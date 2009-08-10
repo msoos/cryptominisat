@@ -279,7 +279,9 @@ bool Solver::satisfied(const XorClause& c) const
 void Solver::cancelUntil(int level)
 {
 #ifdef VERBOSE_DEBUG
-    cout << "Canceling until level " << level << " sublevel: " << trail_lim[level] << endl;
+    cout << "Canceling until level " << level;
+    if (level > 0) cout << " sublevel: " << trail_lim[level];
+    cout << endl;
 #endif
     if (decisionLevel() > level) {
         for (int c = trail.size()-1; c >= trail_lim[level]; c--) {
@@ -884,27 +886,6 @@ void Solver::cleanClauses(vec<XorClause*>& cs)
 #ifdef VERBOSE_DEBUG
     cout << "cleanClauses(XorClause) useful:" << useful << endl;
 #endif
-}
-
-int Solver::calcClauseDifficulty() const
-{
-    int total_diff = 0;
-
-    for (int s = 0; s < clauses.size(); s++) {
-        total_diff += 3;
-
-        Clause& c = *clauses[s];
-        total_diff += c.size();
-    }
-
-    for (int s = 0; s < xorclauses.size(); s++) {
-        total_diff += 3;
-
-        XorClause& c = *xorclauses[s];
-        total_diff += c.size() * 4;
-    }
-
-    return total_diff;
 }
 
 /*_________________________________________________________________________________________________

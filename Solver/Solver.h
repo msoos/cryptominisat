@@ -118,9 +118,6 @@ public:
     void endFirstSimplify();       // After the clauses are added, and the first simplify() is called, this must be called
     const vec<Clause*>& get_sorted_learnts();//return the set of learned clauses
 
-    //Difficulty metrics
-    int      calcClauseDifficulty() const;       // Counts the difficulty of the equations
-
 protected:
     // Helper structures:
     //
