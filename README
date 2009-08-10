@@ -1,0 +1,108 @@
+For usage of standard MiniSat, please have a look at Niklas Eén's and Niklas Sörensson's papers. Also, please look at "./minisat -help"
+
+For a more detailed description of how to use CryptoMiniSat, please refer to  http://planete.inrialpes.fr/~soos/CryptoMiniSat/index.html
+
+CryptoMiniSat integrates the following advancements with respect to MiniSat:
+
+* Xor-clauses. If you want to express a xor, e.g. "var1 + var2 + !var3 = true" then you simply need to put into the sat file the line: "x1 2 -3 0". The "x" in front of the line means that this is a xor-clause clause.
+
+* Advanced statistics. The output of the sample satfile that is under "/optimized/src/satfile" if running with statistics:
+
+--------------
+soos@charmille:$ ./minisat -stats satfile
+
+[...stuff..]
+
+----------- STATS FOR THIS ROUND BEGIN ------------
+ATTENTION! If you used minisat as a library, then vars are all shifted by 1 here and everywhere in ALL outputs of minisat. This does not apply when you use minisat as a stand-alone program)
+Times var guessed:
+var 36, ' sr[0][35] (real unknown)': 30
+var 44, ' sr[0][43] (real unknown)': 16
+var 40, ' sr[0][39] (real unknown)': 14
+var 34, ' sr[0][33] (real unknown)': 14
+var 75, ' sr[0][74] (real unknown)': 9
+var 63, ' sr[0][62] (real unknown)': 9
+var 46, ' sr[0][45] (real unknown)': 9
+var 42, ' sr[0][41] (real unknown)': 9
+var 38, ' sr[0][37] (real unknown)': 9
+var 81, ' sr[0][80]': 8
+[...]
+-----------
+
+This list means that variable 36, which represents the 36th bit in the 0th shift register has been branched upon 30 times. This list is sorted, and the one on the top shows what minisat thinks is the best variable to branch on (i.e. the most active variable).
+
+The way minisat knows that var36 is the 36th variable in the 0th shift register is because of this line in the "satfile":
+
+"c v 36 sr[0][35] (real unknown)"
+
+You can write this yourself to help you with the output. It's a simple "c v VAR NAME" line in your input file. You can write it for any number of variables, as you wish. If you don't write this, everything will still work, but you will not get the name in the statistics, instead you will get:
+
+"var 42: 9"
+
+I.e. much less helpful. In my "satfile" (look at the end of the file) you can see that all variables are named:
+
+c v 1 sr[0][0]
+c v 2 sr[0][1]
+c v 3 sr[0][2]
+c v 4 sr[0][3]
+[...]
+c v 30 sr[0][29]
+c v 31 sr[0][30]
+c v 32 sr[0][31] (real unknown)
+c v 33 sr[0][32] (real unknown)
+[...]
+c v 79 sr[0][78] (real unknown)
+c v 80 sr[0][79] (real unknown)
+c v 81 sr[0][80]
+[...]
+c v 102 sr[0][101]
+c v 103 sr[0][102]
+c v 104 sr[0][103]
+
+
+The statistics also gives you the following for each restart (minisat does re-starts every so often, these are the lines that appear one after the other when you are running it):
+
+No branches visited: 100
+Avg branch depth: 60.900000
+No decisions: 305
+No propagations: 3850
+sum decisions on branches/no branches =
+(if you look at one specific branch, what is the average number of decisions you will find?) =
+ 18.310000
+sum propagations on branches/no branches =
+(if you look at one specific branch, what is the average number of propagations you will find?) =
+ 42.590000
+
+You can see, for example, that 42.59 + 18.31 = 60.9 so things add up :)
+
+* "-randomize=XXX" will randomize the clause order and initial variable pick order. You can measure how much time it takes for minisat on average to solve a problem written down in a SAT file. Useful to calculate average speed of a given problem instance. Just run the problem with multiple "-randomize=xx" numbers and make the average.
+
+* "-grouping" is an option that can be used to give a name to each and every clause. This is very-very useful if you wish to do make create search trees. To use it, you must have after each and every clause a line "c g GROUPNUM NAME". Example:
+
+161 18 20 -22 0
+c g 11 cool name
+161 -18 -20 0
+c g 11 cool name
+141 68 -66 74 0
+c g 234 not cool
+
+These are three clauses. The first two belong to group 11, which has the name "cool name". The third clause belongs to group 234, and is named "not cool". Grouping is important once you need to have more than one clause to express the same concept. I.e. if you were cutting up xors, you could easily give the same group to the different clauses representing the same xor. You don't need to have that for this minisat, as there are xor-clauses, however, if you look at the "satfile", this concept is used often, to represent equations that were coded using Karnaugh-tables (and so need many clauses to express).
+
+* If you create a directory "proofs", and then you execute "./minisat -proof-log -grouping satfile" then you will get a set of files, named "NUM-proofX.dot" in the "proofs" directory, where NUM is a fixed number for a given run, and X is the restart number. For example, I got:
+$ ls proofs/
+7491-proof0.dot
+7491-proof1.dot
+7491-proof2.dot
+[..]
+7491-proof9.dot
+(i.e. there were 9 restarts, you should get exactly the same with the example "satfile")
+
+First you need to get graphviz (free software, available form http://www.graphviz.org/Download..php for both windows and linux). If you now issue "dot -Tsvg 7491-proof1.dot > proof1.svg" and wait a couple of minutes, you get a file "proof1.svg" that contains what happened at the 1st restart (which is not really a restart, it's the first run: the 0th restart is the inserting of clauses). This SVG file is included into this email (zipped). You can view it only with a very good SVG-reader, like the free-software inkscape ( http://www.inkscape.org/download/?lang=en ), available under windows and  linux.
+
+* There is an option to have a LOT of debugging output from minisat. To turn it on, define VERBOSE_DEBUG. See the "INSTALL" file how to do this. After re-compilation, run minisat as usual. This will give you a LOT of information regarding what happens inside minisat. Propagations, cancelations, conflicts, conflict clauses, etc. To handle the amount of information, I suggest you do run minisat as:
+
+"./minisat satfile > debug.txt"
+
+and then open the "debug.txt" with your favourite text editor. (I use "less" -- for gigabyte-sized stuff, it's the best )
+
+

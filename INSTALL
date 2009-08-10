@@ -1,0 +1,85 @@
+-----------
+Libraries needed
+-----------
+You will need the following libraries to compile the sources:
+* libz
+* Boost (for the BOOST_FOREACH() macro)
+
+-----------------
+Building the source
+-----------------
+There are two ways to build the source. With cmake or with autotools. I personally use cmake.
+
+-----------------
+Building using cmake
+-----------------
+Go into the 'build' directory.
+Issue 'cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../'
+Issue 'make'
+Type in './cryptominisat satfile' to test your new code.
+
+------------------
+Building using autotools
+------------------
+Verify that the symlink 'ltmain.sh' is not broken
+Issue 'automake --add-missing'
+Issue 'make -f Makefile.cvs'
+Go to the 'build' directory
+Issue 'CXXFLAGS="-O3 -g" ../configure'
+Type 'make'
+Type in './cryptominisat satfile' to test your new code.
+
+---------
+Please read help
+---------
+For help, build the program, and issue:
+'./minisat -help'
+
+--------
+Verbose debug
+--------
+You can also turn on verbose debugging.
+Simply add "#define VERBOSE_DEBUG" to the Solver/Solver.h file and re-compile
+
+When executing:
+'./minisat satfile'
+You will see a LOT of debug info. You should therefore maybe do:
+'./minisat satfile > debuginfo.txt'
+then you can open the 'debuginfo.txt' file from a text editor and have a look
+
+---------
+Users looking for better performance
+--------
+If using configure: Use 'CXXFLAGS="-O3 -g0 -march=native"'
+
+If using cmake, replace the line in CMakeLists.txt:
+'set(CMAKE_CXX_FLAGS="-g -Wall -O3 -Wno-deprecated")'
+with
+'set(CMAKE_CXX_FLAGS="-g0 -Wall -O3 -march=native -Wno-deprecated")'
+
+-----------------
+Windows use
+----------------
+With cmake it should be relatively simple.
+
+I compile under linux all windows binaries, using gcc that generates windows executables. It works really well. There is a sort-of-howto in the src/Solver/win32-howto text file. A short step-by-step is here: 
+
+1) Install gcc that generates windows binaries:
+
+i586-mingw32msvc
+
+1) Install all libraries (BOOST, libz) 
+
+BOOST:
+http://sourceforge.net/project/showfiles.php?group_id=204414
+
+libz:
+get from source and compile as per src/Solver/win32-howto
+
+2) complie:
+
+go to "src/Solver" and do:
+
+i586-mingw32msvc-g++ -O3 -g0 -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a Solver.C Logger.C fcopy.cpp clause.cpp -o minisat.exe
+
+I test the generated binary under wine, in Linux.

@@ -1,0 +1,34 @@
+mingw howtos:
+
+http://man.gnusquad.org/i586-mingw32msvc-ar/section-1/en/
+
+http://wiki.njh.eu/Cross_Compiling_for_Win32
+
+------- how to compile stuff --------
+
+on debian mingw:
+
+PATH=/usr/i586-mingw32msvc/bin:$PATH \ 
+make CC=i586-mingw32msvc-gcc AR=i586-mingw32msvc-ar \
+     RC=i586-mingw32msvc-windres
+
+for libz, the last line is: i586-mingw32msvc-ar qs libz.a adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o zutil.o inflate.o infback.o inftrees.o inffast.o
+
+make install PREFIX=/usr/i586-mingw32msvc
+
+--------compile minisat ------------
+
+i586-mingw32msvc-g++ -O3 -g0 -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a Solver.C Logger.C fcopy.cpp clause.cpp -o minisat.exe
+
+-----------------------------------
+
+useful for examining archives:
+
+i586-mingw32msvc-nm libz.a
+i586-mingw32msvc-objdump -G libz.a
+
+---------  libs needed  ---------
+BOOST:
+http://sourceforge.net/project/showfiles.php?group_id=204414
+
+
