@@ -1,5618 +1,5618 @@
 c Xor representation
 x-73 0
-c g 1 sr[0][72]
+c group 1 sr[0][72]
 c ---------------
 c Xor representation
 x-71 0
-c g 2 sr[0][70]
+c group 2 sr[0][70]
 c ---------------
 c Xor representation
 x70 0
-c g 3 sr[0][69]
+c group 3 sr[0][69]
 c ---------------
 c Xor representation
 x-67 0
-c g 4 sr[0][66]
+c group 4 sr[0][66]
 c ---------------
 c Xor representation
 x66 0
-c g 5 sr[0][65]
+c group 5 sr[0][65]
 c ---------------
 c Xor representation
 x-59 0
-c g 6 sr[0][58]
+c group 6 sr[0][58]
 c ---------------
 c Xor representation
 x-58 0
-c g 7 sr[0][57]
+c group 7 sr[0][57]
 c ---------------
 c Xor representation
 x-51 0
-c g 8 sr[0][50]
+c group 8 sr[0][50]
 c ---------------
 c Xor representation
 x-50 0
-c g 9 sr[0][49]
+c group 9 sr[0][49]
 c ---------------
 c Karnaugh representation
 105 -10 -12 -14 0
-c g 10 f[0][0]
+c group 10 f[0][0]
 105 12 -14 -16 0
-c g 10 f[0][0]
+c group 10 f[0][0]
 105 -10 14 16 0
-c g 10 f[0][0]
+c group 10 f[0][0]
 105 10 -12 14 0
-c g 10 f[0][0]
+c group 10 f[0][0]
 -105 10 12 14 0
-c g 10 f[0][0]
+c group 10 f[0][0]
 -105 -10 14 -16 0
-c g 10 f[0][0]
+c group 10 f[0][0]
 -105 12 -14 16 0
-c g 10 f[0][0]
+c group 10 f[0][0]
 -105 10 -12 -14 0
-c g 10 f[0][0]
+c group 10 f[0][0]
 c ---------------
 c Karnaugh representation
 161 18 20 -22 0
-c g 11 f[1][0]
+c group 11 f[1][0]
 161 -18 -20 0
-c g 11 f[1][0]
+c group 11 f[1][0]
 161 -18 22 -24 0
-c g 11 f[1][0]
+c group 11 f[1][0]
 161 -20 22 -24 0
-c g 11 f[1][0]
+c group 11 f[1][0]
 -161 18 20 22 0
-c g 11 f[1][0]
+c group 11 f[1][0]
 -161 18 22 24 0
-c g 11 f[1][0]
+c group 11 f[1][0]
 -161 20 22 24 0
-c g 11 f[1][0]
+c group 11 f[1][0]
 -161 18 -20 -22 0
-c g 11 f[1][0]
+c group 11 f[1][0]
 -161 -18 20 -22 0
-c g 11 f[1][0]
+c group 11 f[1][0]
 c ---------------
 c Karnaugh representation
 217 26 28 -30 0
-c g 12 f[2][0]
+c group 12 f[2][0]
 217 -26 -28 0
-c g 12 f[2][0]
+c group 12 f[2][0]
 217 -26 30 -32 0
-c g 12 f[2][0]
+c group 12 f[2][0]
 217 -28 30 -32 0
-c g 12 f[2][0]
+c group 12 f[2][0]
 -217 26 28 30 0
-c g 12 f[2][0]
+c group 12 f[2][0]
 -217 26 30 32 0
-c g 12 f[2][0]
+c group 12 f[2][0]
 -217 28 30 32 0
-c g 12 f[2][0]
+c group 12 f[2][0]
 -217 26 -28 -30 0
-c g 12 f[2][0]
+c group 12 f[2][0]
 -217 -26 28 -30 0
-c g 12 f[2][0]
+c group 12 f[2][0]
 c ---------------
 c Karnaugh representation
 273 -34 -36 -38 0
-c g 13 f[3][0]
+c group 13 f[3][0]
 273 36 -38 -40 0
-c g 13 f[3][0]
+c group 13 f[3][0]
 273 -34 38 40 0
-c g 13 f[3][0]
+c group 13 f[3][0]
 273 34 -36 38 0
-c g 13 f[3][0]
+c group 13 f[3][0]
 -273 34 36 38 0
-c g 13 f[3][0]
+c group 13 f[3][0]
 -273 -34 38 -40 0
-c g 13 f[3][0]
+c group 13 f[3][0]
 -273 36 -38 40 0
-c g 13 f[3][0]
+c group 13 f[3][0]
 -273 34 -36 -38 0
-c g 13 f[3][0]
+c group 13 f[3][0]
 c ---------------
 c Karnaugh representation
 329 42 44 -46 0
-c g 14 f[4][0]
+c group 14 f[4][0]
 329 -42 -44 0
-c g 14 f[4][0]
+c group 14 f[4][0]
 329 -42 46 -48 0
-c g 14 f[4][0]
+c group 14 f[4][0]
 329 -44 46 -48 0
-c g 14 f[4][0]
+c group 14 f[4][0]
 -329 42 44 46 0
-c g 14 f[4][0]
+c group 14 f[4][0]
 -329 42 46 48 0
-c g 14 f[4][0]
+c group 14 f[4][0]
 -329 44 46 48 0
-c g 14 f[4][0]
+c group 14 f[4][0]
 -329 42 -44 -46 0
-c g 14 f[4][0]
+c group 14 f[4][0]
 -329 -42 44 -46 0
-c g 14 f[4][0]
+c group 14 f[4][0]
 c ---------------
 c Karnaugh representation
 161 217 -273 0
-c g 15 output[0]
+c group 15 output[0]
 105 217 329 0
-c g 15 output[0]
+c group 15 output[0]
 -105 -161 273 -329 0
-c g 15 output[0]
+c group 15 output[0]
 -217 273 329 0
-c g 15 output[0]
+c group 15 output[0]
 105 161 -273 0
-c g 15 output[0]
+c group 15 output[0]
 -105 -217 273 0
-c g 15 output[0]
+c group 15 output[0]
 c ---------------
 c Karnaugh representation
 106 -11 -13 -15 0
-c g 16 f[0][1]
+c group 16 f[0][1]
 106 13 -15 -17 0
-c g 16 f[0][1]
+c group 16 f[0][1]
 106 -11 15 17 0
-c g 16 f[0][1]
+c group 16 f[0][1]
 106 11 -13 15 0
-c g 16 f[0][1]
+c group 16 f[0][1]
 -106 11 13 15 0
-c g 16 f[0][1]
+c group 16 f[0][1]
 -106 -11 15 -17 0
-c g 16 f[0][1]
+c group 16 f[0][1]
 -106 13 -15 17 0
-c g 16 f[0][1]
+c group 16 f[0][1]
 -106 11 -13 -15 0
-c g 16 f[0][1]
+c group 16 f[0][1]
 c ---------------
 c Karnaugh representation
 162 19 21 -23 0
-c g 17 f[1][1]
+c group 17 f[1][1]
 162 -19 -21 0
-c g 17 f[1][1]
+c group 17 f[1][1]
 162 -19 23 -25 0
-c g 17 f[1][1]
+c group 17 f[1][1]
 162 -21 23 -25 0
-c g 17 f[1][1]
+c group 17 f[1][1]
 -162 19 21 23 0
-c g 17 f[1][1]
+c group 17 f[1][1]
 -162 19 23 25 0
-c g 17 f[1][1]
+c group 17 f[1][1]
 -162 21 23 25 0
-c g 17 f[1][1]
+c group 17 f[1][1]
 -162 19 -21 -23 0
-c g 17 f[1][1]
+c group 17 f[1][1]
 -162 -19 21 -23 0
-c g 17 f[1][1]
+c group 17 f[1][1]
 c ---------------
 c Karnaugh representation
 218 27 29 -31 0
-c g 18 f[2][1]
+c group 18 f[2][1]
 218 -27 -29 0
-c g 18 f[2][1]
+c group 18 f[2][1]
 218 -27 31 -33 0
-c g 18 f[2][1]
+c group 18 f[2][1]
 218 -29 31 -33 0
-c g 18 f[2][1]
+c group 18 f[2][1]
 -218 27 29 31 0
-c g 18 f[2][1]
+c group 18 f[2][1]
 -218 27 31 33 0
-c g 18 f[2][1]
+c group 18 f[2][1]
 -218 29 31 33 0
-c g 18 f[2][1]
+c group 18 f[2][1]
 -218 27 -29 -31 0
-c g 18 f[2][1]
+c group 18 f[2][1]
 -218 -27 29 -31 0
-c g 18 f[2][1]
+c group 18 f[2][1]
 c ---------------
 c Karnaugh representation
 274 -35 -37 -39 0
-c g 19 f[3][1]
+c group 19 f[3][1]
 274 37 -39 -41 0
-c g 19 f[3][1]
+c group 19 f[3][1]
 274 -35 39 41 0
-c g 19 f[3][1]
+c group 19 f[3][1]
 274 35 -37 39 0
-c g 19 f[3][1]
+c group 19 f[3][1]
 -274 35 37 39 0
-c g 19 f[3][1]
+c group 19 f[3][1]
 -274 -35 39 -41 0
-c g 19 f[3][1]
+c group 19 f[3][1]
 -274 37 -39 41 0
-c g 19 f[3][1]
+c group 19 f[3][1]
 -274 35 -37 -39 0
-c g 19 f[3][1]
+c group 19 f[3][1]
 c ---------------
 c Karnaugh representation
 330 43 45 -47 0
-c g 20 f[4][1]
+c group 20 f[4][1]
 330 -43 -45 0
-c g 20 f[4][1]
+c group 20 f[4][1]
 330 -43 47 -49 0
-c g 20 f[4][1]
+c group 20 f[4][1]
 330 -45 47 -49 0
-c g 20 f[4][1]
+c group 20 f[4][1]
 -330 43 45 47 0
-c g 20 f[4][1]
+c group 20 f[4][1]
 -330 43 47 49 0
-c g 20 f[4][1]
+c group 20 f[4][1]
 -330 45 47 49 0
-c g 20 f[4][1]
+c group 20 f[4][1]
 -330 43 -45 -47 0
-c g 20 f[4][1]
+c group 20 f[4][1]
 -330 -43 45 -47 0
-c g 20 f[4][1]
+c group 20 f[4][1]
 c ---------------
 c Karnaugh representation
 162 218 274 -330 0
-c g 21 output[1]
+c group 21 output[1]
 -106 -162 -274 0
-c g 21 output[1]
+c group 21 output[1]
 -162 -274 -330 0
-c g 21 output[1]
+c group 21 output[1]
 -106 218 274 330 0
-c g 21 output[1]
+c group 21 output[1]
 -106 -218 -274 0
-c g 21 output[1]
+c group 21 output[1]
 106 274 -330 0
-c g 21 output[1]
+c group 21 output[1]
 -162 -218 -274 0
-c g 21 output[1]
+c group 21 output[1]
 c ---------------
 c Karnaugh representation
 107 -12 -14 -16 0
-c g 22 f[0][2]
+c group 22 f[0][2]
 107 14 -16 -18 0
-c g 22 f[0][2]
+c group 22 f[0][2]
 107 -12 16 18 0
-c g 22 f[0][2]
+c group 22 f[0][2]
 107 12 -14 16 0
-c g 22 f[0][2]
+c group 22 f[0][2]
 -107 12 14 16 0
-c g 22 f[0][2]
+c group 22 f[0][2]
 -107 -12 16 -18 0
-c g 22 f[0][2]
+c group 22 f[0][2]
 -107 14 -16 18 0
-c g 22 f[0][2]
+c group 22 f[0][2]
 -107 12 -14 -16 0
-c g 22 f[0][2]
+c group 22 f[0][2]
 c ---------------
 c Karnaugh representation
 163 20 22 -24 0
-c g 23 f[1][2]
+c group 23 f[1][2]
 163 -20 -22 0
-c g 23 f[1][2]
+c group 23 f[1][2]
 163 -20 24 -26 0
-c g 23 f[1][2]
+c group 23 f[1][2]
 163 -22 24 -26 0
-c g 23 f[1][2]
+c group 23 f[1][2]
 -163 20 22 24 0
-c g 23 f[1][2]
+c group 23 f[1][2]
 -163 20 24 26 0
-c g 23 f[1][2]
+c group 23 f[1][2]
 -163 22 24 26 0
-c g 23 f[1][2]
+c group 23 f[1][2]
 -163 20 -22 -24 0
-c g 23 f[1][2]
+c group 23 f[1][2]
 -163 -20 22 -24 0
-c g 23 f[1][2]
+c group 23 f[1][2]
 c ---------------
 c Karnaugh representation
 219 28 30 -32 0
-c g 24 f[2][2]
+c group 24 f[2][2]
 219 -28 -30 0
-c g 24 f[2][2]
+c group 24 f[2][2]
 219 -28 32 -34 0
-c g 24 f[2][2]
+c group 24 f[2][2]
 219 -30 32 -34 0
-c g 24 f[2][2]
+c group 24 f[2][2]
 -219 28 30 32 0
-c g 24 f[2][2]
+c group 24 f[2][2]
 -219 28 32 34 0
-c g 24 f[2][2]
+c group 24 f[2][2]
 -219 30 32 34 0
-c g 24 f[2][2]
+c group 24 f[2][2]
 -219 28 -30 -32 0
-c g 24 f[2][2]
+c group 24 f[2][2]
 -219 -28 30 -32 0
-c g 24 f[2][2]
+c group 24 f[2][2]
 c ---------------
 c Karnaugh representation
 275 -36 -38 -40 0
-c g 25 f[3][2]
+c group 25 f[3][2]
 275 38 -40 -42 0
-c g 25 f[3][2]
+c group 25 f[3][2]
 275 -36 40 42 0
-c g 25 f[3][2]
+c group 25 f[3][2]
 275 36 -38 40 0
-c g 25 f[3][2]
+c group 25 f[3][2]
 -275 36 38 40 0
-c g 25 f[3][2]
+c group 25 f[3][2]
 -275 -36 40 -42 0
-c g 25 f[3][2]
+c group 25 f[3][2]
 -275 38 -40 42 0
-c g 25 f[3][2]
+c group 25 f[3][2]
 -275 36 -38 -40 0
-c g 25 f[3][2]
+c group 25 f[3][2]
 c ---------------
 c Karnaugh representation
 331 44 46 -48 0
-c g 26 f[4][2]
+c group 26 f[4][2]
 331 -44 -46 0
-c g 26 f[4][2]
+c group 26 f[4][2]
 -331 44 -46 0
-c g 26 f[4][2]
+c group 26 f[4][2]
 -331 44 48 0
-c g 26 f[4][2]
+c group 26 f[4][2]
 -331 -44 46 0
-c g 26 f[4][2]
+c group 26 f[4][2]
 c ---------------
 c Karnaugh representation
 163 219 275 -331 0
-c g 27 output[2]
+c group 27 output[2]
 -107 -163 -275 0
-c g 27 output[2]
+c group 27 output[2]
 -163 -275 -331 0
-c g 27 output[2]
+c group 27 output[2]
 -107 219 275 331 0
-c g 27 output[2]
+c group 27 output[2]
 -107 -219 -275 0
-c g 27 output[2]
+c group 27 output[2]
 107 275 -331 0
-c g 27 output[2]
+c group 27 output[2]
 -163 -219 -275 0
-c g 27 output[2]
+c group 27 output[2]
 c ---------------
 c Karnaugh representation
 108 -13 -15 -17 0
-c g 28 f[0][3]
+c group 28 f[0][3]
 108 15 -17 -19 0
-c g 28 f[0][3]
+c group 28 f[0][3]
 108 -13 17 19 0
-c g 28 f[0][3]
+c group 28 f[0][3]
 108 13 -15 17 0
-c g 28 f[0][3]
+c group 28 f[0][3]
 -108 13 15 17 0
-c g 28 f[0][3]
+c group 28 f[0][3]
 -108 -13 17 -19 0
-c g 28 f[0][3]
+c group 28 f[0][3]
 -108 15 -17 19 0
-c g 28 f[0][3]
+c group 28 f[0][3]
 -108 13 -15 -17 0
-c g 28 f[0][3]
+c group 28 f[0][3]
 c ---------------
 c Karnaugh representation
 164 21 23 -25 0
-c g 29 f[1][3]
+c group 29 f[1][3]
 164 -21 -23 0
-c g 29 f[1][3]
+c group 29 f[1][3]
 164 -21 25 -27 0
-c g 29 f[1][3]
+c group 29 f[1][3]
 164 -23 25 -27 0
-c g 29 f[1][3]
+c group 29 f[1][3]
 -164 21 23 25 0
-c g 29 f[1][3]
+c group 29 f[1][3]
 -164 21 25 27 0
-c g 29 f[1][3]
+c group 29 f[1][3]
 -164 23 25 27 0
-c g 29 f[1][3]
+c group 29 f[1][3]
 -164 21 -23 -25 0
-c g 29 f[1][3]
+c group 29 f[1][3]
 -164 -21 23 -25 0
-c g 29 f[1][3]
+c group 29 f[1][3]
 c ---------------
 c Karnaugh representation
 220 29 31 -33 0
-c g 30 f[2][3]
+c group 30 f[2][3]
 220 -29 -31 0
-c g 30 f[2][3]
+c group 30 f[2][3]
 220 -29 33 -35 0
-c g 30 f[2][3]
+c group 30 f[2][3]
 220 -31 33 -35 0
-c g 30 f[2][3]
+c group 30 f[2][3]
 -220 29 31 33 0
-c g 30 f[2][3]
+c group 30 f[2][3]
 -220 29 33 35 0
-c g 30 f[2][3]
+c group 30 f[2][3]
 -220 31 33 35 0
-c g 30 f[2][3]
+c group 30 f[2][3]
 -220 29 -31 -33 0
-c g 30 f[2][3]
+c group 30 f[2][3]
 -220 -29 31 -33 0
-c g 30 f[2][3]
+c group 30 f[2][3]
 c ---------------
 c Karnaugh representation
 276 -37 -39 -41 0
-c g 31 f[3][3]
+c group 31 f[3][3]
 276 39 -41 -43 0
-c g 31 f[3][3]
+c group 31 f[3][3]
 276 -37 41 43 0
-c g 31 f[3][3]
+c group 31 f[3][3]
 276 37 -39 41 0
-c g 31 f[3][3]
+c group 31 f[3][3]
 -276 37 39 41 0
-c g 31 f[3][3]
+c group 31 f[3][3]
 -276 -37 41 -43 0
-c g 31 f[3][3]
+c group 31 f[3][3]
 -276 39 -41 43 0
-c g 31 f[3][3]
+c group 31 f[3][3]
 -276 37 -39 -41 0
-c g 31 f[3][3]
+c group 31 f[3][3]
 c ---------------
 c Karnaugh representation
 332 45 47 -49 0
-c g 32 f[4][3]
+c group 32 f[4][3]
 332 -45 -47 0
-c g 32 f[4][3]
+c group 32 f[4][3]
 -332 45 -47 0
-c g 32 f[4][3]
+c group 32 f[4][3]
 -332 45 49 0
-c g 32 f[4][3]
+c group 32 f[4][3]
 -332 -45 47 0
-c g 32 f[4][3]
+c group 32 f[4][3]
 c ---------------
 c Karnaugh representation
 164 220 276 -332 0
-c g 33 output[3]
+c group 33 output[3]
 -108 -164 -276 0
-c g 33 output[3]
+c group 33 output[3]
 -164 -276 -332 0
-c g 33 output[3]
+c group 33 output[3]
 -108 220 276 332 0
-c g 33 output[3]
+c group 33 output[3]
 -108 -220 -276 0
-c g 33 output[3]
+c group 33 output[3]
 108 276 -332 0
-c g 33 output[3]
+c group 33 output[3]
 -164 -220 -276 0
-c g 33 output[3]
+c group 33 output[3]
 c ---------------
 c Karnaugh representation
 109 -14 -16 -18 0
-c g 34 f[0][4]
+c group 34 f[0][4]
 109 16 -18 -20 0
-c g 34 f[0][4]
+c group 34 f[0][4]
 109 -14 18 20 0
-c g 34 f[0][4]
+c group 34 f[0][4]
 109 14 -16 18 0
-c g 34 f[0][4]
+c group 34 f[0][4]
 -109 14 16 18 0
-c g 34 f[0][4]
+c group 34 f[0][4]
 -109 -14 18 -20 0
-c g 34 f[0][4]
+c group 34 f[0][4]
 -109 16 -18 20 0
-c g 34 f[0][4]
+c group 34 f[0][4]
 -109 14 -16 -18 0
-c g 34 f[0][4]
+c group 34 f[0][4]
 c ---------------
 c Karnaugh representation
 165 22 24 -26 0
-c g 35 f[1][4]
+c group 35 f[1][4]
 165 -22 -24 0
-c g 35 f[1][4]
+c group 35 f[1][4]
 165 -22 26 -28 0
-c g 35 f[1][4]
+c group 35 f[1][4]
 165 -24 26 -28 0
-c g 35 f[1][4]
+c group 35 f[1][4]
 -165 22 24 26 0
-c g 35 f[1][4]
+c group 35 f[1][4]
 -165 22 26 28 0
-c g 35 f[1][4]
+c group 35 f[1][4]
 -165 24 26 28 0
-c g 35 f[1][4]
+c group 35 f[1][4]
 -165 22 -24 -26 0
-c g 35 f[1][4]
+c group 35 f[1][4]
 -165 -22 24 -26 0
-c g 35 f[1][4]
+c group 35 f[1][4]
 c ---------------
 c Karnaugh representation
 221 30 32 -34 0
-c g 36 f[2][4]
+c group 36 f[2][4]
 221 -30 -32 0
-c g 36 f[2][4]
+c group 36 f[2][4]
 221 -30 34 -36 0
-c g 36 f[2][4]
+c group 36 f[2][4]
 221 -32 34 -36 0
-c g 36 f[2][4]
+c group 36 f[2][4]
 -221 30 32 34 0
-c g 36 f[2][4]
+c group 36 f[2][4]
 -221 30 34 36 0
-c g 36 f[2][4]
+c group 36 f[2][4]
 -221 32 34 36 0
-c g 36 f[2][4]
+c group 36 f[2][4]
 -221 30 -32 -34 0
-c g 36 f[2][4]
+c group 36 f[2][4]
 -221 -30 32 -34 0
-c g 36 f[2][4]
+c group 36 f[2][4]
 c ---------------
 c Karnaugh representation
 277 -38 -40 -42 0
-c g 37 f[3][4]
+c group 37 f[3][4]
 277 40 -42 -44 0
-c g 37 f[3][4]
+c group 37 f[3][4]
 277 -38 42 44 0
-c g 37 f[3][4]
+c group 37 f[3][4]
 277 38 -40 42 0
-c g 37 f[3][4]
+c group 37 f[3][4]
 -277 38 40 42 0
-c g 37 f[3][4]
+c group 37 f[3][4]
 -277 -38 42 -44 0
-c g 37 f[3][4]
+c group 37 f[3][4]
 -277 40 -42 44 0
-c g 37 f[3][4]
+c group 37 f[3][4]
 -277 38 -40 -42 0
-c g 37 f[3][4]
+c group 37 f[3][4]
 c ---------------
 c Karnaugh representation
 333 -46 -48 0
-c g 38 f[4][4]
+c group 38 f[4][4]
 333 -46 -52 0
-c g 38 f[4][4]
+c group 38 f[4][4]
 333 -48 -52 0
-c g 38 f[4][4]
+c group 38 f[4][4]
 -333 46 48 0
-c g 38 f[4][4]
+c group 38 f[4][4]
 -333 46 52 0
-c g 38 f[4][4]
+c group 38 f[4][4]
 -333 48 52 0
-c g 38 f[4][4]
+c group 38 f[4][4]
 c ---------------
 c Karnaugh representation
 165 221 277 -333 0
-c g 39 output[4]
+c group 39 output[4]
 -109 -165 -277 0
-c g 39 output[4]
+c group 39 output[4]
 -165 -277 -333 0
-c g 39 output[4]
+c group 39 output[4]
 -109 221 277 333 0
-c g 39 output[4]
+c group 39 output[4]
 -109 -221 -277 0
-c g 39 output[4]
+c group 39 output[4]
 109 277 -333 0
-c g 39 output[4]
+c group 39 output[4]
 -165 -221 -277 0
-c g 39 output[4]
+c group 39 output[4]
 c ---------------
 c Karnaugh representation
 110 -15 -17 -19 0
-c g 40 f[0][5]
+c group 40 f[0][5]
 110 17 -19 -21 0
-c g 40 f[0][5]
+c group 40 f[0][5]
 110 -15 19 21 0
-c g 40 f[0][5]
+c group 40 f[0][5]
 110 15 -17 19 0
-c g 40 f[0][5]
+c group 40 f[0][5]
 -110 15 17 19 0
-c g 40 f[0][5]
+c group 40 f[0][5]
 -110 -15 19 -21 0
-c g 40 f[0][5]
+c group 40 f[0][5]
 -110 17 -19 21 0
-c g 40 f[0][5]
+c group 40 f[0][5]
 -110 15 -17 -19 0
-c g 40 f[0][5]
+c group 40 f[0][5]
 c ---------------
 c Karnaugh representation
 166 23 25 -27 0
-c g 41 f[1][5]
+c group 41 f[1][5]
 166 -23 -25 0
-c g 41 f[1][5]
+c group 41 f[1][5]
 166 -23 27 -29 0
-c g 41 f[1][5]
+c group 41 f[1][5]
 166 -25 27 -29 0
-c g 41 f[1][5]
+c group 41 f[1][5]
 -166 23 25 27 0
-c g 41 f[1][5]
+c group 41 f[1][5]
 -166 23 27 29 0
-c g 41 f[1][5]
+c group 41 f[1][5]
 -166 25 27 29 0
-c g 41 f[1][5]
+c group 41 f[1][5]
 -166 23 -25 -27 0
-c g 41 f[1][5]
+c group 41 f[1][5]
 -166 -23 25 -27 0
-c g 41 f[1][5]
+c group 41 f[1][5]
 c ---------------
 c Karnaugh representation
 222 31 33 -35 0
-c g 42 f[2][5]
+c group 42 f[2][5]
 222 -31 -33 0
-c g 42 f[2][5]
+c group 42 f[2][5]
 222 -31 35 -37 0
-c g 42 f[2][5]
+c group 42 f[2][5]
 222 -33 35 -37 0
-c g 42 f[2][5]
+c group 42 f[2][5]
 -222 31 33 35 0
-c g 42 f[2][5]
+c group 42 f[2][5]
 -222 31 35 37 0
-c g 42 f[2][5]
+c group 42 f[2][5]
 -222 33 35 37 0
-c g 42 f[2][5]
+c group 42 f[2][5]
 -222 31 -33 -35 0
-c g 42 f[2][5]
+c group 42 f[2][5]
 -222 -31 33 -35 0
-c g 42 f[2][5]
+c group 42 f[2][5]
 c ---------------
 c Karnaugh representation
 278 -39 -41 -43 0
-c g 43 f[3][5]
+c group 43 f[3][5]
 278 41 -43 -45 0
-c g 43 f[3][5]
+c group 43 f[3][5]
 278 -39 43 45 0
-c g 43 f[3][5]
+c group 43 f[3][5]
 278 39 -41 43 0
-c g 43 f[3][5]
+c group 43 f[3][5]
 -278 39 41 43 0
-c g 43 f[3][5]
+c group 43 f[3][5]
 -278 -39 43 -45 0
-c g 43 f[3][5]
+c group 43 f[3][5]
 -278 41 -43 45 0
-c g 43 f[3][5]
+c group 43 f[3][5]
 -278 39 -41 -43 0
-c g 43 f[3][5]
+c group 43 f[3][5]
 c ---------------
 c Karnaugh representation
 334 -47 -49 0
-c g 44 f[4][5]
+c group 44 f[4][5]
 334 -47 -53 0
-c g 44 f[4][5]
+c group 44 f[4][5]
 334 -49 -53 0
-c g 44 f[4][5]
+c group 44 f[4][5]
 -334 47 49 0
-c g 44 f[4][5]
+c group 44 f[4][5]
 -334 47 53 0
-c g 44 f[4][5]
+c group 44 f[4][5]
 -334 49 53 0
-c g 44 f[4][5]
+c group 44 f[4][5]
 c ---------------
 c Karnaugh representation
 166 222 278 -334 0
-c g 45 output[5]
+c group 45 output[5]
 -110 -166 -278 0
-c g 45 output[5]
+c group 45 output[5]
 -166 -278 -334 0
-c g 45 output[5]
+c group 45 output[5]
 -110 222 278 334 0
-c g 45 output[5]
+c group 45 output[5]
 -110 -222 -278 0
-c g 45 output[5]
+c group 45 output[5]
 110 278 -334 0
-c g 45 output[5]
+c group 45 output[5]
 -166 -222 -278 0
-c g 45 output[5]
+c group 45 output[5]
 c ---------------
 c Karnaugh representation
 111 -16 -18 -20 0
-c g 46 f[0][6]
+c group 46 f[0][6]
 111 18 -20 -22 0
-c g 46 f[0][6]
+c group 46 f[0][6]
 111 -16 20 22 0
-c g 46 f[0][6]
+c group 46 f[0][6]
 111 16 -18 20 0
-c g 46 f[0][6]
+c group 46 f[0][6]
 -111 16 18 20 0
-c g 46 f[0][6]
+c group 46 f[0][6]
 -111 -16 20 -22 0
-c g 46 f[0][6]
+c group 46 f[0][6]
 -111 18 -20 22 0
-c g 46 f[0][6]
+c group 46 f[0][6]
 -111 16 -18 -20 0
-c g 46 f[0][6]
+c group 46 f[0][6]
 c ---------------
 c Karnaugh representation
 167 24 26 -28 0
-c g 47 f[1][6]
+c group 47 f[1][6]
 167 -24 -26 0
-c g 47 f[1][6]
+c group 47 f[1][6]
 167 -24 28 -30 0
-c g 47 f[1][6]
+c group 47 f[1][6]
 167 -26 28 -30 0
-c g 47 f[1][6]
+c group 47 f[1][6]
 -167 24 26 28 0
-c g 47 f[1][6]
+c group 47 f[1][6]
 -167 24 28 30 0
-c g 47 f[1][6]
+c group 47 f[1][6]
 -167 26 28 30 0
-c g 47 f[1][6]
+c group 47 f[1][6]
 -167 24 -26 -28 0
-c g 47 f[1][6]
+c group 47 f[1][6]
 -167 -24 26 -28 0
-c g 47 f[1][6]
+c group 47 f[1][6]
 c ---------------
 c Karnaugh representation
 223 32 34 -36 0
-c g 48 f[2][6]
+c group 48 f[2][6]
 223 -32 -34 0
-c g 48 f[2][6]
+c group 48 f[2][6]
 223 -32 36 -38 0
-c g 48 f[2][6]
+c group 48 f[2][6]
 223 -34 36 -38 0
-c g 48 f[2][6]
+c group 48 f[2][6]
 -223 32 34 36 0
-c g 48 f[2][6]
+c group 48 f[2][6]
 -223 32 36 38 0
-c g 48 f[2][6]
+c group 48 f[2][6]
 -223 34 36 38 0
-c g 48 f[2][6]
+c group 48 f[2][6]
 -223 32 -34 -36 0
-c g 48 f[2][6]
+c group 48 f[2][6]
 -223 -32 34 -36 0
-c g 48 f[2][6]
+c group 48 f[2][6]
 c ---------------
 c Karnaugh representation
 279 -40 -42 -44 0
-c g 49 f[3][6]
+c group 49 f[3][6]
 279 42 -44 -46 0
-c g 49 f[3][6]
+c group 49 f[3][6]
 279 -40 44 46 0
-c g 49 f[3][6]
+c group 49 f[3][6]
 279 40 -42 44 0
-c g 49 f[3][6]
+c group 49 f[3][6]
 -279 40 42 44 0
-c g 49 f[3][6]
+c group 49 f[3][6]
 -279 -40 44 -46 0
-c g 49 f[3][6]
+c group 49 f[3][6]
 -279 42 -44 46 0
-c g 49 f[3][6]
+c group 49 f[3][6]
 -279 40 -42 -44 0
-c g 49 f[3][6]
+c group 49 f[3][6]
 c ---------------
 c Karnaugh representation
 335 -48 52 -54 0
-c g 50 f[4][6]
+c group 50 f[4][6]
 335 48 -52 0
-c g 50 f[4][6]
+c group 50 f[4][6]
 -335 48 52 0
-c g 50 f[4][6]
+c group 50 f[4][6]
 -335 -48 -52 0
-c g 50 f[4][6]
+c group 50 f[4][6]
 -335 -48 54 0
-c g 50 f[4][6]
+c group 50 f[4][6]
 c ---------------
 c Karnaugh representation
 167 223 -279 0
-c g 51 output[6]
+c group 51 output[6]
 111 223 335 0
-c g 51 output[6]
+c group 51 output[6]
 -111 -167 279 -335 0
-c g 51 output[6]
+c group 51 output[6]
 -223 279 335 0
-c g 51 output[6]
+c group 51 output[6]
 111 167 -279 0
-c g 51 output[6]
+c group 51 output[6]
 -111 -223 279 0
-c g 51 output[6]
+c group 51 output[6]
 c ---------------
 c Karnaugh representation
 112 -17 -19 -21 0
-c g 52 f[0][7]
+c group 52 f[0][7]
 112 19 -21 -23 0
-c g 52 f[0][7]
+c group 52 f[0][7]
 112 -17 21 23 0
-c g 52 f[0][7]
+c group 52 f[0][7]
 112 17 -19 21 0
-c g 52 f[0][7]
+c group 52 f[0][7]
 -112 17 19 21 0
-c g 52 f[0][7]
+c group 52 f[0][7]
 -112 -17 21 -23 0
-c g 52 f[0][7]
+c group 52 f[0][7]
 -112 19 -21 23 0
-c g 52 f[0][7]
+c group 52 f[0][7]
 -112 17 -19 -21 0
-c g 52 f[0][7]
+c group 52 f[0][7]
 c ---------------
 c Karnaugh representation
 168 25 27 -29 0
-c g 53 f[1][7]
+c group 53 f[1][7]
 168 -25 -27 0
-c g 53 f[1][7]
+c group 53 f[1][7]
 168 -25 29 -31 0
-c g 53 f[1][7]
+c group 53 f[1][7]
 168 -27 29 -31 0
-c g 53 f[1][7]
+c group 53 f[1][7]
 -168 25 27 29 0
-c g 53 f[1][7]
+c group 53 f[1][7]
 -168 25 29 31 0
-c g 53 f[1][7]
+c group 53 f[1][7]
 -168 27 29 31 0
-c g 53 f[1][7]
+c group 53 f[1][7]
 -168 25 -27 -29 0
-c g 53 f[1][7]
+c group 53 f[1][7]
 -168 -25 27 -29 0
-c g 53 f[1][7]
+c group 53 f[1][7]
 c ---------------
 c Karnaugh representation
 224 33 35 -37 0
-c g 54 f[2][7]
+c group 54 f[2][7]
 224 -33 -35 0
-c g 54 f[2][7]
+c group 54 f[2][7]
 224 -33 37 -39 0
-c g 54 f[2][7]
+c group 54 f[2][7]
 224 -35 37 -39 0
-c g 54 f[2][7]
+c group 54 f[2][7]
 -224 33 35 37 0
-c g 54 f[2][7]
+c group 54 f[2][7]
 -224 33 37 39 0
-c g 54 f[2][7]
+c group 54 f[2][7]
 -224 35 37 39 0
-c g 54 f[2][7]
+c group 54 f[2][7]
 -224 33 -35 -37 0
-c g 54 f[2][7]
+c group 54 f[2][7]
 -224 -33 35 -37 0
-c g 54 f[2][7]
+c group 54 f[2][7]
 c ---------------
 c Karnaugh representation
 280 -41 -43 -45 0
-c g 55 f[3][7]
+c group 55 f[3][7]
 280 43 -45 -47 0
-c g 55 f[3][7]
+c group 55 f[3][7]
 280 -41 45 47 0
-c g 55 f[3][7]
+c group 55 f[3][7]
 280 41 -43 45 0
-c g 55 f[3][7]
+c group 55 f[3][7]
 -280 41 43 45 0
-c g 55 f[3][7]
+c group 55 f[3][7]
 -280 -41 45 -47 0
-c g 55 f[3][7]
+c group 55 f[3][7]
 -280 43 -45 47 0
-c g 55 f[3][7]
+c group 55 f[3][7]
 -280 41 -43 -45 0
-c g 55 f[3][7]
+c group 55 f[3][7]
 c ---------------
 c Karnaugh representation
 336 -49 53 -55 0
-c g 56 f[4][7]
+c group 56 f[4][7]
 336 49 -53 0
-c g 56 f[4][7]
+c group 56 f[4][7]
 -336 49 53 0
-c g 56 f[4][7]
+c group 56 f[4][7]
 -336 -49 -53 0
-c g 56 f[4][7]
+c group 56 f[4][7]
 -336 -49 55 0
-c g 56 f[4][7]
+c group 56 f[4][7]
 c ---------------
 c Karnaugh representation
 168 224 -280 0
-c g 57 output[7]
+c group 57 output[7]
 112 224 336 0
-c g 57 output[7]
+c group 57 output[7]
 -112 -168 280 -336 0
-c g 57 output[7]
+c group 57 output[7]
 -224 280 336 0
-c g 57 output[7]
+c group 57 output[7]
 112 168 -280 0
-c g 57 output[7]
+c group 57 output[7]
 -112 -224 280 0
-c g 57 output[7]
+c group 57 output[7]
 c ---------------
 c Karnaugh representation
 113 -18 -20 -22 0
-c g 58 f[0][8]
+c group 58 f[0][8]
 113 20 -22 -24 0
-c g 58 f[0][8]
+c group 58 f[0][8]
 113 -18 22 24 0
-c g 58 f[0][8]
+c group 58 f[0][8]
 113 18 -20 22 0
-c g 58 f[0][8]
+c group 58 f[0][8]
 -113 18 20 22 0
-c g 58 f[0][8]
+c group 58 f[0][8]
 -113 -18 22 -24 0
-c g 58 f[0][8]
+c group 58 f[0][8]
 -113 20 -22 24 0
-c g 58 f[0][8]
+c group 58 f[0][8]
 -113 18 -20 -22 0
-c g 58 f[0][8]
+c group 58 f[0][8]
 c ---------------
 c Karnaugh representation
 169 26 28 -30 0
-c g 59 f[1][8]
+c group 59 f[1][8]
 169 -26 -28 0
-c g 59 f[1][8]
+c group 59 f[1][8]
 169 -26 30 -32 0
-c g 59 f[1][8]
+c group 59 f[1][8]
 169 -28 30 -32 0
-c g 59 f[1][8]
+c group 59 f[1][8]
 -169 26 28 30 0
-c g 59 f[1][8]
+c group 59 f[1][8]
 -169 26 30 32 0
-c g 59 f[1][8]
+c group 59 f[1][8]
 -169 28 30 32 0
-c g 59 f[1][8]
+c group 59 f[1][8]
 -169 26 -28 -30 0
-c g 59 f[1][8]
+c group 59 f[1][8]
 -169 -26 28 -30 0
-c g 59 f[1][8]
+c group 59 f[1][8]
 c ---------------
 c Karnaugh representation
 225 34 36 -38 0
-c g 60 f[2][8]
+c group 60 f[2][8]
 225 -34 -36 0
-c g 60 f[2][8]
+c group 60 f[2][8]
 225 -34 38 -40 0
-c g 60 f[2][8]
+c group 60 f[2][8]
 225 -36 38 -40 0
-c g 60 f[2][8]
+c group 60 f[2][8]
 -225 34 36 38 0
-c g 60 f[2][8]
+c group 60 f[2][8]
 -225 34 38 40 0
-c g 60 f[2][8]
+c group 60 f[2][8]
 -225 36 38 40 0
-c g 60 f[2][8]
+c group 60 f[2][8]
 -225 34 -36 -38 0
-c g 60 f[2][8]
+c group 60 f[2][8]
 -225 -34 36 -38 0
-c g 60 f[2][8]
+c group 60 f[2][8]
 c ---------------
 c Karnaugh representation
 281 -42 -44 -46 0
-c g 61 f[3][8]
+c group 61 f[3][8]
 281 44 -46 -48 0
-c g 61 f[3][8]
+c group 61 f[3][8]
 281 -42 46 48 0
-c g 61 f[3][8]
+c group 61 f[3][8]
 281 42 -44 46 0
-c g 61 f[3][8]
+c group 61 f[3][8]
 -281 42 44 46 0
-c g 61 f[3][8]
+c group 61 f[3][8]
 -281 -42 46 -48 0
-c g 61 f[3][8]
+c group 61 f[3][8]
 -281 44 -46 48 0
-c g 61 f[3][8]
+c group 61 f[3][8]
 -281 42 -44 -46 0
-c g 61 f[3][8]
+c group 61 f[3][8]
 c ---------------
 c Karnaugh representation
 337 -52 54 -56 0
-c g 62 f[4][8]
+c group 62 f[4][8]
 337 52 -54 0
-c g 62 f[4][8]
+c group 62 f[4][8]
 -337 52 54 0
-c g 62 f[4][8]
+c group 62 f[4][8]
 -337 -52 -54 0
-c g 62 f[4][8]
+c group 62 f[4][8]
 -337 -52 56 0
-c g 62 f[4][8]
+c group 62 f[4][8]
 c ---------------
 c Karnaugh representation
 169 225 281 -337 0
-c g 63 output[8]
+c group 63 output[8]
 -113 -169 -281 0
-c g 63 output[8]
+c group 63 output[8]
 -169 -281 -337 0
-c g 63 output[8]
+c group 63 output[8]
 -113 225 281 337 0
-c g 63 output[8]
+c group 63 output[8]
 -113 -225 -281 0
-c g 63 output[8]
+c group 63 output[8]
 113 281 -337 0
-c g 63 output[8]
+c group 63 output[8]
 -169 -225 -281 0
-c g 63 output[8]
+c group 63 output[8]
 c ---------------
 c Xor representation
-m32 33 34 38 40 41 43 45 46 47 52 53 60 64 65 68 69 75 76 78 10 0
-c g 64 sr[0][9]
+x32 33 34 38 40 41 43 45 46 47 52 53 60 64 65 68 69 75 76 78 10 0
+c group 64 sr[0][9]
 c ---------------
 c Karnaugh representation
 114 -19 -21 -23 0
-c g 65 f[0][9]
+c group 65 f[0][9]
 114 21 -23 -25 0
-c g 65 f[0][9]
+c group 65 f[0][9]
 114 -19 23 25 0
-c g 65 f[0][9]
+c group 65 f[0][9]
 114 19 -21 23 0
-c g 65 f[0][9]
+c group 65 f[0][9]
 -114 19 21 23 0
-c g 65 f[0][9]
+c group 65 f[0][9]
 -114 -19 23 -25 0
-c g 65 f[0][9]
+c group 65 f[0][9]
 -114 21 -23 25 0
-c g 65 f[0][9]
+c group 65 f[0][9]
 -114 19 -21 -23 0
-c g 65 f[0][9]
+c group 65 f[0][9]
 c ---------------
 c Karnaugh representation
 170 27 29 -31 0
-c g 66 f[1][9]
+c group 66 f[1][9]
 170 -27 -29 0
-c g 66 f[1][9]
+c group 66 f[1][9]
 170 -27 31 -33 0
-c g 66 f[1][9]
+c group 66 f[1][9]
 170 -29 31 -33 0
-c g 66 f[1][9]
+c group 66 f[1][9]
 -170 27 29 31 0
-c g 66 f[1][9]
+c group 66 f[1][9]
 -170 27 31 33 0
-c g 66 f[1][9]
+c group 66 f[1][9]
 -170 29 31 33 0
-c g 66 f[1][9]
+c group 66 f[1][9]
 -170 27 -29 -31 0
-c g 66 f[1][9]
+c group 66 f[1][9]
 -170 -27 29 -31 0
-c g 66 f[1][9]
+c group 66 f[1][9]
 c ---------------
 c Karnaugh representation
 226 35 37 -39 0
-c g 67 f[2][9]
+c group 67 f[2][9]
 226 -35 -37 0
-c g 67 f[2][9]
+c group 67 f[2][9]
 226 -35 39 -41 0
-c g 67 f[2][9]
+c group 67 f[2][9]
 226 -37 39 -41 0
-c g 67 f[2][9]
+c group 67 f[2][9]
 -226 35 37 39 0
-c g 67 f[2][9]
+c group 67 f[2][9]
 -226 35 39 41 0
-c g 67 f[2][9]
+c group 67 f[2][9]
 -226 37 39 41 0
-c g 67 f[2][9]
+c group 67 f[2][9]
 -226 35 -37 -39 0
-c g 67 f[2][9]
+c group 67 f[2][9]
 -226 -35 37 -39 0
-c g 67 f[2][9]
+c group 67 f[2][9]
 c ---------------
 c Karnaugh representation
 282 -43 -45 -47 0
-c g 68 f[3][9]
+c group 68 f[3][9]
 282 45 -47 -49 0
-c g 68 f[3][9]
+c group 68 f[3][9]
 282 -43 47 49 0
-c g 68 f[3][9]
+c group 68 f[3][9]
 282 43 -45 47 0
-c g 68 f[3][9]
+c group 68 f[3][9]
 -282 43 45 47 0
-c g 68 f[3][9]
+c group 68 f[3][9]
 -282 -43 47 -49 0
-c g 68 f[3][9]
+c group 68 f[3][9]
 -282 45 -47 49 0
-c g 68 f[3][9]
+c group 68 f[3][9]
 -282 43 -45 -47 0
-c g 68 f[3][9]
+c group 68 f[3][9]
 c ---------------
 c Karnaugh representation
 338 -53 55 -57 0
-c g 69 f[4][9]
+c group 69 f[4][9]
 338 53 -55 0
-c g 69 f[4][9]
+c group 69 f[4][9]
 -338 53 55 0
-c g 69 f[4][9]
+c group 69 f[4][9]
 -338 -53 -55 0
-c g 69 f[4][9]
+c group 69 f[4][9]
 -338 -53 57 0
-c g 69 f[4][9]
+c group 69 f[4][9]
 c ---------------
 c Karnaugh representation
 170 226 -282 0
-c g 70 output[9]
+c group 70 output[9]
 114 226 338 0
-c g 70 output[9]
+c group 70 output[9]
 -114 -170 282 -338 0
-c g 70 output[9]
+c group 70 output[9]
 -226 282 338 0
-c g 70 output[9]
+c group 70 output[9]
 114 170 -282 0
-c g 70 output[9]
+c group 70 output[9]
 -114 -226 282 0
-c g 70 output[9]
+c group 70 output[9]
 c ---------------
 c Xor representation
-m-33 34 35 39 41 42 44 46 47 48 53 54 61 65 68 69 74 76 77 79 11 0
-c g 71 sr[0][10]
+x-33 34 35 39 41 42 44 46 47 48 53 54 61 65 68 69 74 76 77 79 11 0
+c group 71 sr[0][10]
 c ---------------
 c Karnaugh representation
 115 -20 -22 -24 0
-c g 72 f[0][10]
+c group 72 f[0][10]
 115 22 -24 -26 0
-c g 72 f[0][10]
+c group 72 f[0][10]
 115 -20 24 26 0
-c g 72 f[0][10]
+c group 72 f[0][10]
 115 20 -22 24 0
-c g 72 f[0][10]
+c group 72 f[0][10]
 -115 20 22 24 0
-c g 72 f[0][10]
+c group 72 f[0][10]
 -115 -20 24 -26 0
-c g 72 f[0][10]
+c group 72 f[0][10]
 -115 22 -24 26 0
-c g 72 f[0][10]
+c group 72 f[0][10]
 -115 20 -22 -24 0
-c g 72 f[0][10]
+c group 72 f[0][10]
 c ---------------
 c Karnaugh representation
 171 28 30 -32 0
-c g 73 f[1][10]
+c group 73 f[1][10]
 171 -28 -30 0
-c g 73 f[1][10]
+c group 73 f[1][10]
 171 -28 32 -34 0
-c g 73 f[1][10]
+c group 73 f[1][10]
 171 -30 32 -34 0
-c g 73 f[1][10]
+c group 73 f[1][10]
 -171 28 30 32 0
-c g 73 f[1][10]
+c group 73 f[1][10]
 -171 28 32 34 0
-c g 73 f[1][10]
+c group 73 f[1][10]
 -171 30 32 34 0
-c g 73 f[1][10]
+c group 73 f[1][10]
 -171 28 -30 -32 0
-c g 73 f[1][10]
+c group 73 f[1][10]
 -171 -28 30 -32 0
-c g 73 f[1][10]
+c group 73 f[1][10]
 c ---------------
 c Karnaugh representation
 227 36 38 -40 0
-c g 74 f[2][10]
+c group 74 f[2][10]
 227 -36 -38 0
-c g 74 f[2][10]
+c group 74 f[2][10]
 227 -36 40 -42 0
-c g 74 f[2][10]
+c group 74 f[2][10]
 227 -38 40 -42 0
-c g 74 f[2][10]
+c group 74 f[2][10]
 -227 36 38 40 0
-c g 74 f[2][10]
+c group 74 f[2][10]
 -227 36 40 42 0
-c g 74 f[2][10]
+c group 74 f[2][10]
 -227 38 40 42 0
-c g 74 f[2][10]
+c group 74 f[2][10]
 -227 36 -38 -40 0
-c g 74 f[2][10]
+c group 74 f[2][10]
 -227 -36 38 -40 0
-c g 74 f[2][10]
+c group 74 f[2][10]
 c ---------------
 c Karnaugh representation
 283 -44 48 0
-c g 75 f[3][10]
+c group 75 f[3][10]
 283 -46 48 0
-c g 75 f[3][10]
+c group 75 f[3][10]
 283 -44 -46 0
-c g 75 f[3][10]
+c group 75 f[3][10]
 -283 44 46 0
-c g 75 f[3][10]
+c group 75 f[3][10]
 -283 44 -48 0
-c g 75 f[3][10]
+c group 75 f[3][10]
 -283 46 -48 0
-c g 75 f[3][10]
+c group 75 f[3][10]
 c ---------------
 c Karnaugh representation
 339 52 54 -56 0
-c g 76 f[4][10]
+c group 76 f[4][10]
 339 -52 -54 0
-c g 76 f[4][10]
+c group 76 f[4][10]
 -339 52 -54 0
-c g 76 f[4][10]
+c group 76 f[4][10]
 -339 52 56 0
-c g 76 f[4][10]
+c group 76 f[4][10]
 -339 -52 54 0
-c g 76 f[4][10]
+c group 76 f[4][10]
 c ---------------
 c Karnaugh representation
 171 227 -283 0
-c g 77 output[10]
+c group 77 output[10]
 115 227 339 0
-c g 77 output[10]
+c group 77 output[10]
 -115 -171 283 -339 0
-c g 77 output[10]
+c group 77 output[10]
 -227 283 339 0
-c g 77 output[10]
+c group 77 output[10]
 115 171 -283 0
-c g 77 output[10]
+c group 77 output[10]
 -115 -227 283 0
-c g 77 output[10]
+c group 77 output[10]
 c ---------------
 c Xor representation
-m-32 34 35 36 37 40 41 43 44 45 46 48 52 54 55 56 57 60 61 62 69 72 74 77 78 12 0
-c g 78 sr[0][11]
+x-32 34 35 36 37 40 41 43 44 45 46 48 52 54 55 56 57 60 61 62 69 72 74 77 78 12 0
+c group 78 sr[0][11]
 c ---------------
 c Karnaugh representation
 116 -21 -23 -25 0
-c g 79 f[0][11]
+c group 79 f[0][11]
 116 23 -25 -27 0
-c g 79 f[0][11]
+c group 79 f[0][11]
 116 -21 25 27 0
-c g 79 f[0][11]
+c group 79 f[0][11]
 116 21 -23 25 0
-c g 79 f[0][11]
+c group 79 f[0][11]
 -116 21 23 25 0
-c g 79 f[0][11]
+c group 79 f[0][11]
 -116 -21 25 -27 0
-c g 79 f[0][11]
+c group 79 f[0][11]
 -116 23 -25 27 0
-c g 79 f[0][11]
+c group 79 f[0][11]
 -116 21 -23 -25 0
-c g 79 f[0][11]
+c group 79 f[0][11]
 c ---------------
 c Karnaugh representation
 172 29 31 -33 0
-c g 80 f[1][11]
+c group 80 f[1][11]
 172 -29 -31 0
-c g 80 f[1][11]
+c group 80 f[1][11]
 172 -29 33 -35 0
-c g 80 f[1][11]
+c group 80 f[1][11]
 172 -31 33 -35 0
-c g 80 f[1][11]
+c group 80 f[1][11]
 -172 29 31 33 0
-c g 80 f[1][11]
+c group 80 f[1][11]
 -172 29 33 35 0
-c g 80 f[1][11]
+c group 80 f[1][11]
 -172 31 33 35 0
-c g 80 f[1][11]
+c group 80 f[1][11]
 -172 29 -31 -33 0
-c g 80 f[1][11]
+c group 80 f[1][11]
 -172 -29 31 -33 0
-c g 80 f[1][11]
+c group 80 f[1][11]
 c ---------------
 c Karnaugh representation
 228 37 39 -41 0
-c g 81 f[2][11]
+c group 81 f[2][11]
 228 -37 -39 0
-c g 81 f[2][11]
+c group 81 f[2][11]
 228 -37 41 -43 0
-c g 81 f[2][11]
+c group 81 f[2][11]
 228 -39 41 -43 0
-c g 81 f[2][11]
+c group 81 f[2][11]
 -228 37 39 41 0
-c g 81 f[2][11]
+c group 81 f[2][11]
 -228 37 41 43 0
-c g 81 f[2][11]
+c group 81 f[2][11]
 -228 39 41 43 0
-c g 81 f[2][11]
+c group 81 f[2][11]
 -228 37 -39 -41 0
-c g 81 f[2][11]
+c group 81 f[2][11]
 -228 -37 39 -41 0
-c g 81 f[2][11]
+c group 81 f[2][11]
 c ---------------
 c Karnaugh representation
 284 -45 49 0
-c g 82 f[3][11]
+c group 82 f[3][11]
 284 -47 49 0
-c g 82 f[3][11]
+c group 82 f[3][11]
 284 -45 -47 0
-c g 82 f[3][11]
+c group 82 f[3][11]
 -284 45 47 0
-c g 82 f[3][11]
+c group 82 f[3][11]
 -284 45 -49 0
-c g 82 f[3][11]
+c group 82 f[3][11]
 -284 47 -49 0
-c g 82 f[3][11]
+c group 82 f[3][11]
 c ---------------
 c Karnaugh representation
 340 53 55 -57 0
-c g 83 f[4][11]
+c group 83 f[4][11]
 340 -53 -55 0
-c g 83 f[4][11]
+c group 83 f[4][11]
 -340 53 -55 0
-c g 83 f[4][11]
+c group 83 f[4][11]
 -340 53 57 0
-c g 83 f[4][11]
+c group 83 f[4][11]
 -340 -53 55 0
-c g 83 f[4][11]
+c group 83 f[4][11]
 c ---------------
 c Karnaugh representation
 172 228 -284 0
-c g 84 output[11]
+c group 84 output[11]
 116 228 340 0
-c g 84 output[11]
+c group 84 output[11]
 -116 -172 284 -340 0
-c g 84 output[11]
+c group 84 output[11]
 -228 284 340 0
-c g 84 output[11]
+c group 84 output[11]
 116 172 -284 0
-c g 84 output[11]
+c group 84 output[11]
 -116 -228 284 0
-c g 84 output[11]
+c group 84 output[11]
 c ---------------
 c Xor representation
-m33 35 36 37 38 41 42 44 45 46 47 49 52 53 55 56 57 60 61 62 63 74 75 78 79 13 0
-c g 85 sr[0][12]
+x33 35 36 37 38 41 42 44 45 46 47 49 52 53 55 56 57 60 61 62 63 74 75 78 79 13 0
+c group 85 sr[0][12]
 c ---------------
 c Karnaugh representation
 117 -22 -24 -26 0
-c g 86 f[0][12]
+c group 86 f[0][12]
 117 24 -26 -28 0
-c g 86 f[0][12]
+c group 86 f[0][12]
 117 -22 26 28 0
-c g 86 f[0][12]
+c group 86 f[0][12]
 117 22 -24 26 0
-c g 86 f[0][12]
+c group 86 f[0][12]
 -117 22 24 26 0
-c g 86 f[0][12]
+c group 86 f[0][12]
 -117 -22 26 -28 0
-c g 86 f[0][12]
+c group 86 f[0][12]
 -117 24 -26 28 0
-c g 86 f[0][12]
+c group 86 f[0][12]
 -117 22 -24 -26 0
-c g 86 f[0][12]
+c group 86 f[0][12]
 c ---------------
 c Karnaugh representation
 173 30 32 -34 0
-c g 87 f[1][12]
+c group 87 f[1][12]
 173 -30 -32 0
-c g 87 f[1][12]
+c group 87 f[1][12]
 173 -30 34 -36 0
-c g 87 f[1][12]
+c group 87 f[1][12]
 173 -32 34 -36 0
-c g 87 f[1][12]
+c group 87 f[1][12]
 -173 30 32 34 0
-c g 87 f[1][12]
+c group 87 f[1][12]
 -173 30 34 36 0
-c g 87 f[1][12]
+c group 87 f[1][12]
 -173 32 34 36 0
-c g 87 f[1][12]
+c group 87 f[1][12]
 -173 30 -32 -34 0
-c g 87 f[1][12]
+c group 87 f[1][12]
 -173 -30 32 -34 0
-c g 87 f[1][12]
+c group 87 f[1][12]
 c ---------------
 c Karnaugh representation
 229 38 40 -42 0
-c g 88 f[2][12]
+c group 88 f[2][12]
 229 -38 -40 0
-c g 88 f[2][12]
+c group 88 f[2][12]
 229 -38 42 -44 0
-c g 88 f[2][12]
+c group 88 f[2][12]
 229 -40 42 -44 0
-c g 88 f[2][12]
+c group 88 f[2][12]
 -229 38 40 42 0
-c g 88 f[2][12]
+c group 88 f[2][12]
 -229 38 42 44 0
-c g 88 f[2][12]
+c group 88 f[2][12]
 -229 40 42 44 0
-c g 88 f[2][12]
+c group 88 f[2][12]
 -229 38 -40 -42 0
-c g 88 f[2][12]
+c group 88 f[2][12]
 -229 -38 40 -42 0
-c g 88 f[2][12]
+c group 88 f[2][12]
 c ---------------
 c Karnaugh representation
 285 -46 52 0
-c g 89 f[3][12]
+c group 89 f[3][12]
 285 46 -48 0
-c g 89 f[3][12]
+c group 89 f[3][12]
 -285 46 48 0
-c g 89 f[3][12]
+c group 89 f[3][12]
 -285 -46 -52 0
-c g 89 f[3][12]
+c group 89 f[3][12]
 c ---------------
 c Karnaugh representation
 341 -54 -56 0
-c g 90 f[4][12]
+c group 90 f[4][12]
 341 -54 -60 0
-c g 90 f[4][12]
+c group 90 f[4][12]
 341 -56 -60 0
-c g 90 f[4][12]
+c group 90 f[4][12]
 -341 54 56 0
-c g 90 f[4][12]
+c group 90 f[4][12]
 -341 54 60 0
-c g 90 f[4][12]
+c group 90 f[4][12]
 -341 56 60 0
-c g 90 f[4][12]
+c group 90 f[4][12]
 c ---------------
 c Karnaugh representation
 173 229 -285 0
-c g 91 output[12]
+c group 91 output[12]
 117 229 341 0
-c g 91 output[12]
+c group 91 output[12]
 -117 -173 285 -341 0
-c g 91 output[12]
+c group 91 output[12]
 -229 285 341 0
-c g 91 output[12]
+c group 91 output[12]
 117 173 -285 0
-c g 91 output[12]
+c group 91 output[12]
 -117 -229 285 0
-c g 91 output[12]
+c group 91 output[12]
 c ---------------
 c Xor representation
-m-32 34 36 38 39 41 43 44 45 48 49 53 54 62 63 64 68 72 76 79 14 0
-c g 92 sr[0][13]
+x-32 34 36 38 39 41 43 44 45 48 49 53 54 62 63 64 68 72 76 79 14 0
+c group 92 sr[0][13]
 c ---------------
 c Karnaugh representation
 118 -23 -25 -27 0
-c g 93 f[0][13]
+c group 93 f[0][13]
 118 25 -27 -29 0
-c g 93 f[0][13]
+c group 93 f[0][13]
 118 -23 27 29 0
-c g 93 f[0][13]
+c group 93 f[0][13]
 118 23 -25 27 0
-c g 93 f[0][13]
+c group 93 f[0][13]
 -118 23 25 27 0
-c g 93 f[0][13]
+c group 93 f[0][13]
 -118 -23 27 -29 0
-c g 93 f[0][13]
+c group 93 f[0][13]
 -118 25 -27 29 0
-c g 93 f[0][13]
+c group 93 f[0][13]
 -118 23 -25 -27 0
-c g 93 f[0][13]
+c group 93 f[0][13]
 c ---------------
 c Karnaugh representation
 174 31 33 -35 0
-c g 94 f[1][13]
+c group 94 f[1][13]
 174 -31 -33 0
-c g 94 f[1][13]
+c group 94 f[1][13]
 174 -31 35 -37 0
-c g 94 f[1][13]
+c group 94 f[1][13]
 174 -33 35 -37 0
-c g 94 f[1][13]
+c group 94 f[1][13]
 -174 31 33 35 0
-c g 94 f[1][13]
+c group 94 f[1][13]
 -174 31 35 37 0
-c g 94 f[1][13]
+c group 94 f[1][13]
 -174 33 35 37 0
-c g 94 f[1][13]
+c group 94 f[1][13]
 -174 31 -33 -35 0
-c g 94 f[1][13]
+c group 94 f[1][13]
 -174 -31 33 -35 0
-c g 94 f[1][13]
+c group 94 f[1][13]
 c ---------------
 c Karnaugh representation
 230 39 41 -43 0
-c g 95 f[2][13]
+c group 95 f[2][13]
 230 -39 -41 0
-c g 95 f[2][13]
+c group 95 f[2][13]
 230 -39 43 -45 0
-c g 95 f[2][13]
+c group 95 f[2][13]
 230 -41 43 -45 0
-c g 95 f[2][13]
+c group 95 f[2][13]
 -230 39 41 43 0
-c g 95 f[2][13]
+c group 95 f[2][13]
 -230 39 43 45 0
-c g 95 f[2][13]
+c group 95 f[2][13]
 -230 41 43 45 0
-c g 95 f[2][13]
+c group 95 f[2][13]
 -230 39 -41 -43 0
-c g 95 f[2][13]
+c group 95 f[2][13]
 -230 -39 41 -43 0
-c g 95 f[2][13]
+c group 95 f[2][13]
 c ---------------
 c Karnaugh representation
 286 -47 53 0
-c g 96 f[3][13]
+c group 96 f[3][13]
 286 47 -49 0
-c g 96 f[3][13]
+c group 96 f[3][13]
 -286 47 49 0
-c g 96 f[3][13]
+c group 96 f[3][13]
 -286 -47 -53 0
-c g 96 f[3][13]
+c group 96 f[3][13]
 c ---------------
 c Karnaugh representation
 342 -55 -57 0
-c g 97 f[4][13]
+c group 97 f[4][13]
 342 -55 -61 0
-c g 97 f[4][13]
+c group 97 f[4][13]
 342 -57 -61 0
-c g 97 f[4][13]
+c group 97 f[4][13]
 -342 55 57 0
-c g 97 f[4][13]
+c group 97 f[4][13]
 -342 55 61 0
-c g 97 f[4][13]
+c group 97 f[4][13]
 -342 57 61 0
-c g 97 f[4][13]
+c group 97 f[4][13]
 c ---------------
 c Karnaugh representation
 174 230 -286 0
-c g 98 output[13]
+c group 98 output[13]
 118 230 342 0
-c g 98 output[13]
+c group 98 output[13]
 -118 -174 286 -342 0
-c g 98 output[13]
+c group 98 output[13]
 -230 286 342 0
-c g 98 output[13]
+c group 98 output[13]
 118 174 -286 0
-c g 98 output[13]
+c group 98 output[13]
 -118 -230 286 0
-c g 98 output[13]
+c group 98 output[13]
 c ---------------
 c Xor representation
-m-32 33 35 39 40 41 45 47 52 54 55 56 57 61 63 64 65 68 69 75 77 15 0
-c g 99 sr[0][14]
+x-32 33 35 39 40 41 45 47 52 54 55 56 57 61 63 64 65 68 69 75 77 15 0
+c group 99 sr[0][14]
 c ---------------
 c Karnaugh representation
 119 -24 -26 -28 0
-c g 100 f[0][14]
+c group 100 f[0][14]
 119 26 -28 -30 0
-c g 100 f[0][14]
+c group 100 f[0][14]
 119 -24 28 30 0
-c g 100 f[0][14]
+c group 100 f[0][14]
 119 24 -26 28 0
-c g 100 f[0][14]
+c group 100 f[0][14]
 -119 24 26 28 0
-c g 100 f[0][14]
+c group 100 f[0][14]
 -119 -24 28 -30 0
-c g 100 f[0][14]
+c group 100 f[0][14]
 -119 26 -28 30 0
-c g 100 f[0][14]
+c group 100 f[0][14]
 -119 24 -26 -28 0
-c g 100 f[0][14]
+c group 100 f[0][14]
 c ---------------
 c Karnaugh representation
 175 32 34 -36 0
-c g 101 f[1][14]
+c group 101 f[1][14]
 175 -32 -34 0
-c g 101 f[1][14]
+c group 101 f[1][14]
 175 -32 36 -38 0
-c g 101 f[1][14]
+c group 101 f[1][14]
 175 -34 36 -38 0
-c g 101 f[1][14]
+c group 101 f[1][14]
 -175 32 34 36 0
-c g 101 f[1][14]
+c group 101 f[1][14]
 -175 32 36 38 0
-c g 101 f[1][14]
+c group 101 f[1][14]
 -175 34 36 38 0
-c g 101 f[1][14]
+c group 101 f[1][14]
 -175 32 -34 -36 0
-c g 101 f[1][14]
+c group 101 f[1][14]
 -175 -32 34 -36 0
-c g 101 f[1][14]
+c group 101 f[1][14]
 c ---------------
 c Karnaugh representation
 231 40 42 -44 0
-c g 102 f[2][14]
+c group 102 f[2][14]
 231 -40 -42 0
-c g 102 f[2][14]
+c group 102 f[2][14]
 231 -40 44 -46 0
-c g 102 f[2][14]
+c group 102 f[2][14]
 231 -42 44 -46 0
-c g 102 f[2][14]
+c group 102 f[2][14]
 -231 40 42 44 0
-c g 102 f[2][14]
+c group 102 f[2][14]
 -231 40 44 46 0
-c g 102 f[2][14]
+c group 102 f[2][14]
 -231 42 44 46 0
-c g 102 f[2][14]
+c group 102 f[2][14]
 -231 40 -42 -44 0
-c g 102 f[2][14]
+c group 102 f[2][14]
 -231 -40 42 -44 0
-c g 102 f[2][14]
+c group 102 f[2][14]
 c ---------------
 c Karnaugh representation
 287 -48 52 54 0
-c g 103 f[3][14]
+c group 103 f[3][14]
 287 -52 -54 0
-c g 103 f[3][14]
+c group 103 f[3][14]
 -287 48 52 0
-c g 103 f[3][14]
+c group 103 f[3][14]
 -287 48 54 0
-c g 103 f[3][14]
+c group 103 f[3][14]
 -287 52 -54 0
-c g 103 f[3][14]
+c group 103 f[3][14]
 -287 -52 54 0
-c g 103 f[3][14]
+c group 103 f[3][14]
 c ---------------
 c Karnaugh representation
 343 -56 60 -62 0
-c g 104 f[4][14]
+c group 104 f[4][14]
 343 56 -60 0
-c g 104 f[4][14]
+c group 104 f[4][14]
 -343 56 60 0
-c g 104 f[4][14]
+c group 104 f[4][14]
 -343 -56 -60 0
-c g 104 f[4][14]
+c group 104 f[4][14]
 -343 -56 62 0
-c g 104 f[4][14]
+c group 104 f[4][14]
 c ---------------
 c Karnaugh representation
 175 231 287 -343 0
-c g 105 output[14]
+c group 105 output[14]
 -119 -175 -287 0
-c g 105 output[14]
+c group 105 output[14]
 -175 -287 -343 0
-c g 105 output[14]
+c group 105 output[14]
 -119 231 287 343 0
-c g 105 output[14]
+c group 105 output[14]
 -119 -231 -287 0
-c g 105 output[14]
+c group 105 output[14]
 119 287 -343 0
-c g 105 output[14]
+c group 105 output[14]
 -175 -231 -287 0
-c g 105 output[14]
+c group 105 output[14]
 c ---------------
 c Xor representation
-m-33 34 36 40 41 42 46 48 53 55 56 57 62 64 65 68 69 72 76 78 16 0
-c g 106 sr[0][15]
+x-33 34 36 40 41 42 46 48 53 55 56 57 62 64 65 68 69 72 76 78 16 0
+c group 106 sr[0][15]
 c ---------------
 c Karnaugh representation
 120 -25 -27 -29 0
-c g 107 f[0][15]
+c group 107 f[0][15]
 120 27 -29 -31 0
-c g 107 f[0][15]
+c group 107 f[0][15]
 120 -25 29 31 0
-c g 107 f[0][15]
+c group 107 f[0][15]
 120 25 -27 29 0
-c g 107 f[0][15]
+c group 107 f[0][15]
 -120 25 27 29 0
-c g 107 f[0][15]
+c group 107 f[0][15]
 -120 -25 29 -31 0
-c g 107 f[0][15]
+c group 107 f[0][15]
 -120 27 -29 31 0
-c g 107 f[0][15]
+c group 107 f[0][15]
 -120 25 -27 -29 0
-c g 107 f[0][15]
+c group 107 f[0][15]
 c ---------------
 c Karnaugh representation
 176 33 35 -37 0
-c g 108 f[1][15]
+c group 108 f[1][15]
 176 -33 -35 0
-c g 108 f[1][15]
+c group 108 f[1][15]
 176 -33 37 -39 0
-c g 108 f[1][15]
+c group 108 f[1][15]
 176 -35 37 -39 0
-c g 108 f[1][15]
+c group 108 f[1][15]
 -176 33 35 37 0
-c g 108 f[1][15]
+c group 108 f[1][15]
 -176 33 37 39 0
-c g 108 f[1][15]
+c group 108 f[1][15]
 -176 35 37 39 0
-c g 108 f[1][15]
+c group 108 f[1][15]
 -176 33 -35 -37 0
-c g 108 f[1][15]
+c group 108 f[1][15]
 -176 -33 35 -37 0
-c g 108 f[1][15]
+c group 108 f[1][15]
 c ---------------
 c Karnaugh representation
 232 41 43 -45 0
-c g 109 f[2][15]
+c group 109 f[2][15]
 232 -41 -43 0
-c g 109 f[2][15]
+c group 109 f[2][15]
 232 -41 45 -47 0
-c g 109 f[2][15]
+c group 109 f[2][15]
 232 -43 45 -47 0
-c g 109 f[2][15]
+c group 109 f[2][15]
 -232 41 43 45 0
-c g 109 f[2][15]
+c group 109 f[2][15]
 -232 41 45 47 0
-c g 109 f[2][15]
+c group 109 f[2][15]
 -232 43 45 47 0
-c g 109 f[2][15]
+c group 109 f[2][15]
 -232 41 -43 -45 0
-c g 109 f[2][15]
+c group 109 f[2][15]
 -232 -41 43 -45 0
-c g 109 f[2][15]
+c group 109 f[2][15]
 c ---------------
 c Karnaugh representation
 288 -49 53 55 0
-c g 110 f[3][15]
+c group 110 f[3][15]
 288 -53 -55 0
-c g 110 f[3][15]
+c group 110 f[3][15]
 -288 49 53 0
-c g 110 f[3][15]
+c group 110 f[3][15]
 -288 49 55 0
-c g 110 f[3][15]
+c group 110 f[3][15]
 -288 53 -55 0
-c g 110 f[3][15]
+c group 110 f[3][15]
 -288 -53 55 0
-c g 110 f[3][15]
+c group 110 f[3][15]
 c ---------------
 c Karnaugh representation
 344 -57 61 -63 0
-c g 111 f[4][15]
+c group 111 f[4][15]
 344 57 -61 0
-c g 111 f[4][15]
+c group 111 f[4][15]
 -344 57 61 0
-c g 111 f[4][15]
+c group 111 f[4][15]
 -344 -57 -61 0
-c g 111 f[4][15]
+c group 111 f[4][15]
 -344 -57 63 0
-c g 111 f[4][15]
+c group 111 f[4][15]
 c ---------------
 c Karnaugh representation
 176 232 -288 0
-c g 112 output[15]
+c group 112 output[15]
 120 232 344 0
-c g 112 output[15]
+c group 112 output[15]
 -120 -176 288 -344 0
-c g 112 output[15]
+c group 112 output[15]
 -232 288 344 0
-c g 112 output[15]
+c group 112 output[15]
 120 176 -288 0
-c g 112 output[15]
+c group 112 output[15]
 -120 -232 288 0
-c g 112 output[15]
+c group 112 output[15]
 c ---------------
 c Xor representation
-m-34 35 37 41 42 43 47 49 52 54 56 57 63 65 69 77 79 17 0
-c g 113 sr[0][16]
+x-34 35 37 41 42 43 47 49 52 54 56 57 63 65 69 77 79 17 0
+c group 113 sr[0][16]
 c ---------------
 c Karnaugh representation
 121 -26 -28 -30 0
-c g 114 f[0][16]
+c group 114 f[0][16]
 121 28 -30 -32 0
-c g 114 f[0][16]
+c group 114 f[0][16]
 121 -26 30 32 0
-c g 114 f[0][16]
+c group 114 f[0][16]
 121 26 -28 30 0
-c g 114 f[0][16]
+c group 114 f[0][16]
 -121 26 28 30 0
-c g 114 f[0][16]
+c group 114 f[0][16]
 -121 -26 30 -32 0
-c g 114 f[0][16]
+c group 114 f[0][16]
 -121 28 -30 32 0
-c g 114 f[0][16]
+c group 114 f[0][16]
 -121 26 -28 -30 0
-c g 114 f[0][16]
+c group 114 f[0][16]
 c ---------------
 c Karnaugh representation
 177 34 36 -38 0
-c g 115 f[1][16]
+c group 115 f[1][16]
 177 -34 -36 0
-c g 115 f[1][16]
+c group 115 f[1][16]
 177 -34 38 -40 0
-c g 115 f[1][16]
+c group 115 f[1][16]
 177 -36 38 -40 0
-c g 115 f[1][16]
+c group 115 f[1][16]
 -177 34 36 38 0
-c g 115 f[1][16]
+c group 115 f[1][16]
 -177 34 38 40 0
-c g 115 f[1][16]
+c group 115 f[1][16]
 -177 36 38 40 0
-c g 115 f[1][16]
+c group 115 f[1][16]
 -177 34 -36 -38 0
-c g 115 f[1][16]
+c group 115 f[1][16]
 -177 -34 36 -38 0
-c g 115 f[1][16]
+c group 115 f[1][16]
 c ---------------
 c Karnaugh representation
 233 42 44 -46 0
-c g 116 f[2][16]
+c group 116 f[2][16]
 233 -42 -44 0
-c g 116 f[2][16]
+c group 116 f[2][16]
 233 -42 46 -48 0
-c g 116 f[2][16]
+c group 116 f[2][16]
 233 -44 46 -48 0
-c g 116 f[2][16]
+c group 116 f[2][16]
 -233 42 44 46 0
-c g 116 f[2][16]
+c group 116 f[2][16]
 -233 42 46 48 0
-c g 116 f[2][16]
+c group 116 f[2][16]
 -233 44 46 48 0
-c g 116 f[2][16]
+c group 116 f[2][16]
 -233 42 -44 -46 0
-c g 116 f[2][16]
+c group 116 f[2][16]
 -233 -42 44 -46 0
-c g 116 f[2][16]
+c group 116 f[2][16]
 c ---------------
 c Karnaugh representation
 289 52 -54 -56 0
-c g 117 f[3][16]
+c group 117 f[3][16]
 289 -52 54 0
-c g 117 f[3][16]
+c group 117 f[3][16]
 -289 52 54 0
-c g 117 f[3][16]
+c group 117 f[3][16]
 -289 52 56 0
-c g 117 f[3][16]
+c group 117 f[3][16]
 -289 -52 -54 0
-c g 117 f[3][16]
+c group 117 f[3][16]
 c ---------------
 c Karnaugh representation
 345 -60 62 -64 0
-c g 118 f[4][16]
+c group 118 f[4][16]
 345 60 -62 0
-c g 118 f[4][16]
+c group 118 f[4][16]
 -345 60 62 0
-c g 118 f[4][16]
+c group 118 f[4][16]
 -345 -60 -62 0
-c g 118 f[4][16]
+c group 118 f[4][16]
 -345 -60 64 0
-c g 118 f[4][16]
+c group 118 f[4][16]
 c ---------------
 c Karnaugh representation
 177 233 -289 0
-c g 119 output[16]
+c group 119 output[16]
 121 233 345 0
-c g 119 output[16]
+c group 119 output[16]
 -121 -177 289 -345 0
-c g 119 output[16]
+c group 119 output[16]
 -233 289 345 0
-c g 119 output[16]
+c group 119 output[16]
 121 177 -289 0
-c g 119 output[16]
+c group 119 output[16]
 -121 -233 289 0
-c g 119 output[16]
+c group 119 output[16]
 c ---------------
 c Xor representation
-m-32 35 36 37 38 41 43 46 47 48 49 53 55 56 60 61 64 68 72 75 78 18 0
-c g 120 sr[0][17]
+x-32 35 36 37 38 41 43 46 47 48 49 53 55 56 60 61 64 68 72 75 78 18 0
+c group 120 sr[0][17]
 c ---------------
 c Karnaugh representation
 122 -27 -29 -31 0
-c g 121 f[0][17]
+c group 121 f[0][17]
 122 29 -31 -33 0
-c g 121 f[0][17]
+c group 121 f[0][17]
 122 -27 31 33 0
-c g 121 f[0][17]
+c group 121 f[0][17]
 122 27 -29 31 0
-c g 121 f[0][17]
+c group 121 f[0][17]
 -122 27 29 31 0
-c g 121 f[0][17]
+c group 121 f[0][17]
 -122 -27 31 -33 0
-c g 121 f[0][17]
+c group 121 f[0][17]
 -122 29 -31 33 0
-c g 121 f[0][17]
+c group 121 f[0][17]
 -122 27 -29 -31 0
-c g 121 f[0][17]
+c group 121 f[0][17]
 c ---------------
 c Karnaugh representation
 178 35 37 -39 0
-c g 122 f[1][17]
+c group 122 f[1][17]
 178 -35 -37 0
-c g 122 f[1][17]
+c group 122 f[1][17]
 178 -35 39 -41 0
-c g 122 f[1][17]
+c group 122 f[1][17]
 178 -37 39 -41 0
-c g 122 f[1][17]
+c group 122 f[1][17]
 -178 35 37 39 0
-c g 122 f[1][17]
+c group 122 f[1][17]
 -178 35 39 41 0
-c g 122 f[1][17]
+c group 122 f[1][17]
 -178 37 39 41 0
-c g 122 f[1][17]
+c group 122 f[1][17]
 -178 35 -37 -39 0
-c g 122 f[1][17]
+c group 122 f[1][17]
 -178 -35 37 -39 0
-c g 122 f[1][17]
+c group 122 f[1][17]
 c ---------------
 c Karnaugh representation
 234 43 45 -47 0
-c g 123 f[2][17]
+c group 123 f[2][17]
 234 -43 -45 0
-c g 123 f[2][17]
+c group 123 f[2][17]
 234 -43 47 -49 0
-c g 123 f[2][17]
+c group 123 f[2][17]
 234 -45 47 -49 0
-c g 123 f[2][17]
+c group 123 f[2][17]
 -234 43 45 47 0
-c g 123 f[2][17]
+c group 123 f[2][17]
 -234 43 47 49 0
-c g 123 f[2][17]
+c group 123 f[2][17]
 -234 45 47 49 0
-c g 123 f[2][17]
+c group 123 f[2][17]
 -234 43 -45 -47 0
-c g 123 f[2][17]
+c group 123 f[2][17]
 -234 -43 45 -47 0
-c g 123 f[2][17]
+c group 123 f[2][17]
 c ---------------
 c Karnaugh representation
 290 53 -55 -57 0
-c g 124 f[3][17]
+c group 124 f[3][17]
 290 -53 55 0
-c g 124 f[3][17]
+c group 124 f[3][17]
 -290 53 55 0
-c g 124 f[3][17]
+c group 124 f[3][17]
 -290 53 57 0
-c g 124 f[3][17]
+c group 124 f[3][17]
 -290 -53 -55 0
-c g 124 f[3][17]
+c group 124 f[3][17]
 c ---------------
 c Karnaugh representation
 346 -61 63 -65 0
-c g 125 f[4][17]
+c group 125 f[4][17]
 346 61 -63 0
-c g 125 f[4][17]
+c group 125 f[4][17]
 -346 61 63 0
-c g 125 f[4][17]
+c group 125 f[4][17]
 -346 -61 -63 0
-c g 125 f[4][17]
+c group 125 f[4][17]
 -346 -61 65 0
-c g 125 f[4][17]
+c group 125 f[4][17]
 c ---------------
 c Karnaugh representation
 178 234 290 -346 0
-c g 126 output[17]
+c group 126 output[17]
 -122 -178 -290 0
-c g 126 output[17]
+c group 126 output[17]
 -178 -290 -346 0
-c g 126 output[17]
+c group 126 output[17]
 -122 234 290 346 0
-c g 126 output[17]
+c group 126 output[17]
 -122 -234 -290 0
-c g 126 output[17]
+c group 126 output[17]
 122 290 -346 0
-c g 126 output[17]
+c group 126 output[17]
 -178 -234 -290 0
-c g 126 output[17]
+c group 126 output[17]
 c ---------------
 c Xor representation
-m-33 36 37 38 39 42 44 47 48 49 52 54 56 57 61 62 65 69 74 76 79 19 0
-c g 127 sr[0][18]
+x-33 36 37 38 39 42 44 47 48 49 52 54 56 57 61 62 65 69 74 76 79 19 0
+c group 127 sr[0][18]
 c ---------------
 c Karnaugh representation
 123 -28 -30 -32 0
-c g 128 f[0][18]
+c group 128 f[0][18]
 123 30 -32 -34 0
-c g 128 f[0][18]
+c group 128 f[0][18]
 123 -28 32 34 0
-c g 128 f[0][18]
+c group 128 f[0][18]
 123 28 -30 32 0
-c g 128 f[0][18]
+c group 128 f[0][18]
 -123 28 30 32 0
-c g 128 f[0][18]
+c group 128 f[0][18]
 -123 -28 32 -34 0
-c g 128 f[0][18]
+c group 128 f[0][18]
 -123 30 -32 34 0
-c g 128 f[0][18]
+c group 128 f[0][18]
 -123 28 -30 -32 0
-c g 128 f[0][18]
+c group 128 f[0][18]
 c ---------------
 c Karnaugh representation
 179 36 38 -40 0
-c g 129 f[1][18]
+c group 129 f[1][18]
 179 -36 -38 0
-c g 129 f[1][18]
+c group 129 f[1][18]
 179 -36 40 -42 0
-c g 129 f[1][18]
+c group 129 f[1][18]
 179 -38 40 -42 0
-c g 129 f[1][18]
+c group 129 f[1][18]
 -179 36 38 40 0
-c g 129 f[1][18]
+c group 129 f[1][18]
 -179 36 40 42 0
-c g 129 f[1][18]
+c group 129 f[1][18]
 -179 38 40 42 0
-c g 129 f[1][18]
+c group 129 f[1][18]
 -179 36 -38 -40 0
-c g 129 f[1][18]
+c group 129 f[1][18]
 -179 -36 38 -40 0
-c g 129 f[1][18]
+c group 129 f[1][18]
 c ---------------
 c Karnaugh representation
 235 44 46 -48 0
-c g 130 f[2][18]
+c group 130 f[2][18]
 235 -44 -46 0
-c g 130 f[2][18]
+c group 130 f[2][18]
 -235 44 -46 0
-c g 130 f[2][18]
+c group 130 f[2][18]
 -235 44 48 0
-c g 130 f[2][18]
+c group 130 f[2][18]
 -235 -44 46 0
-c g 130 f[2][18]
+c group 130 f[2][18]
 c ---------------
 c Karnaugh representation
 291 -52 56 0
-c g 131 f[3][18]
+c group 131 f[3][18]
 291 -54 56 0
-c g 131 f[3][18]
+c group 131 f[3][18]
 291 -52 -54 0
-c g 131 f[3][18]
+c group 131 f[3][18]
 -291 52 54 0
-c g 131 f[3][18]
+c group 131 f[3][18]
 -291 52 -56 0
-c g 131 f[3][18]
+c group 131 f[3][18]
 -291 54 -56 0
-c g 131 f[3][18]
+c group 131 f[3][18]
 c ---------------
 c Karnaugh representation
 347 60 62 -64 0
-c g 132 f[4][18]
+c group 132 f[4][18]
 347 -60 64 0
-c g 132 f[4][18]
+c group 132 f[4][18]
 347 -62 64 0
-c g 132 f[4][18]
+c group 132 f[4][18]
 347 -60 -62 0
-c g 132 f[4][18]
+c group 132 f[4][18]
 -347 60 62 64 0
-c g 132 f[4][18]
+c group 132 f[4][18]
 -347 60 -62 -64 0
-c g 132 f[4][18]
+c group 132 f[4][18]
 -347 -60 62 -64 0
-c g 132 f[4][18]
+c group 132 f[4][18]
 c ---------------
 c Karnaugh representation
 179 235 291 -347 0
-c g 133 output[18]
+c group 133 output[18]
 -123 -179 -291 0
-c g 133 output[18]
+c group 133 output[18]
 -179 -291 -347 0
-c g 133 output[18]
+c group 133 output[18]
 -123 235 291 347 0
-c g 133 output[18]
+c group 133 output[18]
 -123 -235 -291 0
-c g 133 output[18]
+c group 133 output[18]
 123 291 -347 0
-c g 133 output[18]
+c group 133 output[18]
 -179 -235 -291 0
-c g 133 output[18]
+c group 133 output[18]
 c ---------------
 c Xor representation
-m-32 34 38 39 40 41 42 43 44 45 46 47 48 52 53 55 56 60 61 62 63 68 72 77 20 0
-c g 134 sr[0][19]
+x-32 34 38 39 40 41 42 43 44 45 46 47 48 52 53 55 56 60 61 62 63 68 72 77 20 0
+c group 134 sr[0][19]
 c ---------------
 c Karnaugh representation
 124 -29 -31 -33 0
-c g 135 f[0][19]
+c group 135 f[0][19]
 124 31 -33 -35 0
-c g 135 f[0][19]
+c group 135 f[0][19]
 124 -29 33 35 0
-c g 135 f[0][19]
+c group 135 f[0][19]
 124 29 -31 33 0
-c g 135 f[0][19]
+c group 135 f[0][19]
 -124 29 31 33 0
-c g 135 f[0][19]
+c group 135 f[0][19]
 -124 -29 33 -35 0
-c g 135 f[0][19]
+c group 135 f[0][19]
 -124 31 -33 35 0
-c g 135 f[0][19]
+c group 135 f[0][19]
 -124 29 -31 -33 0
-c g 135 f[0][19]
+c group 135 f[0][19]
 c ---------------
 c Karnaugh representation
 180 37 39 -41 0
-c g 136 f[1][19]
+c group 136 f[1][19]
 180 -37 -39 0
-c g 136 f[1][19]
+c group 136 f[1][19]
 180 -37 41 -43 0
-c g 136 f[1][19]
+c group 136 f[1][19]
 180 -39 41 -43 0
-c g 136 f[1][19]
+c group 136 f[1][19]
 -180 37 39 41 0
-c g 136 f[1][19]
+c group 136 f[1][19]
 -180 37 41 43 0
-c g 136 f[1][19]
+c group 136 f[1][19]
 -180 39 41 43 0
-c g 136 f[1][19]
+c group 136 f[1][19]
 -180 37 -39 -41 0
-c g 136 f[1][19]
+c group 136 f[1][19]
 -180 -37 39 -41 0
-c g 136 f[1][19]
+c group 136 f[1][19]
 c ---------------
 c Karnaugh representation
 236 45 47 -49 0
-c g 137 f[2][19]
+c group 137 f[2][19]
 236 -45 -47 0
-c g 137 f[2][19]
+c group 137 f[2][19]
 -236 45 -47 0
-c g 137 f[2][19]
+c group 137 f[2][19]
 -236 45 49 0
-c g 137 f[2][19]
+c group 137 f[2][19]
 -236 -45 47 0
-c g 137 f[2][19]
+c group 137 f[2][19]
 c ---------------
 c Karnaugh representation
 292 -53 57 0
-c g 138 f[3][19]
+c group 138 f[3][19]
 292 -55 57 0
-c g 138 f[3][19]
+c group 138 f[3][19]
 292 -53 -55 0
-c g 138 f[3][19]
+c group 138 f[3][19]
 -292 53 55 0
-c g 138 f[3][19]
+c group 138 f[3][19]
 -292 53 -57 0
-c g 138 f[3][19]
+c group 138 f[3][19]
 -292 55 -57 0
-c g 138 f[3][19]
+c group 138 f[3][19]
 c ---------------
 c Karnaugh representation
 348 61 63 -65 0
-c g 139 f[4][19]
+c group 139 f[4][19]
 348 -61 -63 0
-c g 139 f[4][19]
+c group 139 f[4][19]
 -348 61 -63 0
-c g 139 f[4][19]
+c group 139 f[4][19]
 -348 61 65 0
-c g 139 f[4][19]
+c group 139 f[4][19]
 -348 -61 63 0
-c g 139 f[4][19]
+c group 139 f[4][19]
 c ---------------
 c Karnaugh representation
 180 236 292 -348 0
-c g 140 output[19]
+c group 140 output[19]
 -124 -180 -292 0
-c g 140 output[19]
+c group 140 output[19]
 -180 -292 -348 0
-c g 140 output[19]
+c group 140 output[19]
 -124 236 292 348 0
-c g 140 output[19]
+c group 140 output[19]
 -124 -236 -292 0
-c g 140 output[19]
+c group 140 output[19]
 124 292 -348 0
-c g 140 output[19]
+c group 140 output[19]
 -180 -236 -292 0
-c g 140 output[19]
+c group 140 output[19]
 c ---------------
 c Xor representation
-m-33 35 39 40 41 42 43 44 45 46 47 48 49 53 54 56 57 60 61 62 63 64 68 69 72 74 78 21 0
-c g 141 sr[0][20]
+x-33 35 39 40 41 42 43 44 45 46 47 48 49 53 54 56 57 60 61 62 63 64 68 69 72 74 78 21 0
+c group 141 sr[0][20]
 c ---------------
 c Karnaugh representation
 125 -30 -32 -34 0
-c g 142 f[0][20]
+c group 142 f[0][20]
 125 32 -34 -36 0
-c g 142 f[0][20]
+c group 142 f[0][20]
 125 -30 34 36 0
-c g 142 f[0][20]
+c group 142 f[0][20]
 125 30 -32 34 0
-c g 142 f[0][20]
+c group 142 f[0][20]
 -125 30 32 34 0
-c g 142 f[0][20]
+c group 142 f[0][20]
 -125 -30 34 -36 0
-c g 142 f[0][20]
+c group 142 f[0][20]
 -125 32 -34 36 0
-c g 142 f[0][20]
+c group 142 f[0][20]
 -125 30 -32 -34 0
-c g 142 f[0][20]
+c group 142 f[0][20]
 c ---------------
 c Karnaugh representation
 181 38 40 -42 0
-c g 143 f[1][20]
+c group 143 f[1][20]
 181 -38 -40 0
-c g 143 f[1][20]
+c group 143 f[1][20]
 181 -38 42 -44 0
-c g 143 f[1][20]
+c group 143 f[1][20]
 181 -40 42 -44 0
-c g 143 f[1][20]
+c group 143 f[1][20]
 -181 38 40 42 0
-c g 143 f[1][20]
+c group 143 f[1][20]
 -181 38 42 44 0
-c g 143 f[1][20]
+c group 143 f[1][20]
 -181 40 42 44 0
-c g 143 f[1][20]
+c group 143 f[1][20]
 -181 38 -40 -42 0
-c g 143 f[1][20]
+c group 143 f[1][20]
 -181 -38 40 -42 0
-c g 143 f[1][20]
+c group 143 f[1][20]
 c ---------------
 c Karnaugh representation
 237 -46 -48 0
-c g 144 f[2][20]
+c group 144 f[2][20]
 237 -46 -52 0
-c g 144 f[2][20]
+c group 144 f[2][20]
 237 -48 -52 0
-c g 144 f[2][20]
+c group 144 f[2][20]
 -237 46 48 0
-c g 144 f[2][20]
+c group 144 f[2][20]
 -237 46 52 0
-c g 144 f[2][20]
+c group 144 f[2][20]
 -237 48 52 0
-c g 144 f[2][20]
+c group 144 f[2][20]
 c ---------------
 c Karnaugh representation
 293 -54 60 0
-c g 145 f[3][20]
+c group 145 f[3][20]
 293 54 -56 0
-c g 145 f[3][20]
+c group 145 f[3][20]
 -293 54 56 0
-c g 145 f[3][20]
+c group 145 f[3][20]
 -293 -54 -60 0
-c g 145 f[3][20]
+c group 145 f[3][20]
 c ---------------
 c Xor representation
 x62 64 349 0
-c g 146 f[4][20]
+c group 146 f[4][20]
 c ---------------
 c Karnaugh representation
 181 237 -293 0
-c g 147 output[20]
+c group 147 output[20]
 125 237 349 0
-c g 147 output[20]
+c group 147 output[20]
 -125 -181 293 -349 0
-c g 147 output[20]
+c group 147 output[20]
 -237 293 349 0
-c g 147 output[20]
+c group 147 output[20]
 125 181 -293 0
-c g 147 output[20]
+c group 147 output[20]
 -125 -237 293 0
-c g 147 output[20]
+c group 147 output[20]
 c ---------------
 c Xor representation
-m34 36 40 41 42 43 44 45 46 47 48 49 52 54 55 57 60 61 62 63 64 65 68 69 72 74 75 79 22 0
-c g 148 sr[0][21]
+x34 36 40 41 42 43 44 45 46 47 48 49 52 54 55 57 60 61 62 63 64 65 68 69 72 74 75 79 22 0
+c group 148 sr[0][21]
 c ---------------
 c Karnaugh representation
 126 -31 -33 -35 0
-c g 149 f[0][21]
+c group 149 f[0][21]
 126 33 -35 -37 0
-c g 149 f[0][21]
+c group 149 f[0][21]
 126 -31 35 37 0
-c g 149 f[0][21]
+c group 149 f[0][21]
 126 31 -33 35 0
-c g 149 f[0][21]
+c group 149 f[0][21]
 -126 31 33 35 0
-c g 149 f[0][21]
+c group 149 f[0][21]
 -126 -31 35 -37 0
-c g 149 f[0][21]
+c group 149 f[0][21]
 -126 33 -35 37 0
-c g 149 f[0][21]
+c group 149 f[0][21]
 -126 31 -33 -35 0
-c g 149 f[0][21]
+c group 149 f[0][21]
 c ---------------
 c Karnaugh representation
 182 39 41 -43 0
-c g 150 f[1][21]
+c group 150 f[1][21]
 182 -39 -41 0
-c g 150 f[1][21]
+c group 150 f[1][21]
 182 -39 43 -45 0
-c g 150 f[1][21]
+c group 150 f[1][21]
 182 -41 43 -45 0
-c g 150 f[1][21]
+c group 150 f[1][21]
 -182 39 41 43 0
-c g 150 f[1][21]
+c group 150 f[1][21]
 -182 39 43 45 0
-c g 150 f[1][21]
+c group 150 f[1][21]
 -182 41 43 45 0
-c g 150 f[1][21]
+c group 150 f[1][21]
 -182 39 -41 -43 0
-c g 150 f[1][21]
+c group 150 f[1][21]
 -182 -39 41 -43 0
-c g 150 f[1][21]
+c group 150 f[1][21]
 c ---------------
 c Karnaugh representation
 238 -47 -49 0
-c g 151 f[2][21]
+c group 151 f[2][21]
 238 -47 -53 0
-c g 151 f[2][21]
+c group 151 f[2][21]
 238 -49 -53 0
-c g 151 f[2][21]
+c group 151 f[2][21]
 -238 47 49 0
-c g 151 f[2][21]
+c group 151 f[2][21]
 -238 47 53 0
-c g 151 f[2][21]
+c group 151 f[2][21]
 -238 49 53 0
-c g 151 f[2][21]
+c group 151 f[2][21]
 c ---------------
 c Karnaugh representation
 294 -55 61 0
-c g 152 f[3][21]
+c group 152 f[3][21]
 294 55 -57 0
-c g 152 f[3][21]
+c group 152 f[3][21]
 -294 55 57 0
-c g 152 f[3][21]
+c group 152 f[3][21]
 -294 -55 -61 0
-c g 152 f[3][21]
+c group 152 f[3][21]
 c ---------------
 c Karnaugh representation
 350 -63 -65 0
-c g 153 f[4][21]
+c group 153 f[4][21]
 350 -63 -69 0
-c g 153 f[4][21]
+c group 153 f[4][21]
 350 -65 -69 0
-c g 153 f[4][21]
+c group 153 f[4][21]
 -350 63 65 0
-c g 153 f[4][21]
+c group 153 f[4][21]
 -350 63 69 0
-c g 153 f[4][21]
+c group 153 f[4][21]
 -350 65 69 0
-c g 153 f[4][21]
+c group 153 f[4][21]
 c ---------------
 c Karnaugh representation
 182 238 294 -350 0
-c g 154 output[21]
+c group 154 output[21]
 -126 -182 -294 0
-c g 154 output[21]
+c group 154 output[21]
 -182 -294 -350 0
-c g 154 output[21]
+c group 154 output[21]
 -126 238 294 350 0
-c g 154 output[21]
+c group 154 output[21]
 -126 -238 -294 0
-c g 154 output[21]
+c group 154 output[21]
 126 294 -350 0
-c g 154 output[21]
+c group 154 output[21]
 -182 -238 -294 0
-c g 154 output[21]
+c group 154 output[21]
 c ---------------
 c Xor representation
-m-32 35 43 45 48 53 55 57 62 63 64 65 69 76 23 0
-c g 155 sr[0][22]
+x-32 35 43 45 48 53 55 57 62 63 64 65 69 76 23 0
+c group 155 sr[0][22]
 c ---------------
 c Karnaugh representation
 127 -32 -34 -36 0
-c g 156 f[0][22]
+c group 156 f[0][22]
 127 34 -36 -38 0
-c g 156 f[0][22]
+c group 156 f[0][22]
 127 -32 36 38 0
-c g 156 f[0][22]
+c group 156 f[0][22]
 127 32 -34 36 0
-c g 156 f[0][22]
+c group 156 f[0][22]
 -127 32 34 36 0
-c g 156 f[0][22]
+c group 156 f[0][22]
 -127 -32 36 -38 0
-c g 156 f[0][22]
+c group 156 f[0][22]
 -127 34 -36 38 0
-c g 156 f[0][22]
+c group 156 f[0][22]
 -127 32 -34 -36 0
-c g 156 f[0][22]
+c group 156 f[0][22]
 c ---------------
 c Karnaugh representation
 183 40 42 -44 0
-c g 157 f[1][22]
+c group 157 f[1][22]
 183 -40 -42 0
-c g 157 f[1][22]
+c group 157 f[1][22]
 183 -40 44 -46 0
-c g 157 f[1][22]
+c group 157 f[1][22]
 183 -42 44 -46 0
-c g 157 f[1][22]
+c group 157 f[1][22]
 -183 40 42 44 0
-c g 157 f[1][22]
+c group 157 f[1][22]
 -183 40 44 46 0
-c g 157 f[1][22]
+c group 157 f[1][22]
 -183 42 44 46 0
-c g 157 f[1][22]
+c group 157 f[1][22]
 -183 40 -42 -44 0
-c g 157 f[1][22]
+c group 157 f[1][22]
 -183 -40 42 -44 0
-c g 157 f[1][22]
+c group 157 f[1][22]
 c ---------------
 c Karnaugh representation
 239 -48 52 -54 0
-c g 158 f[2][22]
+c group 158 f[2][22]
 239 48 -52 0
-c g 158 f[2][22]
+c group 158 f[2][22]
 -239 48 52 0
-c g 158 f[2][22]
+c group 158 f[2][22]
 -239 -48 -52 0
-c g 158 f[2][22]
+c group 158 f[2][22]
 -239 -48 54 0
-c g 158 f[2][22]
+c group 158 f[2][22]
 c ---------------
 c Karnaugh representation
 295 -56 60 62 0
-c g 159 f[3][22]
+c group 159 f[3][22]
 295 -60 -62 0
-c g 159 f[3][22]
+c group 159 f[3][22]
 -295 56 60 0
-c g 159 f[3][22]
+c group 159 f[3][22]
 -295 56 62 0
-c g 159 f[3][22]
+c group 159 f[3][22]
 -295 60 -62 0
-c g 159 f[3][22]
+c group 159 f[3][22]
 -295 -60 62 0
-c g 159 f[3][22]
+c group 159 f[3][22]
 c ---------------
 c Karnaugh representation
 351 68 0
-c g 160 f[4][22]
+c group 160 f[4][22]
 351 -64 0
-c g 160 f[4][22]
+c group 160 f[4][22]
 -351 64 -68 0
-c g 160 f[4][22]
+c group 160 f[4][22]
 c ---------------
 c Karnaugh representation
 183 239 -295 0
-c g 161 output[22]
+c group 161 output[22]
 127 239 351 0
-c g 161 output[22]
+c group 161 output[22]
 -127 -183 295 -351 0
-c g 161 output[22]
+c group 161 output[22]
 -239 295 351 0
-c g 161 output[22]
+c group 161 output[22]
 127 183 -295 0
-c g 161 output[22]
+c group 161 output[22]
 -127 -239 295 0
-c g 161 output[22]
+c group 161 output[22]
 c ---------------
 c Xor representation
-m-33 36 44 46 49 54 56 63 64 65 68 77 24 0
-c g 162 sr[0][23]
+x-33 36 44 46 49 54 56 63 64 65 68 77 24 0
+c group 162 sr[0][23]
 c ---------------
 c Karnaugh representation
 128 -33 -35 -37 0
-c g 163 f[0][23]
+c group 163 f[0][23]
 128 35 -37 -39 0
-c g 163 f[0][23]
+c group 163 f[0][23]
 128 -33 37 39 0
-c g 163 f[0][23]
+c group 163 f[0][23]
 128 33 -35 37 0
-c g 163 f[0][23]
+c group 163 f[0][23]
 -128 33 35 37 0
-c g 163 f[0][23]
+c group 163 f[0][23]
 -128 -33 37 -39 0
-c g 163 f[0][23]
+c group 163 f[0][23]
 -128 35 -37 39 0
-c g 163 f[0][23]
+c group 163 f[0][23]
 -128 33 -35 -37 0
-c g 163 f[0][23]
+c group 163 f[0][23]
 c ---------------
 c Karnaugh representation
 184 41 43 -45 0
-c g 164 f[1][23]
+c group 164 f[1][23]
 184 -41 -43 0
-c g 164 f[1][23]
+c group 164 f[1][23]
 184 -41 45 -47 0
-c g 164 f[1][23]
+c group 164 f[1][23]
 184 -43 45 -47 0
-c g 164 f[1][23]
+c group 164 f[1][23]
 -184 41 43 45 0
-c g 164 f[1][23]
+c group 164 f[1][23]
 -184 41 45 47 0
-c g 164 f[1][23]
+c group 164 f[1][23]
 -184 43 45 47 0
-c g 164 f[1][23]
+c group 164 f[1][23]
 -184 41 -43 -45 0
-c g 164 f[1][23]
+c group 164 f[1][23]
 -184 -41 43 -45 0
-c g 164 f[1][23]
+c group 164 f[1][23]
 c ---------------
 c Karnaugh representation
 240 -49 53 -55 0
-c g 165 f[2][23]
+c group 165 f[2][23]
 240 49 -53 0
-c g 165 f[2][23]
+c group 165 f[2][23]
 -240 49 53 0
-c g 165 f[2][23]
+c group 165 f[2][23]
 -240 -49 -53 0
-c g 165 f[2][23]
+c group 165 f[2][23]
 -240 -49 55 0
-c g 165 f[2][23]
+c group 165 f[2][23]
 c ---------------
 c Karnaugh representation
 296 -57 61 63 0
-c g 166 f[3][23]
+c group 166 f[3][23]
 296 -61 -63 0
-c g 166 f[3][23]
+c group 166 f[3][23]
 -296 57 61 0
-c g 166 f[3][23]
+c group 166 f[3][23]
 -296 57 63 0
-c g 166 f[3][23]
+c group 166 f[3][23]
 -296 61 -63 0
-c g 166 f[3][23]
+c group 166 f[3][23]
 -296 -61 63 0
-c g 166 f[3][23]
+c group 166 f[3][23]
 c ---------------
 c Karnaugh representation
 352 65 -69 0
-c g 167 f[4][23]
+c group 167 f[4][23]
 -352 -65 0
-c g 167 f[4][23]
+c group 167 f[4][23]
 -352 69 0
-c g 167 f[4][23]
+c group 167 f[4][23]
 c ---------------
 c Karnaugh representation
 184 240 296 -352 0
-c g 168 output[23]
+c group 168 output[23]
 -128 -184 -296 0
-c g 168 output[23]
+c group 168 output[23]
 -184 -296 -352 0
-c g 168 output[23]
+c group 168 output[23]
 -128 240 296 352 0
-c g 168 output[23]
+c group 168 output[23]
 -128 -240 -296 0
-c g 168 output[23]
+c group 168 output[23]
 128 296 -352 0
-c g 168 output[23]
+c group 168 output[23]
 -184 -240 -296 0
-c g 168 output[23]
+c group 168 output[23]
 c ---------------
 c Xor representation
-m34 37 45 47 52 55 57 60 64 65 68 69 72 78 25 0
-c g 169 sr[0][24]
+x34 37 45 47 52 55 57 60 64 65 68 69 72 78 25 0
+c group 169 sr[0][24]
 c ---------------
 c Karnaugh representation
 129 -34 -36 -38 0
-c g 170 f[0][24]
+c group 170 f[0][24]
 129 36 -38 -40 0
-c g 170 f[0][24]
+c group 170 f[0][24]
 129 -34 38 40 0
-c g 170 f[0][24]
+c group 170 f[0][24]
 129 34 -36 38 0
-c g 170 f[0][24]
+c group 170 f[0][24]
 -129 34 36 38 0
-c g 170 f[0][24]
+c group 170 f[0][24]
 -129 -34 38 -40 0
-c g 170 f[0][24]
+c group 170 f[0][24]
 -129 36 -38 40 0
-c g 170 f[0][24]
+c group 170 f[0][24]
 -129 34 -36 -38 0
-c g 170 f[0][24]
+c group 170 f[0][24]
 c ---------------
 c Karnaugh representation
 185 42 44 -46 0
-c g 171 f[1][24]
+c group 171 f[1][24]
 185 -42 -44 0
-c g 171 f[1][24]
+c group 171 f[1][24]
 185 -42 46 -48 0
-c g 171 f[1][24]
+c group 171 f[1][24]
 185 -44 46 -48 0
-c g 171 f[1][24]
+c group 171 f[1][24]
 -185 42 44 46 0
-c g 171 f[1][24]
+c group 171 f[1][24]
 -185 42 46 48 0
-c g 171 f[1][24]
+c group 171 f[1][24]
 -185 44 46 48 0
-c g 171 f[1][24]
+c group 171 f[1][24]
 -185 42 -44 -46 0
-c g 171 f[1][24]
+c group 171 f[1][24]
 -185 -42 44 -46 0
-c g 171 f[1][24]
+c group 171 f[1][24]
 c ---------------
 c Karnaugh representation
 241 -52 54 -56 0
-c g 172 f[2][24]
+c group 172 f[2][24]
 241 52 -54 0
-c g 172 f[2][24]
+c group 172 f[2][24]
 -241 52 54 0
-c g 172 f[2][24]
+c group 172 f[2][24]
 -241 -52 -54 0
-c g 172 f[2][24]
+c group 172 f[2][24]
 -241 -52 56 0
-c g 172 f[2][24]
+c group 172 f[2][24]
 c ---------------
 c Karnaugh representation
 297 60 -62 -64 0
-c g 173 f[3][24]
+c group 173 f[3][24]
 297 -60 62 0
-c g 173 f[3][24]
+c group 173 f[3][24]
 -297 60 62 0
-c g 173 f[3][24]
+c group 173 f[3][24]
 -297 60 64 0
-c g 173 f[3][24]
+c group 173 f[3][24]
 -297 -60 -62 0
-c g 173 f[3][24]
+c group 173 f[3][24]
 c ---------------
 c Karnaugh representation
 185 241 -297 0
-c g 174 output[24]
+c group 174 output[24]
 68 129 241 0
-c g 174 output[24]
+c group 174 output[24]
 -68 -129 -185 297 0
-c g 174 output[24]
+c group 174 output[24]
 68 -241 297 0
-c g 174 output[24]
+c group 174 output[24]
 129 185 -297 0
-c g 174 output[24]
+c group 174 output[24]
 -129 -241 297 0
-c g 174 output[24]
+c group 174 output[24]
 c ---------------
 c Xor representation
-m-35 38 46 48 53 56 60 61 65 68 69 72 79 26 0
-c g 175 sr[0][25]
+x-35 38 46 48 53 56 60 61 65 68 69 72 79 26 0
+c group 175 sr[0][25]
 c ---------------
 c Karnaugh representation
 130 -35 -37 -39 0
-c g 176 f[0][25]
+c group 176 f[0][25]
 130 37 -39 -41 0
-c g 176 f[0][25]
+c group 176 f[0][25]
 130 -35 39 41 0
-c g 176 f[0][25]
+c group 176 f[0][25]
 130 35 -37 39 0
-c g 176 f[0][25]
+c group 176 f[0][25]
 -130 35 37 39 0
-c g 176 f[0][25]
+c group 176 f[0][25]
 -130 -35 39 -41 0
-c g 176 f[0][25]
+c group 176 f[0][25]
 -130 37 -39 41 0
-c g 176 f[0][25]
+c group 176 f[0][25]
 -130 35 -37 -39 0
-c g 176 f[0][25]
+c group 176 f[0][25]
 c ---------------
 c Karnaugh representation
 186 43 45 -47 0
-c g 177 f[1][25]
+c group 177 f[1][25]
 186 -43 -45 0
-c g 177 f[1][25]
+c group 177 f[1][25]
 186 -43 47 -49 0
-c g 177 f[1][25]
+c group 177 f[1][25]
 186 -45 47 -49 0
-c g 177 f[1][25]
+c group 177 f[1][25]
 -186 43 45 47 0
-c g 177 f[1][25]
+c group 177 f[1][25]
 -186 43 47 49 0
-c g 177 f[1][25]
+c group 177 f[1][25]
 -186 45 47 49 0
-c g 177 f[1][25]
+c group 177 f[1][25]
 -186 43 -45 -47 0
-c g 177 f[1][25]
+c group 177 f[1][25]
 -186 -43 45 -47 0
-c g 177 f[1][25]
+c group 177 f[1][25]
 c ---------------
 c Karnaugh representation
 242 -53 55 -57 0
-c g 178 f[2][25]
+c group 178 f[2][25]
 242 53 -55 0
-c g 178 f[2][25]
+c group 178 f[2][25]
 -242 53 55 0
-c g 178 f[2][25]
+c group 178 f[2][25]
 -242 -53 -55 0
-c g 178 f[2][25]
+c group 178 f[2][25]
 -242 -53 57 0
-c g 178 f[2][25]
+c group 178 f[2][25]
 c ---------------
 c Karnaugh representation
 298 61 -63 -65 0
-c g 179 f[3][25]
+c group 179 f[3][25]
 298 -61 63 0
-c g 179 f[3][25]
+c group 179 f[3][25]
 -298 61 63 0
-c g 179 f[3][25]
+c group 179 f[3][25]
 -298 61 65 0
-c g 179 f[3][25]
+c group 179 f[3][25]
 -298 -61 -63 0
-c g 179 f[3][25]
+c group 179 f[3][25]
 c ---------------
 c Xor representation
 x-354 0
-c g 180 f[4][25]
+c group 180 f[4][25]
 c ---------------
 c Karnaugh representation
 -130 -186 -298 0
-c g 181 output[25]
+c group 181 output[25]
 -130 242 298 0
-c g 181 output[25]
+c group 181 output[25]
 -186 -242 -298 0
-c g 181 output[25]
+c group 181 output[25]
 -130 -242 -298 0
-c g 181 output[25]
+c group 181 output[25]
 c ---------------
 c Xor representation
-m-32 36 37 39 41 42 44 46 52 54 56 62 68 69 75 27 0
-c g 182 sr[0][26]
+x-32 36 37 39 41 42 44 46 52 54 56 62 68 69 75 27 0
+c group 182 sr[0][26]
 c ---------------
 c Karnaugh representation
 131 -36 -38 -40 0
-c g 183 f[0][26]
+c group 183 f[0][26]
 131 38 -40 -42 0
-c g 183 f[0][26]
+c group 183 f[0][26]
 131 -36 40 42 0
-c g 183 f[0][26]
+c group 183 f[0][26]
 131 36 -38 40 0
-c g 183 f[0][26]
+c group 183 f[0][26]
 -131 36 38 40 0
-c g 183 f[0][26]
+c group 183 f[0][26]
 -131 -36 40 -42 0
-c g 183 f[0][26]
+c group 183 f[0][26]
 -131 38 -40 42 0
-c g 183 f[0][26]
+c group 183 f[0][26]
 -131 36 -38 -40 0
-c g 183 f[0][26]
+c group 183 f[0][26]
 c ---------------
 c Karnaugh representation
 187 44 46 -48 0
-c g 184 f[1][26]
+c group 184 f[1][26]
 187 -44 -46 0
-c g 184 f[1][26]
+c group 184 f[1][26]
 -187 44 -46 0
-c g 184 f[1][26]
+c group 184 f[1][26]
 -187 44 48 0
-c g 184 f[1][26]
+c group 184 f[1][26]
 -187 -44 46 0
-c g 184 f[1][26]
+c group 184 f[1][26]
 c ---------------
 c Karnaugh representation
 243 52 54 -56 0
-c g 185 f[2][26]
+c group 185 f[2][26]
 243 -52 -54 0
-c g 185 f[2][26]
+c group 185 f[2][26]
 -243 52 -54 0
-c g 185 f[2][26]
+c group 185 f[2][26]
 -243 52 56 0
-c g 185 f[2][26]
+c group 185 f[2][26]
 -243 -52 54 0
-c g 185 f[2][26]
+c group 185 f[2][26]
 c ---------------
 c Karnaugh representation
 299 60 -62 64 0
-c g 186 f[3][26]
+c group 186 f[3][26]
 299 62 -64 0
-c g 186 f[3][26]
+c group 186 f[3][26]
 299 -60 -64 0
-c g 186 f[3][26]
+c group 186 f[3][26]
 -299 62 64 0
-c g 186 f[3][26]
+c group 186 f[3][26]
 -299 60 -62 -64 0
-c g 186 f[3][26]
+c group 186 f[3][26]
 -299 -60 64 0
-c g 186 f[3][26]
+c group 186 f[3][26]
 c ---------------
 c Karnaugh representation
 355 72 -74 0
-c g 187 f[4][26]
+c group 187 f[4][26]
 355 -68 0
-c g 187 f[4][26]
+c group 187 f[4][26]
 -355 68 74 0
-c g 187 f[4][26]
+c group 187 f[4][26]
 -355 68 -72 0
-c g 187 f[4][26]
+c group 187 f[4][26]
 c ---------------
 c Karnaugh representation
 187 243 299 -355 0
-c g 188 output[26]
+c group 188 output[26]
 -131 -187 -299 0
-c g 188 output[26]
+c group 188 output[26]
 -187 -299 -355 0
-c g 188 output[26]
+c group 188 output[26]
 -131 243 299 355 0
-c g 188 output[26]
+c group 188 output[26]
 -131 -243 -299 0
-c g 188 output[26]
+c group 188 output[26]
 131 299 -355 0
-c g 188 output[26]
+c group 188 output[26]
 -187 -243 -299 0
-c g 188 output[26]
+c group 188 output[26]
 c ---------------
 c Xor representation
-m33 37 38 40 42 43 45 47 52 53 55 57 63 69 76 28 0
-c g 189 sr[0][27]
+x33 37 38 40 42 43 45 47 52 53 55 57 63 69 76 28 0
+c group 189 sr[0][27]
 c ---------------
 c Karnaugh representation
 132 -37 -39 -41 0
-c g 190 f[0][27]
+c group 190 f[0][27]
 132 39 -41 -43 0
-c g 190 f[0][27]
+c group 190 f[0][27]
 132 -37 41 43 0
-c g 190 f[0][27]
+c group 190 f[0][27]
 132 37 -39 41 0
-c g 190 f[0][27]
+c group 190 f[0][27]
 -132 37 39 41 0
-c g 190 f[0][27]
+c group 190 f[0][27]
 -132 -37 41 -43 0
-c g 190 f[0][27]
+c group 190 f[0][27]
 -132 39 -41 43 0
-c g 190 f[0][27]
+c group 190 f[0][27]
 -132 37 -39 -41 0
-c g 190 f[0][27]
+c group 190 f[0][27]
 c ---------------
 c Karnaugh representation
 188 45 47 -49 0
-c g 191 f[1][27]
+c group 191 f[1][27]
 188 -45 -47 0
-c g 191 f[1][27]
+c group 191 f[1][27]
 -188 45 -47 0
-c g 191 f[1][27]
+c group 191 f[1][27]
 -188 45 49 0
-c g 191 f[1][27]
+c group 191 f[1][27]
 -188 -45 47 0
-c g 191 f[1][27]
+c group 191 f[1][27]
 c ---------------
 c Karnaugh representation
 244 53 55 -57 0
-c g 192 f[2][27]
+c group 192 f[2][27]
 244 -53 -55 0
-c g 192 f[2][27]
+c group 192 f[2][27]
 -244 53 -55 0
-c g 192 f[2][27]
+c group 192 f[2][27]
 -244 53 57 0
-c g 192 f[2][27]
+c group 192 f[2][27]
 -244 -53 55 0
-c g 192 f[2][27]
+c group 192 f[2][27]
 c ---------------
 c Karnaugh representation
 300 -61 65 0
-c g 193 f[3][27]
+c group 193 f[3][27]
 300 -63 65 0
-c g 193 f[3][27]
+c group 193 f[3][27]
 300 -61 -63 0
-c g 193 f[3][27]
+c group 193 f[3][27]
 -300 61 63 0
-c g 193 f[3][27]
+c group 193 f[3][27]
 -300 61 -65 0
-c g 193 f[3][27]
+c group 193 f[3][27]
 -300 63 -65 0
-c g 193 f[3][27]
+c group 193 f[3][27]
 c ---------------
 c Karnaugh representation
 -69 -75 -188 -300 0
-c g 194 output[27]
+c group 194 output[27]
 -132 188 244 300 0
-c g 194 output[27]
+c group 194 output[27]
 69 -132 -188 244 0
-c g 194 output[27]
+c group 194 output[27]
 75 -132 -188 244 0
-c g 194 output[27]
+c group 194 output[27]
 -69 -75 132 300 0
-c g 194 output[27]
+c group 194 output[27]
 -188 -244 -300 0
-c g 194 output[27]
+c group 194 output[27]
 -132 -244 -300 0
-c g 194 output[27]
+c group 194 output[27]
 c ---------------
 c Xor representation
-m34 38 39 41 43 44 46 48 53 54 56 64 68 72 77 29 0
-c g 195 sr[0][28]
+x34 38 39 41 43 44 46 48 53 54 56 64 68 72 77 29 0
+c group 195 sr[0][28]
 c ---------------
 c Karnaugh representation
 133 -38 -40 -42 0
-c g 196 f[0][28]
+c group 196 f[0][28]
 133 40 -42 -44 0
-c g 196 f[0][28]
+c group 196 f[0][28]
 133 -38 42 44 0
-c g 196 f[0][28]
+c group 196 f[0][28]
 133 38 -40 42 0
-c g 196 f[0][28]
+c group 196 f[0][28]
 -133 38 40 42 0
-c g 196 f[0][28]
+c group 196 f[0][28]
 -133 -38 42 -44 0
-c g 196 f[0][28]
+c group 196 f[0][28]
 -133 40 -42 44 0
-c g 196 f[0][28]
+c group 196 f[0][28]
 -133 38 -40 -42 0
-c g 196 f[0][28]
+c group 196 f[0][28]
 c ---------------
 c Karnaugh representation
 189 -46 -48 0
-c g 197 f[1][28]
+c group 197 f[1][28]
 189 -46 -52 0
-c g 197 f[1][28]
+c group 197 f[1][28]
 189 -48 -52 0
-c g 197 f[1][28]
+c group 197 f[1][28]
 -189 46 48 0
-c g 197 f[1][28]
+c group 197 f[1][28]
 -189 46 52 0
-c g 197 f[1][28]
+c group 197 f[1][28]
 -189 48 52 0
-c g 197 f[1][28]
+c group 197 f[1][28]
 c ---------------
 c Karnaugh representation
 245 -54 -56 0
-c g 198 f[2][28]
+c group 198 f[2][28]
 245 -54 -60 0
-c g 198 f[2][28]
+c group 198 f[2][28]
 245 -56 -60 0
-c g 198 f[2][28]
+c group 198 f[2][28]
 -245 54 56 0
-c g 198 f[2][28]
+c group 198 f[2][28]
 -245 54 60 0
-c g 198 f[2][28]
+c group 198 f[2][28]
 -245 56 60 0
-c g 198 f[2][28]
+c group 198 f[2][28]
 c ---------------
 c Karnaugh representation
 301 -62 -64 0
-c g 199 f[3][28]
+c group 199 f[3][28]
 301 64 -68 0
-c g 199 f[3][28]
+c group 199 f[3][28]
 -301 64 68 0
-c g 199 f[3][28]
+c group 199 f[3][28]
 -301 62 -64 0
-c g 199 f[3][28]
+c group 199 f[3][28]
 c ---------------
 c Karnaugh representation
 357 74 -76 0
-c g 200 f[4][28]
+c group 200 f[4][28]
 357 -72 0
-c g 200 f[4][28]
+c group 200 f[4][28]
 -357 72 76 0
-c g 200 f[4][28]
+c group 200 f[4][28]
 -357 72 -74 0
-c g 200 f[4][28]
+c group 200 f[4][28]
 c ---------------
 c Karnaugh representation
 189 245 301 -357 0
-c g 201 output[28]
+c group 201 output[28]
 -133 -189 -301 0
-c g 201 output[28]
+c group 201 output[28]
 -189 -301 -357 0
-c g 201 output[28]
+c group 201 output[28]
 -133 245 301 357 0
-c g 201 output[28]
+c group 201 output[28]
 -133 -245 -301 0
-c g 201 output[28]
+c group 201 output[28]
 133 301 -357 0
-c g 201 output[28]
+c group 201 output[28]
 -189 -245 -301 0
-c g 201 output[28]
+c group 201 output[28]
 c ---------------
 c Xor representation
-m-35 39 40 42 44 45 47 49 54 55 57 65 69 72 78 30 0
-c g 202 sr[0][29]
+x-35 39 40 42 44 45 47 49 54 55 57 65 69 72 78 30 0
+c group 202 sr[0][29]
 c ---------------
 c Karnaugh representation
 134 -39 -41 -43 0
-c g 203 f[0][29]
+c group 203 f[0][29]
 134 41 -43 -45 0
-c g 203 f[0][29]
+c group 203 f[0][29]
 134 -39 43 45 0
-c g 203 f[0][29]
+c group 203 f[0][29]
 134 39 -41 43 0
-c g 203 f[0][29]
+c group 203 f[0][29]
 -134 39 41 43 0
-c g 203 f[0][29]
+c group 203 f[0][29]
 -134 -39 43 -45 0
-c g 203 f[0][29]
+c group 203 f[0][29]
 -134 41 -43 45 0
-c g 203 f[0][29]
+c group 203 f[0][29]
 -134 39 -41 -43 0
-c g 203 f[0][29]
+c group 203 f[0][29]
 c ---------------
 c Karnaugh representation
 190 -47 -49 0
-c g 204 f[1][29]
+c group 204 f[1][29]
 190 -47 -53 0
-c g 204 f[1][29]
+c group 204 f[1][29]
 190 -49 -53 0
-c g 204 f[1][29]
+c group 204 f[1][29]
 -190 47 49 0
-c g 204 f[1][29]
+c group 204 f[1][29]
 -190 47 53 0
-c g 204 f[1][29]
+c group 204 f[1][29]
 -190 49 53 0
-c g 204 f[1][29]
+c group 204 f[1][29]
 c ---------------
 c Karnaugh representation
 246 -55 -57 0
-c g 205 f[2][29]
+c group 205 f[2][29]
 246 -55 -61 0
-c g 205 f[2][29]
+c group 205 f[2][29]
 246 -57 -61 0
-c g 205 f[2][29]
+c group 205 f[2][29]
 -246 55 57 0
-c g 205 f[2][29]
+c group 205 f[2][29]
 -246 55 61 0
-c g 205 f[2][29]
+c group 205 f[2][29]
 -246 57 61 0
-c g 205 f[2][29]
+c group 205 f[2][29]
 c ---------------
 c Karnaugh representation
 302 -63 69 0
-c g 206 f[3][29]
+c group 206 f[3][29]
 302 63 -65 0
-c g 206 f[3][29]
+c group 206 f[3][29]
 -302 63 65 0
-c g 206 f[3][29]
+c group 206 f[3][29]
 -302 -63 -69 0
-c g 206 f[3][29]
+c group 206 f[3][29]
 c ---------------
 c Karnaugh representation
 190 246 -302 0
-c g 207 output[29]
+c group 207 output[29]
 75 134 246 0
-c g 207 output[29]
+c group 207 output[29]
 -75 -134 -190 302 0
-c g 207 output[29]
+c group 207 output[29]
 75 -246 302 0
-c g 207 output[29]
+c group 207 output[29]
 134 190 -302 0
-c g 207 output[29]
+c group 207 output[29]
 -134 -246 302 0
-c g 207 output[29]
+c group 207 output[29]
 c ---------------
 c Xor representation
-m-36 40 41 43 45 46 48 55 56 60 72 74 79 31 0
-c g 208 sr[0][30]
+x-36 40 41 43 45 46 48 55 56 60 72 74 79 31 0
+c group 208 sr[0][30]
 c ---------------
 c Karnaugh representation
 135 -40 -42 -44 0
-c g 209 f[0][30]
+c group 209 f[0][30]
 135 42 -44 -46 0
-c g 209 f[0][30]
+c group 209 f[0][30]
 135 -40 44 46 0
-c g 209 f[0][30]
+c group 209 f[0][30]
 135 40 -42 44 0
-c g 209 f[0][30]
+c group 209 f[0][30]
 -135 40 42 44 0
-c g 209 f[0][30]
+c group 209 f[0][30]
 -135 -40 44 -46 0
-c g 209 f[0][30]
+c group 209 f[0][30]
 -135 42 -44 46 0
-c g 209 f[0][30]
+c group 209 f[0][30]
 -135 40 -42 -44 0
-c g 209 f[0][30]
+c group 209 f[0][30]
 c ---------------
 c Karnaugh representation
 191 -48 52 -54 0
-c g 210 f[1][30]
+c group 210 f[1][30]
 191 48 -52 0
-c g 210 f[1][30]
+c group 210 f[1][30]
 -191 48 52 0
-c g 210 f[1][30]
+c group 210 f[1][30]
 -191 -48 -52 0
-c g 210 f[1][30]
+c group 210 f[1][30]
 -191 -48 54 0
-c g 210 f[1][30]
+c group 210 f[1][30]
 c ---------------
 c Karnaugh representation
 247 -56 60 -62 0
-c g 211 f[2][30]
+c group 211 f[2][30]
 247 56 -60 0
-c g 211 f[2][30]
+c group 211 f[2][30]
 -247 56 60 0
-c g 211 f[2][30]
+c group 211 f[2][30]
 -247 -56 -60 0
-c g 211 f[2][30]
+c group 211 f[2][30]
 -247 -56 62 0
-c g 211 f[2][30]
+c group 211 f[2][30]
 c ---------------
 c Xor representation
 x64 68 303 0
-c g 212 f[3][30]
+c group 212 f[3][30]
 c ---------------
 c Karnaugh representation
 359 72 74 -76 0
-c g 213 f[4][30]
+c group 213 f[4][30]
 359 -72 -74 0
-c g 213 f[4][30]
+c group 213 f[4][30]
 359 -72 76 -78 0
-c g 213 f[4][30]
+c group 213 f[4][30]
 359 -74 76 -78 0
-c g 213 f[4][30]
+c group 213 f[4][30]
 -359 72 74 76 0
-c g 213 f[4][30]
+c group 213 f[4][30]
 -359 72 76 78 0
-c g 213 f[4][30]
+c group 213 f[4][30]
 -359 74 76 78 0
-c g 213 f[4][30]
+c group 213 f[4][30]
 -359 72 -74 -76 0
-c g 213 f[4][30]
+c group 213 f[4][30]
 -359 -72 74 -76 0
-c g 213 f[4][30]
+c group 213 f[4][30]
 c ---------------
 c Karnaugh representation
 191 247 303 -359 0
-c g 214 output[30]
+c group 214 output[30]
 -135 -191 -303 0
-c g 214 output[30]
+c group 214 output[30]
 -191 -303 -359 0
-c g 214 output[30]
+c group 214 output[30]
 -135 247 303 359 0
-c g 214 output[30]
+c group 214 output[30]
 -135 -247 -303 0
-c g 214 output[30]
+c group 214 output[30]
 135 303 -359 0
-c g 214 output[30]
+c group 214 output[30]
 -191 -247 -303 0
-c g 214 output[30]
+c group 214 output[30]
 c ---------------
 c Xor representation
-m-32 37 41 42 44 46 47 49 56 57 61 74 75 80 0
-c g 215 sr[0][79]
+x-32 37 41 42 44 46 47 49 56 57 61 74 75 80 0
+c group 215 sr[0][79]
 c ---------------
 c Karnaugh representation
 136 -41 -43 -45 0
-c g 216 f[0][31]
+c group 216 f[0][31]
 136 43 -45 -47 0
-c g 216 f[0][31]
+c group 216 f[0][31]
 136 -41 45 47 0
-c g 216 f[0][31]
+c group 216 f[0][31]
 136 41 -43 45 0
-c g 216 f[0][31]
+c group 216 f[0][31]
 -136 41 43 45 0
-c g 216 f[0][31]
+c group 216 f[0][31]
 -136 -41 45 -47 0
-c g 216 f[0][31]
+c group 216 f[0][31]
 -136 43 -45 47 0
-c g 216 f[0][31]
+c group 216 f[0][31]
 -136 41 -43 -45 0
-c g 216 f[0][31]
+c group 216 f[0][31]
 c ---------------
 c Karnaugh representation
 192 -49 53 -55 0
-c g 217 f[1][31]
+c group 217 f[1][31]
 192 49 -53 0
-c g 217 f[1][31]
+c group 217 f[1][31]
 -192 49 53 0
-c g 217 f[1][31]
+c group 217 f[1][31]
 -192 -49 -53 0
-c g 217 f[1][31]
+c group 217 f[1][31]
 -192 -49 55 0
-c g 217 f[1][31]
+c group 217 f[1][31]
 c ---------------
 c Karnaugh representation
 248 -57 61 -63 0
-c g 218 f[2][31]
+c group 218 f[2][31]
 248 57 -61 0
-c g 218 f[2][31]
+c group 218 f[2][31]
 -248 57 61 0
-c g 218 f[2][31]
+c group 218 f[2][31]
 -248 -57 -61 0
-c g 218 f[2][31]
+c group 218 f[2][31]
 -248 -57 63 0
-c g 218 f[2][31]
+c group 218 f[2][31]
 c ---------------
 c Karnaugh representation
 304 -65 69 0
-c g 219 f[3][31]
+c group 219 f[3][31]
 -304 65 0
-c g 219 f[3][31]
+c group 219 f[3][31]
 -304 -69 0
-c g 219 f[3][31]
+c group 219 f[3][31]
 c ---------------
 c Karnaugh representation
 360 -75 77 -79 0
-c g 220 f[4][31]
+c group 220 f[4][31]
 360 75 -77 0
-c g 220 f[4][31]
+c group 220 f[4][31]
 -360 75 77 0
-c g 220 f[4][31]
+c group 220 f[4][31]
 -360 -75 -77 0
-c g 220 f[4][31]
+c group 220 f[4][31]
 -360 -75 79 0
-c g 220 f[4][31]
+c group 220 f[4][31]
 c ---------------
 c Karnaugh representation
 192 248 -304 0
-c g 221 output[31]
+c group 221 output[31]
 136 248 360 0
-c g 221 output[31]
+c group 221 output[31]
 -136 -192 304 -360 0
-c g 221 output[31]
+c group 221 output[31]
 -248 304 360 0
-c g 221 output[31]
+c group 221 output[31]
 136 192 -304 0
-c g 221 output[31]
+c group 221 output[31]
 -136 -248 304 0
-c g 221 output[31]
+c group 221 output[31]
 c ---------------
 c Xor representation
-m-33 38 42 43 45 47 48 52 57 60 62 68 72 74 75 76 81 0
-c g 222 sr[0][80]
+x-33 38 42 43 45 47 48 52 57 60 62 68 72 74 75 76 81 0
+c group 222 sr[0][80]
 c ---------------
 c Karnaugh representation
 137 -42 -44 -46 0
-c g 223 f[0][32]
+c group 223 f[0][32]
 137 44 -46 -48 0
-c g 223 f[0][32]
+c group 223 f[0][32]
 137 -42 46 48 0
-c g 223 f[0][32]
+c group 223 f[0][32]
 137 42 -44 46 0
-c g 223 f[0][32]
+c group 223 f[0][32]
 -137 42 44 46 0
-c g 223 f[0][32]
+c group 223 f[0][32]
 -137 -42 46 -48 0
-c g 223 f[0][32]
+c group 223 f[0][32]
 -137 44 -46 48 0
-c g 223 f[0][32]
+c group 223 f[0][32]
 -137 42 -44 -46 0
-c g 223 f[0][32]
+c group 223 f[0][32]
 c ---------------
 c Karnaugh representation
 193 -52 54 -56 0
-c g 224 f[1][32]
+c group 224 f[1][32]
 193 52 -54 0
-c g 224 f[1][32]
+c group 224 f[1][32]
 -193 52 54 0
-c g 224 f[1][32]
+c group 224 f[1][32]
 -193 -52 -54 0
-c g 224 f[1][32]
+c group 224 f[1][32]
 -193 -52 56 0
-c g 224 f[1][32]
+c group 224 f[1][32]
 c ---------------
 c Karnaugh representation
 249 -60 62 -64 0
-c g 225 f[2][32]
+c group 225 f[2][32]
 249 60 -62 0
-c g 225 f[2][32]
+c group 225 f[2][32]
 -249 60 62 0
-c g 225 f[2][32]
+c group 225 f[2][32]
 -249 -60 -62 0
-c g 225 f[2][32]
+c group 225 f[2][32]
 -249 -60 64 0
-c g 225 f[2][32]
+c group 225 f[2][32]
 c ---------------
 c Karnaugh representation
 305 -68 0
-c g 226 f[3][32]
+c group 226 f[3][32]
 305 -72 0
-c g 226 f[3][32]
+c group 226 f[3][32]
 -305 68 72 0
-c g 226 f[3][32]
+c group 226 f[3][32]
 c ---------------
 c Karnaugh representation
 361 74 76 -78 0
-c g 227 f[4][32]
+c group 227 f[4][32]
 361 -74 -76 0
-c g 227 f[4][32]
+c group 227 f[4][32]
 361 -74 78 -80 0
-c g 227 f[4][32]
+c group 227 f[4][32]
 361 -76 78 -80 0
-c g 227 f[4][32]
+c group 227 f[4][32]
 -361 74 76 78 0
-c g 227 f[4][32]
+c group 227 f[4][32]
 -361 74 78 80 0
-c g 227 f[4][32]
+c group 227 f[4][32]
 -361 76 78 80 0
-c g 227 f[4][32]
+c group 227 f[4][32]
 -361 74 -76 -78 0
-c g 227 f[4][32]
+c group 227 f[4][32]
 -361 -74 76 -78 0
-c g 227 f[4][32]
+c group 227 f[4][32]
 c ---------------
 c Karnaugh representation
 193 249 -305 0
-c g 228 output[32]
+c group 228 output[32]
 137 249 361 0
-c g 228 output[32]
+c group 228 output[32]
 -137 -193 305 -361 0
-c g 228 output[32]
+c group 228 output[32]
 -249 305 361 0
-c g 228 output[32]
+c group 228 output[32]
 137 193 -305 0
-c g 228 output[32]
+c group 228 output[32]
 -137 -249 305 0
-c g 228 output[32]
+c group 228 output[32]
 c ---------------
 c Xor representation
-m-34 39 43 44 46 48 49 53 61 63 69 75 76 77 82 0
-c g 229 sr[0][81]
+x-34 39 43 44 46 48 49 53 61 63 69 75 76 77 82 0
+c group 229 sr[0][81]
 c ---------------
 c Karnaugh representation
 138 -43 -45 -47 0
-c g 230 f[0][33]
+c group 230 f[0][33]
 138 45 -47 -49 0
-c g 230 f[0][33]
+c group 230 f[0][33]
 138 -43 47 49 0
-c g 230 f[0][33]
+c group 230 f[0][33]
 138 43 -45 47 0
-c g 230 f[0][33]
+c group 230 f[0][33]
 -138 43 45 47 0
-c g 230 f[0][33]
+c group 230 f[0][33]
 -138 -43 47 -49 0
-c g 230 f[0][33]
+c group 230 f[0][33]
 -138 45 -47 49 0
-c g 230 f[0][33]
+c group 230 f[0][33]
 -138 43 -45 -47 0
-c g 230 f[0][33]
+c group 230 f[0][33]
 c ---------------
 c Karnaugh representation
 194 -53 55 -57 0
-c g 231 f[1][33]
+c group 231 f[1][33]
 194 53 -55 0
-c g 231 f[1][33]
+c group 231 f[1][33]
 -194 53 55 0
-c g 231 f[1][33]
+c group 231 f[1][33]
 -194 -53 -55 0
-c g 231 f[1][33]
+c group 231 f[1][33]
 -194 -53 57 0
-c g 231 f[1][33]
+c group 231 f[1][33]
 c ---------------
 c Karnaugh representation
 250 -61 63 -65 0
-c g 232 f[2][33]
+c group 232 f[2][33]
 250 61 -63 0
-c g 232 f[2][33]
+c group 232 f[2][33]
 -250 61 63 0
-c g 232 f[2][33]
+c group 232 f[2][33]
 -250 -61 -63 0
-c g 232 f[2][33]
+c group 232 f[2][33]
 -250 -61 65 0
-c g 232 f[2][33]
+c group 232 f[2][33]
 c ---------------
 c Karnaugh representation
 362 75 77 -79 0
-c g 233 f[4][33]
+c group 233 f[4][33]
 362 -75 -77 0
-c g 233 f[4][33]
+c group 233 f[4][33]
 362 -75 79 -81 0
-c g 233 f[4][33]
+c group 233 f[4][33]
 362 -77 79 -81 0
-c g 233 f[4][33]
+c group 233 f[4][33]
 -362 75 77 79 0
-c g 233 f[4][33]
+c group 233 f[4][33]
 -362 75 79 81 0
-c g 233 f[4][33]
+c group 233 f[4][33]
 -362 77 79 81 0
-c g 233 f[4][33]
+c group 233 f[4][33]
 -362 75 -77 -79 0
-c g 233 f[4][33]
+c group 233 f[4][33]
 -362 -75 77 -79 0
-c g 233 f[4][33]
+c group 233 f[4][33]
 c ---------------
 c Karnaugh representation
 138 250 362 0
-c g 234 output[33]
+c group 234 output[33]
 69 -138 -194 -362 0
-c g 234 output[33]
+c group 234 output[33]
 -69 194 250 0
-c g 234 output[33]
+c group 234 output[33]
 69 -250 362 0
-c g 234 output[33]
+c group 234 output[33]
 -69 138 194 0
-c g 234 output[33]
+c group 234 output[33]
 69 -138 -250 0
-c g 234 output[33]
+c group 234 output[33]
 c ---------------
 c Xor representation
-m35 40 44 45 47 49 52 54 60 62 64 74 76 77 78 83 0
-c g 235 sr[0][82]
+x35 40 44 45 47 49 52 54 60 62 64 74 76 77 78 83 0
+c group 235 sr[0][82]
 c ---------------
 c Karnaugh representation
 139 -44 48 0
-c g 236 f[0][34]
+c group 236 f[0][34]
 139 -46 48 0
-c g 236 f[0][34]
+c group 236 f[0][34]
 139 -44 -46 0
-c g 236 f[0][34]
+c group 236 f[0][34]
 -139 44 46 0
-c g 236 f[0][34]
+c group 236 f[0][34]
 -139 44 -48 0
-c g 236 f[0][34]
+c group 236 f[0][34]
 -139 46 -48 0
-c g 236 f[0][34]
+c group 236 f[0][34]
 c ---------------
 c Karnaugh representation
 195 52 54 -56 0
-c g 237 f[1][34]
+c group 237 f[1][34]
 195 -52 -54 0
-c g 237 f[1][34]
+c group 237 f[1][34]
 -195 52 -54 0
-c g 237 f[1][34]
+c group 237 f[1][34]
 -195 52 56 0
-c g 237 f[1][34]
+c group 237 f[1][34]
 -195 -52 54 0
-c g 237 f[1][34]
+c group 237 f[1][34]
 c ---------------
 c Karnaugh representation
 251 60 62 -64 0
-c g 238 f[2][34]
+c group 238 f[2][34]
 251 -60 64 0
-c g 238 f[2][34]
+c group 238 f[2][34]
 251 -62 64 0
-c g 238 f[2][34]
+c group 238 f[2][34]
 251 -60 -62 0
-c g 238 f[2][34]
+c group 238 f[2][34]
 -251 60 62 64 0
-c g 238 f[2][34]
+c group 238 f[2][34]
 -251 60 -62 -64 0
-c g 238 f[2][34]
+c group 238 f[2][34]
 -251 -60 62 -64 0
-c g 238 f[2][34]
+c group 238 f[2][34]
 c ---------------
 c Karnaugh representation
 307 72 74 0
-c g 239 f[3][34]
+c group 239 f[3][34]
 307 68 72 0
-c g 239 f[3][34]
+c group 239 f[3][34]
 307 -68 -72 0
-c g 239 f[3][34]
+c group 239 f[3][34]
 -307 68 -72 0
-c g 239 f[3][34]
+c group 239 f[3][34]
 -307 -68 72 -74 0
-c g 239 f[3][34]
+c group 239 f[3][34]
 c ---------------
 c Karnaugh representation
 363 76 78 -80 0
-c g 240 f[4][34]
+c group 240 f[4][34]
 363 -76 -78 0
-c g 240 f[4][34]
+c group 240 f[4][34]
 363 -76 80 -82 0
-c g 240 f[4][34]
+c group 240 f[4][34]
 363 -78 80 -82 0
-c g 240 f[4][34]
+c group 240 f[4][34]
 -363 76 78 80 0
-c g 240 f[4][34]
+c group 240 f[4][34]
 -363 76 80 82 0
-c g 240 f[4][34]
+c group 240 f[4][34]
 -363 78 80 82 0
-c g 240 f[4][34]
+c group 240 f[4][34]
 -363 76 -78 -80 0
-c g 240 f[4][34]
+c group 240 f[4][34]
 -363 -76 78 -80 0
-c g 240 f[4][34]
+c group 240 f[4][34]
 c ---------------
 c Karnaugh representation
 195 251 -307 0
-c g 241 output[34]
+c group 241 output[34]
 139 251 363 0
-c g 241 output[34]
+c group 241 output[34]
 -139 -195 307 -363 0
-c g 241 output[34]
+c group 241 output[34]
 -251 307 363 0
-c g 241 output[34]
+c group 241 output[34]
 139 195 -307 0
-c g 241 output[34]
+c group 241 output[34]
 -139 -251 307 0
-c g 241 output[34]
+c group 241 output[34]
 c ---------------
 c Xor representation
-m-36 41 45 46 48 53 55 60 61 63 65 75 77 78 79 84 0
-c g 242 sr[0][83]
+x-36 41 45 46 48 53 55 60 61 63 65 75 77 78 79 84 0
+c group 242 sr[0][83]
 c ---------------
 c Karnaugh representation
 140 -45 49 0
-c g 243 f[0][35]
+c group 243 f[0][35]
 140 -47 49 0
-c g 243 f[0][35]
+c group 243 f[0][35]
 140 -45 -47 0
-c g 243 f[0][35]
+c group 243 f[0][35]
 -140 45 47 0
-c g 243 f[0][35]
+c group 243 f[0][35]
 -140 45 -49 0
-c g 243 f[0][35]
+c group 243 f[0][35]
 -140 47 -49 0
-c g 243 f[0][35]
+c group 243 f[0][35]
 c ---------------
 c Karnaugh representation
 196 53 55 -57 0
-c g 244 f[1][35]
+c group 244 f[1][35]
 196 -53 -55 0
-c g 244 f[1][35]
+c group 244 f[1][35]
 -196 53 -55 0
-c g 244 f[1][35]
+c group 244 f[1][35]
 -196 53 57 0
-c g 244 f[1][35]
+c group 244 f[1][35]
 -196 -53 55 0
-c g 244 f[1][35]
+c group 244 f[1][35]
 c ---------------
 c Karnaugh representation
 252 61 63 -65 0
-c g 245 f[2][35]
+c group 245 f[2][35]
 252 -61 -63 0
-c g 245 f[2][35]
+c group 245 f[2][35]
 -252 61 -63 0
-c g 245 f[2][35]
+c group 245 f[2][35]
 -252 61 65 0
-c g 245 f[2][35]
+c group 245 f[2][35]
 -252 -61 63 0
-c g 245 f[2][35]
+c group 245 f[2][35]
 c ---------------
 c Karnaugh representation
 308 -69 75 0
-c g 246 f[3][35]
+c group 246 f[3][35]
 -308 69 0
-c g 246 f[3][35]
+c group 246 f[3][35]
 -308 -75 0
-c g 246 f[3][35]
+c group 246 f[3][35]
 c ---------------
 c Karnaugh representation
 364 77 79 -81 0
-c g 247 f[4][35]
+c group 247 f[4][35]
 364 -77 -79 0
-c g 247 f[4][35]
+c group 247 f[4][35]
 364 -77 81 -83 0
-c g 247 f[4][35]
+c group 247 f[4][35]
 364 -79 81 -83 0
-c g 247 f[4][35]
+c group 247 f[4][35]
 -364 77 79 81 0
-c g 247 f[4][35]
+c group 247 f[4][35]
 -364 77 81 83 0
-c g 247 f[4][35]
+c group 247 f[4][35]
 -364 79 81 83 0
-c g 247 f[4][35]
+c group 247 f[4][35]
 -364 77 -79 -81 0
-c g 247 f[4][35]
+c group 247 f[4][35]
 -364 -77 79 -81 0
-c g 247 f[4][35]
+c group 247 f[4][35]
 c ---------------
 c Karnaugh representation
 196 252 -308 0
-c g 248 output[35]
+c group 248 output[35]
 140 252 364 0
-c g 248 output[35]
+c group 248 output[35]
 -140 -196 308 -364 0
-c g 248 output[35]
+c group 248 output[35]
 -252 308 364 0
-c g 248 output[35]
+c group 248 output[35]
 140 196 -308 0
-c g 248 output[35]
+c group 248 output[35]
 -140 -252 308 0
-c g 248 output[35]
+c group 248 output[35]
 c ---------------
 c Xor representation
-m32 41 44 52 54 57 62 64 72 74 75 76 78 79 85 0
-c g 249 sr[0][84]
+x32 41 44 52 54 57 62 64 72 74 75 76 78 79 85 0
+c group 249 sr[0][84]
 c ---------------
 c Karnaugh representation
 141 -46 52 0
-c g 250 f[0][36]
+c group 250 f[0][36]
 141 46 -48 0
-c g 250 f[0][36]
+c group 250 f[0][36]
 -141 46 48 0
-c g 250 f[0][36]
+c group 250 f[0][36]
 -141 -46 -52 0
-c g 250 f[0][36]
+c group 250 f[0][36]
 c ---------------
 c Karnaugh representation
 197 -54 -56 0
-c g 251 f[1][36]
+c group 251 f[1][36]
 197 -54 -60 0
-c g 251 f[1][36]
+c group 251 f[1][36]
 197 -56 -60 0
-c g 251 f[1][36]
+c group 251 f[1][36]
 -197 54 56 0
-c g 251 f[1][36]
+c group 251 f[1][36]
 -197 54 60 0
-c g 251 f[1][36]
+c group 251 f[1][36]
 -197 56 60 0
-c g 251 f[1][36]
+c group 251 f[1][36]
 c ---------------
 c Xor representation
 x62 64 253 0
-c g 252 f[2][36]
+c group 252 f[2][36]
 c ---------------
 c Karnaugh representation
 309 -72 76 0
-c g 253 f[3][36]
+c group 253 f[3][36]
 309 74 76 0
-c g 253 f[3][36]
+c group 253 f[3][36]
 309 -74 -76 0
-c g 253 f[3][36]
+c group 253 f[3][36]
 -309 74 -76 0
-c g 253 f[3][36]
+c group 253 f[3][36]
 -309 72 -74 76 0
-c g 253 f[3][36]
+c group 253 f[3][36]
 c ---------------
 c Karnaugh representation
 365 78 80 -82 0
-c g 254 f[4][36]
+c group 254 f[4][36]
 365 -78 -80 0
-c g 254 f[4][36]
+c group 254 f[4][36]
 365 -78 82 -84 0
-c g 254 f[4][36]
+c group 254 f[4][36]
 365 -80 82 -84 0
-c g 254 f[4][36]
+c group 254 f[4][36]
 -365 78 80 82 0
-c g 254 f[4][36]
+c group 254 f[4][36]
 -365 78 82 84 0
-c g 254 f[4][36]
+c group 254 f[4][36]
 -365 80 82 84 0
-c g 254 f[4][36]
+c group 254 f[4][36]
 -365 78 -80 -82 0
-c g 254 f[4][36]
+c group 254 f[4][36]
 -365 -78 80 -82 0
-c g 254 f[4][36]
+c group 254 f[4][36]
 c ---------------
 c Karnaugh representation
 197 253 -309 0
-c g 255 output[36]
+c group 255 output[36]
 141 253 365 0
-c g 255 output[36]
+c group 255 output[36]
 -141 -197 309 -365 0
-c g 255 output[36]
+c group 255 output[36]
 -253 309 365 0
-c g 255 output[36]
+c group 255 output[36]
 141 197 -309 0
-c g 255 output[36]
+c group 255 output[36]
 -141 -253 309 0
-c g 255 output[36]
+c group 255 output[36]
 c ---------------
 c Xor representation
-m-32 33 37 41 44 45 46 47 49 53 55 56 57 60 61 63 65 68 72 76 77 79 86 0
-c g 256 sr[0][85]
+x-32 33 37 41 44 45 46 47 49 53 55 56 57 60 61 63 65 68 72 76 77 79 86 0
+c group 256 sr[0][85]
 c ---------------
 c Karnaugh representation
 142 -47 53 0
-c g 257 f[0][37]
+c group 257 f[0][37]
 142 47 -49 0
-c g 257 f[0][37]
+c group 257 f[0][37]
 -142 47 49 0
-c g 257 f[0][37]
+c group 257 f[0][37]
 -142 -47 -53 0
-c g 257 f[0][37]
+c group 257 f[0][37]
 c ---------------
 c Karnaugh representation
 198 -55 -57 0
-c g 258 f[1][37]
+c group 258 f[1][37]
 198 -55 -61 0
-c g 258 f[1][37]
+c group 258 f[1][37]
 198 -57 -61 0
-c g 258 f[1][37]
+c group 258 f[1][37]
 -198 55 57 0
-c g 258 f[1][37]
+c group 258 f[1][37]
 -198 55 61 0
-c g 258 f[1][37]
+c group 258 f[1][37]
 -198 57 61 0
-c g 258 f[1][37]
+c group 258 f[1][37]
 c ---------------
 c Karnaugh representation
 254 -63 -65 0
-c g 259 f[2][37]
+c group 259 f[2][37]
 254 -63 -69 0
-c g 259 f[2][37]
+c group 259 f[2][37]
 254 -65 -69 0
-c g 259 f[2][37]
+c group 259 f[2][37]
 -254 63 65 0
-c g 259 f[2][37]
+c group 259 f[2][37]
 -254 63 69 0
-c g 259 f[2][37]
+c group 259 f[2][37]
 -254 65 69 0
-c g 259 f[2][37]
+c group 259 f[2][37]
 c ---------------
 c Karnaugh representation
 366 79 81 -83 0
-c g 260 f[4][37]
+c group 260 f[4][37]
 366 -79 -81 0
-c g 260 f[4][37]
+c group 260 f[4][37]
 366 -79 83 -85 0
-c g 260 f[4][37]
+c group 260 f[4][37]
 366 -81 83 -85 0
-c g 260 f[4][37]
+c group 260 f[4][37]
 -366 79 81 83 0
-c g 260 f[4][37]
+c group 260 f[4][37]
 -366 79 83 85 0
-c g 260 f[4][37]
+c group 260 f[4][37]
 -366 81 83 85 0
-c g 260 f[4][37]
+c group 260 f[4][37]
 -366 79 -81 -83 0
-c g 260 f[4][37]
+c group 260 f[4][37]
 -366 -79 81 -83 0
-c g 260 f[4][37]
+c group 260 f[4][37]
 c ---------------
 c Karnaugh representation
 -75 -77 -198 -366 0
-c g 261 output[37]
+c group 261 output[37]
 75 -142 198 254 0
-c g 261 output[37]
+c group 261 output[37]
 -142 -198 254 366 0
-c g 261 output[37]
+c group 261 output[37]
 77 -142 198 254 0
-c g 261 output[37]
+c group 261 output[37]
 -75 -77 -142 -254 0
-c g 261 output[37]
+c group 261 output[37]
 -75 -77 -198 -254 0
-c g 261 output[37]
+c group 261 output[37]
 77 142 -366 0
-c g 261 output[37]
+c group 261 output[37]
 75 142 -366 0
-c g 261 output[37]
+c group 261 output[37]
 c ---------------
 c Xor representation
-m32 33 34 37 38 41 44 45 48 49 52 54 60 62 64 69 72 74 75 77 78 87 0
-c g 262 sr[0][86]
+x32 33 34 37 38 41 44 45 48 49 52 54 60 62 64 69 72 74 75 77 78 87 0
+c group 262 sr[0][86]
 c ---------------
 c Karnaugh representation
 143 -48 52 54 0
-c g 263 f[0][38]
+c group 263 f[0][38]
 143 -52 -54 0
-c g 263 f[0][38]
+c group 263 f[0][38]
 -143 48 52 0
-c g 263 f[0][38]
+c group 263 f[0][38]
 -143 48 54 0
-c g 263 f[0][38]
+c group 263 f[0][38]
 -143 52 -54 0
-c g 263 f[0][38]
+c group 263 f[0][38]
 -143 -52 54 0
-c g 263 f[0][38]
+c group 263 f[0][38]
 c ---------------
 c Karnaugh representation
 199 -56 60 -62 0
-c g 264 f[1][38]
+c group 264 f[1][38]
 199 56 -60 0
-c g 264 f[1][38]
+c group 264 f[1][38]
 -199 56 60 0
-c g 264 f[1][38]
+c group 264 f[1][38]
 -199 -56 -60 0
-c g 264 f[1][38]
+c group 264 f[1][38]
 -199 -56 62 0
-c g 264 f[1][38]
+c group 264 f[1][38]
 c ---------------
 c Karnaugh representation
 255 68 0
-c g 265 f[2][38]
+c group 265 f[2][38]
 255 -64 0
-c g 265 f[2][38]
+c group 265 f[2][38]
 -255 64 -68 0
-c g 265 f[2][38]
+c group 265 f[2][38]
 c ---------------
 c Karnaugh representation
 311 -72 -74 -76 0
-c g 266 f[3][38]
+c group 266 f[3][38]
 311 74 -76 -78 0
-c g 266 f[3][38]
+c group 266 f[3][38]
 311 -72 76 78 0
-c g 266 f[3][38]
+c group 266 f[3][38]
 311 72 -74 76 0
-c g 266 f[3][38]
+c group 266 f[3][38]
 -311 72 74 76 0
-c g 266 f[3][38]
+c group 266 f[3][38]
 -311 -72 76 -78 0
-c g 266 f[3][38]
+c group 266 f[3][38]
 -311 74 -76 78 0
-c g 266 f[3][38]
+c group 266 f[3][38]
 -311 72 -74 -76 0
-c g 266 f[3][38]
+c group 266 f[3][38]
 c ---------------
 c Karnaugh representation
 367 80 82 -84 0
-c g 267 f[4][38]
+c group 267 f[4][38]
 367 -80 -82 0
-c g 267 f[4][38]
+c group 267 f[4][38]
 367 -80 84 -86 0
-c g 267 f[4][38]
+c group 267 f[4][38]
 367 -82 84 -86 0
-c g 267 f[4][38]
+c group 267 f[4][38]
 -367 80 82 84 0
-c g 267 f[4][38]
+c group 267 f[4][38]
 -367 80 84 86 0
-c g 267 f[4][38]
+c group 267 f[4][38]
 -367 82 84 86 0
-c g 267 f[4][38]
+c group 267 f[4][38]
 -367 80 -82 -84 0
-c g 267 f[4][38]
+c group 267 f[4][38]
 -367 -80 82 -84 0
-c g 267 f[4][38]
+c group 267 f[4][38]
 c ---------------
 c Karnaugh representation
 199 255 311 -367 0
-c g 268 output[38]
+c group 268 output[38]
 -143 -199 -311 0
-c g 268 output[38]
+c group 268 output[38]
 -199 -311 -367 0
-c g 268 output[38]
+c group 268 output[38]
 -143 255 311 367 0
-c g 268 output[38]
+c group 268 output[38]
 -143 -255 -311 0
-c g 268 output[38]
+c group 268 output[38]
 143 311 -367 0
-c g 268 output[38]
+c group 268 output[38]
 -199 -255 -311 0
-c g 268 output[38]
+c group 268 output[38]
 c ---------------
 c Xor representation
-m33 34 35 38 39 42 45 46 49 52 53 55 61 63 65 68 72 75 76 78 79 88 0
-c g 269 sr[0][87]
+x33 34 35 38 39 42 45 46 49 52 53 55 61 63 65 68 72 75 76 78 79 88 0
+c group 269 sr[0][87]
 c ---------------
 c Karnaugh representation
 144 -49 53 55 0
-c g 270 f[0][39]
+c group 270 f[0][39]
 144 -53 -55 0
-c g 270 f[0][39]
+c group 270 f[0][39]
 -144 49 53 0
-c g 270 f[0][39]
+c group 270 f[0][39]
 -144 49 55 0
-c g 270 f[0][39]
+c group 270 f[0][39]
 -144 53 -55 0
-c g 270 f[0][39]
+c group 270 f[0][39]
 -144 -53 55 0
-c g 270 f[0][39]
+c group 270 f[0][39]
 c ---------------
 c Karnaugh representation
 200 -57 61 -63 0
-c g 271 f[1][39]
+c group 271 f[1][39]
 200 57 -61 0
-c g 271 f[1][39]
+c group 271 f[1][39]
 -200 57 61 0
-c g 271 f[1][39]
+c group 271 f[1][39]
 -200 -57 -61 0
-c g 271 f[1][39]
+c group 271 f[1][39]
 -200 -57 63 0
-c g 271 f[1][39]
+c group 271 f[1][39]
 c ---------------
 c Karnaugh representation
 256 65 -69 0
-c g 272 f[2][39]
+c group 272 f[2][39]
 -256 -65 0
-c g 272 f[2][39]
+c group 272 f[2][39]
 -256 69 0
-c g 272 f[2][39]
+c group 272 f[2][39]
 c ---------------
 c Karnaugh representation
 312 75 -77 -79 0
-c g 273 f[3][39]
+c group 273 f[3][39]
 312 -75 77 0
-c g 273 f[3][39]
+c group 273 f[3][39]
 -312 75 77 0
-c g 273 f[3][39]
+c group 273 f[3][39]
 -312 75 79 0
-c g 273 f[3][39]
+c group 273 f[3][39]
 -312 -75 -77 0
-c g 273 f[3][39]
+c group 273 f[3][39]
 c ---------------
 c Karnaugh representation
 368 81 83 -85 0
-c g 274 f[4][39]
+c group 274 f[4][39]
 368 -81 -83 0
-c g 274 f[4][39]
+c group 274 f[4][39]
 368 -81 85 -87 0
-c g 274 f[4][39]
+c group 274 f[4][39]
 368 -83 85 -87 0
-c g 274 f[4][39]
+c group 274 f[4][39]
 -368 81 83 85 0
-c g 274 f[4][39]
+c group 274 f[4][39]
 -368 81 85 87 0
-c g 274 f[4][39]
+c group 274 f[4][39]
 -368 83 85 87 0
-c g 274 f[4][39]
+c group 274 f[4][39]
 -368 81 -83 -85 0
-c g 274 f[4][39]
+c group 274 f[4][39]
 -368 -81 83 -85 0
-c g 274 f[4][39]
+c group 274 f[4][39]
 c ---------------
 c Karnaugh representation
 200 256 -312 0
-c g 275 output[39]
+c group 275 output[39]
 144 256 368 0
-c g 275 output[39]
+c group 275 output[39]
 -144 -200 312 -368 0
-c g 275 output[39]
+c group 275 output[39]
 -256 312 368 0
-c g 275 output[39]
+c group 275 output[39]
 144 200 -312 0
-c g 275 output[39]
+c group 275 output[39]
 -144 -256 312 0
-c g 275 output[39]
+c group 275 output[39]
 c ---------------
 c Xor representation
-m32 34 35 36 37 39 40 41 42 43 44 49 52 53 54 57 60 61 62 64 68 69 75 76 77 79 89 0
-c g 276 sr[0][88]
+x32 34 35 36 37 39 40 41 42 43 44 49 52 53 54 57 60 61 62 64 68 69 75 76 77 79 89 0
+c group 276 sr[0][88]
 c ---------------
 c Karnaugh representation
 145 52 -54 -56 0
-c g 277 f[0][40]
+c group 277 f[0][40]
 145 -52 54 0
-c g 277 f[0][40]
+c group 277 f[0][40]
 -145 52 54 0
-c g 277 f[0][40]
+c group 277 f[0][40]
 -145 52 56 0
-c g 277 f[0][40]
+c group 277 f[0][40]
 -145 -52 -54 0
-c g 277 f[0][40]
+c group 277 f[0][40]
 c ---------------
 c Karnaugh representation
 201 -60 62 -64 0
-c g 278 f[1][40]
+c group 278 f[1][40]
 201 60 -62 0
-c g 278 f[1][40]
+c group 278 f[1][40]
 -201 60 62 0
-c g 278 f[1][40]
+c group 278 f[1][40]
 -201 -60 -62 0
-c g 278 f[1][40]
+c group 278 f[1][40]
 -201 -60 64 0
-c g 278 f[1][40]
+c group 278 f[1][40]
 c ---------------
 c Karnaugh representation
 313 -74 -76 -78 0
-c g 279 f[3][40]
+c group 279 f[3][40]
 313 76 -78 -80 0
-c g 279 f[3][40]
+c group 279 f[3][40]
 313 -74 78 80 0
-c g 279 f[3][40]
+c group 279 f[3][40]
 313 74 -76 78 0
-c g 279 f[3][40]
+c group 279 f[3][40]
 -313 74 76 78 0
-c g 279 f[3][40]
+c group 279 f[3][40]
 -313 -74 78 -80 0
-c g 279 f[3][40]
+c group 279 f[3][40]
 -313 76 -78 80 0
-c g 279 f[3][40]
+c group 279 f[3][40]
 -313 74 -76 -78 0
-c g 279 f[3][40]
+c group 279 f[3][40]
 c ---------------
 c Karnaugh representation
 369 82 84 -86 0
-c g 280 f[4][40]
+c group 280 f[4][40]
 369 -82 -84 0
-c g 280 f[4][40]
+c group 280 f[4][40]
 369 -82 86 -88 0
-c g 280 f[4][40]
+c group 280 f[4][40]
 369 -84 86 -88 0
-c g 280 f[4][40]
+c group 280 f[4][40]
 -369 82 84 86 0
-c g 280 f[4][40]
+c group 280 f[4][40]
 -369 82 86 88 0
-c g 280 f[4][40]
+c group 280 f[4][40]
 -369 84 86 88 0
-c g 280 f[4][40]
+c group 280 f[4][40]
 -369 82 -84 -86 0
-c g 280 f[4][40]
+c group 280 f[4][40]
 -369 -82 84 -86 0
-c g 280 f[4][40]
+c group 280 f[4][40]
 c ---------------
 c Karnaugh representation
 68 201 -313 0
-c g 281 output[40]
+c group 281 output[40]
 68 145 369 0
-c g 281 output[40]
+c group 281 output[40]
 -145 -201 313 -369 0
-c g 281 output[40]
+c group 281 output[40]
 -68 313 369 0
-c g 281 output[40]
+c group 281 output[40]
 145 201 -313 0
-c g 281 output[40]
+c group 281 output[40]
 -68 -145 313 0
-c g 281 output[40]
+c group 281 output[40]
 c ---------------
 c Xor representation
-m32 33 35 36 38 40 43 45 46 47 49 53 54 55 56 57 60 62 63 65 68 69 74 75 76 77 78 90 0
-c g 282 sr[0][89]
+x32 33 35 36 38 40 43 45 46 47 49 53 54 55 56 57 60 62 63 65 68 69 74 75 76 77 78 90 0
+c group 282 sr[0][89]
 c ---------------
 c Karnaugh representation
 146 53 -55 -57 0
-c g 283 f[0][41]
+c group 283 f[0][41]
 146 -53 55 0
-c g 283 f[0][41]
+c group 283 f[0][41]
 -146 53 55 0
-c g 283 f[0][41]
+c group 283 f[0][41]
 -146 53 57 0
-c g 283 f[0][41]
+c group 283 f[0][41]
 -146 -53 -55 0
-c g 283 f[0][41]
+c group 283 f[0][41]
 c ---------------
 c Karnaugh representation
 202 -61 63 -65 0
-c g 284 f[1][41]
+c group 284 f[1][41]
 202 61 -63 0
-c g 284 f[1][41]
+c group 284 f[1][41]
 -202 61 63 0
-c g 284 f[1][41]
+c group 284 f[1][41]
 -202 -61 -63 0
-c g 284 f[1][41]
+c group 284 f[1][41]
 -202 -61 65 0
-c g 284 f[1][41]
+c group 284 f[1][41]
 c ---------------
 c Xor representation
 x-258 0
-c g 285 f[2][41]
+c group 285 f[2][41]
 c ---------------
 c Karnaugh representation
 314 -75 -77 -79 0
-c g 286 f[3][41]
+c group 286 f[3][41]
 314 77 -79 -81 0
-c g 286 f[3][41]
+c group 286 f[3][41]
 314 -75 79 81 0
-c g 286 f[3][41]
+c group 286 f[3][41]
 314 75 -77 79 0
-c g 286 f[3][41]
+c group 286 f[3][41]
 -314 75 77 79 0
-c g 286 f[3][41]
+c group 286 f[3][41]
 -314 -75 79 -81 0
-c g 286 f[3][41]
+c group 286 f[3][41]
 -314 77 -79 81 0
-c g 286 f[3][41]
+c group 286 f[3][41]
 -314 75 -77 -79 0
-c g 286 f[3][41]
+c group 286 f[3][41]
 c ---------------
 c Karnaugh representation
 370 83 85 -87 0
-c g 287 f[4][41]
+c group 287 f[4][41]
 370 -83 -85 0
-c g 287 f[4][41]
+c group 287 f[4][41]
 370 -83 87 -89 0
-c g 287 f[4][41]
+c group 287 f[4][41]
 370 -85 87 -89 0
-c g 287 f[4][41]
+c group 287 f[4][41]
 -370 83 85 87 0
-c g 287 f[4][41]
+c group 287 f[4][41]
 -370 83 87 89 0
-c g 287 f[4][41]
+c group 287 f[4][41]
 -370 85 87 89 0
-c g 287 f[4][41]
+c group 287 f[4][41]
 -370 83 -85 -87 0
-c g 287 f[4][41]
+c group 287 f[4][41]
 -370 -83 85 -87 0
-c g 287 f[4][41]
+c group 287 f[4][41]
 c ---------------
 c Karnaugh representation
 202 -314 0
-c g 288 output[41]
+c group 288 output[41]
 146 370 0
-c g 288 output[41]
+c group 288 output[41]
 -146 -202 314 -370 0
-c g 288 output[41]
+c group 288 output[41]
 c ---------------
 c Xor representation
-m-33 34 36 37 39 41 44 46 47 48 54 55 56 57 60 61 63 64 69 72 74 75 76 77 78 79 91 0
-c g 289 sr[0][90]
+x-33 34 36 37 39 41 44 46 47 48 54 55 56 57 60 61 63 64 69 72 74 75 76 77 78 79 91 0
+c group 289 sr[0][90]
 c ---------------
 c Karnaugh representation
 147 -52 56 0
-c g 290 f[0][42]
+c group 290 f[0][42]
 147 -54 56 0
-c g 290 f[0][42]
+c group 290 f[0][42]
 147 -52 -54 0
-c g 290 f[0][42]
+c group 290 f[0][42]
 -147 52 54 0
-c g 290 f[0][42]
+c group 290 f[0][42]
 -147 52 -56 0
-c g 290 f[0][42]
+c group 290 f[0][42]
 -147 54 -56 0
-c g 290 f[0][42]
+c group 290 f[0][42]
 c ---------------
 c Karnaugh representation
 203 60 62 -64 0
-c g 291 f[1][42]
+c group 291 f[1][42]
 203 -60 64 0
-c g 291 f[1][42]
+c group 291 f[1][42]
 203 -62 64 0
-c g 291 f[1][42]
+c group 291 f[1][42]
 203 -60 -62 0
-c g 291 f[1][42]
+c group 291 f[1][42]
 -203 60 62 64 0
-c g 291 f[1][42]
+c group 291 f[1][42]
 -203 60 -62 -64 0
-c g 291 f[1][42]
+c group 291 f[1][42]
 -203 -60 62 -64 0
-c g 291 f[1][42]
+c group 291 f[1][42]
 c ---------------
 c Karnaugh representation
 259 72 -74 0
-c g 292 f[2][42]
+c group 292 f[2][42]
 259 -68 0
-c g 292 f[2][42]
+c group 292 f[2][42]
 -259 68 74 0
-c g 292 f[2][42]
+c group 292 f[2][42]
 -259 68 -72 0
-c g 292 f[2][42]
+c group 292 f[2][42]
 c ---------------
 c Karnaugh representation
 315 -76 -78 -80 0
-c g 293 f[3][42]
+c group 293 f[3][42]
 315 78 -80 -82 0
-c g 293 f[3][42]
+c group 293 f[3][42]
 315 -76 80 82 0
-c g 293 f[3][42]
+c group 293 f[3][42]
 315 76 -78 80 0
-c g 293 f[3][42]
+c group 293 f[3][42]
 -315 76 78 80 0
-c g 293 f[3][42]
+c group 293 f[3][42]
 -315 -76 80 -82 0
-c g 293 f[3][42]
+c group 293 f[3][42]
 -315 78 -80 82 0
-c g 293 f[3][42]
+c group 293 f[3][42]
 -315 76 -78 -80 0
-c g 293 f[3][42]
+c group 293 f[3][42]
 c ---------------
 c Karnaugh representation
 371 84 86 -88 0
-c g 294 f[4][42]
+c group 294 f[4][42]
 371 -84 -86 0
-c g 294 f[4][42]
+c group 294 f[4][42]
 371 -84 88 -90 0
-c g 294 f[4][42]
+c group 294 f[4][42]
 371 -86 88 -90 0
-c g 294 f[4][42]
+c group 294 f[4][42]
 -371 84 86 88 0
-c g 294 f[4][42]
+c group 294 f[4][42]
 -371 84 88 90 0
-c g 294 f[4][42]
+c group 294 f[4][42]
 -371 86 88 90 0
-c g 294 f[4][42]
+c group 294 f[4][42]
 -371 84 -86 -88 0
-c g 294 f[4][42]
+c group 294 f[4][42]
 -371 -84 86 -88 0
-c g 294 f[4][42]
+c group 294 f[4][42]
 c ---------------
 c Karnaugh representation
 203 259 315 -371 0
-c g 295 output[42]
+c group 295 output[42]
 -147 -203 -315 0
-c g 295 output[42]
+c group 295 output[42]
 -203 -315 -371 0
-c g 295 output[42]
+c group 295 output[42]
 -147 259 315 371 0
-c g 295 output[42]
+c group 295 output[42]
 -147 -259 -315 0
-c g 295 output[42]
+c group 295 output[42]
 147 315 -371 0
-c g 295 output[42]
+c group 295 output[42]
 -203 -259 -315 0
-c g 295 output[42]
+c group 295 output[42]
 c ---------------
 c Xor representation
-m32 34 35 38 40 41 44 45 46 48 52 55 60 62 64 65 72 74 76 77 78 79 92 0
-c g 296 sr[0][91]
+x32 34 35 38 40 41 44 45 46 48 52 55 60 62 64 65 72 74 76 77 78 79 92 0
+c group 296 sr[0][91]
 c ---------------
 c Karnaugh representation
 148 -53 57 0
-c g 297 f[0][43]
+c group 297 f[0][43]
 148 -55 57 0
-c g 297 f[0][43]
+c group 297 f[0][43]
 148 -53 -55 0
-c g 297 f[0][43]
+c group 297 f[0][43]
 -148 53 55 0
-c g 297 f[0][43]
+c group 297 f[0][43]
 -148 53 -57 0
-c g 297 f[0][43]
+c group 297 f[0][43]
 -148 55 -57 0
-c g 297 f[0][43]
+c group 297 f[0][43]
 c ---------------
 c Karnaugh representation
 204 61 63 -65 0
-c g 298 f[1][43]
+c group 298 f[1][43]
 204 -61 -63 0
-c g 298 f[1][43]
+c group 298 f[1][43]
 -204 61 -63 0
-c g 298 f[1][43]
+c group 298 f[1][43]
 -204 61 65 0
-c g 298 f[1][43]
+c group 298 f[1][43]
 -204 -61 63 0
-c g 298 f[1][43]
+c group 298 f[1][43]
 c ---------------
 c Karnaugh representation
 316 -77 -79 -81 0
-c g 299 f[3][43]
+c group 299 f[3][43]
 316 79 -81 -83 0
-c g 299 f[3][43]
+c group 299 f[3][43]
 316 -77 81 83 0
-c g 299 f[3][43]
+c group 299 f[3][43]
 316 77 -79 81 0
-c g 299 f[3][43]
+c group 299 f[3][43]
 -316 77 79 81 0
-c g 299 f[3][43]
+c group 299 f[3][43]
 -316 -77 81 -83 0
-c g 299 f[3][43]
+c group 299 f[3][43]
 -316 79 -81 83 0
-c g 299 f[3][43]
+c group 299 f[3][43]
 -316 77 -79 -81 0
-c g 299 f[3][43]
+c group 299 f[3][43]
 c ---------------
 c Karnaugh representation
 372 85 87 -89 0
-c g 300 f[4][43]
+c group 300 f[4][43]
 372 -85 -87 0
-c g 300 f[4][43]
+c group 300 f[4][43]
 372 -85 89 -91 0
-c g 300 f[4][43]
+c group 300 f[4][43]
 372 -87 89 -91 0
-c g 300 f[4][43]
+c group 300 f[4][43]
 -372 85 87 89 0
-c g 300 f[4][43]
+c group 300 f[4][43]
 -372 85 89 91 0
-c g 300 f[4][43]
+c group 300 f[4][43]
 -372 87 89 91 0
-c g 300 f[4][43]
+c group 300 f[4][43]
 -372 85 -87 -89 0
-c g 300 f[4][43]
+c group 300 f[4][43]
 -372 -85 87 -89 0
-c g 300 f[4][43]
+c group 300 f[4][43]
 c ---------------
 c Karnaugh representation
 69 204 -316 0
-c g 301 output[43]
+c group 301 output[43]
 69 148 372 0
-c g 301 output[43]
+c group 301 output[43]
 -148 -204 316 -372 0
-c g 301 output[43]
+c group 301 output[43]
 75 204 -316 0
-c g 301 output[43]
+c group 301 output[43]
 75 148 372 0
-c g 301 output[43]
+c group 301 output[43]
 -69 -75 316 372 0
-c g 301 output[43]
+c group 301 output[43]
 148 204 -316 0
-c g 301 output[43]
+c group 301 output[43]
 -69 -75 -148 316 0
-c g 301 output[43]
+c group 301 output[43]
 c ---------------
 c Xor representation
-m32 33 35 36 37 39 44 45 53 57 63 65 74 77 78 79 93 0
-c g 302 sr[0][92]
+x32 33 35 36 37 39 44 45 53 57 63 65 74 77 78 79 93 0
+c group 302 sr[0][92]
 c ---------------
 c Karnaugh representation
 149 -54 60 0
-c g 303 f[0][44]
+c group 303 f[0][44]
 149 54 -56 0
-c g 303 f[0][44]
+c group 303 f[0][44]
 -149 54 56 0
-c g 303 f[0][44]
+c group 303 f[0][44]
 -149 -54 -60 0
-c g 303 f[0][44]
+c group 303 f[0][44]
 c ---------------
 c Xor representation
 x62 64 205 0
-c g 304 f[1][44]
+c group 304 f[1][44]
 c ---------------
 c Karnaugh representation
 261 74 -76 0
-c g 305 f[2][44]
+c group 305 f[2][44]
 261 -72 0
-c g 305 f[2][44]
+c group 305 f[2][44]
 -261 72 76 0
-c g 305 f[2][44]
+c group 305 f[2][44]
 -261 72 -74 0
-c g 305 f[2][44]
+c group 305 f[2][44]
 c ---------------
 c Karnaugh representation
 317 -78 -80 -82 0
-c g 306 f[3][44]
+c group 306 f[3][44]
 317 80 -82 -84 0
-c g 306 f[3][44]
+c group 306 f[3][44]
 317 -78 82 84 0
-c g 306 f[3][44]
+c group 306 f[3][44]
 317 78 -80 82 0
-c g 306 f[3][44]
+c group 306 f[3][44]
 -317 78 80 82 0
-c g 306 f[3][44]
+c group 306 f[3][44]
 -317 -78 82 -84 0
-c g 306 f[3][44]
+c group 306 f[3][44]
 -317 80 -82 84 0
-c g 306 f[3][44]
+c group 306 f[3][44]
 -317 78 -80 -82 0
-c g 306 f[3][44]
+c group 306 f[3][44]
 c ---------------
 c Karnaugh representation
 373 86 88 -90 0
-c g 307 f[4][44]
+c group 307 f[4][44]
 373 -86 -88 0
-c g 307 f[4][44]
+c group 307 f[4][44]
 373 -86 90 -92 0
-c g 307 f[4][44]
+c group 307 f[4][44]
 373 -88 90 -92 0
-c g 307 f[4][44]
+c group 307 f[4][44]
 -373 86 88 90 0
-c g 307 f[4][44]
+c group 307 f[4][44]
 -373 86 90 92 0
-c g 307 f[4][44]
+c group 307 f[4][44]
 -373 88 90 92 0
-c g 307 f[4][44]
+c group 307 f[4][44]
 -373 86 -88 -90 0
-c g 307 f[4][44]
+c group 307 f[4][44]
 -373 -86 88 -90 0
-c g 307 f[4][44]
+c group 307 f[4][44]
 c ---------------
 c Karnaugh representation
 205 261 317 -373 0
-c g 308 output[44]
+c group 308 output[44]
 -149 -205 -317 0
-c g 308 output[44]
+c group 308 output[44]
 -205 -317 -373 0
-c g 308 output[44]
+c group 308 output[44]
 -149 261 317 373 0
-c g 308 output[44]
+c group 308 output[44]
 -149 -261 -317 0
-c g 308 output[44]
+c group 308 output[44]
 149 317 -373 0
-c g 308 output[44]
+c group 308 output[44]
 -205 -261 -317 0
-c g 308 output[44]
+c group 308 output[44]
 c ---------------
 c Xor representation
-m32 33 34 36 38 40 41 42 44 45 47 49 52 54 56 57 61 64 68 74 78 79 94 0
-c g 309 sr[0][93]
+x32 33 34 36 38 40 41 42 44 45 47 49 52 54 56 57 61 64 68 74 78 79 94 0
+c group 309 sr[0][93]
 c ---------------
 c Karnaugh representation
 150 -55 61 0
-c g 310 f[0][45]
+c group 310 f[0][45]
 150 55 -57 0
-c g 310 f[0][45]
+c group 310 f[0][45]
 -150 55 57 0
-c g 310 f[0][45]
+c group 310 f[0][45]
 -150 -55 -61 0
-c g 310 f[0][45]
+c group 310 f[0][45]
 c ---------------
 c Karnaugh representation
 206 -63 -65 0
-c g 311 f[1][45]
+c group 311 f[1][45]
 206 -63 -69 0
-c g 311 f[1][45]
+c group 311 f[1][45]
 206 -65 -69 0
-c g 311 f[1][45]
+c group 311 f[1][45]
 -206 63 65 0
-c g 311 f[1][45]
+c group 311 f[1][45]
 -206 63 69 0
-c g 311 f[1][45]
+c group 311 f[1][45]
 -206 65 69 0
-c g 311 f[1][45]
+c group 311 f[1][45]
 c ---------------
 c Karnaugh representation
 318 -79 -81 -83 0
-c g 312 f[3][45]
+c group 312 f[3][45]
 318 81 -83 -85 0
-c g 312 f[3][45]
+c group 312 f[3][45]
 318 -79 83 85 0
-c g 312 f[3][45]
+c group 312 f[3][45]
 318 79 -81 83 0
-c g 312 f[3][45]
+c group 312 f[3][45]
 -318 79 81 83 0
-c g 312 f[3][45]
+c group 312 f[3][45]
 -318 -79 83 -85 0
-c g 312 f[3][45]
+c group 312 f[3][45]
 -318 81 -83 85 0
-c g 312 f[3][45]
+c group 312 f[3][45]
 -318 79 -81 -83 0
-c g 312 f[3][45]
+c group 312 f[3][45]
 c ---------------
 c Karnaugh representation
 374 87 89 -91 0
-c g 313 f[4][45]
+c group 313 f[4][45]
 374 -87 -89 0
-c g 313 f[4][45]
+c group 313 f[4][45]
 374 -87 91 -93 0
-c g 313 f[4][45]
+c group 313 f[4][45]
 374 -89 91 -93 0
-c g 313 f[4][45]
+c group 313 f[4][45]
 -374 87 89 91 0
-c g 313 f[4][45]
+c group 313 f[4][45]
 -374 87 91 93 0
-c g 313 f[4][45]
+c group 313 f[4][45]
 -374 89 91 93 0
-c g 313 f[4][45]
+c group 313 f[4][45]
 -374 87 -89 -91 0
-c g 313 f[4][45]
+c group 313 f[4][45]
 -374 -87 89 -91 0
-c g 313 f[4][45]
+c group 313 f[4][45]
 c ---------------
 c Karnaugh representation
 75 206 -318 0
-c g 314 output[45]
+c group 314 output[45]
 75 150 374 0
-c g 314 output[45]
+c group 314 output[45]
 -150 -206 318 -374 0
-c g 314 output[45]
+c group 314 output[45]
 -75 318 374 0
-c g 314 output[45]
+c group 314 output[45]
 150 206 -318 0
-c g 314 output[45]
+c group 314 output[45]
 -75 -150 318 0
-c g 314 output[45]
+c group 314 output[45]
 c ---------------
 c Xor representation
-m-32 33 34 35 39 43 44 45 47 48 49 52 53 55 56 60 61 62 65 69 72 79 95 0
-c g 315 sr[0][94]
+x-32 33 34 35 39 43 44 45 47 48 49 52 53 55 56 60 61 62 65 69 72 79 95 0
+c group 315 sr[0][94]
 c ---------------
 c Karnaugh representation
 151 -56 60 62 0
-c g 316 f[0][46]
+c group 316 f[0][46]
 151 -60 -62 0
-c g 316 f[0][46]
+c group 316 f[0][46]
 -151 56 60 0
-c g 316 f[0][46]
+c group 316 f[0][46]
 -151 56 62 0
-c g 316 f[0][46]
+c group 316 f[0][46]
 -151 60 -62 0
-c g 316 f[0][46]
+c group 316 f[0][46]
 -151 -60 62 0
-c g 316 f[0][46]
+c group 316 f[0][46]
 c ---------------
 c Karnaugh representation
 207 68 0
-c g 317 f[1][46]
+c group 317 f[1][46]
 207 -64 0
-c g 317 f[1][46]
+c group 317 f[1][46]
 -207 64 -68 0
-c g 317 f[1][46]
+c group 317 f[1][46]
 c ---------------
 c Karnaugh representation
 263 72 74 -76 0
-c g 318 f[2][46]
+c group 318 f[2][46]
 263 -72 -74 0
-c g 318 f[2][46]
+c group 318 f[2][46]
 263 -72 76 -78 0
-c g 318 f[2][46]
+c group 318 f[2][46]
 263 -74 76 -78 0
-c g 318 f[2][46]
+c group 318 f[2][46]
 -263 72 74 76 0
-c g 318 f[2][46]
+c group 318 f[2][46]
 -263 72 76 78 0
-c g 318 f[2][46]
+c group 318 f[2][46]
 -263 74 76 78 0
-c g 318 f[2][46]
+c group 318 f[2][46]
 -263 72 -74 -76 0
-c g 318 f[2][46]
+c group 318 f[2][46]
 -263 -72 74 -76 0
-c g 318 f[2][46]
+c group 318 f[2][46]
 c ---------------
 c Karnaugh representation
 319 -80 -82 -84 0
-c g 319 f[3][46]
+c group 319 f[3][46]
 319 82 -84 -86 0
-c g 319 f[3][46]
+c group 319 f[3][46]
 319 -80 84 86 0
-c g 319 f[3][46]
+c group 319 f[3][46]
 319 80 -82 84 0
-c g 319 f[3][46]
+c group 319 f[3][46]
 -319 80 82 84 0
-c g 319 f[3][46]
+c group 319 f[3][46]
 -319 -80 84 -86 0
-c g 319 f[3][46]
+c group 319 f[3][46]
 -319 82 -84 86 0
-c g 319 f[3][46]
+c group 319 f[3][46]
 -319 80 -82 -84 0
-c g 319 f[3][46]
+c group 319 f[3][46]
 c ---------------
 c Karnaugh representation
 375 88 90 -92 0
-c g 320 f[4][46]
+c group 320 f[4][46]
 375 -88 -90 0
-c g 320 f[4][46]
+c group 320 f[4][46]
 375 -88 92 -94 0
-c g 320 f[4][46]
+c group 320 f[4][46]
 375 -90 92 -94 0
-c g 320 f[4][46]
+c group 320 f[4][46]
 -375 88 90 92 0
-c g 320 f[4][46]
+c group 320 f[4][46]
 -375 88 92 94 0
-c g 320 f[4][46]
+c group 320 f[4][46]
 -375 90 92 94 0
-c g 320 f[4][46]
+c group 320 f[4][46]
 -375 88 -90 -92 0
-c g 320 f[4][46]
+c group 320 f[4][46]
 -375 -88 90 -92 0
-c g 320 f[4][46]
+c group 320 f[4][46]
 c ---------------
 c Karnaugh representation
 207 263 -319 0
-c g 321 output[46]
+c group 321 output[46]
 151 263 375 0
-c g 321 output[46]
+c group 321 output[46]
 -151 -207 319 -375 0
-c g 321 output[46]
+c group 321 output[46]
 -263 319 375 0
-c g 321 output[46]
+c group 321 output[46]
 151 207 -319 0
-c g 321 output[46]
+c group 321 output[46]
 -151 -263 319 0
-c g 321 output[46]
+c group 321 output[46]
 c ---------------
 c Xor representation
-m-32 33 34 35 36 37 40 41 42 45 47 48 52 53 54 62 63 72 75 96 0
-c g 322 sr[0][95]
+x-32 33 34 35 36 37 40 41 42 45 47 48 52 53 54 62 63 72 75 96 0
+c group 322 sr[0][95]
 c ---------------
 c Karnaugh representation
 152 -57 61 63 0
-c g 323 f[0][47]
+c group 323 f[0][47]
 152 -61 -63 0
-c g 323 f[0][47]
+c group 323 f[0][47]
 -152 57 61 0
-c g 323 f[0][47]
+c group 323 f[0][47]
 -152 57 63 0
-c g 323 f[0][47]
+c group 323 f[0][47]
 -152 61 -63 0
-c g 323 f[0][47]
+c group 323 f[0][47]
 -152 -61 63 0
-c g 323 f[0][47]
+c group 323 f[0][47]
 c ---------------
 c Karnaugh representation
 208 65 -69 0
-c g 324 f[1][47]
+c group 324 f[1][47]
 -208 -65 0
-c g 324 f[1][47]
+c group 324 f[1][47]
 -208 69 0
-c g 324 f[1][47]
+c group 324 f[1][47]
 c ---------------
 c Karnaugh representation
 264 -75 77 -79 0
-c g 325 f[2][47]
+c group 325 f[2][47]
 264 75 -77 0
-c g 325 f[2][47]
+c group 325 f[2][47]
 -264 75 77 0
-c g 325 f[2][47]
+c group 325 f[2][47]
 -264 -75 -77 0
-c g 325 f[2][47]
+c group 325 f[2][47]
 -264 -75 79 0
-c g 325 f[2][47]
+c group 325 f[2][47]
 c ---------------
 c Karnaugh representation
 320 -81 -83 -85 0
-c g 326 f[3][47]
+c group 326 f[3][47]
 320 83 -85 -87 0
-c g 326 f[3][47]
+c group 326 f[3][47]
 320 -81 85 87 0
-c g 326 f[3][47]
+c group 326 f[3][47]
 320 81 -83 85 0
-c g 326 f[3][47]
+c group 326 f[3][47]
 -320 81 83 85 0
-c g 326 f[3][47]
+c group 326 f[3][47]
 -320 -81 85 -87 0
-c g 326 f[3][47]
+c group 326 f[3][47]
 -320 83 -85 87 0
-c g 326 f[3][47]
+c group 326 f[3][47]
 -320 81 -83 -85 0
-c g 326 f[3][47]
+c group 326 f[3][47]
 c ---------------
 c Karnaugh representation
 376 89 91 -93 0
-c g 327 f[4][47]
+c group 327 f[4][47]
 376 -89 -91 0
-c g 327 f[4][47]
+c group 327 f[4][47]
 376 -89 93 -95 0
-c g 327 f[4][47]
+c group 327 f[4][47]
 376 -91 93 -95 0
-c g 327 f[4][47]
+c group 327 f[4][47]
 -376 89 91 93 0
-c g 327 f[4][47]
+c group 327 f[4][47]
 -376 89 93 95 0
-c g 327 f[4][47]
+c group 327 f[4][47]
 -376 91 93 95 0
-c g 327 f[4][47]
+c group 327 f[4][47]
 -376 89 -91 -93 0
-c g 327 f[4][47]
+c group 327 f[4][47]
 -376 -89 91 -93 0
-c g 327 f[4][47]
+c group 327 f[4][47]
 c ---------------
 c Karnaugh representation
 208 264 -320 0
-c g 328 output[47]
+c group 328 output[47]
 152 264 376 0
-c g 328 output[47]
+c group 328 output[47]
 -152 -208 320 -376 0
-c g 328 output[47]
+c group 328 output[47]
 -264 320 376 0
-c g 328 output[47]
+c group 328 output[47]
 152 208 -320 0
-c g 328 output[47]
+c group 328 output[47]
 -152 -264 320 0
-c g 328 output[47]
+c group 328 output[47]
 c ---------------
 c Xor representation
-m-33 34 35 36 37 38 41 42 43 46 48 49 53 54 55 63 64 68 72 76 97 0
-c g 329 sr[0][96]
+x-33 34 35 36 37 38 41 42 43 46 48 49 53 54 55 63 64 68 72 76 97 0
+c group 329 sr[0][96]
 c ---------------
 c Karnaugh representation
 153 60 -62 -64 0
-c g 330 f[0][48]
+c group 330 f[0][48]
 153 -60 62 0
-c g 330 f[0][48]
+c group 330 f[0][48]
 -153 60 62 0
-c g 330 f[0][48]
+c group 330 f[0][48]
 -153 60 64 0
-c g 330 f[0][48]
+c group 330 f[0][48]
 -153 -60 -62 0
-c g 330 f[0][48]
+c group 330 f[0][48]
 c ---------------
 c Karnaugh representation
 265 74 76 -78 0
-c g 331 f[2][48]
+c group 331 f[2][48]
 265 -74 -76 0
-c g 331 f[2][48]
+c group 331 f[2][48]
 265 -74 78 -80 0
-c g 331 f[2][48]
+c group 331 f[2][48]
 265 -76 78 -80 0
-c g 331 f[2][48]
+c group 331 f[2][48]
 -265 74 76 78 0
-c g 331 f[2][48]
+c group 331 f[2][48]
 -265 74 78 80 0
-c g 331 f[2][48]
+c group 331 f[2][48]
 -265 76 78 80 0
-c g 331 f[2][48]
+c group 331 f[2][48]
 -265 74 -76 -78 0
-c g 331 f[2][48]
+c group 331 f[2][48]
 -265 -74 76 -78 0
-c g 331 f[2][48]
+c group 331 f[2][48]
 c ---------------
 c Karnaugh representation
 321 -82 -84 -86 0
-c g 332 f[3][48]
+c group 332 f[3][48]
 321 84 -86 -88 0
-c g 332 f[3][48]
+c group 332 f[3][48]
 321 -82 86 88 0
-c g 332 f[3][48]
+c group 332 f[3][48]
 321 82 -84 86 0
-c g 332 f[3][48]
+c group 332 f[3][48]
 -321 82 84 86 0
-c g 332 f[3][48]
+c group 332 f[3][48]
 -321 -82 86 -88 0
-c g 332 f[3][48]
+c group 332 f[3][48]
 -321 84 -86 88 0
-c g 332 f[3][48]
+c group 332 f[3][48]
 -321 82 -84 -86 0
-c g 332 f[3][48]
+c group 332 f[3][48]
 c ---------------
 c Karnaugh representation
 377 90 92 -94 0
-c g 333 f[4][48]
+c group 333 f[4][48]
 377 -90 -92 0
-c g 333 f[4][48]
+c group 333 f[4][48]
 377 -90 94 -96 0
-c g 333 f[4][48]
+c group 333 f[4][48]
 377 -92 94 -96 0
-c g 333 f[4][48]
+c group 333 f[4][48]
 -377 90 92 94 0
-c g 333 f[4][48]
+c group 333 f[4][48]
 -377 90 94 96 0
-c g 333 f[4][48]
+c group 333 f[4][48]
 -377 92 94 96 0
-c g 333 f[4][48]
+c group 333 f[4][48]
 -377 90 -92 -94 0
-c g 333 f[4][48]
+c group 333 f[4][48]
 -377 -90 92 -94 0
-c g 333 f[4][48]
+c group 333 f[4][48]
 c ---------------
 c Karnaugh representation
 153 265 377 0
-c g 334 output[48]
+c group 334 output[48]
 68 265 -321 0
-c g 334 output[48]
+c group 334 output[48]
 -68 -153 321 -377 0
-c g 334 output[48]
+c group 334 output[48]
 -265 321 377 0
-c g 334 output[48]
+c group 334 output[48]
 68 153 -321 0
-c g 334 output[48]
+c group 334 output[48]
 -153 -265 321 0
-c g 334 output[48]
+c group 334 output[48]
 c ---------------
 c Xor representation
-m-34 35 36 37 38 39 42 43 44 47 49 52 54 55 56 64 65 68 69 72 74 77 98 0
-c g 335 sr[0][97]
+x-34 35 36 37 38 39 42 43 44 47 49 52 54 55 56 64 65 68 69 72 74 77 98 0
+c group 335 sr[0][97]
 c ---------------
 c Karnaugh representation
 154 61 -63 -65 0
-c g 336 f[0][49]
+c group 336 f[0][49]
 154 -61 63 0
-c g 336 f[0][49]
+c group 336 f[0][49]
 -154 61 63 0
-c g 336 f[0][49]
+c group 336 f[0][49]
 -154 61 65 0
-c g 336 f[0][49]
+c group 336 f[0][49]
 -154 -61 -63 0
-c g 336 f[0][49]
+c group 336 f[0][49]
 c ---------------
 c Xor representation
 x-210 0
-c g 337 f[1][49]
+c group 337 f[1][49]
 c ---------------
 c Karnaugh representation
 266 75 77 -79 0
-c g 338 f[2][49]
+c group 338 f[2][49]
 266 -75 -77 0
-c g 338 f[2][49]
+c group 338 f[2][49]
 266 -75 79 -81 0
-c g 338 f[2][49]
+c group 338 f[2][49]
 266 -77 79 -81 0
-c g 338 f[2][49]
+c group 338 f[2][49]
 -266 75 77 79 0
-c g 338 f[2][49]
+c group 338 f[2][49]
 -266 75 79 81 0
-c g 338 f[2][49]
+c group 338 f[2][49]
 -266 77 79 81 0
-c g 338 f[2][49]
+c group 338 f[2][49]
 -266 75 -77 -79 0
-c g 338 f[2][49]
+c group 338 f[2][49]
 -266 -75 77 -79 0
-c g 338 f[2][49]
+c group 338 f[2][49]
 c ---------------
 c Karnaugh representation
 322 -83 -85 -87 0
-c g 339 f[3][49]
+c group 339 f[3][49]
 322 85 -87 -89 0
-c g 339 f[3][49]
+c group 339 f[3][49]
 322 -83 87 89 0
-c g 339 f[3][49]
+c group 339 f[3][49]
 322 83 -85 87 0
-c g 339 f[3][49]
+c group 339 f[3][49]
 -322 83 85 87 0
-c g 339 f[3][49]
+c group 339 f[3][49]
 -322 -83 87 -89 0
-c g 339 f[3][49]
+c group 339 f[3][49]
 -322 85 -87 89 0
-c g 339 f[3][49]
+c group 339 f[3][49]
 -322 83 -85 -87 0
-c g 339 f[3][49]
+c group 339 f[3][49]
 c ---------------
 c Karnaugh representation
 378 91 93 -95 0
-c g 340 f[4][49]
+c group 340 f[4][49]
 378 -91 -93 0
-c g 340 f[4][49]
+c group 340 f[4][49]
 378 -91 95 -97 0
-c g 340 f[4][49]
+c group 340 f[4][49]
 378 -93 95 -97 0
-c g 340 f[4][49]
+c group 340 f[4][49]
 -378 91 93 95 0
-c g 340 f[4][49]
+c group 340 f[4][49]
 -378 91 95 97 0
-c g 340 f[4][49]
+c group 340 f[4][49]
 -378 93 95 97 0
-c g 340 f[4][49]
+c group 340 f[4][49]
 -378 91 -93 -95 0
-c g 340 f[4][49]
+c group 340 f[4][49]
 -378 -91 93 -95 0
-c g 340 f[4][49]
+c group 340 f[4][49]
 c ---------------
 c Karnaugh representation
 -154 -266 -322 0
-c g 341 output[49]
+c group 341 output[49]
 -154 266 322 0
-c g 341 output[49]
+c group 341 output[49]
 154 322 -378 0
-c g 341 output[49]
+c group 341 output[49]
 c ---------------
 c Xor representation
-m-35 36 37 38 39 40 43 44 45 48 53 55 56 57 65 69 74 75 78 99 0
-c g 342 sr[0][98]
+x-35 36 37 38 39 40 43 44 45 48 53 55 56 57 65 69 74 75 78 99 0
+c group 342 sr[0][98]
 c ---------------
 c Karnaugh representation
 155 60 -62 64 0
-c g 343 f[0][50]
+c group 343 f[0][50]
 155 62 -64 0
-c g 343 f[0][50]
+c group 343 f[0][50]
 155 -60 -64 0
-c g 343 f[0][50]
+c group 343 f[0][50]
 -155 62 64 0
-c g 343 f[0][50]
+c group 343 f[0][50]
 -155 60 -62 -64 0
-c g 343 f[0][50]
+c group 343 f[0][50]
 -155 -60 64 0
-c g 343 f[0][50]
+c group 343 f[0][50]
 c ---------------
 c Karnaugh representation
 211 72 -74 0
-c g 344 f[1][50]
+c group 344 f[1][50]
 211 -68 0
-c g 344 f[1][50]
+c group 344 f[1][50]
 -211 68 74 0
-c g 344 f[1][50]
+c group 344 f[1][50]
 -211 68 -72 0
-c g 344 f[1][50]
+c group 344 f[1][50]
 c ---------------
 c Karnaugh representation
 267 76 78 -80 0
-c g 345 f[2][50]
+c group 345 f[2][50]
 267 -76 -78 0
-c g 345 f[2][50]
+c group 345 f[2][50]
 267 -76 80 -82 0
-c g 345 f[2][50]
+c group 345 f[2][50]
 267 -78 80 -82 0
-c g 345 f[2][50]
+c group 345 f[2][50]
 -267 76 78 80 0
-c g 345 f[2][50]
+c group 345 f[2][50]
 -267 76 80 82 0
-c g 345 f[2][50]
+c group 345 f[2][50]
 -267 78 80 82 0
-c g 345 f[2][50]
+c group 345 f[2][50]
 -267 76 -78 -80 0
-c g 345 f[2][50]
+c group 345 f[2][50]
 -267 -76 78 -80 0
-c g 345 f[2][50]
+c group 345 f[2][50]
 c ---------------
 c Karnaugh representation
 323 -84 -86 -88 0
-c g 346 f[3][50]
+c group 346 f[3][50]
 323 86 -88 -90 0
-c g 346 f[3][50]
+c group 346 f[3][50]
 323 -84 88 90 0
-c g 346 f[3][50]
+c group 346 f[3][50]
 323 84 -86 88 0
-c g 346 f[3][50]
+c group 346 f[3][50]
 -323 84 86 88 0
-c g 346 f[3][50]
+c group 346 f[3][50]
 -323 -84 88 -90 0
-c g 346 f[3][50]
+c group 346 f[3][50]
 -323 86 -88 90 0
-c g 346 f[3][50]
+c group 346 f[3][50]
 -323 84 -86 -88 0
-c g 346 f[3][50]
+c group 346 f[3][50]
 c ---------------
 c Karnaugh representation
 379 92 94 -96 0
-c g 347 f[4][50]
+c group 347 f[4][50]
 379 -92 -94 0
-c g 347 f[4][50]
+c group 347 f[4][50]
 379 -92 96 -98 0
-c g 347 f[4][50]
+c group 347 f[4][50]
 379 -94 96 -98 0
-c g 347 f[4][50]
+c group 347 f[4][50]
 -379 92 94 96 0
-c g 347 f[4][50]
+c group 347 f[4][50]
 -379 92 96 98 0
-c g 347 f[4][50]
+c group 347 f[4][50]
 -379 94 96 98 0
-c g 347 f[4][50]
+c group 347 f[4][50]
 -379 92 -94 -96 0
-c g 347 f[4][50]
+c group 347 f[4][50]
 -379 -92 94 -96 0
-c g 347 f[4][50]
+c group 347 f[4][50]
 c ---------------
 c Karnaugh representation
 211 267 -323 0
-c g 348 output[50]
+c group 348 output[50]
 155 267 379 0
-c g 348 output[50]
+c group 348 output[50]
 -155 -211 323 -379 0
-c g 348 output[50]
+c group 348 output[50]
 -267 323 379 0
-c g 348 output[50]
+c group 348 output[50]
 155 211 -323 0
-c g 348 output[50]
+c group 348 output[50]
 -155 -267 323 0
-c g 348 output[50]
+c group 348 output[50]
 c ---------------
 c Xor representation
-m-36 37 38 39 40 41 44 45 46 49 52 54 56 57 74 75 76 79 100 0
-c g 349 sr[0][99]
+x-36 37 38 39 40 41 44 45 46 49 52 54 56 57 74 75 76 79 100 0
+c group 349 sr[0][99]
 c ---------------
 c Karnaugh representation
 156 -61 65 0
-c g 350 f[0][51]
+c group 350 f[0][51]
 156 -63 65 0
-c g 350 f[0][51]
+c group 350 f[0][51]
 156 -61 -63 0
-c g 350 f[0][51]
+c group 350 f[0][51]
 -156 61 63 0
-c g 350 f[0][51]
+c group 350 f[0][51]
 -156 61 -65 0
-c g 350 f[0][51]
+c group 350 f[0][51]
 -156 63 -65 0
-c g 350 f[0][51]
+c group 350 f[0][51]
 c ---------------
 c Karnaugh representation
 268 77 79 -81 0
-c g 351 f[2][51]
+c group 351 f[2][51]
 268 -77 -79 0
-c g 351 f[2][51]
+c group 351 f[2][51]
 268 -77 81 -83 0
-c g 351 f[2][51]
+c group 351 f[2][51]
 268 -79 81 -83 0
-c g 351 f[2][51]
+c group 351 f[2][51]
 -268 77 79 81 0
-c g 351 f[2][51]
+c group 351 f[2][51]
 -268 77 81 83 0
-c g 351 f[2][51]
+c group 351 f[2][51]
 -268 79 81 83 0
-c g 351 f[2][51]
+c group 351 f[2][51]
 -268 77 -79 -81 0
-c g 351 f[2][51]
+c group 351 f[2][51]
 -268 -77 79 -81 0
-c g 351 f[2][51]
+c group 351 f[2][51]
 c ---------------
 c Karnaugh representation
 324 -85 -87 -89 0
-c g 352 f[3][51]
+c group 352 f[3][51]
 324 87 -89 -91 0
-c g 352 f[3][51]
+c group 352 f[3][51]
 324 -85 89 91 0
-c g 352 f[3][51]
+c group 352 f[3][51]
 324 85 -87 89 0
-c g 352 f[3][51]
+c group 352 f[3][51]
 -324 85 87 89 0
-c g 352 f[3][51]
+c group 352 f[3][51]
 -324 -85 89 -91 0
-c g 352 f[3][51]
+c group 352 f[3][51]
 -324 87 -89 91 0
-c g 352 f[3][51]
+c group 352 f[3][51]
 -324 85 -87 -89 0
-c g 352 f[3][51]
+c group 352 f[3][51]
 c ---------------
 c Karnaugh representation
 380 93 95 -97 0
-c g 353 f[4][51]
+c group 353 f[4][51]
 380 -93 -95 0
-c g 353 f[4][51]
+c group 353 f[4][51]
 380 -93 97 -99 0
-c g 353 f[4][51]
+c group 353 f[4][51]
 380 -95 97 -99 0
-c g 353 f[4][51]
+c group 353 f[4][51]
 -380 93 95 97 0
-c g 353 f[4][51]
+c group 353 f[4][51]
 -380 93 97 99 0
-c g 353 f[4][51]
+c group 353 f[4][51]
 -380 95 97 99 0
-c g 353 f[4][51]
+c group 353 f[4][51]
 -380 93 -95 -97 0
-c g 353 f[4][51]
+c group 353 f[4][51]
 -380 -93 95 -97 0
-c g 353 f[4][51]
+c group 353 f[4][51]
 c ---------------
 c Karnaugh representation
 156 268 380 0
-c g 354 output[51]
+c group 354 output[51]
 69 268 -324 0
-c g 354 output[51]
+c group 354 output[51]
 75 268 -324 0
-c g 354 output[51]
+c group 354 output[51]
 -69 -75 -156 324 -380 0
-c g 354 output[51]
+c group 354 output[51]
 69 156 -324 0
-c g 354 output[51]
+c group 354 output[51]
 69 156 380 0
-c g 354 output[51]
+c group 354 output[51]
 -156 -268 324 0
-c g 354 output[51]
+c group 354 output[51]
 -69 -268 324 380 0
-c g 354 output[51]
+c group 354 output[51]
 75 156 -324 0
-c g 354 output[51]
+c group 354 output[51]
 c ---------------
 c Xor representation
-m-32 38 39 40 44 45 49 52 53 55 56 61 68 72 74 76 77 101 0
-c g 355 sr[0][100]
+x-32 38 39 40 44 45 49 52 53 55 56 61 68 72 74 76 77 101 0
+c group 355 sr[0][100]
 c ---------------
 c Karnaugh representation
 157 -62 -64 0
-c g 356 f[0][52]
+c group 356 f[0][52]
 157 64 -68 0
-c g 356 f[0][52]
+c group 356 f[0][52]
 -157 64 68 0
-c g 356 f[0][52]
+c group 356 f[0][52]
 -157 62 -64 0
-c g 356 f[0][52]
+c group 356 f[0][52]
 c ---------------
 c Karnaugh representation
 213 74 -76 0
-c g 357 f[1][52]
+c group 357 f[1][52]
 213 -72 0
-c g 357 f[1][52]
+c group 357 f[1][52]
 -213 72 76 0
-c g 357 f[1][52]
+c group 357 f[1][52]
 -213 72 -74 0
-c g 357 f[1][52]
+c group 357 f[1][52]
 c ---------------
 c Karnaugh representation
 269 78 80 -82 0
-c g 358 f[2][52]
+c group 358 f[2][52]
 269 -78 -80 0
-c g 358 f[2][52]
+c group 358 f[2][52]
 269 -78 82 -84 0
-c g 358 f[2][52]
+c group 358 f[2][52]
 269 -80 82 -84 0
-c g 358 f[2][52]
+c group 358 f[2][52]
 -269 78 80 82 0
-c g 358 f[2][52]
+c group 358 f[2][52]
 -269 78 82 84 0
-c g 358 f[2][52]
+c group 358 f[2][52]
 -269 80 82 84 0
-c g 358 f[2][52]
+c group 358 f[2][52]
 -269 78 -80 -82 0
-c g 358 f[2][52]
+c group 358 f[2][52]
 -269 -78 80 -82 0
-c g 358 f[2][52]
+c group 358 f[2][52]
 c ---------------
 c Karnaugh representation
 325 -86 -88 -90 0
-c g 359 f[3][52]
+c group 359 f[3][52]
 325 88 -90 -92 0
-c g 359 f[3][52]
+c group 359 f[3][52]
 325 -86 90 92 0
-c g 359 f[3][52]
+c group 359 f[3][52]
 325 86 -88 90 0
-c g 359 f[3][52]
+c group 359 f[3][52]
 -325 86 88 90 0
-c g 359 f[3][52]
+c group 359 f[3][52]
 -325 -86 90 -92 0
-c g 359 f[3][52]
+c group 359 f[3][52]
 -325 88 -90 92 0
-c g 359 f[3][52]
+c group 359 f[3][52]
 -325 86 -88 -90 0
-c g 359 f[3][52]
+c group 359 f[3][52]
 c ---------------
 c Karnaugh representation
 381 94 96 -98 0
-c g 360 f[4][52]
+c group 360 f[4][52]
 381 -94 -96 0
-c g 360 f[4][52]
+c group 360 f[4][52]
 381 -94 98 -100 0
-c g 360 f[4][52]
+c group 360 f[4][52]
 381 -96 98 -100 0
-c g 360 f[4][52]
+c group 360 f[4][52]
 -381 94 96 98 0
-c g 360 f[4][52]
+c group 360 f[4][52]
 -381 94 98 100 0
-c g 360 f[4][52]
+c group 360 f[4][52]
 -381 96 98 100 0
-c g 360 f[4][52]
+c group 360 f[4][52]
 -381 94 -96 -98 0
-c g 360 f[4][52]
+c group 360 f[4][52]
 -381 -94 96 -98 0
-c g 360 f[4][52]
+c group 360 f[4][52]
 c ---------------
 c Karnaugh representation
 213 269 -325 0
-c g 361 output[52]
+c group 361 output[52]
 157 269 381 0
-c g 361 output[52]
+c group 361 output[52]
 -157 -213 325 -381 0
-c g 361 output[52]
+c group 361 output[52]
 -269 325 381 0
-c g 361 output[52]
+c group 361 output[52]
 157 213 -325 0
-c g 361 output[52]
+c group 361 output[52]
 -157 -269 325 0
-c g 361 output[52]
+c group 361 output[52]
 c ---------------
 c Xor representation
-m-33 39 40 41 45 46 52 53 54 56 57 62 69 74 75 77 78 102 0
-c g 362 sr[0][101]
+x-33 39 40 41 45 46 52 53 54 56 57 62 69 74 75 77 78 102 0
+c group 362 sr[0][101]
 c ---------------
 c Karnaugh representation
 158 -63 69 0
-c g 363 f[0][53]
+c group 363 f[0][53]
 158 63 -65 0
-c g 363 f[0][53]
+c group 363 f[0][53]
 -158 63 65 0
-c g 363 f[0][53]
+c group 363 f[0][53]
 -158 -63 -69 0
-c g 363 f[0][53]
+c group 363 f[0][53]
 c ---------------
 c Karnaugh representation
 270 79 81 -83 0
-c g 364 f[2][53]
+c group 364 f[2][53]
 270 -79 -81 0
-c g 364 f[2][53]
+c group 364 f[2][53]
 270 -79 83 -85 0
-c g 364 f[2][53]
+c group 364 f[2][53]
 270 -81 83 -85 0
-c g 364 f[2][53]
+c group 364 f[2][53]
 -270 79 81 83 0
-c g 364 f[2][53]
+c group 364 f[2][53]
 -270 79 83 85 0
-c g 364 f[2][53]
+c group 364 f[2][53]
 -270 81 83 85 0
-c g 364 f[2][53]
+c group 364 f[2][53]
 -270 79 -81 -83 0
-c g 364 f[2][53]
+c group 364 f[2][53]
 -270 -79 81 -83 0
-c g 364 f[2][53]
+c group 364 f[2][53]
 c ---------------
 c Karnaugh representation
 326 -87 -89 -91 0
-c g 365 f[3][53]
+c group 365 f[3][53]
 326 89 -91 -93 0
-c g 365 f[3][53]
+c group 365 f[3][53]
 326 -87 91 93 0
-c g 365 f[3][53]
+c group 365 f[3][53]
 326 87 -89 91 0
-c g 365 f[3][53]
+c group 365 f[3][53]
 -326 87 89 91 0
-c g 365 f[3][53]
+c group 365 f[3][53]
 -326 -87 91 -93 0
-c g 365 f[3][53]
+c group 365 f[3][53]
 -326 89 -91 93 0
-c g 365 f[3][53]
+c group 365 f[3][53]
 -326 87 -89 -91 0
-c g 365 f[3][53]
+c group 365 f[3][53]
 c ---------------
 c Karnaugh representation
 382 95 97 -99 0
-c g 366 f[4][53]
+c group 366 f[4][53]
 382 -95 -97 0
-c g 366 f[4][53]
+c group 366 f[4][53]
 382 -95 99 -101 0
-c g 366 f[4][53]
+c group 366 f[4][53]
 382 -97 99 -101 0
-c g 366 f[4][53]
+c group 366 f[4][53]
 -382 95 97 99 0
-c g 366 f[4][53]
+c group 366 f[4][53]
 -382 95 99 101 0
-c g 366 f[4][53]
+c group 366 f[4][53]
 -382 97 99 101 0
-c g 366 f[4][53]
+c group 366 f[4][53]
 -382 95 -97 -99 0
-c g 366 f[4][53]
+c group 366 f[4][53]
 -382 -95 97 -99 0
-c g 366 f[4][53]
+c group 366 f[4][53]
 c ---------------
 c Karnaugh representation
 75 270 326 -382 0
-c g 367 output[53]
+c group 367 output[53]
 -75 -158 -326 0
-c g 367 output[53]
+c group 367 output[53]
 -75 -326 -382 0
-c g 367 output[53]
+c group 367 output[53]
 -158 270 326 382 0
-c g 367 output[53]
+c group 367 output[53]
 -158 -270 -326 0
-c g 367 output[53]
+c group 367 output[53]
 158 326 -382 0
-c g 367 output[53]
+c group 367 output[53]
 -75 -270 -326 0
-c g 367 output[53]
+c group 367 output[53]
 c ---------------
 c Xor representation
-m34 40 41 42 46 47 52 53 54 55 57 60 63 74 75 76 78 79 103 0
-c g 368 sr[0][102]
+x34 40 41 42 46 47 52 53 54 55 57 60 63 74 75 76 78 79 103 0
+c group 368 sr[0][102]
 c ---------------
 c Xor representation
 x64 68 159 0
-c g 369 f[0][54]
+c group 369 f[0][54]
 c ---------------
 c Karnaugh representation
 215 72 74 -76 0
-c g 370 f[1][54]
+c group 370 f[1][54]
 215 -72 -74 0
-c g 370 f[1][54]
+c group 370 f[1][54]
 215 -72 76 -78 0
-c g 370 f[1][54]
+c group 370 f[1][54]
 215 -74 76 -78 0
-c g 370 f[1][54]
+c group 370 f[1][54]
 -215 72 74 76 0
-c g 370 f[1][54]
+c group 370 f[1][54]
 -215 72 76 78 0
-c g 370 f[1][54]
+c group 370 f[1][54]
 -215 74 76 78 0
-c g 370 f[1][54]
+c group 370 f[1][54]
 -215 72 -74 -76 0
-c g 370 f[1][54]
+c group 370 f[1][54]
 -215 -72 74 -76 0
-c g 370 f[1][54]
+c group 370 f[1][54]
 c ---------------
 c Karnaugh representation
 271 80 82 -84 0
-c g 371 f[2][54]
+c group 371 f[2][54]
 271 -80 -82 0
-c g 371 f[2][54]
+c group 371 f[2][54]
 271 -80 84 -86 0
-c g 371 f[2][54]
+c group 371 f[2][54]
 271 -82 84 -86 0
-c g 371 f[2][54]
+c group 371 f[2][54]
 -271 80 82 84 0
-c g 371 f[2][54]
+c group 371 f[2][54]
 -271 80 84 86 0
-c g 371 f[2][54]
+c group 371 f[2][54]
 -271 82 84 86 0
-c g 371 f[2][54]
+c group 371 f[2][54]
 -271 80 -82 -84 0
-c g 371 f[2][54]
+c group 371 f[2][54]
 -271 -80 82 -84 0
-c g 371 f[2][54]
+c group 371 f[2][54]
 c ---------------
 c Karnaugh representation
 327 -88 -90 -92 0
-c g 372 f[3][54]
+c group 372 f[3][54]
 327 90 -92 -94 0
-c g 372 f[3][54]
+c group 372 f[3][54]
 327 -88 92 94 0
-c g 372 f[3][54]
+c group 372 f[3][54]
 327 88 -90 92 0
-c g 372 f[3][54]
+c group 372 f[3][54]
 -327 88 90 92 0
-c g 372 f[3][54]
+c group 372 f[3][54]
 -327 -88 92 -94 0
-c g 372 f[3][54]
+c group 372 f[3][54]
 -327 90 -92 94 0
-c g 372 f[3][54]
+c group 372 f[3][54]
 -327 88 -90 -92 0
-c g 372 f[3][54]
+c group 372 f[3][54]
 c ---------------
 c Karnaugh representation
 383 96 98 -100 0
-c g 373 f[4][54]
+c group 373 f[4][54]
 383 -96 -98 0
-c g 373 f[4][54]
+c group 373 f[4][54]
 383 -96 100 -102 0
-c g 373 f[4][54]
+c group 373 f[4][54]
 383 -98 100 -102 0
-c g 373 f[4][54]
+c group 373 f[4][54]
 -383 96 98 100 0
-c g 373 f[4][54]
+c group 373 f[4][54]
 -383 96 100 102 0
-c g 373 f[4][54]
+c group 373 f[4][54]
 -383 98 100 102 0
-c g 373 f[4][54]
+c group 373 f[4][54]
 -383 96 -98 -100 0
-c g 373 f[4][54]
+c group 373 f[4][54]
 -383 -96 98 -100 0
-c g 373 f[4][54]
+c group 373 f[4][54]
 c ---------------
 c Karnaugh representation
 215 271 327 -383 0
-c g 374 output[54]
+c group 374 output[54]
 -159 -215 -327 0
-c g 374 output[54]
+c group 374 output[54]
 -215 -327 -383 0
-c g 374 output[54]
+c group 374 output[54]
 -159 271 327 383 0
-c g 374 output[54]
+c group 374 output[54]
 -159 -271 -327 0
-c g 374 output[54]
+c group 374 output[54]
 159 327 -383 0
-c g 374 output[54]
+c group 374 output[54]
 -215 -271 -327 0
-c g 374 output[54]
+c group 374 output[54]
 c ---------------
 c Karnaugh representation
 160 -65 69 0
-c g 375 f[0][55]
+c group 375 f[0][55]
 -160 65 0
-c g 375 f[0][55]
+c group 375 f[0][55]
 -160 -69 0
-c g 375 f[0][55]
+c group 375 f[0][55]
 c ---------------
 c Karnaugh representation
 216 -75 77 -79 0
-c g 376 f[1][55]
+c group 376 f[1][55]
 216 75 -77 0
-c g 376 f[1][55]
+c group 376 f[1][55]
 -216 75 77 0
-c g 376 f[1][55]
+c group 376 f[1][55]
 -216 -75 -77 0
-c g 376 f[1][55]
+c group 376 f[1][55]
 -216 -75 79 0
-c g 376 f[1][55]
+c group 376 f[1][55]
 c ---------------
 c Karnaugh representation
 272 81 83 -85 0
-c g 377 f[2][55]
+c group 377 f[2][55]
 272 -81 -83 0
-c g 377 f[2][55]
+c group 377 f[2][55]
 272 -81 85 -87 0
-c g 377 f[2][55]
+c group 377 f[2][55]
 272 -83 85 -87 0
-c g 377 f[2][55]
+c group 377 f[2][55]
 -272 81 83 85 0
-c g 377 f[2][55]
+c group 377 f[2][55]
 -272 81 85 87 0
-c g 377 f[2][55]
+c group 377 f[2][55]
 -272 83 85 87 0
-c g 377 f[2][55]
+c group 377 f[2][55]
 -272 81 -83 -85 0
-c g 377 f[2][55]
+c group 377 f[2][55]
 -272 -81 83 -85 0
-c g 377 f[2][55]
+c group 377 f[2][55]
 c ---------------
 c Karnaugh representation
 328 -89 -91 -93 0
-c g 378 f[3][55]
+c group 378 f[3][55]
 328 91 -93 -95 0
-c g 378 f[3][55]
+c group 378 f[3][55]
 328 -89 93 95 0
-c g 378 f[3][55]
+c group 378 f[3][55]
 328 89 -91 93 0
-c g 378 f[3][55]
+c group 378 f[3][55]
 -328 89 91 93 0
-c g 378 f[3][55]
+c group 378 f[3][55]
 -328 -89 93 -95 0
-c g 378 f[3][55]
+c group 378 f[3][55]
 -328 91 -93 95 0
-c g 378 f[3][55]
+c group 378 f[3][55]
 -328 89 -91 -93 0
-c g 378 f[3][55]
+c group 378 f[3][55]
 c ---------------
 c Karnaugh representation
 384 97 99 -101 0
-c g 379 f[4][55]
+c group 379 f[4][55]
 384 -97 -99 0
-c g 379 f[4][55]
+c group 379 f[4][55]
 384 -97 101 -103 0
-c g 379 f[4][55]
+c group 379 f[4][55]
 384 -99 101 -103 0
-c g 379 f[4][55]
+c group 379 f[4][55]
 -384 97 99 101 0
-c g 379 f[4][55]
+c group 379 f[4][55]
 -384 97 101 103 0
-c g 379 f[4][55]
+c group 379 f[4][55]
 -384 99 101 103 0
-c g 379 f[4][55]
+c group 379 f[4][55]
 -384 97 -99 -101 0
-c g 379 f[4][55]
+c group 379 f[4][55]
 -384 -97 99 -101 0
-c g 379 f[4][55]
+c group 379 f[4][55]
 c ---------------
 c Karnaugh representation
 216 272 -328 0
-c g 380 output[55]
+c group 380 output[55]
 160 272 384 0
-c g 380 output[55]
+c group 380 output[55]
 -160 -216 328 -384 0
-c g 380 output[55]
+c group 380 output[55]
 -272 328 384 0
-c g 380 output[55]
+c group 380 output[55]
 160 216 -328 0
-c g 380 output[55]
+c group 380 output[55]
 -160 -272 328 0
-c g 380 output[55]
+c group 380 output[55]
 c ---------------
 c --------------- Variables in shift registers (sr-s) ------------
-c v 1 sr[0][0]
-c v 2 sr[0][1]
-c v 3 sr[0][2]
-c v 4 sr[0][3]
-c v 5 sr[0][4]
-c v 6 sr[0][5]
-c v 7 sr[0][6]
-c v 8 sr[0][7]
-c v 9 sr[0][8]
-c v 10 sr[0][9]
-c v 11 sr[0][10]
-c v 12 sr[0][11]
-c v 13 sr[0][12]
-c v 14 sr[0][13]
-c v 15 sr[0][14]
-c v 16 sr[0][15]
-c v 17 sr[0][16]
-c v 18 sr[0][17]
-c v 19 sr[0][18]
-c v 20 sr[0][19]
-c v 21 sr[0][20]
-c v 22 sr[0][21]
-c v 23 sr[0][22]
-c v 24 sr[0][23]
-c v 25 sr[0][24]
-c v 26 sr[0][25]
-c v 27 sr[0][26]
-c v 28 sr[0][27]
-c v 29 sr[0][28]
-c v 30 sr[0][29]
-c v 31 sr[0][30]
-c v 32 sr[0][31] (r)
-c v 33 sr[0][32] (r)
-c v 34 sr[0][33] (r)
-c v 35 sr[0][34] (r)
-c v 36 sr[0][35] (r)
-c v 37 sr[0][36] (r)
-c v 38 sr[0][37] (r)
-c v 39 sr[0][38] (r)
-c v 40 sr[0][39] (r)
-c v 41 sr[0][40] (r)
-c v 42 sr[0][41] (r)
-c v 43 sr[0][42] (r)
-c v 44 sr[0][43] (r)
-c v 45 sr[0][44] (r)
-c v 46 sr[0][45] (r)
-c v 47 sr[0][46] (r)
-c v 48 sr[0][47] (r)
-c v 49 sr[0][48] (r)
-c v 50 sr[0][49] (r)
-c v 51 sr[0][50] (r)
-c v 52 sr[0][51] (r)
-c v 53 sr[0][52] (r)
-c v 54 sr[0][53] (r)
-c v 55 sr[0][54] (r)
-c v 56 sr[0][55] (r)
-c v 57 sr[0][56] (r)
-c v 58 sr[0][57] (r)
-c v 59 sr[0][58] (r)
-c v 60 sr[0][59] (r)
-c v 61 sr[0][60] (r)
-c v 62 sr[0][61] (r)
-c v 63 sr[0][62] (r)
-c v 64 sr[0][63] (r)
-c v 65 sr[0][64] (r)
-c v 66 sr[0][65] (r)
-c v 67 sr[0][66] (r)
-c v 68 sr[0][67] (r)
-c v 69 sr[0][68] (r)
-c v 70 sr[0][69] (r)
-c v 71 sr[0][70] (r)
-c v 72 sr[0][71] (r)
-c v 73 sr[0][72] (r)
-c v 74 sr[0][73] (r)
-c v 75 sr[0][74] (r)
-c v 76 sr[0][75] (r)
-c v 77 sr[0][76] (r)
-c v 78 sr[0][77] (r)
-c v 79 sr[0][78] (r)
-c v 80 sr[0][79] (r)
-c v 81 sr[0][80]
-c v 82 sr[0][81]
-c v 83 sr[0][82]
-c v 84 sr[0][83]
-c v 85 sr[0][84]
-c v 86 sr[0][85]
-c v 87 sr[0][86]
-c v 88 sr[0][87]
-c v 89 sr[0][88]
-c v 90 sr[0][89]
-c v 91 sr[0][90]
-c v 92 sr[0][91]
-c v 93 sr[0][92]
-c v 94 sr[0][93]
-c v 95 sr[0][94]
-c v 96 sr[0][95]
-c v 97 sr[0][96]
-c v 98 sr[0][97]
-c v 99 sr[0][98]
-c v 100 sr[0][99]
-c v 101 sr[0][100]
-c v 102 sr[0][101]
-c v 103 sr[0][102]
-c v 104 sr[0][103]
+c var 1 sr[0][0]
+c var 2 sr[0][1]
+c var 3 sr[0][2]
+c var 4 sr[0][3]
+c var 5 sr[0][4]
+c var 6 sr[0][5]
+c var 7 sr[0][6]
+c var 8 sr[0][7]
+c var 9 sr[0][8]
+c var 10 sr[0][9]
+c var 11 sr[0][10]
+c var 12 sr[0][11]
+c var 13 sr[0][12]
+c var 14 sr[0][13]
+c var 15 sr[0][14]
+c var 16 sr[0][15]
+c var 17 sr[0][16]
+c var 18 sr[0][17]
+c var 19 sr[0][18]
+c var 20 sr[0][19]
+c var 21 sr[0][20]
+c var 22 sr[0][21]
+c var 23 sr[0][22]
+c var 24 sr[0][23]
+c var 25 sr[0][24]
+c var 26 sr[0][25]
+c var 27 sr[0][26]
+c var 28 sr[0][27]
+c var 29 sr[0][28]
+c var 30 sr[0][29]
+c var 31 sr[0][30]
+c var 32 sr[0][31] (r)
+c var 33 sr[0][32] (r)
+c var 34 sr[0][33] (r)
+c var 35 sr[0][34] (r)
+c var 36 sr[0][35] (r)
+c var 37 sr[0][36] (r)
+c var 38 sr[0][37] (r)
+c var 39 sr[0][38] (r)
+c var 40 sr[0][39] (r)
+c var 41 sr[0][40] (r)
+c var 42 sr[0][41] (r)
+c var 43 sr[0][42] (r)
+c var 44 sr[0][43] (r)
+c var 45 sr[0][44] (r)
+c var 46 sr[0][45] (r)
+c var 47 sr[0][46] (r)
+c var 48 sr[0][47] (r)
+c var 49 sr[0][48] (r)
+c var 50 sr[0][49] (r)
+c var 51 sr[0][50] (r)
+c var 52 sr[0][51] (r)
+c var 53 sr[0][52] (r)
+c var 54 sr[0][53] (r)
+c var 55 sr[0][54] (r)
+c var 56 sr[0][55] (r)
+c var 57 sr[0][56] (r)
+c var 58 sr[0][57] (r)
+c var 59 sr[0][58] (r)
+c var 60 sr[0][59] (r)
+c var 61 sr[0][60] (r)
+c var 62 sr[0][61] (r)
+c var 63 sr[0][62] (r)
+c var 64 sr[0][63] (r)
+c var 65 sr[0][64] (r)
+c var 66 sr[0][65] (r)
+c var 67 sr[0][66] (r)
+c var 68 sr[0][67] (r)
+c var 69 sr[0][68] (r)
+c var 70 sr[0][69] (r)
+c var 71 sr[0][70] (r)
+c var 72 sr[0][71] (r)
+c var 73 sr[0][72] (r)
+c var 74 sr[0][73] (r)
+c var 75 sr[0][74] (r)
+c var 76 sr[0][75] (r)
+c var 77 sr[0][76] (r)
+c var 78 sr[0][77] (r)
+c var 79 sr[0][78] (r)
+c var 80 sr[0][79] (r)
+c var 81 sr[0][80]
+c var 82 sr[0][81]
+c var 83 sr[0][82]
+c var 84 sr[0][83]
+c var 85 sr[0][84]
+c var 86 sr[0][85]
+c var 87 sr[0][86]
+c var 88 sr[0][87]
+c var 89 sr[0][88]
+c var 90 sr[0][89]
+c var 91 sr[0][90]
+c var 92 sr[0][91]
+c var 93 sr[0][92]
+c var 94 sr[0][93]
+c var 95 sr[0][94]
+c var 96 sr[0][95]
+c var 97 sr[0][96]
+c var 98 sr[0][97]
+c var 99 sr[0][98]
+c var 100 sr[0][99]
+c var 101 sr[0][100]
+c var 102 sr[0][101]
+c var 103 sr[0][102]
+c var 104 sr[0][103]
 c --------------- End variables in shift registers (sr-s) ------------
 c --------------- Variables of filters (f-s) ------------
-c v 105 f[0][0]
-c v 106 f[0][1]
-c v 107 f[0][2]
-c v 108 f[0][3]
-c v 109 f[0][4]
-c v 110 f[0][5]
-c v 111 f[0][6]
-c v 112 f[0][7]
-c v 113 f[0][8]
-c v 114 f[0][9]
-c v 115 f[0][10]
-c v 116 f[0][11]
-c v 117 f[0][12]
-c v 118 f[0][13]
-c v 119 f[0][14]
-c v 120 f[0][15]
-c v 121 f[0][16]
-c v 122 f[0][17]
-c v 123 f[0][18]
-c v 124 f[0][19]
-c v 125 f[0][20]
-c v 126 f[0][21]
-c v 127 f[0][22]
-c v 128 f[0][23]
-c v 129 f[0][24]
-c v 130 f[0][25]
-c v 131 f[0][26]
-c v 132 f[0][27]
-c v 133 f[0][28]
-c v 134 f[0][29]
-c v 135 f[0][30]
-c v 136 f[0][31]
-c v 137 f[0][32]
-c v 138 f[0][33]
-c v 139 f[0][34]
-c v 140 f[0][35]
-c v 141 f[0][36]
-c v 142 f[0][37]
-c v 143 f[0][38]
-c v 144 f[0][39]
-c v 145 f[0][40]
-c v 146 f[0][41]
-c v 147 f[0][42]
-c v 148 f[0][43]
-c v 149 f[0][44]
-c v 150 f[0][45]
-c v 151 f[0][46]
-c v 152 f[0][47]
-c v 153 f[0][48]
-c v 154 f[0][49]
-c v 155 f[0][50]
-c v 156 f[0][51]
-c v 157 f[0][52]
-c v 158 f[0][53]
-c v 159 f[0][54]
-c v 160 f[0][55]
-c v 161 f[1][0]
-c v 162 f[1][1]
-c v 163 f[1][2]
-c v 164 f[1][3]
-c v 165 f[1][4]
-c v 166 f[1][5]
-c v 167 f[1][6]
-c v 168 f[1][7]
-c v 169 f[1][8]
-c v 170 f[1][9]
-c v 171 f[1][10]
-c v 172 f[1][11]
-c v 173 f[1][12]
-c v 174 f[1][13]
-c v 175 f[1][14]
-c v 176 f[1][15]
-c v 177 f[1][16]
-c v 178 f[1][17]
-c v 179 f[1][18]
-c v 180 f[1][19]
-c v 181 f[1][20]
-c v 182 f[1][21]
-c v 183 f[1][22]
-c v 184 f[1][23]
-c v 185 f[1][24]
-c v 186 f[1][25]
-c v 187 f[1][26]
-c v 188 f[1][27]
-c v 189 f[1][28]
-c v 190 f[1][29]
-c v 191 f[1][30]
-c v 192 f[1][31]
-c v 193 f[1][32]
-c v 194 f[1][33]
-c v 195 f[1][34]
-c v 196 f[1][35]
-c v 197 f[1][36]
-c v 198 f[1][37]
-c v 199 f[1][38]
-c v 200 f[1][39]
-c v 201 f[1][40]
-c v 202 f[1][41]
-c v 203 f[1][42]
-c v 204 f[1][43]
-c v 205 f[1][44]
-c v 206 f[1][45]
-c v 207 f[1][46]
-c v 208 f[1][47]
-c v 209 f[1][48]
-c v 210 f[1][49]
-c v 211 f[1][50]
-c v 212 f[1][51]
-c v 213 f[1][52]
-c v 214 f[1][53]
-c v 215 f[1][54]
-c v 216 f[1][55]
-c v 217 f[2][0]
-c v 218 f[2][1]
-c v 219 f[2][2]
-c v 220 f[2][3]
-c v 221 f[2][4]
-c v 222 f[2][5]
-c v 223 f[2][6]
-c v 224 f[2][7]
-c v 225 f[2][8]
-c v 226 f[2][9]
-c v 227 f[2][10]
-c v 228 f[2][11]
-c v 229 f[2][12]
-c v 230 f[2][13]
-c v 231 f[2][14]
-c v 232 f[2][15]
-c v 233 f[2][16]
-c v 234 f[2][17]
-c v 235 f[2][18]
-c v 236 f[2][19]
-c v 237 f[2][20]
-c v 238 f[2][21]
-c v 239 f[2][22]
-c v 240 f[2][23]
-c v 241 f[2][24]
-c v 242 f[2][25]
-c v 243 f[2][26]
-c v 244 f[2][27]
-c v 245 f[2][28]
-c v 246 f[2][29]
-c v 247 f[2][30]
-c v 248 f[2][31]
-c v 249 f[2][32]
-c v 250 f[2][33]
-c v 251 f[2][34]
-c v 252 f[2][35]
-c v 253 f[2][36]
-c v 254 f[2][37]
-c v 255 f[2][38]
-c v 256 f[2][39]
-c v 257 f[2][40]
-c v 258 f[2][41]
-c v 259 f[2][42]
-c v 260 f[2][43]
-c v 261 f[2][44]
-c v 262 f[2][45]
-c v 263 f[2][46]
-c v 264 f[2][47]
-c v 265 f[2][48]
-c v 266 f[2][49]
-c v 267 f[2][50]
-c v 268 f[2][51]
-c v 269 f[2][52]
-c v 270 f[2][53]
-c v 271 f[2][54]
-c v 272 f[2][55]
-c v 273 f[3][0]
-c v 274 f[3][1]
-c v 275 f[3][2]
-c v 276 f[3][3]
-c v 277 f[3][4]
-c v 278 f[3][5]
-c v 279 f[3][6]
-c v 280 f[3][7]
-c v 281 f[3][8]
-c v 282 f[3][9]
-c v 283 f[3][10]
-c v 284 f[3][11]
-c v 285 f[3][12]
-c v 286 f[3][13]
-c v 287 f[3][14]
-c v 288 f[3][15]
-c v 289 f[3][16]
-c v 290 f[3][17]
-c v 291 f[3][18]
-c v 292 f[3][19]
-c v 293 f[3][20]
-c v 294 f[3][21]
-c v 295 f[3][22]
-c v 296 f[3][23]
-c v 297 f[3][24]
-c v 298 f[3][25]
-c v 299 f[3][26]
-c v 300 f[3][27]
-c v 301 f[3][28]
-c v 302 f[3][29]
-c v 303 f[3][30]
-c v 304 f[3][31]
-c v 305 f[3][32]
-c v 306 f[3][33]
-c v 307 f[3][34]
-c v 308 f[3][35]
-c v 309 f[3][36]
-c v 310 f[3][37]
-c v 311 f[3][38]
-c v 312 f[3][39]
-c v 313 f[3][40]
-c v 314 f[3][41]
-c v 315 f[3][42]
-c v 316 f[3][43]
-c v 317 f[3][44]
-c v 318 f[3][45]
-c v 319 f[3][46]
-c v 320 f[3][47]
-c v 321 f[3][48]
-c v 322 f[3][49]
-c v 323 f[3][50]
-c v 324 f[3][51]
-c v 325 f[3][52]
-c v 326 f[3][53]
-c v 327 f[3][54]
-c v 328 f[3][55]
-c v 329 f[4][0]
-c v 330 f[4][1]
-c v 331 f[4][2]
-c v 332 f[4][3]
-c v 333 f[4][4]
-c v 334 f[4][5]
-c v 335 f[4][6]
-c v 336 f[4][7]
-c v 337 f[4][8]
-c v 338 f[4][9]
-c v 339 f[4][10]
-c v 340 f[4][11]
-c v 341 f[4][12]
-c v 342 f[4][13]
-c v 343 f[4][14]
-c v 344 f[4][15]
-c v 345 f[4][16]
-c v 346 f[4][17]
-c v 347 f[4][18]
-c v 348 f[4][19]
-c v 349 f[4][20]
-c v 350 f[4][21]
-c v 351 f[4][22]
-c v 352 f[4][23]
-c v 353 f[4][24]
-c v 354 f[4][25]
-c v 355 f[4][26]
-c v 356 f[4][27]
-c v 357 f[4][28]
-c v 358 f[4][29]
-c v 359 f[4][30]
-c v 360 f[4][31]
-c v 361 f[4][32]
-c v 362 f[4][33]
-c v 363 f[4][34]
-c v 364 f[4][35]
-c v 365 f[4][36]
-c v 366 f[4][37]
-c v 367 f[4][38]
-c v 368 f[4][39]
-c v 369 f[4][40]
-c v 370 f[4][41]
-c v 371 f[4][42]
-c v 372 f[4][43]
-c v 373 f[4][44]
-c v 374 f[4][45]
-c v 375 f[4][46]
-c v 376 f[4][47]
-c v 377 f[4][48]
-c v 378 f[4][49]
-c v 379 f[4][50]
-c v 380 f[4][51]
-c v 381 f[4][52]
-c v 382 f[4][53]
-c v 383 f[4][54]
-c v 384 f[4][55]
+c var 105 f[0][0]
+c var 106 f[0][1]
+c var 107 f[0][2]
+c var 108 f[0][3]
+c var 109 f[0][4]
+c var 110 f[0][5]
+c var 111 f[0][6]
+c var 112 f[0][7]
+c var 113 f[0][8]
+c var 114 f[0][9]
+c var 115 f[0][10]
+c var 116 f[0][11]
+c var 117 f[0][12]
+c var 118 f[0][13]
+c var 119 f[0][14]
+c var 120 f[0][15]
+c var 121 f[0][16]
+c var 122 f[0][17]
+c var 123 f[0][18]
+c var 124 f[0][19]
+c var 125 f[0][20]
+c var 126 f[0][21]
+c var 127 f[0][22]
+c var 128 f[0][23]
+c var 129 f[0][24]
+c var 130 f[0][25]
+c var 131 f[0][26]
+c var 132 f[0][27]
+c var 133 f[0][28]
+c var 134 f[0][29]
+c var 135 f[0][30]
+c var 136 f[0][31]
+c var 137 f[0][32]
+c var 138 f[0][33]
+c var 139 f[0][34]
+c var 140 f[0][35]
+c var 141 f[0][36]
+c var 142 f[0][37]
+c var 143 f[0][38]
+c var 144 f[0][39]
+c var 145 f[0][40]
+c var 146 f[0][41]
+c var 147 f[0][42]
+c var 148 f[0][43]
+c var 149 f[0][44]
+c var 150 f[0][45]
+c var 151 f[0][46]
+c var 152 f[0][47]
+c var 153 f[0][48]
+c var 154 f[0][49]
+c var 155 f[0][50]
+c var 156 f[0][51]
+c var 157 f[0][52]
+c var 158 f[0][53]
+c var 159 f[0][54]
+c var 160 f[0][55]
+c var 161 f[1][0]
+c var 162 f[1][1]
+c var 163 f[1][2]
+c var 164 f[1][3]
+c var 165 f[1][4]
+c var 166 f[1][5]
+c var 167 f[1][6]
+c var 168 f[1][7]
+c var 169 f[1][8]
+c var 170 f[1][9]
+c var 171 f[1][10]
+c var 172 f[1][11]
+c var 173 f[1][12]
+c var 174 f[1][13]
+c var 175 f[1][14]
+c var 176 f[1][15]
+c var 177 f[1][16]
+c var 178 f[1][17]
+c var 179 f[1][18]
+c var 180 f[1][19]
+c var 181 f[1][20]
+c var 182 f[1][21]
+c var 183 f[1][22]
+c var 184 f[1][23]
+c var 185 f[1][24]
+c var 186 f[1][25]
+c var 187 f[1][26]
+c var 188 f[1][27]
+c var 189 f[1][28]
+c var 190 f[1][29]
+c var 191 f[1][30]
+c var 192 f[1][31]
+c var 193 f[1][32]
+c var 194 f[1][33]
+c var 195 f[1][34]
+c var 196 f[1][35]
+c var 197 f[1][36]
+c var 198 f[1][37]
+c var 199 f[1][38]
+c var 200 f[1][39]
+c var 201 f[1][40]
+c var 202 f[1][41]
+c var 203 f[1][42]
+c var 204 f[1][43]
+c var 205 f[1][44]
+c var 206 f[1][45]
+c var 207 f[1][46]
+c var 208 f[1][47]
+c var 209 f[1][48]
+c var 210 f[1][49]
+c var 211 f[1][50]
+c var 212 f[1][51]
+c var 213 f[1][52]
+c var 214 f[1][53]
+c var 215 f[1][54]
+c var 216 f[1][55]
+c var 217 f[2][0]
+c var 218 f[2][1]
+c var 219 f[2][2]
+c var 220 f[2][3]
+c var 221 f[2][4]
+c var 222 f[2][5]
+c var 223 f[2][6]
+c var 224 f[2][7]
+c var 225 f[2][8]
+c var 226 f[2][9]
+c var 227 f[2][10]
+c var 228 f[2][11]
+c var 229 f[2][12]
+c var 230 f[2][13]
+c var 231 f[2][14]
+c var 232 f[2][15]
+c var 233 f[2][16]
+c var 234 f[2][17]
+c var 235 f[2][18]
+c var 236 f[2][19]
+c var 237 f[2][20]
+c var 238 f[2][21]
+c var 239 f[2][22]
+c var 240 f[2][23]
+c var 241 f[2][24]
+c var 242 f[2][25]
+c var 243 f[2][26]
+c var 244 f[2][27]
+c var 245 f[2][28]
+c var 246 f[2][29]
+c var 247 f[2][30]
+c var 248 f[2][31]
+c var 249 f[2][32]
+c var 250 f[2][33]
+c var 251 f[2][34]
+c var 252 f[2][35]
+c var 253 f[2][36]
+c var 254 f[2][37]
+c var 255 f[2][38]
+c var 256 f[2][39]
+c var 257 f[2][40]
+c var 258 f[2][41]
+c var 259 f[2][42]
+c var 260 f[2][43]
+c var 261 f[2][44]
+c var 262 f[2][45]
+c var 263 f[2][46]
+c var 264 f[2][47]
+c var 265 f[2][48]
+c var 266 f[2][49]
+c var 267 f[2][50]
+c var 268 f[2][51]
+c var 269 f[2][52]
+c var 270 f[2][53]
+c var 271 f[2][54]
+c var 272 f[2][55]
+c var 273 f[3][0]
+c var 274 f[3][1]
+c var 275 f[3][2]
+c var 276 f[3][3]
+c var 277 f[3][4]
+c var 278 f[3][5]
+c var 279 f[3][6]
+c var 280 f[3][7]
+c var 281 f[3][8]
+c var 282 f[3][9]
+c var 283 f[3][10]
+c var 284 f[3][11]
+c var 285 f[3][12]
+c var 286 f[3][13]
+c var 287 f[3][14]
+c var 288 f[3][15]
+c var 289 f[3][16]
+c var 290 f[3][17]
+c var 291 f[3][18]
+c var 292 f[3][19]
+c var 293 f[3][20]
+c var 294 f[3][21]
+c var 295 f[3][22]
+c var 296 f[3][23]
+c var 297 f[3][24]
+c var 298 f[3][25]
+c var 299 f[3][26]
+c var 300 f[3][27]
+c var 301 f[3][28]
+c var 302 f[3][29]
+c var 303 f[3][30]
+c var 304 f[3][31]
+c var 305 f[3][32]
+c var 306 f[3][33]
+c var 307 f[3][34]
+c var 308 f[3][35]
+c var 309 f[3][36]
+c var 310 f[3][37]
+c var 311 f[3][38]
+c var 312 f[3][39]
+c var 313 f[3][40]
+c var 314 f[3][41]
+c var 315 f[3][42]
+c var 316 f[3][43]
+c var 317 f[3][44]
+c var 318 f[3][45]
+c var 319 f[3][46]
+c var 320 f[3][47]
+c var 321 f[3][48]
+c var 322 f[3][49]
+c var 323 f[3][50]
+c var 324 f[3][51]
+c var 325 f[3][52]
+c var 326 f[3][53]
+c var 327 f[3][54]
+c var 328 f[3][55]
+c var 329 f[4][0]
+c var 330 f[4][1]
+c var 331 f[4][2]
+c var 332 f[4][3]
+c var 333 f[4][4]
+c var 334 f[4][5]
+c var 335 f[4][6]
+c var 336 f[4][7]
+c var 337 f[4][8]
+c var 338 f[4][9]
+c var 339 f[4][10]
+c var 340 f[4][11]
+c var 341 f[4][12]
+c var 342 f[4][13]
+c var 343 f[4][14]
+c var 344 f[4][15]
+c var 345 f[4][16]
+c var 346 f[4][17]
+c var 347 f[4][18]
+c var 348 f[4][19]
+c var 349 f[4][20]
+c var 350 f[4][21]
+c var 351 f[4][22]
+c var 352 f[4][23]
+c var 353 f[4][24]
+c var 354 f[4][25]
+c var 355 f[4][26]
+c var 356 f[4][27]
+c var 357 f[4][28]
+c var 358 f[4][29]
+c var 359 f[4][30]
+c var 360 f[4][31]
+c var 361 f[4][32]
+c var 362 f[4][33]
+c var 363 f[4][34]
+c var 364 f[4][35]
+c var 365 f[4][36]
+c var 366 f[4][37]
+c var 367 f[4][38]
+c var 368 f[4][39]
+c var 369 f[4][40]
+c var 370 f[4][41]
+c var 371 f[4][42]
+c var 372 f[4][43]
+c var 373 f[4][44]
+c var 374 f[4][45]
+c var 375 f[4][46]
+c var 376 f[4][47]
+c var 377 f[4][48]
+c var 378 f[4][49]
+c var 379 f[4][50]
+c var 380 f[4][51]
+c var 381 f[4][52]
+c var 382 f[4][53]
+c var 383 f[4][54]
+c var 384 f[4][55]
 c --------------- End variables in filters (f-s) ------------
 c --------------- Variables assigned to monomials (monos-s) ------------
 c --------------- End variables assigned to monomials (monos-s) ------------
