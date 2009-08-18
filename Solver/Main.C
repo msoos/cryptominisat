@@ -192,6 +192,17 @@ static int parseInt(B& in)
 }
 
 template<class B>
+static void parseString(B& in, std::string& str)
+{
+    str.clear();
+    skipWhitespace(in);
+    while (*in != ' ' && *in != '\n') {
+        str += *in;
+        ++in;
+    }
+}
+
+template<class B>
 static void readClause(B& in, Solver& S, vec<Lit>& lits)
 {
     int     parsed_lit, var;
@@ -219,6 +230,8 @@ static void parse_DIMACS_main(B& in, Solver& S)
 {
     vec<Lit> lits;
     int group = 0;
+    string str;
+
     for (;;) {
         skipWhitespace(in);
         switch (*in) {
@@ -236,12 +249,10 @@ static void parse_DIMACS_main(B& in, Solver& S)
             break;
         case 'c':
             ++in;
-            skipWhitespace(in);
-            if (*in == 'v') {
-                ++in;
-                skipWhitespace(in);
+            parseString(in, str);
+            if (str == "var") {
                 int var = parseInt(in);
-                if (var <= 0) printf("PARSE ERROR! Var number must be a positive integer\n"), exit(3);
+                if (var <= 0) cout << "PARSE ERROR! Var number must be a positive integer" << endl, exit(3);
                 char tmp[500];
                 untilEnd(in, tmp);
                 S.setVariableName(var-1, tmp);
@@ -262,21 +273,24 @@ static void parse_DIMACS_main(B& in, Solver& S)
 
             if (!grouping) group++;
             else {
-                group = 0;
-                while (group == 0) {
-                    skipWhitespace(in);
-                    if (*in != 'c') printf("PARSE ERROR! Group number must be present ('c' missing)!\n"), exit(3);
-                    ++in;
-                    skipWhitespace(in);
-                    if (*in != 'g') printf("PARSE ERROR! Group number must be present ('g' missing)!\n"), exit(3);
-                    ++in;
-                    skipWhitespace(in);
-                    group = parseInt(in);
-                    if (group <= 0) printf("PARSE ERROR! Group number must be a positive integer\n"), exit(3);
-                    skipWhitespace(in);
-
-                    untilEnd(in, group_name);
+                if (*in != 'c') {
+                    cout << "PARSE ERROR! Group must be present after earch clause ('c' missing after clause line)" << endl;
+                    exit(3);
                 }
+                ++in;
+
+                parseString(in, str);
+                if (str != "group") {
+                    cout << "PARSE ERROR! Group must be present after each clause('group' missing)!" << endl;
+                    cout << "Instead of 'group' there was:" << str << endl;
+                    exit(3);
+                }
+
+                group = parseInt(in);
+                if (group <= 0) printf("PARSE ERROR! Group number must be a positive integer\n"), exit(3);
+
+                skipWhitespace(in);
+                untilEnd(in, group_name);
             }
 
             if (xor_clause)
