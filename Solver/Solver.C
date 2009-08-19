@@ -457,7 +457,7 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel)
 
         for (uint j = (p == lit_Undef) ? 0 : 1; j < c.size(); j++) {
             const Lit& q = c[j];
-            int my_var = q.var();
+            const uint my_var = q.var();
 
             if (!seen[my_var] && level[my_var] > 0) {
                 if (!useRealUnknowns || (my_var < realUnknowns.size() && realUnknowns[my_var]))
