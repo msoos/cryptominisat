@@ -897,7 +897,7 @@ bool Solver::simplify()
         return ok = false;
     }
 
-    if (nAssigns() == simpDB_assigns) {
+    if (nAssigns() == simpDB_assigns || (simpDB_props > 0)) {
         return true;
     }
 
@@ -912,7 +912,7 @@ bool Solver::simplify()
     order_heap.filter(VarFilter(*this));
 
     simpDB_assigns = nAssigns();
-    simpDB_props   = 0; //clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
+    simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
 
     //cleanClauses(clauses);
     cleanClauses(xorclauses);
