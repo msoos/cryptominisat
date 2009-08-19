@@ -117,18 +117,16 @@ class XorClause : public Clause
 public:
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
-    XorClause(const V& ps, const bool _xor_clause_inverted, const bool marked, const uint _group, const bool learnt) :
+    XorClause(const V& ps, const bool _xor_clause_inverted, const uint _group, const bool learnt) :
             Clause(ps, _group, learnt) {
         size_etc |= (((uint32_t)_xor_clause_inverted) << 3);
-        if (marked)
-            mark(true);
     }
 
     // -- use this function instead:
     template<class V>
-    friend XorClause* XorClause_new(const V& ps, const bool xor_clause_inverted, const bool marked, const uint group, const bool learnt = false) {
+    friend XorClause* XorClause_new(const V& ps, const bool xor_clause_inverted, const uint group, const bool learnt = false) {
         void* mem = malloc(sizeof(XorClause) + sizeof(Lit)*(ps.size()));
-        XorClause* real= new (mem) XorClause(ps, xor_clause_inverted, marked, group, learnt);
+        XorClause* real= new (mem) XorClause(ps, xor_clause_inverted, group, learnt);
         return real;
     }
 

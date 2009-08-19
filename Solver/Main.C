@@ -262,9 +262,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
             break;
         default:
             bool xor_clause = false;
-            bool marked = false;
             if ( *in == 'x') xor_clause = true, ++in;
-            if ( *in == 'm') xor_clause = true, marked = true, ++in;
             readClause(in, S, lits);
             skipLine(in);
 
@@ -294,7 +292,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
             }
 
             if (xor_clause)
-                S.addXorClause(lits, false, marked, group, group_name);
+                S.addXorClause(lits, false, group, group_name);
             else
                 S.addClause(lits, group, group_name);
             break;

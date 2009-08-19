@@ -102,7 +102,7 @@ Var Solver::newVar(bool sign, bool dvar)
     return v;
 }
 
-bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const bool marked, const uint group, const char* group_name)
+bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name)
 {
     assert(decisionLevel() == 0);
 
@@ -147,7 +147,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const bool mar
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
 
-        XorClause* c = XorClause_new(ps, xor_clause_inverted, marked, group);
+        XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
 
         xorclauses.push(c);
         attachClause(*c);

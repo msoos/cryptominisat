@@ -52,7 +52,7 @@ public:
     //
     Var     newVar    (bool polarity = true, bool dvar = true); // Add a new variable with parameters specifying variable mode.
     bool    addClause (vec<Lit>& ps, const uint group, const char* group_name);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
-    bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const bool marked, const uint group, const char* group_name);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
