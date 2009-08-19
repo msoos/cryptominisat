@@ -64,8 +64,6 @@ public:
 
     // Ownership of underlying array:
     T*       release  (void)           { T* ret = data; data = NULL; sz = 0; cap = 0; return ret; }
-    //operator T*       (void)           { return data; }     // (unsafe but convenient)
-    //operator const T* (void) const     { return data; }
     const T* getData() const {return data; }
     T* getData() {return data; }
 
