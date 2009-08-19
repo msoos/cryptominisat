@@ -65,7 +65,6 @@ public:
     //
     void    setPolarity    (Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
     void    setDecisionVar (Var v, bool b); // Declare if a variable should be eligible for selection in the decision heuristic.
-    void    setFixedPickOrder(vec<Var>& fixedPickOrder); // Sets a fixed varaible pick order. Experimental!
     void    setSeed (const uint32_t seed);  // Sets the seed to be the given number
     void    permutateClauses();             // Permutates the clauses using the seed. It updates the seed in mtrand
     void    needRealUnknowns();             // Uses the "real unknowns" set by setRealUnknown
@@ -154,7 +153,6 @@ protected:
     vec<char>           decision_var;     // Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            // Assignment stack; stores all assigments made in the order they were made.
     vec<int>            trail_lim;        // Separator indices for different decision levels in 'trail'.
-    vec<Var>		fixedPickOrder;   // Stores the fixed BranchPick order given by the user
     vec<Clause*>        reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<Var>            level;            // 'level[var]' contains the level at which the assignment was made.
     int                 qhead;            // Head of queue (as index into the trail -- no more explicit propagation queue in MiniSat).
@@ -346,10 +344,6 @@ inline bool     Solver::solve         ()
 inline bool     Solver::okay          ()      const
 {
     return ok;
-}
-inline void 	Solver::setFixedPickOrder(vec<Var>& _fixedPickOrder)
-{
-    _fixedPickOrder.copyTo(fixedPickOrder);
 }
 inline void     Solver::setSeed (const uint32_t seed)
 {

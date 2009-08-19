@@ -365,16 +365,8 @@ Lit Solver::pickBranchLit(int polarity_mode)
 #endif
     Var next = var_Undef;
 
-    //Pre-fixed decision:
-    for (int i = 0; decisionLevel()+i < fixedPickOrder.size(); i++ )
-        if (value(fixedPickOrder[decisionLevel()+i]) == l_Undef) {
-            next = fixedPickOrder[decisionLevel()+i];
-            //printf("assigned\n");
-            break;
-        }
-
     // Random decision:
-    if (next == var_Undef && mtrand.randDblExc() < random_var_freq && !order_heap.empty()) {
+    if (mtrand.randDblExc() < random_var_freq && !order_heap.empty()) {
         if (restrictedPickBranch == 0) next = order_heap[mtrand.randInt(order_heap.size()-1)];
         else next = order_heap[mtrand.randInt(std::min((uint32_t)order_heap.size()-1, restrictedPickBranch))];
 
