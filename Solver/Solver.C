@@ -39,7 +39,7 @@ Solver::Solver() :
         // More parameters:
         //
         , expensive_ccmin  (true)
-        , polarity_mode    (polarity_false)
+        , polarity_mode    (polarity_user)
         , verbosity        (0)
         , useRealUnknowns(false)
 
@@ -89,6 +89,7 @@ Var Solver::newVar(bool sign, bool dvar)
     level     .push(-1);
     activity  .push(0);
     seen      .push(0);
+    polarity  .push((char)sign);
 
     polarity    .push((char)sign);
     decision_var.push((char)dvar);
@@ -388,7 +389,8 @@ Lit Solver::pickBranchLit(int polarity_mode)
         sign = true;
         break;
     case polarity_user:
-        sign = polarity[next];
+        if (next != var_Undef)
+            sign = polarity[next];
         break;
     case polarity_rnd:
         sign = mtrand.randInt(1);
@@ -606,6 +608,7 @@ void Solver::uncheckedEnqueue(Lit p, Clause* from)
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     level   [v] = decisionLevel();
     reason  [v] = from;
+    polarity[p.var()] = p.sign();
     trail.push(p);
 }
 
