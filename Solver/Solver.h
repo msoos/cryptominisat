@@ -151,7 +151,7 @@ protected:
     vec<char>           polarity;         // The preferred polarity of each variable.
     vec<char>           decision_var;     // Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            // Assignment stack; stores all assigments made in the order they were made.
-    vec<int>            trail_lim;        // Separator indices for different decision levels in 'trail'.
+    vec<int32_t>        trail_lim;        // Separator indices for different decision levels in 'trail'.
     vec<Clause*>        reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<int32_t>        level;            // 'level[var]' contains the level at which the assignment was made.
     int                 qhead;            // Head of queue (as index into the trail -- no more explicit propagation queue in MiniSat).
