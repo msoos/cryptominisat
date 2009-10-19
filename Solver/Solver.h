@@ -153,7 +153,7 @@ protected:
     vec<Lit>            trail;            // Assignment stack; stores all assigments made in the order they were made.
     vec<int>            trail_lim;        // Separator indices for different decision levels in 'trail'.
     vec<Clause*>        reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
-    vec<Var>            level;            // 'level[var]' contains the level at which the assignment was made.
+    vec<int32_t>        level;            // 'level[var]' contains the level at which the assignment was made.
     int                 qhead;            // Head of queue (as index into the trail -- no more explicit propagation queue in MiniSat).
     int                 simpDB_assigns;   // Number of top-level assignments since last execution of 'simplify()'.
     int64_t             simpDB_props;     // Remaining number of propagations that must be made before next execution of 'simplify()'.
