@@ -665,7 +665,6 @@ Clause* Solver::propagate(const bool xor_as_well)
                 if (value(first) == l_False) {
                     confl = &c;
                     qhead = trail.size();
-                    //printf("size: %d\n", trail.size());
                     // Copy the remaining watches:
                     while (i < end)
                         *j++ = *i++;
