@@ -250,7 +250,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
         case 'c':
             ++in;
             parseString(in, str);
-            if (str == "var") {
+            if (str == "v" || str == "var") {
                 int var = parseInt(in);
                 if (var <= 0) cout << "PARSE ERROR! Var number must be a positive integer" << endl, exit(3);
                 char tmp[500];
@@ -278,7 +278,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 ++in;
 
                 parseString(in, str);
-                if (str != "group") {
+                if (str != "g" && str != "group") {
                     cout << "PARSE ERROR! Group must be present after each clause('group' missing)!" << endl;
                     cout << "Instead of 'group' there was:" << str << endl;
                     exit(3);
