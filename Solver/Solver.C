@@ -41,6 +41,7 @@ Solver::Solver() :
         , expensive_ccmin  (true)
         , polarity_mode    (polarity_user)
         , verbosity        (0)
+        , restrictedPickBranch(0)
         , useRealUnknowns(false)
 
         // Statistics: (formerly in 'SolverStats')
@@ -365,13 +366,16 @@ Lit Solver::pickBranchLit(int polarity_mode)
 
     // Random decision:
     if (mtrand.randDblExc() < random_var_freq && !order_heap.empty()) {
-        next = order_heap[mtrand.randInt(order_heap.size()-1)];
+        if (restrictedPickBranch == 0) next = order_heap[mtrand.randInt(order_heap.size()-1)];
+        else next = order_heap[mtrand.randInt(std::min((uint32_t)order_heap.size()-1, restrictedPickBranch))];
 
         if (assigns[next] == l_Undef && decision_var[next])
             rnd_decisions++;
     }
 
     // Activity based decision:
+    //bool dont_do_bad_decision = false;
+    //if (restrictedPickBranch != 0) dont_do_bad_decision = (mtrand.randInt(100) != 0);
     while (next == var_Undef || assigns[next] != l_Undef || !decision_var[next])
         if (order_heap.empty()) {
             next = var_Undef;

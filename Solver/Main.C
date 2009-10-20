@@ -357,6 +357,9 @@ void printUsage(char** argv)
     printf("  -stats         = Computes statistics of the search\n");
     printf("  -randomize     = <num> [0 - 2^32-1] Randomly permutates the clauses using the seed\n");
     printf("                   Seed is also used for picking decision variables\n");
+    printf("  -restrict      = <num> pick variables betwen [1, num] preferentially when branching\n");
+    printf("                   extremely useful for cryptographic problems, where the question is\n");
+    printf("                   the key, which is usually small (e.g. 80 bits)\n");
     printf("\n");
 }
 
@@ -433,6 +436,14 @@ int main(int argc, char** argv)
             cout << "seed:" << seed << endl;
             S.setSeed(seed);
             permutateClauses = true;
+        } else if ((value = hasPrefix(argv[i], "-restrict="))) {
+            uint branchTo;
+            if (sscanf(value, "%d", &branchTo) < 0) {
+                printf("ERROR! illegal variable number %d\n", branchTo);
+                exit(0);
+            }
+            S.restrictedPickBranch = branchTo-1; //-1 needed as var 1 is represented as var 0 internally
+
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);
