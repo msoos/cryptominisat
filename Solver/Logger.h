@@ -75,10 +75,10 @@ public:
     bool proof_graph_on;
     bool statistics_on;
 private:
-    template<class T>
-    void print_groups(const vector<pair<T, uint> >& to_print) const;
-    template<class T>
-    void print_vars(const vector<pair<T, uint> >& to_print) const;
+    void print_groups(const vector<pair<uint, uint> >& to_print) const;
+    void print_groups(const vector<pair<double, uint> >& to_print) const;
+    void print_vars(const vector<pair<uint, uint> >& to_print) const;
+    void print_vars(const vector<pair<double, uint> >& to_print) const;
     void print_times_var_guessed() const;
     void print_times_group_caused_propagation() const;
     void print_times_group_caused_conflict() const;

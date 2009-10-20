@@ -3,7 +3,6 @@ Libraries needed
 -----------
 You will need the following libraries to compile the sources:
 * libz
-* Boost (for the BOOST_FOREACH() macro)
 
 -----------------
 Building the source

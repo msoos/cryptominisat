@@ -21,14 +21,12 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cstring>
 #include <algorithm>
 #include <vector>
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 using std::cout;
 using std::endl;
 using std::ofstream;
-using boost::lexical_cast;
 
 #include "Logger.h"
 #include "fcopy.h"
@@ -394,8 +392,8 @@ void Logger::print_assign_var_order() const
     vector<pair<double, uint> > prop_ordered;
     for (uint i = 0; i < depths_of_assigns_for_var.size(); i++) {
         double avg = 0.0;
-        BOOST_FOREACH(const uint& d, depths_of_assigns_for_var[i])
-        avg += d;
+        for (vector<uint>::const_iterator it = depths_of_assigns_for_var[i].begin(); it != depths_of_assigns_for_var[i].end(); it++)
+            avg += *it;
         if (depths_of_assigns_for_var[i].size() > 0) {
             avg /= (double) depths_of_assigns_for_var[i].size();
             prop_ordered.push_back(std::make_pair(avg, i));
@@ -414,8 +412,8 @@ void Logger::print_prop_order() const
     vector<pair<double, uint> > prop_ordered;
     for (uint i = 0; i < depths_of_propagations_for_group.size(); i++) {
         double avg = 0.0;
-        BOOST_FOREACH(const uint& d, depths_of_propagations_for_group[i])
-        avg += d;
+        for (vector<uint>::const_iterator it = depths_of_propagations_for_group[i].begin(); it != depths_of_propagations_for_group[i].end(); it++)
+            avg += *it;
         if (depths_of_propagations_for_group[i].size() > 0) {
             avg /= (double) depths_of_propagations_for_group[i].size();
             prop_ordered.push_back(std::make_pair(avg, i));
@@ -434,8 +432,8 @@ void Logger::print_confl_order() const
     vector<pair<double, uint> > confl_ordered;
     for (uint i = 0; i < depths_of_conflicts_for_group.size(); i++) {
         double avg = 0.0;
-        BOOST_FOREACH(const uint& d, depths_of_conflicts_for_group[i])
-        avg += d;
+        for (vector<uint>::const_iterator it = depths_of_conflicts_for_group[i].begin(); it != depths_of_conflicts_for_group[i].end(); it++)
+            avg += *it;
         if (depths_of_conflicts_for_group[i].size() > 0) {
             avg /= (double) depths_of_conflicts_for_group[i].size();
             confl_ordered.push_back(std::make_pair(avg, i));
@@ -491,40 +489,72 @@ void Logger::print_times_group_caused_conflict() const
     }
 }
 
-template<class T>
-void Logger::print_groups(const vector<pair<T, uint> >& to_print) const
+void Logger::print_groups(const vector<pair<double, uint> >& to_print) const
 {
     bool no_name = true;
-    typedef pair<T, uint> mypair;
-    BOOST_FOREACH(const mypair &it, to_print) {
+    typedef vector<pair<double, uint> >::const_iterator myiterator;
+    for (myiterator it = to_print.begin(); it != to_print.end(); it++) {
         /*if (it->first <= 1) {
-        	printf("Skipped all frequencies <= %d\n", it->first);
-        	break;
-        }*/
-        if (it.second > max_group) {
-            cout << "group " << it.second+1 << " ( learnt clause ) : " << it.first << endl;
+        printf("Skipped all frequencies <= %d\n", it->first);
+        break;
+    }*/
+        if (it->second > max_group) {
+            cout << "group " << it->second+1 << " ( learnt clause ) : " << it->first << endl;
         } else {
-            if (!groupnames[it.second].empty())
+            if (!groupnames[it->second].empty())
                 no_name = false;
-            cout << "group " << it.second+1 << " ( " << groupnames[it.second]<< " ) : " << it.first << endl;
+            cout << "group " << it->second+1 << " ( " << groupnames[it->second]<< " ) : " << it->first << endl;
         }
     }
     if (no_name) printf("Tip: You can name your clauses using the syntax \"c g 32 Blah blah\" in your DIMACS file, where 32 is the clause group number, which can be shared between clauses (note: if the clause group matches, the name must match, too).\n");
 }
 
-template<class T>
-void Logger::print_vars(const vector<pair<T, uint> >& to_print) const
+void Logger::print_groups(const vector<pair<uint, uint> >& to_print) const
 {
     bool no_name = true;
-    typedef pair<T, uint> mypair;
-    BOOST_FOREACH(const mypair &it, to_print) {
+    typedef vector<pair<uint, uint> >::const_iterator myiterator;
+    for (myiterator it = to_print.begin(); it != to_print.end(); it++) {
         /*if (it->first <= 1) {
         	printf("Skipped all frequencies <= %d\n", it->first);
         	break;
         }*/
-        if (!varnames[it.second].empty())
+        if (it->second > max_group) {
+            cout << "group " << it->second+1 << " ( learnt clause ) : " << it->first << endl;
+        } else {
+            if (!groupnames[it->second].empty())
+                no_name = false;
+            cout << "group " << it->second+1 << " ( " << groupnames[it->second]<< " ) : " << it->first << endl;
+        }
+    }
+    if (no_name) printf("Tip: You can name your clauses using the syntax \"c g 32 Blah blah\" in your DIMACS file, where 32 is the clause group number, which can be shared between clauses (note: if the clause group matches, the name must match, too).\n");
+}
+
+void Logger::print_vars(const vector<pair<double, uint> >& to_print) const
+{
+    bool no_name = true;
+    for (vector<pair<double, uint> >::const_iterator it = to_print.begin(); it != to_print.end(); it++) {
+        /*if (it->first <= 1) {
+        printf("Skipped all frequencies <= %d\n", it->first);
+        break;
+    }*/
+        if (!varnames[it->second].empty())
             no_name = false;
-        cout << "var " << it.second+1 << " ( " << varnames[it.second] << " ) : " << it.first << endl;
+        cout << "var " << it->second+1 << " ( " << varnames[it->second] << " ) : " << it->first << endl;
+    }
+    if (no_name) printf("Tip: You can name your variables using the syntax \"c v 10 Blah blah\" in your DIMACS file. It helps.\n");
+}
+
+void Logger::print_vars(const vector<pair<uint, uint> >& to_print) const
+{
+    bool no_name = true;
+    for (vector<pair<uint, uint> >::const_iterator it = to_print.begin(); it != to_print.end(); it++) {
+        /*if (it->first <= 1) {
+        	printf("Skipped all frequencies <= %d\n", it->first);
+        	break;
+        }*/
+        if (!varnames[it->second].empty())
+            no_name = false;
+        cout << "var " << it->second+1 << " ( " << varnames[it->second] << " ) : " << it->first << endl;
     }
     if (no_name) printf("Tip: You can name your variables using the syntax \"c v 10 Blah blah\" in your DIMACS file. It helps.\n");
 }
@@ -536,28 +566,27 @@ void Logger::print_branch_depth_distrib() const
     const uint range = 20;
     map<uint, uint> range_stat;
 
-    typedef pair<uint, uint> mypair;
-    BOOST_FOREACH(const mypair &it, branch_depth_distrib) {
-        cout << it.first << " : " << it.second << endl;
-        range_stat[it.first/range] += it.second;
+    for (map<uint, uint>::const_iterator it = branch_depth_distrib.begin(); it != branch_depth_distrib.end(); it++) {
+        cout << it->first << " : " << it->second << endl;
+        range_stat[it->first/range] += it->second;
     }
     cout << endl;
 
     cout << "--- Branch depth stats ranged to " << range << " ---" << endl;
 
+    std::stringstream ss;
+    ss << "branch_depths/branch_depth_file" << proof_num << ".txt";
     ofstream branch_depth_file;
-    branch_depth_file.open(("branch_depths/branch_depth_file"
-                            + lexical_cast<string>(proof_num)
-                            + ".txt").c_str()
-                          );
+    branch_depth_file.open(ss.str().c_str());
     uint i = 0;
-    BOOST_FOREACH(const mypair &it, range_stat) {
-        cout << it.first*range << "-" << it.first*range + range-1 << " : " << it.second << endl;
+    
+    for (map<uint, uint>::iterator it = range_stat.begin(); it != range_stat.end(); it++) {
+        cout << it->first*range << "-" << it->first*range + range-1 << " : " << it->second << endl;
 
-        branch_depth_file << i << "\t" << it.second << "\t";
+        branch_depth_file << i << "\t" << it->second << "\t";
         //branch_depth_file  << "\"" << lexical_cast<string>(it.first*range) << "-" << lexical_cast<string>(it.first*range + range-1) << "\"" << endl;
         if (i %  5 == 0)
-            branch_depth_file  << "\"" << lexical_cast<string>(it.first*range) << "\"";
+            branch_depth_file  << "\"" << it->first*range << "\"";
         else
             branch_depth_file << "\"\"";
         branch_depth_file << endl;
@@ -607,34 +636,36 @@ void Logger::reset_statistics()
 {
     assert(times_var_guessed.size() == times_var_propagated.size());
     assert(times_group_caused_conflict.size() == times_group_caused_propagation.size());
-    BOOST_FOREACH(uint& t, times_var_guessed)
-    t = 0;
+    
+    typedef vector<uint>::iterator vecit;
+    for (vecit it = times_var_guessed.begin(); it != times_var_guessed.end(); it++)
+        *it = 0;
 
-    BOOST_FOREACH(uint& t, times_var_propagated)
-    t = 0;
+    for (vecit it = times_var_propagated.begin(); it != times_var_propagated.end(); it++)
+        *it = 0;
 
-    BOOST_FOREACH(uint& t, times_group_caused_conflict)
-    t = 0;
+    for (vecit it = times_group_caused_conflict.begin(); it != times_group_caused_conflict.end(); it++)
+        *it = 0;
 
-    BOOST_FOREACH(uint& t, times_group_caused_propagation)
-    t = 0;
+    for (vecit it = times_group_caused_propagation.begin(); it != times_group_caused_propagation.end(); it++)
+        *it = 0;
 
-    BOOST_FOREACH(uint& c, confls_by_group)
-    c = 0;
+    for (vecit it = confls_by_group.begin(); it != confls_by_group.end(); it++)
+        *it = 0;
 
-    BOOST_FOREACH(uint& p, props_by_group)
-    p = 0;
+    for (vecit it = props_by_group.begin(); it != props_by_group.end(); it++)
+        *it = 0;
 
-    typedef vector<uint> myvec;
+    typedef vector<vector<uint> >::iterator vecvecit;
 
-    BOOST_FOREACH(myvec& p, depths_of_propagations_for_group)
-    p.clear();
+    for (vecvecit it = depths_of_propagations_for_group.begin(); it != depths_of_propagations_for_group.end(); it++)
+        it->clear();
 
-    BOOST_FOREACH(myvec& p, depths_of_conflicts_for_group)
-    p.clear();
+    for (vecvecit it = depths_of_conflicts_for_group.begin(); it != depths_of_conflicts_for_group.end(); it++)
+        it->clear();
 
-    BOOST_FOREACH(myvec& p, depths_of_assigns_for_var)
-    p.clear();
+    for (vecvecit it = depths_of_assigns_for_var.begin(); it != depths_of_assigns_for_var.end(); it++)
+        it->clear();
 
     sum_conflict_depths = 0;
     no_conflicts = 0;
