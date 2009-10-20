@@ -1,3 +1,3 @@
-* Get rid of bugs. Many popped up during development, I am sure.  -> Report all bugs, please! I need a LOT of bugreports
-* Make it more C++. There are plenty of areas where this would help. I will do this in time, but a set of ideas would help
-* Get rid of Vec.h and other STL-like classes. I don't think we need them
+* Report all bugs, please
+* Make it more C++. There are plenty of areas where this would help
+* Get rid of Vec.h and other STL-like classes
