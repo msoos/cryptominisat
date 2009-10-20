@@ -60,9 +60,6 @@ Logger::Logger(int& _verbosity) :
     if (verbosity >= 1) printf("RunID is: #%d\n",runid);
 
     sprintf(filename0,"proofs/%d-proof0.dot", runid);
-
-    //system("rm proofs/*");
-    system("rm branch_depths/branch_depth_file*");
 }
 
 // Adds a new variable to the knowledge of the logger
@@ -369,16 +366,6 @@ void Logger::end(const finish_type finish)
             fprintf(proof,"}\n");
             proof = (FILE*)fclose(proof);
             assert(proof == NULL);
-
-            char toexec[200];
-            sprintf(toexec, "dot -Tsvg proofs/%d-proof0%d.dot > proofs/%d-proof0%d.svg", runid, proof_num, runid, proof_num);
-            //system(toexec);
-        }
-
-        if (proof_num > 0) {
-            char toexec[200];
-            sprintf(toexec, "dot -Tsvg proofs/%d-proof0%d.dot > proofs/%d-proof0%d.svg", runid, proof_num, runid, proof_num);
-            //system(toexec);
         }
     }
 
@@ -575,7 +562,7 @@ void Logger::print_branch_depth_distrib() const
     cout << "--- Branch depth stats ranged to " << range << " ---" << endl;
 
     std::stringstream ss;
-    ss << "branch_depths/branch_depth_file" << proof_num << ".txt";
+    ss << "branch_depths/branch_depth_file" << runid << "-" << proof_num << ".txt";
     ofstream branch_depth_file;
     branch_depth_file.open(ss.str().c_str());
     uint i = 0;
