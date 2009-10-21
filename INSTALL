@@ -13,7 +13,6 @@ There are two ways to build the source. With cmake or with autotools. I personal
 Building using cmake
 -----------------
 * Install cmake
-* Create a 'build' directory
 * Go into the 'build' directory
 * Issue 'cmake ../'
 * Issue 'make'
@@ -24,7 +23,6 @@ Building using autotools
 ------------------
 * Install automake, autoconf, libtool
 * Issue 'make -f Makefile.cvs'
-* Create a 'build' directory
 * Go to the 'build' directory
 * Issue 'CXXFLAGS="-O3 -g -march=native" ../configure'
 * Issue 'make'
