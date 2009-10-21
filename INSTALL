@@ -12,23 +12,23 @@ There are two ways to build the source. With cmake or with autotools. I personal
 -----------------
 Building using cmake
 -----------------
-create a 'build' directory
-Go into the 'build' directory.
-Issue 'cmake ../'
-Issue 'make'
-Type in './cryptominisat satfile' to test your new code.
+* Install cmake
+* Create a 'build' directory
+* Go into the 'build' directory
+* Issue 'cmake ../'
+* Issue 'make'
+* Issue './cryptominisat satfile' to test your new code.
 
 ------------------
 Building using autotools
 ------------------
-Verify that the symlink 'ltmain.sh' is not broken
-Issue 'automake --add-missing'
-Issue 'make -f Makefile.cvs'
-create a 'build' directory
-Go to the 'build' directory
-Issue 'CXXFLAGS="-O3 -g -march=native" ../configure'
-Type 'make'
-Type in './cryptominisat satfile' to test your new code.
+* Install automake, autoconf, libtool
+* Issue 'make -f Makefile.cvs'
+* Create a 'build' directory
+* Go to the 'build' directory
+* Issue 'CXXFLAGS="-O3 -g -march=native" ../configure'
+* Issue 'make'
+* Issue './cryptominisat satfile' to test your new code
 
 ---------
 Please read help
