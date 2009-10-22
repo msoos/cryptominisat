@@ -252,6 +252,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
             parseString(in, str);
             if (str == "v" || str == "var") {
                 int var = parseInt(in);
+                skipWhitespace(in);
                 if (var <= 0) cout << "PARSE ERROR! Var number must be a positive integer" << endl, exit(3);
                 char tmp[500];
                 untilEnd(in, tmp);
