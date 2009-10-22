@@ -1,4 +1,18 @@
-29/04/2009
+ver 1.2.2 -- 22/10/2009
+* phase saving added (thank you, glucose solver team)
+* better printing of statistics
+* better explanation of statistics
+* accept 'v' and 'var', 'g' and 'group'
+* better parsing of 'v','var' and 'g','group'
+* don't allow too long group and variable names
+* branch length distribution added
+* better Makefile.cvs
+* cmake option added
+* updated INSTALL instructions
+* '-march=native' is default when using cmake
+
+ver 1.1 -- 29/04/2009
 * Renamed to CryptoMiniSat
-15/04/2009
+
+ver 1.0 -- 15/04/2009
 * Some updated statistics! Now average rank of guessed var is shown
