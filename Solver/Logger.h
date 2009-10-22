@@ -69,6 +69,7 @@ public:
 
     void begin();
     void end(const finish_type finish);
+    void print_general_stats(uint restarts, uint64_t conflicts, int vars, int noClauses, uint64_t clauses_Literals, int noLearnts, double litsPerLearntCl, double progressEstimate) const;
 
     void newclause(const vec<Lit>& ps, const bool xor_clause, const uint group);
 
@@ -84,6 +85,14 @@ private:
     void print_times_group_caused_conflict() const;
     void print_branch_depth_distrib() const;
 
+    uint max_print_lines;
+    template<class T>
+    void print_line(const uint& number, const string& name, const T& value) const;
+    void print_header(const string& first, const string& second, const string& third) const;
+    void print_footer() const;
+    template<class T>
+    void print_line(const string& str, const T& num) const;
+    void print_simple_line(const string& str) const;
     void print_confl_order() const;
     void print_prop_order() const;
     void print_assign_var_order() const;

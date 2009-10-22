@@ -894,7 +894,10 @@ bool Solver::simplify()
     assert(decisionLevel() == 0);
 
     if (!ok || propagate() != NULL) {
-        if (dynamic_behaviour_analysis) logger.end(Logger::unsat_model_found);
+        if (dynamic_behaviour_analysis) {
+            logger.end(Logger::unsat_model_found);
+            logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
+        }
         return ok = false;
     }
 
@@ -967,13 +970,19 @@ llbool Solver::new_decision(int& nof_conflicts, int& nof_learnts, int& conflictC
         // Reached bound on number of conflicts:
         progress_estimate = progressEstimate();
         cancelUntil(0);
-        if (dynamic_behaviour_analysis) logger.end(Logger::restarting);
+        if (dynamic_behaviour_analysis) {
+            logger.end(Logger::restarting);
+            logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
+        }
         return l_Undef;
     }
 
     // Simplify the set of problem clauses:
     if (decisionLevel() == 0 && !simplify()) {
-        if (dynamic_behaviour_analysis) logger.end(Logger::unsat_model_found);
+        if (dynamic_behaviour_analysis) {
+            logger.end(Logger::unsat_model_found);
+            logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
+        }
         return l_False;
     }
 
@@ -991,7 +1000,10 @@ llbool Solver::new_decision(int& nof_conflicts, int& nof_learnts, int& conflictC
             if (dynamic_behaviour_analysis) logger.propagation(p, Logger::assumption_type);
         } else if (value(p) == l_False) {
             analyzeFinal(~p, conflict);
-            if (dynamic_behaviour_analysis) logger.end(Logger::unsat_model_found);
+            if (dynamic_behaviour_analysis) {
+                logger.end(Logger::unsat_model_found);
+                logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
+            }
             return l_False;
         } else {
             next = p;
@@ -1006,7 +1018,10 @@ llbool Solver::new_decision(int& nof_conflicts, int& nof_learnts, int& conflictC
 
         if (next == lit_Undef) {
             // Model found:
-            if (dynamic_behaviour_analysis) logger.end(Logger::model_found);
+            if (dynamic_behaviour_analysis) {
+                logger.end(Logger::model_found);
+                logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
+            }
             return l_True;
         }
     }
@@ -1027,7 +1042,10 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     conflicts++;
     conflictC++;
     if (decisionLevel() == 0) {
-        if (dynamic_behaviour_analysis) logger.end(Logger::unsat_model_found);
+        if (dynamic_behaviour_analysis) {
+            logger.end(Logger::unsat_model_found);
+            logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
+        }
         return l_False;
     }
     learnt_clause.clear();
@@ -1109,8 +1127,12 @@ bool Solver::solve(const vec<Lit>& assumps)
     // Search:
     while (status == l_Undef) {
         if (verbosity >= 1) {
-            printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
-            printf("\n");
+            if (!(dynamic_behaviour_analysis && logger.statistics_on))  {
+                printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
+                printf("\n");
+            } else {
+                logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
+            }
         }
         status = search((int)nof_conflicts, (int)nof_learnts);
         nof_conflicts *= restart_inc;

@@ -22,6 +22,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 using std::cout;
@@ -34,10 +35,15 @@ using std::ofstream;
 
 #define MAX_VAR 1000000
 
+#define FST_WIDTH 10
+#define SND_WIDTH 35
+#define TRD_WIDTH 10
+
 Logger::Logger(int& _verbosity) :
         proof_graph_on(false),
         statistics_on(false),
 
+        max_print_lines(20),
         uniqueid(1),
         level(0),
         begin_level(0),
@@ -80,7 +86,7 @@ void Logger::new_group(const uint group)
 {
     if (groupnames.size() <= group) {
         uint old_size = times_group_caused_propagation.size();
-        groupnames.resize(group+1);
+        groupnames.resize(group+1, "Noname");
         times_group_caused_conflict.resize(group+1);
         times_group_caused_propagation.resize(group+1);
         depths_of_propagations_for_group.resize(group+1);
@@ -99,7 +105,12 @@ void Logger::set_group_name(const uint group, const char* name)
 {
     new_group(group);
 
-    if (groupnames[group].empty()) {
+    if (strlen(name) > SND_WIDTH-2) {
+        cout << "A clause group name cannot have more than " << SND_WIDTH-2 << " number of characters. You gave '" << name << "', which is " << strlen(name) << " long." << endl;
+        exit(-1);
+    }
+    
+    if (groupnames[group].empty() || groupnames[group] == "Noname") {
         groupnames[group] = name;
     } else if (name != '\0' && groupnames[group] != name) {
         printf("Error! Group no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", group, groupnames[group].c_str(), name);
@@ -111,6 +122,11 @@ void Logger::set_group_name(const uint group, const char* name)
 void Logger::set_variable_name(const uint var, const char* name)
 {
     if (!proof_graph_on && !statistics_on) return;
+    
+    if (strlen(name) > SND_WIDTH-2) {
+        cout << "A variable name cannot have more than " << SND_WIDTH-2 << " number of characters. You gave '" << name << "', which is " << strlen(name) << " long." << endl;
+        exit(-1);
+    }
 
     new_var(var);
     varnames[var] = name;
@@ -139,7 +155,8 @@ void Logger::begin()
         }
     }
 
-    if (statistics_on) reset_statistics();
+    if (statistics_on)
+        reset_statistics();
 
     level = begin_level;
 }
@@ -374,6 +391,11 @@ void Logger::end(const finish_type finish)
     proof_num++;
 }
 
+void Logger::print_footer() const
+{
+    cout << "+" << std::setfill('-') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+4) << "-" << std::setfill(' ') << "+" << endl;
+}
+
 void Logger::print_assign_var_order() const
 {
     vector<pair<double, uint> > prop_ordered;
@@ -388,7 +410,9 @@ void Logger::print_assign_var_order() const
     }
 
     if (!prop_ordered.empty()) {
-        cout << "--- Variables are assigned in the order of: (avg) ---" << endl;
+        print_footer();
+        print_simple_line(" Variables are assigned in the following order");
+        print_header("var", "var name", "avg order");
         std::sort(prop_ordered.begin(), prop_ordered.end());
         print_vars(prop_ordered);
     }
@@ -408,7 +432,9 @@ void Logger::print_prop_order() const
     }
 
     if (!prop_ordered.empty()) {
-        cout << "--- Propagation depth order of clause groups ---" << endl;
+        print_footer();
+        print_simple_line(" Propagation depth order of clause groups");
+        print_header("group", "group name", "avg order");
         std::sort(prop_ordered.begin(), prop_ordered.end());
         print_groups(prop_ordered);
     }
@@ -428,7 +454,9 @@ void Logger::print_confl_order() const
     }
 
     if (!confl_ordered.empty()) {
-        cout << "--- Avg. conflict depth order of clause groups ---" << endl;
+        print_footer();
+        print_simple_line(" Avg. conflict depth order of clause groups");
+        print_header("groupno", "group name", "avg. depth");
         std::sort(confl_ordered.begin(), confl_ordered.end());
         print_groups(confl_ordered);
     }
@@ -442,7 +470,9 @@ void Logger::print_times_var_guessed() const
             times_var_ordered.push_back(std::make_pair(times_var_guessed[i], i));
 
     if (!times_var_ordered.empty()) {
-        cout << "--- Times var guessed ---" << endl;
+        print_footer();
+        print_simple_line(" No. times variable branched on");
+        print_header("var", "var name", "no. times");
         std::sort(times_var_ordered.rbegin(), times_var_ordered.rend());
         print_vars(times_var_ordered);
     }
@@ -456,7 +486,9 @@ void Logger::print_times_group_caused_propagation() const
             props_group_ordered.push_back(std::make_pair(times_group_caused_propagation[i], i));
 
     if (!props_group_ordered.empty()) {
-        cout << "--- Number of propagations made by clause groups ---" << endl;
+        print_footer();
+        print_simple_line(" No. propagations made by clause groups");
+        print_header("group", "group name", "no. props");
         std::sort(props_group_ordered.rbegin(),props_group_ordered.rend());
         print_groups(props_group_ordered);
     }
@@ -470,96 +502,107 @@ void Logger::print_times_group_caused_conflict() const
             confls_group_ordered.push_back(std::make_pair(times_group_caused_conflict[i], i));
 
     if (!confls_group_ordered.empty()) {
-        cout << "--- Number of conflicts made by clause groups ---" << endl;
+        print_footer();
+        print_simple_line(" No. conflicts made by clause groups");
+        print_header("group", "group name", "no. confl");
         std::sort(confls_group_ordered.rbegin(), confls_group_ordered.rend());
         print_groups(confls_group_ordered);
     }
 }
 
+template<class T>
+inline void Logger::print_line(const uint& number, const string& name, const T& value) const
+{
+    cout << "|" << std::setw(FST_WIDTH) << number << "  " << std::setw(SND_WIDTH) << name << "  " << std::setw(TRD_WIDTH) << value << "|" << endl;
+}
+
+void Logger::print_header(const string& first, const string& second, const string& third) const
+{
+    cout << "|" << std::setw(FST_WIDTH) << first << "  " << std::setw(SND_WIDTH) << second << "  " << std::setw(TRD_WIDTH) << third << "|" << endl;
+    print_footer();
+}
+
 void Logger::print_groups(const vector<pair<double, uint> >& to_print) const
 {
-    bool no_name = true;
+    uint i = 0;
     typedef vector<pair<double, uint> >::const_iterator myiterator;
-    for (myiterator it = to_print.begin(); it != to_print.end(); it++) {
-        /*if (it->first <= 1) {
-        printf("Skipped all frequencies <= %d\n", it->first);
-        break;
-    }*/
-        if (it->second > max_group) {
-            cout << "group " << it->second+1 << " ( learnt clause ) : " << it->first << endl;
-        } else {
-            if (!groupnames[it->second].empty())
-                no_name = false;
-            cout << "group " << it->second+1 << " ( " << groupnames[it->second]<< " ) : " << it->first << endl;
-        }
+    for (myiterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++) {
+        string name;
+        
+        if (it->second > max_group)
+            name = "learnt clause";
+        else
+            name = groupnames[it->second];
+        
+        print_line(it->second+1, name, it->first);
     }
-    if (no_name) printf("Tip: You can name your clauses using the syntax \"c g 32 Blah blah\" in your DIMACS file, where 32 is the clause group number, which can be shared between clauses (note: if the clause group matches, the name must match, too).\n");
+    print_footer();
 }
 
 void Logger::print_groups(const vector<pair<uint, uint> >& to_print) const
 {
-    bool no_name = true;
+    uint i = 0;
     typedef vector<pair<uint, uint> >::const_iterator myiterator;
-    for (myiterator it = to_print.begin(); it != to_print.end(); it++) {
-        /*if (it->first <= 1) {
-        	printf("Skipped all frequencies <= %d\n", it->first);
-        	break;
-        }*/
-        if (it->second > max_group) {
-            cout << "group " << it->second+1 << " ( learnt clause ) : " << it->first << endl;
-        } else {
-            if (!groupnames[it->second].empty())
-                no_name = false;
-            cout << "group " << it->second+1 << " ( " << groupnames[it->second]<< " ) : " << it->first << endl;
-        }
+    for (myiterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++) {
+        string name;
+        
+        if (it->second > max_group)
+            name = "learnt clause";
+        else
+            name = groupnames[it->second];
+        
+        print_line(it->second+1, name, it->first);
     }
-    if (no_name) printf("Tip: You can name your clauses using the syntax \"c g 32 Blah blah\" in your DIMACS file, where 32 is the clause group number, which can be shared between clauses (note: if the clause group matches, the name must match, too).\n");
+    print_footer();
 }
 
 void Logger::print_vars(const vector<pair<double, uint> >& to_print) const
 {
-    bool no_name = true;
-    for (vector<pair<double, uint> >::const_iterator it = to_print.begin(); it != to_print.end(); it++) {
-        /*if (it->first <= 1) {
-        printf("Skipped all frequencies <= %d\n", it->first);
-        break;
-    }*/
-        if (!varnames[it->second].empty())
-            no_name = false;
-        cout << "var " << it->second+1 << " ( " << varnames[it->second] << " ) : " << it->first << endl;
-    }
-    if (no_name) printf("Tip: You can name your variables using the syntax \"c v 10 Blah blah\" in your DIMACS file. It helps.\n");
+    uint i = 0;
+    for (vector<pair<double, uint> >::const_iterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++)
+        print_line(it->second+1, varnames[it->second], it->first);
+    
+    print_footer();
 }
 
 void Logger::print_vars(const vector<pair<uint, uint> >& to_print) const
 {
-    bool no_name = true;
-    for (vector<pair<uint, uint> >::const_iterator it = to_print.begin(); it != to_print.end(); it++) {
-        /*if (it->first <= 1) {
-        	printf("Skipped all frequencies <= %d\n", it->first);
-        	break;
-        }*/
-        if (!varnames[it->second].empty())
-            no_name = false;
-        cout << "var " << it->second+1 << " ( " << varnames[it->second] << " ) : " << it->first << endl;
+    uint i = 0;
+    for (vector<pair<uint, uint> >::const_iterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++) {
+        print_line(it->second+1, varnames[it->second], it->first);
     }
-    if (no_name) printf("Tip: You can name your variables using the syntax \"c v 10 Blah blah\" in your DIMACS file. It helps.\n");
+    
+    print_footer();
+}
+
+template<class T>
+void Logger::print_line(const string& str, const T& num) const
+{
+    cout << "|" << std::setw(FST_WIDTH+SND_WIDTH+4) << str << std::setw(TRD_WIDTH) << num << "|" << endl;
+}
+
+void Logger::print_simple_line(const string& str) const
+{
+    cout << "|" << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+4) << str << "|" << endl;
 }
 
 void Logger::print_branch_depth_distrib() const
 {
-    cout << "--- Branch depth stats ---" << endl;
+    //cout << "--- Branch depth stats ---" << endl;
 
     const uint range = 20;
     map<uint, uint> range_stat;
 
     for (map<uint, uint>::const_iterator it = branch_depth_distrib.begin(); it != branch_depth_distrib.end(); it++) {
-        cout << it->first << " : " << it->second << endl;
+        //cout << it->first << " : " << it->second << endl;
         range_stat[it->first/range] += it->second;
     }
-    cout << endl;
+    //cout << endl;
 
-    cout << "--- Branch depth stats ranged to " << range << " ---" << endl;
+    print_footer();
+    print_simple_line(" No. search branches with branch depth between");
+    print_line("Branch depth between", "no. br.-s");
+    print_footer();
 
     std::stringstream ss;
     ss << "branch_depths/branch_depth_file" << runid << "-" << proof_num << ".txt";
@@ -568,10 +611,11 @@ void Logger::print_branch_depth_distrib() const
     uint i = 0;
     
     for (map<uint, uint>::iterator it = range_stat.begin(); it != range_stat.end(); it++) {
-        cout << it->first*range << "-" << it->first*range + range-1 << " : " << it->second << endl;
+        std::stringstream ss2;
+        ss2 << it->first*range << " - " << it->first*range + range-1;
+        print_line(ss2.str(), it->second);
 
         branch_depth_file << i << "\t" << it->second << "\t";
-        //branch_depth_file  << "\"" << lexical_cast<string>(it.first*range) << "-" << lexical_cast<string>(it.first*range + range-1) << "\"" << endl;
         if (i %  5 == 0)
             branch_depth_file  << "\"" << it->first*range << "\"";
         else
@@ -580,9 +624,25 @@ void Logger::print_branch_depth_distrib() const
         i++;
     }
     branch_depth_file.close();
-    cout << endl;
+    print_footer();
 
 }
+
+void Logger::print_general_stats(uint restarts, uint64_t conflicts, int vars, int noClauses, uint64_t clauses_Literals, int noLearnts, double litsPerLearntCl, double progressEstimate) const
+{
+    print_footer();
+    print_simple_line(" Standard MiniSat restart statistics");
+    print_footer();
+    print_line("Restart number", restarts);
+    print_line("Number of conflicts", conflicts);
+    print_line("Number of variables", vars);
+    print_line("Number of clauses", noClauses);
+    print_line("Number of literals in clauses",clauses_Literals);
+    print_line("Avg. literals per learnt clause",litsPerLearntCl);
+    print_line("Progress estimate (%):", progressEstimate);
+    print_footer();
+}
+
 
 // Prints statistics on the console
 void Logger::printstats() const
@@ -591,31 +651,47 @@ void Logger::printstats() const
     assert(varnames.size() == times_var_guessed.size());
     assert(varnames.size() == times_var_propagated.size());
 
-    printf("\n----------- STATS FOR THIS RESTART BEGIN ------------\n");
-    printf("ATTENTION! If you used minisat as a library, then vars are all shifted by 1 here and everywhere in ALL outputs of minisat. This does not apply when you use minisat as a stand-alone program)\n");
-
+    printf("\n");
+    printf("===================================================\n");
+    printf("=========== STATS FOR THIS RESTART BEGIN ==========\n");
+    printf("===================================================\n");
+    cout.setf(std::ios_base::left);
+    cout.precision(4);
     print_times_var_guessed();
     print_times_group_caused_propagation();
     print_times_group_caused_conflict();
     print_prop_order();
     print_confl_order();
     print_assign_var_order();
+    print_branch_depth_distrib();
 
-    printf("No. branches visited: %d\n", no_conflicts);
-    printf("Avg branch depth: %f\n", (double)sum_conflict_depths/(double)no_conflicts);
-    printf("No decisions: %d\n", no_decisions);
-    printf("No propagations: %d\n", no_propagations);
+    print_footer();
+    print_simple_line(" Advanced statistics");
+    print_footer();
+    print_line("No. branches visited", no_conflicts);
+    print_line("Avg. branch depth", (double)sum_conflict_depths/(double)no_conflicts);
+    print_line("No. decisions", no_decisions);
+    print_line("No. propagations",no_propagations);
 
     //printf("no progatations/no decisions (i.e. one decision gives how many propagations on average *for the whole search graph*): %f\n", (double)no_propagations/(double)no_decisions);
     //printf("no propagations/sum decisions on branches (if you look at one specific branch, what is the average number of propagations you will find?): %f\n", (double)no_propagations/(double)sum_decisions_on_branches);
 
-    printf("sum decisions on branches/no. branches =\n(if you look at one specific branch, what is the average number of decisions you will find?) =\n %f\n", (double)sum_decisions_on_branches/(double)no_conflicts);
+    print_simple_line("sum decisions on branches/no. branches");
+    print_simple_line(" (in a given branch, what is the avg.");
+    print_line("  no. of decisions?)",(double)sum_decisions_on_branches/(double)no_conflicts);
 
-    printf("sum propagations on branches/no. branches =\n(if you look at one specific branch, what is the average number of propagations you will find?) =\n %f\n", (double)sum_propagations_on_branches/(double)no_conflicts);
-
-    print_branch_depth_distrib();
-
-    printf("\n----------- STATS END ------------\n\n");
+    print_simple_line("sum propagations on branches/no. branches");
+    print_simple_line(" (in a given branch, what is the");
+    print_line("  avg. no. of propagations?)",(double)sum_propagations_on_branches/(double)no_conflicts);
+    print_footer();
+    
+    print_footer();
+    print_simple_line("Statistics note: If you used CryptoMiniSat as");
+    print_simple_line("a library then vars are all shifted by 1 here");
+    print_simple_line("and in every printed output of the solver.");
+    print_simple_line("This does not apply when you use CryptoMiniSat");
+    print_simple_line("as a stand-alone program.");
+    print_footer();
 }
 
 // resets all stored statistics. Might be useful, to generate statistics for each restart and not for the whole search in general
