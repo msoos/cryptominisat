@@ -615,15 +615,18 @@ void Logger::print_branch_depth_distrib() const
         ss2 << it->first*range << " - " << it->first*range + range-1;
         print_line(ss2.str(), it->second);
 
-        branch_depth_file << i << "\t" << it->second << "\t";
-        if (i %  5 == 0)
-            branch_depth_file  << "\"" << it->first*range << "\"";
-        else
-            branch_depth_file << "\"\"";
-        branch_depth_file << endl;
+        if (branch_depth_file.is_open()) {
+                branch_depth_file << i << "\t" << it->second << "\t";
+            if (i %  5 == 0)
+                branch_depth_file  << "\"" << it->first*range << "\"";
+            else
+                branch_depth_file << "\"\"";
+            branch_depth_file << endl;
+        }
         i++;
     }
-    branch_depth_file.close();
+    if (branch_depth_file.is_open())
+        branch_depth_file.close();
     print_footer();
 
 }
