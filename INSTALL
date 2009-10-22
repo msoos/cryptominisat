@@ -32,7 +32,7 @@ Building using autotools
 Please read help
 ---------
 For help, build the program, and issue:
-'./minisat -help'
+'./cryptominisat -help'
 
 --------
 Verbose debug
@@ -41,9 +41,9 @@ You can also turn on verbose debugging.
 Simply add "#define VERBOSE_DEBUG" to the Solver/Solver.h file and re-compile
 
 When executing:
-'./minisat satfile'
+'./cryptominisat satfile'
 You will see a LOT of debug info. You should therefore maybe do:
-'./minisat satfile > debuginfo.txt'
+'./cryptominisat satfile > debuginfo.txt'
 then you can open the 'debuginfo.txt' file from a text editor and have a look
 
 -----------------
@@ -66,6 +66,6 @@ get from source and compile as per src/Solver/win32-howto
 
 go to "src/Solver" and do:
 
-i586-mingw32msvc-g++ -O3 -g -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a Solver.C Logger.C fcopy.cpp clause.cpp -o minisat.exe
+i586-mingw32msvc-g++ -O3 -g -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a Solver.C Logger.C fcopy.cpp clause.cpp -o cryptominisat.exe
 
 I test the generated binary under wine, in Linux.
