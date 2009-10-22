@@ -1,3 +1,7 @@
+ver 1.2.4 -- 22/10/2009
+* CryptoMiniSat is printed as the first line of the program
+  (instead of "This is MiniSat 2.0 beta")
+
 ver 1.2.3 -- 22/10/2009
 * better README file
 * better use of the automake autoconf toolchain
