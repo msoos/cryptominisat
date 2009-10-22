@@ -652,9 +652,9 @@ void Logger::printstats() const
     assert(varnames.size() == times_var_propagated.size());
 
     printf("\n");
-    printf("===================================================\n");
-    printf("=========== STATS FOR THIS RESTART BEGIN ==========\n");
-    printf("===================================================\n");
+    cout << "+" << std::setfill('=') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+4) << "=" << "+" << endl;
+    cout << "||" << std::setfill('*') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+2) << "********* STATS FOR THIS RESTART BEGIN " << "||" << endl;
+    cout << "+" << std::setfill('=') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+4) << "=" << std::setfill(' ') << "+" << endl;
     cout.setf(std::ios_base::left);
     cout.precision(4);
     print_times_var_guessed();
