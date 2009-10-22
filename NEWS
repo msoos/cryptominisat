@@ -1,3 +1,7 @@
+ver 1.2.3 -- 22/10/2009
+* better README file
+* better use of the automake autoconf toolchain
+
 ver 1.2.2 -- 22/10/2009
 * phase saving added (thank you, glucose solver team)
 * better printing of statistics
