@@ -159,7 +159,8 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, const char* group_name)
 {
     assert(decisionLevel() == 0);
 
-    if (dynamic_behaviour_analysis) logger.set_group_name(group, group_name);
+    if (dynamic_behaviour_analysis)
+        logger.set_group_name(group, group_name);
 
     if (!ok)
         return false;
@@ -1032,7 +1033,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     learnt_clause.clear();
     analyze(confl, learnt_clause, backtrack_level);
     cancelUntil(backtrack_level);
-    if (dynamic_behaviour_analysis) logger.conflict(Logger::simple_confl_type, backtrack_level, confl->group, learnt_clause);
+    if (dynamic_behaviour_analysis)
+        logger.conflict(Logger::simple_confl_type, backtrack_level, confl->group, learnt_clause);
 #ifdef VERBOSE_DEBUG
     cout << "Learning:";
     for (uint i = 0; i < learnt_clause.size(); i++) printLit(learnt_clause[i]), cout << " ";
@@ -1053,11 +1055,13 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         learnts.push(c);
         attachClause(*c);
         claBumpActivity(*c);
-        if (dynamic_behaviour_analysis) logger.new_group(c->group);
         uncheckedEnqueue(learnt_clause[0], c);
 
-        if (dynamic_behaviour_analysis)
+        if (dynamic_behaviour_analysis) {
             logger.propagation(learnt_clause[0], Logger::revert_guess_type, c->group);
+            logger.new_group(c->group);
+            logger.set_group_name(c->group, "learnt clause");
+        }
     }
 
     varDecayActivity();
