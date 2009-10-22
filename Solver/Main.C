@@ -348,18 +348,18 @@ void printUsage(char** argv)
     printf("  -decay         = <num> [ 0 - 1 ]\n");
     printf("  -rnd-freq      = <num> [ 0 - 1 ]\n");
     printf("  -verbosity     = {0,1,2}\n");
-    printf("  -proof-log     = Logs the proof into files 'proofN.dot', where N is the restart number\n");
-    printf("                   The log can then be visualized using 'dot' from the graphviz package\n");
-    printf("  -grouping      = Lets you customize the number associated with a clause\n");
-    printf("                   which helps when looking at the proof graph\n");
-    printf("                   as two clauses can share the same number\n");
-    printf("                   Remember: clauses cannot be named without grouping turned on\n");
-    printf("  -stats         = Computes statistics of the search\n");
-    printf("  -randomize     = <num> [0 - 2^32-1] Randomly permutates the clauses using the seed\n");
-    printf("                   Seed is also used for picking decision variables\n");
-    printf("  -restrict      = <num> pick variables betwen [1, num] preferentially when branching\n");
-    printf("                   extremely useful for cryptographic problems, where the question is\n");
-    printf("                   the key, which is usually small (e.g. 80 bits)\n");
+    printf("  -proof-log     = Logs the proof into files 'proofN.dot', where N is the\n");
+    printf("                   restart number. The log can then be visualized using\n");
+    printf("                   the 'dot' program from the graphviz package\n");
+    printf("  -grouping      = Lets you group clauses, and customize the groups' names.\n");
+    printf("                   This helps when printing statistics\n");
+    printf("  -stats         = Computes and prints statistics during the search\n");
+    printf("  -randomize     = <seed> [0 - 2^32-1] Randomly permutates the clauses. The \n");
+    printf("                   seed is later also used for picking decision variables\n");
+    printf("  -restrict      = <num> [1 - varnum] when picking random variables to branch\n");
+    printf("                   on, pick one that in the 'num' most active vars useful\n");
+    printf("                   for cryptographic problems, where the question is the key,\n");
+    printf("                   which is usually small (e.g. 80 bits)\n");
     printf("\n");
 }
 
