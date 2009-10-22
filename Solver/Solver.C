@@ -1126,13 +1126,9 @@ bool Solver::solve(const vec<Lit>& assumps)
 
     // Search:
     while (status == l_Undef) {
-        if (verbosity >= 1) {
-            if (!(dynamic_behaviour_analysis && logger.statistics_on))  {
-                printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
-                printf("\n");
-            } else {
-                logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
-            }
+        if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
+            printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
+            printf("\n");
         }
         status = search((int)nof_conflicts, (int)nof_learnts);
         nof_conflicts *= restart_inc;
