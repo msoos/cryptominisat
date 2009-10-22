@@ -1,4 +1,4 @@
-AC_INIT(cryptominisat, 1.2.2)
+AC_INIT(cryptominisat, 1.2.3)
 
 AC_LANG_CPLUSPLUS
 AC_PROG_CXX
