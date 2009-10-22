@@ -133,7 +133,7 @@ protected:
         const Solver& s;
         VarFilter(const Solver& _s) : s(_s) {}
         bool operator()(Var v) const {
-            return s.assigns[v] == l_Undef && s.decision_var[v];
+            return s.assigns[v].isUndef() && s.decision_var[v];
         }
     };
 
