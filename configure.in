@@ -1,10 +1,13 @@
-AC_INIT(configure.in)
-
-AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(cryptominisat, 2.1)
+AC_INIT(cryptominisat, 1.2.2)
 
 AC_LANG_CPLUSPLUS
 AC_PROG_CXX
-AM_PROG_LIBTOOL
+AC_LANG(C++)
+
+AM_INIT_AUTOMAKE
+AC_CONFIG_MACRO_DIR([m4])
+LT_INIT
+AC_CONFIG_HEADERS(config.h)
+AC_CHECK_HEADERS(iostream)
 
 AC_OUTPUT(Makefile)
