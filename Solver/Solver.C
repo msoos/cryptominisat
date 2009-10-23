@@ -69,6 +69,7 @@ Solver::Solver() :
 Solver::~Solver()
 {
     for (int i = 0; i < learnts.size(); i++) free(learnts[i]);
+    for (int i = 0; i < unitary_learnts.size(); i++) free(unitary_learnts[i]);
     for (int i = 0; i < clauses.size(); i++) free(clauses[i]);
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
 }
@@ -845,6 +846,11 @@ const vec<Clause*>& Solver::get_sorted_learnts()
     return learnts;
 }
 
+const vec<Clause*>& Solver::get_unitary_learnts() const
+{
+    return unitary_learnts;
+}
+
 template<class T>
 void Solver::removeSatisfied(vec<T*>& cs)
 {
@@ -1090,7 +1096,10 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     #endif
     
     assert(value(learnt_clause[0]) == l_Undef);
+    //Unitary learnt
     if (learnt_clause.size() == 1) {
+        Clause* c = Clause_new(learnt_clause, learnt_clause_group++, true);
+        unitary_learnts.push(c);
         uncheckedEnqueue(learnt_clause[0]);
         if (dynamic_behaviour_analysis)
             logger.propagation(learnt_clause[0], Logger::learnt_unit_clause_type);
@@ -1099,6 +1108,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         #ifdef VERBOSE_DEBUG
         cout << "Unit clause learnt." << endl;
         #endif
+    //Normal learnt
     } else {
         Clause* c = Clause_new(learnt_clause, learnt_clause_group++, true);
         learnts.push(c);

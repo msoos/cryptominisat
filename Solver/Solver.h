@@ -115,7 +115,8 @@ public:
     void setVariableName(int var, const char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
     void startClauseAdding();      // Before adding clauses, but after setting up the Solver (need* functions, verbosity), this should be called
     void endFirstSimplify();       // After the clauses are added, and the first simplify() is called, this must be called
-    const vec<Clause*>& get_sorted_learnts();//return the set of learned clauses
+    const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses
+    const vec<Clause*>& get_unitary_learnts() const; //return the set of unitary learned clauses
 
 protected:
     // Helper structures:
@@ -143,6 +144,7 @@ protected:
     vec<Clause*>        clauses;          // List of problem clauses.
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses.
     vec<Clause*>        learnts;          // List of learnt clauses.
+    vec<Clause*>        unitary_learnts;  // List of learnt clauses.
     double              cla_inc;          // Amount to bump next clause with.
     vec<double>         activity;         // A heuristic measurement of the activity of a variable.
     double              var_inc;          // Amount to bump next variable with.
