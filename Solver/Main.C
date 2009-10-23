@@ -263,7 +263,16 @@ static void parse_DIMACS_main(B& in, Solver& S)
             break;
         default:
             bool xor_clause = false;
+            uint matrix_no = 15;
             if ( *in == 'x') xor_clause = true, ++in;
+            if ( *in == 'm') {
+                xor_clause = true;
+                ++in;
+                matrix_no = parseInt(in);
+                if (*in != 'm')
+                    cout << "PARSE ERROR! You must have 'mXm' as the beginning of your matrix-aware xor. You forgot the second 'm'", exit(3);
+                ++in;
+            }
             readClause(in, S, lits);
             skipLine(in);
 
@@ -293,7 +302,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
             }
 
             if (xor_clause)
-                S.addXorClause(lits, false, group, group_name);
+                S.addXorClause(lits, false, group, group_name, matrix_no);
             else
                 S.addClause(lits, group, group_name);
             break;
@@ -361,6 +370,9 @@ void printUsage(char** argv)
     printf("                   on, pick one that in the 'num' most active vars useful\n");
     printf("                   for cryptographic problems, where the question is the key,\n");
     printf("                   which is usually small (e.g. 80 bits)\n");
+    printf("  -gaussuntil    = <num> The depth until which Gaussian elimination is active.\n");
+    printf("                   giving 0 means that Gaussian elimination is switched off\n");
+    printf("  -gaussfrom     = <num> The depth from which Gaussian elimination is active.\n");
     printf("\n");
 }
 
@@ -444,7 +456,22 @@ int main(int argc, char** argv)
                 exit(0);
             }
             S.restrictedPickBranch = branchTo-1; //-1 needed as var 1 is represented as var 0 internally
-
+        } else if ((value = hasPrefix(argv[i], "-gaussuntil="))) {
+            uint32_t until;
+            if (sscanf(value, "%d", &until) < 0) {
+                printf("ERROR! until %s\n", value);
+                exit(0);
+            }
+            cout << "Gaussian until:" << until << endl;
+            S.set_gaussian_decision_until(until);
+        } else if ((value = hasPrefix(argv[i], "-gaussfrom="))) {
+            uint32_t from;
+            if (sscanf(value, "%d", &from) < 0) {
+                printf("ERROR! from %s\n", value);
+                exit(0);
+            }
+            cout << "Gaussian from:" << from << endl;
+            S.set_gaussian_decision_from(from);
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);

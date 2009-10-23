@@ -7,6 +7,12 @@ SET(CMAKE_BUILD_TYPE ${MY_BUILD_TYPE} CACHE STRING "..." FORCE)
 MARK_AS_ADVANCED(CMAKE_BUILD_TYPE )
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -march=native")
 
+find_package( Boost 1.34 COMPONENTS system thread filesystem)
+link_directories ( ${Boost_LIBRARY_DIRS} )
+include_directories ( ${Boost_INCLUDE_DIRS} )
+
+find_library(GMP_LIBRARIES NAMES gmp libgmp)
+
 find_package( ZLIB )
 link_directories( ${ZLIB_LIBRARY} )
 include_directories( ${ZLIB_INCLUDE_DIR} )
@@ -22,6 +28,8 @@ add_executable(cryptominisat Solver/Main.C)
 target_link_libraries(cryptominisat
 	cryptominisatlib
 	${ZLIB_LIBRARY}
+        ${Boost_LIBRARIES}
+        ${GMP_LIBRARIES}
 )
 
 add_library(cryptominisatlib
@@ -29,5 +37,8 @@ add_library(cryptominisatlib
 	Solver/Logger.C
 	Solver/Solver.C
 	Solver/clause.cpp
+        Solver/gaussian.cpp
+        Solver/mpzstack.cpp
+        Solver/mpz_class.cpp
 )
 

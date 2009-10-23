@@ -33,11 +33,9 @@ Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt)
     return real;
 }
 
-#ifdef USE_GAUSS
-Clause* Clause_new(const mpz_class& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint group, const bool learnt)
+Clause* Clause_new(const mpz_class& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint group)
 {
-    void* mem = malloc(sizeof(Clause) + sizeof(Lit)*(ps.size()));
-    Clause* real= new (mem) Clause(ps, assigns, col_to_var_original, group, learnt);
+    void* mem = malloc(sizeof(Clause) + sizeof(Lit)*(ps.real_popcnt()));
+    Clause* real= new (mem) Clause(ps, assigns, col_to_var_original, group);
     return real;
 }
-#endif

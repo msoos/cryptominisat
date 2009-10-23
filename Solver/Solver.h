@@ -32,6 +32,12 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "clause.h"
 #include <string.h>
 
+#include "gaussianconfig.h"
+#include <list>
+using std::list;
+class Gaussian;
+
+
 //#define VERBOSE_DEBUG_XOR
 //#define VERBOSE_DEBUG
 
@@ -52,7 +58,7 @@ public:
     //
     Var     newVar    (bool polarity = true, bool dvar = true); // Add a new variable with parameters specifying variable mode.
     bool    addClause (vec<Lit>& ps, const uint group, const char* group_name);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
-    bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name, const uint matrix_no = 15);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
@@ -101,6 +107,9 @@ public:
     uint      restrictedPickBranch; // Pick variables to branch on preferentally from the highest [0, restrictedPickBranch]. If set to 0, preferentiality is turned off (i.e. picked randomly between [0, all])
     bool      useRealUnknowns;    // Whether 'real unknown' optimization should be used. If turned on, VarActivity is only bumped for variables for which the real_unknowns[var] == true
     vector<bool> realUnknowns;    // The important variables. This vector stores 'false' at realUnknowns[var] if the var is not a real unknown, and stores a 'true' if it is a real unkown. If var is larger than realUnkowns.size(), then it is not an important variable
+    void set_gaussian_decision_until(const uint to);
+    void set_gaussian_decision_from(const uint from);
+    
 
     enum { polarity_true = 0, polarity_false = 1, polarity_user = 2, polarity_rnd = 3 };
 
@@ -118,6 +127,11 @@ public:
     const vec<Clause*>& get_sorted_learnts();//return the set of learned clauses
 
 protected:
+    list<Gaussian*> gauss_matrixes;
+    GaussianConfig gaussconfig;
+    friend class Gaussian;
+    
+    
     // Helper structures:
     //
     struct VarOrderLt {
@@ -286,7 +300,7 @@ inline void     Solver::newDecisionLevel()
 {
     trail_lim.push(trail.size());
 #ifdef VERBOSE_DEBUG
-    cout << "New decision level:" << trail_lim.size() << endl;
+    std::cout << "New decision level:" << trail_lim.size() << std::endl;
 #endif
 }
 inline int      Solver::decisionLevel ()      const

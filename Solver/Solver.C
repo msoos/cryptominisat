@@ -27,6 +27,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <vector>
 #include "clause.h"
 
+#include <boost/foreach.hpp>
+#include "gaussian.h"
+
+
 //=================================================================================================
 // Constructor/Destructor:
 
@@ -71,6 +75,9 @@ Solver::~Solver()
     for (int i = 0; i < learnts.size(); i++) free(learnts[i]);
     for (int i = 0; i < clauses.size(); i++) free(clauses[i]);
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
+    BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
+        delete gauss;
+    gauss_matrixes.clear();
 }
 
 //=================================================================================================
@@ -101,7 +108,7 @@ Var Solver::newVar(bool sign, bool dvar)
     return v;
 }
 
-bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name)
+bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name, const uint matrix_no)
 {
     assert(decisionLevel() == 0);
 
@@ -146,7 +153,11 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
 
-        XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
+        if (matrix_no != 15 && matrix_no >= gauss_matrixes.size()) {
+            for (uint i = gauss_matrixes.size(); i <= matrix_no; i++)
+                gauss_matrixes.push_back(new Gaussian(*this, i, gaussconfig));
+        }
+        XorClause* c = XorClause_new(ps, xor_clause_inverted, group, matrix_no);
 
         xorclauses.push(c);
         attachClause(*c);
@@ -289,12 +300,16 @@ void Solver::cancelUntil(int level)
 #ifdef VERBOSE_DEBUG
             cout << "Canceling var " << x+1 << " sublevel:" << c << endl;
 #endif
+            BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
+                gauss->canceling(c, x);
             assigns[x] = l_Undef;
             insertVarOrder(x);
         }
         qhead = trail_lim[level];
         trail.shrink(trail.size() - trail_lim[level]);
         trail_lim.shrink(trail_lim.size() - level);
+        BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
+            gauss->back_to_level(decisionLevel());
     }
 
 #ifdef VERBOSE_DEBUG
@@ -352,6 +367,16 @@ void Solver::printClause(const XorClause& c) const
         i++;
         if (i < c.size()) printf(" + ");
     }
+}
+
+void Solver::set_gaussian_decision_until(const uint to)
+{
+    gaussconfig.decision_until = to;
+}
+
+void Solver::set_gaussian_decision_from(const uint from)
+{
+    gaussconfig.decision_from = from;
 }
 
 //=================================================================================================
@@ -639,7 +664,6 @@ Clause* Solver::propagate(const bool xor_as_well)
         vec<Clause*>&  ws  = watches[p.toInt()];
         Clause         **i, **j, **end;
         num_props++;
-
 
         for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
             Clause& c = **i++;
@@ -948,6 +972,10 @@ lbool Solver::search(int nof_conflicts, int nof_learnts)
     llbool      ret;
 
     starts++;
+    BOOST_FOREACH(Gaussian* gauss, gauss_matrixes) {
+        ret = gauss->full_init();
+        if (ret != l_Nothing) return ret;
+    }
 
     if (dynamic_behaviour_analysis) logger.begin();
 
@@ -958,6 +986,13 @@ lbool Solver::search(int nof_conflicts, int nof_learnts)
             ret = handle_conflict(learnt_clause, confl, conflictC);
             if (ret != l_Nothing) return ret;
         } else {
+            bool at_least_one_continue = false;
+            BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)  {
+                ret = gauss->find_truths(learnt_clause, conflictC);
+                if (ret == l_Continue) at_least_one_continue = true;
+                else if (ret != l_Nothing) return ret;
+            }
+            if (at_least_one_continue) continue;
             ret = new_decision(nof_conflicts, nof_learnts, conflictC);
             if (ret != l_Nothing) return ret;
         }
@@ -1128,15 +1163,24 @@ bool Solver::solve(const vec<Lit>& assumps)
     while (status == l_Undef) {
         if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
             printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
+            BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
+                gauss->print_stats();
             printf("\n");
         }
+        BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
+            gauss->reset_stats();
         status = search((int)nof_conflicts, (int)nof_learnts);
         nof_conflicts *= restart_inc;
         nof_learnts   *= learntsize_inc;
+        
+        BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
+            gauss->clear_clauses();
     }
 
     if (verbosity >= 1) {
         printf("===============================================================================");
+        BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
+            gauss->print_stats();
         printf("\n");
     }
 
