@@ -633,13 +633,20 @@ Clause* Solver::propagate(const bool xor_as_well)
 {
     Clause* confl = NULL;
     int     num_props = 0;
+    
+    #ifdef VERBOSE_DEBUG
+    cout << "Propagation started" << endl;
+    #endif
 
     while (qhead < trail.size()) {
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Clause*>&  ws  = watches[p.toInt()];
         Clause         **i, **j, **end;
         num_props++;
-
+        
+        #ifdef VERBOSE_DEBUG
+        cout << "Propagating lit " << (p.sign() ? '-' : ' ') << p.var()+1 << endl;
+        #endif
 
         for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
             Clause& c = **i++;
@@ -688,6 +695,10 @@ FoundWatch:
     }
     propagations += num_props;
     simpDB_props -= num_props;
+    
+    #ifdef VERBOSE_DEBUG
+    cout << "Propagation ended." << endl;
+    #endif
 
     return confl;
 }
@@ -696,7 +707,7 @@ Clause* Solver::propagate_xors(const Lit& p)
 {
     Clause* confl = NULL;
 #ifdef VERBOSE_DEBUG_XOR
-    cout << "Propagating variable " <<  p.var() << endl;
+    cout << "Xor-Propagating variable " <<  p.var()+1 << endl;
 #endif
 
     vec<XorClause*>&  ws  = xorwatches[p.var()];
@@ -740,7 +751,7 @@ Clause* Solver::propagate_xors(const Lit& p)
             *j++ = &c;
 
 #ifdef VERBOSE_DEBUG_XOR
-            cout << "final: " << boolalpha << final << " - ";
+            cout << "final: " << std::boolalpha << final << " - ";
 #endif
             if (assigns[c[0].var()].isUndef()) {
                 c[0] = c[0].unsign()^final;
@@ -1037,6 +1048,13 @@ llbool Solver::new_decision(int& nof_conflicts, int& nof_learnts, int& conflictC
 
 llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conflictC)
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "Handling conflict: ";
+    for (uint i = 0; i < learnt_clause.size(); i++)
+        cout << learnt_clause[i].var()+1 << ",";
+    cout << endl;
+    #endif
+    
     int backtrack_level;
 
     conflicts++;
