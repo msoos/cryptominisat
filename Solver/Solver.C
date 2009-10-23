@@ -278,17 +278,18 @@ bool Solver::satisfied(const XorClause& c) const
 //
 void Solver::cancelUntil(int level)
 {
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     cout << "Canceling until level " << level;
     if (level > 0) cout << " sublevel: " << trail_lim[level];
     cout << endl;
-#endif
+    #endif
+    
     if (decisionLevel() > level) {
         for (int c = trail.size()-1; c >= trail_lim[level]; c--) {
             Var     x  = trail[c].var();
-#ifdef VERBOSE_DEBUG
+            #ifdef VERBOSE_DEBUG
             cout << "Canceling var " << x+1 << " sublevel:" << c << endl;
-#endif
+            #endif
             assigns[x] = l_Undef;
             insertVarOrder(x);
         }
@@ -297,9 +298,9 @@ void Solver::cancelUntil(int level)
         trail_lim.shrink(trail_lim.size() - level);
     }
 
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     cout << "Canceling finished. (now at level: " << decisionLevel() << " sublevel:" << trail.size()-1 << ")" << endl;
-#endif
+    #endif
 }
 
 //Permutates the clauses in the solver. Very useful to calcuate the average time it takes the solver to solve the prolbem
@@ -360,9 +361,10 @@ void Solver::printClause(const XorClause& c) const
 
 Lit Solver::pickBranchLit(int polarity_mode)
 {
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     cout << "decision level:" << decisionLevel() << " ";
-#endif
+    #endif
+    
     Var next = var_Undef;
 
     // Random decision:
@@ -407,15 +409,15 @@ Lit Solver::pickBranchLit(int polarity_mode)
     assert(next == var_Undef || value(next) == l_Undef);
 
     if (next == var_Undef) {
-#ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUG
         cout << "SAT!" << endl;
-#endif
+        #endif
         return lit_Undef;
     } else {
         Lit lit(next,sign);
-#ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUG
         cout << "decided on: " << lit.var()+1 << " to set:" << !lit.sign() << endl;
-#endif
+        #endif
         return lit;
     }
 }
@@ -605,9 +607,10 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
 
 void Solver::uncheckedEnqueue(Lit p, Clause* from)
 {
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     cout << "uncheckedEnqueue var " << p.var()+1 << " to " << !p.sign() << " level: " << decisionLevel() << " sublevel:" << trail.size() << endl;
-#endif
+    #endif
+    
     assert(value(p) == l_Undef);
     const Var v = p.var();
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
@@ -705,10 +708,11 @@ FoundWatch:
 
 Clause* Solver::propagate_xors(const Lit& p)
 {
-    Clause* confl = NULL;
-#ifdef VERBOSE_DEBUG_XOR
+    #ifdef VERBOSE_DEBUG_XOR
     cout << "Xor-Propagating variable " <<  p.var()+1 << endl;
-#endif
+    #endif
+    
+    Clause* confl = NULL;
 
     vec<XorClause*>&  ws  = xorwatches[p.var()];
     XorClause         **i, **j, **end;
@@ -722,11 +726,12 @@ Clause* Solver::propagate_xors(const Lit& p)
             c[1] = tmp;
         }
         assert(c[1].var() == p.var());
-#ifdef VERBOSE_DEBUG_XOR
+        
+        #ifdef VERBOSE_DEBUG_XOR
         cout << "--> xor thing -- " << endl;
         printClause(c);
         cout << endl;
-#endif
+        #endif
         bool final = c.xor_clause_inverted();
         for (int k = 0, size = c.size(); k < size; k++ ) {
             const lbool& val = assigns[c[k].var()];
@@ -734,9 +739,9 @@ Clause* Solver::propagate_xors(const Lit& p)
                 Lit tmp(c[1]);
                 c[1] = c[k];
                 c[k] = tmp;
-#ifdef VERBOSE_DEBUG_XOR
+                #ifdef VERBOSE_DEBUG_XOR
                 cout << "new watch set" << endl << endl;
-#endif
+                #endif
                 xorwatches[c[1].var()].push(&c);
                 goto FoundWatch;
             }
@@ -750,37 +755,42 @@ Clause* Solver::propagate_xors(const Lit& p)
             // Did not find watch -- clause is unit under assignment:
             *j++ = &c;
 
-#ifdef VERBOSE_DEBUG_XOR
+            #ifdef VERBOSE_DEBUG_XOR
             cout << "final: " << std::boolalpha << final << " - ";
-#endif
+            #endif
             if (assigns[c[0].var()].isUndef()) {
                 c[0] = c[0].unsign()^final;
-#ifdef VERBOSE_DEBUG_XOR
+                
+                #ifdef VERBOSE_DEBUG_XOR
                 cout << "propagating ";
                 printLit(c[0]);
                 cout << endl;
                 cout << "propagation clause -- ";
                 printClause(*(Clause*)&c);
                 cout << endl << endl;
-#endif
+                #endif
+                
                 uncheckedEnqueue(c[0], (Clause*)&c);
                 if (dynamic_behaviour_analysis)
                     logger.propagation(c[0], Logger::simple_propagation_type, c.group);
             } else if (!final) {
-#ifdef VERBOSE_DEBUG_XOR
+                
+                #ifdef VERBOSE_DEBUG_XOR
                 printf("conflict clause -- ");
                 printClause(*(Clause*)&c);
                 cout << endl << endl;
-#endif
+                #endif
+                
                 confl = (Clause*)&c;
                 qhead = trail.size();
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
             } else {
-#ifdef VERBOSE_DEBUG_XOR
+                #ifdef VERBOSE_DEBUG_XOR
                 printf("xor satisfied\n");
-#endif
+                #endif
+                
                 Lit tmp(c[0]);
                 c[0] = c[1];
                 c[1] = tmp;
@@ -865,9 +875,9 @@ void Solver::cleanClauses(vec<Clause*>& cs)
         c.shrink(i-j);
         if (i-j > 0) useful++;
     }
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     cout << "cleanClauses(Clause) useful:" << useful << endl;
-#endif
+    #endif
 }
 
 void Solver::cleanClauses(vec<XorClause*>& cs)
@@ -887,9 +897,9 @@ void Solver::cleanClauses(vec<XorClause*>& cs)
         c.shrink(i-j);
         if (i-j > 0) useful++;
     }
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     cout << "cleanClauses(XorClause) useful:" << useful << endl;
-#endif
+    #endif
 }
 
 /*_________________________________________________________________________________________________
@@ -1071,21 +1081,24 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     cancelUntil(backtrack_level);
     if (dynamic_behaviour_analysis)
         logger.conflict(Logger::simple_confl_type, backtrack_level, confl->group, learnt_clause);
-#ifdef VERBOSE_DEBUG
+    
+    #ifdef VERBOSE_DEBUG
     cout << "Learning:";
     for (uint i = 0; i < learnt_clause.size(); i++) printLit(learnt_clause[i]), cout << " ";
     cout << endl;
     cout << "reverting var " << learnt_clause[0].var()+1 << " to " << !learnt_clause[0].sign() << endl;
-#endif
+    #endif
+    
     assert(value(learnt_clause[0]) == l_Undef);
     if (learnt_clause.size() == 1) {
         uncheckedEnqueue(learnt_clause[0]);
         if (dynamic_behaviour_analysis)
             logger.propagation(learnt_clause[0], Logger::learnt_unit_clause_type);
         assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
-#ifdef VERBOSE_DEBUG
+        
+        #ifdef VERBOSE_DEBUG
         cout << "Unit clause learnt." << endl;
-#endif
+        #endif
     } else {
         Clause* c = Clause_new(learnt_clause, learnt_clause_group++, true);
         learnts.push(c);

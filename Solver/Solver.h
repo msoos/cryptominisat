@@ -285,9 +285,9 @@ inline bool     Solver::locked          (const Clause& c) const
 inline void     Solver::newDecisionLevel()
 {
     trail_lim.push(trail.size());
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     std::cout << "New decision level:" << trail_lim.size() << std::endl;
-#endif
+    #endif
 }
 inline int      Solver::decisionLevel ()      const
 {
