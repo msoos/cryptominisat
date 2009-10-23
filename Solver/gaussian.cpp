@@ -72,7 +72,7 @@ llbool Gaussian::full_init()
     bool do_again_gauss = true;
     while (do_again_gauss) {
         do_again_gauss = false;
-        if (solver.simplify() != l_Undef) return l_False;
+        if (solver.simplify() != true) return l_False;
         init();
         Clause* confl;
         gaussian_ret g = gaussian(confl);
@@ -126,7 +126,7 @@ uint Gaussian::fill_var_to_col(matrixset& m) const
 #ifdef DEBUG_GAUSS
         assert(!solver.satisfied(*solver.xorclauses[i]));
 #endif
-        if (solver.xorclauses[i]->matrix_no == matrix_no) {
+        if (solver.xorclauses[i]->inMatrix() && solver.xorclauses[i]->getMatrix() == matrix_no) {
             num_xorclauses++;
             XorClause& c = *solver.xorclauses[i];
             for (uint i2 = 0; i2 < c.size(); i2++) {
@@ -214,7 +214,7 @@ void Gaussian::fill_matrix(matrixset& m)
     for (int i = 0; i < solver.xorclauses.size(); i++) {
         const XorClause& c = *solver.xorclauses[i];
 
-        if (c.matrix_no == matrix_no) {
+        if (c.inMatrix() &&  c.getMatrix() == matrix_no) {
             m.varset[matrix_row].set(c, m.var_to_col);
             m.matrix[matrix_row].set(c, m.var_to_col);
             matrix_row++;
@@ -496,7 +496,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
 {
     assert(best_row != UINT_MAX);
 
-    confl = Clause_new(m.varset[best_row], solver.assigns, col_to_var_original, solver.learnt_clause_group++, true);
+    confl = Clause_new(m.varset[best_row], solver.assigns, col_to_var_original, solver.learnt_clause_group++);
     Clause& cla = *confl;
     if (cla.size() <= 1)
         return unit_conflict;
@@ -691,7 +691,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     cout << endl;
 #endif
 
-    Clause& cla = *Clause_new(m.varset[row], solver.assigns, col_to_var_original, solver.learnt_clause_group++, true);
+    Clause& cla = *Clause_new(m.varset[row], solver.assigns, col_to_var_original, solver.learnt_clause_group++);
 #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix prop clause: ";
     solver.printClause(cla);
