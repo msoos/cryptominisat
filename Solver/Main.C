@@ -373,6 +373,8 @@ void printUsage(char** argv)
     printf("  -gaussuntil    = <num> The depth until which Gaussian elimination is active.\n");
     printf("                   giving 0 means that Gaussian elimination is switched off\n");
     printf("  -gaussfrom     = <num> The depth from which Gaussian elimination is active.\n");
+    printf("  -restarts       = <num> [1 - 2^32-1] No more than the given number of\n");
+    printf("                   restarts will be performed during search\n");
     printf("\n");
 }
 
@@ -451,11 +453,11 @@ int main(int argc, char** argv)
             permutateClauses = true;
         } else if ((value = hasPrefix(argv[i], "-restrict="))) {
             uint branchTo;
-            if (sscanf(value, "%d", &branchTo) < 0) {
-                printf("ERROR! illegal variable number %d\n", branchTo);
+            if (sscanf(value, "%d", &branchTo) < 0 || branchTo < 1) {
+                printf("ERROR! illegal restricted pick branch number %d\n", branchTo);
                 exit(0);
             }
-            S.restrictedPickBranch = branchTo-1; //-1 needed as var 1 is represented as var 0 internally
+            S.restrictedPickBranch = branchTo;
         } else if ((value = hasPrefix(argv[i], "-gaussuntil="))) {
             uint32_t until;
             if (sscanf(value, "%d", &until) < 0) {
@@ -472,6 +474,13 @@ int main(int argc, char** argv)
             }
             cout << "Gaussian from:" << from << endl;
             S.set_gaussian_decision_from(from);
+        } else if ((value = hasPrefix(argv[i], "-restarts="))) {
+            uint maxrest;
+            if (sscanf(value, "%d", &maxrest) < 0 || maxrest == 0) {
+                printf("ERROR! illegal maximum restart number %d\n", maxrest);
+                exit(0);
+            }
+            S.setMaxRestarts(maxrest);
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);
@@ -521,7 +530,7 @@ int main(int argc, char** argv)
     double parse_time = cpuTime() - cpu_time;
     if (S.verbosity >= 1) printf("|  Parsing time:         %-12.2f s                                       |\n", parse_time);
 
-    if (!S.simplify()) {
+    if (S.simplify() != l_Undef) {
         S.endFirstSimplify();
         printf("Solved by unit propagation\n");
         if (res != NULL) fprintf(res, "UNSAT\n"), fclose(res);
@@ -530,19 +539,32 @@ int main(int argc, char** argv)
     }
     S.endFirstSimplify();
 
-    bool ret = S.solve();
+    lbool ret = S.solve();
     if (S.verbosity >= 1) printStats(S);
     printf("\n");
-    printf(ret ? "SATISFIABLE\n" : "UNSATISFIABLE\n");
+    if (ret == l_Undef) {
+        printf("Not finished running -- maximum restart reached\n");
+    } else if (ret == l_True) {
+        printf("SATISFIABLE\n");
+    } else if (ret == l_False) {
+        printf("UNSATISFIABLE\n");
+    } else {
+        assert(false);
+    }
     if (res != NULL) {
-        if (ret) {
+        if (ret == l_True) {
             fprintf(res, "SAT\n");
             for (int i = 0; i < S.nVars(); i++)
                 if (S.model[i] != l_Undef)
                     fprintf(res, "%s%s%d", (i==0)?"":" ", (S.model[i]==l_True)?"":"-", i+1);
             fprintf(res, " 0\n");
-        } else
+        } else if (ret == l_False) {
             fprintf(res, "UNSAT\n");
+        } else if (ret == l_Undef) {
+            fprintf(res, "Unknown\n");
+        } else {
+            assert(false);
+        }
         fclose(res);
     }
 

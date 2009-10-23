@@ -62,9 +62,9 @@ public:
 
     // Solving:
     //
-    bool    simplify     ();                        // Removes already satisfied clauses.
-    bool    solve        (const vec<Lit>& assumps); // Search for a model that respects a given set of assumptions.
-    bool    solve        ();                        // Search without assumptions.
+    lbool    simplify    ();                        // Removes already satisfied clauses.
+    lbool    solve       (const vec<Lit>& assumps); // Search for a model that respects a given set of assumptions.
+    lbool    solve       ();                        // Search without assumptions.
     bool    okay         () const;                  // FALSE means solver is in a conflicting state
 
     // Variable mode:
@@ -75,6 +75,7 @@ public:
     void    permutateClauses();             // Permutates the clauses using the seed. It updates the seed in mtrand
     void    needRealUnknowns();             // Uses the "real unknowns" set by setRealUnknown
     void    setRealUnknown(const uint var); //sets a variable to be 'real', i.e. to preferentially branch on it during solving (when useRealUnknown it turned on)
+    void    setMaxRestarts(const uint num); //sets the maximum number of restarts to given value
 
     // Read state:
     //
@@ -124,7 +125,8 @@ public:
     void setVariableName(int var, const char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
     void startClauseAdding();      // Before adding clauses, but after setting up the Solver (need* functions, verbosity), this should be called
     void endFirstSimplify();       // After the clauses are added, and the first simplify() is called, this must be called
-    const vec<Clause*>& get_sorted_learnts();//return the set of learned clauses
+    const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses
+    const vec<Clause*>& get_unitary_learnts() const; //return the set of unitary learned clauses
 
 protected:
     list<Gaussian*> gauss_matrixes;
@@ -157,6 +159,7 @@ protected:
     vec<Clause*>        clauses;          // List of problem clauses.
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses.
     vec<Clause*>        learnts;          // List of learnt clauses.
+    vec<Clause*>        unitary_learnts;  // List of learnt clauses.
     double              cla_inc;          // Amount to bump next clause with.
     vec<double>         activity;         // A heuristic measurement of the activity of a variable.
     double              var_inc;          // Amount to bump next variable with.
@@ -179,6 +182,7 @@ protected:
     MTRand mtrand;                        // random number generator
     Logger logger;                        // dynamic logging, statistics
     bool dynamic_behaviour_analysis;      //should 'logger' be called whenever a propagation/conflict/decision is made?
+    uint                maxRestarts;      // More than this number of restarts will not be performed
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
@@ -299,9 +303,9 @@ inline bool     Solver::locked          (const Clause& c) const
 inline void     Solver::newDecisionLevel()
 {
     trail_lim.push(trail.size());
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     std::cout << "New decision level:" << trail_lim.size() << std::endl;
-#endif
+    #endif
 }
 inline int      Solver::decisionLevel ()      const
 {
@@ -350,7 +354,7 @@ inline void     Solver::setDecisionVar(Var v, bool b)
         insertVarOrder(v);
     }
 }
-inline bool     Solver::solve         ()
+inline lbool     Solver::solve         ()
 {
     vec<Lit> tmp;
     return solve(tmp);

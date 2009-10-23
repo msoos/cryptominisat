@@ -72,7 +72,7 @@ llbool Gaussian::full_init()
     bool do_again_gauss = true;
     while (do_again_gauss) {
         do_again_gauss = false;
-        if (solver.simplify() != true) return l_False;
+        if (solver.simplify() != l_Undef) return l_False;
         init();
         Clause* confl;
         gaussian_ret g = gaussian(confl);
