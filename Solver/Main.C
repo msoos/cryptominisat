@@ -441,11 +441,11 @@ int main(int argc, char** argv)
             permutateClauses = true;
         } else if ((value = hasPrefix(argv[i], "-restrict="))) {
             uint branchTo;
-            if (sscanf(value, "%d", &branchTo) < 0) {
-                printf("ERROR! illegal variable number %d\n", branchTo);
+            if (sscanf(value, "%d", &branchTo) < 0 || branchTo < 1) {
+                printf("ERROR! illegal restricted pick branch number %d\n", branchTo);
                 exit(0);
             }
-            S.restrictedPickBranch = branchTo-1; //-1 needed as var 1 is represented as var 0 internally
+            S.restrictedPickBranch = branchTo;
         } else if ((value = hasPrefix(argv[i], "-restarts="))) {
             uint maxrest;
             if (sscanf(value, "%d", &maxrest) < 0 || maxrest == 0) {
