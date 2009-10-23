@@ -851,6 +851,11 @@ const vec<Clause*>& Solver::get_unitary_learnts() const
     return unitary_learnts;
 }
 
+void Solver::setMaxRestarts(const uint num)
+{
+    maxRestarts = num;
+}
+
 template<class T>
 void Solver::removeSatisfied(vec<T*>& cs)
 {
@@ -916,7 +921,7 @@ void Solver::cleanClauses(vec<XorClause*>& cs)
 |    Simplify the clause database according to the current top-level assigment. Currently, the only
 |    thing done here is the removal of satisfied clauses, but more things can be put here.
 |________________________________________________________________________________________________@*/
-bool Solver::simplify()
+lbool Solver::simplify()
 {
     assert(decisionLevel() == 0);
 
@@ -925,11 +930,12 @@ bool Solver::simplify()
             logger.end(Logger::unsat_model_found);
             logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
         }
-        return ok = false;
+        ok = false;
+        return l_False;
     }
 
     if (nAssigns() == simpDB_assigns || (simpDB_props > 0)) {
-        return true;
+        return l_Undef;
     }
 
     // Remove satisfied clauses:
@@ -949,7 +955,7 @@ bool Solver::simplify()
     cleanClauses(xorclauses);
     //cleanClauses(learnts);
 
-    return true;
+    return l_Undef;
 }
 
 
@@ -1005,7 +1011,7 @@ llbool Solver::new_decision(int& nof_conflicts, int& nof_learnts, int& conflictC
     }
 
     // Simplify the set of problem clauses:
-    if (decisionLevel() == 0 && !simplify()) {
+    if (decisionLevel() == 0 && simplify() == l_False) {
         if (dynamic_behaviour_analysis) {
             logger.end(Logger::unsat_model_found);
             logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
@@ -1145,12 +1151,12 @@ double Solver::progressEstimate() const
 }
 
 
-bool Solver::solve(const vec<Lit>& assumps)
+lbool Solver::solve(const vec<Lit>& assumps)
 {
     model.clear();
     conflict.clear();
 
-    if (!ok) return false;
+    if (!ok) return l_False;
 
     assumps.copyTo(assumptions);
 
@@ -1166,7 +1172,7 @@ bool Solver::solve(const vec<Lit>& assumps)
     }
 
     // Search:
-    while (status == l_Undef) {
+    while (status == l_Undef && starts < maxRestarts) {
         if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
             printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
             printf("\n");
@@ -1181,7 +1187,6 @@ bool Solver::solve(const vec<Lit>& assumps)
         printf("\n");
     }
 
-
     if (status == l_True) {
         // Extend & copy model:
         model.growTo(nVars());
@@ -1189,14 +1194,13 @@ bool Solver::solve(const vec<Lit>& assumps)
 #ifndef NDEBUG
         verifyModel();
 #endif
-    } else {
-        assert(status == l_False);
+    } if (status == l_False) {
         if (conflict.size() == 0)
             ok = false;
     }
 
     cancelUntil(0);
-    return status == l_True;
+    return status;
 }
 
 //=================================================================================================

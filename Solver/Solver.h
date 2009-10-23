@@ -56,9 +56,9 @@ public:
 
     // Solving:
     //
-    bool    simplify     ();                        // Removes already satisfied clauses.
-    bool    solve        (const vec<Lit>& assumps); // Search for a model that respects a given set of assumptions.
-    bool    solve        ();                        // Search without assumptions.
+    lbool    simplify    ();                        // Removes already satisfied clauses.
+    lbool    solve       (const vec<Lit>& assumps); // Search for a model that respects a given set of assumptions.
+    lbool    solve       ();                        // Search without assumptions.
     bool    okay         () const;                  // FALSE means solver is in a conflicting state
 
     // Variable mode:
@@ -69,6 +69,7 @@ public:
     void    permutateClauses();             // Permutates the clauses using the seed. It updates the seed in mtrand
     void    needRealUnknowns();             // Uses the "real unknowns" set by setRealUnknown
     void    setRealUnknown(const uint var); //sets a variable to be 'real', i.e. to preferentially branch on it during solving (when useRealUnknown it turned on)
+    void    setMaxRestarts(const uint num); //sets the maximum number of restarts to given value
 
     // Read state:
     //
@@ -167,6 +168,7 @@ protected:
     MTRand mtrand;                        // random number generator
     Logger logger;                        // dynamic logging, statistics
     bool dynamic_behaviour_analysis;      //should 'logger' be called whenever a propagation/conflict/decision is made?
+    uint                maxRestarts;      // More than this number of restarts will not be performed
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
@@ -338,7 +340,7 @@ inline void     Solver::setDecisionVar(Var v, bool b)
         insertVarOrder(v);
     }
 }
-inline bool     Solver::solve         ()
+inline lbool     Solver::solve         ()
 {
     vec<Lit> tmp;
     return solve(tmp);
