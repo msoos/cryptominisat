@@ -64,6 +64,7 @@ public:
     Clause(const mpz_class& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint _group) :
         group(_group)
     {
+        size_etc = 0;
         setSize(ps.real_popcnt());
         setLearnt(false);
         ps.fill(data, assigns, col_to_var_original);
@@ -73,6 +74,7 @@ public:
     Clause(const V& ps, const uint _group, const bool learnt) :
             group(_group)
     {
+        size_etc = 0;
         setSize(ps.size());
         setLearnt(learnt);
         for (uint i = 0; i < ps.size(); i++) data[i] = ps[i];
@@ -128,7 +130,7 @@ public:
     }
 protected:
     void setSize(uint32_t size) {
-        size_etc = (size_etc & (uint32_t)255) + (size << 8);
+        size_etc = ((size_etc & (uint32_t)255) + (size << 8));
     }
     bool setLearnt(bool learnt) {
         size_etc = (size_etc & ~((uint32_t)1)) + (uint32_t)learnt;
