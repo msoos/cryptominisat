@@ -1,3 +1,6 @@
+ver 2.0.1 -- 24/10/2009
+* Added Gaussian elimination
+
 ver 1.2.6 -- 24/10/2009
 * Corrected unitialised maxRestarts
 
