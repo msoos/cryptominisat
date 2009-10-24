@@ -65,6 +65,7 @@ Solver::Solver() :
         , mtrand((unsigned long int)0)
         , logger(verbosity)
         , dynamic_behaviour_analysis(false) //do not document the proof as default
+        , maxRestarts(UINT_MAX)
         , learnt_clause_group(0)
 {
 }
