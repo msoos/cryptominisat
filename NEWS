@@ -1,3 +1,6 @@
+ver 1.2.6 -- 24/10/2009
+* Corrected unitialised maxRestarts
+
 ver 1.2.5 -- 24/10/2009
 * Maximum restarts can be configured
 * Better verbose debug printing
