@@ -229,11 +229,11 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col) co
     cout << "(" << matrix_no << ")Updating matrix var " << var+1 << endl;
 #endif
     m.least_column_changed = std::min(m.least_column_changed, (int)col);
-    mpz_class* this_row = &m.matrix[0];
+    matrix_row* this_row = &m.matrix[0];
 
     if (solver.assigns[var].getBool()) {
         for (uint i = 0, end = std::min(m.num_rows, m.last_one_in_col[col]+1);  i < end; i++, this_row++) {
-            mpz_class& r = *this_row;
+            matrix_row& r = *this_row;
             if (r[col]) {
                 r.invert_xor_clause_inverted();
                 r.clearBit(col);
@@ -242,7 +242,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col) co
     } else {
         for (uint i = 0, end = std::min(m.num_rows, m.last_one_in_col[col]+1);  i < end; i++, this_row++) {
             //this_row->clearBit(col);
-            mpz_class& r = *this_row;
+            matrix_row& r = *this_row;
             if (r[col]) {
                 //r.invert_xor_clause_inverted();
                 r.clearBit(col);
@@ -252,7 +252,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col) co
 
 #ifdef DEBUG_GAUSS
     bool c = false;
-    BOOST_FOREACH(mpz_class& r, m.matrix)
+    BOOST_FOREACH(matrix_row& r, m.matrix)
         c |= r[col];
     assert(!c);
 #endif
@@ -398,7 +398,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
         uint end_investigate = std::min(m.last_one_in_col[j] + 1, m.num_rows);
         rows_with_one.clear();
 
-        mpz_class* this_matrix_row = &m.matrix[0] + i;
+        matrix_row* this_matrix_row = &m.matrix[0] + i;
         for (uint i2 = i; i2 < end_investigate; i2++, this_matrix_row++) {
             //intelligent pivoting
             if ((*this_matrix_row)[j]) {
@@ -412,7 +412,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
         }
 
         if (best_row < m.num_rows) {
-            mpz_class& matrix_row_i = m.matrix[i];
+            matrix_row& matrix_row_i = m.matrix[i];
             mpz_class& varset_row_i = m.varset[i];
 
             //swap rows i and maxi, but do not change the value of i;
@@ -428,7 +428,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
                 varset_row_i.swap(m.varset[best_row]);
             }
 #ifdef DEBUG_GAUSS
-            mpz_class backup = m.matrix[i];
+            matrix_row backup = m.matrix[i];
             assert(m.matrix[i][j]);
 #endif
 
@@ -766,7 +766,8 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
     return l_Nothing;
 }
 
-void Gaussian::print_matrix_row(const mpz_class& row) const
+template<class T>
+void Gaussian::print_matrix_row(const T& row) const
 {
     unsigned long int var = 0;
     while (true) {
@@ -779,7 +780,8 @@ void Gaussian::print_matrix_row(const mpz_class& row) const
     if (row.get_xor_clause_inverted()) cout << "xor_clause_inverted";
 }
 
-void Gaussian::print_matrix_row_with_assigns(const mpz_class& row) const
+template<class T>
+void Gaussian::print_matrix_row_with_assigns(const T& row) const
 {
     unsigned long int col = 0;
     while (true) {
@@ -828,7 +830,7 @@ void Gaussian::reset_stats()
 
 bool Gaussian::check_no_conflict(const matrixset& m) const
 {
-    BOOST_FOREACH(const mpz_class& r, m.matrix) {
+    BOOST_FOREACH(const matrix_row& r, m.matrix) {
         if (!r.get_xor_clause_inverted() && r.popcnt() == 0)
             return false;
     }
@@ -837,12 +839,12 @@ bool Gaussian::check_no_conflict(const matrixset& m) const
 
 const bool Gaussian::nothing_to_propagate(const matrixset& m) const
 {
-    BOOST_FOREACH(const mpz_class& r, m.matrix) {
+    BOOST_FOREACH(const matrix_row& r, m.matrix) {
         if (r.popcnt() == 1
                 && solver.assigns[m.col_to_var[r.scan(0)]].isUndef())
             return false;
     }
-    BOOST_FOREACH(const mpz_class& r, m.matrix) {
+    BOOST_FOREACH(const matrix_row& r, m.matrix) {
         if (r.isZero()
                 && !r.get_xor_clause_inverted())
             return false;
@@ -850,12 +852,12 @@ const bool Gaussian::nothing_to_propagate(const matrixset& m) const
     return true;
 }
 
-const bool Gaussian::check_matrix_against_varset(const vector<mpz_class>& matrix, const vector<mpz_class>& varset) const
+const bool Gaussian::check_matrix_against_varset(const vector<matrix_row>& matrix, const vector<mpz_class>& varset) const
 {
     assert(matrix.size() == varset.size());
     
     for (uint i = 0; i < matrix.size(); i++) {
-        const mpz_class& mat_row = matrix[i];
+        const matrix_row& mat_row = matrix[i];
         const mpz_class& var_row = varset[i];
         
         unsigned long int col = 0;

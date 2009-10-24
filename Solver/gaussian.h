@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define GAUSSIAN_H
 
 #include <vector>
-#include "mpz_class.h"
 #include "SolverTypes.h"
 #include "Solver.h"
 #include "gaussianconfig.h"
@@ -29,9 +28,15 @@ using std::endl;
 
 class Clause;
 
+#include "mpz_class.h"
+#include "my_row.h"
+
+//typedef mpz_class matrix_row;
+typedef my_row matrix_row;
+
+
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
-
 class Gaussian
 {
 public:
@@ -66,7 +71,7 @@ protected:
     class matrixset
     {
     public:
-        vector<mpz_class> matrix; // The matrix, updated to reflect variable assignements
+        vector<matrix_row> matrix; // The matrix, updated to reflect variable assignements
         vector<mpz_class> varset; // The matrix, without variable assignements. The xor-clause is read from here. This matrix only follows the 'matrix' with its row-swap, row-xor, and row-delete operations.
         vector<uint> var_to_col; // var_to_col[VAR] gives the column for that variable. If the variable is not in the matrix, it gives UINT_MAX, if the var WAS inside the matrix, but has been zeroed, it gives UINT_MAX-1
         vector<uint> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives UINT_MAX if the COL has been zeroed (i.e. the variable assigned)
@@ -134,9 +139,11 @@ private:
     //debug functions
     bool check_no_conflict(const matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?
     const bool nothing_to_propagate(const matrixset& m) const; // Are there any conflicts of propagations that matrixset 'm' clauses?
-    void print_matrix_row(const mpz_class& row) const; // Print matrix row 'row'
-    void print_matrix_row_with_assigns(const mpz_class& row) const;
-    const bool check_matrix_against_varset(const vector<mpz_class>& matrix, const vector<mpz_class>& varset) const;
+    template<class T>
+    void print_matrix_row(const T& row) const; // Print matrix row 'row'
+    template<class T>
+    void print_matrix_row_with_assigns(const T& row) const;
+    const bool check_matrix_against_varset(const vector<matrix_row>& matrix, const vector<mpz_class>& varset) const;
     static const string lbool_to_string(const lbool toprint);
 };
 
