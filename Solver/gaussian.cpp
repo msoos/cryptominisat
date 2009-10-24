@@ -216,7 +216,7 @@ void Gaussian::fill_matrix(matrixset& m)
 
         if (c.inMatrix() &&  c.getMatrix() == matrix_no) {
             m.varset[matrix_row].set(c, m.var_to_col);
-            m.matrix[matrix_row].set(c, m.var_to_col);
+            m.matrix[matrix_row].set(c, m.var_to_col, m.col_to_var.size());
             matrix_row++;
         }
     }

@@ -18,7 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __my_row__
 #define __my_row__
 
-#include <deque>
+//#define DEBUG_ROW
+
 #include <vector>
 #include <limits.h>
 #include "SolverTypes.h"
@@ -32,19 +33,69 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 //#define DEBUG_GAUSS
-#define STD_VECTOR_BOOL_NOT_SPECIAL
 
-using std::deque;
 using std::vector;
 
 
 class my_row
 {
 public:
-    my_row()
+    my_row() :
+        size(0)
+        , mp(NULL)
     {
         xor_clause_inverted = false;
         popcount = 0;
+    }
+    
+    my_row(const my_row& b) :
+        size(b.size)
+        , popcount(b.popcount)
+        , xor_clause_inverted(b.xor_clause_inverted)
+    {
+        mp = new bool[size];
+        std::copy(b.mp, b.mp+size, mp);
+    }
+    
+    ~my_row()
+    {
+        delete[] mp;
+    }
+    
+    inline bool operator ==(const my_row& b) const
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(size == b.size);
+        #endif
+        
+        return (xor_clause_inverted == b.xor_clause_inverted && popcount == b.popcount && std::equal(b.mp, b.mp+size, mp));
+    }
+    
+    inline bool operator !=(const my_row& b) const
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(size == b.size);
+        #endif
+        
+        return (xor_clause_inverted != b.xor_clause_inverted || popcount != b.popcount || !std::equal(b.mp, b.mp+size, mp));
+    }
+    
+    inline my_row& operator=(const my_row& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(size == b.size);
+        #endif
+        
+        std::copy(b.mp, b.mp+size, mp);
+        xor_clause_inverted = b.xor_clause_inverted;
+        popcount = b.popcount;
+        return *this;
     }
 
     inline const bool& get_xor_clause_inverted() const
@@ -59,12 +110,14 @@ public:
 
     inline void setZero()
     {
-        std::fill(mp.begin(), mp.end(), false);
+        assert(size > 0);
+        std::fill(mp, mp+size, false);
         popcount = 0;
     }
 
     inline void clearBit(const uint b)
     {
+        assert(size > b);
         #ifdef DEBUG_GAUSS
         assert(mp[b]);
         #endif
@@ -79,6 +132,7 @@ public:
 
     inline void setBit(const uint v)
     {
+        assert(size > v);
         #ifdef DEBUG_GAUSS
         assert(!mp[v]);
         #endif
@@ -88,7 +142,15 @@ public:
 
     void swap(my_row& b)
     {
-        mp.swap(b.mp);
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+        
+        bool* tmp3 = mp;
+        mp = b.mp;
+        b.mp = tmp3;
         
         const bool tmp(xor_clause_inverted);
         xor_clause_inverted = b.xor_clause_inverted;
@@ -101,47 +163,40 @@ public:
 
     inline my_row& operator^=(const my_row& b)
     {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+        
         popcount = 0;
-        typedef deque<bool>::iterator myit;
-        typedef deque<bool>::const_iterator myit2;
-        myit it = mp.begin();
-        myit2 it2 = b.mp.begin();
-        myit2 end = mp.end();
-        for(; it != end; it++, it2++) {
-            *it ^= *it2;
-            popcount += *it;
+        for(uint i = 0; i < size; i++) {
+            mp[i] ^= b.mp[i];
+            popcount += mp[i];
         }
         xor_clause_inverted ^= !b.xor_clause_inverted;
         return *this;
     }
-    
-    inline void noupdate_xor(const my_row& b)
-    {
-        typedef deque<bool>::iterator myit;
-        typedef deque<bool>::const_iterator myit2;
-        myit it = mp.begin();
-        myit2 it2 = b.mp.begin();
-        myit2 end = mp.end();
-        for(; it != end; it++, it2++) {
-            *it ^= *it2;
-        }
-        xor_clause_inverted ^= !b.xor_clause_inverted;
-    }
 
     inline const bool operator[](const uint& i) const
     {
+        #ifdef DEBUG_ROW
+        assert(size > i);
+        #endif
+        
         return mp[i];
     }
 
     template<class T>
-    void set(const T& v, const vector<uint>& var_to_col)
+    void set(const T& v, const vector<uint>& var_to_col, const uint matrix_size)
     {
-        mp.resize(var_to_col.size());
-        std::fill(mp.begin(), mp.end(), false);
-        for (uint i = 0, size = v.size(); i < size; i++) {
+        size = matrix_size;
+        mp = new bool[size];
+        std::fill(mp, mp+size, false);
+        for (uint i = 0, size2 = v.size(); i < size2; i++) {
             const uint toset_var = var_to_col[v[i].var()];
-
             assert(toset_var != UINT_MAX);
+            
             mp[toset_var] = true;
         }
         
@@ -154,32 +209,25 @@ public:
         return popcount;
     }
     
-    inline const uint real_popcnt()
-    {
-        popcount = 0;
-        typedef deque<bool>::iterator myit;
-        for(myit it = mp.begin(), end = mp.end(); it != end; it++) {
-            popcount += *it;
-        }
-        return popcount;
-    }
-    
     inline unsigned long int scan(const unsigned long int var) const
     {
-        for(uint i = var; i < mp.size(); i++)
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        #endif
+        
+        for(uint i = var; i < size; i++)
             if (mp[i]) return i;
         return ULONG_MAX;
     }
-
-    void fill(Lit* ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original) const;
 
     friend std::ostream& operator << (std::ostream& os, const my_row& m);
 
 private:
     
+    uint size;
+    bool* mp;
     uint popcount;
     bool xor_clause_inverted;
-    deque<bool> mp;
 };
 
 std::ostream& operator << (std::ostream& os, const my_row& m);
