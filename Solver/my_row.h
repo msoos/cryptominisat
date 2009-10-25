@@ -45,12 +45,10 @@ public:
         , mp(NULL)
     {
         xor_clause_inverted = false;
-        popcount = 0;
     }
     
     my_row(const my_row& b) :
         size(b.size)
-        , popcount(b.popcount)
         , xor_clause_inverted(b.xor_clause_inverted)
     {
         mp = new bool[size];
@@ -67,6 +65,9 @@ public:
     bool operator !=(const my_row& b) const;
     
     my_row& operator=(const my_row& b);
+    
+    bool popcnt_is_one() const;
+    bool popcnt_is_one(const uint from) const;
 
     inline const bool& get_xor_clause_inverted() const
     {
@@ -75,14 +76,18 @@ public:
 
     inline const bool isZero() const
     {
-        return popcount == 0;
+        const uint64_t*  mp2 = (const uint64_t*)mp;
+        
+        for (uint i = 0; i < size/8; i++) {
+            if (mp2[i]) return false;
+        }
+        return true;
     }
 
     void setZero()
     {
         assert(size > 0);
         std::fill(mp, mp+size, false);
-        popcount = 0;
     }
 
     inline void clearBit(const uint b)
@@ -92,7 +97,6 @@ public:
         assert(mp[b]);
         #endif
         mp[b] = false;
-        popcount--;
     }
 
     inline void invert_xor_clause_inverted(const bool b = true)
@@ -107,7 +111,6 @@ public:
         assert(!mp[v]);
         #endif
         mp[v] = true;
-        popcount++;
     }
 
     void swap(my_row& b)
@@ -125,10 +128,6 @@ public:
         const bool tmp(xor_clause_inverted);
         xor_clause_inverted = b.xor_clause_inverted;
         b.xor_clause_inverted = tmp;
-        
-        const uint tmp2(popcount);
-        popcount = b.popcount;
-        b.popcount = tmp2;
     }
 
     my_row& operator^=(const my_row& b);
@@ -155,13 +154,7 @@ public:
             mp[toset_var] = true;
         }
         
-        popcount = v.size();
         xor_clause_inverted = v.xor_clause_inverted();
-    }
-    
-    inline const uint popcnt() const
-    {
-        return popcount;
     }
     
     inline unsigned long int scan(const unsigned long int var) const
@@ -181,7 +174,6 @@ private:
     
     uint size;
     bool* mp;
-    uint popcount;
     bool xor_clause_inverted;
 };
 

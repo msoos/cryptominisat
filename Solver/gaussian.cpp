@@ -375,10 +375,9 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
     if (m.least_column_changed > -1) {
         const uint until = m.last_one_in_col[m.least_column_changed];
         while (i < until) {
-            const uint popcnt = m.matrix[i].popcnt();
-            if (popcnt == 1)
+            const bool propagatable = m.matrix[i].popcnt_is_one();
+            if (propagatable)
                 propagatable_rows.push(i);
-            assert(popcnt > 0);
             i++;
         }
 
@@ -394,7 +393,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
         }
 
         uint best_row = UINT_MAX;
-        uint best_row_popcnt = UINT_MAX;
+        //uint best_row_popcnt = UINT_MAX;
         uint end_investigate = std::min(m.last_one_in_col[j] + 1, m.num_rows);
         rows_with_one.clear();
 
@@ -402,11 +401,12 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
         for (uint i2 = i; i2 < end_investigate; i2++, this_matrix_row++) {
             //intelligent pivoting
             if ((*this_matrix_row)[j]) {
-                uint popcnt = this_matrix_row->popcnt();
-                if (popcnt < best_row_popcnt) {
-                    best_row = i2;
-                    best_row_popcnt = popcnt;
-                }
+                //uint popcnt = this_matrix_row->popcnt();
+                //if (popcnt < best_row_popcnt) {
+                //    best_row = i2;
+                //    best_row_popcnt = popcnt;
+                //}
+                best_row = i2;
                 rows_with_one.push(i2);
             }
         }
@@ -420,7 +420,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
 #ifdef VERBOSE_DEBUG
                 no_exchanged++;
 #endif
-                if (matrix_row_i.popcnt() == 0 && !matrix_row_i.get_xor_clause_inverted()) {
+                if (matrix_row_i.isZero() && !matrix_row_i.get_xor_clause_inverted()) {
                     conflict_row = i;
                     return 0;
                 }
@@ -432,7 +432,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
             assert(m.matrix[i][j]);
 #endif
 
-            if (best_row_popcnt == 1) propagatable_rows.push(i);
+            if (m.matrix[i].popcnt_is_one(j)) propagatable_rows.push(i);
 
             //Now A[i,j] will contain the old value of A[maxi,j];
             uint* real_it = rows_with_one.getData();
@@ -831,7 +831,7 @@ void Gaussian::reset_stats()
 bool Gaussian::check_no_conflict(const matrixset& m) const
 {
     BOOST_FOREACH(const matrix_row& r, m.matrix) {
-        if (!r.get_xor_clause_inverted() && r.popcnt() == 0)
+        if (!r.get_xor_clause_inverted() && r.isZero())
             return false;
     }
     return true;
@@ -840,7 +840,7 @@ bool Gaussian::check_no_conflict(const matrixset& m) const
 const bool Gaussian::nothing_to_propagate(const matrixset& m) const
 {
     BOOST_FOREACH(const matrix_row& r, m.matrix) {
-        if (r.popcnt() == 1
+        if (r.popcnt_is_one()
                 && solver.assigns[m.col_to_var[r.scan(0)]].isUndef())
             return false;
     }
