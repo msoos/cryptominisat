@@ -62,41 +62,11 @@ public:
         delete[] mp;
     }
     
-    inline bool operator ==(const my_row& b) const
-    {
-        #ifdef DEBUG_ROW
-        assert(size > 0);
-        assert(b.size > 0);
-        assert(size == b.size);
-        #endif
-        
-        return (xor_clause_inverted == b.xor_clause_inverted && popcount == b.popcount && std::equal(b.mp, b.mp+size, mp));
-    }
+    bool operator ==(const my_row& b) const;
     
-    inline bool operator !=(const my_row& b) const
-    {
-        #ifdef DEBUG_ROW
-        assert(size > 0);
-        assert(b.size > 0);
-        assert(size == b.size);
-        #endif
-        
-        return (xor_clause_inverted != b.xor_clause_inverted || popcount != b.popcount || !std::equal(b.mp, b.mp+size, mp));
-    }
+    bool operator !=(const my_row& b) const;
     
-    inline my_row& operator=(const my_row& b)
-    {
-        #ifdef DEBUG_ROW
-        assert(size > 0);
-        assert(b.size > 0);
-        assert(size == b.size);
-        #endif
-        
-        std::copy(b.mp, b.mp+size, mp);
-        xor_clause_inverted = b.xor_clause_inverted;
-        popcount = b.popcount;
-        return *this;
-    }
+    my_row& operator=(const my_row& b);
 
     inline const bool& get_xor_clause_inverted() const
     {
@@ -108,7 +78,7 @@ public:
         return popcount == 0;
     }
 
-    inline void setZero()
+    void setZero()
     {
         assert(size > 0);
         std::fill(mp, mp+size, false);
@@ -161,22 +131,7 @@ public:
         b.popcount = tmp2;
     }
 
-    inline my_row& operator^=(const my_row& b)
-    {
-        #ifdef DEBUG_ROW
-        assert(size > 0);
-        assert(b.size > 0);
-        assert(b.size == size);
-        #endif
-        
-        popcount = 0;
-        for(uint i = 0; i < size; i++) {
-            mp[i] ^= b.mp[i];
-            popcount += mp[i];
-        }
-        xor_clause_inverted ^= !b.xor_clause_inverted;
-        return *this;
-    }
+    my_row& operator^=(const my_row& b);
 
     inline const bool operator[](const uint& i) const
     {
@@ -190,7 +145,7 @@ public:
     template<class T>
     void set(const T& v, const vector<uint>& var_to_col, const uint matrix_size)
     {
-        size = matrix_size;
+        size = 8 * (matrix_size/8) + 8 * ((bool)(matrix_size % 8));
         mp = new bool[size];
         std::fill(mp, mp+size, false);
         for (uint i = 0, size2 = v.size(); i < size2; i++) {
