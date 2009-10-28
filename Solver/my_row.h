@@ -51,7 +51,7 @@ public:
         size(b.size)
         , xor_clause_inverted(b.xor_clause_inverted)
     {
-        mp = new bool[size];
+        mp = new uint64_t[size];
         std::copy(b.mp, b.mp+size, mp);
     }
     
@@ -67,7 +67,7 @@ public:
     my_row& operator=(const my_row& b);
     
     bool popcnt_is_one() const;
-    bool popcnt_is_one(const uint from) const;
+    bool popcnt_is_one(uint from) const;
 
     inline const bool& get_xor_clause_inverted() const
     {
@@ -78,25 +78,20 @@ public:
     {
         const uint64_t*  mp2 = (const uint64_t*)mp;
         
-        for (uint i = 0; i < size/8; i++) {
+        for (uint i = 0; i < size; i++) {
             if (mp2[i]) return false;
         }
         return true;
     }
 
-    void setZero()
+    inline void setZero()
     {
-        assert(size > 0);
-        std::fill(mp, mp+size, false);
+        std::fill(mp, mp+size, 0);
     }
 
-    inline void clearBit(const uint b)
+    inline void clearBit(const uint i)
     {
-        assert(size > b);
-        #ifdef DEBUG_GAUSS
-        assert(mp[b]);
-        #endif
-        mp[b] = false;
+        mp[i/64] &= ~((uint64_t)1 << (i%64));
     }
 
     inline void invert_xor_clause_inverted(const bool b = true)
@@ -104,13 +99,9 @@ public:
         xor_clause_inverted ^= b;
     }
 
-    inline void setBit(const uint v)
+    inline void setBit(const uint i)
     {
-        assert(size > v);
-        #ifdef DEBUG_GAUSS
-        assert(!mp[v]);
-        #endif
-        mp[v] = true;
+        mp[i/64] |= ((uint64_t)1 << (i%64));
     }
 
     void swap(my_row& b)
@@ -121,7 +112,7 @@ public:
         assert(b.size == size);
         #endif
         
-        bool* tmp3 = mp;
+        uint64_t* tmp3 = mp;
         mp = b.mp;
         b.mp = tmp3;
         
@@ -135,23 +126,23 @@ public:
     inline const bool operator[](const uint& i) const
     {
         #ifdef DEBUG_ROW
-        assert(size > i);
+        assert(size*64 > i);
         #endif
         
-        return mp[i];
+        return (mp[i/64] >> (i%64)) & 1;
     }
 
     template<class T>
     void set(const T& v, const vector<uint>& var_to_col, const uint matrix_size)
     {
-        size = 8 * (matrix_size/8) + 8 * ((bool)(matrix_size % 8));
-        mp = new bool[size];
-        std::fill(mp, mp+size, false);
-        for (uint i = 0, size2 = v.size(); i < size2; i++) {
+        size = (matrix_size/64) + ((bool)(matrix_size % 64));
+        mp = new uint64_t[size];
+        setZero();
+        for (uint i = 0; i < v.size(); i++) {
             const uint toset_var = var_to_col[v[i].var()];
             assert(toset_var != UINT_MAX);
             
-            mp[toset_var] = true;
+            setBit(toset_var);
         }
         
         xor_clause_inverted = v.xor_clause_inverted();
@@ -163,8 +154,8 @@ public:
         assert(size > 0);
         #endif
         
-        for(uint i = var; i < size; i++)
-            if (mp[i]) return i;
+        for(uint i = var; i < size*64; i++)
+            if (this->operator[](i)) return i;
         return ULONG_MAX;
     }
 
@@ -173,7 +164,7 @@ public:
 private:
     
     uint size;
-    bool* mp;
+    uint64_t* mp;
     bool xor_clause_inverted;
 };
 
