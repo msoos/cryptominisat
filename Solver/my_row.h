@@ -66,6 +66,7 @@ public:
     
     my_row& operator=(const my_row& b);
     
+    uint popcnt() const;
     bool popcnt_is_one() const;
     bool popcnt_is_one(uint from) const;
 
@@ -147,6 +148,8 @@ public:
         
         xor_clause_inverted = v.xor_clause_inverted();
     }
+    
+    void fill(Lit* ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original) const;
     
     inline unsigned long int scan(const unsigned long int var) const
     {

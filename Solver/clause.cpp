@@ -18,6 +18,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 #include "clause.h"
+#include "my_row.h"
 
 Clause* Clause_new(const vec<Lit>& ps, const uint group, const bool learnt)
 {
@@ -33,9 +34,9 @@ Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt)
     return real;
 }
 
-Clause* Clause_new(const mpz_class& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint group)
+Clause* Clause_new(const my_row& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint group)
 {
-    void* mem = malloc(sizeof(Clause) + sizeof(Lit)*(ps.real_popcnt()));
+    void* mem = malloc(sizeof(Clause) + sizeof(Lit)*(ps.popcnt()));
     Clause* real= new (mem) Clause(ps, assigns, col_to_var_original, group);
     return real;
 }

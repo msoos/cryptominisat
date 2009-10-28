@@ -215,7 +215,7 @@ void Gaussian::fill_matrix(matrixset& m)
         const XorClause& c = *solver.xorclauses[i];
 
         if (c.inMatrix() &&  c.getMatrix() == matrix_no) {
-            m.varset[matrix_row].set(c, m.var_to_col);
+            m.varset[matrix_row].set(c, m.var_to_col, m.col_to_var.size());
             m.matrix[matrix_row].set(c, m.var_to_col, m.col_to_var.size());
             matrix_row++;
         }
@@ -413,7 +413,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
 
         if (best_row < m.num_rows) {
             matrix_row& matrix_row_i = m.matrix[i];
-            mpz_class& varset_row_i = m.varset[i];
+            matrix_row& varset_row_i = m.varset[i];
 
             //swap rows i and maxi, but do not change the value of i;
             if (i != best_row) {
@@ -456,7 +456,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
                     number_of_row_additions++;
 #endif
                     m.matrix[u] ^= matrix_row_i;
-                    m.varset[u].noupdate_xor(varset_row_i);
+                    m.varset[u] ^= varset_row_i;
                     //Would early abort, but would not find the best conflict:
                     //if (!m.matrix[u].get_xor_clause_inverted() && m.matrix[u].isZero()) {
                     //    conflict_row = u;
@@ -853,13 +853,13 @@ const bool Gaussian::nothing_to_propagate(const matrixset& m) const
     return true;
 }
 
-const bool Gaussian::check_matrix_against_varset(const vector<matrix_row>& matrix, const vector<mpz_class>& varset) const
+const bool Gaussian::check_matrix_against_varset(const vector<matrix_row>& matrix, const vector<matrix_row>& varset) const
 {
     assert(matrix.size() == varset.size());
     
     for (uint i = 0; i < matrix.size(); i++) {
         const matrix_row& mat_row = matrix[i];
-        const mpz_class& var_row = varset[i];
+        const matrix_row& var_row = varset[i];
         
         unsigned long int col = 0;
         bool final = false;

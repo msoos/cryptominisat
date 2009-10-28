@@ -27,7 +27,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <sys/types.h>
 #include "Vec.h"
 #include "SolverTypes.h"
-#include "mpz_class.h"
+#include "my_row.h"
 
 #ifndef uint
 #define uint unsigned int
@@ -61,11 +61,11 @@ protected:
     Lit     data[0];
 
 public:
-    Clause(const mpz_class& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint _group) :
+    Clause(const my_row& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint _group) :
         group(_group)
     {
         size_etc = 0;
-        setSize(ps.real_popcnt());
+        setSize(ps.popcnt());
         setLearnt(false);
         ps.fill(data, assigns, col_to_var_original);
     }
@@ -200,6 +200,6 @@ protected:
 
 Clause* Clause_new(const vec<Lit>& ps, const uint group, const bool learnt);
 Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt);
-Clause* Clause_new(const mpz_class& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint group);
+Clause* Clause_new(const my_row& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint group);
 
 #endif

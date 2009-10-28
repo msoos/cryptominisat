@@ -28,7 +28,6 @@ using std::endl;
 
 class Clause;
 
-#include "mpz_class.h"
 #include "my_row.h"
 
 //typedef mpz_class matrix_row;
@@ -72,7 +71,7 @@ protected:
     {
     public:
         vector<matrix_row> matrix; // The matrix, updated to reflect variable assignements
-        vector<mpz_class> varset; // The matrix, without variable assignements. The xor-clause is read from here. This matrix only follows the 'matrix' with its row-swap, row-xor, and row-delete operations.
+        vector<matrix_row> varset; // The matrix, without variable assignements. The xor-clause is read from here. This matrix only follows the 'matrix' with its row-swap, row-xor, and row-delete operations.
         vector<uint> var_to_col; // var_to_col[VAR] gives the column for that variable. If the variable is not in the matrix, it gives UINT_MAX, if the var WAS inside the matrix, but has been zeroed, it gives UINT_MAX-1
         vector<uint> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives UINT_MAX if the COL has been zeroed (i.e. the variable assigned)
         uint num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
@@ -143,7 +142,7 @@ private:
     void print_matrix_row(const T& row) const; // Print matrix row 'row'
     template<class T>
     void print_matrix_row_with_assigns(const T& row) const;
-    const bool check_matrix_against_varset(const vector<matrix_row>& matrix, const vector<mpz_class>& varset) const;
+    const bool check_matrix_against_varset(const vector<matrix_row>& matrix, const vector<matrix_row>& varset) const;
     static const string lbool_to_string(const lbool toprint);
 };
 
