@@ -263,7 +263,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m) const
     uint num_updated = 0;
 #endif
 #ifdef DEBUG_GAUSS
-    //assert(nothing_to_propagate(cur_matrixset));  //NOTE: only holds if gauss is executed at each level
+    assert(config.every_nth_gauss != 1 || nothing_to_propagate(cur_matrixset));  //NOTE: only holds if gauss is executed at each level
 #endif
 
     uint last = 0;
