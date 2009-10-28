@@ -33,7 +33,7 @@ bool my_row::operator !=(const my_row& b) const
 bool my_row::popcnt_is_one() const
 {
     char popcount = 0;
-    for (uint i = 0; i < size; i++) {
+    for (uint i = 0; i < size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
         for (uint i2 = 0; i2 < 64; i2++) {
             popcount += tmp & 1;
@@ -47,7 +47,7 @@ bool my_row::popcnt_is_one() const
 bool my_row::popcnt_is_one(uint from) const
 {
     from++;
-    for (uint i = from/64; i < size; i++) {
+    for (uint i = from/64; i < size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
         uint i2;
         if (i == from/64) {
@@ -66,7 +66,7 @@ bool my_row::popcnt_is_one(uint from) const
 uint my_row::popcnt() const
 {
     uint popcnt = 0;
-    for (uint i = 0; i < size; i++) {
+    for (uint i = 0; i < size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
         for (uint i2 = 0; i2 < 64; i2++) {
             popcnt += (tmp & 1);
