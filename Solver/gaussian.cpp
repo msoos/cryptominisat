@@ -432,7 +432,8 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
             assert(m.matrix[i][j]);
 #endif
 
-            if (m.matrix[i].popcnt_is_one(j)) propagatable_rows.push(i);
+            if (m.matrix[i].popcnt_is_one(j))
+                propagatable_rows.push(i);
 
             //Now A[i,j] will contain the old value of A[maxi,j];
             uint* real_it = rows_with_one.getData();
@@ -455,12 +456,12 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
                     number_of_row_additions++;
 #endif
                     m.matrix[u] ^= matrix_row_i;
-                    //m.varset[u] ^= varset_row_i;
                     m.varset[u].noupdate_xor(varset_row_i);
-                    /*if (m.matrix[u].popcnt() == 0 && !m.matrix[u].get_xor_clause_inverted()) {
-                        conflict_row = u;
-                        return 0;
-                    }*/
+                    //Would early abort, but would not find the best conflict:
+                    //if (!m.matrix[u].get_xor_clause_inverted() && m.matrix[u].isZero()) {
+                    //    conflict_row = u;
+                    //    return 0;
+                    //}
                 }
             }
 #ifdef DEBUG_GAUSS
