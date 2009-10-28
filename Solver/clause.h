@@ -61,13 +61,13 @@ protected:
     Lit     data[0];
 
 public:
-    Clause(const packedRow& ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint _group) :
+    Clause(const packedRow& row, const vec<lbool>& assigns, const vector<uint>& col_to_var_original, const uint _group) :
         group(_group)
     {
         size_etc = 0;
-        setSize(ps.popcnt());
+        setSize(row.popcnt());
         setLearnt(false);
-        ps.fill(data, assigns, col_to_var_original);
+        row.fill(data, assigns, col_to_var_original);
     }
 
     template<class V>
