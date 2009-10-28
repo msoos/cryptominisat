@@ -11,8 +11,6 @@ find_package( Boost 1.34 COMPONENTS system thread filesystem)
 link_directories ( ${Boost_LIBRARY_DIRS} )
 include_directories ( ${Boost_INCLUDE_DIRS} )
 
-find_library(GMP_LIBRARIES NAMES gmp libgmp)
-
 find_package( ZLIB )
 link_directories( ${ZLIB_LIBRARY} )
 include_directories( ${ZLIB_INCLUDE_DIR} )
@@ -29,7 +27,6 @@ target_link_libraries(cryptominisat
 	cryptominisatlib
 	${ZLIB_LIBRARY}
         ${Boost_LIBRARIES}
-        ${GMP_LIBRARIES}
 )
 
 add_library(cryptominisatlib

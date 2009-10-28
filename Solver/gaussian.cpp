@@ -196,7 +196,6 @@ void Gaussian::fill_matrix(matrixset& m)
     m.num_rows = fill_var_to_col(m);
     m.num_cols = m.col_to_var.size();
     col_to_var_original = m.col_to_var;
-    //mpz_class::setNumBits(m.num_cols);
     if (m.num_rows == 0) return;
 
     m.last_one_in_col.resize(m.num_cols);
