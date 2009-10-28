@@ -121,6 +121,7 @@ void packedRow::fill(Lit* ps, const vec<lbool>& assigns, const vector<uint>& col
             *ps = Lit(var, val_bool);
             final ^= val_bool;
             if (val.isUndef()) {
+                assert(!wasundef);
                 Lit tmp(*ps_first);
                 *ps_first = *ps;
                 *ps = tmp;
