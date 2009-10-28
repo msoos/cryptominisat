@@ -31,7 +31,7 @@ class Clause;
 #include "my_row.h"
 
 //typedef mpz_class matrix_row;
-typedef my_row matrix_row;
+typedef packedRow matrix_row;
 
 
 //#define VERBOSE_DEBUG

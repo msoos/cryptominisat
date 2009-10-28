@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
-#ifndef __my_row__
-#define __my_row__
+#ifndef __packedRow__
+#define __packedRow__
 
 //#define DEBUG_ROW
 
@@ -37,17 +37,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::vector;
 
 
-class my_row
+class packedRow
 {
 public:
-    my_row() :
+    packedRow() :
         size(0)
         , mp(NULL)
     {
         xor_clause_inverted = false;
     }
     
-    my_row(const my_row& b) :
+    packedRow(const packedRow& b) :
         size(b.size)
         , xor_clause_inverted(b.xor_clause_inverted)
     {
@@ -55,16 +55,16 @@ public:
         std::copy(b.mp, b.mp+size, mp);
     }
     
-    ~my_row()
+    ~packedRow()
     {
         delete[] mp;
     }
     
-    bool operator ==(const my_row& b) const;
+    bool operator ==(const packedRow& b) const;
     
-    bool operator !=(const my_row& b) const;
+    bool operator !=(const packedRow& b) const;
     
-    my_row& operator=(const my_row& b);
+    packedRow& operator=(const packedRow& b);
     
     uint popcnt() const;
     bool popcnt_is_one() const;
@@ -105,7 +105,7 @@ public:
         mp[i/64] |= ((uint64_t)1 << (i%64));
     }
 
-    void swap(my_row& b)
+    void swap(packedRow& b)
     {
         #ifdef DEBUG_ROW
         assert(size > 0);
@@ -122,7 +122,7 @@ public:
         b.xor_clause_inverted = tmp;
     }
 
-    my_row& operator^=(const my_row& b);
+    packedRow& operator^=(const packedRow& b);
 
     inline const bool operator[](const uint& i) const
     {
@@ -162,7 +162,7 @@ public:
         return ULONG_MAX;
     }
 
-    friend std::ostream& operator << (std::ostream& os, const my_row& m);
+    friend std::ostream& operator << (std::ostream& os, const packedRow& m);
 
 private:
     
@@ -171,7 +171,7 @@ private:
     bool xor_clause_inverted;
 };
 
-std::ostream& operator << (std::ostream& os, const my_row& m);
+std::ostream& operator << (std::ostream& os, const packedRow& m);
 
 #endif
 
