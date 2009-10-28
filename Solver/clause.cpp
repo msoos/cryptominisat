@@ -18,7 +18,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 #include "clause.h"
-#include "my_row.h"
 
 Clause* Clause_new(const vec<Lit>& ps, const uint group, const bool learnt)
 {

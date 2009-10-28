@@ -27,7 +27,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <sys/types.h>
 #include "Vec.h"
 #include "SolverTypes.h"
-#include "my_row.h"
+#include "packedRow.h"
 
 #ifndef uint
 #define uint unsigned int

@@ -28,7 +28,7 @@ using std::endl;
 
 class Clause;
 
-#include "my_row.h"
+#include "packedRow.h"
 
 //typedef mpz_class matrix_row;
 typedef packedRow matrix_row;
