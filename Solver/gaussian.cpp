@@ -240,12 +240,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col) co
         }
     } else {
         for (uint i = 0, end = std::min(m.num_rows, m.last_one_in_col[col]+1);  i < end; i++, this_row++) {
-            //this_row->clearBit(col);
-            matrix_row& r = *this_row;
-            if (r[col]) {
-                //r.invert_xor_clause_inverted();
-                r.clearBit(col);
-            }
+            this_row->clearBit(col);
         }
     }
 
