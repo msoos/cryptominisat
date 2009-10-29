@@ -657,8 +657,7 @@ void Logger::print_learnt_clause_distrib() const
             it->second++;
     }
     
-    uint no_slices = 9;
-    uint slice = (maximum+1-minimum)/no_slices + (bool)((maximum+1-minimum)%no_slices);
+    uint slice = (maximum+1-minimum)/max_print_lines + (bool)((maximum+1-minimum)%max_print_lines);
     
     print_footer();
     print_simple_line(" Learnt clause length distribution");
@@ -710,7 +709,7 @@ void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const uint m
     }
     slices.resize(no_slices, 0);
     
-    uint height = 10;
+    uint height = max_print_lines;
     uint hslice = (hmax+1)/height + (bool)((hmax+1)%height);
     if (hslice == 0) return;
     
