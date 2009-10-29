@@ -649,7 +649,9 @@ void Logger::print_learnt_clause_distrib() const
         else
             it->second++;
     }
-    uint slice = (maximum+1-minimum)/9 + (bool)((maximum+1-minimum)%9);
+    
+    uint no_slices = 9;
+    uint slice = (maximum+1-minimum)/no_slices + (bool)((maximum+1-minimum)%no_slices);
     
     print_footer();
     print_simple_line(" Learnt clause length distribution");
@@ -676,8 +678,54 @@ void Logger::print_learnt_clause_distrib() const
     
     print_footer();
     
-    //uint slice = (maximum+1-minimum)/9 + (bool)((maximum+1-minimum)%9);
+    print_leearnt_clause_graph_distrib(maximum, minimum, learnt_sizes);
+}
+
+void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const uint minimum, const map<uint, uint>& learnt_sizes) const
+{
+    uint no_slices = FST_WIDTH  + SND_WIDTH + TRD_WIDTH + 4-3;
+    uint slice = (maximum+1-minimum)/no_slices + (bool)((maximum+1-minimum)%no_slices);
+    uint until = minimum + slice;
+    uint previous = 0;
+    vector<uint> slices;
+    uint hmax = 0;
+    uint hmin = UINT_MAX;
+    while(until < maximum+1) {
+        uint sum = 0;
+        for (; previous < until; previous++) {
+            map<uint, uint>::const_iterator it = learnt_sizes.find(previous);
+            if (it != learnt_sizes.end())
+                sum += it->second;
+        }
+        slices.push_back(sum);
+        until += slice;
+        hmax = std::max(hmax, sum);
+    }
+    slices.resize(no_slices, 0);
     
+    uint height = 10;
+    uint hslice = (hmax+1)/height + (bool)((hmax+1)%height);
+    if (hslice == 0) return;
+    
+    print_simple_line(" Learnt clause distribution in graph form");
+    print_footer();
+    string yaxis = "Number";
+    uint middle = (height-yaxis.size())/2;
+    
+    for (int i = height-1; i > 0; i--) {
+        cout << "| ";
+        if (height-1-i >= middle && height-1-i-middle < yaxis.size())
+            cout << yaxis[height-1-i-middle] << " ";
+        else
+            cout << "  ";
+        for (uint i2 = 0; i2 < no_slices; i2++) {
+            if (slices[i2]/hslice >= i) cout << "+";
+            else cout << " ";
+        }
+        cout << "|" << endl;
+    }
+    print_simple_line(" Learnt clause size");
+    print_footer();
 }
 
 void Logger::print_general_stats(uint restarts, uint64_t conflicts, int vars, int noClauses, uint64_t clauses_Literals, int noLearnts, double litsPerLearntCl, double progressEstimate) const
