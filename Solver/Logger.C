@@ -659,6 +659,9 @@ void Logger::print_learnt_clause_distrib() const
     uint until = minimum + slice;
     uint previous = 0;
     while(until < maximum+1) {
+        std::stringstream ss2;
+        ss2 << previous << " - " << until-1;
+        
         uint sum = 0;
         for (; previous < until; previous++) {
             map<uint, uint>::const_iterator it = learnt_sizes.find(previous);
@@ -666,8 +669,6 @@ void Logger::print_learnt_clause_distrib() const
                 sum += it->second;
         }
         
-        std::stringstream ss2;
-        ss2 << previous << " - " << until-1;
         print_line(ss2.str(), sum);
         
         until += slice;
