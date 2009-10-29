@@ -91,6 +91,7 @@ private:
     void print_learnt_clause_distrib() const;
     void print_leearnt_clause_graph_distrib(const uint maximum, const map<uint, uint>& learnt_sizes) const;
     void print_advanced_stats() const;
+    void print_statistics_note() const;
 
     uint max_print_lines;
     template<class T>

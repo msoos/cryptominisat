@@ -759,8 +759,10 @@ void Logger::printstats() const
     cout << "+" << std::setfill('=') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+4) << "=" << "+" << endl;
     cout << "||" << std::setfill('*') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+2) << "********* STATS FOR THIS RESTART BEGIN " << "||" << endl;
     cout << "+" << std::setfill('=') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+4) << "=" << std::setfill(' ') << "+" << endl;
+    
     cout.setf(std::ios_base::left);
     cout.precision(4);
+    print_statistics_note();
     print_times_var_guessed();
     print_times_group_caused_propagation();
     print_times_group_caused_conflict();
@@ -770,14 +772,6 @@ void Logger::printstats() const
     print_branch_depth_distrib();
     print_learnt_clause_distrib();
     print_advanced_stats();
-    
-    print_footer();
-    print_simple_line("Statistics note: If you used CryptoMiniSat as");
-    print_simple_line("a library then vars are all shifted by 1 here");
-    print_simple_line("and in every printed output of the solver.");
-    print_simple_line("This does not apply when you use CryptoMiniSat");
-    print_simple_line("as a stand-alone program.");
-    print_footer();
 }
 
 void Logger::print_advanced_stats() const
@@ -801,6 +795,17 @@ void Logger::print_advanced_stats() const
     print_simple_line("sum propagations on branches/no. branches");
     print_simple_line(" (in a given branch, what is the");
     print_line("  avg. no. of propagations?)",(double)sum_propagations_on_branches/(double)no_conflicts);
+    print_footer();
+}
+
+void Logger::print_statistics_note() const
+{
+    print_footer();
+    print_simple_line("Statistics note: If you used CryptoMiniSat as");
+    print_simple_line("a library then vars are all shifted by 1 here");
+    print_simple_line("and in every printed output of the solver.");
+    print_simple_line("This does not apply when you use CryptoMiniSat");
+    print_simple_line("as a stand-alone program.");
     print_footer();
 }
 
