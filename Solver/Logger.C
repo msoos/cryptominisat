@@ -508,7 +508,7 @@ void Logger::print_times_group_caused_conflict() const
 }
 
 template<class T>
-inline void Logger::print_line(const uint& number, const string& name, const T& value) const
+void Logger::print_line(const uint& number, const string& name, const T& value) const
 {
     cout << "|" << std::setw(FST_WIDTH) << number << "  " << std::setw(SND_WIDTH) << name << "  " << std::setw(TRD_WIDTH) << value << "|" << endl;
 }
