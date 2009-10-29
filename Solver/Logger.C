@@ -46,7 +46,6 @@ Logger::Logger(int& _verbosity) :
         uniqueid(1),
         level(0),
         begin_level(0),
-        max_group(0),
 
         proof(NULL),
         proof_num(0),
@@ -82,19 +81,12 @@ void Logger::new_var(const Var var)
 void Logger::new_group(const uint group)
 {
     if (groupnames.size() <= group) {
-        uint old_size = times_group_caused_propagation.size();
         groupnames.resize(group+1, "Noname");
-        times_group_caused_conflict.resize(group+1);
-        times_group_caused_propagation.resize(group+1);
+        times_group_caused_conflict.resize(group+1, 0);
+        times_group_caused_propagation.resize(group+1, 0);
         depths_of_propagations_for_group.resize(group+1);
         depths_of_conflicts_for_group.resize(group+1);
-        for (uint i = old_size; i < times_group_caused_propagation.size(); i++) {
-            times_group_caused_propagation[i] = 0;
-            times_group_caused_conflict[i] = 0;
-        }
     }
-
-    max_group = std::max(group, max_group);
 }
 
 // Adds the new clause group's name to the information stored
@@ -183,8 +175,7 @@ void Logger::conflict(const confl_type type, uint goback, const uint group, cons
 
         if (type == gauss_confl_type) {
             fprintf(proof,"Gauss\",style=bold");
-        } else if (group > max_group) fprintf(proof,"**%d\"",group);
-        else {
+        } else {
             if (groupnames.size() <= group || groupnames[group].empty())
                 fprintf(proof,"%d\"", group);
             else fprintf(proof,"%s\"", groupnames[group].c_str());
@@ -197,10 +188,9 @@ void Logger::conflict(const confl_type type, uint goback, const uint group, cons
     if (statistics_on) {
         const uint depth = level - begin_level;
 
-        if (group < max_group) { //TODO make work for learnt clauses
-            times_group_caused_conflict[group]++;
-            depths_of_conflicts_for_group[group].push_back(depth);
-        }
+        times_group_caused_conflict[group]++;
+        depths_of_conflicts_for_group[group].push_back(depth);
+        
         no_conflicts++;
         sum_conflict_depths += depth;
         sum_decisions_on_branches += decisions[depth];
@@ -218,13 +208,7 @@ void Logger::empty_clause(const uint group)
 
     if (proof_graph_on) {
         fprintf(proof,"node%d -> node%d [label=\"emtpy clause:",history[level],uniqueid+1);
-        if (group > max_group) fprintf(proof,"**%d\\n",group);
-        else {
-            if (groupnames.size() <= group || groupnames[group].empty())
-                fprintf(proof,"%d\\n", group);
-            else fprintf(proof,"%s\\n", groupnames[group].c_str());
-        }
-
+        fprintf(proof,"%s\\n", groupnames[group].c_str());
         fprintf(proof,"\"];\n");
     }
 }
@@ -249,13 +233,7 @@ void Logger::propagation(const Lit lit, const prop_type type, const uint group)
         case revert_guess_type:
         case simple_propagation_type:
             assert(group != UINT_MAX);
-            if (group > max_group) fprintf(proof,"**%d\\n",group);
-            else {
-                if (groupnames.size() <= group || groupnames[group].empty())
-                    fprintf(proof,"%d\\n", group);
-                else fprintf(proof,"%s\\n", groupnames[group].c_str());
-            }
-
+            fprintf(proof,"%s\\n", groupnames[group].c_str());
             fprintf(proof,"\"];\n");
             break;
 
@@ -289,19 +267,19 @@ void Logger::propagation(const Lit lit, const prop_type type, const uint group)
         case simple_propagation_type:
             no_propagations++;
             times_var_propagated[lit.var()]++;
-            if (group < max_group) { //TODO make work for learnt clauses
-                depths_of_propagations_for_group[group].push_back(level - begin_level);
-                times_group_caused_propagation[group]++;
-            }
+            
+            depths_of_propagations_for_group[group].push_back(level - begin_level);
+            times_group_caused_propagation[group]++;
+            
             depths_of_assigns_for_var[lit.var()].push_back(level - begin_level);
             break;
 
         case learnt_unit_clause_type: //when learning unit clause
         case revert_guess_type: //when, after conflict, a guess gets reverted
-            if (group < max_group) { //TODO make work for learnt clauses
-                times_group_caused_propagation[group]++;
-                depths_of_propagations_for_group[group].push_back(level - begin_level);
-            }
+            assert(group != UINT_MAX);
+            times_group_caused_propagation[group]++;
+            depths_of_propagations_for_group[group].push_back(level - begin_level);
+            
             depths_of_assigns_for_var[lit.var()].push_back(level - begin_level);
         case guess_type:
             times_var_guessed[lit.var()]++;
@@ -524,14 +502,7 @@ void Logger::print_groups(const vector<pair<double, uint> >& to_print) const
     uint i = 0;
     typedef vector<pair<double, uint> >::const_iterator myiterator;
     for (myiterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++) {
-        string name;
-        
-        if (it->second > max_group)
-            name = "learnt clause";
-        else
-            name = groupnames[it->second];
-        
-        print_line(it->second+1, name, it->first);
+        print_line(it->second+1, groupnames[it->second], it->first);
     }
     print_footer();
 }
@@ -541,14 +512,7 @@ void Logger::print_groups(const vector<pair<uint, uint> >& to_print) const
     uint i = 0;
     typedef vector<pair<uint, uint> >::const_iterator myiterator;
     for (myiterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++) {
-        string name;
-        
-        if (it->second > max_group)
-            name = "learnt clause";
-        else
-            name = groupnames[it->second];
-        
-        print_line(it->second+1, name, it->first);
+        print_line(it->second+1, groupnames[it->second], it->first);
     }
     print_footer();
 }

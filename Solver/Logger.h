@@ -114,7 +114,6 @@ private:
     vec<uint> history; //stores the node uniqueIDs
     uint level; //used to know the current level
     uint begin_level;
-    uint max_group;
 
     //graph drawing
     FILE* proof; //The file to store the proof
