@@ -716,26 +716,7 @@ void Logger::printstats() const
     print_assign_var_order();
     print_branch_depth_distrib();
     print_learnt_clause_distrib();
-
-    print_footer();
-    print_simple_line(" Advanced statistics");
-    print_footer();
-    print_line("No. branches visited", no_conflicts);
-    print_line("Avg. branch depth", (double)sum_conflict_depths/(double)no_conflicts);
-    print_line("No. decisions", no_decisions);
-    print_line("No. propagations",no_propagations);
-
-    //printf("no progatations/no decisions (i.e. one decision gives how many propagations on average *for the whole search graph*): %f\n", (double)no_propagations/(double)no_decisions);
-    //printf("no propagations/sum decisions on branches (if you look at one specific branch, what is the average number of propagations you will find?): %f\n", (double)no_propagations/(double)sum_decisions_on_branches);
-
-    print_simple_line("sum decisions on branches/no. branches");
-    print_simple_line(" (in a given branch, what is the avg.");
-    print_line("  no. of decisions?)",(double)sum_decisions_on_branches/(double)no_conflicts);
-
-    print_simple_line("sum propagations on branches/no. branches");
-    print_simple_line(" (in a given branch, what is the");
-    print_line("  avg. no. of propagations?)",(double)sum_propagations_on_branches/(double)no_conflicts);
-    print_footer();
+    print_advanced_stats();
     
     print_footer();
     print_simple_line("Statistics note: If you used CryptoMiniSat as");
@@ -743,6 +724,29 @@ void Logger::printstats() const
     print_simple_line("and in every printed output of the solver.");
     print_simple_line("This does not apply when you use CryptoMiniSat");
     print_simple_line("as a stand-alone program.");
+    print_footer();
+}
+
+void Logger::print_advanced_stats() const
+{
+    print_footer();
+    print_simple_line(" Advanced statistics");
+    print_footer();
+    print_line("No. branches visited", no_conflicts);
+    print_line("Avg. branch depth", (double)sum_conflict_depths/(double)no_conflicts);
+    print_line("No. decisions", no_decisions);
+    print_line("No. propagations",no_propagations);
+    
+    //printf("no progatations/no decisions (i.e. one decision gives how many propagations on average *for the whole search graph*): %f\n", (double)no_propagations/(double)no_decisions);
+    //printf("no propagations/sum decisions on branches (if you look at one specific branch, what is the average number of propagations you will find?): %f\n", (double)no_propagations/(double)sum_decisions_on_branches);
+    
+    print_simple_line("sum decisions on branches/no. branches");
+    print_simple_line(" (in a given branch, what is the avg.");
+    print_line("  no. of decisions?)",(double)sum_decisions_on_branches/(double)no_conflicts);
+    
+    print_simple_line("sum propagations on branches/no. branches");
+    print_simple_line(" (in a given branch, what is the");
+    print_line("  avg. no. of propagations?)",(double)sum_propagations_on_branches/(double)no_conflicts);
     print_footer();
 }
 
