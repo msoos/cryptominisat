@@ -654,6 +654,8 @@ void Logger::print_learnt_clause_distrib() const
             it->second++;
     }
     
+    learnt_sizes[0] = solver->get_unitary_learnts().size();
+    
     uint slice = (maximum+1)/max_print_lines + (bool)((maximum+1)%max_print_lines);
     
     print_footer();
@@ -783,6 +785,7 @@ void Logger::print_advanced_stats() const
     print_footer();
     print_simple_line(" Advanced statistics");
     print_footer();
+    print_line("Unitary learnts", solver->get_unitary_learnts().size());
     print_line("No. branches visited", no_conflicts);
     print_line("Avg. branch depth", (double)sum_conflict_depths/(double)no_conflicts);
     print_line("No. decisions", no_decisions);
