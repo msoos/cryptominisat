@@ -640,14 +640,11 @@ void Logger::print_learnt_clause_distrib() const
     map<uint, uint> learnt_sizes;
     const vec<Clause*>& learnts = solver->get_learnts();
     
-    uint minimum = UINT_MAX;
     uint maximum = 0;
     
     for (uint i = 0; i < learnts.size(); i++)
     {
         uint size = learnts[i]->size();
-        
-        minimum = std::min(minimum, size);
         maximum = std::max(maximum, size);
         
         map<uint, uint>::iterator it = learnt_sizes.find(size);
@@ -657,14 +654,14 @@ void Logger::print_learnt_clause_distrib() const
             it->second++;
     }
     
-    uint slice = (maximum+1-minimum)/max_print_lines + (bool)((maximum+1-minimum)%max_print_lines);
+    uint slice = (maximum+1)/max_print_lines + (bool)((maximum+1)%max_print_lines);
     
     print_footer();
     print_simple_line(" Learnt clause length distribution");
     print_line("Length between", "no. cl.");
     print_footer();
     
-    uint until = minimum + slice;
+    uint until = slice;
     uint from = 0;
     while(until < maximum+1) {
         std::stringstream ss2;
@@ -684,14 +681,14 @@ void Logger::print_learnt_clause_distrib() const
     
     print_footer();
     
-    print_leearnt_clause_graph_distrib(maximum, minimum, learnt_sizes);
+    print_leearnt_clause_graph_distrib(maximum, learnt_sizes);
 }
 
-void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const uint minimum, const map<uint, uint>& learnt_sizes) const
+void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const map<uint, uint>& learnt_sizes) const
 {
     uint no_slices = FST_WIDTH  + SND_WIDTH + TRD_WIDTH + 4-3;
-    uint slice = (maximum+1-minimum)/no_slices + (bool)((maximum+1-minimum)%no_slices);
-    uint until = minimum + slice;
+    uint slice = (maximum+1)/no_slices + (bool)((maximum+1)%no_slices);
+    uint until = slice;
     uint from = 0;
     vector<uint> slices;
     uint hmax = 0;

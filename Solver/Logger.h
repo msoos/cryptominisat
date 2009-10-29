@@ -89,7 +89,7 @@ private:
     void print_times_group_caused_conflict() const;
     void print_branch_depth_distrib() const;
     void print_learnt_clause_distrib() const;
-    void print_leearnt_clause_graph_distrib(const uint maximum, const uint minimum, const map<uint, uint>& learnt_sizes) const;
+    void print_leearnt_clause_graph_distrib(const uint maximum, const map<uint, uint>& learnt_sizes) const;
     void print_advanced_stats() const;
 
     uint max_print_lines;
