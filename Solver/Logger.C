@@ -34,8 +34,6 @@ using std::ofstream;
 #include "SolverTypes.h"
 #include "Solver.h"
 
-#define MAX_VAR 1000000
-
 #define FST_WIDTH 10
 #define SND_WIDTH 35
 #define TRD_WIDTH 10
@@ -72,8 +70,6 @@ Logger::Logger(int& _verbosity) :
 // Adds a new variable to the knowledge of the logger
 void Logger::new_var(const Var var)
 {
-    assert(var < MAX_VAR);
-
     if (varnames.size() <= var) {
         varnames.resize(var+1);
         times_var_propagated.resize(var+1);
