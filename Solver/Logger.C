@@ -583,6 +583,13 @@ void Logger::print_simple_line(const string& str) const
     cout << "|" << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+4) << str << "|" << endl;
 }
 
+void Logger::print_center_line(const string& str) const
+{
+    uint middle = (FST_WIDTH+SND_WIDTH+TRD_WIDTH+4-str.size())/2;
+    int rest = FST_WIDTH+SND_WIDTH+TRD_WIDTH+4-middle*2-str.size();
+    cout << "|" << std::setw(middle) << " " << str << std::setw(middle + rest) << " " << "|" << endl;
+}
+
 void Logger::print_branch_depth_distrib() const
 {
     //cout << "--- Branch depth stats ---" << endl;
@@ -724,7 +731,7 @@ void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const uint m
         }
         cout << "|" << endl;
     }
-    print_simple_line(" Learnt clause size");
+    print_center_line(" Learnt clause size");
     print_footer();
 }
 

@@ -100,6 +100,8 @@ private:
     template<class T>
     void print_line(const string& str, const T& num) const;
     void print_simple_line(const string& str) const;
+    void print_center_line(const string& str) const;
+    
     void print_confl_order() const;
     void print_prop_order() const;
     void print_assign_var_order() const;
