@@ -649,7 +649,7 @@ void Logger::print_learnt_clause_distrib() const
         
         map<uint, uint>::iterator it = learnt_sizes.find(size);
         if (it == learnt_sizes.end())
-            learnt_sizes[size] = 0;
+            learnt_sizes[size] = 1;
         else
             it->second++;
     }
