@@ -659,14 +659,14 @@ void Logger::print_learnt_clause_distrib() const
     print_footer();
     
     uint until = minimum + slice;
-    uint previous = 0;
+    uint from = 0;
     while(until < maximum+1) {
         std::stringstream ss2;
-        ss2 << previous << " - " << until-1;
+        ss2 << from << " - " << until-1;
         
         uint sum = 0;
-        for (; previous < until; previous++) {
-            map<uint, uint>::const_iterator it = learnt_sizes.find(previous);
+        for (; from < until; from++) {
+            map<uint, uint>::const_iterator it = learnt_sizes.find(from);
             if (it != learnt_sizes.end())
                 sum += it->second;
         }
@@ -686,14 +686,14 @@ void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const uint m
     uint no_slices = FST_WIDTH  + SND_WIDTH + TRD_WIDTH + 4-3;
     uint slice = (maximum+1-minimum)/no_slices + (bool)((maximum+1-minimum)%no_slices);
     uint until = minimum + slice;
-    uint previous = 0;
+    uint from = 0;
     vector<uint> slices;
     uint hmax = 0;
     uint hmin = UINT_MAX;
     while(until < maximum+1) {
         uint sum = 0;
-        for (; previous < until; previous++) {
-            map<uint, uint>::const_iterator it = learnt_sizes.find(previous);
+        for (; from < until; from++) {
+            map<uint, uint>::const_iterator it = learnt_sizes.find(from);
             if (it != learnt_sizes.end())
                 sum += it->second;
         }
