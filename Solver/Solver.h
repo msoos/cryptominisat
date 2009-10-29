@@ -116,7 +116,8 @@ public:
     void setVariableName(int var, const char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
     void startClauseAdding();      // Before adding clauses, but after setting up the Solver (need* functions, verbosity), this should be called
     void endFirstSimplify();       // After the clauses are added, and the first simplify() is called, this must be called
-    const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses
+    const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
+    const vec<Clause*>& get_learnts() const; //Get all learnt clauses
     const vec<Clause*>& get_unitary_learnts() const; //return the set of unitary learned clauses
 
 protected:

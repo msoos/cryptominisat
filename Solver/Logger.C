@@ -32,6 +32,7 @@ using std::ofstream;
 #include "Logger.h"
 #include "fcopy.h"
 #include "SolverTypes.h"
+#include "Solver.h"
 
 #define MAX_VAR 1000000
 
@@ -631,6 +632,57 @@ void Logger::print_branch_depth_distrib() const
 
 }
 
+void Logger::print_learnt_clause_distrib() const
+{
+    map<uint, uint> learnt_sizes;
+    const vec<Clause*>& learnts = solver->get_learnts();
+    
+    uint minimum = UINT_MAX;
+    uint maximum = 0;
+    
+    for (uint i = 0; i < learnts.size(); i++)
+    {
+        uint size = learnts[i]->size();
+        
+        minimum = std::min(minimum, size);
+        maximum = std::max(maximum, size);
+        
+        map<uint, uint>::iterator it = learnt_sizes.find(size);
+        if (it == learnt_sizes.end())
+            learnt_sizes[size] = 0;
+        else
+            it->second++;
+    }
+    uint slice = (maximum+1-minimum)/9 + (bool)((maximum+1-minimum)%9);
+    
+    print_footer();
+    print_simple_line(" Learnt clause length distribution");
+    print_line("Length between", "no. cl.");
+    print_footer();
+    
+    uint until = minimum + slice;
+    uint previous = 0;
+    while(until < maximum+1) {
+        uint sum = 0;
+        for (; previous < until; previous++) {
+            map<uint, uint>::const_iterator it = learnt_sizes.find(previous);
+            if (it != learnt_sizes.end())
+                sum += it->second;
+        }
+        
+        std::stringstream ss2;
+        ss2 << previous << " - " << until-1;
+        print_line(ss2.str(), sum);
+        
+        until += slice;
+    }
+    
+    print_footer();
+    
+    //uint slice = (maximum+1-minimum)/9 + (bool)((maximum+1-minimum)%9);
+    
+}
+
 void Logger::print_general_stats(uint restarts, uint64_t conflicts, int vars, int noClauses, uint64_t clauses_Literals, int noLearnts, double litsPerLearntCl, double progressEstimate) const
 {
     print_footer();
@@ -667,6 +719,7 @@ void Logger::printstats() const
     print_confl_order();
     print_assign_var_order();
     print_branch_depth_distrib();
+    print_learnt_clause_distrib();
 
     print_footer();
     print_simple_line(" Advanced statistics");
@@ -742,4 +795,9 @@ void Logger::reset_statistics()
     sum_decisions_on_branches = 0;
     sum_propagations_on_branches = 0;
     branch_depth_distrib.clear();
+}
+
+void Logger::setSolver(const Solver* _solver)
+{
+    solver = _solver;
 }

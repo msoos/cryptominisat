@@ -64,6 +64,7 @@ Solver::Solver() :
         , maxRestarts(UINT_MAX)
         , learnt_clause_group(0)
 {
+    logger.setSolver(this);
 }
 
 
@@ -839,6 +840,11 @@ void Solver::reduceDB()
             learnts[j++] = learnts[i];
     }
     learnts.shrink(i - j);
+}
+
+const vec<Clause*>& Solver::get_learnts() const
+{
+    return learnts;
 }
 
 const vec<Clause*>& Solver::get_sorted_learnts()

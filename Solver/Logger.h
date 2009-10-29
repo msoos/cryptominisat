@@ -44,6 +44,8 @@ using std::pair;
 using std::string;
 using std::map;
 
+class Solver;
+
 class Logger
 {
 public:
@@ -75,6 +77,8 @@ public:
 
     bool proof_graph_on;
     bool statistics_on;
+    
+    void setSolver(const Solver* solver);
 private:
     void print_groups(const vector<pair<uint, uint> >& to_print) const;
     void print_groups(const vector<pair<double, uint> >& to_print) const;
@@ -84,6 +88,7 @@ private:
     void print_times_group_caused_propagation() const;
     void print_times_group_caused_conflict() const;
     void print_branch_depth_distrib() const;
+    void print_learnt_clause_distrib() const;
 
     uint max_print_lines;
     template<class T>
@@ -150,6 +155,8 @@ private:
 
     //message display properties
     const int& verbosity;
+    
+    const Solver* solver;
 };
 
 #endif //__LOGGER_H__
