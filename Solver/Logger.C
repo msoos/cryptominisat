@@ -695,7 +695,6 @@ void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const uint m
     uint from = 0;
     vector<uint> slices;
     uint hmax = 0;
-    uint hmin = UINT_MAX;
     while(until < maximum+1) {
         uint sum = 0;
         for (; from < until; from++) {
