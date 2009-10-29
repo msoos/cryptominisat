@@ -1,3 +1,8 @@
+ver 1.2.7 -- 29/10/2009
+* Learnt clause distribution statistics both in
+ - numerical form
+ - graphical form
+
 ver 1.2.6 -- 24/10/2009
 * Corrected unitialised maxRestarts
 
