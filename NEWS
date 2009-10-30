@@ -1,9 +1,17 @@
+ver 2.1.1 -- 30/10/2009
+* Learnt clause distribution stats
+* Added regression testing
+
 ver 2.1.0 -- 28/10/2009
 * hand-made (non-GPL Bignum) packed representation of both matrix' rows
 * removed dependency on GPL Bignum library
 
 ver 2.0.1 -- 24/10/2009
 * Added Gaussian elimination
+
+ver 1.2.6 -- 24/10/2009
+* Corrected unitialised maxRestarts
+
 
 ver 1.2.6 -- 24/10/2009
 * Corrected unitialised maxRestarts

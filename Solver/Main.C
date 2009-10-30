@@ -495,7 +495,7 @@ int main(int argc, char** argv)
     argc = j;
 
 
-    printf("This is CryptoMiniSat 2.1.0\n");
+    printf("This is CryptoMiniSat 2.1.1\n");
 #if defined(__linux__)
     fpu_control_t oldcw, newcw;
     _FPU_GETCW(oldcw);

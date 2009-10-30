@@ -68,6 +68,7 @@ Solver::Solver() :
         , maxRestarts(UINT_MAX)
         , learnt_clause_group(0)
 {
+    logger.setSolver(this);
 }
 
 
@@ -866,6 +867,11 @@ void Solver::reduceDB()
     learnts.shrink(i - j);
 }
 
+const vec<Clause*>& Solver::get_learnts() const
+{
+    return learnts;
+}
+
 const vec<Clause*>& Solver::get_sorted_learnts()
 {
     sort(learnts, reduceDB_lt());
@@ -1144,8 +1150,10 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         Clause* c = Clause_new(learnt_clause, learnt_clause_group++, true);
         unitary_learnts.push(c);
         uncheckedEnqueue(learnt_clause[0]);
-        if (dynamic_behaviour_analysis)
-            logger.propagation(learnt_clause[0], Logger::learnt_unit_clause_type);
+        if (dynamic_behaviour_analysis) {
+            logger.set_group_name(c->group, "unitary learnt clause");
+            logger.propagation(learnt_clause[0], Logger::learnt_unit_clause_type, c->group);
+        }
         assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
         
         #ifdef VERBOSE_DEBUG
@@ -1160,9 +1168,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         uncheckedEnqueue(learnt_clause[0], c);
 
         if (dynamic_behaviour_analysis) {
-            logger.propagation(learnt_clause[0], Logger::revert_guess_type, c->group);
-            logger.new_group(c->group);
             logger.set_group_name(c->group, "learnt clause");
+            logger.propagation(learnt_clause[0], Logger::revert_guess_type, c->group);
         }
     }
 

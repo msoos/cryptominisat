@@ -44,6 +44,8 @@ using std::pair;
 using std::string;
 using std::map;
 
+class Solver;
+
 class Logger
 {
 public:
@@ -75,6 +77,8 @@ public:
 
     bool proof_graph_on;
     bool statistics_on;
+    
+    void setSolver(const Solver* solver);
 private:
     void print_groups(const vector<pair<uint, uint> >& to_print) const;
     void print_groups(const vector<pair<double, uint> >& to_print) const;
@@ -84,6 +88,10 @@ private:
     void print_times_group_caused_propagation() const;
     void print_times_group_caused_conflict() const;
     void print_branch_depth_distrib() const;
+    void print_learnt_clause_distrib() const;
+    void print_leearnt_clause_graph_distrib(const uint maximum, const map<uint, uint>& learnt_sizes) const;
+    void print_advanced_stats() const;
+    void print_statistics_note() const;
 
     uint max_print_lines;
     template<class T>
@@ -93,6 +101,8 @@ private:
     template<class T>
     void print_line(const string& str, const T& num) const;
     void print_simple_line(const string& str) const;
+    void print_center_line(const string& str) const;
+    
     void print_confl_order() const;
     void print_prop_order() const;
     void print_assign_var_order() const;
@@ -104,7 +114,6 @@ private:
     vec<uint> history; //stores the node uniqueIDs
     uint level; //used to know the current level
     uint begin_level;
-    uint max_group;
 
     //graph drawing
     FILE* proof; //The file to store the proof
@@ -150,6 +159,8 @@ private:
 
     //message display properties
     const int& verbosity;
+    
+    const Solver* solver;
 };
 
 #endif //__LOGGER_H__
