@@ -193,6 +193,7 @@ void Gaussian::fill_matrix(matrixset& m)
     cout << "(" << matrix_no << ")Filling matrix" << endl;
 #endif
 
+    solver.cleanClauses(solver.xorclauses);
     m.num_rows = fill_var_to_col(m);
     m.num_cols = m.col_to_var.size();
     col_to_var_original = m.col_to_var;
