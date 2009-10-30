@@ -6,14 +6,14 @@ import gzip
 
 sumt2 = 0.0
 sumprop = 0
-testdir = "tests/"
+testdir = "../tests/"
 dirList=os.listdir(testdir)
 for fname in dirList:
     if fnmatch.fnmatch(fname, '*.cnf.gz'):
       for i in range(3):
           of = "outputfile"
           if (os.path.isfile(of)) : os.unlink(of)
-          cryptominisat = "./build/cryptominisat"
+          cryptominisat = "../build/cryptominisat"
           if (os.path.isfile(cryptominisat) != True) :
                   print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(cryptominisat)
                   exit()
