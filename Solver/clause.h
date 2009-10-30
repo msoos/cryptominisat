@@ -132,7 +132,7 @@ protected:
     void setSize(uint32_t size) {
         size_etc = ((size_etc & (uint32_t)255) + (size << 8));
     }
-    bool setLearnt(bool learnt) {
+    void setLearnt(bool learnt) {
         size_etc = (size_etc & ~((uint32_t)1)) + (uint32_t)learnt;
     }
 };
