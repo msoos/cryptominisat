@@ -21,12 +21,14 @@ Building using cmake
 ------------------
 Building using autotools
 ------------------
-* Install automake, autoconf, libtool
-* Issue 'make -f Makefile.cvs'
 * Go to the 'build' directory
 * Issue 'CXXFLAGS="-O3 -g -march=native" ../configure'
 * Issue 'make'
 * Issue './cryptominisat satfile' to test your new code
+
+If you got your source from the SVN, before doing the above, you should:
+* Install automake, autoconf, libtool
+* Issue 'make -f Makefile.cvs'
 
 ---------
 Please read help
