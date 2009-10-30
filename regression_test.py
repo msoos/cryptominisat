@@ -6,13 +6,19 @@ import gzip
 
 sumt2 = 0.0
 sumprop = 0
-dirList=os.listdir(".")
+testdir = "tests/"
+dirList=os.listdir(testdir)
 for fname in dirList:
     if fnmatch.fnmatch(fname, '*.cnf.gz'):
       for i in range(3):
           of = "outputfile"
           if (os.path.isfile(of)) : os.unlink(of)
-          s2 =  commands.getoutput("../build/cryptominisat -randomize=%d \"%s\" %s"%(i, fname, of))
+          cryptominisat = "./build/cryptominisat"
+          if (os.path.isfile(cryptominisat) != True) :
+                  print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(cryptominisat)
+                  exit()
+
+          s2 =  commands.getoutput("%s -randomize=%d \"%s%s\" %s"%(cryptominisat, i, testdir, fname, of))
           if (os.path.isfile(of) != True) :
              print "OOops, output was not produced by CryptoMiniSat! Error!"
              exit()
@@ -61,7 +67,7 @@ for fname in dirList:
           #    print "var: %d, value: %s" %(k,v)
           
           
-          myfname = fname[:len(fname)-6]
+          myfname = testdir + fname[:len(fname)-6]
           myfname += "output.gz"
           f = gzip.open(myfname, "r")
           text = f.read()
