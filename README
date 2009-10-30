@@ -2,6 +2,8 @@ For usage of standard MiniSat, please have a look at Niklas EÃ©n's and Niklas SÃ
 
 For a more detailed description of how to use CryptoMiniSat, please refer to  http://planete.inrialpes.fr/~soos/CryptoMiniSat/index.html
 
+For regression testing, execute: 'python regression_test.py' in the "scripts/" subdir
+
 CryptoMiniSat integrates the following advancements with respect to MiniSat:
 
 * Xor-clauses. If you want to express a xor, e.g. "var1 + var2 + !var3 = true" then you simply need to put into the sat file the line: "x1 2 -3 0". The "x" in front of the line means that this is a xor-clause clause.
