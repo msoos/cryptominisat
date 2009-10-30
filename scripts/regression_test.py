@@ -18,7 +18,9 @@ for fname in dirList:
                   print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(cryptominisat)
                   exit()
 
-          s2 =  commands.getoutput("%s -randomize=%d \"%s%s\" %s"%(cryptominisat, i, testdir, fname, of))
+          command = "%s -randomize=%d -gaussuntil=10 \"%s%s\" %s"%(cryptominisat, i, testdir, fname, of)
+          print "Executing: %s" %(command)
+          s2 =  commands.getoutput(command)
           if (os.path.isfile(of) != True) :
              print "OOops, output was not produced by CryptoMiniSat! Error!"
              exit()
