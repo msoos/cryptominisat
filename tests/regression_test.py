@@ -11,7 +11,11 @@ for fname in dirList:
     if fnmatch.fnmatch(fname, '*.cnf.gz'):
       for i in range(3):
           of = "outputfile"
+          if (os.path.isfile(of)) : os.unlink(of)
           s2 =  commands.getoutput("../build/cryptominisat -randomize=%d \"%s\" %s"%(i, fname, of))
+          if (os.path.isfile(of) != True) :
+             print "OOops, output was not produced by CryptoMiniSat! Error!"
+             exit()
           #print s2
 
           s2 = s2.splitlines()
@@ -81,13 +85,17 @@ for fname in dirList:
           #print "unsat: %d" %(indicated_unsat)
           if (unsat != indicated_unsat) :
               print "UNSAT vs. SAT problem!"
+              os.unlink(of)
               exit()
           else :
               for k, v in indicated_value.iteritems():
                   #print "var: %d, value: %s" %(k,v)
                   if (indicated_value[k] != value[k]) :
                     print "Problem of found values: values %d: '%s', '%s' don't match!" %(k, value[k], indicated_value[k])
+                    os.unlink(of)
                     exit()
+          
+          os.unlink(of)
 
 
 
