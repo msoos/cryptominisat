@@ -71,10 +71,13 @@ void Logger::new_var(const Var var)
 {
     if (varnames.size() <= var) {
         varnames.resize(var+1);
-        times_var_propagated.resize(var+1);
-        times_var_guessed.resize(var+1);
+        times_var_propagated.resize(var+1, 0);
+        times_var_guessed.resize(var+1, 0);
         depths_of_assigns_for_var.resize(var+1);
     }
+    std::stringstream ss;
+    ss << var + 1;
+    varnames[var] = ss.str();
 }
 
 // Resizes the groupnames and other, related vectors to accomodate for a new group
@@ -99,7 +102,7 @@ void Logger::set_group_name(const uint group, const char* name)
         exit(-1);
     }
     
-    if (groupnames[group].empty() || groupnames[group] == "Noname") {
+    if (groupnames[group] == "Noname") {
         groupnames[group] = name;
     } else if (name != '\0' && groupnames[group] != name) {
         printf("Error! Group no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", group, groupnames[group].c_str(), name);
@@ -110,15 +113,21 @@ void Logger::set_group_name(const uint group, const char* name)
 // sets the variable's name
 void Logger::set_variable_name(const uint var, const char* name)
 {
-    if (!proof_graph_on && !statistics_on) return;
+    new_var(var);
     
     if (strlen(name) > SND_WIDTH-2) {
         cout << "A variable name cannot have more than " << SND_WIDTH-2 << " number of characters. You gave '" << name << "', which is " << strlen(name) << " long." << endl;
         exit(-1);
     }
-
-    new_var(var);
-    varnames[var] = name;
+    
+    std::stringstream ss;
+    ss << var + 1;
+    if (varnames[var] == ss.str()) {
+        varnames[var] = name;
+    } else if (varnames[var] != name) {
+        printf("Error! Variable no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", var+1, varnames[var].c_str(), name);
+        exit(-1);
+    }
 }
 
 void Logger::begin()
@@ -133,7 +142,8 @@ void Logger::begin()
             if (!proof) printf("Couldn't open proof file '%s' for writing\n", filename), exit(-1);
         }
     } else {
-        history.growTo(10);
+        assert(level == 0);
+        history.resize(100);
         history[level] = uniqueid;
 
         if (proof_graph_on) {
@@ -164,24 +174,17 @@ void Logger::conflict(const confl_type type, uint goback, const uint group, cons
         for (int i = 0; i < learnt_clause.size(); i++) {
             if (learnt_clause[i].sign()) fprintf(proof,"-");
             int myvar = learnt_clause[i].var();
-            if (varnames.size() <= myvar || varnames[myvar].empty())
-                fprintf(proof,"%d\\n",myvar+1);
-            else fprintf(proof,"%s\\n",varnames[myvar].c_str());
+            fprintf(proof,"%s\\n",varnames[myvar].c_str());
         }
-
         fprintf(proof,"\"];\n");
 
         fprintf(proof,"node%d -> node%d [label=\"",history[level],uniqueid);
-
-        if (type == gauss_confl_type) {
+        if (type == gauss_confl_type)
             fprintf(proof,"Gauss\",style=bold");
-        } else {
-            if (groupnames.size() <= group || groupnames[group].empty())
-                fprintf(proof,"%d\"", group);
-            else fprintf(proof,"%s\"", groupnames[group].c_str());
-        }
-
+        else
+            fprintf(proof,"%s\"", groupnames[group].c_str());
         fprintf(proof,"];\n");
+        
         fprintf(proof,"node%d -> node%d [style=bold];\n",uniqueid,history[goback]);
     }
 
@@ -222,10 +225,9 @@ void Logger::propagation(const Lit lit, const prop_type type, const uint group)
     //graph
     if (proof_graph_on) {
         fprintf(proof,"node%d [shape=box, label=\"",uniqueid);;
-        if (lit.sign()) fprintf(proof,"-");
-        if (varnames.size() <= lit.var() || varnames[lit.var()].empty())
-            fprintf(proof,"%d\"];\n",lit.var()+1);
-        else fprintf(proof,"%s\"];\n",varnames[lit.var()].c_str());
+        if (lit.sign())
+            fprintf(proof,"-");
+        fprintf(proof,"%s\"];\n",varnames[lit.var()].c_str());
 
         fprintf(proof,"node%d -> node%d [label=\"",history[level],uniqueid);
         switch (type) {
@@ -255,9 +257,7 @@ void Logger::propagation(const Lit lit, const prop_type type, const uint group)
 
         case addclause_type:
             assert(group != UINT_MAX);
-            if (groupnames.size() <= group || groupnames[group].empty())
-                fprintf(proof,"red. from %d\"];\n",group);
-            else fprintf(proof,"red. from %s\"];\n",groupnames[group].c_str());
+            fprintf(proof,"red. from %s\"];\n",groupnames[group].c_str());
             break;
         }
     }
@@ -290,7 +290,7 @@ void Logger::propagation(const Lit lit, const prop_type type, const uint group)
         case addclause_type:
         case assumption_type:
             assert(false);
-        }
+    }
 
     level++;
 
@@ -311,7 +311,7 @@ void Logger::propagation(const Lit lit, const prop_type type, const uint group)
         }
     }
 
-    if (history.size() < level+1) history.growTo(level+10);
+    if (history.size() < level+1) history.resize(level+100);
     history[level] = uniqueid;
 }
 
@@ -356,8 +356,11 @@ void Logger::end(const finish_type finish)
             fprintf(proof,"node%d [shape=doublecircle, label=\"Done adding\\nclauses\"];\n",proof0_lastid+1);
             fprintf(proof,"node%d -> node%d;\n",proof0_lastid,proof0_lastid+1);
             fprintf(proof,"}\n");
-            proof = (FILE*)fclose(proof);
-            assert(proof == NULL);
+            if(fclose(proof) != 0) {
+                printf("Error! Could not close proof file!");
+                exit(-1);
+            }
+            proof = NULL;
         }
     }
 
