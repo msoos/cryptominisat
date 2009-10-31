@@ -22,6 +22,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cstring>
 #include <stdint.h>
 #include <errno.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <signal.h>
@@ -382,6 +383,8 @@ int main(int argc, char** argv)
     Solver      S;
     S.verbosity = 1;
     bool permutateClauses = false;
+    bool dumplearnts = false;
+    char learnts_filename[500];
 
 
     int         i, j;
@@ -453,6 +456,13 @@ int main(int argc, char** argv)
                 exit(0);
             }
             S.setMaxRestarts(maxrest);
+        } else if ((value = hasPrefix(argv[i], "-dumplearnts="))) {
+            uint maxrest;
+            if (sscanf(value, "%400s", &learnts_filename) < 0 || strlen(learnts_filename) == 0) {
+                printf("ERROR! wrong filename '%s'\n", learnts_filename);
+                exit(0);
+            }
+            dumplearnts = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);
@@ -514,6 +524,8 @@ int main(int argc, char** argv)
     lbool ret = S.solve();
     if (S.verbosity >= 1) printStats(S);
     printf("\n");
+    if (dumplearnts)
+        S.dump_sorted_learnts(learnts_filename);
     if (ret == l_Undef) {
         printf("Not finished running -- maximum restart reached\n");
     } else if (ret == l_True) {

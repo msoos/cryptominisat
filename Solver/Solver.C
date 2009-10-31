@@ -858,6 +858,24 @@ const vec<Clause*>& Solver::get_unitary_learnts() const
     return unitary_learnts;
 }
 
+void Solver::dump_sorted_learnts(const char* file)
+{
+    FILE* outfile = fopen(file, "w");
+    if (!outfile) {
+        printf("Error: Cannot open file '%s' to write learnt clauses!\n", file);
+        exit(-1);
+    }
+    
+    for (uint i = 0; i < unitary_learnts.size(); i++)
+        unitary_learnts[i]->plain_print(outfile);
+    
+    sort(learnts, reduceDB_lt());
+    for (int i = learnts.size()-1; i >= 0 ; i--) {
+        learnts[i]->plain_print(outfile);
+    }
+    fclose(outfile);
+}
+
 void Solver::setMaxRestarts(const uint num)
 {
     maxRestarts = num;
