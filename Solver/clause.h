@@ -152,7 +152,7 @@ public:
             printf("-");
         for (uint i = 0; i < size(); i++) {
             assert(!data[i].sign());
-            fprintf(to, "%d", data[i].var() + 1);
+            fprintf(to, "%d ", data[i].var() + 1);
         }
         fprintf(to, "0\n");
     }
