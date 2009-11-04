@@ -26,6 +26,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <limits.h>
 #include <vector>
 #include "clause.h"
+#include "xorFinder.h"
+#include "time_mem.h"
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -1176,6 +1178,52 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
+void Solver::findXors()
+{
+    double xortime = cpuTime();
+    
+    XorFinder xorFinder;
+    xorFinder.addClauses(clauses);
+    vector<bool> toRemove(clauses.size(), false);
+    
+    const vector<pair<Clause*, uint> >* myclauses;
+    bool impair;
+    uint foundXors = 0;
+    while ((myclauses = xorFinder.getNextXor(impair)) != NULL) {
+        const Clause& c = *((*myclauses)[0].first);
+        vector<Lit> lits;
+        for (const Lit *it = &c[0], *end = it+c.size() ; it != end; it++) {
+            lits.push_back(Lit(it->var(), false));
+        }
+        
+        for (const pair<Clause*, uint> *it = &(myclauses->at(0)), *end = it + myclauses->size() ; it != end; it++) {
+            //it->first->plain_print();
+            toRemove[it->second] = true;
+            detachClause(*it->first);
+            free(it->first);
+        }
+        
+        XorClause* x = XorClause_new(lits, impair, learnt_clause_group++);
+        //x->plain_print();
+        xorclauses.push(x);
+        attachClause(*x);
+        foundXors++;
+    }
+    
+    Clause **a = clauses.getData();
+    Clause **r = clauses.getData();
+    Clause **end = clauses.getData() + clauses.size();
+    for (uint i = 0; r != end; i++) {
+        if (!toRemove[i])
+            *a++ = *r++;
+        else
+            r++;
+    }
+    clauses.shrink(r-a);
+    
+    printf("|  Finding XOR time:     %4.2lf (found: %d)\n", cpuTime()-xortime, foundXors);
+}
+
 
 lbool Solver::solve(const vec<Lit>& assumps)
 {
@@ -1189,6 +1237,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
     double  nof_conflicts = restart_first;
     double  nof_learnts   = nClauses() * learntsize_factor;
     lbool   status        = l_Undef;
+
+    findXors();
 
     if (verbosity >= 1) {
         printf("============================[ Search Statistics ]==============================\n");

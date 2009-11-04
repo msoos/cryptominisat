@@ -229,6 +229,7 @@ protected:
     int      decisionLevel    ()      const; // Gives the current decisionlevel.
     uint32_t abstractLevel    (const Var& x) const; // Used to represent an abstraction of sets of decision levels.
     double   progressEstimate ()      const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
+    void     findXors         ();            // Removes Clauses that represent XOR-s and adds them as xor-clauses. Needs to have sorted clauses as input!!!        
 
     // Debug:
     void     printLit         (const Lit l) const;
