@@ -1178,17 +1178,15 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
-void Solver::findXors()
+uint Solver::findXors()
 {
-    double xortime = cpuTime();
-    
+    uint foundXors = 0;
     XorFinder xorFinder;
     xorFinder.addClauses(clauses);
     vector<bool> toRemove(clauses.size(), false);
     
     const vector<pair<Clause*, uint> >* myclauses;
     bool impair;
-    uint foundXors = 0;
     while ((myclauses = xorFinder.getNextXor(impair)) != NULL) {
         const Clause& c = *((*myclauses)[0].first);
         vector<Lit> lits;
@@ -1221,7 +1219,7 @@ void Solver::findXors()
     }
     clauses.shrink(r-a);
     
-    printf("|  Finding XOR time:     %4.2lf (found: %d)\n", cpuTime()-xortime, foundXors);
+    return foundXors;
 }
 
 
@@ -1238,7 +1236,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
     double  nof_learnts   = nClauses() * learntsize_factor;
     lbool   status        = l_Undef;
 
-    findXors();
+    double xortime = cpuTime();
+    uint foundXors = findXors();
+    printf("|  Finding XOR time:     %4.2lf (found: %d)\n", cpuTime()-xortime, foundXors);
 
     if (verbosity >= 1) {
         printf("============================[ Search Statistics ]==============================\n");
