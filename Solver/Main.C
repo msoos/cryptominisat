@@ -299,6 +299,7 @@ void printUsage(char** argv)
     printf("                   which is usually small (e.g. 80 bits)\n");
     printf("  -restarts       = <num> [1 - 2^32-1] No more than the given number of\n");
     printf("                   restarts will be performed during search\n");
+    printf("  -noxorfind      = Don't find and collect xor-clauses from regular clauses\n");
     printf("\n");
 }
 
@@ -398,6 +399,8 @@ int main(int argc, char** argv)
                 exit(0);
             }
             dumplearnts = true;
+        } else if ((value = hasPrefix(argv[i], "-noxorfind"))) {
+            S.xorFinder = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);
