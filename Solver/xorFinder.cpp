@@ -86,6 +86,9 @@ bool XorFinder::isXor(vector<pair<Clause*, uint> >& clauses, bool& impair)
     uint numImpair = 0;
     countImpairs(clauses, numImpair, numPair);
     
+    if (numImpair < 4 && numPair < 4)
+        return false;
+    
     if (numImpair == requiredSize) {
         impair = true;
         if (numImpair != clauses.size())
