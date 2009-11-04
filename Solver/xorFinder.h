@@ -38,8 +38,9 @@ class XorFinder
             size_t operator()(const Clause* c) const
             {
                 size_t hash = 5381;
+                hash = ((hash << 5) + hash) ^ c->size();
                 for (uint i = 0, size = c->size(); i < size; i++)
-                    hash = ((hash << 5) + hash) + (*c)[i].var();
+                    hash = ((hash << 5) + hash) ^ (*c)[i].var();
                 
                 return hash;
             }

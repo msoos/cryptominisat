@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "xorFinder.h"
 #include <algorithm>
 #include <utility>
+#include <iostream>
 
 using std::make_pair;
 
