@@ -1181,6 +1181,103 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
+vector<pair<XorClause*, uint> > Solver::findXorContains(const uint var) const
+{
+    vector<pair<XorClause*, uint> > ret;
+    uint i = 0;
+    for (XorClause* const* it = xorclauses.getData(), *const*end = it + xorclauses.size(); it != end; it++, i++) {
+        const XorClause& c = **it;
+        for (const Lit * a = &c[0], *end = a + c.size(); a != end; a++) {
+            if (a->var() == var)
+                ret.push_back(make_pair(*it, i));
+        }
+    }
+    
+    return ret;
+}
+
+void Solver::doCalcAtFinish()
+{
+    for (vector<pair<XorClause*, Var> >::iterator it = calcAtFinish.begin(); it != calcAtFinish.end(); it++) {
+        XorClause& c = *it->first;
+        bool final = c.xor_clause_inverted();
+        for (int k = 0, size = c.size(); k < size; k++ ) {
+            const lbool& val = assigns[c[k].var()];
+            if (c[k].var() != it->second)
+                final ^= val.getBool();
+        }
+        assigns[it->second] = final ? l_False : l_True;
+        free(it->first);
+    }
+}
+
+uint Solver::conglomerateXors()
+{
+    vector<uint> vars(nVars(), 0);
+    for (XorClause** it = xorclauses.getData(), **end = it + xorclauses.size(); it != end; it++) {
+        const XorClause& c = **it;
+        for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
+            vars[a->var()]++;
+        }
+    }
+    
+    for (Clause** it = clauses.getData(), **end = it + clauses.size(); it != end; it++) {
+        const Clause& c = **it;
+        for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
+            vars[a->var()] = 0;
+        }
+    }
+    
+    uint found = 0;
+    vector<bool> toRemove(xorclauses.size(), false);
+    for (uint var = 0; var < vars.size(); var++) if (assigns[var] == l_Undef && vars[var] >= 1) {
+        vector<pair<XorClause*, uint> > c = findXorContains(var);
+        assert(c.size() == vars[var]);
+        
+        XorClause& x = *(c[0].first);
+        bool first_inverted = !x.xor_clause_inverted();
+        vector<Lit> first_vars;
+        for (const Lit* a = &x[0], *end = a + x.size(); a != end; a++) {
+            if (a->var() != var) first_vars.push_back(*a);
+        }
+        toRemove[c[0].second] = true;
+        detachClause(x);
+        calcAtFinish.push_back(make_pair(&x, var));
+        found++;
+        
+        vector<Lit> ps;
+        for (uint i = 1; i < c.size(); i++) {
+            ps = first_vars;
+            XorClause& x = *c[i].first;
+            for (const Lit* a = &x[0], *end = a + x.size(); a != end; a++) {
+                if (a->var() != var) ps.push_back(*a);
+            }
+            toRemove[c[i].second] = true;
+            bool inverted = first_inverted ^ x.xor_clause_inverted();
+            detachClause(x);
+            free(&x);
+            found++;
+            
+            XorClause* newX = XorClause_new(ps, inverted, learnt_clause_group++);
+            xorclauses.push(newX);
+            attachClause(*newX);
+        }
+    }
+    
+    XorClause **a = xorclauses.getData();
+    XorClause **r = a;
+    XorClause **end = a + xorclauses.size();
+    for (uint i = 0; r != end; i++) {
+        if (!toRemove[i])
+            *a++ = *r++;
+        else
+            r++;
+    }
+    xorclauses.shrink(r-a);
+    
+    return found;
+}
+
 uint Solver::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths)
 {
     uint foundXors = 0;
@@ -1245,7 +1342,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
     uint foundXors = findXors(clauses, xorclauses, sumLengths);
     printf("|  Finding XORs:         %4.2lf (found: %d, avg size: %lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
     
-
+    time = cpuTime();
+    uint foundCong = conglomerateXors();
+    printf("|  Conglomerating XORs:  %4.2lf (found: %d)\n", cpuTime()-time, foundCong);
 
     if (verbosity >= 1) {
         printf("============================[ Search Statistics ]==============================\n");
@@ -1271,6 +1370,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
 
     if (status == l_True) {
+        doCalcAtFinish();
         // Extend & copy model:
         model.growTo(nVars());
         for (int i = 0; i < nVars(); i++) model[i] = value(i);

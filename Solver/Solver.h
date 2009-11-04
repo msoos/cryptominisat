@@ -232,6 +232,10 @@ protected:
     
     //Xor-finding related stuff
     uint     findXors         (vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths); // Removes Clauses that represent XOR-s and adds them as xor-clauses. Needs to have sorted clauses as input!!!        
+    vector<pair<XorClause*, uint> > findXorContains(const uint var) const;
+    uint      conglomerateXors();           //Conglomerate XOR-s that are attached using a variable
+    vector<pair<XorClause*, Var> > calcAtFinish;
+    void      doCalcAtFinish();             //Calculate variables removed during conglomeration
 
     // Debug:
     void     printLit         (const Lit l) const;
