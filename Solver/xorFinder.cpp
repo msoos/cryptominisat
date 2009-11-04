@@ -88,15 +88,15 @@ bool XorFinder::isXor(vector<pair<Clause*, uint> >& clauses, bool& impair)
     clause_sorter clause_sorter_object;
     std::sort(clauses.begin(), clauses.end(), clause_sorter_object);
     
-    uint numImpair = cleanDuplicates(clauses);
-    uint numPair = clauses.size()-numImpair;
+    uint numPair = 0;
+    uint numImpair = 0;
+    countImpairs(clauses, numImpair, numPair);
     
     if (numImpair == requiredSize) {
         impair = true;
         if (numImpair != clauses.size())
             cleanNotRightImPair(clauses, impair);
         
-        assert(clauses.size() == requiredSize);
         return true;
     }
     
@@ -105,7 +105,6 @@ bool XorFinder::isXor(vector<pair<Clause*, uint> >& clauses, bool& impair)
         if (numPair != clauses.size()) 
             cleanNotRightImPair(clauses, impair);
         
-        assert(clauses.size() == requiredSize);
         return true;
     }
     
@@ -128,25 +127,31 @@ void XorFinder::cleanNotRightImPair(vector<pair<Clause*, uint> >& clauses, const
     clauses.resize(clauses.size()-(r-a));
 }
 
-uint XorFinder::cleanDuplicates(vector<pair<Clause*, uint> >& clauses) const
+void XorFinder::countImpairs(const vector<pair<Clause*, uint> >& clauses, uint& numImpair, uint& numPair) const
 {
-    pair<Clause*, uint>* a = &(clauses[0]);
-    pair<Clause*, uint>* r = a;
-    pair<Clause*, uint>* end = a + clauses.size()-1;
+    numImpair = 0;
+    numPair = 0;
     
-    uint numImpair = 0;
-    for (; r != end;) {
-        if (clauseEqual(*(r->first), *((r+1)->first))) {
-            r++;
-        } else {
-            numImpair += impairSigns(*(a->first));
-            *a++ = *r++;
+    vector<pair<Clause*, uint> >::const_iterator it = clauses.begin();
+    vector<pair<Clause*, uint> >::const_iterator it2 = it;
+    it2++;
+    
+    bool impair = impairSigns(*it->first);
+    numImpair += impair;
+    numPair += !impair;
+    //it->first->plain_print();
+    
+    for (; it2 != clauses.end();) {
+        //it->first->plain_print();
+        //it2->first->plain_print();
+        //printf("....\n");
+        if (!clauseEqual(*it->first, *it2->first)) {
+            bool impair = impairSigns(*it2->first);
+            numImpair += impair;
+            numPair += !impair;
         }
+        it++;
+        it2++;
     }
-    *a = *r;
-    a++; r++;
-    clauses.resize(clauses.size()-(r-a));
-    
-    return numImpair;
 }
 

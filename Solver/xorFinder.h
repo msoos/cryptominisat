@@ -78,7 +78,7 @@ class XorFinder
         
         bool clauseEqual(const Clause& c1, const Clause& c2) const;
         bool impairSigns(const Clause& c) const;
-        uint cleanDuplicates(vector<pair<Clause*, uint> >& clauses) const;
+        void countImpairs(const vector<pair<Clause*, uint> >& clauses, uint& numImpair, uint& numPair) const;
         void cleanNotRightImPair(vector<pair<Clause*, uint> >& clauses, const bool impair) const;
         bool isXor(vector<pair<Clause*, uint> >& clauses, bool& impair);
         
