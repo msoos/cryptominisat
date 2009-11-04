@@ -1178,12 +1178,12 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
-uint Solver::findXors()
+uint Solver::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls)
 {
     uint foundXors = 0;
     XorFinder xorFinder;
-    xorFinder.addClauses(clauses);
-    vector<bool> toRemove(clauses.size(), false);
+    xorFinder.addClauses(cls);
+    vector<bool> toRemove(cls.size(), false);
     
     const vector<pair<Clause*, uint> >* myclauses;
     bool impair;
@@ -1203,21 +1203,21 @@ uint Solver::findXors()
         
         XorClause* x = XorClause_new(lits, impair, learnt_clause_group++);
         //x->plain_print();
-        xorclauses.push(x);
+        xorcls.push(x);
         attachClause(*x);
         foundXors++;
     }
     
-    Clause **a = clauses.getData();
-    Clause **r = clauses.getData();
-    Clause **end = clauses.getData() + clauses.size();
+    Clause **a = cls.getData();
+    Clause **r = cls.getData();
+    Clause **end = cls.getData() + cls.size();
     for (uint i = 0; r != end; i++) {
         if (!toRemove[i])
             *a++ = *r++;
         else
             r++;
     }
-    clauses.shrink(r-a);
+    cls.shrink(r-a);
     
     return foundXors;
 }
@@ -1237,7 +1237,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     lbool   status        = l_Undef;
 
     double xortime = cpuTime();
-    uint foundXors = findXors();
+    uint foundXors = findXors(clauses, xorclauses);
     printf("|  Finding XOR time:     %4.2lf (found: %d)\n", cpuTime()-xortime, foundXors);
 
     if (verbosity >= 1) {
