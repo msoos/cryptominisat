@@ -26,11 +26,14 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <limits.h>
 #include <vector>
 #include <utility>
+#include <map>
+
 #include "clause.h"
 #include "xorFinder.h"
 #include "time_mem.h"
 
 using std::make_pair;
+using std::map;
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -48,6 +51,7 @@ Solver::Solver() :
         , verbosity        (0)
         , restrictedPickBranch(0)
         , useRealUnknowns(false)
+        , xorFinder        (true)
 
         // Statistics: (formerly in 'SolverStats')
         //
@@ -1181,21 +1185,6 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
-vector<pair<XorClause*, uint> > Solver::findXorContains(const uint var) const
-{
-    vector<pair<XorClause*, uint> > ret;
-    uint i = 0;
-    for (XorClause* const* it = xorclauses.getData(), *const*end = it + xorclauses.size(); it != end; it++, i++) {
-        const XorClause& c = **it;
-        for (const Lit * a = &c[0], *end = a + c.size(); a != end; a++) {
-            if (a->var() == var)
-                ret.push_back(make_pair(*it, i));
-        }
-    }
-    
-    return ret;
-}
-
 void Solver::doCalcAtFinish()
 {
     for (vector<pair<XorClause*, Var> >::iterator it = calcAtFinish.begin(); it != calcAtFinish.end(); it++) {
@@ -1211,35 +1200,75 @@ void Solver::doCalcAtFinish()
     }
 }
 
-uint Solver::conglomerateXors()
+Solver::varToXorMap Solver::fillVarToXor() const
 {
     vector<uint> vars(nVars(), 0);
-    for (XorClause** it = xorclauses.getData(), **end = it + xorclauses.size(); it != end; it++) {
+    for (XorClause*const* it = xorclauses.getData(), *const*end = it + xorclauses.size(); it != end; it++) {
         const XorClause& c = **it;
         for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
             vars[a->var()]++;
         }
     }
     
-    for (Clause** it = clauses.getData(), **end = it + clauses.size(); it != end; it++) {
+    for (Clause *const*it = clauses.getData(), *const*end = it + clauses.size(); it != end; it++) {
         const Clause& c = **it;
         for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
             vars[a->var()] = 0;
         }
     }
     
+    for (uint i = 0; i < assigns.size(); i++)
+        if (assigns[i] != l_Undef)
+            vars[i] == 0;
+    
+    varToXorMap varToXor;
+    uint i = 0;
+    for (XorClause* const* it = xorclauses.getData(), *const*end = it + xorclauses.size(); it != end; it++, i++) {
+        const XorClause& c = **it;
+        for (const Lit * a = &c[0], *end = a + c.size(); a != end; a++) {
+            if (vars[a->var()] != 0)
+                varToXor[a->var()].push_back(make_pair(*it, i));
+        }
+    }
+    
+    return varToXor;
+}
+
+void Solver::process_clause(XorClause& x, const uint num, uint var, vector<Lit>& vars, varToXorMap& varToXor) {
+    for (const Lit* a = &x[0], *end = a + x.size(); a != end; a++) {
+        if (a->var() != var) {
+            vars.push_back(*a);
+            varToXorMap::iterator finder = varToXor.find(a->var());
+            if (finder != varToXor.end()) {
+                vector<pair<XorClause*, uint> >::iterator it =
+                    std::find(finder->second.begin(), finder->second.end(), make_pair(&x, num));
+                finder->second.erase(it);
+            }
+        }
+    }
+}
+
+uint Solver::conglomerateXors()
+{
+    varToXorMap varToXor = fillVarToXor();
+    
     uint found = 0;
     vector<bool> toRemove(xorclauses.size(), false);
-    for (uint var = 0; var < vars.size(); var++) if (assigns[var] == l_Undef && vars[var] >= 1) {
-        vector<pair<XorClause*, uint> > c = findXorContains(var);
-        assert(c.size() == vars[var]);
+    while(varToXor.begin() != varToXor.end()) {
+        varToXorMap::iterator it = varToXor.begin();
+        const vector<pair<XorClause*, uint> >& c = it->second;
+        const uint& var = it->first;
+        
+        if (c.size() == 0) {
+            varToXor.erase(it);
+            continue;
+        }
         
         XorClause& x = *(c[0].first);
         bool first_inverted = !x.xor_clause_inverted();
         vector<Lit> first_vars;
-        for (const Lit* a = &x[0], *end = a + x.size(); a != end; a++) {
-            if (a->var() != var) first_vars.push_back(*a);
-        }
+        process_clause(x, c[0].second, var, first_vars, varToXor);
+        assert(!toRemove[c[0].second]);
         toRemove[c[0].second] = true;
         detachClause(x);
         calcAtFinish.push_back(make_pair(&x, var));
@@ -1249,19 +1278,26 @@ uint Solver::conglomerateXors()
         for (uint i = 1; i < c.size(); i++) {
             ps = first_vars;
             XorClause& x = *c[i].first;
-            for (const Lit* a = &x[0], *end = a + x.size(); a != end; a++) {
-                if (a->var() != var) ps.push_back(*a);
-            }
-            toRemove[c[i].second] = true;
+            process_clause(x, c[i].second, var, ps, varToXor);
             bool inverted = first_inverted ^ x.xor_clause_inverted();
+            assert(!toRemove[c[i].second]);
+            toRemove[c[i].second] = true;
             detachClause(x);
             free(&x);
             found++;
             
             XorClause* newX = XorClause_new(ps, inverted, learnt_clause_group++);
             xorclauses.push(newX);
+            toRemove.push_back(false);
             attachClause(*newX);
+            for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {
+                varToXorMap::iterator it = varToXor.find(a->var());
+                if (it != varToXor.end())
+                    it->second.push_back(make_pair(newX, toRemove.size()-1));
+            }
         }
+        
+        varToXor.erase(it);
     }
     
     XorClause **a = xorclauses.getData();
@@ -1337,14 +1373,16 @@ lbool Solver::solve(const vec<Lit>& assumps)
     double  nof_learnts   = nClauses() * learntsize_factor;
     lbool   status        = l_Undef;
 
-    double time = cpuTime();
-    uint sumLengths;
-    uint foundXors = findXors(clauses, xorclauses, sumLengths);
-    printf("|  Finding XORs:         %4.2lf (found: %d, avg size: %lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
-    
-    time = cpuTime();
-    uint foundCong = conglomerateXors();
-    printf("|  Conglomerating XORs:  %4.2lf (found: %d)\n", cpuTime()-time, foundCong);
+    if (xorFinder) {
+        double time = cpuTime();
+        uint sumLengths;
+        uint foundXors = findXors(clauses, xorclauses, sumLengths);
+        printf("|  Finding XORs:         %4.2lf (found: %d, avg size: %lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        
+        time = cpuTime();
+        uint foundCong = conglomerateXors();
+        printf("|  Conglomerating XORs:  %4.2lf (found: %d)\n", cpuTime()-time, foundCong);
+    }
 
     if (verbosity >= 1) {
         printf("============================[ Search Statistics ]==============================\n");

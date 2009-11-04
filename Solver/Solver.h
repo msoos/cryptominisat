@@ -102,6 +102,7 @@ public:
     uint      restrictedPickBranch; // Pick variables to branch on preferentally from the highest [0, restrictedPickBranch]. If set to 0, preferentiality is turned off (i.e. picked randomly between [0, all])
     bool      useRealUnknowns;    // Whether 'real unknown' optimization should be used. If turned on, VarActivity is only bumped for variables for which the real_unknowns[var] == true
     vector<bool> realUnknowns;    // The important variables. This vector stores 'false' at realUnknowns[var] if the var is not a real unknown, and stores a 'true' if it is a real unkown. If var is larger than realUnkowns.size(), then it is not an important variable
+    bool      xorFinder;            // Automatically find xor-clauses and convert them
 
     enum { polarity_true = 0, polarity_false = 1, polarity_user = 2, polarity_rnd = 3 };
 
@@ -232,10 +233,16 @@ protected:
     
     //Xor-finding related stuff
     uint     findXors         (vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths); // Removes Clauses that represent XOR-s and adds them as xor-clauses. Needs to have sorted clauses as input!!!        
-    vector<pair<XorClause*, uint> > findXorContains(const uint var) const;
+    
     uint      conglomerateXors();           //Conglomerate XOR-s that are attached using a variable
+    
     vector<pair<XorClause*, Var> > calcAtFinish;
     void      doCalcAtFinish();             //Calculate variables removed during conglomeration
+    
+    typedef map<uint, vector<pair<XorClause*, uint> > > varToXorMap;
+    
+    varToXorMap fillVarToXor() const;
+    void process_clause(XorClause& x, const uint num, uint var, vector<Lit>& vars, varToXorMap& varToXor);
 
     // Debug:
     void     printLit         (const Lit l) const;
