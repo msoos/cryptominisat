@@ -32,14 +32,7 @@ void XorFinder::addClauses(vec<Clause*>& clauses)
     
     uint i =  0;
     for (Clause **it = clauses.getData(), **end = it + clauses.size(); it != end; it++, i++) {
-        ClauseTable::iterator tableit = table.find(*it);
-        if (tableit == table.end()) {
-            vector<pair<Clause*, uint> > tmp;
-            tmp.push_back(make_pair(*it, i));
-            table[*it] = tmp;
-        } else {
-            tableit->second.push_back(make_pair(*it, i));
-        }
+        table[*it].push_back(make_pair(*it, i));
     }
     
     nextXor = table.begin();
