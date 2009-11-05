@@ -1219,7 +1219,7 @@ Solver::varToXorMap Solver::fillVarToXor() const
     
     for (uint i = 0; i < assigns.size(); i++)
         if (assigns[i] != l_Undef)
-            vars[i] == 0;
+            vars[i] = 0;
     
     varToXorMap varToXor;
     uint i = 0;
