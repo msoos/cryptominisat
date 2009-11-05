@@ -1200,13 +1200,14 @@ lbool Solver::solve(const vec<Lit>& assumps)
         uint sumLengths;
         XorFinder xorFinder(this);
         uint foundXors = xorFinder.findXors(clauses, xorclauses, sumLengths);
-        printf("|  Finding XORs:         %4.2lf (found: %6d, avg size: %3.1lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        
+        printf("|  Finding XORs:         %4.2lf s (found: %6d, avg size: %3.1lf)                |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         
         time = cpuTime();
         cleanClauses(xorclauses);
         conglomerate = new Conglomerate;
         uint foundCong = conglomerate->conglomerateXors(this);
-        printf("|  Conglomerating XORs:  %4.2lf (found: %d)\n", cpuTime()-time, foundCong);
+        printf("|  Conglomerating XORs:  %4.2lf s (found: %6d)                               |\n", cpuTime()-time, foundCong);
     }
 
     if (verbosity >= 1) {
