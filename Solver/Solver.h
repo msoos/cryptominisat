@@ -246,7 +246,7 @@ protected:
     
     typedef map<uint, vector<pair<XorClause*, uint> > > varToXorMap;
     
-    varToXorMap fillVarToXor() const;
+    varToXorMap fillVarToXor(vector<bool>& blocked) const;
     void process_clause(XorClause& x, const uint num, uint var, vector<Lit>& vars, varToXorMap& varToXor);
 
     // Debug:

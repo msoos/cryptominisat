@@ -115,6 +115,7 @@ Var Solver::newVar(bool sign, bool dvar)
 
 bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name)
 {
+
     assert(decisionLevel() == 0);
 
     if (dynamic_behaviour_analysis) logger.set_group_name(group, group_name);
@@ -1200,33 +1201,26 @@ void Solver::doCalcAtFinish()
     }
 }
 
-Solver::varToXorMap Solver::fillVarToXor() const
+Solver::varToXorMap Solver::fillVarToXor(vector<bool>& blocked) const
 {
-    vector<uint> vars(nVars(), 0);
-    for (XorClause*const* it = xorclauses.getData(), *const*end = it + xorclauses.size(); it != end; it++) {
-        const XorClause& c = **it;
-        for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
-            vars[a->var()]++;
-        }
-    }
-    
+    blocked.clear();
+    blocked.resize(nVars(), false);
     for (Clause *const*it = clauses.getData(), *const*end = it + clauses.size(); it != end; it++) {
         const Clause& c = **it;
         for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
-            vars[a->var()] = 0;
+            blocked[a->var()] = true;
         }
     }
     
-    for (uint i = 0; i < assigns.size(); i++)
-        if (assigns[i] != l_Undef)
-            vars[i] = 0;
+    for (uint i = 0; i < trail.size(); i++)
+        blocked[trail[i].var()] = true;
     
     varToXorMap varToXor;
     uint i = 0;
     for (XorClause* const* it = xorclauses.getData(), *const*end = it + xorclauses.size(); it != end; it++, i++) {
         const XorClause& c = **it;
         for (const Lit * a = &c[0], *end = a + c.size(); a != end; a++) {
-            if (vars[a->var()] != 0)
+            if (!blocked[a->var()])
                 varToXor[a->var()].push_back(make_pair(*it, i));
         }
     }
@@ -1254,7 +1248,8 @@ uint Solver::conglomerateXors()
     cout << "Finding conglomerate xors started" << endl;
     #endif
     
-    varToXorMap varToXor = fillVarToXor();
+    vector<bool> blocked;
+    varToXorMap varToXor = fillVarToXor(blocked);
     
     uint found = 0;
     vector<bool> toRemove(xorclauses.size(), false);
@@ -1305,6 +1300,19 @@ uint Solver::conglomerateXors()
             detachClause(x);
             free(&x);
             found++;
+            sort(ps.begin(), ps.end());
+            Lit* a = &ps[0], *r = a;
+            r++;
+            for (Lit *end = a + ps.size(); r != end;) {
+                if (a->var() != r->var()) {
+                    a++;
+                    *a = *r++;
+                } else {
+                    a--;
+                    r++;
+                }
+            }
+            ps.resize(ps.size()-(r-a)+1);
             
             XorClause* newX = XorClause_new(ps, inverted, learnt_clause_group++);
             
@@ -1317,9 +1325,8 @@ uint Solver::conglomerateXors()
             toRemove.push_back(false);
             attachClause(*newX);
             for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {
-                varToXorMap::iterator it = varToXor.find(a->var());
-                if (it != varToXor.end())
-                    it->second.push_back(make_pair(newX, toRemove.size()-1));
+                if (!blocked[a->var()])
+                    varToXor[a->var()].push_back(make_pair(newX, toRemove.size()-1));
             }
         }
         
