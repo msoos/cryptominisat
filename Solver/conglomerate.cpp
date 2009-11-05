@@ -131,12 +131,28 @@ uint Conglomerate::conglomerateXors(Solver* _S)
             newX->plain_print();
             #endif
             
-            S->xorclauses.push(newX);
-            toRemove.push_back(false);
-            S->attachClause(*newX);
-            for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {
-                if (!blocked[a->var()])
-                    varToXor[a->var()].push_back(make_pair(newX, toRemove.size()-1));
+            if (ps.size() == 1) {
+                #ifdef VERBOSE_DEBUG
+                cout << "--> xor is 1-long, attempting to set variable" << endl;
+                #endif
+                
+                if (S->assigns[ps[0].var()] == l_Undef)
+                    S->uncheckedEnqueue(Lit(ps[0].var(), inverted));
+                else if (S->assigns[ps[0].var()] != boolToLBool(!inverted)) {
+                        #ifdef VERBOSE_DEBUG
+                        cout << "Conflict. Aborting.";
+                        #endif
+                        S->ok = false;
+                        return found;
+                }
+            } else {
+                S->xorclauses.push(newX);
+                toRemove.push_back(false);
+                S->attachClause(*newX);
+                for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {
+                    if (!blocked[a->var()])
+                        varToXor[a->var()].push_back(make_pair(newX, toRemove.size()-1));
+                }
             }
         }
         

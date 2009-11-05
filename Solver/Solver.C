@@ -1208,6 +1208,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
         conglomerate = new Conglomerate;
         uint foundCong = conglomerate->conglomerateXors(this);
         printf("|  Conglomerating XORs:  %4.2lf s (found: %6d)                               |\n", cpuTime()-time, foundCong);
+        if (!ok) return l_False;
+        ok = (propagate() == NULL);
+        if (!ok) return l_False;
     }
 
     if (verbosity >= 1) {
