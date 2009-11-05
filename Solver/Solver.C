@@ -1181,68 +1181,6 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
-uint Solver::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths)
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "Finding Xors started" << endl;
-    #endif
-    
-    uint foundXors = 0;
-    sumLengths = 0;
-    XorFinder xorFinder;
-    xorFinder.addClauses(cls);
-    vector<bool> toRemove(cls.size(), false);
-    
-    const vector<pair<Clause*, uint> >* myclauses;
-    vector<Lit> lits;
-    bool impair;
-    while ((myclauses = xorFinder.getNextXor(impair)) != NULL) {
-        const Clause& c = *((*myclauses)[0].first);
-        lits.clear();
-        for (const Lit *it = &c[0], *end = it+c.size() ; it != end; it++) {
-            lits.push_back(Lit(it->var(), false));
-        }
-        
-        #ifdef VERBOSE_DEBUG
-        cout << "- Found clauses:" << endl;
-        #endif
-        
-        for (const pair<Clause*, uint> *it = &(myclauses->at(0)), *end = it + myclauses->size() ; it != end; it++) {
-            #ifdef VERBOSE_DEBUG
-            it->first->plain_print();
-            #endif
-            toRemove[it->second] = true;
-            detachClause(*it->first);
-            free(it->first);
-        }
-        
-        XorClause* x = XorClause_new(lits, impair, learnt_clause_group++);
-        xorcls.push(x);
-        attachClause(*x);
-        #ifdef VERBOSE_DEBUG
-        cout << "- Final xor-clause: ";
-        x->plain_print();
-        #endif
-        
-        foundXors++;
-        sumLengths += lits.size();
-    }
-    
-    Clause **a = cls.getData();
-    Clause **r = cls.getData();
-    Clause **end = cls.getData() + cls.size();
-    for (uint i = 0; r != end; i++) {
-        if (!toRemove[i])
-            *a++ = *r++;
-        else
-            r++;
-    }
-    cls.shrink(r-a);
-    
-    return foundXors;
-}
-
-
 lbool Solver::solve(const vec<Lit>& assumps)
 {
     model.clear();
@@ -1260,7 +1198,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         double time = cpuTime();
         cleanClauses(clauses);
         uint sumLengths;
-        uint foundXors = findXors(clauses, xorclauses, sumLengths);
+        XorFinder xorFinder(this);
+        uint foundXors = xorFinder.findXors(clauses, xorclauses, sumLengths);
         printf("|  Finding XORs:         %4.2lf (found: %6d, avg size: %3.1lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         
         time = cpuTime();

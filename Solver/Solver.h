@@ -32,6 +32,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "SolverTypes.h"
 #include "clause.h"
 #include "conglomerate.h"
+#include "xorFinder.h"
 
 
 //#define VERBOSE_DEBUG_XOR
@@ -239,7 +240,7 @@ protected:
     double   progressEstimate ()      const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
     
     //Xor-finding related stuff
-    uint     findXors         (vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths); // Removes Clauses that represent XOR-s and adds them as xor-clauses. Needs to have sorted clauses as input!!!        
+    friend class XorFinder;
     Conglomerate* conglomerate;
     friend class Conglomerate;
 

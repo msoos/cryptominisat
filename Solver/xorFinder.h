@@ -19,7 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define __XORFINDER_H__
 
 #include "clause.h"
+#include <sys/types.h>
 #include <hash_map>
+
+class Solver;
 
 using __gnu_cxx::hash_map;
 using std::pair;
@@ -28,10 +31,13 @@ class XorFinder
 {
     public:
         
-        void addClauses(vec<Clause*>& clauses);
-        const vector<pair<Clause*, uint> >* getNextXor(bool& impair);
+        XorFinder(Solver* S);
+        uint findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths);
         
     private:
+        
+        void addClauses(vec<Clause*>& clauses);
+        const vector<pair<Clause*, uint> >* getNextXor(bool& impair);
         
         struct clause_hasher {
             size_t operator()(const Clause* c) const
@@ -75,6 +81,7 @@ class XorFinder
         typedef hash_map<Clause*, vector<pair<Clause*, uint> >, clause_hasher, clause_vareq> ClauseTable;
         
         ClauseTable table;
+        ClauseTable::iterator nextXor;
         
         bool clauseEqual(const Clause& c1, const Clause& c2) const;
         bool impairSigns(const Clause& c) const;
@@ -82,7 +89,7 @@ class XorFinder
         void cleanNotRightImPair(vector<pair<Clause*, uint> >& clauses, const bool impair) const;
         bool isXor(vector<pair<Clause*, uint> >& clauses, bool& impair);
         
-        ClauseTable::iterator nextXor;
+        Solver* S;
 };
 
 #endif //__XORFINDER_H__
