@@ -25,7 +25,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <algorithm>
 #include <limits.h>
 #include <vector>
+
 #include "clause.h"
+#include "xorFinder.h"
+#include "time_mem.h"
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -43,6 +46,7 @@ Solver::Solver() :
         , verbosity        (0)
         , restrictedPickBranch(0)
         , useRealUnknowns(false)
+        , xorFinder        (true)
 
         // Statistics: (formerly in 'SolverStats')
         //
@@ -106,6 +110,7 @@ Var Solver::newVar(bool sign, bool dvar)
 
 bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name)
 {
+
     assert(decisionLevel() == 0);
 
     if (dynamic_behaviour_analysis) logger.set_group_name(group, group_name);
@@ -1176,7 +1181,6 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
-
 lbool Solver::solve(const vec<Lit>& assumps)
 {
     model.clear();
@@ -1189,6 +1193,22 @@ lbool Solver::solve(const vec<Lit>& assumps)
     double  nof_conflicts = restart_first;
     double  nof_learnts   = nClauses() * learntsize_factor;
     lbool   status        = l_Undef;
+
+    if (xorFinder) {
+        double time = cpuTime();
+        cleanClauses(clauses);
+        uint sumLengths;
+        XorFinder xorFinder(this, clauses, xorclauses);
+        uint foundXors = xorFinder.findXors(sumLengths);
+        
+        printf("|  Finding XORs:         %4.2lf s (found: %6d, avg size: %3.1lf)                |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        
+        time = cpuTime();
+        cleanClauses(xorclauses);
+        conglomerate = new Conglomerate;
+        uint foundCong = conglomerate->conglomerateXors(this);
+        printf("|  Conglomerating XORs:  %4.2lf s (found: %6d)                               |\n", cpuTime()-time, foundCong);
+    }
 
     if (verbosity >= 1) {
         printf("============================[ Search Statistics ]==============================\n");
@@ -1214,6 +1234,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
 
     if (status == l_True) {
+        if (xorFinder) conglomerate->doCalcAtFinish();
         // Extend & copy model:
         model.growTo(nVars());
         for (int i = 0; i < nVars(); i++) model[i] = value(i);

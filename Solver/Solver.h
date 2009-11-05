@@ -22,6 +22,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Solver_h
 
 #include <cstdio>
+#include <string.h>
 
 #include "Vec.h"
 #include "Heap.h"
@@ -30,10 +31,17 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "MersenneTwister.h"
 #include "SolverTypes.h"
 #include "clause.h"
-#include <string.h>
+#include "conglomerate.h"
+#include "xorFinder.h"
+
 
 //#define VERBOSE_DEBUG_XOR
 //#define VERBOSE_DEBUG
+
+#ifdef VERBOSE_DEBUG
+using std::cout;
+using std::endl;
+#endif
 
 //=================================================================================================
 // Solver -- the main class:
@@ -102,6 +110,7 @@ public:
     uint      restrictedPickBranch; // Pick variables to branch on preferentally from the highest [0, restrictedPickBranch]. If set to 0, preferentiality is turned off (i.e. picked randomly between [0, all])
     bool      useRealUnknowns;    // Whether 'real unknown' optimization should be used. If turned on, VarActivity is only bumped for variables for which the real_unknowns[var] == true
     vector<bool> realUnknowns;    // The important variables. This vector stores 'false' at realUnknowns[var] if the var is not a real unknown, and stores a 'true' if it is a real unkown. If var is larger than realUnkowns.size(), then it is not an important variable
+    bool      xorFinder;            // Automatically find xor-clauses and convert them
 
     enum { polarity_true = 0, polarity_false = 1, polarity_user = 2, polarity_rnd = 3 };
 
@@ -229,6 +238,11 @@ protected:
     int      decisionLevel    ()      const; // Gives the current decisionlevel.
     uint32_t abstractLevel    (const Var& x) const; // Used to represent an abstraction of sets of decision levels.
     double   progressEstimate ()      const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
+    
+    //Xor-finding related stuff
+    friend class XorFinder;
+    Conglomerate* conglomerate;
+    friend class Conglomerate;
 
     // Debug:
     void     printLit         (const Lit l) const;
@@ -292,7 +306,7 @@ inline void     Solver::newDecisionLevel()
 {
     trail_lim.push(trail.size());
     #ifdef VERBOSE_DEBUG
-    std::cout << "New decision level:" << trail_lim.size() << std::endl;
+    cout << "New decision level:" << trail_lim.size() << endl;
     #endif
 }
 inline int      Solver::decisionLevel ()      const

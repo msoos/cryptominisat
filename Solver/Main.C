@@ -29,76 +29,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <zlib.h>
 #include "Logger.h"
 #include "Solver.h"
+#include "time_mem.h"
 using std::cout;
 using std::endl;
 
 /*************************************************************************************/
-#ifdef _MSC_VER
-#include <ctime>
-
-static inline double cpuTime(void)
-{
-    return (double)clock() / CLOCKS_PER_SEC;
-}
-#else
-#ifdef CROSS_COMPILE
-#include <ctime>
-
-static inline double cpuTime(void)
-{
-    return (double)clock() / CLOCKS_PER_SEC;
-}
-#else
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <unistd.h>
-
-static inline double cpuTime(void)
-{
-    struct rusage ru;
-    getrusage(RUSAGE_SELF, &ru);
-    return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000;
-}
-#endif
-#endif
-
-
-#if defined(__linux__)
-static inline int memReadStat(int field)
-{
-    char    name[256];
-    pid_t pid = getpid();
-    sprintf(name, "/proc/%d/statm", pid);
-    FILE*   in = fopen(name, "rb");
-    if (in == NULL) return 0;
-    int     value;
-    for (; field >= 0; field--)
-        fscanf(in, "%d", &value);
-    fclose(in);
-    return value;
-}
-static inline uint64_t memUsed()
-{
-    return (uint64_t)memReadStat(0) * (uint64_t)getpagesize();
-}
-
-
-#elif defined(__FreeBSD__)
-static inline uint64_t memUsed(void)
-{
-    struct rusage ru;
-    getrusage(RUSAGE_SELF, &ru);
-    return ru.ru_maxrss*1024;
-}
-
-
-#else
-static inline uint64_t memUsed()
-{
-    return 0;
-}
-#endif
-
 #if defined(__linux__)
 #include <fpu_control.h>
 #endif
@@ -364,6 +299,7 @@ void printUsage(char** argv)
     printf("                   which is usually small (e.g. 80 bits)\n");
     printf("  -restarts       = <num> [1 - 2^32-1] No more than the given number of\n");
     printf("                   restarts will be performed during search\n");
+    printf("  -noxorfind      = Don't find and collect xor-clauses from regular clauses\n");
     printf("\n");
 }
 
@@ -463,6 +399,8 @@ int main(int argc, char** argv)
                 exit(0);
             }
             dumplearnts = true;
+        } else if ((value = hasPrefix(argv[i], "-noxorfind"))) {
+            S.xorFinder = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);

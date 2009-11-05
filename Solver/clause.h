@@ -105,7 +105,7 @@ public:
         printf("Clause   group: %d, size: %d, learnt:%d, lits: ", group, size(), learnt());
         plain_print();
     }
-    void plain_print(FILE* to = stdout) {
+    void plain_print(FILE* to = stdout) const {
         for (uint i = 0; i < size(); i++) {
             if (data[i].sign()) fprintf(to, "-");
             fprintf(to, "%d ", data[i].var() + 1);
@@ -144,7 +144,7 @@ public:
         plain_print();
     }
     
-    void plain_print(FILE* to = stdout) {
+    void plain_print(FILE* to = stdout) const {
         if (size() == 0 && xor_clause_inverted())
             return;
         fprintf(stdout, "x");
