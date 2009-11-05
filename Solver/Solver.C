@@ -1391,11 +1391,13 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     if (xorFinder) {
         double time = cpuTime();
+        cleanClauses(clauses);
         uint sumLengths;
         uint foundXors = findXors(clauses, xorclauses, sumLengths);
         printf("|  Finding XORs:         %4.2lf (found: %d, avg size: %lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         
         time = cpuTime();
+        cleanClauses(xorclauses);
         uint foundCong = conglomerateXors();
         printf("|  Conglomerating XORs:  %4.2lf (found: %d)\n", cpuTime()-time, foundCong);
     }
