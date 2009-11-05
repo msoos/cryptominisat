@@ -162,7 +162,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
 
 void Conglomerate::doCalcAtFinish()
 {
-    for (vector<pair<XorClause*, Var> >::iterator it = calcAtFinish.begin(); it != calcAtFinish.end(); it++) {
+    for (vector<pair<XorClause*, Var> >::reverse_iterator it = calcAtFinish.rbegin(); it != calcAtFinish.rend(); it++) {
         XorClause& c = *it->first;
         bool final = c.xor_clause_inverted();
         for (int k = 0, size = c.size(); k < size; k++ ) {
