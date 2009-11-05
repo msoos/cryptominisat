@@ -311,7 +311,7 @@ inline void     Solver::newDecisionLevel()
 {
     trail_lim.push(trail.size());
     #ifdef VERBOSE_DEBUG
-    std::cout << "New decision level:" << trail_lim.size() << std::endl;
+    cout << "New decision level:" << trail_lim.size() << endl;
     #endif
 }
 inline int      Solver::decisionLevel ()      const
