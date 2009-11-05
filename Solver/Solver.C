@@ -1250,6 +1250,10 @@ void Solver::process_clause(XorClause& x, const uint num, uint var, vector<Lit>&
 
 uint Solver::conglomerateXors()
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "Finding conglomerate xors started" << endl;
+    #endif
+    
     varToXorMap varToXor = fillVarToXor();
     
     uint found = 0;
@@ -1264,10 +1268,20 @@ uint Solver::conglomerateXors()
             continue;
         }
         
+        #ifdef VERBOSE_DEBUG
+        cout << "--- New conglomerate set ---" << endl;
+        #endif
+        
         XorClause& x = *(c[0].first);
         bool first_inverted = !x.xor_clause_inverted();
         vector<Lit> first_vars;
         process_clause(x, c[0].second, var, first_vars, varToXor);
+        
+        #ifdef VERBOSE_DEBUG
+        cout << "- Removing: ";
+        x.plain_print();
+        #endif
+        
         assert(!toRemove[c[0].second]);
         toRemove[c[0].second] = true;
         detachClause(x);
@@ -1279,6 +1293,12 @@ uint Solver::conglomerateXors()
             ps = first_vars;
             XorClause& x = *c[i].first;
             process_clause(x, c[i].second, var, ps, varToXor);
+            
+            #ifdef VERBOSE_DEBUG
+            cout << "- Removing: ";
+            x.plain_print();
+            #endif
+            
             bool inverted = first_inverted ^ x.xor_clause_inverted();
             assert(!toRemove[c[i].second]);
             toRemove[c[i].second] = true;
@@ -1287,6 +1307,12 @@ uint Solver::conglomerateXors()
             found++;
             
             XorClause* newX = XorClause_new(ps, inverted, learnt_clause_group++);
+            
+            #ifdef VERBOSE_DEBUG
+            cout << "- Adding: ";
+            newX->plain_print();
+            #endif
+            
             xorclauses.push(newX);
             toRemove.push_back(false);
             attachClause(*newX);
