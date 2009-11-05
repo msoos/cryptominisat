@@ -35,6 +35,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 //#define VERBOSE_DEBUG_XOR
 //#define VERBOSE_DEBUG
 
+#ifdef VERBOSE_DEBUG
+using std::cout;
+using std::endl;
+#endif
+
 //=================================================================================================
 // Solver -- the main class:
 
