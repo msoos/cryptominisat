@@ -120,13 +120,15 @@ public:
         return data;
     }
     void print() {
-        Clause& c = *this;
-        printf("group: %d, size: %d, learnt:%d, lits:\"", c.group, c.size(), c.learnt());
-        for (uint i = 0; i < c.size(); i++) {
-            if (c[i].sign())  printf("-");
-            printf("%d ", c[i].var()+1);
+        printf("Clause   group: %d, size: %d, learnt:%d, lits: ", group, size(), learnt());
+        plain_print();
+    }
+    void plain_print(FILE* to = stdout) const {
+        for (uint i = 0; i < size(); i++) {
+            if (data[i].sign()) fprintf(to, "-");
+            fprintf(to, "%d ", data[i].var() + 1);
         }
-        printf("\"\n");
+        fprintf(to, "0\n");
     }
 protected:
     void setSize(uint32_t size) {
@@ -177,15 +179,21 @@ public:
     }
 
     void print() {
-        Clause& c = *this;
-        printf("group: %d, size: %d, learnt:%d, lits:\"", c.group, c.size(), c.learnt());
-        for (uint i = 0; i < c.size();) {
-            assert(!c[i].sign());
-            printf("%d", c[i].var()+1);
-            i++;
-            if (i < c.size()) printf(" + ");
+        printf("XOR Clause   group: %d, size: %d, learnt:%d, lits:\"", group, size(), learnt());
+        plain_print();
+    }
+    
+    void plain_print(FILE* to = stdout) const {
+        if (size() == 0 && xor_clause_inverted())
+            return;
+        fprintf(stdout, "x");
+        if (xor_clause_inverted())
+            printf("-");
+        for (uint i = 0; i < size(); i++) {
+            assert(!data[i].sign());
+            fprintf(to, "%d ", data[i].var() + 1);
         }
-        printf("\"\n");
+        fprintf(to, "0\n");
     }
 protected:
     inline void setMatrix   (uint32_t toset) {

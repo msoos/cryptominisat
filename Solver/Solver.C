@@ -25,7 +25,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <algorithm>
 #include <limits.h>
 #include <vector>
+
 #include "clause.h"
+#include "xorFinder.h"
+#include "time_mem.h"
 
 #include <boost/foreach.hpp>
 #include "gaussian.h"
@@ -47,6 +50,7 @@ Solver::Solver() :
         , verbosity        (0)
         , restrictedPickBranch(0)
         , useRealUnknowns(false)
+        , xorFinder        (true)
 
         // Statistics: (formerly in 'SolverStats')
         //
@@ -100,10 +104,9 @@ Var Solver::newVar(bool sign, bool dvar)
     level     .push(-1);
     activity  .push(0);
     seen      .push(0);
-    polarity  .push((char)sign);
+    polarity  .push_back((char)sign);
 
-    polarity    .push((char)sign);
-    decision_var.push((char)dvar);
+    decision_var.push_back((char)dvar);
 
     insertVarOrder(v);
     logger.new_var(v);
@@ -113,6 +116,7 @@ Var Solver::newVar(bool sign, bool dvar)
 
 bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name, const uint matrix_no)
 {
+
     assert(decisionLevel() == 0);
 
     if (dynamic_behaviour_analysis) logger.set_group_name(group, group_name);
@@ -883,6 +887,24 @@ const vec<Clause*>& Solver::get_unitary_learnts() const
     return unitary_learnts;
 }
 
+void Solver::dump_sorted_learnts(const char* file)
+{
+    FILE* outfile = fopen(file, "w");
+    if (!outfile) {
+        printf("Error: Cannot open file '%s' to write learnt clauses!\n", file);
+        exit(-1);
+    }
+    
+    for (uint i = 0; i < unitary_learnts.size(); i++)
+        unitary_learnts[i]->plain_print(outfile);
+    
+    sort(learnts, reduceDB_lt());
+    for (int i = learnts.size()-1; i >= 0 ; i--) {
+        learnts[i]->plain_print(outfile);
+    }
+    fclose(outfile);
+}
+
 void Solver::setMaxRestarts(const uint num)
 {
     maxRestarts = num;
@@ -1194,7 +1216,6 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
-
 lbool Solver::solve(const vec<Lit>& assumps)
 {
     model.clear();
@@ -1207,6 +1228,40 @@ lbool Solver::solve(const vec<Lit>& assumps)
     double  nof_conflicts = restart_first;
     double  nof_learnts   = nClauses() * learntsize_factor;
     lbool   status        = l_Undef;
+
+    if (xorFinder) {
+        double time = cpuTime();
+        cleanClauses(clauses);
+        uint sumLengths;
+        XorFinder xorFinder(this, clauses, xorclauses);
+        uint foundXors = xorFinder.findXors(sumLengths);
+        
+        printf("|  Finding XORs:         %4.2lf s (found: %6d, avg size: %3.1lf)                |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        
+        uint orig_total = 0;
+        uint orig_num_cls = xorclauses.size();
+        for (uint i = 0; i < xorclauses.size(); i++) {
+            orig_total += xorclauses[i]->size();
+        }
+        
+        time = cpuTime();
+        cleanClauses(xorclauses);
+        conglomerate = new Conglomerate;
+        uint foundCong = conglomerate->conglomerateXors(this);
+        printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
+        if (!ok) return l_False;
+        ok = (propagate() == NULL);
+        if (!ok) return l_False;
+        
+        uint new_total = 0;
+        uint new_num_cls = xorclauses.size();
+        for (uint i = 0; i < xorclauses.size(); i++) {
+            new_total += xorclauses[i]->size();
+        }
+        
+        printf("|  Sum lits before: %12d, after: %12d                         |\n", orig_total, new_total);
+        printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
+    }
 
     if (verbosity >= 1) {
         printf("============================[ Search Statistics ]==============================\n");
@@ -1241,6 +1296,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
 
     if (status == l_True) {
+        if (xorFinder) conglomerate->doCalcAtFinish();
         // Extend & copy model:
         model.growTo(nVars());
         for (int i = 0; i < nVars(); i++) model[i] = value(i);

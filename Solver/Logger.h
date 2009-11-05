@@ -111,7 +111,7 @@ private:
 
     //internal data structures
     uint uniqueid; //used to store the last unique ID given to a node
-    vec<uint> history; //stores the node uniqueIDs
+    vector<uint> history; //stores the node uniqueIDs
     uint level; //used to know the current level
     uint begin_level;
 

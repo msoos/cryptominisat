@@ -36,5 +36,7 @@ add_library(cryptominisatlib
 	Solver/clause.cpp
         Solver/gaussian.cpp
         Solver/packedRow.cpp
+        Solver/xorFinder.cpp
+        Solver/conglomerate.cpp
 )
 
