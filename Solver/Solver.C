@@ -97,10 +97,9 @@ Var Solver::newVar(bool sign, bool dvar)
     level     .push(-1);
     activity  .push(0);
     seen      .push(0);
-    polarity  .push((char)sign);
+    polarity  .push_back((char)sign);
 
-    polarity    .push((char)sign);
-    decision_var.push((char)dvar);
+    decision_var.push_back((char)dvar);
 
     insertVarOrder(v);
     logger.new_var(v);

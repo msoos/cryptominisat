@@ -163,8 +163,8 @@ protected:
     vec<vec<Clause*> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<vec<XorClause*> >  xorwatches;    // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
     vec<lbool>          assigns;          // The current assignments
-    vec<char>           polarity;         // The preferred polarity of each variable.
-    vec<char>           decision_var;     // Declares if a variable is eligible for selection in the decision heuristic.
+    vector<bool>        polarity;         // The preferred polarity of each variable.
+    vector<bool>        decision_var;     // Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            // Assignment stack; stores all assigments made in the order they were made.
     vec<int32_t>        trail_lim;        // Separator indices for different decision levels in 'trail'.
     vec<Clause*>        reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
