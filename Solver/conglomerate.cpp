@@ -149,6 +149,9 @@ uint Conglomerate::conglomerateXors(Solver* _S)
     }
     S->xorclauses.shrink(r-a);
     
+    varToXorMap tmp;
+    tmp.swap(varToXor);
+    
     return found;
 }
 
