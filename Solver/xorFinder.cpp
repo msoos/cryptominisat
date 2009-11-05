@@ -136,12 +136,8 @@ void XorFinder::countImpairs(const vector<pair<Clause*, uint> >& clauses, uint& 
     bool impair = impairSigns(*it->first);
     numImpair += impair;
     numPair += !impair;
-    //it->first->plain_print();
     
     for (; it2 != clauses.end();) {
-        //it->first->plain_print();
-        //it2->first->plain_print();
-        //printf("....\n");
         if (!clauseEqual(*it->first, *it2->first)) {
             bool impair = impairSigns(*it2->first);
             numImpair += impair;
