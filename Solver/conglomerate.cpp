@@ -61,6 +61,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
         varToXorMap::iterator it = varToXor.begin();
         const vector<pair<XorClause*, uint> >& c = it->second;
         const uint& var = it->first;
+        S->decision_var[var] = false;
         
         if (c.size() == 0) {
             varToXor.erase(it);
