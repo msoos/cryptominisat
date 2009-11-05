@@ -31,12 +31,11 @@ class XorFinder
 {
     public:
         
-        XorFinder(Solver* S);
-        uint findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths);
+        XorFinder(Solver* S, vec<Clause*>& cls, vec<XorClause*>& xorcls);
+        uint findXors(uint& sumLengths);
         
     private:
         
-        void addClauses(vec<Clause*>& clauses);
         const vector<pair<Clause*, uint> >* getNextXor(bool& impair);
         
         struct clause_hasher {
@@ -82,6 +81,9 @@ class XorFinder
         
         ClauseTable table;
         ClauseTable::iterator nextXor;
+        
+        vec<Clause*>& cls;
+        vec<XorClause*>& xorcls;
         
         bool clauseEqual(const Clause& c1, const Clause& c2) const;
         bool impairSigns(const Clause& c) const;

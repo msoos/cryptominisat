@@ -23,12 +23,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using std::make_pair;
 
-XorFinder::XorFinder(Solver* _S) :
+XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls) :
     S(_S)
+    , cls(_cls)
+    , xorcls(_xorcls)
 {
+    table.resize(cls.size());
+    
+    uint i =  0;
+    for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
+        table[*it].push_back(make_pair(*it, i));
+    }
+    
+    nextXor = table.begin();
 }
 
-uint XorFinder::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths)
+uint XorFinder::findXors(uint& sumLengths)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Finding Xors started" << endl;
@@ -36,7 +46,6 @@ uint XorFinder::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLe
     
     uint foundXors = 0;
     sumLengths = 0;
-    addClauses(cls);
     vector<bool> toRemove(cls.size(), false);
     
     const vector<pair<Clause*, uint> >* myclauses;
@@ -87,18 +96,6 @@ uint XorFinder::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLe
     cls.shrink(r-a);
     
     return foundXors;
-}
-
-void XorFinder::addClauses(vec<Clause*>& clauses)
-{
-    table.resize(clauses.size());
-    
-    uint i =  0;
-    for (Clause **it = clauses.getData(), **end = it + clauses.size(); it != end; it++, i++) {
-        table[*it].push_back(make_pair(*it, i));
-    }
-    
-    nextXor = table.begin();
 }
 
 const vector<pair<Clause*, uint> >* XorFinder::getNextXor(bool& impair)
