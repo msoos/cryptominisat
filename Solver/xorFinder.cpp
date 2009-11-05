@@ -48,6 +48,7 @@ uint XorFinder::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLe
         for (const Lit *it = &c[0], *end = it+c.size() ; it != end; it++) {
             lits.push_back(Lit(it->var(), false));
         }
+        uint old_group = c.group;
         
         #ifdef VERBOSE_DEBUG
         cout << "- Found clauses:" << endl;
@@ -62,7 +63,7 @@ uint XorFinder::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLe
             free(it->first);
         }
         
-        XorClause* x = XorClause_new(lits, impair, S->learnt_clause_group++);
+        XorClause* x = XorClause_new(lits, impair, old_group);
         xorcls.push(x);
         S->attachClause(*x);
         #ifdef VERBOSE_DEBUG
