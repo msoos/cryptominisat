@@ -96,16 +96,20 @@ void Logger::new_group(const uint group)
 void Logger::set_group_name(const uint group, const char* name)
 {
     new_group(group);
+    string name2(name);
 
     if (strlen(name) > SND_WIDTH-2) {
-        cout << "A clause group name cannot have more than " << SND_WIDTH-2 << " number of characters. You gave '" << name << "', which is " << strlen(name) << " long." << endl;
-        exit(-1);
+        //cout << "A clause group name cannot have more than " << SND_WIDTH-2 << " number of characters. You gave '" << name << "', which is " << strlen(name) << " long." << endl;
+        //exit(-1);
+        name2.resize(SND_WIDTH-2);
+        name2[SND_WIDTH-3]='.';
+        name2[SND_WIDTH-4]='.';
     }
     
     if (groupnames[group] == "Noname") {
-        groupnames[group] = name;
-    } else if (name != '\0' && groupnames[group] != name) {
-        printf("Error! Group no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", group, groupnames[group].c_str(), name);
+        groupnames[group] = name2;
+    } else if (name != '\0' && groupnames[group] != name2) {
+        printf("Error! Group no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", group, groupnames[group].c_str(), name2.c_str());
         exit(-1);
     }
 }
@@ -114,18 +118,22 @@ void Logger::set_group_name(const uint group, const char* name)
 void Logger::set_variable_name(const uint var, const char* name)
 {
     new_var(var);
+    string name2(name);
     
     if (strlen(name) > SND_WIDTH-2) {
-        cout << "A variable name cannot have more than " << SND_WIDTH-2 << " number of characters. You gave '" << name << "', which is " << strlen(name) << " long." << endl;
-        exit(-1);
+        //cout << "A variable name cannot have more than " << SND_WIDTH-2 << " number of characters. You gave '" << name << "', which is " << strlen(name) << " long." << endl;
+        //exit(-1);
+        name2.resize(SND_WIDTH-2);
+        name2[SND_WIDTH-3]='.';
+        name2[SND_WIDTH-4]='.';
     }
     
     std::stringstream ss;
     ss << var + 1;
     if (varnames[var] == ss.str()) {
-        varnames[var] = name;
-    } else if (varnames[var] != name) {
-        printf("Error! Variable no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", var+1, varnames[var].c_str(), name);
+        varnames[var] = name2;
+    } else if (varnames[var] != name2) {
+        printf("Error! Variable no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", var+1, varnames[var].c_str(), name2.c_str());
         exit(-1);
     }
 }
