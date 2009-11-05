@@ -98,6 +98,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
             x.plain_print();
             #endif
             
+            const uint old_group = x.group;
             bool inverted = first_inverted ^ x.xor_clause_inverted();
             assert(!toRemove[c[i].second]);
             toRemove[c[i].second] = true;
@@ -118,7 +119,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
             }
             ps.resize(ps.size()-(r-a)+1);
             
-            XorClause* newX = XorClause_new(ps, inverted, S->learnt_clause_group++);
+            XorClause* newX = XorClause_new(ps, inverted, old_group);
             
             #ifdef VERBOSE_DEBUG
             cout << "- Adding: ";
