@@ -1203,14 +1203,29 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         printf("|  Finding XORs:         %4.2lf s (found: %6d, avg size: %3.1lf)                |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         
+        uint orig_total = 0;
+        uint orig_num_cls = xorclauses.size();
+        for (uint i = 0; i < xorclauses.size(); i++) {
+            orig_total += xorclauses[i]->size();
+        }
+        
         time = cpuTime();
         cleanClauses(xorclauses);
         conglomerate = new Conglomerate;
         uint foundCong = conglomerate->conglomerateXors(this);
-        printf("|  Conglomerating XORs:  %4.2lf s (found: %6d)                               |\n", cpuTime()-time, foundCong);
+        printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
         if (!ok) return l_False;
         ok = (propagate() == NULL);
         if (!ok) return l_False;
+        
+        uint new_total = 0;
+        uint new_num_cls = xorclauses.size();
+        for (uint i = 0; i < xorclauses.size(); i++) {
+            new_total += xorclauses[i]->size();
+        }
+        
+        printf("|  Sum lits before: %12d, after: %12d                         |\n", orig_total, new_total);
+        printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
     }
 
     if (verbosity >= 1) {
