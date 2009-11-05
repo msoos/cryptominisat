@@ -1316,6 +1316,10 @@ uint Solver::conglomerateXors()
 
 uint Solver::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths)
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "Finding Xors started" << endl;
+    #endif
+    
     uint foundXors = 0;
     sumLengths = 0;
     XorFinder xorFinder;
@@ -1332,7 +1336,14 @@ uint Solver::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengt
             lits.push_back(Lit(it->var(), false));
         }
         
+        #ifdef VERBOSE_DEBUG
+        cout << "- Found clauses:" << endl;
+        #endif
+        
         for (const pair<Clause*, uint> *it = &(myclauses->at(0)), *end = it + myclauses->size() ; it != end; it++) {
+            #ifdef VERBOSE_DEBUG
+            it->first->plain_print();
+            #endif
             toRemove[it->second] = true;
             detachClause(*it->first);
             free(it->first);
@@ -1341,6 +1352,11 @@ uint Solver::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengt
         XorClause* x = XorClause_new(lits, impair, learnt_clause_group++);
         xorcls.push(x);
         attachClause(*x);
+        #ifdef VERBOSE_DEBUG
+        cout << "- Final xor-clause: ";
+        x->plain_print();
+        #endif
+        
         foundXors++;
         sumLengths += lits.size();
     }
