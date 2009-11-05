@@ -113,8 +113,13 @@ uint Conglomerate::conglomerateXors(Solver* _S)
                     a++;
                     *a = *r++;
                 } else {
-                    a--;
                     r++;
+                    if (a == &ps[0]) {
+                        *a = *r;
+                        r++;
+                    } else {
+                        a--;
+                    }
                 }
             }
             ps.resize(ps.size()-(r-a)+1);
