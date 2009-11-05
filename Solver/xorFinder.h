@@ -28,7 +28,6 @@ class XorFinder
 {
     public:
         
-        XorFinder();
         void addClauses(vec<Clause*>& clauses);
         const vector<pair<Clause*, uint> >* getNextXor(bool& impair);
         

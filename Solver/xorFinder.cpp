@@ -22,11 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using std::make_pair;
 
-XorFinder::XorFinder()
-{
-    nextXor = table.end();
-}
-
 void XorFinder::addClauses(vec<Clause*>& clauses)
 {
     table.resize(clauses.size());
