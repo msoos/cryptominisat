@@ -25,15 +25,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <algorithm>
 #include <limits.h>
 #include <vector>
-#include <utility>
-#include <map>
 
 #include "clause.h"
 #include "xorFinder.h"
 #include "time_mem.h"
-
-using std::make_pair;
-using std::map;
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -1186,167 +1181,6 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
-void Solver::doCalcAtFinish()
-{
-    for (vector<pair<XorClause*, Var> >::iterator it = calcAtFinish.begin(); it != calcAtFinish.end(); it++) {
-        XorClause& c = *it->first;
-        bool final = c.xor_clause_inverted();
-        for (int k = 0, size = c.size(); k < size; k++ ) {
-            const lbool& val = assigns[c[k].var()];
-            if (c[k].var() != it->second)
-                final ^= val.getBool();
-        }
-        assigns[it->second] = final ? l_False : l_True;
-        free(it->first);
-    }
-}
-
-Solver::varToXorMap Solver::fillVarToXor(vector<bool>& blocked) const
-{
-    blocked.clear();
-    blocked.resize(nVars(), false);
-    for (Clause *const*it = clauses.getData(), *const*end = it + clauses.size(); it != end; it++) {
-        const Clause& c = **it;
-        for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
-            blocked[a->var()] = true;
-        }
-    }
-    
-    for (uint i = 0; i < trail.size(); i++)
-        blocked[trail[i].var()] = true;
-    
-    varToXorMap varToXor;
-    uint i = 0;
-    for (XorClause* const* it = xorclauses.getData(), *const*end = it + xorclauses.size(); it != end; it++, i++) {
-        const XorClause& c = **it;
-        for (const Lit * a = &c[0], *end = a + c.size(); a != end; a++) {
-            if (!blocked[a->var()])
-                varToXor[a->var()].push_back(make_pair(*it, i));
-        }
-    }
-    
-    return varToXor;
-}
-
-void Solver::process_clause(XorClause& x, const uint num, uint var, vector<Lit>& vars, varToXorMap& varToXor) {
-    for (const Lit* a = &x[0], *end = a + x.size(); a != end; a++) {
-        if (a->var() != var) {
-            vars.push_back(*a);
-            varToXorMap::iterator finder = varToXor.find(a->var());
-            if (finder != varToXor.end()) {
-                vector<pair<XorClause*, uint> >::iterator it =
-                    std::find(finder->second.begin(), finder->second.end(), make_pair(&x, num));
-                finder->second.erase(it);
-            }
-        }
-    }
-}
-
-uint Solver::conglomerateXors()
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "Finding conglomerate xors started" << endl;
-    #endif
-    
-    vector<bool> blocked;
-    varToXorMap varToXor = fillVarToXor(blocked);
-    
-    uint found = 0;
-    vector<bool> toRemove(xorclauses.size(), false);
-    while(varToXor.begin() != varToXor.end()) {
-        varToXorMap::iterator it = varToXor.begin();
-        const vector<pair<XorClause*, uint> >& c = it->second;
-        const uint& var = it->first;
-        
-        if (c.size() == 0) {
-            varToXor.erase(it);
-            continue;
-        }
-        
-        #ifdef VERBOSE_DEBUG
-        cout << "--- New conglomerate set ---" << endl;
-        #endif
-        
-        XorClause& x = *(c[0].first);
-        bool first_inverted = !x.xor_clause_inverted();
-        vector<Lit> first_vars;
-        process_clause(x, c[0].second, var, first_vars, varToXor);
-        
-        #ifdef VERBOSE_DEBUG
-        cout << "- Removing: ";
-        x.plain_print();
-        #endif
-        
-        assert(!toRemove[c[0].second]);
-        toRemove[c[0].second] = true;
-        detachClause(x);
-        calcAtFinish.push_back(make_pair(&x, var));
-        found++;
-        
-        vector<Lit> ps;
-        for (uint i = 1; i < c.size(); i++) {
-            ps = first_vars;
-            XorClause& x = *c[i].first;
-            process_clause(x, c[i].second, var, ps, varToXor);
-            
-            #ifdef VERBOSE_DEBUG
-            cout << "- Removing: ";
-            x.plain_print();
-            #endif
-            
-            bool inverted = first_inverted ^ x.xor_clause_inverted();
-            assert(!toRemove[c[i].second]);
-            toRemove[c[i].second] = true;
-            detachClause(x);
-            free(&x);
-            found++;
-            sort(ps.begin(), ps.end());
-            Lit* a = &ps[0], *r = a;
-            r++;
-            for (Lit *end = a + ps.size(); r != end;) {
-                if (a->var() != r->var()) {
-                    a++;
-                    *a = *r++;
-                } else {
-                    a--;
-                    r++;
-                }
-            }
-            ps.resize(ps.size()-(r-a)+1);
-            
-            XorClause* newX = XorClause_new(ps, inverted, learnt_clause_group++);
-            
-            #ifdef VERBOSE_DEBUG
-            cout << "- Adding: ";
-            newX->plain_print();
-            #endif
-            
-            xorclauses.push(newX);
-            toRemove.push_back(false);
-            attachClause(*newX);
-            for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {
-                if (!blocked[a->var()])
-                    varToXor[a->var()].push_back(make_pair(newX, toRemove.size()-1));
-            }
-        }
-        
-        varToXor.erase(it);
-    }
-    
-    XorClause **a = xorclauses.getData();
-    XorClause **r = a;
-    XorClause **end = a + xorclauses.size();
-    for (uint i = 0; r != end; i++) {
-        if (!toRemove[i])
-            *a++ = *r++;
-        else
-            r++;
-    }
-    xorclauses.shrink(r-a);
-    
-    return found;
-}
-
 uint Solver::findXors(vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths)
 {
     #ifdef VERBOSE_DEBUG
@@ -1431,7 +1265,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         time = cpuTime();
         cleanClauses(xorclauses);
-        uint foundCong = conglomerateXors();
+        conglomerate = new Conglomerate;
+        uint foundCong = conglomerate->conglomerateXors(this);
         printf("|  Conglomerating XORs:  %4.2lf (found: %d)\n", cpuTime()-time, foundCong);
     }
 
@@ -1459,7 +1294,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
 
     if (status == l_True) {
-        doCalcAtFinish();
+        if (xorFinder) conglomerate->doCalcAtFinish();
         // Extend & copy model:
         model.growTo(nVars());
         for (int i = 0; i < nVars(); i++) model[i] = value(i);

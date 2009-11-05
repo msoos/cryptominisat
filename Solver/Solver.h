@@ -22,6 +22,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Solver_h
 
 #include <cstdio>
+#include <string.h>
 
 #include "Vec.h"
 #include "Heap.h"
@@ -30,7 +31,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "MersenneTwister.h"
 #include "SolverTypes.h"
 #include "clause.h"
-#include <string.h>
+#include "conglomerate.h"
+
 
 //#define VERBOSE_DEBUG_XOR
 //#define VERBOSE_DEBUG
@@ -238,16 +240,8 @@ protected:
     
     //Xor-finding related stuff
     uint     findXors         (vec<Clause*>& cls, vec<XorClause*>& xorcls, uint& sumLengths); // Removes Clauses that represent XOR-s and adds them as xor-clauses. Needs to have sorted clauses as input!!!        
-    
-    uint      conglomerateXors();           //Conglomerate XOR-s that are attached using a variable
-    
-    vector<pair<XorClause*, Var> > calcAtFinish;
-    void      doCalcAtFinish();             //Calculate variables removed during conglomeration
-    
-    typedef map<uint, vector<pair<XorClause*, uint> > > varToXorMap;
-    
-    varToXorMap fillVarToXor(vector<bool>& blocked) const;
-    void process_clause(XorClause& x, const uint num, uint var, vector<Lit>& vars, varToXorMap& varToXor);
+    Conglomerate* conglomerate;
+    friend class Conglomerate;
 
     // Debug:
     void     printLit         (const Lit l) const;

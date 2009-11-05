@@ -30,5 +30,6 @@ add_library(cryptominisatlib
 	Solver/Solver.C
 	Solver/clause.cpp
         Solver/xorFinder.cpp
+        Solver/conglomerate.cpp
 )
 
