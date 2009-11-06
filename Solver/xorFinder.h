@@ -31,7 +31,7 @@ class XorFinder
 {
     public:
         
-        XorFinder(Solver* S, vec<Clause*>& cls, vec<XorClause*>& xorcls);
+        XorFinder(Solver* S, vec<Clause*>& cls, vec<XorClause*>& xorcls, const uint minSize);
         uint doByPart(uint& sumLengths);
         
     private:
@@ -85,6 +85,8 @@ class XorFinder
         
         vec<Clause*>& cls;
         vec<XorClause*>& xorcls;
+        const uint minSize;
+        const uint maxSize;
         
         bool clauseEqual(const Clause& c1, const Clause& c2) const;
         bool impairSigns(const Clause& c) const;

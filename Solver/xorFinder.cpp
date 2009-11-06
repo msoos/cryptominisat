@@ -31,23 +31,25 @@ using std::endl;
 
 using std::make_pair;
 
-XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls) :
+XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls, const uint _minSize) :
     S(_S)
     , cls(_cls)
     , xorcls(_xorcls)
+    , minSize(_minSize)
+    , maxSize(10)
 {
 }
 
 uint XorFinder::doByPart(uint& sumLengths)
 {
-    const uint maxSize = 10;
-    
     uint sumNonParitionClauses = 0;
     uint sumUsage = 0;
     vector<uint> varUsage(S->nVars(), 0);
     for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++) {
-        if ((*it)->size() > maxSize) continue;
-        for (const Lit *l = &(**it)[0], *end = l + (*it)->size(); l != end; l++) {
+        const uint size = (*it)->size();
+        if ( size > maxSize || size < minSize) continue;
+        
+        for (const Lit *l = &(**it)[0], *end = l + size; l != end; l++) {
             varUsage[l->var()]++;
             sumUsage++;
         }
@@ -76,8 +78,10 @@ uint XorFinder::doByPart(uint& sumLengths)
         table.resize(estimate/2);
         uint i = 0;
         for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
-            if ((*it)->size() > maxSize) continue;
-            for (Lit *l = &(**it)[0], *end = l + (*it)->size(); l != end; l++) {
+            const uint size = (*it)->size();
+            if ( size > maxSize || size < minSize) continue;
+            
+            for (Lit *l = &(**it)[0], *end = l + size; l != end; l++) {
                 if (l->var() >= from  && l->var() <= until) {
                     table[*it].push_back(make_pair(*it, i));
                     numClauses++;
