@@ -6,6 +6,7 @@ SET(MY_BUILD_TYPE RelWithDebInfo CACHE STRING "Used instead of CMAKE_BUILD_TYPE"
 SET(CMAKE_BUILD_TYPE ${MY_BUILD_TYPE} CACHE STRING "..." FORCE)
 MARK_AS_ADVANCED(CMAKE_BUILD_TYPE )
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -march=native")
+SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
 
 find_package( Boost 1.34 COMPONENTS system thread filesystem)
 link_directories ( ${Boost_LIBRARY_DIRS} )
