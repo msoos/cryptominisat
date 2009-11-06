@@ -30,7 +30,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "xorFinder.h"
 #include "time_mem.h"
 
-#include <boost/foreach.hpp>
 #include "gaussian.h"
 #include "MatrixFinder.h"
 #include "conglomerate.h"
@@ -85,8 +84,7 @@ Solver::~Solver()
     for (int i = 0; i < unitary_learnts.size(); i++) free(unitary_learnts[i]);
     for (int i = 0; i < clauses.size(); i++) free(clauses[i]);
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
-    BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
-        delete gauss;
+    for (uint i = 0; i < gauss_matrixes.size(); i++) delete gauss_matrixes[i];
     gauss_matrixes.clear();
 }
 
@@ -306,16 +304,16 @@ void Solver::cancelUntil(int level)
             #ifdef VERBOSE_DEBUG
             cout << "Canceling var " << x+1 << " sublevel:" << c << endl;
             #endif
-            BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
-                gauss->canceling(c, x);
+            for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
+                (*gauss)->canceling(c, x);
             assigns[x] = l_Undef;
             insertVarOrder(x);
         }
         qhead = trail_lim[level];
         trail.shrink(trail.size() - trail_lim[level]);
         trail_lim.shrink(trail_lim.size() - level);
-        BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
-            gauss->back_to_level(decisionLevel());
+        for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
+            (*gauss)->back_to_level(decisionLevel());
     }
 
     #ifdef VERBOSE_DEBUG
@@ -1033,8 +1031,8 @@ lbool Solver::search(int nof_conflicts, int nof_learnts)
     llbool      ret;
 
     starts++;
-    BOOST_FOREACH(Gaussian* gauss, gauss_matrixes) {
-        ret = gauss->full_init();
+    for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++) {
+        ret = (*gauss)->full_init();
         if (ret != l_Nothing) return ret;
     }
 
@@ -1048,8 +1046,8 @@ lbool Solver::search(int nof_conflicts, int nof_learnts)
             if (ret != l_Nothing) return ret;
         } else {
             bool at_least_one_continue = false;
-            BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)  {
-                ret = gauss->find_truths(learnt_clause, conflictC);
+            for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)  {
+                ret = (*gauss)->find_truths(learnt_clause, conflictC);
                 if (ret == l_Continue) at_least_one_continue = true;
                 else if (ret != l_Nothing) return ret;
             }
@@ -1218,9 +1216,9 @@ void Solver::print_gauss_sum_stats() const
 {
     uint called = 0;
     uint useful = 0;
-    BOOST_FOREACH(Gaussian* gauss, gauss_matrixes) {
-        called += gauss->get_called();
-        useful += gauss->get_useful();
+    for (Gaussian *const*gauss = &gauss_matrixes[0], *const*end= gauss + gauss_matrixes.size(); gauss != end; gauss++) {
+        called += (*gauss)->get_called();
+        useful += (*gauss)->get_useful();
         //gauss->print_stats();
         //gauss->print_matrix_stats();
     }
@@ -1276,11 +1274,14 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
         printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
         printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
-        
-        time = cpuTime();
+    }
+    
+    if (gaussconfig.decision_until > 0) {
+        double time = cpuTime();
         MatrixFinder m(this);
         printf("|  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, m.numMatrix);
     }
+    
 
     if (verbosity >= 1) {
         printf("============================[ Search Statistics ]==============================\n");
@@ -1294,15 +1295,15 @@ lbool Solver::solve(const vec<Lit>& assumps)
         if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
             printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
             print_gauss_sum_stats();
-        }
-        BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
-            gauss->reset_stats();
+        };
+        for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
+            (*gauss)->reset_stats();
         status = search((int)nof_conflicts, (int)nof_learnts);
         nof_conflicts *= restart_inc;
         nof_learnts   *= learntsize_inc;
         
-        BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
-            gauss->clear_clauses();
+        for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
+            (*gauss)->clear_clauses();
     }
 
     if (verbosity >= 1) {

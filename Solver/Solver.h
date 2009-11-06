@@ -34,8 +34,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 
 #include "gaussianconfig.h"
-#include <list>
-using std::list;
 class Gaussian;
 class MatrixFinder;
 class Conglomerate;
@@ -140,7 +138,7 @@ public:
     void dump_sorted_learnts(const char* file);
 
 protected:
-    list<Gaussian*> gauss_matrixes;
+    vector<Gaussian*> gauss_matrixes;
     GaussianConfig gaussconfig;
     void print_gauss_sum_stats() const;
     friend class Gaussian;
