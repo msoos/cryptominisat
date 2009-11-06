@@ -31,14 +31,13 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "MersenneTwister.h"
 #include "SolverTypes.h"
 #include "clause.h"
-#include "conglomerate.h"
-#include "xorFinder.h"
 
 
 #include "gaussianconfig.h"
 #include <list>
 using std::list;
 class Gaussian;
+class Conglomerate;
 
 
 //#define VERBOSE_DEBUG_XOR

@@ -32,6 +32,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <boost/foreach.hpp>
 #include "gaussian.h"
+#include "conglomerate.h"
+#include "xorFinder.h"
 
 
 //=================================================================================================
