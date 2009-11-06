@@ -1274,9 +1274,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         for (uint i = 0; i < xorclauses.size(); i++) {
             new_total += xorclauses[i]->size();
         }
-        
-        printf("|  Sum lits before: %12d, after: %12d                         |\n", orig_total, new_total);
         printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
+        printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
         
         time = cpuTime();
         MatrixFinder m(this);
