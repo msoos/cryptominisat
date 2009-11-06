@@ -32,10 +32,11 @@ class XorFinder
     public:
         
         XorFinder(Solver* S, vec<Clause*>& cls, vec<XorClause*>& xorcls);
-        uint findXors(uint& sumLengths);
+        uint doByPart(uint& sumLengths);
         
     private:
         
+        uint findXors(uint& sumLengths);
         const vector<pair<Clause*, uint> >* getNextXor(bool& impair);
         
         struct clause_hasher {

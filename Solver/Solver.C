@@ -1250,7 +1250,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         cleanClauses(clauses);
         uint sumLengths;
         XorFinder xorFinder(this, clauses, xorclauses);
-        uint foundXors = xorFinder.findXors(sumLengths);
+        uint foundXors = xorFinder.doByPart(sumLengths);
         
         printf("|  Finding XORs:         %4.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         

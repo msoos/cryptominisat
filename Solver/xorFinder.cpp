@@ -21,6 +21,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include "Solver.h"
 
+//#define VERBOSE_DEBUG
+
+#ifdef VERBOSE_DEBUG
+#include <iostream>
+using std::cout;
+using std::endl;
+#endif
+
 using std::make_pair;
 
 XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls) :
@@ -28,14 +36,75 @@ XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls) :
     , cls(_cls)
     , xorcls(_xorcls)
 {
-    table.resize(cls.size());
+}
+
+uint XorFinder::doByPart(uint& sumLengths)
+{
+    const uint maxSize = 10;
     
-    uint i =  0;
-    for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
-        table[*it].push_back(make_pair(*it, i));
+    uint sumNonParitionClauses = 0;
+    uint sumUsage = 0;
+    vector<uint> varUsage(S->nVars(), 0);
+    for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++) {
+        if ((*it)->size() > maxSize) continue;
+        for (const Lit *l = &(**it)[0], *end = l + (*it)->size(); l != end; l++) {
+            varUsage[l->var()]++;
+            sumUsage++;
+        }
+        sumNonParitionClauses++;
     }
     
-    nextXor = table.begin();
+    uint sumNumClauses = 0;
+    uint found = 0;
+    sumLengths = 0;
+    
+    const uint limit = 400000;
+    uint from = 0;
+    uint until = 0;
+    while (until < varUsage.size()) {
+        uint estimate = 0;
+        for (; until < varUsage.size(); until++) {
+            estimate += varUsage[until];
+            if (estimate >= limit) break;
+        }
+        #ifdef VERBOSE_DEBUG
+        printf("Xor-finding: Vars from: %d, until: %d\n", from, until);
+        #endif
+        
+        uint numClauses = 0;
+        table.clear();
+        table.resize(estimate/2);
+        uint i = 0;
+        for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
+            if ((*it)->size() > maxSize) continue;
+            for (Lit *l = &(**it)[0], *end = l + (*it)->size(); l != end; l++) {
+                if (l->var() >= from  && l->var() <= until) {
+                    table[*it].push_back(make_pair(*it, i));
+                    numClauses++;
+                    break;
+                }
+            }
+        }
+        #ifdef VERBOSE_DEBUG
+        printf("numClauses in range: %d\n", numClauses);
+        sumNumClauses += numClauses;
+        #endif
+        
+        uint lengths;
+        found += findXors(lengths);
+        sumLengths += lengths;
+        #ifdef VERBOSE_DEBUG
+        printf("Found in this range: %d\n", found);
+        #endif
+        
+        from = until+1;
+    }
+    
+    #ifdef VERBOSE_DEBUG
+    cout << "Overdone work due to partitioning:" << (double)sumNumClauses/(double)sumNonParitionClauses << "x" << endl;
+    #endif
+    
+    return found;
 }
 
 uint XorFinder::findXors(uint& sumLengths)
@@ -48,6 +117,7 @@ uint XorFinder::findXors(uint& sumLengths)
     sumLengths = 0;
     vector<bool> toRemove(cls.size(), false);
     
+    nextXor = table.begin();
     const vector<pair<Clause*, uint> >* myclauses;
     vector<Lit> lits;
     bool impair;
