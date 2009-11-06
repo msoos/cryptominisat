@@ -1252,7 +1252,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         XorFinder xorFinder(this, clauses, xorclauses);
         uint foundXors = xorFinder.doByPart(sumLengths);
         
-        printf("|  Finding XORs:         %4.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         
         uint orig_total = 0;
         uint orig_num_cls = xorclauses.size();
@@ -1280,7 +1280,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         time = cpuTime();
         MatrixFinder m(this);
-        printf("|  Finding matrixes :    %4.2lf s (found  %5d)                          |\n", cpuTime()-time, m.numMatrix);
+        printf("|  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, m.numMatrix);
     }
 
     if (verbosity >= 1) {
