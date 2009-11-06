@@ -32,6 +32,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <boost/foreach.hpp>
 #include "gaussian.h"
+#include "MatrixFinder.h"
 #include "conglomerate.h"
 #include "xorFinder.h"
 
@@ -116,7 +117,7 @@ Var Solver::newVar(bool sign, bool dvar)
     return v;
 }
 
-bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name, const uint matrix_no)
+bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name)
 {
 
     assert(decisionLevel() == 0);
@@ -161,12 +162,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         return ok = (propagate() == NULL);
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
-
-        if (matrix_no != 15 && matrix_no >= gauss_matrixes.size()) {
-            for (uint i = gauss_matrixes.size(); i <= matrix_no; i++)
-                gauss_matrixes.push_back(new Gaussian(*this, i, gaussconfig));
-        }
-        XorClause* c = XorClause_new(ps, xor_clause_inverted, group, matrix_no);
+        XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
 
         xorclauses.push(c);
         attachClause(*c);
@@ -1256,7 +1252,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         XorFinder xorFinder(this, clauses, xorclauses);
         uint foundXors = xorFinder.findXors(sumLengths);
         
-        printf("|  Finding XORs:         %4.2lf s (found: %6d, avg size: %3.1lf)                |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        printf("|  Finding XORs:         %4.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         
         uint orig_total = 0;
         uint orig_num_cls = xorclauses.size();
@@ -1281,6 +1277,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         printf("|  Sum lits before: %12d, after: %12d                         |\n", orig_total, new_total);
         printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
+        
+        time = cpuTime();
+        MatrixFinder m(this);
+        printf("|  Finding matrixes :    %4.2lf s (found  %5d)                          |\n", cpuTime()-time, m.numMatrix);
     }
 
     if (verbosity >= 1) {

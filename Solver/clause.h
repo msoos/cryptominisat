@@ -39,6 +39,7 @@ using std::vector;
 //=================================================================================================
 // Clause -- a simple class for representing a clause:
 
+class MatrixFinder;
 
 class Clause
 {
@@ -144,18 +145,17 @@ class XorClause : public Clause
 public:
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
-    XorClause(const V& ps, const bool inverted, const uint _group, const uint matrix_no) :
+    XorClause(const V& ps, const bool inverted, const uint _group) :
         Clause(ps, _group, false)
     {
-        setMatrix(matrix_no);
         setInverted(inverted);
     }
 
     // -- use this function instead:
     template<class V>
-    friend XorClause* XorClause_new(const V& ps, const bool inverted, const uint group, const uint matrix_no = 15) {
+    friend XorClause* XorClause_new(const V& ps, const bool inverted, const uint group) {
         void* mem = malloc(sizeof(XorClause) + sizeof(Lit)*(ps.size()));
-        XorClause* real= new (mem) XorClause(ps, inverted, group, matrix_no);
+        XorClause* real= new (mem) XorClause(ps, inverted, group);
         return real;
     }
 
@@ -190,6 +190,9 @@ public:
         }
         fprintf(to, "0\n");
     }
+    
+    friend class MatrixFinder;
+    
 protected:
     inline void setMatrix   (uint32_t toset) {
         assert(toset < (1 << 12));

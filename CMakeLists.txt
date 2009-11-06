@@ -39,5 +39,6 @@ add_library(cryptominisatlib
         Solver/packedRow.cpp
         Solver/xorFinder.cpp
         Solver/conglomerate.cpp
+        Solver/MatrixFinder.cpp
 )
 

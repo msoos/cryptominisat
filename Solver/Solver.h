@@ -37,6 +37,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <list>
 using std::list;
 class Gaussian;
+class MatrixFinder;
 class Conglomerate;
 
 
@@ -65,7 +66,7 @@ public:
     //
     Var     newVar    (bool polarity = true, bool dvar = true); // Add a new variable with parameters specifying variable mode.
     bool    addClause (vec<Lit>& ps, const uint group, const char* group_name);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
-    bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name, const uint matrix_no = 15);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
@@ -257,6 +258,7 @@ protected:
     friend class XorFinder;
     Conglomerate* conglomerate;
     friend class Conglomerate;
+    friend class MatrixFinder;
 
     // Debug:
     void     printLit         (const Lit l) const;

@@ -238,7 +238,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
             }
 
             if (xor_clause)
-                S.addXorClause(lits, false, group, group_name, matrix_no);
+                S.addXorClause(lits, false, group, group_name);
             else
                 S.addClause(lits, group, group_name);
             break;
