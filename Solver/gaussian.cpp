@@ -41,9 +41,9 @@ Gaussian::Gaussian(Solver& _solver, const uint _matrix_no, const GaussianConfig&
         , config(_config)
         , messed_matrix_vars_since_reversal(true)
         , gauss_last_level(0)
-        , gauss_starts_from(0)
-        , useful_gaussian(0)
-        , called_gaussian(0)
+        , useful(0)
+        , called(0)
+        , disable_gauss(false)
 {
 }
 
@@ -88,9 +88,6 @@ llbool Gaussian::full_init()
             break;
         }
     }
-    
-    if (at_first_init())
-        print_matrix_stats();
 
     return l_Nothing;
 }
@@ -107,7 +104,6 @@ void Gaussian::init(void)
     messed_matrix_vars_since_reversal = false;
     if (config.decision_from > 0) went_below_decision_from = true;
     else went_below_decision_from = true;
-    disable_gauss = false;
 
 #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Gaussian init finished." << endl;
@@ -341,14 +337,14 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
        )
         set_matrixset_to_cur();
 
-    called_gaussian++;
-    if (ret != nothing) useful_gaussian++;
+    called++;
+    if (ret != nothing) useful++;
 
 #ifdef VERBOSE_DEBUG
     if (ret == nothing) cout << "(" << matrix_no << ")Useless. ";
     else cout << "(" << matrix_no << ")Useful. ";
 
-    cout << "(" << matrix_no << ")Useful in " << ((double)useful_gaussian/(double)called_gaussian)*100.0 << "%" << endl;
+    cout << "(" << matrix_no << ")Useful in " << ((double)useful/(double)called)*100.0 << "%" << endl;
 #endif
 
     return ret;
@@ -716,8 +712,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
 {
     if (nof_conflicts >= 0
     && conflictC >= nof_conflicts/5
-    && called_gaussian > 0
-    && (double)useful_gaussian/(double)called_gaussian < 0.05)
+    && called > 0
+    && (double)useful/(double)called < 0.05)
     disable_gauss = true;
 }*/
 
@@ -810,9 +806,9 @@ const string Gaussian::lbool_to_string(const lbool toprint)
 
 void Gaussian::print_stats() const
 {
-    if (called_gaussian > 0) {
+    if (called > 0) {
         cout.setf(std::ios::fixed);
-        std::cout << " Gauss(" << matrix_no << ") useful " << std::setprecision(2) << std::setw(5) << ((double)useful_gaussian/(double)called_gaussian)*100.0 << "% ";
+        std::cout << " Gauss(" << matrix_no << ") useful " << std::setprecision(2) << std::setw(5) << ((double)useful/(double)called)*100.0 << "% ";
         if (disable_gauss) std::cout << "disabled";
     } else
         std::cout << " Gauss(" << matrix_no << ") not called.";
@@ -820,8 +816,8 @@ void Gaussian::print_stats() const
 
 void Gaussian::reset_stats()
 {
-    useful_gaussian = 0;
-    called_gaussian = 0;
+    useful = 0;
+    called = 0;
 }
 
 bool Gaussian::check_no_conflict(const matrixset& m) const
@@ -881,6 +877,16 @@ const bool Gaussian::check_matrix_against_varset(const vector<matrix_row>& matri
             assert(false);
         }
     }
+}
+
+const uint Gaussian::get_called() const
+{
+    return called;
+}
+
+const uint Gaussian::get_useful() const
+{
+    return useful;
 }
 
 //old functions

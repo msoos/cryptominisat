@@ -29,6 +29,7 @@ class GaussianConfig
         , decision_from(0)
         , decision_until(0)
         , every_nth_gauss(1)
+        , starts_from(0)
     {
     }
         
@@ -37,6 +38,7 @@ class GaussianConfig
     uint decision_from; //start from this decision level
     uint decision_until; //do Gauss until this level
     uint every_nth_gauss; //do Gauss every nth level
+    uint starts_from; //Gauss elimination starts from this restart number
 };
 
 #endif //GAUSSIANCONFIG_H

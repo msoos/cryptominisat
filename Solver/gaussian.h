@@ -49,6 +49,8 @@ public:
     void print_stats() const;
     void reset_stats();
     void print_matrix_stats() const;
+    const uint get_called() const;
+    const uint get_useful() const;
 
     //functions used throughout the Solver
     void back_to_level(const uint level);
@@ -91,12 +93,11 @@ protected:
     int gauss_last_level;
     vector<Clause*> matrix_clauses_toclear;
     bool went_below_decision_from;
-    const uint gauss_starts_from; //Gauss elimination starts from this search depth
     bool disable_gauss; // Gauss is disabled (automatically)
 
     //Statistics
-    uint useful_gaussian; //how many times Gauss was useful
-    uint called_gaussian; //how many times called the Gauss
+    uint useful; //how many times Gauss was useful
+    uint called; //how many times called the Gauss
 
     //gauss init functions
     void init(); // Initalise gauss state
@@ -153,18 +154,13 @@ inline void Gaussian::back_to_level(const uint level)
 
 inline bool Gaussian::should_init() const
 {
-    return (solver.starts >= gauss_starts_from && config.decision_until > 0);
-}
-
-inline bool Gaussian::at_first_init() const
-{
-    return (solver.starts == gauss_starts_from);
+    return (solver.starts >= config.starts_from && config.decision_until > 0);
 }
 
 inline bool Gaussian::should_check_gauss(const uint decisionlevel, const uint starts) const
 {
     return (!disable_gauss
-            && starts >= gauss_starts_from
+            && starts >= config.starts_from
             && decisionlevel < config.decision_until
             && decisionlevel >= config.decision_from
             && decisionlevel % config.every_nth_gauss == 0);
