@@ -141,6 +141,7 @@ public:
 protected:
     list<Gaussian*> gauss_matrixes;
     GaussianConfig gaussconfig;
+    void print_gauss_sum_stats() const;
     friend class Gaussian;
     
     

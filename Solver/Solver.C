@@ -1218,6 +1218,24 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
+void Solver::print_gauss_sum_stats() const
+{
+    uint called = 0;
+    uint useful = 0;
+    BOOST_FOREACH(Gaussian* gauss, gauss_matrixes) {
+        called += gauss->get_called();
+        useful += gauss->get_useful();
+        //gauss->print_stats();
+        //gauss->print_matrix_stats();
+    }
+    if (called == 0) {
+        printf("Gauss not called\n");
+    } else if (useful > 0) {
+        printf("Gauss useful: %4.2lf%%\n", (double)useful/(double)called*100.0);
+    }else
+        printf("Gauss was useless\n");
+}
+
 lbool Solver::solve(const vec<Lit>& assumps)
 {
     model.clear();
@@ -1276,9 +1294,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     while (status == l_Undef && starts < maxRestarts) {
         if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
             printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
-            BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
-                gauss->print_stats();
-            printf("\n");
+            print_gauss_sum_stats();
         }
         BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
             gauss->reset_stats();
@@ -1292,9 +1308,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     if (verbosity >= 1) {
         printf("===============================================================================");
-        BOOST_FOREACH(Gaussian* gauss, gauss_matrixes)
-            gauss->print_stats();
-        printf("\n");
+        print_gauss_sum_stats();
     }
 
     if (status == l_True) {
