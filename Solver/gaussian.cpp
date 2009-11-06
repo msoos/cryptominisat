@@ -126,7 +126,7 @@ uint Gaussian::fill_var_to_col(matrixset& m) const
 #ifdef DEBUG_GAUSS
         assert(!solver.satisfied(*solver.xorclauses[i]));
 #endif
-        if (solver.xorclauses[i]->inMatrix() && solver.xorclauses[i]->getMatrix() == matrix_no) {
+        if (solver.xorclauses[i]->getMatrix() == matrix_no) {
             num_xorclauses++;
             XorClause& c = *solver.xorclauses[i];
             for (uint i2 = 0; i2 < c.size(); i2++) {
@@ -214,7 +214,7 @@ void Gaussian::fill_matrix(matrixset& m)
     for (int i = 0; i < solver.xorclauses.size(); i++) {
         const XorClause& c = *solver.xorclauses[i];
 
-        if (c.inMatrix() &&  c.getMatrix() == matrix_no) {
+        if (c.getMatrix() == matrix_no) {
             m.varset[matrix_row].set(c, m.var_to_col, m.col_to_var.size());
             m.matrix[matrix_row].set(c, m.var_to_col, m.col_to_var.size());
             matrix_row++;

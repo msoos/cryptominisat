@@ -48,13 +48,13 @@ protected:
     /**
     bit-layout of size_etc:
     
-    range          type             meaning
+    range           type             meaning
     --------------------------------------------
-    0th bit        bool            learnt clause
-    1st - 2nd bit  2bit int        marking
-    3rd bit        bool            inverted xor
-    4th-7th bit    4bit int        matrix number
-    8th -31st bit  24bit int       size
+    0th bit         bool            learnt clause
+    1st - 2nd bit   2bit int        marking
+    3rd bit         bool            inverted xor
+    4th-15th bit    12bit int        matrix number
+    16th -31st bit  16bit int       size
     */
     uint32_t size_etc; 
     float act;
@@ -86,11 +86,11 @@ public:
     friend Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt = false);
 
     uint         size        ()      const {
-        return size_etc >> 8;
+        return size_etc >> 16;
     }
     void         shrink      (uint i) {
         assert(i <= size());
-        size_etc = (((size_etc >> 8) - i) << 8) | (size_etc & 255);
+        size_etc = (((size_etc >> 16) - i) << 16) | (size_etc & ((1 << 16)-1));
     }
     void         pop         () {
         shrink(1);
@@ -132,10 +132,10 @@ public:
     }
 protected:
     void setSize(uint32_t size) {
-        size_etc = ((size_etc & (uint32_t)255) + (size << 8));
+        size_etc = (size_etc & ((1 << 16)-1)) + (size << 16);
     }
     void setLearnt(bool learnt) {
-        size_etc = (size_etc & ~((uint32_t)1)) + (uint32_t)learnt;
+        size_etc = (size_etc & ~1) + learnt;
     }
 };
 
@@ -167,15 +167,10 @@ public:
     {
         size_etc ^= (uint32_t)b << 3;
     }
-    inline uint32_t inMatrix() const
-    {
-        return (((size_etc >> 4) & 15) != 15);
-    }
     
     inline uint32_t getMatrix() const
     {
-        assert(inMatrix());
-        return ((size_etc >> 4) & 15);
+        return ((size_etc >> 4) & (1 << 12)-1);
     }
 
     void print() {
@@ -197,12 +192,12 @@ public:
     }
 protected:
     inline void setMatrix   (uint32_t toset) {
-        assert(toset < 16);
-        size_etc = (size_etc & 15) + (toset << 4) + (size_etc & ~255);
+        assert(toset < (1 << 12));
+        size_etc = (size_etc & 15) + (toset << 4) + (size_etc & ~((1 << 16)-1));
     }
     inline void setInverted(bool inverted)
     {
-        size_etc = (size_etc & 7) + ((uint32_t)inverted << 3) + ((size_etc >> 4) << 4);
+        size_etc = (size_etc & 7) + ((uint32_t)inverted << 3) + (size_etc & ~15);
     }
 };
 
