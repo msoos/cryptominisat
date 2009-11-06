@@ -54,8 +54,6 @@ public:
 
     //functions used throughout the Solver
     void back_to_level(const uint level);
-    void set_decision_until(const uint to);
-    void set_decision_from(unsigned int from);
     void canceling(const uint level, const Var var);
     void clear_clauses();
 
