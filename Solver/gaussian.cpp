@@ -16,7 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
 #include "gaussian.h"
-#include <boost/foreach.hpp>
 #include <iostream>
 #include <iomanip>
 #include "clause.h"
@@ -54,8 +53,7 @@ Gaussian::~Gaussian()
 
 void Gaussian::clear_clauses()
 {
-    BOOST_FOREACH(Clause* c, matrix_clauses_toclear)
-        free(c);
+    std::for_each(matrix_clauses_toclear.begin(), matrix_clauses_toclear.end(), std::ptr_fun(free));
     matrix_clauses_toclear.clear();
 }
 
@@ -114,8 +112,8 @@ uint Gaussian::fill_var_to_col(matrixset& m) const
 {
     m.var_to_col.resize(solver.nVars());
     uint largest_used_var = 0;
-    BOOST_FOREACH(uint& w, m.var_to_col)
-        w = UINT_MAX;
+    for (uint* w = &m.var_to_col[0], *end = w + m.var_to_col.size(); w != end; w++)
+        *w = UINT_MAX;
 
     uint num_xorclauses  = 0;
     for (int i = 0; i < solver.xorclauses.size(); i++) {
@@ -160,11 +158,8 @@ uint Gaussian::fill_var_to_col(matrixset& m) const
 
 #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")col_to_var:";
-    BOOST_FOREACH(const Var v, m.col_to_var) {
-        cout << v << ",";
-    }
+    std::copy(m.col_to_var.begin(), m.col_to_var.end(), std::ostream_iterator<uint>(cout, ","));
     cout << endl;
-
 
     cout << "(" << matrix_no << ")var_to_col:" << endl;
 #endif
@@ -196,7 +191,9 @@ void Gaussian::fill_matrix(matrixset& m)
     if (m.num_rows == 0) return;
 
     m.last_one_in_col.resize(m.num_cols);
-    BOOST_FOREACH(uint& last, m.last_one_in_col) last = m.num_rows;
+    
+    for (uint *l = &m.last_one_in_col[0], *end = l + m.last_one_in_col.size(); l != end; l++)
+        *l = m.num_rows;
     m.removeable_cols = 0;
     m.least_column_changed = -1;
     m.matrix.resize(m.num_rows);
@@ -243,8 +240,8 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col) co
 
 #ifdef DEBUG_GAUSS
     bool c = false;
-    BOOST_FOREACH(matrix_row& r, m.matrix)
-        c |= r[col];
+    for(matrix_row *r = m.matrix[0], *end = r + m.matrix.size(); r != end; r++)
+        c |= (*r)[col];
     assert(!c);
 #endif
 
@@ -475,8 +472,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
 
 #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")last one in col:";
-    BOOST_FOREACH(const uint& r, m.last_one_in_col)
-        cout << r << ",";
+    std::copy(m.last_one_in_col.begin(), m.last_one_in_col.end(), std::ostream_iterator<uint>(cout, ","));
     cout << endl;
     cout << "(" << matrix_no << ")Exchanged:" << no_exchanged << " row additions:" << number_of_row_additions << endl;
 #endif
@@ -598,9 +594,8 @@ void Gaussian::cancel_until_sublevel(const uint sublevel)
 
         solver.assigns[var] = l_Undef;
         solver.insertVarOrder(var);
-        BOOST_FOREACH(Gaussian* gauss, solver.gauss_matrixes) {
-            if (gauss != this) gauss->canceling(level, var);
-        }
+        for (Gaussian **gauss = &(solver.gauss_matrixes[0]), **end= gauss + solver.gauss_matrixes.size(); gauss != end; gauss++)
+            if (*gauss != this) (*gauss)->canceling(level, var);
     }
     solver.trail.shrink(solver.trail.size() - sublevel);
 #ifdef VERBOSE_DEBUG
@@ -822,8 +817,8 @@ void Gaussian::reset_stats()
 
 bool Gaussian::check_no_conflict(const matrixset& m) const
 {
-    BOOST_FOREACH(const matrix_row& r, m.matrix) {
-        if (!r.get_xor_clause_inverted() && r.isZero())
+    for(const matrix_row *r = &m.matrix[0], *end = r + m.matrix.size(); r != end; r++) {
+        if (!r->get_xor_clause_inverted() && r->isZero())
             return false;
     }
     return true;
@@ -831,14 +826,14 @@ bool Gaussian::check_no_conflict(const matrixset& m) const
 
 const bool Gaussian::nothing_to_propagate(const matrixset& m) const
 {
-    BOOST_FOREACH(const matrix_row& r, m.matrix) {
-        if (r.popcnt_is_one()
-                && solver.assigns[m.col_to_var[r.scan(0)]].isUndef())
+    for(const matrix_row *r = &m.matrix[0], *end = r + m.matrix.size(); r != end; r++) {
+        if (r->popcnt_is_one()
+                && solver.assigns[m.col_to_var[r->scan(0)]].isUndef())
             return false;
     }
-    BOOST_FOREACH(const matrix_row& r, m.matrix) {
-        if (r.isZero()
-                && !r.get_xor_clause_inverted())
+    for(const matrix_row *r = &m.matrix[0], *end = r + m.matrix.size(); r != end; r++) {
+        if (r->isZero()
+                && !r->get_xor_clause_inverted())
             return false;
     }
     return true;
