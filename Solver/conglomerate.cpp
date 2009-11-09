@@ -64,6 +64,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
     
     fillVarToXor();
     
+    map<Var, Lit> toReplace;
     uint found = 0;
     while(varToXor.begin() != varToXor.end()) {
         varToXorMap::iterator it = varToXor.begin();
@@ -116,32 +117,61 @@ uint Conglomerate::conglomerateXors(Solver* _S)
             found++;
             clearDouble(ps);
             
-                }
-            }
-            ps.resize(ps.size()-(r-a)+1);
-            
-            XorClause* newX = XorClause_new(ps, inverted, old_group);
-            
-            #ifdef VERBOSE_DEBUG
-            cout << "- Adding: ";
-            newX->plain_print();
-            #endif
-            
-            if (ps.size() == 1) {
+            switch(ps.size()) {
+            case 0: {
                 #ifdef VERBOSE_DEBUG
-                cout << "--> xor is 1-long, attempting to set variable" << endl;
+                cout << "--> xor is 0-long" << endl;
                 #endif
                 
-                if (S->assigns[ps[0].var()] == l_Undef)
-                    S->uncheckedEnqueue(Lit(ps[0].var(), inverted));
-                else if (S->assigns[ps[0].var()] != boolToLBool(!inverted)) {
-                        #ifdef VERBOSE_DEBUG
-                        cout << "Conflict. Aborting.";
-                        #endif
-                        S->ok = false;
-                        return found;
+                if  (!inverted) {
+                    S->ok = false;
+                    clearToRemove();
+                    return found;
                 }
-            } else {
+                break;
+            }
+            case 1: {
+                #ifdef VERBOSE_DEBUG
+                cout << "--> xor is 1-long, attempting to set variable " << ps[0].var()+1 << endl;
+                #endif
+                
+                if (S->assigns[ps[0].var()] == l_Undef) {
+                    assert(S->decisionLevel() == 0);
+                    S->uncheckedEnqueue(Lit(ps[0].var(), inverted));
+                    ps[0] = Lit(ps[0].var(), inverted);
+                    Clause* newC = Clause_new(ps, old_group);
+                    S->unitary_learnts.push(newC);
+                } else if (S->assigns[ps[0].var()] != boolToLBool(!inverted)) {
+                    #ifdef VERBOSE_DEBUG
+                    cout << "Conflict. Aborting.";
+                    #endif
+                    S->ok = false;
+                    clearToRemove();
+                    return found;
+                }
+                break;
+            }
+            
+            case 2: {
+                XorClause* newX = XorClause_new(ps, inverted, old_group);
+                #ifdef VERBOSE_DEBUG
+                cout << "--> xor is 2-long, must later replace variable:" << endl;
+                newX->plain_print();
+                #endif
+                
+                toReplace[ps[0].var()] = Lit(ps[1].var(), !inverted);
+                S->calcAtFinish.push_back(make_pair(newX, ps[0].var()));
+                break;
+            }
+            
+            default: {
+                XorClause* newX = XorClause_new(ps, inverted, old_group);
+                
+                #ifdef VERBOSE_DEBUG
+                cout << "- Adding: ";
+                newX->plain_print();
+                #endif
+                
                 S->xorclauses.push(newX);
                 toRemove.push_back(false);
                 S->attachClause(*newX);
@@ -149,6 +179,8 @@ uint Conglomerate::conglomerateXors(Solver* _S)
                     if (!blocked[a->var()])
                         varToXor[a->var()].push_back(make_pair(newX, toRemove.size()-1));
                 }
+                break;
+            }
             }
         }
         
@@ -189,11 +221,6 @@ void Conglomerate::clearToRemove()
             r++;
     }
     S->xorclauses.shrink(r-a);
-    
-    varToXorMap tmp;
-    tmp.swap(varToXor);
-    
-    return found;
 }
 
 void Conglomerate::doCalcAtFinish(Solver* S)
