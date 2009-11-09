@@ -257,6 +257,8 @@ protected:
     Conglomerate* conglomerate;
     friend class Conglomerate;
     friend class MatrixFinder;
+    void replace(const map<Var, Lit>& toReplace);
+    void replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& set);
 
     // Debug:
     void     printLit         (const Lit l) const;

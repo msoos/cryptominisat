@@ -1197,6 +1197,42 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     return l_Nothing;
 }
 
+void Solver::replace(const map<Var, Lit>& toReplace)
+{
+    if (toReplace.size() == 0) return;
+    
+    replace_set(toReplace, clauses);
+    replace_set(toReplace, learnts);
+    
+    for (XorClause **c = xorclauses.getData(), **end = c + xorclauses.size(); c != end; c++) {
+        for (Lit *l = &(**c)[0], *lend = l + (**c).size(); l != lend; l++) {
+            const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
+            detachClause(**c);
+            if (it != toReplace.end()) {
+                printf("replacing!!!!!!!!!!!!!!!!!! (xor)\n");
+                *l = Lit(it->second.var(), false);
+                (**c).invert(it->second.sign());
+            }
+            attachClause(**c);
+        }
+    }
+}
+
+void Solver::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& set)
+{
+    for (Clause **c = set.getData(), **end = c + set.size(); c != end; c++) {
+        for (Lit *l = &(**c)[0], *lend = l + (**c).size(); l != lend; l++) {
+            const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
+            detachClause(**c);
+            if (it != toReplace.end()) {
+                printf("replacing!!!!!!!!!!!!!!!!!! (normal)\n");
+                *l = Lit(it->second.var(), it->second.sign()^l->sign());
+            }
+            attachClause(**c);
+        }
+    }
+}
+
 
 double Solver::progressEstimate() const
 {
