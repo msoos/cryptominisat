@@ -21,10 +21,13 @@ private:
     
     void process_clause(XorClause& x, const uint num, uint var, vector<Lit>& vars);
     void fillVarToXor();
+    void clearDouble(vector<Lit>& ps) const;
+    void clearToRemove();
     
     typedef map<uint, vector<pair<XorClause*, uint> > > varToXorMap;
     varToXorMap varToXor; 
     vector<bool> blocked;
+    vector<bool> toRemove;
     
     Solver* S;
 };

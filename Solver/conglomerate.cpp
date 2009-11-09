@@ -56,6 +56,7 @@ void Conglomerate::process_clause(XorClause& x, const uint num, uint var, vector
 uint Conglomerate::conglomerateXors(Solver* _S)
 {
     S = _S;
+    toRemove.resize(S->xorclauses.size(), false);
     
     #ifdef VERBOSE_DEBUG
     cout << "Finding conglomerate xors started" << endl;
@@ -64,7 +65,6 @@ uint Conglomerate::conglomerateXors(Solver* _S)
     fillVarToXor();
     
     uint found = 0;
-    vector<bool> toRemove(S->xorclauses.size(), false);
     while(varToXor.begin() != varToXor.end()) {
         varToXorMap::iterator it = varToXor.begin();
         const vector<pair<XorClause*, uint> >& c = it->second;
@@ -93,7 +93,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
         assert(!toRemove[c[0].second]);
         toRemove[c[0].second] = true;
         S->detachClause(x);
-        calcAtFinish.push_back(make_pair(&x, var));
+        S->calcAtFinish.push_back(make_pair(&x, var));
         found++;
         
         vector<Lit> ps;
@@ -114,21 +114,8 @@ uint Conglomerate::conglomerateXors(Solver* _S)
             S->detachClause(x);
             free(&x);
             found++;
-            sort(ps.begin(), ps.end());
-            Lit* a = &ps[0], *r = a;
-            r++;
-            for (Lit *end = a + ps.size(); r != end;) {
-                if (a->var() != r->var()) {
-                    a++;
-                    *a = *r++;
-                } else {
-                    r++;
-                    if (a == &ps[0]) {
-                        *a = *r;
-                        r++;
-                    } else {
-                        a--;
-                    }
+            clearDouble(ps);
+            
                 }
             }
             ps.resize(ps.size()-(r-a)+1);
@@ -168,6 +155,30 @@ uint Conglomerate::conglomerateXors(Solver* _S)
         varToXor.erase(it);
     }
     
+    clearToRemove();
+    S->replace(toReplace);
+    
+    return found;
+}
+
+void Conglomerate::clearDouble(vector<Lit>& ps) const
+{
+    std::sort(ps.begin(), ps.end());
+    Lit p;
+    int i, j;
+    for (i = j = 0, p = lit_Undef; i < ps.size(); i++) {
+        if (ps[i] == p) {
+            //added, but easily removed
+            j--;
+            p = lit_Undef;
+        } else //just add
+            ps[j++] = p = ps[i];
+    }
+    ps.resize(ps.size()-(i - j));
+}
+
+void Conglomerate::clearToRemove()
+{
     XorClause **a = S->xorclauses.getData();
     XorClause **r = a;
     XorClause **end = a + S->xorclauses.size();
