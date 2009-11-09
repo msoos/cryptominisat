@@ -421,7 +421,6 @@ int main(int argc, char** argv)
             }
             S.setMaxRestarts(maxrest);
         } else if ((value = hasPrefix(argv[i], "-dumplearnts="))) {
-            uint maxrest;
             if (sscanf(value, "%400s", &learnts_filename) < 0 || strlen(learnts_filename) == 0) {
                 printf("ERROR! wrong filename '%s'\n", learnts_filename);
                 exit(0);

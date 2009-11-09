@@ -32,11 +32,11 @@ using std::endl;
 using std::make_pair;
 
 XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls, const uint _minSize) :
-    S(_S)
-    , cls(_cls)
+    cls(_cls)
     , xorcls(_xorcls)
     , minSize(_minSize)
     , maxSize(10)
+    , S(_S)
 {
 }
 
@@ -56,7 +56,6 @@ uint XorFinder::doByPart(uint& sumLengths)
         sumNonParitionClauses++;
     }
     
-    uint sumNumClauses = 0;
     uint found = 0;
     sumLengths = 0;
     

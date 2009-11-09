@@ -170,7 +170,7 @@ public:
     
     inline uint32_t getMatrix() const
     {
-        return ((size_etc >> 4) & (1 << 12)-1);
+        return ((size_etc >> 4) & ((1 << 12)-1));
     }
 
     void print() {

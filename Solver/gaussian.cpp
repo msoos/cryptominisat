@@ -40,9 +40,9 @@ Gaussian::Gaussian(Solver& _solver, const uint _matrix_no, const GaussianConfig&
         , config(_config)
         , messed_matrix_vars_since_reversal(true)
         , gauss_last_level(0)
+        , disable_gauss(false)
         , useful(0)
         , called(0)
-        , disable_gauss(false)
 {
 }
 
@@ -867,7 +867,7 @@ const bool Gaussian::check_matrix_against_varset(const vector<matrix_row>& matri
             
             col++;
         }
-        if (final^mat_row.get_xor_clause_inverted() != var_row.get_xor_clause_inverted()) {
+        if ((final^mat_row.get_xor_clause_inverted()) != var_row.get_xor_clause_inverted()) {
             cout << "problem with row:"; print_matrix_row_with_assigns(var_row); cout << endl;
             assert(false);
         }
