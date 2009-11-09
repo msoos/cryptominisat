@@ -104,6 +104,8 @@ uint XorFinder::doByPart(uint& sumLengths)
         from = until+1;
     }
     
+    S->replace(toReplace);
+    
     #ifdef VERBOSE_DEBUG
     cout << "Overdone work due to partitioning:" << (double)sumNumClauses/(double)sumNonParitionClauses << "x" << endl;
     #endif
@@ -147,12 +149,18 @@ uint XorFinder::findXors(uint& sumLengths)
         }
         
         XorClause* x = XorClause_new(lits, impair, old_group);
-        xorcls.push(x);
-        S->attachClause(*x);
-        #ifdef VERBOSE_DEBUG
-        cout << "- Final xor-clause: ";
-        x->plain_print();
-        #endif
+        assert(x->size() > 1);
+        if (x->size() == 2) {
+            toReplace[lits[0].var()] = Lit(lits[1].var(), !impair);
+            S->calcAtFinish.push_back(make_pair(x, lits[0].var()));
+        } else {
+            xorcls.push(x);
+            S->attachClause(*x);
+            #ifdef VERBOSE_DEBUG
+            cout << "- Final xor-clause: ";
+            x->plain_print();
+            #endif
+        }
         
         foundXors++;
         sumLengths += lits.size();

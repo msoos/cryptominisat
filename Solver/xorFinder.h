@@ -21,10 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "clause.h"
 #include <sys/types.h>
 #include <hash_map>
+#include <map>
 
 class Solver;
 
 using __gnu_cxx::hash_map;
+using std::map;
 using std::pair;
 
 class XorFinder
@@ -82,6 +84,8 @@ class XorFinder
         
         ClauseTable table;
         ClauseTable::iterator nextXor;
+        
+        map<Var, Lit> toReplace;
         
         vec<Clause*>& cls;
         vec<XorClause*>& xorcls;
