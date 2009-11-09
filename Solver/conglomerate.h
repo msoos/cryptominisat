@@ -15,11 +15,9 @@ class Conglomerate
 {
 public:
     uint conglomerateXors(Solver* S); ///<Conglomerate XOR-s that are attached using a variable
-    void doCalcAtFinish(); ///<Calculate variables removed during conglomeration
+    static void doCalcAtFinish(Solver* S); ///<Calculate variables removed during conglomeration
     
 private:
-    
-    vector<pair<XorClause*, Var> > calcAtFinish;
     
     void process_clause(XorClause& x, const uint num, uint var, vector<Lit>& vars);
     void fillVarToXor();

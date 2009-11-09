@@ -1296,7 +1296,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         time = cpuTime();
         cleanClauses(xorclauses);
-        conglomerate = new Conglomerate;
+        Conglomerate* conglomerate = new Conglomerate;
         uint foundCong = conglomerate->conglomerateXors(this);
         printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
         if (!ok) return l_False;
@@ -1348,7 +1348,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
 
     if (status == l_True) {
-        if (xorFinder) conglomerate->doCalcAtFinish();
+        if (xorFinder) Conglomerate::doCalcAtFinish(this);
         // Extend & copy model:
         model.growTo(nVars());
         for (int i = 0; i < nVars(); i++) model[i] = value(i);

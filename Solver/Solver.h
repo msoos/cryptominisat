@@ -254,7 +254,7 @@ protected:
     
     //Xor-finding related stuff
     friend class XorFinder;
-    Conglomerate* conglomerate;
+    vector<pair<XorClause*, Var> > calcAtFinish;
     friend class Conglomerate;
     friend class MatrixFinder;
     void replace(const map<Var, Lit>& toReplace);
