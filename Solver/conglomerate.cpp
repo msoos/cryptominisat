@@ -5,6 +5,14 @@
 #include <algorithm>
 using std::make_pair;
 
+//#define VERBOSE_DEBUG
+
+#ifdef VERBOSE_DEBUG
+#include <iostream>
+using std::cout;
+using std::endl;
+#endif
+
 void Conglomerate::fillVarToXor()
 {
     blocked.clear();
