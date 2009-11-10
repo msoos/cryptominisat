@@ -1228,18 +1228,47 @@ void Solver::replace(const map<Var, Lit>& toReplace)
     }
 }
 
-void Solver::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& set)
+void Solver::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& cs)
 {
-    for (Clause **c = set.getData(), **end = c + set.size(); c != end; c++) {
-        for (Lit *l = &(**c)[0], *lend = l + (**c).size(); l != lend; l++) {
+    Clause **a = cs.getData();
+    Clause **r = a;
+    for (Clause **end = a + cs.size(); r != end; ) {
+        Clause& c = **r;
+        bool needReattach = false;
+        for (Lit *l = c.getData(), *end = l + c.size();  l != end; l++) {
             const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
-            detachClause(**c);
             if (it != toReplace.end()) {
+                if (!needReattach) detachClause(c);
+                needReattach = true;
                 *l = Lit(it->second.var(), it->second.sign()^l->sign());
             }
-            attachClause(**c);
+        }
+        
+        bool skip = false;
+        if (needReattach) {
+            std::sort(c.getData(), c.getData() + c.size());
+            Lit p;
+            int i, j;
+            for (i = j = 0, p = lit_Undef; i < c.size(); i++) {
+                if (value(c[i]) == l_True || c[i] == ~p) {
+                    free(&c);
+                    r++;
+                    skip = true;
+                    break;
+                }
+                else if (value(c[i]) != l_False && c[i] != p)
+                    c[j++] = p = c[i];
+            }
+            c.shrink(i - j);
+            if (!skip) {
+                attachClause(c);
+                *a++ = *r++;
+            }
+        } else {
+            *a++ = *r++;
         }
     }
+    cs.shrink(r-a);
 }
 
 
