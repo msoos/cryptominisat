@@ -163,6 +163,10 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         return ok = (propagate() == NULL);
     }
     case 2: {
+        #ifdef VERBOSE_DEBUG
+        cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xor_clause_inverted ? "-" : "") << ps[1].var()+1 << endl;
+        #endif
+        
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
         
