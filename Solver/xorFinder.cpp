@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility>
 #include <iostream>
 #include "Solver.h"
+#include "VarReplacer.h"
 
 //#define VERBOSE_DEBUG
 
@@ -103,7 +104,10 @@ uint XorFinder::doByPart(uint& sumLengths)
         from = until+1;
     }
     
-    S->replace(toReplace);
+    VarReplacer replacer(S);
+    replacer.replace(toReplace);
+    if (S->ok == false) return found;
+    S->ok = (S->propagate() == NULL);
     
     #ifdef VERBOSE_DEBUG
     cout << "Overdone work due to partitioning:" << (double)sumNumClauses/(double)sumNonParitionClauses << "x" << endl;

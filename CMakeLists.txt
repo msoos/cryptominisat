@@ -38,5 +38,6 @@ add_library(cryptominisatlib
         Solver/xorFinder.cpp
         Solver/conglomerate.cpp
         Solver/MatrixFinder.cpp
+        Solver/VarReplacer.cpp
 )
 

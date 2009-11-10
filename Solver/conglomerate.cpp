@@ -1,5 +1,6 @@
 #include "conglomerate.h"
 #include "Solver.h"
+#include "VarReplacer.h"
 
 #include <utility>
 #include <algorithm>
@@ -64,7 +65,6 @@ uint Conglomerate::conglomerateXors(Solver* _S)
     
     fillVarToXor();
     
-    map<Var, Lit> toReplace;
     uint found = 0;
     while(varToXor.begin() != varToXor.end()) {
         varToXorMap::iterator it = varToXor.begin();
@@ -187,10 +187,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
         varToXor.erase(it);
     }
     
-    clearToRemove();
-    S->replace(toReplace);
-    
-    return found;
+    return true;
 }
 
 void Conglomerate::clearDouble(vector<Lit>& ps) const

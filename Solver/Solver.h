@@ -258,9 +258,7 @@ protected:
     vector<pair<XorClause*, Var> > calcAtFinish;
     friend class Conglomerate;
     friend class MatrixFinder;
-    void replace(const map<Var, Lit>& toReplace);
-    void replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& set);
-    void replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& clauses);
+    friend class VarReplacer;
     map<Var, Lit> replaceAtSimplify;
 
     // Debug:

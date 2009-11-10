@@ -28,6 +28,7 @@ private:
     varToXorMap varToXor; 
     vector<bool> blocked;
     vector<bool> toRemove;
+    map<Var, Lit> toReplace;
     
     Solver* S;
 };
