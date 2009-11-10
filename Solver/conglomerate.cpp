@@ -239,7 +239,7 @@ void Conglomerate::doCalcAtFinish(Solver* S)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Doing doCalcAtFinish" << endl;
-    #endif;
+    #endif
     
     vector<Var> toAssign;
     for (vector<XorClause*>::reverse_iterator it = S->calcAtFinish.rbegin(); it != S->calcAtFinish.rend(); it++) {
