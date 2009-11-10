@@ -117,74 +117,87 @@ uint Conglomerate::conglomerateXors(Solver* _S)
             found++;
             clearDouble(ps);
             
-            switch(ps.size()) {
-            case 0: {
-                #ifdef VERBOSE_DEBUG
-                cout << "--> xor is 0-long" << endl;
-                #endif
-                
-                if  (!inverted) {
-                    S->ok = false;
-                    clearToRemove();
-                    return found;
-                }
-                break;
-            }
-            case 1: {
-                #ifdef VERBOSE_DEBUG
-                cout << "--> xor is 1-long, attempting to set variable " << ps[0].var()+1 << endl;
-                #endif
-                
-                if (S->assigns[ps[0].var()] == l_Undef) {
-                    assert(S->decisionLevel() == 0);
-                    S->uncheckedEnqueue(Lit(ps[0].var(), inverted));
-                    ps[0] = Lit(ps[0].var(), inverted);
-                    Clause* newC = Clause_new(ps, old_group);
-                    S->unitary_learnts.push(newC);
-                } else if (S->assigns[ps[0].var()] != boolToLBool(!inverted)) {
-                    #ifdef VERBOSE_DEBUG
-                    cout << "Conflict. Aborting.";
-                    #endif
-                    S->ok = false;
-                    clearToRemove();
-                    return found;
-                }
-                break;
-            }
-            
-            case 2: {
-                XorClause* newX = XorClause_new(ps, inverted, old_group);
-                #ifdef VERBOSE_DEBUG
-                cout << "--> xor is 2-long, must later replace variable:" << endl;
-                newX->plain_print();
-                #endif
-                
-                toReplace[ps[0].var()] = Lit(ps[1].var(), !inverted);
-                S->calcAtFinish.push_back(make_pair(newX, ps[0].var()));
-                break;
-            }
-            
-            default: {
-                XorClause* newX = XorClause_new(ps, inverted, old_group);
-                
-                #ifdef VERBOSE_DEBUG
-                cout << "- Adding: ";
-                newX->plain_print();
-                #endif
-                
-                S->xorclauses.push(newX);
-                toRemove.push_back(false);
-                S->attachClause(*newX);
-                for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {
-                    if (!blocked[a->var()])
-                        varToXor[a->var()].push_back(make_pair(newX, toRemove.size()-1));
-                }
-                break;
-            }
+            if (!dealWithNewClause(ps, inverted, old_group)) {
+                clearToRemove();
+                S->ok = false;
+                return found;
             }
         }
         
         varToXor.erase(it);
+    }
+    
+    clearToRemove();
+    
+    VarReplacer replacer(S);
+    replacer.replace(toReplace);
+    if (S->ok == false) return found;
+    S->ok = (S->propagate() == NULL);s
+    
+    return found;
+}
+
+bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const uint old_group)
+{
+    switch(ps.size()) {
+        case 0: {
+            #ifdef VERBOSE_DEBUG
+            cout << "--> xor is 0-long" << endl;
+            #endif
+            
+            if  (!inverted)
+                return false;
+            break;
+        }
+        case 1: {
+            #ifdef VERBOSE_DEBUG
+            cout << "--> xor is 1-long, attempting to set variable " << ps[0].var()+1 << endl;
+            #endif
+            
+            if (S->assigns[ps[0].var()] == l_Undef) {
+                assert(S->decisionLevel() == 0);
+                S->uncheckedEnqueue(Lit(ps[0].var(), inverted));
+                ps[0] = Lit(ps[0].var(), inverted);
+                Clause* newC = Clause_new(ps, old_group);
+                S->unitary_learnts.push(newC);
+            } else if (S->assigns[ps[0].var()] != boolToLBool(!inverted)) {
+                #ifdef VERBOSE_DEBUG
+                cout << "Conflict. Aborting.";
+                #endif
+                return false;
+            }
+            break;
+        }
+        
+        case 2: {
+            XorClause* newX = XorClause_new(ps, inverted, old_group);
+            #ifdef VERBOSE_DEBUG
+            cout << "--> xor is 2-long, must later replace variable:" << endl;
+            newX->plain_print();
+            #endif
+            
+            toReplace[ps[0].var()] = Lit(ps[1].var(), !inverted);
+            S->calcAtFinish.push_back(make_pair(newX, ps[0].var()));
+            break;
+        }
+        
+        default: {
+            XorClause* newX = XorClause_new(ps, inverted, old_group);
+            
+            #ifdef VERBOSE_DEBUG
+            cout << "- Adding: ";
+            newX->plain_print();
+            #endif
+            
+            S->xorclauses.push(newX);
+            toRemove.push_back(false);
+            S->attachClause(*newX);
+            for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {
+                if (!blocked[a->var()])
+                    varToXor[a->var()].push_back(make_pair(newX, toRemove.size()-1));
+            }
+            break;
+        }
     }
     
     return true;

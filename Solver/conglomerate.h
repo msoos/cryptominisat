@@ -23,6 +23,7 @@ private:
     void fillVarToXor();
     void clearDouble(vector<Lit>& ps) const;
     void clearToRemove();
+    bool dealWithNewClause(vector<Lit>& ps, const bool inverted, const uint old_group);
     
     typedef map<uint, vector<pair<XorClause*, uint> > > varToXorMap;
     varToXorMap varToXor; 
