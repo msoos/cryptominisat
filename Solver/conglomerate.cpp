@@ -132,7 +132,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
     VarReplacer replacer(S);
     replacer.replace(toReplace);
     if (S->ok == false) return found;
-    S->ok = (S->propagate() == NULL);s
+    S->ok = (S->propagate() == NULL);
     
     return found;
 }
