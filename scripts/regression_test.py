@@ -123,7 +123,8 @@ for fname in dirList:
                     numlit = int(lit)
                     if (numlit != 0) :
                       if (abs(numlit) not in value) :
-                        print "var %d not solved, but referred to in the CNF" %(numlit)
+                        print "var %d not solved, but referred to in the CNF" %(abs(numlit))
+                        exit(-1)
                       if (numlit < 0) : final |= ~value[abs(numlit)]
                       else : final |= value[numlit]
                       if (final == True) : break
@@ -139,7 +140,8 @@ for fname in dirList:
                     numlit = int(lit)
                     if (numlit != 0) :
                       if (abs(numlit) not in value) :
-                        print "var %d not solved, but referred to in the CNF" %(numlit)
+                        print "Error: var %d not solved, but referred to in the CNF" %(abs(numlit))
+                        exit(-1)
                       final ^= value[abs(numlit)]
                       final ^= (numlit < 0)
                   if (final == False) :
