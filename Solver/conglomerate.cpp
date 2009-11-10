@@ -268,11 +268,11 @@ void Conglomerate::doCalcAtFinish(Solver* S)
         }
         #endif
         assert(toAssign.size() > 0);
+        
         for (uint i = 1; i < toAssign.size(); i++) {
-            S->assigns[toAssign[i]] = l_False;
+            S->uncheckedEnqueue(Lit(toAssign[i], false), &c);
         }
-        S->assigns[toAssign[0]] = final ? l_False : l_True;
-        free(&c);
+        S->uncheckedEnqueue(Lit(toAssign[0], !final), &c);
     }
 }
 
