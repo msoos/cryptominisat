@@ -7,7 +7,16 @@ noinst_LTLIBRARIES = libcryptominisat.la
 
 AM_CXXFLAGS = -Wall $(all_includes) -I$(src)/Solver -I$(srcdir)/MTRand -I$(srcdir)/mtl
 
-libcryptominisat_la_SOURCES = Solver/fcopy.cpp Solver/Logger.C Solver/Solver.C Solver/clause.cpp Solver/gaussian.cpp Solver/packedRow.cpp
+libcryptominisat_la_SOURCES = Solver/fcopy.cpp \
+			      Solver/Logger.C \
+			      Solver/Solver.C \
+			      Solver/clause.cpp \
+			      Solver/gaussian.cpp \
+			      Solver/packedRow.cpp \
+			      Solver/xorFinder.cpp \
+			      Solver/conglomerate.cpp \
+			      Solver/MatrixFinder.cpp
+
 
 bin_PROGRAMS = cryptominisat
 cryptominisat_LDADD = libcryptominisat.la
