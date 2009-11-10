@@ -41,6 +41,19 @@ void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& c
     XorClause **r = a;
     for (XorClause **end = a + cs.size(); r != end;) {
         XorClause& c = **r;
+        if (!need_reattach && c.size() == 2) {
+            //the first is always replaceable. What is interesting is whether we need to replace the second
+            map<Var, Lit>::const_iterator it = toReplace.find(c[1].var());
+            if (it != toReplace.end()) {
+                c[1] = Lit(it->second.var(), false);
+                c.invert(it->second.sign());
+            }
+            
+            a++;
+            r++;
+            continue;
+        }
+        
         bool needReattach = false;
         for (Lit *l = &c[0], *lend = l + c.size(); l != lend; l++) {
             const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
@@ -54,7 +67,7 @@ void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& c
             }
         }
         
-        if (needReattach) {
+        if (need_reattach && needReattach) {
             std::sort(c.getData(), c.getData() + c.size());
             Lit p;
             int i, j;
@@ -87,7 +100,7 @@ void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& c
                 break;
             }
             default: {
-                if (need_reattach) S->attachClause(c);
+                S->attachClause(c);
                 *a++ = *r++;
                 break;
             }
