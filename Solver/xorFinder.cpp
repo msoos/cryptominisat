@@ -160,6 +160,7 @@ uint XorFinder::findXors(uint& sumLengths)
         assert(x->size() > 1);
         if (x->size() == 2) {
             toReplace[lits[0].var()] = Lit(lits[1].var(), !impair);
+            S->decision_var[lits[0].var()] = false;
             S->calcAtFinish.push(x);
         } else {
             xorcls.push(x);
