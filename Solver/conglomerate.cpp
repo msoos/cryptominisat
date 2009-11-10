@@ -272,7 +272,7 @@ void Conglomerate::doCalcAtFinish(Solver* S)
         for (uint i = 1; i < toAssign.size(); i++) {
             S->uncheckedEnqueue(Lit(toAssign[i], false), &c);
         }
-        S->uncheckedEnqueue(Lit(toAssign[0], !final), &c);
+        S->uncheckedEnqueue(Lit(toAssign[0], final), &c);
     }
 }
 
