@@ -1217,7 +1217,6 @@ void Solver::replace(const map<Var, Lit>& toReplace)
             const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
             detachClause(**c);
             if (it != toReplace.end()) {
-                printf("replacing!!!!!!!!!!!!!!!!!! (xor)\n");
                 *l = Lit(it->second.var(), false);
                 (**c).invert(it->second.sign());
             }
@@ -1233,7 +1232,6 @@ void Solver::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& set)
             const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
             detachClause(**c);
             if (it != toReplace.end()) {
-                printf("replacing!!!!!!!!!!!!!!!!!! (normal)\n");
                 *l = Lit(it->second.var(), it->second.sign()^l->sign());
             }
             attachClause(**c);
