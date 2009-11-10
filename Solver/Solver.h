@@ -260,6 +260,7 @@ protected:
     friend class MatrixFinder;
     void replace(const map<Var, Lit>& toReplace);
     void replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& set);
+    void replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& clauses);
     map<Var, Lit> replaceAtSimplify;
 
     // Debug:

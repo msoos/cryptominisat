@@ -984,6 +984,9 @@ lbool Solver::simplify()
     assert(decisionLevel() == 0);
     
     replace(replaceAtSimplify);
+    propagate();
+    if (!ok)
+        return l_False;
     replaceAtSimplify.clear();
 
     if (!ok || propagate() != NULL) {
@@ -1215,17 +1218,70 @@ void Solver::replace(const map<Var, Lit>& toReplace)
     replace_set(toReplace, clauses);
     replace_set(toReplace, learnts);
     
-    for (XorClause **c = xorclauses.getData(), **end = c + xorclauses.size(); c != end; c++) {
-        for (Lit *l = &(**c)[0], *lend = l + (**c).size(); l != lend; l++) {
+    replace_set(toReplace, xorclauses);
+}
+
+void Solver::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& set)
+{
+    XorClause **a = set.getData();
+    XorClause **r = a;
+    for (XorClause **end = a + set.size(); r != end;) {
+        XorClause& c = **r;
+        bool needReattach = false;
+        for (Lit *l = &c[0], *lend = l + c.size(); l != lend; l++) {
             const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
-            detachClause(**c);
             if (it != toReplace.end()) {
+                if (!needReattach)
+                    detachClause(c);
+                needReattach = true;
                 *l = Lit(it->second.var(), false);
-                (**c).invert(it->second.sign());
+                c.invert(it->second.sign());
             }
-            attachClause(**c);
+        }
+        
+        if (needReattach) {
+            std::sort(c.getData(), c.getData() + c.size());
+            Lit p;
+            int i, j;
+            for (i = j = 0, p = lit_Undef; i < c.size(); i++) {
+                c[i] = c[i].unsign();
+                if (c[i] == p) {
+                    //added, but easily removed
+                    j--;
+                    p = lit_Undef;
+                    if (!assigns[c[i].var()].isUndef())
+                        c.invert(assigns[c[i].var()].getBool());
+                } else if (value(c[i]) == l_Undef) //just add
+                    c[j++] = p = c[i];
+                else c.invert(value(c[i]) == l_True); //modify xor_clause_inverted instead of adding
+            }
+            c.shrink(i - j);
+            
+            switch (c.size()) {
+            case 0: {
+                if (!c.xor_clause_inverted())
+                    ok = false;
+                free(&c);
+                r++;
+                break;
+            }
+            case 1: {
+                uncheckedEnqueue(Lit(c[0].var(), !c.xor_clause_inverted()));
+                free(&c);
+                r++;
+                break;
+            }
+            default: {
+                attachClause(c);
+                *a++ = *r++;
+                break;
+            }
+            }
+        } else {
+            *a++ = *r++;
         }
     }
+    set.shrink(r-a);
 }
 
 void Solver::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& cs)
