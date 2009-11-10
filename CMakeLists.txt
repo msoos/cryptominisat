@@ -8,8 +8,8 @@ ENDIF()
 
 PROJECT(cryptominisat)
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -march=native")
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -march=native")
+SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -ggdb")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -march=native")
 
 find_package( ZLIB )
 link_directories( ${ZLIB_LIBRARY} )
