@@ -29,22 +29,22 @@ void VarReplacer::replace(const map<Var, Lit>& toReplace)
     replace_set(toReplace, S->clauses);
     replace_set(toReplace, S->learnts);
     
-    replace_set(toReplace, S->xorclauses);
+    replace_set(toReplace, S->xorclauses, true);
     
     printf("|  Replacing       %8d vars, replaced: %8d                         |\n", toReplace.size(), replaced);
 }
 
-void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& set)
+void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& cs, const bool need_reattach)
 {
     XorClause **a = set.getData();
     XorClause **r = a;
-    for (XorClause **end = a + set.size(); r != end;) {
+    for (XorClause **end = a + cs.size(); r != end;) {
         XorClause& c = **r;
         bool needReattach = false;
         for (Lit *l = &c[0], *lend = l + c.size(); l != lend; l++) {
             const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
             if (it != toReplace.end()) {
-                if (!needReattach)
+                if (need_reattach && !needReattach)
                     S->detachClause(c);
                 needReattach = true;
                 *l = Lit(it->second.var(), false);
@@ -86,7 +86,7 @@ void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& s
                 break;
             }
             default: {
-                S->attachClause(c);
+                if (need_reattach) S->attachClause(c);
                 *a++ = *r++;
                 break;
             }

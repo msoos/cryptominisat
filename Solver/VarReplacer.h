@@ -20,7 +20,7 @@ class VarReplacer
     
     private:
         void replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& set);
-        void replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& set);
+        void replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& cs, const bool need_reattach);
         
         uint replaced;
         Solver* S;
