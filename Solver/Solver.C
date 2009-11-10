@@ -147,29 +147,37 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
     }
     ps.shrink(i - j);
 
-    if (ps.size() == 0) {
+    switch(ps.size()) {
+    case 0: {
         if (xor_clause_inverted)
             return true;
 
         if (dynamic_behaviour_analysis) logger.empty_clause(group);
         return ok = false;
-    } else if (ps.size() == 1) {
+    }
+    case 1: {
         assert(value(ps[0]) == l_Undef);
         uncheckedEnqueue( (xor_clause_inverted) ? ~ps[0] : ps[0]);
         if (dynamic_behaviour_analysis)
             logger.propagation((xor_clause_inverted) ? ~ps[0] : ps[0], Logger::addclause_type, group);
         return ok = (propagate() == NULL);
-    } else {
+    }
+    case 2: {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
         
-        if (ps.size() == 2) {
-            replaceAtSimplify[ps[0].var()] = Lit(ps[1].var(), !xor_clause_inverted);
-            calcAtFinish.push_back(std::make_pair(c, ps[0].var()));
-        } else {
-            xorclauses.push(c);
-            attachClause(*c);
-        }
+        replaceAtSimplify[ps[0].var()] = Lit(ps[1].var(), !xor_clause_inverted);
+        calcAtFinish.push_back(std::make_pair(c, ps[0].var()));
+        break;
+    }
+    default: {
+        learnt_clause_group = std::max(group+1, learnt_clause_group);
+        XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
+        
+        xorclauses.push(c);
+        attachClause(*c);
+        break;
+    }
     }
 
     return true;
