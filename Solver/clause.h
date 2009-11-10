@@ -179,13 +179,10 @@ public:
     }
     
     void plain_print(FILE* to = stdout) const {
-        if (size() == 0 && xor_clause_inverted())
-            return;
-        fprintf(stdout, "x");
+        fprintf(to, "x");
         if (xor_clause_inverted())
             printf("-");
         for (uint i = 0; i < size(); i++) {
-            assert(!data[i].sign());
             fprintf(to, "%d ", data[i].var() + 1);
         }
         fprintf(to, "0\n");
