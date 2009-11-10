@@ -2,6 +2,14 @@
 
 #include "Solver.h"
 
+//#define VERBOSE_DEBUG
+
+#ifdef VERBOSE_DEBUG
+#include <iostream>
+using std::cout;
+using std::endl;
+#endif
+
 VarReplacer::VarReplacer(Solver *_S) :
     replaced(0)
     , S(_S)
@@ -11,6 +19,12 @@ VarReplacer::VarReplacer(Solver *_S) :
 void VarReplacer::replace(const map<Var, Lit>& toReplace)
 {
     if (toReplace.size() == 0) return;
+    
+    #ifdef VERBOSE_DEBUG
+    for (map<Var, Lit>::const_iterator it = toReplace.begin(); it != toReplace.end(); it++) {
+        cout << "Replacing var " << it->first+1 << " with Lit " << (it->second.sign() ? "-" : "") <<  it->second.var()+1 << endl;
+    }
+    #endif;
     
     replace_set(toReplace, S->clauses);
     replace_set(toReplace, S->learnts);
