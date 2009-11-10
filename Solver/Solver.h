@@ -37,6 +37,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 class Gaussian;
 class MatrixFinder;
 class Conglomerate;
+class VarReplacer;
 
 
 //#define VERBOSE_DEBUG_XOR
