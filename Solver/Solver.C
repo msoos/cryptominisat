@@ -1251,8 +1251,6 @@ void Solver::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& cs)
             int i, j;
             for (i = j = 0, p = lit_Undef; i < c.size(); i++) {
                 if (value(c[i]) == l_True || c[i] == ~p) {
-                    free(&c);
-                    r++;
                     skip = true;
                     break;
                 }
@@ -1260,9 +1258,25 @@ void Solver::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& cs)
                     c[j++] = p = c[i];
             }
             c.shrink(i - j);
-            if (!skip) {
+            
+            if (skip) {
+                free(&c);
+                r++;
+                continue;
+            }
+            
+            switch(c.size()) {
+            case 1 : {
+                uncheckedEnqueue(c[0]);
+                free(&c);
+                r++;
+                break;
+            }
+            default: {
                 attachClause(c);
                 *a++ = *r++;
+                break;
+            }
             }
         } else {
             *a++ = *r++;
