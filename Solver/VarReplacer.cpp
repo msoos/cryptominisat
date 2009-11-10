@@ -36,7 +36,7 @@ void VarReplacer::replace(const map<Var, Lit>& toReplace)
 
 void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& cs, const bool need_reattach)
 {
-    XorClause **a = set.getData();
+    XorClause **a = cs.getData();
     XorClause **r = a;
     for (XorClause **end = a + cs.size(); r != end;) {
         XorClause& c = **r;
@@ -95,7 +95,7 @@ void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& c
             *a++ = *r++;
         }
     }
-    set.shrink(r-a);
+    cs.shrink(r-a);
 }
 
 void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& cs)
