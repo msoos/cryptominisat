@@ -89,12 +89,13 @@ uint Conglomerate::conglomerateXors(Solver* _S)
         #ifdef VERBOSE_DEBUG
         cout << "- Removing: ";
         x.plain_print();
+        cout << "Adding var " << var+1 << " to calcAtFinish" << endl;
         #endif
         
         assert(!toRemove[c[0].second]);
         toRemove[c[0].second] = true;
         S->detachClause(x);
-        S->calcAtFinish.push_back(make_pair(&x, var));
+        S->calcAtFinish.push_back(&x);
         found++;
         
         vector<Lit> ps;
@@ -177,7 +178,8 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
             #endif
             
             toReplace[ps[0].var()] = Lit(ps[1].var(), !inverted);
-            S->calcAtFinish.push_back(make_pair(newX, ps[0].var()));
+            S->decision_var[ps[0].var()] = false;
+            S->calcAtFinish.push_back(newX);
             break;
         }
         
@@ -235,16 +237,35 @@ void Conglomerate::clearToRemove()
 
 void Conglomerate::doCalcAtFinish(Solver* S)
 {
-    for (vector<pair<XorClause*, Var> >::reverse_iterator it = S->calcAtFinish.rbegin(); it != S->calcAtFinish.rend(); it++) {
-        XorClause& c = *it->first;
+    #ifdef VERBOSE_DEBUG
+    cout << "Doing doCalcAtFinish" << endl;
+    #endif;
+    
+    vector<Var> toAssign;
+    for (vector<XorClause*>::reverse_iterator it = S->calcAtFinish.rbegin(); it != S->calcAtFinish.rend(); it++) {
+        toAssign.clear();
+        XorClause& c = **it;
+        
+        #ifdef VERBOSE_DEBUG
+        cout << "Treating xor-clause:";
+        S->printClause(c); cout << endl;
+        #endif
+        
         bool final = c.xor_clause_inverted();
         for (int k = 0, size = c.size(); k < size; k++ ) {
             const lbool& val = S->assigns[c[k].var()];
-            if (c[k].var() != it->second)
+            if (val == l_Undef)
+                toAssign.push_back(c[k].var());
+            else
                 final ^= val.getBool();
         }
-        S->assigns[it->second] = final ? l_False : l_True;
-        free(it->first);
+        
+        assert(toAssign.size() > 0);
+        for (uint i = 1; i < toAssign.size(); i++) {
+            S->assigns[toAssign[i]] = l_False;
+        }
+        S->assigns[toAssign[0]] = final ? l_False : l_True;
+        free(&c);
     }
 }
 

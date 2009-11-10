@@ -59,6 +59,9 @@ uint XorFinder::doByPart(uint& sumLengths)
     
     uint found = 0;
     sumLengths = 0;
+    #ifdef VERBOSE_DEBUG
+    uint sumNumClauses = 0;
+    #endif
     
     const uint limit = 400000;
     uint from = 0;
@@ -71,9 +74,9 @@ uint XorFinder::doByPart(uint& sumLengths)
         }
         #ifdef VERBOSE_DEBUG
         printf("Xor-finding: Vars from: %d, until: %d\n", from, until);
+        uint numClauses = 0;
         #endif
         
-        uint numClauses = 0;
         table.clear();
         table.resize(estimate/2);
         uint i = 0;
@@ -84,7 +87,9 @@ uint XorFinder::doByPart(uint& sumLengths)
             for (Lit *l = &(**it)[0], *end = l + size; l != end; l++) {
                 if (l->var() >= from  && l->var() <= until) {
                     table[*it].push_back(make_pair(*it, i));
+                    #ifdef VERBOSE_DEBUG
                     numClauses++;
+                    #endif
                     break;
                 }
             }
@@ -155,7 +160,7 @@ uint XorFinder::findXors(uint& sumLengths)
         assert(x->size() > 1);
         if (x->size() == 2) {
             toReplace[lits[0].var()] = Lit(lits[1].var(), !impair);
-            S->calcAtFinish.push_back(make_pair(x, lits[0].var()));
+            S->calcAtFinish.push_back(x);
         } else {
             xorcls.push(x);
             S->attachClause(*x);
