@@ -167,6 +167,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
         
         replaceAtSimplify[ps[0].var()] = Lit(ps[1].var(), !xor_clause_inverted);
+        decision_var[ps[0].var()] = false;
         calcAtFinish.push_back(std::make_pair(c, ps[0].var()));
         break;
     }
