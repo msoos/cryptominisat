@@ -259,7 +259,14 @@ void Conglomerate::doCalcAtFinish(Solver* S)
             else
                 final ^= val.getBool();
         }
-        
+        #ifdef VERBOSE_DEBUG
+        if (toAssign.size() == 0) {
+            cout << "ERROR: toAssign.size() == 0 !!" << endl;
+            for (int k = 0, size = c.size(); k < size; k++ ) {
+                cout << "Var: " << c[k].var() + 1 << " Level: " << S->level[c[k].var()] << endl;
+            }
+        }
+        #endif
         assert(toAssign.size() > 0);
         for (uint i = 1; i < toAssign.size(); i++) {
             S->assigns[toAssign[i]] = l_False;
