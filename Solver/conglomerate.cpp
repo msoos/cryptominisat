@@ -173,7 +173,7 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
         case 2: {
             XorClause* newX = XorClause_new(ps, inverted, old_group);
             #ifdef VERBOSE_DEBUG
-            cout << "--> xor is 2-long, must later replace variable:" << endl;
+            cout << "--> xor is 2-long, must later replace variable, adding var " << ps[0].var() + 1 << " to calcAtFinish:" << endl;
             newX->plain_print();
             #endif
             
@@ -238,7 +238,7 @@ void Conglomerate::clearToRemove()
 void Conglomerate::doCalcAtFinish(Solver* S)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "Doing doCalcAtFinish" << endl;
+    cout << "Executing doCalcAtFinish" << endl;
     #endif
     
     vector<Var> toAssign;
@@ -247,7 +247,7 @@ void Conglomerate::doCalcAtFinish(Solver* S)
         XorClause& c = **it;
         
         #ifdef VERBOSE_DEBUG
-        cout << "Treating xor-clause:";
+        cout << "doCalcFinish for xor-clause:";
         S->printClause(c); cout << endl;
         #endif
         
