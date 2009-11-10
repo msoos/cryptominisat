@@ -24,7 +24,7 @@ void VarReplacer::replace(const map<Var, Lit>& toReplace)
     for (map<Var, Lit>::const_iterator it = toReplace.begin(); it != toReplace.end(); it++) {
         cout << "Replacing var " << it->first+1 << " with Lit " << (it->second.sign() ? "-" : "") <<  it->second.var()+1 << endl;
     }
-    #endif;
+    #endif
     
     replace_set(toReplace, S->clauses);
     replace_set(toReplace, S->learnts);
