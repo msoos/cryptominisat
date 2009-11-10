@@ -223,6 +223,7 @@ protected:
     template<class T>
     void     removeSatisfied  (vec<T*>& cs);                                           // Shrink 'cs' to contain only non-satisfied clauses.
     void     cleanClauses     (vec<XorClause*>& cs);
+    bool     cleanClause      (Clause& c) const;
     void     cleanClauses     (vec<Clause*>& cs);                                      // Remove TRUE or FALSE variables from the xor clauses and remove the FALSE variables from the normal clauses
     llbool   handle_conflict  (vec<Lit>& learnt_clause, Clause* confl, int& conflictC);// Handles the conflict clause
     llbool   new_decision     (int& nof_conflicts, int& nof_learnts, int& conflictC);  // Handles the case when all propagations have been made, and now a decision must be made

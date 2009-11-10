@@ -924,23 +924,26 @@ void Solver::removeSatisfied(vec<T*>& cs)
     cs.shrink(i - j);
 }
 
+bool Solver::cleanClause(Clause& c) const
+{
+    Lit *i, *j, *end;
+    uint at = 0;
+    for (i = j = c.getData(), end = i + c.size();  i != end; i++, at++) {
+        if (value(*i) == l_Undef) {
+            *j = *i;
+            j++;
+        } else assert(at > 1);
+        assert(value(*i) != l_True);
+    }
+    c.shrink(i-j);
+    return (i-j > 0);
+}
+
 void Solver::cleanClauses(vec<Clause*>& cs)
 {
     uint useful = 0;
-    for (int s = 0; s < cs.size(); s++) {
-        Clause& c = *cs[s];
-        Lit *i, *j, *end;
-        uint at = 0;
-        for (i = j = c.getData(), end = i + c.size();  i != end; i++, at++) {
-            if (value(*i) == l_Undef) {
-                *j = *i;
-                j++;
-            } else assert(at > 1);
-            assert(value(*i) != l_True);
-        }
-        c.shrink(i-j);
-        if (i-j > 0) useful++;
-    }
+    for (int s = 0; s < cs.size(); s++)
+        useful += cleanClause(*cs[s]);
     #ifdef VERBOSE_DEBUG
     cout << "cleanClauses(Clause) useful:" << useful << endl;
     #endif
