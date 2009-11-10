@@ -1363,6 +1363,37 @@ lbool Solver::solve(const vec<Lit>& assumps)
 //=================================================================================================
 // Debug methods:
 
+bool Solver::verifyXorClauses(vec<XorClause*>& cs) const
+{
+    #ifdef VERBOSE_DEBUG
+    cout << "Checking xor-clauses whether they have been properly satisfied." << endl;;
+    #endif
+    
+    bool failed = false;
+    
+    for (int i = 0; i < xorclauses.size(); i++) {
+        XorClause& c = *xorclauses[i];
+        bool final = c.xor_clause_inverted();
+        
+        #ifdef VERBOSE_DEBUG
+        std::sort(&c[0], &c[0] + c.size());
+        c.plain_print();
+        #endif
+        
+        for (uint j = 0; j < c.size(); j++) {
+            assert(modelValue(c[j].unsign()) != l_Undef);
+            final ^= (modelValue(c[j].unsign()) == l_True);
+        }
+        if (!final) {
+            printf("unsatisfied clause: ");
+            printClause(*xorclauses[i]);
+            printf("\n");
+            failed = true;
+        }
+    }
+    
+    return failed;
+}
 
 void Solver::verifyModel()
 {
@@ -1380,23 +1411,13 @@ void Solver::verifyModel()
 next:
         ;
     }
-
-    for (int i = 0; i < xorclauses.size(); i++) {
-        XorClause& c = *xorclauses[i];
-        bool final = c.xor_clause_inverted();
-        for (uint j = 0; j < c.size(); j++)
-            final ^= (modelValue(c[j].unsign()) == l_True);
-        if (!final) {
-            printf("unsatisfied clause: ");
-            printClause(*xorclauses[i]);
-            printf("\n");
-            failed = true;
-        }
-    }
+    
+    failed |= verifyXorClauses(xorclauses);
+    failed |= verifyXorClauses(calcAtFinish);
 
     assert(!failed);
 
-    printf("Verified %d original clauses.\n", clauses.size() + xorclauses.size());
+    printf("Verified %d clauses.\n", clauses.size() + xorclauses.size() + calcAtFinish.size());
 }
 
 

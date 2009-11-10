@@ -266,6 +266,7 @@ protected:
     void     printClause      (const Clause& c) const;
     void     printClause      (const XorClause& c) const;
     void     verifyModel      ();
+    bool     verifyXorClauses(vec<XorClause*>& cs) const;
     void     checkLiteralCount();
 };
 
