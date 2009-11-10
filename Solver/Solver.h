@@ -255,7 +255,7 @@ protected:
     
     //Xor-finding related stuff
     friend class XorFinder;
-    vector<XorClause*> calcAtFinish;
+    vec<XorClause*> calcAtFinish;
     friend class Conglomerate;
     friend class MatrixFinder;
     friend class VarReplacer;

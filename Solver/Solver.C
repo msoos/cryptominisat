@@ -174,7 +174,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         
         replaceAtSimplify[ps[0].var()] = Lit(ps[1].var(), !xor_clause_inverted);
         decision_var[ps[0].var()] = false;
-        calcAtFinish.push_back(c);
+        calcAtFinish.push(c);
         break;
     }
     default: {
@@ -1273,7 +1273,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
         if (!ok) return l_False;
         ok = (propagate() == NULL);
         if (!ok) return l_False;
-        replaceAtSimplify.clear();
     }
 
     if (xorFinder) {

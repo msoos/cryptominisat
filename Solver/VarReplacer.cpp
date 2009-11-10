@@ -30,6 +30,7 @@ void VarReplacer::replace(const map<Var, Lit>& toReplace)
     replace_set(toReplace, S->learnts);
     
     replace_set(toReplace, S->xorclauses, true);
+    replace_set(toReplace, S->calcAtFinish, false);
     
     printf("|  Replacing       %8d vars, replaced: %8d                         |\n", toReplace.size(), replaced);
 }

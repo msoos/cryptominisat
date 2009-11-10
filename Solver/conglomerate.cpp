@@ -95,7 +95,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
         assert(!toRemove[c[0].second]);
         toRemove[c[0].second] = true;
         S->detachClause(x);
-        S->calcAtFinish.push_back(&x);
+        S->calcAtFinish.push(&x);
         found++;
         
         vector<Lit> ps;
@@ -179,7 +179,7 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
             
             toReplace[ps[0].var()] = Lit(ps[1].var(), !inverted);
             S->decision_var[ps[0].var()] = false;
-            S->calcAtFinish.push_back(newX);
+            S->calcAtFinish.push(newX);
             break;
         }
         
@@ -242,7 +242,7 @@ void Conglomerate::doCalcAtFinish(Solver* S)
     #endif
     
     vector<Var> toAssign;
-    for (vector<XorClause*>::reverse_iterator it = S->calcAtFinish.rbegin(); it != S->calcAtFinish.rend(); it++) {
+    for (XorClause** it = S->calcAtFinish.getData() + S->calcAtFinish.size()-1; it != S->calcAtFinish.getData()-1; it--) {
         toAssign.clear();
         XorClause& c = **it;
         
