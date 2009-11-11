@@ -87,8 +87,7 @@ Solver::~Solver()
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
     for (uint i = 0; i < gauss_matrixes.size(); i++) delete gauss_matrixes[i];
     gauss_matrixes.clear();
-    for (XorClause** it = calcAtFinish.getData(), **end = it + calcAtFinish.size(); it != end; it++)
-        free(*it);
+    for (int i = 0; i < calcAtFinish.size(); i++) free(calcAtFinish[i]);
 }
 
 //=================================================================================================
