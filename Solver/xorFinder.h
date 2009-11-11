@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/types.h>
 #include <hash_map>
 #include <map>
+#include "VarReplacer.h"
 
 class Solver;
 
@@ -84,8 +85,6 @@ class XorFinder
         
         ClauseTable table;
         ClauseTable::iterator nextXor;
-        
-        map<Var, Lit> toReplace;
         
         vec<Clause*>& cls;
         vec<XorClause*>& xorcls;

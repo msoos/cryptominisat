@@ -31,6 +31,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "MersenneTwister.h"
 #include "SolverTypes.h"
 #include "clause.h"
+#include "VarReplacer.h"
 
 
 #include "gaussianconfig.h"
@@ -38,6 +39,7 @@ class Gaussian;
 class MatrixFinder;
 class Conglomerate;
 class VarReplacer;
+class XorFinder;
 
 
 //#define VERBOSE_DEBUG_XOR
@@ -256,18 +258,18 @@ protected:
     
     //Xor-finding related stuff
     friend class XorFinder;
-    vec<XorClause*> calcAtFinish;
     friend class Conglomerate;
     friend class MatrixFinder;
     friend class VarReplacer;
-    map<Var, Lit> replaceAtSimplify;
+    Conglomerate* conglomerate;
+    VarReplacer* toReplace;
 
     // Debug:
     void     printLit         (const Lit l) const;
     void     printClause      (const Clause& c) const;
     void     printClause      (const XorClause& c) const;
     void     verifyModel      ();
-    bool     verifyXorClauses(vec<XorClause*>& cs) const;
+    bool     verifyXorClauses (const vec<XorClause*>& cs) const;
     void     checkLiteralCount();
 };
 
@@ -370,7 +372,7 @@ inline void     Solver::setPolarity   (Var v, bool b)
 }
 inline void     Solver::setDecisionVar(Var v, bool b)
 {
-    decision_var[v] = (char)b;
+    decision_var[v] = b;
     if (b) {
         insertVarOrder(v);
     }

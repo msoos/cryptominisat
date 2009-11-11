@@ -1,6 +1,7 @@
 #include "VarReplacer.h"
 
 #include "Solver.h"
+#include "conglomerate.h"
 
 //#define VERBOSE_DEBUG
 
@@ -16,48 +17,40 @@ VarReplacer::VarReplacer(Solver *_S) :
 {
 }
 
-void VarReplacer::replace(const map<Var, Lit>& toReplace)
+void VarReplacer::performReplace()
 {
-    if (toReplace.size() == 0) return;
-    
     #ifdef VERBOSE_DEBUG
-    for (map<Var, Lit>::const_iterator it = toReplace.begin(); it != toReplace.end(); it++) {
+    cout << "Replacer started." << endl;
+    for (map<Var, Lit>::const_iterator it = table.begin(); it != table.end(); it++) {
         cout << "Replacing var " << it->first+1 << " with Lit " << (it->second.sign() ? "-" : "") <<  it->second.var()+1 << endl;
     }
     #endif
     
-    replace_set(toReplace, S->clauses);
-    replace_set(toReplace, S->learnts);
+    if (table.size() == 0) return;
     
-    replace_set(toReplace, S->xorclauses, true);
-    replace_set(toReplace, S->calcAtFinish, false);
+    replace_set(S->clauses);
+    replace_set(S->learnts);
     
-    printf("|  Replacing       %8d vars, replaced: %8d                         |\n", toReplace.size(), replaced);
+    replace_set(S->xorclauses, true);
+    replace_set(S->conglomerate->getCalcAtFinish(), false);
+    
+    printf("|  Replacing       %8d vars, replaced: %8d                         |\n", table.size(), replaced);
+    
+    if (S->ok)
+        S->ok = (S->propagate() == NULL);
 }
 
-void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& cs, const bool need_reattach)
+void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
 {
     XorClause **a = cs.getData();
     XorClause **r = a;
     for (XorClause **end = a + cs.size(); r != end;) {
         XorClause& c = **r;
-        if (!need_reattach && c.size() == 2) {
-            //the first is always replaceable. What is interesting is whether we need to replace the second
-            map<Var, Lit>::const_iterator it = toReplace.find(c[1].var());
-            if (it != toReplace.end()) {
-                c[1] = Lit(it->second.var(), false);
-                c.invert(it->second.sign());
-            }
-            
-            a++;
-            r++;
-            continue;
-        }
         
         bool needReattach = false;
         for (Lit *l = &c[0], *lend = l + c.size(); l != lend; l++) {
-            const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
-            if (it != toReplace.end()) {
+            const map<Var, Lit>::const_iterator it = table.find(l->var());
+            if (it != table.end()) {
                 if (need_reattach && !needReattach)
                     S->detachClause(c);
                 needReattach = true;
@@ -112,7 +105,7 @@ void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& c
     cs.shrink(r-a);
 }
 
-void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& cs)
+void VarReplacer::replace_set(vec<Clause*>& cs)
 {
     Clause **a = cs.getData();
     Clause **r = a;
@@ -120,8 +113,8 @@ void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& cs)
         Clause& c = **r;
         bool needReattach = false;
         for (Lit *l = c.getData(), *end = l + c.size();  l != end; l++) {
-            const map<Var, Lit>::const_iterator it = toReplace.find(l->var());
-            if (it != toReplace.end()) {
+            const map<Var, Lit>::const_iterator it = table.find(l->var());
+            if (it != table.end()) {
                 if (!needReattach) S->detachClause(c);
                 needReattach = true;
                 *l = Lit(it->second.var(), it->second.sign()^l->sign());
@@ -170,7 +163,45 @@ void VarReplacer::replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& cs)
     cs.shrink(r-a);
 }
 
-uint VarReplacer::getReplaced() const
+uint VarReplacer::getNumReplaced() const
 {
     return replaced;
+}
+
+void VarReplacer::extendModel() const
+{
+    for (map<Var, Lit>::const_iterator it = table.begin(); it != table.end(); it++) {
+        assert(S->assigns[it->first] == l_Undef);
+        assert(S->assigns[it->second.var()] != l_Undef);
+        
+        bool val = (S->assigns[it->second.var()] == l_True);
+        S->uncheckedEnqueue(Lit(it->first, val ^ it->second.sign()));
+    }
+}
+
+void VarReplacer::replace(const Var var, Lit lit)
+{
+    S->setDecisionVar(var, false);
+    map<Var, Lit>::iterator it = table.find(lit.var());
+    if (it != table.end()) {
+        lit = Lit(it->second.var(), it->second.sign() ^ lit.sign());
+    }
+    
+    for(map<Var, Lit>::iterator it = table.begin(); it != table.end(); it++) {
+        if (it->second.var() == var) {
+            it->second = Lit(lit.var(), it->second.sign() ^ lit.sign());
+        }
+    }
+    
+    map<Var, Lit>::iterator it2 = table.find(var);
+    if (it2 != table.end()) {
+        Var var2 = it2->second.var();
+        bool sign = it2->second.sign() ^ lit.sign();
+        for(map<Var, Lit>::iterator it = table.begin(); it != table.end(); it++) {
+            if (it->second.var() == var2) {
+                it->second = Lit(lit.var(), sign ^ lit.sign());
+            }
+        }
+    }
+    table[var] = lit;
 }

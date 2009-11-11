@@ -104,8 +104,7 @@ uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSiz
         from = until+1;
     }
     
-    VarReplacer replacer(S);
-    replacer.replace(toReplace);
+    S->toReplace->performReplace();
     if (S->ok == false) return found;
     S->ok = (S->propagate() == NULL);
     
@@ -151,19 +150,28 @@ uint XorFinder::findXors(uint& sumLengths)
             free(it->first);
         }
         
-        XorClause* x = XorClause_new(lits, impair, old_group);
-        assert(x->size() > 1);
-        if (x->size() == 2) {
-            toReplace[lits[0].var()] = Lit(lits[1].var(), !impair);
-            S->decision_var[lits[0].var()] = false;
-            S->calcAtFinish.push(x);
-        } else {
+        switch(lits.size()) {
+        case 2: {
+            S->toReplace->replace(lits[0].var(), Lit(lits[1].var(), !impair));
+            
+            #ifdef VERBOSE_DEBUG
+            XorClause* x = XorClause_new(lits, impair, old_group);
+            cout << "- Final 2-long xor-clause: ";
+            x->plain_print();
+            free(x);
+            #endif
+            break;
+        }
+        default: {
+            XorClause* x = XorClause_new(lits, impair, old_group);
             xorcls.push(x);
             S->attachClause(*x);
+            
             #ifdef VERBOSE_DEBUG
             cout << "- Final xor-clause: ";
             x->plain_print();
             #endif
+        }
         }
         
         foundXors++;

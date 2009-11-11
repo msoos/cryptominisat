@@ -76,6 +76,8 @@ Solver::Solver() :
         , learnt_clause_group(0)
 {
     logger.setSolver(this);
+    toReplace = new VarReplacer(this);
+    conglomerate = new Conglomerate(this);
 }
 
 
@@ -87,7 +89,8 @@ Solver::~Solver()
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
     for (uint i = 0; i < gauss_matrixes.size(); i++) delete gauss_matrixes[i];
     gauss_matrixes.clear();
-    for (int i = 0; i < calcAtFinish.size(); i++) free(calcAtFinish[i]);
+    delete toReplace;
+    delete conglomerate;
 }
 
 //=================================================================================================
@@ -109,7 +112,7 @@ Var Solver::newVar(bool sign, bool dvar)
     seen      .push(0);
     polarity  .push_back((char)sign);
 
-    decision_var.push_back((char)dvar);
+    decision_var.push_back(dvar);
 
     insertVarOrder(v);
     logger.new_var(v);
@@ -171,9 +174,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
         
-        replaceAtSimplify[ps[0].var()] = Lit(ps[1].var(), !xor_clause_inverted);
-        decision_var[ps[0].var()] = false;
-        calcAtFinish.push(c);
+        toReplace->replace(ps[0].var(), Lit(ps[1].var(), !xor_clause_inverted));
         break;
     }
     default: {
@@ -1265,22 +1266,15 @@ lbool Solver::solve(const vec<Lit>& assumps)
     double  nof_learnts   = nClauses() * learntsize_factor;
     lbool   status        = l_Undef;
     
-    if (replaceAtSimplify.size() > 0) {
-        VarReplacer replacer(this);
-        replacer.replace(replaceAtSimplify);
-        
-        if (!ok) return l_False;
-        ok = (propagate() == NULL);
-        if (!ok) return l_False;
-    }
+    toReplace->performReplace();
+    if (!ok) return l_False;
 
     if (xorFinder) {
         double time = cpuTime();
         cleanClauses(clauses);
         uint sumLengths = 0;
         XorFinder xorFinder(this, clauses, xorclauses);
-        uint foundXors = xorFinder.doByPart(sumLengths, 3, 10);
-        foundXors += xorFinder.doByPart(sumLengths, 2, 2);
+        uint foundXors = xorFinder.doByPart(sumLengths, 2, 10);
         
         printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         if (!ok) return l_False;
@@ -1293,8 +1287,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         time = cpuTime();
         cleanClauses(xorclauses);
-        Conglomerate conglomerate;
-        uint foundCong = conglomerate.conglomerateXors(this);
+        uint foundCong = conglomerate->conglomerateXors();
         printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
         if (!ok) return l_False;
         
@@ -1343,7 +1336,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
 
     if (status == l_True) {
-        if (xorFinder) Conglomerate::doCalcAtFinish(this);
+        conglomerate->doCalcAtFinish();
+        toReplace->extendModel();
         // Extend & copy model:
         model.growTo(nVars());
         for (int i = 0; i < nVars(); i++) model[i] = value(i);
@@ -1362,7 +1356,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 //=================================================================================================
 // Debug methods:
 
-bool Solver::verifyXorClauses(vec<XorClause*>& cs) const
+bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
 {
     #ifdef VERBOSE_DEBUG
     cout << "Checking xor-clauses whether they have been properly satisfied." << endl;;
@@ -1412,11 +1406,11 @@ next:
     }
     
     failed |= verifyXorClauses(xorclauses);
-    failed |= verifyXorClauses(calcAtFinish);
+    failed |= verifyXorClauses(conglomerate->getCalcAtFinish());
 
     assert(!failed);
 
-    printf("Verified %d clauses.\n", clauses.size() + xorclauses.size() + calcAtFinish.size());
+    printf("Verified %d clauses.\n", clauses.size() + xorclauses.size() + conglomerate->getCalcAtFinish().size());
 }
 
 

@@ -14,6 +14,20 @@ using std::cout;
 using std::endl;
 #endif
 
+Conglomerate::Conglomerate(Solver *_S) :
+    S(_S)
+{}
+
+const vec<XorClause*>& Conglomerate::getCalcAtFinish() const
+{
+    return calcAtFinish;
+}
+
+vec<XorClause*>& Conglomerate::getCalcAtFinish()
+{
+    return calcAtFinish;
+}
+
 void Conglomerate::fillVarToXor()
 {
     blocked.clear();
@@ -54,9 +68,8 @@ void Conglomerate::process_clause(XorClause& x, const uint num, uint var, vector
     }
 }
 
-uint Conglomerate::conglomerateXors(Solver* _S)
+uint Conglomerate::conglomerateXors()
 {
-    S = _S;
     toRemove.resize(S->xorclauses.size(), false);
     
     #ifdef VERBOSE_DEBUG
@@ -70,7 +83,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
         varToXorMap::iterator it = varToXor.begin();
         const vector<pair<XorClause*, uint> >& c = it->second;
         const uint& var = it->first;
-        S->decision_var[var] = false;
+        S->setDecisionVar(var, false);
         
         if (c.size() == 0) {
             varToXor.erase(it);
@@ -95,7 +108,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
         assert(!toRemove[c[0].second]);
         toRemove[c[0].second] = true;
         S->detachClause(x);
-        S->calcAtFinish.push(&x);
+        calcAtFinish.push(&x);
         found++;
         
         vector<Lit> ps;
@@ -130,8 +143,7 @@ uint Conglomerate::conglomerateXors(Solver* _S)
     
     clearToRemove();
     
-    VarReplacer replacer(S);
-    replacer.replace(toReplace);
+    S->toReplace->performReplace();
     if (S->ok == false) return found;
     S->ok = (S->propagate() == NULL);
     
@@ -171,15 +183,14 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
         }
         
         case 2: {
-            XorClause* newX = XorClause_new(ps, inverted, old_group);
             #ifdef VERBOSE_DEBUG
             cout << "--> xor is 2-long, must later replace variable, adding var " << ps[0].var() + 1 << " to calcAtFinish:" << endl;
+            XorClause* newX = XorClause_new(ps, inverted, old_group);
             newX->plain_print();
+            free(newX);
             #endif
             
-            toReplace[ps[0].var()] = Lit(ps[1].var(), !inverted);
-            S->decision_var[ps[0].var()] = false;
-            S->calcAtFinish.push(newX);
+            S->toReplace->replace(ps[0].var(), Lit(ps[1].var(), !inverted));
             break;
         }
         
@@ -235,16 +246,17 @@ void Conglomerate::clearToRemove()
     S->xorclauses.shrink(r-a);
 }
 
-void Conglomerate::doCalcAtFinish(Solver* S)
+void Conglomerate::doCalcAtFinish()
 {
     #ifdef VERBOSE_DEBUG
     cout << "Executing doCalcAtFinish" << endl;
     #endif
     
     vector<Var> toAssign;
-    for (XorClause** it = S->calcAtFinish.getData() + S->calcAtFinish.size()-1; it != S->calcAtFinish.getData()-1; it--) {
+    for (XorClause** it = calcAtFinish.getData() + calcAtFinish.size()-1; it != calcAtFinish.getData()-1; it--) {
         toAssign.clear();
         XorClause& c = **it;
+        assert(c.size() > 2);
         
         #ifdef VERBOSE_DEBUG
         cout << "doCalcFinish for xor-clause:";
@@ -265,6 +277,9 @@ void Conglomerate::doCalcAtFinish(Solver* S)
             for (int k = 0, size = c.size(); k < size; k++ ) {
                 cout << "Var: " << c[k].var() + 1 << " Level: " << S->level[c[k].var()] << endl;
             }
+        }
+        if (toAssign.size() > 1) {
+            cout << "Double assign!" << endl;
         }
         #endif
         assert(toAssign.size() > 0);

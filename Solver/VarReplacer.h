@@ -15,13 +15,16 @@ class VarReplacer
 {
     public:
         VarReplacer(Solver* S);
-        void replace(const map<Var, Lit>& toReplace);
-        uint getReplaced() const;
+        void replace(const Var var, Lit lit);
+        void extendModel() const;
+        void performReplace();
+        uint getNumReplaced() const;
     
     private:
-        void replace_set(const map<Var, Lit>& toReplace, vec<Clause*>& set);
-        void replace_set(const map<Var, Lit>& toReplace, vec<XorClause*>& cs, const bool need_reattach);
+        void replace_set(vec<Clause*>& set);
+        void replace_set(vec<XorClause*>& cs, const bool need_reattach);
         
+        map<Var, Lit> table;
         uint replaced;
         Solver* S;
 };

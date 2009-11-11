@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include "clause.h"
+#include "VarReplacer.h"
 
 using std::vector;
 using std::pair;
@@ -14,8 +15,11 @@ class Solver;
 class Conglomerate
 {
 public:
-    uint conglomerateXors(Solver* S); ///<Conglomerate XOR-s that are attached using a variable
-    static void doCalcAtFinish(Solver* S); ///<Calculate variables removed during conglomeration
+    Conglomerate(Solver *S);
+    uint conglomerateXors(); ///<Conglomerate XOR-s that are attached using a variable
+    void doCalcAtFinish(); ///<Calculate variables removed during conglomeration
+    const vec<XorClause*>& getCalcAtFinish() const;
+    vec<XorClause*>& getCalcAtFinish();
     
 private:
     
@@ -29,7 +33,8 @@ private:
     varToXorMap varToXor; 
     vector<bool> blocked;
     vector<bool> toRemove;
-    map<Var, Lit> toReplace;
+    
+    vec<XorClause*> calcAtFinish;
     
     Solver* S;
 };
