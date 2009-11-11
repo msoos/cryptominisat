@@ -1293,11 +1293,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         time = cpuTime();
         cleanClauses(xorclauses);
-        Conglomerate* conglomerate = new Conglomerate;
-        uint foundCong = conglomerate->conglomerateXors(this);
+        Conglomerate conglomerate;
+        uint foundCong = conglomerate.conglomerateXors(this);
         printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
-        if (!ok) return l_False;
-        ok = (propagate() == NULL);
         if (!ok) return l_False;
         
         uint new_total = 0;
