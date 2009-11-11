@@ -32,16 +32,14 @@ using std::endl;
 
 using std::make_pair;
 
-XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls, const uint _minSize) :
+XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls) :
     cls(_cls)
     , xorcls(_xorcls)
-    , minSize(_minSize)
-    , maxSize(10)
     , S(_S)
 {
 }
 
-uint XorFinder::doByPart(uint& sumLengths)
+uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSize)
 {
     uint sumUsage = 0;
     vector<uint> varUsage(S->nVars(), 0);
@@ -56,7 +54,6 @@ uint XorFinder::doByPart(uint& sumLengths)
     }
     
     uint found = 0;
-    sumLengths = 0;
     #ifdef VERBOSE_DEBUG
     uint sumNumClauses = 0;
     #endif
@@ -224,7 +221,7 @@ bool XorFinder::isXor(vector<pair<Clause*, uint> >& clauses, bool& impair)
     assert(size > 0);
     const uint requiredSize = 1 << (clauses[0].first->size()-1);
     
-    if (size < 4 || size < requiredSize)
+    if (size < requiredSize)
         return false;
     
     clause_sorter clause_sorter_object;
@@ -233,9 +230,6 @@ bool XorFinder::isXor(vector<pair<Clause*, uint> >& clauses, bool& impair)
     uint numPair = 0;
     uint numImpair = 0;
     countImpairs(clauses, numImpair, numPair);
-    
-    if (numImpair < 4 && numPair < 4)
-        return false;
     
     if (numImpair == requiredSize) {
         impair = true;
