@@ -174,7 +174,7 @@ void VarReplacer::extendModel() const
         assert(S->assigns[it->first] == l_Undef);
         assert(S->assigns[it->second.var()] != l_Undef);
         
-        bool val = (S->assigns[it->second.var()] == l_True);
+        bool val = (S->assigns[it->second.var()] == l_False);
         S->uncheckedEnqueue(Lit(it->first, val ^ it->second.sign()));
     }
 }
