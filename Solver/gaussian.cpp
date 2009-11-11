@@ -94,8 +94,12 @@ void Gaussian::init(void)
 {
     assert(solver.decisionLevel() == 0);
 
+    matrix_sets.clear();
     fill_matrix(original_matrixset);
     if (original_matrixset.num_rows == 0) return;
+    
+    cur_matrixset.matrix.resize(0);
+    cur_matrixset.varset.resize(0);
     cur_matrixset = original_matrixset;
 
     gauss_last_level = solver.trail.size();
@@ -183,6 +187,9 @@ void Gaussian::fill_matrix(matrixset& m)
 #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Filling matrix" << endl;
 #endif
+
+    original_matrixset.matrix.resize(0);
+    original_matrixset.varset.resize(0);
 
     solver.cleanClauses(solver.xorclauses);
     m.num_rows = fill_var_to_col(m);
