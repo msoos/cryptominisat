@@ -43,7 +43,6 @@ XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls, c
 
 uint XorFinder::doByPart(uint& sumLengths)
 {
-    uint sumNonParitionClauses = 0;
     uint sumUsage = 0;
     vector<uint> varUsage(S->nVars(), 0);
     for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++) {
@@ -54,7 +53,6 @@ uint XorFinder::doByPart(uint& sumLengths)
             varUsage[l->var()]++;
             sumUsage++;
         }
-        sumNonParitionClauses++;
     }
     
     uint found = 0;
@@ -115,7 +113,7 @@ uint XorFinder::doByPart(uint& sumLengths)
     S->ok = (S->propagate() == NULL);
     
     #ifdef VERBOSE_DEBUG
-    cout << "Overdone work due to partitioning:" << (double)sumNumClauses/(double)sumNonParitionClauses << "x" << endl;
+    cout << "Overdone work due to partitioning:" << (double)sumNumClauses/(double)cls.size() << "x" << endl;
     #endif
     
     return found;
