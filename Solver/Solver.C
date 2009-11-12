@@ -1268,6 +1268,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     double  nof_learnts   = nClauses() * learntsize_factor;
     lbool   status        = l_Undef;
     
+    cleanClauses(xorclauses);
     toReplace->performReplace();
     if (!ok) return l_False;
 
