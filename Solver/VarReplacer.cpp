@@ -21,8 +21,10 @@ void VarReplacer::performReplace()
 {
     #ifdef VERBOSE_DEBUG
     cout << "Replacer started." << endl;
-    for (map<Var, Lit>::const_iterator it = table.begin(); it != table.end(); it++) {
-        cout << "Replacing var " << it->first+1 << " with Lit " << (it->second.sign() ? "-" : "") <<  it->second.var()+1 << endl;
+    uint i = 0;
+    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
+        if (it->var() == i) continue;
+        cout << "Replacing var " << i+1 << " with Lit " << (it->sign() ? "-" : "") <<  it->var()+1 << endl;
     }
     #endif
     
@@ -49,13 +51,13 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
         
         bool needReattach = false;
         for (Lit *l = &c[0], *lend = l + c.size(); l != lend; l++) {
-            const map<Var, Lit>::const_iterator it = table.find(l->var());
-            if (it != table.end()) {
+            Lit newlit = table[l->var()];
+            if (newlit.var() != l->var()) {
                 if (need_reattach && !needReattach)
                     S->detachClause(c);
                 needReattach = true;
-                *l = Lit(it->second.var(), false);
-                c.invert(it->second.sign());
+                *l = Lit(newlit.var(), false);
+                c.invert(newlit.sign());
                 replaced++;
             }
         }
@@ -113,11 +115,11 @@ void VarReplacer::replace_set(vec<Clause*>& cs)
         Clause& c = **r;
         bool needReattach = false;
         for (Lit *l = c.getData(), *end = l + c.size();  l != end; l++) {
-            const map<Var, Lit>::const_iterator it = table.find(l->var());
-            if (it != table.end()) {
+            Lit newlit = table[l->var()];
+            if (newlit.var() != l->var()) {
                 if (!needReattach) S->detachClause(c);
                 needReattach = true;
-                *l = Lit(it->second.var(), it->second.sign()^l->sign());
+                *l = Lit(newlit.var(), newlit.sign()^l->sign());
                 replaced++;
             }
         }
@@ -170,18 +172,21 @@ uint VarReplacer::getNumReplaced() const
 
 void VarReplacer::extendModel() const
 {
-    for (map<Var, Lit>::const_iterator it = table.begin(); it != table.end(); it++) {
+    uint i = 0;
+    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
+        if (it->var() == i) continue;
+        
         #ifdef VERBOSE_DEBUG
-        cout << "Extending model: var "; S->printLit(Lit(it->first, false));
-        cout << " to "; S->printLit(it->second);
+        cout << "Extending model: var "; S->printLit(Lit(i, false));
+        cout << " to "; S->printLit(*it);
         cout << endl;
         #endif
         
-        assert(S->assigns[it->first] == l_Undef);
-        assert(S->assigns[it->second.var()] != l_Undef);
+        assert(S->assigns[i] == l_Undef);
+        assert(S->assigns[it->var()] != l_Undef);
         
-        bool val = (S->assigns[it->second.var()] == l_False);
-        S->uncheckedEnqueue(Lit(it->first, val ^ it->second.sign()));
+        bool val = (S->assigns[it->var()] == l_False);
+        S->uncheckedEnqueue(Lit(i, val ^ it->sign()));
     }
 }
 
@@ -192,12 +197,12 @@ void VarReplacer::replace(Var var, Lit lit)
     //Detect circle
     if (alreadyIn(var, lit)) return;
     
-    map<Var, Lit>::iterator it1 = table.find(var);
+    Lit lit1 = table[var];
     bool inverted = false;
     bool doubleinverted = false;
     
     //This pointer is already set, try to invert
-    if (it1 != table.end()) {
+    if (lit1.var() != var) {
         Var tmp_var = var;
         
         var = lit.var();
@@ -207,19 +212,19 @@ void VarReplacer::replace(Var var, Lit lit)
     
     if (inverted) {
         //Inversion is also set
-        map<Var, Lit>::iterator it2 = table.find(var);
-        if (it2 != table.end()) {
-            setAllThatPointsHereTo(it1->second.var(), lit ^ it1->second.sign());
-            setAllThatPointsHereTo(it2->second.var(), lit ^ it2->second.sign());
+        Lit lit2 = table[var];
+        if (lit2.var() != var) {
+            setAllThatPointsHereTo(lit1.var(), lit ^ lit1.sign());
+            setAllThatPointsHereTo(lit2.var(), lit ^ lit2.sign());
             
-            table[it1->second.var()] = lit ^ it1->second.sign();
-            S->setDecisionVar(it1->second.var(), false);
+            table[lit1.var()] = lit ^ lit1.sign();
+            S->setDecisionVar(lit1.var(), false);
             
-            table[it2->second.var()] = lit ^ it2->second.sign();
-            S->setDecisionVar(it2->second.var(), false);
+            table[lit2.var()] = lit ^ lit2.sign();
+            S->setDecisionVar(lit2.var(), false);
             
-            assert(table.find(lit.var()) != table.end());
-            table.erase(table.find(lit.var()));
+            //assert(table[lit.var()].var() != lit.var());
+            table[lit.var()] = Lit(lit.var(), false);
             S->setDecisionVar(lit.var(), true);
             doubleinverted = true;
         }
@@ -228,9 +233,9 @@ void VarReplacer::replace(Var var, Lit lit)
     if (!doubleinverted) {
         
         //Follow forwards
-        map<Var, Lit>::iterator it = table.find(lit.var());
-        if (it != table.end())
-            lit = it->second ^ lit.sign();
+        Lit lit2 = table[lit.var()];
+        if (lit2.var() != lit.var())
+            lit = lit2 ^ lit.sign();
         
         S->setDecisionVar(var, false);
         
@@ -243,17 +248,25 @@ void VarReplacer::replace(Var var, Lit lit)
 
 bool VarReplacer::alreadyIn(const Var var, const Lit lit)
 {
-    map<Var, Lit>::iterator it = table.find(var);
-    if (it != table.end() && it->second.var() == lit.var()) {
-        if (it->second.sign() != lit.sign())
+    Lit lit2 = table[var];
+    if (lit2.var() == lit.var()) {
+        if (lit2.sign() != lit.sign()) {
+            #ifdef VERBOSE_DEBUG
+            cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
+            #endif
             S->ok = false;
+        }
         return true;
     }
     
-    it = table.find(lit.var());
-    if (it != table.end() && it->second.var() == var) {
-        if (it->second.sign() != lit.sign())
+    lit2 = table[lit.var()];
+    if (lit2.var() == var) {
+        if (lit2.sign() != lit.sign()) {
+            #ifdef VERBOSE_DEBUG
+            cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
+            #endif
             S->ok = false;
+        }
         return true;
     }
     
@@ -262,9 +275,15 @@ bool VarReplacer::alreadyIn(const Var var, const Lit lit)
 
 void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
 {
-    for(map<Var, Lit>::iterator it = table.begin(); it != table.end(); it++) {
-        if (it->second.var() == var) {
-            it->second = Lit(lit.var(), it->second.sign() ^ lit.sign());
+    uint i = 0;
+    for(vector<Lit>::iterator it = table.begin(); it != table.end(); it++, i++) {
+        if (it->var() == var) {
+            *it = lit ^ it->sign();
         }
     }
+}
+
+void VarReplacer::newVar()
+{
+    table.push_back(Lit(table.size(), false));
 }

@@ -113,6 +113,7 @@ Var Solver::newVar(bool sign, bool dvar)
     polarity  .push_back((char)sign);
 
     decision_var.push_back(dvar);
+    toReplace->newVar();
 
     insertVarOrder(v);
     if (dynamic_behaviour_analysis)

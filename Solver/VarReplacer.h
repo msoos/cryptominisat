@@ -7,7 +7,9 @@
 
 #include <sys/types.h>
 #include <map>
+#include <vector>
 using std::map;
+using std::vector;
 
 class Solver;
 
@@ -19,6 +21,7 @@ class VarReplacer
         void extendModel() const;
         void performReplace();
         uint getNumReplaced() const;
+        void newVar();
     
     private:
         void replace_set(vec<Clause*>& set);
@@ -27,7 +30,8 @@ class VarReplacer
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);
         
-        map<Var, Lit> table;
+        vector<Lit> table;
+        
         uint replaced;
         Solver* S;
 };
