@@ -146,8 +146,7 @@ uint XorFinder::findXors(uint& sumLengths)
             it->first->plain_print();
             #endif
             toRemove[it->second] = true;
-            S->detachClause(*it->first);
-            free(it->first);
+            S->removeClause(*it->first);
         }
         
         switch(lits.size()) {

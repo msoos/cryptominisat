@@ -126,8 +126,7 @@ uint Conglomerate::conglomerateXors()
             bool inverted = first_inverted ^ x.xor_clause_inverted();
             assert(!toRemove[c[i].second]);
             toRemove[c[i].second] = true;
-            S->detachClause(x);
-            free(&x);
+            S->removeClause(x);
             found++;
             clearDouble(ps);
             
