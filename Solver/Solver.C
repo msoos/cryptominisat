@@ -1022,7 +1022,7 @@ lbool Solver::simplify()
     simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
 
     //cleanClauses(clauses);
-    cleanClauses(xorclauses);
+    //cleanClauses(xorclauses);
     //cleanClauses(learnts);
 
     return l_Undef;
@@ -1314,6 +1314,14 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
+        removeSatisfied(clauses);
+        removeSatisfied(xorclauses);
+        removeSatisfied(learnts);
+        
+        cleanClauses(clauses);
+        cleanClauses(xorclauses);
+        cleanClauses(learnts);
+        
         if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
             printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
             print_gauss_sum_stats();
