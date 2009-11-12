@@ -12,7 +12,8 @@ using std::endl;
 #endif
 
 VarReplacer::VarReplacer(Solver *_S) :
-    replaced(0)
+    replacedLits(0)
+    , replacedVars(0)
     , S(_S)
 {
 }
@@ -28,7 +29,7 @@ void VarReplacer::performReplace()
     }
     #endif
     
-    if (table.size() == 0) return;
+    if (replacedVars == 0) return;
     
     replace_set(S->clauses);
     replace_set(S->learnts);
@@ -36,7 +37,10 @@ void VarReplacer::performReplace()
     replace_set(S->xorclauses, true);
     replace_set(S->conglomerate->getCalcAtFinish(), false);
     
-    printf("|  Replaced   %8d vars                                                   |\n", replaced);
+    printf("|  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars, replacedLits);
+    
+    replacedVars = 0;
+    replacedLits = 0;
     
     if (S->ok)
         S->ok = (S->propagate() == NULL);
@@ -58,7 +62,7 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
                 needReattach = true;
                 *l = Lit(newlit.var(), false);
                 c.invert(newlit.sign());
-                replaced++;
+                replacedLits++;
             }
         }
         
@@ -120,7 +124,7 @@ void VarReplacer::replace_set(vec<Clause*>& cs)
                 if (!needReattach) S->detachClause(c);
                 needReattach = true;
                 *l = Lit(newlit.var(), newlit.sign()^l->sign());
-                replaced++;
+                replacedLits++;
             }
         }
         
@@ -165,9 +169,14 @@ void VarReplacer::replace_set(vec<Clause*>& cs)
     cs.shrink(r-a);
 }
 
-uint VarReplacer::getNumReplaced() const
+const uint VarReplacer::getNumReplacedLits() const
 {
-    return replaced;
+    return replacedLits;
+}
+
+const uint VarReplacer::getNumReplacedVars() const
+{
+    return replacedVars;
 }
 
 void VarReplacer::extendModel() const
@@ -196,10 +205,10 @@ void VarReplacer::replace(Var var, Lit lit)
     
     //Detect circle
     if (alreadyIn(var, lit)) return;
+    replacedVars++;
     
     Lit lit1 = table[var];
     bool inverted = false;
-    bool doubleinverted = false;
     
     //This pointer is already set, try to invert
     if (lit1.var() != var) {
@@ -225,24 +234,21 @@ void VarReplacer::replace(Var var, Lit lit)
             //assert(table[lit.var()].var() != lit.var());
             table[lit.var()] = Lit(lit.var(), false);
             S->setDecisionVar(lit.var(), true);
-            doubleinverted = true;
+            return;
         }
     }
     
-    if (!doubleinverted) {
-        
-        //Follow forwards
-        Lit lit2 = table[lit.var()];
-        if (lit2.var() != lit.var())
-            lit = lit2 ^ lit.sign();
-        
-        S->setDecisionVar(var, false);
-        
-        //Follow backwards
-        setAllThatPointsHereTo(var, lit);
-        
-        table[var] = lit;
-    }
+    //Follow forwards
+    Lit lit2 = table[lit.var()];
+    if (lit2.var() != lit.var())
+        lit = lit2 ^ lit.sign();
+    
+    S->setDecisionVar(var, false);
+    
+    //Follow backwards
+    setAllThatPointsHereTo(var, lit);
+    
+    table[var] = lit;
 }
 
 bool VarReplacer::alreadyIn(const Var var, const Lit lit)

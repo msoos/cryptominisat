@@ -20,7 +20,8 @@ class VarReplacer
         void replace(const Var var, Lit lit);
         void extendModel() const;
         void performReplace();
-        uint getNumReplaced() const;
+        const uint getNumReplacedLits() const;
+        const uint getNumReplacedVars() const;
         void newVar();
     
     private:
@@ -32,7 +33,8 @@ class VarReplacer
         
         vector<Lit> table;
         
-        uint replaced;
+        uint replacedLits;
+        uint replacedVars;
         Solver* S;
 };
 
