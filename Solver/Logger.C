@@ -69,6 +69,9 @@ Logger::Logger(int& _verbosity) :
 // Adds a new variable to the knowledge of the logger
 void Logger::new_var(const Var var)
 {
+    if (!statistics_on && !proof_graph_on)
+        return;
+    
     if (varnames.size() <= var) {
         varnames.resize(var+1);
         times_var_propagated.resize(var+1, 0);
@@ -95,6 +98,9 @@ void Logger::new_group(const uint group)
 // Adds the new clause group's name to the information stored
 void Logger::set_group_name(const uint group, const char* name)
 {
+    if (!statistics_on && !proof_graph_on)
+        return;
+    
     new_group(group);
     string name2(name);
 
@@ -117,6 +123,9 @@ void Logger::set_group_name(const uint group, const char* name)
 // sets the variable's name
 void Logger::set_variable_name(const uint var, const char* name)
 {
+    if (!statistics_on && !proof_graph_on)
+        return;
+    
     new_var(var);
     string name2(name);
     

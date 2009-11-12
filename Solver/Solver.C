@@ -115,7 +115,8 @@ Var Solver::newVar(bool sign, bool dvar)
     decision_var.push_back(dvar);
 
     insertVarOrder(v);
-    logger.new_var(v);
+    if (dynamic_behaviour_analysis)
+        logger.new_var(v);
 
     return v;
 }

@@ -403,7 +403,8 @@ inline void     Solver::needProofGraph()
 inline void     Solver::setVariableName(int var, const char* name)
 {
     while (var >= nVars()) newVar();
-    logger.set_variable_name(var, name);
+    if (dynamic_behaviour_analysis)
+        logger.set_variable_name(var, name);
 } // Sets the varible 'var'-s name to 'name' in the logger
 inline void     Solver::startClauseAdding()
 {

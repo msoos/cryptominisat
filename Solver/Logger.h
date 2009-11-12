@@ -65,8 +65,7 @@ public:
     void new_var(const Var var);
     void set_variable_name(const uint var, const char* name);
 
-    //functions to add/name clause groups
-    void new_group(const uint group);
+    //function to name clause groups
     void set_group_name(const uint group, const char* name);
 
     void begin();
@@ -80,6 +79,8 @@ public:
     
     void setSolver(const Solver* solver);
 private:
+    void new_group(const uint group);
+    
     void print_groups(const vector<pair<uint, uint> >& to_print) const;
     void print_groups(const vector<pair<double, uint> >& to_print) const;
     void print_vars(const vector<pair<uint, uint> >& to_print) const;
