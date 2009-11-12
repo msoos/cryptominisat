@@ -283,13 +283,6 @@ void Solver::detachClause(const Clause& c)
     else            clauses_literals -= c.size();
 }
 
-template<class T>
-void Solver::removeClause(T& c)
-{
-    detachClause(c);
-    free(&c);
-}
-
 
 bool Solver::satisfied(const Clause& c) const
 {
@@ -927,19 +920,6 @@ void Solver::dump_sorted_learnts(const char* file)
 void Solver::setMaxRestarts(const uint num)
 {
     maxRestarts = num;
-}
-
-template<class T>
-void Solver::removeSatisfied(vec<T*>& cs)
-{
-    int i,j;
-    for (i = j = 0; i < cs.size(); i++) {
-        if (satisfied(*cs[i]))
-            removeClause(*cs[i]);
-        else
-            cs[j++] = cs[i];
-    }
-    cs.shrink(i - j);
 }
 
 bool Solver::cleanClause(Clause& c) const

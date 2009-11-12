@@ -418,6 +418,24 @@ inline void     Solver::needRealUnknowns()
 {
     useRealUnknowns = true;
 }
+template<class T>
+void Solver::removeSatisfied(vec<T*>& cs)
+{
+    int i,j;
+    for (i = j = 0; i < cs.size(); i++) {
+        if (satisfied(*cs[i]))
+            removeClause(*cs[i]);
+        else
+            cs[j++] = cs[i];
+    }
+    cs.shrink(i - j);
+}
+template<class T>
+void Solver::removeClause(T& c)
+{
+    detachClause(c);
+    free(&c);
+}
 
 
 //=================================================================================================
