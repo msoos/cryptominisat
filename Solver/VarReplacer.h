@@ -24,6 +24,9 @@ class VarReplacer
         void replace_set(vec<Clause*>& set);
         void replace_set(vec<XorClause*>& cs, const bool need_reattach);
         
+        void setAllThatPointsHereTo(const Var var, const Lit lit);
+        bool alreadyIn(const Var var, const Lit lit);
+        
         map<Var, Lit> table;
         uint replaced;
         Solver* S;

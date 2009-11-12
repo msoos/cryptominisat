@@ -185,29 +185,86 @@ void VarReplacer::extendModel() const
     }
 }
 
-void VarReplacer::replace(const Var var, Lit lit)
+void VarReplacer::replace(Var var, Lit lit)
 {
-    S->setDecisionVar(var, false);
-    map<Var, Lit>::iterator it = table.find(lit.var());
-    if (it != table.end()) {
-        lit = Lit(it->second.var(), it->second.sign() ^ lit.sign());
+    assert(var != lit.var());
+    
+    //Detect circle
+    if (alreadyIn(var, lit)) return;
+    
+    map<Var, Lit>::iterator it1 = table.find(var);
+    bool inverted = false;
+    bool doubleinverted = false;
+    
+    //This pointer is already set, try to invert
+    if (it1 != table.end()) {
+        Var tmp_var = var;
+        
+        var = lit.var();
+        lit = Lit(tmp_var, lit.sign());
+        inverted = true;
     }
     
+    if (inverted) {
+        //Inversion is also set
+        map<Var, Lit>::iterator it2 = table.find(var);
+        if (it2 != table.end()) {
+            setAllThatPointsHereTo(it1->second.var(), lit ^ it1->second.sign());
+            setAllThatPointsHereTo(it2->second.var(), lit ^ it2->second.sign());
+            
+            table[it1->second.var()] = lit ^ it1->second.sign();
+            S->setDecisionVar(it1->second.var(), false);
+            
+            table[it2->second.var()] = lit ^ it2->second.sign();
+            S->setDecisionVar(it2->second.var(), false);
+            
+            assert(table.find(lit.var()) != table.end());
+            table.erase(table.find(lit.var()));
+            S->setDecisionVar(lit.var(), true);
+            doubleinverted = true;
+        }
+    }
+    
+    if (!doubleinverted) {
+        
+        //Follow forwards
+        map<Var, Lit>::iterator it = table.find(lit.var());
+        if (it != table.end())
+            lit = it->second ^ lit.sign();
+        
+        S->setDecisionVar(var, false);
+        
+        //Follow backwards
+        setAllThatPointsHereTo(var, lit);
+        
+        table[var] = lit;
+    }
+}
+
+bool VarReplacer::alreadyIn(const Var var, const Lit lit)
+{
+    map<Var, Lit>::iterator it = table.find(var);
+    if (it != table.end() && it->second.var() == lit.var()) {
+        if (it->second.sign() != lit.sign())
+            S->ok = false;
+        return true;
+    }
+    
+    it = table.find(lit.var());
+    if (it != table.end() && it->second.var() == var) {
+        if (it->second.sign() != lit.sign())
+            S->ok = false;
+        return true;
+    }
+    
+    return false;
+}
+
+void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
+{
     for(map<Var, Lit>::iterator it = table.begin(); it != table.end(); it++) {
         if (it->second.var() == var) {
             it->second = Lit(lit.var(), it->second.sign() ^ lit.sign());
         }
     }
-    
-    map<Var, Lit>::iterator it2 = table.find(var);
-    if (it2 != table.end()) {
-        Var var2 = it2->second.var();
-        bool sign = it2->second.sign() ^ lit.sign();
-        for(map<Var, Lit>::iterator it = table.begin(); it != table.end(); it++) {
-            if (it->second.var() == var2) {
-                it->second = Lit(lit.var(), sign ^ lit.sign());
-            }
-        }
-    }
-    table[var] = lit;
 }
