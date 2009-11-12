@@ -952,6 +952,12 @@ void Solver::cleanClauses(vec<XorClause*>& cs)
     uint useful = 0;
     for (int s = 0; s < cs.size(); s++) {
         XorClause& c = *cs[s];
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Cleaning clause:";
+        c.plain_print();
+        printClause(c);std::cout << std::endl;
+        #endif
+        
         Lit *i, *j, *end;
         uint at = 0;
         for (i = j = c.getData(), end = i + c.size();  i != end; i++, at++) {
@@ -963,7 +969,15 @@ void Solver::cleanClauses(vec<XorClause*>& cs)
         }
         c.shrink(i-j);
         if (i-j > 0) useful++;
+        
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Cleaned clause:";
+        c.plain_print();
+        printClause(c);std::cout << std::endl;
+        #endif
+        assert(c.size() > 1);
     }
+    
     #ifdef VERBOSE_DEBUG
     cout << "cleanClauses(XorClause) useful:" << useful << endl;
     #endif
