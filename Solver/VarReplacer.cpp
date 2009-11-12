@@ -171,6 +171,12 @@ uint VarReplacer::getNumReplaced() const
 void VarReplacer::extendModel() const
 {
     for (map<Var, Lit>::const_iterator it = table.begin(); it != table.end(); it++) {
+        #ifdef VERBOSE_DEBUG
+        cout << "Extending model: var "; S->printLit(Lit(it->first, false));
+        cout << " to "; S->printLit(it->second);
+        cout << endl;
+        #endif
+        
         assert(S->assigns[it->first] == l_Undef);
         assert(S->assigns[it->second.var()] != l_Undef);
         
