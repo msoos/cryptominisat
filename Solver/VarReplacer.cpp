@@ -36,7 +36,7 @@ void VarReplacer::performReplace()
     replace_set(S->xorclauses, true);
     replace_set(S->conglomerate->getCalcAtFinish(), false);
     
-    printf("|  Replacing       %8d vars, replaced: %8d                         |\n", table.size(), replaced);
+    printf("|  Replaced   %8d vars                                                   |\n", replaced);
     
     if (S->ok)
         S->ok = (S->propagate() == NULL);
