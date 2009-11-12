@@ -1302,6 +1302,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
     
     if (gaussconfig.decision_until > 0) {
+        cleanClauses(xorclauses);
         double time = cpuTime();
         MatrixFinder m(this);
         printf("|  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, m.numMatrix);
