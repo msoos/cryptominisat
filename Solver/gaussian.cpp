@@ -70,7 +70,7 @@ llbool Gaussian::full_init()
     bool do_again_gauss = true;
     while (do_again_gauss) {
         do_again_gauss = false;
-        if (solver.simplify() != l_Undef) return l_False;
+        solver.removeSatisfied(solver.xorclauses);
         solver.cleanClauses(solver.xorclauses);
         init();
         Clause* confl;
@@ -80,9 +80,10 @@ llbool Gaussian::full_init()
         case conflict:
             return l_False;
         case unit_propagation:
-            do_again_gauss=true;
-            break;
         case propagation:
+            do_again_gauss=true;
+            if (solver.propagate() != NULL) return l_False;
+            break;
         case nothing:
             break;
         }
