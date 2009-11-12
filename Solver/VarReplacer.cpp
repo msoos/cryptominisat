@@ -214,12 +214,11 @@ void VarReplacer::replace(Var var, Lit lit)
         //Inversion is also set
         Lit lit2 = table[var];
         if (lit2.var() != var) {
-            setAllThatPointsHereTo(lit1.var(), lit ^ lit1.sign());
-            setAllThatPointsHereTo(lit2.var(), lit ^ lit2.sign());
-            
-            table[lit1.var()] = lit ^ lit1.sign();
+            setAllThatPointsHereTo(lit1.var(), Lit(lit.var(), lit1.sign()));
+            table[lit1.var()] = Lit(lit.var(), lit1.sign());
             S->setDecisionVar(lit1.var(), false);
             
+            setAllThatPointsHereTo(lit2.var(), lit ^ lit2.sign());
             table[lit2.var()] = lit ^ lit2.sign();
             S->setDecisionVar(lit2.var(), false);
             
