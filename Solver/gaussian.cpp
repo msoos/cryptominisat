@@ -71,6 +71,7 @@ llbool Gaussian::full_init()
     while (do_again_gauss) {
         do_again_gauss = false;
         if (solver.simplify() != l_Undef) return l_False;
+        solver.cleanClauses(solver.xorclauses);
         init();
         Clause* confl;
         gaussian_ret g = gaussian(confl);
@@ -191,7 +192,6 @@ void Gaussian::fill_matrix(matrixset& m)
     original_matrixset.matrix.resize(0);
     original_matrixset.varset.resize(0);
 
-    solver.cleanClauses(solver.xorclauses);
     m.num_rows = fill_var_to_col(m);
     m.num_cols = m.col_to_var.size();
     col_to_var_original = m.col_to_var;
