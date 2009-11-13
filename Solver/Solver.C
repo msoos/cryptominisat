@@ -122,7 +122,7 @@ Var Solver::newVar(bool sign, bool dvar)
     return v;
 }
 
-bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name)
+bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name)
 {
 
     assert(decisionLevel() == 0);
@@ -192,7 +192,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
     return true;
 }
 
-bool Solver::addClause(vec<Lit>& ps, const uint group, const char* group_name)
+bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
 

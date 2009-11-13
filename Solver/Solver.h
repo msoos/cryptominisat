@@ -66,8 +66,8 @@ public:
     // Problem specification:
     //
     Var     newVar    (bool polarity = true, bool dvar = true); // Add a new variable with parameters specifying variable mode.
-    bool    addClause (vec<Lit>& ps, const uint group, const char* group_name);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
-    bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, const char* group_name);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addClause (vec<Lit>& ps, const uint group, char* group_name);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
@@ -132,7 +132,7 @@ public:
     //Logging
     void needStats();              // Prepares the solver to output statistics
     void needProofGraph();         // Prepares the solver to output proof graphs during solving
-    void setVariableName(int var, const char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
+    void setVariableName(int var, char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
     void startClauseAdding();      // Before adding clauses, but after setting up the Solver (need* functions, verbosity), this should be called
     void endFirstSimplify();       // After the clauses are added, and the first simplify() is called, this must be called
     const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
@@ -400,7 +400,7 @@ inline void     Solver::needProofGraph()
     dynamic_behaviour_analysis = true;    // Sets the solver and the logger up to generate proof graphs during solving
     logger.proof_graph_on = true;
 }
-inline void     Solver::setVariableName(int var, const char* name)
+inline void     Solver::setVariableName(int var, char* name)
 {
     while (var >= nVars()) newVar();
     if (dynamic_behaviour_analysis)
