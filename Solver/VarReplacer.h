@@ -32,6 +32,7 @@ class VarReplacer
         bool alreadyIn(const Var var, const Lit lit);
         
         vector<Lit> table;
+        map<Var, vector<Var> > reverseTable;
         
         uint replacedLits;
         uint replacedVars;

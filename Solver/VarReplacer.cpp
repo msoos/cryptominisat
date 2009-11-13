@@ -225,13 +225,14 @@ void VarReplacer::replace(Var var, Lit lit)
         if (lit2.var() != var) {
             setAllThatPointsHereTo(lit1.var(), Lit(lit.var(), lit1.sign()));
             table[lit1.var()] = Lit(lit.var(), lit1.sign());
+            reverseTable[lit.var()].push_back(lit1.var());
             S->setDecisionVar(lit1.var(), false);
             
             setAllThatPointsHereTo(lit2.var(), lit ^ lit2.sign());
             table[lit2.var()] = lit ^ lit2.sign();
+            reverseTable[lit.var()].push_back(lit2.var());
             S->setDecisionVar(lit2.var(), false);
             
-            //assert(table[lit.var()].var() != lit.var());
             table[lit.var()] = Lit(lit.var(), false);
             S->setDecisionVar(lit.var(), true);
             return;
@@ -243,12 +244,12 @@ void VarReplacer::replace(Var var, Lit lit)
     if (lit2.var() != lit.var())
         lit = lit2 ^ lit.sign();
     
-    S->setDecisionVar(var, false);
-    
     //Follow backwards
     setAllThatPointsHereTo(var, lit);
     
     table[var] = lit;
+    reverseTable[lit.var()].push_back(var);
+    S->setDecisionVar(var, false);
 }
 
 bool VarReplacer::alreadyIn(const Var var, const Lit lit)
@@ -280,12 +281,17 @@ bool VarReplacer::alreadyIn(const Var var, const Lit lit)
 
 void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
 {
-    uint i = 0;
-    for(vector<Lit>::iterator it = table.begin(); it != table.end(); it++, i++) {
-        if (it->var() == var) {
-            *it = lit ^ it->sign();
-        }
+    map<Var, vector<Var> >::iterator it = reverseTable.find(var);
+    if (it == reverseTable.end())
+        return;
+    
+    for(vector<Var>::const_iterator it2 = it->second.begin(), end = it->second.end(); it2 != end; it2++) {
+        assert(table[*it2].var() == var);
+        table[*it2] = lit ^ table[*it2].sign();
+        if (lit.var() != *it2)
+            reverseTable[lit.var()].push_back(*it2);
     }
+    reverseTable.erase(it);
 }
 
 void VarReplacer::newVar()
