@@ -201,14 +201,6 @@ static void parse_DIMACS_main(B& in, Solver& S)
             bool xor_clause = false;
             uint matrix_no = 15;
             if ( *in == 'x') xor_clause = true, ++in;
-            if ( *in == 'm') {
-                xor_clause = true;
-                ++in;
-                matrix_no = parseInt(in);
-                if (*in != 'm')
-                    cout << "PARSE ERROR! You must have 'mXm' as the beginning of your matrix-aware xor. You forgot the second 'm'", exit(3);
-                ++in;
-            }
             readClause(in, S, lits);
             skipLine(in);
 
