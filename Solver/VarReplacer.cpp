@@ -44,6 +44,8 @@ void VarReplacer::performReplace()
     
     if (S->ok)
         S->ok = (S->propagate() == NULL);
+    
+    S->order_heap.filter(Solver::VarFilter(*S));
 }
 
 void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
