@@ -58,7 +58,7 @@ uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSiz
     uint sumNumClauses = 0;
     #endif
     
-    const uint limit = 400000;
+    const uint limit = 800000;
     uint from = 0;
     uint until = 0;
     while (until < varUsage.size()) {
@@ -73,7 +73,7 @@ uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSiz
         #endif
         
         table.clear();
-        table.resize(estimate/2);
+        table.reserve(estimate/2);
         uint i = 0;
         for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
             const uint size = (*it)->size();
@@ -81,7 +81,7 @@ uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSiz
             
             for (Lit *l = &(**it)[0], *end = l + size; l != end; l++) {
                 if (l->var() >= from  && l->var() <= until) {
-                    table[*it].push_back(make_pair(*it, i));
+                    table.push_back(make_pair(*it, i));
                     #ifdef VERBOSE_DEBUG
                     numClauses++;
                     #endif
@@ -124,15 +124,16 @@ uint XorFinder::findXors(uint& sumLengths)
     uint foundXors = 0;
     sumLengths = 0;
     vector<bool> toRemove(cls.size(), false);
+    std::sort(table.begin(), table.end(), clause_sorter_primary());
     
-    nextXor = table.begin();
-    const vector<pair<Clause*, uint> >* myclauses;
+    ClauseTable::iterator begin = table.begin();
+    ClauseTable::iterator end = table.begin();
     vector<Lit> lits;
     bool impair;
-    while ((myclauses = getNextXor(impair)) != NULL) {
-        const Clause& c = *((*myclauses)[0].first);
+    while (getNextXor(begin,  end, impair)) {
+        const Clause& c = *(begin->first);
         lits.clear();
-        for (const Lit *it = &c[0], *end = it+c.size() ; it != end; it++) {
+        for (const Lit *it = &c[0], *cend = it+c.size() ; it != cend; it++) {
             lits.push_back(Lit(it->var(), false));
         }
         uint old_group = c.group;
@@ -141,7 +142,7 @@ uint XorFinder::findXors(uint& sumLengths)
         cout << "- Found clauses:" << endl;
         #endif
         
-        for (const pair<Clause*, uint> *it = &(myclauses->at(0)), *end = it + myclauses->size() ; it != end; it++) {
+        for (ClauseTable::iterator it = begin; it != end; it++) {
             #ifdef VERBOSE_DEBUG
             it->first->plain_print();
             #endif
@@ -179,8 +180,8 @@ uint XorFinder::findXors(uint& sumLengths)
     
     Clause **a = cls.getData();
     Clause **r = cls.getData();
-    Clause **end = cls.getData() + cls.size();
-    for (uint i = 0; r != end; i++) {
+    Clause **cend = cls.getData() + cls.size();
+    for (uint i = 0; r != cend; i++) {
         if (!toRemove[i])
             *a++ = *r++;
         else
@@ -191,17 +192,20 @@ uint XorFinder::findXors(uint& sumLengths)
     return foundXors;
 }
 
-const vector<pair<Clause*, uint> >* XorFinder::getNextXor(bool& impair)
+bool XorFinder::getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& end, bool& impair)
 {
-    for (; nextXor != table.end(); nextXor++) {
-        if (isXor(nextXor->second, impair)) {
-            ClauseTable::iterator tmp = nextXor;
-            nextXor++;
-            return &(tmp->second);
-        }
+    ClauseTable::iterator tableEnd = table.end();
+
+    while(begin != tableEnd && end != tableEnd) {
+        begin = end;
+        end++;
+        while(end != tableEnd && clause_vareq(begin->first, end->first))
+            end++;
+        if (isXor(begin, end, impair))
+            return true;
     }
     
-    return NULL;
+    return false;
 }
 
 bool XorFinder::clauseEqual(const Clause& c1, const Clause& c2) const
@@ -222,34 +226,29 @@ bool XorFinder::impairSigns(const Clause& c) const
     return num % 2;
 }
 
-bool XorFinder::isXor(vector<pair<Clause*, uint> >& clauses, bool& impair)
+bool XorFinder::isXor(const ClauseTable::iterator& begin, const ClauseTable::iterator& end, bool& impair)
 {
-    uint size = clauses.size();
+    uint size = &(*begin) - &(*end);
     assert(size > 0);
-    const uint requiredSize = 1 << (clauses[0].first->size()-1);
+    const uint requiredSize = 1 << (begin->first->size()-1);
     
     if (size < requiredSize)
         return false;
     
-    clause_sorter clause_sorter_object;
-    std::sort(clauses.begin(), clauses.end(), clause_sorter_object);
+    std::sort(begin, end, clause_sorter_secondary());
     
     uint numPair = 0;
     uint numImpair = 0;
-    countImpairs(clauses, numImpair, numPair);
+    countImpairs(begin, end, numImpair, numPair);
     
     if (numImpair == requiredSize) {
         impair = true;
-        if (numImpair != clauses.size())
-            cleanNotRightImPair(clauses, impair);
         
         return true;
     }
     
     if (numPair == requiredSize) {
         impair = false;
-        if (numPair != clauses.size()) 
-            cleanNotRightImPair(clauses, impair);
         
         return true;
     }
@@ -257,36 +256,20 @@ bool XorFinder::isXor(vector<pair<Clause*, uint> >& clauses, bool& impair)
     return false;
 }
 
-void XorFinder::cleanNotRightImPair(vector<pair<Clause*, uint> >& clauses, const bool impair) const
-{
-    pair<Clause*, uint>* a = &(clauses[0]);
-    pair<Clause*, uint>* r = a;
-    pair<Clause*, uint>* end = a + clauses.size();
-    
-    for (; r != end;) {
-        if (impairSigns(*(r->first)) != impair) {
-            r++;
-        } else {
-            *a++ = *r++;
-        }
-    }
-    clauses.resize(clauses.size()-(r-a));
-}
-
-void XorFinder::countImpairs(const vector<pair<Clause*, uint> >& clauses, uint& numImpair, uint& numPair) const
+void XorFinder::countImpairs(const ClauseTable::iterator& begin, const ClauseTable::iterator& end, uint& numImpair, uint& numPair) const
 {
     numImpair = 0;
     numPair = 0;
     
-    vector<pair<Clause*, uint> >::const_iterator it = clauses.begin();
-    vector<pair<Clause*, uint> >::const_iterator it2 = it;
+    ClauseTable::const_iterator it = begin;
+    ClauseTable::const_iterator it2 = begin;
     it2++;
     
     bool impair = impairSigns(*it->first);
     numImpair += impair;
     numPair += !impair;
     
-    for (; it2 != clauses.end();) {
+    for (; it2 != end;) {
         if (!clauseEqual(*it->first, *it2->first)) {
             bool impair = impairSigns(*it2->first);
             numImpair += impair;

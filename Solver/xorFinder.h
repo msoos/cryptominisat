@@ -20,14 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "clause.h"
 #include <sys/types.h>
-#include <hash_map>
-#include <map>
 #include "VarReplacer.h"
 
 class Solver;
 
-using __gnu_cxx::hash_map;
-using std::map;
 using std::pair;
 
 class XorFinder
@@ -38,9 +34,10 @@ class XorFinder
         uint doByPart(uint& sumLengths, const uint minSize, const uint maxSize);
         
     private:
+        typedef vector<pair<Clause*, uint> > ClauseTable;
         
         uint findXors(uint& sumLengths);
-        const vector<pair<Clause*, uint> >* getNextXor(bool& impair);
+        bool getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& end, bool& impair);
         
         struct clause_hasher {
             size_t operator()(const Clause* c) const
@@ -54,46 +51,61 @@ class XorFinder
             }
         };
         
-        struct clause_sorter {
+        struct clause_sorter_primary {
             bool operator()(const pair<Clause*, uint>& c11, const pair<Clause*, uint>& c22) const
             {
-                const Clause* c1 = c11.first;
-                const Clause* c2 = c22.first;
-                for (uint i = 0, size = c1->size(); i < size; i++) {
-                    if ((*c1)[i].sign() !=  (*c2)[i].sign()) return (*c2)[i].sign();
+                const Clause& c1 = *(c11.first);
+                const Clause& c2 = *(c22.first);
+            
+                if (c1.size() != c2.size())
+                    return (c1.size() < c2.size());
+
+                for (uint i = 0, size = c1.size(); i < size; i++) {
+                    if (c1[i].var() != c2[i].var())
+                        return (c1[i].var() < c2[i].var());
+
+                }
+
+                return false;
+            }
+        };
+        
+        struct clause_sorter_secondary {
+            bool operator()(const pair<Clause*, uint>& c11, const pair<Clause*, uint>& c22) const
+            {
+                const Clause& c1 = *(c11.first);
+                const Clause& c2 = *(c22.first);
+
+                for (uint i = 0, size = c1.size(); i < size; i++) {
+                    if (c1[i].sign() !=  c2[i].sign())
+                        return c2[i].sign();
                 }
                 
                 return false;
             }
         };
-        
-        struct clause_vareq {
-            uint operator()(const Clause* c1, const Clause* c2) const
-            {
-                if (c1->size() != c2->size())
+         
+        bool clause_vareq(const Clause* c1, const Clause* c2) const
+        {
+            if (c1->size() != c2->size())
+                return false;
+
+            for (uint i = 0, size = c1->size(); i < size; i++)
+                if ((*c1)[i].var() != (*c2)[i].var())
                     return false;
-                
-                for (uint i = 0, size = c1->size(); i < size; i++)
-                    if ((*c1)[i].var() != (*c2)[i].var())
-                        return false;
-                    
-                return true;
-            }
-        };
-        
-        typedef hash_map<Clause*, vector<pair<Clause*, uint> >, clause_hasher, clause_vareq> ClauseTable;
+
+            return true;
+        }
         
         ClauseTable table;
-        ClauseTable::iterator nextXor;
         
         vec<Clause*>& cls;
         vec<XorClause*>& xorcls;
         
         bool clauseEqual(const Clause& c1, const Clause& c2) const;
         bool impairSigns(const Clause& c) const;
-        void countImpairs(const vector<pair<Clause*, uint> >& clauses, uint& numImpair, uint& numPair) const;
-        void cleanNotRightImPair(vector<pair<Clause*, uint> >& clauses, const bool impair) const;
-        bool isXor(vector<pair<Clause*, uint> >& clauses, bool& impair);
+        void countImpairs(const ClauseTable::iterator& begin, const ClauseTable::iterator& end, uint& numImpair, uint& numPair) const;
+        bool isXor(const ClauseTable::iterator& begin, const ClauseTable::iterator& end, bool& impair);
         
         Solver* S;
 };
