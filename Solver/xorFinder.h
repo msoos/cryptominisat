@@ -98,6 +98,8 @@ class XorFinder
         }
         
         ClauseTable table;
+        vector<bool> toRemove;
+        void clearToRemove();
         
         vec<Clause*>& cls;
         vec<XorClause*>& xorcls;

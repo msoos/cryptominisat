@@ -41,6 +41,9 @@ XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls) :
 
 uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSize)
 {
+    toRemove.clear();
+    toRemove.resize(cls.size(), false);
+    
     uint sumUsage = 0;
     vector<uint> varUsage(S->nVars(), 0);
     for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++) {
@@ -76,6 +79,7 @@ uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSiz
         table.reserve(estimate/2);
         uint i = 0;
         for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
+            if (toRemove[i]) continue;
             const uint size = (*it)->size();
             if ( size > maxSize || size < minSize) continue;
             
@@ -104,6 +108,8 @@ uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSiz
         from = until+1;
     }
     
+    clearToRemove();
+    
     S->toReplace->performReplace();
     if (S->ok == false) return found;
     S->ok = (S->propagate() == NULL);
@@ -123,7 +129,6 @@ uint XorFinder::findXors(uint& sumLengths)
     
     uint foundXors = 0;
     sumLengths = 0;
-    vector<bool> toRemove(cls.size(), false);
     std::sort(table.begin(), table.end(), clause_sorter_primary());
     
     ClauseTable::iterator begin = table.begin();
@@ -178,6 +183,11 @@ uint XorFinder::findXors(uint& sumLengths)
         sumLengths += lits.size();
     }
     
+    return foundXors;
+}
+
+void XorFinder::clearToRemove()
+{
     Clause **a = cls.getData();
     Clause **r = cls.getData();
     Clause **cend = cls.getData() + cls.size();
@@ -188,8 +198,6 @@ uint XorFinder::findXors(uint& sumLengths)
             r++;
     }
     cls.shrink(r-a);
-    
-    return foundXors;
 }
 
 bool XorFinder::getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& end, bool& impair)
