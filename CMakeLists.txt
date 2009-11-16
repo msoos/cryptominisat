@@ -39,5 +39,6 @@ add_library(cryptominisatlib
         Solver/conglomerate.cpp
         Solver/MatrixFinder.cpp
         Solver/VarReplacer.cpp
+        Solver/FindUndef.cpp
 )
 

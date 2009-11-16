@@ -304,6 +304,7 @@ void printUsage(char** argv)
     printf("  -restarts       = <num> [1 - 2^32-1] No more than the given number of\n");
     printf("                   restarts will be performed during search\n");
     printf("  -noxorfind      = Don't find and collect xor-clauses from regular clauses\n");
+    printf("  -greedyUnbound  = Greedily unbound variables that are not needed for SAT\n");
     printf("\n");
 }
 
@@ -418,12 +419,13 @@ int main(int argc, char** argv)
                 exit(0);
             }
             dumplearnts = true;
+        } else if ((value = hasPrefix(argv[i], "-greedyUnbound"))) {
+            S.greedyUnbound = true;
         } else if ((value = hasPrefix(argv[i], "-noxorfind"))) {
             S.xorFinder = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);
-
         } else if (strncmp(argv[i], "-", 1) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

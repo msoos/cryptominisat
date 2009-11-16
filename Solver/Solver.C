@@ -30,6 +30,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "xorFinder.h"
 #include "time_mem.h"
 #include "VarReplacer.h"
+#include "FindUndef.h"
 
 #include "gaussian.h"
 #include "MatrixFinder.h"
@@ -74,6 +75,7 @@ Solver::Solver() :
         , dynamic_behaviour_analysis(false) //do not document the proof as default
         , maxRestarts(UINT_MAX)
         , learnt_clause_group(0)
+        , greedyUnbound(false)
 {
     logger.setSolver(this);
     toReplace = new VarReplacer(this);
@@ -1350,6 +1352,12 @@ lbool Solver::solve(const vec<Lit>& assumps)
 #ifndef NDEBUG
         verifyModel();
 #endif
+        if (greedyUnbound) {
+            double time = cpuTime();
+            FindUndef finder(*this);
+            const uint unbounded = finder.unRoll();
+            printf("Greedy unbounding vars:%5.2lf s, unbounded: %7d\n", cpuTime()-time, unbounded);
+        }
     } if (status == l_False) {
         if (conflict.size() == 0)
             ok = false;

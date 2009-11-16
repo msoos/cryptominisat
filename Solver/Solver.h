@@ -40,6 +40,7 @@ class MatrixFinder;
 class Conglomerate;
 class VarReplacer;
 class XorFinder;
+class FindUndef;
 
 
 //#define VERBOSE_DEBUG_XOR
@@ -139,6 +140,8 @@ public:
     const vec<Clause*>& get_learnts() const; //Get all learnt clauses
     const vec<Clause*>& get_unitary_learnts() const; //return the set of unitary learned clauses
     void dump_sorted_learnts(const char* file);
+    friend class FindUndef;
+    bool greedyUnbound; //If set to TRUE, then we will greedily unbound variables (set them to l_Undef)
 
 protected:
     vector<Gaussian*> gauss_matrixes;
