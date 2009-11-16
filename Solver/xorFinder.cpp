@@ -39,6 +39,33 @@ XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls) :
 {
 }
 
+uint XorFinder::doNoPart(uint& sumLengths, const uint minSize, const uint maxSize)
+{
+    toRemove.clear();
+    toRemove.resize(cls.size(), false);
+    
+    vector<bool> toRemove(cls.size(), false);
+    uint found = 0;
+    table.clear();
+    table.reserve(cls.size()/2);
+    uint i = 0;
+    for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
+        const uint size = (*it)->size();
+        if ( size > maxSize || size < minSize) continue;
+        table.push_back(make_pair(*it, i));
+    }
+    
+    uint lengths;
+    found += findXors(lengths);
+    clearToRemove();
+    
+    S->toReplace->performReplace();
+    if (S->ok == false) return found;
+    S->ok = (S->propagate() == NULL);
+    
+    return found;
+}
+
 uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSize)
 {
     toRemove.clear();
