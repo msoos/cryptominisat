@@ -55,8 +55,7 @@ uint XorFinder::doNoPart(uint& sumLengths, const uint minSize, const uint maxSiz
         table.push_back(make_pair(*it, i));
     }
     
-    uint lengths;
-    found += findXors(lengths);
+    found += findXors(sumLengths);
     clearToRemove();
     
     S->toReplace->performReplace();
