@@ -199,7 +199,7 @@ class Tester:
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "hfn:vg", ["help", "file=", "num=", "greedy"])
+      opts, args = getopt.getopt(sys.argv[1:], "hgvn:f:", ["help", "file=", "num=", "greedy"])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
@@ -207,17 +207,17 @@ class Tester:
     
     fname = None
     num = 3
-    for o, a in opts:
-        if o == "-v":
+    for opt, arg in opts:
+        if opt == "-v":
             self.verbose = True
-        elif o in ("-h", "--help"):
+        elif opt in ("-h", "--help"):
             self.usage()
             sys.exit()
-        elif o in ("-f", "--file"):
-            fname = a
-        elif o in ("-n", "--num"):
-            num = a
-        elif o in ("-g", "--greedy"):
+        elif opt in ("-f", "--file"):
+            fname = arg
+        elif opt in ("-n", "--num"):
+            num = arg
+        elif opt in ("-g", "--greedy"):
             self.greedyUnbound = True
         else:
             assert False, "unhandled option"
@@ -230,9 +230,9 @@ class Tester:
             self.check(fname, i);
             
     else:
-      if (os.path.isfile(filename) == False) :
-        print "Filename given '%s' is not a file!" %(filename)
-        exit -1
+      if (os.path.isfile(fname) == False) :
+        print "Filename given '%s' is not a file!" %(fname)
+        exit(-1)
       
       for i in range(num):
         self.check(fname, 0)
