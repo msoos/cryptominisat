@@ -185,7 +185,8 @@ void Logger::begin()
 }
 
 // For noting conflicts. Updates the proof graph and the statistics.
-void Logger::conflict(const confl_type type, const uint goback_level, const uint goback_sublevel, const uint group, const vec<Lit>& learnt_clause)
+template<class T>
+void Logger::conflict(const confl_type type, const uint goback_level, const uint goback_sublevel, const uint group, const T& learnt_clause)
 {
     first_begin();
     assert(!(proof == NULL && proof_graph_on));
@@ -233,6 +234,10 @@ void Logger::conflict(const confl_type type, const uint goback_level, const uint
             it->second++;
     }
 }
+
+template void Logger::conflict(const confl_type type, const uint goback_level, const uint goback_sublevel, const uint group, const Clause& learnt_clause);
+
+template void Logger::conflict(const confl_type type, const uint goback_level, const uint goback_sublevel, const uint group, const vec<Lit>& learnt_clause);
 
 // For the really strange event that the solver is given an empty clause
 void Logger::empty_clause(const uint group)

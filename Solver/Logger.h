@@ -33,6 +33,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "SolverTypes.h"
 #include "stdint.h"
 #include "limits.h"
+#include "Clause.h"
 
 #ifndef uint
 #define uint unsigned int
@@ -57,7 +58,8 @@ public:
     enum finish_type { model_found, unsat_model_found, restarting, done_adding_clauses };
 
     //Conflict and propagation(guess is also a proapgation...)
-    void conflict(const confl_type type, const uint goback_level, const uint goback_sublevel, const uint group, const vec<Lit>& learnt_clause);
+    template<class T>
+    void conflict(const confl_type type, const uint goback_level, const uint goback_sublevel, const uint group, const T& learnt_clause);
     void propagation(const Lit lit, const prop_type type, const uint group = UINT_MAX);
     void empty_clause(const uint group);
 
