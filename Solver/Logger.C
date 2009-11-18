@@ -39,31 +39,33 @@ using std::ofstream;
 #define TRD_WIDTH 10
 
 Logger::Logger(int& _verbosity) :
-        proof_graph_on(false),
-        statistics_on(false),
+    proof_graph_on(false)
+    , statistics_on(false)
+    , mini_proof(false)
 
-        max_print_lines(20),
-        uniqueid(1),
-        level(0),
-        begin_level(0),
+    , max_print_lines(20)
+    , uniqueid(1)
 
-        proof(NULL),
-        proof_num(0),
+    , proof(NULL)
 
-        sum_conflict_depths(0),
-        no_conflicts(0),
-        no_decisions(0),
-        no_propagations(0),
-        sum_decisions_on_branches(0),
-        sum_propagations_on_branches(0),
+    , sum_conflict_depths(0)
+    , no_conflicts(0)
+    , no_decisions(0)
+    , no_propagations(0)
+    , sum_decisions_on_branches(0)
+    , sum_propagations_on_branches(0)
 
-        verbosity(_verbosity)
+    , verbosity(_verbosity)
+    , begin_called(false)
 {
     runid /= 10;
-    runid=time(NULL)%10000;
+    runid = time(NULL) % 10000;
     if (verbosity >= 1) printf("RunID is: #%d\n",runid);
+}
 
-    sprintf(filename0,"proofs/%d-proof0.dot", runid);
+void Logger::setSolver(const Solver* _S)
+{
+    S = _S;
 }
 
 // Adds a new variable to the knowledge of the logger
@@ -71,7 +73,7 @@ void Logger::new_var(const Var var)
 {
     if (!statistics_on && !proof_graph_on)
         return;
-    
+
     if (varnames.size() <= var) {
         varnames.resize(var+1);
         times_var_propagated.resize(var+1, 0);
@@ -98,15 +100,15 @@ void Logger::new_group(const uint group)
 void Logger::cut_name_to_size(char* name) const
 {
     uint len = strlen(name);
-    if (name[len-1] == '\r') {
+    if (len > 0 && name[len-1] == '\r') {
         name[len-1] = '\0';
         len--;
     }
     
-    if (strlen(name) > SND_WIDTH-2) {
+    if (len > SND_WIDTH-2) {
         name[SND_WIDTH-2] = '\0';
-        name[SND_WIDTH-3]='.';
-        name[SND_WIDTH-4]='.';
+        name[SND_WIDTH-3] = '.';
+        name[SND_WIDTH-4] = '.';
     }
 }
 
@@ -118,6 +120,8 @@ void Logger::set_group_name(const uint group, char* name)
     
     new_group(group);
     cut_name_to_size(name);
+
+    if (strlen(name) == 0) return;
     
     if (groupnames[group] == "Noname") {
         groupnames[group] = name;
@@ -146,243 +150,210 @@ void Logger::set_variable_name(const uint var, char* name)
     }
 }
 
+void Logger::first_begin()
+{
+    if (begin_called)
+        return;
+    
+    begin_called = true;
+    begin();
+}
+
 void Logger::begin()
 {
-    char filename[80];
-    sprintf(filename, "proofs/%d-proof%d.dot", runid, proof_num);
-
-    if (proof_num > 0) {
-        if (proof_graph_on) {
-            FileCopy(filename0, filename);
-            proof = fopen(filename,"a");
-            if (!proof) printf("Couldn't open proof file '%s' for writing\n", filename), exit(-1);
+    if (proof_graph_on) {
+        char filename[80];
+        sprintf(filename, "proofs/%d-proof%d.dot", runid, S->starts);
+        
+        if (S->starts == 0)
+            history.push_back(uniqueid);
+        else {
+            if (mini_proof)
+                history.resize(S->decisionLevel()+1);
+            else
+                history.resize(S->trail.size()+1);
         }
-    } else {
-        assert(level == 0);
-        history.resize(100);
-        history[level] = uniqueid;
 
-        if (proof_graph_on) {
-            proof = fopen(filename,"w");
-            if (!proof) printf("Couldn't open proof file '%s' for writing\n", filename), exit(-1);
-            fprintf(proof, "digraph G {\n");
-            fprintf(proof,"node%d [shape=circle, label=\"BEGIN\", root];\n", uniqueid);
-        }
+        proof = fopen(filename,"w");
+        if (!proof) printf("Couldn't open proof file '%s' for writing\n", filename), exit(-1);
+        fprintf(proof, "digraph G {\n");
+        fprintf(proof,"node%d [shape=circle, label=\"BEGIN\", root];\n", history[history.size()-1]);
     }
 
     if (statistics_on)
         reset_statistics();
-
-    level = begin_level;
 }
 
 // For noting conflicts. Updates the proof graph and the statistics.
-void Logger::conflict(const confl_type type, uint goback, const uint group, const vec<Lit>& learnt_clause)
+void Logger::conflict(const confl_type type, const uint goback_level, const uint goback_sublevel, const uint group, const vec<Lit>& learnt_clause)
 {
+    first_begin();
     assert(!(proof == NULL && proof_graph_on));
-    assert(goback < level);
-
-    goback += begin_level;
-    uniqueid++;
 
     if (proof_graph_on) {
+        uniqueid++;
         fprintf(proof,"node%d [shape=polygon,sides=5,label=\"",uniqueid);
-        for (int i = 0; i < learnt_clause.size(); i++) {
-            if (learnt_clause[i].sign()) fprintf(proof,"-");
-            int myvar = learnt_clause[i].var();
-            fprintf(proof,"%s\\n",varnames[myvar].c_str());
+        
+        if (!mini_proof) {
+            for (int i = 0; i < learnt_clause.size(); i++) {
+                if (learnt_clause[i].sign()) fprintf(proof,"-");
+                int myvar = learnt_clause[i].var();
+                fprintf(proof,"%s\\n",varnames[myvar].c_str());
+            }
         }
         fprintf(proof,"\"];\n");
 
-        fprintf(proof,"node%d -> node%d [label=\"",history[level],uniqueid);
+        fprintf(proof,"node%d -> node%d [label=\"",history[history.size()-1],uniqueid);
         if (type == gauss_confl_type)
             fprintf(proof,"Gauss\",style=bold");
         else
             fprintf(proof,"%s\"", groupnames[group].c_str());
         fprintf(proof,"];\n");
         
-        fprintf(proof,"node%d -> node%d [style=bold];\n",uniqueid,history[goback]);
+        if (!mini_proof)
+            history.resize(goback_sublevel+1);
+        else
+            history.resize(goback_level+1);
+        fprintf(proof,"node%d -> node%d [style=dotted];\n",uniqueid,history[history.size()-1]);
     }
 
     if (statistics_on) {
-        const uint depth = level - begin_level;
-
         times_group_caused_conflict[group]++;
-        depths_of_conflicts_for_group[group].push_back(depth);
+        depths_of_conflicts_for_group[group].push_back(S->decisionLevel());
         
         no_conflicts++;
-        sum_conflict_depths += depth;
-        sum_decisions_on_branches += decisions[depth];
-        sum_propagations_on_branches += propagations[depth];
-        branch_depth_distrib[depth]++;
+        sum_conflict_depths += S->trail.size() - S->trail_lim[0];
+        sum_decisions_on_branches += S->decisionLevel();
+        sum_propagations_on_branches += S->trail.size() - S->trail_lim[0] - S->decisionLevel();
+        
+        map<uint, uint>::iterator it = branch_depth_distrib.find(S->decisionLevel());
+        if (it == branch_depth_distrib.end())
+            branch_depth_distrib[S->decisionLevel()] = 1;
+        else
+            it->second++;
     }
-
-    level = goback;
 }
 
 // For the really strange event that the solver is given an empty clause
 void Logger::empty_clause(const uint group)
 {
+    first_begin();
     assert(!(proof == NULL && proof_graph_on));
 
     if (proof_graph_on) {
-        fprintf(proof,"node%d -> node%d [label=\"emtpy clause:",history[level],uniqueid+1);
-        fprintf(proof,"%s\\n", groupnames[group].c_str());
-        fprintf(proof,"\"];\n");
+        uniqueid++;
+        fprintf(proof,"node%d -> node%d [label=\"emtpy clause:",history[history.size()-1],uniqueid);
+        fprintf(proof,"%s\"];\n", groupnames[group].c_str());
+        history.push_back(uniqueid);
     }
 }
 
 // Propagating a literal. Type of literal and the (learned clause's)/(propagating clause's)/(etc) group must be given. Updates the proof graph and the statistics. note: the meaning of the variable 'group' depends on the type
 void Logger::propagation(const Lit lit, const prop_type type, const uint group)
 {
+    first_begin();
     assert(!(proof == NULL && proof_graph_on));
-    uniqueid++;
 
     //graph
-    if (proof_graph_on) {
+    if (proof_graph_on && (!mini_proof || type == guess_type || type == assumption_type)) {
+        uniqueid++;
+        
         fprintf(proof,"node%d [shape=box, label=\"",uniqueid);;
         if (lit.sign())
             fprintf(proof,"-");
         fprintf(proof,"%s\"];\n",varnames[lit.var()].c_str());
 
-        fprintf(proof,"node%d -> node%d [label=\"",history[level],uniqueid);
+        fprintf(proof,"node%d -> node%d [label=\"",history[history.size()-1],uniqueid);
+        
         switch (type) {
-
-        case revert_guess_type:
         case simple_propagation_type:
-            assert(group != UINT_MAX);
-            fprintf(proof,"%s\\n", groupnames[group].c_str());
-            fprintf(proof,"\"];\n");
+            fprintf(proof,"%s\"];\n", groupnames[group].c_str());
             break;
-
+            
         case gauss_propagation_type:
-            fprintf(proof,"Gauss\",style=bold];\n");
+            fprintf(proof,"Gauss propagation\",style=bold];\n");
             break;
-
-        case learnt_unit_clause_type:
-            fprintf(proof,"learnt unit clause\",style=bold];\n");
+            
+        case add_clause_type:
+            fprintf(proof,"red. from %s\"];\n",groupnames[group].c_str());
             break;
-
+            
+        case unit_clause_type:
+            fprintf(proof,"unit clause %s,style=bold\"];\n",groupnames[group].c_str());
+            break;
+            
         case assumption_type:
             fprintf(proof,"assumption\"];\n");
             break;
-
+            
         case guess_type:
-            fprintf(proof,"guess\",style=dotted];\n");
-            break;
-
-        case addclause_type:
-            assert(group != UINT_MAX);
-            fprintf(proof,"red. from %s\"];\n",groupnames[group].c_str());
+            fprintf(proof,"guess\",style=bold];\n");
             break;
         }
+        history.push_back(uniqueid);
     }
 
-    if (statistics_on && proof_num > 0) switch (type) {
+    if (statistics_on) {
+        switch (type) {
+        case unit_clause_type:
+            learnt_unitary_clauses++;
+        case add_clause_type:
         case gauss_propagation_type:
         case simple_propagation_type:
             no_propagations++;
             times_var_propagated[lit.var()]++;
             
-            depths_of_propagations_for_group[group].push_back(level - begin_level);
+            depths_of_propagations_for_group[group].push_back(S->decisionLevel());
             times_group_caused_propagation[group]++;
-            
-            depths_of_assigns_for_var[lit.var()].push_back(level - begin_level);
+            depths_of_assigns_for_var[lit.var()].push_back(S->decisionLevel());
             break;
-
-        case learnt_unit_clause_type: //when learning unit clause
-        case revert_guess_type: //when, after conflict, a guess gets reverted
-            assert(group != UINT_MAX);
-            times_group_caused_propagation[group]++;
-            depths_of_propagations_for_group[group].push_back(level - begin_level);
-            
-            depths_of_assigns_for_var[lit.var()].push_back(level - begin_level);
-        case guess_type:
-            times_var_guessed[lit.var()]++;
-            depths_of_assigns_for_var[lit.var()].push_back(level - begin_level);
-            no_decisions++;
-            break;
-
-        case addclause_type:
+        
         case assumption_type:
-            assert(false);
-    }
-
-    level++;
-
-    if (proof_num > 0) {
-        decisions.growTo(level-begin_level+1);
-        propagations.growTo(level-begin_level+1);
-        if (level-begin_level == 1) {
-            decisions[0] = 0;
-            propagations[0] = 0;
-            //note: we might reach this place TWICE in the same restart. This is because the first assignement might get reverted
-        }
-        if (type == simple_propagation_type) {
-            decisions[level-begin_level] = decisions[level-begin_level-1];
-            propagations[level-begin_level] = propagations[level-begin_level-1]+1;
-        } else {
-            decisions[level-begin_level] = decisions[level-begin_level-1]+1;
-            propagations[level-begin_level] = propagations[level-begin_level-1];
+        case guess_type:
+            no_decisions++;
+            times_var_guessed[lit.var()]++;
+            
+            depths_of_assigns_for_var[lit.var()].push_back(S->decisionLevel());
+            break;
         }
     }
-
-    if (history.size() < level+1) history.resize(level+100);
-    history[level] = uniqueid;
 }
 
-// Ending of a restart iteration. Also called when ending S.simplify();
+// Ending of a restart iteration
 void Logger::end(const finish_type finish)
 {
     assert(!(proof == NULL && proof_graph_on));
-
-    switch (finish) {
-    case model_found: {
-        uniqueid++;
-        if (proof_graph_on) fprintf(proof,"node%d [shape=doublecircle, label=\"MODEL\"];\n",uniqueid);
-        break;
-    }
-    case unsat_model_found: {
-        uniqueid++;
-        if (proof_graph_on) fprintf(proof,"node%d [shape=doublecircle, label=\"UNSAT\"];\n",uniqueid);
-        break;
-    }
-    case restarting: {
-        uniqueid++;
-        if (proof_graph_on) fprintf(proof,"node%d [shape=doublecircle, label=\"Re-starting\\nsearch\"];\n",uniqueid);
-        break;
-    }
-    case done_adding_clauses: {
-        begin_level = level;
-        break;
-    }
-    }
-
+    
     if (proof_graph_on) {
-        if (proof_num > 0) {
-            fprintf(proof,"node%d -> node%d;\n",history[level],uniqueid);
-            fprintf(proof,"}\n");
-        } else proof0_lastid = uniqueid;
+        uniqueid++;
+        switch (finish) {
+        case model_found:
+            fprintf(proof,"node%d [shape=doublecircle, label=\"MODEL\"];\n",uniqueid);
+            break;
+        case unsat_model_found:
+            fprintf(proof,"node%d [shape=doublecircle, label=\"UNSAT\"];\n",uniqueid);
+            break;
+        case done_adding_clauses:
+            fprintf(proof,"node%d [shape=doublecircle, label=\"Done adding\\nclauses\"];\n",uniqueid);
+            break;
+        case restarting:
+            fprintf(proof,"node%d [shape=doublecircle, label=\"Re-starting\\nsearch\"];\n",uniqueid);
+            break;
+        }
+
+        fprintf(proof,"node%d -> node%d;\n",history[history.size()-1],uniqueid);
+        fprintf(proof,"}\n");
+        history.push_back(uniqueid);
 
         proof = (FILE*)fclose(proof);
         assert(proof == NULL);
-
-        if (finish == model_found || finish == unsat_model_found) {
-            proof = fopen(filename0,"a");
-            fprintf(proof,"node%d [shape=doublecircle, label=\"Done adding\\nclauses\"];\n",proof0_lastid+1);
-            fprintf(proof,"node%d -> node%d;\n",proof0_lastid,proof0_lastid+1);
-            fprintf(proof,"}\n");
-            if(fclose(proof) != 0) {
-                printf("Error! Could not close proof file!");
-                exit(-1);
-            }
-            proof = NULL;
-        }
     }
 
-    if (statistics_on) printstats();
-
-    proof_num++;
+    if (statistics_on) {
+        printstats();
+        if (finish == restarting)
+            reset_statistics();
+    }
 }
 
 void Logger::print_footer() const
@@ -395,9 +366,12 @@ void Logger::print_assign_var_order() const
     vector<pair<double, uint> > prop_ordered;
     for (uint i = 0; i < depths_of_assigns_for_var.size(); i++) {
         double avg = 0.0;
-        for (vector<uint>::const_iterator it = depths_of_assigns_for_var[i].begin(); it != depths_of_assigns_for_var[i].end(); it++)
+        bool was_unit = false;
+        for (vector<uint>::const_iterator it = depths_of_assigns_for_var[i].begin(); it != depths_of_assigns_for_var[i].end(); it++) {
             avg += *it;
-        if (depths_of_assigns_for_var[i].size() > 0) {
+            if (*it == 0) was_unit = true;
+        }
+        if (depths_of_assigns_for_var[i].size() > 0 && !was_unit) {
             avg /= (double) depths_of_assigns_for_var[i].size();
             prop_ordered.push_back(std::make_pair(avg, i));
         }
@@ -406,6 +380,7 @@ void Logger::print_assign_var_order() const
     if (!prop_ordered.empty()) {
         print_footer();
         print_simple_line(" Variables are assigned in the following order");
+        print_simple_line(" (unitary clauses not shown)");
         print_header("var", "var name", "avg order");
         std::sort(prop_ordered.begin(), prop_ordered.end());
         print_vars(prop_ordered);
@@ -417,9 +392,12 @@ void Logger::print_prop_order() const
     vector<pair<double, uint> > prop_ordered;
     for (uint i = 0; i < depths_of_propagations_for_group.size(); i++) {
         double avg = 0.0;
-        for (vector<uint>::const_iterator it = depths_of_propagations_for_group[i].begin(); it != depths_of_propagations_for_group[i].end(); it++)
+        bool was_unit = false;
+        for (vector<uint>::const_iterator it = depths_of_propagations_for_group[i].begin(); it != depths_of_propagations_for_group[i].end(); it++) {
             avg += *it;
-        if (depths_of_propagations_for_group[i].size() > 0) {
+            if (*it == 0) was_unit = true;
+        }
+        if (depths_of_propagations_for_group[i].size() > 0 && !was_unit) {
             avg /= (double) depths_of_propagations_for_group[i].size();
             prop_ordered.push_back(std::make_pair(avg, i));
         }
@@ -428,6 +406,7 @@ void Logger::print_prop_order() const
     if (!prop_ordered.empty()) {
         print_footer();
         print_simple_line(" Propagation depth order of clause groups");
+        print_simple_line(" (unitary clauses not shown)");
         print_header("group", "group name", "avg order");
         std::sort(prop_ordered.begin(), prop_ordered.end());
         print_groups(prop_ordered);
@@ -592,7 +571,7 @@ void Logger::print_branch_depth_distrib() const
     print_footer();
 
     std::stringstream ss;
-    ss << "branch_depths/branch_depth_file" << runid << "-" << proof_num << ".txt";
+    ss << "branch_depths/branch_depth_file" << runid << "-" << S->starts << ".txt";
     ofstream branch_depth_file;
     branch_depth_file.open(ss.str().c_str());
     uint i = 0;
@@ -621,7 +600,7 @@ void Logger::print_branch_depth_distrib() const
 void Logger::print_learnt_clause_distrib() const
 {
     map<uint, uint> learnt_sizes;
-    const vec<Clause*>& learnts = solver->get_learnts();
+    const vec<Clause*>& learnts = S->get_learnts();
     
     uint maximum = 0;
     
@@ -637,7 +616,7 @@ void Logger::print_learnt_clause_distrib() const
             it->second++;
     }
     
-    learnt_sizes[0] = solver->get_unitary_learnts().size();
+    learnt_sizes[0] = S->get_unitary_learnts().size();
     
     uint slice = (maximum+1)/max_print_lines + (bool)((maximum+1)%max_print_lines);
     
@@ -718,7 +697,7 @@ void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const map<ui
 void Logger::print_general_stats(uint restarts, uint64_t conflicts, int vars, int noClauses, uint64_t clauses_Literals, int noLearnts, double litsPerLearntCl, double progressEstimate) const
 {
     print_footer();
-    print_simple_line(" Standard MiniSat restart statistics");
+    print_simple_line(" Standard MiniSat stats -- for all restarts until now");
     print_footer();
     print_line("Restart number", restarts);
     print_line("Number of conflicts", conflicts);
@@ -727,6 +706,7 @@ void Logger::print_general_stats(uint restarts, uint64_t conflicts, int vars, in
     print_line("Number of literals in clauses",clauses_Literals);
     print_line("Avg. literals per learnt clause",litsPerLearntCl);
     print_line("Progress estimate (%):", progressEstimate);
+    print_line("All unitary learnts until now", S->unitary_learnts.size());
     print_footer();
 }
 
@@ -760,9 +740,9 @@ void Logger::printstats() const
 void Logger::print_advanced_stats() const
 {
     print_footer();
-    print_simple_line(" Advanced statistics");
+    print_simple_line(" Advanced statistics - for only this restart");
     print_footer();
-    print_line("Unitary learnts", solver->get_unitary_learnts().size());
+    print_line("Unitary learnts", learnt_unitary_clauses);
     print_line("No. branches visited", no_conflicts);
     print_line("Avg. branch depth", (double)sum_conflict_depths/(double)no_conflicts);
     print_line("No. decisions", no_decisions);
@@ -795,6 +775,7 @@ void Logger::print_statistics_note() const
 // resets all stored statistics. Might be useful, to generate statistics for each restart and not for the whole search in general
 void Logger::reset_statistics()
 {
+    assert(S->decisionLevel() == 0);
     assert(times_var_guessed.size() == times_var_propagated.size());
     assert(times_group_caused_conflict.size() == times_group_caused_propagation.size());
     
@@ -832,14 +813,9 @@ void Logger::reset_statistics()
     no_conflicts = 0;
     no_decisions = 0;
     no_propagations = 0;
-    decisions.clear();
-    propagations.clear();
     sum_decisions_on_branches = 0;
     sum_propagations_on_branches = 0;
     branch_depth_distrib.clear();
+    learnt_unitary_clauses = 0;
 }
 
-void Logger::setSolver(const Solver* _solver)
-{
-    solver = _solver;
-}

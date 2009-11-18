@@ -76,9 +76,9 @@ Solver::Solver() :
         , learnt_clause_group(0)
         , greedyUnbound(false)
 {
-    logger.setSolver(this);
     toReplace = new VarReplacer(this);
     conglomerate = new Conglomerate(this);
+    logger.setSolver(this);
 }
 
 
@@ -166,7 +166,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         assert(value(ps[0]) == l_Undef);
         uncheckedEnqueue( (xor_clause_inverted) ? ~ps[0] : ps[0]);
         if (dynamic_behaviour_analysis)
-            logger.propagation((xor_clause_inverted) ? ~ps[0] : ps[0], Logger::addclause_type, group);
+            logger.propagation((xor_clause_inverted) ? ~ps[0] : ps[0], Logger::add_clause_type, group);
         return ok = (propagate() == NULL);
     }
     case 2: {
@@ -224,7 +224,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
         assert(value(ps[0]) == l_Undef);
         uncheckedEnqueue(ps[0]);
         if (dynamic_behaviour_analysis)
-            logger.propagation(ps[0], Logger::addclause_type, group);
+            logger.propagation(ps[0], Logger::add_clause_type, group);
         return ok = (propagate() == NULL);
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
@@ -1172,9 +1172,9 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     }
     learnt_clause.clear();
     analyze(confl, learnt_clause, backtrack_level);
-    cancelUntil(backtrack_level);
     if (dynamic_behaviour_analysis)
-        logger.conflict(Logger::simple_confl_type, backtrack_level, confl->group, learnt_clause);
+        logger.conflict(Logger::simple_confl_type, backtrack_level, trail_lim[backtrack_level], confl->group, learnt_clause);
+    cancelUntil(backtrack_level);
     
     #ifdef VERBOSE_DEBUG
     cout << "Learning:";
@@ -1191,7 +1191,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         uncheckedEnqueue(learnt_clause[0]);
         if (dynamic_behaviour_analysis) {
             logger.set_group_name(c->group, "unitary learnt clause");
-            logger.propagation(learnt_clause[0], Logger::learnt_unit_clause_type, c->group);
+            logger.propagation(learnt_clause[0], Logger::unit_clause_type, c->group);
         }
         assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
         
@@ -1208,7 +1208,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
 
         if (dynamic_behaviour_analysis) {
             logger.set_group_name(c->group, "learnt clause");
-            logger.propagation(learnt_clause[0], Logger::revert_guess_type, c->group);
+            logger.propagation(learnt_clause[0], Logger::simple_propagation_type, c->group);
         }
     }
 
@@ -1252,6 +1252,9 @@ void Solver::print_gauss_sum_stats() const
 
 lbool Solver::solve(const vec<Lit>& assumps)
 {
+    if (dynamic_behaviour_analysis)
+        logger.end(Logger::done_adding_clauses);
+    
     model.clear();
     conflict.clear();
 
@@ -1329,6 +1332,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         };
         for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
             (*gauss)->reset_stats();
+        
         status = search((int)nof_conflicts, (int)nof_learnts);
         nof_conflicts *= restart_inc;
         nof_learnts   *= learntsize_inc;

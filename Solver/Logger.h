@@ -24,14 +24,13 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <set>
 #include <Vec.h>
 #include <vector>
+#include <string>
+#include <map>
 
 #include "Vec.h"
 #include "Heap.h"
 #include "Alg.h"
-#include "Logger.h"
 #include "SolverTypes.h"
-#include <string>
-#include <map>
 #include "stdint.h"
 #include "limits.h"
 
@@ -50,14 +49,15 @@ class Logger
 {
 public:
     Logger(int& vebosity);
+    void setSolver(const Solver* S);
 
     //types of props, confl, and finish
-    enum prop_type { revert_guess_type, learnt_unit_clause_type, assumption_type, guess_type, addclause_type, simple_propagation_type, gauss_propagation_type };
+    enum prop_type { revert_guess_type, unit_clause_type, add_clause_type, assumption_type, guess_type, simple_propagation_type, gauss_propagation_type };
     enum confl_type { simple_confl_type, gauss_confl_type };
     enum finish_type { model_found, unsat_model_found, restarting, done_adding_clauses };
 
     //Conflict and propagation(guess is also a proapgation...)
-    void conflict(const confl_type type, uint goback, const uint group, const vec<Lit>& learnt_clause);
+    void conflict(const confl_type type, const uint goback_level, const uint goback_sublevel, const uint group, const vec<Lit>& learnt_clause);
     void propagation(const Lit lit, const prop_type type, const uint group = UINT_MAX);
     void empty_clause(const uint group);
 
@@ -75,9 +75,9 @@ public:
     void newclause(const vec<Lit>& ps, const bool xor_clause, const uint group);
 
     bool proof_graph_on;
+    bool mini_proof;
     bool statistics_on;
     
-    void setSolver(const Solver* solver);
 private:
     void new_group(const uint group);
     void cut_name_to_size(char* name) const;
@@ -114,15 +114,10 @@ private:
     //internal data structures
     uint uniqueid; //used to store the last unique ID given to a node
     vector<uint> history; //stores the node uniqueIDs
-    uint level; //used to know the current level
-    uint begin_level;
 
     //graph drawing
     FILE* proof; //The file to store the proof
-    uint proof_num;
-    char filename0[80];
     uint runid;
-    uint proof0_lastid;
 
     //---------------------
     //statistics collection
@@ -154,15 +149,17 @@ private:
     uint no_conflicts;
     uint no_decisions;
     uint no_propagations;
-    vec<uint> decisions;
-    vec<uint> propagations;
     uint sum_decisions_on_branches;
     uint sum_propagations_on_branches;
+    uint learnt_unitary_clauses;
 
     //message display properties
     const int& verbosity;
     
-    const Solver* solver;
+    const Solver* S;
+    
+    void first_begin();
+    bool begin_called;
 };
 
 #endif //__LOGGER_H__

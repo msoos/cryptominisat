@@ -27,12 +27,12 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Vec.h"
 #include "Heap.h"
 #include "Alg.h"
-#include "Logger.h"
 #include "MersenneTwister.h"
 #include "SolverTypes.h"
 #include "Clause.h"
 #include "VarReplacer.h"
 #include "GaussianConfig.h"
+#include "Logger.h"
 
 class Gaussian;
 class MatrixFinder;
@@ -40,7 +40,6 @@ class Conglomerate;
 class VarReplacer;
 class XorFinder;
 class FindUndef;
-
 
 //#define VERBOSE_DEBUG_XOR
 //#define VERBOSE_DEBUG
@@ -133,8 +132,6 @@ public:
     void needStats();              // Prepares the solver to output statistics
     void needProofGraph();         // Prepares the solver to output proof graphs during solving
     void setVariableName(int var, char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
-    void startClauseAdding();      // Before adding clauses, but after setting up the Solver (need* functions, verbosity), this should be called
-    void endFirstSimplify();       // After the clauses are added, and the first simplify() is called, this must be called
     const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
     const vec<Clause*>& get_learnts() const; //Get all learnt clauses
     const vec<Clause*>& get_unitary_learnts() const; //return the set of unitary learned clauses
@@ -195,7 +192,8 @@ protected:
     double              progress_estimate;// Set by 'search()'.
     bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
     MTRand mtrand;                        // random number generator
-    Logger logger;                        // dynamic logging, statistics
+    Logger logger;                       // dynamic logging, statistics
+    friend class Logger;
     bool dynamic_behaviour_analysis;      //should 'logger' be called whenever a propagation/conflict/decision is made?
     uint                maxRestarts;      // More than this number of restarts will not be performed
 
@@ -408,14 +406,6 @@ inline void     Solver::setVariableName(int var, char* name)
     if (dynamic_behaviour_analysis)
         logger.set_variable_name(var, name);
 } // Sets the varible 'var'-s name to 'name' in the logger
-inline void     Solver::startClauseAdding()
-{
-    if (dynamic_behaviour_analysis) logger.begin();    // Needs to be called before adding any clause
-}
-inline void     Solver::endFirstSimplify()
-{
-    if (dynamic_behaviour_analysis) logger.end(Logger::done_adding_clauses);    // Needs to be called before adding any clause
-}
 inline void     Solver::needRealUnknowns()
 {
     useRealUnknowns = true;
