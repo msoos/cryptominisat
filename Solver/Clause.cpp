@@ -17,7 +17,7 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************************************/
 
-#include "clause.h"
+#include "Clause.h"
 
 Clause* Clause_new(const vec<Lit>& ps, const uint group, const bool learnt)
 {

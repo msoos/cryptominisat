@@ -1,7 +1,7 @@
 #include "VarReplacer.h"
 
 #include "Solver.h"
-#include "conglomerate.h"
+#include "Conglomerate.h"
 
 //#define VERBOSE_DEBUG
 

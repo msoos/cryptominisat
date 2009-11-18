@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "MatrixFinder.h"
 
 #include "Solver.h"
-#include "gaussian.h"
-#include "gaussianconfig.h"
+#include "Gaussian.h"
+#include "GaussianConfig.h"
 
 #include <list>
 #include <set>

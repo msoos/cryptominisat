@@ -15,10 +15,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
-#include "gaussian.h"
+#include "Gaussian.h"
+
 #include <iostream>
 #include <iomanip>
-#include "clause.h"
+#include "Clause.h"
 #include <algorithm>
 using std::ostream;
 using std::cout;

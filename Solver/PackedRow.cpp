@@ -1,4 +1,4 @@
-#include "packedRow.h"
+#include "PackedRow.h"
 
 std::ostream& operator << (std::ostream& os, const packedRow& m)
 {

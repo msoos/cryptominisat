@@ -21,16 +21,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include "SolverTypes.h"
 #include "Solver.h"
-#include "gaussianconfig.h"
+#include "GaussianConfig.h"
+#include "PackedRow.h"
+
 using std::vector;
 using std::cout;
 using std::endl;
 
 class Clause;
-
-#include "packedRow.h"
-
-//typedef mpz_class matrix_row;
 typedef packedRow matrix_row;
 
 

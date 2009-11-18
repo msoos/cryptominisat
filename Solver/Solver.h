@@ -30,11 +30,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Logger.h"
 #include "MersenneTwister.h"
 #include "SolverTypes.h"
-#include "clause.h"
+#include "Clause.h"
 #include "VarReplacer.h"
+#include "GaussianConfig.h"
 
-
-#include "gaussianconfig.h"
 class Gaussian;
 class MatrixFinder;
 class Conglomerate;

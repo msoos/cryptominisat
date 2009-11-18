@@ -2,7 +2,7 @@
 #define __REPLACE_H__
 
 #include "SolverTypes.h"
-#include "clause.h"
+#include "Clause.h"
 #include "Vec.h"
 
 #include <sys/types.h>

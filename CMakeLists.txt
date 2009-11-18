@@ -32,11 +32,11 @@ add_library(cryptominisatlib
 	Solver/fcopy.cpp
 	Solver/Logger.C
 	Solver/Solver.C
-	Solver/clause.cpp
-        Solver/gaussian.cpp
-        Solver/packedRow.cpp
-        Solver/xorFinder.cpp
-        Solver/conglomerate.cpp
+	Solver/Clause.cpp
+        Solver/Gaussian.cpp
+        Solver/PackedRow.cpp
+        Solver/XorFinder.cpp
+        Solver/Conglomerate.cpp
         Solver/MatrixFinder.cpp
         Solver/VarReplacer.cpp
         Solver/FindUndef.cpp

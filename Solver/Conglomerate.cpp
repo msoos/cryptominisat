@@ -1,4 +1,4 @@
-#include "conglomerate.h"
+#include "Conglomerate.h"
 #include "Solver.h"
 #include "VarReplacer.h"
 

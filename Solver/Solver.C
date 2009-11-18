@@ -26,16 +26,15 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <limits.h>
 #include <vector>
 
-#include "clause.h"
-#include "xorFinder.h"
+#include "Clause.h"
 #include "time_mem.h"
+
 #include "VarReplacer.h"
 #include "FindUndef.h"
-
-#include "gaussian.h"
+#include "Gaussian.h"
 #include "MatrixFinder.h"
-#include "conglomerate.h"
-#include "xorFinder.h"
+#include "Conglomerate.h"
+#include "XorFinder.h"
 
 
 //=================================================================================================

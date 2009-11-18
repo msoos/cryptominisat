@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <map>
-#include "clause.h"
+#include "Clause.h"
 #include "VarReplacer.h"
 
 using std::vector;
