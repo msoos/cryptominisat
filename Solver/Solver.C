@@ -1173,7 +1173,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     learnt_clause.clear();
     analyze(confl, learnt_clause, backtrack_level);
     if (dynamic_behaviour_analysis)
-        logger.conflict(Logger::simple_confl_type, backtrack_level, trail_lim[backtrack_level], confl->group, learnt_clause);
+        logger.conflict(Logger::simple_confl_type, backtrack_level, confl->group, learnt_clause);
     cancelUntil(backtrack_level);
     
     #ifdef VERBOSE_DEBUG

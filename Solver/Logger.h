@@ -59,7 +59,7 @@ public:
 
     //Conflict and propagation(guess is also a proapgation...)
     template<class T>
-    void conflict(const confl_type type, const uint goback_level, const uint goback_sublevel, const uint group, const T& learnt_clause);
+    void conflict(const confl_type type, const uint goback_level, const uint group, const T& learnt_clause);
     void propagation(const Lit lit, const prop_type type, const uint group = UINT_MAX);
     void empty_clause(const uint group);
 

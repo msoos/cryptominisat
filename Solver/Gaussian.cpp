@@ -509,7 +509,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
 
     if (maxlevel != solver.decisionLevel()) {
         if (solver.dynamic_behaviour_analysis)
-            solver.logger.conflict(Logger::gauss_confl_type, maxlevel, solver.trail_lim[maxlevel], confl->group, *confl);
+            solver.logger.conflict(Logger::gauss_confl_type, maxlevel, confl->group, *confl);
         solver.cancelUntil(maxlevel);
     }
     const uint curr_dec_level = solver.decisionLevel();
@@ -707,7 +707,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
         const Lit lit = cla[0];
         if (solver.dynamic_behaviour_analysis) {
             solver.logger.set_group_name(cla.group, "unitary learnt clause");
-            solver.logger.conflict(Logger::gauss_confl_type, 0, solver.trail_lim[0], cla.group, cla);
+            solver.logger.conflict(Logger::gauss_confl_type, 0, cla.group, cla);
         }
         
         solver.cancelUntil(0);
@@ -762,7 +762,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
 
             Lit lit = (*confl)[0];
             if (solver.dynamic_behaviour_analysis)
-                solver.logger.conflict(Logger::gauss_confl_type, 0, solver.trail_lim[0], confl->group, *confl);
+                solver.logger.conflict(Logger::gauss_confl_type, 0, confl->group, *confl);
             
             solver.cancelUntil(0);
             
