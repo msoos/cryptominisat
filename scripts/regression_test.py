@@ -14,6 +14,7 @@ class Tester:
   verbose = False
   gaussUntil = 10000
   testDir = "../tests/"
+  cryptominisat = "../build/cryptominisat"
   
   def __init__(self):
     self.greedyUnbound = False
@@ -22,16 +23,16 @@ class Tester:
     self.verbose = False
     self.gaussUntil = 10000
     self.testDir = "../tests/"
+    self.cryptominisat = "../build/cryptominisat"
 
 
   def execute(self, fname, i, of):
     if (os.path.isfile(of)) : os.unlink(of)
-    cryptominisat = "../build/cryptominisat"
-    if (os.path.isfile(cryptominisat) != True) :
-            print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(cryptominisat)
+    if (os.path.isfile(self.cryptominisat) != True) :
+            print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
             exit()
 
-    command = "%s -randomize=%d "%(cryptominisat, i)
+    command = "%s -randomize=%d "%(self.cryptominisat, i)
     if (self.greedyUnbound) :
         command += "-greedyUnbound "
     command += "-gaussuntil=%d \"%s\" %s"%(self.gaussUntil, fname, of)
@@ -198,11 +199,12 @@ class Tester:
     print "--unbound (-u)     Greedily unbound variables after solving. The CNF will still remain SAT"
     print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
     print "--testdir (-t)     The directory where the files to test are. Default: \"../tests/\""
+    print "--exe     (-e)     Where the cryptominisat executable is located. Default: \"../build/cryptominisat\""
     print "--help    (-h)     Print this help screen"
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "huvg:n:f:t:", ["help", "file=", "num=", "unbound", "gauss=", "testdir="])
+      opts, args = getopt.getopt(sys.argv[1:], "huvg:n:f:t:e:", ["help", "file=", "num=", "unbound", "gauss=", "testdir=", "exe="])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
@@ -226,6 +228,8 @@ class Tester:
             self.gaussUntil = int(arg)
         elif opt in ("-t", "--testdir"):
             self.testDir = arg
+        elif opt in ("-e", "--exe"):
+            self.cryptominisat = arg
         else:
             assert False, "unhandled option"
 
