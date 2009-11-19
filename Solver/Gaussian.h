@@ -41,14 +41,16 @@ public:
     ~Gaussian();
 
     llbool full_init();
-    llbool find_truths(vec<Lit>& learnt_clause, int& conflictC);
+    llbool find_truths(vec<Lit>& learnt_clause, int& conflictC, const uint nof_conflicts);
 
     //statistics
     void print_stats() const;
     void reset_stats();
     void print_matrix_stats() const;
     const uint get_called() const;
-    const uint get_useful() const;
+    const uint get_useful_prop() const;
+    const uint get_useful_confl() const;
+    const bool get_disabled() const;
 
     //functions used throughout the Solver
     void back_to_level(const uint level);
@@ -92,7 +94,8 @@ protected:
     bool disable_gauss; // Gauss is disabled (automatically)
 
     //Statistics
-    uint useful; //how many times Gauss was useful
+    uint useful_prop; //how many times Gauss gave propagation as a result
+    uint useful_confl; //how many times Gauss gave conflict as a result
     uint called; //how many times called the Gauss
 
     //gauss init functions
@@ -128,6 +131,8 @@ protected:
     
     
 private:
+    void check_to_disable(const uint conflictC, const uint nof_conflicts);
+    
     //temporary internal data to avoid constantre-allocation
     mutable vec<uint> rows_with_one;
     mutable vec<uint> propagatable_rows; //used in gaussian()

@@ -1068,7 +1068,7 @@ lbool Solver::search(int nof_conflicts, int nof_learnts)
         } else {
             bool at_least_one_continue = false;
             for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)  {
-                ret = (*gauss)->find_truths(learnt_clause, conflictC);
+                ret = (*gauss)->find_truths(learnt_clause, conflictC, nof_conflicts);
                 if (ret == l_Continue) at_least_one_continue = true;
                 else if (ret != l_Nothing) return ret;
             }
@@ -1235,19 +1235,24 @@ double Solver::progressEstimate() const
 void Solver::print_gauss_sum_stats() const
 {
     uint called = 0;
-    uint useful = 0;
+    uint useful_prop = 0;
+    uint useful_confl = 0;
+    uint disabled = 0;
     for (Gaussian *const*gauss = &gauss_matrixes[0], *const*end= gauss + gauss_matrixes.size(); gauss != end; gauss++) {
         called += (*gauss)->get_called();
-        useful += (*gauss)->get_useful();
+        useful_prop += (*gauss)->get_useful_prop();
+        useful_confl += (*gauss)->get_useful_confl();
         //gauss->print_stats();
         //gauss->print_matrix_stats();
+        disabled += (*gauss)->get_disabled();
     }
     if (called == 0) {
-        printf("Gauss not called\n");
-    } else if (useful > 0) {
-        printf("Gauss useful: %4.2lf%%\n", (double)useful/(double)called*100.0);
-    }else
-        printf("Gauss was useless\n");
+        printf("     not called     |\n", (double)disabled/(double)gauss_matrixes.size()*100.0);
+    } else {
+        printf(" %3.0lf%% |", (double)useful_confl/(double)called*100.0);
+        printf(" %3.0lf%% |", (double)useful_prop/(double)called*100.0);
+        printf(" %3.0lf%% |\n", 100.0-(double)disabled/(double)gauss_matrixes.size()*100.0);
+    }
 }
 
 lbool Solver::solve(const vec<Lit>& assumps)
@@ -1310,10 +1315,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
 
     if (verbosity >= 1) {
-        printf("============================[ Search Statistics ]==============================\n");
-        printf("| Conflicts |          ORIGINAL         |          LEARNT          | Progress |\n");
-        printf("|           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl |          |\n");
-        printf("===============================================================================\n");
+        printf("============================[ Search Statistics ]========================================\n");
+        printf("| Conflicts |          ORIGINAL         |          LEARNT          |        GAUSS       |\n");
+        printf("|           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl | Prop   Confl   On  |\n");
+        printf("=========================================================================================\n");
     }
 
     // Search:
@@ -1327,9 +1332,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
         cleanClauses(learnts);
         
         if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
-            printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100), fflush(stdout);
+            printf("| %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nof_learnts, nLearnts(), (double)learnts_literals/nLearnts());
             print_gauss_sum_stats();
-        };
+        }
         for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
             (*gauss)->reset_stats();
         
@@ -1342,7 +1347,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
 
     if (verbosity >= 1) {
-        printf("===============================================================================");
+        printf("====================================================================");
         print_gauss_sum_stats();
     }
 
