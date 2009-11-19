@@ -45,8 +45,6 @@ uint XorFinder::doNoPart(uint& sumLengths, const uint minSize, const uint maxSiz
     toRemove.clear();
     toRemove.resize(cls.size(), false);
     
-    vector<bool> toRemove(cls.size(), false);
-    uint found = 0;
     table.clear();
     table.reserve(cls.size()/2);
     uint i = 0;
@@ -56,12 +54,14 @@ uint XorFinder::doNoPart(uint& sumLengths, const uint minSize, const uint maxSiz
         table.push_back(make_pair(*it, i));
     }
     
-    found += findXors(sumLengths);
-    clearToRemove();
-    
-    S->toReplace->performReplace();
-    if (S->ok == false) return found;
-    S->ok = (S->propagate() == NULL);
+    uint found = findXors(sumLengths);
+    if (found > 0) {
+        clearToRemove();
+        
+        S->toReplace->performReplace();
+        if (S->ok == false) return found;
+        S->ok = (S->propagate() == NULL);
+    }
     
     return found;
 }
