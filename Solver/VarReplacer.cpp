@@ -235,6 +235,18 @@ void VarReplacer::replace(Var var, Lit lit)
     if (inverted) {
         //Inversion is also set
         Lit lit2 = table[var];
+        
+        //triangular cycle
+        if (lit1.var() == lit2.var()) {
+            if (lit1.sign() ^ lit2.sign() != lit.sign()) {
+                #ifdef VERBOSE_DEBUG
+                cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
+                #endif
+                S->ok = false;
+            }
+            return;
+        }
+        
         if (lit2.var() != var) {
             setAllThatPointsHereTo(lit1.var(), Lit(lit.var(), lit1.sign()));
             table[lit1.var()] = Lit(lit.var(), lit1.sign());
