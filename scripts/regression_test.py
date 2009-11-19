@@ -33,7 +33,7 @@ class Tester:
     command = "%s -randomize=%d "%(cryptominisat, i)
     if (self.greedyUnbound) :
         command += "-greedyUnbound "
-    command += "-gaussuntil=10 \"%s%s\" %s"%(testdir, fname, of)
+    command += "-gaussuntil=10 \"%s\" %s"%(fname, of)
     print "Executing: %s" %(command)
     consoleOutput =  commands.getoutput(command)
     
@@ -159,7 +159,7 @@ class Tester:
       exit(-1)
 
   def test_found(self, unsat, value, fname):
-    f = gzip.open(testdir + fname, "r")
+    f = gzip.open(fname, "r")
     line = f.readline()
     clauses = 0
     while line:
@@ -186,7 +186,7 @@ class Tester:
     print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" %(fname[:20]+"....cnf.gz", i, self.sumProp, self.sumTime)
     
     unsat, value = self.read_found(of)
-    self.test_expect(unsat, value, testdir + fname[:len(fname)-6] + "output.gz")
+    self.test_expect(unsat, value, fname[:len(fname)-6] + "output.gz")
     if (unsat == False) : 
       self.test_found(unsat, value, fname)
 
@@ -213,10 +213,10 @@ class Tester:
         elif opt in ("-h", "--help"):
             self.usage()
             sys.exit()
-        elif opt in ("-f", "--file"):
+        elif opt in ("-f", "--file="):
             fname = arg
-        elif opt in ("-n", "--num"):
-            num = arg
+        elif opt in ("-n", "--num="):
+            num = int(arg)
         elif opt in ("-g", "--greedy"):
             self.greedyUnbound = True
         else:
@@ -227,6 +227,7 @@ class Tester:
       for fname in dirList:
         if fnmatch.fnmatch(fname, '*.cnf.gz'):
           for i in range(num):
+            fname = testdir + fname
             self.check(fname, i);
             
     else:
