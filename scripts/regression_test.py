@@ -232,8 +232,7 @@ class Tester:
       for fname in dirList:
         if fnmatch.fnmatch(fname, '*.cnf.gz'):
           for i in range(num):
-            fname = testdir + fname
-            self.check(fname, i);
+            self.check(testdir + fname, i);
             
     else:
       if (os.path.isfile(fname) == False) :
