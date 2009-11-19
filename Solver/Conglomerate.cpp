@@ -70,6 +70,8 @@ void Conglomerate::process_clause(XorClause& x, const uint num, uint var, vector
 
 uint Conglomerate::conglomerateXors()
 {
+    if (S->xorclauses.size() == 0)
+        return 0;
     toRemove.resize(S->xorclauses.size(), false);
     
     #ifdef VERBOSE_DEBUG
