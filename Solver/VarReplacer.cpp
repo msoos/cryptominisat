@@ -181,6 +181,17 @@ const uint VarReplacer::getNumReplacedVars() const
     return replacedVars;
 }
 
+const vector<Var> VarReplacer::getReplacingVars() const
+{
+    vector<Var> replacingVars;
+    
+    for(map<Var, vector<Var> >::const_iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
+        replacingVars.push_back(it->first);
+    }
+    
+    return replacingVars;
+}
+
 void VarReplacer::extendModel() const
 {
     uint i = 0;

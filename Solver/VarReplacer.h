@@ -22,6 +22,7 @@ class VarReplacer
         void performReplace();
         const uint getNumReplacedLits() const;
         const uint getNumReplacedVars() const;
+        const vector<Var> getReplacingVars() const;
         void newVar();
     
     private:

@@ -39,6 +39,14 @@ void FindUndef::fillPotential()
             assert(!S.value(*l).isUndef());
         }
     }
+    
+    vector<Var> replacingVars = S.toReplace->getReplacingVars();
+    for (Var *it = &replacingVars[0], *end = it + replacingVars.size(); it != end; it++) {
+        if (isPotential[*it]) {
+            isPotential[*it] = false;
+            isPotentialSum--;
+        }
+    }
 }
 
 void FindUndef::unboundIsPotentials()
