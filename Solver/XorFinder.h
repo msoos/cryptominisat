@@ -53,22 +53,22 @@ class XorFinder
         };
         
         struct clause_sorter_primary {
-            bool operator()(const pair<Clause*, uint>& c11, const pair<Clause*, uint>& c22) const
+            bool operator()(const pair<Clause*, uint>& c11, const pair<Clause*, uint>& c22)
             {
-                const Clause& c1 = *(c11.first);
-                const Clause& c2 = *(c22.first);
-            
-                if (c1.size() != c2.size())
-                    return (c1.size() < c2.size());
+                if (c11.first->size() != c22.first->size())
+                    return (c11.first->size() < c22.first->size());
 
-                for (uint i = 0, size = c1.size(); i < size; i++) {
-                    if (c1[i].var() != c2[i].var())
-                        return (c1[i].var() < c2[i].var());
-
+                for (a = c11.first->getData(), b = c22.first->getData(), end = a + c11.first->size(); a != end; a++, b++) {
+                    if (a->var() != b->var())
+                        return (a->var() < b->var());
                 }
 
                 return false;
             }
+            
+            Lit const *a;
+            Lit const *b;
+            Lit const *end;
         };
         
         struct clause_sorter_secondary {
