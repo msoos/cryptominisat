@@ -15,12 +15,14 @@ class Tester:
   sumTime = 0.0
   sumProp = 0
   verbose = False
+  gaussUntil = 10000
   
   def __init__(self):
     self.greedyUnbound = False
     self.sumTime = 0.0
     self.sumProp = 0
     self.verbose = False
+    self.gaussUntil = 10000
 
 
   def execute(self, fname, i, of):
@@ -33,7 +35,7 @@ class Tester:
     command = "%s -randomize=%d "%(cryptominisat, i)
     if (self.greedyUnbound) :
         command += "-greedyUnbound "
-    command += "-gaussuntil=10 \"%s\" %s"%(fname, of)
+    command += "-gaussuntil=%d \"%s\" %s"%(self.gaussUntil, fname, of)
     print "Executing: %s" %(command)
     consoleOutput =  commands.getoutput(command)
     
@@ -192,14 +194,15 @@ class Tester:
 
   @staticmethod
   def usage():
-    print "--num=   (-n)     The number of times to randomize and solve the same instance. Default: 3"
-    print "--file=  (-f)     The file to solve. Default: all files under ../tests/"
-    print "--greedy (-g)     Greedily unbound after solving"
-    print "--help   (-h)     This help screen"
+    print "--num     (-n)     The number of times to randomize and solve the same instance. Default: 3"
+    print "--file    (-f)     The file to solve. Default: all files under ../tests/"
+    print "--unbound (-u)     Greedily unbound variables after solving. The CNF will still remain SAT"
+    print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
+    print "--help    (-h)     Print this help screen"
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "hgvn:f:", ["help", "file=", "num=", "greedy"])
+      opts, args = getopt.getopt(sys.argv[1:], "huvg:n:f:", ["help", "file=", "num=", "unbound", "gauss="])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
@@ -213,12 +216,14 @@ class Tester:
         elif opt in ("-h", "--help"):
             self.usage()
             sys.exit()
-        elif opt in ("-f", "--file="):
+        elif opt in ("-f", "--file"):
             fname = arg
-        elif opt in ("-n", "--num="):
+        elif opt in ("-n", "--num"):
             num = int(arg)
-        elif opt in ("-g", "--greedy"):
+        elif opt in ("-u", "--unbound"):
             self.greedyUnbound = True
+        elif opt in ("-g", "--gauss"):
+            self.gaussUntil = int(arg)
         else:
             assert False, "unhandled option"
 
