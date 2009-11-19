@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <list>
 #include <set>
+#include <iomanip>
 using std::list;
 using std::set;
 
@@ -93,12 +94,13 @@ MatrixFinder::MatrixFinder(Solver *_S) :
         numXorInMatrix[varToSet[x[0].var()]]++;
     }
     
-    map<uint, uint> remapMatrixes;
+    vector<uint> remapMatrixes(matrix);
     for (uint i = 0; i < matrix; i++) {
         remapMatrixes[i] = i;
     }
     
     uint newNumMatrixes = matrix;
+    uint realMatrixNum = 0;
     for (uint i = 0; i < numXorInMatrix.size(); i++) {
         if (numXorInMatrix[i] < 20) {
             remapMatrixes[i] = UINT_MAX;
@@ -106,6 +108,9 @@ MatrixFinder::MatrixFinder(Solver *_S) :
                 remapMatrixes[i2]--;
             }
             newNumMatrixes--;
+        } else {
+            cout << "|  Matrix no " << std::setw(4) << realMatrixNum << "      no. rows : " << std::setw(5) << numXorInMatrix[i] << std::setw(40) << "|" << endl;
+            realMatrixNum++;
         }
     }
     
