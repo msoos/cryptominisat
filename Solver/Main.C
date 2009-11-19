@@ -509,6 +509,6 @@ int main(int argc, char** argv)
     }
 
 #ifdef NDEBUG
-    exit(ret ? 10 : 20);     // (faster than "return", which will invoke the destructor for 'Solver')
+    exit(ret == l_True ? 10 : 20);     // (faster than "return", which will invoke the destructor for 'Solver')
 #endif
 }
