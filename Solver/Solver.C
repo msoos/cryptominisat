@@ -1271,7 +1271,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     double  nof_learnts   = nClauses() * learntsize_factor;
     lbool   status        = l_Undef;
     
-    cleanClauses(xorclauses);
     toReplace->performReplace();
     if (!ok) return l_False;
 
@@ -1279,6 +1278,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         double time;
         if (clauses.size() < 400000) {
             time = cpuTime();
+            removeSatisfied(clauses);
             cleanClauses(clauses);
             uint sumLengths = 0;
             XorFinder xorFinder(this, clauses, xorclauses);
@@ -1295,6 +1295,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
         
         time = cpuTime();
+        removeSatisfied(xorclauses);
         cleanClauses(xorclauses);
         uint foundCong = conglomerate->conglomerateXors();
         printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
@@ -1310,6 +1311,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
     
     if (gaussconfig.decision_until > 0) {
+        removeSatisfied(xorclauses);
         cleanClauses(xorclauses);
         double time = cpuTime();
         MatrixFinder m(this);
