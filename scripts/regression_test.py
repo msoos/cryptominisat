@@ -5,9 +5,6 @@ import fnmatch
 import gzip
 import getopt, sys
 
-global testdir
-testdir = "../tests/"
-
 
 class Tester:
 
@@ -16,6 +13,7 @@ class Tester:
   sumProp = 0
   verbose = False
   gaussUntil = 10000
+  testDir = "../tests/"
   
   def __init__(self):
     self.greedyUnbound = False
@@ -23,6 +21,7 @@ class Tester:
     self.sumProp = 0
     self.verbose = False
     self.gaussUntil = 10000
+    self.testDir = "../tests/"
 
 
   def execute(self, fname, i, of):
@@ -198,11 +197,12 @@ class Tester:
     print "--file    (-f)     The file to solve. Default: all files under ../tests/"
     print "--unbound (-u)     Greedily unbound variables after solving. The CNF will still remain SAT"
     print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
+    print "--testdir (-t)     The directory where the files to test are. Default: \"../tests/\""
     print "--help    (-h)     Print this help screen"
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "huvg:n:f:", ["help", "file=", "num=", "unbound", "gauss="])
+      opts, args = getopt.getopt(sys.argv[1:], "huvg:n:f:t:", ["help", "file=", "num=", "unbound", "gauss=", "testdir="])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
@@ -224,15 +224,19 @@ class Tester:
             self.greedyUnbound = True
         elif opt in ("-g", "--gauss"):
             self.gaussUntil = int(arg)
+        elif opt in ("-t", "--testdir"):
+            self.testDir = arg
         else:
             assert False, "unhandled option"
 
     if (fname == None) :
-      dirList=os.listdir(testdir)
+      dirList=os.listdir(self.testDir)
+      if (self.testDir == ".") :
+        self.testDir = ""
       for fname in dirList:
         if fnmatch.fnmatch(fname, '*.cnf.gz'):
           for i in range(num):
-            self.check(testdir + fname, i);
+            self.check(self.testDir + fname, i);
             
     else:
       if (os.path.isfile(fname) == False) :
