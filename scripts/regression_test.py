@@ -161,7 +161,10 @@ class Tester:
       exit(-1)
 
   def test_found(self, unsat, value, fname):
-    f = gzip.open(fname, "r")
+    if fnmatch.fnmatch(fname, '*.gz') :
+      f = gzip.open(fname, "r")
+    else :
+      f = open(fname, "r")
     line = f.readline()
     clauses = 0
     while line:
