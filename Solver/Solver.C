@@ -1276,14 +1276,17 @@ lbool Solver::solve(const vec<Lit>& assumps)
     if (!ok) return l_False;
 
     if (xorFinder) {
-        double time = cpuTime();
-        cleanClauses(clauses);
-        uint sumLengths = 0;
-        XorFinder xorFinder(this, clauses, xorclauses);
-        uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
-        
-        printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
-        if (!ok) return l_False;
+        double time;
+        if (clauses.size() < 400000) {
+            time = cpuTime();
+            cleanClauses(clauses);
+            uint sumLengths = 0;
+            XorFinder xorFinder(this, clauses, xorclauses);
+            uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
+            
+            printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+            if (!ok) return l_False;
+        }
         
         uint orig_total = 0;
         uint orig_num_cls = xorclauses.size();
