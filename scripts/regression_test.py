@@ -236,7 +236,7 @@ class Tester:
         exit(-1)
       
       for i in range(num):
-        self.check(fname, 0)
+        self.check(fname, i)
 
 
 test = Tester()
