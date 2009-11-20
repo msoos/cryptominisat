@@ -1249,8 +1249,8 @@ void Solver::print_gauss_sum_stats() const
     if (called == 0) {
         printf("     not called     |\n", (double)disabled/(double)gauss_matrixes.size()*100.0);
     } else {
-        printf(" %3.0lf%% |", (double)useful_confl/(double)called*100.0);
         printf(" %3.0lf%% |", (double)useful_prop/(double)called*100.0);
+        printf(" %3.0lf%% |", (double)useful_confl/(double)called*100.0);
         printf(" %3.0lf%% |\n", 100.0-(double)disabled/(double)gauss_matrixes.size()*100.0);
     }
 }
