@@ -1,6 +1,14 @@
+ver 2.2 -- 20/11/2009
+* xor-clause finding
+* matrix finding
+* var-replacing
+* heuristics to disable gauss
+* much better+cleaner stats generation (e.g. fcopy.cpp removed)
+* lots of bug-fixing
+* satelite added, with cryptominisat_ext.sh as a wrapper script
+
 ver 2.1.1 -- 30/10/2009
 * Learnt clause distribution stats
-
 * Added regression testing
 
 ver 2.1.0 -- 28/10/2009
