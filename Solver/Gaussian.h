@@ -51,6 +51,7 @@ public:
     const uint get_useful_prop() const;
     const uint get_useful_confl() const;
     const bool get_disabled() const;
+    void set_disabled(const bool toset);
 
     //functions used throughout the Solver
     void back_to_level(const uint level);
@@ -91,7 +92,7 @@ protected:
     int gauss_last_level;
     vector<Clause*> matrix_clauses_toclear;
     bool went_below_decision_from;
-    bool disable_gauss; // Gauss is disabled (automatically)
+    bool disabled; // Gauss is disabled
 
     //Statistics
     uint useful_prop; //how many times Gauss gave propagation as a result
@@ -160,7 +161,7 @@ inline bool Gaussian::should_init() const
 
 inline bool Gaussian::should_check_gauss(const uint decisionlevel, const uint starts) const
 {
-    return (!disable_gauss
+    return (!disabled
             && starts >= config.starts_from
             && decisionlevel < config.decision_until
             && decisionlevel >= config.decision_from

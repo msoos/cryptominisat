@@ -41,7 +41,7 @@ Gaussian::Gaussian(Solver& _solver, const uint _matrix_no, const GaussianConfig&
         , config(_config)
         , messed_matrix_vars_since_reversal(true)
         , gauss_last_level(0)
-        , disable_gauss(false)
+        , disabled(false)
         , useful_prop(0)
         , useful_confl(0)
         , called(0)
@@ -733,7 +733,7 @@ void Gaussian::check_to_disable(const uint conflictC, const uint nof_conflicts)
         /*&&*/ called > 100
         && (double)useful_confl/(double)called < 0.1
         && (double)useful_prop/(double)called < 0.4 )
-            disable_gauss = true;
+            disabled = true;
 }
 
 llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC, const uint nof_conflicts)
@@ -847,7 +847,7 @@ void Gaussian::print_stats() const
         std::cout << " Gauss(" << matrix_no << ") useful";
         cout << " prop: " << std::setprecision(2) << std::setw(5) << ((double)useful_prop/(double)called)*100.0 << "% ";
         cout << " confl: " << std::setprecision(2) << std::setw(5) << ((double)useful_confl/(double)called)*100.0 << "% ";
-        if (disable_gauss) std::cout << "disabled";
+        if (disabled) std::cout << "disabled";
     } else
         std::cout << " Gauss(" << matrix_no << ") not called.";
 }
@@ -857,7 +857,7 @@ void Gaussian::reset_stats()
     useful_prop = 0;
     useful_confl = 0;
     called = 0;
-    disable_gauss = false;
+    disabled = false;
 }
 
 bool Gaussian::check_no_conflict(const matrixset& m) const
@@ -936,7 +936,12 @@ const uint Gaussian::get_useful_confl() const
 
 const bool Gaussian::get_disabled() const
 {
-    return disable_gauss;
+    return disabled;
+}
+
+void Gaussian::set_disabled(const bool toset)
+{
+    disabled = toset;
 }
 
 //old functions
