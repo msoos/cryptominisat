@@ -30,7 +30,6 @@ using std::endl;
 using std::ofstream;
 
 #include "Logger.h"
-#include "fcopy.h"
 #include "SolverTypes.h"
 #include "Solver.h"
 

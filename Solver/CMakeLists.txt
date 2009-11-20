@@ -10,7 +10,6 @@ target_link_libraries(cryptominisat
 )
 
 add_library(cryptominisatlib
-    fcopy.cpp
     Logger.C
     Solver.C
     Clause.cpp
