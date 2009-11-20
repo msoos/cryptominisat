@@ -1,0 +1,25 @@
+include_directories(${cryptominisat_SOURCE_DIR}/mtl)
+include_directories(${cryptominisat_SOURCE_DIR}/Solver)
+include_directories(${cryptominisat_SOURCE_DIR}/MTRand)
+
+add_executable(cryptominisat Main.C)
+
+target_link_libraries(cryptominisat
+    cryptominisatlib
+    ${ZLIB_LIBRARY}
+)
+
+add_library(cryptominisatlib
+    fcopy.cpp
+    Logger.C
+    Solver.C
+    Clause.cpp
+    Gaussian.cpp
+    PackedRow.cpp
+    XorFinder.cpp
+    Conglomerate.cpp
+    MatrixFinder.cpp
+    VarReplacer.cpp
+    FindUndef.cpp
+)
+

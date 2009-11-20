@@ -15,30 +15,20 @@ find_package( ZLIB )
 link_directories( ${ZLIB_LIBRARY} )
 include_directories( ${ZLIB_INCLUDE_DIR} )
 
-include_directories(${cryptominisat_SOURCE_DIR}/mtl)
-include_directories(${cryptominisat_SOURCE_DIR}/Solver)
-include_directories(${cryptominisat_SOURCE_DIR}/MTRand)
+add_subdirectory(Solver)
 
-link_directories(${grain-of-salt_BINARY_DIR}/Solver)
+macro(my_copy FILENAME TO)
+    add_custom_target(copy ALL
+        COMMENT "Copying file: ${FILENAME} to ${TO}")
 
-add_executable(cryptominisat Solver/Main.C)
+        set(SRC "${FILENAME}")
+        set(DST "${TO}")
 
-target_link_libraries(cryptominisat
-	cryptominisatlib
-	${ZLIB_LIBRARY}
-)
+        add_custom_command(
+            TARGET copy
+            COMMAND ${CMAKE_COMMAND} -E copy ${SRC} ${DST}
+            )
+endmacro(my_copy)
 
-add_library(cryptominisatlib
-	Solver/fcopy.cpp
-	Solver/Logger.C
-	Solver/Solver.C
-	Solver/Clause.cpp
-        Solver/Gaussian.cpp
-        Solver/PackedRow.cpp
-        Solver/XorFinder.cpp
-        Solver/Conglomerate.cpp
-        Solver/MatrixFinder.cpp
-        Solver/VarReplacer.cpp
-        Solver/FindUndef.cpp
-)
 
+my_copy(Solver/cryptominisat .)
