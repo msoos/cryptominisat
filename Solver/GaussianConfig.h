@@ -29,7 +29,7 @@ class GaussianConfig
         , decision_from(0)
         , decision_until(0)
         , every_nth_gauss(1)
-        , starts_from(0)
+        , starts_from(3)
     {
     }
         
