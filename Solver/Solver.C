@@ -1294,26 +1294,28 @@ lbool Solver::solve(const vec<Lit>& assumps)
             if (!ok) return l_False;
         }
         
-        uint orig_total = 0;
-        uint orig_num_cls = xorclauses.size();
-        for (uint i = 0; i < xorclauses.size(); i++) {
-            orig_total += xorclauses[i]->size();
+        if (xorclauses.size() > 1) {
+            uint orig_total = 0;
+            uint orig_num_cls = xorclauses.size();
+            for (uint i = 0; i < xorclauses.size(); i++) {
+                orig_total += xorclauses[i]->size();
+            }
+            
+            time = cpuTime();
+            removeSatisfied(xorclauses);
+            cleanClauses(xorclauses);
+            uint foundCong = conglomerate->conglomerateXors();
+            printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
+            if (!ok) return l_False;
+            
+            uint new_total = 0;
+            uint new_num_cls = xorclauses.size();
+            for (uint i = 0; i < xorclauses.size(); i++) {
+                new_total += xorclauses[i]->size();
+            }
+            printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
+            printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
         }
-        
-        time = cpuTime();
-        removeSatisfied(xorclauses);
-        cleanClauses(xorclauses);
-        uint foundCong = conglomerate->conglomerateXors();
-        printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
-        if (!ok) return l_False;
-        
-        uint new_total = 0;
-        uint new_num_cls = xorclauses.size();
-        for (uint i = 0; i < xorclauses.size(); i++) {
-            new_total += xorclauses[i]->size();
-        }
-        printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
-        printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
     }
     
     if (gaussconfig.decision_until > 0 && xorclauses.size() < 2000) {
