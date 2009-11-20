@@ -15,9 +15,7 @@ A simple Chaff-like SAT-solver with support for incremental SAT.
 #include "TmpFiles.h"
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#ifdef RELEASE
 #define SAT_LIVE
-#endif
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 #ifdef SAT_LIVE

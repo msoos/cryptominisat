@@ -6,12 +6,6 @@ Read a DIMACS or BCNF file and apply the SAT-solver to it.
 
 **************************************************************************************************/
 
-#ifndef SAT_LIVE
-#ifndef NDEBUG
-#define VERIFY_MODEL
-#endif
-#endif
-
 #include "Main.h"
 #include "Solver.h"
 #include <ctime>

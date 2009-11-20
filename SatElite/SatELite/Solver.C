@@ -361,27 +361,9 @@ void Solver::analyze(Clause confl, vec<Lit>& out_learnt, int& out_btlevel)
 bool Solver::enqueue(Lit p, Clause from)
 {
     if (value(p) != l_Undef){
-      #ifdef RELEASE
         return value(p) != l_False;
-      #else
-        if (value(p) == l_False){
-            // Conflicting enqueued assignment
-            assert(decisionLevel() > 0);
-            return false;
-        }else if (value(p) == l_True){
-            // Existing consistent assignment -- don't enqueue
-            return true;
-        }else{
-            assert(value(p) == l_Error);
-            // Do nothing -- clause should be removed.
-            return true;
-        }
-      #endif
     }else{
         // New fact -- store it.
-      #ifndef RELEASE
-        if (verbosity >= 2) reportf(L_IND"bind("L_LIT")\n", L_ind, L_lit(p));
-      #endif
         assigns[var(p)] = toInt(lbool(!sign(p)));
         level  [var(p)] = decisionLevel();
         reason [var(p)] = from;
