@@ -19,7 +19,7 @@ add_subdirectory(Solver)
 add_subdirectory(SatElite)
 
 add_custom_target(copy ALL
-    COMMENT "Copying CryptoMiniSat")
+    COMMENT "Copying binaries from subdirs to build directory")
 
 add_custom_command(
     TARGET copy
