@@ -1239,15 +1239,18 @@ void Solver::print_gauss_sum_stats() const
     uint useful_confl = 0;
     uint disabled = 0;
     for (Gaussian *const*gauss = &gauss_matrixes[0], *const*end= gauss + gauss_matrixes.size(); gauss != end; gauss++) {
-        called += (*gauss)->get_called();
-        useful_prop += (*gauss)->get_useful_prop();
-        useful_confl += (*gauss)->get_useful_confl();
+        disabled += (*gauss)->get_disabled();
+        if (!(*gauss)->get_disabled()) {
+            called += (*gauss)->get_called();
+            useful_prop += (*gauss)->get_useful_prop();
+            useful_confl += (*gauss)->get_useful_confl();
+        }
         //gauss->print_stats();
         //gauss->print_matrix_stats();
-        disabled += (*gauss)->get_disabled();
+        
     }
     if (called == 0) {
-        printf("     not called     |\n", (double)disabled/(double)gauss_matrixes.size()*100.0);
+        printf("      disabled      |\n", (double)disabled/(double)gauss_matrixes.size()*100.0);
     } else {
         printf(" %3.0lf%% |", (double)useful_prop/(double)called*100.0);
         printf(" %3.0lf%% |", (double)useful_confl/(double)called*100.0);
