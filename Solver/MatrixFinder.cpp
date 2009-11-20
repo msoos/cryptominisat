@@ -102,7 +102,7 @@ MatrixFinder::MatrixFinder(Solver *_S) :
     uint newNumMatrixes = matrix;
     uint realMatrixNum = 0;
     for (uint i = 0; i < numXorInMatrix.size(); i++) {
-        if (numXorInMatrix[i] < 20 || numXorInMatrix > 500) {
+        if (numXorInMatrix[i] < 20 || numXorInMatrix[i] > 500) {
             remapMatrixes[i] = UINT_MAX;
             for (uint i2 = i+1; i2 < matrix; i2++) {
                 remapMatrixes[i2]--;
