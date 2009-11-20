@@ -10,4 +10,4 @@ LT_INIT
 AC_CONFIG_HEADERS(config.h)
 AC_CHECK_HEADERS(iostream)
 
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makefile Solver/Makefile SatElite/Makefile)
