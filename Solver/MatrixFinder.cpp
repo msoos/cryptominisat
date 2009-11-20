@@ -85,7 +85,6 @@ MatrixFinder::MatrixFinder(Solver *_S) :
             varToSet[*it2] = matrix;
         }
     }
-    assert(matrix < (1 << 12));
     
     vector<uint> numXorInMatrix(matrix, 0);
     
@@ -102,7 +101,7 @@ MatrixFinder::MatrixFinder(Solver *_S) :
     uint newNumMatrixes = matrix;
     uint realMatrixNum = 0;
     for (uint i = 0; i < numXorInMatrix.size(); i++) {
-        if (numXorInMatrix[i] < 20 || numXorInMatrix[i] > 500) {
+        if (numXorInMatrix[i] < 20 || numXorInMatrix[i] > 500 || realMatrixNum >= (1 << 12) ) {
             remapMatrixes[i] = UINT_MAX;
             for (uint i2 = i+1; i2 < matrix; i2++) {
                 remapMatrixes[i2]--;
