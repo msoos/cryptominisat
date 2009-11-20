@@ -3,3 +3,8 @@
 AUTOMAKE_OPTIONS = foreign 1.4
 
 SUBDIRS = Solver SatElite
+
+all-local: Solver SatElite
+	cp Solver/cryptominisat .
+	cp SatElite/satelite .
+

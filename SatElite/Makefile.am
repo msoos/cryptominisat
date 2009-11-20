@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir)/SatElite -I$(srcdir)/ForMani/ADTs -I$(srcdir)/ForMani/Global
+AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir)/SatELite -I$(srcdir)/ForMani/ADTs -I$(srcdir)/ForMani/Global
 
 bin_PROGRAMS = satelite
 satelite_LDFLAGS = -lz
