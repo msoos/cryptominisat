@@ -6,7 +6,7 @@ ELSE()
   SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 ENDIF()
 
-PROJECT(cryptominisat)
+PROJECT(crypto)
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -march=native")
 SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -ggdb")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -march=native")
@@ -16,19 +16,6 @@ link_directories( ${ZLIB_LIBRARY} )
 include_directories( ${ZLIB_INCLUDE_DIR} )
 
 add_subdirectory(Solver)
+add_subdirectory(SatElite)
+add_subdirectory(scripts)
 
-macro(my_copy FILENAME TO)
-    add_custom_target(copy ALL
-        COMMENT "Copying file: ${FILENAME} to ${TO}")
-
-        set(SRC "${FILENAME}")
-        set(DST "${TO}")
-
-        add_custom_command(
-            TARGET copy
-            COMMAND ${CMAKE_COMMAND} -E copy ${SRC} ${DST}
-            )
-endmacro(my_copy)
-
-
-my_copy(Solver/cryptominisat .)
