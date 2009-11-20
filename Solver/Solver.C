@@ -1234,6 +1234,11 @@ double Solver::progressEstimate() const
 
 void Solver::print_gauss_sum_stats() const
 {
+    if (gauss_matrixes.size() == 0) {
+        printf("  no matrixes found |\n");
+        return;
+    }
+    
     uint called = 0;
     uint useful_prop = 0;
     uint useful_confl = 0;
@@ -1247,10 +1252,10 @@ void Solver::print_gauss_sum_stats() const
         }
         //gauss->print_stats();
         //gauss->print_matrix_stats();
-        
     }
+    
     if (called == 0) {
-        printf("      disabled      |\n", (double)disabled/(double)gauss_matrixes.size()*100.0);
+        printf("      disabled      |\n");
     } else {
         printf(" %3.0lf%% |", (double)useful_prop/(double)called*100.0);
         printf(" %3.0lf%% |", (double)useful_confl/(double)called*100.0);
