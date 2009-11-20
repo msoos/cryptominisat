@@ -65,10 +65,10 @@ public:
 
     //functions to add/name variables
     void new_var(const Var var);
-    void set_variable_name(const uint var, char* name);
+    void set_variable_name(const uint var, string name);
 
     //function to name clause groups
-    void set_group_name(const uint group, char* name);
+    void set_group_name(const uint group, string name);
 
     void begin();
     void end(const finish_type finish);
@@ -82,7 +82,7 @@ public:
     
 private:
     void new_group(const uint group);
-    void cut_name_to_size(char* name) const;
+    void cut_name_to_size(string& name) const;
     
     void print_groups(const vector<pair<uint, uint> >& to_print) const;
     void print_groups(const vector<pair<double, uint> >& to_print) const;

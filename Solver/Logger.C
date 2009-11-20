@@ -97,9 +97,9 @@ void Logger::new_group(const uint group)
     }
 }
 
-void Logger::cut_name_to_size(char* name) const
+void Logger::cut_name_to_size(string& name) const
 {
-    uint len = strlen(name);
+    uint len = name.length();
     if (len > 0 && name[len-1] == '\r') {
         name[len-1] = '\0';
         len--;
@@ -113,7 +113,7 @@ void Logger::cut_name_to_size(char* name) const
 }
 
 // Adds the new clause group's name to the information stored
-void Logger::set_group_name(const uint group, char* name)
+void Logger::set_group_name(const uint group, string name)
 {
     if (!statistics_on && !proof_graph_on)
         return;
@@ -121,18 +121,18 @@ void Logger::set_group_name(const uint group, char* name)
     new_group(group);
     cut_name_to_size(name);
 
-    if (strlen(name) == 0) return;
+    if (name.length() == 0) return;
     
     if (groupnames[group] == "Noname") {
         groupnames[group] = name;
     } else if (groupnames[group] != name) {
-        printf("Error! Group no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", group, groupnames[group].c_str(), name);
+        printf("Error! Group no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", group, groupnames[group].c_str(), name.c_str());
         exit(-1);
     }
 }
 
 // sets the variable's name
-void Logger::set_variable_name(const uint var, char* name)
+void Logger::set_variable_name(const uint var, string name)
 {
     if (!statistics_on && !proof_graph_on)
         return;
@@ -145,7 +145,7 @@ void Logger::set_variable_name(const uint var, char* name)
     if (varnames[var] == ss.str()) {
         varnames[var] = name;
     } else if (varnames[var] != name) {
-        printf("Error! Variable no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", var+1, varnames[var].c_str(), name);
+        printf("Error! Variable no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", var+1, varnames[var].c_str(), name.c_str());
         exit(-1);
     }
 }
