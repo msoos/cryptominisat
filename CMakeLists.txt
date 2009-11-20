@@ -17,5 +17,14 @@ include_directories( ${ZLIB_INCLUDE_DIR} )
 
 add_subdirectory(Solver)
 add_subdirectory(SatElite)
-add_subdirectory(scripts)
 
+add_custom_target(copy ALL
+    COMMENT "Copying CryptoMiniSat")
+
+add_custom_command(
+    TARGET copy
+    COMMAND ${CMAKE_COMMAND} -E copy Solver/cryptominisat .
+    COMMAND ${CMAKE_COMMAND} -E copy SatElite/satelite .
+)
+
+add_dependencies(copy cryptominisat satelite)
