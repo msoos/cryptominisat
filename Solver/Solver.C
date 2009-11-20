@@ -1313,7 +1313,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
     }
     
-    if (gaussconfig.decision_until > 0) {
+    if (gaussconfig.decision_until > 0 && xorclauses.size() < 2000) {
         removeSatisfied(xorclauses);
         cleanClauses(xorclauses);
         double time = cpuTime();
