@@ -244,6 +244,7 @@ protected:
     void     attachClause     (Clause& c);             // Attach a clause to watcher lists.
     void     detachClause     (const XorClause& c);
     void     detachClause     (const Clause& c);       // Detach a clause to watcher lists.
+    void     detachModifiedClause(const Lit lit1, const Lit lit2, const uint size, const Clause* address);
     template<class T>
     void     removeClause(T& c);                       // Detach and free a clause.
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.

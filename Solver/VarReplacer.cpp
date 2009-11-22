@@ -119,56 +119,65 @@ void VarReplacer::replace_set(vec<Clause*>& cs)
     Clause **r = a;
     for (Clause **end = a + cs.size(); r != end; ) {
         Clause& c = **r;
-        bool needReattach = false;
+        bool changed = false;
+        Lit origLit1 = c[0];
+        Lit origLit2 = c[1];
         for (Lit *l = c.getData(), *end = l + c.size();  l != end; l++) {
-            Lit newlit = table[l->var()];
-            if (newlit.var() != l->var()) {
-                if (!needReattach) S->detachClause(c);
-                needReattach = true;
-                *l = Lit(newlit.var(), newlit.sign()^l->sign());
+            if (table[l->var()].var() != l->var()) {
+                changed = true;
+                *l = table[l->var()] ^ l->sign();
                 replacedLits++;
             }
         }
         
-        bool skip = false;
-        if (needReattach) {
-            std::sort(c.getData(), c.getData() + c.size());
-            Lit p;
-            int i, j;
-            for (i = j = 0, p = lit_Undef; i < c.size(); i++) {
-                if (S->value(c[i]) == l_True || c[i] == ~p) {
-                    skip = true;
-                    break;
-                }
-                else if (S->value(c[i]) != l_False && c[i] != p)
-                    c[j++] = p = c[i];
-            }
-            c.shrink(i - j);
-            
-            if (skip) {
-                free(&c);
-                r++;
-                continue;
-            }
-            
-            switch(c.size()) {
-            case 1 : {
-                S->uncheckedEnqueue(c[0]);
-                free(&c);
-                r++;
-                break;
-            }
-            default: {
-                S->attachClause(c);
-                *a++ = *r++;
-                break;
-            }
-            }
+        if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
+            free(&c);
+            r++;
         } else {
             *a++ = *r++;
         }
     }
     cs.shrink(r-a);
+}
+
+bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2)
+{
+    bool satisfied = false;
+    std::sort(c.getData(), c.getData() + c.size());
+    Lit p;
+    int i, j;
+    const uint origSize = c.size();
+    for (i = j = 0, p = lit_Undef; i < origSize; i++) {
+        if (S->value(c[i]) == l_True || c[i] == ~p) {
+            satisfied = true;
+            break;
+        }
+        else if (S->value(c[i]) != l_False && c[i] != p)
+            c[j++] = p = c[i];
+    }
+    c.shrink(i - j);
+    
+    if (satisfied) {
+        S->detachModifiedClause(origLit1, origLit2, origSize, &c);
+        return true;
+    }
+    
+    switch(c.size()) {
+    case 0:
+        S->detachModifiedClause(origLit1, origLit2, origSize, &c);
+        S->ok = false;
+        return true;
+    case 1 :
+        S->uncheckedEnqueue(c[0]);
+        S->detachModifiedClause(origLit1, origLit2, origSize, &c);
+        return true;
+    default:
+        if (origLit1 != c[0] || origLit2 != c[1]) {
+            S->detachModifiedClause(origLit1, origLit2, origSize, &c);
+            S->attachClause(c);
+        }
+        return false;
+    }
 }
 
 const uint VarReplacer::getNumReplacedLits() const

@@ -28,6 +28,7 @@ class VarReplacer
     private:
         void replace_set(vec<Clause*>& set);
         void replace_set(vec<XorClause*>& cs, const bool need_reattach);
+        bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
         
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);

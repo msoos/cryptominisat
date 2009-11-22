@@ -284,6 +284,17 @@ void Solver::detachClause(const Clause& c)
     else            clauses_literals -= c.size();
 }
 
+void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint origSize, const Clause* address)
+{
+    assert(origSize > 1);
+    assert(find(watches[(~lit1).toInt()], address));
+    assert(find(watches[(~lit2).toInt()], address));
+    remove(watches[(~lit1).toInt()], address);
+    remove(watches[(~lit2).toInt()], address);
+    if (address->learnt()) learnts_literals -= origSize;
+    else            clauses_literals -= origSize;
+}
+
 
 bool Solver::satisfied(const Clause& c) const
 {
