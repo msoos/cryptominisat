@@ -1328,7 +1328,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         cleanClauses(xorclauses);
         double time = cpuTime();
         MatrixFinder m(this);
-        printf("|  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, m.numMatrix);
+        const uint numMatrixes = m.findMatrixes();
+        printf("|  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, numMatrixes);
     }
     
 

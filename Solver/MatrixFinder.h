@@ -26,7 +26,7 @@ class MatrixFinder {
     
     public:
         MatrixFinder(Solver* S);
-        uint numMatrix;
+        const uint findMatrixes();
     
     private:
         

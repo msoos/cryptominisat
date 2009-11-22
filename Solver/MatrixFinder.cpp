@@ -30,10 +30,12 @@ using std::set;
 MatrixFinder::MatrixFinder(Solver *_S) :
     S(_S)
 {
-    if (S->xorclauses.size() == 0) {
-        numMatrix = 0;
-        return;
-    }
+}
+
+const uint MatrixFinder::findMatrixes()
+{
+    if (S->xorclauses.size() == 0)
+        return 0;
     
     typedef list<set<Var> > myset;
     myset sets;
@@ -78,37 +80,36 @@ MatrixFinder::MatrixFinder(Solver *_S) :
     }
     #endif
     
-    map<Var, uint> varToSet;
-    uint matrix = 0;
-    for (myset::iterator it = sets.begin(), end = sets.end(); it != end; it++, matrix++) {
+    vector<uint> varToSet(S->nVars());
+    vector<uint> setSizes(sets.size());
+    uint matrix_no = 0;
+    for (myset::iterator it = sets.begin(), end = sets.end(); it != end; it++, matrix_no++) {
         for (set<Var>::iterator it2 = it->begin(), end2 = it->end(); it2 != end2; it2++) {
-            varToSet[*it2] = matrix;
+            varToSet[*it2] = matrix_no;
         }
+        setSizes[matrix_no] = it->size();
     }
     
-    vector<uint> numXorInMatrix(matrix, 0);
-    
+    vector<uint> numXorInMatrix(matrix_no, 0);
     for (XorClause** c = S->xorclauses.getData(), **end = c + S->xorclauses.size(); c != end; c++) {
         XorClause& x = **c;
         numXorInMatrix[varToSet[x[0].var()]]++;
     }
     
-    vector<uint> remapMatrixes(matrix);
-    for (uint i = 0; i < matrix; i++) {
+    vector<uint> remapMatrixes(matrix_no);
+    for (uint i = 0; i < matrix_no; i++) {
         remapMatrixes[i] = i;
     }
     
-    uint newNumMatrixes = matrix;
     uint realMatrixNum = 0;
     for (uint i = 0; i < numXorInMatrix.size(); i++) {
         if (numXorInMatrix[i] < 20 || numXorInMatrix[i] > 500 || realMatrixNum >= (1 << 12) ) {
             remapMatrixes[i] = UINT_MAX;
-            for (uint i2 = i+1; i2 < matrix; i2++) {
+            for (uint i2 = i+1; i2 < matrix_no; i2++) {
                 remapMatrixes[i2]--;
             }
-            newNumMatrixes--;
         } else {
-            cout << "|  Matrix no " << std::setw(4) << realMatrixNum << "      no. rows : " << std::setw(5) << numXorInMatrix[i] << std::setw(40) << "|" << endl;
+            cout << "|  Matrix no " << std::setw(4) << realMatrixNum << "      no. rows : " << std::setw(5) << numXorInMatrix[i] << " no cols: " << std::setw(6) << setSizes[i] << std::setw(24) << "|" << endl;
             realMatrixNum++;
         }
     }
@@ -122,8 +123,8 @@ MatrixFinder::MatrixFinder(Solver *_S) :
             x.setMatrix((1 << 12)-1);
     }
     
-    for (uint i = 0; i < newNumMatrixes; i++)
+    for (uint i = 0; i < realMatrixNum; i++)
         S->gauss_matrixes.push_back(new Gaussian(*S, i, S->gaussconfig));
     
-    numMatrix = newNumMatrixes;
+    return realMatrixNum;
 }
