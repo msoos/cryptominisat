@@ -72,7 +72,6 @@ public:
 
     void begin();
     void end(const finish_type finish);
-    void print_general_stats(uint restarts, uint64_t conflicts, int vars, int noClauses, uint64_t clauses_Literals, int noLearnts, double litsPerLearntCl, double progressEstimate) const;
 
     void newclause(const vec<Lit>& ps, const bool xor_clause, const uint group);
 
@@ -96,6 +95,8 @@ private:
     void print_leearnt_clause_graph_distrib(const uint maximum, const map<uint, uint>& learnt_sizes) const;
     void print_advanced_stats() const;
     void print_statistics_note() const;
+    void print_matrix_stats() const;
+    void print_general_stats() const;
 
     uint max_print_lines;
     template<class T>

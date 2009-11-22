@@ -32,6 +32,7 @@ using std::ofstream;
 #include "Logger.h"
 #include "SolverTypes.h"
 #include "Solver.h"
+#include "Gaussian.h"
 
 #define FST_WIDTH 10
 #define SND_WIDTH 35
@@ -700,19 +701,21 @@ void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const map<ui
     print_footer();
 }
 
-void Logger::print_general_stats(uint restarts, uint64_t conflicts, int vars, int noClauses, uint64_t clauses_Literals, int noLearnts, double litsPerLearntCl, double progressEstimate) const
+void Logger::print_general_stats() const
 {
     print_footer();
     print_simple_line(" Standard MiniSat stats -- for all restarts until now");
     print_footer();
-    print_line("Restart number", restarts);
-    print_line("Number of conflicts", conflicts);
-    print_line("Number of variables", vars);
-    print_line("Number of clauses", noClauses);
-    print_line("Number of literals in clauses",clauses_Literals);
-    print_line("Avg. literals per learnt clause",litsPerLearntCl);
-    print_line("Progress estimate (%):", progressEstimate);
+    print_line("Restart number", S->starts);
+    print_line("Number of conflicts", S->conflicts);
+    print_line("Number of decisions", S->decisions);
+    print_line("Number of variables", S->order_heap.size());
+    print_line("Number of clauses", S->nClauses());
+    print_line("Number of literals in clauses",S->clauses_literals);
+    print_line("Avg. literals per learnt clause",(double)S->learnts_literals/(double)S->nLearnts());
+    print_line("Progress estimate (%):", S->progress_estimate*100.0);
     print_line("All unitary learnts until now", S->unitary_learnts.size());
+    
     print_footer();
 }
 
@@ -724,10 +727,15 @@ void Logger::printstats() const
     assert(varnames.size() == times_var_guessed.size());
     assert(varnames.size() == times_var_propagated.size());
 
-    printf("\n");
-    cout << "+" << std::setfill('=') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+4) << "=" << "+" << endl;
-    cout << "||" << std::setfill('*') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+2) << "********* STATS FOR THIS RESTART BEGIN " << "||" << endl;
-    cout << "+" << std::setfill('=') << std::setw(FST_WIDTH+SND_WIDTH+TRD_WIDTH+4) << "=" << std::setfill(' ') << "+" << endl;
+    const uint fullwidth = FST_WIDTH+SND_WIDTH+TRD_WIDTH+4;
+    cout << endl;
+    cout << "+" << std::setfill('=') << std::setw(fullwidth) << "=" << "+" << endl;
+    std::stringstream tmp;
+    tmp << " STATS FOR RESTART NO. " << std::setw(3) << S->starts << "  BEGIN ";
+    uint len = (fullwidth-2)/2-tmp.str().length()/2;
+    uint len2 = len + tmp.str().length()%2 + (fullwidth-2)%2;
+    cout << "||" << std::setfill('*') << std::setw(len) << "*" << tmp.str() << std::setw(len2) << "*" << "||" << endl;
+    cout << "+" << std::setfill('=') << std::setw(fullwidth) << "=" << std::setfill(' ') << "+" << endl;
     
     cout.setf(std::ios_base::left);
     cout.precision(4);
@@ -740,7 +748,39 @@ void Logger::printstats() const
     print_assign_var_order();
     print_branch_depth_distrib();
     print_learnt_clause_distrib();
+    print_matrix_stats();
     print_advanced_stats();
+    print_general_stats();
+}
+
+void Logger::print_matrix_stats() const
+{
+    print_footer();
+    print_simple_line(" Matrix statistics");
+    print_footer();
+    
+    uint i = 0;
+    for (vector<Gaussian*>::const_iterator it = S->gauss_matrixes.begin(), end = S->gauss_matrixes.end(); it != end; it++, i++) {
+        std::stringstream s;
+        s << "Matrix " << i << " enabled";
+        std::stringstream tmp;
+        tmp << std::boolalpha << !(*it)->get_disabled();
+        print_line(s.str(), tmp.str());
+        
+        s.str("");
+        s << "Matrix " << i << " called";
+        print_line(s.str(), (*it)->get_called());
+        
+        s.str("");
+        s << "Matrix " << i << " propagations";
+        print_line(s.str(), (*it)->get_useful_prop());
+        
+        s.str("");
+        s << "Matrix " << i << " conflicts";
+        print_line(s.str(), (*it)->get_useful_confl());
+    }
+    
+    print_footer();
 }
 
 void Logger::print_advanced_stats() const
@@ -764,6 +804,7 @@ void Logger::print_advanced_stats() const
     print_simple_line("sum propagations on branches/no. branches");
     print_simple_line(" (in a given branch, what is the");
     print_line("  avg. no. of propagations?)",(double)sum_propagations_on_branches/(double)no_conflicts);
+    
     print_footer();
 }
 

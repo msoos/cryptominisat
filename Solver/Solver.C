@@ -999,7 +999,6 @@ lbool Solver::simplify()
     if (!ok || propagate() != NULL) {
         if (dynamic_behaviour_analysis) {
             logger.end(Logger::unsat_model_found);
-            logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
         }
         ok = false;
         return l_False;
@@ -1087,7 +1086,6 @@ llbool Solver::new_decision(int& nof_conflicts, int& nof_learnts, int& conflictC
         cancelUntil(0);
         if (dynamic_behaviour_analysis) {
             logger.end(Logger::restarting);
-            logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
         }
         return l_Undef;
     }
@@ -1096,7 +1094,6 @@ llbool Solver::new_decision(int& nof_conflicts, int& nof_learnts, int& conflictC
     if (decisionLevel() == 0 && simplify() == l_False) {
         if (dynamic_behaviour_analysis) {
             logger.end(Logger::unsat_model_found);
-            logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
         }
         return l_False;
     }
@@ -1117,7 +1114,6 @@ llbool Solver::new_decision(int& nof_conflicts, int& nof_learnts, int& conflictC
             analyzeFinal(~p, conflict);
             if (dynamic_behaviour_analysis) {
                 logger.end(Logger::unsat_model_found);
-                logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
             }
             return l_False;
         } else {
@@ -1135,7 +1131,6 @@ llbool Solver::new_decision(int& nof_conflicts, int& nof_learnts, int& conflictC
             // Model found:
             if (dynamic_behaviour_analysis) {
                 logger.end(Logger::model_found);
-                logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
             }
             return l_True;
         }
@@ -1166,7 +1161,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     if (decisionLevel() == 0) {
         if (dynamic_behaviour_analysis) {
             logger.end(Logger::unsat_model_found);
-            logger.print_general_stats(starts, conflicts, order_heap.size(), nClauses(), clauses_literals, nLearnts(), (double)learnts_literals/nLearnts(), progress_estimate*100);
         }
         return l_False;
     }
@@ -1327,7 +1321,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
     
 
-    if (verbosity >= 1) {
+    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
         printf("============================[ Search Statistics ]========================================\n");
         printf("| Conflicts |          ORIGINAL         |          LEARNT          |        GAUSS       |\n");
         printf("|           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl | Prop   Confl   On  |\n");
@@ -1359,7 +1353,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             (*gauss)->clear_clauses();
     }
 
-    if (verbosity >= 1) {
+    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
         printf("====================================================================");
         print_gauss_sum_stats();
     }
