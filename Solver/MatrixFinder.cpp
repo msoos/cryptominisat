@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 #include <map>
 #include <iomanip>
+#include <math.h>
 using std::set;
 using std::map;
 
@@ -89,23 +90,45 @@ const uint MatrixFinder::findMatrixes()
     #endif
     
     vector<uint> numXorInMatrix(matrix_no, 0);
+    vector<uint> sumXorSizeInMatrix(matrix_no, 0);
+    vector<vector<uint> > xorSizesInMatrix(matrix_no);
     for (XorClause** c = S->xorclauses.getData(), **end = c + S->xorclauses.size(); c != end; c++) {
         XorClause& x = **c;
-        numXorInMatrix[table[x[0].var()]]++;
+        const uint matrix = table[x[0].var()];
+        numXorInMatrix[matrix]++;
+        sumXorSizeInMatrix[matrix] += x.size();
+        xorSizesInMatrix[matrix].push_back(x.size());
     }
     
     uint realMatrixNum = 0;
     vector<uint> remapMatrixes(matrix_no, UINT_MAX);
     for (uint i = 0; i < numXorInMatrix.size(); i++) {
+        if (numXorInMatrix[i] < 3)
+            continue;
+        
+        const uint totalSize = reverseTable[i].size()*numXorInMatrix[i];
+        const double density = (double)sumXorSizeInMatrix[i]/(double)totalSize*100.0;
+        double avg = (double)sumXorSizeInMatrix[i]/(double)numXorInMatrix[i];
+        double variance = 0.0;
+        for (uint i2 = 0; i2 < xorSizesInMatrix[i].size(); i2++)
+            variance += pow((double)xorSizesInMatrix[i][i2]-avg, 2);
+        variance /= xorSizesInMatrix.size();
+        const double stdDeviation = sqrt(variance);
+        
         if (numXorInMatrix[i] >= 20
             && numXorInMatrix[i] <= 1000
-            && realMatrixNum < (1 << 12)) {
-            cout << "|  Matrix no " << std::setw(4) << realMatrixNum << "      no. rows : " << std::setw(5) << numXorInMatrix[i] << " no cols: " << std::setw(6) << reverseTable[i].size() << std::setw(24) << "|" << endl;
+            && realMatrixNum < (1 << 12))
+        {
+            cout << "|  Matrix no " << std::setw(4) << realMatrixNum;
             remapMatrixes[i] = realMatrixNum;
             realMatrixNum++;
-        } else if (numXorInMatrix[i] > 0) {
-            cout << "|  Unused Matrix       no. rows : " << std::setw(5) << numXorInMatrix[i] << " no cols: " << std::setw(6) << reverseTable[i].size() << "  NOT used" << std::setw(14) << "|" << endl;
+        } else {
+            cout << "|  Unused Matrix ";
         }
+        cout << std::setw(5) << numXorInMatrix[i] << " x" << std::setw(5) << reverseTable[i].size();
+        cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
+        cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
+        cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << "  |" << endl;
     }
     
     for (XorClause** c = S->xorclauses.getData(), **end = c + S->xorclauses.size(); c != end; c++) {
