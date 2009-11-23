@@ -732,7 +732,7 @@ void Gaussian::check_to_disable(const uint conflictC, const uint nof_conflicts)
         //&& conflictC >= nof_conflicts/8
         /*&&*/ called > 100
         && (double)useful_confl/(double)called < 0.1
-        && (double)useful_prop/(double)called < 0.4 )
+        && (double)useful_prop/(double)called < 0.3 )
             disabled = true;
 }
 
