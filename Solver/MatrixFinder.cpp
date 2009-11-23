@@ -97,10 +97,14 @@ const uint MatrixFinder::findMatrixes()
     uint realMatrixNum = 0;
     vector<uint> remapMatrixes(matrix_no, UINT_MAX);
     for (uint i = 0; i < numXorInMatrix.size(); i++) {
-        if (numXorInMatrix[i] >= 20 && numXorInMatrix[i] <= 500 && realMatrixNum < (1 << 12) ) {
+        if (numXorInMatrix[i] >= 20
+            && numXorInMatrix[i] <= 1000
+            && realMatrixNum < (1 << 12)) {
             cout << "|  Matrix no " << std::setw(4) << realMatrixNum << "      no. rows : " << std::setw(5) << numXorInMatrix[i] << " no cols: " << std::setw(6) << reverseTable[i].size() << std::setw(24) << "|" << endl;
             remapMatrixes[i] = realMatrixNum;
             realMatrixNum++;
+        } else if (numXorInMatrix[i] > 0) {
+            cout << "|  Unused Matrix       no. rows : " << std::setw(5) << numXorInMatrix[i] << " no cols: " << std::setw(6) << reverseTable[i].size() << "  NOT used" << std::setw(14) << "|" << endl;
         }
     }
     
