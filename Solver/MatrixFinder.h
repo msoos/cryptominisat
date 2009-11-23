@@ -19,8 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define __MATRIXFINDER_H__
 
 #include <sys/types.h>
+#include "Clause.h"
 
 class Solver;
+
+#include <vector>
+#include <map>
+using std::map;
+using std::vector;
 
 class MatrixFinder {
     
@@ -29,6 +35,16 @@ class MatrixFinder {
         const uint findMatrixes();
     
     private:
+        const uint setMatrixes();
+        
+        void findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClause*>& xorsInMatrix);
+        inline const Var fingerprint(const XorClause& c) const;
+        inline const bool firstPartOfSecond(const XorClause& c1, const XorClause& c2) const;
+        
+        map<uint, vector<Var> > reverseTable; //matrix -> vars
+        vector<uint> table; //var -> matrix
+        uint matrix_no;
+        const uint unAssigned;
         
         Solver* S;
 };
