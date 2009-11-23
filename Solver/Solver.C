@@ -1323,7 +1323,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
     }
     
-    if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 10000) {
+    if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
         removeSatisfied(xorclauses);
         cleanClauses(xorclauses);
         double time = cpuTime();
