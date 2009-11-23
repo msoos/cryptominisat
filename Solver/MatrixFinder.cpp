@@ -58,8 +58,15 @@ const uint MatrixFinder::findMatrixes()
             else
                 newSet.push_back(l->var());
         }
-        if (newSet.empty() && tomerge.size() == 1)
+        if (tomerge.size() == 1) {
+            const uint into = *tomerge.begin();
+            map<uint, vector<Var> >::iterator intoReverse = reverseTable.find(into);
+            for (uint i = 0; i < newSet.size(); i++) {
+                intoReverse->second.push_back(newSet[i]);
+                table[newSet[i]] = into;
+            }
             continue;
+        }
         
         for (set<uint>::iterator it = tomerge.begin(); it != tomerge.end(); it++) {
             newSet.insert(newSet.end(), reverseTable[*it].begin(), reverseTable[*it].end());
