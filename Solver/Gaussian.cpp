@@ -323,7 +323,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
 
     propagatable_rows.clear();
     uint conflict_row = UINT_MAX;
-    uint row = eliminate(cur_matrixset, propagatable_rows, conflict_row);
+    uint last_row = eliminate(cur_matrixset, conflict_row);
 #ifdef DEBUG_GAUSS
     check_matrix_against_varset(cur_matrixset.matrix, cur_matrixset.varset);
 #endif
@@ -336,7 +336,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
         ret = handle_matrix_confl(confl, cur_matrixset, size, maxlevel, best_row);
         
     } else {
-        ret = handle_matrix_prop_and_confl(cur_matrixset, row, propagatable_rows, confl);
+        ret = handle_matrix_prop_and_confl(cur_matrixset, last_row, confl);
     }
     
     if (ret == nothing
@@ -354,7 +354,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
     return ret;
 }
 
-uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& conflict_row) const
+uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
 {
     if (m.least_column_changed == INT_MAX)
         return m.num_rows;
@@ -513,37 +513,35 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     return conflict;
 }
 
-Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint row, const vec<uint>& propagatable_rows, Clause*& confl)
+Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint last_row, Clause*& confl)
 {
     uint maxlevel = UINT_MAX;
     uint size = UINT_MAX;
     uint best_row = UINT_MAX;
 
-    const uint end_interesting_rows = row;
-    while (row < m.num_rows) {
+
+    for (uint row = last_row; row != m.num_rows; row++) {
 #ifdef DEBUG_GAUSS
         assert(m.matrix[row].isZero());
 #endif
         if (!m.matrix[row].get_xor_clause_inverted())
             analyse_confl(m, row, maxlevel, size, best_row);
-        row++;
     }
 
     if (maxlevel != UINT_MAX)
         return handle_matrix_confl(confl, m, size, maxlevel, best_row);
+
 #ifdef DEBUG_GAUSS
     assert(check_no_conflict(m));
 #endif
-    m.num_rows = end_interesting_rows;
+    m.num_rows = last_row;
     m.matrix.resize(m.num_rows);
     m.varset.resize(m.num_rows);
 
     gaussian_ret ret = nothing;
 
     uint num_props = 0;
-    const uint* prop_row = propagatable_rows.getData();
-    const uint* end = prop_row + propagatable_rows.size();
-    for (; prop_row != end; prop_row++ ) {
+    for (const uint* prop_row = propagatable_rows.getData(), *end = prop_row + propagatable_rows.size(); prop_row != end; prop_row++ ) {
         //this is a "000..1..0000000X" row. I.e. it indicates a propagation
         ret = handle_matrix_prop(m, *prop_row);
         num_props++;

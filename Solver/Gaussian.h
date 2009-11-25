@@ -105,7 +105,7 @@ protected:
     uint fill_var_to_col(matrixset& m) const; // Fills the var_to_col and col_to_var in the matrix. 
 
     //Main function
-    uint eliminate(matrixset& matrix, vec<uint>& propagatable_rows, uint& conflict_row) const; //does the actual gaussian elimination
+    uint eliminate(matrixset& matrix, uint& conflict_row); //does the actual gaussian elimination
 
     //matrix update functions
     void update_matrix_col(matrixset& matrix, const Var x, const uint col) const; // Update one matrix column
@@ -115,7 +115,7 @@ protected:
     //void update_matrix_by_col(matrixset& matrix, const uint last_level) const;
 
     //conflict&propagation handling
-    gaussian_ret handle_matrix_prop_and_confl(matrixset& m, uint row, const vec<uint>& propagatable_rows, Clause*& confl);
+    gaussian_ret handle_matrix_prop_and_confl(matrixset& m, uint row, Clause*& confl);
     void analyse_confl(const matrixset& m, const uint row, uint& maxlevel, uint& size, uint& best_row) const; // analyse conflcit to find the best conflict. Gets & returns the best one in 'maxlevel', 'size' and 'best row' (these are all UINT_MAX when calling this function first, i.e. when there is no other possible conflict to compare to the new in 'row')
     gaussian_ret handle_matrix_confl(Clause*& confl, const matrixset& m, const uint size, const uint maxlevel, const uint best_row);
     gaussian_ret handle_matrix_prop(matrixset& m, const uint row); // Handle matrix propagation at row 'row'
@@ -134,9 +134,7 @@ protected:
 private:
     void check_to_disable(const uint conflictC, const uint nof_conflicts);
     
-    //temporary internal data to avoid constantre-allocation
-    mutable vec<uint> rows_with_one;
-    mutable vec<uint> propagatable_rows; //used in gaussian()
+    vec<uint> propagatable_rows; //used to store which rows were deemed propagatable during elimination
     
     //debug functions
     bool check_no_conflict(const matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?
