@@ -29,7 +29,7 @@ using std::cout;
 using std::endl;
 
 class Clause;
-typedef packedRow matrix_row;
+typedef PackedRow matrix_row;
 
 
 //#define VERBOSE_DEBUG

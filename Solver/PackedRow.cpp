@@ -1,6 +1,6 @@
 #include "PackedRow.h"
 
-std::ostream& operator << (std::ostream& os, const packedRow& m)
+std::ostream& operator << (std::ostream& os, const PackedRow& m)
 {
     for(uint i = 0; i < m.size; i++) {
         if (m[i]) os << i+1 << " ";
@@ -8,7 +8,7 @@ std::ostream& operator << (std::ostream& os, const packedRow& m)
     return os;
 }
 
-bool packedRow::operator ==(const packedRow& b) const
+bool PackedRow::operator ==(const PackedRow& b) const
 {
     #ifdef DEBUG_ROW
     assert(size > 0);
@@ -19,7 +19,7 @@ bool packedRow::operator ==(const packedRow& b) const
     return (xor_clause_inverted == b.xor_clause_inverted && std::equal(b.mp, b.mp+size, mp));
 }
 
-bool packedRow::operator !=(const packedRow& b) const
+bool PackedRow::operator !=(const PackedRow& b) const
 {
     #ifdef DEBUG_ROW
     assert(size > 0);
@@ -30,7 +30,7 @@ bool packedRow::operator !=(const packedRow& b) const
     return (xor_clause_inverted != b.xor_clause_inverted || !std::equal(b.mp, b.mp+size, mp));
 }
 
-bool packedRow::popcnt_is_one() const
+bool PackedRow::popcnt_is_one() const
 {
     char popcount = 0;
     for (uint i = 0; i < size; i++) if (mp[i]) {
@@ -44,7 +44,7 @@ bool packedRow::popcnt_is_one() const
     return popcount;
 }
 
-bool packedRow::popcnt_is_one(uint from) const
+bool PackedRow::popcnt_is_one(uint from) const
 {
     from++;
     for (uint i = from/64; i < size; i++) if (mp[i]) {
@@ -63,7 +63,7 @@ bool packedRow::popcnt_is_one(uint from) const
     return true;
 }
 
-uint packedRow::popcnt() const
+uint PackedRow::popcnt() const
 {
     uint popcnt = 0;
     for (uint i = 0; i < size; i++) if (mp[i]) {
@@ -76,7 +76,7 @@ uint packedRow::popcnt() const
     return popcnt;
 }
 
-packedRow& packedRow::operator=(const packedRow& b)
+PackedRow& PackedRow::operator=(const PackedRow& b)
 {
     #ifdef DEBUG_ROW
     assert(size > 0);
@@ -89,7 +89,7 @@ packedRow& packedRow::operator=(const packedRow& b)
     return *this;
 }
 
-packedRow& packedRow::operator^=(const packedRow& b)
+PackedRow& PackedRow::operator^=(const PackedRow& b)
 {
     #ifdef DEBUG_ROW
     assert(size > 0);
@@ -104,7 +104,7 @@ packedRow& packedRow::operator^=(const packedRow& b)
     return *this;
 }
 
-void packedRow::fill(Lit* ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original) const
+void PackedRow::fill(Lit* ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original) const
 {
     bool final = xor_clause_inverted;
     

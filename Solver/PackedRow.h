@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
-#ifndef __packedRow__
-#define __packedRow__
+#ifndef __PackedRow__
+#define __PackedRow__
 
 //#define DEBUG_ROW
 
@@ -37,17 +37,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::vector;
 
 
-class packedRow
+class PackedRows;
+
+class PackedRow
 {
 public:
-    packedRow() :
+    PackedRow() :
         size(0)
         , mp(NULL)
     {
         xor_clause_inverted = false;
     }
     
-    packedRow(const packedRow& b) :
+    PackedRow(const PackedRow& b) :
         size(b.size)
         , xor_clause_inverted(b.xor_clause_inverted)
     {
@@ -55,16 +57,16 @@ public:
         std::copy(b.mp, b.mp+size, mp);
     }
     
-    ~packedRow()
+    ~PackedRow()
     {
         delete[] mp;
     }
     
-    bool operator ==(const packedRow& b) const;
+    bool operator ==(const PackedRow& b) const;
     
-    bool operator !=(const packedRow& b) const;
+    bool operator !=(const PackedRow& b) const;
     
-    packedRow& operator=(const packedRow& b);
+    PackedRow& operator=(const PackedRow& b);
     
     uint popcnt() const;
     bool popcnt_is_one() const;
@@ -105,7 +107,7 @@ public:
         mp[i/64] |= ((uint64_t)1 << (i%64));
     }
 
-    void swap(packedRow& b)
+    void swap(PackedRow& b)
     {
         #ifdef DEBUG_ROW
         assert(size > 0);
@@ -122,7 +124,7 @@ public:
         b.xor_clause_inverted = tmp;
     }
 
-    packedRow& operator^=(const packedRow& b);
+    PackedRow& operator^=(const PackedRow& b);
 
     inline const bool operator[](const uint& i) const
     {
@@ -162,16 +164,17 @@ public:
         return ULONG_MAX;
     }
 
-    friend std::ostream& operator << (std::ostream& os, const packedRow& m);
+    friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
 
 private:
+    friend class PackedRows;
     
     uint size;
     uint64_t* mp;
     bool xor_clause_inverted;
 };
 
-std::ostream& operator << (std::ostream& os, const packedRow& m);
+std::ostream& operator << (std::ostream& os, const PackedRow& m);
 
 #endif
 
