@@ -108,8 +108,8 @@ protected:
     uint eliminate(matrixset& matrix, uint& conflict_row); //does the actual gaussian elimination
 
     //matrix update functions
-    void update_matrix_col(matrixset& matrix, const Var x, const uint col) const; // Update one matrix column
-    void update_matrix_by_col_all(matrixset& m) const; // Update all columns, column-by-column (and not row-by-row)
+    void update_matrix_col(matrixset& matrix, const Var x, const uint col); // Update one matrix column
+    void update_matrix_by_col_all(matrixset& m); // Update all columns, column-by-column (and not row-by-row)
     void set_matrixset_to_cur(); // Save the current matrixset, the cur_matrixset to matrix_sets
     //void update_matrix_by_row(matrixset& matrix) const;
     //void update_matrix_by_col(matrixset& matrix, const uint last_level) const;
@@ -135,6 +135,7 @@ private:
     void check_to_disable(const uint conflictC, const uint nof_conflicts);
     
     vec<uint> propagatable_rows; //used to store which rows were deemed propagatable during elimination
+    vector<bool> changed_rows; //used to store which rows were deemed propagatable during elimination
     
     //debug functions
     bool check_no_conflict(const matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?

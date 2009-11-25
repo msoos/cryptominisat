@@ -227,7 +227,7 @@ void Gaussian::fill_matrix(matrixset& m)
     assert(m.num_rows == matrix_row);
 }
 
-void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col) const
+void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
 {
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Updating matrix var " << var+1 << endl;
@@ -235,18 +235,24 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col) co
     
     m.least_column_changed = std::min(m.least_column_changed, (int)col);
     matrix_row* this_row = &m.matrix[0];
+    uint row_num = 0;
 
     if (solver.assigns[var].getBool()) {
-        for (matrix_row* end = this_row + std::min(m.num_rows, m.last_one_in_col[col]+1);  this_row != end; this_row++) {
+        for (matrix_row* end = this_row + std::min(m.num_rows, m.last_one_in_col[col]+1);  this_row != end; this_row++, row_num++) {
             matrix_row& r = *this_row;
             if (r[col]) {
+                changed_rows[row_num] = true;
                 r.invert_xor_clause_inverted();
                 r.clearBit(col);
             }
         }
     } else {
-        for (matrix_row* end = this_row + std::min(m.num_rows, m.last_one_in_col[col]+1);  this_row != end; this_row++) {
-            this_row->clearBit(col);
+        for (matrix_row* end = this_row + std::min(m.num_rows, m.last_one_in_col[col]+1);  this_row != end; this_row++, row_num++) {
+            matrix_row& r = *this_row;
+            if (r[col]) {
+                changed_rows[row_num] = true;
+                r.clearBit(col);
+            }
         }
     }
 
@@ -262,7 +268,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col) co
     m.var_to_col[var] = UINT_MAX-1;
 }
 
-void Gaussian::update_matrix_by_col_all(matrixset& m) const
+void Gaussian::update_matrix_by_col_all(matrixset& m)
 {
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Updating matrix." << endl;
@@ -272,6 +278,9 @@ void Gaussian::update_matrix_by_col_all(matrixset& m) const
     #ifdef DEBUG_GAUSS
     assert(config.every_nth_gauss != 1 || nothing_to_propagate(cur_matrixset));
     #endif
+    
+    changed_rows.clear();
+    changed_rows.resize(cur_matrixset.num_rows, false);
 
     uint last = 0;
     uint* col_to_var_it = &m.col_to_var[0];
@@ -320,6 +329,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
             cur_matrixset = original_matrixset;
         else
             cur_matrixset = matrix_sets[((solver.decisionLevel() - config.decision_from) / config.only_nth_gauss_save)];
+        
         update_matrix_by_col_all(cur_matrixset);
     }
 
@@ -327,6 +337,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
     gauss_last_level = solver.trail.size();
 
     propagatable_rows.clear();
+    
     uint conflict_row = UINT_MAX;
     uint last_row = eliminate(cur_matrixset, conflict_row);
     #ifdef DEBUG_GAUSS
@@ -376,12 +387,8 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
 
     if (m.least_column_changed > -1) {
         const uint until = m.last_one_in_col[m.least_column_changed];
-        while (i < until) {
-            const bool propagatable = m.matrix[i].popcnt_is_one();
-            if (propagatable)
-                propagatable_rows.push(i);
-            i++;
-        }
+        for (;i < until; i++) if (changed_rows[i] && m.matrix[i].popcnt_is_one())
+            propagatable_rows.push(i);
 
         j = m.least_column_changed + 1;
     }
