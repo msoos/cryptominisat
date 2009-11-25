@@ -387,26 +387,16 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
             continue;
         }
 
-        uint best_row = UINT_MAX;
-        //uint best_row_popcnt = UINT_MAX;
+        uint best_row = i;
         uint end_investigate = std::min(m.last_one_in_col[j] + 1, m.num_rows);
-        rows_with_one.clear();
-
-        matrix_row* this_matrix_row = &m.matrix[0] + i;
-        for (uint i2 = i; i2 < end_investigate; i2++, this_matrix_row++) {
-            //intelligent pivoting
-            if ((*this_matrix_row)[j]) {
-                //uint popcnt = this_matrix_row->popcnt();
-                //if (popcnt < best_row_popcnt) {
-                //    best_row = i2;
-                //    best_row_popcnt = popcnt;
-                //}
-                best_row = i2;
-                rows_with_one.push(i2);
-            }
+        matrix_row* this_matrix_row = &m.matrix[i];
+        matrix_row* end = &m.matrix[end_investigate];
+        for (; this_matrix_row != end; this_matrix_row++, best_row++) {
+            if ((*this_matrix_row)[j])
+                break;
         }
 
-        if (best_row < m.num_rows) {
+        if (this_matrix_row != end) {
             matrix_row& matrix_row_i = m.matrix[i];
             matrix_row& varset_row_i = m.varset[i];
 
@@ -419,7 +409,7 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
                     conflict_row = i;
                     return 0;
                 }
-                matrix_row_i.swap(m.matrix[best_row]);
+                matrix_row_i.swap(*this_matrix_row);
                 varset_row_i.swap(m.varset[best_row]);
             }
 #ifdef DEBUG_GAUSS
@@ -427,37 +417,25 @@ uint Gaussian::eliminate(matrixset& m, vec<uint>& propagatable_rows, uint& confl
             assert(m.matrix[i][j]);
 #endif
 
-            if (m.matrix[i].popcnt_is_one(j))
+            if (matrix_row_i.popcnt_is_one(j)) {
                 propagatable_rows.push(i);
-
-            //Now A[i,j] will contain the old value of A[maxi,j];
-            uint* real_it = rows_with_one.getData();
-            bool original_was_good = false;
-            if (*real_it == i) {
-                real_it ++;
-                original_was_good = true;
             }
 
-            for (const uint* end = rows_with_one.getData() + rows_with_one.size(); real_it != end; real_it++) {
-                const uint& u = *real_it;
-                if (original_was_good || u != best_row) {
-#ifdef DEBUG_GAUSS
-                    assert( u != i );
-                    assert(m.matrix[u][j]);
-#endif
-                    //subtract row i from row u;
-                    //Now A[u,j] will be 0, since A[u,j] - A[i,j] = A[u,j] -1 = 0.
+            //Now A[i,j] will contain the old value of A[maxi,j];
+            uint i2 = best_row+1;
+            for (matrix_row *it = this_matrix_row+1, *it2 = &m.varset[i2]; it != end; it++, it2++, i2++) if ((*it)[j]) {
+                //subtract row i from row u;
+                //Now A[u,j] will be 0, since A[u,j] - A[i,j] = A[u,j] -1 = 0.
 #ifdef VERBOSE_DEBUG
-                    number_of_row_additions++;
+                number_of_row_additions++;
 #endif
-                    m.matrix[u] ^= matrix_row_i;
-                    m.varset[u] ^= varset_row_i;
-                    //Would early abort, but would not find the best conflict:
-                    //if (!m.matrix[u].get_xor_clause_inverted() && m.matrix[u].isZero()) {
-                    //    conflict_row = u;
-                    //    return 0;
-                    //}
-                }
+                *it ^= matrix_row_i;
+                *it2 ^= varset_row_i;
+                //Would early abort, but would not find the best conflict:
+                //if (!it->get_xor_clause_inverted() &&it->isZero()) {
+                //    conflict_row = i2;
+                //    return 0;
+                //}
             }
 #ifdef DEBUG_GAUSS
             assert(m.matrix[i] == backup);
