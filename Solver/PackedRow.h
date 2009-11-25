@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define uint unsigned int
 #endif
 
-//#define DEBUG_GAUSS
-
 using std::vector;
 
 
