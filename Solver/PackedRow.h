@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Vec.h"
 #include <iostream>
 #include <algorithm>
-#include <boost/foreach.hpp>
 
 #ifndef uint
 #define uint unsigned int
