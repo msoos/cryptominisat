@@ -175,8 +175,6 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         #endif
         
         learnt_clause_group = std::max(group+1, learnt_clause_group);
-        XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
-        
         toReplace->replace(ps[0].var(), Lit(ps[1].var(), !xor_clause_inverted));
         break;
     }
