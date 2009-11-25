@@ -25,6 +25,8 @@ using std::ostream;
 using std::cout;
 using std::endl;
 
+uint64_t* PackedRow::tmp_row;
+
 ostream& operator << (ostream& os, const vec<Lit>& v)
 {
     for (int i = 0; i < v.size(); i++) {
@@ -46,6 +48,7 @@ Gaussian::Gaussian(Solver& _solver, const uint _matrix_no, const GaussianConfig&
         , useful_confl(0)
         , called(0)
 {
+    PackedRow::tmp_row = new uint64_t[1000];
 }
 
 Gaussian::~Gaussian()
@@ -102,8 +105,6 @@ void Gaussian::init(void)
     fill_matrix(original_matrixset);
     if (original_matrixset.num_rows == 0) return;
     
-    cur_matrixset.matrix.resize(0);
-    cur_matrixset.varset.resize(0);
     cur_matrixset = original_matrixset;
 
     gauss_last_level = solver.trail.size();
@@ -193,9 +194,6 @@ void Gaussian::fill_matrix(matrixset& m)
     cout << "(" << matrix_no << ")Filling matrix" << endl;
     #endif
 
-    original_matrixset.matrix.resize(0);
-    original_matrixset.varset.resize(0);
-
     m.num_rows = fill_var_to_col(m);
     m.num_cols = m.col_to_var.size();
     col_to_var_original = m.col_to_var;
@@ -207,8 +205,8 @@ void Gaussian::fill_matrix(matrixset& m)
         *l = m.num_rows;
     m.removeable_cols = 0;
     m.least_column_changed = -1;
-    m.matrix.resize(m.num_rows);
-    m.varset.resize(m.num_rows);
+    m.matrix.resize(m.num_rows, m.num_cols);
+    m.varset.resize(m.num_rows, m.num_cols);
 
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix size:" << m.num_rows << "," << m.num_cols << endl;
@@ -234,12 +232,12 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
     #endif
     
     m.least_column_changed = std::min(m.least_column_changed, (int)col);
-    matrix_row* this_row = &m.matrix[0];
+    PackedMatrix::iterator this_row = m.matrix.begin();
     uint row_num = 0;
 
     if (solver.assigns[var].getBool()) {
-        for (matrix_row* end = this_row + std::min(m.num_rows, m.last_one_in_col[col]+1);  this_row != end; this_row++, row_num++) {
-            matrix_row& r = *this_row;
+        for (PackedMatrix::iterator end = this_row + std::min(m.num_rows, m.last_one_in_col[col]+1);  this_row != end; ++this_row, row_num++) {
+            PackedRow r = *this_row;
             if (r[col]) {
                 changed_rows[row_num] = true;
                 r.invert_xor_clause_inverted();
@@ -247,8 +245,8 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
             }
         }
     } else {
-        for (matrix_row* end = this_row + std::min(m.num_rows, m.last_one_in_col[col]+1);  this_row != end; this_row++, row_num++) {
-            matrix_row& r = *this_row;
+        for (PackedMatrix::iterator end = this_row + std::min(m.num_rows, m.last_one_in_col[col]+1);  this_row != end; ++this_row, row_num++) {
+            PackedRow r = *this_row;
             if (r[col]) {
                 changed_rows[row_num] = true;
                 r.clearBit(col);
@@ -258,7 +256,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
 
     #ifdef DEBUG_GAUSS
     bool c = false;
-    for(matrix_row *r = m.matrix[0], *end = r + m.matrix.size(); r != end; r++)
+    for(PackedMatrix::iterator r = m.matrix.begin(), end = r + m.matrix.size(); r != end; ++r)
         c |= (*r)[col];
     assert(!c);
     #endif
@@ -403,16 +401,16 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
 
         uint best_row = i;
         uint end_investigate = std::min(m.last_one_in_col[j] + 1, m.num_rows);
-        matrix_row* this_matrix_row = &m.matrix[i];
-        matrix_row* end = &m.matrix[end_investigate];
-        for (; this_matrix_row != end; this_matrix_row++, best_row++) {
+        PackedMatrix::iterator this_matrix_row = m.matrix.begin() + i;
+        PackedMatrix::iterator end = m.matrix.begin() + end_investigate;
+        for (; this_matrix_row != end; ++this_matrix_row, best_row++) {
             if ((*this_matrix_row)[j])
                 break;
         }
 
         if (this_matrix_row != end) {
-            matrix_row& matrix_row_i = m.matrix[i];
-            matrix_row& varset_row_i = m.varset[i];
+            PackedRow matrix_row_i = m.matrix[i];
+            PackedRow varset_row_i = m.varset[i];
 
             //swap rows i and maxi, but do not change the value of i;
             if (i != best_row) {
@@ -420,7 +418,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 no_exchanged++;
                 #endif
                 
-                if (matrix_row_i.isZero() && !matrix_row_i.get_xor_clause_inverted()) {
+                if (!matrix_row_i.get_xor_clause_inverted() && matrix_row_i.isZero()) {
                     conflict_row = i;
                     return 0;
                 }
@@ -428,7 +426,6 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 varset_row_i.swap(m.varset[best_row]);
             }
             #ifdef DEBUG_GAUSS
-            matrix_row backup = m.matrix[i];
             assert(m.matrix[i][j]);
             #endif
 
@@ -437,7 +434,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
 
             //Now A[i,j] will contain the old value of A[maxi,j];
             uint i2 = best_row+1;
-            for (matrix_row *it = this_matrix_row+1, *it2 = &m.varset[i2]; it != end; it++, it2++, i2++) if ((*it)[j]) {
+            for (PackedMatrix::iterator it = this_matrix_row+1, it2 = m.varset.begin() + i2; it != end; ++it, ++it2, i2++) if ((*it)[j]) {
                 //subtract row i from row u;
                 //Now A[u,j] will be 0, since A[u,j] - A[i,j] = A[u,j] -1 = 0.
                 #ifdef VERBOSE_DEBUG
@@ -452,9 +449,6 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 //    return 0;
                 //}
             }
-            #ifdef DEBUG_GAUSS
-            assert(m.matrix[i] == backup);
-            #endif
 
             m.last_one_in_col[j] = i;
             i++;
@@ -550,8 +544,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint
     assert(check_no_conflict(m));
     #endif
     m.num_rows = last_row;
-    m.matrix.resize(m.num_rows);
-    m.varset.resize(m.num_rows);
+    m.matrix.resizeNumRows(m.num_rows);
+    m.varset.resizeNumRows(m.num_rows);
 
     gaussian_ret ret = nothing;
 
@@ -855,37 +849,36 @@ void Gaussian::reset_stats()
     disabled = false;
 }
 
-bool Gaussian::check_no_conflict(const matrixset& m) const
+bool Gaussian::check_no_conflict(matrixset& m) const
 {
-    for(const matrix_row *r = &m.matrix[0], *end = r + m.matrix.size(); r != end; r++) {
-        if (!r->get_xor_clause_inverted() && r->isZero())
+    for(PackedMatrix::iterator r = m.matrix.begin(), end = m.matrix.end(); r != end; ++r) {
+        if (!(*r).get_xor_clause_inverted() && (*r).isZero())
             return false;
     }
     return true;
 }
 
-const bool Gaussian::nothing_to_propagate(const matrixset& m) const
+const bool Gaussian::nothing_to_propagate(matrixset& m) const
 {
-    for(const matrix_row *r = &m.matrix[0], *end = r + m.matrix.size(); r != end; r++) {
-        if (r->popcnt_is_one()
-                && solver.assigns[m.col_to_var[r->scan(0)]].isUndef())
+    for(PackedMatrix::iterator r = m.matrix.begin(), end = m.matrix.end(); r != end; ++r) {
+        if ((*r).popcnt_is_one()
+            && solver.assigns[m.col_to_var[(*r).scan(0)]].isUndef())
             return false;
     }
-    for(const matrix_row *r = &m.matrix[0], *end = r + m.matrix.size(); r != end; r++) {
-        if (r->isZero()
-                && !r->get_xor_clause_inverted())
+    for(PackedMatrix::iterator r = m.matrix.begin(), end = m.matrix.end(); r != end; ++r) {
+        if ((*r).isZero() && !(*r).get_xor_clause_inverted())
             return false;
     }
     return true;
 }
 
-const bool Gaussian::check_matrix_against_varset(const vector<matrix_row>& matrix, const vector<matrix_row>& varset) const
+const bool Gaussian::check_matrix_against_varset(PackedMatrix& matrix, PackedMatrix& varset) const
 {
     assert(matrix.size() == varset.size());
     
     for (uint i = 0; i < matrix.size(); i++) {
-        const matrix_row& mat_row = matrix[i];
-        const matrix_row& var_row = varset[i];
+        const PackedRow mat_row = matrix[i];
+        const PackedRow var_row = varset[i];
         
         unsigned long int col = 0;
         bool final = false;

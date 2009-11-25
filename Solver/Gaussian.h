@@ -22,14 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SolverTypes.h"
 #include "Solver.h"
 #include "GaussianConfig.h"
-#include "PackedRow.h"
+#include "PackedMatrix.h"
 
 using std::vector;
 using std::cout;
 using std::endl;
 
 class Clause;
-typedef PackedRow matrix_row;
 
 
 //#define VERBOSE_DEBUG
@@ -71,8 +70,8 @@ protected:
     class matrixset
     {
     public:
-        vector<matrix_row> matrix; // The matrix, updated to reflect variable assignements
-        vector<matrix_row> varset; // The matrix, without variable assignements. The xor-clause is read from here. This matrix only follows the 'matrix' with its row-swap, row-xor, and row-delete operations.
+        PackedMatrix matrix; // The matrix, updated to reflect variable assignements
+        PackedMatrix varset; // The matrix, without variable assignements. The xor-clause is read from here. This matrix only follows the 'matrix' with its row-swap, row-xor, and row-delete operations.
         vector<uint> var_to_col; // var_to_col[VAR] gives the column for that variable. If the variable is not in the matrix, it gives UINT_MAX, if the var WAS inside the matrix, but has been zeroed, it gives UINT_MAX-1
         vector<uint> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives UINT_MAX if the COL has been zeroed (i.e. the variable assigned)
         uint num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
@@ -138,13 +137,13 @@ private:
     vector<bool> changed_rows; //used to store which rows were deemed propagatable during elimination
     
     //debug functions
-    bool check_no_conflict(const matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?
-    const bool nothing_to_propagate(const matrixset& m) const; // Are there any conflicts of propagations that matrixset 'm' clauses?
+    bool check_no_conflict(matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?
+    const bool nothing_to_propagate(matrixset& m) const; // Are there any conflicts of propagations that matrixset 'm' clauses?
     template<class T>
     void print_matrix_row(const T& row) const; // Print matrix row 'row'
     template<class T>
     void print_matrix_row_with_assigns(const T& row) const;
-    const bool check_matrix_against_varset(const vector<matrix_row>& matrix, const vector<matrix_row>& varset) const;
+    const bool check_matrix_against_varset(PackedMatrix& matrix, PackedMatrix& varset) const;
     static const string lbool_to_string(const lbool toprint);
 };
 

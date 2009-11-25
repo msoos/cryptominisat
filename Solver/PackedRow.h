@@ -18,12 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __PackedRow__
 #define __PackedRow__
 
-//#define DEBUG_ROW
+#define DEBUG_ROW
 
 #include <vector>
 #include <limits.h>
 #include "SolverTypes.h"
 #include "Vec.h"
+#include <string.h>
 #include <iostream>
 #include <algorithm>
 
@@ -34,42 +35,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::vector;
 
 
-class PackedRows;
+class PackedMatrix;
 
 class PackedRow
 {
 public:
-    PackedRow() :
-        size(0)
-        , mp(NULL)
-    {
-        xor_clause_inverted = false;
-    }
-    
-    PackedRow(const PackedRow& b) :
-        size(b.size)
-        , xor_clause_inverted(b.xor_clause_inverted)
-    {
-        mp = new uint64_t[size];
-        std::copy(b.mp, b.mp+size, mp);
-    }
-    
-    ~PackedRow()
-    {
-        delete[] mp;
-    }
-    
     bool operator ==(const PackedRow& b) const;
-    
     bool operator !=(const PackedRow& b) const;
-    
     PackedRow& operator=(const PackedRow& b);
-    
     uint popcnt() const;
     bool popcnt_is_one() const;
     bool popcnt_is_one(uint from) const;
 
-    inline const bool& get_xor_clause_inverted() const
+    inline const uint64_t& get_xor_clause_inverted() const
     {
         return xor_clause_inverted;
     }
@@ -103,8 +81,8 @@ public:
     {
         mp[i/64] |= ((uint64_t)1 << (i%64));
     }
-
-    void swap(PackedRow& b)
+    
+    void swap(PackedRow b)
     {
         #ifdef DEBUG_ROW
         assert(size > 0);
@@ -112,13 +90,9 @@ public:
         assert(b.size == size);
         #endif
         
-        uint64_t* tmp3 = mp;
-        mp = b.mp;
-        b.mp = tmp3;
-        
-        const bool tmp(xor_clause_inverted);
-        xor_clause_inverted = b.xor_clause_inverted;
-        b.xor_clause_inverted = tmp;
+        memcpy(tmp_row, b.mp-1, sizeof(uint64_t)*(size+1));
+        memcpy(b.mp-1, mp-1, sizeof(uint64_t)*(size+1));
+        memcpy(mp-1, tmp_row, sizeof(uint64_t)*(size+1));
     }
 
     PackedRow& operator^=(const PackedRow& b);
@@ -135,8 +109,8 @@ public:
     template<class T>
     void set(const T& v, const vector<uint>& var_to_col, const uint matrix_size)
     {
-        size = (matrix_size/64) + ((bool)(matrix_size % 64));
-        mp = new uint64_t[size];
+        assert(size == (matrix_size/64) + ((bool)(matrix_size % 64)));
+        //mp = new uint64_t[size];
         setZero();
         for (uint i = 0; i < v.size(); i++) {
             const uint toset_var = var_to_col[v[i].var()];
@@ -162,13 +136,20 @@ public:
     }
 
     friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
+    
+    static uint64_t *tmp_row;
 
 private:
-    friend class PackedRows;
+    friend class PackedMatrix;
+    PackedRow(const uint _size, uint64_t& _xor_clause_inverted, uint64_t*  const _mp) :
+        size(_size)
+        , xor_clause_inverted(_xor_clause_inverted)
+        , mp(_mp)
+    {}
     
-    uint size;
-    uint64_t* mp;
-    bool xor_clause_inverted;
+    const uint size;
+    uint64_t* const mp;
+    uint64_t& xor_clause_inverted;
 };
 
 std::ostream& operator << (std::ostream& os, const PackedRow& m);

@@ -2,9 +2,10 @@
 
 std::ostream& operator << (std::ostream& os, const PackedRow& m)
 {
-    for(uint i = 0; i < m.size; i++) {
-        if (m[i]) os << i+1 << " ";
+    for(uint i = 0; i < m.size*64; i++) {
+        os << m[i];
     }
+    os << " -- xor: " << m.get_xor_clause_inverted();
     return os;
 }
 
@@ -16,7 +17,7 @@ bool PackedRow::operator ==(const PackedRow& b) const
     assert(size == b.size);
     #endif
     
-    return (xor_clause_inverted == b.xor_clause_inverted && std::equal(b.mp, b.mp+size, mp));
+    return (std::equal(b.mp-1, b.mp+size, mp-1));
 }
 
 bool PackedRow::operator !=(const PackedRow& b) const
@@ -27,7 +28,7 @@ bool PackedRow::operator !=(const PackedRow& b) const
     assert(size == b.size);
     #endif
     
-    return (xor_clause_inverted != b.xor_clause_inverted || !std::equal(b.mp, b.mp+size, mp));
+    return (std::equal(b.mp-1, b.mp+size, mp-1));
 }
 
 bool PackedRow::popcnt_is_one() const
@@ -84,8 +85,7 @@ PackedRow& PackedRow::operator=(const PackedRow& b)
     assert(size == b.size);
     #endif
     
-    std::copy(b.mp, b.mp+size, mp);
-    xor_clause_inverted = b.xor_clause_inverted;
+    memcpy(mp-1, b.mp-1, size+1);
     return *this;
 }
 
