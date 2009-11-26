@@ -714,7 +714,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     return propagation;
 }
 
-void Gaussian::check_to_disable(const uint conflictC, const uint nof_conflicts)
+void Gaussian::disable_if_necessary()
 {
     if (//nof_conflicts >= 0
         //&& conflictC >= nof_conflicts/8
@@ -724,13 +724,13 @@ void Gaussian::check_to_disable(const uint conflictC, const uint nof_conflicts)
             disabled = true;
 }
 
-llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC, const uint nof_conflicts)
+llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
 {
     Clause* confl;
 
+    disable_if_necessary();
     if (should_check_gauss(solver.decisionLevel(), solver.starts)) {
         called++;
-        check_to_disable(conflictC, nof_conflicts);
         gaussian_ret g = gaussian(confl);
         
         switch (g) {

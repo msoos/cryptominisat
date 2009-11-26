@@ -40,7 +40,7 @@ public:
     ~Gaussian();
 
     llbool full_init();
-    llbool find_truths(vec<Lit>& learnt_clause, int& conflictC, const uint nof_conflicts);
+    llbool find_truths(vec<Lit>& learnt_clause, int& conflictC);
 
     //statistics
     void print_stats() const;
@@ -133,7 +133,7 @@ protected:
     bool at_first_init() const;
     bool should_init() const;
     bool should_check_gauss(const uint decisionlevel, const uint starts) const;
-    void check_to_disable(const uint conflictC, const uint nof_conflicts);
+    void disable_if_necessary();
     
 private:
     

@@ -1076,7 +1076,7 @@ lbool Solver::search(int nof_conflicts, int nof_learnts)
         } else {
             bool at_least_one_continue = false;
             for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)  {
-                ret = (*gauss)->find_truths(learnt_clause, conflictC, nof_conflicts);
+                ret = (*gauss)->find_truths(learnt_clause, conflictC);
                 if (ret == l_Continue) at_least_one_continue = true;
                 else if (ret != l_Nothing) return ret;
             }
