@@ -149,8 +149,9 @@ private:
     template<class T>
     void print_matrix_row_with_assigns(const T& row) const;
     const bool check_matrix_against_varset(PackedMatrix& matrix, PackedMatrix& varset) const;
-    const bool check_last_one_in_col(matrixset& m) const;
-    void print_matrix2(matrixset& m) const;
+    const bool check_last_one_in_cols(matrixset& m) const;
+    void print_matrix(matrixset& m) const;
+    void print_last_one_in_cols(matrixset& m) const;
     static const string lbool_to_string(const lbool toprint);
 };
 

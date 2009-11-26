@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PackedRow.h"
 #include <algorithm>
 
+//#define DEBUG_MATRIX
+
 #ifndef uint
 #define uint unsigned int
 #endif
@@ -80,11 +82,19 @@ public:
 
     inline PackedRow operator[](const uint i)
     {
+        #ifdef DEBUG_MATRIX
+        assert(i <= numRows);
+        #endif
+        
         return PackedRow(numCols, *(mp+i*(numCols+1)), mp+i*(numCols+1)+1);
     }
     
     inline const PackedRow operator[](const uint i) const
     {
+        #ifdef DEBUG_MATRIX
+        assert(i <= numRows);
+        #endif
+        
         return PackedRow(numCols, *(mp+i*(numCols+1)), mp+i*(numCols+1)+1);
     }
     

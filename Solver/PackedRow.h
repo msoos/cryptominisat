@@ -44,6 +44,7 @@ public:
     bool operator !=(const PackedRow& b) const;
     PackedRow& operator=(const PackedRow& b);
     uint popcnt() const;
+    uint popcnt(uint from) const;
     bool popcnt_is_one() const;
     bool popcnt_is_one(uint from) const;
 

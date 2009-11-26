@@ -233,7 +233,12 @@ void Gaussian::fill_matrix()
 void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Updating matrix var " << var+1 << " (col " << col << ")" << endl;
+    cout << "(" << matrix_no << ")Updating matrix var " << var+1 << " (col " << col << ", m.last_one_in_col[col]: " << m.last_one_in_col[col] << ")" << endl;
+    cout << "m.num_rows:" << m.num_rows << endl;
+    #endif
+    
+    #ifdef DEBUG_GAUSS
+    assert(col < m.num_cols);
     #endif
     
     m.least_column_changed = std::min(m.least_column_changed, (int)col);
@@ -275,13 +280,13 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
 {
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Updating matrix." << endl;
-    print_matrix2(m);
+    print_matrix(m);
     uint num_updated = 0;
     #endif
     
     #ifdef DEBUG_GAUSS
     assert(config.every_nth_gauss != 1 || nothing_to_propagate(cur_matrixset));
-    assert(check_last_one_in_col(m));
+    assert(check_last_one_in_cols(m));
     #endif
     
     changed_rows.setZero();
@@ -306,7 +311,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
 
     #ifdef VERBOSE_DEBUG
     cout << "Matrix update finished, updated " << num_updated << " cols" << endl;
-    print_matrix2(m);
+    print_matrix(m);
     #endif
     
     /*cout << "num_rows:" << m.num_rows;
@@ -382,11 +387,10 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
 uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
 {
     #ifdef VERBOSE_DEBUG
+    cout << "(" << matrix_no << ")";
     cout << "Starting elimination" << endl;
     cout << "m.least_column_changed:" << m.least_column_changed << endl;
-    cout << "(" << matrix_no << ")last one in col:";
-    std::copy(&m.last_one_in_col[0], &m.last_one_in_col[0] + m.num_cols, std::ostream_iterator<uint>(cout, ","));
-    cout << endl;
+    print_last_one_in_cols(m);
     
     uint number_of_row_additions = 0;
     uint no_exchanged = 0;
@@ -402,7 +406,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
     
     
     #ifdef DEBUG_GAUSS
-    assert(check_last_one_in_col(m));
+    assert(check_last_one_in_cols(m));
     #endif
 
     uint i = 0;
@@ -417,8 +421,20 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
             propagatable_rows.push(i);
     }
     
-    if (j > m.num_cols)
+    if (j > m.past_the_end_last_one_in_col) {
+        #ifdef VERBOSE_DEBUG
+        cout << "Going straight to finish" << endl;
+        #endif
         goto finish;
+    }
+    
+    #ifdef VERBOSE_DEBUG
+    cout << "At while() start: i,j = " << i << ", " << j << endl;
+    #endif
+    
+    #ifdef DEBUG_GAUSS
+    assert(i <= m.num_rows && j <= m.num_cols);
+    #endif
 
     while (i != m.num_rows && j != m.num_cols) {
         //Find pivot in column j, starting in row i:
@@ -454,6 +470,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 varset_row_i.swap(m.varset[best_row]);
             }
             #ifdef DEBUG_GAUSS
+            assert(m.matrix[i].popcnt(j) == m.matrix[i].popcnt());
             assert(m.matrix[i][j]);
             #endif
 
@@ -490,19 +507,31 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
     finish:
 
     m.least_column_changed = INT_MAX;
-    
-    #ifdef DEBUG_GAUSS
-    assert(check_last_one_in_col(m));
-    #endif
 
     #ifdef VERBOSE_DEBUG
     cout << "Finished elimination" << endl;
     cout << "Returning with i,j:" << i << ", " << j << "(" << m.num_rows << ", " << m.num_cols << ")" << endl;
-    print_matrix2(m);
-    cout << "(" << matrix_no << ")last one in col:";
-    std::copy(&m.last_one_in_col[0], &m.last_one_in_col[0] + m.num_cols, std::ostream_iterator<uint>(cout, ","));
-    cout << endl;
+    print_matrix(m);
+    print_last_one_in_cols(m);
     cout << "(" << matrix_no << ")Exchanged:" << no_exchanged << " row additions:" << number_of_row_additions << endl;
+    #endif
+    
+    #ifdef DEBUG_GAUSS
+    assert(check_last_one_in_cols(m));
+    uint row = 0;
+    uint col = 0;
+    for (; col < m.num_cols && row < m.num_rows && row < i && col < m.past_the_end_last_one_in_col; col++) {
+        assert(m.matrix[row].popcnt() == m.matrix[row].popcnt(col));
+        assert(!(m.col_to_var[col] == unassigned_var && m.matrix[row][col]));
+        if (m.col_to_var[col] == unassigned_var || !m.matrix[row][col]) {
+            #ifdef VERBOSE_DEBUG
+            cout << "row:" << row << " col:" << col << " m.last_one_in_col[col]-1: " << m.last_one_in_col[col]-1 << endl;
+            #endif
+            assert(m.last_one_in_col[col]-1 == row);
+            continue;
+        }
+        row++;
+    }
     #endif
 
     return i;
@@ -895,7 +924,7 @@ bool Gaussian::check_no_conflict(matrixset& m) const
     return true;
 }
 
-void Gaussian::print_matrix2(matrixset& m) const
+void Gaussian::print_matrix(matrixset& m) const
 {
     uint row = 0;
     for (PackedMatrix::iterator it = m.matrix.begin(); it != m.matrix.end(); ++it, row++) {
@@ -904,6 +933,14 @@ void Gaussian::print_matrix2(matrixset& m) const
             cout << " (considered past the end)";
         cout << endl;
     }
+}
+
+void Gaussian::print_last_one_in_cols(matrixset& m) const
+{
+    for (uint i = 0; i < m.num_cols; i++) {
+        cout << "last_one_in_col[" << i << "]-1 = " << m.last_one_in_col[i]-1 << endl;
+    }
+    cout << "m.past_the_end_last_one_in_col:" <<  m.past_the_end_last_one_in_col << endl;
 }
 
 const bool Gaussian::nothing_to_propagate(matrixset& m) const
@@ -920,7 +957,7 @@ const bool Gaussian::nothing_to_propagate(matrixset& m) const
     return true;
 }
 
-const bool Gaussian::check_last_one_in_col(matrixset& m) const
+const bool Gaussian::check_last_one_in_cols(matrixset& m) const
 {
     for(uint i = 0; i < m.num_cols; i++) {
         const uint last = m.last_one_in_col[i] - 1;

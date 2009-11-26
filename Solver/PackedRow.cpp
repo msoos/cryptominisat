@@ -77,6 +77,25 @@ uint PackedRow::popcnt() const
     return popcnt;
 }
 
+uint PackedRow::popcnt(const uint from) const
+{
+    uint popcnt = 0;
+    for (uint i = from/64; i < size; i++) if (mp[i]) {
+        uint64_t tmp = mp[i];
+        uint i2;
+        if (i == from/64) {
+            i2 = from%64;
+            tmp >>= i2;
+        } else
+            i2 = 0;
+        for (; i2 < 64; i2++) {
+            popcnt += (tmp & 1);
+            tmp >>= 1;
+        }
+    }
+    return popcnt;
+}
+
 PackedRow& PackedRow::operator=(const PackedRow& b)
 {
     #ifdef DEBUG_ROW
