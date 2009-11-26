@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __PackedRow__
 #define __PackedRow__
 
-#define DEBUG_ROW
+//#define DEBUG_ROW
 
 #include <vector>
 #include <limits.h>
