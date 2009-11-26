@@ -246,7 +246,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
     uint row_num = 0;
 
     if (solver.assigns[var].getBool()) {
-        for (PackedMatrix::iterator end = this_row + m.last_one_in_col[col];  this_row != end; ++this_row, row_num++) {
+        for (PackedMatrix::iterator end = this_row + std::min(m.last_one_in_col[col], m.num_rows);  this_row != end; ++this_row, row_num++) {
             PackedRow r = *this_row;
             if (r[col]) {
                 changed_rows.setBit(row_num);
@@ -255,7 +255,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
             }
         }
     } else {
-        for (PackedMatrix::iterator end = this_row + m.last_one_in_col[col];  this_row != end; ++this_row, row_num++) {
+        for (PackedMatrix::iterator end = this_row + std::min(m.last_one_in_col[col], m.num_rows);  this_row != end; ++this_row, row_num++) {
             PackedRow r = *this_row;
             if (r[col]) {
                 changed_rows.setBit(row_num);
@@ -304,6 +304,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
             last = 0;
     }
     m.num_cols -= last;
+    m.past_the_end_last_one_in_col -= last;
     
     #ifdef DEBUG_GAUSS
     check_matrix_against_varset(m.matrix, m.varset);
@@ -413,11 +414,10 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
     uint j = m.least_column_changed + 1;
 
     if (j) {
-        uint16_t until = m.last_one_in_col[m.least_column_changed] - 1;
+        uint16_t until = std::min(m.last_one_in_col[m.least_column_changed] - 1, (int)m.num_rows);
         if (j > m.past_the_end_last_one_in_col)
             until = m.num_rows;
-        until = std::min(m.num_rows, until);
-        for (;i < until; i++) if (changed_rows[i] && m.matrix[i].popcnt_is_one())
+        for (;i != until; i++) if (changed_rows[i] && m.matrix[i].popcnt_is_one())
             propagatable_rows.push(i);
     }
     
@@ -440,13 +440,14 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
         //Find pivot in column j, starting in row i:
 
         if (m.col_to_var[j] == unassigned_var) {
+            m.last_one_in_col[j] = i + 1;
             j++;
             continue;
         }
 
         uint best_row = i;
         PackedMatrix::iterator this_matrix_row = m.matrix.begin() + i;
-        PackedMatrix::iterator end = m.matrix.begin() + m.last_one_in_col[j];
+        PackedMatrix::iterator end = m.matrix.begin() + std::min(m.last_one_in_col[j], m.num_rows);
         for (; this_matrix_row != end; ++this_matrix_row, best_row++) {
             if ((*this_matrix_row)[j])
                 break;
@@ -501,8 +502,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
         j++;
     }
 
-    if (j != m.num_cols)
-        m.past_the_end_last_one_in_col = j;
+    m.past_the_end_last_one_in_col = j;
     
     finish:
 
