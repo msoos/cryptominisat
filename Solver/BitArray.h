@@ -46,12 +46,13 @@ public:
         memcpy(mp, b.mp, sizeof(uint64_t)*size);
     }
     
-    void resize(const uint _size)
+    void resize(uint _size)
     {
+        _size = _size/64 + _size%64;
         if (size != _size) {
             delete[] mp;
             size = _size;
-            mp = new uint64_t[size/64 + size%64];
+            mp = new uint64_t[size];
         }
     }
     
