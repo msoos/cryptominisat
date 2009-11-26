@@ -292,8 +292,6 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
             last = 0;
     }
     m.num_cols -= last;
-    m.col_to_var.resize(m.num_cols);
-    m.last_one_in_col.resize(m.num_cols);
     
     #ifdef DEBUG_GAUSS
     check_matrix_against_varset(m.matrix, m.varset);
@@ -469,7 +467,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
 
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")last one in col:";
-    std::copy(m.last_one_in_col.begin(), m.last_one_in_col.end(), std::ostream_iterator<uint>(cout, ","));
+    std::copy(&m.last_one_in_col[0], &m.last_one_in_col[0] + m.num_cols, std::ostream_iterator<uint>(cout, ","));
     cout << endl;
     cout << "(" << matrix_no << ")Exchanged:" << no_exchanged << " row additions:" << number_of_row_additions << endl;
     #endif
