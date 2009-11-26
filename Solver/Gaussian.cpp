@@ -442,7 +442,6 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
         //Find pivot in column j, starting in row i:
 
         if (m.col_to_var[j] == unassigned_var) {
-            m.last_one_in_col[j] = i + 1;
             j++;
             continue;
         }
