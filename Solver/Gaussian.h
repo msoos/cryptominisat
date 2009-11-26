@@ -36,7 +36,7 @@ class Clause;
 class Gaussian
 {
 public:
-    Gaussian(Solver& solver, const uint matrix_no, const GaussianConfig& config);
+    Gaussian(Solver& solver, const GaussianConfig& config, const uint matrix_no);
     ~Gaussian();
 
     llbool full_init();
@@ -59,8 +59,10 @@ public:
 
 protected:
     Solver& solver;
-    const uint matrix_no;
+    
+    //Gauss high-level configuration
     const GaussianConfig& config;
+    const uint matrix_no;
 
     enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
     gaussian_ret gaussian(Clause*& confl);

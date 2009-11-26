@@ -37,10 +37,10 @@ ostream& operator << (ostream& os, const vec<Lit>& v)
     return os;
 }
 
-Gaussian::Gaussian(Solver& _solver, const uint _matrix_no, const GaussianConfig& _config) :
+Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint _matrix_no) :
         solver(_solver)
-        , matrix_no(_matrix_no)
         , config(_config)
+        , matrix_no(_matrix_no)
         , messed_matrix_vars_since_reversal(true)
         , gauss_last_level(0)
         , disabled(false)

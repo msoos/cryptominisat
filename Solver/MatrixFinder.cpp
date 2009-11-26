@@ -189,7 +189,7 @@ const uint MatrixFinder::setMatrixes()
     }
     
     for (uint i = 0; i < realMatrixNum; i++)
-        S->gauss_matrixes.push_back(new Gaussian(*S, i, S->gaussconfig));
+        S->gauss_matrixes.push_back(new Gaussian(*S, S->gaussconfig, i));
     
     return realMatrixNum;
 }
