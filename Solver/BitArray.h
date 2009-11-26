@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __BitArray__
 #define __BitArray__
 
-//#define DEBUG_ROW
+//#define DEBUG_BITARRAY
 
 #include <stdint.h>
 #include <string.h>
@@ -88,7 +88,7 @@ public:
 
     inline const bool operator[](const uint& i) const
     {
-        #ifdef DEBUG_ROW
+        #ifdef DEBUG_BITARRAY
         assert(size*64 > i);
         #endif
         
