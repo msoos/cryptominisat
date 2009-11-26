@@ -18,8 +18,8 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************************************/
 
-#ifndef __clause_h__
-#define __clause_h__
+#ifndef CLAUSE_H
+#define CLAUSE_H
 
 #include <stdint.h>
 #include <cstdio>
@@ -205,4 +205,4 @@ Clause* Clause_new(const vec<Lit>& ps, const uint group, const bool learnt);
 Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt);
 Clause* Clause_new(const PackedRow& ps, const vec<lbool>& assigns, const vector<Var>& col_to_var_original, const uint group);
 
-#endif
+#endif //CLAUSE_H

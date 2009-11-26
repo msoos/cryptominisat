@@ -19,8 +19,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 
-#ifndef SolverTypes_h
-#define SolverTypes_h
+#ifndef SOLVERTYPES_H
+#define SOLVERTYPES_H
 
 #include <cassert>
 #include <stdint.h>
@@ -161,4 +161,4 @@ const llbool l_Continue = toLbool(3);
 
 lbool::lbool(llbool b) : value(b.value) {};
 
-#endif
+#endif //SOLVERTYPES_H

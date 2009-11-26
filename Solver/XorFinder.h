@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
-#ifndef __XORFINDER_H__
-#define __XORFINDER_H__
+#ifndef XORFINDER_H
+#define XORFINDER_H
 
 #include "Clause.h"
 #include <sys/types.h>
@@ -113,4 +113,4 @@ class XorFinder
         Solver* S;
 };
 
-#endif //__XORFINDER_H__
+#endif //XORFINDER_H

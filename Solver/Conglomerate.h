@@ -1,5 +1,5 @@
-#ifndef __CONGLOMERATE_H__
-#define __CONGLOMERATE_H__
+#ifndef CONGLOMERATE_H
+#define CONGLOMERATE_H
 
 #include <vector>
 #include <map>
@@ -39,4 +39,4 @@ private:
     Solver* S;
 };
 
-#endif //__CONGLOMERATE_H__
+#endif //CONGLOMERATE_H

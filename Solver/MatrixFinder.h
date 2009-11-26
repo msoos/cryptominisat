@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
-#ifndef __MATRIXFINDER_H__
-#define __MATRIXFINDER_H__
+#ifndef MATRIXFINDER_H
+#define MATRIXFINDER_H
 
 #include <sys/types.h>
 #include "Clause.h"
@@ -50,4 +50,4 @@ class MatrixFinder {
 };
 
 
-#endif
+#endif //MATRIXFINDER_H

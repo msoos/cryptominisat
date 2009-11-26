@@ -1,5 +1,5 @@
-#ifndef __TIME_MEM_H__
-#define __TIME_MEM_H__
+#ifndef TIME_MEM_H
+#define TIME_MEM_H
 
 #ifdef _MSC_VER
 #include <ctime>
@@ -67,4 +67,4 @@ static inline uint64_t memUsed()
 }
 #endif
 
-#endif //__TIME_MEM_H__
+#endif //TIME_MEM_H

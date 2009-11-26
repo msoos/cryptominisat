@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
-#ifndef __PackedMatrix__
-#define __PackedMatrix__
+#ifndef PACKEDMATRIX_H
+#define PACKEDMATRIX_H
 
 #include "PackedRow.h"
 #include <algorithm>
@@ -225,5 +225,5 @@ private:
     uint64_t* mp;
 };
 
-#endif
+#endif //PACKEDMATRIX_H
 

@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
-#ifndef __PackedRow__
-#define __PackedRow__
+#ifndef PACKEDROW_H
+#define PACKEDROW_H
 
 //#define DEBUG_ROW
 
@@ -155,5 +155,5 @@ private:
 
 std::ostream& operator << (std::ostream& os, const PackedRow& m);
 
-#endif
+#endif //PACKEDROW_H
 

@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
-#ifndef __BitArray__
-#define __BitArray__
+#ifndef BITARRAY_H
+#define BITARRAY_H
 
 //#define DEBUG_BITARRAY
 
@@ -101,5 +101,5 @@ private:
     uint64_t* mp;
 };
 
-#endif
+#endif //BITARRAY_H
 

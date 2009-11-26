@@ -1,5 +1,5 @@
-#ifndef __REPLACE_H__
-#define __REPLACE_H__
+#ifndef VARREPLACER_H
+#define VARREPLACER_H
 
 #include "SolverTypes.h"
 #include "Clause.h"
@@ -41,4 +41,4 @@ class VarReplacer
         Solver* S;
 };
 
-#endif
+#endif //VARREPLACER_H

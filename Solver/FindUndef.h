@@ -1,5 +1,5 @@
-#ifndef __FIND_UNDEF__
-#define __FIND_UNDEF__
+#ifndef FINDUNDEF_H
+#define FINDUNDEF_H
 
 #include <vector>
 using std::vector;
@@ -25,4 +25,4 @@ class FindUndef {
         
 };
 
-#endif
+#endif //
