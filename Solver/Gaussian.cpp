@@ -344,6 +344,8 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
         
         update_matrix_by_col_all(cur_matrixset);
     }
+    if (!cur_matrixset.num_cols || !cur_matrixset.num_cols)
+        return nothing;
 
     messed_matrix_vars_since_reversal = false;
     gauss_last_level = solver.trail.size();
