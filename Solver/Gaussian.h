@@ -83,7 +83,7 @@ protected:
 
     //Saved states
     vector<matrixset> matrix_sets; // The matrixsets for depths 'decision_from' + 0,  'decision_from' + only_nth_gaussian_save, 'decision_from' + 2*only_nth_gaussian_save, ... 'decision_from' + 'decision_until'.
-    matrixset original_matrixset; // The matrixset at depth 0 of the search tree
+    matrixset origMat; // The matrixset at depth 0 of the search tree
     matrixset cur_matrixset; // The current matrixset, i.e. the one we are working on, or the last one we worked on
 
     //Varibales to keep Gauss state
@@ -100,8 +100,8 @@ protected:
 
     //gauss init functions
     void init(); // Initalise gauss state
-    void fill_matrix(matrixset& m); // Fills the matrix
-    uint fill_var_to_col(matrixset& m) const; // Fills the var_to_col and col_to_var in the matrix. 
+    void fill_matrix(); // Fills the origMat matrix
+    uint select_columnorder(); // Fills var_to_col and col_to_var of the origMat matrix.
 
     //Main function
     uint eliminate(matrixset& matrix, uint& conflict_row); //does the actual gaussian elimination
@@ -188,7 +188,7 @@ inline void Gaussian::set_matrixset_to_cur()
     cout << matrix_sets.size() << endl;*/
     
     if (solver.decisionLevel() == 0) {
-        original_matrixset = cur_matrixset;
+        origMat = cur_matrixset;
     }
     
     if (solver.decisionLevel() >= config.decision_from) {
