@@ -204,9 +204,8 @@ void Gaussian::fill_matrix()
     if (origMat.num_rows == 0) return;
 
     origMat.last_one_in_col.resize(origMat.num_cols);
-    std::fill(origMat.last_one_in_col.begin(), origMat.last_one_in_col.end(), origMat.num_rows-1);
-    origMat.past_the_end_last_one_in_col.resize(origMat.num_cols);
-    std::fill(origMat.past_the_end_last_one_in_col.begin(), origMat.past_the_end_last_one_in_col.end(), false);
+    std::fill(origMat.last_one_in_col.begin(), origMat.last_one_in_col.end(), origMat.num_rows);
+    origMat.past_the_end_last_one_in_col = origMat.num_cols;
     
     origMat.removeable_cols = 0;
     origMat.least_column_changed = -1;
@@ -241,7 +240,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
     uint row_num = 0;
 
     if (solver.assigns[var].getBool()) {
-        for (PackedMatrix::iterator end = this_row + m.last_one_in_col[col] + 1;  this_row != end; ++this_row, row_num++) {
+        for (PackedMatrix::iterator end = this_row + m.last_one_in_col[col];  this_row != end; ++this_row, row_num++) {
             PackedRow r = *this_row;
             if (r[col]) {
                 changed_rows[row_num] = true;
@@ -250,7 +249,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
             }
         }
     } else {
-        for (PackedMatrix::iterator end = this_row + m.last_one_in_col[col] + 1;  this_row != end; ++this_row, row_num++) {
+        for (PackedMatrix::iterator end = this_row + m.last_one_in_col[col];  this_row != end; ++this_row, row_num++) {
             PackedRow r = *this_row;
             if (r[col]) {
                 changed_rows[row_num] = true;
@@ -409,8 +408,8 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
     uint j = m.least_column_changed + 1;
 
     if (j) {
-        uint16_t until = m.last_one_in_col[m.least_column_changed];
-        if (m.past_the_end_last_one_in_col[m.least_column_changed])
+        uint16_t until = m.last_one_in_col[m.least_column_changed] - 1;
+        if (m.least_column_changed >= m.past_the_end_last_one_in_col)
             until++;
         until = std::min(m.num_rows, until);
         for (;i < until; i++) if (changed_rows[i] && m.matrix[i].popcnt_is_one())
@@ -430,7 +429,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
 
         uint best_row = i;
         PackedMatrix::iterator this_matrix_row = m.matrix.begin() + i;
-        PackedMatrix::iterator end = m.matrix.begin() + m.last_one_in_col[j] + 1;
+        PackedMatrix::iterator end = m.matrix.begin() + m.last_one_in_col[j];
         for (; this_matrix_row != end; ++this_matrix_row, best_row++) {
             if ((*this_matrix_row)[j])
                 break;
@@ -477,17 +476,16 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 //    return 0;
                 //}
             }
-            m.last_one_in_col[j] = i;
+            m.last_one_in_col[j] = i + 1;
             i++;
         } else
-            m.last_one_in_col[j] = i;
+            m.last_one_in_col[j] = i + 1;
         j++;
     }
 
     if (j != m.num_cols) {
-        std::fill(&m.last_one_in_col[j], &m.last_one_in_col[m.num_cols], m.num_rows-1);
-        for (uint i2 = j; i2 < m.num_cols; i2++)
-            m.past_the_end_last_one_in_col[i2] = true;
+        //std::fill(&m.last_one_in_col[j], &m.last_one_in_col[m.num_cols], m.num_rows);
+        m.past_the_end_last_one_in_col = j;
     }
     
     finish:
@@ -926,8 +924,7 @@ const bool Gaussian::nothing_to_propagate(matrixset& m) const
 const bool Gaussian::check_last_one_in_col(matrixset& m) const
 {
     for(uint i = 0; i < m.num_cols; i++) {
-        const uint last = m.last_one_in_col[i];
-        //assert(last < m.num_rows);
+        const uint last = m.last_one_in_col[i] - 1;
         uint real_last = 0;
         uint i2;
         for (PackedMatrix::iterator it = m.matrix.begin(); it != m.matrix.end(); ++it, i2++) {

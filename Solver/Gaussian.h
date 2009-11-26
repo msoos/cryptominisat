@@ -81,7 +81,7 @@ protected:
         uint16_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
         int least_column_changed; // when updating the matrix, this value contains the smallest column number that has been updated  (Gauss elim. can start from here instead of from column 0)
-        vector<bool> past_the_end_last_one_in_col;
+        uint16_t past_the_end_last_one_in_col;
         vector<uint16_t> last_one_in_col; //last_one_in_col[COL] tells the last row that has a '1' in that column. Used to reduce the burden of Gauss elim. (it only needs to look until that row)
         uint removeable_cols; // the number of columns that have been zeroed out (i.e. assigned)
     };
