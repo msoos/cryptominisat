@@ -200,6 +200,7 @@ void Gaussian::fill_matrix()
     origMat.num_rows = select_columnorder();
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
+    changed_rows.resize(origMat.num_rows);
     if (origMat.num_rows == 0) return;
 
     origMat.last_one_in_col.resize(origMat.num_cols);
@@ -279,8 +280,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     assert(config.every_nth_gauss != 1 || nothing_to_propagate(cur_matrixset));
     #endif
     
-    changed_rows.clear();
-    changed_rows.resize(cur_matrixset.num_rows, false);
+    std::fill(changed_rows.begin(), changed_rows.end(),  false);
 
     uint last = 0;
     uint col = 0;
