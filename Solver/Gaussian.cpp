@@ -409,8 +409,8 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
 
     if (j) {
         uint16_t until = m.last_one_in_col[m.least_column_changed] - 1;
-        if (m.least_column_changed >= m.past_the_end_last_one_in_col)
-            until++;
+        if (j > m.past_the_end_last_one_in_col)
+            until = m.num_rows;
         until = std::min(m.num_rows, until);
         for (;i < until; i++) if (changed_rows[i] && m.matrix[i].popcnt_is_one())
             propagatable_rows.push(i);
@@ -476,17 +476,15 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 //    return 0;
                 //}
             }
-            m.last_one_in_col[j] = i + 1;
             i++;
+            m.last_one_in_col[j] = i;
         } else
             m.last_one_in_col[j] = i + 1;
         j++;
     }
 
-    if (j != m.num_cols) {
-        //std::fill(&m.last_one_in_col[j], &m.last_one_in_col[m.num_cols], m.num_rows);
+    if (j != m.num_cols)
         m.past_the_end_last_one_in_col = j;
-    }
     
     finish:
 
