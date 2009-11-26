@@ -92,6 +92,10 @@ protected:
     vector<Clause*> matrix_clauses_toclear;
     bool went_below_decision_from;
     bool disabled; // Gauss is disabled
+    
+    //State of current elimnation
+    vec<uint> propagatable_rows; //used to store which rows were deemed propagatable during elimination
+    vector<bool> changed_rows; //used to store which rows were deemed propagatable during elimination
 
     //Statistics
     uint useful_prop; //how many times Gauss gave propagation as a result
@@ -127,14 +131,9 @@ protected:
     bool at_first_init() const;
     bool should_init() const;
     bool should_check_gauss(const uint decisionlevel, const uint starts) const;
-
-    
-    
-private:
     void check_to_disable(const uint conflictC, const uint nof_conflicts);
     
-    vec<uint> propagatable_rows; //used to store which rows were deemed propagatable during elimination
-    vector<bool> changed_rows; //used to store which rows were deemed propagatable during elimination
+private:
     
     //debug functions
     bool check_no_conflict(matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?
