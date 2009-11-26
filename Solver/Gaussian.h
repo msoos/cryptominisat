@@ -78,10 +78,11 @@ protected:
         PackedMatrix varset; // The matrix, without variable assignements. The xor-clause is read from here. This matrix only follows the 'matrix' with its row-swap, row-xor, and row-delete operations.
         vector<uint16_t> var_to_col; // var_to_col[VAR] gives the column for that variable. If the variable is not in the matrix, it gives UINT_MAX, if the var WAS inside the matrix, but has been zeroed, it gives UINT_MAX-1
         vector<Var> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives UINT_MAX if the COL has been zeroed (i.e. the variable assigned)
-        uint num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
+        uint16_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
         int least_column_changed; // when updating the matrix, this value contains the smallest column number that has been updated  (Gauss elim. can start from here instead of from column 0)
-        vector<uint> last_one_in_col; //last_one_in_col[COL] tells the last row that has a '1' in that column. Used to reduce the burden of Gauss elim. (it only needs to look until that row)
+        vector<bool> past_the_end_last_one_in_col;
+        vector<uint16_t> last_one_in_col; //last_one_in_col[COL] tells the last row that has a '1' in that column. Used to reduce the burden of Gauss elim. (it only needs to look until that row)
         uint removeable_cols; // the number of columns that have been zeroed out (i.e. assigned)
     };
 
@@ -147,6 +148,8 @@ private:
     template<class T>
     void print_matrix_row_with_assigns(const T& row) const;
     const bool check_matrix_against_varset(PackedMatrix& matrix, PackedMatrix& varset) const;
+    const bool check_last_one_in_col(matrixset& m) const;
+    void print_matrix2(matrixset& m) const;
     static const string lbool_to_string(const lbool toprint);
 };
 
