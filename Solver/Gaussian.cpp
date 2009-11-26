@@ -121,10 +121,9 @@ void Gaussian::init(void)
     #endif
 }
 
-uint Gaussian::select_columnorder()
+uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col)
 {
-    origMat.var_to_col.resize(solver.nVars());
-    std::fill(origMat.var_to_col.begin(), origMat.var_to_col.end(), UINT_MAX);
+    var_to_col.resize(solver.nVars(), unassigned_col);
 
     uint largest_used_var = 0;
     uint num_xorclauses  = 0;
@@ -137,12 +136,12 @@ uint Gaussian::select_columnorder()
             XorClause& c = *solver.xorclauses[i];
             for (uint i2 = 0; i2 < c.size(); i2++) {
                 assert(solver.assigns[c[i2].var()].isUndef());
-                origMat.var_to_col[c[i2].var()] = 1;
+                var_to_col[c[i2].var()] = 1;
                 largest_used_var = std::max(largest_used_var, c[i2].var());
             }
         }
     }
-    origMat.var_to_col.resize(largest_used_var + 1);
+    var_to_col.resize(largest_used_var + 1);
 
     origMat.col_to_var.clear();
     for (int i = solver.order_heap.size()-1; i >= 0 ; i--)
@@ -151,7 +150,7 @@ uint Gaussian::select_columnorder()
     {
         Var v = solver.order_heap[i];
 
-        if (origMat.var_to_col[v] == 1) {
+        if (var_to_col[v] == 1) {
             #ifdef DEBUG_GAUSS
             vector<uint>::iterator it =
                 std::find(origMat.col_to_var.begin(), origMat.col_to_var.end(), v);
@@ -159,13 +158,13 @@ uint Gaussian::select_columnorder()
             #endif
             
             origMat.col_to_var.push_back(v);
-            origMat.var_to_col[v] = 2;
+            var_to_col[v] = 2;
         }
     }
 
     //for the ones that were not in the order_heap, but are marked in var_to_col
-    for (uint i = 0; i < origMat.var_to_col.size(); i++) {
-        if (origMat.var_to_col[i] == 1)
+    for (uint i = 0; i < var_to_col.size(); i++) {
+        if (var_to_col[i] == 1)
             origMat.col_to_var.push_back(i);
     }
 
@@ -177,13 +176,18 @@ uint Gaussian::select_columnorder()
     cout << "(" << matrix_no << ")var_to_col:" << endl;
     #endif
 
-    for (uint i = 0; i < origMat.var_to_col.size(); i++) {
-        if (origMat.var_to_col[i] != unassigned_col) {
+    var_is_in.resize(var_to_col.size());
+    var_is_in.setZero();
+    origMat.var_is_set.resize(var_to_col.size());
+    origMat.var_is_set.setZero();
+    for (uint i = 0; i < var_to_col.size(); i++) {
+        if (var_to_col[i] != unassigned_col) {
             vector<uint>::iterator it = std::find(origMat.col_to_var.begin(), origMat.col_to_var.end(), i);
             assert(it != origMat.col_to_var.end());
-            origMat.var_to_col[i] = &(*it) - &origMat.col_to_var[0];
+            var_to_col[i] = &(*it) - &origMat.col_to_var[0];
+            var_is_in.setBit(i);
             #ifdef VERBOSE_DEBUG
-            cout << "(" << matrix_no << ")var_to_col[" << i << "]:" << origMat.var_to_col[i] << endl;
+            cout << "(" << matrix_no << ")var_to_col[" << i << "]:" << var_to_col[i] << endl;
             #endif
         }
     }
@@ -197,7 +201,8 @@ void Gaussian::fill_matrix()
     cout << "(" << matrix_no << ")Filling matrix" << endl;
     #endif
 
-    origMat.num_rows = select_columnorder();
+    vector<uint16_t> var_to_col;
+    origMat.num_rows = select_columnorder(var_to_col);
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
     changed_rows.resize(origMat.num_rows);
@@ -222,8 +227,8 @@ void Gaussian::fill_matrix()
         const XorClause& c = *solver.xorclauses[i];
 
         if (c.getMatrix() == matrix_no) {
-            origMat.varset[matrix_row].set(c, origMat.var_to_col, origMat.num_cols);
-            origMat.matrix[matrix_row].set(c, origMat.var_to_col, origMat.num_cols);
+            origMat.varset[matrix_row].set(c, var_to_col, origMat.num_cols);
+            origMat.matrix[matrix_row].set(c, var_to_col, origMat.num_cols);
             matrix_row++;
         }
     }
@@ -273,7 +278,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
 
     m.removeable_cols++;
     m.col_to_var[col] = unassigned_var;
-    m.var_to_col[var] = unassigned_col - 1;
+    m.var_is_set.setBit(var);
 }
 
 void Gaussian::update_matrix_by_col_all(matrixset& m)
@@ -751,7 +756,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     cout << endl;
     #endif
     
-    assert(m.matrix[row][m.var_to_col[cla[0].var()]]);
     assert(!m.matrix[row].get_xor_clause_inverted() == !cla[0].sign());
     assert(solver.assigns[cla[0].var()].isUndef());
     if (cla.size() == 1) {

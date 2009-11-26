@@ -71,13 +71,14 @@ protected:
     gaussian_ret gaussian(Clause*& confl);
 
     vector<Var> col_to_var_original;
+    BitArray var_is_in;
 
     class matrixset
     {
     public:
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
         PackedMatrix varset; // The matrix, without variable assignements. The xor-clause is read from here. This matrix only follows the 'matrix' with its row-swap, row-xor, and row-delete operations.
-        vector<uint16_t> var_to_col; // var_to_col[VAR] gives the column for that variable. If the variable is not in the matrix, it gives UINT_MAX, if the var WAS inside the matrix, but has been zeroed, it gives UINT_MAX-1
+        BitArray var_is_set;
         vector<Var> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives UINT_MAX if the COL has been zeroed (i.e. the variable assigned)
         uint16_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
@@ -111,7 +112,7 @@ protected:
     //gauss init functions
     void init(); // Initalise gauss state
     void fill_matrix(); // Fills the origMat matrix
-    uint select_columnorder(); // Fills var_to_col and col_to_var of the origMat matrix.
+    uint select_columnorder(vector<uint16_t>& var_to_col); // Fills var_to_col and col_to_var of the origMat matrix.
 
     //Main function
     uint eliminate(matrixset& matrix, uint& conflict_row); //does the actual gaussian elimination
@@ -178,8 +179,9 @@ inline void Gaussian::canceling(const uint level, const Var var)
 {
     if (!messed_matrix_vars_since_reversal
             && level <= gauss_last_level
-            && var < cur_matrixset.var_to_col.size()
-            && cur_matrixset.var_to_col[var] == unassigned_col-1
+            && var < var_is_in.getSize()
+            && var_is_in[var]
+            && cur_matrixset.var_is_set[var]
        )
         messed_matrix_vars_since_reversal = true;
 }

@@ -112,6 +112,11 @@ public:
         
         return (mp[i/64] >> (i%64)) & 1;
     }
+    
+    inline const uint getSize() const
+    {
+        return size*64;
+    }
 
 private:
     
