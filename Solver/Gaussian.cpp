@@ -201,6 +201,7 @@ void Gaussian::fill_matrix()
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
     changed_rows.resize(origMat.num_rows);
+    changed_rows.setZero();
     if (origMat.num_rows == 0) return;
 
     origMat.last_one_in_col.resize(origMat.num_cols);
@@ -243,7 +244,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
         for (PackedMatrix::iterator end = this_row + m.last_one_in_col[col];  this_row != end; ++this_row, row_num++) {
             PackedRow r = *this_row;
             if (r[col]) {
-                changed_rows[row_num] = true;
+                changed_rows.setBit(row_num);
                 r.invert_xor_clause_inverted();
                 r.clearBit(col);
             }
@@ -252,7 +253,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
         for (PackedMatrix::iterator end = this_row + m.last_one_in_col[col];  this_row != end; ++this_row, row_num++) {
             PackedRow r = *this_row;
             if (r[col]) {
-                changed_rows[row_num] = true;
+                changed_rows.setBit(row_num);
                 r.clearBit(col);
             }
         }
@@ -283,7 +284,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     assert(check_last_one_in_col(m));
     #endif
     
-    std::fill(changed_rows.begin(), changed_rows.end(),  false);
+    changed_rows.setZero();
 
     uint last = 0;
     uint col = 0;

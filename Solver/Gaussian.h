@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Solver.h"
 #include "GaussianConfig.h"
 #include "PackedMatrix.h"
+#include "BitArray.h"
 
 using std::vector;
 using std::cout;
@@ -100,7 +101,7 @@ protected:
     
     //State of current elimnation
     vec<uint> propagatable_rows; //used to store which rows were deemed propagatable during elimination
-    vector<bool> changed_rows; //used to store which rows were deemed propagatable during elimination
+    BitArray changed_rows; //used to store which rows were deemed propagatable during elimination
 
     //Statistics
     uint useful_prop; //how many times Gauss gave propagation as a result
