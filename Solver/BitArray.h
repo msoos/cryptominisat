@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdint.h>
 #include <string.h>
+#include <assert.h>
 
 #ifndef uint
 #define uint unsigned int
@@ -43,9 +44,21 @@ public:
         memcpy(mp, b.mp, sizeof(uint64_t)*size);
     }
     
+    BitArray& operator=(const BitArray& b)
+    {
+        if (size != b.size) {
+            delete[] mp;
+            size = b.size;
+            mp = new uint64_t[size];
+        }
+        memcpy(mp, b.mp, sizeof(uint64_t)*size);
+        
+        return *this;
+    }
+    
     void resize(uint _size)
     {
-        _size = _size/64 + _size%64;
+        _size = _size/64 + (bool)(_size%64);
         if (size != _size) {
             delete[] mp;
             size = _size;
