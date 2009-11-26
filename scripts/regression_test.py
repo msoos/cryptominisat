@@ -12,7 +12,7 @@ class Tester:
   sumTime = 0.0
   sumProp = 0
   verbose = False
-  gaussUntil = 10000
+  gaussUntil = 100
   testDir = "../tests/"
   cryptominisat = "../build/cryptominisat"
   
@@ -21,7 +21,7 @@ class Tester:
     self.sumTime = 0.0
     self.sumProp = 0
     self.verbose = False
-    self.gaussUntil = 10000
+    self.gaussUntil = 100
     self.testDir = "../tests/"
     self.cryptominisat = "../build/cryptominisat"
 
