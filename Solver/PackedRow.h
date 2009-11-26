@@ -65,7 +65,7 @@ public:
 
     inline void setZero()
     {
-        std::fill(mp, mp+size, 0);
+        memset(mp, 0, sizeof(uint64_t)*size);
     }
 
     inline void clearBit(const uint i)
