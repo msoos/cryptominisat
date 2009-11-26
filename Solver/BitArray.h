@@ -75,11 +75,19 @@ public:
 
     inline void clearBit(const uint i)
     {
+        #ifdef DEBUG_BITARRAY
+        assert(size*64 > i);
+        #endif
+        
         mp[i/64] &= ~((uint64_t)1 << (i%64));
     }
 
     inline void setBit(const uint i)
     {
+        #ifdef DEBUG_BITARRAY
+        assert(size*64 > i);
+        #endif
+        
         mp[i/64] |= ((uint64_t)1 << (i%64));
     }
 
