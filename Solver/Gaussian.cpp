@@ -25,6 +25,10 @@ using std::ostream;
 using std::cout;
 using std::endl;
 
+#ifdef VERBOSE_DEBUG
+#include <iterator>
+#endif
+
 uint64_t* PackedRow::tmp_row;
 
 ostream& operator << (ostream& os, const vec<Lit>& v)
@@ -150,8 +154,8 @@ uint Gaussian::select_columnorder()
         if (origMat.var_to_col[v] == 1) {
             #ifdef DEBUG_GAUSS
             vector<uint>::iterator it =
-                std::find(m.col_to_var.begin(), m.col_to_var.end(), v);
-            assert(it == m.col_to_var.end());
+                std::find(origMat.col_to_var.begin(), origMat.col_to_var.end(), v);
+            assert(it == origMat.col_to_var.end());
             #endif
             
             origMat.col_to_var.push_back(v);
@@ -207,7 +211,7 @@ void Gaussian::fill_matrix()
     origMat.varset.resize(origMat.num_rows, origMat.num_cols);
 
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")matrix size:" << m.num_rows << "," << m.num_cols << endl;
+    cout << "(" << matrix_no << ")matrix size:" << origMat.num_rows << "," << origMat.num_cols << endl;
     #endif
 
     uint matrix_row = 0;
@@ -362,7 +366,8 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
         cout << "(" << matrix_no << ")Useless. ";
     else
         cout << "(" << matrix_no << ")Useful. ";
-    cout << "(" << matrix_no << ")Useful in " << ((double)useful/(double)called)*100.0 << "%" << endl;
+    cout << "(" << matrix_no << ")Useful prop in " << ((double)useful_prop/(double)called)*100.0 << "%" << endl;
+    cout << "(" << matrix_no << ")Useful confl in " << ((double)useful_confl/(double)called)*100.0 << "%" << endl;
     #endif
 
     return ret;
