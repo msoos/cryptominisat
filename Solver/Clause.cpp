@@ -35,7 +35,8 @@ Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt)
 
 Clause* Clause_new(const PackedRow& row, const vec<lbool>& assigns, const vector<Var>& col_to_var_original, const uint group)
 {
-    void* mem = malloc(sizeof(Clause) + sizeof(Lit)*(row.popcnt()));
-    Clause* real= new (mem) Clause(row, assigns, col_to_var_original, group);
+    const uint size = row.popcnt();
+    void* mem = malloc(sizeof(Clause) + sizeof(Lit)*size);
+    Clause* real= new (mem) Clause(row, size, assigns, col_to_var_original, group);
     return real;
 }
