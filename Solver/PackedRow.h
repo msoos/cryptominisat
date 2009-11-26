@@ -107,7 +107,7 @@ public:
     }
 
     template<class T>
-    void set(const T& v, const vector<uint>& var_to_col, const uint matrix_size)
+    void set(const T& v, const vector<uint16_t>& var_to_col, const uint matrix_size)
     {
         assert(size == (matrix_size/64) + ((bool)(matrix_size % 64)));
         //mp = new uint64_t[size];
@@ -122,7 +122,7 @@ public:
         xor_clause_inverted = v.xor_clause_inverted();
     }
     
-    void fill(Lit* ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original) const;
+    void fill(Lit* ps, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;
     
     inline unsigned long int scan(const unsigned long int var) const
     {

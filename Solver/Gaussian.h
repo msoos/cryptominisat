@@ -30,6 +30,8 @@ using std::endl;
 
 class Clause;
 
+static const uint16_t unassigned_col = -1;
+static const Var unassigned_var = -1;
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
@@ -67,15 +69,15 @@ protected:
     enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
     gaussian_ret gaussian(Clause*& confl);
 
-    vector<uint> col_to_var_original;
+    vector<Var> col_to_var_original;
 
     class matrixset
     {
     public:
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
         PackedMatrix varset; // The matrix, without variable assignements. The xor-clause is read from here. This matrix only follows the 'matrix' with its row-swap, row-xor, and row-delete operations.
-        vector<uint> var_to_col; // var_to_col[VAR] gives the column for that variable. If the variable is not in the matrix, it gives UINT_MAX, if the var WAS inside the matrix, but has been zeroed, it gives UINT_MAX-1
-        vector<uint> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives UINT_MAX if the COL has been zeroed (i.e. the variable assigned)
+        vector<uint16_t> var_to_col; // var_to_col[VAR] gives the column for that variable. If the variable is not in the matrix, it gives UINT_MAX, if the var WAS inside the matrix, but has been zeroed, it gives UINT_MAX-1
+        vector<Var> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives UINT_MAX if the COL has been zeroed (i.e. the variable assigned)
         uint num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
         int least_column_changed; // when updating the matrix, this value contains the smallest column number that has been updated  (Gauss elim. can start from here instead of from column 0)
@@ -172,7 +174,7 @@ inline void Gaussian::canceling(const uint level, const Var var)
     if (!messed_matrix_vars_since_reversal
             && level <= gauss_last_level
             && var < cur_matrixset.var_to_col.size()
-            && cur_matrixset.var_to_col[var] == UINT_MAX-1
+            && cur_matrixset.var_to_col[var] == unassigned_col-1
        )
         messed_matrix_vars_since_reversal = true;
 }

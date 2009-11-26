@@ -104,7 +104,7 @@ PackedRow& PackedRow::operator^=(const PackedRow& b)
     return *this;
 }
 
-void PackedRow::fill(Lit* ps, const vec<lbool>& assigns, const vector<uint>& col_to_var_original) const
+void PackedRow::fill(Lit* ps, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const
 {
     bool final = xor_clause_inverted;
     

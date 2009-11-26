@@ -120,9 +120,9 @@ void Gaussian::init(void)
 uint Gaussian::select_columnorder()
 {
     origMat.var_to_col.resize(solver.nVars());
-    uint largest_used_var = 0;
     std::fill(origMat.var_to_col.begin(), origMat.var_to_col.end(), UINT_MAX);
 
+    uint largest_used_var = 0;
     uint num_xorclauses  = 0;
     for (int i = 0; i < solver.xorclauses.size(); i++) {
         #ifdef DEBUG_GAUSS
@@ -174,10 +174,10 @@ uint Gaussian::select_columnorder()
     #endif
 
     for (uint i = 0; i < origMat.var_to_col.size(); i++) {
-        if (origMat.var_to_col[i] < UINT_MAX) {
+        if (origMat.var_to_col[i] != unassigned_col) {
             vector<uint>::iterator it = std::find(origMat.col_to_var.begin(), origMat.col_to_var.end(), i);
             assert(it != origMat.col_to_var.end());
-            origMat.var_to_col[i] = it - origMat.col_to_var.begin();
+            origMat.var_to_col[i] = &(*it) - &origMat.col_to_var[0];
             #ifdef VERBOSE_DEBUG
             cout << "(" << matrix_no << ")var_to_col[" << i << "]:" << origMat.var_to_col[i] << endl;
             #endif
@@ -200,8 +200,7 @@ void Gaussian::fill_matrix()
 
     origMat.last_one_in_col.resize(origMat.num_cols);
     
-    for (uint *l = &origMat.last_one_in_col[0], *end = l + origMat.last_one_in_col.size(); l != end; l++)
-        *l = origMat.num_rows;
+    std::fill(origMat.last_one_in_col.begin(), origMat.last_one_in_col.end(), origMat.num_rows);
     origMat.removeable_cols = 0;
     origMat.least_column_changed = -1;
     origMat.matrix.resize(origMat.num_rows, origMat.num_cols);
@@ -261,8 +260,8 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
     #endif
 
     m.removeable_cols++;
-    m.col_to_var[col] = UINT_MAX;
-    m.var_to_col[var] = UINT_MAX-1;
+    m.col_to_var[col] = unassigned_var;
+    m.var_to_col[var] = unassigned_col - 1;
 }
 
 void Gaussian::update_matrix_by_col_all(matrixset& m)
@@ -280,10 +279,10 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     changed_rows.resize(cur_matrixset.num_rows, false);
 
     uint last = 0;
-    uint* col_to_var_it = &m.col_to_var[0];
-    for (uint col = 0, end = m.num_cols; col < end; col++, col_to_var_it++) {
-        if (*col_to_var_it != UINT_MAX && solver.assigns[*col_to_var_it].isDef()) {
-            update_matrix_col(m, *col_to_var_it, col);
+    uint col = 0;
+    for (Var *it = &m.col_to_var[0], *end = it + m.num_cols; it != end; col++, it++) {
+        if (*it != unassigned_var && solver.assigns[*it].isDef()) {
+            update_matrix_col(m, *it, col);
             last++;
         } else
             last = 0;
@@ -393,7 +392,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
     while (i < m.num_rows && j < m.num_cols) {
         //Find pivot in column j, starting in row i:
 
-        if (m.col_to_var[j] == UINT_MAX) {
+        if (m.col_to_var[j] == unassigned_var) {
             j++;
             continue;
         }
@@ -627,7 +626,7 @@ void Gaussian::analyse_confl(const matrixset& m, const uint row, uint& maxlevel,
         var = m.varset[row].scan(var);
         if (var == ULONG_MAX) break;
 
-        const uint real_var = col_to_var_original[var];
+        const Var real_var = col_to_var_original[var];
         assert(real_var < solver.nVars());
 
         if (solver.level[real_var] > this_maxlevel)
