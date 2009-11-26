@@ -39,10 +39,7 @@ public:
     BitArray(const BitArray& b) :
         size(b.size)
     {
-        if (b.size != size) {
-            delete[] mp;
-            mp = new uint64_t[size];
-        }
+        mp = new uint64_t[size];
         memcpy(mp, b.mp, sizeof(uint64_t)*size);
     }
     
