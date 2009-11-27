@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define GAUSSIANCONFIG_H
 
 #include <sys/types.h>
+#include "PackedRow.h"
 
 class GaussianConfig
 {
@@ -31,6 +32,13 @@ class GaussianConfig
         , every_nth_gauss(1)
         , starts_from(3)
     {
+        if (PackedRow::tmp_row == NULL)
+            PackedRow::tmp_row = new uint64_t[1000];
+    }
+    
+    ~GaussianConfig()
+    {
+        delete[] PackedRow::tmp_row;
     }
         
     //tuneable gauss parameters

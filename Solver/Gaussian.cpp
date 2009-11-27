@@ -29,8 +29,6 @@ using std::endl;
 #include <iterator>
 #endif
 
-uint64_t* PackedRow::tmp_row;
-
 ostream& operator << (ostream& os, const vec<Lit>& v)
 {
     for (int i = 0; i < v.size(); i++) {
@@ -52,7 +50,6 @@ Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint _m
         , useful_confl(0)
         , called(0)
 {
-    PackedRow::tmp_row = new uint64_t[1000];
 }
 
 Gaussian::~Gaussian()
