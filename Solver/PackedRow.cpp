@@ -137,7 +137,7 @@ void PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vect
             const uint& var = col_to_var_original[col];
             assert(var != UINT_MAX);
             
-            const lbool val = assigns[var];
+            const lbool& val = assigns[var];
             const bool val_bool = val.getBool();
             tmp_clause.push(Lit(var, val_bool));
             final ^= val_bool;
