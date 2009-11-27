@@ -162,8 +162,8 @@ void Logger::first_begin()
 void Logger::begin()
 {
     if (proof_graph_on) {
-        char filename[80];
-        sprintf(filename, "proofs/%d-proof%d.dot", runid, S->starts);
+        std::stringstream filename;
+        filename << "proofs/" << runid << "-proof" << S->starts << ".dot";
         
         if (S->starts == 0)
             history.push_back(uniqueid);
@@ -174,8 +174,8 @@ void Logger::begin()
                 history.resize(S->trail.size()+1);
         }
 
-        proof = fopen(filename,"w");
-        if (!proof) printf("Couldn't open proof file '%s' for writing\n", filename), exit(-1);
+        proof = fopen(filename.str().c_str(),"w");
+        if (!proof) printf("Couldn't open proof file '%s' for writing\n", filename.str().c_str()), exit(-1);
         fprintf(proof, "digraph G {\n");
         fprintf(proof,"node%d [shape=circle, label=\"BEGIN\", root];\n", history[history.size()-1]);
     }
