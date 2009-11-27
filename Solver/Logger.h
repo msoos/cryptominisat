@@ -53,7 +53,7 @@ public:
     void setSolver(const Solver* S);
 
     //types of props, confl, and finish
-    enum prop_type { revert_guess_type, unit_clause_type, add_clause_type, assumption_type, guess_type, simple_propagation_type, gauss_propagation_type };
+    enum prop_type { unit_clause_type, add_clause_type, assumption_type, guess_type, simple_propagation_type, gauss_propagation_type };
     enum confl_type { simple_confl_type, gauss_confl_type };
     enum finish_type { model_found, unsat_model_found, restarting, done_adding_clauses };
 
