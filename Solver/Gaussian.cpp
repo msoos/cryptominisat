@@ -459,6 +459,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
         if (this_matrix_row != end) {
             PackedRow matrix_row_i = m.matrix[i];
             PackedRow varset_row_i = m.varset[i];
+            PackedMatrix::iterator this_varset_row = m.varset.begin() + best_row;
 
             //swap rows i and maxi, but do not change the value of i;
             if (i != best_row) {
@@ -471,7 +472,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                     return 0;
                 }
                 matrix_row_i.swap(*this_matrix_row);
-                varset_row_i.swap(m.varset[best_row]);
+                varset_row_i.swap(*this_varset_row);
             }
             #ifdef DEBUG_GAUSS
             assert(m.matrix[i].popcnt(j) == m.matrix[i].popcnt());
@@ -482,16 +483,17 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 propagatable_rows.push(i);
 
             //Now A[i,j] will contain the old value of A[maxi,j];
-            uint i2 = best_row+1;
-            for (PackedMatrix::iterator it = this_matrix_row+1, it2 = m.varset.begin() + i2; it != end; ++it, ++it2, i2++) if ((*it)[j]) {
+            ++this_matrix_row;
+            ++this_varset_row;
+            for (; this_matrix_row != end; ++this_matrix_row, ++this_varset_row) if ((*this_matrix_row)[j]) {
                 //subtract row i from row u;
                 //Now A[u,j] will be 0, since A[u,j] - A[i,j] = A[u,j] -1 = 0.
                 #ifdef VERBOSE_DEBUG
                 number_of_row_additions++;
                 #endif
                 
-                *it ^= matrix_row_i;
-                *it2 ^= varset_row_i;
+                *this_matrix_row ^= matrix_row_i;
+                *this_varset_row ^= varset_row_i;
                 //Would early abort, but would not find the best conflict:
                 //if (!it->get_xor_clause_inverted() &&it->isZero()) {
                 //    conflict_row = i2;
