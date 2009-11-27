@@ -1,6 +1,6 @@
 #include "PackedRow.h"
 
-uint64_t* PackedRow::tmp_row = NULL;
+__thread uint64_t* PackedRow::tmp_row = NULL;
 
 std::ostream& operator << (std::ostream& os, const PackedRow& m)
 {

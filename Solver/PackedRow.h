@@ -138,7 +138,7 @@ public:
 
     friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
     
-    static uint64_t *tmp_row;
+    static __thread uint64_t *tmp_row;
 
 private:
     friend class PackedMatrix;
