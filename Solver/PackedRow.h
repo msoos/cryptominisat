@@ -144,8 +144,8 @@ private:
     friend class PackedMatrix;
     PackedRow(const uint _size, uint64_t& _xor_clause_inverted, uint64_t*  const _mp) :
         size(_size)
-        , xor_clause_inverted(_xor_clause_inverted)
         , mp(_mp)
+        , xor_clause_inverted(_xor_clause_inverted)
     {}
     
     const uint size;

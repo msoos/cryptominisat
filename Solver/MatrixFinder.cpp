@@ -38,8 +38,8 @@ using std::endl;
 //#define PART_FINDING
 
 MatrixFinder::MatrixFinder(Solver *_S) :
-    S(_S)
-    , unAssigned(_S->nVars() + 1)
+    unAssigned(_S->nVars() + 1)
+    , S(_S)
 {
     table.resize(S->nVars(), unAssigned);
     matrix_no = 0;

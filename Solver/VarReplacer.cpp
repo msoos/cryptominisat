@@ -247,7 +247,7 @@ void VarReplacer::replace(Var var, Lit lit)
         
         //triangular cycle
         if (lit1.var() == lit2.var()) {
-            if (lit1.sign() ^ lit2.sign() != lit.sign()) {
+            if ((lit1.sign() ^ lit2.sign()) != lit.sign()) {
                 #ifdef VERBOSE_DEBUG
                 cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
                 #endif

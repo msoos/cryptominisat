@@ -40,8 +40,8 @@ using std::ofstream;
 
 Logger::Logger(int& _verbosity) :
     proof_graph_on(false)
-    , statistics_on(false)
     , mini_proof(false)
+    , statistics_on(false)
 
     , max_print_lines(20)
     , uniqueid(1)

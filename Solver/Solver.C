@@ -52,8 +52,9 @@ Solver::Solver() :
         , polarity_mode    (polarity_user)
         , verbosity        (0)
         , restrictedPickBranch(0)
-        , useRealUnknowns(false)
+        , useRealUnknowns  (false)
         , xorFinder        (true)
+        , greedyUnbound    (false)
 
         // Statistics: (formerly in 'SolverStats')
         //
@@ -74,7 +75,6 @@ Solver::Solver() :
         , dynamic_behaviour_analysis(false) //do not document the proof as default
         , maxRestarts(UINT_MAX)
         , learnt_clause_group(0)
-        , greedyUnbound(false)
 {
     toReplace = new VarReplacer(this);
     conglomerate = new Conglomerate(this);

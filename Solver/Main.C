@@ -199,7 +199,6 @@ static void parse_DIMACS_main(B& in, Solver& S)
             break;
         default:
             bool xor_clause = false;
-            uint matrix_no = 15;
             if ( *in == 'x') xor_clause = true, ++in;
             readClause(in, S, lits);
             skipLine(in);
@@ -414,7 +413,7 @@ int main(int argc, char** argv)
             }
             S.setMaxRestarts(maxrest);
         } else if ((value = hasPrefix(argv[i], "-dumplearnts="))) {
-            if (sscanf(value, "%400s", &learnts_filename) < 0 || strlen(learnts_filename) == 0) {
+            if (sscanf(value, "%400s", learnts_filename) < 0 || strlen(learnts_filename) == 0) {
                 printf("ERROR! wrong filename '%s'\n", learnts_filename);
                 exit(0);
             }
