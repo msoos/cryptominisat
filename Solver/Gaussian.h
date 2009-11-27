@@ -129,6 +129,7 @@ protected:
     void analyse_confl(const matrixset& m, const uint row, uint& maxlevel, uint& size, uint& best_row) const; // analyse conflcit to find the best conflict. Gets & returns the best one in 'maxlevel', 'size' and 'best row' (these are all UINT_MAX when calling this function first, i.e. when there is no other possible conflict to compare to the new in 'row')
     gaussian_ret handle_matrix_confl(Clause*& confl, const matrixset& m, const uint size, const uint maxlevel, const uint best_row);
     gaussian_ret handle_matrix_prop(matrixset& m, const uint row); // Handle matrix propagation at row 'row'
+    vec<Lit> tmp_clause;
 
     //propagation&conflict handling
     void cancel_until_sublevel(const uint sublevel); // cancels until sublevel 'sublevel'. The var 'sublevel' must NOT go over the current level. I.e. this function is ONLY for moving inside the current level

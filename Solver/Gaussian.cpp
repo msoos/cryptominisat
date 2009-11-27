@@ -544,7 +544,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
 {
     assert(best_row != UINT_MAX);
 
-    confl = Clause_new(m.varset[best_row], solver.assigns, col_to_var_original, solver.learnt_clause_group++);
+    m.varset[best_row].fill(tmp_clause, solver.assigns, col_to_var_original);
+    confl = Clause_new(tmp_clause, solver.learnt_clause_group++, false);
     Clause& cla = *confl;
     if (solver.dynamic_behaviour_analysis)
         solver.logger.set_group_name(confl->group, "learnt gauss clause");
@@ -746,7 +747,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     cout << endl;
     #endif
 
-    Clause& cla = *Clause_new(m.varset[row], solver.assigns, col_to_var_original, solver.learnt_clause_group++);
+    m.varset[row].fill(tmp_clause, solver.assigns, col_to_var_original);
+    Clause& cla = *Clause_new(tmp_clause, solver.learnt_clause_group++, false);
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix prop clause: ";
     solver.printClause(cla);

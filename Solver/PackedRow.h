@@ -123,7 +123,7 @@ public:
         xor_clause_inverted = v.xor_clause_inverted();
     }
     
-    void fill(Lit* ps, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;
+    void fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;
     
     inline unsigned long int scan(const unsigned long int var) const
     {

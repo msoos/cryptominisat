@@ -62,14 +62,6 @@ protected:
     Lit     data[0];
 
 public:
-    Clause(const PackedRow& row, const uint size, const vec<lbool>& assigns, const vector<Var>& col_to_var_original, const uint _group) :
-        group(_group)
-    {
-        size_etc = 0;
-        setSize(size);
-        setLearnt(false);
-        row.fill(data, assigns, col_to_var_original);
-    }
 
     template<class V>
     Clause(const V& ps, const uint _group, const bool learnt) :
@@ -203,6 +195,5 @@ protected:
 
 Clause* Clause_new(const vec<Lit>& ps, const uint group, const bool learnt);
 Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt);
-Clause* Clause_new(const PackedRow& ps, const vec<lbool>& assigns, const vector<Var>& col_to_var_original, const uint group);
 
 #endif //CLAUSE_H
