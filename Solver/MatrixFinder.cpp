@@ -119,7 +119,10 @@ const uint MatrixFinder::findMatrixes()
 
 const uint MatrixFinder::setMatrixes()
 {
-    vector<uint> numXorInMatrix(matrix_no, 0);
+    vector<pair<uint, uint> > numXorInMatrix;
+    for (uint i = 0; i < matrix_no; i++)
+        numXorInMatrix.push_back(std::make_pair(i, 0));
+    
     vector<uint> sumXorSizeInMatrix(matrix_no, 0);
     vector<vector<uint> > xorSizesInMatrix(matrix_no);
     vector<vector<XorClause*> > xorsInMatrix(matrix_no);
@@ -131,9 +134,10 @@ const uint MatrixFinder::setMatrixes()
     for (XorClause** c = S->xorclauses.getData(), **end = c + S->xorclauses.size(); c != end; c++) {
         XorClause& x = **c;
         const uint matrix = table[x[0].var()];
+        assert(matrix < matrix_no);
         
         //for stats
-        numXorInMatrix[matrix]++;
+        numXorInMatrix[matrix].second++;
         sumXorSizeInMatrix[matrix] += x.size();
         xorSizesInMatrix[matrix].push_back(x.size());
         xorsInMatrix[matrix].push_back(&x);
@@ -143,28 +147,32 @@ const uint MatrixFinder::setMatrixes()
         #endif //PART_FINDING
     }
     
+    std::sort(numXorInMatrix.begin(), numXorInMatrix.end(), mysorter());
+    
     #ifdef PART_FINDING
     for (uint i = 0; i < matrix_no; i++)
         findParts(xorFingerprintInMatrix[i], xorsInMatrix[i]);
     #endif //PART_FINDING
     
     uint realMatrixNum = 0;
-    for (uint i = 0; i < matrix_no; i++) {
-        if (numXorInMatrix[i] < 3)
+    for (int a = matrix_no; a != -1; a--) {
+        uint i = numXorInMatrix[a].first;
+        
+        if (numXorInMatrix[a].second < 3)
             continue;
         
-        const uint totalSize = reverseTable[i].size()*numXorInMatrix[i];
+        const uint totalSize = reverseTable[i].size()*numXorInMatrix[a].second;
         const double density = (double)sumXorSizeInMatrix[i]/(double)totalSize*100.0;
-        double avg = (double)sumXorSizeInMatrix[i]/(double)numXorInMatrix[i];
+        double avg = (double)sumXorSizeInMatrix[i]/(double)numXorInMatrix[a].second;
         double variance = 0.0;
         for (uint i2 = 0; i2 < xorSizesInMatrix[i].size(); i2++)
             variance += pow((double)xorSizesInMatrix[i][i2]-avg, 2);
         variance /= xorSizesInMatrix.size();
         const double stdDeviation = sqrt(variance);
         
-        if (numXorInMatrix[i] >= 20
-            && numXorInMatrix[i] <= 1000
-            && realMatrixNum < (1 << 12))
+        if (numXorInMatrix[a].second >= 20
+            && numXorInMatrix[a].second <= 1000
+            && realMatrixNum < 3)
         {
             cout << "|  Matrix no " << std::setw(4) << realMatrixNum;
             S->gauss_matrixes.push_back(new Gaussian(*S, S->gaussconfig, realMatrixNum, xorsInMatrix[i]));
@@ -173,7 +181,7 @@ const uint MatrixFinder::setMatrixes()
         } else {
             cout << "|  Unused Matrix ";
         }
-        cout << std::setw(5) << numXorInMatrix[i] << " x" << std::setw(5) << reverseTable[i].size();
+        cout << std::setw(5) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
         cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
         cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
         cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << "  |" << endl;

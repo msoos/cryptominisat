@@ -27,6 +27,7 @@ class Solver;
 #include <map>
 using std::map;
 using std::vector;
+using std::pair;
 
 class MatrixFinder {
     
@@ -36,6 +37,14 @@ class MatrixFinder {
     
     private:
         const uint setMatrixes();
+        
+        struct mysorter
+        {
+            bool operator () (const pair<uint, uint>& left, const pair<uint, uint>& right)
+            {
+                return left.second < right.second;
+            }
+        };
         
         void findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClause*>& xorsInMatrix);
         inline const Var fingerprint(const XorClause& c) const;
