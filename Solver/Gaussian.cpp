@@ -295,7 +295,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
 
     uint last = 0;
     uint col = 0;
-    for (Var *it = &m.col_to_var[0], *end = it + m.num_cols; it != end; col++, it++) {
+    for (const Var *it = &m.col_to_var[0], *end = it + m.num_cols; it != end; col++, it++) {
         if (*it != unassigned_var && solver.assigns[*it].isDef()) {
             update_matrix_col(m, *it, col);
             last++;
