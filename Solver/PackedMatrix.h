@@ -63,6 +63,10 @@ public:
     
     void resizeNumRows(const uint num_rows)
     {
+        #ifdef DEBUG_MATRIX
+        assert(num_rows <= numRows);
+        #endif
+        
         numRows = num_rows;
     }
     

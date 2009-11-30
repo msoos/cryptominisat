@@ -288,7 +288,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     
     #ifdef DEBUG_GAUSS
     assert(config.every_nth_gauss != 1 || nothing_to_propagate(cur_matrixset));
-    assert(check_last_one_in_cols(m));
+    assert(solver.decisionLevel() == 0 || check_last_one_in_cols(m));
     #endif
     
     changed_rows.setZero();
@@ -412,7 +412,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
     
     
     #ifdef DEBUG_GAUSS
-    assert(check_last_one_in_cols(m));
+    assert(solver.decisionLevel() == 0 || check_last_one_in_cols(m));
     #endif
 
     uint i = 0;
@@ -533,7 +533,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
             #ifdef VERBOSE_DEBUG
             cout << "row:" << row << " col:" << col << " m.last_one_in_col[col]-1: " << m.last_one_in_col[col]-1 << endl;
             #endif
-            assert(m.last_one_in_col[col]-1 == row);
+            assert(m.col_to_var[col] == unassigned_var || std::min(m.last_one_in_col[col]-1, (int)m.num_rows) == row);
             continue;
         }
         row++;
@@ -967,14 +967,15 @@ const bool Gaussian::nothing_to_propagate(matrixset& m) const
 const bool Gaussian::check_last_one_in_cols(matrixset& m) const
 {
     for(uint i = 0; i < m.num_cols; i++) {
-        const uint last = m.last_one_in_col[i] - 1;
+        const uint last = std::min(m.last_one_in_col[i] - 1, (int)m.num_rows);
         uint real_last = 0;
-        uint i2;
+        uint i2 = 0;
         for (PackedMatrix::iterator it = m.matrix.begin(); it != m.matrix.end(); ++it, i2++) {
             if ((*it)[i])
                 real_last = i2;
         }
-        if (real_last > last) return false;
+        if (real_last > last)
+            return false;
     }
     
     return true;
