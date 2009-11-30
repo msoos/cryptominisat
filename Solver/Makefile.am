@@ -4,7 +4,6 @@ AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir) -I$(srcdir)/../MTRand -I$(srcdir
 
 libcryptominisat_la_SOURCES = Logger.C \
 			      Solver.C \
-			      Clause.cpp \
 			      Gaussian.cpp \
 			      PackedRow.cpp \
 			      XorFinder.cpp \
