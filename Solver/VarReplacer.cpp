@@ -90,13 +90,11 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
             case 0: {
                 if (!c.xor_clause_inverted())
                     S->ok = false;
-                free(&c);
                 r++;
                 break;
             }
             case 1: {
                 S->uncheckedEnqueue(Lit(c[0].var(), !c.xor_clause_inverted()));
-                free(&c);
                 r++;
                 break;
             }

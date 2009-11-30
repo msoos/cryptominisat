@@ -204,6 +204,7 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
             #endif
             
             S->xorclauses.push(newX);
+            S->xorclauses_tofree.push(newX);
             toRemove.push_back(false);
             S->attachClause(*newX);
             for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {

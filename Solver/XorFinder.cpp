@@ -33,9 +33,8 @@ using std::endl;
 
 using std::make_pair;
 
-XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, vec<XorClause*>& _xorcls) :
+XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls) :
     cls(_cls)
-    , xorcls(_xorcls)
     , S(_S)
 {
 }
@@ -196,7 +195,8 @@ uint XorFinder::findXors(uint& sumLengths)
         }
         default: {
             XorClause* x = XorClause_new(lits, impair, old_group);
-            xorcls.push(x);
+            S->xorclauses.push(x);
+            S->xorclauses_tofree.push(x);
             S->attachClause(*x);
             
             #ifdef VERBOSE_DEBUG

@@ -169,7 +169,8 @@ protected:
     //
     bool                ok;               // If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
     vec<Clause*>        clauses;          // List of problem clauses.
-    vec<XorClause*>     xorclauses;       // List of problem xor-clauses.
+    vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will not be freed
+    vec<XorClause*>     xorclauses_tofree;// List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
     vec<Clause*>        unitary_learnts;  // List of learnt clauses.
     double              cla_inc;          // Amount to bump next clause with.
@@ -245,8 +246,8 @@ protected:
     void     detachClause     (const XorClause& c);
     void     detachClause     (const Clause& c);       // Detach a clause to watcher lists.
     void     detachModifiedClause(const Lit lit1, const Lit lit2, const uint size, const Clause* address);
-    template<class T>
-    void     removeClause(T& c);                       // Detach and free a clause.
+    void     removeClause(Clause& c);                  // Detach and free a clause.
+    void     removeClause(XorClause& c);               // Detach and free a clause.
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
     bool     satisfied        (const XorClause& c) const; // Returns TRUE if the clause is satisfied in the current state
     bool     satisfied        (const Clause& c) const; // Returns TRUE if the clause is satisfied in the current state.
@@ -423,11 +424,17 @@ void Solver::removeSatisfied(vec<T*>& cs)
     }
     cs.shrink(i - j);
 }
-template<class T>
-void Solver::removeClause(T& c)
+
+inline void Solver::removeClause(Clause& c)
 {
     detachClause(c);
     free(&c);
+}
+
+inline void Solver::removeClause(XorClause& c)
+{
+    detachClause(c);
+    c.mark(1);
 }
 
 

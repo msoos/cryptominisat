@@ -30,7 +30,7 @@ class XorFinder
 {
     public:
         
-        XorFinder(Solver* S, vec<Clause*>& cls, vec<XorClause*>& xorcls);
+        XorFinder(Solver* S, vec<Clause*>& cls);
         uint doByPart(uint& sumLengths, const uint minSize, const uint maxSize);
         uint doNoPart(uint& sumLengths, const uint minSize, const uint maxSize);
         
@@ -103,7 +103,6 @@ class XorFinder
         void clearToRemove();
         
         vec<Clause*>& cls;
-        vec<XorClause*>& xorcls;
         
         bool clauseEqual(const Clause& c1, const Clause& c2) const;
         bool impairSigns(const Clause& c) const;

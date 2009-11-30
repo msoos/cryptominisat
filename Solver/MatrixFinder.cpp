@@ -149,7 +149,6 @@ const uint MatrixFinder::setMatrixes()
     #endif //PART_FINDING
     
     uint realMatrixNum = 0;
-    vector<uint> remapMatrixes(matrix_no, UINT_MAX);
     for (uint i = 0; i < matrix_no; i++) {
         if (numXorInMatrix[i] < 3)
             continue;
@@ -168,8 +167,9 @@ const uint MatrixFinder::setMatrixes()
             && realMatrixNum < (1 << 12))
         {
             cout << "|  Matrix no " << std::setw(4) << realMatrixNum;
-            remapMatrixes[i] = realMatrixNum;
+            S->gauss_matrixes.push_back(new Gaussian(*S, S->gaussconfig, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
+            
         } else {
             cout << "|  Unused Matrix ";
         }
@@ -178,18 +178,6 @@ const uint MatrixFinder::setMatrixes()
         cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
         cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << "  |" << endl;
     }
-    
-    for (XorClause** c = S->xorclauses.getData(), **end = c + S->xorclauses.size(); c != end; c++) {
-        XorClause& x = **c;
-        const uint toSet = remapMatrixes[table[x[0].var()]];
-        if (toSet != UINT_MAX)
-            x.setMatrix(toSet);
-        else
-            x.setMatrix((1 << 12)-1);
-    }
-    
-    for (uint i = 0; i < realMatrixNum; i++)
-        S->gauss_matrixes.push_back(new Gaussian(*S, S->gaussconfig, i));
     
     return realMatrixNum;
 }

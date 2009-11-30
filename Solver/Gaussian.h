@@ -39,7 +39,7 @@ static const Var unassigned_var = -1;
 class Gaussian
 {
 public:
-    Gaussian(Solver& solver, const GaussianConfig& config, const uint matrix_no);
+    Gaussian(Solver& solver, const GaussianConfig& config, const uint matrix_no, const vector<XorClause*>& xorclauses);
     ~Gaussian();
 
     llbool full_init();
@@ -66,6 +66,7 @@ protected:
     //Gauss high-level configuration
     const GaussianConfig& config;
     const uint matrix_no;
+    vector<XorClause*> xorclauses;
 
     enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
     gaussian_ret gaussian(Clause*& confl);

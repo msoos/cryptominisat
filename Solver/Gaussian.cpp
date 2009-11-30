@@ -39,10 +39,11 @@ ostream& operator << (ostream& os, const vec<Lit>& v)
     return os;
 }
 
-Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint _matrix_no) :
+Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint _matrix_no, const vector<XorClause*>& _xorclauses) :
         solver(_solver)
         , config(_config)
         , matrix_no(_matrix_no)
+        , xorclauses(_xorclauses)
         , messed_matrix_vars_since_reversal(true)
         , gauss_last_level(0)
         , disabled(false)
@@ -136,23 +137,31 @@ uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origM
 {
     var_to_col.resize(solver.nVars(), unassigned_col);
 
-    uint largest_used_var = 0;
     uint num_xorclauses  = 0;
-    for (int i = 0; i < solver.xorclauses.size(); i++) {
+    for (int i = 0; i != xorclauses.size(); i++) {
         #ifdef DEBUG_GAUSS
-        assert(!solver.satisfied(*solver.xorclauses[i]));
+        assert(xorclauses[i]->mark() || !solver.satisfied(*xorclauses[i]));
         #endif
-        if (solver.xorclauses[i]->getMatrix() == matrix_no) {
+        if (!xorclauses[i]->mark()) {
             num_xorclauses++;
-            XorClause& c = *solver.xorclauses[i];
+            XorClause& c = *xorclauses[i];
             for (uint i2 = 0; i2 < c.size(); i2++) {
                 assert(solver.assigns[c[i2].var()].isUndef());
-                var_to_col[c[i2].var()] = 1;
-                largest_used_var = std::max(largest_used_var, c[i2].var());
+                var_to_col[c[i2].var()] = unassigned_col - 1;
             }
         }
     }
+    
+    uint largest_used_var = 0;
+    for (uint i = 0; i < var_to_col.size(); i++)
+        if (var_to_col[i] != unassigned_col)
+            largest_used_var = i;
     var_to_col.resize(largest_used_var + 1);
+    
+    var_is_in.resize(var_to_col.size());
+    var_is_in.setZero();
+    origMat.var_is_set.resize(var_to_col.size());
+    origMat.var_is_set.setZero();
 
     origMat.col_to_var.clear();
     for (int i = solver.order_heap.size()-1; i >= 0 ; i--)
@@ -169,39 +178,25 @@ uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origM
             #endif
             
             origMat.col_to_var.push_back(v);
-            var_to_col[v] = 2;
+            var_to_col[v] = origMat.col_to_var.size()-1;
+            var_is_in.setBit(v);
         }
     }
 
     //for the ones that were not in the order_heap, but are marked in var_to_col
-    for (uint i = 0; i < var_to_col.size(); i++) {
-        if (var_to_col[i] == 1)
-            origMat.col_to_var.push_back(i);
+    for (uint v = 0; v != var_to_col.size(); v++) {
+        if (var_to_col[v] == unassigned_col - 1) {
+            origMat.col_to_var.push_back(v);
+            var_to_col[v] = origMat.col_to_var.size() -1;
+            var_is_in.setBit(v);
+        }
     }
 
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")col_to_var:";
     std::copy(origMat.col_to_var.begin(), origMat.col_to_var.end(), std::ostream_iterator<uint>(cout, ","));
     cout << endl;
-
-    cout << "(" << matrix_no << ")var_to_col:" << endl;
     #endif
-
-    var_is_in.resize(var_to_col.size());
-    var_is_in.setZero();
-    origMat.var_is_set.resize(var_to_col.size());
-    origMat.var_is_set.setZero();
-    for (uint i = 0; i < var_to_col.size(); i++) {
-        if (var_to_col[i] != unassigned_col) {
-            vector<uint>::iterator it = std::find(origMat.col_to_var.begin(), origMat.col_to_var.end(), i);
-            assert(it != origMat.col_to_var.end());
-            var_to_col[i] = &(*it) - &origMat.col_to_var[0];
-            var_is_in.setBit(i);
-            #ifdef VERBOSE_DEBUG
-            cout << "(" << matrix_no << ")var_to_col[" << i << "]:" << var_to_col[i] << endl;
-            #endif
-        }
-    }
 
     return num_xorclauses;
 }
@@ -233,10 +228,10 @@ void Gaussian::fill_matrix(matrixset& origMat)
     #endif
 
     uint matrix_row = 0;
-    for (int i = 0; i < solver.xorclauses.size(); i++) {
-        const XorClause& c = *solver.xorclauses[i];
+    for (int i = 0; i < xorclauses.size(); i++) {
+        const XorClause& c = *xorclauses[i];
 
-        if (c.getMatrix() == matrix_no) {
+        if (!c.mark()) {
             origMat.varset[matrix_row].set(c, var_to_col, origMat.num_cols);
             origMat.matrix[matrix_row].set(c, var_to_col, origMat.num_cols);
             matrix_row++;

@@ -87,7 +87,7 @@ Solver::~Solver()
     for (int i = 0; i < learnts.size(); i++) free(learnts[i]);
     for (int i = 0; i < unitary_learnts.size(); i++) free(unitary_learnts[i]);
     for (int i = 0; i < clauses.size(); i++) free(clauses[i]);
-    for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
+    for (int i = 0; i < xorclauses_tofree.size(); i++) free(xorclauses_tofree[i]);
     for (uint i = 0; i < gauss_matrixes.size(); i++) delete gauss_matrixes[i];
     gauss_matrixes.clear();
     delete toReplace;
@@ -183,6 +183,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
         
         xorclauses.push(c);
+        xorclauses_tofree.push(c);
         attachClause(*c);
         break;
     }
@@ -1283,7 +1284,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             removeSatisfied(clauses);
             cleanClauses(clauses);
             uint sumLengths = 0;
-            XorFinder xorFinder(this, clauses, xorclauses);
+            XorFinder xorFinder(this, clauses);
             uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
             
             printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
