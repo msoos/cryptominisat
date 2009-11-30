@@ -155,7 +155,7 @@ const uint MatrixFinder::setMatrixes()
     #endif //PART_FINDING
     
     uint realMatrixNum = 0;
-    for (int a = matrix_no; a != -1; a--) {
+    for (int a = matrix_no-1; a != -1; a--) {
         uint i = numXorInMatrix[a].first;
         
         if (numXorInMatrix[a].second < 3)

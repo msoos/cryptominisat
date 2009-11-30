@@ -147,6 +147,7 @@ static void readClause(B& in, Solver& S, vec<Lit>& lits)
         parsed_lit = parseInt(in);
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
+        while (var >= S.nVars()) S.newVar();
         lits.push( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
 }
@@ -253,7 +254,11 @@ void printStats(Solver& solver)
 {
     double   cpu_time = cpuTime();
     uint64_t mem_used = memUsed();
-    cout << "restarts              : " << solver.starts << endl ;
+    cout << "restarts           : " << solver.starts << endl ;
+    cout << "learnts DL2        : " << solver.nbDL2 << endl;
+    cout << "learnts size 2     : " << solver.nbBin << endl;
+    cout << "learnts size 1     : " << solver.get_unitary_learnts().size() << endl;
+    
     cout << "conflicts             : " << solver.conflicts << " (" << (double)solver.conflicts/cpu_time << " /sec)" << endl;
     cout << "decisions             : " << solver.decisions << " (" << (double)solver.rnd_decisions*100.0/(double)solver.decisions << "% random)" << endl;
     cout << "propagations          : " << solver.propagations << " (" << (double)solver.propagations/cpu_time << " /sec)" << endl;

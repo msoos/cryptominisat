@@ -99,8 +99,14 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
                 break;
             }
             default: {
-                S->attachClause(c);
-                *a++ = *r++;
+                if (c.size() == 2) {
+                    S->addBinaryXorClause(c, c.xor_clause_inverted(), c.group);
+                    c.mark(1);
+                    r++;
+                } else {
+                    S->attachClause(c);
+                    *a++ = *r++;
+                }
                 break;
             }
             }
