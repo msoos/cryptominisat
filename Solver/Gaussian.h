@@ -172,8 +172,7 @@ inline bool Gaussian::should_check_gauss(const uint decisionlevel, const uint st
     return (!disabled
             && starts >= config.starts_from
             && decisionlevel < config.decision_until
-            && decisionlevel >= config.decision_from
-            && decisionlevel % config.every_nth_gauss == 0);
+            && decisionlevel >= config.decision_from);
 }
 
 inline void Gaussian::canceling(const uint level, const Var var)

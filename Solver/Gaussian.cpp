@@ -65,10 +65,6 @@ void Gaussian::clear_clauses()
 
 llbool Gaussian::full_init()
 {
-    assert(config.every_nth_gauss > 0);
-    assert(config.only_nth_gauss_save >= config.every_nth_gauss);
-    assert(config.only_nth_gauss_save % config.every_nth_gauss == 0); 
-    assert(config.decision_from % config.every_nth_gauss == 0);
     assert(config.decision_from % config.only_nth_gauss_save == 0);
     
     if (!should_init()) return l_Nothing;
@@ -286,7 +282,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     #endif
     
     #ifdef DEBUG_GAUSS
-    assert(config.every_nth_gauss != 1 || nothing_to_propagate(cur_matrixset));
+    assert(nothing_to_propagate(cur_matrixset));
     assert(solver.decisionLevel() == 0 || check_last_one_in_cols(m));
     #endif
     
