@@ -714,7 +714,7 @@ Clause* Solver::propagate(const bool xor_as_well)
                 *j++ = &c;
             } else {
                 // Look for new watch:
-                for (uint k = 2; k < c.size(); k++)
+                for (uint k = 2; k != c.size(); k++)
                     if (value(c[k]) != l_False) {
                         c[1] = c[k];
                         c[k] = false_lit;
