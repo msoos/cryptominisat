@@ -351,6 +351,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
 
     messed_matrix_vars_since_reversal = false;
     gauss_last_level = solver.trail.size();
+    went_below_decision_from = false;
 
     propagatable_rows.clear();
     
