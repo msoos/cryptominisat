@@ -309,7 +309,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     m.past_the_end_last_one_in_col -= last;
     
     #ifdef DEBUG_GAUSS
-    check_matrix_against_varset(m.matrix, m.varset);
+    check_matrix_against_varset(m.matrix, m.varset, m);
     #endif
 
     #ifdef VERBOSE_DEBUG
@@ -358,7 +358,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
     uint conflict_row = UINT_MAX;
     uint last_row = eliminate(cur_matrixset, conflict_row);
     #ifdef DEBUG_GAUSS
-    check_matrix_against_varset(cur_matrixset.matrix, cur_matrixset.varset);
+    check_matrix_against_varset(cur_matrixset.matrix, cur_matrixset.varset, cur_matrixset);
     #endif
     
     gaussian_ret ret;
@@ -981,7 +981,7 @@ const bool Gaussian::check_last_one_in_cols(matrixset& m) const
     return true;
 }
 
-const bool Gaussian::check_matrix_against_varset(PackedMatrix& matrix, PackedMatrix& varset) const
+const bool Gaussian::check_matrix_against_varset(PackedMatrix& matrix, PackedMatrix& varset, const matrixset& m) const
 {
     assert(matrix.getSize() == varset.getSize());
     
@@ -1000,10 +1000,16 @@ const bool Gaussian::check_matrix_against_varset(PackedMatrix& matrix, PackedMat
             
             if (solver.assigns[var] == l_True) {
                 assert(!mat_row[col]);
+                assert(m.col_to_var[col] == unassigned_var);
+                assert(m.var_is_set[var]);
                 final = !final;
             } else if (solver.assigns[var] == l_False) {
                 assert(!mat_row[col]);
+                assert(m.col_to_var[col] == unassigned_var);
+                assert(m.var_is_set[var]);
             } else if (solver.assigns[var] == l_Undef) {
+                assert(m.col_to_var[col] != unassigned_var);
+                assert(!m.var_is_set[var]);
                 assert(mat_row[col]);
             } else assert(false);
             
