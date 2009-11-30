@@ -60,14 +60,7 @@ Gaussian::~Gaussian()
 
 inline void Gaussian::set_matrixset_to_cur()
 {
-    /*cout << solver.decisionLevel() << endl;
-    cout << decision_from << endl;
-    cout << matrix_sets.size() << endl;*/
-    
-    if (solver.decisionLevel() % config.only_nth_gauss_save)
-        return;
-    
-    uint level = (solver.decisionLevel() / config.only_nth_gauss_save);
+    uint level = solver.decisionLevel() / config.only_nth_gauss_save;
     assert(level <= matrix_sets.size());
     
     if (level == matrix_sets.size())
@@ -337,24 +330,16 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
     if (solver.decisionLevel() >= badlevel)
         return nothing;
 
-    if (!messed_matrix_vars_since_reversal) {
+    if (messed_matrix_vars_since_reversal) {
         #ifdef VERBOSE_DEBUG
-        cout << "(" << matrix_no << ")matrix needs only update" << endl;
+        cout << "(" << matrix_no << ")matrix needs copy before update" << endl;
         #endif
-        
-        update_matrix_by_col_all(cur_matrixset);
-    } else {
-        #ifdef VERBOSE_DEBUG
-        cout << "(" << matrix_no << ")matrix needs copy&update" << endl;
-        #endif
-        
         
         const uint level = solver.decisionLevel() / config.only_nth_gauss_save;
         assert(level < matrix_sets.size());
         cur_matrixset = matrix_sets[level];
-        
-        update_matrix_by_col_all(cur_matrixset);
     }
+    update_matrix_by_col_all(cur_matrixset);
 
     messed_matrix_vars_since_reversal = false;
     gauss_last_level = solver.trail.size();
@@ -368,22 +353,24 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
     #endif
     
     gaussian_ret ret;
-    if (conflict_row != UINT_MAX) {
+    //There is no early abort, so this is unneeded
+    /*if (conflict_row != UINT_MAX) {
         uint maxlevel = UINT_MAX;
         uint size = UINT_MAX;
         uint best_row = UINT_MAX;
         analyse_confl(cur_matrixset, conflict_row, maxlevel, size, best_row);
         ret = handle_matrix_confl(confl, cur_matrixset, size, maxlevel, best_row);
-    } else {
+    } else {*/
         ret = handle_matrix_prop_and_confl(cur_matrixset, last_row, confl);
-    }
+    //}
     
     if (!cur_matrixset.num_cols || !cur_matrixset.num_rows) {
         badlevel = solver.decisionLevel();
         return nothing;
     }
     
-    if (ret == nothing)
+    if (ret == nothing &&
+        solver.decisionLevel() % config.only_nth_gauss_save == 0)
         set_matrixset_to_cur();
 
     #ifdef VERBOSE_DEBUG
