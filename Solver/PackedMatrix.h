@@ -217,7 +217,7 @@ public:
         return const_iterator(mp+numRows*(numCols+1), numCols);
     }*/
     
-    inline const uint size() const
+    inline const uint getSize() const
     {
         return numRows;
     }

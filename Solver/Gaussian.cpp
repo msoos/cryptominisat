@@ -268,7 +268,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
 
     #ifdef DEBUG_GAUSS
     bool c = false;
-    for(PackedMatrix::iterator r = m.matrix.begin(), end = r + m.matrix.size(); r != end; ++r)
+    for(PackedMatrix::iterator r = m.matrix.begin(), end = r + m.matrix.getSize(); r != end; ++r)
         c |= (*r)[col];
     assert(!c);
     #endif
@@ -983,9 +983,9 @@ const bool Gaussian::check_last_one_in_cols(matrixset& m) const
 
 const bool Gaussian::check_matrix_against_varset(PackedMatrix& matrix, PackedMatrix& varset) const
 {
-    assert(matrix.size() == varset.size());
+    assert(matrix.getSize() == varset.getSize());
     
-    for (uint i = 0; i < matrix.size(); i++) {
+    for (uint i = 0; i < matrix.getSize(); i++) {
         const PackedRow mat_row = matrix[i];
         const PackedRow var_row = varset[i];
         
