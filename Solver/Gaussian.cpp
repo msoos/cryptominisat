@@ -57,6 +57,27 @@ Gaussian::~Gaussian()
     clear_clauses();
 }
 
+inline void Gaussian::set_matrixset_to_cur()
+{
+    /*cout << solver.decisionLevel() << endl;
+    cout << decision_from << endl;
+    cout << matrix_sets.size() << endl;*/
+    
+    if (solver.decisionLevel() == 0) {
+        origMat = cur_matrixset;
+    }
+    
+    if (solver.decisionLevel() >= config.decision_from) {
+        uint level = ((solver.decisionLevel() - config.decision_from) / config.only_nth_gauss_save);
+        
+        assert(level <= matrix_sets.size()); //TODO check if we need this, or HOW we need this in a multi-matrix setting
+        if (level == matrix_sets.size())
+            matrix_sets.push_back(cur_matrixset);
+        else
+            matrix_sets[level] = cur_matrixset;
+    }
+}
+
 void Gaussian::clear_clauses()
 {
     std::for_each(matrix_clauses_toclear.begin(), matrix_clauses_toclear.end(), std::ptr_fun(free));
