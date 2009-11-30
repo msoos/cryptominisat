@@ -70,8 +70,8 @@ protected:
     enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
     gaussian_ret gaussian(Clause*& confl);
 
-    vector<Var> col_to_var_original;
-    BitArray var_is_in;
+    vector<Var> col_to_var_original; //Matches columns to variables
+    BitArray var_is_in; //variable is part of the the matrix. var_is_in's size is _minimal_ so you should check whether var_is_in.getSize() < var before issuing var_is_in[var]
 
     class matrixset
     {
@@ -79,12 +79,12 @@ protected:
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
         PackedMatrix varset; // The matrix, without variable assignements. The xor-clause is read from here. This matrix only follows the 'matrix' with its row-swap, row-xor, and row-delete operations.
         BitArray var_is_set;
-        vector<Var> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives UINT_MAX if the COL has been zeroed (i.e. the variable assigned)
+        vector<Var> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
         uint16_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
         int least_column_changed; // when updating the matrix, this value contains the smallest column number that has been updated  (Gauss elim. can start from here instead of from column 0)
         uint16_t past_the_end_last_one_in_col;
-        vector<uint16_t> last_one_in_col; //last_one_in_col[COL] tells the last row that has a '1' in that column. Used to reduce the burden of Gauss elim. (it only needs to look until that row)
+        vector<uint16_t> last_one_in_col; //last_one_in_col[COL] tells the last row+1 that has a '1' in that column. Used to reduce the burden of Gauss elim. (it only needs to look until that row)
         uint removeable_cols; // the number of columns that have been zeroed out (i.e. assigned)
     };
 
