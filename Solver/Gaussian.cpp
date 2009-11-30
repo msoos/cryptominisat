@@ -110,8 +110,7 @@ void Gaussian::init(void)
 
     gauss_last_level = solver.trail.size();
     messed_matrix_vars_since_reversal = false;
-    if (config.decision_from > 0) went_below_decision_from = true;
-    else went_below_decision_from = true;
+    went_below_decision_from = true;
 
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Gaussian init finished." << endl;
