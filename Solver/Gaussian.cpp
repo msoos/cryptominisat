@@ -481,10 +481,11 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 no_exchanged++;
                 #endif
                 
-                if (!matrix_row_i.get_xor_clause_inverted() && matrix_row_i.isZero()) {
-                    conflict_row = i;
-                    return 0;
-                }
+                //Would early abort, but would not find the best conflict (and would be expensive)
+                //if (!matrix_row_i.get_xor_clause_inverted() && matrix_row_i.isZero()) {
+                //    conflict_row = i;
+                //    return 0;
+                //}
                 matrix_row_i.swap(*this_matrix_row);
                 varset_row_i.swap(*this_varset_row);
             }
@@ -508,7 +509,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 
                 *this_matrix_row ^= matrix_row_i;
                 *this_varset_row ^= varset_row_i;
-                //Would early abort, but would not find the best conflict:
+                //Would early abort, but would not find the best conflict (and would be expensive)
                 //if (!it->get_xor_clause_inverted() &&it->isZero()) {
                 //    conflict_row = i2;
                 //    return 0;
