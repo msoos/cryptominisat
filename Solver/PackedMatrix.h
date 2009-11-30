@@ -41,8 +41,12 @@ public:
         numRows(b.numRows)
         , numCols(b.numCols)
     {
+        #ifdef DEBUG_MATRIX
+        assert(b.numRows > 0 && b.numCols > 0);
+        #endif
+        
         mp = new uint64_t[numRows*(numCols+1)];
-        std::copy(b.mp, b.mp+numRows*(numCols+1), mp);
+        memcpy(mp, b.mp, sizeof(uint64_t)*numRows*(numCols+1));
     }
     
     ~PackedMatrix()
@@ -72,7 +76,11 @@ public:
     
     PackedMatrix& operator=(const PackedMatrix& b)
     {
-        if (b.numRows*(b.numCols+1) > numRows*(numCols+1)) {
+        #ifdef DEBUG_MATRIX
+        //assert(b.numRows > 0 && b.numCols > 0);
+        #endif
+        
+        if (numRows*(numCols+1) < b.numRows*(b.numCols+1)) {
             delete[] mp;
             mp = new uint64_t[b.numRows*(b.numCols+1)];
         }
