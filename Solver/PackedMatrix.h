@@ -87,7 +87,7 @@ public:
         
         numRows = b.numRows;
         numCols = b.numCols;
-        std::copy(b.mp, b.mp+numRows*(numCols+1), mp);
+        memcpy(mp, b.mp, sizeof(uint64_t)*numRows*(numCols+1));
         
         return *this;
     }

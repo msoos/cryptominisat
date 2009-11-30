@@ -63,19 +63,16 @@ inline void Gaussian::set_matrixset_to_cur()
     cout << decision_from << endl;
     cout << matrix_sets.size() << endl;*/
     
-    if (solver.decisionLevel() == 0) {
-        origMat = cur_matrixset;
-    }
+    if (solver.decisionLevel() % config.only_nth_gauss_save)
+        return;
     
-    if (solver.decisionLevel() >= config.decision_from) {
-        uint level = ((solver.decisionLevel() - config.decision_from) / config.only_nth_gauss_save);
-        
-        assert(level <= matrix_sets.size()); //TODO check if we need this, or HOW we need this in a multi-matrix setting
-        if (level == matrix_sets.size())
-            matrix_sets.push_back(cur_matrixset);
-        else
-            matrix_sets[level] = cur_matrixset;
-    }
+    uint level = (solver.decisionLevel() / config.only_nth_gauss_save);
+    assert(level <= matrix_sets.size());
+    
+    if (level == matrix_sets.size())
+        matrix_sets.push_back(cur_matrixset);
+    else
+        matrix_sets[level] = cur_matrixset;
 }
 
 void Gaussian::clear_clauses()
@@ -86,8 +83,6 @@ void Gaussian::clear_clauses()
 
 llbool Gaussian::full_init()
 {
-    assert(config.decision_from % config.only_nth_gauss_save == 0);
-    
     if (!should_init()) return l_Nothing;
     
     bool do_again_gauss = true;
@@ -115,26 +110,29 @@ llbool Gaussian::full_init()
     return l_Nothing;
 }
 
-void Gaussian::init(void)
+void Gaussian::init()
 {
     assert(solver.decisionLevel() == 0);
 
-    matrix_sets.clear();
-    fill_matrix();
-    if (origMat.num_rows == 0) return;
+    fill_matrix(cur_matrixset);
+    if (!cur_matrixset.num_rows || !cur_matrixset.num_cols) {
+        disabled = true;
+        badlevel = 0;
+        return;
+    }
     
-    cur_matrixset = origMat;
-
+    matrix_sets.clear();
+    matrix_sets.push_back(cur_matrixset);
     gauss_last_level = solver.trail.size();
     messed_matrix_vars_since_reversal = false;
-    went_below_decision_from = true;
+    badlevel = UINT_MAX;
 
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Gaussian init finished." << endl;
     #endif
 }
 
-uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col)
+uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origMat)
 {
     var_to_col.resize(solver.nVars(), unassigned_col);
 
@@ -208,19 +206,18 @@ uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col)
     return num_xorclauses;
 }
 
-void Gaussian::fill_matrix()
+void Gaussian::fill_matrix(matrixset& origMat)
 {
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Filling matrix" << endl;
     #endif
 
     vector<uint16_t> var_to_col;
-    origMat.num_rows = select_columnorder(var_to_col);
+    origMat.num_rows = select_columnorder(var_to_col, origMat);
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
     changed_rows.resize(origMat.num_rows);
     changed_rows.setZero();
-    if (origMat.num_rows == 0) return;
 
     origMat.last_one_in_col.resize(origMat.num_cols);
     std::fill(origMat.last_one_in_col.begin(), origMat.last_one_in_col.end(), origMat.num_rows);
@@ -322,7 +319,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
             last = 0;
     }
     m.num_cols -= last;
-    m.past_the_end_last_one_in_col -= last;
+    m.past_the_end_last_one_in_col = std::min(m.past_the_end_last_one_in_col, (uint16_t)m.num_cols);
     
     #ifdef DEBUG_GAUSS
     check_matrix_against_varset(m.matrix, m.varset, m);
@@ -342,7 +339,8 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
 
 Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
 {
-    if (origMat.num_rows == 0) return nothing;
+    if (solver.decisionLevel() >= badlevel)
+        return nothing;
 
     if (!messed_matrix_vars_since_reversal) {
         #ifdef VERBOSE_DEBUG
@@ -355,22 +353,19 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
         cout << "(" << matrix_no << ")matrix needs copy&update" << endl;
         #endif
         
-        if (went_below_decision_from)
-            cur_matrixset = origMat;
-        else
-            cur_matrixset = matrix_sets[((solver.decisionLevel() - config.decision_from) / config.only_nth_gauss_save)];
+        
+        const uint level = solver.decisionLevel() / config.only_nth_gauss_save;
+        assert(level < matrix_sets.size());
+        cur_matrixset = matrix_sets[level];
         
         update_matrix_by_col_all(cur_matrixset);
     }
-    if (!cur_matrixset.num_cols || !cur_matrixset.num_cols)
-        return nothing;
 
     messed_matrix_vars_since_reversal = false;
     gauss_last_level = solver.trail.size();
-    went_below_decision_from = false;
+    badlevel = UINT_MAX;
 
     propagatable_rows.clear();
-    
     uint conflict_row = UINT_MAX;
     uint last_row = eliminate(cur_matrixset, conflict_row);
     #ifdef DEBUG_GAUSS
@@ -384,14 +379,16 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
         uint best_row = UINT_MAX;
         analyse_confl(cur_matrixset, conflict_row, maxlevel, size, best_row);
         ret = handle_matrix_confl(confl, cur_matrixset, size, maxlevel, best_row);
-        
     } else {
         ret = handle_matrix_prop_and_confl(cur_matrixset, last_row, confl);
     }
     
-    if (ret == nothing
-        && (solver.decisionLevel() == 0 || ((solver.decisionLevel() - config.decision_from) % config.only_nth_gauss_save == 0))
-       )
+    if (!cur_matrixset.num_cols || !cur_matrixset.num_rows) {
+        badlevel = solver.decisionLevel();
+        return nothing;
+    }
+    
+    if (ret == nothing)
         set_matrixset_to_cur();
 
     #ifdef VERBOSE_DEBUG

@@ -299,7 +299,6 @@ void printUsage(char** argv)
     printf("                   which is usually small (e.g. 80 bits)\n");
     printf("  -gaussuntil    = <num> The depth until which Gaussian elimination is active.\n");
     printf("                   giving 0 means that Gaussian elimination is switched off\n");
-    printf("  -gaussfrom     = <num> The depth from which Gaussian elimination is active.\n");
     printf("  -restarts       = <num> [1 - 2^32-1] No more than the given number of\n");
     printf("                   restarts will be performed during search\n");
     printf("  -noxorfind      = Don't find and collect xor-clauses from regular clauses\n");
@@ -397,14 +396,6 @@ int main(int argc, char** argv)
             }
             cout << "Gaussian until:" << until << endl;
             S.set_gaussian_decision_until(until);
-        } else if ((value = hasPrefix(argv[i], "-gaussfrom="))) {
-            uint32_t from;
-            if (sscanf(value, "%d", &from) < 0) {
-                printf("ERROR! from %s\n", value);
-                exit(0);
-            }
-            cout << "Gaussian from:" << from << endl;
-            S.set_gaussian_decision_from(from);
         } else if ((value = hasPrefix(argv[i], "-restarts="))) {
             uint maxrest;
             if (sscanf(value, "%d", &maxrest) < 0 || maxrest == 0) {

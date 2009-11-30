@@ -338,8 +338,6 @@ void Solver::cancelUntil(int level)
         qhead = trail_lim[level];
         trail.shrink(trail.size() - trail_lim[level]);
         trail_lim.shrink(trail_lim.size() - level);
-        for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
-            (*gauss)->back_to_level(decisionLevel());
     }
 
     #ifdef VERBOSE_DEBUG
@@ -402,11 +400,6 @@ void Solver::printClause(const XorClause& c) const
 void Solver::set_gaussian_decision_until(const uint to)
 {
     gaussconfig.decision_until = to;
-}
-
-void Solver::set_gaussian_decision_from(const uint from)
-{
-    gaussconfig.decision_from = from;
 }
 
 //=================================================================================================

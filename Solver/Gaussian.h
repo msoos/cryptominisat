@@ -72,6 +72,7 @@ protected:
 
     vector<Var> col_to_var_original; //Matches columns to variables
     BitArray var_is_in; //variable is part of the the matrix. var_is_in's size is _minimal_ so you should check whether var_is_in.getSize() < var before issuing var_is_in[var]
+    uint badlevel;
 
     class matrixset
     {
@@ -90,14 +91,12 @@ protected:
 
     //Saved states
     vector<matrixset> matrix_sets; // The matrixsets for depths 'decision_from' + 0,  'decision_from' + only_nth_gaussian_save, 'decision_from' + 2*only_nth_gaussian_save, ... 'decision_from' + 'decision_until'.
-    matrixset origMat; // The matrixset at depth 0 of the search tree
     matrixset cur_matrixset; // The current matrixset, i.e. the one we are working on, or the last one we worked on
 
     //Varibales to keep Gauss state
     bool messed_matrix_vars_since_reversal;
     int gauss_last_level;
     vector<Clause*> matrix_clauses_toclear;
-    bool went_below_decision_from;
     bool disabled; // Gauss is disabled
     
     //State of current elimnation
@@ -111,8 +110,8 @@ protected:
 
     //gauss init functions
     void init(); // Initalise gauss state
-    void fill_matrix(); // Fills the origMat matrix
-    uint select_columnorder(vector<uint16_t>& var_to_col); // Fills var_to_col and col_to_var of the origMat matrix.
+    void fill_matrix(matrixset& origMat); // Fills the origMat matrix
+    uint select_columnorder(vector<uint16_t>& var_to_col, matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
 
     //Main function
     uint eliminate(matrixset& matrix, uint& conflict_row); //does the actual gaussian elimination
@@ -157,11 +156,6 @@ private:
     static const string lbool_to_string(const lbool toprint);
 };
 
-inline void Gaussian::back_to_level(const uint level)
-{
-    if (level <= config.decision_from) went_below_decision_from = true;
-}
-
 inline bool Gaussian::should_init() const
 {
     return (solver.starts >= config.starts_from && config.decision_until > 0);
@@ -171,8 +165,7 @@ inline bool Gaussian::should_check_gauss(const uint decisionlevel, const uint st
 {
     return (!disabled
             && starts >= config.starts_from
-            && decisionlevel < config.decision_until
-            && decisionlevel >= config.decision_from);
+            && decisionlevel < config.decision_until);
 }
 
 inline void Gaussian::canceling(const uint level, const Var var)
