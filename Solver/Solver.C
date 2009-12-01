@@ -37,6 +37,13 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Conglomerate.h"
 #include "XorFinder.h"
 
+//#define DEBUG_LIB
+
+#ifdef DEBUG_LIB
+#include <sstream>
+FILE* myoutputfile;
+static uint numcalled = 0;
+#endif //DEBUG_LIB
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -87,6 +94,12 @@ Solver::Solver() :
     toReplace = new VarReplacer(this);
     conglomerate = new Conglomerate(this);
     logger.setSolver(this);
+    
+    #ifdef DEBUG_LIB
+    std::stringstream ss;
+    ss << "inputfile" << numcalled << ".cnf";
+    myoutputfile = fopen(ss.str().c_str(), "w");
+    #endif
 }
 
 
@@ -100,6 +113,10 @@ Solver::~Solver()
     gauss_matrixes.clear();
     delete toReplace;
     delete conglomerate;
+    
+    #ifdef DEBUG_LIB
+    fclose(myoutputfile);
+    #endif //DEBUG_LIB
 }
 
 //=================================================================================================
@@ -137,6 +154,13 @@ Var Solver::newVar(bool sign, bool dvar)
 bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
+    #ifdef DEBUG_LIB
+    fprintf(myoutputfile, "x");
+    for (uint i = 0; i < ps.size(); i++) {
+        fprintf(myoutputfile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
+    }
+    fprintf(myoutputfile, "0\n");
+    #endif //DEBUG_LIB
 
     if (dynamic_behaviour_analysis) logger.set_group_name(group, group_name);
 
@@ -206,6 +230,13 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
 bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
+    
+    #ifdef DEBUG_LIB
+    for (int i = 0; i < ps.size(); i++) {
+        fprintf(myoutputfile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
+    }
+    fprintf(myoutputfile, "0\n");
+    #endif //DEBUG_LIB
 
     if (dynamic_behaviour_analysis)
         logger.set_group_name(group, group_name);
@@ -1395,6 +1426,10 @@ void Solver::print_gauss_sum_stats() const
 
 lbool Solver::solve(const vec<Lit>& assumps)
 {
+    #ifdef DEBUG_LIB
+    fprintf(myoutputfile, "c Solver::solve() called\n");
+    #endif
+    
     if (dynamic_behaviour_analysis)
         logger.end(Logger::done_adding_clauses);
     
