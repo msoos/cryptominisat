@@ -46,7 +46,8 @@ void VarReplacer::performReplace()
     replace_set(S->xorclauses, true);
     replace_set(S->conglomerate->getCalcAtFinish(), false);
     
-    printf("|  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars, replacedLits);
+    if (S->verbosity >=1)
+        printf("|  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars, replacedLits);
     
     replacedLits = 0;
     addedNewClause = false;

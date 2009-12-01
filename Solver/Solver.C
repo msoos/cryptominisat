@@ -1460,7 +1460,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
             XorFinder xorFinder(this, clauses);
             uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
             
-            printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+            if (verbosity >=1)
+                printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
             if (!ok) return l_False;
         }
         
@@ -1475,7 +1476,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
             removeSatisfied(xorclauses);
             cleanClauses(xorclauses);
             uint foundCong = conglomerate->conglomerateXors();
-            printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
+            if (verbosity >=1)
+                printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
             if (!ok) return l_False;
             
             uint new_total = 0;
@@ -1483,8 +1485,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
             for (uint i = 0; i < xorclauses.size(); i++) {
                 new_total += xorclauses[i]->size();
             }
-            printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
-            printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
+            if (verbosity >=1) {
+                printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
+                printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
+            }
         }
     }
     
@@ -1497,7 +1501,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         double time = cpuTime();
         MatrixFinder m(this);
         const uint numMatrixes = m.findMatrixes();
-        printf("|  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, numMatrixes);
+        if (verbosity >=1)
+            printf("|  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, numMatrixes);
     }
     
 

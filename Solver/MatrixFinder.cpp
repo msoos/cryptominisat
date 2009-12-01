@@ -174,17 +174,21 @@ const uint MatrixFinder::setMatrixes()
             && numXorInMatrix[a].second <= 1000
             && realMatrixNum < 3)
         {
-            cout << "|  Matrix no " << std::setw(4) << realMatrixNum;
+            if (S->verbosity >=1)
+                cout << "|  Matrix no " << std::setw(4) << realMatrixNum;
             S->gauss_matrixes.push_back(new Gaussian(*S, S->gaussconfig, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
             
         } else {
-            cout << "|  Unused Matrix ";
+            if (S->verbosity >=1)
+                cout << "|  Unused Matrix ";
         }
-        cout << std::setw(5) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
-        cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
-        cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
-        cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << "  |" << endl;
+        if (S->verbosity >=1) {
+            cout << std::setw(5) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
+            cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
+            cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
+            cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << "  |" << endl;
+        }
     }
     
     return realMatrixNum;
