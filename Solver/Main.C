@@ -465,13 +465,6 @@ int main(int argc, char** argv)
     double parse_time = cpuTime() - cpu_time;
     if (S.verbosity >= 1) printf("|  Parsing time:         %-12.2f s                                       |\n", parse_time);
 
-    if (S.simplify() != l_Undef) {
-        printf("Solved by unit propagation\n");
-        if (res != NULL) fprintf(res, "UNSAT\n"), fclose(res);
-        printf("UNSATISFIABLE\n");
-        exit(20);
-    }
-
     lbool ret = S.solve();
     if (S.verbosity >= 1) printStats(S);
     printf("\n");

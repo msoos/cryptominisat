@@ -72,7 +72,6 @@ public:
 
     // Solving:
     //
-    lbool    simplify    ();                        // Removes already satisfied clauses.
     lbool    solve       (const vec<Lit>& assumps); // Search for a model that respects a given set of assumptions.
     lbool    solve       ();                        // Search without assumptions.
     bool    okay         () const;                  // FALSE means solver is in a conflicting state
@@ -229,6 +228,7 @@ protected:
 
     // Main internal methods:
     //
+    lbool    simplify    ();                                                           // Removes already satisfied clauses.
     //int      nbPropagated     (int level);
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
     Lit      pickBranchLit    (int polarity_mode);                                     // Return the next decision variable.
