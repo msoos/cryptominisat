@@ -14,6 +14,7 @@ using std::endl;
 VarReplacer::VarReplacer(Solver *_S) :
     replacedLits(0)
     , replacedVars(0)
+    , addedNewClause(false)
     , S(_S)
 {
 }
@@ -29,7 +30,7 @@ void VarReplacer::performReplace()
     }
     #endif
     
-    if (replacedVars == 0) return;
+    if (!addedNewClause || replacedVars == 0) return;
     
     replace_set(S->clauses);
     replace_set(S->learnts);
@@ -39,8 +40,8 @@ void VarReplacer::performReplace()
     
     printf("|  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars, replacedLits);
     
-    replacedVars = 0;
     replacedLits = 0;
+    addedNewClause = false;
     
     if (S->ok)
         S->ok = (S->propagate() == NULL);
@@ -336,3 +337,9 @@ void VarReplacer::newVar()
 {
     table.push_back(Lit(table.size(), false));
 }
+
+void VarReplacer::newClause()
+{
+    addedNewClause = true;
+}
+

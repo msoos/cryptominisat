@@ -23,6 +23,7 @@ class VarReplacer
         const uint getNumReplacedLits() const;
         const uint getNumReplacedVars() const;
         const vector<Var> getReplacingVars() const;
+        void newClause();
         void newVar();
     
     private:
@@ -38,6 +39,7 @@ class VarReplacer
         
         uint replacedLits;
         uint replacedVars;
+        bool addedNewClause;
         Solver* S;
 };
 

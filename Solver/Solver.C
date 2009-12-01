@@ -195,6 +195,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         xorclauses.push(c);
         xorclauses_tofree.push(c);
         attachClause(*c);
+        toReplace->newClause();
         break;
     }
     }
@@ -241,6 +242,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
 
         clauses.push(c);
         attachClause(*c);
+        toReplace->newClause();
     }
 
     return true;
