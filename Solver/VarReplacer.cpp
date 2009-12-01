@@ -226,6 +226,39 @@ void VarReplacer::extendModel() const
     }
 }
 
+void VarReplacer::extendLevelZeroEnqueue(Var var)
+{
+    #ifdef VERBOSE_DEBUG
+    cout << "Extending 0-level var "; S->printLit(Lit(var, false));
+    cout << endl;
+    #endif
+    
+    assert(S->decisionLevel() == 0);
+    
+    const Var origVar = var;
+    bool val = !S->assigns[origVar].getBool();
+    if (table[origVar].var() != origVar) {
+        assert(S->assigns[table[origVar].var()] == l_Undef);
+        S->uncheckedEnqueue(table[origVar] ^ val);
+        
+        var = table[origVar].var();
+        val ^= table[origVar].sign();
+        table[origVar] = Lit(origVar, false);
+    }
+    
+    map<Var, vector<Var> >::iterator it = reverseTable.find(var);
+    if (it != reverseTable.end()) {
+        for(vector<Var>::const_iterator it2 = it->second.begin(), end = it->second.end(); it2 != end; it2++) {
+            if (*it2 != origVar && *it2 != var) {
+                assert(S->assigns[*it2] == l_Undef);
+                S->uncheckedEnqueue(Lit(*it2, val ^ table[*it2].sign()));
+                table[*it2] = Lit(*it2, false);
+            }
+        }
+        reverseTable.erase(it);
+    }
+}
+
 void VarReplacer::replace(Var var, Lit lit)
 {
     assert(var != lit.var());

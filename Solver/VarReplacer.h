@@ -25,6 +25,7 @@ class VarReplacer
         const vector<Var> getReplacingVars() const;
         void newClause();
         void newVar();
+        void extendLevelZeroEnqueue(Var var);
     
     private:
         void replace_set(vec<Clause*>& set);

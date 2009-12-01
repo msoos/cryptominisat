@@ -176,6 +176,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         uncheckedEnqueue( (xor_clause_inverted) ? ~ps[0] : ps[0]);
         if (dynamic_behaviour_analysis)
             logger.propagation((xor_clause_inverted) ? ~ps[0] : ps[0], Logger::add_clause_type, group);
+        toReplace->extendLevelZeroEnqueue(ps[0].var());
         return ok = (propagate() == NULL);
     }
     case 2: {
@@ -233,6 +234,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
         uncheckedEnqueue(ps[0]);
         if (dynamic_behaviour_analysis)
             logger.propagation(ps[0], Logger::add_clause_type, group);
+        toReplace->extendLevelZeroEnqueue(ps[0].var());
         return ok = (propagate() == NULL);
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
