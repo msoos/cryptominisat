@@ -1400,7 +1400,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
     model.clear();
     conflict.clear();
-    curRestart = 1;
 
     if (!ok) return l_False;
 
