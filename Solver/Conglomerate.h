@@ -23,11 +23,11 @@ public:
     
 private:
     
-    void process_clause(XorClause& x, const uint num, uint var, vector<Lit>& vars);
+    void process_clause(XorClause& x, const uint num, uint var, vec<Lit>& vars);
     void fillVarToXor();
-    void clearDouble(vector<Lit>& ps) const;
+    void clearDouble(vec<Lit>& ps) const;
     void clearToRemove();
-    bool dealWithNewClause(vector<Lit>& ps, const bool inverted, const uint old_group);
+    bool dealWithNewClause(vec<Lit>& ps, const bool inverted, const uint old_group);
     
     typedef map<uint, vector<pair<XorClause*, uint> > > varToXorMap;
     varToXorMap varToXor; 

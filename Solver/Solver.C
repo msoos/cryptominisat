@@ -197,10 +197,9 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
     }
     case 1: {
         assert(value(ps[0]) == l_Undef);
-        uncheckedEnqueue( (xor_clause_inverted) ? ~ps[0] : ps[0]);
+        uncheckedEnqueue(ps[0] ^ xor_clause_inverted);
         if (dynamic_behaviour_analysis)
             logger.propagation((xor_clause_inverted) ? ~ps[0] : ps[0], Logger::add_clause_type, group);
-        toReplace->extendLevelZeroEnqueue(ps[0].var());
         return ok = (propagate() == NULL);
     }
     case 2: {
@@ -208,8 +207,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xor_clause_inverted ? "-" : "") << ps[1].var()+1 << endl;
         #endif
         
-        learnt_clause_group = std::max(group+1, learnt_clause_group);
-        toReplace->replace(ps[0].var(), Lit(ps[1].var(), !xor_clause_inverted));
+        toReplace->replace(ps, xor_clause_inverted, group);
         break;
     }
     default: {
@@ -265,7 +263,6 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
         uncheckedEnqueue(ps[0]);
         if (dynamic_behaviour_analysis)
             logger.propagation(ps[0], Logger::add_clause_type, group);
-        toReplace->extendLevelZeroEnqueue(ps[0].var());
         return ok = (propagate() == NULL);
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
@@ -1123,10 +1120,10 @@ void Solver::cleanClauses(vec<XorClause*>& cs)
         if (i-j > 0) useful++;
         
         if (c.size() == 2) {
-            vec<Lit> ps;
-            ps.push(c[0]);
-            ps.push(c[1]);
-            addBinaryXorClause(ps, c.xor_clause_inverted(), c.group);
+            vec<Lit> ps(2);
+            ps[0] = c[0];
+            ps[1] = c[1];
+            toReplace->replace(ps, c.xor_clause_inverted(), c.group);
             removeClause(c);
             s++;
         } else
@@ -1490,6 +1487,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
             printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
         }
     }
+    
+    toReplace->performReplace();
+    if (!ok) return l_False;
     
     if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
         removeSatisfied(xorclauses);

@@ -32,6 +32,14 @@ void VarReplacer::performReplace()
     
     if (!addedNewClause || replacedVars == 0) return;
     
+    S->removeSatisfied(S->clauses);
+    S->removeSatisfied(S->xorclauses);
+    S->cleanClauses(S->clauses);
+    S->cleanClauses(S->xorclauses);
+    for (uint i = 0; i < toRemove.size(); i++)
+        S->removeClause(*toRemove[i]);
+    toRemove.clear();
+    
     replace_set(S->clauses);
     replace_set(S->learnts);
     
@@ -99,7 +107,10 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
                 break;
             default:
                 if (c.size() == 2) {
-                    S->addBinaryXorClause(c, c.xor_clause_inverted(), c.group);
+                    vec<Lit> ps(2);
+                    ps[0] = c[0];
+                    ps[1] = c[1];
+                    addBinaryXorClause(ps, c.xor_clause_inverted(), c.group, true);
                     c.mark(1);
                     r++;
                 } else {
@@ -192,6 +203,11 @@ const uint VarReplacer::getNumReplacedVars() const
     return replacedVars;
 }
 
+const vector<Lit>& VarReplacer::getReplaceTable() const
+{
+    return table;
+}
+
 const vector<Var> VarReplacer::getReplacingVars() const
 {
     vector<Var> replacingVars;
@@ -215,49 +231,21 @@ void VarReplacer::extendModel() const
         cout << endl;
         #endif
         
-        assert(S->assigns[i] == l_Undef);
         assert(S->assigns[it->var()] != l_Undef);
-        
-        bool val = (S->assigns[it->var()] == l_False);
-        S->uncheckedEnqueue(Lit(i, val ^ it->sign()));
-    }
-}
-
-void VarReplacer::extendLevelZeroEnqueue(Var var)
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "Extending 0-level var "; S->printLit(Lit(var, false));
-    cout << endl;
-    #endif
-    
-    assert(S->decisionLevel() == 0);
-    
-    const Var origVar = var;
-    bool val = !S->assigns[origVar].getBool();
-    if (table[origVar].var() != origVar) {
-        assert(S->assigns[table[origVar].var()] == l_Undef);
-        S->uncheckedEnqueue(table[origVar] ^ val);
-        
-        var = table[origVar].var();
-        val ^= table[origVar].sign();
-        table[origVar] = Lit(origVar, false);
-    }
-    
-    map<Var, vector<Var> >::iterator it = reverseTable.find(var);
-    if (it != reverseTable.end()) {
-        for(vector<Var>::const_iterator it2 = it->second.begin(), end = it->second.end(); it2 != end; it2++) {
-            if (*it2 != origVar && *it2 != var) {
-                assert(S->assigns[*it2] == l_Undef);
-                S->uncheckedEnqueue(Lit(*it2, val ^ table[*it2].sign()));
-                table[*it2] = Lit(*it2, false);
-            }
+        if (S->assigns[i] == l_Undef) {
+            bool val = (S->assigns[it->var()] == l_False);
+            S->uncheckedEnqueue(Lit(i, val ^ it->sign()));
+        } else {
+            assert(S->assigns[i].getBool() == S->assigns[it->var()].getBool() ^ it->sign());
         }
-        reverseTable.erase(it);
     }
 }
 
-void VarReplacer::replace(Var var, Lit lit)
+void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group)
 {
+    addBinaryXorClause(ps, xor_clause_inverted, group);
+    Var var = ps[0].var();
+    Lit lit = Lit(ps[1].var(), !xor_clause_inverted);
     assert(var != lit.var());
     
     //Detect circle
@@ -319,6 +307,30 @@ void VarReplacer::replace(Var var, Lit lit)
     table[var] = lit;
     reverseTable[lit.var()].push_back(var);
     S->setDecisionVar(var, false);
+}
+
+void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal)
+{
+    Clause* c;
+    ps[0] = ps[0].unsign();
+    ps[1] = ps[1].unsign();
+    ps[0] ^= xor_clause_inverted;
+    
+    c = Clause_new(ps, group, false);
+    if (internal)
+        S->clauses.push(c);
+    else
+        toRemove.push(c);
+    S->attachClause(*c);
+    
+    ps[0] ^= true;
+    ps[1] ^= true;
+    c = Clause_new(ps, group, false);
+    if (internal)
+        S->clauses.push(c);
+    else
+        toRemove.push(c);
+    S->attachClause(*c);
 }
 
 bool VarReplacer::alreadyIn(const Var var, const Lit lit)

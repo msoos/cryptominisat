@@ -57,9 +57,8 @@ uint XorFinder::doNoPart(uint& sumLengths, const uint minSize, const uint maxSiz
     if (found > 0) {
         clearToRemove();
         
-        S->toReplace->performReplace();
-        if (S->ok == false) return found;
-        S->ok = (S->propagate() == NULL);
+        if (S->ok != false)
+            S->ok = (S->propagate() == NULL);
     }
     
     return found;
@@ -136,9 +135,8 @@ uint XorFinder::doByPart(uint& sumLengths, const uint minSize, const uint maxSiz
     
     clearToRemove();
     
-    S->toReplace->performReplace();
-    if (S->ok == false) return found;
-    S->ok = (S->propagate() == NULL);
+    if (S->ok != false)
+        S->ok = (S->propagate() == NULL);
     
     #ifdef VERBOSE_DEBUG
     cout << "Overdone work due to partitioning:" << (double)sumNumClauses/(double)cls.size() << "x" << endl;
@@ -159,13 +157,13 @@ uint XorFinder::findXors(uint& sumLengths)
     
     ClauseTable::iterator begin = table.begin();
     ClauseTable::iterator end = table.begin();
-    vector<Lit> lits;
+    vec<Lit> lits;
     bool impair;
     while (getNextXor(begin,  end, impair)) {
         const Clause& c = *(begin->first);
         lits.clear();
         for (const Lit *it = &c[0], *cend = it+c.size() ; it != cend; it++) {
-            lits.push_back(Lit(it->var(), false));
+            lits.push(Lit(it->var(), false));
         }
         uint old_group = c.group;
         
@@ -183,7 +181,7 @@ uint XorFinder::findXors(uint& sumLengths)
         
         switch(lits.size()) {
         case 2: {
-            S->toReplace->replace(lits[0].var(), Lit(lits[1].var(), !impair));
+            S->toReplace->replace(lits, impair, old_group);
             
             #ifdef VERBOSE_DEBUG
             XorClause* x = XorClause_new(lits, impair, old_group);

@@ -271,8 +271,6 @@ protected:
     bool     satisfied        (const XorClause& c) const; // Returns TRUE if the clause is satisfied in the current state
     bool     satisfied        (const Clause& c) const; // Returns TRUE if the clause is satisfied in the current state.
     void     reverse_binary_clause(Clause& c) const;   // Binary clauses --- the first Lit has to be true
-    template<class T>
-    inline void addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint group);  //Adds Binary XOR clause as two normal clauses
 
     // Misc:
     //
@@ -473,23 +471,6 @@ inline void Solver::reverse_binary_clause(Clause& c) const {
         Lit tmp = c[0];
         c[0] =  c[1], c[1] = tmp;
     }
-}
-template<class T>
-inline void Solver::addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint group) {
-    Clause* c;
-    ps[0] = ps[0].unsign();
-    ps[1] = ps[1].unsign();
-    ps[0] ^= xor_clause_inverted;
-    
-    c = Clause_new(ps, group, false);
-    clauses.push(c);
-    attachClause(*c);
-    
-    ps[0] ^= true;
-    ps[1] ^= true;
-    c = Clause_new(ps, group, false);
-    clauses.push(c);
-    attachClause(*c);
 }
 inline void Solver::removeClause(Clause& c)
 {
