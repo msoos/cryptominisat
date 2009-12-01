@@ -88,18 +88,16 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
             c.shrink(i - j);
             
             switch (c.size()) {
-            case 0: {
+            case 0:
                 if (!c.xor_clause_inverted())
                     S->ok = false;
                 r++;
                 break;
-            }
-            case 1: {
+            case 1:
                 S->uncheckedEnqueue(Lit(c[0].var(), !c.xor_clause_inverted()));
                 r++;
                 break;
-            }
-            default: {
+            default:
                 if (c.size() == 2) {
                     S->addBinaryXorClause(c, c.xor_clause_inverted(), c.group);
                     c.mark(1);
@@ -109,7 +107,6 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
                     *a++ = *r++;
                 }
                 break;
-            }
             }
         } else {
             *a++ = *r++;
