@@ -1629,7 +1629,8 @@ next:
 
     assert(!failed);
 
-    printf("Verified %d clauses.\n", clauses.size() + xorclauses.size() + conglomerate->getCalcAtFinish().size());
+    if (verbosity >=1)
+        printf("Verified %d clauses.\n", clauses.size() + xorclauses.size() + conglomerate->getCalcAtFinish().size());
 }
 
 
