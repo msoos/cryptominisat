@@ -76,8 +76,8 @@ public:
     }
 
     // -- use this function instead:
-    friend Clause* Clause_new(const vec<Lit>& ps, const uint group, const bool learnt = false);
-    friend Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt = false);
+    template<class T>
+    friend Clause* Clause_new(const T& ps, const uint group, const bool learnt = false);
 
     uint         size        ()      const {
         return size_etc >> 16;
@@ -168,11 +168,7 @@ public:
 
     // -- use this function instead:
     template<class V>
-    friend XorClause* XorClause_new(const V& ps, const bool inverted, const uint group) {
-        void* mem = malloc(sizeof(XorClause) + sizeof(Lit)*(ps.size()));
-        XorClause* real= new (mem) XorClause(ps, inverted, group);
-        return real;
-    }
+    friend XorClause* XorClause_new(const V& ps, const bool inverted, const uint group);
 
     inline bool xor_clause_inverted() const
     {
@@ -223,7 +219,14 @@ Clause* Clause_new(const T& ps, const uint group, const bool learnt = false)
     Clause* real= new (mem) Clause(ps, group, learnt);
     return real;
 }
-//Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt);
+
+template<class T>
+XorClause* XorClause_new(const T& ps, const bool inverted, const uint group)
+{
+    void* mem = malloc(sizeof(XorClause) + sizeof(Lit)*(ps.size()));
+    XorClause* real= new (mem) XorClause(ps, inverted, group);
+    return real;
+}
 
 /*_________________________________________________________________________________________________
 |
