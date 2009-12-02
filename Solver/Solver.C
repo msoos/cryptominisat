@@ -172,6 +172,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
     Lit p;
     int i, j;
     for (i = j = 0, p = lit_Undef; i < ps.size(); i++) {
+        ps[i] = toReplace->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
         xor_clause_inverted ^= ps[i].sign();
         ps[i] ^= ps[i].sign();
 
@@ -247,6 +248,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
     Lit p;
     int i, j;
     for (i = j = 0, p = lit_Undef; i < ps.size(); i++) {
+        ps[i] = toReplace->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
         if (value(ps[i]) == l_True || ps[i] == ~p)
             return true;
         else if (value(ps[i]) != l_False && ps[i] != p)
