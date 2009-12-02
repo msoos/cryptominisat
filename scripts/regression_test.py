@@ -162,7 +162,7 @@ class Tester:
 
   def test_found(self, unsat, value, fname, debugLibPart = 1000000):
     if (debugLibPart == 1000000) :
-      print "Examining full CNF file."
+      print "Examining CNF file %s" %(fname)
     else :
       print "Examining CNF file %s, part %d" %(fname, debugLibPart)
     
@@ -217,7 +217,7 @@ class Tester:
       if (unsat == False) :
         self.test_found(unsat, value, fname, debugLibPart)
       else :
-        print "Not testing result, as it is UNSAT"
+        print "Not examining part %d -- it is UNSAT" %(debugLibPart)
     
     #print "Checking against solution %s" %(of)
     unsat, value = self.read_found(of)
