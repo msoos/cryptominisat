@@ -32,7 +32,7 @@ class Tester:
             print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
             exit()
 
-    command = "%s -randomize=%d "%(self.cryptominisat, i)
+    command = "%s -randomize=%d -debugLib "%(self.cryptominisat, i)
     if (self.greedyUnbound) :
         command += "-greedyUnbound "
     command += "-gaussuntil=%d \"%s\" %s"%(self.gaussUntil, fname, of)
@@ -66,7 +66,7 @@ class Tester:
 
     if (len(mylines) == 0) :
       print "Error! MiniSat output is empty!"
-      exit(-1);
+      exit(-1)
 
     unsat = False
     if ('UNSAT' in mylines[0]) :
@@ -160,29 +160,41 @@ class Tester:
       print "Error: xor-clause '%s' not satisfied." %(line)
       exit(-1)
 
-  def test_found(self, unsat, value, fname):
+  def test_found(self, unsat, value, fname, debugLibPart = 1000000):
+    if (debugLibPart == 1000000) :
+      print "Examining full CNF file."
+    else :
+      print "Examining CNF file %s, part %d" %(fname, debugLibPart)
+    
     if fnmatch.fnmatch(fname, '*.gz') :
       f = gzip.open(fname, "r")
     else :
       f = open(fname, "r")
     line = f.readline()
     clauses = 0
+    thisDebugLibPart = 0
     while line:
       #print "Examining line '%s'" %(line)
       line = line.rstrip()
+      if ("Solver::solve()" in line) :
+        thisDebugLibPart += 1
+      if (thisDebugLibPart >= debugLibPart) :
+        f.close()
+        #print "Verified %d original xor&regular clauses" %(clauses)
+        return
       if (line[0] != 'c' and line[0] != 'p') :
         if (line[0] != 'x') :
           self.check_regular_clause(line, value)
         else :
-          self.check_xor_clause(line, value);
+          self.check_xor_clause(line, value)
         
         clauses += 1
           
       line = f.readline()
       
-    print "Verified %d original xor&regular clauses" %(clauses)
+    #print "Verified %d original xor&regular clauses" %(clauses)
       
-    f.close();
+    f.close()
     
   def check(self, fname, i):
     of = "outputfile"
@@ -190,6 +202,24 @@ class Tester:
     self.parse_consoleOutput(consoleOutput)
     print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" %(fname[:20]+"....cnf.gz", i, self.sumProp, self.sumTime)
     
+    largestPart = -1
+    dirList2 = os.listdir(".")
+    for fname_debug in dirList2:
+      if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
+        debugLibPart = int(fname_debug[fname_debug.index("t")+1:fname_debug.rindex(".output")])
+        if (largestPart < debugLibPart) :
+          largestPart = debugLibPart
+    
+    for debugLibPart in range(1,largestPart+1) :
+      fname_debug = "debugLibPart%d.output" %(debugLibPart)
+      #print "debugLibPart: %d, %s" %(debugLibPart, fname_debug)
+      unsat, value = self.read_found(fname_debug)
+      if (unsat == False) :
+        self.test_found(unsat, value, fname, debugLibPart)
+      else :
+        print "Not testing result, as it is UNSAT"
+    
+    #print "Checking against solution %s" %(of)
     unsat, value = self.read_found(of)
     self.test_expect(unsat, value, fname[:len(fname)-6] + "output.gz")
     if (unsat == False) : 
@@ -236,6 +266,11 @@ class Tester:
         else:
             assert False, "unhandled option"
 
+    dirList2=os.listdir(".")
+    for fname_unlink in dirList2:
+        if fnmatch.fnmatch(fname_unlink, 'debugLibPart*'):
+          os.unlink(fname_unlink);
+    
     if (fname == None) :
       dirList=os.listdir(self.testDir)
       if (self.testDir == ".") :
@@ -243,7 +278,7 @@ class Tester:
       for fname in dirList:
         if fnmatch.fnmatch(fname, '*.cnf.gz'):
           for i in range(num):
-            self.check(self.testDir + fname, i);
+            self.check(self.testDir + fname, i)
             
     else:
       if (os.path.isfile(fname) == False) :
