@@ -171,7 +171,8 @@ uint XorFinder::findXors(uint& sumLengths)
         cout << "- Found clauses:" << endl;
         #endif
         
-        for (ClauseTable::iterator it = begin; it != end; it++) {
+        for (ClauseTable::iterator it = begin; it != end; it++)
+            if (impairSigns(*it->first) == impair){
             #ifdef VERBOSE_DEBUG
             it->first->plain_print();
             #endif
