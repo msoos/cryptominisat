@@ -123,6 +123,8 @@ void Logger::set_group_name(const uint group, string name)
 
     if (name.length() == 0) return;
     
+    if (name == "Noname" || name == "") return;
+    
     if (groupnames[group] == "Noname") {
         groupnames[group] = name;
     } else if (groupnames[group] != name) {
