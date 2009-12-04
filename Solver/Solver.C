@@ -1432,6 +1432,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
             nbclausesbeforereduce = (nClauses() * learntsize_factor)/2;
     }
     
+    conglomerate->addRemovedClauses();
+    
     if (performReplace) {
         toReplace->performReplace();
         if (!ok) return l_False;
