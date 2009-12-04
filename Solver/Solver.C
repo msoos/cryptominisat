@@ -1590,8 +1590,10 @@ bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
         bool final = c.xor_clause_inverted();
         
         #ifdef VERBOSE_DEBUG
-        std::sort(&c[0], &c[0] + c.size());
-        c.plain_print();
+        XorClause* c2 = XorClause_new(c, c.xor_clause_inverted(), c.group);
+        std::sort(c2->getData(), c2->getData()+ c2->size());
+        c2->plain_print();
+        free(c2);
         #endif
         
         for (uint j = 0; j < c.size(); j++) {
