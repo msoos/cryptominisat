@@ -16,6 +16,7 @@ class Conglomerate
 {
 public:
     Conglomerate(Solver *S);
+    ~Conglomerate();
     uint conglomerateXors(); ///<Conglomerate XOR-s that are attached using a variable
     void addRemovedClauses(); ///<Add clauses that have been removed. Used if solve() is called multiple times
     void doCalcAtFinish(); ///<Calculate variables removed during conglomeration

@@ -18,6 +18,12 @@ Conglomerate::Conglomerate(Solver *_S) :
     S(_S)
 {}
 
+Conglomerate::~Conglomerate()
+{
+    for(uint i = 0; i < calcAtFinish.size(); i++)
+        free(calcAtFinish[i]);
+}
+
 const vec<XorClause*>& Conglomerate::getCalcAtFinish() const
 {
     return calcAtFinish;
