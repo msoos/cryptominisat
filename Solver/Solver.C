@@ -111,7 +111,7 @@ Solver::~Solver()
     for (int i = 0; i < clauses.size(); i++) free(clauses[i]);
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
     for (uint i = 0; i < gauss_matrixes.size(); i++) delete gauss_matrixes[i];
-    gauss_matrixes.clear();
+    for (uint i = 0; i < freeLater.size(); i++) free(freeLater[i]);
     delete toReplace;
     delete conglomerate;
     
@@ -1487,6 +1487,13 @@ lbool Solver::solve(const vec<Lit>& assumps)
             }
         }
     }
+    
+    for (uint i = 0; i < gauss_matrixes.size(); i++)
+        delete gauss_matrixes[i];
+    gauss_matrixes.clear();
+    for (uint i = 0; i < freeLater.size(); i++)
+        free(freeLater[i]);
+    freeLater.clear();
     
     if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
         removeSatisfied(xorclauses);

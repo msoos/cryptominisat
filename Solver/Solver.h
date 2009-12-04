@@ -181,6 +181,7 @@ protected:
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
     vec<Clause*>        unitary_learnts;  // List of learnt clauses.
+    vec<XorClause*>     freeLater;        // List of xorclauses to free at the end (due to matrixes, they cannot be freed immediately)
     vec<double>         activity;         // A heuristic measurement of the activity of a variable.
     double              var_inc;          // Amount to bump next variable with.
     vec<vec<Clause*> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
@@ -479,6 +480,7 @@ inline void Solver::removeClause(Clause& c)
 inline void Solver::removeClause(XorClause& c)
 {
     detachClause(c);
+    freeLater.push(&c);
     c.mark(1);
 }
 
