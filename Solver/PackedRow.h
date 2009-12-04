@@ -91,9 +91,11 @@ public:
         assert(b.size == size);
         #endif
         
-        memcpy(tmp_row, b.mp-1, sizeof(uint64_t)*(size+1));
-        memcpy(b.mp-1, mp-1, sizeof(uint64_t)*(size+1));
-        memcpy(mp-1, tmp_row, sizeof(uint64_t)*(size+1));
+        for (int i = -1; i != size; i++) {
+            uint64_t tmp(*(b.mp + i));
+            *(b.mp + i) = *(mp + i);
+            *(mp + i) = tmp;
+        }
     }
 
     PackedRow& operator^=(const PackedRow& b);
