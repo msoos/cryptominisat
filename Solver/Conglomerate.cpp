@@ -80,6 +80,7 @@ uint Conglomerate::conglomerateXors()
 {
     if (S->xorclauses.size() == 0)
         return 0;
+    toRemove.clear();
     toRemove.resize(S->xorclauses.size(), false);
     
     #ifdef VERBOSE_DEBUG
