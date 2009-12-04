@@ -1501,8 +1501,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     freeLater.clear();
     
     if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
-        removeSatisfied(xorclauses);
-        cleanClauses(xorclauses);
         double time = cpuTime();
         MatrixFinder m(this);
         const uint numMatrixes = m.findMatrixes();
