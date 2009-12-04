@@ -55,7 +55,6 @@ void VarReplacer::performReplace()
     if (S->verbosity >=1)
         printf("|  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars, replacedLits);
     
-    replacedLits = 0;
     addedNewClause = false;
     
     if (S->ok)
