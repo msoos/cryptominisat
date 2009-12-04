@@ -413,24 +413,6 @@ void Solver::cancelUntil(int level)
     #endif
 }
 
-//Permutates the clauses in the solver. Very useful to calcuate the average time it takes the solver to solve the prolbem
-void Solver::permutateClauses()
-{
-    for (int i = 0; i < clauses.size(); i++) {
-        int j = mtrand.randInt(i);
-        Clause* tmp = clauses[i];
-        clauses[i] = clauses[j];
-        clauses[j] = tmp;
-    }
-
-    for (int i = 0; i < xorclauses.size(); i++) {
-        int j = mtrand.randInt(i);
-        XorClause* tmp = xorclauses[i];
-        xorclauses[i] = xorclauses[j];
-        xorclauses[j] = tmp;
-    }
-}
-
 void Solver::setRealUnknown(const uint var)
 {
     if (realUnknowns.size() < var+1)

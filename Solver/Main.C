@@ -325,8 +325,8 @@ void printUsage(char** argv)
     printf("  -grouping      = Lets you group clauses, and customize the groups' names.\n");
     printf("                   This helps when printing statistics\n");
     printf("  -stats         = Computes and prints statistics during the search\n");
-    printf("  -randomize     = <seed> [0 - 2^32-1] Randomly permutates the clauses. The \n");
-    printf("                   seed is later also used for picking decision variables\n");
+    printf("  -randomize     = <seed> [0 - 2^32-1] Sets random seed, used for picking\n");
+    printf("                   decision variables (default = 0)\n");
     printf("  -restrict      = <num> [1 - varnum] when picking random variables to branch\n");
     printf("                   on, pick one that in the 'num' most active vars useful\n");
     printf("                   for cryptographic problems, where the question is the key,\n");
@@ -357,7 +357,6 @@ int main(int argc, char** argv)
 {
     Solver      S;
     S.verbosity = 1;
-    bool permutateClauses = false;
     bool dumplearnts = false;
     char learnts_filename[500];
 
@@ -416,7 +415,6 @@ int main(int argc, char** argv)
             }
             cout << "seed:" << seed << endl;
             S.setSeed(seed);
-            permutateClauses = true;
         } else if ((value = hasPrefix(argv[i], "-restrict="))) {
             uint branchTo;
             if (sscanf(value, "%d", &branchTo) < 0 || branchTo < 1) {
@@ -491,7 +489,6 @@ int main(int argc, char** argv)
     }
 
     parse_DIMACS(in, S);
-    if (permutateClauses) S.permutateClauses();
     gzclose(in);
     FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
 

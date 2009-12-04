@@ -81,7 +81,6 @@ public:
     void    setPolarity    (Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
     void    setDecisionVar (Var v, bool b); // Declare if a variable should be eligible for selection in the decision heuristic.
     void    setSeed (const uint32_t seed);  // Sets the seed to be the given number
-    void    permutateClauses();             // Permutates the clauses using the seed. It updates the seed in mtrand
     void    needRealUnknowns();             // Uses the "real unknowns" set by setRealUnknown
     void    setRealUnknown(const uint var); //sets a variable to be 'real', i.e. to preferentially branch on it during solving (when useRealUnknown it turned on)
     void    setMaxRestarts(const uint num); //sets the maximum number of restarts to given value
