@@ -195,7 +195,6 @@ uint XorFinder::findXors(uint& sumLengths)
         default: {
             XorClause* x = XorClause_new(lits, impair, old_group);
             S->xorclauses.push(x);
-            S->xorclauses_tofree.push(x);
             S->attachClause(*x);
             
             #ifdef VERBOSE_DEBUG

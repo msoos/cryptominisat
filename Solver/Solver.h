@@ -178,8 +178,7 @@ protected:
     //
     bool                ok;               // If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
     vec<Clause*>        clauses;          // List of problem clauses.
-    vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will not be freed
-    vec<XorClause*>     xorclauses_tofree;// List of problem xor-clauses. Will be freed
+    vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
     vec<Clause*>        unitary_learnts;  // List of learnt clauses.
     vec<double>         activity;         // A heuristic measurement of the activity of a variable.
