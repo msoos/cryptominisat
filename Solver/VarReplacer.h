@@ -25,6 +25,7 @@ class VarReplacer
         const uint getNumReplacedVars() const;
         const vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
+        const vec<Clause*>& getToRemove() const;
         void newClause();
         void newVar();
     

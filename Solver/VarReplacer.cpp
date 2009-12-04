@@ -226,6 +226,11 @@ const vector<Var> VarReplacer::getReplacingVars() const
     return replacingVars;
 }
 
+const vec<Clause*>& VarReplacer::getToRemove() const
+{
+    return toRemove;
+}
+
 void VarReplacer::extendModel() const
 {
     uint i = 0;
