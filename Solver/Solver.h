@@ -125,6 +125,7 @@ public:
     bool      useRealUnknowns;    // Whether 'real unknown' optimization should be used. If turned on, VarActivity is only bumped for variables for which the real_unknowns[var] == true
     vector<bool> realUnknowns;    // The important variables. This vector stores 'false' at realUnknowns[var] if the var is not a real unknown, and stores a 'true' if it is a real unkown. If var is larger than realUnkowns.size(), then it is not an important variable
     bool      xorFinder;            // Automatically find xor-clauses and convert them
+    bool      performReplace;       // Should var-replacing be performed?
     friend class FindUndef;
     bool greedyUnbound; //If set to TRUE, then we will greedily unbound variables (set them to l_Undef)
     void set_gaussian_decision_until(const uint to);
