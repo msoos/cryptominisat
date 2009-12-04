@@ -56,9 +56,7 @@ public:
     void set_disabled(const bool toset);
 
     //functions used throughout the Solver
-    void back_to_level(const uint level);
-    void canceling(const uint level, const Var var);
-    void clear_clauses();
+    void canceling(const int sublevel);
 
 protected:
     Solver& solver;
@@ -97,7 +95,7 @@ protected:
     //Varibales to keep Gauss state
     bool messed_matrix_vars_since_reversal;
     int gauss_last_level;
-    vector<Clause*> matrix_clauses_toclear;
+    vector<pair<Clause*, uint> > clauses_toclear;
     bool disabled; // Gauss is disabled
     
     //State of current elimnation
@@ -169,15 +167,29 @@ inline bool Gaussian::should_check_gauss(const uint decisionlevel, const uint st
             && decisionlevel < config.decision_until);
 }
 
-inline void Gaussian::canceling(const uint level, const Var var)
+inline void Gaussian::canceling(const int sublevel)
 {
-    if (!messed_matrix_vars_since_reversal
-            && level <= gauss_last_level
-            && var < var_is_in.getSize()
+    if (disabled)
+        return;
+    uint a = 0;
+    for (int i = clauses_toclear.size()-1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
+        free(clauses_toclear[i].first);
+        a++;
+    }
+    clauses_toclear.resize(clauses_toclear.size()-a);
+    
+    if (messed_matrix_vars_since_reversal)
+        return;
+    int c = std::min(gauss_last_level, solver.trail.size()-1);
+    for (; c >= sublevel; c--) {
+        Var var  = solver.trail[c].var();
+        if (var < var_is_in.getSize()
             && var_is_in[var]
-            && cur_matrixset.var_is_set[var]
-       )
+            && cur_matrixset.var_is_set[var]) {
         messed_matrix_vars_since_reversal = true;
+        return;
+        }
+    }
 }
 
 inline void Gaussian::print_matrix_stats() const

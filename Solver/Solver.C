@@ -393,13 +393,15 @@ void Solver::cancelUntil(int level)
     #endif
     
     if (decisionLevel() > level) {
+        
+        for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
+            (*gauss)->canceling(trail_lim[level]);
+        
         for (int c = trail.size()-1; c >= trail_lim[level]; c--) {
             Var     x  = trail[c].var();
             #ifdef VERBOSE_DEBUG
             cout << "Canceling var " << x+1 << " sublevel:" << c << endl;
             #endif
-            for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
-                (*gauss)->canceling(c, x);
             assigns[x] = l_Undef;
             insertVarOrder(x);
         }
@@ -1540,9 +1542,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         status = search((int)nof_conflicts);
         nof_conflicts *= restart_inc;
-        
-        for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
-            (*gauss)->clear_clauses();
     }
 
     if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {

@@ -55,7 +55,8 @@ Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint _m
 
 Gaussian::~Gaussian()
 {
-    clear_clauses();
+    for (uint i = 0; i < clauses_toclear.size(); i++)
+        free(clauses_toclear[i].first);
 }
 
 inline void Gaussian::set_matrixset_to_cur()
@@ -67,12 +68,6 @@ inline void Gaussian::set_matrixset_to_cur()
         matrix_sets.push_back(cur_matrixset);
     else
         matrix_sets[level] = cur_matrixset;
-}
-
-void Gaussian::clear_clauses()
-{
-    std::for_each(matrix_clauses_toclear.begin(), matrix_clauses_toclear.end(), std::ptr_fun(free));
-    matrix_clauses_toclear.clear();
 }
 
 llbool Gaussian::full_init()
@@ -651,6 +646,9 @@ void Gaussian::cancel_until_sublevel(const uint sublevel)
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Canceling until sublevel " << sublevel << endl;
     #endif
+    
+    for (Gaussian **gauss = &(solver.gauss_matrixes[0]), **end= gauss + solver.gauss_matrixes.size(); gauss != end; gauss++)
+        if (*gauss != this) (*gauss)->canceling(sublevel);
 
     for (int level = solver.trail.size()-1; level >= sublevel; level--) {
         Var     var  = solver.trail[level].var();
@@ -660,8 +658,6 @@ void Gaussian::cancel_until_sublevel(const uint sublevel)
 
         solver.assigns[var] = l_Undef;
         solver.insertVarOrder(var);
-        for (Gaussian **gauss = &(solver.gauss_matrixes[0]), **end= gauss + solver.gauss_matrixes.size(); gauss != end; gauss++)
-            if (*gauss != this) (*gauss)->canceling(level, var);
     }
     solver.trail.shrink(solver.trail.size() - sublevel);
     
@@ -771,7 +767,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
         return unit_propagation;
     }
 
-    matrix_clauses_toclear.push_back(&cla);
+    clauses_toclear.push_back(std::make_pair(&cla, solver.trail.size()-1));
     solver.uncheckedEnqueue(cla[0], &cla);
     if (solver.dynamic_behaviour_analysis) {
         solver.logger.set_group_name(cla.group, "gauss prop clause");
