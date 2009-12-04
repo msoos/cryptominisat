@@ -1210,8 +1210,6 @@ lbool Solver::search(int nof_conflicts)
         if (ret != l_Nothing) return ret;
     }
 
-    if (dynamic_behaviour_analysis) logger.begin();
-
     for (;;) {
         Clause* confl = propagate();
 
@@ -1421,9 +1419,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     fprintf(myoutputfile, "c Solver::solve() called\n");
     #endif
     
-    if (dynamic_behaviour_analysis)
-        logger.end(Logger::done_adding_clauses);
-    
     model.clear();
     conflict.clear();
 
@@ -1522,6 +1517,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
         printf("|           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl | Prop   Confl   On  |\n");
         printf("=========================================================================================\n");
     }
+    
+    if (dynamic_behaviour_analysis)
+        logger.end(Logger::done_adding_clauses);
 
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
@@ -1540,6 +1538,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
             (*gauss)->reset_stats();
         
+        if (dynamic_behaviour_analysis)
+            logger.begin();
         status = search((int)nof_conflicts);
         nof_conflicts *= restart_inc;
     }

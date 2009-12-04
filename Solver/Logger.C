@@ -163,6 +163,7 @@ void Logger::first_begin()
 
 void Logger::begin()
 {
+    begin_called = true;
     if (proof_graph_on) {
         std::stringstream filename;
         filename << "proofs/" << runid << "-proof" << S->starts << ".dot";
