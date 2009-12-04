@@ -131,6 +131,11 @@ public:
             return ret;
         }
         
+        const uint operator-(const iterator& b) const
+        {
+            return (mp - b.mp)/(numCols+1);
+        }
+        
         void operator+=(const uint num)
         {
             mp += (numCols+1)*num;

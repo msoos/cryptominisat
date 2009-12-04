@@ -439,13 +439,13 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
             continue;
         }
 
-        uint best_row = i;
         PackedMatrix::iterator this_matrix_row = m.matrix.begin() + i;
         PackedMatrix::iterator end = m.matrix.begin() + std::min(m.last_one_in_col[j], m.num_rows);
-        for (; this_matrix_row != end; ++this_matrix_row, best_row++) {
+        for (; this_matrix_row != end; ++this_matrix_row) {
             if ((*this_matrix_row)[j])
                 break;
         }
+        uint best_row = this_matrix_row - m.matrix.begin();
 
         if (this_matrix_row != end) {
             PackedRow matrix_row_i = m.matrix[i];
