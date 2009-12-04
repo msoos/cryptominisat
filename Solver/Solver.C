@@ -1475,8 +1475,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
             }
             
             time = cpuTime();
-            removeSatisfied(xorclauses);
-            cleanClauses(xorclauses);
             uint foundCong = conglomerate->conglomerateXors();
             if (verbosity >=1)
                 printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);

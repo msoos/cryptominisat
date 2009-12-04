@@ -87,6 +87,9 @@ uint Conglomerate::conglomerateXors()
     cout << "Finding conglomerate xors started" << endl;
     #endif
     
+    S->removeSatisfied(S->xorclauses);
+    S->cleanClauses(S->xorclauses);
+    
     fillVarToXor();
     
     uint found = 0;
