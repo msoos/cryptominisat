@@ -20,11 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <sys/types.h>
 #include "Clause.h"
+#include <vector>
+#include <map>
 
 class Solver;
 
-#include <vector>
-#include <map>
 using std::map;
 using std::vector;
 using std::pair;
