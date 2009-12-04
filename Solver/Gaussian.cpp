@@ -765,9 +765,9 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
         
         solver.cancelUntil(0);
         solver.uncheckedEnqueue(lit);
-        solver.unitary_learnts.push(&cla);
         if (solver.dynamic_behaviour_analysis)
             solver.logger.propagation(cla[0], Logger::gauss_propagation_type, cla.group);
+        free(&cla);
         return unit_propagation;
     }
 

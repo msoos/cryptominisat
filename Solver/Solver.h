@@ -145,7 +145,8 @@ public:
     void setVariableName(int var, char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
     const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
     const vec<Clause*>& get_learnts() const; //Get all learnt clauses
-    const vec<Clause*>& get_unitary_learnts() const; //return the set of unitary learned clauses
+    const vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
+    const uint get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     void dump_sorted_learnts(const char* file);
 
 protected:
@@ -180,7 +181,6 @@ protected:
     vec<Clause*>        clauses;          // List of problem clauses.
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
-    vec<Clause*>        unitary_learnts;  // List of learnt clauses.
     vec<XorClause*>     freeLater;        // List of xorclauses to free at the end (due to matrixes, they cannot be freed immediately)
     vec<double>         activity;         // A heuristic measurement of the activity of a variable.
     double              var_inc;          // Amount to bump next variable with.
@@ -422,6 +422,12 @@ inline void     Solver::setVariableName(int var, char* name)
 inline void     Solver::needRealUnknowns()
 {
     useRealUnknowns = true;
+}
+inline const uint Solver::get_unitary_learnts_num() const
+{
+    if (decisionLevel() > 0)
+        return trail_lim[0];
+    return 0;
 }
 template<class T>
 void Solver::removeSatisfied(vec<T*>& cs)

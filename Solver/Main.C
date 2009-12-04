@@ -286,7 +286,7 @@ void printStats(Solver& solver)
     cout << "restarts           : " << solver.starts << endl ;
     cout << "learnts DL2        : " << solver.nbDL2 << endl;
     cout << "learnts size 2     : " << solver.nbBin << endl;
-    cout << "learnts size 1     : " << solver.get_unitary_learnts().size() << endl;
+    cout << "learnts size 1     : " << solver.get_unitary_learnts_num() << endl;
     
     cout << "conflicts             : " << solver.conflicts << " (" << (double)solver.conflicts/cpu_time << " /sec)" << endl;
     cout << "decisions             : " << solver.decisions << " (" << (double)solver.rnd_decisions*100.0/(double)solver.decisions << "% random)" << endl;

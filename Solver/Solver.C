@@ -107,7 +107,6 @@ Solver::Solver() :
 Solver::~Solver()
 {
     for (int i = 0; i < learnts.size(); i++) free(learnts[i]);
-    for (int i = 0; i < unitary_learnts.size(); i++) free(unitary_learnts[i]);
     for (int i = 0; i < clauses.size(); i++) free(clauses[i]);
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
     for (uint i = 0; i < gauss_matrixes.size(); i++) delete gauss_matrixes[i];
@@ -1017,9 +1016,15 @@ const vec<Clause*>& Solver::get_sorted_learnts()
     return learnts;
 }
 
-const vec<Clause*>& Solver::get_unitary_learnts() const
+const vector<Lit> Solver::get_unitary_learnts() const
 {
-    return unitary_learnts;
+    vector<Lit> unitaries;
+    if (decisionLevel() > 0) {
+        for (uint i = 0; i < trail_lim[0]; i++)
+            unitaries.push_back(trail[i]);
+    }
+    
+    return unitaries;
 }
 
 void Solver::dump_sorted_learnts(const char* file)
@@ -1030,8 +1035,10 @@ void Solver::dump_sorted_learnts(const char* file)
         exit(-1);
     }
     
-    for (uint i = 0; i < unitary_learnts.size(); i++)
-        unitary_learnts[i]->plain_print(outfile);
+    if (decisionLevel() > 0) {
+        for (uint i = 0; i < trail_lim[0]; i++)
+            printf("%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var());
+    }
     
     sort(learnts, reduceDB_lt());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
@@ -1330,12 +1337,11 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     assert(value(learnt_clause[0]) == l_Undef);
     //Unitary learnt
     if (learnt_clause.size() == 1) {
-        Clause* c = Clause_new(learnt_clause, learnt_clause_group++, true);
-        unitary_learnts.push(c);
         uncheckedEnqueue(learnt_clause[0]);
         if (dynamic_behaviour_analysis) {
-            logger.set_group_name(c->group, "unitary learnt clause");
-            logger.propagation(learnt_clause[0], Logger::unit_clause_type, c->group);
+            logger.set_group_name(learnt_clause_group, "unitary learnt clause");
+            logger.propagation(learnt_clause[0], Logger::unit_clause_type, learnt_clause_group);
+            learnt_clause_group++;
         }
         assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
         

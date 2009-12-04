@@ -195,9 +195,6 @@ bool Conglomerate::dealWithNewClause(vec<Lit>& ps, const bool inverted, const ui
             if (S->assigns[ps[0].var()] == l_Undef) {
                 assert(S->decisionLevel() == 0);
                 S->uncheckedEnqueue(Lit(ps[0].var(), inverted));
-                ps[0] = Lit(ps[0].var(), inverted);
-                Clause* newC = Clause_new(ps, old_group);
-                S->unitary_learnts.push(newC);
             } else if (S->assigns[ps[0].var()] != boolToLBool(!inverted)) {
                 #ifdef VERBOSE_DEBUG
                 cout << "Conflict. Aborting.";
