@@ -44,20 +44,20 @@ void Conglomerate::fillVarToXor()
     for (Lit* it = &(S->trail[0]), *end = it + S->trail.size(); it != end; it++)
         blocked[it->var()] = true;
     
+    const vector<Lit>& replaceTable = S->toReplace->getReplaceTable();
+    for (uint i = 0; i < replaceTable.size(); i++) {
+        if (replaceTable[i] != Lit(i, false)) {
+            blocked[i] = true;
+            blocked[replaceTable[i].var()] = true;
+        }
+    }
+    
     uint i = 0;
     for (XorClause* const* it = S->xorclauses.getData(), *const*end = it + S->xorclauses.size(); it != end; it++, i++) {
         const XorClause& c = **it;
         for (const Lit * a = &c[0], *end = a + c.size(); a != end; a++) {
             if (!blocked[a->var()])
                 varToXor[a->var()].push_back(make_pair(*it, i));
-        }
-    }
-    
-    const vector<Lit>& replaceTable = S->toReplace->getReplaceTable();
-    for (uint i = 0; i < replaceTable.size(); i++) {
-        if (replaceTable[i] != Lit(i, false)) {
-            blocked[i] = true;
-            blocked[replaceTable[i].var()] = true;
         }
     }
 }
