@@ -110,9 +110,9 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
                     p = lit_Undef;
                     if (!S->assigns[c[i].var()].isUndef())
                         c.invert(S->assigns[c[i].var()].getBool());
-                } else if (S->value(c[i]) == l_Undef) //just add
+                } else if (S->assigns[c[i].var()].isUndef()) //just add
                     c[j++] = p = c[i];
-                else c.invert(S->value(c[i]) == l_True); //modify xor_clause_inverted instead of adding
+                else c.invert(S->assigns[c[i].var()].getBool()); //modify xor_clause_inverted instead of adding
             }
             c.shrink(i - j);
             
@@ -123,7 +123,7 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
                 r++;
                 break;
             case 1:
-                S->uncheckedEnqueue(Lit(c[0].var(), !c.xor_clause_inverted()));
+                S->uncheckedEnqueue(c[0] ^ c.xor_clause_inverted());
                 r++;
                 break;
             case 2: {
