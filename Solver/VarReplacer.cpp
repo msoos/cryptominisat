@@ -194,6 +194,10 @@ bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit o
         S->uncheckedEnqueue(c[0]);
         S->detachModifiedClause(origLit1, origLit2, origSize, &c);
         return true;
+    case 2:
+        S->detachModifiedClause(origLit1, origLit2, origSize, &c);
+        S->attachClause(c);
+        return false;
     default:
         if (origLit1 != c[0] || origLit2 != c[1]) {
             S->detachModifiedClause(origLit1, origLit2, origSize, &c);
