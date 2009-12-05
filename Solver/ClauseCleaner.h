@@ -31,10 +31,10 @@ class ClauseCleaner
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type);
         void removeSatisfied(vec<Clause*>& cs, ClauseSetType type);
         void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type);
-        
-    private:
         bool satisfied(const Clause& c) const;
         bool satisfied(const XorClause& c) const;
+        
+    private:
         bool cleanClause(Clause& c);
         
         uint lastNumUnitarySat[4];

@@ -322,6 +322,7 @@ void Conglomerate::doCalcAtFinish()
             S->uncheckedEnqueue(Lit(toAssign[i], true), &c);
         }
         S->uncheckedEnqueue(Lit(toAssign[0], final), &c);
+        assert(S->clauseCleaner->satisfied(c));
     }
 }
 
