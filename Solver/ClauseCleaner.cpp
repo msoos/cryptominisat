@@ -72,8 +72,8 @@ bool ClauseCleaner::cleanClause(Clause& c)
 
 void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type)
 {
-//     if (lastNumUnitaryClean[type] == solver.get_unitary_learnts_num())
-//         return;
+    if (lastNumUnitaryClean[type] == solver.get_unitary_learnts_num())
+        return;
     
     uint useful = 0;
     for (int s = 0; s < cs.size(); s++)
