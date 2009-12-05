@@ -30,13 +30,24 @@ void VarReplacer::performReplace()
 {
     #ifdef VERBOSE_DEBUG
     cout << "Replacer started." << endl;
-    uint i = 0;
-    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
-        if (it->var() == i) continue;
-        cout << "Replacing var " << i+1 << " with Lit " << (it->sign() ? "-" : "") <<  it->var()+1 << endl;
+    {
+        uint i = 0;
+        for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
+            if (it->var() == i) continue;
+            cout << "Replacing var " << i+1 << " with Lit " << (it->sign() ? "-" : "") <<  it->var()+1 << endl;
+        }
     }
     #endif
     
+    uint i = 0;
+    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
+        if (it->var() == i) continue;
+        S->setDecisionVar(i, false);
+        set<Var>::const_iterator it2 = S->conglomerate->getRemovedVars().find(it->var());
+        if (it2 == S->conglomerate->getRemovedVars().end())
+            S->setDecisionVar(it->var(), true);
+    }
+
     if (!addedNewClause || replacedVars == 0) return;
     
     S->clauseCleaner->removeSatisfied(S->clauses, ClauseCleaner::clauses);
@@ -302,15 +313,12 @@ void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const ui
             setAllThatPointsHereTo(lit1.var(), Lit(lit.var(), lit1.sign()));
             table[lit1.var()] = Lit(lit.var(), lit1.sign());
             reverseTable[lit.var()].push_back(lit1.var());
-            S->setDecisionVar(lit1.var(), false);
             
             setAllThatPointsHereTo(lit2.var(), lit ^ lit2.sign());
             table[lit2.var()] = lit ^ lit2.sign();
             reverseTable[lit.var()].push_back(lit2.var());
-            S->setDecisionVar(lit2.var(), false);
             
             table[lit.var()] = Lit(lit.var(), false);
-            S->setDecisionVar(lit.var(), true);
             return;
         }
     }
@@ -325,7 +333,6 @@ void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const ui
     
     table[var] = lit;
     reverseTable[lit.var()].push_back(var);
-    S->setDecisionVar(var, false);
 }
 
 void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal)

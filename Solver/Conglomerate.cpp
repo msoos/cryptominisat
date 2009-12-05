@@ -25,6 +25,11 @@ Conglomerate::~Conglomerate()
         free(calcAtFinish[i]);
 }
 
+const set<Var>& Conglomerate::getRemovedVars() const
+{
+    return removedVars;
+}
+
 const vec<XorClause*>& Conglomerate::getCalcAtFinish() const
 {
     return calcAtFinish;
@@ -112,6 +117,7 @@ uint Conglomerate::conglomerateXors()
         }
         
         S->setDecisionVar(var, false);
+        removedVars.insert(var);
         
         if (c.size() == 0) {
             varToXor.erase(it);
@@ -342,5 +348,6 @@ void Conglomerate::addRemovedClauses()
         free(&c);
     }
     calcAtFinish.clear();
+    removedVars.clear();
 }
 

@@ -3,12 +3,14 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include "Clause.h"
 #include "VarReplacer.h"
 
 using std::vector;
 using std::pair;
 using std::map;
+using std::set;
 
 class Solver;
 
@@ -22,6 +24,7 @@ public:
     void doCalcAtFinish(); ///<Calculate variables removed during conglomeration
     const vec<XorClause*>& getCalcAtFinish() const;
     vec<XorClause*>& getCalcAtFinish();
+    const set<Var>& getRemovedVars() const;
     
 private:
     
@@ -35,6 +38,7 @@ private:
     varToXorMap varToXor; 
     vector<bool> blocked;
     vector<bool> toRemove;
+    set<Var> removedVars;
     
     vec<XorClause*> calcAtFinish;
     
