@@ -311,12 +311,15 @@ void Conglomerate::doCalcAtFinish()
         }
         if (toAssign.size() > 1) {
             cout << "Double assign!" << endl;
+            for (uint i = 1; i < toAssign.size(); i++) {
+                cout << "-> extra Var " << toAssign[i]+1 << endl;
+            }
         }
         #endif
         assert(toAssign.size() > 0);
         
         for (uint i = 1; i < toAssign.size(); i++) {
-            S->uncheckedEnqueue(Lit(toAssign[i], false), &c);
+            S->uncheckedEnqueue(Lit(toAssign[i], true), &c);
         }
         S->uncheckedEnqueue(Lit(toAssign[0], final), &c);
     }
