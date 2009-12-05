@@ -95,7 +95,7 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type)
         #ifdef VERBOSE_DEBUG
         std::cout << "Cleaning clause:";
         c.plain_print();
-        printClause(c);std::cout << std::endl;
+        solver.printClause(c);std::cout << std::endl;
         #endif
         
         Lit *i, *j, *end;
@@ -123,7 +123,7 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type)
         #ifdef VERBOSE_DEBUG
         std::cout << "Cleaned clause:";
         c.plain_print();
-        printClause(c);std::cout << std::endl;
+        solver.printClause(c);std::cout << std::endl;
         #endif
         assert(c.size() > 1);
     }
