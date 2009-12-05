@@ -92,8 +92,6 @@ uint Conglomerate::conglomerateXors()
 {
     if (S->xorclauses.size() == 0)
         return 0;
-    toRemove.clear();
-    toRemove.resize(S->xorclauses.size(), false);
     
     #ifdef VERBOSE_DEBUG
     cout << "Finding conglomerate xors started" << endl;
@@ -101,6 +99,9 @@ uint Conglomerate::conglomerateXors()
     
     S->clauseCleaner->removeSatisfied(S->xorclauses, ClauseCleaner::xorclauses);
     S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
+    
+    toRemove.clear();
+    toRemove.resize(S->xorclauses.size(), false);
     
     fillVarToXor();
     
@@ -267,6 +268,8 @@ void Conglomerate::clearDouble(vec<Lit>& ps) const
 
 void Conglomerate::clearToRemove()
 {
+    assert(toRemove.size() == S->xorclauses.size());
+    
     XorClause **a = S->xorclauses.getData();
     XorClause **r = a;
     XorClause **end = a + S->xorclauses.size();
