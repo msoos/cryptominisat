@@ -64,6 +64,9 @@ bool ClauseCleaner::cleanClause(Clause& c)
         solver.attachClause(c);
     } else
         c.shrink(i-j);
+    
+    assert(c.size() > 1);
+    
     return (i-j > 0);
 }
 
