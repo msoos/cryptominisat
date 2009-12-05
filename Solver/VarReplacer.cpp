@@ -40,11 +40,11 @@ void VarReplacer::performReplace()
     #endif
     
     uint i = 0;
+    const vector<bool>& removedVars = S->conglomerate->getRemovedVars();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
         if (it->var() == i) continue;
         S->setDecisionVar(i, false);
-        set<Var>::const_iterator it2 = S->conglomerate->getRemovedVars().find(it->var());
-        if (it2 == S->conglomerate->getRemovedVars().end())
+        if (removedVars.size() < it->var()+1 || !removedVars[it->var()])
             S->setDecisionVar(it->var(), true);
     }
 

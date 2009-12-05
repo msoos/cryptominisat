@@ -24,7 +24,7 @@ public:
     void doCalcAtFinish(); ///<Calculate variables removed during conglomeration
     const vec<XorClause*>& getCalcAtFinish() const;
     vec<XorClause*>& getCalcAtFinish();
-    const set<Var>& getRemovedVars() const;
+    const vector<bool>& getRemovedVars() const;
     
 private:
     
@@ -38,7 +38,7 @@ private:
     varToXorMap varToXor; 
     vector<bool> blocked;
     vector<bool> toRemove;
-    set<Var> removedVars;
+    vector<bool> removedVars;
     
     vec<XorClause*> calcAtFinish;
     

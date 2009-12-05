@@ -25,7 +25,7 @@ Conglomerate::~Conglomerate()
         free(calcAtFinish[i]);
 }
 
-const set<Var>& Conglomerate::getRemovedVars() const
+const vector<bool>& Conglomerate::getRemovedVars() const
 {
     return removedVars;
 }
@@ -117,7 +117,9 @@ uint Conglomerate::conglomerateXors()
         }
         
         S->setDecisionVar(var, false);
-        removedVars.insert(var);
+        if (removedVars.size() < var+1)
+            removedVars.resize(var+1, false);
+        removedVars[var] = true;
         
         if (c.size() == 0) {
             varToXor.erase(it);
@@ -346,7 +348,7 @@ void Conglomerate::addRemovedClauses()
         ps.clear();
         for(uint i2 = 0; i2 != c.size() ; i2++) {
             ps.push(c[i2]);
-            if (removedVars.find(c[i2].var()) != removedVars.end())
+            if (removedVars.size() > c[i2].var() && removedVars[c[i2].var()])
                 S->setDecisionVar(c[i2].var(), true);
         }
         S->addXorClause(ps, c.xor_clause_inverted(), c.group, tmp);
