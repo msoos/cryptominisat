@@ -115,6 +115,7 @@ Solver::~Solver()
     for (uint i = 0; i < freeLater.size(); i++) free(freeLater[i]);
     delete toReplace;
     delete conglomerate;
+    delete clauseCleaner;
     
     #ifdef DEBUG_LIB
     fclose(myoutputfile);
