@@ -273,8 +273,10 @@ void Conglomerate::clearToRemove()
     for (uint i = 0; r != end; i++) {
         if (!toRemove[i])
             *a++ = *r++;
-        else
+        else {
+            (**a).mark(1);
             r++;
+        }
     }
     S->xorclauses.shrink(r-a);
 }
