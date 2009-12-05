@@ -42,8 +42,6 @@ MatrixFinder::MatrixFinder(Solver *_S) :
     unAssigned(_S->nVars() + 1)
     , S(_S)
 {
-    table.resize(S->nVars(), unAssigned);
-    matrix_no = 0;
 }
 
 inline const Var MatrixFinder::fingerprint(const XorClause& c) const
@@ -73,6 +71,11 @@ inline const bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const Xor
 
 const uint MatrixFinder::findMatrixes()
 {
+    table.clear();
+    table.resize(S->nVars(), unAssigned);
+    reverseTable.clear();
+    matrix_no = 0;
+    
     if (S->xorclauses.size() == 0)
         return 0;
     
