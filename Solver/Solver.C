@@ -158,15 +158,17 @@ Var Solver::newVar(bool sign, bool dvar)
     return v;
 }
 
-bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name)
+bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal)
 {
     assert(decisionLevel() == 0);
     #ifdef DEBUG_LIB
-    fprintf(myoutputfile, "x");
-    for (uint i = 0; i < ps.size(); i++) {
-        fprintf(myoutputfile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
+    if (!internal) {
+        fprintf(myoutputfile, "x");
+        for (uint i = 0; i < ps.size(); i++) {
+            fprintf(myoutputfile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
+        }
+        fprintf(myoutputfile, "0\n");
     }
-    fprintf(myoutputfile, "0\n");
     #endif //DEBUG_LIB
 
     if (dynamic_behaviour_analysis) logger.set_group_name(group, group_name);

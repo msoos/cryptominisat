@@ -356,7 +356,7 @@ void Conglomerate::addRemovedClauses()
             if (removedVars.size() > c[i2].var() && removedVars[c[i2].var()])
                 S->setDecisionVar(c[i2].var(), true);
         }
-        S->addXorClause(ps, c.xor_clause_inverted(), c.group, tmp);
+        S->addXorClause(ps, c.xor_clause_inverted(), c.group, tmp, true);
         free(&c);
     }
     calcAtFinish.clear();
