@@ -150,6 +150,10 @@ Var Solver::newVar(bool sign, bool dvar)
     insertVarOrder(v);
     if (dynamic_behaviour_analysis)
         logger.new_var(v);
+    
+    #ifdef DEBUG_LIB
+    fprintf(myoutputfile, "c Solver::newVar() called\n");
+    #endif //DEBUG_LIB
 
     return v;
 }

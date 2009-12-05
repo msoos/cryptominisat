@@ -156,7 +156,8 @@ static void readClause(B& in, Solver& S, vec<Lit>& lits)
         parsed_lit = parseInt(in);
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
-        while (var >= S.nVars()) S.newVar();
+        if (!debugLib)
+            while (var >= S.nVars()) S.newVar();
         lits.push( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
 }
@@ -223,7 +224,10 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 }
                 fclose(res);
                 debugLibPart++;
-            }else {
+            } else if (debugLib && str == "Solver::newVar()") {
+                S.newVar();
+            }
+            else {
                 skipLine(in);
             }
             break;
