@@ -213,6 +213,8 @@ uint XorFinder::findXors(uint& sumLengths)
 
 void XorFinder::clearToRemove()
 {
+    assert(toRemove.size() == cls.size());
+    
     Clause **a = cls.getData();
     Clause **r = cls.getData();
     Clause **cend = cls.getData() + cls.size();
