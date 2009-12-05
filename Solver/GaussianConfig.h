@@ -30,13 +30,10 @@ class GaussianConfig
         , decision_until(0)
         , starts_from(3)
     {
-        if (PackedRow::tmp_row == NULL)
-            PackedRow::tmp_row = new uint64_t[1000];
     }
     
     ~GaussianConfig()
     {
-        delete[] PackedRow::tmp_row;
     }
         
     //tuneable gauss parameters
