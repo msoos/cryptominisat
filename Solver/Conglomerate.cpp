@@ -346,7 +346,8 @@ void Conglomerate::addRemovedClauses()
         ps.clear();
         for(uint i2 = 0; i2 != c.size() ; i2++) {
             ps.push(c[i2]);
-            S->setDecisionVar(c[i2].var(), true);
+            if (removedVars.find(c[i2].var()) != removedVars.end())
+                S->setDecisionVar(c[i2].var(), true);
         }
         S->addXorClause(ps, c.xor_clause_inverted(), c.group, tmp);
         free(&c);
