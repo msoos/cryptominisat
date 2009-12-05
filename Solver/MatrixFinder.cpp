@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Solver.h"
 #include "Gaussian.h"
 #include "GaussianConfig.h"
+#include "ClauseCleaner.h"
 
 #include <set>
 #include <map>
@@ -75,8 +76,8 @@ const uint MatrixFinder::findMatrixes()
     if (S->xorclauses.size() == 0)
         return 0;
     
-    S->removeSatisfied(S->xorclauses);
-    S->cleanClauses(S->xorclauses);
+    S->clauseCleaner->removeSatisfied(S->xorclauses, ClauseCleaner::xorclauses);
+    S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
     
     for (XorClause** c = S->xorclauses.getData(), **end = c + S->xorclauses.size(); c != end; c++) {
         set<uint> tomerge;

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iomanip>
 #include "Clause.h"
 #include <algorithm>
+#include "ClauseCleaner.h"
 using std::ostream;
 using std::cout;
 using std::endl;
@@ -77,8 +78,8 @@ llbool Gaussian::full_init()
     bool do_again_gauss = true;
     while (do_again_gauss) {
         do_again_gauss = false;
-        solver.removeSatisfied(solver.xorclauses);
-        solver.cleanClauses(solver.xorclauses);
+        solver.clauseCleaner->removeSatisfied(solver.xorclauses, ClauseCleaner::xorclauses);
+        solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
         init();
         Clause* confl;
         gaussian_ret g = gaussian(confl);

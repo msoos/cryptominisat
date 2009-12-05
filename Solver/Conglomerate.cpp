@@ -1,6 +1,7 @@
 #include "Conglomerate.h"
 #include "Solver.h"
 #include "VarReplacer.h"
+#include "ClauseCleaner.h"
 
 #include <utility>
 #include <algorithm>
@@ -93,8 +94,8 @@ uint Conglomerate::conglomerateXors()
     cout << "Finding conglomerate xors started" << endl;
     #endif
     
-    S->removeSatisfied(S->xorclauses);
-    S->cleanClauses(S->xorclauses);
+    S->clauseCleaner->removeSatisfied(S->xorclauses, ClauseCleaner::xorclauses);
+    S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
     
     fillVarToXor();
     

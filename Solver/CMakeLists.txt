@@ -19,5 +19,6 @@ add_library(cryptominisatlib
     MatrixFinder.cpp
     VarReplacer.cpp
     FindUndef.cpp
+    ClauseCleaner.cpp
 )
 

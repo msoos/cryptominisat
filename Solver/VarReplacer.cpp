@@ -2,6 +2,7 @@
 
 #include "Solver.h"
 #include "Conglomerate.h"
+#include "ClauseCleaner.h"
 
 //#define VERBOSE_DEBUG
 
@@ -38,10 +39,13 @@ void VarReplacer::performReplace()
     
     if (!addedNewClause || replacedVars == 0) return;
     
-    S->removeSatisfied(S->clauses);
-    S->removeSatisfied(S->xorclauses);
-    S->cleanClauses(S->clauses);
-    S->cleanClauses(S->xorclauses);
+    S->clauseCleaner->removeSatisfied(S->clauses, ClauseCleaner::clauses);
+    S->clauseCleaner->removeSatisfied(S->learnts, ClauseCleaner::learnts);
+    S->clauseCleaner->removeSatisfied(S->xorclauses, ClauseCleaner::xorclauses);
+    
+    S->clauseCleaner->cleanClauses(S->clauses, ClauseCleaner::clauses);
+    S->clauseCleaner->cleanClauses(S->learnts, ClauseCleaner::learnts);
+    S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
     for (uint i = 0; i < toRemove.size(); i++)
         S->removeClause(*toRemove[i]);
     toRemove.clear();

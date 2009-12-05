@@ -36,6 +36,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "MatrixFinder.h"
 #include "Conglomerate.h"
 #include "XorFinder.h"
+#include "ClauseCleaner.h"
 
 //#define DEBUG_LIB
 
@@ -94,6 +95,7 @@ Solver::Solver() :
 {
     toReplace = new VarReplacer(this);
     conglomerate = new Conglomerate(this);
+    clauseCleaner = new ClauseCleaner(*this);
     logger.setSolver(this);
     
     #ifdef DEBUG_LIB
@@ -360,27 +362,6 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
     if (address->learnt()) learnts_literals -= origSize;
     else            clauses_literals -= origSize;
 }
-
-
-bool Solver::satisfied(const Clause& c) const
-{
-    for (uint i = 0; i < c.size(); i++)
-        if (value(c[i]) == l_True)
-            return true;
-    return false;
-}
-
-bool Solver::satisfied(const XorClause& c) const
-{
-    bool final = c.xor_clause_inverted();
-    for (uint k = 0; k < c.size(); k++ ) {
-        const lbool& val = assigns[c[k].var()];
-        if (val.isUndef()) return false;
-        final ^= val.getBool();
-    }
-    return final;
-}
-
 
 // Revert to the state at given level (keeping all assignment at 'level' but not beyond).
 //
@@ -1056,88 +1037,6 @@ void Solver::setMaxRestarts(const uint num)
     maxRestarts = num;
 }
 
-bool Solver::cleanClause(Clause& c)
-{
-    assert(c.size() >= 2);
-    Lit first = c[0];
-    Lit second = c[1];
-    
-    Lit *i, *j, *end;
-    uint at = 0;
-    for (i = j = c.getData(), end = i + c.size();  i != end; i++, at++) {
-        if (value(*i) == l_Undef) {
-            *j = *i;
-            j++;
-        } else assert(at > 1);
-        assert(value(*i) != l_True);
-    }
-    if ((c.size() > 2) && (c.size() - (i-j) == 2)) {
-        detachModifiedClause(first, second, c.size(), &c);
-        c.shrink(i-j);
-        attachClause(c);
-    } else
-        c.shrink(i-j);
-    return (i-j > 0);
-}
-
-void Solver::cleanClauses(vec<Clause*>& cs)
-{
-    uint useful = 0;
-    for (int s = 0; s < cs.size(); s++)
-        useful += cleanClause(*cs[s]);
-    #ifdef VERBOSE_DEBUG
-    cout << "cleanClauses(Clause) useful:" << useful << endl;
-    #endif
-}
-
-void Solver::cleanClauses(vec<XorClause*>& cs)
-{
-    uint useful = 0;
-    XorClause **s, **ss, **end;
-    for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
-        XorClause& c = **s;
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Cleaning clause:";
-        c.plain_print();
-        printClause(c);std::cout << std::endl;
-        #endif
-        
-        Lit *i, *j, *end;
-        uint at = 0;
-        for (i = j = c.getData(), end = i + c.size();  i != end; i++, at++) {
-            const lbool& val = assigns[i->var()];
-            if (val.isUndef()) {
-                *j = *i;
-                j++;
-            } else /*assert(at>1),*/ c.invert(val.getBool());
-        }
-        c.shrink(i-j);
-        if (i-j > 0) useful++;
-        
-        if (c.size() == 2) {
-            vec<Lit> ps(2);
-            ps[0] = c[0];
-            ps[1] = c[1];
-            toReplace->replace(ps, c.xor_clause_inverted(), c.group);
-            removeClause(c);
-            s++;
-        } else
-            *ss++ = *s++;
-        
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Cleaned clause:";
-        c.plain_print();
-        printClause(c);std::cout << std::endl;
-        #endif
-        assert(c.size() > 1);
-    }
-    cs.shrink(s-ss);
-    
-    #ifdef VERBOSE_DEBUG
-    cout << "cleanClauses(XorClause) useful:" << useful << endl;
-    #endif
-}
-
 /*_________________________________________________________________________________________________
 |
 |  simplify : [void]  ->  [bool]
@@ -1163,10 +1062,10 @@ lbool Solver::simplify()
     }
 
     // Remove satisfied clauses:
-    removeSatisfied(learnts);
+    clauseCleaner->removeSatisfied(learnts, ClauseCleaner::learnts);
     if (remove_satisfied) {       // Can be turned off.
-        removeSatisfied(clauses);
-        removeSatisfied(xorclauses);
+        clauseCleaner->removeSatisfied(clauses, ClauseCleaner::clauses);
+        clauseCleaner->removeSatisfied(xorclauses, ClauseCleaner::xorclauses);
     }
 
     // Remove fixed variables from the variable heap:
@@ -1175,9 +1074,9 @@ lbool Solver::simplify()
     simpDB_assigns = nAssigns();
     simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
 
-    //cleanClauses(clauses);
-    //cleanClauses(xorclauses);
-    //cleanClauses(learnts);
+    //clauseCleaner->cleanClauses(clauses);
+    //clauseCleaner->cleanClauses(xorclauses);
+    //clauseCleaner->cleanClauses(learnts);
 
     return l_Undef;
 }
@@ -1447,8 +1346,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         double time;
         if (clauses.size() < 400000) {
             time = cpuTime();
-            removeSatisfied(clauses);
-            cleanClauses(clauses);
+            clauseCleaner->removeSatisfied(clauses, ClauseCleaner::clauses);
+            clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
             uint sumLengths = 0;
             XorFinder xorFinder(this, clauses);
             uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
@@ -1521,13 +1420,13 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
-        removeSatisfied(clauses);
-        removeSatisfied(xorclauses);
-        removeSatisfied(learnts);
+        clauseCleaner->removeSatisfied(clauses, ClauseCleaner::clauses);
+        clauseCleaner->removeSatisfied(xorclauses, ClauseCleaner::xorclauses);
+        clauseCleaner->removeSatisfied(learnts, ClauseCleaner::learnts);
         
-        cleanClauses(clauses);
-        cleanClauses(xorclauses);
-        cleanClauses(learnts);
+        clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
+        clauseCleaner->cleanClauses(xorclauses, ClauseCleaner::xorclauses);
+        clauseCleaner->cleanClauses(learnts, ClauseCleaner::learnts);
         
         if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
             printf("| %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nbclausesbeforereduce*curRestart, nLearnts(), (double)learnts_literals/nLearnts());
