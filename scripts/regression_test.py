@@ -182,7 +182,7 @@ class Tester:
         f.close()
         #print "Verified %d original xor&regular clauses" %(clauses)
         return
-      if (line[0] != 'c' and line[0] != 'p') :
+      if (line != "" and line[0] != 'c' and line[0] != 'p') :
         if (line[0] != 'x') :
           self.check_regular_clause(line, value)
         else :
