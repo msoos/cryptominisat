@@ -22,8 +22,8 @@ VarReplacer::VarReplacer(Solver *_S) :
 
 VarReplacer::~VarReplacer()
 {
-    for (uint i = 0; i < toRemove.size(); i++)
-        free(toRemove[i]);
+    for (uint i = 0; i < clauses.size(); i++)
+        free(clauses[i]);
 }
 
 void VarReplacer::performReplace()
@@ -57,9 +57,9 @@ void VarReplacer::performReplace()
     S->clauseCleaner->cleanClauses(S->clauses, ClauseCleaner::clauses);
     S->clauseCleaner->cleanClauses(S->learnts, ClauseCleaner::learnts);
     S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
-    for (uint i = 0; i < toRemove.size(); i++)
-        S->removeClause(*toRemove[i]);
-    toRemove.clear();
+    for (uint i = 0; i < clauses.size(); i++)
+        S->removeClause(*clauses[i]);
+    clauses.clear();
     
     replace_set(S->clauses);
     replace_set(S->learnts);
@@ -244,9 +244,9 @@ const vector<Var> VarReplacer::getReplacingVars() const
     return replacingVars;
 }
 
-const vec<Clause*>& VarReplacer::getToRemove() const
+const vec<Clause*>& VarReplacer::getClauses() const
 {
-    return toRemove;
+    return clauses;
 }
 
 void VarReplacer::extendModel() const
@@ -346,7 +346,7 @@ void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverte
     if (internal)
         S->clauses.push(c);
     else
-        toRemove.push(c);
+        clauses.push(c);
     S->attachClause(*c);
     
     ps[0] ^= true;
@@ -355,7 +355,7 @@ void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverte
     if (internal)
         S->clauses.push(c);
     else
-        toRemove.push(c);
+        clauses.push(c);
     S->attachClause(*c);
 }
 

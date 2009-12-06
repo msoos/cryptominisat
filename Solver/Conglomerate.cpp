@@ -56,8 +56,8 @@ void Conglomerate::fillVarToXor()
     for (Lit* it = &(S->trail[0]), *end = it + S->trail.size(); it != end; it++)
         blocked[it->var()] = true;
     
-    const vec<Clause*>& tmp = S->toReplace->getToRemove();
-    for (Clause *const*it = tmp.getData(), *const*end = it + tmp.size(); it != end; it++) {
+    const vec<Clause*>& clauses = S->toReplace->getClauses();
+    for (Clause *const*it = clauses.getData(), *const*end = it + clauses.size(); it != end; it++) {
         const Clause& c = **it;
         for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
             blocked[a->var()] = true;

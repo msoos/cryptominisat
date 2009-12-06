@@ -25,7 +25,7 @@ class VarReplacer
         const uint getNumReplacedVars() const;
         const vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
-        const vec<Clause*>& getToRemove() const;
+        const vec<Clause*>& getClauses() const;
         void newClause();
         void newVar();
     
@@ -40,7 +40,7 @@ class VarReplacer
         
         vector<Lit> table;
         map<Var, vector<Var> > reverseTable;
-        vec<Clause*> toRemove;
+        vec<Clause*> clauses;
         
         uint replacedLits;
         uint replacedVars;
