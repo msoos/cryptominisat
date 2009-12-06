@@ -118,8 +118,6 @@ uint Conglomerate::conglomerateXors()
         }
         
         S->setDecisionVar(var, false);
-        if (removedVars.size() < var+1)
-            removedVars.resize(var+1, false);
         removedVars[var] = true;
         
         if (c.size() == 0) {
@@ -282,6 +280,34 @@ void Conglomerate::clearToRemove()
         }
     }
     S->xorclauses.shrink(r-a);
+    
+    clearLearntsFromToRemove();
+}
+
+void Conglomerate::clearLearntsFromToRemove()
+{
+    Clause **a = S->learnts.getData();
+    Clause **r = a;
+    Clause **end = a + S->learnts.size();
+    for (; r != end;) {
+        const Clause& c = **r;
+        bool inside = false;
+        if (!S->locked(c)) {
+            for (uint i = 0; i < c.size(); i++) {
+                if (removedVars[c[i].var()]) {
+                    inside = true;
+                    break;
+                }
+            }
+        }
+        if (!inside)
+            *a++ = *r++;
+        else {
+            S->removeClause(**r);
+            r++;
+        }
+    }
+    S->learnts.shrink(r-a);
 }
 
 void Conglomerate::doCalcAtFinish()
@@ -353,13 +379,18 @@ void Conglomerate::addRemovedClauses()
         ps.clear();
         for(uint i2 = 0; i2 != c.size() ; i2++) {
             ps.push(c[i2]);
-            if (removedVars.size() > c[i2].var() && removedVars[c[i2].var()])
+            if (removedVars[c[i2].var()])
                 S->setDecisionVar(c[i2].var(), true);
         }
         S->addXorClause(ps, c.xor_clause_inverted(), c.group, tmp, true);
         free(&c);
     }
     calcAtFinish.clear();
-    removedVars.clear();
+    for (uint i = 0; i < removedVars.size(); i++)
+        removedVars[i] = false;
 }
 
+void Conglomerate::newVar()
+{
+    removedVars.resize(removedVars.size()+1, false);
+}

@@ -146,6 +146,7 @@ Var Solver::newVar(bool sign, bool dvar)
 
     decision_var.push_back(dvar);
     toReplace->newVar();
+    conglomerate->newVar();
 
     insertVarOrder(v);
     if (dynamic_behaviour_analysis)

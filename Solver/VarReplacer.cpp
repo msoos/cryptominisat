@@ -44,7 +44,7 @@ void VarReplacer::performReplace()
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
         if (it->var() == i) continue;
         S->setDecisionVar(i, false);
-        if (removedVars.size() < it->var()+1 || !removedVars[it->var()])
+        if (!removedVars[it->var()])
             S->setDecisionVar(it->var(), true);
     }
 

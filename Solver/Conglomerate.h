@@ -25,6 +25,7 @@ public:
     const vec<XorClause*>& getCalcAtFinish() const;
     vec<XorClause*>& getCalcAtFinish();
     const vector<bool>& getRemovedVars() const;
+    void newVar();
     
 private:
     
@@ -32,6 +33,7 @@ private:
     void fillVarToXor();
     void clearDouble(vec<Lit>& ps) const;
     void clearToRemove();
+    void clearLearntsFromToRemove();
     bool dealWithNewClause(vec<Lit>& ps, const bool inverted, const uint old_group);
     
     typedef map<uint, vector<pair<XorClause*, uint> > > varToXorMap;
