@@ -1399,13 +1399,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
     }
     
-    for (uint i = 0; i < gauss_matrixes.size(); i++)
-        delete gauss_matrixes[i];
-    gauss_matrixes.clear();
-    for (uint i = 0; i < freeLater.size(); i++)
-        free(freeLater[i]);
-    freeLater.clear();
-    
     if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
         double time = cpuTime();
         MatrixFinder m(this);
@@ -1452,6 +1445,13 @@ lbool Solver::solve(const vec<Lit>& assumps)
         printf("====================================================================");
         print_gauss_sum_stats();
     }
+    
+    for (uint i = 0; i < gauss_matrixes.size(); i++)
+        delete gauss_matrixes[i];
+    gauss_matrixes.clear();
+    for (uint i = 0; i < freeLater.size(); i++)
+        free(freeLater[i]);
+    freeLater.clear();
 
     if (status == l_True) {
         conglomerate->doCalcAtFinish();
