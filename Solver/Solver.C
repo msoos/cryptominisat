@@ -228,7 +228,8 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         
         xorclauses.push(c);
         attachClause(*c);
-        toReplace->newClause();
+        if (!internal)
+            toReplace->newClause();
         break;
     }
     }
