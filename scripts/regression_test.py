@@ -171,13 +171,16 @@ class Tester:
       print "Examining CNF file %s, part %d" %(fname, debugLibPart)
     
     if fnmatch.fnmatch(fname, '*.gz') :
-      f = gzip.open(fname, "r")
+      tmpfname = "gunzip -c " + fname
+      f = os.popen(tmpfname, 'r')
+      #f = gzip.open(fname, 'r')
     else :
-      f = open(fname, "r")
-    line = f.readline()
+      f = os.open(fname, "r")
+    lines = f.readlines()
+    f.close()
     clauses = 0
     thisDebugLibPart = 0
-    while line:
+    for line in lines :
       #print "Examining line '%s'" %(line)
       line = line.rstrip()
       if ("Solver::solve()" in line) :
@@ -193,12 +196,8 @@ class Tester:
           self.check_xor_clause(line, value)
         
         clauses += 1
-          
-      line = f.readline()
       
     #print "Verified %d original xor&regular clauses" %(clauses)
-      
-    f.close()
     
   def check(self, fname, i, newVar):
     of = "outputfile"
