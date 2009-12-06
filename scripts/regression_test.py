@@ -14,6 +14,7 @@ class Tester:
   verbose = False
   gaussUntil = 100
   testDir = "../tests/"
+  testDirNewVar = "../tests/newVar/"
   cryptominisat = "../build/cryptominisat"
   
   def __init__(self):
@@ -23,16 +24,19 @@ class Tester:
     self.verbose = False
     self.gaussUntil = 100
     self.testDir = "../tests/"
+    self.testDirNewVar = "../tests/newVar/"
     self.cryptominisat = "../build/cryptominisat"
 
 
-  def execute(self, fname, i, of):
+  def execute(self, fname, i, of, newVar):
     if (os.path.isfile(of)) : os.unlink(of)
     if (os.path.isfile(self.cryptominisat) != True) :
             print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
             exit()
 
     command = "%s -randomize=%d -debugLib "%(self.cryptominisat, i)
+    if (newVar) :
+        command += "-debugNewVar "
     if (self.greedyUnbound) :
         command += "-greedyUnbound "
     command += "-gaussuntil=%d \"%s\" %s"%(self.gaussUntil, fname, of)
@@ -196,9 +200,9 @@ class Tester:
       
     f.close()
     
-  def check(self, fname, i):
+  def check(self, fname, i, newVar):
     of = "outputfile"
-    consoleOutput = self.execute(fname, i, of)
+    consoleOutput = self.execute(fname, i, of, newVar)
     self.parse_consoleOutput(consoleOutput)
     print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" %(fname[:20]+"....cnf.gz", i, self.sumProp, self.sumTime)
     
@@ -272,13 +276,21 @@ class Tester:
           os.unlink(fname_unlink);
     
     if (fname == None) :
+      dirList=os.listdir(self.testDirNewVar)
+      if (self.testDirNewVar == ".") :
+        self.testDirNewVar = ""
+      for fname in dirList:
+        if fnmatch.fnmatch(fname, '*.cnf.gz'):
+          for i in range(num):
+            self.check(self.testDirNewVar + fname, i, True)
+     
       dirList=os.listdir(self.testDir)
       if (self.testDir == ".") :
         self.testDir = ""
       for fname in dirList:
         if fnmatch.fnmatch(fname, '*.cnf.gz'):
           for i in range(num):
-            self.check(self.testDir + fname, i)
+            self.check(self.testDir + fname, i, False)
             
     else:
       if (os.path.isfile(fname) == False) :
