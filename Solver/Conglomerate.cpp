@@ -378,16 +378,18 @@ void Conglomerate::addRemovedClauses()
         
         ps.clear();
         for(uint i2 = 0; i2 != c.size() ; i2++) {
-            ps.push(c[i2]);
-            if (removedVars[c[i2].var()])
-                S->setDecisionVar(c[i2].var(), true);
+            ps.push(Lit(c[i2].var(), false));
         }
         S->addXorClause(ps, c.xor_clause_inverted(), c.group, tmp, true);
         free(&c);
     }
     calcAtFinish.clear();
-    for (uint i = 0; i < removedVars.size(); i++)
-        removedVars[i] = false;
+    for (uint i = 0; i < removedVars.size(); i++) {
+        if (removedVars[i]) {
+            removedVars[i] = false;
+            S->setDecisionVar(i, true);
+        }
+    }
 }
 
 void Conglomerate::newVar()
