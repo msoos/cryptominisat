@@ -74,11 +74,12 @@ void Conglomerate::fillVarToXor()
     }
 }
 
-void Conglomerate::process_clause(XorClause& x, const uint num, uint var, vec<Lit>& vars) {
+void Conglomerate::process_clause(XorClause& x, const uint num, Var remove_var, vec<Lit>& vars) {
     for (const Lit* a = &x[0], *end = a + x.size(); a != end; a++) {
-        if (a->var() != var) {
-            vars.push(*a);
-            varToXorMap::iterator finder = varToXor.find(a->var());
+        Var var = a->var();
+        if (var != remove_var) {
+            vars.push(Lit(var, false));
+            varToXorMap::iterator finder = varToXor.find(var);
             if (finder != varToXor.end()) {
                 vector<pair<XorClause*, uint> >::iterator it =
                     std::find(finder->second.begin(), finder->second.end(), make_pair(&x, num));

@@ -29,7 +29,7 @@ public:
     
 private:
     
-    void process_clause(XorClause& x, const uint num, uint var, vec<Lit>& vars);
+    void process_clause(XorClause& x, const uint num, Var remove_var, vec<Lit>& vars);
     void fillVarToXor();
     void clearDouble(vec<Lit>& ps) const;
     void clearToRemove();
