@@ -372,6 +372,18 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
     else            clauses_literals -= origSize;
 }
 
+void Solver::detachModifiedClause(const Var var1, const Var var2, const uint origSize, const XorClause* address)
+{
+    assert(origSize > 2);
+    
+    assert(find(xorwatches[var1], address));
+    assert(find(xorwatches[var2], address));
+    remove(xorwatches[var1], address);
+    remove(xorwatches[var2], address);
+    if (address->learnt()) learnts_literals -= origSize;
+    else            clauses_literals -= origSize;
+}
+
 // Revert to the state at given level (keeping all assignment at 'level' but not beyond).
 //
 void Solver::cancelUntil(int level)

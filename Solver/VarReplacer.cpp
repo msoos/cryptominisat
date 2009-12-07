@@ -80,73 +80,84 @@ void VarReplacer::performReplace()
     S->order_heap.filter(Solver::VarFilter(*S));
 }
 
-void VarReplacer::replace_set(vec<XorClause*>& cs, const bool need_reattach)
+void VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
 {
     XorClause **a = cs.getData();
     XorClause **r = a;
     for (XorClause **end = a + cs.size(); r != end;) {
         XorClause& c = **r;
         
-        bool needReattach = false;
+        bool changed = false;
+        Var origVar1 = c[0].var();
+        Var origVar2 = c[1].var();
         for (Lit *l = &c[0], *lend = l + c.size(); l != lend; l++) {
             Lit newlit = table[l->var()];
             if (newlit.var() != l->var()) {
-                if (need_reattach && !needReattach)
-                    S->detachClause(c);
-                needReattach = true;
+                changed = true;
                 *l = Lit(newlit.var(), false);
                 c.invert(newlit.sign());
                 replacedLits++;
             }
         }
         
-        if (need_reattach && needReattach) {
-            std::sort(c.getData(), c.getData() + c.size());
-            Lit p;
-            int i, j;
-            for (i = j = 0, p = lit_Undef; i < c.size(); i++) {
-                c[i] = c[i].unsign();
-                if (c[i] == p) {
-                    //added, but easily removed
-                    j--;
-                    p = lit_Undef;
-                    if (!S->assigns[c[i].var()].isUndef())
-                        c.invert(S->assigns[c[i].var()].getBool());
-                } else if (S->assigns[c[i].var()].isUndef()) //just add
-                    c[j++] = p = c[i];
-                else c.invert(S->assigns[c[i].var()].getBool()); //modify xor_clause_inverted instead of adding
-            }
-            c.shrink(i - j);
-            
-            switch (c.size()) {
-            case 0:
-                if (!c.xor_clause_inverted())
-                    S->ok = false;
-                r++;
-                break;
-            case 1:
-                S->uncheckedEnqueue(c[0] ^ c.xor_clause_inverted());
-                r++;
-                break;
-            case 2: {
-                vec<Lit> ps(2);
-                ps[0] = c[0];
-                ps[1] = c[1];
-                addBinaryXorClause(ps, c.xor_clause_inverted(), c.group, true);
-                c.mark(1);
-                r++;
-                break;
-            }
-            default:
-                S->attachClause(c);
-                *a++ = *r++;
-                break;
-            }
+        if (isAttached && changed && handleUpdatedClause(c, origVar1, origVar2)) {
+            c.mark(1);
+            r++;
         } else {
             *a++ = *r++;
         }
     }
     cs.shrink(r-a);
+}
+
+const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2)
+{
+    uint origSize = c.size();
+    std::sort(c.getData(), c.getData() + c.size());
+    Lit p;
+    int i, j;
+    for (i = j = 0, p = lit_Undef; i < c.size(); i++) {
+        c[i] = c[i].unsign();
+        if (c[i] == p) {
+            //added, but easily removed
+            j--;
+            p = lit_Undef;
+            if (!S->assigns[c[i].var()].isUndef())
+                c.invert(S->assigns[c[i].var()].getBool());
+        } else if (S->assigns[c[i].var()].isUndef()) //just add
+            c[j++] = p = c[i];
+        else c.invert(S->assigns[c[i].var()].getBool()); //modify xor_clause_inverted instead of adding
+    }
+    c.shrink(i - j);
+    
+    switch (c.size()) {
+    case 0:
+        S->detachModifiedClause(origVar1, origVar2, origSize, &c);
+        if (!c.xor_clause_inverted())
+            S->ok = false;
+        return true;
+    case 1:
+        S->detachModifiedClause(origVar1, origVar2, origSize, &c);
+        S->uncheckedEnqueue(c[0] ^ c.xor_clause_inverted());
+        return true;
+    case 2: {
+        S->detachModifiedClause(origVar1, origVar2, origSize, &c);
+        vec<Lit> ps(2);
+        ps[0] = c[0];
+        ps[1] = c[1];
+        addBinaryXorClause(ps, c.xor_clause_inverted(), c.group, true);
+        return true;
+    }
+    default:
+        if (origVar1 != c[0].var() || origVar2 != c[1].var()) {
+            S->detachModifiedClause(origVar1, origVar2, origSize, &c);
+            S->attachClause(c);
+        }
+        return false;
+    }
+    
+    assert(false);
+    return false;
 }
 
 void VarReplacer::replace_set(vec<Clause*>& cs)
@@ -176,7 +187,7 @@ void VarReplacer::replace_set(vec<Clause*>& cs)
     cs.shrink(r-a);
 }
 
-bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2)
+const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2)
 {
     bool satisfied = false;
     std::sort(c.getData(), c.getData() + c.size());
@@ -204,8 +215,8 @@ bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit o
         S->ok = false;
         return true;
     case 1 :
-        S->uncheckedEnqueue(c[0]);
         S->detachModifiedClause(origLit1, origLit2, origSize, &c);
+        S->uncheckedEnqueue(c[0]);
         return true;
     case 2:
         S->detachModifiedClause(origLit1, origLit2, origSize, &c);
@@ -218,6 +229,9 @@ bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit o
         }
         return false;
     }
+    
+    assert(false);
+    return false;
 }
 
 const uint VarReplacer::getNumReplacedLits() const

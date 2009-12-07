@@ -31,8 +31,9 @@ class VarReplacer
     
     private:
         void replace_set(vec<Clause*>& set);
-        void replace_set(vec<XorClause*>& cs, const bool need_reattach);
-        bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
+        void replace_set(vec<XorClause*>& cs, const bool isAttached);
+        const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
+        const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
         void addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal = false);
         
         void setAllThatPointsHereTo(const Var var, const Lit lit);
