@@ -16,6 +16,7 @@ using std::endl;
 VarReplacer::VarReplacer(Solver *_S) :
     replacedLits(0)
     , replacedVars(0)
+    , lastReplacedVars(0)
     , addedNewClause(false)
     , S(_S)
 {
@@ -41,7 +42,7 @@ void VarReplacer::performReplace()
     S->clauseCleaner->cleanClauses(S->learnts, ClauseCleaner::learnts);
     S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
     
-    if (!addedNewClause || replacedVars == 0) return;
+    if (!addedNewClause && replacedVars == lastReplacedVars) return;
     
     #ifdef VERBOSE_DEBUG
     {
@@ -79,6 +80,7 @@ void VarReplacer::performReplace()
         printf("|  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars, replacedLits);
     
     addedNewClause = false;
+    lastReplacedVars = replacedVars;
     
     if (S->ok)
         S->ok = (S->propagate() == NULL);
