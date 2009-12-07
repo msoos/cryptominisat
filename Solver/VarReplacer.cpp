@@ -40,6 +40,16 @@ void VarReplacer::performReplace()
     }
     #endif
     
+    S->clauseCleaner->removeSatisfied(S->clauses, ClauseCleaner::clauses);
+    S->clauseCleaner->removeSatisfied(S->learnts, ClauseCleaner::learnts);
+    S->clauseCleaner->removeSatisfied(S->xorclauses, ClauseCleaner::xorclauses);
+    
+    S->clauseCleaner->cleanClauses(S->clauses, ClauseCleaner::clauses);
+    S->clauseCleaner->cleanClauses(S->learnts, ClauseCleaner::learnts);
+    S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
+    
+    if (!addedNewClause || replacedVars == 0) return;
+    
     uint i = 0;
     const vector<bool>& removedVars = S->conglomerate->getRemovedVars();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
@@ -48,25 +58,16 @@ void VarReplacer::performReplace()
         if (!removedVars[it->var()])
             S->setDecisionVar(it->var(), true);
     }
-
-    if (!addedNewClause || replacedVars == 0) return;
-    
-    S->clauseCleaner->removeSatisfied(S->clauses, ClauseCleaner::clauses);
-    S->clauseCleaner->removeSatisfied(S->learnts, ClauseCleaner::learnts);
-    S->clauseCleaner->removeSatisfied(S->xorclauses, ClauseCleaner::xorclauses);
-    
-    S->clauseCleaner->cleanClauses(S->clauses, ClauseCleaner::clauses);
-    S->clauseCleaner->cleanClauses(S->learnts, ClauseCleaner::learnts);
-    S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
-    for (uint i = 0; i < clauses.size(); i++)
-        S->removeClause(*clauses[i]);
-    clauses.clear();
     
     replace_set(S->clauses);
     replace_set(S->learnts);
     
     replace_set(S->xorclauses, true);
     replace_set(S->conglomerate->getCalcAtFinish(), false);
+    
+    for (uint i = 0; i < clauses.size(); i++)
+        S->removeClause(*clauses[i]);
+    clauses.clear();
     
     if (S->verbosity >=1)
         printf("|  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars, replacedLits);
