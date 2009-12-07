@@ -31,7 +31,6 @@ class XorFinder
     public:
         
         XorFinder(Solver* S, vec<Clause*>& cls);
-        uint doByPart(uint& sumLengths, const uint minSize, const uint maxSize);
         uint doNoPart(uint& sumLengths, const uint minSize, const uint maxSize);
         
     private:
