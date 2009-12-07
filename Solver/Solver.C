@@ -178,7 +178,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         return false;
 
     // Check if clause is satisfied and remove false/duplicate literals:
-    if (toReplace->getNumReplacedLits()) {
+    if (toReplace->getNumLastReplacedVars()) {
         for (int i = 0; i != ps.size(); i++) {
             ps[i] = toReplace->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
         }
@@ -259,7 +259,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
         return false;
 
     // Check if clause is satisfied and remove false/duplicate literals:
-    if (toReplace->getNumReplacedLits()) {
+    if (toReplace->getNumLastReplacedVars()) {
         for (int i = 0; i != ps.size(); i++) {
             ps[i] = toReplace->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
         }

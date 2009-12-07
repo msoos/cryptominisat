@@ -23,6 +23,7 @@ class VarReplacer
         void performReplace();
         const uint getNumReplacedLits() const;
         const uint getNumReplacedVars() const;
+        const uint getNumLastReplacedVars() const;
         const vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
         const vec<Clause*>& getClauses() const;
