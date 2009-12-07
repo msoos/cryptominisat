@@ -42,7 +42,7 @@ void VarReplacer::performReplace()
     S->clauseCleaner->cleanClauses(S->learnts, ClauseCleaner::learnts);
     S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
     
-    if (!addedNewClause && replacedVars == lastReplacedVars) return;
+    if (replacedVars == lastReplacedVars) return;
     
     #ifdef VERBOSE_DEBUG
     {
