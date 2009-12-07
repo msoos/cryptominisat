@@ -1,0 +1,3 @@
+grep -E "(((var)|(lit)) \b-?248\b)|(Replacing.*\b248\b)|(Statistics)|(Extending.*\b248:)" output
+grep -E "(((var)|(lit)) \b-?(248|180)\b)|(Replacing.*\b(248|180)\b)|(Statistics)|(Extending.*\b(248|180):)|( \| )|(after replacing.*\b-?248\b)|(after)|(after.*248)|(Final.*\b-?248\b)|(group: 63267)" output
+grep -E "(((var)|(lit)) \b-?(9782|9792|9794)\b)|(Replacing.*\b-?(9782|9792|9794)\b)|(Statistics)|(Extending.*\b-?(9782|9792|9794):)|( \| )|(after replacing.*\b-?(9782|9791|9794)\b)|(Final.*\b-?(9782|9792|9794)\b)(doCalc.*\b-?(9782|9792|9794)\b)" output
