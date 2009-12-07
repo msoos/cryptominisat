@@ -131,6 +131,11 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     }
     c.shrink(i - j);
     
+    #ifdef VERBOSE_DEBUG
+    cout << "xor-clause after replacing: ";
+    c.plain_print();
+    #endif
+    
     switch (c.size()) {
     case 0:
         S->detachModifiedClause(origVar1, origVar2, origSize, &c);
@@ -291,7 +296,7 @@ void VarReplacer::extendModel() const
 void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "replace() called with var " << ps[0]+1 << " and var " << ps[1]+1 << " with xor_clause_inverted " << xor_clause_inverted << endl;
+    cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xor_clause_inverted " << xor_clause_inverted << endl;
     #endif
     
     #ifdef DEBUG_REPLACER
