@@ -525,6 +525,7 @@ Lit Solver::pickBranchLit(int polarity_mode)
     } else {
         Lit lit(next,sign);
         #ifdef VERBOSE_DEBUG
+        assert(decision_var[lit.var()]);
         cout << "decided on: " << lit.var()+1 << " to set:" << !lit.sign() << endl;
         #endif
         return lit;
