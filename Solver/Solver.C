@@ -463,7 +463,7 @@ void Solver::set_gaussian_decision_until(const uint to)
 Lit Solver::pickBranchLit(int polarity_mode)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "decision level:" << decisionLevel() << " ";
+    cout << "decision level: " << decisionLevel() << " ";
     #endif
     
     Var next = var_Undef;
