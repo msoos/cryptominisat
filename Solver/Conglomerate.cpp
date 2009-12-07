@@ -203,6 +203,7 @@ bool Conglomerate::dealWithNewClause(vec<Lit>& ps, const bool inverted, const ui
             
             if (S->assigns[ps[0].var()] == l_Undef) {
                 assert(S->decisionLevel() == 0);
+                blocked[ps[0].var()] = true;
                 S->uncheckedEnqueue(Lit(ps[0].var(), inverted));
             } else if (S->assigns[ps[0].var()] != boolToLBool(!inverted)) {
                 #ifdef VERBOSE_DEBUG
