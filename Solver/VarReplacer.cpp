@@ -31,13 +31,6 @@ void VarReplacer::performReplace()
 {
     #ifdef VERBOSE_DEBUG
     cout << "Replacer started." << endl;
-    {
-        uint i = 0;
-        for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
-            if (it->var() == i) continue;
-            cout << "Replacing var " << i+1 << " with Lit " << (it->sign() ? "-" : "") <<  it->var()+1 << endl;
-        }
-    }
     #endif
     
     S->clauseCleaner->removeSatisfied(S->clauses, ClauseCleaner::clauses);
@@ -50,10 +43,23 @@ void VarReplacer::performReplace()
     
     if (!addedNewClause || replacedVars == 0) return;
     
+    #ifdef VERBOSE_DEBUG
+    {
+        uint i = 0;
+        for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
+            if (it->var() == i) continue;
+            cout << "Replacing var " << i+1 << " with Lit " << (it->sign() ? "-" : "") <<  it->var()+1 << endl;
+        }
+    }
+    #endif
+    
     uint i = 0;
     const vector<bool>& removedVars = S->conglomerate->getRemovedVars();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
         if (it->var() == i) continue;
+        #ifdef VERBOSE_DEBUG
+        cout << "Setting var " << i+1 << " to a non-decision var" << endl;
+        #endif
         S->setDecisionVar(i, false);
         if (!removedVars[it->var()])
             S->setDecisionVar(it->var(), true);
