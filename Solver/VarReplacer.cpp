@@ -5,6 +5,7 @@
 #include "ClauseCleaner.h"
 
 //#define VERBOSE_DEBUG
+//#define DEBUG_REPLACER
 
 #ifdef VERBOSE_DEBUG
 #include <iostream>
@@ -273,6 +274,19 @@ void VarReplacer::extendModel() const
 
 void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group)
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "replace() called with var " << ps[0]+1 << " and var " << ps[1]+1 << " with xor_clause_inverted " << xor_clause_inverted << endl;
+    #endif
+    
+    #ifdef DEBUG_REPLACER
+    assert(ps.size() == 2);
+    assert(!ps[0].sign());
+    assert(!ps[1].sign());
+    assert(S->assigns[ps[0].var()].isUndef());
+    assert(S->assigns[ps[1].var()].isUndef());
+    #endif
+    
+    
     addBinaryXorClause(ps, xor_clause_inverted, group);
     Var var = ps[0].var();
     Lit lit = Lit(ps[1].var(), !xor_clause_inverted);
@@ -337,9 +351,12 @@ void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const ui
 
 void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal)
 {
+    #ifdef DEBUG_REPLACER
+    assert(!ps[0].sign());
+    assert(!ps[1].sign());
+    #endif
+    
     Clause* c;
-    ps[0] = ps[0].unsign();
-    ps[1] = ps[1].unsign();
     ps[0] ^= xor_clause_inverted;
     
     c = Clause_new(ps, group, false);
