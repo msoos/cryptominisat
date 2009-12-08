@@ -86,7 +86,7 @@ Solver::Solver() :
         , learnt_clause_group(0)
         , libraryCNFFile   (NULL)
 {
-    toReplace = new VarReplacer(this);
+    varReplacer = new VarReplacer(this);
     conglomerate = new Conglomerate(this);
     clauseCleaner = new ClauseCleaner(*this);
     logger.setSolver(this);
@@ -99,7 +99,7 @@ Solver::~Solver()
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
     for (uint i = 0; i < gauss_matrixes.size(); i++) delete gauss_matrixes[i];
     for (uint i = 0; i < freeLater.size(); i++) free(freeLater[i]);
-    delete toReplace;
+    delete varReplacer;
     delete conglomerate;
     delete clauseCleaner;
     
@@ -130,7 +130,7 @@ Var Solver::newVar(bool sign, bool dvar)
     polarity  .push_back((char)sign);
 
     decision_var.push_back(dvar);
-    toReplace->newVar();
+    varReplacer->newVar();
     conglomerate->newVar();
 
     insertVarOrder(v);
@@ -160,9 +160,9 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         return false;
 
     // Check if clause is satisfied and remove false/duplicate literals:
-    if (toReplace->getNumLastReplacedVars()) {
+    if (varReplacer->getNumLastReplacedVars()) {
         for (int i = 0; i != ps.size(); i++) {
-            ps[i] = toReplace->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
+            ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
         }
     }
     
@@ -205,7 +205,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xor_clause_inverted ? "-" : "") << ps[1].var()+1 << endl;
         #endif
         
-        toReplace->replace(ps, xor_clause_inverted, group);
+        varReplacer->replace(ps, xor_clause_inverted, group);
         break;
     }
     default: {
@@ -215,7 +215,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         xorclauses.push(c);
         attachClause(*c);
         if (!internal)
-            toReplace->newClause();
+            varReplacer->newClause();
         break;
     }
     }
@@ -241,9 +241,9 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
         return false;
 
     // Check if clause is satisfied and remove false/duplicate literals:
-    if (toReplace->getNumLastReplacedVars()) {
+    if (varReplacer->getNumLastReplacedVars()) {
         for (int i = 0; i != ps.size(); i++) {
-            ps[i] = toReplace->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
+            ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
         }
     }
     
@@ -274,7 +274,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
 
         clauses.push(c);
         attachClause(*c);
-        toReplace->newClause();
+        varReplacer->newClause();
     }
 
     return true;
@@ -1333,7 +1333,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     conglomerate->addRemovedClauses();
     
     if (performReplace) {
-        toReplace->performReplace();
+        varReplacer->performReplace();
         if (!ok) return l_False;
     }
 
@@ -1352,7 +1352,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
                 printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
             
             if (performReplace) {
-                toReplace->performReplace();
+                varReplacer->performReplace();
                 if (!ok) return l_False;
             }
         }
@@ -1381,7 +1381,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             }
             
             if (performReplace) {
-                toReplace->performReplace();
+                varReplacer->performReplace();
                 if (!ok) return l_False;
             }
         }
@@ -1443,7 +1443,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     if (status == l_True) {
         conglomerate->doCalcAtFinish();
-        toReplace->extendModel();
+        varReplacer->extendModel();
         // Extend & copy model:
         model.growTo(nVars());
         for (int i = 0; i < nVars(); i++) model[i] = value(i);

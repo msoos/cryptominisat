@@ -101,7 +101,7 @@ uint XorFinder::findXors(uint& sumLengths)
         
         switch(lits.size()) {
         case 2: {
-            S->toReplace->replace(lits, impair, old_group);
+            S->varReplacer->replace(lits, impair, old_group);
             
             #ifdef VERBOSE_DEBUG
             XorClause* x = XorClause_new(lits, impair, old_group);

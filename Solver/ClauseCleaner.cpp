@@ -152,7 +152,7 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type)
             vec<Lit> ps(2);
             ps[0] = c[0].unsign();
             ps[1] = c[1].unsign();
-            solver.toReplace->replace(ps, c.xor_clause_inverted(), c.group);
+            solver.varReplacer->replace(ps, c.xor_clause_inverted(), c.group);
             solver.removeClause(c);
             s++;
         } else

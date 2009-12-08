@@ -282,7 +282,7 @@ protected:
     friend class VarReplacer;
     friend class ClauseCleaner;
     Conglomerate* conglomerate;
-    VarReplacer* toReplace;
+    VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
 
     // Debug:

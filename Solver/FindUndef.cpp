@@ -57,7 +57,7 @@ void FindUndef::fillPotential()
         }
     }
     
-    vector<Var> replacingVars = S.toReplace->getReplacingVars();
+    vector<Var> replacingVars = S.varReplacer->getReplacingVars();
     for (Var *it = &replacingVars[0], *end = it + replacingVars.size(); it != end; it++) {
         if (isPotential[*it]) {
             isPotential[*it] = false;
