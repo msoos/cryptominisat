@@ -6,6 +6,9 @@ ELSE()
   SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 ENDIF()
 
+#set(CMAKE_C_COMPILER "gcc-4.4")
+#set(CMAKE_CXX_COMPILER "/usr/bin/g++-4.4")
+
 PROJECT(crypto)
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -march=native")
 SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -ggdb")
