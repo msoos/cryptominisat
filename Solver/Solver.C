@@ -425,27 +425,6 @@ void Solver::needLibraryCNFFile(const char* fileName)
     assert(libraryCNFFile != NULL);
 }
 
-void Solver::printClause(const Clause& c) const
-{
-    printf("(group: %d) ", c.group);
-    for (uint i = 0; i < c.size();) {
-        printLit(c[i]);
-        i++;
-        if (i < c.size()) printf(" ");
-    }
-}
-
-void Solver::printClause(const XorClause& c) const
-{
-    printf("(group: %d) ", c.group);
-    if (c.xor_clause_inverted()) printf(" /inverted/ ");
-    for (uint i = 0; i < c.size();) {
-        printLit(c[i].unsign());
-        i++;
-        if (i < c.size()) printf(" + ");
-    }
-}
-
 void Solver::set_gaussian_decision_until(const uint to)
 {
     gaussconfig.decision_until = to;
@@ -1520,8 +1499,7 @@ bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
         }
         if (!final) {
             printf("unsatisfied clause: ");
-            printClause(*xorclauses[i]);
-            printf("\n");
+            xorclauses[i]->plain_print();
             failed = true;
         }
     }
@@ -1539,8 +1517,7 @@ void Solver::verifyModel()
                 goto next;
 
         printf("unsatisfied clause: ");
-        printClause(*clauses[i]);
-        printf("\n");
+        clauses[i]->plain_print();
         failed = true;
 next:
         ;
