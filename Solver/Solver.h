@@ -146,10 +146,10 @@ public:
     void needProofGraph();         // Prepares the solver to output proof graphs during solving
     void setVariableName(int var, char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
     const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
-    const vec<Clause*>& get_learnts() const; //Get all learnt clauses
+    const vec<Clause*>& get_learnts() const; //Get all learnt clauses that are >1 long
     const vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
     const uint get_unitary_learnts_num() const; //return the number of unitary learnt clauses
-    void dump_sorted_learnts(const char* file);
+    void dump_sorted_learnts(const char* file); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const char* fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
 
 protected:
@@ -227,7 +227,7 @@ protected:
     unsigned long int   MYFLAG;
 
     //Logging
-    uint learnt_clause_group; //the group number of learnt clauses. Incremented at each added learnt clause
+    uint                learnt_clause_group; //the group number of learnt clauses. Incremented at each added learnt clause
     FILE                *libraryCNFFile; //The file that all calls from the library are logged
 
     // Main internal methods:
@@ -255,7 +255,6 @@ protected:
     void     varDecayActivity ();                      // Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
     void     varBumpActivity  (Var v);                 // Increase a variable with the current 'bump' value.
     void     claDecayActivity ();                      // Decay all clauses with the specified factor. Implemented by increasing the 'bump' value instead.
-    void     claBumpActivity  (Clause& c);             // Increase a clause with the current 'bump' value.
 
     // Operations on clauses:
     //
