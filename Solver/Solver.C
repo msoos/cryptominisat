@@ -38,14 +38,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "XorFinder.h"
 #include "ClauseCleaner.h"
 
-//#define DEBUG_LIB
-
-#ifdef DEBUG_LIB
-#include <sstream>
-FILE* myoutputfile;
-static uint numcalled = 0;
-#endif //DEBUG_LIB
-
 //=================================================================================================
 // Constructor/Destructor:
 
@@ -92,19 +84,13 @@ Solver::Solver() :
         , maxRestarts(UINT_MAX)
         , MYFLAG           (0)
         , learnt_clause_group(0)
+        , libraryCNFFile   (NULL)
 {
     toReplace = new VarReplacer(this);
     conglomerate = new Conglomerate(this);
     clauseCleaner = new ClauseCleaner(*this);
     logger.setSolver(this);
-    
-    #ifdef DEBUG_LIB
-    std::stringstream ss;
-    ss << "inputfile" << numcalled << ".cnf";
-    myoutputfile = fopen(ss.str().c_str(), "w");
-    #endif
 }
-
 
 Solver::~Solver()
 {
@@ -117,9 +103,8 @@ Solver::~Solver()
     delete conglomerate;
     delete clauseCleaner;
     
-    #ifdef DEBUG_LIB
-    fclose(myoutputfile);
-    #endif //DEBUG_LIB
+    if (libraryCNFFile)
+        fclose(libraryCNFFile);
 }
 
 //=================================================================================================
@@ -152,9 +137,8 @@ Var Solver::newVar(bool sign, bool dvar)
     if (dynamic_behaviour_analysis)
         logger.new_var(v);
     
-    #ifdef DEBUG_LIB
-    fprintf(myoutputfile, "c Solver::newVar() called\n");
-    #endif //DEBUG_LIB
+    if (libraryCNFFile)
+        fprintf(libraryCNFFile, "c Solver::newVar() called\n");
 
     return v;
 }
@@ -162,15 +146,13 @@ Var Solver::newVar(bool sign, bool dvar)
 bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal)
 {
     assert(decisionLevel() == 0);
-    #ifdef DEBUG_LIB
-    if (!internal) {
-        fprintf(myoutputfile, "x");
+    if (libraryCNFFile && !internal) {
+        fprintf(libraryCNFFile, "x");
         for (uint i = 0; i < ps.size(); i++) {
-            fprintf(myoutputfile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
+            fprintf(libraryCNFFile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
         }
-        fprintf(myoutputfile, "0\n");
+        fprintf(libraryCNFFile, "0\n");
     }
-    #endif //DEBUG_LIB
 
     if (dynamic_behaviour_analysis) logger.set_group_name(group, group_name);
 
@@ -245,12 +227,12 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
     
-    #ifdef DEBUG_LIB
-    for (int i = 0; i < ps.size(); i++) {
-        fprintf(myoutputfile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
+    if (libraryCNFFile) {
+        for (int i = 0; i < ps.size(); i++) {
+            fprintf(libraryCNFFile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
+        }
+        fprintf(libraryCNFFile, "0\n");
     }
-    fprintf(myoutputfile, "0\n");
-    #endif //DEBUG_LIB
 
     if (dynamic_behaviour_analysis)
         logger.set_group_name(group, group_name);
@@ -437,6 +419,11 @@ void Solver::printLit(const Lit l) const
     printf("%s%d:%c", l.sign() ? "-" : "", l.var()+1, value(l) == l_True ? '1' : (value(l) == l_False ? '0' : 'X'));
 }
 
+void Solver::needLibraryCNFFile(const char* fileName)
+{
+    libraryCNFFile = fopen(fileName, "w");
+    assert(libraryCNFFile != NULL);
+}
 
 void Solver::printClause(const Clause& c) const
 {
@@ -1344,9 +1331,8 @@ void Solver::print_gauss_sum_stats() const
 
 lbool Solver::solve(const vec<Lit>& assumps)
 {
-    #ifdef DEBUG_LIB
-    fprintf(myoutputfile, "c Solver::solve() called\n");
-    #endif
+    if (libraryCNFFile)
+        fprintf(libraryCNFFile, "c Solver::solve() called\n");
     
     model.clear();
     conflict.clear();

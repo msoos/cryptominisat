@@ -24,6 +24,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <cstdio>
 #include <string.h>
+#include <stdio.h>
 
 #include "Vec.h"
 #include "Heap.h"
@@ -149,6 +150,7 @@ public:
     const vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
     const uint get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     void dump_sorted_learnts(const char* file);
+    void needLibraryCNFFile(const char* fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
 
 protected:
     vector<Gaussian*> gauss_matrixes;
@@ -226,6 +228,7 @@ protected:
 
     //Logging
     uint learnt_clause_group; //the group number of learnt clauses. Incremented at each added learnt clause
+    FILE                *libraryCNFFile; //The file that all calls from the library are logged
 
     // Main internal methods:
     //
