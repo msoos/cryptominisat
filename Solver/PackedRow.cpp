@@ -45,7 +45,7 @@ bool PackedRow::operator !=(const PackedRow& b) const
     assert(size == b.size);
     #endif
     
-    return (std::equal(b.mp-1, b.mp+size, mp-1));
+    return (!std::equal(b.mp-1, b.mp+size, mp-1));
 }
 
 bool PackedRow::popcnt_is_one() const
