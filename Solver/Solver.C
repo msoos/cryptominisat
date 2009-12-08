@@ -1269,6 +1269,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         learnts.push(c);
         c->setActivity(nbLevels); // LS
         if (nbLevels <= 2) nbDL2++;
+        if (c->size() == 2) nbBin++;
         attachClause(*c);
         uncheckedEnqueue(learnt_clause[0], c);
 
