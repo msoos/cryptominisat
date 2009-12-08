@@ -137,9 +137,9 @@ public:
     }
     void print() {
         printf("Clause   group: %d, size: %d, learnt:%d, lits: ", group, size(), learnt());
-        plain_print();
+        plainPrint();
     }
-    void plain_print(FILE* to = stdout) const {
+    void plainPrint(FILE* to = stdout) const {
         for (uint i = 0; i < size(); i++) {
             if (data[i].sign()) fprintf(to, "-");
             fprintf(to, "%d ", data[i].var() + 1);
@@ -186,10 +186,10 @@ public:
 
     void print() {
         printf("XOR Clause   group: %d, size: %d, learnt:%d, lits:\"", group, size(), learnt());
-        plain_print();
+        plainPrint();
     }
     
-    void plain_print(FILE* to = stdout) const {
+    void plainPrint(FILE* to = stdout) const {
         fprintf(to, "x");
         if (xor_clause_inverted())
             printf("-");

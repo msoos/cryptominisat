@@ -1023,7 +1023,7 @@ void Solver::dump_sorted_learnts(const char* file)
     
     sort(learnts, reduceDB_lt());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
-        learnts[i]->plain_print(outfile);
+        learnts[i]->plainPrint(outfile);
     }
     fclose(outfile);
 }
@@ -1499,7 +1499,7 @@ bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
         }
         if (!final) {
             printf("unsatisfied clause: ");
-            xorclauses[i]->plain_print();
+            xorclauses[i]->plainPrint();
             failed = true;
         }
     }
@@ -1517,7 +1517,7 @@ void Solver::verifyModel()
                 goto next;
 
         printf("unsatisfied clause: ");
-        clauses[i]->plain_print();
+        clauses[i]->plainPrint();
         failed = true;
 next:
         ;
