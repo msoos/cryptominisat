@@ -75,14 +75,11 @@ void Logger::new_var(const Var var)
         return;
 
     if (varnames.size() <= var) {
-        varnames.resize(var+1);
+        varnames.resize(var+1, "Noname");
         times_var_propagated.resize(var+1, 0);
         times_var_guessed.resize(var+1, 0);
         depths_of_assigns_for_var.resize(var+1);
     }
-    std::stringstream ss;
-    ss << var + 1;
-    varnames[var] = ss.str();
 }
 
 // Resizes the groupnames and other, related vectors to accomodate for a new group
@@ -142,9 +139,7 @@ void Logger::set_variable_name(const uint var, string name)
     new_var(var);
     cut_name_to_size(name);
     
-    std::stringstream ss;
-    ss << var + 1;
-    if (varnames[var] == ss.str()) {
+    if (varnames[var] == "Noname") {
         varnames[var] = name;
     } else if (varnames[var] != name) {
         printf("Error! Variable no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", var+1, varnames[var].c_str(), name.c_str());
@@ -741,7 +736,7 @@ void Logger::printstats() const
     cout << "+" << std::setfill('=') << std::setw(fullwidth) << "=" << std::setfill(' ') << "+" << endl;
     
     cout.setf(std::ios_base::left);
-    cout.precision(4);
+    cout.precision(2);
     print_statistics_note();
     print_times_var_guessed();
     print_times_group_caused_propagation();
