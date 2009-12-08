@@ -36,6 +36,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "GaussianConfig.h"
 #include "Logger.h"
 #include "constants.h"
+#include "BoundedQueue.h"
 
 class Gaussian;
 class MatrixFinder;
@@ -130,6 +131,7 @@ public:
     bool      performReplace;       // Should var-replacing be performed?
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
+    bool      dynamicRestarts;      // If set to true, the restart strategy will be dynamic
     
 
     enum { polarity_true = 0, polarity_false = 1, polarity_user = 2, polarity_rnd = 3 };
@@ -210,6 +212,8 @@ protected:
     Heap<VarOrderLt>    order_heap;       // A priority queue of variables ordered with respect to the variable activity.
     double              progress_estimate;// Set by 'search()'.
     bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
+    bqueue<unsigned int> nbDecisionLevelHistory; // Set of last decision level in conflict clauses
+    float               totalSumOfDecisionLevel;
     MTRand mtrand;                        // random number generator
     Logger logger;                       // dynamic logging, statistics
     friend class Logger;
