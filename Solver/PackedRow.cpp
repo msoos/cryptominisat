@@ -48,39 +48,6 @@ bool PackedRow::operator !=(const PackedRow& b) const
     return (!std::equal(b.mp-1, b.mp+size, mp-1));
 }
 
-bool PackedRow::popcnt_is_one() const
-{
-    char popcount = 0;
-    for (uint i = 0; i < size; i++) if (mp[i]) {
-        uint64_t tmp = mp[i];
-        for (uint i2 = 0; i2 < 64; i2++) {
-            popcount += tmp & 1;
-            if (popcount > 1) return false;
-            tmp >>= 1;
-        }
-    }
-    return popcount;
-}
-
-bool PackedRow::popcnt_is_one(uint from) const
-{
-    from++;
-    for (uint i = from/64; i < size; i++) if (mp[i]) {
-        uint64_t tmp = mp[i];
-        uint i2;
-        if (i == from/64) {
-            i2 = from%64;
-            tmp >>= i2;
-        } else
-            i2 = 0;
-        for (; i2 < 64; i2++) {
-            if (tmp & 1) return false;
-            tmp >>= 1;
-        }
-    }
-    return true;
-}
-
 uint PackedRow::popcnt() const
 {
     uint popcnt = 0;
@@ -97,7 +64,7 @@ uint PackedRow::popcnt() const
 uint PackedRow::popcnt(const uint from) const
 {
     uint popcnt = 0;
-    for (uint i = from/64; i < size; i++) if (mp[i]) {
+    for (uint i = from/64; i != size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
         uint i2;
         if (i == from/64) {
@@ -111,33 +78,6 @@ uint PackedRow::popcnt(const uint from) const
         }
     }
     return popcnt;
-}
-
-PackedRow& PackedRow::operator=(const PackedRow& b)
-{
-    #ifdef DEBUG_ROW
-    assert(size > 0);
-    assert(b.size > 0);
-    assert(size == b.size);
-    #endif
-    
-    memcpy(mp-1, b.mp-1, size+1);
-    return *this;
-}
-
-PackedRow& PackedRow::operator^=(const PackedRow& b)
-{
-    #ifdef DEBUG_ROW
-    assert(size > 0);
-    assert(b.size > 0);
-    assert(b.size == size);
-    #endif
-    
-    for (uint i = 0; i < size; i++) {
-        mp[i] ^= b.mp[i];
-    }
-    xor_clause_inverted ^= !b.xor_clause_inverted;
-    return *this;
 }
 
 void PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const

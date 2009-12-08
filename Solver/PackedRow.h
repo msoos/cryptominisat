@@ -42,11 +42,84 @@ class PackedRow
 public:
     bool operator ==(const PackedRow& b) const;
     bool operator !=(const PackedRow& b) const;
-    PackedRow& operator=(const PackedRow& b);
+    
+    PackedRow& operator=(const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(size == b.size);
+        #endif
+        
+        memcpy(mp-1, b.mp-1, size+1);
+        return *this;
+    }
+    
+    PackedRow& operator^=(const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+        
+        uint64_t * __restrict mp1 = mp;
+        uint64_t * __restrict mp2 = b.mp;
+        
+        for (uint i = 0; i != size; i++) {
+            *(mp1 + i) ^= *(mp2 + i);
+        }
+        xor_clause_inverted ^= !b.xor_clause_inverted;
+        return *this;
+    }
+    
+    
     uint popcnt() const;
     uint popcnt(uint from) const;
-    bool popcnt_is_one() const;
-    bool popcnt_is_one(uint from) const;
+    
+    bool popcnt_is_one() const
+    {
+        char popcount = 0;
+        for (uint i = 0; i != size; i++) if (mp[i]) {
+            uint64_t tmp = mp[i];
+            for (uint i2 = 0; i2 != 64; i2 += 4) {
+                popcount += tmp & 1;
+                popcount += tmp & 2;
+                popcount += tmp & 4;
+                popcount += tmp & 8;
+                if (popcount > 1) return false;
+                tmp >>= 4;
+            }
+        }
+        return popcount;
+    }
+    
+    bool popcnt_is_one(uint from) const
+    {
+        from++;
+        
+        uint64_t tmp = mp[from/64];
+        tmp >>= from%64;
+        for (uint i2 = from%64; i2 < 64; i2 += 4) {
+            if (tmp & 1) return false;
+            if (tmp & 2) return false;
+            if (tmp & 4) return false;
+            if (tmp & 8) return false;
+            tmp >>= 4;
+        }
+        
+        for (uint i = from/64+1; i != size; i++) if (mp[i]) {
+            tmp = mp[i];
+            for (uint i2 = 0; i2 != 64; i2 += 4) {
+                if (tmp & 1) return false;
+                if (tmp & 2) return false;
+                if (tmp & 4) return false;
+                if (tmp & 8) return false;
+                tmp >>= 4;
+            }
+        }
+        return true;
+    }
 
     inline const uint64_t& get_xor_clause_inverted() const
     {
@@ -57,7 +130,7 @@ public:
     {
         const uint64_t*  mp2 = (const uint64_t*)mp;
         
-        for (uint i = 0; i < size; i++) {
+        for (uint i = 0; i != size; i++) {
             if (mp2[i]) return false;
         }
         return true;
@@ -91,14 +164,15 @@ public:
         assert(b.size == size);
         #endif
         
+        uint64_t * __restrict mp1 = mp;
+        uint64_t * __restrict mp2 = b.mp;
+        
         for (int i = -1; i != size; i++) {
-            uint64_t tmp(*(b.mp + i));
-            *(b.mp + i) = *(mp + i);
+            uint64_t tmp(*(mp2 + i));
+            *(mp2 + i) = *(mp + i);
             *(mp + i) = tmp;
         }
     }
-
-    PackedRow& operator^=(const PackedRow& b);
 
     inline const bool operator[](const uint& i) const
     {
@@ -115,7 +189,7 @@ public:
         assert(size == (matrix_size/64) + ((bool)(matrix_size % 64)));
         //mp = new uint64_t[size];
         setZero();
-        for (uint i = 0; i < v.size(); i++) {
+        for (uint i = 0; i != v.size(); i++) {
             const uint toset_var = var_to_col[v[i].var()];
             assert(toset_var != UINT_MAX);
             
@@ -133,7 +207,7 @@ public:
         assert(size > 0);
         #endif
         
-        for(uint i = var; i < size*64; i++)
+        for(uint i = var; i != size*64; i++)
             if (this->operator[](i)) return i;
         return ULONG_MAX;
     }
