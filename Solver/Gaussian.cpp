@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Clause.h"
 #include <algorithm>
 #include "ClauseCleaner.h"
+
 using std::ostream;
 using std::cout;
 using std::endl;
@@ -903,6 +904,12 @@ void Gaussian::print_stats() const
     } else
         std::cout << " Gauss(" << matrix_no << ") not called.";
 }
+
+void Gaussian::print_matrix_stats() const
+{
+    cout << "matrix size: " << cur_matrixset.num_rows << "  x " << cur_matrixset.num_cols << endl;
+}
+
 
 void Gaussian::reset_stats()
 {

@@ -25,9 +25,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PackedMatrix.h"
 #include "BitArray.h"
 
+#ifdef VERBOSE_DEBUG
 using std::vector;
 using std::cout;
 using std::endl;
+#endif
 
 class Clause;
 
@@ -190,11 +192,6 @@ inline void Gaussian::canceling(const int sublevel)
         return;
         }
     }
-}
-
-inline void Gaussian::print_matrix_stats() const
-{
-    cout << "matrix size: " << cur_matrixset.num_rows << "  x " << cur_matrixset.num_cols << endl;
 }
 
 std::ostream& operator << (std::ostream& os, const vec<Lit>& v);

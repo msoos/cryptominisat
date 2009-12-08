@@ -31,10 +31,8 @@ using std::map;
 
 //#define VERBOSE_DEBUG
 
-#ifdef VERBOSE_DEBUG
 using std::cout;
 using std::endl;
-#endif
 
 //#define PART_FINDING
 
