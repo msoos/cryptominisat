@@ -31,6 +31,7 @@ class ClauseCleaner
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type);
         void removeSatisfied(vec<Clause*>& cs, ClauseSetType type);
         void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type);
+        void removeAndCleanAll();
         bool satisfied(const Clause& c) const;
         bool satisfied(const XorClause& c) const;
         
@@ -42,5 +43,16 @@ class ClauseCleaner
         
         Solver& solver;
 };
+
+inline void ClauseCleaner::removeAndCleanAll()
+{
+    removeSatisfied(solver.clauses, ClauseCleaner::clauses);
+    removeSatisfied(solver.xorclauses, ClauseCleaner::xorclauses);
+    removeSatisfied(solver.learnts, ClauseCleaner::learnts);
+    
+    cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
+    cleanClauses(solver.learnts, ClauseCleaner::learnts);
+}
 
 #endif //CLAUSECLEANER_H

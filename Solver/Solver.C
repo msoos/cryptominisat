@@ -1424,13 +1424,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
-        clauseCleaner->removeSatisfied(clauses, ClauseCleaner::clauses);
-        clauseCleaner->removeSatisfied(xorclauses, ClauseCleaner::xorclauses);
-        clauseCleaner->removeSatisfied(learnts, ClauseCleaner::learnts);
-        
-        clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
-        clauseCleaner->cleanClauses(xorclauses, ClauseCleaner::xorclauses);
-        clauseCleaner->cleanClauses(learnts, ClauseCleaner::learnts);
+        clauseCleaner->removeAndCleanAll();
         
         if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
             printf("| %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nbclausesbeforereduce*curRestart, nLearnts(), (double)learnts_literals/nLearnts());
