@@ -53,7 +53,6 @@ Solver::Solver() :
         , polarity_mode    (polarity_user)
         , verbosity        (0)
         , restrictedPickBranch(0)
-        , useRealUnknowns  (false)
         , xorFinder        (true)
         , performReplace   (true)
         , greedyUnbound    (false)
@@ -409,13 +408,6 @@ void Solver::cancelUntil(int level)
     #endif
 }
 
-void Solver::setRealUnknown(const uint var)
-{
-    if (realUnknowns.size() < var+1)
-        realUnknowns.resize(var+1, false);
-    realUnknowns[var] = true;
-}
-
 void Solver::printLit(const Lit l) const
 {
     printf("%s%d:%c", l.sign() ? "-" : "", l.var()+1, value(l) == l_True ? '1' : (value(l) == l_False ? '0' : 'X'));
@@ -540,8 +532,7 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
             const uint my_var = q.var();
 
             if (!seen[my_var] && level[my_var] > 0) {
-                if (!useRealUnknowns || (my_var < realUnknowns.size() && realUnknowns[my_var]))
-                    varBumpActivity(my_var);
+                varBumpActivity(my_var);
                 seen[my_var] = 1;
                 if (level[my_var] >= decisionLevel()) {
                     pathC++;
