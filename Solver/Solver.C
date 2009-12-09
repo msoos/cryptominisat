@@ -180,9 +180,10 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
             p = lit_Undef;
             if (!assigns[ps[i].var()].isUndef())
                 xor_clause_inverted ^= assigns[ps[i].var()].getBool();
-        } else if (value(ps[i]) == l_Undef) //just add
+        } else if (assigns[ps[i].var()].isUndef()) //just add
             ps[j++] = p = ps[i];
-        else xor_clause_inverted ^= (value(ps[i]) == l_True); //modify xor_clause_inverted instead of adding
+        else //modify xor_clause_inverted instead of adding
+            xor_clause_inverted ^= (assigns[ps[i].var()].getBool());
     }
     ps.shrink(i - j);
 
@@ -195,7 +196,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         return ok = false;
     }
     case 1: {
-        assert(value(ps[0]) == l_Undef);
+        assert(assigns[ps[0].var()].isUndef());
         uncheckedEnqueue(ps[0] ^ xor_clause_inverted);
         if (dynamic_behaviour_analysis)
             logger.propagation((xor_clause_inverted) ? ~ps[0] : ps[0], Logger::add_clause_type, group);
@@ -252,7 +253,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
     Lit p;
     int i, j;
     for (i = j = 0, p = lit_Undef; i < ps.size(); i++) {
-        if (value(ps[i]) == l_True || ps[i] == ~p)
+        if (value(ps[i]).getBool() || ps[i] == ~p)
             return true;
         else if (value(ps[i]) != l_False && ps[i] != p)
             ps[j++] = p = ps[i];
@@ -715,7 +716,7 @@ void Solver::uncheckedEnqueue(Lit p, Clause* from)
     cout << "uncheckedEnqueue var " << p.var()+1 << " to " << !p.sign() << " level: " << decisionLevel() << " sublevel: " << trail.size() << endl;
     #endif
     
-    assert(value(p) == l_Undef);
+    assert(assigns[p.var()].isUndef());
     const Var v = p.var();
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     level   [v] = decisionLevel();
