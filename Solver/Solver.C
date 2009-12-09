@@ -37,6 +37,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Conglomerate.h"
 #include "XorFinder.h"
 #include "ClauseCleaner.h"
+#include "RestartTypeChooser.h"
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -56,7 +57,7 @@ Solver::Solver() :
         , xorFinder        (true)
         , performReplace   (true)
         , greedyUnbound    (false)
-        , dynamicRestarts  (false)
+        , restartType       (static_restart)
 
         // Statistics: (formerly in 'SolverStats')
         //
@@ -1121,7 +1122,8 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
 {
     
     // Reached bound on number of conflicts?
-    if (dynamicRestarts) {
+    switch (restartType) {
+    case dynamic_restart:
         if (nbDecisionLevelHistory.isvalid() &&
             ((nbDecisionLevelHistory.getavg()*0.7) > (totalSumOfDecisionLevel / conf4Stats))) {
             nbDecisionLevelHistory.fastclear();
@@ -1132,7 +1134,8 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
             }
             return l_Undef;
         }
-    } else {
+        break;
+    case static_restart:
         if (nof_conflicts >= 0 && conflictC >= nof_conflicts) {
             progress_estimate = progressEstimate();
             cancelUntil(0);
@@ -1140,6 +1143,7 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
                 logger.end(Logger::restarting);
             return l_Undef;
         }
+        break;
     }
 
     // Simplify the set of problem clauses:
@@ -1224,7 +1228,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     learnt_clause.clear();
     analyze(confl, learnt_clause, backtrack_level, nbLevels);
     conf4Stats++;
-    if (dynamicRestarts) {
+    if (restartType == dynamic_restart) {
         nbDecisionLevelHistory.push(nbLevels);
         totalSumOfDecisionLevel += nbLevels;
     }
@@ -1325,11 +1329,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
     model.clear();
     conflict.clear();
-    if (dynamicRestarts) {
-        nbDecisionLevelHistory.fastclear();
-        nbDecisionLevelHistory.initSize(100);
-        totalSumOfDecisionLevel = 0;
-    }
+    restartType = static_restart;
+    starts = 0;
 
     if (!ok) return l_False;
 
@@ -1421,7 +1422,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
     if (dynamic_behaviour_analysis)
         logger.end(Logger::done_adding_clauses);
-
+    
+    RestartTypeChooser restartTypeChooser(this);
+    
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
         clauseCleaner->removeAndCleanAll();
@@ -1437,6 +1440,28 @@ lbool Solver::solve(const vec<Lit>& assumps)
             logger.begin();
         status = search((int)nof_conflicts);
         nof_conflicts *= restart_inc;
+        
+        if (status.isUndef() && starts > 2 && starts < 8) {
+            RestartType tmp = restartTypeChooser.choose();
+            if (starts == 7) {
+                if (tmp == dynamic_restart) {
+                    nbDecisionLevelHistory.fastclear();
+                    nbDecisionLevelHistory.initSize(100);
+                    totalSumOfDecisionLevel = 0;
+                    clearGaussMatrixes();
+                    if (verbosity >= 1)
+                        printf("|                           Decided on dynamic restart strategy                         |\n");
+                } else  {
+                    if (verbosity >= 1)
+                    printf("|                            Decided on static restart strategy                         |\n");
+                }
+                restartType = tmp;
+            }
+        } else {
+            #ifdef VERBOSE_DEBUG
+            restartTypeChooser.choose();
+            #endif
+        }
     }
 
     if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {

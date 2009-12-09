@@ -1,0 +1,84 @@
+/***********************************************************************************
+CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+**************************************************************************************************/
+
+#include "RestartTypeChooser.h"
+#include "Solver.h"
+
+//#define VERBOSE_DEBUG
+
+RestartTypeChooser::RestartTypeChooser(const Solver* const _S) :
+    S(_S)
+    , topX(100)
+    , limit(40)
+{
+}
+
+const RestartType RestartTypeChooser::choose()
+{
+    firstVarsOld = firstVars;
+    calcHeap();
+    uint sameIn = 0;
+    if (!firstVarsOld.empty()) {
+        for (uint i = 0; i < 100; i++) {
+            if (std::find(firstVars.begin(), firstVars.end(), firstVarsOld[i]) != firstVars.end())
+                sameIn++;
+        }
+        #ifdef VERBOSE_DEBUG
+        std::cout << "    Same vars in first&second first 100: " << sameIn << std::endl;
+        #endif
+        sameIns.push_back(sameIn);
+    } else
+        return static_restart;
+    
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Avg same vars in first&second first 100: " << avg() << std::endl;
+    #endif
+    
+    if (avg() > (double)limit)
+        return static_restart;
+    else
+        return dynamic_restart;
+}
+
+const double RestartTypeChooser::avg() const
+{
+    double sum = 0.0;
+    for (uint i = 0; i != sameIns.size(); i++)
+        sum += sameIns[i];
+    return (sum/(double)sameIns.size());
+}
+
+void RestartTypeChooser::calcHeap()
+{
+    firstVars.clear();
+    #ifdef VERBOSE_DEBUG
+    std::cout << "First vars:" << std::endl;
+    #endif
+    Heap<Solver::VarOrderLt> tmp((Solver::VarOrderLt(S->activity)));
+    for (uint i = 0; i != S->nVars(); i++)
+        if (S->decision_var[i])
+            tmp.insert(i);
+    for (uint i = 0; i < 100; i++) {
+        #ifdef VERBOSE_DEBUG
+        std::cout << tmp.removeMin()+1 << ", ";
+        #endif
+        firstVars.push_back(tmp.removeMin());
+    }
+    #ifdef VERBOSE_DEBUG
+    std::cout << std::endl;
+    #endif
+}

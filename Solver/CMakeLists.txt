@@ -20,5 +20,6 @@ add_library(cryptominisatlib
     VarReplacer.cpp
     FindUndef.cpp
     ClauseCleaner.cpp
+    RestartTypeChooser.cpp
 )
 

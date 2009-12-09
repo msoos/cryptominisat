@@ -127,7 +127,7 @@ public:
     bool      performReplace;       // Should var-replacing be performed?
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
-    bool      dynamicRestarts;      // If set to true, the restart strategy will be dynamic
+    RestartType restartType;      // If set to true, the restart strategy will be dynamic
     
 
     enum { polarity_true = 0, polarity_false = 1, polarity_user = 2, polarity_rnd = 3 };
@@ -280,6 +280,7 @@ protected:
     friend class MatrixFinder;
     friend class VarReplacer;
     friend class ClauseCleaner;
+    friend class RestartTypeChooser;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
