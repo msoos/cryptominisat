@@ -28,13 +28,13 @@ ClauseCleaner::ClauseCleaner(Solver& _solver) :
     }
 }
 
-void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type)
+void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint limit)
 {
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
     #endif
     
-    if (lastNumUnitarySat[type] == solver.get_unitary_learnts_num())
+    if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
         return;
     
     int i,j;
@@ -49,13 +49,13 @@ void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type)
     lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
 }
 
-void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type)
+void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint limit)
 {
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
     #endif
     
-    if (lastNumUnitarySat[type] == solver.get_unitary_learnts_num())
+    if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
         return;
     
     int i,j;
@@ -97,13 +97,13 @@ bool ClauseCleaner::cleanClause(Clause& c)
     return (i-j > 0);
 }
 
-void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type)
+void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit)
 {
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
     #endif
     
-    if (lastNumUnitaryClean[type] == solver.get_unitary_learnts_num())
+    if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
         return;
     
     uint useful = 0;
@@ -117,13 +117,13 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type)
     #endif
 }
 
-void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type)
+void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit)
 {
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
     #endif
     
-    if (lastNumUnitaryClean[type] == solver.get_unitary_learnts_num())
+    if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
         return;
     
     uint useful = 0;

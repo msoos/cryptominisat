@@ -27,10 +27,10 @@ class ClauseCleaner
         
         enum ClauseSetType {clauses, xorclauses, learnts, conglomerate};
         
-        void cleanClauses(vec<Clause*>& cs, ClauseSetType type);
-        void cleanClauses(vec<XorClause*>& cs, ClauseSetType type);
-        void removeSatisfied(vec<Clause*>& cs, ClauseSetType type);
-        void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type);
+        void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
+        void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
+        void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
+        void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeAndCleanAll();
         bool satisfied(const Clause& c) const;
         bool satisfied(const XorClause& c) const;
@@ -46,13 +46,15 @@ class ClauseCleaner
 
 inline void ClauseCleaner::removeAndCleanAll()
 {
-    removeSatisfied(solver.clauses, ClauseCleaner::clauses);
-    removeSatisfied(solver.xorclauses, ClauseCleaner::xorclauses);
-    removeSatisfied(solver.learnts, ClauseCleaner::learnts);
+    static const uint limit = 10;
     
-    cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
-    cleanClauses(solver.learnts, ClauseCleaner::learnts);
+    removeSatisfied(solver.clauses, ClauseCleaner::clauses, limit);
+    removeSatisfied(solver.xorclauses, ClauseCleaner::xorclauses, limit);
+    removeSatisfied(solver.learnts, ClauseCleaner::learnts, limit);
+    
+    cleanClauses(solver.clauses, ClauseCleaner::clauses, limit);
+    cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses, limit);
+    cleanClauses(solver.learnts, ClauseCleaner::learnts, limit);
 }
 
 #endif //CLAUSECLEANER_H
