@@ -757,13 +757,12 @@ Clause* Solver::propagate(const bool xor_as_well)
         for(WatchedBin *k = wbin.getData(), *end = k + wbin.size(); k != end; k++) {
             Lit imp = k->impliedLit;
             lbool val = value(imp);
-            if (val == l_False)
-                return k->clause;
-            if (val == l_Undef) {
+            if (val.isUndef()) {
                 uncheckedEnqueue(imp, k->clause);
                 if (dynamic_behaviour_analysis)
                     logger.propagation(imp, Logger::simple_propagation_type, k->clause->group);
-            }
+            } else if (val == l_False)
+                return k->clause;
         }
         
         //Next, propagate normal clauses
@@ -788,7 +787,7 @@ Clause* Solver::propagate(const bool xor_as_well)
                 *j++ = &c;
             } else {
                 // Look for new watch:
-                for (uint k = 2; k != c.size(); k++)
+                for (int k = 2; k != c.size(); k++)
                     if (value(c[k]) != l_False) {
                         c[1] = c[k];
                         c[k] = false_lit;
