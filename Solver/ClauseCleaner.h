@@ -36,7 +36,8 @@ class ClauseCleaner
         bool satisfied(const XorClause& c) const;
         
     private:
-        bool cleanClause(Clause& c);
+        const bool cleanClause(Clause& c);
+        const bool cleanClause(XorClause& c);
         
         uint lastNumUnitarySat[4];
         uint lastNumUnitaryClean[4];
@@ -47,10 +48,6 @@ class ClauseCleaner
 inline void ClauseCleaner::removeAndCleanAll()
 {
     static const uint limit = 10;
-    
-    removeSatisfied(solver.clauses, ClauseCleaner::clauses, limit);
-    removeSatisfied(solver.xorclauses, ClauseCleaner::xorclauses, limit);
-    removeSatisfied(solver.learnts, ClauseCleaner::learnts, limit);
     
     cleanClauses(solver.clauses, ClauseCleaner::clauses, limit);
     cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses, limit);

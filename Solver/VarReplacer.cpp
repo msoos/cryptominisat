@@ -51,10 +51,6 @@ void VarReplacer::performReplace()
     cout << "Replacer started." << endl;
     #endif
     
-    S->clauseCleaner->removeSatisfied(S->clauses, ClauseCleaner::clauses);
-    S->clauseCleaner->removeSatisfied(S->learnts, ClauseCleaner::learnts);
-    S->clauseCleaner->removeSatisfied(S->xorclauses, ClauseCleaner::xorclauses);
-    
     S->clauseCleaner->cleanClauses(S->clauses, ClauseCleaner::clauses);
     S->clauseCleaner->cleanClauses(S->learnts, ClauseCleaner::learnts);
     S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);

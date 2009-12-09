@@ -77,7 +77,6 @@ const uint MatrixFinder::findMatrixes()
     if (S->xorclauses.size() == 0)
         return 0;
     
-    S->clauseCleaner->removeSatisfied(S->xorclauses, ClauseCleaner::xorclauses);
     S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
     
     for (XorClause** c = S->xorclauses.getData(), **end = c + S->xorclauses.size(); c != end; c++) {

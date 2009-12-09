@@ -42,7 +42,6 @@ XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls) :
 
 uint XorFinder::doNoPart(uint& sumLengths, const uint minSize, const uint maxSize)
 {
-    S->clauseCleaner->removeSatisfied(S->clauses, ClauseCleaner::clauses);
     S->clauseCleaner->cleanClauses(S->clauses, ClauseCleaner::clauses);
     
     toRemove.clear();

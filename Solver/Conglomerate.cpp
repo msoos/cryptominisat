@@ -115,7 +115,6 @@ uint Conglomerate::conglomerateXors()
     cout << "Finding conglomerate xors started" << endl;
     #endif
     
-    S->clauseCleaner->removeSatisfied(S->xorclauses, ClauseCleaner::xorclauses);
     S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
     
     toRemove.clear();

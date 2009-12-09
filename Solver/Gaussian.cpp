@@ -80,7 +80,6 @@ llbool Gaussian::full_init()
     bool do_again_gauss = true;
     while (do_again_gauss) {
         do_again_gauss = false;
-        solver.clauseCleaner->removeSatisfied(solver.xorclauses, ClauseCleaner::xorclauses);
         solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
         init();
         Clause* confl;
