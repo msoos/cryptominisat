@@ -92,9 +92,6 @@ class lbool
 
 public:
     lbool()       : value(0) { };
-    inline char getchar() const {
-        return value;
-    }
     inline lbool(llbool b);
 
     inline const bool isUndef() const {
@@ -104,7 +101,7 @@ public:
         return value;
     }
     inline const bool getBool() const {
-        return (value+1) >> 1;
+        return value & 2;
     }
     inline const bool operator==(lbool b) const {
         return value == b.value;
@@ -113,7 +110,7 @@ public:
         return value != b.value;
     }
     lbool operator^(const bool b) const {
-        return lbool(value - value*2*b);
+        return lbool((value << b) %3);
     }
     //lbool operator ^ (const bool b) const { return b ? lbool(-value) : lbool(value); }
 
@@ -127,12 +124,12 @@ inline lbool toLbool(const char   v)
 }
 inline lbool boolToLBool(const bool b)
 {
-    return lbool(2*b-1);
+    return lbool(1 << b);
 }
 
-const lbool l_True  = toLbool( 1);
-const lbool l_False = toLbool(-1);
-const lbool l_Undef = toLbool( 0);
+static const lbool l_True  = toLbool( 2);
+static const lbool l_False = toLbool( 1);
+static const lbool l_Undef = toLbool( 0);
 
 
 class llbool
@@ -156,8 +153,8 @@ public:
 
     friend class lbool;
 };
-const llbool l_Nothing  = toLbool(2);
-const llbool l_Continue = toLbool(3);
+static const llbool l_Nothing  = toLbool(3);
+static const llbool l_Continue = toLbool(4);
 
 lbool::lbool(llbool b) : value(b.value) {};
 
