@@ -75,6 +75,7 @@ inline void Gaussian::set_matrixset_to_cur()
 llbool Gaussian::full_init()
 {
     if (!should_init()) return l_Nothing;
+    reset_stats();
     
     bool do_again_gauss = true;
     while (do_again_gauss) {

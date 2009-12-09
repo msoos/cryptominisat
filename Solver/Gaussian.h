@@ -49,7 +49,6 @@ public:
 
     //statistics
     void print_stats() const;
-    void reset_stats();
     void print_matrix_stats() const;
     const uint get_called() const;
     const uint get_useful_prop() const;
@@ -140,6 +139,7 @@ protected:
     bool should_init() const;
     bool should_check_gauss(const uint decisionlevel, const uint starts) const;
     void disable_if_necessary();
+    void reset_stats();
     
 private:
     

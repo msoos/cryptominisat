@@ -1433,8 +1433,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
             printf("| %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nbclausesbeforereduce*curRestart, nLearnts(), (double)learnts_literals/nLearnts());
             print_gauss_sum_stats();
         }
-        for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
-            (*gauss)->reset_stats();
         
         if (dynamic_behaviour_analysis)
             logger.begin();
