@@ -280,6 +280,11 @@ const uint VarReplacer::getNumLastReplacedVars() const
     return lastReplacedVars;
 }
 
+const uint VarReplacer::getNewToReplaceVars() const
+{
+    return replacedVars-lastReplacedVars;
+}
+
 const vector<Lit>& VarReplacer::getReplaceTable() const
 {
     return table;

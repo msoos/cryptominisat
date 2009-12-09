@@ -1356,7 +1356,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
     conglomerate->addRemovedClauses();
     
-    if (performReplace) {
+    if (performReplace
+        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
         varReplacer->performReplace();
         if (!ok) return l_False;
     }
@@ -1375,7 +1376,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
             if (verbosity >=1)
                 printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
             
-            if (performReplace) {
+            if (performReplace
+                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
                 varReplacer->performReplace();
                 if (!ok) return l_False;
             }
@@ -1404,7 +1406,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
                 printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
             }
             
-            if (performReplace) {
+            if (performReplace
+                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
                 varReplacer->performReplace();
                 if (!ok) return l_False;
             }
