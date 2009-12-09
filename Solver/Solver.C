@@ -98,7 +98,7 @@ Solver::~Solver()
     for (int i = 0; i < learnts.size(); i++) free(learnts[i]);
     for (int i = 0; i < clauses.size(); i++) free(clauses[i]);
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
-    for (uint i = 0; i < gauss_matrixes.size(); i++) delete gauss_matrixes[i];
+    clearGaussMatrixes();
     for (uint i = 0; i < freeLater.size(); i++) free(freeLater[i]);
     delete varReplacer;
     delete conglomerate;
@@ -423,6 +423,13 @@ void Solver::needLibraryCNFFile(const char* fileName)
 void Solver::set_gaussian_decision_until(const uint to)
 {
     gaussconfig.decision_until = to;
+}
+
+void Solver::clearGaussMatrixes()
+{
+    for (uint i = 0; i < gauss_matrixes.size(); i++)
+        delete gauss_matrixes[i];
+    gauss_matrixes.clear();
 }
 
 //=================================================================================================
@@ -1329,6 +1336,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
     model.clear();
     conflict.clear();
+    clearGaussMatrixes();
     restartType = static_restart;
     starts = 0;
 
@@ -1581,3 +1589,4 @@ void Solver::checkLiteralCount()
         assert((int)clauses_literals == cnt);
     }
 }
+

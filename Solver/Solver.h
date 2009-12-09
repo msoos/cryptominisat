@@ -153,6 +153,7 @@ protected:
     vector<Gaussian*> gauss_matrixes;
     GaussianConfig gaussconfig;
     void print_gauss_sum_stats() const;
+    void clearGaussMatrixes();
     friend class Gaussian;
     
     
