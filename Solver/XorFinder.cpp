@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include "Solver.h"
 #include "VarReplacer.h"
+#include "ClauseCleaner.h"
 
 //#define VERBOSE_DEBUG
 
@@ -41,6 +42,9 @@ XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls) :
 
 uint XorFinder::doNoPart(uint& sumLengths, const uint minSize, const uint maxSize)
 {
+    S->clauseCleaner->removeSatisfied(S->clauses, ClauseCleaner::clauses);
+    S->clauseCleaner->cleanClauses(S->clauses, ClauseCleaner::clauses);
+    
     toRemove.clear();
     toRemove.resize(cls.size(), false);
     

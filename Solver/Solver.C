@@ -1357,8 +1357,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
         double time;
         if (clauses.size() < 400000) {
             time = cpuTime();
-            clauseCleaner->removeSatisfied(clauses, ClauseCleaner::clauses);
-            clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
             uint sumLengths = 0;
             XorFinder xorFinder(this, clauses);
             uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
