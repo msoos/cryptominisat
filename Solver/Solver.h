@@ -37,6 +37,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Logger.h"
 #include "constants.h"
 #include "BoundedQueue.h"
+#include "RestartTypeChooser.h"
 
 class Gaussian;
 class MatrixFinder;
@@ -285,6 +286,8 @@ protected:
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
+    void chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser);
+    void performStepsBeforeSolve();
 
     // Debug:
     void     printLit         (const Lit l) const;

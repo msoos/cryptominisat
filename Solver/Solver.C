@@ -1329,6 +1329,98 @@ void Solver::print_gauss_sum_stats() const
     }
 }
 
+inline void Solver::chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser)
+{
+    if (status.isUndef() && starts > 2 && starts < 8) {
+        RestartType tmp = restartTypeChooser.choose();
+        if (starts == 7) {
+            if (tmp == dynamic_restart) {
+                nbDecisionLevelHistory.fastclear();
+                nbDecisionLevelHistory.initSize(100);
+                totalSumOfDecisionLevel = 0;
+                clearGaussMatrixes();
+                if (verbosity >= 1)
+                    printf("|                           Decided on dynamic restart strategy                         |\n");
+            } else  {
+                if (verbosity >= 1)
+                    printf("|                            Decided on static restart strategy                         |\n");
+            }
+            restartType = tmp;
+        }
+    } else {
+        #ifdef VERBOSE_DEBUG
+        restartTypeChooser.choose();
+        #endif
+    }
+}
+
+inline void Solver::performStepsBeforeSolve()
+{
+    if (performReplace
+        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
+        varReplacer->performReplace();
+    if (!ok) return;
+    }
+    
+    if (xorFinder) {
+        double time;
+        if (clauses.size() < 400000) {
+            time = cpuTime();
+            uint sumLengths = 0;
+            XorFinder xorFinder(this, clauses);
+            uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
+            if (!ok) return;
+            
+            if (verbosity >=1)
+                printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+            
+            if (performReplace
+                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
+                varReplacer->performReplace();
+            if (!ok) return;
+            }
+        }
+        
+        if (xorclauses.size() > 1) {
+            uint orig_total = 0;
+            uint orig_num_cls = xorclauses.size();
+            for (uint i = 0; i < xorclauses.size(); i++) {
+                orig_total += xorclauses[i]->size();
+            }
+            
+            time = cpuTime();
+            uint foundCong = conglomerate->conglomerateXors();
+            if (verbosity >=1)
+                printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
+            if (!ok) return;
+            
+            uint new_total = 0;
+            uint new_num_cls = xorclauses.size();
+            for (uint i = 0; i < xorclauses.size(); i++) {
+                new_total += xorclauses[i]->size();
+            }
+            if (verbosity >=1) {
+                printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
+                printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
+            }
+            
+            if (performReplace
+                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
+                varReplacer->performReplace();
+            if (!ok) return;
+            }
+        }
+    }
+    
+    if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
+        double time = cpuTime();
+        MatrixFinder m(this);
+        const uint numMatrixes = m.findMatrixes();
+        if (verbosity >=1)
+            printf("|  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, numMatrixes);
+    }
+}
+
 lbool Solver::solve(const vec<Lit>& assumps)
 {
     if (libraryCNFFile)
@@ -1338,6 +1430,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     conflict.clear();
     clearGaussMatrixes();
     restartType = static_restart;
+    conglomerate->addRemovedClauses();
     starts = 0;
 
     if (!ok) return l_False;
@@ -1354,71 +1447,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
             nbclausesbeforereduce = (nClauses() * learntsize_factor)/2;
     }
     
-    conglomerate->addRemovedClauses();
-    
-    if (performReplace
-        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-        varReplacer->performReplace();
-        if (!ok) return l_False;
-    }
-
-    if (xorFinder) {
-        double time;
-        if (clauses.size() < 400000) {
-            time = cpuTime();
-            uint sumLengths = 0;
-            XorFinder xorFinder(this, clauses);
-            uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
-            if (!ok) return l_False;
-            
-            if (verbosity >=1)
-                printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
-            
-            if (performReplace
-                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-                varReplacer->performReplace();
-                if (!ok) return l_False;
-            }
-        }
-        
-        if (xorclauses.size() > 1) {
-            uint orig_total = 0;
-            uint orig_num_cls = xorclauses.size();
-            for (uint i = 0; i < xorclauses.size(); i++) {
-                orig_total += xorclauses[i]->size();
-            }
-            
-            time = cpuTime();
-            uint foundCong = conglomerate->conglomerateXors();
-            if (verbosity >=1)
-                printf("|  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
-            if (!ok) return l_False;
-            
-            uint new_total = 0;
-            uint new_num_cls = xorclauses.size();
-            for (uint i = 0; i < xorclauses.size(); i++) {
-                new_total += xorclauses[i]->size();
-            }
-            if (verbosity >=1) {
-                printf("|  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
-                printf("|  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
-            }
-            
-            if (performReplace
-                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-                varReplacer->performReplace();
-                if (!ok) return l_False;
-            }
-        }
-    }
-    
-    if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
-        double time = cpuTime();
-        MatrixFinder m(this);
-        const uint numMatrixes = m.findMatrixes();
-        if (verbosity >=1)
-            printf("|  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, numMatrixes);
-    }
+    performStepsBeforeSolve();
+    if (!ok) return l_False;
     
 
     if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
@@ -1447,27 +1477,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         status = search((int)nof_conflicts);
         nof_conflicts *= restart_inc;
         
-        if (status.isUndef() && starts > 2 && starts < 8) {
-            RestartType tmp = restartTypeChooser.choose();
-            if (starts == 7) {
-                if (tmp == dynamic_restart) {
-                    nbDecisionLevelHistory.fastclear();
-                    nbDecisionLevelHistory.initSize(100);
-                    totalSumOfDecisionLevel = 0;
-                    clearGaussMatrixes();
-                    if (verbosity >= 1)
-                        printf("|                           Decided on dynamic restart strategy                         |\n");
-                } else  {
-                    if (verbosity >= 1)
-                    printf("|                            Decided on static restart strategy                         |\n");
-                }
-                restartType = tmp;
-            }
-        } else {
-            #ifdef VERBOSE_DEBUG
-            restartTypeChooser.choose();
-            #endif
-        }
+        chooseRestartType(status, restartTypeChooser);
     }
 
     if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
