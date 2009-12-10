@@ -21,6 +21,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Heap_h
 
 #include "Vec.h"
+#include "string.h"
 
 //=================================================================================================
 // A heap implementation with support for decrease/increase key.
@@ -73,6 +74,12 @@ class Heap {
 
   public:
     Heap(const Comp& c) : lt(c) { }
+    Heap(const Heap<Comp>& other) : lt(other.lt) {
+        heap.growTo(other.heap.size());
+        memcpy(heap.getData(), other.heap.getData(), sizeof(int)*other.heap.size());
+        indices.growTo(other.indices.size());
+        memcpy(indices.getData(), other.indices.getData(), sizeof(int)*other.indices.size());
+    }
 
     int  size      ()          const { return heap.size(); }
     bool empty     ()          const { return heap.size() == 0; }
