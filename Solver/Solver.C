@@ -294,8 +294,7 @@ void Solver::attachClause(XorClause& c)
     xorwatches[c[0].var()].push(&c);
     xorwatches[c[1].var()].push(&c);
 
-    if (c.learnt()) learnts_literals += c.size();
-    else            clauses_literals += c.size();
+    clauses_literals += c.size();
 }
 
 void Solver::attachClause(Clause& c)
@@ -325,8 +324,7 @@ void Solver::detachClause(const XorClause& c)
     remove(xorwatches[c[0].var()], &c);
     remove(xorwatches[c[1].var()], &c);
 
-    if (c.learnt()) learnts_literals -= c.size();
-    else            clauses_literals -= c.size();
+    clauses_literals -= c.size();
 }
 
 void Solver::detachClause(const Clause& c)
@@ -377,8 +375,8 @@ void Solver::detachModifiedClause(const Var var1, const Var var2, const uint ori
     assert(find(xorwatches[var2], address));
     remove(xorwatches[var1], address);
     remove(xorwatches[var2], address);
-    if (address->learnt()) learnts_literals -= origSize;
-    else            clauses_literals -= origSize;
+    
+    clauses_literals -= origSize;
 }
 
 // Revert to the state at given level (keeping all assignment at 'level' but not beyond).

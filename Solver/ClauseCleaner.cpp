@@ -93,8 +93,13 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
         solver.detachModifiedClause(origLit1, origLit2, c.size(), &c);
         c.shrink(i-j);
         solver.attachClause(c);
-    } else
+    } else {
         c.shrink(i-j);
+        if (c.learnt())
+            solver.learnts_literals -= i-j;
+        else
+            solver.clauses_literals -= i-j;
+    }
     
     return false;
 }
