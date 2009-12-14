@@ -170,7 +170,7 @@ public:
         for (int i = -1; i != size; i++) {
             uint64_t tmp(*(mp2 + i));
             *(mp2 + i) = *(mp + i);
-            *(mp + i) = tmp;
+            *(mp1 + i) = tmp;
         }
     }
 
