@@ -209,10 +209,10 @@ protected:
     bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
     bqueue<unsigned int> nbDecisionLevelHistory; // Set of last decision level in conflict clauses
     float               totalSumOfDecisionLevel;
-    MTRand mtrand;                        // random number generator
+    MTRand mtrand;                        // random number generaton
     friend class Logger;
     #ifdef STATS_NEEDED
-    Logger logger;                       // dynamic logging, statistics
+    Logger logger;                        // dynamic logging, statistics
     bool dynamic_behaviour_analysis;      // Is logger running?
     #endif
     uint                maxRestarts;      // More than this number of restarts will not be performed
