@@ -554,7 +554,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     assert(cla.size() >= 2);
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Found conflict:";
-    solver.printClause(cla);
+    cla.plainPrint();
     #endif
 
     if (maxlevel != solver.decisionLevel()) {
@@ -752,7 +752,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     Clause& cla = *Clause_new(tmp_clause, solver.learnt_clause_group++, false);
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix prop clause: ";
-    solver.printClause(cla);
+    cla.plainPrint();
     cout << endl;
     #endif
     

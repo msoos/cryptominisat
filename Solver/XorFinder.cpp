@@ -96,7 +96,7 @@ uint XorFinder::findXors(uint& sumLengths)
         for (ClauseTable::iterator it = begin; it != end; it++)
             if (impairSigns(*it->first) == impair){
             #ifdef VERBOSE_DEBUG
-            it->first->plain_print();
+            it->first->plainPrint();
             #endif
             toRemove[it->second] = true;
             S->removeClause(*it->first);
@@ -109,7 +109,7 @@ uint XorFinder::findXors(uint& sumLengths)
             #ifdef VERBOSE_DEBUG
             XorClause* x = XorClause_new(lits, impair, old_group);
             cout << "- Final 2-long xor-clause: ";
-            x->plain_print();
+            x->plainPrint();
             free(x);
             #endif
             break;
@@ -121,7 +121,7 @@ uint XorFinder::findXors(uint& sumLengths)
             
             #ifdef VERBOSE_DEBUG
             cout << "- Final xor-clause: ";
-            x->plain_print();
+            x->plainPrint();
             #endif
         }
         }

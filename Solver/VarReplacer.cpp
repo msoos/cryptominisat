@@ -154,7 +154,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     
     #ifdef VERBOSE_DEBUG
     cout << "xor-clause after replacing: ";
-    c.plain_print();
+    c.plainPrint();
     #endif
     
     switch (c.size()) {

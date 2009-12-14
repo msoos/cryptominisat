@@ -153,7 +153,7 @@ uint Conglomerate::conglomerateXors()
         
         #ifdef VERBOSE_DEBUG
         cout << "- Removing: ";
-        x.plain_print();
+        x.plainPrint();
         cout << "Adding var " << var+1 << " to calcAtFinish" << endl;
         #endif
         
@@ -171,7 +171,7 @@ uint Conglomerate::conglomerateXors()
             
             #ifdef VERBOSE_DEBUG
             cout << "- Removing: ";
-            x.plain_print();
+            x.plainPrint();
             #endif
             
             const uint old_group = x.group;
@@ -234,7 +234,7 @@ bool Conglomerate::dealWithNewClause(vec<Lit>& ps, const bool inverted, const ui
             #ifdef VERBOSE_DEBUG
             cout << "--> xor is 2-long, must later replace variable, adding var " << ps[0].var() + 1 << " to calcAtFinish:" << endl;
             XorClause* newX = XorClause_new(ps, inverted, old_group);
-            newX->plain_print();
+            newX->plainPrint();
             free(newX);
             #endif
             
@@ -249,7 +249,7 @@ bool Conglomerate::dealWithNewClause(vec<Lit>& ps, const bool inverted, const ui
             
             #ifdef VERBOSE_DEBUG
             cout << "- Adding: ";
-            newX->plain_print();
+            newX->plainPrint();
             #endif
             
             S->xorclauses.push(newX);
@@ -342,7 +342,7 @@ void Conglomerate::doCalcAtFinish()
         
         #ifdef VERBOSE_DEBUG
         cout << "doCalcFinish for xor-clause:";
-        S->printClause(c); cout << endl;
+        c.plainPrint();
         #endif
         
         bool final = c.xor_clause_inverted();
@@ -391,7 +391,7 @@ void Conglomerate::addRemovedClauses()
         XorClause& c = *calcAtFinish[i];
         #ifdef VERBOSE_DEBUG
         cout << "readding already removed (conglomerated) clause: ";
-        c.plain_print();
+        c.plainPrint();
         #endif
         
         ps.clear();
