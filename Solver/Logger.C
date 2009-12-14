@@ -57,6 +57,7 @@ Logger::Logger(int& _verbosity) :
 
     , verbosity(_verbosity)
     , begin_called(false)
+    , proofStarts(0)
 {
     runid /= 10;
     runid = time(NULL) % 10000;
@@ -152,7 +153,6 @@ void Logger::first_begin()
     if (begin_called)
         return;
     
-    begin_called = true;
     begin();
 }
 
@@ -161,7 +161,7 @@ void Logger::begin()
     begin_called = true;
     if (proof_graph_on) {
         std::stringstream filename;
-        filename << "proofs/" << runid << "-proof" << S->starts << ".dot";
+        filename << "proofs/" << runid << "-proof" << proofStarts++ << "-" << S->starts << ".dot";
         
         if (S->starts == 0)
             history.push_back(uniqueid);
@@ -199,7 +199,10 @@ void Logger::conflict(const confl_type type, const uint goback_level, const uint
             for (int i = 0; i < learnt_clause.size(); i++) {
                 if (learnt_clause[i].sign()) fprintf(proof,"-");
                 int myvar = learnt_clause[i].var();
-                fprintf(proof,"%s\\n",varnames[myvar].c_str());
+                if (varnames[myvar] != "Noname")
+                    fprintf(proof,"%s\\n",varnames[myvar].c_str());
+                else
+                    fprintf(proof,"Var: %d\\n",myvar);
             }
         }
         fprintf(proof,"\"];\n");
@@ -239,34 +242,35 @@ template void Logger::conflict(const confl_type type, const uint goback_level, c
 
 template void Logger::conflict(const confl_type type, const uint goback_level, const uint group, const vec<Lit>& learnt_clause);
 
-// For the really strange event that the solver is given an empty clause
-void Logger::empty_clause(const uint group)
-{
-    first_begin();
-    assert(!(proof == NULL && proof_graph_on));
-
-    if (proof_graph_on) {
-        uniqueid++;
-        fprintf(proof,"node%d -> node%d [label=\"emtpy clause:",history[history.size()-1],uniqueid);
-        fprintf(proof,"%s\"];\n", groupnames[group].c_str());
-        history.push_back(uniqueid);
-    }
-}
-
 // Propagating a literal. Type of literal and the (learned clause's)/(propagating clause's)/(etc) group must be given. Updates the proof graph and the statistics. note: the meaning of the variable 'group' depends on the type
-void Logger::propagation(const Lit lit, const prop_type type, const uint group)
+void Logger::propagation(const Lit lit, Clause* c)
 {
     first_begin();
     assert(!(proof == NULL && proof_graph_on));
+    
+    uint group;
+    prop_type type;
+    if (c == NULL) {
+        if (S->decisionLevel() == 0)
+            type = add_clause_type;
+        else
+            type = guess_type;
+    } else {
+        type = simple_propagation_type;
+        group = c->group;
+    }
 
     //graph
-    if (proof_graph_on && (!mini_proof || type == guess_type || type == assumption_type)) {
+    if (proof_graph_on && (!mini_proof || type == guess_type)) {
         uniqueid++;
         
         fprintf(proof,"node%d [shape=box, label=\"",uniqueid);;
         if (lit.sign())
             fprintf(proof,"-");
-        fprintf(proof,"%s\"];\n",varnames[lit.var()].c_str());
+        if (varnames[lit.var()] != "Noname")
+            fprintf(proof,"%s\"];\n",varnames[lit.var()].c_str());
+        else
+            fprintf(proof,"Var: %d\"];\n",lit.var());
 
         fprintf(proof,"node%d -> node%d [label=\"",history[history.size()-1],uniqueid);
         
@@ -275,20 +279,8 @@ void Logger::propagation(const Lit lit, const prop_type type, const uint group)
             fprintf(proof,"%s\"];\n", groupnames[group].c_str());
             break;
             
-        case gauss_propagation_type:
-            fprintf(proof,"Gauss propagation\",style=bold];\n");
-            break;
-            
         case add_clause_type:
-            fprintf(proof,"red. from %s\"];\n",groupnames[group].c_str());
-            break;
-            
-        case unit_clause_type:
-            fprintf(proof,"unit clause %s,style=bold\"];\n",groupnames[group].c_str());
-            break;
-            
-        case assumption_type:
-            fprintf(proof,"assumption\"];\n");
+            fprintf(proof,"red. from clause\"];\n");
             break;
             
         case guess_type:
@@ -300,20 +292,14 @@ void Logger::propagation(const Lit lit, const prop_type type, const uint group)
 
     if (statistics_on) {
         switch (type) {
-        case unit_clause_type:
-            learnt_unitary_clauses++;
-        case add_clause_type:
-        case gauss_propagation_type:
         case simple_propagation_type:
-            no_propagations++;
-            times_var_propagated[lit.var()]++;
-            
             depths_of_propagations_for_group[group].push_back(S->decisionLevel());
             times_group_caused_propagation[group]++;
+        case add_clause_type:
+            no_propagations++;
+            times_var_propagated[lit.var()]++;
             depths_of_assigns_for_var[lit.var()].push_back(S->decisionLevel());
             break;
-        
-        case assumption_type:
         case guess_type:
             no_decisions++;
             times_var_guessed[lit.var()]++;
@@ -327,6 +313,7 @@ void Logger::propagation(const Lit lit, const prop_type type, const uint group)
 // Ending of a restart iteration
 void Logger::end(const finish_type finish)
 {
+    first_begin();
     assert(!(proof == NULL && proof_graph_on));
     
     if (proof_graph_on) {
@@ -337,9 +324,6 @@ void Logger::end(const finish_type finish)
             break;
         case unsat_model_found:
             fprintf(proof,"node%d [shape=doublecircle, label=\"UNSAT\"];\n",uniqueid);
-            break;
-        case done_adding_clauses:
-            fprintf(proof,"node%d [shape=doublecircle, label=\"Done adding\\nclauses\"];\n",uniqueid);
             break;
         case restarting:
             fprintf(proof,"node%d [shape=doublecircle, label=\"Re-starting\\nsearch\"];\n",uniqueid);
@@ -359,6 +343,9 @@ void Logger::end(const finish_type finish)
         if (finish == restarting)
             reset_statistics();
     }
+    
+    if (model_found || unsat_model_found)
+        begin_called = false;
 }
 
 void Logger::print_footer() const
@@ -786,7 +773,7 @@ void Logger::print_advanced_stats() const
     print_footer();
     print_simple_line(" Advanced statistics - for only this restart");
     print_footer();
-    print_line("Unitary learnts", learnt_unitary_clauses);
+    print_line("Unitary learnts", S->get_unitary_learnts_num() - last_unitary_learnt_clauses);
     print_line("No. branches visited", no_conflicts);
     print_line("Avg. branch depth", (double)sum_conflict_depths/(double)no_conflicts);
     print_line("No. decisions", no_decisions);
@@ -861,6 +848,6 @@ void Logger::reset_statistics()
     sum_decisions_on_branches = 0;
     sum_propagations_on_branches = 0;
     branch_depth_distrib.clear();
-    learnt_unitary_clauses = 0;
+    last_unitary_learnt_clauses = S->get_unitary_learnts_num();
 }
 

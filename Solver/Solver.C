@@ -80,8 +80,10 @@ Solver::Solver() :
         , progress_estimate(0)
         , remove_satisfied (true)
         , mtrand((unsigned long int)0)
+        #ifdef STATS_NEEDED
         , logger(verbosity)
         , dynamic_behaviour_analysis(false) //do not document the proof as default
+        #endif
         , maxRestarts(UINT_MAX)
         , MYFLAG           (0)
         , learnt_clause_group(0)
@@ -90,7 +92,10 @@ Solver::Solver() :
     varReplacer = new VarReplacer(this);
     conglomerate = new Conglomerate(this);
     clauseCleaner = new ClauseCleaner(*this);
+    
+    #ifdef STATS_NEEDED
     logger.setSolver(this);
+    #endif
 }
 
 Solver::~Solver()
@@ -135,8 +140,11 @@ Var Solver::newVar(bool sign, bool dvar)
     conglomerate->newVar();
 
     insertVarOrder(v);
+    
+    #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
         logger.new_var(v);
+    #endif
     
     if (libraryCNFFile)
         fprintf(libraryCNFFile, "c Solver::newVar() called\n");
@@ -154,8 +162,11 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         }
         fprintf(libraryCNFFile, "0\n");
     }
-
-    if (dynamic_behaviour_analysis) logger.set_group_name(group, group_name);
+    
+    #ifdef STATS_NEEDED
+    if (dynamic_behaviour_analysis)
+        logger.set_group_name(group, group_name);
+    #endif
 
     if (!ok)
         return false;
@@ -191,15 +202,11 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
     case 0: {
         if (xor_clause_inverted)
             return true;
-
-        if (dynamic_behaviour_analysis) logger.empty_clause(group);
         return ok = false;
     }
     case 1: {
         assert(assigns[ps[0].var()].isUndef());
         uncheckedEnqueue(ps[0] ^ xor_clause_inverted);
-        if (dynamic_behaviour_analysis)
-            logger.propagation((xor_clause_inverted) ? ~ps[0] : ps[0], Logger::add_clause_type, group);
         return ok = (propagate() == NULL);
     }
     case 2: {
@@ -235,9 +242,11 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
         }
         fprintf(libraryCNFFile, "0\n");
     }
-
+    
+    #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
         logger.set_group_name(group, group_name);
+    #endif
 
     if (!ok)
         return false;
@@ -261,14 +270,10 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
     ps.shrink(i - j);
 
     if (ps.size() == 0) {
-        if (dynamic_behaviour_analysis)
-            logger.empty_clause(group);
         return ok = false;
     } else if (ps.size() == 1) {
         assert(value(ps[0]) == l_Undef);
         uncheckedEnqueue(ps[0]);
-        if (dynamic_behaviour_analysis)
-            logger.propagation(ps[0], Logger::add_clause_type, group);
         return ok = (propagate() == NULL);
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
@@ -722,6 +727,11 @@ void Solver::uncheckedEnqueue(Lit p, Clause* from)
     reason  [v] = from;
     polarity[p.var()] = p.sign();
     trail.push(p);
+    
+    #ifdef STATS_NEEDED
+    if (dynamic_behaviour_analysis)
+        logger.propagation(p, from);
+    #endif
 }
 
 
@@ -758,8 +768,6 @@ Clause* Solver::propagate(const bool xor_as_well)
             lbool val = value(imp);
             if (val.isUndef()) {
                 uncheckedEnqueue(imp, k->clause);
-                if (dynamic_behaviour_analysis)
-                    logger.propagation(imp, Logger::simple_propagation_type, k->clause->group);
             } else if (val == l_False)
                 return k->clause;
         }
@@ -804,8 +812,6 @@ Clause* Solver::propagate(const bool xor_as_well)
                         *j++ = *i++;
                 } else {
                     uncheckedEnqueue(first, &c);
-                    if (dynamic_behaviour_analysis)
-                        logger.propagation(first,Logger::simple_propagation_type,c.group);
                     #ifdef DYNAMICNBLEVEL
                     if (c.learnt() && c.activity() > 2) { // GA
                         MYFLAG++;
@@ -907,8 +913,6 @@ Clause* Solver::propagate_xors(const Lit& p)
                 #endif
                 
                 uncheckedEnqueue(c[0], (Clause*)&c);
-                if (dynamic_behaviour_analysis)
-                    logger.propagation(c[0], Logger::simple_propagation_type, c.group);
             } else if (!final) {
                 
                 #ifdef VERBOSE_DEBUG_XOR
@@ -1046,9 +1050,6 @@ lbool Solver::simplify()
     assert(decisionLevel() == 0);
 
     if (!ok || propagate() != NULL) {
-        if (dynamic_behaviour_analysis) {
-            logger.end(Logger::unsat_model_found);
-        }
         ok = false;
         return l_False;
     }
@@ -1136,9 +1137,6 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
             nbDecisionLevelHistory.fastclear();
             progress_estimate = progressEstimate();
             cancelUntil(0);
-            if (dynamic_behaviour_analysis) {
-                logger.end(Logger::restarting);
-            }
             return l_Undef;
         }
         break;
@@ -1146,8 +1144,6 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
         if (nof_conflicts >= 0 && conflictC >= nof_conflicts) {
             progress_estimate = progressEstimate();
             cancelUntil(0);
-            if (dynamic_behaviour_analysis)
-                logger.end(Logger::restarting);
             return l_Undef;
         }
         break;
@@ -1155,9 +1151,6 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
 
     // Simplify the set of problem clauses:
     if (decisionLevel() == 0 && simplify() == l_False) {
-        if (dynamic_behaviour_analysis) {
-            logger.end(Logger::unsat_model_found);
-        }
         return l_False;
     }
 
@@ -1175,12 +1168,8 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
         if (value(p) == l_True) {
             // Dummy decision level:
             newDecisionLevel();
-            if (dynamic_behaviour_analysis) logger.propagation(p, Logger::assumption_type);
         } else if (value(p) == l_False) {
             analyzeFinal(~p, conflict);
-            if (dynamic_behaviour_analysis) {
-                logger.end(Logger::unsat_model_found);
-            }
             return l_False;
         } else {
             next = p;
@@ -1193,21 +1182,14 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
         decisions++;
         next = pickBranchLit(polarity_mode);
 
-        if (next == lit_Undef) {
-            // Model found:
-            if (dynamic_behaviour_analysis) {
-                logger.end(Logger::model_found);
-            }
+        if (next == lit_Undef)
             return l_True;
-        }
     }
 
     // Increase decision level and enqueue 'next'
     assert(value(next) == l_Undef);
     newDecisionLevel();
     uncheckedEnqueue(next);
-    if (dynamic_behaviour_analysis)
-        logger.propagation(next, Logger::guess_type);
 
     return l_Nothing;
 }
@@ -1226,12 +1208,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
 
     conflicts++;
     conflictC++;
-    if (decisionLevel() == 0) {
-        if (dynamic_behaviour_analysis) {
-            logger.end(Logger::unsat_model_found);
-        }
+    if (decisionLevel() == 0)
         return l_False;
-    }
     learnt_clause.clear();
     analyze(confl, learnt_clause, backtrack_level, nbLevels);
     conf4Stats++;
@@ -1240,8 +1218,10 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         totalSumOfDecisionLevel += nbLevels;
     }
     
+    #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
         logger.conflict(Logger::simple_confl_type, backtrack_level, confl->group, learnt_clause);
+    #endif
     cancelUntil(backtrack_level);
     
     #ifdef VERBOSE_DEBUG
@@ -1255,11 +1235,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     //Unitary learnt
     if (learnt_clause.size() == 1) {
         uncheckedEnqueue(learnt_clause[0]);
-        if (dynamic_behaviour_analysis) {
-            logger.set_group_name(learnt_clause_group, "unitary learnt clause");
-            logger.propagation(learnt_clause[0], Logger::unit_clause_type, learnt_clause_group);
-            learnt_clause_group++;
-        }
         assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
         
         #ifdef VERBOSE_DEBUG
@@ -1268,17 +1243,16 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     //Normal learnt
     } else {
         Clause* c = Clause_new(learnt_clause, learnt_clause_group++, true);
+        #ifdef STATS_NEEDED
+        if (dynamic_behaviour_analysis)
+            logger.set_group_name(c->group, "learnt clause");
+        #endif
         learnts.push(c);
         c->setActivity(nbLevels); // LS
         if (nbLevels <= 2) nbDL2++;
         if (c->size() == 2) nbBin++;
         attachClause(*c);
         uncheckedEnqueue(learnt_clause[0], c);
-
-        if (dynamic_behaviour_analysis) {
-            logger.set_group_name(c->group, "learnt clause");
-            logger.propagation(learnt_clause[0], Logger::simple_propagation_type, c->group);
-        }
     }
 
     varDecayActivity();
@@ -1450,40 +1424,27 @@ lbool Solver::solve(const vec<Lit>& assumps)
     performStepsBeforeSolve();
     if (!ok) return l_False;
     
-
-    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
-        printf("============================[ Search Statistics ]========================================\n");
-        printf("| Conflicts |          ORIGINAL         |          LEARNT          |        GAUSS       |\n");
-        printf("|           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl | Prop   Confl   On  |\n");
-        printf("=========================================================================================\n");
-    }
-    
-    if (dynamic_behaviour_analysis)
-        logger.end(Logger::done_adding_clauses);
+    printStatHeader();
     
     RestartTypeChooser restartTypeChooser(this);
     
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
         clauseCleaner->removeAndCleanAll();
-        
-        if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on))  {
-            printf("| %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nbclausesbeforereduce*curRestart, nLearnts(), (double)learnts_literals/nLearnts());
-            print_gauss_sum_stats();
-        }
-        
-        if (dynamic_behaviour_analysis)
+        printRestartStat();
+        #ifdef STATS_NEEDED
+        if (dynamic_behaviour_analysis) {
+            logger.end(Logger::restarting);
             logger.begin();
+        }
+        #endif
+        
         status = search((int)nof_conflicts);
         nof_conflicts *= restart_inc;
         
         chooseRestartType(status, restartTypeChooser);
     }
-
-    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
-        printf("====================================================================");
-        print_gauss_sum_stats();
-    }
+    printEndSearchStat();
     
     for (uint i = 0; i < gauss_matrixes.size(); i++)
         delete gauss_matrixes[i];
@@ -1505,12 +1466,24 @@ lbool Solver::solve(const vec<Lit>& assumps)
             double time = cpuTime();
             FindUndef finder(*this);
             const uint unbounded = finder.unRoll();
-            printf("Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
+            if (verbosity >= 1)
+                printf("Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
         }
     } if (status == l_False) {
         if (conflict.size() == 0)
             ok = false;
     }
+    
+    #ifdef STATS_NEEDED
+    if (dynamic_behaviour_analysis) {
+        if (status == l_True)
+            logger.end(Logger::model_found);
+        else if (status == l_False)
+                logger.end(Logger::unsat_model_found);
+        else if (status == l_Undef)
+            logger.end(Logger::restarting);
+    }
+    #endif
     
     #ifdef LS_STATS_NBBUMP
     for(int i=0;i<learnts.size();i++)
@@ -1598,5 +1571,43 @@ void Solver::checkLiteralCount()
         fprintf(stderr, "literal count: %d, real value = %d\n", (int)clauses_literals, cnt);
         assert((int)clauses_literals == cnt);
     }
+}
+
+void Solver::printStatHeader() const
+{
+    #ifdef STATS_NEEDED
+    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
+    #else
+    if (verbosity >= 1) {
+    #endif
+        printf("============================[ Search Statistics ]========================================\n");
+        printf("| Conflicts |          ORIGINAL         |          LEARNT          |        GAUSS       |\n");
+        printf("|           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl | Prop   Confl   On  |\n");
+        printf("=========================================================================================\n");
+    }
+}
+
+void Solver::printRestartStat() const
+{
+    #ifdef STATS_NEEDED
+    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
+    #else
+    if (verbosity >= 1) {
+    #endif
+        printf("| %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nbclausesbeforereduce*curRestart, nLearnts(), (double)learnts_literals/nLearnts());
+        print_gauss_sum_stats();
+    }
+}
+
+void Solver::printEndSearchStat() const
+{
+    #ifdef STATS_NEEDED
+    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
+        #else
+        if (verbosity >= 1) {
+            #endif
+            printf("====================================================================");
+            print_gauss_sum_stats();
+        }
 }
 

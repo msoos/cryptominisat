@@ -324,12 +324,14 @@ void printUsage(char** argv)
     printf("  -decay         = <num> [ 0 - 1 ]\n");
     printf("  -rnd-freq      = <num> [ 0 - 1 ]\n");
     printf("  -verbosity     = {0,1,2}\n");
+    #ifdef STATS_NEEDED
     printf("  -proof-log     = Logs the proof into files 'proofN.dot', where N is the\n");
     printf("                   restart number. The log can then be visualized using\n");
     printf("                   the 'dot' program from the graphviz package\n");
     printf("  -grouping      = Lets you group clauses, and customize the groups' names.\n");
     printf("                   This helps when printing statistics\n");
     printf("  -stats         = Computes and prints statistics during the search\n");
+    #endif
     printf("  -randomize     = <seed> [0 - 2^32-1] Sets random seed, used for picking\n");
     printf("                   decision variables (default = 0)\n");
     printf("  -restrict      = <num> [1 - varnum] when picking random variables to branch\n");
@@ -408,6 +410,7 @@ int main(int argc, char** argv)
                 exit(0);
             }
             S.verbosity = verbosity;
+        #ifdef STATS_NEEDED
         } else if ((value = hasPrefix(argv[i], "-grouping"))) {
             grouping = true;
         } else if ((value = hasPrefix(argv[i], "-proof-log"))) {
@@ -415,6 +418,7 @@ int main(int argc, char** argv)
 
         } else if ((value = hasPrefix(argv[i], "-stats"))) {
             S.needStats();
+        #endif
 
         } else if ((value = hasPrefix(argv[i], "-randomize="))) {
             uint32_t seed;

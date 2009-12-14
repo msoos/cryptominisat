@@ -53,15 +53,14 @@ public:
     void setSolver(const Solver* S);
 
     //types of props, confl, and finish
-    enum prop_type { unit_clause_type, add_clause_type, assumption_type, guess_type, simple_propagation_type, gauss_propagation_type };
+    enum prop_type { add_clause_type, guess_type, simple_propagation_type};
     enum confl_type { simple_confl_type, gauss_confl_type };
-    enum finish_type { model_found, unsat_model_found, restarting, done_adding_clauses };
+    enum finish_type { model_found, unsat_model_found, restarting};
 
     //Conflict and propagation(guess is also a proapgation...)
     template<class T>
     void conflict(const confl_type type, const uint goback_level, const uint group, const T& learnt_clause);
-    void propagation(const Lit lit, const prop_type type, const uint group = UINT_MAX);
-    void empty_clause(const uint group);
+    void propagation(const Lit lit, Clause* c);
 
     //functions to add/name variables
     void new_var(const Var var);
@@ -154,7 +153,7 @@ private:
     uint no_propagations;
     uint sum_decisions_on_branches;
     uint sum_propagations_on_branches;
-    uint learnt_unitary_clauses;
+    uint last_unitary_learnt_clauses;
 
     //message display properties
     const int& verbosity;
@@ -163,6 +162,7 @@ private:
     
     void first_begin();
     bool begin_called;
+    uint proofStarts;
 };
 
 #endif //LOGGER_H

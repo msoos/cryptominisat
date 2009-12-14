@@ -213,9 +213,11 @@ protected:
     bqueue<unsigned int> nbDecisionLevelHistory; // Set of last decision level in conflict clauses
     float               totalSumOfDecisionLevel;
     MTRand mtrand;                        // random number generator
-    Logger logger;                       // dynamic logging, statistics
     friend class Logger;
-    bool dynamic_behaviour_analysis;      //should 'logger' be called whenever a propagation/conflict/decision is made?
+    #ifdef STATS_NEEDED
+    Logger logger;                       // dynamic logging, statistics
+    bool dynamic_behaviour_analysis;      // Is logger running?
+    #endif
     uint                maxRestarts;      // More than this number of restarts will not be performed
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
@@ -274,7 +276,6 @@ protected:
     //
     int      decisionLevel    ()      const; // Gives the current decisionlevel.
     uint32_t abstractLevel    (const Var& x) const; // Used to represent an abstraction of sets of decision levels.
-    double   progressEstimate ()      const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
     
     //Xor-finding related stuff
     friend class XorFinder;
@@ -289,11 +290,15 @@ protected:
     void chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser);
     void performStepsBeforeSolve();
 
-    // Debug:
+    // Debug & etc:
     void     printLit         (const Lit l) const;
     void     verifyModel      ();
     bool     verifyXorClauses (const vec<XorClause*>& cs) const;
     void     checkLiteralCount();
+    void     printStatHeader  () const;
+    void     printRestartStat () const;
+    void     printEndSearchStat() const;
+    double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
 };
 
 
@@ -404,6 +409,7 @@ inline void     Solver::setSeed (const uint32_t seed)
 {
     mtrand.seed(seed);    // Set seed of the variable-selection and clause-permutation(if applicable)
 }
+#ifdef STATS_NEEDED
 inline void     Solver::needStats()
 {
     dynamic_behaviour_analysis = true;    // Sets the solver and the logger up to generate statistics
@@ -420,6 +426,10 @@ inline void     Solver::setVariableName(int var, char* name)
     if (dynamic_behaviour_analysis)
         logger.set_variable_name(var, name);
 } // Sets the varible 'var'-s name to 'name' in the logger
+#else
+inline void     Solver::setVariableName(int var, char* name)
+{}
+#endif
 inline const uint Solver::get_unitary_learnts_num() const
 {
     if (decisionLevel() > 0)

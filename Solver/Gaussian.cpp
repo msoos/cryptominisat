@@ -543,8 +543,10 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     m.varset[best_row].fill(tmp_clause, solver.assigns, col_to_var_original);
     confl = Clause_new(tmp_clause, solver.learnt_clause_group++, false);
     Clause& cla = *confl;
+    #ifdef STATS_NEEDED
     if (solver.dynamic_behaviour_analysis)
         solver.logger.set_group_name(confl->group, "learnt gauss clause");
+    #endif
     
     if (cla.size() <= 1)
         return unit_conflict;
@@ -556,8 +558,10 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     #endif
 
     if (maxlevel != solver.decisionLevel()) {
+        #ifdef STATS_NEEDED
         if (solver.dynamic_behaviour_analysis)
             solver.logger.conflict(Logger::gauss_confl_type, maxlevel, confl->group, *confl);
+        #endif
         solver.cancelUntil(maxlevel);
     }
     const uint curr_dec_level = solver.decisionLevel();
@@ -756,25 +760,19 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     assert(solver.assigns[cla[0].var()].isUndef());
     if (cla.size() == 1) {
         const Lit lit = cla[0];
-        if (solver.dynamic_behaviour_analysis) {
-            solver.logger.set_group_name(cla.group, "unitary learnt clause");
-            solver.logger.conflict(Logger::gauss_confl_type, 0, cla.group, cla);
-        }
         
         solver.cancelUntil(0);
         solver.uncheckedEnqueue(lit);
-        if (solver.dynamic_behaviour_analysis)
-            solver.logger.propagation(cla[0], Logger::gauss_propagation_type, cla.group);
         free(&cla);
         return unit_propagation;
     }
 
     clauses_toclear.push_back(std::make_pair(&cla, solver.trail.size()-1));
-    solver.uncheckedEnqueue(cla[0], &cla);
-    if (solver.dynamic_behaviour_analysis) {
+    #ifdef STATS_NEEDED
+    if (solver.dynamic_behaviour_analysis)
         solver.logger.set_group_name(cla.group, "gauss prop clause");
-        solver.logger.propagation(cla[0], Logger::gauss_propagation_type, cla.group);
-    }
+    #endif
+    solver.uncheckedEnqueue(cla[0], &cla);
 
     return propagation;
 }
@@ -819,22 +817,19 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
             }
 
             Lit lit = (*confl)[0];
+            #ifdef STATS_NEEDED
             if (solver.dynamic_behaviour_analysis)
                 solver.logger.conflict(Logger::gauss_confl_type, 0, confl->group, *confl);
+            #endif
             
             solver.cancelUntil(0);
             
             if (solver.assigns[lit.var()].isDef()) {
-                if (solver.dynamic_behaviour_analysis)
-                    solver.logger.empty_clause(confl->group);
-                
                 free(confl);
                 return l_False;
             }
             
             solver.uncheckedEnqueue(lit);
-            if (solver.dynamic_behaviour_analysis)
-                solver.logger.propagation(lit, Logger::gauss_propagation_type, confl->group);
             
             free(confl);
             return l_Continue;
