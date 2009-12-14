@@ -196,7 +196,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         else //modify xor_clause_inverted instead of adding
             xor_clause_inverted ^= (assigns[ps[i].var()].getBool());
     }
-    ps.shrink(i - j);
+    ps.shrink_(i - j);
 
     switch(ps.size()) {
     case 0: {
@@ -404,7 +404,7 @@ void Solver::cancelUntil(int level)
         }
         qhead = trail_lim[level];
         trail.shrink(trail.size() - trail_lim[level]);
-        trail_lim.shrink(trail_lim.size() - level);
+        trail_lim.shrink_(trail_lim.size() - level);
     }
 
     #ifdef VERBOSE_DEBUG
@@ -842,7 +842,7 @@ Clause* Solver::propagate(const bool xor_as_well)
 FoundWatch:
             ;
         }
-        ws.shrink(i - j);
+        ws.shrink_(i - j);
 
         //Finally, propagate XOR-clauses
         if (xor_as_well && !confl) confl = propagate_xors(p);
@@ -996,7 +996,7 @@ void Solver::reduceDB()
     for (; i < learnts.size(); i++) {
         learnts[j++] = learnts[i];
     }
-    learnts.shrink(i - j);
+    learnts.shrink_(i - j);
 }
 
 const vec<Clause*>& Solver::get_learnts() const

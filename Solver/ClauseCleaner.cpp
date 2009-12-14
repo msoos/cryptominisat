@@ -44,7 +44,7 @@ void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, con
         else
             cs[j++] = cs[i];
     }
-    cs.shrink(i - j);
+    cs.shrink_(i - j);
     
     lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
 }
@@ -65,7 +65,7 @@ void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const 
         else
             cs[j++] = cs[i];
     }
-    cs.shrink(i - j);
+    cs.shrink_(i - j);
     
     lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
 }
