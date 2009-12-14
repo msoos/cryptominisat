@@ -47,9 +47,6 @@ class XorFinder;
 class FindUndef;
 class ClauseCleaner;
 
-//#define VERBOSE_DEBUG_XOR
-//#define VERBOSE_DEBUG
-
 #ifdef VERBOSE_DEBUG
 using std::cout;
 using std::endl;
