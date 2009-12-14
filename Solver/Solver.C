@@ -1068,11 +1068,7 @@ lbool Solver::simplify()
     }
 
     // Remove satisfied clauses:
-    clauseCleaner->removeSatisfied(learnts, ClauseCleaner::learnts);
-    if (remove_satisfied) {       // Can be turned off.
-        clauseCleaner->removeSatisfied(clauses, ClauseCleaner::clauses);
-        clauseCleaner->removeSatisfied(xorclauses, ClauseCleaner::xorclauses);
-    }
+    clauseCleaner->removeAndCleanAll();
 
     // Remove fixed variables from the variable heap:
     order_heap.filter(VarFilter(*this));
@@ -1435,7 +1431,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
-        clauseCleaner->removeAndCleanAll();
         printRestartStat();
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis) {
