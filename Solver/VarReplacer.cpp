@@ -41,7 +41,7 @@ VarReplacer::VarReplacer(Solver *_S) :
 
 VarReplacer::~VarReplacer()
 {
-    for (uint i = 0; i < clauses.size(); i++)
+    for (uint i = 0; i != clauses.size(); i++)
         free(clauses[i]);
 }
 
@@ -85,7 +85,7 @@ void VarReplacer::performReplace()
     replace_set(S->xorclauses, true);
     replace_set(S->conglomerate->getCalcAtFinish(), false);
     
-    for (uint i = 0; i < clauses.size(); i++)
+    for (uint i = 0; i != clauses.size(); i++)
         S->removeClause(*clauses[i]);
     clauses.clear();
     
