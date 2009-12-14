@@ -1080,10 +1080,6 @@ lbool Solver::simplify()
     simpDB_assigns = nAssigns();
     simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
 
-    //clauseCleaner->cleanClauses(clauses);
-    //clauseCleaner->cleanClauses(xorclauses);
-    //clauseCleaner->cleanClauses(learnts);
-
     return l_Undef;
 }
 
