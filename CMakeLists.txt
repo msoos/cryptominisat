@@ -10,7 +10,7 @@ ENDIF()
 #set(CMAKE_CXX_COMPILER "/usr/bin/g++-4.4")
 
 PROJECT(crypto)
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -march=native")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -Wall -g -march=native")
 SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -ggdb")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -march=native -fomit-frame-pointer")
 

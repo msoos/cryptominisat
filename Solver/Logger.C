@@ -196,7 +196,7 @@ void Logger::conflict(const confl_type type, const uint goback_level, const uint
         fprintf(proof,"node%d [shape=polygon,sides=5,label=\"",uniqueid);
         
         if (!mini_proof) {
-            for (int i = 0; i < learnt_clause.size(); i++) {
+            for (uint32_t i = 0; i != learnt_clause.size(); i++) {
                 if (learnt_clause[i].sign()) fprintf(proof,"-");
                 int myvar = learnt_clause[i].var();
                 if (varnames[myvar] != "Noname")
@@ -431,7 +431,7 @@ void Logger::print_confl_order() const
 void Logger::print_times_var_guessed() const
 {
     vector<pair<uint, uint> > times_var_ordered;
-    for (int i = 0; i < varnames.size(); i++) if (times_var_guessed[i] > 0)
+    for (uint32_t i = 0; i != varnames.size(); i++) if (times_var_guessed[i] > 0)
             times_var_ordered.push_back(std::make_pair(times_var_guessed[i], i));
 
     if (!times_var_ordered.empty()) {
@@ -676,8 +676,8 @@ void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const map<ui
             cout << yaxis[height-1-i-middle] << " ";
         else
             cout << "  ";
-        for (uint i2 = 0; i2 < no_slices; i2++) {
-            if (slices[i2]/hslice >= i) cout << "+";
+        for (uint i2 = 0; i2 != no_slices; i2++) {
+            if (slices[i2]/hslice >= (uint)i) cout << "+";
             else cout << " ";
         }
         cout << "|" << endl;

@@ -188,13 +188,14 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
             return true;
         }
         default:
+            solver.clauses_literals -= i-j;
             return false;
     }
 }
 
 bool ClauseCleaner::satisfied(const Clause& c) const
 {
-    for (uint i = 0; i < c.size(); i++)
+    for (uint i = 0; i != c.size(); i++)
         if (solver.value(c[i]) == l_True)
             return true;
         return false;
@@ -203,7 +204,7 @@ bool ClauseCleaner::satisfied(const Clause& c) const
 bool ClauseCleaner::satisfied(const XorClause& c) const
 {
     bool final = c.xor_clause_inverted();
-    for (uint k = 0; k < c.size(); k++ ) {
+    for (uint k = 0; k != c.size(); k++ ) {
         const lbool& val = solver.assigns[c[k].var()];
         if (val.isUndef()) return false;
         final ^= val.getBool();

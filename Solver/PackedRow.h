@@ -167,7 +167,7 @@ public:
         uint64_t * __restrict mp1 = mp;
         uint64_t * __restrict mp2 = b.mp;
         
-        for (int i = -1; i != size; i++) {
+        for (int i = -1; i != (int)size; i++) {
             uint64_t tmp(*(mp2 + i));
             *(mp2 + i) = *(mp + i);
             *(mp1 + i) = tmp;

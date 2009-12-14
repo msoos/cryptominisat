@@ -151,7 +151,8 @@ static void parseString(B& in, std::string& str)
 template<class B>
 static void readClause(B& in, Solver& S, vec<Lit>& lits)
 {
-    int     parsed_lit, var;
+    int     parsed_lit;
+    Var     var;
     lits.clear();
     for (;;) {
         parsed_lit = parseInt(in);
@@ -212,7 +213,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 FILE* res = fopen(s.c_str(), "w");
                 if (ret == l_True) {
                     fprintf(res, "SAT\n");
-                    for (int i = 0; i < S.nVars(); i++)
+                    for (Var i = 0; i != S.nVars(); i++)
                         if (S.model[i] != l_Undef)
                             fprintf(res, "%s%s%d", (i==0)?"":" ", (S.model[i]==l_True)?"":"-", i+1);
                         fprintf(res, " 0\n");
@@ -529,7 +530,7 @@ int main(int argc, char** argv)
     if (res != NULL) {
         if (ret == l_True) {
             fprintf(res, "SAT\n");
-            for (int i = 0; i < S.nVars(); i++)
+            for (Var i = 0; i != S.nVars(); i++)
                 if (S.model[i] != l_Undef)
                     fprintf(res, "%s%s%d", (i==0)?"":" ", (S.model[i]==l_True)?"":"-", i+1);
             fprintf(res, " 0\n");

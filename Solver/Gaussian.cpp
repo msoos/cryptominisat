@@ -33,7 +33,7 @@ using std::endl;
 
 ostream& operator << (ostream& os, const vec<Lit>& v)
 {
-    for (int i = 0; i < v.size(); i++) {
+    for (uint32_t i = 0; i != v.size(); i++) {
         if (v[i].sign()) os << "-";
         os << v[i].var()+1 << " ";
     }
@@ -128,7 +128,7 @@ uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origM
     var_to_col.resize(solver.nVars(), unassigned_col);
 
     uint num_xorclauses  = 0;
-    for (int i = 0; i != xorclauses.size(); i++) {
+    for (uint32_t i = 0; i != xorclauses.size(); i++) {
         #ifdef DEBUG_GAUSS
         assert(xorclauses[i]->mark() || !solver.satisfied(*xorclauses[i]));
         #endif
@@ -218,7 +218,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     #endif
 
     uint matrix_row = 0;
-    for (int i = 0; i < xorclauses.size(); i++) {
+    for (uint32_t i = 0; i != xorclauses.size(); i++) {
         const XorClause& c = *xorclauses[i];
 
         if (!c.mark()) {
@@ -569,7 +569,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     
     uint maxsublevel = 0;
     uint maxsublevel_at = UINT_MAX;
-    for (uint i = 0, size = cla.size(); i < size; i++) if (solver.level[cla[i].var()] == curr_dec_level) {
+    for (uint i = 0, size = cla.size(); i != size; i++) if (solver.level[cla[i].var()] == curr_dec_level) {
         uint tmp = find_sublevel(cla[i].var());
         if (tmp >= maxsublevel) {
             maxsublevel = tmp;

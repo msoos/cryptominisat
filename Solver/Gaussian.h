@@ -57,7 +57,7 @@ public:
     void set_disabled(const bool toset);
 
     //functions used throughout the Solver
-    void canceling(const int sublevel);
+    void canceling(const uint sublevel);
 
 protected:
     Solver& solver;
@@ -169,7 +169,7 @@ inline bool Gaussian::should_check_gauss(const uint decisionlevel, const uint st
             && decisionlevel < config.decision_until);
 }
 
-inline void Gaussian::canceling(const int sublevel)
+inline void Gaussian::canceling(const uint sublevel)
 {
     if (disabled)
         return;
@@ -182,7 +182,7 @@ inline void Gaussian::canceling(const int sublevel)
     
     if (messed_matrix_vars_since_reversal)
         return;
-    int c = std::min(gauss_last_level, solver.trail.size()-1);
+    int c = std::min((int)gauss_last_level, (int)(solver.trail.size())-1);
     for (; c >= sublevel; c--) {
         Var var  = solver.trail[c].var();
         if (var < var_is_in.getSize()

@@ -100,7 +100,7 @@ Solver::Solver() :
 
 Solver::~Solver()
 {
-    for (int i = 0; i < learnts.size(); i++) free(learnts[i]);
+    for (uint32_t i = 0; i != learnts.size(); i++) free(learnts[i]);
     for (int i = 0; i < clauses.size(); i++) free(clauses[i]);
     for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
     clearGaussMatrixes();
@@ -173,15 +173,15 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
 
     // Check if clause is satisfied and remove false/duplicate literals:
     if (varReplacer->getNumLastReplacedVars()) {
-        for (int i = 0; i != ps.size(); i++) {
+        for (uint32_t i = 0; i != ps.size(); i++) {
             ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
         }
     }
     
     sort(ps);
     Lit p;
-    int i, j;
-    for (i = j = 0, p = lit_Undef; i < ps.size(); i++) {
+    uint32_t i, j;
+    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
         xor_clause_inverted ^= ps[i].sign();
         ps[i] ^= ps[i].sign();
 
@@ -237,7 +237,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
     assert(decisionLevel() == 0);
     
     if (libraryCNFFile) {
-        for (int i = 0; i < ps.size(); i++) {
+        for (uint32_t i = 0; i != ps.size(); i++) {
             fprintf(libraryCNFFile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
         }
         fprintf(libraryCNFFile, "0\n");
@@ -253,15 +253,15 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
 
     // Check if clause is satisfied and remove false/duplicate literals:
     if (varReplacer->getNumLastReplacedVars()) {
-        for (int i = 0; i != ps.size(); i++) {
+        for (uint32_t i = 0; i != ps.size(); i++) {
             ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
         }
     }
     
     sort(ps);
     Lit p;
-    int i, j;
-    for (i = j = 0, p = lit_Undef; i < ps.size(); i++) {
+    uint32_t i, j;
+    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
         if (value(ps[i]).getBool() || ps[i] == ~p)
             return true;
         else if (value(ps[i]) != l_False && ps[i] != p)
@@ -571,7 +571,7 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
 
     // Simplify conflict clause:
     //
-    int i, j;
+    uint32_t i, j;
     if (expensive_ccmin) {
         uint32_t abstract_level = 0;
         for (i = 1; i < out_learnt.size(); i++)
@@ -603,8 +603,8 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
     if (out_learnt.size() == 1)
         out_btlevel = 0;
     else {
-        int max_i = 1;
-        for (int i = 2; i < out_learnt.size(); i++)
+        uint32_t max_i = 1;
+        for (uint32_t i = 2; i < out_learnt.size(); i++)
             if (level[out_learnt[i].var()] > level[out_learnt[max_i].var()])
                 max_i = i;
         Lit p             = out_learnt[max_i];
@@ -615,7 +615,7 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
 
     nbLevels = 0;
     MYFLAG++;
-    for(int i = 0; i < out_learnt.size(); i++) {
+    for(uint32_t i = 0; i != out_learnt.size(); i++) {
         int lev = level[out_learnt[i].var()];
         if (permDiff[lev] != MYFLAG) {
             permDiff[lev] = MYFLAG;
@@ -626,7 +626,7 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
     
     #ifdef UPDATEVARACTIVITY
     if (lastDecisionLevel.size() > 0) {
-        for(int i = 0; i<lastDecisionLevel.size(); i++) {
+        for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
             if (reason[lastDecisionLevel[i].var()]->activity() < nbLevels)
                 varBumpActivity(lastDecisionLevel[i].var());
         }
@@ -634,7 +634,8 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
     }
     #endif
 
-    for (int j = 0; j < analyze_toclear.size(); j++) seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
+    for (uint32_t j = 0; j != analyze_toclear.size(); j++)
+        seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 }
 
 
@@ -660,7 +661,7 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
                     analyze_stack.push(p);
                     analyze_toclear.push(p);
                 } else {
-                    for (int j = top; j < analyze_toclear.size(); j++)
+                    for (uint32_t j = top; j != analyze_toclear.size(); j++)
                         seen[analyze_toclear[j].var()] = 0;
                     analyze_toclear.shrink(analyze_toclear.size() - top);
                     return false;
@@ -800,7 +801,7 @@ Clause* Solver::propagate(const bool xor_as_well)
                 j++;
             } else {
                 // Look for new watch:
-                for (int k = 2; k != c.size(); k++)
+                for (uint32_t k = 2; k != c.size(); k++)
                     if (value(c[k]) != l_False) {
                         c[1] = c[k];
                         c[k] = false_lit;
@@ -982,11 +983,11 @@ struct reduceDB_lt {
 
 void Solver::reduceDB()
 {
-    int     i, j;
+    uint32_t     i, j;
 
     nbReduceDB++;
     sort(learnts, reduceDB_lt());
-    for (i = j = 0; i < learnts.size() / RATIOREMOVECLAUSES; i++){
+    for (i = j = 0; i != learnts.size() / RATIOREMOVECLAUSES; i++){
         if (learnts[i]->size() > 2 && !locked(*learnts[i]) && learnts[i]->activity() > 2)
             removeClause(*learnts[i]);
         else
@@ -1013,7 +1014,7 @@ const vector<Lit> Solver::get_unitary_learnts() const
 {
     vector<Lit> unitaries;
     if (decisionLevel() > 0) {
-        for (uint i = 0; i < trail_lim[0]; i++)
+        for (uint32_t i = 0; i != trail_lim[0]; i++)
             unitaries.push_back(trail[i]);
     }
     
@@ -1029,7 +1030,7 @@ void Solver::dump_sorted_learnts(const char* file)
     }
     
     if (decisionLevel() > 0) {
-        for (uint i = 0; i < trail_lim[0]; i++)
+        for (uint32_t i = 0; i != trail_lim[0]; i++)
             printf("%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var());
     }
     
@@ -1273,7 +1274,7 @@ double Solver::progressEstimate() const
     double  progress = 0;
     double  F = 1.0 / nVars();
 
-    for (int i = 0; i <= decisionLevel(); i++) {
+    for (uint32_t i = 0; i <= decisionLevel(); i++) {
         int beg = i == 0 ? 0 : trail_lim[i - 1];
         int end = i == decisionLevel() ? trail.size() : trail_lim[i];
         progress += pow(F, i) * (end - beg);
@@ -1466,7 +1467,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         varReplacer->extendModel();
         // Extend & copy model:
         model.growTo(nVars());
-        for (int i = 0; i < nVars(); i++) model[i] = value(i);
+        for (uint32_t i = 0; i != nVars(); i++) model[i] = value(i);
 #ifndef NDEBUG
         verifyModel();
 #endif
@@ -1514,7 +1515,7 @@ bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
     
     bool failed = false;
     
-    for (int i = 0; i < xorclauses.size(); i++) {
+    for (uint32_t i = 0; i != xorclauses.size(); i++) {
         XorClause& c = *xorclauses[i];
         bool final = c.xor_clause_inverted();
         
@@ -1542,7 +1543,7 @@ bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
 void Solver::verifyModel()
 {
     bool failed = false;
-    for (int i = 0; i < clauses.size(); i++) {
+    for (uint32_t i = 0; i != clauses.size(); i++) {
         Clause& c = *clauses[i];
         for (uint j = 0; j < c.size(); j++)
             if (modelValue(c[j]) == l_True)
@@ -1569,10 +1570,10 @@ void Solver::checkLiteralCount()
 {
     // Check that sizes are calculated correctly:
     int cnt = 0;
-    for (int i = 0; i < clauses.size(); i++)
+    for (uint32_t i = 0; i != clauses.size(); i++)
         cnt += clauses[i]->size();
 
-    for (int i = 0; i < xorclauses.size(); i++)
+    for (uint32_t i = 0; i != xorclauses.size(); i++)
         cnt += xorclauses[i]->size();
 
     if ((int)clauses_literals != cnt) {

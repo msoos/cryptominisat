@@ -137,8 +137,8 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     uint origSize = c.size();
     std::sort(c.getData(), c.getData() + c.size());
     Lit p;
-    int i, j;
-    for (i = j = 0, p = lit_Undef; i < c.size(); i++) {
+    uint32_t i, j;
+    for (i = j = 0, p = lit_Undef; i != c.size(); i++) {
         c[i] = c[i].unsign();
         if (c[i] == p) {
             //added, but easily removed
@@ -219,9 +219,9 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     bool satisfied = false;
     std::sort(c.getData(), c.getData() + c.size());
     Lit p;
-    int i, j;
+    uint32_t i, j;
     const uint origSize = c.size();
-    for (i = j = 0, p = lit_Undef; i < origSize; i++) {
+    for (i = j = 0, p = lit_Undef; i != origSize; i++) {
         if (S->value(c[i]) == l_True || c[i] == ~p) {
             satisfied = true;
             break;

@@ -19,6 +19,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #ifndef Alg_h
 #define Alg_h
+#include "stdint.h"
 
 //=================================================================================================
 // Useful functions on vectors
@@ -27,7 +28,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 template<class V, class T>
 static inline void remove(V& ts, const T& t)
 {
-    int j = 0;
+    uint32_t j = 0;
     for (; j < ts.size() && ts[j] != t; j++);
     assert(j < ts.size());
     for (; j < ts.size()-1; j++) ts[j] = ts[j+1];
@@ -37,7 +38,7 @@ static inline void remove(V& ts, const T& t)
 template<class V, class T>
 static inline void removeW(V& ts, const T& t)
 {
-    int j = 0;
+    uint32_t j = 0;
     for (; j < ts.size() && ts[j].clause != t; j++);
     assert(j < ts.size());
     for (; j < ts.size()-1; j++) ts[j] = ts[j+1];
@@ -47,7 +48,7 @@ static inline void removeW(V& ts, const T& t)
 template<class V, class T>
 static inline bool find(V& ts, const T& t)
 {
-    int j = 0;
+    uint32_t j = 0;
     for (; j < ts.size() && ts[j] != t; j++);
     return j < ts.size();
 }
@@ -55,7 +56,7 @@ static inline bool find(V& ts, const T& t)
 template<class V, class T>
 static inline bool findW(V& ts, const T& t)
 {
-    int j = 0;
+    uint32_t j = 0;
     for (; j < ts.size() && ts[j].clause != t; j++);
     return j < ts.size();
 }

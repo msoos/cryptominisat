@@ -123,8 +123,8 @@ public:
     
     void calcAbstraction() {
         uint32_t abstraction = 0;
-        for (int i = 0; i < size(); i++)
-        abstraction |= 1 << (data[i].var() & 31);
+        for (uint32_t i = 0; i != size(); i++)
+            abstraction |= 1 << (data[i].var() & 31);
         extra.abst = abstraction;
     }
 
@@ -240,9 +240,9 @@ inline Lit Clause::subsumes(const Clause& other) const
     const Lit* c  = this->getData();
     const Lit* d  = other.getData();
     
-    for (int i = 0; i < size(); i++) {
+    for (uint32_t i = 0; i != size(); i++) {
         // search for c[i] or ~c[i]
-        for (int j = 0; j < other.size(); j++)
+        for (uint32_t j = 0; j != other.size(); j++)
             if (c[i] == d[j])
                 goto ok;
             else if (ret == lit_Undef && c[i] == ~d[j]){
