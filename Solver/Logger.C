@@ -255,6 +255,7 @@ void Logger::propagation(const Lit lit, Clause* c)
             type = add_clause_type;
         else
             type = guess_type;
+        group = UINT_MAX;
     } else {
         type = simple_propagation_type;
         group = c->group;

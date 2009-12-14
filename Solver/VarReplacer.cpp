@@ -319,7 +319,7 @@ void VarReplacer::extendModel() const
             bool val = (S->assigns[it->var()] == l_False);
             S->uncheckedEnqueue(Lit(i, val ^ it->sign()));
         } else {
-            assert(S->assigns[i].getBool() == S->assigns[it->var()].getBool() ^ it->sign());
+            assert(S->assigns[i].getBool() == (S->assigns[it->var()].getBool() ^ it->sign()));
         }
     }
 }

@@ -61,9 +61,9 @@ Solver::Solver() :
 
         // Statistics: (formerly in 'SolverStats')
         //
-        , nbDL2(0), nbBin(0), nbReduceDB(0)
         , starts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
+        , nbDL2(0), nbBin(0), nbReduceDB(0)
         
 
         , ok               (true)
