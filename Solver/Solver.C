@@ -308,8 +308,8 @@ void Solver::attachClause(Clause& c)
         binwatches[index0].push(WatchedBin(&c, c[1]));
         binwatches[index1].push(WatchedBin(&c, c[0]));
     } else {
-        watches[index0].push(&c);
-        watches[index1].push(&c);
+        watches[index0].push(Watched(&c, c[c.size()/2]));
+        watches[index1].push(Watched(&c, c[c.size()/2]));
     }
 
     if (c.learnt()) learnts_literals += c.size();
@@ -360,10 +360,10 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
         removeWatchedBinCl(binwatches[(~lit1).toInt()], address);
         removeWatchedBinCl(binwatches[(~lit2).toInt()], address);
     } else {
-        assert(find(watches[(~lit1).toInt()], address));
-        assert(find(watches[(~lit2).toInt()], address));
-        remove(watches[(~lit1).toInt()], address);
-        remove(watches[(~lit2).toInt()], address);
+        assert(findW(watches[(~lit1).toInt()], address));
+        assert(findW(watches[(~lit2).toInt()], address));
+        removeW(watches[(~lit1).toInt()], address);
+        removeW(watches[(~lit2).toInt()], address);
     }
     if (address->learnt()) learnts_literals -= origSize;
     else            clauses_literals -= origSize;
@@ -757,8 +757,8 @@ Clause* Solver::propagate(const bool xor_as_well)
 
     while (qhead < trail.size()) {
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
-        vec<Clause*>&  ws  = watches[p.toInt()];
-        Clause         **i, **j, **end;
+        vec<Watched>&  ws  = watches[p.toInt()];
+        Watched         *i, *j, *end;
         num_props++;
         
         //First propagate binary clauses
@@ -779,7 +779,13 @@ Clause* Solver::propagate(const bool xor_as_well)
         #endif
 
         for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
-            Clause& c = **i++;
+            if(value(i->blockedLit).getBool()) { // Clause is sat
+                *j++ = *i++;
+                continue;
+            }
+            Lit bl = i->blockedLit;
+            Clause& c = *(i->clause);
+            i++;
 
             // Make sure the false literal is data[1]:
             const Lit false_lit(~p);
@@ -790,20 +796,24 @@ Clause* Solver::propagate(const bool xor_as_well)
 
             // If 0th watch is true, then clause is already satisfied.
             const Lit& first = c[0];
-            if (value(first) == l_True) {
-                *j++ = &c;
+            if (value(first).getBool()) {
+                j->clause = &c;
+                j->blockedLit = first;
+                j++;
             } else {
                 // Look for new watch:
                 for (int k = 2; k != c.size(); k++)
                     if (value(c[k]) != l_False) {
                         c[1] = c[k];
                         c[k] = false_lit;
-                        watches[(~c[1]).toInt()].push(&c);
+                        watches[(~c[1]).toInt()].push(Watched(&c, c[0]));
                         goto FoundWatch;
                     }
 
                 // Did not find watch -- clause is unit under assignment:
-                *j++ = &c;
+                j->clause = &c;
+                j->blockedLit = bl;
+                j++;
                 if (value(first) == l_False) {
                     confl = &c;
                     qhead = trail.size();

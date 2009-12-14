@@ -266,4 +266,11 @@ class WatchedBin {
         Clause *clause;
 };
 
+class Watched {
+    public:
+        Watched(Clause *_clause, Lit _blockedLit) : blockedLit(_blockedLit), clause(_clause) {};
+        Lit blockedLit;
+        Clause *clause;
+};
+
 #endif //CLAUSE_H

@@ -183,7 +183,7 @@ protected:
     vec<XorClause*>     freeLater;        // List of xorclauses to free at the end (due to matrixes, they cannot be freed immediately)
     vec<double>         activity;         // A heuristic measurement of the activity of a variable.
     double              var_inc;          // Amount to bump next variable with.
-    vec<vec<Clause*> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
+    vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<vec<XorClause*> >  xorwatches;    // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
     vec<vec<WatchedBin> >  binwatches;
     vec<lbool>          assigns;          // The current assignments
@@ -437,7 +437,7 @@ inline const uint Solver::get_unitary_learnts_num() const
 template <class T>
 inline void Solver::removeWatchedCl(vec<T> &ws, const Clause *c) {
     int j = 0;
-    for (; j < ws.size() && ws[j] != c; j++);
+    for (; j < ws.size() && ws[j].clause != c; j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
@@ -454,7 +454,7 @@ template<class T>
 inline bool Solver::findWatchedCl(vec<T>& ws, const Clause *c)
 {
     int j = 0;
-    for (; j < ws.size() && ws[j] != c; j++);
+    for (; j < ws.size() && ws[j].clause != c; j++);
     return j < ws.size();
 }
 template<class T>
