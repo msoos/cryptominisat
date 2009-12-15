@@ -47,7 +47,7 @@ class ClauseCleaner
 
 inline void ClauseCleaner::removeAndCleanAll()
 {
-    uint limit = (double)solver.order_heap.size() * 0.005;
+    uint limit = (double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES;
     
     cleanClauses(solver.clauses, ClauseCleaner::clauses, limit);
     cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses, limit);
