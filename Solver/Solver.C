@@ -1069,6 +1069,11 @@ lbool Solver::simplify()
 
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
+    if (performReplace
+        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
+        varReplacer->performReplace();
+        if (!ok) return l_False;
+    }
 
     // Remove fixed variables from the variable heap:
     order_heap.filter(VarFilter(*this));
