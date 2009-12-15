@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 RestartTypeChooser::RestartTypeChooser(const Solver* const _S) :
     S(_S)
     , topX(100)
-    , limit(40)
+    , limit(30)
 {
 }
 
