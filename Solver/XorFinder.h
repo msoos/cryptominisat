@@ -32,7 +32,7 @@ class XorFinder
     public:
         
         XorFinder(Solver* S, vec<Clause*>& cls, ClauseCleaner::ClauseSetType _type);
-        uint doNoPart(uint& sumLengths, const uint minSize, const uint maxSize);
+        uint doNoPart(const uint minSize, const uint maxSize);
         
     private:
         typedef vector<pair<Clause*, uint> > ClauseTable;

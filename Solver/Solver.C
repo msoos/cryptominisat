@@ -1345,14 +1345,9 @@ inline void Solver::performStepsBeforeSolve()
     if (xorFinder) {
         double time;
         if (clauses.size() < MAX_CLAUSENUM_XORFIND) {
-            time = cpuTime();
-            uint sumLengths = 0;
             XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-            uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
+            xorFinder.doNoPart(2, 10);
             if (!ok) return;
-            
-            if (verbosity >=1)
-                printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
             
             if (performReplace
                 && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
