@@ -424,7 +424,7 @@ inline void     Solver::setVariableName(Var var, char* name)
         logger.set_variable_name(var, name);
 } // Sets the varible 'var'-s name to 'name' in the logger
 #else
-inline void     Solver::setVariableName(int var, char* name)
+inline void     Solver::setVariableName(Var var, char* name)
 {}
 #endif
 inline const uint Solver::get_unitary_learnts_num() const
