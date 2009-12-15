@@ -34,15 +34,16 @@ using std::endl;
 
 using std::make_pair;
 
-XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls) :
+XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, ClauseCleaner::ClauseSetType _type) :
     cls(_cls)
+    , type(_type)
     , S(_S)
 {
 }
 
 uint XorFinder::doNoPart(uint& sumLengths, const uint minSize, const uint maxSize)
 {
-    S->clauseCleaner->cleanClauses(S->clauses, ClauseCleaner::clauses);
+    S->clauseCleaner->cleanClauses(cls, type);
     
     toRemove.clear();
     toRemove.resize(cls.size(), false);

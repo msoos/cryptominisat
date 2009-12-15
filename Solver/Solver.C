@@ -1342,7 +1342,7 @@ inline void Solver::performStepsBeforeSolve()
         if (clauses.size() < 400000) {
             time = cpuTime();
             uint sumLengths = 0;
-            XorFinder xorFinder(this, clauses);
+            XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
             uint foundXors = xorFinder.doNoPart(sumLengths, 2, 10);
             if (!ok) return;
             
