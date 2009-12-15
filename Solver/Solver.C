@@ -101,10 +101,10 @@ Solver::Solver() :
 Solver::~Solver()
 {
     for (uint32_t i = 0; i != learnts.size(); i++) free(learnts[i]);
-    for (int i = 0; i < clauses.size(); i++) free(clauses[i]);
-    for (int i = 0; i < xorclauses.size(); i++) free(xorclauses[i]);
+    for (uint32_t i = 0; i != clauses.size(); i++) free(clauses[i]);
+    for (uint32_t i = 0; i != xorclauses.size(); i++) free(xorclauses[i]);
     clearGaussMatrixes();
-    for (uint i = 0; i < freeLater.size(); i++) free(freeLater[i]);
+    for (uint32_t i = 0; i != freeLater.size(); i++) free(freeLater[i]);
     delete varReplacer;
     delete conglomerate;
     delete clauseCleaner;
