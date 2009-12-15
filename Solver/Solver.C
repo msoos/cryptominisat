@@ -1594,7 +1594,7 @@ void Solver::printRestartStat() const
     #else
     if (verbosity >= 1) {
     #endif
-        printf("| %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, order_heap.size(), nClauses(), (int)clauses_literals, (int)nbclausesbeforereduce*curRestart, nLearnts(), (double)learnts_literals/nLearnts());
+        printf("| %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses(), (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart), (int)nLearnts(), (double)learnts_literals/nLearnts());
         print_gauss_sum_stats();
     }
 }
