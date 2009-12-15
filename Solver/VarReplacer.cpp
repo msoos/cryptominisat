@@ -32,6 +32,7 @@ using std::endl;
 
 VarReplacer::VarReplacer(Solver *_S) :
     replacedLits(0)
+    , lastReplacedLits(0)
     , replacedVars(0)
     , lastReplacedVars(0)
     , addedNewClause(false)
@@ -90,10 +91,11 @@ void VarReplacer::performReplace()
     clauses.clear();
     
     if (S->verbosity >=1)
-        printf("|  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars, replacedLits);
+        printf("|  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars-lastReplacedVars, replacedLits-lastReplacedLits);
     
     addedNewClause = false;
     lastReplacedVars = replacedVars;
+    lastReplacedLits = replacedLits;
     
     if (S->ok)
         S->ok = (S->propagate() == NULL);
