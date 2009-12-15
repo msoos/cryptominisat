@@ -63,7 +63,7 @@ Solver::Solver() :
         //
         , starts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
-        , nbDL2(0), nbBin(0), nbReduceDB(0)
+        , nbDL2(0), nbBin(0), lastNbBin(0), nbReduceDB(0)
         
 
         , ok               (true)
@@ -1443,6 +1443,14 @@ lbool Solver::solve(const vec<Lit>& assumps)
         nof_conflicts *= restart_inc;
         
         chooseRestartType(status, restartTypeChooser);
+        
+        if (((double)(nbBin - lastNbBin)/(4.0)) > (double)order_heap.size() * PERCENTAGEPERFORMREPLACE) {
+            XorFinder xorFinder(this, learnts, ClauseCleaner::learnts);
+            xorFinder.doNoPart(2, 2);
+            if (!ok) return l_False;
+            
+            lastNbBin = nbBin;
+        }
     }
     printEndSearchStat();
     
