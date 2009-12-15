@@ -1069,6 +1069,13 @@ lbool Solver::simplify()
 
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
+    if (((double)(nbBin - lastNbBin)/(8.0)) > (double)order_heap.size() * PERCENTAGEPERFORMREPLACE) {
+        XorFinder xorFinder(this, learnts, ClauseCleaner::learnts);
+        xorFinder.doNoPart(2, 2);
+        if (!ok) return l_False;
+        
+        lastNbBin = nbBin;
+    }
     if (performReplace
         && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
         varReplacer->performReplace();
@@ -1443,14 +1450,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
         nof_conflicts *= restart_inc;
         
         chooseRestartType(status, restartTypeChooser);
-        
-        if (((double)(nbBin - lastNbBin)/(4.0)) > (double)order_heap.size() * PERCENTAGEPERFORMREPLACE) {
-            XorFinder xorFinder(this, learnts, ClauseCleaner::learnts);
-            xorFinder.doNoPart(2, 2);
-            if (!ok) return l_False;
-            
-            lastNbBin = nbBin;
-        }
     }
     printEndSearchStat();
     
