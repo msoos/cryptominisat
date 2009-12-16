@@ -71,6 +71,21 @@ public:
         return *this;
     }
     
+    void xorBoth(const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+        
+        for (uint i = 0; i != 2*size+1; i++) {
+            *(mp + i) ^= *(b.mp + i);
+        }
+        
+        is_true_internal ^= b.is_true_internal;
+    }
+    
     
     uint popcnt() const;
     uint popcnt(uint from) const;
@@ -152,6 +167,29 @@ public:
         uint64_t * __restrict mp2 = b.mp-1;
         
         uint i = size+1;
+        
+        while(i != 0) {
+            uint64_t tmp(*mp2);
+            *mp2 = *mp1;
+            *mp1 = tmp;
+            mp1++;
+            mp2++;
+            i--;
+        }
+    }
+    
+    void swapBoth(PackedRow b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+        
+        uint64_t * __restrict mp1 = mp-1;
+        uint64_t * __restrict mp2 = b.mp-1;
+        
+        uint i = 2*(size+1);
         
         while(i != 0) {
             uint64_t tmp(*mp2);
