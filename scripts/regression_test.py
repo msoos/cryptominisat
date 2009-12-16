@@ -16,6 +16,7 @@ class Tester:
   testDir = "../tests/"
   testDirNewVar = "../tests/newVar/"
   cryptominisat = "../build/cryptominisat"
+  speed = False;
   
   def __init__(self):
     self.greedyUnbound = False
@@ -26,6 +27,7 @@ class Tester:
     self.testDir = "../tests/"
     self.testDirNewVar = "../tests/newVar/"
     self.cryptominisat = "../build/cryptominisat"
+    self.speed = False;
 
 
   def execute(self, fname, i, of, newVar):
@@ -205,6 +207,9 @@ class Tester:
     self.parse_consoleOutput(consoleOutput)
     print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" %(fname[:20]+"....cnf.gz", i, self.sumProp, self.sumTime)
     
+    if (self.speed == True) :
+        return
+
     largestPart = -1
     dirList2 = os.listdir(".")
     for fname_debug in dirList2:
@@ -240,7 +245,7 @@ class Tester:
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "huvg:n:f:t:e:", ["help", "file=", "num=", "unbound", "gauss=", "testdir=", "exe="])
+      opts, args = getopt.getopt(sys.argv[1:], "shuvg:n:f:t:e:", ["help", "file=", "num=", "unbound", "gauss=", "testdir=", "exe=", "speed"])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
@@ -266,6 +271,8 @@ class Tester:
             self.testDir = arg
         elif opt in ("-e", "--exe"):
             self.cryptominisat = arg
+        elif opt in ("-s", "--speed"):
+            self.speed = True;
         else:
             assert False, "unhandled option"
 
