@@ -245,20 +245,18 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
     uint row_num = 0;
 
     if (solver.assigns[var].getBool()) {
-        for (PackedMatrix::iterator end = this_row + std::min(m.last_one_in_col[col], m.num_rows);  this_row != end; ++this_row, row_num++) {
-            PackedRow r = *this_row;
-            if (r[col]) {
+        for (uint end = m.last_one_in_col[col];  row_num != end && row_num != m.num_rows; ++this_row, row_num++) {
+            if ((*this_row)[col]) {
                 changed_rows.setBit(row_num);
-                r.invert_is_true();
-                r.clearBit(col);
+                (*this_row).invert_is_true();
+                (*this_row).clearBit(col);
             }
         }
     } else {
-        for (PackedMatrix::iterator end = this_row + std::min(m.last_one_in_col[col], m.num_rows);  this_row != end; ++this_row, row_num++) {
-            PackedRow r = *this_row;
-            if (r[col]) {
+        for (uint end = m.last_one_in_col[col];  row_num != end && row_num != m.num_rows; ++this_row, row_num++) {
+            if ((*this_row)[col]) {
                 changed_rows.setBit(row_num);
-                r.clearBit(col);
+                (*this_row).clearBit(col);
             }
         }
     }
