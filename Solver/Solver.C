@@ -20,7 +20,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 #include "Solver.h"
-#include "Sort.h"
 #include <cmath>
 #include <string.h>
 #include <algorithm>
@@ -178,7 +177,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         }
     }
     
-    sort(ps);
+    std::sort(ps.getData(), ps.getData()+ps.size());
     Lit p;
     uint32_t i, j;
     for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
@@ -258,7 +257,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
         }
     }
     
-    sort(ps);
+    std::sort(ps.getData(), ps.getData()+ps.size());
     Lit p;
     uint32_t i, j;
     for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
@@ -986,7 +985,7 @@ void Solver::reduceDB()
     uint32_t     i, j;
 
     nbReduceDB++;
-    sort(learnts, reduceDB_lt());
+    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
     for (i = j = 0; i != learnts.size() / RATIOREMOVECLAUSES; i++){
         if (learnts[i]->size() > 2 && !locked(*learnts[i]) && learnts[i]->activity() > 2)
             removeClause(*learnts[i]);
@@ -1006,7 +1005,7 @@ const vec<Clause*>& Solver::get_learnts() const
 
 const vec<Clause*>& Solver::get_sorted_learnts()
 {
-    sort(learnts, reduceDB_lt());
+    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
     return learnts;
 }
 
@@ -1034,7 +1033,7 @@ void Solver::dump_sorted_learnts(const char* file)
             printf("%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var());
     }
     
-    sort(learnts, reduceDB_lt());
+    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
         learnts[i]->plainPrint(outfile);
     }
