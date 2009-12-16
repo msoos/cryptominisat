@@ -63,13 +63,11 @@ public:
         assert(b.size == size);
         #endif
         
-        uint64_t * __restrict mp1 = mp;
-        uint64_t * __restrict mp2 = b.mp;
-        
         for (uint i = 0; i != size; i++) {
-            *(mp1 + i) ^= *(mp2 + i);
+            *(mp + i) ^= *(b.mp + i);
         }
-        xor_clause_inverted ^= !b.xor_clause_inverted;
+        
+        is_true_internal ^= b.is_true_internal;
         return *this;
     }
     
@@ -100,30 +98,16 @@ public:
         
         uint64_t tmp = mp[from/64];
         tmp >>= from%64;
-        while(tmp) {
-            if (tmp & 1) return false;
-            if (tmp & 2) return false;
-            if (tmp & 4) return false;
-            if (tmp & 8) return false;
-            tmp >>= 4;
-        }
+        if (tmp) return false;
         
-        for (uint i = from/64+1; i != size; i++) {
-            tmp = mp[i];
-            while(tmp) {
-                if (tmp & 1) return false;
-                if (tmp & 2) return false;
-                if (tmp & 4) return false;
-                if (tmp & 8) return false;
-                tmp >>= 4;
-            }
-        }
+        for (uint i = from/64+1; i != size; i++)
+            if (mp[i]) return false;
         return true;
     }
 
-    inline const uint64_t& get_xor_clause_inverted() const
+    inline const uint64_t& is_true() const
     {
-        return xor_clause_inverted;
+        return is_true_internal;
     }
 
     inline const bool isZero() const
@@ -146,9 +130,9 @@ public:
         mp[i/64] &= ~((uint64_t)1 << (i%64));
     }
 
-    inline void invert_xor_clause_inverted(const bool b = true)
+    inline void invert_is_true(const bool b = true)
     {
-        xor_clause_inverted ^= b;
+        is_true_internal ^= b;
     }
 
     inline void setBit(const uint i)
@@ -164,13 +148,18 @@ public:
         assert(b.size == size);
         #endif
         
-        uint64_t * __restrict mp1 = mp;
-        uint64_t * __restrict mp2 = b.mp;
+        uint64_t * __restrict mp1 = mp-1;
+        uint64_t * __restrict mp2 = b.mp-1;
         
-        for (int i = -1; i != (int)size; i++) {
-            uint64_t tmp(*(mp2 + i));
-            *(mp2 + i) = *(mp + i);
-            *(mp1 + i) = tmp;
+        uint i = size+1;
+        
+        while(i != 0) {
+            uint64_t tmp(*mp2);
+            *mp2 = *mp1;
+            *mp1 = tmp;
+            mp1++;
+            mp2++;
+            i--;
         }
     }
 
@@ -196,7 +185,7 @@ public:
             setBit(toset_var);
         }
         
-        xor_clause_inverted = v.xor_clause_inverted();
+        is_true_internal = !v.xor_clause_inverted();
     }
     
     void fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;
@@ -216,15 +205,15 @@ public:
 
 private:
     friend class PackedMatrix;
-    PackedRow(const uint _size, uint64_t& _xor_clause_inverted, uint64_t*  const _mp) :
+    PackedRow(const uint _size, uint64_t& _is_true_internal, uint64_t*  const _mp) :
         size(_size)
         , mp(_mp)
-        , xor_clause_inverted(_xor_clause_inverted)
+        , is_true_internal(_is_true_internal)
     {}
     
     const uint size;
-    uint64_t* const mp;
-    uint64_t& xor_clause_inverted;
+    uint64_t* __restrict const mp;
+    uint64_t& is_true_internal;
 };
 
 std::ostream& operator << (std::ostream& os, const PackedRow& m);

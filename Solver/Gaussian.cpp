@@ -250,7 +250,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
             PackedRow r = *this_row;
             if (r[col]) {
                 changed_rows.setBit(row_num);
-                r.invert_xor_clause_inverted();
+                r.invert_is_true();
                 r.clearBit(col);
             }
         }
@@ -461,7 +461,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 #endif
                 
                 //Would early abort, but would not find the best conflict (and would be expensive)
-                //if (!matrix_row_i.get_xor_clause_inverted() && matrix_row_i.isZero()) {
+                //if (matrix_row_i.is_true() && matrix_row_i.isZero()) {
                 //    conflict_row = i;
                 //    return 0;
                 //}
@@ -489,7 +489,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 *this_matrix_row ^= matrix_row_i;
                 *this_varset_row ^= varset_row_i;
                 //Would early abort, but would not find the best conflict (and would be expensive)
-                //if (!it->get_xor_clause_inverted() &&it->isZero()) {
+                //if (it->is_true() &&it->isZero()) {
                 //    conflict_row = i2;
                 //    return 0;
                 //}
@@ -599,7 +599,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint
         #ifdef DEBUG_GAUSS
         assert(m.matrix[row].isZero());
         #endif
-        if (!m.matrix[row].get_xor_clause_inverted())
+        if (m.matrix[row].is_true())
             analyse_confl(m, row, maxlevel, size, best_row);
     }
 
@@ -756,7 +756,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     cout << endl;
     #endif
     
-    assert(!m.matrix[row].get_xor_clause_inverted() == !cla[0].sign());
+    assert(m.matrix[row].is_true() == !cla[0].sign());
     assert(solver.assigns[cla[0].var()].isUndef());
     if (cla.size() == 1) {
         const Lit lit = cla[0];
@@ -853,7 +853,7 @@ void Gaussian::print_matrix_row(const T& row) const
         else cout << col_to_var_original[var]+1 << ", ";
         var++;
     }
-    if (row.get_xor_clause_inverted()) cout << "xor_clause_inverted";
+    if (!row.is_true()) cout << "xor_clause_inverted";
 }
 
 template<class T>
@@ -871,7 +871,7 @@ void Gaussian::print_matrix_row_with_assigns(const T& row) const
         }
         col++;
     }
-    if (row.get_xor_clause_inverted()) cout << "xor_clause_inverted";
+    if (!row.is_true()) cout << "xor_clause_inverted";
 }
 
 const string Gaussian::lbool_to_string(const lbool toprint)
@@ -918,7 +918,7 @@ bool Gaussian::check_no_conflict(matrixset& m) const
 {
     uint row = 0;
     for(PackedMatrix::iterator r = m.matrix.begin(), end = m.matrix.end(); r != end; ++r, ++row) {
-        if (!(*r).get_xor_clause_inverted() && (*r).isZero()) {
+        if ((*r).is_true() && (*r).isZero()) {
             cout << "Conflict at row " << row << endl;
             return false;
         }
@@ -953,7 +953,7 @@ const bool Gaussian::nothing_to_propagate(matrixset& m) const
             return false;
     }
     for(PackedMatrix::iterator r = m.matrix.begin(), end = m.matrix.end(); r != end; ++r) {
-        if ((*r).isZero() && !(*r).get_xor_clause_inverted())
+        if ((*r).isZero() && (*r).is_true())
             return false;
     }
     return true;
@@ -1010,7 +1010,7 @@ const bool Gaussian::check_matrix_against_varset(PackedMatrix& matrix, PackedMat
             
             col++;
         }
-        if ((final^mat_row.get_xor_clause_inverted()) != var_row.get_xor_clause_inverted()) {
+        if ((final^!mat_row.is_true()) != !var_row.is_true()) {
             cout << "problem with row:"; print_matrix_row_with_assigns(var_row); cout << endl;
             assert(false);
         }
@@ -1085,7 +1085,7 @@ void Gaussian::set_disabled(const bool toset)
     for(uint i = 0, until = std::min(m.num_rows, m.last_one_in_col[last_col]+1); i < until; i++, this_row++) {
         mpz_class& r = *this_row;
         mpz_and(tmp.get_mp(), tocount.get_mp(), r.get_mp());
-        r.invert_xor_clause_inverted(tmp.popcnt() % 2);
+        r.invert_is_true(tmp.popcnt() % 2);
         r &= toclear;
 }
 

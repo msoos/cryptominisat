@@ -22,7 +22,7 @@ std::ostream& operator << (std::ostream& os, const PackedRow& m)
     for(uint i = 0; i < m.size*64; i++) {
         os << m[i];
     }
-    os << " -- xor: " << m.get_xor_clause_inverted();
+    os << " -- xor: " << !m.is_true();
     return os;
 }
 
@@ -82,7 +82,7 @@ uint PackedRow::popcnt(const uint from) const
 
 void PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const
 {
-    bool final = xor_clause_inverted;
+    bool final = !is_true_internal;
     
     tmp_clause.clear();
     uint col = 0;
