@@ -1069,7 +1069,7 @@ lbool Solver::simplify()
 
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
-    if (((double)(nbBin - lastNbBin)/(8.0)) > (double)order_heap.size() * PERCENTAGEPERFORMREPLACE) {
+    if (((double)(nbBin - lastNbBin)/BINARY_TO_XOR_APPROX) > (double)order_heap.size() * PERCENTAGEPERFORMREPLACE) {
         XorFinder xorFinder(this, learnts, ClauseCleaner::learnts);
         xorFinder.doNoPart(2, 2);
         if (!ok) return l_False;
