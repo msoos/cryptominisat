@@ -100,7 +100,7 @@ public:
         
         uint64_t tmp = mp[from/64];
         tmp >>= from%64;
-        for (uint i2 = from%64; i2 < 64; i2 += 4) {
+        while(tmp) {
             if (tmp & 1) return false;
             if (tmp & 2) return false;
             if (tmp & 4) return false;
@@ -108,9 +108,9 @@ public:
             tmp >>= 4;
         }
         
-        for (uint i = from/64+1; i != size; i++) if (mp[i]) {
+        for (uint i = from/64+1; i != size; i++) {
             tmp = mp[i];
-            for (uint i2 = 0; i2 != 64; i2 += 4) {
+            while(tmp) {
                 if (tmp & 1) return false;
                 if (tmp & 2) return false;
                 if (tmp & 4) return false;
