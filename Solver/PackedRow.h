@@ -80,9 +80,9 @@ public:
     bool popcnt_is_one() const
     {
         char popcount = 0;
-        for (uint i = 0; i != size; i++) if (mp[i]) {
+        for (uint i = 0; i != size; i++) {
             uint64_t tmp = mp[i];
-            for (uint i2 = 0; i2 != 64; i2 += 4) {
+            while(tmp) {
                 popcount += tmp & 1;
                 popcount += tmp & 2;
                 popcount += tmp & 4;
