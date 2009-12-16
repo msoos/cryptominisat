@@ -28,11 +28,7 @@ class GaussianConfig
     GaussianConfig() :
         only_nth_gauss_save(2)
         , decision_until(0)
-        , starts_from(3)
-    {
-    }
-    
-    ~GaussianConfig()
+        , starts_from(2)
     {
     }
         
