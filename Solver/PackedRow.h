@@ -243,10 +243,10 @@ public:
 
 private:
     friend class PackedMatrix;
-    PackedRow(const uint _size, uint64_t& _is_true_internal, uint64_t*  const _mp) :
+    PackedRow(const uint _size, uint64_t*  const _mp) :
         size(_size)
-        , mp(_mp)
-        , is_true_internal(_is_true_internal)
+        , mp(_mp+1)
+        , is_true_internal(*_mp)
     {}
     
     const uint size;

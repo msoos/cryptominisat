@@ -98,7 +98,7 @@ public:
         assert(i <= numRows);
         #endif
         
-        return PackedRow(numCols, *(mp+i*2*(numCols+1)), mp+i*2*(numCols+1)+1);
+        return PackedRow(numCols, mp+i*2*(numCols+1));
     }
     inline PackedRow getVarsetAt(const uint i)
     {
@@ -106,7 +106,7 @@ public:
         assert(i <= numRows);
         #endif
         
-        return PackedRow(numCols, *(mp+i*2*(numCols+1)+(numCols+1)), mp+i*2*(numCols+1)+(numCols+1)+1);
+        return PackedRow(numCols, mp+i*2*(numCols+1)+(numCols+1));
     }
     
     inline const PackedRow getMatrixAt(const uint i) const
@@ -115,7 +115,7 @@ public:
         assert(i <= numRows);
         #endif
         
-        return PackedRow(numCols, *(mp+i*2*(numCols+1)), mp+i*2*(numCols+1)+1);
+        return PackedRow(numCols, mp+i*2*(numCols+1));
     }
     
     inline const PackedRow getVarsetAt(const uint i) const
@@ -124,7 +124,7 @@ public:
         assert(i <= numRows);
         #endif
         
-        return PackedRow(numCols, *(mp+i*2*(numCols+1)+(numCols+1)), mp+i*2*(numCols+1)+(numCols+1)+1);
+        return PackedRow(numCols, mp+i*2*(numCols+1)+(numCols+1));
     }
     
     class iterator
@@ -132,7 +132,7 @@ public:
     public:
         PackedRow operator*()
         {
-            return PackedRow(numCols, *mp, mp+1);
+            return PackedRow(numCols, mp);
         }
         
         iterator& operator++()
