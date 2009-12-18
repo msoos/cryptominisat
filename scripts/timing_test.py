@@ -24,15 +24,20 @@ def testOneFile(exe, fname) :
   print "exe: %s file: %s, total props: %10d total time:%.2f" %(exe, fname, sumprop, sumtime)
   return (sumprop, sumtime);
 
+
+timingFile = open('timings', 'a')
+
 for i in range (110, 0, -2):
   dirList=os.listdir(mydir)
   bigSumTime1 = 0.0
   bigSumProp1 = 0
   bigSumTime2 = 0.0
   bigSumProp2 = 0
+  execnum = 0
   for fname in dirList:
-    mystr = "%s-%d" %(problem, i)
+    mystr = "%s-%d-" %(problem, i)
     if (mystr in fname):
+      execnum += 1
       (tmpProp, tmpTime) = testOneFile("./cryptominisat_ext.sh", fname)
       bigSumProp1 += tmpProp;
       bigSumTime1 += tmpTime;
@@ -41,8 +46,12 @@ for i in range (110, 0, -2):
       bigSumProp2 += tmpProp;
       bigSumTime2 += tmpTime;
 
+  if (execnum == 0) :
+    continue
   print "given help bits: %d, ext1, total props: %10d total time:%.2f" %(i, bigSumProp1, bigSumTime1)
+  timingFile.write("gauss\t%s\t%d\t%d\t%.2f\n" %(problem, execnum, bigSumProp1, bigSumTime1));
   print "given help bits: %d, ext2, total props: %10d total time:%.2f" %(i, bigSumProp2, bigSumTime2)
+  timingFile.write("nogauss\t%s\t%d\t%d\t%.2f\n" %(problem, execnum, bigSumProp2, bigSumTime2));
 
     
 
