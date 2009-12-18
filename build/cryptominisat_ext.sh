@@ -21,7 +21,7 @@ echo "c"
 $SE $INPUT $TMP.cnf $TMP.vmap $TMP.elim
 X=$?
 echo "c"
-echo "c Starting glucose"
+echo "c Starting CryptoMiniSat2"
 echo "c"
 if [ $X == 0 ]; then
   #SatElite terminated correctly
@@ -42,8 +42,8 @@ if [ $X == 0 ]; then
   $SE +ext $INPUT $TMP.result $TMP.vmap $TMP.elim  "$@"
   X=$?
 elif [ $X == 11 ]; then
-  #SatElite died, glucose must take care of the rest
-  $RS $INPUT -verbosity=1 #but we must force glucose to print out result here!!!
+  #SatElite died, CryptoMiniSat2 must take care of the rest
+  $RS $INPUT -verbosity=1 #but we must force CryptoMiniSat to print out result here!!!
   X=$?
 elif [ $X == 12 ]; then
   #SatElite prints out usage message
