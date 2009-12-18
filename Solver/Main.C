@@ -191,8 +191,8 @@ static void parse_DIMACS_main(B& in, Solver& S)
             if (match(in, "p cnf")) {
                 int vars    = parseInt(in);
                 int clauses = parseInt(in);
-                printf("|  Number of variables:  %-12d                                         |\n", vars);
-                printf("|  Number of clauses:    %-12d                                         |\n", clauses);
+                printf("c |  Number of variables:  %-12d                                         |\n", vars);
+                printf("c |  Number of clauses:    %-12d                                         |\n", clauses);
             } else {
                 printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
             }
@@ -289,17 +289,17 @@ void printStats(Solver& solver)
 {
     double   cpu_time = cpuTime();
     uint64_t mem_used = memUsed();
-    cout << "restarts           : " << solver.starts << endl ;
-    cout << "learnts DL2        : " << solver.nbDL2 << endl;
-    cout << "learnts size 2     : " << solver.nbBin << endl;
-    cout << "learnts size 1     : " << solver.get_unitary_learnts_num() << endl;
+    cout << "c restarts           : " << solver.starts << endl ;
+    cout << "c learnts DL2        : " << solver.nbDL2 << endl;
+    cout << "c learnts size 2     : " << solver.nbBin << endl;
+    cout << "c learnts size 1     : " << solver.get_unitary_learnts_num() << endl;
     
-    cout << "conflicts             : " << solver.conflicts << " (" << (double)solver.conflicts/cpu_time << " /sec)" << endl;
-    cout << "decisions             : " << solver.decisions << " (" << (double)solver.rnd_decisions*100.0/(double)solver.decisions << "% random)" << endl;
-    cout << "propagations          : " << solver.propagations << " (" << (double)solver.propagations/cpu_time << " /sec)" << endl;
-    cout << "conflict literals     : " << solver.tot_literals << " (" << (double)(solver.max_literals - solver.tot_literals)*100.0/ (double)solver.max_literals << "% deleted)" << endl;
-    if (mem_used != 0) cout << "Memory used           : " << (double)mem_used / 1048576.0 << " MB\n";
-    cout << "CPU time              : " << cpu_time << " s" << endl;
+    cout << "c conflicts             : " << solver.conflicts << " (" << (double)solver.conflicts/cpu_time << " /sec)" << endl;
+    cout << "c decisions             : " << solver.decisions << " (" << (double)solver.rnd_decisions*100.0/(double)solver.decisions << "% random)" << endl;
+    cout << "c propagations          : " << solver.propagations << " (" << (double)solver.propagations/cpu_time << " /sec)" << endl;
+    cout << "c conflict literals     : " << solver.tot_literals << " (" << (double)(solver.max_literals - solver.tot_literals)*100.0/ (double)solver.max_literals << "% deleted)" << endl;
+    if (mem_used != 0) cout << "c Memory used           : " << (double)mem_used / 1048576.0 << " MB\n";
+    cout << "c CPU time              : " << cpu_time << " s" << endl;
 }
 
 Solver* solver;
@@ -427,7 +427,7 @@ int main(int argc, char** argv)
                 printf("ERROR! illegal seed %s\n", value);
                 exit(0);
             }
-            cout << "seed:" << seed << endl;
+            cout << "c seed:" << seed << endl;
             S.setSeed(seed);
         } else if ((value = hasPrefix(argv[i], "-restrict="))) {
             uint branchTo;
@@ -442,7 +442,7 @@ int main(int argc, char** argv)
                 printf("ERROR! until %s\n", value);
                 exit(0);
             }
-            cout << "Gaussian until:" << until << endl;
+            cout << "c Gaussian until:" << until << endl;
             S.set_gaussian_decision_until(until);
         } else if ((value = hasPrefix(argv[i], "-restarts="))) {
             uint maxrest;
@@ -480,13 +480,13 @@ int main(int argc, char** argv)
     argc = j;
     
     
-    printf("This is CryptoMiniSat 2.1.1\n");
+    printf("c This is CryptoMiniSat 2.1.1\n");
 #if defined(__linux__)
     fpu_control_t oldcw, newcw;
     _FPU_GETCW(oldcw);
     newcw = (oldcw & ~_FPU_EXTENDED) | _FPU_DOUBLE;
     _FPU_SETCW(newcw);
-    if (S.verbosity >= 1) printf("WARNING: for repeatability, setting FPU to use double precision\n");
+    if (S.verbosity >= 1) printf("c WARNING: for repeatability, setting FPU to use double precision\n");
 #endif
     double cpu_time = cpuTime();
 
@@ -495,15 +495,15 @@ int main(int argc, char** argv)
     //signal(SIGHUP,SIGINT_handler);
 
     if (argc == 1)
-        printf("Reading from standard input... Use '-h' or '--help' for help.\n");
+        printf("c Reading from standard input... Use '-h' or '--help' for help.\n");
 
     gzFile in = (argc == 1) ? gzdopen(0, "rb") : gzopen(argv[1], "rb");
     if (in == NULL)
         printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
 
     if (S.verbosity >= 1) {
-        printf("============================[ Problem Statistics ]=============================\n");
-        printf("|                                                                             |\n");
+        printf("c ============================[ Problem Statistics ]=============================\n");
+        printf("c |                                                                             |\n");
     }
 
     parse_DIMACS(in, S);
@@ -511,37 +511,38 @@ int main(int argc, char** argv)
     FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
 
     double parse_time = cpuTime() - cpu_time;
-    if (S.verbosity >= 1) printf("|  Parsing time:         %-12.2f s                                       |\n", parse_time);
+    if (S.verbosity >= 1) printf("c |  Parsing time:         %-12.2f s                                       |\n", parse_time);
 
     lbool ret = S.solve();
     if (S.verbosity >= 1) printStats(S);
-    printf("\n");
+    printf("c \n");
     if (dumplearnts)
         S.dump_sorted_learnts(learnts_filename);
-    if (ret == l_Undef) {
-        printf("Not finished running -- maximum restart reached\n");
-    } else if (ret == l_True) {
-        printf("SATISFIABLE\n");
-    } else if (ret == l_False) {
-        printf("UNSATISFIABLE\n");
-    } else {
-        assert(false);
-    }
-    if (res != NULL) {
+    if (ret == l_Undef)
+        printf("c Not finished running -- maximum restart reached\n");
+    
+    if (res != NULL){
         if (ret == l_True) {
             fprintf(res, "SAT\n");
-            for (Var i = 0; i != S.nVars(); i++)
+            for (uint32_t i = 0; i != S.nVars(); i++)
                 if (S.model[i] != l_Undef)
-                    fprintf(res, "%s%s%d", (i==0)?"":" ", (S.model[i]==l_True)?"":"-", i+1);
-            fprintf(res, " 0\n");
-        } else if (ret == l_False) {
+                    fprintf(res, "%s%d ", (S.model[i] == l_True)? "" : "-", i+1);
+                fprintf(res, "0\n");
+        } else if (ret == l_False)
             fprintf(res, "UNSAT\n");
-        } else if (ret == l_Undef) {
-            fprintf(res, "Unknown\n");
-        } else {
-            assert(false);
-        }
         fclose(res);
+    } else {
+        if (ret == l_True)
+            printf("s SATISFIABLE\n");
+        else if (ret == l_False) printf("s UNSATISFIABLE\n");
+        
+        if(ret == l_True) {
+            printf("v ");
+            for (uint32_t i = 0; i != S.nVars(); i++)
+                if (S.model[i] != l_Undef)
+                    printf("%s%d ", (S.model[i]==l_True)?"":"-", i+1);
+                printf("0\n");
+        }
     }
 
 #ifdef NDEBUG

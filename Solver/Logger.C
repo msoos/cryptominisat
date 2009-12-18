@@ -61,7 +61,7 @@ Logger::Logger(int& _verbosity) :
 {
     runid /= 10;
     runid = time(NULL) % 10000;
-    if (verbosity >= 1) printf("RunID is: #%d\n",runid);
+    if (verbosity >= 1) printf("c RunID is: #%d\n",runid);
 }
 
 void Logger::setSolver(const Solver* _S)

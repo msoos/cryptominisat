@@ -179,13 +179,13 @@ const uint MatrixFinder::setMatrixes()
             && realMatrixNum < 3)
         {
             if (S->verbosity >=1)
-                cout << "|  Matrix no " << std::setw(4) << realMatrixNum;
+                cout << "c |  Matrix no " << std::setw(4) << realMatrixNum;
             S->gauss_matrixes.push_back(new Gaussian(*S, S->gaussconfig, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
             
         } else {
             if (S->verbosity >=1  && numXorInMatrix[a].second >= 20)
-                cout << "|  Unused Matrix ";
+                cout << "c |  Unused Matrix ";
         }
         if (S->verbosity >=1 && numXorInMatrix[a].second >= 20) {
             cout << std::setw(5) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();

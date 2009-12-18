@@ -64,7 +64,7 @@ uint XorFinder::doNoPart(const uint minSize, const uint maxSize)
     uint found = findXors(sumLengths);
     
     if (S->verbosity >=1)
-        printf("|  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, found, (double)sumLengths/(double)found);
+        printf("c |  Finding XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)               |\n", cpuTime()-time, found, (double)sumLengths/(double)found);
     
     if (found > 0) {
         clearToRemove();
