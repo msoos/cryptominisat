@@ -1,3 +1,13 @@
+ver 2.3.0 -- 17/12/2009
+* binary learnts are converted to 2-long xors if possible, and eliminated
+* lots of heuristics tuning
+* Cleanclauses is now default instead of removeSatisfied in simplify()
+* Stable in case used as a library
+* Lots of regression tests added
+* Cleaner logging
+* ints have been replaced with uints (less warnings with -Wall)
+* a lot of speedups for gauss -- packed, multi-matrix representation
+
 ver 2.2 -- 20/11/2009
 * xor-clause finding
 * matrix finding
