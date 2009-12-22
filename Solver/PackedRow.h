@@ -97,14 +97,10 @@ public:
             uint64_t tmp = mp[i];
             while(tmp) {
                 popcount += tmp & 1;
-                popcount += tmp & 2;
-                popcount += tmp & 4;
-                popcount += tmp & 8;
-                if (popcount > 1) return false;
-                tmp >>= 4;
+                tmp >>= 1;
             }
         }
-        return popcount;
+        return popcount == 1;
     }
     
     bool popcnt_is_one(uint from) const
@@ -127,10 +123,8 @@ public:
 
     inline const bool isZero() const
     {
-        const uint64_t*  mp2 = (const uint64_t*)mp;
-        
         for (uint i = 0; i != size; i++) {
-            if (mp2[i]) return false;
+            if (mp[i]) return false;
         }
         return true;
     }

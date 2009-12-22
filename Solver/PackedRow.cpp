@@ -22,7 +22,7 @@ std::ostream& operator << (std::ostream& os, const PackedRow& m)
     for(uint i = 0; i < m.size*64; i++) {
         os << m[i];
     }
-    os << " -- xor: " << !m.is_true();
+    os << " -- xor: " << m.is_true();
     return os;
 }
 

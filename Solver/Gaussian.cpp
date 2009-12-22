@@ -355,6 +355,9 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
     } else {*/
         ret = handle_matrix_prop_and_confl(cur_matrixset, last_row, confl);
     //}
+    #ifdef DEBUG_GAUSS
+    assert(ret == conflict || nothing_to_propagate(cur_matrixset));
+    #endif
     
     if (!cur_matrixset.num_cols || !cur_matrixset.num_rows) {
         badlevel = solver.decisionLevel();
@@ -605,6 +608,11 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint
 
     #ifdef DEBUG_GAUSS
     assert(check_no_conflict(m));
+    assert(last_row == 0 || !m.matrix.getMatrixAt(last_row-1).isZero());
+    #endif
+    
+    #ifdef VERBOSE_DEBUG
+    cout << "Resizing matrix to num_rows = " << last_row << endl;
     #endif
     m.num_rows = last_row;
     m.matrix.resizeNumRows(m.num_rows);
@@ -849,7 +857,7 @@ void Gaussian::print_matrix_row(const T& row) const
         else cout << col_to_var_original[var]+1 << ", ";
         var++;
     }
-    if (!row.is_true()) cout << "xor_clause_inverted";
+    cout << "final:" << row.is_true() << endl;;
 }
 
 template<class T>
