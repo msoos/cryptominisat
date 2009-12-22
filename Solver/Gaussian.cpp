@@ -244,7 +244,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
     uint row_num = 0;
 
     if (solver.assigns[var].getBool()) {
-        for (uint end = m.last_one_in_col[col];  row_num != end && row_num != m.num_rows; ++this_row, row_num++) {
+        for (uint end = m.last_one_in_col[col];  row_num != end; ++this_row, row_num++) {
             if ((*this_row)[col]) {
                 changed_rows[row_num] = true;
                 (*this_row).invert_is_true();
@@ -252,7 +252,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
             }
         }
     } else {
-        for (uint end = m.last_one_in_col[col];  row_num != end && row_num != m.num_rows; ++this_row, row_num++) {
+        for (uint end = m.last_one_in_col[col];  row_num != end; ++this_row, row_num++) {
             if ((*this_row)[col]) {
                 changed_rows[row_num] = true;
                 (*this_row).clearBit(col);
@@ -317,6 +317,12 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     cout << "removeable cols:" << m.removeable_cols << endl;*/
 }
 
+inline void Gaussian::update_last_one_in_col(matrixset& m)
+{
+    for (uint16_t* i = &m.last_one_in_col[0]+m.last_one_in_col.size()-1, *end = &m.last_one_in_col[0]-1; i != end && *i >= m.num_rows; i--)
+        *i = m.num_rows;
+}
+
 Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
 {
     if (solver.decisionLevel() >= badlevel)
@@ -331,6 +337,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
         assert(level < matrix_sets.size());
         cur_matrixset = matrix_sets[level];
     }
+    update_last_one_in_col(cur_matrixset);
     update_matrix_by_col_all(cur_matrixset);
 
     messed_matrix_vars_since_reversal = false;
@@ -447,7 +454,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
         }
 
         PackedMatrix::iterator this_matrix_row = rowIt;
-        PackedMatrix::iterator end = beginIt + std::min(m.last_one_in_col[j], m.num_rows);
+        PackedMatrix::iterator end = beginIt + m.last_one_in_col[j];
         for (; this_matrix_row != end; ++this_matrix_row) {
             if ((*this_matrix_row)[j])
                 break;

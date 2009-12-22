@@ -140,6 +140,7 @@ protected:
     bool should_check_gauss(const uint decisionlevel, const uint starts) const;
     void disable_if_necessary();
     void reset_stats();
+    void update_last_one_in_col(matrixset& m);
     
 private:
     
