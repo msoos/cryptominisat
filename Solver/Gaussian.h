@@ -149,7 +149,7 @@ private:
     void print_matrix_row(const T& row) const; // Print matrix row 'row'
     template<class T>
     void print_matrix_row_with_assigns(const T& row) const;
-    const bool check_matrix_against_varset(PackedMatrix& matrix, PackedMatrix& varset, const matrixset& m) const;
+    const bool check_matrix_against_varset(PackedMatrix& matrix,const matrixset& m) const;
     const bool check_last_one_in_cols(matrixset& m) const;
     void print_matrix(matrixset& m) const;
     void print_last_one_in_cols(matrixset& m) const;
