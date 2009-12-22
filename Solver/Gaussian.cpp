@@ -301,7 +301,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
             last = 0;
     }
     m.num_cols -= last;
-    m.past_the_end_last_one_in_col = std::min(m.past_the_end_last_one_in_col, (uint16_t)m.num_cols);
+    m.past_the_end_last_one_in_col = std::min(m.past_the_end_last_one_in_col, m.num_cols);
     
     #ifdef DEBUG_GAUSS
     check_matrix_against_varset(m.matrix, m.varset, m);
