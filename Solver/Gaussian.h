@@ -83,8 +83,8 @@ protected:
         uint16_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
         int least_column_changed; // when updating the matrix, this value contains the smallest column number that has been updated  (Gauss elim. can start from here instead of from column 0)
-        uint past_the_end_last_one_in_col;
         vector<uint16_t> last_one_in_col; //last_one_in_col[COL] tells the last row+1 that has a '1' in that column. Used to reduce the burden of Gauss elim. (it only needs to look until that row)
+        vector<uint16_t> first_one_in_row;
         uint removeable_cols; // the number of columns that have been zeroed out (i.e. assigned)
     };
 
@@ -151,6 +151,7 @@ private:
     void print_matrix_row_with_assigns(const T& row) const;
     const bool check_matrix_against_varset(PackedMatrix& matrix,const matrixset& m) const;
     const bool check_last_one_in_cols(matrixset& m) const;
+    const void check_first_one_in_row(matrixset& m, const uint j);
     void print_matrix(matrixset& m) const;
     void print_last_one_in_cols(matrixset& m) const;
     static const string lbool_to_string(const lbool toprint);

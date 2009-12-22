@@ -205,7 +205,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
 
     origMat.last_one_in_col.resize(origMat.num_cols);
     std::fill(origMat.last_one_in_col.begin(), origMat.last_one_in_col.end(), origMat.num_rows);
-    origMat.past_the_end_last_one_in_col = origMat.num_cols;
+    origMat.first_one_in_row.resize(origMat.num_rows);
     
     origMat.removeable_cols = 0;
     origMat.least_column_changed = -1;
@@ -300,7 +300,6 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
             last = 0;
     }
     m.num_cols -= last;
-    m.past_the_end_last_one_in_col = std::min(m.past_the_end_last_one_in_col, m.num_cols);
     
     #ifdef DEBUG_GAUSS
     check_matrix_against_varset(m.matrix, m);
@@ -408,24 +407,29 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
     PackedMatrix::iterator beginIt = m.matrix.beginMatrix();
     PackedMatrix::iterator rowIt = m.matrix.beginMatrix();
 
+    #ifdef DEBUG_GAUSS
+    check_first_one_in_row(m, j);
+    #endif
+    
     if (j) {
         uint16_t until = std::min(m.last_one_in_col[m.least_column_changed] - 1, (int)m.num_rows);
-        if (j > m.past_the_end_last_one_in_col)
+        if (j-1 > m.first_one_in_row[m.num_rows-1])
             until = m.num_rows;
-        for (;i != until; i++, ++rowIt) if (changed_rows[i] && (*rowIt).popcnt_is_one())
+        for (;i != until; i++, ++rowIt) if (changed_rows[i] && (*rowIt).popcnt_is_one(m.first_one_in_row[i]))
             propagatable_rows.push(i);
     }
     
-    if (j > m.past_the_end_last_one_in_col) {
+    #ifdef VERBOSE_DEBUG
+    cout << "At while() start: i,j = " << i << ", " << j << endl;
+    cout << "num_rows:" << m.num_rows << " num_cols:" << m.num_cols << endl;
+    #endif
+    
+    if (j > m.num_cols) {
         #ifdef VERBOSE_DEBUG
         cout << "Going straight to finish" << endl;
         #endif
         goto finish;
     }
-    
-    #ifdef VERBOSE_DEBUG
-    cout << "At while() start: i,j = " << i << ", " << j << endl;
-    #endif
     
     #ifdef DEBUG_GAUSS
     assert(i <= m.num_rows && j <= m.num_cols);
@@ -485,15 +489,16 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 //    return 0;
                 //}
             }
+            m.first_one_in_row[i] = j;
             i++;
             ++rowIt;
             m.last_one_in_col[j] = i;
-        } else
+        } else {
+            m.first_one_in_row[i] = j;
             m.last_one_in_col[j] = i + 1;
+        }
         j++;
     }
-
-    m.past_the_end_last_one_in_col = j;
     
     finish:
 
@@ -511,7 +516,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
     assert(check_last_one_in_cols(m));
     uint row = 0;
     uint col = 0;
-    for (; col < m.num_cols && row < m.num_rows && row < i && col < m.past_the_end_last_one_in_col; col++) {
+    for (; col < m.num_cols && row < m.num_rows && row < i ; col++) {
         assert(m.matrix.getMatrixAt(row).popcnt() == m.matrix.getMatrixAt(row).popcnt(col));
         assert(!(m.col_to_var[col] == unassigned_var && m.matrix.getMatrixAt(row)[col]));
         if (m.col_to_var[col] == unassigned_var || !m.matrix.getMatrixAt(row)[col]) {
@@ -933,7 +938,6 @@ void Gaussian::print_last_one_in_cols(matrixset& m) const
     for (uint i = 0; i < m.num_cols; i++) {
         cout << "last_one_in_col[" << i << "]-1 = " << m.last_one_in_col[i]-1 << endl;
     }
-    cout << "m.past_the_end_last_one_in_col:" <<  m.past_the_end_last_one_in_col << endl;
 }
 
 const bool Gaussian::nothing_to_propagate(matrixset& m) const
@@ -1002,6 +1006,38 @@ const bool Gaussian::check_matrix_against_varset(PackedMatrix& matrix, const mat
         if ((final^!mat_row.is_true()) != !var_row.is_true()) {
             cout << "problem with row:"; print_matrix_row_with_assigns(var_row); cout << endl;
             assert(false);
+        }
+    }
+}
+
+const void Gaussian::check_first_one_in_row(matrixset& m, const uint j)
+{
+    if (j) {
+        uint16_t until2 = std::min(m.last_one_in_col[m.least_column_changed] - 1, (int)m.num_rows);
+        if (j-1 > m.first_one_in_row[m.num_rows-1]) {
+            until2 = m.num_rows;
+            #ifdef VERBOSE_DEBUG
+            cout << "j-1 > m.first_one_in_row[m.num_rows-1]" << "j:" << j << " m.first_one_in_row[m.num_rows-1]:" << m.first_one_in_row[m.num_rows-1] << endl;
+            #endif
+        }
+        for (uint i2 = 0; i2 != until2; i2++) {
+            #ifdef VERBOSE_DEBUG
+            cout << endl << "row " << i2 << " (num rows:" << m.num_rows << ")" << endl;
+            cout << m.matrix.getMatrixAt(i2) << endl;
+            cout << " m.first_one_in_row[m.num_rows-1]:" << m.first_one_in_row[m.num_rows-1] << endl;
+            cout << "first_one_in_row:" << m.first_one_in_row[i2] << endl;
+            cout << "num_cols:" << m.num_cols << endl;
+            cout << "popcnt:" << m.matrix.getMatrixAt(i2).popcnt() << endl;
+            cout << "popcnt_is_one():" << m.matrix.getMatrixAt(i2).popcnt_is_one() << endl;
+            cout << "popcnt_is_one("<< m.first_one_in_row[i2] <<"): " << m.matrix.getMatrixAt(i2).popcnt_is_one(m.first_one_in_row[i2]) << endl;
+            #endif
+            
+            for (uint i3 = 0; i3 < m.first_one_in_row[i2]; i3++) {
+                assert(m.matrix.getMatrixAt(i2)[i3] == 0);
+            }
+            assert(m.matrix.getMatrixAt(i2)[m.first_one_in_row[i2]]);
+            assert(m.matrix.getMatrixAt(i2).popcnt_is_one() ==
+            m.matrix.getMatrixAt(i2).popcnt_is_one(m.first_one_in_row[i2]));
         }
     }
 }
