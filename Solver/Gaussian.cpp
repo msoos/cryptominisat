@@ -201,7 +201,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
     changed_rows.resize(origMat.num_rows);
-    changed_rows.setZero();
+    memset(&changed_rows[0], 0, sizeof(char)*changed_rows.size());
 
     origMat.last_one_in_col.resize(origMat.num_cols);
     std::fill(origMat.last_one_in_col.begin(), origMat.last_one_in_col.end(), origMat.num_rows);
@@ -246,7 +246,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
     if (solver.assigns[var].getBool()) {
         for (uint end = m.last_one_in_col[col];  row_num != end && row_num != m.num_rows; ++this_row, row_num++) {
             if ((*this_row)[col]) {
-                changed_rows.setBit(row_num);
+                changed_rows[row_num] = true;
                 (*this_row).invert_is_true();
                 (*this_row).clearBit(col);
             }
@@ -254,7 +254,7 @@ void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint col)
     } else {
         for (uint end = m.last_one_in_col[col];  row_num != end && row_num != m.num_rows; ++this_row, row_num++) {
             if ((*this_row)[col]) {
-                changed_rows.setBit(row_num);
+                changed_rows[row_num] = true;
                 (*this_row).clearBit(col);
             }
         }
@@ -285,7 +285,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     assert(solver.decisionLevel() == 0 || check_last_one_in_cols(m));
     #endif
     
-    changed_rows.setZero();
+    memset(&changed_rows[0], 0, sizeof(char)*changed_rows.size());
 
     uint last = 0;
     uint col = 0;
