@@ -253,7 +253,7 @@ class Tester:
     
     fname = None
     num = 3
-    TestDirSet = False
+    testDirSet = False
     for opt, arg in opts:
         if opt == "-v":
             self.verbose = True
