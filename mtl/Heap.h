@@ -41,7 +41,7 @@ class Heap {
     static inline uint32_t parent(uint32_t i) { return (i-1) >> 1; }
 
 
-    inline void percolateUp(int i)
+    inline void percolateUp(uint32_t i)
     {
         uint32_t x = heap[i];
         while (i != 0 && lt(x, heap[parent(i)])){
@@ -58,7 +58,7 @@ class Heap {
     {
         uint32_t x = heap[i];
         while (left(i) < heap.size()){
-            int child = right(i) < heap.size() && lt(heap[right(i)], heap[left(i)]) ? right(i) : left(i);
+            uint32_t child = right(i) < heap.size() && lt(heap[right(i)], heap[left(i)]) ? right(i) : left(i);
             if (!lt(heap[child], x)) break;
             heap[i]          = heap[child];
             indices[heap[i]] = i;
@@ -78,15 +78,15 @@ class Heap {
     Heap(const Comp& c) : lt(c) { }
     Heap(const Heap<Comp>& other) : lt(other.lt) {
         heap.growTo(other.heap.size());
-        memcpy(heap.getData(), other.heap.getData(), sizeof(int)*other.heap.size());
+        memcpy(heap.getData(), other.heap.getData(), sizeof(uint32_t)*other.heap.size());
         indices.growTo(other.indices.size());
-        memcpy(indices.getData(), other.indices.getData(), sizeof(int)*other.indices.size());
+        memcpy(indices.getData(), other.indices.getData(), sizeof(uint32_t)*other.indices.size());
     }
 
-    int  size      ()          const { return heap.size(); }
+    uint32_t  size      ()          const { return heap.size(); }
     bool empty     ()          const { return heap.size() == 0; }
     bool inHeap    (uint32_t n)     const { return n < indices.size() && indices[n] != UINT32_MAX; }
-    int  operator[](uint32_t index) const { assert(index < heap.size()); return heap[index]; }
+    uint32_t  operator[](uint32_t index) const { assert(index < heap.size()); return heap[index]; }
 
     void decrease  (uint32_t n) { assert(inHeap(n)); percolateUp(indices[n]); }
 
@@ -105,9 +105,9 @@ class Heap {
     }
 
 
-    int  removeMin()
+    uint32_t  removeMin()
     {
-        int x            = heap[0];
+        uint32_t x            = heap[0];
         heap[0]          = heap.last();
         indices[heap[0]] = 0;
         indices[x]       = UINT32_MAX;
@@ -169,7 +169,7 @@ class Heap {
     // COMPAT: should be removed
     void setBounds (uint32_t n) { }
     void increase  (uint32_t n) { decrease(n); }
-    int  getmin    ()      { return removeMin(); }
+    uint32_t  getmin    ()      { return removeMin(); }
 
 };
 

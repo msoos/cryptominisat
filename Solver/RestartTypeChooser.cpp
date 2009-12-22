@@ -70,7 +70,7 @@ void RestartTypeChooser::calcHeap()
     std::cout << "First vars:" << std::endl;
     #endif
     Heap<Solver::VarOrderLt> tmp(S->order_heap);
-    uint thisTopX = std::min(S->order_heap.size(), (int)topX);
+    uint thisTopX = std::min(S->order_heap.size(), topX);
     for (uint i = 0; i != thisTopX; i++) {
         #ifdef VERBOSE_DEBUG
         std::cout << tmp.removeMin()+1 << ", ";
