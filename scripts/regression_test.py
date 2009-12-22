@@ -253,6 +253,7 @@ class Tester:
     
     fname = None
     num = 3
+    TestDirSet = False
     for opt, arg in opts:
         if opt == "-v":
             self.verbose = True
@@ -269,6 +270,7 @@ class Tester:
             self.gaussUntil = int(arg)
         elif opt in ("-t", "--testdir"):
             self.testDir = arg
+            testDirSet = True
         elif opt in ("-e", "--exe"):
             self.cryptominisat = arg
         elif opt in ("-s", "--speed"):
@@ -282,13 +284,14 @@ class Tester:
           os.unlink(fname_unlink);
     
     if (fname == None) :
-      dirList=os.listdir(self.testDirNewVar)
-      if (self.testDirNewVar == ".") :
-        self.testDirNewVar = ""
-      for fname in dirList:
-        if fnmatch.fnmatch(fname, '*.cnf.gz'):
-          for i in range(num):
-            self.check(self.testDirNewVar + fname, i, True)
+      if (testDirSet == False) :
+        dirList=os.listdir(self.testDirNewVar)
+        if (self.testDirNewVar == ".") :
+          self.testDirNewVar = ""
+        for fname in dirList:
+          if fnmatch.fnmatch(fname, '*.cnf.gz'):
+            for i in range(num):
+              self.check(self.testDirNewVar + fname, i, True)
      
       dirList=os.listdir(self.testDir)
       if (self.testDir == ".") :
