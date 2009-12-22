@@ -104,7 +104,6 @@ static void untilEnd(B& in, char* ret)
     for (;;) {
         if (*in == EOF || *in == '\0') return;
         if (*in == '\n') {
-            ++in;
             return;
         }
         *ret = *in;
