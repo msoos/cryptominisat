@@ -25,6 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PackedMatrix.h"
 #include "BitArray.h"
 
+//#define VERBOSE_DEBUG
+//#define DEBUG_GAUSS
+
 #ifdef VERBOSE_DEBUG
 using std::vector;
 using std::cout;
@@ -36,8 +39,6 @@ class Clause;
 static const uint16_t unassigned_col = -1;
 static const Var unassigned_var = -1;
 
-//#define VERBOSE_DEBUG
-//#define DEBUG_GAUSS
 class Gaussian
 {
 public:
