@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define VERBOSE_DEBUG
 
-RestartTypeChooser::RestartTypeChooser(const Solver* const _S) :
-    S(_S)
+RestartTypeChooser::RestartTypeChooser(const Solver* const _s) :
+    S(_s)
     , topX(100)
     , limit(30)
 {

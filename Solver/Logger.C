@@ -64,9 +64,9 @@ Logger::Logger(int& _verbosity) :
     if (verbosity >= 1) printf("c RunID is: #%d\n",runid);
 }
 
-void Logger::setSolver(const Solver* _S)
+void Logger::setSolver(const Solver* _s)
 {
-    S = _S;
+    S = _s;
 }
 
 // Adds a new variable to the knowledge of the logger

@@ -32,8 +32,8 @@ using std::cout;
 using std::endl;
 #endif
 
-Conglomerate::Conglomerate(Solver *_S) :
-    S(_S)
+Conglomerate::Conglomerate(Solver *_s) :
+    S(_s)
 {}
 
 Conglomerate::~Conglomerate()

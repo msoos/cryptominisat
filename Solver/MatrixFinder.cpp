@@ -36,9 +36,9 @@ using std::endl;
 
 //#define PART_FINDING
 
-MatrixFinder::MatrixFinder(Solver *_S) :
-    unAssigned(_S->nVars() + 1)
-    , S(_S)
+MatrixFinder::MatrixFinder(Solver *_s) :
+    unAssigned(_s->nVars() + 1)
+    , S(_s)
 {
 }
 

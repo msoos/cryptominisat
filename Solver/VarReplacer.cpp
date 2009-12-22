@@ -30,13 +30,13 @@ using std::cout;
 using std::endl;
 #endif
 
-VarReplacer::VarReplacer(Solver *_S) :
+VarReplacer::VarReplacer(Solver *_s) :
     replacedLits(0)
     , lastReplacedLits(0)
     , replacedVars(0)
     , lastReplacedVars(0)
     , addedNewClause(false)
-    , S(_S)
+    , S(_s)
 {
 }
 

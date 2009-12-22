@@ -35,10 +35,10 @@ using std::endl;
 
 using std::make_pair;
 
-XorFinder::XorFinder(Solver* _S, vec<Clause*>& _cls, ClauseCleaner::ClauseSetType _type) :
+XorFinder::XorFinder(Solver* _s, vec<Clause*>& _cls, ClauseCleaner::ClauseSetType _type) :
     cls(_cls)
     , type(_type)
-    , S(_S)
+    , S(_s)
 {
 }
 
