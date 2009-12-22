@@ -406,12 +406,14 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
 
     uint i = 0;
     uint j = m.least_column_changed + 1;
+    PackedMatrix::iterator beginIt = m.matrix.beginMatrix();
+    PackedMatrix::iterator rowIt = m.matrix.beginMatrix();
 
     if (j) {
         uint16_t until = std::min(m.last_one_in_col[m.least_column_changed] - 1, (int)m.num_rows);
         if (j > m.past_the_end_last_one_in_col)
             until = m.num_rows;
-        for (;i != until; i++) if (changed_rows[i] && m.matrix.getMatrixAt(i).popcnt_is_one())
+        for (;i != until; i++, ++rowIt) if (changed_rows[i] && (*rowIt).popcnt_is_one())
             propagatable_rows.push(i);
     }
     
@@ -438,19 +440,17 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
             continue;
         }
 
-        PackedMatrix::iterator this_matrix_row = m.matrix.beginMatrix() + i;
-        PackedMatrix::iterator end = m.matrix.beginMatrix() + std::min(m.last_one_in_col[j], m.num_rows);
+        PackedMatrix::iterator this_matrix_row = rowIt;
+        PackedMatrix::iterator end = beginIt + std::min(m.last_one_in_col[j], m.num_rows);
         for (; this_matrix_row != end; ++this_matrix_row) {
             if ((*this_matrix_row)[j])
                 break;
         }
-        uint best_row = this_matrix_row - m.matrix.beginMatrix();
 
         if (this_matrix_row != end) {
-            PackedRow matrix_row_i = m.matrix.getMatrixAt(i);
 
             //swap rows i and maxi, but do not change the value of i;
-            if (i != best_row) {
+            if (this_matrix_row != rowIt) {
                 #ifdef VERBOSE_DEBUG
                 no_exchanged++;
                 #endif
@@ -460,14 +460,14 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 //    conflict_row = i;
                 //    return 0;
                 //}
-                matrix_row_i.swapBoth(*this_matrix_row);
+                (*rowIt).swapBoth(*this_matrix_row);
             }
             #ifdef DEBUG_GAUSS
             assert(m.matrix[i].popcnt(j) == m.matrix[i].popcnt());
             assert(m.matrix[i][j]);
             #endif
 
-            if (matrix_row_i.popcnt_is_one(j))
+            if ((*rowIt).popcnt_is_one(j))
                 propagatable_rows.push(i);
 
             //Now A[i,j] will contain the old value of A[maxi,j];
@@ -479,7 +479,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 number_of_row_additions++;
                 #endif
                 
-                (*this_matrix_row).xorBoth(matrix_row_i);
+                (*this_matrix_row).xorBoth(*rowIt);
                 //Would early abort, but would not find the best conflict (and would be expensive)
                 //if (it->is_true() &&it->isZero()) {
                 //    conflict_row = i2;
@@ -487,6 +487,7 @@ uint Gaussian::eliminate(matrixset& m, uint& conflict_row)
                 //}
             }
             i++;
+            ++rowIt;
             m.last_one_in_col[j] = i;
         } else
             m.last_one_in_col[j] = i + 1;
