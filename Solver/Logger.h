@@ -96,6 +96,7 @@ private:
     void print_statistics_note() const;
     void print_matrix_stats() const;
     void print_general_stats() const;
+    void print_learnt_unitaries(const uint from, const string display) const;
 
     uint max_print_lines;
     template<class T>

@@ -98,8 +98,9 @@ void Logger::new_group(const uint group)
 void Logger::cut_name_to_size(string& name) const
 {
     uint len = name.length();
-    if (len > 0 && name[len-1] == '\r') {
+    while(len > 0 && (name[len-1] == ' ' || name[len-1] == 0x0A || name[len-1] == 0x0D)) {
         name[len-1] = '\0';
+        name.resize(len-1);
         len--;
     }
     
@@ -701,7 +702,20 @@ void Logger::print_general_stats() const
     print_line("Avg. literals per learnt clause",(double)S->learnts_literals/(double)S->nLearnts());
     print_line("Progress estimate (%):", S->progress_estimate*100.0);
     print_line("All unitary learnts until now", S->get_unitary_learnts_num());
-    
+    print_footer();
+}
+
+void Logger::print_learnt_unitaries(const uint from, const string display) const
+{
+    print_footer();
+    print_simple_line(display);
+    print_header("var", "name", "value");
+    for (uint i = from; i < S->trail.size(); i++) {
+        Var var = S->trail[i].var();
+        bool sign = S->trail[i].sign();
+        std::stringstream ss;
+        print_line(var+1, varnames[var], sign);
+    }
     print_footer();
 }
 
@@ -735,6 +749,8 @@ void Logger::printstats() const
     print_branch_depth_distrib();
     print_learnt_clause_distrib();
     print_matrix_stats();
+    print_learnt_unitaries(0," Unitary clauses learnt until now");
+    print_learnt_unitaries(last_unitary_learnt_clauses, " Unitary clauses during this restart");
     print_advanced_stats();
     print_general_stats();
 }
