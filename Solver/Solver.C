@@ -56,7 +56,7 @@ Solver::Solver() :
         , xorFinder        (true)
         , performReplace   (true)
         , greedyUnbound    (false)
-        , restartType       (static_restart)
+        , fixRestartType   (auto_restart)
 
         // Statistics: (formerly in 'SolverStats')
         //
@@ -79,6 +79,7 @@ Solver::Solver() :
         , progress_estimate(0)
         , remove_satisfied (true)
         , mtrand((unsigned long int)0)
+        , restartType      (static_restart)
         #ifdef STATS_NEEDED
         , logger(verbosity)
         , dynamic_behaviour_analysis(false) //do not document the proof as default
@@ -1319,6 +1320,8 @@ inline void Solver::chooseRestartType(const lbool& status, RestartTypeChooser& r
 {
     if (status.isUndef() && starts > 2 && starts < 8) {
         RestartType tmp = restartTypeChooser.choose();
+        if (fixRestartType != auto_restart)
+            tmp = fixRestartType;
         if (starts == 7) {
             if (tmp == dynamic_restart) {
                 nbDecisionLevelHistory.fastclear();

@@ -35,7 +35,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 typedef uint32_t Var;
 #define var_Undef (0xffffffffU >>1)
-enum RestartType {dynamic_restart, static_restart};
+enum RestartType {dynamic_restart, static_restart, auto_restart};
 
 class Lit
 {

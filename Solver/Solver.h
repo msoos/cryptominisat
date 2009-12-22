@@ -125,7 +125,7 @@ public:
     bool      performReplace;       // Should var-replacing be performed?
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
-    RestartType restartType;      // If set to true, the restart strategy will be dynamic
+    RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
     
 
     enum { polarity_true = 0, polarity_false = 1, polarity_user = 2, polarity_rnd = 3 };
@@ -211,6 +211,7 @@ protected:
     float               totalSumOfDecisionLevel;
     MTRand mtrand;                        // random number generaton
     friend class Logger;
+    RestartType         restartType;      // Used internally to determine which restart strategy to choose
     #ifdef STATS_NEEDED
     Logger logger;                        // dynamic logging, statistics
     bool dynamic_behaviour_analysis;      // Is logger running?
