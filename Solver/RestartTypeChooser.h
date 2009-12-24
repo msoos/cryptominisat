@@ -36,8 +36,8 @@ class RestartTypeChooser
         const double avg() const;
         
         const Solver* const S;
-        const uint topX;
-        const uint limit;
+        const uint32_t topX;
+        const uint32_t limit;
         vector<Var> sameIns;
         
         vector<Var> firstVars, firstVarsOld;

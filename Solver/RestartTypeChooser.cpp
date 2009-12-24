@@ -65,17 +65,18 @@ const double RestartTypeChooser::avg() const
 
 void RestartTypeChooser::calcHeap()
 {
-    firstVars.resize(topX);
+    firstVars.clear();
+    firstVars.reserve(topX);
     #ifdef VERBOSE_DEBUG
     std::cout << "First vars:" << std::endl;
     #endif
     Heap<Solver::VarOrderLt> tmp(S->order_heap);
-    uint thisTopX = std::min(S->order_heap.size(), topX);
-    for (uint i = 0; i != thisTopX; i++) {
+    uint32_t thisTopX = std::min(tmp.size(), topX);
+    for (uint32_t i = 0; i != thisTopX; i++) {
         #ifdef VERBOSE_DEBUG
         std::cout << tmp.removeMin()+1 << ", ";
         #endif
-        firstVars[i] = tmp.removeMin();
+        firstVars.push_back(tmp.removeMin());
     }
     #ifdef VERBOSE_DEBUG
     std::cout << std::endl;
