@@ -141,7 +141,7 @@ public:
 
     inline void invert_is_true(const bool b = true)
     {
-        is_true_internal ^= b;
+        is_true_internal ^= (uint64_t)b;
     }
 
     inline void setBit(const uint i)
