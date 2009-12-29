@@ -76,7 +76,7 @@ class StreamBuffer
             printf("buf = %08X\n", buf);
             printf("sizeof(buf) = %u\n", sizeof(buf));
             #endif //VERBOSE_DEBUG
-            size = 0;
+            size = fread(buf, 1, sizeof(buf), in);
 #else
             size = gzread(in, buf, sizeof(buf));
 #endif // DISABLE_ZLIB

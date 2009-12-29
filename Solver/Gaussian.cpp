@@ -664,7 +664,7 @@ void Gaussian::cancel_until_sublevel(const uint sublevel)
     cout << "(" << matrix_no << ")Canceling until sublevel " << sublevel << endl;
     #endif
     
-    for (Gaussian **gauss = &(solver.gauss_matrixes[0]), **end= gauss + solver.gauss_matrixes.size(); gauss != end; gauss++)
+    for (vector<Gaussian*>::iterator gauss = solver.gauss_matrixes.begin(), end= solver.gauss_matrixes.end(); gauss != end; gauss++)
         if (*gauss != this) (*gauss)->canceling(sublevel);
 
     for (int level = solver.trail.size()-1; level >= (int)sublevel; level--) {

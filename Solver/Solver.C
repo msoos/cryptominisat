@@ -391,8 +391,9 @@ void Solver::cancelUntil(int level)
     
     if (decisionLevel() > level) {
         
-        for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)
+        for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++)
             (*gauss)->canceling(trail_lim[level]);
+        
         
         for (int c = trail.size()-1; c >= (int)trail_lim[level]; c--) {
             Var     x  = trail[c].var();
@@ -1130,7 +1131,7 @@ lbool Solver::search(int nof_conflicts)
     llbool      ret;
 
     starts++;
-    for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++) {
+    for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++) {
         ret = (*gauss)->full_init();
         if (ret != l_Nothing) return ret;
     }
@@ -1143,7 +1144,7 @@ lbool Solver::search(int nof_conflicts)
             if (ret != l_Nothing) return ret;
         } else {
             bool at_least_one_continue = false;
-            for (Gaussian **gauss = &gauss_matrixes[0], **end= gauss + gauss_matrixes.size(); gauss != end; gauss++)  {
+            for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++) {
                 ret = (*gauss)->find_truths(learnt_clause, conflictC);
                 if (ret == l_Continue) at_least_one_continue = true;
                 else if (ret != l_Nothing) return ret;
@@ -1317,7 +1318,7 @@ void Solver::print_gauss_sum_stats() const
     uint useful_prop = 0;
     uint useful_confl = 0;
     uint disabled = 0;
-    for (Gaussian *const*gauss = &gauss_matrixes[0], *const*end= gauss + gauss_matrixes.size(); gauss != end; gauss++) {
+    for (vector<Gaussian*>::const_iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++) {
         disabled += (*gauss)->get_disabled();
         called += (*gauss)->get_called();
         useful_prop += (*gauss)->get_useful_prop();
