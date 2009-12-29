@@ -1,103 +1,160 @@
-For usage of standard MiniSat, please have a look at Niklas Eén's and Niklas Sörensson's papers. Also, please look at "./minisat -help"
+For usage of standard MiniSat, please have a look at
+Niklas Eén's and Niklas Sörensson's papers. Also, please
+look at "./minisat -help"
 
-For a more detailed description of how to use CryptoMiniSat, please refer to  http://planete.inrialpes.fr/~soos/CryptoMiniSat/index.html
+For a more detailed description of how to use CryptoMiniSat,
+please refer to  http://planete.inrialpes.fr/~soos/CryptoMiniSat/index.html
 
-For regression testing, execute: 'python regression_test.py' in the "scripts/" subdir
+For regression testing, execute: 
+'python regression_test.py' in the "scripts/" subdir
 
-CryptoMiniSat integrates the following advancements with respect to MiniSat:
+CryptoMiniSat integrates the following advancements with 
+respect to MiniSat:
 
-* Xor-clauses. If you want to express a xor, e.g. "var1 + var2 + !var3 = true" then you simply need to put into the sat file the line: "x1 2 -3 0". The "x" in front of the line means that this is a xor-clause clause.
+* Xor-clauses. If you want to express a xor, e.g. 
+  
+  "var1 + var2 + !var3 = true" 
+  
+  then you simply need to put into the sat file the line: 
+  
+  "x1 2 -3 0". The "x" in 
+  
+  front of the line means that this is a xor-clause clause.
 
-* Clause grouping. Usage: "-grouping" in command line. Used to give a name to each and every clause. Useful if you wish to create meaningful statistics. To use it, you must have after each and every clause a line "c g GROUPNUM NAME". Example:
+* Clause grouping. Usage: "-grouping" in command line. Used to give a
+  name to each and every clause. Useful if you wish to create meaningful
+  statistics. To use it, you must have after each and every clause a line
+  "c g GROUPNUM NAME". 
+  Example:
 
-161 18 20 -22 0
-c g 11 nice name
-161 -18 -20 0
-c g 11 nice name
-141 68 -66 74 0
-c g 234 somewhat nicer name
+  161 18 20 -22 0
+  c g 11 nice name
+  161 -18 -20 0
+  c g 11 nice name
+  141 68 -66 74 0
+  c g 234 somewhat nicer name
+  
+  These are three clauses. The first two belong to group 11, which has 
+  the name "nice name". The third clause belongs to group 234, and is
+  named "somewhat nicer name". Grouping is important once you need to have 
+  more than one clause to express the same concept. I.e. if you were describing 
+  an equation in ANF (Algebraic Normal Form), you could easily give the same
+  group to the different clauses representing the same equation. You can find
+  examples of the usage in the "satfile" file under the "bulid" directory
 
-These are three clauses. The first two belong to group 11, which has the name "nice name". The third clause belongs to group 234, and is named "somewhat nicer name". Grouping is important once you need to have more than one clause to express the same concept. I.e. if you were describing an equation in ANF (Algebraic Normal Form), you could easily give the same group to the different clauses representing the same equation. You can find examples of the usage in the "satfile" file under the "bulid" directory
+* Variable naming. In the CNF file, you have to add a line describing the
+  name of each variable. The lines must follow the pattern 
+  "c v VAR NAME"
+  for each variable. Example:
 
-* Variable naming. In the CNF file, you have to add a line describing the name of each variable. The lines must follow the pattern "c v VAR NAME" for each variable. Example:
+  c v 36 sr[0][35] (real unknown)
 
-c v 36 sr[0][35] (real unknown)
+  This sets variable number 36 to be named "sr[0][35] (real unknown)". 
+  You can find examples of this in the "satfile" under the "build"
+  directory. I personally add the definition of all variables at the
+  end of my CNF file.s
 
-This sets variable number 36 to be named "sr[0][35] (real unknown)". You can find examples of this in the "satfile" under the "build" directory. I personally add the definition of all variables at the end of my CNF file.s
+* Advanced statistics. The output of the sample satfile that is under 
+  "/optimized/src/satfile" if running with statistics:
 
-* Advanced statistics. The output of the sample satfile that is under "/optimized/src/satfile" if running with statistics:
+  --------------
+  soos@charmille:$ ./cryptominisat -stats -grouping satfile
+  
+  [..printed data..]
+  
+  
+  +===========================================================+
+  ||********* STATS FOR THIS RESTART BEGIN ******************||
+  +===========================================================+
+  +-----------------------------------------------------------+
+  | No. times variable branched on                            |
+  |var         var name                             no. times |
+  +-----------------------------------------------------------+
+  |54          sr[0][65](real unknown)              1608      |
+  |45          sr[0][49](real unknown)              1480      |
+  |82          sr[0][43](real unknown)              1461      |
+  |66          sr[0][54](real unknown)              1420      |
+  |195         sr[0][59](real unknown)              1407      |
+  |218         sr[0][69](real unknown)              1318      |
+  |88          sr[0][57](real unknown)              1307      |
+  |223         sr[0][51](real unknown)              1260      |
+  |426         sr[0][70](real unknown)              1201      |
+  |236         sr[0][47](real unknown)              1149      |
+  |83          sr[0][56](real unknown)              1118      |
+  |43          sr[0][45](real unknown)              1050      |
+  |387         sr[0][74](real unknown)              1014      |
+  |46          sr[0][72](real unknown)              1012      |
+  |378         sr[0][55](real unknown)              975       |
+  |349         sr[0][58](real unknown)              890       |
+  |9           sr[0][66](real unknown)              889       |
+  |279         sr[0][44](real unknown)              841       |
+  |108         sr[0][61](real unknown)              841       |
+  |401         sr[0][42](real unknown)              820       |
+  +-----------------------------------------------------------+
+  
+  This list means that variable 54, which represents the 65th bit in the 
+  shift register has been branched upon 1608 times during the solving. This, 
+  by the way, is logical, as we were trying to solve the state of the stream 
+  cipher, which is of course the shift register's state.
 
---------------
-soos@charmille:$ ./cryptominisat -stats -grouping satfile
+  The statistics also gives you the following for each restart 
+  (minisat does re-starts every so often, these are the lines that
+  appear one after the other when you are running it):
+  
+  +-----------------------------------------------------------+
+  | Advanced statistics                                       |
+  +-----------------------------------------------------------+
+  |No. branches visited                             15585     |
+  |Avg. branch depth                                84.81     |
+  |No. decisions                                    32755     |
+  |No. propagations                                 1151570   |
+  |sum decisions on branches/no. branches                     |
+  | (in a given branch, what is the avg.                      |
+  |  no. of decisions?)                             8.518     |
+  |sum propagations on branches/no. branches                  |
+  | (in a given branch, what is the                           |
+  |  avg. no. of propagations?)                     76.29     |
+  +-----------------------------------------------------------+
+  
+  You can see, for example, that 8.52 + 76.29 = 84.81 so things add up.
+  
 
-[..printed data..]
+* "-randomize=XXX" randomizes the clause order and initial variable pick order. 
+  You can measure how much time it takes for minisat on average to solve a problem 
+  written down in a SAT file. Useful to calculate average speed of a given problem
+  instance. Just run the problem with multiple "-randomize=xx" numbers and
+  make the average.
+  
+* If you create a directory "proofs", and then you execute 
+  "./minisat -proof-log -grouping satfile" 
+  then CryptoMiniSat produces a set of files, named "NUM-proofX.dot" in the "proofs"
+  directory, where NUM is a fixed number for a given run, and X is the restart number.
+  For the example "satfile" under the "build" directory:
 
-
-+===========================================================+
-||********* STATS FOR THIS RESTART BEGIN ******************||
-+===========================================================+
-+-----------------------------------------------------------+
-| No. times variable branched on                            |
-|var         var name                             no. times |
-+-----------------------------------------------------------+
-|54          sr[0][65](real unknown)              1608      |
-|45          sr[0][49](real unknown)              1480      |
-|82          sr[0][43](real unknown)              1461      |
-|66          sr[0][54](real unknown)              1420      |
-|195         sr[0][59](real unknown)              1407      |
-|218         sr[0][69](real unknown)              1318      |
-|88          sr[0][57](real unknown)              1307      |
-|223         sr[0][51](real unknown)              1260      |
-|426         sr[0][70](real unknown)              1201      |
-|236         sr[0][47](real unknown)              1149      |
-|83          sr[0][56](real unknown)              1118      |
-|43          sr[0][45](real unknown)              1050      |
-|387         sr[0][74](real unknown)              1014      |
-|46          sr[0][72](real unknown)              1012      |
-|378         sr[0][55](real unknown)              975       |
-|349         sr[0][58](real unknown)              890       |
-|9           sr[0][66](real unknown)              889       |
-|279         sr[0][44](real unknown)              841       |
-|108         sr[0][61](real unknown)              841       |
-|401         sr[0][42](real unknown)              820       |
-+-----------------------------------------------------------+
-
-This list means that variable 54, which represents the 65th bit in the shift register has been branched upon 1608 times during the solving. This, by the way, is logical, as we were trying to solve the state of the stream cipher, which is of course the shift register's state.
-
-The statistics also gives you the following for each restart (minisat does re-starts every so often, these are the lines that appear one after the other when you are running it):
-
-+-----------------------------------------------------------+
-| Advanced statistics                                       |
-+-----------------------------------------------------------+
-|No. branches visited                             15585     |
-|Avg. branch depth                                84.81     |
-|No. decisions                                    32755     |
-|No. propagations                                 1151570   |
-|sum decisions on branches/no. branches                     |
-| (in a given branch, what is the avg.                      |
-|  no. of decisions?)                             8.518     |
-|sum propagations on branches/no. branches                  |
-| (in a given branch, what is the                           |
-|  avg. no. of propagations?)                     76.29     |
-+-----------------------------------------------------------+
-
-You can see, for example, that 8.52 + 76.29 = 84.81 so things add up.
-
-* "-randomize=XXX" randomizes the clause order and initial variable pick order. You can measure how much time it takes for minisat on average to solve a problem written down in a SAT file. Useful to calculate average speed of a given problem instance. Just run the problem with multiple "-randomize=xx" numbers and make the average.
-
-* If you create a directory "proofs", and then you execute "./minisat -proof-log -grouping satfile" then CryptoMiniSat produces a set of files, named "NUM-proofX.dot" in the "proofs" directory, where NUM is a fixed number for a given run, and X is the restart number. For the example "satfile" under the "build" directory:
-$ ls proofs/
-7491-proof0.dot
-7491-proof1.dot
-7491-proof2.dot
-[...]
-
-First you need to get graphviz (free software, available form http://www.graphviz.org/Download..php for both windows and linux). If you now issue "dot -Tsvg 7491-proof1.dot > proof1.svg" and wait a couple of minutes, you get a file "proof1.svg" that contains what happened at the 1st restart (which is not really a restart, it's the first run: the 0th restart is the inserting of clauses). This SVG file is included into this email (zipped). You can view it only with a very good SVG-reader, like the free-software inkscape ( http://www.inkscape.org/download/?lang=en ), available under windows and  linux.
-
-* There is an option to have a LOT of debugging output from minisat. To turn it on, define VERBOSE_DEBUG. See the "INSTALL" file how to do this. After re-compilation, run CryptoMiniSat as usual. This will give you a LOT of information regarding what happens inside CryptoMiniSat. Propagations, cancellations, conflicts, conflict clauses, etc. To handle the amount of information, I suggest you to run CryptoMiniSat as:
-
-"./cryptominisat satfile > debug.txt"
-
-and then open the "debug.txt" with your favourite text editor. (I use "less" if the file is gigabyte-sized files)
-
-
+  $ ls proofs/
+  7491-proof0.dot
+  7491-proof1.dot
+  7491-proof2.dot
+  [...]
+  
+  First you need to get graphviz (free software, available form 
+  http://www.graphviz.org/Download..php for both windows and linux). If you now 
+  issue "dot -Tsvg 7491-proof1.dot > proof1.svg" and wait a couple of minutes, 
+  you get a file "proof1.svg" that contains what happened at the 1st restart
+  (which is not really a restart, it's the first run: the 0th restart is the
+  inserting of clauses). This SVG file is included into this email (zipped).
+  You can view it only with a very good SVG-reader, like the free-software
+  inkscape ( http://www.inkscape.org/download/?lang=en ), available under
+  windows and  linux.
+  
+* There is an option to have a LOT of debugging output from minisat. To turn it
+  on, define VERBOSE_DEBUG. See the "INSTALL" file how to do this. After re-
+  compilation, run CryptoMiniSat as usual. This will give you a LOT of information
+  regarding what happens inside CryptoMiniSat. Propagations, cancellations, conflicts,
+  conflict clauses, etc. To handle the amount of information, I suggest you to run 
+  CryptoMiniSat as:
+  
+  "./cryptominisat satfile > debug.txt"
+  
+  and then open the "debug.txt" with your favourite text editor. 
+  (I use "less" if the file is gigabyte-sized files)
