@@ -1300,7 +1300,7 @@ double Solver::progressEstimate() const
     for (uint32_t i = 0; i <= decisionLevel(); i++) {
         int beg = i == 0 ? 0 : trail_lim[i - 1];
         int end = i == decisionLevel() ? trail.size() : trail_lim[i];
-        progress += pow(F, i) * (end - beg);
+        progress += pow(F, (int)i) * (end - beg);
     }
 
     return progress / nVars();

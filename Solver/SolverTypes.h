@@ -52,10 +52,10 @@ public:
         return Lit(x ^ 1);
     }
     Lit  operator^(const bool b) const {
-        return Lit(x ^ b);
+        return Lit(x ^ (uint32_t)b);
     }
     Lit& operator^=(const bool b) {
-        x ^= b;
+        x ^= (uint32_t)b;
         return *this;
     }
     bool sign() const {
