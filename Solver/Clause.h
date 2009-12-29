@@ -58,7 +58,11 @@ protected:
     */
     uint32_t size_etc; 
     union { int act; uint32_t abst; } extra;
+    #ifdef _MSC_VER
+    Lit     data[1];
+    #else
     Lit     data[0];
+    #endif //_MSC_VER
 
 public:
 
