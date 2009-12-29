@@ -7,7 +7,8 @@ You will need the following libraries to compile the sources:
 -----------------
 Building the source
 -----------------
-There are two ways to build the source. With cmake or with autotools. I personally use cmake.
+There are two ways to build the source. With cmake or with autotools.
+I personally use cmake.
 
 -----------------
 Building using cmake
@@ -16,7 +17,8 @@ Building using cmake
 * Go into the 'build' directory
 * Issue 'cmake ../'
 * Issue 'make'
-* Issue './cryptominisat_ext.sh satfile' to test your new code.
+* Issue './cryptominisat_ext.sh satfile'
+  to test your new code.
 
 ------------------
 Building using autotools
@@ -26,7 +28,8 @@ Building using autotools
 * Issue 'make'
 * Issue './cryptominisat_ext.sh satfile' to test your new code
 
-If you got your source from the SVN, before doing the above, you should:
+If you got your source from the SVN, before doing the above,
+you should:
 * Install automake, autoconf, libtool
 * Issue 'make -f Makefile.cvs' in the root dir of the source
 
@@ -40,20 +43,28 @@ For help, build the program, and issue:
 Verbose debug
 --------
 You can also turn on verbose debugging.
-Simply add "#define VERBOSE_DEBUG" to the Solver/Solver.h file and re-compile
+Simply remove the comment before 
+
+"//#define VERBOSE_DEBUG" 
+in Solver/constants.h and re-compile
 
 When executing:
+
 './cryptominisat satfile'
 You will see a LOT of debug info. You should therefore maybe do:
+
 './cryptominisat satfile > debuginfo.txt'
 then you can open the 'debuginfo.txt' file from a text editor and have a look
 
 -----------------
-Windows use
+Windows binary generation
 ----------------
-With cmake it should be relatively simple. If you compile under windows.
+It should be possible f you compile under windows
+using Visual C++. Please read the HOWTO_VisualCpp for details
 
-I compile under linux all windows binaries, using gcc that generates windows executables. It works really well. There is a sort-of-howto in the "Solver/win32-howto" text file. A short step-by-step is here: 
+I compile under linux all windows binaries, using gcc that generates 
+windows executables. It works really well. There is a sort-of-howto in 
+the "HOWTO_MinGW32" text file. A short step-by-step is here: 
 
 1) Install gcc that generates windows binaries:
 
@@ -68,6 +79,9 @@ get from source and compile as per "Solver/win32-howto"
 
 go to the "Solver" subdir and execute:
 
-i586-mingw32msvc-g++ -O3 -g -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ /usr/i586-mingw32msvc/lib/libz.a Main.C Solver.C Logger.C  Clause.cpp VarReplacer.cpp FindUndef.cpp XorFinder.cpp MatrixFinder.cpp Gaussian.cpp Conglomerate.cpp PackedRow.cpp -o cryptominisat.exe
+i586-mingw32msvc-g++ -O3 -g -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ \
+/usr/i586-mingw32msvc/lib/libz.a Main.C Solver.C Logger.C  Clause.cpp \
+VarReplacer.cpp FindUndef.cpp XorFinder.cpp MatrixFinder.cpp Gaussian.cpp \
+Conglomerate.cpp PackedRow.cpp -o cryptominisat.exe
 
 I test the generated binary under wine, in Linux.
