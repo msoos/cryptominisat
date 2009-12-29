@@ -27,10 +27,17 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <sys/types.h>
 #include <signal.h>
+
+#ifdef DISABLE_ZLIB
+#else
 #include <zlib.h>
+#endif // DISABLE_ZLIB
+
 #include "Logger.h"
 #include "Solver.h"
 #include "time_mem.h"
+#include "constants.h"
+
 using std::cout;
 using std::endl;
 
@@ -50,7 +57,11 @@ static bool debugNewVar = false;
 
 class StreamBuffer
 {
+#ifdef DISABLE_ZLIB
+    FILE *  in;
+#else
     gzFile  in;
+#endif // DISABLE_ZLIB
     char    buf[CHUNK_LIMIT];
     int     pos;
     int     size;
@@ -58,12 +69,24 @@ class StreamBuffer
     void assureLookahead() {
         if (pos >= size) {
             pos  = 0;
+#ifdef DISABLE_ZLIB
+            #ifdef VERBOSE_DEBUG
+            printf("buf = %08X\n", buf);
+            printf("sizeof(buf) = %u\n", sizeof(buf));
+            #endif //VERBOSE_DEBUG
+            size = 0;
+#else
             size = gzread(in, buf, sizeof(buf));
+#endif // DISABLE_ZLIB
         }
     }
 
 public:
+#ifdef DISABLE_ZLIB
+    StreamBuffer(FILE * i) : in(i), pos(0), size(0) {
+#else
     StreamBuffer(gzFile i) : in(i), pos(0), size(0) {
+#endif // DISABLE_ZLIB
         assureLookahead();
     }
 
@@ -181,6 +204,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
     string str;
     uint debugLibPart = 1;
 
+
     for (;;) {
         skipWhitespace(in);
         switch (*in) {
@@ -274,7 +298,11 @@ static void parse_DIMACS_main(B& in, Solver& S)
 
 // Inserts problem into solver.
 //
+#ifdef DISABLE_ZLIB
+static void parse_DIMACS(FILE * input_stream, Solver& S)
+#else
 static void parse_DIMACS(gzFile input_stream, Solver& S)
+#endif // DISABLE_ZLIB
 {
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in, S);
@@ -318,7 +346,11 @@ static void SIGINT_handler(int signum)
 
 void printUsage(char** argv)
 {
+#ifdef DISABLE_ZLIB
+    printf("USAGE: %s [options] <input-file> <result-output-file>\n\n  where input is plain DIMACS.\n\n", argv[0]);
+#else
     printf("USAGE: %s [options] <input-file> <result-output-file>\n\n  where input may be either in plain or gzipped DIMACS.\n\n", argv[0]);
+#endif // DISABLE_ZLIB
     printf("OPTIONS:\n\n");
     printf("  -polarity-mode = {true,false,rnd}\n");
     printf("  -decay         = <num> [ 0 - 1 ]\n");
@@ -509,7 +541,11 @@ int main(int argc, char** argv)
     if (argc == 1)
         printf("c Reading from standard input... Use '-h' or '--help' for help.\n");
 
+#ifdef DISABLE_ZLIB
+    FILE * in = (argc == 1) ? fopen(0, "rb") : fopen(argv[1], "rb");
+#else
     gzFile in = (argc == 1) ? gzdopen(0, "rb") : gzopen(argv[1], "rb");
+#endif // DISABLE_ZLIB
     if (in == NULL)
         printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
 
@@ -519,7 +555,12 @@ int main(int argc, char** argv)
     }
 
     parse_DIMACS(in, S);
+
+#ifdef DISABLE_ZLIB
+    fclose(in);
+#else
     gzclose(in);
+#endif // DISABLE_ZLIB
     FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
 
     double parse_time = cpuTime() - cpu_time;
