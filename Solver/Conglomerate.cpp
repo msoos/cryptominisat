@@ -91,14 +91,14 @@ void Conglomerate::fillVarToXor()
     }
 }
 
-void Conglomerate::process_clause(XorClause& x, const uint num, Var remove_var, vec<Lit>& vars) {
+void Conglomerate::process_clause(XorClause& x, const uint32_t num, Var remove_var, vec<Lit>& vars) {
     for (const Lit* a = &x[0], *end = a + x.size(); a != end; a++) {
         Var var = a->var();
         if (var != remove_var) {
             vars.push(Lit(var, false));
             varToXorMap::iterator finder = varToXor.find(var);
             if (finder != varToXor.end()) {
-                vector<pair<XorClause*, uint> >::iterator it =
+                vector<pair<XorClause*, uint32_t> >::iterator it =
                     std::find(finder->second.begin(), finder->second.end(), make_pair(&x, num));
                 finder->second.erase(it);
             }
@@ -125,7 +125,7 @@ uint Conglomerate::conglomerateXors()
     uint found = 0;
     while(varToXor.begin() != varToXor.end()) {
         varToXorMap::iterator it = varToXor.begin();
-        const vector<pair<XorClause*, uint> >& c = it->second;
+        const vector<pair<XorClause*, uint32_t> >& c = it->second;
         const uint& var = it->first;
         
         //We blocked the var during dealWithNewClause (it was in a 2-long xor-clause)
@@ -257,7 +257,7 @@ bool Conglomerate::dealWithNewClause(vec<Lit>& ps, const bool inverted, const ui
             S->attachClause(*newX);
             for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {
                 if (!blocked[a->var()])
-                    varToXor[a->var()].push_back(make_pair(newX, toRemove.size()-1));
+                    varToXor[a->var()].push_back(make_pair(newX, (uint32_t)(toRemove.size()-1)));
             }
             break;
         }

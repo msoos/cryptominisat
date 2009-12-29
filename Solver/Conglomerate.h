@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 #include "Clause.h"
 #include "VarReplacer.h"
+#include "stddef.h"
 
 using std::vector;
 using std::pair;
@@ -46,14 +47,14 @@ public:
     
 private:
     
-    void process_clause(XorClause& x, const uint num, Var remove_var, vec<Lit>& vars);
+    void process_clause(XorClause& x, const uint32_t num, Var remove_var, vec<Lit>& vars);
     void fillVarToXor();
     void clearDouble(vec<Lit>& ps) const;
     void clearToRemove();
     void clearLearntsFromToRemove();
     bool dealWithNewClause(vec<Lit>& ps, const bool inverted, const uint old_group);
     
-    typedef map<uint, vector<pair<XorClause*, uint> > > varToXorMap;
+    typedef map<uint, vector<pair<XorClause*, uint32_t> > > varToXorMap;
     varToXorMap varToXor; 
     vector<bool> blocked;
     vector<bool> toRemove;
