@@ -1,0 +1,5 @@
+If compiling with Visual C, the CHUNK_LIMIT poses problems.
+Problem is, that VC2008 seems to have a stack, which is not big enough.
+With default command line parameters it will crash.
+The workaround is to give the command line parameter /F. With this you can
+increase the stack to a certain size. Setting to 2 MB is good enough
