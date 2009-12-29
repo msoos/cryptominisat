@@ -10,6 +10,7 @@ def testOneFile(exe, fname) :
   sumtime = 0.0
   sumprop = 0
   s2 =  commands.getoutput("%s \"%s%s\""%(exe, problemDir, fname))
+  #print "%s \"%s%s\""%(exe, problemDir, fname)
 
   #print s2
   
