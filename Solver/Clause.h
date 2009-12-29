@@ -28,6 +28,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Vec.h"
 #include "SolverTypes.h"
 #include "PackedRow.h"
+#include "constants.h"
 
 #ifndef uint
 #define uint unsigned int
@@ -43,8 +44,6 @@ class MatrixFinder;
 
 class Clause
 {
-public:
-    const uint group;
 protected:
     /**
     bit-layout of size_etc:
@@ -56,6 +55,11 @@ protected:
     3rd bit         bool            inverted xor
     4th -31st bit  28bit uint       size
     */
+    
+    #ifdef STATS_NEEDED
+    uint group;
+    #endif
+    
     uint32_t size_etc; 
     union { int act; uint32_t abst; } extra;
     #ifdef _MSC_VER
@@ -65,12 +69,12 @@ protected:
     #endif //_MSC_VER
 
     template<class V>
-    Clause(const V& ps, const uint _group, const bool learnt) :
-            group(_group)
+    Clause(const V& ps, const uint _group, const bool learnt)
     {
         size_etc = 0;
         setSize(ps.size());
         setLearnt(learnt);
+        setGroup(_group);
         for (uint i = 0; i < ps.size(); i++) data[i] = ps[i];
         if (learnt) extra.act = 0;
         else calcAbstraction();
@@ -138,7 +142,7 @@ public:
         return data;
     }
     void print() {
-        printf("Clause   group: %d, size: %d, learnt:%d, lits: ", group, size(), learnt());
+        printf("Clause   group: %d, size: %d, learnt:%d, lits: ", getGroup(), size(), learnt());
         plainPrint();
     }
     void plainPrint(FILE* to = stdout) const {
@@ -148,6 +152,25 @@ public:
         }
         fprintf(to, "0\n");
     }
+    #ifdef STATS_NEEDED
+    const uint32_t getGroup() const
+    {
+        return group;
+    }
+    void setGroup(const uint32_t _group)
+    {
+        group = _group;
+    }
+    #else
+    const uint getGroup() const
+    {
+        return 0;
+    }
+    void setGroup(const uint32_t _group)
+    {
+        return;
+    }
+    #endif //STATS_NEEDED
 protected:
     void setSize(uint32_t size) {
         size_etc = (size_etc & ((1 << 4)-1)) + (size << 4);
@@ -183,7 +206,7 @@ public:
     }
 
     void print() {
-        printf("XOR Clause   group: %d, size: %d, learnt:%d, lits:\"", group, size(), learnt());
+        printf("XOR Clause   group: %d, size: %d, learnt:%d, lits:\"", getGroup(), size(), learnt());
         plainPrint();
     }
     

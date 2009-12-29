@@ -552,7 +552,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     Clause& cla = *confl;
     #ifdef STATS_NEEDED
     if (solver.dynamic_behaviour_analysis)
-        solver.logger.set_group_name(confl->group, "learnt gauss clause");
+        solver.logger.set_group_name(confl->getGroup(), "learnt gauss clause");
     #endif
     
     if (cla.size() <= 1)
@@ -567,7 +567,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     if (maxlevel != solver.decisionLevel()) {
         #ifdef STATS_NEEDED
         if (solver.dynamic_behaviour_analysis)
-            solver.logger.conflict(Logger::gauss_confl_type, maxlevel, confl->group, *confl);
+            solver.logger.conflict(Logger::gauss_confl_type, maxlevel, confl->getGroup(), *confl);
         #endif
         solver.cancelUntil(maxlevel);
     }
@@ -781,7 +781,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     clauses_toclear.push_back(std::make_pair(&cla, solver.trail.size()-1));
     #ifdef STATS_NEEDED
     if (solver.dynamic_behaviour_analysis)
-        solver.logger.set_group_name(cla.group, "gauss prop clause");
+        solver.logger.set_group_name(cla.getGroup(), "gauss prop clause");
     #endif
     solver.uncheckedEnqueue(cla[0], &cla);
 
@@ -830,7 +830,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
             Lit lit = (*confl)[0];
             #ifdef STATS_NEEDED
             if (solver.dynamic_behaviour_analysis)
-                solver.logger.conflict(Logger::gauss_confl_type, 0, confl->group, *confl);
+                solver.logger.conflict(Logger::gauss_confl_type, 0, confl->getGroup(), *confl);
             #endif
             
             solver.cancelUntil(0);

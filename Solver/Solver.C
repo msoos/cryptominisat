@@ -1252,7 +1252,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
-        logger.conflict(Logger::simple_confl_type, backtrack_level, confl->group, learnt_clause);
+        logger.conflict(Logger::simple_confl_type, backtrack_level, confl->getGroup(), learnt_clause);
     #endif
     cancelUntil(backtrack_level);
     
@@ -1277,7 +1277,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         Clause* c = Clause_new(learnt_clause, learnt_clause_group++, true);
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis)
-            logger.set_group_name(c->group, "learnt clause");
+            logger.set_group_name(c->getGroup(), "learnt clause");
         #endif
         learnts.push(c);
         c->setActivity(nbLevels); // LS

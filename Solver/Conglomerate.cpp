@@ -174,7 +174,7 @@ uint Conglomerate::conglomerateXors()
             x.plainPrint();
             #endif
             
-            const uint old_group = x.group;
+            const uint old_group = x.getGroup();
             bool inverted = first_inverted ^ x.xor_clause_inverted();
             assert(!toRemove[c[i].second]);
             toRemove[c[i].second] = true;
@@ -398,7 +398,7 @@ void Conglomerate::addRemovedClauses()
         for(uint i2 = 0; i2 != c.size() ; i2++) {
             ps.push(Lit(c[i2].var(), false));
         }
-        S->addXorClause(ps, c.xor_clause_inverted(), c.group, tmp, true);
+        S->addXorClause(ps, c.xor_clause_inverted(), c.getGroup(), tmp, true);
         free(&c);
     }
     calcAtFinish.clear();

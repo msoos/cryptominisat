@@ -259,7 +259,7 @@ void Logger::propagation(const Lit lit, Clause* c)
         group = UINT_MAX;
     } else {
         type = simple_propagation_type;
-        group = c->group;
+        group = c->getGroup();
     }
 
     //graph

@@ -183,7 +183,7 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
             vec<Lit> ps(2);
             ps[0] = c[0].unsign();
             ps[1] = c[1].unsign();
-            solver.varReplacer->replace(ps, c.xor_clause_inverted(), c.group);
+            solver.varReplacer->replace(ps, c.xor_clause_inverted(), c.getGroup());
             solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
             return true;
         }

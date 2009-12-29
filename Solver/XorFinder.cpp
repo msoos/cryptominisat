@@ -96,7 +96,7 @@ uint XorFinder::findXors(uint& sumLengths)
         for (const Lit *it = &c[0], *cend = it+c.size() ; it != cend; it++) {
             lits.push(Lit(it->var(), false));
         }
-        uint old_group = c.group;
+        uint old_group = c.getGroup();
         
         #ifdef VERBOSE_DEBUG
         cout << "- Found clauses:" << endl;

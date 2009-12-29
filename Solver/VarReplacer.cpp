@@ -174,7 +174,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
         vec<Lit> ps(2);
         ps[0] = c[0];
         ps[1] = c[1];
-        addBinaryXorClause(ps, c.xor_clause_inverted(), c.group, true);
+        addBinaryXorClause(ps, c.xor_clause_inverted(), c.getGroup(), true);
         return true;
     }
     default:
