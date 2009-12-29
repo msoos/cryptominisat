@@ -986,7 +986,7 @@ const bool Gaussian::check_last_one_in_cols(matrixset& m) const
     return true;
 }
 
-const bool Gaussian::check_matrix_against_varset(PackedMatrix& matrix, const matrixset& m) const
+void Gaussian::check_matrix_against_varset(PackedMatrix& matrix, const matrixset& m) const
 {
     for (uint i = 0; i < matrix.getSize(); i++) {
         const PackedRow mat_row = matrix.getMatrixAt(i);
