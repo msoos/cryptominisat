@@ -1,10 +1,17 @@
 Niklas Eén
 Niklas Sörensson
-Mate SOOS <mate.soos@inrialpes.fr>
+Gilles Audemard
+Laurent Simon
+Mate Soos <mate.soos@inrialpes.fr>
 Karsten Nohl <honk98@web.de>
 
 thanks to:
-- the authors' professors for their trust in their PhD students' capabilities
-- the gcc compiler team for the excellent C++ compiler
-- libstdc team for the excellent standard library
-- Bjarne Stroustrup for the excellent C++
+- the authors' professors
+- the gcc compiler team
+- libstdc team
+- Bjarne Stroustrup
+
+Bug-hunting thanks:
+- Vijay Ganesh for finding a zillion bugs
+- Martin Maurer for helping with Visual C-specific things
+- Users of STP (Simple Theorem Prover) for their feedback
