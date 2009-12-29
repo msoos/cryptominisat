@@ -18,7 +18,7 @@ make install PREFIX=/usr/i586-mingw32msvc
 
 --------compile minisat ------------
 
-i586-mingw32msvc-g++ -O3 -g0 -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a Solver.C Logger.C fcopy.cpp clause.cpp -o minisat.exe
+i586-mingw32msvc-g++ -O3 -g0 -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a Logger.C Solver.C  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp Gaussian.cpp MatrixFinder.cpp PackedRow.cpp RestartTypeChooser.cpp VarReplacer.cpp XorFinder.cpp  -o minisat.exe
 
 -----------------------------------
 
