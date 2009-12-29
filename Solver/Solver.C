@@ -1021,7 +1021,7 @@ const vector<Lit> Solver::get_unitary_learnts() const
     return unitaries;
 }
 
-void Solver::dump_sorted_learnts(const char* file)
+void Solver::dumpSortedLearnts(const char* file)
 {
     FILE* outfile = fopen(file, "w");
     if (!outfile) {
@@ -1031,13 +1031,29 @@ void Solver::dump_sorted_learnts(const char* file)
     
     if (decisionLevel() > 0) {
         for (uint32_t i = 0; i != trail_lim[0]; i++)
-            printf("%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var());
+            printf("%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
     }
     
     std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
         learnts[i]->plainPrint(outfile);
     }
+    fclose(outfile);
+}
+
+void Solver::dumpUnitaryLearnts(const char* file)
+{
+    FILE* outfile = fopen(file, "w");
+    if (!outfile) {
+        printf("Error: Cannot open file '%s' to write learnt clauses!\n", file);
+        exit(-1);
+    }
+    
+    if (decisionLevel() > 0) {
+        for (uint32_t i = 0; i != trail_lim[0]; i++)
+            printf("%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+    }
+    
     fclose(outfile);
 }
 

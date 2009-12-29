@@ -49,6 +49,8 @@ using std::endl;
 static bool grouping = false;
 static bool debugLib = false;
 static bool debugNewVar = false;
+static char learnts_filename[500];
+static bool dumpLearnts = false;
 
 //=================================================================================================
 // DIMACS Parser:
@@ -335,6 +337,8 @@ static void SIGINT_handler(int signum)
     printf("\n");
     printf("*** INTERRUPTED ***\n");
     printStats(*solver);
+    if (dumpLearnts)
+        solver->dumpSortedLearnts(learnts_filename);
     printf("\n");
     printf("*** INTERRUPTED ***\n");
     exit(1);
@@ -384,6 +388,8 @@ void printUsage(char** argv)
     printf("                    solver feature\n");
     printf("  -restart        = {auto, static, dynamic}   Which kind of restart strategy to\n");
     printf("                    follow. Default is auto\n");
+    printf("  -dumpLearnts    = <filename> If interrupted or reached restart limit, dump the\n");
+    printf("                    learnt unitary clauses to the specified file\n");
     printf("\n");
 }
 
@@ -402,9 +408,6 @@ int main(int argc, char** argv)
 {
     Solver      S;
     S.verbosity = 1;
-    bool dumplearnts = false;
-    char learnts_filename[500];
-
 
     int         i, j;
     const char* value;
@@ -484,12 +487,12 @@ int main(int argc, char** argv)
                 exit(0);
             }
             S.setMaxRestarts(maxrest);
-        } else if ((value = hasPrefix(argv[i], "-dumplearnts="))) {
+        } else if ((value = hasPrefix(argv[i], "-dumpLearnts="))) {
             if (sscanf(value, "%400s", learnts_filename) < 0 || strlen(learnts_filename) == 0) {
                 printf("ERROR! wrong filename '%s'\n", learnts_filename);
                 exit(0);
             }
-            dumplearnts = true;
+            dumpLearnts = true;
         } else if ((value = hasPrefix(argv[i], "-greedyUnbound"))) {
             S.greedyUnbound = true;
         } else if ((value = hasPrefix(argv[i], "-noxorfind"))) {
@@ -569,8 +572,8 @@ int main(int argc, char** argv)
     lbool ret = S.solve();
     if (S.verbosity >= 1) printStats(S);
     printf("c \n");
-    if (dumplearnts)
-        S.dump_sorted_learnts(learnts_filename);
+    if (dumpLearnts)
+        S.dumpSortedLearnts(learnts_filename);
     if (ret == l_Undef)
         printf("c Not finished running -- maximum restart reached\n");
     
