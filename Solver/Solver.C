@@ -1031,7 +1031,7 @@ void Solver::dumpSortedLearnts(const char* file)
     
     if (decisionLevel() > 0) {
         for (uint32_t i = 0; i != trail_lim[0]; i++)
-            printf("%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+            fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
     }
     
     std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
@@ -1051,7 +1051,7 @@ void Solver::dumpUnitaryLearnts(const char* file)
     
     if (decisionLevel() > 0) {
         for (uint32_t i = 0; i != trail_lim[0]; i++)
-            printf("%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+            fprintf(outfile, "%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
     }
     
     fclose(outfile);
