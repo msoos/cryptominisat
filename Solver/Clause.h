@@ -68,6 +68,9 @@ protected:
     Lit     data[0];
     #endif //_MSC_VER
 
+#ifdef _MSC_VER
+public:
+#endif //_MSC_VER
     template<class V>
     Clause(const V& ps, const uint _group, const bool learnt)
     {
@@ -81,9 +84,11 @@ protected:
     }
 
 public:
+    #ifndef _MSC_VER
     // -- use this function instead:
     template<class T>
     friend Clause* Clause_new(const T& ps, const uint group, const bool learnt = false);
+    #endif //_MSC_VER
 
     uint         size        ()      const {
         return size_etc >> 4;
@@ -182,7 +187,15 @@ protected:
 
 class XorClause : public Clause
 {
-private:
+protected:
+    inline void setInverted(bool inverted)
+    {
+        size_etc = (size_etc & 7) + ((uint32_t)inverted << 3) + (size_etc & ~15);
+    }
+
+#ifdef _MSC_VER
+public:
+#endif //_MSC_VER
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
     XorClause(const V& ps, const bool inverted, const uint _group) :
@@ -192,9 +205,11 @@ private:
     }
 
 public:
+    #ifndef _MSC_VER
     // -- use this function instead:
     template<class V>
     friend XorClause* XorClause_new(const V& ps, const bool inverted, const uint group);
+    #endif //_MSC_VER
 
     inline bool xor_clause_inverted() const
     {
@@ -221,12 +236,6 @@ public:
     }
     
     friend class MatrixFinder;
-    
-protected:
-    inline void setInverted(bool inverted)
-    {
-        size_etc = (size_etc & 7) + ((uint32_t)inverted << 3) + (size_etc & ~15);
-    }
 };
 
 template<class T>
