@@ -64,8 +64,6 @@ protected:
     Lit     data[0];
     #endif //_MSC_VER
 
-public:
-
     template<class V>
     Clause(const V& ps, const uint _group, const bool learnt) :
             group(_group)
@@ -78,6 +76,7 @@ public:
         else calcAbstraction();
     }
 
+public:
     // -- use this function instead:
     template<class T>
     friend Clause* Clause_new(const T& ps, const uint group, const bool learnt = false);
@@ -160,7 +159,7 @@ protected:
 
 class XorClause : public Clause
 {
-public:
+private:
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
     XorClause(const V& ps, const bool inverted, const uint _group) :
@@ -169,6 +168,7 @@ public:
         setInverted(inverted);
     }
 
+public:
     // -- use this function instead:
     template<class V>
     friend XorClause* XorClause_new(const V& ps, const bool inverted, const uint group);
