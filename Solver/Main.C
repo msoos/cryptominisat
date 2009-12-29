@@ -337,8 +337,10 @@ static void SIGINT_handler(int signum)
     printf("\n");
     printf("*** INTERRUPTED ***\n");
     printStats(*solver);
-    if (dumpLearnts)
+    if (dumpLearnts) {
         solver->dumpSortedLearnts(learnts_filename);
+        cout << "Sorted learnt clauses dumped to file " << learnts_filename << endl;
+    }
     printf("\n");
     printf("*** INTERRUPTED ***\n");
     exit(1);
@@ -572,8 +574,10 @@ int main(int argc, char** argv)
     lbool ret = S.solve();
     if (S.verbosity >= 1) printStats(S);
     printf("c \n");
-    if (dumpLearnts)
+    if (dumpLearnts) {
         S.dumpSortedLearnts(learnts_filename);
+        cout << "Sorted learnt clauses dumped to file " << learnts_filename << endl;
+    }
     if (ret == l_Undef)
         printf("c Not finished running -- maximum restart reached\n");
     
