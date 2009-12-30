@@ -25,19 +25,18 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <vector>
 #include <string>
 #include <map>
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
+#endif //_MSC_VER
 
 #include "Vec.h"
 #include "Heap.h"
 #include "Alg.h"
 #include "SolverTypes.h"
-#include "stdint.h"
 #include "limits.h"
 #include "Clause.h"
-
-#ifndef uint
-#define uint unsigned int
-#endif
 
 using std::vector;
 using std::pair;

@@ -21,7 +21,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef TIME_MEM_H
 #define TIME_MEM_H
 
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
+#endif //_MSC_VER
 
 #ifdef _MSC_VER
 #include <ctime>

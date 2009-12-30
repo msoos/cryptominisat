@@ -20,16 +20,18 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <ctime>
 #include <cstring>
-#include <stdint.h>
 #include <errno.h>
 #include <string.h>
 #include <sstream>
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
+#include <stdint.h>
+#endif //_MSC_VER
 
-#include <sys/types.h>
 #include <signal.h>
 
-#ifdef DISABLE_ZLIB
-#else
+#ifndef DISABLE_ZLIB
 #include <zlib.h>
 #endif // DISABLE_ZLIB
 

@@ -22,17 +22,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 #include <limits.h>
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
+#endif //_MSC_VER
 
 #include "SolverTypes.h"
 #include "Vec.h"
 #include <string.h>
 #include <iostream>
 #include <algorithm>
-
-#ifndef uint
-#define uint unsigned int
-#endif
 
 using std::vector;
 

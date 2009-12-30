@@ -21,7 +21,12 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef BoundedQueue_h
 #define BoundedQueue_h
 
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
+#endif //_MSC_VER
+
 #include "Vec.h"
 
 //=================================================================================================
@@ -57,7 +62,7 @@ public:
     void pop() {sumofqueue-=elems[last]; queuesize--; if ((++last) == maxsize) last = 0;}
     
     unsigned long long getsum() const {return sumofqueue;}
-    unsigned int getavg() const {return (unsigned int)(sumofqueue/((unsigned long long)queuesize));}
+    uint getavg() const {return (unsigned int)(sumofqueue/((unsigned long long)queuesize));}
     int isvalid() const {return (queuesize==maxsize);}
     
     void growTo(int size) {

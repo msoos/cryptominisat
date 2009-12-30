@@ -1517,7 +1517,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     #ifdef LS_STATS_NBBUMP
     for(int i=0;i<learnts.size();i++)
         printf("## %d %d %d\n", learnts[i]->size(),learnts[i]->activity(),
-               (unsigned int)learnts[i]->nbBump());
+               (uint)learnts[i]->nbBump());
     #endif
 
     cancelUntil(0);

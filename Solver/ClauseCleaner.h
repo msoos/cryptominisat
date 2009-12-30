@@ -18,7 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CLAUSECLEANER_H
 #define CLAUSECLEANER_H
 
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
+#endif //_MSC_VER
+
 #include "Solver.h"
 
 class ClauseCleaner

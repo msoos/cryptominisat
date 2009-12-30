@@ -18,8 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef VARREPLACER_H
 #define VARREPLACER_H
 
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
-#include <stdint.h>
+#endif //_MSC_VER
+
 #include <map>
 #include <vector>
 using std::map;

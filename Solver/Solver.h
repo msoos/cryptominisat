@@ -25,7 +25,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cstdio>
 #include <string.h>
 #include <stdio.h>
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
+#endif //_MSC_VER
 
 #include "Vec.h"
 #include "Heap.h"
@@ -209,7 +213,7 @@ protected:
     Heap<VarOrderLt>    order_heap;       // A priority queue of variables ordered with respect to the variable activity.
     double              progress_estimate;// Set by 'search()'.
     bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
-    bqueue<unsigned int> nbDecisionLevelHistory; // Set of last decision level in conflict clauses
+    bqueue<uint> nbDecisionLevelHistory; // Set of last decision level in conflict clauses
     float               totalSumOfDecisionLevel;
     MTRand              mtrand;           // random number generaton
     RestartType         restartType;      // Used internally to determine which restart strategy to choose

@@ -21,7 +21,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef CLAUSE_H
 #define CLAUSE_H
 
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
+#endif //_MSC_VER
 #include <cstdio>
 #include <vector>
 #include <sys/types.h>
@@ -29,10 +33,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "SolverTypes.h"
 #include "PackedRow.h"
 #include "constants.h"
-
-#ifndef uint
-#define uint unsigned int
-#endif
 
 using std::vector;
 
