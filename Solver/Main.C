@@ -342,7 +342,7 @@ static void SIGINT_handler(int signum)
     printStats(*solver);
     if (dumpLearnts) {
         solver->dumpSortedLearnts(learnts_filename, maxLearntsSize);
-        cout << "Sorted learnt clauses dumped to file " << learnts_filename << endl;
+        cout << "c Sorted learnt clauses dumped to file '" << learnts_filename << "'" << endl;
     }
     printf("\n");
     printf("*** INTERRUPTED ***\n");
@@ -593,7 +593,7 @@ int main(int argc, char** argv)
     printf("c \n");
     if (dumpLearnts) {
         S.dumpSortedLearnts(learnts_filename, maxLearntsSize);
-        cout << "Sorted learnt clauses dumped to file " << learnts_filename << endl;
+        cout << "c Sorted learnt clauses dumped to file '" << learnts_filename << "'" << endl;
     }
     if (ret == l_Undef)
         printf("c Not finished running -- maximum restart reached\n");
