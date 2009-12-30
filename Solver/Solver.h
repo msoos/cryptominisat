@@ -149,8 +149,7 @@ public:
     const vec<Clause*>& get_learnts() const; //Get all learnt clauses that are >1 long
     const vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
     const uint get_unitary_learnts_num() const; //return the number of unitary learnt clauses
-    void dumpSortedLearnts(const char* file); // Dumps all learnt clauses (including unitary ones) into the file
-    void dumpUnitaryLearnts(const char* file); // Dumps all unitary learnt clauses into the file
+    void dumpSortedLearnts(const char* file, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const char* fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
 
 protected:

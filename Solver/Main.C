@@ -53,6 +53,7 @@ static bool debugLib = false;
 static bool debugNewVar = false;
 static char learnts_filename[500];
 static bool dumpLearnts = false;
+static uint32_t maxLearntsSize = std::numeric_limits<uint32_t>::max();
 
 //=================================================================================================
 // DIMACS Parser:
@@ -340,7 +341,7 @@ static void SIGINT_handler(int signum)
     printf("*** INTERRUPTED ***\n");
     printStats(*solver);
     if (dumpLearnts) {
-        solver->dumpSortedLearnts(learnts_filename);
+        solver->dumpSortedLearnts(learnts_filename, maxLearntsSize);
         cout << "Sorted learnt clauses dumped to file " << learnts_filename << endl;
     }
     printf("\n");
@@ -394,6 +395,9 @@ void printUsage(char** argv)
     printf("                    follow. Default is auto\n");
     printf("  -dumpLearnts    = <filename> If interrupted or reached restart limit, dump the\n");
     printf("                    learnt unitary clauses to the specified file\n");
+    printf("  -maxDumpLearntS = [0 - 2^32-1] When dumping the learnts to file, what should be\n");
+    printf("                    maximum length of the clause dumped. Useful to make the\n");
+    printf("                    resulting file smaller. Default is 2^32-1 (i.e. all lenghts)\n");
     printf("\n");
 }
 
@@ -497,6 +501,17 @@ int main(int argc, char** argv)
                 exit(0);
             }
             dumpLearnts = true;
+        } else if ((value = hasPrefix(argv[i], "-maxDumpLearntS="))) {
+            if (!dumpLearnts) {
+                printf("ERROR! -dumpLearnts=<filename> must be first activated before issuing -maxDumpLearntS=<size>\n");
+                exit(0);
+            }
+            int tmp;
+            if (sscanf(value, "%d", &tmp) < 0 || tmp < 0) {
+                cout << "ERROR! wrong maximum dumped learnt clause size is illegal: " << tmp << endl;
+                exit(0);
+            }
+            maxLearntsSize = (uint32_t)tmp;
         } else if ((value = hasPrefix(argv[i], "-greedyUnbound"))) {
             S.greedyUnbound = true;
         } else if ((value = hasPrefix(argv[i], "-noxorfind"))) {
@@ -577,7 +592,7 @@ int main(int argc, char** argv)
     if (S.verbosity >= 1) printStats(S);
     printf("c \n");
     if (dumpLearnts) {
-        S.dumpSortedLearnts(learnts_filename);
+        S.dumpSortedLearnts(learnts_filename, maxLearntsSize);
         cout << "Sorted learnt clauses dumped to file " << learnts_filename << endl;
     }
     if (ret == l_Undef)
