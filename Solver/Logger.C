@@ -80,6 +80,7 @@ void Logger::new_var(const Var var)
         times_var_propagated.resize(var+1, 0);
         times_var_guessed.resize(var+1, 0);
         depths_of_assigns_for_var.resize(var+1);
+        depths_of_assigns_unit.resize(var+1, false);
     }
 }
 
@@ -91,6 +92,7 @@ void Logger::new_group(const uint group)
         times_group_caused_conflict.resize(group+1, 0);
         times_group_caused_propagation.resize(group+1, 0);
         depths_of_propagations_for_group.resize(group+1);
+        depths_of_propagations_unit.resize(group+1, false);
         depths_of_conflicts_for_group.resize(group+1);
     }
 }
@@ -224,7 +226,8 @@ void Logger::conflict(const confl_type type, const uint goback_level, const uint
 
     if (statistics_on) {
         times_group_caused_conflict[group]++;
-        depths_of_conflicts_for_group[group].push_back(S->decisionLevel());
+        depths_of_conflicts_for_group[group].sum += S->decisionLevel();
+        depths_of_conflicts_for_group[group].num ++;
         
         no_conflicts++;
         sum_conflict_depths += S->trail.size() - S->trail_lim[0];
@@ -293,18 +296,23 @@ void Logger::propagation(const Lit lit, Clause* c)
     if (statistics_on) {
         switch (type) {
         case simple_propagation_type:
-            depths_of_propagations_for_group[group].push_back(S->decisionLevel());
+            depths_of_propagations_for_group[group].sum += S->decisionLevel();
+            depths_of_propagations_for_group[group].num ++;
+            if (S->decisionLevel() == 0) depths_of_propagations_unit[group] = true;
             times_group_caused_propagation[group]++;
         case add_clause_type:
             no_propagations++;
             times_var_propagated[lit.var()]++;
-            depths_of_assigns_for_var[lit.var()].push_back(S->decisionLevel());
+            depths_of_assigns_for_var[lit.var()].sum += S->decisionLevel();
+            depths_of_assigns_for_var[lit.var()].num ++;
+            if (S->decisionLevel() == 0) depths_of_assigns_unit[lit.var()] = true;
             break;
         case guess_type:
             no_decisions++;
             times_var_guessed[lit.var()]++;
             
-            depths_of_assigns_for_var[lit.var()].push_back(S->decisionLevel());
+            depths_of_assigns_for_var[lit.var()].sum += S->decisionLevel();
+            depths_of_assigns_for_var[lit.var()].num ++;
             break;
         }
     }
@@ -357,16 +365,10 @@ void Logger::print_assign_var_order() const
 {
     vector<pair<double, uint> > prop_ordered;
     for (uint i = 0; i < depths_of_assigns_for_var.size(); i++) {
-        double avg = 0.0;
-        bool was_unit = false;
-        for (vector<uint>::const_iterator it = depths_of_assigns_for_var[i].begin(); it != depths_of_assigns_for_var[i].end(); it++) {
-            avg += *it;
-            if (*it == 0) was_unit = true;
-        }
-        if (depths_of_assigns_for_var[i].size() > 0 && !was_unit) {
-            avg /= (double) depths_of_assigns_for_var[i].size();
+        double avg = (double)depths_of_assigns_for_var[i].sum
+                    /(double)depths_of_assigns_for_var[i].num;
+        if (depths_of_assigns_for_var[i].num > 0 && !depths_of_assigns_unit[i])
             prop_ordered.push_back(std::make_pair(avg, i));
-        }
     }
 
     if (!prop_ordered.empty()) {
@@ -383,16 +385,10 @@ void Logger::print_prop_order() const
 {
     vector<pair<double, uint> > prop_ordered;
     for (uint i = 0; i < depths_of_propagations_for_group.size(); i++) {
-        double avg = 0.0;
-        bool was_unit = false;
-        for (vector<uint>::const_iterator it = depths_of_propagations_for_group[i].begin(); it != depths_of_propagations_for_group[i].end(); it++) {
-            avg += *it;
-            if (*it == 0) was_unit = true;
-        }
-        if (depths_of_propagations_for_group[i].size() > 0 && !was_unit) {
-            avg /= (double) depths_of_propagations_for_group[i].size();
+        double avg = (double)depths_of_propagations_for_group[i].sum
+                    /(double)depths_of_propagations_for_group[i].num;
+        if (depths_of_propagations_for_group[i].num > 0 && !depths_of_propagations_unit[i])
             prop_ordered.push_back(std::make_pair(avg, i));
-        }
     }
 
     if (!prop_ordered.empty()) {
@@ -409,13 +405,10 @@ void Logger::print_confl_order() const
 {
     vector<pair<double, uint> > confl_ordered;
     for (uint i = 0; i < depths_of_conflicts_for_group.size(); i++) {
-        double avg = 0.0;
-        for (vector<uint>::const_iterator it = depths_of_conflicts_for_group[i].begin(); it != depths_of_conflicts_for_group[i].end(); it++)
-            avg += *it;
-        if (depths_of_conflicts_for_group[i].size() > 0) {
-            avg /= (double) depths_of_conflicts_for_group[i].size();
+        double avg = (double)depths_of_conflicts_for_group[i].sum
+                    /(double)depths_of_conflicts_for_group[i].num;
+        if (depths_of_conflicts_for_group[i].num > 0)
             confl_ordered.push_back(std::make_pair(avg, i));
-        }
     }
 
     if (!confl_ordered.empty()) {
@@ -842,16 +835,27 @@ void Logger::reset_statistics()
     for (vecit it = props_by_group.begin(); it != props_by_group.end(); it++)
         *it = 0;
 
-    typedef vector<vector<uint> >::iterator vecvecit;
+    typedef vector<MyAvg>::iterator avgIt;
 
-    for (vecvecit it = depths_of_propagations_for_group.begin(); it != depths_of_propagations_for_group.end(); it++)
-        it->clear();
+    for (avgIt it = depths_of_propagations_for_group.begin(); it != depths_of_propagations_for_group.end(); it++) {
+        it->sum = 0;
+        it->num = 0;
+    }
 
-    for (vecvecit it = depths_of_conflicts_for_group.begin(); it != depths_of_conflicts_for_group.end(); it++)
-        it->clear();
+    for (avgIt it = depths_of_conflicts_for_group.begin(); it != depths_of_conflicts_for_group.end(); it++) {
+        it->sum = 0;
+        it->num = 0;
+    }
 
-    for (vecvecit it = depths_of_assigns_for_var.begin(); it != depths_of_assigns_for_var.end(); it++)
-        it->clear();
+    for (avgIt it = depths_of_assigns_for_var.begin(); it != depths_of_assigns_for_var.end(); it++) {
+        it->sum = 0;
+        it->num = 0;
+    }
+    for (uint i = 0; i < depths_of_assigns_unit.size(); i++)
+        depths_of_assigns_unit[i] = false;
+    
+    for (uint i = 0; i < depths_of_propagations_unit.size(); i++)
+        depths_of_propagations_unit[i] = false;
 
     sum_conflict_depths = 0;
     no_conflicts = 0;

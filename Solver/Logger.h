@@ -45,6 +45,17 @@ using std::map;
 
 class Solver;
 
+class MyAvg {
+public:
+    MyAvg() :
+        sum(0)
+        , num(0)
+        {}
+    
+    uint sum;
+    uint num;
+};
+
 class Logger
 {
 public:
@@ -140,9 +151,11 @@ private:
     vector<uint> times_group_caused_conflict;
     vector<uint> times_group_caused_propagation;
 
-    vector<vector<uint> > depths_of_propagations_for_group;
-    vector<vector<uint> > depths_of_conflicts_for_group;
-    vector<vector<uint> > depths_of_assigns_for_var;
+    vector<MyAvg> depths_of_propagations_for_group;
+    vector<bool>  depths_of_propagations_unit;
+    vector<MyAvg> depths_of_conflicts_for_group;
+    vector<MyAvg> depths_of_assigns_for_var;
+    vector<bool>  depths_of_assigns_unit;
 
     //the distribution of branch depths. first = depth, second = number of occurances
     vector<uint> branch_depth_distrib;
