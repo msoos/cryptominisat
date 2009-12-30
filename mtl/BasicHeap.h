@@ -20,6 +20,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef BasicHeap_h
 #define BasicHeap_h
 
+#include <stdint.h>
+
 #include "Vec.h"
 
 //=================================================================================================

@@ -22,10 +22,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <stdio.h>
 #include <set>
-#include <Vec.h>
 #include <vector>
 #include <string>
 #include <map>
+#include <stdint.h>
 
 #include "Vec.h"
 #include "Heap.h"

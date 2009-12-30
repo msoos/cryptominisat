@@ -21,9 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <map>
 #include <set>
+#include <stdint.h>
+
 #include "Clause.h"
 #include "VarReplacer.h"
-#include "stddef.h"
 
 using std::vector;
 using std::pair;

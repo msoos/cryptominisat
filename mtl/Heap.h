@@ -23,7 +23,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Vec.h"
 #include "string.h"
 #include <stdint.h>
-#define UINT32_MAX ((uint32_t)-1)
+#include <limits>
 
 //=================================================================================================
 // A heap implementation with support for decrease/increase key.
@@ -85,7 +85,7 @@ class Heap {
 
     uint32_t  size      ()          const { return heap.size(); }
     bool empty     ()          const { return heap.size() == 0; }
-    bool inHeap    (uint32_t n)     const { return n < indices.size() && indices[n] != UINT32_MAX; }
+    bool inHeap    (uint32_t n)     const { return n < indices.size() && indices[n] != std::numeric_limits<uint32_t>::max(); }
     uint32_t  operator[](uint32_t index) const { assert(index < heap.size()); return heap[index]; }
 
     void decrease  (uint32_t n) { assert(inHeap(n)); percolateUp(indices[n]); }
@@ -96,7 +96,7 @@ class Heap {
 
     void insert(uint32_t n)
     {
-        indices.growTo(n+1, UINT32_MAX);
+        indices.growTo(n+1, std::numeric_limits<uint32_t>::max());
         assert(!inHeap(n));
 
         indices[n] = heap.size();
@@ -110,7 +110,7 @@ class Heap {
         uint32_t x            = heap[0];
         heap[0]          = heap.last();
         indices[heap[0]] = 0;
-        indices[x]       = UINT32_MAX;
+        indices[x]       = std::numeric_limits<uint32_t>::max();
         heap.pop();
         if (heap.size() > 1) percolateDown(0);
         return x; 
@@ -120,10 +120,10 @@ class Heap {
     void clear(bool dealloc = false) 
     { 
         for (uint32_t i = 0; i != heap.size(); i++)
-            indices[heap[i]] = UINT32_MAX;
+            indices[heap[i]] = std::numeric_limits<uint32_t>::max();
 #ifndef NDEBUG
         for (uint32_t i = 0; i != indices.size(); i++)
-            assert(indices[i] == UINT32_MAX);
+            assert(indices[i] == std::numeric_limits<uint32_t>::max());
 #endif
         heap.clear(dealloc); 
     }
@@ -151,7 +151,7 @@ class Heap {
                 heap[j]          = heap[i];
                 indices[heap[i]] = j++;
             }else
-                indices[heap[i]] = UINT32_MAX;
+                indices[heap[i]] = std::numeric_limits<uint32_t>::max();
 
         heap.shrink(i - j);
         for (int i = heap.size() / 2 - 1; i >= 0; i--)

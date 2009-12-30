@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef FINDUNDEF_H
 #define FINDUNDEF_H
 
+#include <stdint.h>
 #include <vector>
 using std::vector;
 

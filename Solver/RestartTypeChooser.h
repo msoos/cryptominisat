@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SolverTypes.h"
 #include <vector>
-#include <sys/types.h>
+#include <stdint.h>
 using std::vector;
 
 class Solver;

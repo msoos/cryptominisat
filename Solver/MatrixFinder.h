@@ -18,10 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MATRIXFINDER_H
 #define MATRIXFINDER_H
 
-#include <sys/types.h>
-#include "Clause.h"
 #include <vector>
 #include <map>
+#include <stdint.h>
+
+#include "Clause.h"
 
 class Solver;
 

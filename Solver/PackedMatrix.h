@@ -18,14 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PACKEDMATRIX_H
 #define PACKEDMATRIX_H
 
-#include "PackedRow.h"
 #include <algorithm>
+#include <stdint.h>
+
+#include "PackedRow.h"
 
 //#define DEBUG_MATRIX
-
-#ifndef uint
-#define uint unsigned int
-#endif
 
 class PackedMatrix
 {

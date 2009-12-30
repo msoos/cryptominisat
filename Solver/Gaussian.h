@@ -19,6 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define GAUSSIAN_H
 
 #include <vector>
+#include <limits>
+#include <stdint.h>
+
 #include "SolverTypes.h"
 #include "Solver.h"
 #include "GaussianConfig.h"
@@ -36,8 +39,8 @@ using std::endl;
 
 class Clause;
 
-static const uint16_t unassigned_col = -1;
-static const Var unassigned_var = -1;
+static const uint16_t unassigned_col = std::numeric_limits<uint16_t>::max();
+static const Var unassigned_var = std::numeric_limits<Var>::max();
 
 class Gaussian
 {

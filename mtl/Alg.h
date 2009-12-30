@@ -19,7 +19,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #ifndef Alg_h
 #define Alg_h
-#include "stdint.h"
+
+#include <stdint.h>
 
 //=================================================================================================
 // Useful functions on vectors

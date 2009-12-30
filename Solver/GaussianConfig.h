@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef GAUSSIANCONFIG_H
 #define GAUSSIANCONFIG_H
 
-#include <sys/types.h>
+#include <stdint.h>
 #include "PackedRow.h"
 
 class GaussianConfig

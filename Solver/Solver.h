@@ -25,6 +25,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cstdio>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "Vec.h"
 #include "Heap.h"

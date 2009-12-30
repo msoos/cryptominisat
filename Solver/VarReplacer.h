@@ -18,15 +18,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef VARREPLACER_H
 #define VARREPLACER_H
 
-#include "SolverTypes.h"
-#include "Clause.h"
-#include "Vec.h"
-
-#include <sys/types.h>
+#include <stdint.h>
+#include <stdint.h>
 #include <map>
 #include <vector>
 using std::map;
 using std::vector;
+
+#include "SolverTypes.h"
+#include "Clause.h"
+#include "Vec.h"
 
 class Solver;
 
