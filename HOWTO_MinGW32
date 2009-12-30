@@ -27,8 +27,3 @@ useful for examining archives:
 i586-mingw32msvc-nm libz.a
 i586-mingw32msvc-objdump -G libz.a
 
----------  libs needed  ---------
-BOOST:
-http://sourceforge.net/project/showfiles.php?group_id=204414
-
-
