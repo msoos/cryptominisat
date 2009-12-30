@@ -1,5 +1,17 @@
 If compiling with Visual C, the CHUNK_LIMIT poses problems.
-Problem is, that VC2008 seems to have a stack, which is not big enough.
+Problem is, that VC2008 seems to have a too small default stack, which is not big enough.
 With default command line parameters it will crash.
 The workaround is to give the command line parameter /F. With this you can
-increase the stack to a certain size. Setting to 2 MB is good enough
+increase the stack to a certain size. Setting it to 2 MB is good enough
+
+ZLIB might also pose problems. If you cannot correctly compile it under
+windows, I suggest you add the -DDISABLE_ZLIB to your compilation flags.
+
+The compilation instruction should therefore be:
+cl /favor:INTEL64 /O2 /Fecryptominisat.exe -DDISABLE_ZLIB /F2097152 
+/TP /EHsc -I. -I../mtl/ -I../MTRand/ Main.C Logger.C Solver.C 
+ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp Gaussian.cpp 
+MatrixFinder.cpp PackedRow.cpp RestartTypeChooser.cpp VarReplacer.cpp 
+XorFinder.cpp
+
+executed from the 'Solver' subdirectory
