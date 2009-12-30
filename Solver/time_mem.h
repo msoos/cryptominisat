@@ -21,6 +21,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef TIME_MEM_H
 #define TIME_MEM_H
 
+#include <stdint.h>
+
 #ifdef _MSC_VER
 #include <ctime>
 
@@ -28,7 +30,7 @@ static inline double cpuTime(void)
 {
     return (double)clock() / CLOCKS_PER_SEC;
 }
-#else
+#else //_MSC_VER
 #ifdef CROSS_COMPILE
 #include <ctime>
 
@@ -36,7 +38,7 @@ static inline double cpuTime(void)
 {
     return (double)clock() / CLOCKS_PER_SEC;
 }
-#else
+#else //CROSS_COMPILE
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -47,8 +49,8 @@ static inline double cpuTime(void)
     getrusage(RUSAGE_SELF, &ru);
     return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000;
 }
-#endif
-#endif
+#endif //CROSS_COMPILE
+#endif //_MSC_VER
 
 
 #if defined(__linux__)
