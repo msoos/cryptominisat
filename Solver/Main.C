@@ -600,12 +600,14 @@ int main(int argc, char** argv)
     
     if (res != NULL){
         if (ret == l_True) {
+            printf("c SAT\n");
             fprintf(res, "SAT\n");
             for (uint32_t i = 0; i != S.nVars(); i++)
                 if (S.model[i] != l_Undef)
                     fprintf(res, "%s%d ", (S.model[i] == l_True)? "" : "-", i+1);
                 fprintf(res, "0\n");
         } else if (ret == l_False)
+            printf("c UNSAT\n");
             fprintf(res, "UNSAT\n");
         fclose(res);
     } else {
