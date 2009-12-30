@@ -231,11 +231,9 @@ void Logger::conflict(const confl_type type, const uint goback_level, const uint
         sum_decisions_on_branches += S->decisionLevel();
         sum_propagations_on_branches += S->trail.size() - S->trail_lim[0] - S->decisionLevel();
         
-        map<uint, uint>::iterator it = branch_depth_distrib.find(S->decisionLevel());
-        if (it == branch_depth_distrib.end())
-            branch_depth_distrib[S->decisionLevel()] = 1;
-        else
-            it->second++;
+        if (branch_depth_distrib.size() <= S->decisionLevel())
+            branch_depth_distrib.resize(S->decisionLevel()+1, 0);
+        branch_depth_distrib[S->decisionLevel()]++;
     }
 }
 
@@ -553,11 +551,10 @@ void Logger::print_branch_depth_distrib() const
     const uint range = 20;
     map<uint, uint> range_stat;
 
-    for (map<uint, uint>::const_iterator it = branch_depth_distrib.begin(); it != branch_depth_distrib.end(); it++) {
-        //cout << it->first << " : " << it->second << endl;
-        range_stat[it->first/range] += it->second;
+    uint i = 0;
+    for (vector<uint>::const_iterator it = branch_depth_distrib.begin(); it != branch_depth_distrib.end(); it++, i++) {
+        range_stat[i/range] += *it;
     }
-    //cout << endl;
 
     print_footer();
     print_simple_line(" No. search branches with branch depth between");
@@ -568,9 +565,9 @@ void Logger::print_branch_depth_distrib() const
     ss << "branch_depths/branch_depth_file" << runid << "-" << S->starts << ".txt";
     ofstream branch_depth_file;
     branch_depth_file.open(ss.str().c_str());
-    uint i = 0;
+    i = 0;
     
-    for (map<uint, uint>::iterator it = range_stat.begin(); it != range_stat.end(); it++) {
+    for (map<uint, uint>::iterator it = range_stat.begin(); it != range_stat.end(); it++, i++) {
         std::stringstream ss2;
         ss2 << it->first*range << " - " << it->first*range + range-1;
         print_line(ss2.str(), it->second);
@@ -583,7 +580,6 @@ void Logger::print_branch_depth_distrib() const
                 branch_depth_file << "\"\"";
             branch_depth_file << endl;
         }
-        i++;
     }
     if (branch_depth_file.is_open())
         branch_depth_file.close();

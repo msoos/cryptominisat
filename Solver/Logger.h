@@ -145,7 +145,7 @@ private:
     vector<vector<uint> > depths_of_assigns_for_var;
 
     //the distribution of branch depths. first = depth, second = number of occurances
-    map<uint, uint> branch_depth_distrib;
+    vector<uint> branch_depth_distrib;
 
     uint sum_conflict_depths;
     uint no_conflicts;
