@@ -2,6 +2,8 @@ ver 2.3.2 -- 28/12/2009
 * further ints have been replaced with uints
 * ZLIB can now be disabled
 * Visual C++ 2008 can now compile the sources
+* Statistics generation is much faster
+  (thanks to Martin Maurer for spotting this)
 
 ver 2.3.0 -- 17/12/2009
 * binary learnts are converted to 2-long xors if possible, and eliminated
