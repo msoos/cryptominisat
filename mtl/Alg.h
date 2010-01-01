@@ -20,7 +20,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef Alg_h
 #define Alg_h
 
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
+#endif //_MSC_VER
 
 //=================================================================================================
 // Useful functions on vectors

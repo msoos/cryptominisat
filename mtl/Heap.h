@@ -21,9 +21,14 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Heap_h
 
 #include "Vec.h"
+
 #include "string.h"
-#include <stdint.h>
 #include <limits>
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
+#include <stdint.h>
+#endif //_MSC_VER
 
 //=================================================================================================
 // A heap implementation with support for decrease/increase key.
