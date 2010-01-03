@@ -33,9 +33,9 @@ class PackedMatrix
 {
 public:
     PackedMatrix() :
-        numRows(0)
+        mp(NULL)
+        , numRows(0)
         , numCols(0)
-        , mp(NULL)
     {
     }
     

@@ -215,9 +215,9 @@ public:
 private:
     friend class PackedMatrix;
     PackedRow(const uint _size, uint64_t*  const _mp) :
-        size(_size)
-        , mp(_mp+1)
+        mp(_mp+1)
         , is_true_internal(*_mp)
+        , size(_size)
     {}
     
     uint64_t* __restrict const mp;
