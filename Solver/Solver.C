@@ -133,7 +133,7 @@ Var Solver::newVar(bool sign, bool dvar)
     activity  .push(0);
     seen      .push(0);
     permDiff  .push(0);
-    polarity  .push_back((char)sign);
+    polarity  .push_back(sign);
 
     decision_var.push_back(dvar);
     varReplacer->newVar();
