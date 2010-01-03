@@ -298,15 +298,15 @@ inline Lit Clause::subsumes(const Clause& other) const
 class WatchedBin {
     public:
         WatchedBin(Clause *_clause, Lit _impliedLit) : impliedLit(_impliedLit), clause(_clause) {};
-        Lit impliedLit;
         Clause *clause;
+        Lit impliedLit;
 };
 
 class Watched {
     public:
         Watched(Clause *_clause, Lit _blockedLit) : blockedLit(_blockedLit), clause(_clause) {};
-        Lit blockedLit;
         Clause *clause;
+        Lit blockedLit;
 };
 
 #endif //CLAUSE_H
