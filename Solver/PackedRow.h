@@ -220,9 +220,9 @@ private:
         , is_true_internal(*_mp)
     {}
     
-    const uint size;
     uint64_t* __restrict const mp;
     uint64_t& is_true_internal;
+    const uint size;
 };
 
 std::ostream& operator << (std::ostream& os, const PackedRow& m);

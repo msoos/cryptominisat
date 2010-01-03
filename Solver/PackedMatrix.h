@@ -209,9 +209,9 @@ public:
 
 private:
     
+    uint64_t* mp;
     uint numRows;
     uint numCols;
-    uint64_t* mp;
 };
 
 #endif //PACKEDMATRIX_H
