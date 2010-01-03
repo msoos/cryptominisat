@@ -54,6 +54,7 @@ static bool debugNewVar = false;
 static char learnts_filename[500];
 static bool dumpLearnts = false;
 static uint32_t maxLearntsSize = std::numeric_limits<uint32_t>::max();
+static bool printResult = true;
 
 //=================================================================================================
 // DIMACS Parser:
@@ -538,6 +539,8 @@ int main(int argc, char** argv)
                 printf("ERROR! unknown restart type %s\n", value);
                 exit(0);
             }
+        } else if ((value = hasPrefix(argv[i], "-noResPrint"))) {
+            printResult = false;
         } else if (strncmp(argv[i], "-", 1) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
@@ -607,10 +610,12 @@ int main(int argc, char** argv)
         if (ret == l_True) {
             printf("c SAT\n");
             fprintf(res, "SAT\n");
-            for (uint32_t i = 0; i != S.nVars(); i++)
-                if (S.model[i] != l_Undef)
-                    fprintf(res, "%s%d ", (S.model[i] == l_True)? "" : "-", i+1);
-                fprintf(res, "0\n");
+            if (printResult) {
+                for (uint32_t i = 0; i != S.nVars(); i++)
+                    if (S.model[i] != l_Undef)
+                        fprintf(res, "%s%d ", (S.model[i] == l_True)? "" : "-", i+1);
+                    fprintf(res, "0\n");
+            }
         } else if (ret == l_False)
             printf("c UNSAT\n");
             fprintf(res, "UNSAT\n");
@@ -618,9 +623,10 @@ int main(int argc, char** argv)
     } else {
         if (ret == l_True)
             printf("s SATISFIABLE\n");
-        else if (ret == l_False) printf("s UNSATISFIABLE\n");
+        else if (ret == l_False)
+            printf("s UNSATISFIABLE\n");
         
-        if(ret == l_True) {
+        if(ret == l_True && printResult) {
             printf("v ");
             for (uint32_t i = 0; i != S.nVars(); i++)
                 if (S.model[i] != l_Undef)
