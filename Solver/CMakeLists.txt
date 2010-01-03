@@ -3,7 +3,7 @@ include_directories(${crypto_SOURCE_DIR}/Solver)
 include_directories(${crypto_SOURCE_DIR}/MTRand)
 
 cmake_minimum_required( VERSION 2.6 FATAL_ERROR )
-find_package( Boost 1.34 COMPONENTS thread )
+find_package( Boost 1.34 COMPONENTS REQUIRED thread )
 link_directories ( ${Boost_LIBRARY_DIRS} )
 include_directories ( ${Boost_INCLUDE_DIRS} )
 
