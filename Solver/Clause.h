@@ -33,6 +33,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "SolverTypes.h"
 #include "PackedRow.h"
 #include "constants.h"
+#include "SmallPtr.h"
 
 using std::vector;
 
@@ -294,19 +295,24 @@ inline Lit Clause::subsumes(const Clause& other) const
     return ret;
 }
 
+typedef sptr<Clause> ClausePtr;
+typedef sptr<XorClause> XorClausePtr;
+//typedef Clause* ClausePtr;
+//typedef XorClause* XorClausePtr;
+
 #pragma pack(push)
 #pragma pack(1)
 class WatchedBin {
     public:
         WatchedBin(Clause *_clause, Lit _impliedLit) : clause(_clause), impliedLit(_impliedLit) {};
-        Clause *clause;
+        ClausePtr clause;
         Lit impliedLit;
 };
 
 class Watched {
     public:
         Watched(Clause *_clause, Lit _blockedLit) : clause(_clause), blockedLit(_blockedLit) {};
-        Clause *clause;
+        ClausePtr clause;
         Lit blockedLit;
 };
 #pragma pack(pop)

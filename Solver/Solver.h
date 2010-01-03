@@ -189,14 +189,14 @@ protected:
     vec<double>         activity;         // A heuristic measurement of the activity of a variable.
     double              var_inc;          // Amount to bump next variable with.
     vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
-    vec<vec<XorClause*> >  xorwatches;    // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
+    vec<vec<XorClausePtr> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
     vec<vec<WatchedBin> >  binwatches;
     vec<lbool>          assigns;          // The current assignments
     vector<bool>        polarity;         // The preferred polarity of each variable.
     vector<bool>        decision_var;     // Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            // Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        // Separator indices for different decision levels in 'trail'.
-    vec<Clause*>        reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
+    vec<ClausePtr>      reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<int32_t>        level;            // 'level[var]' contains the level at which the assignment was made.
     vec<Var>            permDiff;         // LS: permDiff[var] contains the current conflict number... Used to count the number of different decision level variables in learnt clause
     #ifdef UPDATEVARACTIVITY

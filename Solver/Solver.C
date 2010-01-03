@@ -127,7 +127,7 @@ Var Solver::newVar(bool sign, bool dvar)
     binwatches.push();          // (list for positive literal)
     binwatches.push();          // (list for negative literal)
     xorwatches.push();          // (list for variables in xors)
-    reason    .push(NULL);
+    reason    .push((Clause*)NULL);
     assigns   .push(l_Undef);
     level     .push(-1);
     activity  .push(0);
@@ -758,7 +758,7 @@ Clause* Solver::propagate(const bool xor_as_well)
     while (qhead < trail.size()) {
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
-        Watched         *i, *j, *end;
+        Watched        *i, *j, *end;
         num_props++;
         
         //First propagate binary clauses
@@ -866,8 +866,8 @@ Clause* Solver::propagate_xors(const Lit& p)
     
     Clause* confl = NULL;
 
-    vec<XorClause*>&  ws  = xorwatches[p.var()];
-    XorClause         **i, **j, **end;
+    vec<XorClausePtr>&  ws  = xorwatches[p.var()];
+    XorClausePtr        *i, *j, *end;
     for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
         XorClause& c = **i++;
 
