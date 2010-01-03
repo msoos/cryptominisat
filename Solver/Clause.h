@@ -294,7 +294,8 @@ inline Lit Clause::subsumes(const Clause& other) const
     return ret;
 }
 
-
+#pragma pack(push)
+#pragma pack(1)
 class WatchedBin {
     public:
         WatchedBin(Clause *_clause, Lit _impliedLit) : clause(_clause), impliedLit(_impliedLit) {};
@@ -308,5 +309,6 @@ class Watched {
         Clause *clause;
         Lit blockedLit;
 };
+#pragma pack(pop)
 
 #endif //CLAUSE_H
