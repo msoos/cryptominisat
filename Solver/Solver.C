@@ -25,6 +25,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <algorithm>
 #include <limits.h>
 #include <vector>
+#include <iomanip>
 
 #include "Clause.h"
 #include "time_mem.h"
@@ -449,6 +450,15 @@ void Solver::clearGaussMatrixes()
     for (uint i = 0; i < gauss_matrixes.size(); i++)
         delete gauss_matrixes[i];
     gauss_matrixes.clear();
+}
+
+void Solver::printNondecisonVariables() const
+{
+    uint unused = 0;
+    for (uint i = 0; i < decision_var.size(); i++) {
+        if (!decision_var[i]) unused++;
+    }
+    std::cout << "c |  Number of nondecision variables: " << std::setw(5) << unused << std::setw(38) << "|" << std::endl;
 }
 
 //=================================================================================================

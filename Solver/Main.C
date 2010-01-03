@@ -185,8 +185,10 @@ static void readClause(B& in, Solver& S, vec<Lit>& lits)
         parsed_lit = parseInt(in);
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
-        if (!debugNewVar)
-            while (var >= S.nVars()) S.newVar();
+        if (!debugNewVar) {
+            while (var >= S.nVars()) S.newVar(false);
+            S.varUsed(var);
+        }
         lits.push( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
 }
@@ -586,7 +588,10 @@ int main(int argc, char** argv)
     FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
 
     double parse_time = cpuTime() - cpu_time;
-    if (S.verbosity >= 1) printf("c |  Parsing time:         %-12.2f s                                       |\n", parse_time);
+    if (S.verbosity >= 1) {
+        S.printNondecisonVariables();
+        printf("c |  Parsing time:         %-12.2f s                                       |\n", parse_time);
+    }
 
     lbool ret = S.solve();
     if (S.verbosity >= 1) printStats(S);
