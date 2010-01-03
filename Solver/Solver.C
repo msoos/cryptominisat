@@ -50,7 +50,7 @@ Solver::Solver() :
         // More parameters:
         //
         , expensive_ccmin  (true)
-        , polarity_mode    (polarity_user)
+        , polarity_mode    (polarity_false)
         , verbosity        (0)
         , restrictedPickBranch(0)
         , xorFinder        (true)
@@ -119,7 +119,7 @@ Solver::~Solver()
 
 // Creates a new SAT variable in the solver. If 'decision_var' is cleared, variable will not be
 // used as a decision variable (NOTE! This has effects on the meaning of a SATISFIABLE result).
-Var Solver::newVar(bool sign, bool dvar)
+Var Solver::newVar(bool dvar)
 {
     Var v = nVars();
     watches   .push();          // (list for positive literal)
@@ -133,7 +133,22 @@ Var Solver::newVar(bool sign, bool dvar)
     activity  .push(0);
     seen      .push(0);
     permDiff  .push(0);
-    polarity  .push_back((char)sign);
+    
+    bool sign;
+    switch(polarity_mode) {
+    case polarity_false:
+        sign = false;
+        break;
+    case polarity_true:
+        sign = true;
+        break;
+    case polarity_rnd:
+        sign = mtrand.randInt(1);
+        break;
+    default:
+        assert(false);
+    }
+    polarity  .push_back(sign);
 
     decision_var.push_back(dvar);
     varReplacer->newVar();
@@ -469,23 +484,8 @@ Lit Solver::pickBranchLit(int polarity_mode)
         }
 
     bool sign = false;
-    switch (polarity_mode) {
-    case polarity_true:
-        sign = false;
-        break;
-    case polarity_false:
-        sign = true;
-        break;
-    case polarity_user:
-        if (next != var_Undef)
-            sign = polarity[next];
-        break;
-    case polarity_rnd:
-        sign = mtrand.randInt(1);
-        break;
-    default:
-        assert(false);
-    }
+    if (next != var_Undef)
+        sign = polarity[next];
 
     assert(next == var_Undef || value(next) == l_Undef);
 

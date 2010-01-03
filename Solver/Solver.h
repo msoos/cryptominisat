@@ -72,7 +72,7 @@ public:
 
     // Problem specification:
     //
-    Var     newVar    (bool polarity = true, bool dvar = true); // Add a new variable with parameters specifying variable mode.
+    Var     newVar    (bool dvar = true); // Add a new variable with parameters specifying variable mode.
     bool    addClause (vec<Lit>& ps, const uint group, char* group_name);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal = false);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
@@ -133,7 +133,7 @@ public:
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
     
 
-    enum { polarity_true = 0, polarity_false = 1, polarity_user = 2, polarity_rnd = 3 };
+    enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3 };
 
     // Statistics: (read-only member variable)
     //
