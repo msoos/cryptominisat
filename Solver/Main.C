@@ -627,4 +627,11 @@ int main(int argc, char** argv)
 #ifdef NDEBUG
     exit(ret == l_True ? 10 : 20);     // (faster than "return", which will invoke the destructor for 'Solver')
 #endif
+
+    if (ret == l_True) return 10;
+    if (ret == l_False) return 20;
+    if (ret == l_Undef) return 15;
+    assert(false);
+    
+    return 0;
 }
