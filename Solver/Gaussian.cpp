@@ -58,7 +58,7 @@ Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint _m
 Gaussian::~Gaussian()
 {
     for (uint i = 0; i < clauses_toclear.size(); i++)
-        free(clauses_toclear[i].first);
+        clauseFree(clauses_toclear[i].first);
 }
 
 inline void Gaussian::set_matrixset_to_cur()
@@ -811,7 +811,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
         case conflict: {
             useful_confl++;
             llbool ret = solver.handle_conflict(learnt_clause, confl, conflictC);
-            free(confl);
+            clauseFree(confl);
             
             if (ret != l_Nothing) return ret;
             return l_Continue;
@@ -836,13 +836,13 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
             solver.cancelUntil(0);
             
             if (solver.assigns[lit.var()].isDef()) {
-                free(confl);
+                clauseFree(confl);
                 return l_False;
             }
             
             solver.uncheckedEnqueue(lit);
             
-            free(confl);
+            clauseFree(confl);
             return l_Continue;
         }
         case nothing:

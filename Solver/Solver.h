@@ -480,7 +480,7 @@ inline void Solver::reverse_binary_clause(Clause& c) const {
 inline void Solver::removeClause(Clause& c)
 {
     detachClause(c);
-    free(&c);
+    clauseFree(&c);
 }
 inline void Solver::removeClause(XorClause& c)
 {

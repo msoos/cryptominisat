@@ -116,7 +116,7 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
     Clause **s, **ss, **end;
     for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
         if (cleanClause(**s)) {
-            free(*s);
+            clauseFree(*s);
             s++;
         } else {
             *ss++ = *s++;

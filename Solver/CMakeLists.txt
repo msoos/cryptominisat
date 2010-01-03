@@ -29,5 +29,6 @@ add_library(cryptominisatlib
     ClauseCleaner.cpp
     RestartTypeChooser.cpp
     SmallPtr.cpp
+    Clause.cpp
 )
 
