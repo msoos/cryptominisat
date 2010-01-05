@@ -205,7 +205,6 @@ protected:
     vec<Lit>            lastDecisionLevel;
     #endif
     uint64_t            curRestart;
-    uint64_t            conf4Stats;
     uint32_t            nbclausesbeforereduce;
     uint32_t            qhead;            // Head of queue (as index into the trail -- no more explicit propagation queue in MiniSat).
     uint32_t            simpDB_assigns;   // Number of top-level assignments since last execution of 'simplify()'.

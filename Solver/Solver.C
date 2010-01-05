@@ -70,7 +70,6 @@ Solver::Solver() :
         , var_inc          (1)
         
         , curRestart       (1)
-        , conf4Stats       (0)
         , nbclausesbeforereduce (NBCLAUSESBEFOREREDUCE)
         
         , qhead            (0)
@@ -1164,7 +1163,7 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
     switch (restartType) {
     case dynamic_restart:
         if (nbDecisionLevelHistory.isvalid() &&
-            ((nbDecisionLevelHistory.getavg()*0.7) > (totalSumOfDecisionLevel / conf4Stats))) {
+            ((nbDecisionLevelHistory.getavg()*0.7) > (totalSumOfDecisionLevel / conflicts))) {
             nbDecisionLevelHistory.fastclear();
             progress_estimate = progressEstimate();
             cancelUntil(0);
@@ -1246,7 +1245,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         return l_False;
     learnt_clause.clear();
     analyze(confl, learnt_clause, backtrack_level, nbLevels);
-    conf4Stats++;
     if (restartType == dynamic_restart) {
         nbDecisionLevelHistory.push(nbLevels);
         totalSumOfDecisionLevel += nbLevels;
