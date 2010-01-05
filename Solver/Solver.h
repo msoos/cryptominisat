@@ -252,10 +252,10 @@ protected:
     void     analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nblevels); // (bt = backtrack)
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
-    lbool    search           (int nof_conflicts);                                     // Search for a given number of conflicts.
+    lbool    search           (int nof_conflicts, int nof_conflicts_fullrestart);      // Search for a given number of conflicts.
     void     reduceDB         ();                                                      // Reduce the set of learnt clauses.
     llbool   handle_conflict  (vec<Lit>& learnt_clause, Clause* confl, int& conflictC);// Handles the conflict clause
-    llbool   new_decision     (int& nof_conflicts, int& conflictC);                    // Handles the case when all propagations have been made, and now a decision must be made
+    llbool   new_decision     (const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
     // Maintaining Variable/Clause activity:
     //
@@ -291,7 +291,9 @@ protected:
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
-    void chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser);
+    void chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
+    void setDefaultRestartType();
+    void checkFullRestart(double& nof_conflicts, double& nof_conflicts_fullrestart, uint& lastFullRestart);
     bool defaultPhase();
     void performStepsBeforeSolve();
 

@@ -1130,7 +1130,7 @@ lbool Solver::simplify()
 |    all variables are decision variables, this means that the clause set is satisfiable. 'l_False'
 |    if the clause set is unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 |________________________________________________________________________________________________@*/
-lbool Solver::search(int nof_conflicts)
+lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart)
 {
     assert(ok);
     int         conflictC = 0;
@@ -1157,13 +1157,13 @@ lbool Solver::search(int nof_conflicts)
                 else if (ret != l_Nothing) return ret;
             }
             if (at_least_one_continue) continue;
-            ret = new_decision(nof_conflicts, conflictC);
+            ret = new_decision(nof_conflicts, nof_conflicts_fullrestart, conflictC);
             if (ret != l_Nothing) return ret;
         }
     }
 }
 
-llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
+llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC)
 {
     
     // Reached bound on number of conflicts?
@@ -1187,6 +1187,11 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
     case auto_restart:
         assert(false);
         break;
+    }
+    if (nof_conflicts_fullrestart >= 0 && conflicts >= nof_conflicts_fullrestart)  {
+        progress_estimate = progressEstimate();
+        cancelUntil(0);
+        return l_Undef;
     }
 
     // Simplify the set of problem clauses:
@@ -1342,13 +1347,15 @@ void Solver::print_gauss_sum_stats() const
     }
 }
 
-inline void Solver::chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser)
+inline void Solver::chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart)
 {
-    if (status.isUndef() && starts > 2 && starts < 8) {
+    uint relativeStart = starts - lastFullRestart;
+    
+    if (status.isUndef() && relativeStart > RESTART_TYPE_DECIDER_FROM  && relativeStart < RESTART_TYPE_DECIDER_UNTIL) {
         RestartType tmp = restartTypeChooser.choose();
         if (fixRestartType != auto_restart)
             tmp = fixRestartType;
-        if (starts == 7) {
+        if (relativeStart == (RESTART_TYPE_DECIDER_UNTIL-1)) {
             if (tmp == dynamic_restart) {
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
@@ -1366,6 +1373,30 @@ inline void Solver::chooseRestartType(const lbool& status, RestartTypeChooser& r
         #ifdef VERBOSE_DEBUG
         restartTypeChooser.choose();
         #endif
+    }
+}
+
+inline void Solver::setDefaultRestartType()
+{
+    if (fixRestartType != auto_restart) restartType = fixRestartType;
+    else restartType = static_restart;
+    if (restartType == dynamic_restart) {
+        nbDecisionLevelHistory.fastclear();
+        nbDecisionLevelHistory.initSize(100);
+        totalSumOfDecisionLevel = 0;
+    }
+}
+
+inline void Solver::checkFullRestart(double& nof_conflicts, double& nof_conflicts_fullrestart, uint& lastFullRestart)
+{
+    if (conflicts >= nof_conflicts_fullrestart) {
+        printf("c |                                      Fully restarting                                 |\n");
+        for (uint i = 0, size = polarity.size(); i != size; i++)
+            polarity[i] = defaultPhase();
+        nof_conflicts = restart_first + restart_first*restart_inc;
+        nof_conflicts_fullrestart *= FULLRESTART_MULTIPLIER_MULTIPLIER;
+        setDefaultRestartType();
+        lastFullRestart = starts;
     }
 }
 
@@ -1439,7 +1470,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     model.clear();
     conflict.clear();
     clearGaussMatrixes();
-    restartType = static_restart;
+    setDefaultRestartType();
     conglomerate->addRemovedClauses();
     starts = 0;
 
@@ -1448,6 +1479,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
     assumps.copyTo(assumptions);
 
     double  nof_conflicts = restart_first;
+    double  nof_conflicts_fullrestart = restart_first * FULLRESTART_MULTIPLIER;
+    uint    lastFullRestart  = starts;
     lbool   status        = l_Undef;
     
     if (nClauses() * learntsize_factor < nbclausesbeforereduce) {
@@ -1474,10 +1507,11 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
         #endif
         
-        status = search((int)nof_conflicts);
+        status = search((int)nof_conflicts, (int)nof_conflicts_fullrestart);
         nof_conflicts *= restart_inc;
+        checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart);
         
-        chooseRestartType(status, restartTypeChooser);
+        chooseRestartType(status, restartTypeChooser, lastFullRestart);
     }
     printEndSearchStat();
     
