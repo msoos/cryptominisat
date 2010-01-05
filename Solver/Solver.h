@@ -359,10 +359,8 @@ inline uint32_t      Solver::decisionLevel ()      const
 }
 inline void Solver::varUsed(Var var)
 {
-    if (!decision_var[var]) {
-        decision_var[var] = true;
-        insertVarOrder(var);
-    }
+    decision_var[var] = true;
+    insertVarOrder(var);
 }
 inline uint32_t Solver::abstractLevel (const Var& x) const
 {

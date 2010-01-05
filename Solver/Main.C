@@ -23,6 +23,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <errno.h>
 #include <string.h>
 #include <sstream>
+#include <vector>
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
 #else
@@ -55,6 +56,7 @@ static char learnts_filename[500];
 static bool dumpLearnts = false;
 static uint32_t maxLearntsSize = std::numeric_limits<uint32_t>::max();
 static bool printResult = true;
+static vector<bool> varMarkedUsed;
 
 //=================================================================================================
 // DIMACS Parser:
@@ -188,7 +190,12 @@ static void readClause(B& in, Solver& S, vec<Lit>& lits)
         var = abs(parsed_lit)-1;
         if (!debugNewVar) {
             while (var >= S.nVars()) S.newVar(false);
-            S.varUsed(var);
+            if (varMarkedUsed.size() < var+1)
+                varMarkedUsed.resize(var+1, false);
+            if (varMarkedUsed[var] == false) {
+                varMarkedUsed[var] = true;
+                S.varUsed(var);
+            }
         }
         lits.push( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
