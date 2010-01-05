@@ -134,21 +134,7 @@ Var Solver::newVar(bool dvar)
     seen      .push(0);
     permDiff  .push(0);
     
-    bool sign;
-    switch(polarity_mode) {
-    case polarity_false:
-        sign = true;
-        break;
-    case polarity_true:
-        sign = false;
-        break;
-    case polarity_rnd:
-        sign = mtrand.randInt(1);
-        break;
-    default:
-        assert(false);
-    }
-    polarity  .push_back(sign);
+    polarity  .push_back(defaultPhase());
 
     decision_var.push_back(dvar);
     varReplacer->newVar();
@@ -460,6 +446,20 @@ void Solver::printNondecisonVariables() const
     std::cout << "c |  Number of nondecision variables: " << std::setw(5) << unused << std::setw(38) << "|" << std::endl;
 }
 
+inline bool Solver::defaultPhase()
+{
+    switch(polarity_mode) {
+        case polarity_false:
+            return true;
+        case polarity_true:
+            return false;
+        case polarity_rnd:
+            return mtrand.randInt(1);
+        default:
+            assert(false);
+    }
+}
+
 //=================================================================================================
 // Major methods:
 
@@ -492,7 +492,7 @@ Lit Solver::pickBranchLit()
             next = order_heap.removeMin();
         }
 
-    bool sign = false;
+    bool sign = defaultPhase();
     if (next != var_Undef)
         sign = polarity[next];
 

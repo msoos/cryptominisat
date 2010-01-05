@@ -292,6 +292,7 @@ protected:
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
     void chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser);
+    bool defaultPhase();
     void performStepsBeforeSolve();
 
     // Debug & etc:
