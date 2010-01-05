@@ -777,8 +777,10 @@ Clause* Solver::propagate(const bool xor_as_well)
             lbool val = value(imp);
             if (val.isUndef()) {
                 uncheckedEnqueue(imp, k->clause);
-            } else if (val == l_False)
-                return k->clause;
+            } else if (val == l_False) {
+                confl = k->clause;
+                goto EndPropagate;
+            }
         }
         
         //Next, propagate normal clauses
@@ -857,6 +859,7 @@ FoundWatch:
         //Finally, propagate XOR-clauses
         if (xor_as_well && !confl) confl = propagate_xors(p);
     }
+EndPropagate:
     propagations += num_props;
     simpDB_props -= num_props;
     
