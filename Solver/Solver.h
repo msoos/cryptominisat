@@ -242,7 +242,7 @@ protected:
     lbool    simplify    ();                                                           // Removes already satisfied clauses.
     //int      nbPropagated     (int level);
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
-    Lit      pickBranchLit    (int polarity_mode);                                     // Return the next decision variable.
+    Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (Lit p, ClausePtr from = (Clause*)NULL);                 // Enqueue a literal. Assumes value of literal is undefined.
     bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.

@@ -464,7 +464,7 @@ void Solver::printNondecisonVariables() const
 // Major methods:
 
 
-Lit Solver::pickBranchLit(int polarity_mode)
+Lit Solver::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
     cout << "decision level: " << decisionLevel() << " ";
@@ -1216,7 +1216,7 @@ llbool Solver::new_decision(int& nof_conflicts, int& conflictC)
     if (next == lit_Undef) {
         // New variable decision:
         decisions++;
-        next = pickBranchLit(polarity_mode);
+        next = pickBranchLit();
 
         if (next == lit_Undef)
             return l_True;
