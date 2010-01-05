@@ -54,6 +54,7 @@ static bool debugNewVar = false;
 static char learnts_filename[500];
 static bool dumpLearnts = false;
 static uint32_t maxLearntsSize = std::numeric_limits<uint32_t>::max();
+static bool printResult = true;
 
 //=================================================================================================
 // DIMACS Parser:
@@ -185,8 +186,10 @@ static void readClause(B& in, Solver& S, vec<Lit>& lits)
         parsed_lit = parseInt(in);
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
-        if (!debugNewVar)
-            while (var >= S.nVars()) S.newVar();
+        if (!debugNewVar) {
+            while (var >= S.nVars()) S.newVar(false);
+            S.varUsed(var);
+        }
         lits.push( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
 }
@@ -536,6 +539,8 @@ int main(int argc, char** argv)
                 printf("ERROR! unknown restart type %s\n", value);
                 exit(0);
             }
+        } else if ((value = hasPrefix(argv[i], "-noResPrint"))) {
+            printResult = false;
         } else if (strncmp(argv[i], "-", 1) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
@@ -586,7 +591,10 @@ int main(int argc, char** argv)
     FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
 
     double parse_time = cpuTime() - cpu_time;
-    if (S.verbosity >= 1) printf("c |  Parsing time:         %-12.2f s                                       |\n", parse_time);
+    if (S.verbosity >= 1) {
+        S.printNondecisonVariables();
+        printf("c |  Parsing time:         %-12.2f s                                       |\n", parse_time);
+    }
 
     lbool ret = S.solve();
     if (S.verbosity >= 1) printStats(S);
@@ -602,10 +610,12 @@ int main(int argc, char** argv)
         if (ret == l_True) {
             printf("c SAT\n");
             fprintf(res, "SAT\n");
-            for (uint32_t i = 0; i != S.nVars(); i++)
-                if (S.model[i] != l_Undef)
-                    fprintf(res, "%s%d ", (S.model[i] == l_True)? "" : "-", i+1);
-                fprintf(res, "0\n");
+            if (printResult) {
+                for (uint32_t i = 0; i != S.nVars(); i++)
+                    if (S.model[i] != l_Undef)
+                        fprintf(res, "%s%d ", (S.model[i] == l_True)? "" : "-", i+1);
+                    fprintf(res, "0\n");
+            }
         } else if (ret == l_False)
             printf("c UNSAT\n");
             fprintf(res, "UNSAT\n");
@@ -613,9 +623,10 @@ int main(int argc, char** argv)
     } else {
         if (ret == l_True)
             printf("s SATISFIABLE\n");
-        else if (ret == l_False) printf("s UNSATISFIABLE\n");
+        else if (ret == l_False)
+            printf("s UNSATISFIABLE\n");
         
-        if(ret == l_True) {
+        if(ret == l_True && printResult) {
             printf("v ");
             for (uint32_t i = 0; i != S.nVars(); i++)
                 if (S.model[i] != l_Undef)

@@ -25,6 +25,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <algorithm>
 #include <limits.h>
 #include <vector>
+#include <iomanip>
 
 #include "Clause.h"
 #include "time_mem.h"
@@ -50,7 +51,7 @@ Solver::Solver() :
         // More parameters:
         //
         , expensive_ccmin  (true)
-        , polarity_mode    (polarity_user)
+        , polarity_mode    (polarity_false)
         , verbosity        (0)
         , restrictedPickBranch(0)
         , xorFinder        (true)
@@ -119,7 +120,7 @@ Solver::~Solver()
 
 // Creates a new SAT variable in the solver. If 'decision_var' is cleared, variable will not be
 // used as a decision variable (NOTE! This has effects on the meaning of a SATISFIABLE result).
-Var Solver::newVar(bool sign, bool dvar)
+Var Solver::newVar(bool dvar)
 {
     Var v = nVars();
     watches   .push();          // (list for positive literal)
@@ -133,6 +134,21 @@ Var Solver::newVar(bool sign, bool dvar)
     activity  .push(0);
     seen      .push(0);
     permDiff  .push(0);
+    
+    bool sign;
+    switch(polarity_mode) {
+    case polarity_false:
+        sign = false;
+        break;
+    case polarity_true:
+        sign = true;
+        break;
+    case polarity_rnd:
+        sign = mtrand.randInt(1);
+        break;
+    default:
+        assert(false);
+    }
     polarity  .push_back(sign);
 
     decision_var.push_back(dvar);
@@ -436,6 +452,15 @@ void Solver::clearGaussMatrixes()
     gauss_matrixes.clear();
 }
 
+void Solver::printNondecisonVariables() const
+{
+    uint unused = 0;
+    for (uint i = 0; i < decision_var.size(); i++) {
+        if (!decision_var[i]) unused++;
+    }
+    std::cout << "c |  Number of nondecision variables: " << std::setw(5) << unused << std::setw(38) << "|" << std::endl;
+}
+
 //=================================================================================================
 // Major methods:
 
@@ -469,23 +494,8 @@ Lit Solver::pickBranchLit(int polarity_mode)
         }
 
     bool sign = false;
-    switch (polarity_mode) {
-    case polarity_true:
-        sign = false;
-        break;
-    case polarity_false:
-        sign = true;
-        break;
-    case polarity_user:
-        if (next != var_Undef)
-            sign = polarity[next];
-        break;
-    case polarity_rnd:
-        sign = mtrand.randInt(1);
-        break;
-    default:
-        assert(false);
-    }
+    if (next != var_Undef)
+        sign = polarity[next];
 
     assert(next == var_Undef || value(next) == l_Undef);
 
@@ -1030,9 +1040,15 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
         exit(-1);
     }
     
-    if (trail_lim.size() > 0 && maxSize > 0) {
-        for (uint32_t i = 0; i != trail_lim[0]; i++)
-            fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+    if (maxSize > 0) {
+        if (trail_lim.size() > 0) {
+            for (uint32_t i = 0; i != trail_lim[0]; i++)
+                fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+        }
+        else {
+            for (uint32_t i = 0; i != trail.size(); i++)
+                fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+        }
     }
     
     std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());

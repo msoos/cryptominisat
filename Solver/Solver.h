@@ -72,7 +72,8 @@ public:
 
     // Problem specification:
     //
-    Var     newVar    (bool polarity = true, bool dvar = true); // Add a new variable with parameters specifying variable mode.
+    Var     newVar    (bool dvar = true); // Add a new variable with parameters specifying variable mode.
+    void    varUsed(Var var);
     bool    addClause (vec<Lit>& ps, const uint group, char* group_name);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal = false);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
@@ -133,7 +134,7 @@ public:
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
     
 
-    enum { polarity_true = 0, polarity_false = 1, polarity_user = 2, polarity_rnd = 3 };
+    enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3 };
 
     // Statistics: (read-only member variable)
     //
@@ -151,6 +152,7 @@ public:
     const uint get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     void dumpSortedLearnts(const char* file, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const char* fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
+    void printNondecisonVariables() const;
 
 protected:
     vector<Gaussian*> gauss_matrixes;
@@ -355,6 +357,13 @@ inline void     Solver::newDecisionLevel()
 inline uint32_t      Solver::decisionLevel ()      const
 {
     return trail_lim.size();
+}
+inline void Solver::varUsed(Var var)
+{
+    if (!decision_var[var]) {
+        decision_var[var] = true;
+        insertVarOrder(var);
+    }
 }
 inline uint32_t Solver::abstractLevel (const Var& x) const
 {
