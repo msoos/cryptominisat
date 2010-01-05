@@ -137,10 +137,10 @@ Var Solver::newVar(bool dvar)
     bool sign;
     switch(polarity_mode) {
     case polarity_false:
-        sign = false;
+        sign = true;
         break;
     case polarity_true:
-        sign = true;
+        sign = false;
         break;
     case polarity_rnd:
         sign = mtrand.randInt(1);
