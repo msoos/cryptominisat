@@ -35,6 +35,9 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "constants.h"
 #include "SmallPtr.h"
 #include "pool.hpp"
+#ifndef uint
+#define uint unsigned int
+#endif
 
 using std::vector;
 
