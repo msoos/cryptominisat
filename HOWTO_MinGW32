@@ -1,29 +1,87 @@
-mingw howtos:
+*****************************
+   general info
+*****************************
+
+mingw32-w32 is in Debian
 
 http://man.gnusquad.org/i586-mingw32msvc-ar/section-1/en/
 
+64-bit mingw32 build instructions:
+http://www.cadforte.com/wiki/index.php/How_to_build
+
+building libraries:
 http://wiki.njh.eu/Cross_Compiling_for_Win32
 
-------- how to compile stuff --------
+http://stackoverflow.com/questions/1399252/boost-cross-compile-from-linux-to-windows
 
-on debian mingw:
+in my user-config.jam: "using gcc : m : i586-mingw32msvc-g++ ;". I then run: "bjam toolset=gcc-m target-os=windows variant=debug --with-program_options".     
+So the whole command is: "./bjam --layout=system variant=release threading=multi link=shared runtime-link=shared toolset=gcc target-os=windows threadapi=win32 stage". cannot compile these libraries: -graph -graph_parallel -iostreams -math (partly) -python The others can be compiled.
 
+use --without-xxx to disable building unneeded libraries
+
+boost build:
+./bootstrap
+
+./bjam --layout=system variant=release threading=multi link=shared runtime-link=shared toolset=gcc target-os=windows threadapi=win32 --without-graph --without-graph_parallel --without-iostreams --without-math --without-python stage
+
+*****************************
+   how to compile stuff on debian mingw32-w32
+*****************************
+make line:
 PATH=/usr/i586-mingw32msvc/bin:$PATH \ 
 make CC=i586-mingw32msvc-gcc AR=i586-mingw32msvc-ar \
      RC=i586-mingw32msvc-windres
 
-for libz, the last line is: i586-mingw32msvc-ar qs libz.a adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o zutil.o inflate.o infback.o inftrees.o inffast.o
+for libz, the last line is:
+i586-mingw32msvc-ar qs libz.a adler32.o \
+    compress.o crc32.o gzio.o uncompr.o \
+    deflate.o trees.o zutil.o inflate.o \
+    infback.o inftrees.o inffast.o
 
 make install PREFIX=/usr/i586-mingw32msvc
 
---------compile minisat ------------
 
-i586-mingw32msvc-g++ -O3 -g0 -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a Logger.C Solver.C  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp Gaussian.cpp MatrixFinder.cpp PackedRow.cpp RestartTypeChooser.cpp VarReplacer.cpp XorFinder.cpp  -o minisat.exe
+*****************************
+   how to compile stuff on debian mingw32-w64
+*****************************
+make line:
+PATH=/usr/x86_64-w64-mingw32/bin:$PATH \
+    make CC=x86_64-w64-mingw32-gcc AR=x86_64-w64-mingw32-ar \
+    RC=x86_64-w64-mingw32-windres
 
------------------------------------
+for libz, the last line is:
+x86_64-w64-mingw32-ar qs libz.a adler32.o \
+    compress.o crc32.o gzio.o uncompr.o   \
+    deflate.o trees.o zutil.o inflate.o   \
+    infback.o inftrees.o inffast.o
 
-useful for examining archives:
+
+*****************************
+   compile minisat
+*****************************
+
+i586-mingw32msvc-g++ -O3 -g0 -march=i586 -DCROSS_COMPILE  \
+    -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a \
+    Logger.C Solver.C  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp \
+    Gaussian.cpp MatrixFinder.cpp PackedRow.cpp RestartTypeChooser.cpp \
+    VarReplacer.cpp XorFinder.cpp SmallPtr.cpp Clause.cpp -o minisat.exe
+
+x86_64-w64-mingw32-g++ -O3 -g0 -march=core2 -DCROSS_COMPILE  \
+    -I/home/soos/tmp/boost_1_41_0 -I../mtl/ -I../MTRand/ Main.C /usr/x86_64-w64-mingw32/lib/libz.a \
+    Logger.C Solver.C  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp \
+    Gaussian.cpp MatrixFinder.cpp PackedRow.cpp RestartTypeChooser.cpp \
+    VarReplacer.cpp XorFinder.cpp  SmallPtr.cpp Clause.cpp -o minisat.exe
+
+
+*****************************
+   useful for examining archives:
+*****************************
 
 i586-mingw32msvc-nm libz.a
 i586-mingw32msvc-objdump -G libz.a
 
+
+*****************************
+Useful
+*****************************
+./configure --host=x86_64-pc-linux --target=x86_64-pc-mingw32 
