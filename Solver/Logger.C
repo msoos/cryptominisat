@@ -25,6 +25,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <limits>
 using std::cout;
 using std::endl;
 using std::ofstream;
@@ -257,7 +258,7 @@ void Logger::propagation(const Lit lit, Clause* c)
             type = add_clause_type;
         else
             type = guess_type;
-        group = UINT_MAX;
+        group = std::numeric_limits<uint>::max();
     } else {
         type = simple_propagation_type;
         group = c->getGroup();
