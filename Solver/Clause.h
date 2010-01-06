@@ -34,7 +34,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "PackedRow.h"
 #include "constants.h"
 #include "SmallPtr.h"
-#include <boost/pool/pool.hpp>
+#include "pool.hpp"
 
 using std::vector;
 

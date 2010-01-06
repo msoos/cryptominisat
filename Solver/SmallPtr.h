@@ -10,8 +10,8 @@ Link: http://www.codeproject.com/KB/cpp/smallptr.aspx
 #include <boost/static_assert.hpp>
 
 #include <boost/pool/detail/singleton.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
+//#include <boost/thread/mutex.hpp>
+//#include <boost/thread/locks.hpp>
 
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
@@ -38,15 +38,17 @@ Link: http://www.codeproject.com/KB/cpp/smallptr.aspx
 #  endif
 #endif
 
+#include <exception>
+
 class bad_alignment : public std::exception
 {
 public:
-    bad_alignment(const char *const& w) /*: std::exception(w) */ {}
+    bad_alignment(const char *const& w)  {}
 };
 class bad_segment : public std::exception
 {
 public:
-    bad_segment(const char *const& w) /*: std::exception(w) */ {}
+    bad_segment(const char *const& w)  {}
 };
 
 class sptr_base
@@ -59,7 +61,7 @@ protected:
 protected:
     static uintptr_t     _seg_map[ALIGNMENT];
     static uintptr_t     _segs;
-    static boost::mutex  _m;
+    //static boost::mutex  _m;
 
     inline static uintptr_t ptr2seg(uintptr_t p)
     {
@@ -71,7 +73,7 @@ protected:
                 return i;
 
         // Not found - now we do it the "right" way (mutex and all)
-        boost::lock_guard<boost::mutex> lock(_m);
+        //boost::lock_guard<boost::mutex> lock(_m);
         for (i = 0; i < s; ++i)
             if (_seg_map[i] == p)
                 return i;
