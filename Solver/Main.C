@@ -623,9 +623,13 @@ int main(int argc, char** argv)
                         fprintf(res, "%s%d ", (S.model[i] == l_True)? "" : "-", i+1);
                     fprintf(res, "0\n");
             }
-        } else if (ret == l_False)
+        } else if (ret == l_False) {
             printf("c UNSAT\n");
             fprintf(res, "UNSAT\n");
+        } else {
+            printf("c INCONCLUSIVE\n");
+            fprintf(res, "INCONCLUSIVE\n");
+        }
         fclose(res);
     } else {
         if (ret == l_True)
