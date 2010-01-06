@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SolverTypes.h"
 #include "Vec.h"
 #include <string.h>
-#include <sys/types.h>
 #include <iostream>
 #include <algorithm>
 #include <limits>
