@@ -699,7 +699,13 @@ void Logger::print_learnt_unitaries(const uint from, const string display) const
     print_footer();
     print_simple_line(display);
     print_header("var", "name", "value");
-    for (uint i = from; i < S->trail.size(); i++) {
+    uint32_t until;
+    if (S->decisionLevel() > 0)
+        until = S->trail_lim[0];
+    else
+        until = S->trail.size();
+    for (uint i = from; i < until; i++) {
+        if (S->givenUnitaries.size() > i && S->givenUnitaries[i]) continue;
         Var var = S->trail[i].var();
         bool value = !(S->trail[i].sign());
         print_line(var+1, varnames[var], value);

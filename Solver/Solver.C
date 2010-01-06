@@ -156,6 +156,8 @@ Var Solver::newVar(bool dvar)
 bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal)
 {
     assert(decisionLevel() == 0);
+    uint origSize = ps.size();
+    
     if (libraryCNFFile && !internal) {
         fprintf(libraryCNFFile, "x");
         for (uint i = 0; i < ps.size(); i++) {
@@ -208,6 +210,11 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
     case 1: {
         assert(assigns[ps[0].var()].isUndef());
         uncheckedEnqueue(ps[0] ^ xor_clause_inverted);
+        if (origSize == 1) {
+            if (givenUnitaries.size() < trail.size())
+                givenUnitaries.resize(trail.size(), false);
+            givenUnitaries[trail.size()-1] = true;
+        }
         return ok = (propagate() == NULL);
     }
     case 2: {
@@ -236,6 +243,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
 bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
+    uint origSize = ps.size();
     
     if (libraryCNFFile) {
         for (uint32_t i = 0; i != ps.size(); i++) {
@@ -275,6 +283,11 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
     } else if (ps.size() == 1) {
         assert(value(ps[0]) == l_Undef);
         uncheckedEnqueue(ps[0]);
+        if (origSize == 1) {
+            if (givenUnitaries.size() < trail.size())
+                givenUnitaries.resize(trail.size(), false);
+            givenUnitaries[trail.size()-1] = true;
+        }
         return ok = (propagate() == NULL);
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
@@ -1031,8 +1044,9 @@ const vector<Lit> Solver::get_unitary_learnts() const
 {
     vector<Lit> unitaries;
     if (decisionLevel() > 0) {
-        for (uint32_t i = 0; i != trail_lim[0]; i++)
-            unitaries.push_back(trail[i]);
+        for (uint32_t i = 0; i != trail_lim[0]; i++) {
+            if (givenUnitaries.size() <= i || !givenUnitaries[i]) unitaries.push_back(trail[i]);
+        }
     }
     
     return unitaries;
@@ -1048,12 +1062,16 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     
     if (maxSize > 0) {
         if (trail_lim.size() > 0) {
-            for (uint32_t i = 0; i != trail_lim[0]; i++)
-                fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+            for (uint32_t i = 0; i != trail_lim[0]; i++) {
+                if (givenUnitaries.size() <= i || !givenUnitaries[i])
+                    fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+            }
         }
         else {
-            for (uint32_t i = 0; i != trail.size(); i++)
-                fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+            for (uint32_t i = 0; i != trail.size(); i++) {
+                if (givenUnitaries.size() <= i || !givenUnitaries[i])
+                    fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+            }
         }
     }
     
