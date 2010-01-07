@@ -134,7 +134,7 @@ public:
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
     
 
-    enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3 };
+    enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
     // Statistics: (read-only member variable)
     //
@@ -295,7 +295,6 @@ protected:
     void chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
     void setDefaultRestartType();
     void checkFullRestart(double& nof_conflicts, double& nof_conflicts_fullrestart, uint& lastFullRestart);
-    bool defaultPhase();
     void performStepsBeforeSolve();
 
     // Debug & etc:
@@ -308,6 +307,12 @@ protected:
     void     printEndSearchStat() const;
     double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
     uint     numGivenUnitaries() const; //Return the no. of given unitary clauses
+    
+    // Polarity chooser
+    vector<bool> defaultPolarities; //The default polarity to set the var polarity when doing a full restart
+    void         calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
+    bool         defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
+    void         setDefaultPolarities(); //sets the polarity[] to that indicated by defaultPolarities[]
 };
 
 

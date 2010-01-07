@@ -51,7 +51,7 @@ Solver::Solver() :
         // More parameters:
         //
         , expensive_ccmin  (true)
-        , polarity_mode    (polarity_false)
+        , polarity_mode    (polarity_auto)
         , verbosity        (0)
         , restrictedPickBranch(0)
         , xorFinder        (true)
@@ -134,7 +134,7 @@ Var Solver::newVar(bool dvar)
     seen      .push(0);
     permDiff  .push(0);
     
-    polarity  .push_back(defaultPhase());
+    polarity  .push_back(true);
 
     decision_var.push_back(dvar);
     varReplacer->newVar();
@@ -459,7 +459,7 @@ void Solver::printNondecisonVariables() const
     std::cout << "c |  Number of nondecision variables: " << std::setw(5) << unused << std::setw(38) << "|" << std::endl;
 }
 
-inline bool Solver::defaultPhase()
+inline bool Solver::defaultPolarity()
 {
     switch(polarity_mode) {
         case polarity_false:
@@ -471,6 +471,59 @@ inline bool Solver::defaultPhase()
         default:
             assert(false);
     }
+}
+
+void Solver::calculateDefaultPolarities()
+{
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Default polarities: " << endl;
+    #endif
+    
+    defaultPolarities.resize(nVars());
+    
+    if (polarity_mode == polarity_auto) {
+        vector<double> votes;
+        votes.resize(nVars(), 0.0);
+        
+        for (Clause **it = clauses.getData(), **end = it + clauses.size(); it != end; it++) {
+            const Clause& c = **it;
+            double divider;
+            if (c.size() > 63)
+                divider = 0.0;
+            else
+                divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
+            for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++) {
+                votes[it2->var()] += divider*(double)((((int)it2->sign())<<1)-1);
+                //std::cout << "sign:" << it2->sign() << "val:" << (double)((((int)it2->sign())<<1)-1) << "val2:" << divider*(double)((((int)it2->sign())<<1)-1) << "size:" << c.size() << std::endl;
+            }
+        }
+        
+        Var i = 0;
+        for (vector<double>::const_iterator it = votes.begin(), end = votes.end(); it != end; it++, i++) {
+            defaultPolarities[i] = (*it > 0.0);
+            #ifdef VERBOSE_DEBUG
+            std::cout << !defaultPolarities[i] << ", ";
+            #endif //VERBOSE_DEBUG
+        }
+    } else {
+        for (uint i = 0; i != defaultPolarities.size(); i++) {
+            defaultPolarities[i] = defaultPolarity();
+            #ifdef VERBOSE_DEBUG
+            std::cout << !defaultPolarities[i] << ", ";
+            #endif //VERBOSE_DEBUG
+        }
+    }
+    #ifdef VERBOSE_DEBUG
+    std::cout << std::endl;
+    #endif //VERBOSE_DEBUG
+}
+
+void Solver::setDefaultPolarities()
+{
+    assert(polarity.size() == defaultPolarities.size());
+    
+    for (uint i = 0; i != polarity.size(); i++)
+        polarity[i] = defaultPolarities[i];
 }
 
 //=================================================================================================
@@ -1409,8 +1462,7 @@ inline void Solver::checkFullRestart(double& nof_conflicts, double& nof_conflict
 {
     if (conflicts >= nof_conflicts_fullrestart) {
         printf("c |                                      Fully restarting                                 |\n");
-        for (uint i = 0, size = polarity.size(); i != size; i++)
-            polarity[i] = defaultPhase();
+        setDefaultPolarities();
         nof_conflicts = restart_first + restart_first*restart_inc;
         nof_conflicts_fullrestart *= FULLRESTART_MULTIPLIER_MULTIPLIER;
         setDefaultRestartType();
@@ -1514,6 +1566,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
     printStatHeader();
     
     RestartTypeChooser restartTypeChooser(this);
+    calculateDefaultPolarities();
+    setDefaultPolarities();
     
     // Search:
     while (status == l_Undef && starts < maxRestarts) {

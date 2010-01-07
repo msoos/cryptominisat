@@ -371,7 +371,8 @@ void printUsage(char** argv)
     printf("USAGE: %s [options] <input-file> <result-output-file>\n\n  where input may be either in plain or gzipped DIMACS.\n\n", argv[0]);
 #endif // DISABLE_ZLIB
     printf("OPTIONS:\n\n");
-    printf("  -polarity-mode = {true,false,rnd}\n");
+    printf("  -polarity-mode = {true,false,rnd,auto} [default: auto]. Selects the default\n");
+    printf("                 = polarity mode. Auto is the Jeroslow&Wang method\n");
     printf("  -decay         = <num> [ 0 - 1 ]\n");
     printf("  -rnd-freq      = <num> [ 0 - 1 ]\n");
     printf("  -verbosity     = {0,1,2}\n");
@@ -437,6 +438,8 @@ int main(int argc, char** argv)
                 S.polarity_mode = Solver::polarity_false;
             else if (strcmp(value, "rnd") == 0)
                 S.polarity_mode = Solver::polarity_rnd;
+            else if (strcmp(value, "auto") == 0)
+                S.polarity_mode = Solver::polarity_auto;
             else {
                 printf("ERROR! unknown polarity-mode %s\n", value);
                 exit(0);
