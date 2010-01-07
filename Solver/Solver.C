@@ -505,7 +505,7 @@ Lit Solver::pickBranchLit()
             next = order_heap.removeMin();
         }
 
-    bool sign = defaultPhase();
+    bool sign;
     if (next != var_Undef)
         sign = polarity[next];
 
