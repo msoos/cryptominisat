@@ -1459,14 +1459,14 @@ inline void Solver::setDefaultRestartType()
     }
 }
 
-inline void Solver::checkFullRestart(double& nof_conflicts, double& nof_conflicts_fullrestart, uint& lastFullRestart)
+inline void Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart)
 {
     if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
         if (verbosity >= 1)
             printf("c |                                      Fully restarting                                 |\n");
         setDefaultPolarities();
-        nof_conflicts = restart_first + restart_first*restart_inc;
-        nof_conflicts_fullrestart *= FULLRESTART_MULTIPLIER_MULTIPLIER;
+        nof_conflicts = restart_first + (double)restart_first*restart_inc;
+        nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         setDefaultRestartType();
         lastFullRestart = starts;
     }
@@ -1550,8 +1550,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     assumps.copyTo(assumptions);
 
-    double  nof_conflicts = restart_first;
-    double  nof_conflicts_fullrestart = restart_first * FULLRESTART_MULTIPLIER;
+    int  nof_conflicts = restart_first;
+    int  nof_conflicts_fullrestart = (double)restart_first * (double)FULLRESTART_MULTIPLIER;
+    //nof_conflicts_fullrestart = -1;
     uint    lastFullRestart  = starts;
     lbool   status        = l_Undef;
     
@@ -1581,8 +1582,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
         #endif
         
-        status = search((int)nof_conflicts, (int)nof_conflicts_fullrestart);
-        nof_conflicts *= restart_inc;
+        status = search(nof_conflicts, nof_conflicts_fullrestart);
+        nof_conflicts = (double)nof_conflicts * restart_inc;
         checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart);
         
         chooseRestartType(status, restartTypeChooser, lastFullRestart);
