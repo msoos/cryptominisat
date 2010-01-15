@@ -84,12 +84,13 @@ void VarReplacer::performReplace()
         double& activity1 = S->activity[i];
         double& activity2 = S->activity[it->var()];
         if (activity1 > activity2) {
-            S->activity[it->var()] = activity1;
-            if (S->order_heap.inHeap(it->var()))
-                S->order_heap.decrease(it->var());
+            activity2 = activity1;
+            S->order_heap.update(it->var());
         }
         activity1 = 0.0;
+        S->order_heap.update(i);
     }
+    assert(S->order_heap.heapProperty());
     
     replace_set(S->clauses);
     replace_set(S->learnts);
