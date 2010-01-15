@@ -116,7 +116,7 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
     
     Clause **s, **ss, **end;
     for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
-        __builtin_prefetch((s+1), 1, 0);
+        __builtin_prefetch(*(s+1), 1, 0);
         if (cleanClause(**s)) {
             clauseFree(*s);
             s++;
@@ -148,7 +148,7 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
     
     XorClause **s, **ss, **end;
     for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
-        __builtin_prefetch((s+1), 1, 0);
+        __builtin_prefetch(*(s+1), 1, 0);
         if (cleanClause(**s)) {
             (**s).mark(1);
             solver.freeLater.push(*s);
