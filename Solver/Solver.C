@@ -639,6 +639,7 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
         while (!seen[trail[index--].var()]);
         p     = trail[index+1];
         confl = reason[p.var()];
+        __builtin_prefetch(confl, 0, 0);
         seen[p.var()] = 0;
         pathC--;
 
@@ -860,6 +861,7 @@ Clause* Solver::propagate(const bool xor_as_well)
         #endif
 
         for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
+            __builtin_prefetch((i+1)->clause, 1, 0);
             if(value(i->blockedLit).getBool()) { // Clause is sat
                 *j++ = *i++;
                 continue;
@@ -952,6 +954,7 @@ Clause* Solver::propagate_xors(const Lit& p)
     XorClausePtr        *i, *j, *end;
     for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
         XorClause& c = **i++;
+        __builtin_prefetch(*i, 1, 0);
 
         // Make sure the false literal is data[1]:
         if (c[0].var() == p.var()) {
@@ -1071,6 +1074,7 @@ void Solver::reduceDB()
     nbReduceDB++;
     std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
     for (i = j = 0; i != learnts.size() / RATIOREMOVECLAUSES; i++){
+        __builtin_prefetch(learnts[i+1], 0, 0);
         if (learnts[i]->size() > 2 && !locked(*learnts[i]) && learnts[i]->activity() > 2)
             removeClause(*learnts[i]);
         else
