@@ -171,7 +171,7 @@ const uint MatrixFinder::setMatrixes()
         double variance = 0.0;
         for (uint i2 = 0; i2 < xorSizesInMatrix[i].size(); i2++)
             variance += pow((double)xorSizesInMatrix[i][i2]-avg, 2);
-        variance /= xorSizesInMatrix.size();
+        variance /= (double)xorSizesInMatrix.size();
         const double stdDeviation = sqrt(variance);
         
         if (numXorInMatrix[a].second >= 20
