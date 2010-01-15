@@ -1475,7 +1475,7 @@ inline void Solver::performStepsBeforeSolve()
     if (performReplace
         && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
         varReplacer->performReplace();
-    if (!ok) return;
+        if (!ok) return;
     }
     
     if (xorFinder) {
