@@ -865,7 +865,9 @@ Clause* Solver::propagate(const bool xor_as_well)
         #endif
 
         for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
-            __builtin_prefetch((i+1)->clause, 1, 0);
+            if (i+1 != end)
+                __builtin_prefetch((i+1)->clause, 1, 0);
+            
             if(value(i->blockedLit).getBool()) { // Clause is sat
                 *j++ = *i++;
                 continue;
@@ -959,7 +961,8 @@ Clause* Solver::propagate_xors(const Lit& p)
     XorClausePtr        *i, *j, *end;
     for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
         XorClause& c = **i++;
-        __builtin_prefetch(*i, 1, 0);
+        if (i != end)
+            __builtin_prefetch(*i, 1, 0);
 
         // Make sure the false literal is data[1]:
         if (c[0].var() == p.var()) {
@@ -1089,6 +1092,7 @@ void Solver::reduceDB()
     
     const uint removeNum = (double)learnts.size() / (double)RATIOREMOVECLAUSES;
     for (i = j = 0; i != removeNum; i++){
+        //NOTE: The next instruciton only works if removeNum < learnts.size() (strictly smaller!!)
         __builtin_prefetch(learnts[i+1], 0, 0);
         if (learnts[i]->size() > 2 && !locked(*learnts[i]) && learnts[i]->activity() > 2)
             removeClause(*learnts[i]);
@@ -1195,10 +1199,11 @@ lbool Solver::simplify()
         clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
         clauseCleaner->cleanClauses(learnts, ClauseCleaner::learnts);
         clauseCleaner->removeSatisfied(binaryClauses, ClauseCleaner::binaryClauses);
-        for (uint i = 0; i != binaryClauses.size(); i++) {
-            __builtin_prefetch(binaryClauses[i+1], 0);
-            if ((*binaryClauses[i])[0].toInt() < (*binaryClauses[i])[1].toInt())
-                std::swap((*binaryClauses[i])[0], (*binaryClauses[i])[1]);
+        for (Clause **it = &binaryClauses[0], **end = it + binaryClauses.size(); it != end; it ++) {
+            if (it+1 != end)
+                __builtin_prefetch(*(it+1), 0);
+            if ((**it)[0].toInt() < (**it)[1].toInt())
+                std::swap((**it)[0], (**it)[1]);
         }
         XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
         uint found = xorFinder.doNoPart(2, 2);
