@@ -1074,7 +1074,17 @@ void Solver::reduceDB()
 
     nbReduceDB++;
     std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
-    for (i = j = 0; i != learnts.size() / RATIOREMOVECLAUSES; i++){
+    
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Cleaning clauses" << endl;
+    for (uint i = 0; i != learnts.size(); i++) {
+        std::cout << "activity:" << learnts[i]->activity() << " \tsize:" << learnts[i]->size() << std::endl;
+    }
+    #endif
+    
+    
+    const uint removeNum = (double)learnts.size() / (double)RATIOREMOVECLAUSES;
+    for (i = j = 0; i != removeNum; i++){
         __builtin_prefetch(learnts[i+1], 0, 0);
         if (learnts[i]->size() > 2 && !locked(*learnts[i]) && learnts[i]->activity() > 2)
             removeClause(*learnts[i]);
