@@ -65,7 +65,7 @@ class XorFinder
 
                 for (a = c11.first->getData(), b = c22.first->getData(), end = a + c11.first->size(); a != end; a++, b++) {
                     if (a->var() != b->var())
-                        return (a->var() < b->var());
+                        return (a->var() > b->var());
                 }
 
                 return false;
