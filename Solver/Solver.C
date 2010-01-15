@@ -1460,7 +1460,7 @@ inline void Solver::setDefaultRestartType()
 
 inline void Solver::checkFullRestart(double& nof_conflicts, double& nof_conflicts_fullrestart, uint& lastFullRestart)
 {
-    if (conflicts >= nof_conflicts_fullrestart) {
+    if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
         printf("c |                                      Fully restarting                                 |\n");
         setDefaultPolarities();
         nof_conflicts = restart_first + restart_first*restart_inc;
