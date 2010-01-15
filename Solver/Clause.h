@@ -50,22 +50,16 @@ class MatrixFinder;
 class Clause
 {
 protected:
-    /**
-    bit-layout of size_etc:
-    
-    range           type             meaning
-    --------------------------------------------
-    0th bit         bool            learnt clause
-    1st - 2nd bit   2bit int        marking
-    3rd bit         bool            inverted xor
-    4th -31st bit  28bit uint       size
-    */
     
     #ifdef STATS_NEEDED
     uint group;
     #endif
     
-    uint32_t size_etc; 
+    uint32_t isLearnt:1;
+    uint32_t marking:2;
+    uint32_t invertedXor:1;
+    uint32_t mySize:20;
+    
     union { int act; uint32_t abst; } extra;
     #ifdef _MSC_VER
     Lit     data[1];
@@ -79,9 +73,8 @@ public:
     template<class V>
     Clause(const V& ps, const uint _group, const bool learnt)
     {
-        size_etc = 0;
-        setSize(ps.size());
-        setLearnt(learnt);
+        mySize = ps.size();
+        isLearnt = learnt;
         setGroup(_group);
         for (uint i = 0; i < ps.size(); i++) data[i] = ps[i];
         if (learnt) extra.act = 0;
@@ -95,24 +88,24 @@ public:
     friend Clause* Clause_new(const T& ps, const uint group, const bool learnt = false);
     #endif //_MSC_VER
 
-    uint         size        ()      const {
-        return size_etc >> 4;
+    const uint   size        ()      const {
+        return mySize;
     }
-    void         shrink      (uint i) {
+    void         shrink      (const uint i) {
         assert(i <= size());
-        size_etc = (((size_etc >> 4) - i) << 4) | (size_etc & ((1 << 4)-1));
+        mySize -= i;
     }
     void         pop         () {
         shrink(1);
     }
-    bool         learnt      ()      const {
-        return size_etc & 1;
+    const bool   learnt      ()      const {
+        return isLearnt;
     }
-    uint32_t     mark        ()      const {
-        return (size_etc >> 1) & 3;
+    const uint32_t mark        ()      const {
+        return marking;
     }
     void         mark        (uint32_t m) {
-        size_etc = (size_etc & ~6) | ((m & 3) << 1);
+        marking = m;
     }
 
     Lit&         operator [] (uint32_t i) {
@@ -132,7 +125,7 @@ public:
     
     Lit subsumes (const Clause& other) const;
     
-    inline void strengthen(const Lit p)
+    inline void  strengthen(const Lit p)
     {
         remove(*this, p);
         calcAbstraction();
@@ -181,32 +174,23 @@ public:
         return;
     }
     #endif //STATS_NEEDED
-protected:
-    void setSize(uint32_t size) {
-        size_etc = (size_etc & ((1 << 4)-1)) + (size << 4);
-    }
-    void setLearnt(bool learnt) {
-        size_etc = (size_etc & ~1) + learnt;
-    }
 };
 
 class XorClause : public Clause
 {
-protected:
-    inline void setInverted(bool inverted)
-    {
-        size_etc = (size_etc & 7) + ((uint32_t)inverted << 3) + (size_etc & ~15);
-    }
-
+    
 #ifdef _MSC_VER
 public:
+#else //_MSC_VER
+protected:
 #endif //_MSC_VER
+
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
     XorClause(const V& ps, const bool inverted, const uint _group) :
         Clause(ps, _group, false)
     {
-        setInverted(inverted);
+        invertedXor = inverted;
     }
 
 public:
@@ -218,11 +202,11 @@ public:
 
     inline bool xor_clause_inverted() const
     {
-        return size_etc & 8;
+        return invertedXor;
     }
     inline void invert(bool b)
     {
-        size_etc ^= (uint32_t)b << 3;
+        invertedXor ^= b;
     }
 
     void print() {
