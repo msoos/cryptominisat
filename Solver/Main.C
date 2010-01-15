@@ -607,7 +607,7 @@ int main(int argc, char** argv)
     }
 
     lbool ret = S.solve();
-    if (S.verbosity >= 1) printStats(S);
+    printStats(S);
     printf("c \n");
     if (dumpLearnts) {
         S.dumpSortedLearnts(learnts_filename, maxLearntsSize);
