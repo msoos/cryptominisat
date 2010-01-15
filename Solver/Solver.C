@@ -885,13 +885,14 @@ Clause* Solver::propagate(const bool xor_as_well)
                 j++;
             } else {
                 // Look for new watch:
-                for (uint32_t k = 2; k != c.size(); k++)
-                    if (value(c[k]) != l_False) {
-                        c[1] = c[k];
-                        c[k] = false_lit;
+                for (Lit *k = &c[2], *end2 = c.getData()+c.size(); k != end2; k++) {
+                    if (value(*k) != l_False) {
+                        c[1] = *k;
+                        *k = false_lit;
                         watches[(~c[1]).toInt()].push(Watched(&c, c[0]));
                         goto FoundWatch;
                     }
+                }
 
                 // Did not find watch -- clause is unit under assignment:
                 j->clause = &c;
