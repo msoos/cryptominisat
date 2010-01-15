@@ -63,7 +63,7 @@ Solver::Solver() :
         //
         , starts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
-        , nbDL2(0), nbBin(0), lastNbBin(0), nbReduceDB(0)
+        , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         
 
         , ok               (true)
@@ -102,6 +102,7 @@ Solver::~Solver()
 {
     for (uint32_t i = 0; i != learnts.size(); i++) clauseFree(learnts[i]);
     for (uint32_t i = 0; i != clauses.size(); i++) clauseFree(clauses[i]);
+    for (uint32_t i = 0; i != binaryClauses.size(); i++) clauseFree(binaryClauses[i]);
     for (uint32_t i = 0; i != xorclauses.size(); i++) free(xorclauses[i]);
     clearGaussMatrixes();
     for (uint32_t i = 0; i != freeLater.size(); i++) free(freeLater[i]);
@@ -293,7 +294,10 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         Clause* c = Clause_new(ps, group);
 
-        clauses.push(c);
+        if (c->size() > 2)
+            clauses.push(c);
+        else
+            binaryClauses.push(c);
         attachClause(*c);
         varReplacer->newClause();
     }
@@ -1172,6 +1176,46 @@ lbool Solver::simplify()
         ok = false;
         return l_False;
     }
+    
+    double slowdown = (100000.0/(double)binaryClauses.size());
+    slowdown = std::min(3.5, slowdown);
+    slowdown = std::max(0.2, slowdown);
+    
+    double speedup = 50000000.0/(double)(propagations-lastSearchForBinaryXor);
+    speedup = std::min(3.5, speedup);
+    speedup = std::max(0.2, speedup);
+    
+    /*std::cout << "new:" << nbBin - lastNbBin + becameBinary << std::endl;
+    std::cout << "left:" << ((double)(nbBin - lastNbBin + becameBinary)/BINARY_TO_XOR_APPROX) * slowdown  << std::endl;
+    std::cout << "right:" << (double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup << std::endl;*/
+    
+    if (((double)std::abs((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown >
+        (double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup) {
+        lastSearchForBinaryXor = propagations;
+        clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
+        clauseCleaner->cleanClauses(learnts, ClauseCleaner::learnts);
+        clauseCleaner->removeSatisfied(binaryClauses, ClauseCleaner::binaryClauses);
+        for (uint i = 0; i != binaryClauses.size(); i++) {
+            __builtin_prefetch(binaryClauses[i+1], 0);
+            if ((*binaryClauses[i])[0].toInt() < (*binaryClauses[i])[1].toInt())
+                std::swap((*binaryClauses[i])[0], (*binaryClauses[i])[1]);
+        }
+        XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
+        uint found = xorFinder.doNoPart(2, 2);
+        
+        //Performreplace is NEEDED to have a correct reason[] array
+        varReplacer->performReplace();
+        if (!ok) return l_False;
+        
+        lastNbBin = nbBin;
+        becameBinary = 0;
+        if (!ok) return l_False;
+        
+    } else if (performReplace
+        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
+        varReplacer->performReplace();
+        if (!ok) return l_False;
+    }
 
     if (nAssigns() == simpDB_assigns || (simpDB_props > 0)) {
         return l_Undef;
@@ -1179,18 +1223,6 @@ lbool Solver::simplify()
 
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
-    if (((double)(nbBin - lastNbBin)/BINARY_TO_XOR_APPROX) > (double)order_heap.size() * PERCENTAGEPERFORMREPLACE) {
-        XorFinder xorFinder(this, learnts, ClauseCleaner::learnts);
-        xorFinder.doNoPart(2, 2);
-        if (!ok) return l_False;
-        
-        lastNbBin = nbBin;
-    }
-    if (performReplace
-        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-        varReplacer->performReplace();
-        if (!ok) return l_False;
-    }
 
     // Remove fixed variables from the variable heap:
     order_heap.filter(VarFilter(*this));
@@ -1386,7 +1418,10 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         if (dynamic_behaviour_analysis)
             logger.set_group_name(c->getGroup(), "learnt clause");
         #endif
-        learnts.push(c);
+        if (c->size() > 2)
+            learnts.push(c);
+        else
+            binaryClauses.push(c);
         c->setActivity(nbLevels); // LS
         if (nbLevels <= 2) nbDL2++;
         if (c->size() == 2) nbBin++;
@@ -1506,16 +1541,27 @@ inline void Solver::performStepsBeforeSolve()
     
     if (xorFinder) {
         double time;
-        if (clauses.size() < MAX_CLAUSENUM_XORFIND) {
-            XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-            xorFinder.doNoPart(2, 10);
+        
+        if (binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
+            XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
+            xorFinder.doNoPart(2, 2);
             if (!ok) return;
             
-            if (performReplace
-                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-                varReplacer->performReplace();
+            //It's best to replace binaries immediately
+            varReplacer->performReplace();
             if (!ok) return;
-            }
+        }
+        
+        if (clauses.size() < MAX_CLAUSENUM_XORFIND) {
+            XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
+            xorFinder.doNoPart(3, 10);
+            if (!ok) return;
+        }
+        
+        if (performReplace
+            && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
+            varReplacer->performReplace();
+        if (!ok) return;
         }
         
         if (xorclauses.size() > 1) {
@@ -1699,21 +1745,35 @@ bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
     return failed;
 }
 
-void Solver::verifyModel()
+bool Solver::verifyClauses(const vec<Clause*>& cs) const
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "Checking clauses whether they have been properly satisfied." << endl;;
+    #endif
+    
     bool failed = false;
-    for (uint32_t i = 0; i != clauses.size(); i++) {
-        Clause& c = *clauses[i];
+    
+    for (uint32_t i = 0; i != cs.size(); i++) {
+        Clause& c = *cs[i];
         for (uint j = 0; j < c.size(); j++)
             if (modelValue(c[j]) == l_True)
                 goto next;
-
+            
         printf("unsatisfied clause: ");
-        clauses[i]->plainPrint();
+        cs[i]->plainPrint();
         failed = true;
-next:
+    next:
         ;
     }
+    
+    return failed;
+}
+
+void Solver::verifyModel()
+{
+    bool failed = false;
+    failed |= verifyClauses(clauses);
+    failed |= verifyClauses(binaryClauses);
     
     failed |= verifyXorClauses(xorclauses);
     failed |= verifyXorClauses(conglomerate->getCalcAtFinish());
@@ -1762,7 +1822,7 @@ void Solver::printRestartStat() const
     #else
     if (verbosity >= 1) {
     #endif
-        printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses(), (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart), (int)nLearnts(), (double)learnts_literals/nLearnts());
+        printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses()+(int)binaryClauses.size()-(int)nbBin, (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart), (int)nLearnts(), (double)learnts_literals/nLearnts());
         print_gauss_sum_stats();
     }
 }

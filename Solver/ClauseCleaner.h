@@ -31,7 +31,7 @@ class ClauseCleaner
     public:
         ClauseCleaner(Solver& solver);
         
-        enum ClauseSetType {clauses, xorclauses, learnts, conglomerate};
+        enum ClauseSetType {clauses, xorclauses, learnts, binaryClauses};
         
         void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
@@ -55,6 +55,7 @@ inline void ClauseCleaner::removeAndCleanAll()
 {
     uint limit = (double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES;
     
+    removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses, limit);
     cleanClauses(solver.clauses, ClauseCleaner::clauses, limit);
     cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses, limit);
     cleanClauses(solver.learnts, ClauseCleaner::learnts, limit);

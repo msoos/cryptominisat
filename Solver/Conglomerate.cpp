@@ -70,6 +70,12 @@ void Conglomerate::fillVarToXor()
         }
     }
     
+    for (Clause *const*it = S->binaryClauses.getData(), *const*end = it + S->binaryClauses.size(); it != end; it++) {
+        const Clause& c = **it;
+        blocked[c[0].var()] = true;
+        blocked[c[1].var()] = true;
+    }
+    
     for (Lit* it = &(S->trail[0]), *end = it + S->trail.size(); it != end; it++)
         blocked[it->var()] = true;
     

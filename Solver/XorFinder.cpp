@@ -73,6 +73,14 @@ uint XorFinder::doNoPart(const uint minSize, const uint maxSize)
             S->ok = (S->propagate() == NULL);
     }
     
+    if (type == ClauseCleaner::binaryClauses) {
+        assert(table.size() == S->binaryClauses.size());
+        for (uint i = 0, j = 0, size = table.size(); i != size; i++) {
+            if (!toRemove[table[i].second])
+                S->binaryClauses[j++] = table[i].first;
+        }
+    }
+    
     return found;
 }
 

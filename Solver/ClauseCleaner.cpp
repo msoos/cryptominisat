@@ -120,6 +120,10 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
         if (cleanClause(**s)) {
             clauseFree(*s);
             s++;
+        } else if (type != ClauseCleaner::binaryClauses && (*s)->size() == 2) {
+            solver.binaryClauses.push(*s);
+            solver.becameBinary++;
+            s++;
         } else {
             *ss++ = *s++;
         }

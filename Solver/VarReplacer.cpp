@@ -56,6 +56,7 @@ void VarReplacer::performReplace()
     S->clauseCleaner->cleanClauses(S->clauses, ClauseCleaner::clauses);
     S->clauseCleaner->cleanClauses(S->learnts, ClauseCleaner::learnts);
     S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
+    S->clauseCleaner->removeSatisfied(S->binaryClauses, ClauseCleaner::binaryClauses);
     
     if (replacedVars == lastReplacedVars) return;
     
@@ -83,6 +84,7 @@ void VarReplacer::performReplace()
     
     replace_set(S->clauses);
     replace_set(S->learnts);
+    replace_set(S->binaryClauses);
     
     replace_set(S->xorclauses, true);
     replace_set(S->conglomerate->getCalcAtFinish(), false);
@@ -415,18 +417,20 @@ void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverte
     ps[0] ^= xor_clause_inverted;
     
     c = Clause_new(ps, group, false);
-    if (internal)
-        S->clauses.push(c);
-    else
+    if (internal) {
+        S->binaryClauses.push(c);
+        S->becameBinary++;
+    } else
         clauses.push(c);
     S->attachClause(*c);
     
     ps[0] ^= true;
     ps[1] ^= true;
     c = Clause_new(ps, group, false);
-    if (internal)
-        S->clauses.push(c);
-    else
+    if (internal) {
+        S->binaryClauses.push(c);
+        S->becameBinary++;
+    } else
         clauses.push(c);
     S->attachClause(*c);
 }

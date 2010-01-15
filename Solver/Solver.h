@@ -140,7 +140,7 @@ public:
     //
     uint64_t starts, decisions, rnd_decisions, propagations, conflicts;
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
-    uint64_t nbDL2, nbBin, lastNbBin, nbReduceDB;
+    uint64_t nbDL2, nbBin, lastNbBin, becameBinary, lastSearchForBinaryXor, nbReduceDB;
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -185,6 +185,7 @@ protected:
     //
     bool                ok;               // If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
     vec<Clause*>        clauses;          // List of problem clauses.
+    vec<Clause*>        binaryClauses;    // Binary clauses are regularly moved here
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
     vector<bool>        givenUnitaries;   // Unitary clauses given (i.e. not learnt)
@@ -294,12 +295,13 @@ protected:
     ClauseCleaner* clauseCleaner;
     void chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
     void setDefaultRestartType();
-    void checkFullRestart(double& nof_conflicts, double& nof_conflicts_fullrestart, uint& lastFullRestart);
+    void checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();
 
     // Debug & etc:
     void     printLit         (const Lit l) const;
     void     verifyModel      ();
+    bool     verifyClauses    (const vec<Clause*>& cs) const;
     bool     verifyXorClauses (const vec<XorClause*>& cs) const;
     void     checkLiteralCount();
     void     printStatHeader  () const;

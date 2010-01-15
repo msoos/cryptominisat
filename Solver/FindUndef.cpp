@@ -24,6 +24,9 @@ FindUndef::FindUndef(Solver& _s) :
     S(_s)
     , isPotentialSum(0)
 {
+    for (uint i = 0; i != S.binaryClauses.size(); i++)
+        S.clauses.push(S.binaryClauses[i]);
+    S.binaryClauses.clear();
     dontLookAtClause.resize(S.clauses.size(), false);
     isPotential.resize(S.nVars(), false);
     fillPotential();
