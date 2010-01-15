@@ -1,14 +1,50 @@
 #!/bin/bash
 
-if [ "x$1" = "x" ]; then
-  echo "USAGE: cryptominisat_ext.sh <input CNF>"
-  exit 1
+TMPDIR=/tmp
+mypath=.
+verbosity=1
+gaussuntil=0
+
+function usage {
+    echo ""
+    echo "Usage: $0 [options] <input CNF>"
+    echo "  -d   directory of executables (default = .)"
+    echo "  -t   directory of temporaty files (default = /tmp)"
+    echo "  -g   gauss until this depth (default = 0)"
+    echo "  -v   verbosity (default = 1)"
+    echo ""
+}
+
+args=`getopt g:v:t:d: "$@"`
+if test $? != 0
+then
+    usage
+    exit 1
+fi
+set -- $args
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        (-d) mypath=$2; shift;;
+        (-t) TMPDIR=$2; shift;;
+        (-v) verbosity=$2; shift;;
+        (-g) gaussuntil=$2; shift;;
+        (--) shift; break;;
+        (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
+        (*)  break;;
+    esac
+    shift
+done
+
+if [ "x$1" = "x" ];
+then
+    usage
+    exit 1
 fi
 
 
 # To set in a normal envirnement
-mypath=.
-TMPDIR=/tmp
 
 TMP=$TMPDIR/cryptominisat_$$ #set this to the location of temporary files
 SE=$mypath/satelite           #set this to the executable of SatELite
@@ -21,11 +57,13 @@ echo "c"
 $SE $INPUT $TMP.cnf $TMP.vmap $TMP.elim
 X=$?
 echo "c"
-echo "c Starting CryptoMiniSat2"
-echo "c"
+echo "c SatElite return value: $X"
 if [ $X == 0 ]; then
   #SatElite terminated correctly
-  $RS $TMP.cnf -gaussuntil=100 -verbosity=1 $TMP.result "$@" 
+  echo "c SatElite terminated correctly"
+  echo "c Starting CryptoMiniSat2"
+  echo "c"
+  $RS $TMP.cnf -gaussuntil=$gaussuntil -verbosity=$verbosity $TMP.result "$@"
   #more $TMP.result
   X=$?
   if [ $X == 20 ]; then
@@ -39,15 +77,19 @@ if [ $X == 0 ]; then
     exit $X
   fi 
   #SATISFIABLE, call SatElite for model extension
+  echo "c SatElite is called for model extension"
   $SE +ext $INPUT $TMP.result $TMP.vmap $TMP.elim  "$@"
   X=$?
-elif [ $X == 11 ]; then
+elif [ $X == 11 -o $X == 3 ]; then
   #SatElite died, CryptoMiniSat2 must take care of the rest
-  $RS $INPUT -verbosity=1 #but we must force CryptoMiniSat to print out result here!!!
+  echo "c SatElite died, CryptoMiniSat2 must take over"
+  echo "c Starting CryptoMiniSat2"
+  echo "c"
+  $RS $INPUT -gaussuntil=$gaussuntil -verbosity=$verbosity #but we must force CryptoMiniSat to print out result here!!!
   X=$?
 elif [ $X == 12 ]; then
   #SatElite prints out usage message
-  #There is nothing to do here.
+  echo "c SatElite printed use message"
   X=0
 fi
 
