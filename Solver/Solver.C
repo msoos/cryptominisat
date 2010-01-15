@@ -132,7 +132,7 @@ Var Solver::newVar(bool dvar)
     assigns   .push(l_Undef);
     level     .push(-1);
     activity  .push(0);
-    seen      .push(0);
+    seen      .push_back(0);
     permDiff  .push(0);
     
     polarity  .push_back(true);
@@ -618,9 +618,9 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
         if (p != lit_Undef)
             reverse_binary_clause(c);
 
-        for (uint j = (p == lit_Undef) ? 0 : 1; j < c.size(); j++) {
+        for (uint j = (p == lit_Undef) ? 0 : 1; j != c.size(); j++) {
             const Lit& q = c[j];
-            const uint my_var = q.var();
+            const Var my_var = q.var();
 
             if (!seen[my_var] && level[my_var] > 0) {
                 varBumpActivity(my_var);
