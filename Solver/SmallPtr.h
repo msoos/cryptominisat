@@ -7,9 +7,10 @@ Link: http://www.codeproject.com/KB/cpp/smallptr.aspx
 #ifndef __SMALL_PTR_H__
 #define __SMALL_PTR_H__
 
-#include <boost/static_assert.hpp>
+//#include <boost/static_assert.hpp>
 
-#include <boost/pool/detail/singleton.hpp>
+#include <cstring>
+#include "singleton.hpp"
 //#include <boost/thread/mutex.hpp>
 //#include <boost/thread/locks.hpp>
 
@@ -20,7 +21,6 @@ Link: http://www.codeproject.com/KB/cpp/smallptr.aspx
 #endif //_MSC_VER
 
 #define is_n_aligned(T, N) ((sizeof(T) % (N)) == 0)
-#define static_assert(B) BOOST_STATIC_ASSERT(B)
 
 #ifdef WIN32
 #  ifdef WIN64
@@ -165,7 +165,7 @@ private:
 
     void check_alignment() const
     {
-        static_assert(is_n_aligned(TYPE, ALIGNMENT));
+        //BOOST_STATIC_ASSERT(is_n_aligned(TYPE, ALIGNMENT));
     }
 
     void inc_sptr(uint32_t& e, uintptr_t offset = 1)

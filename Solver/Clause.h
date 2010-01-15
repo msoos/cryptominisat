@@ -34,7 +34,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "PackedRow.h"
 #include "constants.h"
 #include "SmallPtr.h"
-#include "pool.hpp"
+//#include "pool.hpp"
 #ifndef uint
 #define uint unsigned int
 #endif
@@ -243,16 +243,16 @@ public:
     friend class MatrixFinder;
 };
 
-extern boost::pool<> binaryClausePool;
+//extern boost::pool<> binaryClausePool;
 
 template<class T>
 Clause* Clause_new(const T& ps, const uint group, const bool learnt = false)
 {
     void* mem;
-    if (ps.size() != 2)
+    //if (ps.size() != 2)
         mem = malloc(sizeof(Clause) + sizeof(Lit)*(ps.size()));
-    else
-        mem = binaryClausePool.malloc();
+    //else
+    //    mem = binaryClausePool.malloc();
     Clause* real= new (mem) Clause(ps, group, learnt);
     return real;
 }
@@ -267,8 +267,9 @@ XorClause* XorClause_new(const T& ps, const bool inverted, const uint group)
 
 inline void clauseFree(Clause* c)
 {
-    if (binaryClausePool.is_from(c)) binaryClausePool.free(c);
-    else free(c);
+    //if (binaryClausePool.is_from(c)) binaryClausePool.free(c);
+    //else 
+    free(c);
 }
 
 /*_________________________________________________________________________________________________

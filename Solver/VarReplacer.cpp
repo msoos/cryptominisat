@@ -43,7 +43,8 @@ VarReplacer::VarReplacer(Solver *_s) :
 VarReplacer::~VarReplacer()
 {
     for (uint i = 0; i != clauses.size(); i++)
-        binaryClausePool.free(clauses[i]);
+        //binaryClausePool.free(clauses[i]);
+        free(clauses[i]);
 }
 
 void VarReplacer::performReplace()
