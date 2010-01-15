@@ -192,7 +192,7 @@ inline void Gaussian::canceling(const uint sublevel)
     if (messed_matrix_vars_since_reversal)
         return;
     int c = std::min((int)gauss_last_level, (int)(solver.trail.size())-1);
-    for (; c >= sublevel; c--) {
+    for (; c >= (int)sublevel; c--) {
         Var var  = solver.trail[c].var();
         if (var < var_is_in.getSize()
             && var_is_in[var]
