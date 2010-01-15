@@ -1060,7 +1060,7 @@ struct reduceDB_lt {
         if (x->activity() < y->activity()) return 0;
         
         //return x->oldActivity() < y->oldActivity();
-        return xsize < ysize;
+        return xsize > ysize;
     }
 };
 
