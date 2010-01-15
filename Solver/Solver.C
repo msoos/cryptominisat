@@ -643,7 +643,6 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
         while (!seen[trail[index--].var()]);
         p     = trail[index+1];
         confl = reason[p.var()];
-        __builtin_prefetch(confl, 0, 0);
         seen[p.var()] = 0;
         pathC--;
 
