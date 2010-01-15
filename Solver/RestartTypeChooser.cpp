@@ -19,11 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Solver.h"
 
 //#define VERBOSE_DEBUG
+//#define PRINT_VARS
 
 RestartTypeChooser::RestartTypeChooser(const Solver* const _s) :
     S(_s)
     , topX(100)
-    , limit(40)
+    , limit(30)
 {
 }
 
@@ -46,10 +47,10 @@ const RestartType RestartTypeChooser::choose()
         return static_restart;
     
     #ifdef VERBOSE_DEBUG
-    std::cout << "Avg same vars in first&second first 100: " << avg() << std::endl;
+    std::cout << "Avg same vars in first&second first 100: " << avg() << " standard Deviation:" << stdDeviation() <<std::endl;
     #endif
     
-    if (avg() > (double)limit)
+    if (avg() > (double)limit || (avg() > (double)(limit*0.9) && stdDeviation() < 5))
         return static_restart;
     else
         return dynamic_restart;
@@ -63,22 +64,33 @@ const double RestartTypeChooser::avg() const
     return (sum/(double)sameIns.size());
 }
 
+const double RestartTypeChooser::stdDeviation() const
+{
+    double average = avg();
+    double variance = 0.0;
+    for (uint i = 0; i != sameIns.size(); i++)
+        variance += pow((double)sameIns[i]-average, 2);
+    variance /= (double)sameIns.size();
+    
+    return sqrt(variance);
+}
+
 void RestartTypeChooser::calcHeap()
 {
     firstVars.clear();
     firstVars.reserve(topX);
-    #ifdef VERBOSE_DEBUG
+    #ifdef PRINT_VARS
     std::cout << "First vars:" << std::endl;
     #endif
     Heap<Solver::VarOrderLt> tmp(S->order_heap);
     uint32_t thisTopX = std::min(tmp.size(), topX);
     for (uint32_t i = 0; i != thisTopX; i++) {
-        #ifdef VERBOSE_DEBUG
+        #ifdef PRINT_VARS
         std::cout << tmp.removeMin()+1 << ", ";
         #endif
         firstVars.push_back(tmp.removeMin());
     }
-    #ifdef VERBOSE_DEBUG
+    #ifdef PRINT_VARS
     std::cout << std::endl;
     #endif
 }

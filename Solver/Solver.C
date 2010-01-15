@@ -1439,6 +1439,7 @@ inline void Solver::chooseRestartType(const lbool& status, RestartTypeChooser& r
                     printf("c |                            Decided on static restart strategy                         |\n");
             }
             restartType = tmp;
+            restartTypeChooser.reset();
         }
     } else {
         #ifdef VERBOSE_DEBUG

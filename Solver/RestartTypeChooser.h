@@ -36,10 +36,12 @@ class RestartTypeChooser
     public:
         RestartTypeChooser(const Solver* const S);
         const RestartType choose();
+        void reset();
         
     private:
         void calcHeap();
         const double avg() const;
+        const double stdDeviation() const;
         
         const Solver* const S;
         const uint32_t topX;
@@ -48,5 +50,10 @@ class RestartTypeChooser
         
         vector<Var> firstVars, firstVarsOld;
 };
+
+inline void RestartTypeChooser::reset()
+{
+    sameIns.clear();
+}
 
 #endif //RESTARTTYPECHOOSER_H
