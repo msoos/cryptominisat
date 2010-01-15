@@ -1243,14 +1243,20 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
         if (nbDecisionLevelHistory.isvalid() &&
             ((nbDecisionLevelHistory.getavg()*0.7) > (totalSumOfDecisionLevel / conflicts))) {
             nbDecisionLevelHistory.fastclear();
-            progress_estimate = progressEstimate();
+            #ifdef STATS_NEEDED
+            if (dynamic_behaviour_analysis)
+                progress_estimate = progressEstimate();
+            #endif
             cancelUntil(0);
             return l_Undef;
         }
         break;
     case static_restart:
         if (nof_conflicts >= 0 && conflictC >= nof_conflicts) {
-            progress_estimate = progressEstimate();
+            #ifdef STATS_NEEDED
+            if (dynamic_behaviour_analysis)
+                progress_estimate = progressEstimate();
+            #endif
             cancelUntil(0);
             return l_Undef;
         }
@@ -1260,7 +1266,10 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
         break;
     }
     if (nof_conflicts_fullrestart >= 0 && conflicts >= nof_conflicts_fullrestart)  {
-        progress_estimate = progressEstimate();
+        #ifdef STATS_NEEDED
+        if (dynamic_behaviour_analysis)
+            progress_estimate = progressEstimate();
+        #endif
         cancelUntil(0);
         return l_Undef;
     }
