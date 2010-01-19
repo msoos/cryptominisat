@@ -1182,6 +1182,10 @@ lbool Solver::simplify()
         ok = false;
         return l_False;
     }
+
+    if (nAssigns() == simpDB_assigns || (simpDB_props > 0)) {
+        return l_Undef;
+    }
     
     double slowdown = (100000.0/(double)binaryClauses.size());
     slowdown = std::min(3.5, slowdown);
@@ -1210,10 +1214,6 @@ lbool Solver::simplify()
         XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
         uint found = xorFinder.doNoPart(2, 2);
         
-        //Performreplace is NEEDED to have a correct reason[] array
-        varReplacer->performReplace();
-        if (!ok) return l_False;
-        
         lastNbBin = nbBin;
         becameBinary = 0;
         if (!ok) return l_False;
@@ -1222,12 +1222,13 @@ lbool Solver::simplify()
         if (!ok) return l_False;
     }
 
-    if (nAssigns() == simpDB_assigns || (simpDB_props > 0)) {
-        return l_Undef;
-    }
-
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
+    if (performReplace
+        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
+        varReplacer->performReplace();
+        if (!ok) return l_False;
+    }
 
     // Remove fixed variables from the variable heap:
     order_heap.filter(VarFilter(*this));
