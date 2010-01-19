@@ -845,21 +845,6 @@ Clause* Solver::propagate(const bool xor_as_well)
 
     while (qhead < trail.size()) {
         
-        //First propagate binary clauses
-        while (qheadBin < trail.size()) {
-            Lit p   = trail[qheadBin++];
-            vec<WatchedBin> & wbin = binwatches[p.toInt()];
-            for(WatchedBin *k = wbin.getData(), *end = k + wbin.size(); k != end; k++) {
-                lbool val = value(k->impliedLit);
-                if (val.isUndef()) {
-                    uncheckedEnqueue(k->impliedLit, k->clause);
-                } else if (val == l_False) {
-                    confl = k->clause;
-                    goto EndPropagate;
-                }
-            }
-        }
-        
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
         Watched        *i, *j, *end;
@@ -941,9 +926,26 @@ FoundWatch:
             ;
         }
         ws.shrink_(i - j);
-
+        
         //Finally, propagate XOR-clauses
         if (xor_as_well && !confl) confl = propagate_xors(p);
+        
+        if (!confl) {
+            //First propagate binary clauses
+            //while (qheadBin < trail.size()) {
+            //Lit p   = trail[qheadBin++];
+            vec<WatchedBin> & wbin = binwatches[p.toInt()];
+            for(WatchedBin *k = wbin.getData(), *end = k + wbin.size(); k != end; k++) {
+                lbool val = value(k->impliedLit);
+                if (val.isUndef()) {
+                    uncheckedEnqueue(k->impliedLit, k->clause);
+                } else if (val == l_False) {
+                    confl = k->clause;
+                    goto EndPropagate;
+                }
+            }
+            //}
+        }
     }
 EndPropagate:
     propagations += num_props;
