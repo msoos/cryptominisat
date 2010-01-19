@@ -110,8 +110,12 @@ void VarReplacer::performReplace()
     lastReplacedVars = replacedVars;
     lastReplacedLits = replacedLits;
     
-    if (S->ok)
-        S->ok = (S->propagate() == NULL);
+    if (!S->ok)
+        return;
+    
+    S->ok = (S->propagate() == NULL);
+    if (!S->ok)
+        return;
     
     S->order_heap.filter(Solver::VarFilter(*S));
 }
