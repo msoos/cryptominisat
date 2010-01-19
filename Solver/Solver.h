@@ -503,6 +503,24 @@ inline void Solver::reverse_binary_clause(Clause& c) const {
         c[0] =  c[1], c[1] = tmp;
     }
 }
+/*inline void Solver::calculate_xor_clause(Clause& c2) const {
+    if (c2.isXor() && ((XorClause*)&c2)->updateNeeded())  {
+        XorClause& c = *((XorClause*)&c2);
+        bool final = c.xor_clause_inverted();
+        for (int k = 0, size = c.size(); k != size; k++ ) {
+            const lbool& val = assigns[c[k].var()];
+            assert(val != l_Undef);
+            
+            c[k] = c[k].unsign() ^ val.getBool();
+            final ^= val.getBool();
+        }
+        if (final)
+            c[0] = c[0].unsign() ^ !assigns[c[0].var()].getBool();
+        
+        c.setUpdateNeeded(false);
+    }
+}*/
+
 inline void Solver::removeClause(Clause& c)
 {
     detachClause(c);
