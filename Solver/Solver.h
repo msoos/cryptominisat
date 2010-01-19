@@ -139,7 +139,7 @@ public:
 
     // Statistics: (read-only member variable)
     //
-    uint64_t starts, decisions, rnd_decisions, propagations, conflicts;
+    uint64_t starts, fullStarts, decisions, rnd_decisions, propagations, conflicts;
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
     uint64_t nbDL2, nbBin, lastNbBin, becameBinary, lastSearchForBinaryXor, nbReduceDB;
 

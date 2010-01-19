@@ -46,7 +46,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 Solver::Solver() :
         // Parameters: (formerly in 'SearchParams')
-        var_decay(1 / 0.95), random_var_freq(0.02)
+        var_decay(1 / 0.95), random_var_freq(0.92)
         , restart_first(100), restart_inc(1.5), learntsize_factor((double)1/(double)3), learntsize_inc(1)
 
         // More parameters:
@@ -62,7 +62,7 @@ Solver::Solver() :
 
         // Statistics: (formerly in 'SolverStats')
         //
-        , starts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
+        , starts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
         , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         
@@ -544,8 +544,11 @@ Lit Solver::pickBranchLit()
     
     Var next = var_Undef;
 
+    
+    bool random = mtrand.randDblExc() < random_var_freq;
+    
     // Random decision:
-    if (mtrand.randDblExc() < random_var_freq && !order_heap.empty()) {
+    if (random && !order_heap.empty()) {
         if (restrictedPickBranch == 0) next = order_heap[mtrand.randInt(order_heap.size()-1)];
         else next = order_heap[mtrand.randInt(std::min((uint32_t)order_heap.size()-1, restrictedPickBranch))];
 
@@ -554,8 +557,6 @@ Lit Solver::pickBranchLit()
     }
 
     // Activity based decision:
-    //bool dont_do_bad_decision = false;
-    //if (restrictedPickBranch != 0) dont_do_bad_decision = (mtrand.randInt(100) != 0);
     while (next == var_Undef || assigns[next] != l_Undef || !decision_var[next])
         if (order_heap.empty()) {
             next = var_Undef;
@@ -565,8 +566,12 @@ Lit Solver::pickBranchLit()
         }
 
     bool sign;
-    if (next != var_Undef)
-        sign = polarity[next];
+    if (next != var_Undef) {
+        if (fullStarts == 0 && random)
+            sign = mtrand.randInt(1);
+        else
+            sign = polarity[next];
+    }
 
     assert(next == var_Undef || value(next) == l_Undef);
 
@@ -1534,6 +1539,8 @@ inline void Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_full
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         setDefaultRestartType();
         lastFullRestart = starts;
+        random_var_freq = 0.02;
+        fullStarts++;
     }
 }
 
