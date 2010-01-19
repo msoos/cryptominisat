@@ -926,7 +926,7 @@ FoundWatch:
             ;
         }
         ws.shrink_(i - j);
-        
+
         //Finally, propagate XOR-clauses
         if (xor_as_well && !confl) confl = propagate_xors(p);
         
