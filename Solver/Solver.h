@@ -51,6 +51,7 @@ class VarReplacer;
 class XorFinder;
 class FindUndef;
 class ClauseCleaner;
+class FailedVarSearcher;
 
 #ifdef VERBOSE_DEBUG
 using std::cout;
@@ -290,9 +291,11 @@ protected:
     friend class VarReplacer;
     friend class ClauseCleaner;
     friend class RestartTypeChooser;
+    friend class FailedVarSearcher;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
+    FailedVarSearcher* failedVarSearcher;
     void chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
     void setDefaultRestartType();
     void checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);

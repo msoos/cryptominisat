@@ -30,5 +30,6 @@ add_library(cryptominisatlib
     RestartTypeChooser.cpp
     SmallPtr.cpp
     Clause.cpp
+    FailedVarSearcher.cpp
 )
 

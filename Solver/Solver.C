@@ -38,6 +38,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "XorFinder.h"
 #include "ClauseCleaner.h"
 #include "RestartTypeChooser.h"
+#include "FailedVarSearcher.h"
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -92,6 +93,7 @@ Solver::Solver() :
     varReplacer = new VarReplacer(this);
     conglomerate = new Conglomerate(this);
     clauseCleaner = new ClauseCleaner(*this);
+    failedVarSearcher = new FailedVarSearcher(*this);
     
     #ifdef STATS_NEEDED
     logger.setSolver(this);
@@ -1216,9 +1218,7 @@ lbool Solver::simplify()
         becameBinary = 0;
         if (!ok) return l_False;
         
-    } else if (performReplace
-        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-        varReplacer->performReplace();
+        failedVarSearcher->search(0.1);
         if (!ok) return l_False;
     }
 
@@ -1599,6 +1599,9 @@ inline void Solver::performStepsBeforeSolve()
             }
         }
     }
+    
+    if (failedVarSearcher->search(10.0) == l_False)
+        return;
     
     if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
         double time = cpuTime();
