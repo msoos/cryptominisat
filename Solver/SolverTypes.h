@@ -119,7 +119,7 @@ public:
         return value != b.value;
     }
     lbool operator^(const bool b) const {
-        return lbool(value - value*2*b);
+        return b ? lbool(-value) : lbool(value);
     }
     //lbool operator ^ (const bool b) const { return b ? lbool(-value) : lbool(value); }
 
