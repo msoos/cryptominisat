@@ -1071,7 +1071,6 @@ struct reduceDB_lt {
         // First criteria
         if (xsize > 2 && ysize == 2) return 1;
         if (ysize > 2 && xsize == 2) return 0;
-        if (xsize == 2 && ysize == 2) return 0;
         
         // Second criteria
         if (x->activity() > y->activity()) return 1;
