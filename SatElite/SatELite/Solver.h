@@ -1,6 +1,6 @@
 /**************************************************************************************************
 
-Solver.h -- (C) Niklas Een, Niklas Sörensson, 2004
+Solver.h -- (C) Niklas Een, Niklas Sorensson, 2004
 
 A simple Chaff-like SAT-solver with support for incremental SAT.
 

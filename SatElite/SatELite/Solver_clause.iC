@@ -1,6 +1,6 @@
 /**************************************************************************************************
 
-Solver_clause.iC -- (C) Niklas Een, Niklas Sörensson, 2004
+Solver_clause.iC -- (C) Niklas Een, Niklas Sorensson, 2004
 
 ADT for clauses, the only constraint supported by Satelite.
 
