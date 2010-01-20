@@ -1,6 +1,6 @@
 /**************************************************************************************************
 
-Solver.C -- (C) Niklas Een, Niklas Sörensson, 2004
+Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 
 A simple Chaff-like SAT-solver with support for incremental SAT.
 
@@ -168,7 +168,7 @@ void Solver::analyze(Clause confl, vec<Lit>& out_learnt, int& out_btlevel)
     // Generate conflict clause:
     //
 #if 1
-// Niklas Sörensson's version
+// Niklas Sorensson's version
     // Generate conflict clause:
     //
     out_learnt.push();      // (leave room for the asserting literal)
@@ -521,7 +521,7 @@ Clause Solver::propagate(void)
 #endif
 
 #if 1
-// Borrowed from Niklas Sörensson -- uses "unsafe" type casts to achieve maximum performance
+// Borrowed from Niklas Sorensson -- uses "unsafe" type casts to achieve maximum performance
 Clause Solver::propagate(void)
 {
     if (decisionLevel() == 0 && occur_mode != occ_Off){
