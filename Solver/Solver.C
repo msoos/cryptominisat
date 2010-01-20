@@ -1609,7 +1609,7 @@ inline void Solver::performStepsBeforeSolve()
         }
     }
     
-    if (failedVarSearcher->search(10.0) == l_False)
+    if (failedVarSearcher->search(20.0) == l_False)
         return;
     
     if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
