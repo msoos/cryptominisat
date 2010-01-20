@@ -83,10 +83,8 @@ const lbool FailedVarSearcher::search(const double maxTime)
                 for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
                     Var     x  = solver.trail[c].var();
                     map<Var, lbool>::iterator it = found.find(x);
-                    if (it != found.end() && it->second == solver.assigns[x]) {
-                            bothSame.push_back(make_pair(x, it->second == l_False));
-                            goodBothSame++;
-                    }
+                    if (it != found.end() && it->second == solver.assigns[x])
+                        bothSame.push_back(make_pair(x, it->second == l_False));
                 }
                 solver.cancelUntil(0);
             }
@@ -94,6 +92,7 @@ const lbool FailedVarSearcher::search(const double maxTime)
             
             for(uint i = 0; i != bothSame.size(); i++)
                 solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
+            goodBothSame += bothSame.size();
             bothSame.clear();
             solver.ok = (solver.propagate() == NULL);
             if (!solver.ok) return l_False;
