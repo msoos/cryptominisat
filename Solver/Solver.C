@@ -113,6 +113,7 @@ Solver::~Solver()
     delete varReplacer;
     delete conglomerate;
     delete clauseCleaner;
+    delete failedVarSearcher;
     
     if (libraryCNFFile)
         fclose(libraryCNFFile);
