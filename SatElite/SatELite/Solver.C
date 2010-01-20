@@ -397,13 +397,18 @@ void Solver::propagateToplevel(void)
 
         // Remove satisfied clauses:
         occur[index(p)].moveTo(cs);
-        for (int i = 0; i < cs.size(); i++)
+        for (int i = 0; i < cs.size(); i++) {
+            if (i+1 < cs.size())
+                __builtin_prefetch(cs[i+1].pointer(), 0, 0);
             removeClause(cs[i]);
+        }
 
         // Remove false literals from clauses:
         occur[index(~p)].moveTo(cs);
         registerIteration(cs);
         for (int i = 0; i < cs.size(); i++){
+            if (i+1 < cs.size())
+                __builtin_prefetch(cs[i+1].pointer(), 0, 0);
             if (!cs[i].null())
                 strengthenClause(cs[i], ~p);    // (may enqueue new facts to propagate)
         }

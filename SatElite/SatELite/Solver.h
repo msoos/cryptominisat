@@ -81,6 +81,7 @@ public:
     bool    operator == (Clause other)  const { return ptr_ == other.ptr_; }
     bool    null(void)                  const { return ptr_ == NULL; }
     void    zero(void)                        { ptr_ = NULL; }
+    Clause_t* pointer()                       { return ptr_; }
 
     bool       dynamic     (void)       const { return ptr_->dynamic(); }
     int        size        (void)       const { return ptr_->size(); }
@@ -168,7 +169,8 @@ macro void remove(vec<T>& ws, const T& elem)
 {
     int j = 0;
     for (; ws[j] != elem  ; j++) assert(j < ws.size());
-    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
+    T *a=&ws[j];
+    memmove(a, a+1, (ws.size()-j)*sizeof(T));
     ws.pop();
 }
 
