@@ -53,7 +53,8 @@ class ClauseCleaner
 
 inline void ClauseCleaner::removeAndCleanAll()
 {
-    uint limit = (double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES;
+    //uint limit = (double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES;
+    uint limit = 1;
     
     removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses, limit);
     cleanClauses(solver.clauses, ClauseCleaner::clauses, limit);
