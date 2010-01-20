@@ -1559,9 +1559,11 @@ inline void Solver::performStepsBeforeSolve()
             xorFinder.doNoPart(2, 2);
             if (!ok) return;
             
-            //It's best to replace binaries immediately
-            varReplacer->performReplace();
-            if (!ok) return;
+            if (performReplace
+                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
+                varReplacer->performReplace();
+                if (!ok) return;
+            }
         }
         
         if (clauses.size() < MAX_CLAUSENUM_XORFIND) {
