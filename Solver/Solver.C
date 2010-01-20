@@ -57,6 +57,7 @@ Solver::Solver() :
         , restrictedPickBranch(0)
         , xorFinder        (true)
         , performReplace   (true)
+        , failedVarSearch  (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
 
@@ -1247,7 +1248,8 @@ lbool Solver::simplify()
         becameBinary = 0;
         if (!ok) return l_False;
         
-        failedVarSearcher->search(0.1);
+        if (failedVarSearch)
+            failedVarSearcher->search(0.1);
         if (!ok) return l_False;
     }
 
@@ -1652,7 +1654,7 @@ inline void Solver::performStepsBeforeSolve()
         }
     }
     
-    if (failedVarSearcher->search(20.0) == l_False)
+    if (failedVarSearch && failedVarSearcher->search(20.0) == l_False)
         return;
 }
 

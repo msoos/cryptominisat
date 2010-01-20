@@ -411,6 +411,8 @@ void printUsage(char** argv)
     printf("  -maxDumpLearntS = [0 - 2^32-1] When dumping the learnts to file, what should be\n");
     printf("                    maximum length of the clause dumped. Useful to make the\n");
     printf("                    resulting file smaller. Default is 2^32-1 (i.e. all lenghts)\n");
+    printf("  -nofailedvar    = Don't search for failed vars, and don't search for vars\n");
+    printf("                    doubly propagated to the same value\n");
     printf("\n");
 }
 
@@ -537,6 +539,8 @@ int main(int argc, char** argv)
             debugNewVar = true;
         } else if ((value = hasPrefix(argv[i], "-novarreplace"))) {
             S.performReplace = false;
+        } else if ((value = hasPrefix(argv[i], "-nofailedvar"))) {
+            S.failedVarSearch = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);

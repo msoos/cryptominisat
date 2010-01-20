@@ -130,6 +130,7 @@ public:
     Var       restrictedPickBranch; // Pick variables to branch on preferentally from the highest [0, restrictedPickBranch]. If set to 0, preferentiality is turned off (i.e. picked randomly between [0, all])
     bool      xorFinder;            // Automatically find xor-clauses and convert them
     bool      performReplace;       // Should var-replacing be performed?
+    bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
