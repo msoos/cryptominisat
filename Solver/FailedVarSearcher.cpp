@@ -29,42 +29,44 @@ const lbool FailedVarSearcher::search(const double maxTime)
     
     finishedLastTime = true;
     lastTimeWentUntil = solver.order_heap.size();
-    for (uint32_t i = from; i < solver.order_heap.size(); i++) if (solver.assigns[i] == l_Undef) {
-        if (cpuTime() - time >= maxTime)  {
-            finishedLastTime = false;
-            lastTimeWentUntil = i;
-            break;
+    for (uint32_t i = from; i < solver.order_heap.size(); i++) {
+        Var var = solver.order_heap[i];
+        if (solver.assigns[var] == l_Undef) {
+            if (cpuTime() - time >= maxTime)  {
+                finishedLastTime = false;
+                lastTimeWentUntil = var;
+                break;
+            }
+            
+            bool oldPolarity = solver.polarity[var];
+            
+            solver.newDecisionLevel();
+            solver.uncheckedEnqueue(Lit(var, false));
+            failed = (solver.propagate() != NULL);
+            solver.cancelUntil(0);
+            if (failed) {
+                num++;
+                solver.uncheckedEnqueue(Lit(var, true));
+                solver.ok = (solver.propagate() == NULL);
+                if (!solver.ok) return l_False;
+                continue;
+            }
+            
+            solver.newDecisionLevel();
+            solver.uncheckedEnqueue(Lit(var, true));
+            failed = (solver.propagate() != NULL);
+            solver.cancelUntil(0);
+            if (failed) {
+                //std::cout << "Var " << i << " fails l_False" << std::endl;
+                num++;
+                solver.uncheckedEnqueue(Lit(var, false));
+                solver.ok = (solver.propagate() == NULL);
+                if (!solver.ok) return l_False;
+                continue;
+            }
+            
+            solver.polarity[var] = oldPolarity;
         }
-        
-        bool oldPolarity = solver.polarity[i];
-        
-        solver.newDecisionLevel();
-        solver.uncheckedEnqueue(Lit(i, false));
-        failed = (solver.propagate() != NULL);
-        solver.cancelUntil(0);
-        if (failed) {
-            //std::cout << "Var " << i << " fails l_True" << std::endl;
-            num++;
-            solver.uncheckedEnqueue(Lit(i, true));
-            solver.ok = (solver.propagate() == NULL);
-            if (!solver.ok) return l_False;
-            continue;
-        }
-        
-        solver.newDecisionLevel();
-        solver.uncheckedEnqueue(Lit(i, true));
-        failed = (solver.propagate() != NULL);
-        solver.cancelUntil(0);
-        if (failed) {
-            //std::cout << "Var " << i << " fails l_False" << std::endl;
-            num++;
-            solver.uncheckedEnqueue(Lit(i, false));
-            solver.ok = (solver.propagate() == NULL);
-            if (!solver.ok) return l_False;
-            continue;
-        }
-        
-        solver.polarity[i] = oldPolarity;
     }
     
     std::cout << "c |  Number of failed vars: " << std::setw(5) << num << " time: " << std::setw(5) << std::setprecision(2) << cpuTime() - time << " s"<< std::setw(34) << "|" << std::endl;
