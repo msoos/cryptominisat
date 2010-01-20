@@ -100,7 +100,7 @@ void VarReplacer::performReplace()
     replace_set(S->conglomerate->getCalcAtFinish(), false);
     
     for (uint i = 0; i != clauses.size(); i++)
-        S->binaryClauses.push(clauses[i]);
+        S->removeClause(*clauses[i]);
     clauses.clear();
     
     if (S->verbosity >=1)
