@@ -335,6 +335,8 @@ void printStats(Solver& solver)
     cout << "c learnts DL2        : " << solver.nbDL2 << endl;
     cout << "c learnts size 2     : " << solver.nbBin << endl;
     cout << "c learnts size 1     : " << solver.get_unitary_learnts_num() << endl;
+    cout << "c OTF clause improved: " << solver.improvedClauseNo << endl;
+    cout << "c OTF imp. size  diff: " << solver.improvedClauseSize << endl;
     
     cout << "c conflicts             : " << solver.conflicts << " (" << (double)solver.conflicts/cpu_time << " /sec)" << endl;
     cout << "c decisions             : " << solver.decisions << " (" << (double)solver.rnd_decisions*100.0/(double)solver.decisions << "% random)" << endl;

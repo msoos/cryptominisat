@@ -58,6 +58,7 @@ protected:
     uint32_t isLearnt:1;
     uint32_t marking:2;
     uint32_t invertedXor:1;
+    uint32_t isXorClause:1;
     uint32_t mySize:20;
     
     union { int act; uint32_t abst; } extra;
@@ -73,6 +74,7 @@ public:
     template<class V>
     Clause(const V& ps, const uint _group, const bool learnt)
     {
+        isXorClause = false;
         mySize = ps.size();
         isLearnt = learnt;
         setGroup(_group);
@@ -91,12 +93,18 @@ public:
     const uint   size        ()      const {
         return mySize;
     }
+    void         resize      (const uint size) {
+        mySize = size;
+    }
     void         shrink      (const uint i) {
         assert(i <= size());
         mySize -= i;
     }
     void         pop         () {
         shrink(1);
+    }
+    const bool   isXor       () {
+        return isXorClause;
     }
     const bool   learnt      ()      const {
         return isLearnt;
@@ -191,6 +199,7 @@ protected:
         Clause(ps, _group, false)
     {
         invertedXor = inverted;
+        isXorClause = true;
     }
 
 public:

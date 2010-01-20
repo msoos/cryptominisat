@@ -65,6 +65,7 @@ Solver::Solver() :
         , starts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
         , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
+        , improvedClauseNo(0), improvedClauseSize(0)
         
 
         , ok               (true)
@@ -608,10 +609,11 @@ Lit Solver::pickBranchLit()
 |  Effect:
 |    Will undo part of the trail, upto but not beyond the assumption of the current decision level.
 |________________________________________________________________________________________________@*/
-void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nbLevels/*, int &merged*/)
+Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nbLevels/*, int &merged*/)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
+    Clause* oldConfl = NULL;
 
     // Generate conflict clause:
     //
@@ -649,6 +651,7 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
         // Select next clause to look at:
         while (!seen[trail[index--].var()]);
         p     = trail[index+1];
+        oldConfl = confl;
         confl = reason[p.var()];
         __builtin_prefetch(confl, 1, 0);
         seen[p.var()] = 0;
@@ -724,6 +727,27 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int 
 
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
+    
+    if (out_learnt.size() == 1)
+        return NULL;
+    
+    if (!oldConfl->isXor() && out_learnt.size() < oldConfl->size()) {
+        for (uint i = 0; i != out_learnt.size(); i++) {
+            bool found = false;
+            for (uint i2 = 0; i2 != oldConfl->size(); i2++) {
+                if ((*oldConfl)[i2] == out_learnt[i]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return NULL;
+        }
+        improvedClauseNo++;
+        improvedClauseSize += oldConfl->size() - out_learnt.size();
+        return oldConfl;
+    }
+    
+    return NULL;
 }
 
 
@@ -1393,7 +1417,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     if (decisionLevel() == 0)
         return l_False;
     learnt_clause.clear();
-    analyze(confl, learnt_clause, backtrack_level, nbLevels);
+    Clause* c = analyze(confl, learnt_clause, backtrack_level, nbLevels);
     if (restartType == dynamic_restart) {
         nbDecisionLevelHistory.push(nbLevels);
         totalSumOfDecisionLevel += nbLevels;
@@ -1423,18 +1447,28 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         #endif
     //Normal learnt
     } else {
-        Clause* c = Clause_new(learnt_clause, learnt_clause_group++, true);
-        #ifdef STATS_NEEDED
-        if (dynamic_behaviour_analysis)
-            logger.set_group_name(c->getGroup(), "learnt clause");
-        #endif
-        if (c->size() > 2)
-            learnts.push(c);
-        else
-            binaryClauses.push(c);
-        c->setActivity(nbLevels); // LS
+        if (c) {
+            detachClause(*c);
+            for (uint i = 0; i != learnt_clause.size(); i++)
+                (*c)[i] = learnt_clause[i];
+            c->resize(learnt_clause.size());
+            if (c->learnt())
+                c->setActivity(nbLevels); // LS
+        } else {
+            c = Clause_new(learnt_clause, learnt_clause_group++, true);
+            #ifdef STATS_NEEDED
+            if (dynamic_behaviour_analysis)
+                logger.set_group_name(c->getGroup(), "learnt clause");
+            #endif
+            if (c->size() > 2) {
+                learnts.push(c);
+                c->setActivity(nbLevels); // LS
+            } else {
+                binaryClauses.push(c);
+                nbBin++;
+            }
+        }
         if (nbLevels <= 2) nbDL2++;
-        if (c->size() == 2) nbBin++;
         attachClause(*c);
         uncheckedEnqueue(learnt_clause[0], c);
     }
