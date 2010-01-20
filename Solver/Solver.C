@@ -1534,12 +1534,19 @@ inline void Solver::chooseRestartType(const lbool& status, RestartTypeChooser& r
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
                 totalSumOfDecisionLevel = 0;
-                clearGaussMatrixes();
                 if (verbosity >= 1)
                     printf("c |                           Decided on dynamic restart strategy                         |\n");
             } else  {
                 if (verbosity >= 1)
                     printf("c |                            Decided on static restart strategy                         |\n");
+                                
+                if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
+                    double time = cpuTime();
+                    MatrixFinder m(this);
+                    const uint numMatrixes = m.findMatrixes();
+                    if (verbosity >=1)
+                        printf("c |  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, numMatrixes);
+                }
             }
             restartType = tmp;
             restartTypeChooser.reset();
@@ -1565,6 +1572,7 @@ inline void Solver::setDefaultRestartType()
 inline void Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart)
 {
     if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
+        clearGaussMatrixes();
         if (verbosity >= 1)
             printf("c |                                      Fully restarting                                 |\n");
         setDefaultPolarities();
@@ -1645,14 +1653,6 @@ inline void Solver::performStepsBeforeSolve()
     
     if (failedVarSearcher->search(20.0) == l_False)
         return;
-    
-    if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
-        double time = cpuTime();
-        MatrixFinder m(this);
-        const uint numMatrixes = m.findMatrixes();
-        if (verbosity >=1)
-            printf("c |  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, numMatrixes);
-    }
 }
 
 lbool Solver::solve(const vec<Lit>& assumps)
