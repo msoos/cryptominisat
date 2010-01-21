@@ -1762,7 +1762,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
         
-        if ((cpuTime()-time)/100.0 >= numSimplified && simplifyProblem(1.0, (cpuTime()-time)/200.0 + 1.0) != l_Undef)
+        if ((cpuTime()-time)/100.0 >= numSimplified && (status = simplifyProblem(2.0, (cpuTime()-time)/200.0 + 1.0)) != l_Undef)
             break;
         
         printRestartStat();
