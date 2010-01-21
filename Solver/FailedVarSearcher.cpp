@@ -1,14 +1,13 @@
 #include "FailedVarSearcher.h"
 
 #include <iomanip>
-#include <map>
 #include <utility>
-using std::map;
 using std::make_pair;
 
 #include "Solver.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
+#include "BitArray.h"
 
 FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
@@ -31,9 +30,9 @@ const lbool FailedVarSearcher::search(const double maxTime)
         from = lastTimeWentUntil;
     }
     
-    vector<bool> propagated;
+    BitArray propagated;
     propagated.resize(solver.nVars());
-    vector<bool> propValue;
+    BitArray propValue;
     propValue.resize(solver.nVars());
     vector<pair<Var, bool> > bothSame;
     uint goodBothSame = 0;
@@ -50,8 +49,7 @@ const lbool FailedVarSearcher::search(const double maxTime)
             }
             
             bool oldPolarity = solver.polarity[var];
-            for (uint x = 0; x != propagated.size(); x++)
-                propagated[x] = false;
+            propagated.setZero();
             
             solver.newDecisionLevel();
             solver.uncheckedEnqueue(Lit(var, false));
@@ -67,8 +65,11 @@ const lbool FailedVarSearcher::search(const double maxTime)
                 assert(solver.decisionLevel() > 0);
                 for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
                     Var     x  = solver.trail[c].var();
-                    propagated[x] = true;
-                    propValue[x] = solver.assigns[x].getBool();
+                    propagated.setBit(x);
+                    if (solver.assigns[x].getBool())
+                        propValue.setBit(x);
+                    else
+                        propValue.clearBit(x);
                 }
                 solver.cancelUntil(0);
             }
