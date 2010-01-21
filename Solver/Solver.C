@@ -1611,8 +1611,8 @@ const lbool Solver::simplifyProblem(const double maxTime, const double failedTim
     restartType = static_restart;
     
     while(status == l_Undef && cpuTime()-time < maxTime) {
-        status = search(100, -1);
         printRestartStat();
+        status = search(100, -1);
         starts--;
     }
     if (status != l_Undef)
