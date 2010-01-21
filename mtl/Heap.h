@@ -87,6 +87,21 @@ class Heap {
         indices.growTo(other.indices.size());
         memcpy(indices.getData(), other.indices.getData(), sizeof(uint32_t)*other.indices.size());
     }
+    
+    void operator=(const Heap<Comp>& other)
+    {
+        if (other.heap.size() > heap.size())
+            heap.growTo(other.heap.size());
+        else
+            heap.shrink(other.heap.size()-heap.size());
+        memcpy(heap.getData(), other.heap.getData(), heap.size()*sizeof(uint32_t));
+        
+        if (other.indices.size() > indices.size())
+            indices.growTo(other.indices.size());
+        else
+            indices.shrink(other.indices.size()-indices.size());
+        memcpy(indices.getData(), other.indices.getData(), indices.size()*sizeof(uint32_t));
+    }
 
     uint32_t  size      ()          const { return heap.size(); }
     bool empty     ()          const { return heap.size() == 0; }

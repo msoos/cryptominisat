@@ -46,7 +46,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 Solver::Solver() :
         // Parameters: (formerly in 'SearchParams')
-        var_decay(1 / 0.95), random_var_freq(0.92)
+        var_decay(1 / 0.95), random_var_freq(0.02)
         , restart_first(100), restart_inc(1.5), learntsize_factor((double)1/(double)3), learntsize_inc(1)
 
         // More parameters:
@@ -66,7 +66,7 @@ Solver::Solver() :
         , starts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
         , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
-        , improvedClauseNo(0), improvedClauseSize(0)
+        , improvedClauseNo(0), improvedClauseSize(0), numSimplified(0)
         
 
         , ok               (true)
@@ -1572,6 +1572,42 @@ inline void Solver::setDefaultRestartType()
     }
 }
 
+const lbool Solver::simplifyProblem(const double maxTime, const double failedTime)
+{
+    Heap<VarOrderLt> backup_order_heap(order_heap);
+    vector<bool> backup_polarities = polarity;
+    RestartType backup_restartType= restartType;
+    double backup_random_var_freq = random_var_freq;
+    
+    printf("c |                             Simplifying problem for %5lf s                       |\n", maxTime);
+    random_var_freq = 1;
+    double time = cpuTime();
+    lbool status = l_Undef;
+    restartType = static_restart;
+    
+    while(status == l_Undef && cpuTime()-time < maxTime) {
+        status = search(100, -1);
+        printRestartStat();
+        starts--;
+    }
+    if (status != l_Undef)
+        return status;
+    
+    if (failedVarSearch)
+        status = failedVarSearcher->search(failedTime);
+    
+    random_var_freq = backup_random_var_freq;
+    printf("c                                      Simplifying finished                               |\n");
+    
+    order_heap = backup_order_heap;
+    order_heap.filter(VarFilter(*this));
+    polarity = backup_polarities;
+    restartType = backup_restartType;
+    numSimplified++;
+    
+    return status;
+}
+
 inline void Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart)
 {
     if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
@@ -1583,7 +1619,7 @@ inline void Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_full
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         setDefaultRestartType();
         lastFullRestart = starts;
-        random_var_freq = 0.02;
+        
         fullStarts++;
     }
 }
@@ -1654,7 +1690,7 @@ inline void Solver::performStepsBeforeSolve()
         }
     }
     
-    if (failedVarSearch && failedVarSearcher->search(20.0) == l_False)
+    if (failedVarSearch && failedVarSearcher->search(5.0) == l_False)
         return;
 }
 
@@ -1696,8 +1732,13 @@ lbool Solver::solve(const vec<Lit>& assumps)
     calculateDefaultPolarities();
     setDefaultPolarities();
     
+    double time = cpuTime();
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
+        
+        if ((cpuTime()-time)/100.0 >= numSimplified && simplifyProblem(1.0, (cpuTime()-time)/200.0 + 1.0) != l_Undef)
+            break;
+        
         printRestartStat();
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis) {

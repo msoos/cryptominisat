@@ -110,7 +110,7 @@ public:
         return value;
     }
     inline const bool getBool() const {
-        return (value+1) >> 1;
+        return value == 1;
     }
     inline const bool operator==(lbool b) const {
         return value == b.value;

@@ -143,7 +143,7 @@ public:
     uint64_t starts, fullStarts, decisions, rnd_decisions, propagations, conflicts;
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
     uint64_t nbDL2, nbBin, lastNbBin, becameBinary, lastSearchForBinaryXor, nbReduceDB;
-    uint64_t improvedClauseNo, improvedClauseSize;
+    uint64_t improvedClauseNo, improvedClauseSize, numSimplified;
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -302,6 +302,7 @@ protected:
     void setDefaultRestartType();
     void checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();
+    const lbool simplifyProblem(const double maxTime, const double failedTime);
 
     // Debug & etc:
     void     printLit         (const Lit l) const;
