@@ -1604,6 +1604,8 @@ const lbool Solver::simplifyProblem(const double maxTime, const double failedTim
     
     printf("c |                             Simplifying problem for %5lf s                       |\n", maxTime);
     random_var_freq = 1;
+    simplifying = true;
+    
     double time = cpuTime();
     lbool status = l_Undef;
     restartType = static_restart;
