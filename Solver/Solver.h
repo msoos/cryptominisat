@@ -477,7 +477,7 @@ inline void Solver::removeWatchedCl(vec<T> &ws, const Clause *c) {
     for (; j < ws.size() && ws[j].clause != c; j++);
     assert(j < ws.size());
     T *a=&ws[j];
-    memmove(a, a+1, (ws.size()-j)*sizeof(T));
+    memmove(a, a+1, (ws.size()-j-1)*sizeof(T));
     ws.pop();
 }
 template <class T>
@@ -486,7 +486,7 @@ inline void Solver::removeWatchedBinCl(vec<T> &ws, const Clause *c) {
     for (; j < ws.size() && ws[j].clause != c; j++);
     assert(j < ws.size());
     T *a=&ws[j];
-    memmove(a, a+1, (ws.size()-j)*sizeof(T));
+    memmove(a, a+1, (ws.size()-j-1)*sizeof(T));
     ws.pop();
 }
 template<class T>

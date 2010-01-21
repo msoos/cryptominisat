@@ -170,7 +170,7 @@ macro void remove(vec<T>& ws, const T& elem)
     int j = 0;
     for (; ws[j] != elem  ; j++) assert(j < ws.size());
     T *a=&ws[j];
-    memmove(a, a+1, (ws.size()-j)*sizeof(T));
+    memmove(a, a+1, (ws.size()-j-1)*sizeof(T));
     ws.pop();
 }
 
