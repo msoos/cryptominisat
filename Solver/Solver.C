@@ -1249,9 +1249,8 @@ lbool Solver::simplify()
         becameBinary = 0;
         if (!ok) return l_False;
         
-        if (failedVarSearch)
-            failedVarSearcher->search(0.1);
-        if (!ok) return l_False;
+        if (failedVarSearch && failedVarSearcher->search(0.1) == l_False)
+            return l_False;
     }
 
     // Remove satisfied clauses:
