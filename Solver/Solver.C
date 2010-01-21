@@ -1236,7 +1236,7 @@ lbool Solver::simplify()
         return l_False;
     }
 
-    if (nAssigns() == simpDB_assigns || (simpDB_props > 0)) {
+    if (simpDB_props > 0) {
         return l_Undef;
     }
     
