@@ -298,7 +298,7 @@ protected:
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
     FailedVarSearcher* failedVarSearcher;
-    void chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
+    void chooseRestartType(RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
     void setDefaultRestartType();
     void checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();

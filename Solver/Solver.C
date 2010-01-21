@@ -1524,11 +1524,11 @@ void Solver::print_gauss_sum_stats() const
     }
 }
 
-inline void Solver::chooseRestartType(const lbool& status, RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart)
+inline void Solver::chooseRestartType(RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart)
 {
     uint relativeStart = starts - lastFullRestart;
     
-    if (status.isUndef() && relativeStart > RESTART_TYPE_DECIDER_FROM  && relativeStart < RESTART_TYPE_DECIDER_UNTIL) {
+    if (relativeStart > RESTART_TYPE_DECIDER_FROM  && relativeStart < RESTART_TYPE_DECIDER_UNTIL) {
         RestartType tmp = restartTypeChooser.choose();
         if (fixRestartType != auto_restart)
             tmp = fixRestartType;
@@ -1709,8 +1709,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         status = search(nof_conflicts, nof_conflicts_fullrestart);
         nof_conflicts = (double)nof_conflicts * restart_inc;
         checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart);
-        
-        chooseRestartType(status, restartTypeChooser, lastFullRestart);
+        chooseRestartType(restartTypeChooser, lastFullRestart);
     }
     printEndSearchStat();
     
