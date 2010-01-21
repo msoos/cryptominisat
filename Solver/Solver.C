@@ -1169,26 +1169,48 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
         exit(-1);
     }
     
+    fprintf(outfile, "c unitaries\n");
     if (maxSize > 0) {
         if (trail_lim.size() > 0) {
             for (uint32_t i = 0; i != trail_lim[0]; i++) {
                 if (givenUnitaries.size() <= i || !givenUnitaries[i])
-                    fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+                    fprintf(outfile,"%s%d 0\n", !trail[i].sign() ? "-" : "", trail[i].var()+1);
             }
         }
         else {
             for (uint32_t i = 0; i != trail.size(); i++) {
                 if (givenUnitaries.size() <= i || !givenUnitaries[i])
-                    fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
+                    fprintf(outfile,"%s%d 0\n", !trail[i].sign() ? "-" : "", trail[i].var()+1);
             }
         }
     }
     
+    fprintf(outfile, "c clauses from binaryClauses\n");
+    if (maxSize >= 2) {
+        for (uint i = 0; i != binaryClauses.size(); i++) {
+            if (binaryClauses[i]->learnt())
+                binaryClauses[i]->plainPrint(outfile);
+        }
+    }
+    
+    fprintf(outfile, "c clauses from learnts\n");
     std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
         if (learnts[i]->size() <= maxSize)
             learnts[i]->plainPrint(outfile);
     }
+    
+    fprintf(outfile, "c clauses representing 2-long XOR clauses\n");
+    const vector<Lit>& table = varReplacer->getReplaceTable();
+    for (Var var = 0; var != table.size(); var++) {
+        Lit lit = table[var];
+        if (lit.var() == var)
+            continue;
+        
+        fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
+        fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
+    }
+    
     fclose(outfile);
 }
 
