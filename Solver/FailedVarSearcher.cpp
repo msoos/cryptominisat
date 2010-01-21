@@ -31,7 +31,10 @@ const lbool FailedVarSearcher::search(const double maxTime)
         from = lastTimeWentUntil;
     }
     
-    map<Var, lbool> found;
+    vector<bool> propagated;
+    propagated.resize(solver.nVars());
+    vector<bool> propValue;
+    propValue.resize(solver.nVars());
     vector<pair<Var, bool> > bothSame;
     uint goodBothSame = 0;
     
@@ -47,6 +50,8 @@ const lbool FailedVarSearcher::search(const double maxTime)
             }
             
             bool oldPolarity = solver.polarity[var];
+            for (uint x = 0; x != propagated.size(); x++)
+                propagated[x] = false;
             
             solver.newDecisionLevel();
             solver.uncheckedEnqueue(Lit(var, false));
@@ -62,7 +67,8 @@ const lbool FailedVarSearcher::search(const double maxTime)
                 assert(solver.decisionLevel() > 0);
                 for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
                     Var     x  = solver.trail[c].var();
-                    found.insert(make_pair(x, solver.assigns[x]));
+                    propagated[x] = true;
+                    propValue[x] = solver.assigns[x].getBool();
                 }
                 solver.cancelUntil(0);
             }
@@ -82,13 +88,11 @@ const lbool FailedVarSearcher::search(const double maxTime)
                 assert(solver.decisionLevel() > 0);
                 for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
                     Var     x  = solver.trail[c].var();
-                    map<Var, lbool>::iterator it = found.find(x);
-                    if (it != found.end() && it->second == solver.assigns[x])
-                        bothSame.push_back(make_pair(x, it->second == l_False));
+                    if (propagated[x] && propValue[x] == solver.assigns[x].getBool())
+                        bothSame.push_back(make_pair(x, !propValue[x]));
                 }
                 solver.cancelUntil(0);
             }
-            found.clear();
             
             for(uint i = 0; i != bothSame.size(); i++)
                 solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
