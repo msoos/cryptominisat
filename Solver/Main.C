@@ -23,6 +23,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <errno.h>
 #include <string.h>
 #include <sstream>
+#include <iostream>
+#include <iomanip>
 #include <vector>
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
@@ -326,24 +328,36 @@ static void parse_DIMACS(gzFile input_stream, Solver& S)
 
 //=================================================================================================
 
+template<class T, class T2>
+inline void printStatsLine(string left, T value, T2 value2, string extra)
+{
+    cout << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
+}
+
+template<class T>
+inline void printStatsLine(string left, T value, string extra = "")
+{
+    cout << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
+}
+
 
 void printStats(Solver& solver)
 {
     double   cpu_time = cpuTime();
     uint64_t mem_used = memUsed();
-    cout << "c restarts           : " << solver.starts << endl ;
-    cout << "c learnts DL2        : " << solver.nbDL2 << endl;
-    cout << "c learnts size 2     : " << solver.nbBin << endl;
-    cout << "c learnts size 1     : " << solver.get_unitary_learnts_num() << endl;
-    cout << "c OTF clause improved: " << solver.improvedClauseNo << endl;
-    cout << "c OTF imp. size  diff: " << solver.improvedClauseSize << endl;
+    printStatsLine("c restarts", solver.starts);
+    printStatsLine("c learnts DL2", solver.nbDL2);
+    printStatsLine("c learnts size 2", solver.nbBin);
+    printStatsLine("c learnts size 1", solver.get_unitary_learnts_num());
+    printStatsLine("c OTF clause improved", solver.improvedClauseNo);
+    printStatsLine("c OTF impr. size diff", solver.improvedClauseSize);
     
-    cout << "c conflicts             : " << solver.conflicts << " (" << (double)solver.conflicts/cpu_time << " /sec)" << endl;
-    cout << "c decisions             : " << solver.decisions << " (" << (double)solver.rnd_decisions*100.0/(double)solver.decisions << "% random)" << endl;
-    cout << "c propagations          : " << solver.propagations << " (" << (double)solver.propagations/cpu_time << " /sec)" << endl;
-    cout << "c conflict literals     : " << solver.tot_literals << " (" << (double)(solver.max_literals - solver.tot_literals)*100.0/ (double)solver.max_literals << "% deleted)" << endl;
-    if (mem_used != 0) cout << "c Memory used           : " << (double)mem_used / 1048576.0 << " MB\n";
-    cout << "c CPU time              : " << cpu_time << " s" << endl;
+    printStatsLine("c conflicts", solver.conflicts, (double)solver.conflicts/cpu_time, "/ sec");
+    printStatsLine("c decisions", solver.decisions, (double)solver.rnd_decisions*100.0/(double)solver.decisions, "% random");
+    printStatsLine("c propagations", solver.propagations, (double)solver.propagations/cpu_time, "/ sec");
+    printStatsLine("c conflict literals", solver.tot_literals, (double)(solver.max_literals - solver.tot_literals)*100.0/ (double)solver.max_literals, "% deleted");
+    printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
+    printStatsLine("c CPU time", cpu_time, " s");
 }
 
 Solver* solver;
