@@ -303,6 +303,7 @@ protected:
     void checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();
     const lbool simplifyProblem(const double maxTime, const double failedTime);
+    bool simplifying;
 
     // Debug & etc:
     void     printLit         (const Lit l) const;

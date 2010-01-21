@@ -91,6 +91,7 @@ Solver::Solver() :
         , MYFLAG           (0)
         , learnt_clause_group(0)
         , libraryCNFFile   (NULL)
+        , simplifying      (false)
 {
     varReplacer = new VarReplacer(this);
     conglomerate = new Conglomerate(this);
@@ -570,7 +571,7 @@ Lit Solver::pickBranchLit()
 
     bool sign;
     if (next != var_Undef) {
-        if (fullStarts == 0 && random)
+        if (simplifying && random)
             sign = mtrand.randInt(1);
         else
             sign = polarity[next];
@@ -1600,6 +1601,7 @@ const lbool Solver::simplifyProblem(const double maxTime, const double failedTim
     printf("c                                      Simplifying finished                               |\n");
     
     order_heap = backup_order_heap;
+    simplifying = false;
     order_heap.filter(VarFilter(*this));
     polarity = backup_polarities;
     restartType = backup_restartType;
