@@ -148,6 +148,8 @@ Var Solver::newVar(bool dvar)
     polarity  .push_back(true);
 
     decision_var.push_back(dvar);
+    insertVarOrder(v);
+    
     varReplacer->newVar();
     conglomerate->newVar();
 
@@ -462,15 +464,6 @@ void Solver::clearGaussMatrixes()
     for (uint i = 0; i < gauss_matrixes.size(); i++)
         delete gauss_matrixes[i];
     gauss_matrixes.clear();
-}
-
-void Solver::printNondecisonVariables() const
-{
-    uint unused = 0;
-    for (uint i = 0; i < decision_var.size(); i++) {
-        if (!decision_var[i]) unused++;
-    }
-    std::cout << "c |  Number of nondecision variables: " << std::setw(5) << unused << std::setw(38) << "|" << std::endl;
 }
 
 inline bool Solver::defaultPolarity()

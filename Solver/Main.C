@@ -58,7 +58,6 @@ static char learnts_filename[500];
 static bool dumpLearnts = false;
 static uint32_t maxLearntsSize = std::numeric_limits<uint32_t>::max();
 static bool printResult = true;
-static vector<bool> varMarkedUsed;
 
 //=================================================================================================
 // DIMACS Parser:
@@ -191,13 +190,7 @@ static void readClause(B& in, Solver& S, vec<Lit>& lits)
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
         if (!debugNewVar) {
-            while (var >= S.nVars()) S.newVar(false);
-            if (varMarkedUsed.size() < var+1)
-                varMarkedUsed.resize(var+1, false);
-            if (varMarkedUsed[var] == false) {
-                varMarkedUsed[var] = true;
-                S.varUsed(var);
-            }
+            while (var >= S.nVars()) S.newVar();
         }
         lits.push( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
@@ -633,10 +626,8 @@ int main(int argc, char** argv)
     FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
 
     double parse_time = cpuTime() - cpu_time;
-    if (S.verbosity >= 1) {
-        S.printNondecisonVariables();
+    if (S.verbosity >= 1)
         printf("c |  Parsing time:         %-12.2f s                                       |\n", parse_time);
-    }
 
     lbool ret = S.solve();
     printStats(S);
