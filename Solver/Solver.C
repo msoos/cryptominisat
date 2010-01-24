@@ -93,7 +93,7 @@ Solver::Solver() :
         , libraryCNFFile   (NULL)
         , simplifying      (false)
 {
-    varReplacer = new VarReplacer(this);
+    varReplacer = new VarReplacer(*this);
     conglomerate = new Conglomerate(this);
     clauseCleaner = new ClauseCleaner(*this);
     failedVarSearcher = new FailedVarSearcher(*this);
@@ -1278,11 +1278,8 @@ lbool Solver::simplify()
 
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
-    if (performReplace
-        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-        varReplacer->performReplace();
-        if (!ok) return l_False;
-    }
+    if (performReplace && varReplacer->performReplace() == l_False)
+        return l_False;
 
     // Remove fixed variables from the variable heap:
     order_heap.filter(VarFilter(*this));
@@ -1652,11 +1649,8 @@ inline void Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_full
 
 inline void Solver::performStepsBeforeSolve()
 {
-    if (performReplace
-        && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-        varReplacer->performReplace();
-        if (!ok) return;
-    }
+    if (performReplace && varReplacer->performReplace() == l_False)
+        return;
     
     if (xorFinder) {
         double time;
@@ -1666,11 +1660,8 @@ inline void Solver::performStepsBeforeSolve()
             xorFinder.doNoPart(2, 2);
             if (!ok) return;
             
-            if (performReplace
-                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-                varReplacer->performReplace();
-                if (!ok) return;
-            }
+            if (performReplace && varReplacer->performReplace() == l_False)
+                return;
         }
         
         if (clauses.size() < MAX_CLAUSENUM_XORFIND) {
@@ -1679,11 +1670,8 @@ inline void Solver::performStepsBeforeSolve()
             if (!ok) return;
         }
         
-        if (performReplace
-            && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-            varReplacer->performReplace();
-        if (!ok) return;
-        }
+        if (performReplace && varReplacer->performReplace() == l_False)
+            return;
         
         if (xorclauses.size() > 1) {
             uint orig_total = 0;
@@ -1708,11 +1696,8 @@ inline void Solver::performStepsBeforeSolve()
                 printf("c |  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
             }
             
-            if (performReplace
-                && ((double)varReplacer->getNewToReplaceVars()/(double)order_heap.size()) > PERCENTAGEPERFORMREPLACE) {
-                varReplacer->performReplace();
-            if (!ok) return;
-            }
+            if (performReplace && varReplacer->performReplace() == l_False)
+                return;
         }
     }
     

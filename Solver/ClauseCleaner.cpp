@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
 #include "ClauseCleaner.h"
+#include "VarReplacer.h"
 
 //#define DEBUG_CLEAN
 

@@ -29,20 +29,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::map;
 using std::vector;
 
+#include "Solver.h"
 #include "SolverTypes.h"
 #include "Clause.h"
 #include "Vec.h"
 
-class Solver;
-
 class VarReplacer
 {
     public:
-        VarReplacer(Solver* S);
+        VarReplacer(Solver& solver);
         ~VarReplacer();
+        const lbool performReplace();
         void replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group);
         void extendModel() const;
-        void performReplace();
         const uint getNumReplacedLits() const;
         const uint getNumReplacedVars() const;
         const uint getNumLastReplacedVars() const;
@@ -54,6 +53,8 @@ class VarReplacer
         void newVar();
     
     private:
+        const lbool performReplaceInternal();
+        
         void replace_set(vec<Clause*>& set);
         void replace_set(vec<XorClause*>& cs, const bool isAttached);
         const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
@@ -72,7 +73,46 @@ class VarReplacer
         uint replacedVars;
         uint lastReplacedVars;
         bool addedNewClause;
-        Solver* S;
+        Solver& solver;
 };
+
+inline const lbool VarReplacer::performReplace()
+{
+    uint32_t limit = std::min((uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE), FIXCLEANREPLACE);
+    if (getNewToReplaceVars() > limit)
+        return performReplaceInternal();
+    
+    return l_Undef;
+}
+
+inline const uint VarReplacer::getNumReplacedLits() const
+{
+    return replacedLits;
+}
+
+inline const uint VarReplacer::getNumReplacedVars() const
+{
+    return replacedVars;
+}
+
+inline const uint VarReplacer::getNumLastReplacedVars() const
+{
+    return lastReplacedVars;
+}
+
+inline const uint VarReplacer::getNewToReplaceVars() const
+{
+    return replacedVars-lastReplacedVars;
+}
+
+inline const vector<Lit>& VarReplacer::getReplaceTable() const
+{
+    return table;
+}
+
+inline const vec<Clause*>& VarReplacer::getClauses() const
+{
+    return clauses;
+}
 
 #endif //VARREPLACER_H

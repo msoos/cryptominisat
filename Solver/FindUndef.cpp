@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "FindUndef.h"
 
 #include "Solver.h"
+#include "VarReplacer.h"
 #include <algorithm>
 
 FindUndef::FindUndef(Solver& _s) :

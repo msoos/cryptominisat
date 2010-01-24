@@ -37,7 +37,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "MersenneTwister.h"
 #include "SolverTypes.h"
 #include "Clause.h"
-#include "VarReplacer.h"
 #include "GaussianConfig.h"
 #include "Logger.h"
 #include "constants.h"
