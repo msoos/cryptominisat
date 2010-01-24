@@ -548,7 +548,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     assert(best_row != UINT_MAX);
 
     m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
-    confl = Clause_new(tmp_clause, solver.learnt_clause_group++, false);
+    confl = (Clause*)XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
     Clause& cla = *confl;
     #ifdef STATS_NEEDED
     if (solver.dynamic_behaviour_analysis)
@@ -760,7 +760,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     #endif
 
     m.matrix.getVarsetAt(row).fill(tmp_clause, solver.assigns, col_to_var_original);
-    Clause& cla = *Clause_new(tmp_clause, solver.learnt_clause_group++, false);
+    Clause& cla = *(Clause*)XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix prop clause: ";
     cla.plainPrint();
