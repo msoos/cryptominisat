@@ -33,15 +33,14 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
 {
 }
 
-const lbool FailedVarSearcher::search(const double maxTime)
+const lbool FailedVarSearcher::search(const uint64_t numProps)
 {
     assert(solver.decisionLevel() == 0);
     
-    double time = cpuTime();
     uint32_t num = 0;
     bool failed;
     uint32_t from;
-    if (finishedLastTime || lastTimeWentUntil >= solver.order_heap.size())
+    if (finishedLastTime || lastTimeWentUntil >= solver.nVars())
         from = 0;
     else {
         from = lastTimeWentUntil;
@@ -53,13 +52,13 @@ const lbool FailedVarSearcher::search(const double maxTime)
     propValue.resize(solver.nVars());
     vector<pair<Var, bool> > bothSame;
     uint goodBothSame = 0;
+    uint64_t origProps = solver.propagations;
     
     finishedLastTime = true;
-    lastTimeWentUntil = solver.order_heap.size();
-    for (uint32_t i = from; i < solver.order_heap.size(); i++) {
-        Var var = solver.order_heap[i];
+    lastTimeWentUntil = solver.nVars();
+    for (Var var = from; var < solver.nVars(); var++) {
         if (solver.assigns[var] == l_Undef) {
-            if (cpuTime() - time >= maxTime)  {
+            if ((int)solver.propagations - (int)origProps >= (int)numProps)  {
                 finishedLastTime = false;
                 lastTimeWentUntil = var;
                 break;
@@ -123,7 +122,7 @@ const lbool FailedVarSearcher::search(const double maxTime)
         }
     }
     
-    std::cout << "c |  No. of failed vars: " << std::setw(5) << num << "     No. of both propagated vars: " << std::setw(6) << goodBothSame << " time: " << std::setw(5) << std::setprecision(2) << cpuTime() - time << " s"<< std::setw(7) << "|" << std::endl;
+    std::cout << "c |  No. of failed vars: " << std::setw(5) << num << "     No. of both propagated vars: " << std::setw(6) << goodBothSame << " Props: " << std::setw(5) << std::setprecision(2) << (int)solver.propagations - (int)origProps  << std::setw(3) << "|" << std::endl;
     
     if (num != 0) {
         solver.order_heap.filter(Solver::VarFilter(solver));

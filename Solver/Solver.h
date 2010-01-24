@@ -305,7 +305,7 @@ protected:
     void setDefaultRestartType();
     void checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();
-    const lbool simplifyProblem(const double maxTime, const double failedTime);
+    const lbool simplifyProblem(const uint32_t numConfls, const uint64_t numProps);
     bool simplifying;
 
     // Debug & etc:

@@ -25,7 +25,7 @@ class FailedVarSearcher {
     public:
         FailedVarSearcher(Solver& _solver);
     
-        const lbool search(const double maxTime);
+        const lbool search(const uint64_t numProps);
         
     private:
         Solver& solver;

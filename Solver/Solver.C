@@ -1282,7 +1282,7 @@ lbool Solver::simplify()
         becameBinary = 0;
         if (!ok) return l_False;
         
-        if (failedVarSearch && failedVarSearcher->search(0.1) == l_False)
+        if (failedVarSearch && failedVarSearcher->search(500000) == l_False)
             return l_False;
     }
 
@@ -1602,7 +1602,7 @@ inline void Solver::setDefaultRestartType()
     }
 }
 
-const lbool Solver::simplifyProblem(const double maxTime, const double failedTime)
+const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t numProps)
 {
     Heap<VarOrderLt> backup_order_heap(order_heap);
     vector<bool> backup_polarities = polarity;
@@ -1612,24 +1612,26 @@ const lbool Solver::simplifyProblem(const double maxTime, const double failedTim
     backup_activity.growTo(activity.size());
     memcpy(backup_activity.getData(), activity.getData(), activity.size()*sizeof(double));
     
-    printf("c |                             Simplifying problem for %5lf s                        |\n", maxTime);
+    printf("c |                             Simplifying problem for %5d confls                   |\n", numConfls);
     random_var_freq = 1;
     simplifying = true;
+    uint64_t origConflicts = conflicts;
     
-    double time = cpuTime();
     lbool status = l_Undef;
     restartType = static_restart;
     
-    while(status == l_Undef && cpuTime()-time < maxTime) {
+    while(status == l_Undef && conflicts-origConflicts < numConfls) {
         printRestartStat();
         status = search(100, -1);
         starts--;
     }
+    printRestartStat();
+    
     if (status != l_Undef)
         return status;
     
     if (failedVarSearch)
-        status = failedVarSearcher->search(failedTime);
+        status = failedVarSearcher->search(numProps);
     
     random_var_freq = backup_random_var_freq;
     printf("c                                      Simplifying finished                               |\n");
@@ -1707,9 +1709,6 @@ inline void Solver::performStepsBeforeSolve()
         if (performReplace && varReplacer->performReplace() == l_False)
             return;
     }
-    
-    if (failedVarSearch && failedVarSearcher->search(5.0) == l_False)
-        return;
 }
 
 lbool Solver::solve(const vec<Lit>& assumps)
@@ -1750,12 +1749,14 @@ lbool Solver::solve(const vec<Lit>& assumps)
     calculateDefaultPolarities();
     setDefaultPolarities();
     
-    double time = cpuTime();
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
         
-        if (schedSimplification && (cpuTime()-time)/100.0 >= numSimplified && (status = simplifyProblem(1.0, std::min(2.0, (cpuTime()-time)/200.0 + 1.0))) != l_Undef)
-            break;
+        if (schedSimplification && conflicts/100000 >= numSimplified) {
+            status = simplifyProblem(500, 50000000);
+            if (status != l_Undef)
+                break;
+        }
         
         printRestartStat();
         #ifdef STATS_NEEDED
