@@ -182,7 +182,7 @@ class Tester:
       f = os.popen(tmpfname, 'r')
       #f = gzip.open(fname, 'r')
     else :
-      f = os.open(fname, "r")
+      f = open(fname, "r")
     lines = f.readlines()
     f.close()
     clauses = 0
