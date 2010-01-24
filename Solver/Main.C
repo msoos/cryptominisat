@@ -331,13 +331,13 @@ static void parse_DIMACS(gzFile input_stream, Solver& S)
 template<class T, class T2>
 inline void printStatsLine(string left, T value, T2 value2, string extra)
 {
-    cout << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
+    cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
 }
 
 template<class T>
 inline void printStatsLine(string left, T value, string extra = "")
 {
-    cout << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
+    cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
 }
 
 
