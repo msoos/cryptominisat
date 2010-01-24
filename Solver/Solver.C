@@ -480,7 +480,7 @@ inline bool Solver::defaultPolarity()
     }
 }
 
-void tallyVotes(const vec<Clause*>& cs, vector<double>& votes)
+void tallyVotes(const vec<Clause*>& cs, vector<double>& votes, vector<bool>& positiveLiteral, vector<bool>& negativeLiteral)
 {
     for (const Clause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
         const Clause& c = **it;
@@ -491,25 +491,36 @@ void tallyVotes(const vec<Clause*>& cs, vector<double>& votes)
             divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
         for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++) {
             votes[it2->var()] += divider*(double)((((int)it2->sign())<<1)-1);
+            if (it2->sign())
+                negativeLiteral[it2->var()] = true;
+            else
+                positiveLiteral[it2->var()] = true;
         }
     }
 }
 
-void Solver::calculateDefaultPolarities()
+const lbool Solver::calculateDefaultPolarities()
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Default polarities: " << endl;
     #endif
     
+    assert(decisionLevel() == 0);
     defaultPolarities.resize(nVars());
     
     if (polarity_mode == polarity_auto) {
-        vector<double> votes;
-        votes.resize(nVars(), 0.0);
+        double time = cpuTime();
         
-        tallyVotes(clauses, votes);
-        tallyVotes(binaryClauses, votes);
-        tallyVotes(learnts, votes);
+        vector<double> votes;
+        vector<bool> positiveLiteral;
+        vector<bool> negativeLiteral;
+        votes.resize(nVars(), 0.0);
+        positiveLiteral.resize(nVars(), false);
+        negativeLiteral.resize(nVars(), false);
+        
+        tallyVotes(clauses, votes, positiveLiteral, negativeLiteral);
+        tallyVotes(binaryClauses, votes, positiveLiteral, negativeLiteral);
+        tallyVotes(learnts, votes, positiveLiteral, negativeLiteral);
         
         Var i = 0;
         for (vector<double>::const_iterator it = votes.begin(), end = votes.end(); it != end; it++, i++) {
@@ -518,6 +529,36 @@ void Solver::calculateDefaultPolarities()
             std::cout << !defaultPolarities[i] << ", ";
             #endif //VERBOSE_DEBUG
         }
+        
+        uint propagated = 0;
+        uint removed = 0;
+        for (uint i = 0; i != nVars(); i++) if (decision_var[i] && assigns[i] == l_Undef) {
+            if (!positiveLiteral[i] && negativeLiteral[i]) {
+                uncheckedEnqueue(Lit(i, true));
+                propagated++;
+            } else if (positiveLiteral[i] && !negativeLiteral[i]) {
+                uncheckedEnqueue(Lit(i, false));
+                propagated++;
+            }
+            else if (!positiveLiteral[i] && !negativeLiteral[i]) {
+                decision_var[i] = false;
+                removed++;
+            }
+        }
+        
+        if (propagated) {
+            ok =  (propagate() == NULL);
+            if (!ok) return l_False;
+        }
+        if (removed)
+            order_heap.filter(VarFilter(*this));
+        
+        std::cout << "c | Calculated default polarities: " 
+        << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s" << 
+        " Removed vars: " << std::fixed << std::setw(6) << std::setprecision(2) << removed << 
+        " Propagated vars: " << std::fixed << std::setw(6) << std::setprecision(2) << propagated << 
+        "  |" << std:: endl;
+        
     } else {
         for (uint i = 0; i != defaultPolarities.size(); i++) {
             defaultPolarities[i] = defaultPolarity();
@@ -529,6 +570,8 @@ void Solver::calculateDefaultPolarities()
     #ifdef VERBOSE_DEBUG
     std::cout << std::endl;
     #endif //VERBOSE_DEBUG
+    
+    return l_Undef;
 }
 
 void Solver::setDefaultPolarities()
@@ -1640,13 +1683,14 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     return status;
 }
 
-inline void Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart)
+const lbool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart)
 {
     if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
         clearGaussMatrixes();
         if (verbosity >= 1)
             printf("c |                                      Fully restarting                                 |\n");
-        calculateDefaultPolarities();
+        if (calculateDefaultPolarities() == l_False)
+            return l_False;
         setDefaultPolarities();
         nof_conflicts = restart_first + (double)restart_first*restart_inc;
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
@@ -1655,6 +1699,8 @@ inline void Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_full
         
         fullStarts++;
     }
+    
+    return l_Undef;
 }
 
 inline void Solver::performStepsBeforeSolve()
@@ -1739,7 +1785,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
     printStatHeader();
     
     RestartTypeChooser restartTypeChooser(this);
-    calculateDefaultPolarities();
+    if (calculateDefaultPolarities() == l_False)
+        return l_False;
     setDefaultPolarities();
     
     // Search:
@@ -1761,7 +1808,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         status = search(nof_conflicts, nof_conflicts_fullrestart);
         nof_conflicts = (double)nof_conflicts * restart_inc;
-        checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart);
+        if (checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart) == l_False)
+            return l_False;
         chooseRestartType(restartTypeChooser, lastFullRestart);
     }
     printEndSearchStat();

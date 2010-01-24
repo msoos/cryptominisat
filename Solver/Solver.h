@@ -301,7 +301,7 @@ protected:
     FailedVarSearcher* failedVarSearcher;
     void chooseRestartType(RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
     void setDefaultRestartType();
-    void checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
+    const lbool checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();
     const lbool simplifyProblem(const uint32_t numConfls, const uint64_t numProps);
     bool simplifying;
@@ -320,7 +320,7 @@ protected:
     
     // Polarity chooser
     vector<bool> defaultPolarities; //The default polarity to set the var polarity when doing a full restart
-    void         calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
+    const lbool  calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
     bool         defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
     void         setDefaultPolarities(); //sets the polarity[] to that indicated by defaultPolarities[]
 };
