@@ -1475,7 +1475,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
             for (uint i = 0; i != learnt_clause.size(); i++)
                 (*c)[i] = learnt_clause[i];
             c->resize(learnt_clause.size());
-            if (c->learnt())
+            if (c->learnt() && c->activity() > nbLevels)
                 c->setActivity(nbLevels); // LS
         } else {
             c = Clause_new(learnt_clause, learnt_clause_group++, true);
