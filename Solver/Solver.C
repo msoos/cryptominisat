@@ -1598,6 +1598,9 @@ const lbool Solver::simplifyProblem(const double maxTime, const double failedTim
     vector<bool> backup_polarities = polarity;
     RestartType backup_restartType= restartType;
     double backup_random_var_freq = random_var_freq;
+    vec<double> backup_activity;
+    backup_activity.growTo(activity.size());
+    memcpy(backup_activity.getData(), activity.getData(), activity.size()*sizeof(double));
     
     printf("c |                             Simplifying problem for %5lf s                       |\n", maxTime);
     random_var_freq = 1;
@@ -1621,6 +1624,7 @@ const lbool Solver::simplifyProblem(const double maxTime, const double failedTim
     random_var_freq = backup_random_var_freq;
     printf("c                                      Simplifying finished                               |\n");
     
+    memcpy(activity.getData(), backup_activity.getData(), activity.size()*sizeof(double));
     order_heap = backup_order_heap;
     simplifying = false;
     order_heap.filter(VarFilter(*this));
