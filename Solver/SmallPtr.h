@@ -10,6 +10,7 @@ Link: http://www.codeproject.com/KB/cpp/smallptr.aspx
 //#include <boost/static_assert.hpp>
 
 #include <cstring>
+#include <stdlib.h>
 #include "singleton.hpp"
 //#include <boost/thread/mutex.hpp>
 //#include <boost/thread/locks.hpp>
@@ -79,8 +80,10 @@ protected:
                 return i;
 
         i = _segs++;
-        if (_segs > ALIGNMENT)
-            throw bad_segment("Segment out of range");
+        if (_segs > ALIGNMENT) {
+            //throw bad_segment("Segment out of range");
+            exit(-1);
+        }
 
         _seg_map[i] = p;
         return i;
@@ -141,8 +144,10 @@ private:
 
         uintptr_t p = reinterpret_cast<uintptr_t>(ptr);
 
-        if ((p & ALIGNMENT_MASK) != 0)
-            throw bad_alignment("Pointer is not aligned");
+        if ((p & ALIGNMENT_MASK) != 0) {
+            //throw bad_alignment("Pointer is not aligned");
+            exit(-1);
+        }
 
         return (uint32_t)(ptr2seg(p) + p);
     
