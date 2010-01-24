@@ -412,6 +412,7 @@ void printUsage(char** argv)
     printf("                   restarts will be performed during search\n");
     printf("  -nonormxorfind  = Don't find and collect >2-long xor-clauses from regular clauses\n");
     printf("  -nobinxorfind   = Don't find and collect 2-long xor-clauses from regular clauses\n");
+    printf("  -noregularbinxorfind  = Don't find and collect 2-long xor-clauses from regular clauses\n");
     printf("  -noconglomerate = Don't conglomerate xor clauses\n");
     printf("  -nosimplify     = Don't simplify the problem\n");
     printf("  -greedyUnbound  = Greedily unbound variables that are not needed for SAT\n");
@@ -552,6 +553,8 @@ int main(int argc, char** argv)
             S.findNormalXors = false;
         } else if ((value = hasPrefix(argv[i], "-nobinxorfind"))) {
             S.findBinaryXors = false;
+        } else if ((value = hasPrefix(argv[i], "-noregularbinxorfind"))) {
+            S.regularlyFindBinaryXors = false;
         } else if ((value = hasPrefix(argv[i], "-noconglomerate"))) {
             S.conglomerateXors = false;
         } else if ((value = hasPrefix(argv[i], "-nosimplify"))) {

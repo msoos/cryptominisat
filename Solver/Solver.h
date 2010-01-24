@@ -127,8 +127,9 @@ public:
     int       polarity_mode;      // Controls which polarity the decision heuristic chooses. See enum below for allowed modes. (default polarity_false)
     int       verbosity;          // Verbosity level. 0=silent, 1=some progress report                                         (default 0)
     Var       restrictedPickBranch; // Pick variables to branch on preferentally from the highest [0, restrictedPickBranch]. If set to 0, preferentiality is turned off (i.e. picked randomly between [0, all])
-    bool      findNormalXors;     // Automatically find xor-clauses and convert them
-    bool      findBinaryXors;     // Automatically find xor-clauses and convert them
+    bool      findNormalXors;     // Automatically find non-binary xor-clauses and convert them
+    bool      findBinaryXors;     // Automatically find binary xor-clauses and convert them
+    bool      regularlyFindBinaryXors; // Regularly find binary xor-clauses and convert them
     bool      performReplace;       // Should var-replacing be performed?
     bool      conglomerateXors;   // Conglomerate XORs
     bool      schedSimplification;// Schedule simplification

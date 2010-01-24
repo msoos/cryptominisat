@@ -57,6 +57,7 @@ Solver::Solver() :
         , restrictedPickBranch(0)
         , findNormalXors   (true)
         , findBinaryXors   (true)
+        , regularlyFindBinaryXors(true)
         , performReplace   (true)
         , conglomerateXors (true)
         , schedSimplification(true)
@@ -1261,7 +1262,7 @@ lbool Solver::simplify()
     std::cout << "left:" << ((double)(nbBin - lastNbBin + becameBinary)/BINARY_TO_XOR_APPROX) * slowdown  << std::endl;
     std::cout << "right:" << (double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup << std::endl;*/
     
-    if (findBinaryXors &&
+    if (findBinaryXors && regularlyFindBinaryXors &&
         (((double)std::abs((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown) >
         ((double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup)) {
         lastSearchForBinaryXor = propagations;
