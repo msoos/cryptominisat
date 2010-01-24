@@ -101,7 +101,7 @@ const lbool VarReplacer::performReplaceInternal()
     clauses.clear();
     
     if (solver.verbosity >=1)
-        printf("c |  Replacing   %8d vars, replaced %8d lits                          |\n", replacedVars-lastReplacedVars, replacedLits-lastReplacedLits);
+        printf("c |  Replacing   %8d vars, replaced %8d lits                                    |\n", replacedVars-lastReplacedVars, replacedLits-lastReplacedLits);
     
     addedNewClause = false;
     lastReplacedVars = replacedVars;

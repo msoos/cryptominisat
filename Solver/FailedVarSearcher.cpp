@@ -123,8 +123,7 @@ const lbool FailedVarSearcher::search(const double maxTime)
         }
     }
     
-    std::cout << "c |  Number of both propagated vars: " << std::setw(5) << goodBothSame << std::endl;
-    std::cout << "c |  Number of failed vars: " << std::setw(5) << num << " time: " << std::setw(5) << std::setprecision(2) << cpuTime() - time << " s"<< std::setw(34) << "|" << std::endl;
+    std::cout << "c |  No. of failed vars: " << std::setw(5) << num << "     No. of both propagated vars: " << std::setw(6) << goodBothSame << " time: " << std::setw(5) << std::setprecision(2) << cpuTime() - time << " s"<< std::setw(7) << "|" << std::endl;
     
     if (num != 0) {
         solver.order_heap.filter(Solver::VarFilter(solver));

@@ -55,8 +55,11 @@ Solver::Solver() :
         , polarity_mode    (polarity_auto)
         , verbosity        (0)
         , restrictedPickBranch(0)
-        , xorFinder        (true)
+        , findNormalXors   (true)
+        , findBinaryXors   (true)
         , performReplace   (true)
+        , conglomerateXors (true)
+        , schedSimplification(true)
         , failedVarSearch  (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
@@ -1258,7 +1261,7 @@ lbool Solver::simplify()
     std::cout << "left:" << ((double)(nbBin - lastNbBin + becameBinary)/BINARY_TO_XOR_APPROX) * slowdown  << std::endl;
     std::cout << "right:" << (double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup << std::endl;*/
     
-    if (xorFinder &&
+    if (findBinaryXors &&
         (((double)std::abs((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown) >
         ((double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup)) {
         lastSearchForBinaryXor = propagations;
@@ -1608,7 +1611,7 @@ const lbool Solver::simplifyProblem(const double maxTime, const double failedTim
     backup_activity.growTo(activity.size());
     memcpy(backup_activity.getData(), activity.getData(), activity.size()*sizeof(double));
     
-    printf("c |                             Simplifying problem for %5lf s                       |\n", maxTime);
+    printf("c |                             Simplifying problem for %5lf s                        |\n", maxTime);
     random_var_freq = 1;
     simplifying = true;
     
@@ -1663,53 +1666,45 @@ inline void Solver::performStepsBeforeSolve()
     if (performReplace && varReplacer->performReplace() == l_False)
         return;
     
-    if (xorFinder) {
-        double time;
+    if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
+        XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
+        xorFinder.doNoPart(2, 2);
+        if (!ok) return;
         
-        if (binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
-            XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
-            xorFinder.doNoPart(2, 2);
-            if (!ok) return;
-            
-            if (performReplace && varReplacer->performReplace() == l_False)
-                return;
+        if (performReplace && varReplacer->performReplace() == l_False)
+            return;
+    }
+        
+    if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
+        XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
+        xorFinder.doNoPart(3, 10);
+        if (!ok) return;
+    }
+        
+    if (conglomerateXors && xorclauses.size() > 1) {
+        uint orig_total = 0;
+        uint orig_num_cls = xorclauses.size();
+        for (uint i = 0; i < xorclauses.size(); i++) {
+            orig_total += xorclauses[i]->size();
         }
         
-        if (clauses.size() < MAX_CLAUSENUM_XORFIND) {
-            XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-            xorFinder.doNoPart(3, 10);
-            if (!ok) return;
+        double time = cpuTime();
+        uint foundCong = conglomerate->conglomerateXors();
+        if (verbosity >=1)
+            printf("c |  Conglomerating XORs:  %4.2lf s (removed %6d vars)                                   |\n", cpuTime()-time, foundCong);
+        if (!ok) return;
+        
+        uint new_total = 0;
+        uint new_num_cls = xorclauses.size();
+        for (uint i = 0; i < xorclauses.size(); i++) {
+            new_total += xorclauses[i]->size();
+        }
+        if (verbosity >=1) {
+            printf("c |  Sum xclauses diff(orig-new): %8d             Sum xlits diff: %8d           |\n", orig_total-new_total, orig_num_cls-new_num_cls);
         }
         
         if (performReplace && varReplacer->performReplace() == l_False)
             return;
-        
-        if (xorclauses.size() > 1) {
-            uint orig_total = 0;
-            uint orig_num_cls = xorclauses.size();
-            for (uint i = 0; i < xorclauses.size(); i++) {
-                orig_total += xorclauses[i]->size();
-            }
-            
-            time = cpuTime();
-            uint foundCong = conglomerate->conglomerateXors();
-            if (verbosity >=1)
-                printf("c |  Conglomerating XORs:  %4.2lf s (removed %6d vars)                         |\n", cpuTime()-time, foundCong);
-            if (!ok) return;
-            
-            uint new_total = 0;
-            uint new_num_cls = xorclauses.size();
-            for (uint i = 0; i < xorclauses.size(); i++) {
-                new_total += xorclauses[i]->size();
-            }
-            if (verbosity >=1) {
-                printf("c |  Sum xclauses before: %8d, after: %12d                         |\n", orig_num_cls, new_num_cls);
-                printf("c |  Sum xlits before: %11d, after: %12d                         |\n", orig_total, new_total);
-            }
-            
-            if (performReplace && varReplacer->performReplace() == l_False)
-                return;
-        }
     }
     
     if (failedVarSearch && failedVarSearcher->search(5.0) == l_False)
@@ -1758,7 +1753,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
         
-        if ((cpuTime()-time)/100.0 >= numSimplified && (status = simplifyProblem(1.0, std::min(2.0, (cpuTime()-time)/200.0 + 1.0))) != l_Undef)
+        if (schedSimplification && (cpuTime()-time)/100.0 >= numSimplified && (status = simplifyProblem(1.0, std::min(2.0, (cpuTime()-time)/200.0 + 1.0))) != l_Undef)
             break;
         
         printRestartStat();
