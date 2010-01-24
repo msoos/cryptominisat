@@ -1641,6 +1641,7 @@ inline void Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_full
         clearGaussMatrixes();
         if (verbosity >= 1)
             printf("c |                                      Fully restarting                                 |\n");
+        calculateDefaultPolarities();
         setDefaultPolarities();
         nof_conflicts = restart_first + (double)restart_first*restart_inc;
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
