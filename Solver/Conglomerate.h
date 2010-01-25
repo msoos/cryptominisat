@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Clause.h"
 #include "VarReplacer.h"
+#include "Solver.h"
 
 using std::vector;
 using std::pair;
@@ -40,7 +41,7 @@ class Solver;
 class Conglomerate
 {
 public:
-    Conglomerate(Solver *S);
+    Conglomerate(Solver& solver);
     ~Conglomerate();
     uint conglomerateXors(); ///<Conglomerate XOR-s that are attached using a variable
     void addRemovedClauses(); ///<Add clauses that have been removed. Used if solve() is called multiple times
@@ -67,7 +68,7 @@ private:
     
     vec<XorClause*> calcAtFinish;
     
-    Solver* S;
+    Solver& solver;
 };
 
 inline const vector<bool>& Conglomerate::getRemovedVars() const

@@ -16,7 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
 #include "Conglomerate.h"
-#include "Solver.h"
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
 
@@ -32,8 +31,8 @@ using std::cout;
 using std::endl;
 #endif
 
-Conglomerate::Conglomerate(Solver *_s) :
-    S(_s)
+Conglomerate::Conglomerate(Solver& _solver) :
+    solver(_solver)
 {}
 
 Conglomerate::~Conglomerate()
@@ -47,24 +46,24 @@ void Conglomerate::fillVarToXor()
     blocked.clear();
     varToXor.clear();
     
-    blocked.resize(S->nVars(), false);
-    for (Clause *const*it = S->clauses.getData(), *const*end = it + S->clauses.size(); it != end; it++) {
+    blocked.resize(solver.nVars(), false);
+    for (Clause *const*it = solver.clauses.getData(), *const*end = it + solver.clauses.size(); it != end; it++) {
         const Clause& c = **it;
         for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
             blocked[a->var()] = true;
         }
     }
     
-    for (Clause *const*it = S->binaryClauses.getData(), *const*end = it + S->binaryClauses.size(); it != end; it++) {
+    for (Clause *const*it = solver.binaryClauses.getData(), *const*end = it + solver.binaryClauses.size(); it != end; it++) {
         const Clause& c = **it;
         blocked[c[0].var()] = true;
         blocked[c[1].var()] = true;
     }
     
-    for (Lit* it = &(S->trail[0]), *end = it + S->trail.size(); it != end; it++)
+    for (Lit* it = &(solver.trail[0]), *end = it + solver.trail.size(); it != end; it++)
         blocked[it->var()] = true;
     
-    const vec<Clause*>& clauses = S->varReplacer->getClauses();
+    const vec<Clause*>& clauses = solver.varReplacer->getClauses();
     for (Clause *const*it = clauses.getData(), *const*end = it + clauses.size(); it != end; it++) {
         const Clause& c = **it;
         for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++) {
@@ -73,7 +72,7 @@ void Conglomerate::fillVarToXor()
     }
     
     uint i = 0;
-    for (XorClause* const* it = S->xorclauses.getData(), *const*end = it + S->xorclauses.size(); it != end; it++, i++) {
+    for (XorClause* const* it = solver.xorclauses.getData(), *const*end = it + solver.xorclauses.size(); it != end; it++, i++) {
         const XorClause& c = **it;
         for (const Lit * a = &c[0], *end = a + c.size(); a != end; a++) {
             if (!blocked[a->var()])
@@ -99,17 +98,17 @@ void Conglomerate::process_clause(XorClause& x, const uint32_t num, Var remove_v
 
 uint Conglomerate::conglomerateXors()
 {
-    if (S->xorclauses.size() == 0)
+    if (solver.xorclauses.size() == 0)
         return 0;
     
     #ifdef VERBOSE_DEBUG
     cout << "Finding conglomerate xors started" << endl;
     #endif
     
-    S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
+    solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     
     toRemove.clear();
-    toRemove.resize(S->xorclauses.size(), false);
+    toRemove.resize(solver.xorclauses.size(), false);
     
     fillVarToXor();
     
@@ -125,9 +124,9 @@ uint Conglomerate::conglomerateXors()
             continue;
         }
         
-        S->setDecisionVar(var, false);
-        S->activity[var] = 0.0;
-        S->order_heap.update(var);
+        solver.setDecisionVar(var, false);
+        solver.activity[var] = 0.0;
+        solver.order_heap.update(var);
         removedVars[var] = true;
         
         if (c.size() == 0) {
@@ -152,7 +151,7 @@ uint Conglomerate::conglomerateXors()
         
         assert(!toRemove[c[0].second]);
         toRemove[c[0].second] = true;
-        S->detachClause(x);
+        solver.detachClause(x);
         calcAtFinish.push(&x);
         found++;
         
@@ -171,13 +170,13 @@ uint Conglomerate::conglomerateXors()
             bool inverted = first_inverted ^ x.xor_clause_inverted();
             assert(!toRemove[c[i].second]);
             toRemove[c[i].second] = true;
-            S->removeClause(x);
+            solver.removeClause(x);
             found++;
             clearDouble(ps);
             
             if (!dealWithNewClause(ps, inverted, old_group)) {
                 clearToRemove();
-                S->ok = false;
+                solver.ok = false;
                 return found;
             }
         }
@@ -186,10 +185,10 @@ uint Conglomerate::conglomerateXors()
     }
     
     clearToRemove();
-    S->order_heap.filter(Solver::VarFilter(*S));
+    solver.order_heap.filter(Solver::VarFilter(solver));
     
-    if (S->ok != false)
-        S->ok = (S->propagate() == NULL);
+    if (solver.ok != false)
+        solver.ok = (solver.propagate() == NULL);
     
     return found;
 }
@@ -211,11 +210,11 @@ bool Conglomerate::dealWithNewClause(vec<Lit>& ps, const bool inverted, const ui
             cout << "--> xor is 1-long, attempting to set variable " << ps[0].var()+1 << endl;
             #endif
             
-            if (S->assigns[ps[0].var()] == l_Undef) {
-                assert(S->decisionLevel() == 0);
+            if (solver.assigns[ps[0].var()] == l_Undef) {
+                assert(solver.decisionLevel() == 0);
                 blocked[ps[0].var()] = true;
-                S->uncheckedEnqueue(Lit(ps[0].var(), inverted));
-            } else if (S->assigns[ps[0].var()] != boolToLBool(!inverted)) {
+                solver.uncheckedEnqueue(Lit(ps[0].var(), inverted));
+            } else if (solver.assigns[ps[0].var()] != boolToLBool(!inverted)) {
                 #ifdef VERBOSE_DEBUG
                 cout << "Conflict. Aborting.";
                 #endif
@@ -232,7 +231,7 @@ bool Conglomerate::dealWithNewClause(vec<Lit>& ps, const bool inverted, const ui
             free(newX);
             #endif
             
-            S->varReplacer->replace(ps, inverted, old_group);
+            solver.varReplacer->replace(ps, inverted, old_group);
             blocked[ps[0].var()] = true;
             blocked[ps[1].var()] = true;
             break;
@@ -246,9 +245,9 @@ bool Conglomerate::dealWithNewClause(vec<Lit>& ps, const bool inverted, const ui
             newX->plainPrint();
             #endif
             
-            S->xorclauses.push(newX);
+            solver.xorclauses.push(newX);
             toRemove.push_back(false);
-            S->attachClause(*newX);
+            solver.attachClause(*newX);
             for (const Lit * a = &((*newX)[0]), *end = a + newX->size(); a != end; a++) {
                 if (!blocked[a->var()])
                     varToXor[a->var()].push_back(make_pair(newX, (uint32_t)(toRemove.size()-1)));
@@ -278,11 +277,11 @@ void Conglomerate::clearDouble(vec<Lit>& ps) const
 
 void Conglomerate::clearToRemove()
 {
-    assert(toRemove.size() == S->xorclauses.size());
+    assert(toRemove.size() == solver.xorclauses.size());
     
-    XorClause **a = S->xorclauses.getData();
+    XorClause **a = solver.xorclauses.getData();
     XorClause **r = a;
-    XorClause **end = a + S->xorclauses.size();
+    XorClause **end = a + solver.xorclauses.size();
     for (uint i = 0; r != end; i++) {
         if (!toRemove[i])
             *a++ = *r++;
@@ -291,20 +290,20 @@ void Conglomerate::clearToRemove()
             r++;
         }
     }
-    S->xorclauses.shrink(r-a);
+    solver.xorclauses.shrink(r-a);
     
     clearLearntsFromToRemove();
 }
 
 void Conglomerate::clearLearntsFromToRemove()
 {
-    Clause **a = S->learnts.getData();
+    Clause **a = solver.learnts.getData();
     Clause **r = a;
-    Clause **end = a + S->learnts.size();
+    Clause **end = a + solver.learnts.size();
     for (; r != end;) {
         const Clause& c = **r;
         bool inside = false;
-        if (!S->locked(c)) {
+        if (!solver.locked(c)) {
             for (uint i = 0; i < c.size(); i++) {
                 if (removedVars[c[i].var()]) {
                     inside = true;
@@ -315,11 +314,11 @@ void Conglomerate::clearLearntsFromToRemove()
         if (!inside)
             *a++ = *r++;
         else {
-            S->removeClause(**r);
+            solver.removeClause(**r);
             r++;
         }
     }
-    S->learnts.shrink(r-a);
+    solver.learnts.shrink(r-a);
 }
 
 void Conglomerate::doCalcAtFinish()
@@ -341,7 +340,7 @@ void Conglomerate::doCalcAtFinish()
         
         bool final = c.xor_clause_inverted();
         for (int k = 0, size = c.size(); k < size; k++ ) {
-            const lbool& val = S->assigns[c[k].var()];
+            const lbool& val = solver.assigns[c[k].var()];
             if (val == l_Undef)
                 toAssign.push_back(c[k].var());
             else
@@ -351,7 +350,7 @@ void Conglomerate::doCalcAtFinish()
         if (toAssign.size() == 0) {
             cout << "ERROR: toAssign.size() == 0 !!" << endl;
             for (int k = 0, size = c.size(); k < size; k++ ) {
-                cout << "Var: " << c[k].var() + 1 << " Level: " << S->level[c[k].var()] << endl;
+                cout << "Var: " << c[k].var() + 1 << " Level: " << solver.level[c[k].var()] << endl;
             }
         }
         if (toAssign.size() > 1) {
@@ -364,10 +363,10 @@ void Conglomerate::doCalcAtFinish()
         assert(toAssign.size() > 0);
         
         for (uint i = 1; i < toAssign.size(); i++) {
-            S->uncheckedEnqueue(Lit(toAssign[i], true), &c);
+            solver.uncheckedEnqueue(Lit(toAssign[i], true), &c);
         }
-        S->uncheckedEnqueue(Lit(toAssign[0], final), &c);
-        assert(S->clauseCleaner->satisfied(c));
+        solver.uncheckedEnqueue(Lit(toAssign[0], final), &c);
+        assert(solver.clauseCleaner->satisfied(c));
     }
 }
 
@@ -392,14 +391,14 @@ void Conglomerate::addRemovedClauses()
         for(uint i2 = 0; i2 != c.size() ; i2++) {
             ps.push(Lit(c[i2].var(), false));
         }
-        S->addXorClause(ps, c.xor_clause_inverted(), c.getGroup(), tmp, true);
+        solver.addXorClause(ps, c.xor_clause_inverted(), c.getGroup(), tmp, true);
         free(&c);
     }
     calcAtFinish.clear();
     for (uint i = 0; i < removedVars.size(); i++) {
         if (removedVars[i]) {
             removedVars[i] = false;
-            S->setDecisionVar(i, true);
+            solver.setDecisionVar(i, true);
         }
     }
 }

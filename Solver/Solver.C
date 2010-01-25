@@ -98,7 +98,7 @@ Solver::Solver() :
         , simplifying      (false)
 {
     varReplacer = new VarReplacer(*this);
-    conglomerate = new Conglomerate(this);
+    conglomerate = new Conglomerate(*this);
     clauseCleaner = new ClauseCleaner(*this);
     failedVarSearcher = new FailedVarSearcher(*this);
     
