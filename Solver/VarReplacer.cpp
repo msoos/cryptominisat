@@ -74,16 +74,20 @@ const lbool VarReplacer::performReplaceInternal()
         #ifdef VERBOSE_DEBUG
         cout << "Setting var " << i+1 << " to a non-decision var" << endl;
         #endif
+        bool wasDecisionVar = solver.decision_var[i];
         solver.setDecisionVar(i, false);
         if (!removedVars[it->var()])
             solver.setDecisionVar(it->var(), true);
+        else
+            continue;
         
         double& activity1 = solver.activity[i];
         double& activity2 = solver.activity[it->var()];
-        if (activity1 > activity2) {
+        if (wasDecisionVar && activity1 > activity2) {
             activity2 = activity1;
             solver.order_heap.update(it->var());
         }
+        
         activity1 = 0.0;
         solver.order_heap.update(i);
     }

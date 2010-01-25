@@ -126,6 +126,8 @@ uint Conglomerate::conglomerateXors()
         }
         
         S->setDecisionVar(var, false);
+        S->activity[var] = 0.0;
+        S->order_heap.update(var);
         removedVars[var] = true;
         
         if (c.size() == 0) {
@@ -184,6 +186,7 @@ uint Conglomerate::conglomerateXors()
     }
     
     clearToRemove();
+    S->order_heap.filter(Solver::VarFilter(*S));
     
     if (S->ok != false)
         S->ok = (S->propagate() == NULL);
