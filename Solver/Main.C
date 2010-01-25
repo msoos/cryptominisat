@@ -343,7 +343,7 @@ void printStats(Solver& solver)
     printStatsLine("c learnts size 2", solver.nbBin);
     printStatsLine("c learnts size 1", solver.get_unitary_learnts_num());
     printStatsLine("c OTF clause improved", solver.improvedClauseNo);
-    printStatsLine("c OTF impr. size diff", solver.improvedClauseSize);
+    printStatsLine("c OTF impr. size diff", solver.improvedClauseSize, (double)solver.improvedClauseSize/(double)solver.improvedClauseNo, " lits/clause");
     
     printStatsLine("c conflicts", solver.conflicts, (double)solver.conflicts/cpu_time, "/ sec");
     printStatsLine("c decisions", solver.decisions, (double)solver.rnd_decisions*100.0/(double)solver.decisions, "% random");
