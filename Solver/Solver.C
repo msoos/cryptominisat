@@ -532,6 +532,7 @@ const lbool Solver::calculateDefaultPolarities()
         tallyVotes(clauses, votes, positiveLiteral, negativeLiteral);
         tallyVotes(binaryClauses, votes, positiveLiteral, negativeLiteral);
         tallyVotes(learnts, votes, positiveLiteral, negativeLiteral);
+        tallyVotes(varReplacer->getClauses(), votes, positiveLiteral, negativeLiteral);
         tallyVotes(xorclauses, positiveLiteral, negativeLiteral);
         
         Var i = 0;
@@ -545,11 +546,12 @@ const lbool Solver::calculateDefaultPolarities()
         uint propagated = 0;
         uint removed = 0;
         for (uint i = 0; i != nVars(); i++) if (decision_var[i] && assigns[i] == l_Undef) {
+            assert(!conglomerate->getRemovedVars()[i]);
             if (!positiveLiteral[i] && negativeLiteral[i]) {
-                uncheckedEnqueue(Lit(i, false));
+                uncheckedEnqueue(Lit(i, true));
                 propagated++;
             } else if (positiveLiteral[i] && !negativeLiteral[i]) {
-                uncheckedEnqueue(Lit(i, true));
+                uncheckedEnqueue(Lit(i, false));
                 propagated++;
             }
             else if (!positiveLiteral[i] && !negativeLiteral[i]) {
