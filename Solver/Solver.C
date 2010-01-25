@@ -499,6 +499,17 @@ void tallyVotes(const vec<Clause*>& cs, vector<double>& votes, vector<bool>& pos
     }
 }
 
+void tallyVotes(const vec<XorClause*>& cs, vector<bool>& positiveLiteral, vector<bool>& negativeLiteral)
+{
+    for (const XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
+        const XorClause& c = **it;
+        for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++) {
+            negativeLiteral[it2->var()] = true;
+            positiveLiteral[it2->var()] = true;
+        }
+    }
+}
+
 const lbool Solver::calculateDefaultPolarities()
 {
     #ifdef VERBOSE_DEBUG
@@ -521,6 +532,7 @@ const lbool Solver::calculateDefaultPolarities()
         tallyVotes(clauses, votes, positiveLiteral, negativeLiteral);
         tallyVotes(binaryClauses, votes, positiveLiteral, negativeLiteral);
         tallyVotes(learnts, votes, positiveLiteral, negativeLiteral);
+        tallyVotes(xorclauses, positiveLiteral, negativeLiteral);
         
         Var i = 0;
         for (vector<double>::const_iterator it = votes.begin(), end = votes.end(); it != end; it++, i++) {
@@ -534,10 +546,10 @@ const lbool Solver::calculateDefaultPolarities()
         uint removed = 0;
         for (uint i = 0; i != nVars(); i++) if (decision_var[i] && assigns[i] == l_Undef) {
             if (!positiveLiteral[i] && negativeLiteral[i]) {
-                uncheckedEnqueue(Lit(i, true));
+                uncheckedEnqueue(Lit(i, false));
                 propagated++;
             } else if (positiveLiteral[i] && !negativeLiteral[i]) {
-                uncheckedEnqueue(Lit(i, false));
+                uncheckedEnqueue(Lit(i, true));
                 propagated++;
             }
             else if (!positiveLiteral[i] && !negativeLiteral[i]) {
