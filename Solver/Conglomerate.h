@@ -70,4 +70,20 @@ private:
     Solver* S;
 };
 
+inline const vector<bool>& Conglomerate::getRemovedVars() const
+{
+    return removedVars;
+}
+
+inline const vec<XorClause*>& Conglomerate::getCalcAtFinish() const
+{
+    return calcAtFinish;
+}
+
+inline vec<XorClause*>& Conglomerate::getCalcAtFinish()
+{
+    return calcAtFinish;
+}
+
+
 #endif //CONGLOMERATE_H

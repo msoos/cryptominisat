@@ -42,21 +42,6 @@ Conglomerate::~Conglomerate()
         free(calcAtFinish[i]);
 }
 
-const vector<bool>& Conglomerate::getRemovedVars() const
-{
-    return removedVars;
-}
-
-const vec<XorClause*>& Conglomerate::getCalcAtFinish() const
-{
-    return calcAtFinish;
-}
-
-vec<XorClause*>& Conglomerate::getCalcAtFinish()
-{
-    return calcAtFinish;
-}
-
 void Conglomerate::fillVarToXor()
 {
     blocked.clear();
