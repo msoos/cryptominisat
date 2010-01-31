@@ -579,7 +579,6 @@ const lbool Solver::calculateDefaultPolarities()
             " Propagated vars: " << std::fixed << std::setw(6) << std::setprecision(2) << propagated <<
             "    |" << std:: endl;
         }
-        
     } else {
         for (uint i = 0; i != defaultPolarities.size(); i++) {
             defaultPolarities[i] = defaultPolarity();
