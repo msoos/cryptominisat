@@ -1667,7 +1667,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     backup_activity.growTo(activity.size());
     memcpy(backup_activity.getData(), activity.getData(), activity.size()*sizeof(double));
     
-    printf("c |                             Simplifying problem for %5d confls                    |\n", numConfls);
+    if (verbosity >= 1)
+        printf("c |                             Simplifying problem for %5d confls                    |\n", numConfls);
     random_var_freq = 1;
     simplifying = true;
     uint64_t origConflicts = conflicts;
@@ -1690,7 +1691,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     
 end:
     random_var_freq = backup_random_var_freq;
-    printf("c                                      Simplifying finished                               |\n");
+    if (verbosity >= 1)
+        printf("c                                      Simplifying finished                               |\n");
     
     memcpy(activity.getData(), backup_activity.getData(), activity.size()*sizeof(double));
     order_heap = backup_order_heap;
