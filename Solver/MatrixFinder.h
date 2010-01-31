@@ -56,9 +56,8 @@ class MatrixFinder {
         inline const bool firstPartOfSecond(const XorClause& c1, const XorClause& c2) const;
         
         map<uint, vector<Var> > reverseTable; //matrix -> vars
-        vector<uint> table; //var -> matrix
+        vector<Var> table; //var -> matrix
         uint matrix_no;
-        const uint unAssigned;
         
         Solver* S;
 };

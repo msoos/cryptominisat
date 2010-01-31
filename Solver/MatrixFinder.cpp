@@ -37,8 +37,7 @@ using std::endl;
 //#define PART_FINDING
 
 MatrixFinder::MatrixFinder(Solver *_s) :
-    unAssigned(_s->nVars() + 1)
-    , S(_s)
+    S(_s)
 {
 }
 
@@ -70,7 +69,7 @@ inline const bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const Xor
 const uint MatrixFinder::findMatrixes()
 {
     table.clear();
-    table.resize(S->nVars(), unAssigned);
+    table.resize(S->nVars(), var_Undef);
     reverseTable.clear();
     matrix_no = 0;
     
@@ -83,7 +82,7 @@ const uint MatrixFinder::findMatrixes()
         set<uint> tomerge;
         vector<Var> newSet;
         for (Lit *l = &(**c)[0], *end2 = l + (**c).size(); l != end2; l++) {
-            if (table[l->var()] != unAssigned)
+            if (table[l->var()] != var_Undef)
                 tomerge.insert(table[l->var()]);
             else
                 newSet.push_back(l->var());
