@@ -110,7 +110,7 @@ const lbool VarReplacer::performReplaceInternal()
         std::cout << "c |  Replacing   " << std::setw(8) << replacedVars-lastReplacedVars << " vars"
         << "     Replaced " <<  std::setw(8) << replacedLits-lastReplacedLits << " lits"
         << "     Time: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime()-time << " s "
-        << std::setw(14) <<  " |" << std::endl;
+        << std::setw(12) <<  " |" << std::endl;
     }
     
     addedNewClause = false;

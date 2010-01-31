@@ -572,11 +572,11 @@ const lbool Solver::calculateDefaultPolarities()
                 order_heap.filter(VarFilter(*this));
         }
         
-        std::cout << "c | Calculated default polarities: " 
-        << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s" << 
-        " Removed vars: " << std::fixed << std::setw(6) << std::setprecision(2) << removed << 
+        std::cout << "c |  Calc-ed default polarities: "
+        << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s" <<
+        " Removed vars: " << std::fixed << std::setw(6) << std::setprecision(2) << removed <<
         " Propagated vars: " << std::fixed << std::setw(6) << std::setprecision(2) << propagated << 
-        "  |" << std:: endl;
+        "    |" << std:: endl;
         
     } else {
         for (uint i = 0; i != defaultPolarities.size(); i++) {
@@ -1667,7 +1667,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     backup_activity.growTo(activity.size());
     memcpy(backup_activity.getData(), activity.getData(), activity.size()*sizeof(double));
     
-    printf("c |                             Simplifying problem for %5d confls                   |\n", numConfls);
+    printf("c |                             Simplifying problem for %5d confls                    |\n", numConfls);
     random_var_freq = 1;
     simplifying = true;
     uint64_t origConflicts = conflicts;
@@ -1813,7 +1813,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     while (status == l_Undef && starts < maxRestarts) {
         
         if (schedSimplification && conflicts/100000 >= numSimplified) {
-            status = simplifyProblem(500, 50000000);
+            status = simplifyProblem(500, 20000000);
             if (status != l_Undef)
                 break;
         }

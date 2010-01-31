@@ -45,6 +45,7 @@ const lbool FailedVarSearcher::search(const uint64_t numProps)
     memcpy(backup_activity.getData(), solver.activity.getData(), solver.activity.size()*sizeof(double));
     
     //General Stats
+    double time = cpuTime();
     uint32_t numFailed = 0;
     uint goodBothSame = 0;
     uint32_t from;
@@ -68,7 +69,7 @@ const lbool FailedVarSearcher::search(const uint64_t numProps)
     finishedLastTime = true;
     lastTimeWentUntil = solver.nVars();
     for (Var var = from; var < solver.nVars(); var++) {
-        if (solver.assigns[var] == l_Undef) {
+        if (solver.assigns[var] == l_Undef && solver.order_heap.inHeap(var)) {
             if ((int)solver.propagations - (int)origProps >= (int)numProps)  {
                 finishedLastTime = false;
                 lastTimeWentUntil = var;
@@ -132,14 +133,22 @@ const lbool FailedVarSearcher::search(const uint64_t numProps)
 
 end:
     //Restoring Solver state
-    std::cout << "c |  No. of failed vars: "<< std::setw(5) << numFailed << 
-    "     No. of both propagated vars: " << std::setw(6) << goodBothSame << 
-    " Props: " << std::setw(5) << std::setprecision(2) << (int)solver.propagations - (int)origProps  << 
-    std::setw(3) << "|" << std::endl;
+    if (solver.verbosity >= 1) {
+        std::cout << "c |  No. failvars: "<< std::setw(5) << numFailed <<
+        "     No. bothprop vars: " << std::setw(6) << goodBothSame <<
+        " Props: " << std::setw(5) << std::setprecision(2) << (int)solver.propagations - (int)origProps  <<
+        " Time: " << std::setw(6) << std::fixed << std::setprecision(2) << cpuTime() - time <<
+        std::setw(10) << " |" << std::endl;
+    }
     
     if (numFailed || goodBothSame) {
+        double time = cpuTime();
         solver.order_heap.filter(Solver::VarFilter(solver));
         solver.clauseCleaner->removeAndCleanAll();
+        if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
+            std::cout << "c |  Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
+            <<  std::setw(33) << " | " << std::endl;
+        }
     }
     
     memcpy(solver.activity.getData(), backup_activity.getData(), solver.activity.size()*sizeof(double));
