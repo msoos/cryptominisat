@@ -76,10 +76,10 @@ class VarReplacer
         Solver& solver;
 };
 
-inline const lbool VarReplacer::performReplace()
+inline const lbool VarReplacer::performReplace(const bool always)
 {
     uint32_t limit = std::min((uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE), FIXCLEANREPLACE);
-    if (getNewToReplaceVars() > limit)
+    if (always || getNewToReplaceVars() > limit)
         return performReplaceInternal();
     
     return l_Undef;

@@ -1737,7 +1737,7 @@ inline void Solver::performStepsBeforeSolve()
         xorFinder.doNoPart(2, 2);
         if (!ok) return;
         
-        if (performReplace && varReplacer->performReplace() == l_False)
+        if (performReplace && varReplacer->performReplace(true) == l_False)
             return;
     }
         
@@ -1755,9 +1755,8 @@ inline void Solver::performStepsBeforeSolve()
         }
         
         double time = cpuTime();
-        uint foundCong = conglomerate->conglomerateXors();
-        if (verbosity >=1)
-            printf("c |  Conglomerating XORs:  %4.2lf s (removed %6d vars)                                   |\n", cpuTime()-time, foundCong);
+        if (conglomerate->conglomerateXors() == false)
+            return;        
         if (!ok) return;
         
         uint new_total = 0;
