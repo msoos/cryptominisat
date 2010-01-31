@@ -548,7 +548,7 @@ const lbool Solver::calculateDefaultPolarities()
         uint propagated = 0;
         uint removed = 0;
         
-        if (failedVarSearch) {
+        if (false && failedVarSearch) {
             for (uint i = 0; i != nVars(); i++) if (decision_var[i] && assigns[i] == l_Undef) {
                 assert(!conglomerate->getRemovedVars()[i]);
                 if (!positiveLiteral[i] && negativeLiteral[i]) {
