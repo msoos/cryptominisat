@@ -640,7 +640,7 @@ Lit Solver::pickBranchLit()
         if (simplifying && random)
             sign = mtrand.randInt(1);
         else
-            sign = polarity[next];
+            sign = polarity[next] ^ (mtrand.randInt(200) == 1);
     }
 
     assert(next == var_Undef || value(next) == l_Undef);
