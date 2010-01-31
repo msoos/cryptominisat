@@ -60,7 +60,6 @@ private:
     };
     
     void removeVar(const Var var);
-    void blockVars(vector<pair<XorClause*, uint32_t> >& clauseSet, const Var var);
     void processClause(XorClause& x, uint32_t num, Var remove_var);
     void fillVarToXor();
     void clearDouble(vector<Lit>& ps) const;

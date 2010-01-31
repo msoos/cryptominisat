@@ -89,15 +89,6 @@ void Conglomerate::removeVar(const Var var)
     removedVars[var] = true;
 }
 
-void Conglomerate::blockVars(vector<pair<XorClause*, uint32_t> >& clauseSet, const Var var)
-{
-    for (uint i = 0; i != clauseSet.size(); i++) {
-        for (Lit  *i2 = clauseSet[i].first->getData(), *end = i2 + clauseSet[i].first->size() ; i2 != end; i2++)
-            if (i2->var() != var)
-                blocked[i2->var()] = true;
-    }
-}
-
 void Conglomerate::processClause(XorClause& x, uint32_t num, Var remove_var)
 {
     for (const Lit* a = &x[0], *end = a + x.size(); a != end; a++) {
@@ -133,7 +124,7 @@ uint Conglomerate::conglomerateXors()
     while(varToXor.begin() != varToXor.end()) {
         varToXorMap::iterator it = varToXor.begin();
         vector<pair<XorClause*, uint32_t> >& clauseSet = it->second;
-        const uint& var = it->first;
+        const Var var = it->first;
         
         //We blocked the var during dealWithNewClause (it was in a 2-long xor-clause)
         if (blocked[var]) {
@@ -149,7 +140,8 @@ uint Conglomerate::conglomerateXors()
         
         std::sort(clauseSet.begin(), clauseSet.end(), ClauseSetSorter());
         
-        vector<vector<Lit> > newSet(1);
+        vector<vector<Lit> > newSet;
+        newSet.resize(clauseSet.size());
         
         XorClause& firstXorClause = *(clauseSet[0].first);
         newSet[0].resize(firstXorClause.size());
@@ -157,11 +149,9 @@ uint Conglomerate::conglomerateXors()
         
         for (uint i = 1; i < clauseSet.size(); i++) {
             XorClause& thisXorClause = *clauseSet[i].first;
-            
-            newSet.push_back(newSet[0]);
+            newSet[i] = newSet[0];
             newSet[i].resize(firstXorClause.size()+thisXorClause.size());
             memcpy(&newSet[i][firstXorClause.size()], thisXorClause.getData(), sizeof(Lit)*thisXorClause.size());
-            
             clearDouble(newSet[i]);
         }
         
@@ -170,6 +160,7 @@ uint Conglomerate::conglomerateXors()
             diff += (int)newSet[i].size()-(int)clauseSet[i].first->size();
         
         if (diff >  newSet.size()-1) {
+            blocked[var] = true;
             varToXor.erase(it);
             continue;
         }
@@ -206,20 +197,21 @@ uint Conglomerate::conglomerateXors()
             found++;
             
             if (!dealWithNewClause(newSet[i], inverted, old_group)) {
-                clearToRemove();
                 solver.ok = false;
-                return found;
+                goto end;
             }
+            assert(newSet.size() == clauseSet.size());
         }
         
         varToXor.erase(it);
     }
     
-    clearToRemove();
-    solver.order_heap.filter(Solver::VarFilter(solver));
-    
     if (solver.ok != false)
         solver.ok = (solver.propagate() == NULL);
+    
+end:
+    clearToRemove();
+    solver.order_heap.filter(Solver::VarFilter(solver));
     
     return found;
 }
@@ -294,19 +286,21 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
 }
 
 void Conglomerate::clearDouble(vector<Lit>& ps) const
-{
+{    
     std::sort(ps.begin(), ps.end());
     Lit p;
-    uint i, j;
-    for (i = j = 0, p = lit_Undef; i < ps.size(); i++) {
+    uint32_t i, j;
+    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
+        ps[i] = ps[i].unsign();
         if (ps[i] == p) {
             //added, but easily removed
             j--;
             p = lit_Undef;
-        } else //just add
+            solver.clauses_literals -= 2;
+        } else
             ps[j++] = p = ps[i];
     }
-    ps.resize(ps.size()-(i - j));
+    ps.resize(ps.size() - (i - j));
 }
 
 void Conglomerate::clearToRemove()
@@ -433,6 +427,9 @@ void Conglomerate::addRemovedClauses()
         if (removedVars[i]) {
             removedVars[i] = false;
             solver.setDecisionVar(i, true);
+            #ifdef VERBOSE_DEBUG
+            std::cout << "Inserting Var " << i+1 << " back into the order_heap" << std::endl;
+            #endif //VERBOSE_DEBUG
         }
     }
 }
