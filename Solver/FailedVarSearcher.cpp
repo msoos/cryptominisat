@@ -37,22 +37,33 @@ const lbool FailedVarSearcher::search(const uint64_t numProps)
 {
     assert(solver.decisionLevel() == 0);
     
-    uint32_t num = 0;
-    bool failed;
+    //Saving Solver state
+    Heap<Solver::VarOrderLt> backup_order_heap(solver.order_heap);
+    vector<bool> backup_polarities = solver.polarity;
+    vec<double> backup_activity;
+    backup_activity.growTo(solver.activity.size());
+    memcpy(backup_activity.getData(), solver.activity.getData(), solver.activity.size()*sizeof(double));
+    
+    //General Stats
+    uint32_t numFailed = 0;
+    uint goodBothSame = 0;
     uint32_t from;
     if (finishedLastTime || lastTimeWentUntil >= solver.nVars())
         from = 0;
-    else {
+    else
         from = lastTimeWentUntil;
-    }
+    uint64_t origProps = solver.propagations;
     
+    //For failure
+    bool failed;
+    
+    //For BothSame
     BitArray propagated;
     propagated.resize(solver.nVars());
     BitArray propValue;
     propValue.resize(solver.nVars());
     vector<pair<Var, bool> > bothSame;
-    uint goodBothSame = 0;
-    uint64_t origProps = solver.propagations;
+    
     
     finishedLastTime = true;
     lastTimeWentUntil = solver.nVars();
@@ -64,18 +75,17 @@ const lbool FailedVarSearcher::search(const uint64_t numProps)
                 break;
             }
             
-            bool oldPolarity = solver.polarity[var];
             propagated.setZero();
             
             solver.newDecisionLevel();
             solver.uncheckedEnqueue(Lit(var, false));
-            failed = (solver.propagate() != NULL);
+            failed = (solver.propagate(false) != NULL);
             if (failed) {
                 solver.cancelUntil(0);
-                num++;
+                numFailed++;
                 solver.uncheckedEnqueue(Lit(var, true));
-                solver.ok = (solver.propagate() == NULL);
-                if (!solver.ok) return l_False;
+                solver.ok = (solver.propagate(false) == NULL);
+                if (!solver.ok) goto end;
                 continue;
             } else {
                 assert(solver.decisionLevel() > 0);
@@ -92,14 +102,14 @@ const lbool FailedVarSearcher::search(const uint64_t numProps)
             
             solver.newDecisionLevel();
             solver.uncheckedEnqueue(Lit(var, true));
-            failed = (solver.propagate() != NULL);
+            failed = (solver.propagate(false) != NULL);
             if (failed) {
                 solver.cancelUntil(0);
                 //std::cout << "Var " << i << " fails l_False" << std::endl;
-                num++;
+                numFailed++;
                 solver.uncheckedEnqueue(Lit(var, false));
-                solver.ok = (solver.propagate() == NULL);
-                if (!solver.ok) return l_False;
+                solver.ok = (solver.propagate(false) == NULL);
+                if (!solver.ok) goto end;
                 continue;
             } else {
                 assert(solver.decisionLevel() > 0);
@@ -115,19 +125,26 @@ const lbool FailedVarSearcher::search(const uint64_t numProps)
                 solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
             goodBothSame += bothSame.size();
             bothSame.clear();
-            solver.ok = (solver.propagate() == NULL);
-            if (!solver.ok) return l_False;
-            
-            solver.polarity[var] = oldPolarity;
+            solver.ok = (solver.propagate(false) == NULL);
+            if (!solver.ok) goto end;
         }
     }
+
+end:
+    //Restoring Solver state
+    std::cout << "c |  No. of failed vars: "<< std::setw(5) << numFailed << 
+    "     No. of both propagated vars: " << std::setw(6) << goodBothSame << 
+    " Props: " << std::setw(5) << std::setprecision(2) << (int)solver.propagations - (int)origProps  << 
+    std::setw(3) << "|" << std::endl;
     
-    std::cout << "c |  No. of failed vars: " << std::setw(5) << num << "     No. of both propagated vars: " << std::setw(6) << goodBothSame << " Props: " << std::setw(5) << std::setprecision(2) << (int)solver.propagations - (int)origProps  << std::setw(3) << "|" << std::endl;
-    
-    if (num != 0) {
+    if (numFailed || goodBothSame) {
         solver.order_heap.filter(Solver::VarFilter(solver));
         solver.clauseCleaner->removeAndCleanAll();
     }
     
-    return l_Undef;
+    memcpy(solver.activity.getData(), backup_activity.getData(), solver.activity.size()*sizeof(double));
+    solver.order_heap = backup_order_heap;
+    solver.polarity = backup_polarities;
+    
+    return (solver.ok ? l_Undef : l_False);
 }
