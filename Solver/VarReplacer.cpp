@@ -16,9 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
 #include "VarReplacer.h"
+#include <iostream>
+#include <iomanip>
 
 #include "Conglomerate.h"
 #include "ClauseCleaner.h"
+#include "time_mem.h"
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_REPLACER
@@ -51,6 +54,7 @@ const lbool VarReplacer::performReplaceInternal()
     #ifdef VERBOSE_DEBUG
     cout << "Replacer started." << endl;
     #endif
+    double time = cpuTime();
     
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
@@ -67,29 +71,27 @@ const lbool VarReplacer::performReplaceInternal()
     }
     #endif
     
-    uint i = 0;
+    Var var = 0;
     const vector<bool>& removedVars = solver.conglomerate->getRemovedVars();
-    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
-        if (it->var() == i) continue;
+    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
+        if (it->var() == var || removedVars[it->var()]) continue;
         #ifdef VERBOSE_DEBUG
         cout << "Setting var " << i+1 << " to a non-decision var" << endl;
         #endif
-        bool wasDecisionVar = solver.decision_var[i];
-        solver.setDecisionVar(i, false);
-        if (!removedVars[it->var()])
-            solver.setDecisionVar(it->var(), true);
-        else
-            continue;
+        bool wasDecisionVar = solver.decision_var[var];
+        solver.setDecisionVar(var, false);
+        solver.setDecisionVar(it->var(), true);
         
-        double& activity1 = solver.activity[i];
+        double& activity1 = solver.activity[var];
         double& activity2 = solver.activity[it->var()];
         if (wasDecisionVar && activity1 > activity2) {
             activity2 = activity1;
             solver.order_heap.update(it->var());
+            solver.polarity[it->var()] = solver.polarity[var]^it->sign();
         }
         
         activity1 = 0.0;
-        solver.order_heap.update(i);
+        solver.order_heap.update(var);
     }
     assert(solver.order_heap.heapProperty());
     
@@ -104,8 +106,12 @@ const lbool VarReplacer::performReplaceInternal()
         solver.removeClause(*clauses[i]);
     clauses.clear();
     
-    if (solver.verbosity >=1)
-        printf("c |  Replacing   %8d vars, replaced %8d lits                                    |\n", replacedVars-lastReplacedVars, replacedLits-lastReplacedLits);
+    if (solver.verbosity >=1) {
+        std::cout << "c |  Replacing   " << std::setw(8) << replacedVars-lastReplacedVars << " vars"
+        << "     Replaced " <<  std::setw(8) << replacedLits-lastReplacedLits << " lits"
+        << "     Time: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime()-time << " s "
+        << std::setw(14) <<  " |" << std::endl;
+    }
     
     addedNewClause = false;
     lastReplacedVars = replacedVars;
