@@ -276,15 +276,10 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
         solver.uncheckedEnqueue(c[0]);
         return true;
-    case 2:
+    default:
         solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
         solver.attachClause(c);
-        return false;
-    default:
-        if (origLit1 != c[0] || origLit2 != c[1]) {
-            solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
-            solver.attachClause(c);
-        }
+        
         return false;
     }
     
