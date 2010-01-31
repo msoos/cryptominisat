@@ -572,11 +572,13 @@ const lbool Solver::calculateDefaultPolarities()
                 order_heap.filter(VarFilter(*this));
         }
         
-        std::cout << "c |  Calc-ed default polarities: "
-        << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s" <<
-        " Removed vars: " << std::fixed << std::setw(6) << std::setprecision(2) << removed <<
-        " Propagated vars: " << std::fixed << std::setw(6) << std::setprecision(2) << propagated << 
-        "    |" << std:: endl;
+        if (verbosity >= 1) {
+            std::cout << "c |  Calc-ed default polarities: "
+            << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s" <<
+            " Removed vars: " << std::fixed << std::setw(6) << std::setprecision(2) << removed <<
+            " Propagated vars: " << std::fixed << std::setw(6) << std::setprecision(2) << propagated <<
+            "    |" << std:: endl;
+        }
         
     } else {
         for (uint i = 0; i != defaultPolarities.size(); i++) {
