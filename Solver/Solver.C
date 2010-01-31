@@ -923,7 +923,7 @@ void Solver::uncheckedEnqueue(Lit p, ClausePtr from)
 |    Post-conditions:
 |      * the propagation queue is empty, even if there was a conflict.
 |________________________________________________________________________________________________@*/
-Clause* Solver::propagate(const bool xor_as_well)
+Clause* Solver::propagate(const bool update)
 {
     Clause* confl = NULL;
     int     num_props = 0;
@@ -1010,7 +1010,7 @@ Clause* Solver::propagate(const bool xor_as_well)
                 } else {
                     uncheckedEnqueue(first, &c);
                     #ifdef DYNAMICNBLEVEL
-                    if (c.learnt() && c.activity() > 2) { // GA
+                    if (update && c.learnt() && c.activity() > 2) { // GA
                         MYFLAG++;
                         int nbLevels =0;
                         for(Lit *i = c.getData(), *end = i+c.size(); i != end; i++) {
@@ -1033,7 +1033,7 @@ FoundWatch:
         ws.shrink_(i - j);
 
         //Finally, propagate XOR-clauses
-        if (xor_as_well && !confl) confl = propagate_xors(p);
+        if (!confl) confl = propagate_xors(p);
     }
 EndPropagate:
     propagations += num_props;
@@ -1368,7 +1368,7 @@ lbool Solver::simplify()
 |    all variables are decision variables, this means that the clause set is satisfiable. 'l_False'
 |    if the clause set is unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 |________________________________________________________________________________________________@*/
-lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart)
+lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const bool update)
 {
     assert(ok);
     int         conflictC = 0;
@@ -1382,7 +1382,7 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart)
     }
 
     for (;;) {
-        Clause* confl = propagate();
+        Clause* confl = propagate(update);
 
         if (confl != NULL) {
             ret = handle_conflict(learnt_clause, confl, conflictC);
@@ -1675,17 +1675,18 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     
     while(status == l_Undef && conflicts-origConflicts < numConfls) {
         printRestartStat();
-        status = search(100, -1);
+        status = search(100, -1, false);
         starts--;
     }
     printRestartStat();
     
     if (status != l_Undef)
-        return status;
+        goto end;
     
     if (failedVarSearch)
         status = failedVarSearcher->search(numProps);
     
+end:
     random_var_freq = backup_random_var_freq;
     printf("c                                      Simplifying finished                               |\n");
     

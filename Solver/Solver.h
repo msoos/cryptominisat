@@ -252,13 +252,13 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (Lit p, ClausePtr from = (Clause*)NULL);                 // Enqueue a literal. Assumes value of literal is undefined.
     bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
-    Clause*  propagate        (const bool xor_as_well = true);                         // Perform unit propagation. Returns possibly conflicting clause.
+    Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     Clause*  propagate_xors   (const Lit& p);
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
     Clause*  analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nblevels); // (bt = backtrack)
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
-    lbool    search           (int nof_conflicts, int nof_conflicts_fullrestart);      // Search for a given number of conflicts.
+    lbool    search           (int nof_conflicts, int nof_conflicts_fullrestart, const bool update = true);      // Search for a given number of conflicts.
     void     reduceDB         ();                                                      // Reduce the set of learnt clauses.
     llbool   handle_conflict  (vec<Lit>& learnt_clause, Clause* confl, int& conflictC);// Handles the conflict clause
     llbool   new_decision     (const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
