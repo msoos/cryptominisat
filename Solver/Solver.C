@@ -40,6 +40,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "RestartTypeChooser.h"
 #include "FailedVarSearcher.h"
 
+//#define VERBOSE_DEBUG_POLARITIES
+
 //=================================================================================================
 // Constructor/Destructor:
 
@@ -512,7 +514,7 @@ void tallyVotes(const vec<XorClause*>& cs, vector<bool>& positiveLiteral, vector
 
 const lbool Solver::calculateDefaultPolarities()
 {
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG_POLARITIES
     std::cout << "Default polarities: " << endl;
     #endif
     
@@ -538,9 +540,9 @@ const lbool Solver::calculateDefaultPolarities()
         Var i = 0;
         for (vector<double>::const_iterator it = votes.begin(), end = votes.end(); it != end; it++, i++) {
             defaultPolarities[i] = (*it > 0.0);
-            #ifdef VERBOSE_DEBUG
+            #ifdef VERBOSE_DEBUG_POLARITIES
             std::cout << !defaultPolarities[i] << ", ";
-            #endif //VERBOSE_DEBUG
+            #endif //VERBOSE_DEBUG_POLARITIES
         }
         
         uint propagated = 0;
@@ -579,14 +581,14 @@ const lbool Solver::calculateDefaultPolarities()
     } else {
         for (uint i = 0; i != defaultPolarities.size(); i++) {
             defaultPolarities[i] = defaultPolarity();
-            #ifdef VERBOSE_DEBUG
+            #ifdef VERBOSE_DEBUG_POLARITIES
             std::cout << !defaultPolarities[i] << ", ";
-            #endif //VERBOSE_DEBUG
+            #endif //VERBOSE_DEBUG_POLARITIES
         }
     }
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG_POLARITIES
     std::cout << std::endl;
-    #endif //VERBOSE_DEBUG
+    #endif //VERBOSE_DEBUG_POLARITIES
     
     return l_Undef;
 }
