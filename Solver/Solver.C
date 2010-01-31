@@ -545,27 +545,30 @@ const lbool Solver::calculateDefaultPolarities()
         
         uint propagated = 0;
         uint removed = 0;
-        for (uint i = 0; i != nVars(); i++) if (decision_var[i] && assigns[i] == l_Undef) {
-            assert(!conglomerate->getRemovedVars()[i]);
-            if (!positiveLiteral[i] && negativeLiteral[i]) {
-                uncheckedEnqueue(Lit(i, true));
-                propagated++;
-            } else if (positiveLiteral[i] && !negativeLiteral[i]) {
-                uncheckedEnqueue(Lit(i, false));
-                propagated++;
-            }
-            else if (!positiveLiteral[i] && !negativeLiteral[i]) {
-                decision_var[i] = false;
-                removed++;
-            }
-        }
         
-        if (propagated) {
-            ok =  (propagate() == NULL);
-            if (!ok) return l_False;
+        if (failedVarSearch) {
+            for (uint i = 0; i != nVars(); i++) if (decision_var[i] && assigns[i] == l_Undef) {
+                assert(!conglomerate->getRemovedVars()[i]);
+                if (!positiveLiteral[i] && negativeLiteral[i]) {
+                    uncheckedEnqueue(Lit(i, true));
+                    propagated++;
+                } else if (positiveLiteral[i] && !negativeLiteral[i]) {
+                    uncheckedEnqueue(Lit(i, false));
+                    propagated++;
+                }
+                else if (!positiveLiteral[i] && !negativeLiteral[i]) {
+                    decision_var[i] = false;
+                    removed++;
+                }
+            }
+            
+            if (propagated) {
+                ok =  (propagate() == NULL);
+                if (!ok) return l_False;
+            }
+            if (removed)
+                order_heap.filter(VarFilter(*this));
         }
-        if (removed)
-            order_heap.filter(VarFilter(*this));
         
         std::cout << "c | Calculated default polarities: " 
         << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s" << 
