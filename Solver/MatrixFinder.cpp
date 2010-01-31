@@ -36,8 +36,8 @@ using std::endl;
 
 //#define PART_FINDING
 
-MatrixFinder::MatrixFinder(Solver *_s) :
-    S(_s)
+MatrixFinder::MatrixFinder(Solver& _solver) :
+    solver(_solver)
 {
 }
 
@@ -69,16 +69,16 @@ inline const bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const Xor
 const uint MatrixFinder::findMatrixes()
 {
     table.clear();
-    table.resize(S->nVars(), var_Undef);
+    table.resize(solver.nVars(), var_Undef);
     reverseTable.clear();
     matrix_no = 0;
     
-    if (S->xorclauses.size() == 0)
+    if (solver.xorclauses.size() == 0)
         return 0;
     
-    S->clauseCleaner->cleanClauses(S->xorclauses, ClauseCleaner::xorclauses);
+    solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     
-    for (XorClause** c = S->xorclauses.getData(), **end = c + S->xorclauses.size(); c != end; c++) {
+    for (XorClause** c = solver.xorclauses.getData(), **end = c + solver.xorclauses.size(); c != end; c++) {
         set<uint> tomerge;
         vector<Var> newSet;
         for (Lit *l = &(**c)[0], *end2 = l + (**c).size(); l != end2; l++) {
@@ -134,7 +134,7 @@ const uint MatrixFinder::setMatrixes()
     vector<vector<Var> > xorFingerprintInMatrix(matrix_no);
     #endif
     
-    for (XorClause** c = S->xorclauses.getData(), **end = c + S->xorclauses.size(); c != end; c++) {
+    for (XorClause** c = solver.xorclauses.getData(), **end = c + solver.xorclauses.size(); c != end; c++) {
         XorClause& x = **c;
         const uint matrix = table[x[0].var()];
         assert(matrix < matrix_no);
@@ -177,16 +177,16 @@ const uint MatrixFinder::setMatrixes()
             && numXorInMatrix[a].second <= 1000
             && realMatrixNum < 3)
         {
-            if (S->verbosity >=1)
+            if (solver.verbosity >=1)
                 cout << "c |  Matrix no " << std::setw(4) << realMatrixNum;
-            S->gauss_matrixes.push_back(new Gaussian(*S, S->gaussconfig, realMatrixNum, xorsInMatrix[i]));
+            solver.gauss_matrixes.push_back(new Gaussian(solver, solver.gaussconfig, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
             
         } else {
-            if (S->verbosity >=1  && numXorInMatrix[a].second >= 20)
+            if (solver.verbosity >=1  && numXorInMatrix[a].second >= 20)
                 cout << "c |  Unused Matrix ";
         }
-        if (S->verbosity >=1 && numXorInMatrix[a].second >= 20) {
+        if (solver.verbosity >=1 && numXorInMatrix[a].second >= 20) {
             cout << std::setw(5) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
             cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
             cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;

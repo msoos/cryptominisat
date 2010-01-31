@@ -1631,7 +1631,7 @@ inline void Solver::chooseRestartType(RestartTypeChooser& restartTypeChooser, co
                                 
                 if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
                     double time = cpuTime();
-                    MatrixFinder m(this);
+                    MatrixFinder m(*this);
                     const uint numMatrixes = m.findMatrixes();
                     if (verbosity >=1)
                         printf("c |  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, numMatrixes);

@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif //_MSC_VER
 
 #include "Clause.h"
+#include "Solver.h"
 
 class Solver;
 
@@ -37,7 +38,7 @@ using std::pair;
 class MatrixFinder {
     
     public:
-        MatrixFinder(Solver* S);
+        MatrixFinder(Solver& solver);
         const uint findMatrixes();
     
     private:
@@ -59,7 +60,7 @@ class MatrixFinder {
         vector<Var> table; //var -> matrix
         uint matrix_no;
         
-        Solver* S;
+        Solver& solver;
 };
 
 
