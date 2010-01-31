@@ -53,12 +53,20 @@ public:
     
 private:
     
-    void process_clause(XorClause& x, const uint32_t num, Var remove_var, vec<Lit>& vars);
+    struct ClauseSetSorter {
+        bool operator () (const pair<XorClause*, uint32_t>& a, const pair<XorClause*, uint32_t>& b) {
+            return a.first->size() < b.first->size();
+        }
+    };
+    
+    void removeVar(const Var var);
+    void blockVars(vector<pair<XorClause*, uint32_t> >& clauseSet, const Var var);
+    void processClause(XorClause& x, uint32_t num, Var remove_var);
     void fillVarToXor();
-    void clearDouble(vec<Lit>& ps) const;
+    void clearDouble(vector<Lit>& ps) const;
     void clearToRemove();
     void clearLearntsFromToRemove();
-    bool dealWithNewClause(vec<Lit>& ps, const bool inverted, const uint old_group);
+    bool dealWithNewClause(vector<Lit>& ps, const bool inverted, const uint old_group);
     
     typedef map<uint, vector<pair<XorClause*, uint32_t> > > varToXorMap;
     varToXorMap varToXor; 
