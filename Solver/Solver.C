@@ -943,6 +943,7 @@ Clause* Solver::propagate(const bool update)
         while (qheadBin < trail.size()) {
             Lit p   = trail[qheadBin++];
             vec<WatchedBin> & wbin = binwatches[p.toInt()];
+            num_props++;
             for(WatchedBin *k = wbin.getData(), *end = k + wbin.size(); k != end; k++) {
                 lbool val = value(k->impliedLit);
                 if (val.isUndef()) {
@@ -1817,7 +1818,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     while (status == l_Undef && starts < maxRestarts) {
         
         if (schedSimplification && conflicts/100000 >= numSimplified) {
-            status = simplifyProblem(500, 20000000);
+            status = simplifyProblem(500, 10000000);
             if (status != l_Undef)
                 break;
         }
