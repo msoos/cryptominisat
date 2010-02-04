@@ -106,11 +106,11 @@ for i in range (rangeStart, rangeEnd, -2):
     mystr = "%s-%d-" %(problem, i)
     if (mystr in fname):
       execnum += 1
-      (tmpProp, tmpTime, sat1) = testOneFile("../build/cryptominisat_ext.sh -d ../build/ -g 100 -v 0 -n ", fname)
+      (tmpProp, tmpTime, sat1) = testOneFile("../build/cryptominisat_ext.sh -d ../build/ -g 100 -v 0 -z -q -c -n ", fname)
       bigSumProp1 += tmpProp;
       bigSumTime1 += tmpTime;
       
-      (tmpProp, tmpTime, sat2) = testOneFile("../build/cryptominisat_ext.sh -d ../build/ -v 0 -n ", fname)
+      (tmpProp, tmpTime, sat2) = testOneFile("../build/cryptominisat_ext.sh -d ../build/ -v 0 -z -q -c -n ", fname)
       bigSumProp2 += tmpProp;
       bigSumTime2 += tmpTime;
 
