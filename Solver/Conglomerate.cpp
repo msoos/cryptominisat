@@ -127,6 +127,12 @@ const bool Conglomerate::conglomerateXors()
     fillVarToXor();
     if (conglomerateXorsInternal(true) == false)
         return false;
+    if (solver.verbosity >=1) {
+        std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
+        << " found binary XOR-s: " << std::setw(6) << foundBin
+        << std::setw(31) << "   |" << std::endl;
+    }
+    
     if (solver.performReplace && solver.varReplacer->performReplace(true) == l_False)
         return false;
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
@@ -143,10 +149,9 @@ const bool Conglomerate::conglomerateXors()
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     if (solver.verbosity >=1) {
-        std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time 
+        std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
         << " s  (removed " << std::setw(8) << found << " vars)"
-        << " found binary XOR-s: " << std::setw(6) << foundBin
-        << "   |" << std::endl;
+        << std::setw(31) << "   |" << std::endl;
     }
     
     return solver.ok;
