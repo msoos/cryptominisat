@@ -1670,7 +1670,9 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     memcpy(backup_activity.getData(), activity.getData(), activity.size()*sizeof(double));
     
     if (verbosity >= 1)
-        printf("c |                             Simplifying problem for %5d confls                    |\n", numConfls);
+        std::cout << "c | " << std::setw(24) << " " 
+        << "Simplifying problem for " << std::setw(8) << numConfls << " confls" 
+        << std::setw(24) << " |" << std::endl;
     random_var_freq = 1;
     simplifying = true;
     uint64_t origConflicts = conflicts;
