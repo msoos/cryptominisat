@@ -954,10 +954,12 @@ Clause* Solver::propagate(const bool update)
                     uncheckedEnqueue(k->impliedLit, k->clause);
                 } else if (val == l_False) {
                     confl = k->clause;
-                    goto EndPropagate;
+                    //goto EndPropagate;
                 }
             }
         }
+        if (confl != NULL)
+            goto EndPropagate;
         
         //Next, propagate normal clauses
         
