@@ -136,9 +136,9 @@ end:
     if (solver.verbosity >= 1) {
         std::cout << "c |  No. failvars: "<< std::setw(5) << numFailed <<
         "     No. bothprop vars: " << std::setw(6) << goodBothSame <<
-        " Props: " << std::setw(5) << std::setprecision(2) << (int)solver.propagations - (int)origProps  <<
+        " Props: " << std::setw(8) << std::setprecision(2) << (int)solver.propagations - (int)origProps  <<
         " Time: " << std::setw(6) << std::fixed << std::setprecision(2) << cpuTime() - time <<
-        std::setw(10) << " |" << std::endl;
+        std::setw(8) << " |" << std::endl;
     }
     
     if (numFailed || goodBothSame) {
