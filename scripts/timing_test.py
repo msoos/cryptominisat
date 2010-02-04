@@ -12,7 +12,8 @@ rangeEnd = 0
 def testOneFile(exe, fname) :
   sumtime = 0.0
   sumprop = 0
-  s2 =  commands.getoutput("%s \"%s%s\""%(exe, problemDir, fname))
+  myexec = "%s \"%s%s\""%(exe, problemDir, fname)
+  s2 =  commands.getoutput(myexec)
   #print "%s \"%s%s\""%(exe, problemDir, fname)
 
   #print s2
@@ -38,6 +39,7 @@ def testOneFile(exe, fname) :
   
   if (solved == False) :
       print "Cannot find line starting with s!!!"
+      print myexec
       print s2
       exit(-1)
         
