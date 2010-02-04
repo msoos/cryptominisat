@@ -792,7 +792,8 @@ void Gaussian::disable_if_necessary()
 {
     if (//nof_conflicts >= 0
         //&& conflictC >= nof_conflicts/8
-        /*&&*/ called > 100
+        !config.dontDisable
+        && called > 100
         && (double)useful_confl/(double)called < 0.1
         && (double)useful_prop/(double)called < 0.3 )
             disabled = true;

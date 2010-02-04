@@ -457,11 +457,6 @@ void Solver::needLibraryCNFFile(const char* fileName)
     assert(libraryCNFFile != NULL);
 }
 
-void Solver::set_gaussian_decision_until(const uint to)
-{
-    gaussconfig.decision_until = to;
-}
-
 void Solver::clearGaussMatrixes()
 {
     for (uint i = 0; i < gauss_matrixes.size(); i++)

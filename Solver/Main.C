@@ -515,7 +515,7 @@ int main(int argc, char** argv)
                 exit(0);
             }
             cout << "c Gaussian until:" << until << endl;
-            S.set_gaussian_decision_until(until);
+            S.gaussconfig.decision_until = until;
         } else if ((value = hasPrefix(argv[i], "-restarts="))) {
             uint maxrest;
             if (sscanf(value, "%d", &maxrest) < 0 || maxrest == 0) {
@@ -560,6 +560,8 @@ int main(int argc, char** argv)
             S.performReplace = false;
         } else if ((value = hasPrefix(argv[i], "-nofailedvar"))) {
             S.failedVarSearch = false;
+        } else if ((value = hasPrefix(argv[i], "-nodisablegauss"))) {
+            S.gaussconfig.dontDisable = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);

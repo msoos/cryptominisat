@@ -88,7 +88,6 @@ public:
     void    setDecisionVar (Var v, bool b); // Declare if a variable should be eligible for selection in the decision heuristic.
     void    setSeed (const uint32_t seed);  // Sets the seed to be the given number
     void    setMaxRestarts(const uint num); //sets the maximum number of restarts to given value
-    void    set_gaussian_decision_until(const uint to);
     template<class T>
     void    removeWatchedCl(vec<T> &ws, const Clause *c);
     template<class T>
@@ -136,7 +135,7 @@ public:
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
-    
+    GaussianConfig gaussconfig;
 
     enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
@@ -160,7 +159,6 @@ public:
 
 protected:
     vector<Gaussian*> gauss_matrixes;
-    GaussianConfig gaussconfig;
     void print_gauss_sum_stats() const;
     void clearGaussMatrixes();
     friend class Gaussian;
