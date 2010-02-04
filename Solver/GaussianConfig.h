@@ -33,7 +33,6 @@ class GaussianConfig
     GaussianConfig() :
         only_nth_gauss_save(2)
         , decision_until(0)
-        , starts_from(2)
         , dontDisable(false)
     {
     }
@@ -41,7 +40,6 @@ class GaussianConfig
     //tuneable gauss parameters
     uint only_nth_gauss_save;  //save only every n-th gauss matrix
     uint decision_until; //do Gauss until this level
-    uint starts_from; //Gauss elimination starts from this restart number
     bool dontDisable; //If activated, gauss elimination is never disabled
 };
 

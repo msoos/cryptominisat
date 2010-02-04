@@ -168,13 +168,12 @@ private:
 
 inline bool Gaussian::should_init() const
 {
-    return (solver.starts >= config.starts_from && config.decision_until > 0);
+    return (config.decision_until > 0);
 }
 
 inline bool Gaussian::should_check_gauss(const uint decisionlevel, const uint starts) const
 {
     return (!disabled
-            && starts >= config.starts_from
             && decisionlevel < config.decision_until);
 }
 
