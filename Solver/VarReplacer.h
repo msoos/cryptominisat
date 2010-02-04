@@ -78,7 +78,8 @@ class VarReplacer
 
 inline const lbool VarReplacer::performReplace(const bool always)
 {
-    uint32_t limit = std::min((uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE), FIXCLEANREPLACE);
+    //uint32_t limit = std::min((uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE), FIXCLEANREPLACE);
+    uint32_t limit = (uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE);
     if (always || getNewToReplaceVars() > limit)
         return performReplaceInternal();
     
