@@ -31,5 +31,6 @@ add_library(cryptominisatlib
     SmallPtr.cpp
     Clause.cpp
     FailedVarSearcher.cpp
+    PartFinder.cpp
 )
 

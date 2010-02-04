@@ -291,6 +291,7 @@ protected:
     friend class XorFinder;
     friend class Conglomerate;
     friend class MatrixFinder;
+    friend class PartFinder;
     friend class VarReplacer;
     friend class ClauseCleaner;
     friend class RestartTypeChooser;

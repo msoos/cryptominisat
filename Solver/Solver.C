@@ -39,6 +39,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "ClauseCleaner.h"
 #include "RestartTypeChooser.h"
 #include "FailedVarSearcher.h"
+#include "PartFinder.h"
 
 //#define VERBOSE_DEBUG_POLARITIES
 
@@ -1719,6 +1720,8 @@ const lbool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_full
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         setDefaultRestartType();
         lastFullRestart = starts;
+        //PartFinder partFinder(*this);
+        //partFinder.findParts();
         
         fullStarts++;
     }
