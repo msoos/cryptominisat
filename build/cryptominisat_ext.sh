@@ -5,6 +5,7 @@ mypath=.
 verbosity=1
 gaussuntil=0
 extra=""
+extra2=""
 
 function usage {
     echo ""
@@ -13,11 +14,12 @@ function usage {
     echo "  -t   directory of temporaty files (default = /tmp)"
     echo "  -g   gauss until this depth (default = 0)"
     echo "  -n   don't perform var replacement (default = replace)"
+    echo "  -c   don't perform conglomeration (default = conglomerate)"
     echo "  -v   verbosity (default = 1)"
     echo ""
 }
 
-args=`getopt g:v:t:d:n "$@"`
+args=`getopt g:v:t:d:nc "$@"`
 if test $? != 0
 then
     usage
@@ -33,6 +35,7 @@ do
         (-v) verbosity=$2; shift;;
         (-g) gaussuntil=$2; shift;;
         (-n) extra="-novarreplace";;
+        (-c) extra2="-noconglomerate";;
         (--) shift; break;;
         (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
         (*)  break;;
@@ -66,7 +69,7 @@ if [ $X == 0 ]; then
   echo "c SatElite terminated correctly"
   echo "c Starting CryptoMiniSat2"
   echo "c"
-  $RS -gaussuntil=$gaussuntil -verbosity=$verbosity $extra $TMP.cnf $TMP.result "$@"
+  $RS -gaussuntil=$gaussuntil -verbosity=$verbosity $extra $extra2 $TMP.cnf $TMP.result "$@"
   #more $TMP.result
   X=$?
   if [ $X == 20 ]; then
@@ -88,7 +91,7 @@ elif [ $X == 11 -o $X == 3 ]; then
   echo "c SatElite died, CryptoMiniSat2 must take over"
   echo "c Starting CryptoMiniSat2"
   echo "c"
-  $RS $extra -gaussuntil=$gaussuntil -verbosity=$verbosity $INPUT #but we must force CryptoMiniSat to print out result here!!!
+  $RS $extra $extra2 -gaussuntil=$gaussuntil -verbosity=$verbosity $INPUT #but we must force CryptoMiniSat to print out result here!!!
   X=$?
 elif [ $X == 12 ]; then
   #SatElite prints out usage message
