@@ -196,7 +196,7 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         }
         
         if (noblock) {
-            for (uint i = 1; i < newSet.size(); i++) if (newSet[i].size() == 2) {
+            for (uint i = 1; i < newSet.size(); i++) if (newSet[i].size() <= 2) {
                 XorClause& thisXorClause = *clauseSet[i].first;
                 foundBin++;
                 
