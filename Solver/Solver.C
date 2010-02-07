@@ -937,7 +937,6 @@ Clause* Solver::propagate(const bool update)
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
         Watched        *i, *j, *end;
-        num_props++;
         
         //First propagate binary clauses
         while (qheadBin < trail.size()) {
