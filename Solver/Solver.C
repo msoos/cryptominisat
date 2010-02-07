@@ -73,7 +73,7 @@ Solver::Solver() :
         , starts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
         , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
-        , improvedClauseNo(0), improvedClauseSize(0), numSimplified(0)
+        , improvedClauseNo(0), improvedClauseSize(0)
         
 
         , ok               (true)
@@ -1702,7 +1702,6 @@ end:
     order_heap.filter(VarFilter(*this));
     polarity = backup_polarities;
     restartType = backup_restartType;
-    numSimplified++;
     
     return status;
 }
@@ -1796,6 +1795,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     //nof_conflicts_fullrestart = -1;
     uint    lastFullRestart  = starts;
     lbool   status        = l_Undef;
+    uint64_t nextSimplify = 30000;
     
     if (nClauses() * learntsize_factor < nbclausesbeforereduce) {
         if (nClauses() * learntsize_factor < nbclausesbeforereduce/2)
@@ -1817,8 +1817,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
         
-        if (schedSimplification && conflicts/100000 >= numSimplified) {
-            status = simplifyProblem(500, 10000000);
+        if (schedSimplification && conflicts >= nextSimplify) {
+            status = simplifyProblem(500, 7000000);
+            nextSimplify = conflicts + (uint64_t) ((double)nextSimplify*1.5);
             if (status != l_Undef)
                 break;
         }
