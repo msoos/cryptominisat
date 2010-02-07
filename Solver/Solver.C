@@ -497,11 +497,17 @@ void tallyVotes(const vec<Clause*>& cs, vector<double>& votes, vector<bool>& pos
     }
 }
 
-void tallyVotes(const vec<XorClause*>& cs, vector<bool>& positiveLiteral, vector<bool>& negativeLiteral)
+void tallyVotes(const vec<XorClause*>& cs, vector<double>& votes, vector<bool>& positiveLiteral, vector<bool>& negativeLiteral)
 {
     for (const XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
         const XorClause& c = **it;
+        double divider;
+        if (c.size() > 63)
+            divider = 0.0;
+        else
+            divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
         for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++) {
+            votes[it2->var()] += divider;
             negativeLiteral[it2->var()] = true;
             positiveLiteral[it2->var()] = true;
         }
@@ -511,7 +517,7 @@ void tallyVotes(const vec<XorClause*>& cs, vector<bool>& positiveLiteral, vector
 const lbool Solver::calculateDefaultPolarities()
 {
     #ifdef VERBOSE_DEBUG_POLARITIES
-    std::cout << "Default polarities: " << endl;
+    std::cout << "Default polarities: " << std::endl;
     #endif
     
     assert(decisionLevel() == 0);
@@ -531,7 +537,7 @@ const lbool Solver::calculateDefaultPolarities()
         tallyVotes(binaryClauses, votes, positiveLiteral, negativeLiteral);
         tallyVotes(learnts, votes, positiveLiteral, negativeLiteral);
         tallyVotes(varReplacer->getClauses(), votes, positiveLiteral, negativeLiteral);
-        tallyVotes(xorclauses, positiveLiteral, negativeLiteral);
+        tallyVotes(xorclauses, votes, positiveLiteral, negativeLiteral);
         
         Var i = 0;
         for (vector<double>::const_iterator it = votes.begin(), end = votes.end(); it != end; it++, i++) {
