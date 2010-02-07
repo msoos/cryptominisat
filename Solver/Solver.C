@@ -541,7 +541,7 @@ const lbool Solver::calculateDefaultPolarities()
         
         Var i = 0;
         for (vector<double>::const_iterator it = votes.begin(), end = votes.end(); it != end; it++, i++) {
-            defaultPolarities[i] = (*it > 0.0);
+            defaultPolarities[i] = (*it >= 0.0);
             #ifdef VERBOSE_DEBUG_POLARITIES
             std::cout << !defaultPolarities[i] << ", ";
             #endif //VERBOSE_DEBUG_POLARITIES
