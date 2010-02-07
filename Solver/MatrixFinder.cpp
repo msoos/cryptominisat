@@ -183,10 +183,10 @@ const uint MatrixFinder::setMatrixes()
             realMatrixNum++;
             
         } else {
-            if (solver.verbosity >=1  && numXorInMatrix[a].second >= 20)
+            if (solver.verbosity >=1  /*&& numXorInMatrix[a].second >= 20*/)
                 cout << "c |  Unused Matrix ";
         }
-        if (solver.verbosity >=1 && numXorInMatrix[a].second >= 20) {
+        if (solver.verbosity >=1 /*&& numXorInMatrix[a].second >= 20*/) {
             cout << std::setw(5) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
             cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
             cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
