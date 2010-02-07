@@ -37,6 +37,7 @@ using std::endl;
 Conglomerate::Conglomerate(Solver& _solver) :
     found(0)
     , foundBin(0)
+    , foundUnit(0)
     , solver(_solver)
 {}
 
@@ -121,22 +122,26 @@ const bool Conglomerate::conglomerateXors()
     
     double time = cpuTime();
     
+    foundBin = foundUnit = 10;
+    while (foundBin != 0 || foundUnit != 0) {
+        foundBin = foundUnit = 0;
+        solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
+        blocked.clear();
+        blocked.resize(solver.nVars());
+        fillVarToXor();
+        if (conglomerateXorsInternal(true) == false)
+            return false;
+        if (solver.verbosity >=1) {
+            std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
+            << " found binary XOR-s: " << std::setw(6) << foundBin
+            << " found unitary XOR-s: " << std::setw(6) << foundUnit
+            << std::setw(3) << " |" << std::endl;
+        }
+        if (solver.performReplace && solver.varReplacer->performReplace(true) == l_False)
+            return false;
+    };
+    
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
-    
-    blocked.resize(solver.nVars());
-    fillVarToXor();
-    if (conglomerateXorsInternal(true) == false)
-        return false;
-    if (solver.verbosity >=1) {
-        std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
-        << " found binary XOR-s: " << std::setw(6) << foundBin
-        << std::setw(31) << "   |" << std::endl;
-    }
-    
-    if (solver.performReplace && solver.varReplacer->performReplace(true) == l_False)
-        return false;
-    solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
-    
     toRemove.clear();
     toRemove.resize(solver.xorclauses.size(), false);
     blocked.clear();
@@ -199,7 +204,10 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         if (noblock) {
             for (uint i = 1; i < newSet.size(); i++) if (newSet[i].size() <= 2) {
                 XorClause& thisXorClause = *clauseSet[i].first;
-                foundBin++;
+                if (newSet[i].size() == 2)
+                    foundBin++;
+                else if (newSet.size() == 1)
+                    foundUnit++;
                 
                 if (!dealWithNewClause(newSet[i], first_inverted ^ thisXorClause.xor_clause_inverted(), thisXorClause.getGroup())) {
                     solver.ok = false;
@@ -212,7 +220,7 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         for (size_t i = 1; i < newSet.size(); i++)
             diff += (int)newSet[i].size()-(int)clauseSet[i].first->size();
         
-        if (noblock || newSet.size() > 2 && diff > newSet.size()-1) {
+        if (noblock || newSet.size() > 2 && diff > 0) {
             blocked[var] = true;
             varToXor.erase(it);
             continue;
@@ -290,6 +298,10 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
                 cout << "Conflict. Aborting.";
                 #endif
                 return false;
+            } else {
+                #ifdef VERBOSE_DEBUG
+                cout << "Variable already set to correct value";
+                #endif
             }
             break;
         }

@@ -80,6 +80,7 @@ private:
     vec<XorClause*> calcAtFinish;
     uint found;
     uint foundBin;
+    uint foundUnit;
     
     Solver& solver;
 };
