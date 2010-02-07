@@ -205,10 +205,8 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
         return true;
     }
     default:
-        if (origVar1 != c[0].var() || origVar2 != c[1].var()) {
-            solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
-            solver.attachClause(c);
-        }
+        solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
+        solver.attachClause(c);
         return false;
     }
     
