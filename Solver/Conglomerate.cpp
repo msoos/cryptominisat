@@ -160,6 +160,7 @@ const bool Conglomerate::conglomerateXors()
 
 const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
 {
+    vector<vector<Lit> > newSet;
     while(varToXor.begin() != varToXor.end()) {
         varToXorMap::iterator it = varToXor.begin();
         vector<pair<XorClause*, uint32_t> >& clauseSet = it->second;
@@ -179,7 +180,7 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         
         std::sort(clauseSet.begin(), clauseSet.end(), ClauseSetSorter());
         
-        vector<vector<Lit> > newSet;
+        newSet.clear();
         newSet.resize(clauseSet.size());
         
         XorClause& firstXorClause = *(clauseSet[0].first);
