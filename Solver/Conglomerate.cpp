@@ -143,7 +143,8 @@ const bool Conglomerate::conglomerateXors()
     blocked.resize(solver.nVars(), false);
     blockVars();
     fillVarToXor();
-    conglomerateXorsInternal(false);
+    if (conglomerateXorsInternal(true) == false)
+        return false;
     clearToRemove();
     
     solver.order_heap.filter(Solver::VarFilter(solver));
