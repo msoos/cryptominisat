@@ -181,7 +181,11 @@ void Solver::subsume1(Clause ps, int& counter)
 
 void Solver::simplifyBySubsumption(bool with_var_elim)
 {
-    propagateToplevel(); if (!ok){ Report("(contradiction during subsumption)\n"); return; }
+    propagateToplevel();
+    if (!ok) {
+        Report("(contradiction during subsumption)\n");
+        return;
+    }
 
     int     orig_n_clauses  = nClauses();
     int     orig_n_literals = nLiterals();
