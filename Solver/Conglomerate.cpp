@@ -92,6 +92,7 @@ void Conglomerate::removeVar(const Var var)
     solver.activity[var] = 0.0;
     solver.order_heap.update(var);
     removedVars[var] = true;
+    found++;
 }
 
 void Conglomerate::processClause(XorClause& x, uint32_t num, Var remove_var)
@@ -216,7 +217,7 @@ const bool Conglomerate::heuleProcess()
         std::sort(clauseSet.begin(), clauseSet.end(), ClauseSetSorter());
         fillNewSet(newSet, clauseSet);
         
-        for (uint i = 1; i < newSet.size(); i++) if (newSet[i].size() < clauseSet[i].first->size()) {
+        for (uint i = 1; i < newSet.size(); i++) if (newSet[i].size() <= 2) {
             found++;
             XorClause& thisXorClause = *clauseSet[i].first;
             const bool inverted = !clauseSet[0].first->xor_clause_inverted() ^ thisXorClause.xor_clause_inverted();
@@ -229,10 +230,10 @@ const bool Conglomerate::heuleProcess()
             thisXorClause.plainPrint();
             #endif
             
-            assert(!toRemove[clauseSet[i].second]);
-            toRemove[clauseSet[i].second] = true;
+            //assert(!toRemove[clauseSet[i].second]);
+            //toRemove[clauseSet[i].second] = true;
             processClause(thisXorClause, clauseSet[i].second, var);
-            solver.removeClause(thisXorClause);
+            //solver.removeClause(thisXorClause);
             
             if (!dealWithNewClause(newSet[i], inverted, old_group)) {
                 solver.ok = false;
@@ -274,7 +275,7 @@ const bool Conglomerate::conglomerateXors()
         for (size_t i = 1; i < newSet.size(); i++)
             diff += (int)newSet[i].size()-(int)clauseSet[i].first->size();
         
-        if (newSet.size() > 2 && diff > 0) {
+        if (newSet.size() > 1) {
             blocked[var] = true;
             varToXor.erase(it);
             continue;
@@ -296,7 +297,6 @@ const bool Conglomerate::conglomerateXors()
         processClause(firstXorClause, clauseSet[0].second, var);
         solver.detachClause(firstXorClause);
         calcAtFinish.push(&firstXorClause);
-        found++;
         
         for (uint i = 1; i < clauseSet.size(); i++) {
             XorClause& thisXorClause = *clauseSet[i].first;
