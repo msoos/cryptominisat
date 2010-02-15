@@ -1697,10 +1697,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     if (failedVarSearch)
         status = failedVarSearcher->search(numProps);
     
-        if (heuleProcess && xorclauses.size() > 1 && conglomerate->heuleProcessFull() == false) {
-            status = l_False;
-            goto end;
-        }
+    if (heuleProcess && xorclauses.size() > 1 && conglomerate->heuleProcessFull() == false) {
+        status = l_False;
+        goto end;
+    }
     
 end:
     random_var_freq = backup_random_var_freq;
