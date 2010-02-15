@@ -94,10 +94,6 @@ inline const uint Conglomerate::getFound()
 {
     return found;
 }
-inline const uint Conglomerate::getFoundBin()
-{
-    return foundBin;
-}
 
 inline const vec<XorClause*>& Conglomerate::getCalcAtFinish() const
 {
