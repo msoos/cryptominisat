@@ -130,6 +130,7 @@ public:
     bool      regularlyFindBinaryXors; // Regularly find binary xor-clauses and convert them
     bool      performReplace;       // Should var-replacing be performed?
     bool      conglomerateXors;   // Conglomerate XORs
+    bool      heuleProcess;       // Process XORs according to Heule
     bool      schedSimplification;// Schedule simplification
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     friend class FindUndef;

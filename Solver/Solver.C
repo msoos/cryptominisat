@@ -63,6 +63,7 @@ Solver::Solver() :
         , regularlyFindBinaryXors(true)
         , performReplace   (true)
         , conglomerateXors (true)
+        , heuleProcess     (true)
         , schedSimplification(true)
         , failedVarSearch  (true)
         , greedyUnbound    (false)
@@ -1696,6 +1697,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     if (failedVarSearch)
         status = failedVarSearcher->search(numProps);
     
+        if (heuleProcess && xorclauses.size() > 1 && conglomerate->heuleProcessFull() == false) {
+            status = l_False;
+            goto end;
+        }
+    
 end:
     random_var_freq = backup_random_var_freq;
     if (verbosity >= 1)
@@ -1753,16 +1759,18 @@ inline void Solver::performStepsBeforeSolve()
         if (!ok) return;
     }
         
-    if (conglomerateXors && xorclauses.size() > 1) {
+    if (xorclauses.size() > 1) {
         uint orig_total = 0;
         uint orig_num_cls = xorclauses.size();
         for (uint i = 0; i < xorclauses.size(); i++) {
             orig_total += xorclauses[i]->size();
         }
         
-        if (conglomerate->conglomerateXors() == false)
-            return;        
-        if (!ok) return;
+        if (heuleProcess && conglomerate->heuleProcessFull() == false)
+            return;
+        
+        if (conglomerateXors && conglomerate->conglomerateXorsFull() == false)
+            return;
         
         uint new_total = 0;
         uint new_num_cls = xorclauses.size();

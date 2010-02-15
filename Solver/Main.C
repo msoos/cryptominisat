@@ -406,7 +406,7 @@ void printUsage(char** argv)
     printf("  -nonormxorfind  = Don't find and collect >2-long xor-clauses from regular clauses\n");
     printf("  -nobinxorfind   = Don't find and collect 2-long xor-clauses from regular clauses\n");
     printf("  -noregularbinxorfind  = Don't find and collect 2-long xor-clauses from regular clauses\n");
-    printf("  -noconglomerate = Don't conglomerate xor clauses\n");
+    printf("  -noconglomerate = Don't conglomerate 2 xor clauses when one var is dependent\n");
     printf("  -nosimplify     = Don't simplify the problem\n");
     printf("  -greedyUnbound  = Greedily unbound variables that are not needed for SAT\n");
     printf("  -debugLib       = Solve at specific 'c Solver::solve()' points in the CNF file\n");
@@ -424,6 +424,8 @@ void printUsage(char** argv)
     printf("                    resulting file smaller. Default is 2^32-1 (i.e. all lenghts)\n");
     printf("  -nofailedvar    = Don't search for failed vars, and don't search for vars\n");
     printf("                    doubly propagated to the same value\n");
+    printf("  -noheuleprocess = Don't try to minimise XORs by XOR-ing them together.\n");
+    printf("                    Algo. as per global/local substitution in Heule's thesis\n");
     printf("\n");
 }
 
@@ -562,6 +564,8 @@ int main(int argc, char** argv)
             S.failedVarSearch = false;
         } else if ((value = hasPrefix(argv[i], "-nodisablegauss"))) {
             S.gaussconfig.dontDisable = true;
+        } else if ((value = hasPrefix(argv[i], "-noheuleprocess"))) {
+            S.heuleProcess = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);
