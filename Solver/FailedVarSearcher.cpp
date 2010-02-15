@@ -145,6 +145,8 @@ end:
         double time = cpuTime();
         solver.order_heap.filter(Solver::VarFilter(solver));
         solver.clauseCleaner->removeAndCleanAll();
+        if (solver.ok == false)
+            return l_False;
         if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
             std::cout << "c |  Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
             <<  std::setw(33) << " | " << std::endl;

@@ -371,7 +371,8 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
             vec<Lit> tmpPS(2);
             tmpPS[0] = ps[0];
             tmpPS[1] = ps[1];
-            solver.varReplacer->replace(tmpPS, inverted, old_group);
+            if (solver.varReplacer->replace(tmpPS, inverted, old_group) == false)
+                return false;
             blocked[ps[0].var()] = true;
             blocked[ps[1].var()] = true;
             break;

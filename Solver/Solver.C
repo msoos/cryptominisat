@@ -239,8 +239,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xor_clause_inverted ? "-" : "") << ps[1].var()+1 << endl;
         #endif
         
-        varReplacer->replace(ps, xor_clause_inverted, group);
-        break;
+        return varReplacer->replace(ps, xor_clause_inverted, group);
     }
     default: {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
@@ -489,11 +488,13 @@ void tallyVotes(const vec<Clause*>& cs, vector<double>& votes, vector<bool>& pos
         else
             divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
         for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++) {
-            votes[it2->var()] += divider*(double)((((int)it2->sign())<<1)-1);
-            if (it2->sign())
+            if (it2->sign()) {
                 negativeLiteral[it2->var()] = true;
-            else
+                votes[it2->var()] += divider;
+            } else {
                 positiveLiteral[it2->var()] = true;
+                votes[it2->var()] -= divider;
+            }
         }
     }
 }
@@ -1330,6 +1331,9 @@ lbool Solver::simplify()
         clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
         clauseCleaner->cleanClauses(learnts, ClauseCleaner::learnts);
         clauseCleaner->removeSatisfied(binaryClauses, ClauseCleaner::binaryClauses);
+        if (ok == false)
+            return l_False;
+    
         for (Clause **it = &binaryClauses[0], **end = it + binaryClauses.size(); it != end; it ++) {
             if (it+1 != end)
                 __builtin_prefetch(*(it+1), 0);
@@ -1337,11 +1341,11 @@ lbool Solver::simplify()
                 std::swap((**it)[0], (**it)[1]);
         }
         XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
-        xorFinder.doNoPart(2, 2);
+        if (xorFinder.doNoPart(2, 2) == false)
+            return l_False;
         
         lastNbBin = nbBin;
         becameBinary = 0;
-        if (!ok) return l_False;
         
         if (failedVarSearch && failedVarSearcher->search(500000) == l_False)
             return l_False;
@@ -1349,7 +1353,9 @@ lbool Solver::simplify()
 
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
-    if (performReplace && varReplacer->performReplace() == l_False)
+    if (ok == false)
+        return l_False;
+    if (performReplace && varReplacer->performReplace() == false)
         return l_False;
 
     // Remove fixed variables from the variable heap:
@@ -1691,11 +1697,14 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     }
     printRestartStat();
     
-    if (status != l_Undef)
+    if (status != l_Undef) {
         goto end;
+    }
     
-    if (failedVarSearch)
+    if (failedVarSearch) {
         status = failedVarSearcher->search(numProps);
+        goto end;
+    }
     
     if (heuleProcess && xorclauses.size() > 1 && conglomerate->heuleProcessFull() == false) {
         status = l_False;
@@ -1741,22 +1750,22 @@ const lbool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_full
 
 inline void Solver::performStepsBeforeSolve()
 {
-    if (performReplace && varReplacer->performReplace() == l_False)
+    if (performReplace && varReplacer->performReplace() == false)
         return;
     
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
-        xorFinder.doNoPart(2, 2);
-        if (!ok) return;
+        if (xorFinder.doNoPart(2, 2) == false)
+            return;
         
-        if (performReplace && varReplacer->performReplace(true) == l_False)
+        if (performReplace && varReplacer->performReplace(true) == false)
             return;
     }
         
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-        xorFinder.doNoPart(3, 10);
-        if (!ok) return;
+        if (xorFinder.doNoPart(3, 10) == false)
+            return;
     }
         
     if (xorclauses.size() > 1) {
@@ -1781,7 +1790,7 @@ inline void Solver::performStepsBeforeSolve()
             printf("c |  Sum xclauses diff(orig-new): %8d             Sum xlits diff: %8d           |\n", orig_total-new_total, orig_num_cls-new_num_cls);
         }
         
-        if (performReplace && varReplacer->performReplace() == l_False)
+        if (performReplace && varReplacer->performReplace() == false)
             return;
     }
 }
@@ -1831,7 +1840,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         if (schedSimplification && conflicts >= nextSimplify) {
             status = simplifyProblem(500, 7000000);
-            nextSimplify = conflicts + (uint64_t) ((double)nextSimplify*1.5);
+            nextSimplify *= 1.5;
             if (status != l_Undef)
                 break;
         }

@@ -56,6 +56,7 @@ const uint PartFinder::findParts()
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::xorclauses);
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::xorclauses);
+    //TODO check for solver.ok == false
     
     addToPart(&(solver.clauses));
     addToPart(&(solver.binaryClauses));

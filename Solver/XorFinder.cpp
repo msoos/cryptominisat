@@ -46,8 +46,10 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
 {
     uint sumLengths = 0;
     double time = cpuTime();
-    
+    foundXors = 0;
     S->clauseCleaner->cleanClauses(cls, type);
+    if (S->ok == false)
+        return false;
     
     toRemove.clear();
     toRemove.resize(cls.size(), false);
@@ -120,7 +122,8 @@ const bool XorFinder::findXors(uint& sumLengths)
         
         switch(lits.size()) {
         case 2: {
-            S->varReplacer->replace(lits, impair, old_group);
+            if (S->varReplacer->replace(lits, impair, old_group) == false)
+                return false;
             
             #ifdef VERBOSE_DEBUG
             XorClause* x = XorClause_new(lits, impair, old_group);

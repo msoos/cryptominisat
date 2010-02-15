@@ -49,7 +49,7 @@ VarReplacer::~VarReplacer()
         free(clauses[i]);
 }
 
-const lbool VarReplacer::performReplaceInternal()
+const bool VarReplacer::performReplaceInternal()
 {
     #ifdef VERBOSE_DEBUG
     cout << "Replacer started." << endl;
@@ -60,6 +60,8 @@ const lbool VarReplacer::performReplaceInternal()
     solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
+    if (solver.ok == false)
+        return false;
     
     #ifdef VERBOSE_DEBUG
     {
@@ -118,15 +120,12 @@ const lbool VarReplacer::performReplaceInternal()
     lastReplacedLits = replacedLits;
     
     if (!solver.ok)
-        return l_False;
+        return false;
     
     solver.ok = (solver.propagate() == NULL);
-    if (!solver.ok)
-        return l_False;
-    
     solver.order_heap.filter(Solver::VarFilter(solver));
     
-    return l_Undef;
+    return solver.ok;
 }
 
 void VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
@@ -318,7 +317,7 @@ void VarReplacer::extendModel() const
     }
 }
 
-void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group)
+const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group)
 {
     #ifdef VERBOSE_DEBUG
     cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xor_clause_inverted " << xor_clause_inverted << endl;
@@ -339,7 +338,7 @@ void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const ui
     assert(var != lit.var());
     
     //Detect circle
-    if (alreadyIn(var, lit)) return;
+    if (alreadyIn(var, lit)) return solver.ok;
     replacedVars++;
     
     Lit lit1 = table[var];
@@ -364,9 +363,9 @@ void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const ui
                 #ifdef VERBOSE_DEBUG
                 cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
                 #endif
-                solver.ok = false;
+                return (solver.ok = false);
             }
-            return;
+            return true;
         }
         
         if (lit2.var() != var) {
@@ -379,7 +378,7 @@ void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const ui
             reverseTable[lit.var()].push_back(lit2.var());
             
             table[lit.var()] = Lit(lit.var(), false);
-            return;
+            return true;
         }
     }
     
@@ -393,6 +392,8 @@ void VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const ui
     
     table[var] = lit;
     reverseTable[lit.var()].push_back(var);
+    
+    return true;
 }
 
 void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal)

@@ -81,6 +81,8 @@ llbool Gaussian::full_init()
     while (do_again_gauss) {
         do_again_gauss = false;
         solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
+        if (solver.ok == false)
+            return l_False;
         init();
         Clause* confl;
         gaussian_ret g = gaussian(confl);

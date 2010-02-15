@@ -39,8 +39,8 @@ class VarReplacer
     public:
         VarReplacer(Solver& solver);
         ~VarReplacer();
-        const lbool performReplace(const bool always = false);
-        void replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group);
+        const bool performReplace(const bool always = false);
+        const bool replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group);
         void extendModel() const;
         const uint getNumReplacedLits() const;
         const uint getNumReplacedVars() const;
@@ -53,7 +53,7 @@ class VarReplacer
         void newVar();
     
     private:
-        const lbool performReplaceInternal();
+        const bool performReplaceInternal();
         
         void replace_set(vec<Clause*>& set);
         void replace_set(vec<XorClause*>& cs, const bool isAttached);
@@ -76,14 +76,14 @@ class VarReplacer
         Solver& solver;
 };
 
-inline const lbool VarReplacer::performReplace(const bool always)
+inline const bool VarReplacer::performReplace(const bool always)
 {
     //uint32_t limit = std::min((uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE), FIXCLEANREPLACE);
     uint32_t limit = (uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE);
     if ((always && getNewToReplaceVars() > 0) || getNewToReplaceVars() > limit)
         return performReplaceInternal();
     
-    return l_Undef;
+    return true;
 }
 
 inline const uint VarReplacer::getNumReplacedLits() const

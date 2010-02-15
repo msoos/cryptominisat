@@ -77,6 +77,7 @@ const uint MatrixFinder::findMatrixes()
         return 0;
     
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
+    //TODO check for solver.ok == false
     
     for (XorClause** c = solver.xorclauses.getData(), **end = c + solver.xorclauses.size(); c != end; c++) {
         set<uint> tomerge;
