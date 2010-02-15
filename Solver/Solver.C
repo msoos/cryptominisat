@@ -1336,7 +1336,7 @@ lbool Solver::simplify()
                 std::swap((**it)[0], (**it)[1]);
         }
         XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
-        uint found = xorFinder.doNoPart(2, 2);
+        xorFinder.doNoPart(2, 2);
         
         lastNbBin = nbBin;
         becameBinary = 0;
