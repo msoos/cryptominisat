@@ -195,15 +195,23 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
         if (!opt_0sub && !opt_1sub){
             cl_added  .clear();
             cl_touched.clear();
-            goto NoSubsumption; }
+            goto NoSubsumption;
+        }
 
-        if (cl_added.size() > nClauses() / 2){
+        if (cl_added.size() > nClauses() / 2) {
             // Optimized variant when virtually whole database is involved:
             cl_added  .clear();
             cl_touched.clear();
 
-            for (int i = 0; i < constrs.size(); i++) if (!constrs[i].null()) subsume1(constrs[i], literals_removed);
-            propagateToplevel(); if (!ok){ Report("(contradiction during subsumption)\n"); return; }
+            for (int i = 0; i < constrs.size(); i++)
+                if (!constrs[i].null())
+                    subsume1(constrs[i], literals_removed);
+            
+            propagateToplevel();
+            if (!ok) {
+                Report("(contradiction during subsumption)\n");
+                return;
+            }
 
             CSet s1;
             registerIteration(s1);
@@ -217,11 +225,17 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
                 s1.clear();
 
                 propagateToplevel();
-                if (!ok){ Report("(contradiction during subsumption)\n"); unregisterIteration(s1); return; }
+                if (!ok) {
+                    Report("(contradiction during subsumption)\n");
+                    unregisterIteration(s1);
+                    return;
+                }
             }
             unregisterIteration(s1);
 
-            for (int i = 0; i < constrs.size(); i++) if (!constrs[i].null()) subsume0(constrs[i], clauses_subsumed);
+            for (int i = 0; i < constrs.size(); i++)
+                if (!constrs[i].null())
+                    subsume0(constrs[i], clauses_subsumed);
 
         }else{
             //  Set used in 1-subs:
@@ -232,7 +246,7 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
             //      (1) clauses containing a (non-negated) literal of an added clause, including the added clause itself.
             //      (2) all strenghtened clauses -- REMOVED!! We turned on eager backward subsumption which supersedes this.
 
-//Report("  PREPARING\n");
+            Report2("  PREPARING\n");
             CSet        s0, s1;     // 's0' is used for 0-subsumption, 's1' for 1-subsumption
             vec<char>   ol_seen(nVars()*2, 0);
             for (int i = 0; i < cl_added.size(); i++){
@@ -243,12 +257,12 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
                     ol_seen[index(c[j])] = 1;
 
                     vec<Clause>& n_occs = occur[index(~c[j])];
-                    for (int k = 0; k < n_occs.size(); k++)     // <<= B�ttra p�. Beh�ver bara kolla 'n_occs[k]' mot 'c'
+                    for (int k = 0; k < n_occs.size(); k++)
                         if (n_occs[k] != c && n_occs[k].size() <= c.size() && selfSubset(n_occs[k].abst(), c.abst()) && selfSubset(n_occs[k], c, seen_tmp))
                             s1.add(n_occs[k]);
 
                     vec<Clause>& p_occs = occur[index(c[j])];
-                    for (int k = 0; k < p_occs.size(); k++)     // <<= B�ttra p�. Beh�ver bara kolla 'p_occs[k]' mot 'c'
+                    for (int k = 0; k < p_occs.size(); k++)
                         if (subset(p_occs[k].abst(), c.abst()))
                             s0.add(p_occs[k]);
                 }
@@ -258,7 +272,7 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
             registerIteration(s0);
             registerIteration(s1);
 
-//Report("  FIXED-POINT\n");
+            Report2("  FIXED-POINT\n");
             // Fixed-point for 1-subsumption:
             while (s1.size() > 0 || cl_touched.size() > 0){
                 for (int i = 0; i < cl_touched.size(); i++)
@@ -268,8 +282,10 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
 
                 cl_touched.clear();
                 assert(propQ.size() == 0);
-//Report("s1.size()=%d  cl_touched.size()=%d\n", s1.size(), cl_touched.size());
-                for (int i = 0; i < s1.size(); i++) if (!s1[i].null()){ subsume1(s1[i], literals_removed); }
+                Report2("s1.size()=%d  cl_touched.size()=%d\n", s1.size(), cl_touched.size());
+                for (int i = 0; i < s1.size(); i++)
+                    if (!s1[i].null())
+                        subsume1(s1[i], literals_removed);
                 s1.clear();
 
                 propagateToplevel();
@@ -283,7 +299,9 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
             unregisterIteration(s1);
 
             // Iteration pass for 0-subsumption:
-            for (int i = 0; i < s0.size(); i++) if (!s0[i].null()) subsume0(s0[i], clauses_subsumed);
+            for (int i = 0; i < s0.size(); i++)
+                if (!s0[i].null())
+                    subsume0(s0[i], clauses_subsumed);
             s0.clear();
             unregisterIteration(s0);
         }
@@ -294,10 +312,11 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
 
         // VARIABLE ELIMINATION:
         //
-      NoSubsumption:
+NoSubsumption:
         if (!with_var_elim || !opt_var_elim) break;
 
-//Report("VARIABLE ELIMINIATION\n");
+
+        Report2("VARIABLE ELIMINIATION\n");
         vec<Var>    init_order;
         orderVarsForElim(init_order);   // (will untouch all variables)
 
@@ -335,7 +354,11 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
               #endif
                 if (maybeEliminate(order[i])){
                     vars_elimed++;
-                    propagateToplevel(); if (!ok){ Report("(contradiction during subsumption)\n"); return; }
+                    propagateToplevel();
+                    if (!ok) {
+                        Report("(contradiction during subsumption)\n");
+                        return;
+                    }
                 }
             }
             assert(propQ.size() == 0);
@@ -345,15 +368,18 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
 
             Report2("  #clauses-removed: %-8d #var-elim: %d\n", clauses_before - nClauses(), vars_elimed);
         }
-        //assert(touched_list.size() == 0);     // <<= No longer true, due to asymmetric branching. Ignore it for the moment...
 //  }while (cl_added.size() > 0);
     }while (cl_added.size() > 100);
 
-    if (orig_n_clauses != nClauses() || orig_n_literals != nLiterals())
-        //Report("#clauses: %d -> %d    #literals: %d -> %d    (#learnts: %d)\n", orig_n_clauses, nClauses(), orig_n_literals, nLiterals(), nLearnts());
-        //Report("#clauses:%8d (%6d removed)    #literals:%8d (%6d removed)    (#learnts:%8d)\n", nClauses(), orig_n_clauses-nClauses(), nLiterals(), orig_n_literals-nLiterals(), nLearnts());
-        Report("| %9d | %7d %8d | %7s %7d %8s %7s | %6s   | %d/%d\n", (int)stats.conflicts, nClauses(), nLiterals(), "--", nLearnts(), "--", "--", "--", nClauses() - orig_n_clauses, nLiterals() - orig_n_literals);
-
+    if (orig_n_clauses != nClauses() || orig_n_literals != nLiterals()) {
+        Report("| %9d | %7d %8d | %7s %7d %8s %7s | %6s   | %d/%d\n",
+               (int)stats.conflicts,
+               nClauses(),
+               nLiterals(),
+               "--", nLearnts(), "--", "--", "--",
+               nClauses() - orig_n_clauses,
+               nLiterals() - orig_n_literals);
+    }
 
     if (opt_pre_sat){
         // Compact variables:
@@ -429,7 +455,7 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
         exit(0);
     }
 
-//Report("DONE!\n");
+    Report2("DONE!\n");
 }
 
 
