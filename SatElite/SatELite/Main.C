@@ -25,26 +25,6 @@ static cchar* doc =
 ;
 
 
-#if 0
-bool opt_confl_1sub   = false;
-bool opt_confl_ksub   = false;
-bool opt_var_elim     = false;
-bool opt_0sub         = false;
-bool opt_1sub         = false;
-bool opt_2sub         = false;
-bool opt_repeated_sub = false;
-bool opt_def_elim     = false;
-bool opt_unit_def     = false;
-bool opt_hyper1_res   = false;
-bool opt_pure_literal = false;
-bool opt_asym_branch  = false;
-bool opt_keep_all     = false;
-bool opt_no_random    = false;
-bool opt_pre_sat      = false;
-bool opt_ext_sat      = false;
-
-bool opt_niver        = false;
-#else
 bool opt_confl_1sub   = true;
 bool opt_confl_ksub   = false;
 bool opt_var_elim     = true;
@@ -63,7 +43,6 @@ bool opt_pre_sat      = false;
 bool opt_ext_sat      = false;
 
 bool opt_niver        = false;
-#endif
 
 cchar* input_file    = NULL;
 cchar* output_file   = NULL;    // (doubles as result input from MiniSat)
