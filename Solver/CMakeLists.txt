@@ -32,5 +32,6 @@ add_library(cryptominisatlib
     Clause.cpp
     FailedVarSearcher.cpp
     PartFinder.cpp
+    Simplifier.cpp
 )
 

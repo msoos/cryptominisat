@@ -51,6 +51,7 @@ class XorFinder;
 class FindUndef;
 class ClauseCleaner;
 class FailedVarSearcher;
+class Simplifier;
 
 #ifdef VERBOSE_DEBUG
 using std::cout;
@@ -296,6 +297,7 @@ protected:
     friend class ClauseCleaner;
     friend class RestartTypeChooser;
     friend class FailedVarSearcher;
+    friend class Simplifier;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;

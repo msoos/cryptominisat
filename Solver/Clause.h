@@ -42,6 +42,14 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 using std::vector;
 
 
+template <class T>
+uint32_t calcAbstraction(T& ps) {
+    uint32_t abstraction = 0;
+    for (uint32_t i = 0; i != ps.size(); i++)
+        abstraction |= 1 << (ps[i].var() & 31);
+    return abstraction;
+}
+
 //=================================================================================================
 // Clause -- a simple class for representing a clause:
 
@@ -80,7 +88,7 @@ public:
         setGroup(_group);
         for (uint i = 0; i < ps.size(); i++) data[i] = ps[i];
         if (learnt) extra.act = 0;
-        else calcAbstraction();
+        //else calcAbstraction();
     }
 
 public:
@@ -109,6 +117,9 @@ public:
     const bool   learnt      ()      const {
         return isLearnt;
     }
+    const uint64_t   abst      ()      const {
+        return calcAbstraction(*this);
+    }
     const uint32_t mark        ()      const {
         return marking;
     }
@@ -136,15 +147,15 @@ public:
     inline void  strengthen(const Lit p)
     {
         remove(*this, p);
-        calcAbstraction();
+        //calcAbstraction();
     }
     
-    void calcAbstraction() {
+    /*void calcAbstraction() {
         uint32_t abstraction = 0;
         for (uint32_t i = 0; i != size(); i++)
             abstraction |= 1 << (data[i].var() & 31);
         extra.abst = abstraction;
-    }
+    }*/
 
     const Lit*     getData     () const {
         return data;

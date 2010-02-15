@@ -40,6 +40,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "RestartTypeChooser.h"
 #include "FailedVarSearcher.h"
 #include "PartFinder.h"
+#include "Simplifier.h"
 
 //#define VERBOSE_DEBUG_POLARITIES
 
@@ -1758,7 +1759,12 @@ inline void Solver::performStepsBeforeSolve()
         if (performReplace && varReplacer->performReplace(true) == false)
             return;
     }
-        
+    
+    if (clauses.size() + binaryClauses.size() < 2000000) {
+        Simplifier s(*this);
+        s.simplifyBySubsumption(false);
+    }
+    
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
         if (xorFinder.doNoPart(3, 10) == false)

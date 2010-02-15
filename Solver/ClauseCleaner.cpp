@@ -107,6 +107,49 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
     return false;
 }
 
+inline const bool ClauseCleaner::cleanClauseBewareNULL(Clause& c, Simplifier& simp)
+{
+    Lit origLit1 = c[0];
+    Lit origLit2 = c[1];
+    uint32_t origSize = c.size();
+    
+    Lit *i, *j, *end;
+    for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
+        lbool val = solver.value(*i);
+        if (val == l_Undef) {
+            *j = *i;
+            j++;
+        }
+        if (val == l_True) {
+            solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
+            for (Lit *a = c.getData(); a != j; a++)
+                maybeRemove(simp.occur[a->toInt()], &c);
+            for (; i != end; i++)
+                maybeRemove(simp.occur[i->toInt()], &c);
+            return true;
+        }
+        if (val == l_False)
+            maybeRemove(simp.occur[i->toInt()], &c);
+    }
+    
+    if (i != j)
+        simp.cl_touched.push(&c);
+    
+    if ((c.size() > 2) && (c.size() - (i-j) == 2)) {
+        solver.detachModifiedClause(origLit1, origLit2, c.size(), &c);
+        c.shrink(i-j);
+        solver.attachClause(c);
+    } else {
+        c.shrink(i-j);
+        if (c.learnt())
+            solver.learnts_literals -= i-j;
+        else
+            solver.clauses_literals -= i-j;
+    }
+    
+    return false;
+}
+
 void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit)
 {
     #ifdef DEBUG_CLEAN
@@ -130,6 +173,58 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
         } else {
             *ss++ = *s++;
         }
+    }
+    cs.shrink(s-ss);
+    
+    lastNumUnitaryClean[type] = solver.get_unitary_learnts_num();
+    
+    #ifdef VERBOSE_DEBUG
+    cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << endl;
+    #endif
+}
+
+void ClauseCleaner::cleanClausesBewareNULL(vec<Clause*>& cs, ClauseCleaner::ClauseSetType type, Simplifier& simp, const uint limit)
+{
+    #ifdef DEBUG_CLEAN
+    assert(solver.decisionLevel() == 0);
+    #endif
+    
+    if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
+        return;
+    
+    Clause **s, **ss, **end;
+    for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
+        if (s+1 != end)
+            __builtin_prefetch(*(s+1), 1, 0);
+        if (*s == NULL) {
+            s++;
+            continue;
+        }
+        if (cleanClauseBewareNULL(**s, simp)) {
+            // Remove from iterator vectors/sets:
+            for (int i = 0; i < simp.iter_vecs.size(); i++){
+                vec<Clause*>& cs = *simp.iter_vecs[i];
+                for (int j = 0; j < cs.size(); j++)
+                    if (cs[j] == *s)
+                        cs[j] = NULL;
+            }
+            for (int i = 0; i < simp.iter_sets.size(); i++){
+                vec<Clause*>& cs = *simp.iter_sets[i];
+                simp.exclude(cs, *s);
+            }
+            
+            // Remove clause from clause touched set:
+            if (simp.updateOccur(**s)) {
+                simp.exclude(simp.cl_touched, *s);
+                simp.exclude(simp.cl_added, *s);
+            }
+            free(*s);
+            s++;
+            continue;
+        } else if (type != ClauseCleaner::binaryClauses && (*s)->size() == 2)
+            solver.becameBinary++;
+        
+        *ss++ = *s++;
     }
     cs.shrink(s-ss);
     
