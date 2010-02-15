@@ -1732,9 +1732,9 @@ const lbool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_full
         clearGaussMatrixes();
         if (verbosity >= 1)
             printf("c |                                      Fully restarting                                 |\n");
-        if (calculateDefaultPolarities() == l_False)
-            return l_False;
-        setDefaultPolarities();
+        //if (calculateDefaultPolarities() == l_False)
+        //    return l_False;
+        //setDefaultPolarities();
         nof_conflicts = restart_first + (double)restart_first*restart_inc;
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         setDefaultRestartType();
