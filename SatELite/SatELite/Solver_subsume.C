@@ -1,7 +1,7 @@
 #include "Solver.h"
 #include "Main.h"
 #include "Sort.h"
-#include "BcnfWriter.iC"
+#include "BcnfWriter.h"
 
 #define Report(format, args...) ((verbosity >= 1) ? reportf(format , ## args) : 0)
 //#define Report(format, args...)

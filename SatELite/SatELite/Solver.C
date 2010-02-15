@@ -11,7 +11,7 @@ A simple Chaff-like SAT-solver with support for incremental SAT.
 #include "Sort.h"
 #include <cmath>
 
-#include "Solver_clause.iC"    // (purely for efficiency reasons!)
+#include "Solver_clause.h"    // (purely for efficiency reasons!)
 
 
 //=================================================================================================
