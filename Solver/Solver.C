@@ -1774,6 +1774,12 @@ inline void Solver::performStepsBeforeSolve()
         
         if (heuleProcess && conglomerate->heuleProcessFull() == false)
             return;
+        while (varReplacer->getNewToReplaceVars() != 0) {
+            if (performReplace && varReplacer->performReplace(true) == false)
+                return;
+            if (heuleProcess && conglomerate->heuleProcessFull() == false)
+                return;
+        }
         
         if (conglomerateXors && conglomerate->conglomerateXorsFull() == false)
             return;
