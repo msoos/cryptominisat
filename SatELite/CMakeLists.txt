@@ -1,6 +1,6 @@
-include_directories(${crypto_SOURCE_DIR}/SatElite/ForMani/ADTs)
-include_directories(${crypto_SOURCE_DIR}/SatElite/ForMani/Global)
-include_directories(${crypto_SOURCE_DIR}/SatElite/SatElite)
+include_directories(${crypto_SOURCE_DIR}/SatELite/ForMani/ADTs)
+include_directories(${crypto_SOURCE_DIR}/SatELite/ForMani/Global)
+include_directories(${crypto_SOURCE_DIR}/SatELite/SatELite)
 
 add_executable(satelite
     SatELite/Solver.C

@@ -20,7 +20,7 @@ link_directories( ${ZLIB_LIBRARY} )
 include_directories( ${ZLIB_INCLUDE_DIR} )
 
 add_subdirectory(Solver)
-add_subdirectory(SatElite)
+add_subdirectory(SatELite)
 
 add_custom_target(copy ALL
     COMMENT "Copying binaries from subdirs to build directory")
@@ -28,7 +28,7 @@ add_custom_target(copy ALL
 add_custom_command(
     TARGET copy
     COMMAND ${CMAKE_COMMAND} -E copy Solver/cryptominisat .
-    COMMAND ${CMAKE_COMMAND} -E copy SatElite/satelite .
+    COMMAND ${CMAKE_COMMAND} -E copy SatELite/satelite .
 )
 
 add_dependencies(copy cryptominisat satelite)
