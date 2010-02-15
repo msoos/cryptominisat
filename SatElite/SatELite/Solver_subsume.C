@@ -14,7 +14,6 @@ macro bool has(Clause c, Lit p) {
     return false; }
 
 
-#if 1
 // Assumes 'seen' is cleared (will leave it cleared)
 static
 bool subset(Clause A, Clause B, vec<char>& seen)
@@ -29,16 +28,6 @@ bool subset(Clause A, Clause B, vec<char>& seen)
     for (int i = 0; i < B.size(); i++) seen[index(B[i])] = 0;
     return true;
 }
-#else
-static
-bool subset(Clause A, Clause B, vec<char>& seen)
-{
-    for (int i = 0; i < A.size(); i++)
-        if (!has(B, A[i]))
-            return false;
-    return true;
-}
-#endif
 
 
 macro bool subset(uint64 A, uint64 B) { return (A & ~B) == 0; }
@@ -138,8 +127,6 @@ void Solver::subsume0(Clause ps, int& counter)
 }
 
 
-#if 1
-// With queue
 void Solver::subsume1(Clause ps, int& counter)
 {
     if (!opt_1sub) return;
@@ -190,36 +177,6 @@ void Solver::subsume1(Clause ps, int& counter)
     unregisterIteration(Q);
     unregisterIteration(subs);
 }
-#else
-// Without queue
-void Solver::subsume1(Clause ps, int& counter)
-{
-    if (!opt_1sub) return;
-
-    vec<Clause>    subs;
-    Clause_t       qs;
-
-    registerIteration(subs);
-
-    assert(!ps.null());
-    for (int i = 0; i < ps.size(); i++)
-        qs.push(ps[i]);
-
-    for (int i = 0; i < qs.size(); i++){
-        qs[i] = ~qs[i];
-        findSubsumed(qs, subs);
-        for (int j = 0; j < subs.size(); j++){
-            if (subs[j].null()) continue;
-            if (&counter != NULL) counter++;
-            strengthenClause(subs[j], qs[i]);
-        }
-
-        qs[i] = ~qs[i];
-        subs.clear();
-    }
-    unregisterIteration(subs);
-}
-#endif
 
 
 void Solver::simplifyBySubsumption(bool with_var_elim)
@@ -286,12 +243,12 @@ void Solver::simplifyBySubsumption(bool with_var_elim)
                     ol_seen[index(c[j])] = 1;
 
                     vec<Clause>& n_occs = occur[index(~c[j])];
-                    for (int k = 0; k < n_occs.size(); k++)     // <<= Bättra på. Behöver bara kolla 'n_occs[k]' mot 'c'
+                    for (int k = 0; k < n_occs.size(); k++)     // <<= Bï¿½ttra pï¿½. Behï¿½ver bara kolla 'n_occs[k]' mot 'c'
                         if (n_occs[k] != c && n_occs[k].size() <= c.size() && selfSubset(n_occs[k].abst(), c.abst()) && selfSubset(n_occs[k], c, seen_tmp))
                             s1.add(n_occs[k]);
 
                     vec<Clause>& p_occs = occur[index(c[j])];
-                    for (int k = 0; k < p_occs.size(); k++)     // <<= Bättra på. Behöver bara kolla 'p_occs[k]' mot 'c'
+                    for (int k = 0; k < p_occs.size(); k++)     // <<= Bï¿½ttra pï¿½. Behï¿½ver bara kolla 'p_occs[k]' mot 'c'
                         if (subset(p_occs[k].abst(), c.abst()))
                             s0.add(p_occs[k]);
                 }
@@ -501,31 +458,6 @@ void Solver::orderVarsForElim(vec<Var>& order)
             order.push(cost_var[x].snd);
 }
 
-
-#if 0
-// Returns FALSE if clause is always satisfied ('out_clause' should not be used).
-static
-bool merge(Clause ps, Clause qs, Lit without_p, Lit without_q, vec<Lit>& out_clause)
-{
-    int     i = 0, j = 0;
-    while (i < ps.size() && j < qs.size()){
-        if      (ps[i] == without_p) i++;
-        else if (qs[j] == without_q) j++;
-        else if (ps[i] == ~qs[j])    return false;
-        else if (ps[i] < qs[j])      out_clause.push(ps[i++]);
-        else if (ps[i] > qs[j])      out_clause.push(qs[j++]);
-        else                         out_clause.push(ps[i++]), j++;
-    }
-    while (i < ps.size()){
-        if (ps[i] == without_p) i++;
-        else                    out_clause.push(ps[i++]); }
-    while (j < qs.size()){
-        if (qs[j] == without_q) j++;
-        else                    out_clause.push(qs[j++]); }
-    return true;
-}
-#endif
-
 // Returns FALSE if clause is always satisfied ('out_clause' should not be used). 'seen' is assumed to be cleared.
 static
 bool merge(Clause ps, Clause qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause)
@@ -636,7 +568,7 @@ bool Solver::findDef(Lit x, vec<Clause>& poss, vec<Clause>& negs, Clause out_def
   4  5 3                 -3 6 7
                          -3 -6 -7
 
-3 -> ~4       == { ~3, ~4 }   (ger ~4, ~5 + ev mer som superset; negera detta och lägg till 3:an)
+3 -> ~4       == { ~3, ~4 }   (ger ~4, ~5 + ev mer som superset; negera detta och lï¿½gg till 3:an)
 3 -> ~5       == { ~3, ~5 }
 
 ~4 & ~5 -> 3  == { 4, 5, 3 }
@@ -739,8 +671,6 @@ void Solver::asymmetricBranching(Lit p)
 
     for (int i = 0; i < cs.size(); i++){
         Clause  c = cs[i]; if (c.null()) continue;
-
-#if 1
         Clause  confl;
         bool    analyze    = false;
 
@@ -822,29 +752,6 @@ void Solver::asymmetricBranching(Lit p)
             addClause(learnt, false, c);
             propagateToplevel(); if (!ok){ Report("(contradiction during asymmetric branching after learning unit fact)\n"); return; }
         }
-
-#else
-        assert(propQ.size() == 0);
-        bool conflict = false;
-        for (int j = 0; j < c.size(); j++){
-            if (c[j] == p) continue;
-            if (!assume(~c[j]))      { conflict = true; break; }
-            if (!propagate().null()) { conflict = true; break; }
-        }
-        assert(propQ.size() == 0);
-        cancelUntil(0);
-
-        if (conflict){
-            /**/putchar('+'); fflush(stdout);
-            //**/printf("----------------------------------------\n");
-            //**/printf("asymmetricBranching("L_LIT" @ %d)\n", L_lit(p), level[var(p)]);
-            //**/dump(*this, c);
-            //**/for (int j = 0; j < c.size(); j++) if (c[j] == p) goto Found; assert(false); Found:;
-            assert(!cs[i].null());
-            strengthenClause(c, p);
-            propagateToplevel(); if (!ok){ Report("(contradiction during asymmetric branching after learning unit fact)\n"); return; }
-        }
-#endif
     }
 
     unregisterIteration(cs);
@@ -900,14 +807,8 @@ bool Solver::maybeEliminate(Var x)
             goto Eliminated;
         }
     }
-
-    // ...
-#if 0
-    if (poss.size() < 10){ asymmetricBranching( Lit(x)); if (!ok) return true; }
-    if (negs.size() < 10){ asymmetricBranching(~Lit(x)); if (!ok) return true; }
-    if (value(x) != l_Undef) return false;
-#endif
-
+    
+    
     // Heuristic:
     if (poss.size() >= 8 && negs.size() >= 8)      // <<== CUT OFF
 //  if (poss.size() >= 7 && negs.size() >= 7)      // <<== CUT OFF
@@ -997,7 +898,6 @@ bool Solver::maybeEliminate(Var x)
         }
 
         /*****TEST*****/
-#if 1
         // Try to remove 'x' from clauses:
         bool    ran = false;
         if (poss.size() < 10){ ran = true; asymmetricBranching( Lit(x)); if (!ok) return true; }
@@ -1042,7 +942,6 @@ bool Solver::maybeEliminate(Var x)
                 goto Eliminated;
             }
         }
-#endif
         /*****END TEST*****/
     }
 
@@ -1118,7 +1017,7 @@ void Solver::clauseReduction(void)
                 }
             }
 
-            // (kolla att seen[] är nollad korrekt här)
+            // (kolla att seen[] ï¿½r nollad korrekt hï¿½r)
 
             /**/if (learnt.size() < c.size()){
                 putchar('*'); fflush(stdout);
