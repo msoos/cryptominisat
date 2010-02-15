@@ -132,7 +132,7 @@ const bool Conglomerate::heuleProcessFull()
     if (solver.verbosity >=1) {
         std::cout << "c |  Heule-processings XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
         << "      Found smaller XOR-s: " << std::setw(6) << found
-        << std::setw(25) << " |" << std::endl;
+        << std::setw(22) << " |" << std::endl;
     }
 
 end:
