@@ -33,7 +33,7 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
 {
 }
 
-const lbool FailedVarSearcher::search(const uint64_t numProps)
+const bool FailedVarSearcher::search(const uint64_t numProps)
 {
     assert(solver.decisionLevel() == 0);
     
@@ -146,7 +146,7 @@ end:
         solver.order_heap.filter(Solver::VarFilter(solver));
         solver.clauseCleaner->removeAndCleanAll();
         if (solver.ok == false)
-            return l_False;
+            return false;
         if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
             std::cout << "c |  Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
             <<  std::setw(33) << " | " << std::endl;
@@ -157,5 +157,5 @@ end:
     solver.order_heap = backup_order_heap;
     solver.polarity = backup_polarities;
     
-    return (solver.ok ? l_Undef : l_False);
+    return solver.ok;
 }

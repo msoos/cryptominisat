@@ -1347,7 +1347,7 @@ lbool Solver::simplify()
         lastNbBin = nbBin;
         becameBinary = 0;
         
-        if (failedVarSearch && failedVarSearcher->search(500000) == l_False)
+        if (failedVarSearch && !failedVarSearcher->search(500000))
             return l_False;
     }
 
@@ -1701,10 +1701,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     }
     
-    if (failedVarSearch) {
-        status = failedVarSearcher->search(numProps);
+    if (failedVarSearch && !failedVarSearcher->search(numProps))
         goto end;
-    }
     
     if (heuleProcess && xorclauses.size() > 1 && conglomerate->heuleProcessFull() == false) {
         status = l_False;
@@ -1726,7 +1724,7 @@ end:
     return status;
 }
 
-const lbool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart)
+const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart)
 {
     if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
         clearGaussMatrixes();
@@ -1745,7 +1743,7 @@ const lbool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_full
         fullStarts++;
     }
     
-    return l_Undef;
+    return true;
 }
 
 inline void Solver::performStepsBeforeSolve()
@@ -1855,7 +1853,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         status = search(nof_conflicts, nof_conflicts_fullrestart);
         nof_conflicts = (double)nof_conflicts * restart_inc;
-        if (checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart) == l_False)
+        if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart))
             return l_False;
         chooseRestartType(restartTypeChooser, lastFullRestart);
     }

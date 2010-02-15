@@ -302,7 +302,7 @@ protected:
     FailedVarSearcher* failedVarSearcher;
     void chooseRestartType(RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
     void setDefaultRestartType();
-    const lbool checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
+    const bool checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();
     const lbool simplifyProblem(const uint32_t numConfls, const uint64_t numProps);
     bool simplifying;
