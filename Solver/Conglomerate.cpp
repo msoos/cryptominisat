@@ -220,7 +220,7 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         for (size_t i = 1; i < newSet.size(); i++)
             diff += (int)newSet[i].size()-(int)clauseSet[i].first->size();
         
-        if (noblock || newSet.size() > 2 && diff > 0) {
+        if (noblock || (newSet.size() > 2 && diff > 0)) {
             blocked[var] = true;
             varToXor.erase(it);
             continue;
