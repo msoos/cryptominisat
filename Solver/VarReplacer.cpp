@@ -76,7 +76,7 @@ const lbool VarReplacer::performReplaceInternal()
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
         if (it->var() == var || removedVars[it->var()]) continue;
         #ifdef VERBOSE_DEBUG
-        cout << "Setting var " << i+1 << " to a non-decision var" << endl;
+        cout << "Setting var " << var+1 << " to a non-decision var" << endl;
         #endif
         bool wasDecisionVar = solver.decision_var[var];
         solver.setDecisionVar(var, false);
