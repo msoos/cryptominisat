@@ -117,6 +117,7 @@ const bool Conglomerate::heuleProcessFull()
     
     double time = cpuTime();
     found = 0;
+    uint oldToReplaceVars = solver.varReplacer->getNewToReplaceVars();
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     if (solver.ok == false)
         return false;
@@ -131,8 +132,9 @@ const bool Conglomerate::heuleProcessFull()
     
     if (solver.verbosity >=1) {
         std::cout << "c |  Heule-processings XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
-        << "      Found smaller XOR-s: " << std::setw(6) << found
-        << std::setw(22) << " |" << std::endl;
+        << "  Found smaller XOR-s: " << std::setw(6) << found
+        << "  New bin anti/eq-s: " << std::setw(3) << solver.varReplacer->getNewToReplaceVars() - oldToReplaceVars
+        << std::setw(0) << " |" << std::endl;
     }
 
 end:
