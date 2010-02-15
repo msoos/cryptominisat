@@ -37,12 +37,12 @@ class XorFinder
     public:
         
         XorFinder(Solver* S, vec<Clause*>& cls, ClauseCleaner::ClauseSetType _type);
-        uint doNoPart(const uint minSize, const uint maxSize);
+        const bool doNoPart(const uint minSize, const uint maxSize);
         
     private:
         typedef vector<pair<Clause*, uint> > ClauseTable;
         
-        uint findXors(uint& sumLengths);
+        const bool findXors(uint& sumLengths);
         bool getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& end, bool& impair);
         
         struct clause_hasher {
@@ -106,6 +106,7 @@ class XorFinder
         ClauseTable table;
         vector<bool> toRemove;
         void clearToRemove();
+        uint32_t foundXors;
         
         vec<Clause*>& cls;
         ClauseCleaner::ClauseSetType type;

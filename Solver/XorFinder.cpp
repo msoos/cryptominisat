@@ -42,7 +42,7 @@ XorFinder::XorFinder(Solver* _s, vec<Clause*>& _cls, ClauseCleaner::ClauseSetTyp
 {
 }
 
-uint XorFinder::doNoPart(const uint minSize, const uint maxSize)
+const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
 {
     uint sumLengths = 0;
     double time = cpuTime();
@@ -61,21 +61,18 @@ uint XorFinder::doNoPart(const uint minSize, const uint maxSize)
         table.push_back(make_pair(*it, i));
     }
     
-    uint found = findXors(sumLengths);
+    if (findXors(sumLengths) == false)
+        return false;
     
     if (S->verbosity >=1) {
         if (minSize == maxSize && minSize == 2)
-            printf("c |  Finding binary XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, found, (double)sumLengths/(double)found);
+            printf("c |  Finding binary XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         else
-            printf("c |  Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, found, (double)sumLengths/(double)found);
+            printf("c |  Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
     }
     
-    if (found > 0) {
+    if (foundXors > 0)
         clearToRemove();
-        
-        if (S->ok != false)
-            S->ok = (S->propagate() == NULL);
-    }
     
     if (type == ClauseCleaner::binaryClauses) {
         for (uint i = 0, j = 0, size = table.size(); i != size; i++) {
@@ -84,16 +81,15 @@ uint XorFinder::doNoPart(const uint minSize, const uint maxSize)
         }
     }
     
-    return found;
+    return S->ok = (S->propagate() == NULL);
 }
 
-uint XorFinder::findXors(uint& sumLengths)
+const bool XorFinder::findXors(uint& sumLengths)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Finding Xors started" << endl;
     #endif
     
-    uint foundXors = 0;
     sumLengths = 0;
     std::sort(table.begin(), table.end(), clause_sorter_primary());
     
@@ -150,7 +146,7 @@ uint XorFinder::findXors(uint& sumLengths)
         sumLengths += lits.size();
     }
     
-    return foundXors;
+    return true;
 }
 
 void XorFinder::clearToRemove()
