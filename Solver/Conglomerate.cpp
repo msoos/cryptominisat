@@ -178,7 +178,7 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         }
         
         if (clauseSet.size() == 0) {
-            removeVar(var);
+            if (!noblock) removeVar(var);
             varToXor.erase(it);
             continue;
         }
