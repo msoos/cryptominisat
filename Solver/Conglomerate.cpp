@@ -36,8 +36,7 @@ using std::endl;
 
 Conglomerate::Conglomerate(Solver& _solver) :
     found(0)
-    , foundBin(0)
-    , foundUnit(0)
+    , replacedShorter(0)
     , solver(_solver)
 {}
 
@@ -122,20 +121,22 @@ const bool Conglomerate::conglomerateXors()
     
     double time = cpuTime();
     
-    foundBin = foundUnit = 10;
-    while (foundBin != 0 || foundUnit != 0) {
-        foundBin = foundUnit = 0;
+    replacedShorter = 10;
+    while (replacedShorter != 0) {
+        replacedShorter = 0;
         solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
+        toRemove.clear();
+        toRemove.resize(solver.xorclauses.size(), false);
         blocked.clear();
         blocked.resize(solver.nVars());
         fillVarToXor();
         if (conglomerateXorsInternal(true) == false)
             return false;
+        clearToRemove();
         if (solver.verbosity >=1) {
             std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
-            << " found binary XOR-s: " << std::setw(6) << foundBin
-            << " found unitary XOR-s: " << std::setw(6) << foundUnit
-            << std::setw(3) << " |" << std::endl;
+            << "      Found smaller XOR-s: " << std::setw(6) << replacedShorter
+            << std::setw(25) << " |" << std::endl;
         }
         if (solver.performReplace && solver.varReplacer->performReplace(true) == l_False)
             return false;
@@ -202,14 +203,17 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         }
         
         if (noblock) {
-            for (uint i = 1; i < newSet.size(); i++) if (newSet[i].size() <= 2) {
+            for (uint i = 1; i < newSet.size(); i++) if (newSet[i].size() < clauseSet[i].first->size()) {
+                replacedShorter++;
                 XorClause& thisXorClause = *clauseSet[i].first;
-                if (newSet[i].size() == 2)
-                    foundBin++;
-                else if (newSet.size() == 1)
-                    foundUnit++;
+                bool inverted = first_inverted ^ thisXorClause.xor_clause_inverted();
+                const uint old_group = thisXorClause.getGroup();
+                assert(!toRemove[clauseSet[i].second]);
+                toRemove[clauseSet[i].second] = true;
+                processClause(thisXorClause, clauseSet[i].second, var);
+                solver.removeClause(thisXorClause);
                 
-                if (!dealWithNewClause(newSet[i], first_inverted ^ thisXorClause.xor_clause_inverted(), thisXorClause.getGroup())) {
+                if (!dealWithNewClause(newSet[i], inverted, old_group)) {
                     solver.ok = false;
                     goto end;
                 }
