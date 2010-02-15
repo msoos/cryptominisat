@@ -1760,7 +1760,6 @@ inline void Solver::performStepsBeforeSolve()
             orig_total += xorclauses[i]->size();
         }
         
-        double time = cpuTime();
         if (conglomerate->conglomerateXors() == false)
             return;        
         if (!ok) return;
