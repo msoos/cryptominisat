@@ -1737,6 +1737,8 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         setDefaultRestartType();
         lastFullRestart = starts;
+        if (performReplace && !varReplacer->performReplace(true))
+            return false;
         //PartFinder partFinder(*this);
         //partFinder.findParts();
         
