@@ -36,7 +36,6 @@ using std::endl;
 
 Conglomerate::Conglomerate(Solver& _solver) :
     found(0)
-    , replacedShorter(0)
     , solver(_solver)
 {}
 
@@ -110,50 +109,59 @@ void Conglomerate::processClause(XorClause& x, uint32_t num, Var remove_var)
     }
 }
 
-const bool Conglomerate::conglomerateXors()
+const bool Conglomerate::heuleProcessFull()
 {
-    if (solver.xorclauses.size() == 0)
-        return 0;
+    #ifdef VERBOSE_DEBUG
+    cout << "Heule XOR-ing started" << endl;
+    #endif
     
+    double time = cpuTime();
+    found = 0;
+    solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
+    if (solver.ok == false)
+        return false;
+    
+    toRemove.clear();
+    toRemove.resize(solver.xorclauses.size(), false);
+    blocked.clear();
+    blocked.resize(solver.nVars(), false);
+    fillVarToXor();
+    if (heuleProcess() == false)
+        goto end;
+    
+    if (solver.verbosity >=1) {
+        std::cout << "c |  Heule-processings XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
+        << "      Found smaller XOR-s: " << std::setw(6) << found
+        << std::setw(25) << " |" << std::endl;
+    }
+
+end:
+    
+    clearToRemove();
+    
+    return solver.ok;
+}
+
+const bool Conglomerate::conglomerateXorsFull()
+{
     #ifdef VERBOSE_DEBUG
     cout << "Finding conglomerate xors started" << endl;
     #endif
     
     double time = cpuTime();
-    
-    replacedShorter = 10;
-    while (replacedShorter != 0) {
-        replacedShorter = 0;
-        solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
-        toRemove.clear();
-        toRemove.resize(solver.xorclauses.size(), false);
-        blocked.clear();
-        blocked.resize(solver.nVars());
-        fillVarToXor();
-        if (conglomerateXorsInternal(true) == false)
-            return false;
-        clearToRemove();
-        if (solver.verbosity >=1) {
-            std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
-            << "      Found smaller XOR-s: " << std::setw(6) << replacedShorter
-            << std::setw(25) << " |" << std::endl;
-        }
-        if (solver.performReplace && solver.varReplacer->performReplace(true) == l_False)
-            return false;
-    };
-    
+    found = 0;
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
+    if (solver.ok == false)
+        return false;
+    
     toRemove.clear();
     toRemove.resize(solver.xorclauses.size(), false);
     blocked.clear();
     blocked.resize(solver.nVars(), false);
     blockVars();
     fillVarToXor();
-    if (conglomerateXorsInternal(true) == false)
-        return false;
-    clearToRemove();
-    
-    solver.order_heap.filter(Solver::VarFilter(solver));
+    if (conglomerateXors() == false)
+        goto end;
     
     if (solver.verbosity >=1) {
         std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
@@ -161,10 +169,83 @@ const bool Conglomerate::conglomerateXors()
         << std::setw(31) << "   |" << std::endl;
     }
     
+end:
+    
+    clearToRemove();
+    clearLearntsFromToRemove();
+    solver.order_heap.filter(Solver::VarFilter(solver));
+    
     return solver.ok;
 }
 
-const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
+void Conglomerate::fillNewSet(vector<vector<Lit> >& newSet, vector<pair<XorClause*, uint32_t> >& clauseSet) const
+{
+    newSet.clear();
+    newSet.resize(clauseSet.size());
+    
+    XorClause& firstXorClause = *(clauseSet[0].first);
+    newSet[0].resize(firstXorClause.size());
+    memcpy(&newSet[0][0], firstXorClause.getData(), sizeof(Lit)*firstXorClause.size());
+    
+    for (uint i = 1; i < clauseSet.size(); i++) {
+        XorClause& thisXorClause = *clauseSet[i].first;
+        newSet[i] = newSet[0];
+        newSet[i].resize(firstXorClause.size()+thisXorClause.size());
+        memcpy(&newSet[i][firstXorClause.size()], thisXorClause.getData(), sizeof(Lit)*thisXorClause.size());
+        clearDouble(newSet[i]);
+    }
+}
+
+const bool Conglomerate::heuleProcess()
+{
+    vector<vector<Lit> > newSet;
+    while(varToXor.begin() != varToXor.end()) {
+        varToXorMap::iterator it = varToXor.begin();
+        vector<pair<XorClause*, uint32_t> >& clauseSet = it->second;
+        const Var var = it->first;
+        
+        if (blocked[var] || clauseSet.size() == 1) {
+            varToXor.erase(it);
+            blocked[var] = true;
+            continue;
+        }
+        blocked[var] = true;
+        
+        std::sort(clauseSet.begin(), clauseSet.end(), ClauseSetSorter());
+        fillNewSet(newSet, clauseSet);
+        
+        for (uint i = 1; i < newSet.size(); i++) if (newSet[i].size() < clauseSet[i].first->size()) {
+            found++;
+            XorClause& thisXorClause = *clauseSet[i].first;
+            const bool inverted = !clauseSet[0].first->xor_clause_inverted() ^ thisXorClause.xor_clause_inverted();
+            const uint old_group = thisXorClause.getGroup();
+
+            #ifdef VERBOSE_DEBUG
+            cout << "- Other XOR:";
+            clauseSet[0].first->plainPrint();
+            cout << "- Removing: ";
+            thisXorClause.plainPrint();
+            #endif
+            
+            assert(!toRemove[clauseSet[i].second]);
+            toRemove[clauseSet[i].second] = true;
+            processClause(thisXorClause, clauseSet[i].second, var);
+            solver.removeClause(thisXorClause);
+            
+            if (!dealWithNewClause(newSet[i], inverted, old_group)) {
+                solver.ok = false;
+                return false;
+            }
+            assert(newSet.size() == clauseSet.size());
+        }
+        
+        varToXor.erase(it);
+    }
+    
+    return (solver.ok = (solver.propagate() == NULL));
+}
+
+const bool Conglomerate::conglomerateXors()
 {
     vector<vector<Lit> > newSet;
     while(varToXor.begin() != varToXor.end()) {
@@ -173,62 +254,33 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         const Var var = it->first;
         
         //We blocked the var during dealWithNewClause (it was in a 2-long xor-clause)
-        if (!noblock && blocked[var]) {
+        if (blocked[var]) {
             varToXor.erase(it);
             continue;
         }
         
         if (clauseSet.size() == 0) {
-            if (!noblock) removeVar(var);
+            removeVar(var);
             varToXor.erase(it);
             continue;
         }
         
         std::sort(clauseSet.begin(), clauseSet.end(), ClauseSetSorter());
-        
-        newSet.clear();
-        newSet.resize(clauseSet.size());
-        
-        XorClause& firstXorClause = *(clauseSet[0].first);
-        bool first_inverted = !firstXorClause.xor_clause_inverted();
-        newSet[0].resize(firstXorClause.size());
-        memcpy(&newSet[0][0], firstXorClause.getData(), sizeof(Lit)*firstXorClause.size());
-        
-        for (uint i = 1; i < clauseSet.size(); i++) {
-            XorClause& thisXorClause = *clauseSet[i].first;
-            newSet[i] = newSet[0];
-            newSet[i].resize(firstXorClause.size()+thisXorClause.size());
-            memcpy(&newSet[i][firstXorClause.size()], thisXorClause.getData(), sizeof(Lit)*thisXorClause.size());
-            clearDouble(newSet[i]);
-        }
-        
-        if (noblock) {
-            for (uint i = 1; i < newSet.size(); i++) if (newSet[i].size() < clauseSet[i].first->size()) {
-                replacedShorter++;
-                XorClause& thisXorClause = *clauseSet[i].first;
-                bool inverted = first_inverted ^ thisXorClause.xor_clause_inverted();
-                const uint old_group = thisXorClause.getGroup();
-                assert(!toRemove[clauseSet[i].second]);
-                toRemove[clauseSet[i].second] = true;
-                processClause(thisXorClause, clauseSet[i].second, var);
-                solver.removeClause(thisXorClause);
-                
-                if (!dealWithNewClause(newSet[i], inverted, old_group)) {
-                    solver.ok = false;
-                    goto end;
-                }
-            }
-        }
+        fillNewSet(newSet, clauseSet);
         
         int diff = 0;
         for (size_t i = 1; i < newSet.size(); i++)
             diff += (int)newSet[i].size()-(int)clauseSet[i].first->size();
         
-        if (noblock || (newSet.size() > 2 && diff > 0)) {
+        if (newSet.size() > 2 && diff > 0) {
             blocked[var] = true;
             varToXor.erase(it);
             continue;
         }
+        
+        XorClause& firstXorClause = *(clauseSet[0].first);
+        bool first_inverted = !firstXorClause.xor_clause_inverted();
+        removeVar(var);
         
         #ifdef VERBOSE_DEBUG
         cout << "--- New conglomerate set ---" << endl;
@@ -236,7 +288,6 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         firstXorClause.plainPrint();
         cout << "Adding var " << var+1 << " to calcAtFinish" << endl;
         #endif
-        removeVar(var);
         
         assert(!toRemove[clauseSet[0].second]);
         toRemove[clauseSet[0].second] = true;
@@ -253,7 +304,7 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
             #endif
             
             const uint old_group = thisXorClause.getGroup();
-            bool inverted = first_inverted ^ thisXorClause.xor_clause_inverted();
+            const bool inverted = first_inverted ^ thisXorClause.xor_clause_inverted();
             assert(!toRemove[clauseSet[i].second]);
             toRemove[clauseSet[i].second] = true;
             processClause(thisXorClause, clauseSet[i].second, var);
@@ -261,7 +312,7 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
             
             if (!dealWithNewClause(newSet[i], inverted, old_group)) {
                 solver.ok = false;
-                goto end;
+                return false;
             }
             assert(newSet.size() == clauseSet.size());
         }
@@ -269,11 +320,7 @@ const bool Conglomerate::conglomerateXorsInternal(const bool noblock)
         varToXor.erase(it);
     }
     
-    solver.ok = (solver.propagate() == NULL);
-    
-end:
-    
-    return solver.ok;
+    return (solver.ok = (solver.propagate() == NULL));
 }
 
 bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const uint old_group)
@@ -284,8 +331,10 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
             cout << "--> xor is 0-long" << endl;
             #endif
             
-            if  (!inverted)
+            if  (!inverted) {
+                solver.ok = false;
                 return false;
+            }
             break;
         }
         case 1: {
@@ -301,6 +350,7 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
                 #ifdef VERBOSE_DEBUG
                 cout << "Conflict. Aborting.";
                 #endif
+                solver.ok = false;
                 return false;
             } else {
                 #ifdef VERBOSE_DEBUG
@@ -312,7 +362,7 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
         
         case 2: {
             #ifdef VERBOSE_DEBUG
-            cout << "--> xor is 2-long, must later replace variable, adding var " << ps[0].var() + 1 << " to calcAtFinish:" << endl;
+            cout << "--> xor is 2-long, must later replace variable" << endl;
             XorClause* newX = XorClause_new(ps, inverted, old_group);
             newX->plainPrint();
             free(newX);
@@ -382,8 +432,6 @@ void Conglomerate::clearToRemove()
         }
     }
     solver.xorclauses.shrink(r-a);
-    
-    clearLearntsFromToRemove();
 }
 
 void Conglomerate::clearLearntsFromToRemove()

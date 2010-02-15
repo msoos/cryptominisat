@@ -43,15 +43,16 @@ class Conglomerate
 public:
     Conglomerate(Solver& solver);
     ~Conglomerate();
-    const bool conglomerateXors(); ///<Conglomerate XOR-s that are attached using a variable
+    const bool conglomerateXorsFull();
+    const bool heuleProcessFull();
     void addRemovedClauses(); ///<Add clauses that have been removed. Used if solve() is called multiple times
     void doCalcAtFinish(); ///<Calculate variables removed during conglomeration
+    
     const vec<XorClause*>& getCalcAtFinish() const;
     vec<XorClause*>& getCalcAtFinish();
     const vector<bool>& getRemovedVars() const;
+    
     void newVar();
-    const uint getFound();
-    const uint getFoundBin();
     
 private:
     
@@ -61,7 +62,11 @@ private:
         }
     };
     
-    const bool conglomerateXorsInternal(const bool noblock);
+    const bool conglomerateXors();
+    const bool heuleProcess();
+    
+    void fillNewSet(vector<vector<Lit> >& newSet, vector<pair<XorClause*, uint32_t> >& clauseSet) const;
+    
     void removeVar(const Var var);
     void processClause(XorClause& x, uint32_t num, Var remove_var);
     void blockVars();
@@ -79,7 +84,6 @@ private:
     
     vec<XorClause*> calcAtFinish;
     uint found;
-    uint replacedShorter;
     
     Solver& solver;
 };
@@ -87,11 +91,6 @@ private:
 inline const vector<bool>& Conglomerate::getRemovedVars() const
 {
     return removedVars;
-}
-
-inline const uint Conglomerate::getFound()
-{
-    return found;
 }
 
 inline const vec<XorClause*>& Conglomerate::getCalcAtFinish() const
