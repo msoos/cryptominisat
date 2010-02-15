@@ -104,6 +104,7 @@ public:
     lbool   modelValue (const Lit& p) const;       // The value of a literal in the last model. The last call to solve must have been satisfiable.
     uint32_t     nAssigns   ()      const;       // The current number of assigned literals.
     uint32_t     nClauses   ()      const;       // The current number of original clauses.
+    uint32_t     nLiterals  ()      const;       // The current number of total literals.
     uint32_t     nLearnts   ()      const;       // The current number of learnt clauses.
     uint32_t     nVars      ()      const;       // The current number of variables.
 
@@ -400,6 +401,10 @@ inline uint32_t      Solver::nAssigns      ()      const
 inline uint32_t      Solver::nClauses      ()      const
 {
     return clauses.size() + xorclauses.size();
+}
+inline uint32_t      Solver::nLiterals      ()      const
+{
+    return clauses_literals + learnts_literals;
 }
 inline uint32_t      Solver::nLearnts      ()      const
 {
