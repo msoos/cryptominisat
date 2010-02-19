@@ -18,11 +18,12 @@ function usage {
     echo "  -z   don't simplify"
     echo "  -q   don't use failed var"
     echo "  -c   don't perform conglomeration (default = conglomerate)"
+    echo "  -e   don't perform heule-preprocess (default = heule)"
     echo "  -v   verbosity (default = 1)"
     echo ""
 }
 
-args=`getopt g:v:t:d:ncsfzq "$@"`
+args=`getopt g:v:t:d:ncsfzqe "$@"`
 if test $? != 0
 then
     usage
@@ -43,6 +44,7 @@ do
         (-s) extra+="$extra -restart=static";;
         (-z) extra+="$extra -nosimplify";;
         (-q) extra+="$extra -nofailedvar";;
+        (-e) extra+="$extra -noheuleprocess";;
         (--) shift; break;;
         (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
         (*)  break;;
