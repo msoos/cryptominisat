@@ -41,15 +41,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 using std::vector;
 
-
-template <class T>
-uint32_t calcAbstraction(T& ps) {
-    uint32_t abstraction = 0;
-    for (uint32_t i = 0; i != ps.size(); i++)
-        abstraction |= 1 << (ps[i].var() & 31);
-    return abstraction;
-}
-
 //=================================================================================================
 // Clause -- a simple class for representing a clause:
 
@@ -69,7 +60,7 @@ protected:
     uint32_t isXorClause:1;
     uint32_t mySize:20;
     
-    union { int act; uint32_t abst; } extra;
+    int act;
     #ifdef _MSC_VER
     Lit     data[1];
     #else
@@ -87,7 +78,7 @@ public:
         isLearnt = learnt;
         setGroup(_group);
         for (uint i = 0; i < ps.size(); i++) data[i] = ps[i];
-        if (learnt) extra.act = 0;
+        if (learnt) act = 0;
         //else calcAbstraction();
     }
 
@@ -117,9 +108,6 @@ public:
     const bool   learnt      ()      const {
         return isLearnt;
     }
-    const uint64_t   abst      ()      const {
-        return calcAbstraction(*this);
-    }
     const uint32_t mark        ()      const {
         return marking;
     }
@@ -135,11 +123,11 @@ public:
     }
 
     void         setActivity(int i)  {
-        extra.act = i;
+        act = i;
     }
     
     const int&   activity   () const {
-        return extra.act;
+        return act;
     }
     
     Lit subsumes (const Clause& other) const;
@@ -289,7 +277,7 @@ inline void clauseFree(Clause* c)
 |       lit_Undef  - Clause subsumes 'other'
 |       p          - The literal p can be deleted from 'other'
 |________________________________________________________________________________________________@*/
-inline Lit Clause::subsumes(const Clause& other) const
+/*inline Lit Clause::subsumes(const Clause& other) const
 {
     if (other.size() < size() || (extra.abst & ~other.extra.abst) != 0)
         return lit_Error;
@@ -314,7 +302,7 @@ inline Lit Clause::subsumes(const Clause& other) const
     }
     
     return ret;
-}
+}*/
 
 typedef sptr<Clause> ClausePtr;
 typedef sptr<XorClause> XorClausePtr;

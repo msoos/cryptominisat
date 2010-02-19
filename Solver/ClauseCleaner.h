@@ -32,10 +32,10 @@ class ClauseCleaner
     public:
         ClauseCleaner(Solver& solver);
         
-        enum ClauseSetType {clauses, xorclauses, learnts, binaryClauses};
+        enum ClauseSetType {clauses, xorclauses, learnts, binaryClauses, simpClauses};
         
         void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
-        void cleanClausesBewareNULL(vec<Clause*>& cs, ClauseSetType type, Simplifier& simp, const uint limit = 0);
+        void cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseSetType type, Simplifier& simp, const uint limit = 0);
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
@@ -45,11 +45,11 @@ class ClauseCleaner
         
     private:
         const bool cleanClause(Clause& c);
-        const bool cleanClauseBewareNULL(Clause& c, Simplifier& simp);
+        const bool cleanClauseBewareNULL(ClauseSimp& c, Simplifier& simp);
         const bool cleanClause(XorClause& c);
         
-        uint lastNumUnitarySat[4];
-        uint lastNumUnitaryClean[4];
+        uint lastNumUnitarySat[5];
+        uint lastNumUnitaryClean[5];
         
         Solver& solver;
 };

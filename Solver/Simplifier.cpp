@@ -10,6 +10,7 @@ A simple Chaff-like SAT-solver with support for incremental SAT.
 #include "Simplifier.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
+#include "assert.h"
 
 //#define VERBOSE_DEBUG
 
@@ -25,36 +26,23 @@ Simplifier::Simplifier(Solver& s):
 
 static bool opt_var_elim = true;
 
-void Simplifier::exclude(vec<Clause*>& cs, Clause* c)
+void Simplifier::exclude(vec<ClauseSimp>& cs, Clause* c)
 {
     uint i = 0, j = 0;
     for (; i < cs.size(); i++) {
-        if (cs[i] != c)
+        if (cs[i].clause != c)
             cs[j++] = cs[i];
     }
     cs.shrink(i-j);
 }
 
-inline bool subset(uint64_t A, uint64_t B) {
-    return (A & ~B) == 0;
-}
-
-// Assumes 'seen' is cleared (will leave it cleared)
-template<class T1, class T2>
-static bool subset(T1& A, T2& B, vec<char>& seen)
+void Simplifier::update(vec<ClauseSimp>& cs, Clause* c, const uint64_t abst)
 {
-    for (int i = 0; i < B.size(); i++)
-        seen[B[i].toInt()] = 1;
-    for (int i = 0; i < A.size(); i++){
-        if (!seen[A[i].toInt()]){
-            for (int i = 0; i < B.size(); i++) 
-                seen[B[i].toInt()] = 0;
-            return false;
-        }
+    uint i = 0;
+    for (; i < cs.size(); i++) {
+        if (cs[i].clause == c)
+            cs[i].abst = abst;
     }
-    for (int i = 0; i < B.size(); i++) 
-        seen[B[i].toInt()] = 0;
-    return true;
 }
 
 bool selfSubset(uint64_t A, uint64_t B)
@@ -88,24 +76,24 @@ bool selfSubset(Clause& A, Clause& B, vec<char>& seen)
 }
 
 // Will put NULL in 'cs' if clause removed.
-void Simplifier::subsume0(Clause* ps, int& counter)
+void Simplifier::subsume0(ClauseSimp& ps, int& counter)
 {
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
-    ps->plainPrint();
-    cout << "pointer:" << ps << endl;
+    ps.clause->plainPrint();
+    cout << "pointer:" << ps.clause << endl;
     #endif
     
-    vec<Clause*> subs;
-    findSubsumed(*ps, subs);
+    vec<ClauseSimp> subs;
+    findSubsumed(ps, subs);
     for (int i = 0; i < subs.size(); i++){
         if (&counter != NULL) counter++;
         #ifdef VERBOSE_DEBUG
         cout << "subsume0 removing:";
-        subs[i]->plainPrint();
+        subs[i].clause->plainPrint();
         #endif
-        Clause* tmp = subs[i];
-        unlinkClause(*subs[i]);
+        Clause* tmp = subs[i].clause;
+        unlinkClause(*subs[i].clause);
         free(tmp);
     }
 }
@@ -131,32 +119,18 @@ void Simplifier::unlinkClause(Clause& c, bool reallyRemove, Var elim)
     }
     
     solver.detachClause(c);
-    if (reallyRemove) {
-        uint pos;
-        if (c.learnt()) {
-            for (pos = 0; pos < solver.learnts.size(); pos++)
-                if (solver.learnts[pos] == &c) {
-                    solver.learnts[pos] = NULL;
-                    break;
-                }
-        } else {
-            for (pos = 0; pos < solver.clauses.size(); pos++)
-                if (solver.clauses[pos] == &c) {
-                    solver.clauses[pos] = NULL;
-                    break;
-                }
-        }
-    }
+    if (reallyRemove)
+        exclude(clauses, &c);
     
     // Remove from iterator vectors/sets:
     for (int i = 0; i < iter_vecs.size(); i++){
-        vec<Clause*>& cs = *iter_vecs[i];
+        vec<ClauseSimp>& cs = *iter_vecs[i];
         for (int j = 0; j < cs.size(); j++)
-            if (cs[j] == &c)
-                cs[j] = NULL;
+            if (cs[j].clause == &c)
+                cs[j].clause = NULL;
     }
     for (int i = 0; i < iter_sets.size(); i++){
-        vec<Clause*>& cs = *iter_sets[i];
+        vec<ClauseSimp>& cs = *iter_sets[i];
         exclude(cs, &c);
     }
     
@@ -167,28 +141,28 @@ void Simplifier::unlinkClause(Clause& c, bool reallyRemove, Var elim)
     }
 }
 
-void Simplifier::subsume1(Clause& ps, int& counter)
+void Simplifier::subsume1(ClauseSimp& ps, int& counter)
 {
-    vec<Clause*>    Q;
-    vec<Clause*>    subs;
+    vec<ClauseSimp>    Q;
+    vec<ClauseSimp>    subs;
     vec<Lit>        qs;
     int             q;
     
     registerIteration(Q);
     registerIteration(subs);
     
-    Q.push(&ps);
+    Q.push(ps);
     q = 0;
     while (q < Q.size()){
-        if (Q[q] == NULL) { q++; continue; }
+        if (Q[q].clause == NULL) { q++; continue; }
         #ifdef VERBOSE_DEBUG
         cout << "subsume1 orig clause:";
-        Q[q]->plainPrint();
+        Q[q].clause->plainPrint();
         #endif
         
         qs.clear();
-        for (int i = 0; i < Q[q]->size(); i++)
-            qs.push((*Q[q])[i]);
+        for (int i = 0; i < Q[q].clause->size(); i++)
+            qs.push((*Q[q].clause)[i]);
         
         for (int i = 0; i < qs.size(); i++){
             qs[i] = ~qs[i];
@@ -196,63 +170,58 @@ void Simplifier::subsume1(Clause& ps, int& counter)
             for (int j = 0; j < subs.size(); j++){
                 #ifndef NDEBUG
                 if (&counter != NULL && counter == -1){
-                    dump(*subs[j]);
+                    dump(*subs[j].clause);
                     qs[i] = ~qs[i];
                     dump(qs);
                     printf(L_LIT"\n", L_lit(qs[i]));
                     exit(0);
                 }
                 #endif
-                if (subs[j] == NULL) continue;
+                if (subs[j].clause == NULL) continue;
                 if (&counter != NULL) counter++;
                 
                 #ifdef VERBOSE_DEBUG
                 cout << "orig clause    :";
-                subs[j]->plainPrint();
+                subs[j].clause->plainPrint();
                 #endif
-                Clause& c = *subs[j];
-                unlinkClause(c, false);
+                ClauseSimp c = subs[j];
+                Clause& cl = *c.clause;
+                unlinkClause(cl, false);
                 
-                c.strengthen(qs[i]);
+                cl.strengthen(qs[i]);
+                c.abst = calcAbstraction(cl);
                 #ifdef VERBOSE_DEBUG
                 cout << "strenghtened   :";
-                c.plainPrint();
+                c.clause->plainPrint();
                 #endif
                 
-                assert(c.size() > 0);
-                if (c.size() > 1) {
-                    solver.attachClause(c);
+                assert(cl.size() > 0);
+                if (cl.size() > 1) {
+                    solver.attachClause(cl);
                     // Occur lists:
-                    if (updateOccur(c)){
-                        for (int i2 = 0; i2 < c.size(); i2++) {
-                            occur[c[i2].toInt()].push(&c);
-                            touch(c[i2].var());
+                    if (updateOccur(cl)){
+                        for (int i2 = 0; i2 < cl.size(); i2++) {
+                            occur[cl[i2].toInt()].push(c);
+                            touch(cl[i2].var());
                         }
-                        cl_added.push(&c);
+                        cl_added.push(c);
                     }
-                    Q.push(&c);
+                    update(clauses, c.clause, c.abst);
+                    Q.push(c);
                 } else {
-                    uint pos;
-                    if (c.learnt()) {
-                        for (pos = 0; pos < solver.learnts.size(); pos++)
-                            if (solver.learnts[pos] == &c) {
-                                solver.learnts[pos] = NULL;
-                                break;
-                            }
-                    } else {
-                        for (pos = 0; pos < solver.clauses.size(); pos++)
-                            if (solver.clauses[pos] == &c) {
-                                solver.clauses[pos] = NULL;
-                                break;
-                            }
+                    for (uint pos = 0; pos < clauses.size(); pos++) {
+                        if (clauses[pos].clause == c.clause) {
+                            clauses[pos].clause = NULL;
+                            break;
+                        }
                     }
-                    if (solver.assigns[c[0].var()] == l_Undef) {
-                        solver.uncheckedEnqueue(c[0]);
+                    if (solver.assigns[cl[0].var()] == l_Undef) {
+                        solver.uncheckedEnqueue(cl[0]);
                         #ifdef VERBOSE_DEBUG
-                        cout << "Found that var " << c[0].var()+1 << " must be " << std::boolalpha << !c[0].sign() << endl;
+                        cout << "Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                         #endif
                     } else {
-                        if (solver.assigns[c[0].var()].getBool() != !c[0].sign()) {
+                        if (solver.assigns[cl[0].var()].getBool() != !cl[0].sign()) {
                             solver.ok = false;
                             return;
                         }
@@ -272,40 +241,38 @@ void Simplifier::subsume1(Clause& ps, int& counter)
 
 void Simplifier::almost_all_database(int& clauses_subsumed, int& literals_removed)
 {
-    std::cout << "Larger database" << std::endl;
+    std::cout << "c Larger database" << std::endl;
     // Optimized variant when virtually whole database is involved:
     cl_added  .clear();
     cl_touched.clear();
     
-    for (int i = 0; i < solver.clauses.size(); i++) {
-        if (solver.clauses[i] != NULL)
-            subsume1(*solver.clauses[i], literals_removed);
+    for (int i = 0; i < clauses.size(); i++) {
+        if (clauses[i].clause != NULL)
+            subsume1(clauses[i], literals_removed);
     }
-    
-    if (!solver.ok)
-        return;
+    if (!solver.ok) return;
     solver.ok = solver.propagate() == NULL;
     if (!solver.ok) {
-        printf("(contradiction during subsumption)\n");
+        std::cout << "c (contradiction during subsumption)" << std::endl;
         return;
     }
-    solver.clauseCleaner->cleanClausesBewareNULL(solver.clauses, ClauseCleaner::clauses, *this);
+    solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     
     #ifdef VERBOSE_DEBUG
     cout << "subsume1 part 1 finished" << endl;
     #endif
     
-    vec<Clause*> s1; //TODO this should be CSet!!
+    vec<ClauseSimp> s1; //TODO this should be CSet!!
     registerIteration(s1);
     while (cl_touched.size() > 0){
         for (int i = 0; i < cl_touched.size(); i++)
-            if (cl_touched[i] != NULL)
+            if (cl_touched[i].clause != NULL)
                 s1.push(cl_touched[i]);
         cl_touched.clear();
         
         for (int i = 0; i < s1.size(); i++)
-            if (s1[i] != NULL)
-                subsume1(*s1[i], literals_removed);
+            if (s1[i].clause != NULL)
+                subsume1(s1[i], literals_removed);
         s1.clear();
         
         solver.ok = solver.propagate() == NULL;
@@ -314,14 +281,14 @@ void Simplifier::almost_all_database(int& clauses_subsumed, int& literals_remove
             unregisterIteration(s1);
             return;
         }
-        solver.clauseCleaner->cleanClausesBewareNULL(solver.clauses, ClauseCleaner::clauses, *this);
+        solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     }
     unregisterIteration(s1);
     
-    for (int i = 0; i < solver.clauses.size(); i++) {
-        if (solver.clauses[i] != NULL) {
-            assert(solver.clauses[i]->size() > 1);
-            subsume0(solver.clauses[i], clauses_subsumed);
+    for (int i = 0; i < clauses.size(); i++) {
+        if (clauses[i].clause != NULL) {
+            assert(clauses[i].clause->size() > 1);
+            subsume0(clauses[i], clauses_subsumed);
         }
     }
 }
@@ -338,25 +305,26 @@ void Simplifier::smaller_database(int& clauses_subsumed, int& literals_removed)
     //      (2) all strenghtened clauses -- REMOVED!! We turned on eager backward subsumption which supersedes this.
     
     printf("  PREPARING\n");
-    vec<Clause*> s0, s1;     // 's0' is used for 0-subsumption, 's1' for 1-subsumption
+    vec<ClauseSimp> s0, s1;     // 's0' is used for 0-subsumption, 's1' for 1-subsumption
     vec<char>   ol_seen(solver.nVars()*2, 0);
     for (int i = 0; i < cl_added.size(); i++){
-        if (cl_added[i] != NULL) continue;
-        Clause& c = *cl_added[i];
+        if (cl_added[i].clause != NULL) continue;
+        ClauseSimp& c = cl_added[i];
+        Clause& cl = *cl_added[i].clause;
         
-        s1.push(&c);
-        for (int j = 0; j < c.size(); j++){
-            if (ol_seen[c[j].toInt()]) continue;
-            ol_seen[c[j].toInt()] = 1;
+        s1.push(c);
+        for (int j = 0; j < cl.size(); j++){
+            if (ol_seen[cl[j].toInt()]) continue;
+            ol_seen[cl[j].toInt()] = 1;
             
-            vec<Clause*>& n_occs = occur[~c[j].toInt()];
+            vec<ClauseSimp>& n_occs = occur[~cl[j].toInt()];
             for (int k = 0; k < n_occs.size(); k++)
-                if (n_occs[k] != &c && n_occs[k]->size() <= c.size() && selfSubset(n_occs[k]->abst(), c.abst()) && selfSubset(*n_occs[k], c, seen_tmp))
+                if (n_occs[k].clause != c.clause && n_occs[k].clause->size() <= cl.size() && selfSubset(n_occs[k].abst, c.abst) && selfSubset(*n_occs[k].clause, cl, seen_tmp))
                     s1.push(n_occs[k]);
                 
-            vec<Clause*>& p_occs = occur[c[j].toInt()];
+            vec<ClauseSimp>& p_occs = occur[cl[j].toInt()];
             for (int k = 0; k < p_occs.size(); k++)
-                if (subset(p_occs[k]->abst(), c.abst()))
+                if (subset(p_occs[k].abst, c.abst))
                     s0.push(p_occs[k]);
         }
     }
@@ -369,7 +337,7 @@ void Simplifier::smaller_database(int& clauses_subsumed, int& literals_removed)
     // Fixed-point for 1-subsumption:
     while (s1.size() > 0 || cl_touched.size() > 0){
         for (int i = 0; i < cl_touched.size(); i++)
-            if (cl_touched[i] != NULL)
+            if (cl_touched[i].clause != NULL)
                 s1.push(cl_touched[i]),
             s0.push(cl_touched[i]);
         
@@ -377,8 +345,8 @@ void Simplifier::smaller_database(int& clauses_subsumed, int& literals_removed)
         assert(solver.qhead == solver.trail.size());
         printf("s1.size()=%d  cl_touched.size()=%d\n", s1.size(), cl_touched.size());
         for (int i = 0; i < s1.size(); i++)
-            if (s1[i] != NULL)
-                subsume1(*s1[i], literals_removed);
+            if (s1[i].clause != NULL)
+                subsume1(s1[i], literals_removed);
             s1.clear();
         
         solver.ok = solver.propagate() == NULL;
@@ -388,14 +356,14 @@ void Simplifier::smaller_database(int& clauses_subsumed, int& literals_removed)
             unregisterIteration(s1);
             return; 
         }
-        solver.clauseCleaner->cleanClausesBewareNULL(solver.clauses, ClauseCleaner::clauses, *this);
+        solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
         assert(cl_added.size() == 0);
     }
     unregisterIteration(s1);
     
     // Iteration pass for 0-subsumption:
     for (int i = 0; i < s0.size(); i++)
-        if (s0[i] != NULL)
+        if (s0[i].clause != NULL)
             subsume0(s0[i], clauses_subsumed);
     s0.clear();
     unregisterIteration(s0);
@@ -415,23 +383,25 @@ void Simplifier::simplifyBySubsumption(bool with_var_elim)
         var_elimed  .push(0);
     }
     
+    for (uint i = 0; i < solver.clauses.size(); i++) {
+        clauses.push(ClauseSimp(solver.clauses[i], clauses.size()));
+    }
+    solver.clauses.clear();
     for (uint i = 0; i < solver.binaryClauses.size(); i++) {
-        if (solver.binaryClauses[i]->learnt())
-            solver.learnts.push(solver.binaryClauses[i]);
-        else
-            solver.clauses.push(solver.binaryClauses[i]);
+        clauses.push(ClauseSimp(solver.binaryClauses[i], clauses.size()));
     }
     solver.binaryClauses.clear();
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     
-    for (uint i = 0; i < solver.clauses.size(); i++) {
-        Clause& c = *solver.clauses[i];
-        cl_added.push(&c);
-        if (updateOccur(c)){
-            for (int i = 0; i < c.size(); i++)
-                occur[c[i].toInt()].push(&c),
-                touch(c[i].var());
-                cl_touched.push(&c);
+    for (uint i = 0; i < clauses.size(); i++) {
+        ClauseSimp& c = clauses[i];
+        Clause& cl = *c.clause;
+        cl_added.push(c);
+        if (updateOccur(cl)){
+            for (int i = 0; i < cl.size(); i++)
+                occur[cl[i].toInt()].push(c),
+                touch(cl[i].var());
+                cl_touched.push(c);
         }
     }
     
@@ -441,9 +411,10 @@ void Simplifier::simplifyBySubsumption(bool with_var_elim)
         // SUBSUMPTION:
         //
         #ifndef SAT_LIVE
-        printf("  -- subsuming                       \n");
+        std::cout << "c   -- subsuming" << std::endl;
         #endif
-        int     clauses_subsumed = 0, literals_removed = 0;
+        int  clauses_subsumed = 0, literals_removed = 0;
+        uint origTrailSize = solver.trail.size();
         
         if (cl_added.size() > solver.nClauses() / 2) {
             almost_all_database(clauses_subsumed, literals_removed);
@@ -453,8 +424,10 @@ void Simplifier::simplifyBySubsumption(bool with_var_elim)
             if (!solver.ok) return;
         }
         
-        if (literals_removed > 0 || clauses_subsumed > 0)
-            printf("  #literals-removed: %d    #clauses-subsumed: %d\n", literals_removed, clauses_subsumed);
+        std::cout << "c #literals-removed: " << literals_removed 
+        << "  #clauses-subsumed: " << clauses_subsumed 
+        << " #vars fixed: " << solver.trail.size() - origTrailSize
+        << std::endl;
         
         
         // VARIABLE ELIMINATION:
@@ -507,15 +480,15 @@ void Simplifier::simplifyBySubsumption(bool with_var_elim)
         }*/
     }while (cl_added.size() > 100);
     
-    if (orig_n_clauses != solver.nClauses() || orig_n_literals != solver.nLiterals()) {
-        printf("| %9d | %7d %8d | %7s %7d %8s %7s | %6s   | %d/%d\n",
+    /*if (orig_n_clauses != solver.nClauses() || orig_n_literals != solver.nLiterals()) {
+        printf("c | %9d | %7d %8d | %7s %7d %8s %7s | %6s   | %d/%d\n",
                (int)solver.conflicts,
                solver.nClauses(),
                solver.nLiterals(),
                "--", solver.nLearnts(), "--", "--", "--",
                solver.nClauses() - orig_n_clauses,
                solver.nLiterals() - orig_n_literals);
-    }
+    }*/
     
     if (!solver.ok)
         return;
@@ -526,16 +499,15 @@ void Simplifier::simplifyBySubsumption(bool with_var_elim)
         return;
     }
     
-    uint i, j;
-    for (i = j = 0; i < solver.clauses.size(); i++) {
-        if (solver.clauses[i] != NULL) {
-            if (solver.clauses[i]->size() == 2)
-                solver.binaryClauses.push(solver.clauses[i]);
+    for (uint i = 0; i < clauses.size(); i++) {
+        if (clauses[i].clause != NULL) {
+            if (clauses[i].clause->size() == 2)
+                solver.binaryClauses.push(clauses[i].clause);
             else
-                solver.clauses[j++] = solver.clauses[i];
+                solver.clauses.push(clauses[i].clause);
         }
     }
-    solver.clauses.shrink(i-j);
+    clauses.clear();
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     
      /*for (i = 0; i < solver.clauses.size(); i++) {
@@ -549,43 +521,42 @@ void Simplifier::simplifyBySubsumption(bool with_var_elim)
          solver.detachClause(*solver.binaryClauses[i]);
      }*/
     
-    printf("DONE!\n");
-    std::cout << " Simplification time:" << cpuTime() - time << std::endl;
+    std::cout << "c Simplification time:" << cpuTime() - time << std::endl;
 }
 
-void Simplifier::findSubsumed(Clause& ps, vec<Clause*>& out_subsumed)
+void Simplifier::findSubsumed(ClauseSimp& ps, vec<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed: ";
-    for (uint i = 0; i < ps.size(); i++) {
-        if (ps[i].sign()) printf("-");
-        printf("%d ", ps[i].var() + 1);
+    for (uint i = 0; i < ps.clause->size(); i++) {
+        if ((*ps.clause)[i].sign()) printf("-");
+        printf("%d ", (*ps.clause)[i].var() + 1);
     }
     printf("0\n");
     #endif
     
-    uint64_t  abst;
-    abst = calcAbstraction(ps);
+    uint64_t  abst = ps.abst;
+    Clause& cl = *ps.clause;
     
     int min_i = 0;
-    for (int i = 1; i < ps.size(); i++){
-        if (occur[ps[i].toInt()].size() < occur[ps[min_i].toInt()].size())
+    for (int i = 1; i < cl.size(); i++){
+        if (occur[cl[i].toInt()].size() < occur[cl[min_i].toInt()].size())
             min_i = i;
     }
     
-    vec<Clause*>& cs = occur[ps[min_i].toInt()];
+    vec<ClauseSimp>& cs = occur[cl[min_i].toInt()];
     for (int i = 0; i < cs.size(); i++){
-        if (cs[i] != &ps && ps.size() <= cs[i]->size() && subset(abst, cs[i]->abst()) && subset(ps, *cs[i], seen_tmp)) {
+        if (cs[i].clause != &cl && subset(abst, cs[i].abst) && cl.size() <= cs[i].clause->size() && subset(cl, *cs[i].clause, seen_tmp)) {
             out_subsumed.push(cs[i]);
             #ifdef VERBOSE_DEBUG
             cout << "subsumed: ";
-            cs[i]->plainPrint();
+            cs[i].clause->plainPrint();
             #endif
         }
     }
 }
 
-void Simplifier::findSubsumed(vec<Lit>& ps, vec<Clause*>& out_subsumed)
+void Simplifier::findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed: ";
@@ -605,13 +576,13 @@ void Simplifier::findSubsumed(vec<Lit>& ps, vec<Clause*>& out_subsumed)
             min_i = i;
     }
     
-    vec<Clause*>& cs = occur[ps[min_i].toInt()];
+    vec<ClauseSimp>& cs = occur[ps[min_i].toInt()];
     for (int i = 0; i < cs.size(); i++){
-        if (ps.size() <= cs[i]->size() && subset(abst, cs[i]->abst()) && subset(ps, *cs[i], seen_tmp)) {
+        if (subset(abst, cs[i].abst) && ps.size() <= cs[i].clause->size() && subset(ps, *cs[i].clause, seen_tmp)) {
             out_subsumed.push(cs[i]);
             #ifdef VERBOSE_DEBUG
             cout << "subsumed: ";
-            cs[i]->plainPrint();
+            cs[i].clause->plainPrint();
             #endif
         }
     }

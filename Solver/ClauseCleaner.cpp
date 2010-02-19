@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ClauseCleaner::ClauseCleaner(Solver& _solver) :
     solver(_solver)
 {
-    for (uint i = 0; i < 4; i++) {
+    for (uint i = 0; i < 5; i++) {
         lastNumUnitarySat[i] = solver.get_unitary_learnts_num();
         lastNumUnitaryClean[i] = solver.get_unitary_learnts_num();
     }
@@ -107,8 +107,10 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
     return false;
 }
 
-inline const bool ClauseCleaner::cleanClauseBewareNULL(Clause& c, Simplifier& simp)
+inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp& cc, Simplifier& simp)
 {
+    Clause& c = *cc.clause;
+    
     Lit origLit1 = c[0];
     Lit origLit2 = c[1];
     uint32_t origSize = c.size();
@@ -132,8 +134,27 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(Clause& c, Simplifier& si
             maybeRemove(simp.occur[i->toInt()], &c);
     }
     
-    if (i != j)
-        simp.cl_touched.push(&c);
+    if (i != j) {
+        cc.abst = calcAbstraction(c);
+        simp.cl_touched.push(cc);
+        // Update from iterator vectors/sets:
+        for (int i = 0; i < simp.iter_vecs.size(); i++){
+            vec<ClauseSimp>& cs = *simp.iter_vecs[i];
+            for (int j = 0; j < cs.size(); j++)
+                if (cs[j].clause == cc.clause)
+                    cs[j].abst = cc.abst;
+        }
+        for (int i = 0; i < simp.iter_sets.size(); i++){
+            vec<ClauseSimp>& cs = *simp.iter_sets[i];
+            simp.update(cs, cc.clause, cc.abst);
+        }
+        
+        // Update clause from clause touched set:
+        if (simp.updateOccur(c)) {
+            simp.update(simp.cl_touched, cc.clause, cc.abst);
+            simp.update(simp.cl_added, cc.clause, cc.abst);
+        }
+    }
     
     if ((c.size() > 2) && (c.size() - (i-j) == 2)) {
         solver.detachModifiedClause(origLit1, origLit2, c.size(), &c);
@@ -183,7 +204,7 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
     #endif
 }
 
-void ClauseCleaner::cleanClausesBewareNULL(vec<Clause*>& cs, ClauseCleaner::ClauseSetType type, Simplifier& simp, const uint limit)
+void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::ClauseSetType type, Simplifier& simp, const uint limit)
 {
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
@@ -192,36 +213,36 @@ void ClauseCleaner::cleanClausesBewareNULL(vec<Clause*>& cs, ClauseCleaner::Clau
     if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
         return;
     
-    Clause **s, **ss, **end;
+    ClauseSimp *s, *ss, *end;
     for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
         if (s+1 != end)
-            __builtin_prefetch(*(s+1), 1, 0);
-        if (*s == NULL) {
+            __builtin_prefetch((s+1)->clause, 1, 0);
+        if (s->clause == NULL) {
             s++;
             continue;
         }
-        if (cleanClauseBewareNULL(**s, simp)) {
+        if (cleanClauseBewareNULL(*s, simp)) {
             // Remove from iterator vectors/sets:
             for (int i = 0; i < simp.iter_vecs.size(); i++){
-                vec<Clause*>& cs = *simp.iter_vecs[i];
+                vec<ClauseSimp>& cs = *simp.iter_vecs[i];
                 for (int j = 0; j < cs.size(); j++)
-                    if (cs[j] == *s)
-                        cs[j] = NULL;
+                    if (cs[j].clause == s->clause)
+                        cs[j].clause = NULL;
             }
             for (int i = 0; i < simp.iter_sets.size(); i++){
-                vec<Clause*>& cs = *simp.iter_sets[i];
-                simp.exclude(cs, *s);
+                vec<ClauseSimp>& cs = *simp.iter_sets[i];
+                simp.exclude(cs, s->clause);
             }
             
             // Remove clause from clause touched set:
-            if (simp.updateOccur(**s)) {
-                simp.exclude(simp.cl_touched, *s);
-                simp.exclude(simp.cl_added, *s);
+            if (simp.updateOccur(*s->clause)) {
+                simp.exclude(simp.cl_touched, s->clause);
+                simp.exclude(simp.cl_added, s->clause);
             }
-            free(*s);
+            free(s->clause);
             s++;
             continue;
-        } else if (type != ClauseCleaner::binaryClauses && (*s)->size() == 2)
+        } else if (s->clause->size() == 2)
             solver.becameBinary++;
         
         *ss++ = *s++;
