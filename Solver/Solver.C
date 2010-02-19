@@ -66,6 +66,7 @@ Solver::Solver() :
         , conglomerateXors (true)
         , heuleProcess     (true)
         , schedSimplification(true)
+        , doSubsumption    (true)
         , failedVarSearch  (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
@@ -83,6 +84,7 @@ Solver::Solver() :
         
         , curRestart       (1)
         , nbclausesbeforereduce (NBCLAUSESBEFOREREDUCE)
+        , nbCompensateSimplifier (0)
         
         , qhead            (0)
         , simpDB_assigns   (-1)
@@ -1462,7 +1464,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     }
 
     // Reduce the set of learnt clauses:
-    if (conflicts >= curRestart * nbclausesbeforereduce) {
+    if (conflicts >= curRestart * nbclausesbeforereduce + nbCompensateSimplifier) {
         curRestart ++;
         reduceDB();
         nbclausesbeforereduce += 500;
@@ -1704,8 +1706,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     if (failedVarSearch && !failedVarSearcher->search(numProps))
         goto end;
     
-    if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
-        goto end;
+    /*if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
+        goto end;*/
     
 end:
     random_var_freq = backup_random_var_freq;
@@ -1739,6 +1741,11 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
             return false;
         //PartFinder partFinder(*this);
         //partFinder.findParts();
+        if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
+            Simplifier s(*this);
+            if (s.simplifyBySubsumption(false) == false)
+                return false;
+        }
         
         fullStarts++;
     }
@@ -1760,10 +1767,11 @@ inline void Solver::performStepsBeforeSolve()
             return;
     }
     
-    if (clauses.size() + binaryClauses.size() < 2000000) {
+    /*if (doSubsumption && clauses.size() + binaryClauses.size() < 4800000) {
         Simplifier s(*this);
-        s.simplifyBySubsumption(false);
-    }
+        if (s.simplifyBySubsumption(false) == false)
+            return;
+    }*/
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
@@ -2032,7 +2040,7 @@ void Solver::printRestartStat() const
     #else
     if (verbosity >= 1) {
     #endif
-        printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses()+(int)binaryClauses.size()-(int)nbBin, (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart), (int)nLearnts(), (double)learnts_literals/nLearnts());
+    printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses()+(int)binaryClauses.size()-(int)nbBin, (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSimplifier), (int)nLearnts(), (double)learnts_literals/nLearnts());
         print_gauss_sum_stats();
     }
 }

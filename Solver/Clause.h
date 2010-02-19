@@ -130,7 +130,10 @@ public:
         return act;
     }
     
-    Lit subsumes (const Clause& other) const;
+    void         makeNonLearnt()  {
+        assert(isLearnt);
+        isLearnt = false;
+    }
     
     inline void  strengthen(const Lit p)
     {

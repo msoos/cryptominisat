@@ -134,6 +134,7 @@ public:
     bool      conglomerateXors;   // Conglomerate XORs
     bool      heuleProcess;       // Process XORs according to Heule
     bool      schedSimplification;// Schedule simplification
+    bool      doSubsumption;        // Should try to subsume clauses
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
@@ -213,6 +214,7 @@ protected:
     #endif
     uint64_t            curRestart;
     uint32_t            nbclausesbeforereduce;
+    uint32_t            nbCompensateSimplifier; // Number of learnt clauses that subsumed normal clauses last time subs. was executed
     uint32_t            qhead;            // Head of queue (as index into the trail -- no more explicit propagation queue in MiniSat).
     uint32_t            simpDB_assigns;   // Number of top-level assignments since last execution of 'simplify()'.
     int64_t             simpDB_props;     // Remaining number of propagations that must be made before next execution of 'simplify()'.

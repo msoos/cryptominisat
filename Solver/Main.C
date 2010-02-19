@@ -426,6 +426,7 @@ void printUsage(char** argv)
     printf("                    doubly propagated to the same value\n");
     printf("  -noheuleprocess = Don't try to minimise XORs by XOR-ing them together.\n");
     printf("                    Algo. as per global/local substitution in Heule's thesis\n");
+    printf("  -nosubsumption  = Don't try to subsume clauses.\n");
     printf("\n");
 }
 
@@ -566,6 +567,8 @@ int main(int argc, char** argv)
             S.gaussconfig.dontDisable = true;
         } else if ((value = hasPrefix(argv[i], "-noheuleprocess"))) {
             S.heuleProcess = false;
+        } else if ((value = hasPrefix(argv[i], "-nosubsumption"))) {
+            S.doSubsumption = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);
