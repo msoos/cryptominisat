@@ -229,6 +229,9 @@ public:
     template<class T1, class T2>
     bool subset(const T1& A, const T2& B, vec<bool>& seen);
     void updateClause(Clause& cl, ClauseSimp& c);
+    void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<Lit>& ps, vec<Lit>& ns, const Var x);
+    void DeallocPsNs(vec<Lit>& ps, vec<Lit>& ns);
+    bool merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause);
 };
 
 template <class T, class T2>
