@@ -1780,10 +1780,10 @@ inline void Solver::performStepsBeforeSolve()
         
         if (heuleProcess && conglomerate->heuleProcessFull() == false)
             return;
-        while (varReplacer->getNewToReplaceVars() != 0) {
-            if (performReplace && varReplacer->performReplace(true) == false)
+        while (heuleProcess && performReplace && varReplacer->getNewToReplaceVars() != 0) {
+            if (varReplacer->performReplace(true) == false)
                 return;
-            if (heuleProcess && conglomerate->heuleProcessFull() == false)
+            if (conglomerate->heuleProcessFull() == false)
                 return;
         }
         
