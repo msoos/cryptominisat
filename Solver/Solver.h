@@ -51,7 +51,7 @@ class XorFinder;
 class FindUndef;
 class ClauseCleaner;
 class FailedVarSearcher;
-class Simplifier;
+class Subsumer;
 
 #ifdef VERBOSE_DEBUG
 using std::cout;
@@ -214,7 +214,7 @@ protected:
     #endif
     uint64_t            curRestart;
     uint32_t            nbclausesbeforereduce;
-    uint32_t            nbCompensateSimplifier; // Number of learnt clauses that subsumed normal clauses last time subs. was executed
+    uint32_t            nbCompensateSubsumer; // Number of learnt clauses that subsumed normal clauses last time subs. was executed
     uint32_t            qhead;            // Head of queue (as index into the trail -- no more explicit propagation queue in MiniSat).
     uint32_t            simpDB_assigns;   // Number of top-level assignments since last execution of 'simplify()'.
     int64_t             simpDB_props;     // Remaining number of propagations that must be made before next execution of 'simplify()'.
@@ -299,7 +299,7 @@ protected:
     friend class ClauseCleaner;
     friend class RestartTypeChooser;
     friend class FailedVarSearcher;
-    friend class Simplifier;
+    friend class Subsumer;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;

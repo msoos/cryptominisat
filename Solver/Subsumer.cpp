@@ -7,7 +7,7 @@ A simple Chaff-like SAT-solver with support for incremental SAT.
 **************************************************************************************************/
 
 #include "Solver.h"
-#include "Simplifier.h"
+#include "Subsumer.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
 #include "assert.h"
@@ -20,14 +20,14 @@ using std::cout;
 using std::endl;
 #endif //VERBOSE_DEBUG
 
-Simplifier::Simplifier(Solver& s):
+Subsumer::Subsumer(Solver& s):
     solver(s)
     , occur_mode(occ_Permanent)
 {};
 
 static bool opt_var_elim = true;
 
-void Simplifier::exclude(vec<ClauseSimp>& cs, Clause* c)
+void Subsumer::exclude(vec<ClauseSimp>& cs, Clause* c)
 {
     uint i = 0, j = 0;
     for (; i < cs.size(); i++) {
@@ -69,7 +69,7 @@ bool selfSubset(Clause& A, Clause& B, vec<bool>& seen)
 }
 
 // Will put NULL in 'cs' if clause removed.
-void Simplifier::subsume0(ClauseSimp& ps, int& counter)
+void Subsumer::subsume0(ClauseSimp& ps, int& counter)
 {
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
@@ -108,7 +108,7 @@ void Simplifier::subsume0(ClauseSimp& ps, int& counter)
     }
 }
 
-void Simplifier::unlinkClause(ClauseSimp c, Var elim)
+void Subsumer::unlinkClause(ClauseSimp c, Var elim)
 {
     Clause& cl = *c.clause;
     
@@ -152,7 +152,7 @@ void Simplifier::unlinkClause(ClauseSimp c, Var elim)
     }
 }
 
-void Simplifier::unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c)
+void Subsumer::unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c)
 {
     if (updateOccur(*c.clause)) {
         for (int i = 0; i < cl.size(); i++) {
@@ -185,7 +185,7 @@ void Simplifier::unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c)
     }
 }
 
-void Simplifier::subsume1(ClauseSimp& ps, int& counter)
+void Subsumer::subsume1(ClauseSimp& ps, int& counter)
 {
     vec<ClauseSimp>    Q;
     vec<ClauseSimp>    subs;
@@ -272,7 +272,7 @@ void Simplifier::subsume1(ClauseSimp& ps, int& counter)
     unregisterIteration(subs);
 }
 
-void Simplifier::updateClause(Clause& cl, ClauseSimp& c)
+void Subsumer::updateClause(Clause& cl, ClauseSimp& c)
 {
     clauses[c.index] = c;
     c.abst = calcAbstraction(cl);
@@ -306,7 +306,7 @@ void Simplifier::updateClause(Clause& cl, ClauseSimp& c)
     }
 }
 
-void Simplifier::almost_all_database(int& clauses_subsumed, int& literals_removed)
+void Subsumer::almost_all_database(int& clauses_subsumed, int& literals_removed)
 {
     std::cout << "c Larger database" << std::endl;
     // Optimized variant when virtually whole database is involved:
@@ -366,7 +366,7 @@ void Simplifier::almost_all_database(int& clauses_subsumed, int& literals_remove
     }*/
 }
 
-void Simplifier::smaller_database(int& clauses_subsumed, int& literals_removed)
+void Subsumer::smaller_database(int& clauses_subsumed, int& literals_removed)
 {
     std::cout << "Smaller database" << std::endl;
     //  Set used in 1-subs:
@@ -448,7 +448,7 @@ void Simplifier::smaller_database(int& clauses_subsumed, int& literals_removed)
     unregisterIteration(s0);
 }
 
-void Simplifier::addFromSolver(vec<Clause*>& cs)
+void Subsumer::addFromSolver(vec<Clause*>& cs)
 {
     for (uint i = 0; i < cs.size(); i++) {
         ClauseSimp c(cs[i], clauses.size());
@@ -465,7 +465,7 @@ void Simplifier::addFromSolver(vec<Clause*>& cs)
     cs.clear();
 }
 
-const bool Simplifier::simplifyBySubsumption(bool with_var_elim)
+const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
 {
     double myTime = cpuTime();
     
@@ -593,7 +593,7 @@ const bool Simplifier::simplifyBySubsumption(bool with_var_elim)
         }
     }
     clauses.clear();
-    solver.nbCompensateSimplifier += origLearntsSize-solver.learnts.size();
+    solver.nbCompensateSubsumer += origLearntsSize-solver.learnts.size();
     
      /*for (i = 0; i < solver.clauses.size(); i++) {
          cout << "detaching:"; solver.clauses[i]->plainPrint();
@@ -610,7 +610,7 @@ const bool Simplifier::simplifyBySubsumption(bool with_var_elim)
     return true;
 }
 
-void Simplifier::findSubsumed(ClauseSimp& ps, vec<ClauseSimp>& out_subsumed)
+void Subsumer::findSubsumed(ClauseSimp& ps, vec<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed: ";
@@ -643,7 +643,7 @@ void Simplifier::findSubsumed(ClauseSimp& ps, vec<ClauseSimp>& out_subsumed)
     }
 }
 
-void Simplifier::findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed)
+void Subsumer::findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed: ";
@@ -678,7 +678,7 @@ void Simplifier::findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed)
 }
 
 /*
-void inline Simplifier::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<vec<Lit> >& ps, vec<vec<Lit> >& ns, const Var x)
+void inline Subsumer::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<vec<Lit> >& ps, vec<vec<Lit> >& ns, const Var x)
 {
     poss.moveTo(ps);
     negs.moveTo(ns);
@@ -689,7 +689,7 @@ void inline Simplifier::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& ne
         unlinkClause(ns[i], x);
 }
 
-void inline Simplifier::DeallocPsNs(vec<Clause>& ps, vec<Clause>& ns)
+void inline Subsumer::DeallocPsNs(vec<Clause>& ps, vec<Clause>& ns)
 {
     for (int i = 0; i < ps.size(); i++) deallocClause(ps[i]);
     for (int i = 0; i < ns.size(); i++) deallocClause(ns[i]);
@@ -700,7 +700,7 @@ void inline Simplifier::DeallocPsNs(vec<Clause>& ps, vec<Clause>& ns)
 
 
 // Returns TRUE if variable was eliminated.
-bool Simplifier::maybeEliminate(const Var x)
+bool Subsumer::maybeEliminate(const Var x)
 {
     assert(propQ.size() == 0);
     assert(!var_elimed[x]);
@@ -921,7 +921,7 @@ bool Simplifier::maybeEliminate(const Var x)
 }
 
 // Returns FALSE if clause is always satisfied ('out_clause' should not be used). 'seen' is assumed to be cleared.
-bool Simplifier::merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause)
+bool Subsumer::merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause)
 {
     for (int i = 0; i < ps.size(); i++){
         if (ps[i] != without_p){
@@ -944,7 +944,7 @@ bool Simplifier::merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec
     return true;
 }
 
-int Simplifier::substitute(Lit x, Clause& def, vec<Clause>& poss, vec<Clause>& negs, vec<Clause>& new_clauses = *(vec<Clause>*)NULL)
+int Subsumer::substitute(Lit x, Clause& def, vec<Clause>& poss, vec<Clause>& negs, vec<Clause>& new_clauses = *(vec<Clause>*)NULL)
 {
     vec<Lit>    tmp;
     int         counter = 0;

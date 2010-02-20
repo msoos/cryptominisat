@@ -40,7 +40,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "RestartTypeChooser.h"
 #include "FailedVarSearcher.h"
 #include "PartFinder.h"
-#include "Simplifier.h"
+#include "Subsumer.h"
 
 //#define VERBOSE_DEBUG_POLARITIES
 
@@ -84,7 +84,7 @@ Solver::Solver() :
         
         , curRestart       (1)
         , nbclausesbeforereduce (NBCLAUSESBEFOREREDUCE)
-        , nbCompensateSimplifier (0)
+        , nbCompensateSubsumer (0)
         
         , qhead            (0)
         , simpDB_assigns   (-1)
@@ -1464,7 +1464,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     }
 
     // Reduce the set of learnt clauses:
-    if (conflicts >= curRestart * nbclausesbeforereduce + nbCompensateSimplifier) {
+    if (conflicts >= curRestart * nbclausesbeforereduce + nbCompensateSubsumer) {
         curRestart ++;
         reduceDB();
         nbclausesbeforereduce += 500;
@@ -1741,10 +1741,9 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         if (performReplace && !varReplacer->performReplace(true))
             return false;
         if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
-            Simplifier s(*this);
+            Subsumer s(*this);
             if (s.simplifyBySubsumption(false) == false) {
-                status = l_False;
-                goto end;
+                return false;
             }
         }
         /*if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
@@ -1774,7 +1773,7 @@ inline void Solver::performStepsBeforeSolve()
     }
     
     /*if (doSubsumption && clauses.size() + binaryClauses.size() < 4800000) {
-        Simplifier s(*this);
+        Subsumer s(*this);
         if (s.simplifyBySubsumption(false) == false)
             return;
     }*/
@@ -2046,7 +2045,7 @@ void Solver::printRestartStat() const
     #else
     if (verbosity >= 1) {
     #endif
-    printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses()+(int)binaryClauses.size()-(int)nbBin, (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSimplifier), (int)nLearnts(), (double)learnts_literals/nLearnts());
+    printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses()+(int)binaryClauses.size()-(int)nbBin, (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSubsumer), (int)nLearnts(), (double)learnts_literals/nLearnts());
         print_gauss_sum_stats();
     }
 }
