@@ -1,9 +1,5 @@
 /**************************************************************************************************
-
-Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
-
-A simple Chaff-like SAT-solver with support for incremental SAT.
-
+From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 **************************************************************************************************/
 
 #include "Solver.h"
@@ -21,8 +17,8 @@ using std::endl;
 #endif //VERBOSE_DEBUG
 
 Subsumer::Subsumer(Solver& s):
-    solver(s)
-    , occur_mode(occ_Permanent)
+    occur_mode(occ_Permanent)
+    , solver(s)
 {};
 
 static bool opt_var_elim = true;
@@ -50,26 +46,26 @@ bool selfSubset(uint64_t A, uint64_t B)
 // Assumes 'seen' is cleared (will leave it cleared)
 bool selfSubset(Clause& A, Clause& B, vec<bool>& seen)
 {
-    for (int i = 0; i < B.size(); i++)
+    for (uint32_t i = 0; i < B.size(); i++)
         seen[B[i].toInt()] = 1;
     
     bool    flip = false;
-    for (int i = 0; i < A.size(); i++) {
+    for (uint32_t i = 0; i < A.size(); i++) {
         if (!seen[A[i].toInt()]) {
             if (flip == true || !seen[(~A[i]).toInt()]) {
-                for (int i = 0; i < B.size(); i++) seen[B[i].toInt()] = 0;
+                for (uint32_t i = 0; i < B.size(); i++) seen[B[i].toInt()] = 0;
                 return false;
             }
             flip = true;
         }
     }
-    for (int i = 0; i < B.size(); i++)
+    for (uint32_t i = 0; i < B.size(); i++)
         seen[B[i].toInt()] = 0;
     return flip;
 }
 
 // Will put NULL in 'cs' if clause removed.
-void Subsumer::subsume0(ClauseSimp& ps, int& counter)
+void Subsumer::subsume0(ClauseSimp& ps)
 {
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
@@ -79,8 +75,8 @@ void Subsumer::subsume0(ClauseSimp& ps, int& counter)
     
     vec<ClauseSimp> subs;
     findSubsumed(ps, subs);
-    for (int i = 0; i < subs.size(); i++){
-        if (&counter != NULL) counter++;
+    for (uint32_t i = 0; i < subs.size(); i++){
+        clauses_subsumed++;
         #ifdef VERBOSE_DEBUG
         cout << "subsume0 removing:";
         subs[i].clause->plainPrint();
@@ -95,7 +91,7 @@ void Subsumer::subsume0(ClauseSimp& ps, int& counter)
             if (!updateOccur(*ps.clause)) {
                 cl_added.add(ps);
                 Clause& cl = *ps.clause;
-                for (int i = 0; i < cl.size(); i++) {
+                for (uint32_t i = 0; i < cl.size(); i++) {
                     occur[cl[i].toInt()].push(ps);
                     touch(cl[i].var());
                 }
@@ -112,17 +108,17 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
 {
     Clause& cl = *c.clause;
     
-    if (elim != var_Undef) {
+    /*if (elim != var_Undef) {
         assert(!cl.learnt());
         io_tmp.clear();
         io_tmp.push(Lit(cl.size(), false));
         for (int i = 0; i < cl.size(); i++)
             io_tmp.push(cl[i]);
         fwrite(io_tmp.getData(), 4, io_tmp.size(), elim_out);
-    }
+    }*/
     
     if (updateOccur(cl)) {
-        for (int i = 0; i < cl.size(); i++) {
+        for (uint32_t i = 0; i < cl.size(); i++) {
             maybeRemove(occur[cl[i].toInt()], &cl);
             #ifndef TOUCH_LESS
             touch(cl[i]);
@@ -134,13 +130,13 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
     clauses[c.index].clause = NULL;
     
     // Remove from iterator vectors/sets:
-    for (int i = 0; i < iter_vecs.size(); i++) {
+    for (uint32_t i = 0; i < iter_vecs.size(); i++) {
         vec<ClauseSimp>& cs = *iter_vecs[i];
-        for (int j = 0; j < cs.size(); j++)
+        for (uint32_t j = 0; j < cs.size(); j++)
             if (cs[j].clause == &cl)
                 cs[j].clause = NULL;
     }
-    for (int i = 0; i < iter_sets.size(); i++) {
+    for (uint32_t i = 0; i < iter_sets.size(); i++) {
         CSet& cs = *iter_sets[i];
         cs.exclude(c);
     }
@@ -155,7 +151,7 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
 void Subsumer::unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c)
 {
     if (updateOccur(*c.clause)) {
-        for (int i = 0; i < cl.size(); i++) {
+        for (uint32_t i = 0; i < cl.size(); i++) {
             maybeRemove(occur[cl[i].toInt()], c.clause);
             #ifndef TOUCH_LESS
             touch(cl[i]);
@@ -167,13 +163,13 @@ void Subsumer::unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c)
     clauses[c.index].clause = NULL;
     
     // Remove from iterator vectors/sets:
-    for (int i = 0; i < iter_vecs.size(); i++){
+    for (uint32_t i = 0; i < iter_vecs.size(); i++){
         vec<ClauseSimp>& cs = *iter_vecs[i];
-        for (int j = 0; j < cs.size(); j++)
+        for (uint32_t j = 0; j < cs.size(); j++)
             if (cs[j].clause == c.clause)
                 cs[j].clause = NULL;
     }
-    for (int i = 0; i < iter_sets.size(); i++){
+    for (uint32_t i = 0; i < iter_sets.size(); i++){
         CSet& cs = *iter_sets[i];
         cs.exclude(c);
     }
@@ -185,12 +181,12 @@ void Subsumer::unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c)
     }
 }
 
-void Subsumer::subsume1(ClauseSimp& ps, int& counter)
+void Subsumer::subsume1(ClauseSimp& ps)
 {
     vec<ClauseSimp>    Q;
     vec<ClauseSimp>    subs;
     vec<Lit>        qs;
-    int             q;
+    uint32_t        q;
     
     registerIteration(Q);
     registerIteration(subs);
@@ -205,13 +201,13 @@ void Subsumer::subsume1(ClauseSimp& ps, int& counter)
         #endif
         
         qs.clear();
-        for (int i = 0; i < Q[q].clause->size(); i++)
+        for (uint32_t i = 0; i < Q[q].clause->size(); i++)
             qs.push((*Q[q].clause)[i]);
         
-        for (int i = 0; i < qs.size(); i++){
+        for (uint32_t i = 0; i < qs.size(); i++){
             qs[i] = ~qs[i];
             findSubsumed(qs, subs);
-            for (int j = 0; j < subs.size(); j++){
+            for (uint32_t j = 0; j < subs.size(); j++){
                 /*#ifndef NDEBUG
                 if (&counter != NULL && counter == -1){
                     dump(*subs[j].clause);
@@ -222,7 +218,7 @@ void Subsumer::subsume1(ClauseSimp& ps, int& counter)
                 }
                 #endif*/
                 if (subs[j].clause == NULL) continue;
-                if (&counter != NULL) counter++;
+                literals_removed++;
                 
                 #ifdef VERBOSE_DEBUG
                 cout << "orig clause    :";
@@ -277,13 +273,13 @@ void Subsumer::updateClause(Clause& cl, ClauseSimp& c)
     clauses[c.index] = c;
     c.abst = calcAbstraction(cl);
     // Update from iterator vectors/sets:
-    for (int i = 0; i < iter_vecs.size(); i++) {
+    for (uint32_t i = 0; i < iter_vecs.size(); i++) {
         vec<ClauseSimp>& cs = *iter_vecs[i];
-        for (uint i2 = 0; i2 < cs.size(); i2++)
+        for (uint32_t i2 = 0; i2 < cs.size(); i2++)
             if (cs[i2].clause == &cl)
                 cs[i2].abst = c.abst;
     }
-    for (int i = 0; i < iter_sets.size(); i++) {
+    for (uint32_t i = 0; i < iter_sets.size(); i++) {
         CSet& cs = *iter_sets[i];
         cs.update(c);
     }
@@ -295,7 +291,7 @@ void Subsumer::updateClause(Clause& cl, ClauseSimp& c)
         if (!cl.learnt()) subsume0(c);
     
     if (updateOccur(cl)) {
-        for (int i2 = 0; i2 < cl.size(); i2++) {
+        for (uint32_t i2 = 0; i2 < cl.size(); i2++) {
             occur[cl[i2].toInt()].push(c);
             touch(cl[i2].var());
         }
@@ -306,16 +302,16 @@ void Subsumer::updateClause(Clause& cl, ClauseSimp& c)
     }
 }
 
-void Subsumer::almost_all_database(int& clauses_subsumed, int& literals_removed)
+void Subsumer::almost_all_database()
 {
     std::cout << "c Larger database" << std::endl;
     // Optimized variant when virtually whole database is involved:
     cl_added  .clear();
     cl_touched.clear();
     
-    for (int i = 0; i < clauses.size(); i++) {
+    for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i].clause != NULL)
-            subsume1(clauses[i], literals_removed);
+            subsume1(clauses[i]);
     }
     if (!solver.ok) return;
     solver.ok = solver.propagate() == NULL;
@@ -341,7 +337,7 @@ void Subsumer::almost_all_database(int& clauses_subsumed, int& literals_removed)
         
         for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
             if (it->clause != NULL)
-                subsume1(*it, literals_removed);
+                subsume1(*it);
         }
         s1.clear();
         
@@ -362,11 +358,11 @@ void Subsumer::almost_all_database(int& clauses_subsumed, int& literals_removed)
     for (int i = 0; i < clauses.size(); i++) {
         assert(clauses[i].index == i);
         if (clauses[i].clause != NULL)
-            subsume0(clauses[i], clauses_subsumed);
+            subsume0(clauses[i]);
     }*/
 }
 
-void Subsumer::smaller_database(int& clauses_subsumed, int& literals_removed)
+void Subsumer::smaller_database()
 {
     std::cout << "Smaller database" << std::endl;
     //  Set used in 1-subs:
@@ -386,17 +382,17 @@ void Subsumer::smaller_database(int& clauses_subsumed, int& literals_removed)
         Clause& cl = *it->clause;
         
         s1.add(c);
-        for (int j = 0; j < cl.size(); j++){
+        for (uint32_t j = 0; j < cl.size(); j++){
             if (ol_seen[cl[j].toInt()]) continue;
             ol_seen[cl[j].toInt()] = 1;
             
             vec<ClauseSimp>& n_occs = occur[~cl[j].toInt()];
-            for (int k = 0; k < n_occs.size(); k++)
+            for (uint32_t k = 0; k < n_occs.size(); k++)
                 if (n_occs[k].clause != c.clause && n_occs[k].clause->size() <= cl.size() && selfSubset(n_occs[k].abst, c.abst) && selfSubset(*n_occs[k].clause, cl, seen_tmp))
                     s1.add(n_occs[k]);
                 
             vec<ClauseSimp>& p_occs = occur[cl[j].toInt()];
-            for (int k = 0; k < p_occs.size(); k++)
+            for (uint32_t k = 0; k < p_occs.size(); k++)
                 if (subsetAbst(p_occs[k].abst, c.abst))
                     s0.add(p_occs[k]);
         }
@@ -422,7 +418,7 @@ void Subsumer::smaller_database(int& clauses_subsumed, int& literals_removed)
         
         for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
             if (it->clause != NULL)
-                subsume1(*it, literals_removed);
+                subsume1(*it);
         }
         s1.clear();
         
@@ -442,7 +438,7 @@ void Subsumer::smaller_database(int& clauses_subsumed, int& literals_removed)
     // Iteration pass for 0-subsumption:
     for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
         if (it->clause != NULL)
-            subsume0(*it, clauses_subsumed);
+            subsume0(*it);
     }
     s0.clear();
     unregisterIteration(s0);
@@ -455,7 +451,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
         clauses.push(c);
         Clause& cl = *c.clause;
         if (updateOccur(cl)) {
-            for (int i = 0; i < cl.size(); i++) {
+            for (uint32_t i = 0; i < cl.size(); i++) {
                 occur[cl[i].toInt()].push(c);
                 touch(cl[i].var());
             }
@@ -487,15 +483,16 @@ const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
     solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
     addFromSolver(solver.learnts);
     
-    int     clauses_subsumed = 0, literals_removed = 0;
-    int     orig_n_clauses  = solver.nClauses();
-    int     orig_n_literals = solver.nLiterals();
-    uint    origTrailSize = solver.trail.size();
+    //uint32_t    orig_n_clauses  = solver.nClauses();
+    //uint32_t    orig_n_literals = solver.nLiterals();
+    uint32_t    origTrailSize = solver.trail.size();
+    clauses_subsumed = 0;
+    literals_removed = 0;
     
-    for (int i = 0; i < clauses.size(); i++) {
+    for (uint32_t i = 0; i < clauses.size(); i++) {
         assert(clauses[i].index == i);
         if (clauses[i].clause != NULL)
-            subsume0(clauses[i], clauses_subsumed);
+            subsume0(clauses[i]);
     }
     if (!solver.ok) return false;
     std::cout << "c   pre-subsumed:" << clauses_subsumed << std::endl;
@@ -508,10 +505,10 @@ const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
         #endif
         
         if (cl_added.size() > solver.nClauses() / 2) {
-            almost_all_database(clauses_subsumed, literals_removed);
+            almost_all_database();
             if (!solver.ok) return false;
         } else {
-            smaller_database(clauses_subsumed, literals_removed);
+            smaller_database();
             if (!solver.ok) return false;
         }
         
@@ -623,13 +620,13 @@ void Subsumer::findSubsumed(ClauseSimp& ps, vec<ClauseSimp>& out_subsumed)
     
     Clause& cl = *ps.clause;
     int min_i = 0;
-    for (int i = 1; i < cl.size(); i++){
+    for (uint32_t i = 1; i < cl.size(); i++){
         if (occur[cl[i].toInt()].size() < occur[cl[min_i].toInt()].size())
             min_i = i;
     }
     
     vec<ClauseSimp>& cs = occur[cl[min_i].toInt()];
-    for (int i = 0; i < cs.size(); i++){
+    for (uint32_t i = 0; i < cs.size(); i++){
         if (i+1 < cs.size())
             __builtin_prefetch(cs[i+1].clause, 1, 1);
         
@@ -857,7 +854,7 @@ bool Subsumer::maybeEliminate(const Var x)
             goto Eliminated;
         }
         
-        //****TEST*****
+        // ****TEST*****
         // Try to remove 'x' from clauses:
         bool    ran = false;
         if (poss.size() < 10){ ran = true; asymmetricBranching(Lit(x, false)); if (!solver.ok) return true; }
@@ -907,7 +904,7 @@ bool Subsumer::maybeEliminate(const Var x)
                 goto Eliminated;
             }
         }
-        //*****END TEST****
+        // *****END TEST****
     }
     
     return false;

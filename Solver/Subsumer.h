@@ -1,9 +1,5 @@
 /**************************************************************************************************
-
-Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
-
-A simple Chaff-like SAT-solver with support for incremental SAT.
-
+From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 **************************************************************************************************/
 
 #ifndef SIMPLIFIER_H
@@ -92,11 +88,11 @@ public:
     void findSubsumed(ClauseSimp& ps, vec<ClauseSimp>& out_subsumed);
     void findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed);
     bool isSubsumed(Clause& ps);
-    void subsume0(ClauseSimp& ps, int& counter = *(int*)NULL);
-    void subsume1(ClauseSimp& ps, int& counter = *(int*)NULL);
+    void subsume0(ClauseSimp& ps);
+    void subsume1(ClauseSimp& ps);
     const bool simplifyBySubsumption(bool with_var_elim = true);
-    void smaller_database(int& clauses_subsumed, int& literals_removed);
-    void almost_all_database(int& clauses_subsumed, int& literals_removed);
+    void smaller_database();
+    void almost_all_database();
     void orderVarsForElim(vec<Var>& order);
     int  substitute(Lit x, Clause& def, vec<Clause*>& poss, vec<Clause*>& negs, vec<Clause*>& new_clauses);
     Lit  findUnitDef(Var x, vec<Clause*>& poss, vec<Clause>& negs);
@@ -111,6 +107,9 @@ public:
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<Lit>& ps, vec<Lit>& ns, const Var x);
     void DeallocPsNs(vec<Lit>& ps, vec<Lit>& ns);
     bool merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause);
+    
+    uint32_t clauses_subsumed;
+    uint32_t literals_removed;
 };
 
 template <class T, class T2>
@@ -163,7 +162,7 @@ bool Subsumer::subset(const T1& A, const T2& B, vec<bool>& seen)
 
 
 
-inline void dump(Clause& c, bool newline = true, FILE* out = stdout)
+/*inline void dump(Clause& c, bool newline = true, FILE* out = stdout)
 {
     fprintf(out, "{");
     for (int i = 0; i < c.size(); i++)
@@ -201,6 +200,6 @@ inline void dump(Solver& S, vec<Lit>& c, bool newline = true, FILE* out = stdout
     
     fprintf(out, " }%s", newline ? "\n" : "");
     fflush(out);
-}
+}*/
 
 #endif //SIMPLIFIER_H
