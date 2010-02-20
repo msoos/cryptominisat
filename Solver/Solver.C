@@ -1744,8 +1744,10 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         //partFinder.findParts();
         if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
             Simplifier s(*this);
-            if (s.simplifyBySubsumption(false) == false)
-                return false;
+            if (s.simplifyBySubsumption(false) == false) {
+                status = l_False;
+                goto end;
+            }
         }
         
         fullStarts++;
