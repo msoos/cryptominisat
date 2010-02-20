@@ -1747,6 +1747,9 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
                 goto end;
             }
         }
+        /*if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
+        goto end;*/
+        
         //PartFinder partFinder(*this);
         //partFinder.findParts();
         
