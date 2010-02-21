@@ -1350,8 +1350,8 @@ lbool Solver::simplify()
         lastNbBin = nbBin;
         becameBinary = 0;
         
-        if (failedVarSearch && !failedVarSearcher->search(500000))
-            return l_False;
+        /*if (failedVarSearch && !failedVarSearcher->search(500000))
+            return l_False;*/
     }
 
     // Remove satisfied clauses:
@@ -1726,26 +1726,45 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         clearGaussMatrixes();
         if (verbosity >= 1)
             printf("c |                                      Fully restarting                                 |\n");
-        //if (calculateDefaultPolarities() == l_False)
-        //    return l_False;
-        //setDefaultPolarities();
         nof_conflicts = restart_first + (double)restart_first*restart_inc;
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         setDefaultRestartType();
         lastFullRestart = starts;
         if (performReplace && !varReplacer->performReplace(true))
             return false;
+        
+        if (failedVarSearch && !failedVarSearcher->search(2000000))
+            return false;
+        
         if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
             Subsumer s(*this);
             if (s.simplifyBySubsumption(false) == false) {
                 return false;
             }
         }
-        /*if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
-        goto end;*/
+        
+        /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
+            for (uint i = 0; i < clauses.size(); i++) {
+                Clause& c = *clauses[i];
+                detachClause(c);
+                std::sort(c.getData(), c.getData()+c.size());
+                attachClause(c);
+            }
+            
+            XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
+            if (!xorFinder.doNoPart(3, 10))
+                return false;
+        }*/
         
         //PartFinder partFinder(*this);
         //partFinder.findParts();
+        
+        /*if (calculateDefaultPolarities() == l_False)
+            return false;
+        setDefaultPolarities();*/
+        
+        /*if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
+        goto end;*/
         
         fullStarts++;
     }
