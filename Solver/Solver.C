@@ -1567,6 +1567,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
             c->resize(learnt_clause.size());
             if (c->learnt() && c->activity() > nbLevels)
                 c->setActivity(nbLevels); // LS
+            c->setChanged();
         } else {
             c = Clause_new(learnt_clause, learnt_clause_group++, true);
             #ifdef STATS_NEEDED
@@ -1711,6 +1712,14 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     }
     printRestartStat();
     
+    if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
+        Subsumer s(*this);
+        if (!s.simplifyBySubsumption(false)) {
+            status = l_False;
+            goto end;
+        }
+    }
+    
     if (status != l_Undef)
         goto end;
     
@@ -1745,13 +1754,6 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         
         if (failedVarSearch && !failedVarSearcher->search(2000000))
             return false;
-        
-        if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
-            Subsumer s(*this);
-            if (s.simplifyBySubsumption(false) == false) {
-                return false;
-            }
-        }
         
         /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
             for (uint i = 0; i < clauses.size(); i++) {
@@ -1796,11 +1798,11 @@ inline void Solver::performStepsBeforeSolve()
             return;
     }
     
-    /*if (doSubsumption && clauses.size() + binaryClauses.size() < 4800000) {
+    if (doSubsumption && nClauses() < 200000) {
         Subsumer s(*this);
-        if (s.simplifyBySubsumption(false) == false)
+        if (s.simplifyBySubsumption(true) == false)
             return;
-    }*/
+    }
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
@@ -2069,7 +2071,7 @@ void Solver::printRestartStat() const
     #else
     if (verbosity >= 1) {
     #endif
-    printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses()+(int)binaryClauses.size()-(int)nbBin, (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSubsumer), (int)nLearnts(), (double)learnts_literals/nLearnts());
+    printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses()-(int)nbBin, (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSubsumer), (int)nLearnts(), (double)learnts_literals/nLearnts());
         print_gauss_sum_stats();
     }
 }
