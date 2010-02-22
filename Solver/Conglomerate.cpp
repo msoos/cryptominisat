@@ -430,7 +430,6 @@ void Conglomerate::clearToRemove()
         if (!toRemove[i])
             *a++ = *r++;
         else {
-            (**a).mark(1);
             r++;
         }
     }

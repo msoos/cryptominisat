@@ -553,7 +553,6 @@ inline void Solver::removeClause(XorClause& c)
 {
     detachClause(c);
     freeLater.push(&c);
-    c.mark(1);
 }
 
 
