@@ -46,7 +46,7 @@ class CSet {
         uint32_t size(void) const { return which.size(); }
         uint32_t nElems(void) const { return which.size() - free.size(); }
         
-        bool add(ClauseSimp& c) {
+        bool add(const ClauseSimp& c) {
             assert(c.clause != NULL);
             where.growTo(c.index+1, std::numeric_limits<uint32_t>::max());
             if (where[c.index] != std::numeric_limits<uint32_t>::max()) {
@@ -65,7 +65,7 @@ class CSet {
             return false;
         }
         
-        bool exclude(ClauseSimp& c) {
+        bool exclude(const ClauseSimp& c) {
             assert(c.clause != NULL);
             if (c.index >= where.size() || where[c.index] == std::numeric_limits<uint32_t>::max()) {
                 //not inside
