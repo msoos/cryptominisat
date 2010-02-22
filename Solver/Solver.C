@@ -150,6 +150,7 @@ Var Solver::newVar(bool dvar)
     level     .push(-1);
     activity  .push(0);
     seen      .push_back(0);
+    seen      .push_back(0);
     permDiff  .push(0);
     
     polarity  .push_back(true);
@@ -667,6 +668,24 @@ Lit Solver::pickBranchLit()
     }
 }
 
+// Assumes 'seen' is cleared (will leave it cleared)
+template<class T1, class T2>
+bool subset(const T1& A, const T2& B, vector<bool>& seen)
+{
+    for (uint i = 0; i != B.size(); i++)
+        seen[B[i].toInt()] = 1;
+    for (uint i = 0; i != A.size(); i++) {
+        if (!seen[A[i].toInt()]) {
+            for (uint i = 0; i != B.size(); i++)
+                seen[B[i].toInt()] = 0;
+            return false;
+        }
+    }
+    for (uint i = 0; i != B.size(); i++)
+        seen[B[i].toInt()] = 0;
+    return true;
+}
+
 
 /*_________________________________________________________________________________________________
 |
@@ -808,16 +827,7 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, i
         return NULL;
     
     if (!oldConfl->isXor() && out_learnt.size() < oldConfl->size()) {
-        for (uint i = 0; i != out_learnt.size(); i++) {
-            bool found = false;
-            for (uint i2 = 0; i2 != oldConfl->size(); i2++) {
-                if ((*oldConfl)[i2] == out_learnt[i]) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) return NULL;
-        }
+        if (!subset(out_learnt, *oldConfl, seen)) return NULL;
         improvedClauseNo++;
         improvedClauseSize += oldConfl->size() - out_learnt.size();
         return oldConfl;
