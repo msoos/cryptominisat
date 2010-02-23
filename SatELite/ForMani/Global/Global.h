@@ -328,6 +328,8 @@ public:
     void     growTo (int size);
     void     growTo (int size, const T& pad);
     void     clear  (bool dealloc = false);
+    const T* getData() const {return data; }
+    T* getData() {return data; }
 
     // Stack interface:
     void     push  (void)              { if (sz == cap) grow(sz+1); new (&data[sz]) T()    ; sz++; }
