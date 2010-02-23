@@ -7,6 +7,7 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include "ClauseCleaner.h"
 #include "time_mem.h"
 #include "assert.h"
+#include <iomanip>
 
 //#define VERBOSE_DEBUG
 //#define TOUCH_LESS
@@ -292,7 +293,9 @@ void Subsumer::updateClause(Clause& cl, ClauseSimp& c)
 
 void Subsumer::almost_all_database()
 {
+    #ifdef VERBOSE_DEBUG
     std::cout << "c Larger database" << std::endl;
+    #endif
     // Optimized variant when virtually whole database is involved:
     cl_added  .clear();
     cl_touched.clear();
@@ -316,7 +319,9 @@ void Subsumer::almost_all_database()
     CSet s1;
     registerIteration(s1);
     while (cl_touched.size() > 0){
+        #ifdef VERBOSE_DEBUG
         std::cout << "c cl_touched was > 0, new iteration" << std::endl;
+        #endif
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
             if (it->clause != NULL)
                 s1.add(*it);
@@ -352,7 +357,9 @@ void Subsumer::almost_all_database()
 
 void Subsumer::smaller_database()
 {
+    #ifdef VERBOSE_DEBUG
     std::cout << "Smaller database" << std::endl;
+    #endif
     //  Set used in 1-subs:
     //      (1) clauses containing a negated literal of an added clause.
     //      (2) all added or strengthened ("touched") clauses.
@@ -484,18 +491,17 @@ const bool Subsumer::simplifyBySubsumption(const bool full)
             subsume0(clauses[i]);
     }
     if (!solver.ok) return false;
+    #ifdef VERBOSE_DEBUG
     std::cout << "c   pre-subsumed:" << clauses_subsumed << std::endl;
     std::cout << "c   cl_added:" << cl_added.size() << std::endl;
     std::cout << "c   cl_touched:" << cl_touched.size() << std::endl;
     std::cout << "c   clauses:" << clauses.size() << std::endl;
     std::cout << "c   origNClauses:" << origNClauses << std::endl;
+    #endif
     
     do{
         // SUBSUMPTION:
         //
-        #ifndef SAT_LIVE
-        std::cout << "c   -- subsuming" << std::endl;
-        #endif
         
         if (cl_added.size() > origNClauses / 2 || full) {
             almost_all_database();
@@ -563,11 +569,6 @@ const bool Subsumer::simplifyBySubsumption(const bool full)
         return false;
     }
     
-    std::cout << "c #literals-removed: " << literals_removed 
-    << "  #clauses-subsumed: " << clauses_subsumed 
-    << " #vars fixed: " << solver.trail.size() - origTrailSize
-    << std::endl;
-    
     if (solver.trail.size() - origTrailSize > 0)
         solver.order_heap.filter(Solver::VarFilter(solver));
     
@@ -586,18 +587,12 @@ const bool Subsumer::simplifyBySubsumption(const bool full)
     clauses.clear();
     solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
     
-     /*for (i = 0; i < solver.clauses.size(); i++) {
-         cout << "detaching:"; solver.clauses[i]->plainPrint();
-         cout << "pointer:" << solver.clauses[i] << endl;
-         solver.detachClause(*solver.clauses[i]);
-     }
-     for (i = 0; i < solver.binaryClauses.size(); i++) {
-         cout << "detaching:"; solver.binaryClauses[i]->plainPrint();
-         cout << "pointer:" << solver.binaryClauses[i] << endl;
-         solver.detachClause(*solver.binaryClauses[i]);
-     }*/
+    std::cout << "c |  literals-removed: " << std::setw(9) << literals_removed
+    << " clauses-subsumed: " << std::setw(9) << clauses_subsumed
+    << " vars fixed: " << std::setw(3) <<solver.trail.size() - origTrailSize
+    << " time: " << std::setw(5) << std::setprecision(2) << (cpuTime() - myTime)
+    << "  |" << std::endl;
     
-    std::cout << "c Subsumer time: " << (cpuTime() - myTime) << std::endl;
     return true;
 }
 
