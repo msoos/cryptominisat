@@ -222,8 +222,9 @@ protected:
     Heap<VarOrderLt>    order_heap;       // A priority queue of variables ordered with respect to the variable activity.
     double              progress_estimate;// Set by 'search()'.
     bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
-    bqueue<uint> nbDecisionLevelHistory; // Set of last decision level in conflict clauses
+    bqueue<uint>        nbDecisionLevelHistory; // Set of last decision level in conflict clauses
     float               totalSumOfDecisionLevel;
+    bqueue<uint>        avgBranchDepth; // Avg branch depth
     MTRand              mtrand;           // random number generaton
     RestartType         restartType;      // Used internally to determine which restart strategy to choose
     friend class        Logger;
@@ -350,10 +351,11 @@ inline void Solver::varBumpActivity(Var v)
         //printf("RESCALE!!!!!!\n");
         //std::cout << "var_inc: " << var_inc << std::endl;
         // Rescale:
-        for (uint32_t i = 0; i != nVars(); i++)
-            activity[i] *= 1e-94;
+        for (uint32_t i = 0; i != nVars(); i++) {
+            activity[i] *= 1e-99;
+        }
         var_inc *= 1e-100;
-        var_inc = 1;
+        //var_inc = 1;
         //std::cout << "var_inc: " << var_inc << std::endl;
         
         /*Heap<VarOrderLt> copy_order_heap2(order_heap);
