@@ -21,18 +21,6 @@ Subsumer::Subsumer(Solver& s):
     , solver(s)
 {};
 
-static bool opt_var_elim = true;
-
-void Subsumer::exclude(vec<ClauseSimp>& cs, Clause* c)
-{
-    uint i = 0, j = 0;
-    for (; i < cs.size(); i++) {
-        if (cs[i].clause != c)
-            cs[j++] = cs[i];
-    }
-    cs.shrink(i-j);
-}
-
 bool selfSubset(uint64_t A, uint64_t B)
 {
     uint64_t B_tmp = B | ((B & 0xAAAAAAAAAAAAAAAALL) >> 1) | ((B & 0x5555555555555555LL) << 1);
@@ -472,7 +460,7 @@ const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
         seen_tmp    .push(0);
         touched     .push(1);
         touched_list.push(i);
-        var_elimed  .push(0);
+        //var_elimed  .push(0);
     }
     
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
@@ -514,7 +502,8 @@ const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
         
         // VARIABLE ELIMINATION:
         //
-        if (!with_var_elim || !opt_var_elim) break;
+        //if (!with_var_elim || !opt_var_elim) break;
+        break;
         
         
         /*printf("VARIABLE ELIMINIATION\n");
@@ -1020,6 +1009,16 @@ int Subsumer::substitute(Lit x, Clause& def, vec<Clause>& poss, vec<Clause>& neg
     
     //if (counter != 0 && def.size() >= 2) exit(0);
     return counter;
+}
+
+void Subsumer::exclude(vec<ClauseSimp>& cs, Clause* c)
+{
+    uint i = 0, j = 0;
+    for (; i < cs.size(); i++) {
+        if (cs[i].clause != c)
+            cs[j++] = cs[i];
+    }
+    cs.shrink(i-j);
 }*/
 
 
