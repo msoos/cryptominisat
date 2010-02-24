@@ -247,6 +247,7 @@ class Tester:
     print "--testdir (-t)     The directory where the files to test are. Default: \"../tests/\""
     print "--exe     (-e)     Where the cryptominisat executable is located. Default: \"../build/cryptominisat\""
     print "--pre     (-p)     Do pre-simplification. The problems cannot contain xor-clauses"
+    print "--speed   (-s)     Only solve, don't verify the result"
     print "--help    (-h)     Print this help screen"
 
   def main(self):
