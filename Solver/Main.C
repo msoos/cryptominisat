@@ -619,8 +619,10 @@ int main(int argc, char** argv)
 #else
     gzFile in = (argc == 1) ? gzdopen(0, "rb") : gzopen(argv[1], "rb");
 #endif // DISABLE_ZLIB
-    if (in == NULL)
-        printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
+    if (in == NULL) {
+        printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]);
+        exit(1);
+    }
 
     if (S.verbosity >= 1) {
         printf("c ============================[ Problem Statistics ]=============================\n");
@@ -634,7 +636,8 @@ int main(int argc, char** argv)
 #else
     gzclose(in);
 #endif // DISABLE_ZLIB
-    FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
+    if (argc >= 3)
+        printf("Putting output to file: %s\n" , argv[2]);
 
     double parse_time = cpuTime() - cpu_time;
     if (S.verbosity >= 1)
@@ -650,7 +653,17 @@ int main(int argc, char** argv)
     if (ret == l_Undef)
         printf("c Not finished running -- maximum restart reached\n");
     
-    if (res != NULL){
+    FILE* res = NULL;
+    if (argc >= 3) {
+        res = fopen(argv[2], "wb");
+        if (res == NULL) {
+            int backup_errno = errno;
+            printf("Cannot open %s for writing. Problem: %s", argv[2], strerror(backup_errno));
+            exit(1);
+        }
+    }
+    
+    if (res != NULL) {
         if (ret == l_True) {
             printf("c SAT\n");
             fprintf(res, "SAT\n");
