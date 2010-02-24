@@ -415,7 +415,7 @@ inline uint32_t      Solver::nAssigns      ()      const
 }
 inline uint32_t      Solver::nClauses      ()      const
 {
-    return clauses.size() + xorclauses.size();
+    return clauses.size() + xorclauses.size()+binaryClauses.size();
 }
 inline uint32_t      Solver::nLiterals      ()      const
 {

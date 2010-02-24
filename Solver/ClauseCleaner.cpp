@@ -95,13 +95,17 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
     if ((c.size() > 2) && (c.size() - (i-j) == 2)) {
         solver.detachModifiedClause(origLit1, origLit2, c.size(), &c);
         c.shrink(i-j);
+        c.setChanged();
         solver.attachClause(c);
     } else {
-        c.shrink(i-j);
-        if (c.learnt())
-            solver.learnts_literals -= i-j;
-        else
-            solver.clauses_literals -= i-j;
+        if (i-j > 0) {
+            c.setChanged();
+            c.shrink(i-j);
+            if (c.learnt())
+                solver.learnts_literals -= i-j;
+            else
+                solver.clauses_literals -= i-j;
+        }
     }
     
     return false;
@@ -257,7 +261,10 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
             return true;
         }
         default:
-            solver.clauses_literals -= i-j;
+            if (i-j > 0) {
+                c.setChanged();
+                solver.clauses_literals -= i-j;
+            }
             return false;
     }
 }

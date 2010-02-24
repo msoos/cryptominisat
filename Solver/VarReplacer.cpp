@@ -144,12 +144,12 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
                 changed = true;
                 *l = Lit(newlit.var(), false);
                 c.invert(newlit.sign());
+                c.setChanged();
                 replacedLits++;
             }
         }
         
         if (isAttached && changed && handleUpdatedClause(c, origVar1, origVar2)) {
-            c.mark(1);
             solver.freeLater.push(&c);
             r++;
         } else {
@@ -226,6 +226,7 @@ void VarReplacer::replace_set(vec<Clause*>& cs)
             if (table[l->var()].var() != l->var()) {
                 changed = true;
                 *l = table[l->var()] ^ l->sign();
+                c.setChanged();
                 replacedLits++;
             }
         }
@@ -407,6 +408,7 @@ void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverte
     ps[0] ^= xor_clause_inverted;
     
     c = Clause_new(ps, group, false);
+    c->setChanged();
     if (internal) {
         solver.binaryClauses.push(c);
         solver.becameBinary++;
@@ -417,6 +419,7 @@ void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverte
     ps[0] ^= true;
     ps[1] ^= true;
     c = Clause_new(ps, group, false);
+    c->setChanged();
     if (internal) {
         solver.binaryClauses.push(c);
         solver.becameBinary++;

@@ -443,13 +443,13 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
                 occur[cl[i].toInt()].push(c);
                 touch(cl[i].var());
             }
-            cl_added.add(c);
+            if (cl.changed()) cl_touched.add(c);
         }
     }
     cs.clear();
 }
 
-const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
+const bool Subsumer::simplifyBySubsumption(const bool full)
 {
     double myTime = cpuTime();
     
@@ -462,12 +462,13 @@ const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
         touched_list.push(i);
         //var_elimed  .push(0);
     }
+    uint32_t origNClauses = solver.nClauses();
     
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses);
     solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::binaryClauses);
     addFromSolver(solver.binaryClauses);
-    uint32_t origLearntsSize = solver.learnts.size();
+    uint32_t origNLearnts = solver.learnts.size();
     solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
     addFromSolver(solver.learnts);
     
@@ -484,6 +485,10 @@ const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
     }
     if (!solver.ok) return false;
     std::cout << "c   pre-subsumed:" << clauses_subsumed << std::endl;
+    std::cout << "c   cl_added:" << cl_added.size() << std::endl;
+    std::cout << "c   cl_touched:" << cl_touched.size() << std::endl;
+    std::cout << "c   clauses:" << clauses.size() << std::endl;
+    std::cout << "c   origNClauses:" << origNClauses << std::endl;
     
     do{
         // SUBSUMPTION:
@@ -492,7 +497,7 @@ const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
         std::cout << "c   -- subsuming" << std::endl;
         #endif
         
-        if (cl_added.size() > solver.nClauses() / 2) {
+        if (cl_added.size() > origNClauses / 2 || full) {
             almost_all_database();
             if (!solver.ok) return false;
         } else {
@@ -579,7 +584,7 @@ const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
         }
     }
     clauses.clear();
-    solver.nbCompensateSubsumer += origLearntsSize-solver.learnts.size();
+    solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
     
      /*for (i = 0; i < solver.clauses.size(); i++) {
          cout << "detaching:"; solver.clauses[i]->plainPrint();
