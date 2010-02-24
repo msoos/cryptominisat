@@ -255,7 +255,7 @@ inline void Simplifier::touch(const Lit p)
 
 inline bool Simplifier::updateOccur(Clause& c)
 {
-    return occur_mode == occ_All || (occur_mode == occ_Permanent && !c.learnt());
+    return occur_mode == occ_All || (occur_mode == occ_Permanent && !c.learnt()) || c.size() == 2;
 }
 
 
