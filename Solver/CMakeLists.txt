@@ -33,5 +33,6 @@ add_library(cryptominisatlib
     FailedVarSearcher.cpp
     PartFinder.cpp
     Subsumer.cpp
+    PartHandler.cpp
 )
 

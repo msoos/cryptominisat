@@ -40,7 +40,8 @@ class VarReplacer
         VarReplacer(Solver& solver);
         ~VarReplacer();
         const bool performReplace(const bool always = false);
-        const bool replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group);
+        template<class T>
+        const bool replace(T& ps, const bool xor_clause_inverted, const uint group);
         void extendModel() const;
         const uint getNumReplacedLits() const;
         const uint getNumReplacedVars() const;
@@ -59,7 +60,8 @@ class VarReplacer
         void replace_set(vec<XorClause*>& cs, const bool isAttached);
         const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
         const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
-        void addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal = false);
+        template<class T>
+        void addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint group, const bool internal = false);
         
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);

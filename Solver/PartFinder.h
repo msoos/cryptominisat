@@ -38,11 +38,17 @@ class PartFinder {
     
     public:
         PartFinder(Solver& solver);
-        const uint findParts();
+        const bool findParts();
+        
+        const map<uint, vector<Var> >& getReverseTable(); // part->var
+        const uint getVarPart(const Var var);
+        const vector<uint>& getTable(); //var -> part
+        const vector<Var>& getPartVars(const uint part);
     
     private:
         const uint setParts();
-        void addToPart(vec<Clause*> const* cs2);
+        template<class T>
+        void addToPart(const vec<T*>& cs);
         
         struct mysorter
         {
@@ -52,16 +58,35 @@ class PartFinder {
             }
         };
         
-        void findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClause*>& xorsInMatrix);
+        //const bool findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClause*>& xorsInMatrix);
         template<class T>
-        void calcIn(vec<T*>const* cs2, vector<uint>& numClauseInPart, vector<uint>& sumXorSizeInPart);
+        void calcIn(const vec<T*>& cs, vector<uint>& numClauseInPart, vector<uint>& sumXorSizeInPart);
         
         map<uint, vector<Var> > reverseTable; //part -> vars
-        vector<Var> table; //var -> part
+        vector<uint> table; //var -> part
         uint part_no;
         
         Solver& solver;
 };
 
+inline const map<uint, vector<Var> >& PartFinder::getReverseTable()
+{
+    return reverseTable;
+}
+
+inline const vector<Var>& PartFinder::getTable()
+{
+    return table;
+}
+
+inline const uint PartFinder::getVarPart(const Var var)
+{
+    return table[var];
+}
+
+inline const vector<Var>& PartFinder::getPartVars(const uint part)
+{
+    return reverseTable[part];
+}
 
 #endif //PARTFINDER_H

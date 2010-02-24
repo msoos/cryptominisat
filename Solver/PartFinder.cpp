@@ -44,8 +44,10 @@ PartFinder::PartFinder(Solver& _solver) :
 {
 }
 
-const uint PartFinder::findParts()
+const bool PartFinder::findParts()
 {
+    assert(solver.performReplace);
+    
     double time = cpuTime();
     
     table.clear();
@@ -56,35 +58,45 @@ const uint PartFinder::findParts()
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::xorclauses);
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::xorclauses);
-    //TODO check for solver.ok == false
+    if (solver.ok == false)
+        return false;
     
-    addToPart(&(solver.clauses));
-    addToPart(&(solver.binaryClauses));
-    addToPart((vec<Clause*>*)(&(solver.xorclauses)));
-    addToPart(&(solver.varReplacer->getClauses()));
+    while (solver.varReplacer->getNewToReplaceVars() > 0) {
+        if (solver.performReplace && !solver.varReplacer->performReplace(true))
+            return false;
+    }
+    assert(solver.varReplacer->getClauses().size() == 0);
     
-    setParts();
+    addToPart(solver.clauses);
+    addToPart(solver.binaryClauses);
+    addToPart(solver.xorclauses);
     
-    std::cout << "Time:" << cpuTime() - time << endl;
+    const uint parts = setParts();
     
+    std::cout << "c | Found parts: " << std::setw(10) <<  parts
+    << " time: " << std::setprecision(2) << std::setw(4) << cpuTime() - time
+    << " s" << std::setw(28) << " |" << std::endl;
     
-    return 0;
+    return true;
 }
 
-void PartFinder::addToPart(vec<Clause*> const* cs2)
+template<class T>
+void PartFinder::addToPart(const vec<T*>& cs)
 {
-    const vec<Clause*>& cs = *cs2;
-    
-    for (Clause* const* c = cs.getData(), *const*end = c + cs.size(); c != end; c++) {
-        set<uint> tomerge;
-        vector<Var> newSet;
-        for (Lit *l = &(**c)[0], *end2 = l + (**c).size(); l != end2; l++) {
+    set<uint> tomerge;
+    vector<Var> newSet;
+    for (T* const* c = cs.getData(), * const*end = c + cs.size(); c != end; c++) {
+        tomerge.clear();
+        newSet.clear();
+        for (const Lit *l = (*c)->getData(), *end2 = l + (*c)->size(); l != end2; l++) {
             if (table[l->var()] != var_Undef)
                 tomerge.insert(table[l->var()]);
             else
                 newSet.push_back(l->var());
         }
         if (tomerge.size() == 1) {
+            //no trees to merge, only merge the clause into one tree
+            
             const uint into = *tomerge.begin();
             map<uint, vector<Var> >::iterator intoReverse = reverseTable.find(into);
             for (uint i = 0; i < newSet.size(); i++) {
@@ -98,6 +110,7 @@ void PartFinder::addToPart(vec<Clause*> const* cs2)
             newSet.insert(newSet.end(), reverseTable[*it].begin(), reverseTable[*it].end());
             reverseTable.erase(*it);
         }
+        
         for (uint i = 0; i < newSet.size(); i++)
             table[newSet[i]] = part_no;
         reverseTable[part_no] = newSet;
@@ -110,19 +123,20 @@ const uint PartFinder::setParts()
     vector<uint> numClauseInPart(part_no, 0);
     vector<uint> sumXorSizeInPart(part_no, 0);
     
-    calcIn(&solver.clauses, numClauseInPart, sumXorSizeInPart);
-    calcIn(&solver.binaryClauses, numClauseInPart, sumXorSizeInPart);
-    calcIn(&solver.xorclauses, numClauseInPart, sumXorSizeInPart);
-    calcIn(&(solver.varReplacer->getClauses()), numClauseInPart, sumXorSizeInPart);
+    calcIn(solver.clauses, numClauseInPart, sumXorSizeInPart);
+    calcIn(solver.binaryClauses, numClauseInPart, sumXorSizeInPart);
+    calcIn(solver.xorclauses, numClauseInPart, sumXorSizeInPart);
+    calcIn(solver.varReplacer->getClauses(), numClauseInPart, sumXorSizeInPart);
  
     uint parts = 0;
     for (uint i = 0; i < numClauseInPart.size(); i++) {
         if (sumXorSizeInPart[i] == 0) continue;
-        std::cout << "!!! part " << parts << " size:" << numClauseInPart[i] << std::endl;
-        std::cout << "!!! part " << parts << " sum size:" << sumXorSizeInPart[i]  << std::endl;
+        std::cout << "c | Found part " << std::setw(8) << i
+        << " vars: " << std::setw(10) << reverseTable[i].size()
+        << " clauses:" << std::setw(10) << numClauseInPart[i]
+        << " lits size:" << std::setw(10) << sumXorSizeInPart[i]  << std::endl;
         parts++;
     }
-    std::cout << "Num interesting parts:" << parts << endl;
     
     if (parts > 1) {
         #ifdef VERBOSE_DEBUG
@@ -136,14 +150,12 @@ const uint PartFinder::setParts()
         #endif
     }
     
-    return part_no;
+    return parts;
 }
 
 template<class T>
-void PartFinder::calcIn(vec<T*>const* cs2, vector<uint>& numClauseInPart, vector<uint>& sumXorSizeInPart)
+void PartFinder::calcIn(const vec<T*>& cs, vector<uint>& numClauseInPart, vector<uint>& sumXorSizeInPart)
 {
-    const vec<T*>& cs = *cs2;
-    
     for (T*const* c = cs.getData(), *const*end = c + cs.size(); c != end; c++) {
         T& x = **c;
         const uint part = table[x[0].var()];

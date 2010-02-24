@@ -136,6 +136,11 @@ public:
         isLearnt = false;
     }
     
+    void         makeLearnt(const uint32_t newActivity)  {
+        act = newActivity;
+        isLearnt = true;
+    }
+    
     inline void  strengthen(const Lit p)
     {
         remove(*this, p);

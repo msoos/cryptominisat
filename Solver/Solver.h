@@ -52,6 +52,7 @@ class FindUndef;
 class ClauseCleaner;
 class FailedVarSearcher;
 class Subsumer;
+class PartHandler;
 
 #ifdef VERBOSE_DEBUG
 using std::cout;
@@ -74,8 +75,10 @@ public:
     // Problem specification:
     //
     Var     newVar    (bool dvar = true); // Add a new variable with parameters specifying variable mode.
-    bool    addClause (vec<Lit>& ps, const uint group, char* group_name);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
-    bool    addXorClause (vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal = false);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    template<class T>
+    bool    addClause (T& ps, const uint group, char* group_name);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    template<class T>
+    bool    addXorClause (T& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal = false);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
@@ -135,13 +138,14 @@ public:
     bool      heuleProcess;       // Process XORs according to Heule
     bool      schedSimplification;// Schedule simplification
     bool      doSubsumption;        // Should try to subsume clauses
+    bool      doPartHandler;        // Should try to subsume clauses
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
     GaussianConfig gaussconfig;
 
-    enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
+    enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4, polarity_manual = 5};
 
     // Statistics: (read-only member variable)
     //
@@ -167,6 +171,10 @@ protected:
     void clearGaussMatrixes();
     friend class Gaussian;
     
+    
+    //For part-finding
+    template<class T>
+    bool addLearntClause(T& ps, const uint group, const uint32_t activity);
     
     // Helper structures:
     //
@@ -300,10 +308,12 @@ protected:
     friend class RestartTypeChooser;
     friend class FailedVarSearcher;
     friend class Subsumer;
+    friend class PartHandler;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
     FailedVarSearcher* failedVarSearcher;
+    PartHandler* partHandler;
     void chooseRestartType(RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
     void setDefaultRestartType();
     const bool checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
