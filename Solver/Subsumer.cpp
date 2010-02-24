@@ -620,12 +620,12 @@ void Subsumer::findSubsumed(ClauseSimp& ps, vec<ClauseSimp>& out_subsumed)
     }
     
     vec<ClauseSimp>& cs = occur[cl[min_i].toInt()];
-    for (uint32_t i = 0; i < cs.size(); i++){
-        if (i+1 < cs.size())
-            __builtin_prefetch(cs[i+1].clause, 1, 1);
+    for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
+        if (it+1 != end)
+            __builtin_prefetch((it+1)->clause, 1, 1);
         
-        if (cs[i].clause != ps.clause && subsetAbst(ps.abst, cs[i].abst) && cl.size() <= cs[i].clause->size() && subset(cl, *cs[i].clause, seen_tmp)) {
-            out_subsumed.push(cs[i]);
+        if (it->clause != ps.clause && subsetAbst(ps.abst, it->abst) && cl.size() <= it->clause->size() && subset(cl, *it->clause, seen_tmp)) {
+            out_subsumed.push(*it);
             #ifdef VERBOSE_DEBUG
             cout << "subsumed: ";
             cs[i].clause->plainPrint();
@@ -654,12 +654,12 @@ void Subsumer::findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed)
     }
     
     vec<ClauseSimp>& cs = occur[ps[min_i].toInt()];
-    for (uint32_t i = 0; i < cs.size(); i++){
-        if (i+1 < cs.size())
-            __builtin_prefetch(cs[i+1].clause, 1, 1);
+    for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
+        if (it+1 != end)
+            __builtin_prefetch((it+1)->clause, 1, 1);
         
-        if (subsetAbst(abst, cs[i].abst) && ps.size() <= cs[i].clause->size() && subset(ps, *cs[i].clause, seen_tmp)) {
-            out_subsumed.push(cs[i]);
+        if (subsetAbst(abst, it->abst) && ps.size() <= it->clause->size() && subset(ps, *it->clause, seen_tmp)) {
+            out_subsumed.push(*it);
             #ifdef VERBOSE_DEBUG
             cout << "subsumed: ";
             cs[i].clause->plainPrint();
