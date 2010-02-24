@@ -213,7 +213,6 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
         if (s+1 != end)
             __builtin_prefetch(*(s+1), 1, 0);
         if (cleanClause(**s)) {
-            (**s).mark(1);
             solver.freeLater.push(*s);
             s++;
         } else {
