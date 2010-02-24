@@ -550,7 +550,7 @@ const bool Simplifier::simplifyBySubsumption(bool with_var_elim)
                     solver.ok = solver.propagate() == NULL;
                     if (!solver.ok) {
                         printf("(contradiction during subsumption)\n");
-                        return;
+                        return false;
                     }
                 }
             }
@@ -605,7 +605,7 @@ const bool Simplifier::simplifyBySubsumption(bool with_var_elim)
          solver.detachClause(*solver.binaryClauses[i]);
      }*/
     
-    std::cout << "c Simplification time:" << (cpuTime() - myTime) << std::endl;
+    std::cout << "c Simplification time: " << (cpuTime() - myTime) << std::endl;
     return true;
 }
 
@@ -677,26 +677,44 @@ void Simplifier::findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed)
 }
 
 /*
+void inline Simplifier::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<vec<Lit> >& ps, vec<vec<Lit> >& ns, const Var x)
+{
+    poss.moveTo(ps);
+    negs.moveTo(ns);
+    
+    for (int i = 0; i < ps.size(); i++)
+        unlinkClause(ps[i], x);
+    for (int i = 0; i < ns.size(); i++)
+        unlinkClause(ns[i], x);
+}
+
+void inline Simplifier::DeallocPsNs(vec<Clause>& ps, vec<Clause>& ns)
+{
+    for (int i = 0; i < ps.size(); i++) deallocClause(ps[i]);
+    for (int i = 0; i < ns.size(); i++) deallocClause(ns[i]);
+}
+
+//#define MigrateToPsNs vec<Clause> ps; poss.moveTo(ps); vec<Clause> ns; negs.moveTo(ns); for (int i = 0; i < ps.size(); i++) unlinkClause(ps[i], x); for (int i = 0; i < ns.size(); i++) unlinkClause(ns[i], x);
+//#define DeallocPsNs   for (int i = 0; i < ps.size(); i++) deallocClause(ps[i]); for (int i = 0; i < ns.size(); i++) deallocClause(ns[i]);
+
+
 // Returns TRUE if variable was eliminated.
-bool Solver::maybeEliminate(Var x)
+bool Simplifier::maybeEliminate(const Var x)
 {
     assert(propQ.size() == 0);
     assert(!var_elimed[x]);
-    if (value(x) != l_Undef) return false;
-    if (occur[index(Lit(x))].size() == 0 && occur[index(~Lit(x))].size() == 0) return false;
+    if (solver.value(x) != l_Undef) return false;
+    if (occur[index(Lit(x))].size() == 0 && occur[Lit(x, true).toInt()].size() == 0) return false;
     
-    vec<Clause>&   poss = occur[index( Lit(x))];
-    vec<Clause>&   negs = occur[index(~Lit(x))];
-    vec<Clause>    new_clauses;
+    vec<ClauseSimp>&   poss = occur[Lit(x, false).toInt()];
+    vec<ClauseSimp>&   negs = occur[Lit(x, true).toInt()];
+    vec<ClauseSimp>    new_clauses;
     
     int before_clauses  = -1;
     int before_literals = -1;
     
     bool    elimed     = false;
     bool    tried_elim = false;
-    
-    #define MigrateToPsNs vec<Clause> ps; poss.moveTo(ps); vec<Clause> ns; negs.moveTo(ns); for (int i = 0; i < ps.size(); i++) unlinkClause(ps[i], x); for (int i = 0; i < ns.size(); i++) unlinkClause(ns[i], x);
-    #define DeallocPsNs   for (int i = 0; i < ps.size(); i++) deallocClause(ps[i]); for (int i = 0; i < ns.size(); i++) deallocClause(ns[i]);
     
     // Find 'x <-> p':
     if (opt_unit_def){
@@ -735,56 +753,76 @@ bool Solver::maybeEliminate(Var x)
     // Count clauses/literals before elimination:
     before_clauses  = poss.size() + negs.size();
     before_literals = 0;
-    for (int i = 0; i < poss.size(); i++) before_literals += poss[i].size();
-    for (int i = 0; i < negs.size(); i++) before_literals += negs[i].size();
+    for (int i = 0; i < poss.size(); i++) before_literals += poss[i].clause->size();
+    for (int i = 0; i < negs.size(); i++) before_literals += negs[i].clause->size();
     
     if (poss.size() >= 3 && negs.size() >= 3 && before_literals > 300)  // <<== CUT OFF
         return false;
     
     // Check for definitions:
+    bool opt_def_elim = false;
+    bool opt_hyper1_res = false;
+    
     if (opt_def_elim || opt_hyper1_res){
         //if (poss.size() > 1 || negs.size() > 1){
-   if (poss.size() > 2 || negs.size() > 2){
-       Clause_t def;
-       int      result_size;
-       if (findDef(Lit(x), poss, negs, def)){
-           if (def.size() == 0){ enqueue(~Lit(x)); return true; }  // Hyper-1-resolution
-               result_size = substitute(Lit(x), def, poss, negs);
-               if (result_size <= poss.size() + negs.size()){  // <<= elimination threshold (maybe subst. should return literal count as well)
-               MigrateToPsNs
-               substitute(Lit(x), def, ps, ns, new_clauses);
-               propagateToplevel(); if (!ok) return true;
-               DeallocPsNs
-               goto Eliminated;
-               }else
-                   tried_elim = true,
-                   def.clear();
-       }
-       if (!elimed && findDef(~Lit(x), negs, poss, def)){
-           if (def.size() == 0){ enqueue(Lit(x)); return true; }  // Hyper-1-resolution
-               result_size = substitute(~Lit(x), def, negs, poss);
-               if (result_size <= poss.size() + negs.size()){  // <<= elimination threshold
-                   MigrateToPsNs
-                   substitute(~Lit(x), def, ns, ps, new_clauses);
-                   propagateToplevel(); if (!ok) return true;
-                   DeallocPsNs
-                   goto Eliminated;
-               }else
-                   tried_elim = true;
-       }
-   }
+        if (poss.size() > 2 || negs.size() > 2){
+            vec<Lit> def;
+            int      result_size;
+            if (findDef(Lit(x), poss, negs, def)) {
+                if (def.size() == 0) {
+                    solver.uncheckedEnqueue(Lit(x, true));
+                    return true;
+                }  // Hyper-1-resolution
+                result_size = substitute(Lit(x, false), def, poss, negs);
+                if (result_size <= poss.size() + negs.size()){  // <<= elimination threshold (maybe subst. should return literal count as well)
+                    vec<Lit> ps, ns;
+                    MigrateToPsNs(poss, negs, ps, ns, x);
+                    substitute(Lit(x, false), def, ps, ns, new_clauses);
+                    
+                    solver.ok = (solver.propagate() == NULL);
+                    if (!solver.ok) return true;
+                    
+                    DeallocPsNs(ps, ns);
+                    goto Eliminated;
+                }else {
+                    tried_elim = true;
+                    def.clear();
+                }
+            }
+            
+            if (!elimed && findDef(Lit(x, true), negs, poss, def)){
+                if (def.size() == 0) {
+                    solver.uncheckedEnqueue(Lit(x, false));
+                    return true; 
+                }  // Hyper-1-resolution
+                result_size = substitute(Lit(x, true), def, negs, poss);
+                if (result_size <= poss.size() + negs.size()){  // <<= elimination threshold
+                    vec<Lit> ps, ns;
+                    MigrateToPsNs(poss, negs, x);
+                    substitute(Lit(x, true), def, ns, ps, new_clauses);
+                    
+                    solver.ok = (solver.propagate() == NULL);
+                    if (!solver.ok) return true;
+                    
+                    DeallocPsNs(ps, ns);
+                    goto Eliminated;
+                }else
+                    tried_elim = true;
+            }
+        }
     }
+    
     
     if (!tried_elim){
         // Count clauses/literals after elimination:
         int after_clauses  = 0;
         int after_literals = 0;
-        Clause_t  dummy;
+        vec<Lit>  dummy;
         for (int i = 0; i < poss.size(); i++){
             for (int j = 0; j < negs.size(); j++){
                 // Merge clauses. If 'y' and '~y' exist, clause will not be created.
                 dummy.clear();
-                bool ok = merge(poss[i], negs[j], Lit(x), ~Lit(x), seen_tmp, dummy.asVec());
+                bool ok = merge(poss[i], negs[j], Lit(x, false), Lit(x, true), seen_tmp, dummy);
                 if (ok){
                     after_clauses++;
                     if (after_clauses > before_clauses) goto Abort;
@@ -794,68 +832,77 @@ bool Solver::maybeEliminate(Var x)
         Abort:;
         
         // Maybe eliminate:
-        if ((!opt_niver && after_clauses  <= before_clauses)
-            ||  ( opt_niver && after_literals <= before_literals)
-            ){
-            MigrateToPsNs
+        if (after_clauses  <= before_clauses) {
+            vec<Clause> ps, ns;
+            MigrateToPsNs(poss, negs, ps, ns, x);
             for (int i = 0; i < ps.size(); i++){
                 for (int j = 0; j < ns.size(); j++){
                     dummy.clear();
-                    bool ok = merge(ps[i], ns[j], Lit(x), ~Lit(x), seen_tmp, dummy.asVec());
+                    bool ok = merge(ps[i], ns[j], Lit(x), ~Lit(x), seen_tmp, dummy);
                     if (ok){
-                        Clause c = addClause(dummy.asVec());
-                        if (!c.null()){
-                            new_clauses.push(c); }
-                            propagateToplevel(); if (!ok) return true;
+                        solver.addClause(dummy, 0);
+                        Clause* cl = solver.clauses[0];
+                        solver.clauses.clear();
+                        ClauseSimp c(cl, clauses.size());
+                        updateClause(c);
+                        if (!c.clause != NULL)
+                            new_clauses.push(c);
+                        solver.ok = (solver.propagate() == NULL);
+                        if (!solver.ok) return true;
                     }
                 }
             }
-            DeallocPsNs
+            DeallocPsNs(ps, ns);
             goto Eliminated;
         }
         
         //****TEST*****
         // Try to remove 'x' from clauses:
         bool    ran = false;
-        if (poss.size() < 10){ ran = true; asymmetricBranching( Lit(x)); if (!ok) return true; }
-        if (negs.size() < 10){ ran = true; asymmetricBranching(~Lit(x)); if (!ok) return true; }
-        if (value(x) != l_Undef) return false;
+        if (poss.size() < 10){ ran = true; asymmetricBranching(Lit(x, false)); if (!solver.ok) return true; }
+        if (negs.size() < 10){ ran = true; asymmetricBranching(Lit(x, true)); if (!solver.ok) return true; }
+        if (solver.value(x) != l_Undef) return false;
         if (!ran) return false;
         
         {
             // Count clauses/literals after elimination:
             int after_clauses  = 0;
             int after_literals = 0;
-            Clause_t  dummy;
+            vec<Lit>  dummy;
             for (int i = 0; i < poss.size(); i++){
                 for (int j = 0; j < negs.size(); j++){
                     // Merge clauses. If 'y' and '~y' exist, clause will not be created.
                     dummy.clear();
-                    bool ok = merge(poss[i], negs[j], Lit(x), ~Lit(x), seen_tmp, dummy.asVec());
+                    bool ok = merge(poss[i], negs[j], Lit(x, false), Lit(x, true), seen_tmp, dummy);
                     if (ok){
                         after_clauses++;
-                        after_literals += dummy.size(); }
+                        after_literals += dummy.size();
+                    }
                 }
             }
             
             // Maybe eliminate:
-            if ((!opt_niver && after_clauses  <= before_clauses)
-                ||  ( opt_niver && after_literals <= before_literals)
-                ){
-                MigrateToPsNs
+            if (after_clauses  <= before_clauses) {
+                vec<Clause> ps, ns;
+                MigrateToPsNs(poss, negs, ps, ns, x);
                 for (int i = 0; i < ps.size(); i++){
                     for (int j = 0; j < ns.size(); j++){
                         dummy.clear();
-                        bool ok = merge(ps[i], ns[j], Lit(x), ~Lit(x), seen_tmp, dummy.asVec());
+                        bool ok = merge(ps[i], ns[j], Lit(x, false), Lit(x, true), seen_tmp, dummy);
                         if (ok){
-                            Clause c = addClause(dummy.asVec());
-                            if (!c.null()){
-                                new_clauses.push(c); }
-                                propagateToplevel(); if (!ok) return true;
+                            solver.addClause(dummy, 0);
+                            Clause* cl = solver.clauses[0];
+                            solver.clauses.clear();
+                            ClauseSimp c(cl, clauses.size());
+                            updateClause(c);
+                            if (c.clause != NULL)
+                                new_clauses.push(c);
+                            solver.ok = (solver.propagate() == NULL);
+                            if (!solver.ok) return true;
                         }
                     }
                 }
-                DeallocPsNs
+                DeallocPsNs(ps, ns);
                 goto Eliminated;
             }
         }
@@ -867,7 +914,114 @@ bool Solver::maybeEliminate(Var x)
     Eliminated:
     assert(occur[index(Lit(x))].size() + occur[index(~Lit(x))].size() == 0);
     var_elimed[x] = 1;
-    assigns   [x] = toInt(l_Error);
+    //TODO
+    //solver.assigns[x] = toInt(l_Error);
     return true;
 }
-*/
+
+// Returns FALSE if clause is always satisfied ('out_clause' should not be used). 'seen' is assumed to be cleared.
+bool Simplifier::merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause)
+{
+    for (int i = 0; i < ps.size(); i++){
+        if (ps[i] != without_p){
+            seen[index(ps[i])] = 1;
+            out_clause.push(ps[i]);
+        }
+    }
+    
+    for (int i = 0; i < qs.size(); i++){
+        if (qs[i] != without_q){
+            if (seen[index(~qs[i])]){
+                for (int i = 0; i < ps.size(); i++) seen[index(ps[i])] = 0;
+                return false; }
+                if (!seen[index(qs[i])])
+                    out_clause.push(qs[i]);
+        }
+    }
+    
+    for (int i = 0; i < ps.size(); i++) seen[index(ps[i])] = 0;
+    return true;
+}
+
+int Simplifier::substitute(Lit x, Clause& def, vec<Clause>& poss, vec<Clause>& negs, vec<Clause>& new_clauses = *(vec<Clause>*)NULL)
+{
+    vec<Lit>    tmp;
+    int         counter = 0;
+    
+    
+    // Positives:
+    //if (hej) printf("    --from POS--\n");
+    for (int i = 0; i < def.size(); i++){
+        for (int j = 0; j < poss.size(); j++){
+            if (poss[j].null()) continue;
+            
+            Clause c = poss[j];
+            for (int k = 0; k < c.size(); k++){
+                if (c[k] == ~def[i])
+                    goto Skip;
+            }
+            tmp.clear();
+            for (int k = 0; k < c.size(); k++){
+                if (c[k] == x)
+                    tmp.push(def[i]);
+                else
+                    tmp.push(c[k]);
+            }
+            //if (hej) printf("    "), dump(*this, tmp);
+            if (&new_clauses != NULL){
+                Clause tmp_c;
+                tmp_c = addClause(tmp);
+                if (!tmp_c.null())
+                    new_clauses.push(tmp_c);
+            }else{
+                sortUnique(tmp);
+                for (int i = 0; i < tmp.size()-1; i++)
+                    if (tmp[i] == ~tmp[i+1])
+                        goto Skip;
+                    counter++;
+            }
+            Skip:;
+        }
+    }
+    //if (hej) printf("    --from NEG--\n");
+    
+    // Negatives:
+    for (int j = 0; j < negs.size(); j++){
+        if (negs[j].null()) continue;
+        
+        Clause c = negs[j];
+        // If any literal from 'def' occurs in 'negs[j]', it is satisfied.
+        for (int i = 0; i < def.size(); i++){
+            if (has(c, def[i]))
+                goto Skip2;
+        }
+        
+        tmp.clear();
+        for (int i = 0; i < c.size(); i++){
+            if (c[i] == ~x){
+                for (int k = 0; k < def.size(); k++)
+                    tmp.push(~def[k]);
+            }else
+                tmp.push(c[i]);
+        }
+        //if (hej) printf("    "), dump(*this, tmp);
+        if (&new_clauses != NULL){
+            Clause tmp_c;
+            tmp_c = addClause(tmp);
+            if (!tmp_c.null())
+                new_clauses.push(tmp_c);
+        }else{
+            sortUnique(tmp);
+            for (int i = 0; i < tmp.size()-1; i++)
+                if (tmp[i] == ~tmp[i+1])
+                    goto Skip2;
+                counter++;
+        }
+        Skip2:;
+    }
+    
+    //if (counter != 0 && def.size() >= 2) exit(0);
+    return counter;
+}*/
+
+
