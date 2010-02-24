@@ -368,7 +368,10 @@ void Subsumer::smaller_database()
     //      (1) clauses containing a (non-negated) literal of an added clause, including the added clause itself.
     //      (2) all strenghtened clauses -- REMOVED!! We turned on eager backward subsumption which supersedes this.
     
+    #ifdef VERBOSE_DEBUG
     printf("  PREPARING\n");
+    #endif
+    
     CSet s0, s1;     // 's0' is used for 0-subsumption, 's1' for 1-subsumption
     vec<char>   ol_seen(solver.nVars()*2, 0);
     for (CSet::iterator it = cl_added.begin(), end = cl_added.end(); it != end; ++it) {
@@ -397,7 +400,10 @@ void Subsumer::smaller_database()
     registerIteration(s0);
     registerIteration(s1);
     
+    #ifdef VERBOSE_DEBUG
     printf("  FIXED-POINT\n");
+    #endif
+    
     // Fixed-point for 1-subsumption:
     while (s1.size() > 0 || cl_touched.size() > 0){
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
@@ -409,7 +415,10 @@ void Subsumer::smaller_database()
         
         cl_touched.clear();
         assert(solver.qhead == solver.trail.size());
+        
+        #ifdef VERBOSE_DEBUG
         printf("s1.size()=%d  cl_touched.size()=%d\n", s1.size(), cl_touched.size());
+        #endif
         
         for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
             if (it->clause != NULL)
