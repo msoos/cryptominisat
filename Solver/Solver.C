@@ -679,8 +679,12 @@ Lit Solver::pickBranchLit()
     if (next != var_Undef) {
         if (simplifying && random)
             sign = mtrand.randInt(1);
-        else
+        /*else
             sign = polarity[next] ^ (mtrand.randInt(200) == 1);
+        else if (avgBranchDepth.isvalid())
+            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);*/
+        else
+            sign = polarity[next];
     }
 
     assert(next == var_Undef || value(next) == l_Undef);
@@ -1557,6 +1561,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     int backtrack_level;
     int nbLevels;
 
+    avgBranchDepth.push(decisionLevel());
     conflicts++;
     conflictC++;
     if (decisionLevel() == 0)
@@ -1885,6 +1890,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
     conflict.clear();
     clearGaussMatrixes();
     setDefaultRestartType();
+    avgBranchDepth.fastclear();
+    avgBranchDepth.initSize(500);
+    
     conglomerate->addRemovedClauses();
     starts = 0;
 
@@ -1939,6 +1947,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart))
             return l_False;
         chooseRestartType(restartTypeChooser, lastFullRestart);
+        //if (avgBranchDepth.isvalid())
+        //    std::cout << "avg branch depth:" << avgBranchDepth.getavg() << std::endl;
     }
     printEndSearchStat();
     
