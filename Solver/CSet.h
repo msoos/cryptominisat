@@ -1,7 +1,12 @@
+/**************************************************************************************************
+From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
+**************************************************************************************************/
+
 #ifndef CSET_H
 #define CSET_H
 
 #include "Vec.h"
+#include <limits>
 
 class Clause;
 
@@ -32,19 +37,19 @@ class ClauseSimp
 #pragma pack(pop)
 
 class CSet {
-    vec<uint>       where;  // Map clause ID to position in 'which'.
+    vec<uint32_t>       where;  // Map clause ID to position in 'which'.
     vec<ClauseSimp> which;  // List of clauses (for fast iteration). May contain 'Clause_NULL'.
-    vec<uint>       free;   // List of positions holding 'Clause_NULL'.
+    vec<uint32_t>       free;   // List of positions holding 'Clause_NULL'.
     
     public:
         //ClauseSimp& operator [] (uint32_t index) { return which[index]; }
-        int size(void) const { return which.size(); }
-        int nElems(void) const { return which.size() - free.size(); }
+        uint32_t size(void) const { return which.size(); }
+        uint32_t nElems(void) const { return which.size() - free.size(); }
         
         bool add(ClauseSimp& c) {
             assert(c.clause != NULL);
-            where.growTo(c.index+1, -1);
-            if (where[c.index] != -1) {
+            where.growTo(c.index+1, std::numeric_limits<uint32_t>::max());
+            if (where[c.index] != std::numeric_limits<uint32_t>::max()) {
                 //already in, only update
                 which[where[c.index]].abst = c.abst;
                 return true;
@@ -62,20 +67,20 @@ class CSet {
         
         bool exclude(ClauseSimp& c) {
             assert(c.clause != NULL);
-            if (c.index >= where.size() || where[c.index] == -1) {
+            if (c.index >= where.size() || where[c.index] == std::numeric_limits<uint32_t>::max()) {
                 //not inside
                 return false;
             }
             free.push(where[c.index]);
             which[where[c.index]].clause = NULL;
-            where[c.index] = -1;
+            where[c.index] = std::numeric_limits<uint32_t>::max();
             return true;
         }
         
         void clear(void) {
-            for (int i = 0; i < which.size(); i++)  {
+            for (uint32_t i = 0; i < which.size(); i++)  {
                 if (which[i].clause != NULL) {
-                    where[which[i].index] = -1;
+                    where[which[i].index] = std::numeric_limits<uint32_t>::max();
                 }
             }
             which.clear();
@@ -83,7 +88,7 @@ class CSet {
         }
         
         void update(ClauseSimp& c) {
-            if (c.index >= where.size() || where[c.index] == -1)
+            if (c.index >= where.size() || where[c.index] == std::numeric_limits<uint32_t>::max())
                 return;
             which[where[c.index]].abst = c.abst;
         }
