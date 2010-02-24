@@ -53,7 +53,8 @@ class PartFinder {
         };
         
         void findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClause*>& xorsInMatrix);
-        void calcIn(vec<Clause*>const* cs2, vector<uint>& numClauseInPart, vector<uint>& sumXorSizeInPart);
+        template<class T>
+        void calcIn(vec<T*>const* cs2, vector<uint>& numClauseInPart, vector<uint>& sumXorSizeInPart);
         
         map<uint, vector<Var> > reverseTable; //part -> vars
         vector<Var> table; //var -> part

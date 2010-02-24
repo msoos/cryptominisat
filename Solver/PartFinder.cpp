@@ -112,7 +112,7 @@ const uint PartFinder::setParts()
     
     calcIn(&solver.clauses, numClauseInPart, sumXorSizeInPart);
     calcIn(&solver.binaryClauses, numClauseInPart, sumXorSizeInPart);
-    calcIn((vec<Clause*>*)(&(solver.xorclauses)), numClauseInPart, sumXorSizeInPart);
+    calcIn(&solver.xorclauses, numClauseInPart, sumXorSizeInPart);
     calcIn(&(solver.varReplacer->getClauses()), numClauseInPart, sumXorSizeInPart);
  
     uint parts = 0;
@@ -139,12 +139,13 @@ const uint PartFinder::setParts()
     return part_no;
 }
 
-void PartFinder::calcIn(vec<Clause*>const* cs2, vector<uint>& numClauseInPart, vector<uint>& sumXorSizeInPart)
+template<class T>
+void PartFinder::calcIn(vec<T*>const* cs2, vector<uint>& numClauseInPart, vector<uint>& sumXorSizeInPart)
 {
-    const vec<Clause*>& cs = *cs2;
+    const vec<T*>& cs = *cs2;
     
-    for (Clause*const* c = cs.getData(), *const*end = c + cs.size(); c != end; c++) {
-        Clause& x = **c;
+    for (T*const* c = cs.getData(), *const*end = c + cs.size(); c != end; c++) {
+        T& x = **c;
         const uint part = table[x[0].var()];
         assert(part < part_no);
         
