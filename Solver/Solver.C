@@ -64,7 +64,7 @@ Solver::Solver() :
         , regularlyFindBinaryXors(true)
         , performReplace   (true)
         , conglomerateXors (true)
-        , heuleProcess     (true)
+        , heuleProcess     (false)
         , schedSimplification(true)
         , doSubsumption    (true)
         , doPartHandler    (true)
