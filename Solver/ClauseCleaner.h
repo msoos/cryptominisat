@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif //_MSC_VER
 
 #include "Solver.h"
-#include "Simplifier.h"
+#include "Subsumer.h"
 
 class ClauseCleaner
 {
@@ -35,7 +35,7 @@ class ClauseCleaner
         enum ClauseSetType {clauses, xorclauses, learnts, binaryClauses, simpClauses};
         
         void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
-        void cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseSetType type, Simplifier& simp, const uint limit = 0);
+        void cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseSetType type, Subsumer& subs, const uint limit = 0);
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
@@ -45,7 +45,7 @@ class ClauseCleaner
         
     private:
         const bool cleanClause(Clause& c);
-        const bool cleanClauseBewareNULL(ClauseSimp c, Simplifier& simp);
+        const bool cleanClauseBewareNULL(ClauseSimp c, Subsumer& subs);
         const bool cleanClause(XorClause& c);
         
         uint lastNumUnitarySat[5];

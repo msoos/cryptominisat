@@ -107,7 +107,7 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
     return false;
 }
 
-inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Simplifier& simp)
+inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& subs)
 {
     Clause& c = *cc.clause;
     vec<Lit> origClause(c.size());
@@ -121,17 +121,17 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Simplifier
             j++;
         }
         if (val == l_True) {
-            simp.unlinkModifiedClause(origClause, cc);
+            subs.unlinkModifiedClause(origClause, cc);
             free(cc.clause);
             return true;
         }
     }
     
     if (i != j) {
-        simp.unlinkModifiedClause(origClause, cc);
+        subs.unlinkModifiedClause(origClause, cc);
         c.shrink(i-j);
         solver.attachClause(c);
-        simp.updateClause(c, cc);
+        subs.updateClause(c, cc);
     }
     
     return false;
@@ -170,7 +170,7 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
     #endif
 }
 
-void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::ClauseSetType type, Simplifier& simp, const uint limit)
+void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::ClauseSetType type, Subsumer& subs, const uint limit)
 {
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
@@ -186,7 +186,7 @@ void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::C
         if (s->clause == NULL)
             continue;
         
-        if (cleanClauseBewareNULL(*s, simp)) {
+        if (cleanClauseBewareNULL(*s, subs)) {
             continue;
         } else if (s->clause->size() == 2)
             solver.becameBinary++;
