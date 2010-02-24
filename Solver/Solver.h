@@ -230,7 +230,7 @@ protected:
     Heap<VarOrderLt>    order_heap;       // A priority queue of variables ordered with respect to the variable activity.
     double              progress_estimate;// Set by 'search()'.
     bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
-    bqueue<uint> nbDecisionLevelHistory; // Set of last decision level in conflict clauses
+    bqueue<uint>        nbDecisionLevelHistory; // Set of last decision level in conflict clauses
     float               totalSumOfDecisionLevel;
     MTRand              mtrand;           // random number generaton
     RestartType         restartType;      // Used internally to determine which restart strategy to choose
