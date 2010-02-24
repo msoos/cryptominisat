@@ -131,17 +131,12 @@ uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origM
 
     uint num_xorclauses  = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        #ifdef DEBUG_GAUSS
-        //assert(xorclauses[i]->mark() || !solver.clauseCleaner->satisfied(*xorclauses[i]));
-        #endif
-        //if (!xorclauses[i]->mark()) {
-            num_xorclauses++;
-            XorClause& c = *xorclauses[i];
-            for (uint i2 = 0; i2 < c.size(); i2++) {
-                assert(solver.assigns[c[i2].var()].isUndef());
-                var_to_col[c[i2].var()] = unassigned_col - 1;
-            }
-        //}
+        num_xorclauses++;
+        XorClause& c = *xorclauses[i];
+        for (uint i2 = 0; i2 < c.size(); i2++) {
+            assert(solver.assigns[c[i2].var()].isUndef());
+            var_to_col[c[i2].var()] = unassigned_col - 1;
+        }
     }
     
     uint largest_used_var = 0;
@@ -221,11 +216,9 @@ void Gaussian::fill_matrix(matrixset& origMat)
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
         const XorClause& c = *xorclauses[i];
 
-        //if (!c.mark()) {
-            origMat.matrix.getVarsetAt(matrix_row).set(c, var_to_col, origMat.num_cols);
-            origMat.matrix.getMatrixAt(matrix_row).set(c, var_to_col, origMat.num_cols);
-            matrix_row++;
-        //}
+        origMat.matrix.getVarsetAt(matrix_row).set(c, var_to_col, origMat.num_cols);
+        origMat.matrix.getMatrixAt(matrix_row).set(c, var_to_col, origMat.num_cols);
+        matrix_row++;
     }
     assert(origMat.num_rows == matrix_row);
 }

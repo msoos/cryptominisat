@@ -55,7 +55,7 @@ protected:
     #endif
     
     uint32_t isLearnt:1;
-    uint32_t marking:2;
+    uint32_t marking:1;
     uint32_t invertedXor:1;
     uint32_t isXorClause:1;
     uint32_t mySize:20;
@@ -111,7 +111,7 @@ public:
     const uint32_t mark        ()      const {
         return marking;
     }
-    void         mark        (uint32_t m) {
+    void         mark        (const bool m) {
         marking = m;
     }
 
