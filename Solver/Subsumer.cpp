@@ -592,7 +592,7 @@ const bool Subsumer::simplifyBySubsumption(bool with_var_elim)
          solver.detachClause(*solver.binaryClauses[i]);
      }*/
     
-    std::cout << "c Simplification time: " << (cpuTime() - myTime) << std::endl;
+    std::cout << "c Subsumer time: " << (cpuTime() - myTime) << std::endl;
     return true;
 }
 
