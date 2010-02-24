@@ -569,6 +569,8 @@ int main(int argc, char** argv)
             S.heuleProcess = false;
         } else if ((value = hasPrefix(argv[i], "-nosubsumption"))) {
             S.doSubsumption = false;
+        } else if ((value = hasPrefix(argv[i], "-noparthandler"))) {
+            S.doPartHandler = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Conglomerate.h"
 #include "ClauseCleaner.h"
+#include "PartHandler.h"
 #include "time_mem.h"
 
 //#define VERBOSE_DEBUG
@@ -74,8 +75,9 @@ const bool VarReplacer::performReplaceInternal()
     
     Var var = 0;
     const vector<bool>& removedVars = solver.conglomerate->getRemovedVars();
+    const vec<lbool>& removedVars2 = solver.partHandler->getSavedState();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
-        if (it->var() == var || removedVars[it->var()]) continue;
+        if (it->var() == var || removedVars[it->var()] || removedVars2[it->var()] != l_Undef) continue;
         #ifdef VERBOSE_DEBUG
         cout << "Setting var " << var+1 << " to a non-decision var" << endl;
         #endif
@@ -319,7 +321,8 @@ void VarReplacer::extendModel() const
     }
 }
 
-const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group)
+template<class T>
+const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uint group)
 {
     #ifdef VERBOSE_DEBUG
     cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xor_clause_inverted " << xor_clause_inverted << endl;
@@ -398,7 +401,11 @@ const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, co
     return true;
 }
 
-void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal)
+template const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group);
+template const bool VarReplacer::replace(XorClause& ps, const bool xor_clause_inverted, const uint group);
+
+template<class T>
+void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint group, const bool internal)
 {
     assert(internal || (replacedVars > lastReplacedVars));
     #ifdef DEBUG_REPLACER
@@ -429,6 +436,9 @@ void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverte
         clauses.push(c);
     solver.attachClause(*c);
 }
+
+template void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal);
+template void VarReplacer::addBinaryXorClause(XorClause& ps, const bool xor_clause_inverted, const uint group, const bool internal);
 
 bool VarReplacer::alreadyIn(const Var var, const Lit lit)
 {

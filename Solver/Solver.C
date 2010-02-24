@@ -39,8 +39,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "ClauseCleaner.h"
 #include "RestartTypeChooser.h"
 #include "FailedVarSearcher.h"
-#include "PartFinder.h"
 #include "Subsumer.h"
+#include "PartHandler.h"
 
 //#define VERBOSE_DEBUG_POLARITIES
 
@@ -67,6 +67,7 @@ Solver::Solver() :
         , heuleProcess     (true)
         , schedSimplification(true)
         , doSubsumption    (true)
+        , doPartHandler    (true)
         , failedVarSearch  (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
@@ -108,6 +109,7 @@ Solver::Solver() :
     conglomerate = new Conglomerate(*this);
     clauseCleaner = new ClauseCleaner(*this);
     failedVarSearcher = new FailedVarSearcher(*this);
+    partHandler = new PartHandler(*this);
     
     #ifdef STATS_NEEDED
     logger.setSolver(this);
@@ -126,6 +128,7 @@ Solver::~Solver()
     delete conglomerate;
     delete clauseCleaner;
     delete failedVarSearcher;
+    delete partHandler;
     
     if (libraryCNFFile)
         fclose(libraryCNFFile);
@@ -154,12 +157,14 @@ Var Solver::newVar(bool dvar)
     permDiff  .push(0);
     
     polarity  .push_back(true);
+    defaultPolarities.push_back(true);
 
     decision_var.push_back(dvar);
     insertVarOrder(v);
     
     varReplacer->newVar();
     conglomerate->newVar();
+    partHandler->newVar();
 
     insertVarOrder(v);
     
@@ -174,7 +179,8 @@ Var Solver::newVar(bool dvar)
     return v;
 }
 
-bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal)
+template<class T>
+bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal)
 {
     assert(decisionLevel() == 0);
     uint origSize = ps.size();
@@ -220,7 +226,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
         else //modify xor_clause_inverted instead of adding
             xor_clause_inverted ^= (assigns[ps[i].var()].getBool());
     }
-    ps.shrink_(i - j);
+    ps.shrink(i - j);
 
     switch(ps.size()) {
     case 0: {
@@ -260,7 +266,31 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
     return true;
 }
 
-bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
+template bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal);
+template bool Solver::addXorClause(XorClause& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal);
+
+
+template<class T>
+bool Solver::addLearntClause(T& ps, const uint group, const uint32_t activity)
+{
+    uint size = clauses.size();
+    addClause(ps, group, "learnt clause");
+    if (size == clauses.size()) return ok;
+    
+    Clause* tmp = clauses[clauses.size()-1];
+    clauses.pop();
+    clauses_literals -= tmp->size();
+    
+    tmp->makeLearnt(activity);
+    learnts.push(tmp);
+    learnts_literals += tmp->size();
+    return ok;
+}
+template bool Solver::addLearntClause(Clause& ps, const uint group, const uint32_t activity);
+template bool Solver::addLearntClause(vec<Lit>& ps, const uint group, const uint32_t activity);
+
+template<class T>
+bool Solver::addClause(T& ps, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
     uint origSize = ps.size();
@@ -323,6 +353,9 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name)
 
     return true;
 }
+
+template bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name);
+template bool Solver::addClause(Clause& ps, const uint group, char* group_name);
 
 void Solver::attachClause(XorClause& c)
 {
@@ -527,7 +560,6 @@ const lbool Solver::calculateDefaultPolarities()
     #endif
     
     assert(decisionLevel() == 0);
-    defaultPolarities.resize(nVars());
     
     if (polarity_mode == polarity_auto) {
         double time = cpuTime();
@@ -587,7 +619,7 @@ const lbool Solver::calculateDefaultPolarities()
             " Propagated vars: " << std::fixed << std::setw(6) << std::setprecision(2) << propagated <<
             "    |" << std:: endl;
         }
-    } else {
+    } else if (polarity_mode != polarity_manual){
         for (uint i = 0; i != defaultPolarities.size(); i++) {
             defaultPolarities[i] = defaultPolarity();
             #ifdef VERBOSE_DEBUG_POLARITIES
@@ -1768,8 +1800,8 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
                 return false;
         }*/
         
-        //PartFinder partFinder(*this);
-        //partFinder.findParts();
+        if (doPartHandler && !partHandler->handle())
+            return false;
         
         /*if (calculateDefaultPolarities() == l_False)
             return false;
@@ -1798,7 +1830,7 @@ inline void Solver::performStepsBeforeSolve()
             return;
     }
     
-    if (doSubsumption && nClauses() < 200000) {
+    if (doSubsumption && nClauses() < 200000 && learnts.size() < 10000) {
         Subsumer s(*this);
         if (s.simplifyBySubsumption(true) == false)
             return;
@@ -1917,6 +1949,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     freeLater.clear();
 
     if (status == l_True) {
+        partHandler->addSavedState();
         conglomerate->doCalcAtFinish();
         varReplacer->extendModel();
         // Extend & copy model:
