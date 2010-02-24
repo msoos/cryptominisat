@@ -34,7 +34,6 @@ using std::endl;
 
 VarReplacer::VarReplacer(Solver& _solver) :
     replacedLits(0)
-    , lastReplacedLits(0)
     , replacedVars(0)
     , lastReplacedVars(0)
     , addedNewClause(false)
@@ -97,6 +96,10 @@ const bool VarReplacer::performReplaceInternal()
     }
     assert(solver.order_heap.heapProperty());
     
+    std::cout << "c |  Replacing   " << std::setw(8) << replacedVars-lastReplacedVars << " vars";
+    
+    lastReplacedVars = replacedVars;
+    
     replace_set(solver.clauses);
     replace_set(solver.learnts);
     replace_set(solver.binaryClauses);
@@ -109,15 +112,13 @@ const bool VarReplacer::performReplaceInternal()
     clauses.clear();
     
     if (solver.verbosity >=1) {
-        std::cout << "c |  Replacing   " << std::setw(8) << replacedVars-lastReplacedVars << " vars"
-        << "     Replaced " <<  std::setw(8) << replacedLits-lastReplacedLits << " lits"
+        std::cout << "     Replaced " <<  std::setw(8) << replacedLits<< " lits"
         << "     Time: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime()-time << " s "
         << std::setw(12) <<  " |" << std::endl;
     }
     
     addedNewClause = false;
-    lastReplacedVars = replacedVars;
-    lastReplacedLits = replacedLits;
+    replacedLits = 0;
     
     if (!solver.ok)
         return false;
@@ -339,8 +340,8 @@ const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, co
     
     //Detect circle
     if (alreadyIn(var, lit)) return solver.ok;
-    addBinaryXorClause(ps, xor_clause_inverted, group);
     replacedVars++;
+    addBinaryXorClause(ps, xor_clause_inverted, group);
     
     Lit lit1 = table[var];
     bool inverted = false;
@@ -399,6 +400,7 @@ const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, co
 
 void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal)
 {
+    assert(internal || (replacedVars > lastReplacedVars));
     #ifdef DEBUG_REPLACER
     assert(!ps[0].sign());
     assert(!ps[1].sign());
