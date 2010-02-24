@@ -1740,8 +1740,6 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         lastFullRestart = starts;
         if (performReplace && !varReplacer->performReplace(true))
             return false;
-        //PartFinder partFinder(*this);
-        //partFinder.findParts();
         if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
             Simplifier s(*this);
             if (s.simplifyBySubsumption(false) == false) {
@@ -1749,6 +1747,8 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
                 goto end;
             }
         }
+        //PartFinder partFinder(*this);
+        //partFinder.findParts();
         
         fullStarts++;
     }
