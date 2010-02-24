@@ -365,7 +365,7 @@ void Subsumer::smaller_database()
     CSet s0, s1;     // 's0' is used for 0-subsumption, 's1' for 1-subsumption
     vec<char>   ol_seen(solver.nVars()*2, 0);
     for (CSet::iterator it = cl_added.begin(), end = cl_added.end(); it != end; ++it) {
-        if (it->clause != NULL) continue;
+        if (it->clause == NULL) continue;
         ClauseSimp& c = *it;
         Clause& cl = *it->clause;
         
@@ -374,7 +374,7 @@ void Subsumer::smaller_database()
             if (ol_seen[cl[j].toInt()]) continue;
             ol_seen[cl[j].toInt()] = 1;
             
-            vec<ClauseSimp>& n_occs = occur[~cl[j].toInt()];
+            vec<ClauseSimp>& n_occs = occur[(~cl[j]).toInt()];
             for (uint32_t k = 0; k < n_occs.size(); k++)
                 if (n_occs[k].clause != c.clause && n_occs[k].clause->size() <= cl.size() && selfSubset(n_occs[k].abst, c.abst) && selfSubset(*n_occs[k].clause, cl, seen_tmp))
                     s1.add(n_occs[k]);
