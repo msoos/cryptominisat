@@ -231,7 +231,8 @@ protected:
     double              progress_estimate;// Set by 'search()'.
     bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
     bqueue<uint>        nbDecisionLevelHistory; // Set of last decision level in conflict clauses
-    float               totalSumOfDecisionLevel;
+    double              totalSumOfDecisionLevel;
+    uint64_t            conflictsAtLastFullRestart;
     MTRand              mtrand;           // random number generaton
     RestartType         restartType;      // Used internally to determine which restart strategy to choose
     friend class        Logger;
