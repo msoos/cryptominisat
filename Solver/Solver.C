@@ -1681,6 +1681,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     vec<double> backup_activity;
     backup_activity.growTo(activity.size());
     memcpy(backup_activity.getData(), activity.getData(), activity.size()*sizeof(double));
+    double backup_var_inc = var_inc;
     
     if (verbosity >= 1)
         std::cout << "c | " << std::setw(24) << " " 
@@ -1714,6 +1715,7 @@ end:
     if (verbosity >= 1)
         printf("c                                      Simplifying finished                               |\n");
     
+    var_inc = backup_var_inc;
     memcpy(activity.getData(), backup_activity.getData(), activity.size()*sizeof(double));
     order_heap = backup_order_heap;
     simplifying = false;

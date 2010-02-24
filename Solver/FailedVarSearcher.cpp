@@ -43,6 +43,7 @@ const bool FailedVarSearcher::search(const uint64_t numProps)
     vec<double> backup_activity;
     backup_activity.growTo(solver.activity.size());
     memcpy(backup_activity.getData(), solver.activity.getData(), solver.activity.size()*sizeof(double));
+    double backup_var_inc = solver.var_inc;
     
     //General Stats
     double time = cpuTime();
@@ -153,6 +154,7 @@ end:
         }
     }
     
+    solver.var_inc = backup_var_inc;
     memcpy(solver.activity.getData(), backup_activity.getData(), solver.activity.size()*sizeof(double));
     solver.order_heap = backup_order_heap;
     solver.polarity = backup_polarities;
