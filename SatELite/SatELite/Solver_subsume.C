@@ -82,7 +82,7 @@ void Solver::findSubsumed(Clause ps, vec<Clause>& out_subsumed)
     }
 
     vec<Clause>& cs = occur[index(ps[min_i])];
-    for (Clause *it = &cs[0], *end = it + cs.size(); it != end; it++){
+    for (Clause *it = &cs.getData(), *end = it + cs.size(); it != end; it++){
         if (it+1 != end)
             __builtin_prefetch((it+1)->ptr(), 1, 0);
         if (*it != ps && ps.size() <= it->size() && subset(abst, it->abst()) && subset(ps, *it, seen_tmp))
