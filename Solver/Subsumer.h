@@ -7,7 +7,7 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 
 #include "Solver.h"
 #include "Queue.h"
-#include "TmpFiles.h"
+//#include "TmpFiles.h"
 #include "CSet.h"
 
 enum OccurMode { occ_Off, occ_Permanent, occ_All };
