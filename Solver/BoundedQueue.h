@@ -37,7 +37,7 @@ class bqueue {
     vec<T>  elems;
     int     first;
     int     last;
-    unsigned long long sumofqueue;
+    uint64_t sumofqueue;
     int     maxsize;
     int     queuesize; // Number of current elements (must be < maxsize !)
     
@@ -61,8 +61,8 @@ public:
     T peek() { assert(queuesize>0); return elems[last]; }
     void pop() {sumofqueue-=elems[last]; queuesize--; if ((++last) == maxsize) last = 0;}
     
-    unsigned long long getsum() const {return sumofqueue;}
-    uint getavg() const {return (unsigned int)(sumofqueue/((unsigned long long)queuesize));}
+    uint64_t getsum() const {return sumofqueue;}
+    uint getavg() const {return (uint64_t)sumofqueue/(uint64_t)queuesize;}
     int isvalid() const {return (queuesize==maxsize);}
     
     void growTo(int size) {
