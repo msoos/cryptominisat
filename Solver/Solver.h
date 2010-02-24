@@ -347,10 +347,21 @@ inline void Solver::varDecayActivity()
 inline void Solver::varBumpActivity(Var v)
 {
     if ( (activity[v] += var_inc) > 1e100 ) {
+        //printf("RESCALE!!!!!!\n");
+        //std::cout << "var_inc: " << var_inc << std::endl;
         // Rescale:
         for (uint32_t i = 0; i != nVars(); i++)
-            activity[i] *= 1e-100;
+            activity[i] *= 1e-94;
         var_inc *= 1e-100;
+        var_inc = 1;
+        //std::cout << "var_inc: " << var_inc << std::endl;
+        
+        /*Heap<VarOrderLt> copy_order_heap2(order_heap);
+        while(!copy_order_heap2.empty()) {
+            Var v = copy_order_heap2.getmin();
+            if (decision_var[v])
+                std::cout << "var_" << v+1 << " act: " << activity[v] << std::endl;
+        }*/
     }
 
     // Update order_heap with respect to new activity:
