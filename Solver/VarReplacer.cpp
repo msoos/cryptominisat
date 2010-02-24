@@ -333,13 +333,13 @@ const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, co
     #endif
     
     
-    addBinaryXorClause(ps, xor_clause_inverted, group);
     Var var = ps[0].var();
     Lit lit = Lit(ps[1].var(), !xor_clause_inverted);
     assert(var != lit.var());
     
     //Detect circle
     if (alreadyIn(var, lit)) return solver.ok;
+    addBinaryXorClause(ps, xor_clause_inverted, group);
     replacedVars++;
     
     Lit lit1 = table[var];
