@@ -356,13 +356,14 @@ void Simplifier::almost_all_database(int& clauses_subsumed, int& literals_remove
     }
     unregisterIteration(s1);
     
-    printf("c final stage: subsume0\n");
+    //TODO we don't need it, since we do pre-subsumption
+    /*printf("c final stage: subsume0\n");
     
     for (int i = 0; i < clauses.size(); i++) {
         assert(clauses[i].index == i);
         if (clauses[i].clause != NULL)
             subsume0(clauses[i], clauses_subsumed);
-    }
+    }*/
 }
 
 void Simplifier::smaller_database(int& clauses_subsumed, int& literals_removed)
