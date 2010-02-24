@@ -1704,11 +1704,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     if (status != l_Undef)
         goto end;
     
-    if (failedVarSearch && !failedVarSearcher->search(numProps))
+    if (failedVarSearch && !failedVarSearcher->search(numProps)) {
+        status = l_False;
         goto end;
-    
-    /*if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
-        goto end;*/
+    }
     
 end:
     random_var_freq = backup_random_var_freq;
