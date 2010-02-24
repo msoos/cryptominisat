@@ -1467,7 +1467,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     switch (restartType) {
     case dynamic_restart:
         if (nbDecisionLevelHistory.isvalid() &&
-            ((nbDecisionLevelHistory.getavg()*0.7) > (totalSumOfDecisionLevel / conflicts))) {
+            ((nbDecisionLevelHistory.getavg()*0.7) > (totalSumOfDecisionLevel / (double)(conflicts - conflictsAtLastFullRestart)))) {
             nbDecisionLevelHistory.fastclear();
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
@@ -1680,6 +1680,7 @@ inline void Solver::chooseRestartType(RestartTypeChooser& restartTypeChooser, co
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
                 totalSumOfDecisionLevel = 0;
+                conflictsAtLastFullRestart = conflicts;
                 if (verbosity >= 1)
                     printf("c |                           Decided on dynamic restart strategy                         |\n");
             } else  {
