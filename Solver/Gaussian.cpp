@@ -805,7 +805,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
         switch (g) {
         case conflict: {
             useful_confl++;
-            llbool ret = solver.handle_conflict(learnt_clause, confl, conflictC);
+            llbool ret = solver.handle_conflict(learnt_clause, confl, conflictC, true);
             clauseFree(confl);
             
             if (ret != l_Nothing) return ret;

@@ -1918,12 +1918,12 @@ lbool Solver::solve(const vec<Lit>& assumps)
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
         
-        if (schedSimplification && conflicts >= nextSimplify) {
+        while (schedSimplification && conflicts >= nextSimplify) {
             status = simplifyProblem(500, 7000000);
-            nextSimplify *= 1.5;
-            if (status != l_Undef)
-                break;
+            nextSimplify *= 2;
+            if (status != l_Undef) break;
         }
+        if (status != l_Undef) break;
         
         printRestartStat();
         #ifdef STATS_NEEDED
