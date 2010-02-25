@@ -53,12 +53,10 @@ const bool PartHandler::handle()
     
     for (uint it = 0; it < sizes.size()-1; it++) {
         uint part = sizes[it].first;
-        vector<Var> vars = reverseTable[sizes[it].first];
+        vector<Var> vars = reverseTable[part];
         std::cout << "c Solving part " << part << std::endl;
         
         Solver newSolver;
-        std::sort(vars.begin(), vars.end());
-        uint i2 = 0;
         newSolver.mtrand.seed(solver.mtrand.randInt());
         newSolver.random_var_freq = solver.random_var_freq;
         newSolver.var_decay = solver.var_decay;
@@ -79,8 +77,10 @@ const bool PartHandler::handle()
         newSolver.fixRestartType = solver.fixRestartType;
         newSolver.var_inc = solver.var_inc;
         newSolver.polarity_mode = Solver::polarity_manual;
+        std::sort(vars.begin(), vars.end());
+        uint i2 = 0;
         for (uint var = 0; var < solver.nVars(); var++) {
-            if (vars[i2] == var) {
+            if (i2 < vars.size() && vars[i2] == var) {
                 newSolver.newVar(true);
                 newSolver.activity[var] = solver.activity[var];
                 newSolver.defaultPolarities[var] = solver.polarity[var];
