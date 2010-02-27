@@ -362,10 +362,11 @@ inline void Solver::varBumpActivity(Var v)
         //printf("RESCALE!!!!!!\n");
         //std::cout << "var_inc: " << var_inc << std::endl;
         // Rescale:
-        for (uint32_t i = 0; i != nVars(); i++)
-            activity[i] *= 1e-94;
+        for (uint32_t i = 0; i != nVars(); i++) {
+            activity[i] *= 1e-99;
+        }
         var_inc *= 1e-100;
-        var_inc = 1;
+        //var_inc = 1;
         //std::cout << "var_inc: " << var_inc << std::endl;
         
         /*Heap<VarOrderLt> copy_order_heap2(order_heap);
