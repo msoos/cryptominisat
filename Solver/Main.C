@@ -637,7 +637,7 @@ int main(int argc, char** argv)
     gzclose(in);
 #endif // DISABLE_ZLIB
     if (argc >= 3)
-        printf("Putting output to file: %s\n" , argv[2]);
+        printf("c Outputting solution to file: %s\n" , argv[2]);
 
     double parse_time = cpuTime() - cpu_time;
     if (S.verbosity >= 1)
