@@ -1467,7 +1467,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     switch (restartType) {
     case dynamic_restart:
         if (nbDecisionLevelHistory.isvalid() &&
-            ((nbDecisionLevelHistory.getavg()*0.7) > (totalSumOfDecisionLevel / (double)(conflicts - conflictsAtLastFullRestart)))) {
+            ((nbDecisionLevelHistory.getavg()*0.7) > (totalSumOfDecisionLevel / (double)(conflicts - conflictsAtLastSolve)))) {
             nbDecisionLevelHistory.fastclear();
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
@@ -1563,10 +1563,9 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         return l_False;
     learnt_clause.clear();
     Clause* c = analyze(confl, learnt_clause, backtrack_level, nbLevels);
-    if (restartType == dynamic_restart) {
+    if (restartType == dynamic_restart)
         nbDecisionLevelHistory.push(nbLevels);
-        totalSumOfDecisionLevel += nbLevels;
-    }
+    totalSumOfDecisionLevel += nbLevels;
     
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
@@ -1679,8 +1678,6 @@ inline void Solver::chooseRestartType(RestartTypeChooser& restartTypeChooser, co
             if (tmp == dynamic_restart) {
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
-                totalSumOfDecisionLevel = 0;
-                conflictsAtLastFullRestart = conflicts;
                 if (verbosity >= 1)
                     printf("c |                           Decided on dynamic restart strategy                         |\n");
             } else  {
@@ -1712,7 +1709,6 @@ inline void Solver::setDefaultRestartType()
     if (restartType == dynamic_restart) {
         nbDecisionLevelHistory.fastclear();
         nbDecisionLevelHistory.initSize(100);
-        totalSumOfDecisionLevel = 0;
     }
 }
 
@@ -1885,6 +1881,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
     conflict.clear();
     clearGaussMatrixes();
     setDefaultRestartType();
+    totalSumOfDecisionLevel = 0;
+    conflictsAtLastSolve = conflicts;
+    
     conglomerate->addRemovedClauses();
     starts = 0;
 
