@@ -73,6 +73,15 @@ const bool PartFinder::findParts()
     
     const uint parts = setParts();
     
+    #ifndef NDEBUG
+    for (map<uint, vector<Var> >::const_iterator it = reverseTable.begin(); it != reverseTable.end(); it++) {
+        for (uint i2 = 0; i2 < it->second.size(); i2++) {
+            assert(table[(it->second)[i2]] == it->first);
+        }
+    }
+    #endif
+    
+    
     std::cout << "c | Found parts: " << std::setw(10) <<  parts
     << " time: " << std::setprecision(2) << std::setw(4) << cpuTime() - time
     << " s" << std::setw(28) << " |" << std::endl;
