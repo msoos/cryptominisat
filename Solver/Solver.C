@@ -1923,12 +1923,11 @@ lbool Solver::solve(const vec<Lit>& assumps)
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
         
-        while (schedSimplification && conflicts >= nextSimplify) {
+        if (schedSimplification && conflicts >= nextSimplify) {
             status = simplifyProblem(500, 7000000);
-            nextSimplify *= 2;
+            nextSimplify = conflicts * 2;
             if (status != l_Undef) break;
         }
-        if (status != l_Undef) break;
         
         printRestartStat();
         #ifdef STATS_NEEDED
