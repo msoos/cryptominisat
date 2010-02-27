@@ -1444,7 +1444,7 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
         Clause* confl = propagate(update);
 
         if (confl != NULL) {
-            ret = handle_conflict(learnt_clause, confl, conflictC);
+            ret = handle_conflict(learnt_clause, confl, conflictC, update);
             if (ret != l_Nothing) return ret;
         } else {
             bool at_least_one_continue = false;
@@ -1545,7 +1545,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     return l_Nothing;
 }
 
-llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conflictC)
+llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conflictC, const bool update)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Handling conflict: ";
@@ -1563,9 +1563,14 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         return l_False;
     learnt_clause.clear();
     Clause* c = analyze(confl, learnt_clause, backtrack_level, nbLevels);
-    if (restartType == dynamic_restart)
-        nbDecisionLevelHistory.push(nbLevels);
-    totalSumOfDecisionLevel += nbLevels;
+    if (update) {
+        avgBranchDepth.push(decisionLevel());
+        if (restartType == dynamic_restart)
+            nbDecisionLevelHistory.push(nbLevels);
+        totalSumOfDecisionLevel += nbLevels;
+    } else {
+        conflictsAtLastSolve++;
+    }
     
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
