@@ -363,7 +363,7 @@ inline void Solver::varBumpActivity(Var v)
         //std::cout << "var_inc: " << var_inc << std::endl;
         // Rescale:
         for (uint32_t i = 0; i != nVars(); i++) {
-            activity[i] *= 1e-99;
+            activity[i] *= 1e-95;
         }
         var_inc *= 1e-100;
         //var_inc = 1;
