@@ -595,6 +595,8 @@ int main(int argc, char** argv)
             argv[j++] = argv[i];
     }
     argc = j;
+    if (!debugLib)
+        S.noLibraryUsage = true;
     
     
     printf("c This is CryptoMiniSat 2.3.2\n");
