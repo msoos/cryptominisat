@@ -400,7 +400,7 @@ int main(int argc, char** argv)
                 char*   tmp  = NULL;
                 int     stat = 0;
                 if (len >= 3 && strcmp(name+len-3, ".gz") == 0){
-                    tmp = xstrdup("/tmp/tmp_CNF__XXXXXX");
+                    tmp = xstrdup("./tmp_CNF__XXXXXX");
                     int fd = mkstemp(tmp);
                     if (fd == -1)
                         fprintf(stderr, "ERROR! Could not create temporary file for unpacking problem.\n"),
@@ -512,7 +512,7 @@ int main(int argc, char** argv)
             if (out == NULL) fprintf(stderr, "WARNING! Could not write model to: %s\n", model_file);
         }else{
 #ifdef VERIFY_MODEL
-	  out = createTmpFile("/tmp/tmp_model__", "wb", (char*)model_file);
+	  out = createTmpFile("./tmp_model__", "wb", (char*)model_file);
 #else
 	  out = NULL;
 #endif
