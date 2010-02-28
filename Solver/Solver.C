@@ -1471,7 +1471,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     switch (restartType) {
     case dynamic_restart:
         if (nbDecisionLevelHistory.isvalid() &&
-            ((nbDecisionLevelHistory.getavg()*0.9) > (totalSumOfDecisionLevel / (double)(conflicts - conflictsAtLastSolve)))) {
+            ((nbDecisionLevelHistory.getavg()) > (totalSumOfDecisionLevel / (double)(conflicts - conflictsAtLastSolve)))) {
             nbDecisionLevelHistory.fastclear();
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
