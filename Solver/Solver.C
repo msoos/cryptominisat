@@ -69,6 +69,7 @@ Solver::Solver() :
         , doSubsumption    (true)
         , doPartHandler    (true)
         , failedVarSearch  (true)
+        , noLibraryUsage   (false)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
 
@@ -588,9 +589,10 @@ const lbool Solver::calculateDefaultPolarities()
         uint propagated = 0;
         uint removed = 0;
         
-        if (false && failedVarSearch) {
+        if (noLibraryUsage && failedVarSearch) {
             for (uint i = 0; i != nVars(); i++) if (decision_var[i] && assigns[i] == l_Undef) {
                 assert(!conglomerate->getRemovedVars()[i]);
+                assert(partHandler->getSavedState()[i] == l_Undef);
                 if (!positiveLiteral[i] && negativeLiteral[i]) {
                     uncheckedEnqueue(Lit(i, true));
                     propagated++;
@@ -599,7 +601,7 @@ const lbool Solver::calculateDefaultPolarities()
                     propagated++;
                 }
                 else if (!positiveLiteral[i] && !negativeLiteral[i]) {
-                    decision_var[i] = false;
+                    setDecisionVar(i, false);
                     removed++;
                 }
             }
@@ -1809,9 +1811,9 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         if (doPartHandler && !partHandler->handle())
             return false;
         
-        /*if (calculateDefaultPolarities() == l_False)
+        if (calculateDefaultPolarities() == l_False)
             return false;
-        setDefaultPolarities();*/
+        setDefaultPolarities();
         
         /*if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
         goto end;*/
