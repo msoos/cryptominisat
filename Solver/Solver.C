@@ -56,7 +56,7 @@ Solver::Solver() :
         // More parameters:
         //
         , expensive_ccmin  (true)
-        , polarity_mode    (polarity_auto)
+        , polarity_mode    (polarity_false)
         , verbosity        (0)
         , restrictedPickBranch(0)
         , findNormalXors   (true)
