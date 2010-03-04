@@ -1750,6 +1750,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         status = search(100, -1, false);
         starts--;
     }
+    if (status != l_Undef)
+        goto end;
     printRestartStat();
     
     if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
@@ -1759,9 +1761,6 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
             goto end;
         }
     }
-    
-    if (status != l_Undef)
-        goto end;
     
 end:
     random_var_freq = backup_random_var_freq;
