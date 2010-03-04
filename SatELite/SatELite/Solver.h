@@ -295,7 +295,7 @@ struct Solver {
     //
     void    createTmpFiles(cchar* filename) {
         if (filename == NULL)
-            elim_out = createTmpFile("/tmp/tmp_elims__", "w+b", elim_out_file);
+            elim_out = createTmpFile("./tmp_elims__", "w+b", elim_out_file);
         else
             elim_out = fopen(filename, "w+b"),
             elim_out_file = NULL; }
