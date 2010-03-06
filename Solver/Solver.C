@@ -684,7 +684,7 @@ Lit Solver::pickBranchLit()
         /*else
             sign = polarity[next] ^ (mtrand.randInt(200) == 1);*/
         else if (avgBranchDepth.isvalid())
-            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);
+            sign = polarity[next] ^ (mtrand.randInt(10*avgBranchDepth.getavg()) == 1);
         else
             sign = polarity[next];
     }
@@ -1825,7 +1825,7 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
 
 inline void Solver::performStepsBeforeSolve()
 {
-    if (performReplace && varReplacer->performReplace() == false)
+    if (performReplace && varReplacer->performReplace(true) == false)
         return;
     
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
@@ -1837,7 +1837,7 @@ inline void Solver::performStepsBeforeSolve()
             return;
     }
     
-    if (doSubsumption && nClauses() < 200000 && learnts.size() < 10000) {
+    if (doSubsumption && nClauses() < 300000 && learnts.size() < 10000) {
         Subsumer s(*this);
         if (s.simplifyBySubsumption(true) == false)
             return;
