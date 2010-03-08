@@ -120,7 +120,7 @@ inline void Subsumer::touch(const Lit p)
 
 inline bool Subsumer::updateOccur(Clause& c)
 {
-    return occur_mode == occ_All || (occur_mode == occ_Permanent && !c.learnt()) || c.size() == 2;
+    return occur_mode == occ_All || (occur_mode == occ_Permanent && !c.learnt()) || c.size() <= 3;
 }
 
 
