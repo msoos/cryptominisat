@@ -17,10 +17,11 @@ class Subsumer
 public:
     
     Subsumer(Solver& S2);
-    const bool simplifyBySubsumption(bool with_var_elim = true);
+    const bool simplifyBySubsumption();
     void unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c);
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
     void updateClause(Clause& cl, ClauseSimp& c);
+    void newVar();
     
 private:
     
@@ -88,6 +89,9 @@ private:
     
     uint32_t clauses_subsumed;
     uint32_t literals_removed;
+    uint32_t origNClauses;
+    uint32_t numCalls;
+    bool fullSubsume;
 };
 
 template <class T, class T2>
@@ -149,6 +153,16 @@ bool Subsumer::subset(const T1& A, const T2& B, vec<bool>& seen)
     for (uint i = 0; i != B.size(); i++)
         seen[B[i].toInt()] = 0;
     return true;
+}
+
+inline void Subsumer::newVar()
+{
+    occur       .push();
+    occur       .push();
+    seen_tmp    .push(0);       // (one for each polarity)
+    seen_tmp    .push(0);
+    touched     .push(1);
+    var_elimed  .push(0);
 }
 
 #endif //SIMPLIFIER_H

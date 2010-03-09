@@ -317,6 +317,7 @@ protected:
     ClauseCleaner* clauseCleaner;
     FailedVarSearcher* failedVarSearcher;
     PartHandler* partHandler;
+    Subsumer* subsumer;
     void chooseRestartType(RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
     void setDefaultRestartType();
     const bool checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);

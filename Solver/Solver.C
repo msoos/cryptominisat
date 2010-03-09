@@ -111,6 +111,7 @@ Solver::Solver() :
     clauseCleaner = new ClauseCleaner(*this);
     failedVarSearcher = new FailedVarSearcher(*this);
     partHandler = new PartHandler(*this);
+    subsumer = new Subsumer(*this);
     
     #ifdef STATS_NEEDED
     logger.setSolver(this);
@@ -130,6 +131,7 @@ Solver::~Solver()
     delete clauseCleaner;
     delete failedVarSearcher;
     delete partHandler;
+    delete subsumer;
     
     if (libraryCNFFile)
         fclose(libraryCNFFile);
@@ -156,6 +158,7 @@ Var Solver::newVar(bool dvar)
     seen      .push_back(0);
     seen      .push_back(0);
     permDiff  .push(0);
+    subsumer->newVar();
     
     polarity  .push_back(true);
     defaultPolarities.push_back(true);
@@ -255,6 +258,7 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     default: {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
+        c->unSetVarChanged();
         
         xorclauses.push(c);
         attachClause(*c);
@@ -343,6 +347,7 @@ bool Solver::addClause(T& ps, const uint group, char* group_name)
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         Clause* c = Clause_new(ps, group);
+        c->unSetVarChanged();
 
         if (c->size() > 2)
             clauses.push(c);
@@ -1755,8 +1760,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     printRestartStat();
     
     if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
-        Subsumer s(*this);
-        if (!s.simplifyBySubsumption(false)) {
+        if (!subsumer->simplifyBySubsumption()) {
             status = l_False;
             goto end;
         }
@@ -1837,10 +1841,8 @@ inline void Solver::performStepsBeforeSolve()
             return;
     }
     
-    if (doSubsumption && nClauses() < 200000 && learnts.size() < 10000) {
-        Subsumer s(*this);
-        if (s.simplifyBySubsumption(true) == false)
-            return;
+    if (doSubsumption && !subsumer->simplifyBySubsumption())
+        return;
     }
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
