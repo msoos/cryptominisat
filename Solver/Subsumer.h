@@ -75,7 +75,7 @@ private:
     bool subset(const T1& A, const T2& B, vec<bool>& seen);
     bool subsetAbst(uint64_t A, uint64_t B);
     
-    /*void orderVarsForElim(vec<Var>& order);
+    void orderVarsForElim(vec<Var>& order);
     int  substitute(Lit x, Clause& def, vec<Clause*>& poss, vec<Clause*>& negs, vec<Clause*>& new_clauses);
     Lit  findUnitDef(Var x, vec<Clause*>& poss, vec<Clause>& negs);
     bool findDef(Lit x, vec<Clause*>& poss, vec<Clause>& negs, Clause& out_def);
@@ -84,7 +84,7 @@ private:
     void exclude(vec<ClauseSimp>& cs, Clause* c);
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<Lit>& ps, vec<Lit>& ns, const Var x);
     void DeallocPsNs(vec<Lit>& ps, vec<Lit>& ns);
-    bool merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause);*/
+    bool merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause);
     
     uint32_t clauses_subsumed;
     uint32_t literals_removed;
