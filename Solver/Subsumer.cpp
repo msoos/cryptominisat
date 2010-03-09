@@ -459,7 +459,10 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
                 occur[cl[i].toInt()].push(c);
                 touch(cl[i].var());
             }
-            if (cl.changed()) cl_touched.add(c);
+            if (cl.getVarChanged()) cl_added.add(c);
+            else if (cl.getStrenghtened()) cl_touched.add(c);
+            cl.unSetStrenghtened();
+            cl.unSetVarChanged();
         }
     }
     cs.clear();

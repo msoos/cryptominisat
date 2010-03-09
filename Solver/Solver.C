@@ -1609,7 +1609,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
             c->resize(learnt_clause.size());
             if (c->learnt() && c->activity() > nbLevels)
                 c->setActivity(nbLevels); // LS
-            c->setChanged();
+            c->setStrenghtened();
         } else {
             c = Clause_new(learnt_clause, learnt_clause_group++, true);
             #ifdef STATS_NEEDED

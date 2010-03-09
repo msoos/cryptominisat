@@ -55,7 +55,8 @@ protected:
     #endif
     
     uint32_t isLearnt:1;
-    uint32_t haveChanged:1;
+    uint32_t strenghtened:1;
+    uint32_t varChanged:1;
     uint32_t invertedXor:1;
     uint32_t isXorClause:1;
     uint32_t mySize:20;
@@ -74,7 +75,8 @@ public:
     Clause(const V& ps, const uint _group, const bool learnt)
     {
         isXorClause = false;
-        haveChanged = false;
+        strenghtened = false;
+        varChanged = true;
         mySize = ps.size();
         isLearnt = learnt;
         setGroup(_group);
@@ -109,11 +111,23 @@ public:
     const bool   learnt      ()      const {
         return isLearnt;
     }
-    const bool changed        ()      const {
-        return haveChanged;
+    const bool getStrenghtened() const {
+        return strenghtened;
     }
-    void       setChanged        () {
-        haveChanged = true;
+    void setStrenghtened() {
+        strenghtened = true;
+    }
+    const bool getVarChanged() const {
+        return varChanged;
+    }
+    void setVarChanged() {
+        varChanged = true;
+    }
+    void unSetStrenghtened() {
+        strenghtened = false;
+    }
+    void unSetVarChanged() {
+        varChanged = false;
     }
 
     Lit&         operator [] (uint32_t i) {
