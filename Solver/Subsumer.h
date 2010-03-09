@@ -47,18 +47,10 @@ private:
     vec<bool>           seen_tmp;       // (used in various places)
     //vec<Lit>            io_tmp;         // (used for reading/writing clauses from/to disk)
     
-    /*
     // Database management:
     //
-    void createTmpFiles(const char* filename) {
-        if (filename == NULL)
-            elim_out = createTmpFile("/tmp/tmp_elims__", "w+b", elim_out_file);
-        else
-            elim_out = fopen(filename, "w+b"),
-            elim_out_file = NULL;
-    }
-    void deleteTmpFiles(void) { if (elim_out_file != NULL) deleteTmpFile(elim_out_file, true); }
-    */
+    void createTmpFiles(const char* filename);
+    void deleteTmpFiles(void);
     
     //Start-up
     void addFromSolver(vec<Clause*>& cs);
@@ -121,6 +113,19 @@ inline void Subsumer::touch(const Lit p)
 inline bool Subsumer::updateOccur(Clause& c)
 {
     return occur_mode == occ_All || (occur_mode == occ_Permanent && !c.learnt()) || c.size() == 2;
+}
+
+inline void Subsumer::createTmpFiles(const char* filename)
+{
+    if (filename == NULL)
+        elim_out = createTmpFile("/tmp/tmp_elims__", "w+b", elim_out_file);
+    else
+        elim_out = fopen(filename, "w+b"), elim_out_file = NULL;
+}
+
+inline void Subsumer::deleteTmpFiles(void)
+{
+    if (elim_out_file != NULL) deleteTmpFile(elim_out_file, true);
 }
 
 
