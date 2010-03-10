@@ -19,11 +19,13 @@ function usage {
     echo "  -q   don't use failed var"
     echo "  -c   don't perform conglomeration (default = conglomerate)"
     echo "  -e   don't perform heule-preprocess (default = heule)"
+    echo "  -p   don't perform subsumption"
+    echo "  -u   don't do binary xor finding"
     echo "  -v   verbosity (default = 1)"
     echo ""
 }
 
-args=`getopt g:v:t:d:ncsfzqe "$@"`
+args=`getopt g:v:t:d:ncsfzqepu "$@"`
 if test $? != 0
 then
     usage
@@ -45,6 +47,8 @@ do
         (-z) extra+="$extra -nosimplify";;
         (-q) extra+="$extra -nofailedvar";;
         (-e) extra+="$extra -noheuleprocess";;
+        (-p) extra+="$extra -nosubsumption";;
+        (-u) extra+="$extra -nobinxorfind";;
         (--) shift; break;;
         (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
         (*)  break;;
