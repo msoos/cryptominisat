@@ -57,6 +57,7 @@ protected:
     uint32_t isLearnt:1;
     uint32_t strenghtened:1;
     uint32_t varChanged:1;
+    uint32_t sorted:1;
     uint32_t invertedXor:1;
     uint32_t isXorClause:1;
     uint32_t mySize:20;
@@ -76,6 +77,7 @@ public:
     {
         isXorClause = false;
         strenghtened = false;
+        sorted = false;
         varChanged = true;
         mySize = ps.size();
         isLearnt = learnt;
@@ -116,18 +118,26 @@ public:
     }
     void setStrenghtened() {
         strenghtened = true;
+        sorted = false;
+    }
+    void unsetStrenghtened() {
+        strenghtened = false;
     }
     const bool getVarChanged() const {
         return varChanged;
     }
     void setVarChanged() {
         varChanged = true;
+        sorted = false;
     }
-    void unSetStrenghtened() {
-        strenghtened = false;
-    }
-    void unSetVarChanged() {
+    void unsetVarChanged() {
         varChanged = false;
+    }
+    const bool getSorted() const {
+        return sorted;
+    }
+    void setSorted() {
+        sorted = true;
     }
 
     Lit&         operator [] (uint32_t i) {
@@ -158,6 +168,7 @@ public:
     inline void  strengthen(const Lit p)
     {
         remove(*this, p);
+        sorted = false;
         //calcAbstraction();
     }
     
