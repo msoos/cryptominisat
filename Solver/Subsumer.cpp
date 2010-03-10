@@ -12,10 +12,10 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
-#define BIT_MORE_VERBOYITY
+#define BIT_MORE_VERBOSITY
 #endif
 
-#define BIT_MORE_VERBOSITY
+//#define BIT_MORE_VERBOSITY
 //#define TOUCH_LESS
 
 #ifdef VERBOSE_DEBUG
