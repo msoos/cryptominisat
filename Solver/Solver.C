@@ -258,7 +258,7 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     default: {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
-        c->unsetVarChanged();
+        if (noLibraryUsage) c->unsetVarChanged();
         
         xorclauses.push(c);
         attachClause(*c);
@@ -347,7 +347,7 @@ bool Solver::addClause(T& ps, const uint group, char* group_name)
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         Clause* c = Clause_new(ps, group);
-        c->unsetVarChanged();
+        if (noLibraryUsage) c->unsetVarChanged();
 
         if (c->size() > 2)
             clauses.push(c);
