@@ -17,7 +17,7 @@ class Subsumer
 public:
     
     Subsumer(Solver& S2);
-    const bool simplifyBySubsumption();
+    const bool simplifyBySubsumption(const bool doFullSubsume = false);
     void unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c);
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
     void updateClause(Clause& cl, ClauseSimp& c);
