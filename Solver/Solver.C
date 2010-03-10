@@ -158,7 +158,6 @@ Var Solver::newVar(bool dvar)
     seen      .push_back(0);
     seen      .push_back(0);
     permDiff  .push(0);
-    subsumer->newVar();
     
     polarity  .push_back(true);
     defaultPolarities.push_back(true);
@@ -168,7 +167,8 @@ Var Solver::newVar(bool dvar)
     
     varReplacer->newVar();
     conglomerate->newVar();
-    partHandler->newVar();
+    if (doPartHandler) partHandler->newVar();
+    if (doSubsumption) subsumer->newVar();
 
     insertVarOrder(v);
     
@@ -1835,9 +1835,8 @@ inline void Solver::performStepsBeforeSolve()
             return;
     }
     
-    if (doSubsumption && !subsumer->simplifyBySubsumption())
+    if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000 && !subsumer->simplifyBySubsumption())
         return;
-    }
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);

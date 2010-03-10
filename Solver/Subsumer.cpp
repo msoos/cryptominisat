@@ -470,8 +470,6 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
             }
             if (fullSubsume || cl.getVarChanged()) cl_added.add(c);
             else if (cl.getStrenghtened()) cl_touched.add(c);
-            cl.unSetStrenghtened();
-            cl.unSetVarChanged();
         }
     }
     cs.clear();
@@ -483,18 +481,22 @@ const bool Subsumer::simplifyBySubsumption()
     uint32_t origTrailSize = solver.trail.size();
     clauses_subsumed = 0;
     literals_removed = 0;
-    if (origNClauses < 200000 && numCalls == 0) fullSubsume = true;
-    else fullSubsume = false;
+    origNClauses = solver.clauses.size() + solver.binaryClauses.size();
+    fullSubsume = false;
     numCalls++;
+    
+    if (numCalls == 1) {
+        if (origNClauses < 200000) fullSubsume = true;
+        else return true;
+    }
     
     touched_list.clear();
     for (Var i = 0; i < solver.nVars(); i++) {
         touched_list.push(i);
-        occur[2*i].clear();
-        occur[2*i+1].clear();
+        occur[2*i].clear(true);
+        occur[2*i+1].clear(true);
     }
     
-    origNClauses = solver.nClauses();
     clauses.clear();
     cl_added.clear();
     cl_touched.clear();
@@ -611,6 +613,8 @@ const bool Subsumer::simplifyBySubsumption()
                 else
                     solver.clauses.push(clauses[i].clause);
             }
+            clauses[i].clause->unsetStrenghtened();
+            clauses[i].clause->unsetVarChanged();
         }
     }
     clauses.clear();
