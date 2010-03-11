@@ -9,6 +9,8 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include "assert.h"
 #include <iomanip>
 #include "ClauseDumper.h"
+#include "VarReplacer.h"
+#include "Conglomerate.h"
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
@@ -28,8 +30,13 @@ Subsumer::Subsumer(Solver& s):
     , solver(s)
     , numCalls(0)
 {
-    //createTmpFiles(NULL);
+    createTmpFiles(NULL);
 };
+
+Subsumer::~Subsumer()
+{
+    deleteTmpFiles();
+}
 
 bool selfSubset(uint64_t A, uint64_t B)
 {
@@ -42,7 +49,7 @@ bool selfSubset(uint64_t A, uint64_t B)
 }
 
 // Assumes 'seen' is cleared (will leave it cleared)
-bool selfSubset(Clause& A, Clause& B, vec<bool>& seen)
+bool selfSubset(Clause& A, Clause& B, vec<char>& seen)
 {
     for (uint32_t i = 0; i < B.size(); i++)
         seen[B[i].toInt()] = 1;
@@ -106,14 +113,14 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
 {
     Clause& cl = *c.clause;
     
-    /*if (elim != var_Undef) {
+    if (elim != var_Undef) {
         assert(!cl.learnt());
         io_tmp.clear();
         io_tmp.push(Lit(cl.size(), false));
         for (int i = 0; i < cl.size(); i++)
             io_tmp.push(cl[i]);
         fwrite(io_tmp.getData(), 4, io_tmp.size(), elim_out);
-    }*/
+    }
     
     if (updateOccur(cl)) {
         for (uint32_t i = 0; i < cl.size(); i++) {
@@ -487,9 +494,26 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     
     touched_list.clear();
     for (Var i = 0; i < solver.nVars(); i++) {
-        touched_list.push(i);
+        if (solver.decision_var[i]) touched_list.push(i);
         occur[2*i].clear(true);
         occur[2*i+1].clear(true);
+    }
+    
+    std::fill(cannot_eliminate.getData(), cannot_eliminate.getData()+cannot_eliminate.size(), false);
+    for (uint i = 0; i < solver.xorclauses.size(); i++) {
+        const XorClause& c = *solver.xorclauses[i];
+        for (uint i2 = 0; i2 < c.size(); i2++)
+            cannot_eliminate[c[i2].var()] = true;
+    }
+    const vec<Clause*>& tmp = solver.varReplacer->getClauses();
+    for (uint i = 0; i < tmp.size(); i++) {
+        const Clause& c = *tmp[i];
+        for (uint i2 = 0; i2 < c.size(); i2++)
+            cannot_eliminate[c[i2].var()] = true;
+    }
+    const vector<bool>& tmp2 = solver.conglomerate->getRemovedVars();
+    for (uint i = 0; i < tmp2.size(); i++) {
+        if (tmp2[i]) cannot_eliminate[i] = true;
     }
     
     clauses.clear();
@@ -540,7 +564,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
         // VARIABLE ELIMINATION:
         //
         //if (!with_var_elim || !opt_var_elim) break;
-        break;
+        //break;
         
         
         printf("c VARIABLE ELIMINIATION\n");
@@ -552,23 +576,30 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             int clauses_before = solver.nClauses();
             vec<Var> order;
             
-            if (first)
-                init_order.copyTo(order);
-            else{
-                for (int i = 0; i < touched_list.size(); i++)
-                    if (!var_elimed[touched_list[i]]) {
+            if (first) {
+                //init_order.copyTo(order);
+                for (int i = 0; i < init_order.size(); i++) {
+                    if (!var_elimed[init_order[i]] && !cannot_eliminate[init_order[i]] && solver.decision_var[init_order[i]])
+                        order.push(init_order[i]);
+                }
+            } else {
+                for (int i = 0; i < touched_list.size(); i++) {
+                    if (!var_elimed[touched_list[i]] && !cannot_eliminate[touched_list[i]] && solver.decision_var[init_order[i]]) {
                         order.push(touched_list[i]);
                         touched[touched_list[i]] = 0;
                     }
-                    touched_list.clear();
+                }
+                touched_list.clear();
             }
+            
+            std::cout << "Order size:" << order.size() << std::endl;
             
             assert(solver.qhead == solver.trail.size());
             for (int i = 0; i < order.size(); i++){
-                #ifndef SAT_LIVE
-                if (i % 1000 == 999 || i == order.size()-1)
-                    printf("  -- var.elim.:  %d/%d          \r", i+1, order.size());
-                #endif
+                //#ifndef SAT_LIVE
+                //if (i % 1000 == 999 || i == order.size()-1)
+                    //printf("  -- var.elim.:  %d/%d          \n", i+1, order.size());
+                //#endif
                 if (maybeEliminate(order[i])){
                     vars_elimed++;
                     solver.ok = solver.propagate() == NULL;
@@ -691,8 +722,7 @@ void Subsumer::findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed)
     }
 }
 
-/*
-void inline Subsumer::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<vec<Lit> >& ps, vec<vec<Lit> >& ns, const Var x)
+void inline Subsumer::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x)
 {
     poss.moveTo(ps);
     negs.moveTo(ns);
@@ -703,10 +733,16 @@ void inline Subsumer::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs
         unlinkClause(ns[i], x);
 }
 
-void inline Subsumer::DeallocPsNs(vec<Clause>& ps, vec<Clause>& ns)
+void inline Subsumer::DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns)
 {
-    for (int i = 0; i < ps.size(); i++) deallocClause(ps[i]);
-    for (int i = 0; i < ns.size(); i++) deallocClause(ns[i]);
+    for (int i = 0; i < ps.size(); i++) {
+        clauses[ps[i].index].clause = NULL;
+        free(ps[i].clause);
+    }
+    for (int i = 0; i < ns.size(); i++) {
+        clauses[ns[i].index].clause = NULL;
+        free(ns[i].clause);
+    }
 }
 
 //#define MigrateToPsNs vec<Clause> ps; poss.moveTo(ps); vec<Clause> ns; negs.moveTo(ns); for (int i = 0; i < ps.size(); i++) unlinkClause(ps[i], x); for (int i = 0; i < ns.size(); i++) unlinkClause(ns[i], x);
@@ -716,10 +752,11 @@ void inline Subsumer::DeallocPsNs(vec<Clause>& ps, vec<Clause>& ns)
 // Returns TRUE if variable was eliminated.
 bool Subsumer::maybeEliminate(const Var x)
 {
-    assert(propQ.size() == 0);
+    assert(solver.qhead == solver.trail.size());
     assert(!var_elimed[x]);
+    assert(!cannot_eliminate[x]);
     if (solver.value(x) != l_Undef) return false;
-    if (occur[index(Lit(x))].size() == 0 && occur[Lit(x, true).toInt()].size() == 0) return false;
+    if (occur[x].size() == 0 && occur[Lit(x, true).toInt()].size() == 0) return false;
     
     vec<ClauseSimp>&   poss = occur[Lit(x, false).toInt()];
     vec<ClauseSimp>&   negs = occur[Lit(x, true).toInt()];
@@ -730,34 +767,6 @@ bool Subsumer::maybeEliminate(const Var x)
     
     bool    elimed     = false;
     bool    tried_elim = false;
-    
-    // Find 'x <-> p':
-    if (opt_unit_def){
-        Lit p = findUnitDef(x, poss, negs);
-        if (p == lit_Undef) propagateToplevel(); if (!ok) return true;
-        if (p != lit_Undef){
-            //printf("DEF: x%d = "L_LIT"\n", x, L_lit(p));
-            //BEG
-            //printf("POS:\n"); for (int i = 0; i < poss.size(); i++) printf("  "), dump(poss[i]);
-            //printf("NEG:\n"); for (int i = 0; i < negs.size(); i++) printf("  "), dump(negs[i]);
-            //printf("DEF: x%d = "L_LIT"\n", x, L_lit(p));
-            //hej = true;
-            //END
-            Clause_t    def; def.push(p);
-            MigrateToPsNs
-            substitute(Lit(x), def, ps, ns, new_clauses);
-            //BEG
-            //hej = false;
-            //printf("NEW:\n");
-            //for (int i = 0; i < new_clauses.size(); i++)
-            //printf("  "), dump(new_clauses[i]);
-            //END
-            propagateToplevel(); if (!ok) return true;
-            DeallocPsNs
-            goto Eliminated;
-        }
-    }
-    
     
     // Heuristic:
     if (poss.size() >= 8 && negs.size() >= 8)      // <<== CUT OFF
@@ -774,61 +783,69 @@ bool Subsumer::maybeEliminate(const Var x)
     if (poss.size() >= 3 && negs.size() >= 3 && before_literals > 300)  // <<== CUT OFF
         return false;
     
-    // Check for definitions:
-    bool opt_def_elim = false;
-    bool opt_hyper1_res = false;
     
-    if (opt_def_elim || opt_hyper1_res){
-        //if (poss.size() > 1 || negs.size() > 1){
-        if (poss.size() > 2 || negs.size() > 2){
-            vec<Lit> def;
-            int      result_size;
-            if (findDef(Lit(x), poss, negs, def)) {
-                if (def.size() == 0) {
-                    solver.uncheckedEnqueue(Lit(x, true));
-                    return true;
-                }  // Hyper-1-resolution
-                result_size = substitute(Lit(x, false), def, poss, negs);
-                if (result_size <= poss.size() + negs.size()){  // <<= elimination threshold (maybe subst. should return literal count as well)
-                    vec<Lit> ps, ns;
-                    MigrateToPsNs(poss, negs, ps, ns, x);
-                    substitute(Lit(x, false), def, ps, ns, new_clauses);
-                    
-                    solver.ok = (solver.propagate() == NULL);
-                    if (!solver.ok) return true;
-                    
-                    DeallocPsNs(ps, ns);
-                    goto Eliminated;
-                }else {
-                    tried_elim = true;
-                    def.clear();
-                }
-            }
-            
-            if (!elimed && findDef(Lit(x, true), negs, poss, def)){
-                if (def.size() == 0) {
-                    solver.uncheckedEnqueue(Lit(x, false));
-                    return true; 
-                }  // Hyper-1-resolution
-                result_size = substitute(Lit(x, true), def, negs, poss);
-                if (result_size <= poss.size() + negs.size()){  // <<= elimination threshold
-                    vec<Lit> ps, ns;
-                    MigrateToPsNs(poss, negs, x);
-                    substitute(Lit(x, true), def, ns, ps, new_clauses);
-                    
-                    solver.ok = (solver.propagate() == NULL);
-                    if (!solver.ok) return true;
-                    
-                    DeallocPsNs(ps, ns);
-                    goto Eliminated;
-                }else
-                    tried_elim = true;
+    // Count clauses/literals after elimination:
+    int after_clauses  = 0;
+    int after_literals = 0;
+    vec<Lit>  dummy;
+    for (int i = 0; i < poss.size(); i++){
+        for (int j = 0; j < negs.size(); j++){
+            // Merge clauses. If 'y' and '~y' exist, clause will not be created.
+            dummy.clear();
+            bool ok = merge(*poss[i].clause, *negs[j].clause, Lit(x, false), Lit(x, true), seen_tmp, dummy);
+            if (ok){
+                after_clauses++;
+                if (after_clauses > before_clauses) goto Abort;
+                after_literals += dummy.size();
             }
         }
     }
+    Abort:;
     
+    // Maybe eliminate:
+    if (after_clauses  <= before_clauses) {
+        vec<ClauseSimp> ps, ns;
+        MigrateToPsNs(poss, negs, ps, ns, x);
+        for (int i = 0; i < ps.size(); i++){
+            for (int j = 0; j < ns.size(); j++){
+                dummy.clear();
+                bool ok = merge(*ps[i].clause, *ns[j].clause, Lit(x, false), Lit(x, true), seen_tmp, dummy);
+                if (ok){
+                    solver.addClause(dummy);
+                    if (solver.clauses.size() + solver.binaryClauses.size() > 0) {
+                        Clause* cl = (solver.clauses.size() > 0) ? solver.clauses[0] : solver.binaryClauses[0];
+                        solver.clauses.clear(); solver.binaryClauses.clear();
+                        ClauseSimp c(cl, clauses.size());
+                        updateClause(*cl, c);
+                        if (!c.clause != NULL)
+                            new_clauses.push(c);
+                        solver.ok = (solver.propagate() == NULL);
+                    }
+                    if (!solver.ok) return true;
+                }
+            }
+        }
+        DeallocPsNs(ps, ns);
+        goto Eliminated;
+    }
     
-    if (!tried_elim){
+    // ****TEST*****
+    // Try to remove 'x' from clauses:
+    {
+        bool    ran = false;
+        if (poss.size() < 10) {
+            ran = true;
+            if (!solver.ok) return true;
+        }
+        if (negs.size() < 10) {
+            ran = true;
+            if (!solver.ok) return true;
+        }
+        if (solver.value(x) != l_Undef) return false;
+        if (!ran) return false;
+    }
+    
+    if (!tried_elim) {
         // Count clauses/literals after elimination:
         int after_clauses  = 0;
         int after_literals = 0;
@@ -837,32 +854,33 @@ bool Subsumer::maybeEliminate(const Var x)
             for (int j = 0; j < negs.size(); j++){
                 // Merge clauses. If 'y' and '~y' exist, clause will not be created.
                 dummy.clear();
-                bool ok = merge(poss[i], negs[j], Lit(x, false), Lit(x, true), seen_tmp, dummy);
+                bool ok = merge(*poss[i].clause, *negs[j].clause, Lit(x, false), Lit(x, true), seen_tmp, dummy);
                 if (ok){
                     after_clauses++;
-                    if (after_clauses > before_clauses) goto Abort;
-                    after_literals += dummy.size(); }
+                    after_literals += dummy.size();
+                }
             }
         }
-        Abort:;
         
         // Maybe eliminate:
         if (after_clauses  <= before_clauses) {
-            vec<Clause> ps, ns;
+            vec<ClauseSimp> ps, ns;
             MigrateToPsNs(poss, negs, ps, ns, x);
             for (int i = 0; i < ps.size(); i++){
                 for (int j = 0; j < ns.size(); j++){
                     dummy.clear();
-                    bool ok = merge(ps[i], ns[j], Lit(x), ~Lit(x), seen_tmp, dummy);
+                    bool ok = merge(*ps[i].clause, *ns[j].clause, Lit(x, false), Lit(x, true), seen_tmp, dummy);
                     if (ok){
-                        solver.addClause(dummy, 0);
-                        Clause* cl = solver.clauses[0];
-                        solver.clauses.clear();
-                        ClauseSimp c(cl, clauses.size());
-                        updateClause(c);
-                        if (!c.clause != NULL)
-                            new_clauses.push(c);
-                        solver.ok = (solver.propagate() == NULL);
+                        solver.addClause(dummy);
+                        if (solver.clauses.size() + solver.binaryClauses.size() > 0) {
+                            Clause* cl = (solver.clauses.size() > 0) ? solver.clauses[0] : solver.binaryClauses[0];
+                            solver.clauses.clear(); solver.binaryClauses.clear();
+                            ClauseSimp c(cl, clauses.size());
+                            updateClause(*cl, c);
+                            if (c.clause != NULL)
+                                new_clauses.push(c);
+                            solver.ok = (solver.propagate() == NULL);
+                        }
                         if (!solver.ok) return true;
                     }
                 }
@@ -870,65 +888,15 @@ bool Subsumer::maybeEliminate(const Var x)
             DeallocPsNs(ps, ns);
             goto Eliminated;
         }
-        
-        // ****TEST*****
-        // Try to remove 'x' from clauses:
-        bool    ran = false;
-        if (poss.size() < 10){ ran = true; asymmetricBranching(Lit(x, false)); if (!solver.ok) return true; }
-        if (negs.size() < 10){ ran = true; asymmetricBranching(Lit(x, true)); if (!solver.ok) return true; }
-        if (solver.value(x) != l_Undef) return false;
-        if (!ran) return false;
-        
-        {
-            // Count clauses/literals after elimination:
-            int after_clauses  = 0;
-            int after_literals = 0;
-            vec<Lit>  dummy;
-            for (int i = 0; i < poss.size(); i++){
-                for (int j = 0; j < negs.size(); j++){
-                    // Merge clauses. If 'y' and '~y' exist, clause will not be created.
-                    dummy.clear();
-                    bool ok = merge(poss[i], negs[j], Lit(x, false), Lit(x, true), seen_tmp, dummy);
-                    if (ok){
-                        after_clauses++;
-                        after_literals += dummy.size();
-                    }
-                }
-            }
-            
-            // Maybe eliminate:
-            if (after_clauses  <= before_clauses) {
-                vec<Clause> ps, ns;
-                MigrateToPsNs(poss, negs, ps, ns, x);
-                for (int i = 0; i < ps.size(); i++){
-                    for (int j = 0; j < ns.size(); j++){
-                        dummy.clear();
-                        bool ok = merge(ps[i], ns[j], Lit(x, false), Lit(x, true), seen_tmp, dummy);
-                        if (ok){
-                            solver.addClause(dummy, 0);
-                            Clause* cl = solver.clauses[0];
-                            solver.clauses.clear();
-                            ClauseSimp c(cl, clauses.size());
-                            updateClause(c);
-                            if (c.clause != NULL)
-                                new_clauses.push(c);
-                            solver.ok = (solver.propagate() == NULL);
-                            if (!solver.ok) return true;
-                        }
-                    }
-                }
-                DeallocPsNs(ps, ns);
-                goto Eliminated;
-            }
-        }
-        // *****END TEST****
     }
+    // *****END TEST****
     
     return false;
     
     Eliminated:
-    assert(occur[index(Lit(x))].size() + occur[index(~Lit(x))].size() == 0);
+    assert(occur[Lit(x, false).toInt()].size() + occur[Lit(x, true).toInt()].size() == 0);
     var_elimed[x] = 1;
+    solver.setDecisionVar(x, false);
     //TODO
     //solver.assigns[x] = toInt(l_Error);
     return true;
@@ -939,104 +907,27 @@ bool Subsumer::merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<c
 {
     for (int i = 0; i < ps.size(); i++){
         if (ps[i] != without_p){
-            seen[index(ps[i])] = 1;
+            seen[ps[i].toInt()] = 1;
             out_clause.push(ps[i]);
         }
     }
     
     for (int i = 0; i < qs.size(); i++){
         if (qs[i] != without_q){
-            if (seen[index(~qs[i])]){
-                for (int i = 0; i < ps.size(); i++) seen[index(ps[i])] = 0;
-                return false; }
-                if (!seen[index(qs[i])])
-                    out_clause.push(qs[i]);
+            if (seen[(~qs[i]).toInt()]){
+                for (int i = 0; i < ps.size(); i++)
+                    seen[ps[i].toInt()] = 0;
+                return false;
+            }
+            if (!seen[qs[i].toInt()])
+                out_clause.push(qs[i]);
         }
     }
     
-    for (int i = 0; i < ps.size(); i++) seen[index(ps[i])] = 0;
+    for (int i = 0; i < ps.size(); i++)
+        seen[ps[i].toInt()] = 0;
+    
     return true;
-}
-
-int Subsumer::substitute(Lit x, Clause& def, vec<Clause>& poss, vec<Clause>& negs, vec<Clause>& new_clauses = *(vec<Clause>*)NULL)
-{
-    vec<Lit>    tmp;
-    int         counter = 0;
-    
-    
-    // Positives:
-    //if (hej) printf("    --from POS--\n");
-    for (int i = 0; i < def.size(); i++){
-        for (int j = 0; j < poss.size(); j++){
-            if (poss[j].null()) continue;
-            
-            Clause c = poss[j];
-            for (int k = 0; k < c.size(); k++){
-                if (c[k] == ~def[i])
-                    goto Skip;
-            }
-            tmp.clear();
-            for (int k = 0; k < c.size(); k++){
-                if (c[k] == x)
-                    tmp.push(def[i]);
-                else
-                    tmp.push(c[k]);
-            }
-            //if (hej) printf("    "), dump(*this, tmp);
-            if (&new_clauses != NULL){
-                Clause tmp_c;
-                tmp_c = addClause(tmp);
-                if (!tmp_c.null())
-                    new_clauses.push(tmp_c);
-            }else{
-                sortUnique(tmp);
-                for (int i = 0; i < tmp.size()-1; i++)
-                    if (tmp[i] == ~tmp[i+1])
-                        goto Skip;
-                    counter++;
-            }
-            Skip:;
-        }
-    }
-    //if (hej) printf("    --from NEG--\n");
-    
-    // Negatives:
-    for (int j = 0; j < negs.size(); j++){
-        if (negs[j].null()) continue;
-        
-        Clause c = negs[j];
-        // If any literal from 'def' occurs in 'negs[j]', it is satisfied.
-        for (int i = 0; i < def.size(); i++){
-            if (has(c, def[i]))
-                goto Skip2;
-        }
-        
-        tmp.clear();
-        for (int i = 0; i < c.size(); i++){
-            if (c[i] == ~x){
-                for (int k = 0; k < def.size(); k++)
-                    tmp.push(~def[k]);
-            }else
-                tmp.push(c[i]);
-        }
-        //if (hej) printf("    "), dump(*this, tmp);
-        if (&new_clauses != NULL){
-            Clause tmp_c;
-            tmp_c = addClause(tmp);
-            if (!tmp_c.null())
-                new_clauses.push(tmp_c);
-        }else{
-            sortUnique(tmp);
-            for (int i = 0; i < tmp.size()-1; i++)
-                if (tmp[i] == ~tmp[i+1])
-                    goto Skip2;
-                counter++;
-        }
-        Skip2:;
-    }
-    
-    //if (counter != 0 && def.size() >= 2) exit(0);
-    return counter;
 }
 
 void Subsumer::exclude(vec<ClauseSimp>& cs, Clause* c)
@@ -1047,6 +938,31 @@ void Subsumer::exclude(vec<ClauseSimp>& cs, Clause* c)
             cs[j++] = cs[i];
     }
     cs.shrink(i-j);
-}*/
+}
 
-
+struct myComp {
+    bool operator () (const pair<int, Var>& x, const pair<int, Var>& y) {
+        return x.first < y.first ||
+            (!(y.first < x.first) && x.second < y.second);
+    }
+};
+    
+// Side-effect: Will untouch all variables.
+void Subsumer::orderVarsForElim(vec<Var>& order)
+{
+    order.clear();
+    vec<pair<int, Var> > cost_var;
+    for (int i = 0; i < touched_list.size(); i++){
+        Var x = touched_list[i];
+        touched[x] = 0;
+        cost_var.push(std::make_pair( occur[Lit(x, false).toInt()].size() * occur[Lit(x, true).toInt()].size() , x ));
+    }
+    
+    touched_list.clear();
+    std::sort(cost_var.getData(), cost_var.getData()+cost_var.size(), myComp());
+    
+    for (int x = 0; x < cost_var.size(); x++) {
+        if (cost_var[x].first != 0)
+            order.push(cost_var[x].second);
+    }
+}
