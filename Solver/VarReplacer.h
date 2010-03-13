@@ -42,7 +42,10 @@ class VarReplacer
         const bool performReplace(const bool always = false);
         template<class T>
         const bool replace(T& ps, const bool xor_clause_inverted, const uint group);
-        void extendModel() const;
+        
+        void extendModelPossible() const;
+        void extendModelImpossible(Solver& solver2) const;
+        
         const uint getNumReplacedLits() const;
         const uint getNumReplacedVars() const;
         const uint getNumLastReplacedVars() const;
