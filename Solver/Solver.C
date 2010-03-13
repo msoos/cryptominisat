@@ -167,8 +167,8 @@ Var Solver::newVar(bool dvar)
     
     varReplacer->newVar();
     conglomerate->newVar();
-    if (doPartHandler) partHandler->newVar();
-    if (doSubsumption) subsumer->newVar();
+    partHandler->newVar();
+    subsumer->newVar();
 
     insertVarOrder(v);
     
