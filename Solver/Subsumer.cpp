@@ -104,18 +104,38 @@ void Subsumer::subsume0(ClauseSimp& ps)
         
         Clause* tmp = subs[i].clause;
         unlinkClause(subs[i]);
-        
-        /*if (ps.clause->learnt() && !tmp->learnt()) {
-            ps.clause->makeNonLearnt();
-            //we are making it non-learnt, so in case they where not in cl_added, then we must add them for consistency
-            
-            linkInAlreadyClause(ps);
-            
-            solver.learnts_literals -= ps.clause->size();
-            solver.clauses_literals += ps.clause->size();
-        }*/
         free(tmp);
     }
+}
+
+// Will put NULL in 'cs' if clause removed.
+uint Subsumer::subsume0Replace(Clause& ps)
+{
+    uint retIndex = UINT_MAX;
+    #ifdef VERBOSE_DEBUG
+    cout << "subsume0Replacec orig clause:";
+    ps.clause->plainPrint();
+    cout << "pointer:" << ps.clause << endl;
+    #endif
+    
+    vec<ClauseSimp> subs;
+    vec<Lit> tmp(ps.size());
+    memcpy(tmp.getData(), ps.getData(), sizeof(Lit)*ps.size());
+    findSubsumed(tmp, subs);
+    for (uint32_t i = 0; i < subs.size(); i++){
+        clauses_subsumed++;
+        #ifdef VERBOSE_DEBUG
+        cout << "subsume0Replace removing:";
+        subs[i].clause->plainPrint();
+        #endif
+        
+        Clause* tmp = subs[i].clause;
+        unlinkClause(subs[i]);
+        free(tmp);
+        retIndex = subs[i].index;
+    }
+    
+    return retIndex;
 }
 
 void Subsumer::unlinkClause(ClauseSimp c, Var elim)
@@ -489,9 +509,11 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
     Clause **i = cs.getData();
     Clause **j = i;
     for (Clause **end = i + cs.size(); i !=  end; i++) {
-        if (cs[i]->learnt())
+        if ((*i)->learnt()) {
+            *j++ = *i;
             continue;
-        ClauseSimp c(cs[i], clauseID++);
+        }
+        ClauseSimp c(*i, clauseID++);
         clauses.push(c);
         Clause& cl = *c.clause;
         if (updateOccur(cl)) {
@@ -502,7 +524,6 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
             if (fullSubsume || cl.getVarChanged()) cl_added.add(c);
             else if (cl.getStrenghtened()) cl_touched.add(c);
         }
-        *j++ = *i;
     }
     cs.shrink(i-j);
 }
@@ -615,6 +636,24 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::binaryClauses);
     addFromSolver(solver.binaryClauses);
     uint32_t origNLearnts = solver.learnts.size();
+    Clause** a = solver.learnts.getData();
+    Clause** b = a;
+    for (Clause** end = a + solver.learnts.size(); a != end; a++) {
+        if ((*a)->getStrenghtened() || (*a)->getVarChanged()) {
+            uint index = subsume0Replace(**a);
+            if (index != UINT_MAX) {
+                (*a)->makeNonLearnt();
+                clauses[index].clause = *a;
+                linkInAlreadyClause(clauses[index]);
+                solver.learnts_literals -= (*a)->size();
+                solver.clauses_literals += (*a)->size();
+            } else {
+                *b++  = *a;
+            }
+        }
+    }
+    solver.learnts.shrink(a-b);
+    
     //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
     //addFromSolver(solver.learnts);
     
