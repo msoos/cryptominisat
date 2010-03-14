@@ -76,17 +76,16 @@ private:
     void touch(const Var x);
     void touch(const Lit p);
     bool updateOccur(Clause& c);
-    void findSubsumed(ClauseSimp& ps, vec<ClauseSimp>& out_subsumed);
+    void findSubsumed(Clause& ps, vec<ClauseSimp>& out_subsumed);
     void findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed);
     bool isSubsumed(Clause& ps);
-    void subsume0(ClauseSimp& ps);
-    uint subsume0Replace(Clause& ps);
+    uint subsume0(Clause& ps);
     void subsume1(ClauseSimp& ps);
     void smaller_database();
     void almost_all_database();
     template<class T1, class T2>
     bool subset(const T1& A, const T2& B, vec<char>& seen);
-    bool subsetAbst(uint64_t A, uint64_t B);
+    bool subsetAbst(uint32_t A, uint32_t B);
     
     void orderVarsForElim(vec<Var>& order);
     int  substitute(Lit x, Clause& def, vec<Clause*>& poss, vec<Clause*>& negs, vec<Clause*>& new_clauses);
@@ -142,7 +141,7 @@ inline void Subsumer::deleteTmpFiles(void)
 }*/
 
 
-inline bool Subsumer::subsetAbst(uint64_t A, uint64_t B)
+inline bool Subsumer::subsetAbst(uint32_t A, uint32_t B)
 {
     return !(A & ~B);
 }
