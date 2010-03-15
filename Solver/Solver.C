@@ -347,42 +347,15 @@ bool Solver::addClause(T& ps, const uint group, char* group_name)
         }
     }
     
-    std::sort(ps.getData(), ps.getData()+ps.size());
-    Lit p;
-    uint32_t i, j;
-    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
-        if (value(ps[i]).getBool() || ps[i] == ~p)
-            return true;
-        else if (value(ps[i]) != l_False && ps[i] != p)
-            ps[j++] = p = ps[i];
-    }
-    ps.shrink(i - j);
-
-    if (ps.size() == 0) {
-        return ok = false;
-    } else if (ps.size() == 1) {
-        assert(value(ps[0]) == l_Undef);
-        uncheckedEnqueue(ps[0]);
-        if (origSize == 1) {
-            if (givenUnitaries.size() < trail.size())
-                givenUnitaries.resize(trail.size(), false);
-            givenUnitaries[trail.size()-1] = true;
-        }
-        return ok = (propagate() == NULL);
-    } else {
-        learnt_clause_group = std::max(group+1, learnt_clause_group);
-        Clause* c = Clause_new(ps, group);
-        if (noLibraryUsage) c->unsetVarChanged();
-
+    Clause* c = addClauseInt(ps, group);
+    if (c != NULL) {
         if (c->size() > 2)
             clauses.push(c);
         else
             binaryClauses.push(c);
-        attachClause(*c);
-        varReplacer->newClause();
     }
 
-    return true;
+    return ok;
 }
 
 template bool Solver::addClause(vec<Lit>& ps, const uint group, char* group_name);
