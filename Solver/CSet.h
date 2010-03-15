@@ -40,6 +40,7 @@ class CSet {
     
     public:
         //ClauseSimp& operator [] (uint32_t index) { return which[index]; }
+        void reserve(uint32_t size) { where.reserve(size);}
         uint32_t size(void) const { return which.size(); }
         uint32_t nElems(void) const { return which.size() - free.size(); }
         
