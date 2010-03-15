@@ -82,10 +82,9 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
     Lit *i, *j, *end;
     for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
         lbool val = solver.value(*i);
-        if (val == l_Undef) {
-            *j = *i;
-            j++;
-        }
+        if (val == l_Undef)
+            *j++ = *i;
+        
         if (val == l_True) {
             solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
             return true;
