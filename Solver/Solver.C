@@ -187,7 +187,6 @@ template<class T>
 bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal)
 {
     assert(decisionLevel() == 0);
-    uint origSize = ps.size();
     
     if (libraryCNFFile && !internal) {
         fprintf(libraryCNFFile, "x");
@@ -241,11 +240,6 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     case 1: {
         assert(assigns[ps[0].var()].isUndef());
         uncheckedEnqueue(ps[0] ^ xor_clause_inverted);
-        if (origSize == 1) {
-            if (givenUnitaries.size() < trail.size())
-                givenUnitaries.resize(trail.size(), false);
-            givenUnitaries[trail.size()-1] = true;
-        }
         return ok = (propagate() == NULL);
     }
     case 2: {
@@ -262,8 +256,6 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
         
         xorclauses.push(c);
         attachClause(*c);
-        if (!internal)
-            varReplacer->newClause();
         break;
     }
     }
@@ -279,26 +271,59 @@ template<class T>
 bool Solver::addLearntClause(T& ps, const uint group, const uint32_t activity)
 {
     uint size = clauses.size();
-    addClause(ps, group, "learnt clause");
-    if (size == clauses.size()) return ok;
+    Clause* c = addClauseInt(ps, group);
+    if (c == NULL)
+        return ok;
     
-    Clause* tmp = clauses[clauses.size()-1];
-    clauses.pop();
-    clauses_literals -= tmp->size();
+    clauses_literals -= c->size();
     
-    tmp->makeLearnt(activity);
-    learnts.push(tmp);
-    learnts_literals += tmp->size();
+    c->makeLearnt(activity);
+    learnts.push(c);
+    learnts_literals += c->size();
     return ok;
 }
 template bool Solver::addLearntClause(Clause& ps, const uint group, const uint32_t activity);
 template bool Solver::addLearntClause(vec<Lit>& ps, const uint group, const uint32_t activity);
 
+template <class T>
+Clause* Solver::addClauseInt(T& ps, uint group)
+{
+    std::sort(ps.getData(), ps.getData()+ps.size());
+    Lit p;
+    uint32_t i, j;
+    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
+        if (value(ps[i]).getBool() || ps[i] == ~p)
+            return NULL;
+        else if (value(ps[i]) != l_False && ps[i] != p)
+            ps[j++] = p = ps[i];
+    }
+    ps.shrink(i - j);
+    
+    if (ps.size() == 0) {
+        ok = false;
+        return NULL;
+    } else if (ps.size() == 1) {
+        assert(value(ps[0]) == l_Undef);
+        uncheckedEnqueue(ps[0]);
+        ok = (propagate() == NULL);
+        return NULL;
+    }
+    
+    learnt_clause_group = std::max(group+1, learnt_clause_group);
+    Clause* c = Clause_new(ps, group);
+    if (noLibraryUsage) c->unsetVarChanged();
+    attachClause(*c);
+    
+    return c;
+}
+
+template Clause* Solver::addClauseInt(Clause& ps, const uint group);
+template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint group);
+
 template<class T>
 bool Solver::addClause(T& ps, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
-    uint origSize = ps.size();
     
     if (libraryCNFFile) {
         for (uint32_t i = 0; i != ps.size(); i++) {
@@ -1282,7 +1307,7 @@ const vector<Lit> Solver::get_unitary_learnts() const
     vector<Lit> unitaries;
     if (decisionLevel() > 0) {
         for (uint32_t i = 0; i != trail_lim[0]; i++) {
-            if (givenUnitaries.size() <= i || !givenUnitaries[i]) unitaries.push_back(trail[i]);
+            unitaries.push_back(trail[i]);
         }
     }
     
@@ -1301,14 +1326,12 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     if (maxSize > 0) {
         if (trail_lim.size() > 0) {
             for (uint32_t i = 0; i != trail_lim[0]; i++) {
-                if (givenUnitaries.size() <= i || !givenUnitaries[i])
-                    fprintf(outfile,"%s%d 0\n", !trail[i].sign() ? "-" : "", trail[i].var()+1);
+                fprintf(outfile,"%s%d 0\n", !trail[i].sign() ? "-" : "", trail[i].var()+1);
             }
         }
         else {
             for (uint32_t i = 0; i != trail.size(); i++) {
-                if (givenUnitaries.size() <= i || !givenUnitaries[i])
-                    fprintf(outfile,"%s%d 0\n", !trail[i].sign() ? "-" : "", trail[i].var()+1);
+                fprintf(outfile,"%s%d 0\n", !trail[i].sign() ? "-" : "", trail[i].var()+1);
             }
         }
     }

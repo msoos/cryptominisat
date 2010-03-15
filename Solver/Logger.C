@@ -706,7 +706,6 @@ void Logger::print_learnt_unitaries(const uint from, const string display) const
     else
         until = S->trail.size();
     for (uint i = from; i < until; i++) {
-        if (S->givenUnitaries.size() > i && S->givenUnitaries[i]) continue;
         Var var = S->trail[i].var();
         bool value = !(S->trail[i].sign());
         print_line(var+1, varnames[var], value);
