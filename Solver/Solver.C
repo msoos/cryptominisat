@@ -289,9 +289,9 @@ template <class T>
 Clause* Solver::addClauseInt(T& ps, uint group)
 {
     std::sort(ps.getData(), ps.getData()+ps.size());
-    Lit p;
+    Lit p = lit_Undef;
     uint32_t i, j;
-    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
+    for (i = j = 0; i != ps.size(); i++) {
         if (value(ps[i]).getBool() || ps[i] == ~p)
             return NULL;
         else if (value(ps[i]) != l_False && ps[i] != p)
@@ -303,7 +303,6 @@ Clause* Solver::addClauseInt(T& ps, uint group)
         ok = false;
         return NULL;
     } else if (ps.size() == 1) {
-        assert(value(ps[0]) == l_Undef);
         uncheckedEnqueue(ps[0]);
         ok = (propagate() == NULL);
         return NULL;
