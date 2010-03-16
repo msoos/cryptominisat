@@ -532,8 +532,8 @@ const bool Subsumer::simplifyBySubsumption()
         break;
         
         
-        /*printf("VARIABLE ELIMINIATION\n");
-        vec<Var>    init_order;
+        printf("c VARIABLE ELIMINIATION\n");
+        vec<Var> init_order;
         orderVarsForElim(init_order);   // (will untouch all variables)
         
         for (bool first = true;; first = false){
