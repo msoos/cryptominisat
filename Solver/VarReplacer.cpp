@@ -38,7 +38,6 @@ VarReplacer::VarReplacer(Solver& _solver) :
     replacedLits(0)
     , replacedVars(0)
     , lastReplacedVars(0)
-    , addedNewClause(false)
     , solver(_solver)
 {
 }
@@ -137,7 +136,6 @@ const bool VarReplacer::performReplaceInternal()
         << std::setw(12) <<  " |" << std::endl;
     }
     
-    addedNewClause = false;
     replacedLits = 0;
     
     solver.order_heap.filter(Solver::VarFilter(solver));
@@ -528,8 +526,4 @@ void VarReplacer::newVar()
     table.push_back(Lit(table.size(), false));
 }
 
-void VarReplacer::newClause()
-{
-    addedNewClause = true;
-}
 

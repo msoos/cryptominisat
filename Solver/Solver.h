@@ -203,7 +203,6 @@ protected:
     vec<Clause*>        binaryClauses;    // Binary clauses are regularly moved here
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
-    vector<bool>        givenUnitaries;   // Unitary clauses given (i.e. not learnt)
     vec<XorClause*>     freeLater;        // List of xorclauses to free at the end (due to matrixes, they cannot be freed immediately)
     vec<double>         activity;         // A heuristic measurement of the activity of a variable.
     double              var_inc;          // Amount to bump next variable with.
@@ -335,7 +334,6 @@ protected:
     void     printRestartStat () const;
     void     printEndSearchStat() const;
     double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
-    uint     numGivenUnitaries() const; //Return the no. of given unitary clauses
     
     // Polarity chooser
     vector<bool> defaultPolarities; //The default polarity to set the var polarity when doing a full restart
@@ -489,20 +487,13 @@ inline void     Solver::setVariableName(Var var, char* name)
 inline void     Solver::setVariableName(Var var, char* name)
 {}
 #endif
-inline uint Solver::numGivenUnitaries() const
-{
-    uint num = 0;
-    for (uint i = 0; i != givenUnitaries.size(); i++)
-        num += (uint)givenUnitaries[i];
-    return num;
-}
 
 inline const uint Solver::get_unitary_learnts_num() const
 {
     if (decisionLevel() > 0)
-        return trail_lim[0]-numGivenUnitaries();
+        return trail_lim[0];
     else
-        return trail.size()-numGivenUnitaries();
+        return trail.size();
 }
 template <class T>
 inline void Solver::removeWatchedCl(vec<T> &ws, const Clause *c) {

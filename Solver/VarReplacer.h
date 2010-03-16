@@ -53,7 +53,6 @@ class VarReplacer
         const vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
         const vec<Clause*>& getClauses() const;
-        void newClause();
         void newVar();
     
     private:
@@ -76,7 +75,6 @@ class VarReplacer
         uint replacedLits;
         uint replacedVars;
         uint lastReplacedVars;
-        bool addedNewClause;
         Solver& solver;
 };
 
