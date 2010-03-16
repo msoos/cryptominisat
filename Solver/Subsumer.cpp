@@ -78,12 +78,12 @@ void Subsumer::subsume0(ClauseSimp& ps)
         if (ps.clause->learnt() && !tmp->learnt()) {
             //we are making it non-learnt, so in case they where not in cl_added, then we must add them for consistency
             if (!updateOccur(*ps.clause)) {
-                cl_added.add(ps);
                 Clause& cl = *ps.clause;
                 for (uint32_t i = 0; i < cl.size(); i++) {
                     occur[cl[i].toInt()].push(ps);
                     touch(cl[i].var());
                 }
+                cl_added.add(ps);
             }
             ps.clause->makeNonLearnt();
             solver.learnts_literals -= ps.clause->size();
