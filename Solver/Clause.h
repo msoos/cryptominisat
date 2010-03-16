@@ -62,7 +62,7 @@ protected:
     uint32_t isXorClause:1;
     uint32_t mySize:20;
     
-    int act;
+    union  {int32_t act; uint32_t abst;} extra;
     #ifdef _MSC_VER
     Lit     data[1];
     #else
@@ -83,8 +83,8 @@ public:
         isLearnt = learnt;
         setGroup(_group);
         for (uint i = 0; i < ps.size(); i++) data[i] = ps[i];
-        if (learnt) act = 0;
-        //else calcAbstraction();
+        if (learnt) extra.act = 0;
+        else calcAbstraction();
     }
 
 public:
@@ -148,20 +148,21 @@ public:
     }
 
     void         setActivity(int i)  {
-        act = i;
+        extra.act = i;
     }
     
     const int&   activity   () const {
-        return act;
+        return extra.act;
     }
     
     void         makeNonLearnt()  {
         assert(isLearnt);
         isLearnt = false;
+        calcAbstraction();
     }
     
     void         makeLearnt(const uint32_t newActivity)  {
-        act = newActivity;
+        extra.act = newActivity;
         isLearnt = true;
     }
     
@@ -169,15 +170,19 @@ public:
     {
         remove(*this, p);
         sorted = false;
-        //calcAbstraction();
+        calcAbstraction();
     }
     
-    /*void calcAbstraction() {
-        uint32_t abstraction = 0;
+    void calcAbstraction() {
+        extra.abst = 0;
         for (uint32_t i = 0; i != size(); i++)
-            abstraction |= 1 << (data[i].var() & 31);
-        extra.abst = abstraction;
-    }*/
+            extra.abst |= 1 << (data[i].var() & 31);
+    }
+    
+    uint32_t getAbst()
+    {
+        return extra.abst;
+    }
 
     const Lit*     getData     () const {
         return data;

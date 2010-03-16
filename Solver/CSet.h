@@ -11,30 +11,27 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 class Clause;
 
 template <class T>
-uint64_t calcAbstraction(const T& ps) {
-    uint64_t abstraction = 0;
+uint32_t calcAbstraction(const T& ps) {
+    uint32_t abstraction = 0;
     for (uint32_t i = 0; i != ps.size(); i++)
-        abstraction |= 1 << (ps[i].toInt() & 63);
+        abstraction |= 1 << (ps[i].var() & 31);
     return abstraction;
 }
 
-#pragma pack(push)
-#pragma pack(1)
+//#pragma pack(push)
+//#pragma pack(1)
 class ClauseSimp
 {
     public:
         ClauseSimp(Clause* c, const uint32_t _index) :
         clause(c)
         , index(_index)
-        {
-            abst = calcAbstraction(*c);
-        }
+        {}
         
         Clause* clause;
-        uint64_t abst;
         uint32_t index;
 };
-#pragma pack(pop)
+//#pragma pack(pop)
 
 class CSet {
     vec<uint32_t>       where;  // Map clause ID to position in 'which'.
@@ -50,8 +47,6 @@ class CSet {
             assert(c.clause != NULL);
             where.growTo(c.index+1, std::numeric_limits<uint32_t>::max());
             if (where[c.index] != std::numeric_limits<uint32_t>::max()) {
-                //already in, only update
-                which[where[c.index]].abst = c.abst;
                 return true;
             }
             if (free.size() > 0){
@@ -85,12 +80,6 @@ class CSet {
             }
             which.clear();
             free.clear();
-        }
-        
-        void update(ClauseSimp& c) {
-            if (c.index >= where.size() || where[c.index] == std::numeric_limits<uint32_t>::max())
-                return;
-            which[where[c.index]].abst = c.abst;
         }
         
         class iterator
