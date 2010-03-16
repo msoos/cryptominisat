@@ -14,7 +14,7 @@ template <class T>
 uint32_t calcAbstraction(const T& ps) {
     uint32_t abstraction = 0;
     for (uint32_t i = 0; i != ps.size(); i++)
-        abstraction |= 1 << (ps[i].var() & 31);
+        abstraction |= 1 << (ps[i].toInt() & 31);
     return abstraction;
 }
 

@@ -213,10 +213,11 @@ void Subsumer::subsume1(ClauseSimp& ps)
         for (uint32_t i = 0; i < Q[q].clause->size(); i++)
             qs.push((*Q[q].clause)[i]);
         
-        uint32_t abst = Q[q].clause->getAbst();
-        
         for (uint32_t i = 0; i < qs.size(); i++){
             qs[i] = ~qs[i];
+            
+            uint32_t abst = calcAbstraction(qs);
+            
             findSubsumed(qs, abst, subs);
             for (uint32_t j = 0; j < subs.size(); j++){
                 /*#ifndef NDEBUG
@@ -616,6 +617,15 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                 solver.learnts_literals -= (*a)->size();
                 solver.clauses_literals += (*a)->size();
             } else {
+                if ((*a)->size() == 2) {
+                    ClauseSimp c(*a, clauseID++);
+                    (*a)->calcAbstraction();
+                    clauses.push(c);
+                    subsume1(c);
+                    assert(clauses[c.index].clause != NULL);
+                    clauses.pop();
+                    clauseID--;
+                }
                 *b++  = *a;
             }
         }

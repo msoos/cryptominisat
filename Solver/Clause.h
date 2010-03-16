@@ -176,7 +176,7 @@ public:
     void calcAbstraction() {
         extra.abst = 0;
         for (uint32_t i = 0; i != size(); i++)
-            extra.abst |= 1 << (data[i].var() & 31);
+            extra.abst |= 1 << (data[i].toInt() & 31);
     }
     
     uint32_t getAbst()
