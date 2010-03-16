@@ -80,6 +80,7 @@ private:
     void findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed);
     bool isSubsumed(Clause& ps);
     void subsume0(ClauseSimp& ps);
+    uint subsume0Replace(Clause& ps);
     void subsume1(ClauseSimp& ps);
     void smaller_database();
     void almost_all_database();
