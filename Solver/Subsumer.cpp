@@ -11,6 +11,11 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include "ClauseDumper.h"
 
 //#define VERBOSE_DEBUG
+#ifdef VERBOSE_DEBUG
+#define BIT_MORE_VERBOYITY
+#endif
+
+#define BIT_MORE_VERBOSITY
 //#define TOUCH_LESS
 
 #ifdef VERBOSE_DEBUG
@@ -296,7 +301,7 @@ void Subsumer::updateClause(Clause& cl, ClauseSimp& c)
 
 void Subsumer::almost_all_database()
 {
-    #ifdef VERBOSE_DEBUG
+    #ifdef BIT_MORE_VERBOSITY
     std::cout << "c Larger database" << std::endl;
     #endif
     // Optimized variant when virtually whole database is involved:
@@ -360,8 +365,8 @@ void Subsumer::almost_all_database()
 
 void Subsumer::smaller_database()
 {
-    #ifdef VERBOSE_DEBUG
-    std::cout << "Smaller database" << std::endl;
+    #ifdef BIT_MORE_VERBOSITY
+    std::cout << "c Smaller database" << std::endl;
     #endif
     //  Set used in 1-subs:
     //      (1) clauses containing a negated literal of an added clause.
