@@ -97,15 +97,13 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
         c.shrink(i-j);
         c.setStrenghtened();
         solver.attachClause(c);
-    } else {
-        if (i-j > 0) {
-            c.setStrenghtened();
-            c.shrink(i-j);
-            if (c.learnt())
-                solver.learnts_literals -= i-j;
-            else
-                solver.clauses_literals -= i-j;
-        }
+    } else if (i != j) {
+        c.setStrenghtened();
+        c.shrink(i-j);
+        if (c.learnt())
+            solver.learnts_literals -= i-j;
+        else
+            solver.clauses_literals -= i-j;
     }
     
     return false;
