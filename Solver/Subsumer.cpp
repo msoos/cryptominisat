@@ -337,7 +337,7 @@ void Subsumer::almost_all_database()
         if (!solver.ok) return;
         solver.ok = solver.propagate() == NULL;
         if (!solver.ok) {
-            printf("(contradiction during subsumption)\n");
+            printf("c (contradiction during subsumption)\n");
             unregisterIteration(s1);
             return;
         }
@@ -429,7 +429,7 @@ void Subsumer::smaller_database()
         if (!solver.ok) return;
         solver.ok = solver.propagate() == NULL;
         if (!solver.ok){
-            printf("(contradiction during subsumption)\n");
+            printf("c (contradiction during subsumption)\n");
             unregisterIteration(s1);
             unregisterIteration(s0);
             return; 
@@ -559,7 +559,7 @@ const bool Subsumer::simplifyBySubsumption(const bool full)
                     vars_elimed++;
                     solver.ok = solver.propagate() == NULL;
                     if (!solver.ok) {
-                        printf("(contradiction during subsumption)\n");
+                        printf("c (contradiction during subsumption)\n");
                         return false;
                     }
                 }
@@ -571,13 +571,13 @@ const bool Subsumer::simplifyBySubsumption(const bool full)
             
             printf("  #clauses-removed: %-8d #var-elim: %d\n", clauses_before - solver.nClauses(), vars_elimed);
             
-        }*/
+        }
     }while (cl_added.size() > 100);
     
     if (!solver.ok) return false;
     solver.ok = (solver.propagate() == NULL);
     if (!solver.ok) {
-        printf("(contradiction during subsumption)\n");
+        printf("c (contradiction during subsumption)\n");
         return false;
     }
     
