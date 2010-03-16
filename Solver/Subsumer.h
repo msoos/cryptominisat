@@ -17,6 +17,7 @@ class Subsumer
 public:
     
     Subsumer(Solver& S2);
+    ~Subsumer();
     const bool simplifyBySubsumption(const bool doFullSubsume = false);
     void unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c);
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
@@ -41,10 +42,11 @@ private:
     FILE*               elim_out;       // File storing eliminated clauses (needed to calculate model).
     char*               elim_out_file;  // (name of file)
     vec<char>           var_elimed;     // 'eliminated[var]' is TRUE if variable has been eliminated.
+    vec<char>           cannot_eliminate;//
     
     // Temporaries (to reduce allocation overhead):
     //
-    vec<bool>           seen_tmp;       // (used in various places)
+    vec<char>           seen_tmp;       // (used in various places)
     vec<Lit>            io_tmp;         // (used for reading/writing clauses from/to disk)
     
     // Database management:
@@ -73,7 +75,7 @@ private:
     void smaller_database();
     void almost_all_database();
     template<class T1, class T2>
-    bool subset(const T1& A, const T2& B, vec<bool>& seen);
+    bool subset(const T1& A, const T2& B, vec<char>& seen);
     bool subsetAbst(uint64_t A, uint64_t B);
     
     void orderVarsForElim(vec<Var>& order);
@@ -81,10 +83,10 @@ private:
     Lit  findUnitDef(Var x, vec<Clause*>& poss, vec<Clause>& negs);
     bool findDef(Lit x, vec<Clause*>& poss, vec<Clause>& negs, Clause& out_def);
     bool maybeEliminate(Var x);
-    void asymmetricBranching(Lit p);
+    //void asymmetricBranching(Lit p);
     void exclude(vec<ClauseSimp>& cs, Clause* c);
-    void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<Lit>& ps, vec<Lit>& ns, const Var x);
-    void DeallocPsNs(vec<Lit>& ps, vec<Lit>& ns);
+    void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
+    void DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns);
     bool merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause);
     
     uint32_t clauses_subsumed;
@@ -139,7 +141,7 @@ inline bool Subsumer::subsetAbst(uint64_t A, uint64_t B)
 
 // Assumes 'seen' is cleared (will leave it cleared)
 template<class T1, class T2>
-bool Subsumer::subset(const T1& A, const T2& B, vec<bool>& seen)
+bool Subsumer::subset(const T1& A, const T2& B, vec<char>& seen)
 {
     for (uint i = 0; i != B.size(); i++)
         seen[B[i].toInt()] = 1;
@@ -163,6 +165,7 @@ inline void Subsumer::newVar()
     seen_tmp    .push(0);
     touched     .push(1);
     var_elimed  .push(0);
+    cannot_eliminate.push(0);
 }
 
 #endif //SIMPLIFIER_H

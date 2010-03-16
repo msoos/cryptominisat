@@ -129,7 +129,7 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint pa
             continue;
         }
         solver.detachClause(**i);
-        newSolver.addClause(**i, (**i).getGroup(), "");
+        newSolver.addClause(**i, (**i).getGroup());
         free(*i);
     }
     cs.shrink(i-j);
@@ -146,7 +146,7 @@ void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint
         solver.detachClause(**i);
         for (uint i2 = 0; i2 < (*i)->size(); i2++)
             (**i)[i2] = (**i)[i2].unsign();
-        newSolver.addXorClause(**i, (**i).xor_clause_inverted(), (**i).getGroup(), "");
+        newSolver.addXorClause(**i, (**i).xor_clause_inverted(), (**i).getGroup());
         free(*i);
     }
     cs.shrink(i-j);
