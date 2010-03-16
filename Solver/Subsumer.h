@@ -12,6 +12,8 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 
 enum OccurMode { occ_Off, occ_Permanent, occ_All };
 
+class ClauseCleaner;
+
 class Subsumer
 {
 public:
@@ -19,17 +21,19 @@ public:
     Subsumer(Solver& S2);
     ~Subsumer();
     const bool simplifyBySubsumption(const bool doFullSubsume = false);
-    void unlinkModifiedClause(vec<Lit>& cl, ClauseSimp c);
+    void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c);
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
     void linkInAlreadyClause(ClauseSimp& c);
-    void updateClause(ClauseSimp& c);
+    const bool updateClause(ClauseSimp c);
     void newVar();
     void extendModel(Solver& solver2);
     const vec<char>& getVarElimed() const;
     const uint getNumElimed() const;
     
 private:
+    
+    friend class ClauseCleaner;
     
     //Main
     vec<ClauseSimp>        clauses;
@@ -77,14 +81,15 @@ private:
     void touch(const Lit p);
     bool updateOccur(Clause& c);
     void findSubsumed(Clause& ps, vec<ClauseSimp>& out_subsumed);
-    void findSubsumed(vec<Lit>& ps, vec<ClauseSimp>& out_subsumed);
+    void findSubsumed(const vec<Lit>& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
     bool isSubsumed(Clause& ps);
     uint subsume0(Clause& ps);
+    void subsume0LearntSet(vec<Clause*>& cs);
     void subsume1(ClauseSimp& ps);
     void smaller_database();
     void almost_all_database();
     template<class T1, class T2>
-    bool subset(const T1& A, const T2& B, vec<char>& seen);
+    bool subset(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
     
     void orderVarsForElim(vec<Var>& order);
@@ -92,7 +97,7 @@ private:
     bool maybeEliminate(Var x);
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
     void DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns);
-    bool merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<char>& seen, vec<Lit>& out_clause);
+    bool merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<Lit>& out_clause);
     
     uint32_t clauses_subsumed;
     uint32_t literals_removed;
@@ -148,19 +153,19 @@ inline bool Subsumer::subsetAbst(uint32_t A, uint32_t B)
 
 // Assumes 'seen' is cleared (will leave it cleared)
 template<class T1, class T2>
-bool Subsumer::subset(const T1& A, const T2& B, vec<char>& seen)
+bool Subsumer::subset(const T1& A, const T2& B)
 {
     for (uint i = 0; i != B.size(); i++)
-        seen[B[i].toInt()] = 1;
+        seen_tmp[B[i].toInt()] = 1;
     for (uint i = 0; i != A.size(); i++) {
-        if (!seen[A[i].toInt()]) {
+        if (!seen_tmp[A[i].toInt()]) {
             for (uint i = 0; i != B.size(); i++)
-                seen[B[i].toInt()] = 0;
+                seen_tmp[B[i].toInt()] = 0;
             return false;
         }
     }
     for (uint i = 0; i != B.size(); i++)
-        seen[B[i].toInt()] = 0;
+        seen_tmp[B[i].toInt()] = 0;
     return true;
 }
 

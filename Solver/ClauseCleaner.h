@@ -36,6 +36,8 @@ class ClauseCleaner
         
         void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
         void cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseSetType type, Subsumer& subs, const uint limit = 0);
+        const bool cleanClauseBewareNULL(ClauseSimp c, Subsumer& subs);
+        
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
@@ -44,9 +46,8 @@ class ClauseCleaner
         bool satisfied(const XorClause& c) const;
         
     private:
-        const bool cleanClause(Clause& c);
-        const bool cleanClauseBewareNULL(ClauseSimp& c, Subsumer& subs);
         const bool cleanClause(XorClause& c);
+        const bool cleanClause(Clause& c);
         
         uint lastNumUnitarySat[5];
         uint lastNumUnitaryClean[5];

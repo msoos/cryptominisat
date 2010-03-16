@@ -82,8 +82,10 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
     Lit *i, *j, *end;
     for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
         lbool val = solver.value(*i);
-        if (val == l_Undef)
+        if (val == l_Undef) {
             *j++ = *i;
+            continue;
+        }
         
         if (val == l_True) {
             solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
@@ -108,37 +110,43 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
     return false;
 }
 
-inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp& cc, Subsumer& subs)
+inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& subs)
 {
     Clause& c = *cc.clause;
     vec<Lit> origClause(c.size());
-    memcpy(origClause.getData(), c.getData(), c.size()*sizeof(Lit));
+    memcpy(origClause.getData(), c.getData(), sizeof(Lit)*c.size());
     
     Lit *i, *j, *end;
     for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
         lbool val = solver.value(*i);
         if (val == l_Undef) {
-            *j = *i;
-            j++;
+            *j++ = *i;
             continue;
         }
         
         if (val == l_True) {
             subs.unlinkModifiedClause(origClause, cc);
             free(cc.clause);
-            cc.clause = NULL;
             return true;
         }
     }
     
     if (i != j) {
-        subs.unlinkModifiedClause(origClause, cc);
         c.setStrenghtened();
-        c.shrink(i-j);
-        subs.updateClause(cc);
-        if (cc.clause == NULL)
+        if (origClause.size() > 2 && origClause.size()-(i-j) == 2) {
+            solver.detachModifiedClause(origClause[0], origClause[1], origClause.size(), cc.clause);
+            c.shrink(i-j);
+            solver.attachClause(c);
+        } else {
+            c.shrink(i-j);
+            if (c.learnt())
+                solver.learnts_literals -= i-j;
+            else
+                solver.clauses_literals -= i-j;
+        }
+        c.calcAbstraction();
+        if (subs.updateClause(cc))
             return true;
-        solver.attachClause(c);
     }
     
     return false;
@@ -146,9 +154,8 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp& cc, Subsumer&
 
 void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit)
 {
-    #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
-    #endif
+    assert(solver.qhead == solver.trail.size());
     
     if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
         return;
@@ -179,9 +186,8 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
 
 void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::ClauseSetType type, Subsumer& subs, const uint limit)
 {
-    #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
-    #endif
+    assert(solver.qhead == solver.trail.size());
     
     if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
         return;
@@ -208,9 +214,8 @@ void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::C
 
 void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit)
 {
-    #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
-    #endif
+    assert(solver.qhead == solver.trail.size());
     
     if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
         return;
