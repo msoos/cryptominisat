@@ -7,7 +7,7 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 
 #include "Solver.h"
 #include "Queue.h"
-//#include "TmpFiles.h"
+#include "TmpFiles.h"
 #include "CSet.h"
 
 enum OccurMode { occ_Off, occ_Permanent, occ_All };
@@ -36,16 +36,15 @@ private:
     vec<CSet* >            iter_sets;      // Sets currently used for iterations.
     Solver&                solver;         // The Solver
     
-    /*
+    
     FILE*               elim_out;       // File storing eliminated clauses (needed to calculate model).
     char*               elim_out_file;  // (name of file)
     vec<char>           var_elimed;     // 'eliminated[var]' is TRUE if variable has been eliminated.
-    */
     
     // Temporaries (to reduce allocation overhead):
     //
     vec<bool>           seen_tmp;       // (used in various places)
-    //vec<Lit>            io_tmp;         // (used for reading/writing clauses from/to disk)
+    vec<Lit>            io_tmp;         // (used for reading/writing clauses from/to disk)
     
     // Database management:
     //
@@ -151,65 +150,5 @@ bool Subsumer::subset(const T1& A, const T2& B, vec<bool>& seen)
         seen[B[i].toInt()] = 0;
     return true;
 }
-
-
-
-/*
-// For derivation output (verbosity level 2)
-#define L_IND    "%-*d"
-#define L_ind    decisionLevel()*3+3,decisionLevel()
-#define L_LIT    "%sx%d"
-#define L_lit(p) p.sign()?"~":"", p.var()
-
-inline string name(const lbool& p) {
-    if (p.isUndef())
-        return "l_Undef";
-    else {
-        if (p.getBool())
-            return "l_True";
-        else
-            return "l_False";
-    }
-}
-
-inline void dump(Clause& c, bool newline = true, FILE* out = stdout)
-{
-    fprintf(out, "{");
-    for (int i = 0; i < c.size(); i++)
-        fprintf(out, " "L_LIT, L_lit(c[i]));
-    
-    fprintf(out, " }%s", newline ? "\n" : "");
-    fflush(out);
-}
-
-inline void dump(Solver& S, Clause& c, bool newline = true, FILE* out = stdout)
-{
-    fprintf(out, "{");
-    for (int i = 0; i < c.size(); i++)
-        fprintf(out, " "L_LIT":%c", L_lit(c[i]), name(S.value(c[i])).c_str());
-    
-    fprintf(out, " }%s", newline ? "\n" : "");
-    fflush(out);
-}
-
-inline void dump(const vec<Lit>& c, bool newline = true, FILE* out = stdout)
-{
-    fprintf(out, "{");
-    for (int i = 0; i < c.size(); i++)
-        fprintf(out, " "L_LIT, L_lit(c[i]));
-    
-    fprintf(out, " }%s", newline ? "\n" : "");
-    fflush(out);
-}
-
-inline void dump(Solver& S, vec<Lit>& c, bool newline = true, FILE* out = stdout)
-{
-    fprintf(out, "{");
-    for (int i = 0; i < c.size(); i++)
-        fprintf(out, " "L_LIT":%c", L_lit(c[i]), name(S.value(c[i])).c_str());
-    
-    fprintf(out, " }%s", newline ? "\n" : "");
-    fflush(out);
-}*/
 
 #endif //SIMPLIFIER_H

@@ -8,6 +8,7 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include "time_mem.h"
 #include "assert.h"
 #include <iomanip>
+#include "ClauseDumper.h"
 
 //#define VERBOSE_DEBUG
 //#define TOUCH_LESS
@@ -20,7 +21,9 @@ using std::endl;
 Subsumer::Subsumer(Solver& s):
     occur_mode(occ_Permanent)
     , solver(s)
-{};
+{
+    //createTmpFiles(NULL);
+};
 
 bool selfSubset(uint64_t A, uint64_t B)
 {
@@ -468,7 +471,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
     cs.clear();
 }
 
-const bool Subsumer::simplifyBySubsumption(const bool full)
+const bool Subsumer::simplifyBySubsumption()
 {
     double myTime = cpuTime();
     
