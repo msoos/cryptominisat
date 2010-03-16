@@ -55,13 +55,77 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
     toRemove.resize(cls.size(), false);
     
     table.clear();
-    table.reserve(cls.size()/2);
+    table.reserve(cls.size());
+    
+    ClauseTable unsortedTable;
+    unsortedTable.reserve(cls.size());
+    ClauseTable sortedTable;
+    sortedTable.reserve(cls.size());
+    
+    for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it ++) {
+        if (it+1 != end)
+            __builtin_prefetch(*(it+1), 0);
+        //if ((**it)[0].toInt() < (**it)[1].toInt())
+        //    std::swap((**it)[0], (**it)[1]);
+        Clause& c = (**it);
+        if ((*it)->size() != 2) {
+            bool sorted = true;
+            for (uint i = 0, size = c.size(); i+1 < size ; i++) {
+                sorted = (c[i].var() <= c[i+1].var());
+                if (!sorted) break;
+            }
+            if (!sorted) {
+                S->detachClause(c);
+                std::sort(c.getData(), c.getData()+c.size());
+                S->attachClause(c);
+            }
+        } else {
+            std::sort(c.getData(), c.getData()+c.size());
+        }
+    }
+    
     uint i = 0;
     for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
         const uint size = (*it)->size();
         if ( size > maxSize || size < minSize) continue;
-        table.push_back(make_pair(*it, i));
+        if ((*it)->getSorted()) sortedTable.push_back(make_pair(*it, i));
+        else unsortedTable.push_back(make_pair(*it, i));
     }
+    
+    clause_sorter_primary sorter;
+    
+    std::sort(unsortedTable.begin(), unsortedTable.end(), clause_sorter_primary());
+    //std::sort(sortedTable.begin(), sortedTable.end(), clause_sorter_primary());
+    #ifdef DEBUG_XORFIND
+    for (uint i = 0; i+1 < unsortedTable.size(); i++) {
+        assert(!sorter(unsortedTable[i+1], unsortedTable[i]));
+    }
+    for (uint i = 0; i+1 < sortedTable.size(); i++) {
+        assert(!sorter(sortedTable[i+1], sortedTable[i]));
+    }
+    #endif //DEBUG_XORFIND
+    
+    for (uint i = 0, j = 0; i < unsortedTable.size() || j <  sortedTable.size();) {
+        if (j == sortedTable.size()) {
+            table.push_back(unsortedTable[i++]);
+            continue;
+        }
+        if (i == unsortedTable.size()) {
+            table.push_back(sortedTable[j++]);
+            continue;
+        }
+        if (sorter(unsortedTable[i], sortedTable[j])) {
+            table.push_back(unsortedTable[i++]);
+        } else {
+            table.push_back(sortedTable[j++]);
+        }
+    }
+    #ifdef DEBUG_XORFIND
+    for (uint i = 0; i+1 < table.size(); i++) {
+        assert(!sorter(table[i+1], table[i]));
+        //table[i].first->plainPrint();
+    }
+    #endif //DEBUG_XORFIND
     
     if (findXors(sumLengths) == false)
         return false;
@@ -73,15 +137,18 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
             printf("c |  Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
     }
     
-    if (foundXors > 0)
-        clearToRemove();
-    
     if (type == ClauseCleaner::binaryClauses) {
-        for (uint i = 0, j = 0, size = table.size(); i != size; i++) {
-            if (!toRemove[table[i].second])
-                S->binaryClauses[j++] = table[i].first;
+        i = 0;
+        uint j = 0;
+        for (uint size = table.size(); i != size; i++) {
+            if (!toRemove[table[i].second]) {
+                table[i].first->setSorted();
+                cls[j++] = table[i].first;
+            }
         }
-    }
+        cls.shrink(i-j);
+    } else if (foundXors > 0)
+        clearToRemove();
     
     return S->ok = (S->propagate() == NULL);
 }
@@ -93,7 +160,6 @@ const bool XorFinder::findXors(uint& sumLengths)
     #endif
     
     sumLengths = 0;
-    std::sort(table.begin(), table.end(), clause_sorter_primary());
     
     ClauseTable::iterator begin = table.begin();
     ClauseTable::iterator end = table.begin();
@@ -210,6 +276,28 @@ bool XorFinder::isXor(const ClauseTable::iterator& begin, const ClauseTable::ite
     
     if (size < requiredSize)
         return false;
+    
+    #ifdef DEBUG_XORFIND
+    {
+        vec<Var> vars;
+        Clause& c = *begin->first;
+        for (uint i = 0; i < c.size(); i++)
+            vars.push(c[i].var());
+        for (ClauseTable::iterator it = begin; it != end; it++) {
+            Clause& c = *it->first;
+            for (uint i = 0; i < c.size(); i++)
+                assert(vars[i] == c[i].var());
+        }
+        clause_sorter_primary sorter;
+        
+        for (ClauseTable::iterator it = begin; it != end; it++) {
+            ClauseTable::iterator it2 = it;
+            it2++;
+            if (it2 == end) break;
+            assert(!sorter(*it2, *it));
+        }
+    }
+    #endif //DEBUG_XORFIND
     
     std::sort(begin, end, clause_sorter_secondary());
     

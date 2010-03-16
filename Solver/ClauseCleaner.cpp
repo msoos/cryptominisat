@@ -133,6 +133,7 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
     
     if (i != j) {
         subs.unlinkModifiedClause(origClause, cc);
+        c.setStrenghtened();
         c.shrink(i-j);
         solver.attachClause(c);
         subs.updateClause(c, cc);

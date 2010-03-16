@@ -258,7 +258,7 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     default: {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
-        c->unSetVarChanged();
+        c->unsetVarChanged();
         
         xorclauses.push(c);
         attachClause(*c);
@@ -347,7 +347,7 @@ bool Solver::addClause(T& ps, const uint group, char* group_name)
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         Clause* c = Clause_new(ps, group);
-        c->unSetVarChanged();
+        c->unsetVarChanged();
 
         if (c->size() > 2)
             clauses.push(c);
@@ -1390,12 +1390,6 @@ lbool Solver::simplify()
         if (ok == false)
             return l_False;
     
-        for (Clause **it = &binaryClauses[0], **end = it + binaryClauses.size(); it != end; it ++) {
-            if (it+1 != end)
-                __builtin_prefetch(*(it+1), 0);
-            if ((**it)[0].toInt() < (**it)[1].toInt())
-                std::swap((**it)[0], (**it)[1]);
-        }
         XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
         if (xorFinder.doNoPart(2, 2) == false)
             return l_False;

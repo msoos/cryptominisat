@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #endif //_MSC_VER
 
+//#define DEBUG_XORFIND
+
 #include "Clause.h"
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
@@ -62,7 +64,17 @@ class XorFinder
             {
                 if (c11.first->size() != c22.first->size())
                     return (c11.first->size() < c22.first->size());
-
+                
+                #ifdef DEBUG_XORFIND
+                Clause& c1 = *c11.first;
+                for (uint i = 0; i+1 < c1.size(); i++)
+                    assert(c1[i].var() <= c1[i+1].var());
+                
+                Clause& c2 = *c22.first;
+                for (uint i = 0; i+1 < c2.size(); i++)
+                    assert(c2[i].var() <= c2[i+1].var());
+                #endif //DEBUG_XORFIND
+                
                 for (a = c11.first->getData(), b = c22.first->getData(), end = a + c11.first->size(); a != end; a++, b++) {
                     if (a->var() != b->var())
                         return (a->var() > b->var());
@@ -84,7 +96,7 @@ class XorFinder
 
                 for (uint i = 0, size = c1.size(); i < size; i++) {
                     if (c1[i].sign() !=  c2[i].sign())
-                        return c2[i].sign();
+                        return c1[i].sign();
                 }
                 
                 return false;
