@@ -536,7 +536,7 @@ const bool Subsumer::simplifyBySubsumption(const bool full)
         for (bool first = true;; first = false){
             int vars_elimed = 0;
             int clauses_before = solver.nClauses();
-            vec<Var>    order;
+            vec<Var> order;
             
             if (first)
                 init_order.copyTo(order);
