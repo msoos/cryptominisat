@@ -144,7 +144,6 @@ end:
     
     if (numFailed || goodBothSame) {
         double time = cpuTime();
-        solver.order_heap.filter(Solver::VarFilter(solver));
         solver.clauseCleaner->removeAndCleanAll();
         if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
             std::cout << "c |  Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
@@ -156,6 +155,7 @@ end:
     memcpy(solver.activity.getData(), backup_activity.getData(), solver.activity.size()*sizeof(double));
     solver.order_heap = backup_order_heap;
     solver.polarity = backup_polarities;
+    solver.order_heap.filter(Solver::VarFilter(solver));
     
     return solver.ok;
 }
