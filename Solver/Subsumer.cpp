@@ -26,6 +26,7 @@ using std::endl;
 Subsumer::Subsumer(Solver& s):
     occur_mode(occ_Permanent)
     , solver(s)
+    , numCalls(0)
 {
     //createTmpFiles(NULL);
 };
@@ -309,7 +310,7 @@ void Subsumer::almost_all_database()
     cl_touched.clear();
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
-        if (clauses[i].clause != NULL)
+        if (clauses[i].clause != NULL && updateOccur(*clauses[i].clause))
             subsume1(clauses[i]);
     }
     if (!solver.ok) return;
@@ -467,7 +468,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
                 occur[cl[i].toInt()].push(c);
                 touch(cl[i].var());
             }
-            if (cl.getVarChanged()) cl_added.add(c);
+            if (fullSubsume || cl.getVarChanged()) cl_added.add(c);
             else if (cl.getStrenghtened()) cl_touched.add(c);
             cl.unSetStrenghtened();
             cl.unSetVarChanged();
@@ -479,17 +480,24 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
 const bool Subsumer::simplifyBySubsumption()
 {
     double myTime = cpuTime();
+    uint32_t origTrailSize = solver.trail.size();
+    clauses_subsumed = 0;
+    literals_removed = 0;
+    if (origNClauses < 200000 && numCalls == 0) fullSubsume = true;
+    else fullSubsume = false;
+    numCalls++;
     
+    touched_list.clear();
     for (Var i = 0; i < solver.nVars(); i++) {
-        occur       .push();
-        occur       .push();
-        seen_tmp    .push(0);       // (one for each polarity)
-        seen_tmp    .push(0);
-        touched     .push(1);
         touched_list.push(i);
-        //var_elimed  .push(0);
+        occur[2*i].clear();
+        occur[2*i+1].clear();
     }
-    uint32_t origNClauses = solver.nClauses();
+    
+    origNClauses = solver.nClauses();
+    clauses.clear();
+    cl_added.clear();
+    cl_touched.clear();
     
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses);
@@ -501,13 +509,14 @@ const bool Subsumer::simplifyBySubsumption()
     
     //uint32_t    orig_n_clauses  = solver.nClauses();
     //uint32_t    orig_n_literals = solver.nLiterals();
-    uint32_t    origTrailSize = solver.trail.size();
-    clauses_subsumed = 0;
-    literals_removed = 0;
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
         assert(clauses[i].index == i);
-        if (clauses[i].clause != NULL)
+        if (clauses[i].clause != NULL
+            && (fullSubsume
+            || clauses[i].clause->getStrenghtened()
+            || clauses[i].clause->getVarChanged())
+            )
             subsume0(clauses[i]);
     }
     if (!solver.ok) return false;
@@ -523,7 +532,7 @@ const bool Subsumer::simplifyBySubsumption()
         // SUBSUMPTION:
         //
         
-        if (cl_added.size() > origNClauses / 2 || full) {
+        if (cl_added.size() > origNClauses / 2) {
             almost_all_database();
             if (!solver.ok) return false;
         } else {
