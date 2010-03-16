@@ -17,7 +17,7 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #define BIT_MORE_VERBOSITY
 #endif
 
-//#define BIT_MORE_VERBOSITY
+#define BIT_MORE_VERBOSITY
 //#define TOUCH_LESS
 
 #ifdef VERBOSE_DEBUG
@@ -606,23 +606,22 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                 solver.learnts_literals -= (*a)->size();
                 solver.clauses_literals += (*a)->size();
                 cl_added.add(clauses[index]);
-            } else {
-                if (((*a)->size() == 2 && clauses.size() < 300000) ||
-                    ((*a)->size() <= 4 && clauses.size() < 60000)) {
-                    ClauseSimp c(*a, clauseID++);
-                    (*a)->calcAbstraction();
-                    clauses.push(c);
-                    subsume1(c);
-                    if (!solver.ok)
-                        return;
-                    assert(clauses[c.index].clause != NULL);
-                    clauses.pop();
-                    clauseID--;
-                }
-                *b++  = *a;
+                continue;
             }
-        } else if ((*a)->size() >= 5)
-            subsume0(**a);
+            if (((*a)->size() == 2 && clauses.size() < 300000) ||
+                ((*a)->size() <= 4 && clauses.size() < 60000)) {
+                ClauseSimp c(*a, clauseID++);
+                (*a)->calcAbstraction();
+                clauses.push(c);
+                subsume1(c);
+                if (!solver.ok)
+                    return;
+                assert(clauses[c.index].clause != NULL);
+                clauses.pop();
+                clauseID--;
+            }
+        }
+        *b++  = *a;
     }
     cs.shrink(a-b);
 }
