@@ -1835,7 +1835,10 @@ inline void Solver::performStepsBeforeSolve()
             return;
     }
     
-    if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000 && !subsumer->simplifyBySubsumption())
+    if (doSubsumption
+        && noLibraryUsage
+        && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
+        && !subsumer->simplifyBySubsumption((clauses.size() + binaryClauses.size() < 2000000)))
         return;
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {

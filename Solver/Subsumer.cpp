@@ -475,20 +475,15 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
     cs.clear();
 }
 
-const bool Subsumer::simplifyBySubsumption()
+const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
 {
+    fullSubsume = doFullSubsume;
     double myTime = cpuTime();
     uint32_t origTrailSize = solver.trail.size();
     clauses_subsumed = 0;
     literals_removed = 0;
     origNClauses = solver.clauses.size() + solver.binaryClauses.size();
-    fullSubsume = false;
     numCalls++;
-    
-    if (numCalls == 1) {
-        if (origNClauses < 200000) fullSubsume = true;
-        else return true;
-    }
     
     touched_list.clear();
     for (Var i = 0; i < solver.nVars(); i++) {
