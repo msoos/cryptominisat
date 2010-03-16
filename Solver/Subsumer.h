@@ -25,7 +25,7 @@ public:
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
     void linkInAlreadyClause(ClauseSimp& c);
-    const bool updateClause(ClauseSimp c);
+    void updateClause(ClauseSimp c);
     void newVar();
     void extendModel(Solver& solver2);
     const vec<char>& getVarElimed() const;
@@ -69,6 +69,7 @@ private:
     void addBackToSolver();
     void removeWrong(vec<Clause*>& cs);
     void fillCannotEliminate();
+    const bool treatLearnts();
     
     //Iterations
     void registerIteration  (CSet& iter_set) { iter_sets.push(&iter_set); }

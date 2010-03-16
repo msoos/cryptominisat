@@ -145,8 +145,7 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
                 solver.clauses_literals -= i-j;
         }
         c.calcAbstraction();
-        if (subs.updateClause(cc))
-            return true;
+        subs.updateClause(cc);
     }
     
     return false;
