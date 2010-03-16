@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_REPLACER
+//#define REPLACE_STATISTICS
 
 #ifdef VERBOSE_DEBUG
 #include <iostream>
@@ -55,6 +56,21 @@ const bool VarReplacer::performReplaceInternal()
     cout << "Replacer started." << endl;
     #endif
     double time = cpuTime();
+    
+    #ifdef REPLACE_STATISTICS
+    uint numRedir = 0;
+    for (uint i = 0; i < table.size(); i++) {
+        if (table[i].var() != i)
+            numRedir++;
+    }
+    std::cout << "Number of trees:" << reverseTable.size() << std::endl;
+    std::cout << "Number of redirected nodes:" << numRedir << std::endl;
+    /*map<Var, vector<Var> >::iterator it = reverseTable.begin();
+    map<Var, vector<Var> >::iterator end = reverseTable.end();
+    for (;it != end; it++) {
+        std::cout << "Tree size: " << it->second.size() << std::endl;
+    }*/
+    #endif //REPLACE_STATISTICS
     
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
@@ -103,12 +119,12 @@ const bool VarReplacer::performReplaceInternal()
     
     lastReplacedVars = replacedVars;
     
-    replace_set(solver.clauses);
-    replace_set(solver.learnts);
-    replace_set(solver.binaryClauses);
+    if (!replace_set(solver.clauses)) return false;
+    if (!replace_set(solver.learnts)) return false;
+    if (!replace_set(solver.binaryClauses)) return false;
     
-    replace_set(solver.xorclauses, true);
-    replace_set(solver.conglomerate->getCalcAtFinish(), false);
+    if (!replace_set(solver.xorclauses, true)) return false;
+    if (!replace_set(solver.conglomerate->getCalcAtFinish(), false)) return false;
     
     for (uint i = 0; i != clauses.size(); i++)
         solver.removeClause(*clauses[i]);
@@ -123,16 +139,12 @@ const bool VarReplacer::performReplaceInternal()
     addedNewClause = false;
     replacedLits = 0;
     
-    if (!solver.ok)
-        return false;
-    
-    solver.ok = (solver.propagate() == NULL);
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     return solver.ok;
 }
 
-void VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
+const bool VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
 {
     XorClause **a = cs.getData();
     XorClause **r = a;
@@ -154,6 +166,7 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
         }
         
         if (isAttached && changed && handleUpdatedClause(c, origVar1, origVar2)) {
+            if (solver.ok == false) return false;
             solver.freeLater.push(&c);
             r++;
         } else {
@@ -161,6 +174,8 @@ void VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
         }
     }
     cs.shrink(r-a);
+    
+    return solver.ok;
 }
 
 const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2)
@@ -198,6 +213,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     case 1:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
         solver.uncheckedEnqueue(c[0] ^ c.xor_clause_inverted());
+        solver.ok = (solver.propagate() == NULL);
         return true;
     case 2: {
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
@@ -217,7 +233,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     return false;
 }
 
-void VarReplacer::replace_set(vec<Clause*>& cs)
+const bool VarReplacer::replace_set(vec<Clause*>& cs)
 {
     Clause **a = cs.getData();
     Clause **r = a;
@@ -236,6 +252,7 @@ void VarReplacer::replace_set(vec<Clause*>& cs)
         }
         
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
+            if (solver.ok == false) return false;
             clauseFree(&c);
             r++;
         } else {
@@ -243,6 +260,8 @@ void VarReplacer::replace_set(vec<Clause*>& cs)
         }
     }
     cs.shrink(r-a);
+    
+    return solver.ok;
 }
 
 const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2)
@@ -259,8 +278,6 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         }
         else if (solver.value(c[i]) != l_False && c[i] != p)
             c[j++] = p = c[i];
-        else
-            solver.clauses_literals--;
     }
     c.shrink(i - j);
     
@@ -277,6 +294,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     case 1 :
         solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
         solver.uncheckedEnqueue(c[0]);
+        solver.ok = (solver.propagate() == NULL);
         return true;
     default:
         solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
@@ -326,13 +344,13 @@ template<class T>
 const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uint group)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xor_clause_inverted " << xor_clause_inverted << endl;
+    std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xor_clause_inverted " << xor_clause_inverted << std::endl;
     #endif
     
-    #ifdef DEBUG_REPLACER
     assert(ps.size() == 2);
     assert(!ps[0].sign());
     assert(!ps[1].sign());
+    #ifdef DEBUG_REPLACER
     assert(solver.assigns[ps[0].var()].isUndef());
     assert(solver.assigns[ps[1].var()].isUndef());
     #endif
@@ -360,11 +378,12 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
     }
     
     if (inverted) {
-        //Inversion is also set
         Lit lit2 = table[var];
         
-        //triangular cycle
+        //Inversion is also set, triangular cycle
+        //A->B, A->C, B->C. There is nothing to add
         if (lit1.var() == lit2.var()) {
+            replacedVars--;
             if ((lit1.sign() ^ lit2.sign()) != lit.sign()) {
                 #ifdef VERBOSE_DEBUG
                 cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
@@ -374,14 +393,13 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
             return true;
         }
         
+        //Inversion is also set
         if (lit2.var() != var) {
+            assert(table[lit1.var()].var() == lit1.var());
             setAllThatPointsHereTo(lit1.var(), Lit(lit.var(), lit1.sign()));
-            table[lit1.var()] = Lit(lit.var(), lit1.sign());
-            reverseTable[lit.var()].push_back(lit1.var());
             
+            assert(table[lit2.var()].var() == lit2.var());
             setAllThatPointsHereTo(lit2.var(), lit ^ lit2.sign());
-            table[lit2.var()] = lit ^ lit2.sign();
-            reverseTable[lit.var()].push_back(lit2.var());
             
             table[lit.var()] = Lit(lit.var(), false);
             return true;
@@ -389,15 +407,12 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
     }
     
     //Follow forwards
-    Lit lit2 = table[lit.var()];
-    if (lit2.var() != lit.var())
-        lit = lit2 ^ lit.sign();
+    Lit litX = table[lit.var()];
+    if (litX.var() != lit.var())
+        lit = litX ^ lit.sign();
     
     //Follow backwards
     setAllThatPointsHereTo(var, lit);
-    
-    table[var] = lit;
-    reverseTable[lit.var()].push_back(var);
     
     return true;
 }
@@ -469,16 +484,18 @@ bool VarReplacer::alreadyIn(const Var var, const Lit lit)
 void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
 {
     map<Var, vector<Var> >::iterator it = reverseTable.find(var);
-    if (it == reverseTable.end())
-        return;
-    
-    for(vector<Var>::const_iterator it2 = it->second.begin(), end = it->second.end(); it2 != end; it2++) {
-        assert(table[*it2].var() == var);
-        table[*it2] = lit ^ table[*it2].sign();
-        if (lit.var() != *it2)
-            reverseTable[lit.var()].push_back(*it2);
+    if (it != reverseTable.end()) {
+        for(vector<Var>::const_iterator it2 = it->second.begin(), end = it->second.end(); it2 != end; it2++) {
+            assert(table[*it2].var() == var);
+            if (lit.var() != *it2) {
+                table[*it2] = lit ^ table[*it2].sign();
+                reverseTable[lit.var()].push_back(*it2);
+            }
+        }
+        reverseTable.erase(it);
     }
-    reverseTable.erase(it);
+    table[var] = lit;
+    reverseTable[lit.var()].push_back(var);
 }
 
 void VarReplacer::newVar()
