@@ -109,7 +109,7 @@ inline const bool ClauseCleaner::cleanClause(Clause& c)
     return false;
 }
 
-inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& subs)
+inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp& cc, Subsumer& subs)
 {
     Clause& c = *cc.clause;
     vec<Lit> origClause(c.size());
@@ -121,10 +121,13 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
         if (val == l_Undef) {
             *j = *i;
             j++;
+            continue;
         }
+        
         if (val == l_True) {
             subs.unlinkModifiedClause(origClause, cc);
             free(cc.clause);
+            cc.clause = NULL;
             return true;
         }
     }
@@ -133,8 +136,10 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
         subs.unlinkModifiedClause(origClause, cc);
         c.setStrenghtened();
         c.shrink(i-j);
+        subs.updateClause(cc);
+        if (cc.clause == NULL)
+            return true;
         solver.attachClause(c);
-        subs.updateClause(c, cc);
     }
     
     return false;

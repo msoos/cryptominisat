@@ -92,8 +92,9 @@ const bool VarReplacer::performReplaceInternal()
     Var var = 0;
     const vector<bool>& removedVars = solver.conglomerate->getRemovedVars();
     const vec<lbool>& removedVars2 = solver.partHandler->getSavedState();
+    const vec<char>& removedVars3 = solver.subsumer->getVarElimed();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
-        if (it->var() == var || removedVars[it->var()] || removedVars2[it->var()] != l_Undef) continue;
+        if (it->var() == var || removedVars[it->var()] || removedVars2[it->var()] != l_Undef || removedVars3[it->var()]) continue;
         #ifdef VERBOSE_DEBUG
         cout << "Setting var " << var+1 << " to a non-decision var" << endl;
         #endif
@@ -318,7 +319,7 @@ const vector<Var> VarReplacer::getReplacingVars() const
     return replacingVars;
 }
 
-void VarReplacer::extendModel() const
+void VarReplacer::extendModelPossible() const
 {
     uint i = 0;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
@@ -330,12 +331,36 @@ void VarReplacer::extendModel() const
         cout << endl;
         #endif
         
-        assert(solver.assigns[it->var()] != l_Undef);
-        if (solver.assigns[i] == l_Undef) {
-            bool val = (solver.assigns[it->var()] == l_False);
-            solver.uncheckedEnqueue(Lit(i, val ^ it->sign()));
-        } else {
-            assert(solver.assigns[i].getBool() == (solver.assigns[it->var()].getBool() ^ it->sign()));
+        if (solver.assigns[it->var()] != l_Undef) {
+            if (solver.assigns[i] == l_Undef) {
+                bool val = (solver.assigns[it->var()] == l_False);
+                solver.uncheckedEnqueue(Lit(i, val ^ it->sign()));
+            } else {
+                assert(solver.assigns[i].getBool() == (solver.assigns[it->var()].getBool() ^ it->sign()));
+            }
+        }
+    }
+}
+
+void VarReplacer::extendModelImpossible(Solver& solver2) const
+{
+    vec<Lit> tmpClause;
+    uint i = 0;
+    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
+        if (it->var() == i) continue;
+        if (solver.assigns[it->var()] == l_Undef) {
+            assert(solver.assigns[it->var()] == l_Undef);
+            assert(solver.assigns[i] == l_Undef);
+            
+            tmpClause.clear();
+            tmpClause.push(Lit(it->var(), true));
+            tmpClause.push(Lit(i, it->sign()));
+            solver2.addClause(tmpClause);
+            
+            tmpClause.clear();
+            tmpClause.push(Lit(it->var(), false));
+            tmpClause.push(Lit(i, it->sign()^true));
+            solver2.addClause(tmpClause);
         }
     }
 }

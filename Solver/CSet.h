@@ -11,10 +11,10 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 class Clause;
 
 template <class T>
-uint32_t calcAbstraction(const T& ps) {
-    uint32_t abstraction = 0;
+uint64_t calcAbstraction(const T& ps) {
+    uint64_t abstraction = 0;
     for (uint32_t i = 0; i != ps.size(); i++)
-        abstraction |= 1 << (ps[i].toInt() & 31);
+        abstraction |= 1 << (ps[i].toInt() & 63);
     return abstraction;
 }
 
@@ -31,7 +31,7 @@ class ClauseSimp
         }
         
         Clause* clause;
-        uint32_t abst;
+        uint64_t abst;
         uint32_t index;
 };
 #pragma pack(pop)

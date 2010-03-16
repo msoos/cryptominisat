@@ -1962,7 +1962,26 @@ lbool Solver::solve(const vec<Lit>& assumps)
     if (status == l_True) {
         partHandler->addSavedState();
         conglomerate->doCalcAtFinish();
-        varReplacer->extendModel();
+        varReplacer->extendModelPossible();
+        if (subsumer->getNumElimed() > 0) {
+            Solver s;
+            for (uint i = 0; i < nVars(); i++) {
+                s.newVar();
+                if (value(i) != l_Undef) {
+                    vec<Lit> tmp;
+                    tmp.push(Lit(i, value(i) == l_False));
+                    s.addClause(tmp);
+                }
+            }
+            varReplacer->extendModelImpossible(s);
+            subsumer->extendModel(s);
+            
+            status = s.solve();
+            assert(status == l_True);
+            for (uint i = 0; i < nVars(); i++) {
+                assigns[i] = s.assigns[i];
+            }
+        }
         // Extend & copy model:
         model.growTo(nVars());
         for (uint32_t i = 0; i != nVars(); i++) model[i] = value(i);

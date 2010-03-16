@@ -45,7 +45,7 @@ class ClauseCleaner
         
     private:
         const bool cleanClause(Clause& c);
-        const bool cleanClauseBewareNULL(ClauseSimp c, Subsumer& subs);
+        const bool cleanClauseBewareNULL(ClauseSimp& c, Subsumer& subs);
         const bool cleanClause(XorClause& c);
         
         uint lastNumUnitarySat[5];
