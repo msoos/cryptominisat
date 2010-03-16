@@ -1085,18 +1085,3 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
             order.push(cost_var[x].second);
     }
 }
-
-/*bool Subsumer::isSubsumed(Clause& ps)
-{
-    for (int j = 0; j < ps.size(); j++){
-        vec<ClauseSimp>& cs = occur[ps[j].toInt()];
-        
-        for (int i = 0; i < cs.size(); i++){
-            if (cs[i].clause != &ps && cs[i].clause->size() <= ps.size() && subsetAbst(cs[i].clause->getAbst(), ps.getAbst())){
-                if (subset(*cs[i].clause, ps))
-                    return true;
-            }
-        }
-    }
-    return false;
-}*/
