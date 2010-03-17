@@ -7,7 +7,6 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 
 #include "Solver.h"
 #include "Queue.h"
-#include "TmpFiles.h"
 #include "CSet.h"
 
 enum OccurMode { occ_Off, occ_Permanent, occ_All };
@@ -58,11 +57,6 @@ private:
     //
     vec<char>           seen_tmp;       // (used in various places)
     vector<Lit>         io_tmp;         // (used for reading/writing clauses from/to disk)
-    
-    // Database management:
-    //
-    //void createTmpFiles(const char* filename);
-    //void deleteTmpFiles(void);
     
     //Start-up
     void addFromSolver(vec<Clause*>& cs);
@@ -132,20 +126,6 @@ inline bool Subsumer::updateOccur(Clause& c)
 {
     return occur_mode == occ_All || (occur_mode == occ_Permanent && !c.learnt()) /*|| c.size() == 2*/;
 }
-
-/*inline void Subsumer::createTmpFiles(const char* filename)
-{
-    if (filename == NULL)
-        elim_out = createTmpFile("/tmp/tmp_elims_cryptoms__", "w+b", elim_out_file);
-    else
-        elim_out = fopen(filename, "w+b"), elim_out_file = NULL;
-}
-
-inline void Subsumer::deleteTmpFiles(void)
-{
-    if (elim_out_file != NULL) deleteTmpFile(elim_out_file, true);
-}*/
-
 
 inline bool Subsumer::subsetAbst(uint32_t A, uint32_t B)
 {
