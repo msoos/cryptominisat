@@ -34,6 +34,6 @@ add_library(cryptominisatlib
     PartFinder.cpp
     Subsumer.cpp
     PartHandler.cpp
-    ClauseDumper.cpp
+    XorSubsumer.cpp
 )
 
