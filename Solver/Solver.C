@@ -41,6 +41,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "FailedVarSearcher.h"
 #include "Subsumer.h"
 #include "PartHandler.h"
+#include "XorSubsumer.h"
 
 //#define VERBOSE_DEBUG_POLARITIES
 
@@ -64,9 +65,10 @@ Solver::Solver() :
         , regularlyFindBinaryXors(true)
         , performReplace   (true)
         , conglomerateXors (true)
-        , heuleProcess     (false)
+        , heuleProcess     (true)
         , schedSimplification(true)
         , doSubsumption    (true)
+        , doXorSubsumption (true)
         , doPartHandler    (true)
         , failedVarSearch  (true)
         , noLibraryUsage   (false)
@@ -1095,7 +1097,7 @@ FoundWatch:
         ws.shrink_(i - j);
 
         //Finally, propagate XOR-clauses
-        if (!confl) confl = propagate_xors(p);
+        if (xorclauses.size() > 0 && !confl) confl = propagate_xors(p);
     }
 EndPropagate:
     propagations += num_props;
@@ -1748,12 +1750,22 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
+    if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
+        goto end;
+    
+    if (doXorSubsumption && xorclauses.size() > 1) {
+        XorSubsumer xsub(*this);
+        if (!xsub.simplifyBySubsumption())
+            goto end;
+    }
+    
     if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
         if (!subsumer->simplifyBySubsumption()) {
             status = l_False;
             goto end;
         }
     }
+    
     
 end:
     random_var_freq = backup_random_var_freq;
@@ -1807,9 +1819,6 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
             return false;
         setDefaultPolarities();*/
         
-        /*if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
-        goto end;*/
-        
         fullStarts++;
     }
     
@@ -1841,12 +1850,18 @@ inline void Solver::performStepsBeforeSolve()
         if (xorFinder.doNoPart(3, 10) == false)
             return;
     }
-        
+    
     if (xorclauses.size() > 1) {
         uint orig_total = 0;
         uint orig_num_cls = xorclauses.size();
         for (uint i = 0; i < xorclauses.size(); i++) {
             orig_total += xorclauses[i]->size();
+        }
+        
+        if (doXorSubsumption && xorclauses.size() > 1) {
+            XorSubsumer xsub(*this);
+            if (!xsub.simplifyBySubsumption())
+                return;
         }
         
         if (heuleProcess && conglomerate->heuleProcessFull() == false)

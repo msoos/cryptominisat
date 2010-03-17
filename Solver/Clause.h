@@ -238,6 +238,7 @@ protected:
     {
         invertedXor = inverted;
         isXorClause = true;
+        calcXorAbstraction();
     }
 
 public:
@@ -254,6 +255,11 @@ public:
     inline void invert(bool b)
     {
         invertedXor ^= b;
+    }
+    void calcXorAbstraction() {
+        extra.abst = 0;
+        for (uint32_t i = 0; i != size(); i++)
+            extra.abst |= 1 << (data[i].var() & 31);
     }
 
     void print() {

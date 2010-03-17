@@ -153,6 +153,8 @@ const bool Conglomerate::conglomerateXorsFull()
     
     double time = cpuTime();
     found = 0;
+    uint32_t origNumClauses = solver.xorclauses.size();
+    
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     if (solver.ok == false)
         return false;
@@ -166,15 +168,17 @@ const bool Conglomerate::conglomerateXorsFull()
     if (conglomerateXors() == false)
         goto end;
     
-    if (solver.verbosity >=1) {
-        std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time
-        << " s  (removed " << std::setw(8) << found << " vars)"
-        << std::setw(31) << "   |" << std::endl;
-    }
-    
 end:
     
     clearToRemove();
+    assert(origNumClauses >= solver.xorclauses.size());
+    if (solver.verbosity >=1) {
+        std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time << " s   "
+        << "   removed " << std::setw(8) << found << " vars"
+        << "   removed " << std::setw(8) << origNumClauses-solver.xorclauses.size() << " clauses"
+        << std::setw(21) << "   |" << std::endl;
+    }
+    
     clearLearntsFromToRemove();
     solver.order_heap.filter(Solver::VarFilter(solver));
     
@@ -224,16 +228,13 @@ const bool Conglomerate::heuleProcess()
             const uint old_group = thisXorClause.getGroup();
 
             #ifdef VERBOSE_DEBUG
-            cout << "- Other XOR:";
+            cout << "- XOR1:";
             clauseSet[0].first->plainPrint();
-            cout << "- Removing: ";
+            cout << "- XOR2:";
             thisXorClause.plainPrint();
             #endif
             
-            //assert(!toRemove[clauseSet[i].second]);
-            //toRemove[clauseSet[i].second] = true;
             processClause(thisXorClause, clauseSet[i].second, var);
-            //solver.removeClause(thisXorClause);
             
             if (!dealWithNewClause(newSet[i], inverted, old_group)) {
                 solver.ok = false;
@@ -275,7 +276,7 @@ const bool Conglomerate::conglomerateXors()
         for (size_t i = 1; i < newSet.size(); i++)
             diff += (int)newSet[i].size()-(int)clauseSet[i].first->size();
         
-        if (newSet.size() > 1) {
+        if (newSet.size() > 2) {
             blocked[var] = true;
             varToXor.erase(it);
             continue;
