@@ -49,6 +49,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #endif //_MSC_VER
 
 //#define VERBOSE_DEBUG_POLARITIES
+//#define DEBUG_DYNAMIC_RESTART
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -1479,7 +1480,20 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     switch (restartType) {
     case dynamic_restart:
         if (nbDecisionLevelHistory.isvalid() &&
-            ((nbDecisionLevelHistory.getavg()) > (totalSumOfDecisionLevel / (double)(conflicts - conflictsAtLastSolve)))) {
+            (((double)(nbDecisionLevelHistory.getavg())*0.9*((double)fullStarts + 20.0)/20.0) > (totalSumOfDecisionLevel / (double)(conflicts - conflictsAtLastSolve)))) {
+            
+            #ifdef DEBUG_DYNAMIC_RESTART
+            if (nbDecisionLevelHistory.isvalid()) {
+                std::cout << "nbDecisionLevelHistory.getavg():" << nbDecisionLevelHistory.getavg() <<std::endl;
+                std::cout << "calculated limit:" << ((double)(nbDecisionLevelHistory.getavg())*0.9*((double)fullStarts + 20.0)/20.0) << std::endl;
+                std::cout << "totalSumOfDecisionLevel:" << totalSumOfDecisionLevel << std::endl;
+                std::cout << "conflicts:" << conflicts<< std::endl;
+                std::cout << "conflictsAtLastSolve:" << conflictsAtLastSolve << std::endl;
+                std::cout << "conflicts-conflictsAtLastSolve:" << conflicts-conflictsAtLastSolve<< std::endl;
+                std::cout << "fullStarts:" << fullStarts << std::endl;
+            }
+            #endif
+            
             nbDecisionLevelHistory.fastclear();
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
@@ -1695,6 +1709,8 @@ inline void Solver::chooseRestartType(RestartTypeChooser& restartTypeChooser, co
             if (tmp == dynamic_restart) {
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
+                totalSumOfDecisionLevel = 0;
+                conflictsAtLastSolve = conflicts;
                 if (verbosity >= 1)
                     printf("c |                           Decided on dynamic restart strategy                         |\n");
             } else  {
