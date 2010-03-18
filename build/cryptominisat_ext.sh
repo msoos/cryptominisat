@@ -15,6 +15,7 @@ function usage {
     echo "  -f   force gauss to work non-stop"
     echo "  -n   don't perform var replacement (default = replace)"
     echo "  -s   static restart strategy"
+    echo "  -w   dynamic restart strategy"
     echo "  -z   don't simplify"
     echo "  -q   don't use failed var"
     echo "  -c   don't perform conglomeration (default = conglomerate)"
@@ -26,7 +27,7 @@ function usage {
     echo ""
 }
 
-args=`getopt g:v:t:d:ncsfzqepui "$@"`
+args=`getopt g:v:t:d:ncsfzqepuiw "$@"`
 if test $? != 0
 then
     usage
@@ -51,6 +52,7 @@ do
         (-p) extra+="$extra -nosubsumption";;
         (-u) extra+="$extra -nobinxorfind";;
         (-i) extra+="$extra -nonormxorfind";;
+        (-w) extra+="$extra -restart=dynamic";;
         (--) shift; break;;
         (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
         (*)  break;;
