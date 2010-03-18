@@ -46,9 +46,9 @@ class PartHandler
         };
         
         //For moving clauses
-        void moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint part, PartFinder& partFinder);
-        void moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint part, PartFinder& partFinder);
-        void moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const uint part, PartFinder& partFinder);
+        void moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
+        void moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
+        void moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
         
         Solver& solver;
         vec<lbool> savedState;

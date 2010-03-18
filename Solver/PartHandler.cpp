@@ -37,22 +37,22 @@ const bool PartHandler::handle()
     if (!partFinder.findParts())
         return false;
     
-    uint num_parts = partFinder.getReverseTable().size();
+    uint32_t num_parts = partFinder.getReverseTable().size();
     if (num_parts == 1)
         return true;
     
-    map<uint, vector<Var> > reverseTable = partFinder.getReverseTable();
+    map<uint32_t, vector<Var> > reverseTable = partFinder.getReverseTable();
     assert(num_parts == partFinder.getReverseTable().size());
     
-    vector<pair<uint, uint> > sizes;
-    for (map<uint, vector<Var> >::iterator it = reverseTable.begin(); it != reverseTable.end(); it++)
+    vector<pair<uint32_t, uint32_t> > sizes;
+    for (map<uint32_t, vector<Var> >::iterator it = reverseTable.begin(); it != reverseTable.end(); it++)
         sizes.push_back(std::make_pair(it->first, it->second.size()));
     
     std::sort(sizes.begin(), sizes.end(), sort_pred());
     assert(sizes.size() > 1);
     
-    for (uint it = 0; it < sizes.size()-1; it++) {
-        uint part = sizes[it].first;
+    for (uint32_t it = 0; it < sizes.size()-1; it++) {
+        uint32_t part = sizes[it].first;
         vector<Var> vars = reverseTable[part];
         std::cout << "c Solving part " << part << std::endl;
         
@@ -78,8 +78,8 @@ const bool PartHandler::handle()
         newSolver.var_inc = solver.var_inc;
         newSolver.polarity_mode = Solver::polarity_manual;
         std::sort(vars.begin(), vars.end());
-        uint i2 = 0;
-        for (uint var = 0; var < solver.nVars(); var++) {
+        uint32_t i2 = 0;
+        for (uint32_t var = 0; var < solver.nVars(); var++) {
             if (i2 < vars.size() && vars[i2] == var) {
                 newSolver.newVar(true);
                 newSolver.activity[var] = solver.activity[var];
@@ -106,7 +106,7 @@ const bool PartHandler::handle()
             return false;
         assert(status != l_Undef);
         
-        for (uint i = 0; i < newSolver.nVars(); i++) {
+        for (uint32_t i = 0; i < newSolver.nVars(); i++) {
             if (newSolver.model[i] != l_Undef) {
                 assert(savedState[i] == l_Undef);
                 savedState[i] = newSolver.model[i];
@@ -120,7 +120,7 @@ const bool PartHandler::handle()
     return true;
 }
 
-void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint part, PartFinder& partFinder)
+void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder)
 {
     Clause **i, **j, **end;
     for (i = j = cs.getData(), j = i , end = i + cs.size(); i != end; i++) {
@@ -135,7 +135,7 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint pa
     cs.shrink(i-j);
 }
 
-void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint part, PartFinder& partFinder)
+void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder)
 {
     XorClause **i, **j, **end;
     for (i = j = cs.getData(), end = i + cs.size(); i != end; i++) {
@@ -144,7 +144,7 @@ void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint
             continue;
         }
         solver.detachClause(**i);
-        for (uint i2 = 0; i2 < (*i)->size(); i2++)
+        for (uint32_t i2 = 0; i2 < (*i)->size(); i2++)
             (**i)[i2] = (**i)[i2].unsign();
         newSolver.addXorClause(**i, (**i).xor_clause_inverted(), (**i).getGroup());
         free(*i);
@@ -152,13 +152,13 @@ void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint
     cs.shrink(i-j);
 }
 
-void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const uint part, PartFinder& partFinder)
+void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder)
 {
     Clause **i, **j, **end;
     for (i = j = cs.getData(), end = i + cs.size() ; i != end; i++) {
         Clause& c = **i;
         assert(c.size() > 0);
-        uint clause_part = partFinder.getVarPart(c[0].var());
+        uint32_t clause_part = partFinder.getVarPart(c[0].var());
         bool removed = false;
         for (const Lit* l = c.getData(), *end = l + c.size(); l != end; l++) {
             if (partFinder.getVarPart(l->var()) != clause_part) {
@@ -193,7 +193,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
 
 void PartHandler::addSavedState()
 {
-    for (uint i = 0; i < savedState.size(); i++) {
+    for (uint32_t i = 0; i < savedState.size(); i++) {
         if (savedState[i] != l_Undef) {
             assert(solver.assigns[i] == l_Undef);
             solver.assigns[i] = savedState[i];
