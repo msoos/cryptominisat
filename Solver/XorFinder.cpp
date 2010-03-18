@@ -26,6 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "time_mem.h"
 
 //#define VERBOSE_DEBUG
+#ifdef _MSC_VER
+#define __builtin_prefetch(a,b)
+#define __builtin_prefetch(a,b,c)
+#endif //_MSC_VER
 
 #ifdef VERBOSE_DEBUG
 #include <iostream>

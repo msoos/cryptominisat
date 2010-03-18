@@ -18,6 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ClauseCleaner.h"
 #include "VarReplacer.h"
 
+#ifdef _MSC_VER
+#define __builtin_prefetch(a,b,c)
+#endif //_MSC_VER
+
 //#define DEBUG_CLEAN
 
 ClauseCleaner::ClauseCleaner(Solver& _solver) :

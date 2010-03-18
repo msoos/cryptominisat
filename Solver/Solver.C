@@ -43,6 +43,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "PartHandler.h"
 #include "XorSubsumer.h"
 
+#ifdef _MSC_VER
+#define __builtin_prefetch(a,b,c)
+#define __builtin_prefetch(a,b)
+#endif //_MSC_VER
+
 //#define VERBOSE_DEBUG_POLARITIES
 
 //=================================================================================================
