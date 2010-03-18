@@ -55,7 +55,7 @@ private:
     uint32_t clauses_subsumed;
     uint32_t clauses_cut;
     uint32_t origNClauses;
-    uint clauseID;
+    uint32_t clauseID;
 };
 
 inline bool XorSubsumer::subsetAbst(uint32_t A, uint32_t B)
@@ -67,16 +67,16 @@ inline bool XorSubsumer::subsetAbst(uint32_t A, uint32_t B)
 template<class T1, class T2>
 bool XorSubsumer::subset(const T1& A, const T2& B)
 {
-    for (uint i = 0; i != B.size(); i++)
+    for (uint32_t i = 0; i != B.size(); i++)
         seen_tmp[B[i].var()] = 1;
-    for (uint i = 0; i != A.size(); i++) {
+    for (uint32_t i = 0; i != A.size(); i++) {
         if (!seen_tmp[A[i].var()]) {
-            for (uint i = 0; i != B.size(); i++)
+            for (uint32_t i = 0; i != B.size(); i++)
                 seen_tmp[B[i].var()] = 0;
             return false;
         }
     }
-    for (uint i = 0; i != B.size(); i++)
+    for (uint32_t i = 0; i != B.size(); i++)
         seen_tmp[B[i].var()] = 0;
     return true;
 }

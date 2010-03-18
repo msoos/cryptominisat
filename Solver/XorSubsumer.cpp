@@ -88,11 +88,11 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
 
 void XorSubsumer::findUnMatched(vec<Lit>& A, XorClause& B, vec<Lit>& unmatchedPart)
 {
-    for (uint i = 0; i != B.size(); i++)
+    for (uint32_t i = 0; i != B.size(); i++)
         seen_tmp[B[i].var()] = 1;
-    for (uint i = 0; i != A.size(); i++)
+    for (uint32_t i = 0; i != A.size(); i++)
         seen_tmp[A[i].var()] = 0;
-    for (uint i = 0; i != B.size(); i++) {
+    for (uint32_t i = 0; i != B.size(); i++) {
         if (seen_tmp[B[i].var()] == 1) {
             unmatchedPart.push(Lit(B[i].var(), false));
             seen_tmp[B[i].var()] = 0;
@@ -174,7 +174,7 @@ void XorSubsumer::addFromSolver(vec<XorClause*>& cs)
 
 void XorSubsumer::addBackToSolver()
 {
-    for (uint i = 0; i < clauses.size(); i++) {
+    for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i].clause != NULL) {
             solver.xorclauses.push(clauses[i].clause);
             clauses[i].clause->unsetStrenghtened();
@@ -260,7 +260,7 @@ void XorSubsumer::findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed: ";
-    for (uint i = 0; i < ps.size(); i++) {
+    for (uint32_t i = 0; i < ps.size(); i++) {
         if (ps[i].sign()) printf("-");
         printf("%d ", ps[i].var() + 1);
     }
