@@ -21,11 +21,12 @@ function usage {
     echo "  -e   don't perform heule-preprocess (default = heule)"
     echo "  -p   don't perform subsumption"
     echo "  -u   don't do binary xor finding"
+    echo "  -i   don't do normal xor finding"
     echo "  -v   verbosity (default = 1)"
     echo ""
 }
 
-args=`getopt g:v:t:d:ncsfzqepu "$@"`
+args=`getopt g:v:t:d:ncsfzqepui "$@"`
 if test $? != 0
 then
     usage
@@ -49,6 +50,7 @@ do
         (-e) extra+="$extra -noheuleprocess";;
         (-p) extra+="$extra -nosubsumption";;
         (-u) extra+="$extra -nobinxorfind";;
+        (-i) extra+="$extra -nonormxorfind";;
         (--) shift; break;;
         (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
         (*)  break;;
