@@ -1749,8 +1749,21 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
-    if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
+    if (heuleProcess && !conglomerate->heuleProcessFull()) {
+        status = l_False;
         goto end;
+    }
+    
+    while (heuleProcess && performReplace && varReplacer->getNewToReplaceVars() != 0) {
+        if (!varReplacer->performReplace(true)) {
+            status = l_False;
+            goto end;
+        }
+        if (!conglomerate->heuleProcessFull()) {
+            status = l_False;
+            goto end;
+        }
+    }
     
     if (doXorSubsumption && xorclauses.size() > 1) {
         XorSubsumer xsub(*this);
