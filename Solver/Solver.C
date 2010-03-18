@@ -65,7 +65,7 @@ Solver::Solver() :
         , regularlyFindBinaryXors(true)
         , performReplace   (true)
         , conglomerateXors (true)
-        , heuleProcess     (false)
+        , heuleProcess     (true)
         , schedSimplification(true)
         , doSubsumption    (true)
         , doXorSubsumption (true)
@@ -1751,6 +1751,9 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
+    if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
+        goto end;
+    
     if (doXorSubsumption && xorclauses.size() > 1) {
         XorSubsumer xsub(*this);
         if (!xsub.simplifyBySubsumption())
@@ -1815,9 +1818,6 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         /*if (calculateDefaultPolarities() == l_False)
             return false;
         setDefaultPolarities();*/
-        
-        /*if (heuleProcess && xorclauses.size() > 1 && !conglomerate->heuleProcessFull())
-        goto end;*/
         
         fullStarts++;
     }
