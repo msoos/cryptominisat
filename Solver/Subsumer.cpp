@@ -84,9 +84,9 @@ bool selfSubset(Clause& A, Clause& B, vec<char>& seen)
 }
 
 // Will put NULL in 'cs' if clause removed.
-uint Subsumer::subsume0(Clause& ps)
+uint32_t Subsumer::subsume0(Clause& ps)
 {
-    uint retIndex = UINT_MAX;
+    uint32_t retIndex = std::numeric_limits<uint32_t>::max();
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
     ps.plainPrint();
@@ -520,7 +520,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
 
 void Subsumer::addBackToSolver()
 {
-    for (uint i = 0; i < clauses.size(); i++) {
+    for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i].clause != NULL) {
             if (clauses[i].clause->size() == 2)
                 solver.binaryClauses.push(clauses[i].clause);
@@ -564,27 +564,27 @@ void Subsumer::removeWrong(vec<Clause*>& cs)
 void Subsumer::fillCannotEliminate()
 {
     std::fill(cannot_eliminate.getData(), cannot_eliminate.getData()+cannot_eliminate.size(), false);
-    for (uint i = 0; i < solver.xorclauses.size(); i++) {
+    for (uint32_t i = 0; i < solver.xorclauses.size(); i++) {
         const XorClause& c = *solver.xorclauses[i];
-        for (uint i2 = 0; i2 < c.size(); i2++)
+        for (uint32_t i2 = 0; i2 < c.size(); i2++)
             cannot_eliminate[c[i2].var()] = true;
     }
     
     const vector<bool>& tmp2 = solver.conglomerate->getRemovedVars();
-    for (uint i = 0; i < tmp2.size(); i++) {
+    for (uint32_t i = 0; i < tmp2.size(); i++) {
         if (tmp2[i]) cannot_eliminate[i] = true;
     }
     
     const vec<Clause*>& tmp = solver.varReplacer->getClauses();
-    for (uint i = 0; i < tmp.size(); i++) {
+    for (uint32_t i = 0; i < tmp.size(); i++) {
         const Clause& c = *tmp[i];
-        for (uint i2 = 0; i2 < c.size(); i2++)
+        for (uint32_t i2 = 0; i2 < c.size(); i2++)
             cannot_eliminate[c[i2].var()] = true;
     }
     
     #ifdef VERBOSE_DEBUG
-    uint tmpNum = 0;
-    for (uint i = 0; i < cannot_eliminate.size(); i++)
+    uint32_t tmpNum = 0;
+    for (uint32_t i = 0; i < cannot_eliminate.size(); i++)
         if (cannot_eliminate[i])
             tmpNum++;
     std::cout << "Cannot eliminate num:" << tmpNum << std::endl;
@@ -597,8 +597,8 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
     Clause** b = a;
     for (Clause** end = a + cs.size(); a != end; a++) {
         if ((*a)->getStrenghtened() || (*a)->getVarChanged()) {
-            uint index = subsume0(**a);
-            if (index != UINT_MAX) {
+            uint32_t index = subsume0(**a);
+            if (index != std::numeric_limits<uint32_t>::max()) {
                 (*a)->makeNonLearnt();
                 clauses[index].clause = *a;
                 linkInAlreadyClause(clauses[index]);
@@ -679,7 +679,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     addFromSolver(solver.binaryClauses);
     std::cout << "c time to link in:" << cpuTime()-myTime << std::endl;
     
-    for (uint i = 0; i < clauses.size(); i++) {
+    for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i].clause != NULL && 
             (fullSubsume
             || clauses[i].clause->getStrenghtened()
@@ -808,7 +808,7 @@ void Subsumer::findSubsumed(Clause& ps, vec<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed: ";
-    for (uint i = 0; i < ps.size(); i++) {
+    for (uint32_t i = 0; i < ps.size(); i++) {
         if (ps[i].sign()) printf("-");
         printf("%d ", ps[i].var() + 1);
     }
@@ -840,7 +840,7 @@ void Subsumer::findSubsumed(const vec<Lit>& ps, const uint32_t abst, vec<ClauseS
 {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed: ";
-    for (uint i = 0; i < ps.size(); i++) {
+    for (uint32_t i = 0; i < ps.size(); i++) {
         if (ps[i].sign()) printf("-");
         printf("%d ", ps[i].var() + 1);
     }
