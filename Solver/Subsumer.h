@@ -28,7 +28,7 @@ public:
     void newVar();
     void extendModel(Solver& solver2);
     const vec<char>& getVarElimed() const;
-    const uint getNumElimed() const;
+    const uint32_t getNumElimed() const;
     
 private:
     
@@ -78,7 +78,7 @@ private:
     void findSubsumed(Clause& ps, vec<ClauseSimp>& out_subsumed);
     void findSubsumed(const vec<Lit>& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
     bool isSubsumed(Clause& ps);
-    uint subsume0(Clause& ps);
+    uint32_t subsume0(Clause& ps);
     void subsume0LearntSet(vec<Clause*>& cs);
     void subsume1(ClauseSimp& ps);
     void smaller_database();
@@ -99,8 +99,8 @@ private:
     uint32_t origNClauses;
     uint32_t numCalls;
     bool fullSubsume;
-    uint clauseID;
-    uint numElimed;
+    uint32_t clauseID;
+    uint32_t numElimed;
 };
 
 template <class T, class T2>
@@ -136,16 +136,16 @@ inline bool Subsumer::subsetAbst(uint32_t A, uint32_t B)
 template<class T1, class T2>
 bool Subsumer::subset(const T1& A, const T2& B)
 {
-    for (uint i = 0; i != B.size(); i++)
+    for (uint32_t i = 0; i != B.size(); i++)
         seen_tmp[B[i].toInt()] = 1;
-    for (uint i = 0; i != A.size(); i++) {
+    for (uint32_t i = 0; i != A.size(); i++) {
         if (!seen_tmp[A[i].toInt()]) {
-            for (uint i = 0; i != B.size(); i++)
+            for (uint32_t i = 0; i != B.size(); i++)
                 seen_tmp[B[i].toInt()] = 0;
             return false;
         }
     }
-    for (uint i = 0; i != B.size(); i++)
+    for (uint32_t i = 0; i != B.size(); i++)
         seen_tmp[B[i].toInt()] = 0;
     return true;
 }
@@ -166,7 +166,7 @@ inline const vec<char>& Subsumer::getVarElimed() const
     return var_elimed;
 }
 
-inline const uint Subsumer::getNumElimed() const
+inline const uint32_t Subsumer::getNumElimed() const
 {
     return numElimed;
 }
