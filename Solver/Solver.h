@@ -140,6 +140,7 @@ public:
     bool      heuleProcess;       // Process XORs according to Heule
     bool      schedSimplification;// Schedule simplification
     bool      doSubsumption;        // Should try to subsume clauses
+    bool      doXorSubsumption;     // Should try to subsume xor clauses
     bool      doPartHandler;        // Should try to subsume clauses
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     bool      noLibraryUsage;       // Set true if not used as a library
@@ -313,6 +314,7 @@ protected:
     friend class RestartTypeChooser;
     friend class FailedVarSearcher;
     friend class Subsumer;
+    friend class XorSubsumer;
     friend class PartHandler;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;

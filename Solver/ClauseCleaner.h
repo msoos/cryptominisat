@@ -26,17 +26,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Solver.h"
 #include "Subsumer.h"
+#include "XorSubsumer.h"
 
 class ClauseCleaner
 {
     public:
         ClauseCleaner(Solver& solver);
         
-        enum ClauseSetType {clauses, xorclauses, learnts, binaryClauses, simpClauses};
+        enum ClauseSetType {clauses, xorclauses, learnts, binaryClauses, simpClauses, xorSimpClauses};
         
         void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
         void cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseSetType type, Subsumer& subs, const uint limit = 0);
+        void cleanXorClausesBewareNULL(vec<XorClauseSimp>& cs, ClauseSetType type, XorSubsumer& subs, const uint limit = 0);
         const bool cleanClauseBewareNULL(ClauseSimp c, Subsumer& subs);
+        const bool cleanXorClauseBewareNULL(XorClauseSimp c, XorSubsumer& subs);
         
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
@@ -49,8 +52,8 @@ class ClauseCleaner
         const bool cleanClause(XorClause& c);
         const bool cleanClause(Clause& c);
         
-        uint lastNumUnitarySat[5];
-        uint lastNumUnitaryClean[5];
+        uint lastNumUnitarySat[6];
+        uint lastNumUnitaryClean[6];
         
         Solver& solver;
 };

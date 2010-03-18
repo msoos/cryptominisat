@@ -41,6 +41,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "FailedVarSearcher.h"
 #include "Subsumer.h"
 #include "PartHandler.h"
+#include "XorSubsumer.h"
 
 //#define VERBOSE_DEBUG_POLARITIES
 
@@ -67,6 +68,7 @@ Solver::Solver() :
         , heuleProcess     (false)
         , schedSimplification(true)
         , doSubsumption    (true)
+        , doXorSubsumption (true)
         , doPartHandler    (true)
         , failedVarSearch  (true)
         , noLibraryUsage   (false)
@@ -1749,6 +1751,12 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
+    if (doXorSubsumption && xorclauses.size() > 1) {
+        XorSubsumer xsub(*this);
+        if (!xsub.simplifyBySubsumption())
+            goto end;
+    }
+    
     if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
         if (!subsumer->simplifyBySubsumption()) {
             status = l_False;
@@ -1848,6 +1856,12 @@ inline void Solver::performStepsBeforeSolve()
         uint orig_num_cls = xorclauses.size();
         for (uint i = 0; i < xorclauses.size(); i++) {
             orig_total += xorclauses[i]->size();
+        }
+        
+        if (doXorSubsumption && xorclauses.size() > 1) {
+            XorSubsumer xsub(*this);
+            if (!xsub.simplifyBySubsumption())
+                return;
         }
         
         if (heuleProcess && conglomerate->heuleProcessFull() == false)

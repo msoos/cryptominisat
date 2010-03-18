@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ClauseCleaner::ClauseCleaner(Solver& _solver) :
     solver(_solver)
 {
-    for (uint i = 0; i < 5; i++) {
+    for (uint i = 0; i < 6; i++) {
         lastNumUnitarySat[i] = solver.get_unitary_learnts_num();
         lastNumUnitaryClean[i] = solver.get_unitary_learnts_num();
     }
@@ -275,6 +275,75 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
         }
         c.calcAbstraction();
         subs.updateClause(cc);
+    }
+    
+    return false;
+}
+
+void ClauseCleaner::cleanXorClausesBewareNULL(vec<XorClauseSimp>& cs, ClauseCleaner::ClauseSetType type, XorSubsumer& subs, const uint limit)
+{
+    assert(solver.decisionLevel() == 0);
+    assert(solver.qhead == solver.trail.size());
+    
+    if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
+        return;
+    
+    XorClauseSimp *s, *end;
+    for (s = cs.getData(), end = s + cs.size();  s != end; s++) {
+        if (s+1 != end)
+            __builtin_prefetch((s+1)->clause, 1, 0);
+        if (s->clause == NULL)
+            continue;
+        
+        cleanXorClauseBewareNULL(*s, subs);
+    }
+    
+    lastNumUnitaryClean[type] = solver.get_unitary_learnts_num();
+    
+    #ifdef VERBOSE_DEBUG
+    cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << endl;
+    #endif
+}
+
+inline const bool ClauseCleaner::cleanXorClauseBewareNULL(XorClauseSimp cc, XorSubsumer& subs)
+{
+    XorClause& c = *cc.clause;
+    vec<Lit> origClause(c.size());
+    memcpy(origClause.getData(), c.getData(), sizeof(Lit)*c.size());
+    assert(find(solver.xorwatches[c[0].var()], &c));
+    assert(find(solver.xorwatches[c[1].var()], &c));
+    
+    Lit *i, *j, *end;
+    for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
+        const lbool& val = solver.assigns[i->var()];
+        if (val.isUndef()) {
+            *j = *i;
+            j++;
+        } else c.invert(val.getBool());
+    }
+    c.shrink(i-j);
+    
+    switch(c.size()) {
+        case 0: {
+            subs.unlinkModifiedClause(origClause, cc);
+            free(cc.clause);
+            return true;
+        }
+        case 2: {
+            vec<Lit> ps(2);
+            ps[0] = c[0].unsign();
+            ps[1] = c[1].unsign();
+            solver.varReplacer->replace(ps, c.xor_clause_inverted(), c.getGroup());
+            subs.unlinkModifiedClause(origClause, cc);
+            free(cc.clause);
+            return true;
+        }
+        default:
+            if (i-j > 0) {
+                subs.unlinkModifiedClauseNoDetachNoNULL(origClause, cc);
+                subs.linkInAlreadyClause(cc);
+                c.calcXorAbstraction();
+            }
     }
     
     return false;

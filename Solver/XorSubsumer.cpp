@@ -119,7 +119,7 @@ void XorSubsumer::unlinkModifiedClause(vec<Lit>& origClause, XorClauseSimp c)
         maybeRemove(occur[origClause[i].var()], c.clause);
     }
     
-    solver.detachModifiedClause(origClause[0], origClause[1], origClause.size(), c.clause);
+    solver.detachModifiedClause(origClause[0].var(), origClause[1].var(), origClause.size(), c.clause);
     
     clauses[c.index].clause = NULL;
 }
@@ -207,7 +207,10 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     if (!solver.ok) return false;
     
     addFromSolver(solver.xorclauses);
+    #ifdef BIT_MORE_VERBOSITY
     std::cout << "c time to link in:" << cpuTime()-myTime << std::endl;
+    #endif
+    
     origNClauses = clauses.size();
     
     if (!solver.ok) return false;
@@ -247,7 +250,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     
     addBackToSolver();
     
-    std::cout << " xorclauses-subsumed: " << std::setw(9) << clauses_subsumed
+    std::cout << "c xorclauses-subsumed: " << std::setw(9) << clauses_subsumed
     << " xorclauses-cut: " << std::setw(9) << clauses_cut
     << " vars fixed: " << std::setw(3) <<solver.trail.size() - origTrailSize
     << " time: " << std::setw(5) << std::setprecision(2) << (cpuTime() - myTime)
