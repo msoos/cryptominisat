@@ -48,7 +48,7 @@ const bool FailedVarSearcher::search(const uint64_t numProps)
     //General Stats
     double time = cpuTime();
     uint32_t numFailed = 0;
-    uint goodBothSame = 0;
+    uint32_t goodBothSame = 0;
     uint32_t from;
     if (finishedLastTime || lastTimeWentUntil >= solver.nVars())
         from = 0;
@@ -123,7 +123,7 @@ const bool FailedVarSearcher::search(const uint64_t numProps)
                 solver.cancelUntil(0);
             }
             
-            for(uint i = 0; i != bothSame.size(); i++)
+            for(uint32_t i = 0; i != bothSame.size(); i++)
                 solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
             goodBothSame += bothSame.size();
             bothSame.clear();
