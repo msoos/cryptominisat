@@ -8,7 +8,6 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include "time_mem.h"
 #include "assert.h"
 #include <iomanip>
-#include "ClauseDumper.h"
 #include "VarReplacer.h"
 #include "Conglomerate.h"
 
