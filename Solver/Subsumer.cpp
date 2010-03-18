@@ -677,7 +677,9 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     addFromSolver(solver.clauses);
     solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::binaryClauses);
     addFromSolver(solver.binaryClauses);
+    #ifdef BIT_MORE_VERBOSITY
     std::cout << "c time to link in:" << cpuTime()-myTime << std::endl;
+    #endif
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i].clause != NULL && 
@@ -693,7 +695,9 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     
     if (!treatLearnts()) return false;
     
+    #ifdef BIT_MORE_VERBOSITY
     std::cout << "c time until pre-subsume0 clauses and subsume1 2-learnts:" << cpuTime()-myTime << std::endl;
+    #endif
     
     //uint32_t    orig_n_clauses  = solver.nClauses();
     //uint32_t    orig_n_literals = solver.nLiterals();
@@ -796,10 +800,10 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
     
     std::cout << "c |  literals-removed: " << std::setw(9) << literals_removed
-    << " clauses-subsumed: " << std::setw(9) << clauses_subsumed
+    << " clauses-subsumed: " << std::setw(8) << clauses_subsumed
     << " vars fixed: " << std::setw(3) <<solver.trail.size() - origTrailSize
-    << " time: " << std::setw(5) << std::setprecision(2) << (cpuTime() - myTime)
-    << "  |" << std::endl;
+    << " time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+    << " |" << std::endl;
     
     return true;
 }
