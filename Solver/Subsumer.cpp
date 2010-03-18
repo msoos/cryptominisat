@@ -321,7 +321,7 @@ void Subsumer::almost_all_database()
         std::cout << "c (contradiction during subsumption)" << std::endl;
         return;
     }
-    //solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
+    solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     
     #ifdef VERBOSE_DEBUG
     cout << "subsume1 part 1 finished" << endl;
@@ -354,7 +354,7 @@ void Subsumer::almost_all_database()
             unregisterIteration(s1);
             return;
         }
-        //solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
+        solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     }
     unregisterIteration(s1);
     
