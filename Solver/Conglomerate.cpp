@@ -234,9 +234,8 @@ const bool Conglomerate::heuleProcess()
             thisXorClause.plainPrint();
             #endif
             
-            if (!dealWithNewClause(newSet[i], inverted, old_group)) {
+            if (!dealWithNewClause(newSet[i], inverted, old_group))
                 return false;
-            }
             assert(newSet.size() == clauseSet.size());
         }
         
