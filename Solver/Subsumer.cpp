@@ -388,7 +388,6 @@ void Subsumer::almost_all_database()
     }
     unregisterIteration(s1);
     
-    printf("c final stage: subsume0\n");
     for (int i = 0; i < clauses.size(); i++) {
         assert(clauses[i].index == i);
         if (clauses[i].clause != NULL)
@@ -673,6 +672,8 @@ const bool Subsumer::treatLearnts()
 const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
 {
     fullSubsume = doFullSubsume;
+    if (fullSubsume)
+        std::cout << "c Doing full subsumption" << std::endl;
     double myTime = cpuTime();
     uint32_t origTrailSize = solver.trail.size();
     clauses_subsumed = 0;
