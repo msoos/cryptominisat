@@ -310,8 +310,6 @@ inline const bool ClauseCleaner::cleanXorClauseBewareNULL(XorClauseSimp cc, XorS
     XorClause& c = *cc.clause;
     vec<Lit> origClause(c.size());
     memcpy(origClause.getData(), c.getData(), sizeof(Lit)*c.size());
-    assert(find(solver.xorwatches[c[0].var()], &c));
-    assert(find(solver.xorwatches[c[1].var()], &c));
     
     Lit *i, *j, *end;
     for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
