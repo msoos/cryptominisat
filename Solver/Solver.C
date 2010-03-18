@@ -1096,7 +1096,7 @@ FoundWatch:
         ws.shrink_(i - j);
 
         //Finally, propagate XOR-clauses
-        if (!confl) confl = propagate_xors(p);
+        if (xorclauses.size() > 0 && !confl) confl = propagate_xors(p);
     }
 EndPropagate:
     propagations += num_props;
