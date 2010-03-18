@@ -1754,8 +1754,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     
     if (doXorSubsumption && xorclauses.size() > 1) {
         XorSubsumer xsub(*this);
-        if (!xsub.simplifyBySubsumption())
+        if (!xsub.simplifyBySubsumption()) {
+            status = l_False;
             goto end;
+        }
     }
     
     if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
