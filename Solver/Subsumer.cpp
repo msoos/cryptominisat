@@ -189,6 +189,36 @@ void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c)
     clauses[c.index].clause = NULL;
 }
 
+void Subsumer::unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSimp c)
+{
+    if (updateOccur(*c.clause)) {
+        for (uint32_t i = 0; i < origClause.size(); i++) {
+            maybeRemove(occur[origClause[i].toInt()], c.clause);
+            #ifndef TOUCH_LESS
+            touch(origClause[i]);
+            #endif
+        }
+    }
+    
+    // Remove from iterator vectors/sets:
+    for (uint32_t i = 0; i < iter_vecs.size(); i++){
+        vec<ClauseSimp>& cs = *iter_vecs[i];
+        for (uint32_t j = 0; j < cs.size(); j++)
+            if (cs[j].clause == c.clause)
+                cs[j].clause = NULL;
+    }
+    for (uint32_t i = 0; i < iter_sets.size(); i++){
+        CSet& cs = *iter_sets[i];
+        cs.exclude(c);
+    }
+    
+    // Remove clause from clause touched set:
+    if (updateOccur(*c.clause)) {
+        cl_touched.exclude(c);
+        cl_added.exclude(c);
+    }
+}
+
 void Subsumer::subsume1(ClauseSimp& ps)
 {
     vec<ClauseSimp>    Q;

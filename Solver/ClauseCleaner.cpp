@@ -259,11 +259,15 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
     if (i != j) {
         c.setStrenghtened();
         if (origClause.size() > 2 && origClause.size()-(i-j) == 2) {
-            solver.detachModifiedClause(origClause[0], origClause[1], origClause.size(), cc.clause);
+            subs.unlinkModifiedClause(origClause, cc);
+            subs.clauses[cc.index] = cc;
             c.shrink(i-j);
             solver.attachClause(c);
+            subs.linkInAlreadyClause(cc);
         } else {
             c.shrink(i-j);
+            subs.unlinkModifiedClauseNoDetachNoNULL(origClause, cc);
+            subs.linkInAlreadyClause(cc);
             if (c.learnt())
                 solver.learnts_literals -= i-j;
             else

@@ -21,6 +21,7 @@ public:
     ~Subsumer();
     const bool simplifyBySubsumption(const bool doFullSubsume = false);
     void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c);
+    void unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSimp c);
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
     void linkInAlreadyClause(ClauseSimp& c);
