@@ -70,6 +70,7 @@ Solver::Solver() :
         , doPartHandler    (true)
         , failedVarSearch  (true)
         , noLibraryUsage   (false)
+        , sateliteUsed     (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
 
@@ -252,7 +253,7 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     default: {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
-        if (noLibraryUsage) c->unsetVarChanged();
+        if (noLibraryUsage || !sateliteUsed) c->unsetVarChanged();
         
         xorclauses.push(c);
         attachClause(*c);
@@ -310,7 +311,7 @@ Clause* Solver::addClauseInt(T& ps, uint group)
     
     learnt_clause_group = std::max(group+1, learnt_clause_group);
     Clause* c = Clause_new(ps, group);
-    if (noLibraryUsage) c->unsetVarChanged();
+    if (noLibraryUsage || !sateliteUsed) c->unsetVarChanged();
     attachClause(*c);
     
     return c;
