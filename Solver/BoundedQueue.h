@@ -62,7 +62,7 @@ public:
     void pop() {sumofqueue-=elems[last]; queuesize--; if ((++last) == maxsize) last = 0;}
     
     uint64_t getsum() const {return sumofqueue;}
-    uint getavg() const {return (uint64_t)sumofqueue/(uint64_t)queuesize;}
+    uint32_t getavg() const {return (uint64_t)sumofqueue/(uint64_t)queuesize;}
     int isvalid() const {return (queuesize==maxsize);}
     
     void growTo(int size) {
