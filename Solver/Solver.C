@@ -1307,12 +1307,12 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     if (maxSize > 0) {
         if (trail_lim.size() > 0) {
             for (uint32_t i = 0; i != trail_lim[0]; i++) {
-                fprintf(outfile,"%s%d 0\n", !trail[i].sign() ? "-" : "", trail[i].var()+1);
+                fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
             }
         }
         else {
             for (uint32_t i = 0; i != trail.size(); i++) {
-                fprintf(outfile,"%s%d 0\n", !trail[i].sign() ? "-" : "", trail[i].var()+1);
+                fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
             }
         }
     }
