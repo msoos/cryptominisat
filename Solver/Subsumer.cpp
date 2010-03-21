@@ -636,7 +636,8 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                 cl_added.add(clauses[index]);
                 continue;
             }
-            if (((*a)->size() == 2 && clauses.size() < 300000) ||
+            if (((*a)->size() == 2) ||
+                ((*a)->size() <= 3 && clauses.size() < 300000) ||
                 ((*a)->size() <= 4 && clauses.size() < 60000)) {
                 ClauseSimp c(*a, clauseID++);
                 (*a)->calcAbstraction();
