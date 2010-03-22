@@ -1987,7 +1987,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         if (schedSimplification && conflicts >= nextSimplify) {
             status = simplifyProblem(500, 7000000);
-            nextSimplify = conflicts * 2;
+            nextSimplify = conflicts * 1.5;
             if (status != l_Undef) break;
         }
         
