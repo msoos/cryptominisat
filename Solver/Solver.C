@@ -76,6 +76,7 @@ Solver::Solver() :
         , doSubsumption    (true)
         , doXorSubsumption (true)
         , doPartHandler    (true)
+        , doHyperBinRes    (true)
         , failedVarSearch  (true)
         , noLibraryUsage   (false)
         , sateliteUsed     (true)
@@ -1782,7 +1783,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
-    if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000) ? 6000000 : 2000000))  {
+    if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000) ? 8000000 : 3000000))  {
         status = l_False;
         goto end;
     }

@@ -10,6 +10,7 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include <iomanip>
 #include "VarReplacer.h"
 #include "Conglomerate.h"
+#include "BitArray.h"
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
@@ -17,6 +18,8 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #endif
 
 //#define BIT_MORE_VERBOSITY
+//#define HYPER_DEBUG
+//#define HYPER_DEBUG2
 //#define TOUCH_LESS
 
 #ifdef VERBOSE_DEBUG
@@ -304,6 +307,12 @@ void Subsumer::subsume1(ClauseSimp& ps)
                 } else {
                     assert(cl.size() == 1);
                     solver.uncheckedEnqueue(cl[0]);
+                    /*solver.ok = (solver.propagate() == NULL);
+                    if (!solver.ok) {
+                        unregisterIteration(Q);
+                        unregisterIteration(subs);
+                        return;
+                    }*/
                     #ifdef VERBOSE_DEBUG
                     cout << "Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                     #endif
@@ -549,11 +558,19 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
 
 void Subsumer::addBackToSolver()
 {
+    #ifdef HYPER_DEBUG2
+    uint32_t binaryLearntAdded = 0;
+    #endif
+    
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i].clause != NULL) {
-            if (clauses[i].clause->size() == 2)
+            if (clauses[i].clause->size() == 2) {
+                #ifdef HYPER_DEBUG2
+                if (clauses[i].clause->learnt())
+                    binaryLearntAdded++;
+                #endif
                 solver.binaryClauses.push(clauses[i].clause);
-            else {
+            } else {
                 if (clauses[i].clause->learnt())
                     solver.learnts.push(clauses[i].clause);
                 else
@@ -563,6 +580,10 @@ void Subsumer::addBackToSolver()
             clauses[i].clause->unsetVarChanged();
         }
     }
+    
+    #ifdef HYPER_DEBUG2
+    std::cout << "Binary learnt added:" << binaryLearntAdded << std::endl;
+    #endif
 }
 
 void Subsumer::removeWrong(vec<Clause*>& cs)
@@ -636,7 +657,8 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                 cl_added.add(clauses[index]);
                 continue;
             }
-            if (((*a)->size() == 2 && clauses.size() < 300000) ||
+            if (((*a)->size() == 2) ||
+                ((*a)->size() <= 3 && clauses.size() < 300000) ||
                 ((*a)->size() <= 4 && clauses.size() < 60000)) {
                 ClauseSimp c(*a, clauseID++);
                 (*a)->calcAbstraction();
@@ -822,12 +844,18 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
         return false;
     }
     
+    removeWrong(solver.learnts);
+    removeWrong(solver.binaryClauses);
+    solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
+    if (solver.doHyperBinRes && numCalls > 1 && !hyperBinRes()) return false;
+    solver.ok = (solver.propagate() == NULL);
+    if (!solver.ok) return false;
+    solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
+    
     if (solver.trail.size() - origTrailSize > 0)
         solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
-    removeWrong(solver.learnts);
-    removeWrong(solver.binaryClauses);
     solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
     
     std::cout << "c |  literals-removed: " << std::setw(9) << literals_removed
@@ -1118,4 +1146,133 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
         if (cost_var[x].first != 0)
             order.push(cost_var[x].second);
     }
+}
+
+void Subsumer::addFromSolverAll(vec<Clause*>& cs)
+{
+    Clause **i = cs.getData();
+    Clause **j = i;
+    for (Clause **end = i + cs.size(); i !=  end; i++) {
+        if (i+1 != end)
+            __builtin_prefetch(*(i+1), 1, 1);
+        
+        ClauseSimp c(*i, clauseID++);
+        clauses.push(c);
+        Clause& cl = *c.clause;
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            occur[cl[i].toInt()].push(c);
+        }
+    }
+    cs.shrink(i-j);
+}
+
+const bool Subsumer::hyperBinRes()
+{
+    double myTime = cpuTime();
+    
+    addFromSolverAll(solver.binaryClauses);
+    addFromSolver(solver.learnts);
+    BitArray inside;
+    inside.resize(solver.nVars()*2);
+    uint32_t hyperBinAdded = 0;
+    uint32_t hyperBinUnitary = 0;
+    vec<ClauseSimp> addToClauses;
+    
+
+    vec<Var> varsToCheck;
+    #ifdef PRINT_VARS
+    std::cout << "First vars:" << std::endl;
+    #endif
+    Heap<Solver::VarOrderLt> tmp(solver.order_heap);
+    uint32_t thisTopX = std::min(tmp.size(), 100U);
+    for (uint32_t i = 0; i != thisTopX; i++) {
+        #ifdef PRINT_VARS
+        std::cout << tmp.removeMin()+1 << ", ";
+        #endif
+        varsToCheck.push(tmp.removeMin());
+    }
+    
+    for (Var test = 0; test < 2*varsToCheck.size(); test++) {
+        inside.setZero();
+        Lit lit(varsToCheck[test/2], test&1);
+        #ifdef HYPER_DEBUG
+        std::cout << "Resolving with literal:" << (lit.sign() ? "-" : "") << lit.var()+1 << std::endl;
+        #endif
+        
+        uint32_t addedToInside = 0;
+        vec<ClauseSimp>& set = occur[lit.toInt()];
+        for (ClauseSimp *it = set.getData(), *end = it + set.size() ; it != end; it++) {
+            if (it->clause == NULL) continue;
+            Clause& cl2 = *it->clause;
+            if (cl2.size() > 2) continue;
+            assert(cl2[0] == lit | cl2[1] == lit);
+            if (cl2[0] == lit) {
+                inside.setBit((~cl2[1]).toInt());
+            } else {
+                inside.setBit((~cl2[0]).toInt());
+            }
+            addedToInside++;
+        }
+        if (addedToInside < 5) continue;
+        
+        for (ClauseSimp *it = clauses.getData(), *end = it + clauses.size() ; it != end; it++) {
+            if (it->clause == NULL) continue;
+            uint32_t notIn = 0;
+            Lit notInLit = Lit(0,false);
+            
+            Clause& cl2 = *it->clause;
+            for (uint32_t i = 0; i < cl2.size(); i++) {
+                if (cl2[i] == lit || cl2[i] == ~lit) {
+                    notIn = 2;
+                    break;
+                }
+                if (!inside[cl2[i].toInt()]) {
+                    notIn++;
+                    notInLit = cl2[i];
+                }
+                if (notIn > 1) break;
+            }
+            
+            if (notIn == 0) {
+                if (solver.assigns[lit.var()] == l_Undef) {
+                    solver.uncheckedEnqueue(lit);
+                    hyperBinUnitary++;
+                } else if (solver.assigns[lit.var()].getBool() == lit.sign()) {
+                    solver.ok = false;
+                    return false;
+                }
+            }
+            
+            if (notIn == 1 && !inside[(~notInLit).toInt()]) {
+                vec<Lit> cs(2);
+                cs[0] = lit;
+                cs[1] = notInLit;
+                Clause *cl3 = solver.addClauseInt(cs, 0);
+                if (cl3 != NULL) {
+                    cl3->makeLearnt(0);
+                    ClauseSimp c(cl3, clauseID++);
+                    addToClauses.push(c);
+                    for (uint32_t i = 0; i < cl3->size(); i++) {
+                        occur[(*cl3)[i].toInt()].push(c);
+                    }
+                    inside.setBit((~notInLit).toInt());
+                    #ifdef HYPER_DEBUG
+                    std::cout << "HyperBinRes adding clause: ";
+                    cl3->plainPrint();
+                    #endif
+                    hyperBinAdded++;
+                } else if (!solver.ok) return false;
+            }
+        }
+        
+        for (uint32_t i = 0; i < addToClauses.size(); i++) {
+            clauses.push(addToClauses[i]);
+        }
+        addToClauses.clear();
+    }
+    
+    std::cout << "c |  Hyper-binary res binary added: " << std::setw(5) << hyperBinAdded << " unitaries:" << std::setw(5) << hyperBinUnitary << " time:" << std::setprecision(2) << std::setw(5)<< cpuTime() - myTime << " s" << std::endl;
+    solver.nbBin += hyperBinAdded;
+    
+    return true;
 }

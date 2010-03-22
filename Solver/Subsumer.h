@@ -95,6 +95,11 @@ private:
     void DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns);
     bool merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<Lit>& out_clause);
     
+    
+    //hyperBinRes
+    void addFromSolverAll(vec<Clause*>& cs);
+    const bool hyperBinRes();
+    
     uint32_t clauses_subsumed;
     uint32_t literals_removed;
     uint32_t origNClauses;

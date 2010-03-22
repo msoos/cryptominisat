@@ -23,11 +23,12 @@ function usage {
     echo "  -p   don't perform subsumption"
     echo "  -u   don't do binary xor finding"
     echo "  -i   don't do normal xor finding"
+    echo "  -x   don't do hyper-binary resolution"
     echo "  -v   verbosity (default = 1)"
     echo ""
 }
 
-args=`getopt g:v:t:d:ncsfzqepuiw "$@"`
+args=`getopt g:v:t:d:ncsfzqepuiwx "$@"`
 if test $? != 0
 then
     usage
@@ -53,6 +54,7 @@ do
         (-u) extra+="$extra -nobinxorfind";;
         (-i) extra+="$extra -nonormxorfind";;
         (-w) extra+="$extra -restart=dynamic";;
+        (-x) extra+="$extra -nohyperbinres";;
         (--) shift; break;;
         (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
         (*)  break;;
