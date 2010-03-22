@@ -697,7 +697,7 @@ Lit Solver::pickBranchLit()
         /*else
             sign = polarity[next] ^ (mtrand.randInt(200) == 1);*/
         else if (avgBranchDepth.isvalid())
-            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);
+            sign = polarity[next] ^ (mtrand.randInt((uint32_t)((double)avgBranchDepth.getavg()*0.8)) == 1);
         else
             sign = polarity[next];
     }
@@ -1782,6 +1782,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
+    if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000) ? 6000000 : 2000000))  {
+        status = l_False;
+        goto end;
+    }
+    
     if (heuleProcess && !conglomerate->heuleProcessFull()) {
         status = l_False;
         goto end;
@@ -1840,9 +1845,6 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         restartType = static_restart;
         lastFullRestart = starts;
         if (performReplace && !varReplacer->performReplace(true))
-            return false;
-        
-        if (failedVarSearch && !failedVarSearcher->search(2000000))
             return false;
         
         /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
@@ -1985,7 +1987,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         if (schedSimplification && conflicts >= nextSimplify) {
             status = simplifyProblem(500, 7000000);
-            nextSimplify = conflicts * 2;
+            nextSimplify = conflicts * 1.5;
             if (status != l_Undef) break;
         }
         
