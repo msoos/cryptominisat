@@ -383,7 +383,7 @@ void Subsumer::almost_all_database()
     }
     
     assert(solver.ok);
-    solver.ok = solver.propagate() == NULL;
+    solver.ok = (solver.propagate() == NULL);
     if (!solver.ok) {
         std::cout << "c (contradiction during subsumption)" << std::endl;
         return;
@@ -415,7 +415,7 @@ void Subsumer::almost_all_database()
         s1.clear();
         
         if (!solver.ok) return;
-        solver.ok = solver.propagate() == NULL;
+        solver.ok = (solver.propagate() == NULL);
         if (!solver.ok) {
             printf("c (contradiction during subsumption)\n");
             unregisterIteration(s1);
@@ -506,7 +506,7 @@ void Subsumer::smaller_database()
         s1.clear();
         
         if (!solver.ok) return;
-        solver.ok = solver.propagate() == NULL;
+        solver.ok = (solver.propagate() == NULL);
         if (!solver.ok){
             printf("c (contradiction during subsumption)\n");
             unregisterIteration(s1);
@@ -711,7 +711,7 @@ const bool Subsumer::treatLearnts()
     if (!solver.ok) return false;
     subsume0LearntSet(solver.binaryClauses);
     if (!solver.ok) return false;
-    solver.ok = solver.propagate() == NULL;
+    solver.ok = (solver.propagate() == NULL);
     if (!solver.ok){
         printf("c (contradiction during subsumption)\n");
         return false;
@@ -849,7 +849,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
                     }
                     vars_elimed++;
                     assert(solver.ok);
-                    solver.ok = solver.propagate() == NULL;
+                    solver.ok = (solver.propagate() == NULL);
                     if (!solver.ok) {
                         printf("c (contradiction during subsumption)\n");
                         return false;
