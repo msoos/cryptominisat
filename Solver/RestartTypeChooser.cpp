@@ -111,9 +111,9 @@ const std::pair<double, double> RestartTypeChooser::countVarsDegreeStDev() const
     double avg = (double)sum/(double)degrees.size();
     double stdDev = stdDeviation(degrees);
     
-    //#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     std::cout << "varsDegree avg:" << avg << " stdDev:" << stdDev << std::endl;
-    //#endif
+    #endif
     
     return std::make_pair(avg, stdDev);
 }
