@@ -1323,7 +1323,7 @@ const bool Subsumer::hyperBinRes()
         }
     }
     
-    std::cout << "c |  Hyper-binary res binary added: " << std::setw(5) << hyperBinAdded << " unitaries:" << std::setw(5) << hyperBinUnitary << " time:" << std::setprecision(2) << std::setw(5)<< cpuTime() - myTime << " s" << std::endl;
+    std::cout << "c |  Hyper-binary res binary added: " << std::setw(5) << hyperBinAdded << " unitaries: " << std::setw(5) << hyperBinUnitary << " time: " << std::setprecision(2) << std::setw(5)<< cpuTime() - myTime << " s" << std::endl;
     solver.nbBin += hyperBinAdded;
     
     return true;
