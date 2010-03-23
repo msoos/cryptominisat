@@ -111,6 +111,34 @@ uint32_t Subsumer::subsume0(Clause& ps)
     return retIndex;
 }
 
+// Will put NULL in 'cs' if clause removed.
+uint32_t Subsumer::subsume0(Clause& ps, uint32_t abs)
+{
+    uint32_t retIndex = std::numeric_limits<uint32_t>::max();
+    #ifdef VERBOSE_DEBUG
+    cout << "subsume0 orig clause:";
+    ps.plainPrint();
+    cout << "pointer:" << &ps << endl;
+    #endif
+    
+    vec<ClauseSimp> subs;
+    findSubsumed(ps, abs, subs);
+    for (uint32_t i = 0; i < subs.size(); i++){
+        clauses_subsumed++;
+        #ifdef VERBOSE_DEBUG
+        cout << "subsume0 removing:";
+        subs[i].clause->plainPrint();
+        #endif
+        
+        Clause* tmp = subs[i].clause;
+        unlinkClause(subs[i]);
+        free(tmp);
+        retIndex = subs[i].index;
+    }
+    
+    return retIndex;
+}
+
 void Subsumer::unlinkClause(ClauseSimp c, Var elim)
 {
     Clause& cl = *c.clause;
@@ -304,6 +332,12 @@ void Subsumer::subsume1(ClauseSimp& ps)
                 } else {
                     assert(cl.size() == 1);
                     solver.uncheckedEnqueue(cl[0]);
+                    /*solver.ok = (solver.propagate() == NULL);
+                    if (!solver.ok) {
+                        unregisterIteration(Q);
+                        unregisterIteration(subs);
+                        return;
+                    }*/
                     #ifdef VERBOSE_DEBUG
                     cout << "Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                     #endif
@@ -625,8 +659,8 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
     Clause** a = cs.getData();
     Clause** b = a;
     for (Clause** end = a + cs.size(); a != end; a++) {
-        if ((*a)->getStrenghtened() || (*a)->getVarChanged()) {
-            uint32_t index = subsume0(**a);
+        if ((*a)->getStrenghtened() || (*a)->getVarChanged() || (*a)->size() == 2) {
+            uint32_t index = subsume0(**a, calcAbstraction(**a));
             if (index != std::numeric_limits<uint32_t>::max()) {
                 (*a)->makeNonLearnt();
                 clauses[index].clause = *a;
@@ -636,7 +670,8 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                 cl_added.add(clauses[index]);
                 continue;
             }
-            if (((*a)->size() == 2 && clauses.size() < 300000) ||
+            if (((*a)->size() == 2) ||
+                ((*a)->size() <= 3 && clauses.size() < 300000) ||
                 ((*a)->size() <= 4 && clauses.size() < 60000)) {
                 ClauseSimp c(*a, clauseID++);
                 (*a)->calcAbstraction();
@@ -862,6 +897,38 @@ void Subsumer::findSubsumed(Clause& ps, vec<ClauseSimp>& out_subsumed)
             __builtin_prefetch((it+1)->clause, 1, 1);
         
         if (it->clause != &ps && subsetAbst(ps.getAbst(), it->clause->getAbst()) && ps.size() <= it->clause->size() && subset(ps, *it->clause)) {
+            out_subsumed.push(*it);
+            #ifdef VERBOSE_DEBUG
+            cout << "subsumed: ";
+            it->clause->plainPrint();
+            #endif
+        }
+    }
+}
+
+void Subsumer::findSubsumed(Clause& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed)
+{
+    #ifdef VERBOSE_DEBUG
+    cout << "findSubsumed: ";
+    for (uint32_t i = 0; i < ps.size(); i++) {
+        if (ps[i].sign()) printf("-");
+        printf("%d ", ps[i].var() + 1);
+    }
+    printf("0\n");
+    #endif
+    
+    int min_i = 0;
+    for (uint32_t i = 1; i < ps.size(); i++){
+        if (occur[ps[i].toInt()].size() < occur[ps[min_i].toInt()].size())
+            min_i = i;
+    }
+    
+    vec<ClauseSimp>& cs = occur[ps[min_i].toInt()];
+    for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
+        if (it+1 != end)
+            __builtin_prefetch((it+1)->clause, 1, 1);
+        
+        if (it->clause != &ps && subsetAbst(abs, it->clause->getAbst()) && ps.size() <= it->clause->size() && subset(ps, *it->clause)) {
             out_subsumed.push(*it);
             #ifdef VERBOSE_DEBUG
             cout << "subsumed: ";
@@ -1118,4 +1185,22 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
         if (cost_var[x].first != 0)
             order.push(cost_var[x].second);
     }
+}
+
+void Subsumer::addFromSolverAll(vec<Clause*>& cs)
+{
+    Clause **i = cs.getData();
+    Clause **j = i;
+    for (Clause **end = i + cs.size(); i !=  end; i++) {
+        if (i+1 != end)
+            __builtin_prefetch(*(i+1), 1, 1);
+        
+        ClauseSimp c(*i, clauseID++);
+        clauses.push(c);
+        Clause& cl = *c.clause;
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            occur[cl[i].toInt()].push(c);
+        }
+    }
+    cs.shrink(i-j);
 }
