@@ -78,8 +78,10 @@ private:
     bool updateOccur(Clause& c);
     void findSubsumed(Clause& ps, vec<ClauseSimp>& out_subsumed);
     void findSubsumed(const vec<Lit>& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
+    void findSubsumed(Clause& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed);
     bool isSubsumed(Clause& ps);
     uint32_t subsume0(Clause& ps);
+    uint32_t subsume0(Clause& ps, uint32_t abs);
     void subsume0LearntSet(vec<Clause*>& cs);
     void subsume1(ClauseSimp& ps);
     void smaller_database();
