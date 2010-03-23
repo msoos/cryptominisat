@@ -1313,9 +1313,9 @@ const bool Subsumer::hyperBinRes()
                 free(addToClauses[i].clause);
                 if (c != NULL) {
                     ClauseSimp cc(c, addToClauses[i].index);
-                    clauses.push(cc);
+                    clauses[cc.index] = cc;
                     linkInAlreadyClause(cc);
-                    subsume1(addToClauses[i]);
+                    subsume1(cc);
                 }
                 if (!solver.ok) return false;
             }
