@@ -1348,6 +1348,12 @@ void Solver::setMaxRestarts(const uint num)
     maxRestarts = num;
 }
 
+inline int64_t abs64(int64_t a)
+{
+    if (a < 0) return -a;
+    return a;
+}
+
 /*_________________________________________________________________________________________________
 |
 |  simplify : [void]  ->  [bool]
@@ -1382,7 +1388,7 @@ lbool Solver::simplify()
     std::cout << "right:" << (double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup << std::endl;*/
     
     if (findBinaryXors && regularlyFindBinaryXors &&
-        (((double)std::abs((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown) >
+        (((double)abs64((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown) >
         ((double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup)) {
         lastSearchForBinaryXor = propagations;
         clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
