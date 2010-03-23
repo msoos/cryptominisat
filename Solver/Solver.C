@@ -76,6 +76,7 @@ Solver::Solver() :
         , doSubsumption    (true)
         , doXorSubsumption (true)
         , doPartHandler    (true)
+        , doHyperBinRes    (true)
         , failedVarSearch  (true)
         , noLibraryUsage   (false)
         , sateliteUsed     (true)
