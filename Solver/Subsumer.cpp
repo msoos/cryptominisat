@@ -1316,10 +1316,8 @@ const bool Subsumer::hyperBinRes()
                     clauses.push(cc);
                     linkInAlreadyClause(cc);
                     subsume1(addToClauses[i]);
-                    if (!solver.ok) return false;
-                } else {
-                    if (!solver.ok) return false;
                 }
+                if (!solver.ok) return false;
             }
             addToClauses.clear();
         }
