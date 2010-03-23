@@ -99,6 +99,7 @@ const bool PartHandler::handle()
         moveClauses(solver.clauses, newSolver, part, partFinder);
         moveClauses(solver.binaryClauses, newSolver, part, partFinder);
         moveClauses(solver.xorclauses, newSolver, part, partFinder);
+        moveLearntClauses(solver.binaryClauses, newSolver, part, partFinder);
         moveLearntClauses(solver.learnts, newSolver, part, partFinder);
         
         lbool status = newSolver.solve();
@@ -124,7 +125,7 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_
 {
     Clause **i, **j, **end;
     for (i = j = cs.getData(), j = i , end = i + cs.size(); i != end; i++) {
-        if (partFinder.getVarPart((**i)[0].var()) != part) {
+        if ((**i).learnt() || partFinder.getVarPart((**i)[0].var()) != part) {
             *j++ = *i;
             continue;
         }
@@ -156,6 +157,11 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
 {
     Clause **i, **j, **end;
     for (i = j = cs.getData(), end = i + cs.size() ; i != end; i++) {
+        if (!(**i).learnt()) {
+            *j++ = *i;
+            continue;
+        }
+        
         Clause& c = **i;
         assert(c.size() > 0);
         uint32_t clause_part = partFinder.getVarPart(c[0].var());
