@@ -46,7 +46,7 @@ void Subsumer::extendModel(Solver& solver2)
         for (vector<vector<Lit> >::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
             tmp.clear();
             tmp.growTo(it2->size());
-            memcpy(tmp.getData(), it2->data(), sizeof(Lit)*it2->size());
+            memcpy(tmp.getData(), &((*it2)[0]), sizeof(Lit)*it2->size());  //*it2 is never empty
             solver2.addClause(tmp);
         }
     }
