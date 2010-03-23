@@ -51,15 +51,14 @@ const bool PartFinder::findParts()
     double time = cpuTime();
     
     table.clear();
-    table.resize(solver.nVars(), var_Undef);
+    table.resize(solver.nVars(), std::numeric_limits<uint32_t>::max());
     reverseTable.clear();
     part_no = 0;
     
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::xorclauses);
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::xorclauses);
-    if (solver.ok == false)
-        return false;
+    if (solver.ok == false) return false;
     
     while (solver.varReplacer->getNewToReplaceVars() > 0) {
         if (solver.performReplace && !solver.varReplacer->performReplace(true))
@@ -95,10 +94,11 @@ void PartFinder::addToPart(const vec<T*>& cs)
     set<uint> tomerge;
     vector<Var> newSet;
     for (T* const* c = cs.getData(), * const*end = c + cs.size(); c != end; c++) {
+        if ((*c)->learnt()) continue;
         tomerge.clear();
         newSet.clear();
         for (const Lit *l = (*c)->getData(), *end2 = l + (*c)->size(); l != end2; l++) {
-            if (table[l->var()] != var_Undef)
+            if (table[l->var()] != std::numeric_limits<uint32_t>::max())
                 tomerge.insert(table[l->var()]);
             else
                 newSet.push_back(l->var());
@@ -130,20 +130,19 @@ void PartFinder::addToPart(const vec<T*>& cs)
 const uint PartFinder::setParts()
 {
     vector<uint> numClauseInPart(part_no, 0);
-    vector<uint> sumXorSizeInPart(part_no, 0);
+    vector<uint> sumLitsInPart(part_no, 0);
     
-    calcIn(solver.clauses, numClauseInPart, sumXorSizeInPart);
-    calcIn(solver.binaryClauses, numClauseInPart, sumXorSizeInPart);
-    calcIn(solver.xorclauses, numClauseInPart, sumXorSizeInPart);
-    calcIn(solver.varReplacer->getClauses(), numClauseInPart, sumXorSizeInPart);
+    calcIn(solver.clauses, numClauseInPart, sumLitsInPart);
+    calcIn(solver.binaryClauses, numClauseInPart, sumLitsInPart);
+    calcIn(solver.xorclauses, numClauseInPart, sumLitsInPart);
  
     uint parts = 0;
     for (uint i = 0; i < numClauseInPart.size(); i++) {
-        if (sumXorSizeInPart[i] == 0) continue;
+        if (sumLitsInPart[i] == 0) continue;
         std::cout << "c | Found part " << std::setw(8) << i
         << " vars: " << std::setw(10) << reverseTable[i].size()
         << " clauses:" << std::setw(10) << numClauseInPart[i]
-        << " lits size:" << std::setw(10) << sumXorSizeInPart[i]  << std::endl;
+        << " lits size:" << std::setw(10) << sumLitsInPart[i]  << std::endl;
         parts++;
     }
     
@@ -163,16 +162,17 @@ const uint PartFinder::setParts()
 }
 
 template<class T>
-void PartFinder::calcIn(const vec<T*>& cs, vector<uint>& numClauseInPart, vector<uint>& sumXorSizeInPart)
+void PartFinder::calcIn(const vec<T*>& cs, vector<uint>& numClauseInPart, vector<uint>& sumLitsInPart)
 {
     for (T*const* c = cs.getData(), *const*end = c + cs.size(); c != end; c++) {
+        if ((*c)->learnt()) continue;
         T& x = **c;
         const uint part = table[x[0].var()];
         assert(part < part_no);
         
         //for stats
         numClauseInPart[part]++;
-        sumXorSizeInPart[part] += x.size();
+        sumLitsInPart[part] += x.size();
     }
 }
 
