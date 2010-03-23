@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef RESTARTTYPECHOOSER_H
 #define RESTARTTYPECHOOSER_H
 
+#include "Solver.h"
 #include <vector>
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
@@ -34,16 +35,21 @@ class Solver;
 class RestartTypeChooser
 {
     public:
-        RestartTypeChooser(const Solver* const S);
+        RestartTypeChooser(const Solver& s);
+        void addInfo();
         const RestartType choose();
         void reset();
         
     private:
         void calcHeap();
         const double avg() const;
-        const double stdDeviation() const;
+        const std::pair<double, double> countVarsDegreeStDev() const;
+        const double stdDeviation(vector<uint32_t>& measure) const;
         
-        const Solver* const S;
+        template<class T>
+        void addDegrees(const vec<T*>& cs, vector<uint32_t>& degrees) const;
+        
+        const Solver& solver;
         const uint32_t topX;
         const uint32_t limit;
         vector<Var> sameIns;

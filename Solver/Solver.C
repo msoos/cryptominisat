@@ -120,6 +120,7 @@ Solver::Solver() :
     failedVarSearcher = new FailedVarSearcher(*this);
     partHandler = new PartHandler(*this);
     subsumer = new Subsumer(*this);
+    restartTypeChooser = new RestartTypeChooser(*this);
     
     #ifdef STATS_NEEDED
     logger.setSolver(this);
@@ -140,6 +141,7 @@ Solver::~Solver()
     delete failedVarSearcher;
     delete partHandler;
     delete subsumer;
+    delete restartTypeChooser;
     
     if (libraryCNFFile)
         fclose(libraryCNFFile);
@@ -1683,15 +1685,21 @@ void Solver::print_gauss_sum_stats() const
     }
 }
 
-inline void Solver::chooseRestartType(RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart)
+inline void Solver::chooseRestartType(const uint& lastFullRestart)
 {
     uint relativeStart = starts - lastFullRestart;
     
     if (relativeStart > RESTART_TYPE_DECIDER_FROM  && relativeStart < RESTART_TYPE_DECIDER_UNTIL) {
-        RestartType tmp = restartTypeChooser.choose();
-        if (fixRestartType != auto_restart)
-            tmp = fixRestartType;
+        if (fixRestartType == auto_restart)
+            restartTypeChooser->addInfo();
+        
         if (relativeStart == (RESTART_TYPE_DECIDER_UNTIL-1)) {
+            RestartType tmp;
+            if (fixRestartType == auto_restart)
+                tmp = restartTypeChooser->choose();
+            else
+                tmp = fixRestartType;
+            
             if (tmp == dynamic_restart) {
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
@@ -1710,7 +1718,7 @@ inline void Solver::chooseRestartType(RestartTypeChooser& restartTypeChooser, co
                 }
             }
             restartType = tmp;
-            restartTypeChooser.reset();
+            restartTypeChooser->reset();
         }
     } else {
         #ifdef VERBOSE_DEBUG
@@ -1954,7 +1962,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
     printStatHeader();
     
-    RestartTypeChooser restartTypeChooser(this);
     if (calculateDefaultPolarities() == l_False)
         return l_False;
     setDefaultPolarities();
@@ -1980,7 +1987,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         nof_conflicts = (double)nof_conflicts * restart_inc;
         if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart))
             return l_False;
-        chooseRestartType(restartTypeChooser, lastFullRestart);
+        chooseRestartType(lastFullRestart);
         //if (avgBranchDepth.isvalid())
         //    std::cout << "avg branch depth:" << avgBranchDepth.getavg() << std::endl;
     }

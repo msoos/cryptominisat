@@ -41,7 +41,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Logger.h"
 #include "constants.h"
 #include "BoundedQueue.h"
-#include "RestartTypeChooser.h"
 
 class Gaussian;
 class MatrixFinder;
@@ -53,6 +52,7 @@ class ClauseCleaner;
 class FailedVarSearcher;
 class Subsumer;
 class PartHandler;
+class RestartTypeChooser;
 
 #ifdef VERBOSE_DEBUG
 using std::cout;
@@ -322,7 +322,8 @@ protected:
     FailedVarSearcher* failedVarSearcher;
     PartHandler* partHandler;
     Subsumer* subsumer;
-    void chooseRestartType(RestartTypeChooser& restartTypeChooser, const uint& lastFullRestart);
+    RestartTypeChooser* restartTypeChooser;
+    void chooseRestartType(const uint& lastFullRestart);
     void setDefaultRestartType();
     const bool checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();
