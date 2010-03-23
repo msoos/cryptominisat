@@ -1815,7 +1815,7 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
             printf("c |                                      Fully restarting                                 |\n");
         nof_conflicts = restart_first + (double)restart_first*restart_inc;
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
-        setDefaultRestartType();
+        restartType = static_restart;
         lastFullRestart = starts;
         if (performReplace && !varReplacer->performReplace(true))
             return false;
