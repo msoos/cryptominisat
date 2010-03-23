@@ -142,6 +142,7 @@ public:
     bool      doSubsumption;        // Should try to subsume clauses
     bool      doXorSubsumption;     // Should try to subsume xor clauses
     bool      doPartHandler;        // Should try to subsume clauses
+    bool      doHyperBinRes;        // Should try carry out hyper-binary resolution
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     bool      noLibraryUsage;       // Set true if not used as a library
     bool      sateliteUsed;         // whether satielite was used on CNF before calling
