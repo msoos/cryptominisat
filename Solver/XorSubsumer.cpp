@@ -56,9 +56,9 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
         XorClause* tmp = subs[i].clause;
         findUnMatched(origClause, *tmp, unmatchedPart);
         if (unmatchedPart.size() == 0) {
+            clauses_subsumed++;
             assert(tmp->size() == origClause.size());
             if (origClauseInverted == tmp->xor_clause_inverted()) {
-                clauses_subsumed++;
                 unlinkClause(subs[i]);
                 free(tmp);
             } else {
@@ -154,7 +154,6 @@ void XorSubsumer::linkInAlreadyClause(XorClauseSimp& c)
 void XorSubsumer::addFromSolver(vec<XorClause*>& cs)
 {
     XorClause **i = cs.getData();
-    XorClause **j = i;
     for (XorClause **end = i + cs.size(); i !=  end; i++) {
         if (i+1 != end)
             __builtin_prefetch(*(i+1), 1, 1);
@@ -169,7 +168,7 @@ void XorSubsumer::addFromSolver(vec<XorClause*>& cs)
         if (cl.getVarChanged() || cl.getStrenghtened())
             cl.calcXorAbstraction();
     }
-    cs.shrink(i-j);
+    cs.clear();
 }
 
 void XorSubsumer::addBackToSolver()
@@ -181,6 +180,8 @@ void XorSubsumer::addBackToSolver()
             clauses[i].clause->unsetVarChanged();
         }
     }
+    clauses.clear();
+    clauseID = 0;
 }
 
 const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
@@ -201,11 +202,11 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
             return false;
     }
     
-    clauses.clear();
-    clauses.reserve(solver.xorclauses.size());
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     if (!solver.ok) return false;
     
+    clauses.clear();
+    clauses.reserve(solver.xorclauses.size());
     addFromSolver(solver.xorclauses);
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c time to link in:" << cpuTime()-myTime << std::endl;
@@ -238,11 +239,13 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         solver.clauseCleaner->cleanXorClausesBewareNULL(clauses, ClauseCleaner::xorSimpClauses, *this);
         if (!solver.ok) return false;
         
+        addBackToSolver();
         while (solver.performReplace && solver.varReplacer->getNewToReplaceVars() > 0) {
             replaced = true;
             if (!solver.varReplacer->performReplace(true))
                 return false;
         }
+        addFromSolver(solver.xorclauses);
     }
     
     if (solver.trail.size() - origTrailSize > 0)
