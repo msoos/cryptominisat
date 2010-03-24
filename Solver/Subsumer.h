@@ -8,6 +8,7 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include "Solver.h"
 #include "Queue.h"
 #include "CSet.h"
+#include "BitArray.h"
 
 enum OccurMode { occ_Off, occ_Permanent, occ_All };
 
@@ -101,6 +102,7 @@ private:
     //hyperBinRes
     void addFromSolverAll(vec<Clause*>& cs);
     const bool hyperBinRes();
+    const bool hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<ClauseSimp>& addToClauses, uint32_t& hyperBinAdded, uint32_t& hyperBinUnitary);
     
     uint32_t clauses_subsumed;
     uint32_t literals_removed;
