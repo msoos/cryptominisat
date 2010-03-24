@@ -674,7 +674,7 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
     Clause** a = cs.getData();
     Clause** b = a;
     for (Clause** end = a + cs.size(); a != end; a++) {
-        if ((*a)->getStrenghtened() || (*a)->getVarChanged() || (*a)->size() == 2) {
+        if ((*a)->getStrenghtened() || (*a)->getVarChanged()) {
             uint32_t index = subsume0(**a, calcAbstraction(**a));
             if (index != std::numeric_limits<uint32_t>::max()) {
                 (*a)->makeNonLearnt();
