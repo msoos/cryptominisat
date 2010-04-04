@@ -30,10 +30,12 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
     , finishedLastTime(true)
     , lastTimeWentUntil(0)
+    , lastTimeFoundTruths(0)
+    , numPropsMultiplier(1.0)
 {
 }
 
-const bool FailedVarSearcher::search(const uint64_t numProps)
+const bool FailedVarSearcher::search(uint64_t numProps)
 {
     assert(solver.decisionLevel() == 0);
     
@@ -55,6 +57,11 @@ const bool FailedVarSearcher::search(const uint64_t numProps)
     else
         from = lastTimeWentUntil;
     uint64_t origProps = solver.propagations;
+    
+    //If failed var searching is going good, do successively more and more of it
+    if (lastTimeFoundTruths > 500) numPropsMultiplier *= 1.7;
+    else numPropsMultiplier = 1.0;
+    numProps = (uint64_t) ((double)numProps * numPropsMultiplier);
     
     //For failure
     bool failed;
@@ -150,6 +157,8 @@ end:
             <<  std::setw(33) << " | " << std::endl;
         }
     }
+    
+    lastTimeFoundTruths = goodBothSame + numFailed;
     
     solver.var_inc = backup_var_inc;
     memcpy(solver.activity.getData(), backup_activity.getData(), solver.activity.size()*sizeof(double));

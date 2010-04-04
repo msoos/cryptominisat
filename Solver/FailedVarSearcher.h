@@ -25,12 +25,14 @@ class FailedVarSearcher {
     public:
         FailedVarSearcher(Solver& _solver);
     
-        const bool search(const uint64_t numProps);
+        const bool search(uint64_t numProps);
         
     private:
         Solver& solver;
         bool finishedLastTime;
         uint32_t lastTimeWentUntil;
+        double numPropsMultiplier;
+        uint32_t lastTimeFoundTruths;
 };
 
 
