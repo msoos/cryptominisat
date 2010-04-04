@@ -920,8 +920,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     if (!solver.ok) return false;
     solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     
-    if (solver.trail.size() - origTrailSize > 0)
-        solver.order_heap.filter(Solver::VarFilter(solver));
+    solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
     
