@@ -544,6 +544,8 @@ void tallyVotes(const vec<Clause*>& cs, vector<double>& votes, vector<bool>& pos
 {
     for (const Clause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
         const Clause& c = **it;
+        if (c.learnt()) continue;
+        
         double divider;
         if (c.size() > 63)
             divider = 0.0;
@@ -598,7 +600,6 @@ const lbool Solver::calculateDefaultPolarities()
         
         tallyVotes(clauses, votes, positiveLiteral, negativeLiteral);
         tallyVotes(binaryClauses, votes, positiveLiteral, negativeLiteral);
-        tallyVotes(learnts, votes, positiveLiteral, negativeLiteral);
         tallyVotes(varReplacer->getClauses(), votes, positiveLiteral, negativeLiteral);
         tallyVotes(xorclauses, votes, positiveLiteral, negativeLiteral);
         
