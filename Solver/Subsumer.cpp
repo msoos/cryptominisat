@@ -1345,7 +1345,7 @@ const bool Subsumer::hyperBinRes()
             if (it->clause == NULL) continue;
             Clause& cl2 = *it->clause;
             if (cl2.size() > 2) continue;
-            assert(cl2[0] == lit | cl2[1] == lit);
+            assert(cl2[0] == lit || cl2[1] == lit);
             if (cl2[0] == lit) {
                 inside.setBit((~cl2[1]).toInt());
                 addedToInside.push(~cl2[1]);
