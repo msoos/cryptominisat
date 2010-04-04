@@ -126,7 +126,7 @@ class XorFinder
         bool clauseEqual(const Clause& c1, const Clause& c2) const;
         bool impairSigns(const Clause& c) const;
         void countImpairs(const ClauseTable::iterator& begin, const ClauseTable::iterator& end, uint& numImpair, uint& numPair) const;
-        bool isXor(const ClauseTable::iterator& begin, const ClauseTable::iterator& end, bool& impair);
+        bool isXor(const uint32_t size, const ClauseTable::iterator& begin, const ClauseTable::iterator& end, bool& impair);
         
         Solver* S;
 };
