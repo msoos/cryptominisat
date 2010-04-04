@@ -79,6 +79,7 @@ shift
 echo "c"
 echo "c Starting SatElite Preprocessing"
 echo "c"
+#echo $SE $INPUT $TMP.cnf $TMP.vmap $TMP.elim
 $SE $INPUT $TMP.cnf $TMP.vmap $TMP.elim
 X=$?
 echo "c"
@@ -88,6 +89,7 @@ if [ $X == 0 ]; then
   echo "c SatElite terminated correctly"
   echo "c Starting CryptoMiniSat2"
   echo "c"
+  #echo $RS -gaussuntil=$gaussuntil -verbosity=$verbosity $extra $TMP.cnf $TMP.result "$@"
   $RS -gaussuntil=$gaussuntil -verbosity=$verbosity $extra $TMP.cnf $TMP.result "$@"
   #more $TMP.result
   X=$?
