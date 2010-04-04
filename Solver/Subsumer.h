@@ -51,7 +51,6 @@ private:
     Solver&                solver;         // The Solver
     
     
-    char*                  elim_out_file;  // (name of file)
     vec<char>              var_elimed;     // 'eliminated[var]' is TRUE if variable has been eliminated.
     vec<char>              cannot_eliminate;//
     map<Var, vector<vector<Lit> > > elimedOutVar;
