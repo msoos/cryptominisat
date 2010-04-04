@@ -2007,11 +2007,11 @@ lbool Solver::solve(const vec<Lit>& assumps)
         varReplacer->extendModelPossible();
         if (subsumer->getNumElimed() > 0) {
             Solver s;
-            for (uint i = 0; i < nVars(); i++) {
+            for (Var var = 0; var < nVars(); var++) {
                 s.newVar();
-                if (value(i) != l_Undef) {
+                if (value(var) != l_Undef) {
                     vec<Lit> tmp;
-                    tmp.push(Lit(i, value(i) == l_False));
+                    tmp.push(Lit(var, value(var) == l_False));
                     s.addClause(tmp);
                 }
             }
@@ -2020,13 +2020,13 @@ lbool Solver::solve(const vec<Lit>& assumps)
             
             status = s.solve();
             assert(status == l_True);
-            for (uint i = 0; i < nVars(); i++) {
-                assigns[i] = s.assigns[i];
+            for (Var var = 0; var < nVars(); var++) {
+                assigns[var] = s.model[var];
             }
         }
         // Extend & copy model:
         model.growTo(nVars());
-        for (uint32_t i = 0; i != nVars(); i++) model[i] = value(i);
+        for (Var var = 0; var != nVars(); var++) model[var] = value(var);
 #ifndef NDEBUG
         verifyModel();
 #endif
