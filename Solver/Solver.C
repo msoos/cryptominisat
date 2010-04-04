@@ -1888,11 +1888,18 @@ inline void Solver::performStepsBeforeSolve()
     }
         
     if (xorclauses.size() > 1) {
-        uint orig_total = 0;
-        uint orig_num_cls = xorclauses.size();
-        for (uint i = 0; i < xorclauses.size(); i++) {
-            orig_total += xorclauses[i]->size();
+        if (heuleProcess) {
+            if (conglomerate->heuleProcessFull() == false)
+                return;
+            
+            while (performReplace && varReplacer->needsReplace()) {
+                if (!varReplacer->performReplace()) return;
+                if (!conglomerate->heuleProcessFull()) return;
+            }
         }
+        
+        if (conglomerateXors && !conglomerate->conglomerateXorsFull())
+            return;
         
         if (doXorSubsumption && xorclauses.size() > 1) {
             XorSubsumer xsub(*this);
@@ -1900,28 +1907,7 @@ inline void Solver::performStepsBeforeSolve()
                 return;
         }
         
-        if (heuleProcess && conglomerate->heuleProcessFull() == false)
-            return;
-        while (heuleProcess && performReplace && varReplacer->getNewToReplaceVars() != 0) {
-            if (varReplacer->performReplace(true) == false)
-                return;
-            if (conglomerate->heuleProcessFull() == false)
-                return;
-        }
-        
-        if (conglomerateXors && conglomerate->conglomerateXorsFull() == false)
-            return;
-        
-        uint new_total = 0;
-        uint new_num_cls = xorclauses.size();
-        for (uint i = 0; i < xorclauses.size(); i++) {
-            new_total += xorclauses[i]->size();
-        }
-        if (verbosity >=1) {
-            printf("c |  Sum xclauses diff(orig-new): %8d             Sum xlits diff: %8d           |\n", orig_total-new_total, orig_num_cls-new_num_cls);
-        }
-        
-        if (performReplace && varReplacer->performReplace() == false)
+        if (performReplace && !varReplacer->performReplace())
             return;
     }
 }
