@@ -1856,8 +1856,7 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
 inline void Solver::performStepsBeforeSolve()
 {
     assert(qhead == trail.size());
-    if (performReplace && varReplacer->performReplace() == false)
-        return;
+    if (performReplace && !varReplacer->performReplace()) return;
     
     
     if (doSubsumption
@@ -1868,11 +1867,9 @@ inline void Solver::performStepsBeforeSolve()
     
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
-        if (xorFinder.doNoPart(2, 2) == false)
-            return;
+        if (!xorFinder.doNoPart(2, 2)) return;
         
-        if (performReplace && varReplacer->performReplace(true) == false)
-            return;
+        if (performReplace && !varReplacer->performReplace(true)) return;
     }
     
     if (doSubsumption
@@ -1883,8 +1880,7 @@ inline void Solver::performStepsBeforeSolve()
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-        if (xorFinder.doNoPart(3, 10) == false)
-            return;
+        if (!xorFinder.doNoPart(3, 10)) return;
     }
         
     if (xorclauses.size() > 1) {
