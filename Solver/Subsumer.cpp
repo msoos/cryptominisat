@@ -732,9 +732,10 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     clauseID = 0;
     
     touched_list.clear();
-    for (Var i = 0; i < solver.nVars(); i++) {
-        if (solver.decision_var[i]) touched_list.push(i);
-        touched[i] = true;
+    touched.clear();
+    touched.growTo(solver.nVars(), false);
+    for (Var i = 0; i < solver.nVars(); i++) if (solver.decision_var[i] && solver.assigns[i] == l_Undef) {
+        touch(i);
         occur[2*i].clear(true);
         occur[2*i+1].clear(true);
     }
