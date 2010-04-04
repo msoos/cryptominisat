@@ -8,6 +8,7 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include "time_mem.h"
 #include "assert.h"
 #include <iomanip>
+#include <cmath>
 #include "VarReplacer.h"
 #include "Conglomerate.h"
 
@@ -900,11 +901,24 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
         return false;
     }
     
+    #ifndef DNDEBUG
+    verifyIntegrity();
+    #endif
+    
+    if (!solver.libraryUsage) {
+        pureLiteralRemoval();
+        solver.ok = (solver.propagate() == NULL);
+        if (!solver.ok) return false;
+    }
+    
+    //vector<char> var_merged = merge();
     removeWrong(solver.learnts);
     removeWrong(solver.binaryClauses);
+    
     solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     if (solver.doHyperBinRes && clauses.size() < 1000000 && numCalls > 1 && !hyperBinRes())
         return false;
+    
     solver.ok = (solver.propagate() == NULL);
     if (!solver.ok) return false;
     solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
@@ -1378,3 +1392,275 @@ const bool Subsumer::hyperBinRes()
     
     return true;
 }
+
+class varDataStruct
+{
+    public:
+        varDataStruct() : 
+            numPosClauses (0)
+            , numNegClauses (0)
+            , sumPosClauseSize (0)
+            , sumNegClauseSize (0)
+            , posHash(0)
+            , negHash(0)
+        {}
+        const bool operator < (const varDataStruct& other) const
+        {
+            if (numPosClauses < other.numPosClauses) return true;
+            if (numPosClauses > other.numPosClauses) return false;
+            
+            if (numNegClauses < other.numNegClauses)  return true;
+            if (numNegClauses > other.numNegClauses)  return false;
+            
+            if (sumPosClauseSize < other.sumPosClauseSize) return true;
+            if (sumPosClauseSize > other.sumPosClauseSize) return false;
+            
+            if (sumNegClauseSize < other.sumNegClauseSize) return true;
+            if (sumNegClauseSize > other.sumNegClauseSize) return false;
+            
+            if (posHash < other.posHash) return true;
+            if (posHash > other.posHash) return false;
+            
+            if (negHash < other.negHash) return true;
+            if (negHash > other.negHash) return false;
+            
+            return false;
+        }
+        
+        const bool operator == (const varDataStruct& other) const
+        {
+            if (numPosClauses == other.numPosClauses &&
+                numNegClauses == other.numNegClauses &&
+                sumPosClauseSize == other.sumPosClauseSize &&
+                sumNegClauseSize == other.sumNegClauseSize &&
+                posHash == other.posHash &&
+                negHash == other.negHash)
+                return true;
+            
+            return false;
+        }
+        
+        void reversePolarity()
+        {
+            std::swap(numPosClauses, numNegClauses);
+            std::swap(sumPosClauseSize, sumNegClauseSize);
+            std::swap(posHash, negHash);
+        }
+        
+        uint32_t numPosClauses;
+        uint32_t numNegClauses;
+        uint32_t sumPosClauseSize;
+        uint32_t sumNegClauseSize;
+        int posHash;
+        int negHash;
+};
+
+int hash32shift(int key)
+{
+    key = ~key + (key << 15); // key = (key << 15) - key - 1;
+    key = key ^ (key >> 12);
+    key = key + (key << 2);
+    key = key ^ (key >> 4);
+    key = key * 2057; // key = (key + (key << 3)) + (key << 11);
+    key = key ^ (key >> 16);
+    return key;
+}
+
+const bool Subsumer::checkIfSame(const Lit lit1, const Lit lit2)
+{
+    assert(lit1.var() != lit2.var());
+    #ifdef VERBOSE_DEBUG
+    std::cout << "checking : " << lit1.var()+1 << " , " << lit2.var()+1 << std::endl;
+    #endif
+    
+    vec<ClauseSimp>& occSet1 = occur[lit1.toInt()];
+    vec<ClauseSimp>& occSet2 = occur[lit2.toInt()];
+    vec<Lit> tmp;
+    
+    for (ClauseSimp *it = occSet1.getData(), *end = it + occSet1.size(); it != end; it++) {
+        bool found = false;
+        tmp.clear();
+        uint32_t clauseSize = it->clause->size();
+        
+        for (Lit *l = it->clause->getData(), *end2 = l + it->clause->size(); l != end2; l++) {
+            if (l->var() != lit1.var()) {
+                tmp.push(*l);
+                seen_tmp[l->toInt()] = true;
+            }
+        }
+        #ifdef VERBOSE_DEBUG
+        std::cout << "orig: ";
+        it->clause->plainPrint();
+        #endif
+        
+        for (ClauseSimp *it2 = occSet2.getData(), *end2 = it2 + occSet2.size(); (it2 != end2 && !found); it2++) {
+            if (it2->clause->size() != clauseSize) continue;
+            
+            for (Lit *l = it2->clause->getData(), *end3 = l + tmp.size(); l != end3; l++) if (l->var() != lit1.var()) {
+                if (!seen_tmp[l->toInt()]) goto next;
+            }
+            found = true;
+            
+            #ifdef VERBOSE_DEBUG
+            std::cout << "OK:   ";
+            it2->clause->plainPrint();
+            #endif
+            next:;
+        }
+        
+        for (Lit *l = tmp.getData(), *end2 = l + tmp.size(); l != end2; l++) {
+            seen_tmp[l->toInt()] = false;
+        }
+        
+        if (!found) return false;
+    }
+    #ifdef VERBOSE_DEBUG
+    std::cout << "OK" << std::endl;
+    #endif
+    
+    return true;
+}
+
+void Subsumer::verifyIntegrity()
+{
+    vector<uint> occurNum(solver.nVars()*2, 0);
+    
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        if (clauses[i].clause == NULL) continue;
+        Clause& c = *clauses[i].clause;
+        for (uint32_t i2 = 0; i2 < c.size(); i2++)
+            occurNum[c[i2].toInt()]++;
+    }
+    
+    for (uint32_t i = 0; i < occurNum.size(); i++) {
+        assert(occurNum[i] == occur[i].size());
+    }
+}
+
+void Subsumer::pureLiteralRemoval()
+{
+    assert(!solver.libraryUsage);
+    
+    uint32_t pureLitRemoved = 0;
+    for (uint32_t var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var]) {
+        uint32_t numPosClauses = occur[Lit(var, false).toInt()].size();
+        uint32_t numNegClauses = occur[Lit(var, true).toInt()].size();
+        if (numNegClauses > 0 && numPosClauses > 0) continue;
+        
+        if (numNegClauses == 0 && numPosClauses == 0) {
+            solver.setDecisionVar(var, false);
+            pureLitRemoved++;
+            continue;
+        }
+        
+        if (numPosClauses == 0 && numNegClauses > 0) {
+            solver.uncheckedEnqueue(Lit(var, true));
+            pureLitRemoved++;
+            continue;
+        }
+        
+        if (numNegClauses == 0 && numPosClauses > 0) {
+            solver.uncheckedEnqueue(Lit(var, false));
+            pureLitRemoved++;
+            continue;
+        }
+    }
+    
+    std::cout << "c |  Pure lits removed: " << pureLitRemoved << std::endl;
+}
+
+vector<char> Subsumer::merge()
+{
+    vector<char> var_merged(solver.nVars(), false);
+    double myTime = cpuTime();
+    
+    vector<varDataStruct> varData(solver.nVars());
+    
+    for (uint32_t var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var]) {
+        varDataStruct thisVar;
+        
+        vec<ClauseSimp>& toCountPos = occur[Lit(var, false).toInt()];
+        thisVar.numPosClauses = toCountPos.size();
+        for (uint32_t i2 = 0; i2 < toCountPos.size(); i2++) {
+            thisVar.sumPosClauseSize += toCountPos[i2].clause->size();
+            for (Lit *l = toCountPos[i2].clause->getData(), *end = l + toCountPos[i2].clause->size(); l != end; l++) {
+                if (l->var() != var) thisVar.posHash ^= hash32shift(l->toInt());
+            }
+        }
+        
+        vec<ClauseSimp>& toCountNeg = occur[Lit(var, true).toInt()];
+        thisVar.numNegClauses = toCountNeg.size();
+        for (uint32_t i2 = 0; i2 < toCountNeg.size(); i2++) {
+            thisVar.sumNegClauseSize += toCountNeg[i2].clause->size();
+            for (Lit *l = toCountNeg[i2].clause->getData(), *end = l + toCountNeg[i2].clause->size(); l != end; l++) {
+                if (l->var() != var) thisVar.negHash ^= hash32shift(l->toInt());
+            }
+        }
+        
+        varData[var] = thisVar;
+    }
+    
+    map<varDataStruct, vector<Var> > dataToVar;
+    for (uint32_t i = 0; i < solver.nVars(); i++) if (solver.decision_var[i] && solver.assigns[i] == l_Undef) {
+        dataToVar[varData[i]].push_back(i);
+        assert(dataToVar[varData[i]].size() > 0);
+    }
+    
+    for (map<varDataStruct, vector<Var> >::iterator it = dataToVar.begin(); it != dataToVar.end(); it++) {
+        //std::cout << "size: " << it->second.size() << std::endl;
+        for (uint i = 0; i < it->second.size()-1; i++) {
+            assert(it->second.size() > i+1);
+            assert(varData[it->second[i]] == varData[it->second[i+1]]);
+        }
+    }
+    
+    uint64_t checked = 0;
+    uint64_t replaced = 0;
+    for (Var var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var]) {
+        varDataStruct tmp = varData[var];
+        assert(dataToVar[tmp].size() > 0);
+        
+        if (dataToVar[tmp].size() > 0) {
+            map<varDataStruct, vector<Var> >::iterator it = dataToVar.find(tmp);
+            for (uint i = 0; i < it->second.size(); i++) if (it->second[i] != var) {
+                checked ++;
+                if (checkIfSame(Lit(var, false), Lit(it->second[i], false)) &&
+                    (checkIfSame(Lit(var, true), Lit(it->second[i], true))))
+                {
+                    vec<Lit> ps(2);
+                    ps[0] = Lit(var, false);
+                    ps[1] = Lit(it->second[i], false);
+                    solver.varReplacer->replace(ps, true, 0);
+                    replaced++;
+                    goto next;
+                    
+                }
+            }
+        }
+        
+        tmp.reversePolarity();
+        if (dataToVar[tmp].size() > 0) {
+            map<varDataStruct, vector<Var> >::iterator it = dataToVar.find(tmp);
+            for (uint i = 0; i < it->second.size(); i++) if (it->second[i] != var) {
+                checked ++;
+                if (checkIfSame(Lit(var, true), Lit(it->second[i], false)) &&
+                    (checkIfSame(Lit(var, false), Lit(it->second[i], true))))
+                {
+                    vec<Lit> ps(2);
+                    ps[0] = Lit(var, false);
+                    ps[1] = Lit(it->second[i], false);
+                    solver.varReplacer->replace(ps, false, 0);
+                    replaced++;
+                    goto next;
+                }
+            }
+        }
+        
+        next:;
+    }
+        
+    std::cout << "c |  Merging vars in same clauses.  checked: " << std::setw(5) << checked << " replaced: " << std::setw(5) << replaced << " time: " << std::setprecision(2) << std::setw(5) << cpuTime()-myTime << std::endl;
+    
+    return var_merged;
+}
+

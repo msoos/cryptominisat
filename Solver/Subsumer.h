@@ -9,6 +9,10 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include "Queue.h"
 #include "CSet.h"
 #include "BitArray.h"
+#include <map>
+#include <vector>
+using std::vector;
+using std::map;
 
 enum OccurMode { occ_Off, occ_Permanent, occ_All };
 
@@ -103,6 +107,14 @@ private:
     void addFromSolverAll(vec<Clause*>& cs);
     const bool hyperBinRes();
     const bool hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<ClauseSimp>& addToClauses, uint32_t& hyperBinAdded, uint32_t& hyperBinUnitary);
+    
+    //merging
+    vector<char> merge();
+    const bool checkIfSame(const Lit var1, const Lit var2);
+    void pureLiteralRemoval();
+    
+    //validity checking
+    void verifyIntegrity();
     
     uint32_t clauses_subsumed;
     uint32_t literals_removed;
