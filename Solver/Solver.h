@@ -77,8 +77,6 @@ public:
     Var     newVar    (bool dvar = true); // Add a new variable with parameters specifying variable mode.
     template<class T>
     bool    addClause (T& ps, const uint group = 0, char* group_name = "");  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
-    template <class T>
-    Clause* addClauseInt(T& ps, uint group);
     template<class T>
     bool    addXorClause (T& ps, bool xor_clause_inverted, const uint group = 0, char* group_name = "");  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
@@ -94,14 +92,6 @@ public:
     void    setDecisionVar (Var v, bool b); // Declare if a variable should be eligible for selection in the decision heuristic.
     void    setSeed (const uint32_t seed);  // Sets the seed to be the given number
     void    setMaxRestarts(const uint num); //sets the maximum number of restarts to given value
-    template<class T>
-    void    removeWatchedCl(vec<T> &ws, const Clause *c);
-    template<class T>
-    bool    findWatchedCl(vec<T>& ws, const Clause *c);
-    template<class T>
-    void    removeWatchedBinCl(vec<T> &ws, const Clause *c);
-    template<class T>
-    bool    findWatchedBinCl(vec<T>& ws, const Clause *c);
 
     // Read state:
     //
@@ -177,10 +167,18 @@ protected:
     void clearGaussMatrixes();
     friend class Gaussian;
     
-    
-    //For part-finding
+    template <class T>
+    Clause* addClauseInt(T& ps, uint group);
     template<class T>
     bool addLearntClause(T& ps, const uint group, const uint32_t activity);
+    template<class T>
+    void    removeWatchedCl(vec<T> &ws, const Clause *c);
+    template<class T>
+    bool    findWatchedCl(vec<T>& ws, const Clause *c);
+    template<class T>
+    void    removeWatchedBinCl(vec<T> &ws, const Clause *c);
+    template<class T>
+    bool    findWatchedBinCl(vec<T>& ws, const Clause *c);
     
     // Helper structures:
     //
