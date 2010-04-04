@@ -184,6 +184,9 @@ void XorSubsumer::addBackToSolver()
             clauses[i].clause->unsetVarChanged();
         }
     }
+    for (uint32_t i = 0; i < solver.nVars(); i++) {
+        occur[i].clear();
+    }
     clauses.clear();
     clauseID = 0;
 }
