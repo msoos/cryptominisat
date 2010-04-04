@@ -106,8 +106,15 @@ const std::pair<double, double> RestartTypeChooser::countVarsDegreeStDev() const
     addDegrees(solver.binaryClauses, degrees);
     addDegrees(solver.xorclauses, degrees);
     uint32_t sum = 0;
-    for (uint i = 0; i < degrees.size(); i++)
-        sum += degrees[i];
+    uint32_t *i = &degrees[0], *j = i;
+    for (uint32_t *end = i + degrees.size(); i != end; i++) {
+        if (*i != 0) {
+            sum += *i;
+            *j++ = *i;
+        }
+    }
+    degrees.resize(degrees.size() - (i-j));
+    
     double avg = (double)sum/(double)degrees.size();
     double stdDev = stdDeviation(degrees);
     
@@ -123,6 +130,8 @@ void RestartTypeChooser::addDegrees(const vec<T*>& cs, vector<uint32_t>& degrees
 {
     for (T * const*c = cs.getData(), * const*end = c + cs.size(); c != end; c++) {
         T& cl = **c;
+        if (cl.learnt()) continue;
+        
         for (const Lit *l = cl.getData(), *end2 = l + cl.size(); l != end2; l++) {
             degrees[l->var()]++;
         }
