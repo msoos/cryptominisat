@@ -19,7 +19,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FAILEDVARSEARCHER_H
 
 #include "SolverTypes.h"
+#include "Clause.h"
 class Solver;
+
+class TwoLongXor
+{
+    public:
+        const bool operator==(const TwoLongXor& other) const
+        {
+            if (var[0] == other.var[0] && var[1] == other.var[1] && inverted == other.inverted)
+                return true;
+            return false;
+        }
+        const bool operator<(const TwoLongXor& other) const
+        {
+            if (var[0] < other.var[0]) return true;
+            if (var[0] > other.var[0]) return false;
+            
+            if (var[1] < other.var[1]) return true;
+            if (var[1] > other.var[1]) return false;
+            
+            if (inverted < other.inverted) return true;
+            if (inverted > other.inverted) return false;
+            
+            return false;
+        }
+        
+        Var var[2];
+        bool inverted;
+};
 
 class FailedVarSearcher {
     public:
@@ -28,7 +56,16 @@ class FailedVarSearcher {
         const bool search(uint64_t numProps);
         
     private:
+        const TwoLongXor getTwoLongXor(const XorClause& c);
+        void addFromSolver(vec<XorClause*>& cs);
+        
         Solver& solver;
+        
+        vec<uint32_t> xorClauseSizes;
+        vector<vector<uint32_t*> > occur;
+        void removeVarFromXors(const Var var);
+        void addVarFromXors(const Var var);
+        
         bool finishedLastTime;
         uint32_t lastTimeWentUntil;
         double numPropsMultiplier;
