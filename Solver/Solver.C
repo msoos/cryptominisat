@@ -79,7 +79,6 @@ Solver::Solver() :
         , doHyperBinRes    (true)
         , failedVarSearch  (true)
         , libraryUsage     (true)
-        , sateliteUsed     (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
 
@@ -267,7 +266,6 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     default: {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
-        if (!libraryUsage || !sateliteUsed) c->unsetVarChanged();
         
         xorclauses.push(c);
         attachClause(*c);
@@ -327,7 +325,6 @@ Clause* Solver::addClauseInt(T& ps, uint group)
     
     learnt_clause_group = std::max(group+1, learnt_clause_group);
     Clause* c = Clause_new(ps, group);
-    if (!libraryUsage || !sateliteUsed) c->unsetVarChanged();
     attachClause(*c);
     
     return c;
@@ -1860,6 +1857,13 @@ inline void Solver::performStepsBeforeSolve()
 {
     assert(qhead == trail.size());
     if (performReplace && varReplacer->performReplace() == false)
+        return;
+    
+    
+    if (doSubsumption
+        && !libraryUsage
+        && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
+        && !subsumer->simplifyBySubsumption((clauses.size() + binaryClauses.size() < 200000)))
         return;
     
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
