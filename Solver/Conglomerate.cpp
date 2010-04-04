@@ -176,7 +176,7 @@ end:
         std::cout << "c |  Conglomerating XORs:" << std::setw(8) << std::setprecision(2) << std::fixed << cpuTime()-time << " s   "
         << "   removed " << std::setw(8) << found << " vars"
         << "   removed " << std::setw(8) << origNumClauses-solver.xorclauses.size() << " clauses"
-        << std::setw(21) << "   |" << std::endl;
+        << std::setw(0) << " |" << std::endl;
     }
     
     clearLearntsFromToRemove();
