@@ -528,6 +528,8 @@ inline bool Solver::defaultPolarity()
         default:
             assert(false);
     }
+    
+    return true;
 }
 
 void tallyVotes(const vec<Clause*>& cs, vector<double>& votes, vector<bool>& positiveLiteral, vector<bool>& negativeLiteral)
