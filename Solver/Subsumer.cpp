@@ -11,6 +11,11 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include "VarReplacer.h"
 #include "Conglomerate.h"
 
+#ifdef _MSC_VER
+#define __builtin_prefetch(a,b,c)
+#endif //_MSC_VER
+
+
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
 #define BIT_MORE_VERBOSITY
