@@ -68,10 +68,9 @@ then
     exit 1
 fi
 
-
-# To set in a normal envirnement
-
-TMP=$TMPDIR/cryptominisat_$$ #set this to the location of temporary files
+MYRAND1=$[ ( $RANDOM % 10000000 )  + 1 ]
+MYRAND2=`dd if=/dev/urandom count=1 2> /dev/null | cksum | cut -f1 -d" "`
+TMP="$TMPDIR/cryptominisat_${MYRAND1}${MYRAND2}" #set this to the location of temporary files
 SE=$mypath/satelite           #set this to the executable of SatELite
 RS=$mypath/cryptominisat      #set this to the executable of CryptoMiniSat
 INPUT=$1;
