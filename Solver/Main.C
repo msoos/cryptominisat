@@ -341,6 +341,7 @@ void printStats(Solver& solver)
     printStatsLine("c restarts", solver.starts);
     printStatsLine("c dynamic restarts", solver.dynStarts);
     printStatsLine("c static restarts", solver.staticStarts);
+    printStatsLine("c full restarts", solver.fullStarts);
     printStatsLine("c learnts DL2", solver.nbDL2);
     printStatsLine("c learnts size 2", solver.nbBin);
     printStatsLine("c learnts size 1", solver.get_unitary_learnts_num());
