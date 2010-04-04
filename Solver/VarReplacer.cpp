@@ -337,6 +337,8 @@ void VarReplacer::extendModelPossible() const
                 assert(solver.assigns[i].getBool() == (solver.assigns[it->var()].getBool() ^ it->sign()));
             }
         }
+        solver.ok = (solver.propagate() == NULL);
+        assert(solver.ok);
     }
 }
 

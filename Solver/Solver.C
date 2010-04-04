@@ -215,6 +215,7 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
 
     if (!ok)
         return false;
+    assert(qhead == trail.size());
 
     // Check if clause is satisfied and remove false/duplicate literals:
     if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed()) {
@@ -302,6 +303,8 @@ template bool Solver::addLearntClause(vec<Lit>& ps, const uint group, const uint
 template <class T>
 Clause* Solver::addClauseInt(T& ps, uint group)
 {
+    assert(ok);
+    
     std::sort(ps.getData(), ps.getData()+ps.size());
     Lit p = lit_Undef;
     uint32_t i, j;
@@ -352,6 +355,7 @@ bool Solver::addClause(T& ps, const uint group, char* group_name)
 
     if (!ok)
         return false;
+    assert(qhead == trail.size());
 
     // Check if clause is satisfied and remove false/duplicate literals:
     if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed()) {
@@ -1883,6 +1887,7 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
 
 inline void Solver::performStepsBeforeSolve()
 {
+    assert(qhead == trail.size());
     if (performReplace && varReplacer->performReplace() == false)
         return;
     
@@ -1948,6 +1953,9 @@ inline void Solver::performStepsBeforeSolve()
 
 lbool Solver::solve(const vec<Lit>& assumps)
 {
+    if (!ok) return l_False;
+    assert(qhead == trail.size());
+    
     if (libraryCNFFile)
         fprintf(libraryCNFFile, "c Solver::solve() called\n");
     
@@ -1962,8 +1970,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
     if (!conglomerate->addRemovedClauses()) return l_False;
     starts = 0;
-
-    if (!ok) return l_False;
 
     assumps.copyTo(assumptions);
 
