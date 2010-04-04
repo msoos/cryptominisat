@@ -30,8 +30,8 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
     , finishedLastTime(true)
     , lastTimeWentUntil(0)
-    , lastTimeFoundTruths(0)
     , numPropsMultiplier(1.0)
+    , lastTimeFoundTruths(0)
 {
 }
 
