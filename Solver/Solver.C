@@ -85,7 +85,7 @@ Solver::Solver() :
 
         // Statistics: (formerly in 'SolverStats')
         //
-        , starts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
+        , starts(0), dynStarts(0), staticStarts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
         , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
@@ -1451,6 +1451,11 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     llbool      ret;
 
     starts++;
+    if (restartType == static_restart)
+        staticStarts++;
+    else
+        dynStarts++;
+    
     for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++) {
         ret = (*gauss)->full_init();
         if (ret != l_Nothing) return ret;
