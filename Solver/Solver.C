@@ -1765,11 +1765,6 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
-    if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 6000000 : 2000000))  {
-        status = l_False;
-        goto end;
-    }
-    
     if (heuleProcess && !conglomerate->heuleProcessFull()) {
         status = l_False;
         goto end;
@@ -1784,6 +1779,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
             status = l_False;
             goto end;
         }
+    }
+    
+    if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 6000000 : 2000000))  {
+        status = l_False;
+        goto end;
     }
     
     if (doXorSubsumption && xorclauses.size() > 1) {
