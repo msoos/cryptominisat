@@ -217,9 +217,11 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
         return false;
 
     // Check if clause is satisfied and remove false/duplicate literals:
-    if (varReplacer->getNumLastReplacedVars()) {
+    if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed()) {
         for (uint32_t i = 0; i != ps.size(); i++) {
             ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
+            if (subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
+                return false;
         }
     }
     
@@ -352,9 +354,11 @@ bool Solver::addClause(T& ps, const uint group, char* group_name)
         return false;
 
     // Check if clause is satisfied and remove false/duplicate literals:
-    if (varReplacer->getNumLastReplacedVars()) {
+    if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed()) {
         for (uint32_t i = 0; i != ps.size(); i++) {
             ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
+            if (subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
+                return false;
         }
     }
     

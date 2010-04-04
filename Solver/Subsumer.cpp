@@ -59,6 +59,28 @@ void Subsumer::extendModel(Solver& solver2)
     }
 }
 
+const bool Subsumer::unEliminate(const Var var)
+{
+    vec<Lit> tmp;
+    typedef map<Var, vector<vector<Lit> > > elimType;
+    elimType::iterator it = elimedOutVar.find(var);
+    assert(it != elimedOutVar.end());
+    
+    solver.setDecisionVar(var, true);
+    var_elimed[var] = false;
+    numElimed--;
+    for (vector<vector<Lit> >::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
+        tmp.clear();
+        tmp.growTo(it2->size());
+        memcpy(tmp.getData(), &((*it2)[0]), sizeof(Lit)*it2->size());  //*it2 is never empty
+        solver.addClause(tmp);
+    }
+    elimedOutVar.erase(it);
+    
+    if (!solver.ok) return false;
+    return true;
+}
+
 bool selfSubset(uint32_t A, uint32_t B)
 {
     uint32_t B_tmp = B | ((B & 0xAAAAAAAALL) >> 1) | ((B & 0x55555555LL) << 1);

@@ -29,6 +29,7 @@ public:
     void updateClause(ClauseSimp c);
     void newVar();
     void extendModel(Solver& solver2);
+    const bool unEliminate(const Var var);
     const vec<char>& getVarElimed() const;
     const uint32_t getNumElimed() const;
     
