@@ -1275,16 +1275,15 @@ const bool Subsumer::hyperBinRes()
     
 
     vec<Var> varsToCheck;
-    #ifdef PRINT_VARS
-    std::cout << "First vars:" << std::endl;
-    #endif
-    Heap<Solver::VarOrderLt> tmp(solver.order_heap);
-    uint32_t thisTopX = std::min(tmp.size(), 1000U);
-    for (uint32_t i = 0; i != thisTopX; i++) {
-        #ifdef PRINT_VARS
-        std::cout << tmp.removeMin()+1 << ", ";
-        #endif
-        varsToCheck.push(tmp.removeMin());
+    
+    if (clauses.size() > 100000 || solver.order_heap.size() > 30000) {
+        Heap<Solver::VarOrderLt> tmp(solver.order_heap);
+        uint32_t thisTopX = std::min(tmp.size(), 1000U);
+        for (uint32_t i = 0; i != thisTopX; i++)
+            varsToCheck.push(tmp.removeMin());
+    } else {
+        for (Var i = 0; i < solver.nVars(); i++)
+            varsToCheck.push(i);
     }
     
     for (Var test = 0; test < 2*varsToCheck.size(); test++) if (solver.assigns[test/2] == l_Undef && solver.decision_var[test/2]) {
