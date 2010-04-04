@@ -1541,7 +1541,7 @@ void Subsumer::pureLiteralRemoval()
     assert(!solver.libraryUsage);
     
     uint32_t pureLitRemoved = 0;
-    for (uint32_t var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var]) {
+    for (uint32_t var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var] && !var_elimed[var]) {
         uint32_t numPosClauses = occur[Lit(var, false).toInt()].size();
         uint32_t numNegClauses = occur[Lit(var, true).toInt()].size();
         if (numNegClauses > 0 && numPosClauses > 0) continue;
