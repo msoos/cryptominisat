@@ -46,7 +46,7 @@ const bool PartHandler::handle()
     
     vector<pair<uint32_t, uint32_t> > sizes;
     for (map<uint32_t, vector<Var> >::iterator it = reverseTable.begin(); it != reverseTable.end(); it++)
-        sizes.push_back(std::make_pair(it->first, it->second.size()));
+        sizes.push_back(std::make_pair(it->first, (uint32_t)it->second.size()));
     
     std::sort(sizes.begin(), sizes.end(), sort_pred());
     assert(sizes.size() > 1);
