@@ -59,7 +59,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     uint64_t origProps = solver.propagations;
     
     //If failed var searching is going good, do successively more and more of it
-    if (lastTimeFoundTruths > 500) numPropsMultiplier *= 1.7;
+    if (lastTimeFoundTruths > 500) std::max(numPropsMultiplier*1.7, 5.0);
     else numPropsMultiplier = 1.0;
     numProps = (uint64_t) ((double)numProps * numPropsMultiplier);
     
