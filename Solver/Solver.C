@@ -196,11 +196,11 @@ Var Solver::newVar(bool dvar)
 }
 
 template<class T>
-bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal)
+bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
     
-    if (libraryCNFFile && !internal) {
+    if (libraryCNFFile) {
         fprintf(libraryCNFFile, "x");
         for (uint i = 0; i < ps.size(); i++) {
             fprintf(libraryCNFFile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
@@ -277,8 +277,8 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     return true;
 }
 
-template bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal);
-template bool Solver::addXorClause(XorClause& ps, bool xor_clause_inverted, const uint group, char* group_name, const bool internal);
+template bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name);
+template bool Solver::addXorClause(XorClause& ps, bool xor_clause_inverted, const uint group, char* group_name);
 
 
 template<class T>
@@ -1964,7 +1964,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     avgBranchDepth.fastclear();
     avgBranchDepth.initSize(500);
     
-    conglomerate->addRemovedClauses();
+    if (!conglomerate->addRemovedClauses()) return l_False;
     starts = 0;
 
     if (!ok) return l_False;

@@ -45,7 +45,7 @@ public:
     ~Conglomerate();
     const bool conglomerateXorsFull();
     const bool heuleProcessFull();
-    void addRemovedClauses(); ///<Add clauses that have been removed. Used if solve() is called multiple times
+    const bool addRemovedClauses(); ///<Add clauses that have been removed. Used if solve() is called multiple times
     void doCalcAtFinish(); ///<Calculate variables removed during conglomeration
     
     const vec<XorClause*>& getCalcAtFinish() const;

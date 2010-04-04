@@ -80,7 +80,7 @@ public:
     template <class T>
     Clause* addClauseInt(T& ps, uint group);
     template<class T>
-    bool    addXorClause (T& ps, bool xor_clause_inverted, const uint group = 0, char* group_name = "", const bool internal = false);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (T& ps, bool xor_clause_inverted, const uint group = 0, char* group_name = "");  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //

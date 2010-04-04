@@ -506,7 +506,7 @@ void Conglomerate::doCalcAtFinish()
     }
 }
 
-void Conglomerate::addRemovedClauses()
+const bool Conglomerate::addRemovedClauses()
 {
     #ifdef VERBOSE_DEBUG
     cout << "Executing addRemovedClauses" << endl;
@@ -527,7 +527,8 @@ void Conglomerate::addRemovedClauses()
         for(uint i2 = 0; i2 != c.size() ; i2++) {
             ps.push(Lit(c[i2].var(), false));
         }
-        solver.addXorClause(ps, c.xor_clause_inverted(), c.getGroup(), tmp, true);
+        if (!solver.addXorClause(ps, c.xor_clause_inverted(), c.getGroup(), tmp))
+            return false;
         free(&c);
     }
     calcAtFinish.clear();
@@ -540,6 +541,8 @@ void Conglomerate::addRemovedClauses()
             #endif //VERBOSE_DEBUG
         }
     }
+    
+    return true;
 }
 
 void Conglomerate::newVar()
