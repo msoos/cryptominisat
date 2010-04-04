@@ -767,10 +767,8 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
         occur[2*i+1].clear(true);
     }
     
-    while (solver.varReplacer->getNewToReplaceVars() > 0) {
-        if (solver.performReplace && !solver.varReplacer->performReplace(true))
-            return false;
-    }
+    if (solver.performReplace && !solver.varReplacer->performReplace(true))
+        return false;
     
     fillCannotEliminate();
     
