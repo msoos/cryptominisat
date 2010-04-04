@@ -1765,19 +1765,21 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
-    if (heuleProcess && !conglomerate->heuleProcessFull()) {
-        status = l_False;
-        goto end;
-    }
-    
-    while (heuleProcess && performReplace && varReplacer->getNewToReplaceVars() != 0) {
-        if (!varReplacer->performReplace(true)) {
-            status = l_False;
-            goto end;
-        }
+    if (heuleProcess) {
         if (!conglomerate->heuleProcessFull()) {
             status = l_False;
             goto end;
+        }
+        
+        while (performReplace && varReplacer->needsReplace()) {
+            if (!varReplacer->performReplace()) {
+                status = l_False;
+                goto end;
+            }
+            if (!conglomerate->heuleProcessFull()) {
+                status = l_False;
+                goto end;
+            }
         }
     }
     
@@ -1827,8 +1829,6 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         restartType = static_restart;
         lastFullRestart = starts;
-        if (performReplace && !varReplacer->performReplace(true))
-            return false;
         
         /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
             for (uint i = 0; i < clauses.size(); i++) {

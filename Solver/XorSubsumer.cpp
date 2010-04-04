@@ -204,8 +204,8 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         newVar();
     }
     
-    while (solver.varReplacer->getNewToReplaceVars() > 0) {
-        if (solver.performReplace && !solver.varReplacer->performReplace(true))
+    while (solver.performReplace && solver.varReplacer->needsReplace()) {
+        if (!solver.varReplacer->performReplace())
             return false;
     }
     
@@ -247,9 +247,9 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         if (!solver.ok) return false;
         
         addBackToSolver();
-        while (solver.performReplace && solver.varReplacer->getNewToReplaceVars() > 0) {
+        while (solver.performReplace && solver.varReplacer->needsReplace()) {
             replaced = true;
-            if (!solver.varReplacer->performReplace(true))
+            if (!solver.varReplacer->performReplace())
                 return false;
         }
         addFromSolver(solver.xorclauses);

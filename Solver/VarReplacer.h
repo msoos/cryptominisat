@@ -40,6 +40,7 @@ class VarReplacer
         VarReplacer(Solver& solver);
         ~VarReplacer();
         const bool performReplace(const bool always = false);
+        const bool needsReplace();
         template<class T>
         const bool replace(T& ps, const bool xor_clause_inverted, const uint group);
         
@@ -86,6 +87,12 @@ inline const bool VarReplacer::performReplace(const bool always)
         return performReplaceInternal();
     
     return true;
+}
+
+inline const bool VarReplacer::needsReplace()
+{
+    uint32_t limit = (uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE);
+    return (getNewToReplaceVars() > limit);
 }
 
 inline const uint VarReplacer::getNumReplacedLits() const
