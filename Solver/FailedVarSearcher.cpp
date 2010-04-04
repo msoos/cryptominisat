@@ -149,7 +149,7 @@ end:
         std::setw(8) << " |" << std::endl;
     }
     
-    if (numFailed || goodBothSame) {
+    if (solver.ok && (numFailed || goodBothSame)) {
         double time = cpuTime();
         solver.clauseCleaner->removeAndCleanAll();
         if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
