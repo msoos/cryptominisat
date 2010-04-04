@@ -1266,6 +1266,8 @@ const bool Subsumer::hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray
             }
         }
     }
+    
+    return true;
 }
 
 const bool Subsumer::hyperBinRes()
@@ -1322,10 +1324,13 @@ const bool Subsumer::hyperBinRes()
         if (sum < clauses.size()) {
             for (uint32_t add = 0; add < addedToInside.size(); add++) {
                 vec<ClauseSimp>& iter = occur[addedToInside[add].toInt()];
-                hyperUtility(iter, lit, inside, addToClauses, hyperBinAdded, hyperBinUnitary);
+                if (!hyperUtility(iter, lit, inside, addToClauses, hyperBinAdded, hyperBinUnitary))
+                    return false;
             }
         } else {
-            hyperUtility(clauses, lit, inside, addToClauses, hyperBinAdded, hyperBinUnitary);
+            totalClausesChecked += clauses.size();
+            if (!hyperUtility(clauses, lit, inside, addToClauses, hyperBinAdded, hyperBinUnitary))
+                return false;
         }
         
         for (uint32_t i = 0; i < addToClauses.size(); i++) {
