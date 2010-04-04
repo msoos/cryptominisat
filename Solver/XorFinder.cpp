@@ -244,12 +244,12 @@ bool XorFinder::getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& 
     while(begin != tableEnd && end != tableEnd) {
         begin = end;
         end++;
-        uint32_t size = 0;
+        uint32_t size = (end == tableEnd ? 0:1);
         while(end != tableEnd && clause_vareq(begin->first, end->first)) {
             size++;
             end++;
         }
-        if (isXor(size, begin, end, impair))
+        if (size > 0 && isXor(size, begin, end, impair))
             return true;
     }
     
@@ -276,7 +276,6 @@ bool XorFinder::impairSigns(const Clause& c) const
 
 bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, const ClauseTable::iterator& end, bool& impair)
 {
-    assert(size > 0);
     const uint requiredSize = 1 << (begin->first->size()-1);
     
     if (size < requiredSize)
