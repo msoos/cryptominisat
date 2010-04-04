@@ -1301,7 +1301,7 @@ const bool Subsumer::hyperBinRes()
     uint32_t hyperBinAdded = 0;
     uint32_t hyperBinUnitary = 0;
     vec<ClauseSimp> addToClauses;
-    
+    uint64_t totalClausesChecked = 0;
 
     vec<Var> varsToCheck;
     
@@ -1316,6 +1316,9 @@ const bool Subsumer::hyperBinRes()
     }
     
     for (Var test = 0; test < 2*varsToCheck.size(); test++) if (solver.assigns[test/2] == l_Undef && solver.decision_var[test/2]) {
+        if (totalClausesChecked > 5000000)
+            break;
+        
         inside.setZero();
         Lit lit(varsToCheck[test/2], test&1);
         #ifdef HYPER_DEBUG
@@ -1344,6 +1347,7 @@ const bool Subsumer::hyperBinRes()
         }
         
         if (sum < clauses.size()) {
+            totalClausesChecked += sum;
             for (uint32_t add = 0; add < addedToInside.size(); add++) {
                 vec<ClauseSimp>& iter = occur[addedToInside[add].toInt()];
                 if (!hyperUtility(iter, lit, inside, addToClauses, hyperBinAdded, hyperBinUnitary))
