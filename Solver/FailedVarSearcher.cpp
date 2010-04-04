@@ -114,7 +114,6 @@ const bool FailedVarSearcher::search(uint64_t numProps)
             failed = (solver.propagate(false) != NULL);
             if (failed) {
                 solver.cancelUntil(0);
-                //std::cout << "Var " << i << " fails l_False" << std::endl;
                 numFailed++;
                 solver.uncheckedEnqueue(Lit(var, false));
                 solver.ok = (solver.propagate(false) == NULL);
