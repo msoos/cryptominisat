@@ -1828,13 +1828,6 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         lastFullRestart = starts;
         
         /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
-            for (uint i = 0; i < clauses.size(); i++) {
-                Clause& c = *clauses[i];
-                detachClause(c);
-                std::sort(c.getData(), c.getData()+c.size());
-                attachClause(c);
-            }
-            
             XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
             if (!xorFinder.doNoPart(3, 10))
                 return false;
