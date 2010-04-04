@@ -1889,8 +1889,7 @@ inline void Solver::performStepsBeforeSolve()
         
     if (xorclauses.size() > 1) {
         if (heuleProcess) {
-            if (conglomerate->heuleProcessFull() == false)
-                return;
+            if (!conglomerate->heuleProcessFull()) return;
             
             while (performReplace && varReplacer->needsReplace()) {
                 if (!varReplacer->performReplace()) return;
