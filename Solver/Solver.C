@@ -611,40 +611,10 @@ const lbool Solver::calculateDefaultPolarities()
             #endif //VERBOSE_DEBUG_POLARITIES
         }
         
-        uint propagated = 0;
-        uint removed = 0;
-        
-        if (!libraryUsage && failedVarSearch) {
-            for (uint i = 0; i != nVars(); i++) if (decision_var[i] && assigns[i] == l_Undef) {
-                assert(!conglomerate->getRemovedVars()[i]);
-                assert(partHandler->getSavedState()[i] == l_Undef);
-                if (!positiveLiteral[i] && negativeLiteral[i]) {
-                    uncheckedEnqueue(Lit(i, true));
-                    propagated++;
-                } else if (positiveLiteral[i] && !negativeLiteral[i]) {
-                    uncheckedEnqueue(Lit(i, false));
-                    propagated++;
-                }
-                else if (!positiveLiteral[i] && !negativeLiteral[i]) {
-                    setDecisionVar(i, false);
-                    removed++;
-                }
-            }
-            
-            if (propagated) {
-                ok =  (propagate() == NULL);
-                if (!ok) return l_False;
-            }
-            if (removed)
-                order_heap.filter(VarFilter(*this));
-        }
-        
         if (verbosity >= 1) {
             std::cout << "c |  Calc-ed default polarities: "
-            << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s" <<
-            " Removed vars: " << std::fixed << std::setw(6) << std::setprecision(2) << removed <<
-            " Propagated vars: " << std::fixed << std::setw(6) << std::setprecision(2) << propagated <<
-            "    |" << std:: endl;
+            << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s"
+            << "    |" << std:: endl;
         }
     } else if (polarity_mode != polarity_manual){
         for (uint i = 0; i != defaultPolarities.size(); i++) {
