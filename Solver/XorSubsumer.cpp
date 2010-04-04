@@ -260,7 +260,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     
     addBackToSolver();
     
-    std::cout << "c xorclauses-subsumed: " << std::setw(9) << clauses_subsumed
+    std::cout << "c | xorclauses-subsumed: " << std::setw(9) << clauses_subsumed
     << " xorclauses-cut: " << std::setw(9) << clauses_cut
     << " vars fixed: " << std::setw(3) <<solver.trail.size() - origTrailSize
     << " time: " << std::setw(5) << std::setprecision(2) << (cpuTime() - myTime)
