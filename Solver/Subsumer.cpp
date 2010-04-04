@@ -335,12 +335,12 @@ void Subsumer::subsume1(ClauseSimp& ps)
                 } else {
                     assert(cl.size() == 1);
                     solver.uncheckedEnqueue(cl[0]);
-                    /*solver.ok = (solver.propagate() == NULL);
+                    solver.ok = (solver.propagate() == NULL);
                     if (!solver.ok) {
                         unregisterIteration(Q);
                         unregisterIteration(subs);
                         return;
-                    }*/
+                    }
                     #ifdef VERBOSE_DEBUG
                     cout << "Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                     #endif
