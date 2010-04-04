@@ -1746,10 +1746,6 @@ inline void Solver::chooseRestartType(const uint& lastFullRestart)
             restartType = tmp;
             restartTypeChooser->reset();
         }
-    } else {
-        #ifdef VERBOSE_DEBUG
-        restartTypeChooser.choose();
-        #endif
     }
 }
 

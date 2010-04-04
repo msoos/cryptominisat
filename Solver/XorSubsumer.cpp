@@ -38,7 +38,7 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
     assert(solver.xorclauses.size() ==  0);
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
-    ps.plainPrint();
+    ps.clause->plainPrint();
     cout << "pointer:" << &ps << endl;
     #endif
     

@@ -233,10 +233,6 @@ void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::C
     }
     
     lastNumUnitaryClean[type] = solver.get_unitary_learnts_num();
-    
-    #ifdef VERBOSE_DEBUG
-    cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << endl;
-    #endif
 }
 
 inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& subs)
@@ -303,10 +299,6 @@ void ClauseCleaner::cleanXorClausesBewareNULL(vec<XorClauseSimp>& cs, ClauseClea
     }
     
     lastNumUnitaryClean[type] = solver.get_unitary_learnts_num();
-    
-    #ifdef VERBOSE_DEBUG
-    cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << endl;
-    #endif
 }
 
 inline const bool ClauseCleaner::cleanXorClauseBewareNULL(XorClauseSimp cc, XorSubsumer& subs)
