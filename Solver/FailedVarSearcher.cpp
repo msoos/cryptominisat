@@ -144,8 +144,13 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     //For 2-long xor (rule 6 of  Equivalent literal propagation in the DLL procedure by Chu-Min Li)
     set<TwoLongXor> twoLongXors;
     uint32_t toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
-    addFromSolver(solver.xorclauses);
     uint32_t lastTrailSize = solver.trail.size();
+    bool binXorFind = true;
+    if (solver.xorclauses.size() < 5 ||
+        solver.xorclauses.size() > 50000 ||
+        solver.nVars() > 30000)
+        binXorFind = false;
+    if (binXorFind) addFromSolver(solver.xorclauses);
     
     finishedLastTime = true;
     lastTimeWentUntil = solver.nVars();
@@ -157,12 +162,14 @@ const bool FailedVarSearcher::search(uint64_t numProps)
                 break;
             }
             
-            if (lastTrailSize < solver.trail.size()) {
-                for (uint32_t i = lastTrailSize; i != solver.trail.size(); i++) {
-                    removeVarFromXors(solver.trail[i].var());
+            if (binXorFind) {
+                if (lastTrailSize < solver.trail.size()) {
+                    for (uint32_t i = lastTrailSize; i != solver.trail.size(); i++) {
+                        removeVarFromXors(solver.trail[i].var());
+                    }
                 }
+                lastTrailSize = solver.trail.size();
             }
-            lastTrailSize = solver.trail.size();
             
             propagated.setZero();
             twoLongXors.clear();
@@ -187,16 +194,18 @@ const bool FailedVarSearcher::search(uint64_t numProps)
                     else
                         propValue.clearBit(x);
                     
-                    removeVarFromXors(x);
+                    if (binXorFind) removeVarFromXors(x);
                 }
                 
-                uint32_t i = 0;
-                for (uint32_t *it = xorClauseSizes.getData(), *end = it + xorClauseSizes.size(); it != end; it++, i++) {
-                    if (*it == 2)
-                        twoLongXors.insert(getTwoLongXor(*solver.xorclauses[i]));
-                }
-                for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-                    addVarFromXors(solver.trail[c].var());
+                if (binXorFind) {
+                    uint32_t i = 0;
+                    for (uint32_t *it = xorClauseSizes.getData(), *end = it + xorClauseSizes.size(); it != end; it++, i++) {
+                        if (*it == 2)
+                            twoLongXors.insert(getTwoLongXor(*solver.xorclauses[i]));
+                    }
+                    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+                        addVarFromXors(solver.trail[c].var());
+                    }
                 }
                 
                 solver.cancelUntil(0);
@@ -218,26 +227,28 @@ const bool FailedVarSearcher::search(uint64_t numProps)
                     Var     x  = solver.trail[c].var();
                     if (propagated[x] && propValue[x] == solver.assigns[x].getBool())
                         bothSame.push_back(make_pair(x, !propValue[x]));
-                    removeVarFromXors(x);
+                    if (binXorFind) removeVarFromXors(x);
                 }
                 
-                if (twoLongXors.size() > 0) {
-                    uint32_t i = 0;
-                    for (uint32_t *it = xorClauseSizes.getData(), *end = it + xorClauseSizes.size(); it != end; it++, i++) {
-                        if (*it == 2) {
-                            TwoLongXor tmp = getTwoLongXor(*solver.xorclauses[i]);
-                            if (twoLongXors.find(tmp) != twoLongXors.end()) {
-                                vec<Lit> ps(2);
-                                ps[0] = Lit(tmp.var[0], false);
-                                ps[1] = Lit(tmp.var[1], false);
-                                if (!solver.varReplacer->replace(ps, tmp.inverted, 0))
-                                    goto end;
+                if (binXorFind) {
+                    if (twoLongXors.size() > 0) {
+                        uint32_t i = 0;
+                        for (uint32_t *it = xorClauseSizes.getData(), *end = it + xorClauseSizes.size(); it != end; it++, i++) {
+                            if (*it == 2) {
+                                TwoLongXor tmp = getTwoLongXor(*solver.xorclauses[i]);
+                                if (twoLongXors.find(tmp) != twoLongXors.end()) {
+                                    vec<Lit> ps(2);
+                                    ps[0] = Lit(tmp.var[0], false);
+                                    ps[1] = Lit(tmp.var[1], false);
+                                    if (!solver.varReplacer->replace(ps, tmp.inverted, 0))
+                                        goto end;
+                                }
                             }
                         }
                     }
-                }
-                for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-                    addVarFromXors(solver.trail[c].var());
+                    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+                        addVarFromXors(solver.trail[c].var());
+                    }
                 }
                 
                 solver.cancelUntil(0);
