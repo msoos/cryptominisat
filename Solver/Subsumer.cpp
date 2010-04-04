@@ -50,7 +50,6 @@ void Subsumer::extendModel(Solver& solver2)
     typedef map<Var, vector<vector<Lit> > > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
         Var var = it->first;
-        solver2.setDecisionVar(var, true);
         for (vector<vector<Lit> >::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
             tmp.clear();
             tmp.growTo(it2->size());
