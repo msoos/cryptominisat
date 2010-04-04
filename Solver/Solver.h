@@ -134,7 +134,7 @@ public:
     bool      doPartHandler;        // Should try to subsume clauses
     bool      doHyperBinRes;        // Should try carry out hyper-binary resolution
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
-    bool      noLibraryUsage;       // Set true if not used as a library
+    bool      libraryUsage;         // Set true if not used as a library
     bool      sateliteUsed;         // whether satielite was used on CNF before calling
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)

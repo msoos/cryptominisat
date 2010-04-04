@@ -78,7 +78,7 @@ Solver::Solver() :
         , doPartHandler    (true)
         , doHyperBinRes    (true)
         , failedVarSearch  (true)
-        , noLibraryUsage   (false)
+        , libraryUsage     (true)
         , sateliteUsed     (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
@@ -267,7 +267,7 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     default: {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
         XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
-        if (noLibraryUsage || !sateliteUsed) c->unsetVarChanged();
+        if (!libraryUsage || !sateliteUsed) c->unsetVarChanged();
         
         xorclauses.push(c);
         attachClause(*c);
@@ -327,7 +327,7 @@ Clause* Solver::addClauseInt(T& ps, uint group)
     
     learnt_clause_group = std::max(group+1, learnt_clause_group);
     Clause* c = Clause_new(ps, group);
-    if (noLibraryUsage || !sateliteUsed) c->unsetVarChanged();
+    if (!libraryUsage || !sateliteUsed) c->unsetVarChanged();
     attachClause(*c);
     
     return c;
@@ -613,7 +613,7 @@ const lbool Solver::calculateDefaultPolarities()
         uint propagated = 0;
         uint removed = 0;
         
-        if (noLibraryUsage && failedVarSearch) {
+        if (!libraryUsage && failedVarSearch) {
             for (uint i = 0; i != nVars(); i++) if (decision_var[i] && assigns[i] == l_Undef) {
                 assert(!conglomerate->getRemovedVars()[i]);
                 assert(partHandler->getSavedState()[i] == l_Undef);
@@ -1901,7 +1901,7 @@ inline void Solver::performStepsBeforeSolve()
     }
     
     if (doSubsumption
-        && noLibraryUsage
+        && !libraryUsage
         && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
         && !subsumer->simplifyBySubsumption((clauses.size() + binaryClauses.size() < 200000)))
         return;

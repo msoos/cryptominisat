@@ -608,7 +608,7 @@ int main(int argc, char** argv)
     }
     argc = j;
     if (!debugLib)
-        S.noLibraryUsage = true;
+        S.libraryUsage = false;
     else
         S.sateliteUsed = false;
     
