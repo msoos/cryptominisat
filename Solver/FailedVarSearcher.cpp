@@ -266,14 +266,14 @@ const bool FailedVarSearcher::search(uint64_t numProps)
 
 end:
     //Restoring Solver state
-    if (solver.verbosity >= 1) {
+    //if (solver.verbosity >= 1) {
         std::cout << "c |  Failvars: "<< std::setw(5) << numFailed <<
         "     Bprop vars: " << std::setw(6) << goodBothSame <<
         " Replaced: " << std::setw(3) << (solver.varReplacer->getNewToReplaceVars() - toReplaceBefore) <<
         " Props: " << std::setw(8) << std::setprecision(2) << (int)solver.propagations - (int)origProps  <<
         " Time: " << std::setw(6) << std::fixed << std::setprecision(2) << cpuTime() - time <<
         std::setw(5) << " |" << std::endl;
-    }
+    //}
     
     if (solver.ok && (numFailed || goodBothSame)) {
         double time = cpuTime();
