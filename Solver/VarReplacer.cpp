@@ -387,8 +387,6 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
     
     //Detect circle
     if (alreadyIn(var, lit)) return solver.ok;
-    replacedVars++;
-    addBinaryXorClause(ps, xor_clause_inverted, group);
     
     Lit lit1 = table[var];
     bool inverted = false;
@@ -408,7 +406,6 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
         //Inversion is also set, triangular cycle
         //A->B, A->C, B->C. There is nothing to add
         if (lit1.var() == lit2.var()) {
-            replacedVars--;
             if ((lit1.sign() ^ lit2.sign()) != lit.sign()) {
                 #ifdef VERBOSE_DEBUG
                 cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
@@ -427,6 +424,8 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
             setAllThatPointsHereTo(lit2.var(), lit ^ lit2.sign());
             
             table[lit.var()] = Lit(lit.var(), false);
+            replacedVars++;
+            addBinaryXorClause(ps, xor_clause_inverted, group);
             return true;
         }
     }
@@ -438,6 +437,8 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
     
     //Follow backwards
     setAllThatPointsHereTo(var, lit);
+    replacedVars++;
+    addBinaryXorClause(ps, xor_clause_inverted, group);
     
     return true;
 }
