@@ -1234,7 +1234,7 @@ const bool Subsumer::hyperBinRes()
         varsToCheck.push(tmp.removeMin());
     }
     
-    for (Var test = 0; test < 2*varsToCheck.size(); test++) {
+    for (Var test = 0; test < 2*varsToCheck.size(); test++) if (solver.assigns[test/2] == l_Undef && solver.decision_var[test/2]) {
         inside.setZero();
         Lit lit(varsToCheck[test/2], test&1);
         #ifdef HYPER_DEBUG
