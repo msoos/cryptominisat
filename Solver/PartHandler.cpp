@@ -94,7 +94,6 @@ const bool PartHandler::handle()
                 newSolver.newVar(false);
             }
         }
-        solver.order_heap.filter(Solver::VarFilter(solver));
         
         assert(solver.varReplacer->getClauses().size() == 0);
         moveClauses(solver.clauses, newSolver, part, partFinder);
@@ -102,22 +101,63 @@ const bool PartHandler::handle()
         moveClauses(solver.xorclauses, newSolver, part, partFinder);
         moveLearntClauses(solver.binaryClauses, newSolver, part, partFinder);
         moveLearntClauses(solver.learnts, newSolver, part, partFinder);
+        assert(checkClauseMovement(newSolver, part, partFinder));
         
         lbool status = newSolver.solve();
         if (status == l_False)
             return false;
         assert(status != l_Undef);
         
-        for (uint32_t i = 0; i < newSolver.nVars(); i++) {
-            if (newSolver.model[i] != l_Undef) {
-                assert(savedState[i] == l_Undef);
-                savedState[i] = newSolver.model[i];
+        for (Var var = 0; var < newSolver.nVars(); var++) {
+            if (newSolver.model[var] != l_Undef) {
+                assert(savedState[var] == l_Undef);
+                assert(partFinder.getVarPart(var) == part);
+                savedState[var] = newSolver.model[var];
             }
         }
         
         std::cout << "c Solved part" << std::endl;
     }
     std::cout << "c Coming back to original instance" << std::endl;
+    solver.order_heap.filter(Solver::VarFilter(solver));
+    
+    //Checking that all variables that are not in the remaining part are all non-decision vars, and none have been set
+    for (Var var = 0; var < solver.nVars(); var++) {
+        if (savedState[var] != l_Undef) {
+            assert(solver.decision_var[var] == false);
+            assert(solver.assigns[var] == l_Undef);
+        }
+    }
+    
+    //Checking that all remaining clauses contain only variables that are in the remaining part
+    assert(checkClauseMovement(solver, sizes[sizes.size()-1].first, partFinder));
+    
+    return true;
+}
+
+const bool PartHandler::checkClauseMovement(const Solver& thisSolver, const uint32_t part, const PartFinder& partFinder) const
+{
+    if (!checkOnlyThisPart(thisSolver.clauses, part, partFinder))
+        return false;
+    if (!checkOnlyThisPart(thisSolver.learnts, part, partFinder))
+        return false;
+    if (!checkOnlyThisPart(thisSolver.binaryClauses, part, partFinder))
+        return false;
+    if (!checkOnlyThisPart(thisSolver.xorclauses, part, partFinder))
+        return false;
+    
+    return true;
+}
+
+template<class T>
+const bool PartHandler::checkOnlyThisPart(const vec<T*>& cs, const uint32_t part, const PartFinder& partFinder) const
+{
+    for(T * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
+        const T& c = **it;
+        for(const Lit *l = c.getData(), *end2 = l + c.size(); l != end2; l++) {
+            if (partFinder.getVarPart(l->var()) != part) return false;
+        }
+    }
     
     return true;
 }
@@ -174,7 +214,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
                 #endif
                 
                 removed = true;
-                solver.removeClause(**i);
+                solver.removeClause(c);
                 break;
             }
         }
@@ -184,7 +224,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
             std::cout << "Learnt clause in this part!" << std::endl;
             #endif
             
-            solver.detachClause(**i);
+            solver.detachClause(c);
             newSolver.addLearntClause(c, c.getGroup(), c.activity());
             free(*i);
         } else {

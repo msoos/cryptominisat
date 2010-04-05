@@ -50,6 +50,11 @@ class PartHandler
         void moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
         void moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
         
+        //Checking moved clauses
+        const bool checkClauseMovement(const Solver& thisSolver, const uint32_t part, const PartFinder& partFinder) const;
+        template<class T>
+        const bool checkOnlyThisPart(const vec<T*>& cs, const uint32_t part, const PartFinder& partFinder) const;
+        
         Solver& solver;
         vec<lbool> savedState;
         vec<Var> decisionVarRemoved; //variables whose decision-ness has been removed
