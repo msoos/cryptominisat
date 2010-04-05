@@ -55,14 +55,13 @@ const bool PartFinder::findParts()
     reverseTable.clear();
     part_no = 0;
     
-    solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
-    solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::xorclauses);
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::xorclauses);
+    solver.clauseCleaner->removeAndCleanAll(true);
     if (solver.ok == false) return false;
-    
     while (solver.varReplacer->getNewToReplaceVars() > 0) {
         if (solver.performReplace && !solver.varReplacer->performReplace(true))
             return false;
+        solver.clauseCleaner->removeAndCleanAll(true);
+        if (solver.ok == false) return false;
     }
     assert(solver.varReplacer->getClauses().size() == 0);
     
