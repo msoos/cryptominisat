@@ -40,10 +40,10 @@ class PartFinder {
         PartFinder(Solver& solver);
         const bool findParts();
         
-        const map<uint, vector<Var> >& getReverseTable(); // part->var
-        const uint getVarPart(const Var var);
-        const vector<uint>& getTable(); //var -> part
-        const vector<Var>& getPartVars(const uint part);
+        const map<uint32_t, vector<Var> >& getReverseTable() const; // part->var
+        const uint32_t getVarPart(const Var var) const;
+        const vector<uint32_t>& getTable() const; //var -> part
+        const vector<Var>& getPartVars(const uint32_t part);
     
     private:
         const uint setParts();
@@ -62,29 +62,29 @@ class PartFinder {
         template<class T>
         void calcIn(const vec<T*>& cs, vector<uint>& numClauseInPart, vector<uint>& sumLitsInPart);
         
-        map<uint, vector<Var> > reverseTable; //part -> vars
+        map<uint32_t, vector<Var> > reverseTable; //part -> vars
         vector<uint32_t> table; //var -> part
-        uint part_no;
+        uint32_t part_no;
         
         Solver& solver;
 };
 
-inline const map<uint, vector<Var> >& PartFinder::getReverseTable()
+inline const map<uint32_t, vector<Var> >& PartFinder::getReverseTable() const
 {
     return reverseTable;
 }
 
-inline const vector<Var>& PartFinder::getTable()
+inline const vector<Var>& PartFinder::getTable() const
 {
     return table;
 }
 
-inline const uint PartFinder::getVarPart(const Var var)
+inline const uint32_t PartFinder::getVarPart(const Var var) const
 {
     return table[var];
 }
 
-inline const vector<Var>& PartFinder::getPartVars(const uint part)
+inline const vector<Var>& PartFinder::getPartVars(const uint32_t part)
 {
     return reverseTable[part];
 }
