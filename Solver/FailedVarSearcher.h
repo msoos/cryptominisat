@@ -57,7 +57,7 @@ class FailedVarSearcher {
         
     private:
         const TwoLongXor getTwoLongXor(const XorClause& c);
-        void addFromSolver(vec<XorClause*>& cs);
+        void addFromSolver(const vec<XorClause*>& cs);
         
         Solver& solver;
         

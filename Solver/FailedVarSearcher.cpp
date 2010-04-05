@@ -40,7 +40,7 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
 {
 }
 
-void FailedVarSearcher::addFromSolver(vec< XorClause* >& cs)
+void FailedVarSearcher::addFromSolver(const vec< XorClause* >& cs)
 {
     xorClauseSizes.clear();
     xorClauseSizes.growTo(cs.size());
@@ -50,7 +50,7 @@ void FailedVarSearcher::addFromSolver(vec< XorClause* >& cs)
     }
     
     uint32_t i = 0;
-    for (XorClause **it = cs.getData(), **end = it + cs.size(); it !=  end; it++, i++) {
+    for (XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it !=  end; it++, i++) {
         if (it+1 != end)
             __builtin_prefetch(*(it+1), 1, 1);
         
