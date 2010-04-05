@@ -52,6 +52,7 @@ class PartHandler
         
         Solver& solver;
         vec<lbool> savedState;
+        vec<Var> decisionVarRemoved; //variables whose decision-ness has been removed
 };
 
 inline const vec<lbool>& PartHandler::getSavedState()

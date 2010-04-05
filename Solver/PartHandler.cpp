@@ -81,12 +81,13 @@ const bool PartHandler::handle()
         uint32_t i2 = 0;
         for (uint32_t var = 0; var < solver.nVars(); var++) {
             if (i2 < vars.size() && vars[i2] == var) {
-                newSolver.newVar(true);
+                newSolver.newVar(solver.decision_var[var]);
                 newSolver.activity[var] = solver.activity[var];
                 newSolver.defaultPolarities[var] = solver.polarity[var];
                 newSolver.order_heap.update(var);
                 assert(partFinder.getVarPart(var) == part);
                 solver.setDecisionVar(var, false);
+                if (solver.decision_var[var]) decisionVarRemoved.push(var);
                 i2++;
             } else {
                 assert(partFinder.getVarPart(var) != part);
@@ -205,5 +206,9 @@ void PartHandler::addSavedState()
             solver.assigns[i] = savedState[i];
         }
     }
+    
+    for (uint32_t var = 0; var < decisionVarRemoved.size(); var++)
+        solver.setDecisionVar(var, true);
+    decisionVarRemoved.clear();
 }
 
