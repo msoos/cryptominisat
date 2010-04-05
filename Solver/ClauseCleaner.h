@@ -44,7 +44,7 @@ class ClauseCleaner
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
         void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
-        void removeAndCleanAll();
+        void removeAndCleanAll(const bool nolimit = false);
         bool satisfied(const Clause& c) const;
         bool satisfied(const XorClause& c) const;
         
@@ -58,10 +58,11 @@ class ClauseCleaner
         Solver& solver;
 };
 
-inline void ClauseCleaner::removeAndCleanAll()
+inline void ClauseCleaner::removeAndCleanAll(const bool nolimit)
 {
     //uint limit = std::min((uint)((double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES), FIXCLEANREPLACE);
     uint limit = (double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES;
+    if (nolimit) limit = 0;
     
     removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses, limit);
     cleanClauses(solver.clauses, ClauseCleaner::clauses, limit);
