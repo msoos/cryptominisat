@@ -79,7 +79,7 @@ const bool PartHandler::handle()
         newSolver.polarity_mode = Solver::polarity_manual;
         std::sort(vars.begin(), vars.end());
         uint32_t i2 = 0;
-        for (uint32_t var = 0; var < solver.nVars(); var++) {
+        for (Var var = 0; var < solver.nVars(); var++) {
             if (i2 < vars.size() && vars[i2] == var) {
                 newSolver.newVar(solver.decision_var[var]);
                 newSolver.activity[var] = solver.activity[var];

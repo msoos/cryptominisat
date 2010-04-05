@@ -761,10 +761,10 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     touched_list.clear();
     touched.clear();
     touched.growTo(solver.nVars(), false);
-    for (Var i = 0; i < solver.nVars(); i++) {
-        if (solver.decision_var[i] && solver.assigns[i] == l_Undef) touch(i);
-        occur[2*i].clear(true);
-        occur[2*i+1].clear(true);
+    for (Var var = 0; var < solver.nVars(); var++) {
+        if (solver.decision_var[var] && solver.assigns[var] == l_Undef) touch(var);
+        occur[2*var].clear(true);
+        occur[2*var+1].clear(true);
     }
     
     if (solver.performReplace && !solver.varReplacer->performReplace(true))
@@ -1538,7 +1538,7 @@ void Subsumer::pureLiteralRemoval()
     assert(!solver.libraryUsage);
     
     uint32_t pureLitRemoved = 0;
-    for (uint32_t var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var] && !var_elimed[var]) {
+    for (Var var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var] && !var_elimed[var]) {
         uint32_t numPosClauses = occur[Lit(var, false).toInt()].size();
         uint32_t numNegClauses = occur[Lit(var, true).toInt()].size();
         if (numNegClauses > 0 && numPosClauses > 0) continue;
@@ -1572,7 +1572,7 @@ vector<char> Subsumer::merge()
     
     vector<varDataStruct> varData(solver.nVars());
     
-    for (uint32_t var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var]) {
+    for (Var var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var]) {
         varDataStruct thisVar;
         
         vec<ClauseSimp>& toCountPos = occur[Lit(var, false).toInt()];
@@ -1597,9 +1597,9 @@ vector<char> Subsumer::merge()
     }
     
     map<varDataStruct, vector<Var> > dataToVar;
-    for (uint32_t i = 0; i < solver.nVars(); i++) if (solver.decision_var[i] && solver.assigns[i] == l_Undef) {
-        dataToVar[varData[i]].push_back(i);
-        assert(dataToVar[varData[i]].size() > 0);
+    for (Var var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef) {
+        dataToVar[varData[var]].push_back(var);
+        assert(dataToVar[varData[var]].size() > 0);
     }
     
     for (map<varDataStruct, vector<Var> >::iterator it = dataToVar.begin(); it != dataToVar.end(); it++) {

@@ -45,8 +45,8 @@ void FailedVarSearcher::addFromSolver(const vec< XorClause* >& cs)
     xorClauseSizes.clear();
     xorClauseSizes.growTo(cs.size());
     occur.resize(solver.nVars());
-    for (uint32_t i = 0; i < solver.nVars(); i++) {
-        occur[i].clear();
+    for (Var var = 0; var < solver.nVars(); var++) {
+        occur[var].clear();
     }
     
     uint32_t i = 0;

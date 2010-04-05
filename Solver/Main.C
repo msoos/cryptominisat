@@ -684,9 +684,9 @@ int main(int argc, char** argv)
             printf("c SAT\n");
             fprintf(res, "SAT\n");
             if (printResult) {
-                for (uint32_t i = 0; i != S.nVars(); i++)
-                    if (S.model[i] != l_Undef)
-                        fprintf(res, "%s%d ", (S.model[i] == l_True)? "" : "-", i+1);
+                for (Var var = 0; var != S.nVars(); var++)
+                    if (S.model[var] != l_Undef)
+                        fprintf(res, "%s%d ", (S.model[var] == l_True)? "" : "-", i+1);
                     fprintf(res, "0\n");
             }
         } else if (ret == l_False) {
@@ -705,9 +705,9 @@ int main(int argc, char** argv)
         
         if(ret == l_True && printResult) {
             printf("v ");
-            for (uint32_t i = 0; i != S.nVars(); i++)
-                if (S.model[i] != l_Undef)
-                    printf("%s%d ", (S.model[i]==l_True)?"":"-", i+1);
+            for (Var var = 0; var != S.nVars(); var++)
+                if (S.model[var] != l_Undef)
+                    printf("%s%d ", (S.model[var] == l_True)? "" : "-", i+1);
                 printf("0\n");
         }
     }

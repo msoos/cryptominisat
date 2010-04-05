@@ -184,8 +184,8 @@ void XorSubsumer::addBackToSolver()
             clauses[i].clause->unsetVarChanged();
         }
     }
-    for (uint32_t i = 0; i < solver.nVars(); i++) {
-        occur[i].clear();
+    for (Var var = 0; var < solver.nVars(); var++) {
+        occur[var].clear();
     }
     clauses.clear();
     clauseID = 0;
@@ -199,8 +199,8 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     clauses_cut = 0;
     clauseID = 0;
     
-    for (Var i = 0; i < solver.nVars(); i++) {
-        //occur[i].clear(true);
+    for (Var var = 0; var < solver.nVars(); var++) {
+        //occur[var].clear(true);
         newVar();
     }
     
