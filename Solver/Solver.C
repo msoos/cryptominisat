@@ -1124,7 +1124,7 @@ Clause* Solver::propagate_xors(const Lit& p)
         cout << endl;
         #endif
         bool final = c.xor_clause_inverted();
-        for (int k = 0, size = c.size(); k != size; k++ ) {
+        for (uint32_t k = 0, size = c.size(); k != size; k++ ) {
             const lbool& val = assigns[c[k].var()];
             if (val.isUndef() && k >= 2) {
                 Lit tmp(c[1]);
