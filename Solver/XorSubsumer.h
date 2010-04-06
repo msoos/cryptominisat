@@ -1,5 +1,6 @@
 /**************************************************************************************************
-From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
+Originally From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
+Substantially modified by: Mate Soos (2010)
 **************************************************************************************************/
 
 #ifndef XORSIMPLIFIER_H
