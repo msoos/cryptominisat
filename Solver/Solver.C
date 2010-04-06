@@ -973,7 +973,7 @@ void Solver::uncheckedEnqueue(Lit p, ClausePtr from)
 Clause* Solver::propagate(const bool update)
 {
     Clause* confl = NULL;
-    int     num_props = 0;
+    uint32_t num_props = 0;
     
     #ifdef VERBOSE_DEBUG
     cout << "Propagation started" << endl;
