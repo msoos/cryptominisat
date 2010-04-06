@@ -452,9 +452,9 @@ int main(int argc, char** argv)
     Solver      S;
     S.verbosity = 1;
 
-    int         i, j;
     const char* value;
-    for (i = j = 0; i < argc; i++) {
+    int j = 0;
+    for (int i = 0; i < argc; i++) {
         if ((value = hasPrefix(argv[i], "-polarity-mode="))) {
             if (strcmp(value, "true") == 0)
                 S.polarity_mode = Solver::polarity_true;
@@ -686,7 +686,7 @@ int main(int argc, char** argv)
             if (printResult) {
                 for (Var var = 0; var != S.nVars(); var++)
                     if (S.model[var] != l_Undef)
-                        fprintf(res, "%s%d ", (S.model[var] == l_True)? "" : "-", i+1);
+                        fprintf(res, "%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
                     fprintf(res, "0\n");
             }
         } else if (ret == l_False) {
@@ -707,7 +707,7 @@ int main(int argc, char** argv)
             printf("v ");
             for (Var var = 0; var != S.nVars(); var++)
                 if (S.model[var] != l_Undef)
-                    printf("%s%d ", (S.model[var] == l_True)? "" : "-", i+1);
+                    printf("%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
                 printf("0\n");
         }
     }
