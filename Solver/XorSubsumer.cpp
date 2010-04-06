@@ -246,13 +246,15 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         solver.clauseCleaner->cleanXorClausesBewareNULL(clauses, ClauseCleaner::xorSimpClauses, *this);
         if (!solver.ok) return false;
         
-        addBackToSolver();
-        while (solver.performReplace && solver.varReplacer->needsReplace()) {
-            replaced = true;
-            if (!solver.varReplacer->performReplace())
-                return false;
+        if (solver.performReplace && solver.varReplacer->needsReplace()) {
+            addBackToSolver();
+            while (solver.performReplace && solver.varReplacer->needsReplace()) {
+                replaced = true;
+                if (!solver.varReplacer->performReplace())
+                    return false;
+            }
+            addFromSolver(solver.xorclauses);
         }
-        addFromSolver(solver.xorclauses);
     }
     
     if (solver.trail.size() - origTrailSize > 0)
