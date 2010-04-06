@@ -198,6 +198,10 @@ template<class T>
 bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
+    if (ps.size() > (0x01UL << 18)) {
+        std::cout << "Too long clause!" << std::endl;
+        exit(-1);
+    }
     
     if (libraryCNFFile) {
         fprintf(libraryCNFFile, "x");
@@ -336,6 +340,10 @@ template<class T>
 bool Solver::addClause(T& ps, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
+    if (ps.size() > (0x01UL << 18)) {
+        std::cout << "Too long clause!" << std::endl;
+        exit(-1);
+    }
     
     if (libraryCNFFile) {
         for (uint32_t i = 0; i != ps.size(); i++) {
