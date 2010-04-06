@@ -86,8 +86,10 @@ const bool PartHandler::handle()
                 newSolver.defaultPolarities[var] = solver.polarity[var];
                 newSolver.order_heap.update(var);
                 assert(partFinder.getVarPart(var) == part);
-                solver.setDecisionVar(var, false);
-                if (solver.decision_var[var]) decisionVarRemoved.push(var);
+                if (solver.decision_var[var]) {
+                    solver.setDecisionVar(var, false);
+                    if (solver.decision_var[var]) decisionVarRemoved.push(var);
+                }
                 i2++;
             } else {
                 assert(partFinder.getVarPart(var) != part);
