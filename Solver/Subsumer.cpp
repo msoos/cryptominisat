@@ -356,6 +356,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     linkInAlreadyClause(c);
                     clauses[c.index] = c;
                     solver.attachClause(cl);
+                    if (cl.size() == 2) solver.becameBinary++;
                     updateClause(c);
                     Q.push(c);
                 } else {
@@ -1376,6 +1377,7 @@ const bool Subsumer::hyperBinRes()
                 ClauseSimp cc(c, addToClauses[i].index);
                 clauses[cc.index] = cc;
                 linkInAlreadyClause(cc);
+                solver.becameBinary++; //since this binary did not exist, and now it exists.
                 subsume1(cc);
             }
             if (!solver.ok) return false;
