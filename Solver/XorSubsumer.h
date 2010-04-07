@@ -43,10 +43,8 @@ private:
     
     // Subsumption:
     void findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed);
-    void findSubsumed(const vec<Lit>& ps, const uint32_t abst, vec<XorClauseSimp>& out_subsumed);
     bool isSubsumed(XorClause& ps);
     void subsume0(XorClauseSimp& ps);
-    void almost_all_database();
     template<class T1, class T2>
     bool subset(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
