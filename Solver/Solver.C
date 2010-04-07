@@ -978,7 +978,7 @@ Clause* Solver::propagate(const bool update)
     #ifdef VERBOSE_DEBUG
     cout << "Propagation started" << endl;
     #endif
-    uint qheadBin = qhead;
+    uint32_t qheadBin = qhead;
 
     while (qhead < trail.size()) {
         
