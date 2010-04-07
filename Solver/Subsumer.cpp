@@ -1544,8 +1544,6 @@ void Subsumer::verifyIntegrity()
 
 void Subsumer::pureLiteralRemoval()
 {
-    assert(!solver.libraryUsage);
-    
     for (Var var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var] && !var_elimed[var]) {
         uint32_t numPosClauses = occur[Lit(var, false).toInt()].size();
         uint32_t numNegClauses = occur[Lit(var, true).toInt()].size();
@@ -1558,28 +1556,55 @@ void Subsumer::pureLiteralRemoval()
             continue;
         }
         
-        if (!solver.libraryUsage) {
-            if (numPosClauses == 0 && numNegClauses > 0) {
-                solver.uncheckedEnqueue(Lit(var, true));
-                pureLitsRemoved++;
-                continue;
+        if (numPosClauses == 0 && numNegClauses > 0) {
+            if (solver.decision_var[var]) madeVarNonDecision.push(var);
+            solver.setDecisionVar(var, false);
+            assignVar.push(Lit(var, false));
+            vec<ClauseSimp> occ(occur[Lit(var, true).toInt()]);
+            for (ClauseSimp *it = occ.getData(), *end = occ.getDataEnd(); it != end; it++) {
+                unlinkClause(*it);
+                pureLitClauseRemoved.push(it->clause);
             }
-            
-            if (numNegClauses == 0 && numPosClauses > 0) {
-                solver.uncheckedEnqueue(Lit(var, false));
-                pureLitsRemoved++;
-                continue;
+            pureLitsRemoved++;
+            continue;
+        }
+        
+        if (numNegClauses == 0 && numPosClauses > 0) {
+            if (solver.decision_var[var]) madeVarNonDecision.push(var);
+            solver.setDecisionVar(var, false);
+            assignVar.push(Lit(var, true));
+            vec<ClauseSimp> occ(occur[Lit(var, false).toInt()]);
+            for (ClauseSimp *it = occ.getData(), *end = occ.getDataEnd(); it != end; it++) {
+                unlinkClause(*it);
+                pureLitClauseRemoved.push(it->clause);
             }
+            pureLitsRemoved++;
+            continue;
         }
     }
 }
 
-void Subsumer::undoPureLitRemoval()
+void Subsumer::undoPureLitRemoval(vec<lbool>& model)
 {
+    assert(solver.ok);
+    for (Clause **it = pureLitClauseRemoved.getData(), **end = pureLitClauseRemoved.getDataEnd(); it != end; it++) {
+        solver.addClause(**it, (*it)->getGroup());
+        free(*it);
+        assert(solver.ok);
+    }
+    pureLitClauseRemoved.clear();
+    
     for (uint32_t i = 0; i < madeVarNonDecision.size(); i++) {
         assert(!solver.decision_var[madeVarNonDecision[i]]);
         solver.setDecisionVar(madeVarNonDecision[i], true);
     }
+    madeVarNonDecision.clear();
+    
+    for (Lit *l = assignVar.getData(), *end = assignVar.getDataEnd(); l != end; l++) {
+        assert(model[l->var()] == l_Undef);
+        model[l->var()] = boolToLBool(l->sign());
+    }
+    assignVar.clear();
 }
 
 inline void Subsumer::touchLit(const Lit l)

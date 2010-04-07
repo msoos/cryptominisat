@@ -35,7 +35,7 @@ public:
     void linkInAlreadyClause(ClauseSimp& c);
     void updateClause(ClauseSimp c);
     void newVar();
-    void undoPureLitRemoval();
+    void undoPureLitRemoval(vec<lbool>& model);
     void extendModel(Solver& solver2);
     const bool unEliminate(const Var var);
     const vec<char>& getVarElimed() const;
@@ -117,6 +117,8 @@ private:
     const bool checkIfSame(const Lit var1, const Lit var2);
     void pureLiteralRemoval();
     vec<Var> madeVarNonDecision;
+    vec<Clause*> pureLitClauseRemoved;
+    vec<Lit> assignVar;
     uint32_t pureLitsRemoved;
     
     class LitOcc {
