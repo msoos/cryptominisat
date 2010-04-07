@@ -117,6 +117,7 @@ private:
     const bool checkIfSame(const Lit var1, const Lit var2);
     void pureLiteralRemoval();
     vec<Var> madeVarNonDecision;
+    uint32_t pureLitsRemoved;
     
     class LitOcc {
         public:

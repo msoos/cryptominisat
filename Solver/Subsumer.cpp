@@ -37,6 +37,7 @@ using std::endl;
 Subsumer::Subsumer(Solver& s):
     occur_mode(occ_Permanent)
     , solver(s)
+    , pureLitsRemoved(0)
     , numCalls(0)
     , numElimed(0)
 {
@@ -758,6 +759,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     uint32_t origTrailSize = solver.trail.size();
     clauses_subsumed = 0;
     literals_removed = 0;
+    pureLitsRemoved = 0;
     numCalls++;
     clauseID = 0;
     
@@ -938,6 +940,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     << " vars fixed: " << std::setw(3) <<solver.trail.size() - origTrailSize
     << " time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
     << " |" << std::endl;
+    std::cout << "c |  pureLitsRemoved: " << std::setw(8) << pureLitsRemoved << std::endl;
     
     return true;
 }
@@ -1545,7 +1548,6 @@ void Subsumer::pureLiteralRemoval()
 {
     assert(!solver.libraryUsage);
     
-    uint32_t pureLitRemoved = 0;
     for (Var var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var] && !var_elimed[var]) {
         uint32_t numPosClauses = occur[Lit(var, false).toInt()].size();
         uint32_t numNegClauses = occur[Lit(var, true).toInt()].size();
@@ -1554,26 +1556,24 @@ void Subsumer::pureLiteralRemoval()
         if (numNegClauses == 0 && numPosClauses == 0) {
             if (solver.decision_var[var]) madeVarNonDecision.push(var);
             solver.setDecisionVar(var, false);
-            pureLitRemoved++;
+            pureLitsRemoved++;
             continue;
         }
         
         if (!solver.libraryUsage) {
             if (numPosClauses == 0 && numNegClauses > 0) {
                 solver.uncheckedEnqueue(Lit(var, true));
-                pureLitRemoved++;
+                pureLitsRemoved++;
                 continue;
             }
             
             if (numNegClauses == 0 && numPosClauses > 0) {
                 solver.uncheckedEnqueue(Lit(var, false));
-                pureLitRemoved++;
+                pureLitsRemoved++;
                 continue;
             }
         }
     }
-    
-    std::cout << "c |  Pure lits removed: " << pureLitRemoved << std::endl;
 }
 
 void Subsumer::undoPureLitRemoval()
