@@ -1392,9 +1392,6 @@ lbool Solver::simplify()
         
         lastNbBin = nbBin;
         becameBinary = 0;
-        
-        /*if (failedVarSearch && !failedVarSearcher->search(500000))
-            return l_False;*/
     }
 
     // Remove satisfied clauses:
