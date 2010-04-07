@@ -280,7 +280,7 @@ void XorSubsumer::findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed)
     printf("0\n");
     #endif
     
-    int min_i = 0;
+    uint32_t min_i = 0;
     for (uint32_t i = 1; i < ps.size(); i++){
         if (occur[ps[i].var()].size() < occur[ps[min_i].var()].size())
             min_i = i;
