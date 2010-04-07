@@ -672,7 +672,7 @@ void Subsumer::removeWrong(vec<Clause*>& cs)
 
 void Subsumer::fillCannotEliminate()
 {
-    std::fill(cannot_eliminate.getData(), cannot_eliminate.getData()+cannot_eliminate.size(), false);
+    std::fill(cannot_eliminate.getData(), cannot_eliminate.getDataEnd(), false);
     for (uint32_t i = 0; i < solver.xorclauses.size(); i++) {
         const XorClause& c = *solver.xorclauses[i];
         for (uint32_t i2 = 0; i2 < c.size(); i2++)
