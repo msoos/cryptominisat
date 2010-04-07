@@ -1082,8 +1082,6 @@ bool Subsumer::maybeEliminate(const Var x)
     int before_clauses  = -1;
     int before_literals = -1;
     
-    bool    elimed     = false;
-    
     // Heuristic:
     if (poss.size() >= 8 && negs.size() >= 8)      // <<== CUT OFF
         //  if (poss.size() >= 7 && negs.size() >= 7)      // <<== CUT OFF
