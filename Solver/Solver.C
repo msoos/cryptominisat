@@ -283,7 +283,6 @@ template bool Solver::addXorClause(XorClause& ps, bool xor_clause_inverted, cons
 template<class T>
 bool Solver::addLearntClause(T& ps, const uint group, const uint32_t activity)
 {
-    uint size = clauses.size();
     Clause* c = addClauseInt(ps, group);
     if (c == NULL)
         return ok;
