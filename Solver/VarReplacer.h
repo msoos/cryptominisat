@@ -54,6 +54,7 @@ class VarReplacer
         const vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
         const vec<Clause*>& getClauses() const;
+        const bool varHasBeenReplaced(const Var var) const;
         void newVar();
     
     private:
@@ -124,5 +125,11 @@ inline const vec<Clause*>& VarReplacer::getClauses() const
 {
     return clauses;
 }
+
+inline const bool VarReplacer::varHasBeenReplaced(const Var var) const
+{
+    return table[var].var() != var;
+}
+
 
 #endif //VARREPLACER_H
