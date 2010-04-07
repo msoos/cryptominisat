@@ -112,7 +112,6 @@ public:
 
     // Mode of operation:
     //
-    double    var_decay;          // Inverse of the variable activity decay factor.                                            (default 1 / 0.95)
     double    random_var_freq;    // The frequency with which the decision heuristic tries to choose a random variable.        (default 0.02)
     int       restart_first;      // The initial restart limit.                                                                (default 100)
     double    restart_inc;        // The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
@@ -183,11 +182,11 @@ protected:
     // Helper structures:
     //
     struct VarOrderLt {
-        const vec<double>&  activity;
+        const vec<uint32_t>&  activity;
         bool operator () (Var x, Var y) const {
             return activity[x] > activity[y];
         }
-        VarOrderLt(const vec<double>&  act) : activity(act) { }
+        VarOrderLt(const vec<uint32_t>&  act) : activity(act) { }
     };
 
     friend class VarFilter;
@@ -207,8 +206,8 @@ protected:
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
     vec<XorClause*>     freeLater;        // List of xorclauses to free at the end (due to matrixes, they cannot be freed immediately)
-    vec<double>         activity;         // A heuristic measurement of the activity of a variable.
-    double              var_inc;          // Amount to bump next variable with.
+    vec<uint32_t>       activity;         // A heuristic measurement of the activity of a variable.
+    uint32_t            var_inc;          // Amount to bump next variable with.
     vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<vec<XorClausePtr> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
     vec<vec<WatchedBin> >  binwatches;
@@ -359,18 +358,19 @@ inline void Solver::insertVarOrder(Var x)
 
 inline void Solver::varDecayActivity()
 {
-    var_inc *= var_decay;
+    var_inc *= 11;
+    var_inc /= 10;
 }
 inline void Solver::varBumpActivity(Var v)
 {
-    if ( (activity[v] += var_inc) > 1e100 ) {
+    if ( (activity[v] += var_inc) > (0x1U) << 24 ) {
         //printf("RESCALE!!!!!!\n");
         //std::cout << "var_inc: " << var_inc << std::endl;
         // Rescale:
         for (Var var = 0; var != nVars(); var++) {
-            activity[var] *= 1e-95;
+            activity[var] >>= 14;
         }
-        var_inc *= 1e-100;
+        var_inc >>= 14;
         //var_inc = 1;
         //std::cout << "var_inc: " << var_inc << std::endl;
         

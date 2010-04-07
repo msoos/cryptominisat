@@ -57,7 +57,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 Solver::Solver() :
         // Parameters: (formerly in 'SearchParams')
-        var_decay(1 / 0.95), random_var_freq(0.02)
+        random_var_freq(0.02)
         , restart_first(100), restart_inc(1.5), learntsize_factor((double)1/(double)3), learntsize_inc(1)
 
         // More parameters:
@@ -91,7 +91,7 @@ Solver::Solver() :
         
 
         , ok               (true)
-        , var_inc          (1)
+        , var_inc          (128)
         
         , curRestart       (1)
         , nbclausesbeforereduce (NBCLAUSESBEFOREREDUCE)
@@ -1743,11 +1743,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     Heap<VarOrderLt> backup_order_heap(order_heap);
     vector<bool> backup_polarities = polarity;
     RestartType backup_restartType= restartType;
-    double backup_random_var_freq = random_var_freq;
-    vec<double> backup_activity;
-    backup_activity.growTo(activity.size());
+    uint32_t backup_random_var_freq = random_var_freq;
+    vec<uint32_t> backup_activity(activity.size());
     std::copy(activity.getData(), activity.getDataEnd(), backup_activity.getData());
-    double backup_var_inc = var_inc;
+    uint32_t backup_var_inc = var_inc;
     
     if (verbosity >= 1)
         std::cout << "c | " << std::setw(24) << " " 

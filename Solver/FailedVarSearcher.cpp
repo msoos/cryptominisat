@@ -113,10 +113,9 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     //Saving Solver state
     Heap<Solver::VarOrderLt> backup_order_heap(solver.order_heap);
     vector<bool> backup_polarities = solver.polarity;
-    vec<double> backup_activity;
-    backup_activity.growTo(solver.activity.size());
+    vec<uint32_t> backup_activity(solver.activity.size());
     std::copy(solver.activity.getData(), solver.activity.getDataEnd(), backup_activity.getData());
-    double backup_var_inc = solver.var_inc;
+    uint32_t backup_var_inc = solver.var_inc;
     
     //General Stats
     double time = cpuTime();
