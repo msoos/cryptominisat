@@ -190,6 +190,12 @@ public:
     Lit*    getData     () {
         return data;
     }
+    const Lit*     getDataEnd     () const {
+        return data+size();
+    }
+    Lit*    getDataEnd     () {
+        return data+size();
+    }
     void print() {
         printf("Clause   group: %d, size: %d, learnt:%d, lits: ", getGroup(), size(), learnt());
         plainPrint();
