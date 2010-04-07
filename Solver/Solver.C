@@ -1070,10 +1070,10 @@ Clause* Solver::propagate(const bool update)
                     if (update && c.learnt() && c.activity() > 2) { // GA
                         MYFLAG++;
                         int nbLevels =0;
-                        for(Lit *i = c.getData(), *end = i+c.size(); i != end; i++) {
-                            int l = level[i->var()];
-                            if (permDiff[l] != MYFLAG) {
-                                permDiff[l] = MYFLAG;
+                        for(Lit *l = c.getData(), *end2 = l+c.size(); l != end2; l++) {
+                            int lev = level[l->var()];
+                            if (permDiff[lev] != MYFLAG) {
+                                permDiff[lev] = MYFLAG;
                                 nbLevels++;
                             }
                             
