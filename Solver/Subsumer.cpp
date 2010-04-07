@@ -832,6 +832,11 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             if (!solver.ok) return false;
         }
         
+        pureLiteralRemoval();
+        solver.ok = (solver.propagate() == NULL);
+        if (!solver.ok) return false;
+        solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
+        
         #ifdef BIT_MORE_VERBOSITY
         printf("c VARIABLE ELIMINIATION\n");
         std::cout << "c toucheds list size:" << touched_list.size() << std::endl;
@@ -903,12 +908,6 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     #ifndef DNDEBUG
     verifyIntegrity();
     #endif
-    
-    if (!solver.libraryUsage) {
-        pureLiteralRemoval();
-        solver.ok = (solver.propagate() == NULL);
-        if (!solver.ok) return false;
-    }
     
     //vector<char> var_merged = merge();
     removeWrong(solver.learnts);
@@ -1547,25 +1546,36 @@ void Subsumer::pureLiteralRemoval()
         if (numNegClauses > 0 && numPosClauses > 0) continue;
         
         if (numNegClauses == 0 && numPosClauses == 0) {
+            if (solver.decision_var[var]) madeVarNonDecision.push(var);
             solver.setDecisionVar(var, false);
             pureLitRemoved++;
             continue;
         }
         
-        if (numPosClauses == 0 && numNegClauses > 0) {
-            solver.uncheckedEnqueue(Lit(var, true));
-            pureLitRemoved++;
-            continue;
-        }
-        
-        if (numNegClauses == 0 && numPosClauses > 0) {
-            solver.uncheckedEnqueue(Lit(var, false));
-            pureLitRemoved++;
-            continue;
+        if (!solver.libraryUsage) {
+            if (numPosClauses == 0 && numNegClauses > 0) {
+                solver.uncheckedEnqueue(Lit(var, true));
+                pureLitRemoved++;
+                continue;
+            }
+            
+            if (numNegClauses == 0 && numPosClauses > 0) {
+                solver.uncheckedEnqueue(Lit(var, false));
+                pureLitRemoved++;
+                continue;
+            }
         }
     }
     
     std::cout << "c |  Pure lits removed: " << pureLitRemoved << std::endl;
+}
+
+void Subsumer::undoPureLitRemoval()
+{
+    for (uint32_t i = 0; i < madeVarNonDecision.size(); i++) {
+        assert(!solver.decision_var[madeVarNonDecision[i]]);
+        solver.setDecisionVar(madeVarNonDecision[i], true);
+    }
 }
 
 vector<char> Subsumer::merge()

@@ -33,6 +33,7 @@ public:
     void linkInAlreadyClause(ClauseSimp& c);
     void updateClause(ClauseSimp c);
     void newVar();
+    void undoPureLitRemoval();
     void extendModel(Solver& solver2);
     const bool unEliminate(const Var var);
     const vec<char>& getVarElimed() const;
@@ -113,6 +114,7 @@ private:
     vector<char> merge();
     const bool checkIfSame(const Lit var1, const Lit var2);
     void pureLiteralRemoval();
+    vec<Var> madeVarNonDecision;
     
     //validity checking
     void verifyIntegrity();

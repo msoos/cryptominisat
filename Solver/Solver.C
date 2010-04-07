@@ -2047,6 +2047,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
     #endif
 
     cancelUntil(0);
+    if (doSubsumption) subsumer->undoPureLitRemoval();
+    
     return status;
 }
 
