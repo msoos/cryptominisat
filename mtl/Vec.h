@@ -45,11 +45,13 @@ class vec {
 
     // Don't allow copying (error prone):
     vec<T>&  operator = (vec<T>& other) { assert(0); return *this; }
-             vec        (vec<T>& other) { assert(0); }
+             //vec        (vec<T>& other) { assert(0); }
 
     static inline uint32_t imax(int x, int y) {
         int mask = (y-x) >> (sizeof(int)*8-1);
         return (x&mask) + (y&(~mask)); }
+    
+    void     myCopy (const vec<T>& other);
 
 public:
     // Types:
@@ -61,6 +63,7 @@ public:
     vec(uint32_t size)               : data(NULL) , sz(0)   , cap(0)    { growTo(size); }
     vec(uint32_t size, const T& pad) : data(NULL) , sz(0)   , cap(0)    { growTo(size, pad); }
     vec(T* array, uint32_t size)     : data(array), sz(size), cap(size) { }      // (takes ownership of array -- will be deallocated with 'free()')
+    vec(const vec<T>& other)         : data(NULL) , sz(0)   , cap(0)    { myCopy(other); }
    ~vec(void)                                                      { clear(true); }
 
     // Ownership of underlying array:
@@ -119,6 +122,13 @@ void vec<T>::growTo(uint32_t size) {
     grow(size);
     for (uint32_t i = sz; i != size; i++) new (&data[i]) T();
     sz = size; }
+    
+template<class T>
+void vec<T>::myCopy(const vec<T>& other) {
+    assert(sz == 0);
+    grow(other.size());
+    for (uint32_t i = sz; i != other.size(); i++) new (&data[i]) T(other[i]);
+    sz = other.size(); }
 
 template<class T>
 void vec<T>::clear(bool dealloc) {

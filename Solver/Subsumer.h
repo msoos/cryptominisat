@@ -12,8 +12,10 @@ Substantially modified by: Mate Soos (2010)
 #include "BitArray.h"
 #include <map>
 #include <vector>
+#include <queue>
 using std::vector;
 using std::map;
+using std::priority_queue;
 
 enum OccurMode { occ_Off, occ_Permanent, occ_All };
 
@@ -115,6 +117,31 @@ private:
     const bool checkIfSame(const Lit var1, const Lit var2);
     void pureLiteralRemoval();
     vec<Var> madeVarNonDecision;
+    
+    class LitOcc {
+        public:
+            LitOcc(const Lit& l, const uint32_t num) :
+                lit(l)
+                , occurnum(num)
+            {}
+            Lit lit;
+            uint32_t occurnum;
+    };
+    
+    struct MyComp {
+        const bool operator() (const LitOcc& l1, const LitOcc& l2) const {
+            return l1.occurnum > l2.occurnum;
+        }
+    };
+    
+    //blocked clause removal
+    void blockedClauseRemoval();
+    void touchLit(const Lit lit);
+    const bool allTautology(const vec<Lit>& ps, const Lit lit);
+    
+    vec<bool> touchedLitBool;
+    priority_queue<LitOcc, vector<LitOcc>, MyComp> touchedLits;
+    
     
     //validity checking
     void verifyIntegrity();
