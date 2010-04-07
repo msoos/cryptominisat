@@ -66,7 +66,9 @@ public:
     // Ownership of underlying array:
     T*       release  (void)           { T* ret = data; data = NULL; sz = 0; cap = 0; return ret; }
     const T* getData() const {return data; }
+    const T* getDataEnd() const {return data + size(); }
     T* getData() {return data; }
+    T* getDataEnd() {return data + size(); }
 
     // Size operations:
     uint32_t size   (void) const       { return sz; }
