@@ -115,7 +115,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     vector<bool> backup_polarities = solver.polarity;
     vec<double> backup_activity;
     backup_activity.growTo(solver.activity.size());
-    memcpy(backup_activity.getData(), solver.activity.getData(), solver.activity.size()*sizeof(double));
+    std::copy(solver.activity.getData(), solver.activity.getDataEnd(), backup_activity.getData());
     double backup_var_inc = solver.var_inc;
     
     //General Stats
@@ -294,7 +294,7 @@ end:
     lastTimeFoundTruths = goodBothSame + numFailed;
     
     solver.var_inc = backup_var_inc;
-    memcpy(solver.activity.getData(), backup_activity.getData(), solver.activity.size()*sizeof(double));
+    std::copy(backup_activity.getData(), backup_activity.getDataEnd(), solver.activity.getData());
     solver.order_heap = backup_order_heap;
     solver.polarity = backup_polarities;
     solver.order_heap.filter(Solver::VarFilter(solver));

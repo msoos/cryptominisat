@@ -1746,7 +1746,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     double backup_random_var_freq = random_var_freq;
     vec<double> backup_activity;
     backup_activity.growTo(activity.size());
-    memcpy(backup_activity.getData(), activity.getData(), activity.size()*sizeof(double));
+    std::copy(activity.getData(), activity.getDataEnd(), backup_activity.getData());
     double backup_var_inc = var_inc;
     
     if (verbosity >= 1)
@@ -1813,7 +1813,7 @@ end:
         printf("c                                      Simplifying finished                               |\n");
     
     var_inc = backup_var_inc;
-    memcpy(activity.getData(), backup_activity.getData(), activity.size()*sizeof(double));
+    std::copy(backup_activity.getData(), backup_activity.getDataEnd(), activity.getData());
     order_heap = backup_order_heap;
     simplifying = false;
     order_heap.filter(VarFilter(*this));
