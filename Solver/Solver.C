@@ -1986,6 +1986,14 @@ lbool Solver::solve(const vec<Lit>& assumps)
     freeLater.clear();
 
     if (status == l_True) {
+        if (greedyUnbound) {
+            double time = cpuTime();
+            FindUndef finder(*this);
+            const uint unbounded = finder.unRoll();
+            if (verbosity >= 1)
+                printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
+        }
+        
         partHandler->addSavedState();
         conglomerate->doCalcAtFinish();
         varReplacer->extendModelPossible();
@@ -2014,14 +2022,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
 #ifndef NDEBUG
         verifyModel();
 #endif
-        if (greedyUnbound) {
-            double time = cpuTime();
-            FindUndef finder(*this);
-            const uint unbounded = finder.unRoll();
-            if (verbosity >= 1)
-                printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
-        }
-    } if (status == l_False) {
+    
+    }
+    
+    if (status == l_False) {
         if (conflict.size() == 0)
             ok = false;
     }
