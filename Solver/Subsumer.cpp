@@ -847,12 +847,12 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             if (first) {
                 //init_order.copyTo(order);
                 for (int i = 0; i < init_order.size(); i++) {
-                    if (!var_elimed[init_order[i]] && !cannot_eliminate[init_order[i]] && solver.decision_var[init_order[i]])
+                    if (!var_elimed[init_order[i]] && !cannot_eliminate[init_order[i]] && solver.decision_var[init_order[i]] && solver.assigns[init_order[i]] == l_Undef)
                         order.push(init_order[i]);
                 }
             } else {
                 for (int i = 0; i < touched_list.size(); i++) {
-                    if (!var_elimed[touched_list[i]] && !cannot_eliminate[touched_list[i]] && solver.decision_var[touched_list[i]]) {
+                    if (!var_elimed[touched_list[i]] && !cannot_eliminate[touched_list[i]] && solver.decision_var[touched_list[i]] && solver.assigns[touched_list[i]] == l_Undef) {
                         order.push(touched_list[i]);
                         touched[touched_list[i]] = 0;
                     }
