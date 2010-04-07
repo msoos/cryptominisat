@@ -26,7 +26,6 @@ using std::set;
 #include "Solver.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
-#include "BitArray.h"
 #include "VarReplacer.h"
 
 //#define FINDBINARYXOR
@@ -57,28 +56,32 @@ void FailedVarSearcher::addFromSolver(const vec< XorClause* >& cs)
         const XorClause& cl = **it;
         xorClauseSizes[i] = cl.size();
         for (const Lit *l = cl.getData(), *end2 = l + cl.size(); l != end2; l++) {
-            occur[l->var()].push_back(&xorClauseSizes[i]);
+            occur[l->var()].push_back(i);
         }
     }
 }
 
 inline void FailedVarSearcher::removeVarFromXors(const Var var)
 {
-    vector<uint32_t*>& occ = occur[var];
+    vector<uint32_t>& occ = occur[var];
     if (occ.empty()) return;
     
-    for (uint32_t **it = &occ[0], **end = it + occ.size(); it != end; it++) {
-        (**it)--;
+    for (uint32_t *it = &occ[0], *end = it + occ.size(); it != end; it++) {
+        xorClauseSizes[*it]--;
+        if (!xorClauseTouched[*it]) {
+            xorClauseTouched.setBit(*it);
+            investigateXor.push(*it);
+        }
     }
 }
 
 inline void FailedVarSearcher::addVarFromXors(const Var var)
 {
-    vector<uint32_t*>& occ = occur[var];
+    vector<uint32_t>& occ = occur[var];
     if (occ.empty()) return;
     
-    for (uint32_t **it = &occ[0], **end = it + occ.size(); it != end; it++) {
-        (**it)++;
+    for (uint32_t *it = &occ[0], *end = it + occ.size(); it != end; it++) {
+        xorClauseSizes[*it]++;
     }
 }
 
@@ -147,10 +150,12 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     uint32_t lastTrailSize = solver.trail.size();
     bool binXorFind = true;
     if (solver.xorclauses.size() < 5 ||
-        solver.xorclauses.size() > 50000 ||
-        solver.order_heap.size() > 30000)
+        solver.xorclauses.size() > 30000 ||
+        solver.order_heap.size() > 30000 ||
+        solver.nClauses() > 100000)
         binXorFind = false;
     if (binXorFind) addFromSolver(solver.xorclauses);
+    xorClauseTouched.resize(solver.xorclauses.size());
     
     finishedLastTime = true;
     lastTimeWentUntil = solver.nVars();
@@ -169,6 +174,8 @@ const bool FailedVarSearcher::search(uint64_t numProps)
                     }
                 }
                 lastTrailSize = solver.trail.size();
+                xorClauseTouched.setZero();
+                investigateXor.clear();
             }
             
             propagated.setZero();
@@ -198,14 +205,15 @@ const bool FailedVarSearcher::search(uint64_t numProps)
                 }
                 
                 if (binXorFind) {
-                    uint32_t i = 0;
-                    for (uint32_t *it = xorClauseSizes.getData(), *end = it + xorClauseSizes.size(); it != end; it++, i++) {
-                        if (*it == 2)
-                            twoLongXors.insert(getTwoLongXor(*solver.xorclauses[i]));
+                    for (uint32_t *it = investigateXor.getData(), *end = it + investigateXor.size(); it != end; it++) {
+                        if (xorClauseSizes[*it] == 2)
+                            twoLongXors.insert(getTwoLongXor(*solver.xorclauses[*it]));
                     }
                     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
                         addVarFromXors(solver.trail[c].var());
                     }
+                    xorClauseTouched.setZero();
+                    investigateXor.clear();
                 }
                 
                 solver.cancelUntil(0);
@@ -232,10 +240,9 @@ const bool FailedVarSearcher::search(uint64_t numProps)
                 
                 if (binXorFind) {
                     if (twoLongXors.size() > 0) {
-                        uint32_t i = 0;
-                        for (uint32_t *it = xorClauseSizes.getData(), *end = it + xorClauseSizes.size(); it != end; it++, i++) {
-                            if (*it == 2) {
-                                TwoLongXor tmp = getTwoLongXor(*solver.xorclauses[i]);
+                        for (uint32_t *it = investigateXor.getData(), *end = it + investigateXor.size(); it != end; it++) {
+                            if (xorClauseSizes[*it] == 2) {
+                                TwoLongXor tmp = getTwoLongXor(*solver.xorclauses[*it]);
                                 if (twoLongXors.find(tmp) != twoLongXors.end()) {
                                     vec<Lit> ps(2);
                                     ps[0] = Lit(tmp.var[0], false);

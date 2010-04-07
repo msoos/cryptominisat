@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SolverTypes.h"
 #include "Clause.h"
+#include "BitArray.h"
 class Solver;
 
 class TwoLongXor
@@ -62,9 +63,11 @@ class FailedVarSearcher {
         Solver& solver;
         
         vec<uint32_t> xorClauseSizes;
-        vector<vector<uint32_t*> > occur;
+        vector<vector<uint32_t> > occur;
         void removeVarFromXors(const Var var);
         void addVarFromXors(const Var var);
+        BitArray xorClauseTouched;
+        vec<uint32_t> investigateXor;
         
         bool finishedLastTime;
         uint32_t lastTimeWentUntil;
