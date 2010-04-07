@@ -836,7 +836,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             if (!solver.ok) return false;
         }
         
-        if (!removedBlockedOnce && numCalls % 3 == 0) {
+        if (!removedBlockedOnce && (numCalls % 3 == 2 || numCalls < 3)) {
             blockedClauseRemoval();
             removedBlockedOnce = true;
         }
