@@ -357,11 +357,13 @@ void VarReplacer::extendModelImpossible(Solver& solver2) const
             tmpClause.push(Lit(it->var(), true));
             tmpClause.push(Lit(i, it->sign()));
             solver2.addClause(tmpClause);
+            assert(solver2.ok);
             
             tmpClause.clear();
             tmpClause.push(Lit(it->var(), false));
             tmpClause.push(Lit(i, it->sign()^true));
             solver2.addClause(tmpClause);
+            assert(solver2.ok);
         }
     }
 }
