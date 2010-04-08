@@ -112,6 +112,19 @@ const bool PartHandler::handle()
         
         for (Var var = 0; var < newSolver.nVars(); var++) {
             if (newSolver.model[var] != l_Undef) {
+                assert(solver.assigns[var] == l_Undef);
+            }
+        }
+        
+        assert(newSolver.decisionLevel() == 0);
+        for (uint32_t i = 0; i < newSolver.trail.size(); i++) {
+            solver.uncheckedEnqueue(newSolver.trail[i]);
+        }
+        solver.ok = (solver.propagate() == NULL);
+        assert(solver.ok);
+        
+        for (Var var = 0; var < newSolver.nVars(); var++) {
+            if (newSolver.model[var] != l_Undef) {
                 assert(savedState[var] == l_Undef);
                 assert(partFinder.getVarPart(var) == part);
                 savedState[var] = newSolver.model[var];
@@ -127,7 +140,7 @@ const bool PartHandler::handle()
     for (Var var = 0; var < solver.nVars(); var++) {
         if (savedState[var] != l_Undef) {
             assert(solver.decision_var[var] == false);
-            assert(solver.assigns[var] == l_Undef);
+            assert(solver.assigns[var] == l_Undef || solver.level[var] == 0);
         }
     }
     
@@ -242,10 +255,12 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
 
 void PartHandler::addSavedState()
 {
-    for (uint32_t i = 0; i < savedState.size(); i++) {
-        if (savedState[i] != l_Undef) {
-            assert(solver.assigns[i] == l_Undef);
-            solver.assigns[i] = savedState[i];
+    for (Var var = 0; var < savedState.size(); var++) {
+        if (savedState[var] != l_Undef) {
+            assert(solver.assigns[var] == l_Undef || (solver.assigns[var] == savedState[var] && solver.level[var] == 0));
+            //decision level should NOT be 0.... TODO
+            solver.uncheckedEnqueue(Lit(var, savedState[var] == l_False));
+            assert(solver.assigns[var] == savedState[var]);
         }
     }
     
