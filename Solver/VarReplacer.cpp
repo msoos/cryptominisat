@@ -93,7 +93,7 @@ const bool VarReplacer::performReplaceInternal()
     const vec<lbool>& removedVars2 = solver.partHandler->getSavedState();
     const vec<char>& removedVars3 = solver.subsumer->getVarElimed();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
-        if (it->var() == var || removedVars[it->var()] || removedVars2[it->var()] != l_Undef || removedVars3[it->var()]) continue;
+        if (it->var() == var || removedVars[it->var()] || removedVars2[it->var()] != l_Undef || removedVars3[it->var()] || solver.subsumer->getPureLitRemoved()[it->var()]) continue;
         #ifdef VERBOSE_DEBUG
         cout << "Setting var " << var+1 << " to a non-decision var" << endl;
         #endif

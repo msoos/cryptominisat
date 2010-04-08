@@ -1994,6 +1994,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
                 printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
         }
         
+        subsumer->undoPureLitRemoval();
         partHandler->addSavedState();
         conglomerate->doCalcAtFinish();
         varReplacer->extendModelPossible();
@@ -2013,7 +2014,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             status = s.solve();
             assert(status == l_True);
             for (Var var = 0; var < nVars(); var++) {
-                assigns[var] = s.model[var];
+                if (assigns[var] == l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
             }
         }
         // Extend & copy model:
@@ -2048,7 +2049,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     #endif
 
     cancelUntil(0);
-    if (doSubsumption && status != l_False) subsumer->undoPureLitRemoval(model);
+    if (doSubsumption && status != l_False) subsumer->reAddPureLitClauses();
     
     return status;
 }
