@@ -838,7 +838,10 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     std::cout << "c   origNClauses:" << origNClauses << std::endl;
     #endif
     
-    bool removedBlockedOnce = false;
+    /*if (numCalls % 3 == 1 || numCalls < 3) {
+        blockedClauseRemoval();
+    }*/
+    
     do{
         // SUBSUMPTION:
         //
@@ -851,10 +854,6 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             if (!solver.ok) return false;
         }
         
-        if (!removedBlockedOnce && (numCalls % 3 == 2 || numCalls < 3)) {
-            blockedClauseRemoval();
-            removedBlockedOnce = true;
-        }
         uint32_t pureLitsUntilNow = pureLitsRemovedNum;
         pureLiteralRemoval();
         if (pureLitsRemovedNum > pureLitsUntilNow) {
@@ -949,6 +948,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     solver.ok = (solver.propagate() == NULL);
     if (!solver.ok) return false;
     solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
+    //blockedClauseRemoval();
     
     solver.order_heap.filter(Solver::VarFilter(solver));
     
@@ -1711,9 +1711,9 @@ void Subsumer::blockedClauseRemoval()
         Lit lit = lo.lit;
         Lit negLit = ~lo.lit;
         
-        if (occur[lit.toInt()].size() > 500 || var_elimed[lit.var()] || solver.assigns[lit.var()] != l_Undef || !solver.decision_var[lit.var()]) {
+        if (occur[lit.toInt()].size() > 500 || var_elimed[lit.var()] || solver.assigns[lit.var()] != l_Undef || !solver.decision_var[lit.var()] || cannot_eliminate[lit.var()])
             continue;
-        }
+        
         sumNumVisited += occur[lit.toInt()].size();
         vec<ClauseSimp> occ(occur[lit.toInt()]);
         
@@ -1726,13 +1726,13 @@ void Subsumer::blockedClauseRemoval()
             std::copy(it->clause->getData(), it->clause->getDataEnd(), cl.getData());
             remove(cl, lit);
             
-            Clause* tmp = it->clause;
             if (allTautology(cl, negLit)) {
                 for (Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
                     touchLit(~(*l));
                 }
+                Clause* tmp = it->clause;
                 unlinkClause(*it);
-                free(tmp);
+                //removedBlockedClauses.
                 blockedClauseRemoved++;
             }
         }
