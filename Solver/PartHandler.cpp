@@ -96,6 +96,7 @@ const bool PartHandler::handle()
                 newSolver.newVar(false);
             }
         }
+        solver.order_heap.filter(Solver::VarFilter(solver));
         
         assert(solver.varReplacer->getClauses().size() == 0);
         moveClauses(solver.clauses, newSolver, part, partFinder);
