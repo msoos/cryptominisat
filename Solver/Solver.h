@@ -334,6 +334,7 @@ protected:
     void     verifyModel      ();
     bool     verifyClauses    (const vec<Clause*>& cs) const;
     bool     verifyXorClauses (const vec<XorClause*>& cs) const;
+    void     checkSolution();
     void     checkLiteralCount();
     void     printStatHeader  () const;
     void     printRestartStat () const;

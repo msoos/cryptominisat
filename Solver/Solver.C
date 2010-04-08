@@ -1906,6 +1906,15 @@ inline void Solver::performStepsBeforeSolve()
     }
 }
 
+void Solver::checkSolution()
+{
+    // Extend & check:
+    model.growTo(nVars());
+    for (Var var = 0; var != nVars(); var++) model[var] = value(var);
+    verifyModel();
+    model.clear();
+}
+
 lbool Solver::solve(const vec<Lit>& assumps)
 {
     if (!ok) return l_False;
@@ -1998,6 +2007,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
         partHandler->addSavedState();
         conglomerate->doCalcAtFinish();
         varReplacer->extendModelPossible();
+#ifndef NDEBUG
+        checkSolution();
+#endif
+        
         if (subsumer->getNumElimed() > 0) {
             Solver s;
             for (Var var = 0; var < nVars(); var++) {
@@ -2018,11 +2031,11 @@ lbool Solver::solve(const vec<Lit>& assumps)
             }
         }
         // Extend & copy model:
+#ifndef NDEBUG
+        checkSolution();
+#endif
         model.growTo(nVars());
         for (Var var = 0; var != nVars(); var++) model[var] = value(var);
-#ifndef NDEBUG
-        verifyModel();
-#endif
     
     }
     
@@ -2116,14 +2129,11 @@ bool Solver::verifyClauses(const vec<Clause*>& cs) const
 
 void Solver::verifyModel()
 {
-    bool failed = false;
-    failed |= verifyClauses(clauses);
-    failed |= verifyClauses(binaryClauses);
+    assert(!verifyClauses(clauses));
+    assert(!verifyClauses(binaryClauses));
     
-    failed |= verifyXorClauses(xorclauses);
-    failed |= verifyXorClauses(conglomerate->getCalcAtFinish());
-
-    assert(!failed);
+    assert(!verifyXorClauses(xorclauses));
+    assert(!verifyXorClauses(conglomerate->getCalcAtFinish()));
 
     if (verbosity >=1)
         printf("c Verified %d clauses.\n", clauses.size() + xorclauses.size() + conglomerate->getCalcAtFinish().size());
