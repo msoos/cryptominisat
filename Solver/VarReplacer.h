@@ -55,6 +55,7 @@ class VarReplacer
         const vector<Lit>& getReplaceTable() const;
         const vec<Clause*>& getClauses() const;
         const bool varHasBeenReplaced(const Var var) const;
+        const bool replacingVar(const Var var) const;
         void newVar();
     
     private:
@@ -131,5 +132,9 @@ inline const bool VarReplacer::varHasBeenReplaced(const Var var) const
     return table[var].var() != var;
 }
 
+inline const bool VarReplacer::replacingVar(const Var var) const
+{
+    return (reverseTable.find(var) != reverseTable.end());
+}
 
 #endif //VARREPLACER_H
