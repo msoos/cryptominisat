@@ -1654,18 +1654,20 @@ const bool Subsumer::allTautology(const vec<Lit>& ps, const Lit lit)
     printf("0\n");
     #endif
     
+    vec<ClauseSimp>& cs = occur[lit.toInt()];
+    if (cs.size() == 0) return false;
+    
     for (const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
         seen_tmp[l->toInt()] = true;
     }
     
     bool allIsTautology = true;
-    vec<ClauseSimp>& cs = occur[lit.toInt()];
     for (ClauseSimp *it = cs.getData(), *end = cs.getDataEnd(); it != end; it++){
         if (it+1 != end)
             __builtin_prefetch((it+1)->clause, 1, 1);
         
         Clause& c = *it->clause;
-        for (Lit *l = c.getData(), *end = l + c.size(); l != end; l++) {
+        for (Lit *l = c.getData(), *end2 = l + c.size(); l != end2; l++) {
             if (*l != lit && seen_tmp[(~(*l)).toInt()]) {
                 goto next;
             }
@@ -1685,12 +1687,15 @@ const bool Subsumer::allTautology(const vec<Lit>& ps, const Lit lit)
 
 void Subsumer::blockedClauseRemoval()
 {
+    assert(solver.varReplacer->getNewToReplaceVars() == 0);
     double myTime = cpuTime();
     uint64_t sumNumVisited = 0;
+    vec<ClauseSimp> toRemove;
     
     touchedLitBool.clear();
     touchedLitBool.growTo(solver.nVars()*2, false);
     touchedLits = priority_queue<LitOcc, vector<LitOcc>, MyComp>();
+    assert(touchedLits.empty());
     
     for (uint32_t lit = 0; lit < solver.nVars()*2; lit++) {
         touchLit(Lit(lit/2, lit%2));
