@@ -2001,7 +2001,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         if (subsumer->getNumElimed() > 0) {
             Solver s;
             for (Var var = 0; var < nVars(); var++) {
-                s.newVar(decision_var[var] || subsumer->getVarElimed()[var]);
+                s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var));
                 if (value(var) != l_Undef) {
                     vec<Lit> tmp;
                     tmp.push(Lit(var, value(var) == l_False));
