@@ -187,8 +187,11 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_
             continue;
         }
         solver.detachClause(**i);
-        newSolver.addClause(**i, (**i).getGroup());
-        free(*i);
+        vec<Lit> cs((*i)->size());
+        std::copy((**i).getData(), (**i).getDataEnd(), cs.getData());
+        newSolver.addClause(cs, (**i).getGroup());
+        //NOTE: we need the CS because otherwise, the addClause could have changed **i, which we need to re-add later!
+        clausesRemoved.push(*i);
     }
     cs.shrink(i-j);
 }
@@ -202,10 +205,12 @@ void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint
             continue;
         }
         solver.detachClause(**i);
+        vec<Lit> cs((*i)->size());
         for (uint32_t i2 = 0; i2 < (*i)->size(); i2++)
-            (**i)[i2] = (**i)[i2].unsign();
-        newSolver.addXorClause(**i, (**i).xor_clause_inverted(), (**i).getGroup());
-        free(*i);
+            cs[i2] = (**i)[i2].unsign();
+        newSolver.addXorClause(cs, (**i).xor_clause_inverted(), (**i).getGroup());
+        //NOTE: we need the CS because otherwise, the addXorClause could have changed **i, which we need to re-add later!
+        xorClausesRemoved.push(*i);
     }
     cs.shrink(i-j);
 }
@@ -268,5 +273,23 @@ void PartHandler::addSavedState()
     for (uint32_t var = 0; var < decisionVarRemoved.size(); var++)
         solver.setDecisionVar(var, true);
     decisionVarRemoved.clear();
+}
+
+void PartHandler::readdRemovedClauses()
+{
+    for (Clause **it = clausesRemoved.getData(), **end = clausesRemoved.getDataEnd(); it != end; it++) {
+        solver.addClause(**it, (*it)->getGroup());
+        assert(solver.ok);
+    }
+    clausesRemoved.clear();
+    
+    for (XorClause **it = xorClausesRemoved.getData(), **end = xorClausesRemoved.getDataEnd(); it != end; it++) {
+        for (Lit *l = (*it)->getData(), *end2 = (*it)->getDataEnd(); l != end2; l++) {
+            *l = l->unsign();
+        }
+        solver.addXorClause(**it, (*it)->getGroup());
+        assert(solver.ok);
+    }
+    xorClausesRemoved.clear();
 }
 

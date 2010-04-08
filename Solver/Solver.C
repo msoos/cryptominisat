@@ -2063,6 +2063,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     cancelUntil(0);
     if (doSubsumption && status != l_False) subsumer->reAddPureLitClauses();
+    if (doPartHandler && status != l_False) partHandler->readdRemovedClauses();
     
     return status;
 }

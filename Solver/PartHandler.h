@@ -37,6 +37,7 @@ class PartHandler
         const vec<lbool>& getSavedState();
         void newVar();
         void addSavedState();
+        void readdRemovedClauses();
         
     private:
         struct sort_pred {
@@ -58,6 +59,8 @@ class PartHandler
         Solver& solver;
         vec<lbool> savedState;
         vec<Var> decisionVarRemoved; //variables whose decision-ness has been removed
+        vec<Clause*> clausesRemoved;
+        vec<XorClause*> xorClausesRemoved;
 };
 
 inline const vec<lbool>& PartHandler::getSavedState()
