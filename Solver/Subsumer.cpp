@@ -1621,6 +1621,8 @@ void Subsumer::undoPureLitRemoval()
     
     for (Lit *l = assignVar.getData(), *end = assignVar.getDataEnd(); l != end; l++) {
         solver.uncheckedEnqueue(*l);
+        solver.ok = (solver.propagate() == NULL);
+        assert(solver.ok);
     }
     assignVar.clear();
 }
