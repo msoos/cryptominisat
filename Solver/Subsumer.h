@@ -17,8 +17,6 @@ using std::vector;
 using std::map;
 using std::priority_queue;
 
-enum OccurMode { occ_Off, occ_Permanent, occ_All };
-
 class ClauseCleaner;
 
 class Subsumer
@@ -52,7 +50,6 @@ private:
     CSet                   cl_touched;     // Clauses strengthened.
     CSet                   cl_added;       // Clauses created.
     vec<vec<ClauseSimp> >  occur;          // 'occur[index(lit)]' is a list of constraints containing 'lit'.
-    OccurMode              occur_mode;     // What clauses to keep in the occur lists.
     vec<vec<ClauseSimp>* > iter_vecs;      // Vectors currently used for iterations. Removed clauses will be looked up and replaced by 'Clause_NULL'.
     vec<CSet* >            iter_sets;      // Sets currently used for iterations.
     Solver&                solver;         // The Solver
@@ -178,7 +175,7 @@ inline void Subsumer::touch(const Lit p)
 
 inline bool Subsumer::updateOccur(Clause& c)
 {
-    return occur_mode == occ_All || (occur_mode == occ_Permanent && !c.learnt()) /*|| c.size() == 2*/;
+    return !c.learnt();
 }
 
 inline bool Subsumer::subsetAbst(uint32_t A, uint32_t B)
