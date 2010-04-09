@@ -789,8 +789,10 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     
     if (solver.performReplace && !solver.varReplacer->performReplace(true))
         return false;
-    
     fillCannotEliminate();
+    
+    //For BCE
+    touchedBlockedVars = priority_queue<VarOcc, vector<VarOcc>, MyComp>();
     
     clauses.clear();
     cl_added.clear();
@@ -838,10 +840,6 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     std::cout << "c   origNClauses:" << origNClauses << std::endl;
     #endif
     
-    /*if (numCalls % 3 == 1 || numCalls < 3) {
-        blockedClauseRemoval();
-    }*/
-    
     do{
         // SUBSUMPTION:
         //
@@ -854,6 +852,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             if (!solver.ok) return false;
         }
         
+        if (solver.doBlockedClause) blockedClauseRemoval();
         solver.ok = (solver.propagate() == NULL);
         if (!solver.ok) return false;
         solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
@@ -919,6 +918,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             
         }
     }while (cl_added.size() > 100);
+    if (solver.doBlockedClause) blockedClauseRemoval();
     
     if (!solver.ok) return false;
     solver.ok = (solver.propagate() == NULL);
@@ -942,7 +942,6 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     solver.ok = (solver.propagate() == NULL);
     if (!solver.ok) return false;
     solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
-    //blockedClauseRemoval();
     
     solver.order_heap.filter(Solver::VarFilter(solver));
     
@@ -956,8 +955,11 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
         << "  v-elim: " << std::setw(6) << numVarsElimed
         << "  v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
         << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
         << "   |" << std::endl;
     }
+    
+    std::cout << "c |  Blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved << "    Time: " << std::fixed << std::setprecision(2) << std::setw(4) << blockTime << " s" << std::endl;
     
     return true;
 }
@@ -1531,15 +1533,7 @@ void Subsumer::reAddPureLitClauses()
         assert(solver.ok);
     }
     pureLitClauseRemoved.clear();
-}
-
-inline void Subsumer::touchLit(const Lit l)
-{
-    if (!touchedLitBool[l.toInt()] && !cannot_eliminate[l.var()] && solver.assigns[l.var()] == l_Undef && solver.decision_var[l.var()]) {
-        touchedLits.push(LitOcc(l, occur[(~l).toInt()].size()*occur[l.toInt()].size()));
-        touchedLitBool[l.toInt()] = true;
-    }
-}
+}*/
 
 const bool Subsumer::allTautology(const vec<Lit>& ps, const Lit lit)
 {
@@ -1553,7 +1547,7 @@ const bool Subsumer::allTautology(const vec<Lit>& ps, const Lit lit)
     #endif
     
     vec<ClauseSimp>& cs = occur[lit.toInt()];
-    if (cs.size() == 0) return false;
+    if (cs.size() == 0) return true;
     
     for (const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
         seen_tmp[l->toInt()] = true;
@@ -1585,67 +1579,77 @@ const bool Subsumer::allTautology(const vec<Lit>& ps, const Lit lit)
 
 void Subsumer::blockedClauseRemoval()
 {
-    assert(solver.varReplacer->getNewToReplaceVars() == 0);
     double myTime = cpuTime();
     uint64_t sumNumVisited = 0;
     vec<ClauseSimp> toRemove;
     
-    touchedLitBool.clear();
-    touchedLitBool.growTo(solver.nVars()*2, false);
-    touchedLits = priority_queue<LitOcc, vector<LitOcc>, MyComp>();
-    assert(touchedLits.empty());
-    
-    for (uint32_t lit = 0; lit < solver.nVars()*2; lit++) {
-        touchLit(Lit(lit/2, lit%2));
-    }
-    
-    uint32_t blockedClauseRemoved = 0;
-    vec<Lit> cl;
-    while (touchedLits.size() > 50) {
-        if (sumNumVisited > 10000000) {
-            std::cout << "Blocked: too many visited!" << std::endl;
-            break;
-        }
+    while (touchedBlockedVars.size() > 100) {
+        VarOcc vo = touchedBlockedVars.top();
+        touchedBlockedVars.pop();
+        touchedBlockedVarsBool[vo.var] = false;
         
-        LitOcc lo = touchedLits.top();
-        touchedLits.pop();
-        touchedLitBool[lo.lit.toInt()] = false;
-        
-        Lit lit = lo.lit;
-        Lit negLit = ~lo.lit;
-        
-        if (occur[lit.toInt()].size() > 500 || var_elimed[lit.var()] || solver.assigns[lit.var()] != l_Undef || !solver.decision_var[lit.var()] || cannot_eliminate[lit.var()])
+        Lit lit = Lit(vo.var, false);
+        Lit negLit = Lit(vo.var, true);
+        if (var_elimed[lit.var()] || solver.assigns[lit.var()] != l_Undef || !solver.decision_var[lit.var()] || cannot_eliminate[lit.var()])
             continue;
         
         sumNumVisited += occur[lit.toInt()].size();
-        vec<ClauseSimp> occ(occur[lit.toInt()]);
-        
-        registerIteration(occ);
-        for(ClauseSimp *it = occ.getData(), *end = occ.getDataEnd(); it != end; it++) {
-            if (it->clause == NULL) continue;
-            
-            cl.clear();
-            cl.growTo(it->clause->size());
-            std::copy(it->clause->getData(), it->clause->getDataEnd(), cl.getData());
-            remove(cl, lit);
-            
-            if (allTautology(cl, negLit)) {
-                for (Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
-                    touchLit(~(*l));
-                }
-                Clause* tmp = it->clause;
-                unlinkClause(*it);
-                //removedBlockedClauses.
-                blockedClauseRemoved++;
-            }
+        sumNumVisited += occur[negLit.toInt()].size();
+        if (!tryOneSetting(lit, negLit)) {
+            tryOneSetting(negLit, lit);
         }
-        unregisterIteration(occ);
     }
+    blockTime += cpuTime() - myTime;
     
-    std::cout << "c |  Blocked clauses removed: " << std::setw(8) << blockedClauseRemoved << "    Time: " << std::fixed << std::setprecision(2) << std::setw(4) << cpuTime() - myTime << " s" << std::endl;
+    //Clear touchedBlockedVars
+    //std::fill(touchedBlockedVarsBool.getData(), touchedBlockedVarsBool.getDataEnd(), 0);
+    //touchedBlockedVars = priority_queue<VarOcc, vector<VarOcc>, MyComp>();
 }
 
-vector<char> Subsumer::merge()
+const bool Subsumer::tryOneSetting(const Lit lit, const Lit negLit)
+{
+    uint32_t toRemove = 0;
+    bool returnVal = false;
+    vec<Lit> cl;
+    
+    for(ClauseSimp *it = occur[lit.toInt()].getData(), *end = occur[lit.toInt()].getDataEnd(); it != end; it++) {
+        cl.clear();
+        cl.growTo(it->clause->size()-1);
+        for (uint32_t i = 0, i2 = 0; i < it->clause->size(); i++) {
+            if ((*it->clause)[i] != lit) {
+                cl[i2] = (*it->clause)[i];
+                i2++;
+            }
+        }
+        
+        if (allTautology(cl, negLit)) {
+            toRemove++;
+        } else {
+            break;
+        }
+    }
+    
+    if (toRemove == occur[lit.toInt()].size()) {
+        var_elimed[lit.var()] == true;
+        solver.setDecisionVar(lit.var(), false);
+        vec<ClauseSimp> toRemove(occur[lit.toInt()]);
+        for (ClauseSimp *it = toRemove.getData(), *end = toRemove.getDataEnd(); it != end; it++) {
+            unlinkClause(*it, lit.var());
+            numblockedClauseRemoved++;
+        }
+        
+        vec<ClauseSimp> toRemove2(occur[negLit.toInt()]);
+        for (ClauseSimp *it = toRemove2.getData(), *end = toRemove2.getDataEnd(); it != end; it++) {
+            unlinkClause(*it, lit.var());
+            numblockedClauseRemoved++;
+        }
+        returnVal = true;
+    }
+    
+    return returnVal;
+}
+
+/*vector<char> Subsumer::merge()
 {
     vector<char> var_merged(solver.nVars(), false);
     double myTime = cpuTime();

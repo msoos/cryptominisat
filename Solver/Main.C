@@ -583,6 +583,8 @@ int main(int argc, char** argv)
             S.doXorSubsumption = false;
         } else if ((value = hasPrefix(argv[i], "-nohyperbinres"))) {
             S.doHyperBinRes = false;
+        } else if ((value = hasPrefix(argv[i], "-noblockedclause"))) {
+            S.doBlockedClause = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);
