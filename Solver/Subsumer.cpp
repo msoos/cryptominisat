@@ -1155,21 +1155,6 @@ bool Subsumer::maybeEliminate(const Var x)
         goto Eliminated;
     }
     
-    // Try to remove 'x' from clauses:
-    {
-        bool    ran = false;
-        if (poss.size() < 10) {
-            ran = true;
-            if (!solver.ok) return true;
-        }
-        if (negs.size() < 10) {
-            ran = true;
-            if (!solver.ok) return true;
-        }
-        if (solver.value(x) != l_Undef) return false;
-        if (!ran) return false;
-    }
-    
     {
         // Count clauses/literals after elimination:
         int after_clauses  = 0;
