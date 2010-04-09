@@ -61,6 +61,7 @@ private:
     Solver&                solver;         // The Solver
     
     
+    uint32_t numVarsElimed;
     vec<char>              var_elimed;     // 'eliminated[var]' is TRUE if variable has been eliminated.
     vec<char>              cannot_eliminate;//
     map<Var, vector<vector<Lit> > > elimedOutVar;
