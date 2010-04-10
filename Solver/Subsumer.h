@@ -135,6 +135,7 @@ private:
     const bool tryOneSetting(const Lit lit, const Lit negLit);
     priority_queue<VarOcc, vector<VarOcc>, MyComp> touchedBlockedVars;
     vec<bool> touchedBlockedVarsBool;
+    void touchBlockedVar(const Var x);
     double blockTime;
     
     
@@ -163,11 +164,16 @@ inline void Subsumer::touch(const Var x)
         touched[x] = 1;
         touched_list.push(x);
     }
+}
+
+inline void Subsumer::touchBlockedVar(const Var x)
+{
     if (!touchedBlockedVarsBool[x]) {
         touchedBlockedVars.push(VarOcc(x, occur[Lit(x, false).toInt()].size()*occur[Lit(x, true).toInt()].size()));
         touchedBlockedVarsBool[x] = 1;
     }
 }
+
 inline void Subsumer::touch(const Lit p)
 {
     touch(p.var());
