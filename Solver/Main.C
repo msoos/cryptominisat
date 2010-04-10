@@ -224,8 +224,10 @@ static void parse_DIMACS_main(B& in, Solver& S)
             if (match(in, "p cnf")) {
                 int vars    = parseInt(in);
                 int clauses = parseInt(in);
-                printf("c |  Number of variables:  %-12d                                         |\n", vars);
-                printf("c |  Number of clauses:    %-12d                                         |\n", clauses);
+                if (S.verbosity >= 1) {
+                    printf("c |  Number of variables:  %-12d                                         |\n", vars);
+                    printf("c |  Number of clauses:    %-12d                                         |\n", clauses);
+                }
             } else {
                 printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
             }
@@ -615,7 +617,8 @@ int main(int argc, char** argv)
         S.sateliteUsed = false;
     
     
-    printf("c This is CryptoMiniSat 2.3.2\n");
+    if (S.verbosity >= 1)
+        printf("c This is CryptoMiniSat 2.3.2\n");
 #if defined(__linux__)
     fpu_control_t oldcw, newcw;
     _FPU_GETCW(oldcw);

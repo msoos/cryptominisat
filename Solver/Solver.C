@@ -616,7 +616,7 @@ const lbool Solver::calculateDefaultPolarities()
             #endif //VERBOSE_DEBUG_POLARITIES
         }
         
-        if (verbosity >= 1) {
+        if (verbosity >= 2) {
             std::cout << "c |  Calc-ed default polarities: "
             << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s"
             << "    |" << std:: endl;
@@ -1706,10 +1706,10 @@ inline void Solver::chooseRestartType(const uint& lastFullRestart)
             if (tmp == dynamic_restart) {
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
-                if (verbosity >= 1)
+                if (verbosity >= 2)
                     printf("c |                           Decided on dynamic restart strategy                         |\n");
             } else  {
-                if (verbosity >= 1)
+                if (verbosity >= 2)
                     printf("c |                            Decided on static restart strategy                         |\n");
                                 
                 if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
@@ -1747,7 +1747,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     std::copy(activity.getData(), activity.getDataEnd(), backup_activity.getData());
     double backup_var_inc = var_inc;
     
-    if (verbosity >= 1)
+    if (verbosity >= 2)
         std::cout << "c | " << std::setw(24) << " " 
         << "Simplifying problem for " << std::setw(8) << numConfls << " confls" 
         << std::setw(24) << " |" << std::endl;
@@ -1807,7 +1807,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     
 end:
     random_var_freq = backup_random_var_freq;
-    if (verbosity >= 1)
+    if (verbosity >= 2)
         printf("c                                      Simplifying finished                               |\n");
     
     var_inc = backup_var_inc;
@@ -1825,7 +1825,7 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
 {
     if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
         clearGaussMatrixes();
-        if (verbosity >= 1)
+        if (verbosity >= 2)
             printf("c |                                      Fully restarting                                 |\n");
         nof_conflicts = restart_first + (double)restart_first*restart_inc;
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
@@ -2178,9 +2178,9 @@ void Solver::printStatHeader() const
 void Solver::printRestartStat() const
 {
     #ifdef STATS_NEEDED
-    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
+    if (verbosity >= 2 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
     #else
-    if (verbosity >= 1) {
+    if (verbosity >= 2) {
     #endif
     printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses(), (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSubsumer), (int)nLearnts(), (double)learnts_literals/nLearnts());
         print_gauss_sum_stats();
