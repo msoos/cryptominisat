@@ -354,6 +354,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     }
                 }
                 cl.shrink(a-b);
+                cl.setStrenghtened();
                 
                 #ifdef VERBOSE_DEBUG
                 cout << "strenghtened   :";
@@ -607,6 +608,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
         
         if ((*i)->learnt()) {
             *j++ = *i;
+            (*i)->setUnsorted();
             continue;
         }
         ClauseSimp c(*i, clauseID++);
