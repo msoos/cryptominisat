@@ -1093,40 +1093,44 @@ bool Subsumer::maybeEliminate(const Var x)
     
     vec<ClauseSimp>&   poss = occur[Lit(x, false).toInt()];
     vec<ClauseSimp>&   negs = occur[Lit(x, true).toInt()];
-    vec<ClauseSimp>    new_clauses;
     
-    int before_clauses  = -1;
-    int before_literals = -1;
-    
-    // Heuristic:
-    if (poss.size() >= 8 && negs.size() >= 8)      // <<== CUT OFF
-        //  if (poss.size() >= 7 && negs.size() >= 7)      // <<== CUT OFF
-        //  if (poss.size() >= 6 && negs.size() >= 6)      // <<== CUT OFF
+    // Heuristic CUT OFF:
+    if (poss.size() >= 10 && negs.size() >= 10)
         return false;
     
     // Count clauses/literals before elimination:
-    before_clauses  = poss.size() + negs.size();
-    before_literals = 0;
+    int before_clauses  = poss.size() + negs.size();
+    uint32_t before_literals = 0;
     for (int i = 0; i < poss.size(); i++) before_literals += poss[i].clause->size();
     for (int i = 0; i < negs.size(); i++) before_literals += negs[i].clause->size();
     
-    if (poss.size() >= 3 && negs.size() >= 3 && before_literals > 300)  // <<== CUT OFF
+    // Heuristic CUT OFF2:
+    if ((poss.size() >= 3 && negs.size() >= 3 && before_literals > 300)
+        && clauses.size() > 1500000)
         return false;
-    
+    if ((poss.size() >= 5 && negs.size() >= 5 && before_literals > 400)
+        && clauses.size() <= 1500000 && clauses.size() > 200000)
+        return false;
+    if ((poss.size() >= 10 && negs.size() >= 10 && before_literals > 700)
+        && clauses.size() <= 200000)
+        return false;
     
     // Count clauses/literals after elimination:
     int after_clauses  = 0;
-    int after_literals = 0;
+    //int after_literals = 0;
     vec<Lit>  dummy;
+    //vec<ClauseSimp> dummy2;
     for (int i = 0; i < poss.size(); i++){
         for (int j = 0; j < negs.size(); j++){
             // Merge clauses. If 'y' and '~y' exist, clause will not be created.
             dummy.clear();
             bool ok = merge(*poss[i].clause, *negs[j].clause, Lit(x, false), Lit(x, true), dummy);
             if (ok){
+                //findSubsumed(dummy, calcAbstraction(dummy), dummy2);
+                //after_clauses -= (int)dummy2.size();
                 after_clauses++;
                 if (after_clauses > before_clauses) goto Abort;
-                after_literals += dummy.size();
+                //after_literals += dummy.size();
             }
         }
     }
@@ -1145,7 +1149,6 @@ bool Subsumer::maybeEliminate(const Var x)
                     ClauseSimp c = linkInClause(*cl);
                     subsume0(*cl);
                     //subsume1(c);
-                    new_clauses.push(c);
                 }
                 if (!solver.ok) return true;
             }
@@ -1155,16 +1158,18 @@ bool Subsumer::maybeEliminate(const Var x)
     }
     
     after_clauses  = 0;
-    after_literals = 0;
+    //after_literals = 0;
     for (int i = 0; i < poss.size(); i++){
         for (int j = 0; j < negs.size(); j++){
             // Merge clauses. If 'y' and '~y' exist, clause will not be created.
             dummy.clear();
             bool ok = merge(*poss[i].clause, *negs[j].clause, Lit(x, false), Lit(x, true),  dummy);
             if (ok){
+                //findSubsumed(dummy, calcAbstraction(dummy), dummy2);
+                //after_clauses -= (int)dummy2.size();
                 after_clauses++;
                 if (after_clauses > before_clauses) goto Abort2;
-                after_literals += dummy.size();
+                //after_literals += dummy.size();
             }
         }
     }
@@ -1183,7 +1188,6 @@ bool Subsumer::maybeEliminate(const Var x)
                     ClauseSimp c = linkInClause(*cl);
                     subsume0(*cl);
                     //subsume1(c);
-                    new_clauses.push(c);
                 }
                 if (!solver.ok) return true;
             }
