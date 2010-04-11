@@ -13,6 +13,7 @@ Substantially modified by: Mate Soos (2010)
 #include <algorithm>
 #include "VarReplacer.h"
 #include "Conglomerate.h"
+#include "XorFinder.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -777,6 +778,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     clauseID = 0;
     numVarsElimed = 0;
     blockTime = 0.0;
+    //if (solver.clauses.size() < 2000000) addAllXorAsNorm();
     
     //For VE
     touched_list.clear();
@@ -940,8 +942,11 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
-    
     solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
+    /*if (solver.findNormalXors && solver.clauses.size() < MAX_CLAUSENUM_XORFIND) {
+        XorFinder xorFinder(&solver, solver.clauses, ClauseCleaner::clauses);
+        if (!xorFinder.doNoPart(3, 4)) return false;
+    }*/
     
     if (solver.verbosity >= 1) {
         std::cout << "c |  lits-rem: " << std::setw(9) << literals_removed
@@ -1613,6 +1618,130 @@ const bool Subsumer::tryOneSetting(const Lit lit, const Lit negLit)
     }
     
     return returnVal;
+}
+
+void Subsumer::addAllXorAsNorm()
+{
+    uint32_t added = 0;
+    XorClause **i = solver.xorclauses.getData(), **j = i;
+    for (XorClause **end = solver.xorclauses.getDataEnd(); i != end; i++) {
+        if ((*i)->size() > 3) {
+            *j++ = *i;
+            continue;
+        }
+        added++;
+        if ((*i)->size() == 3) addXorAsNormal3(**i);
+        //if ((*i)->size() == 4) addXorAsNormal4(**i);
+        solver.removeClause(**i);
+    }
+    solver.xorclauses.shrink(i-j);
+    std::cout << "Added XOR as norm:" << added << std::endl;
+}
+
+void Subsumer::addXorAsNormal3(XorClause& c)
+{
+    assert(c.size() == 3);
+    Clause *tmp;
+    vec<Var> vars;
+    vec<Lit> vars2(c.size());
+    const bool inverted = c.xor_clause_inverted();
+    
+    for (uint32_t i = 0; i < c.size(); i++) {
+        vars.push(c[i].var());
+    }
+    
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], false ^ inverted);
+    vars2[2] = Lit(vars[2], false ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], true ^ inverted);
+    vars2[1] = Lit(vars[1], true ^ inverted);
+    vars2[2] = Lit(vars[2], false ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], true ^ inverted);
+    vars2[1] = Lit(vars[1], false ^ inverted);
+    vars2[2] = Lit(vars[2], true ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], true ^ inverted);
+    vars2[2] = Lit(vars[2], true ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+}
+
+void Subsumer::addXorAsNormal4(XorClause& c)
+{
+    assert(c.size() == 4);
+    Clause *tmp;
+    vec<Var> vars;
+    vec<Lit> vars2(c.size());
+    const bool inverted = !c.xor_clause_inverted();
+    
+    for (uint32_t i = 0; i < c.size(); i++) {
+        vars.push(c[i].var());
+    }
+    
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], false ^ inverted);
+    vars2[2] = Lit(vars[2], false ^ inverted);
+    vars2[3] = Lit(vars[3], true ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], true ^ inverted);
+    vars2[2] = Lit(vars[2], false ^ inverted);
+    vars2[3] = Lit(vars[3], false ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], false ^ inverted);
+    vars2[2] = Lit(vars[2], true ^ inverted);
+    vars2[3] = Lit(vars[3], false ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], false ^ inverted);
+    vars2[2] = Lit(vars[2], false ^ inverted);
+    vars2[3] = Lit(vars[3], true ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], false ^ inverted);
+    vars2[1] = Lit(vars[1], true ^ inverted);
+    vars2[2] = Lit(vars[2], true ^ inverted);
+    vars2[3] = Lit(vars[3], true ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], true ^ inverted);
+    vars2[1] = Lit(vars[1], false ^ inverted);
+    vars2[2] = Lit(vars[2], true ^ inverted);
+    vars2[3] = Lit(vars[3], true ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], true ^ inverted);
+    vars2[1] = Lit(vars[1], true ^ inverted);
+    vars2[2] = Lit(vars[2], false ^ inverted);
+    vars2[3] = Lit(vars[3], true ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
+    
+    vars2[0] = Lit(vars[0], true ^ inverted);
+    vars2[1] = Lit(vars[1], true ^ inverted);
+    vars2[2] = Lit(vars[2], true ^ inverted);
+    vars2[3] = Lit(vars[3], false ^ inverted);
+    tmp = solver.addClauseInt(vars2, c.getGroup());
+    if (tmp) solver.clauses.push(tmp);
 }
 
 /*vector<char> Subsumer::merge()
