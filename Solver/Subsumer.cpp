@@ -1496,35 +1496,6 @@ void Subsumer::verifyIntegrity()
     }
 }
 
-/*void Subsumer::undoPureLitRemoval()
-{
-    assert(solver.ok);
-    for (uint32_t i = 0; i < madeVarNonDecision.size(); i++) {
-        assert(!solver.decision_var[madeVarNonDecision[i]]);
-        assert(solver.assigns[madeVarNonDecision[i]] == l_Undef);
-        solver.setDecisionVar(madeVarNonDecision[i], true);
-        pureLitRemoved[madeVarNonDecision[i]] = false;
-    }
-    madeVarNonDecision.clear();
-    
-    for (Lit *l = assignVar.getData(), *end = assignVar.getDataEnd(); l != end; l++) {
-        solver.uncheckedEnqueue(*l);
-        solver.ok = (solver.propagate() == NULL);
-        assert(solver.ok);
-    }
-    assignVar.clear();
-}
-
-void Subsumer::reAddPureLitClauses()
-{
-    for (Clause **it = pureLitClauseRemoved.getData(), **end = pureLitClauseRemoved.getDataEnd(); it != end; it++) {
-        solver.addClause(**it, (*it)->getGroup());
-        free(*it);
-        assert(solver.ok);
-    }
-    pureLitClauseRemoved.clear();
-}*/
-
 const bool Subsumer::allTautology(const vec<Lit>& ps, const Lit lit)
 {
     #ifdef VERBOSE_DEBUG
@@ -1835,4 +1806,33 @@ const bool Subsumer::tryOneSetting(const Lit lit, const Lit negLit)
             continue;
         }
     }
+}*/
+
+/*void Subsumer::undoPureLitRemoval()
+{
+    assert(solver.ok);
+    for (uint32_t i = 0; i < madeVarNonDecision.size(); i++) {
+        assert(!solver.decision_var[madeVarNonDecision[i]]);
+        assert(solver.assigns[madeVarNonDecision[i]] == l_Undef);
+        solver.setDecisionVar(madeVarNonDecision[i], true);
+        pureLitRemoved[madeVarNonDecision[i]] = false;
+    }
+    madeVarNonDecision.clear();
+    
+    for (Lit *l = assignVar.getData(), *end = assignVar.getDataEnd(); l != end; l++) {
+        solver.uncheckedEnqueue(*l);
+        solver.ok = (solver.propagate() == NULL);
+        assert(solver.ok);
+    }
+    assignVar.clear();
+}
+
+void Subsumer::reAddPureLitClauses()
+{
+    for (Clause **it = pureLitClauseRemoved.getData(), **end = pureLitClauseRemoved.getDataEnd(); it != end; it++) {
+        solver.addClause(**it, (*it)->getGroup());
+        free(*it);
+        assert(solver.ok);
+    }
+    pureLitClauseRemoved.clear();
 }*/
