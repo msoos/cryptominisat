@@ -1062,19 +1062,19 @@ void inline Subsumer::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs
     poss.moveTo(ps);
     negs.moveTo(ns);
     
-    for (int i = 0; i < ps.size(); i++)
+    for (uint32_t i = 0; i < ps.size(); i++)
         unlinkClause(ps[i], x);
-    for (int i = 0; i < ns.size(); i++)
+    for (uint32_t i = 0; i < ns.size(); i++)
         unlinkClause(ns[i], x);
 }
 
 void inline Subsumer::DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns)
 {
-    for (int i = 0; i < ps.size(); i++) {
+    for (uint32_t i = 0; i < ps.size(); i++) {
         clauses[ps[i].index].clause = NULL;
         free(ps[i].clause);
     }
-    for (int i = 0; i < ns.size(); i++) {
+    for (uint32_t i = 0; i < ns.size(); i++) {
         clauses[ns[i].index].clause = NULL;
         free(ns[i].clause);
     }
