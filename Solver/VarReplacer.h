@@ -46,6 +46,7 @@ class VarReplacer
         
         void extendModelPossible() const;
         void extendModelImpossible(Solver& solver2) const;
+        void reattachInternalClauses();
         
         const uint getNumReplacedLits() const;
         const uint getNumReplacedVars() const;

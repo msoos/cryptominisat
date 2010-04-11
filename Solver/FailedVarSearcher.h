@@ -60,6 +60,11 @@ class FailedVarSearcher {
         const TwoLongXor getTwoLongXor(const XorClause& c);
         void addFromSolver(const vec<XorClause*>& cs);
         
+        template<class T>
+        void cleanAndAttachClauses(vec<T*>& cs);
+        const bool cleanClause(Clause& ps);
+        const bool cleanClause(XorClause& ps);
+        
         Solver& solver;
         
         vec<uint32_t> xorClauseSizes;
