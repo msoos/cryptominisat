@@ -1798,7 +1798,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         }
     }
     
-    if (doSubsumption && clauses.size() + binaryClauses.size() + learnts.size() < 4800000) {
+    if (doSubsumption) {
         if (!subsumer->simplifyBySubsumption()) {
             status = l_False;
             goto end;
@@ -1860,7 +1860,7 @@ inline void Solver::performStepsBeforeSolve()
     if (doSubsumption
         && !libraryUsage
         && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
-        && !subsumer->simplifyBySubsumption((clauses.size() + binaryClauses.size() < 200000)))
+        && !subsumer->simplifyBySubsumption())
         return;
     
     const uint32_t lastReplacedVars = varReplacer->getNumReplacedVars();
@@ -1870,13 +1870,6 @@ inline void Solver::performStepsBeforeSolve()
         
         if (performReplace && !varReplacer->performReplace(true)) return;
     }
-    
-    if (doSubsumption
-        && !libraryUsage
-        && varReplacer->getNumReplacedVars()-lastReplacedVars > 10
-        && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
-        && !subsumer->simplifyBySubsumption((clauses.size() + binaryClauses.size() < 200000)))
-        return;
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);

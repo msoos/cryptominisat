@@ -25,7 +25,7 @@ public:
     
     Subsumer(Solver& S2);
     ~Subsumer();
-    const bool simplifyBySubsumption(const bool doFullSubsume = false);
+    const bool simplifyBySubsumption();
     void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c);
     void unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSimp c);
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
@@ -55,7 +55,6 @@ private:
     Solver&                solver;         // The Solver
     
     
-    uint32_t numVarsElimed;
     vec<char>              var_elimed;     // 'eliminated[var]' is TRUE if variable has been eliminated.
     vec<char>              cannot_eliminate;//
     map<Var, vector<vector<Lit> > > elimedOutVar;
@@ -64,6 +63,15 @@ private:
     //
     vec<char>           seen_tmp;       // (used in various places)
     vector<Lit>         io_tmp;         // (used for reading/writing clauses from/to disk)
+    
+    
+    //Limits
+    uint32_t numVarsElimed;
+    uint32_t numToSubsume1;
+    uint32_t numToSubsume0;
+    uint32_t numMaxElim;
+    int64_t sumBlockToVisit;
+    uint32_t numBlockVars;
     
     //Start-up
     void addFromSolver(vec<Clause*>& cs);

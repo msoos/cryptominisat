@@ -60,6 +60,7 @@ protected:
     uint32_t sorted:1;
     uint32_t invertedXor:1;
     uint32_t isXorClause:1;
+    uint32_t subsume0Done:1;
     uint32_t mySize:20;
     
     union  {int32_t act; uint32_t abst;} extra;
@@ -79,6 +80,7 @@ public:
         strenghtened = false;
         sorted = false;
         varChanged = true;
+        subsume0Done = false;
         mySize = ps.size();
         isLearnt = learnt;
         setGroup(_group);
@@ -119,6 +121,7 @@ public:
     void setStrenghtened() {
         strenghtened = true;
         sorted = false;
+        subsume0Done = false;
     }
     void unsetStrenghtened() {
         strenghtened = false;
@@ -129,6 +132,7 @@ public:
     void setVarChanged() {
         varChanged = true;
         sorted = false;
+        subsume0Done = false;
     }
     void unsetVarChanged() {
         varChanged = false;
@@ -141,6 +145,12 @@ public:
     }
     void setUnsorted() {
         sorted = false;
+    }
+    void subsume0Finished() {
+        subsume0Done = 1;
+    }
+    const bool subsume0IsFinished() {
+        return subsume0Done;
     }
 
     Lit&         operator [] (uint32_t i) {
