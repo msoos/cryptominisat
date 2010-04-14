@@ -426,10 +426,10 @@ void Subsumer::almost_all_database()
     cl_touched.clear();
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
-        if (numToSubsume1 == 0) break;
+        if (numMaxSubsume1 == 0) break;
         if (clauses[i].clause != NULL && updateOccur(*clauses[i].clause)) {
             subsume1(clauses[i]);
-            numToSubsume1--;
+            numMaxSubsume1--;
             if (!solver.ok) return;
         }
     }
@@ -448,7 +448,7 @@ void Subsumer::almost_all_database()
     
     CSet s1;
     registerIteration(s1);
-    while (cl_touched.size() > 0 && numToSubsume1 > 0){
+    while (cl_touched.size() > 0 && numMaxSubsume1 > 0){
         #ifdef VERBOSE_DEBUG
         std::cout << "c cl_touched was > 0, new iteration" << std::endl;
         #endif
@@ -459,10 +459,10 @@ void Subsumer::almost_all_database()
         cl_touched.clear();
         
         for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
-            if (numToSubsume1 == 0) break;
+            if (numMaxSubsume1 == 0) break;
             if (it->clause != NULL) {
                 subsume1(*it);
-                numToSubsume1--;
+                numMaxSubsume1--;
                 if (!solver.ok) return;
             }
         }
@@ -546,10 +546,10 @@ void Subsumer::smaller_database()
         #endif
         
         for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
-            if (numToSubsume1 == 0) break;
+            if (numMaxSubsume1 == 0) break;
             if (it->clause != NULL) {
                 subsume1(*it);
-                numToSubsume1--;
+                numMaxSubsume1--;
                 if (!solver.ok) return;
             }
         }
@@ -723,9 +723,9 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
     Clause** a = cs.getData();
     Clause** b = a;
     for (Clause** end = a + cs.size(); a != end; a++) {
-        if (numToSubsume0 == 0) break;
+        if (numMaxSubsume0 == 0) break;
         if (!(*a)->subsume0IsFinished()) {
-            numToSubsume0--;
+            numMaxSubsume0--;
             uint32_t index = subsume0(**a, calcAbstraction(**a));
             if (index != std::numeric_limits<uint32_t>::max()) {
                 (*a)->makeNonLearnt();
@@ -736,7 +736,7 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                 cl_added.add(clauses[index]);
                 continue;
             }
-            if (numToSubsume1 > 0 &&
+            if (numMaxSubsume1 > 0 &&
                 (((*a)->size() == 2 && clauses.size() < 3500000) ||
                 ((*a)->size() <= 3 && clauses.size() < 300000) ||
                 ((*a)->size() <= 4 && clauses.size() < 60000))) {
@@ -744,7 +744,7 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                 (*a)->calcAbstraction();
                 clauses.push(c);
                 subsume1(c);
-                numToSubsume1--;
+                numMaxSubsume1--;
                 if (!solver.ok)
                     return;
                 assert(clauses[c.index].clause != NULL);
@@ -817,14 +817,14 @@ const bool Subsumer::simplifyBySubsumption()
     
     //Limits
     if (clauses.size() > 3500000)
-        numToSubsume0 = 900000 * (1+numCalls/2);
+        numMaxSubsume0 = 900000 * (1+numCalls/2);
     else
-        numToSubsume0 = 2000000 * (1+numCalls/2);
+        numMaxSubsume0 = 2000000 * (1+numCalls/2);
     
     if (clauses.size() > 3500000)
-        numToSubsume1 = 100000 * (1+numCalls/2);
+        numMaxSubsume1 = 100000 * (1+numCalls/2);
     else
-        numToSubsume1 = 500000 * (1+numCalls/2);
+        numMaxSubsume1 = 500000 * (1+numCalls/2);
     
     if (clauses.size() > 3500000)
         numMaxElim = (uint32_t)((double)solver.order_heap.size() / 5.0 * (0.8+(double)(numCalls)/4.0));
@@ -832,14 +832,14 @@ const bool Subsumer::simplifyBySubsumption()
         numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
     
     if (clauses.size() > 3500000)
-        sumBlockToVisit = (int64_t)(30000.0 * (0.8+(double)(numCalls)/3.0));
+        numMaxBlockToVisit = (int64_t)(30000.0 * (0.8+(double)(numCalls)/3.0));
     else
-        sumBlockToVisit = (int64_t)(50000.0 * (0.8+(double)(numCalls)/3.0));
+        numMaxBlockToVisit = (int64_t)(50000.0 * (0.8+(double)(numCalls)/3.0));
     
     if (solver.order_heap.size() > 200000)
-        numBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
+        numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
     else
-        numBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
+        numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
     
     if (clauses.size() < 200000)
         fullSubsume = true;
@@ -852,13 +852,13 @@ const bool Subsumer::simplifyBySubsumption()
     #endif
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
-        if (numToSubsume0 == 0) break;
+        if (numMaxSubsume0 == 0) break;
         if (clauses[i].clause != NULL && 
             (fullSubsume
             || !clauses[i].clause->subsume0IsFinished())
             ) {
             subsume0(*clauses[i].clause);
-            numToSubsume0--;
+            numMaxSubsume0--;
         }
     }
     
@@ -888,7 +888,7 @@ const bool Subsumer::simplifyBySubsumption()
         #ifdef BIT_MORE_VERBOSITY
         std::cout << "c time before the start of almost_all/smaller: " << cpuTime() - myTime << std::endl;
         #endif
-        if (numToSubsume0 > 0) {
+        if (numMaxSubsume0 > 0) {
             if (cl_added.size() > origNClauses / 2) {
                 almost_all_database();
                 if (!solver.ok) return false;
@@ -1600,7 +1600,7 @@ const bool Subsumer::allTautology(const vec<Lit>& ps, const Lit lit)
 
 void Subsumer::blockedClauseRemoval()
 {
-    if (sumBlockToVisit < 0) return;
+    if (numMaxBlockToVisit < 0) return;
     if (solver.order_heap.size() < 1) return;
     double myTime = cpuTime();
     vec<ClauseSimp> toRemove;
@@ -1608,11 +1608,11 @@ void Subsumer::blockedClauseRemoval()
     touchedBlockedVars = priority_queue<VarOcc, vector<VarOcc>, MyComp>();
     touchedBlockedVarsBool.clear();
     touchedBlockedVarsBool.growTo(solver.nVars(), false);
-    for (uint32_t i =  0; i < solver.order_heap.size() && i < numBlockVars; i++) {
+    for (uint32_t i =  0; i < solver.order_heap.size() && i < numMaxBlockVars; i++) {
         touchBlockedVar(solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)]);
     }
     
-    while (touchedBlockedVars.size() > 100  && sumBlockToVisit > 0) {
+    while (touchedBlockedVars.size() > 100  && numMaxBlockToVisit > 0) {
         VarOcc vo = touchedBlockedVars.top();
         touchedBlockedVars.pop();
         
@@ -1622,8 +1622,8 @@ void Subsumer::blockedClauseRemoval()
         Lit lit = Lit(vo.var, false);
         Lit negLit = Lit(vo.var, true);
         
-        sumBlockToVisit -= (int64_t)occur[lit.toInt()].size();
-        sumBlockToVisit -= (int64_t)occur[negLit.toInt()].size();
+        numMaxBlockToVisit -= (int64_t)occur[lit.toInt()].size();
+        numMaxBlockToVisit -= (int64_t)occur[negLit.toInt()].size();
         if (!tryOneSetting(lit, negLit)) {
             tryOneSetting(negLit, lit);
         }

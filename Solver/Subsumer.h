@@ -67,11 +67,11 @@ private:
     
     //Limits
     uint32_t numVarsElimed;
-    uint32_t numToSubsume1;
-    uint32_t numToSubsume0;
+    uint32_t numMaxSubsume1;
+    uint32_t numMaxSubsume0;
     uint32_t numMaxElim;
-    int64_t sumBlockToVisit;
-    uint32_t numBlockVars;
+    int64_t numMaxBlockToVisit;
+    uint32_t numMaxBlockVars;
     
     //Start-up
     void addFromSolver(vec<Clause*>& cs);
