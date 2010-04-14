@@ -30,11 +30,11 @@ using std::vector;
 
 class FindUndef {
     public:
-        FindUndef(Solver& S);
+        FindUndef(Solver& _solver);
         const uint unRoll();
         
     private:
-        Solver& S;
+        Solver& solver;
         
         bool updateTables();
         void fillPotential();
