@@ -1621,7 +1621,7 @@ const bool Subsumer::tryOneSetting(const Lit lit, const Lit negLit)
     }
     
     if (toRemove == occur[lit.toInt()].size()) {
-        var_elimed[lit.var()] == true;
+        var_elimed[lit.var()] = true;
         solver.setDecisionVar(lit.var(), false);
         vec<ClauseSimp> toRemove(occur[lit.toInt()]);
         for (ClauseSimp *it = toRemove.getData(), *end = toRemove.getDataEnd(); it != end; it++) {
