@@ -1205,17 +1205,17 @@ bool Subsumer::maybeEliminate(const Var x)
 // Returns FALSE if clause is always satisfied ('out_clause' should not be used). 'seen' is assumed to be cleared.
 bool Subsumer::merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<Lit>& out_clause)
 {
-    for (int i = 0; i < ps.size(); i++){
+    for (uint32_t i = 0; i < ps.size(); i++){
         if (ps[i] != without_p){
             seen_tmp[ps[i].toInt()] = 1;
             out_clause.push(ps[i]);
         }
     }
     
-    for (int i = 0; i < qs.size(); i++){
+    for (uint32_t i = 0; i < qs.size(); i++){
         if (qs[i] != without_q){
             if (seen_tmp[(~qs[i]).toInt()]){
-                for (int i = 0; i < ps.size(); i++)
+                for (uint32_t i = 0; i < ps.size(); i++)
                     seen_tmp[ps[i].toInt()] = 0;
                 return false;
             }
@@ -1224,7 +1224,7 @@ bool Subsumer::merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<L
         }
     }
     
-    for (int i = 0; i < ps.size(); i++)
+    for (uint32_t i = 0; i < ps.size(); i++)
         seen_tmp[ps[i].toInt()] = 0;
     
     return true;
