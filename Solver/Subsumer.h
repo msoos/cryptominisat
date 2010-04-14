@@ -118,27 +118,27 @@ private:
     
     class VarOcc {
         public:
-            LitOcc(const Lit& l, const uint32_t num) :
-                lit(l)
+            VarOcc(const Var& v, const uint32_t num) :
+                var(v)
                 , occurnum(num)
             {}
-            Lit lit;
+            Var var;
             uint32_t occurnum;
     };
     
     struct MyComp {
-        const bool operator() (const LitOcc& l1, const LitOcc& l2) const {
+        const bool operator() (const VarOcc& l1, const VarOcc& l2) const {
             return l1.occurnum > l2.occurnum;
         }
     };
     
-    //blocked clause removal
     void blockedClauseRemoval();
-    void touchLit(const Lit lit);
     const bool allTautology(const vec<Lit>& ps, const Lit lit);
-    
-    vec<bool> touchedLitBool;
-    priority_queue<LitOcc, vector<LitOcc>, MyComp> touchedLits;
+    uint32_t numblockedClauseRemoved;
+    const bool tryOneSetting(const Lit lit, const Lit negLit);
+    priority_queue<VarOcc, vector<VarOcc>, MyComp> touchedBlockedVars;
+    vec<bool> touchedBlockedVarsBool;
+    double blockTime;
     
     
     //validity checking
@@ -165,6 +165,10 @@ inline void Subsumer::touch(const Var x)
     if (!touched[x]) {
         touched[x] = 1;
         touched_list.push(x);
+    }
+    if (!touchedBlockedVarsBool[x]) {
+        touchedBlockedVars.push(VarOcc(x, occur[Lit(x, false).toInt()].size()*occur[Lit(x, true).toInt()].size()));
+        touchedBlockedVarsBool[x] = 1;
     }
 }
 inline void Subsumer::touch(const Lit p)
@@ -208,6 +212,7 @@ inline void Subsumer::newVar()
     seen_tmp    .push(0);
     touched     .push(1);
     var_elimed  .push(0);
+    touchedBlockedVarsBool.push(0);
     cannot_eliminate.push(0);
 }
 
