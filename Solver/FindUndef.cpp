@@ -25,15 +25,6 @@ FindUndef::FindUndef(Solver& _solver) :
     solver(_solver)
     , isPotentialSum(0)
 {
-    if (solver.decisionLevel() == 0) return;
-    
-    for (uint i = 0; i != solver.binaryClauses.size(); i++)
-        solver.clauses.push(solver.binaryClauses[i]);
-    solver.binaryClauses.clear();
-    dontLookAtClause.resize(solver.clauses.size(), false);
-    isPotential.resize(solver.nVars(), false);
-    fillPotential();
-    satisfies.resize(solver.nVars(), 0);
 }
 
 void FindUndef::fillPotential()
@@ -46,8 +37,10 @@ void FindUndef::fillPotential()
         
         assert(at > 0);
         Var v = solver.trail[at].var();
-        isPotential[v] = true;
-        isPotentialSum++;
+        if (solver.assigns[v] != l_Undef) {
+            isPotential[v] = true;
+            isPotentialSum++;
+        }
         
         trail--;
     }
@@ -79,8 +72,32 @@ void FindUndef::unboundIsPotentials()
             solver.assigns[i] = l_Undef;
 }
 
+void FindUndef::moveBinToNormal()
+{
+    binPosition = solver.clauses.size();
+    for (uint i = 0; i != solver.binaryClauses.size(); i++)
+        solver.clauses.push(solver.binaryClauses[i]);
+    solver.binaryClauses.clear();
+}
+
+void FindUndef::moveBinFromNormal()
+{
+    for (uint i = binPosition; i != solver.clauses.size(); i++)
+        solver.binaryClauses.push(solver.clauses[i]);
+    solver.clauses.shrink(solver.clauses.size() - binPosition);
+}
+
 const uint FindUndef::unRoll()
 {
+    if (solver.decisionLevel() == 0) return 0;
+    
+    moveBinToNormal();
+    
+    dontLookAtClause.resize(solver.clauses.size(), false);
+    isPotential.resize(solver.nVars(), false);
+    fillPotential();
+    satisfies.resize(solver.nVars(), 0);
+    
     while(!updateTables()) {
         assert(isPotentialSum > 0);
         
@@ -100,6 +117,7 @@ const uint FindUndef::unRoll()
     }
     
     unboundIsPotentials();
+    moveBinFromNormal();
     
     return isPotentialSum;
 }
@@ -115,7 +133,7 @@ bool FindUndef::updateTables()
         
         Clause& c = **it;
         bool definitelyOK = false;
-        Var v;
+        Var v = var_Undef;
         uint numTrue = 0;
         for (Lit *l = c.getData(), *end = l + c.size(); l != end; l++) {
             if (solver.value(*l) == l_True) {
@@ -133,12 +151,14 @@ bool FindUndef::updateTables()
             continue;
         
         if (numTrue == 1) {
+            assert(v != var_Undef);
             isPotential[v] = false;
             isPotentialSum--;
             dontLookAtClause[i] = true;
             continue;
         }
         
+        //numTrue > 1
         allSat = false;
         for (Lit *l = c.getData(), *end = l + c.size(); l != end; l++) {
             if (solver.value(*l) == l_True)

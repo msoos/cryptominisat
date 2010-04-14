@@ -36,6 +36,8 @@ class FindUndef {
     private:
         Solver& solver;
         
+        void moveBinToNormal();
+        void moveBinFromNormal();
         bool updateTables();
         void fillPotential();
         void unboundIsPotentials();
@@ -44,6 +46,7 @@ class FindUndef {
         vector<uint32_t> satisfies;
         vector<bool> isPotential;
         uint32_t isPotentialSum;
+        uint32_t binPosition;
         
 };
 
