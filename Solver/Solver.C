@@ -2003,7 +2003,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
                 printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
         }
         
-        subsumer->undoPureLitRemoval();
         partHandler->addSavedState();
         conglomerate->doCalcAtFinish();
         varReplacer->extendModelPossible();
@@ -2067,7 +2066,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     #endif
 
     cancelUntil(0);
-    if (doSubsumption && status != l_False) subsumer->reAddPureLitClauses();
     if (doPartHandler && status != l_False) partHandler->readdRemovedClauses();
     
     return status;
