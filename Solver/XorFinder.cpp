@@ -281,7 +281,7 @@ bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, c
     if (size < requiredSize)
         return false;
     
-    #ifdef DEBUG_XORFIND
+    #ifdef DEBUG_XORFIND2
     {
         vec<Var> vars;
         Clause& c = *begin->first;
