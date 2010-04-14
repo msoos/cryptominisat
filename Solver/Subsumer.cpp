@@ -909,20 +909,22 @@ const bool Subsumer::simplifyBySubsumption()
         vec<Var> init_order;
         orderVarsForElim(init_order);   // (will untouch all variables)
         
-        for (bool first = true;; first = false){
-            int vars_elimed = 0;
+        for (bool first = true; numMaxElim > 0; first = false){
+            uint32_t vars_elimed = 0;
             int clauses_before = solver.nClauses();
             vec<Var> order;
             
             if (first) {
                 //init_order.copyTo(order);
-                for (int i = 0; i < init_order.size(); i++) {
-                    if (!var_elimed[init_order[i]] && !cannot_eliminate[init_order[i]] && solver.decision_var[init_order[i]] && solver.assigns[init_order[i]] == l_Undef)
+                for (uint32_t i = 0; i < init_order.size(); i++) {
+                    const Var var = init_order[i];
+                    if (!var_elimed[var] && !cannot_eliminate[var] && solver.decision_var[var] && solver.assigns[var] == l_Undef)
                         order.push(init_order[i]);
                 }
             } else {
-                for (int i = 0; i < touched_list.size(); i++) {
-                    if (!var_elimed[touched_list[i]] && !cannot_eliminate[touched_list[i]] && solver.decision_var[touched_list[i]] && solver.assigns[touched_list[i]] == l_Undef) {
+                for (uint32_t i = 0; i < touched_list.size(); i++) {
+                    const Var var = touched_list[i];
+                    if (!var_elimed[var] && !cannot_eliminate[var] && solver.decision_var[var] && solver.assigns[var] == l_Undef) {
                         order.push(touched_list[i]);
                         touched[touched_list[i]] = 0;
                     }
@@ -934,25 +936,23 @@ const bool Subsumer::simplifyBySubsumption()
             #endif
             
             assert(solver.qhead == solver.trail.size());
-            for (int i = 0; i < order.size() && numMaxElim > 0; i++, numMaxElim--){
-                if (maybeEliminate(order[i])){
+            for (uint32_t i = 0; i < order.size() && numMaxElim > 0; i++, numMaxElim--) {
+                if (maybeEliminate(order[i])) {
                     if (!solver.ok) {
                         printf("c (contradiction during subsumption)\n");
                         return false;
                     }
-                    vars_elimed++;
-                    assert(solver.ok);
                     solver.ok = (solver.propagate() == NULL);
                     if (!solver.ok) {
                         printf("c (contradiction during subsumption)\n");
                         return false;
                     }
+                    vars_elimed++;
                 }
             }
             assert(solver.qhead == solver.trail.size());
             
-            if (vars_elimed == 0)
-                break;
+            if (vars_elimed == 0) break;
             
             numVarsElimed += vars_elimed;
             #ifdef BIT_MORE_VERBOSITY
