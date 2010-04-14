@@ -1146,6 +1146,7 @@ bool Subsumer::maybeEliminate(const Var x)
                 if (cl != NULL) {
                     ClauseSimp c = linkInClause(*cl);
                     subsume0(*cl);
+                    subsume1(c);
                     new_clauses.push(c);
                 }
                 if (!solver.ok) return true;
@@ -1155,43 +1156,42 @@ bool Subsumer::maybeEliminate(const Var x)
         goto Eliminated;
     }
     
-    {
-        // Count clauses/literals after elimination:
-        int after_clauses  = 0;
-        int after_literals = 0;
-        vec<Lit>  dummy;
-        for (int i = 0; i < poss.size(); i++){
-            for (int j = 0; j < negs.size(); j++){
-                // Merge clauses. If 'y' and '~y' exist, clause will not be created.
-                dummy.clear();
-                bool ok = merge(*poss[i].clause, *negs[j].clause, Lit(x, false), Lit(x, true),  dummy);
-                if (ok){
-                    after_clauses++;
-                    after_literals += dummy.size();
-                }
+    after_clauses  = 0;
+    after_literals = 0;
+    for (int i = 0; i < poss.size(); i++){
+        for (int j = 0; j < negs.size(); j++){
+            // Merge clauses. If 'y' and '~y' exist, clause will not be created.
+            dummy.clear();
+            bool ok = merge(*poss[i].clause, *negs[j].clause, Lit(x, false), Lit(x, true),  dummy);
+            if (ok){
+                after_clauses++;
+                if (after_clauses > before_clauses) goto Abort2;
+                after_literals += dummy.size();
             }
         }
-        
-        // Maybe eliminate:
-        if (after_clauses  <= before_clauses) {
-            vec<ClauseSimp> ps, ns;
-            MigrateToPsNs(poss, negs, ps, ns, x);
-            for (int i = 0; i < ps.size(); i++) for (int j = 0; j < ns.size(); j++){
-                dummy.clear();
-                bool ok = merge(*ps[i].clause, *ns[j].clause, Lit(x, false), Lit(x, true), dummy);
-                if (ok){
-                    Clause* cl = solver.addClauseInt(dummy, 0);
-                    if (cl != NULL) {
-                        ClauseSimp c = linkInClause(*cl);
-                        subsume0(*cl);
-                        new_clauses.push(c);
-                    }
-                    if (!solver.ok) return true;
+    }
+    Abort2:
+    
+    // Maybe eliminate:
+    if (after_clauses  <= before_clauses) {
+        vec<ClauseSimp> ps, ns;
+        MigrateToPsNs(poss, negs, ps, ns, x);
+        for (int i = 0; i < ps.size(); i++) for (int j = 0; j < ns.size(); j++){
+            dummy.clear();
+            bool ok = merge(*ps[i].clause, *ns[j].clause, Lit(x, false), Lit(x, true), dummy);
+            if (ok){
+                Clause* cl = solver.addClauseInt(dummy, 0);
+                if (cl != NULL) {
+                    ClauseSimp c = linkInClause(*cl);
+                    subsume0(*cl);
+                    subsume1(c);
+                    new_clauses.push(c);
                 }
+                if (!solver.ok) return true;
             }
-            DeallocPsNs(ps, ns);
-            goto Eliminated;
         }
+        DeallocPsNs(ps, ns);
+        goto Eliminated;
     }
     
     return false;
