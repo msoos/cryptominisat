@@ -849,9 +849,6 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
         }
         
         if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
-        solver.ok = (solver.propagate() == NULL);
-        if (!solver.ok) return false;
-        solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
         
         #ifdef BIT_MORE_VERBOSITY
         printf("c VARIABLE ELIMINIATION\n");
