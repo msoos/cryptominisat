@@ -35,8 +35,7 @@ using std::endl;
 #endif //VERBOSE_DEBUG
 
 Subsumer::Subsumer(Solver& s):
-    occur_mode(occ_Permanent)
-    , solver(s)
+    solver(s)
     , numCalls(0)
     , numElimed(0)
 {
