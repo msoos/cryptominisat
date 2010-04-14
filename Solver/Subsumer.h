@@ -35,13 +35,10 @@ public:
     void linkInAlreadyClause(ClauseSimp& c);
     void updateClause(ClauseSimp c);
     void newVar();
-    void undoPureLitRemoval();
     void extendModel(Solver& solver2);
     const bool unEliminate(const Var var);
     const vec<char>& getVarElimed() const;
     const uint32_t getNumElimed() const;
-    const vec<char>& getPureLitRemoved() const;
-    void reAddPureLitClauses();
     
 private:
     
@@ -116,16 +113,10 @@ private:
     const bool hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<ClauseSimp>& addToClauses, uint32_t& hyperBinAdded, uint32_t& hyperBinUnitary);
     
     //merging
-    vector<char> merge();
-    const bool checkIfSame(const Lit var1, const Lit var2);
-    void pureLiteralRemoval();
-    vec<Var> madeVarNonDecision;
-    vec<Clause*> pureLitClauseRemoved;
-    vec<Lit> assignVar;
-    vec<char> pureLitRemoved;
-    uint32_t pureLitsRemovedNum;
+    //vector<char> merge();
+    //const bool checkIfSame(const Lit var1, const Lit var2);
     
-    class LitOcc {
+    class VarOcc {
         public:
             LitOcc(const Lit& l, const uint32_t num) :
                 lit(l)
@@ -217,7 +208,6 @@ inline void Subsumer::newVar()
     seen_tmp    .push(0);
     touched     .push(1);
     var_elimed  .push(0);
-    pureLitRemoved.push(0);
     cannot_eliminate.push(0);
 }
 
@@ -229,11 +219,6 @@ inline const vec<char>& Subsumer::getVarElimed() const
 inline const uint32_t Subsumer::getNumElimed() const
 {
     return numElimed;
-}
-
-inline const vec<char>& Subsumer::getPureLitRemoved() const
-{
-    return pureLitRemoved;
 }
 
 #endif //SIMPLIFIER_H
