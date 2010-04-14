@@ -44,8 +44,8 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
     #endif
     
     vec<Lit> origClause(ps.clause->size());
-    memcpy(origClause.getData(), ps.clause->getData(), sizeof(Lit)*ps.clause->size());
-    bool origClauseInverted = ps.clause->xor_clause_inverted();
+    std::copy(ps.clause->getData(), ps.clause->getDataEnd(), origClause.getData());
+    const bool origClauseInverted = ps.clause->xor_clause_inverted();
     
     vec<Lit> unmatchedPart;
     bool needUnlinkPS = false;
