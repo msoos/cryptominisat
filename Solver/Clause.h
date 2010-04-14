@@ -139,6 +139,9 @@ public:
     void setSorted() {
         sorted = true;
     }
+    void setUnsorted() {
+        sorted = false;
+    }
 
     Lit&         operator [] (uint32_t i) {
         return data[i];
