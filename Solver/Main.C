@@ -435,6 +435,7 @@ void printUsage(char** argv)
     printf("  -noxorsubsumption Don't try to subsume xor-clauses.\n");
     printf("  -nosatelite     = SatELite was not used on input (please set for library usage)\n");
     printf("  -nohyperbinres  = Don't carry out hyper-binary resolution\n");
+    printf("  -noResPrint     = Don't print the satisfying assignment if the solution is SAT\n");
     printf("\n");
 }
 
