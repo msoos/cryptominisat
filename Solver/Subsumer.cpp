@@ -25,7 +25,7 @@ Substantially modified by: Mate Soos (2010)
 #define BIT_MORE_VERBOSITY
 #endif
 
-#define BIT_MORE_VERBOSITY
+//#define BIT_MORE_VERBOSITY
 //#define HYPER_DEBUG
 //#define HYPER_DEBUG2
 //#define TOUCH_LESS
