@@ -768,16 +768,17 @@ const bool Subsumer::treatLearnts()
 const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
 {
     fullSubsume = doFullSubsume;
-    if (fullSubsume)
-        std::cout << "c Doing full subsumption" << std::endl;
     double myTime = cpuTime();
     uint32_t origTrailSize = solver.trail.size();
     clauses_subsumed = 0;
     literals_removed = 0;
-    pureLitsRemovedNum = 0;
+    numblockedClauseRemoved = 0;
     numCalls++;
     clauseID = 0;
+    numVarsElimed = 0;
+    blockTime = 0;
     
+    //For VE
     touched_list.clear();
     touched.clear();
     touched.growTo(solver.nVars(), false);
@@ -921,7 +922,8 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             if (vars_elimed == 0)
                 break;
             
-            printf("c  #clauses-removed: %-8d #var-elim: %d\n", clauses_before - solver.nClauses(), vars_elimed);
+            numVarsElimed += vars_elimed;
+            //printf("c  #clauses-removed: %-8d #var-elim: %d\n", clauses_before - solver.nClauses(), vars_elimed);
             
         }
     }while (cl_added.size() > 100);
@@ -956,12 +958,14 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     
     solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
     
-    std::cout << "c |  literals-removed: " << std::setw(9) << literals_removed
-    << " clauses-subsumed: " << std::setw(8) << clauses_subsumed
-    << " vars fixed: " << std::setw(3) <<solver.trail.size() - origTrailSize
-    << " time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
-    << " |" << std::endl;
-    std::cout << "c |  pureLitsRemoved: " << std::setw(8) << pureLitsRemovedNum << std::endl;
+    if (solver.verbosity >= 1) {
+        std::cout << "c |  lits-rem: " << std::setw(9) << literals_removed
+        << "  cl-subs: " << std::setw(8) << clauses_subsumed
+        << "  v-elim: " << std::setw(6) << numVarsElimed
+        << "  v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
+        << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        << "   |" << std::endl;
+    }
     
     return true;
 }
