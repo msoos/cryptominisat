@@ -1149,7 +1149,7 @@ bool Subsumer::maybeEliminate(const Var x)
                 if (cl != NULL) {
                     ClauseSimp c = linkInClause(*cl);
                     subsume0(*cl);
-                    subsume1(c);
+                    //subsume1(c);
                     new_clauses.push(c);
                 }
                 if (!solver.ok) return true;
@@ -1187,7 +1187,7 @@ bool Subsumer::maybeEliminate(const Var x)
                 if (cl != NULL) {
                     ClauseSimp c = linkInClause(*cl);
                     subsume0(*cl);
-                    subsume1(c);
+                    //subsume1(c);
                     new_clauses.push(c);
                 }
                 if (!solver.ok) return true;
