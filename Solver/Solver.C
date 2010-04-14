@@ -1767,7 +1767,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
-    if (heuleProcess) {
+    if (heuleProcess && xorclauses.size() > 1) {
         if (!conglomerate->heuleProcessFull()) {
             status = l_False;
             goto end;
