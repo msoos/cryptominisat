@@ -774,7 +774,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     numCalls++;
     clauseID = 0;
     numVarsElimed = 0;
-    blockTime = 0;
+    blockTime = 0.0;
     
     //For VE
     touched_list.clear();
@@ -789,9 +789,6 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
     if (solver.performReplace && !solver.varReplacer->performReplace(true))
         return false;
     fillCannotEliminate();
-    
-    //For BCE
-    touchedBlockedVars = priority_queue<VarOcc, vector<VarOcc>, MyComp>();
     
     clauses.clear();
     cl_added.clear();
@@ -851,7 +848,7 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             if (!solver.ok) return false;
         }
         
-        if (solver.doBlockedClause) blockedClauseRemoval();
+        if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
         solver.ok = (solver.propagate() == NULL);
         if (!solver.ok) return false;
         solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
@@ -917,7 +914,6 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
             
         }
     }while (cl_added.size() > 100);
-    if (solver.doBlockedClause) blockedClauseRemoval();
     
     if (!solver.ok) return false;
     solver.ok = (solver.propagate() == NULL);
@@ -957,10 +953,12 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
         << "   |" << std::endl;
         
-        std::cout 
-        << "c |  Blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved 
-        << "    Time: " << std::fixed << std::setprecision(2) << std::setw(4) << blockTime << " s" 
-        << "                                    |" << std::endl;
+        if (numblockedClauseRemoved > 0 || blockTime > 0.0) {
+            std::cout 
+            << "c |  Blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved 
+            << "    Time: " << std::fixed << std::setprecision(2) << std::setw(4) << blockTime << " s" 
+            << "                                    |" << std::endl;
+        }
     }
     
     return true;
@@ -1574,15 +1572,22 @@ void Subsumer::blockedClauseRemoval()
     uint64_t sumNumVisited = 0;
     vec<ClauseSimp> toRemove;
     
+    touchedBlockedVars = priority_queue<VarOcc, vector<VarOcc>, MyComp>();
+    touchedBlockedVarsBool.clear();
+    touchedBlockedVarsBool.growTo(solver.nVars(), false);
+    for (Var var = 0; var < solver.nVars(); var++) {
+        touchBlockedVar(var);
+    }
+    
     while (touchedBlockedVars.size() > 100) {
         VarOcc vo = touchedBlockedVars.top();
         touchedBlockedVars.pop();
-        touchedBlockedVarsBool[vo.var] = false;
         
+        if (var_elimed[vo.var] || solver.assigns[vo.var] != l_Undef || !solver.decision_var[vo.var] || cannot_eliminate[vo.var])
+            continue;
+        touchedBlockedVarsBool[vo.var] = false;
         Lit lit = Lit(vo.var, false);
         Lit negLit = Lit(vo.var, true);
-        if (var_elimed[lit.var()] || solver.assigns[lit.var()] != l_Undef || !solver.decision_var[lit.var()] || cannot_eliminate[lit.var()])
-            continue;
         
         sumNumVisited += occur[lit.toInt()].size();
         sumNumVisited += occur[negLit.toInt()].size();
@@ -1591,10 +1596,6 @@ void Subsumer::blockedClauseRemoval()
         }
     }
     blockTime += cpuTime() - myTime;
-    
-    //Clear touchedBlockedVars
-    //std::fill(touchedBlockedVarsBool.getData(), touchedBlockedVarsBool.getDataEnd(), 0);
-    //touchedBlockedVars = priority_queue<VarOcc, vector<VarOcc>, MyComp>();
 }
 
 const bool Subsumer::tryOneSetting(const Lit lit, const Lit negLit)
