@@ -531,4 +531,16 @@ void VarReplacer::newVar()
     table.push_back(Lit(table.size(), false));
 }
 
-
+void VarReplacer::reattachInternalClauses()
+{
+    Clause **i = clauses.getData();
+    Clause **j = i;
+    for (Clause **end = clauses.getDataEnd(); i != end; i++) {
+        if (solver.value((**i)[0]) == l_Undef &&
+            solver.value((**i)[1]) == l_Undef) {
+            solver.attachClause(**i);
+            *j++ = *i;
+        }
+    }
+    clauses.shrink(i-j);
+}

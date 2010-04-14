@@ -117,6 +117,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     backup_activity.growTo(solver.activity.size());
     std::copy(solver.activity.getData(), solver.activity.getDataEnd(), backup_activity.getData());
     double backup_var_inc = solver.var_inc;
+    uint32_t origHeapSize = solver.order_heap.size();
     
     //General Stats
     double time = cpuTime();
@@ -282,9 +283,28 @@ end:
         std::setw(5) << " |" << std::endl;
     }
     
+    solver.order_heap.filter(Solver::VarFilter(solver));
+    
     if (solver.ok && (numFailed || goodBothSame)) {
         double time = cpuTime();
-        solver.clauseCleaner->removeAndCleanAll();
+        if ((int)origHeapSize - (int)solver.order_heap.size() >  origHeapSize/15 && solver.nClauses() + solver.learnts.size() > 500000) {
+            solver.clauses_literals = 0;
+            solver.learnts_literals = 0;
+            for (uint32_t i = 0; i < solver.nVars(); i++) {
+                solver.binwatches[i*2].clear();
+                solver.binwatches[i*2+1].clear();
+                solver.watches[i*2].clear();
+                solver.watches[i*2+1].clear();
+                solver.xorwatches[i].clear();
+            }
+            solver.varReplacer->reattachInternalClauses();
+            cleanAndAttachClauses(solver.binaryClauses);
+            cleanAndAttachClauses(solver.clauses);
+            cleanAndAttachClauses(solver.learnts);
+            cleanAndAttachClauses(solver.xorclauses);
+        } else {
+            solver.clauseCleaner->removeAndCleanAll();
+        }
         if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
             std::cout << "c |  Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
             <<  std::setw(33) << " | " << std::endl;
@@ -300,4 +320,70 @@ end:
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     return solver.ok;
+}
+
+template<class T>
+inline void FailedVarSearcher::cleanAndAttachClauses(vec<T*>& cs)
+{
+    T **i = cs.getData();
+    T **j = i;
+    for (T **end = cs.getDataEnd(); i != end; i++) {
+        if (cleanClause(**i)) {
+            solver.attachClause(**i);
+            *j++ = *i;
+        } else {
+            free(*i);
+        }
+    }
+    cs.shrink(i-j);
+}
+
+inline const bool FailedVarSearcher::cleanClause(Clause& ps)
+{
+    uint32_t origSize = ps.size();
+    
+    Lit *i = ps.getData();
+    Lit *j = i;
+    for (Lit *end = ps.getDataEnd(); i != end; i++) {
+        if (solver.value(*i) == l_True) return false;
+        if (solver.value(*i) == l_Undef) {
+            *j++ = *i;
+        }
+    }
+    ps.shrink(i-j);
+    assert(ps.size() > 1);
+    
+    if (ps.size() != origSize) ps.setStrenghtened();
+    if (origSize != 2 && ps.size() == 2)
+        solver.becameBinary++;
+    
+    return true;
+}
+
+inline const bool FailedVarSearcher::cleanClause(XorClause& ps)
+{
+    uint32_t origSize = ps.size();
+    
+    Lit *i = ps.getData(), *j = i;
+    for (Lit *end = ps.getDataEnd(); i != end; i++) {
+        if (solver.assigns[i->var()] == l_True) ps.invert(true);
+        if (solver.assigns[i->var()] == l_Undef) {
+            *j++ = *i;
+        }
+    }
+    ps.shrink(i-j);
+    
+    if (ps.size() == 0) return false;
+    assert(ps.size() > 1);
+    
+    if (ps.size() != origSize) ps.setStrenghtened();
+    if (ps.size() == 2) {
+        vec<Lit> tmp(2);
+        tmp[0] = ps[0].unsign();
+        tmp[1] = ps[1].unsign();
+        solver.varReplacer->replace(tmp, ps.xor_clause_inverted(), ps.getGroup());
+        return false;
+    }
+    
+    return true;
 }
