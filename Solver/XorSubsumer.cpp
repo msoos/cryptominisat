@@ -162,15 +162,9 @@ void XorSubsumer::addFromSolver(vec<XorClause*>& cs)
         if (i+1 != end)
             __builtin_prefetch(*(i+1), 1, 1);
         
-        XorClauseSimp c(*i, clauseID++);
-        clauses.push(c);
-        XorClause& cl = *c.clause;
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            occur[cl[i].var()].push(c);
-        }
-        
-        if (cl.getVarChanged() || cl.getStrenghtened())
-            cl.calcXorAbstraction();
+        linkInClause(**i);
+        if ((*i)->getVarChanged() || (*i)->getStrenghtened())
+            (*i)->calcXorAbstraction();
     }
     cs.clear();
 }
