@@ -196,6 +196,60 @@ Var Solver::newVar(bool dvar)
 }
 
 template<class T>
+XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32_t group)
+{
+    std::sort(ps.getData(), ps.getData()+ps.size());
+    Lit p;
+    uint32_t i, j;
+    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
+        xor_clause_inverted ^= ps[i].sign();
+        ps[i] ^= ps[i].sign();
+        
+        if (ps[i] == p) {
+            //added, but easily removed
+            j--;
+            p = lit_Undef;
+            if (!assigns[ps[i].var()].isUndef())
+                xor_clause_inverted ^= assigns[ps[i].var()].getBool();
+        } else if (assigns[ps[i].var()].isUndef()) //just add
+            ps[j++] = p = ps[i];
+        else //modify xor_clause_inverted instead of adding
+            xor_clause_inverted ^= (assigns[ps[i].var()].getBool());
+    }
+    ps.shrink(i - j);
+    
+    switch(ps.size()) {
+        case 0: {
+            if (!xor_clause_inverted) ok = false;
+            return NULL;
+        }
+        case 1: {
+            assert(assigns[ps[0].var()].isUndef());
+            uncheckedEnqueue(ps[0] ^ xor_clause_inverted);
+            ok = (propagate() == NULL);
+            return NULL;
+        }
+        case 2: {
+            #ifdef VERBOSE_DEBUG
+            cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xor_clause_inverted ? "-" : "") << ps[1].var()+1 << endl;
+            #endif
+            
+            varReplacer->replace(ps, xor_clause_inverted, group);
+            return NULL;
+        }
+        default: {
+            learnt_clause_group = std::max(group+1, learnt_clause_group);
+            XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
+            attachClause(*c);
+            return c;
+        }
+    }
+}
+
+template XorClause* Solver::addXorClauseInt(vec<Lit>& ps, bool xor_clause_inverted, const uint32_t group);
+template XorClause* Solver::addXorClauseInt(XorClause& ps, bool xor_clause_inverted, const uint32_t group);
+
+template<class T>
 bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, char* group_name)
 {
     assert(decisionLevel() == 0);
@@ -230,55 +284,10 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
         }
     }
     
-    std::sort(ps.getData(), ps.getData()+ps.size());
-    Lit p;
-    uint32_t i, j;
-    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
-        xor_clause_inverted ^= ps[i].sign();
-        ps[i] ^= ps[i].sign();
+    XorClause* c = addXorClauseInt(ps, xor_clause_inverted, group);
+    if (c != NULL) xorclauses.push(c);
 
-        if (ps[i] == p) {
-            //added, but easily removed
-            j--;
-            p = lit_Undef;
-            if (!assigns[ps[i].var()].isUndef())
-                xor_clause_inverted ^= assigns[ps[i].var()].getBool();
-        } else if (assigns[ps[i].var()].isUndef()) //just add
-            ps[j++] = p = ps[i];
-        else //modify xor_clause_inverted instead of adding
-            xor_clause_inverted ^= (assigns[ps[i].var()].getBool());
-    }
-    ps.shrink(i - j);
-
-    switch(ps.size()) {
-    case 0: {
-        if (xor_clause_inverted)
-            return true;
-        return ok = false;
-    }
-    case 1: {
-        assert(assigns[ps[0].var()].isUndef());
-        uncheckedEnqueue(ps[0] ^ xor_clause_inverted);
-        return ok = (propagate() == NULL);
-    }
-    case 2: {
-        #ifdef VERBOSE_DEBUG
-        cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xor_clause_inverted ? "-" : "") << ps[1].var()+1 << endl;
-        #endif
-        
-        return varReplacer->replace(ps, xor_clause_inverted, group);
-    }
-    default: {
-        learnt_clause_group = std::max(group+1, learnt_clause_group);
-        XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
-        
-        xorclauses.push(c);
-        attachClause(*c);
-        break;
-    }
-    }
-
-    return true;
+    return ok;
 }
 
 template bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint group, char* group_name);

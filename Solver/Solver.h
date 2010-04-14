@@ -171,6 +171,8 @@ protected:
     template <class T>
     Clause* addClauseInt(T& ps, uint group);
     template<class T>
+    XorClause* addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32_t group);
+    template<class T>
     bool addLearntClause(T& ps, const uint group, const uint32_t activity);
     template<class T>
     void    removeWatchedCl(vec<T> &ws, const Clause *c);
