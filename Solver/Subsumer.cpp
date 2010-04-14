@@ -564,7 +564,6 @@ void Subsumer::smaller_database()
             return; 
         }
         solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
-        assert(cl_added.size() == 0);
     }
     unregisterIteration(s1);
     
@@ -897,9 +896,16 @@ const bool Subsumer::simplifyBySubsumption()
                 smaller_database();
                 if (!solver.ok) return false;
             }
-        } else {
-            cl_added.clear();
         }
+        cl_added.clear();
+        assert(cl_added.size() == 0);
+        assert(solver.ok);
+        solver.ok = (solver.propagate() == NULL);
+        if (!solver.ok) {
+            printf("c (contradiction during subsumption)\n");
+            return false;
+        }
+        solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
         
         #ifdef BIT_MORE_VERBOSITY
         std::cout << "c time until the end of almost_all/smaller: " << cpuTime() - myTime << std::endl;
