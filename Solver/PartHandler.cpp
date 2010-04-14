@@ -54,7 +54,8 @@ const bool PartHandler::handle()
     for (uint32_t it = 0; it < sizes.size()-1; it++) {
         uint32_t part = sizes[it].first;
         vector<Var> vars = reverseTable[part];
-        std::cout << "c Solving part " << part << std::endl;
+        if (solver.verbosity >= 1)
+            std::cout << "c Solving part " << part << std::endl;
         
         Solver newSolver;
         newSolver.mtrand.seed(solver.mtrand.randInt());
@@ -132,9 +133,12 @@ const bool PartHandler::handle()
             }
         }
         
-        std::cout << "c Solved part" << std::endl;
+        if (solver.verbosity >= 1)
+            std::cout << "c Solved part" << std::endl;
     }
-    std::cout << "c Coming back to original instance" << std::endl;
+    if (solver.verbosity >= 1)
+        std::cout << "c Coming back to original instance" << std::endl;
+    
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     //Checking that all variables that are not in the remaining part are all non-decision vars, and none have been set

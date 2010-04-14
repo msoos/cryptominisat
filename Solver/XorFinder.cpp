@@ -133,7 +133,7 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
     if (findXors(sumLengths) == false)
         return false;
     
-    if (S->verbosity >=1) {
+    if (S->verbosity >= 2) {
         if (minSize == maxSize && minSize == 2)
             printf("c |  Finding binary XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         else

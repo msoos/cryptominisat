@@ -956,9 +956,12 @@ const bool Subsumer::simplifyBySubsumption(const bool doFullSubsume)
         << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
         << "   |" << std::endl;
+        
+        std::cout 
+        << "c |  Blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved 
+        << "    Time: " << std::fixed << std::setprecision(2) << std::setw(4) << blockTime << " s" 
+        << "                                    |" << std::endl;
     }
-    
-    std::cout << "c |  Blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved << "    Time: " << std::fixed << std::setprecision(2) << std::setw(4) << blockTime << " s" << std::endl;
     
     return true;
 }
@@ -1395,8 +1398,12 @@ const bool Subsumer::hyperBinRes()
         addToClauses.clear();
     }
     
-    std::cout << "c |  Hyper-binary res binary added: " << std::setw(5) << hyperBinAdded << " unitaries: " << std::setw(5) << hyperBinUnitary << " time: " << std::setprecision(2) << std::setw(5)<< cpuTime() - myTime << " s" << std::endl;
-    solver.nbBin += hyperBinAdded;
+    if (solver.verbosity >= 1) {
+        std::cout << "c |  Hyper-binary res binary added: " << std::setw(5) << hyperBinAdded 
+        << " unitaries: " << std::setw(5) << hyperBinUnitary 
+        << " time: " << std::setprecision(2) << std::setw(5)<< cpuTime() - myTime << " s" 
+        << "                  |"  << std::endl;
+    }
     
     return true;
 }
