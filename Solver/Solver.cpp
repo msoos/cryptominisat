@@ -2073,6 +2073,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     cancelUntil(0);
     if (doPartHandler && status != l_False) partHandler->readdRemovedClauses();
+    restartTypeChooser->reset();
     
     return status;
 }
