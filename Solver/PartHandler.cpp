@@ -271,6 +271,7 @@ void PartHandler::addSavedState()
             //decision level should NOT be 0.... TODO
             solver.uncheckedEnqueue(Lit(var, savedState[var] == l_False));
             assert(solver.assigns[var] == savedState[var]);
+            savedState[var] = l_Undef;
         }
     }
     
