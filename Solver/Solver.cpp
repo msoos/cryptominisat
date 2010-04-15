@@ -1954,7 +1954,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             nbclausesbeforereduce = (nClauses() * learntsize_factor)/2;
     }
     
-    performStepsBeforeSolve();
+    if (conflicts == 0) performStepsBeforeSolve();
     if (!ok) return l_False;
     
     printStatHeader();
