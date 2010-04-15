@@ -436,6 +436,7 @@ void printUsage(char** argv)
     printf("  -nosatelite     = SatELite was not used on input (please set for library usage)\n");
     printf("  -nohyperbinres  = Don't carry out hyper-binary resolution\n");
     printf("  -noResPrint     = Don't print the satisfying assignment if the solution is SAT\n");
+    printf("  -novarelim      = Don't perform variable elimination as per Een and Biere\n");
     printf("\n");
 }
 
@@ -588,6 +589,8 @@ int main(int argc, char** argv)
             S.doHyperBinRes = false;
         } else if ((value = hasPrefix(argv[i], "-noblockedclause"))) {
             S.doBlockedClause = false;
+        } else if ((value = hasPrefix(argv[i], "-novarelim"))) {
+            S.doVarElim = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);

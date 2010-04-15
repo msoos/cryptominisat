@@ -78,6 +78,7 @@ Solver::Solver() :
         , doPartHandler    (true)
         , doHyperBinRes    (true)
         , doBlockedClause  (true)
+        , doVarElim        (true)
         , failedVarSearch  (true)
         , libraryUsage     (true)
         , greedyUnbound    (false)

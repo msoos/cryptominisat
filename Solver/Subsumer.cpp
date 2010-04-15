@@ -909,6 +909,11 @@ const bool Subsumer::simplifyBySubsumption()
         
         #ifdef BIT_MORE_VERBOSITY
         std::cout << "c time until the end of almost_all/smaller: " << cpuTime() - myTime << std::endl;
+        #endif
+        
+        if (!solver.doVarElim) break;
+        
+        #ifdef BIT_MORE_VERBOSITY
         printf("c VARIABLE ELIMINIATION\n");
         std::cout << "c  toucheds list size:" << touched_list.size() << std::endl;
         #endif
