@@ -211,7 +211,6 @@ protected:
     vec<Clause*>        binaryClauses;    // Binary clauses are regularly moved here
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
-    vec<XorClause*>     freeLater;        // List of xorclauses to free at the end (due to matrixes, they cannot be freed immediately)
     vec<double>         activity;         // A heuristic measurement of the activity of a variable.
     double              var_inc;          // Amount to bump next variable with.
     vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
@@ -298,8 +297,8 @@ protected:
     void     detachClause     (const Clause& c);       // Detach a clause to watcher lists.
     void     detachModifiedClause(const Lit lit1, const Lit lit2, const uint size, const Clause* address);
     void     detachModifiedClause(const Var var1, const Var var2, const uint origSize, const XorClause* address);
-    void     removeClause(Clause& c);                  // Detach and free a clause.
-    void     removeClause(XorClause& c);               // Detach and free a clause.
+    template<class T>
+    void     removeClause(T& c);                       // Detach and free a clause.
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
     void     reverse_binary_clause(Clause& c) const;   // Binary clauses --- the first Lit has to be true
 
@@ -561,15 +560,11 @@ inline void Solver::reverse_binary_clause(Clause& c) const {
     }
 }*/
 
-inline void Solver::removeClause(Clause& c)
+template<class T>
+inline void Solver::removeClause(T& c)
 {
     detachClause(c);
     clauseFree(&c);
-}
-inline void Solver::removeClause(XorClause& c)
-{
-    detachClause(c);
-    freeLater.push(&c);
 }
 
 

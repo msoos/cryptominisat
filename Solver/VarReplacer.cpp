@@ -166,7 +166,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
         
         if (isAttached && changed && handleUpdatedClause(c, origVar1, origVar2)) {
             if (solver.ok == false) return false;
-            solver.freeLater.push(&c);
+            free(&c);
             r++;
         } else {
             *a++ = *r++;
