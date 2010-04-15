@@ -437,6 +437,7 @@ void printUsage(char** argv)
     printf("  -nohyperbinres  = Don't carry out hyper-binary resolution\n");
     printf("  -noResPrint     = Don't print the satisfying assignment if the solution is SAT\n");
     printf("  -novarelim      = Don't perform variable elimination as per Een and Biere\n");
+    printf("  -nosubsume1     = Don't perform clause contraction through resolution\n");
     printf("\n");
 }
 
@@ -591,6 +592,8 @@ int main(int argc, char** argv)
             S.doBlockedClause = false;
         } else if ((value = hasPrefix(argv[i], "-novarelim"))) {
             S.doVarElim = false;
+        } else if ((value = hasPrefix(argv[i], "-nosubsume1"))) {
+            S.doSubsume1 = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);

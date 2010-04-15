@@ -135,6 +135,7 @@ public:
     bool      doHyperBinRes;        // Should try carry out hyper-binary resolution
     bool      doBlockedClause;      // Should try to remove blocked clauses
     bool      doVarElim;            // Perform variable elimination
+    bool      doSubsume1;           // Perform clause contraction through resolution
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     bool      libraryUsage;         // Set true if not used as a library
     bool      sateliteUsed;         // whether satielite was used on CNF before calling

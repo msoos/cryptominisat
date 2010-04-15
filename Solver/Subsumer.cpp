@@ -821,10 +821,14 @@ const bool Subsumer::simplifyBySubsumption()
     else
         numMaxSubsume0 = 2000000 * (1+numCalls/2);
     
-    if (clauses.size() > 3500000)
-        numMaxSubsume1 = 100000 * (1+numCalls/2);
-    else
-        numMaxSubsume1 = 500000 * (1+numCalls/2);
+    if (solver.doSubsume1) {
+        if (clauses.size() > 3500000)
+            numMaxSubsume1 = 100000 * (1+numCalls/2);
+        else
+            numMaxSubsume1 = 500000 * (1+numCalls/2);
+    } else {
+        numMaxSubsume1 = 0;
+    }
     
     if (clauses.size() > 3500000)
         numMaxElim = (uint32_t)((double)solver.order_heap.size() / 5.0 * (0.8+(double)(numCalls)/4.0));

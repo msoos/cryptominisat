@@ -79,6 +79,7 @@ Solver::Solver() :
         , doHyperBinRes    (true)
         , doBlockedClause  (true)
         , doVarElim        (true)
+        , doSubsume1       (true)
         , failedVarSearch  (true)
         , libraryUsage     (true)
         , greedyUnbound    (false)
