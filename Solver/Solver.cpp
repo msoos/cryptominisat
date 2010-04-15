@@ -138,7 +138,6 @@ Solver::~Solver()
     for (uint32_t i = 0; i != binaryClauses.size(); i++) clauseFree(binaryClauses[i]);
     for (uint32_t i = 0; i != xorclauses.size(); i++) free(xorclauses[i]);
     clearGaussMatrixes();
-    for (uint32_t i = 0; i != freeLater.size(); i++) free(freeLater[i]);
     delete varReplacer;
     delete conglomerate;
     delete clauseCleaner;
@@ -1999,9 +1998,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     for (uint i = 0; i < gauss_matrixes.size(); i++)
         delete gauss_matrixes[i];
     gauss_matrixes.clear();
-    for (uint i = 0; i < freeLater.size(); i++)
-        free(freeLater[i]);
-    freeLater.clear();
 
     if (status == l_True) {
         if (greedyUnbound) {
@@ -2013,7 +2009,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
         
         partHandler->addSavedState();
-        conglomerate->doCalcAtFinish();
         varReplacer->extendModelPossible();
 #ifndef NDEBUG
         checkSolution();
@@ -2022,13 +2017,17 @@ lbool Solver::solve(const vec<Lit>& assumps)
         if (subsumer->getNumElimed() > 0) {
             Solver s;
             s.doSubsumption = false;
+            s.performReplace = false;
             s.findBinaryXors = false;
             s.findNormalXors = false;
             s.failedVarSearch = false;
+            s.conglomerateXors = false;
             s.greedyUnbound = greedyUnbound;
             for (Var var = 0; var < nVars(); var++) {
                 s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var));
+                assert(!(conglomerate->getRemovedVars()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
                 if (value(var) != l_Undef) {
+                    assert(!conglomerate->getRemovedVars()[var]);
                     vec<Lit> tmp;
                     tmp.push(Lit(var, value(var) == l_False));
                     s.addClause(tmp);
@@ -2040,9 +2039,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
             status = s.solve();
             assert(status == l_True);
             for (Var var = 0; var < nVars(); var++) {
-                if (assigns[var] == l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
+                if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
             }
         }
+        conglomerate->doCalcAtFinish();
         // Extend & copy model:
 #ifndef NDEBUG
         checkSolution();
