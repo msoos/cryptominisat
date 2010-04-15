@@ -165,7 +165,6 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
         }
         
         if (isAttached && changed && handleUpdatedClause(c, origVar1, origVar2)) {
-            clauseFree(&c);
             if (solver.ok == false) {
                 for(;r != end; r++)
                     free(*r);
@@ -261,7 +260,6 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
                 cs.shrink(r-a);
                 return false;
             }
-            clauseFree(&c);
         } else {
             *a++ = *r;
         }
