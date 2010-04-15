@@ -1943,11 +1943,11 @@ lbool Solver::solve(const vec<Lit>& assumps)
     assumps.copyTo(assumptions);
 
     int  nof_conflicts = restart_first;
-    int  nof_conflicts_fullrestart = (double)restart_first * (double)FULLRESTART_MULTIPLIER;
+    int  nof_conflicts_fullrestart = (double)restart_first * (double)FULLRESTART_MULTIPLIER + conflicts;
     //nof_conflicts_fullrestart = -1;
     uint    lastFullRestart  = starts;
     lbool   status        = l_Undef;
-    uint64_t nextSimplify = 30000;
+    uint64_t nextSimplify = 30000 + conflicts;
     
     if (nClauses() * learntsize_factor < nbclausesbeforereduce) {
         if (nClauses() * learntsize_factor < nbclausesbeforereduce/2)
