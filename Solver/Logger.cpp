@@ -115,10 +115,16 @@ void Logger::cut_name_to_size(string& name) const
 }
 
 // Adds the new clause group's name to the information stored
-void Logger::set_group_name(const uint group, string name)
+void Logger::set_group_name(const uint group, char* name_tmp)
 {
     if (!statistics_on && !proof_graph_on)
         return;
+    
+    string name;
+    if (name_tmp == NULL)
+        name = "";
+    else
+        name = name_tmp;
     
     new_group(group);
     cut_name_to_size(name);
@@ -136,12 +142,19 @@ void Logger::set_group_name(const uint group, string name)
 }
 
 // sets the variable's name
-void Logger::set_variable_name(const uint var, string name)
+void Logger::set_variable_name(const uint var, char* name_tmp)
 {
     if (!statistics_on && !proof_graph_on)
         return;
     
     new_var(var);
+    
+    string name;
+    if (name_tmp == NULL)
+        name = "";
+    else
+        name = name_tmp;
+    
     cut_name_to_size(name);
     
     if (varnames[var] == "Noname") {

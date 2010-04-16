@@ -76,9 +76,9 @@ public:
     //
     Var     newVar    (bool dvar = true); // Add a new variable with parameters specifying variable mode.
     template<class T>
-    bool    addClause (T& ps, const uint group = 0, char* group_name = "");  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addClause (T& ps, const uint group = 0, char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool    addXorClause (T& ps, bool xor_clause_inverted, const uint group = 0, char* group_name = "");  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (T& ps, bool xor_clause_inverted, const uint group = 0, char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
