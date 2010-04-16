@@ -1389,7 +1389,7 @@ const bool Subsumer::hyperBinRes()
     double myTime = cpuTime();
     
     BitArray inside;
-    inside.resize(solver.nVars()*2);
+    inside.resize(solver.nVars()*2, 0);
     uint32_t hyperBinAdded = 0;
     uint32_t hyperBinUnitary = 0;
     vec<ClauseSimp> addToClauses;

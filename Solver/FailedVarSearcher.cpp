@@ -27,8 +27,9 @@ using std::set;
 #include "ClauseCleaner.h"
 #include "time_mem.h"
 #include "VarReplacer.h"
+#include "ClauseCleaner.h"
 
-//#define FINDBINARYXOR
+//#define VERBOSE_DEUBUG
 
 FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
@@ -51,7 +52,7 @@ void FailedVarSearcher::addFromSolver(const vec< XorClause* >& cs)
     uint32_t i = 0;
     for (XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it !=  end; it++, i++) {
         if (it+1 != end)
-            __builtin_prefetch(*(it+1), 1, 1);
+            __builtin_prefetch(*(it+1), 0, 0);
         
         const XorClause& cl = **it;
         xorClauseSizes[i] = cl.size();
@@ -101,6 +102,13 @@ const TwoLongXor FailedVarSearcher::getTwoLongXor(const XorClause& c)
         }
     }
     
+    #ifdef VERBOSE_DEUBUG
+    if (num != 2) {
+        std::cout << "Num:" << num << std::endl;
+        c.plainPrint();
+    }
+    #endif
+    
     std::sort(&tmp.var[0], &tmp.var[0]+2);
     assert(num == 2);
     return tmp;
@@ -140,9 +148,9 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     
     //For BothSame
     BitArray propagated;
-    propagated.resize(solver.nVars());
+    propagated.resize(solver.nVars(), 0);
     BitArray propValue;
-    propValue.resize(solver.nVars());
+    propValue.resize(solver.nVars(), 0);
     vector<pair<Var, bool> > bothSame;
     
     //For 2-long xor (rule 6 of  Equivalent literal propagation in the DLL procedure by Chu-Min Li)
@@ -155,8 +163,11 @@ const bool FailedVarSearcher::search(uint64_t numProps)
         solver.order_heap.size() > 30000 ||
         solver.nClauses() > 100000)
         binXorFind = false;
-    if (binXorFind) addFromSolver(solver.xorclauses);
-    xorClauseTouched.resize(solver.xorclauses.size());
+    if (binXorFind) {
+        solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
+        addFromSolver(solver.xorclauses);
+    }
+    xorClauseTouched.resize(solver.xorclauses.size(), 0);
     
     finishedLastTime = true;
     lastTimeWentUntil = solver.nVars();
@@ -206,7 +217,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
                 }
                 
                 if (binXorFind) {
-                    for (uint32_t *it = investigateXor.getData(), *end = it + investigateXor.size(); it != end; it++) {
+                    for (uint32_t *it = investigateXor.getData(), *end = investigateXor.getDataEnd(); it != end; it++) {
                         if (xorClauseSizes[*it] == 2)
                             twoLongXors.insert(getTwoLongXor(*solver.xorclauses[*it]));
                     }

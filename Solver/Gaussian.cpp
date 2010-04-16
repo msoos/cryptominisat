@@ -145,10 +145,8 @@ uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origM
             largest_used_var = i;
     var_to_col.resize(largest_used_var + 1);
     
-    var_is_in.resize(var_to_col.size());
-    var_is_in.setZero();
-    origMat.var_is_set.resize(var_to_col.size());
-    origMat.var_is_set.setZero();
+    var_is_in.resize(var_to_col.size(), 0);
+    origMat.var_is_set.resize(var_to_col.size(), 0);
 
     origMat.col_to_var.clear();
     Heap<Solver::VarOrderLt> order_heap(solver.order_heap);

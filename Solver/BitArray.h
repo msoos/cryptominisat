@@ -56,7 +56,7 @@ public:
         return *this;
     }
     
-    void resize(uint _size)
+    void resize(uint _size, const bool fill)
     {
         _size = _size/64 + (bool)(_size%64);
         if (size != _size) {
@@ -64,6 +64,8 @@ public:
             size = _size;
             mp = new uint64_t[size];
         }
+        if (fill) setOne();
+        else setZero();
     }
     
     ~BitArray()
@@ -82,6 +84,11 @@ public:
     }
 
     inline void setZero()
+    {
+        memset(mp, 0, size*sizeof(uint64_t));
+    }
+    
+    inline void setOne()
     {
         memset(mp, 0, size*sizeof(uint64_t));
     }
