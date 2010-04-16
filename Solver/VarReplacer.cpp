@@ -89,7 +89,7 @@ const bool VarReplacer::performReplaceInternal()
     #endif
     
     Var var = 0;
-    const vector<bool>& removedVars = solver.conglomerate->getRemovedVars();
+    const vec<bool>& removedVars = solver.conglomerate->getRemovedVars();
     const vec<lbool>& removedVars2 = solver.partHandler->getSavedState();
     const vec<char>& removedVars3 = solver.subsumer->getVarElimed();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {

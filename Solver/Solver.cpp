@@ -2014,7 +2014,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         checkSolution();
 #endif
         
-        if (subsumer->getNumElimed() > 0) {
+        if (subsumer->getNumElimed() > 0 || conglomerate->needCalcAtFinish()) {
             Solver s;
             s.doSubsumption = false;
             s.performReplace = false;
@@ -2024,8 +2024,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
             s.conglomerateXors = false;
             s.greedyUnbound = greedyUnbound;
             for (Var var = 0; var < nVars(); var++) {
-                s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var));
+                s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || conglomerate->getRemovedVars()[var]);
+                
                 assert(!(conglomerate->getRemovedVars()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
+                
                 if (value(var) != l_Undef) {
                     assert(!conglomerate->getRemovedVars()[var]);
                     vec<Lit> tmp;
@@ -2035,18 +2037,22 @@ lbool Solver::solve(const vec<Lit>& assumps)
             }
             varReplacer->extendModelImpossible(s);
             subsumer->extendModel(s);
+            conglomerate->extendModel(s);
             
             status = s.solve();
-            assert(status == l_True);
+            if (status != l_True) {
+                printf("c ERROR! Extension of model failed!\n");
+                assert(status == l_True);
+                exit(-1);
+            }
             for (Var var = 0; var < nVars(); var++) {
                 if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
             }
         }
-        conglomerate->doCalcAtFinish();
-        // Extend & copy model:
 #ifndef NDEBUG
         checkSolution();
 #endif
+        //Copy model:
         model.growTo(nVars());
         for (Var var = 0; var != nVars(); var++) model[var] = value(var);
     

@@ -697,7 +697,7 @@ void Subsumer::fillCannotEliminate()
             cannot_eliminate[c[i2].var()] = true;
     }
     
-    const vector<bool>& tmp2 = solver.conglomerate->getRemovedVars();
+    const vec<bool>& tmp2 = solver.conglomerate->getRemovedVars();
     for (uint32_t i = 0; i < tmp2.size(); i++) {
         if (tmp2[i]) cannot_eliminate[i] = true;
     }

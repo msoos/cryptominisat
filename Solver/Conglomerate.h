@@ -46,11 +46,12 @@ public:
     const bool conglomerateXorsFull();
     const bool heuleProcessFull();
     const bool addRemovedClauses(); ///<Add clauses that have been removed. Used if solve() is called multiple times
-    void doCalcAtFinish(); ///<Calculate variables removed during conglomeration
+    void extendModel(Solver& solver2); ///<Calculate variables removed during conglomeration
     
     const vec<XorClause*>& getCalcAtFinish() const;
     vec<XorClause*>& getCalcAtFinish();
-    const vector<bool>& getRemovedVars() const;
+    const vec<bool>& getRemovedVars() const;
+    const bool needCalcAtFinish() const;
     
     void newVar();
     
@@ -80,7 +81,9 @@ private:
     varToXorMap varToXor; 
     vector<bool> blocked;
     vector<bool> toRemove;
-    vector<bool> removedVars;
+    
+    vec<bool> removedVars;
+    vec<Var> madeVarNonDecision;
     
     vec<XorClause*> calcAtFinish;
     uint found;
@@ -88,7 +91,12 @@ private:
     Solver& solver;
 };
 
-inline const vector<bool>& Conglomerate::getRemovedVars() const
+inline void Conglomerate::newVar()
+{
+    removedVars.push(false);
+}
+
+inline const vec<bool>& Conglomerate::getRemovedVars() const
 {
     return removedVars;
 }
@@ -101,6 +109,11 @@ inline const vec<XorClause*>& Conglomerate::getCalcAtFinish() const
 inline vec<XorClause*>& Conglomerate::getCalcAtFinish()
 {
     return calcAtFinish;
+}
+
+inline const bool Conglomerate::needCalcAtFinish() const
+{
+    return calcAtFinish.size();
 }
 
 
