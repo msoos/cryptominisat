@@ -21,6 +21,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Heap_h
 
 #include "Vec.h"
+#include <algorithm>
 
 #include "string.h"
 #include <limits>
@@ -83,9 +84,9 @@ class Heap {
     Heap(const Comp& c) : lt(c) { }
     Heap(const Heap<Comp>& other) : lt(other.lt) {
         heap.growTo(other.heap.size());
-        memcpy(heap.getData(), other.heap.getData(), sizeof(uint32_t)*other.heap.size());
+        std::copy(other.heap.getData(), other.heap.getDataEnd(), heap.getData());
         indices.growTo(other.indices.size());
-        memcpy(indices.getData(), other.indices.getData(), sizeof(uint32_t)*other.indices.size());
+        std::copy(other.indices.getData(), other.indices.getDataEnd(), indices.getData());
     }
     
     void operator=(const Heap<Comp>& other)
@@ -93,14 +94,14 @@ class Heap {
         if (other.heap.size() > heap.size())
             heap.growTo(other.heap.size());
         else
-            heap.shrink(other.heap.size()-heap.size());
-        memcpy(heap.getData(), other.heap.getData(), heap.size()*sizeof(uint32_t));
+            heap.shrink(heap.size()-other.heap.size());
+        std::copy(other.heap.getData(), other.heap.getDataEnd(), heap.getData());
         
         if (other.indices.size() > indices.size())
             indices.growTo(other.indices.size());
         else
-            indices.shrink(other.indices.size()-indices.size());
-        memcpy(indices.getData(), other.indices.getData(), indices.size()*sizeof(uint32_t));
+            indices.shrink(indices.size() - other.indices.size());
+        std::copy(other.indices.getData(), other.indices.getDataEnd(), indices.getData());
     }
 
     uint32_t  size      ()          const { return heap.size(); }
