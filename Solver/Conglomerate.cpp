@@ -88,10 +88,13 @@ void Conglomerate::fillVarToXor()
 
 void Conglomerate::removeVar(const Var var)
 {
-    solver.setDecisionVar(var, false);
     solver.activity[var] = 0.0;
     solver.order_heap.update(var);
     removedVars[var] = true;
+    if (solver.decision_var[var]) {
+        madeVarNonDecision.push(var);
+        solver.setDecisionVar(var, false);
+    }
     found++;
 }
 
@@ -457,52 +460,24 @@ void Conglomerate::clearLearntsFromToRemove()
     solver.learnts.shrink(r-a);
 }
 
-void Conglomerate::doCalcAtFinish()
+void Conglomerate::extendModel(Solver& solver2)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Executing doCalcAtFinish" << endl;
     #endif
     
-    vector<Var> toAssign;
-    for (XorClause** it = calcAtFinish.getData() + calcAtFinish.size()-1; it != calcAtFinish.getData()-1; it--) {
-        toAssign.clear();
-        XorClause& c = **it;
+    vec<Lit> ps;
+    for (int i = (int)(calcAtFinish.size())-1; i >= 0; i--) {
+        XorClause& c = *calcAtFinish[i];
         assert(c.size() > 2);
         
-        #ifdef VERBOSE_DEBUG
-        cout << "doCalcFinish for xor-clause:";
-        c.plainPrint();
-        #endif
+        ps.clear();
+        for (Lit *l = c.getData(), *end = c.getDataEnd(); l != end; l++) {
+            ps.push(l->unsign());
+        }
         
-        bool final = c.xor_clause_inverted();
-        for (int k = 0, size = c.size(); k < size; k++ ) {
-            const lbool& val = solver.assigns[c[k].var()];
-            if (val == l_Undef)
-                toAssign.push_back(c[k].var());
-            else
-                final ^= val.getBool();
-        }
-        #ifdef VERBOSE_DEBUG
-        if (toAssign.size() == 0) {
-            cout << "ERROR: toAssign.size() == 0 !!" << endl;
-            for (int k = 0, size = c.size(); k < size; k++ ) {
-                cout << "Var: " << c[k].var() + 1 << " Level: " << solver.level[c[k].var()] << endl;
-            }
-        }
-        if (toAssign.size() > 1) {
-            cout << "Double assign!" << endl;
-            for (uint i = 1; i < toAssign.size(); i++) {
-                cout << "-> extra Var " << toAssign[i]+1 << endl;
-            }
-        }
-        #endif
-        assert(toAssign.size() > 0);
-        
-        for (uint i = 1; i < toAssign.size(); i++) {
-            solver.uncheckedEnqueue(Lit(toAssign[i], true), &c);
-        }
-        solver.uncheckedEnqueue(Lit(toAssign[0], final), &c);
-        assert(solver.clauseCleaner->satisfied(c));
+        solver2.addXorClause(ps, c.xor_clause_inverted(), c.getGroup());
+        assert(solver2.ok);
     }
 }
 
@@ -512,9 +487,6 @@ const bool Conglomerate::addRemovedClauses()
     cout << "Executing addRemovedClauses" << endl;
     #endif
     
-    char tmp[100];
-    tmp[0] = '\0';
-    vec<Lit> ps;
     for(uint i = 0; i < calcAtFinish.size(); i++)
     {
         XorClause& c = *calcAtFinish[i];
@@ -523,29 +495,21 @@ const bool Conglomerate::addRemovedClauses()
         c.plainPrint();
         #endif
         
-        ps.clear();
-        for(uint i2 = 0; i2 != c.size() ; i2++) {
-            ps.push(Lit(c[i2].var(), false));
-        }
-        if (!solver.addXorClause(ps, c.xor_clause_inverted(), c.getGroup(), tmp))
+        for(Lit *l = c.getData(), *end = c.getDataEnd(); l != end ; l++)
+            *l = l->unsign();
+        
+        if (!solver.addXorClause(c, c.xor_clause_inverted(), c.getGroup()))
             return false;
         free(&c);
     }
     calcAtFinish.clear();
-    for (uint i = 0; i < removedVars.size(); i++) {
-        if (removedVars[i]) {
-            removedVars[i] = false;
-            solver.setDecisionVar(i, true);
-            #ifdef VERBOSE_DEBUG
-            std::cout << "Inserting Var " << i+1 << " back into the order_heap" << std::endl;
-            #endif //VERBOSE_DEBUG
-        }
+    
+    std::fill(removedVars.getData(), removedVars.getDataEnd(), false);
+    for (Var *v = madeVarNonDecision.getData(), *end =  madeVarNonDecision.getDataEnd(); v != end; v++) {
+        solver.setDecisionVar(*v, true);
     }
+    madeVarNonDecision.clear();
     
     return true;
 }
 
-void Conglomerate::newVar()
-{
-    removedVars.resize(removedVars.size()+1, false);
-}

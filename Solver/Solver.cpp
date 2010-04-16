@@ -57,7 +57,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 Solver::Solver() :
         // Parameters: (formerly in 'SearchParams')
-        var_decay(1 / 0.95), random_var_freq(0.02)
+        random_var_freq(0.02)
         , restart_first(100), restart_inc(1.5), learntsize_factor((double)1/(double)3), learntsize_inc(1)
 
         // More parameters:
@@ -94,7 +94,7 @@ Solver::Solver() :
         
 
         , ok               (true)
-        , var_inc          (1)
+        , var_inc          (128)
         
         , curRestart       (1)
         , nbclausesbeforereduce (NBCLAUSESBEFOREREDUCE)
@@ -199,6 +199,10 @@ Var Solver::newVar(bool dvar)
 template<class T>
 XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32_t group)
 {
+    if (ps.size() > (0x01UL << 18)) {
+        std::cout << "Too long clause!" << std::endl;
+        exit(-1);
+    }
     std::sort(ps.getData(), ps.getData()+ps.size());
     Lit p;
     uint32_t i, j;
@@ -1751,11 +1755,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     Heap<VarOrderLt> backup_order_heap(order_heap);
     vector<bool> backup_polarities = polarity;
     RestartType backup_restartType= restartType;
-    double backup_random_var_freq = random_var_freq;
-    vec<double> backup_activity;
-    backup_activity.growTo(activity.size());
+    uint32_t backup_random_var_freq = random_var_freq;
+    vec<uint32_t> backup_activity(activity.size());
     std::copy(activity.getData(), activity.getDataEnd(), backup_activity.getData());
-    double backup_var_inc = var_inc;
+    uint32_t backup_var_inc = var_inc;
     
     if (verbosity >= 2)
         std::cout << "c | " << std::setw(24) << " " 
@@ -2011,7 +2014,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         checkSolution();
 #endif
         
-        if (subsumer->getNumElimed() > 0) {
+        if (subsumer->getNumElimed() > 0 || conglomerate->needCalcAtFinish()) {
             Solver s;
             s.doSubsumption = false;
             s.performReplace = false;
@@ -2021,8 +2024,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
             s.conglomerateXors = false;
             s.greedyUnbound = greedyUnbound;
             for (Var var = 0; var < nVars(); var++) {
-                s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var));
+                s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || conglomerate->getRemovedVars()[var]);
+                
                 assert(!(conglomerate->getRemovedVars()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
+                
                 if (value(var) != l_Undef) {
                     assert(!conglomerate->getRemovedVars()[var]);
                     vec<Lit> tmp;
@@ -2032,18 +2037,22 @@ lbool Solver::solve(const vec<Lit>& assumps)
             }
             varReplacer->extendModelImpossible(s);
             subsumer->extendModel(s);
+            conglomerate->extendModel(s);
             
             status = s.solve();
-            assert(status == l_True);
+            if (status != l_True) {
+                printf("c ERROR! Extension of model failed!\n");
+                assert(status == l_True);
+                exit(-1);
+            }
             for (Var var = 0; var < nVars(); var++) {
                 if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
             }
         }
-        conglomerate->doCalcAtFinish();
-        // Extend & copy model:
 #ifndef NDEBUG
         checkSolution();
 #endif
+        //Copy model:
         model.growTo(nVars());
         for (Var var = 0; var != nVars(); var++) model[var] = value(var);
     

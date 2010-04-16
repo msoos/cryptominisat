@@ -89,7 +89,7 @@ const bool VarReplacer::performReplaceInternal()
     #endif
     
     Var var = 0;
-    const vector<bool>& removedVars = solver.conglomerate->getRemovedVars();
+    const vec<bool>& removedVars = solver.conglomerate->getRemovedVars();
     const vec<lbool>& removedVars2 = solver.partHandler->getSavedState();
     const vec<char>& removedVars3 = solver.subsumer->getVarElimed();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
@@ -101,8 +101,8 @@ const bool VarReplacer::performReplaceInternal()
         solver.setDecisionVar(var, false);
         solver.setDecisionVar(it->var(), true);
         
-        double& activity1 = solver.activity[var];
-        double& activity2 = solver.activity[it->var()];
+        uint32_t& activity1 = solver.activity[var];
+        uint32_t& activity2 = solver.activity[it->var()];
         if (wasDecisionVar && activity1 > activity2) {
             activity2 = activity1;
             solver.order_heap.update(it->var());

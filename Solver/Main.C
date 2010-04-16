@@ -387,7 +387,7 @@ void printUsage(char** argv)
     printf("OPTIONS:\n\n");
     printf("  -polarity-mode = {true,false,rnd,auto} [default: auto]. Selects the default\n");
     printf("                 = polarity mode. Auto is the Jeroslow&Wang method\n");
-    printf("  -decay         = <num> [ 0 - 1 ]\n");
+    //printf("  -decay         = <num> [ 0 - 1 ]\n");
     printf("  -rnd-freq      = <num> [ 0 - 1 ]\n");
     printf("  -verbosity     = {0,1,2}\n");
     #ifdef STATS_NEEDED
@@ -482,13 +482,13 @@ int main(int argc, char** argv)
             }
             S.random_var_freq = rnd;
 
-        } else if ((value = hasPrefix(argv[i], "-decay="))) {
+        /*} else if ((value = hasPrefix(argv[i], "-decay="))) {
             double decay;
             if (sscanf(value, "%lf", &decay) <= 0 || decay <= 0 || decay > 1) {
                 printf("ERROR! illegal decay constant %s\n", value);
                 exit(0);
             }
-            S.var_decay = 1 / decay;
+            S.var_decay = 1 / decay;*/
 
         } else if ((value = hasPrefix(argv[i], "-verbosity="))) {
             int verbosity = (int)strtol(value, NULL, 10);

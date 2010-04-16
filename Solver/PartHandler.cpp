@@ -60,7 +60,6 @@ const bool PartHandler::handle()
         Solver newSolver;
         newSolver.mtrand.seed(solver.mtrand.randInt());
         newSolver.random_var_freq = solver.random_var_freq;
-        newSolver.var_decay = solver.var_decay;
         newSolver.verbosity = solver.verbosity;
         newSolver.restrictedPickBranch = solver.restrictedPickBranch;
         newSolver.greedyUnbound = solver.greedyUnbound;
