@@ -95,6 +95,7 @@ Solver::Solver() :
 
         , ok               (true)
         , var_inc          (128)
+        , cla_inc          (1)
         
         , curRestart       (1)
         , nbclausesbeforereduce (NBCLAUSESBEFOREREDUCE)
@@ -108,6 +109,7 @@ Solver::Solver() :
         , remove_satisfied (true)
         , mtrand((unsigned long int)0)
         , restartType      (static_restart)
+        , lastSelectedRestartType (static_restart)
         #ifdef STATS_NEEDED
         , logger(verbosity)
         , dynamic_behaviour_analysis(false) //do not document the proof as default
@@ -756,7 +758,7 @@ bool subset(const T1& A, const T2& B, vector<bool>& seen)
 |  Effect:
 |    Will undo part of the trail, upto but not beyond the assumption of the current decision level.
 |________________________________________________________________________________________________@*/
-Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nbLevels/*, int &merged*/)
+Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nbLevels, const bool update)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -773,6 +775,9 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, i
         Clause& c = *confl;
         if (p != lit_Undef)
             reverse_binary_clause(c);
+        
+        if (update && restartType == static_restart && c.learnt())
+            claBumpActivity(c);
 
         for (uint j = (p == lit_Undef) ? 0 : 1; j != c.size(); j++) {
             const Lit& q = c[j];
@@ -1225,30 +1230,39 @@ FoundWatch:
 |    Remove half of the learnt clauses, minus the clauses locked by the current assignment. Locked
 |    clauses are clauses that are reason to some assignment. Binary clauses are never removed.
 |________________________________________________________________________________________________@*/
-struct reduceDB_lt {
-    bool operator () (const Clause* x, const Clause* y) {
-        const uint xsize = x->size();
-        const uint ysize = y->size();
-        
-        // First criteria
-        if (xsize > 2 && ysize == 2) return 1;
-        if (ysize > 2 && xsize == 2) return 0;
-        
-        // Second criteria
-        if (x->activity() > y->activity()) return 1;
-        if (x->activity() < y->activity()) return 0;
-        
-        //return x->oldActivity() < y->oldActivity();
-        return xsize > ysize;
-    }
-};
+bool  reduceDB_ltMiniSat::operator () (const Clause* x, const Clause* y) {
+    const uint xsize = x->size();
+    const uint ysize = y->size();
+    
+    // First criteria
+    if (xsize > 2 && ysize == 2) return 1;
+    if (ysize > 2 && xsize == 2) return 0;
+    
+    return x->oldActivity() < y->oldActivity();
+}
+    
+bool  reduceDB_ltGlucose::operator () (const Clause* x, const Clause* y) {
+    const uint xsize = x->size();
+    const uint ysize = y->size();
+    
+    // First criteria
+    if (xsize > 2 && ysize == 2) return 1;
+    if (ysize > 2 && xsize == 2) return 0;
+    
+    if (x->activity() > y->activity()) return 1;
+    if (x->activity() < y->activity()) return 0;
+    return xsize > ysize;
+}
 
 void Solver::reduceDB()
 {
     uint32_t     i, j;
 
     nbReduceDB++;
-    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
+    if (lastSelectedRestartType == dynamic_restart)
+        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
+    else
+        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
     
     #ifdef VERBOSE_DEBUG
     std::cout << "Cleaning clauses" << endl;
@@ -1280,7 +1294,10 @@ const vec<Clause*>& Solver::get_learnts() const
 
 const vec<Clause*>& Solver::get_sorted_learnts()
 {
-    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
+    if (lastSelectedRestartType == dynamic_restart)
+        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
+    else
+        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
     return learnts;
 }
 
@@ -1327,7 +1344,11 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     }
     
     fprintf(outfile, "c clauses from learnts\n");
-    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_lt());
+    
+    if (lastSelectedRestartType == dynamic_restart)
+        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
+    else
+        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
         if (learnts[i]->size() <= maxSize)
             learnts[i]->plainPrint(outfile);
@@ -1593,7 +1614,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     if (decisionLevel() == 0)
         return l_False;
     learnt_clause.clear();
-    Clause* c = analyze(confl, learnt_clause, backtrack_level, nbLevels);
+    Clause* c = analyze(confl, learnt_clause, backtrack_level, nbLevels, update);
     if (update) {
         avgBranchDepth.push(decisionLevel());
         if (restartType == dynamic_restart)
@@ -1718,11 +1739,13 @@ inline void Solver::chooseRestartType(const uint& lastFullRestart)
                 tmp = fixRestartType;
             
             if (tmp == dynamic_restart) {
+                lastSelectedRestartType = dynamic_restart;
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
                 if (verbosity >= 2)
                     printf("c |                           Decided on dynamic restart strategy                         |\n");
             } else  {
+                lastSelectedRestartType = static_restart;
                 if (verbosity >= 2)
                     printf("c |                            Decided on static restart strategy                         |\n");
                                 
@@ -1744,10 +1767,13 @@ inline void Solver::setDefaultRestartType()
 {
     if (fixRestartType != auto_restart) restartType = fixRestartType;
     else restartType = static_restart;
+    
     if (restartType == dynamic_restart) {
         nbDecisionLevelHistory.fastclear();
         nbDecisionLevelHistory.initSize(100);
     }
+    
+    lastSelectedRestartType = restartType;
 }
 
 const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t numProps)

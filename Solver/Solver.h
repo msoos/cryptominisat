@@ -62,6 +62,16 @@ using std::endl;
 //=================================================================================================
 // Solver -- the main class:
 
+struct reduceDB_ltMiniSat
+{
+    bool operator () (const Clause* x, const Clause* y);
+};
+
+struct reduceDB_ltGlucose
+{
+    bool operator () (const Clause* x, const Clause* y);
+};
+
 
 class Solver
 {
@@ -212,6 +222,7 @@ protected:
     vec<Clause*>        learnts;          // List of learnt clauses.
     vec<uint32_t>       activity;         // A heuristic measurement of the activity of a variable.
     uint32_t            var_inc;          // Amount to bump next variable with.
+    double              cla_inc;          // Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<vec<XorClausePtr> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
     vec<vec<WatchedBin> >  binwatches;
@@ -242,6 +253,7 @@ protected:
     bqueue<uint>        avgBranchDepth; // Avg branch depth
     MTRand              mtrand;           // random number generaton
     RestartType         restartType;      // Used internally to determine which restart strategy to choose
+    RestartType         lastSelectedRestartType; //the last selected restart type
     friend class        Logger;
     #ifdef STATS_NEEDED
     Logger logger;                        // dynamic logging, statistics
@@ -274,7 +286,7 @@ protected:
     Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     Clause*  propagate_xors   (const Lit& p);
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
-    Clause*  analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nblevels); // (bt = backtrack)
+    Clause*  analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nblevels, const bool update); // (bt = backtrack)
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
     lbool    search           (int nof_conflicts, int nof_conflicts_fullrestart, const bool update = true);      // Search for a given number of conflicts.
@@ -284,6 +296,7 @@ protected:
 
     // Maintaining Variable/Clause activity:
     //
+    void     claBumpActivity (Clause& c);
     void     varDecayActivity ();                      // Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
     void     varBumpActivity  (Var v);                 // Increase a variable with the current 'bump' value.
     void     claDecayActivity ();                      // Decay all clauses with the specified factor. Implemented by increasing the 'bump' value instead.
@@ -391,6 +404,17 @@ inline void Solver::varBumpActivity(Var v)
     if (order_heap.inHeap(v))
         order_heap.decrease(v);
 }
+
+inline void Solver::claBumpActivity (Clause& c)
+{
+    if ( (c.oldActivity() += cla_inc) > 1e20 ) {
+        // Rescale:
+        for (uint32_t i = 0; i < learnts.size(); i++)
+            learnts[i]->oldActivity() *= 1e-17;
+        cla_inc *= 1e-20;
+    }
+}
+        
 
 inline bool     Solver::enqueue         (Lit p, Clause* from)
 {
