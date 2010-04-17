@@ -138,7 +138,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     uint64_t origProps = solver.propagations;
     
     //If failed var searching is going good, do successively more and more of it
-    if (lastTimeFoundTruths > 500 || (double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.05) std::max(numPropsMultiplier*1.7, 5.0);
+    if (lastTimeFoundTruths > 500 || (double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.03) std::max(numPropsMultiplier*1.7, 5.0);
     else numPropsMultiplier = 1.0;
     numProps = (uint64_t) ((double)numProps * numPropsMultiplier);
     
@@ -151,6 +151,9 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     BitArray propValue;
     propValue.resize(solver.nVars(), 0);
     vector<pair<Var, bool> > bothSame;
+    
+    //For calculating how many variables have really been set
+    uint32_t origTrailSize = solver.trail.size();
     
     //For 2-long xor (rule 6 of  Equivalent literal propagation in the DLL procedure by Chu-Min Li)
     set<TwoLongXor> twoLongXors;
@@ -321,7 +324,7 @@ end:
         }
     }
     
-    lastTimeFoundTruths = goodBothSame + numFailed;
+    lastTimeFoundTruths = solver.trail.size() - origTrailSize;
     
     solver.var_inc = backup_var_inc;
     std::copy(backup_activity.getData(), backup_activity.getDataEnd(), solver.activity.getData());
