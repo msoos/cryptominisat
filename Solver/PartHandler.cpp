@@ -288,7 +288,6 @@ void PartHandler::readdRemovedClauses()
         solver.addClause(**it, (*it)->getGroup());
         assert(solver.ok);
     }
-    solver.libraryCNFFile = backup_libraryCNFfile;
     clausesRemoved.clear();
     
     for (XorClause **it = xorClausesRemoved.getData(), **end = xorClausesRemoved.getDataEnd(); it != end; it++) {
@@ -299,5 +298,6 @@ void PartHandler::readdRemovedClauses()
         assert(solver.ok);
     }
     xorClausesRemoved.clear();
+    solver.libraryCNFFile = backup_libraryCNFfile;
 }
 
