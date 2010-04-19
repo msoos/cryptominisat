@@ -282,10 +282,13 @@ void PartHandler::addSavedState()
 
 void PartHandler::readdRemovedClauses()
 {
+    FILE* backup_libraryCNFfile = solver.libraryCNFFile;
+    solver.libraryCNFFile = NULL;
     for (Clause **it = clausesRemoved.getData(), **end = clausesRemoved.getDataEnd(); it != end; it++) {
         solver.addClause(**it, (*it)->getGroup());
         assert(solver.ok);
     }
+    solver.libraryCNFFile = backup_libraryCNFfile;
     clausesRemoved.clear();
     
     for (XorClause **it = xorClausesRemoved.getData(), **end = xorClausesRemoved.getDataEnd(); it != end; it++) {

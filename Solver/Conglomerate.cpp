@@ -498,12 +498,15 @@ const bool Conglomerate::addRemovedClauses()
         for(Lit *l = c.getData(), *end2 = c.getDataEnd(); l != end2 ; l++)
             *l = l->unsign();
         
+        FILE* backup_libraryCNFfile = solver.libraryCNFFile;
+        solver.libraryCNFFile = NULL;
         if (!solver.addXorClause(c, c.xor_clause_inverted(), c.getGroup())) {
             for (;it != end; it++)
                 free(&c);
             calcAtFinish.clear();
             return false;
         }
+        solver.libraryCNFFile = backup_libraryCNFfile;
         free(&c);
     }
     calcAtFinish.clear();

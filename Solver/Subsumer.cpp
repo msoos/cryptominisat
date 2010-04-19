@@ -86,12 +86,15 @@ const bool Subsumer::unEliminate(const Var var)
     solver.setDecisionVar(var, true);
     var_elimed[var] = false;
     numElimed--;
+    FILE* backup_libraryCNFfile = solver.libraryCNFFile;
+    solver.libraryCNFFile = NULL;
     for (vector<vector<Lit> >::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         tmp.clear();
         tmp.growTo(it2->size());
-        memcpy(tmp.getData(), &((*it2)[0]), sizeof(Lit)*it2->size());  //*it2 is never empty
+        std::copy(it2->begin(), it2->end(), tmp.getData());
         solver.addClause(tmp);
     }
+    solver.libraryCNFFile = backup_libraryCNFfile;
     elimedOutVar.erase(it);
     
     if (!solver.ok) return false;
