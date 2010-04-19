@@ -1950,6 +1950,9 @@ void Solver::checkSolution()
 
 lbool Solver::solve(const vec<Lit>& assumps)
 {
+#ifdef VERBOSE_DEBUG
+    std::cout << "Solver::solve() called" << std::endl;
+#endif
     if (!ok) return l_False;
     assert(qhead == trail.size());
     
@@ -2025,6 +2028,15 @@ lbool Solver::solve(const vec<Lit>& assumps)
         delete gauss_matrixes[i];
     gauss_matrixes.clear();
 
+#ifdef VERBOSE_DEBUG
+    if (status == l_True)
+        std::cout << "Solution  is SAT" << std::endl;
+    else if (status == l_False)
+        std::cout << "Solution is UNSAT" << std::endl;
+    else
+        std::cout << "Solutions is UNKNOWN" << std::endl;
+#endif //VERBOSE_DEBUG
+
     if (status == l_True) {
         if (greedyUnbound) {
             double time = cpuTime();
@@ -2041,6 +2053,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
 #endif
         
         if (subsumer->getNumElimed() > 0 || conglomerate->needCalcAtFinish()) {
+#ifdef VERBOSE_DEBUG
+            std::cout << "Solution needs extension. Extending." << std::endl;
+#endif //VERBOSE_DEBUG
             Solver s;
             s.doSubsumption = false;
             s.performReplace = false;
@@ -2071,6 +2086,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
                 assert(status == l_True);
                 exit(-1);
             }
+#ifdef VERBOSE_DEBUG
+            std::cout << "Solution extending finished." << std::endl;
+#endif
             for (Var var = 0; var < nVars(); var++) {
                 if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
             }
@@ -2110,6 +2128,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
     if (doPartHandler && status != l_False) partHandler->readdRemovedClauses();
     restartTypeChooser->reset();
     
+#ifdef VERBOSE_DEBUG
+    std::cout << "Solver::solve() finished" << std::endl;
+#endif
     return status;
 }
 
