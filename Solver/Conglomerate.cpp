@@ -487,19 +487,23 @@ const bool Conglomerate::addRemovedClauses()
     cout << "Executing addRemovedClauses" << endl;
     #endif
     
-    for(uint i = 0; i < calcAtFinish.size(); i++)
+    for(XorClause **it = calcAtFinish.getData(), **end = calcAtFinish.getDataEnd(); it != end; it++)
     {
-        XorClause& c = *calcAtFinish[i];
+        XorClause& c = **it;
         #ifdef VERBOSE_DEBUG
         cout << "readding already removed (conglomerated) clause: ";
         c.plainPrint();
         #endif
         
-        for(Lit *l = c.getData(), *end = c.getDataEnd(); l != end ; l++)
+        for(Lit *l = c.getData(), *end2 = c.getDataEnd(); l != end2 ; l++)
             *l = l->unsign();
         
-        if (!solver.addXorClause(c, c.xor_clause_inverted(), c.getGroup()))
+        if (!solver.addXorClause(c, c.xor_clause_inverted(), c.getGroup())) {
+            for (;it != end; it++)
+                free(&c);
+            calcAtFinish.clear();
             return false;
+        }
         free(&c);
     }
     calcAtFinish.clear();
