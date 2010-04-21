@@ -42,14 +42,14 @@ void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, con
     if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
         return;
     
-    int i,j;
+    uint32_t i,j;
     for (i = j = 0; i < cs.size(); i++) {
         if (satisfied(*cs[i]))
             solver.removeClause(*cs[i]);
         else
             cs[j++] = cs[i];
     }
-    cs.shrink_(i - j);
+    cs.shrink(i - j);
     
     lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
 }

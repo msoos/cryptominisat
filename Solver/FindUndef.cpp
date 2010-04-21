@@ -32,7 +32,7 @@ void FindUndef::fillPotential()
     int trail = solver.decisionLevel()-1;
     
     while(trail > 0) {
-        assert(trail < solver.trail_lim.size());
+        assert(trail < (int)solver.trail_lim.size());
         uint at = solver.trail_lim[trail];
         
         assert(at > 0);

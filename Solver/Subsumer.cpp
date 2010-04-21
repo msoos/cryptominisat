@@ -51,9 +51,8 @@ void Subsumer::extendModel(Solver& solver2)
     vec<Lit> tmp;
     typedef map<Var, vector<vector<Lit> > > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
-        Var var = it->first;
-        
         #ifdef VERBOSE_DEBUG
+        Var var = it->first;
         std::cout << "Reinserting elimed var: " << var+1 << std::endl;
         #endif
         
@@ -929,7 +928,6 @@ const bool Subsumer::simplifyBySubsumption()
         
         for (bool first = true; numMaxElim > 0; first = false){
             uint32_t vars_elimed = 0;
-            int clauses_before = solver.nClauses();
             vec<Var> order;
             
             if (first) {
@@ -1318,7 +1316,7 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
 {
     order.clear();
     vec<pair<int, Var> > cost_var;
-    for (int i = 0; i < touched_list.size(); i++){
+    for (uint32_t i = 0; i < touched_list.size(); i++){
         Var x = touched_list[i];
         touched[x] = 0;
         cost_var.push(std::make_pair( occur[Lit(x, false).toInt()].size() * occur[Lit(x, true).toInt()].size() , x ));
@@ -1327,7 +1325,7 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
     touched_list.clear();
     std::sort(cost_var.getData(), cost_var.getData()+cost_var.size(), myComp());
     
-    for (int x = 0; x < cost_var.size(); x++) {
+    for (uint32_t x = 0; x < cost_var.size(); x++) {
         if (cost_var[x].first != 0)
             order.push(cost_var[x].second);
     }

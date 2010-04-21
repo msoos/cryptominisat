@@ -300,7 +300,7 @@ end:
     
     if (solver.ok && (numFailed || goodBothSame)) {
         double time = cpuTime();
-        if ((int)origHeapSize - (int)solver.order_heap.size() >  origHeapSize/15 && solver.nClauses() + solver.learnts.size() > 500000) {
+        if ((int)origHeapSize - (int)solver.order_heap.size() >  (int)origHeapSize/15 && solver.nClauses() + solver.learnts.size() > 500000) {
             solver.clauses_literals = 0;
             solver.learnts_literals = 0;
             for (uint32_t i = 0; i < solver.nVars(); i++) {
