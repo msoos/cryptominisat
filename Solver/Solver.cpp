@@ -1911,7 +1911,7 @@ inline void Solver::performStepsBeforeSolve()
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-        if (!xorFinder.doNoPart(3, 10)) return;
+        if (!xorFinder.doNoPart(3, 7)) return;
     }
         
     if (xorclauses.size() > 1) {
