@@ -126,7 +126,7 @@ end:
     clauses.clear();
     
     if (solver.verbosity >= 2) {
-        std::cout << "     Replaced " <<  std::setw(8) << replacedLits<< " lits"
+        std::cout << "c |  Replaced " <<  std::setw(8) << replacedLits<< " lits"
         << "     Time: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime()-time << " s "
         << std::setw(12) <<  " |" << std::endl;
     }
