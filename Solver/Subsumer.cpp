@@ -1006,10 +1006,10 @@ const bool Subsumer::simplifyBySubsumption()
     
     addBackToSolver();
     solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
-    /*if (solver.findNormalXors && solver.clauses.size() < MAX_CLAUSENUM_XORFIND) {
+    if (solver.findNormalXors && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(&solver, solver.clauses, ClauseCleaner::clauses);
-        if (!xorFinder.doNoPart(3, 4)) return false;
-    }*/
+        if (!xorFinder.doNoPart(3, 7)) return false;
+    }
     
     if (solver.verbosity >= 1) {
         std::cout << "c |  lits-rem: " << std::setw(9) << literals_removed
