@@ -755,13 +755,16 @@ void Logger::printstats() const
     print_assign_var_order();
     print_branch_depth_distrib();
     print_learnt_clause_distrib();
+    #ifdef USE_GAUSS
     print_matrix_stats();
+    #endif //USE_GAUSS
     print_learnt_unitaries(0," Unitary clauses learnt until now");
     print_learnt_unitaries(last_unitary_learnt_clauses, " Unitary clauses during this restart");
     print_advanced_stats();
     print_general_stats();
 }
 
+#ifdef USE_GAUSS
 void Logger::print_matrix_stats() const
 {
     print_footer();
@@ -791,6 +794,7 @@ void Logger::print_matrix_stats() const
     
     print_footer();
 }
+#endif //USE_GAUSS
 
 void Logger::print_advanced_stats() const
 {

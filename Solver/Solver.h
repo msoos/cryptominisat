@@ -37,10 +37,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "MersenneTwister.h"
 #include "SolverTypes.h"
 #include "Clause.h"
-#include "GaussianConfig.h"
 #include "Logger.h"
 #include "constants.h"
 #include "BoundedQueue.h"
+#include "GaussianConfig.h"
 
 class Gaussian;
 class MatrixFinder;
@@ -152,6 +152,7 @@ public:
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
     GaussianConfig gaussconfig;
+    
 
     enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4, polarity_manual = 5};
 
@@ -174,9 +175,11 @@ public:
     void needLibraryCNFFile(const char* fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
 
 protected:
-    vector<Gaussian*> gauss_matrixes;
+    #ifdef USE_GAUSS
     void print_gauss_sum_stats() const;
     void clearGaussMatrixes();
+    vector<Gaussian*> gauss_matrixes;
+    #endif //USE_GAUSS
     friend class Gaussian;
     
     template <class T>
