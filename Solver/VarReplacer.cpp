@@ -71,12 +71,8 @@ const bool VarReplacer::performReplaceInternal()
     }*/
     #endif //REPLACE_STATISTICS
     
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
-    solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
-    solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
-    if (solver.ok == false)
-        return false;
+    solver.clauseCleaner->removeAndCleanAll(true);
+    if (solver.ok == false) return false;
     
     #ifdef VERBOSE_DEBUG
     {
