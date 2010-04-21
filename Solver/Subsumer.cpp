@@ -788,7 +788,7 @@ const bool Subsumer::simplifyBySubsumption()
     numVarsElimed = 0;
     blockTime = 0.0;
     
-    //if (solver.clauses.size() < 2000000) addAllXorAsNorm();
+    //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
     
     //For VE
     touched_list.clear();
