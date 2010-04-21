@@ -138,7 +138,7 @@ end:
     return solver.ok;
 }
 
-const bool VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
+const bool VarReplacer::replace_set(vec<XorClause*>& cs)
 {
     XorClause **a = cs.getData();
     XorClause **r = a;
@@ -159,10 +159,9 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs, const bool isAttached)
             }
         }
         
-        if (isAttached && changed && handleUpdatedClause(c, origVar1, origVar2)) {
+        if (changed && handleUpdatedClause(c, origVar1, origVar2)) {
             if (solver.ok == false) {
-                for(;r != end; r++)
-                    free(*r);
+                for(;r != end; r++) free(*r);
                 cs.shrink(r-a);
                 return false;
             }
@@ -250,8 +249,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
         
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
             if (solver.ok == false) {
-                for(;r != end; r++)
-                    free(*r);
+                for(;r != end; r++) free(*r);
                 cs.shrink(r-a);
                 return false;
             }
