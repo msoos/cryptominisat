@@ -1703,7 +1703,9 @@ void Subsumer::addAllXorAsNorm()
         solver.removeClause(**i);
     }
     solver.xorclauses.shrink(i-j);
-    std::cout << "Added XOR as norm:" << added << std::endl;
+    if (solver.verbosity >= 1) {
+        std::cout << "c |  Added XOR as norm:" << added << std::endl;
+    }
 }
 
 void Subsumer::addXorAsNormal3(XorClause& c)
