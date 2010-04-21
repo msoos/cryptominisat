@@ -148,7 +148,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
         bool changed = false;
         Var origVar1 = c[0].var();
         Var origVar2 = c[1].var();
-        for (Lit *l = &c[0], *lend = l + c.size(); l != lend; l++) {
+        for (Lit *l = &c[0], *end2 = l + c.size(); l != end2; l++) {
             Lit newlit = table[l->var()];
             if (newlit.var() != l->var()) {
                 changed = true;
@@ -238,7 +238,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
         bool changed = false;
         Lit origLit1 = c[0];
         Lit origLit2 = c[1];
-        for (Lit *l = c.getData(), *end = l + c.size();  l != end; l++) {
+        for (Lit *l = c.getData(), *end2 = l + c.size();  l != end2; l++) {
             if (table[l->var()].var() != l->var()) {
                 changed = true;
                 *l = table[l->var()] ^ l->sign();
