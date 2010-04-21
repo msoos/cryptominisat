@@ -115,13 +115,12 @@ const bool VarReplacer::performReplaceInternal()
     
     lastReplacedVars = replacedVars;
     
-    if (!replace_set(solver.clauses)) return false;
-    if (!replace_set(solver.learnts)) return false;
-    if (!replace_set(solver.binaryClauses)) return false;
+    if (!replace_set(solver.clauses)) goto end;
+    if (!replace_set(solver.learnts)) goto end;
+    if (!replace_set(solver.binaryClauses)) goto end;
+    if (!replace_set(solver.xorclauses)) goto end;
     
-    if (!replace_set(solver.xorclauses, true)) return false;
-    if (!replace_set(solver.conglomerate->getCalcAtFinish(), false)) return false;
-    
+end:
     for (uint i = 0; i != clauses.size(); i++)
         solver.removeClause(*clauses[i]);
     clauses.clear();
