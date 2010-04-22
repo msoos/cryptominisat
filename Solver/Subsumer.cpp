@@ -972,7 +972,7 @@ const bool Subsumer::simplifyBySubsumption()
             
             numVarsElimed += vars_elimed;
             #ifdef BIT_MORE_VERBOSITY
-            printf("c  #clauses-removed: %-8d #var-elim: %d\n", clauses_before - solver.nClauses(), vars_elimed);
+            printf("c  #var-elim: %d\n", vars_elimed);
             std::cout << "c time until the end of varelim: " << cpuTime() - myTime << std::endl;
             #endif
         }
