@@ -708,7 +708,7 @@ Lit Solver::pickBranchLit()
         /*else
             sign = polarity[next] ^ (mtrand.randInt(200) == 1);*/
         else if (avgBranchDepth.isvalid())
-            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
+            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);
         else
             sign = polarity[next];
     }
