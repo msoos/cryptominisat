@@ -72,7 +72,7 @@ void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const 
         else
             *j++ = *i;
     }
-    cs.shrink_(i - j);
+    cs.shrink(i - j);
     
     lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
 }
