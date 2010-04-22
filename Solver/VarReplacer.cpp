@@ -111,7 +111,7 @@ const bool VarReplacer::performReplaceInternal()
     assert(solver.order_heap.heapProperty());
     
     if (solver.verbosity >= 2)
-        std::cout << "c |  Replacing   " << std::setw(8) << replacedVars-lastReplacedVars << " vars";
+        std::cout << "c |  Replacing   " << std::setw(8) << replacedVars-lastReplacedVars << " vars" << std::endl;
     
     lastReplacedVars = replacedVars;
     
