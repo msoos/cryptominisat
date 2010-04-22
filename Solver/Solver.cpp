@@ -2113,6 +2113,12 @@ lbool Solver::solve(const vec<Lit>& assumps)
             for (Var var = 0; var < nVars(); var++) {
                 if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
             }
+            ok = (propagate() == NULL);
+            if (!ok) {
+                printf("c ERROR! Extension of model failed!\n");
+                assert(ok);
+                exit(-1);
+            }
         }
 #ifndef NDEBUG
         checkSolution();
