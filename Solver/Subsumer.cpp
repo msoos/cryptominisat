@@ -788,7 +788,7 @@ const bool Subsumer::simplifyBySubsumption()
     numVarsElimed = 0;
     blockTime = 0.0;
     
-    //if (solver.clauses.size() < 2000000) addAllXorAsNorm();
+    //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
     
     //For VE
     touched_list.clear();
@@ -1006,10 +1006,10 @@ const bool Subsumer::simplifyBySubsumption()
     
     addBackToSolver();
     solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
-    /*if (solver.findNormalXors && solver.clauses.size() < MAX_CLAUSENUM_XORFIND) {
+    if (solver.findNormalXors && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(&solver, solver.clauses, ClauseCleaner::clauses);
-        if (!xorFinder.doNoPart(3, 4)) return false;
-    }*/
+        if (!xorFinder.doNoPart(3, 7)) return false;
+    }
     
     if (solver.verbosity >= 1) {
         std::cout << "c |  lits-rem: " << std::setw(9) << literals_removed
@@ -1703,7 +1703,9 @@ void Subsumer::addAllXorAsNorm()
         solver.removeClause(**i);
     }
     solver.xorclauses.shrink(i-j);
-    std::cout << "Added XOR as norm:" << added << std::endl;
+    if (solver.verbosity >= 1) {
+        std::cout << "c |  Added XOR as norm:" << added << std::endl;
+    }
 }
 
 void Subsumer::addXorAsNormal3(XorClause& c)

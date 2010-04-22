@@ -708,7 +708,7 @@ Lit Solver::pickBranchLit()
         /*else
             sign = polarity[next] ^ (mtrand.randInt(200) == 1);*/
         else if (avgBranchDepth.isvalid())
-            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);
+            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
         else
             sign = polarity[next];
     }
@@ -1929,7 +1929,7 @@ inline void Solver::performStepsBeforeSolve()
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-        if (!xorFinder.doNoPart(3, 10)) return;
+        if (!xorFinder.doNoPart(3, 7)) return;
     }
         
     if (xorclauses.size() > 1) {
