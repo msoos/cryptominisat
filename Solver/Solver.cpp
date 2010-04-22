@@ -2126,7 +2126,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
         //Copy model:
         model.growTo(nVars());
         for (Var var = 0; var != nVars(); var++) model[var] = value(var);
-    
     }
     
     if (status == l_False) {
