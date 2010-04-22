@@ -501,8 +501,7 @@ const bool Conglomerate::addRemovedClauses()
         FILE* backup_libraryCNFfile = solver.libraryCNFFile;
         solver.libraryCNFFile = NULL;
         if (!solver.addXorClause(c, c.xor_clause_inverted(), c.getGroup())) {
-            for (;it != end; it++)
-                free(&c);
+            for (;it != end; it++) free(*it);
             calcAtFinish.clear();
             return false;
         }
