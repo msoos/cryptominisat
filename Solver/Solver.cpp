@@ -1431,7 +1431,7 @@ lbool Solver::simplify()
         if (ok == false)
             return l_False;
     
-        XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
+        XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
         if (xorFinder.doNoPart(2, 2) == false)
             return l_False;
         
@@ -1862,6 +1862,17 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         }
     }
     
+    if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
+        XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
+        if (!xorFinder.doNoPart(3, 7)) {
+            status = l_False;
+            goto end;
+        }
+    } else if (xorclauses.size() <= 200 && xorclauses.size() > 0 && nClauses() > 10000) {
+        XorFinder x(*this, clauses, ClauseCleaner::clauses);
+        x.addAllXorAsNorm();
+    }
+    
 end:
     random_var_freq = backup_random_var_freq;
     if (verbosity >= 2)
@@ -1923,14 +1934,14 @@ inline void Solver::performStepsBeforeSolve()
         return;
     
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
-        XorFinder xorFinder(this, binaryClauses, ClauseCleaner::binaryClauses);
+        XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
         if (!xorFinder.doNoPart(2, 2)) return;
         
         if (performReplace && !varReplacer->performReplace(true)) return;
     }
     
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
-        XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
+        XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
         if (!xorFinder.doNoPart(3, 7)) return;
     }
         
