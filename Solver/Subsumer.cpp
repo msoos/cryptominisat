@@ -528,7 +528,7 @@ void Subsumer::smaller_database()
     registerIteration(s1);
     
     #ifdef BIT_MORE_VERBOSITY
-    printf("  FIXED-POINT\n");
+    printf("c FIXED-POINT\n");
     #endif
     
     // Fixed-point for 1-subsumption:
@@ -544,7 +544,7 @@ void Subsumer::smaller_database()
         assert(solver.qhead == solver.trail.size());
         
         #ifdef BIT_MORE_VERBOSITY
-        printf("s1.size()=%d  cl_touched.size()=%d\n", s1.size(), cl_touched.size());
+        printf("c s1.size()=%d  cl_touched.size()=%d\n", s1.size(), cl_touched.size());
         #endif
         
         for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
