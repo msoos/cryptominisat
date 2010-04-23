@@ -725,8 +725,7 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
     Clause** a = cs.getData();
     Clause** b = a;
     for (Clause** end = a + cs.size(); a != end; a++) {
-        if (numMaxSubsume0 == 0) goto end;
-        if (!(*a)->subsume0IsFinished()) {
+        if (numMaxSubsume0 > 0 && !(*a)->subsume0IsFinished()) {
             numMaxSubsume0--;
             uint32_t index = subsume0(**a, calcAbstraction(**a));
             if (index != std::numeric_limits<uint32_t>::max()) {
@@ -758,8 +757,6 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                 clauseID--;
             }
         }
-        
-        end:
         *b++  = *a;
     }
     cs.shrink(a-b);
