@@ -139,11 +139,14 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
     solver.ok = (solver.propagate() == NULL);
     
 end:
-    if (solver.verbosity >= 2) {
-        if (minSize == maxSize && minSize == 2)
+    if (minSize == maxSize && minSize == 2) {
+        if (solver.verbosity >= 2 || (solver.conflicts == 0 && solver.verbosity >= 1)) {
             printf("c |  Finding binary XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
-        else
+        }
+    } else {
+        if (solver.verbosity >= 2 || (solver.verbosity >= 1 && foundXors > 0)) {
             printf("c |  Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        }
     }
     
     i = 0;
