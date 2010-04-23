@@ -977,7 +977,7 @@ const bool Subsumer::simplifyBySubsumption()
             std::cout << "c time until the end of varelim: " << cpuTime() - myTime << std::endl;
             #endif
         }
-    }while (cl_added.size() > 100);
+    }while (cl_added.size() > 100 && numMaxElim > 0);
     endSimplifyBySubsumption:
     
     if (!solver.ok) return false;
