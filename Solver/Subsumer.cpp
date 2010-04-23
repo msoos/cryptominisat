@@ -890,10 +890,8 @@ const bool Subsumer::simplifyBySubsumption()
     #endif
     
     if (clauses.size() > 10000000)  goto endSimplifyBySubsumption;
-    
+    if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
     do{
-        if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
-        
         #ifdef BIT_MORE_VERBOSITY
         std::cout << "c time before the start of almost_all/smaller: " << cpuTime() - myTime << std::endl;
         #endif
