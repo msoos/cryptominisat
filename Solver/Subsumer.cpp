@@ -855,6 +855,13 @@ const bool Subsumer::simplifyBySubsumption()
     else
         fullSubsume = false;
     
+    //For debugging post-c32s-gcdm16-22.cnf --- an instance that is turned SAT to UNSAT if a bug is in the code
+    //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
+    //numMaxElim = std::numeric_limits<uint32_t>::max();
+    //numMaxSubsume0 = std::numeric_limits<uint32_t>::max();
+    //numMaxSubsume1 = std::numeric_limits<uint32_t>::max();
+    //numMaxBlockVars = std::numeric_limits<uint32_t>::max();
+    
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  num clauses:" << clauses.size() << std::endl;
     std::cout << "c  time to link in:" << cpuTime()-myTime << std::endl;
