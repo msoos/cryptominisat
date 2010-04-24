@@ -993,7 +993,7 @@ const bool Subsumer::simplifyBySubsumption()
         return false;
     }
     
-    #ifndef DNDEBUG
+    #ifndef NDEBUG
     verifyIntegrity();
     #endif
     
