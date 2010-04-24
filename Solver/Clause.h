@@ -381,10 +381,13 @@ inline void clauseFree(Clause* c)
     return ret;
 }*/
 
+#ifdef _MSC_VER
+typedef Clause* ClausePtr;
+typedef XorClause* XorClausePtr;
+#else
 typedef sptr<Clause> ClausePtr;
 typedef sptr<XorClause> XorClausePtr;
-//typedef Clause* ClausePtr;
-//typedef XorClause* XorClausePtr;
+#endif //_MSC_VER
 
 #pragma pack(push)
 #pragma pack(1)
