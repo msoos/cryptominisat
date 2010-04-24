@@ -140,7 +140,6 @@ uint32_t Subsumer::subsume0(Clause& ps)
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
     ps.plainPrint();
-    cout << "pointer:" << &ps << endl;
     #endif
     
     vec<ClauseSimp> subs;
