@@ -615,11 +615,7 @@ int main(int argc, char** argv)
             argv[j++] = argv[i];
     }
     argc = j;
-    if (!debugLib)
-        S.libraryUsage = false;
-    else
-        S.sateliteUsed = false;
-    
+    if (!debugLib) S.libraryUsage = false;
     
     if (S.verbosity >= 1)
         printf("c This is CryptoMiniSat 2.3.2\n");
