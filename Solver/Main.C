@@ -433,7 +433,6 @@ void printUsage(char** argv)
     printf("                    Algo. as per global/local substitution in Heule's thesis\n");
     printf("  -nosubsumption  = Don't try to subsume clauses.\n");
     printf("  -noxorsubsumption Don't try to subsume xor-clauses.\n");
-    printf("  -nosatelite     = SatELite was not used on input (please set for library usage)\n");
     printf("  -nohyperbinres  = Don't carry out hyper-binary resolution\n");
     printf("  -noResPrint     = Don't print the satisfying assignment if the solution is SAT\n");
     printf("  -novarelim      = Don't perform variable elimination as per Een and Biere\n");
@@ -582,8 +581,6 @@ int main(int argc, char** argv)
             S.doSubsumption = false;
         } else if ((value = hasPrefix(argv[i], "-noparthandler"))) {
             S.doPartHandler = false;
-        } else if ((value = hasPrefix(argv[i], "-nosatelite"))) {
-            S.sateliteUsed = false;
         } else if ((value = hasPrefix(argv[i], "-noxorsubsumption"))) {
             S.doXorSubsumption = false;
         } else if ((value = hasPrefix(argv[i], "-nohyperbinres"))) {

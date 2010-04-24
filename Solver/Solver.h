@@ -148,7 +148,6 @@ public:
     bool      doSubsume1;           // Perform clause contraction through resolution
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     bool      libraryUsage;         // Set true if not used as a library
-    bool      sateliteUsed;         // whether satielite was used on CNF before calling
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
