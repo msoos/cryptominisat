@@ -949,8 +949,8 @@ const bool Subsumer::simplifyBySubsumption()
                     const Var var = touched_list[i];
                     if (!var_elimed[var] && !cannot_eliminate[var] && solver.decision_var[var] && solver.assigns[var] == l_Undef) {
                         order.push(touched_list[i]);
-                        touched[var] = 0;
                     }
+                    touched[var] = 0;
                 }
                 touched_list.clear();
             }
