@@ -29,6 +29,10 @@ using std::set;
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
 
+#ifdef _MSC_VER
+#define __builtin_prefetch(a,b,c)
+#endif //_MSC_VER
+
 //#define VERBOSE_DEUBUG
 
 FailedVarSearcher::FailedVarSearcher(Solver& _solver):
