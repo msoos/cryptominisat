@@ -62,8 +62,8 @@ x86_64-w64-mingw32-ar qs libz.a adler32.o \
 
 i586-mingw32msvc-g++ -O3 -g0 -march=i586 -DCROSS_COMPILE  \
     -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a \
-    Logger.C Solver.C  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp \
-    Gaussian.cpp MatrixFinder.cpp PackedRow.cpp RestartTypeChooser.cpp \
+    Logger.cpp Solver.cpp  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp \
+    PackedRow.cpp RestartTypeChooser.cpp \
     VarReplacer.cpp XorFinder.cpp SmallPtr.cpp Clause.cpp PartHandler.cpp \
     Subsumer.cpp XorSubsumer.cpp FailedVarSearcher.cpp PartFinder.cpp \
     -o minisat.exe
@@ -71,7 +71,7 @@ i586-mingw32msvc-g++ -O3 -g0 -march=i586 -DCROSS_COMPILE  \
 x86_64-w64-mingw32-g++ -O3 -g0 -march=core2 -DCROSS_COMPILE  \
     -I../mtl/ -I../MTRand/ Main.C /usr/x86_64-w64-mingw32/lib/libz.a \
     Logger.C Solver.C  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp \
-    Gaussian.cpp MatrixFinder.cpp PackedRow.cpp RestartTypeChooser.cpp \
+    PackedRow.cpp RestartTypeChooser.cpp \
     VarReplacer.cpp XorFinder.cpp SmallPtr.cpp Clause.cpp PartHandler.cpp \
     Subsumer.cpp XorSubsumer.cpp FailedVarSearcher.cpp PartFinder.cpp \
     -o minisat.exe
