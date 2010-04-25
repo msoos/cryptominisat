@@ -1862,13 +1862,13 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         }
     }
     
-    if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
+    /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
         if (!xorFinder.doNoPart(3, 7)) {
             status = l_False;
             goto end;
         }
-    } else if (xorclauses.size() <= 200 && xorclauses.size() > 0 && nClauses() > 10000) {
+    } else*/ if (xorclauses.size() <= 200 && xorclauses.size() > 0 && nClauses() > 10000) {
         XorFinder x(*this, clauses, ClauseCleaner::clauses);
         x.addAllXorAsNorm();
     }
