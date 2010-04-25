@@ -80,11 +80,16 @@ const bool Subsumer::unEliminate(const Var var)
     vec<Lit> tmp;
     typedef map<Var, vector<vector<Lit> > > elimType;
     elimType::iterator it = elimedOutVar.find(var);
-    assert(it != elimedOutVar.end());
     
     solver.setDecisionVar(var, true);
     var_elimed[var] = false;
     numElimed--;
+    
+    //If the variable was removed because of
+    //pure literal removal (by blocked clause
+    //elimination, there are no clauses to re-insert
+    if (it == elimedOutVar.end()) return solver.ok;
+    
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
     solver.libraryCNFFile = NULL;
     for (vector<vector<Lit> >::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
@@ -96,8 +101,7 @@ const bool Subsumer::unEliminate(const Var var)
     solver.libraryCNFFile = backup_libraryCNFfile;
     elimedOutVar.erase(it);
     
-    if (!solver.ok) return false;
-    return true;
+    return solver.ok;
 }
 
 bool selfSubset(uint32_t A, uint32_t B)
