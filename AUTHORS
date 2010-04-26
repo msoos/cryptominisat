@@ -1,16 +1,26 @@
-Niklas Eén
-Niklas Sörensson
-Gilles Audemard
-Laurent Simon
 Mate Soos <mate.soos@inrialpes.fr>
 
-thanks to:
+People whose code has been incorporated:
+- Niklas Eén
+- Niklas Sörensson
+- Gilles Audemard
+- Laurent Simon
+- Some of Armin Biere's code
+->> Great thanks to all of the above. They were not
+in any way associated with the development of CryptoMiniSat.
+Please don't blame them or write to them regarding bugs etc.
+
+Special thanks to:
 - the authors' professors
 - the gcc compiler team
 - libstdc team
-- Bjarne Stroustrup
+- Bjarne Stroustrup for C++
+- Armin Biere for the great papers on SAT
 
-Bug-hunting thanks:
-- Vijay Ganesh for finding a zillion bugs
+Bug-hunting thanks to:
 - Martin Maurer for helping with Visual C-specific things
+  and reporting on multiple bugs
+- Trevor Hansen, for fuzztesting the code on millions of problems
+  and reporting on a good number of bugs
+- Vijay Ganesh for finding a lots of bugs
 - Users of STP (Simple Theorem Prover) for their feedback
