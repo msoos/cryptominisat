@@ -2,9 +2,8 @@
 # have all needed files, that a GNU package needs
 AUTOMAKE_OPTIONS = foreign 1.4
 
-SUBDIRS = Solver SatElite
+SUBDIRS = Solver
 
-all-local: Solver SatElite
+all-local: Solver
 	cp Solver/cryptominisat .
-	cp SatElite/satelite .
 

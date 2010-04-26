@@ -618,7 +618,7 @@ int main(int argc, char** argv)
     if (!debugLib) S.libraryUsage = false;
     
     if (S.verbosity >= 1)
-        printf("c This is CryptoMiniSat 2.3.2\n");
+        printf("c This is CryptoMiniSat\n");
 #if defined(__linux__)
     fpu_control_t oldcw, newcw;
     _FPU_GETCW(oldcw);
