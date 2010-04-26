@@ -1,15 +1,6 @@
-For usage of standard MiniSat, please have a look at
-Niklas Eén's and Niklas Sörensson's papers. Also, please
-look at "./minisat -help"
-
-For a more detailed description of how to use CryptoMiniSat,
-please refer to  http://planete.inrialpes.fr/~soos/CryptoMiniSat/index.html
-
-For regression testing, execute: 
-'python regression_test.py' in the "scripts/" subdir
-
-CryptoMiniSat integrates the following advancements with 
-respect to MiniSat:
+CryptoMiniSat integrates a lot of advancements relative to MiniSat.
+You can find these under the NEWS file. Here, we will explain how to
+use the xor-clause and logging facilities of CryptoMiniSat:
 
 * Xor-clauses. If you want to express a xor, e.g. 
   
@@ -92,10 +83,11 @@ respect to MiniSat:
   |401         sr[0][42](real unknown)              820       |
   +-----------------------------------------------------------+
   
-  This list means that variable 54, which represents the 65th bit in the 
-  shift register has been branched upon 1608 times during the solving. This, 
-  by the way, is logical, as we were trying to solve the state of the stream 
-  cipher, which is of course the shift register's state.
+  This list means that variable 54, which represents the 65th bit
+  in the shift register has been branched upon 1608 times during the
+  solving. This, by the way, is logical, as we were trying to solve the
+  state of the stream cipher, which is of course the shift register's
+  state.
 
   The statistics also gives you the following for each restart 
   (minisat does re-starts every so often, these are the lines that
@@ -120,16 +112,16 @@ respect to MiniSat:
   
 
 * "-randomize=XXX" randomizes the clause order and initial variable pick order. 
-  You can measure how much time it takes for minisat on average to solve a problem 
-  written down in a SAT file. Useful to calculate average speed of a given problem
-  instance. Just run the problem with multiple "-randomize=xx" numbers and
-  make the average.
+  You can measure how much time it takes for minisat on average to solve a
+  problem written down in a SAT file. Useful to calculate average speed of a
+  given problem instance. Just run the problem with multiple "-randomize=xx"
+  numbers and make the average.
   
 * If you create a directory "proofs", and then you execute 
   "./minisat -proof-log -grouping satfile" 
-  then CryptoMiniSat produces a set of files, named "NUM-proofX.dot" in the "proofs"
-  directory, where NUM is a fixed number for a given run, and X is the restart number.
-  For the example "satfile" under the "build" directory:
+  then CryptoMiniSat produces a set of files, named "NUM-proofX.dot" in the
+  "proofs" directory, where NUM is a fixed number for a given run, and X is
+  the restart number. For the example "satfile" under the "build" directory:
 
   $ ls proofs/
   7491-proof0.dot
@@ -138,21 +130,21 @@ respect to MiniSat:
   [...]
   
   First you need to get graphviz (free software, available form 
-  http://www.graphviz.org/Download..php for both windows and linux). If you now 
-  issue "dot -Tsvg 7491-proof1.dot > proof1.svg" and wait a couple of minutes, 
-  you get a file "proof1.svg" that contains what happened at the 1st restart
-  (which is not really a restart, it's the first run: the 0th restart is the
-  inserting of clauses). This SVG file is included into this email (zipped).
-  You can view it only with a very good SVG-reader, like the free-software
-  inkscape ( http://www.inkscape.org/download/?lang=en ), available under
-  windows and  linux.
+  http://www.graphviz.org/Download..php for both windows and linux). If you
+  now issue "dot -Tsvg 7491-proof1.dot > proof1.svg" and wait a couple of
+  minutes, you get a file "proof1.svg" that contains what happened at the 1st
+  restart (which is not really a restart, it's the first run: the 0th restart
+  is the inserting of clauses). This SVG file is included into this email
+  (zipped). You can view it only with a very good SVG-reader, like the
+  free-software inkscape ( http://www.inkscape.org/download/?lang=en ),
+  available under windows and  linux.
   
-* There is an option to have a LOT of debugging output from minisat. To turn it
-  on, define VERBOSE_DEBUG. See the "INSTALL" file how to do this. After re-
-  compilation, run CryptoMiniSat as usual. This will give you a LOT of information
-  regarding what happens inside CryptoMiniSat. Propagations, cancellations, conflicts,
-  conflict clauses, etc. To handle the amount of information, I suggest you to run 
-  CryptoMiniSat as:
+* There is an option to have a LOT of debugging output from CryptoMiniSat. To
+  turn it on, define VERBOSE_DEBUG. See the "INSTALL" file how to do this.
+  After re-compilation, run CryptoMiniSat as usual. This will give you a LOT
+  of information regarding what happens inside CryptoMiniSat. Propagations,
+  cancellations, conflicts, conflict clauses, etc. To handle the amount of
+  information, I suggest you to run CryptoMiniSat as:
   
   "./cryptominisat satfile > debug.txt"
   
