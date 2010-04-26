@@ -1,3 +1,64 @@
+ver 2.4.0 -- 26/04/2009
+The first real release of CryptoMiniSat v2. It contains the following set
+of improvements:
+    * XOR clauses are extracted at the beginning of the solving
+    * Anti- or equivalent variables are detected at regular intervals
+      and are replaced with one another, eliminating variables during
+      solving
+    * xor-clauses are regularly XOR-ed with one another such as to obtain
+      binary XOR clauses. These binary xor-clauses are then treated as variable
+      replacements instructions (i.e. "v1 XOR v2 = false" means that v1 is
+      replaced with v2)
+    * Phase calculation using Jeroslow and Wang, and phase saving with
+      randomised search space exploration. The average branch depth is
+      measured for each instance, and the solver makes a random phase
+      flip with 1/avgBranchDepth probability
+    * Random search burst are used to search unexplored areas of the
+      search space at regular intervals
+    * Automatic detection of cryptographic and industrial instances. Dynamic
+      restart is used for industrial instances, and static restart for
+      cryptographical instances. Detection is based on xor-clause percentage
+      and variable activity stability.
+    * Regular full restarts are performed to detect if the problem hasn't
+      changed enough due to learnt clauses and assigned variables to behave
+      more like a cryptographical instance than an industrial instance or
+      vice-versa.
+    * Both GLUCOSE-type learnt clause activity and MiniSat-type learnt clause
+      activity heuristics are supported. During dynamic restarts, the GLUCOSE
+      heuristic is used, while during static restarts, the MiniSat-type
+      heuristic is used.
+    * SatELite-type variable elimination, clause subsumption and clause
+      strengthening is regularly performed. The occurrence lists are, however,
+      not updated all the time such as the case is with PrecoSat. Instead,
+      occurrences are calculated on per-use basis
+    * On-the-fly subsumption is used to check whether the conflict clause
+      automatically subsumes the clause that caused the conflict.
+    * Binary clauses are propagated first before non-binary clauses are
+      propagated.
+    * 32-bit pointers are used for the watchlists on 64-bit architectures,
+      using out the fact that most bits in the 64-bit pointer are actually fixed
+    * Hyper-binary resolution is used when the hyper-binary clause subsumes
+      any of the original clauses
+    * Clauses are regularly scrubbed from variables that have been assigned
+    * Preliminary blocked-clause elimination is used to remove pure literals
+    * Distinct subproblems are regularly searched for and detected. These
+      subproblems and solved with subsolvers. As a side-ntoe, this eliminates
+      the original theoretical need for phase-saving (enabling the random
+      flipping of phase, which is also used)
+    * xor-clause subsumption is regularly performed
+    * So-called dependent variables are removed along with their xor-clauses.
+      This means that variables that only occur in one xor-clause and in no
+      other clause are removed along with the XOR clause. Once the solving has
+      finished, this xor-clause is re-introduced and a suitable value for the
+      variable is found to satisfy the XOR.
+    * Failed variable probing with both-propagated and binary XOR detection.
+      All variables are successively propagated both to TRUE and FALSE. If one
+      of these branches fails, the variable is assigned the other branch.
+      If none fails, but the intersection of assignments is non-empty, those
+      assignments are made. Essentially the same is done to non-binary XOR-s:
+      if both v and !v propagate a given binary XOR, that XOR is learnt.
+    * Designed to work as a library and as a drop-in replacement for MiniSat
+
 ver 2.3.2 -- 28/12/2009
 * further ints have been replaced with uints
 * ZLIB can now be disabled
