@@ -3,8 +3,8 @@ default: all
 all:
 	aclocal
 	autoheader
-	libtoolize
-	automake --add-missing
+	libtoolize --copy
+	automake --copy --add-missing
 	automake
 	autoconf
 
