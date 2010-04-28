@@ -121,22 +121,18 @@ void Logger::set_group_name(const uint group, char* name_tmp)
         return;
     
     string name;
-    if (name_tmp == NULL)
-        name = "";
-    else
-        name = name_tmp;
+    if (name_tmp == NULL) return;
+    else name = name_tmp;
     
     new_group(group);
     cut_name_to_size(name);
-
-    if (name.length() == 0) return;
     
-    if (name == "Noname" || name == "") return;
+    if (name == "Noname") return;
     
     if (groupnames[group] == "Noname") {
         groupnames[group] = name;
     } else if (groupnames[group] != name) {
-        printf("Error! Group no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", group, groupnames[group].c_str(), name.c_str());
+        std::cout << "Error! Group no. " <<  group << "has been named twice. First, as '" << groupnames[group] << "', then second as '" <<  name << "'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line" << std::endl;
         exit(-1);
     }
 }
