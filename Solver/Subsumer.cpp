@@ -945,16 +945,15 @@ const bool Subsumer::simplifyBySubsumption()
                 //init_order.copyTo(order);
                 for (uint32_t i = 0; i < init_order.size(); i++) {
                     const Var var = init_order[i];
-                    if (!var_elimed[var] && !cannot_eliminate[var] && solver.decision_var[var] && solver.assigns[var] == l_Undef)
-                        order.push(init_order[i]);
+                    if (!cannot_eliminate[var] && solver.decision_var[var])
+                        order.push(var);
                 }
             } else {
                 for (uint32_t i = 0; i < touched_list.size(); i++) {
                     const Var var = touched_list[i];
-                    if (!var_elimed[var] && !cannot_eliminate[var] && solver.decision_var[var] && solver.assigns[var] == l_Undef) {
-                        order.push(touched_list[i]);
-                    }
-                    touched[var] = 0;
+                    if (!cannot_eliminate[var] && solver.decision_var[var])
+                        order.push(var);
+                    touched[var] = false;
                 }
                 touched_list.clear();
             }
@@ -1178,8 +1177,8 @@ bool Subsumer::maybeEliminate(const Var x)
     // Count clauses/literals before elimination:
     int before_clauses  = poss.size() + negs.size();
     uint32_t before_literals = 0;
-    for (int i = 0; i < poss.size(); i++) before_literals += poss[i].clause->size();
-    for (int i = 0; i < negs.size(); i++) before_literals += negs[i].clause->size();
+    for (uint32_t i = 0; i < poss.size(); i++) before_literals += poss[i].clause->size();
+    for (uint32_t i = 0; i < negs.size(); i++) before_literals += negs[i].clause->size();
     
     // Heuristic CUT OFF2:
     if ((poss.size() >= 3 && negs.size() >= 3 && before_literals > 300)
@@ -1188,27 +1187,20 @@ bool Subsumer::maybeEliminate(const Var x)
     if ((poss.size() >= 5 && negs.size() >= 5 && before_literals > 400)
         && clauses.size() <= 1500000 && clauses.size() > 200000)
         return false;
-    if ((poss.size() >= 10 && negs.size() >= 10 && before_literals > 700)
+    if ((poss.size() >= 8 && negs.size() >= 8 && before_literals > 700)
         && clauses.size() <= 200000)
         return false;
     
     // Count clauses/literals after elimination:
     int after_clauses  = 0;
-    //int after_literals = 0;
     vec<Lit>  dummy;
-    //vec<ClauseSimp> dummy2;
-    for (int i = 0; i < poss.size(); i++){
-        for (int j = 0; j < negs.size(); j++){
-            // Merge clauses. If 'y' and '~y' exist, clause will not be created.
-            dummy.clear();
-            bool ok = merge(*poss[i].clause, *negs[j].clause, Lit(x, false), Lit(x, true), dummy);
-            if (ok){
-                //findSubsumed(dummy, calcAbstraction(dummy), dummy2);
-                //after_clauses -= (int)dummy2.size();
-                after_clauses++;
-                if (after_clauses > before_clauses) goto Abort;
-                //after_literals += dummy.size();
-            }
+    for (uint32_t i = 0; i < poss.size(); i++) for (uint32_t j = 0; j < negs.size(); j++){
+        // Merge clauses. If 'y' and '~y' exist, clause will not be created.
+        dummy.clear();
+        bool ok = merge(*poss[i].clause, *negs[j].clause, Lit(x, false), Lit(x, true), dummy);
+        if (ok){
+            after_clauses++;
+            if (after_clauses > before_clauses) goto Abort;
         }
     }
     Abort:;
@@ -1217,7 +1209,7 @@ bool Subsumer::maybeEliminate(const Var x)
     if (after_clauses  <= before_clauses) {
         vec<ClauseSimp> ps, ns;
         MigrateToPsNs(poss, negs, ps, ns, x);
-        for (int i = 0; i < ps.size(); i++) for (int j = 0; j < ns.size(); j++){
+        for (uint32_t i = 0; i < ps.size(); i++) for (uint32_t j = 0; j < ns.size(); j++){
             dummy.clear();
             bool ok = merge(*ps[i].clause, *ns[j].clause, Lit(x, false), Lit(x, true), dummy);
             if (ok){
@@ -1225,46 +1217,6 @@ bool Subsumer::maybeEliminate(const Var x)
                 if (cl != NULL) {
                     ClauseSimp c = linkInClause(*cl);
                     subsume0(*cl);
-                    //subsume1(c);
-                }
-                if (!solver.ok) return true;
-            }
-        }
-        DeallocPsNs(ps, ns);
-        goto Eliminated;
-    }
-    
-    after_clauses  = 0;
-    //after_literals = 0;
-    for (int i = 0; i < poss.size(); i++){
-        for (int j = 0; j < negs.size(); j++){
-            // Merge clauses. If 'y' and '~y' exist, clause will not be created.
-            dummy.clear();
-            bool ok = merge(*poss[i].clause, *negs[j].clause, Lit(x, false), Lit(x, true),  dummy);
-            if (ok){
-                //findSubsumed(dummy, calcAbstraction(dummy), dummy2);
-                //after_clauses -= (int)dummy2.size();
-                after_clauses++;
-                if (after_clauses > before_clauses) goto Abort2;
-                //after_literals += dummy.size();
-            }
-        }
-    }
-    Abort2:
-    
-    // Maybe eliminate:
-    if (after_clauses  <= before_clauses) {
-        vec<ClauseSimp> ps, ns;
-        MigrateToPsNs(poss, negs, ps, ns, x);
-        for (int i = 0; i < ps.size(); i++) for (int j = 0; j < ns.size(); j++){
-            dummy.clear();
-            bool ok = merge(*ps[i].clause, *ns[j].clause, Lit(x, false), Lit(x, true), dummy);
-            if (ok){
-                Clause* cl = solver.addClauseInt(dummy, 0);
-                if (cl != NULL) {
-                    ClauseSimp c = linkInClause(*cl);
-                    subsume0(*cl);
-                    //subsume1(c);
                 }
                 if (!solver.ok) return true;
             }
