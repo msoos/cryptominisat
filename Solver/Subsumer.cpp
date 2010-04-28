@@ -201,7 +201,7 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
     if (elim != var_Undef) {
         assert(!cl.learnt());
         io_tmp.clear();
-        for (int i = 0; i < cl.size(); i++)
+        for (uint32_t i = 0; i < cl.size(); i++)
             io_tmp.push_back(cl[i]);
         elimedOutVar[elim].push_back(io_tmp);
     }
