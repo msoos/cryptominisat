@@ -1,0 +1,47 @@
+[General]
+def_graphic_ext=
+img_extIsRegExp=false
+img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
+kileprversion=2
+kileversion=2.1 beta2
+lastDocument=sigproc.bib
+masterDocument=
+name=practicalanalytic
+pkg_extIsRegExp=false
+pkg_extensions=.cls .sty .bbx .cbx .lbx
+src_extIsRegExp=false
+src_extensions=.tex .ltx .latex .dtx .ins
+
+[Tools]
+MakeIndex=
+QuickBuild=
+
+[item:CryptoMiniSat-2.4.0.kilepr]
+archive=true
+column=7667713
+encoding=
+highlight=
+line=0
+mode=
+open=false
+order=-1
+
+[item:CryptoMiniSat-2.4.0.tex]
+archive=true
+column=728
+encoding=UTF-8
+highlight=LaTeX
+line=110
+mode=LaTeX
+open=true
+order=0
+
+[item:sigproc.bib]
+archive=true
+column=19
+encoding=UTF-8
+highlight=BibTeX
+line=2242
+mode=BibTeX
+open=true
+order=1
