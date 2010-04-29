@@ -1000,12 +1000,12 @@ const bool Subsumer::simplifyBySubsumption()
     removeWrong(solver.binaryClauses);
     
     solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
-    if (solver.doHyperBinRes && clauses.size() < 1000000 && numCalls > 1 && !hyperBinRes())
-        return false;
-    
-    solver.ok = (solver.propagate() == NULL);
-    if (!solver.ok) return false;
-    solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
+//     if (solver.doHyperBinRes && clauses.size() < 1000000 && numCalls > 1 && !hyperBinRes())
+//         return false;
+//     
+//     solver.ok = (solver.propagate() == NULL);
+//     if (!solver.ok) return false;
+//     solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     
     solver.order_heap.filter(Solver::VarFilter(solver));
     
