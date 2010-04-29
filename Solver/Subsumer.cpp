@@ -1580,7 +1580,7 @@ void Subsumer::blockedClauseRemoval()
         VarOcc vo = touchedBlockedVars.top();
         touchedBlockedVars.pop();
         
-        if (var_elimed[vo.var] || solver.assigns[vo.var] != l_Undef || !solver.decision_var[vo.var] || cannot_eliminate[vo.var])
+        if (solver.assigns[vo.var] != l_Undef || !solver.decision_var[vo.var] || cannot_eliminate[vo.var])
             continue;
         touchedBlockedVarsBool[vo.var] = false;
         Lit lit = Lit(vo.var, false);
