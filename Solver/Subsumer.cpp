@@ -968,11 +968,6 @@ const bool Subsumer::simplifyBySubsumption()
                         printf("c (contradiction during subsumption)\n");
                         return false;
                     }
-                    solver.ok = (solver.propagate() == NULL);
-                    if (!solver.ok) {
-                        printf("c (contradiction during subsumption)\n");
-                        return false;
-                    }
                     vars_elimed++;
                 }
             }
