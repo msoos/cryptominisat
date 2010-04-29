@@ -437,6 +437,7 @@ void printUsage(char** argv)
     printf("  -noResPrint     = Don't print the satisfying assignment if the solution is SAT\n");
     printf("  -novarelim      = Don't perform variable elimination as per Een and Biere\n");
     printf("  -nosubsume1     = Don't perform clause contraction through resolution\n");
+    printf("  -noparthander   = Don't find and solve subroblems with subsolvers\n");
     printf("\n");
 }
 
