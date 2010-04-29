@@ -601,7 +601,7 @@ void Subsumer::linkInAlreadyClause(ClauseSimp& c)
     Clause& cl = *c.clause;
     
     if (updateOccur(cl)) {
-        for (uint32_t i = 0; i < c.clause->size(); i++) {
+        for (uint32_t i = 0; i < cl.size(); i++) {
             occur[cl[i].toInt()].push(c);
             touch(cl[i].var());
         }
