@@ -186,9 +186,9 @@ uint32_t Subsumer::subsume0(Clause& ps, uint32_t abs)
         #endif
         
         Clause* tmp = subs[i].clause;
+        retIndex = subs[i].index;
         unlinkClause(subs[i]);
         free(tmp);
-        retIndex = subs[i].index;
     }
     
     return retIndex;
