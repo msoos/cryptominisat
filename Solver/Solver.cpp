@@ -877,11 +877,13 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, i
     }
     
     #ifdef UPDATEVARACTIVITY
-    for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
-        if (reason[lastDecisionLevel[i].var()]->activity() < nbLevels)
-            varBumpActivity(lastDecisionLevel[i].var());
+    if (lastDecisionLevel.size() > 0) {
+        for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
+            if (reason[lastDecisionLevel[i].var()]->activity() < nbLevels)
+                varBumpActivity(lastDecisionLevel[i].var());
+        }
+        lastDecisionLevel.clear();
     }
-    lastDecisionLevel.clear();
     #endif
 
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
