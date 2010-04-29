@@ -492,7 +492,7 @@ int main(int argc, char** argv)
 
         } else if ((value = hasPrefix(argv[i], "-verbosity="))) {
             int verbosity = (int)strtol(value, NULL, 10);
-            if (verbosity == 0 && errno == EINVAL) {
+            if (errno == EINVAL) {
                 printf("ERROR! illegal verbosity level %s\n", value);
                 exit(0);
             }
