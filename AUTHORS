@@ -1,4 +1,4 @@
-Mate Soos <mate.soos@inrialpes.fr>
+Mate Soos <soos.mate@gmail.com>
 
 People whose code has been incorporated:
 - Niklas Eén
@@ -11,11 +11,10 @@ in any way associated with the development of CryptoMiniSat.
 Please don't blame them or write to them regarding bugs etc.
 
 Special thanks to:
-- the authors' professors
+- the author's professors
 - the gcc compiler team
 - libstdc team
 - Bjarne Stroustrup for C++
-- Armin Biere for the great papers on SAT
 
 Bug-hunting thanks to:
 - Martin Maurer for helping with Visual C-specific things
