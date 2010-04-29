@@ -1588,9 +1588,9 @@ void Subsumer::blockedClauseRemoval()
         
         numMaxBlockToVisit -= (int64_t)occur[lit.toInt()].size();
         numMaxBlockToVisit -= (int64_t)occur[negLit.toInt()].size();
-        if (!tryOneSetting(lit, negLit)) {
+        //if (!tryOneSetting(lit, negLit)) {
             tryOneSetting(negLit, lit);
-        }
+       // }
     }
     blockTime += cpuTime() - myTime;
     
