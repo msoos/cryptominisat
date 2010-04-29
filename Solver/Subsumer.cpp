@@ -818,6 +818,11 @@ const bool Subsumer::simplifyBySubsumption()
     cl_added.reserve(solver.clauses.size() + solver.binaryClauses.size());
     cl_touched.reserve(solver.clauses.size() + solver.binaryClauses.size());
     
+    if (clauses.size() < 200000)
+        fullSubsume = true;
+    else
+        fullSubsume = false;
+    
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses);
     solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::binaryClauses);
@@ -852,11 +857,6 @@ const bool Subsumer::simplifyBySubsumption()
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
     else
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
-    
-    if (clauses.size() < 200000)
-        fullSubsume = true;
-    else
-        fullSubsume = false;
     
     //For debugging post-c32s-gcdm16-22.cnf --- an instance that is turned SAT to UNSAT if a bug is in the code
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
