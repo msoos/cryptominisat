@@ -3,12 +3,12 @@ import commands
 import os
 import fnmatch
 import gzip
+import re
 import getopt, sys
 
 
 class Tester:
 
-  greedyUnbound = False
   sumTime = 0.0
   sumProp = 0
   verbose = False
@@ -19,7 +19,6 @@ class Tester:
   speed = False
   
   def __init__(self):
-    self.greedyUnbound = False
     self.sumTime = 0.0
     self.sumProp = 0
     self.verbose = False
@@ -28,9 +27,9 @@ class Tester:
     self.testDirNewVar = "../tests/newVar/"
     self.cryptominisat = "../build/cryptominisat"
     self.speed = False
+    self.checkDirOnly = False
 
-  def execute(self, fname, i, of, newVar):
-    if (os.path.isfile(of)) : os.unlink(of)
+  def execute(self, fname, i, newVar):
     if (os.path.isfile(self.cryptominisat) != True) :
             print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
             exit()
@@ -38,17 +37,9 @@ class Tester:
     command = "%s -randomize=%d -debugLib "%(self.cryptominisat, i)
     if (newVar) :
         command += "-debugNewVar "
-    if (self.greedyUnbound) :
-        command += "-greedyUnbound "
-    command += "-gaussuntil=%d -verbosity=0 \"%s\" %s"%(self.gaussUntil, fname, of)
+    command += "-gaussuntil=%d -verbosity=1 \"%s\""%(self.gaussUntil, fname)
     print "Executing: %s" %(command)
     consoleOutput =  commands.getoutput(command)
-    
-    if (os.path.isfile(of) != True) :
-       print "OOops, output was not produced by CryptoMiniSat! Error!"
-       print "Error log:"
-       print consoleOutput
-       exit()
      
     if (self.verbose) :
       print consoleOutput
@@ -63,38 +54,47 @@ class Tester:
         if "propagations" in l:
             self.sumProp += int(l[l.index(":")+1:l.rindex("(")])
 
-  def read_found(self, of):
-    f = open(of, "r")
-    text = f.read()
-    mylines = text.splitlines()
-    f.close()
+  def read_found_output(self, output):
+    lines = output.splitlines()
 
-    if (len(mylines) == 0) :
-      print "Error! MiniSat output is empty!"
-      exit(-1)
-
-    unsat = False
-    if ('UNSAT' in mylines[0]) :
-        unsat = True
-    elif ('SAT' in mylines[0]) :
-        unsat = False
-    else :
-        print "Error! Maybe didn't finish running?"
+    if (len(lines) == 0) :
+      if (self.checkDirOnly == True) :
+        print "Solving probably timed out"
+        return (True, {})
+      else :
+        print "Error! MiniSat output is empty!"
         exit(-1)
 
     value = {}
-    if (len(mylines) > 1) :
-        vars = mylines[1].split(' ')
+    unsat = False
+    sLineFound = False
+    vLineFound = False
+    for line in lines:
+      if (line == 's UNSATISFIABLE') :
+        unsat = True
+        sLineFound = True
+      elif (line == 's SATISFIABLE') :
+        unsat = False
+        sLineFound = True
+      elif (re.match('^v ',line)) :
+        vars = line.split(' ')
+        vLineFound = True
         for var in vars:
-             vvar = int(var)
-             value[abs(vvar)] = ((vvar < 0) == False)
-       
+            if (var == "v") :
+              continue
+            vvar = int(var)
+            value[abs(vvar)] = ((vvar < 0) == False)
+    
+    if (sLineFound == False or (unsat == False and vLineFound == False)) :
+        print "Cannot find line starting with 's' or 'v' in output!";
+        print consoleOutput
+        exit()
+    
     #print "FOUND:"
     #print "unsat: %d" %(unsat)
     #for k, v in value.iteritems():
     #    print "var: %d, value: %s" %(k,v)
     
-    os.unlink(of)
     return (unsat, value)
 
 
@@ -107,8 +107,8 @@ class Tester:
     
     indicated_value = {}
     indicated_unsat = False
-    mylines = text.splitlines()
-    for line in mylines :
+    lines = text.splitlines()
+    for line in lines :
       if ('UNSAT' in line) :
           indicated_unsat = True
       elif ('SAT' in line) :
@@ -137,13 +137,8 @@ class Tester:
     for lit in lits :
       numlit = int(lit)
       if (numlit != 0) :
-        if (abs(numlit) not in value) :
-          if (self.greedyUnbound == False) :
-            print "var %d not solved, but referred to in a clause in the CNF" %(abs(numlit))
-            exit(-1)
-        else :
-          if (numlit < 0) : final |= ~value[abs(numlit)]
-          else : final |= value[numlit]
+        if (numlit < 0) : final |= ~value[abs(numlit)]
+        else : final |= value[numlit]
         if (final == True) : break
     if (final == False) :
       print "Error: clause '%s' not satisfied." %(line)
@@ -200,9 +195,15 @@ class Tester:
       
     #print "Verified %d original xor&regular clauses" %(clauses)
     
-  def check(self, fname, i, newVar):
-    of = "outputfile"
-    consoleOutput = self.execute(fname, i, of, newVar)
+  def check(self, fname, i, newVar, needSolve = True):
+    consoleOutput = "";
+    if (needSolve) :
+        consoleOutput = self.execute(fname, i, newVar)
+    else :
+        f = open(fname + ".out", "r")
+        consoleOutput = f.read()
+        f.close()
+    
     self.parse_consoleOutput(consoleOutput)
     print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" %(fname[:20]+"....cnf.gz", i, self.sumProp, self.sumTime)
     
@@ -227,7 +228,10 @@ class Tester:
         print "Not examining part %d -- it is UNSAT" %(debugLibPart)
     
     #print "Checking against solution %s" %(of)
-    unsat, value = self.read_found(of)
+    #unsat, value = self.read_found(of)
+    unsat, value = self.read_found_output(consoleOutput)
+    if (unsat == True) :
+        print "Cannot check -- output is UNSAT"
     self.test_expect(unsat, value, fname[:len(fname)-6] + "output.gz")
     if (unsat == False) : 
       self.test_found(unsat, value, fname)
@@ -236,22 +240,23 @@ class Tester:
   def usage():
     print "--num     (-n)     The number of times to randomize and solve the same instance. Default: 3"
     print "--file    (-f)     The file to solve. Default: all files under ../tests/"
-    print "--unbound (-u)     Greedily unbound variables after solving. The CNF will still remain SAT"
     print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
     print "--testdir (-t)     The directory where the files to test are. Default: \"../tests/\""
     print "--exe     (-e)     Where the cryptominisat executable is located. Default: \"../build/cryptominisat\""
     print "--speed   (-s)     Only solve, don't verify the result"
+    print "--checkDirOnly(-c)     Check all solutions in directory"
     print "--help    (-h)     Print this help screen"
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "pshuvg:n:f:t:e:", ["help", "file=", "num=", "unbound", "gauss=", "testdir=", "exe=", "speed"])
+      opts, args = getopt.getopt(sys.argv[1:], "schg:n:f:t:e:", ["help", "checkDirOnly", "file=", "num=", "gauss=", "testdir=", "exe=", "speed"])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
       sys.exit(2)
     
     fname = None
+    debugLib = False
     num = 3
     testDirSet = False
     for opt, arg in opts:
@@ -264,8 +269,6 @@ class Tester:
             fname = arg
         elif opt in ("-n", "--num"):
             num = int(arg)
-        elif opt in ("-u", "--unbound"):
-            self.greedyUnbound = True
         elif opt in ("-g", "--gauss"):
             self.gaussUntil = int(arg)
         elif opt in ("-t", "--testdir"):
@@ -275,6 +278,8 @@ class Tester:
             self.cryptominisat = arg
         elif opt in ("-s", "--speed"):
             self.speed = True
+        elif opt in ("-c", "--checkDirOnly"):
+            self.checkDirOnly = True
         else:
             assert False, "unhandled option"
 
@@ -283,6 +288,19 @@ class Tester:
         if fnmatch.fnmatch(fname_unlink, 'debugLibPart*'):
           os.unlink(fname_unlink);
     
+    if (self.checkDirOnly) :
+        print "Checking already solved solutions"
+        if (testDirSet == False) :
+            print "When checking, you must give test dir"
+            exit()
+        dirList=os.listdir(self.testDir)
+        for fname in dirList:
+          if fnmatch.fnmatch(fname, '*.cnf.gz'):
+            for i in range(num):
+              self.check(self.testDir + fname, i, False, False)
+        exit()
+      
+
     if (fname == None) :
       if (testDirSet == False) :
         dirList=os.listdir(self.testDirNewVar)
