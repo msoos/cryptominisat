@@ -617,6 +617,7 @@ int main(int argc, char** argv)
     }
     argc = j;
     if (!debugLib) S.libraryUsage = false;
+    S.verbosity = 1;
     
     if (S.verbosity >= 1)
         printf("c This is CryptoMiniSat\n");

@@ -12,7 +12,7 @@ ENDIF()
 PROJECT(crypto)
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -Wall -DSTATS_NEEDED -g -march=core2")
 SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -DSTATS_NEEDED -O0 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -march=native -fomit-frame-pointer")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -fno-exceptions -DNDEBUG -mtune=native -fomit-frame-pointer")
 SET(CMAKE_EXE_LINKER_FLAGS "-static")
 
 find_package( ZLIB )

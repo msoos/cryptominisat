@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #endif //_MSC_VER
 
-#define DEBUG_XORFIND
+//#define DEBUG_XORFIND
 //#define DEBUG_XORFIND2
 
 #include "Clause.h"
