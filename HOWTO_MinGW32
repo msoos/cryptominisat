@@ -66,7 +66,7 @@ i586-mingw32msvc-g++ -O3 -g0 -march=i586 -DCROSS_COMPILE  \
     PackedRow.cpp RestartTypeChooser.cpp \
     VarReplacer.cpp XorFinder.cpp SmallPtr.cpp Clause.cpp PartHandler.cpp \
     Subsumer.cpp XorSubsumer.cpp FailedVarSearcher.cpp PartFinder.cpp \
-    -o minisat.exe
+    -o cryptominisat.exe
 
 x86_64-w64-mingw32-g++ -O3 -g0 -march=core2 -DCROSS_COMPILE  \
     -I../mtl/ -I../MTRand/ Main.C /usr/x86_64-w64-mingw32/lib/libz.a \
@@ -74,7 +74,7 @@ x86_64-w64-mingw32-g++ -O3 -g0 -march=core2 -DCROSS_COMPILE  \
     PackedRow.cpp RestartTypeChooser.cpp \
     VarReplacer.cpp XorFinder.cpp SmallPtr.cpp Clause.cpp PartHandler.cpp \
     Subsumer.cpp XorSubsumer.cpp FailedVarSearcher.cpp PartFinder.cpp \
-    -o minisat.exe
+    -o cryptominisat.exe
 
 
 *****************************
