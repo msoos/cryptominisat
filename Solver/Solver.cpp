@@ -1021,10 +1021,6 @@ Clause* Solver::propagate(const bool update)
 
     while (qhead < trail.size()) {
         
-        Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
-        vec<Watched>&  ws  = watches[p.toInt()];
-        Watched        *i, *j, *end;
-        
         //First propagate binary clauses
         while (qheadBin < trail.size()) {
             Lit p   = trail[qheadBin++];
@@ -1042,6 +1038,10 @@ Clause* Solver::propagate(const bool update)
         }
         if (confl != NULL)
             goto EndPropagate;
+        
+        Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
+        vec<Watched>&  ws  = watches[p.toInt()];
+        Watched        *i, *j, *end;
         
         //Next, propagate normal clauses
         
