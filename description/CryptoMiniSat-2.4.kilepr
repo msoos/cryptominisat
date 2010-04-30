@@ -16,7 +16,7 @@ src_extensions=.tex .ltx .latex .dtx .ins
 MakeIndex=
 QuickBuild=
 
-[item:CryptoMiniSat-2.4.0.kilepr]
+[item:CryptoMiniSat-2.4.kilepr]
 archive=true
 column=7667713
 encoding=
@@ -26,7 +26,7 @@ mode=
 open=false
 order=-1
 
-[item:CryptoMiniSat-2.4.0.tex]
+[item:CryptoMiniSat-2.4.tex]
 archive=true
 column=728
 encoding=UTF-8
