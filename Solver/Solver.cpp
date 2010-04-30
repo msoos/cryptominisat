@@ -1026,7 +1026,7 @@ Clause* Solver::propagate(const bool update)
             Lit p   = trail[qheadBin++];
             vec<WatchedBin> & wbin = binwatches[p.toInt()];
             num_props++;
-            for(WatchedBin *k = wbin.getData(), *end = k + wbin.size(); k != end; k++) {
+            for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
                 lbool val = value(k->impliedLit);
                 if (val.isUndef()) {
                     uncheckedEnqueue(k->impliedLit, k->clause);
@@ -1049,7 +1049,7 @@ Clause* Solver::propagate(const bool update)
         cout << "Propagating lit " << (p.sign() ? '-' : ' ') << p.var()+1 << endl;
         #endif
 
-        for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
+        for (i = j = ws.getData(), end = ws.getDataEnd();  i != end;) {
             if (i+1 != end)
                 __builtin_prefetch((i+1)->clause, 1, 0);
             
@@ -1076,7 +1076,7 @@ Clause* Solver::propagate(const bool update)
                 j++;
             } else {
                 // Look for new watch:
-                for (Lit *k = &c[2], *end2 = c.getData()+c.size(); k != end2; k++) {
+                for (Lit *k = &c[2], *end2 = c.getDataEnd(); k != end2; k++) {
                     if (value(*k) != l_False) {
                         c[1] = *k;
                         *k = false_lit;
@@ -1101,7 +1101,7 @@ Clause* Solver::propagate(const bool update)
                     if (update && c.learnt() && c.activity() > 2) { // GA
                         MYFLAG++;
                         int nbLevels =0;
-                        for(Lit *l = c.getData(), *end2 = l+c.size(); l != end2; l++) {
+                        for(Lit *l = c.getData(), *end2 = c.getDataEnd(); l != end2; l++) {
                             int lev = level[l->var()];
                             if (permDiff[lev] != MYFLAG) {
                                 permDiff[lev] = MYFLAG;
