@@ -1,3 +1,8 @@
+ver 2.4.1 -- 30/04/2009
+Serious bug fixed that read data from change memory in subsume0, and
+hyper-binary resolution has been disabled, since it caused satisfiable
+instances to become unsatisfiable.
+
 ver 2.4.0 -- 26/04/2009
 The first real release of CryptoMiniSat v2. It contains the following set
 of improvements:
