@@ -17,7 +17,6 @@ class Tester:
   testDirNewVar = "../tests/newVar/"
   cryptominisat = "../build/cryptominisat"
   speed = False
-  pre = False
   
   def __init__(self):
     self.greedyUnbound = False
@@ -29,8 +28,6 @@ class Tester:
     self.testDirNewVar = "../tests/newVar/"
     self.cryptominisat = "../build/cryptominisat"
     self.speed = False
-    self.pre = False
-
 
   def execute(self, fname, i, of, newVar):
     if (os.path.isfile(of)) : os.unlink(of)
@@ -38,19 +35,16 @@ class Tester:
             print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
             exit()
 
-    if (self.pre == True) :
-        command = "../build/cryptominisat_ext.sh -d ../build/ -v 0 \"%s\"" %(fname)
-    else :
-        command = "%s -randomize=%d -debugLib "%(self.cryptominisat, i)
-        if (newVar) :
-            command += "-debugNewVar "
-        if (self.greedyUnbound) :
-            command += "-greedyUnbound "
-        command += "-gaussuntil=%d \"%s\" %s"%(self.gaussUntil, fname, of)
+    command = "%s -randomize=%d -debugLib "%(self.cryptominisat, i)
+    if (newVar) :
+        command += "-debugNewVar "
+    if (self.greedyUnbound) :
+        command += "-greedyUnbound "
+    command += "-gaussuntil=%d -verbosity=0 \"%s\" %s"%(self.gaussUntil, fname, of)
     print "Executing: %s" %(command)
     consoleOutput =  commands.getoutput(command)
     
-    if (self.pre == False and os.path.isfile(of) != True) :
+    if (os.path.isfile(of) != True) :
        print "OOops, output was not produced by CryptoMiniSat! Error!"
        print "Error log:"
        print consoleOutput
@@ -212,7 +206,7 @@ class Tester:
     self.parse_consoleOutput(consoleOutput)
     print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" %(fname[:20]+"....cnf.gz", i, self.sumProp, self.sumTime)
     
-    if (self.speed == True or self.pre == True) :
+    if (self.speed == True) :
         return
 
     largestPart = -1
@@ -246,13 +240,12 @@ class Tester:
     print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
     print "--testdir (-t)     The directory where the files to test are. Default: \"../tests/\""
     print "--exe     (-e)     Where the cryptominisat executable is located. Default: \"../build/cryptominisat\""
-    print "--pre     (-p)     Do pre-simplification. The problems cannot contain xor-clauses"
     print "--speed   (-s)     Only solve, don't verify the result"
     print "--help    (-h)     Print this help screen"
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "pshuvg:n:f:t:e:", ["help", "file=", "num=", "unbound", "gauss=", "testdir=", "exe=", "speed", "pre"])
+      opts, args = getopt.getopt(sys.argv[1:], "pshuvg:n:f:t:e:", ["help", "file=", "num=", "unbound", "gauss=", "testdir=", "exe=", "speed"])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
@@ -282,8 +275,6 @@ class Tester:
             self.cryptominisat = arg
         elif opt in ("-s", "--speed"):
             self.speed = True
-        elif opt in ("-p", "--pre"):
-            self.pre = True
         else:
             assert False, "unhandled option"
 
