@@ -461,7 +461,7 @@ int main(int argc, char** argv)
     const char* value;
     int j = 0;
     unsigned long max_nr_of_solutions = 1;
-    unsigned long current_nr_of_solutions = 0;
+    unsigned long current_nr_of_solutions = 1;
 
     for (int i = 0; i < argc; i++) {
         if ((value = hasPrefix(argv[i], "-polarity-mode="))) {
@@ -677,46 +677,28 @@ int main(int argc, char** argv)
         printf("c |  Parsing time:         %-12.2f s                                       |\n", parse_time);
 
     lbool ret;
-    vec<Lit> lits;
-    // uint32_t number_of_true_variables;
 
     while(1)
     {
         ret = S.solve();
-
         if ( ret != l_True ) break;
 
-        current_nr_of_solutions++;
+        std::cout << "c " << std::setw(8) << current_nr_of_solutions++ << "solution(s) found" << std::endl;
 
-        printf("c %d solution(s) found\n", current_nr_of_solutions);
-
-        // number_of_true_variables = 0;
-
-        printf("v ");
-        for (Var var = 0; var != S.nVars(); var++)
-            if (S.model[var] != l_Undef)
-                // if ( S.model[var] == l_True )
-                    {
-                    printf("%s%d ", (S.model[var]==l_True)?"":"-", var+1);
-                    // number_of_true_variables++;
-                    }
-        printf("0\n");
-
-        // printf("c number_of_true_variables = %d\n", number_of_true_variables);
-
-        if(current_nr_of_solutions >= max_nr_of_solutions) break;
-
+        if (current_nr_of_solutions > max_nr_of_solutions) break;
         printf("c Prepare for next run...\n");
 
-        lits.clear();
-
-        for (Var var = 0; var != S.nVars(); var++)
-        {
-            if (S.model[var] != l_Undef)
-                lits.push( Lit(var, (S.model[var] == l_True)? false : true) );
+        vec<Lit> lits;
+        if (printResult) printf("v ");
+        for (Var var = 0; var != S.nVars(); var++) {
+            if (S.model[var] != l_Undef) {
+                lits.push( Lit(var, (S.model[var] == l_True)? true : false) );
+                if (printResult) printf("%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
+            }
         }
+        if (printResult) printf("\n");
 
-        S.addClause(lits, 0, "");
+        S.addClause(lits);
     }
 
     printStats(S);
