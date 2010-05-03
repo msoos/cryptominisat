@@ -427,6 +427,7 @@ void printUsage(char** argv)
     printf("  -maxDumpLearntS = [0 - 2^32-1] When dumping the learnts to file, what should be\n");
     printf("                    maximum length of the clause dumped. Useful to make the\n");
     printf("                    resulting file smaller. Default is 2^32-1 (i.e. all lenghts)\n");
+    printf("  -maxsolutions   = Search for given amount of solutions\n");
     printf("  -nofailedvar    = Don't search for failed vars, and don't search for vars\n");
     printf("                    doubly propagated to the same value\n");
     printf("  -noheuleprocess = Don't try to minimise XORs by XOR-ing them together.\n");
@@ -459,6 +460,9 @@ int main(int argc, char** argv)
 
     const char* value;
     int j = 0;
+    unsigned long max_nr_of_solutions = 1;
+    unsigned long current_nr_of_solutions = 0;
+
     for (int i = 0; i < argc; i++) {
         if ((value = hasPrefix(argv[i], "-polarity-mode="))) {
             if (strcmp(value, "true") == 0)
@@ -554,6 +558,13 @@ int main(int argc, char** argv)
                 exit(0);
             }
             maxLearntsSize = (uint32_t)tmp;
+        } else if ((value = hasPrefix(argv[i], "-maxsolutions="))) {
+            int tmp;
+            if (sscanf(value, "%d", &tmp) < 0 || tmp < 0) {
+                cout << "ERROR! wrong maximum number of solutions is illegal: " << tmp << endl;
+                exit(0);
+            }
+            max_nr_of_solutions = (uint32_t)tmp;
         } else if ((value = hasPrefix(argv[i], "-greedyUnbound"))) {
             S.greedyUnbound = true;
         } else if ((value = hasPrefix(argv[i], "-nonormxorfind"))) {
@@ -665,7 +676,49 @@ int main(int argc, char** argv)
     if (S.verbosity >= 1)
         printf("c |  Parsing time:         %-12.2f s                                       |\n", parse_time);
 
-    lbool ret = S.solve();
+    lbool ret;
+    vec<Lit> lits;
+    // uint32_t number_of_true_variables;
+
+    while(1)
+    {
+        ret = S.solve();
+
+        if ( ret != l_True ) break;
+
+        current_nr_of_solutions++;
+
+        printf("c %d solution(s) found\n", current_nr_of_solutions);
+
+        // number_of_true_variables = 0;
+
+        printf("v ");
+        for (Var var = 0; var != S.nVars(); var++)
+            if (S.model[var] != l_Undef)
+                // if ( S.model[var] == l_True )
+                    {
+                    printf("%s%d ", (S.model[var]==l_True)?"":"-", var+1);
+                    // number_of_true_variables++;
+                    }
+        printf("0\n");
+
+        // printf("c number_of_true_variables = %d\n", number_of_true_variables);
+
+        if(current_nr_of_solutions >= max_nr_of_solutions) break;
+
+        printf("c Prepare for next run...\n");
+
+        lits.clear();
+
+        for (Var var = 0; var != S.nVars(); var++)
+        {
+            if (S.model[var] != l_Undef)
+                lits.push( Lit(var, (S.model[var] == l_True)? false : true) );
+        }
+
+        S.addClause(lits, 0, "");
+    }
+
     printStats(S);
     printf("c \n");
     if (dumpLearnts) {
