@@ -349,7 +349,7 @@ void printStats(Solver& solver)
     printStatsLine("c learnts size 1", solver.get_unitary_learnts_num());
     printStatsLine("c OTF clause improved", solver.improvedClauseNo);
     printStatsLine("c OTF impr. size diff", solver.improvedClauseSize, (double)solver.improvedClauseSize/(double)solver.improvedClauseNo, " lits/clause");
-    
+
     printStatsLine("c conflicts", solver.conflicts, (double)solver.conflicts/cpu_time, "/ sec");
     printStatsLine("c decisions", solver.decisions, (double)solver.rnd_decisions*100.0/(double)solver.decisions, "% random");
     printStatsLine("c propagations", solver.propagations, (double)solver.propagations/cpu_time, "/ sec");
@@ -628,7 +628,7 @@ int main(int argc, char** argv)
     }
     argc = j;
     if (!debugLib) S.libraryUsage = false;
-    
+
     if (S.verbosity >= 1)
         printf("c This is CryptoMiniSat\n");
 #if defined(__linux__)
@@ -727,7 +727,7 @@ int main(int argc, char** argv)
     }
     if (ret == l_Undef)
         printf("c Not finished running -- maximum restart reached\n");
-    
+
     FILE* res = NULL;
     if (argc >= 3) {
         res = fopen(argv[2], "wb");
@@ -737,7 +737,7 @@ int main(int argc, char** argv)
             exit(1);
         }
     }
-    
+
     if (res != NULL) {
         if (ret == l_True) {
             printf("c SAT\n");
@@ -761,7 +761,7 @@ int main(int argc, char** argv)
             printf("s SATISFIABLE\n");
         else if (ret == l_False)
             printf("s UNSATISFIABLE\n");
-        
+
         if(ret == l_True && printResult) {
             printf("v ");
             for (Var var = 0; var != S.nVars(); var++)
@@ -779,6 +779,6 @@ int main(int argc, char** argv)
     if (ret == l_False) return 20;
     if (ret == l_Undef) return 15;
     assert(false);
-    
+
     return 0;
 }
