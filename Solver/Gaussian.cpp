@@ -131,8 +131,10 @@ uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origM
 
     uint num_xorclauses  = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        num_xorclauses++;
         XorClause& c = *xorclauses[i];
+        if (c.removed()) continue;
+        num_xorclauses++;
+        
         for (uint i2 = 0; i2 < c.size(); i2++) {
             assert(solver.assigns[c[i2].var()].isUndef());
             var_to_col[c[i2].var()] = unassigned_col - 1;
@@ -213,6 +215,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     uint matrix_row = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
         const XorClause& c = *xorclauses[i];
+        if (c.removed()) continue;
 
         origMat.matrix.getVarsetAt(matrix_row).set(c, var_to_col, origMat.num_cols);
         origMat.matrix.getMatrixAt(matrix_row).set(c, var_to_col, origMat.num_cols);

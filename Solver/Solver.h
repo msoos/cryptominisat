@@ -223,6 +223,7 @@ protected:
     vec<Clause*>        binaryClauses;    // Binary clauses are regularly moved here
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
+    vec<XorClause*>     freeLater;        // xor clauses that need to be freed later due to Gauss
     vec<uint32_t>       activity;         // A heuristic measurement of the activity of a variable.
     uint32_t            var_inc;          // Amount to bump next variable with.
     double              cla_inc;          // Amount to bump learnt clause oldActivity with

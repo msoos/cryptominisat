@@ -61,6 +61,7 @@ protected:
     uint32_t invertedXor:1;
     uint32_t isXorClause:1;
     uint32_t subsume0Done:1;
+    uint32_t isRemoved:1;
     uint32_t mySize:20;
     
     union  {int32_t act; uint32_t abst;} extra;
@@ -270,6 +271,7 @@ protected:
     {
         invertedXor = inverted;
         isXorClause = true;
+        isRemoved = false;
         calcXorAbstraction();
     }
 
@@ -297,6 +299,14 @@ public:
     void print() {
         printf("XOR Clause   group: %d, size: %d, learnt:%d, lits:\"", getGroup(), size(), learnt());
         plainPrint();
+    }
+
+    void setRemoved() {
+        isRemoved = true;
+    }
+
+    const bool removed() const {
+        return isRemoved;
     }
     
     void plainPrint(FILE* to = stdout) const {

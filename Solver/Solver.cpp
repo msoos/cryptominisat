@@ -146,6 +146,8 @@ Solver::~Solver()
     #ifdef USE_GAUSS
     clearGaussMatrixes();
     #endif
+    for (uint32_t i = 0; i != freeLater.size(); i++) free(freeLater[i]);
+    
     delete varReplacer;
     delete conglomerate;
     delete clauseCleaner;
