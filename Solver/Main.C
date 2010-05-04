@@ -351,13 +351,15 @@ void printStats(Solver& solver)
     printStatsLine("c OTF impr. size diff", solver.improvedClauseSize, (double)solver.improvedClauseSize/(double)solver.improvedClauseNo, " lits/clause");
 
     #ifdef USE_GAUSS
-    std::cout << "c " << std::endl;
-    printStatsLine("c gauss unit truths ", solver.get_sum_gauss_unit_truths());
-    printStatsLine("c gauss called", solver.get_sum_gauss_called());
-    printStatsLine("c gauss conflicts ", solver.get_sum_gauss_confl(), (double)solver.get_sum_gauss_confl() / (double)solver.get_sum_gauss_called() * 100.0, " %");
-    printStatsLine("c gauss propagations ", solver.get_sum_gauss_prop(), (double)solver.get_sum_gauss_prop() / (double)solver.get_sum_gauss_called() * 100.0, " %");
-    printStatsLine("c gauss useful", ((double)solver.get_sum_gauss_prop() + (double)solver.get_sum_gauss_confl())/ (double)solver.get_sum_gauss_called() * 100.0, " %");
-    std::cout << "c " << std::endl;
+    if (solver.gaussconfig.decision_until > 0) {
+        std::cout << "c " << std::endl;
+        printStatsLine("c gauss unit truths ", solver.get_sum_gauss_unit_truths());
+        printStatsLine("c gauss called", solver.get_sum_gauss_called());
+        printStatsLine("c gauss conflicts ", solver.get_sum_gauss_confl(), (double)solver.get_sum_gauss_confl() / (double)solver.get_sum_gauss_called() * 100.0, " %");
+        printStatsLine("c gauss propagations ", solver.get_sum_gauss_prop(), (double)solver.get_sum_gauss_prop() / (double)solver.get_sum_gauss_called() * 100.0, " %");
+        printStatsLine("c gauss useful", ((double)solver.get_sum_gauss_prop() + (double)solver.get_sum_gauss_confl())/ (double)solver.get_sum_gauss_called() * 100.0, " %");
+        std::cout << "c " << std::endl;
+    }
     #endif
 
     printStatsLine("c conflicts", solver.conflicts, (double)solver.conflicts/cpu_time, "/ sec");
