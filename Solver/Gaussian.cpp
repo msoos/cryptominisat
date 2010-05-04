@@ -1050,31 +1050,6 @@ const void Gaussian::check_first_one_in_row(matrixset& m, const uint j)
     }
 }
 
-const uint Gaussian::get_called() const
-{
-    return called;
-}
-
-const uint Gaussian::get_useful_prop() const
-{
-    return useful_prop;
-}
-
-const uint Gaussian::get_useful_confl() const
-{
-    return useful_confl;
-}
-
-const bool Gaussian::get_disabled() const
-{
-    return disabled;
-}
-
-void Gaussian::set_disabled(const bool toset)
-{
-    disabled = toset;
-}
-
 //old functions
 
 /*void Gaussian::update_matrix_by_row(matrixset& m) const

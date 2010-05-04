@@ -202,6 +202,31 @@ inline void Gaussian::canceling(const uint sublevel)
     }
 }
 
+inline const uint Gaussian::get_called() const
+{
+    return called;
+}
+
+inline const uint Gaussian::get_useful_prop() const
+{
+    return useful_prop;
+}
+
+inline const uint Gaussian::get_useful_confl() const
+{
+    return useful_confl;
+}
+
+inline const bool Gaussian::get_disabled() const
+{
+    return disabled;
+}
+
+inline void Gaussian::set_disabled(const bool toset)
+{
+    disabled = toset;
+}
+
 std::ostream& operator << (std::ostream& os, const vec<Lit>& v);
 
 #endif //GAUSSIAN_H
