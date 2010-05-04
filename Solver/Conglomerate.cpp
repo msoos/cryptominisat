@@ -113,6 +113,21 @@ void Conglomerate::processClause(XorClause& x, uint32_t num, Var remove_var)
     }
 }
 
+const bool Conglomerate::heuleProcessRecursiveFull()
+{
+    if (!heuleProcessFull()) return false;
+
+    while (solver.performReplace && solver.varReplacer->needsReplace()) {
+        if (!solver.varReplacer->performReplace())
+            return false;
+
+        if (!heuleProcessFull())
+            return false;
+    }
+
+    return true;
+}
+
 const bool Conglomerate::heuleProcessFull()
 {
     #ifdef VERBOSE_DEBUG

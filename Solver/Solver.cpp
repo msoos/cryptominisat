@@ -1844,22 +1844,9 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
-    if (heuleProcess && xorclauses.size() > 1) {
-        if (!conglomerate->heuleProcessFull()) {
-            status = l_False;
-            goto end;
-        }
-        
-        while (performReplace && varReplacer->needsReplace()) {
-            if (!varReplacer->performReplace()) {
-                status = l_False;
-                goto end;
-            }
-            if (!conglomerate->heuleProcessFull()) {
-                status = l_False;
-                goto end;
-            }
-        }
+    if (heuleProcess && !conglomerate->heuleProcessRecursiveFull()) {
+        status = l_False;
+        goto end;
     }
     
     if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 6000000 : 2000000))  {
@@ -1971,14 +1958,8 @@ inline void Solver::performStepsBeforeSolve()
     }
         
     if (xorclauses.size() > 1) {
-        if (heuleProcess) {
-            if (!conglomerate->heuleProcessFull()) return;
-            
-            while (performReplace && varReplacer->needsReplace()) {
-                if (!varReplacer->performReplace()) return;
-                if (!conglomerate->heuleProcessFull()) return;
-            }
-        }
+        if (heuleProcess && !conglomerate->heuleProcessRecursiveFull())
+            return;
         
         if (conglomerateXors && !conglomerate->conglomerateXorsFull())
             return;

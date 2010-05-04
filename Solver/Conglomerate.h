@@ -44,7 +44,7 @@ public:
     Conglomerate(Solver& solver);
     ~Conglomerate();
     const bool conglomerateXorsFull();
-    const bool heuleProcessFull();
+    const bool heuleProcessRecursiveFull();
     const bool addRemovedClauses(); ///<Add clauses that have been removed. Used if solve() is called multiple times
     void extendModel(Solver& solver2); ///<Calculate variables removed during conglomeration
     
@@ -56,6 +56,7 @@ public:
     void newVar();
     
 private:
+    const bool heuleProcessFull();
     
     struct ClauseSetSorter {
         bool operator () (const pair<XorClause*, uint32_t>& a, const pair<XorClause*, uint32_t>& b) {
