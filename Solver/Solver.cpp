@@ -131,6 +131,9 @@ Solver::Solver() :
     partHandler = new PartHandler(*this);
     subsumer = new Subsumer(*this);
     restartTypeChooser = new RestartTypeChooser(*this);
+    #ifdef USE_GAUSS
+    matrixFinder = new MatrixFinder(*this);
+    #endif //USE_GAUSS
     
     #ifdef STATS_NEEDED
     logger.setSolver(this);
@@ -145,6 +148,7 @@ Solver::~Solver()
     for (uint32_t i = 0; i != xorclauses.size(); i++) free(xorclauses[i]);
     #ifdef USE_GAUSS
     clearGaussMatrixes();
+    delete matrixFinder;
     #endif
     for (uint32_t i = 0; i != freeLater.size(); i++) free(freeLater[i]);
     
@@ -1400,17 +1404,17 @@ inline int64_t abs64(int64_t a)
 |    Simplify the clause database according to the current top-level assigment. Currently, the only
 |    thing done here is the removal of satisfied clauses, but more things can be put here.
 |________________________________________________________________________________________________@*/
-lbool Solver::simplify()
+const bool Solver::simplify()
 {
     assert(decisionLevel() == 0);
 
     if (!ok || propagate() != NULL) {
         ok = false;
-        return l_False;
+        return false;
     }
 
     if (simpDB_props > 0) {
-        return l_Undef;
+        return true;
     }
     
     double slowdown = (100000.0/(double)binaryClauses.size());
@@ -1429,34 +1433,39 @@ lbool Solver::simplify()
         (((double)abs64((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown) >
         ((double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup)) {
         lastSearchForBinaryXor = propagations;
+    
         clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
         clauseCleaner->cleanClauses(learnts, ClauseCleaner::learnts);
         clauseCleaner->removeSatisfied(binaryClauses, ClauseCleaner::binaryClauses);
-        if (ok == false)
-            return l_False;
+        if (!ok) return false;
     
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
-        if (xorFinder.doNoPart(2, 2) == false)
-            return l_False;
+        if (!xorFinder.doNoPart(2, 2)) return false;
         
         lastNbBin = nbBin;
         becameBinary = 0;
     }
-
+    
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
-    if (ok == false)
-        return l_False;
-    if (performReplace && varReplacer->performReplace() == false)
-        return l_False;
+    if (!ok) return false;
+    
+    if (performReplace && !varReplacer->performReplace())
+        return false;
 
     // Remove fixed variables from the variable heap:
     order_heap.filter(VarFilter(*this));
 
+    #ifdef USE_GAUSS
+    for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
+        if (!(*gauss)->full_init()) return false;
+    }
+    #endif //USE_GAUSS
+    
     simpDB_assigns = nAssigns();
     simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
 
-    return l_Undef;
+    return true;
 }
 
 
@@ -1488,9 +1497,9 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
         dynStarts++;
     
     #ifdef USE_GAUSS
-    for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++) {
-        ret = (*gauss)->full_init();
-        if (ret != l_Nothing) return ret;
+    for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
+        if (!(*gauss)->full_init())
+            return l_False;
     }
     #endif //USE_GAUSS
 
@@ -1570,7 +1579,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     }
 
     // Simplify the set of problem clauses:
-    if (decisionLevel() == 0 && simplify() == l_False) {
+    if (decisionLevel() == 0 && !simplify()) {
         return l_False;
     }
 
@@ -1743,7 +1752,7 @@ void Solver::print_gauss_sum_stats() const
 }
 #endif //USE_GAUSS
 
-inline void Solver::chooseRestartType(const uint& lastFullRestart)
+const bool Solver::chooseRestartType(const uint& lastFullRestart)
 {
     uint relativeStart = starts - lastFullRestart;
     
@@ -1770,19 +1779,15 @@ inline void Solver::chooseRestartType(const uint& lastFullRestart)
                     printf("c |                            Decided on static restart strategy                         |\n");
                 
                 #ifdef USE_GAUSS
-                if (gaussconfig.decision_until > 0 && xorclauses.size() > 1 && xorclauses.size() < 20000) {
-                    double time = cpuTime();
-                    MatrixFinder m(*this);
-                    const uint numMatrixes = m.findMatrixes();
-                    if (verbosity >=1)
-                        printf("c |  Finding matrixes :    %4.2lf s (found  %5d)                                |\n", cpuTime()-time, numMatrixes);
-                }
+                if (!matrixFinder->findMatrixes()) return false;
                 #endif //USE_GAUSS
             }
             restartType = tmp;
             restartTypeChooser->reset();
         }
     }
+
+    return true;
 }
 
 inline void Solver::setDefaultRestartType()
@@ -1800,6 +1805,9 @@ inline void Solver::setDefaultRestartType()
 
 const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t numProps)
 {
+    #ifdef USE_GAUSS
+    clearGaussMatrixes();
+    #endif //USE_GAUSS
     Heap<VarOrderLt> backup_order_heap(order_heap);
     vector<bool> backup_polarities = polarity;
     RestartType backup_restartType= restartType;
@@ -1889,6 +1897,11 @@ end:
     order_heap.filter(VarFilter(*this));
     polarity = backup_polarities;
     restartType = backup_restartType;
+    
+    #ifdef USE_GAUSS
+    if (ok && !matrixFinder->findMatrixes())
+        status = l_False;
+    #endif //USE_GAUSS
     
     return status;
 }
@@ -2054,7 +2067,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         nof_conflicts = (double)nof_conflicts * restart_inc;
         if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart))
             return l_False;
-        chooseRestartType(lastFullRestart);
+        if (!chooseRestartType(lastFullRestart))
+            return l_False;
         //if (avgBranchDepth.isvalid())
         //    std::cout << "avg branch depth:" << avgBranchDepth.getavg() << std::endl;
     }

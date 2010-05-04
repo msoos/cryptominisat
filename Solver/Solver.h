@@ -280,7 +280,7 @@ protected:
 
     // Main internal methods:
     //
-    lbool    simplify    ();                                                           // Removes already satisfied clauses.
+    const bool simplify    ();                                                           // Removes already satisfied clauses.
     //int      nbPropagated     (int level);
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
@@ -342,7 +342,8 @@ protected:
     PartHandler* partHandler;
     Subsumer* subsumer;
     RestartTypeChooser* restartTypeChooser;
-    void chooseRestartType(const uint& lastFullRestart);
+    MatrixFinder* matrixFinder;
+    const bool chooseRestartType(const uint& lastFullRestart);
     void setDefaultRestartType();
     const bool checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();

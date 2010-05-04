@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Gaussian.h"
 #include "GaussianConfig.h"
 #include "ClauseCleaner.h"
+#include "time_mem.h"
 
 #include <set>
 #include <map>
@@ -66,18 +67,22 @@ inline const bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const Xor
     return (i1 == c1.size());
 }
 
-const uint MatrixFinder::findMatrixes()
+const bool MatrixFinder::findMatrixes()
 {
     table.clear();
     table.resize(solver.nVars(), var_Undef);
     reverseTable.clear();
     matrix_no = 0;
+    double myTime = cpuTime();
     
-    if (solver.xorclauses.size() == 0)
-        return 0;
+    if (solver.xorclauses.size() < MIN_GAUSS_XOR_CLAUSES ||
+        solver.gaussconfig.decision_until <= 0 ||
+        solver.xorclauses.size() > MAX_GAUSS_XOR_CLAUSES
+        )
+        return true;
     
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
-    //TODO check for solver.ok == false
+    if (!solver.ok) return false;
     
     for (XorClause** c = solver.xorclauses.getData(), **end = c + solver.xorclauses.size(); c != end; c++) {
         set<uint> tomerge;
@@ -118,7 +123,16 @@ const uint MatrixFinder::findMatrixes()
     }
     #endif
     
-    return setMatrixes();
+    uint32_t numMatrixes = setMatrixes();
+    
+    if (solver.verbosity >=1)
+        std::cout << "c |  Finding matrixes :    " << cpuTime() - myTime << " s (found  " << numMatrixes << ")                                |" << endl;
+
+    for (vector<Gaussian*>::iterator gauss = solver.gauss_matrixes.begin(), end = solver.gauss_matrixes.end(); gauss != end; gauss++) {
+        if (!(*gauss)->full_init()) return false;
+    }
+
+    return true;
 }
 
 const uint MatrixFinder::setMatrixes()

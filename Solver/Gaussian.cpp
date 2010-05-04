@@ -72,35 +72,34 @@ inline void Gaussian::set_matrixset_to_cur()
         matrix_sets[level] = cur_matrixset;
 }
 
-llbool Gaussian::full_init()
+const bool Gaussian::full_init()
 {
-    if (!should_init()) return l_Nothing;
+    if (!should_init()) return true;
     reset_stats();
     
     bool do_again_gauss = true;
     while (do_again_gauss) {
         do_again_gauss = false;
         solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
-        if (solver.ok == false)
-            return l_False;
+        if (!solver.ok) return false;
         init();
         Clause* confl;
         gaussian_ret g = gaussian(confl);
         switch (g) {
         case unit_conflict:
         case conflict:
-            return l_False;
+            return false;
         case unit_propagation:
         case propagation:
-            do_again_gauss=true;
-            if (solver.propagate() != NULL) return l_False;
+            do_again_gauss = true;
+            if (solver.propagate() != NULL) return false;
             break;
         case nothing:
             break;
         }
     }
 
-    return l_Nothing;
+    return true;
 }
 
 void Gaussian::init()

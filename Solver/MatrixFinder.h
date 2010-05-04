@@ -39,7 +39,7 @@ class MatrixFinder {
     
     public:
         MatrixFinder(Solver& solver);
-        const uint findMatrixes();
+        const bool findMatrixes();
     
     private:
         const uint setMatrixes();

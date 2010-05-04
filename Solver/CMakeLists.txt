@@ -19,11 +19,11 @@ target_link_libraries(cryptominisat
 add_library(cryptominisatlib
     Logger.cpp
     Solver.cpp
-    #Gaussian.cpp
+    Gaussian.cpp
     PackedRow.cpp
     XorFinder.cpp
     Conglomerate.cpp
-    #MatrixFinder.cpp
+    MatrixFinder.cpp
     VarReplacer.cpp
     FindUndef.cpp
     ClauseCleaner.cpp
