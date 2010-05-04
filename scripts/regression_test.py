@@ -54,6 +54,37 @@ class Tester:
         if "propagations" in l:
             self.sumProp += int(l[l.index(":")+1:l.rindex("(")])
 
+
+  def read_found(self, of):
+    f = open(of, "r")
+    text = f.read()
+    mylines = text.splitlines()
+    f.close()
+
+    if (len(mylines) == 0) :
+      print "Error! CryptoMiniSat output is empty!"
+      exit(-1)
+
+    unsat = False
+    if ('UNSAT' in mylines[0]) :
+      unsat = True
+    elif ('SAT' in mylines[0]) :
+      unsat = False
+    else :
+      print "Error! Cannot find if SAT or UNSAT. Maybe didn't finish running?"
+      exit(-1)
+
+    value = {}
+    if (len(mylines) > 1) :
+      vars = mylines[1].split(' ')
+      for var in vars:
+        vvar = int(var)
+        value[abs(vvar)] = ((vvar < 0) == False)
+
+    os.unlink(of)
+    return (unsat, value)
+
+
   def read_found_output(self, output):
     lines = output.splitlines()
 
