@@ -52,6 +52,7 @@ Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint _m
         , useful_prop(0)
         , useful_confl(0)
         , called(0)
+        , unit_truths(0)
 {
 }
 
@@ -76,6 +77,7 @@ const bool Gaussian::full_init()
 {
     if (!should_init()) return true;
     reset_stats();
+    uint32_t last_trail_size = solver.trail.size();
     
     bool do_again_gauss = true;
     while (do_again_gauss) {
@@ -91,6 +93,7 @@ const bool Gaussian::full_init()
             return false;
         case unit_propagation:
         case propagation:
+            unit_truths += last_trail_size - solver.trail.size();;
             do_again_gauss = true;
             if (solver.propagate() != NULL) return false;
             break;
@@ -811,11 +814,13 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
             if (ret != l_Nothing) return ret;
             return l_Continue;
         }
-        case propagation:
         case unit_propagation:
+            unit_truths++;
+        case propagation:
             useful_prop++;
             return l_Continue;
         case unit_conflict: {
+            unit_truths++;
             useful_confl++;
             if (confl->size() == 0) {
                 free(confl);

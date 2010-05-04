@@ -97,6 +97,10 @@ Solver::Solver() :
         , improvedClauseNo(0), improvedClauseSize(0)
         
 
+        , sum_gauss_called (0)
+        , sum_gauss_confl  (0)
+        , sum_gauss_prop   (0)
+        , sum_gauss_unit_truths (0)
         , ok               (true)
         , var_inc          (128)
         , cla_inc          (1)
@@ -1722,7 +1726,7 @@ double Solver::progressEstimate() const
 }
 
 #ifdef USE_GAUSS
-void Solver::print_gauss_sum_stats() const
+void Solver::print_gauss_sum_stats()
 {
     if (gauss_matrixes.size() == 0) {
         printf("  no matrixes found |\n");
@@ -1738,9 +1742,13 @@ void Solver::print_gauss_sum_stats() const
         called += (*gauss)->get_called();
         useful_prop += (*gauss)->get_useful_prop();
         useful_confl += (*gauss)->get_useful_confl();
+        sum_gauss_unit_truths += (*gauss)->get_unit_truths();
         //gauss->print_stats();
         //gauss->print_matrix_stats();
     }
+    sum_gauss_called += called;
+    sum_gauss_confl += useful_confl;
+    sum_gauss_prop += useful_prop;
     
     if (called == 0) {
         printf("      disabled      |\n");
@@ -2294,7 +2302,7 @@ void Solver::printStatHeader() const
     }
 }
 
-void Solver::printRestartStat() const
+void Solver::printRestartStat()
 {
     #ifdef STATS_NEEDED
     if (verbosity >= 2 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
@@ -2310,7 +2318,7 @@ void Solver::printRestartStat() const
     }
 }
 
-void Solver::printEndSearchStat() const
+void Solver::printEndSearchStat()
 {
     #ifdef STATS_NEEDED
     if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {

@@ -174,13 +174,26 @@ public:
     void dumpSortedLearnts(const char* file, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const char* fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
 
+    #ifdef USE_GAUSS
+    const uint32_t get_sum_gauss_called() const;
+    const uint32_t get_sum_gauss_confl() const;
+    const uint32_t get_sum_gauss_prop() const;
+    const uint32_t get_sum_gauss_unit_truths() const;
+    #endif //USE_GAUSS
+    
 protected:
     #ifdef USE_GAUSS
-    void print_gauss_sum_stats() const;
+    void print_gauss_sum_stats();
     void clearGaussMatrixes();
     vector<Gaussian*> gauss_matrixes;
-    #endif //USE_GAUSS
+
+    //stats
+    uint32_t sum_gauss_called;
+    uint32_t sum_gauss_confl;
+    uint32_t sum_gauss_prop;
+    uint32_t sum_gauss_unit_truths;
     friend class Gaussian;
+    #endif //USE_GAUSS
     
     template <class T>
     Clause* addClauseInt(T& ps, uint group);
@@ -358,8 +371,8 @@ protected:
     void     checkSolution();
     void     checkLiteralCount();
     void     printStatHeader  () const;
-    void     printRestartStat () const;
-    void     printEndSearchStat() const;
+    void     printRestartStat ();
+    void     printEndSearchStat();
     double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
     
     // Polarity chooser
@@ -529,6 +542,28 @@ inline void     Solver::setVariableName(Var var, char* name)
 #else
 inline void     Solver::setVariableName(Var var, char* name)
 {}
+#endif
+
+#ifdef USE_GAUSS
+inline const uint32_t Solver::get_sum_gauss_unit_truths() const
+{
+    return sum_gauss_unit_truths;
+}
+
+inline const uint32_t Solver::get_sum_gauss_called() const
+{
+    return sum_gauss_called;
+}
+
+inline const uint32_t Solver::get_sum_gauss_confl() const
+{
+    return sum_gauss_confl;
+}
+
+inline const uint32_t Solver::get_sum_gauss_prop() const
+{
+    return sum_gauss_prop;
+}
 #endif
 
 inline const uint Solver::get_unitary_learnts_num() const

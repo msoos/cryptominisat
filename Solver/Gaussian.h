@@ -62,6 +62,7 @@ public:
     const uint get_useful_prop() const;
     const uint get_useful_confl() const;
     const bool get_disabled() const;
+    const uint32_t get_unit_truths() const;
     void set_disabled(const bool toset);
 
     //functions used throughout the Solver
@@ -114,6 +115,7 @@ protected:
     uint useful_prop; //how many times Gauss gave propagation as a result
     uint useful_confl; //how many times Gauss gave conflict as a result
     uint called; //how many times called the Gauss
+    uint32_t unit_truths; //how many unitary (i.e. decisionLevel 0) truths have been found
 
     //gauss init functions
     void init(); // Initalise gauss state
@@ -200,6 +202,11 @@ inline void Gaussian::canceling(const uint sublevel)
         return;
         }
     }
+}
+
+inline const uint32_t Gaussian::get_unit_truths() const
+{
+    return unit_truths;
 }
 
 inline const uint Gaussian::get_called() const
