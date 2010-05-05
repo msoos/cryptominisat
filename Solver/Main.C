@@ -451,6 +451,9 @@ void printUsage(char** argv)
     printf("  -novarelim      = Don't perform variable elimination as per Een and Biere\n");
     printf("  -nosubsume1     = Don't perform clause contraction through resolution\n");
     printf("  -noparthander   = Don't find and solve subroblems with subsolvers\n");
+    printf("  -nomatrixfind   = Don't find distinct matrixes. Treat all xors as belonging to one matrix\n");
+    printf("  -noiterreduce   = Don't order variables in the columns of Gaussian elimination\n");
+    printf("                    effectively disables iterative reduction of the matrix\n");
     printf("\n");
 }
 
@@ -615,6 +618,10 @@ int main(int argc, char** argv)
             S.doVarElim = false;
         } else if ((value = hasPrefix(argv[i], "-nosubsume1"))) {
             S.doSubsume1 = false;
+        } else if ((value = hasPrefix(argv[i], "-nomatrixfind"))) {
+            S.gaussconfig.noMatrixFind = true;
+        } else if ((value = hasPrefix(argv[i], "-noiterreduce"))) {
+            S.gaussconfig.iterativeReduce = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
             exit(0);

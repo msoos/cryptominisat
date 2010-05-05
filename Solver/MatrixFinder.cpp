@@ -83,6 +83,17 @@ const bool MatrixFinder::findMatrixes()
     
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     if (!solver.ok) return false;
+
+    if (solver.gaussconfig.noMatrixFind) {
+        if (solver.verbosity >=1)
+            cout << "c |  Matrix finding disabled through switch. Putting all xors into matrix." << endl;
+        vector<XorClause*> xorclauses;
+        xorclauses.reserve(solver.xorclauses.size());
+        for (uint32_t i = 0; i < solver.xorclauses.size(); i++)
+            xorclauses.push_back(solver.xorclauses[i]);
+        solver.gauss_matrixes.push_back(new Gaussian(solver, solver.gaussconfig, 0, xorclauses));
+        return true;
+    }
     
     for (XorClause** c = solver.xorclauses.getData(), **end = c + solver.xorclauses.size(); c != end; c++) {
         set<uint> tomerge;

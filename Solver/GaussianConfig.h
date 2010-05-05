@@ -34,6 +34,8 @@ class GaussianConfig
         only_nth_gauss_save(2)
         , decision_until(0)
         , dontDisable(false)
+        , noMatrixFind(false)
+        , iterativeReduce(true)
     {
     }
         
@@ -41,6 +43,8 @@ class GaussianConfig
     uint only_nth_gauss_save;  //save only every n-th gauss matrix
     uint decision_until; //do Gauss until this level
     bool dontDisable; //If activated, gauss elimination is never disabled
+    bool noMatrixFind; //Put all xor-s into one matrix, don't find matrixes
+    bool iterativeReduce; //Order columns according to activity
 };
 
 #endif //GAUSSIANCONFIG_H

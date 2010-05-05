@@ -153,11 +153,21 @@ uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origM
     origMat.var_is_set.resize(var_to_col.size(), 0);
 
     origMat.col_to_var.clear();
-    Heap<Solver::VarOrderLt> order_heap(solver.order_heap);
-    while (!order_heap.empty())
-    {
-        Var v = order_heap.removeMin();
+    vector<Var> vars(solver.nVars());
+    if (!config.iterativeReduce) {
+        for (uint32_t i = 0; i < solver.nVars(); i++) {
+            vars.push_back(i);
+        }
+        std::random_shuffle(vars.begin(), vars.end());
+    }
 
+    Heap<Solver::VarOrderLt> order_heap(solver.order_heap);
+    uint32_t iterReduceIt = 0;
+    while ((config.iterativeReduce && !order_heap.empty()) || (!config.iterativeReduce && iterReduceIt < vars.size()))
+    {
+        Var v;
+        if (config.iterativeReduce) v = order_heap.removeMin();
+        else Var v = vars[iterReduceIt++];
         if (var_to_col[v] == 1) {
             #ifdef DEBUG_GAUSS
             vector<uint>::iterator it =
