@@ -199,12 +199,12 @@ const uint MatrixFinder::setMatrixes()
         variance /= (double)xorSizesInMatrix.size();
         const double stdDeviation = sqrt(variance);
         
-        if (numXorInMatrix[a].second >= 20
-            && numXorInMatrix[a].second <= 1000
+        if (numXorInMatrix[a].second >= solver.gaussconfig.minMatrixRows
+            && numXorInMatrix[a].second <= solver.gaussconfig.maxMatrixRows
             && realMatrixNum < 3)
         {
             if (solver.verbosity >=1)
-                cout << "c |  Matrix no " << std::setw(4) << realMatrixNum;
+                cout << "c |  Matrix no " << std::setw(2) << realMatrixNum;
             solver.gauss_matrixes.push_back(new Gaussian(solver, solver.gaussconfig, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
             
@@ -213,7 +213,7 @@ const uint MatrixFinder::setMatrixes()
                 cout << "c |  Unused Matrix ";
         }
         if (solver.verbosity >=1 /*&& numXorInMatrix[a].second >= 20*/) {
-            cout << std::setw(5) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
+            cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
             cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
             cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
             cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << "  |" << endl;

@@ -36,6 +36,8 @@ class GaussianConfig
         , dontDisable(false)
         , noMatrixFind(false)
         , iterativeReduce(true)
+        , maxMatrixRows(1000)
+        , minMatrixRows(20)
     {
     }
         
@@ -45,6 +47,8 @@ class GaussianConfig
     bool dontDisable; //If activated, gauss elimination is never disabled
     bool noMatrixFind; //Put all xor-s into one matrix, don't find matrixes
     bool iterativeReduce; //Order columns according to activity
+    uint32_t maxMatrixRows; //The maximum matrix size -- no. of rows
+    uint32_t minMatrixRows; //The minimum matrix size -- no. of rows
 };
 
 #endif //GAUSSIANCONFIG_H
