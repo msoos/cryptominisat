@@ -1,3 +1,17 @@
+ver 2.4.2 -- 6/05/2009
+* Gaussian elimination has finally been fixed. It can now be tried out with
+  the command-line switch "--gaussuntil=X", where X is the maximum depth. I
+  usually set 100, but this is probably a wrong default. You should experiment
+  with your own cipher. NOTE: Gauss is still experimental. If it segfaults,
+  please file a bug.
+* The solver can now print out all the solutions to a problem. Simply use the
+  "--maxsolutions=X" option, where X is the maximum number of solutions you
+  need. You may use this option in conjunction with the very experimental
+  "--greedyunbound" which unassigns some variables in such a way that the
+  given solution is still correct, but some variables may not appear in it.
+* Command line switches have been corrected. They are now all lower-case and
+  use the prefix "--" instead of "-"
+
 ver 2.4.1 -- 30/04/2009
 Serious bug fixed that read data from change memory in subsume0, and
 hyper-binary resolution has been disabled, since it caused satisfiable
