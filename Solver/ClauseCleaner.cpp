@@ -189,6 +189,7 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
     }
     c.shrink(i-j);
     
+    assert(c.size() != 1);
     switch (c.size()) {
         case 0: {
             solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
