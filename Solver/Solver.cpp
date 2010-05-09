@@ -1898,7 +1898,7 @@ end:
     restartType = backup_restartType;
     
     #ifdef USE_GAUSS
-    if (ok && !gauss_was_cleared && !matrixFinder->findMatrixes())
+    if (status == l_Undef && !gauss_was_cleared && !matrixFinder->findMatrixes())
         status = l_False;
     #endif //USE_GAUSS
     
