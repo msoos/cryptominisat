@@ -1,4 +1,4 @@
-ver 2.4.2 -- 6/05/2009
+ver 2.4.2 -- 9/05/2009
 * Gaussian elimination has finally been fixed. It can now be tried out with
   the command-line switch "--gaussuntil=X", where X is the maximum depth. I
   usually set 100, but this is probably a wrong default. You should experiment
