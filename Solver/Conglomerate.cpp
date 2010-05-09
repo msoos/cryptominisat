@@ -145,7 +145,6 @@ const bool Conglomerate::heuleProcessFull()
     toRemove.resize(solver.xorclauses.size(), false);
     blocked.clear();
     blocked.resize(solver.nVars(), false);
-    blockVars();
     fillVarToXor();
     if (!heuleProcess())
         goto end;
