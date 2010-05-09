@@ -75,6 +75,8 @@ inline void Gaussian::set_matrixset_to_cur()
 
 const bool Gaussian::full_init()
 {
+    assert(solver.ok);
+    
     if (!should_init()) return true;
     reset_stats();
     uint32_t last_trail_size = solver.trail.size();
@@ -90,12 +92,14 @@ const bool Gaussian::full_init()
         switch (g) {
         case unit_conflict:
         case conflict:
+            solver.ok = false;
             return false;
         case unit_propagation:
         case propagation:
-            unit_truths += last_trail_size - solver.trail.size();;
+            unit_truths += last_trail_size - solver.trail.size();
             do_again_gauss = true;
-            if (solver.propagate() != NULL) return false;
+            solver.ok = (solver.propagate() == NULL);
+            if (!solver.ok) return false;
             break;
         case nothing:
             break;
@@ -563,8 +567,10 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
         solver.logger.set_group_name(confl->getGroup(), "learnt gauss clause");
     #endif
     
-    if (cla.size() <= 1)
+    if (cla.size() <= 1) {
+        solver.ok = false;
         return unit_conflict;
+    }
 
     assert(cla.size() >= 2);
     #ifdef VERBOSE_DEBUG
@@ -778,10 +784,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
     assert(solver.assigns[cla[0].var()].isUndef());
     if (cla.size() == 1) {
-        const Lit lit = cla[0];
-        
         solver.cancelUntil(0);
-        solver.uncheckedEnqueue(lit);
+        solver.uncheckedEnqueue(cla[0]);
         free(&cla);
         return unit_propagation;
     }
