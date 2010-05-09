@@ -13,7 +13,8 @@ cl /favor:INTEL64 /O2 /Fecryptominisat.exe -DDISABLE_ZLIB /F2097152
 ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp
 PackedRow.cpp RestartTypeChooser.cpp VarReplacer.cpp
 XorFinder.cpp XorSubsumer.cpp Subsumer.cpp PartFinder.cpp
-PartHandler.cpp FailedVarSearcher.cpp
+PartHandler.cpp FailedVarSearcher.cpp Gaussian.cpp
+MatrixFinder.cpp
 
 executed from the 'Solver' subdirectory
 

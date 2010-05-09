@@ -63,7 +63,7 @@ x86_64-w64-mingw32-ar qs libz.a adler32.o \
 i586-mingw32msvc-g++ -O3 -g0 -march=i586 -DCROSS_COMPILE  \
     -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a \
     Logger.cpp Solver.cpp  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp \
-    PackedRow.cpp RestartTypeChooser.cpp \
+    PackedRow.cpp RestartTypeChooser.cpp MatrixFinder.cpp Gaussian.cpp \
     VarReplacer.cpp XorFinder.cpp SmallPtr.cpp Clause.cpp PartHandler.cpp \
     Subsumer.cpp XorSubsumer.cpp FailedVarSearcher.cpp PartFinder.cpp \
     -o cryptominisat.exe
