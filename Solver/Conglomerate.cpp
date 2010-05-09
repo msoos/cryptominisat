@@ -145,6 +145,7 @@ const bool Conglomerate::heuleProcessFull()
     toRemove.resize(solver.xorclauses.size(), false);
     blocked.clear();
     blocked.resize(solver.nVars(), false);
+    blockVars();
     fillVarToXor();
     if (!heuleProcess())
         goto end;
@@ -338,8 +339,28 @@ const bool Conglomerate::conglomerateXors()
     return (solver.ok = (solver.propagate() == NULL));
 }
 
-bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const uint old_group)
+bool Conglomerate::dealWithNewClause(vector<Lit>& ps, bool inverted, const uint old_group)
 {
+    std::sort(ps.begin(), ps.end());
+    Lit p;
+    uint32_t i, j;
+    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
+        inverted ^= ps[i].sign();
+        ps[i] ^= ps[i].sign();
+        
+        if (ps[i] == p) {
+            //added, but easily removed
+            j--;
+            p = lit_Undef;
+            if (!solver.assigns[ps[i].var()].isUndef())
+                inverted ^= solver.assigns[ps[i].var()].getBool();
+        } else if (solver.assigns[ps[i].var()].isUndef()) //just add
+            ps[j++] = p = ps[i];
+        else //modify xor_clause_inverted instead of adding
+            inverted ^= (solver.assigns[ps[i].var()].getBool());
+    }
+    ps.resize(ps.size() - (i - j));
+    
     switch(ps.size()) {
         case 0: {
             #ifdef VERBOSE_DEBUG
@@ -357,21 +378,11 @@ bool Conglomerate::dealWithNewClause(vector<Lit>& ps, const bool inverted, const
             cout << "--> xor is 1-long, attempting to set variable " << ps[0].var()+1 << endl;
             #endif
             
-            if (solver.assigns[ps[0].var()] == l_Undef) {
-                assert(solver.decisionLevel() == 0);
-                blocked[ps[0].var()] = true;
-                solver.uncheckedEnqueue(Lit(ps[0].var(), inverted));
-            } else if (solver.assigns[ps[0].var()] != boolToLBool(!inverted)) {
-                #ifdef VERBOSE_DEBUG
-                cout << "Conflict. Aborting.";
-                #endif
-                solver.ok = false;
-                return false;
-            } else {
-                #ifdef VERBOSE_DEBUG
-                cout << "Variable already set to correct value";
-                #endif
-            }
+            assert(solver.decisionLevel() == 0);
+            blocked[ps[0].var()] = true;
+            solver.uncheckedEnqueue(Lit(ps[0].var(), inverted));
+            solver.ok = (solver.propagate() == NULL);
+            if (!solver.ok) return false;
             break;
         }
         

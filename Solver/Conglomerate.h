@@ -76,7 +76,7 @@ private:
     void clearDouble(vector<Lit>& ps) const;
     void clearToRemove();
     void clearLearntsFromToRemove();
-    bool dealWithNewClause(vector<Lit>& ps, const bool inverted, const uint old_group);
+    bool dealWithNewClause(vector<Lit>& ps, bool inverted, const uint old_group);
     
     typedef map<uint, vector<pair<XorClause*, uint32_t> > > varToXorMap;
     varToXorMap varToXor; 
