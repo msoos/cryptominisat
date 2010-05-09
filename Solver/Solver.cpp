@@ -1817,6 +1817,7 @@ inline void Solver::setDefaultRestartType()
 const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t numProps)
 {
     #ifdef USE_GAUSS
+    bool gauss_was_cleared = (gauss_matrixes.size() == 0);
     clearGaussMatrixes();
     #endif //USE_GAUSS
     Heap<VarOrderLt> backup_order_heap(order_heap);
@@ -1897,7 +1898,7 @@ end:
     restartType = backup_restartType;
     
     #ifdef USE_GAUSS
-    if (ok && !matrixFinder->findMatrixes())
+    if (ok && !gauss_was_cleared && !matrixFinder->findMatrixes())
         status = l_False;
     #endif //USE_GAUSS
     
