@@ -2058,6 +2058,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         
         status = search(nof_conflicts, nof_conflicts_fullrestart);
         nof_conflicts = (double)nof_conflicts * restart_inc;
+        if (status != l_Undef) break;
         if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart))
             return l_False;
         if (!chooseRestartType(lastFullRestart))
