@@ -155,15 +155,14 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
         return;
     
     XorClause **s, **ss, **end;
-    for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
+    for (s = ss = cs.getData(), end = s + cs.size();  s != end; s++) {
         if (s+1 != end)
             __builtin_prefetch(*(s+1), 1, 0);
         if (cleanClause(**s)) {
             solver.freeLater.push(*s);
             (*s)->setRemoved();
-            s++;
         } else {
-            *ss++ = *s++;
+            *ss++ = *s;
         }
     }
     cs.shrink(s-ss);
