@@ -564,7 +564,6 @@ int main(int argc, char** argv)
                 printf("ERROR! until %s\n", value);
                 exit(0);
             }
-            cout << "c Gaussian until:" << until << endl;
             S.gaussconfig.decision_until = until;
         } else if ((value = hasPrefix(argv[i], "--restarts="))) {
             uint maxrest;
@@ -645,7 +644,6 @@ int main(int argc, char** argv)
                 printf("ERROR! maxmatrixrows: %s\n", value);
                 exit(0);
             }
-            cout << "c Max matrix rows:" << rows << endl;
             S.gaussconfig.maxMatrixRows = rows;
         } else if ((value = hasPrefix(argv[i], "--minmatrixrows"))) {
             uint32_t rows;
@@ -653,7 +651,6 @@ int main(int argc, char** argv)
                 printf("ERROR! minmatrixrows: %s\n", value);
                 exit(0);
             }
-            cout << "c Min matrix rows:" << rows << endl;
             S.gaussconfig.minMatrixRows = rows;
         } else if ((value = hasPrefix(argv[i], "--savematrix"))) {
             uint32_t every;
@@ -756,7 +753,7 @@ int main(int argc, char** argv)
             }
         }
         if (printResult) printf("\n");
-
+        
         S.addClause(lits);
     }
 

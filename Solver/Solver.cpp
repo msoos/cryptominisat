@@ -1729,7 +1729,7 @@ double Solver::progressEstimate() const
 #ifdef USE_GAUSS
 void Solver::print_gauss_sum_stats()
 {
-    if (gauss_matrixes.size() == 0) {
+    if (gauss_matrixes.size() == 0 && verbosity >= 2) {
         printf("  no matrixes found |\n");
         return;
     }
@@ -1751,12 +1751,14 @@ void Solver::print_gauss_sum_stats()
     sum_gauss_confl += useful_confl;
     sum_gauss_prop += useful_prop;
     
-    if (called == 0) {
-        printf("      disabled      |\n");
-    } else {
-        printf(" %3.0lf%% |", (double)useful_prop/(double)called*100.0);
-        printf(" %3.0lf%% |", (double)useful_confl/(double)called*100.0);
-        printf(" %3.0lf%% |\n", 100.0-(double)disabled/(double)gauss_matrixes.size()*100.0);
+    if (verbosity >= 2) {
+        if (called == 0) {
+            printf("      disabled      |\n");
+        } else {
+            printf(" %3.0lf%% |", (double)useful_prop/(double)called*100.0);
+            printf(" %3.0lf%% |", (double)useful_confl/(double)called*100.0);
+            printf(" %3.0lf%% |\n", 100.0-(double)disabled/(double)gauss_matrixes.size()*100.0);
+        }
     }
 }
 #endif //USE_GAUSS
@@ -2286,18 +2288,17 @@ void Solver::printStatHeader() const
 
 void Solver::printRestartStat()
 {
-    #ifdef STATS_NEEDED
-    if (verbosity >= 2 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
-    #else
     if (verbosity >= 2) {
-    #endif
         printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses(), (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSubsumer), (int)nLearnts(), (double)learnts_literals/nLearnts());
-        #ifdef USE_GAUSS
-        print_gauss_sum_stats();
-        #else //USE_GAUSS
-        printf("                    |\n");
-        #endif //USE_GAUSS
     }
+    
+    #ifdef USE_GAUSS
+    print_gauss_sum_stats();
+    #else //USE_GAUSS
+    if (verbosity >= 2) {
+        printf("                    |\n");
+    }
+    #endif //USE_GAUSS
 }
 
 void Solver::printEndSearchStat()
