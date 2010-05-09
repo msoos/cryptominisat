@@ -1208,7 +1208,15 @@ bool Subsumer::maybeEliminate(const Var x)
             dummy.clear();
             bool ok = merge(*ps[i].clause, *ns[j].clause, Lit(x, false), Lit(x, true), dummy);
             if (ok){
-                Clause* cl = solver.addClauseInt(dummy, 0);
+                uint32_t group_num = 0;
+                #ifdef STATS_NEEDED
+                group_num = solver.learnt_clause_group++;
+                if (solver.dynamic_behaviour_analysis) {
+                    string name = solver.logger.get_group_name(ps[i].clause->getGroup()) + " " + solver.logger.get_group_name(ns[j].clause->getGroup());
+                    solver.logger.set_group_name(group_num, name);
+                }
+                #endif
+                Clause* cl = solver.addClauseInt(dummy, group_num);
                 if (cl != NULL) {
                     ClauseSimp c = linkInClause(*cl);
                     subsume0(*cl);

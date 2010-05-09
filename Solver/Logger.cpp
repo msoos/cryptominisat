@@ -123,18 +123,28 @@ void Logger::set_group_name(const uint group, char* name_tmp)
     string name;
     if (name_tmp == NULL) return;
     else name = name_tmp;
-    
+
+    set_group_name(group, name);
+}
+
+void Logger::set_group_name(const uint group, string& name)
+{
     new_group(group);
     cut_name_to_size(name);
-    
+
     if (name == "Noname") return;
-    
+
     if (groupnames[group] == "Noname") {
         groupnames[group] = name;
     } else if (groupnames[group] != name) {
         std::cout << "Error! Group no. " <<  group << "has been named twice. First, as '" << groupnames[group] << "', then second as '" <<  name << "'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line" << std::endl;
         exit(-1);
     }
+}
+
+string Logger::get_group_name(const uint group) const
+{
+    return groupnames[group];
 }
 
 // sets the variable's name

@@ -256,7 +256,8 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32
             #ifdef VERBOSE_DEBUG
             cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xor_clause_inverted ? "-" : "") << ps[1].var()+1 << endl;
             #endif
-            
+
+            learnt_clause_group = std::max(group+1, learnt_clause_group);
             varReplacer->replace(ps, xor_clause_inverted, group);
             return NULL;
         }

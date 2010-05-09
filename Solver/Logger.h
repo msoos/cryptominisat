@@ -78,6 +78,8 @@ public:
 
     //function to name clause groups
     void set_group_name(const uint group, char* name_tmp);
+    void set_group_name(const uint group, string& name);
+    string get_group_name(const uint group) const;
 
     void begin();
     void end(const finish_type finish);

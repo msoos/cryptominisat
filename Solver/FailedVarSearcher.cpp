@@ -265,7 +265,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
                                     vec<Lit> ps(2);
                                     ps[0] = Lit(tmp.var[0], false);
                                     ps[1] = Lit(tmp.var[1], false);
-                                    if (!solver.varReplacer->replace(ps, tmp.inverted, 0))
+                                    if (!solver.varReplacer->replace(ps, tmp.inverted, solver.xorclauses[*it]->getGroup()))
                                         goto end;
                                 }
                             }
