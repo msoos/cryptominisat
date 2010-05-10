@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef FAILEDVARSEARCHER_H
 #define FAILEDVARSEARCHER_H
 
+#include <set>
+
 #include "SolverTypes.h"
 #include "Clause.h"
 #include "BitArray.h"
@@ -57,23 +59,48 @@ class FailedVarSearcher {
         const bool search(uint64_t numProps);
         
     private:
+        //For 2-long xor
         const TwoLongXor getTwoLongXor(const XorClause& c);
         void addFromSolver(const vec<XorClause*>& cs);
         
+        //For detach&re-attach (when lots of vars found)
         template<class T>
         void cleanAndAttachClauses(vec<T*>& cs);
         const bool cleanClause(Clause& ps);
         const bool cleanClause(XorClause& ps);
         
+        const bool tryBoth(const Lit lit1, const Lit lit2);
+        const bool tryAll(const Lit* begin, const Lit* end);
+        
         Solver& solver;
         
+        //For failure
+        bool failed;
+        
+        //bothprop finding
+        BitArray propagated;
+        BitArray propValue;
+        vector<std::pair<Var, bool> > bothSame;
+        
+        //2-long xor-finding
         vec<uint32_t> xorClauseSizes;
         vector<vector<uint32_t> > occur;
         void removeVarFromXors(const Var var);
         void addVarFromXors(const Var var);
         BitArray xorClauseTouched;
         vec<uint32_t> investigateXor;
+        std::set<TwoLongXor> twoLongXors;
+        bool binXorFind;
+        uint32_t lastTrailSize;
         
+        //State for this run
+        uint32_t toReplaceBefore;
+        uint32_t origTrailSize;
+        uint64_t origProps;
+        uint32_t numFailed;
+        uint32_t goodBothSame;
+        
+        //State between runs
         bool finishedLastTime;
         uint32_t lastTimeWentUntil;
         double numPropsMultiplier;

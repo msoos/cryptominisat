@@ -132,38 +132,33 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     
     //General Stats
     double time = cpuTime();
-    uint32_t numFailed = 0;
-    uint32_t goodBothSame = 0;
+    numFailed = 0;
+    goodBothSame = 0;
     uint32_t from;
     if (finishedLastTime || lastTimeWentUntil >= solver.nVars())
         from = 0;
     else
         from = lastTimeWentUntil;
-    uint64_t origProps = solver.propagations;
+    origProps = solver.propagations;
     
     //If failed var searching is going good, do successively more and more of it
     if (lastTimeFoundTruths > 500 || (double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.03) std::max(numPropsMultiplier*1.7, 5.0);
     else numPropsMultiplier = 1.0;
     numProps = (uint64_t) ((double)numProps * numPropsMultiplier);
     
-    //For failure
-    bool failed;
-    
     //For BothSame
-    BitArray propagated;
     propagated.resize(solver.nVars(), 0);
-    BitArray propValue;
     propValue.resize(solver.nVars(), 0);
-    vector<pair<Var, bool> > bothSame;
+    bothSame.clear();
     
     //For calculating how many variables have really been set
-    uint32_t origTrailSize = solver.trail.size();
+    origTrailSize = solver.trail.size();
     
     //For 2-long xor (rule 6 of  Equivalent literal propagation in the DLL procedure by Chu-Min Li)
-    set<TwoLongXor> twoLongXors;
-    uint32_t toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
-    uint32_t lastTrailSize = solver.trail.size();
-    bool binXorFind = true;
+    toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
+    lastTrailSize = solver.trail.size();
+    binXorFind = true;
+    twoLongXors.clear();
     if (solver.xorclauses.size() < 5 ||
         solver.xorclauses.size() > 30000 ||
         solver.order_heap.size() > 30000 ||
@@ -184,113 +179,54 @@ const bool FailedVarSearcher::search(uint64_t numProps)
                 lastTimeWentUntil = var;
                 break;
             }
-            
-            if (binXorFind) {
-                if (lastTrailSize < solver.trail.size()) {
-                    for (uint32_t i = lastTrailSize; i != solver.trail.size(); i++) {
-                        removeVarFromXors(solver.trail[i].var());
-                    }
-                }
-                lastTrailSize = solver.trail.size();
-                xorClauseTouched.setZero();
-                investigateXor.clear();
-            }
-            
-            propagated.setZero();
-            twoLongXors.clear();
-            
-            solver.newDecisionLevel();
-            solver.uncheckedEnqueue(Lit(var, false));
-            failed = (solver.propagate(false) != NULL);
-            if (failed) {
-                solver.cancelUntil(0);
-                numFailed++;
-                solver.uncheckedEnqueue(Lit(var, true));
-                solver.ok = (solver.propagate(false) == NULL);
-                if (!solver.ok) goto end;
-                continue;
-            } else {
-                assert(solver.decisionLevel() > 0);
-                for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-                    Var x = solver.trail[c].var();
-                    propagated.setBit(x);
-                    if (solver.assigns[x].getBool())
-                        propValue.setBit(x);
-                    else
-                        propValue.clearBit(x);
-                    
-                    if (binXorFind) removeVarFromXors(x);
-                }
-                
-                if (binXorFind) {
-                    for (uint32_t *it = investigateXor.getData(), *end = investigateXor.getDataEnd(); it != end; it++) {
-                        if (xorClauseSizes[*it] == 2)
-                            twoLongXors.insert(getTwoLongXor(*solver.xorclauses[*it]));
-                    }
-                    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-                        addVarFromXors(solver.trail[c].var());
-                    }
-                    xorClauseTouched.setZero();
-                    investigateXor.clear();
-                }
-                
-                solver.cancelUntil(0);
-            }
-            
-            solver.newDecisionLevel();
-            solver.uncheckedEnqueue(Lit(var, true));
-            failed = (solver.propagate(false) != NULL);
-            if (failed) {
-                solver.cancelUntil(0);
-                numFailed++;
-                solver.uncheckedEnqueue(Lit(var, false));
-                solver.ok = (solver.propagate(false) == NULL);
-                if (!solver.ok) goto end;
-                continue;
-            } else {
-                assert(solver.decisionLevel() > 0);
-                for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-                    Var     x  = solver.trail[c].var();
-                    if (propagated[x] && propValue[x] == solver.assigns[x].getBool())
-                        bothSame.push_back(make_pair(x, !propValue[x]));
-                    if (binXorFind) removeVarFromXors(x);
-                }
-                
-                if (binXorFind) {
-                    if (twoLongXors.size() > 0) {
-                        for (uint32_t *it = investigateXor.getData(), *end = it + investigateXor.size(); it != end; it++) {
-                            if (xorClauseSizes[*it] == 2) {
-                                TwoLongXor tmp = getTwoLongXor(*solver.xorclauses[*it]);
-                                if (twoLongXors.find(tmp) != twoLongXors.end()) {
-                                    vec<Lit> ps(2);
-                                    ps[0] = Lit(tmp.var[0], false);
-                                    ps[1] = Lit(tmp.var[1], false);
-                                    if (!solver.varReplacer->replace(ps, tmp.inverted, solver.xorclauses[*it]->getGroup()))
-                                        goto end;
-                                }
-                            }
-                        }
-                    }
-                    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-                        addVarFromXors(solver.trail[c].var());
-                    }
-                }
-                
-                solver.cancelUntil(0);
-            }
-            
-            for(uint32_t i = 0; i != bothSame.size(); i++) {
-                solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
-            }
-            goodBothSame += bothSame.size();
-            bothSame.clear();
-            solver.ok = (solver.propagate(false) == NULL);
-            if (!solver.ok) goto end;
+            if (!tryBoth(Lit(var, false), Lit(var, true)))
+                goto end;
         }
     }
+    /* 
+    //Print results
+    if (solver.verbosity >= 1) {
+        std::cout << "c |  Failvars: "<< std::setw(5) << numFailed <<
+        "     Bprop vars: " << std::setw(6) << goodBothSame <<
+        " Replaced: " << std::setw(3) << (solver.varReplacer->getNewToReplaceVars() - toReplaceBefore) <<
+        " Props: " << std::setw(8) << std::setprecision(2) << (int)solver.propagations - (int)origProps  <<
+        " Time: " << std::setw(6) << std::fixed << std::setprecision(2) << cpuTime() - time <<
+        std::setw(5) << " |" << std::endl;
+    }
+    
+    for (Clause **it = solver.binaryClauses.getData(), **end = solver.binaryClauses.getDataEnd(); it != end; it++) {
+        Lit lit1((**it)[0]);
+        Lit lit2((**it)[1]);
+        if (solver.value(lit1) == l_Undef && solver.value(lit2) == l_Undef) {
+            if (!tryBoth(lit1, lit2))
+                goto end;
+        }
+    }*/
+    
+    /*for (Clause **it = solver.clauses.getData(), **end = solver.clauses.getDataEnd(); it != end; it++) {
+        Clause& c = **it;
+        for (uint i = 0; i < c.size(); i++) {
+            if (solver.value(c[i]) != l_Undef) goto next;
+        }
+        if (!tryAll(c.getData(), c.getDataEnd()))
+            goto end;
+        
+        next:;
+    }
+    
+    for (Clause **it = solver.learnts.getData(), **end = solver.learnts.getDataEnd(); it != end; it++) {
+        Clause& c = **it;
+        for (uint i = 0; i < c.size(); i++) {
+            if (solver.value(c[i]) != l_Undef) goto next2;
+        }
+        if (!tryAll(c.getData(), c.getDataEnd()))
+            goto end;
+        
+        next2:;
+    }*/
 
 end:
-    //Restoring Solver state
+    //Print results
     if (solver.verbosity >= 1) {
         std::cout << "c |  Failvars: "<< std::setw(5) << numFailed <<
         "     Bprop vars: " << std::setw(6) << goodBothSame <<
@@ -330,6 +266,7 @@ end:
     
     lastTimeFoundTruths = solver.trail.size() - origTrailSize;
     
+    //Restore Solver state
     solver.var_inc = backup_var_inc;
     std::copy(backup_activity.getData(), backup_activity.getDataEnd(), solver.activity.getData());
     solver.order_heap = backup_order_heap;
@@ -337,6 +274,174 @@ end:
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     return solver.ok;
+}
+
+const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
+{
+    if (binXorFind) {
+        if (lastTrailSize < solver.trail.size()) {
+            for (uint32_t i = lastTrailSize; i != solver.trail.size(); i++) {
+                removeVarFromXors(solver.trail[i].var());
+            }
+        }
+        lastTrailSize = solver.trail.size();
+        xorClauseTouched.setZero();
+        investigateXor.clear();
+    }
+    
+    propagated.setZero();
+    twoLongXors.clear();
+    
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueue(lit1);
+    failed = (solver.propagate(false) != NULL);
+    if (failed) {
+        solver.cancelUntil(0);
+        numFailed++;
+        solver.uncheckedEnqueue(~lit1);
+        solver.ok = (solver.propagate(false) == NULL);
+        if (!solver.ok) return false;
+        return true;
+    } else {
+        assert(solver.decisionLevel() > 0);
+        for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+            Var x = solver.trail[c].var();
+            propagated.setBit(x);
+            if (solver.assigns[x].getBool())
+                propValue.setBit(x);
+            else
+                propValue.clearBit(x);
+            
+            if (binXorFind) removeVarFromXors(x);
+        }
+        
+        if (binXorFind) {
+            for (uint32_t *it = investigateXor.getData(), *end = investigateXor.getDataEnd(); it != end; it++) {
+                if (xorClauseSizes[*it] == 2)
+                    twoLongXors.insert(getTwoLongXor(*solver.xorclauses[*it]));
+            }
+            for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+                addVarFromXors(solver.trail[c].var());
+            }
+            xorClauseTouched.setZero();
+            investigateXor.clear();
+        }
+        
+        solver.cancelUntil(0);
+    }
+    
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueue(lit2);
+    failed = (solver.propagate(false) != NULL);
+    if (failed) {
+        solver.cancelUntil(0);
+        numFailed++;
+        solver.uncheckedEnqueue(~lit2);
+        solver.ok = (solver.propagate(false) == NULL);
+        if (!solver.ok) return false;
+        return true;
+    } else {
+        assert(solver.decisionLevel() > 0);
+        for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+            Var     x  = solver.trail[c].var();
+            if (propagated[x] && propValue[x] == solver.assigns[x].getBool())
+                bothSame.push_back(make_pair(x, !propValue[x]));
+            if (binXorFind) removeVarFromXors(x);
+        }
+        
+        if (binXorFind) {
+            if (twoLongXors.size() > 0) {
+                for (uint32_t *it = investigateXor.getData(), *end = it + investigateXor.size(); it != end; it++) {
+                    if (xorClauseSizes[*it] == 2) {
+                        TwoLongXor tmp = getTwoLongXor(*solver.xorclauses[*it]);
+                        if (twoLongXors.find(tmp) != twoLongXors.end()) {
+                            vec<Lit> ps(2);
+                            ps[0] = Lit(tmp.var[0], false);
+                            ps[1] = Lit(tmp.var[1], false);
+                            if (!solver.varReplacer->replace(ps, tmp.inverted, solver.xorclauses[*it]->getGroup()))
+                                return false;
+                        }
+                    }
+                }
+            }
+            for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+                addVarFromXors(solver.trail[c].var());
+            }
+        }
+        
+        solver.cancelUntil(0);
+    }
+    
+    for(uint32_t i = 0; i != bothSame.size(); i++) {
+        solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
+    }
+    goodBothSame += bothSame.size();
+    bothSame.clear();
+    solver.ok = (solver.propagate(false) == NULL);
+    if (!solver.ok) return false;
+    
+    return true;
+}
+
+const bool FailedVarSearcher::tryAll(const Lit* begin, const Lit* end)
+{
+    propagated.setZero();
+    BitArray propagated2;
+    propagated2.resize(solver.nVars(), 0);
+    propValue.resize(solver.nVars(), 0);
+    bool first = true;
+    bool last = false;
+    
+    for (const Lit *it = begin; it != end; it++, first = false) {
+        if (it+1 == end) last = true;
+        
+        if (!first && !last) propagated2.setZero();
+        solver.newDecisionLevel();
+        solver.uncheckedEnqueue(*it);
+        failed = (solver.propagate(false) != NULL);
+        if (failed) {
+            solver.cancelUntil(0);
+            numFailed++;
+            solver.uncheckedEnqueue(~(*it));
+            solver.ok = (solver.propagate(false) == NULL);
+            if (!solver.ok) return false;
+            return true;
+        } else {
+            assert(solver.decisionLevel() > 0);
+            for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+                Var x = solver.trail[c].var();
+                if (last) {
+                    if (propagated[x] && propValue[x] == solver.assigns[x].getBool())
+                        bothSame.push_back(make_pair(x, !propValue[x]));
+                } else {
+                    if (first) {
+                        propagated.setBit(x);
+                        if (solver.assigns[x].getBool())
+                            propValue.setBit(x);
+                        else
+                            propValue.clearBit(x);
+                    } else if (propValue[x] == solver.assigns[x].getBool()) {
+                        propagated2.setBit(x);
+                    }
+                }
+            }
+            solver.cancelUntil(0);
+        }
+        if (!last && !first) {
+            propagated &= propagated2;
+            if (propagated.isZero()) return true;
+        }
+    }
+    
+    for(uint32_t i = 0; i != bothSame.size(); i++) {
+        solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
+    }
+    goodBothSame += bothSame.size();
+    bothSame.clear();
+    solver.ok = (solver.propagate(false) == NULL);
+    if (!solver.ok) return false;
+    
+    return true;
 }
 
 template<class T>
