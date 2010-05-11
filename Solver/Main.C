@@ -460,9 +460,10 @@ void printUsage(char** argv, Solver& S)
     printf("  --noparthander   = Don't find and solve subroblems with subsolvers\n");
     printf("  --nomatrixfind   = Don't find distinct matrixes. Put all xors into one\n");
     printf("                     big matrix\n");
-    printf("  --noiterreduce   = Don't order variables in the columns of Gaussian\n");
+    printf("  --noordercol     = Don't order variables in the columns of Gaussian\n");
     printf("                     elimination. Effectively disables iterative reduction\n");
     printf("                     of the matrix\n");
+    printf("  --noiterreduce   = Don't reduce iteratively the matrix that is updated\n");
     printf("  --maxmatrixrows  = [0 - 2^32-1] Set maximum no. of rows for gaussian matrix.\n");
     printf("                     Too large matrixes should bee discarded for\n");
     printf("                     reasons of efficiency. Default: %d\n", S.gaussconfig.maxMatrixRows);
@@ -638,6 +639,10 @@ int main(int argc, char** argv)
             S.gaussconfig.noMatrixFind = true;
         } else if ((value = hasPrefix(argv[i], "--noiterreduce"))) {
             S.gaussconfig.iterativeReduce = false;
+        } else if ((value = hasPrefix(argv[i], "--noiterreduce"))) {
+            S.gaussconfig.iterativeReduce = false;
+        } else if ((value = hasPrefix(argv[i], "--noordercol"))) {
+            S.gaussconfig.orderCols = false;
         } else if ((value = hasPrefix(argv[i], "--maxmatrixrows"))) {
             uint32_t rows;
             if (sscanf(value, "%d", &rows) < 0) {
