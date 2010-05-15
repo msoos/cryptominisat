@@ -51,6 +51,7 @@ class FindUndef;
 class ClauseCleaner;
 class FailedVarSearcher;
 class Subsumer;
+class XorSubsumer;
 class PartHandler;
 class RestartTypeChooser;
 
@@ -354,6 +355,7 @@ protected:
     FailedVarSearcher* failedVarSearcher;
     PartHandler* partHandler;
     Subsumer* subsumer;
+    XorSubsumer* xorSubsumer;
     RestartTypeChooser* restartTypeChooser;
     MatrixFinder* matrixFinder;
     const bool chooseRestartType(const uint& lastFullRestart);

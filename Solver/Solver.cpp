@@ -134,6 +134,7 @@ Solver::Solver() :
     failedVarSearcher = new FailedVarSearcher(*this);
     partHandler = new PartHandler(*this);
     subsumer = new Subsumer(*this);
+    xorSubsumer = new XorSubsumer(*this);
     restartTypeChooser = new RestartTypeChooser(*this);
     #ifdef USE_GAUSS
     matrixFinder = new MatrixFinder(*this);
@@ -162,6 +163,7 @@ Solver::~Solver()
     delete failedVarSearcher;
     delete partHandler;
     delete subsumer;
+    delete xorSubsumer;
     delete restartTypeChooser;
     
     if (libraryCNFFile)
@@ -197,9 +199,9 @@ Var Solver::newVar(bool dvar)
     insertVarOrder(v);
     
     varReplacer->newVar();
-    conglomerate->newVar();
     partHandler->newVar();
     subsumer->newVar();
+    xorSubsumer->newVar();
 
     insertVarOrder(v);
     
@@ -300,10 +302,12 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     assert(qhead == trail.size());
 
     // Check if clause is satisfied and remove false/duplicate literals:
-    if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed()) {
+    if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
         for (uint32_t i = 0; i != ps.size(); i++) {
             ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
             if (subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
+                return false;
+            if (xorSubsumer->getVarElimed()[ps[i].var()] && !xorSubsumer->unEliminate(ps[i].var()))
                 return false;
         }
     }
@@ -396,10 +400,12 @@ bool Solver::addClause(T& ps, const uint group, char* group_name)
     assert(qhead == trail.size());
 
     // Check if clause is satisfied and remove false/duplicate literals:
-    if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed()) {
+    if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
         for (uint32_t i = 0; i != ps.size(); i++) {
             ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
             if (subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
+                return false;
+            if (xorSubsumer->getVarElimed()[ps[i].var()] && !xorSubsumer->unEliminate(ps[i].var()))
                 return false;
         }
     }
@@ -1858,19 +1864,14 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     }
     
-    if (doXorSubsumption && xorclauses.size() > 1) {
-        XorSubsumer xsub(*this);
-        if (!xsub.simplifyBySubsumption()) {
-            status = l_False;
-            goto end;
-        }
+    if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) {
+        status = l_False;
+        goto end;
     }
     
-    if (doSubsumption) {
-        if (!subsumer->simplifyBySubsumption()) {
-            status = l_False;
-            goto end;
-        }
+    if (doSubsumption && !subsumer->simplifyBySubsumption()) {
+        status = l_False;
+        goto end;
     }
     
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
@@ -1965,14 +1966,8 @@ inline void Solver::performStepsBeforeSolve()
         if (heuleProcess && !conglomerate->heuleProcessRecursiveFull())
             return;
         
-        if (conglomerateXors && !conglomerate->conglomerateXorsFull())
+        if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption())
             return;
-        
-        if (doXorSubsumption && xorclauses.size() > 1) {
-            XorSubsumer xsub(*this);
-            if (!xsub.simplifyBySubsumption())
-                return;
-        }
         
         if (performReplace && !varReplacer->performReplace())
             return;
@@ -2009,8 +2004,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     conflictsAtLastSolve = conflicts;
     avgBranchDepth.fastclear();
     avgBranchDepth.initSize(500);
-    
-    if (!conglomerate->addRemovedClauses()) return l_False;
     starts = 0;
 
     assumps.copyTo(assumptions);
@@ -2098,7 +2091,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         checkSolution();
 #endif
         
-        if (subsumer->getNumElimed() > 0 || conglomerate->needCalcAtFinish()) {
+        if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
 #ifdef VERBOSE_DEBUG
             std::cout << "Solution needs extension. Extending." << std::endl;
 #endif //VERBOSE_DEBUG
@@ -2111,12 +2104,11 @@ lbool Solver::solve(const vec<Lit>& assumps)
             s.conglomerateXors = false;
             s.greedyUnbound = greedyUnbound;
             for (Var var = 0; var < nVars(); var++) {
-                s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || conglomerate->getRemovedVars()[var]);
+                s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || xorSubsumer->getVarElimed()[var]);
                 
-                assert(!(conglomerate->getRemovedVars()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
+                //assert(!(xorSubsumer->getVarElimed()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
                 
                 if (value(var) != l_Undef) {
-                    assert(!conglomerate->getRemovedVars()[var]);
                     vec<Lit> tmp;
                     tmp.push(Lit(var, value(var) == l_False));
                     s.addClause(tmp);
@@ -2124,7 +2116,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             }
             varReplacer->extendModelImpossible(s);
             subsumer->extendModel(s);
-            conglomerate->extendModel(s);
+            xorSubsumer->extendModel(s);
             
             status = s.solve();
             if (status != l_True) {
@@ -2249,12 +2241,10 @@ void Solver::verifyModel()
 {
     assert(!verifyClauses(clauses));
     assert(!verifyClauses(binaryClauses));
-    
     assert(!verifyXorClauses(xorclauses));
-    assert(!verifyXorClauses(conglomerate->getCalcAtFinish()));
 
     if (verbosity >=1)
-        printf("c Verified %d clauses.\n", clauses.size() + xorclauses.size() + conglomerate->getCalcAtFinish().size());
+        printf("c Verified %d clauses.\n", clauses.size() + xorclauses.size());
 }
 
 

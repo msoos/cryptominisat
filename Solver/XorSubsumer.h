@@ -20,10 +20,14 @@ public:
     const bool simplifyBySubsumption(const bool doFullSubsume = false);
     void unlinkModifiedClause(vec<Lit>& origClause, XorClauseSimp c);
     void unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, XorClauseSimp c);
-    void unlinkClause(XorClauseSimp cc);
+    void unlinkClause(XorClauseSimp cc, Var elim = var_Undef);
     XorClauseSimp linkInClause(XorClause& cl);
     void linkInAlreadyClause(XorClauseSimp& c);
     void newVar();
+    void extendModel(Solver& solver2);
+    const uint32_t getNumElimed() const;
+    const vec<char>& getVarElimed() const;
+    const bool unEliminate(const Var var);
     
 private:
     
@@ -50,6 +54,16 @@ private:
     bool subset(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
     void findUnMatched(vec<Lit>& A, XorClause& B, vec<Lit>& unmatchedPart);
+    
+    //dependent removal
+    void removeDependent();
+    void fillCannotEliminate();
+    vec<char> cannot_eliminate;
+    void addToCannotEliminate(Clause* it);
+    map<Var, vector<XorClause*> > elimedOutVar;
+    vec<char> var_elimed;
+    uint32_t numElimed;
+    void clearDouble(vec<Lit>& ps) const;
     
     uint32_t clauses_subsumed;
     uint32_t clauses_cut;
@@ -84,6 +98,19 @@ inline void XorSubsumer::newVar()
 {
     occur       .push();
     seen_tmp    .push(0);       // (one for each polarity)
+    cannot_eliminate.push(0);
+    var_elimed.push(0);
 }
+
+inline const vec<char>& XorSubsumer::getVarElimed() const
+{
+    return var_elimed;
+}
+
+inline const uint32_t XorSubsumer::getNumElimed() const
+{
+    return numElimed;
+}
+
 
 #endif //XORSIMPLIFIER_H

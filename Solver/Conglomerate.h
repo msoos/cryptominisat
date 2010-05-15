@@ -42,18 +42,7 @@ class Conglomerate
 {
 public:
     Conglomerate(Solver& solver);
-    ~Conglomerate();
-    const bool conglomerateXorsFull();
     const bool heuleProcessRecursiveFull();
-    const bool addRemovedClauses(); ///<Add clauses that have been removed. Used if solve() is called multiple times
-    void extendModel(Solver& solver2); ///<Calculate variables removed during conglomeration
-    
-    const vec<XorClause*>& getCalcAtFinish() const;
-    vec<XorClause*>& getCalcAtFinish();
-    const vec<bool>& getRemovedVars() const;
-    const bool needCalcAtFinish() const;
-    
-    void newVar();
     
 private:
     const bool heuleProcessFull();
@@ -64,14 +53,11 @@ private:
         }
     };
     
-    const bool conglomerateXors();
     const bool heuleProcess();
     
     void fillNewSet(vector<vector<Lit> >& newSet, vector<pair<XorClause*, uint32_t> >& clauseSet) const;
     
-    void removeVar(const Var var);
     void processClause(XorClause& x, uint32_t num, Var remove_var);
-    void blockVars();
     void fillVarToXor();
     void clearDouble(vector<Lit>& ps) const;
     void clearToRemove();
@@ -82,40 +68,10 @@ private:
     varToXorMap varToXor; 
     vector<bool> blocked;
     vector<bool> toRemove;
-    
-    vec<bool> removedVars;
-    vec<Var> madeVarNonDecision;
-    
-    vec<XorClause*> calcAtFinish;
     uint found;
     
     Solver& solver;
 };
-
-inline void Conglomerate::newVar()
-{
-    removedVars.push(false);
-}
-
-inline const vec<bool>& Conglomerate::getRemovedVars() const
-{
-    return removedVars;
-}
-
-inline const vec<XorClause*>& Conglomerate::getCalcAtFinish() const
-{
-    return calcAtFinish;
-}
-
-inline vec<XorClause*>& Conglomerate::getCalcAtFinish()
-{
-    return calcAtFinish;
-}
-
-inline const bool Conglomerate::needCalcAtFinish() const
-{
-    return calcAtFinish.size();
-}
 
 
 #endif //CONGLOMERATE_H
