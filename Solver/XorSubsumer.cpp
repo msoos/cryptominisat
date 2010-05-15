@@ -386,7 +386,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         solver.clauseCleaner->cleanXorClausesBewareNULL(clauses, ClauseCleaner::xorSimpClauses, *this);
         if (!solver.ok) return false;
         
-        if (solver.performReplace && solver.varReplacer->needsReplace()) {
+        /*if (solver.performReplace && solver.varReplacer->needsReplace()) {
             addBackToSolver();
             while (solver.performReplace && solver.varReplacer->needsReplace()) {
                 replaced = true;
@@ -394,7 +394,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
                     return false;
             }
             addFromSolver(solver.xorclauses);
-        }
+        }*/
         if (solver.conglomerateXors) removeDependent();
     }
     
