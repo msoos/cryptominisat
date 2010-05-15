@@ -337,6 +337,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     clauses_subsumed = 0;
     clauses_cut = 0;
     clauseID = 0;
+    uint32_t lastNumElimed = numElimed;
     
     for (Var var = 0; var < solver.nVars(); var++) {
         //occur[var].clear(true);
@@ -407,7 +408,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         std::cout << "c |  xorcla-subs: " << std::setw(6) << clauses_subsumed
         << " xorcla-cut: " << std::setw(6) << clauses_cut
         << " v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
-        << " v-elim: " <<std::setw(6) << numElimed
+        << " v-elim: " <<std::setw(6) << numElimed - lastNumElimed
         << " time: " << std::setw(7) << std::setprecision(2) << (cpuTime() - myTime)
         << std::setw(7) << "  |" << std::endl;
     }
