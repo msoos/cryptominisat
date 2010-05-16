@@ -83,8 +83,8 @@ public:
     }
 };    
 
-const Lit lit_Undef(var_Undef, false);  // }- Useful special constants.
-const Lit lit_Error(var_Undef, true );  // }
+const Lit lit_Undef(var_Undef, false);  // Useful special constants.
+const Lit lit_Error(var_Undef, true );  //
 
 //=================================================================================================
 // Lifted booleans:
