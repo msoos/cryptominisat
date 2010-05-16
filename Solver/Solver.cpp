@@ -223,7 +223,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32
         std::cout << "Too long clause!" << std::endl;
         exit(-1);
     }
-    std::sort(ps.getData(), ps.getData()+ps.size());
+    std::sort(ps.getData(), ps.getDataEnd());
     Lit p;
     uint32_t i, j;
     for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
@@ -344,7 +344,7 @@ Clause* Solver::addClauseInt(T& ps, uint group)
 {
     assert(ok);
     
-    std::sort(ps.getData(), ps.getData()+ps.size());
+    std::sort(ps.getData(), ps.getDataEnd());
     Lit p = lit_Undef;
     uint32_t i, j;
     for (i = j = 0; i != ps.size(); i++) {
