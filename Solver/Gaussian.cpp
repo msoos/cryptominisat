@@ -171,7 +171,7 @@ uint Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& origM
     {
         Var v;
         if (config.orderCols) v = order_heap.removeMin();
-        else Var v = vars[iterReduceIt++];
+        else v = vars[iterReduceIt++];
         if (var_to_col[v] == 1) {
             #ifdef DEBUG_GAUSS
             vector<uint>::iterator it =
