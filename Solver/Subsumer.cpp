@@ -824,36 +824,34 @@ const bool Subsumer::simplifyBySubsumption()
     addFromSolver(solver.binaryClauses);
     
     //Limits
-    if (clauses.size() > 3500000)
+    if (clauses.size() > 3500000) {
         numMaxSubsume0 = 900000 * (1+numCalls/2);
-    else
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 5.0 * (0.8+(double)(numCalls)/4.0));
+        numMaxSubsume1 = 100000 * (1+numCalls/2);
+        numMaxBlockToVisit = (int64_t)(30000.0 * (0.8+(double)(numCalls)/3.0));
+    }
+    if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
         numMaxSubsume0 = 2000000 * (1+numCalls/2);
-    
-    if (solver.doSubsume1) {
-        if (clauses.size() > 3500000)
-            numMaxSubsume1 = 100000 * (1+numCalls/2);
-        else
-            numMaxSubsume1 = 500000 * (1+numCalls/2);
-    } else {
-        numMaxSubsume1 = 0;
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
+        numMaxSubsume1 = 500000 * (1+numCalls/2);
+        numMaxBlockToVisit = (int64_t)(50000.0 * (0.8+(double)(numCalls)/3.0));
+    }
+    if (clauses.size() <= 1500000) {
+        numMaxSubsume0 = 4000000 * (1+numCalls/2);
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() * (0.8+(double)(numCalls)/2.0));
+        numMaxSubsume1 = 800000 * (1+numCalls/2);
+        numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
     }
     
-    if (clauses.size() > 3500000)
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 5.0 * (0.8+(double)(numCalls)/4.0));
-    else
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
-    
-    if (clauses.size() > 3500000)
-        numMaxBlockToVisit = (int64_t)(30000.0 * (0.8+(double)(numCalls)/3.0));
-    else
-        numMaxBlockToVisit = (int64_t)(50000.0 * (0.8+(double)(numCalls)/3.0));
+    if (!solver.doSubsume1) numMaxSubsume1 = 0;
+        
     
     if (solver.order_heap.size() > 200000)
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
     else
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
     
-    //For debugging post-c32s-gcdm16-22.cnf --- an instance that is turned SAT to UNSAT if a bug is in the code
+    //For debugging
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
     //numMaxElim = std::numeric_limits<uint32_t>::max();
     //numMaxSubsume0 = std::numeric_limits<uint32_t>::max();
