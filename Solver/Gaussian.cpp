@@ -612,7 +612,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
 
 Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint last_row, Clause*& confl)
 {
-    uint maxlevel = UINT_MAX;
+    int32_t maxlevel = std::numeric_limits<int32_t>::max();
     uint size = UINT_MAX;
     uint best_row = UINT_MAX;
 
@@ -624,7 +624,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint
             analyse_confl(m, row, maxlevel, size, best_row);
     }
 
-    if (maxlevel != UINT_MAX)
+    if (maxlevel != std::numeric_limits<int32_t>::max())
         return handle_matrix_confl(confl, m, size, maxlevel, best_row);
 
     #ifdef DEBUG_GAUSS
@@ -697,7 +697,7 @@ void Gaussian::cancel_until_sublevel(const uint sublevel)
     #endif
 }
 
-void Gaussian::analyse_confl(const matrixset& m, const uint row, uint& maxlevel, uint& size, uint& best_row) const
+void Gaussian::analyse_confl(const matrixset& m, const uint row, int32_t& maxlevel, uint& size, uint& best_row) const
 {
     assert(row < m.num_rows);
 
@@ -713,7 +713,7 @@ void Gaussian::analyse_confl(const matrixset& m, const uint row, uint& maxlevel,
     cout << endl;
     #endif
 
-    uint this_maxlevel = 0;
+    int32_t this_maxlevel = 0;
     unsigned long int var = 0;
     uint this_size = 0;
     while (true) {
@@ -735,7 +735,7 @@ void Gaussian::analyse_confl(const matrixset& m, const uint row, uint& maxlevel,
                 || (this_maxlevel == maxlevel && this_size < size)
                 || (this_size <= 1)
             )) {
-        assert(maxlevel != UINT_MAX);
+        assert(maxlevel != std::numeric_limits<int32_t>::max());
     
         #ifdef VERBOSE_DEBUG
         cout << "(" << matrix_no << ")Other found conflict just as good or better.";
