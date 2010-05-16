@@ -81,7 +81,7 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
             }
             if (!sorted) {
                 solver.detachClause(c);
-                std::sort(c.getData(), c.getData()+c.size());
+                std::sort(c.getData(), c.getDataEnd());
                 solver.attachClause(c);
             }
         } else {
