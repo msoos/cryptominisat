@@ -3,7 +3,7 @@ def_graphic_ext=
 img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
-kileversion=2.1 beta2
+kileversion=2.0.84
 lastDocument=sigproc.bib
 masterDocument=
 name=practicalanalytic
@@ -28,20 +28,20 @@ order=-1
 
 [item:CryptoMiniSat-2.4.tex]
 archive=true
-column=728
+column=0
 encoding=UTF-8
 highlight=LaTeX
-line=110
+line=0
 mode=LaTeX
-open=true
+open=false
 order=0
 
 [item:sigproc.bib]
 archive=true
-column=19
+column=0
 encoding=UTF-8
 highlight=BibTeX
-line=2242
+line=0
 mode=BibTeX
-open=true
+open=false
 order=1

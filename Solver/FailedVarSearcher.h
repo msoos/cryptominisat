@@ -62,6 +62,7 @@ class FailedVarSearcher {
         //For 2-long xor
         const TwoLongXor getTwoLongXor(const XorClause& c);
         void addFromSolver(const vec<XorClause*>& cs);
+        uint32_t newBinXor;
         
         //For detach&re-attach (when lots of vars found)
         template<class T>
@@ -94,6 +95,11 @@ class FailedVarSearcher {
         std::set<TwoLongXor> twoLongXors;
         bool binXorFind;
         uint32_t lastTrailSize;
+        
+        //2-long xor-finding no.2 through
+        // 1) (a->b, ~a->~b) -> a=b
+        // 2) binary clause (a,c):  (a->g, c->~g) -> a = ~c
+        uint32_t bothInvert;
         
         //State for this run
         uint32_t toReplaceBefore;

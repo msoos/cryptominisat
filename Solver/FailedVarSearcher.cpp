@@ -164,6 +164,10 @@ const bool FailedVarSearcher::search(uint64_t numProps)
         addFromSolver(solver.xorclauses);
     }
     xorClauseTouched.resize(solver.xorclauses.size(), 0);
+    newBinXor = 0;
+    
+    //For 2-long xor through Le Berre paper
+    bothInvert = 0;
     
     uint32_t fromVar;
     if (finishedLastTimeVar || lastTimeWentUntilVar >= solver.nVars())
@@ -187,6 +191,9 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     /*if (solver.verbosity >= 1) printResults(myTime);
     
     for (Clause **it = solver.binaryClauses.getData(), **end = solver.binaryClauses.getDataEnd(); it != end; it++) {
+        if ((int)solver.propagations - (int)origProps >= 2*(int)numProps)
+            break;
+        
         Lit lit1((**it)[0]);
         Lit lit2((**it)[1]);
         if (solver.value(lit1) == l_Undef && solver.value(lit2) == l_Undef) {
@@ -274,6 +281,7 @@ void FailedVarSearcher::printResults(const double myTime) const
 
 const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
 {
+    vec<Lit> tmpPs(2);
     if (binXorFind) {
         if (lastTrailSize < solver.trail.size()) {
             for (uint32_t i = lastTrailSize; i != solver.trail.size(); i++) {
@@ -340,8 +348,28 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         assert(solver.decisionLevel() > 0);
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
             Var     x  = solver.trail[c].var();
-            if (propagated[x] && propValue[x] == solver.assigns[x].getBool())
-                bothSame.push_back(make_pair(x, !propValue[x]));
+            if (propagated[x]) {
+                if (propValue[x] == solver.assigns[x].getBool()) {
+                    //they both imply the same
+                    bothSame.push_back(make_pair(x, !propValue[x]));
+                } else if (c != (int)solver.trail_lim[0]) {
+                    bool invert;
+                    if (lit1.var() == lit2.var()) {
+                        assert(lit1.sign() == false && lit2.sign() == true);
+                        tmpPs[0] = Lit(lit1.var(), false);
+                        tmpPs[1] = Lit(x, false);
+                        invert = propValue[x];
+                    } else {
+                        tmpPs[0] = Lit(lit1.var(), false);
+                        tmpPs[1] = Lit(lit2.var(), false);
+                        invert = lit1.sign() ^ lit2.sign();
+                    }
+                    if (!solver.varReplacer->replace(tmpPs, invert, 0))
+                        return false;
+                    bothInvert += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
+                    toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
+                }
+            }
             if (binXorFind) removeVarFromXors(x);
         }
         
@@ -351,11 +379,12 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
                     if (xorClauseSizes[*it] == 2) {
                         TwoLongXor tmp = getTwoLongXor(*solver.xorclauses[*it]);
                         if (twoLongXors.find(tmp) != twoLongXors.end()) {
-                            vec<Lit> ps(2);
-                            ps[0] = Lit(tmp.var[0], false);
-                            ps[1] = Lit(tmp.var[1], false);
-                            if (!solver.varReplacer->replace(ps, tmp.inverted, solver.xorclauses[*it]->getGroup()))
+                            tmpPs[0] = Lit(tmp.var[0], false);
+                            tmpPs[1] = Lit(tmp.var[1], false);
+                            if (!solver.varReplacer->replace(tmpPs, tmp.inverted, solver.xorclauses[*it]->getGroup()))
                                 return false;
+                            newBinXor += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
+                            toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
                         }
                     }
                 }
