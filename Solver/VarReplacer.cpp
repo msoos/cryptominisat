@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <iomanip>
 
-#include "Conglomerate.h"
 #include "ClauseCleaner.h"
 #include "PartHandler.h"
 #include "time_mem.h"

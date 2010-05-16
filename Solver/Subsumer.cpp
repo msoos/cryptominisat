@@ -12,7 +12,6 @@ Substantially modified by: Mate Soos (2010)
 #include <cmath>
 #include <algorithm>
 #include "VarReplacer.h"
-#include "Conglomerate.h"
 #include "XorFinder.h"
 
 #ifdef _MSC_VER
