@@ -189,7 +189,6 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
             p = lit_Undef;
             if (!solver.assigns[c[i].var()].isUndef())
                 c.invert(solver.assigns[c[i].var()].getBool());
-            solver.clauses_literals -= 2;
         } else if (solver.assigns[c[i].var()].isUndef()) //just add
             c[j++] = p = c[i];
         else c.invert(solver.assigns[c[i].var()].getBool()); //modify xor_clause_inverted instead of adding
