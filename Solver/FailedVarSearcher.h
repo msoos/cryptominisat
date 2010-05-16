@@ -69,8 +69,10 @@ class FailedVarSearcher {
         const bool cleanClause(Clause& ps);
         const bool cleanClause(XorClause& ps);
         
+        //Main
         const bool tryBoth(const Lit lit1, const Lit lit2);
         const bool tryAll(const Lit* begin, const Lit* end);
+        void printResults(const double myTime) const;
         
         Solver& solver;
         
@@ -101,8 +103,9 @@ class FailedVarSearcher {
         uint32_t goodBothSame;
         
         //State between runs
-        bool finishedLastTime;
-        uint32_t lastTimeWentUntil;
+        bool finishedLastTimeVar;
+        uint32_t lastTimeWentUntilVar;
+        
         double numPropsMultiplier;
         uint32_t lastTimeFoundTruths;
 };

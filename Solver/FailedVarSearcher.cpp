@@ -37,8 +37,8 @@ using std::set;
 
 FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
-    , finishedLastTime(true)
-    , lastTimeWentUntil(0)
+    , finishedLastTimeVar(true)
+    , lastTimeWentUntilVar(0)
     , numPropsMultiplier(1.0)
     , lastTimeFoundTruths(0)
 {
@@ -131,14 +131,9 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     uint32_t origHeapSize = solver.order_heap.size();
     
     //General Stats
-    double time = cpuTime();
+    double myTime = cpuTime();
     numFailed = 0;
     goodBothSame = 0;
-    uint32_t from;
-    if (finishedLastTime || lastTimeWentUntil >= solver.nVars())
-        from = 0;
-    else
-        from = lastTimeWentUntil;
     origProps = solver.propagations;
     
     //If failed var searching is going good, do successively more and more of it
@@ -170,29 +165,26 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     }
     xorClauseTouched.resize(solver.xorclauses.size(), 0);
     
-    finishedLastTime = true;
-    lastTimeWentUntil = solver.nVars();
-    for (Var var = from; var < solver.nVars(); var++) {
+    uint32_t fromVar;
+    if (finishedLastTimeVar || lastTimeWentUntilVar >= solver.nVars())
+        fromVar = 0;
+    else
+        fromVar = lastTimeWentUntilVar;
+    finishedLastTimeVar = true;
+    lastTimeWentUntilVar = solver.nVars();
+    for (Var var = fromVar; var < solver.nVars(); var++) {
         if (solver.assigns[var] == l_Undef && solver.order_heap.inHeap(var)) {
             if ((int)solver.propagations - (int)origProps >= (int)numProps)  {
-                finishedLastTime = false;
-                lastTimeWentUntil = var;
+                finishedLastTimeVar = false;
+                lastTimeWentUntilVar = var;
                 break;
             }
             if (!tryBoth(Lit(var, false), Lit(var, true)))
                 goto end;
         }
     }
-    /* 
-    //Print results
-    if (solver.verbosity >= 1) {
-        std::cout << "c |  Failvars: "<< std::setw(5) << numFailed <<
-        "     Bprop vars: " << std::setw(6) << goodBothSame <<
-        " Replaced: " << std::setw(3) << (solver.varReplacer->getNewToReplaceVars() - toReplaceBefore) <<
-        " Props: " << std::setw(8) << std::setprecision(2) << (int)solver.propagations - (int)origProps  <<
-        " Time: " << std::setw(6) << std::fixed << std::setprecision(2) << cpuTime() - time <<
-        std::setw(5) << " |" << std::endl;
-    }
+    
+    /*if (solver.verbosity >= 1) printResults(myTime);
     
     for (Clause **it = solver.binaryClauses.getData(), **end = solver.binaryClauses.getDataEnd(); it != end; it++) {
         Lit lit1((**it)[0]);
@@ -227,14 +219,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
 
 end:
     //Print results
-    if (solver.verbosity >= 1) {
-        std::cout << "c |  Failvars: "<< std::setw(5) << numFailed <<
-        "     Bprop vars: " << std::setw(6) << goodBothSame <<
-        " Replaced: " << std::setw(3) << (solver.varReplacer->getNewToReplaceVars() - toReplaceBefore) <<
-        " Props: " << std::setw(8) << std::setprecision(2) << (int)solver.propagations - (int)origProps  <<
-        " Time: " << std::setw(6) << std::fixed << std::setprecision(2) << cpuTime() - time <<
-        std::setw(5) << " |" << std::endl;
-    }
+    if (solver.verbosity >= 1) printResults(myTime);
     
     solver.order_heap.filter(Solver::VarFilter(solver));
     
@@ -274,6 +259,17 @@ end:
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     return solver.ok;
+}
+
+void FailedVarSearcher::printResults(const double myTime) const
+{
+    std::cout << "c |  Failv: "<< std::setw(5) << numFailed <<
+    " Bprop v: " << std::setw(6) << goodBothSame <<
+    " bXBeca: " << std::setw(5) << newBinXor <<
+    " bXProp: " << std::setw(5) << bothInvert <<
+    " Prop: " << std::setw(5) << std::setprecision(2) << (solver.propagations - origProps)/1000  << "t"
+    " Time: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime <<
+    std::setw(5) << " |" << std::endl;
 }
 
 const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
