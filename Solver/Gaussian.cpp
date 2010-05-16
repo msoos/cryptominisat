@@ -593,7 +593,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     
     uint maxsublevel = 0;
     uint maxsublevel_at = UINT_MAX;
-    for (uint i = 0, size = cla.size(); i != size; i++) if (solver.level[cla[i].var()] == curr_dec_level) {
+    for (uint i = 0, size = cla.size(); i != size; i++) if (solver.level[cla[i].var()] == (int32_t)curr_dec_level) {
         uint tmp = find_sublevel(cla[i].var());
         if (tmp >= maxsublevel) {
             maxsublevel = tmp;

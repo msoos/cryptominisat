@@ -299,9 +299,13 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 untilEnd(in, group_name);
             }
 
-            if (xor_clause)
-                S.addXorClause(lits, false, group, group_name);
-            else
+            if (xor_clause) {
+                bool xor_clause_inverted = false;
+                for (uint32_t i = 0; i < lits.size(); i++) {
+                    xor_clause_inverted ^= lits[i].sign();
+                }
+                S.addXorClause(lits, xor_clause_inverted, group, group_name);
+            } else
                 S.addClause(lits, group, group_name);
             break;
         }

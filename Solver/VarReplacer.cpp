@@ -183,8 +183,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     Lit p;
     uint32_t i, j;
     for (i = j = 0, p = lit_Undef; i != c.size(); i++) {
-        c[i] = c[i].unsign();
-        if (c[i] == p) {
+        if (c[i].var() == p.var()) {
             //added, but easily removed
             j--;
             p = lit_Undef;
@@ -210,15 +209,14 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
         return true;
     case 1:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
-        solver.uncheckedEnqueue(c[0] ^ c.xor_clause_inverted());
+        solver.uncheckedEnqueue(Lit(c[0].var(), c.xor_clause_inverted()));
         solver.ok = (solver.propagate() == NULL);
         return true;
     case 2: {
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
-        vec<Lit> ps(2);
-        ps[0] = c[0];
-        ps[1] = c[1];
-        addBinaryXorClause(ps, c.xor_clause_inverted(), c.getGroup(), true);
+        c[0] = c[0].unsign();
+        c[1] = c[1].unsign();
+        addBinaryXorClause(c, c.xor_clause_inverted(), c.getGroup(), true);
         return true;
     }
     default:

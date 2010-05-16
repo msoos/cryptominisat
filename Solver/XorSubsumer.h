@@ -56,14 +56,18 @@ private:
     void findUnMatched(vec<Lit>& A, XorClause& B, vec<Lit>& unmatchedPart);
     
     //dependent removal
-    void removeDependent();
+    const bool removeDependent();
     void fillCannotEliminate();
     vec<char> cannot_eliminate;
     void addToCannotEliminate(Clause* it);
     map<Var, vector<XorClause*> > elimedOutVar;
     vec<char> var_elimed;
     uint32_t numElimed;
+    
+    //Heule-process
     void clearDouble(vec<Lit>& ps) const;
+    const bool localSubstitute();
+    uint32_t localSubstituteUseful;
     
     uint32_t clauses_subsumed;
     uint32_t clauses_cut;

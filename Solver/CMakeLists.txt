@@ -22,7 +22,6 @@ add_library(cryptominisatlib
     Gaussian.cpp
     PackedRow.cpp
     XorFinder.cpp
-    Conglomerate.cpp
     MatrixFinder.cpp
     VarReplacer.cpp
     FindUndef.cpp

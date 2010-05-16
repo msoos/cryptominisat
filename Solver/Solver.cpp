@@ -32,7 +32,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include "VarReplacer.h"
 #include "FindUndef.h"
-#include "Conglomerate.h"
 #include "XorFinder.h"
 #include "ClauseCleaner.h"
 #include "RestartTypeChooser.h"
@@ -129,7 +128,6 @@ Solver::Solver() :
         , simplifying      (false)
 {
     varReplacer = new VarReplacer(*this);
-    conglomerate = new Conglomerate(*this);
     clauseCleaner = new ClauseCleaner(*this);
     failedVarSearcher = new FailedVarSearcher(*this);
     partHandler = new PartHandler(*this);
@@ -158,7 +156,6 @@ Solver::~Solver()
     for (uint32_t i = 0; i != freeLater.size(); i++) free(freeLater[i]);
     
     delete varReplacer;
-    delete conglomerate;
     delete clauseCleaner;
     delete failedVarSearcher;
     delete partHandler;
@@ -227,10 +224,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32
     Lit p;
     uint32_t i, j;
     for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
-        xor_clause_inverted ^= ps[i].sign();
-        ps[i] ^= ps[i].sign();
-        
-        if (ps[i] == p) {
+        if (ps[i].var() == p.var()) {
             //added, but easily removed
             j--;
             p = lit_Undef;
@@ -249,8 +243,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32
             return NULL;
         }
         case 1: {
-            assert(assigns[ps[0].var()].isUndef());
-            uncheckedEnqueue(ps[0] ^ xor_clause_inverted);
+            uncheckedEnqueue(Lit(ps[0].var(), xor_clause_inverted));
             ok = (propagate() == NULL);
             return NULL;
         }
@@ -260,6 +253,8 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32
             #endif
 
             learnt_clause_group = std::max(group+1, learnt_clause_group);
+            ps[0] = ps[0].unsign();
+            ps[1] = ps[1].unsign();
             varReplacer->replace(ps, xor_clause_inverted, group);
             return NULL;
         }
@@ -304,7 +299,8 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     // Check if clause is satisfied and remove false/duplicate literals:
     if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
         for (uint32_t i = 0; i != ps.size(); i++) {
-            ps[i] = varReplacer->getReplaceTable()[ps[i].var()] ^ ps[i].sign();
+            ps[i] = Lit(varReplacer->getReplaceTable()[ps[i].var()].var(), false);
+            xor_clause_inverted ^= varReplacer->getReplaceTable()[ps[i].var()].sign();
             if (subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
                 return false;
             if (xorSubsumer->getVarElimed()[ps[i].var()] && !xorSubsumer->unEliminate(ps[i].var()))
@@ -1854,11 +1850,6 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
         goto end;
     printRestartStat();
     
-    if (heuleProcess && !conglomerate->heuleProcessRecursiveFull()) {
-        status = l_False;
-        goto end;
-    }
-    
     if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 6000000 : 2000000))  {
         status = l_False;
         goto end;
@@ -1963,9 +1954,6 @@ inline void Solver::performStepsBeforeSolve()
     }
         
     if (xorclauses.size() > 1) {
-        if (heuleProcess && !conglomerate->heuleProcessRecursiveFull())
-            return;
-        
         if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption())
             return;
         

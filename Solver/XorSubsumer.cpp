@@ -31,6 +31,7 @@ using std::endl;
 XorSubsumer::XorSubsumer(Solver& s):
     solver(s)
     , numElimed(0)
+    , localSubstituteUseful(0)
 {
 };
 
@@ -224,17 +225,61 @@ void XorSubsumer::extendModel(Solver& solver2)
             c.plainPrint();
             std::cout << std::endl;
             #endif
-            for (uint32_t i = 0; i < c.size(); i++) {
-                c[i] = c[i].unsign();
-            }
-            
             solver2.addXorClause(c, c.xor_clause_inverted());
             assert(solver2.ok);
         }
     }
 }
 
-void XorSubsumer::removeDependent()
+const bool XorSubsumer::localSubstitute()
+{
+    vec<Lit> tmp;
+    for (Var var = 0; var < occur.size(); var++) {
+        vec<XorClauseSimp>& occ = occur[var];
+        if (occ.size() <= 1) continue;
+        for (uint32_t i = 0; i < occ.size(); i++) {
+            XorClause& c1 = *occ[i].clause;
+            for (uint32_t i2 = i+1; i2 < occ.size(); i2++) {
+                XorClause& c2 = *occ[i2].clause;
+                tmp.clear();
+                tmp.growTo(c1.size() + c2.size());
+                std::copy(c1.getData(), c1.getDataEnd(), tmp.getData());
+                std::copy(c2.getData(), c2.getDataEnd(), tmp.getData() + c1.size());
+                clearDouble(tmp);
+                if (tmp.size() <= 2) {
+                    localSubstituteUseful++;
+                    uint32_t lastSize = solver.varReplacer->getClauses().size();
+                    solver.addXorClauseInt(tmp, c1.xor_clause_inverted() ^ !c2.xor_clause_inverted(), c1.getGroup());
+                    if (solver.varReplacer->getClauses().size() > lastSize) {
+                        for (uint32_t i = lastSize; i  < solver.varReplacer->getClauses().size(); i++)
+                            addToCannotEliminate(solver.varReplacer->getClauses()[i]);
+                    }
+                    if (!solver.ok) return false;
+                }
+            }
+        }
+    }
+    
+    return true;
+}
+
+void XorSubsumer::clearDouble(vec<Lit>& ps) const
+{
+    std::sort(ps.getData(), ps.getDataEnd());
+    Lit p;
+    uint32_t i, j;
+    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
+        if (ps[i].var() == p.var()) {
+            //added, but easily removed
+            j--;
+            p = lit_Undef;
+        } else
+            ps[j++] = p = ps[i];
+    }
+    ps.shrink(i - j);
+}
+
+const bool XorSubsumer::removeDependent()
 {
     for (Var var = 0; var < occur.size(); var++) {
         if (cannot_eliminate[var]) continue;
@@ -263,19 +308,21 @@ void XorSubsumer::removeDependent()
             var_elimed[var] = true;
             numElimed++;
             
-            clearDouble(lits);
-            uint lastSize =  solver.varReplacer->getClauses().size();
+            uint32_t lastSize =  solver.varReplacer->getClauses().size();
             XorClause* c = solver.addXorClauseInt(lits, inverted, group);
             
             if (c != NULL) {
                 linkInClause(*c);
                 if (solver.varReplacer->getClauses().size() > lastSize) {
-                    for (uint i = lastSize; i  < solver.varReplacer->getClauses().size(); i++)
+                    for (uint32_t i = lastSize; i  < solver.varReplacer->getClauses().size(); i++)
                         addToCannotEliminate(solver.varReplacer->getClauses()[i]);
                 }
             }
+            if (!solver.ok) return false;
         }
     }
+    
+    return true;
 }
 
 inline void XorSubsumer::addToCannotEliminate(Clause* it)
@@ -283,23 +330,6 @@ inline void XorSubsumer::addToCannotEliminate(Clause* it)
     const Clause& c = *it;
     for (uint32_t i2 = 0; i2 < c.size(); i2++)
         cannot_eliminate[c[i2].var()] = true;
-}
-
-void XorSubsumer::clearDouble(vec<Lit>& ps) const
-{    
-    std::sort(ps.getData(), ps.getData());
-    Lit p;
-    uint32_t i, j;
-    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
-        ps[i] = ps[i].unsign();
-        if (ps[i] == p) {
-            //added, but easily removed
-            j--;
-            p = lit_Undef;
-        } else
-            ps[j++] = p = ps[i];
-    }
-    ps.shrink(i - j);
 }
 
 const bool XorSubsumer::unEliminate(const Var var)
@@ -317,9 +347,6 @@ const bool XorSubsumer::unEliminate(const Var var)
     solver.libraryCNFFile = NULL;
     for (vector<XorClause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         XorClause& c = **it2;
-        for (uint32_t i = 0; i < c.size(); it2++) {
-            c[i] = c[i].unsign();
-        }
         solver.addXorClause(c, c.xor_clause_inverted());
         free(&c);
     }
@@ -338,6 +365,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     clauses_cut = 0;
     clauseID = 0;
     uint32_t lastNumElimed = numElimed;
+    localSubstituteUseful = 0;
     
     for (Var var = 0; var < solver.nVars(); var++) {
         //occur[var].clear(true);
@@ -396,7 +424,10 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
             }
             addFromSolver(solver.xorclauses);
         }*/
-        if (solver.conglomerateXors) removeDependent();
+        if (solver.conglomerateXors && !removeDependent())
+            return false;
+        if (solver.heuleProcess && !localSubstitute())
+            return false;
     }
     
     if (solver.trail.size() - origTrailSize > 0)
@@ -405,12 +436,13 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     addBackToSolver();
     
     if (solver.verbosity >= 1) {
-        std::cout << "c |  xorcla-subs: " << std::setw(6) << clauses_subsumed
-        << " xorcla-cut: " << std::setw(6) << clauses_cut
-        << " v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
+        std::cout << "c |  x-subs: " << std::setw(6) << clauses_subsumed
+        << " x-cut: " << std::setw(6) << clauses_cut
+        << " v-fix: " << std::setw(6) <<solver.trail.size() - origTrailSize
         << " v-elim: " <<std::setw(6) << numElimed - lastNumElimed
-        << " time: " << std::setw(7) << std::setprecision(2) << (cpuTime() - myTime)
-        << std::setw(7) << "  |" << std::endl;
+        << " l-sub:" << std::setw(6) << localSubstituteUseful
+        << " time: " << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime)
+        << std::setw(3) << "  |" << std::endl;
     }
     
     return true;
