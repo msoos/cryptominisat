@@ -115,7 +115,7 @@ void Logger::cut_name_to_size(string& name) const
 }
 
 // Adds the new clause group's name to the information stored
-void Logger::set_group_name(const uint group, char* name_tmp)
+void Logger::set_group_name(const uint group, const char* name_tmp)
 {
     if (!statistics_on && !proof_graph_on)
         return;

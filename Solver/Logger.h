@@ -77,7 +77,7 @@ public:
     void set_variable_name(const uint var, char* name_tmp);
 
     //function to name clause groups
-    void set_group_name(const uint group, char* name_tmp);
+    void set_group_name(const uint group, const char* name_tmp);
     void set_group_name(const uint group, string& name);
     string get_group_name(const uint group) const;
 
