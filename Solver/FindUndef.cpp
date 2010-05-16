@@ -102,13 +102,14 @@ const uint FindUndef::unRoll()
         assert(isPotentialSum > 0);
         
         uint32_t maximum = 0;
-        Var v;
+        Var v = var_Undef;
         for (uint i = 0; i < isPotential.size(); i++) {
             if (isPotential[i] && satisfies[i] >= maximum) {
                 maximum = satisfies[i];
                 v = i;
             }
         }
+        assert(v != var_Undef);
         
         isPotential[v] = false;
         isPotentialSum--;
