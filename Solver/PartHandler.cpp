@@ -294,7 +294,7 @@ void PartHandler::readdRemovedClauses()
         for (Lit *l = (*it)->getData(), *end2 = (*it)->getDataEnd(); l != end2; l++) {
             *l = l->unsign();
         }
-        solver.addXorClause(**it, (*it)->getGroup());
+        solver.addXorClause(**it, (**it).xor_clause_inverted(), (*it)->getGroup());
         assert(solver.ok);
     }
     xorClausesRemoved.clear();
