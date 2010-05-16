@@ -111,6 +111,8 @@ class FailedVarSearcher {
         //State between runs
         bool finishedLastTimeVar;
         uint32_t lastTimeWentUntilVar;
+        bool finishedLastTimeBin;
+        uint32_t lastTimeWentUntilBin;
         
         double numPropsMultiplier;
         uint32_t lastTimeFoundTruths;

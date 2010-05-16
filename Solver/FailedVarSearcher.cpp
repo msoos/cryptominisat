@@ -39,6 +39,8 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
     , finishedLastTimeVar(true)
     , lastTimeWentUntilVar(0)
+    , finishedLastTimeBin(true)
+    , lastTimeWentUntilBin(0)
     , numPropsMultiplier(1.0)
     , lastTimeFoundTruths(0)
 {
@@ -169,6 +171,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     //For 2-long xor through Le Berre paper
     bothInvert = 0;
     
+    uint32_t fromBin;
     uint32_t fromVar;
     if (finishedLastTimeVar || lastTimeWentUntilVar >= solver.nVars())
         fromVar = 0;
@@ -178,7 +181,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     lastTimeWentUntilVar = solver.nVars();
     for (Var var = fromVar; var < solver.nVars(); var++) {
         if (solver.assigns[var] == l_Undef && solver.order_heap.inHeap(var)) {
-            if ((int)solver.propagations - (int)origProps >= (int)numProps)  {
+            if (solver.propagations - origProps >= numProps)  {
                 finishedLastTimeVar = false;
                 lastTimeWentUntilVar = var;
                 break;
@@ -188,19 +191,26 @@ const bool FailedVarSearcher::search(uint64_t numProps)
         }
     }
     
-    /*if (solver.verbosity >= 1) printResults(myTime);
-    
-    for (Clause **it = solver.binaryClauses.getData(), **end = solver.binaryClauses.getDataEnd(); it != end; it++) {
-        if ((int)solver.propagations - (int)origProps >= 2*(int)numProps)
+    if (solver.verbosity >= 1) printResults(myTime);
+    if (finishedLastTimeBin || lastTimeWentUntilBin >= solver.binaryClauses.size())
+        fromBin = 0;
+    else
+        fromBin = lastTimeWentUntilBin;
+    finishedLastTimeBin = true;
+    lastTimeWentUntilBin = solver.nVars();
+    for (uint32_t binCl = 0; binCl < solver.binaryClauses.size(); binCl++) {
+        if ((double)(solver.propagations - origProps) >= 1.1*(double)numProps)  {
+            finishedLastTimeBin = false;
+            lastTimeWentUntilBin = binCl;
             break;
+        }
         
-        Lit lit1((**it)[0]);
-        Lit lit2((**it)[1]);
-        if (solver.value(lit1) == l_Undef && solver.value(lit2) == l_Undef) {
-            if (!tryBoth(lit1, lit2))
+        Clause& cl = *solver.binaryClauses[binCl];
+        if (solver.value(cl[0]) == l_Undef && solver.value(cl[1]) == l_Undef) {
+            if (!tryBoth(cl[0], cl[1]))
                 goto end;
         }
-    }*/
+    }
     
     /*for (Clause **it = solver.clauses.getData(), **end = solver.clauses.getDataEnd(); it != end; it++) {
         Clause& c = **it;
