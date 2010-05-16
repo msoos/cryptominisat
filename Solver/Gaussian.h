@@ -43,9 +43,6 @@ using std::endl;
 
 class Clause;
 
-static const uint16_t unassigned_col = std::numeric_limits<uint16_t>::max();
-static const Var unassigned_var = std::numeric_limits<Var>::max();
-
 class Gaussian
 {
 public:

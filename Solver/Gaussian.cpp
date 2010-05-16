@@ -31,6 +31,9 @@ using std::endl;
 #include <iterator>
 #endif
 
+static const uint16_t unassigned_col = std::numeric_limits<uint16_t>::max();
+static const Var unassigned_var = std::numeric_limits<Var>::max();
+
 ostream& operator << (ostream& os, const vec<Lit>& v)
 {
     for (uint32_t i = 0; i != v.size(); i++) {
