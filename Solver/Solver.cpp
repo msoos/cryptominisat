@@ -526,7 +526,7 @@ void Solver::cancelUntil(int level)
     cout << endl;
     #endif
     
-    if (decisionLevel() > level) {
+    if ((int)decisionLevel() > level) {
         
         #ifdef USE_GAUSS
         for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++)
@@ -812,7 +812,7 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, i
             if (!seen[my_var] && level[my_var] > 0) {
                 varBumpActivity(my_var);
                 seen[my_var] = 1;
-                if (level[my_var] >= decisionLevel()) {
+                if (level[my_var] >= (int)decisionLevel()) {
                     pathC++;
                     #ifdef UPDATEVARACTIVITY
                     if ( reason[q.var()] != NULL  && reason[q.var()]->learnt() )
@@ -1580,7 +1580,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
         assert(false);
         break;
     }
-    if (nof_conflicts_fullrestart >= 0 && conflicts >= nof_conflicts_fullrestart)  {
+    if (nof_conflicts_fullrestart >= 0 && (int)conflicts >= nof_conflicts_fullrestart)  {
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis)
             progress_estimate = progressEstimate();
@@ -1908,7 +1908,7 @@ end:
 
 const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart)
 {
-    if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
+    if (nof_conflicts_fullrestart > 0 && (int)conflicts >= nof_conflicts_fullrestart) {
         #ifdef USE_GAUSS
         clearGaussMatrixes();
         #endif //USE_GAUSS
