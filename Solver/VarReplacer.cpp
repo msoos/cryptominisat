@@ -179,7 +179,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
 const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2)
 {
     uint origSize = c.size();
-    std::sort(c.getData(), c.getData() + c.size());
+    std::sort(c.getData(), c.getDataEnd());
     Lit p;
     uint32_t i, j;
     for (i = j = 0, p = lit_Undef; i != c.size(); i++) {
