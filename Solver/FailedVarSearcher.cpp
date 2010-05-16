@@ -535,10 +535,9 @@ inline const bool FailedVarSearcher::cleanClause(XorClause& ps)
     
     if (ps.size() != origSize) ps.setStrenghtened();
     if (ps.size() == 2) {
-        vec<Lit> tmp(2);
-        tmp[0] = ps[0].unsign();
-        tmp[1] = ps[1].unsign();
-        solver.varReplacer->replace(tmp, ps.xor_clause_inverted(), ps.getGroup());
+        ps[0] = ps[0].unsign();
+        ps[1] = ps[1].unsign();
+        solver.varReplacer->replace(ps, ps.xor_clause_inverted(), ps.getGroup());
         return false;
     }
     
