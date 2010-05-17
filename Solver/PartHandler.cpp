@@ -97,7 +97,7 @@ const bool PartHandler::handle()
                 assert(partFinder.getVarPart(var) == part);
                 if (solver.decision_var[var]) {
                     solver.setDecisionVar(var, false);
-                    if (solver.decision_var[var]) decisionVarRemoved.push(var);
+                    decisionVarRemoved.push(var);
                 }
                 i2++;
             } else {
