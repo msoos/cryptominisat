@@ -305,6 +305,10 @@ const bool XorSubsumer::removeDependent()
             unlinkClause(occ[0], var);
             solver.setDecisionVar(var, false);
             var_elimed[var] = true;
+            #ifdef VERBOSE_DEBUG
+            std::cout << "Eliminating dependent var " << var + 1 << std::endl;
+            std::cout << "-> Removing dependent clause "; occ[0].clause->plainPrint();
+            #endif //VERBOSE_DEBUG
             numElimed++;
         } else if (occ.size() == 2) {
             vec<Lit> lits;
@@ -319,6 +323,11 @@ const bool XorSubsumer::removeDependent()
             inverted ^= !c2.xor_clause_inverted();
             uint32_t group = c2.getGroup();
 
+            #ifdef VERBOSE_DEBUG
+            std::cout << "Eliminating var " << var + 1 << " present in 2 xor-clauses" << std::endl;
+            std::cout << "-> Removing xor clause "; occ[0].clause->plainPrint();
+            std::cout << "-> Removing xor clause "; occ[1].clause->plainPrint();
+            #endif //VERBOSE_DEBUG
             XorClauseSimp toUnlink0 = occ[0];
             XorClauseSimp toUnlink1 = occ[1];
             unlinkClause(toUnlink0);

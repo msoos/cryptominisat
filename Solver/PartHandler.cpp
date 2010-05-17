@@ -34,8 +34,12 @@ const bool PartHandler::handle()
         return true;
     
     PartFinder partFinder(solver);
-    if (!partFinder.findParts())
+    if (!partFinder.findParts()) {
+        #ifdef VERBOSE_DEBUG
+        std::cout << "c findParts() found UNSAT. Whole problem is unsat." << std::endl;
+        #endif //VERBOSE_DEBUG
         return false;
+    }
     
     uint32_t num_parts = partFinder.getReverseTable().size();
     if (num_parts == 1)
@@ -81,6 +85,11 @@ const bool PartHandler::handle()
         uint32_t i2 = 0;
         for (Var var = 0; var < solver.nVars(); var++) {
             if (i2 < vars.size() && vars[i2] == var) {
+                #ifdef VERBOSE_DEBUG
+                if (!solver.decision_var[var]) {
+                    std::cout << "var " << var + 1 << " is non-decision, but in part... strange." << std::endl;
+                }
+                #endif //VERBOSE_DEBUG
                 newSolver.newVar(solver.decision_var[var]);
                 newSolver.activity[var] = solver.activity[var];
                 newSolver.defaultPolarities[var] = solver.polarity[var];
@@ -107,8 +116,12 @@ const bool PartHandler::handle()
         assert(checkClauseMovement(newSolver, part, partFinder));
         
         lbool status = newSolver.solve();
-        if (status == l_False)
+        if (status == l_False) {
+            #ifdef VERBOSE_DEBUG
+            std::cout << "c One of the sub-problems was UNSAT. Whole problem is unsat." << std::endl;
+            #endif //VERBOSE_DEBUG
             return false;
+        }
         assert(status != l_Undef);
         
         for (Var var = 0; var < newSolver.nVars(); var++) {
@@ -190,6 +203,10 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_
             continue;
         }
         solver.detachClause(**i);
+        #ifdef VERBOSE_DEBUG
+        std::cout << "clause in this part:"; (**i).plainPrint();
+        #endif
+
         vec<Lit> cs((*i)->size());
         std::copy((**i).getData(), (**i).getDataEnd(), cs.getData());
         newSolver.addClause(cs, (**i).getGroup());
@@ -208,6 +225,10 @@ void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint
             continue;
         }
         solver.detachClause(**i);
+        #ifdef VERBOSE_DEBUG
+        std::cout << "xor clause in this part:"; (**i).plainPrint();
+        #endif
+
         vec<Lit> cs((*i)->size());
         std::copy((*i)->getData(), (*i)->getDataEnd(), cs.getData());
         newSolver.addXorClause(cs, (**i).xor_clause_inverted(), (**i).getGroup());
@@ -233,7 +254,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
         for (const Lit* l = c.getData(), *end = l + c.size(); l != end; l++) {
             if (partFinder.getVarPart(l->var()) != clause_part) {
                 #ifdef VERBOSE_DEBUG
-                std::cout << "Learnt clause in both parts!" << std::endl;
+                std::cout << "Learnt clause in both parts:"; c.plainPrint();
                 #endif
                 
                 removed = true;
@@ -244,7 +265,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
         if (removed) continue;
         if (clause_part == part) {
             #ifdef VERBOSE_DEBUG
-            std::cout << "Learnt clause in this part!" << std::endl;
+            //std::cout << "Learnt clause in other part:"; c.plainPrint();
             #endif
             
             solver.detachClause(c);
@@ -252,7 +273,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
             free(*i);
         } else {
             #ifdef VERBOSE_DEBUG
-            std::cout << "Learnt clause in other part!" << std::endl;
+            std::cout << "Learnt clause in other part:"; c.plainPrint();
             #endif
             
             *j++ = *i;
