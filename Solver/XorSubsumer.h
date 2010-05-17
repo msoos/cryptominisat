@@ -67,6 +67,7 @@ private:
     map<Var, vector<XorClause*> > elimedOutVar;
     vec<char> var_elimed;
     uint32_t numElimed;
+    void removeWrong(vec<Clause*>& cs);
     
     //Heule-process
     void clearDouble(vec<Lit>& ps) const;

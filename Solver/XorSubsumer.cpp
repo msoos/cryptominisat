@@ -198,6 +198,9 @@ void XorSubsumer::fillCannotEliminate()
     std::fill(cannot_eliminate.getData(), cannot_eliminate.getDataEnd(), false);
     for (uint32_t i = 0; i < solver.clauses.size(); i++)
         addToCannotEliminate(solver.clauses[i]);
+
+    for (uint32_t i = 0; i < solver.binaryClauses.size(); i++)
+        if (!(*solver.binaryClauses[i]).learnt()) addToCannotEliminate(solver.binaryClauses[i]);
     
     const vec<Clause*>& tmp = solver.varReplacer->getClauses();
     for (uint32_t i = 0; i < tmp.size(); i++)
@@ -293,6 +296,32 @@ void XorSubsumer::clearDouble(vec<Lit>& ps) const
     }
     ps.shrink(i - j);
 }
+
+void XorSubsumer::removeWrong(vec<Clause*>& cs)
+{
+    Clause **i = cs.getData();
+    Clause **j = i;
+    for (Clause **end =  i + cs.size(); i != end; i++) {
+        Clause& c = **i;
+        if (!c.learnt())  {
+            *j++ = *i;
+            continue;
+        }
+        bool remove = false;
+        for (Lit *l = c.getData(), *end2 = l+c.size(); l != end2; l++) {
+            if (var_elimed[l->var()]) {
+                remove = true;
+                solver.detachClause(c);
+                free(&c);
+                break;
+            }
+        }
+        if (!remove)
+            *j++ = *i;
+    }
+    cs.shrink(i-j);
+}
+
 
 const bool XorSubsumer::removeDependent()
 {
@@ -462,7 +491,9 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     
     if (solver.trail.size() - origTrailSize > 0)
         solver.order_heap.filter(Solver::VarFilter(solver));
-    
+
+    removeWrong(solver.learnts);
+    removeWrong(solver.binaryClauses);
     addBackToSolver();
     
     if (solver.verbosity >= 1) {
