@@ -475,7 +475,7 @@ void printUsage(char** argv, Solver& S)
     printf("                     Normally, too small matrixes are discarded for\n");
     printf("                     reasons of efficiency. Default: %d\n", S.gaussconfig.minMatrixRows);
     printf("  --savematrix     = [0 - 2^32-1] Save matrix every Nth decision level.\n");
-    printf("                     Default: %d", S.gaussconfig.only_nth_gauss_save);
+    printf("                     Default: %d\n", S.gaussconfig.only_nth_gauss_save);
     printf("  --noreaddold     = Readd old learnts for failed variable searching.\n");
     printf("                     These learnts are usually deleted, but may help\n");
     printf("\n");
