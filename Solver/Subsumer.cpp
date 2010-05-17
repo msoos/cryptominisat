@@ -834,13 +834,13 @@ const bool Subsumer::simplifyBySubsumption()
     if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
         numMaxSubsume0 = 2000000 * (1+numCalls/2);
         numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
-        numMaxSubsume1 = 500000 * (1+numCalls/2);
+        numMaxSubsume1 = 300000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(50000.0 * (0.8+(double)(numCalls)/3.0));
     }
     if (clauses.size() <= 1500000) {
         numMaxSubsume0 = 4000000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
-        numMaxSubsume1 = 800000 * (1+numCalls/2);
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/2.0));
+        numMaxSubsume1 = 400000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
     }
     
