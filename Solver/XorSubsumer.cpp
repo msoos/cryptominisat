@@ -74,21 +74,21 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
         } else {
             assert(unmatchedPart.size() > 0);
             clauses_cut++;
-            //XorClause *c = solver.addXorClauseInt(unmatchedPart, tmp->xor_clause_inverted() ^ origClauseInverted, tmp->getGroup());
-            if (!solver.ok) return;
-            //if (c != NULL) {
-                //linkInClause(*c);
+            XorClause *c = solver.addXorClauseInt(unmatchedPart, tmp->xor_clause_inverted() ^ !origClauseInverted, tmp->getGroup());
+            if (c != NULL) {
+                linkInClause(*c);
                 needUnlinkPS = true;
-            //}
+            }
+            if (!solver.ok) return;
         }
         unmatchedPart.clear();
     }
     
-    /*if (needUnlinkPS) {
+    if (needUnlinkPS) {
         XorClause* tmp = ps.clause;
         unlinkClause(ps);
         free(tmp);
-    }*/
+    }
 }
 
 void XorSubsumer::findUnMatched(vec<Lit>& A, XorClause& B, vec<Lit>& unmatchedPart)
