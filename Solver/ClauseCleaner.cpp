@@ -158,10 +158,23 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
     for (s = ss = cs.getData(), end = s + cs.size();  s != end; s++) {
         if (s+1 != end)
             __builtin_prefetch(*(s+1), 1, 0);
+
+        #ifdef DEBUG_ATTACH
+        assert(find(solver.xorwatches[(**s)[0].var()], *s));
+        assert(find(solver.xorwatches[(**s)[1].var()], *s));
+        if (solver.assigns[(**s)[0].var()]!=l_Undef || solver.assigns[(**s)[1].var()]!=l_Undef) {
+            satisfied(**s);
+        }
+        #endif //DEBUG_ATTACH
+        
         if (cleanClause(**s)) {
             solver.freeLater.push(*s);
             (*s)->setRemoved();
         } else {
+            #ifdef DEBUG_ATTACH
+            assert(find(solver.xorwatches[(**s)[0].var()], *s));
+            assert(find(solver.xorwatches[(**s)[1].var()], *s));
+            #endif //DEBUG_ATTACH
             *ss++ = *s;
         }
     }
@@ -196,20 +209,23 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
             return true;
         }
         case 2: {
-            vec<Lit> ps(2);
-            ps[0] = c[0].unsign();
-            ps[1] = c[1].unsign();
-            solver.varReplacer->replace(ps, c.xor_clause_inverted(), c.getGroup());
+            c[0] = c[0].unsign();
+            c[1] = c[1].unsign();
+            solver.varReplacer->replace(c, c.xor_clause_inverted(), c.getGroup());
             solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
             return true;
         }
-        default:
+        default: {
             if (i-j > 0) {
                 c.setStrenghtened();
                 solver.clauses_literals -= i-j;
             }
             return false;
+        }
     }
+
+    assert(false);
+    return false;
 }
 
 void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::ClauseSetType type, Subsumer& subs, const uint limit)

@@ -799,10 +799,12 @@ const bool Subsumer::simplifyBySubsumption()
         occur[2*var].clear();
         occur[2*var+1].clear();
     }
-    
+
+    solver.testAllClauseAttach();
     if (solver.performReplace && !solver.varReplacer->performReplace(true))
         return false;
     fillCannotEliminate();
+    solver.testAllClauseAttach();
     
     clauses.clear();
     cl_added.clear();
@@ -837,7 +839,7 @@ const bool Subsumer::simplifyBySubsumption()
     }
     if (clauses.size() <= 1500000) {
         numMaxSubsume0 = 4000000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() * (0.8+(double)(numCalls)/2.0));
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
         numMaxSubsume1 = 800000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
     }
@@ -1020,7 +1022,8 @@ const bool Subsumer::simplifyBySubsumption()
             << "                                    |" << std::endl;
         }
     }
-    
+
+    solver.testAllClauseAttach();
     return true;
 }
 

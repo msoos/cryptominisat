@@ -54,6 +54,10 @@ private:
     bool subset(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
     void findUnMatched(vec<Lit>& A, XorClause& B, vec<Lit>& unmatchedPart);
+
+    //helper
+    void cleanOccFromNull(vec<XorClauseSimp>& occ);
+    void testAllClauseAttach() const;
     
     //dependent removal
     const bool removeDependent();

@@ -62,7 +62,7 @@ class VarReplacer
     private:
         const bool performReplaceInternal();
         
-        const bool replace_set(vec<Clause*>& set);
+        const bool replace_set(vec<Clause*>& cs, const bool binClauses);
         const bool replace_set(vec<XorClause*>& cs);
         const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
         const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);

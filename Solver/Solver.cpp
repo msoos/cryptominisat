@@ -216,6 +216,9 @@ Var Solver::newVar(bool dvar)
 template<class T>
 XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32_t group)
 {
+    assert(qhead == trail.size());
+    assert(decisionLevel() == 0);
+    
     if (ps.size() > (0x01UL << 18)) {
         std::cout << "Too long clause!" << std::endl;
         exit(-1);
@@ -423,6 +426,10 @@ template bool Solver::addClause(Clause& ps, const uint group, char* group_name);
 void Solver::attachClause(XorClause& c)
 {
     assert(c.size() > 2);
+    #ifdef DEBUG_ATTACH
+    assert(assigns[c[0].var()] == l_Undef);
+    assert(assigns[c[1].var()] == l_Undef);
+    #endif //DEBUG_ATTACH
 
     xorwatches[c[0].var()].push(&c);
     xorwatches[c[1].var()].push(&c);
@@ -1413,6 +1420,7 @@ inline int64_t abs64(int64_t a)
 |________________________________________________________________________________________________@*/
 const bool Solver::simplify()
 {
+    testAllClauseAttach();
     assert(decisionLevel() == 0);
 
     if (!ok || propagate() != NULL) {
@@ -1440,14 +1448,16 @@ const bool Solver::simplify()
         (((double)abs64((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown) >
         ((double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup)) {
         lastSearchForBinaryXor = propagations;
-    
+
         clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
         clauseCleaner->cleanClauses(learnts, ClauseCleaner::learnts);
         clauseCleaner->removeSatisfied(binaryClauses, ClauseCleaner::binaryClauses);
         if (!ok) return false;
-    
+        testAllClauseAttach();
+
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
         if (!xorFinder.doNoPart(2, 2)) return false;
+        testAllClauseAttach();
         
         lastNbBin = nbBin;
         becameBinary = 0;
@@ -1455,6 +1465,7 @@ const bool Solver::simplify()
     
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
+    testAllClauseAttach();
     if (!ok) return false;
     
     if (performReplace && !varReplacer->performReplace())
@@ -1472,6 +1483,7 @@ const bool Solver::simplify()
     simpDB_assigns = nAssigns();
     simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
 
+    testAllClauseAttach();
     return true;
 }
 
@@ -1510,6 +1522,7 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     }
     #endif //USE_GAUSS
 
+    testAllClauseAttach();
     for (;;) {
         Clause* confl = propagate(update);
 
@@ -1818,6 +1831,7 @@ inline void Solver::setDefaultRestartType()
 
 const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t numProps)
 {
+    testAllClauseAttach();
     #ifdef USE_GAUSS
     bool gauss_was_cleared = (gauss_matrixes.size() == 0);
     clearGaussMatrixes();
@@ -1849,21 +1863,24 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     if (status != l_Undef)
         goto end;
     printRestartStat();
-    
+
     if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 6000000 : 2000000))  {
         status = l_False;
         goto end;
     }
+    testAllClauseAttach();
     
     if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) {
         status = l_False;
         goto end;
     }
+    testAllClauseAttach();
     
     if (doSubsumption && !subsumer->simplifyBySubsumption()) {
         status = l_False;
         goto end;
     }
+    testAllClauseAttach();
     
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
@@ -1893,7 +1910,8 @@ end:
     if (status == l_Undef && !gauss_was_cleared && !matrixFinder->findMatrixes())
         status = l_False;
     #endif //USE_GAUSS
-    
+
+    testAllClauseAttach();
     return status;
 }
 
@@ -1932,31 +1950,35 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
 inline void Solver::performStepsBeforeSolve()
 {
     assert(qhead == trail.size());
+    testAllClauseAttach();
     if (performReplace && !varReplacer->performReplace()) return;
     
-    
+    testAllClauseAttach();
     if (doSubsumption
         && !libraryUsage
         && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
     
+    testAllClauseAttach();
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
         if (!xorFinder.doNoPart(2, 2)) return;
-        
         if (performReplace && !varReplacer->performReplace(true)) return;
     }
     
+    testAllClauseAttach();
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
         if (!xorFinder.doNoPart(3, 7)) return;
     }
-        
+    
     if (xorclauses.size() > 1) {
+        testAllClauseAttach();
         if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption())
             return;
         
+        testAllClauseAttach();
         if (performReplace && !varReplacer->performReplace())
             return;
     }
@@ -2297,3 +2319,36 @@ void Solver::printEndSearchStat()
         }
 }
 
+#ifdef DEBUG_ATTACH
+void Solver::testAllClauseAttach() const
+{
+    for (Clause *const*it = clauses.getData(), *const*end = clauses.getDataEnd(); it != end; it++) {
+        const Clause& c = **it;
+        if (c.size() > 2) {
+            assert(findWatchedCl(watches[(~c[0]).toInt()], &c));
+            assert(findWatchedCl(watches[(~c[1]).toInt()], &c));
+        } else {
+            assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], &c));
+            assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], &c));
+        }
+    }
+    
+    for (Clause *const*it = binaryClauses.getData(), *const*end = binaryClauses.getDataEnd(); it != end; it++) {
+        const Clause& c = **it;
+        assert(c.size() == 2);
+        assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], &c));
+        assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], &c));
+    }
+    
+    for (XorClause *const*it = xorclauses.getData(), *const*end = xorclauses.getDataEnd(); it != end; it++) {
+        const XorClause& c = **it;
+        assert(find(xorwatches[c[0].var()], &c));
+        assert(find(xorwatches[c[1].var()], &c));
+        if (assigns[c[0].var()]!=l_Undef || assigns[c[1].var()]!=l_Undef) {
+            for (uint i = 0; i < c.size();i++) {
+                assert(assigns[c[i].var()] != l_Undef);
+            }
+        }
+    }
+}
+#endif //DEBUG_ATTACH

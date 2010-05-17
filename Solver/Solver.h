@@ -205,11 +205,11 @@ protected:
     template<class T>
     void    removeWatchedCl(vec<T> &ws, const Clause *c);
     template<class T>
-    bool    findWatchedCl(vec<T>& ws, const Clause *c);
+    bool    findWatchedCl(const vec<T>& ws, const Clause *c) const;
     template<class T>
     void    removeWatchedBinCl(vec<T> &ws, const Clause *c);
     template<class T>
-    bool    findWatchedBinCl(vec<T>& ws, const Clause *c);
+    bool    findWatchedBinCl(const vec<T>& ws, const Clause *c) const;
     
     // Helper structures:
     //
@@ -331,6 +331,7 @@ protected:
     void     removeClause(T& c);                       // Detach and free a clause.
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
     void     reverse_binary_clause(Clause& c) const;   // Binary clauses --- the first Lit has to be true
+    void     testAllClauseAttach() const;
 
     // Misc:
     //
@@ -592,14 +593,14 @@ inline void Solver::removeWatchedBinCl(vec<T> &ws, const Clause *c) {
     ws.pop();
 }
 template<class T>
-inline bool Solver::findWatchedCl(vec<T>& ws, const Clause *c)
+inline bool Solver::findWatchedCl(const vec<T>& ws, const Clause *c) const
 {
     uint32_t j = 0;
     for (; j < ws.size() && ws[j].clause != c; j++);
     return j < ws.size();
 }
 template<class T>
-inline bool Solver::findWatchedBinCl(vec<T>& ws, const Clause *c)
+inline bool Solver::findWatchedBinCl(const vec<T>& ws, const Clause *c) const
 {
     uint32_t j = 0;
     for (; j < ws.size() && ws[j].clause != c; j++);
@@ -670,6 +671,13 @@ static inline void check(bool expr)
 {
     assert(expr);
 }
+
+#ifndef DEBUG_ATTACH
+inline void Solver::testAllClauseAttach() const
+{
+    return;
+}
+#endif //DEBUG_ATTACH
 
 //=================================================================================================
 #endif //SOLVER_H

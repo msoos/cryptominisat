@@ -123,6 +123,7 @@ const TwoLongXor FailedVarSearcher::getTwoLongXor(const XorClause& c)
 const bool FailedVarSearcher::search(uint64_t numProps)
 {
     assert(solver.decisionLevel() == 0);
+    solver.testAllClauseAttach();
     
     //Saving Solver state
     Heap<Solver::VarOrderLt> backup_order_heap(solver.order_heap);
@@ -275,6 +276,7 @@ end:
     solver.polarity = backup_polarities;
     solver.order_heap.filter(Solver::VarFilter(solver));
     
+    solver.testAllClauseAttach();
     return solver.ok;
 }
 

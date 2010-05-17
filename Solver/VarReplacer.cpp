@@ -72,6 +72,7 @@ const bool VarReplacer::performReplaceInternal()
     
     solver.clauseCleaner->removeAndCleanAll(true);
     if (solver.ok == false) return false;
+    solver.testAllClauseAttach();
     
     #ifdef VERBOSE_DEBUG
     {
@@ -114,10 +115,12 @@ const bool VarReplacer::performReplaceInternal()
     
     lastReplacedVars = replacedVars;
     
-    if (!replace_set(solver.clauses)) goto end;
-    if (!replace_set(solver.learnts)) goto end;
-    if (!replace_set(solver.binaryClauses)) goto end;
+    solver.testAllClauseAttach();
+    if (!replace_set(solver.binaryClauses, true)) goto end;
+    if (!replace_set(solver.clauses, false)) goto end;
+    if (!replace_set(solver.learnts, false)) goto end;
     if (!replace_set(solver.xorclauses)) goto end;
+    solver.testAllClauseAttach();
     
 end:
     for (uint i = 0; i != clauses.size(); i++)
@@ -147,6 +150,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
         bool changed = false;
         Var origVar1 = c[0].var();
         Var origVar2 = c[1].var();
+        
         for (Lit *l = &c[0], *end2 = l + c.size(); l != end2; l++) {
             Lit newlit = table[l->var()];
             if (newlit.var() != l->var()) {
@@ -227,7 +231,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     return false;
 }
 
-const bool VarReplacer::replace_set(vec<Clause*>& cs)
+const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
 {
     Clause **a = cs.getData();
     Clause **r = a;
@@ -252,7 +256,11 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
                 return false;
             }
         } else {
-            *a++ = *r;
+            if (!binClauses && c.size() == 2) {
+                solver.becameBinary++;
+                solver.binaryClauses.push(&c);
+            } else
+                *a++ = *r;
         }
     }
     cs.shrink(r-a);
