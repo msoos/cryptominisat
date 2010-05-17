@@ -84,6 +84,7 @@ Solver::Solver() :
         , doVarElim        (true)
         , doSubsume1       (true)
         , failedVarSearch  (true)
+        , readdOldLearnts  (true)
         , libraryUsage     (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
@@ -149,6 +150,7 @@ Solver::~Solver()
     for (uint32_t i = 0; i != clauses.size(); i++) clauseFree(clauses[i]);
     for (uint32_t i = 0; i != binaryClauses.size(); i++) clauseFree(binaryClauses[i]);
     for (uint32_t i = 0; i != xorclauses.size(); i++) free(xorclauses[i]);
+    for (uint32_t i = 0; i != removedLearnts.size(); i++) free(removedLearnts[i]);
     #ifdef USE_GAUSS
     clearGaussMatrixes();
     delete matrixFinder;
@@ -1307,9 +1309,14 @@ void Solver::reduceDB()
     for (i = j = 0; i != removeNum; i++){
         //NOTE: The next instruciton only works if removeNum < learnts.size() (strictly smaller!!)
         __builtin_prefetch(learnts[i+1], 0, 0);
-        if (learnts[i]->size() > 2 && !locked(*learnts[i]) && learnts[i]->activity() > 2)
-            removeClause(*learnts[i]);
-        else
+        if (learnts[i]->size() > 2 && !locked(*learnts[i]) && learnts[i]->activity() > 2) {
+            if (readdOldLearnts) {
+                detachClause(*learnts[i]);
+                removedLearnts.push(learnts[i]);
+            } else {
+                removeClause(*learnts[i]);
+            }
+        } else
             learnts[j++] = learnts[i];
     }
     for (; i < learnts.size(); i++) {

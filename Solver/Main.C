@@ -476,6 +476,8 @@ void printUsage(char** argv, Solver& S)
     printf("                     reasons of efficiency. Default: %d\n", S.gaussconfig.minMatrixRows);
     printf("  --savematrix     = [0 - 2^32-1] Save matrix every Nth decision level.\n");
     printf("                     Default: %d", S.gaussconfig.only_nth_gauss_save);
+    printf("  --noreaddold     = Readd old learnts for failed variable searching.\n");
+    printf("                     These learnts are usually deleted, but may help\n");
     printf("\n");
 }
 
@@ -685,6 +687,8 @@ int main(int argc, char** argv)
             }
         } else if ((value = hasPrefix(argv[i], "--nosolprint"))) {
             printResult = false;
+        } else if ((value = hasPrefix(argv[i], "--noreaddold"))) {
+            S.readdOldLearnts = false;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

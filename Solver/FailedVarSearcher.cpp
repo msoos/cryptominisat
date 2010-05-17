@@ -124,6 +124,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
 {
     assert(solver.decisionLevel() == 0);
     solver.testAllClauseAttach();
+    double myTime = cpuTime();
     
     //Saving Solver state
     Heap<Solver::VarOrderLt> backup_order_heap(solver.order_heap);
@@ -132,9 +133,9 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     std::copy(solver.activity.getData(), solver.activity.getDataEnd(), backup_activity.getData());
     uint32_t backup_var_inc = solver.var_inc;
     uint32_t origHeapSize = solver.order_heap.size();
+    if (solver.readdOldLearnts && !readdRemovedLearnts()) goto end;
     
     //General Stats
-    double myTime = cpuTime();
     numFailed = 0;
     goodBothSame = 0;
     origProps = solver.propagations;
@@ -236,6 +237,8 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     }*/
 
 end:
+    if (solver.readdOldLearnts && solver.ok) removeOldLearnts();
+
     //Print results
     if (solver.verbosity >= 1) printResults(myTime);
     
@@ -289,6 +292,35 @@ void FailedVarSearcher::printResults(const double myTime) const
     " Prop: " << std::setw(5) << std::setprecision(2) << (solver.propagations - origProps)/1000  << "t"
     " Time: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime <<
     std::setw(5) << " |" << std::endl;
+}
+
+void FailedVarSearcher::removeOldLearnts()
+{
+    for (Clause **it = solver.removedLearnts.getData(), **end = solver.removedLearnts.getDataEnd(); it != end; it++) {
+        solver.detachClause(**it);
+    }
+}
+
+const bool FailedVarSearcher::readdRemovedLearnts()
+{
+    Clause **it1, **it2;
+    it1 = it2 = solver.removedLearnts.getData();
+    for (Clause **end = solver.removedLearnts.getDataEnd(); it1 != end; it1++) {
+        Clause* c = solver.addClauseInt(**it1, (**it1).getGroup());
+        free(*it1);
+        if (c != NULL) {
+            *it2 = c;
+            it2++;
+        }
+        if (!solver.ok) {
+            it1++;
+            for (; it1 != end; it1++) free(*it1);
+        }
+    }
+    solver.removedLearnts.shrink(it1-it2);
+    //std::cout << "Readded old learnts. New facts:" << (int)origHeapSize - (int)solver.order_heap.size() << std::endl;
+
+    return solver.ok;
 }
 
 const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
