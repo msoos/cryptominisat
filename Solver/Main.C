@@ -242,7 +242,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 char tmp[500];
                 untilEnd(in, tmp);
                 S.setVariableName(var-1, tmp);
-            } if (debugLib && str == "Solver::solve()") {
+            } else if (debugLib && str == "Solver::solve()") {
                 lbool ret = S.solve();
                 std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
                 FILE* res = fopen(s.c_str(), "w");
@@ -263,8 +263,8 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 debugLibPart++;
             } else if (debugNewVar && str == "Solver::newVar()") {
                 S.newVar();
-            }
-            else {
+            } else {
+                //printf("didn't understand in CNF file: 'c %s'\n", str.c_str());
                 skipLine(in);
             }
             break;
