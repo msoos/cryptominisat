@@ -69,6 +69,7 @@ class FailedVarSearcher {
         void cleanAndAttachClauses(vec<T*>& cs);
         const bool cleanClause(Clause& ps);
         const bool cleanClause(XorClause& ps);
+        void completelyDetachAndReattach();
 
         //For re-adding old removed learnt clauses
         const bool readdRemovedLearnts();

@@ -237,8 +237,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     }*/
 
 end:
-    if (solver.readdOldLearnts && solver.ok) removeOldLearnts();
-
+    bool removedOldLearnts = false;
     //Print results
     if (solver.verbosity >= 1) printResults(myTime);
     
@@ -247,26 +246,22 @@ end:
     if (solver.ok && (numFailed || goodBothSame)) {
         double time = cpuTime();
         if ((int)origHeapSize - (int)solver.order_heap.size() >  (int)origHeapSize/15 && solver.nClauses() + solver.learnts.size() > 500000) {
-            solver.clauses_literals = 0;
-            solver.learnts_literals = 0;
-            for (uint32_t i = 0; i < solver.nVars(); i++) {
-                solver.binwatches[i*2].clear();
-                solver.binwatches[i*2+1].clear();
-                solver.watches[i*2].clear();
-                solver.watches[i*2+1].clear();
-                solver.xorwatches[i].clear();
-            }
-            solver.varReplacer->reattachInternalClauses();
-            cleanAndAttachClauses(solver.binaryClauses);
-            cleanAndAttachClauses(solver.clauses);
-            cleanAndAttachClauses(solver.learnts);
-            cleanAndAttachClauses(solver.xorclauses);
+            completelyDetachAndReattach();
+            removedOldLearnts = true;
         } else {
             solver.clauseCleaner->removeAndCleanAll();
         }
         if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
             std::cout << "c |  Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
             <<  std::setw(33) << " | " << std::endl;
+        }
+    }
+
+    if (solver.ok && solver.readdOldLearnts && !removedOldLearnts) {
+        if (solver.removedLearnts.size() < 100000) {
+            removeOldLearnts();
+        } else {
+            completelyDetachAndReattach();
         }
     }
     
@@ -281,6 +276,24 @@ end:
     
     solver.testAllClauseAttach();
     return solver.ok;
+}
+
+void FailedVarSearcher::completelyDetachAndReattach()
+{
+    solver.clauses_literals = 0;
+    solver.learnts_literals = 0;
+    for (uint32_t i = 0; i < solver.nVars(); i++) {
+        solver.binwatches[i*2].clear();
+        solver.binwatches[i*2+1].clear();
+        solver.watches[i*2].clear();
+        solver.watches[i*2+1].clear();
+        solver.xorwatches[i].clear();
+    }
+    solver.varReplacer->reattachInternalClauses();
+    cleanAndAttachClauses(solver.binaryClauses);
+    cleanAndAttachClauses(solver.clauses);
+    cleanAndAttachClauses(solver.learnts);
+    cleanAndAttachClauses(solver.xorclauses);
 }
 
 void FailedVarSearcher::printResults(const double myTime) const
@@ -301,11 +314,28 @@ void FailedVarSearcher::removeOldLearnts()
     }
 }
 
+struct reduceDB_ltOldLearnt
+{
+    bool operator () (const Clause* x, const Clause* y) {
+        return x->size() > y->size();
+    }
+};
+
 const bool FailedVarSearcher::readdRemovedLearnts()
 {
+    uint32_t toRemove = (solver.removedLearnts.size() > MAX_OLD_LEARNTS) ? (solver.removedLearnts.size() - MAX_OLD_LEARNTS/4) : 0;
+    if (toRemove > 0)
+        std::sort(solver.removedLearnts.getData(), solver.removedLearnts.getDataEnd(), reduceDB_ltOldLearnt());
+
     Clause **it1, **it2;
     it1 = it2 = solver.removedLearnts.getData();
     for (Clause **end = solver.removedLearnts.getDataEnd(); it1 != end; it1++) {
+        if (toRemove > 0) {
+            free(*it1);
+            toRemove--;
+            continue;
+        }
+        
         Clause* c = solver.addClauseInt(**it1, (**it1).getGroup());
         free(*it1);
         if (c != NULL) {
