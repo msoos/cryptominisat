@@ -173,7 +173,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     //For 2-long xor through Le Berre paper
     bothInvert = 0;
     
-    uint32_t fromBin;
+    //uint32_t fromBin;
     uint32_t fromVar;
     if (finishedLastTimeVar || lastTimeWentUntilVar >= solver.nVars())
         fromVar = 0;
@@ -193,7 +193,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
         }
     }
     
-    if (solver.verbosity >= 1) printResults(myTime);
+    /*if (solver.verbosity >= 1) printResults(myTime);
     if (finishedLastTimeBin || lastTimeWentUntilBin >= solver.binaryClauses.size())
         fromBin = 0;
     else
@@ -212,7 +212,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
             if (!tryBoth(cl[0], cl[1]))
                 goto end;
         }
-    }
+    }*/
     
     /*for (Clause **it = solver.clauses.getData(), **end = solver.clauses.getDataEnd(); it != end; it++) {
         Clause& c = **it;
