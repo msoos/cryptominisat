@@ -351,6 +351,8 @@ void printStats(Solver& solver)
     printStatsLine("c learnts DL2", solver.nbDL2);
     printStatsLine("c learnts size 2", solver.nbBin);
     printStatsLine("c learnts size 1", solver.get_unitary_learnts_num());
+    printStatsLine("c v-elim SatELite", solver.getNumElimSubsume());
+    printStatsLine("c v-elim xor", solver.getNumElimXorSubsume());
     printStatsLine("c OTF clause improved", solver.improvedClauseNo);
     printStatsLine("c OTF impr. size diff", solver.improvedClauseSize, (double)solver.improvedClauseSize/(double)solver.improvedClauseNo, " lits/clause");
 

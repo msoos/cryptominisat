@@ -182,6 +182,9 @@ public:
     const uint32_t get_sum_gauss_prop() const;
     const uint32_t get_sum_gauss_unit_truths() const;
     #endif //USE_GAUSS
+
+    const uint32_t getNumElimSubsume() const; // Get variable elimination stats from Subsumer
+    const uint32_t getNumElimXorSubsume() const; // Get variable elimination stats from XorSubsumer
     
 protected:
     #ifdef USE_GAUSS
@@ -639,7 +642,6 @@ inline void Solver::removeClause(T& c)
     detachClause(c);
     clauseFree(&c);
 }
-
 
 //=================================================================================================
 // Debug + etc:

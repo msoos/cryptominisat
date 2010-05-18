@@ -1406,6 +1406,16 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     fclose(outfile);
 }
 
+const uint32_t Solver::getNumElimSubsume() const
+{
+    return subsumer->getNumElimed();
+}
+
+const uint32_t Solver::getNumElimXorSubsume() const
+{
+    return xorSubsumer->getNumElimed();
+}
+
 void Solver::setMaxRestarts(const uint num)
 {
     maxRestarts = num;
