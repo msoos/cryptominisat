@@ -497,13 +497,13 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     addBackToSolver();
     
     if (solver.verbosity >= 1) {
-        std::cout << "c |  x-subs: " << std::setw(6) << clauses_subsumed
+        std::cout << "c |  x-sub: " << std::setw(5) << clauses_subsumed
         << " x-cut: " << std::setw(6) << clauses_cut
-        << " v-fix: " << std::setw(6) <<solver.trail.size() - origTrailSize
+        << " vfix: " << std::setw(6) <<solver.trail.size() - origTrailSize
         << " v-elim: " <<std::setw(6) << numElimed - lastNumElimed
-        << " l-sub:" << std::setw(6) << localSubstituteUseful
+        << " locsubst:" << std::setw(6) << localSubstituteUseful
         << " time: " << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime)
-        << std::setw(3) << "  |" << std::endl;
+        << std::setw(3) << " |" << std::endl;
     }
     
     solver.testAllClauseAttach();
