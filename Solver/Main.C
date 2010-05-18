@@ -446,10 +446,12 @@ void printUsage(char** argv, Solver& S)
     printf("  --restart        = {auto, static, dynamic}   Which kind of restart strategy to\n");
     printf("                     follow. Default is auto\n");
     printf("  --dumplearnts    = <filename> If interrupted or reached restart limit, dump\n");
-    printf("                     the learnt unitary clauses to the specified file\n");
+    printf("                     the learnt clauses to the specified file. Maximum size of\n");
+    printf("                     dumped clauses can be specified with next option.\n");
     printf("  --maxdumplearnts = [0 - 2^32-1] When dumping the learnts to file, what\n");
     printf("                     should be maximum length of the clause dumped. Useful\n");
     printf("                     to make the resulting file smaller. Default is 2^32-1\n");
+    printf("                     note: 2-long XOR-s are always dumped.\n");
     printf("  --maxsolutions   = Search for given amount of solutions\n");
     printf("  --nofailedvar    = Don't search for failed vars, and don't search for vars\n");
     printf("                     doubly propagated to the same value\n");
