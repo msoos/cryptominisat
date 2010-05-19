@@ -274,7 +274,9 @@ protected:
     bqueue<uint>        nbDecisionLevelHistory; // Set of last decision level in conflict clauses
     double              totalSumOfDecisionLevel;
     uint64_t            conflictsAtLastSolve;
+    #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
     bqueue<uint>        avgBranchDepth; // Avg branch depth
+    #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     MTRand              mtrand;           // random number generaton
     RestartType         restartType;      // Used internally to determine which restart strategy to choose
     RestartType         lastSelectedRestartType; //the last selected restart type

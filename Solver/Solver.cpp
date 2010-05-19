@@ -730,11 +730,11 @@ Lit Solver::pickBranchLit()
     if (next != var_Undef) {
         if (simplifying && random)
             sign = mtrand.randInt(1);
-        /*else
-            sign = polarity[next] ^ (mtrand.randInt(200) == 1);*/
-        /*else if (avgBranchDepth.isvalid())
+        #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
+        else if (avgBranchDepth.isvalid())
             sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);
-        else*/
+        #endif
+        else
             sign = polarity[next];
     }
 
@@ -1682,7 +1682,9 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     learnt_clause.clear();
     Clause* c = analyze(confl, learnt_clause, backtrack_level, nbLevels, update);
     if (update) {
+        #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         avgBranchDepth.push(decisionLevel());
+        #endif //RANDOM_LOOKAROUND_SEARCHSPACE
         if (restartType == dynamic_restart)
             nbDecisionLevelHistory.push(nbLevels);
         totalSumOfDecisionLevel += nbLevels;
@@ -2032,8 +2034,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
     setDefaultRestartType();
     totalSumOfDecisionLevel = 0;
     conflictsAtLastSolve = conflicts;
+    #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
     avgBranchDepth.fastclear();
     avgBranchDepth.initSize(500);
+    #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     starts = 0;
 
     assumps.copyTo(assumptions);
@@ -2086,8 +2090,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
             return l_False;
         if (!chooseRestartType(lastFullRestart))
             return l_False;
+        #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         //if (avgBranchDepth.isvalid())
         //    std::cout << "avg branch depth:" << avgBranchDepth.getavg() << std::endl;
+        #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     }
     printEndSearchStat();
     
