@@ -137,7 +137,7 @@ protected:
     vec<Lit> tmp_clause;
 
     //propagation&conflict handling
-    void cancel_until_sublevel(const uint sublevel); // cancels until sublevel 'sublevel'. The var 'sublevel' must NOT go over the current level. I.e. this function is ONLY for moving inside the current level
+    void cancel_until_sublevel(const uint until_sublevel); // cancels until sublevel 'until_sublevel'. The var 'until_sublevel' must NOT go over the current level. I.e. this function is ONLY for moving inside the current level
     uint find_sublevel(const Var v) const; // find the sublevel (i.e. trail[X]) of a given variable
 
     //helper functions

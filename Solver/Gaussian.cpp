@@ -675,17 +675,17 @@ uint Gaussian::find_sublevel(const Var v) const
     return 0;
 }
 
-void Gaussian::cancel_until_sublevel(const uint sublevel)
+void Gaussian::cancel_until_sublevel(const uint until_sublevel)
 {
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Canceling until sublevel " << sublevel << endl;
     #endif
     
     for (vector<Gaussian*>::iterator gauss = solver.gauss_matrixes.begin(), end= solver.gauss_matrixes.end(); gauss != end; gauss++)
-        if (*gauss != this) (*gauss)->canceling(sublevel);
+        if (*gauss != this) (*gauss)->canceling(until_sublevel);
 
-    for (int level = solver.trail.size()-1; level >= (int)sublevel; level--) {
-        Var     var  = solver.trail[level].var();
+        for (int sublevel = solver.trail.size()-1; sublevel >= (int)until_sublevel; sublevel--) {
+        Var var  = solver.trail[sublevel].var();
         #ifdef VERBOSE_DEBUG
         cout << "(" << matrix_no << ")Canceling var " << var+1 << endl;
         #endif
@@ -694,7 +694,7 @@ void Gaussian::cancel_until_sublevel(const uint sublevel)
         solver.assigns[var] = l_Undef;
         solver.insertVarOrder(var);
     }
-    solver.trail.shrink(solver.trail.size() - sublevel);
+    solver.trail.shrink(solver.trail.size() - until_sublevel);
     
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Canceling sublevel finished." << endl;
