@@ -634,7 +634,7 @@ void tallyVotes(const vec<XorClause*>& cs, vector<double>& votes, vector<bool>& 
     }
 }
 
-const lbool Solver::calculateDefaultPolarities()
+void Solver::calculateDefaultPolarities()
 {
     #ifdef VERBOSE_DEBUG_POLARITIES
     std::cout << "Default polarities: " << std::endl;
@@ -681,8 +681,6 @@ const lbool Solver::calculateDefaultPolarities()
     #ifdef VERBOSE_DEBUG_POLARITIES
     std::cout << std::endl;
     #endif //VERBOSE_DEBUG_POLARITIES
-    
-    return l_Undef;
 }
 
 void Solver::setDefaultPolarities()
@@ -2071,8 +2069,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         if (!ok) return l_False;
     
         printStatHeader();
-        if (calculateDefaultPolarities() == l_False)
-        return l_False;
+        calculateDefaultPolarities();
         setDefaultPolarities();
     }
     

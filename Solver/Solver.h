@@ -391,7 +391,7 @@ protected:
     
     // Polarity chooser
     vector<bool> defaultPolarities; //The default polarity to set the var polarity when doing a full restart
-    const lbool  calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
+    void         calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
     bool         defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
     void         setDefaultPolarities(); //sets the polarity[] to that indicated by defaultPolarities[]
 };
