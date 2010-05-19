@@ -191,9 +191,8 @@ Var Solver::newVar(bool dvar)
     seen      .push_back(0);
     permDiff  .push(0);
     
-    polarity  .push_back(true);
-    oldPolarity.push_back(true);
-    defaultPolarities.push_back(true);
+    polarity  .push_back(defaultPolarity());
+    oldPolarity.push_back(defaultPolarity());
 
     decision_var.push_back(dvar);
     insertVarOrder(v);
@@ -590,43 +589,33 @@ inline bool Solver::defaultPolarity()
     return true;
 }
 
-void tallyVotes(const vec<Clause*>& cs, vector<double>& votes, vector<bool>& positiveLiteral, vector<bool>& negativeLiteral)
+void Solver::tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const
 {
     for (const Clause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
         const Clause& c = **it;
         if (c.learnt()) continue;
         
         double divider;
-        if (c.size() > 63)
-            divider = 0.0;
-        else
-            divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
+        if (c.size() > 63) divider = 0.0;
+        else divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
+        
         for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++) {
-            if (it2->sign()) {
-                negativeLiteral[it2->var()] = true;
-                votes[it2->var()] += divider;
-            } else {
-                positiveLiteral[it2->var()] = true;
-                votes[it2->var()] -= divider;
-            }
+            if (it2->sign()) votes[it2->var()] += divider;
+            else votes[it2->var()] -= divider;
         }
     }
 }
 
-void tallyVotes(const vec<XorClause*>& cs, vector<double>& votes, vector<bool>& positiveLiteral, vector<bool>& negativeLiteral)
+void Solver::tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const
 {
     for (const XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
         const XorClause& c = **it;
         double divider;
-        if (c.size() > 63)
-            divider = 0.0;
-        else
-            divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
-        for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++) {
+        if (c.size() > 63) divider = 0.0;
+        else divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
+        
+        for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++)
             votes[it2->var()] += divider;
-            negativeLiteral[it2->var()] = true;
-            positiveLiteral[it2->var()] = true;
-        }
     }
 }
 
@@ -637,25 +626,20 @@ void Solver::calculateDefaultPolarities()
     #endif
     
     assert(decisionLevel() == 0);
-    
     if (polarity_mode == polarity_auto) {
         double time = cpuTime();
         
         vector<double> votes;
-        vector<bool> positiveLiteral;
-        vector<bool> negativeLiteral;
         votes.resize(nVars(), 0.0);
-        positiveLiteral.resize(nVars(), false);
-        negativeLiteral.resize(nVars(), false);
         
-        tallyVotes(clauses, votes, positiveLiteral, negativeLiteral);
-        tallyVotes(binaryClauses, votes, positiveLiteral, negativeLiteral);
-        tallyVotes(varReplacer->getClauses(), votes, positiveLiteral, negativeLiteral);
-        tallyVotes(xorclauses, votes, positiveLiteral, negativeLiteral);
+        tallyVotes(clauses, votes);
+        tallyVotes(binaryClauses, votes);
+        tallyVotes(varReplacer->getClauses(), votes);
+        tallyVotes(xorclauses, votes);
         
         Var i = 0;
         for (vector<double>::const_iterator it = votes.begin(), end = votes.end(); it != end; it++, i++) {
-            defaultPolarities[i] = (*it >= 0.0);
+            polarity[i] = (*it >= 0.0);
             #ifdef VERBOSE_DEBUG_POLARITIES
             std::cout << !defaultPolarities[i] << ", ";
             #endif //VERBOSE_DEBUG_POLARITIES
@@ -666,25 +650,13 @@ void Solver::calculateDefaultPolarities()
             << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s"
             << "    |" << std:: endl;
         }
-    } else if (polarity_mode != polarity_manual){
-        for (uint i = 0; i != defaultPolarities.size(); i++) {
-            defaultPolarities[i] = defaultPolarity();
-            #ifdef VERBOSE_DEBUG_POLARITIES
-            std::cout << !defaultPolarities[i] << ", ";
-            #endif //VERBOSE_DEBUG_POLARITIES
-        }
+    } else {
+        std::fill(polarity.begin(), polarity.end(), defaultPolarity());
     }
+    
     #ifdef VERBOSE_DEBUG_POLARITIES
     std::cout << std::endl;
     #endif //VERBOSE_DEBUG_POLARITIES
-}
-
-void Solver::setDefaultPolarities()
-{
-    assert(polarity.size() == defaultPolarities.size());
-    
-    for (uint i = 0; i != polarity.size(); i++)
-        polarity[i] = defaultPolarities[i];
 }
 
 //=================================================================================================
@@ -1956,9 +1928,7 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         if (doPartHandler && !partHandler->handle())
             return false;
         
-        /*if (calculateDefaultPolarities() == l_False)
-            return false;
-        setDefaultPolarities();*/
+        //calculateDefaultPolarities();
         
         fullStarts++;
     }
@@ -2058,9 +2028,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         if (!ok) return l_False;
     
         printStatHeader();
-        calculateDefaultPolarities();
-        setDefaultPolarities();
     }
+    calculateDefaultPolarities();
     
     // Search:
     while (status == l_Undef && starts < maxRestarts) {

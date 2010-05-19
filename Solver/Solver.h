@@ -156,7 +156,7 @@ public:
     GaussianConfig gaussconfig;
     
 
-    enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4, polarity_manual = 5};
+    enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
     // Statistics: (read-only member variable)
     //
@@ -390,10 +390,10 @@ protected:
     double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
     
     // Polarity chooser
-    vector<bool> defaultPolarities; //The default polarity to set the var polarity when doing a full restart
-    void         calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
-    bool         defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
-    void         setDefaultPolarities(); //sets the polarity[] to that indicated by defaultPolarities[]
+    void calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
+    bool defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
+    void tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const;
+    void tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const;
 };
 
 

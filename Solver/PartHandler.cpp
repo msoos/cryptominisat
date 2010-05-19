@@ -80,7 +80,7 @@ const bool PartHandler::handle()
         newSolver.doPartHandler = solver.doPartHandler;
         newSolver.fixRestartType = solver.fixRestartType;
         newSolver.var_inc = solver.var_inc;
-        newSolver.polarity_mode = Solver::polarity_manual;
+        newSolver.polarity_mode = solver.polarity_mode;
         std::sort(vars.begin(), vars.end());
         uint32_t i2 = 0;
         for (Var var = 0; var < solver.nVars(); var++) {
@@ -92,7 +92,6 @@ const bool PartHandler::handle()
                 #endif //VERBOSE_DEBUG
                 newSolver.newVar(solver.decision_var[var]);
                 newSolver.activity[var] = solver.activity[var];
-                newSolver.defaultPolarities[var] = solver.polarity[var];
                 newSolver.order_heap.update(var);
                 assert(partFinder.getVarPart(var) == part);
                 if (solver.decision_var[var]) {
