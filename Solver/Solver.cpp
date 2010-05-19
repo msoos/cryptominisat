@@ -582,6 +582,8 @@ inline bool Solver::defaultPolarity()
             return false;
         case polarity_rnd:
             return mtrand.randInt(1);
+        case polarity_auto:
+            return true;
         default:
             assert(false);
     }
