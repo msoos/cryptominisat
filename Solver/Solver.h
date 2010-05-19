@@ -183,8 +183,11 @@ public:
     const uint32_t get_sum_gauss_unit_truths() const;
     #endif //USE_GAUSS
 
+    //Printing statistics
     const uint32_t getNumElimSubsume() const; // Get variable elimination stats from Subsumer
     const uint32_t getNumElimXorSubsume() const; // Get variable elimination stats from XorSubsumer
+    const uint32_t getNumXorTrees() const; // Get the number of trees built from 2-long XOR-s. This is effectively the number of variables that replace other variables
+    const uint32_t getNumXorTreesCrownSize() const; // Get the number of variables being replaced by other variables
     
 protected:
     #ifdef USE_GAUSS

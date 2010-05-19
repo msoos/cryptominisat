@@ -1419,6 +1419,16 @@ const uint32_t Solver::getNumElimXorSubsume() const
     return xorSubsumer->getNumElimed();
 }
 
+const uint32_t Solver::getNumXorTrees() const
+{
+    return varReplacer->getNumTrees();
+}
+
+const uint32_t Solver::getNumXorTreesCrownSize() const
+{
+    return varReplacer->getNumReplacedVars();
+}
+
 void Solver::setMaxRestarts(const uint num)
 {
     maxRestarts = num;
