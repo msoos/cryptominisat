@@ -539,14 +539,14 @@ void Solver::cancelUntil(int level)
             (*gauss)->canceling(trail_lim[level]);
         #endif //USE_GAUSS
         
-        for (int c = trail.size()-1; c >= (int)trail_lim[level]; c--) {
-            Var     x  = trail[c].var();
+        for (int sublevel = trail.size()-1; sublevel >= (int)trail_lim[level]; sublevel--) {
+            Var var = trail[sublevel].var();
             #ifdef VERBOSE_DEBUG
             cout << "Canceling var " << x+1 << " sublevel: " << c << endl;
             #endif
-            polarity[x] = oldPolarity[x];
-            assigns[x] = l_Undef;
-            insertVarOrder(x);
+            polarity[var] = oldPolarity[var];
+            assigns[var] = l_Undef;
+            insertVarOrder(var);
         }
         qhead = trail_lim[level];
         trail.shrink(trail.size() - trail_lim[level]);
