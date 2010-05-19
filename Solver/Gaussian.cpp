@@ -690,6 +690,7 @@ void Gaussian::cancel_until_sublevel(const uint sublevel)
         cout << "(" << matrix_no << ")Canceling var " << var+1 << endl;
         #endif
 
+        solver.polarity[var] = solver.oldPolarity[var];
         solver.assigns[var] = l_Undef;
         solver.insertVarOrder(var);
     }
