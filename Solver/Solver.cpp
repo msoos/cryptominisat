@@ -730,9 +730,9 @@ Lit Solver::pickBranchLit()
             sign = mtrand.randInt(1);
         /*else
             sign = polarity[next] ^ (mtrand.randInt(200) == 1);*/
-        else if (avgBranchDepth.isvalid())
+        /*else if (avgBranchDepth.isvalid())
             sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);
-        else
+        else*/
             sign = polarity[next];
     }
 
