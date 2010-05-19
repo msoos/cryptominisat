@@ -1334,37 +1334,36 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++)
         trail[i].printFull(outfile);
 
-    fprintf(outfile, "c conflicts %lud\n", conflicts);
+    fprintf(outfile, "c conflicts %lu\n", conflicts);
     
-    fprintf(outfile, "c clauses from binaryClauses\n");
+    fprintf(outfile, "c learnt clauses from binaryClauses\n");
     if (maxSize >= 2) {
         for (uint i = 0; i != binaryClauses.size(); i++) {
             if (binaryClauses[i]->learnt())
-                binaryClauses[i]->plainPrint(outfile);
+                binaryClauses[i]->print(outfile);
         }
     }
-    
-    fprintf(outfile, "c clauses from learnts\n");
-    
-    if (lastSelectedRestartType == dynamic_restart)
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
-    else
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
-    for (int i = learnts.size()-1; i >= 0 ; i--) {
-        if (learnts[i]->size() <= maxSize) {
-            learnts[i]->plainPrint(outfile);
-        }
-    }
-    
+
     fprintf(outfile, "c clauses representing 2-long XOR clauses\n");
     const vector<Lit>& table = varReplacer->getReplaceTable();
     for (Var var = 0; var != table.size(); var++) {
         Lit lit = table[var];
         if (lit.var() == var)
             continue;
-        
+
         fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
         fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
+    }
+    
+    fprintf(outfile, "c clauses from learnts\n");
+    if (lastSelectedRestartType == dynamic_restart)
+        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
+    else
+        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
+    for (int i = learnts.size()-1; i >= 0 ; i--) {
+        if (learnts[i]->size() <= maxSize) {
+            learnts[i]->print(outfile);
+        }
     }
     
     fclose(outfile);

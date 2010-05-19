@@ -223,9 +223,9 @@ public:
     Lit*    getDataEnd     () {
         return data+size();
     }
-    void print() {
-        printf("Clause   group: %d, size: %d, learnt:%d, lits: ", getGroup(), size(), learnt());
-        plainPrint();
+    void print(FILE* to = stdout) {
+        plainPrint(to);
+        fprintf(to, "c clause learnt %s group %d act %d oldAct %f\n", (learnt() ? "yes" : "no"), getGroup(), activity(), oldActivity());
     }
     void plainPrint(FILE* to = stdout) const {
         for (uint i = 0; i < size(); i++) {
