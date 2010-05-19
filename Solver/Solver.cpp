@@ -728,14 +728,14 @@ Lit Solver::pickBranchLit()
 
     bool sign;
     if (next != var_Undef) {
-        if (simplifying && random)
-            sign = mtrand.randInt(1);
+        /*if (simplifying && random)
+            sign = mtrand.randInt(1);*/
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-        else if (avgBranchDepth.isvalid())
+        if (avgBranchDepth.isvalid() && !simplifying)
             sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);
-        #endif
         else
-            sign = polarity[next];
+        #endif
+        sign = polarity[next];
     }
 
     assert(next == var_Undef || value(next) == l_Undef);
