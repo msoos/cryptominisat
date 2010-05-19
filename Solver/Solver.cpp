@@ -287,9 +287,7 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     
     if (libraryCNFFile) {
         fprintf(libraryCNFFile, "x");
-        for (uint i = 0; i < ps.size(); i++) {
-            fprintf(libraryCNFFile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
-        }
+        for (uint32_t i = 0; i < ps.size(); i++) ps[i].print(libraryCNFFile);
         fprintf(libraryCNFFile, "0\n");
     }
     
@@ -386,9 +384,7 @@ bool Solver::addClause(T& ps, const uint group, char* group_name)
     }
     
     if (libraryCNFFile) {
-        for (uint32_t i = 0; i != ps.size(); i++) {
-            fprintf(libraryCNFFile, "%s%d ", ps[i].sign() ? "-" : "", ps[i].var()+1);
-        }
+        for (uint32_t i = 0; i != ps.size(); i++) ps[i].print(libraryCNFFile);
         fprintf(libraryCNFFile, "0\n");
     }
     
@@ -1361,18 +1357,10 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     }
     
     fprintf(outfile, "c unitaries\n");
-    if (maxSize > 0) {
-        if (trail_lim.size() > 0) {
-            for (uint32_t i = 0; i != trail_lim[0]; i++) {
-                fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
-            }
-        }
-        else {
-            for (uint32_t i = 0; i != trail.size(); i++) {
-                fprintf(outfile,"%s%d 0\n", trail[i].sign() ? "-" : "", trail[i].var()+1);
-            }
-        }
-    }
+    for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++)
+        trail[i].printFull(outfile);
+
+    fprintf(outfile, "c conflicts %lud\n", conflicts);
     
     fprintf(outfile, "c clauses from binaryClauses\n");
     if (maxSize >= 2) {
@@ -1389,8 +1377,9 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     else
         std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
-        if (learnts[i]->size() <= maxSize)
+        if (learnts[i]->size() <= maxSize) {
             learnts[i]->plainPrint(outfile);
+        }
     }
     
     fprintf(outfile, "c clauses representing 2-long XOR clauses\n");

@@ -30,6 +30,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #endif //_MSC_VER
 
 #include "Alg.h"
+#include <stdio.h>
 
 //=================================================================================================
 // Variables, literals, lifted booleans, clauses:
@@ -81,7 +82,15 @@ public:
     bool operator <  (const Lit& p) const {
         return x < p.x;     // '<' guarantees that p, ~p are adjacent in the ordering.
     }
-};    
+    inline void print(FILE* outfile = stdout)
+    {
+        fprintf(outfile,"%s%d", sign() ? "-" : "", var()+1);
+    }
+    inline void printFull(FILE* outfile = stdout)
+    {
+        fprintf(outfile,"%s%d 0\n", sign() ? "-" : "", var()+1);
+    }
+};
 
 const Lit lit_Undef(var_Undef, false);  // Useful special constants.
 const Lit lit_Error(var_Undef, true );  //
