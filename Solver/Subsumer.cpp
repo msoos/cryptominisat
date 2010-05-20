@@ -135,7 +135,7 @@ bool selfSubset(Clause& A, Clause& B, vec<char>& seen)
 }
 
 // Will put NULL in 'cs' if clause removed.
-uint32_t Subsumer::subsume0(Clause& ps)
+uint32_t Subsumer::subsume0(Clause& ps, uint32_t abs)
 {
     ps.subsume0Finished();
     ps.unsetVarChanged();
@@ -143,10 +143,11 @@ uint32_t Subsumer::subsume0(Clause& ps)
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
     ps.plainPrint();
+    cout << "pointer:" << &ps << endl;
     #endif
     
     vec<ClauseSimp> subs;
-    findSubsumed(ps, subs);
+    findSubsumed(ps, abs, subs);
     for (uint32_t i = 0; i < subs.size(); i++){
         clauses_subsumed++;
         #ifdef VERBOSE_DEBUG
@@ -155,19 +156,16 @@ uint32_t Subsumer::subsume0(Clause& ps)
         #endif
         
         Clause* tmp = subs[i].clause;
+        retIndex = subs[i].index;
         unlinkClause(subs[i]);
         free(tmp);
-        retIndex = subs[i].index;
     }
     
     return retIndex;
 }
 
-// Will put NULL in 'cs' if clause removed.
-uint32_t Subsumer::subsume0(Clause& ps, uint32_t abs)
+uint32_t Subsumer::subsume0(vec<Lit>& ps, uint32_t abs)
 {
-    ps.subsume0Finished();
-    ps.unsetVarChanged();
     uint32_t retIndex = std::numeric_limits<uint32_t>::max();
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
@@ -415,7 +413,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
 
 void Subsumer::updateClause(ClauseSimp c)
 {
-    if (!c.clause->learnt()) subsume0(*c.clause);
+    if (!c.clause->learnt()) subsume0(*c.clause, c.clause->getAbst());
     
     cl_touched.add(c);
 }
@@ -574,7 +572,7 @@ void Subsumer::smaller_database()
     // Iteration pass for 0-subsumption:
     for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
         if (it->clause != NULL)
-            subsume0(*it->clause);
+            subsume0(*it->clause, it->clause->getAbst());
     }
     s0.clear();
     unregisterIteration(s0);
@@ -870,7 +868,7 @@ const bool Subsumer::simplifyBySubsumption()
             (fullSubsume
             || !clauses[i].clause->subsume0IsFinished())
             ) {
-            subsume0(*clauses[i].clause);
+            subsume0(*clauses[i].clause, clauses[i].clause->getAbst());
             numMaxSubsume0--;
         }
     }
@@ -1214,7 +1212,7 @@ bool Subsumer::maybeEliminate(const Var x)
                 Clause* cl = solver.addClauseInt(dummy, group_num);
                 if (cl != NULL) {
                     ClauseSimp c = linkInClause(*cl);
-                    subsume0(*cl);
+                    subsume0(*cl, cl->getAbst());
                 }
                 if (!solver.ok) return true;
             }
