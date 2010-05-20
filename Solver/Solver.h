@@ -449,7 +449,7 @@ inline void Solver::claBumpActivity (Clause& c)
 
 inline void Solver::claDecayActivity()
 {
-    cla_inc *= clause_decay;
+    //cla_inc *= clause_decay;
 }
 
 inline bool     Solver::enqueue         (Lit p, Clause* from)

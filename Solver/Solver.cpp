@@ -696,14 +696,14 @@ Lit Solver::pickBranchLit()
 
     bool sign;
     if (next != var_Undef) {
-        /*if (simplifying && random)
-            sign = mtrand.randInt(1);*/
+        if (simplifying && random)
+            sign = mtrand.randInt(1);
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-        if (fullStarts % 2 == 0 && avgBranchDepth.isvalid())
-            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);
-        else
+        else if (avgBranchDepth.isvalid())
+            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
         #endif
-        sign = polarity[next];
+        else
+            sign = polarity[next];
     }
 
     assert(next == var_Undef || value(next) == l_Undef);
@@ -869,13 +869,11 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, i
     }
     
     #ifdef UPDATEVARACTIVITY
-    if (lastDecisionLevel.size() > 0) {
-        for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
-            if (reason[lastDecisionLevel[i].var()]->activity() < nbLevels)
-                varBumpActivity(lastDecisionLevel[i].var());
-        }
-        lastDecisionLevel.clear();
+    for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
+        if (reason[lastDecisionLevel[i].var()]->activity() < nbLevels)
+            varBumpActivity(lastDecisionLevel[i].var());
     }
+    lastDecisionLevel.clear();
     #endif
 
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
