@@ -699,7 +699,7 @@ Lit Solver::pickBranchLit()
         /*if (simplifying && random)
             sign = mtrand.randInt(1);*/
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-        if (avgBranchDepth.isvalid() && !simplifying)
+        if (fullStarts % 2 == 0 && avgBranchDepth.isvalid())
             sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg()) == 1);
         else
         #endif
