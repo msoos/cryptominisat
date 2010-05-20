@@ -74,7 +74,7 @@ private:
     uint32_t numMaxBlockVars;
     
     //Start-up
-    void addFromSolver(vec<Clause*>& cs);
+    void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false);
     void addBackToSolver();
     void removeWrong(vec<Clause*>& cs);
     void fillCannotEliminate();
@@ -116,7 +116,7 @@ private:
     //hyperBinRes
     void addFromSolverAll(vec<Clause*>& cs);
     const bool hyperBinRes();
-    const bool hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<ClauseSimp>& addToClauses);
+    const bool hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<Clause*>& addToClauses);
     
     //merging
     //vector<char> merge();
