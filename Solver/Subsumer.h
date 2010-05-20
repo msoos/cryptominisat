@@ -93,8 +93,8 @@ private:
     void touch(const Var x);
     void touch(const Lit p);
     bool updateOccur(Clause& c);
-    void findSubsumed(const vec<Lit>& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
-    void findSubsumed(Clause& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed);
+    template<class T>
+    void findSubsumed(const T& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
     bool isSubsumed(Clause& ps);
     uint32_t subsume0(Clause& ps, uint32_t abs);
     uint32_t subsume0(vec<Lit>& ps, uint32_t abs);
