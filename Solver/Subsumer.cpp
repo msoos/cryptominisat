@@ -1025,38 +1025,6 @@ const bool Subsumer::simplifyBySubsumption()
     return true;
 }
 
-void Subsumer::findSubsumed(Clause& ps, vec<ClauseSimp>& out_subsumed)
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "findSubsumed: ";
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        if (ps[i].sign()) printf("-");
-        printf("%d ", ps[i].var() + 1);
-    }
-    printf("0\n");
-    #endif
-    
-    int min_i = 0;
-    for (uint32_t i = 1; i < ps.size(); i++){
-        if (occur[ps[i].toInt()].size() < occur[ps[min_i].toInt()].size())
-            min_i = i;
-    }
-    
-    vec<ClauseSimp>& cs = occur[ps[min_i].toInt()];
-    for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
-        if (it+1 != end)
-            __builtin_prefetch((it+1)->clause, 1, 1);
-        
-        if (it->clause != &ps && subsetAbst(ps.getAbst(), it->clause->getAbst()) && ps.size() <= it->clause->size() && subset(ps, *it->clause)) {
-            out_subsumed.push(*it);
-            #ifdef VERBOSE_DEBUG
-            cout << "subsumed: ";
-            it->clause->plainPrint();
-            #endif
-        }
-    }
-}
-
 void Subsumer::findSubsumed(Clause& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
