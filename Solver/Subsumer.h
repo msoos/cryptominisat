@@ -117,7 +117,7 @@ private:
     //hyperBinRes
     void addFromSolverAll(vec<Clause*>& cs);
     const bool hyperBinRes();
-    const bool hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<ClauseSimp>& addToClauses, uint32_t& hyperBinAdded, uint32_t& hyperBinUnitary);
+    const bool hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<ClauseSimp>& addToClauses);
     
     //merging
     //vector<char> merge();
