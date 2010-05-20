@@ -202,14 +202,12 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
             io_tmp.push_back(cl[i]);
         elimedOutVar[elim].push_back(io_tmp);
     }
-    
-    if (updateOccur(cl)) {
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            maybeRemove(occur[cl[i].toInt()], &cl);
-            #ifndef TOUCH_LESS
-            touch(cl[i]);
-            #endif
-        }
+
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        maybeRemove(occur[cl[i].toInt()], &cl);
+        #ifndef TOUCH_LESS
+        touch(cl[i]);
+        #endif
     }
     
     solver.detachClause(cl);
@@ -227,23 +225,19 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
     }
     
     // Remove clause from clause touched set:
-    if (updateOccur(cl)) {
-        cl_touched.exclude(c);
-        cl_added.exclude(c);
-    }
+    cl_touched.exclude(c);
+    cl_added.exclude(c);
     
     clauses[c.index].clause = NULL;
 }
 
 void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c)
 {
-    if (updateOccur(*c.clause)) {
-        for (uint32_t i = 0; i < origClause.size(); i++) {
-            maybeRemove(occur[origClause[i].toInt()], c.clause);
-            #ifndef TOUCH_LESS
-            touch(origClause[i]);
-            #endif
-        }
+    for (uint32_t i = 0; i < origClause.size(); i++) {
+        maybeRemove(occur[origClause[i].toInt()], c.clause);
+        #ifndef TOUCH_LESS
+        touch(origClause[i]);
+        #endif
     }
     
     solver.detachModifiedClause(origClause[0], origClause[1], origClause.size(), c.clause);
@@ -261,23 +255,19 @@ void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c)
     }
     
     // Remove clause from clause touched set:
-    if (updateOccur(*c.clause)) {
-        cl_touched.exclude(c);
-        cl_added.exclude(c);
-    }
+    cl_touched.exclude(c);
+    cl_added.exclude(c);
     
     clauses[c.index].clause = NULL;
 }
 
 void Subsumer::unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSimp c)
 {
-    if (updateOccur(*c.clause)) {
-        for (uint32_t i = 0; i < origClause.size(); i++) {
-            maybeRemove(occur[origClause[i].toInt()], c.clause);
-            #ifndef TOUCH_LESS
-            touch(origClause[i]);
-            #endif
-        }
+    for (uint32_t i = 0; i < origClause.size(); i++) {
+        maybeRemove(occur[origClause[i].toInt()], c.clause);
+        #ifndef TOUCH_LESS
+        touch(origClause[i]);
+        #endif
     }
     
     // Remove from iterator vectors/sets:
@@ -293,10 +283,8 @@ void Subsumer::unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSi
     }
     
     // Remove clause from clause touched set:
-    if (updateOccur(*c.clause)) {
-        cl_touched.exclude(c);
-        cl_added.exclude(c);
-    }
+    cl_touched.exclude(c);
+    cl_added.exclude(c);
 }
 
 void Subsumer::subsume1(ClauseSimp& ps)
@@ -429,7 +417,7 @@ void Subsumer::almost_all_database()
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (numMaxSubsume1 == 0) break;
-        if (clauses[i].clause != NULL && updateOccur(*clauses[i].clause)) {
+        if (clauses[i].clause != NULL) {
             subsume1(clauses[i]);
             numMaxSubsume1--;
             if (!solver.ok) return;
@@ -582,11 +570,9 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
 {
     ClauseSimp c(&cl, clauseID++);
     clauses.push(c);
-    if (updateOccur(cl)) {
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            occur[cl[i].toInt()].push(c);
-            touch(cl[i].var());
-        }
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        occur[cl[i].toInt()].push(c);
+        touch(cl[i].var());
     }
     cl_added.add(c);
     
@@ -596,12 +582,9 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
 void Subsumer::linkInAlreadyClause(ClauseSimp& c)
 {
     Clause& cl = *c.clause;
-    
-    if (updateOccur(cl)) {
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            occur[cl[i].toInt()].push(c);
-            touch(cl[i].var());
-        }
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        occur[cl[i].toInt()].push(c);
+        touch(cl[i].var());
     }
 }
 
@@ -621,17 +604,15 @@ void Subsumer::addFromSolver(vec<Clause*>& cs)
         ClauseSimp c(*i, clauseID++);
         clauses.push(c);
         Clause& cl = *c.clause;
-        if (updateOccur(cl)) {
-            for (uint32_t i = 0; i < cl.size(); i++) {
-                occur[cl[i].toInt()].push(c);
-                touch(cl[i].var());
-            }
-            if (fullSubsume || cl.getVarChanged()) cl_added.add(c);
-            else if (cl.getStrenghtened()) cl_touched.add(c);
-            
-            if (cl.getVarChanged() || cl.getStrenghtened())
-                cl.calcAbstraction();
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            occur[cl[i].toInt()].push(c);
+            touch(cl[i].var());
         }
+        if (fullSubsume || cl.getVarChanged()) cl_added.add(c);
+        else if (cl.getStrenghtened()) cl_touched.add(c);
+
+        if (cl.getVarChanged() || cl.getStrenghtened())
+            cl.calcAbstraction();
     }
     cs.shrink(i-j);
 }

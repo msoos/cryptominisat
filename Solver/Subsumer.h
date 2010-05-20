@@ -92,7 +92,6 @@ private:
     // Subsumption:
     void touch(const Var x);
     void touch(const Lit p);
-    bool updateOccur(Clause& c);
     template<class T>
     void findSubsumed(const T& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
     bool isSubsumed(Clause& ps);
@@ -187,11 +186,6 @@ inline void Subsumer::touchBlockedVar(const Var x)
 inline void Subsumer::touch(const Lit p)
 {
     touch(p.var());
-}
-
-inline bool Subsumer::updateOccur(Clause& c)
-{
-    return !c.learnt();
 }
 
 inline bool Subsumer::subsetAbst(uint32_t A, uint32_t B)
