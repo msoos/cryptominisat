@@ -1438,17 +1438,6 @@ class varDataStruct
         int negHash;
 };
 
-int hash32shift(int key)
-{
-    key = ~key + (key << 15); // key = (key << 15) - key - 1;
-    key = key ^ (key >> 12);
-    key = key + (key << 2);
-    key = key ^ (key >> 4);
-    key = key * 2057; // key = (key + (key << 3)) + (key << 11);
-    key = key ^ (key >> 16);
-    return key;
-}
-
 void Subsumer::verifyIntegrity()
 {
     vector<uint> occurNum(solver.nVars()*2, 0);
@@ -1587,7 +1576,19 @@ const bool Subsumer::tryOneSetting(const Lit lit, const Lit negLit)
     return returnVal;
 }
 
-/*vector<char> Subsumer::merge()
+/*
+int hash32shift(int key)
+{
+    key = ~key + (key << 15); // key = (key << 15) - key - 1;
+    key = key ^ (key >> 12);
+    key = key + (key << 2);
+    key = key ^ (key >> 4);
+    key = key * 2057; // key = (key + (key << 3)) + (key << 11);
+    key = key ^ (key >> 16);
+    return key;
+}
+
+vector<char> Subsumer::merge()
 {
     vector<char> var_merged(solver.nVars(), false);
     double myTime = cpuTime();
