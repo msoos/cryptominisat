@@ -98,20 +98,22 @@ void Logger::new_group(const uint group)
     }
 }
 
-void Logger::cut_name_to_size(string& name) const
+string Logger::cut_name_to_size(const string& name) const
 {
+    string ret = name;
     uint len = name.length();
     while(len > 0 && (name[len-1] == ' ' || name[len-1] == 0x0A || name[len-1] == 0x0D)) {
-        name[len-1] = '\0';
-        name.resize(len-1);
+        ret.resize(len-1);
         len--;
     }
     
-    if (len > SND_WIDTH-2) {
-        name[SND_WIDTH-2] = '\0';
-        name[SND_WIDTH-3] = '.';
-        name[SND_WIDTH-4] = '.';
+    if (len > SND_WIDTH-3) {
+        ret[SND_WIDTH-3] = '\0';
+        ret[SND_WIDTH-4] = '.';
+        ret[SND_WIDTH-5] = '.';
     }
+
+    return ret;
 }
 
 // Adds the new clause group's name to the information stored
@@ -130,7 +132,6 @@ void Logger::set_group_name(const uint group, const char* name_tmp)
 void Logger::set_group_name(const uint group, string& name)
 {
     new_group(group);
-    cut_name_to_size(name);
 
     if (name == "Noname") return;
 
@@ -144,7 +145,14 @@ void Logger::set_group_name(const uint group, string& name)
 
 string Logger::get_group_name(const uint group) const
 {
+    assert(group < groupnames.size());
     return groupnames[group];
+}
+
+string Logger::get_var_name(const Var var) const
+{
+    if (var >= varnames.size()) return "unknown";
+    return varnames[var];
 }
 
 // sets the variable's name
@@ -160,8 +168,6 @@ void Logger::set_variable_name(const uint var, char* name_tmp)
         name = "";
     else
         name = name_tmp;
-    
-    cut_name_to_size(name);
     
     if (varnames[var] == "Noname") {
         varnames[var] = name;
@@ -505,7 +511,7 @@ void Logger::print_groups(const vector<pair<double, uint> >& to_print) const
     uint i = 0;
     typedef vector<pair<double, uint> >::const_iterator myiterator;
     for (myiterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++) {
-        print_line(it->second+1, groupnames[it->second], it->first);
+        print_line(it->second+1, cut_name_to_size(groupnames[it->second]), it->first);
     }
     print_footer();
 }
@@ -515,7 +521,7 @@ void Logger::print_groups(const vector<pair<uint, uint> >& to_print) const
     uint i = 0;
     typedef vector<pair<uint, uint> >::const_iterator myiterator;
     for (myiterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++) {
-        print_line(it->second+1, groupnames[it->second], it->first);
+        print_line(it->second+1, cut_name_to_size(groupnames[it->second]), it->first);
     }
     print_footer();
 }
@@ -524,7 +530,7 @@ void Logger::print_vars(const vector<pair<double, uint> >& to_print) const
 {
     uint i = 0;
     for (vector<pair<double, uint> >::const_iterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++)
-        print_line(it->second+1, varnames[it->second], it->first);
+        print_line(it->second+1, cut_name_to_size(varnames[it->second]), it->first);
     
     print_footer();
 }
@@ -533,7 +539,7 @@ void Logger::print_vars(const vector<pair<uint, uint> >& to_print) const
 {
     uint i = 0;
     for (vector<pair<uint, uint> >::const_iterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++) {
-        print_line(it->second+1, varnames[it->second], it->first);
+        print_line(it->second+1, cut_name_to_size(varnames[it->second]), it->first);
     }
     
     print_footer();
@@ -727,7 +733,7 @@ void Logger::print_learnt_unitaries(const uint from, const string display) const
     for (uint i = from; i < until; i++) {
         Var var = S->trail[i].var();
         bool value = !(S->trail[i].sign());
-        print_line(var+1, varnames[var], value);
+        print_line(var+1, cut_name_to_size(varnames[var]), value);
     }
     print_footer();
 }

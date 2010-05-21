@@ -1327,22 +1327,34 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
         printf("Error: Cannot open file '%s' to write learnt clauses!\n", file);
         exit(-1);
     }
-    
+
+    fprintf(outfile, "c \nc ---------\n");
     fprintf(outfile, "c unitaries\n");
-    for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++)
+    fprintf(outfile, "c ---------\n");
+    for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         trail[i].printFull(outfile);
+        #ifdef STATS_NEEDED
+        if (dynamic_behaviour_analysis)
+            fprintf(outfile, "c name of var: %s\n", logger.get_var_name(trail[i].var()).c_str());
+        #endif //STATS_NEEDED
+    }
 
     fprintf(outfile, "c conflicts %lu\n", conflicts);
-    
+
+    fprintf(outfile, "c \nc ---------------------------------\n");
     fprintf(outfile, "c learnt clauses from binaryClauses\n");
+    fprintf(outfile, "c ---------------------------------\n");
     if (maxSize >= 2) {
         for (uint i = 0; i != binaryClauses.size(); i++) {
-            if (binaryClauses[i]->learnt())
+            if (binaryClauses[i]->learnt()) {
                 binaryClauses[i]->print(outfile);
+            }
         }
     }
 
+    fprintf(outfile, "c \nc ---------------------------------------\n");
     fprintf(outfile, "c clauses representing 2-long XOR clauses\n");
+    fprintf(outfile, "c ---------------------------------------\n");
     const vector<Lit>& table = varReplacer->getReplaceTable();
     for (Var var = 0; var != table.size(); var++) {
         Lit lit = table[var];
@@ -1351,9 +1363,15 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
 
         fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
         fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
+        #ifdef STATS_NEEDED
+        if (dynamic_behaviour_analysis)
+            fprintf(outfile, "c name of two vars that are anti/equivalent: '%s' and '%s'\n", logger.get_var_name(lit.var()).c_str(), logger.get_var_name(var).c_str());
+        #endif //STATS_NEEDED
     }
-    
+
+    fprintf(outfile, "c \nc --------------------n");
     fprintf(outfile, "c clauses from learnts\n");
+    fprintf(outfile, "c --------------------n");
     if (lastSelectedRestartType == dynamic_restart)
         std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
     else

@@ -80,6 +80,7 @@ public:
     void set_group_name(const uint group, const char* name_tmp);
     void set_group_name(const uint group, string& name);
     string get_group_name(const uint group) const;
+    string get_var_name(const Var var) const;
 
     void begin();
     void end(const finish_type finish);
@@ -92,7 +93,7 @@ public:
     
 private:
     void new_group(const uint group);
-    void cut_name_to_size(string& name) const;
+    string cut_name_to_size(const string& name) const;
     
     void print_groups(const vector<pair<uint, uint> >& to_print) const;
     void print_groups(const vector<pair<double, uint> >& to_print) const;
