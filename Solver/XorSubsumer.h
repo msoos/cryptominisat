@@ -56,7 +56,6 @@ private:
     void findUnMatched(vec<Lit>& A, XorClause& B, vec<Lit>& unmatchedPart);
 
     //helper
-    void cleanOccFromNull(vec<XorClauseSimp>& occ);
     void testAllClauseAttach() const;
     
     //dependent removal

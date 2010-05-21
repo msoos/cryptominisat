@@ -237,19 +237,6 @@ void XorSubsumer::extendModel(Solver& solver2)
     }
 }
 
-void XorSubsumer::cleanOccFromNull(vec<XorClauseSimp>& occ)
-{
-    XorClauseSimp *i, *j;
-    i = j = occ.getData();
-    for(XorClauseSimp *end = occ.getDataEnd(); i != end; i++) {
-        if (i->clause != NULL) {
-            *j = *i;
-            j++;
-        }
-    }
-    occ.shrink(i-j);
-}
-
 const bool XorSubsumer::localSubstitute()
 {
     vec<Lit> tmp;
@@ -257,9 +244,9 @@ const bool XorSubsumer::localSubstitute()
         vec<XorClauseSimp>& occ = occur[var];
 
         if (occ.size() <= 1) continue;
-        for (uint32_t i = 0; i < occ.size(); i++) if (occ[i].clause != NULL) {
+        for (uint32_t i = 0; i < occ.size(); i++) {
             XorClause& c1 = *occ[i].clause;
-            for (uint32_t i2 = i+1; i2 < occ.size(); i2++) if (occ[i2].clause != NULL) {
+            for (uint32_t i2 = i+1; i2 < occ.size(); i2++) {
                 XorClause& c2 = *occ[i2].clause;
                 tmp.clear();
                 tmp.growTo(c1.size() + c2.size());
@@ -328,7 +315,6 @@ const bool XorSubsumer::removeDependent()
     for (Var var = 0; var < occur.size(); var++) {
         if (cannot_eliminate[var]) continue;
         vec<XorClauseSimp>& occ = occur[var];
-        cleanOccFromNull(occ);
 
         if (occ.size() == 1) {
             unlinkClause(occ[0], var);
