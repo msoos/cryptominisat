@@ -544,8 +544,8 @@ void Solver::cancelUntil(int level)
             insertVarOrder(var);
         }
         qhead = trail_lim[level];
-        trail.shrink(trail.size() - trail_lim[level]);
-        trail_lim.shrink(trail_lim.size() - level);
+        trail.shrink_(trail.size() - trail_lim[level]);
+        trail_lim.shrink_(trail_lim.size() - level);
     }
 
     #ifdef VERBOSE_DEBUG
@@ -1109,7 +1109,7 @@ Clause* Solver::propagate(const bool update)
 FoundWatch:
             ;
         }
-        ws.shrink(i - j);
+        ws.shrink_(i - j);
 
         //Finally, propagate XOR-clauses
         if (xorclauses.size() > 0 && !confl) confl = propagate_xors(p);
@@ -1218,7 +1218,7 @@ Clause* Solver::propagate_xors(const Lit& p)
 FoundWatch:
         ;
     }
-    ws.shrink(i - j);
+    ws.shrink_(i - j);
 
     return confl;
 }
