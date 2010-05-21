@@ -822,6 +822,8 @@ const bool Subsumer::simplifyBySubsumption()
         numMaxSubsume1 = 400000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
     }
+
+    if (numCalls == 1) numMaxSubsume1 = 0;
     
     if (!solver.doSubsume1) numMaxSubsume1 = 0;
         
