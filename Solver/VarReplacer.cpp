@@ -71,7 +71,7 @@ const bool VarReplacer::performReplaceInternal()
     #endif //REPLACE_STATISTICS
     
     solver.clauseCleaner->removeAndCleanAll(true);
-    if (solver.ok == false) return false;
+    if (!solver.ok) return false;
     solver.testAllClauseAttach();
     
     #ifdef VERBOSE_DEBUG
@@ -163,7 +163,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
         }
         
         if (changed && handleUpdatedClause(c, origVar1, origVar2)) {
-            if (solver.ok == false) {
+            if (!solver.ok) {
                 for(;r != end; r++) free(*r);
                 cs.shrink(r-a);
                 return false;
@@ -250,7 +250,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
         }
         
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
-            if (solver.ok == false) {
+            if (!solver.ok) {
                 for(;r != end; r++) free(*r);
                 cs.shrink(r-a);
                 return false;

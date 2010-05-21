@@ -51,8 +51,7 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
     double time = cpuTime();
     foundXors = 0;
     solver.clauseCleaner->cleanClauses(cls, type);
-    if (solver.ok == false)
-        return false;
+    if (!solver.ok) return false;
     
     toRemove.clear();
     toRemove.resize(cls.size(), false);

@@ -56,12 +56,12 @@ const bool PartFinder::findParts()
     part_no = 0;
     
     solver.clauseCleaner->removeAndCleanAll(true);
-    if (solver.ok == false) return false;
+    if (!solver.ok) return false;
     while (solver.varReplacer->getNewToReplaceVars() > 0) {
         if (solver.performReplace && !solver.varReplacer->performReplace(true))
             return false;
         solver.clauseCleaner->removeAndCleanAll(true);
-        if (solver.ok == false) return false;
+        if (!solver.ok) return false;
     }
     assert(solver.varReplacer->getClauses().size() == 0);
     
