@@ -63,6 +63,7 @@ static bool printResult = true;
 // DIMACS Parser:
 
 #define CHUNK_LIMIT 1048576
+#define MAX_NAMES_SIZE 1000
 
 class StreamBuffer
 {
@@ -133,7 +134,8 @@ static void skipLine(B& in)
 template<class B>
 static void untilEnd(B& in, char* ret)
 {
-    for (;;) {
+    uint32_t sizeRead = 0;
+    for (;sizeRead < MAX_NAMES_SIZE-1; sizeRead++) {
         if (*in == EOF || *in == '\0') return;
         if (*in == '\n') {
             return;
@@ -213,6 +215,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
     int group = 0;
     string str;
     uint debugLibPart = 1;
+    char name[MAX_NAMES_SIZE];
 
 
     for (;;) {
@@ -239,9 +242,9 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 int var = parseInt(in);
                 skipWhitespace(in);
                 if (var <= 0) cout << "PARSE ERROR! Var number must be a positive integer" << endl, exit(3);
-                char tmp[500];
-                untilEnd(in, tmp);
-                S.setVariableName(var-1, tmp);
+                name[0] = '\0';
+                untilEnd(in, name);
+                S.setVariableName(var-1, name);
             } else if (debugLib && str == "Solver::solve()") {
                 lbool ret = S.solve();
                 std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
@@ -274,8 +277,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
             readClause(in, S, lits);
             skipLine(in);
 
-            char group_name[500];
-            group_name[0] = '\0';
+            name[0] = '\0';
 
             if (!grouping) group++;
             else {
@@ -296,7 +298,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 if (group <= 0) printf("PARSE ERROR! Group number must be a positive integer\n"), exit(3);
 
                 skipWhitespace(in);
-                untilEnd(in, group_name);
+                untilEnd(in, name);
             }
 
             if (xor_clause) {
@@ -304,9 +306,9 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 for (uint32_t i = 0; i < lits.size(); i++) {
                     xor_clause_inverted ^= lits[i].sign();
                 }
-                S.addXorClause(lits, xor_clause_inverted, group, group_name);
+                S.addXorClause(lits, xor_clause_inverted, group, name);
             } else
-                S.addClause(lits, group, group_name);
+                S.addClause(lits, group, name);
             break;
         }
     }
