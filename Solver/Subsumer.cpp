@@ -948,12 +948,11 @@ const bool Subsumer::simplifyBySubsumption()
     removeWrong(solver.learnts);
     removeWrong(solver.binaryClauses);
     
-    solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
-
+    /*solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     addFromSolver(solver.learnts, true);
     addFromSolver(solver.binaryClauses, true);
-    if (solver.doHyperBinRes /*&& clauses.size() < 1000000 && numCalls > 1*/ && !hyperBinRes())
-        return false;
+    if (solver.doHyperBinRes && clauses.size() < 1000000 && numCalls > 1 && !hyperBinRes())
+        return false;*/
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
