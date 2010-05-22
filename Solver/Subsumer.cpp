@@ -135,37 +135,11 @@ bool selfSubset(Clause& A, Clause& B, vec<char>& seen)
 }
 
 // Will put NULL in 'cs' if clause removed.
-uint32_t Subsumer::subsume0(Clause& ps, uint32_t abs)
+template<class T>
+uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
 {
     ps.subsume0Finished();
     ps.unsetVarChanged();
-    uint32_t retIndex = std::numeric_limits<uint32_t>::max();
-    #ifdef VERBOSE_DEBUG
-    cout << "subsume0 orig clause:";
-    ps.plainPrint();
-    cout << "pointer:" << &ps << endl;
-    #endif
-    
-    vec<ClauseSimp> subs;
-    findSubsumed(ps, abs, subs);
-    for (uint32_t i = 0; i < subs.size(); i++){
-        clauses_subsumed++;
-        #ifdef VERBOSE_DEBUG
-        cout << "subsume0 removing:";
-        subs[i].clause->plainPrint();
-        #endif
-        
-        Clause* tmp = subs[i].clause;
-        retIndex = subs[i].index;
-        unlinkClause(subs[i]);
-        free(tmp);
-    }
-    
-    return retIndex;
-}
-
-uint32_t Subsumer::subsume0(vec<Lit>& ps, uint32_t abs)
-{
     uint32_t retIndex = std::numeric_limits<uint32_t>::max();
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
