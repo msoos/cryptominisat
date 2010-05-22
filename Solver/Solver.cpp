@@ -1812,13 +1812,11 @@ const bool Solver::chooseRestartType(const uint& lastFullRestart)
                 tmp = fixRestartType;
             
             if (tmp == dynamic_restart) {
-                lastSelectedRestartType = dynamic_restart;
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
                 if (verbosity >= 2)
                     printf("c |                           Decided on dynamic restart strategy                         |\n");
             } else  {
-                lastSelectedRestartType = static_restart;
                 if (verbosity >= 2)
                     printf("c |                            Decided on static restart strategy                         |\n");
                 
@@ -1826,6 +1824,7 @@ const bool Solver::chooseRestartType(const uint& lastFullRestart)
                 if (!matrixFinder->findMatrixes()) return false;
                 #endif //USE_GAUSS
             }
+            lastSelectedRestartType = tmp;
             restartType = tmp;
             restartTypeChooser->reset();
         }
