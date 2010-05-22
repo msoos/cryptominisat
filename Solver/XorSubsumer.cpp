@@ -312,7 +312,7 @@ void XorSubsumer::removeWrong(vec<Clause*>& cs)
 const bool XorSubsumer::removeDependent()
 {
     for (Var var = 0; var < occur.size(); var++) {
-        if (cannot_eliminate[var]) continue;
+        if (cannot_eliminate[var] || !solver.decision_var[var] || solver.assigns[var] != l_Undef) continue;
         vec<XorClauseSimp>& occ = occur[var];
 
         if (occ.size() == 1) {
@@ -479,9 +479,8 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
             addFromSolver(solver.xorclauses);
         }*/
     }
-    
-    if (solver.trail.size() - origTrailSize > 0)
-        solver.order_heap.filter(Solver::VarFilter(solver));
+
+    solver.order_heap.filter(Solver::VarFilter(solver));
 
     removeWrong(solver.learnts);
     removeWrong(solver.binaryClauses);
