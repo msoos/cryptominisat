@@ -763,7 +763,7 @@ bool subset(const T1& A, const T2& B, vector<bool>& seen)
 |  Effect:
 |    Will undo part of the trail, upto but not beyond the assumption of the current decision level.
 |________________________________________________________________________________________________@*/
-Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nbLevels, const bool update)
+Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nbLevels, const bool update)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -861,24 +861,18 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, i
         out_btlevel       = level[p.var()];
     }
 
-    nbLevels = 0;
-    MYFLAG++;
-    for(uint32_t i = 0; i != out_learnt.size(); i++) {
-        int lev = level[out_learnt[i].var()];
-        if (permDiff[lev] != MYFLAG) {
-            permDiff[lev] = MYFLAG;
-            nbLevels++;
-            //merged += nbPropagated(lev);
+    if (lastSelectedRestartType == dynamic_restart) {
+        nbLevels = calcNBLevels(out_learnt);
+        #ifdef UPDATEVARACTIVITY
+        for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
+            if (reason[lastDecisionLevel[i].var()]->activity() < nbLevels)
+                varBumpActivity(lastDecisionLevel[i].var());
         }
+        lastDecisionLevel.clear();
+        #endif
+    } else {
+        nbLevels = 1000;
     }
-    
-    #ifdef UPDATEVARACTIVITY
-    for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
-        if (reason[lastDecisionLevel[i].var()]->activity() < nbLevels)
-            varBumpActivity(lastDecisionLevel[i].var());
-    }
-    lastDecisionLevel.clear();
-    #endif
 
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
@@ -1096,17 +1090,8 @@ Clause* Solver::propagate(const bool update)
                     uncheckedEnqueue(first, &c);
                     #ifdef DYNAMICNBLEVEL
                     if (update && c.learnt() && c.activity() > 2) { // GA
-                        MYFLAG++;
-                        int nbLevels =0;
-                        for(Lit *l = c.getData(), *end2 = c.getDataEnd(); l != end2; l++) {
-                            int lev = level[l->var()];
-                            if (permDiff[lev] != MYFLAG) {
-                                permDiff[lev] = MYFLAG;
-                                nbLevels++;
-                            }
-                            
-                        }
-                        if(nbLevels+1 < c.activity())
+                        uint32_t nbLevels = calcNBLevels(c);
+                        if (nbLevels+1 < c.activity())
                             c.setActivity(nbLevels);
                     }
                     #endif
@@ -1129,6 +1114,21 @@ EndPropagate:
     #endif
 
     return confl;
+}
+
+template<class T>
+inline const uint32_t Solver::calcNBLevels(const T& ps)
+{
+    MYFLAG++;
+    uint32_t nbLevels = 0;
+    for(const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
+        int32_t lev = level[l->var()];
+        if (permDiff[lev] != MYFLAG) {
+            permDiff[lev] = MYFLAG;
+            nbLevels++;
+        }
+    }
+    return nbLevels;
 }
 
 Clause* Solver::propagate_xors(const Lit& p)
@@ -1665,7 +1665,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
     #endif
     
     int backtrack_level;
-    int nbLevels;
+    uint32_t nbLevels;
 
     conflicts++;
     conflictC++;

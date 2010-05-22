@@ -262,10 +262,6 @@ protected:
     vec<uint32_t>       trail_lim;        // Separator indices for different decision levels in 'trail'.
     vec<ClausePtr>      reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<int32_t>        level;            // 'level[var]' contains the level at which the assignment was made.
-    vec<Var>            permDiff;         // LS: permDiff[var] contains the current conflict number... Used to count the number of different decision level variables in learnt clause
-    #ifdef UPDATEVARACTIVITY
-    vec<Lit>            lastDecisionLevel;
-    #endif
     uint64_t            curRestart;
     uint32_t            nbclausesbeforereduce;
     uint32_t            nbCompensateSubsumer; // Number of learnt clauses that subsumed normal clauses last time subs. was executed
@@ -299,7 +295,15 @@ protected:
     vec<Lit>            analyze_stack;
     vec<Lit>            analyze_toclear;
     vec<Lit>            add_tmp;
-    unsigned long int   MYFLAG;
+
+    
+    uint64_t MYFLAG;
+    template<class T>
+    const uint32_t calcNBLevels(const T& ps);
+    vec<uint64_t> permDiff; // LS: permDiff[var] contains the current conflict number... Used to count the number of different decision level variables in learnt clause
+    #ifdef UPDATEVARACTIVITY
+    vec<Lit> lastDecisionLevel;
+    #endif
 
     //Logging
     uint                learnt_clause_group; //the group number of learnt clauses. Incremented at each added learnt clause
@@ -317,7 +321,7 @@ protected:
     Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     Clause*  propagate_xors   (const Lit& p);
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
-    Clause*  analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, int &nblevels, const bool update); // (bt = backtrack)
+    Clause*  analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
     lbool    search           (int nof_conflicts, int nof_conflicts_fullrestart, const bool update = true);      // Search for a given number of conflicts.

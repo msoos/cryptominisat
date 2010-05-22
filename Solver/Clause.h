@@ -64,7 +64,7 @@ protected:
     uint32_t isRemoved:1;
     uint32_t mySize:20;
     
-    union  {int32_t act; uint32_t abst;} extra;
+    union  {uint32_t act; uint32_t abst;} extra;
     float oldActivityInter;
     #ifdef _MSC_VER
     Lit     data[1];
@@ -174,11 +174,11 @@ public:
         return data[i];
     }
 
-    void         setActivity(int i)  {
+    void         setActivity(uint32_t i)  {
         extra.act = i;
     }
     
-    const int&   activity   () const {
+    const uint32_t&   activity   () const {
         return extra.act;
     }
     
