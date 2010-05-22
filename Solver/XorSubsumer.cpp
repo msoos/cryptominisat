@@ -41,7 +41,6 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
     ps.clause->plainPrint();
-    cout << "pointer:" << &ps << endl;
     #endif
     
     vec<Lit> origClause(ps.clause->size());
@@ -317,13 +316,13 @@ const bool XorSubsumer::removeDependent()
         vec<XorClauseSimp>& occ = occur[var];
 
         if (occ.size() == 1) {
-            unlinkClause(occ[0], var);
-            solver.setDecisionVar(var, false);
-            var_elimed[var] = true;
             #ifdef VERBOSE_DEBUG
             std::cout << "Eliminating dependent var " << var + 1 << std::endl;
             std::cout << "-> Removing dependent clause "; occ[0].clause->plainPrint();
             #endif //VERBOSE_DEBUG
+            unlinkClause(occ[0], var);
+            solver.setDecisionVar(var, false);
+            var_elimed[var] = true;
             numElimed++;
         } else if (occ.size() == 2) {
             vec<Lit> lits;
@@ -354,6 +353,12 @@ const bool XorSubsumer::removeDependent()
             
             uint32_t lastSize =  solver.varReplacer->getClauses().size();
             XorClause* c = solver.addXorClauseInt(lits, inverted, group);
+            #ifdef VERBOSE_DEBUG
+            if (c != NULL) {
+                std::cout << "-> Added combined xor clause:"; c->plainPrint();
+            } else
+                std::cout << "-> Combined xor clause is NULL" << std::endl;
+            #endif
             if (c != NULL) linkInClause(*c);
             for (uint32_t i = lastSize; i  < solver.varReplacer->getClauses().size(); i++)
                 addToCannotEliminate(solver.varReplacer->getClauses()[i]);

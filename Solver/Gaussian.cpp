@@ -678,7 +678,7 @@ uint Gaussian::find_sublevel(const Var v) const
 void Gaussian::cancel_until_sublevel(const uint until_sublevel)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Canceling until sublevel " << sublevel << endl;
+    cout << "(" << matrix_no << ")Canceling until sublevel " << until_sublevel << endl;
     #endif
     
     for (vector<Gaussian*>::iterator gauss = solver.gauss_matrixes.begin(), end= solver.gauss_matrixes.end(); gauss != end; gauss++)
@@ -755,7 +755,7 @@ void Gaussian::analyse_confl(const matrixset& m, const uint row, int32_t& maxlev
 
 
     #ifdef VERBOSE_DEBUG
-    if (maxlevel != UINT_MAX)
+    if (maxlevel != std::numeric_limits<int32_t>::max())
         cout << "(" << matrix_no << ")Better conflict found.";
     else
         cout << "(" << matrix_no << ")Found a possible conflict.";

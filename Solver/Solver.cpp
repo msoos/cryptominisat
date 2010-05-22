@@ -539,7 +539,7 @@ void Solver::cancelUntil(int level)
         for (int sublevel = trail.size()-1; sublevel >= (int)trail_lim[level]; sublevel--) {
             Var var = trail[sublevel].var();
             #ifdef VERBOSE_DEBUG
-            cout << "Canceling var " << x+1 << " sublevel: " << c << endl;
+            cout << "Canceling var " << var+1 << " sublevel: " << sublevel << endl;
             #endif
             #ifdef USE_OLD_POLARITIES
             polarity[var] = oldPolarity[var];
