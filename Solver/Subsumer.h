@@ -79,9 +79,6 @@ private:
     void removeWrong(vec<Clause*>& cs);
     void fillCannotEliminate();
     const bool treatLearnts();
-    void addAllXorAsNorm();
-    void addXorAsNormal3(XorClause& c);
-    void addXorAsNormal4(XorClause& c);
     
     //Iterations
     void registerIteration  (CSet& iter_set) { iter_sets.push(&iter_set); }
