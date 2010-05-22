@@ -692,8 +692,8 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                 ((*a)->size() <= 3 && clauses.size() < 300000) ||
                 ((*a)->size() <= 4 && clauses.size() < 60000))) {
                 ClauseSimp c(*a, clauseID++);
-                (*a)->calcAbstraction();
-                clauses.push(c);
+                //(*a)->calcAbstraction();
+                //clauses.push(c);
                 subsume1(c);
                 numMaxSubsume1--;
                 if (!solver.ok) {
@@ -702,8 +702,8 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
                     cs.shrink(a-b);
                     return;
                 }
-                assert(clauses[c.index].clause != NULL);
-                clauses.pop();
+                //assert(clauses[c.index].clause != NULL);
+                //clauses.pop();
                 clauseID--;
             }
         }

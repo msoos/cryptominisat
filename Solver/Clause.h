@@ -201,6 +201,7 @@ public:
     }
     
     void calcAbstraction() {
+        assert(!learnt());
         extra.abst = 0;
         for (uint32_t i = 0; i != size(); i++)
             extra.abst |= 1 << (data[i].toInt() & 31);
