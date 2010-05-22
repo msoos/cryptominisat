@@ -192,7 +192,9 @@ Var Solver::newVar(bool dvar)
     permDiff  .push(0);
     
     polarity  .push_back(defaultPolarity());
+    #ifdef USE_OLD_POLARITIES
     oldPolarity.push_back(defaultPolarity());
+    #endif //USE_OLD_POLARITIES
 
     decision_var.push_back(dvar);
     insertVarOrder(v);
@@ -539,7 +541,9 @@ void Solver::cancelUntil(int level)
             #ifdef VERBOSE_DEBUG
             cout << "Canceling var " << x+1 << " sublevel: " << c << endl;
             #endif
+            #ifdef USE_OLD_POLARITIES
             polarity[var] = oldPolarity[var];
+            #endif //USE_OLD_POLARITIES
             assigns[var] = l_Undef;
             insertVarOrder(var);
         }
@@ -978,7 +982,9 @@ void Solver::uncheckedEnqueue(Lit p, ClausePtr from)
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     level   [v] = decisionLevel();
     reason  [v] = from;
+    #ifdef USE_OLD_POLARITIES
     oldPolarity[p.var()] = polarity[p.var()];
+    #endif //USE_OLD_POLARITIES
     polarity[p.var()] = p.sign();
     trail.push(p);
     
