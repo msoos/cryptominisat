@@ -1245,8 +1245,10 @@ bool  reduceDB_ltMiniSat::operator () (const Clause* x, const Clause* y) {
     // First criteria
     if (xsize > 2 && ysize == 2) return 1;
     if (ysize > 2 && xsize == 2) return 0;
-    
-    return x->oldActivity() < y->oldActivity();
+
+    if (x->oldActivity() == y->oldActivity())
+        return xsize > ysize;
+    else return x->oldActivity() < y->oldActivity();
 }
     
 bool  reduceDB_ltGlucose::operator () (const Clause* x, const Clause* y) {
