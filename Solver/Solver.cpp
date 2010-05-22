@@ -1275,9 +1275,11 @@ void Solver::reduceDB()
         std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
     
     #ifdef VERBOSE_DEBUG
-    std::cout << "Cleaning clauses" << endl;
+    std::cout << "Cleaning clauses" << std::endl;
     for (uint i = 0; i != learnts.size(); i++) {
-        std::cout << "activity:" << learnts[i]->activity() << " \tsize:" << learnts[i]->size() << std::endl;
+        std::cout << "activity:" << learnts[i]->activity()
+        << " \toldActivity:" << learnts[i]->oldActivity()
+        << " \tsize:" << learnts[i]->size() << std::endl;
     }
     #endif
     
