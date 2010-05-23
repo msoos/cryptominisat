@@ -407,17 +407,14 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     clauseID = 0;
     uint32_t lastNumElimed = numElimed;
     localSubstituteUseful = 0;
-    
-    for (Var var = 0; var < solver.nVars(); var++) {
-        //occur[var].clear(true);
-        newVar();
-    }
-    
     while (solver.performReplace && solver.varReplacer->needsReplace()) {
         if (!solver.varReplacer->performReplace())
             return false;
     }
-    fillCannotEliminate();
+    
+    for (Var var = 0; var < solver.nVars(); var++) {
+        occur[var].clear();
+    }
     solver.findAllAttach();
     
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
@@ -459,6 +456,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         if (!solver.ok) return false;
         testAllClauseAttach();
 
+        fillCannotEliminate();
         if (solver.conglomerateXors && !removeDependent())
             return false;
         testAllClauseAttach();
