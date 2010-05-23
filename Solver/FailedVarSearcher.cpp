@@ -182,7 +182,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     finishedLastTimeVar = true;
     lastTimeWentUntilVar = solver.nVars();
     for (Var var = fromVar; var < solver.nVars(); var++) {
-        if (solver.assigns[var] == l_Undef && solver.order_heap.inHeap(var)) {
+        if (solver.assigns[var] == l_Undef && solver.decision_var[var]) {
             if (solver.propagations - origProps >= numProps)  {
                 finishedLastTimeVar = false;
                 lastTimeWentUntilVar = var;
