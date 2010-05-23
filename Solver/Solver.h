@@ -302,7 +302,7 @@ protected:
     const uint32_t calcNBLevels(const T& ps);
     vec<uint64_t> permDiff; // LS: permDiff[var] contains the current conflict number... Used to count the number of different decision level variables in learnt clause
     #ifdef UPDATEVARACTIVITY
-    vec<Lit> lastDecisionLevel;
+    vec<Var> lastDecisionLevel;
     #endif
 
     //Logging

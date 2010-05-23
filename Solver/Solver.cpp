@@ -794,8 +794,8 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, u
                 if (level[my_var] >= (int)decisionLevel()) {
                     pathC++;
                     #ifdef UPDATEVARACTIVITY
-                    if ( reason[q.var()] != NULL  && reason[q.var()]->learnt() )
-                        lastDecisionLevel.push(q);
+                    if (lastSelectedRestartType == dynamic_restart && reason[q.var()] != NULL  && reason[q.var()]->learnt())
+                        lastDecisionLevel.push(q.var());
                     #endif
                 } else {
                     out_learnt.push(q);
@@ -865,8 +865,8 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, u
         nbLevels = calcNBLevels(out_learnt);
         #ifdef UPDATEVARACTIVITY
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
-            if (reason[lastDecisionLevel[i].var()]->activity() < nbLevels)
-                varBumpActivity(lastDecisionLevel[i].var());
+            if (reason[lastDecisionLevel[i]]->activity() < nbLevels)
+                varBumpActivity(lastDecisionLevel[i]);
         }
         lastDecisionLevel.clear();
         #endif
