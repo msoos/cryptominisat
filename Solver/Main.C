@@ -352,12 +352,12 @@ void printStats(Solver& solver)
     printStatsLine("c full restarts", solver.fullStarts);
     printStatsLine("c learnts DL2", solver.nbDL2);
     printStatsLine("c learnts size 2", solver.nbBin);
-    printStatsLine("c learnts size 1", solver.get_unitary_learnts_num());
-    printStatsLine("c v-elim SatELite", solver.getNumElimSubsume());
-    printStatsLine("c v-elim xor", solver.getNumElimXorSubsume());
+    printStatsLine("c learnts size 1", solver.get_unitary_learnts_num(), (double)solver.get_unitary_learnts_num()/(double)solver.nVars()*100.0, "% of vars");
+    printStatsLine("c v-elim SatELite", solver.getNumElimSubsume(), (double)solver.getNumElimSubsume()/(double)solver.nVars()*100.0, "% of vars");
+    printStatsLine("c v-elim xor", solver.getNumElimXorSubsume(), (double)solver.getNumElimXorSubsume()/(double)solver.nVars()*100.0, "% of vars");
     printStatsLine("c num binary xor trees", solver.getNumXorTrees());
-    printStatsLine("c binxor trees' tot crown", solver.getNumXorTreesCrownSize());
-    printStatsLine("c OTF clause improved", solver.improvedClauseNo);
+    printStatsLine("c binxor trees' crown", solver.getNumXorTreesCrownSize(), (double)solver.getNumXorTreesCrownSize()/(double)solver.getNumXorTrees(), "crowns/tree");
+    printStatsLine("c OTF clause improved", solver.improvedClauseNo, (double)solver.improvedClauseNo/(double)solver.conflicts, "clauses/conflict");
     printStatsLine("c OTF impr. size diff", solver.improvedClauseSize, (double)solver.improvedClauseSize/(double)solver.improvedClauseNo, " lits/clause");
 
     #ifdef USE_GAUSS

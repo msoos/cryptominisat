@@ -308,7 +308,7 @@ void FailedVarSearcher::printResults(const double myTime) const
     " bXBeca: " << std::setw(4) << newBinXor <<
     " bXProp: " << std::setw(4) << bothInvert <<
     " Bins:" << std::setw(7) << binClauseAdded <<
-    " P: " << std::setw(4) << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
+    " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
     " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime <<
     std::setw(5) << " |" << std::endl;
 }
