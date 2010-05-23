@@ -106,7 +106,7 @@ bool XorSubsumer::subset(const T1& A, const T2& B)
 inline void XorSubsumer::newVar()
 {
     occur       .push();
-    seen_tmp    .push(0);       // (one for each polarity)
+    seen_tmp    .push(0);
     cannot_eliminate.push(0);
     var_elimed.push(0);
 }

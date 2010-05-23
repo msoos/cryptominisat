@@ -378,7 +378,7 @@ const bool XorSubsumer::unEliminate(const Var var)
     vec<Lit> tmp;
     typedef map<Var, vector<XorClause*> > elimType;
     elimType::iterator it = elimedOutVar.find(var);
-    
+
     solver.setDecisionVar(var, true);
     var_elimed[var] = false;
     numElimed--;
@@ -458,7 +458,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         solver.clauseCleaner->cleanXorClausesBewareNULL(clauses, ClauseCleaner::xorSimpClauses, *this);
         if (!solver.ok) return false;
         testAllClauseAttach();
-        
+
         if (solver.conglomerateXors && !removeDependent())
             return false;
         testAllClauseAttach();
