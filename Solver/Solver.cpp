@@ -1539,6 +1539,7 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     #endif //USE_GAUSS
 
     testAllClauseAttach();
+    findAllAttach();
     for (;;) {
         Clause* confl = propagate(update);
 
@@ -2048,6 +2049,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
         else
             nbclausesbeforereduce = (nClauses() * learntsize_factor)/2;
     }
+    testAllClauseAttach();
+    findAllAttach();
     
     if (conflicts == 0) {
         performStepsBeforeSolve();
@@ -2367,5 +2370,52 @@ void Solver::testAllClauseAttach() const
             }
         }
     }
+}
+
+void Solver::findAllAttach() const
+{
+    for (uint32_t i = 0; i < binwatches.size(); i++) {
+        for (uint32_t i2 = 0; i2 < binwatches[i].size(); i2++) {
+            assert(findClause(binwatches[i][i2].clause));
+        }
+    }
+    for (uint32_t i = 0; i < watches.size(); i++) {
+        for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
+            assert(findClause(watches[i][i2].clause));
+        }
+    }
+
+    for (uint32_t i = 0; i < xorwatches.size(); i++) {
+        for (uint32_t i2 = 0; i2 < xorwatches[i].size(); i2++) {
+            assert(findClause(xorwatches[i][i2]));
+        }
+    }
+}
+
+const bool Solver::findClause(XorClause* c) const
+{
+    for (uint32_t i = 0; i < xorclauses.size(); i++) {
+        if (xorclauses[i] == c) return true;
+    }
+    return false;
+}
+
+const bool Solver::findClause(Clause* c) const
+{
+    for (uint32_t i = 0; i < binaryClauses.size(); i++) {
+        if (binaryClauses[i] == c) return true;
+    }
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        if (clauses[i] == c) return true;
+    }
+    for (uint32_t i = 0; i < learnts.size(); i++) {
+        if (learnts[i] == c) return true;
+    }
+    vec<Clause*> cs = varReplacer->getClauses();
+    for (uint32_t i = 0; i < cs.size(); i++) {
+        if (cs[i] == c) return true;
+    }
+    
+    return false;
 }
 #endif //DEBUG_ATTACH

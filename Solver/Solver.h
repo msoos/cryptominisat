@@ -349,6 +349,9 @@ protected:
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
     void     reverse_binary_clause(Clause& c) const;   // Binary clauses --- the first Lit has to be true
     void     testAllClauseAttach() const;
+    void     findAllAttach() const;
+    const bool findClause(XorClause* c) const;
+    const bool findClause(Clause* c) const;
 
     // Misc:
     //
@@ -690,6 +693,10 @@ static inline void check(bool expr)
 
 #ifndef DEBUG_ATTACH
 inline void Solver::testAllClauseAttach() const
+{
+    return;
+}
+inline void Solver::findAllAttach() const
 {
     return;
 }

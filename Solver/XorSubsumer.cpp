@@ -421,6 +421,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
             return false;
     }
     fillCannotEliminate();
+    solver.findAllAttach();
     
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     if (!solver.ok) return false;
