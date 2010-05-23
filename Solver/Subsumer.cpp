@@ -1527,6 +1527,18 @@ const bool Subsumer::tryOneSetting(const Lit lit, const Lit negLit)
     return returnVal;
 }
 
+const bool Subsumer::checkElimedUnassigned() const
+{
+    for (uint32_t i = 0; i < var_elimed.size(); i++) {
+        if (var_elimed[i]) {
+            assert(solver.assigns[i] == l_Undef);
+            if (solver.assigns[i] != l_Undef) return false;
+        }
+    }
+
+    return true;
+}
+
 /*
 int hash32shift(int key)
 {

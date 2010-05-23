@@ -2122,6 +2122,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
 #endif
         
         if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
+            assert(subsumer->checkElimedUnassigned());
+            assert(xorSubsumer->checkElimedUnassigned());
 #ifdef VERBOSE_DEBUG
             std::cout << "Solution needs extension. Extending." << std::endl;
 #endif //VERBOSE_DEBUG

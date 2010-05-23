@@ -555,4 +555,14 @@ void XorSubsumer::findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed)
     }
 }
 
+const bool XorSubsumer::checkElimedUnassigned() const
+{
+    for (uint32_t i = 0; i < var_elimed.size(); i++) {
+        if (var_elimed[i]) {
+            assert(solver.assigns[i] == l_Undef);
+            if (solver.assigns[i] != l_Undef) return false;
+        }
+    }
 
+    return true;
+}

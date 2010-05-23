@@ -28,6 +28,7 @@ public:
     const uint32_t getNumElimed() const;
     const vec<char>& getVarElimed() const;
     const bool unEliminate(const Var var);
+    const bool checkElimedUnassigned() const;
     
 private:
     
