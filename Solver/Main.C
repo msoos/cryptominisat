@@ -368,7 +368,7 @@ void printStats(Solver& solver)
 
     //VarReplacer stats
     printStatsLine("c num binary xor trees", solver.getNumXorTrees());
-    printStatsLine("c binxor trees' crown", solver.getNumXorTreesCrownSize(), (double)solver.getNumXorTreesCrownSize()/(double)solver.getNumXorTrees(), "crowns/tree");
+    printStatsLine("c binxor trees' crown", solver.getNumXorTreesCrownSize(), (double)solver.getNumXorTreesCrownSize()/(double)solver.getNumXorTrees(), "leafs/tree");
 
     //OTF clause improvement stats
     printStatsLine("c OTF clause improved", solver.improvedClauseNo, (double)solver.improvedClauseNo/(double)solver.conflicts, "clauses/conflict");
