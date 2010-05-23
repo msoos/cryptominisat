@@ -518,6 +518,7 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
             ps[0] = ~lit;
             ps[1] = Lit(*var, !propValue[*var]);
             solver.addLearntClause(ps, 0, 0);
+            solver.nbBin++;
             assert(solver.ok);
             binClauseAdded++;
         }

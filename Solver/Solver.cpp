@@ -330,12 +330,15 @@ bool Solver::addLearntClause(T& ps, const uint group, const uint32_t activity)
     Clause* c = addClauseInt(ps, group);
     if (c == NULL)
         return ok;
-    
+
+    //compensate for addClauseInt's attachClause, which doesn't know
+    //that this is a learnt clause.
     clauses_literals -= c->size();
+    learnts_literals += c->size();
     
     c->makeLearnt(activity);
-    learnts.push(c);
-    learnts_literals += c->size();
+    if (c->size() > 2) learnts.push(c);
+    else binaryClauses.push(c);
     return ok;
 }
 template bool Solver::addLearntClause(Clause& ps, const uint group, const uint32_t activity);
@@ -1758,8 +1761,12 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
             for (uint32_t i = 0; i != learnt_clause.size(); i++)
                 (*c)[i] = learnt_clause[i];
             c->resize(learnt_clause.size());
-            if (c->learnt() && c->activity() > nbLevels)
-                c->setActivity(nbLevels); // LS
+            if (c->learnt()) {
+                if (c->activity() > nbLevels)
+                    c->setActivity(nbLevels); // LS
+                if (c->size() == 2)
+                    nbBin++;
+            }
             c->setStrenghtened();
         } else {
             c = Clause_new(learnt_clause, learnt_clause_group++, true);
@@ -2357,7 +2364,7 @@ void Solver::printStatHeader() const
 void Solver::printRestartStat()
 {
     if (verbosity >= 2) {
-        printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)nClauses(), (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSubsumer), (int)nLearnts(), (double)learnts_literals/nLearnts());
+        printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)(nClauses()-nbBin), (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSubsumer), (int)(nLearnts()+nbBin), (double)learnts_literals/(double)(nLearnts()+nbBin));
     }
     
     #ifdef USE_GAUSS
