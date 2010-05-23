@@ -84,7 +84,7 @@ Solver::Solver() :
         , doVarElim        (true)
         , doSubsume1       (true)
         , failedVarSearch  (true)
-        , readdOldLearnts  (true)
+        , readdOldLearnts  (false)
         , addExtraBins     (true)
         , libraryUsage     (true)
         , greedyUnbound    (false)
