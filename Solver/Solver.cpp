@@ -85,6 +85,7 @@ Solver::Solver() :
         , doSubsume1       (true)
         , failedVarSearch  (true)
         , readdOldLearnts  (true)
+        , addExtraBins     (true)
         , libraryUsage     (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
@@ -1112,6 +1113,34 @@ EndPropagate:
     #ifdef VERBOSE_DEBUG
     cout << "Propagation ended." << endl;
     #endif
+
+    return confl;
+}
+
+Clause* Solver::propagateBin()
+{
+    Clause* confl = NULL;
+    
+    #ifdef VERBOSE_DEBUG
+    cout << "Propagation started" << endl;
+    #endif
+    uint32_t qheadBin = qhead;
+
+    //First propagate binary clauses
+    while (qheadBin < trail.size()) {
+        Lit p   = trail[qheadBin++];
+        vec<WatchedBin> & wbin = binwatches[p.toInt()];
+        //propagations++;
+        for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+            lbool val = value(k->impliedLit);
+            if (val.isUndef()) {
+                uncheckedEnqueue(k->impliedLit, k->clause);
+            } else if (val == l_False) {
+                confl = k->clause;
+                //goto EndPropagate;
+            }
+        }
+    }
 
     return confl;
 }

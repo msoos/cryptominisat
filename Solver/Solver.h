@@ -149,6 +149,7 @@ public:
     bool      doSubsume1;           // Perform clause contraction through resolution
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     bool      readdOldLearnts;      // Should re-add old learnts for failed variable searching
+    bool      addExtraBins;         // Should add extra binaries in failed literal probing
     bool      libraryUsage;         // Set true if not used as a library
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
@@ -319,6 +320,7 @@ protected:
     void     uncheckedEnqueue (Lit p, ClausePtr from = (Clause*)NULL);                 // Enqueue a literal. Assumes value of literal is undefined.
     bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
     Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
+    Clause*  propagateBin();
     Clause*  propagate_xors   (const Lit& p);
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
     Clause*  analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)

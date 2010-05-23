@@ -172,6 +172,11 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     
     //For 2-long xor through Le Berre paper
     bothInvert = 0;
+
+    //For HyperBin
+    binClauseAdded = 0;
+    propagatedBin.resize(solver.nVars(), 0);
+    propagatedVars.clear();
     
     //uint32_t fromBin;
     uint32_t fromVar;
@@ -298,12 +303,13 @@ void FailedVarSearcher::completelyDetachAndReattach()
 
 void FailedVarSearcher::printResults(const double myTime) const
 {
-    std::cout << "c |  Failv: "<< std::setw(5) << numFailed <<
-    " Bprop v: " << std::setw(6) << goodBothSame <<
-    " bXBeca: " << std::setw(5) << newBinXor <<
-    " bXProp: " << std::setw(5) << bothInvert <<
-    " Prop: " << std::setw(5) << std::setprecision(2) << (solver.propagations - origProps)/1000  << "t"
-    " Time: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime <<
+    std::cout << "c |  Flit: "<< std::setw(5) << numFailed <<
+    " Blit: " << std::setw(6) << goodBothSame <<
+    " bXBeca: " << std::setw(4) << newBinXor <<
+    " bXProp: " << std::setw(4) << bothInvert <<
+    " Bins:" << std::setw(7) << binClauseAdded <<
+    " P: " << std::setw(4) << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
+    " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime <<
     std::setw(5) << " |" << std::endl;
 }
 
@@ -385,10 +391,12 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
             Var x = solver.trail[c].var();
             propagated.setBit(x);
-            if (solver.assigns[x].getBool())
-                propValue.setBit(x);
-            else
-                propValue.clearBit(x);
+            if (solver.addExtraBins) {
+                propagatedBin.setBit(x);
+                propagatedVars.push(x);
+            }
+            if (solver.assigns[x].getBool()) propValue.setBit(x);
+            else propValue.clearBit(x);
             
             if (binXorFind) removeVarFromXors(x);
         }
@@ -407,6 +415,8 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         
         solver.cancelUntil(0);
     }
+
+    if (solver.addExtraBins) addBinClauses(lit1);
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit2);
@@ -423,6 +433,10 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
             Var     x  = solver.trail[c].var();
             if (propagated[x]) {
+                if (solver.addExtraBins) {
+                    propagatedBin.setBit(x);
+                    propagatedVars.push(x);
+                }
                 if (propValue[x] == solver.assigns[x].getBool()) {
                     //they both imply the same
                     bothSame.push_back(make_pair(x, !propValue[x]));
@@ -444,6 +458,8 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
                     toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
                 }
             }
+            if (solver.assigns[x].getBool()) propValue.setBit(x);
+            else propValue.clearBit(x);
             if (binXorFind) removeVarFromXors(x);
         }
         
@@ -470,6 +486,8 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         
         solver.cancelUntil(0);
     }
+
+    if (solver.addExtraBins) addBinClauses(lit2);
     
     for(uint32_t i = 0; i != bothSame.size(); i++) {
         solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
@@ -480,6 +498,32 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     if (!solver.ok) return false;
     
     return true;
+}
+
+void FailedVarSearcher::addBinClauses(const Lit& lit)
+{
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueue(lit);
+    failed = (solver.propagateBin() != NULL);
+    assert(!failed);
+    assert(solver.decisionLevel() > 0);
+    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+        Var x = solver.trail[c].var();
+        propagatedBin.clearBit(x);
+    }
+    solver.cancelUntil(0);
+    for (const Var *var = propagatedVars.getData(), *end = propagatedVars.getDataEnd(); var != end; var++) {
+        if (propagatedBin[*var]) {
+            vec<Lit> ps(2);
+            ps[0] = ~lit;
+            ps[1] = Lit(*var, !propValue[*var]);
+            solver.addLearntClause(ps, 0, 0);
+            assert(solver.ok);
+            binClauseAdded++;
+        }
+    }
+    propagatedBin.setZero();
+    propagatedVars.clear();
 }
 
 const bool FailedVarSearcher::tryAll(const Lit* begin, const Lit* end)

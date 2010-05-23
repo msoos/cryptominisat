@@ -486,6 +486,7 @@ void printUsage(char** argv, Solver& S)
     printf("                     Default: %d\n", S.gaussconfig.only_nth_gauss_save);
     printf("  --noreaddold     = Readd old learnts for failed variable searching.\n");
     printf("                     These learnts are usually deleted, but may help\n");
+    printf("  --noextrabins    = Don't add binary clauses when doing failed lit probing.\n");
     printf("\n");
 }
 
@@ -697,6 +698,8 @@ int main(int argc, char** argv)
             printResult = false;
         } else if ((value = hasPrefix(argv[i], "--noreaddold"))) {
             S.readdOldLearnts = false;
+        } else if ((value = hasPrefix(argv[i], "--noextrabins"))) {
+            S.addExtraBins = false;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

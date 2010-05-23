@@ -105,6 +105,12 @@ class FailedVarSearcher {
         // 1) (a->b, ~a->~b) -> a=b
         // 2) binary clause (a,c):  (a->g, c->~g) -> a = ~c
         uint32_t bothInvert;
+
+        //finding HyperBins
+        void addBinClauses(const Lit& lit);
+        uint32_t binClauseAdded;
+        BitArray propagatedBin;
+        vec<Var> propagatedVars;
         
         //State for this run
         uint32_t toReplaceBefore;
