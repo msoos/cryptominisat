@@ -17,11 +17,8 @@ Substantially modified by: Mate Soos (2010)
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
-#define BIT_MORE_VERBOSITY
+#define VERBOSE_DEBUGSUBSUME0
 #endif
-
-//#define BIT_MORE_VERBOSITY
-//#define TOUCH_LESS
 
 #ifdef VERBOSE_DEBUG
 using std::cout;
@@ -38,7 +35,7 @@ XorSubsumer::XorSubsumer(Solver& s):
 // Will put NULL in 'cs' if clause removed.
 void XorSubsumer::subsume0(XorClauseSimp& ps)
 {
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUGSUBSUME0
     cout << "subsume0 orig clause:";
     ps.clause->plainPrint();
     #endif
@@ -53,7 +50,7 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
     vec<XorClauseSimp> subs;
     findSubsumed(*ps.clause, subs);
     for (uint32_t i = 0; i < subs.size(); i++){
-        #ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUGSUBSUME0
         cout << "subsume0 removing:";
         subs[i].clause->plainPrint();
         #endif
@@ -525,7 +522,7 @@ inline void XorSubsumer::testAllClauseAttach() const
 
 void XorSubsumer::findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed)
 {
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUGSUBSUME0
     cout << "findSubsumed: ";
     for (uint32_t i = 0; i < ps.size(); i++) {
         if (ps[i].sign()) printf("-");
@@ -547,7 +544,7 @@ void XorSubsumer::findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed)
         
         if (it->clause != &ps && subsetAbst(ps.getAbst(), it->clause->getAbst()) && ps.size() <= it->clause->size() && subset(ps, *it->clause)) {
             out_subsumed.push(*it);
-            #ifdef VERBOSE_DEBUG
+            #ifdef VERBOSE_DEBUGSUBSUME0
             cout << "subsumed: ";
             it->clause->plainPrint();
             #endif
