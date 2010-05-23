@@ -633,8 +633,7 @@ inline bool Solver::findWatchedBinCl(const vec<T>& ws, const Clause *c) const
 inline void Solver::reverse_binary_clause(Clause& c) const {
     if (c.size() == 2 && value(c[0]) == l_False) {
         assert(value(c[1]) == l_True);
-        Lit tmp = c[0];
-        c[0] =  c[1], c[1] = tmp;
+        std::swap(c[0], c[1]);
     }
 }
 /*inline void Solver::calculate_xor_clause(Clause& c2) const {
