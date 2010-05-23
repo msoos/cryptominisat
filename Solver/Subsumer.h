@@ -38,6 +38,7 @@ public:
     const vec<char>& getVarElimed() const;
     const uint32_t getNumElimed() const;
     const bool checkElimedUnassigned() const;
+    const double getTotalTime() const;
     
 private:
     
@@ -53,11 +54,13 @@ private:
     vec<vec<ClauseSimp> >  occur;          // 'occur[index(lit)]' is a list of constraints containing 'lit'.
     vec<vec<ClauseSimp>* > iter_vecs;      // Vectors currently used for iterations. Removed clauses will be looked up and replaced by 'Clause_NULL'.
     vec<CSet* >            iter_sets;      // Sets currently used for iterations.
-    Solver&                solver;         // The Solver
-    
-    
-    vec<char>              var_elimed;     // 'eliminated[var]' is TRUE if variable has been eliminated.
     vec<char>              cannot_eliminate;//
+
+    //Global stats
+    Solver& solver;
+    vec<char> var_elimed; //TRUE if var has been eliminated
+    double totalTime;
+    uint32_t numElimed;
     map<Var, vector<vector<Lit> > > elimedOutVar;
     
     // Temporaries (to reduce allocation overhead):
@@ -155,7 +158,6 @@ private:
     uint32_t numCalls;
     bool fullSubsume;
     uint32_t clauseID;
-    uint32_t numElimed;
 };
 
 template <class T, class T2>
@@ -229,6 +231,11 @@ inline const vec<char>& Subsumer::getVarElimed() const
 inline const uint32_t Subsumer::getNumElimed() const
 {
     return numElimed;
+}
+
+inline const double Subsumer::getTotalTime() const
+{
+    return totalTime;
 }
 
 #endif //SIMPLIFIER_H

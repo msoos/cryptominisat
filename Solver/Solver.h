@@ -189,6 +189,8 @@ public:
     const uint32_t getNumElimXorSubsume() const; // Get variable elimination stats from XorSubsumer
     const uint32_t getNumXorTrees() const; // Get the number of trees built from 2-long XOR-s. This is effectively the number of variables that replace other variables
     const uint32_t getNumXorTreesCrownSize() const; // Get the number of variables being replaced by other variables
+    const double getTotalTimeSubsumer() const;
+    const double getTotalTimeXorSubsumer() const;
     
 protected:
     #ifdef USE_GAUSS

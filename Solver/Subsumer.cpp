@@ -36,8 +36,9 @@ using std::endl;
 
 Subsumer::Subsumer(Solver& s):
     solver(s)
-    , numCalls(0)
+    , totalTime(0.0)
     , numElimed(0)
+    , numCalls(0)
 {
 };
 
@@ -973,6 +974,7 @@ const bool Subsumer::simplifyBySubsumption()
             << "                                    |" << std::endl;
         }
     }
+    totalTime += cpuTime() - myTime;
 
     solver.testAllClauseAttach();
     return true;

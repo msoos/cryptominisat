@@ -29,6 +29,7 @@ public:
     const vec<char>& getVarElimed() const;
     const bool unEliminate(const Var var);
     const bool checkElimedUnassigned() const;
+    const double getTotalTime() const;
     
 private:
     
@@ -64,10 +65,13 @@ private:
     void fillCannotEliminate();
     vec<char> cannot_eliminate;
     void addToCannotEliminate(Clause* it);
+    void removeWrong(vec<Clause*>& cs);
+
+    //Global stats
+    double totalTime;
     map<Var, vector<XorClause*> > elimedOutVar;
     vec<char> var_elimed;
     uint32_t numElimed;
-    void removeWrong(vec<Clause*>& cs);
     
     //Heule-process
     void clearDouble(vec<Lit>& ps) const;
@@ -119,6 +123,11 @@ inline const vec<char>& XorSubsumer::getVarElimed() const
 inline const uint32_t XorSubsumer::getNumElimed() const
 {
     return numElimed;
+}
+
+inline const double XorSubsumer::getTotalTime() const
+{
+    return totalTime;
 }
 
 

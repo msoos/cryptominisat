@@ -346,17 +346,31 @@ void printStats(Solver& solver)
 {
     double   cpu_time = cpuTime();
     uint64_t mem_used = memUsed();
+
+    //Restarts stats
     printStatsLine("c restarts", solver.starts);
     printStatsLine("c dynamic restarts", solver.dynStarts);
     printStatsLine("c static restarts", solver.staticStarts);
     printStatsLine("c full restarts", solver.fullStarts);
+
+    //Learnts stats
     printStatsLine("c learnts DL2", solver.nbDL2);
     printStatsLine("c learnts size 2", solver.nbBin);
     printStatsLine("c learnts size 1", solver.get_unitary_learnts_num(), (double)solver.get_unitary_learnts_num()/(double)solver.nVars()*100.0, "% of vars");
-    printStatsLine("c v-elim SatELite", solver.getNumElimSubsume(), (double)solver.getNumElimSubsume()/(double)solver.nVars()*100.0, "% of vars");
-    printStatsLine("c v-elim xor", solver.getNumElimXorSubsume(), (double)solver.getNumElimXorSubsume()/(double)solver.nVars()*100.0, "% of vars");
+
+    //Subsumer stats
+    printStatsLine("c v-elim SatELite", solver.getNumElimSubsume(), (double)solver.getNumElimSubsume()/(double)solver.nVars()*100.0, "% vars");
+    printStatsLine("c SatELite time", solver.getTotalTimeSubsumer(), solver.getTotalTimeSubsumer()/cpu_time*100.0, "% time");
+
+    //XorSubsumer stats
+    printStatsLine("c v-elim xor", solver.getNumElimXorSubsume(), (double)solver.getNumElimXorSubsume()/(double)solver.nVars()*100.0, "% vars");
+    printStatsLine("c xor elim time", solver.getTotalTimeXorSubsumer(), solver.getTotalTimeXorSubsumer()/cpu_time*100.0, "% time");
+
+    //VarReplacer stats
     printStatsLine("c num binary xor trees", solver.getNumXorTrees());
     printStatsLine("c binxor trees' crown", solver.getNumXorTreesCrownSize(), (double)solver.getNumXorTreesCrownSize()/(double)solver.getNumXorTrees(), "crowns/tree");
+
+    //OTF clause improvement stats
     printStatsLine("c OTF clause improved", solver.improvedClauseNo, (double)solver.improvedClauseNo/(double)solver.conflicts, "clauses/conflict");
     printStatsLine("c OTF impr. size diff", solver.improvedClauseSize, (double)solver.improvedClauseSize/(double)solver.improvedClauseNo, " lits/clause");
 
@@ -372,10 +386,13 @@ void printStats(Solver& solver)
     }
     #endif
 
+    //Search stats
     printStatsLine("c conflicts", solver.conflicts, (double)solver.conflicts/cpu_time, "/ sec");
     printStatsLine("c decisions", solver.decisions, (double)solver.rnd_decisions*100.0/(double)solver.decisions, "% random");
     printStatsLine("c propagations", solver.propagations, (double)solver.propagations/cpu_time, "/ sec");
     printStatsLine("c conflict literals", solver.tot_literals, (double)(solver.max_literals - solver.tot_literals)*100.0/ (double)solver.max_literals, "% deleted");
+
+    //General stats
     printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
     printStatsLine("c CPU time", cpu_time, " s");
 }

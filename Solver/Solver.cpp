@@ -1444,6 +1444,17 @@ const uint32_t Solver::getNumXorTreesCrownSize() const
     return varReplacer->getNumReplacedVars();
 }
 
+const double Solver::getTotalTimeSubsumer() const
+{
+    return subsumer->getTotalTime();
+}
+
+const double Solver::getTotalTimeXorSubsumer() const
+{
+    return xorSubsumer->getTotalTime();
+}
+
+
 void Solver::setMaxRestarts(const uint num)
 {
     maxRestarts = num;

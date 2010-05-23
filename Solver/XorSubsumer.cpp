@@ -27,6 +27,7 @@ using std::endl;
 
 XorSubsumer::XorSubsumer(Solver& s):
     solver(s)
+    , totalTime(0.0)
     , numElimed(0)
     , localSubstituteUseful(0)
 {
@@ -491,6 +492,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         << " time: " << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime)
         << std::setw(3) << " |" << std::endl;
     }
+    totalTime += cpuTime() - myTime;
     
     solver.testAllClauseAttach();
     return true;
