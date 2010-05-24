@@ -633,57 +633,6 @@ void FailedVarSearcher::fillImplies(const Lit& lit, BitArray& myimplies)
     solver.cancelUntil(0);
 }
 
-void FailedVarSearcher::addBinClausesOld(const Lit& lit)
-{
-    std::cout << "Checking one BTC vs UP" << std::endl;
-    vec<Lit> toVisit;
-    
-    solver.newDecisionLevel();
-    solver.uncheckedEnqueue(lit);
-    failed = (solver.propagateBin() != NULL);
-    assert(!failed);
-    assert(solver.decisionLevel() > 0);
-    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-        Lit x = solver.trail[c];
-        propagatedBin.clearBit(x.var());
-        toVisit.push(x);
-    }
-    
-    solver.cancelUntil(0);
-    for (const Var *var = propagatedVars.getData(), *end = propagatedVars.getDataEnd(); var != end; var++) {
-        if (propagatedBin[*var]) {
-            std::cout << "Adding one diff" << std::endl;
-            for (Lit *l = toVisit.getData(), *end2 = toVisit.getDataEnd(); l != end2; l++) {
-                if (implies(*l, Lit(*var, !propValue[*var]))) {
-                    addBin(*l, Lit(*var, !propValue[*var]));
-                    std::cout << "-> added (diff:" << (end2-1-l) << std::endl;
-                    goto next;
-                }
-            }
-            assert(false);
-        }
-        next:;
-    }
-    propagatedBin.setZero();
-    propagatedVars.clear();
-}
-
-const bool FailedVarSearcher::implies(const Lit& from, const Lit& to)
-{
-    bool ret = false;
-    
-    solver.newDecisionLevel();
-    solver.uncheckedEnqueue(from);
-    failed = (solver.propagate() != NULL);
-    assert(!failed);
-    if (solver.assigns[to.var()] != l_Undef) {
-        assert(solver.assigns[to.var()] == (to.sign() ? l_False : l_True));
-        ret = true;
-    }
-    solver.cancelUntil(0);
-    return ret;
-}
-
 void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
 {
     vec<Lit> ps(2);
@@ -695,6 +644,9 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
     binClauseAdded++;
 }
 
+/***************
+UNTESTED CODE
+*****************
 const bool FailedVarSearcher::tryAll(const Lit* begin, const Lit* end)
 {
     propagated.setZero();
@@ -755,6 +707,9 @@ const bool FailedVarSearcher::tryAll(const Lit* begin, const Lit* end)
     
     return true;
 }
+**************
+Untested code end
+**************/
 
 template<class T>
 inline void FailedVarSearcher::cleanAndAttachClauses(vec<T*>& cs)
