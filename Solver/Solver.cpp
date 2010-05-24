@@ -2016,9 +2016,9 @@ inline void Solver::performStepsBeforeSolve()
     testAllClauseAttach();
     if (performReplace && !varReplacer->performReplace()) return;
 
-    if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 3000000 : 1000000))  {
+    /*if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 3000000 : 1000000))  {
         return;
-    }
+    }*/
     
     testAllClauseAttach();
     if (doSubsumption
