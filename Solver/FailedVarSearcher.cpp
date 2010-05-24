@@ -177,6 +177,10 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     binClauseAdded = 0;
     propagatedBin.resize(solver.nVars(), 0);
     propagatedVars.clear();
+    myimplies.resize(solver.nVars(), 0);
+    hyperbinProps = 0;
+    if (solver.addExtraBins && !orderLits()) return false;
+    maxHyperBinProps = (double)numProps * 0.2;
     
     //uint32_t fromBin;
     uint32_t fromVar;
@@ -313,6 +317,45 @@ void FailedVarSearcher::printResults(const double myTime) const
     std::setw(5) << " |" << std::endl;
 }
 
+const bool FailedVarSearcher::orderLits()
+{
+    uint32_t oldProps = solver.propagations;
+    double myTime = cpuTime();
+    uint32_t numChecked = 0;
+    litDegrees.clear();
+    litDegrees.resize(solver.nVars()*2, 0);
+    uint32_t i;
+    
+    for (i = 0; i < 1000000; i++) {
+        if (solver.propagations - oldProps > 500000) break;
+        Var var = solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)];
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+        Lit randLit(var, solver.mtrand.randInt(1));
+
+        numChecked++;
+        solver.newDecisionLevel();
+        solver.uncheckedEnqueue(randLit);
+        failed = (solver.propagateBin() != NULL);
+        if (failed) {
+            solver.cancelUntil(0);
+            solver.uncheckedEnqueue(~randLit);
+            solver.ok = (solver.propagate() == NULL);
+            if (!solver.ok) return false;
+            continue;
+        }
+        assert(solver.decisionLevel() > 0);
+        for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
+            Lit x = solver.trail[c];
+            litDegrees[x.toInt()]++;
+        }
+        solver.cancelUntil(0);
+    }
+    std::cout << "c binary Degree finding time:" << cpuTime() - myTime << "s  num checked: " << numChecked << " i: " << i << std::endl;
+    solver.propagations = oldProps;
+
+    return true;
+}
+
 void FailedVarSearcher::removeOldLearnts()
 {
     for (Clause **it = solver.removedLearnts.getData(), **end = solver.removedLearnts.getDataEnd(); it != end; it++) {
@@ -416,7 +459,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.cancelUntil(0);
     }
 
-    if (solver.addExtraBins) addBinClauses(lit1);
+    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) addBinClauses(lit1);
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit2);
@@ -487,7 +530,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.cancelUntil(0);
     }
 
-    if (solver.addExtraBins) addBinClauses(lit2);
+    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) addBinClauses(lit2);
     
     for(uint32_t i = 0; i != bothSame.size(); i++) {
         solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
@@ -500,31 +543,156 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     return true;
 }
 
+struct litOrder
+{
+    litOrder(const vector<uint32_t>& _litDegrees) :
+    litDegrees(_litDegrees)
+    {}
+    
+    bool operator () (const Lit& x, const Lit& y) {
+        return litDegrees[x.toInt()] > litDegrees[y.toInt()];
+    }
+    
+    const vector<uint32_t>& litDegrees;
+};
+
 void FailedVarSearcher::addBinClauses(const Lit& lit)
 {
+    uint64_t oldProps = solver.propagations;
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Checking one BTC vs UP" << std::endl;
+    #endif //VERBOSE_DEBUG
+    vec<Lit> toVisit;
+    
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueue(lit);
+    failed = (solver.propagateBin() != NULL);
+    assert(!failed);
+    assert(solver.decisionLevel() > 0);
+    
+    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+        Lit x = solver.trail[c];
+        propagatedBin.clearBit(x.var());
+        toVisit.push(x);
+    }
+    solver.cancelUntil(0);
+
+    std::sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
+    /*************************
+    //To check that the ordering is the right way
+    // --> i.e. to avoid mistake present in Glucose's ordering
+    for (uint32_t i = 0; i < toVisit.size(); i++) {
+        std::cout << "i:" << std::setw(8) << i << " degree:" << litDegrees[toVisit[i].toInt()] << std::endl;
+    }
+    std::cout << std::endl;
+    ***************************/
+
+    if (propagatedBin.isZero()) goto end;
+    for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Checking visit level " << end-l-1 << std::endl;
+        #endif //VERBOSE_DEBUG
+        myimplies.setZero();
+        fillImplies(*l, myimplies);
+        uint32_t thisLevel = 0;
+        for (const Var *var = propagatedVars.getData(), *end2 = propagatedVars.getDataEnd(); var != end2; var++) {
+            if (propagatedBin[*var] && myimplies[*var]) {
+                thisLevel++;
+                addBin(*l, Lit(*var, !propValue[*var]));
+                propagatedBin.removeThese(myimplies);
+                break;
+            }
+        }
+        #ifdef VERBOSE_DEBUG
+        if (thisLevel > 0) {
+            std::cout << "Added " << thisLevel << " level diff:" << end-l-1 << std::endl;
+        }
+        #endif //VERBOSE_DEBUG
+        if (propagatedBin.isZero()) break;
+    }
+    assert(propagatedBin.isZero());
+
+    end:
+    propagatedBin.setZero();
+    propagatedVars.clear();
+    hyperbinProps += solver.propagations - oldProps;
+}
+
+void FailedVarSearcher::fillImplies(const Lit& lit, BitArray& myimplies)
+{
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueue(lit);
+    failed = (solver.propagate() != NULL);
+    assert(!failed);
+    assert(solver.decisionLevel() > 0);
+    
+    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+        Lit x = solver.trail[c];
+        myimplies.setBit(x.var());
+    }
+    solver.cancelUntil(0);
+}
+
+void FailedVarSearcher::addBinClausesOld(const Lit& lit)
+{
+    std::cout << "Checking one BTC vs UP" << std::endl;
+    vec<Lit> toVisit;
+    
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit);
     failed = (solver.propagateBin() != NULL);
     assert(!failed);
     assert(solver.decisionLevel() > 0);
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-        Var x = solver.trail[c].var();
-        propagatedBin.clearBit(x);
+        Lit x = solver.trail[c];
+        propagatedBin.clearBit(x.var());
+        toVisit.push(x);
     }
+    
     solver.cancelUntil(0);
     for (const Var *var = propagatedVars.getData(), *end = propagatedVars.getDataEnd(); var != end; var++) {
         if (propagatedBin[*var]) {
-            vec<Lit> ps(2);
-            ps[0] = ~lit;
-            ps[1] = Lit(*var, !propValue[*var]);
-            solver.addLearntClause(ps, 0, 0);
-            solver.nbBin++;
-            assert(solver.ok);
-            binClauseAdded++;
+            std::cout << "Adding one diff" << std::endl;
+            for (Lit *l = toVisit.getData(), *end2 = toVisit.getDataEnd(); l != end2; l++) {
+                if (implies(*l, Lit(*var, !propValue[*var]))) {
+                    addBin(*l, Lit(*var, !propValue[*var]));
+                    std::cout << "-> added (diff:" << (end2-1-l) << std::endl;
+                    goto next;
+                }
+            }
+            assert(false);
         }
+        next:;
     }
     propagatedBin.setZero();
     propagatedVars.clear();
+}
+
+const bool FailedVarSearcher::implies(const Lit& from, const Lit& to)
+{
+    bool ret = false;
+    
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueue(from);
+    failed = (solver.propagate() != NULL);
+    assert(!failed);
+    if (solver.assigns[to.var()] != l_Undef) {
+        assert(solver.assigns[to.var()] == (to.sign() ? l_False : l_True));
+        ret = true;
+    }
+    solver.cancelUntil(0);
+    return ret;
+}
+
+void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
+{
+    vec<Lit> ps(2);
+    ps[0] = ~lit1;
+    ps[1] = lit2;
+    solver.addLearntClause(ps, 0, 0);
+    solver.nbBin++;
+    assert(solver.ok);
+    binClauseAdded++;
 }
 
 const bool FailedVarSearcher::tryAll(const Lit* begin, const Lit* end)

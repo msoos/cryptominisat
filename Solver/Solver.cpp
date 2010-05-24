@@ -1020,7 +1020,7 @@ Clause* Solver::propagate(const bool update)
         while (qheadBin < trail.size()) {
             Lit p   = trail[qheadBin++];
             vec<WatchedBin> & wbin = binwatches[p.toInt()];
-            num_props++;
+            num_props += wbin.size()/2;
             for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
                 lbool val = value(k->impliedLit);
                 if (val.isUndef()) {
@@ -1033,12 +1033,12 @@ Clause* Solver::propagate(const bool update)
         }
         if (confl != NULL)
             goto EndPropagate;
-        
+
+        //Next, propagate normal clauses
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
         Watched        *i, *j, *end;
-        
-        //Next, propagate normal clauses
+        num_props += ws.size();
         
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << (p.sign() ? '-' : ' ') << p.var()+1 << endl;
@@ -1133,7 +1133,7 @@ Clause* Solver::propagateBin()
     while (qheadBin < trail.size()) {
         Lit p   = trail[qheadBin++];
         vec<WatchedBin> & wbin = binwatches[p.toInt()];
-        //propagations++;
+        propagations += wbin.size()/2;
         for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
             lbool val = value(k->impliedLit);
             if (val.isUndef()) {

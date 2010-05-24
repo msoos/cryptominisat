@@ -69,6 +69,20 @@ public:
         
         return *this;
     }
+
+    BitArray& removeThese(const BitArray& b)
+    {
+        assert(size == b.size);
+        uint64_t* t1 = mp;
+        uint64_t* t2 = b.mp;
+        for (uint64_t i = 0; i < size; i++) {
+            *t1 &= ~(*t2);
+            t1++;
+            t2++;
+        }
+
+        return *this;
+    }
     
     void resize(uint _size, const bool fill)
     {
