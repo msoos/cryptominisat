@@ -1129,13 +1129,8 @@ EndPropagate:
 
 Clause* Solver::propagateBin()
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "Propagation started" << endl;
-    #endif
-    uint32_t qheadBin = qhead;
-
-    while (qheadBin < trail.size()) {
-        Lit p   = trail[qheadBin++];
+    while (qhead < trail.size()) {
+        Lit p   = trail[qhead++];
         vec<WatchedBin> & wbin = binwatches[p.toInt()];
         propagations += wbin.size()/2;
         for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
@@ -1154,10 +1149,6 @@ Clause* Solver::propagateBin()
 
 Clause* Solver::propagateBinExcept(const Lit& exceptLit)
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "Propagation started" << endl;
-    #endif
-    
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
         vec<WatchedBin> & wbin = binwatches[p.toInt()];
@@ -1178,9 +1169,6 @@ Clause* Solver::propagateBinExcept(const Lit& exceptLit)
 
 Clause* Solver::propagateBinOneLevel()
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "Propagation started" << endl;
-    #endif
     Lit p   = trail[qhead];
     vec<WatchedBin> & wbin = binwatches[p.toInt()];
     propagations += wbin.size()/2;
