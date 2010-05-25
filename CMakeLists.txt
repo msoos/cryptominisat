@@ -19,6 +19,9 @@ find_package( ZLIB )
 link_directories( ${ZLIB_LIBRARY} )
 include_directories( ${ZLIB_INCLUDE_DIR} )
 
+#FIND_PACKAGE(Threads REQUIRED)
+#set(thread_library "${CMAKE_THREAD_LIBS_INIT}")
+
 add_subdirectory(Solver)
 #add_subdirectory(SatELite)
 
