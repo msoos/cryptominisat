@@ -406,6 +406,7 @@ protected:
     void     printRestartStat ();
     void     printEndSearchStat();
     double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
+    const bool noLearntBinaries() const;
     
     // Polarity chooser
     void calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it

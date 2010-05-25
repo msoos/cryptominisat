@@ -2068,7 +2068,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     }
     testAllClauseAttach();
 
-    if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 6000000 : 2000000))  {
+    if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 9000000 : 3000000))  {
         status = l_False;
         goto end;
     }
@@ -2150,7 +2150,8 @@ inline void Solver::performStepsBeforeSolve()
 
     if (performReplace && !varReplacer->performReplace()) return;
 
-    if (removeUselessBins && !failedVarSearcher->removeUslessBinFull())  {
+    if (removeUselessBins && conflicts == 0 && learnts.size() == 0
+        && noLearntBinaries() && !failedVarSearcher->removeUslessBinFull())  {
         return;
     }
     
@@ -2606,3 +2607,12 @@ const bool Solver::findClause(Clause* c) const
     return false;
 }
 #endif //DEBUG_ATTACH
+
+const bool Solver::noLearntBinaries() const
+{
+    for (uint32_t i = 0; i < binaryClauses.size(); i++) {
+        if (binaryClauses[i]->learnt()) return false;
+    }
+
+    return true;
+}
