@@ -386,6 +386,8 @@ const bool XorSubsumer::unEliminate(const Var var)
     typedef map<Var, vector<XorClause*> > elimType;
     elimType::iterator it = elimedOutVar.find(var);
 
+    //MUST set to decision, since it would never have been eliminated
+    //had it not been decision var
     solver.setDecisionVar(var, true);
     var_elimed[var] = false;
     numElimed--;
