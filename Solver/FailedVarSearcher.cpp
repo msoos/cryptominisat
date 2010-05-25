@@ -828,11 +828,12 @@ void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
 
     //Find AND remove from watches
     vec<WatchedBin>& bwin = solver.binwatches[(~lit1).toInt()];
+    extraTime += bwin.size() / EXTRATIME_DIVIDER;
     Clause *cl = NULL;
     WatchedBin *i, *j;
     i = j = bwin.getData();
     for (const WatchedBin *end = bwin.getDataEnd(); i != end; i++) {
-        if (i->impliedLit == lit2) {
+        if (i->impliedLit == lit2 && i->clause != NULL && cl == NULL) {
             cl = i->clause;
         } else {
             *j++ = *i;
@@ -842,11 +843,11 @@ void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
     assert(cl != NULL);
 
     vec<WatchedBin>& bwin2 = solver.binwatches[(~lit2).toInt()];
-    cl = NULL;
+    extraTime += bwin2.size() / EXTRATIME_DIVIDER;
     i = j = bwin2.getData();
     for (const WatchedBin *end = bwin2.getDataEnd(); i != end; i++) {
-        if (i->impliedLit == lit1) {
-            cl = i->clause;
+        if (i->clause == cl) {
+
         } else {
             *j++ = *i;
         }
