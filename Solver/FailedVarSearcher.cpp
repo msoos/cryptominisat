@@ -139,7 +139,6 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     //General Stats
     numFailed = 0;
     goodBothSame = 0;
-    origProps = solver.propagations;
     numCalls++;
     
     //If failed var searching is going good, do successively more and more of it
@@ -192,6 +191,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
         fromVar = lastTimeWentUntilVar;
     finishedLastTimeVar = true;
     lastTimeWentUntilVar = solver.nVars();
+    origProps = solver.propagations;
     for (Var var = fromVar; var < solver.nVars(); var++) {
         if (solver.assigns[var] == l_Undef && solver.decision_var[var]) {
             if (solver.propagations - origProps >= numProps)  {
@@ -357,7 +357,7 @@ const bool FailedVarSearcher::orderLits()
         }
         solver.cancelUntil(0);
     }
-    std::cout << "c binary Degree finding time:" << cpuTime() - myTime << "s  num checked: " << numChecked << " i: " << i << " props:" << (solver.propagations - oldProps) << std::endl;
+    std::cout << "c binary Degree finding time: " << cpuTime() - myTime << "s  num checked: " << numChecked << " i: " << i << " props: " << (solver.propagations - oldProps) << std::endl;
     solver.propagations = oldProps;
 
     return true;
