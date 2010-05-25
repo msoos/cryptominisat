@@ -684,7 +684,7 @@ void FailedVarSearcher::fillImplies(const Lit& lit, BitArray& myimplies)
 const bool FailedVarSearcher::fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong)
 {
     solver.newDecisionLevel();
-    solver.uncheckedEnqueue(lit);
+    solver.uncheckedEnqueueLight(lit);
     //if it's a cycle, it doesn't work, so don't propagate origLit
     failed = (solver.propagateBinExcept(origLit) != NULL);
     if (failed) return false;
@@ -725,7 +725,7 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
     assert(solver.learnts.size() == 0);
 
     solver.newDecisionLevel();
-    solver.uncheckedEnqueue(lit);
+    solver.uncheckedEnqueueLight(lit);
     failed = (solver.propagateBinOneLevel() != NULL);
     if (failed) return false;
 
@@ -739,7 +739,7 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
     solver.cancelUntil(0);
 
     bool ret = true;
-    vec<Lit> wrong;
+    wrong.clear();
     for(uint32_t i = 0; i < oneHopAway.size(); i++) {
         if (!fillBinImpliesMinusLast(lit, oneHopAway[i], wrong)) {
             ret = false;

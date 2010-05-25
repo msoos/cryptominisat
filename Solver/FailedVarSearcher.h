@@ -127,6 +127,7 @@ class FailedVarSearcher {
         uint32_t removedUselessBin;
         vec<char> toDeleteSet;
         vec<Lit> oneHopAway;
+        vec<Lit> wrong;
         
         //State for this run
         uint32_t toReplaceBefore;
