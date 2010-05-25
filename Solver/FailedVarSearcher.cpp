@@ -653,12 +653,11 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     assert(!failed);
     
     assert(solver.decisionLevel() > 0);
-    for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
+    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
         unPropagatedBin.clearBit(x.var());
         toVisit.push(x);
     }
-    unPropagatedBin.clearBit(lit.var());
     solver.cancelUntil(0);
 
     std::sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
