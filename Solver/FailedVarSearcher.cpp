@@ -782,9 +782,13 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
     bool ret = true;
     wrong.clear();
     for(uint32_t i = 0; i < oneHopAway.size(); i++) {
-        if (!fillBinImpliesMinusLast(lit, oneHopAway[i], wrong)) {
-            ret = false;
-            goto end;
+        //no need to visit it if it already queued for removal
+        //basically, we check if it's in 'wrong'
+        if (toDeleteSet[oneHopAway[i].toInt()]) {
+            if (!fillBinImpliesMinusLast(lit, oneHopAway[i], wrong)) {
+                ret = false;
+                goto end;
+            }
         }
     }
 
