@@ -206,9 +206,10 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_
         std::cout << "clause in this part:"; (**i).plainPrint();
         #endif
 
-        vec<Lit> cs((*i)->size());
-        std::copy((**i).getData(), (**i).getDataEnd(), cs.getData());
-        newSolver.addClause(cs, (**i).getGroup());
+        Clause& c = **i;
+        vec<Lit> tmp(c.size());
+        std::copy(c.getData(), c.getDataEnd(), tmp.getData());
+        newSolver.addClause(tmp, c.getGroup());
         //NOTE: we need the CS because otherwise, the addClause could have changed **i, which we need to re-add later!
         clausesRemoved.push(*i);
     }
@@ -228,9 +229,10 @@ void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint
         std::cout << "xor clause in this part:"; (**i).plainPrint();
         #endif
 
-        vec<Lit> cs((*i)->size());
-        std::copy((*i)->getData(), (*i)->getDataEnd(), cs.getData());
-        newSolver.addXorClause(cs, (**i).xor_clause_inverted(), (**i).getGroup());
+        XorClause& c = **i;
+        vec<Lit> tmp(c.size());
+        std::copy(c.getData(), c.getDataEnd(), tmp.getData());
+        newSolver.addXorClause(tmp, c.xor_clause_inverted(), c.getGroup());
         //NOTE: we need the CS because otherwise, the addXorClause could have changed **i, which we need to re-add later!
         xorClausesRemoved.push(*i);
     }
@@ -264,12 +266,12 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
         if (removed) continue;
         if (clause_part == part) {
             #ifdef VERBOSE_DEBUG
-            //std::cout << "Learnt clause in other part:"; c.plainPrint();
+            //std::cout << "Learnt clause in this part:"; c.plainPrint();
             #endif
             
             solver.detachClause(c);
             newSolver.addLearntClause(c, c.getGroup(), c.activity());
-            free(*i);
+            free(&c);
         } else {
             #ifdef VERBOSE_DEBUG
             std::cout << "Learnt clause in other part:"; c.plainPrint();
