@@ -34,10 +34,13 @@ class Tester:
             print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
             exit()
 
-    command = "%s --randomize=%d --debuglib "%(self.cryptominisat, i)
+    command = "%s --randomize=%d --noxorsubs --debuglib "%(self.cryptominisat, i)
     if (newVar) :
         command += "--debugnewvar "
-    command += "--gaussuntil=%d --verbosity=0 \"%s\""%(self.gaussUntil, fname)
+    command += "--gaussuntil=%d "%(self.gaussUntil);
+    if (self.verbose == False) :
+        command += "--verbosity=0 ";
+    command += "\"%s\""%(fname);
     print "Executing: %s" %(command)
     consoleOutput =  commands.getoutput(command)
      
@@ -270,6 +273,7 @@ class Tester:
   @staticmethod
   def usage():
     print "--num     (-n)     The number of times to randomize and solve the same instance. Default: 3"
+    print "--verbose (-v)     Verbose output"
     print "--file    (-f)     The file to solve. Default: all files under ../tests/"
     print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
     print "--testdir (-t)     The directory where the files to test are. Default: \"../tests/\""
@@ -280,7 +284,7 @@ class Tester:
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "schg:n:f:t:e:", ["help", "checkDirOnly", "file=", "num=", "gauss=", "testdir=", "exe=", "speed"])
+      opts, args = getopt.getopt(sys.argv[1:], "vschg:n:f:t:e:", ["help", "checkDirOnly", "file=", "num=", "gauss=", "testdir=", "exe=", "speed", "verbose"])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
@@ -291,7 +295,7 @@ class Tester:
     num = 3
     testDirSet = False
     for opt, arg in opts:
-        if opt == "-v":
+        if opt in ("-v", "--verbose"):
             self.verbose = True
         elif opt in ("-h", "--help"):
             self.usage()
