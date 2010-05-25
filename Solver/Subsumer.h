@@ -61,12 +61,11 @@ private:
     vec<char> var_elimed; //TRUE if var has been eliminated
     double totalTime;
     uint32_t numElimed;
-    map<Var, vector<vector<Lit> > > elimedOutVar;
+    map<Var, vector<Clause*> > elimedOutVar;
     
     // Temporaries (to reduce allocation overhead):
     //
     vec<char>           seen_tmp;       // (used in various places)
-    vector<Lit>         io_tmp;         // (used for reading/writing clauses from/to disk)
     
     
     //Limits

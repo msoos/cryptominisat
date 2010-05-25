@@ -49,17 +49,18 @@ Subsumer::~Subsumer()
 void Subsumer::extendModel(Solver& solver2)
 {
     vec<Lit> tmp;
-    typedef map<Var, vector<vector<Lit> > > elimType;
+    typedef map<Var, vector<Clause*> > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
         #ifdef VERBOSE_DEBUG
         Var var = it->first;
         std::cout << "Reinserting elimed var: " << var+1 << std::endl;
         #endif
         
-        for (vector<vector<Lit> >::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
+        for (vector<Clause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
+            Clause& c = **it2;
             tmp.clear();
-            tmp.growTo(it2->size());
-            std::copy(it2->begin(), it2->end(), tmp.getData());
+            tmp.growTo(c.size());
+            std::copy(c.getData(), c.getDataEnd(), tmp.getData());
             
             #ifdef VERBOSE_DEBUG
             std::cout << "Reinserting Clause: ";
@@ -79,7 +80,7 @@ const bool Subsumer::unEliminate(const Var var)
 {
     assert(var_elimed[var]);
     vec<Lit> tmp;
-    typedef map<Var, vector<vector<Lit> > > elimType;
+    typedef map<Var, vector<Clause*> > elimType;
     elimType::iterator it = elimedOutVar.find(var);
     
     solver.setDecisionVar(var, true);
@@ -93,10 +94,11 @@ const bool Subsumer::unEliminate(const Var var)
     
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
     solver.libraryCNFFile = NULL;
-    for (vector<vector<Lit> >::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
+    for (vector<Clause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
+        Clause& c = **it2;
         tmp.clear();
-        tmp.growTo(it2->size());
-        std::copy(it2->begin(), it2->end(), tmp.getData());
+        tmp.growTo(c.size());
+        std::copy(c.getData(), c.getDataEnd(), tmp.getData());
         solver.addClause(tmp);
     }
     solver.libraryCNFFile = backup_libraryCNFfile;
@@ -172,10 +174,7 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
     
     if (elim != var_Undef) {
         assert(!cl.learnt());
-        io_tmp.clear();
-        for (uint32_t i = 0; i < cl.size(); i++)
-            io_tmp.push_back(cl[i]);
-        elimedOutVar[elim].push_back(io_tmp);
+        elimedOutVar[elim].push_back(c.clause);
     }
 
     for (uint32_t i = 0; i < cl.size(); i++) {
@@ -1030,11 +1029,11 @@ void inline Subsumer::DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns)
 {
     for (uint32_t i = 0; i < ps.size(); i++) {
         clauses[ps[i].index].clause = NULL;
-        free(ps[i].clause);
+        //free(ps[i].clause);
     }
     for (uint32_t i = 0; i < ns.size(); i++) {
         clauses[ns[i].index].clause = NULL;
-        free(ns[i].clause);
+        //free(ns[i].clause);
     }
 }
 
@@ -1087,7 +1086,7 @@ bool Subsumer::maybeEliminate(const Var x)
     }
     Abort:;
     
-    // Maybe eliminate:
+    //Eliminate:
     if (after_clauses  <= before_clauses) {
         vec<ClauseSimp> ps, ns;
         MigrateToPsNs(poss, negs, ps, ns, x);
