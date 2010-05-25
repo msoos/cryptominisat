@@ -34,10 +34,10 @@ class Tester:
             print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
             exit()
 
-    command = "%s -randomize=%d -debugLib "%(self.cryptominisat, i)
+    command = "%s --randomize=%d --debuglib "%(self.cryptominisat, i)
     if (newVar) :
-        command += "-debugNewVar "
-    command += "-gaussuntil=%d -verbosity=1 \"%s\""%(self.gaussUntil, fname)
+        command += "--debugnewvar "
+    command += "--gaussuntil=%d --verbosity=0 \"%s\""%(self.gaussUntil, fname)
     print "Executing: %s" %(command)
     consoleOutput =  commands.getoutput(command)
      
@@ -118,7 +118,7 @@ class Tester:
     
     if (sLineFound == False or (unsat == False and vLineFound == False)) :
         print "Cannot find line starting with 's' or 'v' in output!";
-        print consoleOutput
+        print output
         exit()
     
     #print "FOUND:"
