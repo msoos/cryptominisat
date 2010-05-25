@@ -82,7 +82,9 @@ const bool Subsumer::unEliminate(const Var var)
     vec<Lit> tmp;
     typedef map<Var, vector<Clause*> > elimType;
     elimType::iterator it = elimedOutVar.find(var);
-    
+
+    //it MUST have been decision var, otherwise we would
+    //never have removed it
     solver.setDecisionVar(var, true);
     var_elimed[var] = false;
     numElimed--;
@@ -1118,7 +1120,7 @@ bool Subsumer::maybeEliminate(const Var x)
     
     Eliminated:
     assert(occur[Lit(x, false).toInt()].size() + occur[Lit(x, true).toInt()].size() == 0);
-    var_elimed[x] = 1;
+    var_elimed[x] = true;
     numElimed++;
     solver.setDecisionVar(x, false);
     return true;
