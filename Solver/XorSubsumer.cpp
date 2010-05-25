@@ -214,6 +214,7 @@ void XorSubsumer::fillCannotEliminate()
 
 void XorSubsumer::extendModel(Solver& solver2)
 {
+    vec<Lit> tmp;
     typedef map<Var, vector<XorClause*> > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
         #ifdef VERBOSE_DEBUG
@@ -228,7 +229,11 @@ void XorSubsumer::extendModel(Solver& solver2)
             c.plainPrint();
             std::cout << std::endl;
             #endif
-            solver2.addXorClause(c, c.xor_clause_inverted());
+            tmp.clear();
+            tmp.growTo(c.size());
+            std::copy(c.getData(), c.getDataEnd(), tmp.getData());
+            bool inverted = c.xor_clause_inverted();
+            solver2.addXorClause(tmp, inverted);
             assert(solver2.ok);
         }
     }
