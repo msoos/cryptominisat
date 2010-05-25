@@ -294,8 +294,8 @@ void PartHandler::addSavedState()
         }
     }
     
-    for (uint32_t var = 0; var < decisionVarRemoved.size(); var++)
-        solver.setDecisionVar(var, true);
+    for (uint32_t i = 0; i < decisionVarRemoved.size(); i++)
+        solver.setDecisionVar(decisionVarRemoved[i], true);
     decisionVarRemoved.clear();
 }
 
