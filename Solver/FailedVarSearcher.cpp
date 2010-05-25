@@ -43,6 +43,7 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     , lastTimeWentUntilBin(0)
     , numPropsMultiplier(1.0)
     , lastTimeFoundTruths(0)
+    , numCalls(0)
 {
 }
 
@@ -139,6 +140,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     numFailed = 0;
     goodBothSame = 0;
     origProps = solver.propagations;
+    numCalls++;
     
     //If failed var searching is going good, do successively more and more of it
     if (lastTimeFoundTruths > 500 || (double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.03) std::max(numPropsMultiplier*1.7, 5.0);
@@ -402,6 +404,52 @@ const bool FailedVarSearcher::readdRemovedLearnts()
     return solver.ok;
 }
 
+const bool FailedVarSearcher::removeUslessBinFull()
+{
+    double myTime = cpuTime();
+    removedUselessBin = 0;
+    setOneHop.clear();
+    setOneHop.growTo(solver.nVars()*2, 0);
+    uint32_t origHeapSize = solver.order_heap.size();
+    uint64_t origProps = solver.propagations;
+    bool fixed = false;
+
+    for (Var var = 0; var != solver.nVars(); var++) {
+        if (solver.propagations - origProps > 3000000) break;
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+
+        Lit lit(var, false);
+        if (!removeUselessBinaries(lit)) {
+            fixed = true;
+            solver.cancelUntil(0);
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = (solver.propagate() == NULL);
+            if (!solver.ok) return false;
+            continue;
+        }
+
+        lit = ~lit;
+        if (!removeUselessBinaries(lit)) {
+            fixed = true;
+            solver.cancelUntil(0);
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = (solver.propagate() == NULL);
+            if (!solver.ok) return false;
+            continue;
+        }
+    }
+    
+    if (fixed) solver.order_heap.filter(Solver::VarFilter(solver));
+
+    std::cout
+    << "c Removed useless bin:" << std::setw(8) << removedUselessBin
+    << " fixed: " << std::setw(4) << (origHeapSize - solver.order_heap.size())
+    << " props: " << std::fixed << std::setprecision(2) << std::setw(4) << (double)(solver.propagations - origProps)/1000000.0 << "M"
+    << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << std::endl;
+
+    return true;
+}
+
 const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
 {
     vec<Lit> tmpPs(2);
@@ -568,8 +616,8 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     solver.uncheckedEnqueue(lit);
     failed = (solver.propagateBin() != NULL);
     assert(!failed);
-    assert(solver.decisionLevel() > 0);
     
+    assert(solver.decisionLevel() > 0);
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
         propagatedBin.clearBit(x.var());
@@ -624,13 +672,36 @@ void FailedVarSearcher::fillImplies(const Lit& lit, BitArray& myimplies)
     solver.uncheckedEnqueue(lit);
     failed = (solver.propagate() != NULL);
     assert(!failed);
-    assert(solver.decisionLevel() > 0);
     
+    assert(solver.decisionLevel() > 0);
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
         myimplies.setBit(x.var());
     }
     solver.cancelUntil(0);
+}
+
+const bool FailedVarSearcher::fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong)
+{
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueue(lit);
+    failed = (solver.propagateBin() != NULL);
+    if (failed) return false;
+
+    //if it's a cycle, it doesn't work
+    if (solver.assigns[origLit.var()] == l_Undef) {
+        assert(solver.decisionLevel() > 0);
+        for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
+            Lit x = solver.trail[c];
+            if (setOneHop[x.toInt()]) {
+                wrong.push(x);
+                setOneHop[x.toInt()] = false;
+            };
+        }
+    }
+    solver.cancelUntil(0);
+
+    return true;
 }
 
 void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
@@ -642,6 +713,72 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
     solver.nbBin++;
     assert(solver.ok);
     binClauseAdded++;
+}
+
+const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
+{
+    //Nothing can be learnt at this point!
+    //Otherwise, it might happen that the path to X has learnts,
+    //but binary clause to X is not learnt.
+    //So we remove X , then we might remove
+    //the path (since it's learnt) -- removing a FACT!!
+    //[note:removal can be through variable elimination
+    //, and removeWrong() will happily remove it
+    assert(solver.learnts.size() == 0);
+
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueue(lit);
+    failed = (solver.propagateBinOneLevel() != NULL);
+    if (failed) return false;
+
+    vec<Lit> oneHopAway;
+    
+    assert(solver.decisionLevel() > 0);
+    for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
+        Lit x = solver.trail[c];
+        setOneHop[x.toInt()] = 1;
+        oneHopAway.push(x);
+    }
+    solver.cancelUntil(0);
+
+    vec<Lit> wrong;
+    for(uint32_t i = 0; i < oneHopAway.size(); i++) {
+        if (!fillBinImpliesMinusLast(lit, oneHopAway[i], wrong)) {
+            for(uint32_t i2 = 0; i2 < oneHopAway.size(); i2++) {
+                setOneHop[oneHopAway[i].toInt()] = false;
+            }
+            return false;
+        }
+    }
+
+    for (uint32_t i = 0; i < wrong.size(); i++) {
+        removeBin(~lit, oneHopAway[i]);
+    }
+
+    for(uint32_t i = 0; i < oneHopAway.size(); i++) {
+        setOneHop[oneHopAway[i].toInt()] = false;
+    }
+
+    return true;
+}
+
+void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
+{
+    const vec<WatchedBin>& bwin = solver.binwatches[(~lit1).toInt()];
+    Clause *cl = NULL;
+    for (const WatchedBin *it = bwin.getData(), *end = bwin.getDataEnd(); it != end; it++) {
+        if (it->impliedLit == lit2) cl = it->clause;
+    }
+    assert(cl != NULL);
+
+    if (find(solver.binaryClauses, cl))
+        remove(solver.binaryClauses, cl);
+    else if (find(solver.clauses, cl))
+        remove(solver.clauses, cl);
+    else return;
+    
+    solver.removeClause(*cl);
+    removedUselessBin++;
 }
 
 template<class T>

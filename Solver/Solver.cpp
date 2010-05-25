@@ -992,6 +992,13 @@ void Solver::uncheckedEnqueue(Lit p, ClausePtr from)
     #endif
 }
 
+void Solver::uncheckedEnqueueLight(Lit p)
+{
+    const Var v = p.var();
+    assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    trail.push(p);
+}
+
 
 /*_________________________________________________________________________________________________
 |
@@ -1122,14 +1129,11 @@ EndPropagate:
 
 Clause* Solver::propagateBin()
 {
-    Clause* confl = NULL;
-    
     #ifdef VERBOSE_DEBUG
     cout << "Propagation started" << endl;
     #endif
     uint32_t qheadBin = qhead;
 
-    //First propagate binary clauses
     while (qheadBin < trail.size()) {
         Lit p   = trail[qheadBin++];
         vec<WatchedBin> & wbin = binwatches[p.toInt()];
@@ -1137,15 +1141,38 @@ Clause* Solver::propagateBin()
         for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
             lbool val = value(k->impliedLit);
             if (val.isUndef()) {
-                uncheckedEnqueue(k->impliedLit, k->clause);
+                //uncheckedEnqueue(k->impliedLit, k->clause);
+                uncheckedEnqueueLight(k->impliedLit);
             } else if (val == l_False) {
-                confl = k->clause;
-                //goto EndPropagate;
+                return k->clause;
             }
         }
     }
 
-    return confl;
+    return NULL;
+}
+
+Clause* Solver::propagateBinOneLevel()
+{
+    #ifdef VERBOSE_DEBUG
+    cout << "Propagation started" << endl;
+    #endif
+    uint32_t qheadBin = qhead;
+
+    Lit p   = trail[qheadBin++];
+    vec<WatchedBin> & wbin = binwatches[p.toInt()];
+    propagations += wbin.size()/2;
+    for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+        lbool val = value(k->impliedLit);
+        if (val.isUndef()) {
+            //uncheckedEnqueue(k->impliedLit, k->clause);
+            uncheckedEnqueueLight(k->impliedLit);
+        } else if (val == l_False) {
+            return k->clause;
+        }
+    }
+    
+    return NULL;
 }
 
 template<class T>
@@ -2015,10 +2042,11 @@ inline void Solver::performStepsBeforeSolve()
     assert(qhead == trail.size());
     testAllClauseAttach();
     if (performReplace && !varReplacer->performReplace()) return;
+    clauseCleaner->removeAndCleanAll(true);
 
-    /*if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 3000000 : 1000000))  {
+    if (failedVarSearch && !failedVarSearcher->removeUslessBinFull())  {
         return;
-    }*/
+    }
     
     testAllClauseAttach();
     if (doSubsumption

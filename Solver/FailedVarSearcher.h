@@ -57,6 +57,7 @@ class FailedVarSearcher {
         FailedVarSearcher(Solver& _solver);
     
         const bool search(uint64_t numProps);
+        const bool removeUslessBinFull();
         
     private:
         //For 2-long xor
@@ -118,6 +119,13 @@ class FailedVarSearcher {
         vector<uint32_t> litDegrees;
         const bool orderLits();
         uint32_t maxHyperBinProps;
+
+        //Remove useless binaries
+        const bool fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong);
+        const bool removeUselessBinaries(const Lit& lit);
+        void removeBin(const Lit& lit1, const Lit& lit2);
+        uint32_t removedUselessBin;
+        vec<char> setOneHop;
         
         //State for this run
         uint32_t toReplaceBefore;
@@ -134,6 +142,8 @@ class FailedVarSearcher {
         
         double numPropsMultiplier;
         uint32_t lastTimeFoundTruths;
+
+        uint32_t numCalls;
 };
 
 
