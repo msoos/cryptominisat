@@ -419,6 +419,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
         if (!solver.varReplacer->performReplace(true)) return false;
     }
     assert(solver.varReplacer->getClauses().size() == 0);
+    solver.testAllClauseAttach();
 
     double myTime = cpuTime();
     removedUselessBin = 0;
