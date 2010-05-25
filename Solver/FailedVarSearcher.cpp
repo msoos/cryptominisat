@@ -176,8 +176,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
 
     //For HyperBin
     binClauseAdded = 0;
-    propagatedBin.resize(solver.nVars(), 0);
-    propagatedVars.clear();
+    unPropagatedBin.resize(solver.nVars(), 0);
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     if (solver.addExtraBins && !orderLits()) return false;
@@ -498,6 +497,8 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     
     propagated.setZero();
     twoLongXors.clear();
+    propagatedVars.clear();
+    unPropagatedBin.setZero();
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit1);
@@ -515,7 +516,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
             Var x = solver.trail[c].var();
             propagated.setBit(x);
             if (solver.addExtraBins) {
-                propagatedBin.setBit(x);
+                unPropagatedBin.setBit(x);
                 propagatedVars.push(x);
             }
             if (solver.assigns[x].getBool()) propValue.setBit(x);
@@ -540,6 +541,8 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) addBinClauses(lit1);
+    propagatedVars.clear();
+    unPropagatedBin.setZero();
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit2);
@@ -557,7 +560,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
             Var     x  = solver.trail[c].var();
             if (propagated[x]) {
                 if (solver.addExtraBins) {
-                    propagatedBin.setBit(x);
+                    unPropagatedBin.setBit(x);
                     propagatedVars.push(x);
                 }
                 if (propValue[x] == solver.assigns[x].getBool()) {
@@ -650,11 +653,12 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     assert(!failed);
     
     assert(solver.decisionLevel() > 0);
-    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+    for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
-        propagatedBin.clearBit(x.var());
+        unPropagatedBin.clearBit(x.var());
         toVisit.push(x);
     }
+    unPropagatedBin.clearBit(lit.var());
     solver.cancelUntil(0);
 
     std::sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
@@ -667,7 +671,9 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     std::cout << std::endl;
     ***************************/
 
-    if (propagatedBin.isZero()) goto end;
+    //difference between UP and BTC is in unPropagatedBin
+    if (unPropagatedBin.isZero()) goto end;
+    
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
         #ifdef VERBOSE_DEBUG
         std::cout << "Checking visit level " << end-l-1 << std::endl;
@@ -676,10 +682,10 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
         fillImplies(*l, myimplies);
         uint32_t thisLevel = 0;
         for (const Var *var = propagatedVars.getData(), *end2 = propagatedVars.getDataEnd(); var != end2; var++) {
-            if (propagatedBin[*var] && myimplies[*var]) {
+            if (unPropagatedBin[*var] && myimplies[*var]) {
                 thisLevel++;
-                addBin(*l, Lit(*var, !propValue[*var]));
-                propagatedBin.removeThese(myimplies);
+                addBin(~*l, Lit(*var, !propValue[*var]));
+                unPropagatedBin.removeThese(myimplies);
                 break;
             }
         }
@@ -688,13 +694,11 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
             std::cout << "Added " << thisLevel << " level diff:" << end-l-1 << std::endl;
         }
         #endif //VERBOSE_DEBUG
-        if (propagatedBin.isZero()) break;
+        if (unPropagatedBin.isZero()) break;
     }
-    assert(propagatedBin.isZero());
+    assert(unPropagatedBin.isZero());
 
     end:
-    propagatedBin.setZero();
-    propagatedVars.clear();
     hyperbinProps += solver.propagations - oldProps;
 }
 
@@ -745,7 +749,7 @@ const bool FailedVarSearcher::fillBinImpliesMinusLast(const Lit& origLit, const 
 void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
 {
     vec<Lit> ps(2);
-    ps[0] = ~lit1;
+    ps[0] = lit1;
     ps[1] = lit2;
     solver.addLearntClause(ps, 0, 0);
     solver.nbBin++;

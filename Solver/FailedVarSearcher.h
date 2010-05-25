@@ -115,7 +115,7 @@ class FailedVarSearcher {
         //finding HyperBins
         void addBinClauses(const Lit& lit);
         uint32_t binClauseAdded;
-        BitArray propagatedBin;
+        BitArray unPropagatedBin;
         vec<Var> propagatedVars;
         void addBin(const Lit& lit1, const Lit& lit2);
         void fillImplies(const Lit& lit, BitArray& myimplies);
