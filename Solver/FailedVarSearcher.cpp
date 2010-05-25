@@ -410,6 +410,7 @@ const bool FailedVarSearcher::readdRemovedLearnts()
 }
 
 #define MAX_REMOVE_BIN_FULL_PROPS 5000000
+#define EXTRATIME_DIVIDER 3
 
 const bool FailedVarSearcher::removeUslessBinFull()
 {
@@ -426,9 +427,11 @@ const bool FailedVarSearcher::removeUslessBinFull()
     uint32_t origHeapSize = solver.order_heap.size();
     uint64_t origProps = solver.propagations;
     bool fixed = false;
+    uint32_t extraTime = solver.binaryClauses.size() / EXTRATIME_DIVIDER;
 
-    for (Var var = 0; var != solver.nVars(); var++) {
-        if (solver.propagations - origProps > MAX_REMOVE_BIN_FULL_PROPS) break;
+    Var var = 0;
+    for (var = 0; var != solver.nVars(); var++) {
+        if (solver.propagations - origProps + extraTime > MAX_REMOVE_BIN_FULL_PROPS) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
 
         Lit lit(var, false);
@@ -471,6 +474,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
         << "c Removed useless bin:" << std::setw(8) << removedUselessBin
         << " fixed: " << std::setw(4) << (origHeapSize - solver.order_heap.size())
         << " props: " << std::fixed << std::setprecision(2) << std::setw(4) << (double)(solver.propagations - origProps)/1000000.0 << "M"
+        << " finished: " << (var == solver.nVars() ? "1" : "0")
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << std::endl;
     }
 
@@ -718,6 +722,7 @@ const bool FailedVarSearcher::fillBinImpliesMinusLast(const Lit& origLit, const 
 
     assert(solver.decisionLevel() > 0);
     int c;
+    extraTime += (solver.trail.size() - solver.trail_lim[0]) / EXTRATIME_DIVIDER;
     for (c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
         if (toDeleteSet[x.toInt()]) {
@@ -766,6 +771,7 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
     oneHopAway.clear();
     assert(solver.decisionLevel() > 0);
     int c;
+    extraTime += (solver.trail.size() - solver.trail_lim[0]) / EXTRATIME_DIVIDER;
     for (c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
         toDeleteSet[x.toInt()] = true;

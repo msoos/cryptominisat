@@ -84,6 +84,9 @@ class FailedVarSearcher {
         void printResults(const double myTime) const;
         
         Solver& solver;
+
+        //Time
+        uint32_t extraTime;
         
         //For failure
         bool failed;
