@@ -125,7 +125,8 @@ class FailedVarSearcher {
         const bool removeUselessBinaries(const Lit& lit);
         void removeBin(const Lit& lit1, const Lit& lit2);
         uint32_t removedUselessBin;
-        vec<char> setOneHop;
+        vec<char> toDeleteSet;
+        vec<Lit> oneHopAway;
         
         //State for this run
         uint32_t toReplaceBefore;

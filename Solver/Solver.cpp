@@ -1152,6 +1152,33 @@ Clause* Solver::propagateBin()
     return NULL;
 }
 
+Clause* Solver::propagateBinExcept(const Lit& exceptLit)
+{
+    #ifdef VERBOSE_DEBUG
+    cout << "Propagation started" << endl;
+    #endif
+    uint32_t qheadBin = qhead;
+    
+    while (qheadBin < trail.size()) {
+        Lit p   = trail[qheadBin++];
+        vec<WatchedBin> & wbin = binwatches[p.toInt()];
+        propagations += wbin.size()/2;
+        for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+            lbool val = value(k->impliedLit);
+            if (val.isUndef()) {
+                if (k->impliedLit != exceptLit) {
+                    //uncheckedEnqueue(k->impliedLit, k->clause);
+                    uncheckedEnqueueLight(k->impliedLit);
+                }
+            } else if (val == l_False) {
+                return k->clause;
+            }
+        }
+    }
+    
+    return NULL;
+}
+
 Clause* Solver::propagateBinOneLevel()
 {
     #ifdef VERBOSE_DEBUG

@@ -324,6 +324,7 @@ protected:
     bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
     Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     Clause*  propagateBin();
+    Clause*  propagateBinExcept(const Lit& exceptLit);
     Clause*  propagateBinOneLevel();
     Clause*  propagate_xors   (const Lit& p);
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.

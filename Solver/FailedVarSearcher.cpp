@@ -408,8 +408,8 @@ const bool FailedVarSearcher::removeUslessBinFull()
 {
     double myTime = cpuTime();
     removedUselessBin = 0;
-    setOneHop.clear();
-    setOneHop.growTo(solver.nVars()*2, 0);
+    toDeleteSet.clear();
+    toDeleteSet.growTo(solver.nVars()*2, 0);
     uint32_t origHeapSize = solver.order_heap.size();
     uint64_t origProps = solver.propagations;
     bool fixed = false;
@@ -685,19 +685,17 @@ const bool FailedVarSearcher::fillBinImpliesMinusLast(const Lit& origLit, const 
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit);
-    failed = (solver.propagateBin() != NULL);
+    //if it's a cycle, it doesn't work, so don't propagate origLit
+    failed = (solver.propagateBinExcept(origLit) != NULL);
     if (failed) return false;
 
-    //if it's a cycle, it doesn't work
-    if (solver.assigns[origLit.var()] == l_Undef) {
-        assert(solver.decisionLevel() > 0);
-        for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
-            Lit x = solver.trail[c];
-            if (setOneHop[x.toInt()]) {
-                wrong.push(x);
-                setOneHop[x.toInt()] = false;
-            };
-        }
+    assert(solver.decisionLevel() > 0);
+    for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
+        Lit x = solver.trail[c];
+        if (toDeleteSet[x.toInt()]) {
+            wrong.push(x);
+            toDeleteSet[x.toInt()] = false;
+        };
     }
     solver.cancelUntil(0);
 
@@ -731,35 +729,34 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
     failed = (solver.propagateBinOneLevel() != NULL);
     if (failed) return false;
 
-    vec<Lit> oneHopAway;
-    
+    oneHopAway.clear();
     assert(solver.decisionLevel() > 0);
     for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
-        setOneHop[x.toInt()] = 1;
+        toDeleteSet[x.toInt()] = true;
         oneHopAway.push(x);
     }
     solver.cancelUntil(0);
 
+    bool ret = true;
     vec<Lit> wrong;
     for(uint32_t i = 0; i < oneHopAway.size(); i++) {
         if (!fillBinImpliesMinusLast(lit, oneHopAway[i], wrong)) {
-            for(uint32_t i2 = 0; i2 < oneHopAway.size(); i2++) {
-                setOneHop[oneHopAway[i].toInt()] = false;
-            }
-            return false;
+            ret = false;
+            goto end;
         }
     }
 
     for (uint32_t i = 0; i < wrong.size(); i++) {
         removeBin(~lit, oneHopAway[i]);
     }
-
+    
+    end:
     for(uint32_t i = 0; i < oneHopAway.size(); i++) {
-        setOneHop[oneHopAway[i].toInt()] = false;
+        toDeleteSet[oneHopAway[i].toInt()] = false;
     }
 
-    return true;
+    return ret;
 }
 
 void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
