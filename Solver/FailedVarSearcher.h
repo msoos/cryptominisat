@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FAILEDVARSEARCHER_H
 
 #include <set>
+#include <map>
+using std::map;
 
 #include "SolverTypes.h"
 #include "Clause.h"

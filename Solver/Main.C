@@ -504,6 +504,7 @@ void printUsage(char** argv, Solver& S)
     printf("  --addoldlearnts  = Readd old learnts for failed variable searching.\n");
     printf("                     These learnts are usually deleted, but may help\n");
     printf("  --noextrabins    = Don't add binary clauses when doing failed lit probing.\n");
+    printf("  --noremovebins   = Don't remove useless binary clauses\n");
     printf("\n");
 }
 
@@ -717,6 +718,8 @@ int main(int argc, char** argv)
             S.readdOldLearnts = true;
         } else if ((value = hasPrefix(argv[i], "--noextrabins"))) {
             S.addExtraBins = false;
+        } else if ((value = hasPrefix(argv[i], "--noremovebins"))) {
+            S.removeUselessBins = false;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

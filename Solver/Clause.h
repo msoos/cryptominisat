@@ -254,6 +254,13 @@ public:
         return;
     }
     #endif //STATS_NEEDED
+    void setRemoved() {
+        isRemoved = true;
+    }
+
+    const bool removed() const {
+        return isRemoved;
+    }
 };
 
 class XorClause : public Clause
@@ -300,14 +307,6 @@ public:
     void print() {
         printf("XOR Clause   group: %d, size: %d, learnt:%d, lits:\"", getGroup(), size(), learnt());
         plainPrint();
-    }
-
-    void setRemoved() {
-        isRemoved = true;
-    }
-
-    const bool removed() const {
-        return isRemoved;
     }
     
     void plainPrint(FILE* to = stdout) const {

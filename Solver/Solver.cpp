@@ -86,6 +86,7 @@ Solver::Solver() :
         , failedVarSearch  (true)
         , readdOldLearnts  (false)
         , addExtraBins     (true)
+        , removeUselessBins(true)
         , libraryUsage     (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
@@ -1127,6 +1128,101 @@ EndPropagate:
     return confl;
 }
 
+Clause* Solver::propagateLight()
+{
+    Clause* confl = NULL;
+    uint32_t num_props = 0;
+    uint32_t qheadBin = qhead;
+    
+    while (qhead < trail.size()) {
+        
+        //First propagate binary clauses
+        while (qheadBin < trail.size()) {
+            Lit p   = trail[qheadBin++];
+            vec<WatchedBin> & wbin = binwatches[p.toInt()];
+            num_props += wbin.size()/2;
+            for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+                lbool val = value(k->impliedLit);
+                if (val.isUndef()) {
+                    uncheckedEnqueueLight(k->impliedLit);
+                } else if (val == l_False) {
+                    confl = k->clause;
+                    goto EndPropagate;
+                }
+            }
+        }
+        
+        //Next, propagate normal clauses
+        Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
+        vec<Watched>&  ws  = watches[p.toInt()];
+        Watched        *i, *j, *end;
+        num_props += ws.size();
+        
+        for (i = j = ws.getData(), end = ws.getDataEnd();  i != end;) {
+            if (i+1 != end)
+                __builtin_prefetch((i+1)->clause, 1, 0);
+            
+            if(value(i->blockedLit).getBool()) { // Clause is sat
+                *j++ = *i++;
+                continue;
+            }
+            Lit bl = i->blockedLit;
+            Clause& c = *(i->clause);
+            i++;
+            
+            // Make sure the false literal is data[1]:
+            const Lit false_lit(~p);
+            if (c[0] == false_lit)
+                c[0] = c[1], c[1] = false_lit;
+            
+            assert(c[1] == false_lit);
+            
+            // If 0th watch is true, then clause is already satisfied.
+            const Lit& first = c[0];
+            if (value(first).getBool()) {
+                j->clause = &c;
+                j->blockedLit = first;
+                j++;
+            } else {
+                // Look for new watch:
+                for (Lit *k = &c[2], *end2 = c.getDataEnd(); k != end2; k++) {
+                    if (value(*k) != l_False) {
+                        c[1] = *k;
+                        *k = false_lit;
+                        watches[(~c[1]).toInt()].push(Watched(&c, c[0]));
+                        goto FoundWatch;
+                    }
+                }
+                
+                // Did not find watch -- clause is unit under assignment:
+                j->clause = &c;
+                j->blockedLit = bl;
+                j++;
+                if (value(first) == l_False) {
+                    confl = &c;
+                    qhead = trail.size();
+                    // Copy the remaining watches:
+                    while (i < end)
+                        *j++ = *i++;
+                } else {
+                    uncheckedEnqueueLight(first);
+                }
+            }
+            FoundWatch:
+            ;
+        }
+        ws.shrink_(i - j);
+        
+        //Finally, propagate XOR-clauses
+        if (xorclauses.size() > 0 && !confl) confl = propagate_xors(p);
+    }
+    EndPropagate:
+    propagations += num_props;
+    simpDB_props -= num_props;
+    
+    return confl;
+}
+
 Clause* Solver::propagateBin()
 {
     while (qhead < trail.size()) {
@@ -2051,10 +2147,10 @@ inline void Solver::performStepsBeforeSolve()
 {
     assert(qhead == trail.size());
     testAllClauseAttach();
-    if (performReplace && !varReplacer->performReplace()) return;
-    clauseCleaner->removeAndCleanAll(true);
 
-    if (failedVarSearch && !failedVarSearcher->removeUslessBinFull())  {
+    if (performReplace && !varReplacer->performReplace()) return;
+
+    if (removeUselessBins && !failedVarSearcher->removeUslessBinFull())  {
         return;
     }
     

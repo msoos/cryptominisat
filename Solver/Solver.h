@@ -150,6 +150,7 @@ public:
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     bool      readdOldLearnts;      // Should re-add old learnts for failed variable searching
     bool      addExtraBins;         // Should add extra binaries in failed literal probing
+    bool      removeUselessBins;    // Should try to remove useless binary clauses
     bool      libraryUsage;         // Set true if not used as a library
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
@@ -323,6 +324,7 @@ protected:
     void     uncheckedEnqueueLight (Lit p);
     bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
     Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
+    Clause*  propagateLight();
     Clause*  propagateBin();
     Clause*  propagateBinExcept(const Lit& exceptLit);
     Clause*  propagateBinOneLevel();
