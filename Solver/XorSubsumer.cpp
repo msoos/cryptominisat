@@ -376,6 +376,7 @@ inline void XorSubsumer::addToCannotEliminate(Clause* it)
 
 const bool XorSubsumer::unEliminate(const Var var)
 {
+    assert(var_elimed[var]);
     vec<Lit> tmp;
     typedef map<Var, vector<XorClause*> > elimType;
     elimType::iterator it = elimedOutVar.find(var);

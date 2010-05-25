@@ -77,6 +77,7 @@ void Subsumer::extendModel(Solver& solver2)
 
 const bool Subsumer::unEliminate(const Var var)
 {
+    assert(var_elimed[var]);
     vec<Lit> tmp;
     typedef map<Var, vector<vector<Lit> > > elimType;
     elimType::iterator it = elimedOutVar.find(var);

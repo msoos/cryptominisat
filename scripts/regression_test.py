@@ -34,7 +34,7 @@ class Tester:
             print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
             exit()
 
-    command = "%s --randomize=%d --noxorsubs --debuglib "%(self.cryptominisat, i)
+    command = "%s --randomize=%d --noxorsubs --noremovebins --debuglib "%(self.cryptominisat, i)
     if (newVar) :
         command += "--debugnewvar "
     command += "--gaussuntil=%d "%(self.gaussUntil);
