@@ -685,6 +685,7 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
                 thisLevel++;
                 addBin(~*l, Lit(*var, !propValue[*var]));
                 unPropagatedBin.removeThese(myimplies);
+                if (unPropagatedBin.isZero()) break;
                 break;
             }
         }
@@ -693,7 +694,6 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
             std::cout << "Added " << thisLevel << " level diff:" << end-l-1 << std::endl;
         }
         #endif //VERBOSE_DEBUG
-        if (unPropagatedBin.isZero()) break;
     }
     assert(unPropagatedBin.isZero());
 
@@ -751,8 +751,8 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
     ps[0] = lit1;
     ps[1] = lit2;
     solver.addLearntClause(ps, 0, 0);
-    solver.nbBin++;
     assert(solver.ok);
+    solver.nbBin++;
     binClauseAdded++;
 }
 

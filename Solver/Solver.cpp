@@ -334,8 +334,7 @@ template<class T>
 bool Solver::addLearntClause(T& ps, const uint group, const uint32_t activity)
 {
     Clause* c = addClauseInt(ps, group);
-    if (c == NULL)
-        return ok;
+    if (c == NULL) return ok;
 
     //compensate for addClauseInt's attachClause, which doesn't know
     //that this is a learnt clause.
