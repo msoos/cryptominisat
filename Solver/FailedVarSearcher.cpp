@@ -326,13 +326,18 @@ const bool FailedVarSearcher::orderLits()
     uint32_t numChecked = 0;
     litDegrees.clear();
     litDegrees.resize(solver.nVars()*2, 0);
+    BitArray alreadyTested;
+    alreadyTested.resize(solver.nVars()*2, 0);
     uint32_t i;
     
     for (i = 0; i < 3*solver.order_heap.size(); i++) {
         if (solver.propagations - oldProps > 500000) break;
         Var var = solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)];
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+
         Lit randLit(var, solver.mtrand.randInt(1));
+        if (alreadyTested[randLit.toInt()]) continue;
+        alreadyTested.setBit(randLit.toInt());
 
         numChecked++;
         solver.newDecisionLevel();
