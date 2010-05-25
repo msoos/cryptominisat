@@ -328,7 +328,7 @@ const bool FailedVarSearcher::orderLits()
     litDegrees.resize(solver.nVars()*2, 0);
     uint32_t i;
     
-    for (i = 0; i < 1000000; i++) {
+    for (i = 0; i < 3*solver.order_heap.size(); i++) {
         if (solver.propagations - oldProps > 500000) break;
         Var var = solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)];
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
@@ -352,7 +352,7 @@ const bool FailedVarSearcher::orderLits()
         }
         solver.cancelUntil(0);
     }
-    std::cout << "c binary Degree finding time:" << cpuTime() - myTime << "s  num checked: " << numChecked << " i: " << i << std::endl;
+    std::cout << "c binary Degree finding time:" << cpuTime() - myTime << "s  num checked: " << numChecked << " i: " << i << " props:" << (solver.propagations - oldProps) << std::endl;
     solver.propagations = oldProps;
 
     return true;
