@@ -866,7 +866,7 @@ void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
 
     #ifdef VERBOSE_DEBUG
     std::cout << "Removing useless bin: ";
-    c.plainPrint();
+    cl->plainPrint();
     #endif //VERBOSE_DEBUG
 
     cl->setRemoved();
