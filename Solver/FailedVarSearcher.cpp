@@ -809,7 +809,7 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
     }
 
     for (uint32_t i = 0; i < wrong.size(); i++) {
-        removeBin(~lit, oneHopAway[i]);
+        removeBin(~lit, wrong[i]);
     }
     
     end:
