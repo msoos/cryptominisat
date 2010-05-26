@@ -110,7 +110,7 @@ private:
     bool maybeEliminate(Var x);
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
     void DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns);
-    bool merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<Lit>& out_clause);
+    bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
     
     
     //hyperBinRes

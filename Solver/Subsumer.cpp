@@ -1027,11 +1027,11 @@ void inline Subsumer::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs
 void inline Subsumer::DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns)
 {
     for (uint32_t i = 0; i < ps.size(); i++) {
-        clauses[ps[i].index].clause = NULL;
+        //clauses[ps[i].index].clause = NULL;
         //free(ps[i].clause);
     }
     for (uint32_t i = 0; i < ns.size(); i++) {
-        clauses[ns[i].index].clause = NULL;
+        //clauses[ns[i].index].clause = NULL;
         //free(ns[i].clause);
     }
 }
@@ -1124,7 +1124,7 @@ bool Subsumer::maybeEliminate(const Var x)
 }
 
 // Returns FALSE if clause is always satisfied ('out_clause' should not be used). 'seen' is assumed to be cleared.
-bool Subsumer::merge(Clause& ps, Clause& qs, Lit without_p, Lit without_q, vec<Lit>& out_clause)
+bool Subsumer::merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause)
 {
     for (uint32_t i = 0; i < ps.size(); i++){
         if (ps[i] != without_p){
