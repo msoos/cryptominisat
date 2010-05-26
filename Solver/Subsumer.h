@@ -92,6 +92,7 @@ private:
     void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false);
     void addBackToSolver();
     void removeWrong(vec<Clause*>& cs);
+    void removeAssignedVarsFromEliminated();
     void fillCannotEliminate();
     const bool treatLearnts();
     void clearTouchedAndOccur();

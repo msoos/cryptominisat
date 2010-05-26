@@ -2258,6 +2258,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
     
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
+        #ifdef DEBUG_VARELIM
+        assert(subsumer->checkElimedUnassigned());
+        assert(xorSubsumer->checkElimedUnassigned());
+        #endif //DEBUG_VARELIM
         
         if (schedSimplification && conflicts >= nextSimplify) {
             status = simplifyProblem(500, 7000000);

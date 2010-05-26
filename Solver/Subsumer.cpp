@@ -988,6 +988,7 @@ const bool Subsumer::simplifyBySubsumption()
     //vector<char> var_merged = merge();
     removeWrong(solver.learnts);
     removeWrong(solver.binaryClauses);
+    removeAssignedVarsFromEliminated();
     
     /*solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     addFromSolver(solver.learnts, true);
@@ -1019,6 +1020,21 @@ const bool Subsumer::simplifyBySubsumption()
 
     solver.testAllClauseAttach();
     return true;
+}
+
+void Subsumer::removeAssignedVarsFromEliminated()
+{
+    for (Var var = 0; var < var_elimed.size(); var++) {
+        if (var_elimed[var] && solver.assigns[var] != l_Undef) {
+            var_elimed[var] = false;
+            numElimed--;
+            map<Var, vector<Clause*> >::iterator it = elimedOutVar.find(var);
+            if (it != elimedOutVar.end()) {
+                //TODO memory loss here
+                elimedOutVar.erase(it);
+            }
+        }
+    }
 }
 
 template<class T>
