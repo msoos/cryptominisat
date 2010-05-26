@@ -22,19 +22,31 @@ class ClauseCleaner;
 class Subsumer
 {
 public:
-    
+
+    //Construct-destruct
     Subsumer(Solver& S2);
     ~Subsumer();
+
+    //Called from main
     const bool simplifyBySubsumption();
+    void subsumeWithBinaries();
+    void newVar();
+
+    //Used by cleaner
     void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c);
     void unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSimp c);
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
     void linkInAlreadyClause(ClauseSimp& c);
     void updateClause(ClauseSimp c);
-    void newVar();
+
+
+    //UnElimination
     void extendModel(Solver& solver2);
     const bool unEliminate(const Var var);
+
+
+    //Get-functions
     const vec<char>& getVarElimed() const;
     const uint32_t getNumElimed() const;
     const bool checkElimedUnassigned() const;
@@ -82,6 +94,7 @@ private:
     void removeWrong(vec<Clause*>& cs);
     void fillCannotEliminate();
     const bool treatLearnts();
+    void clearTouchedAndOccur();
     
     //Iterations
     void registerIteration  (CSet& iter_set) { iter_sets.push(&iter_set); }

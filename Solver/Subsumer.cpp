@@ -734,6 +734,18 @@ const bool Subsumer::treatLearnts()
     return true;
 }
 
+void Subsumer::clearTouchedAndOccur()
+{
+    touched_list.clear();
+    touched.clear();
+    touched.growTo(solver.nVars(), false);
+    for (Var var = 0; var < solver.nVars(); var++) {
+        if (solver.decision_var[var] && solver.assigns[var] == l_Undef) touch(var);
+        occur[2*var].clear();
+        occur[2*var+1].clear();
+    }
+}
+
 const bool Subsumer::simplifyBySubsumption()
 {
     if (solver.nClauses() > 20000000)  return true;
@@ -747,18 +759,9 @@ const bool Subsumer::simplifyBySubsumption()
     clauseID = 0;
     numVarsElimed = 0;
     blockTime = 0.0;
+    clearTouchedAndOccur();
     
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
-    
-    //For VE
-    touched_list.clear();
-    touched.clear();
-    touched.growTo(solver.nVars(), false);
-    for (Var var = 0; var < solver.nVars(); var++) {
-        if (solver.decision_var[var] && solver.assigns[var] == l_Undef) touch(var);
-        occur[2*var].clear();
-        occur[2*var+1].clear();
-    }
 
     solver.testAllClauseAttach();
     if (solver.performReplace && !solver.varReplacer->performReplace(true))
