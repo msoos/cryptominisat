@@ -154,7 +154,7 @@ uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
     for (uint32_t i = 0; i < subs.size(); i++){
         clauses_subsumed++;
         #ifdef VERBOSE_DEBUG
-        cout << "subsume0 removing:";
+        cout << "-> subsume0 removing:";
         subs[i].clause->plainPrint();
         #endif
         
@@ -173,6 +173,10 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
     
     if (elim != var_Undef) {
         assert(!cl.learnt());
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Eliminating clause: "; c.clause->plainPrint();
+        std::cout << "On variable: " << elim+1 << std::endl;
+        #endif //VERBOSE_DEBUG
         elimedOutVar[elim].push_back(c.clause);
     }
 
@@ -276,7 +280,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
     while (q < Q.size()){
         if (Q[q].clause == NULL) { q++; continue; }
         #ifdef VERBOSE_DEBUG
-        cout << "subsume1 orig clause:";
+        cout << "subsume1 with clause:";
         Q[q].clause->plainPrint();
         #endif
         
@@ -304,7 +308,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                 ClauseSimp c = subs[j];
                 Clause& cl = *c.clause;
                 #ifdef VERBOSE_DEBUG
-                cout << "orig clause    :";
+                cout << "-> Strenghtening clause :";
                 cl.plainPrint();
                 #endif
                 unlinkClause(subs[j]);
@@ -318,6 +322,9 @@ void Subsumer::subsume1(ClauseSimp& ps)
                         *b++ = *a;
                     
                     if (val == l_True) {
+                        #ifdef VERBOSE_DEBUG
+                        std::cout << "--> Clause was satisfied." << std::endl;
+                        #endif
                         free(&cl);
                         goto endS;
                     }
@@ -326,8 +333,8 @@ void Subsumer::subsume1(ClauseSimp& ps)
                 cl.setStrenghtened();
                 
                 #ifdef VERBOSE_DEBUG
-                cout << "strenghtened   :";
-                c.clause->plainPrint();
+                cout << "--> Strenghtened clause:";
+                cl.plainPrint();
                 #endif
                 
                 if (cl.size() == 0) {
@@ -355,7 +362,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                         return;
                     }
                     #ifdef VERBOSE_DEBUG
-                    cout << "Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
+                    cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                     #endif
                     free(&cl);
                 }
@@ -1514,12 +1521,18 @@ const bool Subsumer::tryOneSetting(const Lit lit, const Lit negLit)
         solver.setDecisionVar(lit.var(), false);
         vec<ClauseSimp> toRemove(occur[lit.toInt()]);
         for (ClauseSimp *it = toRemove.getData(), *end = toRemove.getDataEnd(); it != end; it++) {
+            #ifdef VERBOSE_DEBUG
+            std::cout << "Next varelim because of block clause elim" << std::endl;
+            #endif //VERBOSE_DEBUG
             unlinkClause(*it, lit.var());
             numblockedClauseRemoved++;
         }
         
         vec<ClauseSimp> toRemove2(occur[negLit.toInt()]);
         for (ClauseSimp *it = toRemove2.getData(), *end = toRemove2.getDataEnd(); it != end; it++) {
+            #ifdef VERBOSE_DEBUG
+            std::cout << "Next varelim because of block clause elim" << std::endl;
+            #endif //VERBOSE_DEBUG
             unlinkClause(*it, lit.var());
             numblockedClauseRemoved++;
         }
