@@ -138,6 +138,8 @@ const bool PartHandler::handle()
         
         for (Var var = 0; var < newSolver.nVars(); var++) {
             if (newSolver.model[var] != l_Undef) {
+                //Must have been decision var in the old solver!??
+                //assert(std::find(decisionVarRemoved.getData(), decisionVarRemoved.getDataEnd(), var) != decisionVarRemoved.getDataEnd());
                 assert(savedState[var] == l_Undef);
                 assert(partFinder.getVarPart(var) == part);
                 if (newSolver.assigns[var] == l_Undef) {
