@@ -56,6 +56,7 @@ class PartHandler;
 class RestartTypeChooser;
 
 #ifdef VERBOSE_DEBUG
+#define DEBUG_UNCHECKEDENQUEUE_LEVEL0
 using std::cout;
 using std::endl;
 #endif
