@@ -140,7 +140,9 @@ const bool PartHandler::handle()
             if (newSolver.model[var] != l_Undef) {
                 assert(savedState[var] == l_Undef);
                 assert(partFinder.getVarPart(var) == part);
-                savedState[var] = newSolver.model[var];
+                if (newSolver.assigns[var] == l_Undef) {
+                    savedState[var] = newSolver.model[var];
+                }
             }
         }
         
@@ -285,10 +287,11 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
 
 void PartHandler::addSavedState()
 {
+    //Don't add these (non-0-decison-level!) solutions to the 0th decision level
+    solver.newDecisionLevel();
     for (Var var = 0; var < savedState.size(); var++) {
         if (savedState[var] != l_Undef) {
-            assert(solver.assigns[var] == l_Undef || (solver.assigns[var] == savedState[var] && solver.level[var] == 0));
-            //decision level should NOT be 0.... TODO
+            assert(solver.assigns[var] == l_Undef);
             solver.uncheckedEnqueue(Lit(var, savedState[var] == l_False));
             assert(solver.assigns[var] == savedState[var]);
             savedState[var] = l_Undef;

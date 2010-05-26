@@ -2304,9 +2304,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
             if (verbosity >= 1)
                 printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
         }
-        
-        partHandler->addSavedState();
+
         varReplacer->extendModelPossible();
+        partHandler->addSavedState();
 #ifndef NDEBUG
         checkSolution();
 #endif
