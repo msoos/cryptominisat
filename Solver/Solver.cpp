@@ -2310,8 +2310,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
                 printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
         }
 
-        varReplacer->extendModelPossible();
         partHandler->addSavedState();
+        varReplacer->extendModelPossible();
 #ifndef NDEBUG
         checkSolution();
 #endif
