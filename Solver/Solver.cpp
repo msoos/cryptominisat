@@ -2160,8 +2160,9 @@ inline void Solver::performStepsBeforeSolve()
     if (performReplace && !varReplacer->performReplace()) return;
 
     if (removeUselessBins && conflicts == 0 && learnts.size() == 0
-        && noLearntBinaries() && !failedVarSearcher->removeUslessBinFull())  {
-        return;
+        && noLearntBinaries()) {
+        subsumer->subsumeWithBinaries();
+        if (!failedVarSearcher->removeUslessBinFull()) return;
     }
     
     testAllClauseAttach();

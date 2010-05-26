@@ -734,6 +734,37 @@ const bool Subsumer::treatLearnts()
     return true;
 }
 
+void Subsumer::subsumeWithBinaries()
+{
+    double myTime = cpuTime();
+    clearTouchedAndOccur();
+    clauseID = 0;
+    clauses_subsumed = 0;
+
+    clauses.clear();
+    cl_added.clear();
+    cl_touched.clear();
+
+    clauses.reserve(solver.clauses.size());
+    cl_added.reserve(solver.clauses.size());
+    cl_touched.reserve(solver.clauses.size());
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    addFromSolver(solver.clauses);
+
+    for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
+        Clause& c = *solver.binaryClauses[i];
+        subsume0(c, c.getAbst());
+    }
+
+    addBackToSolver();
+    if (solver.verbosity >= 1) {
+        std::cout << "c subsumed with bin: " << std::setw(8) << clauses_subsumed
+        << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        << "   |" << std::endl;
+    }
+    totalTime += cpuTime() - myTime;
+}
+
 void Subsumer::clearTouchedAndOccur()
 {
     touched_list.clear();
