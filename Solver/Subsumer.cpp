@@ -94,11 +94,8 @@ const bool Subsumer::unEliminate(const Var var)
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
     solver.libraryCNFFile = NULL;
     for (vector<Clause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-        Clause& c = **it2;
-        tmp.clear();
-        tmp.growTo(c.size());
-        std::copy(c.getData(), c.getDataEnd(), tmp.getData());
-        solver.addClause(tmp);
+        solver.addClause(**it2);
+        free(*it2);
     }
     solver.libraryCNFFile = backup_libraryCNFfile;
     elimedOutVar.erase(it);
