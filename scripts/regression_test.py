@@ -34,7 +34,7 @@ class Tester:
             print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
             exit()
 
-    command = "%s --randomize=%d --noxorsubs --noremovebins --debuglib "%(self.cryptominisat, i)
+    command = "%s --randomize=%d --debuglib "%(self.cryptominisat, i)
     if (newVar) :
         command += "--debugnewvar "
     command += "--gaussuntil=%d "%(self.gaussUntil);
@@ -358,6 +358,7 @@ class Tester:
       if (os.path.isfile(fname) == False) :
         print "Filename given '%s' is not a file!" %(fname)
         exit(-1)
+      print "Checking fname %s" %(fname)
       
       for i in range(num):
         self.check(fname, i, False)
