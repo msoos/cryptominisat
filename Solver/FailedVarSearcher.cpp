@@ -747,6 +747,12 @@ const bool FailedVarSearcher::fillBinImpliesMinusLast(const Lit& origLit, const 
 
 void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
 {
+
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Adding extra bin: ";
+    lit1.print(); std::cout << " "; lit2.printFull();
+    #endif //VERBOSE_DEBUG
+
     vec<Lit> ps(2);
     ps[0] = lit1;
     ps[1] = lit2;
@@ -857,6 +863,11 @@ void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
     }
     bwin2.shrink(1);
     assert(cl != NULL);
+
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Removing useless bin: ";
+    c.plainPrint();
+    #endif //VERBOSE_DEBUG
 
     cl->setRemoved();
     solver.clauses_literals -= 2;
