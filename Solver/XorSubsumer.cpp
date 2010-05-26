@@ -227,7 +227,6 @@ void XorSubsumer::extendModel(Solver& solver2)
             #ifdef VERBOSE_DEBUG
             std::cout << "Reinserting Clause: ";
             c.plainPrint();
-            std::cout << std::endl;
             #endif
             tmp.clear();
             tmp.growTo(c.size());

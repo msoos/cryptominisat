@@ -64,10 +64,7 @@ void Subsumer::extendModel(Solver& solver2)
             
             #ifdef VERBOSE_DEBUG
             std::cout << "Reinserting Clause: ";
-            for (uint32_t i = 0; i < tmp.size(); i++) {
-                std::cout << (tmp[i].sign() ? "-" : "")<< tmp[i].var()+1 << " ";
-            }
-            std::cout << std::endl;
+            c.plainPrint();
             #endif
             
             solver2.addClause(tmp);
