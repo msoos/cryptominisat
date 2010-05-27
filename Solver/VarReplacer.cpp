@@ -324,6 +324,9 @@ const vector<Var> VarReplacer::getReplacingVars() const
 
 void VarReplacer::extendModelPossible() const
 {
+    #ifdef VERBOSE_DEBUG
+    std::cout << "extendModelPossible() called" << std::endl;
+    #endif //VERBOSE_DEBUG
     uint i = 0;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
         if (it->var() == i) continue;
@@ -349,6 +352,11 @@ void VarReplacer::extendModelPossible() const
 
 void VarReplacer::extendModelImpossible(Solver& solver2) const
 {
+
+    #ifdef VERBOSE_DEBUG
+    std::cout << "extendModelImpossible() called" << std::endl;
+    #endif //VERBOSE_DEBUG
+    
     vec<Lit> tmpClause;
     uint i = 0;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
