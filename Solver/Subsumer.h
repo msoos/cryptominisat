@@ -29,7 +29,7 @@ public:
 
     //Called from main
     const bool simplifyBySubsumption();
-    void subsumeWithBinaries();
+    const bool subsumeWithBinaries();
     void newVar();
 
     //Used by cleaner
@@ -111,6 +111,8 @@ private:
     bool isSubsumed(Clause& ps);
     template<class T>
     uint32_t subsume0(T& ps, uint32_t abs);
+    template<class T>
+    uint32_t subsume0Orig(T& ps, uint32_t abs);
     void subsume0LearntSet(vec<Clause*>& cs);
     void subsume1(ClauseSimp& ps);
     void smaller_database();
@@ -125,7 +127,17 @@ private:
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
     void DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns);
     bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
-    
+
+    //Subsume with Nonexistent Bins
+    const bool newBinClausesBothFull();
+    const bool newBinClauses(const Lit& lit);
+    template<class T>
+    void subsume1Partial(const T& ps);
+    uint32_t subsNonExistentNum;
+    uint32_t subsNonExistentumFailed;
+    bool subsNonExistentFinish;
+    double subsNonExistentTime;
+    uint32_t subsNonExistentLitsRemoved;
     
     //hyperBinRes
     void addFromSolverAll(vec<Clause*>& cs);

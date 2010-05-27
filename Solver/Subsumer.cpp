@@ -138,12 +138,24 @@ bool selfSubset(Clause& A, Clause& B, vec<char>& seen)
     return flip;
 }
 
-// Will put NULL in 'cs' if clause removed.
-template<class T>
-uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
+template <>
+inline uint32_t Subsumer::subsume0(Clause& ps, uint32_t abs)
 {
     ps.subsume0Finished();
     ps.unsetVarChanged();
+    return subsume0Orig(ps, abs);
+}
+
+template <class T>
+inline uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
+{
+    return subsume0Orig(ps, abs);
+}
+
+// Will put NULL in 'cs' if clause removed.
+template<class T>
+uint32_t Subsumer::subsume0Orig(T& ps, uint32_t abs)
+{
     uint32_t retIndex = std::numeric_limits<uint32_t>::max();
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause:";
@@ -378,6 +390,90 @@ void Subsumer::subsume1(ClauseSimp& ps)
     
     unregisterIteration(Q);
     unregisterIteration(subs);
+}
+
+template<class T>
+void Subsumer::subsume1Partial(const T& ps)
+{
+    vec<ClauseSimp>    subs;
+    vec<Lit>        qs;
+        
+    qs.clear();
+    for (uint32_t i = 0; i < ps.size(); i++)
+        qs.push(ps[i]);
+
+    for (uint32_t i = 0; i < qs.size(); i++){
+        qs[i] = ~qs[i];
+
+        uint32_t abst = calcAbstraction(qs);
+
+        findSubsumed(qs, abst, subs);
+        for (uint32_t j = 0; j < subs.size(); j++){
+            if (subs[j].clause == NULL) continue;
+            ClauseSimp c = subs[j];
+            Clause& cl = *c.clause;
+            #ifdef VERBOSE_DEBUG
+            cout << "-> Strenghtening clause :";
+            cl.plainPrint();
+            #endif
+            unlinkClause(subs[j]);
+
+            literals_removed++;
+            cl.strengthen(qs[i]);
+            Lit *a, *b, *end;
+            for (a = b = cl.getData(), end = a + cl.size();  a != end; a++) {
+                lbool val = solver.value(*a);
+                if (val == l_Undef)
+                    *b++ = *a;
+
+                if (val == l_True) {
+                    #ifdef VERBOSE_DEBUG
+                    std::cout << "--> Clause was satisfied." << std::endl;
+                    #endif
+                    free(&cl);
+                    goto endS;
+                }
+            }
+            cl.shrink(a-b);
+            cl.setStrenghtened();
+
+            #ifdef VERBOSE_DEBUG
+            cout << "--> Strenghtened clause:";
+            cl.plainPrint();
+            #endif
+
+            if (cl.size() == 0) {
+                solver.ok = false;
+                unregisterIteration(subs);
+                free(&cl);
+                return;
+            }
+            if (cl.size() > 1) {
+                cl.calcAbstraction();
+                linkInAlreadyClause(c);
+                clauses[c.index] = c;
+                solver.attachClause(cl);
+                if (cl.size() == 2) solver.becameBinary++;
+                updateClause(c);
+            } else {
+                assert(cl.size() == 1);
+                solver.uncheckedEnqueue(cl[0]);
+                solver.ok = (solver.propagate() == NULL);
+                if (!solver.ok) {
+                    unregisterIteration(subs);
+                    return;
+                }
+                #ifdef VERBOSE_DEBUG
+                cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
+                #endif
+                free(&cl);
+            }
+            endS:;
+        }
+
+        qs[i] = ~qs[i];
+        subs.clear();
+    }
 }
 
 void Subsumer::updateClause(ClauseSimp c)
@@ -735,14 +831,22 @@ const bool Subsumer::treatLearnts()
     return true;
 }
 
-void Subsumer::subsumeWithBinaries()
+const bool Subsumer::subsumeWithBinaries()
 {
-    double myTime = cpuTime();
     clearTouchedAndOccur();
     clauseID = 0;
+    fullSubsume = true;
+
+    //Clearing stats
+    subsNonExistentumFailed = 0;
     clauses_subsumed = 0;
     literals_removed = 0;
-    fullSubsume = true;
+    double myTime = cpuTime();
+    uint32_t origTrailSize = solver.trail.size();
+    
+    bool doSubsume1 = true;
+    if (solver.clauses.size()+solver.binaryClauses.size() > 2000000)
+        doSubsume1 = false;
 
     clauses.clear();
     cl_added.clear();
@@ -754,21 +858,108 @@ void Subsumer::subsumeWithBinaries()
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses);
 
-    for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
+    //for (uint32_t i2 = 0; i2 < 1; i2++) {
+    /*for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
         Clause& c = *solver.binaryClauses[i];
         subsume0(c, c.getAbst());
-        ClauseSimp cc = ClauseSimp(&c, clauseID);
-        subsume1(cc);
+    }*/
+    //}
+    if (doSubsume1) {
+        for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
+            Clause& c = *solver.binaryClauses[i];
+            subsume1Partial(c);
+        }
     }
-
-    addBackToSolver();
     if (solver.verbosity >= 1) {
-        std::cout << "c subsumed with bin: " << std::setw(8) << clauses_subsumed
+        std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed - subsNonExistentNum
         << "  lits-rem: " << std::setw(9) << literals_removed
-        << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        << "  v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
+        << "  time: " << std::setprecision(2) << std::setw(5) <<  cpuTime() - myTime << " s"
         << "   |" << std::endl;
     }
+    
+    if (!newBinClausesBothFull()) return false;
+
+    addBackToSolver();
+
+    if (solver.verbosity >= 1) {
+        std::cout << "c Subs w/ non-existent bins: " << subsNonExistentNum
+        << " lits-rem: " << subsNonExistentLitsRemoved
+        << " v-fix: " << subsNonExistentumFailed
+        << " finished: " << (subsNonExistentFinish ? "1" : "0")
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << subsNonExistentTime
+        << std::endl;
+    }
     totalTime += cpuTime() - myTime;
+
+    return true;
+}
+
+#define MAX_BINARY_PROP 10000000
+
+const bool Subsumer::newBinClausesBothFull()
+{
+    uint32_t oldClausesSubusmed = clauses_subsumed;
+    uint32_t oldLitsRemoved = literals_removed;
+    double myTime = cpuTime();
+    uint64_t oldProps = solver.propagations;
+    uint32_t oldTrailSize = solver.trail.size();
+    Var var;
+    for (var = 0; var < solver.nVars(); var++) {
+        if (solver.propagations - oldProps > MAX_BINARY_PROP) break;
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+
+        Lit lit(var, true);
+        if (!newBinClauses(lit)) {
+            solver.cancelUntil(0);
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = (solver.propagate(false) == NULL);
+            if (!solver.ok) return false;
+            continue;
+        }
+        
+        /*lit = ~lit;
+        if (!newBinClauses(lit)) {
+            solver.cancelUntil(0);
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = (solver.propagate(false) == NULL);
+            if (!solver.ok) return false;
+            continue;
+        }*/
+    }
+    subsNonExistentNum = clauses_subsumed - oldClausesSubusmed;
+    subsNonExistentTime = cpuTime() - myTime;
+    subsNonExistentFinish = (var == solver.nVars());
+    subsNonExistentumFailed = solver.trail.size() - oldTrailSize;
+    subsNonExistentLitsRemoved = literals_removed - oldLitsRemoved;
+
+    return true;
+}
+
+const bool Subsumer::newBinClauses(const Lit& lit)
+{
+    vec<Lit> toVisit;
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueue(lit);
+    bool failed = (solver.propagateBin() != NULL);
+    if (failed) return false;
+
+    assert(solver.decisionLevel() > 0);
+    for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
+        Lit x = solver.trail[c];
+        toVisit.push(x);
+    }
+    solver.cancelUntil(0);
+
+    vec<Lit> ps2(2);
+    ps2[0] = ~lit;
+    for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
+        ps2[1] = *l;
+        subsume0(ps2, calcAbstraction(ps2));
+        //subsume1Partial(ps2);
+    }
+
+    return true;
 }
 
 void Subsumer::clearTouchedAndOccur()

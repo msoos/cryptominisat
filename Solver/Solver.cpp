@@ -2153,7 +2153,7 @@ inline void Solver::performStepsBeforeSolve()
 
     if (removeUselessBins && conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
-        subsumer->subsumeWithBinaries();
+        if (!subsumer->subsumeWithBinaries()) return;
         if (!failedVarSearcher->removeUslessBinFull()) return;
     }
     
