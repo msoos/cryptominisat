@@ -1027,6 +1027,7 @@ void Subsumer::removeAssignedVarsFromEliminated()
     for (Var var = 0; var < var_elimed.size(); var++) {
         if (var_elimed[var] && solver.assigns[var] != l_Undef) {
             var_elimed[var] = false;
+            solver.setDecisionVar(var, true);
             numElimed--;
             map<Var, vector<Clause*> >::iterator it = elimedOutVar.find(var);
             if (it != elimedOutVar.end()) {
