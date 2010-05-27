@@ -921,6 +921,7 @@ const bool Subsumer::subsumeWithBinaries()
         << std::endl;
     }
     totalTime += cpuTime() - myTime;
+    solver.order_heap.filter(Solver::VarFilter(solver));
 
     return true;
 }
