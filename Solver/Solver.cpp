@@ -2151,7 +2151,7 @@ inline void Solver::performStepsBeforeSolve()
 
     if (performReplace && !varReplacer->performReplace()) return;
 
-    if (removeUselessBins && conflicts == 0 && learnts.size() == 0
+    if (removeUselessBins && performReplace && conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
         if (!subsumer->subsumeWithBinaries()) return;
         if (!failedVarSearcher->removeUslessBinFull()) return;

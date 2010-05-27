@@ -95,7 +95,7 @@ private:
     void removeAssignedVarsFromEliminated();
     void fillCannotEliminate();
     const bool treatLearnts();
-    void clearTouchedAndOccur();
+    void clearAll();
     
     //Iterations
     void registerIteration  (CSet& iter_set) { iter_sets.push(&iter_set); }
@@ -138,6 +138,7 @@ private:
     bool subsNonExistentFinish;
     double subsNonExistentTime;
     uint32_t subsNonExistentLitsRemoved;
+    bool doSubsume1;
     
     //hyperBinRes
     void addFromSolverAll(vec<Clause*>& cs);

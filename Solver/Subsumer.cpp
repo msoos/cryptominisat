@@ -18,6 +18,7 @@ Substantially modified by: Mate Soos (2010)
 #define __builtin_prefetch(a,b,c)
 #endif //_MSC_VER
 
+//#define DEBUG_BINARIES
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
@@ -460,13 +461,17 @@ void Subsumer::subsume1Partial(const T& ps)
                 free(&cl);
                 return;
             }
-            if (cl.size() > 1) {
+            if (cl.size() > 2) {
                 cl.calcAbstraction();
                 linkInAlreadyClause(c);
                 clauses[c.index] = c;
                 solver.attachClause(cl);
-                if (cl.size() == 2) solver.becameBinary++;
                 updateClause(c);
+            } else if (cl.size() == 2) {
+                cl.calcAbstraction();
+                solver.attachClause(cl);
+                solver.becameBinary++;
+                //updateClause(c);
             } else {
                 assert(cl.size() == 1);
                 solver.uncheckedEnqueue(cl[0]);
@@ -685,7 +690,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
     for (Clause **end = i + cs.size(); i !=  end; i++) {
         if (i+1 != end)
             __builtin_prefetch(*(i+1), 1, 1);
-        
+
         if (!alsoLearnt && (*i)->learnt()) {
             *j++ = *i;
             (*i)->setUnsorted();
@@ -846,7 +851,12 @@ const bool Subsumer::treatLearnts()
 
 const bool Subsumer::subsumeWithBinaries()
 {
-    clearTouchedAndOccur();
+    while (solver.performReplace && solver.varReplacer->getClauses().size() > 0) {
+        if (!solver.varReplacer->performReplace(true)) return false;
+        solver.clauseCleaner->removeAndCleanAll(true);
+    }
+    
+    clearAll();
     clauseID = 0;
     fullSubsume = true;
 
@@ -857,30 +867,32 @@ const bool Subsumer::subsumeWithBinaries()
     double myTime = cpuTime();
     uint32_t origTrailSize = solver.trail.size();
     
-    bool doSubsume1 = true;
-    if (solver.clauses.size()+solver.binaryClauses.size() > 2000000)
+    doSubsume1 = true;
+    if (solver.clauses.size()+solver.binaryClauses.size() > 1600000)
         doSubsume1 = false;
-
-    clauses.clear();
-    cl_added.clear();
-    cl_touched.clear();
 
     clauses.reserve(solver.clauses.size());
     cl_added.reserve(solver.clauses.size());
     cl_touched.reserve(solver.clauses.size());
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses);
+    #ifdef DEBUG_BINARIES
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        assert(clauses[i].clause->size() != 2);
+    }
+    #endif //DEBUG_BINARIES
 
     //for (uint32_t i2 = 0; i2 < 1; i2++) {
-    /*for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
+    for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
         Clause& c = *solver.binaryClauses[i];
         subsume0(c, c.getAbst());
-    }*/
+    }
     //}
     if (doSubsume1) {
         for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
             Clause& c = *solver.binaryClauses[i];
             subsume1Partial(c);
+            if (!solver.ok) return false;
         }
     }
     if (solver.verbosity >= 1) {
@@ -893,6 +905,11 @@ const bool Subsumer::subsumeWithBinaries()
     
     if (!newBinClausesBothFull()) return false;
 
+    #ifdef DEBUG_BINARIES
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        assert(clauses[i].clause == NULL || clauses[i].clause->size() != 2);
+    }
+    #endif //DEBUG_BINARIES
     addBackToSolver();
 
     if (solver.verbosity >= 1) {
@@ -924,6 +941,7 @@ const bool Subsumer::newBinClausesBothFull()
 
         Lit lit(var, true);
         if (!newBinClauses(lit)) {
+            if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
             solver.ok = (solver.propagate(false) == NULL);
@@ -933,6 +951,7 @@ const bool Subsumer::newBinClausesBothFull()
         
         /*lit = ~lit;
         if (!newBinClauses(lit)) {
+            if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
             solver.ok = (solver.propagate(false) == NULL);
@@ -969,13 +988,16 @@ const bool Subsumer::newBinClauses(const Lit& lit)
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
         ps2[1] = *l;
         subsume0(ps2, calcAbstraction(ps2));
-        //subsume1Partial(ps2);
+        if (doSubsume1) {
+            subsume1Partial(ps2);
+            if (!solver.ok) return false;
+        }
     }
 
     return true;
 }
 
-void Subsumer::clearTouchedAndOccur()
+void Subsumer::clearAll()
 {
     touched_list.clear();
     touched.clear();
@@ -985,6 +1007,9 @@ void Subsumer::clearTouchedAndOccur()
         occur[2*var].clear();
         occur[2*var+1].clear();
     }
+    clauses.clear();
+    cl_added.clear();
+    cl_touched.clear();
 }
 
 const bool Subsumer::simplifyBySubsumption()
@@ -1000,7 +1025,7 @@ const bool Subsumer::simplifyBySubsumption()
     clauseID = 0;
     numVarsElimed = 0;
     blockTime = 0.0;
-    clearTouchedAndOccur();
+    clearAll();
     
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
@@ -1009,10 +1034,6 @@ const bool Subsumer::simplifyBySubsumption()
         return false;
     fillCannotEliminate();
     solver.testAllClauseAttach();
-    
-    clauses.clear();
-    cl_added.clear();
-    cl_touched.clear();
     
     clauses.reserve(solver.clauses.size() + solver.binaryClauses.size());
     cl_added.reserve(solver.clauses.size() + solver.binaryClauses.size());
@@ -1025,7 +1046,7 @@ const bool Subsumer::simplifyBySubsumption()
     
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses);
-    solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::binaryClauses);
+    solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
     addFromSolver(solver.binaryClauses);
     
     //Limits
