@@ -741,6 +741,7 @@ void Subsumer::subsumeWithBinaries()
     clearTouchedAndOccur();
     clauseID = 0;
     clauses_subsumed = 0;
+    fullSubsume = true;
 
     clauses.clear();
     cl_added.clear();
