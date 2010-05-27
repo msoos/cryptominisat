@@ -214,6 +214,7 @@ void XorSubsumer::fillCannotEliminate()
 
 void XorSubsumer::extendModel(Solver& solver2)
 {
+    assert(checkElimedUnassigned());
     vec<Lit> tmp;
     typedef map<Var, vector<XorClause*> > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {

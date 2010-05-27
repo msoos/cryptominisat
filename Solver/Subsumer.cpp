@@ -48,6 +48,7 @@ Subsumer::~Subsumer()
 
 void Subsumer::extendModel(Solver& solver2)
 {
+    assert(checkElimedUnassigned());
     vec<Lit> tmp;
     typedef map<Var, vector<Clause*> > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
