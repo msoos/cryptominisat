@@ -472,6 +472,7 @@ void Subsumer::subsume1Partial(const T& ps)
                 cl.calcAbstraction();
                 solver.attachClause(cl);
                 solver.becameBinary++;
+                addBinaryClauses.push(&cl);
                 //updateClause(c);
             } else {
                 assert(cl.size() == 1);
@@ -860,6 +861,7 @@ const bool Subsumer::subsumeWithBinaries()
     clearAll();
     clauseID = 0;
     fullSubsume = true;
+    addBinaryClauses.clear();
 
     //Clearing stats
     subsNonExistentumFailed = 0;
@@ -912,6 +914,10 @@ const bool Subsumer::subsumeWithBinaries()
     }
     #endif //DEBUG_BINARIES
     addBackToSolver();
+    for (uint32_t i = 0; i < addBinaryClauses.size(); i++) {
+        solver.binaryClauses.push(addBinaryClauses[i]);
+    }
+    addBinaryClauses.clear();
 
     if (solver.verbosity >= 1) {
         std::cout << "c Subs w/ non-existent bins: " << subsNonExistentNum

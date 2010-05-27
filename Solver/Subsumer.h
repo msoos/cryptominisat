@@ -139,6 +139,7 @@ private:
     double subsNonExistentTime;
     uint32_t subsNonExistentLitsRemoved;
     bool doSubsume1;
+    vec<Clause*> addBinaryClauses;
     
     //hyperBinRes
     void addFromSolverAll(vec<Clause*>& cs);
