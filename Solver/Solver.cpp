@@ -2165,6 +2165,12 @@ inline void Solver::performStepsBeforeSolve()
         && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
+
+    if (removeUselessBins && performReplace && conflicts == 0 && learnts.size() == 0
+        && noLearntBinaries()) {
+        if (!subsumer->subsumeWithBinaries()) return;
+        if (!failedVarSearcher->removeUslessBinFull()) return;
+    }
     
     testAllClauseAttach();
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
