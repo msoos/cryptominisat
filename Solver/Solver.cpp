@@ -1870,6 +1870,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conf
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
         if (restartType == dynamic_restart)
             nbDecisionLevelHistory.push(nbLevels);
+
         totalSumOfDecisionLevel += nbLevels;
     } else {
         conflictsAtLastSolve++;
