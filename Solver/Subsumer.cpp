@@ -400,6 +400,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
 template<class T>
 void Subsumer::subsume1Partial(const T& ps)
 {
+    assert(solver.decisionLevel() == 0);
     vec<ClauseSimp>    subs;
     vec<Lit>        qs;
     registerIteration(subs);
