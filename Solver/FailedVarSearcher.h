@@ -129,7 +129,6 @@ class FailedVarSearcher {
         const bool fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong);
         const bool removeUselessBinaries(const Lit& lit);
         void removeBin(const Lit& lit1, const Lit& lit2);
-        uint32_t removedUselessBin;
         vec<char> toDeleteSet;
         vec<Lit> oneHopAway;
         vec<Lit> wrong;

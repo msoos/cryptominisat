@@ -416,12 +416,12 @@ const bool FailedVarSearcher::removeUslessBinFull()
     if (!solver.performReplace) return true;
     while (solver.performReplace && solver.varReplacer->getClauses().size() > 0) {
         if (!solver.varReplacer->performReplace(true)) return false;
+        solver.clauseCleaner->removeAndCleanAll(true);
     }
     assert(solver.varReplacer->getClauses().size() == 0);
     solver.testAllClauseAttach();
 
     double myTime = cpuTime();
-    removedUselessBin = 0;
     toDeleteSet.clear();
     toDeleteSet.growTo(solver.nVars()*2, 0);
     uint32_t origHeapSize = solver.order_heap.size();
@@ -465,6 +465,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
             free(*i);
         }
     }
+    uint32_t removedUselessBin = i - j;
     solver.binaryClauses.shrink(i - j);
     
     if (fixed) solver.order_heap.filter(Solver::VarFilter(solver));
@@ -842,7 +843,7 @@ void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
     WatchedBin *i, *j;
     i = j = bwin.getData();
     for (const WatchedBin *end = bwin.getDataEnd(); i != end; i++) {
-        if (i->impliedLit == lit2 && i->clause != NULL && cl == NULL) {
+        if (i->impliedLit == lit2 && cl == NULL) {
             cl = i->clause;
         } else {
             *j++ = *i;
@@ -851,18 +852,19 @@ void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
     bwin.shrink(1);
     assert(cl != NULL);
 
+    bool found = false;
     vec<WatchedBin>& bwin2 = solver.binwatches[(~lit2).toInt()];
     extraTime += bwin2.size() / EXTRATIME_DIVIDER;
     i = j = bwin2.getData();
     for (const WatchedBin *end = bwin2.getDataEnd(); i != end; i++) {
         if (i->clause == cl) {
-
+            found = true;
         } else {
             *j++ = *i;
         }
     }
     bwin2.shrink(1);
-    assert(cl != NULL);
+    assert(found);
 
     #ifdef VERBOSE_DEBUG
     std::cout << "Removing useless bin: ";
@@ -871,7 +873,6 @@ void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
 
     cl->setRemoved();
     solver.clauses_literals -= 2;
-    removedUselessBin++;
 }
 
 template<class T>
