@@ -896,7 +896,7 @@ const bool Subsumer::subsumeWithBinaries()
         }
     }
     if (solver.verbosity >= 1) {
-        std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed - subsNonExistentNum
+        std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed
         << "  lits-rem: " << std::setw(9) << literals_removed
         << "  v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
         << "  time: " << std::setprecision(2) << std::setw(5) <<  cpuTime() - myTime << " s"
