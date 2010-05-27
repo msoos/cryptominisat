@@ -166,11 +166,6 @@ template<class T>
 uint32_t Subsumer::subsume0Orig(T& ps, uint32_t abs)
 {
     uint32_t retIndex = std::numeric_limits<uint32_t>::max();
-    #ifdef VERBOSE_DEBUG
-    cout << "subsume0 orig clause:";
-    ps.plainPrint();
-    #endif
-    
     vec<ClauseSimp> subs;
     findSubsumed(ps, abs, subs);
     for (uint32_t i = 0; i < subs.size(); i++){
