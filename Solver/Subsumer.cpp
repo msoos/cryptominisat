@@ -741,6 +741,7 @@ void Subsumer::subsumeWithBinaries()
     clearTouchedAndOccur();
     clauseID = 0;
     clauses_subsumed = 0;
+    literals_removed = 0;
     fullSubsume = true;
 
     clauses.clear();
@@ -756,11 +757,14 @@ void Subsumer::subsumeWithBinaries()
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
         Clause& c = *solver.binaryClauses[i];
         subsume0(c, c.getAbst());
+        ClauseSimp cc = ClauseSimp(&c, clauseID);
+        subsume1(cc);
     }
 
     addBackToSolver();
     if (solver.verbosity >= 1) {
         std::cout << "c subsumed with bin: " << std::setw(8) << clauses_subsumed
+        << "  lits-rem: " << std::setw(9) << literals_removed
         << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         << "   |" << std::endl;
     }
