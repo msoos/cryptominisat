@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "StateSaver.h"
 
 StateSaver::StateSaver(Solver& _solver) :
-solver(_solver)
-, backup_order_heap(Solver::VarOrderLt(solver.activity))
+    solver(_solver)
+    , backup_order_heap(Solver::VarOrderLt(solver.activity))
 {
     //Saving Solver state
     backup_var_inc = solver.var_inc;
