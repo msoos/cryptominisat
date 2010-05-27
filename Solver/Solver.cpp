@@ -985,6 +985,8 @@ void Solver::uncheckedEnqueue(Lit p, ClausePtr from)
     #endif //VERBOSE_DEBUG
     std::cout << "uncheckedEnqueue var " << p.var()+1 << " to " << !p.sign() << " level: " << decisionLevel() << " sublevel: " << trail.size() << std::endl;
     #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
+
+    //assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
     
     assert(assigns[p.var()].isUndef());
     const Var v = p.var();
