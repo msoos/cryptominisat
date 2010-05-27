@@ -143,12 +143,21 @@ inline uint32_t Subsumer::subsume0(Clause& ps, uint32_t abs)
 {
     ps.subsume0Finished();
     ps.unsetVarChanged();
+    #ifdef VERBOSE_DEBUG
+    cout << "subsume0 orig clause: ";
+    ps.plainPrint();
+    #endif
     return subsume0Orig(ps, abs);
 }
 
 template <class T>
 inline uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "subsume0 orig vec: ";
+    ps[0].print(); std::cout << " ";
+    ps[1].printFull();
+    #endif
     return subsume0Orig(ps, abs);
 }
 
@@ -397,6 +406,12 @@ void Subsumer::subsume1Partial(const T& ps)
 {
     vec<ClauseSimp>    subs;
     vec<Lit>        qs;
+    #ifdef VERBOSE_DEBUG
+    cout << "-> Strenghtening using clause :";
+    ps[0].print(); std::cout << " ";
+    ps[1].printFull();
+    assert(ps.size() == 2);
+    #endif
         
     qs.clear();
     for (uint32_t i = 0; i < ps.size(); i++)
