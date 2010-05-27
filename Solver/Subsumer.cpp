@@ -401,6 +401,8 @@ void Subsumer::subsume1Partial(const T& ps)
 {
     vec<ClauseSimp>    subs;
     vec<Lit>        qs;
+    registerIteration(subs);
+    
     #ifdef VERBOSE_DEBUG
     cout << "-> Strenghtening using clause :";
     ps[0].print(); std::cout << " ";
@@ -484,6 +486,7 @@ void Subsumer::subsume1Partial(const T& ps)
         qs[i] = ~qs[i];
         subs.clear();
     }
+    unregisterIteration(subs);
 }
 
 void Subsumer::updateClause(ClauseSimp c)
