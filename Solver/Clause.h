@@ -85,6 +85,7 @@ public:
         subsume0Done = false;
         mySize = ps.size();
         isLearnt = learnt;
+        isRemoved = false;
         setGroup(_group);
         for (uint i = 0; i < ps.size(); i++) data[i] = ps[i];
         if (learnt) {
@@ -279,7 +280,6 @@ protected:
     {
         invertedXor = inverted;
         isXorClause = true;
-        isRemoved = false;
         calcXorAbstraction();
     }
 
