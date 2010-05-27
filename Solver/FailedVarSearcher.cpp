@@ -28,6 +28,7 @@ using std::set;
 #include "time_mem.h"
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
+#include "StateSaver.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -126,14 +127,9 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     assert(solver.decisionLevel() == 0);
     solver.testAllClauseAttach();
     double myTime = cpuTime();
-    
-    //Saving Solver state
-    Heap<Solver::VarOrderLt> backup_order_heap(solver.order_heap);
-    vector<bool> backup_polarities = solver.polarity;
-    vec<uint32_t> backup_activity(solver.activity.size());
-    std::copy(solver.activity.getData(), solver.activity.getDataEnd(), backup_activity.getData());
-    uint32_t backup_var_inc = solver.var_inc;
     uint32_t origHeapSize = solver.order_heap.size();
+    StateSaver savedState(solver);
+    
     if (solver.readdOldLearnts && !readdRemovedLearnts()) goto end;
     
     //General Stats
@@ -276,13 +272,8 @@ end:
     }
     
     lastTimeFoundTruths = solver.trail.size() - origTrailSize;
-    
-    //Restore Solver state
-    solver.var_inc = backup_var_inc;
-    std::copy(backup_activity.getData(), backup_activity.getDataEnd(), solver.activity.getData());
-    solver.order_heap = backup_order_heap;
-    solver.polarity = backup_polarities;
-    solver.order_heap.filter(Solver::VarFilter(solver));
+
+    savedState.restore();
     
     solver.testAllClauseAttach();
     return solver.ok;

@@ -54,6 +54,7 @@ class Subsumer;
 class XorSubsumer;
 class PartHandler;
 class RestartTypeChooser;
+class StateSaver;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -380,6 +381,7 @@ protected:
     friend class Subsumer;
     friend class XorSubsumer;
     friend class PartHandler;
+    friend class StateSaver;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;

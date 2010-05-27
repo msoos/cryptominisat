@@ -39,6 +39,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Subsumer.h"
 #include "PartHandler.h"
 #include "XorSubsumer.h"
+#include "StateSaver.h"
 
 #ifdef USE_GAUSS
 #include "Gaussian.h"
@@ -2043,13 +2044,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     bool gauss_was_cleared = (gauss_matrixes.size() == 0);
     clearGaussMatrixes();
     #endif //USE_GAUSS
-    Heap<VarOrderLt> backup_order_heap(order_heap);
-    vector<bool> backup_polarities = polarity;
-    RestartType backup_restartType= restartType;
-    uint32_t backup_random_var_freq = random_var_freq;
-    vec<uint32_t> backup_activity(activity.size());
-    std::copy(activity.getData(), activity.getDataEnd(), backup_activity.getData());
-    uint32_t backup_var_inc = var_inc;
+
+    StateSaver savedState(*this);;
     
     if (verbosity >= 2)
         std::cout << "c | " << std::setw(24) << " " 
@@ -2101,17 +2097,12 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     }
     
 end:
-    random_var_freq = backup_random_var_freq;
     if (verbosity >= 2)
         printf("c                                      Simplifying finished                               |\n");
-    
-    var_inc = backup_var_inc;
-    std::copy(backup_activity.getData(), backup_activity.getDataEnd(), activity.getData());
-    order_heap = backup_order_heap;
+
+
+    savedState.restore();
     simplifying = false;
-    order_heap.filter(VarFilter(*this));
-    polarity = backup_polarities;
-    restartType = backup_restartType;
     
     #ifdef USE_GAUSS
     if (status == l_Undef && !gauss_was_cleared && !matrixFinder->findMatrixes())

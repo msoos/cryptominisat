@@ -7,7 +7,7 @@ libcryptominisat_la_SOURCES = \
 	PartFinder.cpp SmallPtr.cpp VarReplacer.cpp \
 	Clause.cpp FindUndef.cpp MatrixFinder.cpp \
 	PartHandler.cpp Solver.cpp XorFinder.cpp \
-	PackedRow.cpp Gaussian.cpp \
+	PackedRow.cpp Gaussian.cpp StateSaver.cpp \
 	RestartTypeChooser.cpp Subsumer.cpp XorSubsumer.cpp
 
 bin_PROGRAMS = cryptominisat
