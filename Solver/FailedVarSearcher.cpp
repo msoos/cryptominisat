@@ -311,7 +311,7 @@ void FailedVarSearcher::printResults(const double myTime) const
 
 const bool FailedVarSearcher::orderLits()
 {
-    uint32_t oldProps = solver.propagations;
+    uint64_t oldProps = solver.propagations;
     double myTime = cpuTime();
     uint32_t numChecked = 0;
     litDegrees.clear();
