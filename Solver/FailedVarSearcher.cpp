@@ -129,6 +129,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     double myTime = cpuTime();
     uint32_t origHeapSize = solver.order_heap.size();
     StateSaver savedState(solver);
+    Heap<Solver::VarOrderLt> order_heap_copy(solver.order_heap); //for hyperbin
     
     if (solver.readdOldLearnts && !readdRemovedLearnts()) goto end;
     
@@ -188,15 +189,30 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     lastTimeWentUntilVar = solver.nVars();
     origProps = solver.propagations;
     for (Var var = fromVar; var < solver.nVars(); var++) {
-        if (solver.assigns[var] == l_Undef && solver.decision_var[var]) {
-            if (solver.propagations - origProps >= numProps)  {
-                finishedLastTimeVar = false;
-                lastTimeWentUntilVar = var;
-                break;
-            }
-            if (!tryBoth(Lit(var, false), Lit(var, true)))
-                goto end;
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
+            continue;
+        if (solver.propagations - origProps >= numProps)  {
+            finishedLastTimeVar = false;
+            lastTimeWentUntilVar = var;
+            break;
         }
+        if (!tryBoth(Lit(var, false), Lit(var, true)))
+            goto end;
+    }
+
+    numProps = (double)numProps * 1.2;
+    hyperbinProps = 0;
+    while (!order_heap_copy.empty()) {
+        Var var = order_heap_copy.removeMin();
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
+            continue;
+        if (solver.propagations - origProps >= numProps)  {
+            finishedLastTimeVar = false;
+            lastTimeWentUntilVar = var;
+            break;
+        }
+        if (!tryBoth(Lit(var, false), Lit(var, true)))
+            goto end;
     }
     
     /*if (solver.verbosity >= 1) printResults(myTime);
