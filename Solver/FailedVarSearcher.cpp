@@ -176,7 +176,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     if (solver.addExtraBins && !orderLits()) return false;
-    maxHyperBinProps = (double)numProps * 0.1;
+    maxHyperBinProps = numProps/5;
     
     //uint32_t fromBin;
     uint32_t fromVar;

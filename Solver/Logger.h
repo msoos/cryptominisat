@@ -163,13 +163,13 @@ private:
     //the distribution of branch depths. first = depth, second = number of occurances
     vector<uint> branch_depth_distrib;
 
-    uint sum_conflict_depths;
-    uint no_conflicts;
-    uint no_decisions;
-    uint no_propagations;
-    uint sum_decisions_on_branches;
-    uint sum_propagations_on_branches;
-    uint last_unitary_learnt_clauses;
+    uint64_t sum_conflict_depths;
+    uint64_t no_conflicts;
+    uint64_t no_decisions;
+    uint64_t no_propagations;
+    uint64_t sum_decisions_on_branches;
+    uint64_t sum_propagations_on_branches;
+    uint64_t last_unitary_learnt_clauses;
 
     //message display properties
     const int& verbosity;

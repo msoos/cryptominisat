@@ -120,10 +120,10 @@ class FailedVarSearcher {
         void addBin(const Lit& lit1, const Lit& lit2);
         void fillImplies(const Lit& lit, BitArray& myimplies);
         BitArray myimplies;
-        uint32_t hyperbinProps;
+        uint64_t hyperbinProps;
         vector<uint32_t> litDegrees;
         const bool orderLits();
-        uint32_t maxHyperBinProps;
+        uint64_t maxHyperBinProps;
 
         //Remove useless binaries
         const bool fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong);
