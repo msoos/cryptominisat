@@ -29,7 +29,7 @@ public:
 
     //Called from main
     const bool simplifyBySubsumption();
-    const bool subsumeWithBinaries();
+    const bool subsumeWithBinaries(const bool startUp);
     void newVar();
 
     //Used by cleaner
@@ -129,8 +129,8 @@ private:
     bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
 
     //Subsume with Nonexistent Bins
-    const bool newBinClausesBothFull();
-    const bool newBinClauses(const Lit& lit);
+    const bool newBinClausesBothFull(const bool startUp);
+    const bool newBinClauses(const Lit& lit, const bool startUp);
     template<class T>
     void subsume1Partial(const T& ps);
     uint32_t subsNonExistentNum;
@@ -138,8 +138,8 @@ private:
     bool subsNonExistentFinish;
     double subsNonExistentTime;
     uint32_t subsNonExistentLitsRemoved;
-    bool doSubsume1;
     vec<Clause*> addBinaryClauses;
+    uint32_t doneNum;
     
     //hyperBinRes
     void addFromSolverAll(vec<Clause*>& cs);

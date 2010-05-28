@@ -2082,6 +2082,12 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t num
     }
     testAllClauseAttach();
 
+    /*if (removeUselessBins && performReplace
+        && !subsumer->subsumeWithBinaries(false)) {
+        status = l_False;
+        goto end;
+    }*/
+
     if (doSubsumption && !subsumer->simplifyBySubsumption()) {
         status = l_False;
         goto end;
@@ -2155,7 +2161,7 @@ inline void Solver::performStepsBeforeSolve()
 
     if (removeUselessBins && performReplace && conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
-        if (!subsumer->subsumeWithBinaries()) return;
+        if (!subsumer->subsumeWithBinaries(true)) return;
         if (!failedVarSearcher->removeUslessBinFull()) return;
     }
     
@@ -2168,7 +2174,7 @@ inline void Solver::performStepsBeforeSolve()
 
     if (removeUselessBins && performReplace && conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
-        if (!subsumer->subsumeWithBinaries()) return;
+        if (!subsumer->subsumeWithBinaries(true)) return;
         if (!failedVarSearcher->removeUslessBinFull()) return;
     }
     

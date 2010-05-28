@@ -851,7 +851,7 @@ const bool Subsumer::treatLearnts()
     return true;
 }
 
-const bool Subsumer::subsumeWithBinaries()
+const bool Subsumer::subsumeWithBinaries(const bool startUp)
 {
     while (solver.performReplace && solver.varReplacer->getClauses().size() > 0) {
         if (!solver.varReplacer->performReplace(true)) return false;
@@ -870,9 +870,21 @@ const bool Subsumer::subsumeWithBinaries()
     double myTime = cpuTime();
     uint32_t origTrailSize = solver.trail.size();
     
-    doSubsume1 = true;
-    if (solver.clauses.size()+solver.binaryClauses.size() > 1600000)
-        doSubsume1 = false;
+    /*doSubsume1 = true;
+    if (solver.clauses.size()+solver.binaryClauses.size() > 400000)
+        doSubsume1 = false;*/
+    //if (!startUp) doSubsume1 = false;
+
+    if (clauses.size() > 3500000) {
+        numMaxSubsume1 = 10000;
+    }
+    if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
+        numMaxSubsume1 = 30000;
+    }
+    if (clauses.size() <= 1500000) {;
+        numMaxSubsume1 = 40000;
+    }
+    if (!startUp) numMaxSubsume1 = 0;
 
     clauses.reserve(solver.clauses.size());
     cl_added.reserve(solver.clauses.size());
@@ -891,12 +903,12 @@ const bool Subsumer::subsumeWithBinaries()
         subsume0(c, c.getAbst());
     }
     //}
-    if (doSubsume1) {
-        for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-            Clause& c = *solver.binaryClauses[i];
-            subsume1Partial(c);
-            if (!solver.ok) return false;
-        }
+    for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
+        Clause& c = *solver.binaryClauses[i];
+        if (numMaxSubsume1 == 0) break;
+        numMaxSubsume1--;
+        subsume1Partial(c);
+        if (!solver.ok) return false;
     }
     if (solver.verbosity >= 1) {
         std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed
@@ -906,7 +918,7 @@ const bool Subsumer::subsumeWithBinaries()
         << "   |" << std::endl;
     }
     
-    if (!newBinClausesBothFull()) return false;
+    if (!newBinClausesBothFull(startUp)) return false;
 
     #ifdef DEBUG_BINARIES
     for (uint32_t i = 0; i < clauses.size(); i++) {
@@ -923,7 +935,7 @@ const bool Subsumer::subsumeWithBinaries()
         std::cout << "c Subs w/ non-existent bins: " << subsNonExistentNum
         << " lits-rem: " << subsNonExistentLitsRemoved
         << " v-fix: " << subsNonExistentumFailed
-        << " finished: " << (subsNonExistentFinish ? "1" : "0")
+        << " done: " << doneNum
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << subsNonExistentTime
         << std::endl;
     }
@@ -933,22 +945,31 @@ const bool Subsumer::subsumeWithBinaries()
     return true;
 }
 
-#define MAX_BINARY_PROP 10000000
+#define MAX_BINARY_PROP 5000000
 
-const bool Subsumer::newBinClausesBothFull()
+const bool Subsumer::newBinClausesBothFull(const bool startUp)
 {
     uint32_t oldClausesSubusmed = clauses_subsumed;
     uint32_t oldLitsRemoved = literals_removed;
     double myTime = cpuTime();
     uint64_t oldProps = solver.propagations;
     uint32_t oldTrailSize = solver.trail.size();
-    Var var;
-    for (var = 0; var < solver.nVars(); var++) {
-        if (solver.propagations - oldProps > MAX_BINARY_PROP) break;
-        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+    uint64_t maxProp = MAX_BINARY_PROP;
+    if (!startUp) maxProp /= 2;
+    
+    Var var = 0;
+    doneNum = 0;
+    BitArray doneIt;
+    doneIt.resize(solver.nVars(), false);
+    for (uint32_t i = 0; i < 3*solver.nVars(); i++) {
+        var = solver.mtrand.randInt(solver.nVars()-1);
+        if (solver.propagations - oldProps > maxProp) break;
+        if (doneIt[var] || solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+        doneIt.setBit(var);
+        doneNum++;
 
-        Lit lit(var, true);
-        if (!newBinClauses(lit)) {
+        Lit lit(var, solver.mtrand.randInt(1));
+        if (!newBinClauses(lit, startUp)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
@@ -958,7 +979,7 @@ const bool Subsumer::newBinClausesBothFull()
         }
         
         /*lit = ~lit;
-        if (!newBinClauses(lit)) {
+        if (!newBinClauses(lit, startUp)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
@@ -969,14 +990,13 @@ const bool Subsumer::newBinClausesBothFull()
     }
     subsNonExistentNum = clauses_subsumed - oldClausesSubusmed;
     subsNonExistentTime = cpuTime() - myTime;
-    subsNonExistentFinish = (var == solver.nVars());
     subsNonExistentumFailed = solver.trail.size() - oldTrailSize;
     subsNonExistentLitsRemoved = literals_removed - oldLitsRemoved;
 
     return true;
 }
 
-const bool Subsumer::newBinClauses(const Lit& lit)
+const bool Subsumer::newBinClauses(const Lit& lit, const bool startUp)
 {
     vec<Lit> toVisit;
     solver.newDecisionLevel();
@@ -995,8 +1015,16 @@ const bool Subsumer::newBinClauses(const Lit& lit)
     ps2[0] = ~lit;
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
         ps2[1] = *l;
-        subsume0(ps2, calcAbstraction(ps2));
-        if (doSubsume1) {
+        uint32_t index = subsume0(ps2, calcAbstraction(ps2));
+        if (!startUp && index != std::numeric_limits<uint32_t>::max()) {
+            Clause* c = solver.addClauseInt(ps2, 0);
+            if (!solver.ok) return false;
+            if (c != NULL) addBinaryClauses.push(c);
+            ps2[0] = ~lit;
+            ps2[1] = *l;
+        }
+        if (numMaxSubsume1 > 0) {
+            numMaxSubsume1--;
             subsume1Partial(ps2);
             if (!solver.ok) return false;
         }
@@ -1076,7 +1104,6 @@ const bool Subsumer::simplifyBySubsumption()
         numMaxSubsume1 = 400000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
     }
-
     if (numCalls == 1) numMaxSubsume1 = 0;
     
     if (!solver.doSubsume1) numMaxSubsume1 = 0;
