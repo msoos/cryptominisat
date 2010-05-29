@@ -130,6 +130,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     uint32_t origHeapSize = solver.order_heap.size();
     StateSaver savedState(solver);
     Heap<Solver::VarOrderLt> order_heap_copy(solver.order_heap); //for hyperbin
+    uint64_t origBinClauses = solver.binaryClauses.size();
     
     if (solver.readdOldLearnts && !readdRemovedLearnts()) goto end;
     
@@ -172,7 +173,6 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     bothInvert = 0;
 
     //For HyperBin
-    binClauseAdded = 0;
     unPropagatedBin.resize(solver.nVars(), 0);
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
@@ -260,6 +260,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
 
 end:
     bool removedOldLearnts = false;
+    binClauseAdded = solver.binaryClauses.size() - origBinClauses;
     //Print results
     if (solver.verbosity >= 1) printResults(myTime);
     
@@ -363,7 +364,7 @@ const bool FailedVarSearcher::orderLits()
         }
         solver.cancelUntil(0);
     }
-    std::cout << "c binary Degree finding time: " << cpuTime() - myTime << "s  num checked: " << numChecked << " i: " << i << " props: " << (solver.propagations - oldProps) << std::endl;
+    std::cout << "c binary Degree finding time: " << cpuTime() - myTime << " s  num checked: " << numChecked << " i: " << i << " props: " << (solver.propagations - oldProps) << std::endl;
     solver.propagations = oldProps;
 
     return true;
@@ -755,7 +756,6 @@ const bool FailedVarSearcher::fillBinImpliesMinusLast(const Lit& origLit, const 
 
 void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
 {
-
     #ifdef VERBOSE_DEBUG
     std::cout << "Adding extra bin: ";
     lit1.print(); std::cout << " "; lit2.printFull();
@@ -766,8 +766,6 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
     ps[1] = lit2;
     solver.addLearntClause(ps, 0, 0);
     assert(solver.ok);
-    solver.nbBin++;
-    binClauseAdded++;
 }
 
 const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)

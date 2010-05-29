@@ -803,7 +803,7 @@ void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
             uint32_t index = subsume0(**a, calcAbstraction(**a));
             if (index != std::numeric_limits<uint32_t>::max()) {
                 (*a)->makeNonLearnt();
-                solver.nbBin--;
+                //solver.nbBin--;
                 clauses[index].clause = *a;
                 linkInAlreadyClause(clauses[index]);
                 solver.learnts_literals -= (*a)->size();

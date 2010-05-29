@@ -114,7 +114,6 @@ class FailedVarSearcher {
 
         //finding HyperBins
         void addBinClauses(const Lit& lit);
-        uint32_t binClauseAdded;
         BitArray unPropagatedBin;
         vec<Var> propagatedVars;
         void addBin(const Lit& lit1, const Lit& lit2);
@@ -124,6 +123,7 @@ class FailedVarSearcher {
         vector<uint32_t> litDegrees;
         const bool orderLits();
         uint64_t maxHyperBinProps;
+        uint64_t binClauseAdded;
 
         //Remove useless binaries
         const bool fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong);

@@ -345,7 +345,10 @@ bool Solver::addLearntClause(T& ps, const uint group, const uint32_t activity)
     
     c->makeLearnt(activity);
     if (c->size() > 2) learnts.push(c);
-    else binaryClauses.push(c);
+    else {
+        nbBin++;
+        binaryClauses.push(c);
+    }
     return ok;
 }
 template bool Solver::addLearntClause(Clause& ps, const uint group, const uint32_t activity);
