@@ -94,7 +94,7 @@ class FailedVarSearcher {
         //bothprop finding
         BitArray propagated;
         BitArray propValue;
-        vector<std::pair<Var, bool> > bothSame;
+        vec<Lit> bothSame;
         
         //2-long xor-finding
         vec<uint32_t> xorClauseSizes;

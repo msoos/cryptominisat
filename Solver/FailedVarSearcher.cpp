@@ -147,7 +147,6 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     //For BothSame
     propagated.resize(solver.nVars(), 0);
     propValue.resize(solver.nVars(), 0);
-    bothSame.clear();
     
     //For calculating how many variables have really been set
     origTrailSize = solver.trail.size();
@@ -508,6 +507,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     twoLongXors.clear();
     propagatedVars.clear();
     unPropagatedBin.setZero();
+    bothSame.clear();
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit1);
@@ -574,7 +574,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
                 }
                 if (propValue[x] == solver.assigns[x].getBool()) {
                     //they both imply the same
-                    bothSame.push_back(make_pair(x, !propValue[x]));
+                    bothSame.push(Lit(x, !propValue[x]));
                 } else if (c != (int)solver.trail_lim[0]) {
                     bool invert;
                     if (lit1.var() == lit2.var()) {
@@ -625,10 +625,9 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) addBinClauses(lit2);
     
     for(uint32_t i = 0; i != bothSame.size(); i++) {
-        solver.uncheckedEnqueue(Lit(bothSame[i].first, bothSame[i].second));
+        solver.uncheckedEnqueue(bothSame[i]);
     }
     goodBothSame += bothSame.size();
-    bothSame.clear();
     solver.ok = (solver.propagate(false) == NULL);
     if (!solver.ok) return false;
     
