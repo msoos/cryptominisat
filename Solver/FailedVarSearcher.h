@@ -132,6 +132,9 @@ class FailedVarSearcher {
         vec<char> toDeleteSet;
         vec<Lit> oneHopAway;
         vec<Lit> wrong;
+
+        //Temporaries
+        vec<Lit> tmpPs;
         
         //State for this run
         uint32_t toReplaceBefore;

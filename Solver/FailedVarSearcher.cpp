@@ -38,6 +38,7 @@ using std::set;
 
 FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
+    , tmpPs(2)
     , finishedLastTimeVar(true)
     , lastTimeWentUntilVar(0)
     , finishedLastTimeBin(true)
@@ -491,7 +492,6 @@ const bool FailedVarSearcher::removeUslessBinFull()
 
 const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
 {
-    vec<Lit> tmpPs(2);
     if (binXorFind) {
         if (lastTrailSize < solver.trail.size()) {
             for (uint32_t i = lastTrailSize; i != solver.trail.size(); i++) {
@@ -760,10 +760,10 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
     lit1.print(); std::cout << " "; lit2.printFull();
     #endif //VERBOSE_DEBUG
 
-    vec<Lit> ps(2);
-    ps[0] = lit1;
-    ps[1] = lit2;
-    solver.addLearntClause(ps, 0, 0);
+    tmpPs[0] = lit1;
+    tmpPs[1] = lit2;
+    solver.addLearntClause(tmpPs, 0, 0);
+    tmpPs.growTo(2);
     assert(solver.ok);
 }
 
