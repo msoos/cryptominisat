@@ -395,7 +395,7 @@ protected:
     void setDefaultRestartType();
     const bool checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
     void performStepsBeforeSolve();
-    const lbool simplifyProblem(const uint32_t numConfls, const uint64_t numProps);
+    const lbool simplifyProblem(const uint32_t numConfls);
     bool simplifying;
 
     // Debug & etc:

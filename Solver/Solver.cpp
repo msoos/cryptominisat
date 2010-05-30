@@ -2043,7 +2043,7 @@ inline void Solver::setDefaultRestartType()
     lastSelectedRestartType = restartType;
 }
 
-const lbool Solver::simplifyProblem(const uint32_t numConfls, const uint64_t numProps)
+const lbool Solver::simplifyProblem(const uint32_t numConfls)
 {
     testAllClauseAttach();
     #ifdef USE_GAUSS
@@ -2273,7 +2273,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         #endif //DEBUG_VARELIM
         
         if (schedSimplification && conflicts >= nextSimplify) {
-            status = simplifyProblem(500, 7000000);
+            status = simplifyProblem(500);
             nextSimplify = conflicts * 1.5;
             if (status != l_Undef) break;
         }
