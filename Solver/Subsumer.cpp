@@ -894,8 +894,10 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
 
     //for (uint32_t i2 = 0; i2 < 1; i2++) {
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-        Clause& c = *solver.binaryClauses[i];
-        subsume0(c, c.getAbst());
+        if (startUp || !solver.binaryClauses[i]->learnt()) {
+            Clause& c = *solver.binaryClauses[i];
+            subsume0(c, c.getAbst());
+        }
     }
     //}
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
