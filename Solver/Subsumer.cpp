@@ -853,11 +853,6 @@ const bool Subsumer::treatLearnts()
 
 const bool Subsumer::subsumeWithBinaries(const bool startUp)
 {
-    while (solver.performReplace && solver.varReplacer->getClauses().size() > 0) {
-        if (!solver.varReplacer->performReplace(true)) return false;
-        solver.clauseCleaner->removeAndCleanAll(true);
-    }
-    
     clearAll();
     clauseID = 0;
     fullSubsume = true;
