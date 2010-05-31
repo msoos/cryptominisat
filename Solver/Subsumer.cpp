@@ -997,7 +997,7 @@ const bool Subsumer::newBinClauses(const Lit& lit, const bool startUp)
 {
     vec<Lit> toVisit;
     solver.newDecisionLevel();
-    solver.uncheckedEnqueue(lit);
+    solver.uncheckedEnqueueLight(lit);
     bool failed = (solver.propagateBin() != NULL);
     if (failed) return false;
 
