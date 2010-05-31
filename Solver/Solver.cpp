@@ -2085,11 +2085,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
     testAllClauseAttach();
 
-    /*if (removeUselessBins && performReplace
+    if (removeUselessBins && performReplace
         && !subsumer->subsumeWithBinaries(false)) {
         status = l_False;
         goto end;
-    }*/
+    }
 
     if (doSubsumption && !subsumer->simplifyBySubsumption()) {
         status = l_False;
