@@ -2052,7 +2052,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     #endif //USE_GAUSS
 
     StateSaver savedState(*this);;
-    
+
+    #ifdef BUST_SEARCH
     if (verbosity >= 2)
         std::cout << "c | " << std::setw(24) << " " 
         << "Simplifying problem for " << std::setw(8) << numConfls << " confls" 
@@ -2060,8 +2061,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     random_var_freq = 1;
     simplifying = true;
     uint64_t origConflicts = conflicts;
+    #endif //BURST_SEARCH
     
     lbool status = l_Undef;
+
+    #ifdef BURST_SEARCH
     restartType = static_restart;
     
     while(status == l_Undef && conflicts-origConflicts < numConfls) {
@@ -2072,6 +2076,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (status != l_Undef)
         goto end;
     printRestartStat();
+    #endif //BURST_SEARCH
 
     if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) {
         status = l_False;
@@ -2109,8 +2114,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
     
 end:
+    #ifdef BURST_SEARCH
     if (verbosity >= 2)
         printf("c                                      Simplifying finished                               |\n");
+    #endif //#ifdef BURST_SEARCH
 
 
     savedState.restore();
