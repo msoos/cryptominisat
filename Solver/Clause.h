@@ -351,46 +351,6 @@ inline void clauseFree(Clause* c)
     free(c);
 }
 
-/*_________________________________________________________________________________________________
-|
-|  subsumes : (other : const Clause&)  ->  Lit
-|
-|  Description:
-|       Checks if clause subsumes 'other', and at the same time, if it can be used to simplify 'other'
-|       by subsumption resolution.
-|
-|    Result:
-|       lit_Error  - No subsumption or simplification
-|       lit_Undef  - Clause subsumes 'other'
-|       p          - The literal p can be deleted from 'other'
-|________________________________________________________________________________________________@*/
-/*inline Lit Clause::subsumes(const Clause& other) const
-{
-    if (other.size() < size() || (extra.abst & ~other.extra.abst) != 0)
-        return lit_Error;
-    
-    Lit        ret = lit_Undef;
-    const Lit* c  = this->getData();
-    const Lit* d  = other.getData();
-    
-    for (uint32_t i = 0; i != size(); i++) {
-        // search for c[i] or ~c[i]
-        for (uint32_t j = 0; j != other.size(); j++)
-            if (c[i] == d[j])
-                goto ok;
-            else if (ret == lit_Undef && c[i] == ~d[j]){
-                ret = c[i];
-                goto ok;
-            }
-            
-            // did not find it
-            return lit_Error;
-        ok:;
-    }
-    
-    return ret;
-}*/
-
 #ifdef _MSC_VER
 typedef Clause* ClausePtr;
 typedef XorClause* XorClausePtr;
