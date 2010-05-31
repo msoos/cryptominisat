@@ -792,7 +792,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     if (cla.size() == 1) {
         solver.cancelUntil(0);
         solver.uncheckedEnqueue(cla[0]);
-        free(&cla);
+        clauseFree(&cla);
         return unit_propagation;
     }
 
@@ -843,7 +843,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
             unit_truths++;
             useful_confl++;
             if (confl->size() == 0) {
-                free(confl);
+                clauseFree(confl);
                 return l_False;
             }
 

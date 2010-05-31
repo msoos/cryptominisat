@@ -100,7 +100,7 @@ const bool Subsumer::unEliminate(const Var var)
     solver.libraryCNFFile = NULL;
     for (vector<Clause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         solver.addClause(**it2);
-        free(*it2);
+        clauseFree(*it2);
     }
     solver.libraryCNFFile = backup_libraryCNFfile;
     elimedOutVar.erase(it);
@@ -179,7 +179,7 @@ uint32_t Subsumer::subsume0Orig(T& ps, uint32_t abs)
         Clause* tmp = subs[i].clause;
         retIndex = subs[i].index;
         unlinkClause(subs[i]);
-        free(tmp);
+        clauseFree(tmp);
     }
     
     return retIndex;
@@ -343,7 +343,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                         #ifdef VERBOSE_DEBUG
                         std::cout << "--> Clause was satisfied." << std::endl;
                         #endif
-                        free(&cl);
+                        clauseFree(&cl);
                         goto endS;
                     }
                 }
@@ -359,7 +359,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     solver.ok = false;
                     unregisterIteration(Q);
                     unregisterIteration(subs);
-                    free(&cl);
+                    clauseFree(&cl);
                     return;
                 }
                 if (cl.size() > 1) {
@@ -382,7 +382,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     #ifdef VERBOSE_DEBUG
                     cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                     #endif
-                    free(&cl);
+                    clauseFree(&cl);
                 }
                 endS:;
             }
@@ -444,7 +444,7 @@ void Subsumer::subsume1Partial(const T& ps)
                     #ifdef VERBOSE_DEBUG
                     std::cout << "--> Clause was satisfied." << std::endl;
                     #endif
-                    free(&cl);
+                    clauseFree(&cl);
                     goto endS;
                 }
             }
@@ -459,7 +459,7 @@ void Subsumer::subsume1Partial(const T& ps)
             if (cl.size() == 0) {
                 solver.ok = false;
                 unregisterIteration(subs);
-                free(&cl);
+                clauseFree(&cl);
                 return;
             }
             if (cl.size() > 2) {
@@ -485,7 +485,7 @@ void Subsumer::subsume1Partial(const T& ps)
                 #ifdef VERBOSE_DEBUG
                 cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                 #endif
-                free(&cl);
+                clauseFree(&cl);
             }
             endS:;
         }
@@ -758,7 +758,7 @@ void Subsumer::removeWrong(vec<Clause*>& cs)
             if (var_elimed[l->var()]) {
                 remove = true;
                 solver.detachClause(c);
-                free(&c);
+                clauseFree(&c);
                 break;
             }
         }
@@ -970,7 +970,7 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate(false) == NULL);
+            solver.ok = (solver.propagate() == NULL);
             if (!solver.ok) return false;
             continue;
         }
@@ -1349,11 +1349,11 @@ void inline Subsumer::DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns)
 {
     for (uint32_t i = 0; i < ps.size(); i++) {
         //clauses[ps[i].index].clause = NULL;
-        //free(ps[i].clause);
+        //clauseFree(ps[i].clause);
     }
     for (uint32_t i = 0; i < ns.size(); i++) {
         //clauses[ns[i].index].clause = NULL;
-        //free(ns[i].clause);
+        //clauseFree(ns[i].clause);
     }
 }
 
@@ -1631,7 +1631,7 @@ const bool Subsumer::hyperBinRes()
         hyperBinAdded +=  addToClauses.size();
         for (uint32_t i = 0; i < addToClauses.size(); i++) {
             Clause *c = solver.addClauseInt(*addToClauses[i], addToClauses[i]->getGroup());
-            free(addToClauses[i]);
+            clauseFree(addToClauses[i]);
             if (c != NULL) {
                 ClauseSimp cc = linkInClause(*c);
                 subsume1(cc);
@@ -2098,7 +2098,7 @@ void Subsumer::reAddPureLitClauses()
 {
     for (Clause **it = pureLitClauseRemoved.getData(), **end = pureLitClauseRemoved.getDataEnd(); it != end; it++) {
         solver.addClause(**it, (*it)->getGroup());
-        free(*it);
+        clauseFree(*it);
         assert(solver.ok);
     }
     pureLitClauseRemoved.clear();

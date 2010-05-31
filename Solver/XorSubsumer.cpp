@@ -63,7 +63,7 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
             assert(tmp->size() == origClause.size());
             if (origClauseInverted == tmp->xor_clause_inverted()) {
                 unlinkClause(subs[i]);
-                free(tmp);
+                clauseFree(tmp);
             } else {
                 solver.ok = false;
                 return;
@@ -84,7 +84,7 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
     if (needUnlinkPS) {
         XorClause* tmp = ps.clause;
         unlinkClause(ps);
-        free(tmp);
+        clauseFree(tmp);
     }
 }
 
@@ -301,7 +301,7 @@ void XorSubsumer::removeWrong(vec<Clause*>& cs)
             if (var_elimed[l->var()]) {
                 remove = true;
                 solver.detachClause(c);
-                free(&c);
+                clauseFree(&c);
                 break;
             }
         }
@@ -348,7 +348,7 @@ const bool XorSubsumer::removeDependent()
             XorClauseSimp toUnlink0 = occ[0];
             XorClauseSimp toUnlink1 = occ[1];
             unlinkClause(toUnlink0);
-            free(toUnlink0.clause);
+            clauseFree(toUnlink0.clause);
             unlinkClause(toUnlink1, var);
             solver.setDecisionVar(var, false);
             var_elimed[var] = true;
@@ -397,7 +397,7 @@ const bool XorSubsumer::unEliminate(const Var var)
     for (vector<XorClause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         XorClause& c = **it2;
         solver.addXorClause(c, c.xor_clause_inverted());
-        free(&c);
+        clauseFree(&c);
     }
     solver.libraryCNFFile = backup_libraryCNFfile;
     elimedOutVar.erase(it);

@@ -153,13 +153,13 @@ Solver::~Solver()
     for (uint32_t i = 0; i != learnts.size(); i++) clauseFree(learnts[i]);
     for (uint32_t i = 0; i != clauses.size(); i++) clauseFree(clauses[i]);
     for (uint32_t i = 0; i != binaryClauses.size(); i++) clauseFree(binaryClauses[i]);
-    for (uint32_t i = 0; i != xorclauses.size(); i++) free(xorclauses[i]);
-    for (uint32_t i = 0; i != removedLearnts.size(); i++) free(removedLearnts[i]);
+    for (uint32_t i = 0; i != xorclauses.size(); i++) clauseFree(xorclauses[i]);
+    for (uint32_t i = 0; i != removedLearnts.size(); i++) clauseFree(removedLearnts[i]);
     #ifdef USE_GAUSS
     clearGaussMatrixes();
     delete matrixFinder;
     #endif
-    for (uint32_t i = 0; i != freeLater.size(); i++) free(freeLater[i]);
+    for (uint32_t i = 0; i != freeLater.size(); i++) clauseFree(freeLater[i]);
     
     delete varReplacer;
     delete clauseCleaner;
@@ -1463,7 +1463,7 @@ void Solver::reduceDB()
     }
     #endif
     
-    
+
     const uint removeNum = (double)learnts.size() / (double)RATIOREMOVECLAUSES;
     for (i = j = 0; i != removeNum; i++){
         //NOTE: The next instruciton only works if removeNum < learnts.size() (strictly smaller!!)
@@ -2442,7 +2442,7 @@ bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
         XorClause* c2 = XorClause_new(c, c.xor_clause_inverted(), c.getGroup());
         std::sort(c2->getData(), c2->getData()+ c2->size());
         c2->plainPrint();
-        free(c2);
+        clauseFree(c2);
         #endif
         
         for (uint j = 0; j < c.size(); j++) {

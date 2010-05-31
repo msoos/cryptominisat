@@ -394,20 +394,20 @@ const bool FailedVarSearcher::readdRemovedLearnts()
     it1 = it2 = solver.removedLearnts.getData();
     for (Clause **end = solver.removedLearnts.getDataEnd(); it1 != end; it1++) {
         if (toRemove > 0) {
-            free(*it1);
+            clauseFree(*it1);
             toRemove--;
             continue;
         }
         
         Clause* c = solver.addClauseInt(**it1, (**it1).getGroup());
-        free(*it1);
+        clauseFree(*it1);
         if (c != NULL) {
             *it2 = c;
             it2++;
         }
         if (!solver.ok) {
             it1++;
-            for (; it1 != end; it1++) free(*it1);
+            for (; it1 != end; it1++) clauseFree(*it1);
         }
     }
     solver.removedLearnts.shrink(it1-it2);
@@ -470,7 +470,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
         if (!(*i)->removed()) {
             *j++ = *i;
         } else {
-            free(*i);
+            clauseFree(*i);
         }
     }
     uint32_t removedUselessBin = i - j;
@@ -889,7 +889,7 @@ inline void FailedVarSearcher::cleanAndAttachClauses(vec<T*>& cs)
             solver.attachClause(**i);
             *j++ = *i;
         } else {
-            free(*i);
+            clauseFree(*i);
         }
     }
     cs.shrink(i-j);

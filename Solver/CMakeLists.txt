@@ -36,5 +36,6 @@ add_library(cryptominisatlib
     PartHandler.cpp
     XorSubsumer.cpp
     StateSaver.cpp
+    Clause.cpp
 )
 

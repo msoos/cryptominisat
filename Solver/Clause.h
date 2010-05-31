@@ -34,10 +34,12 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "PackedRow.h"
 #include "constants.h"
 #include "SmallPtr.h"
-//#include "pool.hpp"
+#include "pool.hpp"
 #ifndef uint
 #define uint unsigned int
 #endif
+
+//#define USE_4POOLS
 
 using std::vector;
 
@@ -62,6 +64,11 @@ protected:
     uint32_t isXorClause:1;
     uint32_t subsume0Done:1;
     uint32_t isRemoved:1;
+    uint32_t wasTriOriginallyInt:1;
+    uint32_t wasBinOriginallyInt:1;
+    #ifdef USE_4POOLS
+    uint32_t wasQuadOriginallyInt:1;
+    #endif
     uint32_t mySize:20;
     
     union  {uint32_t act; uint32_t abst;} extra;
@@ -87,6 +94,8 @@ public:
         isLearnt = learnt;
         isRemoved = false;
         setGroup(_group);
+        setAllocSize();
+
         for (uint i = 0; i < ps.size(); i++) data[i] = ps[i];
         if (learnt) {
             extra.act = 0;
@@ -100,6 +109,7 @@ public:
     // -- use this function instead:
     template<class T>
     friend Clause* Clause_new(const T& ps, const uint group, const bool learnt = false);
+    friend Clause* Clause_new(Clause& c);
     #endif //_MSC_VER
 
     const uint   size        ()      const {
@@ -262,6 +272,44 @@ public:
     const bool removed() const {
         return isRemoved;
     }
+    const bool wasTriOriginally() const
+    {
+        return wasTriOriginallyInt;
+    }
+    const bool wasBinOriginally() const
+    {
+        return wasBinOriginallyInt;
+    }
+    #ifdef USE_4POOLS
+    const bool wasQuadOriginally() const
+    {
+        return wasQuadOriginallyInt;
+    }
+    #endif //USE_4POOLS
+    void setAllocSize()
+    {
+        wasTriOriginallyInt = false;
+        wasBinOriginallyInt = false;
+        #ifdef USE_4POOLS
+        wasQuadOriginallyInt = false;
+        #endif //USE_4POOLS
+        switch(size()) {
+            case 2:
+                wasBinOriginallyInt = true;
+                break;
+            case 3:
+                wasTriOriginallyInt = true;
+                break;
+            #ifdef USE_4POOLS
+            case 4:
+                wasQuadOriginallyInt = true;
+                break;
+            case 5:
+                wasQuadOriginallyInt = true;
+                break;
+            #endif //USE_4POOLS
+        }
+    }
 };
 
 class XorClause : public Clause
@@ -322,16 +370,43 @@ public:
     friend class MatrixFinder;
 };
 
-//extern boost::pool<> binaryClausePool;
+extern boost::pool<> clausePoolTri;
+extern boost::pool<> clausePoolBin;
+#ifdef USE_4POOLS
+extern boost::pool<> clausePoolQuad;
+#endif //USE_4POOLS
+
+template<class T>
+inline void* allocEnough(const T& ps)
+{
+    void* mem;
+    switch(ps.size()) {
+        case 2:
+            mem = clausePoolBin.malloc();
+            break;
+        case 3:
+            mem = clausePoolTri.malloc();
+            break;
+        #ifdef USE_4POOLS
+        case 4:
+            mem = clausePoolQuad.malloc();
+            break;
+        case 5:
+            mem = clausePoolQuad.malloc();
+            break;
+        #endif //USE_4POOLS
+        default:
+            mem = malloc(sizeof(Clause) + sizeof(Lit)*(ps.size()));
+            break;
+    }
+
+    return mem;
+}
 
 template<class T>
 Clause* Clause_new(const T& ps, const uint group, const bool learnt = false)
 {
-    void* mem;
-    //if (ps.size() != 2)
-        mem = malloc(sizeof(Clause) + sizeof(Lit)*(ps.size()));
-    //else
-    //    mem = binaryClausePool.malloc();
+    void* mem = allocEnough(ps);
     Clause* real= new (mem) Clause(ps, group, learnt);
     return real;
 }
@@ -339,16 +414,34 @@ Clause* Clause_new(const T& ps, const uint group, const bool learnt = false)
 template<class T>
 XorClause* XorClause_new(const T& ps, const bool inverted, const uint group)
 {
-    void* mem = malloc(sizeof(XorClause) + sizeof(Lit)*(ps.size()));
+    void* mem = allocEnough(ps);
     XorClause* real= new (mem) XorClause(ps, inverted, group);
     return real;
 }
 
+inline Clause* Clause_new(Clause& c)
+{
+    void* mem = allocEnough(c);
+    //Clause* real= new (mem) Clause(ps, group, learnt);
+    memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
+    Clause& c2 = *(Clause*)mem;
+    c2.setAllocSize();
+
+    return &c2;
+}
+
 inline void clauseFree(Clause* c)
 {
-    //if (binaryClausePool.is_from(c)) binaryClausePool.free(c);
-    //else 
-    free(c);
+    if (c->wasTriOriginally())
+        clausePoolTri.free(c);
+    else if (c->wasBinOriginally())
+        clausePoolBin.free(c);
+    #ifdef USE_4POOLS
+    else if (c->wasQuadOriginally())
+        clausePoolQuad.free(c);
+    #endif //USE_4POOLS
+    else
+        free(c);
 }
 
 #ifdef _MSC_VER

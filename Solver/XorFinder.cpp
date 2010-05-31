@@ -210,7 +210,7 @@ const bool XorFinder::findXors(uint& sumLengths)
             XorClause* x = XorClause_new(lits, impair, old_group);
             cout << "- Final 2-long xor-clause: ";
             x->plainPrint();
-            free(x);
+            clauseFree(x);
             #endif
             break;
         }

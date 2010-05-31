@@ -44,8 +44,7 @@ VarReplacer::VarReplacer(Solver& _solver) :
 VarReplacer::~VarReplacer()
 {
     for (uint i = 0; i != clauses.size(); i++)
-        //binaryClausePool.free(clauses[i]);
-        free(clauses[i]);
+        clauseFree(clauses[i]);
 }
 
 const bool VarReplacer::performReplaceInternal()
@@ -164,7 +163,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
         
         if (changed && handleUpdatedClause(c, origVar1, origVar2)) {
             if (!solver.ok) {
-                for(;r != end; r++) free(*r);
+                for(;r != end; r++) clauseFree(*r);
                 cs.shrink(r-a);
                 return false;
             }
@@ -251,7 +250,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
         
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
             if (!solver.ok) {
-                for(;r != end; r++) free(*r);
+                for(;r != end; r++) clauseFree(*r);
                 cs.shrink(r-a);
                 return false;
             }

@@ -50,7 +50,7 @@ class ClauseCleaner
         
     private:
         const bool cleanClause(XorClause& c);
-        const bool cleanClause(Clause& c);
+        const bool cleanClause(Clause*& c);
         
         uint lastNumUnitarySat[6];
         uint lastNumUnitaryClean[6];
