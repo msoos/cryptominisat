@@ -89,6 +89,7 @@ private:
     uint32_t numMaxBlockVars;
     
     //Start-up
+    template<bool UseCL>
     void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false);
     void addBackToSolver();
     void removeWrong(vec<Clause*>& cs);

@@ -685,6 +685,7 @@ void Subsumer::linkInAlreadyClause(ClauseSimp& c)
     }
 }
 
+template<bool UseCL>
 void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
 {
     Clause **i = cs.getData();
@@ -705,8 +706,10 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
             occur[cl[i].toInt()].push(c);
             touch(cl[i].var());
         }
-        if (fullSubsume || cl.getVarChanged()) cl_added.add(c);
-        else if (cl.getStrenghtened()) cl_touched.add(c);
+        if (UseCL) {
+            if (fullSubsume || cl.getVarChanged()) cl_added.add(c);
+            else if (cl.getStrenghtened()) cl_touched.add(c);
+        }
 
         if (cl.getVarChanged() || cl.getStrenghtened())
             cl.calcAbstraction();
@@ -882,10 +885,8 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     if (!startUp) numMaxSubsume1 = 0;
 
     clauses.reserve(solver.clauses.size());
-    cl_added.reserve(solver.clauses.size());
-    cl_touched.reserve(solver.clauses.size());
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver(solver.clauses);
+    addFromSolver<false>(solver.clauses);
     #ifdef DEBUG_BINARIES
     for (uint32_t i = 0; i < clauses.size(); i++) {
         assert(clauses[i].clause->size() != 2);
@@ -1083,9 +1084,9 @@ const bool Subsumer::simplifyBySubsumption()
         fullSubsume = false;
     
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver(solver.clauses);
+    addFromSolver<true>(solver.clauses);
     solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
-    addFromSolver(solver.binaryClauses);
+    addFromSolver<true>(solver.binaryClauses);
     
     //Limits
     if (clauses.size() > 3500000) {
