@@ -998,7 +998,12 @@ const bool Subsumer::newBinClauses(const Lit& lit, const bool startUp)
     vec<Lit> toVisit;
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    bool failed = (solver.propagateBin() != NULL);
+    bool failed;
+    if (startUp) {
+        failed = (solver.propagateBin() != NULL);
+    } else {
+        failed = (solver.propagateBinNoLearnts() != NULL);
+    }
     if (failed) return false;
 
     assert(solver.decisionLevel() > 0);
@@ -1012,14 +1017,14 @@ const bool Subsumer::newBinClauses(const Lit& lit, const bool startUp)
     ps2[0] = ~lit;
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
         ps2[1] = *l;
-        uint32_t index = subsume0(ps2, calcAbstraction(ps2));
-        if (!startUp && index != std::numeric_limits<uint32_t>::max()) {
+        /*uint32_t index = */subsume0(ps2, calcAbstraction(ps2));
+        /*if (!startUp && index != std::numeric_limits<uint32_t>::max()) {
             Clause* c = solver.addClauseInt(ps2, 0);
             if (!solver.ok) return false;
             if (c != NULL) addBinaryClauses.push(c);
             ps2[0] = ~lit;
             ps2[1] = *l;
-        }
+        }*/
         if (numMaxSubsume1 > 0) {
             numMaxSubsume1--;
             subsume1Partial(ps2);

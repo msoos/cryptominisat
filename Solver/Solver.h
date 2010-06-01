@@ -328,6 +328,7 @@ protected:
     Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     Clause*  propagateLight();
     Clause*  propagateBin();
+    Clause*  propagateBinNoLearnts();
     Clause*  propagateBinExcept(const Lit& exceptLit);
     Clause*  propagateBinOneLevel();
     Clause*  propagate_xors   (const Lit& p);

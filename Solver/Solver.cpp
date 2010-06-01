@@ -1258,6 +1258,27 @@ Clause* Solver::propagateBin()
     return NULL;
 }
 
+Clause* Solver::propagateBinNoLearnts()
+{
+    while (qhead < trail.size()) {
+        Lit p   = trail[qhead++];
+        vec<WatchedBin> & wbin = binwatches[p.toInt()];
+        propagations += wbin.size()/2;
+        for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+            if (k->clause->learnt()) continue;
+            lbool val = value(k->impliedLit);
+            if (val.isUndef()) {
+                //uncheckedEnqueue(k->impliedLit, k->clause);
+                uncheckedEnqueueLight(k->impliedLit);
+            } else if (val == l_False) {
+                return k->clause;
+            }
+        }
+    }
+    
+    return NULL;
+}
+
 Clause* Solver::propagateBinExcept(const Lit& exceptLit)
 {
     while (qhead < trail.size()) {
