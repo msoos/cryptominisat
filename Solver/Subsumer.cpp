@@ -872,13 +872,13 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     //if (!startUp) doSubsume1 = false;
 
     if (clauses.size() > 3500000) {
-        numMaxSubsume1 = 10000;
+        numMaxSubsume1 = 10000*30;
     }
     if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
-        numMaxSubsume1 = 30000;
+        numMaxSubsume1 = 30000*50;
     }
-    if (clauses.size() <= 1500000) {;
-        numMaxSubsume1 = 40000;
+    if (clauses.size() <= 1500000) {
+        numMaxSubsume1 = 40000*80;
     }
     if (!startUp) numMaxSubsume1 = 0;
 
@@ -941,7 +941,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     return true;
 }
 
-#define MAX_BINARY_PROP 5000000
+#define MAX_BINARY_PROP 40000000
 
 const bool Subsumer::newBinClausesBothFull(const bool startUp)
 {
