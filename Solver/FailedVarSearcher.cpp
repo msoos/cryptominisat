@@ -688,6 +688,7 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
         uint32_t thisLevel = 0;
         #endif //VERBOSE_DEBUG
         fillImplies(*l);
+        if (unPropagatedBin.nothingInCommon(myimplies)) goto next;
         for (const Var *var = propagatedVars.getData(), *end2 = propagatedVars.getDataEnd(); var != end2; var++) {
             if (unPropagatedBin[*var] && myimplies[*var]) {
                 #ifdef VERBOSE_DEBUG
@@ -702,6 +703,7 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
                 }
             }
         }
+        next:
         myimplies.removeThese(myImpliesSet);
         myImpliesSet.clear();
         #ifdef VERBOSE_DEBUG
