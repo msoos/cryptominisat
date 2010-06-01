@@ -659,14 +659,17 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     solver.uncheckedEnqueue(lit);
     failed = (solver.propagateBin() != NULL);
     assert(!failed);
-    
+
+    uint32_t difference = propagatedVars.size();
     assert(solver.decisionLevel() > 0);
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
         unPropagatedBin.clearBit(x.var());
         toVisit.push(x);
+        difference--;
     }
     solver.cancelUntil(0);
+    if (difference == 0) goto end;
 
     std::sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
     /*************************
@@ -679,24 +682,28 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     ***************************/
 
     //difference between UP and BTC is in unPropagatedBin
-    if (unPropagatedBin.isZero()) goto end;
-    
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
         #ifdef VERBOSE_DEBUG
         std::cout << "Checking visit level " << end-l-1 << std::endl;
-        #endif //VERBOSE_DEBUG
-        myimplies.setZero();
-        fillImplies(*l, myimplies);
         uint32_t thisLevel = 0;
+        #endif //VERBOSE_DEBUG
+        fillImplies(*l);
         for (const Var *var = propagatedVars.getData(), *end2 = propagatedVars.getDataEnd(); var != end2; var++) {
             if (unPropagatedBin[*var] && myimplies[*var]) {
+                #ifdef VERBOSE_DEBUG
                 thisLevel++;
+                #endif //VERBOSE_DEBUG
                 addBin(~*l, Lit(*var, !propValue[*var]));
-                unPropagatedBin.removeThese(myimplies);
-                if (unPropagatedBin.isZero()) break;
-                break;
+                unPropagatedBin.removeThese(myImpliesSet);
+                if (unPropagatedBin.isZero()) {
+                    myimplies.removeThese(myImpliesSet);
+                    myImpliesSet.clear();
+                    goto end;
+                }
             }
         }
+        myimplies.removeThese(myImpliesSet);
+        myImpliesSet.clear();
         #ifdef VERBOSE_DEBUG
         if (thisLevel > 0) {
             std::cout << "Added " << thisLevel << " level diff:" << end-l-1 << std::endl;
@@ -709,7 +716,7 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     hyperbinProps += solver.propagations - oldProps;
 }
 
-void FailedVarSearcher::fillImplies(const Lit& lit, BitArray& myimplies)
+void FailedVarSearcher::fillImplies(const Lit& lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit);
@@ -720,6 +727,7 @@ void FailedVarSearcher::fillImplies(const Lit& lit, BitArray& myimplies)
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
         myimplies.setBit(x.var());
+        myImpliesSet.push(x.var());
     }
     solver.cancelUntil(0);
 }

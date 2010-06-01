@@ -83,6 +83,16 @@ public:
 
         return *this;
     }
+
+    template<class T>
+    BitArray& removeThese(const T& rem)
+    {
+        for (uint32_t i = 0; i < rem.size(); i++) {
+            clearBit(rem[i]);
+        }
+
+        return *this;
+    }
     
     void resize(uint _size, const bool fill)
     {

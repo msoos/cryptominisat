@@ -117,8 +117,9 @@ class FailedVarSearcher {
         BitArray unPropagatedBin;
         vec<Var> propagatedVars;
         void addBin(const Lit& lit1, const Lit& lit2);
-        void fillImplies(const Lit& lit, BitArray& myimplies);
+        void fillImplies(const Lit& lit);
         BitArray myimplies;
+        vec<Var> myImpliesSet;
         uint64_t hyperbinProps;
         vector<uint32_t> litDegrees;
         const bool orderLits();
