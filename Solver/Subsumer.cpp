@@ -53,6 +53,7 @@ void Subsumer::extendModel(Solver& solver2)
     vec<Lit> tmp;
     typedef map<Var, vector<Clause*> > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
+        #ifndef NDEBUG
         Var var = it->first;
         #ifdef VERBOSE_DEBUG
         std::cout << "Reinserting elimed var: " << var+1 << std::endl;
@@ -60,6 +61,7 @@ void Subsumer::extendModel(Solver& solver2)
         assert(!solver.decision_var[var]);
         assert(solver.assigns[var] == l_Undef);
         assert(!solver.order_heap.inHeap(var));
+        #endif
         
         for (vector<Clause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
             Clause& c = **it2;
