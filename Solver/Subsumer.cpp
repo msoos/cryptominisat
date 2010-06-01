@@ -956,15 +956,15 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
     ps2.growTo(2);
     toVisit.clear();
     
-    Var var = 0;
+    //Var var = 0;
     doneNum = 0;
-    BitArray doneIt;
-    doneIt.resize(solver.nVars(), false);
-    for (uint32_t i = 0; i < 3*solver.nVars(); i++) {
-        var = solver.mtrand.randInt(solver.nVars()-1);
+    //BitArray doneIt;
+    //doneIt.resize(solver.nVars(), false);
+    for (Var var = 0; var < solver.nVars(); var++) {
+        //var = solver.mtrand.randInt(solver.nVars()-1);
         if (solver.propagations - oldProps > maxProp) break;
-        if (doneIt[var] || solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
-        doneIt.setBit(var);
+        if (/*doneIt[var] || */solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+        //doneIt.setBit(var);
         doneNum++;
 
         Lit lit(var, solver.mtrand.randInt(1));
@@ -977,7 +977,7 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
             continue;
         }
         
-        /*lit = ~lit;
+        lit = ~lit;
         if (!newBinClauses(lit, startUp)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
@@ -985,7 +985,7 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
             solver.ok = (solver.propagate(false) == NULL);
             if (!solver.ok) return false;
             continue;
-        }*/
+        }
     }
     subsNonExistentNum = clauses_subsumed - oldClausesSubusmed;
     subsNonExistentTime = cpuTime() - myTime;
