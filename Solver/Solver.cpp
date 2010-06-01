@@ -2074,7 +2074,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     StateSaver savedState(*this);;
 
-    #ifdef BUST_SEARCH
+    #ifdef BURST_SEARCH
     if (verbosity >= 2)
         std::cout << "c | " << std::setw(24) << " " 
         << "Simplifying problem for " << std::setw(8) << numConfls << " confls" 
