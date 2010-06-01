@@ -141,6 +141,10 @@ private:
     uint32_t subsNonExistentLitsRemoved;
     vec<Clause*> addBinaryClauses;
     uint32_t doneNum;
+    vec<ClauseSimp> subsume1PartialSubs;
+    vec<Lit> subsume1PartialQs;
+    vec<Lit> toVisit;
+    vec<Lit> ps2;
     
     //hyperBinRes
     void addFromSolverAll(vec<Clause*>& cs);

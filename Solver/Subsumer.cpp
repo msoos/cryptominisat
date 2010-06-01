@@ -401,9 +401,7 @@ template<class T>
 void Subsumer::subsume1Partial(const T& ps)
 {
     assert(solver.decisionLevel() == 0);
-    vec<ClauseSimp>    subs;
-    vec<Lit>        qs;
-    registerIteration(subs);
+    registerIteration(subsume1PartialSubs);
     
     #ifdef VERBOSE_DEBUG
     cout << "-> Strenghtening using clause :";
@@ -412,28 +410,28 @@ void Subsumer::subsume1Partial(const T& ps)
     assert(ps.size() == 2);
     #endif
         
-    qs.clear();
-    for (uint32_t i = 0; i < ps.size(); i++)
-        qs.push(ps[i]);
+    subsume1PartialQs.clear();
+    for (uint8_t i = 0; i < 2; i++)
+        subsume1PartialQs.push(ps[i]);
 
-    for (uint32_t i = 0; i < qs.size(); i++){
-        qs[i] = ~qs[i];
+    for (uint8_t i = 0; i < 2; i++){
+        subsume1PartialQs[i] = ~subsume1PartialQs[i];
 
-        uint32_t abst = calcAbstraction(qs);
+        uint32_t abst = calcAbstraction(subsume1PartialQs);
 
-        findSubsumed(qs, abst, subs);
-        for (uint32_t j = 0; j < subs.size(); j++){
-            if (subs[j].clause == NULL) continue;
-            ClauseSimp c = subs[j];
+        findSubsumed(subsume1PartialQs, abst, subsume1PartialSubs);
+        for (uint32_t j = 0; j < subsume1PartialSubs.size(); j++){
+            if (subsume1PartialSubs[j].clause == NULL) continue;
+            ClauseSimp c = subsume1PartialSubs[j];
             Clause& cl = *c.clause;
             #ifdef VERBOSE_DEBUG
             cout << "-> Strenghtening clause :";
             cl.plainPrint();
             #endif
-            unlinkClause(subs[j]);
+            unlinkClause(subsume1PartialSubs[j]);
 
             literals_removed++;
-            cl.strengthen(qs[i]);
+            cl.strengthen(subsume1PartialQs[i]);
             Lit *a, *b, *end;
             for (a = b = cl.getData(), end = a + cl.size();  a != end; a++) {
                 lbool val = solver.value(*a);
@@ -458,7 +456,7 @@ void Subsumer::subsume1Partial(const T& ps)
 
             if (cl.size() == 0) {
                 solver.ok = false;
-                unregisterIteration(subs);
+                unregisterIteration(subsume1PartialSubs);
                 clauseFree(&cl);
                 return;
             }
@@ -479,7 +477,7 @@ void Subsumer::subsume1Partial(const T& ps)
                 solver.uncheckedEnqueue(cl[0]);
                 solver.ok = (solver.propagate() == NULL);
                 if (!solver.ok) {
-                    unregisterIteration(subs);
+                    unregisterIteration(subsume1PartialSubs);
                     return;
                 }
                 #ifdef VERBOSE_DEBUG
@@ -490,10 +488,10 @@ void Subsumer::subsume1Partial(const T& ps)
             endS:;
         }
 
-        qs[i] = ~qs[i];
-        subs.clear();
+        subsume1PartialQs[i] = ~subsume1PartialQs[i];
+        subsume1PartialSubs.clear();
     }
-    unregisterIteration(subs);
+    unregisterIteration(subsume1PartialSubs);
 }
 
 void Subsumer::updateClause(ClauseSimp c)
@@ -996,7 +994,6 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
 
 const bool Subsumer::newBinClauses(const Lit& lit, const bool startUp)
 {
-    vec<Lit> toVisit;
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     bool failed;
@@ -1014,7 +1011,6 @@ const bool Subsumer::newBinClauses(const Lit& lit, const bool startUp)
     }
     solver.cancelUntil(0);
 
-    vec<Lit> ps2(2);
     ps2[0] = ~lit;
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
         ps2[1] = *l;
@@ -1032,6 +1028,7 @@ const bool Subsumer::newBinClauses(const Lit& lit, const bool startUp)
             if (!solver.ok) return false;
         }
     }
+    toVisit.clear();
 
     return true;
 }
@@ -1319,7 +1316,7 @@ void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subs
     printf("0\n");
     #endif
     
-    int min_i = 0;
+    uint32_t min_i = 0;
     for (uint32_t i = 1; i < ps.size(); i++){
         if (occur[ps[i].toInt()].size() < occur[ps[min_i].toInt()].size())
             min_i = i;
