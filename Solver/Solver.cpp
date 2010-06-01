@@ -2111,8 +2111,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
     testAllClauseAttach();
 
-    if (removeUselessBins && performReplace
-        && !subsumer->subsumeWithBinaries(false)) {
+    if (removeUselessBins && !subsumer->subsumeWithBinaries(false)) {
         status = l_False;
         goto end;
     }
