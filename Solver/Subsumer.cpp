@@ -952,6 +952,9 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t maxProp = MAX_BINARY_PROP;
     if (!startUp) maxProp /= 2;
+    ps2.clear();
+    ps2.growTo(2);
+    toVisit.clear();
     
     Var var = 0;
     doneNum = 0;
