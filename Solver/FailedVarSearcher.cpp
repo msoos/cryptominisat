@@ -416,7 +416,7 @@ const bool FailedVarSearcher::readdRemovedLearnts()
     return solver.ok;
 }
 
-#define MAX_REMOVE_BIN_FULL_PROPS 5000000
+#define MAX_REMOVE_BIN_FULL_PROPS 20000000
 #define EXTRATIME_DIVIDER 3
 
 const bool FailedVarSearcher::removeUslessBinFull()
