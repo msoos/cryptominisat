@@ -207,6 +207,7 @@ public:
     
     void         makeLearnt(const uint32_t newActivity)  {
         extra.act = newActivity;
+        oldActivityInter = 0;
         isLearnt = true;
     }
     
