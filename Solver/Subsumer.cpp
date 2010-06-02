@@ -18,8 +18,6 @@ Substantially modified by: Mate Soos (2010)
 #define __builtin_prefetch(a,b,c)
 #endif //_MSC_VER
 
-//#define DEBUG_BINARIES
-
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
 #define BIT_MORE_VERBOSITY
@@ -699,6 +697,14 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
             (*i)->setUnsorted();
             continue;
         }
+
+        if (!UseCL && (*i)->size() == 2) {
+            //don't add binary clauses in this case
+            *j++ = *i;
+            (*i)->setUnsorted();
+            continue;
+        }
+
         ClauseSimp c(*i, clauseID++);
         clauses.push(c);
         Clause& cl = *c.clause;
