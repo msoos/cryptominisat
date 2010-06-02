@@ -949,7 +949,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     return true;
 }
 
-#define MAX_BINARY_PROP 40000000
+#define MAX_BINARY_PROP 10000000
 
 const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
 {
