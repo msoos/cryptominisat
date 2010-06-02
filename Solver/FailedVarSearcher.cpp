@@ -660,16 +660,17 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     failed = (solver.propagateBin() != NULL);
     assert(!failed);
 
-    uint32_t difference = propagatedVars.size();
     assert(solver.decisionLevel() > 0);
+    if (propagatedVars.size() - (solver.trail.size()-solver.trail_lim[0]) == 0) {
+        solver.cancelUntil(0);
+        goto end;
+    }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
         unPropagatedBin.clearBit(x.var());
         toVisit.push(x);
-        difference--;
     }
     solver.cancelUntil(0);
-    if (difference == 0) goto end;
 
     std::sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
     /*************************
