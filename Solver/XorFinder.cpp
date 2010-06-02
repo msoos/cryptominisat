@@ -50,7 +50,10 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
     uint sumLengths = 0;
     double time = cpuTime();
     foundXors = 0;
-    solver.clauseCleaner->cleanClauses(cls, type);
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    if (type == ClauseCleaner::binaryClauses) {
+        solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::binaryClauses);
+    }
     if (!solver.ok) return false;
     
     toRemove.clear();
