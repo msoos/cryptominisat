@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif //_MSC_VER
 
 //#define DEBUG_CLEAN
+//#define VERBOSE_DEBUG
 
 ClauseCleaner::ClauseCleaner(Solver& _solver) :
     solver(_solver)
@@ -84,6 +85,10 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
     
     if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
         return;
+
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Cleaning " << (type==binaryClauses ? "binaryClauses" : "normal clauses" ) << std::endl;
+    #endif //VERBOSE_DEBUG
     
     Clause **s, **ss, **end;
     for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
