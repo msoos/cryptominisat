@@ -957,16 +957,11 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
     ps2.clear();
     ps2.growTo(2);
     toVisit.clear();
-    
-    //Var var = 0;
+
     doneNum = 0;
-    //BitArray doneIt;
-    //doneIt.resize(solver.nVars(), false);
     for (Var var = 0; var < solver.nVars(); var++) {
-        //var = solver.mtrand.randInt(solver.nVars()-1);
         if (solver.propagations - oldProps > maxProp) break;
-        if (/*doneIt[var] || */solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
-        //doneIt.setBit(var);
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
         doneNum++;
 
         Lit lit(var, true);
