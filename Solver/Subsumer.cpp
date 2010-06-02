@@ -880,15 +880,15 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     //if (!startUp) doSubsume1 = false;
 
     if (clauses.size() > 3500000) {
-        numMaxSubsume1 = 10000*30;
+        numMaxSubsume1 = 10000*numCalls;
     }
     if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
-        numMaxSubsume1 = 30000*50;
+        numMaxSubsume1 = 30000*numCalls;
     }
     if (clauses.size() <= 1500000) {
-        numMaxSubsume1 = 40000*80;
+        numMaxSubsume1 = 40000*numCalls;
     }
-    if (!startUp) numMaxSubsume1 = 0;
+    numMaxSubsume1 = 0;
 
     clauses.reserve(solver.clauses.size());
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
