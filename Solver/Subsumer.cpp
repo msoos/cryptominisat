@@ -964,7 +964,8 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
     ps2.growTo(2);
 
     doneNum = 0;
-    for (Var var = 0; var < solver.nVars(); var++) {
+    for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
+        Var var = solver.order_heap[i];
         if (solver.propagations - oldProps > maxProp) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
         doneNum++;
