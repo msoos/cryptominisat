@@ -113,7 +113,7 @@ private:
     template<class T>
     uint32_t subsume0(T& ps, uint32_t abs);
     template<class T>
-    uint32_t subsume0Orig(T& ps, uint32_t abs);
+    uint32_t subsume0Orig(const T& ps, uint32_t abs);
     void subsume0LearntSet(vec<Clause*>& cs);
     void subsume1(ClauseSimp& ps);
     void smaller_database();

@@ -166,7 +166,7 @@ inline uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
 
 // Will put NULL in 'cs' if clause removed.
 template<class T>
-uint32_t Subsumer::subsume0Orig(T& ps, uint32_t abs)
+uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 {
     uint32_t retIndex = std::numeric_limits<uint32_t>::max();
     vec<ClauseSimp> subs;
