@@ -956,7 +956,6 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
     if (!startUp) maxProp /= 2;
     ps2.clear();
     ps2.growTo(2);
-    toVisit.clear();
 
     doneNum = 0;
     for (Var var = 0; var < solver.nVars(); var++) {
@@ -994,6 +993,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
 
 const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
 {
+    toVisit.clear();
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     bool failed;
@@ -1021,7 +1021,6 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
             if (!solver.ok) return false;
         }
     }
-    toVisit.clear();
 
     return true;
 }
