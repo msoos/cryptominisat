@@ -130,8 +130,8 @@ private:
     bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
 
     //Subsume with Nonexistent Bins
-    const bool newBinClausesBothFull(const bool startUp);
-    const bool newBinClauses(const Lit& lit, const bool startUp);
+    const bool subsWNonExistBinsFull(const bool startUp);
+    const bool subsWNonExistBins(const Lit& lit, const bool startUp);
     template<class T>
     void subsume1Partial(const T& ps);
     uint32_t subsNonExistentNum;

@@ -916,7 +916,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
         << "   |" << std::endl;
     }
     
-    if (!newBinClausesBothFull(startUp)) return false;
+    if (!subsWNonExistBinsFull(startUp)) return false;
 
     #ifdef DEBUG_BINARIES
     for (uint32_t i = 0; i < clauses.size(); i++) {
@@ -945,7 +945,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
 
 #define MAX_BINARY_PROP 40000000
 
-const bool Subsumer::newBinClausesBothFull(const bool startUp)
+const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
 {
     uint32_t oldClausesSubusmed = clauses_subsumed;
     uint32_t oldLitsRemoved = literals_removed;
@@ -970,7 +970,7 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
         doneNum++;
 
         Lit lit(var, true);
-        if (!newBinClauses(lit, startUp)) {
+        if (!subsWNonExistBins(lit, startUp)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
@@ -980,7 +980,7 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
         }
         
         lit = ~lit;
-        if (!newBinClauses(lit, startUp)) {
+        if (!subsWNonExistBins(lit, startUp)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
@@ -997,7 +997,7 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
     return true;
 }
 
-const bool Subsumer::newBinClauses(const Lit& lit, const bool startUp)
+const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
