@@ -419,6 +419,7 @@ const bool FailedVarSearcher::readdRemovedLearnts()
 #define MAX_REMOVE_BIN_FULL_PROPS 20000000
 #define EXTRATIME_DIVIDER 3
 
+template<bool startUp>
 const bool FailedVarSearcher::removeUslessBinFull()
 {
     if (!solver.performReplace) return true;
@@ -428,6 +429,9 @@ const bool FailedVarSearcher::removeUslessBinFull()
     }
     assert(solver.varReplacer->getClauses().size() == 0);
     solver.testAllClauseAttach();
+    if (startUp) {
+        solver.clauseCleaner->moveBinClausesToBinClauses();
+    }
 
     double myTime = cpuTime();
     toDeleteSet.clear();
@@ -437,13 +441,13 @@ const bool FailedVarSearcher::removeUslessBinFull()
     bool fixed = false;
     uint32_t extraTime = solver.binaryClauses.size() / EXTRATIME_DIVIDER;
 
-    Var var = 0;
-    for (var = 0; var != solver.nVars(); var++) {
+    for (uint32_t i = 0; i != solver.order_heap.size(); i++) {
+        Var var = solver.order_heap[i];
         if (solver.propagations - origProps + extraTime > MAX_REMOVE_BIN_FULL_PROPS) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
 
         Lit lit(var, false);
-        if (!removeUselessBinaries(lit)) {
+        if (!removeUselessBinaries<startUp>(lit)) {
             fixed = true;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
@@ -453,7 +457,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
         }
 
         lit = ~lit;
-        if (!removeUselessBinaries(lit)) {
+        if (!removeUselessBinaries<startUp>(lit)) {
             fixed = true;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
@@ -483,7 +487,6 @@ const bool FailedVarSearcher::removeUslessBinFull()
         << "c Removed useless bin:" << std::setw(8) << removedUselessBin
         << " fixed: " << std::setw(4) << (origHeapSize - solver.order_heap.size())
         << " props: " << std::fixed << std::setprecision(2) << std::setw(4) << (double)(solver.propagations - origProps)/1000000.0 << "M"
-        << " finished: " << (var == solver.nVars() ? "1" : "0")
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << std::endl;
     }
 
@@ -735,12 +738,13 @@ void FailedVarSearcher::fillImplies(const Lit& lit)
     solver.cancelUntil(0);
 }
 
+template<bool startUp>
 const bool FailedVarSearcher::fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     //if it's a cycle, it doesn't work, so don't propagate origLit
-    failed = (solver.propagateBinExcept(origLit) != NULL);
+    failed = (solver.propagateBinExcept<startUp>(origLit) != NULL);
     if (failed) return false;
 
     assert(solver.decisionLevel() > 0);
@@ -778,6 +782,7 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
     assert(solver.ok);
 }
 
+template<bool startUp>
 const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
 {
     //Nothing can be learnt at this point!
@@ -787,11 +792,11 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
     //the path (since it's learnt) -- removing a FACT!!
     //[note:removal can be through variable elimination
     //, and removeWrong() will happily remove it
-    assert(solver.learnts.size() == 0);
+    assert(!startUp || solver.learnts.size() == 0);
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    failed = (solver.propagateBinOneLevel() != NULL);
+    failed = (solver.propagateBinOneLevel<startUp>() != NULL);
     if (failed) return false;
 
     oneHopAway.clear();
@@ -817,7 +822,7 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
         //no need to visit it if it already queued for removal
         //basically, we check if it's in 'wrong'
         if (toDeleteSet[oneHopAway[i].toInt()]) {
-            if (!fillBinImpliesMinusLast(lit, oneHopAway[i], wrong)) {
+            if (!fillBinImpliesMinusLast<startUp>(lit, oneHopAway[i], wrong)) {
                 ret = false;
                 goto end;
             }
@@ -835,6 +840,12 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
 
     return ret;
 }
+template const bool FailedVarSearcher::removeUselessBinaries <true>(const Lit& lit);
+template const bool FailedVarSearcher::removeUselessBinaries <false>(const Lit& lit);
+template const bool FailedVarSearcher::fillBinImpliesMinusLast <true>(const Lit& origLit, const Lit& lit, vec<Lit>& wrong);
+template const bool FailedVarSearcher::fillBinImpliesMinusLast <false>(const Lit& origLit, const Lit& lit, vec<Lit>& wrong);
+template const bool FailedVarSearcher::removeUslessBinFull <true>();
+template const bool FailedVarSearcher::removeUslessBinFull <false>();
 
 void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
 {

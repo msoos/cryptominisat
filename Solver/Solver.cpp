@@ -89,6 +89,7 @@ Solver::Solver() :
         , readdOldLearnts  (false)
         , addExtraBins     (true)
         , removeUselessBins(true)
+        , regularRemoveUselessBins(true)
         , subsumeWithNonExistBinaries(true)
         , regularSubsumeWithNonExistBinaries(true)
         , libraryUsage     (true)
@@ -1281,6 +1282,7 @@ Clause* Solver::propagateBinNoLearnts()
     return NULL;
 }
 
+template<bool dontCareLearnt>
 Clause* Solver::propagateBinExcept(const Lit& exceptLit)
 {
     while (qhead < trail.size()) {
@@ -1288,6 +1290,7 @@ Clause* Solver::propagateBinExcept(const Lit& exceptLit)
         vec<WatchedBin> & wbin = binwatches[p.toInt()];
         propagations += wbin.size()/2;
         for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+            if (!dontCareLearnt && k->clause->learnt()) continue;
             lbool val = value(k->impliedLit);
             if (val.isUndef() && k->impliedLit != exceptLit) {
                 //uncheckedEnqueue(k->impliedLit, k->clause);
@@ -1301,12 +1304,17 @@ Clause* Solver::propagateBinExcept(const Lit& exceptLit)
     return NULL;
 }
 
+template Clause* Solver::propagateBinExcept <true>(const Lit& exceptLit);
+template Clause* Solver::propagateBinExcept <false>(const Lit& exceptLit);
+
+template<bool dontCareLearnt>
 Clause* Solver::propagateBinOneLevel()
 {
     Lit p   = trail[qhead];
     vec<WatchedBin> & wbin = binwatches[p.toInt()];
     propagations += wbin.size()/2;
     for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+        if (!dontCareLearnt && k->clause->learnt()) continue;
         lbool val = value(k->impliedLit);
         if (val.isUndef()) {
             //uncheckedEnqueue(k->impliedLit, k->clause);
@@ -1318,6 +1326,9 @@ Clause* Solver::propagateBinOneLevel()
     
     return NULL;
 }
+
+template Clause* Solver::propagateBinOneLevel <true>();
+template Clause* Solver::propagateBinOneLevel <false>();
 
 template<class T>
 inline const uint32_t Solver::calcNBLevels(const T& ps)
@@ -2119,6 +2130,12 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         goto end;
     }
 
+    if (regularRemoveUselessBins
+        && !failedVarSearcher->removeUslessBinFull<false>()) {
+        status = l_False;
+        goto end;
+    }
+
     if (doSubsumption && !subsumer->simplifyBySubsumption()) {
         status = l_False;
         goto end;
@@ -2195,7 +2212,7 @@ inline void Solver::performStepsBeforeSolve()
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
         if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
-        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull()) return;
+        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
     }
     
     testAllClauseAttach();
@@ -2208,7 +2225,7 @@ inline void Solver::performStepsBeforeSolve()
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
         if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
-        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull()) return;
+        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
     }
     
     testAllClauseAttach();

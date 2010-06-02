@@ -59,6 +59,7 @@ class FailedVarSearcher {
         FailedVarSearcher(Solver& _solver);
     
         const bool search(uint64_t numProps);
+        template<bool startUp>
         const bool removeUslessBinFull();
         
     private:
@@ -127,7 +128,9 @@ class FailedVarSearcher {
         uint64_t binClauseAdded;
 
         //Remove useless binaries
+        template<bool startUp>
         const bool fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong);
+        template<bool startUp>
         const bool removeUselessBinaries(const Lit& lit);
         void removeBin(const Lit& lit1, const Lit& lit2);
         vec<char> toDeleteSet;

@@ -505,6 +505,7 @@ void printUsage(char** argv, Solver& S)
     printf("                     These learnts are usually deleted, but may help\n");
     printf("  --noextrabins    = Don't add binary clauses when doing failed lit probing.\n");
     printf("  --noremovebins   = Don't remove useless binary clauses\n");
+    printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
     printf("  --nosubswithbins = Don't subsume with non-existent bins\n");
     printf("  --norsubswithbins= Don't subsume regularly with non-existent bins\n");
     printf("\n");
@@ -722,6 +723,8 @@ int main(int argc, char** argv)
             S.addExtraBins = false;
         } else if ((value = hasPrefix(argv[i], "--noremovebins"))) {
             S.removeUselessBins = false;
+        } else if ((value = hasPrefix(argv[i], "--noregremovebins"))) {
+            S.regularRemoveUselessBins = false;
         } else if ((value = hasPrefix(argv[i], "--nosubswithbins"))) {
             S.subsumeWithNonExistBinaries = false;
         } else if ((value = hasPrefix(argv[i], "--norsubswithbins"))) {

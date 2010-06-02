@@ -47,6 +47,8 @@ class ClauseCleaner
         void removeAndCleanAll(const bool nolimit = false);
         bool satisfied(const Clause& c) const;
         bool satisfied(const XorClause& c) const;
+
+        void moveBinClausesToBinClauses();
         
     private:
         const bool cleanClause(XorClause& c);

@@ -394,3 +394,22 @@ bool ClauseCleaner::satisfied(const XorClause& c) const
     }
     return final;
 }
+
+void ClauseCleaner::moveBinClausesToBinClauses()
+{
+    assert(solver.decisionLevel() == 0);
+    assert(solver.qhead == solver.trail.size());
+
+    vec<Clause*>& cs = solver.clauses;
+    Clause **s, **ss, **end;
+    for (s = ss = cs.getData(), end = s + cs.size();  s != end; s++) {
+        if (s+1 != end)
+            __builtin_prefetch(*(s+1), 1, 0);
+
+        if ((**s).size() == 2)
+            solver.binaryClauses.push(*s);
+        else
+            *ss++ = *s;
+    }
+    cs.shrink(s-ss);
+}

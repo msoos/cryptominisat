@@ -153,6 +153,7 @@ public:
     bool      readdOldLearnts;      // Should re-add old learnts for failed variable searching
     bool      addExtraBins;         // Should add extra binaries in failed literal probing
     bool      removeUselessBins;    // Should try to remove useless binary clauses
+    bool      regularRemoveUselessBins; // Should try to remove useless binary clauses regularly
     bool      subsumeWithNonExistBinaries;
     bool      regularSubsumeWithNonExistBinaries;
     bool      libraryUsage;         // Set true if not used as a library
@@ -331,7 +332,9 @@ protected:
     Clause*  propagateLight();
     Clause*  propagateBin();
     Clause*  propagateBinNoLearnts();
+    template<bool dontCareLearnt>
     Clause*  propagateBinExcept(const Lit& exceptLit);
+    template<bool dontCareLearnt>
     Clause*  propagateBinOneLevel();
     Clause*  propagate_xors   (const Lit& p);
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
