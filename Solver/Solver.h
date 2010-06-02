@@ -153,6 +153,8 @@ public:
     bool      readdOldLearnts;      // Should re-add old learnts for failed variable searching
     bool      addExtraBins;         // Should add extra binaries in failed literal probing
     bool      removeUselessBins;    // Should try to remove useless binary clauses
+    bool      subsumeWithNonExistBinaries;
+    bool      regularSubsumeWithNonExistBinaries;
     bool      libraryUsage;         // Set true if not used as a library
     friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
