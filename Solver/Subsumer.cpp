@@ -969,7 +969,7 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
         //doneIt.setBit(var);
         doneNum++;
 
-        Lit lit(var, solver.mtrand.randInt(1));
+        Lit lit(var, true);
         if (!newBinClauses(lit, startUp)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
@@ -984,7 +984,7 @@ const bool Subsumer::newBinClausesBothFull(const bool startUp)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate(false) == NULL);
+            solver.ok = (solver.propagate() == NULL);
             if (!solver.ok) return false;
             continue;
         }
