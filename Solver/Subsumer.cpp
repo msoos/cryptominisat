@@ -906,7 +906,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     if (solver.clauses.size()+solver.binaryClauses.size() > 400000)
         doSubsume1 = false;*/
 
-    if (clauses.size() > 3500000) {
+    /*if (clauses.size() > 3500000) {
         numMaxSubsume1 = 10000*40;
     }
     if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
@@ -914,8 +914,11 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     }
     if (clauses.size() <= 1500000) {
         numMaxSubsume1 = 40000*80;
-    }
-    if (!startUp) numMaxSubsume1 = 0;
+    }*/
+    numMaxSubsume1 = 0;
+    if (startUp && solver.clauses.size()+solver.binaryClauses.size() <= 1600000)
+        numMaxSubsume1 = numMaxSubsume1 = std::numeric_limits< uint32_t >::max();
+    
 
     clauses.reserve(solver.clauses.size());
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
@@ -976,7 +979,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     return true;
 }
 
-#define MAX_BINARY_PROP 10000000
+#define MAX_BINARY_PROP 40000000
 
 const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
 {
@@ -986,7 +989,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
     uint64_t oldProps = solver.propagations;
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t maxProp = MAX_BINARY_PROP;
-    if (!startUp) maxProp /= 2;
+    if (!startUp) maxProp /= 3;
     ps2.clear();
     ps2.growTo(2);
     toVisitAll.growTo(solver.nVars()*2, false);
