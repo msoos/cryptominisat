@@ -446,7 +446,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
         if (solver.propagations - origProps + extraTime > MAX_REMOVE_BIN_FULL_PROPS) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
 
-        Lit lit(var, false);
+        Lit lit(var, true);
         if (!removeUselessBinaries<startUp>(lit)) {
             fixed = true;
             solver.cancelUntil(0);
@@ -456,7 +456,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
             continue;
         }
 
-        lit = ~lit;
+        /*lit = ~lit;
         if (!removeUselessBinaries<startUp>(lit)) {
             fixed = true;
             solver.cancelUntil(0);
@@ -464,7 +464,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
             solver.ok = (solver.propagate() == NULL);
             if (!solver.ok) return false;
             continue;
-        }
+        }*/
     }
 
     Clause **i, **j;
