@@ -456,7 +456,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
             continue;
         }
 
-        /*lit = ~lit;
+        lit = ~lit;
         if (!removeUselessBinaries<startUp>(lit)) {
             fixed = true;
             solver.cancelUntil(0);
@@ -464,7 +464,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
             solver.ok = (solver.propagate() == NULL);
             if (!solver.ok) return false;
             continue;
-        }*/
+        }
     }
 
     Clause **i, **j;
