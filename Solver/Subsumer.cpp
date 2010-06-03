@@ -877,18 +877,17 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     /*doSubsume1 = true;
     if (solver.clauses.size()+solver.binaryClauses.size() > 400000)
         doSubsume1 = false;*/
-    //if (!startUp) doSubsume1 = false;
 
     if (clauses.size() > 3500000) {
-        numMaxSubsume1 = 10000*numCalls;
+        numMaxSubsume1 = 10000*40;
     }
     if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
-        numMaxSubsume1 = 30000*numCalls;
+        numMaxSubsume1 = 30000*60;
     }
     if (clauses.size() <= 1500000) {
-        numMaxSubsume1 = 40000*numCalls;
+        numMaxSubsume1 = 40000*80;
     }
-    numMaxSubsume1 = 0;
+    if (!startUp) numMaxSubsume1 = 0;
 
     clauses.reserve(solver.clauses.size());
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
