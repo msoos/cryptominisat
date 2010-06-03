@@ -2116,14 +2116,14 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
     testAllClauseAttach();
 
-    if (regularSubsumeWithNonExistBinaries
-        && !subsumer->subsumeWithBinaries(false)) {
+    if (regularRemoveUselessBins
+        && !failedVarSearcher->removeUslessBinFull<false>()) {
         status = l_False;
         goto end;
     }
 
-    if (regularRemoveUselessBins
-        && !failedVarSearcher->removeUslessBinFull<false>()) {
+    if (regularSubsumeWithNonExistBinaries
+        && !subsumer->subsumeWithBinaries(false)) {
         status = l_False;
         goto end;
     }
@@ -2203,8 +2203,8 @@ inline void Solver::performStepsBeforeSolve()
 
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
-        if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
         if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
+        if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
     }
     
     testAllClauseAttach();
@@ -2216,8 +2216,8 @@ inline void Solver::performStepsBeforeSolve()
 
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
-        if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
         if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
+        if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
     }
     
     testAllClauseAttach();
