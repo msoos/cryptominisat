@@ -798,10 +798,15 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
     solver.uncheckedEnqueueLight(lit);
     failed = (solver.propagateBinOneLevel<startUp>() != NULL);
     if (failed) return false;
+    bool ret = true;
 
     oneHopAway.clear();
     assert(solver.decisionLevel() > 0);
     int c;
+    if (solver.trail.size()-solver.trail_lim[0] == 0) {
+        solver.cancelUntil(0);
+        goto end;
+    }
     extraTime += (solver.trail.size() - solver.trail_lim[0]) / EXTRATIME_DIVIDER;
     for (c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
@@ -816,7 +821,6 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
     solver.trail_lim.clear();
     //solver.cancelUntil(0);
 
-    bool ret = true;
     wrong.clear();
     for(uint32_t i = 0; i < oneHopAway.size(); i++) {
         //no need to visit it if it already queued for removal
