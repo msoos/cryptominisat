@@ -348,7 +348,7 @@ const bool FailedVarSearcher::orderLits()
 
         numChecked++;
         solver.newDecisionLevel();
-        solver.uncheckedEnqueue(randLit);
+        solver.uncheckedEnqueueLight(randLit);
         failed = (solver.propagateBin() != NULL);
         if (failed) {
             solver.cancelUntil(0);
@@ -513,7 +513,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     bothSame.clear();
     
     solver.newDecisionLevel();
-    solver.uncheckedEnqueue(lit1);
+    solver.uncheckedEnqueueLight(lit1);
     failed = (solver.propagateLight() != NULL);
     if (failed) {
         solver.cancelUntil(0);
@@ -557,7 +557,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     unPropagatedBin.setZero();
     
     solver.newDecisionLevel();
-    solver.uncheckedEnqueue(lit2);
+    solver.uncheckedEnqueueLight(lit2);
     failed = (solver.propagateLight() != NULL);
     if (failed) {
         solver.cancelUntil(0);
@@ -659,7 +659,7 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     vec<Lit> toVisit;
     
     solver.newDecisionLevel();
-    solver.uncheckedEnqueue(lit);
+    solver.uncheckedEnqueueLight(lit);
     failed = (solver.propagateBin() != NULL);
     assert(!failed);
 
