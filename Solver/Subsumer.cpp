@@ -185,6 +185,34 @@ uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
     return retIndex;
 }
 
+void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
+{
+    vec<ClauseSimp> subs;
+
+    vec<ClauseSimp>& cs = occur[lit1.toInt()];
+    for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
+        if (it+1 != end)
+            __builtin_prefetch((it+1)->clause, 0, 1);
+        Clause& c = *it->clause;
+        for (uint32_t i = 0; i < c.size(); i++) {
+            if (lits[c[i].toInt()]) subs.push(*it);
+            break;
+        }
+    }
+    
+    for (uint32_t i = 0; i < subs.size(); i++){
+        clauses_subsumed++;
+        #ifdef VERBOSE_DEBUG
+        cout << "-> subsume0 removing:";
+        subs[i].clause->plainPrint();
+        #endif
+        
+        Clause* tmp = subs[i].clause;
+        unlinkClause(subs[i]);
+        clauseFree(tmp);
+    }
+}
+
 void Subsumer::unlinkClause(ClauseSimp c, Var elim)
 {
     Clause& cl = *c.clause;
@@ -961,6 +989,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
     if (!startUp) maxProp /= 2;
     ps2.clear();
     ps2.growTo(2);
+    toVisitAll.growTo(solver.nVars()*2, false);
 
     doneNum = 0;
     for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
@@ -1018,24 +1047,31 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
     for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
         toVisit.push(x);
+        toVisitAll[x.toInt()] = true;
     }
     solver.cancelUntil(0);
 
-    ps2[0] = ~lit;
-    for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
-        ps2[1] = *l;
-        assert(ps2[0] != ps2[1]);
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Non-existent bin. lit1: "; ps2[0].print();
-        std::cout << " lit2: "; ps2[1].print(); std::cout << std::endl;
-        #endif //VERBOSE_DEBUG
-        subsume0(ps2, calcAbstraction(ps2));
-        if (numMaxSubsume1 > 0) {
-            numMaxSubsume1--;
-            subsume1Partial(ps2);
-            if (!solver.ok) return false;
+    if (toVisit.size() <= 3) {
+        ps2[0] = ~lit;
+        for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
+            ps2[1] = *l;
+            assert(ps2[0] != ps2[1]);
+            #ifdef VERBOSE_DEBUG
+            std::cout << "Non-existent bin. lit1: "; ps2[0].print();
+            std::cout << " lit2: "; ps2[1].print(); std::cout << std::endl;
+            #endif //VERBOSE_DEBUG
+            subsume0(ps2, calcAbstraction(ps2));
+            if (numMaxSubsume1 > 0) {
+                numMaxSubsume1--;
+                subsume1Partial(ps2);
+                if (!solver.ok) return false;
+            }
         }
+    } else {
+        subsume0BIN(~lit, toVisitAll);
     }
+    for (uint32_t i = 0; i < toVisit.size(); i++)
+        toVisitAll[toVisit[i].toInt()] = false;
 
     return true;
 }

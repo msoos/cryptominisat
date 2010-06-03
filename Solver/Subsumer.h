@@ -114,6 +114,7 @@ private:
     uint32_t subsume0(T& ps, uint32_t abs);
     template<class T>
     uint32_t subsume0Orig(const T& ps, uint32_t abs);
+    void subsume0BIN(const Lit lit, const vec<char>& lits);
     void subsume0LearntSet(vec<Clause*>& cs);
     void subsume1(ClauseSimp& ps);
     void smaller_database();
@@ -144,6 +145,7 @@ private:
     vec<ClauseSimp> subsume1PartialSubs;
     vec<Lit> subsume1PartialQs;
     vec<Lit> toVisit;
+    vec<char> toVisitAll;
     vec<Lit> ps2;
     
     //hyperBinRes
