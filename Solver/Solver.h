@@ -326,7 +326,7 @@ protected:
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (Lit p, ClausePtr from = (Clause*)NULL);                 // Enqueue a literal. Assumes value of literal is undefined.
-    void     uncheckedEnqueueLight (Lit p);
+    void     uncheckedEnqueueLight (const Lit p);
     bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
     Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     Clause*  propagateLight();
@@ -719,6 +719,12 @@ inline void Solver::findAllAttach() const
     return;
 }
 #endif //DEBUG_ATTACH
+
+inline void Solver::uncheckedEnqueueLight(const Lit p)
+{
+    assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    trail.push(p);
+}
 
 //=================================================================================================
 #endif //SOLVER_H

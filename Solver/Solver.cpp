@@ -1011,14 +1011,6 @@ void Solver::uncheckedEnqueue(Lit p, ClausePtr from)
     #endif
 }
 
-void Solver::uncheckedEnqueueLight(Lit p)
-{
-    const Var v = p.var();
-    assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
-    trail.push(p);
-}
-
-
 /*_________________________________________________________________________________________________
 |
 |  propagate : [void]  ->  [Clause*]
