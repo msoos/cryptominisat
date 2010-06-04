@@ -436,9 +436,9 @@ void Subsumer::subsume1Partial(const T& ps)
     cout << "-> Strenghtening using clause :";
     ps[0].print(); std::cout << " ";
     ps[1].printFull();
-    assert(ps.size() == 2);
     #endif
-        
+
+    assert(ps.size() == 2);
     subsume1PartialQs.clear();
     for (uint8_t i = 0; i < 2; i++)
         subsume1PartialQs.push(ps[i]);
