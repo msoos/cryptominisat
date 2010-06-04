@@ -261,7 +261,12 @@ const bool XorSubsumer::localSubstitute()
                     solver.addXorClauseInt(tmp, c1.xor_clause_inverted() ^ !c2.xor_clause_inverted(), c1.getGroup());
                     for (uint32_t i = lastSize; i  < solver.varReplacer->getClauses().size(); i++)
                         addToCannotEliminate(solver.varReplacer->getClauses()[i]);
-                    if (!solver.ok) return false;
+                    if (!solver.ok) {
+                        #ifdef VERBOSE_DEBUG
+                        std::cout << "solver.ok is false after local substitution" << std::endl;
+                        #endif //VERBOSE_DEBUG
+                        return false;
+                    }
                 }
             }
         }
@@ -365,7 +370,12 @@ const bool XorSubsumer::removeDependent()
             if (c != NULL) linkInClause(*c);
             for (uint32_t i = lastSize; i  < solver.varReplacer->getClauses().size(); i++)
                 addToCannotEliminate(solver.varReplacer->getClauses()[i]);
-            if (!solver.ok) return false;
+            if (!solver.ok) {
+                #ifdef VERBOSE_DEBUG
+                std::cout << "solver.ok is false after var-elim through xor" << std::endl;
+                #endif //VERBOSE_DEBUG
+                return false;
+            }
         }
     }
     
@@ -465,12 +475,16 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         testAllClauseAttach();
 
         fillCannotEliminate();
-        if (solver.conglomerateXors && !removeDependent())
+        if (solver.conglomerateXors && !removeDependent()) {
+            addBackToSolver();
             return false;
+        }
         testAllClauseAttach();
 
-        if (solver.heuleProcess && !localSubstitute())
+        if (solver.heuleProcess && !localSubstitute()) {
+            addBackToSolver();
             return false;
+        }
         testAllClauseAttach();
 
         /*if (solver.performReplace && solver.varReplacer->needsReplace()) {
