@@ -1011,7 +1011,9 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
             if (!solver.ok) return false;
             continue;
         }
-        
+
+        //in the meantime it could have got assigned
+        if (solver.assigns[var] != l_Undef) continue;
         lit = ~lit;
         if (!subsWNonExistBins(lit, startUp)) {
             if (!solver.ok) return false;
