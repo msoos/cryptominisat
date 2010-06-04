@@ -987,6 +987,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     clauses_subsumed = 0;
     literals_removed = 0;
     double myTime = cpuTime();
+    uint32_t origTrailSize = solver.trail.size();
 
     clauses.reserve(solver.clauses.size());
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
@@ -996,6 +997,25 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
         assert(clauses[i].clause->size() != 2);
     }
     #endif //DEBUG_BINARIES
+
+    for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
+        if (startUp || !solver.binaryClauses[i]->learnt()) {
+            Clause& c = *solver.binaryClauses[i];
+            subsume0(c, c.getAbst());
+        }
+    }
+    for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
+        Clause& c = *solver.binaryClauses[i];
+        subsume1Partial(c);
+        if (!solver.ok) return false;
+    }
+    if (solver.verbosity >= 1) {
+        std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed
+        << "  lits-rem: " << std::setw(9) << literals_removed
+        << "  v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
+        << "  time: " << std::setprecision(2) << std::setw(5) <<  cpuTime() - myTime << " s"
+        << "   |" << std::endl;
+    }
     
     if (!subsWNonExistBinsFull(startUp)) return false;
 

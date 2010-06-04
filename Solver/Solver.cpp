@@ -2203,8 +2203,8 @@ inline void Solver::performStepsBeforeSolve()
 
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
-        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
         if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
+        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
     }
     
     testAllClauseAttach();
@@ -2216,8 +2216,8 @@ inline void Solver::performStepsBeforeSolve()
 
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
-        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
         if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
+        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
     }
     
     testAllClauseAttach();
