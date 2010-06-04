@@ -441,8 +441,9 @@ const bool FailedVarSearcher::removeUslessBinFull()
     bool fixed = false;
     uint32_t extraTime = solver.binaryClauses.size() / EXTRATIME_DIVIDER;
 
+    uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
     for (uint32_t i = 0; i != solver.order_heap.size(); i++) {
-        Var var = solver.order_heap[i];
+        Var var = solver.order_heap[(i+startFrom)%solver.order_heap.size()];
         if (solver.propagations - origProps + extraTime > MAX_REMOVE_BIN_FULL_PROPS) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
 
