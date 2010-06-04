@@ -460,6 +460,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         for (uint32_t i = 0; i < clauses.size(); i++) {
             if (clauses[i].clause != NULL) {
                 subsume0(clauses[i]);
+                addBackToSolver();
                 if (!solver.ok) return false;
             }
         }
