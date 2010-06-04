@@ -193,6 +193,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
     for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
         if (it+1 != end)
             __builtin_prefetch((it+1)->clause, 0, 1);
+        if (it->clause == NULL) continue;
         Clause& c = *it->clause;
         for (uint32_t i = 0; i < c.size(); i++) {
             if (lits[c[i].toInt()]) subs.push(*it);
