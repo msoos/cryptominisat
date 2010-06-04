@@ -18,6 +18,7 @@ Substantially modified by: Mate Soos (2010)
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_DEBUGSUBSUME0
+#define BIT_MORE_VERBOSITY
 #endif
 
 #ifdef VERBOSE_DEBUG
@@ -51,14 +52,13 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
     vec<XorClauseSimp> subs;
     findSubsumed(*ps.clause, subs);
     for (uint32_t i = 0; i < subs.size(); i++){
-        #ifdef VERBOSE_DEBUGSUBSUME0
-        cout << "subsume0 removing:";
-        subs[i].clause->plainPrint();
-        #endif
-        
         XorClause* tmp = subs[i].clause;
         findUnMatched(origClause, *tmp, unmatchedPart);
         if (unmatchedPart.size() == 0) {
+            #ifdef VERBOSE_DEBUGSUBSUME0
+            cout << "subsume0 removing:";
+            subs[i].clause->plainPrint();
+            #endif
             clauses_subsumed++;
             assert(tmp->size() == origClause.size());
             if (origClauseInverted == tmp->xor_clause_inverted()) {
@@ -71,6 +71,10 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
         } else {
             assert(unmatchedPart.size() > 0);
             clauses_cut++;
+            #ifdef VERBOSE_DEBUG
+            std::cout << "Cutting xor-clause:";
+            subs[i].clause->plainPrint();
+            #endif //VERBOSE_DEBUG
             XorClause *c = solver.addXorClauseInt(unmatchedPart, tmp->xor_clause_inverted() ^ !origClauseInverted, tmp->getGroup());
             if (c != NULL) {
                 linkInClause(*c);
@@ -256,6 +260,10 @@ const bool XorSubsumer::localSubstitute()
                 std::copy(c2.getData(), c2.getDataEnd(), tmp.getData() + c1.size());
                 clearDouble(tmp);
                 if (tmp.size() <= 2) {
+                    #ifdef VERBOSE_DEBUG
+                    std::cout << "Local substiuting. Clause1:"; c1.plainPrint();
+                    std::cout << "Clause 2:"; c2.plainPrint();
+                    #endif //VERBOSE_DEBUG
                     localSubstituteUseful++;
                     uint32_t lastSize = solver.varReplacer->getClauses().size();
                     solver.addXorClauseInt(tmp, c1.xor_clause_inverted() ^ !c2.xor_clause_inverted(), c1.getGroup());
