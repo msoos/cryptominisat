@@ -1,0 +1,25 @@
+#set term epslatex color rounded size 4.9,2.2
+set term png rounded size 800,600
+
+set pointsize 1
+set tics scale 2 
+
+#set ytics 4e+8
+#set output "only-vs-congl.eps"
+set xlabel "No. solved instances"
+set ylabel "Time (s)"
+#unset key
+set xtics 20
+#set key inside b
+#set logscale x
+#set xtics (10,40,160,640,2560,5000)
+set style line 1 lt 1 lw 2 pt 4 linecolor rgbcolor "red"
+set style line 2 lt 2 lw 2 pt 8 linecolor rgbcolor "orange"
+set style line 3 lt 3 lw 2 pt 12 linecolor rgbcolor "blue"
+
+##########################################
+
+#set key lmargin
+set key left top
+set output "CryptoMiniSat2.5.0beta1vsPrecoSat236.png"
+plot "./CryptoMiniSat2.5.0beta1" w lp title "CryptoMiniSat 2.5.0beta1" ls 1, "PrecoSat236" w lp title "PrecoSat236" ls 2
