@@ -17,6 +17,9 @@ class Tester:
   testDirNewVar = "../tests/newVar/"
   cryptominisat = "../build/cryptominisat"
   speed = False
+  checkDirDifferent = True
+  differentDirForCheck = "/home/soos/Development/sat_solvers/satcomp09/"
+  ignoreNoSolution = False
   
   def __init__(self):
     self.sumTime = 0.0
@@ -28,6 +31,9 @@ class Tester:
     self.cryptominisat = "../build/cryptominisat"
     self.speed = False
     self.checkDirOnly = False
+    self.checkDirDifferent = False
+    self.differentDirForCheck = "/home/soos/Development/sat_solvers/satcomp09/"
+    self.ignoreNoSolution = False
 
   def execute(self, fname, i, newVar):
     if (os.path.isfile(self.cryptominisat) != True) :
@@ -119,10 +125,14 @@ class Tester:
             vvar = int(var)
             value[abs(vvar)] = ((vvar < 0) == False)
     
-    if (sLineFound == False or (unsat == False and vLineFound == False)) :
+    if (self.ignoreNoSolution == False and (sLineFound == False or (unsat == False and vLineFound == False))) :
         print "Cannot find line starting with 's' or 'v' in output!";
         print output
         exit()
+    if (self.ignoreNoSolution == True and (sLineFound == False or (unsat == False and vLineFound == False))) :
+        print "Probably timeout, since no solution  printed. Could, of course, be segfault/assert fault, etc."
+        print "Making it look like an UNSAT, so no checks!"
+        return (True,[])
     
     #print "FOUND:"
     #print "unsat: %d" %(unsat)
@@ -229,7 +239,7 @@ class Tester:
       
     #print "Verified %d original xor&regular clauses" %(clauses)
     
-  def check(self, fname, i, newVar, needSolve = True):
+  def check(self, fname, fnameCheck, i, newVar, needSolve = True):
     consoleOutput = "";
     if (needSolve) :
         consoleOutput = self.execute(fname, i, newVar)
@@ -257,7 +267,7 @@ class Tester:
       #print "debugLibPart: %d, %s" %(debugLibPart, fname_debug)
       unsat, value = self.read_found(fname_debug)
       if (unsat == False) :
-        self.test_found(unsat, value, fname, debugLibPart)
+        self.test_found(unsat, value, fnameCheck, debugLibPart)
       else :
         print "Not examining part %d -- it is UNSAT" %(debugLibPart)
     
@@ -268,7 +278,7 @@ class Tester:
         print "Cannot check -- output is UNSAT"
     self.test_expect(unsat, value, fname[:len(fname)-6] + "output.gz")
     if (unsat == False) : 
-      self.test_found(unsat, value, fname)
+        self.test_found(unsat, value, fnameCheck)
 
   @staticmethod
   def usage():
@@ -279,12 +289,14 @@ class Tester:
     print "--testdir (-t)     The directory where the files to test are. Default: \"../tests/\""
     print "--exe     (-e)     Where the cryptominisat executable is located. Default: \"../build/cryptominisat\""
     print "--speed   (-s)     Only solve, don't verify the result"
-    print "--checkDirOnly(-c)     Check all solutions in directory"
+    print "--checkDirOnly(-c) Check all solutions in directory"
+    print "--diffCheckDir(-d) Use with -c. The original files are at a different place"
+    print "--ignore  (-i)     If no solution found, (timeout), ignore"
     print "--help    (-h)     Print this help screen"
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "vschg:n:f:t:e:", ["help", "checkDirOnly", "file=", "num=", "gauss=", "testdir=", "exe=", "speed", "verbose"])
+      opts, args = getopt.getopt(sys.argv[1:], "vscihg:n:f:t:e:d:", ["help", "checkDirOnly", "file=", "num=", "gauss=", "testdir=", "exe=", "speed", "verbose", "diffCheckDir", "ignore"])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
@@ -315,6 +327,11 @@ class Tester:
             self.speed = True
         elif opt in ("-c", "--checkDirOnly"):
             self.checkDirOnly = True
+        elif opt in ("-d", "--diffCheckDir"):
+            self.diffCheckDir = arg
+            self.checkDirDifferent = True
+        elif opt in ("-i", "--ignore"):
+            self.ignoreNoSolution = True
         else:
             assert False, "unhandled option"
 
@@ -330,9 +347,18 @@ class Tester:
             exit()
         dirList=os.listdir(self.testDir)
         for fname in dirList:
-          if fnmatch.fnmatch(fname, '*.cnf.gz'):
+          myMatch = ""
+          if (self.checkDirDifferent == True) :
+            myMatch = '*.cnf.gz.out'
+          else:
+            myMatch = '*.cnf.gz'
+          if fnmatch.fnmatch(fname, myMatch):
+            myDir = self.testDir
+            if (self.checkDirDifferent) :
+              fname = fname[:len(fname)-4] #remove trailing .out
+              myDir = self.differentDirForCheck
             for i in range(num):
-              self.check(self.testDir + fname, i, False, False)
+              self.check(self.testDir + fname, myDir + fname, i, False, False)
         exit()
       
 
@@ -344,7 +370,7 @@ class Tester:
         for fname in dirList:
           if fnmatch.fnmatch(fname, '*.cnf.gz'):
             for i in range(num):
-              self.check(self.testDirNewVar + fname, i, True)
+              self.check(self.testDirNewVar + fname, self.testDirNewVar + fname, i, True)
      
       dirList=os.listdir(self.testDir)
       if (self.testDir == ".") :
@@ -352,7 +378,7 @@ class Tester:
       for fname in dirList:
         if fnmatch.fnmatch(fname, '*.cnf.gz'):
           for i in range(num):
-            self.check(self.testDir + fname, i, False)
+            self.check(self.testDir + fname, self.testDir + fname, i, False)
             
     else:
       if (os.path.isfile(fname) == False) :
@@ -361,7 +387,7 @@ class Tester:
       print "Checking fname %s" %(fname)
       
       for i in range(num):
-        self.check(fname, i, False)
+        self.check(fname, fname, i, False)
 
 
 test = Tester()
