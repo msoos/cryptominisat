@@ -2189,6 +2189,8 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         //calculateDefaultPolarities();
         
         fullStarts++;
+        if (fullStarts == 2)
+            calculateDefaultPolarities();
     }
     
     return true;
