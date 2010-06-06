@@ -143,7 +143,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     //If failed var searching is going good, do successively more and more of it
     if (lastTimeFoundTruths > 500 || (double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.03) std::max(numPropsMultiplier*1.7, 5.0);
     else numPropsMultiplier = 1.0;
-    numProps = (uint64_t) ((double)numProps * numPropsMultiplier *3);
+    numProps = (uint64_t) ((double)numProps * numPropsMultiplier * 6);
     
     //For BothSame
     propagated.resize(solver.nVars(), 0);
@@ -177,7 +177,7 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     if (solver.addExtraBins && !orderLits()) return false;
-    maxHyperBinProps = numProps/8;
+    maxHyperBinProps = numProps/2;
     
     //uint32_t fromBin;
     uint32_t fromVar;
@@ -364,7 +364,9 @@ const bool FailedVarSearcher::orderLits()
         }
         solver.cancelUntil(0);
     }
-    std::cout << "c binary Degree finding time: " << cpuTime() - myTime << " s  num checked: " << numChecked << " i: " << i << " props: " << (solver.propagations - oldProps) << std::endl;
+    if (solver.verbosity >=1) {
+        std::cout << "c binary Degree finding time: " << cpuTime() - myTime << " s  num checked: " << numChecked << " i: " << i << " props: " << (solver.propagations - oldProps) << std::endl;
+    }
     solver.propagations = oldProps;
 
     return true;
