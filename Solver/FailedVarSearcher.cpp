@@ -276,7 +276,7 @@ end:
         }
         if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
             std::cout << "c |  Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
-            <<  std::setw(33) << " | " << std::endl;
+            <<  std::setw(39) << " | " << std::endl;
         }
     }
 
@@ -491,10 +491,10 @@ const bool FailedVarSearcher::removeUslessBinFull()
     if (solver.verbosity >= 1) {
         std::cout
         << "c Removed useless bin:" << std::setw(8) << removedUselessBin
-        << "  fixed: " << std::setw(4) << (origHeapSize - solver.order_heap.size())
-        << "  props: " << std::fixed << std::setprecision(2) << std::setw(4) << (double)(solver.propagations - origProps)/1000000.0 << "M"
+        << "  fixed: " << std::setw(5) << (origHeapSize - solver.order_heap.size())
+        << "  props: " << std::fixed << std::setprecision(2) << std::setw(6) << (double)(solver.propagations - origProps)/1000000.0 << "M"
         << "  time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << " s"
-        << std::setw(19)  << "   |" << std::endl;
+        << std::setw(16)  << "   |" << std::endl;
     }
 
     return true;

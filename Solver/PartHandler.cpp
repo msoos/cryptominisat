@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include <iostream>
 #include <assert.h>
+#include <iomanip>
 
 //#define VERBOSE_DEBUG
 
@@ -152,7 +153,8 @@ const bool PartHandler::handle()
             std::cout << "c Solved part" << std::endl;
     }
     if (solver.verbosity >= 1)
-        std::cout << "c Coming back to original instance" << std::endl;
+        std::cout << "c Coming back to original instance"
+        << std::setw(57) << " |" << std::endl;
     
     solver.order_heap.filter(Solver::VarFilter(solver));
     
