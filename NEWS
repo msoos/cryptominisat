@@ -1,4 +1,4 @@
-ver 2.4.2 -- 9/05/2009
+ver 2.4.2 -- 9/05/2010
 * Gaussian elimination has finally been fixed. It can now be tried out with
   the command-line switch "--gaussuntil=X", where X is the maximum depth. I
   usually set 100, but this is probably a wrong default. You should experiment
@@ -12,12 +12,12 @@ ver 2.4.2 -- 9/05/2009
 * Command line switches have been corrected. They are now all lower-case and
   use the prefix "--" instead of "-"
 
-ver 2.4.1 -- 30/04/2009
+ver 2.4.1 -- 30/04/2010
 Serious bug fixed that read data from change memory in subsume0, and
 hyper-binary resolution has been disabled, since it caused satisfiable
 instances to become unsatisfiable.
 
-ver 2.4.0 -- 26/04/2009
+ver 2.4.0 -- 26/04/2010
 The first real release of CryptoMiniSat v2. It contains the following set
 of improvements:
     * XOR clauses are extracted at the beginning of the solving
