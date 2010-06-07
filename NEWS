@@ -1,3 +1,18 @@
+ver 2.5.0 -- 7/06/2010 (SAT Race'10 version)
+* A lot of performance bugs have been fixed. Activities of clauses were wrongly
+  updated with their abstract representation during subsumtion for example.
+  Also, we now use a well-tested set of magic constants instead of making
+  them up using intuition. Apparently, intuition in the field of SAT leads
+  to headaches and (in severe cases) to dementia.
+* A lot of code has been added regarding binary clause graphs. It is now
+  regularly cleaned from useless binary clauses. Also, the useless binary
+  clauses are regularly generated to subsume and strenghthen other clauses
+  with them -- and once used, these useless binary clauses are thrown away.
+* Hyper-binary clauses are now generated using an algorithm relying purely
+  on the datastrucures available in modern SAT solvers -- i.e. the fact that
+  binary clauses have their own watchlists, and so allow for efficient
+  propagation of the binary clauses separately from other clauses.
+
 ver 2.4.2 -- 9/05/2010
 * Gaussian elimination has finally been fixed. It can now be tried out with
   the command-line switch "--gaussuntil=X", where X is the maximum depth. I
