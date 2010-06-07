@@ -11,8 +11,8 @@ ENDIF()
 
 PROJECT(crypto)
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -Wall -Werror -DSTATS_NEEDED -g -mtune=native")
-SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -DSTATS_NEEDED -O0 -ggdb")
-SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -Werror -O3 -g0 -fno-exceptions -DNDEBUG -mtune=native -fomit-frame-pointer")
+SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -Wextra -Werror -DSTATS_NEEDED -O0 -ggdb")
+SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -fprofile-use -Werror -O3 -g0 -fno-exceptions -DNDEBUG -mtune=native -fomit-frame-pointer")
 SET(CMAKE_EXE_LINKER_FLAGS "-static")
 
 find_package( ZLIB )
