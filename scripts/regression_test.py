@@ -221,6 +221,7 @@ class Tester:
     for line in f :
       #print "Examining line '%s'" %(line)
       line = line.rstrip()
+      if (len(line) == 0) : continue
       if (line[0] == 'c' and ("Solver::solve()" in line)) :
         thisDebugLibPart += 1
       if (thisDebugLibPart >= debugLibPart) :
