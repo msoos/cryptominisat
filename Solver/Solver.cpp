@@ -103,11 +103,12 @@ Solver::Solver() :
         , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
         
-
+        #ifdef USE_GAUSS
         , sum_gauss_called (0)
         , sum_gauss_confl  (0)
         , sum_gauss_prop   (0)
         , sum_gauss_unit_truths (0)
+        #endif //USE_GAUSS
         , ok               (true)
         , var_inc          (128)
         , cla_inc          (1)
