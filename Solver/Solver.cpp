@@ -662,17 +662,24 @@ void Solver::calculateDefaultPolarities()
         tallyVotes(xorclauses, votes);
         
         Var i = 0;
+        uint32_t posPolars = 0;
+        uint32_t undecidedPolars = 0;
         for (vector<double>::const_iterator it = votes.begin(), end = votes.end(); it != end; it++, i++) {
             polarity[i] = (*it >= 0.0);
+            posPolars += (*it < 0.0);
+            undecidedPolars += (*it == 0.0);
             #ifdef VERBOSE_DEBUG_POLARITIES
             std::cout << !defaultPolarities[i] << ", ";
             #endif //VERBOSE_DEBUG_POLARITIES
         }
         
         if (verbosity >= 2) {
-            std::cout << "c |  Calc-ed default polarities: "
-            << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s"
-            << "    |" << std:: endl;
+            std::cout << "c |  Calc default polars - "
+            << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s"
+            << " pos: " << std::setw(7) << posPolars
+            << " undec: " << std::setw(7) << undecidedPolars
+            << " neg: " << std::setw(7) << nVars()-  undecidedPolars - posPolars
+            << std::setw(8) << "    |" << std:: endl;
         }
     } else {
         std::fill(polarity.begin(), polarity.end(), defaultPolarity());
@@ -2576,16 +2583,17 @@ void Solver::printEndSearchStat()
 {
     #ifdef STATS_NEEDED
     if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
-        #else
-        if (verbosity >= 1) {
-            #endif
-            printf("c ====================================================================");
-            #ifdef USE_GAUSS
-            print_gauss_sum_stats();
-            #else //USE_GAUSS
-            printf("\n");
-            #endif //USE_GAUSS
-        }
+    #else
+    if (verbosity >= 1) {
+    #endif //STATS_NEEDED
+        printf("c ====================================================================");
+        #ifdef USE_GAUSS
+        print_gauss_sum_stats();
+        if (verbosity == 1) printf("=====================\n");
+        #else //USE_GAUSS
+        printf("\n");
+        #endif //USE_GAUSS
+    }
 }
 
 #ifdef DEBUG_ATTACH

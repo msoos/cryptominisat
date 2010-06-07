@@ -82,7 +82,7 @@ const bool PartFinder::findParts()
     if (solver.verbosity >= 2 || (solver.verbosity >=1 && parts > 1)) {
         std::cout << "c | Found parts: " << std::setw(10) <<  parts
         << " time: " << std::setprecision(2) << std::setw(4) << cpuTime() - time
-        << " s" << std::setw(28) << " |" << std::endl;
+        << " s" << std::setw(51) << " |" << std::endl;
     }
     
     return true;

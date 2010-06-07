@@ -364,7 +364,10 @@ const bool FailedVarSearcher::orderLits()
         }
         solver.cancelUntil(0);
     }
-    std::cout << "c binary Degree finding time: " << cpuTime() - myTime << " s  num checked: " << numChecked << " i: " << i << " props: " << (solver.propagations - oldProps) << std::endl;
+    std::cout << "c binary Degree finding time: " << cpuTime() - myTime << " s"
+    << "  num checked: " << numChecked << " i: " << i
+    << " props: " << (solver.propagations - oldProps)
+    << std::setw(20) << " |" << std::endl;
     solver.propagations = oldProps;
 
     return true;
@@ -486,9 +489,10 @@ const bool FailedVarSearcher::removeUslessBinFull()
     if (solver.verbosity >= 1) {
         std::cout
         << "c Removed useless bin:" << std::setw(8) << removedUselessBin
-        << " fixed: " << std::setw(4) << (origHeapSize - solver.order_heap.size())
-        << " props: " << std::fixed << std::setprecision(2) << std::setw(4) << (double)(solver.propagations - origProps)/1000000.0 << "M"
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << std::endl;
+        << "  fixed: " << std::setw(4) << (origHeapSize - solver.order_heap.size())
+        << "  props: " << std::fixed << std::setprecision(2) << std::setw(4) << (double)(solver.propagations - origProps)/1000000.0 << "M"
+        << "  time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << " s"
+        << std::setw(19)  << "   |" << std::endl;
     }
 
     return true;

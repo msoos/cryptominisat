@@ -1014,7 +1014,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
         << "  lits-rem: " << std::setw(9) << literals_removed
         << "  v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
         << "  time: " << std::setprecision(2) << std::setw(5) <<  cpuTime() - myTime << " s"
-        << "   |" << std::endl;
+        << std::setw(17)  << "   |" << std::endl;
     }
     
     if (!subsWNonExistBinsFull(startUp)) return false;
@@ -1031,12 +1031,12 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     addBinaryClauses.clear();
 
     if (solver.verbosity >= 1) {
-        std::cout << "c Subs w/ non-existent bins: " << subsNonExistentNum
-        << " lits-rem: " << subsNonExistentLitsRemoved
-        << " v-fix: " << subsNonExistentumFailed
-        << " done: " << doneNum
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << subsNonExistentTime
-        << std::endl;
+        std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << subsNonExistentNum
+        << " l-rem: " << std::setw(6) << subsNonExistentLitsRemoved
+        << " v-fix: " << std::setw(5) << subsNonExistentumFailed
+        << " done: " << std::setw(6) << doneNum
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << subsNonExistentTime << " s"
+        << std::setw(2)  << " |" << std::endl;
     }
     totalTime += cpuTime() - myTime;
     solver.order_heap.filter(Solver::VarFilter(solver));

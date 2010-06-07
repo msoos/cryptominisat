@@ -228,8 +228,8 @@ static void parse_DIMACS_main(B& in, Solver& S)
                 int vars    = parseInt(in);
                 int clauses = parseInt(in);
                 if (S.verbosity >= 1) {
-                    printf("c |  Number of variables:  %-12d                                         |\n", vars);
-                    printf("c |  Number of clauses:    %-12d                                         |\n", clauses);
+                    printf("c |  Number of variables:  %-12d                                                   |\n", vars);
+                    printf("c |  Number of clauses:    %-12d                                                   |\n", clauses);
                 }
             } else {
                 printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
@@ -767,8 +767,8 @@ int main(int argc, char** argv)
     }
 
     if (S.verbosity >= 1) {
-        printf("c ============================[ Problem Statistics ]=============================\n");
-        printf("c |                                                                             |\n");
+        printf("c =================================[ Problem Statistics ]==================================\n");
+        printf("c |                                                                                       |\n");
     }
 
     parse_DIMACS(in, S);
@@ -783,7 +783,7 @@ int main(int argc, char** argv)
 
     double parse_time = cpuTime() - cpu_time;
     if (S.verbosity >= 1)
-        printf("c |  Parsing time:         %-12.2f s                                       |\n", parse_time);
+        printf("c |  Parsing time:         %-12.2f s                                                 |\n", parse_time);
 
     lbool ret;
 
