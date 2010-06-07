@@ -143,7 +143,8 @@ const uint PartFinder::setParts()
             std::cout << "c | Found part " << std::setw(8) << i
             << " vars: " << std::setw(10) << reverseTable[i].size()
             << " clauses:" << std::setw(10) << numClauseInPart[i]
-            << " lits size:" << std::setw(10) << sumLitsInPart[i]  << std::endl;
+            << " lits size:" << std::setw(10) << sumLitsInPart[i]
+            << std::setw(12) << " | " << std::endl;
         }
         parts++;
     }

@@ -364,10 +364,12 @@ const bool FailedVarSearcher::orderLits()
         }
         solver.cancelUntil(0);
     }
-    std::cout << "c binary Degree finding time: " << cpuTime() - myTime << " s"
-    << "  num checked: " << numChecked << " i: " << i
-    << " props: " << (solver.propagations - oldProps)
-    << std::setw(20) << " |" << std::endl;
+    std::cout << "c binary deg approx."
+    << " time: " << std::fixed << std::setw(5) << std::setprecision(2) << cpuTime() - myTime << " s"
+    << " num checked: " << std::setw(6) << numChecked
+    << " i: " << std::setw(7) << i
+    << " props: " << std::setw(4) << (solver.propagations - oldProps)/1000 << "k"
+    << std::setw(13) << " |" << std::endl;
     solver.propagations = oldProps;
 
     return true;
