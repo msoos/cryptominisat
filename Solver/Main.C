@@ -525,7 +525,7 @@ const char* hasPrefix(const char* str, const char* prefix)
 int main(int argc, char** argv)
 {
     Solver      S;
-    S.verbosity = 2;
+    S.verbosity = 1;
 
     const char* value;
     int j = 0;
