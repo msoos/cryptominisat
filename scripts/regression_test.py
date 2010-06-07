@@ -327,7 +327,7 @@ class Tester:
         elif opt in ("-c", "--checkDirOnly"):
             self.checkDirOnly = True
         elif opt in ("-d", "--diffCheckDir"):
-            self.diffCheckDir = arg
+            self.differentDirForCheck = arg
             self.checkDirDifferent = True
         elif opt in ("-i", "--ignore"):
             self.ignoreNoSolution = True
@@ -356,8 +356,7 @@ class Tester:
             if (self.checkDirDifferent) :
               fname = fname[:len(fname)-4] #remove trailing .out
               myDir = self.differentDirForCheck
-            for i in range(num):
-              self.check(self.testDir + fname, myDir + fname, i, False, False)
+              self.check(self.testDir + fname, myDir + fname, 0, False, False)
         exit()
       
 
