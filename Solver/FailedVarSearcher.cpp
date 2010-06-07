@@ -331,8 +331,8 @@ const bool FailedVarSearcher::orderLits()
     uint64_t oldProps = solver.propagations;
     double myTime = cpuTime();
     uint32_t numChecked = 0;
-    litDegrees.clear();
-    litDegrees.resize(solver.nVars()*2, 0);
+    if (litDegrees.size() != solver.nVars())
+        litDegrees.resize(solver.nVars()*2, 0);
     BitArray alreadyTested;
     alreadyTested.resize(solver.nVars()*2, 0);
     uint32_t i;
