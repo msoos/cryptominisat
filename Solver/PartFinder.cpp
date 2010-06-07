@@ -18,7 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PartFinder.h"
 
 #include "Solver.h"
+#ifdef USE_GAUSS
 #include "Gaussian.h"
+#endif //USE_GAUSS
 #include "GaussianConfig.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
