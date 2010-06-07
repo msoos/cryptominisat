@@ -501,8 +501,8 @@ void printUsage(char** argv, Solver& S)
     printf("                     reasons of efficiency. Default: %d\n", S.gaussconfig.minMatrixRows);
     printf("  --savematrix     = [0 - 2^32-1] Save matrix every Nth decision level.\n");
     printf("                     Default: %d\n", S.gaussconfig.only_nth_gauss_save);
-    printf("  --addoldlearnts  = Readd old learnts for failed variable searching.\n");
-    printf("                     These learnts are usually deleted, but may help\n");
+    //printf("  --addoldlearnts  = Readd old learnts for failed variable searching.\n");
+    //printf("                     These learnts are usually deleted, but may help\n");
     printf("  --noextrabins    = Don't add binary clauses when doing failed lit probing.\n");
     printf("  --noremovebins   = Don't remove useless binary clauses\n");
     printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
@@ -717,8 +717,8 @@ int main(int argc, char** argv)
             }
         } else if ((value = hasPrefix(argv[i], "--nosolprint"))) {
             printResult = false;
-        } else if ((value = hasPrefix(argv[i], "--addoldlearnts"))) {
-            S.readdOldLearnts = true;
+        //} else if ((value = hasPrefix(argv[i], "--addoldlearnts"))) {
+        //    S.readdOldLearnts = true;
         } else if ((value = hasPrefix(argv[i], "--noextrabins"))) {
             S.addExtraBins = false;
         } else if ((value = hasPrefix(argv[i], "--noremovebins"))) {
