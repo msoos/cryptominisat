@@ -406,9 +406,10 @@ void ClauseCleaner::moveBinClausesToBinClauses()
         if (s+1 != end)
             __builtin_prefetch(*(s+1), 1, 0);
 
-        if ((**s).size() == 2)
+        if ((**s).size() == 2) {
+            (**s).setUnsorted();
             solver.binaryClauses.push(*s);
-        else
+        } else
             *ss++ = *s;
     }
     cs.shrink(s-ss);
