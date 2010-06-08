@@ -60,22 +60,13 @@ x86_64-w64-mingw32-ar qs libz.a adler32.o \
    compile minisat
 *****************************
 
-i586-mingw32msvc-g++ -O3 -g0 -march=i586 -DCROSS_COMPILE  \
+i586-mingw32msvc-g++ -O3 -march=i586 -DVERSION=\"2.5.1\" -DCROSS_COMPILE  \
     -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a \
-    Logger.cpp Solver.cpp  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp \
+    Logger.cpp Solver.cpp  ClauseCleaner.cpp FindUndef.cpp \
     PackedRow.cpp RestartTypeChooser.cpp MatrixFinder.cpp Gaussian.cpp \
     VarReplacer.cpp XorFinder.cpp SmallPtr.cpp Clause.cpp PartHandler.cpp \
     Subsumer.cpp XorSubsumer.cpp FailedVarSearcher.cpp PartFinder.cpp \
-    -o cryptominisat.exe
-
-x86_64-w64-mingw32-g++ -O3 -g0 -march=core2 -DCROSS_COMPILE  \
-    -I../mtl/ -I../MTRand/ Main.C /usr/x86_64-w64-mingw32/lib/libz.a \
-    Logger.C Solver.C  ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp \
-    PackedRow.cpp RestartTypeChooser.cpp \
-    VarReplacer.cpp XorFinder.cpp SmallPtr.cpp Clause.cpp PartHandler.cpp \
-    Subsumer.cpp XorSubsumer.cpp FailedVarSearcher.cpp PartFinder.cpp \
-    -o cryptominisat.exe
-
+    StateSaver.cpp -o cryptominisat.exe
 
 *****************************
    useful for examining archives:

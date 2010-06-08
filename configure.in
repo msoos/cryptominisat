@@ -1,13 +1,36 @@
-AC_INIT(cryptominisat, 2)
+AC_INIT(cryptominisat, 2.5.1)
 
+dnl use libtool
+AC_PROG_LIBTOOL
+
+dnl we are C++
 AC_LANG_CPLUSPLUS
 AC_PROG_CXX
 AC_LANG(C++)
 
-AM_INIT_AUTOMAKE
+dnl AC_CONFIG_AUX_DIR([m4-extra])
 AC_CONFIG_MACRO_DIR([m4])
-LT_INIT
+AM_INIT_AUTOMAKE
+
 AC_CONFIG_HEADERS(config.h)
 AC_CHECK_HEADERS(iostream)
+
+# checks for compiler characteristics
+AC_CHECK_SIZEOF([int])
+AC_CHECK_SIZEOF([long])
+AC_CHECK_SIZEOF([size_t])
+
+# checks for library functions
+AC_FUNC_MALLOC
+AC_FUNC_MEMCMP
+
+#statistics generation needed
+AH_TEMPLATE([STATS_NEEDED],[Enable statistics generation code])
+AC_DEFINE([STATS_NEEDED])
+
+#search for pools
+AH_TEMPLATE([USE_POOLS], [Use memory pools to store packed clauses])
+m4_include(m4-extra/boost.m4)
+BOOST_FIND_HEADER(boost/pool/pool.hpp,  AC_MSG_WARN([Cannot find boost pool library -- clauses will NOT be packed (slowdown)]), AC_DEFINE([USE_POOLS]))
 
 AC_OUTPUT(Makefile Solver/Makefile)

@@ -35,7 +35,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "constants.h"
 #include "SmallPtr.h"
 #ifdef USE_POOLS
-#include "pool.hpp"
+#include <boost/pool/pool.hpp>
 #endif //USE_POOLS
 #ifndef uint
 #define uint unsigned int
