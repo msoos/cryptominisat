@@ -1,3 +1,8 @@
+ver 2.5.1 -- 8/06/2010 --- 'The Obvious Child'
+* Printing updates: everyting is printed much more nicely now
+* Approximated degrees of literals in binary graph are not reset between
+  calculations
+
 ver 2.5.0 -- 7/06/2010 (SAT Race'10 version)
 * A lot of performance bugs have been fixed. Activities of clauses were wrongly
   updated with their abstract representation during subsumtion for example.
