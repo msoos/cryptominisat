@@ -128,3 +128,4 @@ class CSet {
 };
 
 #endif //CSET_H
+

@@ -161,3 +161,4 @@ class FailedVarSearcher {
 
 
 #endif //FAILEDVARSEARCHER_H
+
