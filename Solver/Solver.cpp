@@ -1563,7 +1563,7 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
         #endif //STATS_NEEDED
     }
 
-    fprintf(outfile, "c conflicts %lu\n", conflicts);
+    fprintf(outfile, "c conflicts %lu\n", (unsigned long)conflicts);
 
     fprintf(outfile, "c \nc ---------------------------------\n");
     fprintf(outfile, "c learnt clauses from binaryClauses\n");
