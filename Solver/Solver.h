@@ -349,6 +349,7 @@ protected:
     // Maintaining Variable/Clause activity:
     //
     void     claBumpActivity (Clause& c);
+    void     claBumpActivityHalf (Clause& c);
     void     varDecayActivity ();                      // Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
     void     varBumpActivity  (Var v);                 // Increase a variable with the current 'bump' value.
     void     claDecayActivity ();                      // Decay all clauses with the specified factor. Implemented by increasing the 'bump' value instead.
@@ -468,6 +469,16 @@ inline void Solver::varBumpActivity(Var v)
 inline void Solver::claBumpActivity (Clause& c)
 {
     if ( (c.oldActivity() += cla_inc) > 1e20 ) {
+        // Rescale:
+        for (uint32_t i = 0; i < learnts.size(); i++)
+            learnts[i]->oldActivity() *= 1e-17;
+        cla_inc *= 1e-20;
+    }
+}
+
+inline void Solver::claBumpActivityHalf (Clause& c)
+{
+    if ( (c.oldActivity() += cla_inc/3) > 1e20 ) {
         // Rescale:
         for (uint32_t i = 0; i < learnts.size(); i++)
             learnts[i]->oldActivity() *= 1e-17;

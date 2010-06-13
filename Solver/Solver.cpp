@@ -1110,6 +1110,8 @@ Clause* Solver::propagate(const bool update)
                         *j++ = *i++;
                 } else {
                     uncheckedEnqueue(first, &c);
+                    if (update && lastSelectedRestartType == static_restart)
+                        claBumpActivityHalf(c);
                     #ifdef DYNAMICNBLEVEL
                     if (update && c.learnt() && c.activity() > 2) { // GA
                         uint32_t nbLevels = calcNBLevels(c);
