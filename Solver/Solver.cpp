@@ -1071,7 +1071,7 @@ Clause* Solver::propagate(const bool update)
         #endif
 
         for (i = j = ws.getData(), end = ws.getDataEnd();  i != end;) {
-            if (i+1 != end)
+            if (i+1 != end && !value((i+1)->blockedLit).getBool())
                 __builtin_prefetch((i+1)->clause, 1, 0);
             
             if(value(i->blockedLit).getBool()) { // Clause is sat
