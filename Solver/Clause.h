@@ -409,6 +409,7 @@ inline void* allocEnough(const T& ps)
         #endif //USE_4POOLS
         #endif //USE_POOLS
         default:
+            //posix_memalign(&mem, 64, sizeof(Clause) + sizeof(Lit)*(ps.size()));
             mem = malloc(sizeof(Clause) + sizeof(Lit)*(ps.size()));
             break;
     }
