@@ -255,10 +255,7 @@ const bool XorSubsumer::localSubstitute()
             for (uint32_t i2 = i+1; i2 < occ.size(); i2++) {
                 XorClause& c2 = *occ[i2].clause;
                 tmp.clear();
-                tmp.growTo(c1.size() + c2.size());
-                std::copy(c1.getData(), c1.getDataEnd(), tmp.getData());
-                std::copy(c2.getData(), c2.getDataEnd(), tmp.getData() + c1.size());
-                clearDouble(tmp);
+                xorTwoClauses(c1, c2, tmp);
                 if (tmp.size() <= 2) {
                     #ifdef VERBOSE_DEBUG
                     std::cout << "Local substiuting. Clause1:"; c1.plainPrint();
@@ -283,20 +280,26 @@ const bool XorSubsumer::localSubstitute()
     return true;
 }
 
-void XorSubsumer::clearDouble(vec<Lit>& ps) const
+template<class T>
+void XorSubsumer::xorTwoClauses(const T& c1, const T& c2, vec<Lit>& xored)
 {
-    std::sort(ps.getData(), ps.getDataEnd());
-    Lit p;
-    uint32_t i, j;
-    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
-        if (ps[i].var() == p.var()) {
-            //added, but easily removed
-            j--;
-            p = lit_Undef;
-        } else
-            ps[j++] = p = ps[i];
+    for (uint32_t i = 0; i != c1.size(); i++)
+        seen_tmp[c1[i].var()] = 1;
+    for (uint32_t i = 0; i != c2.size(); i++)
+        seen_tmp[c2[i].var()] ^= 1;
+
+    for (uint32_t i = 0; i != c1.size(); i++) {
+        if (seen_tmp[c1[i].var()] == 1) {
+            xored.push(Lit(c1[i].var(), false));
+            seen_tmp[c1[i].var()] = 0;
+        }
     }
-    ps.shrink(i - j);
+    for (uint32_t i = 0; i != c2.size(); i++) {
+        if (seen_tmp[c2[i].var()] == 1) {
+            xored.push(Lit(c2[i].var(), false));
+            seen_tmp[c2[i].var()] = 0;
+        }
+    }
 }
 
 void XorSubsumer::removeWrong(vec<Clause*>& cs)

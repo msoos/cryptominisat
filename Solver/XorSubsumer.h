@@ -74,7 +74,8 @@ private:
     uint32_t numElimed;
     
     //Heule-process
-    void clearDouble(vec<Lit>& ps) const;
+    template<class T>
+    void xorTwoClauses(const T& c1, const T& c2, vec<Lit>& xored);
     const bool localSubstitute();
     uint32_t localSubstituteUseful;
     
