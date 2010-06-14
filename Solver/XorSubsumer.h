@@ -51,11 +51,12 @@ private:
     // Subsumption:
     void findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed);
     bool isSubsumed(XorClause& ps);
-    void subsume0(XorClauseSimp& ps);
+    void subsume0(XorClauseSimp ps);
     template<class T1, class T2>
     bool subset(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
-    void findUnMatched(vec<Lit>& A, XorClause& B, vec<Lit>& unmatchedPart);
+    template<class T>
+    void findUnMatched(const T& A, const T& B, vec<Lit>& unmatchedPart);
 
     //helper
     void testAllClauseAttach() const;
@@ -74,7 +75,8 @@ private:
     uint32_t numElimed;
     
     //Heule-process
-    void clearDouble(vec<Lit>& ps) const;
+    template<class T>
+    void xorTwoClauses(const T& c1, const T& c2, vec<Lit>& xored);
     const bool localSubstitute();
     uint32_t localSubstituteUseful;
     

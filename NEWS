@@ -1,3 +1,7 @@
+ver 2.5.2 -- 8/06/2010
+* Fixing serious bug with xor-cutting. We no longer segfault if there are
+  many XORs in the given problem
+
 ver 2.5.1 -- 8/06/2010 --- 'The Obvious Child'
 * Printing updates: everyting is printed much more nicely now
 * Approximated degrees of literals in binary graph are not reset between
