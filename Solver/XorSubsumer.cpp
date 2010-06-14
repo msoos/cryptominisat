@@ -35,33 +35,28 @@ XorSubsumer::XorSubsumer(Solver& s):
 };
 
 // Will put NULL in 'cs' if clause removed.
-void XorSubsumer::subsume0(XorClauseSimp& ps)
+void XorSubsumer::subsume0(XorClauseSimp ps)
 {
     #ifdef VERBOSE_DEBUGSUBSUME0
     cout << "subsume0 orig clause:";
     ps.clause->plainPrint();
     #endif
-    
-    vec<Lit> origClause(ps.clause->size());
-    std::copy(ps.clause->getData(), ps.clause->getDataEnd(), origClause.getData());
-    const bool origClauseInverted = ps.clause->xor_clause_inverted();
-    
+
     vec<Lit> unmatchedPart;
-    bool needUnlinkPS = false;
-    
     vec<XorClauseSimp> subs;
+
     findSubsumed(*ps.clause, subs);
     for (uint32_t i = 0; i < subs.size(); i++){
         XorClause* tmp = subs[i].clause;
-        findUnMatched(origClause, *tmp, unmatchedPart);
+        findUnMatched(*ps.clause, *tmp, unmatchedPart);
         if (unmatchedPart.size() == 0) {
             #ifdef VERBOSE_DEBUGSUBSUME0
             cout << "subsume0 removing:";
             subs[i].clause->plainPrint();
             #endif
             clauses_subsumed++;
-            assert(tmp->size() == origClause.size());
-            if (origClauseInverted == tmp->xor_clause_inverted()) {
+            assert(tmp->size() == ps.clause->size());
+            if (ps.clause->xor_clause_inverted() == tmp->xor_clause_inverted()) {
                 unlinkClause(subs[i]);
                 clauseFree(tmp);
             } else {
@@ -75,24 +70,18 @@ void XorSubsumer::subsume0(XorClauseSimp& ps)
             std::cout << "Cutting xor-clause:";
             subs[i].clause->plainPrint();
             #endif //VERBOSE_DEBUG
-            XorClause *c = solver.addXorClauseInt(unmatchedPart, tmp->xor_clause_inverted() ^ !origClauseInverted, tmp->getGroup());
-            if (c != NULL) {
+            XorClause *c = solver.addXorClauseInt(unmatchedPart, tmp->xor_clause_inverted() ^ !ps.clause->xor_clause_inverted(), tmp->getGroup());
+            if (c != NULL)
                 linkInClause(*c);
-                needUnlinkPS = true;
-            }
+            unlinkClause(subs[i]);
             if (!solver.ok) return;
         }
         unmatchedPart.clear();
     }
-    
-    if (needUnlinkPS) {
-        XorClause* tmp = ps.clause;
-        unlinkClause(ps);
-        clauseFree(tmp);
-    }
 }
 
-void XorSubsumer::findUnMatched(vec<Lit>& A, XorClause& B, vec<Lit>& unmatchedPart)
+template<class T>
+void XorSubsumer::findUnMatched(const T& A, const T& B, vec<Lit>& unmatchedPart)
 {
     for (uint32_t i = 0; i != B.size(); i++)
         seen_tmp[B[i].var()] = 1;
