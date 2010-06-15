@@ -364,12 +364,14 @@ const bool FailedVarSearcher::orderLits()
         }
         solver.cancelUntil(0);
     }
-    std::cout << "c binary deg approx."
-    << " time: " << std::fixed << std::setw(5) << std::setprecision(2) << cpuTime() - myTime << " s"
-    << " num checked: " << std::setw(6) << numChecked
-    << " i: " << std::setw(7) << i
-    << " props: " << std::setw(4) << (solver.propagations - oldProps)/1000 << "k"
-    << std::setw(13) << " |" << std::endl;
+    if (solver.verbosity >= 1) {
+        std::cout << "c binary deg approx."
+        << " time: " << std::fixed << std::setw(5) << std::setprecision(2) << cpuTime() - myTime << " s"
+        << " num checked: " << std::setw(6) << numChecked
+        << " i: " << std::setw(7) << i
+        << " props: " << std::setw(4) << (solver.propagations - oldProps)/1000 << "k"
+        << std::setw(13) << " |" << std::endl;
+    }
     solver.propagations = oldProps;
 
     return true;
