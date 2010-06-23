@@ -1565,35 +1565,35 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     }
 
     fprintf(outfile, "c conflicts %lu\n", (unsigned long)conflicts);
+    if (maxSize == 1) goto end;
 
     fprintf(outfile, "c \nc ---------------------------------\n");
     fprintf(outfile, "c learnt clauses from binaryClauses\n");
     fprintf(outfile, "c ---------------------------------\n");
-    if (maxSize >= 2) {
-        for (uint i = 0; i != binaryClauses.size(); i++) {
-            if (binaryClauses[i]->learnt()) {
-                binaryClauses[i]->print(outfile);
-            }
+    for (uint i = 0; i != binaryClauses.size(); i++) {
+        if (binaryClauses[i]->learnt()) {
+            binaryClauses[i]->print(outfile);
         }
     }
 
     fprintf(outfile, "c \nc ---------------------------------------\n");
     fprintf(outfile, "c clauses representing 2-long XOR clauses\n");
     fprintf(outfile, "c ---------------------------------------\n");
-    const vector<Lit>& table = varReplacer->getReplaceTable();
-    for (Var var = 0; var != table.size(); var++) {
-        Lit lit = table[var];
-        if (lit.var() == var)
-            continue;
+    {
+        const vector<Lit>& table = varReplacer->getReplaceTable();
+        for (Var var = 0; var != table.size(); var++) {
+            Lit lit = table[var];
+            if (lit.var() == var)
+                continue;
 
-        fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
-        fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
-        #ifdef STATS_NEEDED
-        if (dynamic_behaviour_analysis)
-            fprintf(outfile, "c name of two vars that are anti/equivalent: '%s' and '%s'\n", logger.get_var_name(lit.var()).c_str(), logger.get_var_name(var).c_str());
-        #endif //STATS_NEEDED
+            fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
+            fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
+            #ifdef STATS_NEEDED
+            if (dynamic_behaviour_analysis)
+                fprintf(outfile, "c name of two vars that are anti/equivalent: '%s' and '%s'\n", logger.get_var_name(lit.var()).c_str(), logger.get_var_name(var).c_str());
+            #endif //STATS_NEEDED
+        }
     }
-
     fprintf(outfile, "c \nc --------------------n");
     fprintf(outfile, "c clauses from learnts\n");
     fprintf(outfile, "c --------------------n");
@@ -1606,6 +1606,8 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
             learnts[i]->print(outfile);
         }
     }
+
+    end:
     
     fclose(outfile);
 }
