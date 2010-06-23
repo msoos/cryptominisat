@@ -267,14 +267,12 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32
             cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xor_clause_inverted ? "-" : "") << ps[1].var()+1 << endl;
             #endif
 
-            learnt_clause_group = std::max(group+1, learnt_clause_group);
             ps[0] = ps[0].unsign();
             ps[1] = ps[1].unsign();
             varReplacer->replace(ps, xor_clause_inverted, group);
             return NULL;
         }
         default: {
-            learnt_clause_group = std::max(group+1, learnt_clause_group);
             XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
             attachClause(*c);
             return c;
@@ -301,8 +299,10 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint group, cha
     }
     
     #ifdef STATS_NEEDED
-    if (dynamic_behaviour_analysis)
+    if (dynamic_behaviour_analysis) {
         logger.set_group_name(group, group_name);
+        learnt_clause_group = std::max(group+1, learnt_clause_group);
+    }
     #endif
 
     if (!ok)
@@ -382,8 +382,7 @@ Clause* Solver::addClauseInt(T& ps, uint group)
         ok = (propagate() == NULL);
         return NULL;
     }
-    
-    learnt_clause_group = std::max(group+1, learnt_clause_group);
+
     Clause* c = Clause_new(ps, group);
     attachClause(*c);
     
@@ -408,8 +407,10 @@ bool Solver::addClause(T& ps, const uint group, char* group_name)
     }
     
     #ifdef STATS_NEEDED
-    if (dynamic_behaviour_analysis)
+    if (dynamic_behaviour_analysis) {
         logger.set_group_name(group, group_name);
+        learnt_clause_group = std::max(group+1, learnt_clause_group);
+    }
     #endif
 
     if (!ok)
