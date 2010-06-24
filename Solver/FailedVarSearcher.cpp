@@ -349,11 +349,11 @@ const bool FailedVarSearcher::orderLits()
         numChecked++;
         solver.newDecisionLevel();
         solver.uncheckedEnqueueLight(randLit);
-        failed = (solver.propagateBin() != NULL);
+        failed = (!solver.propagateBin().isNULL());
         if (failed) {
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~randLit);
-            solver.ok = (solver.propagate() == NULL);
+            solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) return false;
             continue;
         }
@@ -459,7 +459,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
             fixed = true;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate() == NULL);
+            solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) return false;
             continue;
         }
@@ -469,7 +469,7 @@ const bool FailedVarSearcher::removeUslessBinFull()
             fixed = true;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate() == NULL);
+            solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) return false;
             continue;
         }
@@ -523,12 +523,12 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
-    failed = (solver.propagateLight() != NULL);
+    failed = (!solver.propagate().isNULL());
     if (failed) {
         solver.cancelUntil(0);
         numFailed++;
         solver.uncheckedEnqueue(~lit1);
-        solver.ok = (solver.propagate(false) == NULL);
+        solver.ok = (solver.propagate(false).isNULL());
         if (!solver.ok) return false;
         return true;
     } else {
@@ -567,12 +567,12 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit2);
-    failed = (solver.propagateLight() != NULL);
+    failed = (!solver.propagate().isNULL());
     if (failed) {
         solver.cancelUntil(0);
         numFailed++;
         solver.uncheckedEnqueue(~lit2);
-        solver.ok = (solver.propagate(false) == NULL);
+        solver.ok = (solver.propagate(false).isNULL());
         if (!solver.ok) return false;
         return true;
     } else {
@@ -640,7 +640,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.uncheckedEnqueue(bothSame[i]);
     }
     goodBothSame += bothSame.size();
-    solver.ok = (solver.propagate(false) == NULL);
+    solver.ok = (solver.propagate(false).isNULL());
     if (!solver.ok) return false;
     
     return true;
@@ -669,7 +669,7 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    failed = (solver.propagateBin() != NULL);
+    failed = (!solver.propagateBin().isNULL());
     assert(!failed);
 
     assert(solver.decisionLevel() > 0);
@@ -735,7 +735,7 @@ void FailedVarSearcher::fillImplies(const Lit& lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit);
-    failed = (solver.propagateLight() != NULL);
+    failed = (!solver.propagate().isNULL());
     assert(!failed);
     
     assert(solver.decisionLevel() > 0);
@@ -753,7 +753,7 @@ const bool FailedVarSearcher::fillBinImpliesMinusLast(const Lit& origLit, const 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     //if it's a cycle, it doesn't work, so don't propagate origLit
-    failed = (solver.propagateBinExcept<startUp>(origLit) != NULL);
+    failed = (!solver.propagateBinExcept<startUp>(origLit).isNULL());
     if (failed) return false;
 
     assert(solver.decisionLevel() > 0);
@@ -805,7 +805,7 @@ const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    failed = (solver.propagateBinOneLevel<startUp>() != NULL);
+    failed = (!solver.propagateBinOneLevel<startUp>().isNULL());
     if (failed) return false;
     bool ret = true;
 

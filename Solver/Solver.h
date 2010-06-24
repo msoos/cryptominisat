@@ -75,6 +75,76 @@ struct reduceDB_ltGlucose
     bool operator () (const Clause* x, const Clause* y);
 };
 
+class PropagatedFrom
+{
+    private:
+        union {Clause* cl; uint32_t otherLit;} data;
+        bool binary;;
+        bool null;
+        
+    public:
+        PropagatedFrom(Clause* c) :
+            binary(false)
+            , null(false)
+        {
+            assert(c != NULL);
+            data.cl = c;
+        }
+
+        PropagatedFrom(Lit _other) :
+            binary(true)
+            , null(false)
+        {
+            data.otherLit = _other.toInt();
+        }
+
+        PropagatedFrom() :
+            null(true)
+        {
+        }
+
+        const bool isBinary() const
+        {
+            return binary;
+        }
+
+        const Lit getOtherLit() const
+        {
+            return Lit::toLit(data.otherLit);
+        }
+
+        const Clause* getClause() const
+        {
+            return data.cl;
+        }
+
+        Clause* getClause()
+        {
+            return data.cl;
+        }
+
+        const bool isNULL() const
+        {
+            return null;
+        }
+
+        const uint32_t size() const
+        {
+            assert(!isNULL());
+            if (isBinary()) return 2;
+            return getClause()->size();
+        }
+
+        const Lit operator[](uint32_t i) const
+        {
+            assert(!isNULL());
+            if (isBinary()) {
+                assert(i == 1);
+                return getOtherLit();
+            }
+            return (*getClause())[i];
+        }
+};
 
 class Solver
 {
@@ -269,12 +339,13 @@ protected:
     vector<bool>        decision_var;     // Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            // Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        // Separator indices for different decision levels in 'trail'.
-    vec<ClausePtr>      reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
+    vec<PropagatedFrom> reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<int32_t>        level;            // 'level[var]' contains the level at which the assignment was made.
     uint64_t            curRestart;
     uint32_t            nbclausesbeforereduce;
     uint32_t            nbCompensateSubsumer; // Number of learnt clauses that subsumed normal clauses last time subs. was executed
     uint32_t            qhead;            // Head of queue (as index into the trail -- no more explicit propagation queue in MiniSat).
+    Lit                 failBinLit;
     uint32_t            simpDB_assigns;   // Number of top-level assignments since last execution of 'simplify()'.
     int64_t             simpDB_props;     // Remaining number of propagations that must be made before next execution of 'simplify()'.
     vec<Lit>            assumptions;      // Current set of assumptions provided to solve by the user.
@@ -325,25 +396,24 @@ protected:
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
-    void     uncheckedEnqueue (Lit p, ClausePtr from = (Clause*)NULL);                 // Enqueue a literal. Assumes value of literal is undefined.
+    void     uncheckedEnqueue (Lit p, PropagatedFrom from = PropagatedFrom());                 // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
     bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
-    Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
-    Clause*  propagateLight();
-    Clause*  propagateBin();
-    Clause*  propagateBinNoLearnts();
+    PropagatedFrom  propagate (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
+    PropagatedFrom  propagateBin();
+    PropagatedFrom  propagateBinNoLearnts();
     template<bool dontCareLearnt>
-    Clause*  propagateBinExcept(const Lit& exceptLit);
+    PropagatedFrom  propagateBinExcept(const Lit& exceptLit);
     template<bool dontCareLearnt>
-    Clause*  propagateBinOneLevel();
-    Clause*  propagate_xors   (const Lit& p);
+    PropagatedFrom  propagateBinOneLevel();
+    PropagatedFrom  propagate_xors   (const Lit& p);
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
-    Clause*  analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
+    Clause*  analyze          (PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
     lbool    search           (int nof_conflicts, int nof_conflicts_fullrestart, const bool update = true);      // Search for a given number of conflicts.
     void     reduceDB         ();                                                      // Reduce the set of learnt clauses.
-    llbool   handle_conflict  (vec<Lit>& learnt_clause, Clause* confl, int& conflictC, const bool update);// Handles the conflict clause
+    llbool   handle_conflict  (vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update);// Handles the conflict clause
     llbool   new_decision     (const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
     // Maintaining Variable/Clause activity:
@@ -364,7 +434,7 @@ protected:
     template<class T>
     void     removeClause(T& c);                       // Detach and free a clause.
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
-    void     reverse_binary_clause(Clause& c) const;   // Binary clauses --- the first Lit has to be true
+    //void     reverse_binary_clause(Clause& c) const;   // Binary clauses --- the first Lit has to be true
     void     testAllClauseAttach() const;
     void     findAllAttach() const;
     const bool findClause(XorClause* c) const;
@@ -486,7 +556,8 @@ inline bool     Solver::enqueue         (Lit p, Clause* from)
 }
 inline bool     Solver::locked          (const Clause& c) const
 {
-    return reason[c[0].var()] == &c && value(c[0]) == l_True;
+    if (c.size() == 2) return true; //we don't know in this case :I
+    return reason[c[0].var()].getClause() == &c && value(c[0]) == l_True;
 }
 inline void     Solver::newDecisionLevel()
 {
@@ -645,12 +716,16 @@ inline bool Solver::findWatchedBinCl(const vec<T>& ws, const Clause *c) const
     for (; j < ws.size() && ws[j].clause != c; j++);
     return j < ws.size();
 }
+
+/*
 inline void Solver::reverse_binary_clause(Clause& c) const {
     if (c.size() == 2 && value(c[0]) == l_False) {
         assert(value(c[1]) == l_True);
         std::swap(c[0], c[1]);
     }
 }
+*/
+
 /*inline void Solver::calculate_xor_clause(Clause& c2) const {
     if (c2.isXor() && ((XorClause*)&c2)->updateNeeded())  {
         XorClause& c = *((XorClause*)&c2);

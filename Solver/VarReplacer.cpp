@@ -211,7 +211,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     case 1:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
         solver.uncheckedEnqueue(Lit(c[0].var(), c.xor_clause_inverted()));
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         return true;
     case 2: {
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
@@ -297,7 +297,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     case 1 :
         solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
         solver.uncheckedEnqueue(c[0]);
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         return true;
     default:
         solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
@@ -344,7 +344,7 @@ void VarReplacer::extendModelPossible() const
                 assert(solver.assigns[i].getBool() == (solver.assigns[it->var()].getBool() ^ it->sign()));
             }
         }
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         assert(solver.ok);
     }
 }

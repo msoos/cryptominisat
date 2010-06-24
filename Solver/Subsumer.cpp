@@ -285,7 +285,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
         } else {
             assert(cl.size() == 1);
             solver.uncheckedEnqueue(cl[0]);
-            solver.ok = (solver.propagate() == NULL);
+            solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) {
                 unregisterIteration(subs2);
                 return;
@@ -488,7 +488,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                 } else {
                     assert(cl.size() == 1);
                     solver.uncheckedEnqueue(cl[0]);
-                    solver.ok = (solver.propagate() == NULL);
+                    solver.ok = (solver.propagate().isNULL());
                     if (!solver.ok) {
                         unregisterIteration(Q);
                         unregisterIteration(subs);
@@ -590,7 +590,7 @@ void Subsumer::subsume1Partial(const T& ps)
             } else {
                 assert(cl.size() == 1);
                 solver.uncheckedEnqueue(cl[0]);
-                solver.ok = (solver.propagate() == NULL);
+                solver.ok = (solver.propagate().isNULL());
                 if (!solver.ok) {
                     unregisterIteration(subsume1PartialSubs);
                     return;
@@ -635,7 +635,7 @@ void Subsumer::almost_all_database()
     }
     
     assert(solver.ok);
-    solver.ok = (solver.propagate() == NULL);
+    solver.ok = (solver.propagate().isNULL());
     if (!solver.ok) {
         std::cout << "c (contradiction during subsumption)" << std::endl;
         return;
@@ -669,7 +669,7 @@ void Subsumer::almost_all_database()
         s1.clear();
         
         if (!solver.ok) return;
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         if (!solver.ok) {
             printf("c (contradiction during subsumption)\n");
             unregisterIteration(s1);
@@ -756,7 +756,7 @@ void Subsumer::smaller_database()
         s1.clear();
         
         if (!solver.ok) return;
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         if (!solver.ok){
             printf("c (contradiction during subsumption)\n");
             unregisterIteration(s1);
@@ -966,7 +966,7 @@ const bool Subsumer::treatLearnts()
     if (!solver.ok) return false;
     subsume0LearntSet(solver.binaryClauses);
     if (!solver.ok) return false;
-    solver.ok = (solver.propagate() == NULL);
+    solver.ok = (solver.propagate().isNULL());
     if (!solver.ok){
         printf("c (contradiction during subsumption)\n");
         return false;
@@ -1072,7 +1072,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate() == NULL);
+            solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) return false;
             continue;
         }
@@ -1084,7 +1084,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate() == NULL);
+            solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) return false;
             continue;
         }
@@ -1108,9 +1108,9 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
     solver.uncheckedEnqueueLight(lit);
     bool failed;
     if (startUp) {
-        failed = (solver.propagateBin() != NULL);
+        failed = (!solver.propagateBin().isNULL());
     } else {
-        failed = (solver.propagateBinNoLearnts() != NULL);
+        failed = (!solver.propagateBinNoLearnts().isNULL());
     }
     if (failed) return false;
 
@@ -1283,7 +1283,7 @@ const bool Subsumer::simplifyBySubsumption()
         cl_added.clear();
         assert(cl_added.size() == 0);
         assert(solver.ok);
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         if (!solver.ok) {
             printf("c (contradiction during subsumption)\n");
             return false;
@@ -1351,7 +1351,7 @@ const bool Subsumer::simplifyBySubsumption()
     endSimplifyBySubsumption:
     
     if (!solver.ok) return false;
-    solver.ok = (solver.propagate() == NULL);
+    solver.ok = (solver.propagate().isNULL());
     if (!solver.ok) {
         printf("c (contradiction during subsumption)\n");
         return false;

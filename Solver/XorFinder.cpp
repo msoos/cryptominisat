@@ -138,7 +138,7 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
     #endif //DEBUG_XORFIND
     
     if (findXors(sumLengths) == false) goto end;
-    solver.ok = (solver.propagate() == NULL);
+    solver.ok = (solver.propagate().isNULL());
     
 end:
     if (minSize == maxSize && minSize == 2) {
