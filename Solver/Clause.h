@@ -462,7 +462,7 @@ inline void clauseFree(Clause* c)
         free(c);
 }
 
-#ifdef _MSC_VER
+#if defined (_MSC_VER) || !defined (__LP64__)
 typedef Clause* ClausePtr;
 typedef XorClause* XorClausePtr;
 #else
