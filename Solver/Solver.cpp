@@ -804,7 +804,6 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
 
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
-        //Clause& c = *confl;
         
         if (update && restartType == static_restart && !confl.isBinary() && confl.getClause()->learnt())
             claBumpActivity(*confl.getClause());
