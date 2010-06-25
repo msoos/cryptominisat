@@ -89,7 +89,9 @@ class PropagatedFrom
             binary(false)
             , null(false)
         {
+            #ifdef DEBUG_PROPAGATEFROM
             assert(c != NULL);
+            #endif
             data.cl = c;
         }
 
