@@ -995,7 +995,7 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
 }
 
 
-void Solver::uncheckedEnqueue(Lit p, PropagatedFrom from)
+void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
 {
 
     #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0

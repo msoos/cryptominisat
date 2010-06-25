@@ -407,7 +407,7 @@ protected:
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
-    void     uncheckedEnqueue (Lit p, PropagatedFrom from = PropagatedFrom());                 // Enqueue a literal. Assumes value of literal is undefined.
+    void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom());                 // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
     bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
     PropagatedFrom  propagate (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
