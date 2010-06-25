@@ -809,7 +809,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         if (update && restartType == static_restart && !confl.isBinary() && confl.getClause()->learnt())
             claBumpActivity(*confl.getClause());
 
-        for (uint j = (p == lit_Undef) ? 0 : 1; j != confl.size(); j++) {
+        for (uint j = (p == lit_Undef) ? 0 : 1, size = confl.size(); j != size; j++) {
             Lit q;
             if (j == 0 && confl.isBinary()) q = failBinLit;
             else q = confl[j];
@@ -864,7 +864,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         for (i = j = 1; i < out_learnt.size(); i++) {
             PropagatedFrom c(reason[out_learnt[i].var()]);
 
-            for (uint k = 1; k < c.size(); k++) {
+            for (uint k = 1, size = c.size(); k < size; k++) {
                 if (!seen[c[k].var()] && level[c[k].var()] > 0) {
                     out_learnt[j++] = out_learnt[i];
                     break;
@@ -933,11 +933,10 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     while (analyze_stack.size() > 0) {
         assert(!reason[analyze_stack.last().var()].isNULL());
         PropagatedFrom c(reason[analyze_stack.last().var()]);
-        //Clause& c = *reason[analyze_stack.last().var()];
         
         analyze_stack.pop();
 
-        for (uint i = 1; i < c.size(); i++) {
+        for (uint i = 1, size = c.size(); i < size; i++) {
             Lit p  = c[i];
             if (!seen[p.var()] && level[p.var()] > 0) {
                 if (!reason[p.var()].isNULL() && (abstractLevel(p.var()) & abstract_levels) != 0) {
@@ -984,9 +983,8 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
                 assert(level[x] > 0);
                 out_conflict.push(~trail[i]);
             } else {
-                //const Clause& c = *reason[x];
                 PropagatedFrom c = reason[x];
-                for (uint j = 1; j < c.size(); j++)
+                for (uint j = 1, size = c.size(); j < size; j++)
                     if (level[c[j].var()] > 0)
                         seen[c[j].var()] = 1;
             }
