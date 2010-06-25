@@ -293,9 +293,9 @@ protected:
     template<class T>
     bool    findWatchedCl(const vec<T>& ws, const Clause *c) const;
     template<class T>
-    void    removeWatchedBinCl(vec<T> &ws, const Clause *c);
+    void    removeWatchedBinCl(vec<T> &ws, const Lit impliedLit);
     template<class T>
-    bool    findWatchedBinCl(const vec<T>& ws, const Clause *c) const;
+    bool    findWatchedBinCl(const vec<T>& ws, const Lit impliedLit) const;
     
     // Helper structures:
     //
@@ -695,25 +695,25 @@ inline void Solver::removeWatchedCl(vec<T> &ws, const Clause *c) {
     ws.pop();
 }
 template <class T>
-inline void Solver::removeWatchedBinCl(vec<T> &ws, const Clause *c) {
+inline void Solver::removeWatchedBinCl(vec<T> &ws, const Lit impliedLit) {
     uint32_t j = 0;
-    for (; j < ws.size() && ws[j].clause != c; j++);
+    for (; j < ws.size() && ws[j].impliedLit != impliedLit; j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
 }
 template<class T>
-inline bool Solver::findWatchedCl(const vec<T>& ws, const Clause *c) const
+inline bool Solver::findWatchedCl(const vec<T>& ws, const Clause* c) const
 {
     uint32_t j = 0;
     for (; j < ws.size() && ws[j].clause != c; j++);
     return j < ws.size();
 }
 template<class T>
-inline bool Solver::findWatchedBinCl(const vec<T>& ws, const Clause *c) const
+inline bool Solver::findWatchedBinCl(const vec<T>& ws, const Lit impliedLit) const
 {
     uint32_t j = 0;
-    for (; j < ws.size() && ws[j].clause != c; j++);
+    for (; j < ws.size() && ws[j].impliedLit != impliedLit; j++);
     return j < ws.size();
 }
 

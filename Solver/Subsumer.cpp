@@ -1110,7 +1110,11 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
     if (startUp) {
         failed = (!solver.propagateBin().isNULL());
     } else {
+        #ifdef BINARY_LEARNT_DISTINCTION
         failed = (!solver.propagateBinNoLearnts().isNULL());
+        #else
+        assert(false);
+        #endif //BINARY_LEARNT_DISTINCTION
     }
     if (failed) return false;
 

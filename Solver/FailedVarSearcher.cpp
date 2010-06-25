@@ -426,82 +426,6 @@ const bool FailedVarSearcher::readdRemovedLearnts()
 #define MAX_REMOVE_BIN_FULL_PROPS 20000000
 #define EXTRATIME_DIVIDER 3
 
-template<bool startUp>
-const bool FailedVarSearcher::removeUslessBinFull()
-{
-    if (!solver.performReplace) return true;
-    while (solver.performReplace && solver.varReplacer->getClauses().size() > 0) {
-        if (!solver.varReplacer->performReplace(true)) return false;
-        solver.clauseCleaner->removeAndCleanAll(true);
-    }
-    assert(solver.varReplacer->getClauses().size() == 0);
-    solver.testAllClauseAttach();
-    if (startUp) {
-        solver.clauseCleaner->moveBinClausesToBinClauses();
-    }
-
-    double myTime = cpuTime();
-    toDeleteSet.clear();
-    toDeleteSet.growTo(solver.nVars()*2, 0);
-    uint32_t origHeapSize = solver.order_heap.size();
-    uint64_t origProps = solver.propagations;
-    bool fixed = false;
-    uint32_t extraTime = solver.binaryClauses.size() / EXTRATIME_DIVIDER;
-
-    uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
-    for (uint32_t i = 0; i != solver.order_heap.size(); i++) {
-        Var var = solver.order_heap[(i+startFrom)%solver.order_heap.size()];
-        if (solver.propagations - origProps + extraTime > MAX_REMOVE_BIN_FULL_PROPS) break;
-        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
-
-        Lit lit(var, true);
-        if (!removeUselessBinaries<startUp>(lit)) {
-            fixed = true;
-            solver.cancelUntil(0);
-            solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate().isNULL());
-            if (!solver.ok) return false;
-            continue;
-        }
-
-        lit = ~lit;
-        if (!removeUselessBinaries<startUp>(lit)) {
-            fixed = true;
-            solver.cancelUntil(0);
-            solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate().isNULL());
-            if (!solver.ok) return false;
-            continue;
-        }
-    }
-
-    Clause **i, **j;
-    i = j = solver.binaryClauses.getData();
-    uint32_t num = 0;
-    for (Clause **end = solver.binaryClauses.getDataEnd(); i != end; i++, num++) {
-        if (!(*i)->removed()) {
-            *j++ = *i;
-        } else {
-            clauseFree(*i);
-        }
-    }
-    uint32_t removedUselessBin = i - j;
-    solver.binaryClauses.shrink(i - j);
-    
-    if (fixed) solver.order_heap.filter(Solver::VarFilter(solver));
-
-    if (solver.verbosity >= 1) {
-        std::cout
-        << "c Removed useless bin:" << std::setw(8) << removedUselessBin
-        << "  fixed: " << std::setw(5) << (origHeapSize - solver.order_heap.size())
-        << "  props: " << std::fixed << std::setprecision(2) << std::setw(6) << (double)(solver.propagations - origProps)/1000000.0 << "M"
-        << "  time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << " s"
-        << std::setw(16)  << "   |" << std::endl;
-    }
-
-    return true;
-}
-
 const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
 {
     if (binXorFind) {
@@ -791,6 +715,83 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
     assert(solver.ok);
 }
 
+#ifdef BINARY_LEARNT_DISTINCTION
+template<bool startUp>
+const bool FailedVarSearcher::removeUslessBinFull()
+{
+    if (!solver.performReplace) return true;
+    while (solver.performReplace && solver.varReplacer->getClauses().size() > 0) {
+        if (!solver.varReplacer->performReplace(true)) return false;
+        solver.clauseCleaner->removeAndCleanAll(true);
+    }
+    assert(solver.varReplacer->getClauses().size() == 0);
+    solver.testAllClauseAttach();
+    if (startUp) {
+        solver.clauseCleaner->moveBinClausesToBinClauses();
+    }
+    
+    double myTime = cpuTime();
+    toDeleteSet.clear();
+    toDeleteSet.growTo(solver.nVars()*2, 0);
+    uint32_t origHeapSize = solver.order_heap.size();
+    uint64_t origProps = solver.propagations;
+    bool fixed = false;
+    uint32_t extraTime = solver.binaryClauses.size() / EXTRATIME_DIVIDER;
+    
+    uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
+    for (uint32_t i = 0; i != solver.order_heap.size(); i++) {
+        Var var = solver.order_heap[(i+startFrom)%solver.order_heap.size()];
+        if (solver.propagations - origProps + extraTime > MAX_REMOVE_BIN_FULL_PROPS) break;
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+        
+        Lit lit(var, true);
+        if (!removeUselessBinaries<startUp>(lit)) {
+            fixed = true;
+            solver.cancelUntil(0);
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = (solver.propagate().isNULL());
+            if (!solver.ok) return false;
+            continue;
+        }
+        
+        lit = ~lit;
+        if (!removeUselessBinaries<startUp>(lit)) {
+            fixed = true;
+            solver.cancelUntil(0);
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = (solver.propagate().isNULL());
+            if (!solver.ok) return false;
+            continue;
+        }
+    }
+    
+    Clause **i, **j;
+    i = j = solver.binaryClauses.getData();
+    uint32_t num = 0;
+    for (Clause **end = solver.binaryClauses.getDataEnd(); i != end; i++, num++) {
+        if (!(*i)->removed()) {
+            *j++ = *i;
+        } else {
+            clauseFree(*i);
+        }
+    }
+    uint32_t removedUselessBin = i - j;
+    solver.binaryClauses.shrink(i - j);
+    
+    if (fixed) solver.order_heap.filter(Solver::VarFilter(solver));
+    
+    if (solver.verbosity >= 1) {
+        std::cout
+        << "c Removed useless bin:" << std::setw(8) << removedUselessBin
+        << "  fixed: " << std::setw(5) << (origHeapSize - solver.order_heap.size())
+        << "  props: " << std::fixed << std::setprecision(2) << std::setw(6) << (double)(solver.propagations - origProps)/1000000.0 << "M"
+        << "  time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << " s"
+        << std::setw(16)  << "   |" << std::endl;
+    }
+    
+    return true;
+}
+
 template<bool startUp>
 const bool FailedVarSearcher::removeUselessBinaries(const Lit& lit)
 {
@@ -913,6 +914,7 @@ void FailedVarSearcher::removeBin(const Lit& lit1, const Lit& lit2)
     cl->setRemoved();
     solver.clauses_literals -= 2;
 }
+#endif //BINARY_LEARNT_DISTINCTION
 
 template<class T>
 inline void FailedVarSearcher::cleanAndAttachClauses(vec<T*>& cs)

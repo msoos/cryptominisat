@@ -463,8 +463,8 @@ void Solver::attachClause(Clause& c)
     int index1 = (~c[1]).toInt();
     
     if (c.size() == 2) {
-        binwatches[index0].push(WatchedBin(&c, c[1]));
-        binwatches[index1].push(WatchedBin(&c, c[0]));
+        binwatches[index0].push(WatchedBin(c[1]));
+        binwatches[index1].push(WatchedBin(c[0]));
     } else {
         watches[index0].push(Watched(&c, c[c.size()/2]));
         watches[index1].push(Watched(&c, c[c.size()/2]));
@@ -490,11 +490,11 @@ void Solver::detachClause(const Clause& c)
 {
     assert(c.size() > 1);
     if (c.size() == 2) {
-        assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], &c));
-        assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], &c));
+        assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], c[1]));
+        assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], c[0]));
         
-        removeWatchedBinCl(binwatches[(~c[0]).toInt()], &c);
-        removeWatchedBinCl(binwatches[(~c[1]).toInt()], &c);
+        removeWatchedBinCl(binwatches[(~c[0]).toInt()], c[1]);
+        removeWatchedBinCl(binwatches[(~c[1]).toInt()], c[0]);
     } else {
         assert(findWatchedCl(watches[(~c[0]).toInt()], &c));
         assert(findWatchedCl(watches[(~c[1]).toInt()], &c));
@@ -512,10 +512,10 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
     assert(origSize > 1);
     
     if (origSize == 2) {
-        assert(findWatchedBinCl(binwatches[(~lit1).toInt()], address));
-        assert(findWatchedBinCl(binwatches[(~lit2).toInt()], address));
-        removeWatchedBinCl(binwatches[(~lit1).toInt()], address);
-        removeWatchedBinCl(binwatches[(~lit2).toInt()], address);
+        assert(findWatchedBinCl(binwatches[(~lit1).toInt()], lit2));
+        assert(findWatchedBinCl(binwatches[(~lit2).toInt()], lit1));
+        removeWatchedBinCl(binwatches[(~lit1).toInt()], lit2);
+        removeWatchedBinCl(binwatches[(~lit2).toInt()], lit1);
     } else {
         assert(findW(watches[(~lit1).toInt()], address));
         assert(findW(watches[(~lit2).toInt()], address));
@@ -1176,6 +1176,7 @@ PropagatedFrom Solver::propagateBin()
     return PropagatedFrom();
 }
 
+#ifdef BINARY_LEARNT_DISTINCTION
 PropagatedFrom Solver::propagateBinNoLearnts()
 {
     while (qhead < trail.size()) {
@@ -1244,6 +1245,7 @@ PropagatedFrom Solver::propagateBinOneLevel()
 
 template PropagatedFrom Solver::propagateBinOneLevel <true>();
 template PropagatedFrom Solver::propagateBinOneLevel <false>();
+#endif //BINARY_LEARNT_DISTINCTION
 
 template<class T>
 inline const uint32_t Solver::calcNBLevels(const T& ps)
@@ -2041,6 +2043,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
     testAllClauseAttach();
 
+    #ifdef BINARY_LEARNT_DISTINCTION
     if (regularRemoveUselessBins
         && !failedVarSearcher->removeUslessBinFull<false>()) {
         status = l_False;
@@ -2052,6 +2055,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         status = l_False;
         goto end;
     }
+    #endif //BINARY_LEARNT_DISTINCTION
 
     if (doSubsumption && !subsumer->simplifyBySubsumption()) {
         status = l_False;
@@ -2129,7 +2133,9 @@ inline void Solver::performStepsBeforeSolve()
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
         if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
+        #ifdef BINARY_LEARNT_DISTINCTION
         if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
+        #endif //BINARY_LEARNT_DISTINCTION
     }
     
     testAllClauseAttach();
@@ -2142,7 +2148,9 @@ inline void Solver::performStepsBeforeSolve()
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
         if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
+        #ifdef BINARY_LEARNT_DISTINCTION
         if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
+        #endif //BINARY_LEARNT_DISTINCTION
     }
     
     testAllClauseAttach();

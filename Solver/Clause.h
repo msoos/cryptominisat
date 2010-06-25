@@ -474,8 +474,7 @@ typedef sptr<XorClause> XorClausePtr;
 #pragma pack(1)
 class WatchedBin {
     public:
-        WatchedBin(Clause *_clause, Lit _impliedLit) : clause(_clause), impliedLit(_impliedLit) {};
-        ClausePtr clause;
+        WatchedBin(Lit _impliedLit) : impliedLit(_impliedLit) {};
         Lit impliedLit;
 };
 
