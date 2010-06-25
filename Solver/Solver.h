@@ -75,12 +75,14 @@ struct reduceDB_ltGlucose
     bool operator () (const Clause* x, const Clause* y);
 };
 
+#pragma pack(push)
+#pragma pack(1)
 class PropagatedFrom
 {
     private:
         union {Clause* cl; uint32_t otherLit;} data;
-        bool binary;;
-        bool null;
+        uint8_t binary:1;
+        uint8_t null:1;
         
     public:
         PropagatedFrom(Clause* c) :
@@ -130,21 +132,28 @@ class PropagatedFrom
 
         const uint32_t size() const
         {
+            #ifdef DEBUG_PROPAGATEFROM
             assert(!isNULL());
+            #endif
             if (isBinary()) return 2;
             return getClause()->size();
         }
 
         const Lit operator[](uint32_t i) const
         {
+            #ifdef DEBUG_PROPAGATEFROM
             assert(!isNULL());
+            #endif
             if (isBinary()) {
+                #ifdef DEBUG_PROPAGATEFROM
                 assert(i == 1);
+                #endif
                 return getOtherLit();
             }
             return (*getClause())[i];
         }
 };
+#pragma pack(pop)
 
 class Solver
 {
