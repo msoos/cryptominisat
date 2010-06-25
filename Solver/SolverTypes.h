@@ -92,9 +92,7 @@ public:
     }
     static Lit toLit(uint32_t data)
     {
-        Lit l;
-        l.x = data;
-        return l;
+        return Lit(data);
     }
 };
 
