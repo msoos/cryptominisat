@@ -80,7 +80,7 @@ struct reduceDB_ltGlucose
 class PropagatedFrom
 {
     private:
-        union {Clause* cl; uint32_t otherLit;} data;
+        union {Clause* clause; uint32_t otherLit;};
         uint8_t binary:1;
         uint8_t null:1;
         
@@ -92,14 +92,14 @@ class PropagatedFrom
             #ifdef DEBUG_PROPAGATEFROM
             assert(c != NULL);
             #endif
-            data.cl = c;
+            clause = c;
         }
 
-        PropagatedFrom(Lit _other) :
+        PropagatedFrom(const Lit& _other) :
             binary(true)
             , null(false)
         {
-            data.otherLit = _other.toInt();
+            otherLit = _other.toInt();
         }
 
         PropagatedFrom() :
@@ -114,17 +114,17 @@ class PropagatedFrom
 
         const Lit getOtherLit() const
         {
-            return Lit::toLit(data.otherLit);
+            return Lit::toLit(otherLit);
         }
 
         const Clause* getClause() const
         {
-            return data.cl;
+            return clause;
         }
 
         Clause* getClause()
         {
-            return data.cl;
+            return clause;
         }
 
         const bool isNULL() const
