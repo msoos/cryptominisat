@@ -146,11 +146,6 @@ private:
     vec<char> toVisitAll;
     vec<Lit> ps2;
     
-    //hyperBinRes
-    void addFromSolverAll(vec<Clause*>& cs);
-    const bool hyperBinRes();
-    const bool hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<Clause*>& addToClauses);
-    
     class VarOcc {
         public:
             VarOcc(const Var& v, const uint32_t num) :
