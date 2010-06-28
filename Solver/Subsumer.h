@@ -33,8 +33,7 @@ public:
     void newVar();
 
     //Used by cleaner
-    void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c);
-    void unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSimp c);
+    void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c, const bool detachAndNull);
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
     void linkInAlreadyClause(ClauseSimp& c);
