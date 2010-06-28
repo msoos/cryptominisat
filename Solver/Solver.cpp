@@ -2054,7 +2054,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
     #endif //BINARY_LEARNT_DISTINCTION
 
-    if (doSubsumption && !subsumer->simplifyBySubsumption()) {
+    if (doSubsumption && !subsumer->simplifyBySubsumption(false)) {
+        status = l_False;
+        goto end;
+    }
+    if (doSubsumption && !subsumer->simplifyBySubsumption(true)) {
         status = l_False;
         goto end;
     }

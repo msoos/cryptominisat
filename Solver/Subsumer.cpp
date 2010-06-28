@@ -166,6 +166,7 @@ inline uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
 template<class T>
 uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 {
+    subsumedNonLearnt = false;
     uint32_t retIndex = std::numeric_limits<uint32_t>::max();
     vec<ClauseSimp> subs;
     findSubsumed(ps, abs, subs);
@@ -177,6 +178,7 @@ uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         #endif
         
         Clause* tmp = subs[i].clause;
+        subsumedNonLearnt |= !tmp->learnt();
         retIndex = subs[i].index;
         unlinkClause(subs[i]);
         clauseFree(tmp);
@@ -271,13 +273,13 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
             return;
         }
         if (cl.size() > 2) {
-            cl.calcAbstraction();
+            cl.calcAbstractionClause();
             linkInAlreadyClause(c);
             clauses[c.index] = c;
             solver.attachClause(cl);
             updateClause(c);
         } else if (cl.size() == 2) {
-            cl.calcAbstraction();
+            cl.calcAbstractionClause();
             solver.attachClause(cl);
             solver.becameBinary++;
             addBinaryClauses.push(&cl);
@@ -478,7 +480,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     return;
                 }
                 if (cl.size() > 1) {
-                    cl.calcAbstraction();
+                    cl.calcAbstractionClause();
                     linkInAlreadyClause(c);
                     clauses[c.index] = c;
                     solver.attachClause(cl);
@@ -576,13 +578,13 @@ void Subsumer::subsume1Partial(const T& ps)
                 return;
             }
             if (cl.size() > 2) {
-                cl.calcAbstraction();
+                cl.calcAbstractionClause();
                 linkInAlreadyClause(c);
                 clauses[c.index] = c;
                 solver.attachClause(cl);
                 updateClause(c);
             } else if (cl.size() == 2) {
-                cl.calcAbstraction();
+                cl.calcAbstractionClause();
                 solver.attachClause(cl);
                 solver.becameBinary++;
                 addBinaryClauses.push(&cl);
@@ -611,7 +613,9 @@ void Subsumer::subsume1Partial(const T& ps)
 
 void Subsumer::updateClause(ClauseSimp c)
 {
-    if (!c.clause->learnt()) subsume0(*c.clause, c.clause->getAbst());
+    subsume0(*c.clause, c.clause->getAbst());
+    if (c.clause->learnt() && subsumedNonLearnt)
+        c.clause->makeNonLearnt();
     
     cl_touched.add(c);
 }
@@ -769,8 +773,10 @@ void Subsumer::smaller_database()
     
     // Iteration pass for 0-subsumption:
     for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
-        if (it->clause != NULL)
+        if (it->clause != NULL) {
             subsume0(*it->clause, it->clause->getAbst());
+            if (subsumedNonLearnt && it->clause->learnt()) it->clause->makeNonLearnt();
+        }
     }
     s0.clear();
     unregisterIteration(s0);
@@ -832,8 +838,8 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
             else if (cl.getStrenghtened()) cl_touched.add(c);
         }
 
-        if (cl.getVarChanged() || cl.getStrenghtened())
-            cl.calcAbstraction();
+        if (!cl.learnt() && (cl.getVarChanged() || cl.getStrenghtened()))
+            cl.calcAbstractionClause();
     }
     cs.shrink(i-j);
 }
@@ -915,64 +921,6 @@ void Subsumer::fillCannotEliminate()
             tmpNum++;
     std::cout << "Cannot eliminate num:" << tmpNum << std::endl;
     #endif
-}
-
-void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
-{
-    Clause** a = cs.getData();
-    Clause** b = a;
-    for (Clause** end = a + cs.size(); a != end; a++) {
-        if (numMaxSubsume0 > 0 && !(*a)->subsume0IsFinished()) {
-            numMaxSubsume0--;
-            uint32_t index = subsume0(**a, calcAbstraction(**a));
-            if (index != std::numeric_limits<uint32_t>::max()) {
-                (*a)->makeNonLearnt();
-                //solver.nbBin--;
-                clauses[index].clause = *a;
-                linkInAlreadyClause(clauses[index]);
-                solver.learnts_literals -= (*a)->size();
-                solver.clauses_literals += (*a)->size();
-                cl_added.add(clauses[index]);
-                continue;
-            }
-            if (numMaxSubsume1 > 0 &&
-                (((*a)->size() == 2 && clauses.size() < 3500000) ||
-                ((*a)->size() <= 3 && clauses.size() < 300000) ||
-                ((*a)->size() <= 4 && clauses.size() < 60000))) {
-                ClauseSimp c(*a, clauseID++);
-                //(*a)->calcAbstraction();
-                //clauses.push(c);
-                subsume1(c);
-                numMaxSubsume1--;
-                if (!solver.ok) {
-                    for (; a != end; a++)
-                        *b++ = *a;
-                    cs.shrink(a-b);
-                    return;
-                }
-                //assert(clauses[c.index].clause != NULL);
-                //clauses.pop();
-                clauseID--;
-            }
-        }
-        *b++  = *a;
-    }
-    cs.shrink(a-b);
-}
-
-const bool Subsumer::treatLearnts()
-{
-    subsume0LearntSet(solver.learnts);
-    if (!solver.ok) return false;
-    subsume0LearntSet(solver.binaryClauses);
-    if (!solver.ok) return false;
-    solver.ok = (solver.propagate().isNULL());
-    if (!solver.ok){
-        printf("c (contradiction during subsumption)\n");
-        return false;
-    }
-    solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
-    return true;
 }
 
 const bool Subsumer::subsumeWithBinaries(const bool startUp)
@@ -1162,7 +1110,7 @@ void Subsumer::clearAll()
     cl_touched.clear();
 }
 
-const bool Subsumer::simplifyBySubsumption()
+const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 {
     if (solver.nClauses() > 20000000)  return true;
     
@@ -1184,20 +1132,25 @@ const bool Subsumer::simplifyBySubsumption()
         return false;
     fillCannotEliminate();
     solver.testAllClauseAttach();
+
+    uint32_t expected_size;
+    if (!alsoLearnt)
+        expected_size = solver.clauses.size() + solver.binaryClauses.size();
+    else
+        expected_size = solver.clauses.size() + solver.binaryClauses.size() + solver.learnts.size();
+    clauses.reserve(expected_size);
+    cl_added.reserve(expected_size);
+    cl_touched.reserve(expected_size);
     
-    clauses.reserve(solver.clauses.size() + solver.binaryClauses.size());
-    cl_added.reserve(solver.clauses.size() + solver.binaryClauses.size());
-    cl_touched.reserve(solver.clauses.size() + solver.binaryClauses.size());
-    
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    addFromSolver<true>(solver.clauses, alsoLearnt);
+    solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
+    addFromSolver<true>(solver.binaryClauses, alsoLearnt);
+
     if (clauses.size() < 200000)
         fullSubsume = true;
     else
         fullSubsume = false;
-    
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver<true>(solver.clauses);
-    solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
-    addFromSolver<true>(solver.binaryClauses);
     
     //Limits
     if (clauses.size() > 3500000) {
@@ -1218,15 +1171,20 @@ const bool Subsumer::simplifyBySubsumption()
         numMaxSubsume1 = 400000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
     }
-    if (numCalls == 1) numMaxSubsume1 = 0;
-    
-    if (!solver.doSubsume1) numMaxSubsume1 = 0;
-        
-    
     if (solver.order_heap.size() > 200000)
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
     else
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
+
+    if (numCalls == 1) numMaxSubsume1 = 0;
+    if (!solver.doSubsume1) numMaxSubsume1 = 0;
+    if (alsoLearnt) {
+        numMaxElim = 0;
+        numMaxSubsume1 = 0;
+        numMaxBlockVars = 0;
+        numMaxBlockToVisit = 0;
+        fullSubsume = true;
+    }
     
     //For debugging
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
@@ -1245,16 +1203,15 @@ const bool Subsumer::simplifyBySubsumption()
         if (clauses[i].clause != NULL && 
             (fullSubsume
             || !clauses[i].clause->subsume0IsFinished())
-            ) {
+            )
+        {
             subsume0(*clauses[i].clause, clauses[i].clause->getAbst());
+            if (subsumedNonLearnt && clauses[i].clause->learnt()) clauses[i].clause->makeNonLearnt();
             numMaxSubsume0--;
         }
     }
     
     origNClauses = clauses.size();
-    uint32_t origNLearnts = solver.learnts.size();
-    
-    if (!treatLearnts()) return false;
     
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  time until pre-subsume0 clauses and subsume1 2-learnts:" << cpuTime()-myTime << std::endl;
@@ -1378,7 +1335,6 @@ const bool Subsumer::simplifyBySubsumption()
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
-    solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
     
     if (solver.verbosity >= 1) {
         std::cout << "c |  lits-rem: " << std::setw(9) << literals_removed
@@ -1646,21 +1602,9 @@ const bool Subsumer::hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray
             vec<Lit> cs(2);
             cs[0] = lit;
             cs[1] = notInLit;
-            //uint32_t index = subsume0(cs, calcAbstraction(cs));
-            /*if (index != std::numeric_limits<uint32_t>::max()) {
-                Clause *cl3 = Clause_new(cs, cl.getGroup());
-                ClauseSimp c(cl3, index);
-                addToClauses.push(c);
-                inside.setBit((~notInLit).toInt());
-                #ifdef HYPER_DEBUG
-                std::cout << "HyperBinRes adding clause: ";
-                cl3->plainPrint();
-                #endif
-            } else {*/
-                Clause *cl3 = Clause_new(cs, cl.getGroup());
-                addToClauses.push(cl3);
-                inside.setBit((~notInLit).toInt());
-            //}
+            Clause *cl3 = Clause_new(cs, cl.getGroup());
+            addToClauses.push(cl3);
+            inside.setBit((~notInLit).toInt());
         }
         next:;
     }
