@@ -75,8 +75,6 @@ struct reduceDB_ltGlucose
     bool operator () (const Clause* x, const Clause* y);
 };
 
-#pragma pack(push)
-#pragma pack(1)
 class PropagatedFrom
 {
     private:
@@ -153,7 +151,6 @@ class PropagatedFrom
             return (*getClause())[i];
         }
 };
-#pragma pack(pop)
 
 class Solver
 {
