@@ -24,8 +24,6 @@ Substantially modified by: Mate Soos (2010)
 #endif
 
 //#define BIT_MORE_VERBOSITY
-//#define HYPER_DEBUG
-//#define HYPER_DEBUG2
 //#define TOUCH_LESS
 
 #ifdef VERBOSE_DEBUG
@@ -1321,8 +1319,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     #ifndef NDEBUG
     verifyIntegrity();
     #endif
-    
-    //vector<char> var_merged = merge();
+
     removeWrong(solver.learnts);
     removeWrong(solver.binaryClauses);
     removeAssignedVarsFromEliminated();
