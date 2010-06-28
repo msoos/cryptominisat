@@ -81,13 +81,11 @@ class PropagatedFrom
 {
     private:
         union {Clause* clause; uint32_t otherLit;};
-        uint8_t binary:1;
-        uint8_t null:1;
+        bool binary;
         
     public:
         PropagatedFrom(Clause* c) :
             binary(false)
-            , null(false)
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(c != NULL);
@@ -97,13 +95,13 @@ class PropagatedFrom
 
         PropagatedFrom(const Lit& _other) :
             binary(true)
-            , null(false)
         {
             otherLit = _other.toInt();
         }
 
         PropagatedFrom() :
-            null(true)
+            clause(NULL)
+            , binary(true)
         {
         }
 
@@ -129,7 +127,10 @@ class PropagatedFrom
 
         const bool isNULL() const
         {
-            return null;
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(!isBinary());
+            #endif
+            return clause == NULL;
         }
 
         const uint32_t size() const
