@@ -2250,9 +2250,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 #endif
         
         if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
-#ifdef VERBOSE_DEBUG
-            std::cout << "Solution needs extension. Extending." << std::endl;
-#endif //VERBOSE_DEBUG
+            std::cout << "c Solution needs extension. Extending." << std::endl;
             Solver s;
             s.doSubsumption = false;
             s.performReplace = false;
@@ -2260,6 +2258,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
             s.findNormalXors = false;
             s.failedVarSearch = false;
             s.conglomerateXors = false;
+            s.subsumeWithNonExistBinaries = false;
+            s.regularSubsumeWithNonExistBinaries = false;
+            s.removeUselessBins = false;
+            s.regularRemoveUselessBins = false;
             s.greedyUnbound = greedyUnbound;
             for (Var var = 0; var < nVars(); var++) {
                 s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || xorSubsumer->getVarElimed()[var]);
