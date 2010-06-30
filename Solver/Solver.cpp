@@ -2068,8 +2068,11 @@ inline void Solver::performStepsBeforeSolve()
 
     if (performReplace && !varReplacer->performReplace()) return;
 
-    if (conflicts == 0 && learnts.size() == 0
-        && noLearntBinaries()) {
+    if (doSubsumption && !subsumer->simplifyBySubsumption(true)) {
+        return;
+    }
+
+    if (performReplace) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) return;
         if (regularRemoveUselessBins) {
