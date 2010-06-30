@@ -283,7 +283,7 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
         }
         
         if (val == l_True) {
-            subs.unlinkModifiedClause(origClause, cc);
+            subs.unlinkModifiedClause(origClause, cc, true);
             clauseFree(cc.clause);
             return true;
         }
@@ -292,21 +292,21 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
     if (i != j) {
         c.setStrenghtened();
         if (origClause.size() > 2 && origClause.size()-(i-j) == 2) {
-            subs.unlinkModifiedClause(origClause, cc);
+            subs.unlinkModifiedClause(origClause, cc, true);
             subs.clauses[cc.index] = cc;
             c.shrink(i-j);
             solver.attachClause(c);
             subs.linkInAlreadyClause(cc);
         } else {
             c.shrink(i-j);
-            subs.unlinkModifiedClauseNoDetachNoNULL(origClause, cc);
+            subs.unlinkModifiedClause(origClause, cc, false);
             subs.linkInAlreadyClause(cc);
             if (c.learnt())
                 solver.learnts_literals -= i-j;
             else
                 solver.clauses_literals -= i-j;
         }
-        c.calcAbstraction();
+        if (!c.learnt()) c.calcAbstractionClause();
         subs.updateClause(cc);
     }
     

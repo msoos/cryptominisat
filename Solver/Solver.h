@@ -55,6 +55,7 @@ class XorSubsumer;
 class PartHandler;
 class RestartTypeChooser;
 class StateSaver;
+class UselessBinRemover;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -75,6 +76,82 @@ struct reduceDB_ltGlucose
     bool operator () (const Clause* x, const Clause* y);
 };
 
+class PropagatedFrom
+{
+    private:
+        union {Clause* clause; uint32_t otherLit;};
+        
+    public:
+        PropagatedFrom(Clause* c)
+        {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(c != NULL);
+            #endif
+            clause = c;
+        }
+
+        PropagatedFrom(const Lit& _other)
+        {
+            otherLit = _other.toInt() << 1;
+            otherLit |= 1;
+        }
+
+        PropagatedFrom() :
+            clause(NULL)
+        {
+        }
+
+        const bool isBinary() const
+        {
+            return (otherLit&1);
+        }
+
+        const Lit getOtherLit() const
+        {
+            return Lit::toLit(otherLit>>1);
+        }
+
+        const Clause* getClause() const
+        {
+            return clause;
+        }
+
+        Clause* getClause()
+        {
+            return clause;
+        }
+
+        const bool isNULL() const
+        {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(!isBinary());
+            #endif
+            return clause == NULL;
+        }
+
+        const uint32_t size() const
+        {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(!isNULL());
+            #endif
+            if (isBinary()) return 2;
+            return getClause()->size();
+        }
+
+        const Lit operator[](uint32_t i) const
+        {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(!isNULL());
+            #endif
+            if (isBinary()) {
+                #ifdef DEBUG_PROPAGATEFROM
+                assert(i == 1);
+                #endif
+                return getOtherLit();
+            }
+            return (*getClause())[i];
+        }
+};
 
 class Solver
 {
@@ -223,9 +300,9 @@ protected:
     template<class T>
     bool    findWatchedCl(const vec<T>& ws, const Clause *c) const;
     template<class T>
-    void    removeWatchedBinCl(vec<T> &ws, const Clause *c);
+    void    removeWatchedBinCl(vec<T> &ws, const Lit impliedLit);
     template<class T>
-    bool    findWatchedBinCl(const vec<T>& ws, const Clause *c) const;
+    bool    findWatchedBinCl(const vec<T>& ws, const Lit impliedLit) const;
     
     // Helper structures:
     //
@@ -269,12 +346,13 @@ protected:
     vector<bool>        decision_var;     // Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            // Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        // Separator indices for different decision levels in 'trail'.
-    vec<ClausePtr>      reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
+    vec<PropagatedFrom> reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<int32_t>        level;            // 'level[var]' contains the level at which the assignment was made.
     uint64_t            curRestart;
     uint32_t            nbclausesbeforereduce;
     uint32_t            nbCompensateSubsumer; // Number of learnt clauses that subsumed normal clauses last time subs. was executed
     uint32_t            qhead;            // Head of queue (as index into the trail -- no more explicit propagation queue in MiniSat).
+    Lit                 failBinLit;
     uint32_t            simpDB_assigns;   // Number of top-level assignments since last execution of 'simplify()'.
     int64_t             simpDB_props;     // Remaining number of propagations that must be made before next execution of 'simplify()'.
     vec<Lit>            assumptions;      // Current set of assumptions provided to solve by the user.
@@ -325,25 +403,24 @@ protected:
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
-    void     uncheckedEnqueue (Lit p, ClausePtr from = (Clause*)NULL);                 // Enqueue a literal. Assumes value of literal is undefined.
+    void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom());                 // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
     bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
-    Clause*  propagate        (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
-    Clause*  propagateLight();
-    Clause*  propagateBin();
-    Clause*  propagateBinNoLearnts();
+    PropagatedFrom  propagate (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
+    PropagatedFrom  propagateBin();
+    PropagatedFrom  propagateBinNoLearnts();
     template<bool dontCareLearnt>
-    Clause*  propagateBinExcept(const Lit& exceptLit);
+    PropagatedFrom  propagateBinExcept(const Lit& exceptLit);
     template<bool dontCareLearnt>
-    Clause*  propagateBinOneLevel();
-    Clause*  propagate_xors   (const Lit& p);
+    PropagatedFrom  propagateBinOneLevel();
+    PropagatedFrom  propagate_xors   (const Lit& p);
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
-    Clause*  analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
+    Clause*  analyze          (PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
     lbool    search           (int nof_conflicts, int nof_conflicts_fullrestart, const bool update = true);      // Search for a given number of conflicts.
     void     reduceDB         ();                                                      // Reduce the set of learnt clauses.
-    llbool   handle_conflict  (vec<Lit>& learnt_clause, Clause* confl, int& conflictC, const bool update);// Handles the conflict clause
+    llbool   handle_conflict  (vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update);// Handles the conflict clause
     llbool   new_decision     (const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
     // Maintaining Variable/Clause activity:
@@ -364,7 +441,7 @@ protected:
     template<class T>
     void     removeClause(T& c);                       // Detach and free a clause.
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
-    void     reverse_binary_clause(Clause& c) const;   // Binary clauses --- the first Lit has to be true
+    //void     reverse_binary_clause(Clause& c) const;   // Binary clauses --- the first Lit has to be true
     void     testAllClauseAttach() const;
     void     findAllAttach() const;
     const bool findClause(XorClause* c) const;
@@ -388,6 +465,8 @@ protected:
     friend class XorSubsumer;
     friend class PartHandler;
     friend class StateSaver;
+    friend class UselessBinRemover;
+    friend class OnlyNonLearntBins;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
@@ -486,7 +565,8 @@ inline bool     Solver::enqueue         (Lit p, Clause* from)
 }
 inline bool     Solver::locked          (const Clause& c) const
 {
-    return reason[c[0].var()] == &c && value(c[0]) == l_True;
+    if (c.size() == 2) return true; //we don't know in this case :I
+    return reason[c[0].var()].getClause() == &c && value(c[0]) == l_True;
 }
 inline void     Solver::newDecisionLevel()
 {
@@ -624,33 +704,37 @@ inline void Solver::removeWatchedCl(vec<T> &ws, const Clause *c) {
     ws.pop();
 }
 template <class T>
-inline void Solver::removeWatchedBinCl(vec<T> &ws, const Clause *c) {
+inline void Solver::removeWatchedBinCl(vec<T> &ws, const Lit impliedLit) {
     uint32_t j = 0;
-    for (; j < ws.size() && ws[j].clause != c; j++);
+    for (; j < ws.size() && ws[j].impliedLit != impliedLit; j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
 }
 template<class T>
-inline bool Solver::findWatchedCl(const vec<T>& ws, const Clause *c) const
+inline bool Solver::findWatchedCl(const vec<T>& ws, const Clause* c) const
 {
     uint32_t j = 0;
     for (; j < ws.size() && ws[j].clause != c; j++);
     return j < ws.size();
 }
 template<class T>
-inline bool Solver::findWatchedBinCl(const vec<T>& ws, const Clause *c) const
+inline bool Solver::findWatchedBinCl(const vec<T>& ws, const Lit impliedLit) const
 {
     uint32_t j = 0;
-    for (; j < ws.size() && ws[j].clause != c; j++);
+    for (; j < ws.size() && ws[j].impliedLit != impliedLit; j++);
     return j < ws.size();
 }
+
+/*
 inline void Solver::reverse_binary_clause(Clause& c) const {
     if (c.size() == 2 && value(c[0]) == l_False) {
         assert(value(c[1]) == l_True);
         std::swap(c[0], c[1]);
     }
 }
+*/
+
 /*inline void Solver::calculate_xor_clause(Clause& c2) const {
     if (c2.isXor() && ((XorClause*)&c2)->updateNeeded())  {
         XorClause& c = *((XorClause*)&c2);

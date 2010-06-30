@@ -18,6 +18,7 @@ using std::map;
 using std::priority_queue;
 
 class ClauseCleaner;
+class OnlyNonLearntBins;
 
 class Subsumer
 {
@@ -28,13 +29,12 @@ public:
     ~Subsumer();
 
     //Called from main
-    const bool simplifyBySubsumption();
-    const bool subsumeWithBinaries(const bool startUp);
+    const bool simplifyBySubsumption(const bool alsoLearnt = false);
+    const bool subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins);
     void newVar();
 
     //Used by cleaner
-    void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c);
-    void unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSimp c);
+    void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c, const bool detachAndNull);
     void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
     void linkInAlreadyClause(ClauseSimp& c);
@@ -95,7 +95,6 @@ private:
     void removeWrong(vec<Clause*>& cs);
     void removeAssignedVarsFromEliminated();
     void fillCannotEliminate();
-    const bool treatLearnts();
     void clearAll();
     
     //Iterations
@@ -114,8 +113,8 @@ private:
     uint32_t subsume0(T& ps, uint32_t abs);
     template<class T>
     uint32_t subsume0Orig(const T& ps, uint32_t abs);
+    bool subsumedNonLearnt;
     void subsume0BIN(const Lit lit, const vec<char>& lits);
-    void subsume0LearntSet(vec<Clause*>& cs);
     void subsume1(ClauseSimp& ps);
     void smaller_database();
     void almost_all_database();
@@ -124,15 +123,14 @@ private:
     bool subsetAbst(uint32_t A, uint32_t B);
     
     void orderVarsForElim(vec<Var>& order);
-    int  substitute(Lit x, Clause& def, vec<Clause*>& poss, vec<Clause*>& negs, vec<Clause*>& new_clauses);
     bool maybeEliminate(Var x);
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
     void DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns);
     bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
 
     //Subsume with Nonexistent Bins
-    const bool subsWNonExistBinsFull(const bool startUp);
-    const bool subsWNonExistBins(const Lit& lit, const bool startUp);
+    const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
+    const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
     template<class T>
     void subsume1Partial(const T& ps);
     uint32_t subsNonExistentNum;
@@ -147,15 +145,6 @@ private:
     vec<Lit> toVisit;
     vec<char> toVisitAll;
     vec<Lit> ps2;
-    
-    //hyperBinRes
-    void addFromSolverAll(vec<Clause*>& cs);
-    const bool hyperBinRes();
-    const bool hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<Clause*>& addToClauses);
-    
-    //merging
-    //vector<char> merge();
-    //const bool checkIfSame(const Lit var1, const Lit var2);
     
     class VarOcc {
         public:

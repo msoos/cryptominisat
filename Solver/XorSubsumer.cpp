@@ -100,7 +100,7 @@ void XorSubsumer::unlinkClause(XorClauseSimp c, const Var elim)
     XorClause& cl = *c.clause;
     
     for (uint32_t i = 0; i < cl.size(); i++) {
-        maybeRemove(occur[cl[i].var()], &cl);
+        removeW(occur[cl[i].var()], &cl);
     }
     
     if (elim != var_Undef)
@@ -114,7 +114,7 @@ void XorSubsumer::unlinkClause(XorClauseSimp c, const Var elim)
 void XorSubsumer::unlinkModifiedClause(vec<Lit>& origClause, XorClauseSimp c)
 {
     for (uint32_t i = 0; i < origClause.size(); i++) {
-        maybeRemove(occur[origClause[i].var()], c.clause);
+        removeW(occur[origClause[i].var()], c.clause);
     }
     
     solver.detachModifiedClause(origClause[0].var(), origClause[1].var(), origClause.size(), c.clause);
@@ -125,7 +125,7 @@ void XorSubsumer::unlinkModifiedClause(vec<Lit>& origClause, XorClauseSimp c)
 void XorSubsumer::unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, XorClauseSimp c)
 {
     for (uint32_t i = 0; i < origClause.size(); i++) {
-        maybeRemove(occur[origClause[i].var()], c.clause);
+        removeW(occur[origClause[i].var()], c.clause);
     }
 }
 
@@ -468,7 +468,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         }
         
         propagated =  (solver.qhead != solver.trail.size());
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         if (!solver.ok) {
             std::cout << "c (contradiction during subsumption)" << std::endl;
             return false;

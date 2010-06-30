@@ -40,6 +40,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "PartHandler.h"
 #include "XorSubsumer.h"
 #include "StateSaver.h"
+#include "UselessBinRemover.h"
+#include "OnlyNonLearntBins.h"
 
 #ifdef USE_GAUSS
 #include "Gaussian.h"
@@ -191,7 +193,7 @@ Var Solver::newVar(bool dvar)
     binwatches.push();          // (list for positive literal)
     binwatches.push();          // (list for negative literal)
     xorwatches.push();          // (list for variables in xors)
-    reason    .push((Clause*)NULL);
+    reason    .push(PropagatedFrom());
     assigns   .push(l_Undef);
     level     .push(-1);
     activity  .push(0);
@@ -259,7 +261,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32
         }
         case 1: {
             uncheckedEnqueue(Lit(ps[0].var(), xor_clause_inverted));
-            ok = (propagate() == NULL);
+            ok = (propagate().isNULL());
             return NULL;
         }
         case 2: {
@@ -379,7 +381,7 @@ Clause* Solver::addClauseInt(T& ps, uint group)
         return NULL;
     } else if (ps.size() == 1) {
         uncheckedEnqueue(ps[0]);
-        ok = (propagate() == NULL);
+        ok = (propagate().isNULL());
         return NULL;
     }
 
@@ -459,12 +461,12 @@ void Solver::attachClause(XorClause& c)
 void Solver::attachClause(Clause& c)
 {
     assert(c.size() > 1);
-    int index0 = (~c[0]).toInt();
-    int index1 = (~c[1]).toInt();
+    uint32_t index0 = (~c[0]).toInt();
+    uint32_t index1 = (~c[1]).toInt();
     
     if (c.size() == 2) {
-        binwatches[index0].push(WatchedBin(&c, c[1]));
-        binwatches[index1].push(WatchedBin(&c, c[0]));
+        binwatches[index0].push(WatchedBin(c[1]));
+        binwatches[index1].push(WatchedBin(c[0]));
     } else {
         watches[index0].push(Watched(&c, c[c.size()/2]));
         watches[index1].push(Watched(&c, c[c.size()/2]));
@@ -490,11 +492,11 @@ void Solver::detachClause(const Clause& c)
 {
     assert(c.size() > 1);
     if (c.size() == 2) {
-        assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], &c));
-        assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], &c));
+        assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], c[1]));
+        assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], c[0]));
         
-        removeWatchedBinCl(binwatches[(~c[0]).toInt()], &c);
-        removeWatchedBinCl(binwatches[(~c[1]).toInt()], &c);
+        removeWatchedBinCl(binwatches[(~c[0]).toInt()], c[1]);
+        removeWatchedBinCl(binwatches[(~c[1]).toInt()], c[0]);
     } else {
         assert(findWatchedCl(watches[(~c[0]).toInt()], &c));
         assert(findWatchedCl(watches[(~c[1]).toInt()], &c));
@@ -512,10 +514,10 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
     assert(origSize > 1);
     
     if (origSize == 2) {
-        assert(findWatchedBinCl(binwatches[(~lit1).toInt()], address));
-        assert(findWatchedBinCl(binwatches[(~lit2).toInt()], address));
-        removeWatchedBinCl(binwatches[(~lit1).toInt()], address);
-        removeWatchedBinCl(binwatches[(~lit2).toInt()], address);
+        assert(findWatchedBinCl(binwatches[(~lit1).toInt()], lit2));
+        assert(findWatchedBinCl(binwatches[(~lit2).toInt()], lit1));
+        removeWatchedBinCl(binwatches[(~lit1).toInt()], lit2);
+        removeWatchedBinCl(binwatches[(~lit2).toInt()], lit1);
     } else {
         assert(findW(watches[(~lit1).toInt()], address));
         assert(findW(watches[(~lit2).toInt()], address));
@@ -789,11 +791,10 @@ bool subset(const T1& A, const T2& B, vector<bool>& seen)
 |  Effect:
 |    Will undo part of the trail, upto but not beyond the assumption of the current decision level.
 |________________________________________________________________________________________________@*/
-Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nbLevels, const bool update)
+Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nbLevels, const bool update)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
-    Clause* oldConfl = NULL;
 
     // Generate conflict clause:
     //
@@ -801,17 +802,18 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, u
     int index   = trail.size() - 1;
     out_btlevel = 0;
 
-    do {
-        assert(confl != NULL);          // (otherwise should be UIP)
-        Clause& c = *confl;
-        if (p != lit_Undef)
-            reverse_binary_clause(c);
-        
-        if (update && restartType == static_restart && c.learnt())
-            claBumpActivity(c);
+    PropagatedFrom oldConfl;
 
-        for (uint j = (p == lit_Undef) ? 0 : 1; j != c.size(); j++) {
-            const Lit& q = c[j];
+    do {
+        assert(!confl.isNULL());          // (otherwise should be UIP)
+        
+        if (update && restartType == static_restart && !confl.isBinary() && confl.getClause()->learnt())
+            claBumpActivity(*confl.getClause());
+
+        for (uint j = (p == lit_Undef) ? 0 : 1, size = confl.size(); j != size; j++) {
+            Lit q;
+            if (j == 0 && confl.isBinary()) q = failBinLit;
+            else q = confl[j];
             const Var my_var = q.var();
 
             if (!seen[my_var] && level[my_var] > 0) {
@@ -820,7 +822,10 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, u
                 if (level[my_var] >= (int)decisionLevel()) {
                     pathC++;
                     #ifdef UPDATEVARACTIVITY
-                    if (lastSelectedRestartType == dynamic_restart && reason[q.var()] != NULL  && reason[q.var()]->learnt())
+                    if (lastSelectedRestartType == dynamic_restart
+                        && !reason[q.var()].isNULL()
+                        && !reason[q.var()].isBinary()
+                        && reason[q.var()].getClause()->learnt())
                         lastDecisionLevel.push(q.var());
                     #endif
                 } else {
@@ -836,7 +841,7 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, u
         p     = trail[index+1];
         oldConfl = confl;
         confl = reason[p.var()];
-        __builtin_prefetch(confl, 1, 0);
+        if (!confl.isBinary()) __builtin_prefetch(confl.getClause(), 1, 0);
         seen[p.var()] = 0;
         pathC--;
 
@@ -853,19 +858,19 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, u
 
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++)
-            if (reason[out_learnt[i].var()] == NULL || !litRedundant(out_learnt[i], abstract_level))
+            if (reason[out_learnt[i].var()].isNULL() || !litRedundant(out_learnt[i], abstract_level))
                 out_learnt[j++] = out_learnt[i];
     } else {
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++) {
-            Clause& c = *reason[out_learnt[i].var()];
-            reverse_binary_clause(c);
-            
-            for (uint k = 1; k < c.size(); k++)
+            PropagatedFrom c(reason[out_learnt[i].var()]);
+
+            for (uint k = 1, size = c.size(); k < size; k++) {
                 if (!seen[c[k].var()] && level[c[k].var()] > 0) {
                     out_learnt[j++] = out_learnt[i];
                     break;
                 }
+            }
         }
     }
     max_literals += out_learnt.size();
@@ -891,7 +896,8 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, u
         nbLevels = calcNBLevels(out_learnt);
         #ifdef UPDATEVARACTIVITY
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
-            if (reason[lastDecisionLevel[i]]->activity() < nbLevels)
+            PropagatedFrom cl = reason[lastDecisionLevel[i]];
+            if (!cl.isBinary() && cl.getClause()->activity() < nbLevels)
                 varBumpActivity(lastDecisionLevel[i]);
         }
         lastDecisionLevel.clear();
@@ -903,14 +909,15 @@ Clause* Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel, u
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
     
-    if (out_learnt.size() == 1)
-        return NULL;
+    if (out_learnt.size() == 1) return NULL;
     
-    if (!oldConfl->isXor() && out_learnt.size() < oldConfl->size()) {
-        if (!subset(out_learnt, *oldConfl, seen)) return NULL;
+    if (!oldConfl.isBinary() && !oldConfl.getClause()->isXor()
+        && out_learnt.size() < oldConfl.getClause()->size()) {
+        if (!subset(out_learnt, *oldConfl.getClause(), seen))
+            return NULL;
         improvedClauseNo++;
-        improvedClauseSize += oldConfl->size() - out_learnt.size();
-        return oldConfl;
+        improvedClauseSize += oldConfl.getClause()->size() - out_learnt.size();
+        return oldConfl.getClause();
     }
     
     return NULL;
@@ -925,16 +932,15 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     analyze_stack.push(p);
     int top = analyze_toclear.size();
     while (analyze_stack.size() > 0) {
-        assert(reason[analyze_stack.last().var()] != NULL);
-        Clause& c = *reason[analyze_stack.last().var()];
-        reverse_binary_clause(c);
+        assert(!reason[analyze_stack.last().var()].isNULL());
+        PropagatedFrom c(reason[analyze_stack.last().var()]);
         
         analyze_stack.pop();
 
-        for (uint i = 1; i < c.size(); i++) {
+        for (uint i = 1, size = c.size(); i < size; i++) {
             Lit p  = c[i];
             if (!seen[p.var()] && level[p.var()] > 0) {
-                if (reason[p.var()] != NULL && (abstractLevel(p.var()) & abstract_levels) != 0) {
+                if (!reason[p.var()].isNULL() && (abstractLevel(p.var()) & abstract_levels) != 0) {
                     seen[p.var()] = 1;
                     analyze_stack.push(p);
                     analyze_toclear.push(p);
@@ -974,12 +980,12 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
     for (int32_t i = (int32_t)trail.size()-1; i >= (int32_t)trail_lim[0]; i--) {
         Var x = trail[i].var();
         if (seen[x]) {
-            if (reason[x] == NULL) {
+            if (reason[x].isNULL()) {
                 assert(level[x] > 0);
                 out_conflict.push(~trail[i]);
             } else {
-                const Clause& c = *reason[x];
-                for (uint j = 1; j < c.size(); j++)
+                PropagatedFrom c = reason[x];
+                for (uint j = 1, size = c.size(); j < size; j++)
                     if (level[c[j].var()] > 0)
                         seen[c[j].var()] = 1;
             }
@@ -991,7 +997,7 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
 }
 
 
-void Solver::uncheckedEnqueue(Lit p, ClausePtr from)
+void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
 {
 
     #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -1031,9 +1037,9 @@ void Solver::uncheckedEnqueue(Lit p, ClausePtr from)
 |    Post-conditions:
 |      * the propagation queue is empty, even if there was a conflict.
 |________________________________________________________________________________________________@*/
-Clause* Solver::propagate(const bool update)
+PropagatedFrom Solver::propagate(const bool update)
 {
-    Clause* confl = NULL;
+    PropagatedFrom confl;
     uint32_t num_props = 0;
     
     #ifdef VERBOSE_DEBUG
@@ -1051,15 +1057,17 @@ Clause* Solver::propagate(const bool update)
             for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
                 lbool val = value(k->impliedLit);
                 if (val.isUndef()) {
-                    uncheckedEnqueue(k->impliedLit, k->clause);
+                    uncheckedEnqueue(k->impliedLit, PropagatedFrom(p));
                 } else if (val == l_False) {
-                    confl = k->clause;
+                    confl = PropagatedFrom(p);
+                    failBinLit = k->impliedLit;
                     //goto EndPropagate;
                 }
             }
         }
-        if (confl != NULL)
+        if (!confl.isNULL()) {
             goto EndPropagate;
+        }
 
         //Next, propagate normal clauses
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
@@ -1112,7 +1120,7 @@ Clause* Solver::propagate(const bool update)
                 j->blockedLit = bl;
                 j++;
                 if (value(first) == l_False) {
-                    confl = &c;
+                    confl = PropagatedFrom(&c);
                     qhead = trail.size();
                     // Copy the remaining watches:
                     while (i < end)
@@ -1134,7 +1142,7 @@ FoundWatch:
         ws.shrink_(i - j);
 
         //Finally, propagate XOR-clauses
-        if (xorclauses.size() > 0 && !confl) confl = propagate_xors(p);
+        if (xorclauses.size() > 0 && confl.isNULL()) confl = propagate_xors(p);
     }
 EndPropagate:
     propagations += num_props;
@@ -1147,102 +1155,7 @@ EndPropagate:
     return confl;
 }
 
-Clause* Solver::propagateLight()
-{
-    Clause* confl = NULL;
-    uint32_t num_props = 0;
-    uint32_t qheadBin = qhead;
-    
-    while (qhead < trail.size()) {
-        
-        //First propagate binary clauses
-        while (qheadBin < trail.size()) {
-            Lit p   = trail[qheadBin++];
-            vec<WatchedBin> & wbin = binwatches[p.toInt()];
-            num_props += wbin.size()/2;
-            for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
-                lbool val = value(k->impliedLit);
-                if (val.isUndef()) {
-                    uncheckedEnqueueLight(k->impliedLit);
-                } else if (val == l_False) {
-                    confl = k->clause;
-                    goto EndPropagate;
-                }
-            }
-        }
-        
-        //Next, propagate normal clauses
-        Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
-        vec<Watched>&  ws  = watches[p.toInt()];
-        Watched        *i, *j, *end;
-        num_props += ws.size();
-        
-        for (i = j = ws.getData(), end = ws.getDataEnd();  i != end;) {
-            if (i+1 != end)
-                __builtin_prefetch((i+1)->clause, 1, 0);
-            
-            if(value(i->blockedLit).getBool()) { // Clause is sat
-                *j++ = *i++;
-                continue;
-            }
-            Lit bl = i->blockedLit;
-            Clause& c = *(i->clause);
-            i++;
-            
-            // Make sure the false literal is data[1]:
-            const Lit false_lit(~p);
-            if (c[0] == false_lit)
-                c[0] = c[1], c[1] = false_lit;
-            
-            assert(c[1] == false_lit);
-            
-            // If 0th watch is true, then clause is already satisfied.
-            const Lit& first = c[0];
-            if (value(first).getBool()) {
-                j->clause = &c;
-                j->blockedLit = first;
-                j++;
-            } else {
-                // Look for new watch:
-                for (Lit *k = &c[2], *end2 = c.getDataEnd(); k != end2; k++) {
-                    if (value(*k) != l_False) {
-                        c[1] = *k;
-                        *k = false_lit;
-                        watches[(~c[1]).toInt()].push(Watched(&c, c[0]));
-                        goto FoundWatch;
-                    }
-                }
-                
-                // Did not find watch -- clause is unit under assignment:
-                j->clause = &c;
-                j->blockedLit = bl;
-                j++;
-                if (value(first) == l_False) {
-                    confl = &c;
-                    qhead = trail.size();
-                    // Copy the remaining watches:
-                    while (i < end)
-                        *j++ = *i++;
-                } else {
-                    uncheckedEnqueueLight(first);
-                }
-            }
-            FoundWatch:
-            ;
-        }
-        ws.shrink_(i - j);
-        
-        //Finally, propagate XOR-clauses
-        if (xorclauses.size() > 0 && !confl) confl = propagate_xors(p);
-    }
-    EndPropagate:
-    propagations += num_props;
-    simpDB_props -= num_props;
-    
-    return confl;
-}
-
-Clause* Solver::propagateBin()
+PropagatedFrom Solver::propagateBin()
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
@@ -1254,82 +1167,13 @@ Clause* Solver::propagateBin()
                 //uncheckedEnqueue(k->impliedLit, k->clause);
                 uncheckedEnqueueLight(k->impliedLit);
             } else if (val == l_False) {
-                return k->clause;
+                return PropagatedFrom(p);
             }
         }
     }
 
-    return NULL;
+    return PropagatedFrom();
 }
-
-Clause* Solver::propagateBinNoLearnts()
-{
-    while (qhead < trail.size()) {
-        Lit p   = trail[qhead++];
-        vec<WatchedBin> & wbin = binwatches[p.toInt()];
-        propagations += wbin.size()/2;
-        for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
-            if (k->clause->learnt()) continue;
-            lbool val = value(k->impliedLit);
-            if (val.isUndef()) {
-                //uncheckedEnqueue(k->impliedLit, k->clause);
-                uncheckedEnqueueLight(k->impliedLit);
-            } else if (val == l_False) {
-                return k->clause;
-            }
-        }
-    }
-    
-    return NULL;
-}
-
-template<bool dontCareLearnt>
-Clause* Solver::propagateBinExcept(const Lit& exceptLit)
-{
-    while (qhead < trail.size()) {
-        Lit p   = trail[qhead++];
-        vec<WatchedBin> & wbin = binwatches[p.toInt()];
-        propagations += wbin.size()/2;
-        for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
-            if (!dontCareLearnt && k->clause->learnt()) continue;
-            lbool val = value(k->impliedLit);
-            if (val.isUndef() && k->impliedLit != exceptLit) {
-                //uncheckedEnqueue(k->impliedLit, k->clause);
-                uncheckedEnqueueLight(k->impliedLit);
-            } else if (val == l_False) {
-                return k->clause;
-            }
-        }
-    }
-    
-    return NULL;
-}
-
-template Clause* Solver::propagateBinExcept <true>(const Lit& exceptLit);
-template Clause* Solver::propagateBinExcept <false>(const Lit& exceptLit);
-
-template<bool dontCareLearnt>
-Clause* Solver::propagateBinOneLevel()
-{
-    Lit p   = trail[qhead];
-    vec<WatchedBin> & wbin = binwatches[p.toInt()];
-    propagations += wbin.size()/2;
-    for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
-        if (!dontCareLearnt && k->clause->learnt()) continue;
-        lbool val = value(k->impliedLit);
-        if (val.isUndef()) {
-            //uncheckedEnqueue(k->impliedLit, k->clause);
-            uncheckedEnqueueLight(k->impliedLit);
-        } else if (val == l_False) {
-            return k->clause;
-        }
-    }
-    
-    return NULL;
-}
-
-template Clause* Solver::propagateBinOneLevel <true>();
-template Clause* Solver::propagateBinOneLevel <false>();
 
 template<class T>
 inline const uint32_t Solver::calcNBLevels(const T& ps)
@@ -1346,13 +1190,13 @@ inline const uint32_t Solver::calcNBLevels(const T& ps)
     return nbLevels;
 }
 
-Clause* Solver::propagate_xors(const Lit& p)
+PropagatedFrom Solver::propagate_xors(const Lit& p)
 {
     #ifdef VERBOSE_DEBUG_XOR
     cout << "Xor-Propagating variable " <<  p.var()+1 << endl;
     #endif
     
-    Clause* confl = NULL;
+    PropagatedFrom confl;
 
     vec<XorClausePtr>&  ws  = xorwatches[p.var()];
     XorClausePtr        *i, *j, *end;
@@ -1421,7 +1265,7 @@ Clause* Solver::propagate_xors(const Lit& p)
                 cout << endl << endl;
                 #endif
                 
-                confl = (Clause*)&c;
+                confl = PropagatedFrom((Clause*)&c);
                 qhead = trail.size();
                 // Copy the remaining watches:
                 while (i < end)
@@ -1667,7 +1511,7 @@ const bool Solver::simplify()
     testAllClauseAttach();
     assert(decisionLevel() == 0);
 
-    if (!ok || propagate() != NULL) {
+    if (!ok || !propagate().isNULL()) {
         ok = false;
         return false;
     }
@@ -1769,9 +1613,9 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     testAllClauseAttach();
     findAllAttach();
     for (;;) {
-        Clause* confl = propagate(update);
+        PropagatedFrom confl = propagate(update);
 
-        if (confl != NULL) {
+        if (!confl.isNULL()) {
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
             if (ret != l_Nothing) return ret;
         } else {
@@ -1888,7 +1732,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     return l_Nothing;
 }
 
-llbool Solver::handle_conflict(vec<Lit>& learnt_clause, Clause* confl, int& conflictC, const bool update)
+llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Handling conflict: ";
@@ -2127,19 +1971,31 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
     testAllClauseAttach();
 
-    if (regularRemoveUselessBins
-        && !failedVarSearcher->removeUslessBinFull<false>()) {
+    if (performReplace && (regularRemoveUselessBins || regularSubsumeWithNonExistBinaries)) {
+        OnlyNonLearntBins onlyNonLearntBins(*this);
+        if (!onlyNonLearntBins.fill()) {
+            status = l_False;
+            goto end;
+        }
+        if (regularRemoveUselessBins) {
+            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
+            if (!uselessBinRemover.removeUslessBinFull()) {
+                status = l_False;
+                goto end;
+            }
+        }
+        if (regularSubsumeWithNonExistBinaries
+            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) {
+            status = l_False;
+            goto end;
+        }
+    }
+
+    if (doSubsumption && !subsumer->simplifyBySubsumption(false)) {
         status = l_False;
         goto end;
     }
-
-    if (regularSubsumeWithNonExistBinaries
-        && !subsumer->subsumeWithBinaries(false)) {
-        status = l_False;
-        goto end;
-    }
-
-    if (doSubsumption && !subsumer->simplifyBySubsumption()) {
+    if (doSubsumption && !subsumer->simplifyBySubsumption(true)) {
         status = l_False;
         goto end;
     }
@@ -2214,8 +2070,14 @@ inline void Solver::performStepsBeforeSolve()
 
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
-        if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
-        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
+        OnlyNonLearntBins onlyNonLearntBins(*this);
+        if (!onlyNonLearntBins.fill()) return;
+        if (regularRemoveUselessBins) {
+            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
+            if (!uselessBinRemover.removeUslessBinFull()) return;
+        }
+        if (subsumeWithNonExistBinaries
+            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
     }
     
     testAllClauseAttach();
@@ -2225,11 +2087,18 @@ inline void Solver::performStepsBeforeSolve()
         && !subsumer->simplifyBySubsumption())
         return;
 
+    /*
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
         if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
-        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
+        OnlyNonLearntBins onlyNonLearntBins(*this);
+        if (!onlyNonLearntBins.fill()) return;
+        if (regularRemoveUselessBins) {
+            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
+            if (!uselessBinRemover.removeUslessBinFull()) return;
+        }
     }
+    */
     
     testAllClauseAttach();
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
@@ -2419,7 +2288,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             for (Var var = 0; var < nVars(); var++) {
                 if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
             }
-            ok = (propagate() == NULL);
+            ok = (propagate().isNULL());
             if (!ok) {
                 printf("c ERROR! Extension of model failed!\n");
                 assert(ok);

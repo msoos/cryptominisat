@@ -90,6 +90,10 @@ public:
     {
         fprintf(outfile,"%s%d 0\n", sign() ? "-" : "", var()+1);
     }
+    static Lit toLit(uint32_t data)
+    {
+        return Lit(data);
+    }
 };
 
 const Lit lit_Undef(var_Undef, false);  // Useful special constants.

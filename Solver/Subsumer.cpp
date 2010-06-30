@@ -13,6 +13,7 @@ Substantially modified by: Mate Soos (2010)
 #include <algorithm>
 #include "VarReplacer.h"
 #include "XorFinder.h"
+#include "OnlyNonLearntBins.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -24,8 +25,6 @@ Substantially modified by: Mate Soos (2010)
 #endif
 
 //#define BIT_MORE_VERBOSITY
-//#define HYPER_DEBUG
-//#define HYPER_DEBUG2
 //#define TOUCH_LESS
 
 #ifdef VERBOSE_DEBUG
@@ -166,6 +165,7 @@ inline uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
 template<class T>
 uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 {
+    subsumedNonLearnt = false;
     uint32_t retIndex = std::numeric_limits<uint32_t>::max();
     vec<ClauseSimp> subs;
     findSubsumed(ps, abs, subs);
@@ -177,6 +177,7 @@ uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         #endif
         
         Clause* tmp = subs[i].clause;
+        subsumedNonLearnt |= !tmp->learnt();
         retIndex = subs[i].index;
         unlinkClause(subs[i]);
         clauseFree(tmp);
@@ -271,13 +272,13 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
             return;
         }
         if (cl.size() > 2) {
-            cl.calcAbstraction();
+            cl.calcAbstractionClause();
             linkInAlreadyClause(c);
             clauses[c.index] = c;
             solver.attachClause(cl);
             updateClause(c);
         } else if (cl.size() == 2) {
-            cl.calcAbstraction();
+            cl.calcAbstractionClause();
             solver.attachClause(cl);
             solver.becameBinary++;
             addBinaryClauses.push(&cl);
@@ -285,7 +286,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
         } else {
             assert(cl.size() == 1);
             solver.uncheckedEnqueue(cl[0]);
-            solver.ok = (solver.propagate() == NULL);
+            solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) {
                 unregisterIteration(subs2);
                 return;
@@ -341,7 +342,7 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
     clauses[c.index].clause = NULL;
 }
 
-void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c)
+void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c, bool detachAndNull)
 {
     for (uint32_t i = 0; i < origClause.size(); i++) {
         maybeRemove(occur[origClause[i].toInt()], c.clause);
@@ -349,8 +350,6 @@ void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c)
         touch(origClause[i]);
         #endif
     }
-    
-    solver.detachModifiedClause(origClause[0], origClause[1], origClause.size(), c.clause);
     
     // Remove from iterator vectors/sets:
     for (uint32_t i = 0; i < iter_vecs.size(); i++){
@@ -367,34 +366,11 @@ void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c)
     // Remove clause from clause touched set:
     cl_touched.exclude(c);
     cl_added.exclude(c);
-    
-    clauses[c.index].clause = NULL;
-}
 
-void Subsumer::unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSimp c)
-{
-    for (uint32_t i = 0; i < origClause.size(); i++) {
-        maybeRemove(occur[origClause[i].toInt()], c.clause);
-        #ifndef TOUCH_LESS
-        touch(origClause[i]);
-        #endif
+    if (detachAndNull) {
+        solver.detachModifiedClause(origClause[0], origClause[1], origClause.size(), c.clause);
+        clauses[c.index].clause = NULL;
     }
-    
-    // Remove from iterator vectors/sets:
-    for (uint32_t i = 0; i < iter_vecs.size(); i++){
-        vec<ClauseSimp>& cs = *iter_vecs[i];
-        for (uint32_t j = 0; j < cs.size(); j++)
-            if (cs[j].clause == c.clause)
-                cs[j].clause = NULL;
-    }
-    for (uint32_t i = 0; i < iter_sets.size(); i++){
-        CSet& cs = *iter_sets[i];
-        cs.exclude(c);
-    }
-    
-    // Remove clause from clause touched set:
-    cl_touched.exclude(c);
-    cl_added.exclude(c);
 }
 
 void Subsumer::subsume1(ClauseSimp& ps)
@@ -478,7 +454,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     return;
                 }
                 if (cl.size() > 1) {
-                    cl.calcAbstraction();
+                    cl.calcAbstractionClause();
                     linkInAlreadyClause(c);
                     clauses[c.index] = c;
                     solver.attachClause(cl);
@@ -488,7 +464,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                 } else {
                     assert(cl.size() == 1);
                     solver.uncheckedEnqueue(cl[0]);
-                    solver.ok = (solver.propagate() == NULL);
+                    solver.ok = (solver.propagate().isNULL());
                     if (!solver.ok) {
                         unregisterIteration(Q);
                         unregisterIteration(subs);
@@ -576,13 +552,13 @@ void Subsumer::subsume1Partial(const T& ps)
                 return;
             }
             if (cl.size() > 2) {
-                cl.calcAbstraction();
+                cl.calcAbstractionClause();
                 linkInAlreadyClause(c);
                 clauses[c.index] = c;
                 solver.attachClause(cl);
                 updateClause(c);
             } else if (cl.size() == 2) {
-                cl.calcAbstraction();
+                cl.calcAbstractionClause();
                 solver.attachClause(cl);
                 solver.becameBinary++;
                 addBinaryClauses.push(&cl);
@@ -590,7 +566,7 @@ void Subsumer::subsume1Partial(const T& ps)
             } else {
                 assert(cl.size() == 1);
                 solver.uncheckedEnqueue(cl[0]);
-                solver.ok = (solver.propagate() == NULL);
+                solver.ok = (solver.propagate().isNULL());
                 if (!solver.ok) {
                     unregisterIteration(subsume1PartialSubs);
                     return;
@@ -611,7 +587,9 @@ void Subsumer::subsume1Partial(const T& ps)
 
 void Subsumer::updateClause(ClauseSimp c)
 {
-    if (!c.clause->learnt()) subsume0(*c.clause, c.clause->getAbst());
+    subsume0(*c.clause, c.clause->getAbst());
+    if (c.clause->learnt() && subsumedNonLearnt)
+        c.clause->makeNonLearnt();
     
     cl_touched.add(c);
 }
@@ -635,7 +613,7 @@ void Subsumer::almost_all_database()
     }
     
     assert(solver.ok);
-    solver.ok = (solver.propagate() == NULL);
+    solver.ok = (solver.propagate().isNULL());
     if (!solver.ok) {
         std::cout << "c (contradiction during subsumption)" << std::endl;
         return;
@@ -669,7 +647,7 @@ void Subsumer::almost_all_database()
         s1.clear();
         
         if (!solver.ok) return;
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         if (!solver.ok) {
             printf("c (contradiction during subsumption)\n");
             unregisterIteration(s1);
@@ -756,7 +734,7 @@ void Subsumer::smaller_database()
         s1.clear();
         
         if (!solver.ok) return;
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         if (!solver.ok){
             printf("c (contradiction during subsumption)\n");
             unregisterIteration(s1);
@@ -769,8 +747,10 @@ void Subsumer::smaller_database()
     
     // Iteration pass for 0-subsumption:
     for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
-        if (it->clause != NULL)
+        if (it->clause != NULL) {
             subsume0(*it->clause, it->clause->getAbst());
+            if (subsumedNonLearnt && it->clause->learnt()) it->clause->makeNonLearnt();
+        }
     }
     s0.clear();
     unregisterIteration(s0);
@@ -832,8 +812,8 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
             else if (cl.getStrenghtened()) cl_touched.add(c);
         }
 
-        if (cl.getVarChanged() || cl.getStrenghtened())
-            cl.calcAbstraction();
+        if (!cl.learnt() && (cl.getVarChanged() || cl.getStrenghtened()))
+            cl.calcAbstractionClause();
     }
     cs.shrink(i-j);
 }
@@ -917,65 +897,7 @@ void Subsumer::fillCannotEliminate()
     #endif
 }
 
-void Subsumer::subsume0LearntSet(vec<Clause*>& cs)
-{
-    Clause** a = cs.getData();
-    Clause** b = a;
-    for (Clause** end = a + cs.size(); a != end; a++) {
-        if (numMaxSubsume0 > 0 && !(*a)->subsume0IsFinished()) {
-            numMaxSubsume0--;
-            uint32_t index = subsume0(**a, calcAbstraction(**a));
-            if (index != std::numeric_limits<uint32_t>::max()) {
-                (*a)->makeNonLearnt();
-                //solver.nbBin--;
-                clauses[index].clause = *a;
-                linkInAlreadyClause(clauses[index]);
-                solver.learnts_literals -= (*a)->size();
-                solver.clauses_literals += (*a)->size();
-                cl_added.add(clauses[index]);
-                continue;
-            }
-            if (numMaxSubsume1 > 0 &&
-                (((*a)->size() == 2 && clauses.size() < 3500000) ||
-                ((*a)->size() <= 3 && clauses.size() < 300000) ||
-                ((*a)->size() <= 4 && clauses.size() < 60000))) {
-                ClauseSimp c(*a, clauseID++);
-                //(*a)->calcAbstraction();
-                //clauses.push(c);
-                subsume1(c);
-                numMaxSubsume1--;
-                if (!solver.ok) {
-                    for (; a != end; a++)
-                        *b++ = *a;
-                    cs.shrink(a-b);
-                    return;
-                }
-                //assert(clauses[c.index].clause != NULL);
-                //clauses.pop();
-                clauseID--;
-            }
-        }
-        *b++  = *a;
-    }
-    cs.shrink(a-b);
-}
-
-const bool Subsumer::treatLearnts()
-{
-    subsume0LearntSet(solver.learnts);
-    if (!solver.ok) return false;
-    subsume0LearntSet(solver.binaryClauses);
-    if (!solver.ok) return false;
-    solver.ok = (solver.propagate() == NULL);
-    if (!solver.ok){
-        printf("c (contradiction during subsumption)\n");
-        return false;
-    }
-    solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
-    return true;
-}
-
-const bool Subsumer::subsumeWithBinaries(const bool startUp)
+const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
 {
     clearAll();
     clauseID = 0;
@@ -999,7 +921,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     #endif //DEBUG_BINARIES
 
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-        if (startUp || !solver.binaryClauses[i]->learnt()) {
+        if (!solver.binaryClauses[i]->learnt()) {
             Clause& c = *solver.binaryClauses[i];
             subsume0(c, c.getAbst());
         }
@@ -1017,7 +939,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
         << std::setw(17)  << "   |" << std::endl;
     }
     
-    if (!subsWNonExistBinsFull(startUp)) return false;
+    if (!subsWNonExistBinsFull(onlyNonLearntBins)) return false;
 
     #ifdef DEBUG_BINARIES
     for (uint32_t i = 0; i < clauses.size(); i++) {
@@ -1046,7 +968,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
 
 #define MAX_BINARY_PROP 40000000
 
-const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
+const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
 {
     uint32_t oldClausesSubusmed = clauses_subsumed;
     uint32_t oldLitsRemoved = literals_removed;
@@ -1054,7 +976,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
     uint64_t oldProps = solver.propagations;
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t maxProp = MAX_BINARY_PROP;
-    if (!startUp) maxProp /= 3;
+    //if (!startUp) maxProp /= 3;
     ps2.clear();
     ps2.growTo(2);
     toVisitAll.growTo(solver.nVars()*2, false);
@@ -1068,11 +990,11 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
         doneNum++;
 
         Lit lit(var, true);
-        if (!subsWNonExistBins(lit, startUp)) {
+        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate() == NULL);
+            solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) return false;
             continue;
         }
@@ -1080,11 +1002,11 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
         //in the meantime it could have got assigned
         if (solver.assigns[var] != l_Undef) continue;
         lit = ~lit;
-        if (!subsWNonExistBins(lit, startUp)) {
+        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate() == NULL);
+            solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) return false;
             continue;
         }
@@ -1097,7 +1019,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
     return true;
 }
 
-const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
+const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "subsWNonExistBins called with lit "; lit.print();
@@ -1106,12 +1028,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
     toVisit.clear();
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    bool failed;
-    if (startUp) {
-        failed = (solver.propagateBin() != NULL);
-    } else {
-        failed = (solver.propagateBinNoLearnts() != NULL);
-    }
+    bool failed = !onlyNonLearntBins->propagate();
     if (failed) return false;
 
     assert(solver.decisionLevel() > 0);
@@ -1122,7 +1039,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
     }
     solver.cancelUntil(0);
 
-    if (toVisit.size() <= 1) {
+    /*if (toVisit.size() <= 1) {
         ps2[0] = ~lit;
         for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
             ps2[1] = *l;
@@ -1134,7 +1051,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
             subsume0(ps2, calcAbstraction(ps2));
             subsume1Partial(ps2);
         }
-    } else {
+    } else */{
         subsume0BIN(~lit, toVisitAll);
     }
     for (uint32_t i = 0; i < toVisit.size(); i++)
@@ -1158,7 +1075,7 @@ void Subsumer::clearAll()
     cl_touched.clear();
 }
 
-const bool Subsumer::simplifyBySubsumption()
+const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 {
     if (solver.nClauses() > 20000000)  return true;
     
@@ -1180,20 +1097,25 @@ const bool Subsumer::simplifyBySubsumption()
         return false;
     fillCannotEliminate();
     solver.testAllClauseAttach();
+
+    uint32_t expected_size;
+    if (!alsoLearnt)
+        expected_size = solver.clauses.size() + solver.binaryClauses.size();
+    else
+        expected_size = solver.clauses.size() + solver.binaryClauses.size() + solver.learnts.size();
+    clauses.reserve(expected_size);
+    cl_added.reserve(expected_size);
+    cl_touched.reserve(expected_size);
     
-    clauses.reserve(solver.clauses.size() + solver.binaryClauses.size());
-    cl_added.reserve(solver.clauses.size() + solver.binaryClauses.size());
-    cl_touched.reserve(solver.clauses.size() + solver.binaryClauses.size());
-    
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    addFromSolver<true>(solver.clauses, alsoLearnt);
+    solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
+    addFromSolver<true>(solver.binaryClauses, alsoLearnt);
+
     if (clauses.size() < 200000)
         fullSubsume = true;
     else
         fullSubsume = false;
-    
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver<true>(solver.clauses);
-    solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
-    addFromSolver<true>(solver.binaryClauses);
     
     //Limits
     if (clauses.size() > 3500000) {
@@ -1214,15 +1136,20 @@ const bool Subsumer::simplifyBySubsumption()
         numMaxSubsume1 = 400000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
     }
-    if (numCalls == 1) numMaxSubsume1 = 0;
-    
-    if (!solver.doSubsume1) numMaxSubsume1 = 0;
-        
-    
     if (solver.order_heap.size() > 200000)
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
     else
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
+
+    if (numCalls == 1) numMaxSubsume1 = 0;
+    if (!solver.doSubsume1) numMaxSubsume1 = 0;
+    if (alsoLearnt) {
+        numMaxElim = 0;
+        numMaxSubsume1 = 0;
+        numMaxBlockVars = 0;
+        numMaxBlockToVisit = 0;
+        fullSubsume = true;
+    }
     
     //For debugging
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
@@ -1241,16 +1168,15 @@ const bool Subsumer::simplifyBySubsumption()
         if (clauses[i].clause != NULL && 
             (fullSubsume
             || !clauses[i].clause->subsume0IsFinished())
-            ) {
+            )
+        {
             subsume0(*clauses[i].clause, clauses[i].clause->getAbst());
+            if (subsumedNonLearnt && clauses[i].clause->learnt()) clauses[i].clause->makeNonLearnt();
             numMaxSubsume0--;
         }
     }
     
     origNClauses = clauses.size();
-    uint32_t origNLearnts = solver.learnts.size();
-    
-    if (!treatLearnts()) return false;
     
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  time until pre-subsume0 clauses and subsume1 2-learnts:" << cpuTime()-myTime << std::endl;
@@ -1283,7 +1209,7 @@ const bool Subsumer::simplifyBySubsumption()
         cl_added.clear();
         assert(cl_added.size() == 0);
         assert(solver.ok);
-        solver.ok = (solver.propagate() == NULL);
+        solver.ok = (solver.propagate().isNULL());
         if (!solver.ok) {
             printf("c (contradiction during subsumption)\n");
             return false;
@@ -1351,7 +1277,7 @@ const bool Subsumer::simplifyBySubsumption()
     endSimplifyBySubsumption:
     
     if (!solver.ok) return false;
-    solver.ok = (solver.propagate() == NULL);
+    solver.ok = (solver.propagate().isNULL());
     if (!solver.ok) {
         printf("c (contradiction during subsumption)\n");
         return false;
@@ -1360,21 +1286,14 @@ const bool Subsumer::simplifyBySubsumption()
     #ifndef NDEBUG
     verifyIntegrity();
     #endif
-    
-    //vector<char> var_merged = merge();
+
     removeWrong(solver.learnts);
     removeWrong(solver.binaryClauses);
     removeAssignedVarsFromEliminated();
-    
-    /*solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
-    addFromSolver(solver.learnts, true);
-    addFromSolver(solver.binaryClauses, true);
-    if (solver.doHyperBinRes && clauses.size() < 1000000 && numCalls > 1 && !hyperBinRes())
-        return false;*/
+
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
-    solver.nbCompensateSubsumer += origNLearnts-solver.learnts.size();
     
     if (solver.verbosity >= 1) {
         std::cout << "c |  lits-rem: " << std::setw(9) << literals_removed
@@ -1611,219 +1530,6 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
             order.push(cost_var[x].second);
     }
 }
-
-const bool Subsumer::hyperUtility(vec<ClauseSimp>& iter, const Lit lit, BitArray& inside, vec<Clause*>& addToClauses)
-{
-    for (ClauseSimp *it = iter.getData(), *end = it + iter.size() ; it != end; it++) {
-        if (it->clause == NULL) continue;
-        uint32_t notIn = 0;
-        Lit notInLit = lit_Undef;
-        
-        Clause& cl = *it->clause;
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            if (cl[i].var() == lit.var() || cl.size() == 2) {
-                goto next;
-            }
-            if (!inside[cl[i].toInt()]) {
-                notIn++;
-                if (notIn > 1) goto next;
-                notInLit = cl[i];
-            }
-        }
-        
-        if (notIn == 0) {
-            vec<Lit> lits(1);
-            lits[0] = lit;
-            solver.addClauseInt(lits, cl.getGroup());
-            if (!solver.ok) return false;
-        }
-        
-        if (notIn == 1 && !inside[(~notInLit).toInt()]) {
-            vec<Lit> cs(2);
-            cs[0] = lit;
-            cs[1] = notInLit;
-            //uint32_t index = subsume0(cs, calcAbstraction(cs));
-            /*if (index != std::numeric_limits<uint32_t>::max()) {
-                Clause *cl3 = Clause_new(cs, cl.getGroup());
-                ClauseSimp c(cl3, index);
-                addToClauses.push(c);
-                inside.setBit((~notInLit).toInt());
-                #ifdef HYPER_DEBUG
-                std::cout << "HyperBinRes adding clause: ";
-                cl3->plainPrint();
-                #endif
-            } else {*/
-                Clause *cl3 = Clause_new(cs, cl.getGroup());
-                addToClauses.push(cl3);
-                inside.setBit((~notInLit).toInt());
-            //}
-        }
-        next:;
-    }
-    
-    return true;
-}
-
-const bool Subsumer::hyperBinRes()
-{
-    double myTime = cpuTime();
-    
-    BitArray inside;
-    inside.resize(solver.nVars()*2, 0);
-    uint32_t hyperBinAdded = 0;
-    uint32_t oldTrailSize = solver.trail.size();
-    vec<Clause*> addToClauses;
-    vec<Lit> addedToInside;
-    uint64_t totalClausesChecked = 0;
-
-    vec<Var> varsToCheck;
-    
-    if (clauses.size() > 500000 || solver.order_heap.size() > 50000) {
-        Heap<Solver::VarOrderLt> tmp(solver.order_heap);
-        uint32_t thisTopX = std::min(tmp.size(), 5000U);
-        for (uint32_t i = 0; i != thisTopX; i++)
-            varsToCheck.push(tmp.removeMin());
-    } else {
-        for (Var i = 0; i < solver.nVars(); i++)
-            varsToCheck.push(i);
-    }
-    
-    for (uint32_t test = 0; test < 2*varsToCheck.size(); test++) if (solver.assigns[test/2] == l_Undef && solver.decision_var[test/2]) {
-        if (totalClausesChecked > 1000000)
-            break;
-        
-        inside.setZero();
-        addToClauses.clear();
-        addedToInside.clear();
-        
-        Lit lit(varsToCheck[test/2], test&1);
-        #ifdef HYPER_DEBUG
-        std::cout << "Resolving with literal:" << (lit.sign() ? "-" : "") << lit.var()+1 << std::endl;
-        #endif
-
-        //fill inside with binary clauses' literals that this lit is in
-        //addedToInside now contains the list
-        vec<ClauseSimp>& set = occur[lit.toInt()];
-        totalClausesChecked += occur.size();
-        for (ClauseSimp *it = set.getData(), *end = it + set.size() ; it != end; it++) {
-            if (it->clause == NULL) continue;
-            Clause& cl2 = *it->clause;
-            if (cl2.size() > 2) continue;
-            assert(cl2[0] == lit || cl2[1] == lit);
-            if (cl2[0] == lit) {
-                if (!inside[(~cl2[1]).toInt()]) {
-                    inside.setBit((~cl2[1]).toInt());
-                    addedToInside.push(~cl2[1]);
-                }
-            } else {
-                if (!inside[(~cl2[0]).toInt()]) {
-                    inside.setBit((~cl2[0]).toInt());
-                    addedToInside.push(~cl2[0]);
-                }
-            }
-        }
-        
-        uint32_t sum = 0;
-        for (uint32_t add = 0; add < addedToInside.size(); add++) {
-            sum += occur[addedToInside[add].toInt()].size();
-        }
-        
-        if (sum < clauses.size()) {
-            totalClausesChecked += sum;
-            for (uint32_t add = 0; add < addedToInside.size(); add++) {
-                vec<ClauseSimp>& iter = occur[addedToInside[add].toInt()];
-                if (!hyperUtility(iter, lit, inside, addToClauses))
-                    return false;
-            }
-        } else {
-            totalClausesChecked += clauses.size();
-            if (!hyperUtility(clauses, lit, inside, addToClauses))
-                return false;
-        }
-
-        hyperBinAdded +=  addToClauses.size();
-        for (uint32_t i = 0; i < addToClauses.size(); i++) {
-            Clause *c = solver.addClauseInt(*addToClauses[i], addToClauses[i]->getGroup());
-            clauseFree(addToClauses[i]);
-            if (c != NULL) {
-                ClauseSimp cc = linkInClause(*c);
-                subsume1(cc);
-            }
-            if (!solver.ok) return false;
-        }
-    }
-    
-    if (solver.verbosity >= 1) {
-        std::cout << "c |  Hyper-binary res binary added: " << std::setw(5) << hyperBinAdded 
-        << " unitaries: " << std::setw(5) << solver.trail.size() - oldTrailSize  
-        << " time: " << std::setprecision(2) << std::setw(5)<< cpuTime() - myTime << " s" 
-        << "                  |"  << std::endl;
-    }
-    
-    return true;
-}
-
-class varDataStruct
-{
-    public:
-        varDataStruct() : 
-            numPosClauses (0)
-            , numNegClauses (0)
-            , sumPosClauseSize (0)
-            , sumNegClauseSize (0)
-            , posHash(0)
-            , negHash(0)
-        {}
-        const bool operator < (const varDataStruct& other) const
-        {
-            if (numPosClauses < other.numPosClauses) return true;
-            if (numPosClauses > other.numPosClauses) return false;
-            
-            if (numNegClauses < other.numNegClauses)  return true;
-            if (numNegClauses > other.numNegClauses)  return false;
-            
-            if (sumPosClauseSize < other.sumPosClauseSize) return true;
-            if (sumPosClauseSize > other.sumPosClauseSize) return false;
-            
-            if (sumNegClauseSize < other.sumNegClauseSize) return true;
-            if (sumNegClauseSize > other.sumNegClauseSize) return false;
-            
-            if (posHash < other.posHash) return true;
-            if (posHash > other.posHash) return false;
-            
-            if (negHash < other.negHash) return true;
-            if (negHash > other.negHash) return false;
-            
-            return false;
-        }
-        
-        const bool operator == (const varDataStruct& other) const
-        {
-            if (numPosClauses == other.numPosClauses &&
-                numNegClauses == other.numNegClauses &&
-                sumPosClauseSize == other.sumPosClauseSize &&
-                sumNegClauseSize == other.sumNegClauseSize &&
-                posHash == other.posHash &&
-                negHash == other.negHash)
-                return true;
-            
-            return false;
-        }
-        
-        void reversePolarity()
-        {
-            std::swap(numPosClauses, numNegClauses);
-            std::swap(sumPosClauseSize, sumNegClauseSize);
-            std::swap(posHash, negHash);
-        }
-        
-        uint32_t numPosClauses;
-        uint32_t numNegClauses;
-        uint32_t sumPosClauseSize;
-        uint32_t sumNegClauseSize;
-        int posHash;
-        int negHash;
-};
 
 void Subsumer::verifyIntegrity()
 {
@@ -2141,78 +1847,4 @@ vector<char> Subsumer::merge()
     #endif
     
     return true;
-}*/
-
-/*void Subsumer::pureLiteralRemoval()
-{
-    for (Var var = 0; var < solver.nVars(); var++) if (solver.decision_var[var] && solver.assigns[var] == l_Undef && !cannot_eliminate[var] && !var_elimed[var] && !solver.varReplacer->varHasBeenReplaced(var)) {
-        uint32_t numPosClauses = occur[Lit(var, false).toInt()].size();
-        uint32_t numNegClauses = occur[Lit(var, true).toInt()].size();
-        if (numNegClauses > 0 && numPosClauses > 0) continue;
-        
-        if (numNegClauses == 0 && numPosClauses == 0) {
-            if (solver.decision_var[var]) madeVarNonDecision.push(var);
-            solver.setDecisionVar(var, false);
-            pureLitRemoved[var] = true;
-            pureLitsRemovedNum++;
-            continue;
-        }
-        
-        if (numPosClauses == 0 && numNegClauses > 0) {
-            if (solver.decision_var[var]) madeVarNonDecision.push(var);
-            solver.setDecisionVar(var, false);
-            pureLitRemoved[var] = true;
-            assignVar.push(Lit(var, true));
-            vec<ClauseSimp> occ(occur[Lit(var, true).toInt()]);
-            for (ClauseSimp *it = occ.getData(), *end = occ.getDataEnd(); it != end; it++) {
-                unlinkClause(*it);
-                pureLitClauseRemoved.push(it->clause);
-            }
-            pureLitsRemovedNum++;
-            continue;
-        }
-        
-        if (numNegClauses == 0 && numPosClauses > 0) {
-            if (solver.decision_var[var]) madeVarNonDecision.push(var);
-            solver.setDecisionVar(var, false);
-            pureLitRemoved[var] = true;
-            assignVar.push(Lit(var, false));
-            vec<ClauseSimp> occ(occur[Lit(var, false).toInt()]);
-            for (ClauseSimp *it = occ.getData(), *end = occ.getDataEnd(); it != end; it++) {
-                unlinkClause(*it);
-                pureLitClauseRemoved.push(it->clause);
-            }
-            pureLitsRemovedNum++;
-            continue;
-        }
-    }
-}*/
-
-/*void Subsumer::undoPureLitRemoval()
-{
-    assert(solver.ok);
-    for (uint32_t i = 0; i < madeVarNonDecision.size(); i++) {
-        assert(!solver.decision_var[madeVarNonDecision[i]]);
-        assert(solver.assigns[madeVarNonDecision[i]] == l_Undef);
-        solver.setDecisionVar(madeVarNonDecision[i], true);
-        pureLitRemoved[madeVarNonDecision[i]] = false;
-    }
-    madeVarNonDecision.clear();
-    
-    for (Lit *l = assignVar.getData(), *end = assignVar.getDataEnd(); l != end; l++) {
-        solver.uncheckedEnqueue(*l);
-        solver.ok = (solver.propagate() == NULL);
-        assert(solver.ok);
-    }
-    assignVar.clear();
-}
-
-void Subsumer::reAddPureLitClauses()
-{
-    for (Clause **it = pureLitClauseRemoved.getData(), **end = pureLitClauseRemoved.getDataEnd(); it != end; it++) {
-        solver.addClause(**it, (*it)->getGroup());
-        clauseFree(*it);
-        assert(solver.ok);
-    }
-    pureLitClauseRemoved.clear();
 }*/

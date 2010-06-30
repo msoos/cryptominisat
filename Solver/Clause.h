@@ -45,6 +45,14 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 using std::vector;
 
+template <class T>
+uint32_t calcAbstraction(const T& ps) {
+    uint32_t abstraction = 0;
+    for (uint32_t i = 0; i != ps.size(); i++)
+        abstraction |= 1 << (ps[i].toInt() & 31);
+    return abstraction;
+}
+
 //=================================================================================================
 // Clause -- a simple class for representing a clause:
 
@@ -107,7 +115,7 @@ public:
             extra.act = 0;
             oldActivityInter = 0;
         } else
-            calcAbstraction();
+            calcAbstractionClause();
     }
 
 public:
@@ -202,7 +210,7 @@ public:
     void         makeNonLearnt()  {
         assert(isLearnt);
         isLearnt = false;
-        calcAbstraction();
+        calcAbstractionClause();
     }
     
     void         makeLearnt(const uint32_t newActivity)  {
@@ -215,19 +223,20 @@ public:
     {
         remove(*this, p);
         sorted = false;
-        calcAbstraction();
+        calcAbstractionClause();
     }
     
-    void calcAbstraction() {
+    void calcAbstractionClause() {
         assert(!learnt());
-        extra.abst = 0;
-        for (uint32_t i = 0; i != size(); i++)
-            extra.abst |= 1 << (data[i].toInt() & 31);
+        extra.abst = calcAbstraction(*this);;
     }
     
     uint32_t getAbst()
     {
-        return extra.abst;
+        if (learnt())
+            return calcAbstraction(*this);
+        else
+            return extra.abst;
     }
 
     const Lit*     getData     () const {
@@ -462,7 +471,7 @@ inline void clauseFree(Clause* c)
         free(c);
 }
 
-#ifdef _MSC_VER
+#if defined (_MSC_VER) || !defined (__LP64__)
 typedef Clause* ClausePtr;
 typedef XorClause* XorClausePtr;
 #else
@@ -474,8 +483,7 @@ typedef sptr<XorClause> XorClausePtr;
 #pragma pack(1)
 class WatchedBin {
     public:
-        WatchedBin(Clause *_clause, Lit _impliedLit) : clause(_clause), impliedLit(_impliedLit) {};
-        ClausePtr clause;
+        WatchedBin(Lit _impliedLit) : impliedLit(_impliedLit) {};
         Lit impliedLit;
 };
 

@@ -15,14 +15,6 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 
 class Clause;
 
-template <class T>
-uint32_t calcAbstraction(const T& ps) {
-    uint32_t abstraction = 0;
-    for (uint32_t i = 0; i != ps.size(); i++)
-        abstraction |= 1 << (ps[i].toInt() & 31);
-    return abstraction;
-}
-
 //#pragma pack(push)
 //#pragma pack(1)
 class ClauseSimp
