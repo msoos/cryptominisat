@@ -302,6 +302,8 @@ protected:
     template<class T>
     void    removeWatchedBinCl(vec<T> &ws, const Lit impliedLit);
     template<class T>
+    void    removeWatchedBinClAll(vec<T> &ws, const Lit impliedLit);
+    template<class T>
     bool    findWatchedBinCl(const vec<T>& ws, const Lit impliedLit) const;
     
     // Helper structures:
@@ -710,6 +712,16 @@ inline void Solver::removeWatchedBinCl(vec<T> &ws, const Lit impliedLit) {
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
+}
+template <class T>
+inline void Solver::removeWatchedBinClAll(vec<T> &ws, const Lit impliedLit) {
+    T *i = ws.getData();
+    T *j = i;
+    for (T* end = ws.getDataEnd(); i != end; i++) {
+        if (i->impliedLit != impliedLit)
+            *j++ = *i;
+    }
+    ws.shrink(i-j);
 }
 template<class T>
 inline bool Solver::findWatchedCl(const vec<T>& ws, const Clause* c) const
