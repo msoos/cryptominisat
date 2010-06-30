@@ -37,5 +37,7 @@ add_library(cryptominisatlib
     XorSubsumer.cpp
     StateSaver.cpp
     Clause.cpp
+    UselessBinRemover.cpp
+    OnlyNonLearntBins.cpp
 )
 

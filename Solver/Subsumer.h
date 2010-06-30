@@ -18,6 +18,7 @@ using std::map;
 using std::priority_queue;
 
 class ClauseCleaner;
+class OnlyNonLearntBins;
 
 class Subsumer
 {
@@ -29,7 +30,7 @@ public:
 
     //Called from main
     const bool simplifyBySubsumption(const bool alsoLearnt = false);
-    const bool subsumeWithBinaries(const bool startUp);
+    const bool subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins);
     void newVar();
 
     //Used by cleaner
@@ -128,8 +129,8 @@ private:
     bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
 
     //Subsume with Nonexistent Bins
-    const bool subsWNonExistBinsFull(const bool startUp);
-    const bool subsWNonExistBins(const Lit& lit, const bool startUp);
+    const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
+    const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
     template<class T>
     void subsume1Partial(const T& ps);
     uint32_t subsNonExistentNum;

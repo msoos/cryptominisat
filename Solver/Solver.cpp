@@ -40,6 +40,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "PartHandler.h"
 #include "XorSubsumer.h"
 #include "StateSaver.h"
+#include "UselessBinRemover.h"
+#include "OnlyNonLearntBins.h"
 
 #ifdef USE_GAUSS
 #include "Gaussian.h"
@@ -459,8 +461,8 @@ void Solver::attachClause(XorClause& c)
 void Solver::attachClause(Clause& c)
 {
     assert(c.size() > 1);
-    int index0 = (~c[0]).toInt();
-    int index1 = (~c[1]).toInt();
+    uint32_t index0 = (~c[0]).toInt();
+    uint32_t index1 = (~c[1]).toInt();
     
     if (c.size() == 2) {
         binwatches[index0].push(WatchedBin(c[1]));
@@ -1172,77 +1174,6 @@ PropagatedFrom Solver::propagateBin()
 
     return PropagatedFrom();
 }
-
-#ifdef BINARY_LEARNT_DISTINCTION
-PropagatedFrom Solver::propagateBinNoLearnts()
-{
-    while (qhead < trail.size()) {
-        Lit p   = trail[qhead++];
-        vec<WatchedBin> & wbin = binwatches[p.toInt()];
-        propagations += wbin.size()/2;
-        for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
-            if (k->clause->learnt()) continue;
-            lbool val = value(k->impliedLit);
-            if (val.isUndef()) {
-                //uncheckedEnqueue(k->impliedLit, k->clause);
-                uncheckedEnqueueLight(k->impliedLit);
-            } else if (val == l_False) {
-                return PropagatedFrom(p);
-            }
-        }
-    }
-    
-    return PropagatedFrom();
-}
-
-template<bool dontCareLearnt>
-PropagatedFrom Solver::propagateBinExcept(const Lit& exceptLit)
-{
-    while (qhead < trail.size()) {
-        Lit p   = trail[qhead++];
-        vec<WatchedBin> & wbin = binwatches[p.toInt()];
-        propagations += wbin.size()/2;
-        for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
-            if (!dontCareLearnt && k->clause->learnt()) continue;
-            lbool val = value(k->impliedLit);
-            if (val.isUndef() && k->impliedLit != exceptLit) {
-                //uncheckedEnqueue(k->impliedLit, k->clause);
-                uncheckedEnqueueLight(k->impliedLit);
-            } else if (val == l_False) {
-                return PropagatedFrom(p);
-            }
-        }
-    }
-    
-    return PropagatedFrom();
-}
-
-template PropagatedFrom Solver::propagateBinExcept <true>(const Lit& exceptLit);
-template PropagatedFrom Solver::propagateBinExcept <false>(const Lit& exceptLit);
-
-template<bool dontCareLearnt>
-PropagatedFrom Solver::propagateBinOneLevel()
-{
-    Lit p   = trail[qhead];
-    vec<WatchedBin> & wbin = binwatches[p.toInt()];
-    propagations += wbin.size()/2;
-    for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
-        if (!dontCareLearnt && k->clause->learnt()) continue;
-        lbool val = value(k->impliedLit);
-        if (val.isUndef()) {
-            //uncheckedEnqueue(k->impliedLit, k->clause);
-            uncheckedEnqueueLight(k->impliedLit);
-        } else if (val == l_False) {
-            return PropagatedFrom(p);
-        }
-    }
-    
-    return PropagatedFrom();
-}
-
-template PropagatedFrom Solver::propagateBinOneLevel <true>();
-template PropagatedFrom Solver::propagateBinOneLevel <false>();
-#endif //BINARY_LEARNT_DISTINCTION
 
 template<class T>
 inline const uint32_t Solver::calcNBLevels(const T& ps)
@@ -2040,19 +1971,25 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
     testAllClauseAttach();
 
-    #ifdef BINARY_LEARNT_DISTINCTION
-    if (regularRemoveUselessBins
-        && !failedVarSearcher->removeUslessBinFull<false>()) {
-        status = l_False;
-        goto end;
+    if (performReplace && (regularRemoveUselessBins || regularSubsumeWithNonExistBinaries)) {
+        OnlyNonLearntBins onlyNonLearntBins(*this);
+        if (!onlyNonLearntBins.fill()) {
+            status = l_False;
+            goto end;
+        }
+        if (regularRemoveUselessBins) {
+            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
+            if (!uselessBinRemover.removeUslessBinFull()) {
+                status = l_False;
+                goto end;
+            }
+        }
+        if (regularSubsumeWithNonExistBinaries
+            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) {
+            status = l_False;
+            goto end;
+        }
     }
-
-    if (regularSubsumeWithNonExistBinaries
-        && !subsumer->subsumeWithBinaries(false)) {
-        status = l_False;
-        goto end;
-    }
-    #endif //BINARY_LEARNT_DISTINCTION
 
     if (doSubsumption && !subsumer->simplifyBySubsumption(false)) {
         status = l_False;
@@ -2133,10 +2070,14 @@ inline void Solver::performStepsBeforeSolve()
 
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
-        if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
-        #ifdef BINARY_LEARNT_DISTINCTION
-        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
-        #endif //BINARY_LEARNT_DISTINCTION
+        OnlyNonLearntBins onlyNonLearntBins(*this);
+        if (!onlyNonLearntBins.fill()) return;
+        if (regularRemoveUselessBins) {
+            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
+            if (!uselessBinRemover.removeUslessBinFull()) return;
+        }
+        if (subsumeWithNonExistBinaries
+            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
     }
     
     testAllClauseAttach();
@@ -2146,13 +2087,18 @@ inline void Solver::performStepsBeforeSolve()
         && !subsumer->simplifyBySubsumption())
         return;
 
+    /*
     if (conflicts == 0 && learnts.size() == 0
         && noLearntBinaries()) {
         if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
-        #ifdef BINARY_LEARNT_DISTINCTION
-        if (removeUselessBins && !failedVarSearcher->removeUslessBinFull<true>()) return;
-        #endif //BINARY_LEARNT_DISTINCTION
+        OnlyNonLearntBins onlyNonLearntBins(*this);
+        if (!onlyNonLearntBins.fill()) return;
+        if (regularRemoveUselessBins) {
+            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
+            if (!uselessBinRemover.removeUslessBinFull()) return;
+        }
     }
+    */
     
     testAllClauseAttach();
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {

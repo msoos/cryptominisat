@@ -13,6 +13,7 @@ Substantially modified by: Mate Soos (2010)
 #include <algorithm>
 #include "VarReplacer.h"
 #include "XorFinder.h"
+#include "OnlyNonLearntBins.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -896,7 +897,7 @@ void Subsumer::fillCannotEliminate()
     #endif
 }
 
-const bool Subsumer::subsumeWithBinaries(const bool startUp)
+const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
 {
     clearAll();
     clauseID = 0;
@@ -920,7 +921,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
     #endif //DEBUG_BINARIES
 
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-        if (startUp || !solver.binaryClauses[i]->learnt()) {
+        if (!solver.binaryClauses[i]->learnt()) {
             Clause& c = *solver.binaryClauses[i];
             subsume0(c, c.getAbst());
         }
@@ -938,7 +939,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
         << std::setw(17)  << "   |" << std::endl;
     }
     
-    if (!subsWNonExistBinsFull(startUp)) return false;
+    if (!subsWNonExistBinsFull(onlyNonLearntBins)) return false;
 
     #ifdef DEBUG_BINARIES
     for (uint32_t i = 0; i < clauses.size(); i++) {
@@ -967,7 +968,7 @@ const bool Subsumer::subsumeWithBinaries(const bool startUp)
 
 #define MAX_BINARY_PROP 40000000
 
-const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
+const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
 {
     uint32_t oldClausesSubusmed = clauses_subsumed;
     uint32_t oldLitsRemoved = literals_removed;
@@ -975,7 +976,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
     uint64_t oldProps = solver.propagations;
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t maxProp = MAX_BINARY_PROP;
-    if (!startUp) maxProp /= 3;
+    //if (!startUp) maxProp /= 3;
     ps2.clear();
     ps2.growTo(2);
     toVisitAll.growTo(solver.nVars()*2, false);
@@ -989,7 +990,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
         doneNum++;
 
         Lit lit(var, true);
-        if (!subsWNonExistBins(lit, startUp)) {
+        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
@@ -1001,7 +1002,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
         //in the meantime it could have got assigned
         if (solver.assigns[var] != l_Undef) continue;
         lit = ~lit;
-        if (!subsWNonExistBins(lit, startUp)) {
+        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
@@ -1018,7 +1019,7 @@ const bool Subsumer::subsWNonExistBinsFull(const bool startUp)
     return true;
 }
 
-const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
+const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "subsWNonExistBins called with lit "; lit.print();
@@ -1027,16 +1028,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
     toVisit.clear();
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    bool failed;
-    if (startUp) {
-        failed = (!solver.propagateBin().isNULL());
-    } else {
-        #ifdef BINARY_LEARNT_DISTINCTION
-        failed = (!solver.propagateBinNoLearnts().isNULL());
-        #else
-        assert(false);
-        #endif //BINARY_LEARNT_DISTINCTION
-    }
+    bool failed = !onlyNonLearntBins->propagate();
     if (failed) return false;
 
     assert(solver.decisionLevel() > 0);
@@ -1047,7 +1039,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
     }
     solver.cancelUntil(0);
 
-    if (toVisit.size() <= 1) {
+    /*if (toVisit.size() <= 1) {
         ps2[0] = ~lit;
         for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
             ps2[1] = *l;
@@ -1059,7 +1051,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, const bool startUp)
             subsume0(ps2, calcAbstraction(ps2));
             subsume1Partial(ps2);
         }
-    } else {
+    } else */{
         subsume0BIN(~lit, toVisitAll);
     }
     for (uint32_t i = 0; i < toVisit.size(); i++)
