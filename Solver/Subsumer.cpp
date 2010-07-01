@@ -99,7 +99,7 @@ const bool Subsumer::unEliminate(const Var var)
     solver.libraryCNFFile = NULL;
     for (vector<Clause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         solver.addClause(**it2);
-        clauseFree(*it2);
+        solver.clauseAllocator.clauseFree(*it2);
     }
     solver.libraryCNFFile = backup_libraryCNFfile;
     elimedOutVar.erase(it);
@@ -180,7 +180,7 @@ uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         subsumedNonLearnt |= !tmp->learnt();
         retIndex = subs[i].index;
         unlinkClause(subs[i]);
-        clauseFree(tmp);
+        solver.clauseAllocator.clauseFree(tmp);
     }
     
     return retIndex;
@@ -226,7 +226,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
         
         Clause* tmp = subs[i].clause;
         unlinkClause(subs[i]);
-        clauseFree(tmp);
+        solver.clauseAllocator.clauseFree(tmp);
     }
 
     if (subs2.size() == 0) return;
@@ -253,7 +253,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
                 #ifdef VERBOSE_DEBUG
                 std::cout << "--> Clause was satisfied." << std::endl;
                 #endif
-                clauseFree(&cl);
+                solver.clauseAllocator.clauseFree(&cl);
                 goto endS;
             }
         }
@@ -268,7 +268,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
         if (cl.size() == 0) {
             solver.ok = false;
             unregisterIteration(subs2);
-            clauseFree(&cl);
+            solver.clauseAllocator.clauseFree(&cl);
             return;
         }
         if (cl.size() > 2) {
@@ -294,7 +294,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
             #ifdef VERBOSE_DEBUG
             cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
             #endif
-            clauseFree(&cl);
+            solver.clauseAllocator.clauseFree(&cl);
         }
         endS:;
     }
@@ -434,7 +434,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                         #ifdef VERBOSE_DEBUG
                         std::cout << "--> Clause was satisfied." << std::endl;
                         #endif
-                        clauseFree(&cl);
+                        solver.clauseAllocator.clauseFree(&cl);
                         goto endS;
                     }
                 }
@@ -450,7 +450,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     solver.ok = false;
                     unregisterIteration(Q);
                     unregisterIteration(subs);
-                    clauseFree(&cl);
+                    solver.clauseAllocator.clauseFree(&cl);
                     return;
                 }
                 if (cl.size() > 1) {
@@ -473,7 +473,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     #ifdef VERBOSE_DEBUG
                     cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                     #endif
-                    clauseFree(&cl);
+                    solver.clauseAllocator.clauseFree(&cl);
                 }
                 endS:;
             }
@@ -533,7 +533,7 @@ void Subsumer::subsume1Partial(const T& ps)
                     #ifdef VERBOSE_DEBUG
                     std::cout << "--> Clause was satisfied." << std::endl;
                     #endif
-                    clauseFree(&cl);
+                    solver.clauseAllocator.clauseFree(&cl);
                     goto endS;
                 }
             }
@@ -548,7 +548,7 @@ void Subsumer::subsume1Partial(const T& ps)
             if (cl.size() == 0) {
                 solver.ok = false;
                 unregisterIteration(subsume1PartialSubs);
-                clauseFree(&cl);
+                solver.clauseAllocator.clauseFree(&cl);
                 return;
             }
             if (cl.size() > 2) {
@@ -574,7 +574,7 @@ void Subsumer::subsume1Partial(const T& ps)
                 #ifdef VERBOSE_DEBUG
                 cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                 #endif
-                clauseFree(&cl);
+                solver.clauseAllocator.clauseFree(&cl);
             }
             endS:;
         }
@@ -862,7 +862,7 @@ void Subsumer::removeWrong(vec<Clause*>& cs)
             if (var_elimed[l->var()]) {
                 remove = true;
                 solver.detachClause(c);
-                clauseFree(&c);
+                solver.clauseAllocator.clauseFree(&c);
                 break;
             }
         }

@@ -182,7 +182,7 @@ inline void Gaussian::canceling(const uint sublevel)
         return;
     uint a = 0;
     for (int i = clauses_toclear.size()-1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
-        clauseFree(clauses_toclear[i].first);
+        solver.clauseAllocator.clauseFree(clauses_toclear[i].first);
         a++;
     }
     clauses_toclear.resize(clauses_toclear.size()-a);

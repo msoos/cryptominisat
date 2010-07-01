@@ -277,7 +277,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
             
             solver.detachClause(c);
             newSolver.addLearntClause(c, c.getGroup(), c.activity());
-            clauseFree(&c);
+            solver.clauseAllocator.clauseFree(&c);
         } else {
             #ifdef VERBOSE_DEBUG
             std::cout << "Learnt clause in other part:"; c.plainPrint();

@@ -156,16 +156,16 @@ Solver::Solver() :
 
 Solver::~Solver()
 {
-    for (uint32_t i = 0; i != learnts.size(); i++) clauseFree(learnts[i]);
-    for (uint32_t i = 0; i != clauses.size(); i++) clauseFree(clauses[i]);
-    for (uint32_t i = 0; i != binaryClauses.size(); i++) clauseFree(binaryClauses[i]);
-    for (uint32_t i = 0; i != xorclauses.size(); i++) clauseFree(xorclauses[i]);
-    for (uint32_t i = 0; i != removedLearnts.size(); i++) clauseFree(removedLearnts[i]);
+    for (uint32_t i = 0; i != learnts.size(); i++) clauseAllocator.clauseFree(learnts[i]);
+    for (uint32_t i = 0; i != clauses.size(); i++) clauseAllocator.clauseFree(clauses[i]);
+    for (uint32_t i = 0; i != binaryClauses.size(); i++) clauseAllocator.clauseFree(binaryClauses[i]);
+    for (uint32_t i = 0; i != xorclauses.size(); i++) clauseAllocator.clauseFree(xorclauses[i]);
+    for (uint32_t i = 0; i != removedLearnts.size(); i++) clauseAllocator.clauseFree(removedLearnts[i]);
     #ifdef USE_GAUSS
     clearGaussMatrixes();
     delete matrixFinder;
     #endif
-    for (uint32_t i = 0; i != freeLater.size(); i++) clauseFree(freeLater[i]);
+    for (uint32_t i = 0; i != freeLater.size(); i++) clauseAllocator.clauseFree(freeLater[i]);
     
     delete varReplacer;
     delete clauseCleaner;
@@ -515,7 +515,6 @@ void Solver::detachClause(const Clause& c)
 void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint origSize, const Clause* address)
 {
     assert(origSize > 1);
-    ClauseOffset offset = clauseAllocator.getOffset(address);
     
     if (origSize == 2) {
         assert(findWatchedBinCl(binwatches[(~lit1).toInt()], lit2));
@@ -523,6 +522,7 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
         removeWatchedBinCl(binwatches[(~lit1).toInt()], lit2);
         removeWatchedBinCl(binwatches[(~lit2).toInt()], lit1);
     } else {
+        ClauseOffset offset = clauseAllocator.getOffset(address);
         assert(findW(watches[(~lit1).toInt()], offset));
         assert(findW(watches[(~lit2).toInt()], offset));
         removeW(watches[(~lit1).toInt()], offset);

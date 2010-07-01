@@ -770,7 +770,7 @@ template<class T>
 inline void Solver::removeClause(T& c)
 {
     detachClause(c);
-    clauseFree(&c);
+    clauseAllocator.clauseFree(&c);
 }
 
 //=================================================================================================

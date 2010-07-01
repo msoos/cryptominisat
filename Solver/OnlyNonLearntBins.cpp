@@ -141,7 +141,7 @@ const uint32_t OnlyNonLearntBins::removeBins()
         if (toRemove.find(final) == toRemove.end()) {
             *j++ = *i;
         } else {
-            clauseFree(*i);
+            solver.clauseAllocator.clauseFree(*i);
         }
     }
     solver.binaryClauses.shrink(i-j);

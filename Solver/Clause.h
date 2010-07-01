@@ -67,6 +67,7 @@ protected:
     uint32_t subsume0Done:1;
     uint32_t isRemoved:1;
     uint32_t isFreed:1;
+    uint32_t wasBinInternal:1;
     uint32_t mySize:20;
     
     union  {uint32_t act; uint32_t abst;} extra;
@@ -83,6 +84,7 @@ public:
     template<class V>
     Clause(const V& ps, const uint _group, const bool learnt)
     {
+        if (ps.size() == 2) wasBinInternal = true;
         isFreed = false;
         isXorClause = false;
         strenghtened = false;
@@ -274,6 +276,10 @@ public:
     const bool freed() const {
         return isFreed;
     }
+
+    const bool wasBin() const {
+        return wasBinInternal;
+    }
 };
 
 class XorClause : public Clause
@@ -323,11 +329,6 @@ public:
     
     friend class MatrixFinder;
 };
-
-inline void clauseFree(Clause* c)
-{
-    c->setFreed();
-}
 
 class WatchedBin {
     public:
