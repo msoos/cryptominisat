@@ -141,7 +141,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
         c.setStrenghtened();
         if (c.size() == 2) {
             solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
-            Clause *c2 = Clause_new(c);
+            Clause *c2 = solver.clauseAllocator.Clause_new(c);
             clauseFree(&c);
             cc = c2;
             solver.attachClause(*c2);

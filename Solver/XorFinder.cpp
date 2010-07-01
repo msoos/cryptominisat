@@ -218,7 +218,7 @@ const bool XorFinder::findXors(uint& sumLengths)
             break;
         }
         default: {
-            XorClause* x = XorClause_new(lits, impair, old_group);
+            XorClause* x = solver.clauseAllocator.XorClause_new(lits, impair, old_group);
             solver.xorclauses.push(x);
             solver.attachClause(*x);
             

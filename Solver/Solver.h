@@ -296,9 +296,9 @@ protected:
     template<class T>
     bool addLearntClause(T& ps, const uint group, const uint32_t activity);
     template<class T>
-    void    removeWatchedCl(vec<T> &ws, const Clause *c);
+    void    removeWatchedCl(vec<T> &ws, const ClauseOffset c);
     template<class T>
-    bool    findWatchedCl(const vec<T>& ws, const Clause *c) const;
+    bool    findWatchedCl(const vec<T>& ws, const ClauseOffset c) const;
     template<class T>
     void    removeWatchedBinCl(vec<T> &ws, const Lit impliedLit);
     template<class T>
@@ -328,6 +328,7 @@ protected:
     // Solver state:
     //
     bool                ok;               // If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
+    ClauseAllocator     clauseAllocator;
     vec<Clause*>        clauses;          // List of problem clauses.
     vec<Clause*>        binaryClauses;    // Binary clauses are regularly moved here
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
@@ -338,7 +339,7 @@ protected:
     uint32_t            var_inc;          // Amount to bump next variable with.
     double              cla_inc;          // Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
-    vec<vec<XorClausePtr> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
+    vec<vec<XorClause*> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
     vec<vec<WatchedBin> >  binwatches;
     vec<lbool>          assigns;          // The current assignments
     vector<bool>        polarity;         // The preferred polarity of each variable.
@@ -698,7 +699,7 @@ inline const uint Solver::get_unitary_learnts_num() const
         return trail.size();
 }
 template <class T>
-inline void Solver::removeWatchedCl(vec<T> &ws, const Clause *c) {
+inline void Solver::removeWatchedCl(vec<T> &ws, const ClauseOffset c) {
     uint32_t j = 0;
     for (; j < ws.size() && ws[j].clause != c; j++);
     assert(j < ws.size());
@@ -724,7 +725,7 @@ inline void Solver::removeWatchedBinClAll(vec<T> &ws, const Lit impliedLit) {
     ws.shrink(i-j);
 }
 template<class T>
-inline bool Solver::findWatchedCl(const vec<T>& ws, const Clause* c) const
+inline bool Solver::findWatchedCl(const vec<T>& ws, const ClauseOffset c) const
 {
     uint32_t j = 0;
     for (; j < ws.size() && ws[j].clause != c; j++);

@@ -472,7 +472,7 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, cons
     Clause* c;
     ps[0] ^= xor_clause_inverted;
     
-    c = Clause_new(ps, group, false);
+    c = solver.clauseAllocator.Clause_new(ps, group, false);
     if (internal) {
         solver.binaryClauses.push(c);
         solver.becameBinary++;
@@ -482,7 +482,7 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, cons
     
     ps[0] ^= true;
     ps[1] ^= true;
-    c = Clause_new(ps, group, false);
+    c = solver.clauseAllocator.Clause_new(ps, group, false);
     if (internal) {
         solver.binaryClauses.push(c);
         solver.becameBinary++;

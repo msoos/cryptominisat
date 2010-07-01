@@ -275,7 +275,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32
             return NULL;
         }
         default: {
-            XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
+            XorClause* c = clauseAllocator.XorClause_new(ps, xor_clause_inverted, group);
             attachClause(*c);
             return c;
         }
@@ -385,7 +385,7 @@ Clause* Solver::addClauseInt(T& ps, uint group)
         return NULL;
     }
 
-    Clause* c = Clause_new(ps, group);
+    Clause* c = clauseAllocator.Clause_new(ps, group);
     attachClause(*c);
     
     return c;
@@ -468,8 +468,9 @@ void Solver::attachClause(Clause& c)
         binwatches[index0].push(WatchedBin(c[1]));
         binwatches[index1].push(WatchedBin(c[0]));
     } else {
-        watches[index0].push(Watched(&c, c[c.size()/2]));
-        watches[index1].push(Watched(&c, c[c.size()/2]));
+        ClauseOffset offset = clauseAllocator.getOffset(&c);
+        watches[index0].push(Watched(offset, c[c.size()/2]));
+        watches[index1].push(Watched(offset, c[c.size()/2]));
     }
 
     if (c.learnt()) learnts_literals += c.size();
@@ -498,11 +499,13 @@ void Solver::detachClause(const Clause& c)
         removeWatchedBinCl(binwatches[(~c[0]).toInt()], c[1]);
         removeWatchedBinCl(binwatches[(~c[1]).toInt()], c[0]);
     } else {
-        assert(findWatchedCl(watches[(~c[0]).toInt()], &c));
-        assert(findWatchedCl(watches[(~c[1]).toInt()], &c));
+        ClauseOffset offset = clauseAllocator.getOffset(&c);
         
-        removeWatchedCl(watches[(~c[0]).toInt()], &c);
-        removeWatchedCl(watches[(~c[1]).toInt()], &c);
+        assert(findWatchedCl(watches[(~c[0]).toInt()], offset));
+        assert(findWatchedCl(watches[(~c[1]).toInt()], offset));
+        
+        removeWatchedCl(watches[(~c[0]).toInt()], offset);
+        removeWatchedCl(watches[(~c[1]).toInt()], offset);
     }
     
     if (c.learnt()) learnts_literals -= c.size();
@@ -512,6 +515,7 @@ void Solver::detachClause(const Clause& c)
 void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint origSize, const Clause* address)
 {
     assert(origSize > 1);
+    ClauseOffset offset = clauseAllocator.getOffset(address);
     
     if (origSize == 2) {
         assert(findWatchedBinCl(binwatches[(~lit1).toInt()], lit2));
@@ -519,10 +523,10 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
         removeWatchedBinCl(binwatches[(~lit1).toInt()], lit2);
         removeWatchedBinCl(binwatches[(~lit2).toInt()], lit1);
     } else {
-        assert(findW(watches[(~lit1).toInt()], address));
-        assert(findW(watches[(~lit2).toInt()], address));
-        removeW(watches[(~lit1).toInt()], address);
-        removeW(watches[(~lit2).toInt()], address);
+        assert(findW(watches[(~lit1).toInt()], offset));
+        assert(findW(watches[(~lit2).toInt()], offset));
+        removeW(watches[(~lit1).toInt()], offset);
+        removeW(watches[(~lit2).toInt()], offset);
     }
     if (address->learnt()) learnts_literals -= origSize;
     else            clauses_literals -= origSize;
@@ -1081,14 +1085,15 @@ PropagatedFrom Solver::propagate(const bool update)
 
         for (i = j = ws.getData(), end = ws.getDataEnd();  i != end;) {
             if (i+1 != end && !value((i+1)->blockedLit).getBool())
-                __builtin_prefetch((i+1)->clause, 1, 0);
+                __builtin_prefetch(clauseAllocator.getPointer((i+1)->clause), 1, 0);
             
             if(value(i->blockedLit).getBool()) { // Clause is sat
                 *j++ = *i++;
                 continue;
             }
             Lit bl = i->blockedLit;
-            Clause& c = *(i->clause);
+            Clause& c = *clauseAllocator.getPointer(i->clause);
+            ClauseOffset origClauseOffset = i->clause;
             i++;
 
             // Make sure the false literal is data[1]:
@@ -1101,7 +1106,7 @@ PropagatedFrom Solver::propagate(const bool update)
             // If 0th watch is true, then clause is already satisfied.
             const Lit& first = c[0];
             if (value(first).getBool()) {
-                j->clause = &c;
+                j->clause = origClauseOffset;
                 j->blockedLit = first;
                 j++;
             } else {
@@ -1110,13 +1115,13 @@ PropagatedFrom Solver::propagate(const bool update)
                     if (value(*k) != l_False) {
                         c[1] = *k;
                         *k = false_lit;
-                        watches[(~c[1]).toInt()].push(Watched(&c, c[0]));
+                        watches[(~c[1]).toInt()].push(Watched(origClauseOffset, c[0]));
                         goto FoundWatch;
                     }
                 }
 
                 // Did not find watch -- clause is unit under assignment:
-                j->clause = &c;
+                j->clause = origClauseOffset;
                 j->blockedLit = bl;
                 j++;
                 if (value(first) == l_False) {
@@ -1198,8 +1203,8 @@ PropagatedFrom Solver::propagate_xors(const Lit& p)
     
     PropagatedFrom confl;
 
-    vec<XorClausePtr>&  ws  = xorwatches[p.var()];
-    XorClausePtr        *i, *j, *end;
+    vec<XorClause*>& ws = xorwatches[p.var()];
+    XorClause **i, **j, **end;
     for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
         XorClause& c = **i++;
         if (i != end)
@@ -1799,7 +1804,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
             }
             c->setStrenghtened();
         } else {
-            c = Clause_new(learnt_clause, learnt_clause_group++, true);
+            c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
                 logger.set_group_name(c->getGroup(), "learnt clause");

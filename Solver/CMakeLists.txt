@@ -29,14 +29,13 @@ add_library(cryptominisatlib
     ClauseCleaner.cpp
     RestartTypeChooser.cpp
     SmallPtr.cpp
-    Clause.cpp
     FailedVarSearcher.cpp
     PartFinder.cpp
     Subsumer.cpp
     PartHandler.cpp
     XorSubsumer.cpp
     StateSaver.cpp
-    Clause.cpp
+    ClauseAllocator.cpp
     UselessBinRemover.cpp
     OnlyNonLearntBins.cpp
 )
