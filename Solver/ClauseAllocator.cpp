@@ -97,7 +97,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         std::cout << "c New list in ClauseAllocator" << std::endl;
         uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0)
-            nextSize = maxSizes[maxSizes.size()-1]*3;
+            nextSize = maxSizes[maxSizes.size()-1]*3*sizeof(uint32_t);
         else
             nextSize = MIN_LIST_SIZE;
         assert(needed <  nextSize);
