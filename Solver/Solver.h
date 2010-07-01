@@ -76,6 +76,8 @@ struct reduceDB_ltGlucose
     bool operator () (const Clause* x, const Clause* y);
 };
 
+//#define DEBUG_PROPAGATEFROM
+
 class PropagatedFrom
 {
     private:
@@ -108,11 +110,17 @@ class PropagatedFrom
 
         const Lit getOtherLit() const
         {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(isBinary());
+            #endif
             return Lit::toLit(otherLit>>1);
         }
 
         const Clause* getClause() const
         {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(!isBinary());
+            #endif
             return clause;
         }
 
@@ -123,32 +131,33 @@ class PropagatedFrom
 
         const bool isNULL() const
         {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(!isBinary());
-            #endif
+            if (isBinary()) return false;
             return clause == NULL;
         }
 
         const uint32_t size() const
         {
+            if (isBinary()) return 2;
+            
             #ifdef DEBUG_PROPAGATEFROM
             assert(!isNULL());
             #endif
-            if (isBinary()) return 2;
+            
             return getClause()->size();
         }
 
         const Lit operator[](uint32_t i) const
         {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(!isNULL());
-            #endif
             if (isBinary()) {
                 #ifdef DEBUG_PROPAGATEFROM
                 assert(i == 1);
                 #endif
                 return getOtherLit();
             }
+
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(!isNULL());
+            #endif
             return (*getClause())[i];
         }
 };
@@ -570,7 +579,8 @@ inline bool     Solver::enqueue         (Lit p, Clause* from)
 inline bool     Solver::locked          (const Clause& c) const
 {
     if (c.size() == 2) return true; //we don't know in this case :I
-    return reason[c[0].var()].getClause() == &c && value(c[0]) == l_True;
+    PropagatedFrom from(reason[c[0].var()]);
+    return !from.isBinary() && from.getClause() == &c && value(c[0]) == l_True;
 }
 inline void     Solver::newDecisionLevel()
 {
