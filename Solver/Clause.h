@@ -84,7 +84,7 @@ public:
     template<class V>
     Clause(const V& ps, const uint _group, const bool learnt)
     {
-        if (ps.size() == 2) wasBinInternal = true;
+        wasBinInternal = (ps.size() == 2);
         isFreed = false;
         isXorClause = false;
         strenghtened = false;
@@ -279,6 +279,10 @@ public:
 
     const bool wasBin() const {
         return wasBinInternal;
+    }
+
+    void setWasBin(const bool toSet) {
+        wasBinInternal = toSet;
     }
 };
 

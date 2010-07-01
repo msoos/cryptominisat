@@ -33,6 +33,7 @@ Clause* ClauseAllocator::Clause_new(const T& ps, const unsigned int group, const
 {
     void* mem = allocEnough(ps.size());
     Clause* real= new (mem) Clause(ps, group, learnt);
+    //assert(!(ps.size() == 2 && !real->wasBin()));
 
     return real;
 }
@@ -45,6 +46,7 @@ XorClause* ClauseAllocator::XorClause_new(const T& ps, const bool inverted, cons
 {
     void* mem = allocEnough(ps.size());
     XorClause* real= new (mem) XorClause(ps, inverted, group);
+    //assert(!(ps.size() == 2 && !real->wasBin()));
 
     return real;
 }
@@ -54,9 +56,10 @@ template XorClause* ClauseAllocator::XorClause_new(const XorClause& ps, const bo
 Clause* ClauseAllocator::Clause_new(Clause& c)
 {
     void* mem = allocEnough(c.size());
-    //Clause* real= new (mem) Clause(ps, group, learnt);
     memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
     Clause& c2 = *(Clause*)mem;
+    c2.setWasBin(c.size() == 2);
+    //assert(!(c.size() == 2 && !c2.wasBin()));
     
     return &c2;
 }
