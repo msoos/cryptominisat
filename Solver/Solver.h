@@ -236,7 +236,6 @@ public:
     bool      doVarElim;            // Perform variable elimination
     bool      doSubsume1;           // Perform clause contraction through resolution
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
-    bool      readdOldLearnts;      // Should re-add old learnts for failed variable searching
     bool      addExtraBins;         // Should add extra binaries in failed literal probing
     bool      removeUselessBins;    // Should try to remove useless binary clauses
     bool      regularRemoveUselessBins; // Should try to remove useless binary clauses regularly
@@ -342,7 +341,6 @@ protected:
     vec<Clause*>        binaryClauses;    // Binary clauses are regularly moved here
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
-    vec<Clause*>        removedLearnts;   // Clauses that have been learnt, then removed
     vec<XorClause*>     freeLater;        // xor clauses that need to be freed later due to Gauss
     vec<uint32_t>       activity;         // A heuristic measurement of the activity of a variable.
     uint32_t            var_inc;          // Amount to bump next variable with.

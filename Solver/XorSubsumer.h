@@ -34,6 +34,7 @@ public:
 private:
     
     friend class ClauseCleaner;
+    friend class ClauseAllocator;
     
     //Main
     vec<XorClauseSimp>        clauses;

@@ -26,6 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Vec.h"
 #include <boost/pool/pool.hpp>
+#include <map>
+#include <vector>
+using std::map;
+using std::vector;
 
 class Clause;
 class XorClause;
@@ -58,6 +62,16 @@ class ClauseAllocator {
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
         const ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
+
+        template<class T>
+        void updatePointers(vec<T*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
+        void updatePointers(vector<Clause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
+        void updatePointers(vector<XorClause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
+        
+        template<class T>
+        void updateOffsets(vec<vec<T> >& watches, const map<ClauseOffset, ClauseOffset>& oldToNewOffset);
+        template<class T>
+        void updateOffsetsXor(vec<vec<T> >& watches, const map<ClauseOffset, ClauseOffset>& oldToNewOffset);
         
         vec<uint32_t*> dataStarts;
         vec<size_t> sizes;

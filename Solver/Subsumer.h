@@ -55,6 +55,7 @@ public:
 private:
     
     friend class ClauseCleaner;
+    friend class ClauseAllocator;
     
     //Main
     vec<ClauseSimp>        clauses;

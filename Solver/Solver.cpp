@@ -88,7 +88,6 @@ Solver::Solver() :
         , doVarElim        (true)
         , doSubsume1       (true)
         , failedVarSearch  (true)
-        , readdOldLearnts  (false)
         , addExtraBins     (true)
         , removeUselessBins(true)
         , regularRemoveUselessBins(true)
@@ -160,12 +159,11 @@ Solver::~Solver()
     for (uint32_t i = 0; i != clauses.size(); i++) clauseAllocator.clauseFree(clauses[i]);
     for (uint32_t i = 0; i != binaryClauses.size(); i++) clauseAllocator.clauseFree(binaryClauses[i]);
     for (uint32_t i = 0; i != xorclauses.size(); i++) clauseAllocator.clauseFree(xorclauses[i]);
-    for (uint32_t i = 0; i != removedLearnts.size(); i++) clauseAllocator.clauseFree(removedLearnts[i]);
     #ifdef USE_GAUSS
     clearGaussMatrixes();
     delete matrixFinder;
     #endif
-    for (uint32_t i = 0; i != freeLater.size(); i++) clauseAllocator.clauseFree(freeLater[i]);
+    //for (uint32_t i = 0; i != freeLater.size(); i++) clauseAllocator.clauseFree(freeLater[i]);
     
     delete varReplacer;
     delete clauseCleaner;
@@ -827,8 +825,8 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
                     pathC++;
                     #ifdef UPDATEVARACTIVITY
                     if (lastSelectedRestartType == dynamic_restart
-                        && !reason[q.var()].isNULL()
                         && !reason[q.var()].isBinary()
+                        && !reason[q.var()].isNULL()
                         && reason[q.var()].getClause()->learnt())
                         lastDecisionLevel.push(q.var());
                     #endif
@@ -1353,12 +1351,7 @@ void Solver::reduceDB()
         //NOTE: The next instruciton only works if removeNum < learnts.size() (strictly smaller!!)
         __builtin_prefetch(learnts[i+1], 0, 0);
         if (learnts[i]->size() > 2 && !locked(*learnts[i]) && learnts[i]->activity() > 2) {
-            if (readdOldLearnts) {
-                detachClause(*learnts[i]);
-                removedLearnts.push(learnts[i]);
-            } else {
-                removeClause(*learnts[i]);
-            }
+            removeClause(*learnts[i]);
         } else
             learnts[j++] = learnts[i];
     }
@@ -1366,6 +1359,8 @@ void Solver::reduceDB()
         learnts[j++] = learnts[i];
     }
     learnts.shrink(i - j);
+
+    clauseAllocator.consolidate(this);
 }
 
 const vec<Clause*>& Solver::get_learnts() const
@@ -2087,8 +2082,7 @@ inline void Solver::performStepsBeforeSolve()
         if (subsumeWithNonExistBinaries
             && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
     }
-    
-    testAllClauseAttach();
+
     if (doSubsumption
         && !libraryUsage
         && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
@@ -2107,15 +2101,13 @@ inline void Solver::performStepsBeforeSolve()
         }
     }
     */
-    
-    testAllClauseAttach();
+
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
         if (!xorFinder.doNoPart(2, 2)) return;
         if (performReplace && !varReplacer->performReplace(true)) return;
     }
-    
-    testAllClauseAttach();
+
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
         if (!xorFinder.doNoPart(3, 7)) return;
