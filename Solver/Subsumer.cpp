@@ -1107,15 +1107,14 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     cl_added.reserve(expected_size);
     cl_touched.reserve(expected_size);
     
+    if (clauses.size() < 200000) fullSubsume = true;
+    else fullSubsume = false;
+    if (alsoLearnt) fullSubsume = true;
+    
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver<true>(solver.clauses, alsoLearnt);
     solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
     addFromSolver<true>(solver.binaryClauses, alsoLearnt);
-
-    if (clauses.size() < 200000)
-        fullSubsume = true;
-    else
-        fullSubsume = false;
     
     //Limits
     if (clauses.size() > 3500000) {

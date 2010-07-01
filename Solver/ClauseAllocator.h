@@ -43,7 +43,7 @@ class ClauseAllocator {
         XorClause* XorClause_new(const T& ps, const bool inverted, const uint group);
         Clause* Clause_new(Clause& c);
 
-        ClauseOffset getOffset(const Clause* ptr);
+        const ClauseOffset getOffset(const Clause* ptr) const;
 
         inline Clause* getPointer(const uint32_t offset)
         {
@@ -55,10 +55,15 @@ class ClauseAllocator {
         void consolidate(Solver* solver);
 
     private:
+        uint32_t getOuterOffset(const Clause* c) const;
+        uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
+        const ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
+        
         vec<uint32_t*> dataStarts;
         vec<size_t> sizes;
         vec<vec<uint32_t> > origClauseSizes;
         vec<size_t> maxSizes;
+        vec<size_t> currentlyUsedSize;
         vec<uint32_t> origSizes;
 
         boost::pool<> clausePoolBin;

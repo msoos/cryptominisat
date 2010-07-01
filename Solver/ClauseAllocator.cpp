@@ -87,7 +87,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
 
     if (!found) {
         std::cout << "c New list in ClauseAllocator" << std::endl;
-        uint32_t nextSize;
+        uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0)
             nextSize = maxSizes[maxSizes.size()-1]*3;
         else
@@ -100,6 +100,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         sizes.push(0);
         maxSizes.push(nextSize/sizeof(uint32_t));
         origClauseSizes.push();
+        currentlyUsedSize.push(0);
         which = dataStarts.size()-1;
     }
     /*std::cout
@@ -111,12 +112,25 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     assert(which != std::numeric_limits<uint32_t>::max());
     Clause* pointer = (Clause*)(dataStarts[which] + sizes[which]);
     sizes[which] += needed/sizeof(uint32_t);
-    origClauseSizes[which].push(size);
+    currentlyUsedSize[which] += needed/sizeof(uint32_t);
+    origClauseSizes[which].push(needed/sizeof(uint32_t));
 
     return pointer;
 }
 
-ClauseOffset ClauseAllocator::getOffset(const Clause* ptr)
+const ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
+{
+    uint32_t outerOffset = getOuterOffset(ptr);
+    uint32_t interOffset = getInterOffset(ptr, outerOffset);
+    return combineOuterInterOffsets(outerOffset, interOffset);
+}
+
+inline const ClauseOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
+{
+    return (outerOffset | (interOffset<<8));
+}
+
+inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
 {
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
@@ -124,9 +138,13 @@ ClauseOffset ClauseAllocator::getOffset(const Clause* ptr)
             which = i;
     }
     assert(which != std::numeric_limits<uint32_t>::max());
-    uint32_t outerOffset = which;
-    uint32_t interOffset = ((uint32_t*)ptr-dataStarts[which]);
-    return (outerOffset | (interOffset<<8));
+
+    return which;
+}
+
+inline uint32_t ClauseAllocator::getInterOffset(const Clause* ptr, uint32_t outerOffset) const
+{
+    return ((uint32_t*)ptr - dataStarts[outerOffset]);
 }
 
 void ClauseAllocator::clauseFree(Clause* c)
@@ -135,11 +153,85 @@ void ClauseAllocator::clauseFree(Clause* c)
         clausePoolBin.free(c);
     } else {
         c->setFreed();
+        uint32_t outerOffset = getOuterOffset(c);
+        //uint32_t interOffset = getInterOffset(c, outerOffset);
+        currentlyUsedSize[outerOffset] -= sizeof(Clause) + c->size()*sizeof(Lit);
+        //above should be
+        //origClauseSizes[outerOffset][interOffset]
+        //but it cannot be :(
     }
 }
 
+struct NewPointerAndOffset {
+    Clause* newPointer;
+    uint32_t newOffset;
+};
+
 void ClauseAllocator::consolidate(Solver* solver)
 {
-    dasfdasf
+    //if (dataStarts.size() > 2) {
+    uint32_t sum = 0;
+    for (uint32_t i = 0; i < sizes.size(); i++) {
+        sum += currentlyUsedSize[i];
+    }
+    uint32_t newMaxSize = sum*2*sizeof(uint32_t);
+    uint32_t* newDataStarts = (uint32_t*)malloc(newMaxSize);
+    uint32_t newSize = 0;
+    vec<uint32_t> newOrigClauseSizes;
+    //}
+
+    map<Clause*, Clause*> oldToNewPointer;
+    map<uint32_t, uint32_t> oldToNewOffset;
+    
+    uint32_t* newDataStartsPointer = newDataStarts;
+    for (uint32_t i = 0; i < dataStarts.size(); i++) {
+        uint32_t currentLoc = 0;
+        for (uint32_t i2 = 0; i2 < origClauseSizes[i].size(); i2++) {
+            Clause* oldPointer = (Clause*)(dataStarts[i] + currentLoc);
+            if (!oldPointer->freed()) {
+                uint32_t sizeNeeded = sizeof(Clause) + oldPointer->size()*sizeof(Lit);
+                memcpy(newDataStartsPointer, dataStarts[i] + currentLoc, sizeNeeded);
+                
+                oldToNewPointer[oldPointer] = (Clause*)newDataStartsPointer;
+                oldToNewOffset[combineOuterInterOffsets(i, currentLoc)] = combineOuterInterOffsets(0, newSize);
+
+                newSize += sizeNeeded/sizeof(uint32_t);
+                newOrigClauseSizes.push(sizeNeeded/sizeof(uint32_t));
+                newDataStartsPointer += sizeNeeded/sizeof(uint32_t);
+            }
+            
+            currentLoc += origClauseSizes[i][i2];
+        }
+        free(dataStarts[i]);
+    }
+
+    dataStarts.clear();
+    maxSizes.clear();
+    sizes.clear();
+    origClauseSizes.clear();
+
+    dataStarts.push(newDataStarts);
+    maxSizes.push(newMaxSize);
+    sizes.push(newSize);
+    origClauseSizes.clear();
+    origClauseSizes.push();
+    newOrigClauseSizes.moveTo(origClauseSizes[0]);
+
+    for (uint32_t i = 0;  i < solver->watches.size(); i++) {
+        vec<Watched>& list = solver->watches[i];
+        for (Watched *it = list.getData(), *end = list.getDataEnd(); it != end; it++) {
+            it->clause = oldToNewOffset[it->clause];
+        }
+    }
+
+    vec<Clause*>& clauses = solver->clauses;
+    for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++) {
+        if (!(*it)->wasBin()) *it = oldToNewPointer[*it];
+    };
+
+    vec<Clause*>& binClauses = solver->clauses;
+    for (Clause **it = binClauses.getData(), **end = binClauses.getDataEnd(); it != end; it++) {
+        if (!(*it)->wasBin()) *it = oldToNewPointer[*it];
+    };
 }
 

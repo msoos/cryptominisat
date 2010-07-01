@@ -470,6 +470,7 @@ protected:
     friend class StateSaver;
     friend class UselessBinRemover;
     friend class OnlyNonLearntBins;
+    friend class ClauseAllocator;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
