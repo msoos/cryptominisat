@@ -920,16 +920,23 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     }
     #endif //DEBUG_BINARIES
 
+    numMaxSubsume0 = 300000 * (1+numCalls/2);
+    numMaxSubsume1 = 10000 * (1+numCalls);
+
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-        if (!solver.binaryClauses[i]->learnt()) {
+        if (!solver.binaryClauses[i]->learnt() && numMaxSubsume0 > 0) {
             Clause& c = *solver.binaryClauses[i];
             subsume0(c, c.getAbst());
+            numMaxSubsume0--;
         }
     }
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-        Clause& c = *solver.binaryClauses[i];
-        subsume1Partial(c);
-        if (!solver.ok) return false;
+        if (numMaxSubsume1 > 0) {
+            Clause& c = *solver.binaryClauses[i];
+            subsume1Partial(c);
+            if (!solver.ok) return false;
+            numMaxSubsume1--;
+        }
     }
     if (solver.verbosity >= 1) {
         std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed
@@ -977,6 +984,7 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t maxProp = MAX_BINARY_PROP;
     //if (!startUp) maxProp /= 3;
+    if (clauses.size() > 2000000) maxProp /= 2;
     ps2.clear();
     ps2.growTo(2);
     toVisitAll.growTo(solver.nVars()*2, false);
@@ -1039,7 +1047,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
     }
     solver.cancelUntil(0);
 
-    /*if (toVisit.size() <= 1) {
+    if (toVisit.size() <= 1) {
         ps2[0] = ~lit;
         for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
             ps2[1] = *l;
@@ -1051,7 +1059,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
             subsume0(ps2, calcAbstraction(ps2));
             subsume1Partial(ps2);
         }
-    } else */{
+    } else {
         subsume0BIN(~lit, toVisitAll);
     }
     for (uint32_t i = 0; i < toVisit.size(); i++)
