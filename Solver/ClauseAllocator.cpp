@@ -135,7 +135,7 @@ const ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
 
 inline const ClauseOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
 {
-    return (outerOffset | (interOffset<<8));
+    return (outerOffset | (interOffset<<4));
 }
 
 inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const

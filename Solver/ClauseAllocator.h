@@ -51,7 +51,7 @@ class ClauseAllocator {
 
         inline Clause* getPointer(const uint32_t offset)
         {
-            return (Clause*)(dataStarts[offset&255]+(offset>>8));
+            return (Clause*)(dataStarts[offset&16]+(offset>>4));
         }
 
         void clauseFree(Clause* c);
