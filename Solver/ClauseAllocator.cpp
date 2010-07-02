@@ -96,7 +96,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     }
 
     if (!found) {
-        std::cout << "c New list in ClauseAllocator" << std::endl;
+        //std::cout << "c New list in ClauseAllocator" << std::endl;
         uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0)
             nextSize = maxSizes[maxSizes.size()-1]*3*sizeof(uint32_t);
@@ -191,10 +191,12 @@ void ClauseAllocator::consolidate(Solver* solver)
         sumAlloc += sizes[i];
     }
 
-    std::cout << "c ratio:" << (double)sum/(double)sumAlloc << std::endl;
+    //std::cout << "c ratio:" << (double)sum/(double)sumAlloc << std::endl;
     
     if ((double)sum/(double)sumAlloc > 0.7 /*&& sum > 10000000*/) {
-        std::cout << "c Not consolidating" << std::endl;
+        if (solver->verbosity >= 2) {
+            std::cout << "c Not consolidating memory." << std::endl;
+        }
         return;
     }
 
@@ -288,7 +290,10 @@ void ClauseAllocator::consolidate(Solver* solver)
     origClauseSizes.push();
     newOrigClauseSizes.moveTo(origClauseSizes[0]);
 
-    std::cout << "c Consolidated memory. Time: " << cpuTime() - myTime << std::endl;
+    if (solver->verbosity >= 1) {
+        std::cout << "c Consolidated memory. Time: "
+        << cpuTime() - myTime << std::endl;
+    }
 }
 
 template<class T>
