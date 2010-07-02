@@ -407,8 +407,12 @@ void ClauseCleaner::moveBinClausesToBinClauses()
             __builtin_prefetch(*(s+1), 1, 0);
 
         if ((**s).size() == 2) {
-            (**s).setUnsorted();
-            solver.binaryClauses.push(*s);
+            solver.detachClause(**s);
+            Clause *c2 = solver.clauseAllocator.Clause_new(**s);
+            solver.clauseAllocator.clauseFree(*s);
+            solver.attachClause(*c2);
+            solver.becameBinary++;
+            solver.binaryClauses.push(c2);
         } else
             *ss++ = *s;
     }

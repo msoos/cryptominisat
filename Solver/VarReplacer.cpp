@@ -256,8 +256,12 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
             }
         } else {
             if (!binClauses && c.size() == 2) {
+                solver.detachClause(c);
+                Clause *c2 = solver.clauseAllocator.Clause_new(c);
+                solver.clauseAllocator.clauseFree(&c);
+                solver.attachClause(*c2);
                 solver.becameBinary++;
-                solver.binaryClauses.push(&c);
+                solver.binaryClauses.push(c2);
             } else
                 *a++ = *r;
         }

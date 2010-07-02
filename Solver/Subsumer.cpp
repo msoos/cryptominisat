@@ -839,7 +839,16 @@ void Subsumer::addBackToSolver()
                 if (clauses[i].clause->learnt())
                     binaryLearntAdded++;
                 #endif
-                solver.binaryClauses.push(clauses[i].clause);
+                Clause* c = clauses[i].clause;
+                if (!c->wasBin()) {
+                    solver.detachClause(*c);
+                    Clause *c2 = solver.clauseAllocator.Clause_new(*c);
+                    solver.clauseAllocator.clauseFree(c);
+                    solver.attachClause(*c2);
+                    solver.becameBinary++;
+                    c = c2;
+                }
+                solver.binaryClauses.push(c);
             } else {
                 if (clauses[i].clause->learnt())
                     solver.learnts.push(clauses[i].clause);
@@ -962,7 +971,13 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     #endif //DEBUG_BINARIES
     addBackToSolver();
     for (uint32_t i = 0; i < addBinaryClauses.size(); i++) {
-        solver.binaryClauses.push(addBinaryClauses[i]);
+        Clause& c = *addBinaryClauses[i];
+        solver.detachClause(c);
+        Clause *c2 = solver.clauseAllocator.Clause_new(c);
+        solver.clauseAllocator.clauseFree(&c);
+        solver.attachClause(*c2);
+        solver.becameBinary++;
+        solver.binaryClauses.push(c2);
     }
     addBinaryClauses.clear();
     freeMemory();
