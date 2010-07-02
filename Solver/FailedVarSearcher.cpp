@@ -133,8 +133,6 @@ const bool FailedVarSearcher::search(uint64_t numProps)
     Heap<Solver::VarOrderLt> order_heap_copy(solver.order_heap); //for hyperbin
     uint64_t origBinClauses = solver.binaryClauses.size();
     
-    if (solver.readdOldLearnts && !readdRemovedLearnts()) goto end;
-    
     //General Stats
     numFailed = 0;
     goodBothSame = 0;
@@ -279,14 +277,6 @@ end:
             <<  std::setw(39) << " | " << std::endl;
         }
     }
-
-    if (solver.ok && solver.readdOldLearnts && !removedOldLearnts) {
-        if (solver.removedLearnts.size() < 100000) {
-            removeOldLearnts();
-        } else {
-            completelyDetachAndReattach();
-        }
-    }
     
     lastTimeFoundTruths = solver.trail.size() - origTrailSize;
 
@@ -375,52 +365,6 @@ const bool FailedVarSearcher::orderLits()
     solver.propagations = oldProps;
 
     return true;
-}
-
-void FailedVarSearcher::removeOldLearnts()
-{
-    for (Clause **it = solver.removedLearnts.getData(), **end = solver.removedLearnts.getDataEnd(); it != end; it++) {
-        solver.detachClause(**it);
-    }
-}
-
-struct reduceDB_ltOldLearnt
-{
-    bool operator () (const Clause* x, const Clause* y) {
-        return x->size() > y->size();
-    }
-};
-
-const bool FailedVarSearcher::readdRemovedLearnts()
-{
-    uint32_t toRemove = (solver.removedLearnts.size() > MAX_OLD_LEARNTS) ? (solver.removedLearnts.size() - MAX_OLD_LEARNTS/4) : 0;
-    if (toRemove > 0)
-        std::sort(solver.removedLearnts.getData(), solver.removedLearnts.getDataEnd(), reduceDB_ltOldLearnt());
-
-    Clause **it1, **it2;
-    it1 = it2 = solver.removedLearnts.getData();
-    for (Clause **end = solver.removedLearnts.getDataEnd(); it1 != end; it1++) {
-        if (toRemove > 0) {
-            clauseFree(*it1);
-            toRemove--;
-            continue;
-        }
-        
-        Clause* c = solver.addClauseInt(**it1, (**it1).getGroup());
-        clauseFree(*it1);
-        if (c != NULL) {
-            *it2 = c;
-            it2++;
-        }
-        if (!solver.ok) {
-            it1++;
-            for (; it1 != end; it1++) clauseFree(*it1);
-        }
-    }
-    solver.removedLearnts.shrink(it1-it2);
-    //std::cout << "Readded old learnts. New facts:" << (int)origHeapSize - (int)solver.order_heap.size() << std::endl;
-
-    return solver.ok;
 }
 
 const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
@@ -692,7 +636,7 @@ inline void FailedVarSearcher::cleanAndAttachClauses(vec<T*>& cs)
             solver.attachClause(**i);
             *j++ = *i;
         } else {
-            clauseFree(*i);
+            solver.clauseAllocator.clauseFree(*i);
         }
     }
     cs.shrink(i-j);

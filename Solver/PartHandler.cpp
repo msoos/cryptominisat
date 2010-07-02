@@ -82,6 +82,13 @@ const bool PartHandler::handle()
         newSolver.fixRestartType = solver.fixRestartType;
         newSolver.var_inc = solver.var_inc;
         newSolver.polarity_mode = solver.polarity_mode;
+
+        //Memory-usage reduction
+        newSolver.schedSimplification = false;
+        newSolver.doSubsumption = false;
+        newSolver.doXorSubsumption = false;
+        newSolver.doPartHandler = false;
+
         std::sort(vars.begin(), vars.end());
         uint32_t i2 = 0;
         for (Var var = 0; var < solver.nVars(); var++) {
@@ -277,7 +284,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
             
             solver.detachClause(c);
             newSolver.addLearntClause(c, c.getGroup(), c.activity());
-            clauseFree(&c);
+            solver.clauseAllocator.clauseFree(&c);
         } else {
             #ifdef VERBOSE_DEBUG
             std::cout << "Learnt clause in other part:"; c.plainPrint();

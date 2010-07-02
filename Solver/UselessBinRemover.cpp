@@ -29,7 +29,7 @@ UselessBinRemover::UselessBinRemover(Solver& _solver, OnlyNonLearntBins& _onlyNo
 }
 
 #define MAX_REMOVE_BIN_FULL_PROPS 20000000
-#define EXTRATIME_DIVIDER 3
+#define EXTRATIME_DIVIDER 2
 
 const bool UselessBinRemover::removeUslessBinFull()
 {

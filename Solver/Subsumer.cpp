@@ -99,7 +99,7 @@ const bool Subsumer::unEliminate(const Var var)
     solver.libraryCNFFile = NULL;
     for (vector<Clause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         solver.addClause(**it2);
-        clauseFree(*it2);
+        solver.clauseAllocator.clauseFree(*it2);
     }
     solver.libraryCNFFile = backup_libraryCNFfile;
     elimedOutVar.erase(it);
@@ -180,7 +180,7 @@ uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         subsumedNonLearnt |= !tmp->learnt();
         retIndex = subs[i].index;
         unlinkClause(subs[i]);
-        clauseFree(tmp);
+        solver.clauseAllocator.clauseFree(tmp);
     }
     
     return retIndex;
@@ -226,7 +226,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
         
         Clause* tmp = subs[i].clause;
         unlinkClause(subs[i]);
-        clauseFree(tmp);
+        solver.clauseAllocator.clauseFree(tmp);
     }
 
     if (subs2.size() == 0) return;
@@ -253,7 +253,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
                 #ifdef VERBOSE_DEBUG
                 std::cout << "--> Clause was satisfied." << std::endl;
                 #endif
-                clauseFree(&cl);
+                solver.clauseAllocator.clauseFree(&cl);
                 goto endS;
             }
         }
@@ -268,7 +268,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
         if (cl.size() == 0) {
             solver.ok = false;
             unregisterIteration(subs2);
-            clauseFree(&cl);
+            solver.clauseAllocator.clauseFree(&cl);
             return;
         }
         if (cl.size() > 2) {
@@ -294,7 +294,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
             #ifdef VERBOSE_DEBUG
             cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
             #endif
-            clauseFree(&cl);
+            solver.clauseAllocator.clauseFree(&cl);
         }
         endS:;
     }
@@ -434,7 +434,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                         #ifdef VERBOSE_DEBUG
                         std::cout << "--> Clause was satisfied." << std::endl;
                         #endif
-                        clauseFree(&cl);
+                        solver.clauseAllocator.clauseFree(&cl);
                         goto endS;
                     }
                 }
@@ -450,7 +450,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     solver.ok = false;
                     unregisterIteration(Q);
                     unregisterIteration(subs);
-                    clauseFree(&cl);
+                    solver.clauseAllocator.clauseFree(&cl);
                     return;
                 }
                 if (cl.size() > 1) {
@@ -473,7 +473,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     #ifdef VERBOSE_DEBUG
                     cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                     #endif
-                    clauseFree(&cl);
+                    solver.clauseAllocator.clauseFree(&cl);
                 }
                 endS:;
             }
@@ -533,7 +533,7 @@ void Subsumer::subsume1Partial(const T& ps)
                     #ifdef VERBOSE_DEBUG
                     std::cout << "--> Clause was satisfied." << std::endl;
                     #endif
-                    clauseFree(&cl);
+                    solver.clauseAllocator.clauseFree(&cl);
                     goto endS;
                 }
             }
@@ -548,7 +548,7 @@ void Subsumer::subsume1Partial(const T& ps)
             if (cl.size() == 0) {
                 solver.ok = false;
                 unregisterIteration(subsume1PartialSubs);
-                clauseFree(&cl);
+                solver.clauseAllocator.clauseFree(&cl);
                 return;
             }
             if (cl.size() > 2) {
@@ -574,7 +574,7 @@ void Subsumer::subsume1Partial(const T& ps)
                 #ifdef VERBOSE_DEBUG
                 cout << "--> Found that var " << cl[0].var()+1 << " must be " << std::boolalpha << !cl[0].sign() << endl;
                 #endif
-                clauseFree(&cl);
+                solver.clauseAllocator.clauseFree(&cl);
             }
             endS:;
         }
@@ -818,6 +818,13 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
     cs.shrink(i-j);
 }
 
+void Subsumer::freeMemory()
+{
+    for (uint32_t i = 0; i < occur.size(); i++) {
+        occur[i].clear(true);
+    }
+}
+
 void Subsumer::addBackToSolver()
 {
     #ifdef HYPER_DEBUG2
@@ -832,7 +839,16 @@ void Subsumer::addBackToSolver()
                 if (clauses[i].clause->learnt())
                     binaryLearntAdded++;
                 #endif
-                solver.binaryClauses.push(clauses[i].clause);
+                Clause* c = clauses[i].clause;
+                if (!c->wasBin()) {
+                    solver.detachClause(*c);
+                    Clause *c2 = solver.clauseAllocator.Clause_new(*c);
+                    solver.clauseAllocator.clauseFree(c);
+                    solver.attachClause(*c2);
+                    solver.becameBinary++;
+                    c = c2;
+                }
+                solver.binaryClauses.push(c);
             } else {
                 if (clauses[i].clause->learnt())
                     solver.learnts.push(clauses[i].clause);
@@ -862,7 +878,7 @@ void Subsumer::removeWrong(vec<Clause*>& cs)
             if (var_elimed[l->var()]) {
                 remove = true;
                 solver.detachClause(c);
-                clauseFree(&c);
+                solver.clauseAllocator.clauseFree(&c);
                 break;
             }
         }
@@ -920,16 +936,23 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     }
     #endif //DEBUG_BINARIES
 
+    numMaxSubsume0 = 300000 * (1+numCalls/2);
+    numMaxSubsume1 = 10000 * (1+numCalls);
+
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-        if (!solver.binaryClauses[i]->learnt()) {
+        if (!solver.binaryClauses[i]->learnt() && numMaxSubsume0 > 0) {
             Clause& c = *solver.binaryClauses[i];
             subsume0(c, c.getAbst());
+            numMaxSubsume0--;
         }
     }
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-        Clause& c = *solver.binaryClauses[i];
-        subsume1Partial(c);
-        if (!solver.ok) return false;
+        if (numMaxSubsume1 > 0) {
+            Clause& c = *solver.binaryClauses[i];
+            subsume1Partial(c);
+            if (!solver.ok) return false;
+            numMaxSubsume1--;
+        }
     }
     if (solver.verbosity >= 1) {
         std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed
@@ -948,9 +971,16 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     #endif //DEBUG_BINARIES
     addBackToSolver();
     for (uint32_t i = 0; i < addBinaryClauses.size(); i++) {
-        solver.binaryClauses.push(addBinaryClauses[i]);
+        Clause& c = *addBinaryClauses[i];
+        solver.detachClause(c);
+        Clause *c2 = solver.clauseAllocator.Clause_new(c);
+        solver.clauseAllocator.clauseFree(&c);
+        solver.attachClause(*c2);
+        solver.becameBinary++;
+        solver.binaryClauses.push(c2);
     }
     addBinaryClauses.clear();
+    freeMemory();
 
     if (solver.verbosity >= 1) {
         std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << subsNonExistentNum
@@ -977,6 +1007,7 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t maxProp = MAX_BINARY_PROP;
     //if (!startUp) maxProp /= 3;
+    if (clauses.size() > 2000000) maxProp /= 2;
     ps2.clear();
     ps2.growTo(2);
     toVisitAll.growTo(solver.nVars()*2, false);
@@ -1039,7 +1070,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
     }
     solver.cancelUntil(0);
 
-    /*if (toVisit.size() <= 1) {
+    if (toVisit.size() <= 1) {
         ps2[0] = ~lit;
         for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
             ps2[1] = *l;
@@ -1051,7 +1082,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
             subsume0(ps2, calcAbstraction(ps2));
             subsume1Partial(ps2);
         }
-    } else */{
+    } else {
         subsume0BIN(~lit, toVisitAll);
     }
     for (uint32_t i = 0; i < toVisit.size(); i++)
@@ -1107,15 +1138,14 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     cl_added.reserve(expected_size);
     cl_touched.reserve(expected_size);
     
+    if (clauses.size() < 200000) fullSubsume = true;
+    else fullSubsume = false;
+    if (alsoLearnt) fullSubsume = true;
+    
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver<true>(solver.clauses, alsoLearnt);
     solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
     addFromSolver<true>(solver.binaryClauses, alsoLearnt);
-
-    if (clauses.size() < 200000)
-        fullSubsume = true;
-    else
-        fullSubsume = false;
     
     //Limits
     if (clauses.size() > 3500000) {
@@ -1294,6 +1324,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
+    freeMemory();
     
     if (solver.verbosity >= 1) {
         std::cout << "c |  lits-rem: " << std::setw(9) << literals_removed

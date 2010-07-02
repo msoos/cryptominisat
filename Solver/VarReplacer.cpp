@@ -44,7 +44,7 @@ VarReplacer::VarReplacer(Solver& _solver) :
 VarReplacer::~VarReplacer()
 {
     for (uint i = 0; i != clauses.size(); i++)
-        clauseFree(clauses[i]);
+        solver.clauseAllocator.clauseFree(clauses[i]);
 }
 
 const bool VarReplacer::performReplaceInternal()
@@ -163,7 +163,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
         
         if (changed && handleUpdatedClause(c, origVar1, origVar2)) {
             if (!solver.ok) {
-                for(;r != end; r++) clauseFree(*r);
+                for(;r != end; r++) solver.clauseAllocator.clauseFree(*r);
                 cs.shrink(r-a);
                 return false;
             }
@@ -250,14 +250,18 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
         
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
             if (!solver.ok) {
-                for(;r != end; r++) clauseFree(*r);
+                for(;r != end; r++) solver.clauseAllocator.clauseFree(*r);
                 cs.shrink(r-a);
                 return false;
             }
         } else {
             if (!binClauses && c.size() == 2) {
+                solver.detachClause(c);
+                Clause *c2 = solver.clauseAllocator.Clause_new(c);
+                solver.clauseAllocator.clauseFree(&c);
+                solver.attachClause(*c2);
                 solver.becameBinary++;
-                solver.binaryClauses.push(&c);
+                solver.binaryClauses.push(c2);
             } else
                 *a++ = *r;
         }
@@ -472,7 +476,7 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, cons
     Clause* c;
     ps[0] ^= xor_clause_inverted;
     
-    c = Clause_new(ps, group, false);
+    c = solver.clauseAllocator.Clause_new(ps, group, false);
     if (internal) {
         solver.binaryClauses.push(c);
         solver.becameBinary++;
@@ -482,7 +486,7 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, cons
     
     ps[0] ^= true;
     ps[1] ^= true;
-    c = Clause_new(ps, group, false);
+    c = solver.clauseAllocator.Clause_new(ps, group, false);
     if (internal) {
         solver.binaryClauses.push(c);
         solver.becameBinary++;

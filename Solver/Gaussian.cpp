@@ -62,7 +62,7 @@ Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint _m
 Gaussian::~Gaussian()
 {
     for (uint i = 0; i < clauses_toclear.size(); i++)
-        clauseFree(clauses_toclear[i].first);
+        solver.clauseAllocator.clauseFree(clauses_toclear[i].first);
 }
 
 inline void Gaussian::set_matrixset_to_cur()
@@ -563,7 +563,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     assert(best_row != UINT_MAX);
 
     m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
-    confl = (Clause*)XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
+    confl = (Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
     Clause& cla = *confl;
     #ifdef STATS_NEEDED
     if (solver.dynamic_behaviour_analysis)
@@ -780,7 +780,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     #endif
 
     m.matrix.getVarsetAt(row).fill(tmp_clause, solver.assigns, col_to_var_original);
-    Clause& cla = *(Clause*)XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
+    Clause& cla = *(Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix prop clause: ";
     cla.plainPrint();
@@ -792,7 +792,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint row
     if (cla.size() == 1) {
         solver.cancelUntil(0);
         solver.uncheckedEnqueue(cla[0]);
-        clauseFree(&cla);
+        solver.clauseAllocator.clauseFree(&cla);
         return unit_propagation;
     }
 
@@ -829,7 +829,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
         case conflict: {
             useful_confl++;
             llbool ret = solver.handle_conflict(learnt_clause, confl, conflictC, true);
-            clauseFree(confl);
+            solver.clauseAllocator.clauseFree(confl);
             
             if (ret != l_Nothing) return ret;
             return l_Continue;
@@ -843,7 +843,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
             unit_truths++;
             useful_confl++;
             if (confl->size() == 0) {
-                clauseFree(confl);
+                solver.clauseAllocator.clauseFree(confl);
                 return l_False;
             }
 
@@ -856,13 +856,13 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
             solver.cancelUntil(0);
             
             if (solver.assigns[lit.var()].isDef()) {
-                clauseFree(confl);
+                solver.clauseAllocator.clauseFree(confl);
                 return l_False;
             }
             
             solver.uncheckedEnqueue(lit);
             
-            clauseFree(confl);
+            solver.clauseAllocator.clauseFree(confl);
             return l_Continue;
         }
         case nothing:

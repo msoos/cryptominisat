@@ -236,7 +236,6 @@ public:
     bool      doVarElim;            // Perform variable elimination
     bool      doSubsume1;           // Perform clause contraction through resolution
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
-    bool      readdOldLearnts;      // Should re-add old learnts for failed variable searching
     bool      addExtraBins;         // Should add extra binaries in failed literal probing
     bool      removeUselessBins;    // Should try to remove useless binary clauses
     bool      regularRemoveUselessBins; // Should try to remove useless binary clauses regularly
@@ -305,9 +304,9 @@ protected:
     template<class T>
     bool addLearntClause(T& ps, const uint group, const uint32_t activity);
     template<class T>
-    void    removeWatchedCl(vec<T> &ws, const Clause *c);
+    void    removeWatchedCl(vec<T> &ws, const ClauseOffset c);
     template<class T>
-    bool    findWatchedCl(const vec<T>& ws, const Clause *c) const;
+    bool    findWatchedCl(const vec<T>& ws, const ClauseOffset c) const;
     template<class T>
     void    removeWatchedBinCl(vec<T> &ws, const Lit impliedLit);
     template<class T>
@@ -337,17 +336,17 @@ protected:
     // Solver state:
     //
     bool                ok;               // If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
+    ClauseAllocator     clauseAllocator;
     vec<Clause*>        clauses;          // List of problem clauses.
     vec<Clause*>        binaryClauses;    // Binary clauses are regularly moved here
     vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          // List of learnt clauses.
-    vec<Clause*>        removedLearnts;   // Clauses that have been learnt, then removed
     vec<XorClause*>     freeLater;        // xor clauses that need to be freed later due to Gauss
     vec<uint32_t>       activity;         // A heuristic measurement of the activity of a variable.
     uint32_t            var_inc;          // Amount to bump next variable with.
     double              cla_inc;          // Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
-    vec<vec<XorClausePtr> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
+    vec<vec<ClauseOffset> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
     vec<vec<WatchedBin> >  binwatches;
     vec<lbool>          assigns;          // The current assignments
     vector<bool>        polarity;         // The preferred polarity of each variable.
@@ -416,7 +415,7 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom());                 // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
-    bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
+    bool     enqueue          (Lit p, PropagatedFrom from = PropagatedFrom());                            // Test if fact 'p' contradicts current state, enqueue otherwise.
     PropagatedFrom  propagate (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     PropagatedFrom  propagateBin();
     PropagatedFrom  propagateBinNoLearnts();
@@ -478,6 +477,7 @@ protected:
     friend class StateSaver;
     friend class UselessBinRemover;
     friend class OnlyNonLearntBins;
+    friend class ClauseAllocator;
     Conglomerate* conglomerate;
     VarReplacer* varReplacer;
     ClauseCleaner* clauseCleaner;
@@ -570,7 +570,7 @@ inline void Solver::claDecayActivity()
     //cla_inc *= clause_decay;
 }
 
-inline bool     Solver::enqueue         (Lit p, Clause* from)
+inline bool     Solver::enqueue         (Lit p, PropagatedFrom from)
 {
     return value(p) != l_Undef ? value(p) != l_False : (uncheckedEnqueue(p, from), true);
 }
@@ -708,7 +708,7 @@ inline const uint Solver::get_unitary_learnts_num() const
         return trail.size();
 }
 template <class T>
-inline void Solver::removeWatchedCl(vec<T> &ws, const Clause *c) {
+inline void Solver::removeWatchedCl(vec<T> &ws, const ClauseOffset c) {
     uint32_t j = 0;
     for (; j < ws.size() && ws[j].clause != c; j++);
     assert(j < ws.size());
@@ -734,7 +734,7 @@ inline void Solver::removeWatchedBinClAll(vec<T> &ws, const Lit impliedLit) {
     ws.shrink(i-j);
 }
 template<class T>
-inline bool Solver::findWatchedCl(const vec<T>& ws, const Clause* c) const
+inline bool Solver::findWatchedCl(const vec<T>& ws, const ClauseOffset c) const
 {
     uint32_t j = 0;
     for (; j < ws.size() && ws[j].clause != c; j++);
@@ -779,7 +779,7 @@ template<class T>
 inline void Solver::removeClause(T& c)
 {
     detachClause(c);
-    clauseFree(&c);
+    clauseAllocator.clauseFree(&c);
 }
 
 //=================================================================================================

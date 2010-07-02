@@ -38,6 +38,8 @@ class PartHandler
         void newVar();
         void addSavedState();
         void readdRemovedClauses();
+
+        friend class ClauseAllocator;
         
     private:
         struct sort_pred {
