@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "time_mem.h"
 #include "Subsumer.h"
 #include "XorSubsumer.h"
+#include "VarReplacer.h"
+#include "PartHandler.h"
 
 ClauseAllocator::ClauseAllocator() :
     clausePoolBin(sizeof(Clause) + 2*sizeof(Lit))
@@ -184,6 +186,19 @@ void ClauseAllocator::consolidate(Solver* solver)
     for (uint32_t i = 0; i < sizes.size(); i++) {
         sum += currentlyUsedSize[i];
     }
+    uint32_t sumAlloc = 0;
+    for (uint32_t i = 0; i < sizes.size(); i++) {
+        sumAlloc += sizes[i];
+    }
+
+    std::cout << "c ratio:" << (double)sum/(double)sumAlloc << std::endl;
+    
+    if ((double)sum/(double)sumAlloc > 0.7 /*&& sum > 10000000*/) {
+        std::cout << "c Not consolidating" << std::endl;
+        return;
+    }
+
+    
     uint32_t newMaxSize = std::max(sum*2*sizeof(uint32_t), MIN_LIST_SIZE);
     uint32_t* newDataStarts = (uint32_t*)malloc(newMaxSize);
     newMaxSize /= sizeof(uint32_t);
@@ -226,6 +241,10 @@ void ClauseAllocator::consolidate(Solver* solver)
     updatePointers(solver->learnts, oldToNewPointer);
     updatePointers(solver->binaryClauses, oldToNewPointer);
     updatePointers(solver->xorclauses, oldToNewPointer);
+    
+    updatePointers(solver->varReplacer->clauses, oldToNewPointer);
+    updatePointers(solver->partHandler->clausesRemoved, oldToNewPointer);
+    updatePointers(solver->partHandler->xorClausesRemoved, oldToNewPointer);
     for(map<Var, vector<Clause*> >::iterator it = solver->subsumer->elimedOutVar.begin(); it != solver->subsumer->elimedOutVar.end(); it++) {
         updatePointers(it->second, oldToNewPointer);
     }

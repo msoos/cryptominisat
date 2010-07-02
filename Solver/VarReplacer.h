@@ -59,6 +59,8 @@ class VarReplacer
         const bool varHasBeenReplaced(const Var var) const;
         const bool replacingVar(const Var var) const;
         void newVar();
+
+        friend class ClauseAllocator;
     
     private:
         const bool performReplaceInternal();
