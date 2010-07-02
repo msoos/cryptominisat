@@ -2254,7 +2254,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
 #endif
         
         if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
-            std::cout << "c Solution needs extension. Extending." << std::endl;
+            if (verbosity >= 1) {
+                std::cout << "c Solution needs extension. Extending." << std::endl;
+            }
             Solver s;
             s.doSubsumption = false;
             s.performReplace = false;
