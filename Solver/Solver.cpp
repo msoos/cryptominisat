@@ -450,8 +450,8 @@ void Solver::attachClause(XorClause& c)
     assert(assigns[c[1].var()] == l_Undef);
     #endif //DEBUG_ATTACH
 
-    xorwatches[c[0].var()].push(&c);
-    xorwatches[c[1].var()].push(&c);
+    xorwatches[c[0].var()].push(clauseAllocator.getOffset((Clause*)&c));
+    xorwatches[c[1].var()].push(clauseAllocator.getOffset((Clause*)&c));
 
     clauses_literals += c.size();
 }
@@ -479,10 +479,11 @@ void Solver::attachClause(Clause& c)
 void Solver::detachClause(const XorClause& c)
 {
     assert(c.size() > 1);
-    assert(find(xorwatches[c[0].var()], &c));
-    assert(find(xorwatches[c[1].var()], &c));
-    remove(xorwatches[c[0].var()], &c);
-    remove(xorwatches[c[1].var()], &c);
+    ClauseOffset offset = clauseAllocator.getOffset(&c);
+    assert(find(xorwatches[c[0].var()], offset));
+    assert(find(xorwatches[c[1].var()], offset));
+    remove(xorwatches[c[0].var()], offset);
+    remove(xorwatches[c[1].var()], offset);
 
     clauses_literals -= c.size();
 }
@@ -533,11 +534,12 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
 void Solver::detachModifiedClause(const Var var1, const Var var2, const uint origSize, const XorClause* address)
 {
     assert(origSize > 2);
-    
-    assert(find(xorwatches[var1], address));
-    assert(find(xorwatches[var2], address));
-    remove(xorwatches[var1], address);
-    remove(xorwatches[var2], address);
+
+    ClauseOffset offset = clauseAllocator.getOffset(address);
+    assert(find(xorwatches[var1], offset));
+    assert(find(xorwatches[var2], offset));
+    remove(xorwatches[var1], offset);
+    remove(xorwatches[var2], offset);
     
     clauses_literals -= origSize;
 }
@@ -1201,12 +1203,14 @@ PropagatedFrom Solver::propagate_xors(const Lit& p)
     
     PropagatedFrom confl;
 
-    vec<XorClause*>& ws = xorwatches[p.var()];
-    XorClause **i, **j, **end;
+    vec<ClauseOffset>& ws = xorwatches[p.var()];
+    ClauseOffset *i, *j, *end;
     for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
-        XorClause& c = **i++;
+        XorClause& c = *(XorClause*)clauseAllocator.getPointer(*i);
+        ClauseOffset origClauseOffset = *i;
+        i++;
         if (i != end)
-            __builtin_prefetch(*i, 1, 0);
+            __builtin_prefetch(clauseAllocator.getPointer(*i), 1, 0);
 
         // Make sure the false literal is data[1]:
         if (c[0].var() == p.var()) {
@@ -1231,7 +1235,7 @@ PropagatedFrom Solver::propagate_xors(const Lit& p)
                 #ifdef VERBOSE_DEBUG_XOR
                 cout << "new watch set" << endl << endl;
                 #endif
-                xorwatches[c[1].var()].push(&c);
+                xorwatches[c[1].var()].push(origClauseOffset);
                 goto FoundWatch;
             }
 
@@ -1242,7 +1246,7 @@ PropagatedFrom Solver::propagate_xors(const Lit& p)
 
         {
             // Did not find watch -- clause is unit under assignment:
-            *j++ = &c;
+            *j++ = origClauseOffset;
 
             #ifdef VERBOSE_DEBUG_XOR
             cout << "final: " << std::boolalpha << final << " - ";

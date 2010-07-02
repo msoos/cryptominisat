@@ -235,9 +235,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     assert(newSize <= newMaxSize/2);
 
     updateOffsets(solver->watches, oldToNewOffset);
-    for (uint32_t i = 0; i < solver->xorwatches.size(); i++) {
-        updatePointers(solver->xorwatches[i], oldToNewPointer);
-    }
+    updateOffsetsXor(solver->xorwatches, oldToNewOffset);
 
     updatePointers(solver->clauses, oldToNewPointer);
     updatePointers(solver->learnts, oldToNewPointer);
@@ -302,9 +300,22 @@ void ClauseAllocator::updateOffsets(vec<vec<T> >& watches, const map<ClauseOffse
     for (uint32_t i = 0;  i < watches.size(); i++) {
         vec<T>& list = watches[i];
         for (T *it = list.getData(), *end = list.getDataEnd(); it != end; it++) {
-            assert(oldToNewOffset.find(it->clause) != oldToNewOffset.end());
             map<ClauseOffset, ClauseOffset>::const_iterator it2 = oldToNewOffset.find(it->clause);
+            assert(it2 != oldToNewOffset.end());
             it->clause = it2->second;
+        }
+    }
+}
+
+template<class T>
+void ClauseAllocator::updateOffsetsXor(vec<vec<T> >& watches, const map<ClauseOffset, ClauseOffset>& oldToNewOffset)
+{
+    for (uint32_t i = 0;  i < watches.size(); i++) {
+        vec<T>& list = watches[i];
+        for (T *it = list.getData(), *end = list.getDataEnd(); it != end; it++) {
+            map<ClauseOffset, ClauseOffset>::const_iterator it2 = oldToNewOffset.find(*it);
+            assert(it2 != oldToNewOffset.end());
+            *it = it2->second;
         }
     }
 }

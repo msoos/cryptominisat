@@ -346,7 +346,7 @@ protected:
     uint32_t            var_inc;          // Amount to bump next variable with.
     double              cla_inc;          // Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
-    vec<vec<XorClause*> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
+    vec<vec<ClauseOffset> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
     vec<vec<WatchedBin> >  binwatches;
     vec<lbool>          assigns;          // The current assignments
     vector<bool>        polarity;         // The preferred polarity of each variable.
