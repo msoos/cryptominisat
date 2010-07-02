@@ -207,7 +207,7 @@ Var Solver::newVar(bool dvar)
     decision_var.push_back(dvar);
     insertVarOrder(v);
     
-    if (performReplace) varReplacer->newVar();
+    varReplacer->newVar();
     if (doPartHandler) partHandler->newVar();
     if (doSubsumption) subsumer->newVar();
     if (doXorSubsumption) xorSubsumer->newVar();
