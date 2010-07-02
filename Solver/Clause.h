@@ -96,7 +96,7 @@ public:
         isRemoved = false;
         setGroup(_group);
 
-        for (uint i = 0; i < ps.size(); i++) data[i] = ps[i];
+        memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
         if (learnt) {
             extra.act = 0;
             oldActivityInter = 0;
