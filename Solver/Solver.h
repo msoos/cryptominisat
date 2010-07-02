@@ -415,7 +415,7 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom());                 // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
-    bool     enqueue          (Lit p, Clause* from = NULL);                            // Test if fact 'p' contradicts current state, enqueue otherwise.
+    bool     enqueue          (Lit p, PropagatedFrom from = PropagatedFrom());                            // Test if fact 'p' contradicts current state, enqueue otherwise.
     PropagatedFrom  propagate (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     PropagatedFrom  propagateBin();
     PropagatedFrom  propagateBinNoLearnts();
@@ -570,7 +570,7 @@ inline void Solver::claDecayActivity()
     //cla_inc *= clause_decay;
 }
 
-inline bool     Solver::enqueue         (Lit p, Clause* from)
+inline bool     Solver::enqueue         (Lit p, PropagatedFrom from)
 {
     return value(p) != l_Undef ? value(p) != l_False : (uncheckedEnqueue(p, from), true);
 }
