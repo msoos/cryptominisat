@@ -28,7 +28,6 @@ add_library(cryptominisatlib
     FindUndef.cpp
     ClauseCleaner.cpp
     RestartTypeChooser.cpp
-    SmallPtr.cpp
     FailedVarSearcher.cpp
     PartFinder.cpp
     Subsumer.cpp
