@@ -92,11 +92,14 @@ private:
     //Start-up
     template<bool UseCL>
     void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false);
+    void fillCannotEliminate();
+    void clearAll();
+
+    //Finish-up
+    void freeMemory();
     void addBackToSolver();
     void removeWrong(vec<Clause*>& cs);
     void removeAssignedVarsFromEliminated();
-    void fillCannotEliminate();
-    void clearAll();
     
     //Iterations
     void registerIteration  (CSet& iter_set) { iter_sets.push(&iter_set); }

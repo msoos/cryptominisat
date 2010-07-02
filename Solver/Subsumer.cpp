@@ -818,6 +818,13 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
     cs.shrink(i-j);
 }
 
+void Subsumer::freeMemory()
+{
+    for (uint32_t i = 0; i < occur.size(); i++) {
+        occur[i].clear(true);
+    }
+}
+
 void Subsumer::addBackToSolver()
 {
     #ifdef HYPER_DEBUG2
@@ -958,6 +965,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
         solver.binaryClauses.push(addBinaryClauses[i]);
     }
     addBinaryClauses.clear();
+    freeMemory();
 
     if (solver.verbosity >= 1) {
         std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << subsNonExistentNum
@@ -1301,6 +1309,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
+    freeMemory();
     
     if (solver.verbosity >= 1) {
         std::cout << "c |  lits-rem: " << std::setw(9) << literals_removed
