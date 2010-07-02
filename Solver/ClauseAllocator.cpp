@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "time_mem.h"
 #include "Subsumer.h"
 #include "XorSubsumer.h"
-#include "VarReplacer.h"
+//#include "VarReplacer.h"
 #include "PartHandler.h"
 
 ClauseAllocator::ClauseAllocator() :
@@ -241,8 +241,10 @@ void ClauseAllocator::consolidate(Solver* solver)
     updatePointers(solver->learnts, oldToNewPointer);
     updatePointers(solver->binaryClauses, oldToNewPointer);
     updatePointers(solver->xorclauses, oldToNewPointer);
-    
-    updatePointers(solver->varReplacer->clauses, oldToNewPointer);
+
+    //No need to update varreplacer, since it only stores binary clauses that
+    //must have been allocated such as to use the pool
+    //updatePointers(solver->varReplacer->clauses, oldToNewPointer);
     updatePointers(solver->partHandler->clausesRemoved, oldToNewPointer);
     updatePointers(solver->partHandler->xorClausesRemoved, oldToNewPointer);
     for(map<Var, vector<Clause*> >::iterator it = solver->subsumer->elimedOutVar.begin(); it != solver->subsumer->elimedOutVar.end(); it++) {

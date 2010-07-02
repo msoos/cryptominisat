@@ -60,7 +60,9 @@ class VarReplacer
         const bool replacingVar(const Var var) const;
         void newVar();
 
-        friend class ClauseAllocator;
+        //No need to update, only stores binary clauses, that
+        //have been allocated within pool
+        //friend class ClauseAllocator;
     
     private:
         const bool performReplaceInternal();
