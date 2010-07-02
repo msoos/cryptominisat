@@ -40,6 +40,7 @@ typedef uint32_t ClauseOffset;
 class ClauseAllocator {
     public:
         ClauseAllocator();
+        ~ClauseAllocator();
         
         template<class T>
         Clause* Clause_new(const T& ps, const uint group, const bool learnt = false);

@@ -33,6 +33,13 @@ ClauseAllocator::ClauseAllocator() :
     clausePoolBin(sizeof(Clause) + 2*sizeof(Lit))
 {}
 
+ClauseAllocator::~ClauseAllocator()
+{
+    for (uint32_t i = 0; i < dataStarts.size(); i++) {
+        free(dataStarts[i]);
+    }
+}
+
 template<class T>
 Clause* ClauseAllocator::Clause_new(const T& ps, const unsigned int group, const bool learnt)
 {
