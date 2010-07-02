@@ -88,6 +88,8 @@ const bool PartHandler::handle()
         newSolver.doSubsumption = false;
         newSolver.doXorSubsumption = false;
         newSolver.doPartHandler = false;
+        newSolver.subsumeWithNonExistBinaries = false;
+        newSolver.regularSubsumeWithNonExistBinaries = false;
 
         std::sort(vars.begin(), vars.end());
         uint32_t i2 = 0;
