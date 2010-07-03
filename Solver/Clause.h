@@ -339,14 +339,11 @@ class WatchedBin {
         Lit impliedLit;
 };
 
-#pragma pack(push)
-#pragma pack(1)
 class Watched {
     public:
         Watched(ClauseOffset _clause, Lit _blockedLit) : clause(_clause), blockedLit(_blockedLit) {};
         ClauseOffset clause;
         Lit blockedLit;
 };
-#pragma pack(pop)
 
 #endif //CLAUSE_H
