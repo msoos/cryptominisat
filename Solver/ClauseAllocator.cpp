@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include "VarReplacer.h"
 #include "PartHandler.h"
 
+//#define DEBUG_CLAUSEALLOCATOR
+
 ClauseAllocator::ClauseAllocator() :
     clausePoolBin(sizeof(Clause) + 2*sizeof(Lit))
 {}
@@ -103,7 +105,10 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     }
 
     if (!found) {
-        //std::cout << "c New list in ClauseAllocator" << std::endl;
+        #ifdef DEBUG_CLAUSEALLOCATOR
+        std::cout << "c New list in ClauseAllocator" << std::endl;
+        #endif //DEBUG_CLAUSEALLOCATOR
+        
         uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0)
             nextSize = maxSizes[maxSizes.size()-1]*3*sizeof(uint32_t);
@@ -120,11 +125,13 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         currentlyUsedSize.push(0);
         which = dataStarts.size()-1;
     }
-    /*std::cout
+    #ifdef DEBUG_CLAUSEALLOCATOR
+    std::cout
     << "selected list = " << which
     << " size = " << sizes[which]
     << " maxsize = " << maxSizes[which]
-    << " diff = " << maxSizes[which] - sizes[which] << std::endl;*/
+    << " diff = " << maxSizes[which] - sizes[which] << std::endl;
+    #endif //DEBUG_CLAUSEALLOCATOR
 
     assert(which != std::numeric_limits<uint32_t>::max());
     Clause* pointer = (Clause*)(dataStarts[which] + sizes[which]);
@@ -198,7 +205,9 @@ void ClauseAllocator::consolidate(Solver* solver)
         sumAlloc += sizes[i];
     }
 
-    //std::cout << "c ratio:" << (double)sum/(double)sumAlloc << std::endl;
+    #ifdef DEBUG_CLAUSEALLOCATOR
+    std::cout << "c ratio:" << (double)sum/(double)sumAlloc << std::endl;
+    #endif //DEBUG_CLAUSEALLOCATOR
     
     if ((double)sum/(double)sumAlloc > 0.7 /*&& sum > 10000000*/) {
         if (solver->verbosity >= 2) {
