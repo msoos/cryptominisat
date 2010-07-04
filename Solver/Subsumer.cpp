@@ -830,7 +830,8 @@ void Subsumer::addBackToSolver()
     #ifdef HYPER_DEBUG2
     uint32_t binaryLearntAdded = 0;
     #endif
-    
+
+    assert(solver.clauses.size() == 0);
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i].clause != NULL) {
             assert(clauses[i].clause->size() > 1);
