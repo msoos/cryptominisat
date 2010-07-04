@@ -1082,14 +1082,17 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
             #endif //VERBOSE_DEBUG
             subsume0(ps2, calcAbstraction(ps2));
             subsume1Partial(ps2);
+            if (!solver.ok) goto end;
         }
     } else {
         subsume0BIN(~lit, toVisitAll);
     }
+
+    end:
     for (uint32_t i = 0; i < toVisit.size(); i++)
         toVisitAll[toVisit[i].toInt()] = false;
 
-    return true;
+    return solver.ok;
 }
 
 void Subsumer::clearAll()
