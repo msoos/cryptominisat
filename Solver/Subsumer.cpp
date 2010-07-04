@@ -1055,7 +1055,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "subsWNonExistBins called with lit "; lit.print();
-    std::cout << " startUp: " << startUp << std::endl;
+    std::cout << std::endl;
     #endif //VERBOSE_DEBUG
     toVisit.clear();
     solver.newDecisionLevel();
