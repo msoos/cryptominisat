@@ -1143,9 +1143,14 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     if (clauses.size() < 200000) fullSubsume = true;
     else fullSubsume = false;
     if (alsoLearnt) fullSubsume = true;
-    
+
+    solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
+    addFromSolver<true>(solver.learnts, alsoLearnt);
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver<true>(solver.clauses, alsoLearnt);
+
+    //It is IMPERATIVE to add binaryClauses last. The non-binary clauses can
+    //move to binaryClauses during cleaning!!!!
     solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
     addFromSolver<true>(solver.binaryClauses, alsoLearnt);
     
