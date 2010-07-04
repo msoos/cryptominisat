@@ -1127,11 +1127,9 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
-    solver.testAllClauseAttach();
     if (solver.performReplace && !solver.varReplacer->performReplace(true))
         return false;
     fillCannotEliminate();
-    solver.testAllClauseAttach();
 
     uint32_t expected_size;
     if (!alsoLearnt)
