@@ -8,7 +8,7 @@ include_directories(${cryptoms_SOURCE_DIR}/MTRand)
 # include_directories ( ${Boost_INCLUDE_DIRS} )
 
 
-add_executable(cryptominisat Main.C)
+add_executable(cryptominisat Main.cpp)
 
 target_link_libraries(cryptominisat
     cryptominisatlib
