@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "XorSubsumer.h"
 //#include "VarReplacer.h"
 #include "PartHandler.h"
+#include "Gaussian.h"
 
 //#define DEBUG_CLAUSEALLOCATOR
 
@@ -303,6 +304,10 @@ void ClauseAllocator::consolidate(Solver* solver)
     origClauseSizes.clear();
     origClauseSizes.push();
     newOrigClauseSizes.moveTo(origClauseSizes[0]);
+
+    for (uint32_t i = 0; i < solver->gauss_matrixes.size(); i++) {
+        updatePointers(solver->gauss_matrixes[i]->xorclauses, oldToNewPointer);
+    }
 
     if (solver->verbosity >= 1) {
         std::cout << "c Consolidated memory. Time: "

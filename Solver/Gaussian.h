@@ -65,6 +65,8 @@ public:
     //functions used throughout the Solver
     void canceling(const uint sublevel);
 
+    friend class ClauseAllocator;
+
 protected:
     Solver& solver;
     
