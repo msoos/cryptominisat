@@ -1144,8 +1144,8 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     else fullSubsume = false;
     if (alsoLearnt) fullSubsume = true;
 
-    solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
-    addFromSolver<true>(solver.learnts, alsoLearnt);
+    //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
+    //addFromSolver<true>(solver.learnts, alsoLearnt);
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver<true>(solver.clauses, alsoLearnt);
 
