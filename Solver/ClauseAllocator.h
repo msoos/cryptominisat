@@ -68,6 +68,7 @@ class ClauseAllocator {
         void updatePointers(vec<T*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
         void updatePointers(vector<Clause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
         void updatePointers(vector<XorClause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
+        void updatePointers(vector<std::pair<Clause*, uint> >& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
         
         template<class T>
         void updateOffsets(vec<vec<T> >& watches, const map<ClauseOffset, ClauseOffset>& oldToNewOffset);

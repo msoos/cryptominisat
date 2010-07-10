@@ -270,7 +270,11 @@ void ClauseAllocator::consolidate(Solver* solver)
     for(map<Var, vector<XorClause*> >::iterator it = solver->xorSubsumer->elimedOutVar.begin(); it != solver->xorSubsumer->elimedOutVar.end(); it++) {
         updatePointers(it->second, oldToNewPointer);
     }
-    
+
+    for (uint32_t i = 0; i < solver->gauss_matrixes.size(); i++) {
+        updatePointers(solver->gauss_matrixes[i]->xorclauses, oldToNewPointer);
+        updatePointers(solver->gauss_matrixes[i]->clauses_toclear, oldToNewPointer);
+    }
 
     vec<PropagatedFrom>& reason = solver->reason;
     for (PropagatedFrom *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
@@ -304,10 +308,6 @@ void ClauseAllocator::consolidate(Solver* solver)
     origClauseSizes.clear();
     origClauseSizes.push();
     newOrigClauseSizes.moveTo(origClauseSizes[0]);
-
-    for (uint32_t i = 0; i < solver->gauss_matrixes.size(); i++) {
-        updatePointers(solver->gauss_matrixes[i]->xorclauses, oldToNewPointer);
-    }
 
     if (solver->verbosity >= 1) {
         std::cout << "c Consolidated memory. Time: "
@@ -371,6 +371,17 @@ void ClauseAllocator::updatePointers(vector<XorClause*>& toUpdate, const map<Cla
             //assert(oldToNewPointer.find((TT*)*it) != oldToNewPointer.end());
             map<Clause*, Clause*>::const_iterator it2 = oldToNewPointer.find((Clause*)*it);
             *it = (XorClause*)it2->second;
+        }
+    }
+}
+
+void ClauseAllocator::updatePointers(vector<pair<Clause*, uint> >& toUpdate, const map<Clause*, Clause*>& oldToNewPointer)
+{
+    for (vector<pair<Clause*, uint> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
+        if (!(it->first)->wasBin()) {
+            //assert(oldToNewPointer.find((TT*)*it) != oldToNewPointer.end());
+            map<Clause*, Clause*>::const_iterator it2 = oldToNewPointer.find(it->first);
+            it->first = (Clause*)it2->second;
         }
     }
 }
