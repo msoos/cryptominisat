@@ -1069,18 +1069,9 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
     solver.cancelUntil(0);
 
     if (toVisit.size() <= 1) {
-        ps2[0] = ~lit;
-        for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
-            ps2[1] = *l;
-            assert(ps2[0] != ps2[1]);
-            #ifdef VERBOSE_DEBUG
-            std::cout << "Non-existent bin. lit1: "; ps2[0].print();
-            std::cout << " lit2: "; ps2[1].print(); std::cout << std::endl;
-            #endif //VERBOSE_DEBUG
-            subsume0(ps2, calcAbstraction(ps2));
-            subsume1Partial(ps2);
-            if (!solver.ok) goto end;
-        }
+        //This has been performed above, with subsume1Partial of binary clauses:
+        //this toVisit.size()<=1, there mustn't have been more than 1 binary
+        //clause in the watchlist, so this has been performed above.
     } else {
         subsume0BIN(~lit, toVisitAll);
     }
