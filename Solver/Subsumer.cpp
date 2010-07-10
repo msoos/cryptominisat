@@ -585,7 +585,7 @@ void Subsumer::subsume1Partial(const T& ps)
 void Subsumer::updateClause(ClauseSimp c)
 {
     subsume0(*c.clause, c.clause->getAbst());
-    if (c.clause->learnt() && subsumedNonLearnt)
+    if (subsumedNonLearnt && c.clause->learnt())
         c.clause->makeNonLearnt();
     
     cl_touched.add(c);
