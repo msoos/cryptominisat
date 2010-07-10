@@ -139,7 +139,7 @@ bool selfSubset(Clause& A, Clause& B, vec<char>& seen)
 }
 
 template <>
-inline uint32_t Subsumer::subsume0(Clause& ps, uint32_t abs)
+inline void Subsumer::subsume0(Clause& ps, uint32_t abs)
 {
     ps.subsume0Finished();
     ps.unsetVarChanged();
@@ -151,7 +151,7 @@ inline uint32_t Subsumer::subsume0(Clause& ps, uint32_t abs)
 }
 
 template <class T>
-inline uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
+inline void Subsumer::subsume0(T& ps, uint32_t abs)
 {
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig vec: ";
@@ -163,10 +163,10 @@ inline uint32_t Subsumer::subsume0(T& ps, uint32_t abs)
 
 // Will put NULL in 'cs' if clause removed.
 template<class T>
-uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
+void Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 {
     subsumedNonLearnt = false;
-    uint32_t retIndex = std::numeric_limits<uint32_t>::max();
+    
     vec<ClauseSimp> subs;
     findSubsumed(ps, abs, subs);
     for (uint32_t i = 0; i < subs.size(); i++){
@@ -178,12 +178,9 @@ uint32_t Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         
         Clause* tmp = subs[i].clause;
         subsumedNonLearnt |= !tmp->learnt();
-        retIndex = subs[i].index;
         unlinkClause(subs[i]);
         solver.clauseAllocator.clauseFree(tmp);
     }
-    
-    return retIndex;
 }
 
 void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)

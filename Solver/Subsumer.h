@@ -107,25 +107,32 @@ private:
     void registerIteration  (vec<ClauseSimp>& iter_vec) { iter_vecs.push(&iter_vec); }
     void unregisterIteration(vec<ClauseSimp>& iter_vec) { remove(iter_vecs, &iter_vec); }
     
-    // Subsumption:
+    //Touching
     void touch(const Var x);
     void touch(const Lit p);
+
+    //Findsubsumed
     template<class T>
     void findSubsumed(const T& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
-    bool isSubsumed(Clause& ps);
-    template<class T>
-    uint32_t subsume0(T& ps, uint32_t abs);
-    template<class T>
-    uint32_t subsume0Orig(const T& ps, uint32_t abs);
-    bool subsumedNonLearnt;
-    void subsume0BIN(const Lit lit, const vec<char>& lits);
-    void subsume1(ClauseSimp& ps);
-    void smaller_database();
-    void almost_all_database();
     template<class T1, class T2>
     bool subset(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
-    
+
+    //subsume0
+    template<class T>
+    void subsume0(T& ps, uint32_t abs);
+    template<class T>
+    void subsume0Orig(const T& ps, uint32_t abs);
+    bool subsumedNonLearnt;
+
+    //subsume1
+    void subsume1(ClauseSimp& ps);
+
+    //smaller-bigger databases
+    void smaller_database();
+    void almost_all_database();
+
+    //Variable elimination
     void orderVarsForElim(vec<Var>& order);
     bool maybeEliminate(Var x);
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
@@ -137,6 +144,7 @@ private:
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
     template<class T>
     void subsume1Partial(const T& ps);
+    void subsume0BIN(const Lit lit, const vec<char>& lits);
     uint32_t subsNonExistentNum;
     uint32_t subsNonExistentumFailed;
     bool subsNonExistentFinish;
