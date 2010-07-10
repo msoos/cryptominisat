@@ -1076,7 +1076,6 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
         subsume0BIN(~lit, toVisitAll);
     }
 
-    end:
     for (uint32_t i = 0; i < toVisit.size(); i++)
         toVisitAll[toVisit[i].toInt()] = false;
 
