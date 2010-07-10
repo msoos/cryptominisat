@@ -128,6 +128,10 @@ public:
     float&       oldActivity    () {
         return oldActivityInter;
     }
+
+    void setOldActivity(const float newOldAct) {
+        oldActivityInter = newOldAct;
+    }
     
     const float&       oldActivity    () const {
         return oldActivityInter;

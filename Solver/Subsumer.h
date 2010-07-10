@@ -117,7 +117,7 @@ private:
     template<class T>
     void subsume0(T& ps, uint32_t abs);
     template<class T>
-    void subsume0Orig(const T& ps, uint32_t abs);
+    pair<uint32_t, float> subsume0Orig(const T& ps, uint32_t abs);
     bool subsumedNonLearnt;
 
     //subsume1

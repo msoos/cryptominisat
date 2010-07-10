@@ -147,7 +147,13 @@ inline void Subsumer::subsume0(Clause& ps, uint32_t abs)
     cout << "subsume0 orig clause: ";
     ps.plainPrint();
     #endif
-    return subsume0Orig(ps, abs);
+    pair<uint32_t, float> bestActivities = subsume0Orig(ps, abs);
+    if (!subsumedNonLearnt) {
+        if (ps.activity() > bestActivities.first)
+            ps.setActivity(bestActivities.first);
+        if (ps.oldActivity() < bestActivities.second)
+            ps.setOldActivity(bestActivities.second);
+    }
 }
 
 template <class T>
@@ -163,9 +169,12 @@ inline void Subsumer::subsume0(T& ps, uint32_t abs)
 
 // Will put NULL in 'cs' if clause removed.
 template<class T>
-void Subsumer::subsume0Orig(const T& ps, uint32_t abs)
+pair<uint32_t, float> Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 {
     subsumedNonLearnt = false;
+    pair<uint32_t, float> ret =
+        std::make_pair(std::numeric_limits<uint32_t>::max(),
+                       std::numeric_limits< float >::min());
     
     vec<ClauseSimp> subs;
     findSubsumed(ps, abs, subs);
@@ -177,10 +186,17 @@ void Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         #endif
         
         Clause* tmp = subs[i].clause;
-        subsumedNonLearnt |= !tmp->learnt();
+        if (tmp->learnt()) {
+            ret.first = std::min(ret.first, tmp->activity());
+            ret.second = std::max(ret.second, tmp->oldActivity());
+        } else {
+            subsumedNonLearnt = true;
+        }
         unlinkClause(subs[i]);
         solver.clauseAllocator.clauseFree(tmp);
     }
+
+    return ret;
 }
 
 void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
