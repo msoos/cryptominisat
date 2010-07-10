@@ -68,6 +68,7 @@ private:
     vec<vec<ClauseSimp>* > iter_vecs;      // Vectors currently used for iterations. Removed clauses will be looked up and replaced by 'Clause_NULL'.
     vec<CSet* >            iter_sets;      // Sets currently used for iterations.
     vec<char>              cannot_eliminate;//
+    vec<char>              seen_tmp; // (used in various places)
 
     //Global stats
     Solver& solver;
@@ -75,11 +76,6 @@ private:
     double totalTime;
     uint32_t numElimed;
     map<Var, vector<Clause*> > elimedOutVar;
-    
-    // Temporaries (to reduce allocation overhead):
-    //
-    vec<char>           seen_tmp;       // (used in various places)
-    
     
     //Limits
     uint32_t numVarsElimed;
