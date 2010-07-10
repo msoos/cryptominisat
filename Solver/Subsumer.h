@@ -90,8 +90,7 @@ private:
     uint32_t numMaxBlockVars;
     
     //Start-up
-    template<bool UseCL>
-    void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false);
+    void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false, const bool addBinAndAddToCL = true);
     void fillCannotEliminate();
     void clearAll();
 

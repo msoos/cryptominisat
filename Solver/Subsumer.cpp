@@ -775,8 +775,7 @@ void Subsumer::linkInAlreadyClause(ClauseSimp& c)
     }
 }
 
-template<bool UseCL>
-void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
+void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool addBinAndAddToCL)
 {
     Clause **i = cs.getData();
     Clause **j = i;
@@ -790,7 +789,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
             continue;
         }
 
-        if (!UseCL && (*i)->size() == 2) {
+        if (!addBinAndAddToCL && (*i)->size() == 2) {
             //don't add binary clauses in this case
             *j++ = *i;
             (*i)->setUnsorted();
@@ -804,7 +803,8 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, bool alsoLearnt)
             occur[cl[i].toInt()].push(c);
             touch(cl[i].var());
         }
-        if (UseCL) {
+        
+        if (addBinAndAddToCL) {
             if (fullSubsume || cl.getVarChanged()) cl_added.add(c);
             else if (cl.getStrenghtened()) cl_touched.add(c);
         }
@@ -927,7 +927,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
 
     clauses.reserve(solver.clauses.size());
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver<false>(solver.clauses);
+    addFromSolver(solver.clauses, false, false);
     #ifdef DEBUG_BINARIES
     for (uint32_t i = 0; i < clauses.size(); i++) {
         assert(clauses[i].clause->size() != 2);
@@ -1141,15 +1141,15 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     else fullSubsume = false;
     if (alsoLearnt) fullSubsume = true;
 
-    //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
-    //addFromSolver<true>(solver.learnts, alsoLearnt);
+    solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
+    addFromSolver(solver.learnts, alsoLearnt);
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver<true>(solver.clauses, alsoLearnt);
+    addFromSolver(solver.clauses, alsoLearnt);
 
     //It is IMPERATIVE to add binaryClauses last. The non-binary clauses can
     //move to binaryClauses during cleaning!!!!
     solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
-    addFromSolver<true>(solver.binaryClauses, alsoLearnt);
+    addFromSolver(solver.binaryClauses, alsoLearnt);
     
     //Limits
     if (clauses.size() > 3500000) {
