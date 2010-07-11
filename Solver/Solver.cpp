@@ -155,10 +155,15 @@ Solver::Solver() :
 
 Solver::~Solver()
 {
+    for (uint32_t i = 0; i != learnts.size(); i++) clauseAllocator.clauseFree(learnts[i]);
+    for (uint32_t i = 0; i != clauses.size(); i++) clauseAllocator.clauseFree(clauses[i]);
+    for (uint32_t i = 0; i != binaryClauses.size(); i++) clauseAllocator.clauseFree(binaryClauses[i]);
+    for (uint32_t i = 0; i != xorclauses.size(); i++) clauseAllocator.clauseFree(xorclauses[i]);
     #ifdef USE_GAUSS
     clearGaussMatrixes();
     delete matrixFinder;
     #endif
+    //for (uint32_t i = 0; i != freeLater.size(); i++) clauseAllocator.clauseFree(freeLater[i]);
     
     delete varReplacer;
     delete clauseCleaner;
