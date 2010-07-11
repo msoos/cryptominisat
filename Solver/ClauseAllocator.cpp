@@ -268,6 +268,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     updatePointers(solver->learnts, oldToNewPointer);
     updatePointers(solver->binaryClauses, oldToNewPointer);
     updatePointers(solver->xorclauses, oldToNewPointer);
+    updatePointers(solver->freeLater, oldToNewPointer);
 
     //No need to update varreplacer, since it only stores binary clauses that
     //must have been allocated such as to use the pool

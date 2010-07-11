@@ -602,6 +602,8 @@ void Solver::clearGaussMatrixes()
     for (uint i = 0; i < gauss_matrixes.size(); i++)
         delete gauss_matrixes[i];
     gauss_matrixes.clear();
+    for (uint32_t i = 0; i != freeLater.size(); i++)
+        clauseAllocator.clauseFree(freeLater[i]);
 }
 #endif //USE_GAUSS
 
@@ -2227,9 +2229,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     printEndSearchStat();
     
     #ifdef USE_GAUSS
-    for (uint i = 0; i < gauss_matrixes.size(); i++)
-        delete gauss_matrixes[i];
-    gauss_matrixes.clear();
+    clearGaussMatrixes();;
     #endif //USE_GAUSS
 
 #ifdef VERBOSE_DEBUG
