@@ -8,13 +8,13 @@ ZLIB might also pose problems. If you cannot correctly compile it under
 windows, I suggest you add the -DDISABLE_ZLIB to your compilation flags.
 
 The compilation instruction should therefore be:
-cl /favor:INTEL64 /O2 /Fecryptominisat.exe -DDISABLE_ZLIB /F2097152
-/TP /EHsc -I. -I../mtl/ -I../MTRand/ Main.C Logger.cpp Solver.cpp
-ClauseCleaner.cpp Conglomerate.cpp FindUndef.cpp
-PackedRow.cpp RestartTypeChooser.cpp VarReplacer.cpp
-XorFinder.cpp XorSubsumer.cpp Subsumer.cpp PartFinder.cpp
-PartHandler.cpp FailedVarSearcher.cpp Gaussian.cpp
-MatrixFinder.cpp
+
+cl /favor:INTEL64 /O2 /Fecryptominisat64.exe -DVERSION="__DATE__" -DDISABLE_ZLIB \
+/F2097152 /TP /EHsc -I. -I../mtl/ -I../MTRand/ Main.cpp Logger.cpp Solver.cpp \
+ClauseCleaner.cpp FindUndef.cpp PackedRow.cpp RestartTypeChooser.cpp \
+VarReplacer.cpp XorFinder.cpp XorSubsumer.cpp Subsumer.cpp PartFinder.cpp \
+PartHandler.cpp FailedVarSearcher.cpp Gaussian.cpp ClauseAllocator.cpp \
+MatrixFinder.cpp OnlyNonLearntBins.cpp UselessBinRemover.cpp StateSaver.cpp
 
 executed from the 'Solver' subdirectory
 

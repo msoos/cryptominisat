@@ -21,7 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Vec.h"
 #include "Solver.h"
 #include "OnlyNonLearntBins.h"
+#ifdef _MSC_VER
+#include <msvc/stdint.h>
+#else
 #include <stdint.h>
+#endif //_MSC_VER
 
 class UselessBinRemover {
     public:
