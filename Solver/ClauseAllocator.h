@@ -25,11 +25,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif //_MSC_VER
 
 #include "Vec.h"
-#include <boost/pool/pool.hpp>
 #include <map>
 #include <vector>
 using std::map;
 using std::vector;
+
+#ifdef USE_BOOST
+#include <boost/pool/pool.hpp>
+#endif //USE_BOOST
 
 class Clause;
 class XorClause;
@@ -82,7 +85,9 @@ class ClauseAllocator {
         vec<size_t> currentlyUsedSize;
         vec<uint32_t> origSizes;
 
+        #ifdef USE_BOOST
         boost::pool<> clausePoolBin;
+        #endif //USE_BOOST
 
         void* allocEnough(const uint32_t size);
 };

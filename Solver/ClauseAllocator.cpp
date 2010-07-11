@@ -32,8 +32,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define DEBUG_CLAUSEALLOCATOR
 
-ClauseAllocator::ClauseAllocator() :
-    clausePoolBin(sizeof(Clause) + 2*sizeof(Lit))
+ClauseAllocator::ClauseAllocator()
+    #ifdef USE_BOOST
+    : clausePoolBin(sizeof(Clause) + 2*sizeof(Lit))
+    #endif //USE_BOOST
 {}
 
 ClauseAllocator::~ClauseAllocator()
@@ -91,7 +93,11 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     assert(sizeof(Lit)%sizeof(uint32_t) == 0);
 
     if (size == 2) {
+        #ifdef USE_BOOST
         return clausePoolBin.malloc();
+        #else
+        return malloc(sizeof(Clause) + 2*sizeof(Lit));
+        #endif
     }
     
     uint32_t needed = sizeof(Clause)+sizeof(Lit)*size;
@@ -175,7 +181,11 @@ inline uint32_t ClauseAllocator::getInterOffset(const Clause* ptr, uint32_t oute
 void ClauseAllocator::clauseFree(Clause* c)
 {
     if (c->wasBin()) {
+        #ifdef USE_BOOST
         clausePoolBin.free(c);
+        #else
+        free(c);
+        #endif
     } else {
         c->setFreed();
         uint32_t outerOffset = getOuterOffset(c);
