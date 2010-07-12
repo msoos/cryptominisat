@@ -201,7 +201,7 @@ const uint MatrixFinder::setMatrixes()
         
         if (numXorInMatrix[a].second >= solver.gaussconfig.minMatrixRows
             && numXorInMatrix[a].second <= solver.gaussconfig.maxMatrixRows
-            && realMatrixNum < 3)
+            && realMatrixNum <= solver.gaussconfig.maxNumMatrixes)
         {
             if (solver.verbosity >=1)
                 cout << "c |  Matrix no " << std::setw(2) << realMatrixNum;

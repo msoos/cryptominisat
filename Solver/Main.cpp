@@ -501,6 +501,8 @@ void printUsage(char** argv, Solver& S)
     printf("                     reasons of efficiency. Default: %d\n", S.gaussconfig.minMatrixRows);
     printf("  --savematrix     = [0 - 2^32-1] Save matrix every Nth decision level.\n");
     printf("                     Default: %d\n", S.gaussconfig.only_nth_gauss_save);
+    printf("  --maxnummatrixes = [0 - 2^32-1] Maximum number of matrixes to treat.\n");
+    printf("                     Default: %d\n", S.gaussconfig.maxNumMatrixes);
     //printf("  --addoldlearnts  = Readd old learnts for failed variable searching.\n");
     //printf("                     These learnts are usually deleted, but may help\n");
     printf("  --noextrabins    = Don't add binary clauses when doing failed lit probing.\n");
@@ -655,6 +657,13 @@ int main(int argc, char** argv)
             S.failedVarSearch = false;
         } else if ((value = hasPrefix(argv[i], "--nodisablegauss"))) {
             S.gaussconfig.dontDisable = true;
+        } else if ((value = hasPrefix(argv[i], "--maxnummatrixes="))) {
+            uint32_t maxNumMatrixes;
+            if (sscanf(value, "%d", &maxNumMatrixes) < 0) {
+                printf("ERROR! maxnummatrixes: %s\n", value);
+                exit(0);
+            }
+            S.gaussconfig.maxNumMatrixes = maxNumMatrixes;
         } else if ((value = hasPrefix(argv[i], "--noheuleprocess"))) {
             S.heuleProcess = false;
         } else if ((value = hasPrefix(argv[i], "--nosatelite"))) {
