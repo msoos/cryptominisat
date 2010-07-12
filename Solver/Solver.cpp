@@ -1093,7 +1093,7 @@ PropagatedFrom Solver::propagate(const bool update)
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << (p.sign() ? '-' : ' ') << p.var()+1 << endl;
         #endif
-        for (i = j = ws.getData(), end = ws.getDataEnd();  i != end;) {
+        for (i = j = ws.getData(), end = ws.getDataEnd();  i != end; i++) {
             if (!value(i->blockedLit).getBool())
                 __builtin_prefetch(clauseAllocator.getPointer(i->clause), 1, 0);
         }
