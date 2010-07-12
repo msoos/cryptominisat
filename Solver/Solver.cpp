@@ -1093,11 +1093,12 @@ PropagatedFrom Solver::propagate(const bool update)
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << (p.sign() ? '-' : ' ') << p.var()+1 << endl;
         #endif
+        for (i = j = ws.getData(), end = ws.getDataEnd();  i != end;) {
+            if (!value(i->blockedLit).getBool())
+                __builtin_prefetch(clauseAllocator.getPointer(i->clause), 1, 0);
+        }
 
         for (i = j = ws.getData(), end = ws.getDataEnd();  i != end;) {
-            if (i+1 != end && !value((i+1)->blockedLit).getBool())
-                __builtin_prefetch(clauseAllocator.getPointer((i+1)->clause), 1, 0);
-            
             if(value(i->blockedLit).getBool()) { // Clause is sat
                 *j++ = *i++;
                 continue;
