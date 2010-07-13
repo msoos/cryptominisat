@@ -36,7 +36,7 @@ Subsumer::Subsumer(Solver& s):
     solver(s)
     , totalTime(0.0)
     , numElimed(0)
-    , numCalls(0)
+    , numCalls(1)
 {
 };
 
@@ -950,8 +950,8 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     }
     #endif //DEBUG_BINARIES
 
-    numMaxSubsume0 = 300000 * (1+numCalls/2);
-    numMaxSubsume1 = 10000 * (1+numCalls);
+    numMaxSubsume0 = 1000000 * (numCalls);
+    numMaxSubsume1 = 500000 * (numCalls);
 
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
         if (!solver.binaryClauses[i]->learnt() && numMaxSubsume0 > 0) {
@@ -1122,7 +1122,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     clauses_subsumed = 0;
     literals_removed = 0;
     numblockedClauseRemoved = 0;
-    numCalls++;
     clauseID = 0;
     numVarsElimed = 0;
     blockTime = 0.0;
@@ -1145,7 +1144,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     
     if (clauses.size() < 200000) fullSubsume = true;
     else fullSubsume = false;
-    if (alsoLearnt) fullSubsume = true;
+    //if (alsoLearnt) fullSubsume = true;
 
     solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
     addFromSolver(solver.learnts, alsoLearnt);
@@ -1188,7 +1187,9 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         numMaxSubsume1 = 0;
         numMaxBlockVars = 0;
         numMaxBlockToVisit = 0;
-        fullSubsume = true;
+        //fullSubsume = true;
+    } else {
+        numCalls++;
     }
     
     //For debugging
