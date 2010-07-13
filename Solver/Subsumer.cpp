@@ -1020,7 +1020,6 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
     uint64_t oldProps = solver.propagations;
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t maxProp = MAX_BINARY_PROP;
-    //if (!startUp) maxProp /= 3;
     if (clauses.size() > 2000000) maxProp /= 2;
     ps2.clear();
     ps2.growTo(2);
