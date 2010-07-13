@@ -943,7 +943,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
 
     clauses.reserve(solver.clauses.size());
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver(solver.clauses, false, false);
+    addFromSolver(solver.clauses, true, false);
     #ifdef DEBUG_BINARIES
     for (uint32_t i = 0; i < clauses.size(); i++) {
         assert(clauses[i].clause->size() != 2);
