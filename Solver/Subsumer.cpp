@@ -148,11 +148,16 @@ inline void Subsumer::subsume0(Clause& ps, uint32_t abs)
     ps.plainPrint();
     #endif
     pair<uint32_t, float> bestActivities = subsume0Orig(ps, abs);
-    if (!subsumedNonLearnt) {
-        if (ps.activity() > bestActivities.first)
-            ps.setActivity(bestActivities.first);
-        if (ps.oldActivity() < bestActivities.second)
-            ps.setOldActivity(bestActivities.second);
+    
+    if (ps.learnt()) {
+        if (!subsumedNonLearnt) {
+            if (ps.activity() > bestActivities.first)
+                ps.setActivity(bestActivities.first);
+            if (ps.oldActivity() < bestActivities.second)
+                ps.setOldActivity(bestActivities.second);
+        } else {
+            ps.makeNonLearnt();
+        }
     }
 }
 
@@ -601,8 +606,6 @@ void Subsumer::subsume1Partial(const T& ps)
 void Subsumer::updateClause(ClauseSimp c)
 {
     subsume0(*c.clause, c.clause->getAbst());
-    if (subsumedNonLearnt && c.clause->learnt())
-        c.clause->makeNonLearnt();
     
     cl_touched.add(c);
 }
@@ -762,7 +765,6 @@ void Subsumer::smaller_database()
     for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
         if (it->clause != NULL) {
             subsume0(*it->clause, it->clause->getAbst());
-            if (subsumedNonLearnt && it->clause->learnt()) it->clause->makeNonLearnt();
         }
     }
     s0.clear();
@@ -961,12 +963,12 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
         }
     }
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-        if (numMaxSubsume1 > 0) {
+        //if (numMaxSubsume1 > 0) {
             Clause& c = *solver.binaryClauses[i];
             subsume1Partial(c);
             if (!solver.ok) return false;
-            numMaxSubsume1--;
-        }
+            //numMaxSubsume1--;
+        //}
     }
     if (solver.verbosity >= 1) {
         std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed
@@ -1020,7 +1022,7 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
     uint64_t oldProps = solver.propagations;
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t maxProp = MAX_BINARY_PROP;
-    if (clauses.size() > 2000000) maxProp /= 2;
+    //if (clauses.size() > 2000000) maxProp /= 2;
     ps2.clear();
     ps2.growTo(2);
     toVisitAll.growTo(solver.nVars()*2, false);
@@ -1211,7 +1213,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
             )
         {
             subsume0(*clauses[i].clause, clauses[i].clause->getAbst());
-            if (subsumedNonLearnt && clauses[i].clause->learnt()) clauses[i].clause->makeNonLearnt();
             numMaxSubsume0--;
         }
     }
