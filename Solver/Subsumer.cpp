@@ -963,12 +963,12 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
         }
     }
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
-        //if (numMaxSubsume1 > 0) {
+        if (numMaxSubsume1 > 0) {
             Clause& c = *solver.binaryClauses[i];
             subsume1Partial(c);
             if (!solver.ok) return false;
-            //numMaxSubsume1--;
-        //}
+            numMaxSubsume1--;
+        }
     }
     if (solver.verbosity >= 1) {
         std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed
