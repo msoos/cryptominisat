@@ -1143,9 +1143,8 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     cl_added.reserve(expected_size);
     cl_touched.reserve(expected_size);
     
-    if (clauses.size() < 200000) fullSubsume = true;
+    if (expected_size < 300000) fullSubsume = true;
     else fullSubsume = false;
-    //if (alsoLearnt) fullSubsume = true;
 
     solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
     addFromSolver(solver.learnts, alsoLearnt);
@@ -1188,7 +1187,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         numMaxSubsume1 = 0;
         numMaxBlockVars = 0;
         numMaxBlockToVisit = 0;
-        //fullSubsume = true;
     } else {
         numCalls++;
     }
