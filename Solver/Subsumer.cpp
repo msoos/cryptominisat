@@ -812,6 +812,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
             subsume0BIN(c[0], lits);
             lits[c[1].toInt()] = 0;
             numMaxSubsume0--;
+            if (!solver.ok) return false;
         }
     }
 
