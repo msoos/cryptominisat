@@ -800,7 +800,6 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     #endif //DEBUG_BINARIES
 
     numMaxSubsume0 = 1000000 * (numCalls);
-    numMaxSubsume1 = 500000 * (numCalls);
 
     vec<char> lits(solver.nVars()*2, 0);
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
