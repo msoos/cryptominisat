@@ -1087,26 +1087,26 @@ PropagatedFrom Solver::propagate(const bool update)
         //Next, propagate normal clauses
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
-        Watched        *i, *j, *end;
+        Watched        *i, *i2, *j;
         num_props += ws.size();
         
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << (p.sign() ? '-' : ' ') << p.var()+1 << endl;
         #endif
-        for (i = j = ws.getData(), end = ws.getDataEnd();  i != end; i++) {
-            if (!value(i->blockedLit).getBool())
-                __builtin_prefetch(clauseAllocator.getPointer(i->clause), 1, 0);
-        }
 
-        for (i = j = ws.getData(), end = ws.getDataEnd();  i != end;) {
+        i = i2 = j = ws.getData();
+        i2++;
+        for (Watched *end = ws.getDataEnd(); i != end; i++, i2++) {
+            if (i2 != end) {
+                //if (!value(i2->blockedLit).getBool())
+                    __builtin_prefetch(clauseAllocator.getPointer(i2->clause), 1, 0);
+            }
+            
             if(value(i->blockedLit).getBool()) { // Clause is sat
-                *j++ = *i++;
+                *j++ = *i;
                 continue;
             }
-            Lit bl = i->blockedLit;
             Clause& c = *clauseAllocator.getPointer(i->clause);
-            ClauseOffset origClauseOffset = i->clause;
-            i++;
 
             // Make sure the false literal is data[1]:
             const Lit false_lit(~p);
@@ -1118,7 +1118,7 @@ PropagatedFrom Solver::propagate(const bool update)
             // If 0th watch is true, then clause is already satisfied.
             const Lit& first = c[0];
             if (value(first).getBool()) {
-                j->clause = origClauseOffset;
+                j->clause = i->clause;
                 j->blockedLit = first;
                 j++;
             } else {
@@ -1127,21 +1127,20 @@ PropagatedFrom Solver::propagate(const bool update)
                     if (value(*k) != l_False) {
                         c[1] = *k;
                         *k = false_lit;
-                        watches[(~c[1]).toInt()].push(Watched(origClauseOffset, c[0]));
+                        watches[(~c[1]).toInt()].push(Watched(i->clause, c[0]));
                         goto FoundWatch;
                     }
                 }
 
                 // Did not find watch -- clause is unit under assignment:
-                j->clause = origClauseOffset;
-                j->blockedLit = bl;
-                j++;
+                *j++ = *i;
                 if (value(first) == l_False) {
                     confl = PropagatedFrom(&c);
                     qhead = trail.size();
                     // Copy the remaining watches:
-                    while (i < end)
-                        *j++ = *i++;
+                    while (++i < end)
+                        *j++ = *i;
+                    i--;
                 } else {
                     uncheckedEnqueue(first, &c);
                     #ifdef DYNAMICNBLEVEL
