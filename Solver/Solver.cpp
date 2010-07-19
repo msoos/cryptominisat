@@ -1978,13 +1978,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         status = l_False;
         goto end;
     }
-    testAllClauseAttach();
 
     if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 9000000 : 3000000))  {
         status = l_False;
         goto end;
     }
-    testAllClauseAttach();
 
     if (performReplace && (regularRemoveUselessBins || regularSubsumeWithNonExistBinaries)) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
@@ -2010,11 +2008,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         status = l_False;
         goto end;
     }
+
     if (doSubsumption && !subsumer->simplifyBySubsumption(true)) {
         status = l_False;
         goto end;
     }
-    testAllClauseAttach();
     
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
@@ -2032,7 +2030,6 @@ end:
     if (verbosity >= 2)
         printf("c                                      Simplifying finished                               |\n");
     #endif //#ifdef BURST_SEARCH
-
 
     savedState.restore();
     simplifying = false;
