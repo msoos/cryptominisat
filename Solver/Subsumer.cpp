@@ -258,13 +258,13 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
             return;
         }
         if (cl.size() > 2) {
-            cl.calcAbstractionClause();
+            if (!cl.learnt()) cl.calcAbstractionClause();
             linkInAlreadyClause(c);
             clauses[c.index] = c;
             solver.attachClause(cl);
             updateClause(c);
         } else if (cl.size() == 2) {
-            cl.calcAbstractionClause();
+            if (!cl.learnt()) cl.calcAbstractionClause();
             solver.attachClause(cl);
             solver.becameBinary++;
             addBinaryClauses.push(&cl);
