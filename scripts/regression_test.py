@@ -20,6 +20,7 @@ class Tester:
   checkDirDifferent = True
   differentDirForCheck = "/home/soos/Development/sat_solvers/satcomp09/"
   ignoreNoSolution = False
+  arminFuzzer = False
   
   def __init__(self):
     self.sumTime = 0.0
@@ -34,6 +35,7 @@ class Tester:
     self.checkDirDifferent = False
     self.differentDirForCheck = "/home/soos/Development/sat_solvers/satcomp09/"
     self.ignoreNoSolution = False
+    self.arminFuzzer = False
 
   def execute(self, fname, i, newVar):
     if (os.path.isfile(self.cryptominisat) != True) :
@@ -102,7 +104,7 @@ class Tester:
         print "Solving probably timed out"
         return (True, {})
       else :
-        print "Error! MiniSat output is empty!"
+        print "Error! CryptoMiniSat output is empty!"
         exit(-1)
 
     value = {}
@@ -274,8 +276,22 @@ class Tester:
     #print "Checking against solution %s" %(of)
     #unsat, value = self.read_found(of)
     unsat, value = self.read_found_output(consoleOutput)
-    if (unsat == True) :
+    otherSolverUNSAT = True
+    if (self.arminFuzzer) :
+      toexec = "./precosat %s" %(fname);
+      #print "executing: %s" %(toexec)
+      consoleOutput2 = commands.getoutput(toexec);
+      #print "precosat output:"
+      #print consoleOutput2
+      otherSolverUNSAT, otherSolverValue = self.read_found_output(consoleOutput2)
+    if (unsat == True) : 
+      if (self.arminFuzzer == False) :
         print "Cannot check -- output is UNSAT"
+      elif (self.arminFuzzer == True) :
+        if (otherSolverUNSAT == False) :
+          print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
+          exit()
+        else : print "UNSAT verified by other solver"
     self.test_expect(unsat, value, fname[:len(fname)-6] + "output.gz")
     if (unsat == False) : 
         self.test_found(unsat, value, fnameCheck)
@@ -292,11 +308,12 @@ class Tester:
     print "--checkDirOnly(-c) Check all solutions in directory"
     print "--diffCheckDir(-d) Use with -c. The original files are at a different place"
     print "--ignore  (-i)     If no solution found, (timeout), ignore"
+    print "--armin   (-a)     Use Armin Biere's fuzzer"
     print "--help    (-h)     Print this help screen"
 
   def main(self):
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "vscihg:n:f:t:e:d:", ["help", "checkDirOnly", "file=", "num=", "gauss=", "testdir=", "exe=", "speed", "verbose", "diffCheckDir", "ignore"])
+      opts, args = getopt.getopt(sys.argv[1:], "vscihag:n:f:t:e:d:", ["help", "checkDirOnly", "file=", "num=", "gauss=", "testdir=", "exe=", "speed", "verbose", "diffCheckDir", "ignore", "armin"])
     except getopt.GetoptError, err:
       print str(err)
       self.usage()
@@ -332,6 +349,8 @@ class Tester:
             self.checkDirDifferent = True
         elif opt in ("-i", "--ignore"):
             self.ignoreNoSolution = True
+        elif opt in ("-a", "--armin"):
+            self.arminFuzzer = True
         else:
             assert False, "unhandled option"
 
@@ -339,6 +358,13 @@ class Tester:
     for fname_unlink in dirList2:
         if fnmatch.fnmatch(fname_unlink, 'debugLibPart*'):
           os.unlink(fname_unlink);
+          
+    if (self.arminFuzzer) :
+      for i in range(100) :
+        commands.getoutput("./fuzzer > fuzzTest");
+        for i2 in range(3):
+          self.check("fuzzTest", "fuzzTest", i2, False)
+      exit()
     
     if (self.checkDirOnly) :
         print "Checking already solved solutions"
