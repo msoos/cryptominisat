@@ -138,8 +138,7 @@ bool selfSubset(Clause& A, Clause& B, vec<char>& seen)
     return flip;
 }
 
-template <>
-inline void Subsumer::subsume0(Clause& ps, uint32_t abs)
+void Subsumer::subsume0(Clause& ps)
 {
     ps.subsume0Finished();
     ps.unsetVarChanged();
@@ -147,7 +146,8 @@ inline void Subsumer::subsume0(Clause& ps, uint32_t abs)
     cout << "subsume0 orig clause: ";
     ps.plainPrint();
     #endif
-    pair<uint32_t, float> bestActivities = subsume0Orig(ps, abs);
+    pair<uint32_t, float> bestActivities =
+        subsume0Orig(ps, (ps.learnt() ? calcAbstraction(ps) : ps.getAbst()));
     
     if (ps.learnt()) {
         if (!subsumedNonLearnt) {
@@ -161,15 +161,14 @@ inline void Subsumer::subsume0(Clause& ps, uint32_t abs)
     }
 }
 
-template <class T>
-inline void Subsumer::subsume0(T& ps, uint32_t abs)
+void Subsumer::subsume0(vec<Lit>& ps, uint32_t abs)
 {
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig vec: ";
     ps[0].print(); std::cout << " ";
     ps[1].printFull();
     #endif
-    return subsume0Orig(ps, abs);
+    subsume0Orig(ps, abs);
 }
 
 // Will put NULL in 'cs' if clause removed.
@@ -605,7 +604,7 @@ void Subsumer::subsume1Partial(const T& ps)
 
 void Subsumer::updateClause(ClauseSimp c)
 {
-    subsume0(*c.clause, c.clause->getAbst());
+    subsume0(*c.clause);
     
     cl_touched.add(c);
 }
@@ -764,7 +763,7 @@ void Subsumer::smaller_database()
     // Iteration pass for 0-subsumption:
     for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
         if (it->clause != NULL) {
-            subsume0(*it->clause, it->clause->getAbst());
+            subsume0(*it->clause);
         }
     }
     s0.clear();
@@ -957,7 +956,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
         if (!solver.binaryClauses[i]->learnt() && numMaxSubsume0 > 0) {
             Clause& c = *solver.binaryClauses[i];
-            subsume0(c, c.getAbst());
+            subsume0(c);
             numMaxSubsume0--;
         }
     }
@@ -1142,8 +1141,10 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     cl_added.reserve(expected_size);
     cl_touched.reserve(expected_size);
 
-    solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
-    addFromSolver(solver.learnts, alsoLearnt);
+    if (alsoLearnt) {
+        solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
+        addFromSolver(solver.learnts, alsoLearnt);
+    }
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses, alsoLearnt);
 
@@ -1202,7 +1203,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (numMaxSubsume0 == 0) break;
         if (clauses[i].clause != NULL &&  !clauses[i].clause->subsume0IsFinished()) {
-            subsume0(*clauses[i].clause, clauses[i].clause->getAbst());
+            subsume0(*clauses[i].clause);
             numMaxSubsume0--;
         }
     }
@@ -1486,7 +1487,7 @@ bool Subsumer::maybeEliminate(const Var x)
                 Clause* cl = solver.addClauseInt(dummy, group_num);
                 if (cl != NULL) {
                     ClauseSimp c = linkInClause(*cl);
-                    subsume0(*cl, cl->getAbst());
+                    subsume0(*cl);
                 }
                 if (!solver.ok) return true;
             }

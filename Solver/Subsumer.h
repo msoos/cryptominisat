@@ -114,8 +114,8 @@ private:
     bool subsetAbst(uint32_t A, uint32_t B);
 
     //subsume0
-    template<class T>
-    void subsume0(T& ps, uint32_t abs);
+    void subsume0(Clause& ps);
+    void subsume0(vec<Lit>& ps, uint32_t abs);
     template<class T>
     pair<uint32_t, float> subsume0Orig(const T& ps, uint32_t abs);
     bool subsumedNonLearnt;
