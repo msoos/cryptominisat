@@ -793,6 +793,8 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     clauses.reserve(solver.clauses.size());
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses, true, false);
+    //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
+    //addFromSolver(solver.learnts, true, false);
     #ifdef DEBUG_BINARIES
     for (uint32_t i = 0; i < clauses.size(); i++) {
         assert(clauses[i].clause->size() != 2);
@@ -985,8 +987,8 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     cl_touched.reserve(expected_size);
 
     if (alsoLearnt) {
-        solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
-        addFromSolver(solver.learnts, alsoLearnt);
+        //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
+        //addFromSolver(solver.learnts, alsoLearnt);
     }
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses, alsoLearnt);
@@ -1045,7 +1047,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (numMaxSubsume0 == 0) break;
-        if (clauses[i].clause != NULL &&  !clauses[i].clause->subsume0IsFinished()) {
+        if (clauses[i].clause != NULL && (!clauses[i].clause->subsume0IsFinished() || clauses[i].clause->learnt())) {
             subsume0(*clauses[i].clause);
             numMaxSubsume0--;
         }
