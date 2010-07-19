@@ -114,11 +114,16 @@ private:
     bool subsetAbst(uint32_t A, uint32_t B);
 
     //subsume0
+    struct subsume0Happened {
+        bool subsumedNonLearnt;
+        uint32_t activity;
+        float oldActivity;
+    };
+    
     void subsume0(Clause& ps);
     void subsume0(vec<Lit>& ps, uint32_t abs);
     template<class T>
-    pair<uint32_t, float> subsume0Orig(const T& ps, uint32_t abs);
-    bool subsumedNonLearnt;
+    subsume0Happened subsume0Orig(const T& ps, uint32_t abs);
 
     //subsume1
     void subsume1(ClauseSimp& ps);

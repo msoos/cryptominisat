@@ -115,15 +115,15 @@ void Subsumer::subsume0(Clause& ps)
     cout << "subsume0 orig clause: ";
     ps.plainPrint();
     #endif
-    pair<uint32_t, float> bestActivities =
+    subsume0Happened ret =
         subsume0Orig(ps, (ps.learnt() ? calcAbstraction(ps) : ps.getAbst()));
     
     if (ps.learnt()) {
-        if (!subsumedNonLearnt) {
-            if (ps.activity() > bestActivities.first)
-                ps.setActivity(bestActivities.first);
-            if (ps.oldActivity() < bestActivities.second)
-                ps.setOldActivity(bestActivities.second);
+        if (!ret.subsumedNonLearnt) {
+            if (ps.activity() > ret.activity)
+                ps.setActivity(ret.activity);
+            if (ps.oldActivity() < ret.oldActivity)
+                ps.setOldActivity(ret.oldActivity);
         } else {
             ps.makeNonLearnt();
         }
@@ -142,12 +142,12 @@ void Subsumer::subsume0(vec<Lit>& ps, uint32_t abs)
 
 // Will put NULL in 'cs' if clause removed.
 template<class T>
-pair<uint32_t, float> Subsumer::subsume0Orig(const T& ps, uint32_t abs)
+Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 {
-    subsumedNonLearnt = false;
-    pair<uint32_t, float> ret =
-        std::make_pair(std::numeric_limits<uint32_t>::max(),
-                       std::numeric_limits< float >::min());
+    subsume0Happened ret;
+    ret.subsumedNonLearnt = false;
+    ret.activity = std::numeric_limits<uint32_t>::max();
+    ret.oldActivity = std::numeric_limits< float >::min();
     
     vec<ClauseSimp> subs;
     findSubsumed(ps, abs, subs);
@@ -160,10 +160,10 @@ pair<uint32_t, float> Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         
         Clause* tmp = subs[i].clause;
         if (tmp->learnt()) {
-            ret.first = std::min(ret.first, tmp->activity());
-            ret.second = std::max(ret.second, tmp->oldActivity());
+            ret.activity = std::min(ret.activity, tmp->activity());
+            ret.oldActivity = std::max(ret.oldActivity, tmp->oldActivity());
         } else {
-            subsumedNonLearnt = true;
+            ret.subsumedNonLearnt = true;
         }
         unlinkClause(subs[i]);
         solver.clauseAllocator.clauseFree(tmp);
