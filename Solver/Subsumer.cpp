@@ -1207,8 +1207,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         }
     }
     
-    origNClauses = clauses.size();
-    
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  time until pre-subsume0 clauses and subsume1 2-learnts:" << cpuTime()-myTime << std::endl;
     #endif
@@ -1219,7 +1217,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     std::cout << "c   cl_added:" << cl_added.size() << std::endl;
     std::cout << "c   cl_touched:" << cl_touched.size() << std::endl;
     std::cout << "c   clauses:" << clauses.size() << std::endl;
-    std::cout << "c   origNClauses:" << origNClauses << std::endl;
     #endif
     
     if (clauses.size() > 10000000)  goto endSimplifyBySubsumption;
@@ -1229,7 +1226,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         std::cout << "c time before the start of almost_all/smaller: " << cpuTime() - myTime << std::endl;
         #endif
         if (numMaxSubsume0 > 0) {
-            if (cl_added.size() > origNClauses / 2) {
+            if (cl_added.size() > clauses.size() / 2) {
                 almost_all_database();
                 if (!solver.ok) return false;
             } else {

@@ -184,7 +184,6 @@ private:
     
     uint32_t clauses_subsumed;
     uint32_t literals_removed;
-    uint32_t origNClauses;
     uint32_t numCalls;
     uint32_t clauseID;
 };
