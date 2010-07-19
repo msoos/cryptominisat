@@ -823,7 +823,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool
         }
         
         if (addBinAndAddToCL) {
-            if (fullSubsume || cl.getVarChanged()) cl_added.add(c);
+            if (cl.getVarChanged()) cl_added.add(c);
             else if (cl.getStrenghtened()) cl_touched.add(c);
         }
 
@@ -933,7 +933,6 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
 {
     clearAll();
     clauseID = 0;
-    fullSubsume = true;
     addBinaryClauses.clear();
 
     //Clearing stats
@@ -1142,9 +1141,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     clauses.reserve(expected_size);
     cl_added.reserve(expected_size);
     cl_touched.reserve(expected_size);
-    
-    if (expected_size < 300000) fullSubsume = true;
-    else fullSubsume = false;
 
     solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
     addFromSolver(solver.learnts, alsoLearnt);
@@ -1205,11 +1201,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (numMaxSubsume0 == 0) break;
-        if (clauses[i].clause != NULL && 
-            (fullSubsume
-            || !clauses[i].clause->subsume0IsFinished())
-            )
-        {
+        if (clauses[i].clause != NULL &&  !clauses[i].clause->subsume0IsFinished()) {
             subsume0(*clauses[i].clause, clauses[i].clause->getAbst());
             numMaxSubsume0--;
         }

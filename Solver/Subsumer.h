@@ -186,7 +186,6 @@ private:
     uint32_t literals_removed;
     uint32_t origNClauses;
     uint32_t numCalls;
-    bool fullSubsume;
     uint32_t clauseID;
 };
 
