@@ -137,8 +137,6 @@ private:
     //Subsume with Nonexistent Bins
     const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
-    template<class T>
-    void subsume1Partial(const T& ps);
     void subsume0BIN(const Lit lit, const vec<char>& lits);
     uint32_t subsNonExistentNum;
     uint32_t subsNonExistentumFailed;
@@ -147,11 +145,8 @@ private:
     uint32_t subsNonExistentLitsRemoved;
     vec<Clause*> addBinaryClauses;
     uint32_t doneNum;
-    vec<ClauseSimp> subsume1PartialSubs;
-    vec<Lit> subsume1PartialQs;
     vec<Lit> toVisit;
     vec<char> toVisitAll;
-    vec<Lit> ps2;
     
     class VarOcc {
         public:
