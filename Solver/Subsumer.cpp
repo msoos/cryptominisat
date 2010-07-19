@@ -1223,7 +1223,10 @@ void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subs
         if (it+1 != end)
             __builtin_prefetch((it+1)->clause, 1, 1);
         
-        if (it->clause != (Clause*)&ps && subsetAbst(abs, it->clause->getAbst()) && ps.size() <= it->clause->size() && subset(ps, *it->clause)) {
+        if (it->clause != (Clause*)&ps
+            && (it->clause->learnt() || subsetAbst(abs, it->clause->getAbst()))
+            && ps.size() <= it->clause->size()
+            && subset(ps, *it->clause)) {
             out_subsumed.push(*it);
             #ifdef VERBOSE_DEBUG
             cout << "subsumed: ";
