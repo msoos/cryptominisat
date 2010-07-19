@@ -206,7 +206,7 @@ public:
     {
         remove(*this, p);
         sorted = false;
-        calcAbstractionClause();
+        if (!learnt()) calcAbstractionClause();
     }
     
     void calcAbstractionClause() {
