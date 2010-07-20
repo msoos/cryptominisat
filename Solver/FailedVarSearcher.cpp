@@ -291,11 +291,8 @@ void FailedVarSearcher::completelyDetachAndReattach()
     solver.clauses_literals = 0;
     solver.learnts_literals = 0;
     for (uint32_t i = 0; i < solver.nVars(); i++) {
-        solver.binwatches[i*2].clear();
-        solver.binwatches[i*2+1].clear();
         solver.watches[i*2].clear();
         solver.watches[i*2+1].clear();
-        solver.xorwatches[i].clear();
     }
     solver.varReplacer->reattachInternalClauses();
     cleanAndAttachClauses(solver.binaryClauses);

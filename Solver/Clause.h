@@ -337,17 +337,89 @@ public:
     friend class MatrixFinder;
 };
 
+class Watched {
+    public:
+        Watched(const ClauseOffset offset, Lit blockedLit) //for normal clause
+        {
+            data1 = (uint32_t)1 + (blockedLit.toInt() << 2);
+            data2 = (uint32_t)offset;
+        }
+        
+        Watched(const ClauseOffset offset) //for xor-clause
+        {
+            data1 = (uint32_t)2;
+            data2 = (uint32_t)offset;
+        }
+        
+        Watched(const Lit lit) //for binary clause
+        {
+            data1 = (uint32_t)0 + (lit.toInt() << 2);
+        }
+
+        void setOffset(const ClauseOffset offset)
+        {
+            data2 = (uint32_t)offset;
+        }
+
+        void setBlockedLit(const Lit lit)
+        {
+            assert(isClause());
+            data1 = (uint32_t)1 + (lit.toInt() << 2);
+        }
+
+        void setClause()
+        {
+            data1 = 1;
+        }
+
+        const bool isBinary() const
+        {
+            return ((data1&3) == 0);
+        }
+
+        const bool isClause() const
+        {
+            return ((data1&3) == 1);
+        }
+
+        const bool isXorClause() const
+        {
+            return ((data1&3) == 2);
+        }
+
+        const Lit getOtherLit() const
+        {
+            assert(isBinary());
+            return data1AsLit();
+        }
+
+        const Lit getBlockedLit() const
+        {
+            assert(isClause());
+            return data1AsLit();
+        }
+
+        const ClauseOffset getOffset() const
+        {
+            assert(isClause() || isXorClause());
+            return (ClauseOffset)(data2);
+        }
+
+    private:
+        const Lit data1AsLit() const
+        {
+            return (Lit::toLit(data1>>2));
+        }
+        
+        uint32_t data1; //blocked lit
+        uint32_t data2; //offset (if normal/xor Clause)
+};
+
 class WatchedBin {
     public:
         WatchedBin(Lit _impliedLit) : impliedLit(_impliedLit) {};
         Lit impliedLit;
 };
-
-class Watched {
-    public:
-        Watched(ClauseOffset _clause, Lit _blockedLit) : clause(_clause), blockedLit(_blockedLit) {};
-        ClauseOffset clause;
-        Lit blockedLit;
-};
+    
 
 #endif //CLAUSE_H

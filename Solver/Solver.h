@@ -303,16 +303,20 @@ protected:
     XorClause* addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32_t group);
     template<class T>
     bool addLearntClause(T& ps, const uint group, const uint32_t activity);
-    template<class T>
-    void    removeWatchedCl(vec<T> &ws, const ClauseOffset c);
-    template<class T>
-    bool    findWatchedCl(const vec<T>& ws, const ClauseOffset c) const;
-    template<class T>
-    void    removeWatchedBinCl(vec<T> &ws, const Lit impliedLit);
-    template<class T>
-    void    removeWatchedBinClAll(vec<T> &ws, const Lit impliedLit);
-    template<class T>
-    bool    findWatchedBinCl(const vec<T>& ws, const Lit impliedLit) const;
+
+    //Normal clause
+    bool    findWCl(const vec<Watched>& ws, const ClauseOffset c) const;
+    void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
+
+    //Binary clause
+    bool    findWBin(const vec<Watched>& ws, const Lit impliedLit) const;
+    void    removeWBin(vec<Watched> &ws, const Lit impliedLit);
+    void    removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit);
+    void    removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
+
+    //Xor Clause
+    bool    findWXCl(const vec<Watched>& ws, const ClauseOffset c) const;
+    void    removeWXCl(vec<Watched> &ws, const ClauseOffset c);
     
     // Helper structures:
     //
@@ -346,8 +350,6 @@ protected:
     uint32_t            var_inc;          // Amount to bump next variable with.
     double              cla_inc;          // Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
-    vec<vec<ClauseOffset> > xorwatches;   // 'xorwatches[var]' is a list of constraints watching var in XOR clauses.
-    vec<vec<WatchedBin> >  binwatches;
     vec<lbool>          assigns;          // The current assignments
     vector<bool>        polarity;         // The preferred polarity of each variable.
     #ifdef USE_OLD_POLARITIES
@@ -702,46 +704,89 @@ inline const uint Solver::get_unitary_learnts_num() const
     else
         return trail.size();
 }
-template <class T>
-inline void Solver::removeWatchedCl(vec<T> &ws, const ClauseOffset c) {
+
+//////////////////
+// NORMAL Clause
+//////////////////
+inline bool Solver::findWCl(const vec<Watched>& ws, const ClauseOffset c) const
+{
     uint32_t j = 0;
-    for (; j < ws.size() && ws[j].clause != c; j++);
+    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getOffset() != c); j++);
+    return j < ws.size();
+}
+
+inline void Solver::removeWCl(vec<Watched> &ws, const ClauseOffset c)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getOffset() != c); j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
 }
-template <class T>
-inline void Solver::removeWatchedBinCl(vec<T> &ws, const Lit impliedLit) {
+
+//////////////////
+// XOR Clause
+//////////////////
+inline bool Solver::findWXCl(const vec<Watched>& ws, const ClauseOffset c) const
+{
     uint32_t j = 0;
-    for (; j < ws.size() && ws[j].impliedLit != impliedLit; j++);
+    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getOffset() != c); j++);
+    return j < ws.size();
+}
+
+inline void Solver::removeWXCl(vec<Watched> &ws, const ClauseOffset c)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getOffset() != c); j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
 }
-template <class T>
-inline void Solver::removeWatchedBinClAll(vec<T> &ws, const Lit impliedLit) {
-    T *i = ws.getData();
-    T *j = i;
-    for (T* end = ws.getDataEnd(); i != end; i++) {
+
+//////////////////
+// BINARY Clause
+//////////////////
+inline bool Solver::findWBin(const vec<Watched>& ws, const Lit impliedLit) const
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
+    return j < ws.size();
+}
+
+inline void Solver::removeWBin(vec<Watched> &ws, const Lit impliedLit)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
+    assert(j < ws.size());
+    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
+    ws.pop();
+}
+
+inline void Solver::removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit)
+{
+    WatchedBin *i = ws.getData();
+    WatchedBin *j = i;
+    for (WatchedBin* end = ws.getDataEnd(); i != end; i++) {
         if (i->impliedLit != impliedLit)
             *j++ = *i;
     }
     ws.shrink(i-j);
 }
-template<class T>
-inline bool Solver::findWatchedCl(const vec<T>& ws, const ClauseOffset c) const
+
+inline void Solver::removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
 {
-    uint32_t j = 0;
-    for (; j < ws.size() && ws[j].clause != c; j++);
-    return j < ws.size();
+    Watched *i = ws.getData();
+    Watched *j = i;
+    for (Watched* end = ws.getDataEnd(); i != end; i++) {
+        if (!i->isBinary() || i->getOtherLit() != impliedLit)
+            *j++ = *i;
+    }
+    ws.shrink(i-j);
 }
-template<class T>
-inline bool Solver::findWatchedBinCl(const vec<T>& ws, const Lit impliedLit) const
-{
-    uint32_t j = 0;
-    for (; j < ws.size() && ws[j].impliedLit != impliedLit; j++);
-    return j < ws.size();
-}
+
+//////////////////
+// Xor Clause
+//////////////////
 
 /*
 inline void Solver::reverse_binary_clause(Clause& c) const {

@@ -196,9 +196,6 @@ Var Solver::newVar(bool dvar)
     Var v = nVars();
     watches   .push();          // (list for positive literal)
     watches   .push();          // (list for negative literal)
-    binwatches.push();          // (list for positive literal)
-    binwatches.push();          // (list for negative literal)
-    xorwatches.push();          // (list for variables in xors)
     reason    .push(PropagatedFrom());
     assigns   .push(l_Undef);
     level     .push(-1);
@@ -458,8 +455,10 @@ void Solver::attachClause(XorClause& c)
     assert(assigns[c[1].var()] == l_Undef);
     #endif //DEBUG_ATTACH
 
-    xorwatches[c[0].var()].push(clauseAllocator.getOffset((Clause*)&c));
-    xorwatches[c[1].var()].push(clauseAllocator.getOffset((Clause*)&c));
+    watches[Lit(c[0].var(), false).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
+    watches[Lit(c[0].var(), true).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
+    watches[Lit(c[1].var(), false).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
+    watches[Lit(c[1].var(), true).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
 
     clauses_literals += c.size();
 }
@@ -471,8 +470,8 @@ void Solver::attachClause(Clause& c)
     uint32_t index1 = (~c[1]).toInt();
     
     if (c.size() == 2) {
-        binwatches[index0].push(WatchedBin(c[1]));
-        binwatches[index1].push(WatchedBin(c[0]));
+        watches[index0].push(Watched(c[1]));
+        watches[index1].push(Watched(c[0]));
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(&c);
         watches[index0].push(Watched(offset, c[c.size()/2]));
@@ -488,10 +487,15 @@ void Solver::detachClause(const XorClause& c)
 {
     assert(c.size() > 1);
     ClauseOffset offset = clauseAllocator.getOffset(&c);
-    assert(find(xorwatches[c[0].var()], offset));
-    assert(find(xorwatches[c[1].var()], offset));
-    remove(xorwatches[c[0].var()], offset);
-    remove(xorwatches[c[1].var()], offset);
+    assert(findWXCl(watches[Lit(c[0].var(), false).toInt()], offset));
+    assert(findWXCl(watches[Lit(c[0].var(), true).toInt()], offset));
+    assert(findWXCl(watches[Lit(c[1].var(), false).toInt()], offset));
+    assert(findWXCl(watches[Lit(c[1].var(), true).toInt()], offset));
+    
+    removeWXCl(watches[Lit(c[0].var(), false).toInt()], offset);
+    removeWXCl(watches[Lit(c[0].var(), true).toInt()], offset);
+    removeWXCl(watches[Lit(c[1].var(), false).toInt()], offset);
+    removeWXCl(watches[Lit(c[1].var(), true).toInt()], offset);
 
     clauses_literals -= c.size();
 }
@@ -500,19 +504,19 @@ void Solver::detachClause(const Clause& c)
 {
     assert(c.size() > 1);
     if (c.size() == 2) {
-        assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], c[1]));
-        assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], c[0]));
+        assert(findWBin(watches[(~c[0]).toInt()], c[1]));
+        assert(findWBin(watches[(~c[1]).toInt()], c[0]));
         
-        removeWatchedBinCl(binwatches[(~c[0]).toInt()], c[1]);
-        removeWatchedBinCl(binwatches[(~c[1]).toInt()], c[0]);
+        removeWBin(watches[(~c[0]).toInt()], c[1]);
+        removeWBin(watches[(~c[1]).toInt()], c[0]);
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(&c);
         
-        assert(findWatchedCl(watches[(~c[0]).toInt()], offset));
-        assert(findWatchedCl(watches[(~c[1]).toInt()], offset));
+        assert(findWCl(watches[(~c[0]).toInt()], offset));
+        assert(findWCl(watches[(~c[1]).toInt()], offset));
         
-        removeWatchedCl(watches[(~c[0]).toInt()], offset);
-        removeWatchedCl(watches[(~c[1]).toInt()], offset);
+        removeWCl(watches[(~c[0]).toInt()], offset);
+        removeWCl(watches[(~c[1]).toInt()], offset);
     }
     
     if (c.learnt()) learnts_literals -= c.size();
@@ -524,16 +528,16 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
     assert(origSize > 1);
     
     if (origSize == 2) {
-        assert(findWatchedBinCl(binwatches[(~lit1).toInt()], lit2));
-        assert(findWatchedBinCl(binwatches[(~lit2).toInt()], lit1));
-        removeWatchedBinCl(binwatches[(~lit1).toInt()], lit2);
-        removeWatchedBinCl(binwatches[(~lit2).toInt()], lit1);
+        assert(findWBin(watches[(~lit1).toInt()], lit2));
+        assert(findWBin(watches[(~lit2).toInt()], lit1));
+        removeWBin(watches[(~lit1).toInt()], lit2);
+        removeWBin(watches[(~lit2).toInt()], lit1);
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(address);
-        assert(findW(watches[(~lit1).toInt()], offset));
-        assert(findW(watches[(~lit2).toInt()], offset));
-        removeW(watches[(~lit1).toInt()], offset);
-        removeW(watches[(~lit2).toInt()], offset);
+        assert(findWCl(watches[(~lit1).toInt()], offset));
+        assert(findWCl(watches[(~lit2).toInt()], offset));
+        removeWCl(watches[(~lit1).toInt()], offset);
+        removeWCl(watches[(~lit2).toInt()], offset);
     }
     if (address->learnt()) learnts_literals -= origSize;
     else            clauses_literals -= origSize;
@@ -544,10 +548,16 @@ void Solver::detachModifiedClause(const Var var1, const Var var2, const uint ori
     assert(origSize > 2);
 
     ClauseOffset offset = clauseAllocator.getOffset(address);
-    assert(find(xorwatches[var1], offset));
-    assert(find(xorwatches[var2], offset));
-    remove(xorwatches[var1], offset);
-    remove(xorwatches[var2], offset);
+    assert(findWXCl(watches[Lit(var1, false).toInt()], offset));
+    assert(findWXCl(watches[Lit(var1, true).toInt()], offset));
+    assert(findWXCl(watches[Lit(var2, false).toInt()], offset));
+    assert(findWXCl(watches[Lit(var2, true).toInt()], offset));
+    
+    removeWXCl(watches[Lit(var1, false).toInt()], offset);
+    removeWXCl(watches[Lit(var1, true).toInt()], offset);
+    removeWXCl(watches[Lit(var2, false).toInt()], offset);
+    removeWXCl(watches[Lit(var2, true).toInt()], offset);
+    
     
     clauses_literals -= origSize;
 }
@@ -1060,10 +1070,10 @@ PropagatedFrom Solver::propagate(const bool update)
     #ifdef VERBOSE_DEBUG
     cout << "Propagation started" << endl;
     #endif
-    uint32_t qheadBin = qhead;
 
     while (qhead < trail.size()) {
-        
+
+        /*
         //First propagate binary clauses
         while (qheadBin < trail.size()) {
             Lit p   = trail[qheadBin++];
@@ -1082,7 +1092,7 @@ PropagatedFrom Solver::propagate(const bool update)
         }
         if (!confl.isNULL()) {
             goto EndPropagate;
-        }
+        }*/
 
         //Next, propagate normal clauses
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
@@ -1097,70 +1107,137 @@ PropagatedFrom Solver::propagate(const bool update)
         i = i2 = j = ws.getData();
         i2++;
         for (Watched *end = ws.getDataEnd(); i != end; i++, i2++) {
-            if (i2 != end) {
-                //if (!value(i2->blockedLit).getBool())
-                    __builtin_prefetch(clauseAllocator.getPointer(i2->clause), 1, 0);
-            }
-            
-            if(value(i->blockedLit).getBool()) { // Clause is sat
+            /*if (i2 != end) {
+                __builtin_prefetch(clauseAllocator.getPointer(i2->clause), 1, 0);
+            }*/
+
+            if (i->isBinary()) {
                 *j++ = *i;
-                continue;
-            }
-            Clause& c = *clauseAllocator.getPointer(i->clause);
+                lbool val = value(i->getOtherLit());
+                if (val.isUndef()) {
+                    uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p));
+                } else if (val == l_False) {
+                    confl = PropagatedFrom(p);
+                    failBinLit = i->getOtherLit();
+                    qhead = trail.size();
+                    while (++i < end)
+                        *j++ = *i;
+                    i--;
+                }
+                goto FoundWatch;
+            } //end BINARY
+            
+            if (i->isClause()) {
+                if(value(i->getBlockedLit()).getBool()) { // Clause is sat
+                    *j++ = *i;
+                    continue;
+                }
+                Clause& c = *clauseAllocator.getPointer(i->getOffset());
 
-            // Make sure the false literal is data[1]:
-            const Lit false_lit(~p);
-            if (c[0] == false_lit)
-                c[0] = c[1], c[1] = false_lit;
+                // Make sure the false literal is data[1]:
+                const Lit false_lit(~p);
+                if (c[0] == false_lit)
+                    c[0] = c[1], c[1] = false_lit;
 
-            assert(c[1] == false_lit);
+                assert(c[1] == false_lit);
 
-            // If 0th watch is true, then clause is already satisfied.
-            const Lit& first = c[0];
-            if (value(first).getBool()) {
-                j->clause = i->clause;
-                j->blockedLit = first;
-                j++;
-            } else {
-                // Look for new watch:
-                for (Lit *k = &c[2], *end2 = c.getDataEnd(); k != end2; k++) {
-                    if (value(*k) != l_False) {
-                        c[1] = *k;
-                        *k = false_lit;
-                        watches[(~c[1]).toInt()].push(Watched(i->clause, c[0]));
+                // If 0th watch is true, then clause is already satisfied.
+                const Lit& first = c[0];
+                if (value(first).getBool()) {
+                    j->setClause();
+                    j->setOffset(i->getOffset());
+                    j->setBlockedLit(first);
+                    j++;
+                } else {
+                    // Look for new watch:
+                    for (Lit *k = &c[2], *end2 = c.getDataEnd(); k != end2; k++) {
+                        if (value(*k) != l_False) {
+                            c[1] = *k;
+                            *k = false_lit;
+                            watches[(~c[1]).toInt()].push(Watched(i->getOffset(), c[0]));
+                            goto FoundWatch;
+                        }
+                    }
+
+                    // Did not find watch -- clause is unit under assignment:
+                    *j++ = *i;
+                    if (value(first) == l_False) {
+                        confl = PropagatedFrom(&c);
+                        qhead = trail.size();
+                        // Copy the remaining watches:
+                        while (++i < end)
+                            *j++ = *i;
+                        i--;
+                    } else {
+                        uncheckedEnqueue(first, &c);
+                        #ifdef DYNAMICNBLEVEL
+                        if (update && c.learnt() && c.activity() > 2) { // GA
+                            uint32_t nbLevels = calcNBLevels(c);
+                            if (nbLevels+1 < c.activity())
+                                c.setActivity(nbLevels);
+                        }
+                        #endif
+                    }
+                }
+                goto FoundWatch;
+            } //end CLAUSE
+
+            if (i->isXorClause()) {
+                XorClause& c = *(XorClause*)clauseAllocator.getPointer(i->getOffset());
+                
+                // Make sure the false literal is data[1]:
+                if (c[0].var() == p.var()) {
+                    Lit tmp(c[0]);
+                    c[0] = c[1];
+                    c[1] = tmp;
+                }
+                assert(c[1].var() == p.var());
+
+                bool final = c.xor_clause_inverted();
+                for (uint32_t k = 0, size = c.size(); k != size; k++ ) {
+                    const lbool& val = assigns[c[k].var()];
+                    if (val.isUndef() && k >= 2) {
+                        Lit tmp(c[1]);
+                        c[1] = c[k];
+                        c[k] = tmp;
+                        removeWXCl(watches[(~p).toInt()], i->getOffset());
+                        watches[Lit(c[1].var(), false).toInt()].push(i->getOffset());
+                        watches[Lit(c[1].var(), true).toInt()].push(i->getOffset());
                         goto FoundWatch;
                     }
+                    
+                    c[k] = c[k].unsign() ^ val.getBool();
+                    final ^= val.getBool();
                 }
 
                 // Did not find watch -- clause is unit under assignment:
                 *j++ = *i;
-                if (value(first) == l_False) {
-                    confl = PropagatedFrom(&c);
+
+                if (assigns[c[0].var()].isUndef()) {
+                    c[0] = c[0].unsign()^final;
+                    uncheckedEnqueue(c[0], (Clause*)&c);
+                } else if (!final) {
+                    confl = PropagatedFrom((Clause*)&c);
                     qhead = trail.size();
                     // Copy the remaining watches:
                     while (++i < end)
                         *j++ = *i;
                     i--;
                 } else {
-                    uncheckedEnqueue(first, &c);
-                    #ifdef DYNAMICNBLEVEL
-                    if (update && c.learnt() && c.activity() > 2) { // GA
-                        uint32_t nbLevels = calcNBLevels(c);
-                        if (nbLevels+1 < c.activity())
-                            c.setActivity(nbLevels);
-                    }
-                    #endif
+                    Lit tmp(c[0]);
+                    c[0] = c[1];
+                    c[1] = tmp;
                 }
-            }
+                goto FoundWatch;
+            } //end XORCLAUSE
 FoundWatch:
             ;
         }
         ws.shrink_(i - j);
 
         //Finally, propagate XOR-clauses
-        if (xorclauses.size() > 0 && confl.isNULL()) confl = propagate_xors(p);
+        //if (xorclauses.size() > 0 && confl.isNULL()) confl = propagate_xors(p);
     }
-EndPropagate:
     propagations += num_props;
     simpDB_props -= num_props;
     
@@ -1175,13 +1252,15 @@ PropagatedFrom Solver::propagateBin()
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
-        vec<WatchedBin> & wbin = binwatches[p.toInt()];
+        vec<Watched> & wbin = watches[p.toInt()];
         propagations += wbin.size()/2;
-        for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
-            lbool val = value(k->impliedLit);
+        for(Watched *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+            if (!k->isBinary()) continue;
+            
+            lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
                 //uncheckedEnqueue(k->impliedLit, k->clause);
-                uncheckedEnqueueLight(k->impliedLit);
+                uncheckedEnqueueLight(k->getOtherLit());
             } else if (val == l_False) {
                 return PropagatedFrom(p);
             }
@@ -1206,7 +1285,7 @@ inline const uint32_t Solver::calcNBLevels(const T& ps)
     return nbLevels;
 }
 
-PropagatedFrom Solver::propagate_xors(const Lit& p)
+/*PropagatedFrom Solver::propagate_xors(const Lit& p)
 {
     #ifdef VERBOSE_DEBUG_XOR
     cout << "Xor-Propagating variable " <<  p.var()+1 << endl;
@@ -1304,7 +1383,7 @@ FoundWatch:
     ws.shrink_(i - j);
 
     return confl;
-}
+}*/
 
 
 /*_________________________________________________________________________________________________

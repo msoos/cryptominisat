@@ -121,8 +121,8 @@ void OnlyNonLearntBins::removeBin(Lit lit1, Lit lit2)
     final |= ((uint64_t)index1) << 32;
     toRemove.insert(final);
 
-    solver.removeWatchedBinClAll(binwatches[(~lit1).toInt()], lit2);
-    solver.removeWatchedBinClAll(binwatches[(~lit2).toInt()], lit1);
+    solver.removeWBinAll(binwatches[(~lit1).toInt()], lit2);
+    solver.removeWBinAll(binwatches[(~lit2).toInt()], lit1);
 }
 
 const uint32_t OnlyNonLearntBins::removeBins()
