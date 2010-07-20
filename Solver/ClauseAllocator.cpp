@@ -289,14 +289,7 @@ void ClauseAllocator::consolidate(Solver* solver)
 
     vec<PropagatedFrom>& reason = solver->reason;
     for (PropagatedFrom *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
-        if (!it->isBinary() && !it->isNULL()) {
-            /*if ((it == reason.getData() + (*it->getClause())[0].var())
-                && (solver->value((*it->getClause())[0]) == l_True)) {
-                assert(oldToNewPointer.find(it->getClause()) != oldToNewPointer.end());
-                *it = PropagatedFrom(oldToNewPointer[it->getClause()]);
-            } else {
-                *it = PropagatedFrom();
-            }*/
+        if (it->isClause() && !it->isNULL()) {
             if (oldToNewPointer.find(it->getClause()) != oldToNewPointer.end()) {
                 *it = PropagatedFrom(oldToNewPointer[it->getClause()]);
             }
@@ -332,7 +325,7 @@ void ClauseAllocator::updateOffsets(vec<vec<T> >& watches, const map<ClauseOffse
     for (uint32_t i = 0;  i < watches.size(); i++) {
         vec<T>& list = watches[i];
         for (T *it = list.getData(), *end = list.getDataEnd(); it != end; it++) {
-            if (it->isBinary()) continue;
+            if (!it->isClause() && !it->isXorClause()) continue;
             
             map<ClauseOffset, ClauseOffset>::const_iterator it2 = oldToNewOffset.find(it->getOffset());
             assert(it2 != oldToNewOffset.end());

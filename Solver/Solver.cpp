@@ -472,58 +472,34 @@ void Solver::attachClause(Clause& c)
     if (c.size() == 2) {
         watches[index0].push(Watched(c[1]));
         watches[index1].push(Watched(c[0]));
+    } else if (c.size() == 3 && !c.learnt()) {
+        watches[index0].push(Watched(c[1], c[2]));
+        watches[index1].push(Watched(c[0], c[2]));
+        watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(&c);
         watches[index0].push(Watched(offset, c[c.size()/2]));
         watches[index1].push(Watched(offset, c[c.size()/2]));
     }
 
-    if (c.learnt()) learnts_literals += c.size();
-    else            clauses_literals += c.size();
+    if (c.learnt())
+        learnts_literals += c.size();
+    else
+        clauses_literals += c.size();
 }
 
 
 void Solver::detachClause(const XorClause& c)
 {
-    assert(c.size() > 1);
-    ClauseOffset offset = clauseAllocator.getOffset(&c);
-    assert(findWXCl(watches[Lit(c[0].var(), false).toInt()], offset));
-    assert(findWXCl(watches[Lit(c[0].var(), true).toInt()], offset));
-    assert(findWXCl(watches[Lit(c[1].var(), false).toInt()], offset));
-    assert(findWXCl(watches[Lit(c[1].var(), true).toInt()], offset));
-    
-    removeWXCl(watches[Lit(c[0].var(), false).toInt()], offset);
-    removeWXCl(watches[Lit(c[0].var(), true).toInt()], offset);
-    removeWXCl(watches[Lit(c[1].var(), false).toInt()], offset);
-    removeWXCl(watches[Lit(c[1].var(), true).toInt()], offset);
-
-    clauses_literals -= c.size();
+    detachModifiedClause(c[0].var(), c[1].var(), c.size(), &c);
 }
 
 void Solver::detachClause(const Clause& c)
 {
-    assert(c.size() > 1);
-    if (c.size() == 2) {
-        assert(findWBin(watches[(~c[0]).toInt()], c[1]));
-        assert(findWBin(watches[(~c[1]).toInt()], c[0]));
-        
-        removeWBin(watches[(~c[0]).toInt()], c[1]);
-        removeWBin(watches[(~c[1]).toInt()], c[0]);
-    } else {
-        ClauseOffset offset = clauseAllocator.getOffset(&c);
-        
-        assert(findWCl(watches[(~c[0]).toInt()], offset));
-        assert(findWCl(watches[(~c[1]).toInt()], offset));
-        
-        removeWCl(watches[(~c[0]).toInt()], offset);
-        removeWCl(watches[(~c[1]).toInt()], offset);
-    }
-    
-    if (c.learnt()) learnts_literals -= c.size();
-    else            clauses_literals -= c.size();
+    detachModifiedClause(c[0], c[1], (c.size() == 3) ? c[2] : lit_Undef,  c.size(), &c);
 }
 
-void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint origSize, const Clause* address)
+void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint origSize, const Clause* address)
 {
     assert(origSize > 1);
     
@@ -534,13 +510,25 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const uint ori
         removeWBin(watches[(~lit2).toInt()], lit1);
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(address);
-        assert(findWCl(watches[(~lit1).toInt()], offset));
-        assert(findWCl(watches[(~lit2).toInt()], offset));
-        removeWCl(watches[(~lit1).toInt()], offset);
-        removeWCl(watches[(~lit2).toInt()], offset);
+        if (origSize == 3) {
+            if (findWCl(watches[(~lit1).toInt()], offset)) goto fullClause;
+
+            removeWTri(watches[(~lit1).toInt()], lit2, lit3);
+            removeWTri(watches[(~lit2).toInt()], lit1, lit3);
+            removeWTri(watches[(~lit3).toInt()], lit1, lit2);
+        } else {
+            fullClause:
+            assert(findWCl(watches[(~lit1).toInt()], offset));
+            assert(findWCl(watches[(~lit2).toInt()], offset));
+            removeWCl(watches[(~lit1).toInt()], offset);
+            removeWCl(watches[(~lit2).toInt()], offset);
+        }
     }
-    if (address->learnt()) learnts_literals -= origSize;
-    else            clauses_literals -= origSize;
+    
+    if (address->learnt())
+        learnts_literals -= origSize;
+    else
+        clauses_literals -= origSize;
 }
 
 void Solver::detachModifiedClause(const Var var1, const Var var2, const uint origSize, const XorClause* address)
@@ -832,12 +820,12 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
         
-        if (update && restartType == static_restart && !confl.isBinary() && confl.getClause()->learnt())
+        if (update && restartType == static_restart && confl.isClause() && confl.getClause()->learnt())
             claBumpActivity(*confl.getClause());
 
         for (uint j = (p == lit_Undef) ? 0 : 1, size = confl.size(); j != size; j++) {
             Lit q;
-            if (j == 0 && confl.isBinary()) q = failBinLit;
+            if (j == 0 && !confl.isClause()) q = failBinLit;
             else q = confl[j];
             const Var my_var = q.var();
 
@@ -848,7 +836,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
                     pathC++;
                     #ifdef UPDATEVARACTIVITY
                     if (lastSelectedRestartType == dynamic_restart
-                        && !reason[q.var()].isBinary()
+                        && reason[q.var()].isClause()
                         && !reason[q.var()].isNULL()
                         && reason[q.var()].getClause()->learnt())
                         lastDecisionLevel.push(q.var());
@@ -866,7 +854,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         p     = trail[index+1];
         oldConfl = confl;
         confl = reason[p.var()];
-        if (!confl.isBinary()) __builtin_prefetch(confl.getClause(), 1, 0);
+        if (confl.isClause()) __builtin_prefetch(confl.getClause(), 1, 0);
         seen[p.var()] = 0;
         pathC--;
 
@@ -922,7 +910,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         #ifdef UPDATEVARACTIVITY
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
             PropagatedFrom cl = reason[lastDecisionLevel[i]];
-            if (!cl.isBinary() && cl.getClause()->activity() < nbLevels)
+            if (cl.isClause() && cl.getClause()->activity() < nbLevels)
                 varBumpActivity(lastDecisionLevel[i]);
         }
         lastDecisionLevel.clear();
@@ -936,7 +924,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     
     if (out_learnt.size() == 1) return NULL;
     
-    if (!oldConfl.isBinary() && !oldConfl.getClause()->isXor()
+    if (oldConfl.isClause() && !oldConfl.getClause()->isXor()
         && out_learnt.size() < oldConfl.getClause()->size()) {
         if (!subset(out_learnt, *oldConfl.getClause(), seen))
             return NULL;
@@ -1103,6 +1091,25 @@ PropagatedFrom Solver::propagate(const bool update)
                 }
                 goto FoundWatch;
             } //end BINARY
+
+            if (i->isTriClause()) {
+                *j++ = *i;
+                lbool val = value(i->getOtherLit());
+                lbool val2 = value(i->getOtherLit2());
+                if (val.isUndef() && val2 == l_False) {
+                    uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p, i->getOtherLit2()));
+                } else if (val == l_False && val2.isUndef()) {
+                    uncheckedEnqueue(i->getOtherLit2(), PropagatedFrom(p, i->getOtherLit()));
+                } else if (val == l_False && val2 == l_False) {
+                    confl = PropagatedFrom(p, i->getOtherLit2());
+                    failBinLit = i->getOtherLit();
+                    qhead = trail.size();
+                    while (++i < end)
+                        *j++ = *i;
+                    i--;
+                }
+                goto FoundWatch;
+            } //end TRICLAUSE
             
             if (i->isClause()) {
                 if(value(i->getBlockedLit()).getBool()) { // Clause is sat
@@ -1421,7 +1428,7 @@ void Solver::reduceDB()
     for (i = j = 0; i != removeNum; i++){
         //NOTE: The next instruciton only works if removeNum < learnts.size() (strictly smaller!!)
         __builtin_prefetch(learnts[i+1], 0, 0);
-        if (learnts[i]->size() > 2 && !locked(*learnts[i]) && learnts[i]->activity() > 2) {
+        if (learnts[i]->size() > 2 && !locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->activity() > 2)) {
             removeClause(*learnts[i]);
         } else
             learnts[j++] = learnts[i];

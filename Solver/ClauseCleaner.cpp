@@ -121,6 +121,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
     Lit origLit1 = c[0];
     Lit origLit2 = c[1];
     uint32_t origSize = c.size();
+    Lit origLit3 = (origSize == 3) ? c[2] : lit_Undef;
     
     Lit *i, *j, *end;
     for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
@@ -131,7 +132,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
         }
         
         if (val == l_True) {
-            solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
+            solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             return true;
         }
     }
@@ -141,7 +142,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
     if (i != j) {
         c.setStrenghtened();
         if (c.size() == 2) {
-            solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
+            solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             Clause *c2 = solver.clauseAllocator.Clause_new(c);
             solver.clauseAllocator.clauseFree(&c);
             cc = c2;

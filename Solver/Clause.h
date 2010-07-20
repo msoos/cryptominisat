@@ -337,6 +337,8 @@ public:
     friend class MatrixFinder;
 };
 
+//#define DEBUG_WATCHED
+
 class Watched {
     public:
         Watched(const ClauseOffset offset, Lit blockedLit) //for normal clause
@@ -356,6 +358,12 @@ class Watched {
             data1 = (uint32_t)0 + (lit.toInt() << 2);
         }
 
+        Watched(const Lit lit1, const Lit lit2) //for binary clause
+        {
+            data1 = (uint32_t)3 + (lit1.toInt() << 2);
+            data2 = lit2.toInt();
+        }
+
         void setOffset(const ClauseOffset offset)
         {
             data2 = (uint32_t)offset;
@@ -363,7 +371,9 @@ class Watched {
 
         void setBlockedLit(const Lit lit)
         {
+            #ifdef DEBUG_WATCHED
             assert(isClause());
+            #endif
             data1 = (uint32_t)1 + (lit.toInt() << 2);
         }
 
@@ -387,21 +397,40 @@ class Watched {
             return ((data1&3) == 2);
         }
 
+        const bool isTriClause() const
+        {
+            return ((data1&3) == 3);
+        }
+
         const Lit getOtherLit() const
         {
-            assert(isBinary());
+            #ifdef DEBUG_WATCHED
+            assert(isBinary() || isTriClause());
+            #endif
             return data1AsLit();
+        }
+
+        const Lit getOtherLit2() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isTriClause());
+            #endif
+            return data2AsLit();
         }
 
         const Lit getBlockedLit() const
         {
+            #ifdef DEBUG_WATCHED
             assert(isClause());
+            #endif
             return data1AsLit();
         }
 
         const ClauseOffset getOffset() const
         {
+            #ifdef DEBUG_WATCHED
             assert(isClause() || isXorClause());
+            #endif
             return (ClauseOffset)(data2);
         }
 
@@ -409,6 +438,11 @@ class Watched {
         const Lit data1AsLit() const
         {
             return (Lit::toLit(data1>>2));
+        }
+
+        const Lit data2AsLit() const
+        {
+            return (Lit::toLit(data2));
         }
         
         uint32_t data1; //blocked lit

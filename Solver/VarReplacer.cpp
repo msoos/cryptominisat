@@ -243,6 +243,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
         bool changed = false;
         Lit origLit1 = c[0];
         Lit origLit2 = c[1];
+        Lit origLit3 = (c.size() == 3) ? c[2] : lit_Undef;
         for (Lit *l = c.getData(), *end2 = l + c.size();  l != end2; l++) {
             if (table[l->var()].var() != l->var()) {
                 changed = true;
@@ -252,7 +253,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
             }
         }
         
-        if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
+        if (changed && handleUpdatedClause(c, origLit1, origLit2, origLit3)) {
             if (!solver.ok) {
                 for(;r != end; r++) solver.clauseAllocator.clauseFree(*r);
                 cs.shrink(r-a);
@@ -275,7 +276,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
     return solver.ok;
 }
 
-const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2)
+const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3)
 {
     bool satisfied = false;
     std::sort(c.getData(), c.getData() + c.size());
@@ -291,24 +292,20 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
             c[j++] = p = c[i];
     }
     c.shrink(i - j);
-    
-    if (satisfied) {
-        solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
-        return true;
-    }
+
+    solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
+
+    if (satisfied) return true;
     
     switch(c.size()) {
     case 0:
-        solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
         solver.ok = false;
         return true;
     case 1 :
-        solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
         solver.uncheckedEnqueue(c[0]);
         solver.ok = (solver.propagate().isNULL());
         return true;
     default:
-        solver.detachModifiedClause(origLit1, origLit2, origSize, &c);
         solver.attachClause(c);
         
         return false;

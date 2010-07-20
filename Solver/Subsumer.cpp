@@ -354,7 +354,7 @@ void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c, bool det
     cl_added.exclude(c);
 
     if (detachAndNull) {
-        solver.detachModifiedClause(origClause[0], origClause[1], origClause.size(), c.clause);
+        solver.detachModifiedClause(origClause[0], origClause[1], (origClause.size() == 3) ? origClause[2] : lit_Undef, origClause.size(), c.clause);
         clauses[c.index].clause = NULL;
     }
 }

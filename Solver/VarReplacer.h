@@ -69,7 +69,7 @@ class VarReplacer
         
         const bool replace_set(vec<Clause*>& cs, const bool binClauses);
         const bool replace_set(vec<XorClause*>& cs);
-        const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
+        const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
         const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
         template<class T>
         void addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint group, const bool internal = false);

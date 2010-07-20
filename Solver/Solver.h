@@ -82,62 +82,92 @@ class PropagatedFrom
 {
     private:
         union {Clause* clause; uint32_t otherLit;};
+        uint32_t otherLit2;
         
     public:
-        PropagatedFrom(Clause* c)
+        PropagatedFrom() :
+            clause(NULL)
+            , otherLit2(0)
+        {}
+        
+        PropagatedFrom(Clause* c) :
+            clause(c)
+            , otherLit2(0)
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(c != NULL);
             #endif
-            clause = c;
         }
 
-        PropagatedFrom(const Lit& _other)
+        PropagatedFrom(const Lit& lit) :
+            otherLit(lit.toInt())
+            , otherLit2(1)
         {
-            otherLit = _other.toInt() << 1;
-            otherLit |= 1;
         }
 
-        PropagatedFrom() :
-            clause(NULL)
+        PropagatedFrom(const Lit& lit1, const Lit& lit2) :
+            otherLit(lit1.toInt())
+            , otherLit2(2 + (lit2.toInt() << 2))
         {
+        }
+
+        const bool isClause() const
+        {
+            return ((otherLit2&3) == 0);
         }
 
         const bool isBinary() const
         {
-            return (otherLit&1);
+            return ((otherLit2&3) == 1);
+        }
+
+        const bool isTriClause() const
+        {
+            return ((otherLit2&3) == 2);
         }
 
         const Lit getOtherLit() const
         {
             #ifdef DEBUG_PROPAGATEFROM
-            assert(isBinary());
+            assert(isBinary() || isTriClause());
             #endif
-            return Lit::toLit(otherLit>>1);
+            return Lit::toLit(otherLit);
+        }
+
+        const Lit getOtherLit2() const
+        {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(isTriClause());
+            #endif
+            return Lit::toLit(otherLit2 >> 2);
         }
 
         const Clause* getClause() const
         {
             #ifdef DEBUG_PROPAGATEFROM
-            assert(!isBinary());
+            assert(isClause());
             #endif
             return clause;
         }
 
         Clause* getClause()
         {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(isClause());
+            #endif
             return clause;
         }
 
         const bool isNULL() const
         {
-            if (isBinary()) return false;
+            if (!isClause()) return false;
             return clause == NULL;
         }
 
         const uint32_t size() const
         {
             if (isBinary()) return 2;
+            if (isTriClause()) return 3;
             
             #ifdef DEBUG_PROPAGATEFROM
             assert(!isNULL());
@@ -153,6 +183,14 @@ class PropagatedFrom
                 assert(i == 1);
                 #endif
                 return getOtherLit();
+            }
+
+            if (isTriClause()) {
+                #ifdef DEBUG_PROPAGATEFROM
+                assert(i <= 2);
+                #endif
+                if (i == 1) return getOtherLit();
+                if (i == 2) return getOtherLit2();
             }
 
             #ifdef DEBUG_PROPAGATEFROM
@@ -311,6 +349,7 @@ protected:
     //Binary clause
     bool    findWBin(const vec<Watched>& ws, const Lit impliedLit) const;
     void    removeWBin(vec<Watched> &ws, const Lit impliedLit);
+    void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
     void    removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit);
     void    removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
 
@@ -417,7 +456,6 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom());                 // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
-    bool     enqueue          (Lit p, PropagatedFrom from = PropagatedFrom());                            // Test if fact 'p' contradicts current state, enqueue otherwise.
     PropagatedFrom  propagate (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     PropagatedFrom  propagateBin();
     PropagatedFrom  propagate_xors   (const Lit& p);
@@ -443,7 +481,7 @@ protected:
     void     attachClause     (Clause& c);             // Attach a clause to watcher lists.
     void     detachClause     (const XorClause& c);
     void     detachClause     (const Clause& c);       // Detach a clause to watcher lists.
-    void     detachModifiedClause(const Lit lit1, const Lit lit2, const uint size, const Clause* address);
+    void     detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint origSize, const Clause* address);
     void     detachModifiedClause(const Var var1, const Var var2, const uint origSize, const XorClause* address);
     template<class T>
     void     removeClause(T& c);                       // Detach and free a clause.
@@ -567,16 +605,13 @@ inline void Solver::claDecayActivity()
     //cla_inc *= clause_decay;
 }
 
-inline bool     Solver::enqueue         (Lit p, PropagatedFrom from)
-{
-    return value(p) != l_Undef ? value(p) != l_False : (uncheckedEnqueue(p, from), true);
-}
-inline bool     Solver::locked          (const Clause& c) const
+inline bool Solver::locked(const Clause& c) const
 {
     if (c.size() == 2) return true; //we don't know in this case :I
     PropagatedFrom from(reason[c[0].var()]);
-    return !from.isBinary() && from.getClause() == &c && value(c[0]) == l_True;
+    return from.isClause() && from.getClause() == &c && value(c[0]) == l_True;
 }
+
 inline void     Solver::newDecisionLevel()
 {
     trail_lim.push(trail.size());
@@ -757,6 +792,15 @@ inline void Solver::removeWBin(vec<Watched> &ws, const Lit impliedLit)
 {
     uint32_t j = 0;
     for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
+    assert(j < ws.size());
+    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
+    ws.pop();
+}
+
+inline void Solver::removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isTriClause() || ws[j].getOtherLit() != lit1 || ws[j].getOtherLit2() != lit2); j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
