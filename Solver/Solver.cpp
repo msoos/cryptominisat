@@ -552,6 +552,28 @@ void Solver::detachModifiedClause(const Var var1, const Var var2, const uint ori
     clauses_literals -= origSize;
 }
 
+void Solver::detachAll()
+{
+    clauses_literals = binaryClauses.size()*2;
+    learnts_literals = 0;
+    for (uint32_t i = 0; i < nVars(); i++) {
+        watches[i*2].clear();
+        watches[i*2+1].clear();
+        xorwatches[i].clear();
+    }
+}
+
+void Solver::attachAll()
+{
+    for (uint32_t i = 0; i < clauses.size(); i++)
+        attachClause(*clauses[i]);
+    for (uint32_t i = 0; i < learnts.size(); i++)
+        attachClause(*learnts[i]);
+
+    for (uint32_t i = 0; i < xorclauses.size(); i++)
+        attachClause(*xorclauses[i]);
+}
+
 // Revert to the state at given level (keeping all assignment at 'level' but not beyond).
 //
 void Solver::cancelUntil(int level)
