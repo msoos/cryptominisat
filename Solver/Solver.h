@@ -418,11 +418,6 @@ protected:
     bool     enqueue          (Lit p, PropagatedFrom from = PropagatedFrom());                            // Test if fact 'p' contradicts current state, enqueue otherwise.
     PropagatedFrom  propagate (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
     PropagatedFrom  propagateBin();
-    PropagatedFrom  propagateBinNoLearnts();
-    template<bool dontCareLearnt>
-    PropagatedFrom  propagateBinExcept(const Lit& exceptLit);
-    template<bool dontCareLearnt>
-    PropagatedFrom  propagateBinOneLevel();
     PropagatedFrom  propagate_xors   (const Lit& p);
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
     Clause*  analyze          (PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
