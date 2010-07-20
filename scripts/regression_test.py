@@ -360,9 +360,9 @@ class Tester:
           os.unlink(fname_unlink);
           
     if (self.arminFuzzer) :
-      for i in range(100) :
+      for i in range(10000) :
         commands.getoutput("./fuzzer > fuzzTest");
-        for i2 in range(3):
+        for i2 in range(num):
           self.check("fuzzTest", "fuzzTest", i2, False)
       exit()
     
