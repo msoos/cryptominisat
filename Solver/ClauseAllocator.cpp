@@ -32,6 +32,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define DEBUG_CLAUSEALLOCATOR
 
+#define MIN_LIST_SIZE (300000 * (sizeof(Clause) + 4*sizeof(Lit)))
+#define ALLOC_GROW_MULT 4
+
 ClauseAllocator::ClauseAllocator()
     #ifdef USE_BOOST
     : clausePoolBin(sizeof(Clause) + 2*sizeof(Lit))
@@ -81,8 +84,6 @@ Clause* ClauseAllocator::Clause_new(Clause& c)
     return &c2;
 }
 
-#define MIN_LIST_SIZE (300000 * (sizeof(Clause) + 4*sizeof(Lit)))
-
 void* ClauseAllocator::allocEnough(const uint32_t size)
 {
     assert(sizes.size() == dataStarts.size());
@@ -118,7 +119,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         
         uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0)
-            nextSize = maxSizes[maxSizes.size()-1]*3*sizeof(uint32_t);
+            nextSize = maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT*sizeof(uint32_t);
         else
             nextSize = MIN_LIST_SIZE;
         assert(needed <  nextSize);
@@ -158,7 +159,7 @@ const ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
 
 inline const ClauseOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
 {
-    return (outerOffset | (interOffset<<4));
+    return (outerOffset | (interOffset << NUM_BITS_OUTER_OFFSET));
 }
 
 inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const

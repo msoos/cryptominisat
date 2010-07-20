@@ -34,6 +34,8 @@ using std::vector;
 #include <boost/pool/pool.hpp>
 #endif //USE_BOOST
 
+#define NUM_BITS_OUTER_OFFSET 4
+
 class Clause;
 class XorClause;
 class Solver;
@@ -55,7 +57,8 @@ class ClauseAllocator {
 
         inline Clause* getPointer(const uint32_t offset)
         {
-            return (Clause*)(dataStarts[offset&15]+(offset>>4));
+            return (Clause*)(dataStarts[offset&((1 << NUM_BITS_OUTER_OFFSET) - 1)]
+                            +(offset >> NUM_BITS_OUTER_OFFSET));
         }
 
         void clauseFree(Clause* c);
