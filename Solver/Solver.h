@@ -439,10 +439,8 @@ protected:
     //
     void     attachClause     (XorClause& c);
     void     attachClause     (Clause& c);             // Attach a clause to watcher lists.
-    void     attachAll        ();                      // Attach all clauses
     void     detachClause     (const XorClause& c);
     void     detachClause     (const Clause& c);       // Detach a clause to watcher lists.
-    void     detachAll        ();                      // Detach all clauses
     void     detachModifiedClause(const Lit lit1, const Lit lit2, const uint size, const Clause* address);
     void     detachModifiedClause(const Var var1, const Var var2, const uint origSize, const XorClause* address);
     template<class T>

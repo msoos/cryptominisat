@@ -262,8 +262,12 @@ void ClauseAllocator::consolidate(Solver* solver)
     assert(newSize < newMaxSize);
     assert(newSize <= newMaxSize/2);
 
+    updateOffsets(solver->watches, oldToNewOffset);
+    updateOffsetsXor(solver->xorwatches, oldToNewOffset);
+
     updatePointers(solver->clauses, oldToNewPointer);
     updatePointers(solver->learnts, oldToNewPointer);
+    updatePointers(solver->binaryClauses, oldToNewPointer);
     updatePointers(solver->xorclauses, oldToNewPointer);
     updatePointers(solver->freeLater, oldToNewPointer);
 
@@ -287,6 +291,13 @@ void ClauseAllocator::consolidate(Solver* solver)
     vec<PropagatedFrom>& reason = solver->reason;
     for (PropagatedFrom *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
         if (!it->isBinary() && !it->isNULL()) {
+            /*if ((it == reason.getData() + (*it->getClause())[0].var())
+                && (solver->value((*it->getClause())[0]) == l_True)) {
+                assert(oldToNewPointer.find(it->getClause()) != oldToNewPointer.end());
+                *it = PropagatedFrom(oldToNewPointer[it->getClause()]);
+            } else {
+                *it = PropagatedFrom();
+            }*/
             if (oldToNewPointer.find(it->getClause()) != oldToNewPointer.end()) {
                 *it = PropagatedFrom(oldToNewPointer[it->getClause()]);
             }
@@ -310,12 +321,35 @@ void ClauseAllocator::consolidate(Solver* solver)
     origClauseSizes.push();
     newOrigClauseSizes.moveTo(origClauseSizes[0]);
 
-    solver->detachAll();
-    solver->attachAll();
-
     if (solver->verbosity >= 1) {
         std::cout << "c Consolidated memory. Time: "
         << cpuTime() - myTime << std::endl;
+    }
+}
+
+template<class T>
+void ClauseAllocator::updateOffsets(vec<vec<T> >& watches, const map<ClauseOffset, ClauseOffset>& oldToNewOffset)
+{
+    for (uint32_t i = 0;  i < watches.size(); i++) {
+        vec<T>& list = watches[i];
+        for (T *it = list.getData(), *end = list.getDataEnd(); it != end; it++) {
+            map<ClauseOffset, ClauseOffset>::const_iterator it2 = oldToNewOffset.find(it->clause);
+            assert(it2 != oldToNewOffset.end());
+            it->clause = it2->second;
+        }
+    }
+}
+
+template<class T>
+void ClauseAllocator::updateOffsetsXor(vec<vec<T> >& watches, const map<ClauseOffset, ClauseOffset>& oldToNewOffset)
+{
+    for (uint32_t i = 0;  i < watches.size(); i++) {
+        vec<T>& list = watches[i];
+        for (T *it = list.getData(), *end = list.getDataEnd(); it != end; it++) {
+            map<ClauseOffset, ClauseOffset>::const_iterator it2 = oldToNewOffset.find(*it);
+            assert(it2 != oldToNewOffset.end());
+            *it = it2->second;
+        }
     }
 }
 
@@ -324,8 +358,8 @@ void ClauseAllocator::updatePointers(vec<T*>& toUpdate, const map<Clause*, Claus
 {
     for (T **it = toUpdate.getData(), **end = toUpdate.getDataEnd(); it != end; it++) {
         if (!(*it)->wasBin()) {
+            //assert(oldToNewPointer.find((TT*)*it) != oldToNewPointer.end());
             map<Clause*, Clause*>::const_iterator it2 = oldToNewPointer.find((Clause*)*it);
-            assert(it2 != oldToNewPointer.end());
             *it = (T*)it2->second;
         }
     }
@@ -335,8 +369,8 @@ void ClauseAllocator::updatePointers(vector<Clause*>& toUpdate, const map<Clause
 {
     for (vector<Clause*>::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
         if (!(*it)->wasBin()) {
+            //assert(oldToNewPointer.find((TT*)*it) != oldToNewPointer.end());
             map<Clause*, Clause*>::const_iterator it2 = oldToNewPointer.find((Clause*)*it);
-            assert(it2 != oldToNewPointer.end());
             *it = it2->second;
         }
     }
