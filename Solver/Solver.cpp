@@ -1072,29 +1072,6 @@ PropagatedFrom Solver::propagate(const bool update)
     #endif
 
     while (qhead < trail.size()) {
-
-        /*
-        //First propagate binary clauses
-        while (qheadBin < trail.size()) {
-            Lit p   = trail[qheadBin++];
-            vec<WatchedBin> & wbin = binwatches[p.toInt()];
-            num_props += wbin.size()/2;
-            for(WatchedBin *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
-                lbool val = value(k->impliedLit);
-                if (val.isUndef()) {
-                    uncheckedEnqueue(k->impliedLit, PropagatedFrom(p));
-                } else if (val == l_False) {
-                    confl = PropagatedFrom(p);
-                    failBinLit = k->impliedLit;
-                    //goto EndPropagate;
-                }
-            }
-        }
-        if (!confl.isNULL()) {
-            goto EndPropagate;
-        }*/
-
-        //Next, propagate normal clauses
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
         Watched        *i, *i2, *j;
