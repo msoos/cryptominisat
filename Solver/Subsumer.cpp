@@ -987,6 +987,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     cl_added.reserve(expected_size);
     cl_touched.reserve(expected_size);
 
+    uint32_t origNLearntClauses = solver.learnts.size();
     if (alsoLearnt) {
         //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
         //addFromSolver(solver.learnts, alsoLearnt);
@@ -1053,6 +1054,16 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
             numMaxSubsume0--;
         }
     }
+
+    if (alsoLearnt) {
+        for (uint32_t i = 0; i < clauses.size(); i++) {
+            if (numMaxSubsume0 == 0) break;
+            if (clauses[i].clause != NULL && !clauses[i].clause->learnt()) {
+                subsume0(*clauses[i].clause);
+                numMaxSubsume0--;
+            }
+        }
+    }
     
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  time until pre-subsume0 clauses and subsume1 2-learnts:" << cpuTime()-myTime << std::endl;
@@ -1066,20 +1077,18 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     std::cout << "c   clauses:" << clauses.size() << std::endl;
     #endif
     
-    if (clauses.size() > 10000000)  goto endSimplifyBySubsumption;
+    if (clauses.size() > 10000000 || alsoLearnt)  goto endSimplifyBySubsumption;
     if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
     do {
         #ifdef BIT_MORE_VERBOSITY
         std::cout << "c time before the start of almost_all/smaller: " << cpuTime() - myTime << std::endl;
         #endif
-        if (numMaxSubsume0 > 0) {
-            if (cl_added.size() > clauses.size() / 2) {
-                almost_all_database();
-                if (!solver.ok) return false;
-            } else {
-                smaller_database();
-                if (!solver.ok) return false;
-            }
+        if (cl_added.size() > clauses.size() / 2) {
+            almost_all_database();
+            if (!solver.ok) return false;
+        } else {
+            smaller_database();
+            if (!solver.ok) return false;
         }
         cl_added.clear();
 
@@ -1163,6 +1172,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
+    solver.nbCompensateSubsumer += (origNLearntClauses - solver.learnts.size())*2;
     freeMemory();
     
     if (solver.verbosity >= 1) {
