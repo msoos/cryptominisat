@@ -18,6 +18,10 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************************************/
 
+///////////////////
+// Settings (magic constants)
+///////////////////
+
 #define RATIOREMOVECLAUSES 2
 #define NBCLAUSESBEFOREREDUCE 20000
 #define DYNAMICNBLEVEL
@@ -32,18 +36,32 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define FULLRESTART_MULTIPLIER_MULTIPLIER 3.5
 #define RESTART_TYPE_DECIDER_FROM 2
 #define RESTART_TYPE_DECIDER_UNTIL 7
-//#define VERBOSE_DEBUG_XOR
-//#define VERBOSE_DEBUG
-#define USE_GAUSS
 #define MIN_GAUSS_XOR_CLAUSES 5
 #define MAX_GAUSS_XOR_CLAUSES 30000
 #define MAX_OLD_LEARNTS 2000000
-//#define DEBUG_ATTACH
 #define RANDOM_LOOKAROUND_SEARCHSPACE
 //#define USE_OLD_POLARITIES
-//#define DEBUG_VARELIM
 #define BURST_SEARCH
+
+///////////////////
+// Silent Debug
+///////////////////
+
+//#define DEBUG_VARELIM
 //#define DEBUG_PROPAGATEFROM
+//#define DEBUG_WATCHED
+//#define DEBUG_ATTACH
+
+///////////////////
+// Verbose Debug
+///////////////////
+
+//#define VERBOSE_DEBUG_XOR
+//#define VERBOSE_DEBUG
+
+///////////////////
+//  For Automake tools
+///////////////////
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

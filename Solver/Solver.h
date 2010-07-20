@@ -332,8 +332,8 @@ protected:
     uint32_t sum_gauss_confl;
     uint32_t sum_gauss_prop;
     uint32_t sum_gauss_unit_truths;
-    friend class Gaussian;
     #endif //USE_GAUSS
+    friend class Gaussian;
     
     template <class T>
     Clause* addClauseInt(T& ps, uint group);
