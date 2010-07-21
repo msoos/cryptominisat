@@ -472,7 +472,7 @@ void Solver::attachClause(Clause& c)
     if (c.size() == 2) {
         watches[index0].push(Watched(c[1]));
         watches[index1].push(Watched(c[0]));
-    } else if (c.size() == 3 && !c.learnt()) {
+    } else if (c.size() == 3) {
         watches[index0].push(Watched(c[1], c[2]));
         watches[index1].push(Watched(c[0], c[2]));
         watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));

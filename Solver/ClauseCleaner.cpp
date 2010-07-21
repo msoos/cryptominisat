@@ -152,12 +152,9 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
             solver.clauseAllocator.clauseFree(&c);
             cc = c2;
             solver.attachClause(*c2);
-        } else if (c.size() == 3 && !c.learnt()) {
+        } else if (c.size() == 3) {
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
-            Clause *c2 = solver.clauseAllocator.Clause_new(c);
-            solver.clauseAllocator.clauseFree(&c);
-            cc = c2;
-            solver.attachClause(*c2);
+            solver.attachClause(c);
         } else {
             if (c.learnt())
                 solver.learnts_literals -= i-j;

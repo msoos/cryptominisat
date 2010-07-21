@@ -607,7 +607,7 @@ inline void Solver::claDecayActivity()
 
 inline bool Solver::locked(const Clause& c) const
 {
-    if (c.size() == 2) return true; //we don't know in this case :I
+    if (c.size() <= 3) return true; //we don't know in this case :I
     PropagatedFrom from(reason[c[0].var()]);
     return from.isClause() && from.getClause() == &c && value(c[0]) == l_True;
 }
