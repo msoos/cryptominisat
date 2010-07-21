@@ -126,6 +126,8 @@ void Subsumer::subsume0(Clause& ps)
                 ps.setOldActivity(ret.oldActivity);
         } else {
             ps.makeNonLearnt();
+            solver.learnts_literals -= ps.size();
+            solver.clauses_literals += ps.size();
         }
     }
 }

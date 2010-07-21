@@ -98,6 +98,11 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
             solver.clauseAllocator.clauseFree(*s);
             s++;
         } else if (type != ClauseCleaner::binaryClauses && (*s)->size() == 2) {
+            if (!(*s)->wasBin()) {
+                Clause *c2 = solver.clauseAllocator.Clause_new(**s);
+                solver.clauseAllocator.clauseFree(*s);
+                *s = c2;
+            }
             solver.binaryClauses.push(*s);
             solver.becameBinary++;
             s++;

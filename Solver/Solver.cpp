@@ -1426,8 +1426,8 @@ void Solver::reduceDB()
 
     const uint removeNum = (double)learnts.size() / (double)RATIOREMOVECLAUSES;
     for (i = j = 0; i != removeNum; i++){
-        //NOTE: The next instruciton only works if removeNum < learnts.size() (strictly smaller!!)
-        __builtin_prefetch(learnts[i+1], 0, 0);
+        if (i+1 < removeNum)
+            __builtin_prefetch(learnts[i+1], 0, 0);
         if (learnts[i]->size() > 2 && !locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->activity() > 2)) {
             removeClause(*learnts[i]);
         } else

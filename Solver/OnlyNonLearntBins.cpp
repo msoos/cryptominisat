@@ -145,6 +145,7 @@ const uint32_t OnlyNonLearntBins::removeBins()
         }
     }
     solver.binaryClauses.shrink(i-j);
+    solver.clauses_literals -= (i-j)*2;
     return (i - j);
 }
 
