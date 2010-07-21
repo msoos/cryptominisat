@@ -905,8 +905,8 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         out_btlevel       = level[p.var()];
     }
 
+    nbLevels = calcNBLevels(out_learnt);
     if (lastSelectedRestartType == dynamic_restart) {
-        nbLevels = calcNBLevels(out_learnt);
         #ifdef UPDATEVARACTIVITY
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
             PropagatedFrom cl = reason[lastDecisionLevel[i]];
@@ -915,8 +915,6 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         }
         lastDecisionLevel.clear();
         #endif
-    } else {
-        nbLevels = 1000;
     }
 
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
