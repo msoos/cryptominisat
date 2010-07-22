@@ -145,7 +145,6 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
 
     assert(c.size() != 1);
     if (i != j) {
-        c.setStrenghtened();
         if (c.size() == 2) {
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             Clause *c2 = solver.clauseAllocator.Clause_new(c);
@@ -237,7 +236,6 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
         }
         default: {
             if (i-j > 0) {
-                c.setStrenghtened();
                 solver.clauses_literals -= i-j;
             }
             return false;
@@ -292,25 +290,21 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
             return true;
         }
     }
-    
+    c.shrink(i-j);
+
     if (i != j) {
-        c.setStrenghtened();
         if (origClause.size() > 2 && origClause.size()-(i-j) == 2) {
             subs.unlinkModifiedClause(origClause, cc, true);
             subs.clauses[cc.index] = cc;
-            c.shrink(i-j);
             solver.attachClause(c);
-            subs.linkInAlreadyClause(cc);
         } else {
-            c.shrink(i-j);
             subs.unlinkModifiedClause(origClause, cc, false);
-            subs.linkInAlreadyClause(cc);
             if (c.learnt())
                 solver.learnts_literals -= i-j;
             else
                 solver.clauses_literals -= i-j;
         }
-        if (!c.learnt()) c.calcAbstractionClause();
+        subs.linkInAlreadyClause(cc);
         subs.updateClause(cc);
     }
     

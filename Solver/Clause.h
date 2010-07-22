@@ -59,7 +59,6 @@ protected:
     
     uint32_t isLearnt:1;
     uint32_t strenghtened:1;
-    uint32_t varChanged:1;
     uint32_t sorted:1;
     uint32_t invertedXor:1;
     uint32_t isXorClause:1;
@@ -88,7 +87,6 @@ public:
         isXorClause = false;
         strenghtened = false;
         sorted = false;
-        varChanged = true;
         subsume0Done = false;
         mySize = ps.size();
         isLearnt = learnt;
@@ -109,12 +107,11 @@ public:
     const uint   size        ()      const {
         return mySize;
     }
-    void         resize      (const uint size) {
-        mySize = size;
-    }
+    
     void         shrink      (const uint i) {
         assert(i <= size());
         mySize -= i;
+        if (i > 0) setStrenghtened();
     }
     void         pop         () {
         shrink(1);
@@ -144,20 +141,10 @@ public:
         strenghtened = true;
         sorted = false;
         subsume0Done = false;
+        if (!learnt()) calcAbstractionClause();
     }
     void unsetStrenghtened() {
         strenghtened = false;
-    }
-    const bool getVarChanged() const {
-        return varChanged;
-    }
-    void setVarChanged() {
-        varChanged = true;
-        sorted = false;
-        subsume0Done = false;
-    }
-    void unsetVarChanged() {
-        varChanged = false;
     }
     const bool getSorted() const {
         return sorted;

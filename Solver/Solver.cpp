@@ -1863,17 +1863,20 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
     //Normal learnt
     } else {
         if (c) {
+            uint32_t origSize = c->size();
             detachClause(*c);
             for (uint32_t i = 0; i != learnt_clause.size(); i++)
                 (*c)[i] = learnt_clause[i];
-            c->resize(learnt_clause.size());
+            c->shrink(origSize - learnt_clause.size());
             if (c->learnt()) {
                 if (c->activity() > nbLevels)
                     c->setActivity(nbLevels); // LS
                 if (c->size() == 2)
                     nbBin++;
+                learnts_literals -= origSize - learnt_clause.size();
+            } else {
+                clauses_literals -= origSize - learnt_clause.size();
             }
-            c->setStrenghtened();
         } else {
             c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
             #ifdef STATS_NEEDED

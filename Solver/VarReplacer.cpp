@@ -160,7 +160,6 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
                 changed = true;
                 *l = Lit(newlit.var(), false);
                 c.invert(newlit.sign());
-                c.setVarChanged();
                 replacedLits++;
             }
         }
@@ -200,6 +199,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
         else c.invert(solver.assigns[c[i].var()].getBool()); //modify xor_clause_inverted instead of adding
     }
     c.shrink(i - j);
+    c.setStrenghtened();
     
     #ifdef VERBOSE_DEBUG
     cout << "xor-clause after replacing: ";
@@ -248,7 +248,6 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
             if (table[l->var()].var() != l->var()) {
                 changed = true;
                 *l = table[l->var()] ^ l->sign();
-                c.setVarChanged();
                 replacedLits++;
             }
         }
@@ -292,6 +291,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
             c[j++] = p = c[i];
     }
     c.shrink(i - j);
+    c.setStrenghtened();
 
     solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
 

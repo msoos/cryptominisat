@@ -159,8 +159,6 @@ void XorSubsumer::addFromSolver(vec<XorClause*>& cs)
             __builtin_prefetch(*(i+1), 1, 1);
         
         linkInClause(**i);
-        if ((*i)->getVarChanged() || (*i)->getStrenghtened())
-            (*i)->calcXorAbstraction();
     }
     cs.clear();
     cs.push(NULL); //HACK --to force xor-propagation
@@ -173,7 +171,6 @@ void XorSubsumer::addBackToSolver()
         if (clauses[i].clause != NULL) {
             solver.xorclauses.push(clauses[i].clause);
             clauses[i].clause->unsetStrenghtened();
-            clauses[i].clause->unsetVarChanged();
         }
     }
     for (Var var = 0; var < solver.nVars(); var++) {

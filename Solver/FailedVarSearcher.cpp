@@ -653,8 +653,7 @@ inline const bool FailedVarSearcher::cleanClause(Clause& ps)
     }
     ps.shrink(i-j);
     assert(ps.size() > 1);
-    
-    if (ps.size() != origSize) ps.setStrenghtened();
+
     if (origSize != 2 && ps.size() == 2)
         solver.becameBinary++;
     
@@ -662,9 +661,7 @@ inline const bool FailedVarSearcher::cleanClause(Clause& ps)
 }
 
 inline const bool FailedVarSearcher::cleanClause(XorClause& ps)
-{
-    uint32_t origSize = ps.size();
-    
+{    
     Lit *i = ps.getData(), *j = i;
     for (Lit *end = ps.getDataEnd(); i != end; i++) {
         if (solver.assigns[i->var()] == l_True) ps.invert(true);
@@ -676,8 +673,7 @@ inline const bool FailedVarSearcher::cleanClause(XorClause& ps)
     
     if (ps.size() == 0) return false;
     assert(ps.size() > 1);
-    
-    if (ps.size() != origSize) ps.setStrenghtened();
+
     if (ps.size() == 2) {
         ps[0] = ps[0].unsign();
         ps[1] = ps[1].unsign();

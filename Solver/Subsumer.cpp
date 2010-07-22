@@ -110,7 +110,6 @@ const bool Subsumer::unEliminate(const Var var)
 void Subsumer::subsume0(Clause& ps)
 {
     ps.subsume0Finished();
-    ps.unsetVarChanged();
     #ifdef VERBOSE_DEBUG
     cout << "subsume0 orig clause: ";
     ps.plainPrint();
@@ -125,6 +124,7 @@ void Subsumer::subsume0(Clause& ps)
             if (ps.oldActivity() < ret.oldActivity)
                 ps.setOldActivity(ret.oldActivity);
         } else {
+            solver.nbCompensateSubsumer++;
             ps.makeNonLearnt();
             solver.learnts_literals -= ps.size();
             solver.clauses_literals += ps.size();
@@ -162,6 +162,7 @@ Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         
         Clause* tmp = subs[i].clause;
         if (tmp->learnt()) {
+            solver.nbCompensateSubsumer++;
             ret.activity = std::min(ret.activity, tmp->activity());
             ret.oldActivity = std::max(ret.oldActivity, tmp->oldActivity());
         } else {
@@ -246,7 +247,6 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
             }
         }
         cl.shrink(a-b);
-        cl.setStrenghtened();
 
         #ifdef VERBOSE_DEBUG
         cout << "--> Strenghtened clause:";
@@ -325,7 +325,6 @@ void Subsumer::unlinkClause(ClauseSimp c, Var elim)
     
     // Remove clause from clause touched set:
     cl_touched.exclude(c);
-    cl_added.exclude(c);
     
     clauses[c.index].clause = NULL;
 }
@@ -353,7 +352,6 @@ void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c, bool det
     
     // Remove clause from clause touched set:
     cl_touched.exclude(c);
-    cl_added.exclude(c);
 
     if (detachAndNull) {
         solver.detachModifiedClause(origClause[0], origClause[1], (origClause.size() == 3) ? origClause[2] : lit_Undef, origClause.size(), c.clause);
@@ -367,8 +365,7 @@ void Subsumer::subsume1(ClauseSimp& ps)
     vec<ClauseSimp>    subs;
     vec<Lit>        qs;
     uint32_t        q;
-    
-    ps.clause->unsetStrenghtened();
+
     registerIteration(Q);
     registerIteration(subs);
     
@@ -418,7 +415,6 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     }
                 }
                 cl.shrink(a-b);
-                cl.setStrenghtened();
                 
                 #ifdef VERBOSE_DEBUG
                 cout << "--> Strenghtened clause:";
@@ -480,7 +476,6 @@ void Subsumer::almost_all_database()
     std::cout << "c Larger database" << std::endl;
     #endif
     // Optimized variant when virtually whole database is involved:
-    cl_added  .clear();
     cl_touched.clear();
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
@@ -547,7 +542,7 @@ void Subsumer::smaller_database()
     
     CSet s0, s1;     // 's0' is used for 0-subsumption, 's1' for 1-subsumption
     vec<char> ol_seen(solver.nVars()*2, 0);
-    for (CSet::iterator it = cl_added.begin(), end = cl_added.end(); it != end; ++it) {
+    for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
         if (it->clause == NULL) continue;
         ClauseSimp& c = *it;
         Clause& cl = *it->clause;
@@ -568,7 +563,7 @@ void Subsumer::smaller_database()
             }
         }
     }
-    cl_added.clear();
+    cl_touched.clear();
     
     registerIteration(s0);
     registerIteration(s1);
@@ -629,7 +624,7 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
         occur[cl[i].toInt()].push(c);
         touch(cl[i].var());
     }
-    cl_added.add(c);
+    cl_touched.add(c);
     
     return c;
 }
@@ -673,12 +668,8 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool
         }
         
         if (addBinAndAddToCL) {
-            if (cl.getVarChanged()) cl_added.add(c);
-            else if (cl.getStrenghtened()) cl_touched.add(c);
+            if (cl.getStrenghtened()) cl_touched.add(c);
         }
-
-        if (!cl.learnt() && (cl.getVarChanged() || cl.getStrenghtened()))
-            cl.calcAbstractionClause();
     }
     cs.shrink(i-j);
 }
@@ -956,7 +947,6 @@ void Subsumer::clearAll()
         occur[2*var+1].clear();
     }
     clauses.clear();
-    cl_added.clear();
     cl_touched.clear();
 }
 
@@ -986,13 +976,11 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     else
         expected_size = solver.clauses.size() + solver.binaryClauses.size() + solver.learnts.size();
     clauses.reserve(expected_size);
-    cl_added.reserve(expected_size);
     cl_touched.reserve(expected_size);
 
-    uint32_t origNLearntClauses = solver.learnts.size();
     if (alsoLearnt) {
-        //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
-        //addFromSolver(solver.learnts, alsoLearnt);
+        solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
+        addFromSolver(solver.learnts, alsoLearnt);
     }
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses, alsoLearnt);
@@ -1079,20 +1067,20 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     std::cout << "c   clauses:" << clauses.size() << std::endl;
     #endif
     
-    if (clauses.size() > 10000000 || alsoLearnt)  goto endSimplifyBySubsumption;
+    if (clauses.size() > 10000000 || numMaxSubsume1 == 0 )  goto endSimplifyBySubsumption;
     if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
     do {
         #ifdef BIT_MORE_VERBOSITY
         std::cout << "c time before the start of almost_all/smaller: " << cpuTime() - myTime << std::endl;
         #endif
-        if (cl_added.size() > clauses.size() / 2) {
+        if (cl_touched.size() > clauses.size() / 2) {
             almost_all_database();
             if (!solver.ok) return false;
         } else {
             smaller_database();
             if (!solver.ok) return false;
         }
-        cl_added.clear();
+        cl_touched.clear();
 
         solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
         
@@ -1153,7 +1141,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
             std::cout << "c time until the end of varelim: " << cpuTime() - myTime << std::endl;
             #endif
         }
-    } while (cl_added.size() > 100);
+    } while (cl_touched.size() > 100);
     endSimplifyBySubsumption:
     
     if (!solver.ok) return false;
@@ -1174,7 +1162,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     addBackToSolver();
-    solver.nbCompensateSubsumer += (origNLearntClauses - solver.learnts.size())*2;
     freeMemory();
     
     if (solver.verbosity >= 1) {

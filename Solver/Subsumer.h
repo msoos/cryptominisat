@@ -63,7 +63,6 @@ private:
     vec<char>              touched;        // Is set to true when a variable is part of a removed clause. Also true initially (upon variable creation).
     vec<Var>               touched_list;   // A list of the true elements in 'touched'.
     CSet                   cl_touched;     // Clauses strengthened.
-    CSet                   cl_added;       // Clauses created.
     vec<vec<ClauseSimp> >  occur;          // 'occur[index(lit)]' is a list of constraints containing 'lit'.
     vec<vec<ClauseSimp>* > iter_vecs;      // Vectors currently used for iterations. Removed clauses will be looked up and replaced by 'Clause_NULL'.
     vec<CSet* >            iter_sets;      // Sets currently used for iterations.
