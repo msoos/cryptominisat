@@ -87,6 +87,8 @@ Solver::Solver() :
         , doBlockedClause  (true)
         , doVarElim        (true)
         , doSubsume1       (true)
+        , doAssymBranch    (true)
+        , doAssymBranchReg (true)
         , failedVarSearch  (true)
         , addExtraBins     (true)
         , removeUselessBins(true)

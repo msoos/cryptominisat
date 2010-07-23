@@ -286,6 +286,127 @@ end:
     return solver.ok;
 }
 
+//#define ASSYM_DEBUG
+
+struct sortBySize
+{
+    bool operator () (const Clause* x, const Clause* y);
+};
+
+//order larger...smaller
+bool  sortBySize::operator () (const Clause* x, const Clause* y) {
+    return (x->size() > y->size());
+}
+
+const bool FailedVarSearcher::assymBranch()
+{
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    
+    uint32_t effective = 0;
+    uint32_t effectiveLit = 0;
+    double myTime = cpuTime();
+    uint32_t maxDo;
+    uint32_t totalSize = solver.clauses.size() + solver.binaryClauses.size() + solver.learnts.size();
+    if (totalSize < 2000000)
+        maxDo = 60000;
+    else {
+        maxDo = 20000;
+    }
+    vec<Lit> lits;
+    vec<Lit> unused;
+
+    if (solver.clauses.size() < 1000000) {
+        //if too many clauses, random order will do perfectly well
+        std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
+    }
+
+    Clause **i, **j;
+    i = j = solver.clauses.getData();
+    for (Clause **end = solver.clauses.getDataEnd(); i != end; i++) {
+        if (maxDo == 0 || (**i).size() == 2) {
+            *j++ = *i;
+            continue;
+        }
+        maxDo--;
+
+        Clause& c = **i;
+        assert(c.size() > 2);
+        assert(!c.learnt());
+        lits.clear();
+        unused.clear();
+        lits.growTo(c.size());
+        memcpy(lits.getData(), c.getData(), c.size() * sizeof(Lit));
+
+        failed = false;
+        uint32_t done = 0;
+        solver.newDecisionLevel();
+        for (; done < lits.size(); done++) {
+            uint32_t i2 = 0;
+            for (; i2 < 1 && done+i2 < lits.size()-1; i2++) {
+                lbool val = solver.value(lits[done+i2]);
+                if (val == l_Undef) {
+                    solver.uncheckedEnqueueLight(~lits[done+i2]);
+                } else if (val == l_False) {
+                    unused.push(lits[done+i2]);
+                }
+            }
+            done += i2;
+            failed = (!solver.propagate(false).isNULL());
+            if (failed) {
+                done++;
+                break;
+            }
+        }
+        solver.cancelUntil(0);
+        assert(solver.ok);
+        
+        if (unused.size() > 0 || failed) {
+            effective++;
+            uint32_t origSize = lits.size();
+            #ifdef ASSYM_DEBUG
+            std::cout << "Assym branch effective." << std::endl;
+            std::cout << "-- Orig clause:"; c.plainPrint();
+            #endif
+            solver.detachClause(c);
+
+            lits.shrink(lits.size() - done);
+            for (uint32_t i2 = 0; i2 < unused.size(); i2++) {
+                remove(lits, unused[i2]);
+            }
+
+            Clause *c2 = solver.addClauseInt(lits, c.getGroup());
+            #ifdef ASSYM_DEBUG
+            std::cout << "-- Origsize:" << origSize << " newSize:" << (c2 == NULL ? 0 : c2->size()) << " toRemove:" << c.size() - done << " unused.size():" << unused.size() << std::endl;
+            #endif
+            effectiveLit += origSize - (c2 == NULL ? 0 : c2->size());
+            solver.clauseAllocator.clauseFree(&c);
+
+            if (c2 != NULL) {
+                #ifdef ASSYM_DEBUG
+                std::cout << "-- New clause:"; c2->plainPrint();
+                #endif
+                *j++ = c2;
+            }
+
+            if (!solver.ok) {
+                maxDo = 0;
+                continue;
+            }
+        } else {
+            *j++ = *i;
+        }
+    }
+    solver.clauses.shrink(i-j);
+
+    std::cout << "c assym "
+    << " cl-useful: " << effective << "/" << solver.clauses.size()
+    << " lits-rem:" << effectiveLit
+    << " time: " << cpuTime() - myTime
+    << std::endl;
+
+    return solver.ok;
+}
+
 void FailedVarSearcher::completelyDetachAndReattach()
 {
     solver.clauses_literals = 0;
