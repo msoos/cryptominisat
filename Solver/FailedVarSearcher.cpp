@@ -305,13 +305,12 @@ const bool FailedVarSearcher::assymBranch()
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint32_t maxDo;
-    uint32_t totalSize = solver.clauses.size() + solver.binaryClauses.size() + solver.learnts.size();
-    if (totalSize < 2000000)
-        maxDo = 60000;
-    else {
-        maxDo = 20000;
-    }
+    int32_t maxDo;
+    double totalDifficulty = solver.clauses.size()*20 + solver.clauses_literals + solver.learnts.size()*20 + solver.learnts_literals - solver.binaryClauses.size()*3;
+    double divisor = totalDifficulty*log(totalDifficulty)/8000000.0;
+    std::cout << "Divisor:" << divisor << " totalDifficulty: " << totalDifficulty<< std::endl;
+    maxDo = 600000.0/divisor;
+    std::cout << "maxDo:" << maxDo << std::endl;
     vec<Lit> lits;
     vec<Lit> unused;
 
@@ -323,13 +322,18 @@ const bool FailedVarSearcher::assymBranch()
     Clause **i, **j;
     i = j = solver.clauses.getData();
     for (Clause **end = solver.clauses.getDataEnd(); i != end; i++) {
-        if (maxDo == 0 || (**i).size() == 2) {
+        if (maxDo <= 0 || (**i).size() == 2) {
             *j++ = *i;
             continue;
         }
-        maxDo--;
+        //if bad performance, stop doing it
+        if ((i-solver.clauses.getData() > 5000 && effectiveLit < 500)) {
+            maxDo = 0;
+        }
 
         Clause& c = **i;
+        maxDo -= c.size();
+        
         assert(c.size() > 2);
         assert(!c.learnt());
         lits.clear();
@@ -340,9 +344,9 @@ const bool FailedVarSearcher::assymBranch()
         failed = false;
         uint32_t done = 0;
         solver.newDecisionLevel();
-        for (; done < lits.size(); done++) {
+        for (; done < lits.size();) {
             uint32_t i2 = 0;
-            for (; i2 < 1 && done+i2 < lits.size()-1; i2++) {
+            for (; i2 < 2 && done+i2 < lits.size(); i2++) {
                 lbool val = solver.value(lits[done+i2]);
                 if (val == l_Undef) {
                     solver.uncheckedEnqueueLight(~lits[done+i2]);
@@ -353,14 +357,13 @@ const bool FailedVarSearcher::assymBranch()
             done += i2;
             failed = (!solver.propagate(false).isNULL());
             if (failed) {
-                done++;
                 break;
             }
         }
         solver.cancelUntil(0);
         assert(solver.ok);
         
-        if (unused.size() > 0 || failed) {
+        if (unused.size() > 0 || (failed && done < lits.size())) {
             effective++;
             uint32_t origSize = lits.size();
             #ifdef ASSYM_DEBUG
@@ -378,6 +381,7 @@ const bool FailedVarSearcher::assymBranch()
             #ifdef ASSYM_DEBUG
             std::cout << "-- Origsize:" << origSize << " newSize:" << (c2 == NULL ? 0 : c2->size()) << " toRemove:" << c.size() - done << " unused.size():" << unused.size() << std::endl;
             #endif
+            maxDo -= 5;
             effectiveLit += origSize - (c2 == NULL ? 0 : c2->size());
             solver.clauseAllocator.clauseFree(&c);
 
