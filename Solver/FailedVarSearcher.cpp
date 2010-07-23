@@ -340,7 +340,7 @@ const bool FailedVarSearcher::orderLits()
         if (failed) {
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~randLit);
-            solver.ok = (solver.propagate().isNULL());
+            solver.ok = (solver.propagate(false).isNULL());
             if (!solver.ok) return false;
             continue;
         }
@@ -385,7 +385,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
-    failed = (!solver.propagate().isNULL());
+    failed = (!solver.propagate(false).isNULL());
     if (failed) {
         solver.cancelUntil(0);
         numFailed++;
@@ -429,7 +429,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit2);
-    failed = (!solver.propagate().isNULL());
+    failed = (!solver.propagate(false).isNULL());
     if (failed) {
         solver.cancelUntil(0);
         numFailed++;
@@ -597,7 +597,7 @@ void FailedVarSearcher::fillImplies(const Lit& lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit);
-    failed = (!solver.propagate().isNULL());
+    failed = (!solver.propagate(false).isNULL());
     assert(!failed);
     
     assert(solver.decisionLevel() > 0);
