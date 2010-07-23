@@ -2052,50 +2052,30 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         status = search(100, -1, false);
         starts--;
     }
-    if (status != l_Undef)
-        goto end;
+    if (status != l_Undef) goto end;
     printRestartStat();
     #endif //BURST_SEARCH
 
-    if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) {
-        status = l_False;
-        goto end;
-    }
+    if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
-    if (failedVarSearch && !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 9000000 : 3000000))  {
-        status = l_False;
+    if (failedVarSearch &&
+        !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 9000000 : 3000000))
         goto end;
-    }
 
     if (performReplace && (regularRemoveUselessBins || regularSubsumeWithNonExistBinaries)) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
-        if (!onlyNonLearntBins.fill()) {
-            status = l_False;
-            goto end;
-        }
+        if (!onlyNonLearntBins.fill()) goto end;
+        if (regularSubsumeWithNonExistBinaries
+            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) goto end;
         if (regularRemoveUselessBins) {
             UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
-            if (!uselessBinRemover.removeUslessBinFull()) {
-                status = l_False;
-                goto end;
-            }
-        }
-        if (regularSubsumeWithNonExistBinaries
-            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) {
-            status = l_False;
-            goto end;
+            if (!uselessBinRemover.removeUslessBinFull()) goto end;
         }
     }
 
-    if (doSubsumption && !subsumer->simplifyBySubsumption(false)) {
-        status = l_False;
-        goto end;
-    }
+    if (doSubsumption && !subsumer->simplifyBySubsumption(false)) goto end;
 
-    if (doSubsumption && !subsumer->simplifyBySubsumption(true)) {
-        status = l_False;
-        goto end;
-    }
+    if (doSubsumption && !subsumer->simplifyBySubsumption(true)) goto end;
     
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
@@ -2107,6 +2087,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         XorFinder x(*this, clauses, ClauseCleaner::clauses);
         x.addAllXorAsNorm();
     }
+
+    if (doAssymBranchReg && !failedVarSearcher->assymBranch()) goto end;
     
 end:
     #ifdef BURST_SEARCH
@@ -2123,6 +2105,8 @@ end:
     #endif //USE_GAUSS
 
     testAllClauseAttach();
+
+    if (!ok) return l_False;
     return status;
 }
 
@@ -2163,19 +2147,23 @@ inline void Solver::performStepsBeforeSolve()
 
     if (performReplace && !varReplacer->performReplace()) return;
 
-    if (doSubsumption && !subsumer->simplifyBySubsumption(true)) {
+    /*if (doSubsumption && !subsumer->simplifyBySubsumption(true)) {
+        return;
+    }*/
+
+    if (doAssymBranch && !failedVarSearcher->assymBranch()) {
         return;
     }
 
     if (performReplace) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) return;
+        if (subsumeWithNonExistBinaries
+            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
         if (regularRemoveUselessBins) {
             UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
             if (!uselessBinRemover.removeUslessBinFull()) return;
         }
-        if (subsumeWithNonExistBinaries
-            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
     }
 
     if (doSubsumption
@@ -2184,18 +2172,16 @@ inline void Solver::performStepsBeforeSolve()
         && !subsumer->simplifyBySubsumption())
         return;
 
-    /*
-    if (conflicts == 0 && learnts.size() == 0
-        && noLearntBinaries()) {
-        if (subsumeWithNonExistBinaries && !subsumer->subsumeWithBinaries(true)) return;
+    /*if (performReplace) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) return;
+        if (subsumeWithNonExistBinaries
+            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
         if (regularRemoveUselessBins) {
             UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
             if (!uselessBinRemover.removeUslessBinFull()) return;
         }
-    }
-    */
+    }*/
 
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);

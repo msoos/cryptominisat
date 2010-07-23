@@ -175,7 +175,7 @@ Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
     return ret;
 }
 
-void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
+void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, OnlyNonLearntBins* onlyNonLearntBins)
 {
     vec<ClauseSimp> subs;
     vec<ClauseSimp> subs2;
@@ -266,7 +266,10 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
             solver.attachClause(cl);
             updateClause(c);
         } else if (cl.size() == 2) {
-            if (!cl.learnt()) cl.calcAbstractionClause();
+            if (!cl.learnt()) {
+                cl.calcAbstractionClause();
+                onlyNonLearntBins->attachBin(cl);
+            }
             solver.attachClause(cl);
             solver.becameBinary++;
             addBinaryClauses.push(&cl);
@@ -800,9 +803,8 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
         if (!solver.binaryClauses[i]->learnt() && numMaxSubsume0 > 0) {
             Clause& c = *solver.binaryClauses[i];
-            subsume0(c);
             lits[c[1].toInt()] = 1;
-            subsume0BIN(c[0], lits);
+            subsume0BIN(c[0], lits, onlyNonLearntBins);
             lits[c[1].toInt()] = 0;
             numMaxSubsume0--;
             if (!solver.ok) return false;
@@ -827,10 +829,10 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     addBackToSolver();
     for (uint32_t i = 0; i < addBinaryClauses.size(); i++) {
         Clause& c = *addBinaryClauses[i];
-        solver.detachClause(c);
         Clause *c2 = solver.clauseAllocator.Clause_new(c);
+        //no need to detach&retattach, since it was detached and attached
+        //in form that was already binary
         solver.clauseAllocator.clauseFree(&c);
-        solver.attachClause(*c2);
         solver.becameBinary++;
         solver.binaryClauses.push(c2);
     }
@@ -927,7 +929,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
         //this toVisit.size()<=1, there mustn't have been more than 1 binary
         //clause in the watchlist, so this has been performed above.
     } else {
-        subsume0BIN(~lit, toVisitAll);
+        subsume0BIN(~lit, toVisitAll, onlyNonLearntBins);
     }
 
     for (uint32_t i = 0; i < toVisit.size(); i++)

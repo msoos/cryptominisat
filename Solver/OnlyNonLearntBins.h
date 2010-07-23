@@ -34,7 +34,7 @@ class OnlyNonLearntBins {
         //Management of clauses
         const bool fill();
         void removeBin(Lit lit1, Lit lit2);
-        void removeClause(Clause& c);
+        void attachBin(const Clause& c);
         const uint32_t removeBins();
 
     private:

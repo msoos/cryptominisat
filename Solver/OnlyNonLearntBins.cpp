@@ -99,8 +99,7 @@ const bool OnlyNonLearntBins::fill()
         Clause& c = **i;
         if (c.learnt()) continue;
 
-        binwatches[(~c[0]).toInt()].push(WatchedBin(c[1]));
-        binwatches[(~c[1]).toInt()].push(WatchedBin(c[0]));
+        attachBin(c);
     }
 
     if (solver.verbosity >= 2) {
@@ -111,6 +110,13 @@ const bool OnlyNonLearntBins::fill()
 
     return true;
 }
+
+void OnlyNonLearntBins::attachBin(const Clause& c)
+{
+    binwatches[(~c[0]).toInt()].push(WatchedBin(c[1]));
+    binwatches[(~c[1]).toInt()].push(WatchedBin(c[0]));
+}
+
 
 void OnlyNonLearntBins::removeBin(Lit lit1, Lit lit2)
 {
