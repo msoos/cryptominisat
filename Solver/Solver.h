@@ -454,11 +454,9 @@ protected:
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
-    void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom());                 // Enqueue a literal. Assumes value of literal is undefined.
+    void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
-    PropagatedFrom  propagate (const bool update = true);                         // Perform unit propagation. Returns possibly conflicting clause.
-    PropagatedFrom  propagateBin();
-    PropagatedFrom  propagate_xors   (const Lit& p);
+
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
     Clause*  analyze          (PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
@@ -467,6 +465,15 @@ protected:
     void     reduceDB         ();                                                      // Reduce the set of learnt clauses.
     llbool   handle_conflict  (vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update);// Handles the conflict clause
     llbool   new_decision     (const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
+
+    //Propagation
+    PropagatedFrom propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
+    void propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
+    void propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
+    void propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl, const bool update);
+    void propXorClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
+    
+    PropagatedFrom propagateBin();
 
     // Maintaining Variable/Clause activity:
     //
@@ -912,6 +919,8 @@ inline void Solver::findAllAttach() const
 
 inline void Solver::uncheckedEnqueueLight(const Lit p)
 {
+    assert(assigns[p.var()] == l_Undef);
+    
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
 }

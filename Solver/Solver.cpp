@@ -1048,11 +1048,153 @@ void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
 |    Post-conditions:
 |      * the propagation queue is empty, even if there was a conflict.
 |________________________________________________________________________________________________@*/
+inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
+{
+    *j++ = *i;
+    lbool val = value(i->getOtherLit());
+    if (val.isUndef()) {
+        uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p));
+    } else if (val == l_False) {
+        confl = PropagatedFrom(p);
+        failBinLit = i->getOtherLit();
+        qhead = trail.size();
+        while (++i < end)
+            *j++ = *i;
+        i--;
+    }
+}
+
+inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
+{
+    *j++ = *i;
+    lbool val = value(i->getOtherLit());
+    lbool val2 = value(i->getOtherLit2());
+    if (val.isUndef() && val2 == l_False) {
+        uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p, i->getOtherLit2()));
+    } else if (val == l_False && val2.isUndef()) {
+        uncheckedEnqueue(i->getOtherLit2(), PropagatedFrom(p, i->getOtherLit()));
+    } else if (val == l_False && val2 == l_False) {
+        confl = PropagatedFrom(p, i->getOtherLit2());
+        failBinLit = i->getOtherLit();
+        qhead = trail.size();
+        while (++i < end)
+            *j++ = *i;
+        i--;
+    }
+}
+
+inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl, const bool update)
+{
+    if (value(i->getBlockedLit()).getBool()) {
+        // Clause is sat
+        *j++ = *i;
+        return;
+    }
+    Clause& c = *clauseAllocator.getPointer(i->getOffset());
+
+    // Make sure the false literal is data[1]:
+    const Lit false_lit(~p);
+    if (c[0] == false_lit) {
+        c[0] = c[1];
+        c[1] = false_lit;
+    }
+
+    assert(c[1] == false_lit);
+
+    // If 0th watch is true, then clause is already satisfied.
+    const Lit& first = c[0];
+    if (value(first).getBool()) {
+        j->setClause();
+        j->setOffset(i->getOffset());
+        j->setBlockedLit(first);
+        j++;
+    } else {
+        // Look for new watch:
+        for (Lit *k = &c[2], *end2 = c.getDataEnd(); k != end2; k++) {
+            if (value(*k) != l_False) {
+                c[1] = *k;
+                *k = false_lit;
+                watches[(~c[1]).toInt()].push(Watched(i->getOffset(), c[0]));
+                return;
+            }
+        }
+
+        // Did not find watch -- clause is unit under assignment:
+        *j++ = *i;
+        if (value(first) == l_False) {
+            confl = PropagatedFrom(&c);
+            qhead = trail.size();
+            // Copy the remaining watches:
+            while (++i < end)
+                *j++ = *i;
+            i--;
+        } else {
+            uncheckedEnqueue(first, &c);
+            #ifdef DYNAMICNBLEVEL
+            if (update && c.learnt() && c.activity() > 2) { // GA
+                uint32_t nbLevels = calcNBLevels(c);
+                if (nbLevels+1 < c.activity())
+                    c.setActivity(nbLevels);
+            }
+            #endif
+        }
+    }
+}
+
+inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
+{
+    XorClause& c = *(XorClause*)clauseAllocator.getPointer(i->getOffset());
+
+    // Make sure the false literal is data[1]:
+    if (c[0].var() == p.var()) {
+        Lit tmp(c[0]);
+        c[0] = c[1];
+        c[1] = tmp;
+    }
+    assert(c[1].var() == p.var());
+
+    bool final = c.xor_clause_inverted();
+    for (uint32_t k = 0, size = c.size(); k != size; k++ ) {
+        const lbool& val = assigns[c[k].var()];
+        if (val.isUndef() && k >= 2) {
+            Lit tmp(c[1]);
+            c[1] = c[k];
+            c[k] = tmp;
+            removeWXCl(watches[(~p).toInt()], i->getOffset());
+            watches[Lit(c[1].var(), false).toInt()].push(i->getOffset());
+            watches[Lit(c[1].var(), true).toInt()].push(i->getOffset());
+            return;
+        }
+
+        c[k] = c[k].unsign() ^ val.getBool();
+        final ^= val.getBool();
+    }
+
+    // Did not find watch -- clause is unit under assignment:
+    *j++ = *i;
+
+    if (assigns[c[0].var()].isUndef()) {
+        c[0] = c[0].unsign()^final;
+        uncheckedEnqueue(c[0], (Clause*)&c);
+    } else if (!final) {
+        confl = PropagatedFrom((Clause*)&c);
+        qhead = trail.size();
+        // Copy the remaining watches:
+        while (++i < end)
+            *j++ = *i;
+        i--;
+    } else {
+        Lit tmp(c[0]);
+        c[0] = c[1];
+        c[1] = tmp;
+    }
+}
+
 PropagatedFrom Solver::propagate(const bool update)
 {
     PropagatedFrom confl;
     uint32_t num_props = 0;
-    
+
     #ifdef VERBOSE_DEBUG
     cout << "Propagation started" << endl;
     #endif
@@ -1070,146 +1212,23 @@ PropagatedFrom Solver::propagate(const bool update)
         i = i2 = j = ws.getData();
         i2++;
         for (Watched *end = ws.getDataEnd(); i != end; i++, i2++) {
-            /*if (i2 != end) {
-                __builtin_prefetch(clauseAllocator.getPointer(i2->clause), 1, 0);
-            }*/
-
             if (i->isBinary()) {
-                *j++ = *i;
-                lbool val = value(i->getOtherLit());
-                if (val.isUndef()) {
-                    uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p));
-                } else if (val == l_False) {
-                    confl = PropagatedFrom(p);
-                    failBinLit = i->getOtherLit();
-                    qhead = trail.size();
-                    while (++i < end)
-                        *j++ = *i;
-                    i--;
-                }
+                propBinaryClause(i, j, end, p, confl);
                 goto FoundWatch;
             } //end BINARY
 
             if (i->isTriClause()) {
-                *j++ = *i;
-                lbool val = value(i->getOtherLit());
-                lbool val2 = value(i->getOtherLit2());
-                if (val.isUndef() && val2 == l_False) {
-                    uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p, i->getOtherLit2()));
-                } else if (val == l_False && val2.isUndef()) {
-                    uncheckedEnqueue(i->getOtherLit2(), PropagatedFrom(p, i->getOtherLit()));
-                } else if (val == l_False && val2 == l_False) {
-                    confl = PropagatedFrom(p, i->getOtherLit2());
-                    failBinLit = i->getOtherLit();
-                    qhead = trail.size();
-                    while (++i < end)
-                        *j++ = *i;
-                    i--;
-                }
+                propTriClause(i, j, end, p, confl);
                 goto FoundWatch;
             } //end TRICLAUSE
-            
+
             if (i->isClause()) {
-                if(value(i->getBlockedLit()).getBool()) { // Clause is sat
-                    *j++ = *i;
-                    continue;
-                }
-                Clause& c = *clauseAllocator.getPointer(i->getOffset());
-
-                // Make sure the false literal is data[1]:
-                const Lit false_lit(~p);
-                if (c[0] == false_lit)
-                    c[0] = c[1], c[1] = false_lit;
-
-                assert(c[1] == false_lit);
-
-                // If 0th watch is true, then clause is already satisfied.
-                const Lit& first = c[0];
-                if (value(first).getBool()) {
-                    j->setClause();
-                    j->setOffset(i->getOffset());
-                    j->setBlockedLit(first);
-                    j++;
-                } else {
-                    // Look for new watch:
-                    for (Lit *k = &c[2], *end2 = c.getDataEnd(); k != end2; k++) {
-                        if (value(*k) != l_False) {
-                            c[1] = *k;
-                            *k = false_lit;
-                            watches[(~c[1]).toInt()].push(Watched(i->getOffset(), c[0]));
-                            goto FoundWatch;
-                        }
-                    }
-
-                    // Did not find watch -- clause is unit under assignment:
-                    *j++ = *i;
-                    if (value(first) == l_False) {
-                        confl = PropagatedFrom(&c);
-                        qhead = trail.size();
-                        // Copy the remaining watches:
-                        while (++i < end)
-                            *j++ = *i;
-                        i--;
-                    } else {
-                        uncheckedEnqueue(first, &c);
-                        #ifdef DYNAMICNBLEVEL
-                        if (update && c.learnt() && c.activity() > 2) { // GA
-                            uint32_t nbLevels = calcNBLevels(c);
-                            if (nbLevels+1 < c.activity())
-                                c.setActivity(nbLevels);
-                        }
-                        #endif
-                    }
-                }
+                propNormalClause(i, j, end, p, confl, update);
                 goto FoundWatch;
             } //end CLAUSE
 
             if (i->isXorClause()) {
-                XorClause& c = *(XorClause*)clauseAllocator.getPointer(i->getOffset());
-                
-                // Make sure the false literal is data[1]:
-                if (c[0].var() == p.var()) {
-                    Lit tmp(c[0]);
-                    c[0] = c[1];
-                    c[1] = tmp;
-                }
-                assert(c[1].var() == p.var());
-
-                bool final = c.xor_clause_inverted();
-                for (uint32_t k = 0, size = c.size(); k != size; k++ ) {
-                    const lbool& val = assigns[c[k].var()];
-                    if (val.isUndef() && k >= 2) {
-                        Lit tmp(c[1]);
-                        c[1] = c[k];
-                        c[k] = tmp;
-                        removeWXCl(watches[(~p).toInt()], i->getOffset());
-                        watches[Lit(c[1].var(), false).toInt()].push(i->getOffset());
-                        watches[Lit(c[1].var(), true).toInt()].push(i->getOffset());
-                        goto FoundWatch;
-                    }
-                    
-                    c[k] = c[k].unsign() ^ val.getBool();
-                    final ^= val.getBool();
-                }
-
-                // Did not find watch -- clause is unit under assignment:
-                *j++ = *i;
-
-                if (assigns[c[0].var()].isUndef()) {
-                    c[0] = c[0].unsign()^final;
-                    uncheckedEnqueue(c[0], (Clause*)&c);
-                } else if (!final) {
-                    confl = PropagatedFrom((Clause*)&c);
-                    qhead = trail.size();
-                    // Copy the remaining watches:
-                    while (++i < end)
-                        *j++ = *i;
-                    i--;
-                } else {
-                    Lit tmp(c[0]);
-                    c[0] = c[1];
-                    c[1] = tmp;
-                }
+                propXorClause(i, j, end, p, confl);
                 goto FoundWatch;
             } //end XORCLAUSE
 FoundWatch:
