@@ -271,7 +271,7 @@ public:
     bool      findNormalXors;     // Automatically find non-binary xor-clauses and convert them
     bool      findBinaryXors;     // Automatically find binary xor-clauses and convert them
     bool      regularlyFindBinaryXors; // Regularly find binary xor-clauses and convert them
-    bool      performReplace;       // Should var-replacing be performed?
+    bool      doReplace;          // Should var-replacing be performed?
     bool      conglomerateXors;   // Conglomerate XORs
     bool      heuleProcess;       // Process XORs according to Heule
     bool      schedSimplification;// Schedule simplification

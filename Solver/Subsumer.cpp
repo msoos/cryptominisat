@@ -967,7 +967,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
-    if (solver.performReplace && !solver.varReplacer->performReplace(true))
+    if (solver.doReplace && !solver.varReplacer->performReplace(true))
         return false;
     fillCannotEliminate();
 

@@ -86,8 +86,8 @@ const bool OnlyNonLearntBins::propagateBinOneLevel()
 const bool OnlyNonLearntBins::fill()
 {
     double myTime = cpuTime();
-    assert(solver.performReplace);
-    while (solver.performReplace && solver.varReplacer->getClauses().size() > 0) {
+    assert(solver.doReplace);
+    while (solver.doReplace && solver.varReplacer->getClauses().size() > 0) {
         if (!solver.varReplacer->performReplace(true)) return false;
         solver.clauseCleaner->removeAndCleanAll(true);
     }

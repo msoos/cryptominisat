@@ -31,7 +31,7 @@ PartHandler::PartHandler(Solver& s) :
 
 const bool PartHandler::handle()
 {
-    if (solver.performReplace == false)
+    if (solver.doReplace == false)
         return true;
     
     PartFinder partFinder(solver);
@@ -73,7 +73,7 @@ const bool PartHandler::handle()
         newSolver.regularlyFindBinaryXors = solver.regularlyFindBinaryXors;
         newSolver.conglomerateXors = solver.conglomerateXors;
         newSolver.schedSimplification = solver.schedSimplification;
-        newSolver.performReplace = solver.performReplace;
+        newSolver.doReplace = solver.doReplace;
         newSolver.failedVarSearch = solver.failedVarSearch;
         newSolver.gaussconfig.dontDisable = solver.gaussconfig.dontDisable;
         newSolver.heuleProcess = solver.heuleProcess;

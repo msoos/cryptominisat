@@ -76,7 +76,7 @@ Solver::Solver() :
         , findNormalXors   (true)
         , findBinaryXors   (true)
         , regularlyFindBinaryXors(true)
-        , performReplace   (true)
+        , doReplace        (true)
         , conglomerateXors (true)
         , heuleProcess     (true)
         , schedSimplification(true)
@@ -1420,7 +1420,7 @@ const bool Solver::simplify()
     testAllClauseAttach();
     if (!ok) return false;
     
-    if (performReplace && !varReplacer->performReplace())
+    if (doReplace && !varReplacer->performReplace())
         return false;
 
     // Remove fixed variables from the variable heap:
@@ -1794,7 +1794,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 9000000 : 3000000))
         goto end;
 
-    if (performReplace && (regularRemoveUselessBins || regularSubsumeWithNonExistBinaries)) {
+    if (doReplace && (regularRemoveUselessBins || regularSubsumeWithNonExistBinaries)) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) goto end;
         if (regularSubsumeWithNonExistBinaries
@@ -1879,7 +1879,7 @@ inline void Solver::performStepsBeforeSolve()
     assert(qhead == trail.size());
     testAllClauseAttach();
 
-    if (performReplace && !varReplacer->performReplace()) return;
+    if (doReplace && !varReplacer->performReplace()) return;
 
     /*if (doSubsumption && !subsumer->simplifyBySubsumption(true)) {
         return;
@@ -1889,7 +1889,7 @@ inline void Solver::performStepsBeforeSolve()
         return;
     }
 
-    if (performReplace) {
+    if (doReplace) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) return;
         if (subsumeWithNonExistBinaries
@@ -1906,7 +1906,7 @@ inline void Solver::performStepsBeforeSolve()
         && !subsumer->simplifyBySubsumption())
         return;
 
-    /*if (performReplace) {
+    /*if (doReplace) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) return;
         if (subsumeWithNonExistBinaries
@@ -1920,7 +1920,7 @@ inline void Solver::performStepsBeforeSolve()
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
         if (!xorFinder.doNoPart(2, 2)) return;
-        if (performReplace && !varReplacer->performReplace(true)) return;
+        if (doReplace && !varReplacer->performReplace(true)) return;
     }
 
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
@@ -1934,7 +1934,7 @@ inline void Solver::performStepsBeforeSolve()
             return;
         
         testAllClauseAttach();
-        if (performReplace && !varReplacer->performReplace())
+        if (doReplace && !varReplacer->performReplace())
             return;
     }
 }
@@ -2063,7 +2063,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             }
             Solver s;
             s.doSubsumption = false;
-            s.performReplace = false;
+            s.doReplace = false;
             s.findBinaryXors = false;
             s.findNormalXors = false;
             s.failedVarSearch = false;
@@ -2072,6 +2072,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
             s.regularSubsumeWithNonExistBinaries = false;
             s.removeUselessBins = false;
             s.regularRemoveUselessBins = false;
+            s.doAssymBranch = false;
+            s.doAssymBranchReg = false;
             s.greedyUnbound = greedyUnbound;
             for (Var var = 0; var < nVars(); var++) {
                 s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || xorSubsumer->getVarElimed()[var]);

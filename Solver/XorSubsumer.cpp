@@ -422,7 +422,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     clauseID = 0;
     uint32_t lastNumElimed = numElimed;
     localSubstituteUseful = 0;
-    while (solver.performReplace && solver.varReplacer->needsReplace()) {
+    while (solver.doReplace && solver.varReplacer->needsReplace()) {
         if (!solver.varReplacer->performReplace())
             return false;
     }
@@ -487,9 +487,9 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         }
         testAllClauseAttach();
 
-        /*if (solver.performReplace && solver.varReplacer->needsReplace()) {
+        /*if (solver.doReplace && solver.varReplacer->needsReplace()) {
             addBackToSolver();
-            while (solver.performReplace && solver.varReplacer->needsReplace()) {
+            while (solver.doReplace && solver.varReplacer->needsReplace()) {
                 replaced = true;
                 if (!solver.varReplacer->performReplace())
                     return false;

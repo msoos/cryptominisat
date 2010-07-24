@@ -46,7 +46,7 @@ PartFinder::PartFinder(Solver& _solver) :
 
 const bool PartFinder::findParts()
 {
-    assert(solver.performReplace);
+    assert(solver.doReplace);
     
     double time = cpuTime();
     
@@ -58,7 +58,7 @@ const bool PartFinder::findParts()
     solver.clauseCleaner->removeAndCleanAll(true);
     if (!solver.ok) return false;
     while (solver.varReplacer->getNewToReplaceVars() > 0) {
-        if (solver.performReplace && !solver.varReplacer->performReplace(true))
+        if (solver.doReplace && !solver.varReplacer->performReplace(true))
             return false;
         solver.clauseCleaner->removeAndCleanAll(true);
         if (!solver.ok) return false;
