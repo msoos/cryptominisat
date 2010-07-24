@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include "Subsumer.h"
 #include "XorSubsumer.h"
+#include "time_mem.h"
 #include <iomanip>
 
 #ifdef USE_GAUSS
@@ -253,3 +254,17 @@ void Solver::print_gauss_sum_stats()
     }
 }
 #endif //USE_GAUSS
+
+void Solver::sortWatched()
+{
+    double myTime = cpuTime();
+    for (vec<Watched> *i = watches.getData(), *end = watches.getDataEnd(); i != end; i++) {
+        std::sort(i->getData(), i->getDataEnd(), WatchedSorter());
+    }
+
+    if (verbosity >= 2) {
+        std::cout << "c watched "
+        << "sorting time: " << cpuTime() - myTime
+        << std::endl;
+    }
+}

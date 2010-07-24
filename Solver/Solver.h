@@ -355,6 +355,11 @@ protected:
     template<class T>
     bool addLearntClause(T& ps, const uint group, const uint32_t activity);
 
+    //////////////////
+    //Handling Watched
+    //////////////////
+    void sortWatched();
+
     //Normal clause
     bool    findWCl(const vec<Watched>& ws, const ClauseOffset c) const;
     void    removeWCl(vec<Watched> &ws, const ClauseOffset c);

@@ -436,6 +436,26 @@ class Watched {
         uint32_t data2; //offset (if normal/xor Clause)
 };
 
+struct WatchedSorter
+{
+    bool operator () (const Watched& x, const Watched& y);
+};
+
+inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
+{
+    if (y.isBinary()) return false;
+    //y is not binary, but x is, so x must be first
+    if (x.isBinary()) return true;
+
+    //from now on, none is binary.
+    if (y.isTriClause()) return false;
+    if (x.isTriClause()) return true;
+
+    //from now on, none is binary or tertiary
+    //don't bother sorting these
+    return false;
+}
+
 class WatchedBin {
     public:
         WatchedBin(Lit _impliedLit) : impliedLit(_impliedLit) {};

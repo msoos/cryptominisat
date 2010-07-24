@@ -1823,7 +1823,9 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     }
 
     if (doAssymBranchReg && !failedVarSearcher->assymBranch()) goto end;
-    
+
+    sortWatched();
+
 end:
     #ifdef BURST_SEARCH
     if (verbosity >= 3)
@@ -1939,6 +1941,8 @@ inline void Solver::performStepsBeforeSolve()
         if (doReplace && !varReplacer->performReplace())
             return;
     }
+
+    sortWatched();
 }
 
 lbool Solver::solve(const vec<Lit>& assumps)
