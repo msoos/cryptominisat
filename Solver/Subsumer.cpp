@@ -797,13 +797,17 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
         if (!solver.binaryClauses[i]->learnt() && numMaxSubsume0 > 0) {
             Clause& c = *solver.binaryClauses[i];
-            lits[c[1].toInt()] = 1;
-            subsume0BIN(c[0], lits, onlyNonLearntBins);
-            lits[c[1].toInt()] = 0;
+            if (clauses.size() < 3000000) {
+                lits[c[1].toInt()] = 1;
+                subsume0BIN(c[0], lits, onlyNonLearntBins);
+                lits[c[1].toInt()] = 0;
 
-            lits[c[0].toInt()] = 1;
-            subsume0BIN(c[1], lits, onlyNonLearntBins);
-            lits[c[0].toInt()] = 0;
+                lits[c[0].toInt()] = 1;
+                subsume0BIN(c[1], lits, onlyNonLearntBins);
+                lits[c[0].toInt()] = 0;
+            } else {
+                subsume0(c);
+            }
             
             numMaxSubsume0--;
             if (!solver.ok) return false;
