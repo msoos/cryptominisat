@@ -482,7 +482,7 @@ const bool FailedVarSearcher::orderLits()
         << " num checked: " << std::setw(6) << numChecked
         << " i: " << std::setw(7) << i
         << " props: " << std::setw(4) << (solver.propagations - oldProps)/1000 << "k"
-        << std::setw(13) << " |" << std::endl;
+        << std::endl;
     }
     solver.propagations = oldProps;
 
