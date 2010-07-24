@@ -125,10 +125,7 @@ Solver::Solver() :
         , simpDB_props     (0)
         , order_heap       (VarOrderLt(activity))
         , progress_estimate(0)
-        , remove_satisfied (true)
         , mtrand((unsigned long int)0)
-        , restartType      (static_restart)
-        , lastSelectedRestartType (static_restart)
         #ifdef STATS_NEEDED
         , logger(verbosity)
         , dynamic_behaviour_analysis(false) //do not document the proof as default
@@ -137,6 +134,8 @@ Solver::Solver() :
         , MYFLAG           (0)
         , learnt_clause_group(0)
         , libraryCNFFile   (NULL)
+        , restartType      (static_restart)
+        , lastSelectedRestartType (static_restart)
         , simplifying      (false)
 {
     varReplacer = new VarReplacer(*this);

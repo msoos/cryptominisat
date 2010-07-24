@@ -158,8 +158,8 @@ void UselessBinRemover::removeBin(const Lit& lit1, const Lit& lit2)
     lit1.print(); lit2.printFull();
     #endif //VERBOSE_DEBUG
     
-    solver.removeWBinAll(solver.watches[(~lit1).toInt()], lit2);
-    solver.removeWBinAll(solver.watches[(~lit2).toInt()], lit1);
+    removeWBinAll(solver.watches[(~lit1).toInt()], lit2);
+    removeWBinAll(solver.watches[(~lit2).toInt()], lit1);
     onlyNonLearntBins.removeBin(lit1, lit2);
 }
 

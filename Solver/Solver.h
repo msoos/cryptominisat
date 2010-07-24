@@ -31,6 +31,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <stdint.h>
 #endif //_MSC_VER
 
+#include "PropagatedFrom.h"
 #include "Vec.h"
 #include "Heap.h"
 #include "Alg.h"
@@ -85,130 +86,6 @@ struct reduceDB_ltGlucose
     bool operator () (const Clause* x, const Clause* y);
 };
 
-//#define DEBUG_PROPAGATEFROM
-
-class PropagatedFrom
-{
-    private:
-        union {Clause* clause; uint32_t otherLit;};
-        uint32_t otherLit2;
-        
-    public:
-        PropagatedFrom() :
-            clause(NULL)
-            , otherLit2(0)
-        {}
-        
-        PropagatedFrom(Clause* c) :
-            clause(c)
-            , otherLit2(0)
-        {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(c != NULL);
-            #endif
-        }
-
-        PropagatedFrom(const Lit& lit) :
-            otherLit(lit.toInt())
-            , otherLit2(1)
-        {
-        }
-
-        PropagatedFrom(const Lit& lit1, const Lit& lit2) :
-            otherLit(lit1.toInt())
-            , otherLit2(2 + (lit2.toInt() << 2))
-        {
-        }
-
-        const bool isClause() const
-        {
-            return ((otherLit2&3) == 0);
-        }
-
-        const bool isBinary() const
-        {
-            return ((otherLit2&3) == 1);
-        }
-
-        const bool isTriClause() const
-        {
-            return ((otherLit2&3) == 2);
-        }
-
-        const Lit getOtherLit() const
-        {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(isBinary() || isTriClause());
-            #endif
-            return Lit::toLit(otherLit);
-        }
-
-        const Lit getOtherLit2() const
-        {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(isTriClause());
-            #endif
-            return Lit::toLit(otherLit2 >> 2);
-        }
-
-        const Clause* getClause() const
-        {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(isClause());
-            #endif
-            return clause;
-        }
-
-        Clause* getClause()
-        {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(isClause());
-            #endif
-            return clause;
-        }
-
-        const bool isNULL() const
-        {
-            if (!isClause()) return false;
-            return clause == NULL;
-        }
-
-        const uint32_t size() const
-        {
-            if (isBinary()) return 2;
-            if (isTriClause()) return 3;
-            
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(!isNULL());
-            #endif
-            
-            return getClause()->size();
-        }
-
-        const Lit operator[](uint32_t i) const
-        {
-            if (isBinary()) {
-                #ifdef DEBUG_PROPAGATEFROM
-                assert(i == 1);
-                #endif
-                return getOtherLit();
-            }
-
-            if (isTriClause()) {
-                #ifdef DEBUG_PROPAGATEFROM
-                assert(i <= 2);
-                #endif
-                if (i == 1) return getOtherLit();
-                if (i == 2) return getOtherLit2();
-            }
-
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(!isNULL());
-            #endif
-            return (*getClause())[i];
-        }
-};
-
 class Solver
 {
 public:
@@ -236,7 +113,6 @@ public:
 
     // Variable mode:
     //
-    void    setPolarity    (Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
     void    setDecisionVar (Var v, bool b); // Declare if a variable should be eligible for selection in the decision heuristic.
     void    setSeed (const uint32_t seed);  // Sets the seed to be the given number
     void    setMaxRestarts(const uint num); //sets the maximum number of restarts to given value
@@ -267,7 +143,7 @@ public:
     double    learntsize_factor;  // The intitial limit for learnt clauses is a factor of the original clauses.                (default 1 / 3)
     double    learntsize_inc;     // The limit for learnt clauses is multiplied with this factor each restart.                 (default 1.1)
     bool      expensive_ccmin;    // Controls conflict clause minimization.                                                    (default TRUE)
-    int       polarity_mode;      // Controls which polarity the decision heuristic chooses. See enum below for allowed modes. (default polarity_false)
+    int       polarity_mode;    // Controls which polarity the decision heuristic chooses. (default: polarity_auto)
     int       verbosity;          // Verbosity level. 0=silent, 1=some progress report                                         (default 0)
     Var       restrictedPickBranch; // Pick variables to branch on preferentally from the highest [0, restrictedPickBranch]. If set to 0, preferentiality is turned off (i.e. picked randomly between [0, all])
     bool      findNormalXors;     // Automatically find non-binary xor-clauses and convert them
@@ -293,11 +169,9 @@ public:
     bool      subsumeWithNonExistBinaries;
     bool      regularSubsumeWithNonExistBinaries;
     bool      libraryUsage;         // Set true if not used as a library
-    friend class FindUndef;
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
     GaussianConfig gaussconfig;
-    
 
     enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
@@ -327,12 +201,12 @@ public:
     #endif //USE_GAUSS
 
     //Printing statistics
-    const uint32_t getNumElimSubsume() const; // Get variable elimination stats from Subsumer
+    const uint32_t getNumElimSubsume() const;    // Get variable elimination stats from Subsumer
     const uint32_t getNumElimXorSubsume() const; // Get variable elimination stats from XorSubsumer
-    const uint32_t getNumXorTrees() const; // Get the number of trees built from 2-long XOR-s. This is effectively the number of variables that replace other variables
+    const uint32_t getNumXorTrees() const;       // Get the number of trees built from 2-long XOR-s. This is effectively the number of variables that replace other variables
     const uint32_t getNumXorTreesCrownSize() const; // Get the number of variables being replaced by other variables
-    const double getTotalTimeSubsumer() const;
-    const double getTotalTimeXorSubsumer() const;
+    const double   getTotalTimeSubsumer() const;
+    const double   getTotalTimeXorSubsumer() const;
     
 protected:
     #ifdef USE_GAUSS
@@ -346,7 +220,6 @@ protected:
     uint32_t sum_gauss_prop;
     uint32_t sum_gauss_unit_truths;
     #endif //USE_GAUSS
-    friend class Gaussian;
     
     template <class T>
     Clause* addClauseInt(T& ps, uint group);
@@ -370,7 +243,6 @@ protected:
         VarOrderLt(const vec<uint32_t>&  act) : activity(act) { }
     };
 
-    friend class VarFilter;
     struct VarFilter {
         const Solver& s;
         VarFilter(const Solver& _s) : s(_s) {}
@@ -393,10 +265,6 @@ protected:
     double              cla_inc;          // Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          // The current assignments
-    vector<bool>        polarity;         // The preferred polarity of each variable.
-    #ifdef USE_OLD_POLARITIES
-    vector<bool>        oldPolarity;      // The polarity before the last setting. Good for unsetting polairties that have been changed since the last conflict
-    #endif //USE_OLD_POLARITIES
     vector<bool>        decision_var;     // Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            // Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        // Separator indices for different decision levels in 'trail'.
@@ -405,29 +273,25 @@ protected:
     uint64_t            curRestart;
     uint32_t            nbclausesbeforereduce;
     uint32_t            nbCompensateSubsumer; // Number of learnt clauses that subsumed normal clauses last time subs. was executed
-    uint32_t            qhead;            // Head of queue (as index into the trail -- no more explicit propagation queue in MiniSat).
-    Lit                 failBinLit;
+    uint32_t            qhead;            // Head of queue (as index into the trail)
+    Lit                 failBinLit;       // Used to store which watches[~lit] we were looking through when conflict occured
     uint32_t            simpDB_assigns;   // Number of top-level assignments since last execution of 'simplify()'.
     int64_t             simpDB_props;     // Remaining number of propagations that must be made before next execution of 'simplify()'.
     vec<Lit>            assumptions;      // Current set of assumptions provided to solve by the user.
     Heap<VarOrderLt>    order_heap;       // A priority queue of variables ordered with respect to the variable activity.
     double              progress_estimate;// Set by 'search()'.
-    bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
-    bqueue<uint>        nbDecisionLevelHistory; // Set of last decision level in conflict clauses
-    double              totalSumOfDecisionLevel;
-    uint64_t            conflictsAtLastSolve;
     #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
     bqueue<uint>        avgBranchDepth; // Avg branch depth
     #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     MTRand              mtrand;           // random number generaton
-    RestartType         restartType;      // Used internally to determine which restart strategy to choose
-    RestartType         lastSelectedRestartType; //the last selected restart type
-    friend class        Logger;
-    #ifdef STATS_NEEDED
-    Logger logger;                        // dynamic logging, statistics
-    bool                dynamic_behaviour_analysis; // Is logger running?
-    #endif
     uint                maxRestarts;      // More than this number of restarts will not be performed
+
+    /////////////////////////
+    // For dynamic restarts
+    /////////////////////////
+    bqueue<uint>        nbDecisionLevelHistory; // Set of last decision level in conflict clauses
+    double              totalSumOfDecisionLevel;
+    uint64_t            conflictsAtLastSolve;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
@@ -437,46 +301,59 @@ protected:
     vec<Lit>            analyze_toclear;
     vec<Lit>            add_tmp;
 
-    
+    ///////////////////////////
+    // Clause glue calculation
+    ///////////////////////////
     uint64_t MYFLAG;
-    template<class T>
-    const uint32_t calcNBLevels(const T& ps);
+    template<class T> const uint32_t calcNBLevels(const T& ps);
     vec<uint64_t> permDiff; // LS: permDiff[var] contains the current conflict number... Used to count the number of different decision level variables in learnt clause
     #ifdef UPDATEVARACTIVITY
     vec<Var> lastDecisionLevel;
     #endif
 
+    ////////////
     //Logging
-    uint                learnt_clause_group; //the group number of learnt clauses. Incremented at each added learnt clause
-    FILE                *libraryCNFFile; //The file that all calls from the library are logged
+    ///////////
+    #ifdef STATS_NEEDED
+    Logger   logger;                     // dynamic logging, statistics
+    bool     dynamic_behaviour_analysis; // Is logger running?
+    #endif
+    uint32_t learnt_clause_group;       //the group number of learnt clauses. Incremented at each added learnt clause
+    FILE     *libraryCNFFile;           //The file that all calls from the library are logged
 
-    // Main internal methods:
-    //
-    const bool simplify    ();                                                           // Removes already satisfied clauses.
-    //int      nbPropagated     (int level);
-    void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
+    /////////////////
+    // Propagating
+    ////////////////
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
 
+    ///////////////
+    // Conflicting
+    ///////////////
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
     Clause*  analyze          (PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
+    void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
+
+    /////////////////
+    // Searching
+    /////////////////
     lbool    search           (int nof_conflicts, int nof_conflicts_fullrestart, const bool update = true);      // Search for a given number of conflicts.
-    void     reduceDB         ();                                                      // Reduce the set of learnt clauses.
     llbool   handle_conflict  (vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update);// Handles the conflict clause
     llbool   new_decision     (const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
+    //////////////
     //Propagation
+    //////////////
+    PropagatedFrom propagateBin();
     PropagatedFrom propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
     void propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
     void propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
     void propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl, const bool update);
     void propXorClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
-    
-    PropagatedFrom propagateBin();
 
     // Maintaining Variable/Clause activity:
     //
@@ -496,9 +373,12 @@ protected:
     template<class T>
     void     removeClause(T& c);                       // Detach and free a clause.
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
-    //void     reverse_binary_clause(Clause& c) const;   // Binary clauses --- the first Lit has to be true
-    void     testAllClauseAttach() const;
-    void     findAllAttach() const;
+
+    ///////////////////////////
+    // Debug clause attachment
+    ///////////////////////////
+    void       testAllClauseAttach() const;
+    void       findAllAttach() const;
     const bool findClause(XorClause* c) const;
     const bool findClause(Clause* c) const;
 
@@ -508,6 +388,10 @@ protected:
     uint32_t abstractLevel    (const Var& x) const; // Used to represent an abstraction of sets of decision levels.
     
     //Xor-finding related stuff
+    friend class VarFilter;
+    friend class Gaussian;
+    friend class FindUndef;
+    friend class Logger;
     friend class XorFinder;
     friend class Conglomerate;
     friend class MatrixFinder;
@@ -523,39 +407,62 @@ protected:
     friend class UselessBinRemover;
     friend class OnlyNonLearntBins;
     friend class ClauseAllocator;
-    Conglomerate* conglomerate;
-    VarReplacer* varReplacer;
-    ClauseCleaner* clauseCleaner;
-    FailedVarSearcher* failedVarSearcher;
-    PartHandler* partHandler;
-    Subsumer* subsumer;
-    XorSubsumer* xorSubsumer;
+    Conglomerate*       conglomerate;
+    VarReplacer*        varReplacer;
+    ClauseCleaner*      clauseCleaner;
+    FailedVarSearcher*  failedVarSearcher;
+    PartHandler*        partHandler;
+    Subsumer*           subsumer;
+    XorSubsumer*        xorSubsumer;
     RestartTypeChooser* restartTypeChooser;
-    MatrixFinder* matrixFinder;
-    const bool chooseRestartType(const uint& lastFullRestart);
-    void setDefaultRestartType();
-    const bool checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
-    void performStepsBeforeSolve();
-    const lbool simplifyProblem(const uint32_t numConfls);
-    bool simplifying;
+    MatrixFinder*       matrixFinder;
 
-    // Debug & etc:
-    void     printLit         (const Lit l) const;
+    /////////////////////////
+    // Restart type handling
+    /////////////////////////
+    const bool  chooseRestartType(const uint& lastFullRestart);
+    void        setDefaultRestartType();
+    const bool  checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
+    RestartType restartType;      // Used internally to determine which restart strategy to choose
+    RestartType lastSelectedRestartType; //the last selected restart type
+
+    //////////////////////////
+    // Problem simplification
+    //////////////////////////
+    void        performStepsBeforeSolve();
+    const lbool simplifyProblem(const uint32_t numConfls);
+    bool        simplifying;
+    void        reduceDB();  // Reduce the set of learnt clauses.
+    const bool  simplify();  // Removes satisfied clauses and finds binary xors
+
+    /////////////////////////////
+    // SAT solution verification
+    /////////////////////////////
+    void       checkSolution    ();
     const bool verifyModel      () const;
     const bool verifyClauses    (const vec<Clause*>& cs) const;
     const bool verifyXorClauses (const vec<XorClause*>& cs) const;
-    void     checkSolution();
+
+    // Debug & etc:
+    void     printLit         (const Lit l) const;
     void     checkLiteralCount();
     void     printStatHeader  () const;
     void     printRestartStat (const char* type = "N");
     void     printEndSearchStat();
     double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
-    
+
+    /////////////////////
     // Polarity chooser
+    /////////////////////
     void calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
     bool defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
     void tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const;
     void tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const;
+    void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
+    vector<bool> polarity;      // The preferred polarity of each variable.
+    #ifdef USE_OLD_POLARITIES
+    vector<bool> oldPolarity;   // The polarity before the last setting. Good for unsetting polairties that have been changed since the last conflict
+    #endif //USE_OLD_POLARITIES
 };
 
 
@@ -753,14 +660,6 @@ inline const uint Solver::get_unitary_learnts_num() const
 // Xor Clause
 //////////////////
 
-/*
-inline void Solver::reverse_binary_clause(Clause& c) const {
-    if (c.size() == 2 && value(c[0]) == l_False) {
-        assert(value(c[1]) == l_True);
-        std::swap(c[0], c[1]);
-    }
-}
-*/
 
 /*inline void Solver::calculate_xor_clause(Clause& c2) const {
     if (c2.isXor() && ((XorClause*)&c2)->updateNeeded())  {
