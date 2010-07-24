@@ -654,7 +654,7 @@ int main(int argc, char** argv)
         } else if ((value = hasPrefix(argv[i], "--debugnewvar"))) {
             debugNewVar = true;
         } else if ((value = hasPrefix(argv[i], "--novarreplace"))) {
-            S.performReplace = false;
+            S.doReplace = false;
         } else if ((value = hasPrefix(argv[i], "--nofailedvar"))) {
             S.failedVarSearch = false;
         } else if ((value = hasPrefix(argv[i], "--nodisablegauss"))) {
