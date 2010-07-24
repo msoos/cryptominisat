@@ -26,7 +26,6 @@ public:
 
     //Construct-destruct
     Subsumer(Solver& S2);
-    ~Subsumer();
 
     //Called from main
     const bool simplifyBySubsumption(const bool alsoLearnt = false);

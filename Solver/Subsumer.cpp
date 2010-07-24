@@ -40,10 +40,6 @@ Subsumer::Subsumer(Solver& s):
 {
 };
 
-Subsumer::~Subsumer()
-{
-}
-
 void Subsumer::extendModel(Solver& solver2)
 {
     assert(checkElimedUnassigned());
