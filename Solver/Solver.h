@@ -44,7 +44,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #define release_assert(a) \
     do { \
-        if (!a) {\
+        if (!(a)) {\
             fprintf(stderr, "*** ASSERTION FAILURE in %s() [%s:%d]: %s\n", \
             __FUNCTION__, __FILE__, __LINE__, #a); \
             abort(); \

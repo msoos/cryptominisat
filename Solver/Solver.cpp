@@ -2121,11 +2121,7 @@ void Solver::handleSATSolution()
         xorSubsumer->extendModel(s);
 
         lbool status = s.solve();
-        if (status != l_True) {
-            printf("c ERROR! Extension of model failed!\n");
-            assert(status == l_True);
-            exit(-1);
-        }
+        release_assert(status == l_True && "c ERROR! Extension of model failed!");
 #ifdef VERBOSE_DEBUG
         std::cout << "Solution extending finished." << std::endl;
 #endif
@@ -2133,11 +2129,7 @@ void Solver::handleSATSolution()
             if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
         }
         ok = (propagate().isNULL());
-        if (!ok) {
-            printf("c ERROR! Extension of model failed!\n");
-            assert(ok);
-            exit(-1);
-        }
+        release_assert(ok && "c ERROR! Extension of model failed!");
     }
     checkSolution();
     //Copy model:
