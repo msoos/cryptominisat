@@ -2032,117 +2032,119 @@ lbool Solver::solve(const vec<Lit>& assumps)
     printEndSearchStat();
     
     #ifdef USE_GAUSS
-    clearGaussMatrixes();;
+    clearGaussMatrixes();
     #endif //USE_GAUSS
 
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     if (status == l_True)
         std::cout << "Solution  is SAT" << std::endl;
     else if (status == l_False)
         std::cout << "Solution is UNSAT" << std::endl;
     else
         std::cout << "Solutions is UNKNOWN" << std::endl;
-#endif //VERBOSE_DEBUG
+    #endif //VERBOSE_DEBUG
 
-    if (status == l_True) {
-        if (greedyUnbound) {
-            double time = cpuTime();
-            FindUndef finder(*this);
-            const uint unbounded = finder.unRoll();
-            if (verbosity >= 1)
-                printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
-        }
-
-        partHandler->addSavedState();
-        varReplacer->extendModelPossible();
-        checkSolution();
-        
-        if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
-            if (verbosity >= 1) {
-                std::cout << "c Solution needs extension. Extending." << std::endl;
-            }
-            Solver s;
-            s.doSubsumption = false;
-            s.doReplace = false;
-            s.findBinaryXors = false;
-            s.findNormalXors = false;
-            s.failedVarSearch = false;
-            s.conglomerateXors = false;
-            s.subsumeWithNonExistBinaries = false;
-            s.regularSubsumeWithNonExistBinaries = false;
-            s.removeUselessBins = false;
-            s.regularRemoveUselessBins = false;
-            s.doAssymBranch = false;
-            s.doAssymBranchReg = false;
-            s.greedyUnbound = greedyUnbound;
-            for (Var var = 0; var < nVars(); var++) {
-                s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || xorSubsumer->getVarElimed()[var]);
-                
-                //assert(!(xorSubsumer->getVarElimed()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
-                
-                if (value(var) != l_Undef) {
-                    vec<Lit> tmp;
-                    tmp.push(Lit(var, value(var) == l_False));
-                    s.addClause(tmp);
-                }
-            }
-            varReplacer->extendModelImpossible(s);
-            subsumer->extendModel(s);
-            xorSubsumer->extendModel(s);
-            
-            status = s.solve();
-            if (status != l_True) {
-                printf("c ERROR! Extension of model failed!\n");
-                assert(status == l_True);
-                exit(-1);
-            }
-#ifdef VERBOSE_DEBUG
-            std::cout << "Solution extending finished." << std::endl;
-#endif
-            for (Var var = 0; var < nVars(); var++) {
-                if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
-            }
-            ok = (propagate().isNULL());
-            if (!ok) {
-                printf("c ERROR! Extension of model failed!\n");
-                assert(ok);
-                exit(-1);
-            }
-        }
-        checkSolution();
-        //Copy model:
-        model.growTo(nVars());
-        for (Var var = 0; var != nVars(); var++) model[var] = value(var);
-    }
-    
-    if (status == l_False) {
-        if (conflict.size() == 0)
-            ok = false;
-    }
+    if (status == l_True) handleSATSolution();
+    else if (status == l_False) handleUNSATSolution();
     
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis) {
         if (status == l_True)
             logger.end(Logger::model_found);
         else if (status == l_False)
-                logger.end(Logger::unsat_model_found);
+            logger.end(Logger::unsat_model_found);
         else if (status == l_Undef)
             logger.end(Logger::restarting);
     }
-    #endif
-    
-    #ifdef LS_STATS_NBBUMP
-    for(int i=0;i<learnts.size();i++)
-        printf("## %d %d %d\n", learnts[i]->size(),learnts[i]->activity(),
-               (uint)learnts[i]->nbBump());
     #endif
 
     cancelUntil(0);
     if (doPartHandler && status != l_False) partHandler->readdRemovedClauses();
     restartTypeChooser->reset();
-    
+
 #ifdef VERBOSE_DEBUG
     std::cout << "Solver::solve() finished" << std::endl;
 #endif
     return status;
+}
+
+void Solver::handleSATSolution()
+{
+
+    if (greedyUnbound) {
+        double time = cpuTime();
+        FindUndef finder(*this);
+        const uint unbounded = finder.unRoll();
+        if (verbosity >= 1)
+            printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
+    }
+
+    partHandler->addSavedState();
+    varReplacer->extendModelPossible();
+    checkSolution();
+
+    if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
+        if (verbosity >= 1) {
+            std::cout << "c Solution needs extension. Extending." << std::endl;
+        }
+        Solver s;
+        s.doSubsumption = false;
+        s.doReplace = false;
+        s.findBinaryXors = false;
+        s.findNormalXors = false;
+        s.failedVarSearch = false;
+        s.conglomerateXors = false;
+        s.subsumeWithNonExistBinaries = false;
+        s.regularSubsumeWithNonExistBinaries = false;
+        s.removeUselessBins = false;
+        s.regularRemoveUselessBins = false;
+        s.doAssymBranch = false;
+        s.doAssymBranchReg = false;
+        s.greedyUnbound = greedyUnbound;
+
+        vec<Lit> tmp;
+        for (Var var = 0; var < nVars(); var++) {
+            s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || xorSubsumer->getVarElimed()[var]);
+
+            //assert(!(xorSubsumer->getVarElimed()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
+
+            if (value(var) != l_Undef) {
+                tmp.clear();
+                tmp.push(Lit(var, value(var) == l_False));
+                s.addClause(tmp);
+            }
+        }
+        varReplacer->extendModelImpossible(s);
+        subsumer->extendModel(s);
+        xorSubsumer->extendModel(s);
+
+        lbool status = s.solve();
+        if (status != l_True) {
+            printf("c ERROR! Extension of model failed!\n");
+            assert(status == l_True);
+            exit(-1);
+        }
+#ifdef VERBOSE_DEBUG
+        std::cout << "Solution extending finished." << std::endl;
+#endif
+        for (Var var = 0; var < nVars(); var++) {
+            if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
+        }
+        ok = (propagate().isNULL());
+        if (!ok) {
+            printf("c ERROR! Extension of model failed!\n");
+            assert(ok);
+            exit(-1);
+        }
+    }
+    checkSolution();
+    //Copy model:
+    model.growTo(nVars());
+    for (Var var = 0; var != nVars(); var++) model[var] = value(var);
+}
+
+void Solver::handleUNSATSolution()
+{
+    if (conflict.size() == 0)
+        ok = false;
 }

@@ -230,7 +230,9 @@ public:
     //
     lbool    solve       (const vec<Lit>& assumps); // Search for a model that respects a given set of assumptions.
     lbool    solve       ();                        // Search without assumptions.
-    bool    okay         () const;                  // FALSE means solver is in a conflicting state
+    void     handleSATSolution();                   // Extends model, if needed, and fills "model"
+    void     handleUNSATSolution();                 // If conflict really was zero-length, sets OK to false
+    bool     okay         () const;                 // FALSE means solver is in a conflicting state
 
     // Variable mode:
     //
