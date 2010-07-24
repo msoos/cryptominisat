@@ -1205,7 +1205,7 @@ PropagatedFrom Solver::propagate(const bool update)
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
         Watched        *i, *i2, *j;
-        num_props += ws.size();
+        num_props += ws.size()/2 + 1;
         
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << (p.sign() ? '-' : ' ') << p.var()+1 << endl;
