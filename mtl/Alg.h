@@ -20,6 +20,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef Alg_h
 #define Alg_h
 
+#include "Vec.h"
+#include "SolverTypes.h"
+#include "Watched.h"
+
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
 #else
@@ -28,7 +32,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 //=================================================================================================
 // Useful functions on vectors
-
 
 template<class V, class T>
 static inline void remove(V& ts, const T& t)
@@ -64,6 +67,110 @@ static inline bool findW(V& ts, const T& t)
     uint32_t j = 0;
     for (; j < ts.size() && ts[j].clause != t; j++);
     return j < ts.size();
+}
+
+
+//Normal clause
+static bool    findWCl(const vec<Watched>& ws, const ClauseOffset c);
+static void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
+
+//Binary clause
+static bool    findWBin(const vec<Watched>& ws, const Lit impliedLit);
+static void    removeWBin(vec<Watched> &ws, const Lit impliedLit);
+static void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
+static void    removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit);
+static void    removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
+
+//Xor Clause
+static bool    findWXCl(const vec<Watched>& ws, const ClauseOffset c);
+static void    removeWXCl(vec<Watched> &ws, const ClauseOffset c);
+
+//////////////////
+// NORMAL Clause
+//////////////////
+static inline bool findWCl(const vec<Watched>& ws, const ClauseOffset c)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getOffset() != c); j++);
+    return j < ws.size();
+}
+
+static inline void removeWCl(vec<Watched> &ws, const ClauseOffset c)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getOffset() != c); j++);
+    assert(j < ws.size());
+    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
+    ws.pop();
+}
+
+//////////////////
+// XOR Clause
+//////////////////
+static inline bool findWXCl(const vec<Watched>& ws, const ClauseOffset c)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getOffset() != c); j++);
+    return j < ws.size();
+}
+
+static inline void removeWXCl(vec<Watched> &ws, const ClauseOffset c)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getOffset() != c); j++);
+    assert(j < ws.size());
+    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
+    ws.pop();
+}
+
+//////////////////
+// BINARY Clause
+//////////////////
+static inline bool findWBin(const vec<Watched>& ws, const Lit impliedLit)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
+    return j < ws.size();
+}
+
+static inline void removeWBin(vec<Watched> &ws, const Lit impliedLit)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
+    assert(j < ws.size());
+    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
+    ws.pop();
+}
+
+static inline void removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isTriClause() || ws[j].getOtherLit() != lit1 || ws[j].getOtherLit2() != lit2); j++);
+    assert(j < ws.size());
+    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
+    ws.pop();
+}
+
+static inline void removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit)
+{
+    WatchedBin *i = ws.getData();
+    WatchedBin *j = i;
+    for (WatchedBin* end = ws.getDataEnd(); i != end; i++) {
+        if (i->impliedLit != impliedLit)
+            *j++ = *i;
+    }
+    ws.shrink(i-j);
+}
+
+static inline void removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
+{
+    Watched *i = ws.getData();
+    Watched *j = i;
+    for (Watched* end = ws.getDataEnd(); i != end; i++) {
+        if (!i->isBinary() || i->getOtherLit() != impliedLit)
+            *j++ = *i;
+    }
+    ws.shrink(i-j);
 }
 
 #endif

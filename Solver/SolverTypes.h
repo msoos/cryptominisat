@@ -29,7 +29,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <stdint.h>
 #endif //_MSC_VER
 
-#include "Alg.h"
 #include <stdio.h>
 
 //=================================================================================================

@@ -359,21 +359,6 @@ protected:
     //Handling Watched
     //////////////////
     void sortWatched();
-
-    //Normal clause
-    bool    findWCl(const vec<Watched>& ws, const ClauseOffset c) const;
-    void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
-
-    //Binary clause
-    bool    findWBin(const vec<Watched>& ws, const Lit impliedLit) const;
-    void    removeWBin(vec<Watched> &ws, const Lit impliedLit);
-    void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
-    void    removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit);
-    void    removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
-
-    //Xor Clause
-    bool    findWXCl(const vec<Watched>& ws, const ClauseOffset c) const;
-    void    removeWXCl(vec<Watched> &ws, const ClauseOffset c);
     
     // Helper structures:
     //
@@ -762,94 +747,6 @@ inline const uint Solver::get_unitary_learnts_num() const
         return trail_lim[0];
     else
         return trail.size();
-}
-
-//////////////////
-// NORMAL Clause
-//////////////////
-inline bool Solver::findWCl(const vec<Watched>& ws, const ClauseOffset c) const
-{
-    uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getOffset() != c); j++);
-    return j < ws.size();
-}
-
-inline void Solver::removeWCl(vec<Watched> &ws, const ClauseOffset c)
-{
-    uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getOffset() != c); j++);
-    assert(j < ws.size());
-    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
-    ws.pop();
-}
-
-//////////////////
-// XOR Clause
-//////////////////
-inline bool Solver::findWXCl(const vec<Watched>& ws, const ClauseOffset c) const
-{
-    uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getOffset() != c); j++);
-    return j < ws.size();
-}
-
-inline void Solver::removeWXCl(vec<Watched> &ws, const ClauseOffset c)
-{
-    uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getOffset() != c); j++);
-    assert(j < ws.size());
-    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
-    ws.pop();
-}
-
-//////////////////
-// BINARY Clause
-//////////////////
-inline bool Solver::findWBin(const vec<Watched>& ws, const Lit impliedLit) const
-{
-    uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
-    return j < ws.size();
-}
-
-inline void Solver::removeWBin(vec<Watched> &ws, const Lit impliedLit)
-{
-    uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
-    assert(j < ws.size());
-    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
-    ws.pop();
-}
-
-inline void Solver::removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
-{
-    uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isTriClause() || ws[j].getOtherLit() != lit1 || ws[j].getOtherLit2() != lit2); j++);
-    assert(j < ws.size());
-    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
-    ws.pop();
-}
-
-inline void Solver::removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit)
-{
-    WatchedBin *i = ws.getData();
-    WatchedBin *j = i;
-    for (WatchedBin* end = ws.getDataEnd(); i != end; i++) {
-        if (i->impliedLit != impliedLit)
-            *j++ = *i;
-    }
-    ws.shrink(i-j);
-}
-
-inline void Solver::removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
-{
-    Watched *i = ws.getData();
-    Watched *j = i;
-    for (Watched* end = ws.getDataEnd(); i != end; i++) {
-        if (!i->isBinary() || i->getOtherLit() != impliedLit)
-            *j++ = *i;
-    }
-    ws.shrink(i-j);
 }
 
 //////////////////
