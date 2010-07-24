@@ -301,16 +301,16 @@ bool  sortBySize::operator () (const Clause* x, const Clause* y) {
 const bool FailedVarSearcher::assymBranch()
 {
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    
+
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    int32_t maxDo;
-    double totalDifficulty = solver.clauses.size()*20 + solver.clauses_literals + solver.learnts.size()*20 + solver.learnts_literals - solver.binaryClauses.size()*3;
-    double divisor = totalDifficulty*log(totalDifficulty)/8000000.0;
-    std::cout << "Divisor:" << divisor << " totalDifficulty: " << totalDifficulty<< std::endl;
-    maxDo = 600000.0/divisor;
-    std::cout << "maxDo:" << maxDo << std::endl;
+    uint64_t maxNumProps = 20000*1000;
+    uint64_t extraDiff = 0;
+    uint64_t oldProps = solver.propagations;
+    bool needToFinish = false;
+    uint32_t checkedClauses = 0;
+    uint32_t potentialClauses = solver.clauses.size();
     vec<Lit> lits;
     vec<Lit> unused;
 
@@ -322,22 +322,32 @@ const bool FailedVarSearcher::assymBranch()
     Clause **i, **j;
     i = j = solver.clauses.getData();
     for (Clause **end = solver.clauses.getDataEnd(); i != end; i++) {
-        if (maxDo <= 0 || (**i).size() == 2) {
+        if (needToFinish || (**i).size() == 2) {
             *j++ = *i;
             continue;
         }
-        //if bad performance, stop doing it
-        if ((i-solver.clauses.getData() > 5000 && effectiveLit < 500)) {
-            maxDo = 0;
+
+        //if done enough, stop doing it
+        if (solver.propagations-oldProps + extraDiff > maxNumProps) {
+            //std::cout << "Need to finish -- ran out of prop" << std::endl;
+            needToFinish = true;
         }
 
+        //if bad performance, stop doing it
+        /*if ((i-solver.clauses.getData() > 5000 && effectiveLit < 300)) {
+            std::cout << "Need to finish -- not effective" << std::endl;
+            needToFinish = true;
+        }*/
+
         Clause& c = **i;
-        maxDo -= c.size();
-        
+        extraDiff += c.size();
+        checkedClauses++;
+
         assert(c.size() > 2);
         assert(!c.learnt());
-        lits.clear();
+
         unused.clear();
+        lits.clear();
         lits.growTo(c.size());
         memcpy(lits.getData(), c.getData(), c.size() * sizeof(Lit));
 
@@ -362,7 +372,7 @@ const bool FailedVarSearcher::assymBranch()
         }
         solver.cancelUntil(0);
         assert(solver.ok);
-        
+
         if (unused.size() > 0 || (failed && done < lits.size())) {
             effective++;
             uint32_t origSize = lits.size();
@@ -381,7 +391,7 @@ const bool FailedVarSearcher::assymBranch()
             #ifdef ASSYM_DEBUG
             std::cout << "-- Origsize:" << origSize << " newSize:" << (c2 == NULL ? 0 : c2->size()) << " toRemove:" << c.size() - done << " unused.size():" << unused.size() << std::endl;
             #endif
-            maxDo -= 5;
+            extraDiff += 20;
             effectiveLit += origSize - (c2 == NULL ? 0 : c2->size());
             solver.clauseAllocator.clauseFree(&c);
 
@@ -392,10 +402,7 @@ const bool FailedVarSearcher::assymBranch()
                 *j++ = c2;
             }
 
-            if (!solver.ok) {
-                maxDo = 0;
-                continue;
-            }
+            if (!solver.ok) needToFinish = true;
         } else {
             *j++ = *i;
         }
@@ -403,7 +410,7 @@ const bool FailedVarSearcher::assymBranch()
     solver.clauses.shrink(i-j);
 
     std::cout << "c assym "
-    << " cl-useful: " << effective << "/" << solver.clauses.size()
+    << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem:" << effectiveLit
     << " time: " << cpuTime() - myTime
     << std::endl;
