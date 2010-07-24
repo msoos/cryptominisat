@@ -211,12 +211,8 @@ void Solver::printEndSearchStat()
     #else
     if (verbosity >= 1) {
     #endif //STATS_NEEDED
-        printf("c ====================================================================");
         #ifdef USE_GAUSS
         print_gauss_sum_stats();
-        if (verbosity == 1) printf("=====================\n");
-        #else //USE_GAUSS
-        printf("\n");
         #endif //USE_GAUSS
     }
 }
@@ -228,7 +224,7 @@ void Solver::print_gauss_sum_stats()
         std::cout << "  no matrixes";
         return;
     }
-    
+
     uint called = 0;
     uint useful_prop = 0;
     uint useful_confl = 0;

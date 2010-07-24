@@ -78,7 +78,7 @@ const bool UselessBinRemover::removeUslessBinFull()
         << "  fixed: " << std::setw(5) << (origHeapSize - solver.order_heap.size())
         << "  props: " << std::fixed << std::setprecision(2) << std::setw(6) << (double)(solver.propagations - origProps)/1000000.0 << "M"
         << "  time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << " s"
-        << std::setw(16)  << "   |" << std::endl;
+        << std::endl;
     }
 
     return true;
