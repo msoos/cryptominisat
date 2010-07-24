@@ -1723,10 +1723,12 @@ const bool Solver::chooseRestartType(const uint& lastFullRestart)
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
                 if (verbosity >= 3)
-                    printf("c |                           Decided on dynamic restart strategy                         |\n");
+                    std::cout << "c Decided on dynamic restart strategy"
+                    << std::endl;
             } else  {
                 if (verbosity >= 3)
-                    printf("c |                            Decided on static restart strategy                         |\n");
+                    std::cout << "c Decided on static restart strategy"
+                    << std::endl;
                 
                 #ifdef USE_GAUSS
                 if (!matrixFinder->findMatrixes()) return false;
@@ -1766,9 +1768,9 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     #ifdef BURST_SEARCH
     if (verbosity >= 3)
-        std::cout << "c | " << std::setw(24) << " " 
+        std::cout << "c " << std::setw(24) << " "
         << "Simplifying problem for " << std::setw(8) << numConfls << " confls" 
-        << std::setw(24) << " |" << std::endl;
+        << std::endl;
     random_var_freq = 1;
     simplifying = true;
     uint64_t origConflicts = conflicts;
@@ -1825,7 +1827,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 end:
     #ifdef BURST_SEARCH
     if (verbosity >= 3)
-        printf("c                                      Simplifying finished                               |\n");
+        std::cout << "c Simplifying finished" << std::endl;
     #endif //#ifdef BURST_SEARCH
 
     savedState.restore();
@@ -1854,7 +1856,7 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         lastFullRestart = starts;
 
         if (verbosity >= 3)
-            printf("c |                                      Fully restarting                                 |\n");
+            std::cout << "c Fully restarting" << std::endl;
         printRestartStat("F");
         
         /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
