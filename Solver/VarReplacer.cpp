@@ -112,10 +112,8 @@ const bool VarReplacer::performReplaceInternal()
         solver.order_heap.update(var);
     }
     assert(solver.order_heap.heapProperty());
-    
-    if (solver.verbosity >= 2)
-        std::cout << "c |  Replacing " << std::setw(8) << replacedVars-lastReplacedVars << " vars" << std::flush;
-    
+
+    uint32_t thisTimeReplaced = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;
     
     solver.testAllClauseAttach();
@@ -131,9 +129,12 @@ end:
     clauses.clear();
     
     if (solver.verbosity >= 2) {
-        std::cout << "       Replaced " <<  std::setw(8) << replacedLits<< " lits"
-        << "       Time: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime()-time << " s "
-        << std::setw(10) <<  " |" << std::endl;
+        std::cout << "c Replacing "
+        << std::setw(8) << thisTimeReplaced << " vars"
+        << " Replaced " <<  std::setw(8) << replacedLits<< " lits"
+        << " Time: " << std::setw(8) << std::fixed << std::setprecision(2) 
+        << cpuTime()-time << " s "
+        << std::endl;
     }
     
     replacedLits = 0;

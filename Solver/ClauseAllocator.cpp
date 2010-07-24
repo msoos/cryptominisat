@@ -222,7 +222,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     #endif //DEBUG_CLAUSEALLOCATOR
     
     if ((double)sum/(double)sumAlloc > 0.7 /*&& sum > 10000000*/) {
-        if (solver->verbosity >= 2) {
+        if (solver->verbosity >= 3) {
             std::cout << "c Not consolidating memory." << std::endl;
         }
         return;
@@ -313,7 +313,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     origClauseSizes.push();
     newOrigClauseSizes.moveTo(origClauseSizes[0]);
 
-    if (solver->verbosity >= 1) {
+    if (solver->verbosity >= 3) {
         std::cout << "c Consolidated memory. Time: "
         << cpuTime() - myTime << std::endl;
     }

@@ -86,7 +86,7 @@ const bool MatrixFinder::findMatrixes()
 
     if (solver.gaussconfig.noMatrixFind) {
         if (solver.verbosity >=1)
-            cout << "c |  Matrix finding disabled through switch. Putting all xors into matrix." << endl;
+            cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << endl;
         vector<XorClause*> xorclauses;
         xorclauses.reserve(solver.xorclauses.size());
         for (uint32_t i = 0; i < solver.xorclauses.size(); i++)
@@ -137,7 +137,9 @@ const bool MatrixFinder::findMatrixes()
     uint32_t numMatrixes = setMatrixes();
     
     if (solver.verbosity >=1)
-        std::cout << "c |  Finding matrixes :    " << cpuTime() - myTime << " s (found  " << numMatrixes << ")                                |" << endl;
+        std::cout << "c Finding matrixes :    " << cpuTime() - myTime
+        << " s (found  " << numMatrixes << ")"
+        << endl;
 
     for (vector<Gaussian*>::iterator gauss = solver.gauss_matrixes.begin(), end = solver.gauss_matrixes.end(); gauss != end; gauss++) {
         if (!(*gauss)->full_init()) return false;
@@ -204,13 +206,13 @@ const uint MatrixFinder::setMatrixes()
             && realMatrixNum <= solver.gaussconfig.maxNumMatrixes)
         {
             if (solver.verbosity >=1)
-                cout << "c |  Matrix no " << std::setw(2) << realMatrixNum;
+                cout << "c Matrix no " << std::setw(2) << realMatrixNum;
             solver.gauss_matrixes.push_back(new Gaussian(solver, solver.gaussconfig, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
             
         } else {
             if (solver.verbosity >=1  /*&& numXorInMatrix[a].second >= 20*/)
-                cout << "c |  Unused Matrix ";
+                cout << "c Unused Matrix ";
         }
         if (solver.verbosity >=1 /*&& numXorInMatrix[a].second >= 20*/) {
             cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();

@@ -267,7 +267,6 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, OnlyNonLearntB
                 onlyNonLearntBins->attachBin(cl);
             }
             solver.attachClause(cl);
-            solver.becameBinary++;
             addBinaryClauses.push(&cl);
             //updateClause(c);
         } else {
@@ -432,7 +431,6 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     linkInAlreadyClause(c);
                     clauses[c.index] = c;
                     solver.attachClause(cl);
-                    if (cl.size() == 2) solver.becameBinary++;
                     updateClause(c);
                     Q.push(c);
                 } else {
@@ -817,7 +815,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
         << "  lits-rem: " << std::setw(9) << literals_removed
         << "  v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
         << "  time: " << std::setprecision(2) << std::setw(5) <<  cpuTime() - myTime << " s"
-        << std::setw(17)  << "   |" << std::endl;
+        << std::endl;
     }
     
     if (!subsWNonExistBinsFull(onlyNonLearntBins)) return false;
@@ -834,8 +832,8 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
         //no need to detach&retattach, since it was detached and attached
         //in form that was already binary
         solver.clauseAllocator.clauseFree(&c);
-        solver.becameBinary++;
         solver.binaryClauses.push(c2);
+        solver.becameBinary++;
     }
     addBinaryClauses.clear();
     freeMemory();
@@ -846,7 +844,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
         << " v-fix: " << std::setw(5) << subsNonExistentumFailed
         << " done: " << std::setw(6) << doneNum
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << subsNonExistentTime << " s"
-        << std::setw(2)  << " |" << std::endl;
+        << std::endl;
     }
     totalTime += cpuTime() - myTime;
     solver.order_heap.filter(Solver::VarFilter(solver));
@@ -1168,19 +1166,19 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     freeMemory();
     
     if (solver.verbosity >= 1) {
-        std::cout << "c |  lits-rem: " << std::setw(9) << literals_removed
+        std::cout << "c lits-rem: " << std::setw(9) << literals_removed
         << "  cl-subs: " << std::setw(8) << clauses_subsumed
         << "  v-elim: " << std::setw(6) << numVarsElimed
         << "  v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
         << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
-        << "   |" << std::endl;
+        << std::endl;
         
         if (numblockedClauseRemoved > 0 || blockTime > 0.0) {
             std::cout 
-            << "c |  Blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved 
+            << "c Blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved
             << "    Time: " << std::fixed << std::setprecision(2) << std::setw(4) << blockTime << " s" 
-            << "                                    |" << std::endl;
+            << std::endl;
         }
     }
     totalTime += cpuTime() - myTime;

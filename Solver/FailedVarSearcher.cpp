@@ -273,8 +273,8 @@ end:
             solver.clauseCleaner->removeAndCleanAll();
         }
         if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
-            std::cout << "c |  Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
-            <<  std::setw(39) << " | " << std::endl;
+            std::cout << "c Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
+            << std::endl;
         }
     }
     
@@ -428,14 +428,14 @@ void FailedVarSearcher::completelyDetachAndReattach()
 
 void FailedVarSearcher::printResults(const double myTime) const
 {
-    std::cout << "c |  Flit: "<< std::setw(5) << numFailed <<
+    std::cout << "c Flit: "<< std::setw(5) << numFailed <<
     " Blit: " << std::setw(6) << goodBothSame <<
     " bXBeca: " << std::setw(4) << newBinXor <<
     " bXProp: " << std::setw(4) << bothInvert <<
     " Bins:" << std::setw(7) << binClauseAdded <<
     " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
-    " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime <<
-    std::setw(5) << " |" << std::endl;
+    " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
+    << std::endl;
 }
 
 const bool FailedVarSearcher::orderLits()

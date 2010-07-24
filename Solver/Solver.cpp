@@ -692,12 +692,12 @@ void Solver::calculateDefaultPolarities()
         }
         
         if (verbosity >= 2) {
-            std::cout << "c |  Calc default polars - "
+            std::cout << "c Calc default polars - "
             << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s"
             << " pos: " << std::setw(7) << posPolars
             << " undec: " << std::setw(7) << undecidedPolars
             << " neg: " << std::setw(7) << nVars()-  undecidedPolars - posPolars
-            << std::setw(8) << "    |" << std:: endl;
+            << std:: endl;
         }
     } else {
         std::fill(polarity.begin(), polarity.end(), defaultPolarity());
@@ -1237,9 +1237,6 @@ FoundWatch:
             ;
         }
         ws.shrink_(i - j);
-
-        //Finally, propagate XOR-clauses
-        //if (xorclauses.size() > 0 && confl.isNULL()) confl = propagate_xors(p);
     }
     propagations += num_props;
     simpDB_props -= num_props;
@@ -1287,107 +1284,6 @@ inline const uint32_t Solver::calcNBLevels(const T& ps)
     }
     return nbLevels;
 }
-
-/*PropagatedFrom Solver::propagate_xors(const Lit& p)
-{
-    #ifdef VERBOSE_DEBUG_XOR
-    cout << "Xor-Propagating variable " <<  p.var()+1 << endl;
-    #endif
-    
-    PropagatedFrom confl;
-
-    vec<ClauseOffset>& ws = xorwatches[p.var()];
-    ClauseOffset *i, *j, *end;
-    for (i = j = ws.getData(), end = i + ws.size();  i != end;) {
-        XorClause& c = *(XorClause*)clauseAllocator.getPointer(*i);
-        ClauseOffset origClauseOffset = *i;
-        i++;
-        if (i != end)
-            __builtin_prefetch(clauseAllocator.getPointer(*i), 1, 0);
-
-        // Make sure the false literal is data[1]:
-        if (c[0].var() == p.var()) {
-            Lit tmp(c[0]);
-            c[0] = c[1];
-            c[1] = tmp;
-        }
-        assert(c[1].var() == p.var());
-        
-        #ifdef VERBOSE_DEBUG_XOR
-        cout << "--> xor thing -- " << endl;
-        printClause(c);
-        cout << endl;
-        #endif
-        bool final = c.xor_clause_inverted();
-        for (uint32_t k = 0, size = c.size(); k != size; k++ ) {
-            const lbool& val = assigns[c[k].var()];
-            if (val.isUndef() && k >= 2) {
-                Lit tmp(c[1]);
-                c[1] = c[k];
-                c[k] = tmp;
-                #ifdef VERBOSE_DEBUG_XOR
-                cout << "new watch set" << endl << endl;
-                #endif
-                xorwatches[c[1].var()].push(origClauseOffset);
-                goto FoundWatch;
-            }
-
-            c[k] = c[k].unsign() ^ val.getBool();
-            final ^= val.getBool();
-        }
-
-
-        {
-            // Did not find watch -- clause is unit under assignment:
-            *j++ = origClauseOffset;
-
-            #ifdef VERBOSE_DEBUG_XOR
-            cout << "final: " << std::boolalpha << final << " - ";
-            #endif
-            if (assigns[c[0].var()].isUndef()) {
-                c[0] = c[0].unsign()^final;
-                
-                #ifdef VERBOSE_DEBUG_XOR
-                cout << "propagating ";
-                printLit(c[0]);
-                cout << endl;
-                cout << "propagation clause -- ";
-                printClause(*(Clause*)&c);
-                cout << endl << endl;
-                #endif
-                
-                uncheckedEnqueue(c[0], (Clause*)&c);
-            } else if (!final) {
-                
-                #ifdef VERBOSE_DEBUG_XOR
-                printf("conflict clause -- ");
-                printClause(*(Clause*)&c);
-                cout << endl << endl;
-                #endif
-                
-                confl = PropagatedFrom((Clause*)&c);
-                qhead = trail.size();
-                // Copy the remaining watches:
-                while (i < end)
-                    *j++ = *i++;
-            } else {
-                #ifdef VERBOSE_DEBUG_XOR
-                printf("xor satisfied\n");
-                #endif
-                
-                Lit tmp(c[0]);
-                c[0] = c[1];
-                c[1] = tmp;
-            }
-        }
-FoundWatch:
-        ;
-    }
-    ws.shrink_(i - j);
-
-    return confl;
-}*/
-
 
 /*_________________________________________________________________________________________________
 |
@@ -1458,135 +1354,6 @@ void Solver::reduceDB()
     learnts.shrink(i - j);
 
     clauseAllocator.consolidate(this);
-}
-
-const vec<Clause*>& Solver::get_learnts() const
-{
-    return learnts;
-}
-
-const vec<Clause*>& Solver::get_sorted_learnts()
-{
-    if (lastSelectedRestartType == dynamic_restart)
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
-    else
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
-    return learnts;
-}
-
-const vector<Lit> Solver::get_unitary_learnts() const
-{
-    vector<Lit> unitaries;
-    if (decisionLevel() > 0) {
-        for (uint32_t i = 0; i != trail_lim[0]; i++) {
-            unitaries.push_back(trail[i]);
-        }
-    }
-    
-    return unitaries;
-}
-
-void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
-{
-    FILE* outfile = fopen(file, "w");
-    if (!outfile) {
-        printf("Error: Cannot open file '%s' to write learnt clauses!\n", file);
-        exit(-1);
-    }
-
-    fprintf(outfile, "c \nc ---------\n");
-    fprintf(outfile, "c unitaries\n");
-    fprintf(outfile, "c ---------\n");
-    for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
-        trail[i].printFull(outfile);
-        #ifdef STATS_NEEDED
-        if (dynamic_behaviour_analysis)
-            fprintf(outfile, "c name of var: %s\n", logger.get_var_name(trail[i].var()).c_str());
-        #endif //STATS_NEEDED
-    }
-
-    fprintf(outfile, "c conflicts %lu\n", (unsigned long)conflicts);
-    if (maxSize == 1) goto end;
-
-    fprintf(outfile, "c \nc ---------------------------------\n");
-    fprintf(outfile, "c learnt clauses from binaryClauses\n");
-    fprintf(outfile, "c ---------------------------------\n");
-    for (uint i = 0; i != binaryClauses.size(); i++) {
-        if (binaryClauses[i]->learnt()) {
-            binaryClauses[i]->print(outfile);
-        }
-    }
-
-    fprintf(outfile, "c \nc ---------------------------------------\n");
-    fprintf(outfile, "c clauses representing 2-long XOR clauses\n");
-    fprintf(outfile, "c ---------------------------------------\n");
-    {
-        const vector<Lit>& table = varReplacer->getReplaceTable();
-        for (Var var = 0; var != table.size(); var++) {
-            Lit lit = table[var];
-            if (lit.var() == var)
-                continue;
-
-            fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
-            fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
-            #ifdef STATS_NEEDED
-            if (dynamic_behaviour_analysis)
-                fprintf(outfile, "c name of two vars that are anti/equivalent: '%s' and '%s'\n", logger.get_var_name(lit.var()).c_str(), logger.get_var_name(var).c_str());
-            #endif //STATS_NEEDED
-        }
-    }
-    fprintf(outfile, "c \nc --------------------n");
-    fprintf(outfile, "c clauses from learnts\n");
-    fprintf(outfile, "c --------------------n");
-    if (lastSelectedRestartType == dynamic_restart)
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
-    else
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
-    for (int i = learnts.size()-1; i >= 0 ; i--) {
-        if (learnts[i]->size() <= maxSize) {
-            learnts[i]->print(outfile);
-        }
-    }
-
-    end:
-    
-    fclose(outfile);
-}
-
-const uint32_t Solver::getNumElimSubsume() const
-{
-    return subsumer->getNumElimed();
-}
-
-const uint32_t Solver::getNumElimXorSubsume() const
-{
-    return xorSubsumer->getNumElimed();
-}
-
-const uint32_t Solver::getNumXorTrees() const
-{
-    return varReplacer->getNumTrees();
-}
-
-const uint32_t Solver::getNumXorTreesCrownSize() const
-{
-    return varReplacer->getNumReplacedVars();
-}
-
-const double Solver::getTotalTimeSubsumer() const
-{
-    return subsumer->getTotalTime();
-}
-
-const double Solver::getTotalTimeXorSubsumer() const
-{
-    return xorSubsumer->getTotalTime();
-}
-
-
-void Solver::setMaxRestarts(const uint num)
-{
-    maxRestarts = num;
 }
 
 inline int64_t abs64(int64_t a)
@@ -1937,43 +1704,6 @@ double Solver::progressEstimate() const
     return progress / nVars();
 }
 
-#ifdef USE_GAUSS
-void Solver::print_gauss_sum_stats()
-{
-    if (gauss_matrixes.size() == 0 && verbosity >= 2) {
-        printf("  no matrixes found |\n");
-        return;
-    }
-    
-    uint called = 0;
-    uint useful_prop = 0;
-    uint useful_confl = 0;
-    uint disabled = 0;
-    for (vector<Gaussian*>::const_iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++) {
-        disabled += (*gauss)->get_disabled();
-        called += (*gauss)->get_called();
-        useful_prop += (*gauss)->get_useful_prop();
-        useful_confl += (*gauss)->get_useful_confl();
-        sum_gauss_unit_truths += (*gauss)->get_unit_truths();
-        //gauss->print_stats();
-        //gauss->print_matrix_stats();
-    }
-    sum_gauss_called += called;
-    sum_gauss_confl += useful_confl;
-    sum_gauss_prop += useful_prop;
-    
-    if (verbosity >= 2) {
-        if (called == 0) {
-            printf("      disabled      |\n");
-        } else {
-            printf(" %3.0lf%% |", (double)useful_prop/(double)called*100.0);
-            printf(" %3.0lf%% |", (double)useful_confl/(double)called*100.0);
-            printf(" %3.0lf%% |\n", 100.0-(double)disabled/(double)gauss_matrixes.size()*100.0);
-        }
-    }
-}
-#endif //USE_GAUSS
-
 const bool Solver::chooseRestartType(const uint& lastFullRestart)
 {
     uint relativeStart = starts - lastFullRestart;
@@ -1992,10 +1722,10 @@ const bool Solver::chooseRestartType(const uint& lastFullRestart)
             if (tmp == dynamic_restart) {
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
-                if (verbosity >= 2)
+                if (verbosity >= 3)
                     printf("c |                           Decided on dynamic restart strategy                         |\n");
             } else  {
-                if (verbosity >= 2)
+                if (verbosity >= 3)
                     printf("c |                            Decided on static restart strategy                         |\n");
                 
                 #ifdef USE_GAUSS
@@ -2035,7 +1765,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     StateSaver savedState(*this);;
 
     #ifdef BURST_SEARCH
-    if (verbosity >= 2)
+    if (verbosity >= 3)
         std::cout << "c | " << std::setw(24) << " " 
         << "Simplifying problem for " << std::setw(8) << numConfls << " confls" 
         << std::setw(24) << " |" << std::endl;
@@ -2048,14 +1778,14 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     #ifdef BURST_SEARCH
     restartType = static_restart;
-    
+
+    printRestartStat("S");
     while(status == l_Undef && conflicts-origConflicts < numConfls) {
-        printRestartStat();
         status = search(100, -1, false);
         starts--;
     }
+    printRestartStat("S");
     if (status != l_Undef) goto end;
-    printRestartStat();
     #endif //BURST_SEARCH
 
     if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
@@ -2094,7 +1824,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     
 end:
     #ifdef BURST_SEARCH
-    if (verbosity >= 2)
+    if (verbosity >= 3)
         printf("c                                      Simplifying finished                               |\n");
     #endif //#ifdef BURST_SEARCH
 
@@ -2118,12 +1848,14 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         #ifdef USE_GAUSS
         clearGaussMatrixes();
         #endif //USE_GAUSS
-        if (verbosity >= 2)
-            printf("c |                                      Fully restarting                                 |\n");
         nof_conflicts = restart_first + (double)restart_first*restart_inc;
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         restartType = static_restart;
         lastFullRestart = starts;
+
+        if (verbosity >= 3)
+            printf("c |                                      Fully restarting                                 |\n");
+        printRestartStat("F");
         
         /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
             XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
@@ -2207,15 +1939,6 @@ inline void Solver::performStepsBeforeSolve()
     }
 }
 
-void Solver::checkSolution()
-{
-    // Extend & check:
-    model.growTo(nVars());
-    for (Var var = 0; var != nVars(); var++) model[var] = value(var);
-    verifyModel();
-    model.clear();
-}
-
 lbool Solver::solve(const vec<Lit>& assumps)
 {
 #ifdef VERBOSE_DEBUG
@@ -2262,25 +1985,31 @@ lbool Solver::solve(const vec<Lit>& assumps)
     if (conflicts == 0) {
         performStepsBeforeSolve();
         if (!ok) return l_False;
-    
-        printStatHeader();
     }
     calculateDefaultPolarities();
-    
+
+    printStatHeader();
+    printRestartStat("B");
+    uint64_t lastConflPrint = conflicts;
     // Search:
     while (status == l_Undef && starts < maxRestarts) {
         #ifdef DEBUG_VARELIM
         assert(subsumer->checkElimedUnassigned());
         assert(xorSubsumer->checkElimedUnassigned());
         #endif //DEBUG_VARELIM
-        
+
+        if (conflicts - lastConflPrint> 3000) {
+            printRestartStat("N");
+            lastConflPrint = conflicts;
+        }
+
         if (schedSimplification && conflicts >= nextSimplify) {
             status = simplifyProblem(500);
+            printRestartStat();
             nextSimplify = conflicts * 1.5;
             if (status != l_Undef) break;
         }
-        
-        printRestartStat();
+
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis) {
             logger.end(Logger::restarting);
@@ -2326,9 +2055,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
         partHandler->addSavedState();
         varReplacer->extendModelPossible();
-#ifndef NDEBUG
         checkSolution();
-#endif
         
         if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
             if (verbosity >= 1) {
@@ -2380,9 +2107,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
                 exit(-1);
             }
         }
-#ifndef NDEBUG
         checkSolution();
-#endif
         //Copy model:
         model.growTo(nVars());
         for (Var var = 0; var != nVars(); var++) model[var] = value(var);
@@ -2418,227 +2143,4 @@ lbool Solver::solve(const vec<Lit>& assumps)
     std::cout << "Solver::solve() finished" << std::endl;
 #endif
     return status;
-}
-
-//=================================================================================================
-// Debug methods:
-
-bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "Checking xor-clauses whether they have been properly satisfied." << endl;;
-    #endif
-    
-    bool failed = false;
-    
-    for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        XorClause& c = *xorclauses[i];
-        bool final = c.xor_clause_inverted();
-        
-        #ifdef VERBOSE_DEBUG
-        XorClause* c2 = XorClause_new(c, c.xor_clause_inverted(), c.getGroup());
-        std::sort(c2->getData(), c2->getData()+ c2->size());
-        c2->plainPrint();
-        clauseFree(c2);
-        #endif
-        
-        for (uint j = 0; j < c.size(); j++) {
-            assert(modelValue(c[j].unsign()) != l_Undef);
-            final ^= (modelValue(c[j].unsign()) == l_True);
-        }
-        if (!final) {
-            printf("unsatisfied clause: ");
-            xorclauses[i]->plainPrint();
-            failed = true;
-        }
-    }
-    
-    return failed;
-}
-
-bool Solver::verifyClauses(const vec<Clause*>& cs) const
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "Checking clauses whether they have been properly satisfied." << endl;;
-    #endif
-    
-    bool failed = false;
-    
-    for (uint32_t i = 0; i != cs.size(); i++) {
-        Clause& c = *cs[i];
-        for (uint j = 0; j < c.size(); j++)
-            if (modelValue(c[j]) == l_True)
-                goto next;
-            
-        printf("unsatisfied clause: ");
-        cs[i]->plainPrint();
-        failed = true;
-    next:
-        ;
-    }
-    
-    return failed;
-}
-
-void Solver::verifyModel()
-{
-    assert(!verifyClauses(clauses));
-    assert(!verifyClauses(binaryClauses));
-    assert(!verifyXorClauses(xorclauses));
-
-    if (verbosity >=1)
-        printf("c Verified %d clauses.\n", clauses.size() + xorclauses.size());
-}
-
-
-void Solver::checkLiteralCount()
-{
-    // Check that sizes are calculated correctly:
-    int cnt = 0;
-    for (uint32_t i = 0; i != clauses.size(); i++)
-        cnt += clauses[i]->size();
-
-    for (uint32_t i = 0; i != xorclauses.size(); i++)
-        cnt += xorclauses[i]->size();
-
-    if ((int)clauses_literals != cnt) {
-        fprintf(stderr, "literal count: %d, real value = %d\n", (int)clauses_literals, cnt);
-        assert((int)clauses_literals == cnt);
-    }
-}
-
-void Solver::printStatHeader() const
-{
-    #ifdef STATS_NEEDED
-    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
-    #else
-    if (verbosity >= 1) {
-    #endif
-        printf("c ============================[ Search Statistics ]========================================\n");
-        printf("c | Conflicts |          ORIGINAL         |          LEARNT          |        GAUSS       |\n");
-        printf("c |           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl | Prop   Confl   On  |\n");
-        printf("c =========================================================================================\n");
-    }
-}
-
-void Solver::printRestartStat()
-{
-    if (verbosity >= 2) {
-        printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)(nClauses()-nbBin), (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSubsumer), (int)(nLearnts()+nbBin), (double)learnts_literals/(double)(nLearnts()+nbBin));
-    }
-    
-    #ifdef USE_GAUSS
-    print_gauss_sum_stats();
-    #else //USE_GAUSS
-    if (verbosity >= 2) {
-        printf("                    |\n");
-    }
-    #endif //USE_GAUSS
-}
-
-void Solver::printEndSearchStat()
-{
-    #ifdef STATS_NEEDED
-    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
-    #else
-    if (verbosity >= 1) {
-    #endif //STATS_NEEDED
-        printf("c ====================================================================");
-        #ifdef USE_GAUSS
-        print_gauss_sum_stats();
-        if (verbosity == 1) printf("=====================\n");
-        #else //USE_GAUSS
-        printf("\n");
-        #endif //USE_GAUSS
-    }
-}
-
-#ifdef DEBUG_ATTACH
-void Solver::testAllClauseAttach() const
-{
-    for (Clause *const*it = clauses.getData(), *const*end = clauses.getDataEnd(); it != end; it++) {
-        const Clause& c = **it;
-        if (c.size() > 2) {
-            assert(findWatchedCl(watches[(~c[0]).toInt()], &c));
-            assert(findWatchedCl(watches[(~c[1]).toInt()], &c));
-        } else {
-            assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], &c));
-            assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], &c));
-        }
-    }
-    
-    for (Clause *const*it = binaryClauses.getData(), *const*end = binaryClauses.getDataEnd(); it != end; it++) {
-        const Clause& c = **it;
-        assert(c.size() == 2);
-        assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], &c));
-        assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], &c));
-    }
-    
-    for (XorClause *const*it = xorclauses.getData(), *const*end = xorclauses.getDataEnd(); it != end; it++) {
-        const XorClause& c = **it;
-        assert(find(xorwatches[c[0].var()], &c));
-        assert(find(xorwatches[c[1].var()], &c));
-        if (assigns[c[0].var()]!=l_Undef || assigns[c[1].var()]!=l_Undef) {
-            for (uint i = 0; i < c.size();i++) {
-                assert(assigns[c[i].var()] != l_Undef);
-            }
-        }
-    }
-}
-
-void Solver::findAllAttach() const
-{
-    for (uint32_t i = 0; i < binwatches.size(); i++) {
-        for (uint32_t i2 = 0; i2 < binwatches[i].size(); i2++) {
-            assert(findClause(binwatches[i][i2].clause));
-        }
-    }
-    for (uint32_t i = 0; i < watches.size(); i++) {
-        for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
-            assert(findClause(watches[i][i2].clause));
-        }
-    }
-
-    for (uint32_t i = 0; i < xorwatches.size(); i++) {
-        for (uint32_t i2 = 0; i2 < xorwatches[i].size(); i2++) {
-            assert(findClause(xorwatches[i][i2]));
-        }
-    }
-}
-
-const bool Solver::findClause(XorClause* c) const
-{
-    for (uint32_t i = 0; i < xorclauses.size(); i++) {
-        if (xorclauses[i] == c) return true;
-    }
-    return false;
-}
-
-const bool Solver::findClause(Clause* c) const
-{
-    for (uint32_t i = 0; i < binaryClauses.size(); i++) {
-        if (binaryClauses[i] == c) return true;
-    }
-    for (uint32_t i = 0; i < clauses.size(); i++) {
-        if (clauses[i] == c) return true;
-    }
-    for (uint32_t i = 0; i < learnts.size(); i++) {
-        if (learnts[i] == c) return true;
-    }
-    vec<Clause*> cs = varReplacer->getClauses();
-    for (uint32_t i = 0; i < cs.size(); i++) {
-        if (cs[i] == c) return true;
-    }
-    
-    return false;
-}
-#endif //DEBUG_ATTACH
-
-const bool Solver::noLearntBinaries() const
-{
-    for (uint32_t i = 0; i < binaryClauses.size(); i++) {
-        if (binaryClauses[i]->learnt()) return false;
-    }
-
-    return true;
 }

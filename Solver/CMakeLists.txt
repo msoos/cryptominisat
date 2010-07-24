@@ -20,6 +20,8 @@ target_link_libraries(cryptominisat
 add_library(cryptominisatlib
     Logger.cpp
     Solver.cpp
+    SolverDebug.cpp
+    SolverMisc.cpp
     Gaussian.cpp
     PackedRow.cpp
     XorFinder.cpp

@@ -42,6 +42,15 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "BoundedQueue.h"
 #include "GaussianConfig.h"
 
+#define release_assert(a) \
+    do { \
+        if (!a) {\
+            fprintf(stderr, "*** ASSERTION FAILURE in %s() [%s:%d]: %s\n", \
+            __FUNCTION__, __FILE__, __LINE__, #a); \
+            abort(); \
+        } \
+    } while (0)
+
 class Gaussian;
 class MatrixFinder;
 class Conglomerate;
@@ -540,16 +549,15 @@ protected:
 
     // Debug & etc:
     void     printLit         (const Lit l) const;
-    void     verifyModel      ();
-    bool     verifyClauses    (const vec<Clause*>& cs) const;
-    bool     verifyXorClauses (const vec<XorClause*>& cs) const;
+    const bool verifyModel      () const;
+    const bool verifyClauses    (const vec<Clause*>& cs) const;
+    const bool verifyXorClauses (const vec<XorClause*>& cs) const;
     void     checkSolution();
     void     checkLiteralCount();
     void     printStatHeader  () const;
-    void     printRestartStat ();
+    void     printRestartStat (const char* type = "N");
     void     printEndSearchStat();
     double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
-    const bool noLearntBinaries() const;
     
     // Polarity chooser
     void calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
@@ -901,12 +909,6 @@ static inline const char* showBool(bool b)
     return b ? "true" : "false";
 }
 
-
-// Just like 'assert()' but expression will be evaluated in the release version as well.
-static inline void check(bool expr)
-{
-    assert(expr);
-}
 
 #ifndef DEBUG_ATTACH
 inline void Solver::testAllClauseAttach() const

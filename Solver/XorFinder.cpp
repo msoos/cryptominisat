@@ -142,12 +142,12 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
     
 end:
     if (minSize == maxSize && minSize == 2) {
-        if (solver.verbosity >= 2 || (solver.conflicts == 0 && solver.verbosity >= 1)) {
-            printf("c |  Finding binary XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        if (solver.verbosity >= 3 || (solver.conflicts == 0 && solver.verbosity >= 1)) {
+            printf("c Finding binary XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         }
     } else {
-        if (solver.verbosity >= 2 || (solver.verbosity >= 1 && foundXors > 0)) {
-            printf("c |  Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)                  |\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        if (solver.verbosity >= 1 || (solver.verbosity >= 1 && foundXors > 0)) {
+            printf("c Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
         }
     }
     
@@ -379,7 +379,7 @@ void XorFinder::addAllXorAsNorm()
     }
     solver.xorclauses.shrink(i-j);
     if (solver.verbosity >= 1) {
-        std::cout << "c |  Added XOR as norm:" << added << std::endl;
+        std::cout << "c Added XOR as norm:" << added << std::endl;
     }
 }
 
