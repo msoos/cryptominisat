@@ -1164,7 +1164,9 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     std::cout << "c   clauses:" << clauses.size() << std::endl;
     #endif
     
-    if (clauses.size() > 10000000 || numMaxSubsume1 == 0 )  goto endSimplifyBySubsumption;
+    if (clauses.size() > 10000000 ||
+        (numMaxSubsume1 == 0 && numMaxElim == 0 && numMaxBlockVars == 0))
+        goto endSimplifyBySubsumption;
     if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
     do {
         #ifdef BIT_MORE_VERBOSITY
