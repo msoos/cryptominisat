@@ -89,6 +89,7 @@ Solver::Solver() :
         , doSubsume1       (true)
         , doAsymmBranch    (true)
         , doAsymmBranchReg (true)
+        , doSortWatched    (true)
         , failedVarSearch  (true)
         , addExtraBins     (true)
         , removeUselessBins(true)
@@ -1823,7 +1824,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (doAsymmBranchReg && !failedVarSearcher->asymmBranch()) goto end;
 
-    sortWatched();
+    if (doSortWatched) sortWatched();
 
 end:
     #ifdef BURST_SEARCH
@@ -1941,7 +1942,7 @@ inline void Solver::performStepsBeforeSolve()
             return;
     }
 
-    sortWatched();
+    if (doSortWatched) sortWatched();
 }
 
 lbool Solver::solve(const vec<Lit>& assumps)

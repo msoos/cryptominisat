@@ -162,6 +162,7 @@ public:
     bool      doSubsume1;           // Perform clause contraction through resolution
     bool      doAsymmBranch;        // Perform asymmetric branching at the beginning of the solving
     bool      doAsymmBranchReg;     // Perform asymmetric branching regularly
+    bool      doSortWatched;        // Sort watches according to size
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     bool      addExtraBins;         // Should add extra binaries in failed literal probing
     bool      removeUselessBins;    // Should try to remove useless binary clauses

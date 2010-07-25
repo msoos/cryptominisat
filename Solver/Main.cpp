@@ -512,6 +512,7 @@ void printUsage(char** argv, Solver& S)
     printf("  --norsubswithbins= Don't subsume regularly with non-existent bins\n");
     printf("  --noasymm         = Don't do asymmetric branching at the beginnning\n");
     printf("  --norasymm        = Don't do asymmetric branching regularly\n");
+    printf("  --nosortwatched   = Don't sort watches according to size: bin, tri, etc.\n");
     printf("\n");
 }
 
@@ -779,6 +780,8 @@ int main(int argc, char** argv)
             S.doAsymmBranch = false;
         } else if ((value = hasPrefix(argv[i], "--norasymm"))) {
             S.doAsymmBranchReg = false;
+        } else if ((value = hasPrefix(argv[i], "--nosortwatched"))) {
+            S.doSortWatched = false;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
