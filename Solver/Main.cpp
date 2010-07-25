@@ -510,8 +510,8 @@ void printUsage(char** argv, Solver& S)
     printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
     printf("  --nosubswithbins = Don't subsume with non-existent bins\n");
     printf("  --norsubswithbins= Don't subsume regularly with non-existent bins\n");
-    printf("  --noassym        = Don't do assymetric branching at the beginnning\n");
-    printf("  --norassym       = Don't do assymetric branching regularly\n");
+    printf("  --noassymm        = Don't do asymmetric branching at the beginnning\n");
+    printf("  --norasymm       = Don't do asymmetric branching regularly\n");
     printf("\n");
 }
 
@@ -775,10 +775,10 @@ int main(int argc, char** argv)
             S.subsumeWithNonExistBinaries = false;
         } else if ((value = hasPrefix(argv[i], "--norsubswithbins"))) {
             S.regularSubsumeWithNonExistBinaries = false;
-        } else if ((value = hasPrefix(argv[i], "--noassym"))) {
-            S.doAssymBranch = false;
-        } else if ((value = hasPrefix(argv[i], "--norassym"))) {
-            S.doAssymBranchReg = false;
+        } else if ((value = hasPrefix(argv[i], "--noasymm"))) {
+            S.doAsymmBranch = false;
+        } else if ((value = hasPrefix(argv[i], "--norasymm"))) {
+            S.doAsymmBranchReg = false;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

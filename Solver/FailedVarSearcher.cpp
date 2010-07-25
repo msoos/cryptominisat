@@ -298,7 +298,7 @@ bool  sortBySize::operator () (const Clause* x, const Clause* y) {
     return (x->size() > y->size());
 }
 
-const bool FailedVarSearcher::assymBranch()
+const bool FailedVarSearcher::asymmBranch()
 {
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
 
@@ -409,7 +409,7 @@ const bool FailedVarSearcher::assymBranch()
     }
     solver.clauses.shrink(i-j);
 
-    std::cout << "c assym "
+    std::cout << "c asymm "
     << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem:" << effectiveLit
     << " time: " << cpuTime() - myTime

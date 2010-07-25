@@ -59,7 +59,7 @@ class FailedVarSearcher {
         FailedVarSearcher(Solver& _solver);
     
         const bool search(uint64_t numProps);
-        const bool assymBranch();
+        const bool asymmBranch();
         
     private:
         //For 2-long xor

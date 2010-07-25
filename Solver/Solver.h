@@ -160,8 +160,8 @@ public:
     bool      doBlockedClause;      // Should try to remove blocked clauses
     bool      doVarElim;            // Perform variable elimination
     bool      doSubsume1;           // Perform clause contraction through resolution
-    bool      doAssymBranch;        // Perform assymetric branching at the beginning of the solving
-    bool      doAssymBranchReg;     // Perform assymetric branching regularly
+    bool      doAsymmBranch;        // Perform asymmetric branching at the beginning of the solving
+    bool      doAsymmBranchReg;     // Perform asymmetric branching regularly
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     bool      addExtraBins;         // Should add extra binaries in failed literal probing
     bool      removeUselessBins;    // Should try to remove useless binary clauses

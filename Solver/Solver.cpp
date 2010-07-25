@@ -87,8 +87,8 @@ Solver::Solver() :
         , doBlockedClause  (true)
         , doVarElim        (true)
         , doSubsume1       (true)
-        , doAssymBranch    (true)
-        , doAssymBranchReg (true)
+        , doAsymmBranch    (true)
+        , doAsymmBranchReg (true)
         , failedVarSearch  (true)
         , addExtraBins     (true)
         , removeUselessBins(true)
@@ -1821,7 +1821,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         x.addAllXorAsNorm();
     }
 
-    if (doAssymBranchReg && !failedVarSearcher->assymBranch()) goto end;
+    if (doAsymmBranchReg && !failedVarSearcher->asymmBranch()) goto end;
 
     sortWatched();
 
@@ -1888,7 +1888,7 @@ inline void Solver::performStepsBeforeSolve()
         return;
     }*/
 
-    if (doAssymBranch && !failedVarSearcher->assymBranch()) {
+    if (doAsymmBranch && !failedVarSearcher->asymmBranch()) {
         return;
     }
 
@@ -2103,8 +2103,8 @@ void Solver::handleSATSolution()
         s.regularSubsumeWithNonExistBinaries = false;
         s.removeUselessBins = false;
         s.regularRemoveUselessBins = false;
-        s.doAssymBranch = false;
-        s.doAssymBranchReg = false;
+        s.doAsymmBranch = false;
+        s.doAsymmBranchReg = false;
         s.greedyUnbound = greedyUnbound;
 
         vec<Lit> tmp;
