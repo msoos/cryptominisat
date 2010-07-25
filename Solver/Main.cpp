@@ -525,6 +525,41 @@ const char* hasPrefix(const char* str, const char* prefix)
         return NULL;
 }
 
+void printResultFunc(const Solver& S, const lbool ret, FILE* res)
+{
+    if (res != NULL) {
+        if (ret == l_True) {
+            printf("c SAT\n");
+            fprintf(res, "SAT\n");
+            if (printResult) {
+                for (Var var = 0; var != S.nVars(); var++)
+                    if (S.model[var] != l_Undef)
+                        fprintf(res, "%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
+                    fprintf(res, "0\n");
+            }
+        } else if (ret == l_False) {
+            printf("c UNSAT\n");
+            fprintf(res, "UNSAT\n");
+        } else {
+            printf("c INCONCLUSIVE\n");
+            fprintf(res, "INCONCLUSIVE\n");
+        }
+        fclose(res);
+    } else {
+        if (ret == l_True)
+            printf("s SATISFIABLE\n");
+        else if (ret == l_False)
+            printf("s UNSATISFIABLE\n");
+
+        if(ret == l_True && printResult) {
+            printf("v ");
+            for (Var var = 0; var != S.nVars(); var++)
+                if (S.model[var] != l_Undef)
+                    printf("%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
+                printf("0\n");
+        }
+    }
+}
 
 int main(int argc, char** argv)
 {
@@ -802,6 +837,16 @@ int main(int argc, char** argv)
 
     lbool ret;
 
+    FILE* res = NULL;
+    if (argc >= 3) {
+        res = fopen(argv[2], "wb");
+        if (res == NULL) {
+            int backup_errno = errno;
+            printf("Cannot open %s for writing. Problem: %s", argv[2], strerror(backup_errno));
+            exit(1);
+        }
+    }
+
     while(1)
     {
         ret = S.solve();
@@ -813,15 +858,13 @@ int main(int argc, char** argv)
         printf("c Prepare for next run...\n");
 
         vec<Lit> lits;
-        if (printResult) printf("v ");
         for (Var var = 0; var != S.nVars(); var++) {
             if (S.model[var] != l_Undef) {
                 lits.push( Lit(var, (S.model[var] == l_True)? true : false) );
-                if (printResult) printf("%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
             }
         }
-        if (printResult) printf("\n");
-        
+        printResultFunc(S, ret, res);
+
         S.addClause(lits);
     }
 
@@ -834,48 +877,7 @@ int main(int argc, char** argv)
     if (ret == l_Undef)
         printf("c Not finished running -- maximum restart reached\n");
 
-    FILE* res = NULL;
-    if (argc >= 3) {
-        res = fopen(argv[2], "wb");
-        if (res == NULL) {
-            int backup_errno = errno;
-            printf("Cannot open %s for writing. Problem: %s", argv[2], strerror(backup_errno));
-            exit(1);
-        }
-    }
-
-    if (res != NULL) {
-        if (ret == l_True) {
-            printf("c SAT\n");
-            fprintf(res, "SAT\n");
-            if (printResult) {
-                for (Var var = 0; var != S.nVars(); var++)
-                    if (S.model[var] != l_Undef)
-                        fprintf(res, "%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
-                    fprintf(res, "0\n");
-            }
-        } else if (ret == l_False) {
-            printf("c UNSAT\n");
-            fprintf(res, "UNSAT\n");
-        } else {
-            printf("c INCONCLUSIVE\n");
-            fprintf(res, "INCONCLUSIVE\n");
-        }
-        fclose(res);
-    } else {
-        if (ret == l_True)
-            printf("s SATISFIABLE\n");
-        else if (ret == l_False)
-            printf("s UNSATISFIABLE\n");
-
-        if(ret == l_True && printResult) {
-            printf("v ");
-            for (Var var = 0; var != S.nVars(); var++)
-                if (S.model[var] != l_Undef)
-                    printf("%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
-                printf("0\n");
-        }
-    }
+    printResultFunc(S, ret, res);
 
 #ifdef NDEBUG
     exit(ret == l_True ? 10 : 20);     // (faster than "return", which will invoke the destructor for 'Solver')
