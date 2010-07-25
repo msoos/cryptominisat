@@ -510,8 +510,8 @@ void printUsage(char** argv, Solver& S)
     printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
     printf("  --nosubswithbins = Don't subsume with non-existent bins\n");
     printf("  --norsubswithbins= Don't subsume regularly with non-existent bins\n");
-    printf("  --noassymm        = Don't do asymmetric branching at the beginnning\n");
-    printf("  --norasymm       = Don't do asymmetric branching regularly\n");
+    printf("  --noasymm         = Don't do asymmetric branching at the beginnning\n");
+    printf("  --norasymm        = Don't do asymmetric branching regularly\n");
     printf("\n");
 }
 
