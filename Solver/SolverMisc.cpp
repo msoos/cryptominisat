@@ -80,7 +80,7 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     }
     fprintf(outfile, "c \nc --------------------n");
     fprintf(outfile, "c clauses from learnts\n");
-    fprintf(outfile, "c --------------------n");
+    fprintf(outfile, "c --------------------\n");
     if (lastSelectedRestartType == dynamic_restart)
         std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
     else
