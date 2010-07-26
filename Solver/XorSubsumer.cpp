@@ -467,7 +467,6 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         propagated =  (solver.qhead != solver.trail.size());
         solver.ok = (solver.propagate().isNULL());
         if (!solver.ok) {
-            std::cout << "c (contradiction during subsumption)" << std::endl;
             return false;
         }
         solver.clauseCleaner->cleanXorClausesBewareNULL(clauses, ClauseCleaner::xorSimpClauses, *this);
