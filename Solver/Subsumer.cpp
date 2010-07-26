@@ -575,10 +575,7 @@ void Subsumer::almost_all_database()
         if (clauses[i].clause != NULL) {
             subsume1(clauses[i]);
             numMaxSubsume1--;
-            if (!solver.ok) {
-                std::cout << "c (contradiction during subsumption)" << std::endl;
-                return;
-            }
+            if (!solver.ok) return;
         }
     }
 
@@ -606,7 +603,6 @@ void Subsumer::almost_all_database()
                 subsume1(*it);
                 numMaxSubsume1--;
                 if (!solver.ok) {
-                    printf("c (contradiction during subsumption)\n");
                     unregisterIteration(s1);
                     return;
                 }
@@ -682,7 +678,6 @@ void Subsumer::smaller_database()
                 subsume1(*it);
                 numMaxSubsume1--;
                 if (!solver.ok) {
-                    printf("c (contradiction during subsumption1)\n");
                     unregisterIteration(s1);
                     unregisterIteration(s0);
                     return;
@@ -1170,13 +1165,12 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         #ifdef BIT_MORE_VERBOSITY
         std::cout << "c time before the start of almost_all/smaller: " << cpuTime() - myTime << std::endl;
         #endif
-        if (cl_touched.size() > clauses.size() / 2) {
+        if (cl_touched.size() > clauses.size() / 2)
             almost_all_database();
-            if (!solver.ok) return false;
-        } else {
+        else
             smaller_database();
-            if (!solver.ok) return false;
-        }
+
+        if (!solver.ok) return false;
         cl_touched.clear();
 
         solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
@@ -1221,10 +1215,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
             assert(solver.qhead == solver.trail.size());
             for (uint32_t i = 0; i < order.size() && numMaxElim > 0; i++, numMaxElim--) {
                 if (maybeEliminate(order[i])) {
-                    if (!solver.ok) {
-                        printf("c (contradiction during subsumption)\n");
-                        return false;
-                    }
+                    if (!solver.ok) return false;
                     vars_elimed++;
                 }
             }
@@ -1240,13 +1231,9 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         }
     } while (cl_touched.size() > 100);
     endSimplifyBySubsumption:
-    
-    if (!solver.ok) return false;
+
     solver.ok = (solver.propagate().isNULL());
-    if (!solver.ok) {
-        printf("c (contradiction during subsumption)\n");
-        return false;
-    }
+    if (!solver.ok) return false;
     
     #ifndef NDEBUG
     verifyIntegrity();
