@@ -1,4 +1,4 @@
-/***********************************************************************************
+/**************************************************************************
 CryptoMiniSat -- Copyright (c) 2009 Mate Soos
 
 This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-**************************************************************************************************/
+*****************************************************************************/
 
 #include "FailedVarSearcher.h"
 
@@ -773,8 +773,6 @@ inline void FailedVarSearcher::cleanAndAttachClauses(vec<T*>& cs)
 
 inline const bool FailedVarSearcher::cleanClause(Clause& ps)
 {
-    uint32_t origSize = ps.size();
-    
     Lit *i = ps.getData();
     Lit *j = i;
     for (Lit *end = ps.getDataEnd(); i != end; i++) {
@@ -786,14 +784,14 @@ inline const bool FailedVarSearcher::cleanClause(Clause& ps)
     ps.shrink(i-j);
     assert(ps.size() > 1);
 
-    if (origSize != 2 && ps.size() == 2)
+    if (i != j && ps.size() == 2)
         solver.becameBinary++;
-    
+
     return true;
 }
 
 inline const bool FailedVarSearcher::cleanClause(XorClause& ps)
-{    
+{
     Lit *i = ps.getData(), *j = i;
     for (Lit *end = ps.getDataEnd(); i != end; i++) {
         if (solver.assigns[i->var()] == l_True) ps.invert(true);
@@ -802,7 +800,7 @@ inline const bool FailedVarSearcher::cleanClause(XorClause& ps)
         }
     }
     ps.shrink(i-j);
-    
+
     if (ps.size() == 0) return false;
     assert(ps.size() > 1);
 
