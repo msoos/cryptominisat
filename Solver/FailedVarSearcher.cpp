@@ -420,11 +420,13 @@ const bool FailedVarSearcher::asymmBranch()
 
     asymmLastTimeWentUntil = thisTimeWentUntil;
 
-    std::cout << "c asymm "
-    << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
-    << " lits-rem:" << effectiveLit
-    << " time: " << cpuTime() - myTime
-    << std::endl;
+    if (solver.verbosity >= 1) {
+        std::cout << "c asymm "
+        << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
+        << " lits-rem:" << effectiveLit
+        << " time: " << cpuTime() - myTime
+        << std::endl;
+    }
 
     return solver.ok;
 }
