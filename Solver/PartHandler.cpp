@@ -163,7 +163,7 @@ const bool PartHandler::handle()
     }
     if (solver.verbosity >= 1)
         std::cout << "c Coming back to original instance"
-        << std::setw(57) << " |" << std::endl;
+        << " |" << std::endl;
     
     solver.order_heap.filter(Solver::VarFilter(solver));
     

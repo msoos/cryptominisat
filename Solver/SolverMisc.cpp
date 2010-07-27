@@ -212,11 +212,7 @@ void Solver::printEndSearchStat()
     #else
     if (verbosity >= 1) {
     #endif //STATS_NEEDED
-        #ifdef USE_GAUSS
-        std::cout << "c ";
-        print_gauss_sum_stats();
-        std::cout << std::endl;
-        #endif //USE_GAUSS
+        printRestartStat("F");
     }
 }
 
