@@ -13,8 +13,8 @@ cl /favor:INTEL64 /O2 /Fecryptominisat64.exe -DVERSION="__DATE__" -DDISABLE_ZLIB
 /F2097152 /TP /EHsc -I. -I../mtl/ -I../MTRand/ Main.cpp Solver.cpp \
 ClauseCleaner.cpp FindUndef.cpp PackedRow.cpp RestartTypeChooser.cpp \
 VarReplacer.cpp XorFinder.cpp XorSubsumer.cpp Subsumer.cpp PartFinder.cpp \
-PartHandler.cpp FailedVarSearcher.cpp Gaussian.cpp ClauseAllocator.cpp \
-MatrixFinder.cpp OnlyNonLearntBins.cpp UselessBinRemover.cpp StateSaver.cpp \
+PartHandler.cpp FailedVarSearcher.cpp ClauseAllocator.cpp \
+OnlyNonLearntBins.cpp UselessBinRemover.cpp StateSaver.cpp \
 SolverMisc.cpp SolverDebug.cpp
 
 executed from the 'Solver' subdirectory
