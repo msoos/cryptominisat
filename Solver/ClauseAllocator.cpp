@@ -282,10 +282,12 @@ void ClauseAllocator::consolidate(Solver* solver)
         updatePointers(it->second, oldToNewPointer);
     }
 
+    #ifdef USE_GAUSS
     for (uint32_t i = 0; i < solver->gauss_matrixes.size(); i++) {
         updatePointers(solver->gauss_matrixes[i]->xorclauses, oldToNewPointer);
         updatePointers(solver->gauss_matrixes[i]->clauses_toclear, oldToNewPointer);
     }
+    #endif //USE_GAUSS
 
     vec<PropagatedFrom>& reason = solver->reason;
     for (PropagatedFrom *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
