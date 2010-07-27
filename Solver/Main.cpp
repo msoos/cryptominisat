@@ -486,7 +486,8 @@ void printUsage(char** argv, Solver& S)
     printf("                     is SAT\n");
     printf("  --novarelim      = Don't perform variable elimination as per Een and Biere\n");
     printf("  --nosubsume1     = Don't perform clause contraction through resolution\n");
-    printf("  --noparthander   = Don't find and solve subroblems with subsolvers\n");
+    printf("  --noparthandler  = Don't find and solve subroblems with subsolvers\n");
+#ifdef USE_GAUSS
     printf("  --nomatrixfind   = Don't find distinct matrixes. Put all xors into one\n");
     printf("                     big matrix\n");
     printf("  --noordercol     = Don't order variables in the columns of Gaussian\n");
@@ -503,13 +504,14 @@ void printUsage(char** argv, Solver& S)
     printf("                     Default: %d\n", S.gaussconfig.only_nth_gauss_save);
     printf("  --maxnummatrixes = [0 - 2^32-1] Maximum number of matrixes to treat.\n");
     printf("                     Default: %d\n", S.gaussconfig.maxNumMatrixes);
+#endif //USE_GAUSS
     //printf("  --addoldlearnts  = Readd old learnts for failed variable searching.\n");
     //printf("                     These learnts are usually deleted, but may help\n");
     printf("  --noextrabins    = Don't add binary clauses when doing failed lit probing.\n");
-    printf("  --noremovebins   = Don't remove useless binary clauses\n");
+    printf("  --noremovebins   = Don't remove useless binary clauses at the beginnning\n");
     printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
-    printf("  --nosubswithbins = Don't subsume with non-existent bins\n");
-    printf("  --norsubswithbins= Don't subsume regularly with non-existent bins\n");
+    printf("  --nosubswithbins = Don't subsume with non-existent bins at the beginnning\n");
+    printf("  --norsubswithbins= Don't subsume with non-existent bins regularly \n");
     printf("  --noasymm         = Don't do asymmetric branching at the beginnning\n");
     printf("  --norasymm        = Don't do asymmetric branching regularly\n");
     printf("  --nosortwatched   = Don't sort watches according to size: bin, tri, etc.\n");

@@ -1,3 +1,32 @@
+ver 2.6.0 -- 27/07/27
+* No more separate watchlists for binary clauses. Class "Watched" knows
+  what it watches. This reduces memory overhead, and reduces jump-around
+  in code and data.
+* Tertiary clauses are handled natively inside the watchlists just like
+  binary clauses
+* Watchlists are sorted to propagate binary clauses first, and tertiary
+  clauses next, finally to propagate normal and xor clauses
+* Clause subsumption has finally been cleared of a number of bugs. We now
+  subsume with learnt clauses on a regular basis.
+* 32-bit pointers are no longer used. Instead, a stack-based implementation
+  is used, on the lines of the description of the solver lingeling by
+  Armin Biere. This leads to minimal (~6%) speedup relative to the original
+  scheme in CryptoMiniSat 2.5.1, but it enables 32-bit pointers on all
+  architectures
+* Asymmetric branching is now used. Clauses are sorted according to size,
+  and the largest ones are shortened with asymm-branching. This brings
+  large benefits, as often the largest clauses are responsible for a good
+  number of the literals in the learnt clauses. Asymmetric branching thus
+  reduces the learnt clause sizes, increasing their potential and making
+  propagation faster
+* Since tertiary clauses are first to propagate after binary clauses, the
+  number of tertiary clauses propagating is higher, leading to even less
+  literals in the learnt clauses
+* Printing has been updated. It is still not perfect, but we are making
+  progress.
+* Known regressions: xor clauses could potentially be propagated somewhat
+  slower
+
 ver 2.5.2 -- 8/06/2010
 * Fixing serious bug with xor-cutting. We no longer segfault if there are
   many XORs in the given problem

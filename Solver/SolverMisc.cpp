@@ -170,10 +170,10 @@ void Solver::printStatHeader() const
         << std::setw(3) << "rt"
         << std::setw(6) << "Rest"
         << std::setw(space) << "Confl"
-        << std::setw(space) << "vars"
-        << std::setw(space) << "OCs"
-        << std::setw(space) << "OCBins"
-        << std::setw(space) << "Lts"
+        << std::setw(space) << "Vars"
+        << std::setw(space) << "NormCls"
+        << std::setw(space) << "BinCls"
+        << std::setw(space) << "Learnts"
         << std::setw(space) << "ClLits"
         << std::setw(space) << "LtLits"
         << std::endl;
@@ -213,7 +213,9 @@ void Solver::printEndSearchStat()
     if (verbosity >= 1) {
     #endif //STATS_NEEDED
         #ifdef USE_GAUSS
+        std::cout << "c ";
         print_gauss_sum_stats();
+        std::cout << std::endl;
         #endif //USE_GAUSS
     }
 }
