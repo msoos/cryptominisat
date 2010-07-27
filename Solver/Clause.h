@@ -30,6 +30,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cstdio>
 #include <vector>
 #include <sys/types.h>
+#include <string.h>
+
 #include "SolverTypes.h"
 #include "constants.h"
 #include "Watched.h"
