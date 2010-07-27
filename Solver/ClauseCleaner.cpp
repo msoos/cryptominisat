@@ -28,13 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ClauseCleaner::ClauseCleaner(Solver& _solver) :
     solver(_solver)
 {
-    for (uint i = 0; i < 6; i++) {
+    for (uint32_t i = 0; i < 6; i++) {
         lastNumUnitarySat[i] = solver.get_unitary_learnts_num();
         lastNumUnitaryClean[i] = solver.get_unitary_learnts_num();
     }
 }
 
-void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint limit)
+void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit)
 {
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
@@ -55,7 +55,7 @@ void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, con
     lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
 }
 
-void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint limit)
+void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit)
 {
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
@@ -78,7 +78,7 @@ void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const 
     lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
 }
 
-void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit)
+void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit)
 {
     assert(solver.decisionLevel() == 0);
     assert(solver.qhead == solver.trail.size());
@@ -165,7 +165,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
     return false;
 }
 
-void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit)
+void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit)
 {
     assert(solver.decisionLevel() == 0);
     assert(solver.qhead == solver.trail.size());
@@ -246,7 +246,7 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
     return false;
 }
 
-void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::ClauseSetType type, Subsumer& subs, const uint limit)
+void ClauseCleaner::cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseCleaner::ClauseSetType type, Subsumer& subs, const uint32_t limit)
 {
     assert(solver.decisionLevel() == 0);
     assert(solver.qhead == solver.trail.size());
@@ -311,7 +311,7 @@ inline const bool ClauseCleaner::cleanClauseBewareNULL(ClauseSimp cc, Subsumer& 
     return false;
 }
 
-void ClauseCleaner::cleanXorClausesBewareNULL(vec<XorClauseSimp>& cs, ClauseCleaner::ClauseSetType type, XorSubsumer& subs, const uint limit)
+void ClauseCleaner::cleanXorClausesBewareNULL(vec<XorClauseSimp>& cs, ClauseCleaner::ClauseSetType type, XorSubsumer& subs, const uint32_t limit)
 {
     assert(solver.decisionLevel() == 0);
     assert(solver.qhead == solver.trail.size());
@@ -376,7 +376,7 @@ inline const bool ClauseCleaner::cleanXorClauseBewareNULL(XorClauseSimp cc, XorS
 
 bool ClauseCleaner::satisfied(const Clause& c) const
 {
-    for (uint i = 0; i != c.size(); i++)
+    for (uint32_t i = 0; i != c.size(); i++)
         if (solver.value(c[i]) == l_True)
             return true;
         return false;
@@ -385,7 +385,7 @@ bool ClauseCleaner::satisfied(const Clause& c) const
 bool ClauseCleaner::satisfied(const XorClause& c) const
 {
     bool final = c.xor_clause_inverted();
-    for (uint k = 0; k != c.size(); k++ ) {
+    for (uint32_t k = 0; k != c.size(); k++ ) {
         const lbool& val = solver.assigns[c[k].var()];
         if (val.isUndef()) return false;
         final ^= val.getBool();

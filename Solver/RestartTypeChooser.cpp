@@ -16,7 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
 #include "RestartTypeChooser.h"
+
+#include <utility>
 #include "Solver.h"
+using std::pair;
 
 //#define VERBOSE_DEBUG
 //#define PRINT_VARS
@@ -32,10 +35,10 @@ void RestartTypeChooser::addInfo()
 {
     firstVarsOld = firstVars;
     calcHeap();
-    uint sameIn = 0;
+    uint32_t sameIn = 0;
     if (!firstVarsOld.empty()) {
-        uint thisTopX = std::min(firstVarsOld.size(), (size_t)topX);
-        for (uint i = 0; i != thisTopX; i++) {
+        uint32_t thisTopX = std::min(firstVarsOld.size(), (size_t)topX);
+        for (uint32_t i = 0; i != thisTopX; i++) {
             if (std::find(firstVars.begin(), firstVars.end(), firstVarsOld[i]) != firstVars.end())
                 sameIn++;
         }
@@ -65,7 +68,7 @@ const RestartType RestartTypeChooser::choose()
 const double RestartTypeChooser::avg() const
 {
     double sum = 0.0;
-    for (uint i = 0; i != sameIns.size(); i++)
+    for (uint32_t i = 0; i != sameIns.size(); i++)
         sum += sameIns[i];
     return (sum/(double)sameIns.size());
 }
@@ -74,7 +77,7 @@ const double RestartTypeChooser::stdDeviation(vector<uint32_t>& measure) const
 {
     double average = avg();
     double variance = 0.0;
-    for (uint i = 0; i != measure.size(); i++)
+    for (uint32_t i = 0; i != measure.size(); i++)
         variance += pow((double)measure[i]-average, 2);
     variance /= (double)measure.size();
     

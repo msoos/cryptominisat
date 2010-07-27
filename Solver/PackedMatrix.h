@@ -56,7 +56,7 @@ public:
         delete[] mp;
     }
     
-    void resize(const uint num_rows, uint num_cols)
+    void resize(const uint32_t num_rows, uint32_t num_cols)
     {
         num_cols = num_cols / 64 + (bool)(num_cols % 64);
         if (numRows*2*(numCols+1) < num_rows*2*(num_cols+1)) {
@@ -67,7 +67,7 @@ public:
         numCols = num_cols;
     }
     
-    void resizeNumRows(const uint num_rows)
+    void resizeNumRows(const uint32_t num_rows)
     {
         #ifdef DEBUG_MATRIX
         assert(num_rows <= numRows);
@@ -94,7 +94,7 @@ public:
         return *this;
     }
 
-    inline PackedRow getMatrixAt(const uint i)
+    inline PackedRow getMatrixAt(const uint32_t i)
     {
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
@@ -102,7 +102,7 @@ public:
         
         return PackedRow(numCols, mp+i*2*(numCols+1));
     }
-    inline PackedRow getVarsetAt(const uint i)
+    inline PackedRow getVarsetAt(const uint32_t i)
     {
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
@@ -111,7 +111,7 @@ public:
         return PackedRow(numCols, mp+i*2*(numCols+1)+(numCols+1));
     }
     
-    inline const PackedRow getMatrixAt(const uint i) const
+    inline const PackedRow getMatrixAt(const uint32_t i) const
     {
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
@@ -120,7 +120,7 @@ public:
         return PackedRow(numCols, mp+i*2*(numCols+1));
     }
     
-    inline const PackedRow getVarsetAt(const uint i) const
+    inline const PackedRow getVarsetAt(const uint32_t i) const
     {
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
@@ -143,19 +143,19 @@ public:
             return *this;
         }
         
-        iterator operator+(const uint num) const
+        iterator operator+(const uint32_t num) const
         {
             iterator ret(*this);
             ret.mp += 2*(numCols+1)*num;
             return ret;
         }
         
-        const uint operator-(const iterator& b) const
+        const uint32_t operator-(const iterator& b) const
         {
             return (mp - b.mp)/(2*(numCols+1));
         }
         
-        void operator+=(const uint num)
+        void operator+=(const uint32_t num)
         {
             mp += 2*(numCols+1)*num;
         }
@@ -173,13 +173,13 @@ public:
     private:
         friend class PackedMatrix;
         
-        iterator(uint64_t* _mp, const uint _numCols) :
+        iterator(uint64_t* _mp, const uint32_t _numCols) :
             mp(_mp)
             , numCols(_numCols)
         {}
         
         uint64_t* mp;
-        const uint numCols;
+        const uint32_t numCols;
     };
     
     inline iterator beginMatrix()
@@ -202,7 +202,7 @@ public:
         return iterator(mp+(numCols+1)+numRows*2*(numCols+1), numCols);
     }
     
-    inline const uint getSize() const
+    inline const uint32_t getSize() const
     {
         return numRows;
     }
@@ -210,8 +210,8 @@ public:
 private:
     
     uint64_t* mp;
-    uint numRows;
-    uint numCols;
+    uint32_t numRows;
+    uint32_t numCols;
 };
 
 #endif //PACKEDMATRIX_H

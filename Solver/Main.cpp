@@ -33,12 +33,17 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #endif //_MSC_VER
 
 #include <signal.h>
+#include <string>
+using std::string;
 
 #ifndef DISABLE_ZLIB
 #include <zlib.h>
 #endif // DISABLE_ZLIB
 
+#ifdef STATS_NEEDED
 #include "Logger.h"
+#endif //STATS_NEEDED
+
 #include "Solver.h"
 #include "time_mem.h"
 #include "constants.h"
@@ -163,7 +168,7 @@ static int parseInt(B& in)
     return neg ? -val : val;
 }
 
-inline std::string stringify(uint x)
+inline std::string stringify(uint32_t x)
 {
     std::ostringstream o;
     o << x;
@@ -214,7 +219,7 @@ static void parse_DIMACS_main(B& in, Solver& S)
     vec<Lit> lits;
     int group = 0;
     string str;
-    uint debugLibPart = 1;
+    uint32_t debugLibPart = 1;
     char name[MAX_NAMES_SIZE];
 
 
@@ -631,7 +636,7 @@ int main(int argc, char** argv)
             cout << "c seed:" << seed << endl;
             S.setSeed(seed);
         } else if ((value = hasPrefix(argv[i], "--restrict="))) {
-            uint branchTo;
+            uint32_t branchTo;
             if (sscanf(value, "%d", &branchTo) < 0 || branchTo < 1) {
                 printf("ERROR! illegal restricted pick branch number %d\n", branchTo);
                 exit(0);
@@ -645,7 +650,7 @@ int main(int argc, char** argv)
             }
             S.gaussconfig.decision_until = until;
         } else if ((value = hasPrefix(argv[i], "--restarts="))) {
-            uint maxrest;
+            uint32_t maxrest;
             if (sscanf(value, "%d", &maxrest) < 0 || maxrest == 0) {
                 printf("ERROR! illegal maximum restart number %d\n", maxrest);
                 exit(0);

@@ -35,15 +35,15 @@ class ClauseCleaner
         
         enum ClauseSetType {clauses, xorclauses, learnts, binaryClauses, simpClauses, xorSimpClauses};
         
-        void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
-        void cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseSetType type, Subsumer& subs, const uint limit = 0);
-        void cleanXorClausesBewareNULL(vec<XorClauseSimp>& cs, ClauseSetType type, XorSubsumer& subs, const uint limit = 0);
+        void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit = 0);
+        void cleanClausesBewareNULL(vec<ClauseSimp>& cs, ClauseSetType type, Subsumer& subs, const uint32_t limit = 0);
+        void cleanXorClausesBewareNULL(vec<XorClauseSimp>& cs, ClauseSetType type, XorSubsumer& subs, const uint32_t limit = 0);
         const bool cleanClauseBewareNULL(ClauseSimp c, Subsumer& subs);
         const bool cleanXorClauseBewareNULL(XorClauseSimp c, XorSubsumer& subs);
         
-        void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
-        void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint limit = 0);
-        void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint limit = 0);
+        void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit = 0);
+        void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit = 0);
+        void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit = 0);
         void removeAndCleanAll(const bool nolimit = false);
         bool satisfied(const Clause& c) const;
         bool satisfied(const XorClause& c) const;
@@ -54,16 +54,16 @@ class ClauseCleaner
         const bool cleanClause(XorClause& c);
         const bool cleanClause(Clause*& c);
         
-        uint lastNumUnitarySat[6];
-        uint lastNumUnitaryClean[6];
+        uint32_t lastNumUnitarySat[6];
+        uint32_t lastNumUnitaryClean[6];
         
         Solver& solver;
 };
 
 inline void ClauseCleaner::removeAndCleanAll(const bool nolimit)
 {
-    //uint limit = std::min((uint)((double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES), FIXCLEANREPLACE);
-    uint limit = (double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES;
+    //uint32_t limit = std::min((uint32_t)((double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES), FIXCLEANREPLACE);
+    uint32_t limit = (double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES;
     if (nolimit) limit = 0;
     
     removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses, limit);

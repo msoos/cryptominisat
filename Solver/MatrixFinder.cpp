@@ -54,7 +54,7 @@ inline const Var MatrixFinder::fingerprint(const XorClause& c) const
 
 inline const bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const XorClause& c2) const
 {
-    uint i1, i2;
+    uint32_t i1, i2;
     for (i1 = 0, i2 = 0; i1 < c1.size() && i2 < c2.size();) {
         if (c1[i1].var() != c2[i2].var())
             i2++;
@@ -96,7 +96,7 @@ const bool MatrixFinder::findMatrixes()
     }
     
     for (XorClause** c = solver.xorclauses.getData(), **end = c + solver.xorclauses.size(); c != end; c++) {
-        set<uint> tomerge;
+        set<uint32_t> tomerge;
         vector<Var> newSet;
         for (Lit *l = &(**c)[0], *end2 = l + (**c).size(); l != end2; l++) {
             if (table[l->var()] != var_Undef)
@@ -105,27 +105,27 @@ const bool MatrixFinder::findMatrixes()
                 newSet.push_back(l->var());
         }
         if (tomerge.size() == 1) {
-            const uint into = *tomerge.begin();
-            map<uint, vector<Var> >::iterator intoReverse = reverseTable.find(into);
-            for (uint i = 0; i < newSet.size(); i++) {
+            const uint32_t into = *tomerge.begin();
+            map<uint32_t, vector<Var> >::iterator intoReverse = reverseTable.find(into);
+            for (uint32_t i = 0; i < newSet.size(); i++) {
                 intoReverse->second.push_back(newSet[i]);
                 table[newSet[i]] = into;
             }
             continue;
         }
         
-        for (set<uint>::iterator it = tomerge.begin(); it != tomerge.end(); it++) {
+        for (set<uint32_t>::iterator it = tomerge.begin(); it != tomerge.end(); it++) {
             newSet.insert(newSet.end(), reverseTable[*it].begin(), reverseTable[*it].end());
             reverseTable.erase(*it);
         }
-        for (uint i = 0; i < newSet.size(); i++)
+        for (uint32_t i = 0; i < newSet.size(); i++)
             table[newSet[i]] = matrix_no;
         reverseTable[matrix_no] = newSet;
         matrix_no++;
     }
     
     #ifdef VERBOSE_DEBUG
-    for (map<uint, vector<Var> >::iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
+    for (map<uint32_t, vector<Var> >::iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
         cout << "-- set begin --" << endl;
         for (vector<Var>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
             cout << *it2 << ", ";
@@ -148,14 +148,14 @@ const bool MatrixFinder::findMatrixes()
     return true;
 }
 
-const uint MatrixFinder::setMatrixes()
+const uint32_t MatrixFinder::setMatrixes()
 {
-    vector<pair<uint, uint> > numXorInMatrix;
-    for (uint i = 0; i < matrix_no; i++)
+    vector<pair<uint32_t, uint32_t> > numXorInMatrix;
+    for (uint32_t i = 0; i < matrix_no; i++)
         numXorInMatrix.push_back(std::make_pair(i, 0));
     
-    vector<uint> sumXorSizeInMatrix(matrix_no, 0);
-    vector<vector<uint> > xorSizesInMatrix(matrix_no);
+    vector<uint32_t> sumXorSizeInMatrix(matrix_no, 0);
+    vector<vector<uint32_t> > xorSizesInMatrix(matrix_no);
     vector<vector<XorClause*> > xorsInMatrix(matrix_no);
     
     #ifdef PART_FINDING
@@ -164,7 +164,7 @@ const uint MatrixFinder::setMatrixes()
     
     for (XorClause** c = solver.xorclauses.getData(), **end = c + solver.xorclauses.size(); c != end; c++) {
         XorClause& x = **c;
-        const uint matrix = table[x[0].var()];
+        const uint32_t matrix = table[x[0].var()];
         assert(matrix < matrix_no);
         
         //for stats
@@ -181,22 +181,22 @@ const uint MatrixFinder::setMatrixes()
     std::sort(numXorInMatrix.begin(), numXorInMatrix.end(), mysorter());
     
     #ifdef PART_FINDING
-    for (uint i = 0; i < matrix_no; i++)
+    for (uint32_t i = 0; i < matrix_no; i++)
         findParts(xorFingerprintInMatrix[i], xorsInMatrix[i]);
     #endif //PART_FINDING
     
-    uint realMatrixNum = 0;
+    uint32_t realMatrixNum = 0;
     for (int a = matrix_no-1; a != -1; a--) {
-        uint i = numXorInMatrix[a].first;
+        uint32_t i = numXorInMatrix[a].first;
         
         if (numXorInMatrix[a].second < 3)
             continue;
         
-        const uint totalSize = reverseTable[i].size()*numXorInMatrix[a].second;
+        const uint32_t totalSize = reverseTable[i].size()*numXorInMatrix[a].second;
         const double density = (double)sumXorSizeInMatrix[i]/(double)totalSize*100.0;
         double avg = (double)sumXorSizeInMatrix[i]/(double)numXorInMatrix[a].second;
         double variance = 0.0;
-        for (uint i2 = 0; i2 < xorSizesInMatrix[i].size(); i2++)
+        for (uint32_t i2 = 0; i2 < xorSizesInMatrix[i].size(); i2++)
             variance += pow((double)xorSizesInMatrix[i][i2]-avg, 2);
         variance /= (double)xorSizesInMatrix.size();
         const double stdDeviation = sqrt(variance);
@@ -227,10 +227,10 @@ const uint MatrixFinder::setMatrixes()
 
 void MatrixFinder::findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClause*>& xorsInMatrix)
 {
-    uint ai = 0;
+    uint32_t ai = 0;
     for (XorClause **a = &xorsInMatrix[0], **end = a + xorsInMatrix.size(); a != end; a++, ai++) {
         const Var fingerprint = xorFingerprintInMatrix[ai];
-        uint ai2 = 0;
+        uint32_t ai2 = 0;
         for (XorClause **a2 = &xorsInMatrix[0]; a2 != end; a2++, ai2++) {
             if (ai == ai2) continue;
             const Var fingerprint2 = xorFingerprintInMatrix[ai2];

@@ -43,7 +43,7 @@ VarReplacer::VarReplacer(Solver& _solver) :
 
 VarReplacer::~VarReplacer()
 {
-    for (uint i = 0; i != clauses.size(); i++)
+    for (uint32_t i = 0; i != clauses.size(); i++)
         solver.clauseAllocator.clauseFree(clauses[i]);
 }
 
@@ -55,8 +55,8 @@ const bool VarReplacer::performReplaceInternal()
     double time = cpuTime();
     
     #ifdef REPLACE_STATISTICS
-    uint numRedir = 0;
-    for (uint i = 0; i < table.size(); i++) {
+    uint32_t numRedir = 0;
+    for (uint32_t i = 0; i < table.size(); i++) {
         if (table[i].var() != i)
             numRedir++;
     }
@@ -75,7 +75,7 @@ const bool VarReplacer::performReplaceInternal()
     
     #ifdef VERBOSE_DEBUG
     {
-        uint i = 0;
+        uint32_t i = 0;
         for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
             if (it->var() == i) continue;
             cout << "Replacing var " << i+1 << " with Lit " << (it->sign() ? "-" : "") <<  it->var()+1 << endl;
@@ -124,7 +124,7 @@ const bool VarReplacer::performReplaceInternal()
     solver.testAllClauseAttach();
     
 end:
-    for (uint i = 0; i != clauses.size(); i++)
+    for (uint32_t i = 0; i != clauses.size(); i++)
         solver.removeClause(*clauses[i]);
     clauses.clear();
     
@@ -184,7 +184,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
 
 const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2)
 {
-    uint origSize = c.size();
+    uint32_t origSize = c.size();
     std::sort(c.getData(), c.getDataEnd());
     Lit p;
     uint32_t i, j;
@@ -282,7 +282,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     std::sort(c.getData(), c.getData() + c.size());
     Lit p;
     uint32_t i, j;
-    const uint origSize = c.size();
+    const uint32_t origSize = c.size();
     for (i = j = 0, p = lit_Undef; i != origSize; i++) {
         if (solver.value(c[i]) == l_True || c[i] == ~p) {
             satisfied = true;
@@ -332,7 +332,7 @@ void VarReplacer::extendModelPossible() const
     #ifdef VERBOSE_DEBUG
     std::cout << "extendModelPossible() called" << std::endl;
     #endif //VERBOSE_DEBUG
-    uint i = 0;
+    uint32_t i = 0;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
         if (it->var() == i) continue;
         
@@ -363,7 +363,7 @@ void VarReplacer::extendModelImpossible(Solver& solver2) const
     #endif //VERBOSE_DEBUG
     
     vec<Lit> tmpClause;
-    uint i = 0;
+    uint32_t i = 0;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
         if (it->var() == i) continue;
         if (solver.assigns[it->var()] == l_Undef) {
@@ -386,7 +386,7 @@ void VarReplacer::extendModelImpossible(Solver& solver2) const
 }
 
 template<class T>
-const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uint group)
+const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uint32_t group)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xor_clause_inverted " << xor_clause_inverted << std::endl;
@@ -463,11 +463,11 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
     return true;
 }
 
-template const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint group);
-template const bool VarReplacer::replace(XorClause& ps, const bool xor_clause_inverted, const uint group);
+template const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint32_t group);
+template const bool VarReplacer::replace(XorClause& ps, const bool xor_clause_inverted, const uint32_t group);
 
 template<class T>
-void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint group, const bool internal)
+void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint32_t group, const bool internal)
 {
     assert(internal || (replacedVars > lastReplacedVars));
     #ifdef DEBUG_REPLACER
@@ -497,8 +497,8 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, cons
     solver.attachClause(*c);
 }
 
-template void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint group, const bool internal);
-template void VarReplacer::addBinaryXorClause(XorClause& ps, const bool xor_clause_inverted, const uint group, const bool internal);
+template void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint32_t group, const bool internal);
+template void VarReplacer::addBinaryXorClause(XorClause& ps, const bool xor_clause_inverted, const uint32_t group, const bool internal);
 
 bool VarReplacer::alreadyIn(const Var var, const Lit lit)
 {

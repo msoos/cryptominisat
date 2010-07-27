@@ -33,7 +33,7 @@ void FindUndef::fillPotential()
     
     while(trail > 0) {
         assert(trail < (int)solver.trail_lim.size());
-        uint at = solver.trail_lim[trail];
+        uint32_t at = solver.trail_lim[trail];
         
         assert(at > 0);
         Var v = solver.trail[at].var();
@@ -67,7 +67,7 @@ void FindUndef::fillPotential()
 
 void FindUndef::unboundIsPotentials()
 {
-    for (uint i = 0; i < isPotential.size(); i++)
+    for (uint32_t i = 0; i < isPotential.size(); i++)
         if (isPotential[i])
             solver.assigns[i] = l_Undef;
 }
@@ -75,19 +75,19 @@ void FindUndef::unboundIsPotentials()
 void FindUndef::moveBinToNormal()
 {
     binPosition = solver.clauses.size();
-    for (uint i = 0; i != solver.binaryClauses.size(); i++)
+    for (uint32_t i = 0; i != solver.binaryClauses.size(); i++)
         solver.clauses.push(solver.binaryClauses[i]);
     solver.binaryClauses.clear();
 }
 
 void FindUndef::moveBinFromNormal()
 {
-    for (uint i = binPosition; i != solver.clauses.size(); i++)
+    for (uint32_t i = binPosition; i != solver.clauses.size(); i++)
         solver.binaryClauses.push(solver.clauses[i]);
     solver.clauses.shrink(solver.clauses.size() - binPosition);
 }
 
-const uint FindUndef::unRoll()
+const uint32_t FindUndef::unRoll()
 {
     if (solver.decisionLevel() == 0) return 0;
     
@@ -103,7 +103,7 @@ const uint FindUndef::unRoll()
         
         uint32_t maximum = 0;
         Var v = var_Undef;
-        for (uint i = 0; i < isPotential.size(); i++) {
+        for (uint32_t i = 0; i < isPotential.size(); i++) {
             if (isPotential[i] && satisfies[i] >= maximum) {
                 maximum = satisfies[i];
                 v = i;
@@ -127,7 +127,7 @@ bool FindUndef::updateTables()
 {
     bool allSat = true;
     
-    uint i = 0;
+    uint32_t i = 0;
     for (Clause** it = solver.clauses.getData(), **end = it + solver.clauses.size(); it != end; it++, i++) {
         if (dontLookAtClause[i])
             continue;
@@ -135,7 +135,7 @@ bool FindUndef::updateTables()
         Clause& c = **it;
         bool definitelyOK = false;
         Var v = var_Undef;
-        uint numTrue = 0;
+        uint32_t numTrue = 0;
         for (Lit *l = c.getData(), *end = l + c.size(); l != end; l++) {
             if (solver.value(*l) == l_True) {
                 if (!isPotential[l->var()]) {

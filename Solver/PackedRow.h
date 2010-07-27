@@ -33,9 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <algorithm>
 #include <limits>
-#ifndef uint
-#define uint unsigned int
-#endif
 
 using std::vector;
 

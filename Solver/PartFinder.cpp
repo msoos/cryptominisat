@@ -69,11 +69,11 @@ const bool PartFinder::findParts()
     addToPart(solver.binaryClauses);
     addToPart(solver.xorclauses);
     
-    const uint parts = setParts();
+    const uint32_t parts = setParts();
     
     #ifndef NDEBUG
-    for (map<uint, vector<Var> >::const_iterator it = reverseTable.begin(); it != reverseTable.end(); it++) {
-        for (uint i2 = 0; i2 < it->second.size(); i2++) {
+    for (map<uint32_t, vector<Var> >::const_iterator it = reverseTable.begin(); it != reverseTable.end(); it++) {
+        for (uint32_t i2 = 0; i2 < it->second.size(); i2++) {
             assert(table[(it->second)[i2]] == it->first);
         }
     }
@@ -91,7 +91,7 @@ const bool PartFinder::findParts()
 template<class T>
 void PartFinder::addToPart(const vec<T*>& cs)
 {
-    set<uint> tomerge;
+    set<uint32_t> tomerge;
     vector<Var> newSet;
     for (T* const* c = cs.getData(), * const*end = c + cs.size(); c != end; c++) {
         if ((*c)->learnt()) continue;
@@ -106,38 +106,38 @@ void PartFinder::addToPart(const vec<T*>& cs)
         if (tomerge.size() == 1) {
             //no trees to merge, only merge the clause into one tree
             
-            const uint into = *tomerge.begin();
-            map<uint, vector<Var> >::iterator intoReverse = reverseTable.find(into);
-            for (uint i = 0; i < newSet.size(); i++) {
+            const uint32_t into = *tomerge.begin();
+            map<uint32_t, vector<Var> >::iterator intoReverse = reverseTable.find(into);
+            for (uint32_t i = 0; i < newSet.size(); i++) {
                 intoReverse->second.push_back(newSet[i]);
                 table[newSet[i]] = into;
             }
             continue;
         }
         
-        for (set<uint>::iterator it = tomerge.begin(); it != tomerge.end(); it++) {
+        for (set<uint32_t>::iterator it = tomerge.begin(); it != tomerge.end(); it++) {
             newSet.insert(newSet.end(), reverseTable[*it].begin(), reverseTable[*it].end());
             reverseTable.erase(*it);
         }
         
-        for (uint i = 0; i < newSet.size(); i++)
+        for (uint32_t i = 0; i < newSet.size(); i++)
             table[newSet[i]] = part_no;
         reverseTable[part_no] = newSet;
         part_no++;
     }
 }
 
-const uint PartFinder::setParts()
+const uint32_t PartFinder::setParts()
 {
-    vector<uint> numClauseInPart(part_no, 0);
-    vector<uint> sumLitsInPart(part_no, 0);
+    vector<uint32_t> numClauseInPart(part_no, 0);
+    vector<uint32_t> sumLitsInPart(part_no, 0);
     
     calcIn(solver.clauses, numClauseInPart, sumLitsInPart);
     calcIn(solver.binaryClauses, numClauseInPart, sumLitsInPart);
     calcIn(solver.xorclauses, numClauseInPart, sumLitsInPart);
  
-    uint parts = 0;
-    for (uint i = 0; i < numClauseInPart.size(); i++) {
+    uint32_t parts = 0;
+    for (uint32_t i = 0; i < numClauseInPart.size(); i++) {
         if (sumLitsInPart[i] == 0) continue;
         if (solver.verbosity >= 3 || ( solver.verbosity >= 1 && reverseTable.size() > 1) ) {
             std::cout << "c | Found part " << std::setw(8) << i
@@ -151,7 +151,7 @@ const uint PartFinder::setParts()
     
     if (parts > 1) {
         #ifdef VERBOSE_DEBUG
-        for (map<uint, vector<Var> >::iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
+        for (map<uint32_t, vector<Var> >::iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
             cout << "-- set begin --" << endl;
             for (vector<Var>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
                 cout << *it2 << ", ";
@@ -165,12 +165,12 @@ const uint PartFinder::setParts()
 }
 
 template<class T>
-void PartFinder::calcIn(const vec<T*>& cs, vector<uint>& numClauseInPart, vector<uint>& sumLitsInPart)
+void PartFinder::calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInPart, vector<uint32_t>& sumLitsInPart)
 {
     for (T*const* c = cs.getData(), *const*end = c + cs.size(); c != end; c++) {
         if ((*c)->learnt()) continue;
         T& x = **c;
-        const uint part = table[x[0].var()];
+        const uint32_t part = table[x[0].var()];
         assert(part < part_no);
         
         //for stats

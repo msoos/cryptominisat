@@ -45,9 +45,9 @@ XorFinder::XorFinder(Solver& _solver, vec<Clause*>& _cls, ClauseCleaner::ClauseS
 {
 }
 
-const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
+const bool XorFinder::doNoPart(const uint32_t minSize, const uint32_t maxSize)
 {
-    uint sumLengths = 0;
+    uint32_t sumLengths = 0;
     double time = cpuTime();
     foundXors = 0;
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
@@ -77,7 +77,7 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
         Clause& c = (**it);
         if ((*it)->size() != 2) {
             bool sorted = true;
-            for (uint i = 0, size = c.size(); i+1 < size ; i++) {
+            for (uint32_t i = 0, size = c.size(); i+1 < size ; i++) {
                 sorted = (c[i].var() <= c[i+1].var());
                 if (!sorted) break;
             }
@@ -91,9 +91,9 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
         }
     }
     
-    uint i = 0;
+    uint32_t i = 0;
     for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
-        const uint size = (*it)->size();
+        const uint32_t size = (*it)->size();
         if ( size > maxSize || size < minSize) {
             toLeaveInPlace[i] = true;
             continue;
@@ -107,15 +107,15 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
     std::sort(unsortedTable.begin(), unsortedTable.end(), clause_sorter_primary());
     //std::sort(sortedTable.begin(), sortedTable.end(), clause_sorter_primary());
     #ifdef DEBUG_XORFIND
-    for (uint i = 0; i+1 < unsortedTable.size(); i++) {
+    for (uint32_t i = 0; i+1 < unsortedTable.size(); i++) {
         assert(!sorter(unsortedTable[i+1], unsortedTable[i]));
     }
-    for (uint i = 0; i+1 < sortedTable.size(); i++) {
+    for (uint32_t i = 0; i+1 < sortedTable.size(); i++) {
         assert(!sorter(sortedTable[i+1], sortedTable[i]));
     }
     #endif //DEBUG_XORFIND
     
-    for (uint i = 0, j = 0; i < unsortedTable.size() || j <  sortedTable.size();) {
+    for (uint32_t i = 0, j = 0; i < unsortedTable.size() || j <  sortedTable.size();) {
         if (j == sortedTable.size()) {
             table.push_back(unsortedTable[i++]);
             continue;
@@ -131,7 +131,7 @@ const bool XorFinder::doNoPart(const uint minSize, const uint maxSize)
         }
     }
     #ifdef DEBUG_XORFIND
-    for (uint i = 0; i+1 < table.size(); i++) {
+    for (uint32_t i = 0; i+1 < table.size(); i++) {
         assert(!sorter(table[i+1], table[i]));
         //table[i].first->plainPrint();
     }
@@ -154,7 +154,7 @@ end:
     i = 0;
     uint32_t j = 0;
     uint32_t toSkip = 0;
-    for (uint end = cls.size(); i != end; i++) {
+    for (uint32_t end = cls.size(); i != end; i++) {
         if (toLeaveInPlace[i]) {
             cls[j] = cls[i];
             j++;
@@ -172,7 +172,7 @@ end:
     return solver.ok;
 }
 
-const bool XorFinder::findXors(uint& sumLengths)
+const bool XorFinder::findXors(uint32_t& sumLengths)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Finding Xors started" << endl;
@@ -190,7 +190,7 @@ const bool XorFinder::findXors(uint& sumLengths)
         for (const Lit *it = &c[0], *cend = it+c.size() ; it != cend; it++) {
             lits.push(Lit(it->var(), false));
         }
-        uint old_group = c.getGroup();
+        uint32_t old_group = c.getGroup();
         
         #ifdef VERBOSE_DEBUG
         cout << "- Found clauses:" << endl;
@@ -243,7 +243,7 @@ void XorFinder::clearToRemove()
     Clause **a = cls.getData();
     Clause **r = cls.getData();
     Clause **cend = cls.getData() + cls.size();
-    for (uint i = 0; r != cend; i++) {
+    for (uint32_t i = 0; r != cend; i++) {
         if (!toRemove[i])
             *a++ = *r++;
         else
@@ -274,7 +274,7 @@ bool XorFinder::getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& 
 bool XorFinder::clauseEqual(const Clause& c1, const Clause& c2) const
 {
     assert(c1.size() == c2.size());
-    for (uint i = 0, size = c1.size(); i < size; i++)
+    for (uint32_t i = 0, size = c1.size(); i < size; i++)
         if (c1[i].sign() !=  c2[i].sign()) return false;
     
     return true;
@@ -282,7 +282,7 @@ bool XorFinder::clauseEqual(const Clause& c1, const Clause& c2) const
 
 bool XorFinder::impairSigns(const Clause& c) const
 {
-    uint num = 0;
+    uint32_t num = 0;
     for (const Lit *it = &c[0], *end = it + c.size(); it != end; it++)
         num += it->sign();
         
@@ -291,7 +291,7 @@ bool XorFinder::impairSigns(const Clause& c) const
 
 bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, const ClauseTable::iterator& end, bool& impair)
 {
-    const uint requiredSize = 1 << (begin->first->size()-1);
+    const uint32_t requiredSize = 1 << (begin->first->size()-1);
     
     if (size < requiredSize)
         return false;
@@ -300,11 +300,11 @@ bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, c
     {
         vec<Var> vars;
         Clause& c = *begin->first;
-        for (uint i = 0; i < c.size(); i++)
+        for (uint32_t i = 0; i < c.size(); i++)
             vars.push(c[i].var());
         for (ClauseTable::iterator it = begin; it != end; it++) {
             Clause& c = *it->first;
-            for (uint i = 0; i < c.size(); i++)
+            for (uint32_t i = 0; i < c.size(); i++)
                 assert(vars[i] == c[i].var());
         }
         clause_sorter_primary sorter;
@@ -320,8 +320,8 @@ bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, c
     
     std::sort(begin, end, clause_sorter_secondary());
     
-    uint numPair = 0;
-    uint numImpair = 0;
+    uint32_t numPair = 0;
+    uint32_t numImpair = 0;
     countImpairs(begin, end, numImpair, numPair);
     
     if (numImpair == requiredSize) {
@@ -339,7 +339,7 @@ bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, c
     return false;
 }
 
-void XorFinder::countImpairs(const ClauseTable::iterator& begin, const ClauseTable::iterator& end, uint& numImpair, uint& numPair) const
+void XorFinder::countImpairs(const ClauseTable::iterator& begin, const ClauseTable::iterator& end, uint32_t& numImpair, uint32_t& numPair) const
 {
     numImpair = 0;
     numPair = 0;

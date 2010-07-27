@@ -1491,7 +1491,7 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
 
 void Subsumer::verifyIntegrity()
 {
-    vector<uint> occurNum(solver.nVars()*2, 0);
+    vector<uint32_t> occurNum(solver.nVars()*2, 0);
     
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i].clause == NULL) continue;
@@ -1696,7 +1696,7 @@ vector<char> Subsumer::merge()
     
     for (map<varDataStruct, vector<Var> >::iterator it = dataToVar.begin(); it != dataToVar.end(); it++) {
         //std::cout << "size: " << it->second.size() << std::endl;
-        for (uint i = 0; i < it->second.size()-1; i++) {
+        for (uint32_t i = 0; i < it->second.size()-1; i++) {
             assert(it->second.size() > i+1);
             assert(varData[it->second[i]] == varData[it->second[i+1]]);
         }
@@ -1710,7 +1710,7 @@ vector<char> Subsumer::merge()
         
         if (dataToVar[tmp].size() > 0) {
             map<varDataStruct, vector<Var> >::iterator it = dataToVar.find(tmp);
-            for (uint i = 0; i < it->second.size(); i++) if (it->second[i] != var) {
+            for (uint32_t i = 0; i < it->second.size(); i++) if (it->second[i] != var) {
                 checked ++;
                 if (checkIfSame(Lit(var, false), Lit(it->second[i], false)) &&
                     (checkIfSame(Lit(var, true), Lit(it->second[i], true))))
@@ -1729,7 +1729,7 @@ vector<char> Subsumer::merge()
         tmp.reversePolarity();
         if (dataToVar[tmp].size() > 0) {
             map<varDataStruct, vector<Var> >::iterator it = dataToVar.find(tmp);
-            for (uint i = 0; i < it->second.size(); i++) if (it->second[i] != var) {
+            for (uint32_t i = 0; i < it->second.size(); i++) if (it->second[i] != var) {
                 checked ++;
                 if (checkIfSame(Lit(var, true), Lit(it->second[i], false)) &&
                     (checkIfSame(Lit(var, false), Lit(it->second[i], true))))

@@ -1,4 +1,4 @@
-ver 2.6.0 -- 27/07/27
+ver 2.6.0 -- 27/07/2010
 * No more separate watchlists for binary clauses. Class "Watched" knows
   what it watches. This reduces memory overhead, and reduces jump-around
   in code and data.
@@ -25,7 +25,7 @@ ver 2.6.0 -- 27/07/27
 * Printing has been updated. It is still not perfect, but we are making
   progress.
 * Known regressions: xor clauses could potentially be propagated somewhat
-  slower
+  slower, statistics generator is currently broken
 
 ver 2.5.2 -- 8/06/2010
 * Fixing serious bug with xor-cutting. We no longer segfault if there are

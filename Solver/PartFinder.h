@@ -46,13 +46,13 @@ class PartFinder {
         const vector<Var>& getPartVars(const uint32_t part);
     
     private:
-        const uint setParts();
+        const uint32_t setParts();
         template<class T>
         void addToPart(const vec<T*>& cs);
         
         struct mysorter
         {
-            bool operator () (const pair<uint, uint>& left, const pair<uint, uint>& right)
+            bool operator () (const pair<uint32_t, uint32_t>& left, const pair<uint32_t, uint32_t>& right)
             {
                 return left.second < right.second;
             }
@@ -60,7 +60,7 @@ class PartFinder {
         
         //const bool findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClause*>& xorsInMatrix);
         template<class T>
-        void calcIn(const vec<T*>& cs, vector<uint>& numClauseInPart, vector<uint>& sumLitsInPart);
+        void calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInPart, vector<uint32_t>& sumLitsInPart);
         
         map<uint32_t, vector<Var> > reverseTable; //part -> vars
         vector<uint32_t> table; //var -> part

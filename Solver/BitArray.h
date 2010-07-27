@@ -108,7 +108,7 @@ public:
         return *this;
     }
     
-    void resize(uint _size, const bool fill)
+    void resize(uint32_t _size, const bool fill)
     {
         _size = _size/64 + (bool)(_size%64);
         if (size != _size) {
@@ -129,7 +129,7 @@ public:
     {
         const uint64_t*  mp2 = (const uint64_t*)mp;
         
-        for (uint i = 0; i < size; i++) {
+        for (uint32_t i = 0; i < size; i++) {
             if (mp2[i]) return false;
         }
         return true;
@@ -145,7 +145,7 @@ public:
         memset(mp, 0, size*sizeof(uint64_t));
     }
 
-    inline void clearBit(const uint i)
+    inline void clearBit(const uint32_t i)
     {
         #ifdef DEBUG_BITARRAY
         assert(size*64 > i);
@@ -154,7 +154,7 @@ public:
         mp[i/64] &= ~((uint64_t)1 << (i%64));
     }
 
-    inline void setBit(const uint i)
+    inline void setBit(const uint32_t i)
     {
         #ifdef DEBUG_BITARRAY
         assert(size*64 > i);
@@ -163,7 +163,7 @@ public:
         mp[i/64] |= ((uint64_t)1 << (i%64));
     }
 
-    inline const bool operator[](const uint& i) const
+    inline const bool operator[](const uint32_t& i) const
     {
         #ifdef DEBUG_BITARRAY
         assert(size*64 > i);
@@ -172,14 +172,14 @@ public:
         return (mp[i/64] >> (i%64)) & 1;
     }
     
-    inline const uint getSize() const
+    inline const uint32_t getSize() const
     {
         return size*64;
     }
 
 private:
     
-    uint size;
+    uint32_t size;
     uint64_t* mp;
 };
 

@@ -54,7 +54,7 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
     fprintf(outfile, "c \nc ---------------------------------\n");
     fprintf(outfile, "c learnt clauses from binaryClauses\n");
     fprintf(outfile, "c ---------------------------------\n");
-    for (uint i = 0; i != binaryClauses.size(); i++) {
+    for (uint32_t i = 0; i != binaryClauses.size(); i++) {
         if (binaryClauses[i]->learnt()) {
             binaryClauses[i]->print(outfile);
         }
@@ -153,7 +153,7 @@ const double Solver::getTotalTimeXorSubsumer() const
 }
 
 
-void Solver::setMaxRestarts(const uint num)
+void Solver::setMaxRestarts(const uint32_t num)
 {
     maxRestarts = num;
 }
@@ -228,10 +228,10 @@ void Solver::print_gauss_sum_stats()
         return;
     }
 
-    uint called = 0;
-    uint useful_prop = 0;
-    uint useful_confl = 0;
-    uint disabled = 0;
+    uint32_t called = 0;
+    uint32_t useful_prop = 0;
+    uint32_t useful_confl = 0;
+    uint32_t disabled = 0;
     for (vector<Gaussian*>::const_iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++) {
         disabled += (*gauss)->get_disabled();
         called += (*gauss)->get_called();

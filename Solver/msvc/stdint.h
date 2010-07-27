@@ -243,8 +243,4 @@ typedef uint64_t  uintmax_t;
 
 #endif // __STDC_CONSTANT_MACROS ]
 
-#ifndef uint
-#define uint unsigned int
-#endif
-
 #endif // _MSC_STDINT_H_ ]

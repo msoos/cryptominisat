@@ -21,8 +21,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Alg_h
 
 #include "Vec.h"
-#include "SolverTypes.h"
-#include "Watched.h"
+#include "../Solver/SolverTypes.h"
+#include "../Solver/Watched.h"
 
 #ifdef _MSC_VER
 #include <msvc/stdint.h>

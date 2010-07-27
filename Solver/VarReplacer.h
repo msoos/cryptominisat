@@ -42,16 +42,16 @@ class VarReplacer
         const bool performReplace(const bool always = false);
         const bool needsReplace();
         template<class T>
-        const bool replace(T& ps, const bool xor_clause_inverted, const uint group);
+        const bool replace(T& ps, const bool xor_clause_inverted, const uint32_t group);
         
         void extendModelPossible() const;
         void extendModelImpossible(Solver& solver2) const;
         void reattachInternalClauses();
         
-        const uint getNumReplacedLits() const;
-        const uint getNumReplacedVars() const;
-        const uint getNumLastReplacedVars() const;
-        const uint getNewToReplaceVars() const;
+        const uint32_t getNumReplacedLits() const;
+        const uint32_t getNumReplacedVars() const;
+        const uint32_t getNumLastReplacedVars() const;
+        const uint32_t getNewToReplaceVars() const;
         const uint32_t getNumTrees() const;
         const vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
@@ -72,7 +72,7 @@ class VarReplacer
         const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
         const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
         template<class T>
-        void addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint group, const bool internal = false);
+        void addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint32_t group, const bool internal = false);
         
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);
@@ -81,9 +81,9 @@ class VarReplacer
         map<Var, vector<Var> > reverseTable;
         vec<Clause*> clauses;
         
-        uint replacedLits;
-        uint replacedVars;
-        uint lastReplacedVars;
+        uint32_t replacedLits;
+        uint32_t replacedVars;
+        uint32_t lastReplacedVars;
         Solver& solver;
 };
 
@@ -103,22 +103,22 @@ inline const bool VarReplacer::needsReplace()
     return (getNewToReplaceVars() > limit);
 }
 
-inline const uint VarReplacer::getNumReplacedLits() const
+inline const uint32_t VarReplacer::getNumReplacedLits() const
 {
     return replacedLits;
 }
 
-inline const uint VarReplacer::getNumReplacedVars() const
+inline const uint32_t VarReplacer::getNumReplacedVars() const
 {
     return replacedVars;
 }
 
-inline const uint VarReplacer::getNumLastReplacedVars() const
+inline const uint32_t VarReplacer::getNumLastReplacedVars() const
 {
     return lastReplacedVars;
 }
 
-inline const uint VarReplacer::getNewToReplaceVars() const
+inline const uint32_t VarReplacer::getNewToReplaceVars() const
 {
     return replacedVars-lastReplacedVars;
 }

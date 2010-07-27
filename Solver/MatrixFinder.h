@@ -42,11 +42,11 @@ class MatrixFinder {
         const bool findMatrixes();
     
     private:
-        const uint setMatrixes();
+        const uint32_t setMatrixes();
         
         struct mysorter
         {
-            bool operator () (const pair<uint, uint>& left, const pair<uint, uint>& right)
+            bool operator () (const pair<uint32_t, uint32_t>& left, const pair<uint32_t, uint32_t>& right)
             {
                 return left.second < right.second;
             }
@@ -56,9 +56,9 @@ class MatrixFinder {
         inline const Var fingerprint(const XorClause& c) const;
         inline const bool firstPartOfSecond(const XorClause& c1, const XorClause& c2) const;
         
-        map<uint, vector<Var> > reverseTable; //matrix -> vars
+        map<uint32_t, vector<Var> > reverseTable; //matrix -> vars
         vector<Var> table; //var -> matrix
-        uint matrix_no;
+        uint32_t matrix_no;
         
         Solver& solver;
 };

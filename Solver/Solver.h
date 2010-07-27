@@ -25,11 +25,17 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cstdio>
 #include <string.h>
 #include <stdio.h>
+
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
 #else
 #include <stdint.h>
 #endif //_MSC_VER
+
+#ifdef STATS_NEEDED
+#include "Logger.h"
+#endif //STATS_NEEDED
+
 
 #include "PropagatedFrom.h"
 #include "Vec.h"
@@ -38,7 +44,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "MersenneTwister.h"
 #include "SolverTypes.h"
 #include "Clause.h"
-#include "Logger.h"
 #include "constants.h"
 #include "BoundedQueue.h"
 #include "GaussianConfig.h"
@@ -99,9 +104,9 @@ public:
     //
     Var     newVar    (bool dvar = true); // Add a new variable with parameters specifying variable mode.
     template<class T>
-    bool    addClause (T& ps, const uint group = 0, char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addClause (T& ps, const uint32_t group = 0, char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool    addXorClause (T& ps, bool xor_clause_inverted, const uint group = 0, char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (T& ps, bool xor_clause_inverted, const uint32_t group = 0, char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
@@ -115,7 +120,7 @@ public:
     //
     void    setDecisionVar (Var v, bool b); // Declare if a variable should be eligible for selection in the decision heuristic.
     void    setSeed (const uint32_t seed);  // Sets the seed to be the given number
-    void    setMaxRestarts(const uint num); //sets the maximum number of restarts to given value
+    void    setMaxRestarts(const uint32_t num); //sets the maximum number of restarts to given value
 
     // Read state:
     //
@@ -190,7 +195,7 @@ public:
     const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
     const vec<Clause*>& get_learnts() const; //Get all learnt clauses that are >1 long
     const vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
-    const uint get_unitary_learnts_num() const; //return the number of unitary learnt clauses
+    const uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     void dumpSortedLearnts(const char* file, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const char* fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
 
@@ -223,11 +228,11 @@ protected:
     #endif //USE_GAUSS
     
     template <class T>
-    Clause* addClauseInt(T& ps, uint group);
+    Clause* addClauseInt(T& ps, uint32_t group);
     template<class T>
     XorClause* addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32_t group);
     template<class T>
-    bool addLearntClause(T& ps, const uint group, const uint32_t activity);
+    bool addLearntClause(T& ps, const uint32_t group, const uint32_t activity);
 
     //////////////////
     //Handling Watched
@@ -282,15 +287,15 @@ protected:
     Heap<VarOrderLt>    order_heap;       // A priority queue of variables ordered with respect to the variable activity.
     double              progress_estimate;// Set by 'search()'.
     #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-    bqueue<uint>        avgBranchDepth; // Avg branch depth
+    bqueue<uint32_t>        avgBranchDepth; // Avg branch depth
     #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     MTRand              mtrand;           // random number generaton
-    uint                maxRestarts;      // More than this number of restarts will not be performed
+    uint32_t                maxRestarts;      // More than this number of restarts will not be performed
 
     /////////////////////////
     // For dynamic restarts
     /////////////////////////
-    bqueue<uint>        nbDecisionLevelHistory; // Set of last decision level in conflict clauses
+    bqueue<uint32_t>        nbDecisionLevelHistory; // Set of last decision level in conflict clauses
     double              totalSumOfDecisionLevel;
     uint64_t            conflictsAtLastSolve;
 
@@ -369,8 +374,8 @@ protected:
     void     attachClause     (Clause& c);             // Attach a clause to watcher lists.
     void     detachClause     (const XorClause& c);
     void     detachClause     (const Clause& c);       // Detach a clause to watcher lists.
-    void     detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint origSize, const Clause* address);
-    void     detachModifiedClause(const Var var1, const Var var2, const uint origSize, const XorClause* address);
+    void     detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
+    void     detachModifiedClause(const Var var1, const Var var2, const uint32_t origSize, const XorClause* address);
     template<class T>
     void     removeClause(T& c);                       // Detach and free a clause.
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
@@ -421,9 +426,9 @@ protected:
     /////////////////////////
     // Restart type handling
     /////////////////////////
-    const bool  chooseRestartType(const uint& lastFullRestart);
+    const bool  chooseRestartType(const uint32_t& lastFullRestart);
     void        setDefaultRestartType();
-    const bool  checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint& lastFullRestart);
+    const bool  checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint32_t& lastFullRestart);
     RestartType restartType;      // Used internally to determine which restart strategy to choose
     RestartType lastSelectedRestartType; //the last selected restart type
 
@@ -649,7 +654,7 @@ inline const uint32_t Solver::get_sum_gauss_prop() const
 }
 #endif
 
-inline const uint Solver::get_unitary_learnts_num() const
+inline const uint32_t Solver::get_unitary_learnts_num() const
 {
     if (decisionLevel() > 0)
         return trail_lim[0];

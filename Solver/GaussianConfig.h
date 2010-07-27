@@ -44,8 +44,8 @@ class GaussianConfig
     }
         
     //tuneable gauss parameters
-    uint only_nth_gauss_save;  //save only every n-th gauss matrix
-    uint decision_until; //do Gauss until this level
+    uint32_t only_nth_gauss_save;  //save only every n-th gauss matrix
+    uint32_t decision_until; //do Gauss until this level
     bool dontDisable; //If activated, gauss elimination is never disabled
     bool noMatrixFind; //Put all xor-s into one matrix, don't find matrixes
     bool orderCols; //Order columns according to activity

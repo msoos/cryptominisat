@@ -54,7 +54,7 @@ class Clause
 protected:
     
     #ifdef STATS_NEEDED
-    uint group;
+    uint32_t group;
     #endif
     
     uint32_t isLearnt:1;
@@ -80,7 +80,7 @@ protected:
 public:
 #endif //_MSC_VER
     template<class V>
-    Clause(const V& ps, const uint _group, const bool learnt)
+    Clause(const V& ps, const uint32_t _group, const bool learnt)
     {
         wasBinInternal = (ps.size() == 2);
         isFreed = false;
@@ -104,11 +104,11 @@ public:
 public:
     friend class ClauseAllocator;
 
-    const uint   size        ()      const {
+    const uint32_t   size        ()      const {
         return mySize;
     }
     
-    void         shrink      (const uint i) {
+    void         shrink      (const uint32_t i) {
         assert(i <= size());
         mySize -= i;
         if (i > 0) setStrenghtened();
@@ -226,7 +226,7 @@ public:
         fprintf(to, "c clause learnt %s group %d act %d oldAct %f\n", (learnt() ? "yes" : "no"), getGroup(), activity(), oldActivity());
     }
     void plainPrint(FILE* to = stdout) const {
-        for (uint i = 0; i < size(); i++) {
+        for (uint32_t i = 0; i < size(); i++) {
             if (data[i].sign()) fprintf(to, "-");
             fprintf(to, "%d ", data[i].var() + 1);
         }
@@ -242,7 +242,7 @@ public:
         group = _group;
     }
     #else
-    const uint getGroup() const
+    const uint32_t getGroup() const
     {
         return 0;
     }
@@ -281,7 +281,7 @@ class XorClause : public Clause
 protected:
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
-    XorClause(const V& ps, const bool inverted, const uint _group) :
+    XorClause(const V& ps, const bool inverted, const uint32_t _group) :
         Clause(ps, _group, false)
     {
         invertedXor = inverted;
@@ -315,7 +315,7 @@ public:
         fprintf(to, "x");
         if (xor_clause_inverted())
             printf("-");
-        for (uint i = 0; i < size(); i++) {
+        for (uint32_t i = 0; i < size(); i++) {
             fprintf(to, "%d ", data[i].var() + 1);
         }
         fprintf(to, "0\n");

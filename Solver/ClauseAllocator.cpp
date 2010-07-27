@@ -368,9 +368,9 @@ void ClauseAllocator::updatePointers(vector<XorClause*>& toUpdate, const map<Cla
     }
 }
 
-void ClauseAllocator::updatePointers(vector<pair<Clause*, uint> >& toUpdate, const map<Clause*, Clause*>& oldToNewPointer)
+void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate, const map<Clause*, Clause*>& oldToNewPointer)
 {
-    for (vector<pair<Clause*, uint> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
+    for (vector<pair<Clause*, uint32_t> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
         if (!(it->first)->wasBin()) {
             //assert(oldToNewPointer.find((TT*)*it) != oldToNewPointer.end());
             map<Clause*, Clause*>::const_iterator it2 = oldToNewPointer.find(it->first);

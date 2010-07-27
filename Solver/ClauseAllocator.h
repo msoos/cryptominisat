@@ -48,9 +48,9 @@ class ClauseAllocator {
         ~ClauseAllocator();
         
         template<class T>
-        Clause* Clause_new(const T& ps, const uint group, const bool learnt = false);
+        Clause* Clause_new(const T& ps, const uint32_t group, const bool learnt = false);
         template<class T>
-        XorClause* XorClause_new(const T& ps, const bool inverted, const uint group);
+        XorClause* XorClause_new(const T& ps, const bool inverted, const uint32_t group);
         Clause* Clause_new(Clause& c);
 
         const ClauseOffset getOffset(const Clause* ptr) const;
@@ -74,7 +74,7 @@ class ClauseAllocator {
         void updatePointers(vec<T*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
         void updatePointers(vector<Clause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
         void updatePointers(vector<XorClause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
-        void updatePointers(vector<std::pair<Clause*, uint> >& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
+        void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
 
         template<class T>
         void updateOffsets(vec<vec<T> >& watches, const map<ClauseOffset, ClauseOffset>& oldToNewOffset);

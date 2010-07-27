@@ -45,7 +45,7 @@ void Solver::testAllClauseAttach() const
         assert(find(xorwatches[c[0].var()], &c));
         assert(find(xorwatches[c[1].var()], &c));
         if (assigns[c[0].var()]!=l_Undef || assigns[c[1].var()]!=l_Undef) {
-            for (uint i = 0; i < c.size();i++) {
+            for (uint32_t i = 0; i < c.size();i++) {
                 assert(assigns[c[i].var()] != l_Undef);
             }
         }
@@ -127,7 +127,7 @@ const bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
         clauseFree(c2);
         #endif
         
-        for (uint j = 0; j < c.size(); j++) {
+        for (uint32_t j = 0; j < c.size(); j++) {
             assert(modelValue(c[j].unsign()) != l_Undef);
             final ^= (modelValue(c[j].unsign()) == l_True);
         }
@@ -151,7 +151,7 @@ const bool Solver::verifyClauses(const vec<Clause*>& cs) const
     
     for (uint32_t i = 0; i != cs.size(); i++) {
         Clause& c = *cs[i];
-        for (uint j = 0; j < c.size(); j++)
+        for (uint32_t j = 0; j < c.size(); j++)
             if (modelValue(c[j]) == l_True)
                 goto next;
             

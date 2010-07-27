@@ -60,13 +60,15 @@ x86_64-w64-mingw32-ar qs libz.a adler32.o \
    compile minisat
 *****************************
 
-i586-mingw32msvc-g++ -O3 -march=i586 -DVERSION=\"2.5.1\" -DCROSS_COMPILE  \
-    -I../mtl/ -I../MTRand/ Main.C /usr/i586-mingw32msvc/lib/libz.a \
-    Logger.cpp Solver.cpp  ClauseCleaner.cpp FindUndef.cpp \
+i586-mingw32msvc-g++ -O3 -march=i586 -DVERSION=\"2.6.0\" -DCROSS_COMPILE  \
+    -I../mtl/ -I../MTRand/ -DUSE_GAUSS Main.cpp \
+    /usr/i586-mingw32msvc/lib/libz.a \
+    Solver.cpp  ClauseCleaner.cpp FindUndef.cpp \
     PackedRow.cpp RestartTypeChooser.cpp MatrixFinder.cpp Gaussian.cpp \
-    VarReplacer.cpp XorFinder.cpp SmallPtr.cpp Clause.cpp PartHandler.cpp \
+    VarReplacer.cpp XorFinder.cpp ClauseAllocator.cpp PartHandler.cpp \
     Subsumer.cpp XorSubsumer.cpp FailedVarSearcher.cpp PartFinder.cpp \
-    StateSaver.cpp -o cryptominisat.exe
+    StateSaver.cpp UselessBinRemover.cpp SolverMisc.cpp \
+    SolverDebug.cpp OnlyNonLearntBins.cpp -o cryptominisat.exe
 
 *****************************
    useful for examining archives:

@@ -31,7 +31,7 @@ using std::vector;
 class FindUndef {
     public:
         FindUndef(Solver& _solver);
-        const uint unRoll();
+        const uint32_t unRoll();
         
     private:
         Solver& solver;
