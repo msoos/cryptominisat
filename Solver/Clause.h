@@ -69,9 +69,12 @@ protected:
     uint32_t isFreed:1;
     uint32_t wasBinInternal:1;
     uint32_t mySize:20;
+
+    uint32_t act;  //Clause glue -- clause activity according to GLUCOSE
+    float oldActivityInter; //Clause activity according to MiniSat
+
+    uint32_t abst; //Abstraction of clause
     
-    union  {uint32_t act; uint32_t abst;} extra;
-    float oldActivityInter;
     #ifdef _MSC_VER
     Lit     data[1];
     #else
@@ -96,144 +99,182 @@ public:
         setGroup(_group);
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
-        if (learnt) {
-            extra.act = 0;
-            oldActivityInter = 0;
-        } else
-            calcAbstractionClause();
+        oldActivityInter = 0;
+        calcAbstractionClause();
     }
 
 public:
     friend class ClauseAllocator;
 
-    const uint32_t   size        ()      const {
+    const uint32_t size() const
+    {
         return mySize;
     }
-    
-    void         shrink      (const uint32_t i) {
+
+    void shrink (const uint32_t i)
+    {
         assert(i <= size());
         mySize -= i;
         if (i > 0) setStrenghtened();
     }
-    void         pop         () {
+
+    void pop()
+    {
         shrink(1);
     }
-    const bool   isXor       () {
+
+    const bool isXor()
+    {
         return isXorClause;
     }
-    const bool   learnt      ()      const {
+
+    const bool learnt() const
+    {
         return isLearnt;
     }
-    float&       oldActivity    () {
+
+    float& oldActivity()
+    {
         return oldActivityInter;
     }
 
-    void setOldActivity(const float newOldAct) {
+    void setOldActivity(const float newOldAct)
+    {
         oldActivityInter = newOldAct;
     }
-    
-    const float&       oldActivity    () const {
+
+    const float& oldActivity() const
+    {
         return oldActivityInter;
     }
-    
-    const bool getStrenghtened() const {
+
+    const bool getStrenghtened() const
+    {
         return strenghtened;
     }
-    void setStrenghtened() {
+
+    void setStrenghtened()
+    {
         strenghtened = true;
         sorted = false;
         subsume0Done = false;
-        if (!learnt()) calcAbstractionClause();
+        calcAbstractionClause();
     }
-    void unsetStrenghtened() {
+
+    void unsetStrenghtened()
+    {
         strenghtened = false;
     }
-    const bool getSorted() const {
+
+    const bool getSorted() const
+    {
         return sorted;
     }
-    void setSorted() {
+
+    void setSorted()
+    {
         sorted = true;
     }
-    void setUnsorted() {
+
+    void setUnsorted()
+    {
         sorted = false;
     }
-    void subsume0Finished() {
+
+    void subsume0Finished()
+    {
         subsume0Done = 1;
     }
-    const bool subsume0IsFinished() {
+
+    const bool subsume0IsFinished()
+    {
         return subsume0Done;
     }
 
-    Lit& operator [] (uint32_t i) {
-        return data[i];
-    }
-    const Lit& operator [] (uint32_t i) const {
+    Lit& operator [] (uint32_t i)
+    {
         return data[i];
     }
 
-    void setActivity(uint32_t i)  {
-        extra.act = i;
+    const Lit& operator [] (uint32_t i) const
+    {
+        return data[i];
     }
-    
-    const uint32_t&   activity   () const {
-        return extra.act;
+
+    void setActivity(uint32_t newAct)
+    {
+        act = newAct;
     }
-    
-    void makeNonLearnt()  {
+
+    const uint32_t& activity() const
+    {
+        return act;
+    }
+
+    void makeNonLearnt()
+    {
         assert(isLearnt);
         isLearnt = false;
-        calcAbstractionClause();
     }
-    
-    void makeLearnt(const uint32_t newActivity)  {
-        extra.act = newActivity;
+
+    void makeLearnt(const uint32_t newAct)
+    {
+        act = newAct;
         oldActivityInter = 0;
         isLearnt = true;
     }
-    
-    inline void  strengthen(const Lit p)
+
+    inline void strengthen(const Lit p)
     {
         remove(*this, p);
-        sorted = false;
-        if (!learnt()) calcAbstractionClause();
-    }
-    
-    void calcAbstractionClause() {
-        assert(!learnt());
-        extra.abst = calcAbstraction(*this);;
-    }
-    
-    uint32_t getAbst()
-    {
-        if (learnt())
-            return calcAbstraction(*this);
-        else
-            return extra.abst;
+        setStrenghtened();
     }
 
-    const Lit*     getData     () const {
+    void calcAbstractionClause()
+    {
+        abst = calcAbstraction(*this);
+    }
+
+    uint32_t getAbst()
+    {
+        return abst;
+    }
+
+    const Lit* getData() const
+    {
         return data;
     }
-    Lit*    getData     () {
+
+    Lit* getData()
+    {
         return data;
     }
-    const Lit*     getDataEnd     () const {
+
+    const Lit* getDataEnd() const
+    {
         return data+size();
     }
-    Lit*    getDataEnd     () {
+
+    Lit* getDataEnd()
+    {
         return data+size();
     }
-    void print(FILE* to = stdout) {
+
+    void print(FILE* to = stdout)
+    {
         plainPrint(to);
         fprintf(to, "c clause learnt %s group %d act %d oldAct %f\n", (learnt() ? "yes" : "no"), getGroup(), activity(), oldActivity());
     }
-    void plainPrint(FILE* to = stdout) const {
+    
+    void plainPrint(FILE* to = stdout) const
+    {
         for (uint32_t i = 0; i < size(); i++) {
             if (data[i].sign()) fprintf(to, "-");
             fprintf(to, "%d ", data[i].var() + 1);
         }
         fprintf(to, "0\n");
     }
+    
     #ifdef STATS_NEEDED
     const uint32_t getGroup() const
     {
@@ -253,27 +294,33 @@ public:
         return;
     }
     #endif //STATS_NEEDED
-    void setRemoved() {
+    void setRemoved()
+    {
         isRemoved = true;
     }
 
-    const bool removed() const {
+    const bool removed() const
+    {
         return isRemoved;
     }
 
-    void setFreed() {
+    void setFreed()
+    {
         isFreed = true;
     }
 
-    const bool freed() const {
+    const bool freed() const
+    {
         return isFreed;
     }
 
-    const bool wasBin() const {
+    const bool wasBin() const
+    {
         return wasBinInternal;
     }
 
-    void setWasBin(const bool toSet) {
+    void setWasBin(const bool toSet)
+    {
         wasBinInternal = toSet;
     }
 };
@@ -298,22 +345,26 @@ public:
     {
         return invertedXor;
     }
+
     inline void invert(bool b)
     {
         invertedXor ^= b;
     }
-    void calcXorAbstraction() {
-        extra.abst = 0;
+    
+    void calcXorAbstraction()
+    {
+        abst = 0;
         for (uint32_t i = 0; i != size(); i++)
-            extra.abst |= 1 << (data[i].var() & 31);
+            abst |= 1 << (data[i].var() & 31);
     }
 
     void print() {
         printf("XOR Clause   group: %d, size: %d, learnt:%d, lits:\"", getGroup(), size(), learnt());
         plainPrint();
     }
-    
-    void plainPrint(FILE* to = stdout) const {
+
+    void plainPrint(FILE* to = stdout) const
+    {
         fprintf(to, "x");
         if (xor_clause_inverted())
             printf("-");
@@ -322,7 +373,7 @@ public:
         }
         fprintf(to, "0\n");
     }
-    
+
     friend class MatrixFinder;
 };
 

@@ -256,14 +256,12 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, OnlyNonLearntB
             return;
         }
         if (cl.size() > 2) {
-            if (!cl.learnt()) cl.calcAbstractionClause();
             linkInAlreadyClause(c);
             clauses[c.index] = c;
             solver.attachClause(cl);
             updateClause(c);
         } else if (cl.size() == 2) {
             if (!cl.learnt()) {
-                cl.calcAbstractionClause();
                 onlyNonLearntBins->attachBin(cl);
             }
             solver.attachClause(cl);
@@ -359,6 +357,7 @@ void Subsumer::unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c, bool det
 
 void Subsumer::subsume1(ClauseSimp& ps)
 {
+    ps.clause->unsetStrenghtened();
     vec<ClauseSimp>    Q;
     vec<ClauseSimp>    subs;
     vec<Lit>        qs;
@@ -427,7 +426,6 @@ void Subsumer::subsume1(ClauseSimp& ps)
                     return;
                 }
                 if (cl.size() > 1) {
-                    if (!cl.learnt()) cl.calcAbstractionClause();
                     linkInAlreadyClause(c);
                     clauses[c.index] = c;
                     solver.attachClause(cl);
@@ -509,7 +507,6 @@ void Subsumer::subsume1Partial(const Clause& ps)
                 }
             }
             cl.shrink(a-b);
-            cl.setStrenghtened();
 
             #ifdef VERBOSE_DEBUG
             cout << "--> Strenghtened clause:";
@@ -523,13 +520,11 @@ void Subsumer::subsume1Partial(const Clause& ps)
                 return;
             }
             if (cl.size() > 2) {
-                if (!cl.learnt()) cl.calcAbstractionClause();
                 linkInAlreadyClause(c);
                 clauses[c.index] = c;
                 solver.attachClause(cl);
                 updateClause(c);
             } else if (cl.size() == 2) {
-                if (!cl.learnt()) cl.calcAbstractionClause();
                 solver.attachClause(cl);
                 addBinaryClauses.push(&cl);
                 //updateClause(c);
@@ -1312,7 +1307,7 @@ void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subs
             __builtin_prefetch((it+1)->clause, 1, 1);
         
         if (it->clause != (Clause*)&ps
-            && (it->clause->learnt() || subsetAbst(abs, it->clause->getAbst()))
+            && subsetAbst(abs, it->clause->getAbst())
             && ps.size() <= it->clause->size()
             && subset(ps, *it->clause)) {
             out_subsumed.push(*it);
