@@ -142,6 +142,8 @@ class FailedVarSearcher {
         double numPropsMultiplier;
         uint32_t lastTimeFoundTruths;
 
+        uint32_t assymLastTimeWentUntil;
+
         uint32_t numCalls;
 };
 

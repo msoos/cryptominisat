@@ -45,6 +45,7 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     , lastTimeWentUntilBin(0)
     , numPropsMultiplier(1.0)
     , lastTimeFoundTruths(0)
+    , assymLastTimeWentUntil(0)
     , numCalls(0)
 {
 }
@@ -311,6 +312,9 @@ const bool FailedVarSearcher::asymmBranch()
     bool needToFinish = false;
     uint32_t checkedClauses = 0;
     uint32_t potentialClauses = solver.clauses.size();
+    if (assymLastTimeWentUntil + 500 > solver.clauses.size())
+        assymLastTimeWentUntil = 0;
+    uint32_t thisTimeWentUntil = 0;
     vec<Lit> lits;
     vec<Lit> unused;
 
@@ -322,7 +326,11 @@ const bool FailedVarSearcher::asymmBranch()
     Clause **i, **j;
     i = j = solver.clauses.getData();
     for (Clause **end = solver.clauses.getDataEnd(); i != end; i++) {
-        if (needToFinish || (**i).size() == 2) {
+        if (needToFinish || (**i).size() == 2 || assymLastTimeWentUntil > 0) {
+            if (!needToFinish && (**i).size() != 2) {
+                assymLastTimeWentUntil--;
+                thisTimeWentUntil++;
+            }
             *j++ = *i;
             continue;
         }
@@ -342,6 +350,7 @@ const bool FailedVarSearcher::asymmBranch()
         Clause& c = **i;
         extraDiff += c.size();
         checkedClauses++;
+        thisTimeWentUntil++;
 
         assert(c.size() > 2);
         assert(!c.learnt());
@@ -408,6 +417,8 @@ const bool FailedVarSearcher::asymmBranch()
         }
     }
     solver.clauses.shrink(i-j);
+
+    assymLastTimeWentUntil = thisTimeWentUntil;
 
     std::cout << "c asymm "
     << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
