@@ -576,38 +576,7 @@ void Subsumer::almost_all_database()
 
     solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
     
-    #ifdef VERBOSE_DEBUG
-    cout << "subsume1 part 1 finished" << endl;
-    #endif
-    
-    CSet s1;
-    registerIteration(s1);
-    while (cl_touched.size() > 0 && numMaxSubsume1 > 0){
-        #ifdef VERBOSE_DEBUG
-        std::cout << "c cl_touched was > 0, new iteration" << std::endl;
-        #endif
-        for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
-            if (it->clause != NULL)
-                s1.add(*it);
-        }
-        cl_touched.clear();
-        
-        for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
-            if (numMaxSubsume1 == 0) break;
-            if (it->clause != NULL) {
-                subsume1(*it);
-                numMaxSubsume1--;
-                if (!solver.ok) {
-                    unregisterIteration(s1);
-                    return;
-                }
-            }
-        }
-        s1.clear();
-
-        solver.clauseCleaner->cleanClausesBewareNULL(clauses, ClauseCleaner::simpClauses, *this);
-    }
-    unregisterIteration(s1);
+    smaller_database();
 }
 
 void Subsumer::smaller_database()
