@@ -134,7 +134,6 @@ private:
     void orderVarsForElim(vec<Var>& order);
     bool maybeEliminate(Var x);
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
-    void DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns);
     bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
 
     //Subsume with Nonexistent Bins

@@ -1299,18 +1299,6 @@ void inline Subsumer::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs
         unlinkClause(ns[i], x);
 }
 
-void inline Subsumer::DeallocPsNs(vec<ClauseSimp>& ps, vec<ClauseSimp>& ns)
-{
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        //clauses[ps[i].index].clause = NULL;
-        //clauseFree(ps[i].clause);
-    }
-    for (uint32_t i = 0; i < ns.size(); i++) {
-        //clauses[ns[i].index].clause = NULL;
-        //clauseFree(ns[i].clause);
-    }
-}
-
 // Returns TRUE if variable was eliminated.
 bool Subsumer::maybeEliminate(const Var x)
 {
@@ -1384,7 +1372,6 @@ bool Subsumer::maybeEliminate(const Var x)
                 if (!solver.ok) return true;
             }
         }
-        DeallocPsNs(ps, ns);
         goto Eliminated;
     }
     
