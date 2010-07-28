@@ -90,9 +90,6 @@ public:
         wasBinInternal = (ps.size() == 2);
         isFreed = false;
         isXorClause = false;
-        strenghtened = false;
-        sorted = false;
-        subsume0Done = false;
         mySize = ps.size();
         isLearnt = learnt;
         isRemoved = false;
@@ -100,7 +97,7 @@ public:
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
         oldActivityInter = 0;
-        calcAbstractionClause();
+        setStrenghtened();
     }
 
 public:
