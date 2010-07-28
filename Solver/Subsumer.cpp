@@ -560,7 +560,7 @@ void Subsumer::updateClause(ClauseSimp c)
 void Subsumer::almost_all_database()
 {
     #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c Larger database" << std::endl;
+    std::cout << "c Almost all database" << std::endl;
     #endif
     // Optimized variant when virtually whole database is involved:
     cl_touched.clear();
