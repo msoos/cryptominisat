@@ -360,10 +360,12 @@ class Tester:
           os.unlink(fname_unlink);
           
     if (self.arminFuzzer) :
-      for i in range(100000000) :
+      i = 0
+      while (i < 100000000) :
         commands.getoutput("./fuzzer > fuzzTest");
-        for i2 in range(num):
-          self.check("fuzzTest", "fuzzTest", i2, False)
+        for i3 in range(num):
+          self.check("fuzzTest", "fuzzTest", i3, False)
+          i = i + 1;
       exit()
     
     if (self.checkDirOnly) :
@@ -417,5 +419,8 @@ class Tester:
 
 test = Tester()
 test.main()
+
+#import cProfile
+#cProfile.run('test.main()')
 
 
