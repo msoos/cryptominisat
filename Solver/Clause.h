@@ -41,7 +41,7 @@ template <class T>
 uint32_t calcAbstraction(const T& ps) {
     uint32_t abstraction = 0;
     for (uint32_t i = 0; i != ps.size(); i++)
-        abstraction |= 1 << (ps[i].toInt() & 31);
+        abstraction |= 1 << (ps[i].var() & 31);
     return abstraction;
 }
 
@@ -332,7 +332,6 @@ protected:
     {
         invertedXor = inverted;
         isXorClause = true;
-        calcXorAbstraction();
     }
 
 public:
@@ -346,13 +345,6 @@ public:
     inline void invert(bool b)
     {
         invertedXor ^= b;
-    }
-    
-    void calcXorAbstraction()
-    {
-        abst = 0;
-        for (uint32_t i = 0; i != size(); i++)
-            abst |= 1 << (data[i].var() & 31);
     }
 
     void print() {

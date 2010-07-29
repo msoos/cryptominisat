@@ -33,6 +33,17 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 //=================================================================================================
 // Useful functions on vectors
 
+template<class T>
+static inline void printClause(T& ps)
+{
+    for (uint32_t i = 0; i < ps.size(); i++) {
+        if (ps[i].sign()) printf("-");
+        printf("%d ", ps[i].var() + 1);
+    }
+    printf("0\n");
+}
+
+
 template<class V, class T>
 static inline void remove(V& ts, const T& t)
 {

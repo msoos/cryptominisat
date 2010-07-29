@@ -63,7 +63,6 @@ private:
     vec<Var>               touched_list;   // A list of the true elements in 'touched'.
     CSet                   cl_touched;     // Clauses strengthened.
     vec<vec<ClauseSimp> >  occur;          // 'occur[index(lit)]' is a list of constraints containing 'lit'.
-    vec<vec<ClauseSimp>* > iter_vecs;      // Vectors currently used for iterations. Removed clauses will be looked up and replaced by 'Clause_NULL'.
     vec<CSet* >            iter_sets;      // Sets currently used for iterations.
     vec<char>              cannot_eliminate;//
     vec<char>              seen_tmp; // (used in various places)
@@ -97,8 +96,6 @@ private:
     //Iterations
     void registerIteration  (CSet& iter_set) { iter_sets.push(&iter_set); }
     void unregisterIteration(CSet& iter_set) { remove(iter_sets, &iter_set); }
-    void registerIteration  (vec<ClauseSimp>& iter_vec) { iter_vecs.push(&iter_vec); }
-    void unregisterIteration(vec<ClauseSimp>& iter_vec) { remove(iter_vecs, &iter_vec); }
     
     //Touching
     void touch(const Var x);
@@ -107,8 +104,14 @@ private:
     //Findsubsumed
     template<class T>
     void findSubsumed(const T& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
+    template<class T>
+    void findSubsumed1(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits);
+    template<class T>
+    void fillSubs(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits, const Lit lit);
     template<class T1, class T2>
     bool subset(const T1& A, const T2& B);
+    template<class T1, class T2>
+    const Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
 
     //subsume0
@@ -122,9 +125,11 @@ private:
     void subsume0(vec<Lit>& ps, uint32_t abs);
     template<class T>
     subsume0Happened subsume0Orig(const T& ps, uint32_t abs);
+    void subsume0Touched();
 
     //subsume1
-    void subsume1(ClauseSimp& ps);
+    void subsume1(ClauseSimp& ps, const bool alsoSubsume0 = true, const bool specialHandleBin = false);
+    const bool strenghten(ClauseSimp c, Clause& cl, const Lit toRemoveLit, const bool specialHandleBin);
 
     //smaller-bigger databases
     void smaller_database();
@@ -140,7 +145,6 @@ private:
     const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
     void subsume0BIN(const Lit lit, const vec<char>& lits, OnlyNonLearntBins* onlyNonLearntBins);
-    void subsume1Partial(const Clause& ps);
     uint32_t subsNonExistentNum;
     uint32_t subsNonExistentumFailed;
     bool subsNonExistentFinish;
@@ -148,8 +152,6 @@ private:
     uint32_t subsNonExistentLitsRemoved;
     vec<Clause*> addBinaryClauses;
     uint32_t doneNum;
-    vec<ClauseSimp> subsume1PartialSubs;
-    vec<Lit> subsume1PartialQs;
     vec<Lit> toVisit;
     vec<char> toVisitAll;
     vec<Lit> ps2;
@@ -217,8 +219,11 @@ inline void Subsumer::touch(const Lit p)
     touch(p.var());
 }
 
-inline bool Subsumer::subsetAbst(uint32_t A, uint32_t B)
+inline bool Subsumer::subsetAbst(const uint32_t A, const uint32_t B)
 {
+    //A subsumes B? (everything that is in A MUST be in B)
+    //if (A & ~B) contains even one bit, it means that A contains something
+    //that B doesn't. So A may be a subset of B only if (A & ~B) == 0;
     return !(A & ~B);
 }
 
@@ -238,6 +243,34 @@ bool Subsumer::subset(const T1& A, const T2& B)
     for (uint32_t i = 0; i != B.size(); i++)
         seen_tmp[B[i].toInt()] = 0;
     return true;
+}
+
+// Assumes 'seen' is cleared (will leave it cleared)
+//Checks whether A subsumes(1) B
+//Returns lit_Undef if it simply subsumes
+//Returns lit_Error if it doesnt subsume1 or subsume0
+template<class T1, class T2>
+const Lit Subsumer::subset1(const T1& A, const T2& B)
+{
+    Lit retLit = lit_Undef;
+
+    for (uint32_t i = 0; i != B.size(); i++)
+        seen_tmp[B[i].toInt()] = 1;
+    for (uint32_t i = 0; i != A.size(); i++) {
+        if (!seen_tmp[A[i].toInt()]) {
+            if (retLit == lit_Undef && seen_tmp[(~A[i]).toInt()])
+                retLit = ~A[i];
+            else {
+                retLit = lit_Error;
+                goto end;
+            }
+        }
+    }
+
+    end:
+    for (uint32_t i = 0; i != B.size(); i++)
+        seen_tmp[B[i].toInt()] = 0;
+    return retLit;
 }
 
 inline void Subsumer::newVar()

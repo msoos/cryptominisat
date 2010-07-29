@@ -367,7 +367,6 @@ inline const bool ClauseCleaner::cleanXorClauseBewareNULL(XorClauseSimp cc, XorS
             if (i-j > 0) {
                 subs.unlinkModifiedClauseNoDetachNoNULL(origClause, cc);
                 subs.linkInAlreadyClause(cc);
-                c.calcXorAbstraction();
             }
     }
     
