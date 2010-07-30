@@ -166,6 +166,16 @@ void Solver::printStatHeader() const
     if (verbosity >= 1) {
     #endif
         std::cout << "c "
+        << "========================================================================================="
+        << std::endl;
+        std::cout << "c"
+        << " types(t): F = full restart, N = normal restart" << std::endl;
+        std::cout << "c"
+        << " types(t): S = simplification begin/end, E = solution found" << std::endl;
+        std::cout << "c"
+        << " restart types(rt): st = static, dy = dynamic" << std::endl;
+
+        std::cout << "c "
         << std::setw(2) << "t"
         << std::setw(3) << "rt"
         << std::setw(6) << "Rest"
@@ -212,7 +222,7 @@ void Solver::printEndSearchStat()
     #else
     if (verbosity >= 1) {
     #endif //STATS_NEEDED
-        printRestartStat("F");
+        printRestartStat("E");
     }
 }
 

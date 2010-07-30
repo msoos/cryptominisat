@@ -158,13 +158,21 @@ const bool PartHandler::handle()
             }
         }
         
-        if (solver.verbosity >= 1)
+        if (solver.verbosity >= 1) {
             std::cout << "c Solved part" << std::endl;
+            std::cout << "c "
+            << "========================================================================================="
+            << std::endl;
+        }
     }
-    if (solver.verbosity >= 1)
+    if (solver.verbosity >= 1) {
         std::cout << "c Coming back to original instance"
-        << " |" << std::endl;
-    
+        << std::endl;
+        std::cout << "c "
+        << "========================================================================================="
+        << std::endl;
+    }
+
     solver.order_heap.filter(Solver::VarFilter(solver));
     
     //Checking that all variables that are not in the remaining part are all non-decision vars, and none have been set
