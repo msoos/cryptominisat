@@ -1098,6 +1098,9 @@ void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subs
     cout << "findSubsumed: ";
     printClause(ps);
     #endif
+
+    for (uint32_t i = 0; i != ps.size(); i++)
+        seen_tmp[ps[i].toInt()] = 1;
     
     uint32_t min_i = 0;
     for (uint32_t i = 1; i < ps.size(); i++){
@@ -1113,7 +1116,7 @@ void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subs
         if (it->clause != (Clause*)&ps
             && subsetAbst(abs, it->clause->getAbst())
             && ps.size() <= it->clause->size()
-            && subset(ps, *it->clause)) {
+            && subset(ps.size(), *it->clause)) {
             out_subsumed.push(*it);
             #ifdef VERBOSE_DEBUG
             cout << "subsumed: ";
@@ -1121,6 +1124,9 @@ void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subs
             #endif
         }
     }
+
+    for (uint32_t i = 0; i != ps.size(); i++)
+        seen_tmp[ps[i].toInt()] = 0;
 }
 
 template<class T>

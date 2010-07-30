@@ -108,8 +108,8 @@ private:
     void findSubsumed1(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits);
     template<class T>
     void fillSubs(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits, const Lit lit);
-    template<class T1, class T2>
-    bool subset(const T1& A, const T2& B);
+    template<class T2>
+    bool subset(const uint32_t aSize, const T2& B);
     template<class T1, class T2>
     const Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
@@ -227,22 +227,15 @@ inline bool Subsumer::subsetAbst(const uint32_t A, const uint32_t B)
     return !(A & ~B);
 }
 
-// Assumes 'seen' is cleared (will leave it cleared)
-template<class T1, class T2>
-bool Subsumer::subset(const T1& A, const T2& B)
+//A subsumes B (A is <= B)
+template<class T2>
+bool Subsumer::subset(const uint32_t aSize, const T2& B)
 {
-    for (uint32_t i = 0; i != B.size(); i++)
-        seen_tmp[B[i].toInt()] = 1;
-    for (uint32_t i = 0; i != A.size(); i++) {
-        if (!seen_tmp[A[i].toInt()]) {
-            for (uint32_t i = 0; i != B.size(); i++)
-                seen_tmp[B[i].toInt()] = 0;
-            return false;
-        }
+    uint32_t num = 0;
+    for (uint32_t i = 0; i != B.size(); i++) {
+        num += seen_tmp[B[i].toInt()];
     }
-    for (uint32_t i = 0; i != B.size(); i++)
-        seen_tmp[B[i].toInt()] = 0;
-    return true;
+    return num == aSize;
 }
 
 // Assumes 'seen' is cleared (will leave it cleared)
