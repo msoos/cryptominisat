@@ -29,6 +29,7 @@ using std::set;
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
 #include "StateSaver.h"
+#include "CompleteDetachReattacher.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -268,7 +269,10 @@ end:
     if (solver.ok && (numFailed || goodBothSame)) {
         double time = cpuTime();
         if ((int)origHeapSize - (int)solver.order_heap.size() >  (int)origHeapSize/15 && solver.nClauses() + solver.learnts.size() > 500000) {
-            completelyDetachAndReattach();
+            CompleteDetachReatacher reattacher(solver);
+            reattacher.completelyDetach();
+            const bool ret = reattacher.completelyReattach();
+            assert(ret == true);
             removedOldLearnts = true;
         } else {
             solver.clauseCleaner->removeAndCleanAll();
@@ -429,21 +433,6 @@ const bool FailedVarSearcher::asymmBranch()
     }
 
     return solver.ok;
-}
-
-void FailedVarSearcher::completelyDetachAndReattach()
-{
-    solver.clauses_literals = 0;
-    solver.learnts_literals = 0;
-    for (uint32_t i = 0; i < solver.nVars(); i++) {
-        solver.watches[i*2].clear();
-        solver.watches[i*2+1].clear();
-    }
-    solver.varReplacer->reattachInternalClauses();
-    cleanAndAttachClauses(solver.binaryClauses);
-    cleanAndAttachClauses(solver.clauses);
-    cleanAndAttachClauses(solver.learnts);
-    cleanAndAttachClauses(solver.xorclauses);
 }
 
 void FailedVarSearcher::printResults(const double myTime) const
@@ -767,66 +756,6 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
     tmpPs.growTo(2);
     assert(solver.ok);
 }
-
-template<class T>
-inline void FailedVarSearcher::cleanAndAttachClauses(vec<T*>& cs)
-{
-    T **i = cs.getData();
-    T **j = i;
-    for (T **end = cs.getDataEnd(); i != end; i++) {
-        if (cleanClause(**i)) {
-            solver.attachClause(**i);
-            *j++ = *i;
-        } else {
-            solver.clauseAllocator.clauseFree(*i);
-        }
-    }
-    cs.shrink(i-j);
-}
-
-inline const bool FailedVarSearcher::cleanClause(Clause& ps)
-{
-    Lit *i = ps.getData();
-    Lit *j = i;
-    for (Lit *end = ps.getDataEnd(); i != end; i++) {
-        if (solver.value(*i) == l_True) return false;
-        if (solver.value(*i) == l_Undef) {
-            *j++ = *i;
-        }
-    }
-    ps.shrink(i-j);
-    assert(ps.size() > 1);
-
-    if (i != j && ps.size() == 2)
-        solver.becameBinary++;
-
-    return true;
-}
-
-inline const bool FailedVarSearcher::cleanClause(XorClause& ps)
-{
-    Lit *i = ps.getData(), *j = i;
-    for (Lit *end = ps.getDataEnd(); i != end; i++) {
-        if (solver.assigns[i->var()] == l_True) ps.invert(true);
-        if (solver.assigns[i->var()] == l_Undef) {
-            *j++ = *i;
-        }
-    }
-    ps.shrink(i-j);
-
-    if (ps.size() == 0) return false;
-    assert(ps.size() > 1);
-
-    if (ps.size() == 2) {
-        ps[0] = ps[0].unsign();
-        ps[1] = ps[1].unsign();
-        solver.varReplacer->replace(ps, ps.xor_clause_inverted(), ps.getGroup());
-        return false;
-    }
-    
-    return true;
-}
-
 
 
 /***************

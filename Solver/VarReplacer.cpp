@@ -559,6 +559,23 @@ void VarReplacer::reattachInternalClauses()
             solver.attachClause(**i);
             *j++ = *i;
         }
+
+        if (solver.value((**i)[0]) == l_False &&
+            solver.value((**i)[1]) == l_Undef) {
+            solver.uncheckedEnqueue((**i)[1]);
+        }
+
+        if (solver.value((**i)[0]) == l_Undef &&
+            solver.value((**i)[1]) == l_False) {
+            solver.uncheckedEnqueue((**i)[0]);
+        }
+
+        if (solver.value((**i)[0]) == l_False &&
+            solver.value((**i)[1]) == l_False) {
+            solver.ok = false;
+        }
+
+        //either is l_True, it is ignored
     }
     clauses.shrink(i-j);
 }

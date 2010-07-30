@@ -20,6 +20,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef Alg_h
 #define Alg_h
 
+#include <iostream>
 #include "Vec.h"
 #include "../Solver/SolverTypes.h"
 #include "../Solver/Watched.h"
@@ -41,6 +42,17 @@ static inline void printClause(T& ps)
         printf("%d ", ps[i].var() + 1);
     }
     printf("0\n");
+}
+
+template<class T>
+static inline void printXorClause(T& ps, const bool xor_clause_inverted)
+{
+    std::cout << "x";
+    if (xor_clause_inverted) std::cout << "-";
+    for (uint32_t i = 0; i < ps.size(); i++) {
+        std::cout << ps[i].var() + 1 << " ";
+    }
+    std::cout << "0" << std::endl;
 }
 
 

@@ -210,10 +210,8 @@ const bool XorFinder::findXors(uint32_t& sumLengths)
             solver.varReplacer->replace(lits, impair, old_group);
             
             #ifdef VERBOSE_DEBUG
-            XorClause* x = XorClause_new(lits, impair, old_group);
             cout << "- Final 2-long xor-clause: ";
-            x->plainPrint();
-            clauseFree(x);
+            printXorClause(lits, impair);
             #endif
             break;
         }

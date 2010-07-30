@@ -22,7 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 using std::set;
 
-class OnlyNonLearntBins {
+class OnlyNonLearntBins
+{
     public:
         OnlyNonLearntBins(Solver& solver);
 
@@ -37,11 +38,19 @@ class OnlyNonLearntBins {
         void attachBin(const Clause& c);
         const uint32_t removeBins();
 
+        //helper
+        inline const uint32_t getWatchSize(const Lit lit);
+
     private:
         vec<vec<WatchedBin> > binwatches;
         set<uint64_t> toRemove;
         
         Solver& solver;
 };
+
+inline const uint32_t OnlyNonLearntBins::getWatchSize(const Lit lit)
+{
+    return binwatches[lit.toInt()].size();
+}
 
 #endif //ONLYNONLEARNTBINS_H

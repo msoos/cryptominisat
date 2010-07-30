@@ -33,17 +33,12 @@ public:
     void newVar();
 
     //Used by cleaner
-    void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c, const bool detachAndNull);
-    void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
+    void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
-    void linkInAlreadyClause(ClauseSimp& c);
-    void updateClause(ClauseSimp c);
-
 
     //UnElimination
     void extendModel(Solver& solver2);
     const bool unEliminate(const Var var);
-
 
     //Get-functions
     const vec<char>& getVarElimed() const;
@@ -58,7 +53,6 @@ private:
     
     //Main
     vec<ClauseSimp>        clauses;
-    CSet                   learntClauses;
     vec<char>              touched;        // Is set to true when a variable is part of a removed clause. Also true initially (upon variable creation).
     vec<Var>               touched_list;   // A list of the true elements in 'touched'.
     CSet                   cl_touched;     // Clauses strengthened.
@@ -73,7 +67,7 @@ private:
     double totalTime;
     uint32_t numElimed;
     map<Var, vector<Clause*> > elimedOutVar;
-    
+
     //Limits
     uint32_t numVarsElimed;
     uint32_t numMaxSubsume1;
@@ -128,12 +122,11 @@ private:
     void subsume0Touched();
 
     //subsume1
-    void subsume1(ClauseSimp& ps, const bool alsoSubsume0 = true, const bool specialHandleBin = false);
-    const bool strenghten(ClauseSimp c, Clause& cl, const Lit toRemoveLit, const bool specialHandleBin);
+    void subsume1(Clause& ps, const bool alsoSubsume0 = true);
+    void strenghten(ClauseSimp c, const Lit toRemoveLit);
 
     //smaller-bigger databases
-    void smaller_database();
-    void almost_all_database();
+    void subsume0AndSubsume1();
 
     //Variable elimination
     void orderVarsForElim(vec<Var>& order);
@@ -144,7 +137,7 @@ private:
     //Subsume with Nonexistent Bins
     const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
-    void subsume0BIN(const Lit lit, const vec<char>& lits, OnlyNonLearntBins* onlyNonLearntBins);
+    void subsume0BIN(const Lit lit, const vec<char>& lits);
     uint32_t subsNonExistentNum;
     uint32_t subsNonExistentumFailed;
     bool subsNonExistentFinish;
@@ -154,7 +147,6 @@ private:
     uint32_t doneNum;
     vec<Lit> toVisit;
     vec<char> toVisitAll;
-    vec<Lit> ps2;
     
     class VarOcc {
         public:
@@ -183,7 +175,7 @@ private:
     
     
     //validity checking
-    void verifyIntegrity();
+    const bool verifyIntegrity();
     
     uint32_t clauses_subsumed;
     uint32_t literals_removed;

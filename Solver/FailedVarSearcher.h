@@ -66,13 +66,6 @@ class FailedVarSearcher {
         const TwoLongXor getTwoLongXor(const XorClause& c);
         void addFromSolver(const vec<XorClause*>& cs);
         uint32_t newBinXor;
-        
-        //For detach&re-attach (when lots of vars found)
-        template<class T>
-        void cleanAndAttachClauses(vec<T*>& cs);
-        const bool cleanClause(Clause& ps);
-        const bool cleanClause(XorClause& ps);
-        void completelyDetachAndReattach();
 
         //For re-adding old removed learnt clauses
         const bool readdRemovedLearnts();

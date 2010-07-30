@@ -413,6 +413,7 @@ protected:
     friend class UselessBinRemover;
     friend class OnlyNonLearntBins;
     friend class ClauseAllocator;
+    friend class CompleteDetachReatacher;
     Conglomerate*       conglomerate;
     VarReplacer*        varReplacer;
     ClauseCleaner*      clauseCleaner;

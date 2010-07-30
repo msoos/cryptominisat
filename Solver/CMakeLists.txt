@@ -39,5 +39,6 @@ add_library(cryptominisatlib
     ClauseAllocator.cpp
     UselessBinRemover.cpp
     OnlyNonLearntBins.cpp
+    CompleteDetachReattacher.cpp
 )
 
