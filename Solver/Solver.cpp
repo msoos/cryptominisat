@@ -2004,7 +2004,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         assert(xorSubsumer->checkElimedUnassigned());
         #endif //DEBUG_VARELIM
 
-        if ((conflicts - lastConflPrint) > std::max(conflicts/100*4, (uint64_t)3000)) {
+        if ((conflicts - lastConflPrint) > std::max(conflicts/100*6, (uint64_t)4000)) {
             printRestartStat("N");
             lastConflPrint = conflicts;
         }
@@ -2012,6 +2012,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         if (schedSimplification && conflicts >= nextSimplify) {
             status = simplifyProblem(500);
             printRestartStat();
+            lastConflPrint = conflicts;
             nextSimplify = conflicts * 1.5;
             if (status != l_Undef) break;
         }
