@@ -122,7 +122,7 @@ private:
     void subsume0Touched();
 
     //subsume1
-    void subsume1(Clause& ps, const bool alsoSubsume0 = true);
+    void subsume1(Clause& ps);
     void strenghten(ClauseSimp c, const Lit toRemoveLit);
 
     //smaller-bigger databases

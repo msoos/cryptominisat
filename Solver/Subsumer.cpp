@@ -215,7 +215,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
     #endif //VERBOSE_DEBUG
 }
 
-void Subsumer::subsume1(Clause& ps, const bool alsoSubsume0)
+void Subsumer::subsume1(Clause& ps)
 {
     ps.unsetStrenghtened();
     vec<ClauseSimp>    subs;
@@ -226,12 +226,24 @@ void Subsumer::subsume1(Clause& ps, const bool alsoSubsume0)
     #endif
 
     findSubsumed1(ps, ps.getAbst(), subs, subsLits);
-    if (alsoSubsume0) ps.subsume0Finished();
+    ps.subsume0Finished();
     for (uint32_t j = 0; j < subs.size(); j++) {
         if (subs[j].clause == NULL) continue;
         ClauseSimp c = subs[j];
         if (subsLits[j] == lit_Undef) {
-            if (alsoSubsume0) unlinkClause(c);
+            if (ps.learnt()) {
+                if (c.clause->learnt()) {
+                    if (c.clause->activity() < ps.activity())
+                        ps.setActivity(c.clause->activity());
+                    if (c.clause->oldActivity() > ps.oldActivity())
+                        ps.setOldActivity(c.clause->oldActivity());
+                } else {
+                    ps.makeNonLearnt();
+                    solver.learnts_literals -= ps.size();
+                    solver.clauses_literals += ps.size();
+                }
+            }
+            unlinkClause(c);
         } else {
             strenghten(c, subsLits[j]);
             if (!solver.ok) return;
@@ -584,7 +596,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
         if (numMaxSubsume0 > 0) {
             Clause& cl = *solver.binaryClauses[i];
-            subsume1(cl, !cl.learnt());
+            subsume1(cl);
             if (!solver.ok) return false;
             numMaxSubsume0--;
         }
