@@ -689,15 +689,6 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate().isNULL());
-            if (!solver.ok) {
-                #ifdef VERBOSE_DEBUG
-                std::cout << "Conflict for both signs of var "
-                << lit.var() + 1
-                << " -> UNSAT" << std::endl;
-                #endif //VERBOSE_DEBUG
-                return false;
-            }
             continue;
         }
 
@@ -708,15 +699,6 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate().isNULL());
-            if (!solver.ok) {
-                #ifdef VERBOSE_DEBUG
-                std::cout << "Conflict for both signs of var "
-                << lit.var() + 1
-                << " -> UNSAT" << std::endl;
-                #endif //VERBOSE_DEBUG
-                return false;
-            }
             continue;
         }
     }
