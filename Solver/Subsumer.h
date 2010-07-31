@@ -147,6 +147,8 @@ private:
     uint32_t doneNum;
     vec<Lit> toVisit;
     vec<char> toVisitAll;
+
+    bool subsWithBins;
     
     class VarOcc {
         public:

@@ -106,7 +106,7 @@ const bool Subsumer::unEliminate(const Var var)
 
 void Subsumer::subsume0(Clause& ps)
 {
-    ps.subsume0Finished();
+    if (!subsWithBins) ps.subsume0Finished();
     #ifdef VERBOSE_DEBUG
     cout << "subsume0-ing with clause: ";
     ps.plainPrint();
@@ -217,7 +217,6 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
 
 void Subsumer::subsume1(Clause& ps)
 {
-    ps.unsetStrenghtened();
     vec<ClauseSimp>    subs;
     vec<Lit>           subsLits;
     #ifdef VERBOSE_DEBUG
@@ -226,7 +225,8 @@ void Subsumer::subsume1(Clause& ps)
     #endif
 
     findSubsumed1(ps, ps.getAbst(), subs, subsLits);
-    ps.subsume0Finished();
+    ps.unsetStrenghtened();
+    if (!subsWithBins) ps.subsume0Finished();
     for (uint32_t j = 0; j < subs.size(); j++) {
         if (subs[j].clause == NULL) continue;
         ClauseSimp c = subs[j];
@@ -567,6 +567,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     clearAll();
     clauseID = 0;
     addBinaryClauses.clear();
+    subsWithBins = true;
 
     //Clearing stats
     subsNonExistentumFailed = 0;
@@ -771,6 +772,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     numVarsElimed = 0;
     blockTime = 0.0;
     clearAll();
+    subsWithBins = false;
     
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
