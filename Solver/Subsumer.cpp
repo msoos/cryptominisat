@@ -396,6 +396,7 @@ void Subsumer::subsume0AndSubsume1()
             if (numMaxSubsume1 == 0) break;
             if (it->clause != NULL) {
                 subsume1(*it->clause);
+                s0.exclude(*it);
                 numMaxSubsume1--;
                 if (!solver.ok) goto end;
             }
