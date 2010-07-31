@@ -368,7 +368,6 @@ void Subsumer::subsume0AndSubsume1()
                 for (uint32_t k = 0; k < p_occs.size(); k++) s0.add(p_occs[k]);
             }
         }
-        cl_touched.clear();
     } else {
         for (uint32_t i = 0; i < clauses.size(); i++) {
             if (clauses[i].clause != NULL) {
@@ -377,6 +376,7 @@ void Subsumer::subsume0AndSubsume1()
             }
         }
     }
+    cl_touched.clear();
 
     registerIteration(s0);
     registerIteration(s1);
