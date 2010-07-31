@@ -638,8 +638,8 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     }
     addBinaryClauses.clear();
     freeMemory();
-    if (!doSimpleFailedVarSearch()) return false;
     subsNonExistentumFailed += solver.trail.size() - oldTrailSize;
+    if (!doSimpleFailedVarSearch()) return false;
 
     if (solver.verbosity >= 1) {
         std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << subsNonExistentNum
@@ -649,6 +649,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << subsNonExistentTime << " s"
         << std::endl;
     }
+
     totalTime += cpuTime() - myTime;
     solver.order_heap.filter(Solver::VarFilter(solver));
 
@@ -660,6 +661,8 @@ const bool Subsumer::doSimpleFailedVarSearch()
     uint64_t extraWork = 0;
     solver.order_heap.filter(Solver::VarFilter(solver));
     uint64_t oldProps = solver.propagations;
+    uint32_t oldTrailSize = solver.trail.size();
+    double myTime = cpuTime();
     while (solver.propagations + extraWork < oldProps + 20000*1000) {
         Var var = solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)];
 
@@ -690,6 +693,13 @@ const bool Subsumer::doSimpleFailedVarSearch()
             if (!solver.ok) return false;
             extraWork += 5;
         }
+    }
+
+    if (solver.verbosity >= 1) {
+        std::cout << "c Simple failed var search: "
+        << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() -  myTime) << " s"
+        << std::endl;
     }
 
     return true;
