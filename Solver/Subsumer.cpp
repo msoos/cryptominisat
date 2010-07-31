@@ -317,6 +317,7 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
                 }
             } else {
                 solver.uncheckedEnqueue(lit);
+                solver.ok = solver.propagate().isNULL();
             }
             unlinkClause(c);
             break;
@@ -690,6 +691,8 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
+            solver.ok = solver.propagate().isNULL();
+            if (!solver.ok) return false;
             continue;
         }
 
@@ -700,6 +703,8 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
+            solver.ok = solver.propagate().isNULL();
+            if (!solver.ok) return false;
             continue;
         }
     }
@@ -1168,6 +1173,7 @@ bool Subsumer::maybeEliminate(const Var x)
                             }
                         } else {
                             solver.uncheckedEnqueue(lit);
+                            solver.ok = solver.propagate().isNULL();
                         }
                         break;
                     }
