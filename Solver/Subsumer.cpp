@@ -638,6 +638,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     }
     addBinaryClauses.clear();
     freeMemory();
+    if (!doSimpleFailedVarSearch()) return false;
     subsNonExistentumFailed += solver.trail.size() - oldTrailSize;
 
     if (solver.verbosity >= 1) {
@@ -650,6 +651,46 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     }
     totalTime += cpuTime() - myTime;
     solver.order_heap.filter(Solver::VarFilter(solver));
+
+    return true;
+}
+
+const bool Subsumer::doSimpleFailedVarSearch()
+{
+    uint64_t extraWork = 0;
+    solver.order_heap.filter(Solver::VarFilter(solver));
+    uint64_t oldProps = solver.propagations;
+    while (solver.propagations + extraWork < oldProps + 20000*1000) {
+        Var var = solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)];
+
+        if (solver.assigns[var] != l_Undef) continue;
+        Lit lit = Lit(var, true);
+        solver.newDecisionLevel();
+        solver.uncheckedEnqueueLight(lit);
+        bool failed = !solver.propagate().isNULL();
+        solver.cancelUntil(0);
+        extraWork += 5;
+        if (failed) {
+            solver.uncheckedEnqueueLight(~lit);
+            solver.ok = solver.propagate().isNULL();
+            if (!solver.ok) return false;
+            extraWork += 5;
+        }
+
+        if (solver.assigns[var] != l_Undef) continue;
+        lit = ~lit;
+        solver.newDecisionLevel();
+        solver.uncheckedEnqueueLight(lit);
+        failed = !solver.propagate().isNULL();
+        solver.cancelUntil(0);
+        extraWork += 5;
+        if (failed) {
+            solver.uncheckedEnqueueLight(~lit);
+            solver.ok = solver.propagate().isNULL();
+            if (!solver.ok) return false;
+            extraWork += 5;
+        }
+    }
 
     return true;
 }

@@ -149,6 +149,7 @@ private:
     vec<Lit> toVisit;
     vec<char> toVisitAll;
 
+    const bool doSimpleFailedVarSearch();
     bool subsWithBins;
     
     class VarOcc {
