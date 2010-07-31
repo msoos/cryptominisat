@@ -792,53 +792,23 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     clauses.reserve(expected_size);
     cl_touched.reserve(expected_size);
 
+    //start with smaller clauses first
+    //they will be subsumed first, so makes sense!
+    solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
+    addFromSolver(solver.binaryClauses, alsoLearnt);
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    addFromSolver(solver.clauses, alsoLearnt);
     if (alsoLearnt) {
         solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
         addFromSolver(solver.learnts, alsoLearnt);
     }
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver(solver.clauses, alsoLearnt);
-
     //It is IMPERATIVE to add binaryClauses last. The non-binary clauses can
     //move to binaryClauses during cleaning!!!!
-    solver.clauseCleaner->removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses);
     addFromSolver(solver.binaryClauses, alsoLearnt);
     CompleteDetachReatacher reattacher(solver);
     reattacher.completelyDetach();
 
-    //Limits
-    if (clauses.size() > 3500000) {
-        numMaxSubsume0 = 900000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 5.0 * (0.8+(double)(numCalls)/4.0));
-        numMaxSubsume1 = 100000 * (1+numCalls/2);
-        numMaxBlockToVisit = (int64_t)(30000.0 * (0.8+(double)(numCalls)/3.0));
-    }
-    if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
-        numMaxSubsume0 = 2000000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
-        numMaxSubsume1 = 300000 * (1+numCalls/2);
-        numMaxBlockToVisit = (int64_t)(50000.0 * (0.8+(double)(numCalls)/3.0));
-    }
-    if (clauses.size() <= 1500000) {
-        numMaxSubsume0 = 4000000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/2.0));
-        numMaxSubsume1 = 400000 * (1+numCalls/2);
-        numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
-    }
-    if (solver.order_heap.size() > 200000)
-        numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
-    else
-        numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
-
-    if (!solver.doSubsume1) numMaxSubsume1 = 0;
-    if (alsoLearnt) {
-        numMaxElim = 0;
-        //numMaxSubsume1 = 0;
-        numMaxBlockVars = 0;
-        numMaxBlockToVisit = 0;
-    } else {
-        numCalls++;
-    }
+    setLimits(alsoLearnt);
 
     //For debugging
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
@@ -985,6 +955,42 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     solver.testAllClauseAttach();
     return true;
+}
+
+void Subsumer::setLimits(const bool alsoLearnt)
+{
+    if (clauses.size() > 3500000) {
+        numMaxSubsume0 = 900000 * (1+numCalls/2);
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 5.0 * (0.8+(double)(numCalls)/4.0));
+        numMaxSubsume1 = 100000 * (1+numCalls/2);
+        numMaxBlockToVisit = (int64_t)(30000.0 * (0.8+(double)(numCalls)/3.0));
+    }
+    if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
+        numMaxSubsume0 = 2000000 * (1+numCalls/2);
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
+        numMaxSubsume1 = 300000 * (1+numCalls/2);
+        numMaxBlockToVisit = (int64_t)(50000.0 * (0.8+(double)(numCalls)/3.0));
+    }
+    if (clauses.size() <= 1500000) {
+        numMaxSubsume0 = 4000000 * (1+numCalls/2);
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/2.0));
+        numMaxSubsume1 = 400000 * (1+numCalls/2);
+        numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
+    }
+    if (solver.order_heap.size() > 200000)
+        numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
+    else
+        numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
+
+    if (!solver.doSubsume1) numMaxSubsume1 = 0;
+    if (alsoLearnt) {
+        numMaxElim = 0;
+        numMaxSubsume1 = std::min(numMaxSubsume1, (uint32_t)10000);
+        numMaxBlockVars = 0;
+        numMaxBlockToVisit = 0;
+    } else {
+        numCalls++;
+    }
 }
 
 void Subsumer::removeAssignedVarsFromEliminated()

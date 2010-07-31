@@ -80,6 +80,7 @@ private:
     void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false, const bool addBinAndAddToCL = true);
     void fillCannotEliminate();
     void clearAll();
+    void setLimits(const bool alsoLearnt);
 
     //Finish-up
     void freeMemory();
