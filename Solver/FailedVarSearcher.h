@@ -58,7 +58,7 @@ class FailedVarSearcher {
     public:
         FailedVarSearcher(Solver& _solver);
     
-        const bool search(uint64_t numProps);
+        const bool search();
         const bool asymmBranch();
         
     private:

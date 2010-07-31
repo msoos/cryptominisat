@@ -1792,9 +1792,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
-    if (failedVarSearch &&
-        !failedVarSearcher->search((nClauses() < 500000 && order_heap.size() < 50000) ? 11000000 : 4000000))
-        goto end;
+    if (failedVarSearch && !failedVarSearcher->search()) goto end;
 
     if (doReplace && (regularRemoveUselessBins || regularSubsumeWithNonExistBinaries)) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
@@ -1933,16 +1931,15 @@ inline void Solver::performStepsBeforeSolve()
     }
     
     if (xorclauses.size() > 1) {
-        testAllClauseAttach();
         if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption())
             return;
-        
-        testAllClauseAttach();
+
         if (doReplace && !varReplacer->performReplace())
             return;
     }
 
     if (doSortWatched) sortWatched();
+    testAllClauseAttach();
 }
 
 lbool Solver::solve(const vec<Lit>& assumps)

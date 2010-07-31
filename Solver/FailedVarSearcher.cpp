@@ -125,8 +125,9 @@ const TwoLongXor FailedVarSearcher::getTwoLongXor(const XorClause& c)
     return tmp;
 }
 
-const bool FailedVarSearcher::search(uint64_t numProps)
+const bool FailedVarSearcher::search()
 {
+    uint64_t numProps = (solver.nClauses() < 500000 && solver.order_heap.size() < 50000) ? 22000000 : 8000000;
     assert(solver.decisionLevel() == 0);
     solver.testAllClauseAttach();
     double myTime = cpuTime();
