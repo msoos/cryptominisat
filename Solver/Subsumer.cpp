@@ -621,6 +621,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     }
     #endif //DEBUG_BINARIES
 
+    uint32_t oldTrailSize = solver.trail.size();
     addBackToSolver();
     if (!reattacher.completelyReattach()) return false;
     for (uint32_t i = 0; i < addBinaryClauses.size(); i++) {
@@ -637,6 +638,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     }
     addBinaryClauses.clear();
     freeMemory();
+    subsNonExistentumFailed += solver.trail.size() - oldTrailSize;
 
     if (solver.verbosity >= 1) {
         std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << subsNonExistentNum
