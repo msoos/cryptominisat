@@ -1902,6 +1902,8 @@ inline void Solver::performStepsBeforeSolve()
         }
     }
 
+    if (failedVarSearch && !failedVarSearcher->search()) return;
+
     if (doSubsumption
         && !libraryUsage
         && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
