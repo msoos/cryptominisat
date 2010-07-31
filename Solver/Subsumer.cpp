@@ -344,7 +344,6 @@ void Subsumer::subsume0AndSubsume1()
             Lit smallestPos = lit_Undef;
             s1.add(c);
             for (uint32_t j = 0; j < cl.size(); j++) {
-
                 if (ol_seenPos[cl[j].toInt()] || smallestPos == lit_Error) {
                     smallestPos = lit_Error;
                     goto next;
@@ -582,7 +581,6 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     addFromSolver(solver.clauses, true, false);
     //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
     //addFromSolver(solver.learnts, true, false);
-
     CompleteDetachReatacher reattacher(solver);
     reattacher.completelyDetach();
 
@@ -624,7 +622,6 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
 
     addBackToSolver();
     if (!reattacher.completelyReattach()) return false;
-
     for (uint32_t i = 0; i < addBinaryClauses.size(); i++) {
         Clause& c = *addBinaryClauses[i];
         assert(!c.learnt());
@@ -638,7 +635,6 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
         if (!solver.ok) return false;
     }
     addBinaryClauses.clear();
-
     freeMemory();
 
     if (solver.verbosity >= 1) {
@@ -861,6 +857,9 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         }
     }
 
+    //Because of touched, we will go through this anyway
+    //--> s0 will have the important clauses from here in it
+    //but for performance reasons, it's probably best to do it anyway
     if (alsoLearnt) {
         for (uint32_t i = 0; i < clauses.size(); i++) {
             if (numMaxSubsume0 == 0) break;
