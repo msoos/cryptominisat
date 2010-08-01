@@ -123,8 +123,8 @@ private:
     void subsume0Touched();
 
     //subsume1
-    void subsume1(Clause& ps);
-    void strenghten(ClauseSimp c, const Lit toRemoveLit);
+    void subsume1(Clause& ps, OnlyNonLearntBins* onlyNonLearntBins = NULL);
+    void strenghten(ClauseSimp c, const Lit toRemoveLit, OnlyNonLearntBins* onlyNonLearntBins = NULL);
 
     //smaller-bigger databases
     void subsume0AndSubsume1();
@@ -138,18 +138,17 @@ private:
     //Subsume with Nonexistent Bins
     const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
-    void subsume0BIN(const Lit lit, const vec<char>& lits);
+    void subsume0BIN(const Lit lit, const vec<char>& lits, OnlyNonLearntBins* onlyNonLearntBins);
     uint32_t subsNonExistentNum;
     uint32_t subsNonExistentumFailed;
     bool subsNonExistentFinish;
     double subsNonExistentTime;
     uint32_t subsNonExistentLitsRemoved;
-    vec<Clause*> addBinaryClauses;
     uint32_t doneNum;
     vec<Lit> toVisit;
     vec<char> toVisitAll;
 
-    const bool doSimpleFailedVarSearch();
+    const bool doSimpleFailedVarSearch(OnlyNonLearntBins* OnlyNonLearntBins);
     bool subsWithBins;
     
     class VarOcc {

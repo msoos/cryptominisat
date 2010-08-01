@@ -155,4 +155,33 @@ const uint32_t OnlyNonLearntBins::removeBins()
     return (i - j);
 }
 
+const bool OnlyNonLearntBins::cleanAndAttachBin(const Clause& c)
+{
+    if (solver.value(c[0]) == l_True || solver.value(c[1]) == l_True) return true;
+    if (solver.value(c[0]) == l_Undef && solver.value(c[1]) == l_Undef) {
+        attachBin(c);
+        return true;
+    }
+
+    if (solver.value(c[0]) == l_False && solver.value(c[1]) == l_False) {
+        solver.ok = false;
+        return false;
+    }
+
+    if (solver.value(c[0]) == l_False) {
+        solver.uncheckedEnqueue(c[1]);
+        solver.ok = propagate();
+        return solver.ok;
+    }
+
+    if (solver.value(c[1]) == l_False) {
+        solver.uncheckedEnqueue(c[0]);
+        solver.ok = propagate();
+        return solver.ok;
+    }
+
+    assert(false);
+
+    return true;
+}
 
