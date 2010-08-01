@@ -1887,6 +1887,14 @@ inline void Solver::performStepsBeforeSolve()
         return;
     }*/
 
+    if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
+        XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
+        if (!xorFinder.doNoPart(2, 2)) return;
+        if (doReplace && !varReplacer->performReplace(true)) return;
+    }
+
+    if (failedVarSearch && !failedVarSearcher->search()) return;
+
     if (doAsymmBranch && !failedVarSearcher->asymmBranch()) {
         return;
     }
@@ -1901,8 +1909,6 @@ inline void Solver::performStepsBeforeSolve()
             if (!uselessBinRemover.removeUslessBinFull()) return;
         }
     }
-
-    //if (failedVarSearch && !failedVarSearcher->search()) return;
 
     if (doSubsumption
         && !libraryUsage
@@ -1920,12 +1926,6 @@ inline void Solver::performStepsBeforeSolve()
             if (!uselessBinRemover.removeUslessBinFull()) return;
         }
     }*/
-
-    if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
-        XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
-        if (!xorFinder.doNoPart(2, 2)) return;
-        if (doReplace && !varReplacer->performReplace(true)) return;
-    }
 
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
