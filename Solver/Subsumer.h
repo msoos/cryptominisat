@@ -81,6 +81,7 @@ private:
     void fillCannotEliminate();
     void clearAll();
     void setLimits(const bool alsoLearnt);
+    void subsume0AndSubsume1();
 
     //Finish-up
     void freeMemory();
@@ -115,7 +116,6 @@ private:
         uint32_t activity;
         float oldActivity;
     };
-    
     void subsume0(Clause& ps);
     void subsume0(vec<Lit>& ps, uint32_t abs);
     template<class T>
@@ -125,9 +125,6 @@ private:
     //subsume1
     void subsume1(Clause& ps, OnlyNonLearntBins* onlyNonLearntBins = NULL);
     void strenghten(ClauseSimp c, const Lit toRemoveLit, OnlyNonLearntBins* onlyNonLearntBins = NULL);
-
-    //smaller-bigger databases
-    void subsume0AndSubsume1();
 
     //Variable elimination
     void orderVarsForElim(vec<Var>& order);
@@ -147,9 +144,6 @@ private:
     uint32_t doneNum;
     vec<Lit> toVisit;
     vec<char> toVisitAll;
-
-    const bool doSimpleFailedVarSearch(OnlyNonLearntBins* OnlyNonLearntBins);
-    bool subsWithBins;
     
     class VarOcc {
         public:
@@ -184,6 +178,7 @@ private:
     uint32_t literals_removed;
     uint32_t numCalls;
     uint32_t clauseID;
+    bool subsWithBins;
 };
 
 template <class T, class T2>

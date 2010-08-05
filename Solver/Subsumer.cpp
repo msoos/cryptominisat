@@ -649,56 +649,6 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     return true;
 }
 
-const bool Subsumer::doSimpleFailedVarSearch(OnlyNonLearntBins* onlyNonLearntBins)
-{
-    uint64_t extraWork = 0;
-    solver.order_heap.filter(Solver::VarFilter(solver));
-    uint64_t oldProps = solver.propagations;
-    uint32_t oldTrailSize = solver.trail.size();
-    double myTime = cpuTime();
-    while (solver.propagations + extraWork < oldProps + 20000*1000) {
-        if (solver.order_heap.size() < 1) break;
-        Var var = solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)];
-
-        if (solver.assigns[var] != l_Undef) continue;
-        Lit lit = Lit(var, true);
-        solver.newDecisionLevel();
-        solver.uncheckedEnqueueLight(lit);
-        bool failed = !onlyNonLearntBins->propagate();
-        solver.cancelUntil(0);
-        extraWork += 5;
-        if (failed) {
-            solver.uncheckedEnqueueLight(~lit);
-            solver.ok = solver.propagate().isNULL();
-            if (!solver.ok) return false;
-            extraWork += 5;
-        }
-
-        if (solver.assigns[var] != l_Undef) continue;
-        lit = ~lit;
-        solver.newDecisionLevel();
-        solver.uncheckedEnqueueLight(lit);
-        failed = !onlyNonLearntBins->propagate();
-        solver.cancelUntil(0);
-        extraWork += 5;
-        if (failed) {
-            solver.uncheckedEnqueueLight(~lit);
-            solver.ok = solver.propagate().isNULL();
-            if (!solver.ok) return false;
-            extraWork += 5;
-        }
-    }
-
-    if (solver.verbosity >= 1) {
-        std::cout << "c Simple failed var search: "
-        << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() -  myTime) << " s"
-        << std::endl;
-    }
-
-    return true;
-}
-
 void Subsumer::subsume0Touched()
 {
     for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
