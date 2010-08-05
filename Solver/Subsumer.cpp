@@ -122,8 +122,6 @@ void Subsumer::subsume0(Clause& ps)
         } else {
             solver.nbCompensateSubsumer++;
             ps.makeNonLearnt();
-            solver.learnts_literals -= ps.size();
-            solver.clauses_literals += ps.size();
         }
     }
 }
@@ -239,8 +237,6 @@ void Subsumer::subsume1(Clause& ps, OnlyNonLearntBins* onlyNonLearntBins)
                         ps.setOldActivity(c.clause->oldActivity());
                 } else {
                     ps.makeNonLearnt();
-                    solver.learnts_literals -= ps.size();
-                    solver.clauses_literals += ps.size();
                 }
             }
             unlinkClause(c);
