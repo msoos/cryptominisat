@@ -157,9 +157,11 @@ const uint32_t OnlyNonLearntBins::removeBins()
 
 const bool OnlyNonLearntBins::cleanAndAttachBin(const Clause& c)
 {
+    assert(c.size() == 2);
+    assert(!c.learnt());
     if (solver.value(c[0]) == l_True || solver.value(c[1]) == l_True) return true;
     if (solver.value(c[0]) == l_Undef && solver.value(c[1]) == l_Undef) {
-        attachBin(c);
+        //attachBin(c);
         return true;
     }
 
