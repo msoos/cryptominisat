@@ -37,7 +37,6 @@ class OnlyNonLearntBins
         void removeBin(Lit lit1, Lit lit2);
         void attachBin(const Clause& c);
         const uint32_t removeBins();
-        const bool cleanAndAttachBin(const Clause& c);
 
         //helper
         inline const uint32_t getWatchSize(const Lit lit);

@@ -123,8 +123,10 @@ private:
     void subsume0Touched();
 
     //subsume1
-    void subsume1(Clause& ps, OnlyNonLearntBins* onlyNonLearntBins = NULL);
-    void strenghten(ClauseSimp c, const Lit toRemoveLit, OnlyNonLearntBins* onlyNonLearntBins = NULL);
+    void subsume1(Clause& ps);
+    void strenghten(ClauseSimp c, const Lit toRemoveLit);
+    void propagateBinIfNeeded(const Clause& c);
+    void handleSize1Clause(const Lit lit);
 
     //Variable elimination
     void orderVarsForElim(vec<Var>& order);
@@ -135,7 +137,7 @@ private:
     //Subsume with Nonexistent Bins
     const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
-    void subsume0BIN(const Lit lit, const vec<char>& lits, OnlyNonLearntBins* onlyNonLearntBins);
+    void subsume0BIN(const Lit lit, const vec<char>& lits);
     uint32_t subsNonExistentNum;
     uint32_t subsNonExistentumFailed;
     bool subsNonExistentFinish;

@@ -23,8 +23,11 @@ class CompleteDetachReatacher
         CompleteDetachReatacher(Solver& solver);
         const bool completelyReattach();
         void completelyDetach();
+        void detachPointerUsingClauses();
 
     private:
+        void clearWatchOfPointerUsers(vec<Watched>& ws);
+
         void cleanAndAttachClauses(vec<Clause*>& cs, const bool lookingThroughBinary);
         void cleanAndAttachClauses(vec<XorClause*>& cs);
         const bool cleanClause(Clause*& ps);

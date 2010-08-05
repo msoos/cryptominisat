@@ -166,7 +166,7 @@ Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
     return ret;
 }
 
-void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, OnlyNonLearntBins* onlyNonLearntBins)
+void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
 {
     vec<ClauseSimp> subs;
     vec<ClauseSimp> subs2;
@@ -202,7 +202,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, OnlyNonLearntB
     }
 
     for (uint32_t i = 0; i < subs2.size(); i++) {
-        strenghten(subs2[i], subs2Lit[i], onlyNonLearntBins);
+        strenghten(subs2[i], subs2Lit[i]);
         if (!solver.ok) break;
     }
 
@@ -213,7 +213,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, OnlyNonLearntB
     #endif //VERBOSE_DEBUG
 }
 
-void Subsumer::subsume1(Clause& ps, OnlyNonLearntBins* onlyNonLearntBins)
+void Subsumer::subsume1(Clause& ps)
 {
     vec<ClauseSimp>    subs;
     vec<Lit>           subsLits;
@@ -241,7 +241,7 @@ void Subsumer::subsume1(Clause& ps, OnlyNonLearntBins* onlyNonLearntBins)
             }
             unlinkClause(c);
         } else {
-            strenghten(c, subsLits[j], onlyNonLearntBins);
+            strenghten(c, subsLits[j]);
             if (!solver.ok) return;
         }
     }
@@ -282,7 +282,7 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
     clauses[c.index].clause = NULL;
 }
 
-void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit, OnlyNonLearntBins* onlyNonLearntBins)
+void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
 {
     #ifdef VERBOSE_DEBUG
     cout << "-> Strenghtening clause :";
@@ -302,32 +302,54 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit, OnlyNonLearntBins
             solver.ok = false;
             break;
         case 1: {
-            Lit lit = (*c.clause)[0];
-            if (solver.assigns[lit.var()] != l_Undef) {
-                if (solver.value(lit) != l_True) {
-                    #ifdef VERBOSE_DEBUG
-                    std::cout << "solver.value() is already set differently for var "
-                    << lit.var() + 1 << " -> UNSAT"<< std::endl;
-                    #endif //VERBOSE_DEBUG
-                    solver.ok = false;
-                }
-            } else {
-                solver.uncheckedEnqueue(lit);
-                if (onlyNonLearntBins)
-                    solver.ok = onlyNonLearntBins->propagate();
-                else
-                    solver.ok = solver.propagate().isNULL();
-            }
+            handleSize1Clause((*c.clause)[0]);
             unlinkClause(c);
             break;
         }
-        case 2: {
-            if (onlyNonLearntBins && !c.clause->learnt())
-                onlyNonLearntBins->cleanAndAttachBin(*c.clause);
-        }
+        case 2:
+            propagateBinIfNeeded(*c.clause);
+            //no break command here!
+            //we need to do the same as in "default" as well
         default:
-            //subsume0(*c.clause);
             cl_touched.add(c);
+    }
+}
+
+inline void Subsumer::handleSize1Clause(const Lit lit)
+{
+    if (solver.value(lit) == l_False) {
+        solver.ok = false;
+    } else if (solver.value(lit) == l_Undef) {
+        solver.uncheckedEnqueue(lit);
+        solver.ok = solver.propagate().isNULL();
+    } else {
+        assert(solver.value(lit) == l_True);
+    }
+}
+
+void Subsumer::propagateBinIfNeeded(const Clause& c)
+{
+    if (solver.value(c[0]) == l_True || solver.value(c[1]) == l_True) return;
+    if (solver.value(c[0]) == l_Undef && solver.value(c[1]) == l_Undef) {
+        //attachBin(c);
+        return;
+    }
+
+    if (solver.value(c[0]) == l_False && solver.value(c[1]) == l_False) {
+        solver.ok = false;
+        return;
+    }
+
+    if (solver.value(c[0]) == l_False) {
+        solver.uncheckedEnqueue(c[1]);
+        solver.ok = solver.propagate().isNULL();
+        return;
+    }
+
+    if (solver.value(c[1]) == l_False) {
+        solver.uncheckedEnqueue(c[0]);
+        solver.ok = solver.propagate().isNULL();
+        return;
     }
 }
 
@@ -585,7 +607,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
     //addFromSolver(solver.learnts, true, false);
     CompleteDetachReatacher reattacher(solver);
-    reattacher.completelyDetach();
+    reattacher.detachPointerUsingClauses();
 
     #ifdef DEBUG_BINARIES
     for (uint32_t i = 0; i < clauses.size(); i++) {
@@ -594,12 +616,11 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     #endif //DEBUG_BINARIES
 
     numMaxSubsume0 = 2000000 * (numCalls);
-    numMaxSubsume1 = 2000000 * (numCalls);
 
     for (uint32_t i = 0; i < solver.binaryClauses.size(); i++) {
         if (numMaxSubsume0 > 0) {
             Clause& cl = *solver.binaryClauses[i];
-            subsume1(cl, onlyNonLearntBins);
+            subsume1(cl);
             if (!solver.ok) return false;
             numMaxSubsume0--;
         }
@@ -625,6 +646,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
 
     uint32_t oldTrailSize = solver.trail.size();
     addBackToSolver();
+    reattacher.completelyDetach();
     if (!reattacher.completelyReattach()) return false;
     freeMemory();
     subsNonExistentumFailed += solver.trail.size() - oldTrailSize;
@@ -680,7 +702,7 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = onlyNonLearntBins->propagate();
+            solver.ok = solver.propagate().isNULL();
             if (!solver.ok) return false;
             continue;
         }
@@ -692,7 +714,7 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
             if (!solver.ok) return false;
             solver.cancelUntil(0);
             solver.uncheckedEnqueue(~lit);
-            solver.ok = onlyNonLearntBins->propagate();
+            solver.ok = solver.propagate().isNULL();
             if (!solver.ok) return false;
             continue;
         }
@@ -730,7 +752,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
         //this toVisit.size()<=1, there mustn't have been more than 1 binary
         //clause in the watchlist, so this has been performed above.
     } else {
-        subsume0BIN(~lit, toVisitAll, onlyNonLearntBins);
+        subsume0BIN(~lit, toVisitAll);
     }
 
     for (uint32_t i = 0; i < toVisit.size(); i++)
@@ -796,7 +818,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     //move to binaryClauses during cleaning!!!!
     addFromSolver(solver.binaryClauses, alsoLearnt);
     CompleteDetachReatacher reattacher(solver);
-    reattacher.completelyDetach();
+    reattacher.detachPointerUsingClauses();
 
     setLimits(alsoLearnt);
 
@@ -921,6 +943,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     solver.order_heap.filter(Solver::VarFilter(solver));
 
     addBackToSolver();
+    reattacher.completelyDetach();
     if (!reattacher.completelyReattach()) return false;
 
     freeMemory();
@@ -1160,19 +1183,7 @@ bool Subsumer::maybeEliminate(const Var x)
                         solver.ok = false;
                         break;
                     case 1: {
-                        Lit lit = dummy[0];
-                        if (solver.assigns[lit.var()] != l_Undef) {
-                            if (solver.value(lit) != l_True) {
-                                #ifdef VERBOSE_DEBUG
-                                std::cout << "solver.value() is already set differently for var "
-                                << lit.var() + 1 << " -> UNSAT"<< std::endl;
-                                #endif //VERBOSE_DEBUG
-                                solver.ok = false;
-                            }
-                        } else {
-                            solver.uncheckedEnqueue(lit);
-                            solver.ok = solver.propagate().isNULL();
-                        }
+                        handleSize1Clause(dummy[0]);
                         break;
                     }
                     default: {

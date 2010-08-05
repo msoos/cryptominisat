@@ -33,6 +33,28 @@ void CompleteDetachReatacher::completelyDetach()
     }
 }
 
+void CompleteDetachReatacher::detachPointerUsingClauses()
+{
+    solver.clauses_literals = 0;
+    solver.learnts_literals = 0;
+    for (uint32_t i = 0; i < solver.nVars(); i++) {
+        clearWatchOfPointerUsers(solver.watches[i*2]);
+        clearWatchOfPointerUsers(solver.watches[i*2+1]);
+    }
+}
+
+void CompleteDetachReatacher::clearWatchOfPointerUsers(vec<Watched>& ws)
+{
+    Watched* i = ws.getData();
+    Watched* j = i;
+    for (Watched *end = ws.getDataEnd(); i != end; i++) {
+        if (i->isBinary() || i->isTriClause()) {
+            *j++ = *i;
+        }
+    }
+    ws.shrink_(i-j);
+}
+
 const bool CompleteDetachReatacher::completelyReattach()
 {
     assert(solver.ok);
