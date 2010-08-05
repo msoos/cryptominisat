@@ -319,6 +319,8 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit, OnlyNonLearntBins
                 solver.uncheckedEnqueue(lit);
                 if (onlyNonLearntBins)
                     solver.ok = onlyNonLearntBins->propagate();
+                else
+                    solver.ok = solver.propagate().isNULL();
             }
             unlinkClause(c);
             break;
