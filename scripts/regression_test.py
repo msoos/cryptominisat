@@ -188,7 +188,8 @@ class Tester:
         if (final == True) : break
     if (final == False) :
       print "Error: clause '%s' not satisfied." %(line)
-      exit(-1)
+      print "Error code 100"
+      exit(100)
   
   def check_xor_clause(self, line, value):
     line = line.lstrip('x')
