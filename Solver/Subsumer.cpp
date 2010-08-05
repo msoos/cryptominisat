@@ -632,7 +632,6 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     if (!reattacher.completelyReattach()) return false;
     freeMemory();
     subsNonExistentumFailed += solver.trail.size() - oldTrailSize;
-    //doSimpleFailedVarSearch(onlyNonLearntBins);
 
     if (solver.verbosity >= 1) {
         std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << subsNonExistentNum
