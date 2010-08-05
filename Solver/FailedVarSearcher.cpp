@@ -461,6 +461,7 @@ const bool FailedVarSearcher::orderLits()
     
     for (i = 0; i < 3*solver.order_heap.size(); i++) {
         if (solver.propagations - oldProps > 3000000) break;
+        if (solver.order_heap.size() < 1) break;
         Var var = solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)];
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
 

@@ -655,6 +655,7 @@ const bool Subsumer::doSimpleFailedVarSearch(OnlyNonLearntBins* onlyNonLearntBin
     uint32_t oldTrailSize = solver.trail.size();
     double myTime = cpuTime();
     while (solver.propagations + extraWork < oldProps + 20000*1000) {
+        if (solver.order_heap.size() < 1) break;
         Var var = solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)];
 
         if (solver.assigns[var] != l_Undef) continue;
@@ -1381,6 +1382,7 @@ void Subsumer::blockedClauseRemoval()
     touchedBlockedVarsBool.clear();
     touchedBlockedVarsBool.growTo(solver.nVars(), false);
     for (uint32_t i =  0; i < solver.order_heap.size() && i < numMaxBlockVars; i++) {
+        if (solver.order_heap.size() < 1) break;
         touchBlockedVar(solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)]);
     }
     
