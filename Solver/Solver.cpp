@@ -952,7 +952,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
         for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
                 if (seen[(~i->getOtherLit()).toInt()]) {
-                    seen[i->getOtherLit().toInt()] = 0;
+                    seen[(~i->getOtherLit()).toInt()] = 0;
                     removedLits++;
                 }
                 continue;
@@ -960,11 +960,11 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
 
             if (i->isTriClause()) {
                 if (seen[(~i->getOtherLit()).toInt()] && seen[i->getOtherLit2().toInt()]) {
-                    seen[i->getOtherLit().toInt()] = 0;
+                    seen[(~i->getOtherLit()).toInt()] = 0;
                     removedLits++;
                 }
                 if (seen[(~i->getOtherLit2()).toInt()] && seen[i->getOtherLit().toInt()]) {
-                    seen[i->getOtherLit2().toInt()] = 0;
+                    seen[(~i->getOtherLit2()).toInt()] = 0;
                     removedLits++;
                 }
                 continue;
