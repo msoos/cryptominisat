@@ -90,6 +90,7 @@ Solver::Solver() :
         , doAsymmBranch    (true)
         , doAsymmBranchReg (true)
         , doSortWatched    (true)
+        , doMinimiseLearntFurther (true)
         , failedVarSearch  (true)
         , addExtraBins     (true)
         , removeUselessBins(true)
@@ -106,6 +107,7 @@ Solver::Solver() :
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
         , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
+        , numShrinkedClause(0), numShrinkedClauseLits(0)
         
         #ifdef USE_GAUSS
         , sum_gauss_called (0)
@@ -890,6 +892,10 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     }
     max_literals += out_learnt.size();
     out_learnt.shrink(i - j);
+    for (uint32_t j = 0; j != analyze_toclear.size(); j++)
+        seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
+
+    if (doMinimiseLearntFurther) minimiseLeartFurther(out_learnt);
     tot_literals += out_learnt.size();
 
     // Find correct backtrack level:
@@ -919,9 +925,6 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         #endif
     }
 
-    for (uint32_t j = 0; j != analyze_toclear.size(); j++)
-        seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
-    
     if (out_learnt.size() == 1) return NULL;
     
     if (oldConfl.isClause() && !oldConfl.getClause()->isXor()
@@ -934,6 +937,58 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     }
     
     return NULL;
+}
+
+void Solver::minimiseLeartFurther(vec<Lit>& cl)
+{
+    uint32_t removedLits = 0;
+    for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
+    for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+        if (seen[l->toInt()] == 0) continue;
+
+        Lit lit = *l;
+        //watched is messed: lit is in watched[~lit]
+        vec<Watched>& ws = watches[(~lit).toInt()];
+        for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+            if (i->isBinary()) {
+                if (seen[(~i->getOtherLit()).toInt()]) {
+                    seen[i->getOtherLit().toInt()] = 0;
+                    removedLits++;
+                }
+                continue;
+            }
+
+            if (i->isTriClause()) {
+                if (seen[(~i->getOtherLit()).toInt()] && seen[i->getOtherLit2().toInt()]) {
+                    seen[i->getOtherLit().toInt()] = 0;
+                    removedLits++;
+                }
+                if (seen[(~i->getOtherLit2()).toInt()] && seen[i->getOtherLit().toInt()]) {
+                    seen[i->getOtherLit2().toInt()] = 0;
+                    removedLits++;
+                }
+                continue;
+            }
+
+            //watches are mostly sorted, so it's more-or-less OK to break
+            //  if non-bi or non-tri is encountered
+            break;
+        }
+    }
+
+    Lit *i = cl.getData();
+    Lit *j= i;
+    for (Lit* end = cl.getDataEnd(); i != end; i++) {
+        if (i == cl.getData() || seen[i->toInt()]) *j++ = *i;
+        seen[i->toInt()] = 0;
+    }
+    numShrinkedClause += (removedLits > 0);
+    numShrinkedClauseLits += removedLits;
+    cl.shrink_(i-j);
+
+    #ifdef VERBOSE_DEBUG
+    std::cout << "c Removed further " << toRemove << " lits" << std::endl;
+    #endif
 }
 
 

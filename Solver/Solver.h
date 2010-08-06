@@ -168,6 +168,7 @@ public:
     bool      doAsymmBranch;        // Perform asymmetric branching at the beginning of the solving
     bool      doAsymmBranchReg;     // Perform asymmetric branching regularly
     bool      doSortWatched;        // Sort watches according to size
+    bool      doMinimiseLearntFurther; //Perform learnt-clause minimisation using watchists
     bool      failedVarSearch;      // Should search for failed vars and doulbly propagated vars
     bool      addExtraBins;         // Should add extra binaries in failed literal probing
     bool      removeUselessBins;    // Should try to remove useless binary clauses
@@ -187,6 +188,7 @@ public:
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
     uint64_t nbDL2, nbBin, lastNbBin, becameBinary, lastSearchForBinaryXor, nbReduceDB;
     uint64_t improvedClauseNo, improvedClauseSize;
+    uint64_t numShrinkedClause, numShrinkedClauseLits;
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -343,6 +345,7 @@ protected:
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
+    void     minimiseLeartFurther(vec<Lit>& cl);
 
     /////////////////
     // Searching

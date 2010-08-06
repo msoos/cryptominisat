@@ -379,6 +379,10 @@ void printStats(Solver& solver)
     printStatsLine("c OTF clause improved", solver.improvedClauseNo, (double)solver.improvedClauseNo/(double)solver.conflicts, "clauses/conflict");
     printStatsLine("c OTF impr. size diff", solver.improvedClauseSize, (double)solver.improvedClauseSize/(double)solver.improvedClauseNo, " lits/clause");
 
+    //Clause-shrinking through watchlists
+    printStatsLine("c OTF cl watch-shrink", solver.numShrinkedClause, (double)solver.numShrinkedClause/(double)solver.conflicts, "clauses/conflict");
+    printStatsLine("c OTF cl watch-sh-lit", solver.numShrinkedClauseLits, (double)solver.numShrinkedClauseLits/(double)solver.numShrinkedClause, " lits/clause");
+
     #ifdef USE_GAUSS
     if (solver.gaussconfig.decision_until > 0) {
         std::cout << "c " << std::endl;
@@ -520,6 +524,7 @@ void printUsage(char** argv, Solver& S)
     printf("  --noasymm         = Don't do asymmetric branching at the beginnning\n");
     printf("  --norasymm        = Don't do asymmetric branching regularly\n");
     printf("  --nosortwatched   = Don't sort watches according to size: bin, tri, etc.\n");
+    printf("  --nolearntfminim  = Don't minimise learnt clauses further\n");
     printf("\n");
 }
 
@@ -789,6 +794,8 @@ int main(int argc, char** argv)
             S.doAsymmBranchReg = false;
         } else if ((value = hasPrefix(argv[i], "--nosortwatched"))) {
             S.doSortWatched = false;
+        } else if ((value = hasPrefix(argv[i], "--nolearntfminim"))) {
+            S.doMinimiseLearntFurther = false;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
