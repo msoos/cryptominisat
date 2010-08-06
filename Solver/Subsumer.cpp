@@ -995,7 +995,8 @@ void Subsumer::setLimits(const bool alsoLearnt)
     else
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
-    if (!solver.doSubsume1) numMaxSubsume1 = 0;
+    if (!solver.doSubsume1 || numCalls == 1)
+        numMaxSubsume1 = 0;
     if (alsoLearnt) {
         numMaxElim = 0;
         numMaxSubsume1 = std::min(numMaxSubsume1, (uint32_t)10000);
@@ -1189,7 +1190,7 @@ bool Subsumer::maybeEliminate(const Var x)
                     default: {
                         Clause* cl = solver.clauseAllocator.Clause_new(dummy, group_num);
                         ClauseSimp c = linkInClause(*cl);
-                        subsume1(*c.clause);
+                        subsume0(*c.clause);
                     }
                 }
                 if (!solver.ok) return true;
