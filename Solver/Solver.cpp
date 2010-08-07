@@ -979,7 +979,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     Lit *i = cl.getData();
     Lit *j= i;
     for (Lit* end = cl.getDataEnd(); i != end; i++) {
-        if (i == cl.getData() || seen[i->toInt()]) *j++ = *i;
+        if (seen[i->toInt()]) *j++ = *i;
         seen[i->toInt()] = 0;
     }
     numShrinkedClause += (removedLits > 0);
