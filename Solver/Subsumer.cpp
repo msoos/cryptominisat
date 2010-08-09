@@ -641,6 +641,7 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
         << "  time: " << std::setprecision(2) << std::setw(5) <<  cpuTime() - myTime << " s"
         << std::endl;
     }
+    totalTime += cpuTime() - myTime;
     myTime = cpuTime();
 
     uint32_t oldTrailSize = solver.trail.size();
