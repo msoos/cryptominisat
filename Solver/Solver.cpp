@@ -1965,7 +1965,7 @@ inline void Solver::performStepsBeforeSolve()
         && !subsumer->simplifyBySubsumption())
         return;
 
-    /*if (doReplace) {
+    if (doReplace) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) return;
         if (subsumeWithNonExistBinaries
@@ -1974,7 +1974,7 @@ inline void Solver::performStepsBeforeSolve()
             UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
             if (!uselessBinRemover.removeUslessBinFull()) return;
         }
-    }*/
+    }
 
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
