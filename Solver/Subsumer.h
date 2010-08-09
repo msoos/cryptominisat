@@ -138,11 +138,7 @@ private:
     const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
     void subsume0BIN(const Lit lit, const vec<char>& lits);
-    uint32_t subsNonExistentNum;
-    uint32_t subsNonExistentumFailed;
     bool subsNonExistentFinish;
-    double subsNonExistentTime;
-    uint32_t subsNonExistentLitsRemoved;
     uint32_t doneNum;
     vec<Lit> toVisit;
     vec<char> toVisitAll;
