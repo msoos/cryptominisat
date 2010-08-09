@@ -1198,7 +1198,7 @@ bool Subsumer::maybeEliminate(const Var x)
                     default: {
                         Clause* cl = solver.clauseAllocator.Clause_new(dummy, group_num);
                         ClauseSimp c = linkInClause(*cl);
-                        subsume0(*c.clause);
+                        subsume1(*c.clause);
                     }
                 }
                 if (!solver.ok) return true;
