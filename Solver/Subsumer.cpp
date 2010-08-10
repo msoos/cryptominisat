@@ -306,13 +306,6 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
             unlinkClause(c);
             break;
         }
-        case 2:
-            if (propagateBinIfNeeded(*c.clause)) {
-                unlinkClause(c);
-                break;
-            }
-            //no break command here!
-            //we need to do the same as in "default" as well
         default:
             cl_touched.add(c);
     }
@@ -328,37 +321,6 @@ inline void Subsumer::handleSize1Clause(const Lit lit)
     } else {
         assert(solver.value(lit) == l_True);
     }
-}
-
-const bool Subsumer::propagateBinIfNeeded(const Clause& c)
-{
-    if (solver.value(c[0]) == l_True || solver.value(c[1]) == l_True)
-        return true;
-    if (solver.value(c[0]) == l_Undef && solver.value(c[1]) == l_Undef) {
-        //attachBin(c);
-        return false;
-    }
-
-    if (solver.value(c[0]) == l_False && solver.value(c[1]) == l_False) {
-        solver.ok = false;
-        return true;
-    }
-
-    if (solver.value(c[0]) == l_False) {
-        solver.uncheckedEnqueue(c[1]);
-        solver.ok = solver.propagate().isNULL();
-        return true;
-    }
-
-    if (solver.value(c[1]) == l_False) {
-        solver.uncheckedEnqueue(c[0]);
-        solver.ok = solver.propagate().isNULL();
-        return true;
-    }
-
-    assert(false);
-
-    return false;
 }
 
 void Subsumer::subsume0AndSubsume1()
