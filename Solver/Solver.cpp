@@ -1951,30 +1951,13 @@ inline void Solver::performStepsBeforeSolve()
         if (!onlyNonLearntBins.fill()) return;
         if (subsumeWithNonExistBinaries
             && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
-        /*if (regularRemoveUselessBins) {
-            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
-            if (!uselessBinRemover.removeUslessBinFull()) return;
-        }*/
     }
-
-    //if (failedVarSearch && !failedVarSearcher->search()) return;
 
     if (doSubsumption
         && !libraryUsage
         && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
-
-    /*if (doReplace) {
-        OnlyNonLearntBins onlyNonLearntBins(*this);
-        if (!onlyNonLearntBins.fill()) return;
-        if (subsumeWithNonExistBinaries
-            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
-        if (regularRemoveUselessBins) {
-            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
-            if (!uselessBinRemover.removeUslessBinFull()) return;
-        }
-    }*/
 
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
