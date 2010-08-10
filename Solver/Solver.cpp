@@ -1957,7 +1957,7 @@ inline void Solver::performStepsBeforeSolve()
         }
     }
 
-    if (failedVarSearch && !failedVarSearcher->search()) return;
+    //if (failedVarSearch && !failedVarSearcher->search()) return;
 
     if (doSubsumption
         && !libraryUsage
