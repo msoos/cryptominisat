@@ -78,7 +78,7 @@ void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
             #endif //STATS_NEEDED
         }
     }
-    fprintf(outfile, "c \nc --------------------n");
+    fprintf(outfile, "c \nc --------------------\n");
     fprintf(outfile, "c clauses from learnts\n");
     fprintf(outfile, "c --------------------\n");
     if (lastSelectedRestartType == dynamic_restart)
