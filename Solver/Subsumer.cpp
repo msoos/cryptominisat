@@ -282,6 +282,33 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
     clauses[c.index].clause = NULL;
 }
 
+const bool Subsumer::cleanClause(Clause& ps)
+{
+    bool retval = false;
+
+    Lit *i = ps.getData();
+    Lit *j = i;
+    for (Lit *end = ps.getDataEnd(); i != end; i++) {
+        lbool val = solver.value(*i);
+        if (val == l_Undef) {
+            *j++ = *i;
+            continue;
+        }
+        if (val == l_False) {
+            removeW(occur[i->toInt()], &ps);
+            continue;
+        }
+        if (val == l_True) {
+            retval = true;
+            continue;
+        }
+        assert(false);
+    }
+    ps.shrink(i-j);
+
+    return retval;
+}
+
 void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
 {
     #ifdef VERBOSE_DEBUG
@@ -293,6 +320,10 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
     literals_removed++;
     c.clause->strengthen(toRemoveLit);
     removeW(occur[toRemoveLit.toInt()], c.clause);
+    if (cleanClause(*c.clause)) {
+        unlinkClause(c);
+        return;
+    }
 
     switch (c.clause->size()) {
         case 0:

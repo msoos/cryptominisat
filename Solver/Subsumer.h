@@ -125,6 +125,7 @@ private:
     //subsume1
     void subsume1(Clause& ps);
     void strenghten(ClauseSimp c, const Lit toRemoveLit);
+    const bool cleanClause(Clause& c);
     void handleSize1Clause(const Lit lit);
 
     //Variable elimination
