@@ -128,6 +128,7 @@ const TwoLongXor FailedVarSearcher::getTwoLongXor(const XorClause& c)
 const bool FailedVarSearcher::search()
 {
     uint64_t numProps = (solver.nClauses() < 500000 && solver.order_heap.size() < 50000) ? 22000000 : 8000000;
+    numProps *= 3;
     assert(solver.decisionLevel() == 0);
     solver.testAllClauseAttach();
     double myTime = cpuTime();
@@ -178,7 +179,7 @@ const bool FailedVarSearcher::search()
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     if (solver.addExtraBins && !orderLits()) return false;
-    maxHyperBinProps = numProps/8;
+    maxHyperBinProps = numProps/4;
     
     //uint32_t fromBin;
     uint32_t fromVar;
