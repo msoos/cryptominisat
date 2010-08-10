@@ -1951,10 +1951,10 @@ inline void Solver::performStepsBeforeSolve()
         if (!onlyNonLearntBins.fill()) return;
         if (subsumeWithNonExistBinaries
             && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
-        if (regularRemoveUselessBins) {
+        /*if (regularRemoveUselessBins) {
             UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
             if (!uselessBinRemover.removeUslessBinFull()) return;
-        }
+        }*/
     }
 
     //if (failedVarSearch && !failedVarSearcher->search()) return;
