@@ -59,9 +59,7 @@ using std::endl;
 static bool grouping = false;
 static bool debugLib = false;
 static bool debugNewVar = false;
-static char learnts_filename[500];
 static bool dumpLearnts = false;
-static uint32_t maxLearntsSize = std::numeric_limits<uint32_t>::max();
 static bool printResult = true;
 
 //=================================================================================================
@@ -411,14 +409,15 @@ static void SIGINT_handler(int signum)
 {
     printf("\n");
     printf("*** INTERRUPTED ***\n");
-    printStats(*solver);
     if (dumpLearnts) {
-        solver->dumpSortedLearnts(learnts_filename, maxLearntsSize);
-        cout << "c Sorted learnt clauses dumped to file '" << learnts_filename << "'" << endl;
+        solver->needToInterrupt = true;
+        printf("*** Please wait. We need to interrupt cleanly\n");
+        printf("*** This means we might need to finish some calculations\n");
+        printf("*** INTERRUPTED ***\n");
+    } else {
+        printStats(*solver);
+        exit(1);
     }
-    printf("\n");
-    printf("*** INTERRUPTED ***\n");
-    exit(1);
 }
 
 
@@ -662,8 +661,8 @@ int main(int argc, char** argv)
             }
             S.setMaxRestarts(maxrest);
         } else if ((value = hasPrefix(argv[i], "--dumplearnts="))) {
-            if (sscanf(value, "%400s", learnts_filename) < 0 || strlen(learnts_filename) == 0) {
-                printf("ERROR! wrong filename '%s'\n", learnts_filename);
+            if (sscanf(value, "%400s", S.learntsFilename) < 0 || strlen(S.learntsFilename) == 0) {
+                printf("ERROR! wrong filename '%s'\n", S.learntsFilename);
                 exit(0);
             }
             dumpLearnts = true;
@@ -677,7 +676,7 @@ int main(int argc, char** argv)
                 cout << "ERROR! wrong maximum dumped learnt clause size is illegal: " << tmp << endl;
                 exit(0);
             }
-            maxLearntsSize = (uint32_t)tmp;
+            solver->maxDumpLearntsSize = (uint32_t)tmp;
         } else if ((value = hasPrefix(argv[i], "--maxsolutions="))) {
             int tmp;
             if (sscanf(value, "%d", &tmp) < 0 || tmp < 0) {
@@ -888,8 +887,8 @@ int main(int argc, char** argv)
     printStats(S);
     printf("c \n");
     if (dumpLearnts) {
-        S.dumpSortedLearnts(learnts_filename, maxLearntsSize);
-        cout << "c Sorted learnt clauses dumped to file '" << learnts_filename << "'" << endl;
+        S.dumpSortedLearnts(S.learntsFilename, S.maxDumpLearntsSize);
+        cout << "c Sorted learnt clauses dumped to file '" << S.learntsFilename << "'" << endl;
     }
     if (ret == l_Undef)
         printf("c Not finished running -- maximum restart reached\n");

@@ -97,6 +97,8 @@ Solver::Solver() :
         , regularRemoveUselessBins(true)
         , subsumeWithNonExistBinaries(true)
         , regularSubsumeWithNonExistBinaries(true)
+        , needToInterrupt  (false)
+        , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
@@ -148,6 +150,9 @@ Solver::Solver() :
     subsumer = new Subsumer(*this);
     xorSubsumer = new XorSubsumer(*this);
     restartTypeChooser = new RestartTypeChooser(*this);
+    learntsFilename = new char[500];
+    learntsFilename[0] = '\0';
+
     #ifdef USE_GAUSS
     matrixFinder = new MatrixFinder(*this);
     #endif //USE_GAUSS
@@ -184,6 +189,7 @@ Solver::~Solver()
     delete subsumer;
     delete xorSubsumer;
     delete restartTypeChooser;
+    delete [] learntsFilename;
     
     if (libraryCNFFile)
         fclose(libraryCNFFile);
@@ -1494,6 +1500,13 @@ const bool Solver::simplify()
     return true;
 }
 
+void Solver::interruptCleanly()
+{
+    dumpSortedLearnts(learntsFilename, maxDumpLearntsSize);
+    std::cout << "c Sorted learnt clauses dumped to file '" << learntsFilename << "'" << std::endl;
+    exit(0);
+}
+
 
 /*_________________________________________________________________________________________________
 |
@@ -1532,6 +1545,7 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     testAllClauseAttach();
     findAllAttach();
     for (;;) {
+        if (needToInterrupt) interruptCleanly();
         PropagatedFrom confl = propagate(update);
 
         if (!confl.isNULL()) {

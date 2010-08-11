@@ -29,11 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 static const int space = 10;
 
-void Solver::dumpSortedLearnts(const char* file, const uint32_t maxSize)
+void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
 {
-    FILE* outfile = fopen(file, "w");
+    FILE* outfile = fopen(fileName, "w");
     if (!outfile) {
-        printf("Error: Cannot open file '%s' to write learnt clauses!\n", file);
+        printf("Error: Cannot open file '%s' to write learnt clauses!\n", fileName);
         exit(-1);
     }
 

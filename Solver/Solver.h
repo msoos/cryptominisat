@@ -175,6 +175,9 @@ public:
     bool      regularRemoveUselessBins; // Should try to remove useless binary clauses regularly
     bool      subsumeWithNonExistBinaries;
     bool      regularSubsumeWithNonExistBinaries;
+    bool      needToInterrupt;      // If set to TRUE, we will interrupt cleanly ASAP
+    char*     learntsFilename;
+    uint32_t  maxDumpLearntsSize;
     bool      libraryUsage;         // Set true if not used as a library
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
     RestartType fixRestartType;     // If set, the solver will always choose the given restart strategy
@@ -460,6 +463,7 @@ protected:
     void     printRestartStat (const char* type = "N");
     void     printEndSearchStat();
     double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
+    void     interruptCleanly();
 
     /////////////////////
     // Polarity chooser
