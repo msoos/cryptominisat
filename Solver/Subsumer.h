@@ -45,6 +45,7 @@ public:
     const uint32_t getNumElimed() const;
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
+    const map<Var, vector<Clause*> >& getElimedOutVar() const;
     
 private:
     
@@ -264,6 +265,11 @@ inline void Subsumer::newVar()
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
     cannot_eliminate.push(0);
+}
+
+inline const map<Var, vector<Clause*> >& Subsumer::getElimedOutVar() const
+{
+    return elimedOutVar;
 }
 
 inline const vec<char>& Subsumer::getVarElimed() const
