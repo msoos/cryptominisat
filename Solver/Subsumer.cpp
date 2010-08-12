@@ -296,6 +296,9 @@ const bool Subsumer::cleanClause(Clause& ps)
         }
         if (val == l_False) {
             removeW(occur[i->toInt()], &ps);
+            #ifndef TOUCH_LESS
+            touch(*i);
+            #endif
             continue;
         }
         if (val == l_True) {
@@ -321,6 +324,9 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
     literals_removed++;
     c.clause->strengthen(toRemoveLit);
     removeW(occur[toRemoveLit.toInt()], c.clause);
+    #ifndef TOUCH_LESS
+    touch(toRemoveLit);
+    #endif
     if (cleanClause(*c.clause)) {
         unlinkClause(c);
         return;
