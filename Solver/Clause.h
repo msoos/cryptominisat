@@ -257,7 +257,7 @@ public:
         return data+size();
     }
 
-    void print(FILE* to = stdout)
+    void print(FILE* to = stdout) const
     {
         plainPrint(to);
         fprintf(to, "c clause learnt %s group %d act %d oldAct %f\n", (learnt() ? "yes" : "no"), getGroup(), activity(), oldActivity());
