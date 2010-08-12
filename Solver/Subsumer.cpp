@@ -299,6 +299,7 @@ const bool Subsumer::cleanClause(Clause& ps)
             continue;
         }
         if (val == l_True) {
+            *j++ = *i;
             retval = true;
             continue;
         }
