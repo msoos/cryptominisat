@@ -1962,6 +1962,10 @@ inline void Solver::performStepsBeforeSolve()
         if (!onlyNonLearntBins.fill()) return;
         if (subsumeWithNonExistBinaries
             && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
+        if (removeUselessBins) {
+            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
+            if (!uselessBinRemover.removeUslessBinFull()) goto end;
+        }
     }
 
     if (doSubsumption
