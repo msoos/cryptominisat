@@ -1964,7 +1964,7 @@ inline void Solver::performStepsBeforeSolve()
             && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
         if (removeUselessBins) {
             UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
-            if (!uselessBinRemover.removeUslessBinFull()) goto end;
+            if (!uselessBinRemover.removeUslessBinFull()) return;
         }
     }
 
