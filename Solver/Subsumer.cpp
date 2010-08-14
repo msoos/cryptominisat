@@ -745,6 +745,24 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
     return true;
 }
 
+void Subsumer::fillToTryProp(vec<char>& toTryProp, const OnlyNonLearntBins* onlyNonLearntBins)
+{
+    const vec<vec<WatchedBin> >& binwatches = onlyNonLearntBins->getBinWatches();
+
+    uint32_t thisLit = 0;
+    for (const vec<WatchedBin> *it = binwatches.getData(), *end = binwatches.getDataEnd(); it != end; it++, thisLit++) {
+        const vec<WatchedBin>& ws = *it;
+        if (ws.size() == 0) {
+            toTryProp[thisLit] = 0;
+            continue;
+        }
+        if (solver.assigns[thisLit/2] != l_Undef) continue;
+        for (const WatchedBin *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            toTryProp[(it2->impliedLit).toInt()] = false;
+        }
+    }
+}
+
 const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
 {
     #ifdef VERBOSE_DEBUG
