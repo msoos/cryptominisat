@@ -1953,10 +1953,6 @@ inline void Solver::performStepsBeforeSolve()
 
     if (doReplace && !varReplacer->performReplace()) return;
 
-    /*if (doSubsumption && !subsumer->simplifyBySubsumption(true)) {
-        return;
-    }*/
-
     if (doAsymmBranch && !failedVarSearcher->asymmBranch()) {
         return;
     }
