@@ -203,6 +203,7 @@ public:
     const uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     void dumpSortedLearnts(const char* file, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const char* fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
+    void dumpOrigClauses(const char* fileName) const;
 
     #ifdef USE_GAUSS
     const uint32_t get_sum_gauss_called() const;

@@ -1504,6 +1504,7 @@ void Solver::interruptCleanly()
 {
     dumpSortedLearnts(learntsFilename, maxDumpLearntsSize);
     std::cout << "c Sorted learnt clauses dumped to file '" << learntsFilename << "'" << std::endl;
+    dumpOrigClauses("origClauses");
     exit(0);
 }
 

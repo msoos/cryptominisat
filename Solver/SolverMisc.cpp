@@ -96,6 +96,97 @@ void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
     fclose(outfile);
 }
 
+void Solver::dumpOrigClauses(const char* fileName) const
+{
+    FILE* outfile = fopen(fileName, "w");
+    if (!outfile) {
+        printf("Error: Cannot open file '%s' to write learnt clauses!\n", fileName);
+        exit(-1);
+    }
+
+    uint32_t numClauses = 0;
+    //unitary clauses
+    for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++)
+      numClauses++;
+    //binary XOR clauses
+    const vector<Lit>& table = varReplacer->getReplaceTable();
+    for (Var var = 0; var != table.size(); var++) {
+        Lit lit = table[var];
+        if (lit.var() == var)
+            continue;
+        numClauses+=2;
+    }
+    //binary normal clauses
+    for (Clause *const *i = binaryClauses.getData(); i != binaryClauses.getDataEnd(); i++) {
+        if ((*i)->learnt()) continue;
+        numClauses++;
+    }
+    numClauses += clauses.size();
+    //normal clauses
+    const map<Var, vector<Clause*> >& elimedOutVar = subsumer->getElimedOutVar();
+    for (map<Var, vector<Clause*> >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
+        const vector<Clause*>& cs = it->second;
+        numClauses += cs.size();
+    }
+    fprintf(outfile, "p cnf %d %d\n", nVars(), numClauses);
+
+    fprintf(outfile, "c \nc ---------\n");
+    fprintf(outfile, "c unitaries\n");
+    fprintf(outfile, "c ---------\n");
+    for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
+        trail[i].printFull(outfile);
+        #ifdef STATS_NEEDED
+        if (dynamic_behaviour_analysis)
+            fprintf(outfile, "c name of var: %s\n", logger.get_var_name(trail[i].var()).c_str());
+        #endif //STATS_NEEDED
+    }
+
+    fprintf(outfile, "c \nc ---------------------------------------\n");
+    fprintf(outfile, "c clauses representing 2-long XOR clauses\n");
+    fprintf(outfile, "c ---------------------------------------\n");
+    for (Var var = 0; var != table.size(); var++) {
+        Lit lit = table[var];
+        if (lit.var() == var)
+            continue;
+
+        fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
+        fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
+        #ifdef STATS_NEEDED
+        if (dynamic_behaviour_analysis)
+            fprintf(outfile, "c name of two vars that are anti/equivalent: '%s' and '%s'\n", logger.get_var_name(lit.var()).c_str(), logger.get_var_name(var).c_str());
+        #endif //STATS_NEEDED
+    }
+
+    fprintf(outfile, "c \nc ------------\n");
+    fprintf(outfile, "c binary clauses\n");
+    fprintf(outfile, "c ---------------\n");
+    for (Clause *const *i = binaryClauses.getData(); i != binaryClauses.getDataEnd(); i++) {
+        if ((*i)->learnt()) continue;
+        (*i)->print(outfile);
+    }
+
+    fprintf(outfile, "c \nc ------------\n");
+    fprintf(outfile, "c normal clauses\n");
+    fprintf(outfile, "c ---------------\n");
+    for (Clause *const *i = clauses.getData(); i != clauses.getDataEnd(); i++) {
+        assert(!(*i)->learnt());
+        (*i)->print(outfile);
+    }
+
+    //map<Var, vector<Clause*> > elimedOutVar
+    fprintf(outfile, "c -------------------------------\n");
+    fprintf(outfile, "c previously eliminated variables\n");
+    fprintf(outfile, "c -------------------------------\n");
+    for (map<Var, vector<Clause*> >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
+        const vector<Clause*>& cs = it->second;
+        for (vector<Clause*>::const_iterator it2 = cs.begin(); it2 != cs.end(); it2++) {
+            (*it2)->print(outfile);
+        }
+    }
+
+    fclose(outfile);
+}
+
 const vector<Lit> Solver::get_unitary_learnts() const
 {
     vector<Lit> unitaries;
