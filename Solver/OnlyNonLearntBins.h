@@ -39,7 +39,8 @@ class OnlyNonLearntBins
         const uint32_t removeBins();
 
         //helper
-        inline const uint32_t getWatchSize(const Lit lit);
+        inline const uint32_t getWatchSize(const Lit lit) const;
+        inline const vec<vec<WatchedBin> >& getBinWatches() const;
 
     private:
         vec<vec<WatchedBin> > binwatches;
@@ -48,9 +49,14 @@ class OnlyNonLearntBins
         Solver& solver;
 };
 
-inline const uint32_t OnlyNonLearntBins::getWatchSize(const Lit lit)
+inline const uint32_t OnlyNonLearntBins::getWatchSize(const Lit lit) const
 {
     return binwatches[lit.toInt()].size();
+}
+
+inline const vec<vec<WatchedBin> >& OnlyNonLearntBins::getBinWatches() const
+{
+    return binwatches;
 }
 
 #endif //ONLYNONLEARNTBINS_H
