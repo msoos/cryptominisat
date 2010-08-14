@@ -178,6 +178,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
             __builtin_prefetch((it+1)->clause, 0, 1);
         if (it->clause == NULL) continue;
         Clause& c = *it->clause;
+        extraTimeNonExist += c.size()*3;
         bool removed = false;
         for (uint32_t i = 0; i < c.size(); i++) {
             if (lits[c[i].toInt()]) {
@@ -186,13 +187,12 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
                 break;
             }
         }
-        if (!removed) {
-            for (uint32_t i = 0; i < c.size(); i++) {
-                if (lits[(~c[i]).toInt()]) {
-                    subs2.push(*it);
-                    subs2Lit.push(c[i]);
-                    break;
-                }
+        if (removed) continue;
+
+        for (uint32_t i = 0; i < c.size(); i++) {
+            if (lits[(~c[i]).toInt()]) {
+                subs2.push(*it);
+                subs2Lit.push(c[i]);
             }
         }
     }
@@ -201,8 +201,14 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
         unlinkClause(subs[i]);
     }
 
+    Clause* lastCl = NULL;
+    Clause* thisCl = NULL;
     for (uint32_t i = 0; i < subs2.size(); i++) {
-        strenghten(subs2[i], subs2Lit[i]);
+        thisCl = subs2[i].clause;
+        if (thisCl != lastCl) {
+            strenghten(subs2[i], subs2Lit[i], true);
+            if (subs2[i].clause == NULL) lastCl = thisCl;
+        }
         if (!solver.ok) break;
     }
 
@@ -313,7 +319,7 @@ const bool Subsumer::cleanClause(Clause& ps)
     return retval;
 }
 
-void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
+void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit, const bool searchForLit)
 {
     #ifdef VERBOSE_DEBUG
     cout << "-> Strenghtening clause :";
@@ -321,6 +327,7 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
     cout << " with lit: " << (toRemoveLit.sign() ? "-" : "") << toRemoveLit.var()+1 << std::endl;
     #endif
 
+    if (searchForLit && !find(*c.clause, toRemoveLit)) return;
     literals_removed++;
     c.clause->strengthen(toRemoveLit);
     removeW(occur[toRemoveLit.toInt()], c.clause);
@@ -329,6 +336,7 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
     #endif
     if (cleanClause(*c.clause)) {
         unlinkClause(c);
+        c.clause = NULL;
         return;
     }
 
@@ -342,6 +350,7 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
         case 1: {
             handleSize1Clause((*c.clause)[0]);
             unlinkClause(c);
+            c.clause = NULL;
             break;
         }
         default:
@@ -694,16 +703,19 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
     uint64_t maxProp = MAX_BINARY_PROP;
     //if (clauses.size() > 2000000) maxProp /= 2;
     toVisitAll.growTo(solver.nVars()*2, false);
+    extraTimeNonExist = 0;
 
     doneNum = 0;
     uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
     for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
         Var var = solver.order_heap[(i+startFrom)%solver.order_heap.size()];
-        if (solver.propagations - oldProps > maxProp) break;
+        if (solver.propagations + extraTimeNonExist - oldProps > maxProp) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
         doneNum++;
+        extraTimeNonExist += 5;
 
         Lit lit(var, true);
+        if (onlyNonLearntBins->getWatchSize(lit) == 0) goto next;
         if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
@@ -712,10 +724,13 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
             if (!solver.ok) return false;
             continue;
         }
+        extraTimeNonExist += 10;
+        next:
 
         //in the meantime it could have got assigned
         if (solver.assigns[var] != l_Undef) continue;
         lit = ~lit;
+        if (onlyNonLearntBins->getWatchSize(lit) == 0) continue;
         if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntil(0);
@@ -724,6 +739,7 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
             if (!solver.ok) return false;
             continue;
         }
+        extraTimeNonExist += 10;
     }
 
     return true;
