@@ -1,4 +1,4 @@
-ver 2.6.0 -- 27/07/2010
+ver 2.6.0 -- 16/08/2010
 * No more separate watchlists for binary clauses. Class "Watched" knows
   what it watches. This reduces memory overhead, and reduces jump-around
   in code and data.
@@ -19,6 +19,9 @@ ver 2.6.0 -- 27/07/2010
   number of the literals in the learnt clauses. Asymmetric branching thus
   reduces the learnt clause sizes, increasing their potential and making
   propagation faster
+* On-the-fly self-subsuming resolution of learnt clauses is used to
+  shorten them even further using binary and tertiary (i.e. natively
+  stored) clauses.
 * Since tertiary clauses are first to propagate after binary clauses, the
   number of tertiary clauses propagating is higher, leading to even less
   literals in the learnt clauses

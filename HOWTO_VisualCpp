@@ -15,7 +15,7 @@ ClauseCleaner.cpp FindUndef.cpp PackedRow.cpp RestartTypeChooser.cpp \
 VarReplacer.cpp XorFinder.cpp XorSubsumer.cpp Subsumer.cpp PartFinder.cpp \
 PartHandler.cpp FailedVarSearcher.cpp ClauseAllocator.cpp \
 OnlyNonLearntBins.cpp UselessBinRemover.cpp StateSaver.cpp \
-SolverMisc.cpp SolverDebug.cpp
+SolverMisc.cpp SolverDebug.cpp CompleteDetachReattacher.cpp
 
 executed from the 'Solver' subdirectory
 
