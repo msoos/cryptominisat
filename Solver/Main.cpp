@@ -59,7 +59,6 @@ using std::endl;
 static bool grouping = false;
 static bool debugLib = false;
 static bool debugNewVar = false;
-static bool dumpLearnts = false;
 static bool printResult = true;
 
 //=================================================================================================
@@ -409,7 +408,7 @@ static void SIGINT_handler(int signum)
 {
     printf("\n");
     printf("*** INTERRUPTED ***\n");
-    if (dumpLearnts) {
+    if (solver->needToDumpLearnts || solver->needToDumpOrig) {
         solver->needToInterrupt = true;
         printf("*** Please wait. We need to interrupt cleanly\n");
         printf("*** This means we might need to finish some calculations\n");
@@ -481,6 +480,9 @@ void printUsage(char** argv, Solver& S)
     printf("                     should be maximum length of the clause dumped. Useful\n");
     printf("                     to make the resulting file smaller. Default is 2^32-1\n");
     printf("                     note: 2-long XOR-s are always dumped.\n");
+    printf("  --dumporig       = <filename> If interrupted or reached restart limit, dump\n");
+    printf("                     the original problem instance, simplified to the\n");
+    printf("                     current point.\n");
     printf("  --maxsolutions   = Search for given amount of solutions\n");
     printf("  --nofailedvar    = Don't search for failed vars, and don't search for vars\n");
     printf("                     doubly propagated to the same value\n");
@@ -665,9 +667,15 @@ int main(int argc, char** argv)
                 printf("ERROR! wrong filename '%s'\n", S.learntsFilename);
                 exit(0);
             }
-            dumpLearnts = true;
+            S.needToDumpLearnts = true;
+        } else if ((value = hasPrefix(argv[i], "--dumporig="))) {
+            if (sscanf(value, "%400s", S.origFilename) < 0 || strlen(S.origFilename) == 0) {
+                printf("ERROR! wrong filename '%s'\n", S.origFilename);
+                exit(0);
+            }
+            S.needToDumpOrig = true;
         } else if ((value = hasPrefix(argv[i], "--maxdumplearnts="))) {
-            if (!dumpLearnts) {
+            if (!S.needToDumpLearnts) {
                 printf("ERROR! -dumplearnts=<filename> must be first activated before issuing -maxdumplearnts=<size>\n");
                 exit(0);
             }
@@ -886,9 +894,13 @@ int main(int argc, char** argv)
 
     printStats(S);
     printf("c \n");
-    if (dumpLearnts) {
+    if (S.needToDumpLearnts) {
         S.dumpSortedLearnts(S.learntsFilename, S.maxDumpLearntsSize);
         cout << "c Sorted learnt clauses dumped to file '" << S.learntsFilename << "'" << endl;
+    }
+    if (S.needToDumpOrig) {
+        S.dumpOrigClauses(S.origFilename);
+        std::cout << "c Simplified original clauses dumped to file '" << S.origFilename << "'" << std::endl;
     }
     if (ret == l_Undef)
         printf("c Not finished running -- maximum restart reached\n");

@@ -98,6 +98,8 @@ Solver::Solver() :
         , subsumeWithNonExistBinaries(true)
         , regularSubsumeWithNonExistBinaries(true)
         , needToInterrupt  (false)
+        , needToDumpLearnts(false)
+        , needToDumpOrig   (false)
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , greedyUnbound    (false)
@@ -152,6 +154,8 @@ Solver::Solver() :
     restartTypeChooser = new RestartTypeChooser(*this);
     learntsFilename = new char[500];
     learntsFilename[0] = '\0';
+    origFilename = new char[500];
+    origFilename[0] = '\0';
 
     #ifdef USE_GAUSS
     matrixFinder = new MatrixFinder(*this);
@@ -1502,9 +1506,14 @@ const bool Solver::simplify()
 
 void Solver::interruptCleanly()
 {
-    dumpSortedLearnts(learntsFilename, maxDumpLearntsSize);
-    std::cout << "c Sorted learnt clauses dumped to file '" << learntsFilename << "'" << std::endl;
-    dumpOrigClauses("origClauses");
+    if (needToDumpLearnts) {
+        dumpSortedLearnts(learntsFilename, maxDumpLearntsSize);
+        std::cout << "c Sorted learnt clauses dumped to file '" << learntsFilename << "'" << std::endl;
+    }
+    if (needToDumpOrig) {
+        dumpOrigClauses(origFilename);
+        std::cout << "c Simplified original clauses dumped to file '" << origFilename << "'" << std::endl;
+    }
     exit(0);
 }
 

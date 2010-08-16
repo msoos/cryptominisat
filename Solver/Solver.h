@@ -176,7 +176,10 @@ public:
     bool      subsumeWithNonExistBinaries;
     bool      regularSubsumeWithNonExistBinaries;
     bool      needToInterrupt;      // If set to TRUE, we will interrupt cleanly ASAP
-    char*     learntsFilename;
+    bool      needToDumpLearnts;
+    bool      needToDumpOrig;
+    char*     learntsFilename;      // Dump sorted learnt clauses to this file
+    char*     origFilename;         // Dump simplified original problem CNF to this file
     uint32_t  maxDumpLearntsSize;
     bool      libraryUsage;         // Set true if not used as a library
     bool      greedyUnbound;        //If set, then variables will be greedily unbounded (set to l_Undef)
