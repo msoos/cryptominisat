@@ -1,11 +1,31 @@
 # -*- coding: utf-8 -*-
+from __future__ import with_statement # Required in 2.5
 import commands
 import os
 import fnmatch
 import gzip
 import re
 import getopt, sys
+import signal
+import signal
+from contextlib import contextmanager
 
+class TimeoutException(Exception): pass
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException, "Timed out!"
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+
+
+def signal_handler(signum, frame):
+    raise Exception("Timed out!")
 
 class Tester:
 
@@ -362,10 +382,17 @@ class Tester:
           
     if (self.arminFuzzer) :
       i = 0
+      signal.signal(signal.SIGALRM, signal_handler)
       while (i < 100000000) :
-        commands.getoutput("./fuzzer > fuzzTest");
+        #commands.getoutput("./cnffuzzer > fuzzTest");
+        commands.getoutput("./fuzzsat > fuzzTest");
         for i3 in range(num):
-          self.check("fuzzTest", "fuzzTest", i3, False)
+          try:
+            with time_limit(30):
+              self.check("fuzzTest", "fuzzTest", i3, False)
+          except TimeoutException, msg:
+            print "Fuzzing timed out -- probably too difficult instance generated"
+
           i = i + 1;
       exit()
     
