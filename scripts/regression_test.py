@@ -1,27 +1,26 @@
 # -*- coding: utf-8 -*-
 from __future__ import with_statement # Required in 2.5
-import commands
+import subprocess
 import os
 import fnmatch
 import gzip
 import re
+import commands
 import getopt, sys
 import signal
-import signal
-from contextlib import contextmanager
+import resource
+import time
+from subprocess import Popen, PIPE, STDOUT
 
-class TimeoutException(Exception): pass
 
-@contextmanager
-def time_limit(seconds):
-    def signal_handler(signum, frame):
-        raise TimeoutException, "Timed out!"
-    signal.signal(signal.SIGALRM, signal_handler)
-    signal.alarm(seconds)
-    try:
-        yield
-    finally:
-        signal.alarm(0)
+maxTime = 25
+maxTimeLimit = 23
+
+
+def setlimits():
+  # Set maximum CPU time to 1 second in child process, after fork() but before exec()
+  #sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" %(os.getpid(), numsecs))
+  resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 
 def signal_handler(signum, frame):
@@ -68,15 +67,20 @@ class Tester:
     command += "--gaussuntil=%d "%(self.gaussUntil);
     if (self.verbose == False) :
         command += "--verbosity=0 ";
-    command += "\"%s\""%(fname);
-    print "Executing: %s" %(command)
-    consoleOutput =  commands.getoutput(command)
-     
+    command += fname;
+    print "Executing: %s" %(command.rsplit())
+    #print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
+    p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
+    #print "CPU limit of parent (pid %d) after startup of child" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
+    p.wait()
+    consoleOutput = p.communicate()[0]
+    #print "CPU limit of parent (pid %d) after child finished executing" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
+
     if (self.verbose) :
       print consoleOutput
-       
+
     return consoleOutput
-       
+
   def parse_consoleOutput(self, consoleOutput):
     s3 = consoleOutput.splitlines()
     for l in s3:
@@ -264,13 +268,19 @@ class Tester:
     
   def check(self, fname, fnameCheck, i, newVar, needSolve = True):
     consoleOutput = "";
+    currTime = time.time()
     if (needSolve) :
         consoleOutput = self.execute(fname, i, newVar)
     else :
         f = open(fname + ".out", "r")
         consoleOutput = f.read()
         f.close()
-    
+
+    diffTime = time.time() - currTime
+    if (diffTime > maxTimeLimit) :
+      print "Too much time to solve, aborted!"
+      return
+
     self.parse_consoleOutput(consoleOutput)
     print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" %(fname[:20]+"....cnf.gz", i, self.sumProp, self.sumTime)
     
@@ -301,7 +311,9 @@ class Tester:
     if (self.arminFuzzer) :
       toexec = "./precosat %s" %(fname);
       #print "executing: %s" %(toexec)
-      consoleOutput2 = commands.getoutput(toexec);
+      p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
+      p.wait()
+      consoleOutput2 = p.communicate()[0]
       #print "precosat output:"
       #print consoleOutput2
       otherSolverUNSAT, otherSolverValue = self.read_found_output(consoleOutput2)
@@ -383,15 +395,15 @@ class Tester:
     if (self.arminFuzzer) :
       i = 0
       signal.signal(signal.SIGALRM, signal_handler)
+
       while (i < 100000000) :
-        #commands.getoutput("./cnffuzzer > fuzzTest");
         commands.getoutput("./fuzzsat > fuzzTest");
         for i3 in range(num):
-          try:
-            with time_limit(30):
-              self.check("fuzzTest", "fuzzTest", i3, False)
-          except TimeoutException, msg:
-            print "Fuzzing timed out -- probably too difficult instance generated"
+          self.check("fuzzTest", "fuzzTest", i3, False)
+
+        commands.getoutput("./cnffuzz > fuzzTest");
+        for i3 in range(num):
+          self.check("fuzzTest", "fuzzTest", i3, False)
 
           i = i + 1;
       exit()
