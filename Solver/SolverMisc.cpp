@@ -121,8 +121,9 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
         if (!alsoLearntBin && (*i)->learnt()) continue;
         numClauses++;
     }
-    numClauses += clauses.size();
     //normal clauses
+    numClauses += clauses.size();
+    //previously eliminated clauses
     const map<Var, vector<Clause*> >& elimedOutVar = subsumer->getElimedOutVar();
     for (map<Var, vector<Clause*> >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
         const vector<Clause*>& cs = it->second;
@@ -388,4 +389,23 @@ void Solver::sortWatched()
         << "sorting time: " << cpuTime() - myTime
         << std::endl;
     }
+}
+
+void Solver::addSymmBreakClauses()
+{
+    if (xorclauses.size() > 0) {
+        std::cout << "c xor clauses present -> no saucy" << std::endl;
+        return;
+    }
+    double myTime = cpuTime();
+    std::cout << "c Doing saucy" << std::endl;
+    dumpOrigClauses("origProblem.cnf", true);
+    system("grep -v \"^c\" origProblem.cnf > origProblem2.cnf");
+    system("python saucyReader.py origProblem2.cnf > output");
+    DimacsParser parser(this, false, false, false, true);
+
+    gzFile in = gzopen("output", "rb");
+    parser.parse_DIMACS(in);
+    gzclose(in);
+    std::cout << "c Finished saucy, time: " << (cpuTime() - myTime) << std::endl;
 }

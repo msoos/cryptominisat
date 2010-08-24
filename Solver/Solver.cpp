@@ -1901,6 +1901,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (doAsymmBranchReg && !failedVarSearcher->asymmBranch()) goto end;
 
+    //addSymmBreakClauses();
+
     if (doSortWatched) sortWatched();
 
 end:

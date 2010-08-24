@@ -468,6 +468,7 @@ protected:
     void     printEndSearchStat();
     double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
     void     interruptCleanly();
+    void     addSymmBreakClauses();
 
     /////////////////////
     // Polarity chooser
