@@ -21,6 +21,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "DimacsParser.h"
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 using std::cout;
 using std::endl;
 
