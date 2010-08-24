@@ -20,12 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Subsumer.h"
 #include "XorSubsumer.h"
 #include "time_mem.h"
+#include "DimacsParser.h"
 #include <iomanip>
 
 #ifdef USE_GAUSS
 #include "Gaussian.h"
 #endif
-
 
 static const int space = 10;
 
@@ -96,7 +96,7 @@ void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
     fclose(outfile);
 }
 
-void Solver::dumpOrigClauses(const char* fileName) const
+void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) const
 {
     FILE* outfile = fopen(fileName, "w");
     if (!outfile) {
@@ -118,7 +118,7 @@ void Solver::dumpOrigClauses(const char* fileName) const
     }
     //binary normal clauses
     for (Clause *const *i = binaryClauses.getData(); i != binaryClauses.getDataEnd(); i++) {
-        if ((*i)->learnt()) continue;
+        if (!alsoLearntBin && (*i)->learnt()) continue;
         numClauses++;
     }
     numClauses += clauses.size();
@@ -161,7 +161,7 @@ void Solver::dumpOrigClauses(const char* fileName) const
     fprintf(outfile, "c binary clauses\n");
     fprintf(outfile, "c ---------------\n");
     for (Clause *const *i = binaryClauses.getData(); i != binaryClauses.getDataEnd(); i++) {
-        if ((*i)->learnt()) continue;
+        if (!alsoLearntBin && (*i)->learnt()) continue;
         (*i)->print(outfile);
     }
 

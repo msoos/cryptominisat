@@ -40,5 +40,6 @@ add_library(cryptominisatlib
     UselessBinRemover.cpp
     OnlyNonLearntBins.cpp
     CompleteDetachReattacher.cpp
+    DimacsParser.cpp
 )
 

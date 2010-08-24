@@ -107,6 +107,8 @@ public:
     bool    addClause (T& ps, const uint32_t group = 0, char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
     bool    addXorClause (T& ps, bool xor_clause_inverted, const uint32_t group = 0, char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    template<class T>
+    bool addLearntClause(T& ps, const uint32_t group, const uint32_t activity);
 
     // Solving:
     //
@@ -206,7 +208,7 @@ public:
     const uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     void dumpSortedLearnts(const char* file, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const char* fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
-    void dumpOrigClauses(const char* fileName) const;
+    void dumpOrigClauses(const char* fileName, const bool alsoLearntBin = false) const;
 
     #ifdef USE_GAUSS
     const uint32_t get_sum_gauss_called() const;
@@ -240,8 +242,6 @@ protected:
     Clause* addClauseInt(T& ps, uint32_t group);
     template<class T>
     XorClause* addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32_t group);
-    template<class T>
-    bool addLearntClause(T& ps, const uint32_t group, const uint32_t activity);
 
     //////////////////
     //Handling Watched
