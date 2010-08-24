@@ -14,17 +14,13 @@ from subprocess import Popen, PIPE, STDOUT
 
 
 maxTime = 25
-maxTimeLimit = 23
+maxTimeLimit = 20
 
 
 def setlimits():
   # Set maximum CPU time to 1 second in child process, after fork() but before exec()
   #sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" %(os.getpid(), numsecs))
   resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
-
-
-def signal_handler(signum, frame):
-    raise Exception("Timed out!")
 
 class Tester:
 
@@ -394,7 +390,6 @@ class Tester:
           
     if (self.arminFuzzer) :
       i = 0
-      signal.signal(signal.SIGALRM, signal_handler)
 
       while (i < 100000000) :
         commands.getoutput("./fuzzsat > fuzzTest");
