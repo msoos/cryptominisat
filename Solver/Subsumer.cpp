@@ -695,7 +695,7 @@ void Subsumer::subsume0Touched()
     cl_touched.clear();
 }
 
-#define MAX_BINARY_PROP 40000000
+#define MAX_BINARY_PROP 60000000
 
 const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
 {
