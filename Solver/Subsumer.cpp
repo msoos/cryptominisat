@@ -439,6 +439,8 @@ void Subsumer::subsume0AndSubsume1()
         }
         s1.clear();
 
+        if (!cleanAndPropAllClauses()) goto end;
+
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
             if (it->clause != NULL) {
                 s1.add(*it);
@@ -452,6 +454,37 @@ void Subsumer::subsume0AndSubsume1()
     end:
     unregisterIteration(s1);
     unregisterIteration(s0);
+}
+
+const bool Subsumer::cleanAndPropAllClauses()
+{
+    for (ClauseSimp *i = clauses.getData(), *end = clauses.getDataEnd(); i != end; i++) {
+        if (i->clause == NULL) continue;
+
+        Clause& c = *i->clause;
+        uint32_t origSize = c.size();
+        if (cleanClause(c)) {
+            unlinkClause(*i);
+            continue;
+        }
+
+        switch (c.size()) {
+            case 0:
+                solver.ok = false;
+                goto end;
+            case 1: {
+                handleSize1Clause(c[0]);
+                unlinkClause(*i);
+                break;
+            }
+            default:
+                if (c.size() != origSize) cl_touched.add(*i);
+        }
+    }
+
+    end:
+
+    return solver.ok;
 }
 
 ClauseSimp Subsumer::linkInClause(Clause& cl)

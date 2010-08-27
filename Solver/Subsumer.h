@@ -83,6 +83,7 @@ private:
     void clearAll();
     void setLimits(const bool alsoLearnt);
     void subsume0AndSubsume1();
+    const bool cleanAndPropAllClauses();
 
     //Finish-up
     void freeMemory();
