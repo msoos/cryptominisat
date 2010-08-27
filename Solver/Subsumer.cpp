@@ -475,6 +475,7 @@ const bool Subsumer::cleanAndPropAllClauses()
             case 1: {
                 handleSize1Clause(c[0]);
                 unlinkClause(*i);
+                if (!solver.ok) goto end;
                 break;
             }
             default:
