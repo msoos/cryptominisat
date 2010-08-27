@@ -873,6 +873,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         pathC--;
 
     } while (pathC > 0);
+    assert(pathC == 0);
     out_learnt[0] = ~p;
 
     // Simplify conflict clause:
