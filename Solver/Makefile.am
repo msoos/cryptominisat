@@ -11,7 +11,7 @@ libcryptominisat_la_SOURCES = \
 	RestartTypeChooser.cpp Subsumer.cpp XorSubsumer.cpp \
 	SolverMisc.cpp SolverDebug.cpp ClauseAllocator.cpp \
 	OnlyNonLearntBins.cpp UselessBinRemover.cpp \
-	CompleteDetachReattacher.cpp
+	CompleteDetachReattacher.cpp DimacsParser.cpp
 
 bin_PROGRAMS = cryptominisat
 cryptominisat_LDADD = libcryptominisat.la
