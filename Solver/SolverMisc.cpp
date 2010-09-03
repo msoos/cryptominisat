@@ -404,8 +404,16 @@ void Solver::addSymmBreakClauses()
     system("python saucyReader.py origProblem2.cnf > output");
     DimacsParser parser(this, false, false, false, true);
 
+    #ifdef DISABLE_ZLIB
+    FILE * in = fopen("output", "rb");
+    #else
     gzFile in = gzopen("output", "rb");
+    #endif // DISABLE_ZLIB
     parser.parse_DIMACS(in);
+    #ifdef DISABLE_ZLIB
+    fclose(in);
+    #else
     gzclose(in);
+    #endif // DISABLE_ZLIB
     std::cout << "c Finished saucy, time: " << (cpuTime() - myTime) << std::endl;
 }
