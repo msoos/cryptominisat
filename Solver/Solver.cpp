@@ -846,6 +846,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
             if (!seen[my_var] && level[my_var] > 0) {
                 varBumpActivity(my_var);
                 seen[my_var] = 1;
+                assert(level[my_var] <= (int)decisionLevel());
                 if (level[my_var] >= (int)decisionLevel()) {
                     pathC++;
                     #ifdef UPDATEVARACTIVITY
