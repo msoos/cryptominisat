@@ -41,6 +41,14 @@ Subsumer::Subsumer(Solver& s):
 {
 };
 
+/**
+@brief Extends the model to include eliminated variables
+
+Adds the clauses to the parameter solver2, and then relies on the
+caller to call solver2.solve().
+
+@p solver2 The external solver the variables' clauses are added to
+*/
 void Subsumer::extendModel(Solver& solver2)
 {
     assert(checkElimedUnassigned());
@@ -74,6 +82,14 @@ void Subsumer::extendModel(Solver& solver2)
     }
 }
 
+/**
+@brief Adds to the solver the clauses representing variable var
+
+This function is useful if a variable was eliminated, but now needs to be
+added back again.
+
+@p var The variable to be added back again
+*/
 const bool Subsumer::unEliminate(const Var var)
 {
     assert(var_elimed[var]);
@@ -104,6 +120,20 @@ const bool Subsumer::unEliminate(const Var var)
     return solver.ok;
 }
 
+/**
+@brief Backward-subsumption using given clause: helper function
+
+Checks all clauses in the occurrence lists if they are subsumed by ps or not.
+
+The input clause can be learnt. In that case, if it subsumes non-learnt clauses,
+it will become non-learnt.
+
+Handles it well if the subsumed clause has a higher activity than the subsuming
+clause (will take the max() of the two)
+
+@p ps The clause to use
+
+*/
 void Subsumer::subsume0(Clause& ps)
 {
     if (!subsWithBins) ps.subsume0Finished();
@@ -126,16 +156,15 @@ void Subsumer::subsume0(Clause& ps)
     }
 }
 
-void Subsumer::subsume0(vec<Lit>& ps, uint32_t abs)
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "subsume0-ing with vec: ";
-    printClause(ps);
-    #endif
-    subsume0Orig(ps, abs);
-}
+/**
+@brief Backward-subsumption using given clause
 
-// Will put NULL in 'cs' if clause removed.
+@note Use helper function
+
+@param ps The clause to use to backward-subsume (doesn't handle learnt clauses)
+@param[in] abs The abstraction of the clause
+@return Subsumed anything? If so, what was the max activity? Was it non-learnt?
+*/
 template<class T>
 Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 {
@@ -165,7 +194,20 @@ Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 
     return ret;
 }
+/**
+@brief Backward-subsumption&self-subsuming resolution for binary clause sets
 
+Takes in a set of binary clauses:
+lit1 OR lits[0]
+lit1 OR lits[1]
+...
+and backward-subsumes clauses in the occurence lists with it, as well as
+performing self-subsuming resolution using these binary clauses on clauses in
+the occurrence lists.
+
+@param[in] lit1 As defined above
+@param[in] lits The abstraction of the clause
+*/
 void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
 {
     vec<ClauseSimp> subs;
@@ -212,7 +254,14 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
     }
     #endif //VERBOSE_DEBUG
 }
+/**
+@brief Backward subsumption and self-subsuming resolution
 
+Performs backward subsumption AND
+self-subsuming resolution using backward-subsumption
+
+@param[in] ps The clause to use for backw-subsumption and self-subs. resolution
+*/
 void Subsumer::subsume1(Clause& ps)
 {
     vec<ClauseSimp>    subs;
@@ -246,7 +295,18 @@ void Subsumer::subsume1(Clause& ps)
         }
     }
 }
+/**
+@brief Removes&free-s a clause from everywhere
 
+Removes clause from occurence lists, from clauses[], and iter_sets.
+
+If clause is to be removed because the variable in it is eliminated, the clause
+is saved in elimedOutVar[] before it is fully removed.
+
+@param[in] c The clause to remove
+@param[in] elim If the clause is removed because of variable elmination, this
+parameter is different from var_Undef.
+*/
 void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
 {
     Clause& cl = *c.clause;
@@ -282,6 +342,17 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
     clauses[c.index].clause = NULL;
 }
 
+/**
+@brief Cleans clause from false literals
+
+This does NOT re-implement the feature of \class ClauseCleaner because
+here we need to remove the literals from the occurrence lists as well. Further-
+more, we need propagate if needed, which is never assumed to be a need in
+\class ClauseCleaner since there the clauses are always attached to the watch-
+lists.
+
+@param ps Clause to be cleaned
+*/
 const bool Subsumer::cleanClause(Clause& ps)
 {
     bool retval = false;
@@ -313,6 +384,14 @@ const bool Subsumer::cleanClause(Clause& ps)
     return retval;
 }
 
+/**
+@brief Removes a literal from a clause
+
+May return with solver.ok being FALSE, and may set&propagate variable values.
+
+@param c Clause to be cleaned of the literal
+@param[in] toRemoveLit The literal to be removed from the clause
+*/
 void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
 {
     #ifdef VERBOSE_DEBUG
@@ -349,6 +428,14 @@ void Subsumer::strenghten(ClauseSimp c, const Lit toRemoveLit)
     }
 }
 
+/**
+@brief Handles if a clause became 1-long (unitary)
+
+Either sets&propagates the value, ignores the value (if already set),
+or sets solver.ok = FALSE
+
+@param[in] lit The single literal the clause has
+*/
 inline void Subsumer::handleSize1Clause(const Lit lit)
 {
     if (solver.value(lit) == l_False) {
@@ -361,6 +448,13 @@ inline void Subsumer::handleSize1Clause(const Lit lit)
     }
 }
 
+/**
+@brief Executes subsume1() recursively on all clauses
+
+This function requires cl_touched to have been set. Then, it manages cl_touched.
+The clauses are called to perform subsume1() or subsume0() when appropriate, and
+when there is enough numMaxSubume1 and numMaxSubume0 is available.
+*/
 void Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
@@ -451,6 +545,13 @@ void Subsumer::subsume0AndSubsume1()
     unregisterIteration(s0);
 }
 
+/**
+@brief Links in a clause into the occurrence lists and the clauses[]
+
+Increments clauseID
+
+@param[in] cl The clause to link in
+*/
 ClauseSimp Subsumer::linkInClause(Clause& cl)
 {
     ClauseSimp c(&cl, clauseID++);
@@ -464,6 +565,16 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
     return c;
 }
 
+/**
+@brief Adds clauses from the solver to here, and removes them from the solver
+
+Which clauses are needed can be controlled by the parameters
+
+@param[in] cs The clause-set to use, e.g. solver.binaryClauses, solver.learnts
+@param[in] alsoLearnt Also add learnt clauses?
+@param[in] addBinAndAddToCL If set to FALSE, binary clauses are not added, and
+clauses are never added to the cl_touched set.
+*/
 void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool addBinAndAddToCL)
 {
     Clause **i = cs.getData();
@@ -500,6 +611,9 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool
     cs.shrink(i-j);
 }
 
+/**
+@brief Frees memory occupied by occurrence lists
+*/
 void Subsumer::freeMemory()
 {
     for (uint32_t i = 0; i < occur.size(); i++) {
@@ -507,6 +621,9 @@ void Subsumer::freeMemory()
     }
 }
 
+/**
+@brief Adds clauses from here, back to the solver
+*/
 void Subsumer::addBackToSolver()
 {
     #ifdef HYPER_DEBUG2
@@ -546,6 +663,12 @@ void Subsumer::addBackToSolver()
     #endif
 }
 
+/**
+@brief Remove clauses from input that contain eliminated variables
+
+Used to remove learnt clauses that still reference a variable that has been
+eliminated.
+*/
 void Subsumer::removeWrong(vec<Clause*>& cs)
 {
     Clause **i = cs.getData();
@@ -571,6 +694,14 @@ void Subsumer::removeWrong(vec<Clause*>& cs)
     cs.shrink(i-j);
 }
 
+/**
+@brief Fills the vector cannot_eliminate
+
+Variables that are:
+* also present in XOR-clauses, or
+* have been replaced
+cannot be eliminated. This is enforced by the vector cannot_elimnate
+*/
 void Subsumer::fillCannotEliminate()
 {
     std::fill(cannot_eliminate.getData(), cannot_eliminate.getDataEnd(), false);
@@ -596,6 +727,17 @@ void Subsumer::fillCannotEliminate()
     #endif
 }
 
+/**
+@brief Subsumes&strenghtens normal clauses with (non-existing) binary clauses
+
+First, it backward-subsumes and performs self-subsuming resolution using binary
+clauses on non-binary clauses. Then, it generates non-existing binary clauses
+(that could exist, but would be redundant), and performs self-subsuming
+resolution with them on the normal clauses using \function subsume0BIN().
+
+@param onlyNonLearntBins This class is initialised before calling this function
+and contains all the non-learnt binary clauses
+*/
 const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
 {
     clearAll();
@@ -676,6 +818,9 @@ const bool Subsumer::subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins)
     return true;
 }
 
+/**
+@brief Perform backward subsumption on clauses in cl_touched
+*/
 void Subsumer::subsume0Touched()
 {
     for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
@@ -688,6 +833,17 @@ void Subsumer::subsume0Touched()
 
 #define MAX_BINARY_PROP 40000000
 
+/**
+@brief Call subsWNonExistBins with randomly picked starting literals
+
+This is the function that overviews the deletion of all clauses that could be
+inferred from non-existing binary clauses, and the strenghtening (through self-
+subsuming resolution) of clauses that could be strenghtened using non-existent
+binary clauses.
+
+@param onlyNonLearntBins This class is initialised before calling this function
+and contains all the non-learnt binary clauses
+*/
 const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
 {
     uint64_t oldProps = solver.propagations;
@@ -729,6 +885,18 @@ const bool Subsumer::subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins)
     return true;
 }
 
+/**
+@brief Subsumes&strenghtens clauses with non-existent binary clauses
+
+Generates binary clauses that could exist, then calls \function subsume0BIN()
+with them, thus performing self-subsuming resolution and subsumption on the
+clauses.
+
+@param[in] lit This literal is the starting point of this set of non-existent
+binary clauses (this literal is the starting point in the binary graph)
+@param onlyNonLearntBins This class is initialised before calling this function
+and contains all the non-learnt binary clauses
+*/
 const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
 {
     #ifdef VERBOSE_DEBUG
@@ -762,7 +930,11 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
 
     return solver.ok;
 }
+/**
+@brief Clears and deletes (almost) everything in this class
 
+Clears touchlists, occurrance lists, clauses, and variable touched lists
+*/
 void Subsumer::clearAll()
 {
     touched_list.clear();
@@ -777,6 +949,17 @@ void Subsumer::clearAll()
     cl_touched.clear();
 }
 
+/**
+@brief Main function in this class
+
+Performs, recursively:
+* backward-subsumption
+* self-subsuming resolution
+* variable elimination
+
+@param[in] alsoLearnt Should learnt clauses be also hooked into the occurrence
+lists? If so, variable elimination cannot take place.
+*/
 const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 {
     if (solver.nClauses() > 20000000)  return true;
@@ -972,6 +1155,17 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     return true;
 }
 
+/**
+@brief Calculate limits for backw-subsumption, var elim, etc.
+
+It is important to have limits, otherwise the time taken to perfom these tasks
+could be huge. Furthermore, it seems that there is a benefit in doing these
+simplifications slowly, instead of trying to use them as much as possible
+from the beginning.
+
+@param[in] alsoLearnt Have learnt clauses also been hooked in? If so, variable
+elimination must be excluded, for example (i.e. its limit must be 0)
+*/
 void Subsumer::setLimits(const bool alsoLearnt)
 {
     if (clauses.size() > 3500000) {
@@ -1009,6 +1203,16 @@ void Subsumer::setLimits(const bool alsoLearnt)
     }
 }
 
+/**
+@brief Remove variables from var_elimed if it has been set
+
+While doing, e.g. self-subsuming resolution, it might happen that the variable
+that we JUST eliminated has been assigned a value. This could happen for example
+if due to clause-cleaning some variable value got propagated that we just set.
+Therefore, we must check at the very end if any variables that we eliminated
+got set, and if so, the clauses linked to these variables can be fully removed
+from elimedOutVar[].
+*/
 void Subsumer::removeAssignedVarsFromEliminated()
 {
     for (Var var = 0; var < var_elimed.size(); var++) {
@@ -1025,6 +1229,15 @@ void Subsumer::removeAssignedVarsFromEliminated()
     }
 }
 
+/**
+@brief Finds clauses that are backward-subsumed by given clause
+
+Only handles backward-subsumption. Uses occurrence lists
+
+@param[in] ps The clause to backward-subsume with.
+@param[in] abs Abstraction of the clause ps
+@param[out] out_subsumed The set of clauses subsumed by this clause
+*/
 template<class T>
 void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed)
 {
@@ -1063,6 +1276,21 @@ void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subs
         seen_tmp[ps[i].toInt()] = 0;
 }
 
+/**
+@brief Checks if clauses are subsumed or could be strenghtened with given clause
+
+Checks if:
+* any clause is subsumed with given clause
+* the given clause could perform self-subsuming resolution on any other clause
+
+Only takes into consideration clauses that are in the occurrence lists.
+
+@param[in] ps The clause to perform the above listed algos with
+@param[in] abs The abstraction of clause ps
+@param[out] out_subsumed The clauses that could be modified by ps
+@param[out] out_lits Defines HOW these clauses could be modified. By removing
+literal, or by subsumption (in this case, there is lit_Undef here)
+*/
 template<class T>
 void Subsumer::findSubsumed1(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits)
 {
@@ -1086,6 +1314,11 @@ void Subsumer::findSubsumed1(const T& ps, uint32_t abs, vec<ClauseSimp>& out_sub
     fillSubs(ps, abs, out_subsumed, out_lits, Lit(minVar, false));
 }
 
+/**
+@brief Helper function for findSubsumed1
+
+Used to avoid duplication of code
+*/
 template<class T>
 void inline Subsumer::fillSubs(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits, const Lit lit)
 {
@@ -1112,6 +1345,20 @@ void inline Subsumer::fillSubs(const T& ps, uint32_t abs, vec<ClauseSimp>& out_s
     }
 }
 
+/**
+@brief Used for variable elimination
+
+Migrates clauses in poss to ps, and negs to ns
+Also unlinks ass clauses is ps and ns. This is special unlinking, since it
+actually saves the clauses for later re-use when extending the model, or re-
+introducing the eliminated variables.
+
+@param[in] poss The occurrence list of var where it is positive
+@param[in] negs The occurrence list of var where it is negavite
+@param[out] ps Where thre clauses from poss have been moved
+@param[out] ns Where thre clauses from negs have been moved
+@param[in] var The variable that is being eliminated
+*/
 void inline Subsumer::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x)
 {
     poss.moveTo(ps);
@@ -1123,7 +1370,15 @@ void inline Subsumer::MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs
         unlinkClause(ns[i], x);
 }
 
-// Returns TRUE if variable was eliminated.
+/**
+@brief Tries to eliminate variable
+
+Tries to eliminate a variable. It uses heuristics to decide whether it's a good
+idea to eliminate a variable or not.
+
+@param[in] var The variable that is being eliminated
+@return TRUE if variable was eliminated
+*/
 bool Subsumer::maybeEliminate(const Var x)
 {
     assert(!var_elimed[x]);
@@ -1217,7 +1472,18 @@ bool Subsumer::maybeEliminate(const Var x)
     return true;
 }
 
-// Returns FALSE if clause is always satisfied ('out_clause' should not be used). 'seen' is assumed to be cleared.
+/**
+@brief Resolves two clauses on a variable
+
+Clause ps must contain without_p
+Clause ps must contain without_q
+And without_p = ~without_q
+
+@note: 'seen' is assumed to be cleared.
+
+@param[in] var The variable that is being eliminated
+@return FALSE if clause is always satisfied ('out_clause' should not be used)
+*/
 bool Subsumer::merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause)
 {
     for (uint32_t i = 0; i < ps.size(); i++){
@@ -1245,14 +1511,30 @@ bool Subsumer::merge(const Clause& ps, const Clause& qs, const Lit without_p, co
     return true;
 }
 
+/**
+@brief Struct used to compare variable elimination difficulties
+
+Used to order variables according to their difficulty of elimination. Used by
+the std::sort() function. in \function orderVarsForElim()
+*/
 struct myComp {
     bool operator () (const pair<int, Var>& x, const pair<int, Var>& y) {
         return x.first < y.first ||
             (!(y.first < x.first) && x.second < y.second);
     }
 };
-    
-// Side-effect: Will untouch all variables.
+
+/**
+@brief Orders variables for elimination
+
+Variables are ordered according to their occurrances. If a variable occurs far
+less than others, it should be prioritised for elimination. The more difficult
+variables are OK to try later.
+
+@note: Will untouch all variables.
+
+@param[out] order The order to try to eliminate the variables
+*/
 void Subsumer::orderVarsForElim(vec<Var>& order)
 {
     order.clear();
@@ -1272,6 +1554,14 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
     }
 }
 
+/**
+@brief Verifies that occurrence lists are OK
+
+Calculates how many occurences are of the varible in clauses[], and if that is
+less than occur[var].size(), returns FALSE
+
+@return TRUE if they are OK
+*/
 const bool Subsumer::verifyIntegrity()
 {
     vector<uint32_t> occurNum(solver.nVars()*2, 0);
@@ -1425,6 +1715,17 @@ const bool Subsumer::tryOneSetting(const Lit lit, const Lit negLit)
     return returnVal;
 }
 
+/**
+@brief Checks if eliminated variables are unassigned
+
+If there is a variable that has been assigned even though it's been eliminated
+that means that there were clauses that contained that variable, and where some-
+how inserted into the watchlists. That would be a grave bug, since that would
+mean that not all clauses containing the eliminated variable were removed during
+the running of this class.
+
+@return TRUE if they are all unassigned
+*/
 const bool Subsumer::checkElimedUnassigned() const
 {
     for (uint32_t i = 0; i < var_elimed.size(); i++) {
