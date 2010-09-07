@@ -54,28 +54,28 @@ private:
     
     //Main
     vec<ClauseSimp>        clauses;
-    vec<char>              touched;        // Is set to true when a variable is part of a removed clause. Also true initially (upon variable creation).
-    vec<Var>               touched_list;   // A list of the true elements in 'touched'.
-    CSet                   cl_touched;     // Clauses strengthened.
-    vec<vec<ClauseSimp> >  occur;          // 'occur[index(lit)]' is a list of constraints containing 'lit'.
-    vec<CSet* >            iter_sets;      // Sets currently used for iterations.
-    vec<char>              cannot_eliminate;//
-    vec<char>              seen_tmp; // (used in various places)
+    vec<char>              touched;        ///<Is set to true when a variable is part of a removed clause. Also true initially (upon variable creation).
+    vec<Var>               touched_list;   ///<A list of the true elements in 'touched'.
+    CSet                   cl_touched;     ///<Clauses strengthened/added
+    vec<vec<ClauseSimp> >  occur;          ///<occur[index(lit)]' is a list of constraints containing 'lit'.
+    vec<CSet* >            iter_sets;      ///<Sets currently used in iterations.
+    vec<char>              cannot_eliminate;///<Variables that cannot be eliminated due to, e.g. XOR-clauses
+    vec<char>              seen_tmp;       ///<Used in various places to help perform algorithms
 
     //Global stats
-    Solver& solver;
-    vec<char> var_elimed; //TRUE if var has been eliminated
-    double totalTime;
-    uint32_t numElimed;
-    map<Var, vector<Clause*> > elimedOutVar;
+    Solver& solver;                        ///<The solver this simplifier is connected to
+    vec<char> var_elimed;                  ///<Contains TRUE if var has been eliminated
+    double totalTime;                      ///<Total time spent in this class
+    uint32_t numElimed;                    ///<Total number of variables eliminated
+    map<Var, vector<Clause*> > elimedOutVar; ///<Contains the clauses to use to uneliminate a variable
 
     //Limits
-    uint32_t numVarsElimed;
-    uint32_t numMaxSubsume1;
-    uint32_t numMaxSubsume0;
-    uint32_t numMaxElim;
-    int64_t numMaxBlockToVisit;
-    uint32_t numMaxBlockVars;
+    uint32_t numVarsElimed;               ///<Number of variables elimed in this run
+    uint32_t numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
+    uint32_t numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
+    uint32_t numMaxElim;                  ///<Max. number of variable elimination tries to do this run
+    int64_t numMaxBlockToVisit;           ///<Max. number variable-blocking clauses to visit to do this run
+    uint32_t numMaxBlockVars;             ///<Max. number variable-blocking tries to do this run
     
     //Start-up
     void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false, const bool addBinAndAddToCL = true);
@@ -118,7 +118,6 @@ private:
         float oldActivity;
     };
     void subsume0(Clause& ps);
-    void subsume0(vec<Lit>& ps, uint32_t abs);
     template<class T>
     subsume0Happened subsume0Orig(const T& ps, uint32_t abs);
     void subsume0Touched();
@@ -142,9 +141,9 @@ private:
     bool subsNonExistentFinish;
     uint32_t doneNum;
     uint64_t extraTimeNonExist;
-    vec<Lit> toVisit;
-    vec<char> toVisitAll;
-    
+    vec<Lit> toVisit;      ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (list)
+    vec<char> toVisitAll;  ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (contains '1' for literal.toInt() that we visited)
+
     class VarOcc {
         public:
             VarOcc(const Var& v, const uint32_t num) :
@@ -174,11 +173,11 @@ private:
     //validity checking
     const bool verifyIntegrity();
     
-    uint32_t clauses_subsumed;
-    uint32_t literals_removed;
-    uint32_t numCalls;
-    uint32_t clauseID;
-    bool subsWithBins;
+    uint32_t clauses_subsumed; ///<Number of clauses subsumed in this run
+    uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
+    uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
+    uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
+    bool subsWithBins;         ///<Are we currently subsuming with binaries only?
 };
 
 template <class T, class T2>
@@ -188,6 +187,13 @@ void maybeRemove(vec<T>& ws, const T2& elem)
         removeW(ws, elem);
 }
 
+/**
+@brief Put varible in touched_list
+
+call it when the number of occurrences of this variable changed.
+
+@param[in] x The varible that must be put into touched_list
+*/
 inline void Subsumer::touch(const Var x)
 {
     if (!touched[x]) {
@@ -196,6 +202,11 @@ inline void Subsumer::touch(const Var x)
     }
 }
 
+/**
+@brief Put varible in touchedBlockedVars
+
+call it when the number of occurrences of this variable changed.
+*/
 inline void Subsumer::touchBlockedVar(const Var x)
 {
     if (!touchedBlockedVarsBool[x]) {
@@ -204,16 +215,27 @@ inline void Subsumer::touchBlockedVar(const Var x)
     }
 }
 
+/**
+@brief Put variable of literal in touched_list
+
+call it when the number of occurrences of this variable changed
+*/
 inline void Subsumer::touch(const Lit p)
 {
     touch(p.var());
 }
 
+/**
+@brief Decides only using abstraction if clause A could subsume clause B
+
+@note: It can give false positives. Never gives false negatives.
+
+For A to subsume B, everything that is in A MUST be in B. So, if (A & ~B)
+contains even one bit, it means that A contains something that B doesn't. So
+A may be a subset of B only if (A & ~B) == 0
+*/
 inline bool Subsumer::subsetAbst(const uint32_t A, const uint32_t B)
 {
-    //A subsumes B? (everything that is in A MUST be in B)
-    //if (A & ~B) contains even one bit, it means that A contains something
-    //that B doesn't. So A may be a subset of B only if (A & ~B) == 0;
     return !(A & ~B);
 }
 
@@ -228,10 +250,20 @@ bool Subsumer::subset(const uint32_t aSize, const T2& B)
     return num == aSize;
 }
 
-// Assumes 'seen' is cleared (will leave it cleared)
-//Checks whether A subsumes(1) B
-//Returns lit_Undef if it simply subsumes
-//Returns lit_Error if it doesnt subsume1 or subsume0
+
+/**
+@brief Decides if A subsumes B, or if not, if A could strenghten B
+
+@note: Assumes 'seen' is cleared (will leave it cleared)
+
+Helper function findSubsumed1. Does two things in one go:
+1) decides if clause A could subsume clause B
+1) decides if clause A could be used to perform self-subsuming resoltuion on
+clause B
+
+@return lit_Error, if neither (1) or (2) is true. Returns lit_Undef (1) is true,
+and returns the literal to remove if (2) is true
+*/
 template<class T1, class T2>
 const Lit Subsumer::subset1(const T1& A, const T2& B)
 {
@@ -256,6 +288,13 @@ const Lit Subsumer::subset1(const T1& A, const T2& B)
     return retLit;
 }
 
+/**
+@brief New var has been added to the solver
+
+@note: MUST be called if a new var has been added to the solver
+
+Adds occurrence list places, increments seen_tmp, etc.
+*/
 inline void Subsumer::newVar()
 {
     occur       .push();
