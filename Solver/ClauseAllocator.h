@@ -36,6 +36,7 @@ using std::vector;
 
 #define NUM_BITS_OUTER_OFFSET 4
 
+
 class Clause;
 class XorClause;
 class Solver;
@@ -83,7 +84,7 @@ class ClauseAllocator {
         vec<size_t> sizes;
         vec<vec<uint32_t> > origClauseSizes;
         vec<size_t> maxSizes;
-        vec<size_t> currentlyUsedSize;
+        vec<size_t> currentlyUsedSizes;
         vec<uint32_t> origSizes;
 
         #ifdef USE_BOOST
