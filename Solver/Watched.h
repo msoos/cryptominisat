@@ -24,9 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #endif //_MSC_VER
 
-#include "ClauseAllocator.h"
-
 //#define DEBUG_WATCHED
+
+#include "ClauseOffset.h"
+#include "SolverTypes.h"
 
 class Watched {
     public:

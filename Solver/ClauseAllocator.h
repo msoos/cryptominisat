@@ -24,11 +24,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #endif //_MSC_VER
 
+#include <stdlib.h>
 #include "Vec.h"
 #include <map>
 #include <vector>
 using std::map;
 using std::vector;
+
+#include "ClauseOffset.h"
+#include "Watched.h"
 
 #ifdef USE_BOOST
 #include <boost/pool/pool.hpp>
@@ -40,8 +44,6 @@ using std::vector;
 class Clause;
 class XorClause;
 class Solver;
-
-typedef uint32_t ClauseOffset;
 
 class ClauseAllocator {
     public:
@@ -70,15 +72,16 @@ class ClauseAllocator {
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
         const ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
+        const bool insideMemoryRange(const Clause* c) const;
 
+        void updateAllOffsetsAndPointers(Solver* solver);
         template<class T>
-        void updatePointers(vec<T*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
-        void updatePointers(vector<Clause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
-        void updatePointers(vector<XorClause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
-        void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate, const map<Clause*, Clause*>& oldToNewPointer);
+        void updatePointers(vec<T*>& toUpdate);
+        void updatePointers(vector<Clause*>& toUpdate);
+        void updatePointers(vector<XorClause*>& toUpdate);
+        void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate);
 
-        template<class T>
-        void updateOffsets(vec<vec<T> >& watches, const map<ClauseOffset, ClauseOffset>& oldToNewOffset);
+        void updateOffsets(vec<vec<Watched> >& watches);
         
         vec<uint32_t*> dataStarts;
         vec<size_t> sizes;

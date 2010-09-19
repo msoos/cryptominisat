@@ -42,12 +42,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //We shift stuff around in Watched, so not all of 32 bits are useable.
 #define EFFECTIVELY_USEABLE_BITS 30
 
+
+struct NewPointerAndOffset
+{
+    #ifdef STATS_NEEDED
+    uint32_t group;
+    #endif
+    uint32_t clauseData;
+
+    uint32_t newOffset;
+    Clause* newPointer;
+};
+
 ClauseAllocator::ClauseAllocator()
     #ifdef USE_BOOST
     : clausePoolBin(sizeof(Clause) + 2*sizeof(Lit))
     #endif //USE_BOOST
 {
     assert(MIN_LIST_SIZE < (1 << (EFFECTIVELY_USEABLE_BITS-NUM_BITS_OUTER_OFFSET)));
+    assert(sizeof(Clause) + 2*sizeof(Lit) > sizeof(NewPointerAndOffset));
 }
 
 ClauseAllocator::~ClauseAllocator()
@@ -195,6 +208,19 @@ inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
     return which;
 }
 
+const bool ClauseAllocator::insideMemoryRange(const Clause* ptr) const
+{
+    bool found = false;
+    for (uint32_t i = 0; i < sizes.size(); i++) {
+        if ((uint32_t*)ptr >= dataStarts[i] && (uint32_t*)ptr < dataStarts[i] + maxSizes[i]) {
+            found = true;
+            break;
+        }
+    }
+
+    return found;
+}
+
 inline uint32_t ClauseAllocator::getInterOffset(const Clause* ptr, uint32_t outerOffset) const
 {
     return ((uint32_t*)ptr - dataStarts[outerOffset]);
@@ -218,11 +244,6 @@ void ClauseAllocator::clauseFree(Clause* c)
         //but it cannot be :(
     }
 }
-
-struct NewPointerAndOffset {
-    Clause* newPointer;
-    uint32_t newOffset;
-};
 
 void ClauseAllocator::consolidate(Solver* solver)
 {
@@ -315,9 +336,6 @@ void ClauseAllocator::consolidate(Solver* solver)
         newDataStarts.push(pointer);
     }
 
-    map<Clause*, Clause*> oldToNewPointer;
-    map<uint32_t, uint32_t> oldToNewOffset;
-
     uint32_t outerPart = 0;
     for (uint32_t i = 0; i < dataStarts.size(); i++) {
         uint32_t currentLoc = 0;
@@ -329,9 +347,9 @@ void ClauseAllocator::consolidate(Solver* solver)
                     outerPart++;
                 }
                 memcpy(newDataStartsPointers[outerPart], dataStarts[i] + currentLoc, sizeNeeded*sizeof(uint32_t));
-
-                oldToNewPointer[oldPointer] = (Clause*)newDataStartsPointers[outerPart];
-                oldToNewOffset[combineOuterInterOffsets(i, currentLoc)] = combineOuterInterOffsets(outerPart, newSizes[outerPart]);
+ 
+                (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newOffset = combineOuterInterOffsets(outerPart, newSizes[outerPart]);
+                (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newPointer = (Clause*)newDataStartsPointers[outerPart];
 
                 newSizes[outerPart] += sizeNeeded;
                 newOrigClauseSizes[outerPart].push(sizeNeeded);
@@ -341,44 +359,8 @@ void ClauseAllocator::consolidate(Solver* solver)
             currentLoc += origClauseSizes[i][i2];
         }
     }
-    //assert(newSize < newMaxSize);
-    //assert(newSize <= newMaxSize/2);
 
-    updateOffsets(solver->watches, oldToNewOffset);
-
-    updatePointers(solver->clauses, oldToNewPointer);
-    updatePointers(solver->learnts, oldToNewPointer);
-    updatePointers(solver->binaryClauses, oldToNewPointer);
-    updatePointers(solver->xorclauses, oldToNewPointer);
-    updatePointers(solver->freeLater, oldToNewPointer);
-
-    //No need to update varreplacer, since it only stores binary clauses that
-    //must have been allocated such as to use the pool
-    //updatePointers(solver->varReplacer->clauses, oldToNewPointer);
-    updatePointers(solver->partHandler->clausesRemoved, oldToNewPointer);
-    updatePointers(solver->partHandler->xorClausesRemoved, oldToNewPointer);
-    for(map<Var, vector<Clause*> >::iterator it = solver->subsumer->elimedOutVar.begin(); it != solver->subsumer->elimedOutVar.end(); it++) {
-        updatePointers(it->second, oldToNewPointer);
-    }
-    for(map<Var, vector<XorClause*> >::iterator it = solver->xorSubsumer->elimedOutVar.begin(); it != solver->xorSubsumer->elimedOutVar.end(); it++) {
-        updatePointers(it->second, oldToNewPointer);
-    }
-
-    #ifdef USE_GAUSS
-    for (uint32_t i = 0; i < solver->gauss_matrixes.size(); i++) {
-        updatePointers(solver->gauss_matrixes[i]->xorclauses, oldToNewPointer);
-        updatePointers(solver->gauss_matrixes[i]->clauses_toclear, oldToNewPointer);
-    }
-    #endif //USE_GAUSS
-
-    vec<PropagatedFrom>& reason = solver->reason;
-    for (PropagatedFrom *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
-        if (it->isClause() && !it->isNULL()) {
-            if (oldToNewPointer.find(it->getClause()) != oldToNewPointer.end()) {
-                *it = PropagatedFrom(oldToNewPointer[it->getClause()]);
-            }
-        }
-    }
+    updateAllOffsetsAndPointers(solver);
 
     for (uint32_t i = 0; i < dataStarts.size(); i++)
         free(dataStarts[i]);
@@ -405,62 +387,89 @@ void ClauseAllocator::consolidate(Solver* solver)
     }
 }
 
-template<class T>
-void ClauseAllocator::updateOffsets(vec<vec<T> >& watches, const map<ClauseOffset, ClauseOffset>& oldToNewOffset)
+void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
+{
+    updateOffsets(solver->watches);
+
+    updatePointers(solver->clauses);
+    updatePointers(solver->learnts);
+    updatePointers(solver->binaryClauses);
+    updatePointers(solver->xorclauses);
+    updatePointers(solver->freeLater);
+
+    //No need to update varreplacer, since it only stores binary clauses that
+    //must have been allocated such as to use the pool
+    //updatePointers(solver->varReplacer->clauses, oldToNewPointer);
+    updatePointers(solver->partHandler->clausesRemoved);
+    updatePointers(solver->partHandler->xorClausesRemoved);
+    for(map<Var, vector<Clause*> >::iterator it = solver->subsumer->elimedOutVar.begin(); it != solver->subsumer->elimedOutVar.end(); it++) {
+        updatePointers(it->second);
+    }
+    for(map<Var, vector<XorClause*> >::iterator it = solver->xorSubsumer->elimedOutVar.begin(); it != solver->xorSubsumer->elimedOutVar.end(); it++) {
+        updatePointers(it->second);
+    }
+
+    #ifdef USE_GAUSS
+    for (uint32_t i = 0; i < solver->gauss_matrixes.size(); i++) {
+        updatePointers(solver->gauss_matrixes[i]->xorclauses);
+        updatePointers(solver->gauss_matrixes[i]->clauses_toclear);
+    }
+    #endif //USE_GAUSS
+
+    vec<PropagatedFrom>& reason = solver->reason;
+    for (PropagatedFrom *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
+        if (it->isClause() && !it->isNULL()) {
+            if (insideMemoryRange(it->getClause())) {
+                *it = PropagatedFrom((Clause*)((NewPointerAndOffset*)(it->getClause()))->newPointer);
+            }
+        }
+    }
+}
+
+void ClauseAllocator::updateOffsets(vec<vec<Watched> >& watches)
 {
     for (uint32_t i = 0;  i < watches.size(); i++) {
-        vec<T>& list = watches[i];
-        for (T *it = list.getData(), *end = list.getDataEnd(); it != end; it++) {
+        vec<Watched>& list = watches[i];
+        for (Watched *it = list.getData(), *end = list.getDataEnd(); it != end; it++) {
             if (!it->isClause() && !it->isXorClause()) continue;
-            
-            map<ClauseOffset, ClauseOffset>::const_iterator it2 = oldToNewOffset.find(it->getOffset());
-            assert(it2 != oldToNewOffset.end());
-            it->setOffset(it2->second);
+            it->setOffset(((NewPointerAndOffset*)(getPointer(it->getOffset())))->newOffset);
         }
     }
 }
 
 template<class T>
-void ClauseAllocator::updatePointers(vec<T*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer)
+void ClauseAllocator::updatePointers(vec<T*>& toUpdate)
 {
     for (T **it = toUpdate.getData(), **end = toUpdate.getDataEnd(); it != end; it++) {
         if (!(*it)->wasBin()) {
-            //assert(oldToNewPointer.find((TT*)*it) != oldToNewPointer.end());
-            map<Clause*, Clause*>::const_iterator it2 = oldToNewPointer.find((Clause*)*it);
-            *it = (T*)it2->second;
+            *it = (T*)(((NewPointerAndOffset*)(*it))->newPointer);
         }
     }
 }
 
-void ClauseAllocator::updatePointers(vector<Clause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer)
+void ClauseAllocator::updatePointers(vector<Clause*>& toUpdate)
 {
     for (vector<Clause*>::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
         if (!(*it)->wasBin()) {
-            //assert(oldToNewPointer.find((TT*)*it) != oldToNewPointer.end());
-            map<Clause*, Clause*>::const_iterator it2 = oldToNewPointer.find((Clause*)*it);
-            *it = it2->second;
+            *it = (((NewPointerAndOffset*)(*it))->newPointer);
         }
     }
 }
 
-void ClauseAllocator::updatePointers(vector<XorClause*>& toUpdate, const map<Clause*, Clause*>& oldToNewPointer)
+void ClauseAllocator::updatePointers(vector<XorClause*>& toUpdate)
 {
     for (vector<XorClause*>::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
         if (!(*it)->wasBin()) {
-            //assert(oldToNewPointer.find((TT*)*it) != oldToNewPointer.end());
-            map<Clause*, Clause*>::const_iterator it2 = oldToNewPointer.find((Clause*)*it);
-            *it = (XorClause*)it2->second;
+            *it = (XorClause*)(((NewPointerAndOffset*)(*it))->newPointer);
         }
     }
 }
 
-void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate, const map<Clause*, Clause*>& oldToNewPointer)
+void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
 {
     for (vector<pair<Clause*, uint32_t> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
         if (!(it->first)->wasBin()) {
-            //assert(oldToNewPointer.find((TT*)*it) != oldToNewPointer.end());
-            map<Clause*, Clause*>::const_iterator it2 = oldToNewPointer.find(it->first);
-            it->first = (Clause*)it2->second;
+            it->first = (((NewPointerAndOffset*)(it->first))->newPointer);
         }
     }
 }
