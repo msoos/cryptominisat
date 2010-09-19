@@ -432,7 +432,7 @@ int main(int argc, char** argv)
         } else if ((value = hasPrefix(argv[i], "--nobinxorfind"))) {
             S.findBinaryXors = false;
         } else if ((value = hasPrefix(argv[i], "--noregbxorfind"))) {
-            S.regularlyFindBinaryXors = false;
+            S.regFindBinaryXors = false;
         } else if ((value = hasPrefix(argv[i], "--noconglomerate"))) {
             S.conglomerateXors = false;
         } else if ((value = hasPrefix(argv[i], "--nosimplify"))) {
@@ -521,13 +521,13 @@ int main(int argc, char** argv)
         } else if ((value = hasPrefix(argv[i], "--noextrabins"))) {
             S.addExtraBins = false;
         } else if ((value = hasPrefix(argv[i], "--noremovebins"))) {
-            S.removeUselessBins = false;
+            S.remUselessBins = false;
         } else if ((value = hasPrefix(argv[i], "--noregremovebins"))) {
-            S.regularRemoveUselessBins = false;
+            S.regRemUselessBins = false;
         } else if ((value = hasPrefix(argv[i], "--nosubswithbins"))) {
-            S.subsumeWithNonExistBinaries = false;
+            S.subsWNonExistBins = false;
         } else if ((value = hasPrefix(argv[i], "--norsubswithbins"))) {
-            S.regularSubsumeWithNonExistBinaries = false;
+            S.regSubsWNonExistBins = false;
         } else if ((value = hasPrefix(argv[i], "--noasymm"))) {
             S.doAsymmBranch = false;
         } else if ((value = hasPrefix(argv[i], "--norasymm"))) {
@@ -535,7 +535,7 @@ int main(int argc, char** argv)
         } else if ((value = hasPrefix(argv[i], "--nosortwatched"))) {
             S.doSortWatched = false;
         } else if ((value = hasPrefix(argv[i], "--nolearntfminim"))) {
-            S.doMinimiseLearntFurther = false;
+            S.doMinimLearntMore = false;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

@@ -70,7 +70,7 @@ const bool PartHandler::handle()
         newSolver.greedyUnbound = solver.greedyUnbound;
         newSolver.findNormalXors = solver.findNormalXors;
         newSolver.findBinaryXors = solver.findBinaryXors;
-        newSolver.regularlyFindBinaryXors = solver.regularlyFindBinaryXors;
+        newSolver.regFindBinaryXors = solver.regFindBinaryXors;
         newSolver.conglomerateXors = solver.conglomerateXors;
         newSolver.schedSimplification = solver.schedSimplification;
         newSolver.doReplace = solver.doReplace;
@@ -88,8 +88,8 @@ const bool PartHandler::handle()
         newSolver.doSubsumption = false;
         newSolver.doXorSubsumption = false;
         newSolver.doPartHandler = false;
-        newSolver.subsumeWithNonExistBinaries = false;
-        newSolver.regularSubsumeWithNonExistBinaries = false;
+        newSolver.subsWNonExistBins = false;
+        newSolver.regSubsWNonExistBins = false;
 
         std::sort(vars.begin(), vars.end());
         uint32_t i2 = 0;

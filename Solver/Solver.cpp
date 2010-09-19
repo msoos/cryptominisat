@@ -75,7 +75,7 @@ Solver::Solver() :
         , restrictedPickBranch(0)
         , findNormalXors   (true)
         , findBinaryXors   (true)
-        , regularlyFindBinaryXors(true)
+        , regFindBinaryXors(true)
         , doReplace        (true)
         , conglomerateXors (true)
         , heuleProcess     (true)
@@ -90,13 +90,13 @@ Solver::Solver() :
         , doAsymmBranch    (true)
         , doAsymmBranchReg (true)
         , doSortWatched    (true)
-        , doMinimiseLearntFurther (true)
+        , doMinimLearntMore(true)
         , failedVarSearch  (true)
         , addExtraBins     (true)
-        , removeUselessBins(true)
-        , regularRemoveUselessBins(true)
-        , subsumeWithNonExistBinaries(true)
-        , regularSubsumeWithNonExistBinaries(true)
+        , remUselessBins   (true)
+        , regRemUselessBins(true)
+        , subsWNonExistBins(true)
+        , regSubsWNonExistBins(true)
         , needToInterrupt  (false)
         , needToDumpLearnts(false)
         , needToDumpOrig   (false)
@@ -203,8 +203,12 @@ Solver::~Solver()
 // Minor methods:
 
 
-// Creates a new SAT variable in the solver. If 'decision_var' is cleared, variable will not be
-// used as a decision variable (NOTE! This has effects on the meaning of a SATISFIABLE result).
+/**
+Creates a new SAT variable in the solver. If 'decision_var' is cleared, variable will not be
+used as a decision variable (NOTE! This has effects on the meaning of a SATISFIABLE result).
+ 
+@p dvar The new variable should be used as a decision variable?
+*/
 Var Solver::newVar(bool dvar)
 {
     Var v = nVars();
@@ -228,7 +232,7 @@ Var Solver::newVar(bool dvar)
     
     varReplacer->newVar();
     if (doPartHandler) partHandler->newVar();
-    if (doSubsumption || subsumeWithNonExistBinaries || regularSubsumeWithNonExistBinaries) subsumer->newVar();
+    if (doSubsumption || subsWNonExistBins || regSubsWNonExistBins) subsumer->newVar();
     if (doXorSubsumption) xorSubsumer->newVar();
 
     insertVarOrder(v);
@@ -907,7 +911,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 
-    if (doMinimiseLearntFurther) minimiseLeartFurther(out_learnt);
+    if (doMinimLearntMore) minimiseLeartFurther(out_learnt);
     tot_literals += out_learnt.size();
 
     // Find correct backtrack level:
@@ -1463,7 +1467,7 @@ const bool Solver::simplify()
     std::cout << "left:" << ((double)(nbBin - lastNbBin + becameBinary)/BINARY_TO_XOR_APPROX) * slowdown  << std::endl;
     std::cout << "right:" << (double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup << std::endl;*/
     
-    if (findBinaryXors && regularlyFindBinaryXors &&
+    if (findBinaryXors && regFindBinaryXors &&
         (((double)abs64((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown) >
         ((double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup)) {
         lastSearchForBinaryXor = propagations;
@@ -1875,12 +1879,12 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (failedVarSearch && !failedVarSearcher->search()) goto end;
 
-    if (doReplace && (regularRemoveUselessBins || regularSubsumeWithNonExistBinaries)) {
+    if (doReplace && (regRemUselessBins || regSubsWNonExistBins)) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) goto end;
-        if (regularSubsumeWithNonExistBinaries
+        if (regSubsWNonExistBins
             && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) goto end;
-        if (regularRemoveUselessBins) {
+        if (regRemUselessBins) {
             UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
             if (!uselessBinRemover.removeUslessBinFull()) goto end;
         }
@@ -1973,7 +1977,7 @@ inline void Solver::performStepsBeforeSolve()
     if (doReplace) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) return;
-        if (subsumeWithNonExistBinaries
+        if (subsWNonExistBins
             && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
     }
 
@@ -2162,10 +2166,10 @@ void Solver::handleSATSolution()
         s.findNormalXors = false;
         s.failedVarSearch = false;
         s.conglomerateXors = false;
-        s.subsumeWithNonExistBinaries = false;
-        s.regularSubsumeWithNonExistBinaries = false;
-        s.removeUselessBins = false;
-        s.regularRemoveUselessBins = false;
+        s.subsWNonExistBins = false;
+        s.regSubsWNonExistBins = false;
+        s.remUselessBins = false;
+        s.regRemUselessBins = false;
         s.doAsymmBranch = false;
         s.doAsymmBranchReg = false;
         s.greedyUnbound = greedyUnbound;
