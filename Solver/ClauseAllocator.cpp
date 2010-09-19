@@ -257,7 +257,10 @@ void ClauseAllocator::consolidate(Solver* solver)
     #ifdef DEBUG_CLAUSEALLOCATOR
     std::cout << "c ------ Consolidating Memory ------------" << std::endl;
     #endif //DEBUG_CLAUSEALLOCATOR
-    int64_t newMaxSizeNeed = sum + MIN_LIST_SIZE;
+    int64_t newMaxSizeNeed = (double)sum*1.2 + MIN_LIST_SIZE;
+    #ifdef DEBUG_CLAUSEALLOCATOR
+    std::cout << "c newMaxSizeNeed = " << newMaxSizeNeed << std::endl;
+    #endif //DEBUG_CLAUSEALLOCATOR
     vec<uint32_t> newMaxSizes;
     for (uint32_t i = 0; i < (1 << NUM_BITS_OUTER_OFFSET); i++) {
         if (newMaxSizeNeed > 0) {
@@ -277,7 +280,8 @@ void ClauseAllocator::consolidate(Solver* solver)
             //So this "magic" constant could take care of that....
             //or maybe not (if _very_ large clauses are used, always
             //bad chance, etc. :O )
-            newMaxSizeNeed += 1000;
+            //NOTE: the + MIN_LIST_SIZE should take care of this above at
+            // newMaxSizeNeed = sum + MIN_LIST_SIZE;
         } else {
             break;
         }
