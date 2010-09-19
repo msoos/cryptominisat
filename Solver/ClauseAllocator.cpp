@@ -118,7 +118,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         #endif
     }
     
-    uint32_t needed = sizeof(Clause)+sizeof(Lit)*size;
+    uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(uint32_t);
     bool found = false;
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
@@ -162,9 +162,9 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
 
     assert(which != std::numeric_limits<uint32_t>::max());
     Clause* pointer = (Clause*)(dataStarts[which] + sizes[which]);
-    sizes[which] += needed/sizeof(uint32_t);
-    currentlyUsedSizes[which] += needed/sizeof(uint32_t);
-    origClauseSizes[which].push(needed/sizeof(uint32_t));
+    sizes[which] += needed;
+    currentlyUsedSizes[which] += needed;
+    origClauseSizes[which].push(needed);
 
     return pointer;
 }
