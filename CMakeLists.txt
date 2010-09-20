@@ -27,7 +27,7 @@ else(Boost_FOUND)
     message("Boost NOT found, so clauses will NOT be packed (slowdown)")
 endif(Boost_FOUND)
 
-add_definitions(-DVERSION="2.6.0")
+add_definitions(-DVERSION="2.6.1")
 
 #FIND_PACKAGE(Threads REQUIRED)
 #set(thread_library "${CMAKE_THREAD_LIBS_INIT}")
