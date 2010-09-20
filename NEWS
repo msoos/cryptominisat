@@ -1,3 +1,10 @@
+ver 2.6.0 -- 22/08/2010
+* Memory manager has been debugged. It was segfaulting on certain large
+  instances. (thanks to Rob None for the bug report)
+* Memory manager no longer needs to keep a map of old clauses<-> new
+  clauses. This is now a direct-access table, speeding up memory
+  consolidation considerably
+
 ver 2.6.0 -- 16/08/2010
 * No more separate watchlists for binary clauses. Class "Watched" knows
   what it watches. This reduces memory overhead, and reduces jump-around
