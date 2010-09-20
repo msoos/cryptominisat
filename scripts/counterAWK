@@ -1,0 +1,36 @@
+grep -f solvedUNSAT solved | wc -l
+grep -f solvedUNSAT solvedAll | wc -l 
+grep "s UNSATISFIABLE" *out | sed 's/:s.*$//' > solvedUNSAT
+grep "s SATISFIABLE" *out | sed 's/:s.*$//' > solvedSAT
+
+grep "CPU time .*:" *out | awk 'BEGIN { x=0;num=0 } { x=x+$5; num=num+1 } END   { print "total time: " x " s"; print "total num: " num;}'
+
+grep "CPU time .*:" *out | awk 'BEGIN { x=0;num=0 } { if ($5<5000) {x=x+$5; num=num+1;} else {print $0} } END   { print "total time: " x " s"; print "total num: " num;}'
+
+grep restarts * | awk 'BEGIN {x=0} {x+=$4} END {print x}'
+
+grep "CPU time .*:" *out | awk '{ if ($5<5000) {print $1}}' | sed 's/:c$//' > solved
+
+grep "literals-removed" * | awk 'BEGIN {litrem=0;clauserem=0;time=0;} {litrem+=$4; clauserem+=$6; varrem+=$9; time+=$11} END {print "time:            " time; print "lits removed:    " litrem; print "clauses subsumed:" clauserem; print "vars fixed:      " varrem}'
+
+grep "restarts" *out | awk 'BEGIN { x=0;num=0 } {x=x+$4;num+=1} END   { print "num restarts:        " x; print "instances solved(?): " num; print "restarts/instances:  " x/num;}'
+
+grep parts *out | awk '{if ($5>1) print $0}'
+
+grep cut * | awk 'BEGIN {ssub=0; cut = 0; fix= 0; time =0;} {ssub+=$3;cut+=$5;fix+=$8;time+=$10} END {print "subsumed: " ssub ; print "cut: " cut; print "vars fixed: " fix; print "time: " time;}'
+
+grep Hyper * | awk 'BEGIN{t=0; bin=0; u = 0;} {t+=$11; u+= $9; bin+=$7} END {print "time: " t; print "unitaries: " u; print "hyper bin: " bin;}'
+
+grep "CPU time .*:" *out | awk '{print $1}' | sed 's/:c$//' > solvedAll
+ls *.gz.out > allFiles
+
+grep Failvars * | awk 'BEGIN {fails=0; bprop=0; t=0; props=0; repl=0;} {fails+=$4; bprop+=$7; repl+=$9; props+=$11; t+=$13} END {print "fails: " fails; print "bprops: " bprop; print "props: " props; print "replaced : " repl; print "time: " t;}'
+
+grep "v-elim" * | awk 'BEGIN {litrem=0;clauserem=0;velim=0;time=0;} {litrem+=$4; clauserem+=$6; varelim+=$8; time+=$12} END {print "time:             " time; print "lits removed:     " litrem; print "clauses subsumed: " clauserem; print "vars elimed:      " varelim}'
+
+grep "Cleaning" * | awk 'BEGIN {time=0;} {time+=$9} END {print "cleaning up after failed var search: " time}'
+
+grep "s UNSAT" * | sed 's/.gz.out.*//' > solvedUNSAT
+
+grep CPU * | awk '{print $5}' > solveTimes
+
