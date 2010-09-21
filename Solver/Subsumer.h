@@ -20,6 +20,15 @@ using std::priority_queue;
 class ClauseCleaner;
 class OnlyNonLearntBins;
 
+/**
+@brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
+
+There are two main functions in this class, simplifyBySubsumption() and subsumeWithBinaries().
+The first one is the most important of the two: it performs everything, except manipuation
+with non-existing binary clauses. The second does self-subsuming resolution with existing binary
+clauses, and then does self-subsuming resolution and subsumption with binary clauses that don't exist
+and never will exist: they are temporarily "created" (memorised), and used by subsume0BIN().
+*/
 class Subsumer
 {
 public:
@@ -144,6 +153,7 @@ private:
     vec<Lit> toVisit;      ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (list)
     vec<char> toVisitAll;  ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (contains '1' for literal.toInt() that we visited)
 
+    //Blocked clause elimination
     class VarOcc {
         public:
             VarOcc(const Var& v, const uint32_t num) :
@@ -153,13 +163,11 @@ private:
             Var var;
             uint32_t occurnum;
     };
-    
     struct MyComp {
         const bool operator() (const VarOcc& l1, const VarOcc& l2) const {
             return l1.occurnum > l2.occurnum;
         }
     };
-    
     void blockedClauseRemoval();
     const bool allTautology(const vec<Lit>& ps, const Lit lit);
     uint32_t numblockedClauseRemoved;

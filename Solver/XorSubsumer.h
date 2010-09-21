@@ -12,6 +12,22 @@ Substantially modified by: Mate Soos (2010)
 
 class ClauseCleaner;
 
+/**
+@brief Handles xor-subsumption and variable elimination at the XOR level
+
+This class achieves three things:
+
+1) it removes variables though XOR-ing of two xors thereby removing their common
+variable. If that variable is not used anywere else, the variable is now removed
+from the problem
+
+2) It tries to XOR clauses together to get 1-long or 2-long XOR clauses. These
+force variables to certain values or replace variables with other variables,
+respectively
+
+3) It tries to subsume XOR clauses with other XOR clauses (making 2 XOR clauses
+in the process, but one of them is going to be much smaller than it was originally)
+*/
 class XorSubsumer
 {
 public:

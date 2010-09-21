@@ -18,6 +18,30 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************************************/
 
+/**
+@mainpage CryptoMiniSat
+@author Mate Soos, and collaborators
+
+CryptoMiniSat is an award-winning SAT solver based on MiniSat. It brings a
+number of benefits relative to MiniSat, among them XOR clauses, extensive
+failed literal probing, and better random search.
+
+The solver basically performs the following steps:
+
+1) parse CNF file into clause database
+
+2) run Conflict-Driven Clause-Learning DPLL on the clauses
+
+3) regularly run simplification passes on the clause-set
+
+4) display solution and if not used as a library, exit
+
+Here is a picture of of the above process in more detail:
+
+\image html "../main_flowgraph.png"
+
+*/
+
 #include <ctime>
 #include <cstring>
 #include <errno.h>
