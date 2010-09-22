@@ -45,6 +45,22 @@ class Clause;
 class XorClause;
 class Solver;
 
+
+/**
+@brief Allocates memory for (xor) clauses
+
+This class allocates memory in large chunks, then distributes it to clauses when
+needed. When instructed, it consolidates the unused space (i.e. clauses free()-ed).
+Essentially, it is a stack-like allocator for clauses. It is useful to have
+this, because this way, we can address clauses according to their number,
+which is 32-bit, instead of their address, which might be 64-bit
+
+2-long clauses are specially treated. If BOOST is enabled, a special memory
+allocator is used for 2-long clauses. If BOOST is not available, then regular
+memory allocation is used (i.e. not stack-based). This is because for 2-long
+clauses, a 64-bit pointer doesn't cause problems (while for other clauses, it
+does)
+*/
 class ClauseAllocator {
     public:
         ClauseAllocator();
