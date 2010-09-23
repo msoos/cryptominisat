@@ -107,7 +107,35 @@ class CSet {
             private:
                 ClauseSimp* it;
         };
-        
+
+        class const_iterator
+        {
+            public:
+                const_iterator(const ClauseSimp* _it) :
+                it(_it)
+                {}
+
+                void operator++()
+                {
+                    it++;
+                }
+
+                const bool operator!=(const const_iterator& iter) const
+                {
+                    return (it != iter.it);;
+                }
+
+                const ClauseSimp& operator*() {
+                    return *it;
+                }
+
+                const ClauseSimp*& operator->() {
+                    return it;
+                }
+            private:
+                const ClauseSimp* it;
+        };
+
         iterator begin()
         {
             return iterator(which.getData());
@@ -116,6 +144,16 @@ class CSet {
         iterator end()
         {
             return iterator(which.getData() + which.size());
+        }
+
+        const_iterator begin() const
+        {
+            return const_iterator(which.getData());
+        }
+
+        const_iterator end() const
+        {
+            return const_iterator(which.getData() + which.size());
         }
 };
 
