@@ -279,10 +279,14 @@ void printUsage(char** argv, Solver& S)
     printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
     printf("  --nosubswithbins = Don't subsume with non-existent bins at the beginnning\n");
     printf("  --norsubswithbins= Don't subsume with non-existent bins regularly \n");
-    printf("  --noasymm         = Don't do asymmetric branching at the beginnning\n");
-    printf("  --norasymm        = Don't do asymmetric branching regularly\n");
-    printf("  --nosortwatched   = Don't sort watches according to size: bin, tri, etc.\n");
-    printf("  --nolearntfminim  = Don't minimise learnt clauses further\n");
+    printf("  --noasymm        = Don't do asymmetric branching at the beginnning\n");
+    printf("  --norasymm       = Don't do asymmetric branching regularly\n");
+    printf("  --nosortwatched  = Don't sort watches according to size: bin, tri, etc.\n");
+    printf("  --nolfminim      = Don't do on-the-fly self-subsuming resolution\n");
+    printf("                     (called 'strong minimisation' in PrecoSat)\n");
+    printf("  --nolfminimrec   = Don't do recursive/transitive OTF self-\n");
+    printf("                     subsuming resolution (enhancement of \n");
+    printf("                     'strong minimisation' in PrecoSat)\n");
     printf("\n");
 }
 
@@ -558,8 +562,10 @@ int main(int argc, char** argv)
             S.doAsymmBranchReg = false;
         } else if ((value = hasPrefix(argv[i], "--nosortwatched"))) {
             S.doSortWatched = false;
-        } else if ((value = hasPrefix(argv[i], "--nolearntfminim"))) {
+        } else if ((value = hasPrefix(argv[i], "--nolfminim"))) {
             S.doMinimLearntMore = false;
+        } else if ((value = hasPrefix(argv[i], "--nolfminimrec"))) {
+            S.doMinimLMoreRecur = false;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

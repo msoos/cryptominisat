@@ -26,6 +26,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <limits.h>
 #include <vector>
 #include <iomanip>
+#include <stack>
+using std::stack;
 
 #include "Clause.h"
 #include "time_mem.h"
@@ -91,6 +93,7 @@ Solver::Solver() :
         , doAsymmBranchReg (true)
         , doSortWatched    (true)
         , doMinimLearntMore(true)
+        , doMinimLMoreRecur(true)
         , failedVarSearch  (true)
         , addExtraBins     (true)
         , remUselessBins   (true)
@@ -220,6 +223,8 @@ Var Solver::newVar(bool dvar)
     activity  .push(0);
     seen      .push_back(0);
     seen      .push_back(0);
+    seen2     .push_back(0);
+    seen2     .push_back(0);
     permDiff  .push(0);
     
     polarity  .push_back(defaultPolarity());
@@ -911,7 +916,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 
-    if (doMinimLearntMore) minimiseLeartFurther(out_learnt);
+    if (doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt);
     tot_literals += out_learnt.size();
 
     // Find correct backtrack level:
@@ -957,31 +962,58 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
 
 void Solver::minimiseLeartFurther(vec<Lit>& cl)
 {
-    uint32_t removedLits = 0;
+    vec<Lit> allAddedToSeen2;
+    stack<Lit> toRecursiveProp;
+
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
         if (seen[l->toInt()] == 0) continue;
 
         Lit lit = *l;
+
+        if (doMinimLMoreRecur) {
+            //Recursively self-subsume-resolve all "a OR c" when "a OR b" as well as
+            //"~b OR c" exists.
+            toRecursiveProp.push(lit);
+            while(!toRecursiveProp.empty()) {
+                Lit thisLit = toRecursiveProp.top();
+                toRecursiveProp.pop();
+                //watched is messed: lit is in watched[~lit]
+                vec<Watched>& ws = watches[(~thisLit).toInt()];
+                for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+                    if (i->isBinary()) {
+                        Lit otherLit = i->getOtherLit();
+                        //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
+                        if (seen2[otherLit.toInt()] != 0 || ~otherLit == lit) break;
+                        seen2[otherLit.toInt()] = 1;
+                        allAddedToSeen2.push(otherLit);
+                        seen[(~otherLit).toInt()] = 0;
+                        toRecursiveProp.push(~otherLit);
+                    }
+                }
+            }
+            assert(toRecursiveProp.empty());
+
+            for (Lit *it = allAddedToSeen2.getData(), *end = allAddedToSeen2.getDataEnd(); it != end; it++) {
+                seen2[it->toInt()] = 0;
+            }
+            allAddedToSeen2.clear();
+        }
+
         //watched is messed: lit is in watched[~lit]
         vec<Watched>& ws = watches[(~lit).toInt()];
         for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
-            if (i->isBinary()) {
-                if (seen[(~i->getOtherLit()).toInt()]) {
-                    seen[(~i->getOtherLit()).toInt()] = 0;
-                    removedLits++;
-                }
+            if (!doMinimLMoreRecur && i->isBinary()) {
+                seen[(~i->getOtherLit()).toInt()] = 0;
                 continue;
             }
 
             if (i->isTriClause()) {
                 if (seen[(~i->getOtherLit()).toInt()] && seen[i->getOtherLit2().toInt()]) {
                     seen[(~i->getOtherLit()).toInt()] = 0;
-                    removedLits++;
                 }
                 if (seen[(~i->getOtherLit2()).toInt()] && seen[i->getOtherLit().toInt()]) {
                     seen[(~i->getOtherLit2()).toInt()] = 0;
-                    removedLits++;
                 }
                 continue;
             }
@@ -992,10 +1024,12 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
         }
     }
 
+    uint32_t removedLits = 0;
     Lit *i = cl.getData();
     Lit *j= i;
     for (Lit* end = cl.getDataEnd(); i != end; i++) {
         if (seen[i->toInt()]) *j++ = *i;
+        else removedLits++;
         seen[i->toInt()] = 0;
     }
     numShrinkedClause += (removedLits > 0);

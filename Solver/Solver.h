@@ -171,6 +171,7 @@ public:
     bool      doAsymmBranchReg;   ///<Perform asymmetric branching regularly
     bool      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
     bool      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
+    bool      doMinimLMoreRecur;  ///<Perform recursive/transitive on-the-fly self self-subsuming resolution --> an enhancement of "strong minimization" of PrecoSat
     bool      failedVarSearch;    ///<Do Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
     bool      addExtraBins;       ///<Should perform hyper-binary resolution during failed literal probing?
     bool      remUselessBins;     ///<Should try to remove useless binary clauses at the beginning of solving?
@@ -312,6 +313,7 @@ protected:
     // used, exept 'seen' wich is used in several places.
     //
     vector<bool>        seen;
+    vector<bool>        seen2;
     vec<Lit>            analyze_stack;
     vec<Lit>            analyze_toclear;
     vec<Lit>            add_tmp;
