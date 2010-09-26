@@ -971,9 +971,13 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
 
         Lit lit = *l;
 
+        //Recursively self-subsume-resolve all "a OR c" when "a OR b" as well as
+        //"~b OR c" exists.
         if (doMinimLMoreRecur) {
-            //Recursively self-subsume-resolve all "a OR c" when "a OR b" as well as
-            //"~b OR c" exists.
+            //Don't come back to the starting point
+            seen2[(~lit).toInt()] = 1;
+            allAddedToSeen2.push(~lit);
+
             toRecursiveProp.push(lit);
             while(!toRecursiveProp.empty()) {
                 Lit thisLit = toRecursiveProp.top();
@@ -989,6 +993,8 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
                         allAddedToSeen2.push(otherLit);
                         seen[(~otherLit).toInt()] = 0;
                         toRecursiveProp.push(~otherLit);
+                    } else {
+                        break;
                     }
                 }
             }
