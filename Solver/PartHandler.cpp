@@ -33,7 +33,7 @@ const bool PartHandler::handle()
 {
     if (solver.doReplace == false)
         return true;
-    
+
     PartFinder partFinder(solver);
     if (!partFinder.findParts()) {
         #ifdef VERBOSE_DEBUG
@@ -41,27 +41,27 @@ const bool PartHandler::handle()
         #endif //VERBOSE_DEBUG
         return false;
     }
-    
+
     uint32_t num_parts = partFinder.getReverseTable().size();
     if (num_parts == 1)
         return true;
-    
+
     map<uint32_t, vector<Var> > reverseTable = partFinder.getReverseTable();
     assert(num_parts == partFinder.getReverseTable().size());
-    
+
     vector<pair<uint32_t, uint32_t> > sizes;
     for (map<uint32_t, vector<Var> >::iterator it = reverseTable.begin(); it != reverseTable.end(); it++)
         sizes.push_back(std::make_pair(it->first, (uint32_t)it->second.size()));
-    
+
     std::sort(sizes.begin(), sizes.end(), sort_pred());
     assert(sizes.size() > 1);
-    
+
     for (uint32_t it = 0; it < sizes.size()-1; it++) {
         uint32_t part = sizes[it].first;
         vector<Var> vars = reverseTable[part];
         if (solver.verbosity >= 1)
             std::cout << "c Solving part " << part << std::endl;
-        
+
         Solver newSolver;
         newSolver.mtrand.seed(solver.mtrand.randInt());
         newSolver.random_var_freq = solver.random_var_freq;
@@ -115,7 +115,7 @@ const bool PartHandler::handle()
             }
         }
         solver.order_heap.filter(Solver::VarFilter(solver));
-        
+
         assert(solver.varReplacer->getClauses().size() == 0);
         moveClauses(solver.clauses, newSolver, part, partFinder);
         moveClauses(solver.binaryClauses, newSolver, part, partFinder);
@@ -123,7 +123,7 @@ const bool PartHandler::handle()
         moveLearntClauses(solver.binaryClauses, newSolver, part, partFinder);
         moveLearntClauses(solver.learnts, newSolver, part, partFinder);
         assert(checkClauseMovement(newSolver, part, partFinder));
-        
+
         lbool status = newSolver.solve();
         if (status == l_False) {
             #ifdef VERBOSE_DEBUG
@@ -132,20 +132,20 @@ const bool PartHandler::handle()
             return false;
         }
         assert(status != l_Undef);
-        
+
         for (Var var = 0; var < newSolver.nVars(); var++) {
             if (newSolver.model[var] != l_Undef) {
                 assert(solver.assigns[var] == l_Undef);
             }
         }
-        
+
         assert(newSolver.decisionLevel() == 0);
         for (uint32_t i = 0; i < newSolver.trail.size(); i++) {
             solver.uncheckedEnqueue(newSolver.trail[i]);
         }
         solver.ok = (solver.propagate().isNULL());
         assert(solver.ok);
-        
+
         for (Var var = 0; var < newSolver.nVars(); var++) {
             if (newSolver.model[var] != l_Undef) {
                 //Must have been decision var in the old solver!??
@@ -157,7 +157,7 @@ const bool PartHandler::handle()
                 }
             }
         }
-        
+
         if (solver.verbosity >= 1) {
             std::cout << "c Solved part" << std::endl;
             std::cout << "c "
@@ -174,7 +174,7 @@ const bool PartHandler::handle()
     }
 
     solver.order_heap.filter(Solver::VarFilter(solver));
-    
+
     //Checking that all variables that are not in the remaining part are all non-decision vars, and none have been set
     for (Var var = 0; var < solver.nVars(); var++) {
         if (savedState[var] != l_Undef) {
@@ -182,10 +182,10 @@ const bool PartHandler::handle()
             assert(solver.assigns[var] == l_Undef || solver.level[var] == 0);
         }
     }
-    
+
     //Checking that all remaining clauses contain only variables that are in the remaining part
     assert(checkClauseMovement(solver, sizes[sizes.size()-1].first, partFinder));
-    
+
     return true;
 }
 
@@ -199,7 +199,7 @@ const bool PartHandler::checkClauseMovement(const Solver& thisSolver, const uint
         return false;
     if (!checkOnlyThisPart(thisSolver.xorclauses, part, partFinder))
         return false;
-    
+
     return true;
 }
 
@@ -212,7 +212,7 @@ const bool PartHandler::checkOnlyThisPart(const vec<T*>& cs, const uint32_t part
             if (partFinder.getVarPart(l->var()) != part) return false;
         }
     }
-    
+
     return true;
 }
 
@@ -270,7 +270,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
             *j++ = *i;
             continue;
         }
-        
+
         Clause& c = **i;
         assert(c.size() > 0);
         uint32_t clause_part = partFinder.getVarPart(c[0].var());
@@ -280,7 +280,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
                 #ifdef VERBOSE_DEBUG
                 std::cout << "Learnt clause in both parts:"; c.plainPrint();
                 #endif
-                
+
                 removed = true;
                 solver.removeClause(c);
                 break;
@@ -291,7 +291,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
             #ifdef VERBOSE_DEBUG
             //std::cout << "Learnt clause in this part:"; c.plainPrint();
             #endif
-            
+
             solver.detachClause(c);
             newSolver.addLearntClause(c, c.getGroup(), c.getGlue());
             solver.clauseAllocator.clauseFree(&c);
@@ -299,7 +299,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
             #ifdef VERBOSE_DEBUG
             std::cout << "Learnt clause in other part:"; c.plainPrint();
             #endif
-            
+
             *j++ = *i;
         }
     }
@@ -319,7 +319,7 @@ void PartHandler::addSavedState()
             solver.polarity[var] = (solver.assigns[var] == l_False);
         }
     }
-    
+
     for (uint32_t i = 0; i < decisionVarRemoved.size(); i++)
         solver.setDecisionVar(decisionVarRemoved[i], true);
     decisionVarRemoved.clear();
@@ -334,7 +334,7 @@ void PartHandler::readdRemovedClauses()
         assert(solver.ok);
     }
     clausesRemoved.clear();
-    
+
     for (XorClause **it = xorClausesRemoved.getData(), **end = xorClausesRemoved.getDataEnd(); it != end; it++) {
         solver.addXorClause(**it, (**it).xor_clause_inverted(), (*it)->getGroup());
         assert(solver.ok);
