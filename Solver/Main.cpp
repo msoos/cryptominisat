@@ -100,7 +100,12 @@ inline void printStatsLine(string left, T value, string extra = "")
     cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
 }
 
+/**
+@brief prints the statistics line at the end of solving
 
+Prints all sorts of statistics, like number of restarts, time spent in
+SatELite-type simplification, number of unit claues found, etc.
+*/
 void printStats(Solver& solver)
 {
     double   cpu_time = cpuTime();
@@ -160,6 +165,14 @@ void printStats(Solver& solver)
     printStatsLine("c CPU time", cpu_time, " s");
 }
 
+/**
+@brief For correctly and gracefully exiting
+
+It can happen that the user requests a dump of the learnt clauses. In this case,
+the program must wait until it gets to a state where the learnt clauses are in
+a correct state, then dump these and quit normally. This interrupt hander
+is used to achieve this
+*/
 Solver* solver;
 static void SIGINT_handler(int signum)
 {
@@ -284,7 +297,7 @@ void printUsage(char** argv, Solver& S)
     printf("  --nosortwatched  = Don't sort watches according to size: bin, tri, etc.\n");
     printf("  --nolfminim      = Don't do on-the-fly self-subsuming resolution\n");
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
-    printf("  --nolfminimrec   = Don't do recursive/transitive OTF self-\n");
+    printf("  --lfminimrec     = Perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution (enhancement of \n");
     printf("                     'strong minimisation' in PrecoSat)\n");
     printf("\n");
@@ -564,8 +577,8 @@ int main(int argc, char** argv)
             S.doSortWatched = false;
         } else if ((value = hasPrefix(argv[i], "--nolfminim"))) {
             S.doMinimLearntMore = false;
-        } else if ((value = hasPrefix(argv[i], "--nolfminimrec"))) {
-            S.doMinimLMoreRecur = false;
+        } else if ((value = hasPrefix(argv[i], "--lfminimrec"))) {
+            S.doMinimLMoreRecur = true;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

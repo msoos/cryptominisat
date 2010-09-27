@@ -152,9 +152,9 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     if (!found) {
         uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0)
-            nextSize = std::min(maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT, (unsigned long)1 << (EFFECTIVELY_USEABLE_BITS - NUM_BITS_OUTER_OFFSET));
+            nextSize = std::min((uint32_t)(maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT), (uint32_t)1 << (EFFECTIVELY_USEABLE_BITS - NUM_BITS_OUTER_OFFSET));
         else
-            nextSize = MIN_LIST_SIZE;
+            nextSize = (uint32_t)MIN_LIST_SIZE;
         assert(needed <  nextSize);
 
         #ifdef DEBUG_CLAUSEALLOCATOR
