@@ -63,58 +63,8 @@ const bool PartHandler::handle()
             std::cout << "c Solving part " << part << std::endl;
 
         Solver newSolver;
-        newSolver.mtrand.seed(solver.mtrand.randInt());
-        newSolver.random_var_freq = solver.random_var_freq;
-        newSolver.verbosity = solver.verbosity;
-        newSolver.restrictedPickBranch = solver.restrictedPickBranch;
-        newSolver.greedyUnbound = solver.greedyUnbound;
-        newSolver.findNormalXors = solver.findNormalXors;
-        newSolver.findBinaryXors = solver.findBinaryXors;
-        newSolver.regFindBinaryXors = solver.regFindBinaryXors;
-        newSolver.conglomerateXors = solver.conglomerateXors;
-        newSolver.schedSimplification = solver.schedSimplification;
-        newSolver.doReplace = solver.doReplace;
-        newSolver.failedVarSearch = solver.failedVarSearch;
-        newSolver.gaussconfig.dontDisable = solver.gaussconfig.dontDisable;
-        newSolver.heuleProcess = solver.heuleProcess;
-        newSolver.doSubsumption = solver.doSubsumption;
-        newSolver.doPartHandler = solver.doPartHandler;
-        newSolver.fixRestartType = solver.fixRestartType;
-        newSolver.var_inc = solver.var_inc;
-        newSolver.polarity_mode = solver.polarity_mode;
-
-        //Memory-usage reduction
-        newSolver.schedSimplification = false;
-        newSolver.doSubsumption = false;
-        newSolver.doXorSubsumption = false;
-        newSolver.doPartHandler = false;
-        newSolver.subsWNonExistBins = false;
-        newSolver.regSubsWNonExistBins = false;
-
-        std::sort(vars.begin(), vars.end());
-        uint32_t i2 = 0;
-        for (Var var = 0; var < solver.nVars(); var++) {
-            if (i2 < vars.size() && vars[i2] == var) {
-                #ifdef VERBOSE_DEBUG
-                if (!solver.decision_var[var]) {
-                    std::cout << "var " << var + 1 << " is non-decision, but in part... strange." << std::endl;
-                }
-                #endif //VERBOSE_DEBUG
-                newSolver.newVar(solver.decision_var[var]);
-                newSolver.activity[var] = solver.activity[var];
-                newSolver.order_heap.update(var);
-                assert(partFinder.getVarPart(var) == part);
-                if (solver.decision_var[var]) {
-                    solver.setDecisionVar(var, false);
-                    decisionVarRemoved.push(var);
-                }
-                i2++;
-            } else {
-                assert(partFinder.getVarPart(var) != part);
-                newSolver.newVar(false);
-            }
-        }
-        solver.order_heap.filter(Solver::VarFilter(solver));
+        configureNewSolver(newSolver);
+        moveVariablesBetweenSolvers(newSolver, vars, part, partFinder);
 
         assert(solver.varReplacer->getClauses().size() == 0);
         moveClauses(solver.clauses, newSolver, part, partFinder);
@@ -125,14 +75,16 @@ const bool PartHandler::handle()
         assert(checkClauseMovement(newSolver, part, partFinder));
 
         lbool status = newSolver.solve();
+        assert(status != l_Undef);
         if (status == l_False) {
             #ifdef VERBOSE_DEBUG
             std::cout << "c One of the sub-problems was UNSAT. Whole problem is unsat." << std::endl;
             #endif //VERBOSE_DEBUG
             return false;
         }
-        assert(status != l_Undef);
 
+        //Check that the newly found solution is really unassigned in the
+        //original solver
         for (Var var = 0; var < newSolver.nVars(); var++) {
             if (newSolver.model[var] != l_Undef) {
                 assert(solver.assigns[var] == l_Undef);
@@ -175,7 +127,8 @@ const bool PartHandler::handle()
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
-    //Checking that all variables that are not in the remaining part are all non-decision vars, and none have been set
+    //Checking that all variables that are not in the remaining part are all
+    //non-decision vars, and none have been assigned
     for (Var var = 0; var < solver.nVars(); var++) {
         if (savedState[var] != l_Undef) {
             assert(solver.decision_var[var] == false);
@@ -189,6 +142,82 @@ const bool PartHandler::handle()
     return true;
 }
 
+/**
+@brief Sets up the sub-solver with a specific configuration
+
+We need to save on memory, since there might be many subsolvers. We also
+need to pass all configurations from the original solver to the sub-solver.
+*/
+void PartHandler::configureNewSolver(Solver& newSolver) const
+{
+    newSolver.mtrand.seed(solver.mtrand.randInt());
+    newSolver.random_var_freq = solver.random_var_freq;
+    newSolver.verbosity = solver.verbosity;
+    newSolver.restrictedPickBranch = solver.restrictedPickBranch;
+    newSolver.greedyUnbound = solver.greedyUnbound;
+    newSolver.findNormalXors = solver.findNormalXors;
+    newSolver.findBinaryXors = solver.findBinaryXors;
+    newSolver.regFindBinaryXors = solver.regFindBinaryXors;
+    newSolver.conglomerateXors = solver.conglomerateXors;
+    newSolver.schedSimplification = solver.schedSimplification;
+    newSolver.doReplace = solver.doReplace;
+    newSolver.failedVarSearch = solver.failedVarSearch;
+    newSolver.gaussconfig.dontDisable = solver.gaussconfig.dontDisable;
+    newSolver.heuleProcess = solver.heuleProcess;
+    newSolver.doSubsumption = solver.doSubsumption;
+    newSolver.doPartHandler = solver.doPartHandler;
+    newSolver.fixRestartType = solver.fixRestartType;
+    newSolver.var_inc = solver.var_inc;
+    newSolver.polarity_mode = solver.polarity_mode;
+
+    //Memory-usage reduction
+    newSolver.schedSimplification = false;
+    newSolver.doSubsumption = false;
+    newSolver.doXorSubsumption = false;
+    newSolver.doPartHandler = false;
+    newSolver.subsWNonExistBins = false;
+    newSolver.regSubsWNonExistBins = false;
+}
+
+/**
+@brief Moves the variables to the new solver, and removes it from the original one
+
+This implies making the right variables decision in the new solver,
+and making it non-decision in the old solver.
+*/
+void PartHandler::moveVariablesBetweenSolvers(Solver& newSolver, vector<Var>& vars, const uint32_t part, const PartFinder& partFinder)
+{
+    std::sort(vars.begin(), vars.end());
+    uint32_t i2 = 0;
+    for (Var var = 0; var < solver.nVars(); var++) {
+        if (i2 < vars.size() && vars[i2] == var) {
+            #ifdef VERBOSE_DEBUG
+            if (!solver.decision_var[var]) {
+                std::cout << "var " << var + 1 << " is non-decision, but in part... strange." << std::endl;
+            }
+            #endif //VERBOSE_DEBUG
+            newSolver.newVar(solver.decision_var[var]);
+            newSolver.activity[var] = solver.activity[var];
+            newSolver.order_heap.update(var);
+            assert(partFinder.getVarPart(var) == part);
+            if (solver.decision_var[var]) {
+                solver.setDecisionVar(var, false);
+                decisionVarRemoved.push(var);
+            }
+            i2++;
+        } else {
+            assert(partFinder.getVarPart(var) != part);
+            newSolver.newVar(false);
+        }
+    }
+    solver.order_heap.filter(Solver::VarFilter(solver));
+}
+
+/**
+@brief Check that when we moved the clauses, we did a good job
+
+I.e. we did not move clauses into a part where they don't belong
+*/
 const bool PartHandler::checkClauseMovement(const Solver& thisSolver, const uint32_t part, const PartFinder& partFinder) const
 {
     if (!checkOnlyThisPart(thisSolver.clauses, part, partFinder))
@@ -203,6 +232,11 @@ const bool PartHandler::checkClauseMovement(const Solver& thisSolver, const uint
     return true;
 }
 
+/**
+@brief Check that clauses only contain variables belonging to this partFinder
+@p cs The clause-list to check
+@p part The part that we should check that the clauses belong to
+*/
 template<class T>
 const bool PartHandler::checkOnlyThisPart(const vec<T*>& cs, const uint32_t part, const PartFinder& partFinder) const
 {
@@ -216,6 +250,12 @@ const bool PartHandler::checkOnlyThisPart(const vec<T*>& cs, const uint32_t part
     return true;
 }
 
+/**
+@brief Move clauses from original to the part
+
+The variables that form part of the part will determine if the clause is in the
+part or not
+*/
 void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder)
 {
     Clause **i, **j, **end;
@@ -239,6 +279,12 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_
     cs.shrink(i-j);
 }
 
+/**
+@brief Move xor clauses from original to the part
+
+The variables that form part of the part will determine if the clause is in the
+part or not
+*/
 void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder)
 {
     XorClause **i, **j, **end;
@@ -262,6 +308,16 @@ void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint
     cs.shrink(i-j);
 }
 
+/**
+@brief Move learnt clauses from original to the part
+
+The variables that form part of the part will determine if the clause is in the
+part or not.
+
+Note that learnt clauses might be in both the orignal and the sub-part. In this
+case, the learnt clause is deleted, since it unneccesarily connects two
+components that otherwise would be distinct
+*/
 void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder)
 {
     Clause **i, **j, **end;
@@ -306,6 +362,14 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
     cs.shrink(i-j);
 }
 
+/**
+@brief Adds the saved states to the final solutions
+It is only called if the solution of the main part was SAT, and the parts
+have all been SAT. We now basically extend the main part with the solutions
+of the sub-parts.
+
+Sets all saved states to l_Undef, i.e. unassigns them
+*/
 void PartHandler::addSavedState()
 {
     //Don't add these (non-0-decison-level!) solutions to the 0th decision level
@@ -325,6 +389,17 @@ void PartHandler::addSavedState()
     decisionVarRemoved.clear();
 }
 
+/**
+@brief Re-add the clauses that have been removed because they were in a part
+
+We remove the clauses that are are in a part. Then, at the very end of the
+solving, we must re-add them, since if the program is used a library, then
+solve() might be called again, at which point we would be missing our clauses!
+
+(Furhtermore, clauses might be added between the end of solving and the
+next solve() command, so we cannot keep in memory which parts were what, because
+parts might be connected through the added clauses)
+*/
 void PartHandler::readdRemovedClauses()
 {
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
