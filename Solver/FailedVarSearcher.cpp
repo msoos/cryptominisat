@@ -37,6 +37,9 @@ using std::set;
 
 //#define VERBOSE_DEUBUG
 
+/**
+@brief Sets up variables that are used between calls to search()
+*/
 FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
     , tmpPs(2)
@@ -51,6 +54,9 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
 {
 }
 
+/**
+@brief Initialises datastructures for 2-long xor finding by shortening longer xors
+*/
 void FailedVarSearcher::addFromSolver(const vec< XorClause* >& cs)
 {
     xorClauseSizes.clear();
@@ -59,12 +65,12 @@ void FailedVarSearcher::addFromSolver(const vec< XorClause* >& cs)
     for (Var var = 0; var < solver.nVars(); var++) {
         occur[var].clear();
     }
-    
+
     uint32_t i = 0;
     for (XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it !=  end; it++, i++) {
         if (it+1 != end)
             __builtin_prefetch(*(it+1), 0, 0);
-        
+
         const XorClause& cl = **it;
         xorClauseSizes[i] = cl.size();
         for (const Lit *l = cl.getData(), *end2 = l + cl.size(); l != end2; l++) {
@@ -73,11 +79,17 @@ void FailedVarSearcher::addFromSolver(const vec< XorClause* >& cs)
     }
 }
 
+/**
+@brief Remove the assinged vars from the xors added by addFromSolver()
+
+The thus shortened xors are then treated if they are 2-long and if they
+appear twice: by propagating "var" and by propagating "~var"
+*/
 inline void FailedVarSearcher::removeVarFromXors(const Var var)
 {
     vector<uint32_t>& occ = occur[var];
     if (occ.empty()) return;
-    
+
     for (uint32_t *it = &occ[0], *end = it + occ.size(); it != end; it++) {
         xorClauseSizes[*it]--;
         if (!xorClauseTouched[*it]) {
@@ -87,11 +99,14 @@ inline void FailedVarSearcher::removeVarFromXors(const Var var)
     }
 }
 
+/**
+@brief Undoes what removeVarFromXors() has done
+*/
 inline void FailedVarSearcher::addVarFromXors(const Var var)
 {
     vector<uint32_t>& occ = occur[var];
     if (occ.empty()) return;
-    
+
     for (uint32_t *it = &occ[0], *end = it + occ.size(); it != end; it++) {
         xorClauseSizes[*it]++;
     }
@@ -102,7 +117,7 @@ const FailedVarSearcher::TwoLongXor FailedVarSearcher::getTwoLongXor(const XorCl
     TwoLongXor tmp;
     uint32_t num = 0;
     tmp.inverted = c.xor_clause_inverted();
-    
+
     for(const Lit *l = c.getData(), *end = l + c.size(); l != end; l++) {
         if (solver.assigns[l->var()] == l_Undef) {
             assert(num < 2);
@@ -112,19 +127,28 @@ const FailedVarSearcher::TwoLongXor FailedVarSearcher::getTwoLongXor(const XorCl
             tmp.inverted ^= (solver.assigns[l->var()] == l_True);
         }
     }
-    
+
     #ifdef VERBOSE_DEUBUG
     if (num != 2) {
         std::cout << "Num:" << num << std::endl;
         c.plainPrint();
     }
     #endif
-    
+
     std::sort(&tmp.var[0], &tmp.var[0]+2);
     assert(num == 2);
     return tmp;
 }
 
+/**
+@brief The main function. Initialises data and calls tryBoth() for heavy-lifting
+
+It sets up the ground for tryBoth() and calls it as many times as it sees fit.
+One afther the other, the different optimisations' data structures are
+initialised, and their limits are set. Then tryBoth is called in two different
+forms: somewhat sequentially on varaibles x...z and then on randomly picked
+variables.
+*/
 const bool FailedVarSearcher::search()
 {
     uint64_t numProps = (solver.nClauses() < 500000 && solver.order_heap.size() < 50000) ? 22000000 : 8000000;
@@ -305,6 +329,14 @@ bool  sortBySize::operator () (const Clause* x, const Clause* y) {
     return (x->size() > y->size());
 }
 
+/**
+@brief Performs asymmetric branching
+
+This is the only thing that does not fit under the aegis of tryBoth(), since
+it is not part of failed literal probing, really. However, it is here because
+it seems to be a function that fits into the idology of failed literal probing.
+Maybe I am off-course and it should be in another class, or a class of its own.
+*/
 const bool FailedVarSearcher::asymmBranch()
 {
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
@@ -437,6 +469,20 @@ const bool FailedVarSearcher::asymmBranch()
     return solver.ok;
 }
 
+/**
+@brief Prints results of failed litaral probing
+
+Printed:
+1) Num failed lits
+2) Num lits that have been propagated by both "var" and "~var"
+3) 2-long Xor clauses that have been found because when propagating "var" and
+   "~var", they have been produced by normal xor-clauses shortening to this xor
+   clause
+4) If var1 propagates var2 and ~var1 propagates ~var2, then var=var2, and this
+   is a 2-long XOR clause
+5) Number of propagations
+6) Time in seconds
+*/
 void FailedVarSearcher::printResults(const double myTime) const
 {
     std::cout << "c Flit: "<< std::setw(5) << numFailed <<
