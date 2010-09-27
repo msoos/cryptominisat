@@ -207,11 +207,54 @@ public:
 
     // Statistics: (read-only member variable)
     //
-    uint64_t starts, dynStarts, staticStarts, fullStarts, decisions, rnd_decisions, propagations, conflicts;
+    uint64_t starts; ///<Num restarts
+    uint64_t dynStarts; ///<Num dynamic restarts
+    uint64_t staticStarts; ///<Num static restarts: note that after full restart, we do a couple of static restarts always
+    /**
+    @brief Num full restarts
+
+    Full restarts are restarts that are made always, no matter what, after
+    a certan number of conflicts have passed. The problem will tried to be
+    decomposed into multiple parts, and then there will be a couple of static
+    restarts made. Finally, the problem will be determined to be MiniSat-type
+    or Glucose-type.
+
+    NOTE: I belive there is a point in having full restarts even if the
+    glue-clause vs. MiniSat clause can be fully resolved
+    */
+    uint64_t fullStarts;
+    uint64_t decisions; ///<Number of decisions made
+    uint64_t rnd_decisions; ///<Numer of random decisions made
+    /**
+    @brief An approximation of accumulated propagation difficulty
+
+    It does not hold the number of propagations made. Rather, it hold a
+    value that is approximate of the difficulty of the propagations made
+    This makes sense, since it is not at all the same difficulty to proapgate
+    a 2-long clause than to propagate a 20-long clause. In certain algorihtms,
+    there is a need to know how difficult the propagation part was. This value
+    can be used in these algorihms. However, the reported "statistic" will be
+    bogus.
+    */
+    uint64_t propagations;
+    uint64_t conflicts; ///<Num conflicts
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
-    uint64_t nbDL2, nbBin, lastNbBin, becameBinary, lastSearchForBinaryXor, nbReduceDB;
-    uint64_t improvedClauseNo, improvedClauseSize;
-    uint64_t numShrinkedClause, numShrinkedClauseLits;
+    uint64_t nbDL2; ///<Num learnt clauses that had a glue of 2 when created
+    uint64_t nbBin; ///<Num learnt clauses that were binary when created
+    uint64_t lastNbBin; ///<Last time we seached for binary xors, the number of clauses in binaryClauses was this much
+    /**
+    @brief When a clause becomes binary through shrinking, we increment this
+
+    It is used to determine if we should try to look for binary xors among
+    the binary clauses
+    */
+    uint64_t becameBinary; ///<
+    uint64_t lastSearchForBinaryXor; ///<Last time we looked for binary xors, this many bogoprops(=propagations) has been done
+    uint64_t nbReduceDB; ///<Number of times learnt clause have been cleaned
+    uint64_t improvedClauseNo; ///<Num clauses improved using on-the-fly subsumption
+    uint64_t improvedClauseSize; ///<Num literals removed using on-the-fly subsumption
+    uint64_t numShrinkedClause; ///<Num clauses improved using on-the-fly self-subsuming resolution
+    uint64_t numShrinkedClauseLits; ///<Num literals removed by on-the-fly self-subsuming resolution
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -237,8 +280,22 @@ public:
     const uint32_t getNumElimXorSubsume() const;    ///<Get variable elimination stats from XorSubsumer
     const uint32_t getNumXorTrees() const;          ///<Get the number of trees built from 2-long XOR-s. This is effectively the number of variables that replace other variables
     const uint32_t getNumXorTreesCrownSize() const; ///<Get the number of variables being replaced by other variables
-    const double   getTotalTimeSubsumer() const;    ///<Get total time spent in Class Subsumer. This includes: subsumption, self-subsuming resolution, variable elimination, blocked clause elimination, subsumption and self-subsuming resolution using non-existent binary clauses.
-    const double   getTotalTimeXorSubsumer() const; ///<Get total time spent in Class XorSubsumer. This included subsumption, variable elimination through XOR, and local substitution
+    /**
+    @brief Get total time spent in Subsumer.
+
+    This includes: subsumption, self-subsuming resolution, variable elimination,
+    blocked clause elimination, subsumption and self-subsuming resolution
+    using non-existent binary clauses.
+    */
+    const double   getTotalTimeSubsumer() const;
+
+    /**
+    @brief Get total time spent in XorSubsumer.
+
+    This included subsumption, variable elimination through XOR, and local
+    substitution (see Heule's Thesis)
+    */
+    const double   getTotalTimeXorSubsumer() const;
 
 protected:
     #ifdef USE_GAUSS

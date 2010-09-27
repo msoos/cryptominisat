@@ -152,7 +152,7 @@ void printStats(Solver& solver)
     //Search stats
     printStatsLine("c conflicts", solver.conflicts, (double)solver.conflicts/cpu_time, "/ sec");
     printStatsLine("c decisions", solver.decisions, (double)solver.rnd_decisions*100.0/(double)solver.decisions, "% random");
-    printStatsLine("c propagations", solver.propagations, (double)solver.propagations/cpu_time, "/ sec");
+    printStatsLine("c bogo-props", solver.propagations, (double)solver.propagations/cpu_time, "/ sec");
     printStatsLine("c conflict literals", solver.tot_literals, (double)(solver.max_literals - solver.tot_literals)*100.0/ (double)solver.max_literals, "% deleted");
 
     //General stats
