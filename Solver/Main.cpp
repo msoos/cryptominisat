@@ -100,7 +100,12 @@ inline void printStatsLine(string left, T value, string extra = "")
     cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
 }
 
+/**
+@brief prints the statistics line at the end of solving
 
+Prints all sorts of statistics, like number of restarts, time spent in
+SatELite-type simplification, number of unit claues found, etc.
+*/
 void printStats(Solver& solver)
 {
     double   cpu_time = cpuTime();
@@ -160,6 +165,14 @@ void printStats(Solver& solver)
     printStatsLine("c CPU time", cpu_time, " s");
 }
 
+/**
+@brief For correctly and gracefully exiting
+
+It can happen that the user requests a dump of the learnt clauses. In this case,
+the program must wait until it gets to a state where the learnt clauses are in
+a correct state, then dump these and quit normally. This interrupt hander
+is used to achieve this
+*/
 Solver* solver;
 static void SIGINT_handler(int signum)
 {
