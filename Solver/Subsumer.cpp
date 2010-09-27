@@ -346,10 +346,10 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
 /**
 @brief Cleans clause from false literals
 
-This does NOT re-implement the feature of \class ClauseCleaner because
+This does NOT re-implement the feature of  ClauseCleaner because
 here we need to remove the literals from the occurrence lists as well. Further-
 more, we need propagate if needed, which is never assumed to be a need in
-\class ClauseCleaner since there the clauses are always attached to the watch-
+ClauseCleaner since there the clauses are always attached to the watch-
 lists.
 
 @param ps Clause to be cleaned
@@ -1520,19 +1520,6 @@ bool Subsumer::merge(const Clause& ps, const Clause& qs, const Lit without_p, co
     
     return true;
 }
-
-/**
-@brief Struct used to compare variable elimination difficulties
-
-Used to order variables according to their difficulty of elimination. Used by
-the std::sort() function. in \function orderVarsForElim()
-*/
-struct myComp {
-    bool operator () (const pair<int, Var>& x, const pair<int, Var>& y) {
-        return x.first < y.first ||
-            (!(y.first < x.first) && x.second < y.second);
-    }
-};
 
 /**
 @brief Orders variables for elimination

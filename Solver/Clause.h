@@ -51,6 +51,14 @@ uint32_t calcAbstraction(const T& ps) {
 class MatrixFinder;
 class ClauseAllocator;
 
+/**
+@brief Holds a clause. Does not allocate space for literals
+
+Literals are allocated by an external allocator that allocates enough space
+for the class that it can hold the literals as well. I.e. it malloc()-s
+    sizeof(Clause)+LENGHT*sizeof(Lit)
+to hold the clause.
+*/
 class Clause
 {
 protected:
@@ -59,11 +67,13 @@ protected:
     uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
     /**
     @brief Is the clause sorted in the binaryClauses[]?
+
     If it is a new clause, this is set to FALSE
     */
     uint32_t sorted:1;
     /**
     @brief Is the XOR equal to 1 or 0?
+
     ONLY set if the clause is an xor clause
     */
     uint32_t invertedXor:1;
@@ -73,6 +83,7 @@ protected:
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     /**
     @brief When the clause was allocated, was it a binary clause?
+
     This is imporant, because if the cluause is binary AT THE MOMENT OF
     ALLOCATION, it is allocated differently. Note that clauses can shrink, so
     clauses may become binary, even though they were allocated the "normal" way,
@@ -97,6 +108,7 @@ protected:
     #else
     /**
     @brief Stores the literals in the clause
+
     This is the reason why we cannot have an instance of this class as it is:
     it cannot hold any literals in that case! This is a trick so that the
     literals are at the same place as the data of the clause, i.e. its size,
@@ -347,6 +359,11 @@ public:
     }
 };
 
+/**
+@brief Holds an xor clause. Similarly to Clause, it cannot be directly used
+
+The space is not allocated for the literals. See Clause for details
+*/
 class XorClause : public Clause
 {
 protected:

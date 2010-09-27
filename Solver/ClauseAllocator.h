@@ -130,6 +130,20 @@ class ClauseAllocator {
         #endif //USE_BOOST
 
         void* allocEnough(const uint32_t size);
+
+        /**
+        @brief The clause's data is replaced by this to aid updating
+
+        We need to update the pointer or offset that points to the clause
+        The best way to do that is to simply fill the original place of the clause
+        with the pointer/offset of the new location.
+        */
+        struct NewPointerAndOffset
+        {
+            uint32_t clauseData; ///<Data that is crucial part of the clause and is needed in updating
+            uint32_t newOffset; ///<The new offset where the clause now resides
+            Clause* newPointer; ///<The new place
+        };
 };
 
 #endif //CLAUSEALLOCATOR_H

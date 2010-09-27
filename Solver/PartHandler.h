@@ -31,6 +31,7 @@ using std::pair;
 
 /**
 @brief Disconnected components are treated here
+
 Uses PartFinder to find disconnected components and treats them using
 subsolvers. The solutions (if SAT) are aggregated, and at then end, the
 solution is extended with the sub-solutions, and the removed clauses are
@@ -47,7 +48,7 @@ class PartHandler
         void readdRemovedClauses();
 
         friend class ClauseAllocator;
-        
+
     private:
         struct sort_pred {
             bool operator()(const std::pair<int,int> &left, const std::pair<int,int> &right) {
@@ -57,20 +58,21 @@ class PartHandler
 
         void configureNewSolver(Solver& newSolver) const;
         void moveVariablesBetweenSolvers(Solver& newSolver, vector<Var>& vars, const uint32_t part, const PartFinder& partFinder);
-        
+
         //For moving clauses
         void moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
         void moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
         void moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
-        
+
         //Checking moved clauses
         const bool checkClauseMovement(const Solver& thisSolver, const uint32_t part, const PartFinder& partFinder) const;
         template<class T>
         const bool checkOnlyThisPart(const vec<T*>& cs, const uint32_t part, const PartFinder& partFinder) const;
-        
+
         Solver& solver; ///<The base solver
         /**
         @brief The SAT solutions that have been found by the parts
+
         When a part finishes with SAT, its soluton is saved here. In th end
         the solutions are aggregaed using addSavedState()
         */
@@ -78,6 +80,7 @@ class PartHandler
         vec<Var> decisionVarRemoved; ///<List of variables whose decision-ness has been removed (set to FALSE)
         /**
         @brief Clauses that have been moved to parts
+
         We aggregate here clauses that have been moved to parts. There are
         later re-added back to the solver such that the problem is complete
         again.
@@ -86,6 +89,7 @@ class PartHandler
 
         /**
         @brief xor clauses that have been moved to parts
+
         We aggregate here xor clauses that have been moved to parts. There are
         later re-added back to the solver such that the problem is complete
         again.
@@ -103,6 +107,7 @@ inline const vec<lbool>& PartHandler::getSavedState()
 
 /**
 @brief Creates a space in savedState
+
 So that the solution can eventually be saved here (if parts are used). By
 default the value is l_Undef, i.e. no solution has been saved there.
 */

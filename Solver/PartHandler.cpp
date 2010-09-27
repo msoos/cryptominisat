@@ -234,6 +234,7 @@ const bool PartHandler::checkClauseMovement(const Solver& thisSolver, const uint
 
 /**
 @brief Check that clauses only contain variables belonging to this partFinder
+
 @p cs The clause-list to check
 @p part The part that we should check that the clauses belong to
 */
@@ -364,6 +365,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
 
 /**
 @brief Adds the saved states to the final solutions
+
 It is only called if the solution of the main part was SAT, and the parts
 have all been SAT. We now basically extend the main part with the solutions
 of the sub-parts.

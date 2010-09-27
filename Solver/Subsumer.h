@@ -138,6 +138,18 @@ private:
     void handleSize1Clause(const Lit lit);
 
     //Variable elimination
+    /**
+    @brief Struct used to compare variable elimination difficulties
+
+    Used to order variables according to their difficulty of elimination. Used by
+    the std::sort() function. in \function orderVarsForElim()
+    */
+    struct myComp {
+        bool operator () (const std::pair<int, Var>& x, const std::pair<int, Var>& y) {
+            return x.first < y.first ||
+                (!(y.first < x.first) && x.second < y.second);
+        }
+    };
     void orderVarsForElim(vec<Var>& order);
     bool maybeEliminate(Var x);
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
