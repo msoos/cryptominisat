@@ -1,4 +1,4 @@
-/***********************************************************************************
+/***************************************************************************
 CryptoMiniSat -- Copyright (c) 2009 Mate Soos
 
 This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-**************************************************************************************************/
+****************************************************************************/
 
 #ifndef FAILEDVARSEARCHER_H
 #define FAILEDVARSEARCHER_H
@@ -30,76 +30,76 @@ using std::vector;
 #include "BitArray.h"
 class Solver;
 
-class TwoLongXor
-{
-    public:
-        const bool operator==(const TwoLongXor& other) const
-        {
-            if (var[0] == other.var[0] && var[1] == other.var[1] && inverted == other.inverted)
-                return true;
-            return false;
-        }
-        const bool operator<(const TwoLongXor& other) const
-        {
-            if (var[0] < other.var[0]) return true;
-            if (var[0] > other.var[0]) return false;
-            
-            if (var[1] < other.var[1]) return true;
-            if (var[1] > other.var[1]) return false;
-            
-            if (inverted < other.inverted) return true;
-            if (inverted > other.inverted) return false;
-            
-            return false;
-        }
-        
-        Var var[2];
-        bool inverted;
-};
-
 class FailedVarSearcher {
     public:
         FailedVarSearcher(Solver& _solver);
-    
+
         const bool search();
         const bool asymmBranch();
-        
-    private:
-        //For 2-long xor
-        const TwoLongXor getTwoLongXor(const XorClause& c);
-        void addFromSolver(const vec<XorClause*>& cs);
-        uint32_t newBinXor;
 
+    private:
         //For re-adding old removed learnt clauses
         const bool readdRemovedLearnts();
         void removeOldLearnts();
-        
+
         //Main
         const bool tryBoth(const Lit lit1, const Lit lit2);
         const bool tryAll(const Lit* begin, const Lit* end);
         void printResults(const double myTime) const;
-        
+
         Solver& solver;
-        
+
         //For failure
         bool failed;
-        
+
         //bothprop finding
         BitArray propagated;
         BitArray propValue;
         vec<Lit> bothSame;
-        
+
         //2-long xor-finding
-        vec<uint32_t> xorClauseSizes;
-        vector<vector<uint32_t> > occur;
+        class TwoLongXor
+        {
+        public:
+            const bool operator==(const TwoLongXor& other) const
+            {
+                if (var[0] == other.var[0]
+                    && var[1] == other.var[1]
+                    && inverted == other.inverted)
+                    return true;
+                return false;
+            }
+            const bool operator<(const TwoLongXor& other) const
+            {
+                if (var[0] < other.var[0]) return true;
+                if (var[0] > other.var[0]) return false;
+
+                if (var[1] < other.var[1]) return true;
+                if (var[1] > other.var[1]) return false;
+
+                if (inverted < other.inverted) return true;
+                if (inverted > other.inverted) return false;
+
+                return false;
+            }
+
+            Var var[2];
+            bool inverted;
+        };
+        const TwoLongXor getTwoLongXor(const XorClause& c);
+        void addFromSolver(const vec<XorClause*>& cs);
         void removeVarFromXors(const Var var);
         void addVarFromXors(const Var var);
+
+        uint32_t newBinXor;
+        vec<uint32_t> xorClauseSizes;
+        vector<vector<uint32_t> > occur;
         BitArray xorClauseTouched;
         vec<uint32_t> investigateXor;
         std::set<TwoLongXor> twoLongXors;
         bool binXorFind;
         uint32_t lastTrailSize;
-        
+
         //2-long xor-finding no.2 through
         // 1) (a->b, ~a->~b) -> a=b
         // 2) binary clause (a,c):  (a->g, c->~g) -> a = ~c
@@ -121,20 +121,20 @@ class FailedVarSearcher {
 
         //Temporaries
         vec<Lit> tmpPs;
-        
+
         //State for this run
         uint32_t toReplaceBefore;
         uint32_t origTrailSize;
         uint64_t origProps;
         uint32_t numFailed;
         uint32_t goodBothSame;
-        
+
         //State between runs
         bool finishedLastTimeVar;
         uint32_t lastTimeWentUntilVar;
         bool finishedLastTimeBin;
         uint32_t lastTimeWentUntilBin;
-        
+
         double numPropsMultiplier;
         uint32_t lastTimeFoundTruths;
 

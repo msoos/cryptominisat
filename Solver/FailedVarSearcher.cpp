@@ -97,7 +97,7 @@ inline void FailedVarSearcher::addVarFromXors(const Var var)
     }
 }
 
-const TwoLongXor FailedVarSearcher::getTwoLongXor(const XorClause& c)
+const FailedVarSearcher::TwoLongXor FailedVarSearcher::getTwoLongXor(const XorClause& c)
 {
     TwoLongXor tmp;
     uint32_t num = 0;
