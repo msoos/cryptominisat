@@ -93,7 +93,7 @@ Solver::Solver() :
         , doAsymmBranchReg (true)
         , doSortWatched    (true)
         , doMinimLearntMore(true)
-        , doMinimLMoreRecur(true)
+        , doMinimLMoreRecur(false)
         , failedVarSearch  (true)
         , addExtraBins     (true)
         , remUselessBins   (true)

@@ -284,7 +284,7 @@ void printUsage(char** argv, Solver& S)
     printf("  --nosortwatched  = Don't sort watches according to size: bin, tri, etc.\n");
     printf("  --nolfminim      = Don't do on-the-fly self-subsuming resolution\n");
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
-    printf("  --nolfminimrec   = Don't do recursive/transitive OTF self-\n");
+    printf("  --lfminimrec     = Perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution (enhancement of \n");
     printf("                     'strong minimisation' in PrecoSat)\n");
     printf("\n");
@@ -564,8 +564,8 @@ int main(int argc, char** argv)
             S.doSortWatched = false;
         } else if ((value = hasPrefix(argv[i], "--nolfminim"))) {
             S.doMinimLearntMore = false;
-        } else if ((value = hasPrefix(argv[i], "--nolfminimrec"))) {
-            S.doMinimLMoreRecur = false;
+        } else if ((value = hasPrefix(argv[i], "--lfminimrec"))) {
+            S.doMinimLMoreRecur = true;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
