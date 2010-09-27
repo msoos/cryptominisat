@@ -42,12 +42,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //We shift stuff around in Watched, so not all of 32 bits are useable.
 #define EFFECTIVELY_USEABLE_BITS 30
 
+/**
+@brief The clause's data is replaced by this to aid updating
 
+We need to update the pointer or offset that points to the clause
+The best way to do that is to simply fill the original place of the clause
+with the pointer/offset of the new location.
+*/
 struct NewPointerAndOffset
 {
-    uint32_t clauseData;
-    uint32_t newOffset;
-    Clause* newPointer;
+    uint32_t clauseData; ///<Data that is crucial part of the clause and is needed in updating
+    uint32_t newOffset; ///<The new offset where the clause now resides
+    Clause* newPointer; ///<The new place
 };
 
 ClauseAllocator::ClauseAllocator()
@@ -59,6 +65,9 @@ ClauseAllocator::ClauseAllocator()
     assert(sizeof(Clause) + 2*sizeof(Lit) > sizeof(NewPointerAndOffset));
 }
 
+/**
+@brief Frees all stacks
+*/
 ClauseAllocator::~ClauseAllocator()
 {
     for (uint32_t i = 0; i < dataStarts.size(); i++) {
@@ -66,6 +75,9 @@ ClauseAllocator::~ClauseAllocator()
     }
 }
 
+/**
+@brief Allocates space&initializes a clause
+*/
 template<class T>
 Clause* ClauseAllocator::Clause_new(const T& ps, const unsigned int group, const bool learnt)
 {
@@ -76,10 +88,14 @@ Clause* ClauseAllocator::Clause_new(const T& ps, const unsigned int group, const
 
     return real;
 }
+
 template Clause* ClauseAllocator::Clause_new(const vec<Lit>& ps, const unsigned int group, const bool learnt);
 template Clause* ClauseAllocator::Clause_new(const Clause& ps, const unsigned int group, const bool learnt);
 template Clause* ClauseAllocator::Clause_new(const XorClause& ps, const unsigned int group, const bool learnt);
 
+/**
+@brief Allocates space&initializes an xor clause
+*/
 template<class T>
 XorClause* ClauseAllocator::XorClause_new(const T& ps, const bool inverted, const unsigned int group)
 {
@@ -93,6 +109,9 @@ XorClause* ClauseAllocator::XorClause_new(const T& ps, const bool inverted, cons
 template XorClause* ClauseAllocator::XorClause_new(const vec<Lit>& ps, const bool inverted, const unsigned int group);
 template XorClause* ClauseAllocator::XorClause_new(const XorClause& ps, const bool inverted, const unsigned int group);
 
+/**
+@brief Allocates space for a new clause & copies a give clause to it
+*/
 Clause* ClauseAllocator::Clause_new(Clause& c)
 {
     assert(c.size() > 0);
@@ -101,10 +120,16 @@ Clause* ClauseAllocator::Clause_new(Clause& c)
     Clause& c2 = *(Clause*)mem;
     c2.setWasBin(c.size() == 2);
     //assert(!(c.size() == 2 && !c2.wasBin()));
-    
+
     return &c2;
 }
 
+/**
+@brief Allocates enough space for a new clause
+
+It tries to add the clause to the end of any already created stacks
+if that is impossible, it creates a new stack, and adds the clause there
+*/
 void* ClauseAllocator::allocEnough(const uint32_t size)
 {
     assert(sizes.size() == dataStarts.size());
@@ -126,7 +151,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         return malloc(sizeof(Clause) + 2*sizeof(Lit));
         #endif
     }
-    
+
     uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(uint32_t);
     bool found = false;
     uint32_t which = std::numeric_limits<uint32_t>::max();
@@ -178,6 +203,12 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     return pointer;
 }
 
+/**
+@brief Given the pointer of the clause it finds a 32-bit offset for it
+
+Calculates the stack frame and the position of the pointer in the stack, and
+rerturns a 32-bit value that is a concatenation of these two
+*/
 const ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
 {
     uint32_t outerOffset = getOuterOffset(ptr);
@@ -185,11 +216,17 @@ const ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
     return combineOuterInterOffsets(outerOffset, interOffset);
 }
 
+/**
+@brief Combines the stack number and the internal offset into one 32-bit number
+*/
 inline const ClauseOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
 {
     return (outerOffset | (interOffset << NUM_BITS_OUTER_OFFSET));
 }
 
+/**
+@brief Given a pointer, finds which stack it's in
+*/
 inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
 {
     uint32_t which = std::numeric_limits<uint32_t>::max();
@@ -204,6 +241,12 @@ inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
     return which;
 }
 
+/**
+@brief Returns if the clause has been allocated in a stack
+
+Essentially, it tries each stack if the pointer could be part of it. If not,
+return false. Otherwise, returns true.
+*/
 const bool ClauseAllocator::insideMemoryRange(const Clause* ptr) const
 {
     bool found = false;
@@ -217,11 +260,27 @@ const bool ClauseAllocator::insideMemoryRange(const Clause* ptr) const
     return found;
 }
 
+/**
+@brief Given a pointer and its stack number, returns its position inside the stack
+*/
 inline uint32_t ClauseAllocator::getInterOffset(const Clause* ptr, uint32_t outerOffset) const
 {
     return ((uint32_t*)ptr - dataStarts[outerOffset]);
 }
 
+/**
+@brief Frees a clause
+
+If clause was binary, it frees it in quite a normal way. If it isn't, then it
+needs to set the data in the Clause that it has been freed, and updates the
+stack it belongs to such that the stack can now that its effectively used size
+is smaller
+
+NOTE: The size of claues can change. Therefore, currentlyUsedSizes can in fact
+be incorrect, since it was incremented by the ORIGINAL size of the clause, but
+when the clause is "freed", it is decremented by the POTENTIALLY SMALLER size
+of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
+*/
 void ClauseAllocator::clauseFree(Clause* c)
 {
     if (c->wasBin()) {
@@ -241,10 +300,18 @@ void ClauseAllocator::clauseFree(Clause* c)
     }
 }
 
+/**
+@brief If needed, compacts stacks, removing unused clauses
+
+Firstly, the algorithm determines if the number of useless slots is large or
+small compared to the problem size. If it is small, it does nothing. If it is
+large, then it allocates new stacks, copies the non-freed clauses to these new
+stacks, updates all pointers and offsets, and frees the original stacks.
+*/
 void ClauseAllocator::consolidate(Solver* solver)
 {
     double myTime = cpuTime();
-    
+
     //if (dataStarts.size() > 2) {
     uint32_t sum = 0;
     for (uint32_t i = 0; i < sizes.size(); i++) {
@@ -422,6 +489,9 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     }
 }
 
+/**
+@brief A dumb helper function to update offsets
+*/
 void ClauseAllocator::updateOffsets(vec<vec<Watched> >& watches)
 {
     for (uint32_t i = 0;  i < watches.size(); i++) {
@@ -433,6 +503,9 @@ void ClauseAllocator::updateOffsets(vec<vec<Watched> >& watches)
     }
 }
 
+/**
+@brief A dumb helper function to update pointers
+*/
 template<class T>
 void ClauseAllocator::updatePointers(vec<T*>& toUpdate)
 {
@@ -443,6 +516,9 @@ void ClauseAllocator::updatePointers(vec<T*>& toUpdate)
     }
 }
 
+/**
+@brief A dumb helper function to update pointers
+*/
 void ClauseAllocator::updatePointers(vector<Clause*>& toUpdate)
 {
     for (vector<Clause*>::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
@@ -452,6 +528,9 @@ void ClauseAllocator::updatePointers(vector<Clause*>& toUpdate)
     }
 }
 
+/**
+@brief A dumb helper function to update pointers
+*/
 void ClauseAllocator::updatePointers(vector<XorClause*>& toUpdate)
 {
     for (vector<XorClause*>::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
@@ -461,6 +540,9 @@ void ClauseAllocator::updatePointers(vector<XorClause*>& toUpdate)
     }
 }
 
+/**
+@brief A dumb helper function to update pointers
+*/
 void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
 {
     for (vector<pair<Clause*, uint32_t> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
