@@ -293,7 +293,7 @@ void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const u
             #endif
             
             solver.detachClause(c);
-            newSolver.addLearntClause(c, c.getGroup(), c.activity());
+            newSolver.addLearntClause(c, c.getGroup(), c.getGlue());
             solver.clauseAllocator.clauseFree(&c);
         } else {
             #ifdef VERBOSE_DEBUG

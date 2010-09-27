@@ -55,19 +55,36 @@ class Clause
 {
 protected:
     
-    uint32_t isLearnt:1;
-    uint32_t strenghtened:1;
+    uint32_t isLearnt:1; ///<Is the clause a learnt clause?
+    uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
+    /**
+    @brief Is the clause sorted in the binaryClauses[]?
+    If it is a new clause, this is set to FALSE
+    */
     uint32_t sorted:1;
+    /**
+    @brief Is the XOR equal to 1 or 0?
+    ONLY set if the clause is an xor clause
+    */
     uint32_t invertedXor:1;
-    uint32_t isXorClause:1;
-    uint32_t subsume0Done:1;
-    uint32_t isRemoved:1;
-    uint32_t isFreed:1;
+    uint32_t isXorClause:1; ///< Is the clause an XOR clause?
+    uint32_t subsume0Done:1; ///Has normal subsumption been done with this clause?
+    uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
+    uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
+    /**
+    @brief When the clause was allocated, was it a binary clause?
+    This is imporant, because if the cluause is binary AT THE MOMENT OF
+    ALLOCATION, it is allocated differently. Note that clauses can shrink, so
+    clauses may become binary, even though they were allocated the "normal" way,
+    i.e. with ClauseAllocator's special stack-allocation procedure. We need to
+    know if a cluase was allocated specially or not, so that we can properly
+    free it
+    */
     uint32_t wasBinInternal:1;
-    uint32_t mySize:20;
+    uint32_t mySize:20; ///<The current size of the clause
 
-    uint32_t act;  //Clause glue -- clause activity according to GLUCOSE
-    float oldActivityInter; //Clause activity according to MiniSat
+    uint32_t glue;  ///<Clause glue -- clause activity according to GLUCOSE
+    float miniSatAct; ///<Clause activity according to MiniSat
 
     uint32_t abst; //Abstraction of clause
 
@@ -78,6 +95,14 @@ protected:
     #ifdef _MSC_VER
     Lit     data[1];
     #else
+    /**
+    @brief Stores the literals in the clause
+    This is the reason why we cannot have an instance of this class as it is:
+    it cannot hold any literals in that case! This is a trick so that the
+    literals are at the same place as the data of the clause, i.e. its size,
+    glue, etc. We allocate therefore the clause manually, taking care that
+    there is enough space for data[] to hold the literals
+    */
     Lit     data[0];
     #endif //_MSC_VER
 
@@ -96,7 +121,7 @@ public:
         setGroup(_group);
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
-        oldActivityInter = 0;
+        miniSatAct = 0;
         setStrenghtened();
     }
 
@@ -130,19 +155,19 @@ public:
         return isLearnt;
     }
 
-    float& oldActivity()
+    float& getMiniSatAct()
     {
-        return oldActivityInter;
+        return miniSatAct;
     }
 
-    void setOldActivity(const float newOldAct)
+    void setMiniSatAct(const float newMiniSatAct)
     {
-        oldActivityInter = newOldAct;
+        miniSatAct = newMiniSatAct;
     }
 
-    const float& oldActivity() const
+    const float& getMiniSatAct() const
     {
-        return oldActivityInter;
+        return miniSatAct;
     }
 
     const bool getStrenghtened() const
@@ -198,14 +223,14 @@ public:
         return data[i];
     }
 
-    void setActivity(uint32_t newAct)
+    void setGlue(uint32_t newGlue)
     {
-        act = newAct;
+        glue = newGlue;
     }
 
-    const uint32_t& activity() const
+    const uint32_t& getGlue() const
     {
-        return act;
+        return glue;
     }
 
     void makeNonLearnt()
@@ -214,10 +239,10 @@ public:
         isLearnt = false;
     }
 
-    void makeLearnt(const uint32_t newAct)
+    void makeLearnt(const uint32_t newGlue)
     {
-        act = newAct;
-        oldActivityInter = 0;
+        glue = newGlue;
+        miniSatAct = 0;
         isLearnt = true;
     }
 
@@ -260,7 +285,7 @@ public:
     void print(FILE* to = stdout) const
     {
         plainPrint(to);
-        fprintf(to, "c clause learnt %s group %d act %d oldAct %f\n", (learnt() ? "yes" : "no"), getGroup(), activity(), oldActivity());
+        fprintf(to, "c clause learnt %s group %d glue %d miniSatAct %f\n", (learnt() ? "yes" : "no"), getGroup(), getGlue(), getMiniSatAct());
     }
     
     void plainPrint(FILE* to = stdout) const

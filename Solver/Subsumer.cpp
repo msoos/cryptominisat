@@ -145,10 +145,10 @@ void Subsumer::subsume0(Clause& ps)
     
     if (ps.learnt()) {
         if (!ret.subsumedNonLearnt) {
-            if (ps.activity() > ret.activity)
-                ps.setActivity(ret.activity);
-            if (ps.oldActivity() < ret.oldActivity)
-                ps.setOldActivity(ret.oldActivity);
+            if (ps.getGlue() > ret.activity)
+                ps.setGlue(ret.activity);
+            if (ps.getMiniSatAct() < ret.oldActivity)
+                ps.setMiniSatAct(ret.oldActivity);
         } else {
             solver.nbCompensateSubsumer++;
             ps.makeNonLearnt();
@@ -184,8 +184,8 @@ Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         Clause* tmp = subs[i].clause;
         if (tmp->learnt()) {
             solver.nbCompensateSubsumer++;
-            ret.activity = std::min(ret.activity, tmp->activity());
-            ret.oldActivity = std::max(ret.oldActivity, tmp->oldActivity());
+            ret.activity = std::min(ret.activity, tmp->getGlue());
+            ret.oldActivity = std::max(ret.oldActivity, tmp->getMiniSatAct());
         } else {
             ret.subsumedNonLearnt = true;
         }
@@ -281,10 +281,10 @@ void Subsumer::subsume1(Clause& ps)
         if (subsLits[j] == lit_Undef) {
             if (ps.learnt()) {
                 if (c.clause->learnt()) {
-                    if (c.clause->activity() < ps.activity())
-                        ps.setActivity(c.clause->activity());
-                    if (c.clause->oldActivity() > ps.oldActivity())
-                        ps.setOldActivity(c.clause->oldActivity());
+                    if (c.clause->getGlue() < ps.getGlue())
+                        ps.setGlue(c.clause->getGlue());
+                    if (c.clause->getMiniSatAct() > ps.getMiniSatAct())
+                        ps.setMiniSatAct(c.clause->getMiniSatAct());
                 } else {
                     ps.makeNonLearnt();
                 }

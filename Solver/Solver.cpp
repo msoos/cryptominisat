@@ -939,7 +939,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         #ifdef UPDATEVARACTIVITY
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
             PropagatedFrom cl = reason[lastDecisionLevel[i]];
-            if (cl.isClause() && cl.getClause()->activity() < nbLevels)
+            if (cl.isClause() && cl.getClause()->getGlue() < nbLevels)
                 varBumpActivity(lastDecisionLevel[i]);
         }
         lastDecisionLevel.clear();
@@ -1244,10 +1244,10 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
         } else {
             uncheckedEnqueue(first, &c);
             #ifdef DYNAMICNBLEVEL
-            if (update && c.learnt() && c.activity() > 2) { // GA
+            if (update && c.learnt() && c.getGlue() > 2) { // GA
                 uint32_t nbLevels = calcNBLevels(c);
-                if (nbLevels+1 < c.activity())
-                    c.setActivity(nbLevels);
+                if (nbLevels+1 < c.getGlue())
+                    c.setGlue(nbLevels);
             }
             #endif
         }
@@ -1412,9 +1412,9 @@ bool  reduceDB_ltMiniSat::operator () (const Clause* x, const Clause* y) {
     if (xsize > 2 && ysize == 2) return 1;
     if (ysize > 2 && xsize == 2) return 0;
 
-    if (x->oldActivity() == y->oldActivity())
+    if (x->getMiniSatAct() == y->getMiniSatAct())
         return xsize > ysize;
-    else return x->oldActivity() < y->oldActivity();
+    else return x->getMiniSatAct() < y->getMiniSatAct();
 }
     
 bool  reduceDB_ltGlucose::operator () (const Clause* x, const Clause* y) {
@@ -1425,8 +1425,8 @@ bool  reduceDB_ltGlucose::operator () (const Clause* x, const Clause* y) {
     if (xsize > 2 && ysize == 2) return 1;
     if (ysize > 2 && xsize == 2) return 0;
     
-    if (x->activity() > y->activity()) return 1;
-    if (x->activity() < y->activity()) return 0;
+    if (x->getGlue() > y->getGlue()) return 1;
+    if (x->getGlue() < y->getGlue()) return 0;
     return xsize > ysize;
 }
 
@@ -1454,7 +1454,7 @@ void Solver::reduceDB()
     for (i = j = 0; i != removeNum; i++){
         if (i+1 < removeNum)
             __builtin_prefetch(learnts[i+1], 0, 0);
-        if (learnts[i]->size() > 2 && !locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->activity() > 2)) {
+        if (learnts[i]->size() > 2 && !locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->getGlue() > 2)) {
             removeClause(*learnts[i]);
         } else
             learnts[j++] = learnts[i];
@@ -1782,8 +1782,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
                 (*c)[i] = learnt_clause[i];
             c->shrink(origSize - learnt_clause.size());
             if (c->learnt()) {
-                if (c->activity() > nbLevels)
-                    c->setActivity(nbLevels); // LS
+                if (c->getGlue() > nbLevels)
+                    c->setGlue(nbLevels); // LS
                 if (c->size() == 2)
                     nbBin++;
                 learnts_literals -= origSize - learnt_clause.size();
@@ -1798,7 +1798,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
             #endif
             if (c->size() > 2) {
                 learnts.push(c);
-                c->setActivity(nbLevels); // LS
+                c->setGlue(nbLevels); // LS
             } else {
                 binaryClauses.push(c);
                 nbBin++;

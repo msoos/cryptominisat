@@ -529,10 +529,10 @@ inline void Solver::varBumpActivity(Var v)
 
 inline void Solver::claBumpActivity (Clause& c)
 {
-    if ( (c.oldActivity() += cla_inc) > 1e20 ) {
+    if ( (c.getMiniSatAct() += cla_inc) > 1e20 ) {
         // Rescale:
         for (uint32_t i = 0; i < learnts.size(); i++)
-            learnts[i]->oldActivity() *= 1e-17;
+            learnts[i]->getMiniSatAct() *= 1e-17;
         cla_inc *= 1e-20;
     }
 }

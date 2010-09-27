@@ -74,6 +74,13 @@ class ClauseAllocator {
 
         const ClauseOffset getOffset(const Clause* ptr) const;
 
+        /**
+        @brief Returns the pointer of a clause given its offset
+
+        Takes the "dataStart" of the correct stack, and adds the offset,
+        returning the thus created pointer. Used a LOT in propagation, thus this
+        is very important to be fast (therefore, it is an inlined method)
+        */
         inline Clause* getPointer(const uint32_t offset)
         {
             return (Clause*)(dataStarts[offset&((1 << NUM_BITS_OUTER_OFFSET) - 1)]
