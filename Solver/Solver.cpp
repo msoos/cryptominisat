@@ -134,7 +134,6 @@ Solver::Solver() :
         , simpDB_assigns   (-1)
         , simpDB_props     (0)
         , order_heap       (VarOrderLt(activity))
-        , progress_estimate(0)
         , mtrand((unsigned long int)0)
         , maxRestarts(UINT_MAX)
         , MYFLAG           (0)
@@ -207,9 +206,11 @@ Solver::~Solver()
 
 
 /**
-Creates a new SAT variable in the solver. If 'decision_var' is cleared, variable will not be
-used as a decision variable (NOTE! This has effects on the meaning of a SATISFIABLE result).
- 
+@brief Creates a new variable in the solver.
+
+If 'decision_var' is cleared, variable will not be used as a decision variable
+NOTE: This has effects on the meaning of a SATISFIABLE result
+
 @p dvar The new variable should be used as a decision variable?
 */
 Var Solver::newVar(bool dvar)
@@ -470,6 +471,12 @@ bool Solver::addClause(T& ps, const uint32_t group, char* group_name)
 template bool Solver::addClause(vec<Lit>& ps, const uint32_t group, char* group_name);
 template bool Solver::addClause(Clause& ps, const uint32_t group, char* group_name);
 
+/**
+@brief Attaches an xor clause to the watchlists
+
+The xor clause must be larger than 2, since a 2-long XOR clause is a varible
+replacement instruction, really.
+*/
 void Solver::attachClause(XorClause& c)
 {
     assert(c.size() > 2);
@@ -486,6 +493,11 @@ void Solver::attachClause(XorClause& c)
     clauses_literals += c.size();
 }
 
+/**
+@brief Attach normal a clause to the watchlists
+
+Handles 2, 3 and >3 clause sizes differently and specially
+*/
 void Solver::attachClause(Clause& c)
 {
     assert(c.size() > 1);
@@ -511,21 +523,33 @@ void Solver::attachClause(Clause& c)
         clauses_literals += c.size();
 }
 
-
+/**
+@brief Calls detachModifiedClause to do the heavy-lifting
+*/
 void Solver::detachClause(const XorClause& c)
 {
     detachModifiedClause(c[0].var(), c[1].var(), c.size(), &c);
 }
 
+/**
+@brief Calls detachModifiedClause to do the heavy-lifting
+*/
 void Solver::detachClause(const Clause& c)
 {
     detachModifiedClause(c[0], c[1], (c.size() == 3) ? c[2] : lit_Undef,  c.size(), &c);
 }
 
+/**
+@brief Detaches a (potentially) modified clause
+
+The first two literals might have chaned through modification, so they are
+passed along as arguments -- they are needed to find the correct place where
+the clause is
+*/
 void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address)
 {
     assert(origSize > 1);
-    
+
     if (origSize == 2) {
         assert(findWBin(watches[(~lit1).toInt()], lit2));
         assert(findWBin(watches[(~lit2).toInt()], lit1));
@@ -534,6 +558,8 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(address);
         if (origSize == 3) {
+            //The clause might have been longer, and has only recently
+            //became 3-long. Check, and detach accordingly
             if (findWCl(watches[(~lit1).toInt()], offset)) goto fullClause;
 
             removeWTri(watches[(~lit1).toInt()], lit2, lit3);
@@ -547,13 +573,19 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3
             removeWCl(watches[(~lit2).toInt()], offset);
         }
     }
-    
+
     if (address->learnt())
         learnts_literals -= origSize;
     else
         clauses_literals -= origSize;
 }
 
+/**
+@brief Detaches a (potentially) modified xor clause
+
+The first two vars might have chaned through modification, so they are passed
+along as arguments.
+*/
 void Solver::detachModifiedClause(const Var var1, const Var var2, const uint32_t origSize, const XorClause* address)
 {
     assert(origSize > 2);
@@ -563,13 +595,12 @@ void Solver::detachModifiedClause(const Var var1, const Var var2, const uint32_t
     assert(findWXCl(watches[Lit(var1, true).toInt()], offset));
     assert(findWXCl(watches[Lit(var2, false).toInt()], offset));
     assert(findWXCl(watches[Lit(var2, true).toInt()], offset));
-    
+
     removeWXCl(watches[Lit(var1, false).toInt()], offset);
     removeWXCl(watches[Lit(var1, true).toInt()], offset);
     removeWXCl(watches[Lit(var2, false).toInt()], offset);
     removeWXCl(watches[Lit(var2, true).toInt()], offset);
-    
-    
+
     clauses_literals -= origSize;
 }
 
@@ -609,17 +640,6 @@ void Solver::cancelUntil(int level)
     #ifdef VERBOSE_DEBUG
     cout << "Canceling finished. (now at level: " << decisionLevel() << " sublevel: " << trail.size()-1 << ")" << endl;
     #endif
-}
-
-void Solver::printLit(const Lit l) const
-{
-    printf("%s%d:%c", l.sign() ? "-" : "", l.var()+1, value(l) == l_True ? '1' : (value(l) == l_False ? '0' : 'X'));
-}
-
-void Solver::needLibraryCNFFile(const char* fileName)
-{
-    libraryCNFFile = fopen(fileName, "w");
-    assert(libraryCNFFile != NULL);
 }
 
 #ifdef USE_GAUSS
@@ -960,6 +980,12 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     return NULL;
 }
 
+/**
+@brief Performs on-the-fly self-subsuming resolution
+
+Only uses binary and tertiary clauses already in the watchlists in native
+form to carry out the forward-self-subsuming resolution
+*/
 void Solver::minimiseLeartFurther(vec<Lit>& cl)
 {
     vec<Lit> allAddedToSeen2;
@@ -1048,8 +1074,12 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
 }
 
 
-// Check if 'p' can be removed. 'abstract_levels' is used to abort early if the algorithm is
-// visiting literals at levels that cannot be removed later.
+/**
+@brief Check if 'p' can be removed
+
+'abstract_levels' is used to abort early if the algorithm is
+visiting literals at levels that cannot be removed later.
+*/
 bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
 {
     analyze_stack.clear();
@@ -1161,6 +1191,12 @@ void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
 |    Post-conditions:
 |      * the propagation queue is empty, even if there was a conflict.
 |________________________________________________________________________________________________@*/
+/**
+@brief Propagates a binary clause
+
+Need to be somewhat tricky if the clause indicates that current assignement
+is incorrect (i.e. both literals evaluate to FALSE)
+*/
 inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
 {
     *j++ = *i;
@@ -1177,6 +1213,12 @@ inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *en
     }
 }
 
+/**
+@brief Propagates a tertiary (3-long) clause
+
+Need to be somewhat tricky if the clause indicates that current assignement
+is incorrect (i.e. all 3 literals evaluate to FALSE)
+*/
 inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
 {
     *j++ = *i;
@@ -1196,6 +1238,12 @@ inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, 
     }
 }
 
+/**
+@brief Propagates a tertiary (3-long) clause
+
+We have blocked literals in this case in the watchlist. That must be checked
+and updated.
+*/
 inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl, const bool update)
 {
     if (value(i->getBlockedLit()).getBool()) {
@@ -1254,6 +1302,16 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
     }
 }
 
+/**
+@brief Propagates a tertiary (3-long) clause
+
+Strangely enough, we need to have 4 literals in the wathclists:
+for the first two varialbles, BOTH negations (v and ~v). This means quite some
+pain, since we need to remove v when moving ~v and vica-versa. However, it means
+better memory-accesses since the watchlist is already in the memory...
+
+\todo maybe not worth it, and a variable-based watchlist should be used
+*/
 inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
 {
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(i->getOffset());
@@ -1303,6 +1361,12 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
     }
 }
 
+/**
+@brief Does the propagation
+
+Basically, it goes through the watchlists recursively, and calls the appropirate
+propagaton function
+*/
 PropagatedFrom Solver::propagate(const bool update)
 {
     PropagatedFrom confl;
@@ -1359,6 +1423,11 @@ FoundWatch:
     return confl;
 }
 
+/**
+@brief Only propagates binary clauses
+
+This is used in special algorithms outside the main Solver class
+*/
 PropagatedFrom Solver::propagateBin()
 {
     while (qhead < trail.size()) {
@@ -1367,7 +1436,7 @@ PropagatedFrom Solver::propagateBin()
         propagations += wbin.size()/2;
         for(Watched *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
             if (!k->isBinary()) continue;
-            
+
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
                 //uncheckedEnqueue(k->impliedLit, k->clause);
@@ -1381,6 +1450,13 @@ PropagatedFrom Solver::propagateBin()
     return PropagatedFrom();
 }
 
+/**
+@brief Calculates the glue of a clause
+
+Used to calculate the Glue of a new clause, or to update the glue of an
+existing clause. Only used if the glue-based activity heuristic is enabled,
+i.e. if we are in GLUCOSE mode (not MiniSat mode)
+*/
 template<class T>
 inline const uint32_t Solver::calcNBLevels(const T& ps)
 {
@@ -1430,6 +1506,12 @@ bool  reduceDB_ltGlucose::operator () (const Clause* x, const Clause* y) {
     return xsize > ysize;
 }
 
+/**
+@brief Removes learnt clauses that have been found not to be too good
+
+Either based on glue or MiniSat-style learnt clause activities, the clauses are
+sorted and then removed
+*/
 void Solver::reduceDB()
 {
     uint32_t     i, j;
@@ -1473,14 +1555,13 @@ inline int64_t abs64(int64_t a)
     return a;
 }
 
-/*_________________________________________________________________________________________________
-|
-|  simplify : [void]  ->  [bool]
-|
-|  Description:
-|    Simplify the clause database according to the current top-level assigment. Currently, the only
-|    thing done here is the removal of satisfied clauses, but more things can be put here.
-|________________________________________________________________________________________________@*/
+/**
+@brief Simplify the clause database according to the current top-level assigment.
+
+We remove satisfied clauses, clean clauses from assigned literals, find
+binary xor-clauses and replace variables with one another. Heuristics are
+used to check if we need to find binary xor clauses or not.
+*/
 const bool Solver::simplify()
 {
     testAllClauseAttach();
@@ -1494,19 +1575,19 @@ const bool Solver::simplify()
     if (simpDB_props > 0) {
         return true;
     }
-    
+
     double slowdown = (100000.0/(double)binaryClauses.size());
     slowdown = std::min(3.5, slowdown);
     slowdown = std::max(0.2, slowdown);
-    
+
     double speedup = 50000000.0/(double)(propagations-lastSearchForBinaryXor);
     speedup = std::min(3.5, speedup);
     speedup = std::max(0.2, speedup);
-    
+
     /*std::cout << "new:" << nbBin - lastNbBin + becameBinary << std::endl;
     std::cout << "left:" << ((double)(nbBin - lastNbBin + becameBinary)/BINARY_TO_XOR_APPROX) * slowdown  << std::endl;
     std::cout << "right:" << (double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup << std::endl;*/
-    
+
     if (findBinaryXors && regFindBinaryXors &&
         (((double)abs64((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown) >
         ((double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup)) {
@@ -1516,21 +1597,18 @@ const bool Solver::simplify()
         clauseCleaner->cleanClauses(learnts, ClauseCleaner::learnts);
         clauseCleaner->removeSatisfied(binaryClauses, ClauseCleaner::binaryClauses);
         if (!ok) return false;
-        testAllClauseAttach();
 
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
         if (!xorFinder.doNoPart(2, 2)) return false;
-        testAllClauseAttach();
-        
+
         lastNbBin = nbBin;
         becameBinary = 0;
     }
-    
+
     // Remove satisfied clauses:
     clauseCleaner->removeAndCleanAll();
-    testAllClauseAttach();
     if (!ok) return false;
-    
+
     if (doReplace && !varReplacer->performReplace())
         return false;
 
@@ -1542,7 +1620,7 @@ const bool Solver::simplify()
         if (!(*gauss)->full_init()) return false;
     }
     #endif //USE_GAUSS
-    
+
     simpDB_assigns = nAssigns();
     simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
 
@@ -1550,6 +1628,13 @@ const bool Solver::simplify()
     return true;
 }
 
+/**
+@brief Used to dump claues and exit
+
+Only called when a clean interrupt has been asked for, and we are at a point
+where we can cleanly dump the datastructures (i.e. they are not in the middle
+of being updated, for example)
+*/
 void Solver::interruptCleanly()
 {
     if (needToDumpLearnts) {
@@ -1564,20 +1649,19 @@ void Solver::interruptCleanly()
 }
 
 
-/*_________________________________________________________________________________________________
-|
-|  search : (nof_conflicts : int) (nof_learnts : int) (params : const SearchParams&)  ->  [lbool]
-|
-|  Description:
-|    Search for a model the specified number of conflicts, keeping the number of learnt clauses
-|    below the provided limit. NOTE! Use negative value for 'nof_conflicts' or 'nof_learnts' to
-|    indicate infinity.
-|
-|  Output:
-|    'l_True' if a partial assigment that is consistent with respect to the clauseset is found. If
-|    all variables are decision variables, this means that the clause set is satisfiable. 'l_False'
-|    if the clause set is unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
-|________________________________________________________________________________________________@*/
+/**
+@brief Search for a model
+
+Limits: must be below the specified number of conflicts and must keep the
+number of learnt clauses below the provided limit
+
+Use negative value for 'nof_conflicts' or 'nof_learnts' to indicate infinity.
+
+Output: 'l_True' if a partial assigment that is consistent with respect to the
+clauseset is found. If all variables are decision variables, this means
+that the clause set is satisfiable. 'l_False' if the clause set is
+unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
+*/
 lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const bool update)
 {
     assert(ok);
@@ -1590,7 +1674,7 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
         staticStarts++;
     else
         dynStarts++;
-    
+
     #ifdef USE_GAUSS
     for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
         if (!(*gauss)->full_init())
@@ -1623,15 +1707,21 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     }
 }
 
+/**
+@brief Picks a new decision variable to branch on
+
+@returns l_Undef if it should restart instead. l_False if it reached UNSAT
+         (through simplification)
+*/
 llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC)
 {
-    
+
     // Reached bound on number of conflicts?
     switch (restartType) {
     case dynamic_restart:
         if (nbDecisionLevelHistory.isvalid() &&
             ((nbDecisionLevelHistory.getavg()) > (totalSumOfDecisionLevel / (double)(conflicts - conflictsAtLastSolve)))) {
-            
+
             #ifdef DEBUG_DYNAMIC_RESTART
             if (nbDecisionLevelHistory.isvalid()) {
                 std::cout << "nbDecisionLevelHistory.getavg():" << nbDecisionLevelHistory.getavg() <<std::endl;
@@ -1643,7 +1733,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
                 std::cout << "fullStarts:" << fullStarts << std::endl;
             }
             #endif
-            
+
             nbDecisionLevelHistory.fastclear();
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
@@ -1721,6 +1811,11 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     return l_Nothing;
 }
 
+/**
+@brief Handles a conflict that we reached through propagation
+
+@returns l_False if UNSAT
+*/
 llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update)
 {
     #ifdef VERBOSE_DEBUG
@@ -1729,7 +1824,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
         cout << learnt_clause[i].var()+1 << ",";
     cout << endl;
     #endif
-    
+
     int backtrack_level;
     uint32_t nbLevels;
 
@@ -1750,26 +1845,26 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
     } else {
         conflictsAtLastSolve++;
     }
-    
+
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
         logger.conflict(Logger::simple_confl_type, backtrack_level, confl->getGroup(), learnt_clause);
     #endif
     cancelUntil(backtrack_level);
-    
+
     #ifdef VERBOSE_DEBUG
     cout << "Learning:";
     for (uint32_t i = 0; i < learnt_clause.size(); i++) printLit(learnt_clause[i]), cout << " ";
     cout << endl;
     cout << "reverting var " << learnt_clause[0].var()+1 << " to " << !learnt_clause[0].sign() << endl;
     #endif
-    
+
     assert(value(learnt_clause[0]) == l_Undef);
     //Unitary learnt
     if (learnt_clause.size() == 1) {
         uncheckedEnqueue(learnt_clause[0]);
         assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
-        
+
         #ifdef VERBOSE_DEBUG
         cout << "Unit clause learnt." << endl;
         #endif
@@ -1815,35 +1910,26 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
     return l_Nothing;
 }
 
-double Solver::progressEstimate() const
-{
-    double  progress = 0;
-    double  F = 1.0 / nVars();
+/**
+@brief After a full restart, determines which restar type to use
 
-    for (uint32_t i = 0; i <= decisionLevel(); i++) {
-        int beg = i == 0 ? 0 : trail_lim[i - 1];
-        int end = i == decisionLevel() ? trail.size() : trail_lim[i];
-        progress += pow(F, (int)i) * (end - beg);
-    }
-
-    return progress / nVars();
-}
-
+Uses class RestartTypeChooser to do the heavy-lifting
+*/
 const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
 {
     uint32_t relativeStart = starts - lastFullRestart;
-    
+
     if (relativeStart > RESTART_TYPE_DECIDER_FROM  && relativeStart < RESTART_TYPE_DECIDER_UNTIL) {
         if (fixRestartType == auto_restart)
             restartTypeChooser->addInfo();
-        
+
         if (relativeStart == (RESTART_TYPE_DECIDER_UNTIL-1)) {
             RestartType tmp;
             if (fixRestartType == auto_restart)
                 tmp = restartTypeChooser->choose();
             else
                 tmp = fixRestartType;
-            
+
             if (tmp == dynamic_restart) {
                 nbDecisionLevelHistory.fastclear();
                 nbDecisionLevelHistory.initSize(100);
@@ -1854,7 +1940,7 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
                 if (verbosity >= 3)
                     std::cout << "c Decided on static restart strategy"
                     << std::endl;
-                
+
                 #ifdef USE_GAUSS
                 if (!matrixFinder->findMatrixes()) return false;
                 #endif //USE_GAUSS
@@ -1872,15 +1958,22 @@ inline void Solver::setDefaultRestartType()
 {
     if (fixRestartType != auto_restart) restartType = fixRestartType;
     else restartType = static_restart;
-    
+
     if (restartType == dynamic_restart) {
         nbDecisionLevelHistory.fastclear();
         nbDecisionLevelHistory.initSize(100);
     }
-    
+
     lastSelectedRestartType = restartType;
 }
 
+/**
+@brief The function that brings together almost all CNF-simplifications
+
+It burst-searches for given number of conflicts, then it tries all sorts of
+things like variable elimination, subsumption, failed literal probing, etc.
+to try to simplifcy the problem at hand.
+*/
 const lbool Solver::simplifyProblem(const uint32_t numConfls)
 {
     testAllClauseAttach();
@@ -1900,7 +1993,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     simplifying = true;
     uint64_t origConflicts = conflicts;
     #endif //BURST_SEARCH
-    
+
     lbool status = l_Undef;
 
     #ifdef BURST_SEARCH
@@ -1933,7 +2026,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (doSubsumption && !subsumer->simplifyBySubsumption(false)) goto end;
 
     if (doSubsumption && !subsumer->simplifyBySubsumption(true)) goto end;
-    
+
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
         if (!xorFinder.doNoPart(3, 7)) {
@@ -1959,7 +2052,7 @@ end:
 
     savedState.restore();
     simplifying = false;
-    
+
     #ifdef USE_GAUSS
     if (status == l_Undef && !gauss_was_cleared && !matrixFinder->findMatrixes())
         status = l_False;
@@ -1971,6 +2064,13 @@ end:
     return status;
 }
 
+/**
+@brief Should we perform a full restart?
+
+If so, we also do the things to be done if the full restart is effected.
+Currently, this means we try to find disconnected components and solve
+them with sub-solvers using class PartHandler
+*/
 const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint32_t& lastFullRestart)
 {
     if (nof_conflicts_fullrestart > 0 && (int)conflicts >= nof_conflicts_fullrestart) {
@@ -1985,21 +2085,21 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         if (verbosity >= 3)
             std::cout << "c Fully restarting" << std::endl;
         printRestartStat("F");
-        
+
         /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
             XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
             if (!xorFinder.doNoPart(3, 10))
                 return false;
         }*/
-        
+
         if (doPartHandler && !partHandler->handle())
             return false;
-        
+
         //calculateDefaultPolarities();
-        
+
         fullStarts++;
     }
-    
+
     return true;
 }
 
@@ -2037,7 +2137,7 @@ inline void Solver::performStepsBeforeSolve()
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
         if (!xorFinder.doNoPart(3, 7)) return;
     }
-    
+
     if (xorclauses.size() > 1) {
         if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption())
             return;
@@ -2057,10 +2157,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
 #endif
     if (!ok) return l_False;
     assert(qhead == trail.size());
-    
+
     if (libraryCNFFile)
         fprintf(libraryCNFFile, "c Solver::solve() called\n");
-    
+
     model.clear();
     conflict.clear();
     #ifdef USE_GAUSS
@@ -2083,7 +2183,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     uint32_t    lastFullRestart  = starts;
     lbool   status        = l_Undef;
     uint64_t nextSimplify = restart_first * SIMPLIFY_MULTIPLIER + conflicts;
-    
+
     if (nClauses() * learntsize_factor < nbclausesbeforereduce) {
         if (nClauses() * learntsize_factor < nbclausesbeforereduce/2)
             nbclausesbeforereduce = nbclausesbeforereduce/4;
@@ -2092,7 +2192,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
     testAllClauseAttach();
     findAllAttach();
-    
+
     if (conflicts == 0) {
         performStepsBeforeSolve();
         if (!ok) return l_False;
@@ -2128,7 +2228,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             logger.begin();
         }
         #endif
-        
+
         status = search(nof_conflicts, nof_conflicts_fullrestart);
         nof_conflicts = (double)nof_conflicts * restart_inc;
         if (status != l_Undef) break;
@@ -2142,7 +2242,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     }
     printEndSearchStat();
-    
+
     #ifdef USE_GAUSS
     clearGaussMatrixes();
     #endif //USE_GAUSS
@@ -2158,7 +2258,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     if (status == l_True) handleSATSolution();
     else if (status == l_False) handleUNSATSolution();
-    
+
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis) {
         if (status == l_True)
@@ -2180,6 +2280,14 @@ lbool Solver::solve(const vec<Lit>& assumps)
     return status;
 }
 
+/**
+@brief Extends a SAT solution to the full solution
+
+variable elimination, variable replacement, sub-part solving, etc. all need to
+be handled correctly to arrive at a solution that is a solution to ALL of the
+original problem, not just of what remained of it at the end inside this class
+(i.e. we need to combine things from the helper classes)
+*/
 void Solver::handleSATSolution()
 {
 

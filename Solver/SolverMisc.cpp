@@ -417,3 +417,24 @@ void Solver::addSymmBreakClauses()
     #endif // DISABLE_ZLIB
     std::cout << "c Finished saucy, time: " << (cpuTime() - myTime) << std::endl;
 }
+
+/**
+@brief Pretty-prints a literal
+*/
+void Solver::printLit(const Lit l) const
+{
+    printf("%s%d:%c", l.sign() ? "-" : "", l.var()+1, value(l) == l_True ? '1' : (value(l) == l_False ? '0' : 'X'));
+}
+
+/**
+@brief Sets that we need a CNF file that documents all commands
+
+newVar() and addClause(), addXorClause() commands are logged to this CNF
+file and then can be re-read with special arguments to the main program. This
+can help simulate a segfaulting library-call
+*/
+void Solver::needLibraryCNFFile(const char* fileName)
+{
+    libraryCNFFile = fopen(fileName, "w");
+    assert(libraryCNFFile != NULL);
+}

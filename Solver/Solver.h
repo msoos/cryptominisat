@@ -92,6 +92,20 @@ struct reduceDB_ltGlucose
     bool operator () (const Clause* x, const Clause* y);
 };
 
+/**
+@brief The main solver class
+
+This class creates and manages all the others. It is here that settings must
+be set, and it is here that all data enter and leaves the system. The basic
+use is to add normal and XOR clauses, and then solve(). The solver will then
+solve the problem, and return with either a SAT solution with corresponding
+variable settings, or report that the problem in UNSATisfiable.
+
+The prolbem-solving can be interrupted with the "interrupt" varible, and can
+also be pre-set to stop after a certain number of restarts. The data until the
+interruption can be dumped by previously setting parameters like
+dumpSortedLearnts
+*/
 class Solver
 {
 public:
@@ -295,7 +309,6 @@ protected:
     int64_t             simpDB_props;     // Remaining number of propagations that must be made before next execution of 'simplify()'.
     vec<Lit>            assumptions;      // Current set of assumptions provided to solve by the user.
     Heap<VarOrderLt>    order_heap;       // A priority queue of variables ordered with respect to the variable activity.
-    double              progress_estimate;// Set by 'search()'.
     #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
     bqueue<uint32_t>        avgBranchDepth; // Avg branch depth
     #endif //RANDOM_LOOKAROUND_SEARCHSPACE
@@ -468,7 +481,6 @@ protected:
     void     printStatHeader  () const;
     void     printRestartStat (const char* type = "N");
     void     printEndSearchStat();
-    double   progressEstimate () const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
     void     interruptCleanly();
     void     addSymmBreakClauses();
 
