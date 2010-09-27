@@ -99,12 +99,24 @@ class ClauseAllocator {
 
         void updateOffsets(vec<vec<Watched> >& watches);
         
-        vec<uint32_t*> dataStarts;
-        vec<size_t> sizes;
+        vec<uint32_t*> dataStarts; ///<Stacks start at these positions
+        vec<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack
+        /**
+        @brief Clauses in the stack had this size when they were allocated
+        This my NOT be their current size: the clauses may be shrinked during
+        the running of the solver. Therefore, it is imperative that their orignal
+        size is saved. This way, we can later move clauses around.
+        */
         vec<vec<uint32_t> > origClauseSizes;
-        vec<size_t> maxSizes;
+        vec<size_t> maxSizes; ///<The number of 32-bit datapieces allocated in each stack
+        /**
+        @brief The estimated used size of the stack
+        This is incremented by clauseSize each time a clause is allocated, and
+        decremetented by clauseSize each time a clause is deallocated. The
+        problem is, that clauses can shrink, and thus this value will be an
+        overestimation almost all the time
+        */
         vec<size_t> currentlyUsedSizes;
-        vec<uint32_t> origSizes;
 
         #ifdef USE_BOOST
         boost::pool<> clausePoolBin;
