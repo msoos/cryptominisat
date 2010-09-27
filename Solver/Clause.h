@@ -55,10 +55,6 @@ class Clause
 {
 protected:
     
-    #ifdef STATS_NEEDED
-    uint32_t group;
-    #endif
-    
     uint32_t isLearnt:1;
     uint32_t strenghtened:1;
     uint32_t sorted:1;
@@ -74,7 +70,11 @@ protected:
     float oldActivityInter; //Clause activity according to MiniSat
 
     uint32_t abst; //Abstraction of clause
-    
+
+    #ifdef STATS_NEEDED
+    uint32_t group;
+    #endif
+
     #ifdef _MSC_VER
     Lit     data[1];
     #else

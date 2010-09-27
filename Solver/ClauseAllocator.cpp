@@ -45,11 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 struct NewPointerAndOffset
 {
-    #ifdef STATS_NEEDED
-    uint32_t group;
-    #endif
     uint32_t clauseData;
-
     uint32_t newOffset;
     Clause* newPointer;
 };
