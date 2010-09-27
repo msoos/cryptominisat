@@ -362,17 +362,18 @@ protected:
 public:
     friend class ClauseAllocator;
 
-    inline bool xor_clause_inverted() const
+    inline const bool xor_clause_inverted() const
     {
         return invertedXor;
     }
 
-    inline void invert(bool b)
+    inline void invert(const bool b)
     {
         invertedXor ^= b;
     }
 
-    void print() {
+    void print() const
+    {
         printf("XOR Clause   group: %d, size: %d, learnt:%d, lits:\"", getGroup(), size(), learnt());
         plainPrint();
     }
