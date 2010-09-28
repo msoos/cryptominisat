@@ -112,6 +112,15 @@ inline void FailedVarSearcher::addVarFromXors(const Var var)
     }
 }
 
+/**
+@brief Returns the 2-long xor clause that has been made of the longer xor-clause under current assignement
+
+We KNOW that the xorclause "c" passed as a parameter must be 2-long. We just
+need it so that we can work with it. We KNOW it's 2-long because of the
+data structures and functions in place
+
+@p[in] c MUST be a 2-long xor clause under current assignement
+*/
 const FailedVarSearcher::TwoLongXor FailedVarSearcher::getTwoLongXor(const XorClause& c)
 {
     TwoLongXor tmp;
@@ -160,24 +169,24 @@ const bool FailedVarSearcher::search()
     StateSaver savedState(solver);
     Heap<Solver::VarOrderLt> order_heap_copy(solver.order_heap); //for hyperbin
     uint64_t origBinClauses = solver.binaryClauses.size();
-    
+
     //General Stats
     numFailed = 0;
     goodBothSame = 0;
     numCalls++;
-    
+
     //If failed var searching is going good, do successively more and more of it
     if (lastTimeFoundTruths > 500 || (double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.03) std::max(numPropsMultiplier*1.7, 5.0);
     else numPropsMultiplier = 1.0;
     numProps = (uint64_t) ((double)numProps * numPropsMultiplier *3);
-    
+
     //For BothSame
     propagated.resize(solver.nVars(), 0);
     propValue.resize(solver.nVars(), 0);
-    
+
     //For calculating how many variables have really been set
     origTrailSize = solver.trail.size();
-    
+
     //For 2-long xor (rule 6 of  Equivalent literal propagation in the DLL procedure by Chu-Min Li)
     toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
     lastTrailSize = solver.trail.size();
@@ -194,7 +203,7 @@ const bool FailedVarSearcher::search()
     }
     xorClauseTouched.resize(solver.xorclauses.size(), 0);
     newBinXor = 0;
-    
+
     //For 2-long xor through Le Berre paper
     bothInvert = 0;
 
@@ -204,7 +213,7 @@ const bool FailedVarSearcher::search()
     hyperbinProps = 0;
     if (solver.addExtraBins && !orderLits()) return false;
     maxHyperBinProps = numProps/4;
-    
+
     //uint32_t fromBin;
     uint32_t fromVar;
     if (finishedLastTimeVar || lastTimeWentUntilVar >= solver.nVars())
@@ -240,7 +249,7 @@ const bool FailedVarSearcher::search()
         if (!tryBoth(Lit(var, false), Lit(var, true)))
             goto end;
     }
-    
+
     /*if (solver.verbosity >= 1) printResults(myTime);
     if (finishedLastTimeBin || lastTimeWentUntilBin >= solver.binaryClauses.size())
         fromBin = 0;
@@ -286,12 +295,12 @@ const bool FailedVarSearcher::search()
 
 end:
     bool removedOldLearnts = false;
-    binClauseAdded = solver.binaryClauses.size() - origBinClauses;
     //Print results
-    if (solver.verbosity >= 1) printResults(myTime);
-    
+    if (solver.verbosity >= 1)
+      printResults(myTime, solver.binaryClauses.size() - origBinClauses);
+
     solver.order_heap.filter(Solver::VarFilter(solver));
-    
+
     if (solver.ok && (numFailed || goodBothSame)) {
         double time = cpuTime();
         if ((int)origHeapSize - (int)solver.order_heap.size() >  (int)origHeapSize/15 && solver.nClauses() + solver.learnts.size() > 500000) {
@@ -308,26 +317,16 @@ end:
             << std::endl;
         }
     }
-    
+
     lastTimeFoundTruths = solver.trail.size() - origTrailSize;
 
     savedState.restore();
-    
+
     solver.testAllClauseAttach();
     return solver.ok;
 }
 
 //#define ASSYM_DEBUG
-
-struct sortBySize
-{
-    bool operator () (const Clause* x, const Clause* y);
-};
-
-//order larger...smaller
-bool  sortBySize::operator () (const Clause* x, const Clause* y) {
-    return (x->size() > y->size());
-}
 
 /**
 @brief Performs asymmetric branching
@@ -483,18 +482,26 @@ Printed:
 5) Number of propagations
 6) Time in seconds
 */
-void FailedVarSearcher::printResults(const double myTime) const
+void FailedVarSearcher::printResults(const double myTime, uint32_t numBinAdded) const
 {
     std::cout << "c Flit: "<< std::setw(5) << numFailed <<
     " Blit: " << std::setw(6) << goodBothSame <<
     " bXBeca: " << std::setw(4) << newBinXor <<
     " bXProp: " << std::setw(4) << bothInvert <<
-    " Bins:" << std::setw(7) << binClauseAdded <<
+    " Bins:" << std::setw(7) << numBinAdded <<
     " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
     " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
     << std::endl;
 }
 
+/**
+@brief Approximate in-degree of literals for better hyper-binary resolution
+
+This is carried out at the beginning of search() so that when we need to add
+a missing binary clauses (missing = could be added with hyper-binary
+resolution), then we add it at the 'right' place. Right in this sense means
+the literal that has the highest in-degree.
+*/
 const bool FailedVarSearcher::orderLits()
 {
     uint64_t oldProps = solver.propagations;
@@ -505,7 +512,9 @@ const bool FailedVarSearcher::orderLits()
     BitArray alreadyTested;
     alreadyTested.resize(solver.nVars()*2, 0);
     uint32_t i;
-    
+
+    //we randomly pick the literals, but don't pick the same twice
+    //to achieve it, we use the alradyTested data, that we check&update
     for (i = 0; i < 3*solver.order_heap.size(); i++) {
         if (solver.propagations - oldProps > 3000000) break;
         if (solver.order_heap.size() < 1) break;
@@ -534,6 +543,8 @@ const bool FailedVarSearcher::orderLits()
         }
         solver.cancelUntil(0);
     }
+
+    //Print the results of the degree approximation
     if (solver.verbosity >= 1) {
         std::cout << "c binary deg approx."
         << " time: " << std::fixed << std::setw(5) << std::setprecision(2) << cpuTime() - myTime << " s"
@@ -547,6 +558,14 @@ const bool FailedVarSearcher::orderLits()
     return true;
 }
 
+/**
+@brief The main function of search() doing almost everything in this class
+
+Tries to branch on both lit1 and lit2 and then both-propagates them, fail-lits
+them, and hyper-bin resolves them, etc. It is imperative that from the
+SAT point of view, EITHER lit1 or lit2 MUST hold. So, if lit1 = ~lit2, it's OK.
+Also, if there is a binary clause 'lit1 or lit2' it's also OK.
+*/
 const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
 {
     if (binXorFind) {
@@ -559,13 +578,13 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         xorClauseTouched.setZero();
         investigateXor.clear();
     }
-    
+
     propagated.setZero();
     twoLongXors.clear();
     propagatedVars.clear();
     unPropagatedBin.setZero();
     bothSame.clear();
-    
+
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
     failed = (!solver.propagate(false).isNULL());
@@ -587,10 +606,10 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
             }
             if (solver.assigns[x].getBool()) propValue.setBit(x);
             else propValue.clearBit(x);
-            
+
             if (binXorFind) removeVarFromXors(x);
         }
-        
+
         if (binXorFind) {
             for (uint32_t *it = investigateXor.getData(), *end = investigateXor.getDataEnd(); it != end; it++) {
                 if (xorClauseSizes[*it] == 2)
@@ -602,14 +621,15 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
             xorClauseTouched.setZero();
             investigateXor.clear();
         }
-        
+
         solver.cancelUntil(0);
     }
 
-    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) addBinClauses(lit1);
+    //Hyper-binary resolution, and its accompanying data-structure cleaning
+    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
     propagatedVars.clear();
     unPropagatedBin.setZero();
-    
+
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit2);
     failed = (!solver.propagate(false).isNULL());
@@ -654,7 +674,9 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
             else propValue.clearBit(x);
             if (binXorFind) removeVarFromXors(x);
         }
-        
+
+        //We now add the two-long xors that have been found through longer
+        //xor-shortening
         if (binXorFind) {
             if (twoLongXors.size() > 0) {
                 for (uint32_t *it = investigateXor.getData(), *end = it + investigateXor.size(); it != end; it++) {
@@ -675,43 +697,40 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
                 addVarFromXors(solver.trail[c].var());
             }
         }
-        
+
         solver.cancelUntil(0);
     }
 
-    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) addBinClauses(lit2);
-    
+    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
+
     for(uint32_t i = 0; i != bothSame.size(); i++) {
         solver.uncheckedEnqueue(bothSame[i]);
     }
     goodBothSame += bothSame.size();
     solver.ok = (solver.propagate(false).isNULL());
     if (!solver.ok) return false;
-    
+
     return true;
 }
 
-struct litOrder
-{
-    litOrder(const vector<uint32_t>& _litDegrees) :
-    litDegrees(_litDegrees)
-    {}
-    
-    bool operator () (const Lit& x, const Lit& y) {
-        return litDegrees[x.toInt()] > litDegrees[y.toInt()];
-    }
-    
-    const vector<uint32_t>& litDegrees;
-};
+/**
+@brief Adds hyper-binary clauses
 
-void FailedVarSearcher::addBinClauses(const Lit& lit)
+At this point, unPropagatedBin is set, and propagatedVars is filled with lits
+that have been propagated. Here, we propagate ONLY at the binary level,
+and compare with propagatedVars and unPropagatedBin. If they match, it's OK. If
+not, then we add the relevant binary clauses at the right point. The "right"
+point is the point which has the highest in-degree. We approximated the degrees
+beforehand with orderLits()
+*/
+void FailedVarSearcher::hyperBinResolution(const Lit& lit)
 {
     uint64_t oldProps = solver.propagations;
     #ifdef VERBOSE_DEBUG
     std::cout << "Checking one BTC vs UP" << std::endl;
     #endif //VERBOSE_DEBUG
     vec<Lit> toVisit;
-    
+
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     failed = (!solver.propagateBin().isNULL());
@@ -776,13 +795,20 @@ void FailedVarSearcher::addBinClauses(const Lit& lit)
     hyperbinProps += solver.propagations - oldProps;
 }
 
+/**
+@brief Fills myimplies and myimpliesSet by propagating lit at a binary level
+
+Used to check which variables are propagated by a certain literal when
+propagating it only at the binary level
+@p[in] the literal to be propagated at the binary level
+*/
 void FailedVarSearcher::fillImplies(const Lit& lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit);
     failed = (!solver.propagate(false).isNULL());
     assert(!failed);
-    
+
     assert(solver.decisionLevel() > 0);
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
@@ -792,6 +818,11 @@ void FailedVarSearcher::fillImplies(const Lit& lit)
     solver.cancelUntil(0);
 }
 
+/**
+@brief Adds a learnt binary clause to the solver
+
+Used by hyperBinResolution() to add the newly discovered clauses
+*/
 void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
 {
     #ifdef VERBOSE_DEBUG

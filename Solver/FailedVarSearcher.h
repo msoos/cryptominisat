@@ -30,6 +30,23 @@ using std::vector;
 #include "BitArray.h"
 class Solver;
 
+/**
+@brief Responsible for doing failed var searching and related algorithms
+
+Performs in seach():
+1) Failed lit searching
+2) Searching for lits that have been propagated by both "var" and "~var"
+3) 2-long Xor clauses that have been found because when propagating "var" and
+   "~var", they have been produced by normal xor-clauses shortening to this xor
+   clause
+4) If var1 propagates var2 and ~var1 propagates ~var2, then var=var2, and this
+   is a 2-long XOR clause, this 2-long xor is added
+5) Hyper-binary resolution
+
+Perfoms in asymmBranch(): asymmetric branching, heuristically. Best paper
+on this is 'Vivifying Propositional Clausal Formulae', though we do it much
+more heuristically
+*/
 class FailedVarSearcher {
     public:
         FailedVarSearcher(Solver& _solver);
@@ -38,26 +55,37 @@ class FailedVarSearcher {
         const bool asymmBranch();
 
     private:
-        //For re-adding old removed learnt clauses
-        const bool readdRemovedLearnts();
-        void removeOldLearnts();
-
         //Main
         const bool tryBoth(const Lit lit1, const Lit lit2);
         const bool tryAll(const Lit* begin, const Lit* end);
-        void printResults(const double myTime) const;
+        void printResults(const double myTime, uint32_t numBinAdded) const;
 
-        Solver& solver;
+        Solver& solver; ///<The solver we are updating&working with
 
-        //For failure
-        bool failed;
+        bool failed; ///<For checking that a specific propagation failed (=conflict). It is used in many places
 
         //bothprop finding
-        BitArray propagated;
-        BitArray propValue;
+        BitArray propagated; ///<These lits have been propagated by propagating the lit picked
+        BitArray propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
+        /**
+        @brief Lits that have been propagated to the same value both by "var" and "~var"
+
+        value that the literal has been propagated to is available in propValue
+        */
         vec<Lit> bothSame;
 
         //2-long xor-finding
+        /**
+        @brief used to find 2-long xor by shortening longer xors to this size
+
+        -# We propagate "var" and record all xors that become 2-long
+        -# We propagate "~var" and record all xors that become 2-long
+        -# if (1) and (2) have something in common, we add it as a variable
+        replacement instruction
+
+        We must be able to order these 2-long xors, so that we can search
+        for matching couples fast. This class is used for that
+        */
         class TwoLongXor
         {
         public:
@@ -93,54 +121,109 @@ class FailedVarSearcher {
 
         uint32_t newBinXor;
         vec<uint32_t> xorClauseSizes;
-        vector<vector<uint32_t> > occur;
+        vector<vector<uint32_t> > occur; ///<Occurence list for XORs. Indexed by variables
         BitArray xorClauseTouched;
         vec<uint32_t> investigateXor;
         std::set<TwoLongXor> twoLongXors;
         bool binXorFind;
         uint32_t lastTrailSize;
 
-        //2-long xor-finding no.2 through
-        // 1) (a->b, ~a->~b) -> a=b
-        // 2) binary clause (a,c):  (a->g, c->~g) -> a = ~c
+        /**
+        @brief Num. 2-long xor-found through Le Berre paper
+
+        In case:
+        -# (a->b, ~a->~b) -> a=b
+        -#  binary clause (a,c) exists:  (a->g, c->~g) -> a = ~c
+        */
         uint32_t bothInvert;
 
         //finding HyperBins
-        void addBinClauses(const Lit& lit);
+        /**
+        @brief For sorting literals according to their in-degree
+
+        Used to add the hyper-binary clause to the literal that makes the most
+        sense -- not the most trivial, but the one where it will make the most
+        impact (impact = makes the most routes in the graph longer)
+        */
+        struct litOrder
+        {
+            litOrder(const vector<uint32_t>& _litDegrees) :
+            litDegrees(_litDegrees)
+            {}
+
+            bool operator () (const Lit& x, const Lit& y) {
+                return litDegrees[x.toInt()] > litDegrees[y.toInt()];
+            }
+
+            const vector<uint32_t>& litDegrees;
+        };
+        void hyperBinResolution(const Lit& lit);
         BitArray unPropagatedBin;
         vec<Var> propagatedVars;
         void addBin(const Lit& lit1, const Lit& lit2);
         void fillImplies(const Lit& lit);
-        BitArray myimplies;
-        vec<Var> myImpliesSet;
-        uint64_t hyperbinProps;
+        BitArray myimplies; ///<variables that have been set by a lit propagated only at the binary level
+        vec<Var> myImpliesSet; ///<variables set in myimplies
+        uint64_t hyperbinProps; ///<Number of bogoprops done by the hyper-binary resolution function hyperBinResolution()
         vector<uint32_t> litDegrees;
         const bool orderLits();
+        /**
+        @brief Controls hyper-binary resolution's time-usage
+
+        Don't do more than this many propagations within hyperBinResolution()
+        */
         uint64_t maxHyperBinProps;
-        uint64_t binClauseAdded;
 
         //Temporaries
         vec<Lit> tmpPs;
 
         //State for this run
+        /**
+        @brief Records num. var-replacement istructions between 2-long xor findings through longer xor shortening
+
+        Finding 2-long xor claues by shortening is fine, but sometimes we find
+        the same thing, or find something that is trivially a consequence of
+        other 2-long xors that we already know. To filter out these bogus
+        "findigs" from the statistics reported, we save in this value the
+        real var-replacement insturctions before and after the 2-long xor
+        finding through longer xor-shortening, and then compare the changes
+        made
+        */
         uint32_t toReplaceBefore;
-        uint32_t origTrailSize;
-        uint64_t origProps;
-        uint32_t numFailed;
-        uint32_t goodBothSame;
+        uint32_t origTrailSize; ///<Records num. of 0-depth assignments at the start-up of search()
+        uint64_t origProps;     ///<Records num. of bogoprops at the start-up of search()
+        uint32_t numFailed;     ///<Records num. of failed literals during search()
+        uint32_t goodBothSame;  ///<Records num. of literals that have been propagated to the same value by both "var" and "~var"
 
         //State between runs
-        bool finishedLastTimeVar;
+        bool finishedLastTimeVar;      ///<Did we finish going through all vars last time we launched search() ?
         uint32_t lastTimeWentUntilVar;
         bool finishedLastTimeBin;
         uint32_t lastTimeWentUntilBin;
 
-        double numPropsMultiplier;
-        uint32_t lastTimeFoundTruths;
+        double numPropsMultiplier; ///<If last time we called search() all went fine, then this is incremented, so we do more searching this time
+        uint32_t lastTimeFoundTruths; ///<Records how many unit clauses we found last time we called search()
 
+        /**
+        @brief Records data for asymmBranch()
+
+        Clauses are ordered accurding to sze in asymmBranch() and then some are
+        checked if we could shorten them. This value records that between calls
+        to asymmBranch() where we stopped last time in the list
+        */
         uint32_t asymmLastTimeWentUntil;
+        /**
+        @brief Used in asymmBranch() to sort clauses according to size
+        */
+        struct sortBySize
+        {
+            const bool operator () (const Clause* x, const Clause* y)
+            {
+              return (x->size() > y->size());
+            }
+        };
 
-        uint32_t numCalls;
+        uint32_t numCalls; ///<Number of times search() has been called
 };
 
 
