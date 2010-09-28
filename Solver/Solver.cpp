@@ -965,6 +965,10 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     vec<Lit> allAddedToSeen2;
     stack<Lit> toRecursiveProp;
     uint32_t clauseSize = cl.size();
+    //80 million is kind of a hack. It seems that the longer the solving
+    //the slower this thing gets. So, limiting the "time" with total
+    //number of conflict literals is maybe a good way of doing this
+    bool thisDoMinLMoreRecur = doMinimLMoreRecur || (clauseSize <= 5 && tot_literals < 80000000);
 
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
@@ -974,7 +978,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
 
         //Recursively self-subsume-resolve all "a OR c" when "a OR b" as well as
         //"~b OR c" exists.
-        if (doMinimLMoreRecur || clauseSize <= 5) {
+        if (thisDoMinLMoreRecur) {
             //Don't come back to the starting point
             seen2[(~lit).toInt()] = 1;
             allAddedToSeen2.push(~lit);
@@ -1010,7 +1014,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
         //watched is messed: lit is in watched[~lit]
         vec<Watched>& ws = watches[(~lit).toInt()];
         for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
-            if ((!doMinimLMoreRecur && clauseSize > 5) && i->isBinary()) {
+            if (!thisDoMinLMoreRecur && i->isBinary()) {
                 seen[(~i->getOtherLit()).toInt()] = 0;
                 continue;
             }
