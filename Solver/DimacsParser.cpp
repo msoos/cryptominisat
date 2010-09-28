@@ -230,11 +230,11 @@ void DimacsParser::parse_DIMACS_main(B& in)
             }
 
             if (xor_clause) {
-                bool xor_clause_inverted = false;
+                bool xorEqualFalse = false;
                 for (uint32_t i = 0; i < lits.size(); i++) {
-                    xor_clause_inverted ^= lits[i].sign();
+                    xorEqualFalse ^= lits[i].sign();
                 }
-                solver->addXorClause(lits, xor_clause_inverted, group, name);
+                solver->addXorClause(lits, xorEqualFalse, group, name);
                 assert(!addAsLearnt);
             } else {
                 if (!addAsLearnt) {

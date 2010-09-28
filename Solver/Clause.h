@@ -337,7 +337,7 @@ protected:
 public:
     friend class ClauseAllocator;
 
-    inline bool xor_clause_inverted() const
+    inline bool xorEqualFalse() const
     {
         return invertedXor;
     }
@@ -355,7 +355,7 @@ public:
     void plainPrint(FILE* to = stdout) const
     {
         fprintf(to, "x");
-        if (xor_clause_inverted())
+        if (xorEqualFalse())
             printf("-");
         for (uint32_t i = 0; i < size(); i++) {
             fprintf(to, "%d ", data[i].var() + 1);

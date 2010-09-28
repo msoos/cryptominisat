@@ -255,7 +255,7 @@ void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint
         XorClause& c = **i;
         vec<Lit> tmp(c.size());
         std::copy(c.getData(), c.getDataEnd(), tmp.getData());
-        newSolver.addXorClause(tmp, c.xor_clause_inverted(), c.getGroup());
+        newSolver.addXorClause(tmp, c.xorEqualFalse(), c.getGroup());
         //NOTE: we need the CS because otherwise, the addXorClause could have changed **i, which we need to re-add later!
         xorClausesRemoved.push(*i);
     }
@@ -336,7 +336,7 @@ void PartHandler::readdRemovedClauses()
     clausesRemoved.clear();
     
     for (XorClause **it = xorClausesRemoved.getData(), **end = xorClausesRemoved.getDataEnd(); it != end; it++) {
-        solver.addXorClause(**it, (**it).xor_clause_inverted(), (*it)->getGroup());
+        solver.addXorClause(**it, (**it).xorEqualFalse(), (*it)->getGroup());
         assert(solver.ok);
     }
     xorClausesRemoved.clear();

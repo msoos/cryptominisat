@@ -902,7 +902,7 @@ void Gaussian::print_matrix_row_with_assigns(const T& row) const
         }
         col++;
     }
-    if (!row.is_true()) cout << "xor_clause_inverted";
+    if (!row.is_true()) cout << "xorEqualFalse";
 }
 
 const string Gaussian::lbool_to_string(const lbool toprint)

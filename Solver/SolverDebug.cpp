@@ -118,10 +118,10 @@ const bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
     
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
         XorClause& c = *xorclauses[i];
-        bool final = c.xor_clause_inverted();
+        bool final = c.xorEqualFalse();
         
         #ifdef VERBOSE_DEBUG
-        printXorClause(*cs[i], c.xor_clause_inverted());
+        printXorClause(*cs[i], c.xorEqualFalse());
         #endif
         
         for (uint32_t j = 0; j < c.size(); j++) {

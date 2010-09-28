@@ -101,7 +101,7 @@ const TwoLongXor FailedVarSearcher::getTwoLongXor(const XorClause& c)
 {
     TwoLongXor tmp;
     uint32_t num = 0;
-    tmp.inverted = c.xor_clause_inverted();
+    tmp.inverted = c.xorEqualFalse();
     
     for(const Lit *l = c.getData(), *end = l + c.size(); l != end; l++) {
         if (solver.assigns[l->var()] == l_Undef) {

@@ -107,7 +107,7 @@ public:
     template<class T>
     bool    addClause (T& ps, const uint32_t group = 0, char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool    addXorClause (T& ps, bool xor_clause_inverted, const uint32_t group = 0, char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
     bool addLearntClause(T& ps, const uint32_t group, const uint32_t activity);
 
@@ -242,7 +242,7 @@ protected:
     template <class T>
     Clause* addClauseInt(T& ps, uint32_t group);
     template<class T>
-    XorClause* addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32_t group);
+    XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group);
 
     //////////////////
     //Handling Watched
@@ -685,7 +685,7 @@ inline const uint32_t Solver::get_unitary_learnts_num() const
 /*inline void Solver::calculate_xor_clause(Clause& c2) const {
     if (c2.isXor() && ((XorClause*)&c2)->updateNeeded())  {
         XorClause& c = *((XorClause*)&c2);
-        bool final = c.xor_clause_inverted();
+        bool final = c.xorEqualFalse();
         for (int k = 0, size = c.size(); k != size; k++ ) {
             const lbool& val = assigns[c[k].var()];
             assert(val != l_Undef);

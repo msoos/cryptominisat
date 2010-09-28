@@ -254,7 +254,7 @@ Var Solver::newVar(bool dvar)
 }
 
 template<class T>
-XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32_t group)
+XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group)
 {
     assert(qhead == trail.size());
     assert(decisionLevel() == 0);
@@ -272,60 +272,63 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xor_clause_inverted, const uint32
             j--;
             p = lit_Undef;
             if (!assigns[ps[i].var()].isUndef())
-                xor_clause_inverted ^= assigns[ps[i].var()].getBool();
+                xorEqualFalse ^= assigns[ps[i].var()].getBool();
         } else if (assigns[ps[i].var()].isUndef()) //just add
             ps[j++] = p = ps[i];
-        else //modify xor_clause_inverted instead of adding
-            xor_clause_inverted ^= (assigns[ps[i].var()].getBool());
+        else //modify xorEqualFalse instead of adding
+            xorEqualFalse ^= (assigns[ps[i].var()].getBool());
     }
     ps.shrink(i - j);
     
     switch(ps.size()) {
         case 0: {
-            if (!xor_clause_inverted) ok = false;
+            if (!xorEqualFalse) ok = false;
             return NULL;
         }
         case 1: {
-            uncheckedEnqueue(Lit(ps[0].var(), xor_clause_inverted));
+            uncheckedEnqueue(Lit(ps[0].var(), xorEqualFalse));
             ok = (propagate().isNULL());
             return NULL;
         }
         case 2: {
             #ifdef VERBOSE_DEBUG
-            cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xor_clause_inverted ? "-" : "") << ps[1].var()+1 << endl;
+            cout << "--> xor is 2-long, replacing var " << ps[0].var()+1 << " with " << (!xorEqualFalse ? "-" : "") << ps[1].var()+1 << endl;
             #endif
 
             ps[0] = ps[0].unsign();
             ps[1] = ps[1].unsign();
-            varReplacer->replace(ps, xor_clause_inverted, group);
+            varReplacer->replace(ps, xorEqualFalse, group);
             return NULL;
         }
         default: {
-            XorClause* c = clauseAllocator.XorClause_new(ps, xor_clause_inverted, group);
+            XorClause* c = clauseAllocator.XorClause_new(ps, xorEqualFalse, group);
             attachClause(*c);
             return c;
         }
     }
 }
 
-template XorClause* Solver::addXorClauseInt(vec<Lit>& ps, bool xor_clause_inverted, const uint32_t group);
-template XorClause* Solver::addXorClauseInt(XorClause& ps, bool xor_clause_inverted, const uint32_t group);
+template XorClause* Solver::addXorClauseInt(vec<Lit>& ps, bool xorEqualFalse, const uint32_t group);
+template XorClause* Solver::addXorClauseInt(XorClause& ps, bool xorEqualFalse, const uint32_t group);
 
+/**
+@brief Adds an xor clause to the problem
+*/
 template<class T>
-bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint32_t group, char* group_name)
+bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, char* group_name)
 {
     assert(decisionLevel() == 0);
     if (ps.size() > (0x01UL << 18)) {
         std::cout << "Too long clause!" << std::endl;
         exit(-1);
     }
-    
+
     if (libraryCNFFile) {
         fprintf(libraryCNFFile, "x");
         for (uint32_t i = 0; i < ps.size(); i++) ps[i].print(libraryCNFFile);
         fprintf(libraryCNFFile, "0\n");
     }
-    
+
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis) {
         logger.set_group_name(group, group_name);
@@ -348,20 +351,20 @@ bool Solver::addXorClause(T& ps, bool xor_clause_inverted, const uint32_t group,
                 Lit otherLit = varReplacer->getReplaceTable()[ps[i].var()];
                 if (otherLit.var() != ps[i].var()) {
                     ps[i] = Lit(otherLit.var(), false);
-                    xor_clause_inverted ^= otherLit.sign();
+                    xorEqualFalse ^= otherLit.sign();
                 }
             }
         }
     }
-    
-    XorClause* c = addXorClauseInt(ps, xor_clause_inverted, group);
+
+    XorClause* c = addXorClauseInt(ps, xorEqualFalse, group);
     if (c != NULL) xorclauses.push(c);
 
     return ok;
 }
 
-template bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint32_t group, char* group_name);
-template bool Solver::addXorClause(XorClause& ps, bool xor_clause_inverted, const uint32_t group, char* group_name);
+template bool Solver::addXorClause(vec<Lit>& ps, bool xorEqualFalse, const uint32_t group, char* group_name);
+template bool Solver::addXorClause(XorClause& ps, bool xorEqualFalse, const uint32_t group, char* group_name);
 
 
 template<class T>
@@ -1271,7 +1274,7 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
     }
     assert(c[1].var() == p.var());
 
-    bool final = c.xor_clause_inverted();
+    bool final = c.xorEqualFalse();
     for (uint32_t k = 0, size = c.size(); k != size; k++ ) {
         const lbool& val = assigns[c[k].var()];
         if (val.isUndef() && k >= 2) {

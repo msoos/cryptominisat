@@ -387,7 +387,7 @@ void XorFinder::addXorAsNormal3(XorClause& c)
     Clause *tmp;
     vec<Var> vars;
     vec<Lit> vars2(c.size());
-    const bool inverted = c.xor_clause_inverted();
+    const bool inverted = c.xorEqualFalse();
     
     for (uint32_t i = 0; i < c.size(); i++) {
         vars.push(c[i].var());
@@ -424,7 +424,7 @@ void XorFinder::addXorAsNormal4(XorClause& c)
     Clause *tmp;
     vec<Var> vars;
     vec<Lit> vars2(c.size());
-    const bool inverted = !c.xor_clause_inverted();
+    const bool inverted = !c.xorEqualFalse();
     
     for (uint32_t i = 0; i < c.size(); i++) {
         vars.push(c[i].var());

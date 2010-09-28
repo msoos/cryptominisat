@@ -230,7 +230,7 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
         case 2: {
             c[0] = c[0].unsign();
             c[1] = c[1].unsign();
-            solver.varReplacer->replace(c, c.xor_clause_inverted(), c.getGroup());
+            solver.varReplacer->replace(c, c.xorEqualFalse(), c.getGroup());
             solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
             return true;
         }
@@ -256,7 +256,7 @@ bool ClauseCleaner::satisfied(const Clause& c) const
 
 bool ClauseCleaner::satisfied(const XorClause& c) const
 {
-    bool final = c.xor_clause_inverted();
+    bool final = c.xorEqualFalse();
     for (uint32_t k = 0; k != c.size(); k++ ) {
         const lbool& val = solver.assigns[c[k].var()];
         if (val.isUndef()) return false;

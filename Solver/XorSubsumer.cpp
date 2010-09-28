@@ -56,7 +56,7 @@ void XorSubsumer::subsume0(XorClauseSimp ps)
             #endif
             clauses_subsumed++;
             assert(tmp->size() == ps.clause->size());
-            if (ps.clause->xor_clause_inverted() == tmp->xor_clause_inverted()) {
+            if (ps.clause->xorEqualFalse() == tmp->xorEqualFalse()) {
                 unlinkClause(subs[i]);
                 solver.clauseAllocator.clauseFree(tmp);
             } else {
@@ -70,7 +70,7 @@ void XorSubsumer::subsume0(XorClauseSimp ps)
             std::cout << "Cutting xor-clause:";
             subs[i].clause->plainPrint();
             #endif //VERBOSE_DEBUG
-            XorClause *c = solver.addXorClauseInt(unmatchedPart, tmp->xor_clause_inverted() ^ !ps.clause->xor_clause_inverted(), tmp->getGroup());
+            XorClause *c = solver.addXorClauseInt(unmatchedPart, tmp->xorEqualFalse() ^ !ps.clause->xorEqualFalse(), tmp->getGroup());
             if (c != NULL)
                 linkInClause(*c);
             unlinkClause(subs[i]);
@@ -222,7 +222,7 @@ void XorSubsumer::extendModel(Solver& solver2)
             tmp.clear();
             tmp.growTo(c.size());
             std::copy(c.getData(), c.getDataEnd(), tmp.getData());
-            bool inverted = c.xor_clause_inverted();
+            bool inverted = c.xorEqualFalse();
             solver2.addXorClause(tmp, inverted);
             assert(solver2.ok);
         }
@@ -249,7 +249,7 @@ const bool XorSubsumer::localSubstitute()
                     #endif //VERBOSE_DEBUG
                     localSubstituteUseful++;
                     uint32_t lastSize = solver.varReplacer->getClauses().size();
-                    solver.addXorClauseInt(tmp, c1.xor_clause_inverted() ^ !c2.xor_clause_inverted(), c1.getGroup());
+                    solver.addXorClauseInt(tmp, c1.xorEqualFalse() ^ !c2.xorEqualFalse(), c1.getGroup());
                     for (uint32_t i = lastSize; i  < solver.varReplacer->getClauses().size(); i++)
                         addToCannotEliminate(solver.varReplacer->getClauses()[i]);
                     if (!solver.ok) {
@@ -334,12 +334,12 @@ const bool XorSubsumer::removeDependent()
             XorClause& c1 = *(occ[0].clause);
             lits.growTo(c1.size());
             std::copy(c1.getData(), c1.getDataEnd(), lits.getData());
-            bool inverted = c1.xor_clause_inverted();
+            bool inverted = c1.xorEqualFalse();
             
             XorClause& c2 = *(occ[1].clause);
             lits.growTo(lits.size() + c2.size());
             std::copy(c2.getData(), c2.getDataEnd(), lits.getData() + c1.size());
-            inverted ^= !c2.xor_clause_inverted();
+            inverted ^= !c2.xorEqualFalse();
             uint32_t group = c2.getGroup();
 
             #ifdef VERBOSE_DEBUG
@@ -403,7 +403,7 @@ const bool XorSubsumer::unEliminate(const Var var)
     solver.libraryCNFFile = NULL;
     for (vector<XorClause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         XorClause& c = **it2;
-        solver.addXorClause(c, c.xor_clause_inverted());
+        solver.addXorClause(c, c.xorEqualFalse());
         solver.clauseAllocator.clauseFree(&c);
     }
     solver.libraryCNFFile = backup_libraryCNFfile;
