@@ -197,7 +197,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
                 c.invert(solver.assigns[c[i].var()].getBool());
         } else if (solver.assigns[c[i].var()].isUndef()) //just add
             c[j++] = p = c[i];
-        else c.invert(solver.assigns[c[i].var()].getBool()); //modify xor_clause_inverted instead of adding
+        else c.invert(solver.assigns[c[i].var()].getBool()); //modify xorEqualFalse instead of adding
     }
     c.shrink(i - j);
     c.setStrenghtened();
@@ -210,19 +210,19 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     switch (c.size()) {
     case 0:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
-        if (!c.xor_clause_inverted())
+        if (!c.xorEqualFalse())
             solver.ok = false;
         return true;
     case 1:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
-        solver.uncheckedEnqueue(Lit(c[0].var(), c.xor_clause_inverted()));
+        solver.uncheckedEnqueue(Lit(c[0].var(), c.xorEqualFalse()));
         solver.ok = (solver.propagate().isNULL());
         return true;
     case 2: {
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
         c[0] = c[0].unsign();
         c[1] = c[1].unsign();
-        addBinaryXorClause(c, c.xor_clause_inverted(), c.getGroup(), true);
+        addBinaryXorClause(c, c.xorEqualFalse(), c.getGroup(), true);
         return true;
     }
     default:
@@ -386,10 +386,10 @@ void VarReplacer::extendModelImpossible(Solver& solver2) const
 }
 
 template<class T>
-const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uint32_t group)
+const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xor_clause_inverted " << xor_clause_inverted << std::endl;
+    std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
     #endif
     
     assert(ps.size() == 2);
@@ -402,7 +402,7 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
     
     
     Var var = ps[0].var();
-    Lit lit = Lit(ps[1].var(), !xor_clause_inverted);
+    Lit lit = Lit(ps[1].var(), !xorEqualFalse);
     assert(var != lit.var());
     
     //Detect circle
@@ -445,7 +445,7 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
             
             table[lit.var()] = Lit(lit.var(), false);
             replacedVars++;
-            addBinaryXorClause(ps, xor_clause_inverted, group);
+            addBinaryXorClause(ps, xorEqualFalse, group);
             return true;
         }
     }
@@ -458,16 +458,16 @@ const bool VarReplacer::replace(T& ps, const bool xor_clause_inverted, const uin
     //Follow backwards
     setAllThatPointsHereTo(var, lit);
     replacedVars++;
-    addBinaryXorClause(ps, xor_clause_inverted, group);
+    addBinaryXorClause(ps, xorEqualFalse, group);
     
     return true;
 }
 
-template const bool VarReplacer::replace(vec<Lit>& ps, const bool xor_clause_inverted, const uint32_t group);
-template const bool VarReplacer::replace(XorClause& ps, const bool xor_clause_inverted, const uint32_t group);
+template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group);
+template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group);
 
 template<class T>
-void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, const uint32_t group, const bool internal)
+void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint32_t group, const bool internal)
 {
     assert(internal || (replacedVars > lastReplacedVars));
     #ifdef DEBUG_REPLACER
@@ -476,7 +476,7 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, cons
     #endif
     
     Clause* c;
-    ps[0] ^= xor_clause_inverted;
+    ps[0] ^= xorEqualFalse;
     
     c = solver.clauseAllocator.Clause_new(ps, group, false);
     if (internal) {
@@ -497,8 +497,8 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xor_clause_inverted, cons
     solver.attachClause(*c);
 }
 
-template void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xor_clause_inverted, const uint32_t group, const bool internal);
-template void VarReplacer::addBinaryXorClause(XorClause& ps, const bool xor_clause_inverted, const uint32_t group, const bool internal);
+template void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool internal);
+template void VarReplacer::addBinaryXorClause(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool internal);
 
 bool VarReplacer::alreadyIn(const Var var, const Lit lit)
 {

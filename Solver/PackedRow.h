@@ -194,7 +194,7 @@ public:
             setBit(toset_var);
         }
         
-        is_true_internal = !v.xor_clause_inverted();
+        is_true_internal = !v.xorEqualFalse();
     }
     
     void fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;

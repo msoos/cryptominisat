@@ -151,16 +151,16 @@ inline const bool CompleteDetachReatacher::cleanClause(XorClause& ps)
 
     switch (ps.size()) {
         case 0:
-            if (ps.xor_clause_inverted() == false) solver.ok = false;
+            if (ps.xorEqualFalse() == false) solver.ok = false;
             return false;
         case 1:
-            solver.uncheckedEnqueue(Lit(ps[0].var(), ps.xor_clause_inverted()));
+            solver.uncheckedEnqueue(Lit(ps[0].var(), ps.xorEqualFalse()));
             return false;
 
         case 2: {
             ps[0] = ps[0].unsign();
             ps[1] = ps[1].unsign();
-            solver.varReplacer->replace(ps, ps.xor_clause_inverted(), ps.getGroup());
+            solver.varReplacer->replace(ps, ps.xorEqualFalse(), ps.getGroup());
             return false;
         }
 

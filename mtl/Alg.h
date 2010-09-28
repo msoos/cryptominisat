@@ -45,10 +45,10 @@ static inline void printClause(T& ps)
 }
 
 template<class T>
-static inline void printXorClause(T& ps, const bool xor_clause_inverted)
+static inline void printXorClause(T& ps, const bool xorEqualFalse)
 {
     std::cout << "x";
-    if (xor_clause_inverted) std::cout << "-";
+    if (xorEqualFalse) std::cout << "-";
     for (uint32_t i = 0; i < ps.size(); i++) {
         std::cout << ps[i].var() + 1 << " ";
     }
