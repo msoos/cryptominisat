@@ -63,6 +63,9 @@ using std::stack;
 // Constructor/Destructor:
 
 
+/**
+@brief Sets a sane default config and allocates handler classes
+*/
 Solver::Solver() :
         // Parameters: (formerly in 'SearchParams')
         random_var_freq(0.02)
@@ -162,19 +165,22 @@ Solver::Solver() :
     #ifdef USE_GAUSS
     matrixFinder = new MatrixFinder(*this);
     #endif //USE_GAUSS
-    
+
     #ifdef STATS_NEEDED
     logger.setSolver(this);
     #endif
 }
 
+/**
+@brief Frees clauses and frees all allocated hander classes
+*/
 Solver::~Solver()
 {
     #ifdef USE_GAUSS
     clearGaussMatrixes();
     delete matrixFinder;
     #endif
-    
+
     #ifndef USE_POOLS
     for (uint32_t i = 0; i != learnts.size(); i++) clauseAllocator.clauseFree(learnts[i]);
     learnts.clear();
@@ -187,7 +193,7 @@ Solver::~Solver()
     for (uint32_t i = 0; i != freeLater.size(); i++) clauseAllocator.clauseFree(freeLater[i]);
     freeLater.clear();
     #endif //USE_POOLS
-    
+
     delete varReplacer;
     delete clauseCleaner;
     delete failedVarSearcher;
@@ -196,7 +202,7 @@ Solver::~Solver()
     delete xorSubsumer;
     delete restartTypeChooser;
     delete [] learntsFilename;
-    
+
     if (libraryCNFFile)
         fclose(libraryCNFFile);
 }
@@ -206,12 +212,14 @@ Solver::~Solver()
 
 
 /**
-@brief Creates a new variable in the solver.
+@brief Creates a new SAT variable in the solver
 
-If 'decision_var' is cleared, variable will not be used as a decision variable
-NOTE: This has effects on the meaning of a SATISFIABLE result
+This entails making the datastructures large enough to fit the new variable
+in all internal datastructures as well as all datastructures used in
+classes used inside Solver
 
 @p dvar The new variable should be used as a decision variable?
+   NOTE: this has effects on the meaning of a SATISFIABLE result
 */
 Var Solver::newVar(bool dvar)
 {
@@ -227,7 +235,7 @@ Var Solver::newVar(bool dvar)
     seen2     .push_back(0);
     seen2     .push_back(0);
     permDiff  .push(0);
-    
+
     polarity  .push_back(defaultPolarity());
     #ifdef USE_OLD_POLARITIES
     oldPolarity.push_back(defaultPolarity());
@@ -235,31 +243,38 @@ Var Solver::newVar(bool dvar)
 
     decision_var.push_back(dvar);
     insertVarOrder(v);
-    
+
     varReplacer->newVar();
     if (doPartHandler) partHandler->newVar();
     if (doSubsumption || subsWNonExistBins || regSubsWNonExistBins) subsumer->newVar();
     if (doXorSubsumption) xorSubsumer->newVar();
 
     insertVarOrder(v);
-    
+
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
         logger.new_var(v);
     #endif
-    
+
     if (libraryCNFFile)
         fprintf(libraryCNFFile, "c Solver::newVar() called\n");
 
     return v;
 }
 
+/**
+@brief Adds an xor clause to the problem
+
+Should ONLY be called from internally. This is different from the extenal
+xor clause-adding function addXorClause() in that it assumes that the variables
+inside are decision variables, have not been replaced, eliminated, etc.
+*/
 template<class T>
 XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group)
 {
     assert(qhead == trail.size());
     assert(decisionLevel() == 0);
-    
+
     if (ps.size() > (0x01UL << 18)) {
         std::cout << "Too long clause!" << std::endl;
         exit(-1);
@@ -280,7 +295,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
             xorEqualFalse ^= (assigns[ps[i].var()].getBool());
     }
     ps.shrink(i - j);
-    
+
     switch(ps.size()) {
         case 0: {
             if (!xorEqualFalse) ok = false;
@@ -314,6 +329,16 @@ template XorClause* Solver::addXorClauseInt(XorClause& ps, bool xorEqualFalse, c
 
 /**
 @brief Adds an xor clause to the problem
+
+Calls addXorClauseInt() for the heavy-lifting. Basically, this does a bit
+of debug-related stuff (see "libraryCNFFile"), and then checks if any of the
+variables have been eliminated, replaced, etc. If so, it treats it correctly,
+and then calls addXorClauseInt() to actually add the xor clause.
+
+@p ps[inout] The VARIABLES in the xor clause. Beware, there must be NO signs
+            here: ALL must be unsigned (.sign() == false). Values passed here
+            WILL be changed, ordered, removed, etc!
+@p xorEqualFalse The xor must be equal to TRUE or false?
 */
 template<class T>
 bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, char* group_name)
@@ -368,6 +393,16 @@ template bool Solver::addXorClause(vec<Lit>& ps, bool xorEqualFalse, const uint3
 template bool Solver::addXorClause(XorClause& ps, bool xorEqualFalse, const uint32_t group, char* group_name);
 
 
+/**
+@brief Adds a leant clause to the problem
+
+It is not a very good function, so if really needed, it should be corrected.
+It uses addClauseInt() for the heavy-lifting, and then makes the clause learnt.
+Not exactly a perfect method. For example, it assumes that the "ps" left by
+addClauseInt() conveys some meaningful message, which it might not, for example.
+
+\todo Correct this method, make it more robust
+*/
 template<class T>
 bool Solver::addLearntClause(T& ps, const uint32_t group, const uint32_t activity)
 {
@@ -378,7 +413,7 @@ bool Solver::addLearntClause(T& ps, const uint32_t group, const uint32_t activit
     //that this is a learnt clause.
     clauses_literals -= c->size();
     learnts_literals += c->size();
-    
+
     c->makeLearnt(activity);
     if (c->size() > 2) learnts.push(c);
     else {
@@ -390,11 +425,19 @@ bool Solver::addLearntClause(T& ps, const uint32_t group, const uint32_t activit
 template bool Solver::addLearntClause(Clause& ps, const uint32_t group, const uint32_t activity);
 template bool Solver::addLearntClause(vec<Lit>& ps, const uint32_t group, const uint32_t activity);
 
+/**
+@brief Adds a clause to the problem. Should ONLY be called internally
+
+This code is very specific in that it must NOT be called with varibles in
+"ps" that have been replaced, eliminated, etc. Also, it must not be called
+when the solver is in an UNSAT (!ok) state, for example. Use it carefully,
+and only internally
+*/
 template <class T>
 Clause* Solver::addClauseInt(T& ps, uint32_t group)
 {
     assert(ok);
-    
+
     std::sort(ps.getData(), ps.getDataEnd());
     Lit p = lit_Undef;
     uint32_t i, j;
@@ -405,7 +448,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group)
             ps[j++] = p = ps[i];
     }
     ps.shrink(i - j);
-    
+
     if (ps.size() == 0) {
         ok = false;
         return NULL;
@@ -417,13 +460,21 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group)
 
     Clause* c = clauseAllocator.Clause_new(ps, group);
     attachClause(*c);
-    
+
     return c;
 }
 
 template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group);
 template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group);
 
+/**
+@brief Adds a clause to the problem. Calls addClauseInt() for heavy-lifting
+
+Does some debug-related stuff (see "libraryCNFFile"), and checks whether the
+variables of the literals in "ps" have been eliminated/replaced etc. If so,
+it acts on them such that they are correct, and calls addClauseInt() to do
+the heavy-lifting
+*/
 template<class T>
 bool Solver::addClause(T& ps, const uint32_t group, char* group_name)
 {
@@ -432,12 +483,12 @@ bool Solver::addClause(T& ps, const uint32_t group, char* group_name)
         std::cout << "Too long clause!" << std::endl;
         exit(-1);
     }
-    
+
     if (libraryCNFFile) {
         for (uint32_t i = 0; i != ps.size(); i++) ps[i].print(libraryCNFFile);
         fprintf(libraryCNFFile, "0\n");
     }
-    
+
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis) {
         logger.set_group_name(group, group_name);
@@ -459,7 +510,7 @@ bool Solver::addClause(T& ps, const uint32_t group, char* group_name)
                 return false;
         }
     }
-    
+
     Clause* c = addClauseInt(ps, group);
     if (c != NULL) {
         if (c->size() > 2)
