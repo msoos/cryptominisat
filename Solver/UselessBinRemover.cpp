@@ -1,4 +1,4 @@
-/***********************************************************************************
+/***************************************************************************
 CryptoMiniSat -- Copyright (c) 2009 Mate Soos
 
 This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-**************************************************************************************************/
+****************************************************************************/
 
 #include <iomanip>
 #include "UselessBinRemover.h"
@@ -22,15 +22,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "time_mem.h"
 #include "OnlyNonLearntBins.h"
 
+/**
+@p _onlyNonLearntBins This class MUST be filled with all non-learnt binary
+clauses of _solver
+*/
 UselessBinRemover::UselessBinRemover(Solver& _solver, OnlyNonLearntBins& _onlyNonLearntBins) :
     solver(_solver)
     , onlyNonLearntBins(_onlyNonLearntBins)
 {
 }
 
+/**
+@brief Time limiting
+*/
 #define MAX_REMOVE_BIN_FULL_PROPS 20000000
+/**
+@brief We measure time in (bogo)propagations and "extra" time, time not accountable in (bogo)props
+*/
 #define EXTRATIME_DIVIDER 3
 
+/**
+@brief Removes useless binary non-learnt clauses. See definiton of class for details
+
+We pick variables starting randomly at a place and going on until we stop:
+we limit ourselves in time using (bogo)propagations and "extratime"
+*/
 const bool UselessBinRemover::removeUslessBinFull()
 {
     double myTime = cpuTime();
@@ -84,10 +100,25 @@ const bool UselessBinRemover::removeUslessBinFull()
     return true;
 }
 
+/**
+@brief Removes useless binaries of the graph portion that starts with lit
+
+We try binary-space propagation on lit. Then, we check that we cannot reach any
+of its one-hop neighboours from any of its other one-hope neighbours. If we can,
+we remove the one-hop neighbour from the neightbours (i.e. remove the binary
+clause). Example:
+
+\li a->b, a->c, b->c
+\li In claues: (-a V b), (-a V c), (-b V c)
+
+One-hop neighbours of a: b, c. But c can be reached through b! So, we remove
+a->c, the one-hop neighbour that is useless.
+*/
 const bool UselessBinRemover::removeUselessBinaries(const Lit& lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
+    //Propagate only one hop
     failed = !onlyNonLearntBins.propagateBinOneLevel();
     if (failed) return false;
     bool ret = true;
@@ -99,6 +130,7 @@ const bool UselessBinRemover::removeUselessBinaries(const Lit& lit)
         solver.cancelUntil(0);
         goto end;
     }
+    //Fill oneHopAway and toDeleteSet with lits that are 1 hop away
     extraTime += (solver.trail.size() - solver.trail_lim[0]) / EXTRATIME_DIVIDER;
     for (c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
         Lit x = solver.trail[c];
@@ -114,6 +146,8 @@ const bool UselessBinRemover::removeUselessBinaries(const Lit& lit)
     //solver.cancelUntil(0);
 
     wrong.clear();
+    //We now try to reach the one-hop-away nodes from other one-hop-away
+    //nodes, but this time we propagate all the way
     for(uint32_t i = 0; i < oneHopAway.size(); i++) {
         //no need to visit it if it already queued for removal
         //basically, we check if it's in 'wrong'
@@ -137,32 +171,30 @@ const bool UselessBinRemover::removeUselessBinaries(const Lit& lit)
     return ret;
 }
 
+/**
+@brief Removes a binary clause (lit1 V lit2)
+
+The binary clause might be in twice, three times, etc. Take care to remove
+all instances of it.
+*/
 void UselessBinRemover::removeBin(const Lit& lit1, const Lit& lit2)
 {
-    /*******************
-    Lit litFind1 = lit_Undef;
-    Lit litFind2 = lit_Undef;
-
-    if (solver.binwatches[(~lit1).toInt()].size() < solver.binwatches[(~lit2).toInt()].size()) {
-        litFind1 = lit1;
-        litFind2 = lit2;
-    } else {
-        litFind1 = lit2;
-        litFind2 = lit1;
-    }
-    ********************/
-
-    //Find AND remove from watches
     #ifdef VERBOSE_DEBUG
     std::cout << "Removing useless bin: ";
     lit1.print(); lit2.printFull();
     #endif //VERBOSE_DEBUG
-    
+
     removeWBinAll(solver.watches[(~lit1).toInt()], lit2);
     removeWBinAll(solver.watches[(~lit2).toInt()], lit1);
     onlyNonLearntBins.removeBin(lit1, lit2);
 }
 
+/**
+@brief Propagates all the way lit, but doesn't propagate origLit
+
+Removes adds to "wrong" the set of one-hop lits that can be reached from
+lit AND are one-hop away from origLit. These later need to be removed
+*/
 const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong)
 {
     solver.newDecisionLevel();
@@ -170,7 +202,7 @@ const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit& origLit, const 
     //if it's a cycle, it doesn't work, so don't propagate origLit
     failed = !onlyNonLearntBins.propagateBinExcept(origLit);
     if (failed) return false;
-    
+
     assert(solver.decisionLevel() > 0);
     int c;
     extraTime += (solver.trail.size() - solver.trail_lim[0]) / EXTRATIME_DIVIDER;
@@ -183,12 +215,12 @@ const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit& origLit, const 
         solver.assigns[x.var()] = l_Undef;
     }
     solver.assigns[solver.trail[c].var()] = l_Undef;
-    
+
     solver.qhead = solver.trail_lim[0];
     solver.trail.shrink_(solver.trail.size() - solver.trail_lim[0]);
     solver.trail_lim.clear();
     //solver.cancelUntil(0);
-    
+
     return true;
 }
 
