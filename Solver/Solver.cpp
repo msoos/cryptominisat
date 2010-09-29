@@ -115,6 +115,7 @@ Solver::Solver() :
         , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
         , numShrinkedClause(0), numShrinkedClauseLits(0)
+        , moreRecurMinLDo(0), moreRecurMinLDoLit(0), moreRecurMinLStop (0)
         
         #ifdef USE_GAUSS
         , sum_gauss_called (0)
@@ -972,6 +973,8 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     //the slower this thing gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
     bool thisDoMinLMoreRecur = doMinimLMoreRecur || (clauseSize <= 5 && tot_literals < 80000000);
+    uint32_t moreRecurProp = 0;
+    if (thisDoMinLMoreRecur) moreRecurMinLDo++;
 
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
@@ -981,6 +984,12 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
 
         //Recursively self-subsume-resolve all "a OR c" when "a OR b" as well as
         //"~b OR c" exists.
+        if (thisDoMinLMoreRecur && moreRecurProp > 450) {
+            //std::cout << "switched off"  << std::endl;
+            moreRecurMinLStop++;
+            thisDoMinLMoreRecur = false;
+        }
+        if (thisDoMinLMoreRecur) moreRecurMinLDoLit++;
         if (thisDoMinLMoreRecur) {
             //Don't come back to the starting point
             seen2[(~lit).toInt()] = 1;
@@ -992,8 +1001,10 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
                 toRecursiveProp.pop();
                 //watched is messed: lit is in watched[~lit]
                 vec<Watched>& ws = watches[(~thisLit).toInt()];
+                moreRecurProp += ws.size() +10;
                 for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
                     if (i->isBinary()) {
+                        moreRecurProp += 5;
                         Lit otherLit = i->getOtherLit();
                         //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
                         if (seen2[otherLit.toInt()] != 0 || ~otherLit == lit) break;

@@ -198,6 +198,7 @@ public:
     uint64_t nbDL2, nbBin, lastNbBin, becameBinary, lastSearchForBinaryXor, nbReduceDB;
     uint64_t improvedClauseNo, improvedClauseSize;
     uint64_t numShrinkedClause, numShrinkedClauseLits;
+    uint64_t moreRecurMinLDo, moreRecurMinLDoLit, moreRecurMinLStop;
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
