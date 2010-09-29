@@ -1,4 +1,4 @@
-/***********************************************************************************
+/****************************************************************************
 CryptoMiniSat -- Copyright (c) 2009 Mate Soos
 
 This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-**************************************************************************************************/
+*****************************************************************************/
 
 #include "RestartTypeChooser.h"
 
@@ -31,6 +31,12 @@ RestartTypeChooser::RestartTypeChooser(const Solver& s) :
 {
 }
 
+/**
+@brief Adds info at the end of a restart to the internal datastructures
+
+It is called a number of times after a full restart has been done, to
+accumulate data. Finally, choose() is called to choose the restart type
+*/
 void RestartTypeChooser::addInfo()
 {
     firstVarsOld = firstVars;
@@ -47,12 +53,15 @@ void RestartTypeChooser::addInfo()
         #endif
         sameIns.push_back(sameIn);
     }
-    
+
     #ifdef VERBOSE_DEBUG
     std::cout << "Avg same vars in first&second first 100: " << avg() << " standard Deviation:" << stdDeviation(sameIns) <<std::endl;
     #endif
 }
 
+/**
+@brief After accumulation of data, this function finally decides which type to choose
+*/
 const RestartType RestartTypeChooser::choose()
 {
     pair<double, double> mypair = countVarsDegreeStDev();
@@ -65,6 +74,9 @@ const RestartType RestartTypeChooser::choose()
         return dynamic_restart;
 }
 
+/**
+@brief Calculates average for topx variable activity changes
+*/
 const double RestartTypeChooser::avg() const
 {
     double sum = 0.0;
@@ -73,6 +85,9 @@ const double RestartTypeChooser::avg() const
     return (sum/(double)sameIns.size());
 }
 
+/**
+@brief Calculates standard deviation for topx variable activity changes
+*/
 const double RestartTypeChooser::stdDeviation(vector<uint32_t>& measure) const
 {
     double average = avg();
@@ -80,7 +95,7 @@ const double RestartTypeChooser::stdDeviation(vector<uint32_t>& measure) const
     for (uint32_t i = 0; i != measure.size(); i++)
         variance += pow((double)measure[i]-average, 2);
     variance /= (double)measure.size();
-    
+
     return sqrt(variance);
 }
 
@@ -120,14 +135,14 @@ const std::pair<double, double> RestartTypeChooser::countVarsDegreeStDev() const
         }
     }
     degrees.resize(degrees.size() - (i-j));
-    
+
     double avg = (double)sum/(double)degrees.size();
     double stdDev = stdDeviation(degrees);
-    
+
     #ifdef VERBOSE_DEBUG
     std::cout << "varsDegree avg:" << avg << " stdDev:" << stdDev << std::endl;
     #endif
-    
+
     return std::make_pair(avg, stdDev);
 }
 
@@ -137,7 +152,7 @@ void RestartTypeChooser::addDegrees(const vec<T*>& cs, vector<uint32_t>& degrees
     for (T * const*c = cs.getData(), * const*end = c + cs.size(); c != end; c++) {
         T& cl = **c;
         if (cl.learnt()) continue;
-        
+
         for (const Lit *l = cl.getData(), *end2 = l + cl.size(); l != end2; l++) {
             degrees[l->var()]++;
         }

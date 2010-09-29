@@ -934,23 +934,22 @@ bool subset(const T1& A, const T2& B, vector<bool>& seen)
 }
 
 
-/*_________________________________________________________________________________________________
-|
-|  analyze : (confl : Clause*) (out_learnt : vec<Lit>&) (out_btlevel : int&)  ->  [void]
-|
-|  Description:
-|    Analyze conflict and produce a reason clause.
-|
-|    Pre-conditions:
-|      * 'out_learnt' is assumed to be cleared.
-|      * Current decision level must be greater than root level.
-|
-|    Post-conditions:
-|      * 'out_learnt[0]' is the asserting literal at level 'out_btlevel'.
-|
-|  Effect:
-|    Will undo part of the trail, upto but not beyond the assumption of the current decision level.
-|________________________________________________________________________________________________@*/
+/**
+@brief    Analyze conflict and produce a reason clause.
+
+Pre-conditions:
+\li  'out_learnt' is assumed to be cleared.
+\li Current decision level must be greater than root level.
+
+Post-conditions:
+\li 'out_learnt[0]' is the asserting literal at level 'out_btlevel'.
+
+Effect: Will undo part of the trail, upto but not beyond the assumption of the
+current decision level.
+
+@return NULL if the conflict doesn't on-the-fly subsume the last clause, and
+the pointer of the clause if it does
+*/
 Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nbLevels, const bool update)
 {
     int pathC = 0;
@@ -1717,7 +1716,7 @@ const bool Solver::simplify()
         if (!ok) return false;
 
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
-        if (!xorFinder.doNoPart(2, 2)) return false;
+        if (!xorFinder.fullFindXors(2, 2)) return false;
 
         lastNbBin = nbBin;
         becameBinary = 0;
@@ -1932,6 +1931,9 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
 /**
 @brief Handles a conflict that we reached through propagation
 
+Handles on-the-fly subsumption: the OTF subsumption check is done in
+conflict analysis, but this is the code that actually replaces the original
+clause with that of the shorter one
 @returns l_False if UNSAT
 */
 llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update)
@@ -1988,7 +1990,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
         #endif
     //Normal learnt
     } else {
-        if (c) {
+        if (c) { //On-the-fly subsumption
             uint32_t origSize = c->size();
             detachClause(*c);
             for (uint32_t i = 0; i != learnt_clause.size(); i++)
@@ -2003,7 +2005,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
             } else {
                 clauses_literals -= origSize - learnt_clause.size();
             }
-        } else {
+        } else {  //no on-the-fly subsumption
             c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
@@ -2258,13 +2260,13 @@ void Solver::performStepsBeforeSolve()
 
     if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
-        if (!xorFinder.doNoPart(2, 2)) return;
+        if (!xorFinder.fullFindXors(2, 2)) return;
         if (doReplace && !varReplacer->performReplace(true)) return;
     }
 
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
-        if (!xorFinder.doNoPart(3, 7)) return;
+        if (!xorFinder.fullFindXors(3, 7)) return;
     }
 
     if (xorclauses.size() > 1) {

@@ -82,14 +82,14 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
 {
     assert(solver.decisionLevel() == 0);
     assert(solver.qhead == solver.trail.size());
-    
+
     if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
         return;
 
     #ifdef VERBOSE_DEBUG
     std::cout << "Cleaning " << (type==binaryClauses ? "binaryClauses" : "normal clauses" ) << std::endl;
     #endif //VERBOSE_DEBUG
-    
+
     Clause **s, **ss, **end;
     for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
         if (s+1 != end)
@@ -111,9 +111,9 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
         }
     }
     cs.shrink(s-ss);
-    
+
     lastNumUnitaryClean[type] = solver.get_unitary_learnts_num();
-    
+
     #ifdef VERBOSE_DEBUG
     cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << endl;
     #endif
@@ -122,12 +122,12 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
 inline const bool ClauseCleaner::cleanClause(Clause*& cc)
 {
     Clause& c = *cc;
-    
+
     Lit origLit1 = c[0];
     Lit origLit2 = c[1];
     uint32_t origSize = c.size();
     Lit origLit3 = (origSize == 3) ? c[2] : lit_Undef;
-    
+
     Lit *i, *j, *end;
     for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
         lbool val = solver.value(*i);
@@ -135,7 +135,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
             *j++ = *i;
             continue;
         }
-        
+
         if (val == l_True) {
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             return true;
@@ -161,7 +161,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
                 solver.clauses_literals -= i-j;
         }
     }
-    
+
     return false;
 }
 
@@ -169,10 +169,10 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
 {
     assert(solver.decisionLevel() == 0);
     assert(solver.qhead == solver.trail.size());
-    
+
     if (lastNumUnitaryClean[type] + limit >= solver.get_unitary_learnts_num())
         return;
-    
+
     XorClause **s, **ss, **end;
     for (s = ss = cs.getData(), end = s + cs.size();  s != end; s++) {
         if (s+1 != end)
@@ -185,7 +185,7 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
             satisfied(**s);
         }
         #endif //DEBUG_ATTACH
-        
+
         if (cleanClause(**s)) {
             solver.freeLater.push(*s);
             (*s)->setRemoved();
@@ -198,9 +198,9 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
         }
     }
     cs.shrink(s-ss);
-    
+
     lastNumUnitaryClean[type] = solver.get_unitary_learnts_num();
-    
+
     #ifdef VERBOSE_DEBUG
     cout << "cleanClauses(XorClause) useful: ?? Removed: " << s-ss << endl;
     #endif
@@ -220,7 +220,7 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
         } else c.invert(val.getBool());
     }
     c.shrink(i-j);
-    
+
     assert(c.size() != 1);
     switch (c.size()) {
         case 0: {

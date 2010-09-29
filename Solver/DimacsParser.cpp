@@ -37,6 +37,9 @@ DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _de
     , addAsLearnt(_addAsLearnt)
 {}
 
+/**
+@brief Skips all whitespaces
+*/
 template<class B>
 void DimacsParser::skipWhitespace(B& in)
 {
@@ -44,6 +47,9 @@ void DimacsParser::skipWhitespace(B& in)
         ++in;
 }
 
+/**
+@brief Skips until the end of the line
+*/
 template<class B>
 void DimacsParser::skipLine(B& in)
 {
@@ -57,6 +63,9 @@ void DimacsParser::skipLine(B& in)
     }
 }
 
+/**
+@brief Returns line until the end of line into "ret"
+*/
 template<class B>
 void DimacsParser::untilEnd(B& in, char* ret)
 {
@@ -73,7 +82,9 @@ void DimacsParser::untilEnd(B& in, char* ret)
     }
 }
 
-
+/**
+@brief Parses in an integer
+*/
 template<class B>
 int DimacsParser::parseInt(B& in)
 {
@@ -107,6 +118,9 @@ void DimacsParser::parseString(B& in, std::string& str)
     }
 }
 
+/**
+@brief Reads in a clause
+*/
 template<class B>
 void DimacsParser::readClause(B& in, vec<Lit>& lits)
 {
@@ -133,7 +147,14 @@ bool DimacsParser::match(B& in, const char* str)
     return true;
 }
 
+/**
+@brief The main function: parses in a full DIMACS file
 
+Parses in header, the clauses, and special comment lines that define clause
+groups, clause group names, and variable names, plus it parses up special
+comments that have to do with debugging Solver::newVar() and Solver::solve()
+calls for library-debugging
+*/
 template<class B>
 void DimacsParser::parse_DIMACS_main(B& in)
 {

@@ -32,6 +32,16 @@ using std::vector;
 
 class Solver;
 
+/**
+@brief Chooses between MiniSat and GLUCOSE restart types&learnt clause evaluation
+
+MiniSat style restart is geometric, and glucose-type is dynamic. MiniSat-type
+learnt clause staistic is activity-based, glucose-type is glue-based. This
+class takes as input a number of MiniSat restart's end results, computes some
+statistics on them, and at the end, tells if we should use one type or the
+other. Basically, it masures variable activity stability, number of xors
+in the problem, and variable degrees.
+*/
 class RestartTypeChooser
 {
     public:
@@ -39,22 +49,23 @@ class RestartTypeChooser
         void addInfo();
         const RestartType choose();
         void reset();
-        
+
     private:
         void calcHeap();
         const double avg() const;
         const std::pair<double, double> countVarsDegreeStDev() const;
         const double stdDeviation(vector<uint32_t>& measure) const;
-        
+
         template<class T>
         void addDegrees(const vec<T*>& cs, vector<uint32_t>& degrees) const;
-        
+
         const Solver& solver;
-        const uint32_t topX;
-        const uint32_t limit;
+        const uint32_t topX; ///<The how many is the top X? 100 is default
+        const uint32_t limit; ///<If top x contains on average this many common varables, we select MiniSat-type
         vector<Var> sameIns;
-        
-        vector<Var> firstVars, firstVarsOld;
+
+        vector<Var> firstVars; ///<The top x variables (in terms of var activity)
+        vector<Var> firstVarsOld; ///<The previous top x variables (in terms of var activity)
 };
 
 inline void RestartTypeChooser::reset()

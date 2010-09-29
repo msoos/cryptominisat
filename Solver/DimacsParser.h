@@ -23,6 +23,9 @@
 
 class Solver;
 
+/**
+@brief Parses up a DIMACS file that my be zipped
+*/
 class DimacsParser
 {
     public:
