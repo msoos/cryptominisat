@@ -34,6 +34,9 @@ using std::vector;
 #include "Clause.h"
 #include "Vec.h"
 
+/**
+@brief Replaces variables with their anti/equivalents
+*/
 class VarReplacer
 {
     public:
@@ -43,11 +46,11 @@ class VarReplacer
         const bool needsReplace();
         template<class T>
         const bool replace(T& ps, const bool xorEqualFalse, const uint32_t group);
-        
+
         void extendModelPossible() const;
         void extendModelImpossible(Solver& solver2) const;
         void reattachInternalClauses();
-        
+
         const uint32_t getNumReplacedLits() const;
         const uint32_t getNumReplacedVars() const;
         const uint32_t getNumLastReplacedVars() const;
@@ -63,28 +66,35 @@ class VarReplacer
         //No need to update, only stores binary clauses, that
         //have been allocated within pool
         //friend class ClauseAllocator;
-    
+
     private:
         const bool performReplaceInternal();
-        
+
         const bool replace_set(vec<Clause*>& cs, const bool binClauses);
         const bool replace_set(vec<XorClause*>& cs);
         const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
         const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
         template<class T>
         void addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint32_t group, const bool internal = false);
-        
+
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);
-        
-        vector<Lit> table;
-        map<Var, vector<Var> > reverseTable;
+
+        vector<Lit> table; ///<Stores which variables have been replaced by which literals. Index by: table[VAR]
+        map<Var, vector<Var> > reverseTable; ///<mapping of variable to set of variables it replaces
+        /**
+        @brief Set of internal clauses -- they are attached
+
+        When a variable gets replaced by another one, we add 2 binary clauses
+        here, and attach these clauses. When we get to actually replace the
+        variables with one another, we remove these claues.
+        */
         vec<Clause*> clauses;
-        
-        uint32_t replacedLits;
-        uint32_t replacedVars;
-        uint32_t lastReplacedVars;
-        Solver& solver;
+
+        uint32_t replacedLits; ///<Num literals replaced during var-replacement
+        uint32_t replacedVars; ///<Num vars replaced during var-replacement
+        uint32_t lastReplacedVars; ///<Last time performReplace() was called, "replacedVars" contained this
+        Solver& solver; ///<The solver we are working with
 };
 
 inline const bool VarReplacer::performReplace(const bool always)
@@ -93,7 +103,7 @@ inline const bool VarReplacer::performReplace(const bool always)
     uint32_t limit = (uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE);
     if ((always && getNewToReplaceVars() > 0) || getNewToReplaceVars() > limit)
         return performReplaceInternal();
-    
+
     return true;
 }
 
