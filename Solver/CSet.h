@@ -32,8 +32,8 @@ class ClauseSimp
         , index(_index)
         {}
 
-        Clause* clause;
-        uint32_t index;
+        Clause* clause; ///<The clause to be stored
+        uint32_t index; ///<The index of the clause in Subsumer::clauses
 };
 
 /**

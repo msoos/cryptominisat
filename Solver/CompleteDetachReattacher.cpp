@@ -69,7 +69,7 @@ void CompleteDetachReatacher::clearWatchOfPointerUsers(vec<Watched>& ws)
 }
 
 /**
-@brief Completely reattach all clauses
+@brief Completely attach all clauses
 */
 const bool CompleteDetachReatacher::completelyReattach()
 {

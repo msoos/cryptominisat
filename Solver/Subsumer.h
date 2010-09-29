@@ -55,13 +55,16 @@ public:
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
     const map<Var, vector<Clause*> >& getElimedOutVar() const;
-    
+
 private:
-    
+
     friend class ClauseCleaner;
     friend class ClauseAllocator;
-    
+
     //Main
+    /**
+    @brief Clauses to be treated are moved here ClauseSimp::index refers to the index of the clause here
+    */
     vec<ClauseSimp>        clauses;
     vec<char>              touched;        ///<Is set to true when a variable is part of a removed clause. Also true initially (upon variable creation).
     vec<Var>               touched_list;   ///<A list of the true elements in 'touched'.
@@ -85,7 +88,7 @@ private:
     uint32_t numMaxElim;                  ///<Max. number of variable elimination tries to do this run
     int64_t numMaxBlockToVisit;           ///<Max. number variable-blocking clauses to visit to do this run
     uint32_t numMaxBlockVars;             ///<Max. number variable-blocking tries to do this run
-    
+
     //Start-up
     void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false, const bool addBinAndAddToCL = true);
     void fillCannotEliminate();
@@ -98,11 +101,11 @@ private:
     void addBackToSolver();
     void removeWrong(vec<Clause*>& cs);
     void removeAssignedVarsFromEliminated();
-    
+
     //Iterations
     void registerIteration  (CSet& iter_set) { iter_sets.push(&iter_set); }
     void unregisterIteration(CSet& iter_set) { remove(iter_sets, &iter_set); }
-    
+
     //Touching
     void touch(const Var x);
     void touch(const Lit p);
@@ -188,11 +191,11 @@ private:
     vec<bool> touchedBlockedVarsBool;
     void touchBlockedVar(const Var x);
     double blockTime;
-    
-    
+
+
     //validity checking
     const bool verifyIntegrity();
-    
+
     uint32_t clauses_subsumed; ///<Number of clauses subsumed in this run
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
     uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
