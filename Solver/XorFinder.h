@@ -70,7 +70,7 @@ class XorFinder
         };
 
         /**
-        @brief For sorting clauses according to their size and then according to their content. Clauses' internal variables must be sorted already!
+        @brief For sorting clauses according to their size&their var content. Clauses' variables must already be sorted
         */
         struct clause_sorter_primary {
             bool operator()(const pair<Clause*, uint32_t>& c11, const pair<Clause*, uint32_t>& c22)
