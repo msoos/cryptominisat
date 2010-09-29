@@ -557,7 +557,7 @@ void Solver::attachClause(Clause& c)
     assert(c.size() > 1);
     uint32_t index0 = (~c[0]).toInt();
     uint32_t index1 = (~c[1]).toInt();
-    
+
     if (c.size() == 2) {
         watches[index0].push(Watched(c[1]));
         watches[index1].push(Watched(c[0]));
@@ -658,8 +658,12 @@ void Solver::detachModifiedClause(const Var var1, const Var var2, const uint32_t
     clauses_literals -= origSize;
 }
 
-// Revert to the state at given level (keeping all assignment at 'level' but not beyond).
-//
+/**
+@brief Revert to the state at given level
+
+Also reverts all stuff in Gass-elimination, as well as resetting the old
+default polarities if USE_OLD_POLARITIES is set (which is by default NOT set).
+*/
 void Solver::cancelUntil(int level)
 {
     #ifdef VERBOSE_DEBUG
@@ -667,14 +671,14 @@ void Solver::cancelUntil(int level)
     if (level > 0) cout << " sublevel: " << trail_lim[level];
     cout << endl;
     #endif
-    
+
     if ((int)decisionLevel() > level) {
-        
+
         #ifdef USE_GAUSS
         for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++)
             (*gauss)->canceling(trail_lim[level]);
         #endif //USE_GAUSS
-        
+
         for (int sublevel = trail.size()-1; sublevel >= (int)trail_lim[level]; sublevel--) {
             Var var = trail[sublevel].var();
             #ifdef VERBOSE_DEBUG
@@ -708,6 +712,12 @@ void Solver::clearGaussMatrixes()
 }
 #endif //USE_GAUSS
 
+/**
+@brief Returns what polarity[] should be set as default based on polarity_mode
+
+since polarity is filled with Lit::sign() , "true" here means an inverted
+signed-ness, i.e. a FALSE default value. And vice-versa
+*/
 inline bool Solver::defaultPolarity()
 {
     switch(polarity_mode) {
@@ -722,20 +732,26 @@ inline bool Solver::defaultPolarity()
         default:
             assert(false);
     }
-    
+
     return true;
 }
 
+/**
+@brief Tally votes for a default TRUE or FALSE value for the variable using the Jeroslow-Wang method
+
+@p votes[inout] Votes are tallied at this place for each variable
+@p cs The clause to tally votes for
+*/
 void Solver::tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const
 {
     for (const Clause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
         const Clause& c = **it;
         if (c.learnt()) continue;
-        
+
         double divider;
         if (c.size() > 63) divider = 0.0;
         else divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
-        
+
         for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++) {
             if (it2->sign()) votes[it2->var()] += divider;
             else votes[it2->var()] -= divider;
@@ -743,6 +759,12 @@ void Solver::tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const
     }
 }
 
+/**
+@brief Tally votes a default TRUE or FALSE value for the variable using the Jeroslow-Wang method
+
+For XOR clause, we simply add some weight for a FALSE default, i.e. being in
+xor clauses makes the variabe more likely to be FALSE by default
+*/
 void Solver::tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const
 {
     for (const XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
@@ -750,30 +772,36 @@ void Solver::tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const
         double divider;
         if (c.size() > 63) divider = 0.0;
         else divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
-        
+
         for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++)
             votes[it2->var()] += divider;
     }
 }
 
+/**
+@brief Tallies votes for a TRUE/FALSE default polarity using Jeroslow-Wang
+
+Voting is only used if polarity_mode is "polarity_auto". This is the default.
+Uses the tallyVotes() functions to tally the votes
+*/
 void Solver::calculateDefaultPolarities()
 {
     #ifdef VERBOSE_DEBUG_POLARITIES
     std::cout << "Default polarities: " << std::endl;
     #endif
-    
+
     assert(decisionLevel() == 0);
     if (polarity_mode == polarity_auto) {
         double time = cpuTime();
-        
+
         vector<double> votes;
         votes.resize(nVars(), 0.0);
-        
+
         tallyVotes(clauses, votes);
         tallyVotes(binaryClauses, votes);
         tallyVotes(varReplacer->getClauses(), votes);
         tallyVotes(xorclauses, votes);
-        
+
         Var i = 0;
         uint32_t posPolars = 0;
         uint32_t undecidedPolars = 0;
@@ -785,7 +813,7 @@ void Solver::calculateDefaultPolarities()
             std::cout << !defaultPolarities[i] << ", ";
             #endif //VERBOSE_DEBUG_POLARITIES
         }
-        
+
         if (verbosity >= 2) {
             std::cout << "c Calc default polars - "
             << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s"
@@ -797,7 +825,7 @@ void Solver::calculateDefaultPolarities()
     } else {
         std::fill(polarity.begin(), polarity.end(), defaultPolarity());
     }
-    
+
     #ifdef VERBOSE_DEBUG_POLARITIES
     std::cout << std::endl;
     #endif //VERBOSE_DEBUG_POLARITIES
@@ -807,17 +835,30 @@ void Solver::calculateDefaultPolarities()
 // Major methods:
 
 
+/**
+@brief Picks a branching variable and its value (True/False)
+
+We do three things here:
+-# Try to do random decision (rare, less than 2%)
+-# Try acitivity-based decision
+
+Then, we pick a sign (True/False):
+\li If we are in search-burst mode ("simplifying" is set), we pick a sign
+totally randomly
+\li If RANDOM_LOOKAROUND_SEARCHSPACE is set, we take the previously saved
+polarity, and with some chance, flip it
+\li Otherwise, we simply take the saved polarity
+*/
 Lit Solver::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
     cout << "decision level: " << decisionLevel() << " ";
     #endif
-    
+
     Var next = var_Undef;
 
-    
     bool random = mtrand.randDblExc() < random_var_freq;
-    
+
     // Random decision:
     if (random && !order_heap.empty()) {
         if (restrictedPickBranch == 0) next = order_heap[mtrand.randInt(order_heap.size()-1)];
@@ -836,6 +877,11 @@ Lit Solver::pickBranchLit()
             next = order_heap.removeMin();
         }
 
+    //if "simplifying" is set, i.e. if we are in a burst-search mode, then
+    //randomly pick a sign. Otherwise, if RANDOM_LOOKAROUND_SEARCHSPACE is
+    //defined, we check the default polarity, and we may change it a bit
+    //randomly based on the average branch depth. Otherwise, we just go for the
+    //polarity that has been saved
     bool sign;
     if (next != var_Undef) {
         if (simplifying && random)
@@ -865,7 +911,11 @@ Lit Solver::pickBranchLit()
     }
 }
 
-// Assumes 'seen' is cleared (will leave it cleared)
+/**
+@brief Checks subsumption. Used in on-the-fly subsumption code
+
+Assumes 'seen' is cleared (will leave it cleared)
+*/
 template<class T1, class T2>
 bool subset(const T1& A, const T2& B, vector<bool>& seen)
 {
@@ -1142,7 +1192,7 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     while (analyze_stack.size() > 0) {
         assert(!reason[analyze_stack.last().var()].isNULL());
         PropagatedFrom c(reason[analyze_stack.last().var()]);
-        
+
         analyze_stack.pop();
 
         for (uint32_t i = 1, size = c.size(); i < size; i++) {
@@ -1205,6 +1255,18 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
 }
 
 
+/**
+@brief Enqueues&sets a new fact that has been found
+
+Call this when a fact has been found. Sets the value, enqueues it for
+propagation, sets its level, sets why it was propagated, saves the polarity,
+and does some logging if logging is enabled. May also save the "old" polarity
+(i.e. polarity that was in polarities[] at p.var()] of the variable if
+USE_OLD_POLARITIES is set
+
+@p p the fact to enqueue
+@p from Why was it propagated (binary clause, tertiary clause, normal clause)
+*/
 void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
 {
 
@@ -1216,7 +1278,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
     #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
 
     //assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
-    
+
     assert(assigns[p.var()].isUndef());
     const Var v = p.var();
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
@@ -1227,7 +1289,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
     #endif //USE_OLD_POLARITIES
     polarity[p.var()] = p.sign();
     trail.push(p);
-    
+
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
         logger.propagation(p, from);
@@ -1249,7 +1311,8 @@ void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
 @brief Propagates a binary clause
 
 Need to be somewhat tricky if the clause indicates that current assignement
-is incorrect (i.e. both literals evaluate to FALSE)
+is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
+sets failBinLit
 */
 inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
 {
@@ -1271,7 +1334,8 @@ inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *en
 @brief Propagates a tertiary (3-long) clause
 
 Need to be somewhat tricky if the clause indicates that current assignement
-is incorrect (i.e. all 3 literals evaluate to FALSE)
+is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
+sets failBinLit
 */
 inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
 {
@@ -1435,7 +1499,7 @@ PropagatedFrom Solver::propagate(const bool update)
         vec<Watched>&  ws  = watches[p.toInt()];
         Watched        *i, *i2, *j;
         num_props += ws.size()/2 + 1;
-        
+
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << (p.sign() ? '-' : ' ') << p.var()+1 << endl;
         #endif
@@ -1469,7 +1533,7 @@ FoundWatch:
     }
     propagations += num_props;
     simpDB_props -= num_props;
-    
+
     #ifdef VERBOSE_DEBUG
     cout << "Propagation ended." << endl;
     #endif
