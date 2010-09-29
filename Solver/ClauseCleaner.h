@@ -28,15 +28,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Subsumer.h"
 #include "XorSubsumer.h"
 
+/**
+@brief Cleans clauses from false literals & removes satisfied clauses
+*/
 class ClauseCleaner
 {
     public:
         ClauseCleaner(Solver& solver);
-        
+
         enum ClauseSetType {clauses, xorclauses, learnts, binaryClauses, simpClauses, xorSimpClauses};
-        
+
         void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit = 0);
-        
+
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit = 0);
         void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit = 0);
         void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit = 0);
@@ -45,23 +48,31 @@ class ClauseCleaner
         bool satisfied(const XorClause& c) const;
 
         void moveBinClausesToBinClauses();
-        
+
     private:
         const bool cleanClause(XorClause& c);
         const bool cleanClause(Clause*& c);
-        
-        uint32_t lastNumUnitarySat[6];
-        uint32_t lastNumUnitaryClean[6];
-        
+
+        uint32_t lastNumUnitarySat[6]; ///<Last time we cleaned from satisfied clauses, this many unitary clauses were known
+        uint32_t lastNumUnitaryClean[6]; ///<Last time we cleaned from satisfied clauses&false literals, this many unitary clauses were known
+
         Solver& solver;
 };
 
+/**
+@brief Removes all satisfied clauses, and cleans false literals
+
+There is a heuristic in place not to try to clean all the time. However,
+this limit can be overridden with "nolimit"
+@p nolimit set this to force cleaning&removing. Useful if a really clean
+state is needed, which is important for certain algorithms
+*/
 inline void ClauseCleaner::removeAndCleanAll(const bool nolimit)
 {
     //uint32_t limit = std::min((uint32_t)((double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES), FIXCLEANREPLACE);
     uint32_t limit = (double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES;
     if (nolimit) limit = 0;
-    
+
     removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses, limit);
     cleanClauses(solver.clauses, ClauseCleaner::clauses, limit);
     cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses, limit);
