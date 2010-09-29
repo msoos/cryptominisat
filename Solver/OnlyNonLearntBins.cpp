@@ -28,6 +28,9 @@ OnlyNonLearntBins::OnlyNonLearntBins(Solver& _solver) :
     solver(_solver)
 {}
 
+/**
+@brief Propagate recursively on non-learnt binaries
+*/
 const bool OnlyNonLearntBins::propagate()
 {
     while (solver.qhead < solver.trail.size()) {
@@ -47,6 +50,9 @@ const bool OnlyNonLearntBins::propagate()
     return true;
 }
 
+/**
+@brief Propagate recursively on non-learnt binaries, but do not propagate exceptLit if we reach it
+*/
 const bool OnlyNonLearntBins::propagateBinExcept(const Lit& exceptLit)
 {
     while (solver.qhead < solver.trail.size()) {
@@ -66,6 +72,9 @@ const bool OnlyNonLearntBins::propagateBinExcept(const Lit& exceptLit)
     return true;
 }
 
+/**
+@brief Propagate only for one hop(=non-recursively) on non-learnt bins
+*/
 const bool OnlyNonLearntBins::propagateBinOneLevel()
 {
     Lit p   = solver.trail[solver.qhead];
@@ -83,6 +92,9 @@ const bool OnlyNonLearntBins::propagateBinOneLevel()
     return true;
 }
 
+/**
+@brief Fill internal watchlists with non-binary clauses
+*/
 const bool OnlyNonLearntBins::fill()
 {
     double myTime = cpuTime();
@@ -131,6 +143,9 @@ void OnlyNonLearntBins::removeBin(Lit lit1, Lit lit2)
     removeWBinAll(binwatches[(~lit2).toInt()], lit1);
 }
 
+/**
+@brief Remove all binary clauses marked to be removed
+*/
 const uint32_t OnlyNonLearntBins::removeBins()
 {
     Clause **i, **j;
@@ -143,7 +158,7 @@ const uint32_t OnlyNonLearntBins::removeBins()
         if (index1 > index0) std::swap(index0, index1);
         uint64_t final = index0;
         final |= ((uint64_t)index1) << 32;
-        
+
         if (toRemove.find(final) == toRemove.end()) {
             *j++ = *i;
         } else {

@@ -22,6 +22,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 using std::set;
 
+/**
+@brief Handles propagation, addition&removal of non-learnt binary clauses
+
+It takes a snapshot of Solver's non-learnt binary clauses, builds its own
+watchlists, and does everything itself. It is used in UselessBinRemover. We
+need this class, because we don't store in Solver's watchlists if binary
+clauses are learnt or not.
+
+\todo We could do without this class if we had extra data in normal
+watchlists saying whether the clause is learnt or not. That would bring its
+own set of problems, but maybe it would be worth it. Who knows.
+*/
 class OnlyNonLearntBins
 {
     public:
@@ -43,9 +55,9 @@ class OnlyNonLearntBins
         inline const vec<vec<WatchedBin> >& getBinWatches() const;
 
     private:
-        vec<vec<WatchedBin> > binwatches;
-        set<uint64_t> toRemove;
-        
+        vec<vec<WatchedBin> > binwatches; ///<Internal wathclists for non-learnt binary clauses
+        set<uint64_t> toRemove; ///<Clauses that have been marked to be removed (two 32-bit lits: 64 bit to store)
+
         Solver& solver;
 };
 
