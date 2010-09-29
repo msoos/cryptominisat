@@ -23,6 +23,9 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver& _solver) :
 {
 }
 
+/**
+@brief Completely detach all clauses
+*/
 void CompleteDetachReatacher::completelyDetach()
 {
     solver.clauses_literals = 0;
@@ -33,6 +36,13 @@ void CompleteDetachReatacher::completelyDetach()
     }
 }
 
+/**
+@brief Detach clauses that are non-native in the watchlists
+
+This effectively means all clauses that are of size >3. Native clauses
+might not need to be detached, because playing around with their content
+does not affect their ability to do propagations
+*/
 void CompleteDetachReatacher::detachPointerUsingClauses()
 {
     solver.clauses_literals = 0;
@@ -43,6 +53,9 @@ void CompleteDetachReatacher::detachPointerUsingClauses()
     }
 }
 
+/**
+@brief Helper function for detachPointerUsingClauses()
+*/
 void CompleteDetachReatacher::clearWatchOfPointerUsers(vec<Watched>& ws)
 {
     Watched* i = ws.getData();
@@ -55,6 +68,9 @@ void CompleteDetachReatacher::clearWatchOfPointerUsers(vec<Watched>& ws)
     ws.shrink_(i-j);
 }
 
+/**
+@brief Completely reattach all clauses
+*/
 const bool CompleteDetachReatacher::completelyReattach()
 {
     assert(solver.ok);
@@ -71,6 +87,11 @@ const bool CompleteDetachReatacher::completelyReattach()
     return solver.ok;
 }
 
+/**
+@brief Cleans clauses from failed literals/removes satisfied clauses from cs
+
+May change solver.ok to FALSE (!)
+*/
 inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<Clause*>& cs, const bool lookingThroughBinary)
 {
     Clause **i = cs.getData();
@@ -89,6 +110,9 @@ inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<Clause*>& cs, con
     cs.shrink(i-j);
 }
 
+/**
+@brief Cleans clauses from failed literals/removes satisfied clauses from cs
+*/
 inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<XorClause*>& cs)
 {
     XorClause **i = cs.getData();
@@ -104,6 +128,9 @@ inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<XorClause*>& cs)
     cs.shrink(i-j);
 }
 
+/**
+@brief Not only cleans a clause from false literals, but if clause is satisfied, it reports it
+*/
 inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
 {
     Clause& ps = *cl;
@@ -138,6 +165,9 @@ inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
     return true;
 }
 
+/**
+@brief Not only cleans a clause from false literals, but if clause is satisfied, it reports it
+*/
 inline const bool CompleteDetachReatacher::cleanClause(XorClause& ps)
 {
     Lit *i = ps.getData(), *j = i;

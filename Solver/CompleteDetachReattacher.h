@@ -17,6 +17,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Solver.h"
 
+/**
+@brief Helper class to completely detaches all(or only non-native) clauses, and then re-attach all
+
+Used in classes that (may) do a lot of clause-changning, in which case
+detaching&reattaching of clauses would be neccessary to do
+individually, which is \b very slow
+
+A main use-case is the following:
+-# detach all clauses
+-# play around with all clauses as desired. Cannot call solver.propagate() here
+-# attach all clauses again
+
+A somewhat more complicated, but more interesting use-case is the following:
+-# detach only non-natively stored clauses from watchlists
+-# play around wil all clauses as desired. 2- and 3-long clauses can still
+be propagated with solver.propagate() -- this is quite a nice trick, in fact
+-# detach all clauses (i.e. also native ones)
+-# attach all clauses
+*/
 class CompleteDetachReatacher
 {
     public:
@@ -32,6 +51,6 @@ class CompleteDetachReatacher
         void cleanAndAttachClauses(vec<XorClause*>& cs);
         const bool cleanClause(Clause*& ps);
         const bool cleanClause(XorClause& ps);
-        
+
         Solver& solver;
 };
