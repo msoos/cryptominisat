@@ -73,9 +73,9 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
         if (it+1 != end)
             __builtin_prefetch(*(it+1), 0);
         Clause& c = (**it);
-        //2-long clauses only need to be sorted, no need to
+        //2- and 3-long clauses only need to be sorted, no need to
         //detach&reattach
-        if ((*it)->size() > 2) {
+        if ((*it)->size() > 3) {
             bool sorted = true;
             for (uint32_t i = 0, size = c.size(); i+1 < size ; i++) {
                 sorted = (c[i].var() <= c[i+1].var());
