@@ -1179,7 +1179,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
 
 
 /**
-@brief Check if 'p' can be removed
+@brief Check if 'p' can be removed from a learnt clause
 
 'abstract_levels' is used to abort early if the algorithm is
 visiting literals at levels that cannot be removed later.
@@ -2221,7 +2221,18 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
     return true;
 }
 
-inline void Solver::performStepsBeforeSolve()
+/**
+@brief Performs a set of pre-optimisations before the beggining of solving
+
+This is somewhat different than the set of optimisations carried out during
+solving in simplifyProblem(). For instance, binary xors are searched fully
+here, while there, no search for them is carried out. Also, the ordering
+is different.
+
+\todo experiment to use simplifyProblem() instead of this, with the only
+addition of binary clause search. Maybe it will do just as good (or better).
+*/
+void Solver::performStepsBeforeSolve()
 {
     assert(qhead == trail.size());
     testAllClauseAttach();
@@ -2268,6 +2279,14 @@ inline void Solver::performStepsBeforeSolve()
     testAllClauseAttach();
 }
 
+/**
+@brief The main solve loop that glues everything together
+
+We clear everything needed, pre-simplify the problem, calculate default
+polarities, and start the loop. Finally, we either report UNSAT or extend the
+found solution with all the intermediary simplifications (e.g. variable
+elimination, etc.) and output the solution.
+*/
 lbool Solver::solve(const vec<Lit>& assumps)
 {
 #ifdef VERBOSE_DEBUG
@@ -2473,6 +2492,12 @@ void Solver::handleSATSolution()
     for (Var var = 0; var != nVars(); var++) model[var] = value(var);
 }
 
+/**
+@brief When problem is decided to be UNSAT, this is called
+
+There is basically nothing to be handled for the moment, but this could be
+made extensible
+*/
 void Solver::handleUNSATSolution()
 {
     if (conflict.size() == 0)
