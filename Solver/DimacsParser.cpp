@@ -40,8 +40,7 @@ DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _de
 /**
 @brief Skips all whitespaces
 */
-template<class B>
-void DimacsParser::skipWhitespace(B& in)
+void DimacsParser::skipWhitespace(StreamBuffer& in)
 {
     while ((*in >= 9 && *in <= 13) || *in == 32)
         ++in;
@@ -50,8 +49,7 @@ void DimacsParser::skipWhitespace(B& in)
 /**
 @brief Skips until the end of the line
 */
-template<class B>
-void DimacsParser::skipLine(B& in)
+void DimacsParser::skipLine(StreamBuffer& in)
 {
     for (;;) {
         if (*in == EOF || *in == '\0') return;
@@ -66,8 +64,7 @@ void DimacsParser::skipLine(B& in)
 /**
 @brief Returns line until the end of line into "ret"
 */
-template<class B>
-void DimacsParser::untilEnd(B& in, char* ret)
+void DimacsParser::untilEnd(StreamBuffer& in, char* ret)
 {
     uint32_t sizeRead = 0;
     for (;sizeRead < MAX_NAMES_SIZE-1; sizeRead++) {
@@ -85,8 +82,7 @@ void DimacsParser::untilEnd(B& in, char* ret)
 /**
 @brief Parses in an integer
 */
-template<class B>
-int DimacsParser::parseInt(B& in)
+int DimacsParser::parseInt(StreamBuffer& in)
 {
     int     val = 0;
     bool    neg = false;
@@ -107,8 +103,7 @@ std::string DimacsParser::stringify(uint32_t x)
     return o.str();
 }
 
-template<class B>
-void DimacsParser::parseString(B& in, std::string& str)
+void DimacsParser::parseString(StreamBuffer& in, std::string& str)
 {
     str.clear();
     skipWhitespace(in);
@@ -119,10 +114,10 @@ void DimacsParser::parseString(B& in, std::string& str)
 }
 
 /**
-@brief Reads in a clause
+@brief Reads in a clause and puts it in lit
+@p[out] lits
 */
-template<class B>
-void DimacsParser::readClause(B& in, vec<Lit>& lits)
+void DimacsParser::readClause(StreamBuffer& in, vec<Lit>& lits)
 {
     int     parsed_lit;
     Var     var;
@@ -138,13 +133,39 @@ void DimacsParser::readClause(B& in, vec<Lit>& lits)
     }
 }
 
-template<class B>
-bool DimacsParser::match(B& in, const char* str)
+/**
+@brief Matches parameter "str" to content in "in"
+*/
+bool DimacsParser::match(StreamBuffer& in, const char* str)
 {
     for (; *str != 0; ++str, ++in)
         if (*str != *in)
             return false;
     return true;
+}
+
+/**
+@brief Prints the data in "p cnf VARS CLAUSES" header in DIMACS
+
+We don't actually do \b anything with these. It's just printed for user
+happyness. However, I think it's useless to print it, since it might mislead
+users to think that their headers are correct, even though a lot of headers are
+completely wrong, thanks to MiniSat printing the header, but not checking it.
+Not checking it is \b not a problem. The problem is printing it such that
+people believe it's validated
+*/
+void DimacsParser::printHeader(StreamBuffer& in)
+{
+    if (match(in, "p cnf")) {
+                int vars    = parseInt(in);
+                int clauses = parseInt(in);
+                if (solver->verbosity >= 1) {
+                    printf("c |  Number of variables:  %-12d                                                   |\n", vars);
+                    printf("c |  Number of clauses:    %-12d                                                   |\n", clauses);
+                }
+            } else {
+                printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
+            }
 }
 
 /**
@@ -155,8 +176,7 @@ groups, clause group names, and variable names, plus it parses up special
 comments that have to do with debugging Solver::newVar() and Solver::solve()
 calls for library-debugging
 */
-template<class B>
-void DimacsParser::parse_DIMACS_main(B& in)
+void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
 {
     vec<Lit> lits;
     int group = 0;
@@ -173,16 +193,7 @@ void DimacsParser::parse_DIMACS_main(B& in)
             std::cout << "c Added " << std::setw(10) << numLearntClause << " learnt clauses" << std::endl;
             return;
         case 'p':
-            if (match(in, "p cnf")) {
-                int vars    = parseInt(in);
-                int clauses = parseInt(in);
-                if (solver->verbosity >= 1) {
-                    printf("c |  Number of variables:  %-12d                                                   |\n", vars);
-                    printf("c |  Number of clauses:    %-12d                                                   |\n", clauses);
-                }
-            } else {
-                printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
-            }
+            printHeader(in);
             break;
         case 'c':
             ++in;

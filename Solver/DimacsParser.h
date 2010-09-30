@@ -38,31 +38,17 @@ class DimacsParser
         #endif // DISABLE_ZLIB
 
     private:
-        template<class B>
-        void parse_DIMACS_main(B& in);
-
-        template<class B>
-        void skipWhitespace(B& in);
-
-        template<class B>
-        void skipLine(B& in);
-
-        template<class B>
-        void untilEnd(B& in, char* ret);
-
-        template<class B>
-        int parseInt(B& in);
-
+        void parse_DIMACS_main(StreamBuffer& in);
+        void skipWhitespace(StreamBuffer& in);
+        void skipLine(StreamBuffer& in);
+        void untilEnd(StreamBuffer& in, char* ret);
+        int parseInt(StreamBuffer& in);
+        void parseString(StreamBuffer& in, std::string& str);
+        void readClause(StreamBuffer& in, vec<Lit>& lits);
+        bool match(StreamBuffer& in, const char* str);
+        void printHeader(StreamBuffer& in);
         std::string stringify(uint32_t x);
 
-        template<class B>
-        void parseString(B& in, std::string& str);
-
-        template<class B>
-        void readClause(B& in, vec<Lit>& lits);
-
-        template<class B>
-        bool match(B& in, const char* str);
 
         Solver *solver;
         const bool debugLib;
