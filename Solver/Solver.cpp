@@ -968,11 +968,12 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
 {
     vec<Lit> allAddedToSeen2;
     stack<Lit> toRecursiveProp;
-    uint32_t clauseSize = cl.size();
+    //uint32_t clauseSize = cl.size();
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this thing gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisDoMinLMoreRecur = doMinimLMoreRecur || (clauseSize <= 5 && tot_literals < 80000000);
+    //bool thisDoMinLMoreRecur = doMinimLMoreRecur || (clauseSize <= 5 && tot_literals < 80000000);
+    bool thisDoMinLMoreRecur = true;
     uint32_t moreRecurProp = 0;
     if (thisDoMinLMoreRecur) moreRecurMinLDo++;
 
