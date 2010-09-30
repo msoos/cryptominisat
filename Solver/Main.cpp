@@ -38,7 +38,7 @@ The solver basically performs the following steps:
 
 Here is a picture of of the above process in more detail:
 
-\image html "../main_flowgraph.png"
+\image html "main_flowgraph.png"
 
 */
 
