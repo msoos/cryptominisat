@@ -339,6 +339,10 @@ class Tester:
     print "--ignore  (-i)     If no solution found, (timeout), ignore"
     print "--armin   (-a)     Use Armin Biere's fuzzer"
     print "--help    (-h)     Print this help screen"
+    print ""
+    print "Example usage:"
+    print "1) check already computed SAT solutions (UNSAT cannot be checked):"
+    print "   python regression_test.py -c -t ../../clusters/cluster93/ -d ../../satcomp09/ --ignore -n 1"
 
   def main(self):
     try:
@@ -408,6 +412,8 @@ class Tester:
         if (testDirSet == False) :
             print "When checking, you must give test dir"
             exit()
+        else :
+            print "You gave testdir (where solutions are):", self.testDir
         dirList=os.listdir(self.testDir)
         for fname in dirList:
           myMatch = ""
