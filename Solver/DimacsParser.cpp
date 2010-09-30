@@ -272,7 +272,7 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
                 if (!addAsLearnt) {
                     solver->addClause(lits, group, name);
                 } else {
-                    solver->addLearntClause(lits, 0, 0);
+                    solver->addLearntClause(lits, 0, 0, 0);
                     numLearntClause++;
                 }
             }

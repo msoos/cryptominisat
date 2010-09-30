@@ -251,10 +251,10 @@ public:
         isLearnt = false;
     }
 
-    void makeLearnt(const uint32_t newGlue)
+    void makeLearnt(const uint32_t newGlue, const float newMiniSatAct)
     {
         glue = newGlue;
-        miniSatAct = 0;
+        miniSatAct = newMiniSatAct;
         isLearnt = true;
     }
 

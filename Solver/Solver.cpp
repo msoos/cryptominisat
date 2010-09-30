@@ -404,7 +404,7 @@ addClauseInt() conveys some meaningful message, which it might not, for example.
 \todo Correct this method, make it more robust
 */
 template<class T>
-bool Solver::addLearntClause(T& ps, const uint32_t group, const uint32_t activity)
+bool Solver::addLearntClause(T& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group)
 {
     Clause* c = addClauseInt(ps, group);
     if (c == NULL) return ok;
@@ -414,7 +414,7 @@ bool Solver::addLearntClause(T& ps, const uint32_t group, const uint32_t activit
     clauses_literals -= c->size();
     learnts_literals += c->size();
 
-    c->makeLearnt(activity);
+    c->makeLearnt(glue, miniSatActivity);
     if (c->size() > 2) learnts.push(c);
     else {
         nbBin++;
@@ -422,8 +422,8 @@ bool Solver::addLearntClause(T& ps, const uint32_t group, const uint32_t activit
     }
     return ok;
 }
-template bool Solver::addLearntClause(Clause& ps, const uint32_t group, const uint32_t activity);
-template bool Solver::addLearntClause(vec<Lit>& ps, const uint32_t group, const uint32_t activity);
+template bool Solver::addLearntClause(Clause& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group);
+template bool Solver::addLearntClause(vec<Lit>& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group);
 
 /**
 @brief Adds a clause to the problem. Should ONLY be called internally

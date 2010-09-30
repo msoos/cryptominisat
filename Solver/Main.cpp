@@ -458,7 +458,7 @@ int main(int argc, char** argv)
                 cout << "ERROR! wrong maximum dumped learnt clause size is illegal: " << tmp << endl;
                 exit(0);
             }
-            solver->maxDumpLearntsSize = (uint32_t)tmp;
+            S.maxDumpLearntsSize = (uint32_t)tmp;
         } else if ((value = hasPrefix(argv[i], "--maxsolutions="))) {
             int tmp;
             if (sscanf(value, "%d", &tmp) < 0 || tmp < 0) {

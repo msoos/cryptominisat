@@ -123,7 +123,7 @@ public:
     template<class T>
     bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool addLearntClause(T& ps, const uint32_t group, const uint32_t activity);
+    bool addLearntClause(T& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group);
 
     // Solving:
     //
