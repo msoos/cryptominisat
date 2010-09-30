@@ -203,13 +203,16 @@ const bool XorFinder::findXors(uint32_t& sumLengths)
         cout << "- Found clauses:" << endl;
         #endif
 
-        for (ClauseTable::iterator it = begin; it != end; it++)
+        for (ClauseTable::iterator it = begin; it != end; it++) {
+            //This clause belongs to the xor we found?
+            //(i.e. does it have the correct number of inverted literals?)
             if (impairSigns(*it->first) == impair){
-            #ifdef VERBOSE_DEBUG
-            it->first->plainPrint();
-            #endif
-            toRemove[it->second] = true;
-            solver.removeClause(*it->first);
+                #ifdef VERBOSE_DEBUG
+                it->first->plainPrint();
+                #endif
+                toRemove[it->second] = true;
+                solver.removeClause(*it->first);
+            }
         }
 
         switch(lits.size()) {
