@@ -973,7 +973,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     //the slower this thing gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
     //bool thisDoMinLMoreRecur = doMinimLMoreRecur || (clauseSize <= 5 && tot_literals < 80000000);
-    bool thisDoMinLMoreRecur = true;
+    bool thisDoMinLMoreRecur = (cl.size() <= 5);
     uint32_t moreRecurProp = 0;
     if (thisDoMinLMoreRecur) moreRecurMinLDo++;
 
