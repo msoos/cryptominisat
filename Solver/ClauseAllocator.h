@@ -65,7 +65,7 @@ class ClauseAllocator {
     public:
         ClauseAllocator();
         ~ClauseAllocator();
-        
+
         template<class T>
         Clause* Clause_new(const T& ps, const uint32_t group, const bool learnt = false);
         template<class T>
@@ -105,7 +105,7 @@ class ClauseAllocator {
         void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate);
 
         void updateOffsets(vec<vec<Watched> >& watches);
-        
+
         vec<uint32_t*> dataStarts; ///<Stacks start at these positions
         vec<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack
         /**

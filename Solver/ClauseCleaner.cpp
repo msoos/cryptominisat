@@ -39,10 +39,10 @@ void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, con
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
     #endif
-    
+
     if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
         return;
-    
+
     uint32_t i,j;
     for (i = j = 0; i < cs.size(); i++) {
         if (satisfied(*cs[i]))
@@ -51,7 +51,7 @@ void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, con
             cs[j++] = cs[i];
     }
     cs.shrink(i - j);
-    
+
     lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
 }
 
@@ -60,10 +60,10 @@ void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const 
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
     #endif
-    
+
     if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
         return;
-    
+
     Clause **i,**j, **end;
     for (i = j = cs.getData(), end = i + cs.size(); i != end; i++) {
         if (i+1 != end)
@@ -74,7 +74,7 @@ void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const 
             *j++ = *i;
     }
     cs.shrink(i - j);
-    
+
     lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
 }
 

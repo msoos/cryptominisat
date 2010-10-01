@@ -29,26 +29,48 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ClauseOffset.h"
 #include "SolverTypes.h"
 
+/**
+@brief An element in the watchlist. Natively contains 2- and 3-long clauses, others are referenced by pointer
+
+This class contains two 32-bit datapieces. They are either used as:
+\li One literal, in the case of binary clauses
+\li Two literals, in the case of tertiary clauses
+\li One blocking literal (i.e. an example literal from the clause) and a clause
+offset (as per ClauseAllocator ), in the case of normal clauses
+\li A clause offset (as per ClauseAllocator) for xor clauses
+*/
 class Watched {
     public:
-        Watched(const ClauseOffset offset, Lit blockedLit) //for normal clause
+        /**
+        @brief Constructor for a >3-long normal clause
+        */
+        Watched(const ClauseOffset offset, Lit blockedLit)
         {
             data1 = (uint32_t)1 + (blockedLit.toInt() << 2);
             data2 = (uint32_t)offset;
         }
 
-        Watched(const ClauseOffset offset) //for xor-clause
+        /**
+        @brief Constructor for an xor-clause
+        */
+        Watched(const ClauseOffset offset)
         {
             data1 = (uint32_t)2;
             data2 = (uint32_t)offset;
         }
 
-        Watched(const Lit lit) //for binary clause
+        /**
+        @brief Constructor for a binary clause
+        */
+        Watched(const Lit lit)
         {
             data1 = (uint32_t)0 + (lit.toInt() << 2);
         }
 
-        Watched(const Lit lit1, const Lit lit2) //for binary clause
+        /**
+        @brief Constructor for a 3-long, non-xor clause
+        */
+        Watched(const Lit lit1, const Lit lit2)
         {
             data1 = (uint32_t)3 + (lit1.toInt() << 2);
             data2 = lit2.toInt();
@@ -59,6 +81,9 @@ class Watched {
             data2 = (uint32_t)offset;
         }
 
+        /**
+        @brief To update the example literal (blocked literal) of a >3-long normal clause
+        */
         void setBlockedLit(const Lit lit)
         {
             #ifdef DEBUG_WATCHED
@@ -92,6 +117,9 @@ class Watched {
             return ((data1&3) == 3);
         }
 
+        /**
+        @brief Get the sole other lit of the binary clause, or get lit2 of the tertiary clause
+        */
         const Lit getOtherLit() const
         {
             #ifdef DEBUG_WATCHED
@@ -100,6 +128,9 @@ class Watched {
             return data1AsLit();
         }
 
+        /**
+        @brief Get the 3rd literal of a 3-long clause
+        */
         const Lit getOtherLit2() const
         {
             #ifdef DEBUG_WATCHED
@@ -108,6 +139,9 @@ class Watched {
             return data2AsLit();
         }
 
+        /**
+        @brief Get example literal (blocked lit) of a normal >3-long clause
+        */
         const Lit getBlockedLit() const
         {
             #ifdef DEBUG_WATCHED
@@ -116,6 +150,9 @@ class Watched {
             return data1AsLit();
         }
 
+        /**
+        @brief Get offset of a >3-long normal clause or of an xor clause (which may be 3-long)
+        */
         const ClauseOffset getOffset() const
         {
             #ifdef DEBUG_WATCHED
@@ -135,10 +172,13 @@ class Watched {
             return (Lit::toLit(data2));
         }
 
-        uint32_t data1; //blocked lit
-        uint32_t data2; //offset (if normal/xor Clause)
+        uint32_t data1; ///<Either the other lit (for bin clauses) or the blocked lit it stored here
+        uint32_t data2; ///<Either the offset (for >3-long normal, or xor clauses) or the 3rd literal (for 3-long clauses) is stored here
 };
 
+/**
+@brief Orders the watchlists such that the order is binary, tertiary, normal, xor
+*/
 struct WatchedSorter
 {
     bool operator () (const Watched& x, const Watched& y);
@@ -158,11 +198,5 @@ inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
     //don't bother sorting these
     return false;
 }
-
-class WatchedBin {
-    public:
-        WatchedBin(Lit _impliedLit) : impliedLit(_impliedLit) {};
-        Lit impliedLit;
-};
 
 #endif //WATCHED_H

@@ -118,7 +118,7 @@ Solver::Solver() :
         , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
         , numShrinkedClause(0), numShrinkedClauseLits(0)
-        
+
         #ifdef USE_GAUSS
         , sum_gauss_called (0)
         , sum_gauss_confl  (0)
@@ -128,11 +128,11 @@ Solver::Solver() :
         , ok               (true)
         , var_inc          (128)
         , cla_inc          (1)
-        
+
         , curRestart       (1)
         , nbclausesbeforereduce (NBCLAUSESBEFOREREDUCE)
         , nbCompensateSubsumer (0)
-        
+
         , qhead            (0)
         , simpDB_assigns   (-1)
         , simpDB_props     (0)
@@ -979,7 +979,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
 
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
-        
+
         if (update && restartType == static_restart && confl.isClause() && confl.getClause()->learnt())
             claBumpActivity(*confl.getClause());
 
@@ -1084,7 +1084,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     }
 
     if (out_learnt.size() == 1) return NULL;
-    
+
     if (oldConfl.isClause() && !oldConfl.getClause()->isXor()
         && out_learnt.size() < oldConfl.getClause()->size()) {
         if (!subset(out_learnt, *oldConfl.getClause(), seen))
@@ -1093,7 +1093,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         improvedClauseSize += oldConfl.getClause()->size() - out_learnt.size();
         return oldConfl.getClause();
     }
-    
+
     return NULL;
 }
 
@@ -1614,7 +1614,7 @@ inline const uint32_t Solver::calcNBLevels(const T& ps)
 bool  reduceDB_ltMiniSat::operator () (const Clause* x, const Clause* y) {
     const uint32_t xsize = x->size();
     const uint32_t ysize = y->size();
-    
+
     // First criteria
     if (xsize > 2 && ysize == 2) return 1;
     if (ysize > 2 && xsize == 2) return 0;
@@ -1623,15 +1623,15 @@ bool  reduceDB_ltMiniSat::operator () (const Clause* x, const Clause* y) {
         return xsize > ysize;
     else return x->getMiniSatAct() < y->getMiniSatAct();
 }
-    
+
 bool  reduceDB_ltGlucose::operator () (const Clause* x, const Clause* y) {
     const uint32_t xsize = x->size();
     const uint32_t ysize = y->size();
-    
+
     // First criteria
     if (xsize > 2 && ysize == 2) return 1;
     if (ysize > 2 && xsize == 2) return 0;
-    
+
     if (x->getGlue() > y->getGlue()) return 1;
     if (x->getGlue() < y->getGlue()) return 0;
     return xsize > ysize;
@@ -1652,7 +1652,7 @@ void Solver::reduceDB()
         std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
     else
         std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
-    
+
     #ifdef VERBOSE_DEBUG
     std::cout << "Cleaning clauses" << std::endl;
     for (uint32_t i = 0; i != learnts.size(); i++) {
@@ -1661,7 +1661,7 @@ void Solver::reduceDB()
         << " \tsize:" << learnts[i]->size() << std::endl;
     }
     #endif
-    
+
 
     const uint32_t removeNum = (double)learnts.size() / (double)RATIOREMOVECLAUSES;
     for (i = j = 0; i != removeNum; i++){
@@ -2121,7 +2121,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     #ifdef BURST_SEARCH
     if (verbosity >= 3)
         std::cout << "c " << std::setw(24) << " "
-        << "Simplifying problem for " << std::setw(8) << numConfls << " confls" 
+        << "Simplifying problem for " << std::setw(8) << numConfls << " confls"
         << std::endl;
     random_var_freq = 1;
     simplifying = true;

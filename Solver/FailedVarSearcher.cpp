@@ -263,14 +263,14 @@ const bool FailedVarSearcher::search()
             lastTimeWentUntilBin = binCl;
             break;
         }
-        
+
         Clause& cl = *solver.binaryClauses[binCl];
         if (solver.value(cl[0]) == l_Undef && solver.value(cl[1]) == l_Undef) {
             if (!tryBoth(cl[0], cl[1]))
                 goto end;
         }
     }*/
-    
+
     /*for (Clause **it = solver.clauses.getData(), **end = solver.clauses.getDataEnd(); it != end; it++) {
         Clause& c = **it;
         for (uint i = 0; i < c.size(); i++) {
@@ -278,10 +278,10 @@ const bool FailedVarSearcher::search()
         }
         if (!tryAll(c.getData(), c.getDataEnd()))
             goto end;
-        
+
         next:;
     }
-    
+
     for (Clause **it = solver.learnts.getData(), **end = solver.learnts.getDataEnd(); it != end; it++) {
         Clause& c = **it;
         for (uint i = 0; i < c.size(); i++) {
@@ -289,7 +289,7 @@ const bool FailedVarSearcher::search()
         }
         if (!tryAll(c.getData(), c.getDataEnd()))
             goto end;
-        
+
         next2:;
     }*/
 

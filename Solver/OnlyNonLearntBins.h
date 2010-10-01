@@ -39,6 +39,16 @@ class OnlyNonLearntBins
     public:
         OnlyNonLearntBins(Solver& solver);
 
+        /**
+        @brief For storing a binary clause
+        */
+        class WatchedBin {
+        public:
+            static void removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit);
+            WatchedBin(Lit _impliedLit) : impliedLit(_impliedLit) {};
+            Lit impliedLit;
+        };
+
         //propagation
         const bool propagate();
         const bool propagateBinExcept(const Lit& exceptLit);
@@ -66,9 +76,20 @@ inline const uint32_t OnlyNonLearntBins::getWatchSize(const Lit lit) const
     return binwatches[lit.toInt()].size();
 }
 
-inline const vec<vec<WatchedBin> >& OnlyNonLearntBins::getBinWatches() const
+inline const vec<vec<OnlyNonLearntBins::WatchedBin> >& OnlyNonLearntBins::getBinWatches() const
 {
     return binwatches;
+}
+
+inline void OnlyNonLearntBins::WatchedBin::removeWBinAll(vec<OnlyNonLearntBins::WatchedBin> &ws, const Lit impliedLit)
+{
+    WatchedBin *i = ws.getData();
+    WatchedBin *j = i;
+    for (WatchedBin* end = ws.getDataEnd(); i != end; i++) {
+        if (i->impliedLit != impliedLit)
+            *j++ = *i;
+    }
+    ws.shrink(i-j);
 }
 
 #endif //ONLYNONLEARNTBINS_H

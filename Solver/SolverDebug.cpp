@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 
 #ifdef DEBUG_ATTACH
+//warning This needs to be fixed!
 void Solver::testAllClauseAttach() const
 {
     for (Clause *const*it = clauses.getData(), *const*end = clauses.getDataEnd(); it != end; it++) {
@@ -113,17 +114,17 @@ const bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
     #ifdef VERBOSE_DEBUG
     cout << "Checking xor-clauses whether they have been properly satisfied." << endl;;
     #endif
-    
+
     bool verificationOK = true;
-    
+
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
         XorClause& c = *xorclauses[i];
         bool final = c.xorEqualFalse();
-        
+
         #ifdef VERBOSE_DEBUG
         printXorClause(*cs[i], c.xorEqualFalse());
         #endif
-        
+
         for (uint32_t j = 0; j < c.size(); j++) {
             assert(modelValue(c[j].unsign()) != l_Undef);
             final ^= (modelValue(c[j].unsign()) == l_True);
@@ -134,7 +135,7 @@ const bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
             verificationOK = false;
         }
     }
-    
+
     return verificationOK;
 }
 
@@ -143,22 +144,22 @@ const bool Solver::verifyClauses(const vec<Clause*>& cs) const
     #ifdef VERBOSE_DEBUG
     cout << "Checking clauses whether they have been properly satisfied." << endl;;
     #endif
-    
+
     bool verificationOK = true;
-    
+
     for (uint32_t i = 0; i != cs.size(); i++) {
         Clause& c = *cs[i];
         for (uint32_t j = 0; j < c.size(); j++)
             if (modelValue(c[j]) == l_True)
                 goto next;
-            
+
         printf("unsatisfied clause: ");
         cs[i]->plainPrint();
         verificationOK = false;
         next:
         ;
     }
-    
+
     return verificationOK;
 }
 
@@ -168,7 +169,7 @@ const bool Solver::verifyModel() const
     verificationOK &= verifyClauses(clauses);
     verificationOK &= verifyClauses(binaryClauses);
     verificationOK &= verifyXorClauses(xorclauses);
-    
+
     if (verbosity >=1 && verificationOK)
         printf("c Verified %d clauses.\n", clauses.size() + xorclauses.size());
 
@@ -182,10 +183,10 @@ void Solver::checkLiteralCount()
     int cnt = 0;
     for (uint32_t i = 0; i != clauses.size(); i++)
         cnt += clauses[i]->size();
-    
+
     for (uint32_t i = 0; i != xorclauses.size(); i++)
         cnt += xorclauses[i]->size();
-    
+
     if ((int)clauses_literals != cnt) {
         fprintf(stderr, "literal count: %d, real value = %d\n", (int)clauses_literals, cnt);
         assert((int)clauses_literals == cnt);

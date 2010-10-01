@@ -101,7 +101,6 @@ static void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
 static bool    findWBin(const vec<Watched>& ws, const Lit impliedLit);
 static void    removeWBin(vec<Watched> &ws, const Lit impliedLit);
 static void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
-static void    removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit);
 static void    removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
 
 //Xor Clause
@@ -172,17 +171,6 @@ static inline void removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
-}
-
-static inline void removeWBinAll(vec<WatchedBin> &ws, const Lit impliedLit)
-{
-    WatchedBin *i = ws.getData();
-    WatchedBin *j = i;
-    for (WatchedBin* end = ws.getDataEnd(); i != end; i++) {
-        if (i->impliedLit != impliedLit)
-            *j++ = *i;
-    }
-    ws.shrink(i-j);
 }
 
 static inline void removeWBinAll(vec<Watched> &ws, const Lit impliedLit)

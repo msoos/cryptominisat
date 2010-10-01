@@ -162,7 +162,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         << " (maxSize: " << ((unsigned long)1 << (EFFECTIVELY_USEABLE_BITS - NUM_BITS_OUTER_OFFSET))
         << ")" << std::endl;
         #endif //DEBUG_CLAUSEALLOCATOR
-        
+
         uint32_t *dataStart = (uint32_t*)malloc(nextSize*sizeof(uint32_t));
         assert(dataStart != NULL);
         dataStarts.push(dataStart);
@@ -396,7 +396,7 @@ void ClauseAllocator::consolidate(Solver* solver)
                     outerPart++;
                 }
                 memcpy(newDataStartsPointers[outerPart], dataStarts[i] + currentLoc, sizeNeeded*sizeof(uint32_t));
- 
+
                 (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newOffset = combineOuterInterOffsets(outerPart, newSizes[outerPart]);
                 (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newPointer = (Clause*)newDataStartsPointers[outerPart];
 
