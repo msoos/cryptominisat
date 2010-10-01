@@ -42,9 +42,11 @@ class DimacsParser
         void skipWhitespace(StreamBuffer& in);
         void skipLine(StreamBuffer& in);
         std::string untilEnd(StreamBuffer& in);
-        int parseInt(StreamBuffer& in);
+        int parseInt(StreamBuffer& in, uint32_t& len);
+        float parseFloat(StreamBuffer& in);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in, vec<Lit>& lits);
+        void readFullClause(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);
         void printHeader(StreamBuffer& in);
         void parseComments(StreamBuffer& in);
@@ -60,7 +62,9 @@ class DimacsParser
         uint32_t debugLibPart; ///<printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
         uint32_t groupId;
         vec<Lit> lits; ///<To reduce temporary creation overhead
-        uint32_t numLearntClause;
+        uint32_t numLearntClauses; ///<Number of learnt non-xor clauses added
+        uint32_t numNormClauses; ///<Number of non-learnt, non-xor claues added
+        uint32_t numXorClauses; ///<Number of non-learnt xor clauses added
 };
 
 #endif //DIMACSPARSER_H

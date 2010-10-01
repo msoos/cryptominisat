@@ -85,6 +85,7 @@ static bool grouping = false;
 static bool debugLib = false;
 static bool debugNewVar = false;
 static bool printResult = true;
+static std::vector<std::string> filesToRead;
 
 //=================================================================================================
 
@@ -189,6 +190,74 @@ static void SIGINT_handler(int signum)
     }
 }
 
+#ifndef DISABLE_ZLIB
+static gzFile openGzFile(int inNum)
+{
+    gzFile in = gzdopen(inNum, "rb");
+    return in;
+}
+
+static gzFile openGzFile(const char* name)
+{
+    gzFile in = gzopen(name, "rb");
+    return in;
+}
+#endif //DISABLE_ZLIB
+
+template<class B>
+static void readInAFile(B stuff, Solver& solver)
+{
+    if ((const char*)stuff == (const char*)fileno(stdin)) {
+        std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
+    } else {
+        std::cout << "c Reading file '" << stuff << "'" << std::endl;
+    }
+    #ifdef DISABLE_ZLIB
+        FILE * in = fopen(stuff, "rb");
+    #else
+        gzFile in = openGzFile(stuff);
+    #endif // DISABLE_ZLIB
+
+    if (in == NULL) {
+        std::cout << "ERROR! Could not open file " << stuff << std::endl;
+        exit(1);
+    }
+
+    DimacsParser parser(&solver, debugLib, debugNewVar, grouping);
+    parser.parse_DIMACS(in);
+
+    #ifdef DISABLE_ZLIB
+        fclose(in);
+    #else
+        gzclose(in);
+    #endif // DISABLE_ZLIB
+}
+
+void parseInAllFiles(Solver& S, int argc, char** argv)
+{
+    double myTime = cpuTime();
+    //FIRST read normal extra files
+    if ((debugLib || debugNewVar) && filesToRead.size() > 0) {
+        std::cout << "debugNewVar and debugLib must both be OFF to parse in extra files" << std::endl;
+        exit(-1);
+    }
+    for (uint32_t i = 0; i < filesToRead.size(); i++) {
+        readInAFile(filesToRead[i].c_str(), S);
+    }
+
+    //Then read the main file or standard input
+    if (argc == 1) {
+        readInAFile(fileno(stdin), S);
+    } else {
+        readInAFile(argv[1], S);
+    }
+
+    if (S.verbosity >= 1) {
+        std::cout << "c Parsing time: "
+        << std::fixed << std::setw(5) << std::setprecision(2) << (cpuTime() - myTime)
+        << " s" << std::endl;
+    }
+}
 
 //=================================================================================================
 // Main:
@@ -253,6 +322,8 @@ void printUsage(char** argv, Solver& S)
     printf("  --dumporig       = <filename> If interrupted or reached restart limit, dump\n");
     printf("                     the original problem instance, simplified to the\n");
     printf("                     current point.\n");
+    printf("  --alsoread       = <filename> Also read this file in\n");
+    printf("                     Can be used to re-read dumped learnts, for example\n");
     printf("  --maxsolutions   = Search for given amount of solutions\n");
     printf("  --nofailedvar    = Don't search for failed vars, and don't search for vars\n");
     printf("                     doubly propagated to the same value\n");
@@ -353,6 +424,8 @@ int main(int argc, char** argv)
 {
     Solver      S;
     S.verbosity = 2;
+    char tmpFilename[201];
+    tmpFilename[0] = '\0';
 
     const char* value;
     int j = 0;
@@ -448,6 +521,12 @@ int main(int argc, char** argv)
                 exit(0);
             }
             S.needToDumpOrig = true;
+        } else if ((value = hasPrefix(argv[i], "--alsoread="))) {
+            if (sscanf(value, "%400s", tmpFilename) < 0 || strlen(tmpFilename) == 0) {
+                printf("ERROR! wrong filename '%s'\n", tmpFilename);
+                exit(0);
+            }
+            filesToRead.push_back(tmpFilename);
         } else if ((value = hasPrefix(argv[i], "--maxdumplearnts="))) {
             if (!S.needToDumpLearnts) {
                 printf("ERROR! -dumplearnts=<filename> must be first activated before issuing -maxdumplearnts=<size>\n");
@@ -597,57 +676,27 @@ int main(int argc, char** argv)
     _FPU_SETCW(newcw);
     if (S.verbosity >= 1) printf("c WARNING: for repeatability, setting FPU to use double precision\n");
 #endif
-    double cpu_time = cpuTime();
 
     solver = &S;
     signal(SIGINT,SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);
 
-    if (argc == 1)
-        printf("c Reading from standard input... Use '-h' or '--help' for help.\n");
-
-#ifdef DISABLE_ZLIB
-    FILE * in = (argc == 1) ? fopen(0, "rb") : fopen(argv[1], "rb");
-#else
-    gzFile in = (argc == 1) ? gzdopen(0, "rb") : gzopen(argv[1], "rb");
-#endif // DISABLE_ZLIB
-    if (in == NULL) {
-        printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]);
-        exit(1);
-    }
-
-    if (S.verbosity >= 1) {
-        printf("c =================================[ Problem Statistics ]==================================\n");
-        printf("c |                                                                                       |\n");
-    }
-
-    DimacsParser parser(&S, debugLib, debugNewVar, grouping);
-    parser.parse_DIMACS(in);
-
-#ifdef DISABLE_ZLIB
-    fclose(in);
-#else
-    gzclose(in);
-#endif // DISABLE_ZLIB
-    if (argc >= 3)
-        printf("c Outputting solution to file: %s\n" , argv[2]);
-
-    double parse_time = cpuTime() - cpu_time;
-    if (S.verbosity >= 1)
-        printf("c |  Parsing time:         %-12.2f s                                                 |\n", parse_time);
-
-    lbool ret;
+    parseInAllFiles(S, argc, argv);
 
     FILE* res = NULL;
     if (argc >= 3) {
+        printf("c Outputting solution to file: %s\n" , argv[2]);
         res = fopen(argv[2], "wb");
         if (res == NULL) {
             int backup_errno = errno;
             printf("Cannot open %s for writing. Problem: %s", argv[2], strerror(backup_errno));
             exit(1);
         }
+    } else {
+        printf("c Ouptutting solution to console\n");
     }
 
+    lbool ret;
     while(1)
     {
         ret = S.solve();

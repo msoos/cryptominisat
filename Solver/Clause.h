@@ -62,7 +62,7 @@ to hold the clause.
 class Clause
 {
 protected:
-    
+
     uint32_t isLearnt:1; ///<Is the clause a learnt clause?
     uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
     /**
@@ -297,7 +297,7 @@ public:
     void print(FILE* to = stdout) const
     {
         plainPrint(to);
-        fprintf(to, "c clause learnt %s glue %d miniSatAct %f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
+        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
     }
 
     void plainPrint(FILE* to = stdout) const
