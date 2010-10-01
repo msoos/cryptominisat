@@ -42,6 +42,9 @@ typedef uint32_t Var;
 #define var_Undef (0xffffffffU >>1)
 enum RestartType {dynamic_restart, static_restart, auto_restart};
 
+/**
+@brief A Literal, i.e. a variable with a sign
+*/
 class Lit
 {
     uint32_t     x;
@@ -78,6 +81,9 @@ public:
     bool operator!= (const Lit& p) const {
         return x != p.x;
     }
+    /**
+    @brief ONLY to be used for ordering such as: a, b, ~b, etc.
+    */
     bool operator <  (const Lit& p) const {
         return x < p.x;     // '<' guarantees that p, ~p are adjacent in the ordering.
     }
@@ -153,6 +159,9 @@ const lbool l_False = toLbool(-1);
 const lbool l_Undef = toLbool( 0);
 
 
+/**
+@brief A very hackish lbool that also supports l_Nothing and l_Continue
+*/
 class llbool
 {
     char value;
