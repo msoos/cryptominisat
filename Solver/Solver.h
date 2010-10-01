@@ -119,9 +119,9 @@ public:
     //
     Var     newVar    (bool dvar = true);           // Add a new variable with parameters specifying variable mode.
     template<class T>
-    bool    addClause (T& ps, const uint32_t group = 0, char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addClause (T& ps, const uint32_t group = 0, const char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, const char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
     bool addLearntClause(T& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group);
 
@@ -259,7 +259,7 @@ public:
     //Logging
     void needStats();              // Prepares the solver to output statistics
     void needProofGraph();         // Prepares the solver to output proof graphs during solving
-    void setVariableName(Var var, char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
+    void setVariableName(const Var var, const char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
     const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
     const vec<Clause*>& get_learnts() const; //Get all learnt clauses that are >1 long
     const vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
@@ -705,14 +705,14 @@ inline void     Solver::needProofGraph()
     dynamic_behaviour_analysis = true;    // Sets the solver and the logger up to generate proof graphs during solving
     logger.proof_graph_on = true;
 }
-inline void     Solver::setVariableName(Var var, char* name)
+inline void     Solver::setVariableName(const Var var, const char* name)
 {
     while (var >= nVars()) newVar();
     if (dynamic_behaviour_analysis)
         logger.set_variable_name(var, name);
 } // Sets the varible 'var'-s name to 'name' in the logger
 #else
-inline void     Solver::setVariableName(Var var, char* name)
+inline void     Solver::setVariableName(const Var var, const char* name)
 {}
 #endif
 

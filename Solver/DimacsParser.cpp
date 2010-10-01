@@ -27,14 +27,13 @@ using std::endl;
 
 #include "Solver.h"
 
-#define MAX_NAMES_SIZE 1000
-
 DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _debugNewVar, const bool _grouping, const bool _addAsLearnt):
     solver(_solver)
     , debugLib(_debugLib)
     , debugNewVar(_debugNewVar)
     , grouping(_grouping)
     , addAsLearnt(_addAsLearnt)
+    , groupId(0)
 {}
 
 /**
@@ -62,21 +61,18 @@ void DimacsParser::skipLine(StreamBuffer& in)
 }
 
 /**
-@brief Returns line until the end of line into "ret"
+@brief Returns line until the end of line
 */
-void DimacsParser::untilEnd(StreamBuffer& in, char* ret)
+std::string DimacsParser::untilEnd(StreamBuffer& in)
 {
-    uint32_t sizeRead = 0;
-    for (;sizeRead < MAX_NAMES_SIZE-1; sizeRead++) {
-        if (*in == EOF || *in == '\0') return;
-        if (*in == '\n') {
-            return;
-        }
-        *ret = *in;
-        ret++;
-        *ret = '\0';
+    std::string ret;
+
+    while(*in != EOF && *in != '\0' && *in != '\n') {
+        ret += *in;
         ++in;
     }
+
+    return ret;
 }
 
 /**
@@ -103,6 +99,11 @@ std::string DimacsParser::stringify(uint32_t x)
     return o.str();
 }
 
+/**
+@brief Parse a continious set of characters from "in" to "str".
+
+\todo EOF is not checked for!!
+*/
 void DimacsParser::parseString(StreamBuffer& in, std::string& str)
 {
     str.clear();
@@ -157,15 +158,155 @@ people believe it's validated
 void DimacsParser::printHeader(StreamBuffer& in)
 {
     if (match(in, "p cnf")) {
-                int vars    = parseInt(in);
-                int clauses = parseInt(in);
-                if (solver->verbosity >= 1) {
-                    printf("c |  Number of variables:  %-12d                                                   |\n", vars);
-                    printf("c |  Number of clauses:    %-12d                                                   |\n", clauses);
-                }
-            } else {
-                printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
-            }
+        int vars    = parseInt(in);
+        int clauses = parseInt(in);
+        if (solver->verbosity >= 1) {
+            printf("c |  Number of variables:  %-12d                                                   |\n", vars);
+            printf("c |  Number of clauses:    %-12d                                                   |\n", clauses);
+        }
+    } else {
+        printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
+    }
+}
+
+/**
+@brief Parse up comment lines which could contain important information
+
+In CryptoMiniSat we save quite a bit of information in the comment lines.
+These need to be parsed up. This function achieves that.
+*/
+void DimacsParser::parseComments(StreamBuffer& in)
+{
+    ++in;
+    std::string str;
+    parseString(in, str);
+    if (str == "v" || str == "var") {
+        int var = parseInt(in);
+        skipWhitespace(in);
+        if (var <= 0) cout << "PARSE ERROR! Var number must be a positive integer" << endl, exit(3);
+        std::string name = untilEnd(in);
+        solver->setVariableName(var-1, name.c_str());
+    } else if (debugLib && str == "Solver::solve()") {
+        lbool ret = solver->solve();
+        std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
+        FILE* res = fopen(s.c_str(), "w");
+        if (ret == l_True) {
+            fprintf(res, "SAT\n");
+            for (Var i = 0; i != solver->nVars(); i++)
+                if (solver->model[i] != l_Undef)
+                    fprintf(res, "%s%s%d", (i==0)?"":" ", (solver->model[i]==l_True)?"":"-", i+1);
+                fprintf(res, " 0\n");
+        } else if (ret == l_False) {
+            fprintf(res, "UNSAT\n");
+        } else if (ret == l_Undef) {
+            assert(false);
+        } else {
+            assert(false);
+        }
+        fclose(res);
+        debugLibPart++;
+    } else if (debugNewVar && str == "Solver::newVar()") {
+        solver->newVar();
+    } else {
+        //printf("didn't understand in CNF file: 'c %s'\n", str.c_str());
+        skipLine(in);
+    }
+}
+
+void DimacsParser::readClause(StreamBuffer& in)
+{
+    bool xor_clause = false;
+    bool learnt = false;
+    uint32_t glue;
+    uint32_t miniSatAct;
+    std::string name;
+    std::string str;
+
+    //read in the actual clause
+    if ( *in == 'x') xor_clause = true, ++in;
+    readClause(in, lits);
+    skipLine(in);
+
+    //now read in grouping information, etc.
+    if (!grouping) groupId++;
+    else {
+        if (*in != 'c') {
+            cout << "PARSE ERROR! Group must be present after earch clause ('c' missing after clause line)" << endl;
+            exit(3);
+        }
+        ++in;
+
+        parseString(in, str);
+        if (str != "g" && str != "group") {
+            cout << "PARSE ERROR! Group must be present after each clause('group' missing)!" << endl;
+            cout << "Instead of 'group' there was:" << str << endl;
+            exit(3);
+        }
+
+        groupId = parseInt(in);
+        if (groupId <= 0) printf("PARSE ERROR! Group number must be a positive integer\n"), exit(3);
+
+        skipWhitespace(in);
+        name = untilEnd(in);
+    }
+    if (*in == 'c') {
+        parseString(in, str);
+        if (str != "clause") {
+            skipLine(in);
+            goto addTheClause;
+        }
+        ++in;
+        parseString(in, str);
+        if (str != "learnt") {
+            skipLine(in);
+            goto addTheClause;
+        }
+
+        //Parse in if we are a learnt clause or not
+        parseString(in, str);
+        if (str == "yes") learnt = true;
+        else if (str == "no") learnt = false;
+        else {
+            cout << "PARSE ERROR: learnt is not yes/no" << std::endl;
+        }
+        ++in;
+
+        //Parse in Glue value
+        parseString(in, str);
+        if (str != "glue") {
+            skipLine(in);
+            goto addTheClause;
+        }
+        ++in;
+        glue = parseInt(in);
+
+        //Parse in MiniSat activity
+        ++in;
+        parseString(in, str);
+        if (str != "miniSatAct") {
+            skipLine(in);
+            goto addTheClause;
+        }
+        miniSatAct = parseFloat(in);
+        skipLine(in);
+    }
+
+    addTheClause:
+    //add the clause
+    if (xor_clause) {
+        bool xorEqualFalse = false;
+        for (uint32_t i = 0; i < lits.size(); i++) {
+            xorEqualFalse ^= lits[i].sign();
+        }
+        solver->addXorClause(lits, xorEqualFalse, group, name.c_str());
+    } else {
+        if (!addAsLearnt) {
+            solver->addClause(lits, group, name.c_str());
+        } else {
+            solver->addLearntClause(lits, 0, 0, 0);
+            numLearntClause++;
+        }
+    }
 }
 
 /**
@@ -178,12 +319,7 @@ calls for library-debugging
 */
 void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
 {
-    vec<Lit> lits;
-    int group = 0;
     std::string str;
-    uint32_t debugLibPart = 1;
-    char name[MAX_NAMES_SIZE];
-    uint32_t numLearntClause = 0;
 
 
     for (;;) {
@@ -196,86 +332,10 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             printHeader(in);
             break;
         case 'c':
-            ++in;
-            parseString(in, str);
-            if (str == "v" || str == "var") {
-                int var = parseInt(in);
-                skipWhitespace(in);
-                if (var <= 0) cout << "PARSE ERROR! Var number must be a positive integer" << endl, exit(3);
-                name[0] = '\0';
-                untilEnd(in, name);
-                solver->setVariableName(var-1, name);
-            } else if (debugLib && str == "Solver::solve()") {
-                lbool ret = solver->solve();
-                std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
-                FILE* res = fopen(s.c_str(), "w");
-                if (ret == l_True) {
-                    fprintf(res, "SAT\n");
-                    for (Var i = 0; i != solver->nVars(); i++)
-                        if (solver->model[i] != l_Undef)
-                            fprintf(res, "%s%s%d", (i==0)?"":" ", (solver->model[i]==l_True)?"":"-", i+1);
-                        fprintf(res, " 0\n");
-                } else if (ret == l_False) {
-                    fprintf(res, "UNSAT\n");
-                } else if (ret == l_Undef) {
-                    assert(false);
-                } else {
-                    assert(false);
-                }
-                fclose(res);
-                debugLibPart++;
-            } else if (debugNewVar && str == "Solver::newVar()") {
-                solver->newVar();
-            } else {
-                //printf("didn't understand in CNF file: 'c %s'\n", str.c_str());
-                skipLine(in);
-            }
+            parseComments(in);
             break;
         default:
-            bool xor_clause = false;
-            if ( *in == 'x') xor_clause = true, ++in;
-            readClause(in, lits);
-            skipLine(in);
-
-            name[0] = '\0';
-
-            if (!grouping) group++;
-            else {
-                if (*in != 'c') {
-                    cout << "PARSE ERROR! Group must be present after earch clause ('c' missing after clause line)" << endl;
-                    exit(3);
-                }
-                ++in;
-
-                parseString(in, str);
-                if (str != "g" && str != "group") {
-                    cout << "PARSE ERROR! Group must be present after each clause('group' missing)!" << endl;
-                    cout << "Instead of 'group' there was:" << str << endl;
-                    exit(3);
-                }
-
-                group = parseInt(in);
-                if (group <= 0) printf("PARSE ERROR! Group number must be a positive integer\n"), exit(3);
-
-                skipWhitespace(in);
-                untilEnd(in, name);
-            }
-
-            if (xor_clause) {
-                bool xorEqualFalse = false;
-                for (uint32_t i = 0; i < lits.size(); i++) {
-                    xorEqualFalse ^= lits[i].sign();
-                }
-                solver->addXorClause(lits, xorEqualFalse, group, name);
-                assert(!addAsLearnt);
-            } else {
-                if (!addAsLearnt) {
-                    solver->addClause(lits, group, name);
-                } else {
-                    solver->addLearntClause(lits, 0, 0, 0);
-                    numLearntClause++;
-                }
-            }
+            readClause(in);
             break;
         }
     }
@@ -287,6 +347,8 @@ void DimacsParser::parse_DIMACS(FILE * input_stream)
 void DimacsParser::parse_DIMACS(gzFile input_stream)
 #endif // DISABLE_ZLIB
 {
+    debugLibPart = 1;
+    numLearntClause = 0;
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
 }

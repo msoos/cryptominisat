@@ -341,7 +341,7 @@ and then calls addXorClauseInt() to actually add the xor clause.
 @p xorEqualFalse The xor must be equal to TRUE or false?
 */
 template<class T>
-bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, char* group_name)
+bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, const char* group_name)
 {
     assert(decisionLevel() == 0);
     if (ps.size() > (0x01UL << 18)) {
@@ -389,8 +389,8 @@ bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, char*
     return ok;
 }
 
-template bool Solver::addXorClause(vec<Lit>& ps, bool xorEqualFalse, const uint32_t group, char* group_name);
-template bool Solver::addXorClause(XorClause& ps, bool xorEqualFalse, const uint32_t group, char* group_name);
+template bool Solver::addXorClause(vec<Lit>& ps, bool xorEqualFalse, const uint32_t group, const char* group_name);
+template bool Solver::addXorClause(XorClause& ps, bool xorEqualFalse, const uint32_t group, const char* group_name);
 
 
 /**
@@ -476,7 +476,7 @@ it acts on them such that they are correct, and calls addClauseInt() to do
 the heavy-lifting
 */
 template<class T>
-bool Solver::addClause(T& ps, const uint32_t group, char* group_name)
+bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
 {
     assert(decisionLevel() == 0);
     if (ps.size() > (0x01UL << 18)) {
@@ -522,8 +522,8 @@ bool Solver::addClause(T& ps, const uint32_t group, char* group_name)
     return ok;
 }
 
-template bool Solver::addClause(vec<Lit>& ps, const uint32_t group, char* group_name);
-template bool Solver::addClause(Clause& ps, const uint32_t group, char* group_name);
+template bool Solver::addClause(vec<Lit>& ps, const uint32_t group, const char* group_name);
+template bool Solver::addClause(Clause& ps, const uint32_t group, const char* group_name);
 
 /**
 @brief Attaches an xor clause to the watchlists

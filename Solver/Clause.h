@@ -297,9 +297,9 @@ public:
     void print(FILE* to = stdout) const
     {
         plainPrint(to);
-        fprintf(to, "c clause learnt %s group %d glue %d miniSatAct %f\n", (learnt() ? "yes" : "no"), getGroup(), getGlue(), getMiniSatAct());
+        fprintf(to, "c clause learnt %s glue %d miniSatAct %f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
     }
-    
+
     void plainPrint(FILE* to = stdout) const
     {
         for (uint32_t i = 0; i < size(); i++) {
@@ -308,7 +308,7 @@ public:
         }
         fprintf(to, "0\n");
     }
-    
+
     #ifdef STATS_NEEDED
     const uint32_t getGroup() const
     {

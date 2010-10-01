@@ -41,12 +41,13 @@ class DimacsParser
         void parse_DIMACS_main(StreamBuffer& in);
         void skipWhitespace(StreamBuffer& in);
         void skipLine(StreamBuffer& in);
-        void untilEnd(StreamBuffer& in, char* ret);
+        std::string untilEnd(StreamBuffer& in);
         int parseInt(StreamBuffer& in);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in, vec<Lit>& lits);
         bool match(StreamBuffer& in, const char* str);
         void printHeader(StreamBuffer& in);
+        void parseComments(StreamBuffer& in);
         std::string stringify(uint32_t x);
 
 
@@ -55,6 +56,11 @@ class DimacsParser
         const bool debugNewVar;
         const bool grouping;
         const bool addAsLearnt;
+
+        uint32_t debugLibPart; ///<printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
+        uint32_t groupId;
+        vec<Lit> lits; ///<To reduce temporary creation overhead
+        uint32_t numLearntClause;
 };
 
 #endif //DIMACSPARSER_H
