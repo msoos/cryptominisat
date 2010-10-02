@@ -379,7 +379,6 @@ protected:
 public:
     friend class ClauseAllocator;
 
-
     inline const bool xorEqualFalse() const
     {
         return invertedXor;

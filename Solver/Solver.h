@@ -255,6 +255,7 @@ public:
     uint64_t improvedClauseSize; ///<Num literals removed using on-the-fly subsumption
     uint64_t numShrinkedClause; ///<Num clauses improved using on-the-fly self-subsuming resolution
     uint64_t numShrinkedClauseLits; ///<Num literals removed by on-the-fly self-subsuming resolution
+    uint64_t moreRecurMinLDo, moreRecurMinLDoLit, moreRecurMinLStop; ///<Stats about transitive on-the-fly self-subsuming resolution
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -309,7 +310,7 @@ protected:
     uint32_t sum_gauss_prop;
     uint32_t sum_gauss_unit_truths;
     #endif //USE_GAUSS
-    
+
     template <class T>
     Clause* addClauseInt(T& ps, uint32_t group);
     template<class T>
@@ -319,7 +320,7 @@ protected:
     //Handling Watched
     //////////////////
     void sortWatched();
-    
+
     // Helper structures:
     //
     struct VarOrderLt {
@@ -474,7 +475,7 @@ protected:
     //
     uint32_t decisionLevel    ()      const; // Gives the current decisionlevel.
     uint32_t abstractLevel    (const Var& x) const; // Used to represent an abstraction of sets of decision levels.
-    
+
     //Xor-finding related stuff
     friend class VarFilter;
     friend class Gaussian;
@@ -582,7 +583,7 @@ inline void Solver::varBumpActivity(Var v)
         var_inc >>= 14;
         //var_inc = 1;
         //std::cout << "var_inc: " << var_inc << std::endl;
-        
+
         /*Heap<VarOrderLt> copy_order_heap2(order_heap);
         while(!copy_order_heap2.empty()) {
             Var v = copy_order_heap2.getmin();
@@ -758,13 +759,13 @@ inline const uint32_t Solver::get_unitary_learnts_num() const
         for (int k = 0, size = c.size(); k != size; k++ ) {
             const lbool& val = assigns[c[k].var()];
             assert(val != l_Undef);
-            
+
             c[k] = c[k].unsign() ^ val.getBool();
             final ^= val.getBool();
         }
         if (final)
             c[0] = c[0].unsign() ^ !assigns[c[0].var()].getBool();
-        
+
         c.setUpdateNeeded(false);
     }
 }*/
@@ -817,7 +818,7 @@ inline void Solver::findAllAttach() const
 inline void Solver::uncheckedEnqueueLight(const Lit p)
 {
     assert(assigns[p.var()] == l_Undef);
-    
+
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
 }

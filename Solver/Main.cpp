@@ -142,6 +142,9 @@ void printStats(Solver& solver)
     //Clause-shrinking through watchlists
     printStatsLine("c OTF cl watch-shrink", solver.numShrinkedClause, (double)solver.numShrinkedClause/(double)solver.conflicts, "clauses/conflict");
     printStatsLine("c OTF cl watch-sh-lit", solver.numShrinkedClauseLits, (double)solver.numShrinkedClauseLits/(double)solver.numShrinkedClause, " lits/clause");
+    printStatsLine("c tried to recurMin cls", solver.moreRecurMinLDo, (double)solver.moreRecurMinLDo/(double)solver.conflicts*100.0, " % of conflicts");
+    printStatsLine("c stopped recurMin", solver.moreRecurMinLStop, (double)solver.moreRecurMinLStop/(double)solver.moreRecurMinLDo * 100.0, " %");
+    printStatsLine("c lits visited recurmin:", (double)solver.moreRecurMinLDoLit/(double)solver.moreRecurMinLDo);
 
     #ifdef USE_GAUSS
     if (solver.gaussconfig.decision_until > 0) {

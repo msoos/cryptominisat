@@ -139,7 +139,7 @@ end:
         std::cout << "c Replacing "
         << std::setw(8) << thisTimeReplaced << " vars"
         << " Replaced " <<  std::setw(8) << replacedLits<< " lits"
-        << " Time: " << std::setw(8) << std::fixed << std::setprecision(2) 
+        << " Time: " << std::setw(8) << std::fixed << std::setprecision(2)
         << cpuTime()-time << " s "
         << std::endl;
     }
