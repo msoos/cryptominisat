@@ -548,11 +548,7 @@ void Solver::attachClause(XorClause& c)
 /**
 @brief Attach normal a clause to the watchlists
 
-Handles 2, 3 and >3 clause sizes differently and specially. The 3-long clauses
-MUST be attached such that they are sorted when they are attached. This is
-important, as there are 3 combinations of sorting them, and they are not
-mirror to each other, like the 2-long cluses in the watchlists. Detaching
-is similarly somewhat complicated for 3-long clauses therefore
+Handles 2, 3 and >3 clause sizes differently and specially
 */
 void Solver::attachClause(Clause& c)
 {
@@ -564,14 +560,9 @@ void Solver::attachClause(Clause& c)
         watches[index0].push(Watched(c[1]));
         watches[index1].push(Watched(c[0]));
     } else if (c.size() == 3) {
-        Lit copy[3];
-        copy[0] = c[0];
-        copy[1] = c[1];
-        copy[2] = c[2];
-        std::sort(copy, copy+3);
-        watches[(~copy[0]).toInt()].push(Watched(copy[1], copy[2]));
-        watches[(~copy[1]).toInt()].push(Watched(copy[0], copy[2]));
-        watches[(~copy[2]).toInt()].push(Watched(copy[0], copy[1]));
+        watches[index0].push(Watched(c[1], c[2]));
+        watches[index1].push(Watched(c[0], c[2]));
+        watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(&c);
         watches[index0].push(Watched(offset, c[c.size()/2]));
@@ -606,10 +597,6 @@ void Solver::detachClause(const Clause& c)
 The first two literals might have chaned through modification, so they are
 passed along as arguments -- they are needed to find the correct place where
 the clause is
-
-The 3-long clauses is attached such that its literals are sorted. This is
-important, as there are 3 combinations of sorting them, and they are not mirror
-to each other, like the 2-long cluses in the watchlists.
 */
 void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address)
 {
@@ -623,16 +610,15 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(address);
         if (origSize == 3) {
-            Lit copy[3];
-            copy[0] = lit1;
-            copy[1] = lit2;
-            copy[2] = lit3;
-            std::sort(copy+0, copy+3);
+            //The clause might have been longer, and has only recently
+            //became 3-long. Check, and detach accordingly
+            if (findWCl(watches[(~lit1).toInt()], offset)) goto fullClause;
 
-            removeWTri(watches[(~copy[0]).toInt()], copy[1], copy[2]);
-            removeWTri(watches[(~copy[1]).toInt()], copy[0], copy[2]);
-            removeWTri(watches[(~copy[2]).toInt()], copy[0], copy[1]);
+            removeWTri(watches[(~lit1).toInt()], lit2, lit3);
+            removeWTri(watches[(~lit2).toInt()], lit1, lit3);
+            removeWTri(watches[(~lit3).toInt()], lit1, lit2);
         } else {
+            fullClause:
             assert(findWCl(watches[(~lit1).toInt()], offset));
             assert(findWCl(watches[(~lit2).toInt()], offset));
             removeWCl(watches[(~lit1).toInt()], offset);
