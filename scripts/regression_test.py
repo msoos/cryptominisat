@@ -12,15 +12,13 @@ import resource
 import time
 from subprocess import Popen, PIPE, STDOUT
 
-
-maxTime = 25
-maxTimeLimit = 20
-
+maxTime = 10
+maxTimeLimit = 5
 
 def setlimits():
-  # Set maximum CPU time to 1 second in child process, after fork() but before exec()
-  #sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" %(os.getpid(), numsecs))
-  resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
+    # Set maximum CPU time to 1 second in child process, after fork() but before exec()
+    #sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" %(os.getpid(), numsecs))
+    resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 class Tester:
 
@@ -36,7 +34,7 @@ class Tester:
   differentDirForCheck = "/home/soos/Development/sat_solvers/satcomp09/"
   ignoreNoSolution = False
   arminFuzzer = False
-  
+
   def __init__(self):
     self.sumTime = 0.0
     self.sumProp = 0
@@ -52,28 +50,27 @@ class Tester:
     self.ignoreNoSolution = False
     self.arminFuzzer = False
 
-  def execute(self, fname, i, newVar):
+  def execute(self, fname, randomizeNum, newVar, needToLimitTime):
     if (os.path.isfile(self.cryptominisat) != True) :
-            print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
-            exit()
+        print "Cannot file CryptoMiniSat executable. Searched in: '%s'" %(self.cryptominisat)
+        exit()
 
-    command = "%s --randomize=%d --debuglib "%(self.cryptominisat, i)
+    command = "%s --randomize=%d --debuglib "%(self.cryptominisat, randomizeNum)
     if (newVar) :
         command += "--debugnewvar "
     command += "--gaussuntil=%d "%(self.gaussUntil);
     if (self.verbose == False) :
         command += "--verbosity=0 ";
     command += fname;
-    print "Executing: %s" %(command.rsplit())
+    print "Executing: %s " % command
     #print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
-    p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
+    p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits) # bufsize = -1
     #print "CPU limit of parent (pid %d) after startup of child" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
-    p.wait()
     consoleOutput = p.communicate()[0]
+    #p.wait()
     #print "CPU limit of parent (pid %d) after child finished executing" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
-    if (self.verbose) :
-      print consoleOutput
+    if (self.verbose) : print consoleOutput
 
     return consoleOutput
 
@@ -94,6 +91,7 @@ class Tester:
 
     if (len(mylines) == 0) :
       print "Error! CryptoMiniSat output is empty!"
+      print "output lines: ", mylines
       exit(-1)
 
     unsat = False
@@ -124,7 +122,8 @@ class Tester:
         print "Solving probably timed out"
         return (True, {})
       else :
-        print "Error! CryptoMiniSat output is empty!"
+        print "Error! Output is empty!"
+        print "output : ", lines
         exit(-1)
 
     value = {}
@@ -146,31 +145,32 @@ class Tester:
               continue
             vvar = int(var)
             value[abs(vvar)] = ((vvar < 0) == False)
-    
+
     if (self.ignoreNoSolution == False and (sLineFound == False or (unsat == False and vLineFound == False))) :
         print "Cannot find line starting with 's' or 'v' in output!";
         print output
         exit()
+
     if (self.ignoreNoSolution == True and (sLineFound == False or (unsat == False and vLineFound == False))) :
         print "Probably timeout, since no solution  printed. Could, of course, be segfault/assert fault, etc."
         print "Making it look like an UNSAT, so no checks!"
         return (True,[])
-    
+
     #print "FOUND:"
     #print "unsat: %d" %(unsat)
     #for k, v in value.iteritems():
     #    print "var: %d, value: %s" %(k,v)
-    
+
     return (unsat, value)
 
 
   def test_expect(self, unsat, value, expectOutputFile):
     if (os.path.isfile(expectOutputFile) != True) : return
-    
+
     f = gzip.open(expectOutputFile, "r")
     text = f.read()
     f.close()
-    
+
     indicated_value = {}
     indicated_unsat = False
     lines = text.splitlines()
@@ -184,7 +184,7 @@ class Tester:
           stuff = line.split()
           indicated_value[int(stuff[0])] = (stuff[1].lstrip().rstrip() == 'true')
 
-    
+
     #print "INDICATED:"
     #print "unsat: %d" %(indicated_unsat)
     if (unsat != indicated_unsat) :
@@ -229,58 +229,63 @@ class Tester:
 
   def test_found(self, unsat, value, fname, debugLibPart = 1000000):
     if (debugLibPart == 1000000) :
-      print "Examining CNF file %s" %(fname)
+        print "Verifying solution for CNF file %s" %(fname)
     else :
-      print "Examining CNF file %s, part %d" %(fname, debugLibPart)
-    
+        print "Verifying solution for CNF file %s, part %d" %(fname, debugLibPart)
+
     if fnmatch.fnmatch(fname, '*.gz') :
-      #tmpfname = "gunzip -c " + fname
-      #f = os.popen(tmpfname, 'r')
-      f = gzip.open(fname, 'r')
+        #tmpfname = "gunzip -c " + fname
+        #f = os.popen(tmpfname, 'r')
+        f = gzip.open(fname, 'r')
     else :
-      f = open(fname, "r")
+        f = open(fname, "r")
     clauses = 0
     thisDebugLibPart = 0
+
     for line in f :
-      #print "Examining line '%s'" %(line)
-      line = line.rstrip()
-      if (len(line) == 0) : continue
-      if (line[0] == 'c' and ("Solver::solve()" in line)) :
-        thisDebugLibPart += 1
-      if (thisDebugLibPart >= debugLibPart) :
-        f.close()
-        #print "Verified %d original xor&regular clauses" %(clauses)
-        return
-      if (line[0] != 'c' and line[0] != 'p') :
-        if (line[0] != 'x') :
-          self.check_regular_clause(line, value)
-        else :
-          self.check_xor_clause(line, value)
-        
-        clauses += 1
-      
+        #print "Examining line '%s'" %(line)
+        line = line.rstrip()
+        if (len(line) == 0) : continue
+        if (line[0] == 'c' and ("Solver::solve()" in line)) :
+            thisDebugLibPart += 1
+        if (thisDebugLibPart >= debugLibPart) :
+            f.close()
+            #print "Verified %d original xor&regular clauses" %(clauses)
+            return
+        if (line[0] != 'c' and line[0] != 'p') :
+            if (line[0] != 'x') :
+                self.check_regular_clause(line, value)
+            else :
+                self.check_xor_clause(line, value)
+
+            clauses += 1
+
     f.close()
-    #print "Verified %d original xor&regular clauses" %(clauses)
-    
-  def check(self, fname, fnameCheck, i, newVar, needSolve = True):
+    print "Verified %d original xor&regular clauses" %(clauses)
+
+  def check(self, fname, fnameCheck, randomizeNum = 0, newVar = False, needSolve = True, needToLimitTime = False):
     consoleOutput = "";
     currTime = time.time()
     if (needSolve) :
-        consoleOutput = self.execute(fname, i, newVar)
+        consoleOutput = self.execute(fname, randomizeNum, newVar, needToLimitTime)
     else :
         f = open(fname + ".out", "r")
         consoleOutput = f.read()
         f.close()
 
-    diffTime = time.time() - currTime
-    if (diffTime > maxTimeLimit) :
-      print "Too much time to solve, aborted!"
-      return
+    if (needToLimitTime == True) :
+        diffTime = time.time() - currTime
+        if (diffTime > maxTimeLimit) :
+            print "Too much time to solve, aborted!"
+            return
+        else :
+            print "Not too much time: %d s" % (time.time() - currTime)
 
     self.parse_consoleOutput(consoleOutput)
-    print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" %(fname[:20]+"....cnf.gz", i, self.sumProp, self.sumTime)
-    
+    print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" %(fname[:20]+"....cnf.gz", randomizeNum, self.sumProp, self.sumTime)
+
     if (self.speed == True) :
+        print "Not checking solution, only checking speed of solving"
         return
 
     largestPart = -1
@@ -290,7 +295,7 @@ class Tester:
         debugLibPart = int(fname_debug[fname_debug.index("t")+1:fname_debug.rindex(".output")])
         if (largestPart < debugLibPart) :
           largestPart = debugLibPart
-    
+
     for debugLibPart in range(1,largestPart+1) :
       fname_debug = "debugLibPart%d.output" %(debugLibPart)
       #print "debugLibPart: %d, %s" %(debugLibPart, fname_debug)
@@ -299,19 +304,22 @@ class Tester:
         self.test_found(unsat, value, fnameCheck, debugLibPart)
       else :
         print "Not examining part %d -- it is UNSAT" %(debugLibPart)
-    
+
     #print "Checking against solution %s" %(of)
     #unsat, value = self.read_found(of)
+    print "Checking console output..."
     unsat, value = self.read_found_output(consoleOutput)
     otherSolverUNSAT = True
-    if (self.arminFuzzer) :
+    if (self.arminFuzzer and unsat) :
       toexec = "./precosat %s" %(fname);
-      #print "executing: %s" %(toexec)
+      print "Solving with other solver.."
       p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
-      p.wait()
       consoleOutput2 = p.communicate()[0]
-      #print "precosat output:"
-      #print consoleOutput2
+      diffTime = time.time() - currTime
+      if (diffTime > maxTimeLimit) :
+          print "Other solver: too much time to solve, aborted!"
+          return
+      print "Checking other solver output..."
       otherSolverUNSAT, otherSolverValue = self.read_found_output(consoleOutput2)
     if (unsat == True) : 
       if (self.arminFuzzer == False) :
@@ -391,22 +399,22 @@ class Tester:
     for fname_unlink in dirList2:
         if fnmatch.fnmatch(fname_unlink, 'debugLibPart*'):
           os.unlink(fname_unlink);
-          
+
     if (self.arminFuzzer) :
       i = 0
 
       while (i < 100000000) :
         commands.getoutput("./fuzzsat > fuzzTest");
         for i3 in range(num):
-          self.check("fuzzTest", "fuzzTest", i3, False)
+          self.check(fname = "fuzzTest", fnameCheck = "fuzzTest", randomizeNum = i3, needToLimitTime = True)
 
         commands.getoutput("./cnffuzz > fuzzTest");
         for i3 in range(num):
-          self.check("fuzzTest", "fuzzTest", i3, False)
+          self.check(fname = "fuzzTest", fnameCheck = "fuzzTest", randomizeNum = i3, needToLimitTime = True)
 
           i = i + 1;
       exit()
-    
+
     if (self.checkDirOnly) :
         print "Checking already solved solutions"
         if (testDirSet == False) :
@@ -426,9 +434,8 @@ class Tester:
             if (self.checkDirDifferent) :
               fname = fname[:len(fname)-4] #remove trailing .out
               myDir = self.differentDirForCheck
-              self.check(self.testDir + fname, myDir + fname, 0, False, False)
+              self.check(fname = self.testDir + fname, fnameCheck = myDir + fname, needToSolve = False)
         exit()
-      
 
     if (fname == None) :
       if (testDirSet == False) :
@@ -438,24 +445,24 @@ class Tester:
         for fname in dirList:
           if fnmatch.fnmatch(fname, '*.cnf.gz'):
             for i in range(num):
-              self.check(self.testDirNewVar + fname, self.testDirNewVar + fname, i, True)
-     
+              self.check(fname = self.testDirNewVar + fname, fnameCheck = self.testDirNewVar + fname, randomizeNum = i, newVar = True)
+
       dirList=os.listdir(self.testDir)
       if (self.testDir == ".") :
         self.testDir = ""
       for fname in dirList:
         if fnmatch.fnmatch(fname, '*.cnf.gz'):
           for i in range(num):
-            self.check(self.testDir + fname, self.testDir + fname, i, False)
-            
+            self.check(fname = self.testDir + fname, fnameCheck = self.testDir + fname, randomizeNum = i, newVar = False)
+
     else:
       if (os.path.isfile(fname) == False) :
         print "Filename given '%s' is not a file!" %(fname)
         exit(-1)
       print "Checking fname %s" %(fname)
-      
+
       for i in range(num):
-        self.check(fname, fname, i, False)
+        self.check(fname = fname, fnameCheck = fname, randomizeNum = i)
 
 
 test = Tester()
@@ -463,5 +470,4 @@ test.main()
 
 #import cProfile
 #cProfile.run('test.main()')
-
 
