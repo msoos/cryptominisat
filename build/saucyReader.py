@@ -16,8 +16,7 @@ maxTime = 20
 maxTimeLimit = 17
 
 def setlimits():
-  # Set maximum CPU time to 1 second in child process, after fork() but before exec()
-  #sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" %(os.getpid(), numsecs))
+  sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" %(os.getpid(), numsecs))
   resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 def addClause(variables) :
@@ -33,13 +32,9 @@ if (len(sys.argv) == 1) :
 else:
     toexec= "./saucy --timeout=5 -c %s > myout 2>&1" %(sys.argv[1])
 
-#print "toexec:", toexec
-os.system(toexec)
-#p = subprocess.Popen(toexec.rsplit(), shell=True, preexec_fn=setlimits)
-#p.wait()
-#consoleOutput = p.communicate()[0]
-#print "precosat output:"
-#print consoleOutput2
+print "toexec:", toexec
+p = subprocess.Popen(toexec.rsplit(), shell=True, preexec_fn=setlimits)
+consoleOutput = p.communicate()[0]
 
 f = open("myout", "r");
 consoleOutput = f.read()
@@ -51,10 +46,10 @@ for line in mylines :
     thisLineDone = False
     line = line.rstrip();
     if (line.find("Error") != -1) :
-        print "c Error in saucy: ", line
+        sys.stderr.write("c Error in saucy: %s", line)
         exit(-1)
     if (line.find("duplicate") != -1) :
-        print "c Duplicate in saucy"
+        sys.stderr.write("c Duplicate in saucy");
         exit(-1)
     if (line == "") : continue
     print "c --------------------------------"
@@ -81,5 +76,5 @@ for line in mylines :
 
 
 if (len(mylines) == 0) :
-    #print "Error! saucy output is empty!"
+    sys.stderr.write("Error! saucy output is empty!");
     exit(-1)
