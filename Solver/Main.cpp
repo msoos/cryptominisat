@@ -119,7 +119,7 @@ void printStats(Solver& solver)
     printStatsLine("c full restarts", solver.fullStarts);
 
     //Learnts stats
-    printStatsLine("c learnts DL2", solver.nbDL2);
+    printStatsLine("c learnts DL2", solver.nbGlue2);
     printStatsLine("c learnts size 2", solver.nbBin);
     printStatsLine("c learnts size 1", solver.get_unitary_learnts_num(), (double)solver.get_unitary_learnts_num()/(double)solver.nVars()*100.0, "% of vars");
 
@@ -371,7 +371,7 @@ void printUsage(char** argv, Solver& S)
     printf("  --nosortwatched  = Don't sort watches according to size: bin, tri, etc.\n");
     printf("  --nolfminim      = Don't do on-the-fly self-subsuming resolution\n");
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
-    printf("  --lfminimrec     = Perform recursive/transitive OTF self-\n");
+    printf("  --lfminimrec     = Always perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution (enhancement of \n");
     printf("                     'strong minimisation' in PrecoSat)\n");
     printf("\n");

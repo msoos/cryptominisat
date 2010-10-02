@@ -25,6 +25,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cstdio>
 #include <string.h>
 #include <stdio.h>
+#include <stack>
 
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
@@ -185,7 +186,7 @@ public:
     bool      doAsymmBranchReg;   ///<Perform asymmetric branching regularly
     bool      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
     bool      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
-    bool      doMinimLMoreRecur;  ///<Perform recursive/transitive on-the-fly self self-subsuming resolution --> an enhancement of "strong minimization" of PrecoSat
+    bool      doMinimLMoreRecur;  ///<Always perform recursive/transitive on-the-fly self self-subsuming resolution --> an enhancement of "strong minimization" of PrecoSat
     bool      failedVarSearch;    ///<Do Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
     bool      addExtraBins;       ///<Should perform hyper-binary resolution during failed literal probing?
     bool      remUselessBins;     ///<Should try to remove useless binary clauses at the beginning of solving?
@@ -222,8 +223,8 @@ public:
     NOTE: I belive there is a point in having full restarts even if the
     glue-clause vs. MiniSat clause can be fully resolved
     */
-    uint64_t fullStarts;
-    uint64_t decisions; ///<Number of decisions made
+    uint64_t fullStarts;    ///<Number of full restarts made
+    uint64_t decisions;     ///<Number of decisions made
     uint64_t rnd_decisions; ///<Numer of random decisions made
     /**
     @brief An approximation of accumulated propagation difficulty
@@ -239,7 +240,7 @@ public:
     uint64_t propagations;
     uint64_t conflicts; ///<Num conflicts
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
-    uint64_t nbDL2; ///<Num learnt clauses that had a glue of 2 when created
+    uint64_t nbGlue2; ///<Num learnt clauses that had a glue of 2 when created
     uint64_t nbBin; ///<Num learnt clauses that were binary when created
     uint64_t lastNbBin; ///<Last time we seached for binary xors, the number of clauses in binaryClauses was this much
     /**
@@ -248,7 +249,7 @@ public:
     It is used to determine if we should try to look for binary xors among
     the binary clauses
     */
-    uint64_t becameBinary; ///<
+    uint64_t becameBinary;
     uint64_t lastSearchForBinaryXor; ///<Last time we looked for binary xors, this many bogoprops(=propagations) has been done
     uint64_t nbReduceDB; ///<Number of times learnt clause have been cleaned
     uint64_t improvedClauseNo; ///<Num clauses improved using on-the-fly subsumption
@@ -311,16 +312,6 @@ protected:
     uint32_t sum_gauss_unit_truths;
     #endif //USE_GAUSS
 
-    template <class T>
-    Clause* addClauseInt(T& ps, uint32_t group);
-    template<class T>
-    XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group);
-
-    //////////////////
-    //Handling Watched
-    //////////////////
-    void sortWatched();
-
     // Helper structures:
     //
     struct VarOrderLt {
@@ -341,63 +332,59 @@ protected:
 
     // Solver state:
     //
-    bool                ok;               // If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
-    ClauseAllocator     clauseAllocator;
-    vec<Clause*>        clauses;          // List of problem clauses.
-    vec<Clause*>        binaryClauses;    // Binary clauses are regularly moved here
-    vec<XorClause*>     xorclauses;       // List of problem xor-clauses. Will be freed
-    vec<Clause*>        learnts;          // List of learnt clauses.
-    vec<XorClause*>     freeLater;        // xor clauses that need to be freed later due to Gauss
-    vec<uint32_t>       activity;         // A heuristic measurement of the activity of a variable.
-    uint32_t            var_inc;          // Amount to bump next variable with.
-    double              cla_inc;          // Amount to bump learnt clause oldActivity with
-    vec<vec<Watched> >  watches;          // 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
-    vec<lbool>          assigns;          // The current assignments
-    vector<bool>        decision_var;     // Declares if a variable is eligible for selection in the decision heuristic.
-    vec<Lit>            trail;            // Assignment stack; stores all assigments made in the order they were made.
-    vec<uint32_t>       trail_lim;        // Separator indices for different decision levels in 'trail'.
-    vec<PropagatedFrom> reason;           // 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
-    vec<int32_t>        level;            // 'level[var]' contains the level at which the assignment was made.
-    uint64_t            curRestart;
-    uint32_t            nbclausesbeforereduce;
-    uint32_t            nbCompensateSubsumer; // Number of learnt clauses that subsumed normal clauses last time subs. was executed
-    uint32_t            qhead;            // Head of queue (as index into the trail)
-    Lit                 failBinLit;       // Used to store which watches[~lit] we were looking through when conflict occured
-    uint32_t            simpDB_assigns;   // Number of top-level assignments since last execution of 'simplify()'.
-    int64_t             simpDB_props;     // Remaining number of propagations that must be made before next execution of 'simplify()'.
-    vec<Lit>            assumptions;      // Current set of assumptions provided to solve by the user.
-    Heap<VarOrderLt>    order_heap;       // A priority queue of variables ordered with respect to the variable activity.
+    bool                ok;               ///< If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
+    ClauseAllocator     clauseAllocator;  ///< Handles memory allocation for claues
+    vec<Clause*>        clauses;          ///< List of problem clauses that are normally larger than 2. Sometimes, due to on-the-fly self-subsuming resoulution, clauses here become 2-long. They are never purposfully put here such that they are long
+    vec<Clause*>        binaryClauses;    ///< Binary clauses are regularly moved here. When Clause::sorted is true, they are sorted here
+    vec<XorClause*>     xorclauses;       ///< List of problem xor-clauses. Will be freed
+    vec<Clause*>        learnts;          ///< List of learnt clauses.
+    vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
+    vec<uint32_t>       activity;         ///< A heuristic measurement of the activity of a variable.
+    uint32_t            var_inc;          ///< Amount to bump next variable with.
+    double              cla_inc;          ///< Amount to bump learnt clause oldActivity with
+    vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
+    vec<lbool>          assigns;          ///< The current assignments
+    vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
+    vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
+    vec<uint32_t>       trail_lim;        ///< Separator indices for different decision levels in 'trail'.
+    vec<PropagatedFrom> reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
+    vec<int32_t>        level;            ///< 'level[var]' contains the level at which the assignment was made.
+    uint64_t            numCleanedLearnts;///< Number of times learnt clauses have been removed through simplify() up until now
+    uint32_t            nbClBeforeRed;    ///< Number of learnt clauses before learnt-clause cleaning
+    uint32_t            nbCompensateSubsumer; ///< Number of learnt clauses that subsumed normal clauses last time subs. was executed (used to delay learnt clause-cleaning)
+    uint32_t            qhead;            ///< Head of queue (as index into the trail)
+    Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
+    vec<Lit>            assumptions;      ///< Current set of assumptions provided to solve by the user.
+    Heap<VarOrderLt>    order_heap;       ///< A priority queue of variables ordered with respect to the variable activity. All variables here MUST be decision variables. If you changed the decision variables, you MUST filter this
     #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-    bqueue<uint32_t>        avgBranchDepth; // Avg branch depth
+    bqueue<uint32_t>    avgBranchDepth;   ///< Avg branch depth. We collect this, and use it to do random look-around in the searchspace during simplifyProblem()
     #endif //RANDOM_LOOKAROUND_SEARCHSPACE
-    MTRand              mtrand;           // random number generaton
-    uint32_t                maxRestarts;      // More than this number of restarts will not be performed
+    MTRand              mtrand;           ///< random number generator
+    uint32_t            maxRestarts;      ///< More than this number of restarts will not be performed. Instead, we will stop, and optinally dump the reduced problem and/or the learnt clauses
 
     /////////////////////////
-    // For dynamic restarts
+    // For glue calculation & dynamic restarts
     /////////////////////////
-    bqueue<uint32_t>        nbDecisionLevelHistory; // Set of last decision level in conflict clauses
-    double              totalSumOfDecisionLevel;
-    uint64_t            conflictsAtLastSolve;
+    uint64_t MYFLAG; ///<For glue calculation
+    template<class T>
+    const uint32_t calcNBLevels(const T& ps);
+    vec<uint64_t> permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
+    #ifdef UPDATEVARACTIVITY
+    vec<Var>            lastDecisionLevel;
+    #endif
+    bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
+    double              totalSumOfGlue; ///< The total decision levels in (glues of) conflict clauses. This is used to calculate the average glue overall. It is used to dynamically restart the solving
+    uint64_t            compTotSumGlue;    ///< To compensate for conflicts that were made but which have not been accumulated into Solver::totalSumOfDecisionLevel, so when we calculate the average, we must take this into account (i.e,. substruct it from Solver::conflicts )
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
     //
-    vector<bool>        seen;
-    vector<bool>        seen2;
+    vector<bool>        seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
+    vector<bool>        seen2; ///<Used in minimiseLeartFurther(), contains 2 * numVars() elements, all zeroed out
     vec<Lit>            analyze_stack;
     vec<Lit>            analyze_toclear;
-    vec<Lit>            add_tmp;
-
-    ///////////////////////////
-    // Clause glue calculation
-    ///////////////////////////
-    uint64_t MYFLAG;
-    template<class T> const uint32_t calcNBLevels(const T& ps);
-    vec<uint64_t> permDiff; // LS: permDiff[var] contains the current conflict number... Used to count the number of different decision level variables in learnt clause
-    #ifdef UPDATEVARACTIVITY
-    vec<Var> lastDecisionLevel;
-    #endif
+    vec<Lit> allAddedToSeen2; ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
+    std::stack<Lit> toRecursiveProp; ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
 
     ////////////
     //Logging
@@ -416,6 +403,13 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
+    PropagatedFrom propagateBin();
+    PropagatedFrom propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
+    void     propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
+    void     propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
+    void     propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl, const bool update);
+    void     propXorClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
+    void     sortWatched();
 
     ///////////////
     // Conflicting
@@ -434,34 +428,30 @@ protected:
     llbool   handle_conflict  (vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update);// Handles the conflict clause
     llbool   new_decision     (const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
-    //////////////
-    //Propagation
-    //////////////
-    PropagatedFrom propagateBin();
-    PropagatedFrom propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
-    void propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
-    void propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
-    void propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl, const bool update);
-    void propXorClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
-
+    /////////////////
     // Maintaining Variable/Clause activity:
-    //
+    /////////////////
     void     claBumpActivity (Clause& c);
     void     varDecayActivity ();                      // Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
     void     varBumpActivity  (Var v);                 // Increase a variable with the current 'bump' value.
     void     claDecayActivity ();                      // Decay all clauses with the specified factor. Implemented by increasing the 'bump' value instead.
 
+    /////////////////
     // Operations on clauses:
-    //
-    void     attachClause     (XorClause& c);
-    void     attachClause     (Clause& c);             // Attach a clause to watcher lists.
-    void     detachClause     (const XorClause& c);
-    void     detachClause     (const Clause& c);       // Detach a clause to watcher lists.
-    void     detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
-    void     detachModifiedClause(const Var var1, const Var var2, const uint32_t origSize, const XorClause* address);
+    /////////////////
+    template <class T>
+    Clause*    addClauseInt(T& ps, uint32_t group);
     template<class T>
-    void     removeClause(T& c);                       // Detach and free a clause.
-    bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
+    XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group);
+    void       attachClause     (XorClause& c);
+    void       attachClause     (Clause& c);             // Attach a clause to watcher lists.
+    void       detachClause     (const XorClause& c);
+    void       detachClause     (const Clause& c);       // Detach a clause to watcher lists.
+    void       detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
+    void       detachModifiedClause(const Var var1, const Var var2, const uint32_t origSize, const XorClause* address);
+    template<class T>
+    void       removeClause(T& c);                       // Detach and free a clause.
+    bool       locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
 
     ///////////////////////////
     // Debug clause attachment
@@ -476,7 +466,9 @@ protected:
     uint32_t decisionLevel    ()      const; // Gives the current decisionlevel.
     uint32_t abstractLevel    (const Var& x) const; // Used to represent an abstraction of sets of decision levels.
 
-    //Xor-finding related stuff
+    /////////////////////////
+    //Classes that must be friends, since they accomplish things on our datastructures
+    /////////////////////////
     friend class VarFilter;
     friend class Gaussian;
     friend class FindUndef;
@@ -513,17 +505,19 @@ protected:
     const bool  chooseRestartType(const uint32_t& lastFullRestart);
     void        setDefaultRestartType();
     const bool  checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint32_t& lastFullRestart);
-    RestartType restartType;      // Used internally to determine which restart strategy to choose
-    RestartType lastSelectedRestartType; //the last selected restart type
+    RestartType restartType;             ///<Used internally to determine which restart strategy is currently in use
+    RestartType lastSelectedRestartType; ///<The last selected restart type. Used when we are just after a full restart, and need to know how to really act
 
     //////////////////////////
     // Problem simplification
     //////////////////////////
     void        performStepsBeforeSolve();
     const lbool simplifyProblem(const uint32_t numConfls);
-    bool        simplifying;
-    void        reduceDB();  // Reduce the set of learnt clauses.
-    const bool  simplify();  // Removes satisfied clauses and finds binary xors
+    void        reduceDB();       // Reduce the set of learnt clauses.
+    const bool  simplify();       // Removes satisfied clauses and finds binary xors
+    bool        simplifying;      ///<We are currently doing burst search
+    uint32_t    simpDB_assigns;   ///< Number of top-level assignments since last execution of 'simplify()'.
+    int64_t     simpDB_props;     ///< Remaining number of propagations that must be made before next execution of 'simplify()'.
 
     /////////////////////////////
     // SAT solution verification
@@ -541,6 +535,7 @@ protected:
     void     printEndSearchStat();
     void     interruptCleanly();
     void     addSymmBreakClauses();
+    void     initialiseSolver();
 
     /////////////////////
     // Polarity chooser
@@ -797,12 +792,6 @@ static inline void logLits(FILE* f, const vec<Lit>& ls)
     }
     fprintf(f, "] ");
 }
-
-static inline const char* showBool(bool b)
-{
-    return b ? "true" : "false";
-}
-
 
 #ifndef DEBUG_ATTACH
 inline void Solver::testAllClauseAttach() const

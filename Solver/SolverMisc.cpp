@@ -196,7 +196,7 @@ const vector<Lit> Solver::get_unitary_learnts() const
             unitaries.push_back(trail[i]);
         }
     }
-    
+
     return unitaries;
 }
 
@@ -342,7 +342,7 @@ void Solver::print_gauss_sum_stats()
     sum_gauss_called += called;
     sum_gauss_confl += useful_confl;
     sum_gauss_prop += useful_prop;
-    
+
     if (verbosity >= 2) {
         if (called == 0) {
             printf("      disabled      |\n");
@@ -355,6 +355,9 @@ void Solver::print_gauss_sum_stats()
 }
 #endif //USE_GAUSS
 
+/**
+@brief Sorts the watchlists' clauses as: binary, tertiary, normal, xor
+*/
 void Solver::sortWatched()
 {
     double myTime = cpuTime();

@@ -26,8 +26,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <limits.h>
 #include <vector>
 #include <iomanip>
-#include <stack>
-using std::stack;
 
 #include "Clause.h"
 #include "time_mem.h"
@@ -115,7 +113,7 @@ Solver::Solver() :
         //
         , starts(0), dynStarts(0), staticStarts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
-        , nbDL2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
+        , nbGlue2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
         , numShrinkedClause(0), numShrinkedClauseLits(0)
         , moreRecurMinLDo(0), moreRecurMinLDoLit(0), moreRecurMinLStop (0)
@@ -130,13 +128,11 @@ Solver::Solver() :
         , var_inc          (128)
         , cla_inc          (1)
 
-        , curRestart       (1)
-        , nbclausesbeforereduce (NBCLAUSESBEFOREREDUCE)
+        , numCleanedLearnts(1)
+        , nbClBeforeRed    (NBCLAUSESBEFOREREDUCE)
         , nbCompensateSubsumer (0)
 
         , qhead            (0)
-        , simpDB_assigns   (-1)
-        , simpDB_props     (0)
         , order_heap       (VarOrderLt(activity))
         , mtrand((unsigned long int)0)
         , maxRestarts(UINT_MAX)
@@ -150,6 +146,8 @@ Solver::Solver() :
         , restartType      (static_restart)
         , lastSelectedRestartType (static_restart)
         , simplifying      (false)
+        , simpDB_assigns   (-1)
+        , simpDB_props     (0)
 {
     varReplacer = new VarReplacer(*this);
     clauseCleaner = new ClauseCleaner(*this);
@@ -1105,15 +1103,15 @@ form to carry out the forward-self-subsuming resolution
 */
 void Solver::minimiseLeartFurther(vec<Lit>& cl)
 {
-    vec<Lit> allAddedToSeen2;
-    stack<Lit> toRecursiveProp;
-    uint32_t clauseSize = cl.size();
     //80 million is kind of a hack. It seems that the longer the solving
-    //the slower this thing gets. So, limiting the "time" with total
+    //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisDoMinLMoreRecur = doMinimLMoreRecur || (clauseSize <= 5 && tot_literals < 80000000);
-    uint32_t moreRecurProp = 0;
+    bool thisDoMinLMoreRecur = doMinimLMoreRecur || (cl.size() <= 5 && tot_literals < 80000000);
     if (thisDoMinLMoreRecur) moreRecurMinLDo++;
+
+    //To count the "amount of time" invested in doing transitive on-the-fly
+    //self-subsuming resolution
+    uint32_t moreRecurProp = 0;
 
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
@@ -1865,22 +1863,20 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     // Reached bound on number of conflicts?
     switch (restartType) {
     case dynamic_restart:
-        if (nbDecisionLevelHistory.isvalid() &&
-            ((nbDecisionLevelHistory.getavg()) > (totalSumOfDecisionLevel / (double)(conflicts - conflictsAtLastSolve)))) {
+        if (glueHistory.isvalid() &&
+            ((glueHistory.getavg()) > (totalSumOfGlue / (double)(conflicts - compTotSumGlue)))) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
-            if (nbDecisionLevelHistory.isvalid()) {
-                std::cout << "nbDecisionLevelHistory.getavg():" << nbDecisionLevelHistory.getavg() <<std::endl;
-                //std::cout << "calculated limit:" << ((double)(nbDecisionLevelHistory.getavg())*0.9*((double)fullStarts + 20.0)/20.0) << std::endl;
-                std::cout << "totalSumOfDecisionLevel:" << totalSumOfDecisionLevel << std::endl;
+            if (glueHistory.isvalid()) {
+                std::cout << "glueHistory.getavg():" << glueHistory.getavg() <<std::endl;
+                std::cout << "totalSumOfGlue:" << totalSumOfGlue << std::endl;
                 std::cout << "conflicts:" << conflicts<< std::endl;
-                std::cout << "conflictsAtLastSolve:" << conflictsAtLastSolve << std::endl;
-                std::cout << "conflicts-conflictsAtLastSolve:" << conflicts-conflictsAtLastSolve<< std::endl;
-                std::cout << "fullStarts:" << fullStarts << std::endl;
+                std::cout << "compTotSumGlue:" << compTotSumGlue << std::endl;
+                std::cout << "conflicts-compTotSumGlue:" << conflicts-compTotSumGlue<< std::endl;
             }
             #endif
 
-            nbDecisionLevelHistory.fastclear();
+            glueHistory.fastclear();
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
                 progress_estimate = progressEstimate();
@@ -1918,10 +1914,10 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     }
 
     // Reduce the set of learnt clauses:
-    if (conflicts >= curRestart * nbclausesbeforereduce + nbCompensateSubsumer) {
-        curRestart ++;
+    if (conflicts >= numCleanedLearnts * nbClBeforeRed + nbCompensateSubsumer) {
+        numCleanedLearnts ++;
         reduceDB();
-        nbclausesbeforereduce += 500;
+        nbClBeforeRed += 500;
     }
 
     Lit next = lit_Undef;
@@ -1975,24 +1971,24 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
     #endif
 
     int backtrack_level;
-    uint32_t nbLevels;
+    uint32_t glue;
 
     conflicts++;
     conflictC++;
     if (decisionLevel() == 0)
         return l_False;
     learnt_clause.clear();
-    Clause* c = analyze(confl, learnt_clause, backtrack_level, nbLevels, update);
+    Clause* c = analyze(confl, learnt_clause, backtrack_level, glue, update);
     if (update) {
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         avgBranchDepth.push(decisionLevel());
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
         if (restartType == dynamic_restart)
-            nbDecisionLevelHistory.push(nbLevels);
+            glueHistory.push(glue);
 
-        totalSumOfDecisionLevel += nbLevels;
+        totalSumOfGlue += glue;
     } else {
-        conflictsAtLastSolve++;
+        compTotSumGlue++;
     }
 
     #ifdef STATS_NEEDED
@@ -2026,8 +2022,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
                 (*c)[i] = learnt_clause[i];
             c->shrink(origSize - learnt_clause.size());
             if (c->learnt()) {
-                if (c->getGlue() > nbLevels)
-                    c->setGlue(nbLevels); // LS
+                if (c->getGlue() > glue)
+                    c->setGlue(glue); // LS
                 if (c->size() == 2)
                     nbBin++;
                 learnts_literals -= origSize - learnt_clause.size();
@@ -2042,13 +2038,12 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
             #endif
             if (c->size() > 2) {
                 learnts.push(c);
-                c->setGlue(nbLevels); // LS
+                c->setGlue(glue); // LS
             } else {
                 binaryClauses.push(c);
                 nbBin++;
             }
         }
-        if (nbLevels <= 2) nbDL2++;
         attachClause(*c);
         uncheckedEnqueue(learnt_clause[0], c);
     }
@@ -2080,8 +2075,8 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
                 tmp = fixRestartType;
 
             if (tmp == dynamic_restart) {
-                nbDecisionLevelHistory.fastclear();
-                nbDecisionLevelHistory.initSize(100);
+                glueHistory.fastclear();
+                glueHistory.initSize(100);
                 if (verbosity >= 3)
                     std::cout << "c Decided on dynamic restart strategy"
                     << std::endl;
@@ -2109,8 +2104,8 @@ inline void Solver::setDefaultRestartType()
     else restartType = static_restart;
 
     if (restartType == dynamic_restart) {
-        nbDecisionLevelHistory.fastclear();
-        nbDecisionLevelHistory.initSize(100);
+        glueHistory.fastclear();
+        glueHistory.initSize(100);
     }
 
     lastSelectedRestartType = restartType;
@@ -2311,6 +2306,43 @@ void Solver::performStepsBeforeSolve()
 }
 
 /**
+@brief Initialises model, restarts, learnt cluause cleaning, burst-search, etc.
+*/
+void Solver::initialiseSolver()
+{
+    //Clear up previous stuff like model, final conflict, matrixes
+    model.clear();
+    conflict.clear();
+    #ifdef USE_GAUSS
+    clearGaussMatrixes();
+    #endif //USE_GAUSS
+
+    //Initialise restarts & dynamic restart datastructures
+    setDefaultRestartType();
+    totalSumOfGlue = 0;
+    compTotSumGlue = conflicts;
+
+    //Initialise avg. branch depth
+    #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
+    avgBranchDepth.fastclear();
+    avgBranchDepth.initSize(500);
+    #endif //RANDOM_LOOKAROUND_SEARCHSPACE
+
+    //Initialise number of restarts&full restarts
+    starts = 0;
+    fullStarts = 0;
+
+    if (nClauses() * learntsize_factor < nbClBeforeRed) {
+        if (nClauses() * learntsize_factor < nbClBeforeRed/2)
+            nbClBeforeRed /= 4;
+        else
+            nbClBeforeRed = (nClauses() * learntsize_factor)/2;
+    }
+    testAllClauseAttach();
+    findAllAttach();
+}
+
+/**
 @brief The main solve loop that glues everything together
 
 We clear everything needed, pre-simplify the problem, calculate default
@@ -2329,37 +2361,13 @@ lbool Solver::solve(const vec<Lit>& assumps)
     if (libraryCNFFile)
         fprintf(libraryCNFFile, "c Solver::solve() called\n");
 
-    model.clear();
-    conflict.clear();
-    #ifdef USE_GAUSS
-    clearGaussMatrixes();
-    #endif //USE_GAUSS
-    setDefaultRestartType();
-    totalSumOfDecisionLevel = 0;
-    conflictsAtLastSolve = conflicts;
-    #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-    avgBranchDepth.fastclear();
-    avgBranchDepth.initSize(500);
-    #endif //RANDOM_LOOKAROUND_SEARCHSPACE
-    starts = 0;
-
     assumps.copyTo(assumptions);
-
-    int  nof_conflicts = restart_first;
-    int  nof_conflicts_fullrestart = restart_first * FULLRESTART_MULTIPLIER + conflicts;
-    //nof_conflicts_fullrestart = -1;
-    uint32_t    lastFullRestart  = starts;
-    lbool   status        = l_Undef;
-    uint64_t nextSimplify = restart_first * SIMPLIFY_MULTIPLIER + conflicts;
-
-    if (nClauses() * learntsize_factor < nbclausesbeforereduce) {
-        if (nClauses() * learntsize_factor < nbclausesbeforereduce/2)
-            nbclausesbeforereduce = nbclausesbeforereduce/4;
-        else
-            nbclausesbeforereduce = (nClauses() * learntsize_factor)/2;
-    }
-    testAllClauseAttach();
-    findAllAttach();
+    initialiseSolver();
+    int       nof_conflicts = restart_first; //Geometric restart policy, start with this many
+    int       nof_conflicts_fullrestart = restart_first * FULLRESTART_MULTIPLIER + conflicts; //at this point, do a full restart
+    uint32_t  lastFullRestart = starts; //last time a full restart was made was at this number of restarts
+    lbool     status = l_Undef; //Current status
+    uint64_t  nextSimplify = restart_first * SIMPLIFY_MULTIPLIER + conflicts; //Do simplifyProblem() at this number of conflicts
 
     if (conflicts == 0) {
         performStepsBeforeSolve();
@@ -2442,9 +2450,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
     if (doPartHandler && status != l_False) partHandler->readdRemovedClauses();
     restartTypeChooser->reset();
 
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     std::cout << "Solver::solve() finished" << std::endl;
-#endif
+    #endif
     return status;
 }
 
