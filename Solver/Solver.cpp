@@ -2261,14 +2261,13 @@ void Solver::performStepsBeforeSolve()
 
     if (doReplace && !varReplacer->performReplace()) return;
 
-    if (doAsymmBranch && !failedVarSearcher->asymmBranch()) {
-        return;
-    }
+    if (doAsymmBranch && !libraryUsage
+        && !failedVarSearcher->asymmBranch()) return;
 
     if (doReplace) {
         OnlyNonLearntBins onlyNonLearntBins(*this);
         if (!onlyNonLearntBins.fill()) return;
-        if (subsWNonExistBins
+        if (subsWNonExistBins && !libraryUsage
             && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
     }
 
