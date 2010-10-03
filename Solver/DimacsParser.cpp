@@ -200,7 +200,13 @@ void DimacsParser::printHeader(StreamBuffer& in)
 @brief Parse up comment lines which could contain important information
 
 In CryptoMiniSat we save quite a bit of information in the comment lines.
-These need to be parsed up. This function achieves that.
+These need to be parsed up. This function achieves that. Informations that
+can be given:
+\li "c Solver::newVar() called" -- we execute Solver::newVar()
+\li "c Solver::solve() called" -- we execute Solver::solve() and dump the
+solution to debugLibPartX.out, where X is a number that starts with 1 and
+increases to N, where N is the number of solve() instructions
+\li variable names in the form of "c var VARNUM NAME"
 */
 void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 {
@@ -257,6 +263,9 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     skipLine(in);
 }
 
+/**
+@brief Parses clause parameters given as e.g. "c clause learnt yes glue 4 miniSatAct 5.2"
+*/
 void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_t& glue, float& miniSatAct)
 {
     std::string str;
@@ -299,6 +308,17 @@ void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_
     return;
 }
 
+/**
+@brief Parses in a clause and its optional attributes
+
+We might have lines like:
+\li "c clause learnt yes glue 4 miniSatAct 5.2" which we need to parse up and
+make the clause learnt.
+\li Also, groupings can be given with "c group NUM NAME" after the clause.
+\li Furthermore, we need to take care, since comments might mean orders like
+"c Solver::newVar() called", which needs to be parsed with parseComments()
+-- this, we delegate
+*/
 void DimacsParser::readFullClause(StreamBuffer& in)
 {
     bool xor_clause = false;
