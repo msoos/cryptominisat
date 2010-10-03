@@ -18,10 +18,8 @@ from subprocess import Popen, PIPE, STDOUT
 maxTime = 10
 maxTimeLimit = 5
 
-
 def setlimits():
-    sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" %
-                     (os.getpid(), maxTime))
+    sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
 
@@ -78,8 +76,10 @@ class Tester:
 
         if self.verbose:
             print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
-        p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE,
-                             preexec_fn=setlimits)  # bufsize = -1
+        if (needToLimitTime) :
+            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
+        else:
+            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE)
         if self.verbose:
             print "CPU limit of parent (pid %d) after startup of child" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
@@ -101,8 +101,11 @@ class Tester:
             if "propagations" in l:
                 self.sumProp += int(l[l.index(":") + 1:l.rindex("(")])
 
-    def read_found(self, of):
-        f = open(of, "r")
+    def read_found(self, filename):
+        if (os.path.isfile(filename) == False) :
+            print "ERROR! Filename to be read '%s' is not a file!" % filename
+            exit(-1);
+        f = open(filename, "r")
         text = f.read()
         mylines = text.splitlines()
         f.close()
@@ -123,12 +126,14 @@ class Tester:
 
         value = {}
         if len(mylines) > 1:
-            vars = mylines[1].split(' ')
-            for var in vars:
+            myvars = mylines[1].split(' ')
+            for var in myvars:
+                if (int(var) == 0) : break;
                 vvar = int(var)
                 value[abs(vvar)] = (vvar < 0) == False
+        #print "Parsed values:", value
 
-        os.unlink(of)
+        os.unlink(filename)
         return (unsat, value)
 
     def read_found_output(self, output):
@@ -291,9 +296,11 @@ class Tester:
         None
         currTime = time.time()
         if needSolve:
-            consoleOutput = self.execute(fname, randomizeNum, newVar,
-                    needToLimitTime)
+            consoleOutput = self.execute(fname, randomizeNum, newVar, needToLimitTime)
         else:
+            if (os.path.isfile(fname + ".out") == False) :
+                print "ERROR! Solution file '%s' is not a file!" %(fname + ".out")
+                exit(-1)
             f = open(fname + ".out", "r")
             consoleOutput = f.read()
             f.close()
@@ -304,8 +311,7 @@ class Tester:
                 print "Too much time to solve, aborted!"
                 return
             else:
-                print "Not too much time: %d s" % (time.time() -
-                        currTime)
+                print "Not too much time: %d s" % (time.time() - currTime)
 
         self.parse_consoleOutput(consoleOutput)
         print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" % \

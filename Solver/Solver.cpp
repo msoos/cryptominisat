@@ -364,6 +364,11 @@ bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, const
     if (!ok)
         return false;
     assert(qhead == trail.size());
+    #ifndef NDEBUG
+    for (Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
+        assert(l->var() < nVars() && "Clause inserted, but variable inside has not been declared with newVar()!");
+    }
+    #endif
 
     // Check if clause is satisfied and remove false/duplicate literals:
     if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
@@ -497,6 +502,11 @@ bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
     if (!ok)
         return false;
     assert(qhead == trail.size());
+    #ifndef NDEBUG
+    for (Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
+        assert(l->var() < nVars() && "Clause inserted, but variable inside has not been declared with Solver::newVar() !");
+    }
+    #endif
 
     // Check if clause is satisfied and remove false/duplicate literals:
     if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
