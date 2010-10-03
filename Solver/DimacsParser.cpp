@@ -323,8 +323,8 @@ void DimacsParser::readFullClause(StreamBuffer& in)
 {
     bool xor_clause = false;
     bool learnt = false;
-    uint32_t glue;
-    float miniSatAct;
+    uint32_t glue = 100.0;
+    float miniSatAct = 10.0;
     std::string name;
     std::string str;
     uint32_t len;
