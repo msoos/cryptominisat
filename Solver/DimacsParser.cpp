@@ -378,7 +378,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         numXorClauses++;
     } else {
         if (addAsLearnt || learnt) {
-            solver->addLearntClause(lits, 0, 0, 0);
+            solver->addLearntClause(lits, glue, miniSatAct, groupId);
             numLearntClauses++;
         } else {
             solver->addClause(lits, groupId, name.c_str());
