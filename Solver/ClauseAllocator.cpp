@@ -151,11 +151,14 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
 
     if (!found) {
         uint32_t nextSize; //number of BYTES to allocate
-        if (maxSizes.size() != 0)
+        if (maxSizes.size() != 0) {
             nextSize = std::min((uint32_t)(maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT), (uint32_t)1 << (EFFECTIVELY_USEABLE_BITS - NUM_BITS_OUTER_OFFSET));
-        else
+            nextSize = std::max(nextSize, (uint32_t)MIN_LIST_SIZE*2);
+        } else {
             nextSize = (uint32_t)MIN_LIST_SIZE;
+        }
         assert(needed <  nextSize);
+        assert(nextSize < (uint32_t)1 << (EFFECTIVELY_USEABLE_BITS - NUM_BITS_OUTER_OFFSET));
 
         #ifdef DEBUG_CLAUSEALLOCATOR
         std::cout << "c New list in ClauseAllocator. Size: " << nextSize
@@ -340,6 +343,7 @@ void ClauseAllocator::consolidate(Solver* solver)
             } else {
                 assert(i > 0);
                 thisMaxSize = std::max(thisMaxSize, newMaxSizes[i-1]/2);
+                thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE);
             }
             newMaxSizeNeed -= thisMaxSize;
             newMaxSizes.push(thisMaxSize);
