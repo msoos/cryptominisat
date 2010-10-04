@@ -74,9 +74,12 @@ protected:
     /**
     @brief Is the XOR equal to 1 or 0?
 
-    ONLY set if the clause is an xor clause
+    i.e. "a + b" = TRUE or FALSE? -- we only have variables inside xor clauses,
+    so this is important to know
+
+    NOTE: ONLY set if the clause is an xor clause.
     */
-    uint32_t invertedXor:1;
+    uint32_t isXorEqualFalse:1;
     uint32_t isXorClause:1; ///< Is the clause an XOR clause?
     uint32_t subsume0Done:1; ///Has normal subsumption been done with this clause?
     uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
@@ -369,10 +372,10 @@ class XorClause : public Clause
 protected:
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
-    XorClause(const V& ps, const bool inverted, const uint32_t _group) :
+    XorClause(const V& ps, const bool xorEqualFalse, const uint32_t _group) :
         Clause(ps, _group, false)
     {
-        invertedXor = inverted;
+        isXorEqualFalse = xorEqualFalse;
         isXorClause = true;
     }
 
@@ -381,12 +384,12 @@ public:
 
     inline const bool xorEqualFalse() const
     {
-        return invertedXor;
+        return isXorEqualFalse;
     }
 
     inline void invert(const bool b)
     {
-        invertedXor ^= b;
+        isXorEqualFalse ^= b;
     }
 
     void print() const
