@@ -343,7 +343,7 @@ void ClauseAllocator::consolidate(Solver* solver)
             } else {
                 assert(i > 0);
                 thisMaxSize = std::max(thisMaxSize, newMaxSizes[i-1]/2);
-                thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE);
+                thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE*2);
             }
             newMaxSizeNeed -= thisMaxSize;
             newMaxSizes.push(thisMaxSize);
