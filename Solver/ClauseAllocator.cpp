@@ -41,13 +41,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define ALLOC_GROW_MULT 4
 //We shift stuff around in Watched, so not all of 32 bits are useable.
 #define EFFECTIVELY_USEABLE_BITS 30
+#define MAXSIZE ((1 << (EFFECTIVELY_USEABLE_BITS-NUM_BITS_OUTER_OFFSET))-1)
 
 ClauseAllocator::ClauseAllocator()
     #ifdef USE_BOOST
     : clausePoolBin(sizeof(Clause) + 2*sizeof(Lit))
     #endif //USE_BOOST
 {
-    assert(MIN_LIST_SIZE < (1 << (EFFECTIVELY_USEABLE_BITS-NUM_BITS_OUTER_OFFSET)));
+    assert(MIN_LIST_SIZE < MAXSIZE);
     assert(sizeof(Clause) + 2*sizeof(Lit) > sizeof(NewPointerAndOffset));
 }
 
@@ -152,17 +153,17 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     if (!found) {
         uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0) {
-            nextSize = std::min((uint32_t)(maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT), (uint32_t)1 << (EFFECTIVELY_USEABLE_BITS - NUM_BITS_OUTER_OFFSET));
+            nextSize = std::min((uint32_t)(maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT), (uint32_t)MAXSIZE);
             nextSize = std::max(nextSize, (uint32_t)MIN_LIST_SIZE*2);
         } else {
             nextSize = (uint32_t)MIN_LIST_SIZE;
         }
         assert(needed <  nextSize);
-        assert(nextSize < (uint32_t)1 << (EFFECTIVELY_USEABLE_BITS - NUM_BITS_OUTER_OFFSET));
+        assert(nextSize <= MAXSIZE);
 
         #ifdef DEBUG_CLAUSEALLOCATOR
         std::cout << "c New list in ClauseAllocator. Size: " << nextSize
-        << " (maxSize: " << ((unsigned long)1 << (EFFECTIVELY_USEABLE_BITS - NUM_BITS_OUTER_OFFSET))
+        << " (maxSize: " << MAXSIZE
         << ")" << std::endl;
         #endif //DEBUG_CLAUSEALLOCATOR
 
@@ -337,7 +338,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     vec<uint32_t> newMaxSizes;
     for (uint32_t i = 0; i < (1 << NUM_BITS_OUTER_OFFSET); i++) {
         if (newMaxSizeNeed > 0) {
-            uint32_t thisMaxSize = std::min(newMaxSizeNeed, (int64_t)1<<(EFFECTIVELY_USEABLE_BITS-NUM_BITS_OUTER_OFFSET));
+            uint32_t thisMaxSize = std::min(newMaxSizeNeed, (int64_t)MAXSIZE);
             if (i == 0) {
                 thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE);
             } else {
