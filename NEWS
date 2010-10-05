@@ -1,6 +1,14 @@
-ver 2.6.0 -- 22/08/2010
+ver 2.7.0 -- 5/10/2010
+* Lots of documentation added. At least 1500 lines of in-line documentation
+  is now available. This documentation can be extracted using the Doxygen
+  tool
+* Transitive on-the-fly self-subsuming resolution added for short clauses
+  at the beginning of the solving (<80 million conflict literals).
+* Preliminary learnt-clause parsing -- the dumped learnt clauses are now
+  correctly parsed up to be learnt, and hence a preliminary of stop-
+  solving & restart-solving cycle can be created
 * Memory manager has been debugged. It was segfaulting on certain large
-  instances. (thanks to Rob None for the bug report)
+  instances. (thanks to Rob None for the multiple bug reports)
 * Memory manager no longer needs to keep a map of old clauses<-> new
   clauses. This is now a direct-access table, speeding up memory
   consolidation considerably
