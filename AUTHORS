@@ -23,3 +23,4 @@ Bug-hunting thanks to:
   and reporting on a good number of bugs
 - Vijay Ganesh for finding a lots of bugs
 - Users of STP (Simple Theorem Prover) for their feedback
+- Rob None for debugging memory manager-related problems
