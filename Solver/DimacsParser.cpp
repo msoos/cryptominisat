@@ -274,14 +274,22 @@ void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_
     //Parse in if we are a learnt clause or not
     ++in;
     parseString(in, str);
+    //std::cout << str<< std::endl;
+    if (str != "learnt") goto addTheClause;
+
+    ++in;
+    parseString(in, str);
+    //std::cout << str<< std::endl;
     if (str == "yes") learnt = true;
     else if (str == "no") {
         learnt = false;
         goto addTheClause;
     }
     else {
-        std::cout << "PARSE ERROR: line contains \"c learnt\" but is not followed by yes/no" << std::endl;
-        exit(-1);
+        std::cout << "parsed in instead of yes/no: '" << str << "'" << std::endl;
+        goto addTheClause;
+        //std::cout << "PARSE ERROR: line contains \"c learnt\" but is not followed by yes/no" << std::endl;
+        //exit(-1);
     }
     //std::std::cout << "Learnt? " << learnt << std::endl;
 
