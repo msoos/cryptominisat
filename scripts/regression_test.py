@@ -492,8 +492,7 @@ class Tester:
                         fname = fname[:len(fname) - 4]  #remove trailing .out
                         myDir = self.differentDirForCheck
                         self.check(fname=self.testDir + fname,
-                                   fnameCheck=myDir + fname, needToSolve=
-                                   False)
+                                   fnameCheck=myDir + fname, needSolve=False)
             exit()
 
         if fname == None:
