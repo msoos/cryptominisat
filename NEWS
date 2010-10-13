@@ -1,3 +1,8 @@
+ver 2.7.1 -- 10/10/2010
+* Bug in DIMACS-parsing fixed. We couldn't read back the dumped clauses'
+  learnt state properly, which lead to parsing problems. Thanks to
+  Vlastislav Weiner for reporting this
+
 ver 2.7.0 -- 5/10/2010
 * Lots of documentation added. At least 1500 lines of in-line documentation
   is now available. This documentation can be extracted using the Doxygen
