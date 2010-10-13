@@ -37,7 +37,6 @@ add_definitions(-DUSE_GAUSS)
 #set(thread_library "${CMAKE_THREAD_LIBS_INIT}")
 
 add_subdirectory(Solver)
-#add_subdirectory(SatELite)
 
 add_custom_target(copy ALL
     COMMENT "Copying binaries from subdirs to build directory")
@@ -45,8 +44,6 @@ add_custom_target(copy ALL
 add_custom_command(
     TARGET copy
     COMMAND ${CMAKE_COMMAND} -E copy Solver/cryptominisat .
-#   COMMAND ${CMAKE_COMMAND} -E copy SatELite/satelite .
 )
 
-#add_dependencies(copy cryptominisat satelite)
 add_dependencies(copy cryptominisat)
