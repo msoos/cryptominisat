@@ -1047,6 +1047,10 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 
+    //Calculate glue before we do transitive strong minimisation,
+    //which could possibly make the glue less than 2, a strange phenomenon
+    nbLevels = calcNBLevels(out_learnt);
+
     if (doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt);
     tot_literals += out_learnt.size();
 
@@ -1065,7 +1069,6 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         out_btlevel       = level[p.var()];
     }
 
-    nbLevels = calcNBLevels(out_learnt);
     if (lastSelectedRestartType == dynamic_restart) {
         #ifdef UPDATEVARACTIVITY
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
