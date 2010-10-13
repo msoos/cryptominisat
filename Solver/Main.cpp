@@ -158,6 +158,8 @@ void printStats(Solver& solver)
     }
     #endif
 
+    printStatsLine("c clauses over max glue", solver.nbClOverMaxGlue, (double)solver.nbClOverMaxGlue/(double)solver.conflicts*100.0, "% of all clauses");
+
     //Search stats
     printStatsLine("c conflicts", solver.conflicts, (double)solver.conflicts/cpu_time, "/ sec");
     printStatsLine("c decisions", solver.decisions, (double)solver.rnd_decisions*100.0/(double)solver.decisions, "% random");

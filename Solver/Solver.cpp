@@ -53,9 +53,14 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 //#define __builtin_prefetch(a,b)
 #endif //_MSC_VER
 
+#ifdef VERBOSE_DEBUG
+#define UNWINDING_DEBUG
+#endif
+
 //#define DEBUG_UNCHECKEDENQUEUE_LEVEL0
 //#define VERBOSE_DEBUG_POLARITIES
 //#define DEBUG_DYNAMIC_RESTART
+//#define UNWINDING_DEBUG
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -117,6 +122,7 @@ Solver::Solver() :
         , improvedClauseNo(0), improvedClauseSize(0)
         , numShrinkedClause(0), numShrinkedClauseLits(0)
         , moreRecurMinLDo(0), moreRecurMinLDoLit(0), moreRecurMinLStop (0)
+        , nbClOverMaxGlue(0)
 
         #ifdef USE_GAUSS
         , sum_gauss_called (0)
@@ -234,6 +240,7 @@ Var Solver::newVar(bool dvar)
     seen2     .push_back(0);
     seen2     .push_back(0);
     permDiff  .push(0);
+    unWindGlue.push(NULL);
 
     polarity  .push_back(defaultPolarity());
     #ifdef USE_OLD_POLARITIES
@@ -697,6 +704,21 @@ void Solver::cancelUntil(int level)
             #endif //USE_OLD_POLARITIES
             assigns[var] = l_Undef;
             insertVarOrder(var);
+            if (unWindGlue[var] != NULL) {
+                #ifdef UNWINDING_DEBUG
+                std::cout << "unwind, var:" << var
+                << " sublevel:" << sublevel
+                << " coming from:" << (trail.size()-1)
+                << " going until:" << (int)trail_lim[level]
+                << std::endl;
+                unWindGlue[var]->plainPrint();
+                #endif //UNWINDING_DEBUG
+
+                Clause*& clauseToFree = unWindGlue[var];
+                detachClause(*clauseToFree);
+                clauseAllocator.clauseFree(clauseToFree);
+                clauseToFree = NULL;
+            }
         }
         qhead = trail_lim[level];
         trail.shrink_(trail.size() - trail_lim[level]);
@@ -1080,6 +1102,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     if (out_learnt.size() == 1) return NULL;
 
     if (oldConfl.isClause() && !oldConfl.getClause()->isXor()
+        && (oldConfl.getClause()->getGlue() <= MAX_GLUE || lastSelectedRestartType != dynamic_restart)
         && out_learnt.size() < oldConfl.getClause()->size()) {
         if (!subset(out_learnt, *oldConfl.getClause(), seen))
             return NULL;
@@ -2033,8 +2056,17 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
                 logger.set_group_name(c->getGroup(), "learnt clause");
             #endif
             if (c->size() > 2) {
-                learnts.push(c);
-                c->setGlue(glue); // LS
+                if (glue > MAX_GLUE && lastSelectedRestartType == dynamic_restart) {
+                    nbClOverMaxGlue++;
+                    unWindGlue[learnt_clause[0].var()] = c;
+                    #ifdef UNWINDING_DEBUG
+                    std::cout << "unwind, var:" << learnt_clause[0].var() << std::endl;
+                    c->plainPrint();
+                    #endif //VERBOSE_DEBUG
+                } else {
+                    learnts.push(c);
+                }
+                c->setGlue(glue);
             } else {
                 binaryClauses.push(c);
                 nbBin++;

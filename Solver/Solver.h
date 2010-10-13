@@ -242,7 +242,7 @@ public:
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
     uint64_t nbGlue2; ///<Num learnt clauses that had a glue of 2 when created
     uint64_t nbBin; ///<Num learnt clauses that were binary when created
-    uint64_t lastNbBin; ///<Last time we seached for binary xors, the number of clauses in binaryClauses was this much
+    uint64_t lastNbBin; ///<Last time we seached for binary xors, the number of clauses in binaryClauses was this much    /**
     /**
     @brief When a clause becomes binary through shrinking, we increment this
 
@@ -257,6 +257,7 @@ public:
     uint64_t numShrinkedClause; ///<Num clauses improved using on-the-fly self-subsuming resolution
     uint64_t numShrinkedClauseLits; ///<Num literals removed by on-the-fly self-subsuming resolution
     uint64_t moreRecurMinLDo, moreRecurMinLDoLit, moreRecurMinLStop; ///<Stats about transitive on-the-fly self-subsuming resolution
+    uint64_t nbClOverMaxGlue;
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -375,6 +376,7 @@ protected:
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
     double              totalSumOfGlue; ///< The total decision levels in (glues of) conflict clauses. This is used to calculate the average glue overall. It is used to dynamically restart the solving
     uint64_t            compTotSumGlue;    ///< To compensate for conflicts that were made but which have not been accumulated into Solver::totalSumOfDecisionLevel, so when we calculate the average, we must take this into account (i.e,. substruct it from Solver::conflicts )
+    vec<Clause*>        unWindGlue;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.

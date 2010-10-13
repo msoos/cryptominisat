@@ -450,6 +450,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     updatePointers(solver->binaryClauses);
     updatePointers(solver->xorclauses);
     updatePointers(solver->freeLater);
+    updatePointers(solver->unWindGlue);
 
     //No need to update varreplacer, since it only stores binary clauses that
     //must have been allocated such as to use the pool
@@ -501,7 +502,7 @@ template<class T>
 void ClauseAllocator::updatePointers(vec<T*>& toUpdate)
 {
     for (T **it = toUpdate.getData(), **end = toUpdate.getDataEnd(); it != end; it++) {
-        if (!(*it)->wasBin()) {
+        if (*it != NULL && !(*it)->wasBin()) {
             *it = (T*)(((NewPointerAndOffset*)(*it))->newPointer);
         }
     }
