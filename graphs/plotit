@@ -1,5 +1,6 @@
 #set term epslatex color rounded size 4.9,2.2
-set term png rounded size 1024,768
+#set term png rounded size 1024,768
+set term png rounded size 800,600
 
 set pointsize 1
 set tics scale 2 
@@ -21,5 +22,8 @@ set style line 3 lt 3 lw 1 pt 12 ps 0.3 linecolor rgbcolor "blue"
 
 #set key lmargin
 set key left top
-set output "CryptoMiniSat2.5.0_vs_CryptoMiniSat2.6.0.png"
-plot "./solveTimes56Graph" w lp title "CryptoMiniSat 2.5.0 (SAT Race version)" ls 1, "solveTimes82-learntminimGraph" w lp title "CryptoMiniSat 2.6.0" ls 2
+#set output "CryptoMiniSat2.5.0_vs_CryptoMiniSat2.6.0.png"
+#plot "./solveTimes56Graph" w lp title "CryptoMiniSat 2.5.0 (SAT Race version)" ls 1, "solveTimes82-learntminimGraph" w lp title "CryptoMiniSat 2.6.0" ls 2
+
+set output "Ligeling_vs_CryptoMiniSat2.6.1.png"
+plot [80:] "./solveTimes97Graph" w lp title "CryptoMiniSat 2.6.1",  "./solveTimesLingelingGraph" w lp title "Lingeling"
