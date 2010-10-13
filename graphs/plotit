@@ -7,7 +7,7 @@ set tics scale 2
 
 #set ytics 4e+8
 #set output "only-vs-congl.eps"
-set xlabel "No. solved instances"
+set xlabel "No. solved instances from SAT Comp'09"
 set ylabel "Time (s)"
 #unset key
 set xtics 20
@@ -25,5 +25,9 @@ set key left top
 #set output "CryptoMiniSat2.5.0_vs_CryptoMiniSat2.6.0.png"
 #plot "./solveTimes56Graph" w lp title "CryptoMiniSat 2.5.0 (SAT Race version)" ls 1, "solveTimes82-learntminimGraph" w lp title "CryptoMiniSat 2.6.0" ls 2
 
-set output "Ligeling_vs_CryptoMiniSat2.6.1.png"
-plot [80:] "./solveTimes97Graph" w lp title "CryptoMiniSat 2.6.1",  "./solveTimesLingelingGraph" w lp title "Lingeling"
+#set output "Ligeling_vs_CryptoMiniSat2.6.1.png"
+#plot [80:] "./solveTimes97Graph" w lp title "CryptoMiniSat 2.6.1",  "./solveTimesLingelingGraph" w lp title "Lingeling"
+
+set output "CryptoMiniSat2.7.1-compare.png"
+plot [80:] "./solveTimesMiniSatGraph" w lp title "MiniSat 2.2", "./solveTimesLingelingGraph" w lp title "lingeling", "./solveTimesPrecoSat465Graph" w lp title "PrecoSat465", "./solveTimes97Graph" w lp title "CryptoMiniSat2.7.1"
+
