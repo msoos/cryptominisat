@@ -112,6 +112,7 @@ Solver::Solver() :
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , greedyUnbound    (false)
+        , maxGlue          (24)
         , fixRestartType   (auto_restart)
 
         // Statistics: (formerly in 'SolverStats')
@@ -1102,7 +1103,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     if (out_learnt.size() == 1) return NULL;
 
     if (oldConfl.isClause() && !oldConfl.getClause()->isXor()
-        && (oldConfl.getClause()->getGlue() <= MAX_GLUE || lastSelectedRestartType != dynamic_restart)
+        && (oldConfl.getClause()->getGlue() <= maxGlue || lastSelectedRestartType != dynamic_restart)
         && out_learnt.size() < oldConfl.getClause()->size()) {
         if (!subset(out_learnt, *oldConfl.getClause(), seen))
             return NULL;
@@ -1457,8 +1458,10 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
             #ifdef DYNAMICNBLEVEL
             if (update && c.learnt() && c.getGlue() > 2) { // GA
                 uint32_t nbLevels = calcNBLevels(c);
-                if (nbLevels+1 < c.getGlue())
+                if (nbLevels+1 < c.getGlue()) {
+                    //c.setGlue(std::min(nbLevels, (uint32_t)(1 << MAX_GLUE_BITS)-1));
                     c.setGlue(nbLevels);
+                }
             }
             #endif
         }
@@ -2056,8 +2059,9 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
                 logger.set_group_name(c->getGroup(), "learnt clause");
             #endif
             if (c->size() > 2) {
-                if (glue > MAX_GLUE && lastSelectedRestartType == dynamic_restart) {
+                if (glue > maxGlue && lastSelectedRestartType == dynamic_restart) {
                     nbClOverMaxGlue++;
+                    nbCompensateSubsumer++;
                     unWindGlue[learnt_clause[0].var()] = c;
                     #ifdef UNWINDING_DEBUG
                     std::cout << "unwind, var:" << learnt_clause[0].var() << std::endl;
@@ -2066,11 +2070,11 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
                 } else {
                     learnts.push(c);
                 }
-                c->setGlue(glue);
             } else {
                 binaryClauses.push(c);
                 nbBin++;
             }
+            c->setGlue(std::min(glue, (uint32_t)((1 << MAX_GLUE_BITS)-1)));
         }
         attachClause(*c);
         uncheckedEnqueue(learnt_clause[0], c);
