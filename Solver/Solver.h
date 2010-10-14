@@ -38,7 +38,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #endif //STATS_NEEDED
 
 
-#include "PropagatedFrom.h"
+#include "PropBy.h"
 #include "Vec.h"
 #include "Heap.h"
 #include "Alg.h"
@@ -256,7 +256,9 @@ public:
     uint64_t improvedClauseSize; ///<Num literals removed using on-the-fly subsumption
     uint64_t numShrinkedClause; ///<Num clauses improved using on-the-fly self-subsuming resolution
     uint64_t numShrinkedClauseLits; ///<Num literals removed by on-the-fly self-subsuming resolution
-    uint64_t moreRecurMinLDo, moreRecurMinLDoLit, moreRecurMinLStop; ///<Stats about transitive on-the-fly self-subsuming resolution
+    uint64_t moreRecurMinLDo; ///< Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
+    uint64_t moreRecurMinLDoLit; ///< Calculated transitive graph for this many literals to carry transitive out on-the-fly self-subsuming resolution
+    uint64_t moreRecurMinLStop; ///< Stopped calculating transitive graph to carry out transitive on-the-fly self-subsuming resolution
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -339,36 +341,44 @@ protected:
     vec<XorClause*>     xorclauses;       ///< List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          ///< List of learnt clauses.
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
-    vec<uint32_t>       activity;         ///< A heuristic measurement of the activity of a variable.
-    uint32_t            var_inc;          ///< Amount to bump next variable with.
     double              cla_inc;          ///< Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          ///< The current assignments
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        ///< Separator indices for different decision levels in 'trail'.
-    vec<PropagatedFrom> reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
+    vec<PropBy> reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<int32_t>        level;            ///< 'level[var]' contains the level at which the assignment was made.
-    uint64_t            numCleanedLearnts;///< Number of times learnt clauses have been removed through simplify() up until now
-    uint32_t            nbClBeforeRed;    ///< Number of learnt clauses before learnt-clause cleaning
-    uint32_t            nbCompensateSubsumer; ///< Number of learnt clauses that subsumed normal clauses last time subs. was executed (used to delay learnt clause-cleaning)
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
     vec<Lit>            assumptions;      ///< Current set of assumptions provided to solve by the user.
-    Heap<VarOrderLt>    order_heap;       ///< A priority queue of variables ordered with respect to the variable activity. All variables here MUST be decision variables. If you changed the decision variables, you MUST filter this
     #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
     bqueue<uint32_t>    avgBranchDepth;   ///< Avg branch depth. We collect this, and use it to do random look-around in the searchspace during simplifyProblem()
     #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     MTRand              mtrand;           ///< random number generator
     uint32_t            maxRestarts;      ///< More than this number of restarts will not be performed. Instead, we will stop, and optinally dump the reduced problem and/or the learnt clauses
 
+    /////////////////
+    // Variable activities
+    /////////////////
+    Heap<VarOrderLt>    order_heap;       ///< A priority queue of variables ordered with respect to the variable activity. All variables here MUST be decision variables. If you changed the decision variables, you MUST filter this
+    vec<uint32_t>       activity;         ///< A heuristic measurement of the activity of a variable.
+    uint32_t            var_inc;          ///< Amount to bump next variable with.
+
+    /////////////////
+    // Learnt clause cleaning
+    /////////////////
+    uint64_t  numCleanedLearnts;    ///< Number of times learnt clauses have been removed through simplify() up until now
+    uint32_t  nbClBeforeRed;        ///< Number of learnt clauses before learnt-clause cleaning
+    uint32_t  nbCompensateSubsumer; ///< Number of learnt clauses that subsumed normal clauses last time subs. was executed (used to delay learnt clause-cleaning)
+
     /////////////////////////
     // For glue calculation & dynamic restarts
     /////////////////////////
     uint64_t MYFLAG; ///<For glue calculation
     template<class T>
-    const uint32_t calcNBLevels(const T& ps);
-    vec<uint64_t> permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
+    const uint32_t      calcNBLevels(const T& ps);
+    vec<uint64_t>       permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
     #ifdef UPDATEVARACTIVITY
     vec<Var>            lastDecisionLevel;
     #endif
@@ -380,11 +390,16 @@ protected:
     // used, exept 'seen' wich is used in several places.
     //
     vector<bool>        seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
-    vector<bool>        seen2; ///<Used in minimiseLeartFurther(), contains 2 * numVars() elements, all zeroed out
     vec<Lit>            analyze_stack;
     vec<Lit>            analyze_toclear;
-    vec<Lit> allAddedToSeen2; ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
-    std::stack<Lit> toRecursiveProp; ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
+
+    ////////////
+    // Transitive on-the-fly self-subsuming resolution
+    ///////////
+    vector<bool>        seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
+    vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
+    std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
+    void                minimiseLeartFurther(vec<Lit>& cl);
 
     ////////////
     //Logging
@@ -401,31 +416,30 @@ protected:
     ////////////////
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
-    void     uncheckedEnqueue (const Lit p, const PropagatedFrom& from = PropagatedFrom()); // Enqueue a literal. Assumes value of literal is undefined.
+    void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
-    PropagatedFrom propagateBin();
-    PropagatedFrom propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
-    void     propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
-    void     propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
-    void     propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl, const bool update);
-    void     propXorClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl);
+    PropBy propagateBin();
+    PropBy propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
+    void     propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
+    void     propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
+    void     propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl, const bool update);
+    void     propXorClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
     void     sortWatched();
 
     ///////////////
     // Conflicting
     ///////////////
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
-    Clause*  analyze          (PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
+    Clause*  analyze          (PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update); // (bt = backtrack)
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
-    void     minimiseLeartFurther(vec<Lit>& cl);
 
     /////////////////
     // Searching
     /////////////////
     lbool    search           (int nof_conflicts, int nof_conflicts_fullrestart, const bool update = true);      // Search for a given number of conflicts.
-    llbool   handle_conflict  (vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update);// Handles the conflict clause
+    llbool   handle_conflict  (vec<Lit>& learnt_clause, PropBy confl, int& conflictC, const bool update);// Handles the conflict clause
     llbool   new_decision     (const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
     /////////////////
@@ -610,7 +624,7 @@ inline void Solver::claDecayActivity()
 inline bool Solver::locked(const Clause& c) const
 {
     if (c.size() <= 3) return true; //we don't know in this case :I
-    PropagatedFrom from(reason[c[0].var()]);
+    PropBy from(reason[c[0].var()]);
     return from.isClause() && from.getClause() == &c && value(c[0]) == l_True;
 }
 

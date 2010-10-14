@@ -109,8 +109,7 @@ Solver::Solver() :
         , greedyUnbound    (false)
         , fixRestartType   (auto_restart)
 
-        // Statistics: (formerly in 'SolverStats')
-        //
+        // Stats
         , starts(0), dynStarts(0), staticStarts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
         , nbGlue2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
@@ -125,17 +124,20 @@ Solver::Solver() :
         , sum_gauss_unit_truths (0)
         #endif //USE_GAUSS
         , ok               (true)
-        , var_inc          (128)
         , cla_inc          (1)
+        , qhead            (0)
+        , mtrand           ((unsigned long int)0)
+        , maxRestarts      (std::numeric_limits<uint32_t>::max())
 
+        //variables
+        , order_heap       (VarOrderLt(activity))
+        , var_inc          (128)
+
+        //learnts
         , numCleanedLearnts(1)
         , nbClBeforeRed    (NBCLAUSESBEFOREREDUCE)
         , nbCompensateSubsumer (0)
 
-        , qhead            (0)
-        , order_heap       (VarOrderLt(activity))
-        , mtrand((unsigned long int)0)
-        , maxRestarts(UINT_MAX)
         , MYFLAG           (0)
         #ifdef STATS_NEEDED
         , logger(verbosity)
@@ -225,7 +227,7 @@ Var Solver::newVar(bool dvar)
     Var v = nVars();
     watches   .push();          // (list for positive literal)
     watches   .push();          // (list for negative literal)
-    reason    .push(PropagatedFrom());
+    reason    .push(PropBy());
     assigns   .push(l_Undef);
     level     .push(-1);
     activity  .push(0);
@@ -958,7 +960,7 @@ current decision level.
 @return NULL if the conflict doesn't on-the-fly subsume the last clause, and
 the pointer of the clause if it does
 */
-Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nbLevels, const bool update)
+Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nbLevels, const bool update)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -969,7 +971,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     int index   = trail.size() - 1;
     out_btlevel = 0;
 
-    PropagatedFrom oldConfl;
+    PropBy oldConfl;
 
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
@@ -1032,7 +1034,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     } else {
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++) {
-            PropagatedFrom c(reason[out_learnt[i].var()]);
+            PropBy c(reason[out_learnt[i].var()]);
 
             for (uint32_t k = 1, size = c.size(); k < size; k++) {
                 if (!seen[c[k].var()] && level[c[k].var()] > 0) {
@@ -1069,7 +1071,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     if (lastSelectedRestartType == dynamic_restart) {
         #ifdef UPDATEVARACTIVITY
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
-            PropagatedFrom cl = reason[lastDecisionLevel[i]];
+            PropBy cl = reason[lastDecisionLevel[i]];
             if (cl.isClause() && cl.getClause()->getGlue() < nbLevels)
                 varBumpActivity(lastDecisionLevel[i]);
         }
@@ -1213,7 +1215,7 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     int top = analyze_toclear.size();
     while (analyze_stack.size() > 0) {
         assert(!reason[analyze_stack.last().var()].isNULL());
-        PropagatedFrom c(reason[analyze_stack.last().var()]);
+        PropBy c(reason[analyze_stack.last().var()]);
 
         analyze_stack.pop();
 
@@ -1264,7 +1266,7 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
                 assert(level[x] > 0);
                 out_conflict.push(~trail[i]);
             } else {
-                PropagatedFrom c = reason[x];
+                PropBy c = reason[x];
                 for (uint32_t j = 1, size = c.size(); j < size; j++)
                     if (level[c[j].var()] > 0)
                         seen[c[j].var()] = 1;
@@ -1289,7 +1291,7 @@ USE_OLD_POLARITIES is set
 @p p the fact to enqueue
 @p from Why was it propagated (binary clause, tertiary clause, normal clause)
 */
-void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
+void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
 {
 
     #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -1336,14 +1338,14 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
+inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
-        uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p));
+        uncheckedEnqueue(i->getOtherLit(), PropBy(p));
     } else if (val == l_False) {
-        confl = PropagatedFrom(p);
+        confl = PropBy(p);
         failBinLit = i->getOtherLit();
         qhead = trail.size();
         while (++i < end)
@@ -1359,17 +1361,17 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
-inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
+inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
-        uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p, i->getOtherLit2()));
+        uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
     } else if (val == l_False && val2.isUndef()) {
-        uncheckedEnqueue(i->getOtherLit2(), PropagatedFrom(p, i->getOtherLit()));
+        uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
     } else if (val == l_False && val2 == l_False) {
-        confl = PropagatedFrom(p, i->getOtherLit2());
+        confl = PropBy(p, i->getOtherLit2());
         failBinLit = i->getOtherLit();
         qhead = trail.size();
         while (++i < end)
@@ -1384,7 +1386,7 @@ inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, 
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
-inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl, const bool update)
+inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl, const bool update)
 {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
@@ -1423,7 +1425,7 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
         // Did not find watch -- clause is unit under assignment:
         *j++ = *i;
         if (value(first) == l_False) {
-            confl = PropagatedFrom(&c);
+            confl = PropBy(&c);
             qhead = trail.size();
             // Copy the remaining watches:
             while (++i < end)
@@ -1452,7 +1454,7 @@ better memory-accesses since the watchlist is already in the memory...
 
 \todo maybe not worth it, and a variable-based watchlist should be used
 */
-inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
+inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
 {
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(i->getOffset());
 
@@ -1488,7 +1490,7 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
         c[0] = c[0].unsign()^final;
         uncheckedEnqueue(c[0], (Clause*)&c);
     } else if (!final) {
-        confl = PropagatedFrom((Clause*)&c);
+        confl = PropBy((Clause*)&c);
         qhead = trail.size();
         // Copy the remaining watches:
         while (++i < end)
@@ -1507,9 +1509,9 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
 Basically, it goes through the watchlists recursively, and calls the appropirate
 propagaton function
 */
-PropagatedFrom Solver::propagate(const bool update)
+PropBy Solver::propagate(const bool update)
 {
-    PropagatedFrom confl;
+    PropBy confl;
     uint32_t num_props = 0;
 
     #ifdef VERBOSE_DEBUG
@@ -1568,7 +1570,7 @@ FoundWatch:
 
 This is used in special algorithms outside the main Solver class
 */
-PropagatedFrom Solver::propagateBin()
+PropBy Solver::propagateBin()
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
@@ -1582,12 +1584,12 @@ PropagatedFrom Solver::propagateBin()
                 //uncheckedEnqueue(k->impliedLit, k->clause);
                 uncheckedEnqueueLight(k->getOtherLit());
             } else if (val == l_False) {
-                return PropagatedFrom(p);
+                return PropBy(p);
             }
         }
     }
 
-    return PropagatedFrom();
+    return PropBy();
 }
 
 /**
@@ -1826,7 +1828,7 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     findAllAttach();
     for (;;) {
         if (needToInterrupt) interruptCleanly();
-        PropagatedFrom confl = propagate(update);
+        PropBy confl = propagate(update);
 
         if (!confl.isNULL()) {
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
@@ -1957,7 +1959,7 @@ conflict analysis, but this is the code that actually replaces the original
 clause with that of the shorter one
 @returns l_False if UNSAT
 */
-llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update)
+llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& conflictC, const bool update)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Handling conflict: ";

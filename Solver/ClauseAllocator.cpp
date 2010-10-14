@@ -470,11 +470,11 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     }
     #endif //USE_GAUSS
 
-    vec<PropagatedFrom>& reason = solver->reason;
-    for (PropagatedFrom *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
+    vec<PropBy>& reason = solver->reason;
+    for (PropBy *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
         if (it->isClause() && !it->isNULL()) {
             if (insideMemoryRange(it->getClause())) {
-                *it = PropagatedFrom((Clause*)((NewPointerAndOffset*)(it->getClause()))->newPointer);
+                *it = PropBy((Clause*)((NewPointerAndOffset*)(it->getClause()))->newPointer);
             }
         }
     }
