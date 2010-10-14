@@ -115,7 +115,8 @@ Solver::Solver() :
         , nbGlue2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
         , numShrinkedClause(0), numShrinkedClauseLits(0)
-        , moreRecurMinLDo(0), moreRecurMinLDoLit(0), moreRecurMinLStop (0)
+        , moreRecurMinLDo(0)
+        , updateTransCache(0)
 
         #ifdef USE_GAUSS
         , sum_gauss_called (0)
@@ -233,9 +234,12 @@ Var Solver::newVar(bool dvar)
     activity  .push(0);
     seen      .push_back(0);
     seen      .push_back(0);
-    seen2     .push_back(0);
-    seen2     .push_back(0);
     permDiff  .push(0);
+    //Transitive OTF self-subsuming resolution
+    seen2     .push_back(0);
+    seen2     .push_back(0);
+    transOTFCache.push_back(transCache());
+    transOTFCache.push_back(transCache());
 
     polarity  .push_back(defaultPolarity());
     #ifdef USE_OLD_POLARITIES
@@ -1104,8 +1108,11 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisDoMinLMoreRecur = doMinimLMoreRecur || (cl.size() <= 5 && tot_literals < 80000000);
-    if (thisDoMinLMoreRecur) moreRecurMinLDo++;
+    bool thisClauseDoMinLMoreRecur = doMinimLMoreRecur || (cl.size() <= 8);
+    if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
+    uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
+    if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 3;
+    else if (tot_literals < 10000000) thisUpdateTransOTFSSCache /= 2;
 
     //To count the "amount of time" invested in doing transitive on-the-fly
     //self-subsuming resolution
@@ -1114,56 +1121,25 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
         if (seen[l->toInt()] == 0) continue;
-
         Lit lit = *l;
 
-        //Recursively self-subsume-resolve all "a OR c" when "a OR b" as well as
-        //"~b OR c" exists.
-        if (thisDoMinLMoreRecur && moreRecurProp > 450) {
-            //std::cout << "switched off"  << std::endl;
-            moreRecurMinLStop++;
-            thisDoMinLMoreRecur = false;
-        }
-        if (thisDoMinLMoreRecur) moreRecurMinLDoLit++;
-        if (thisDoMinLMoreRecur) {
-            //Don't come back to the starting point
-            seen2[(~lit).toInt()] = 1;
-            allAddedToSeen2.push(~lit);
-
-            toRecursiveProp.push(lit);
-            while(!toRecursiveProp.empty()) {
-                Lit thisLit = toRecursiveProp.top();
-                toRecursiveProp.pop();
-                //watched is messed: lit is in watched[~lit]
-                vec<Watched>& ws = watches[(~thisLit).toInt()];
-                moreRecurProp += ws.size() +10;
-                for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
-                    if (i->isBinary()) {
-                        moreRecurProp += 5;
-                        Lit otherLit = i->getOtherLit();
-                        //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
-                        if (seen2[otherLit.toInt()] != 0 || ~otherLit == lit) break;
-                        seen2[otherLit.toInt()] = 1;
-                        allAddedToSeen2.push(otherLit);
-                        seen[(~otherLit).toInt()] = 0;
-                        toRecursiveProp.push(~otherLit);
-                    } else {
-                        break;
-                    }
+        if (thisClauseDoMinLMoreRecur) {
+            if ((conflicts < UPDATE_TRANSOTFSSR_CACHE && mtrand.randInt(cl.size()/2) != 0)
+                //|| moreRecurProp > 450
+                || (conflicts >= UPDATE_TRANSOTFSSR_CACHE && transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts)) {
+                for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
+                    seen[(~(*it)).toInt()] = 0;
                 }
+            } else {
+                updateTransCache++;
+                transMinimAndUpdateCache(lit, moreRecurProp);
             }
-            assert(toRecursiveProp.empty());
-
-            for (Lit *it = allAddedToSeen2.getData(), *end = allAddedToSeen2.getDataEnd(); it != end; it++) {
-                seen2[it->toInt()] = 0;
-            }
-            allAddedToSeen2.clear();
         }
 
         //watched is messed: lit is in watched[~lit]
         vec<Watched>& ws = watches[(~lit).toInt()];
         for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
-            if (!thisDoMinLMoreRecur && i->isBinary()) {
+            if (i->isBinary()) {
                 seen[(~i->getOtherLit()).toInt()] = 0;
                 continue;
             }
@@ -1201,6 +1177,41 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     #endif
 }
 
+void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
+{
+    vector<Lit>& allAddedToSeen2 = transOTFCache[lit.toInt()].lits;
+    allAddedToSeen2.clear();
+
+    toRecursiveProp.push(lit);
+    while(!toRecursiveProp.empty()) {
+        Lit thisLit = toRecursiveProp.top();
+        toRecursiveProp.pop();
+        //watched is messed: lit is in watched[~lit]
+        vec<Watched>& ws = watches[(~thisLit).toInt()];
+        moreRecurProp += ws.size() +10;
+        for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+            if (i->isBinary()) {
+                moreRecurProp += 5;
+                Lit otherLit = i->getOtherLit();
+                //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
+                if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) break;
+                seen2[otherLit.toInt()] = 1;
+                allAddedToSeen2.push_back(otherLit);
+                toRecursiveProp.push(~otherLit);
+            } else {
+                break;
+            }
+        }
+    }
+    assert(toRecursiveProp.empty());
+
+    for (vector<Lit>::const_iterator it = allAddedToSeen2.begin(), end = allAddedToSeen2.end(); it != end; it++) {
+        seen[(~(*it)).toInt()] = 0;
+        seen2[it->toInt()] = 0;
+    }
+
+    transOTFCache[lit.toInt()].conflictLastUpdated = conflicts;
+}
 
 /**
 @brief Check if 'p' can be removed from a learnt clause

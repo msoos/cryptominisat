@@ -257,8 +257,7 @@ public:
     uint64_t numShrinkedClause; ///<Num clauses improved using on-the-fly self-subsuming resolution
     uint64_t numShrinkedClauseLits; ///<Num literals removed by on-the-fly self-subsuming resolution
     uint64_t moreRecurMinLDo; ///< Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
-    uint64_t moreRecurMinLDoLit; ///< Calculated transitive graph for this many literals to carry transitive out on-the-fly self-subsuming resolution
-    uint64_t moreRecurMinLStop; ///< Stopped calculating transitive graph to carry out transitive on-the-fly self-subsuming resolution
+    uint64_t updateTransCache;
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -396,10 +395,21 @@ protected:
     ////////////
     // Transitive on-the-fly self-subsuming resolution
     ///////////
+    class transCache {
+        public:
+            transCache() :
+                conflictLastUpdated(0)
+            {};
+
+            vector<Lit> lits;
+            uint64_t conflictLastUpdated;
+    };
     vector<bool>        seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
     vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
+    vector<transCache>  transOTFCache;
     void                minimiseLeartFurther(vec<Lit>& cl);
+    void                transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp);
 
     ////////////
     //Logging
