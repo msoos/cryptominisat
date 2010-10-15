@@ -382,8 +382,6 @@ protected:
     vec<Var>            lastDecisionLevel;
     #endif
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
-    double              totalSumOfGlue; ///< The total decision levels in (glues of) conflict clauses. This is used to calculate the average glue overall. It is used to dynamically restart the solving
-    uint64_t            compTotSumGlue;    ///< To compensate for conflicts that were made but which have not been accumulated into Solver::totalSumOfDecisionLevel, so when we calculate the average, we must take this into account (i.e,. substruct it from Solver::conflicts )
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.

@@ -1822,11 +1822,15 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     vec<Lit>    learnt_clause;
     llbool      ret;
 
-    starts++;
-    if (restartType == static_restart)
-        staticStarts++;
-    else
-        dynStarts++;
+    if (simplifying == false) {
+        starts++;
+        if (restartType == static_restart) {
+            staticStarts++;
+        } else {
+            dynStarts++;
+        }
+    }
+    glueHistory.fastclear();
 
     #ifdef USE_GAUSS
     for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
@@ -1873,7 +1877,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     switch (restartType) {
     case dynamic_restart:
         if (glueHistory.isvalid() &&
-            ((glueHistory.getavg()) > (totalSumOfGlue / (double)(conflicts - compTotSumGlue)))) {
+            glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
             if (glueHistory.isvalid()) {
@@ -1885,7 +1889,6 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
             }
             #endif
 
-            glueHistory.fastclear();
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
                 progress_estimate = progressEstimate();
@@ -1992,12 +1995,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         avgBranchDepth.push(decisionLevel());
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
-        if (restartType == dynamic_restart)
-            glueHistory.push(glue);
-
-        totalSumOfGlue += glue;
-    } else {
-        compTotSumGlue++;
+        if (restartType == dynamic_restart) glueHistory.push(glue);
     }
 
     #ifdef STATS_NEEDED
@@ -2085,7 +2083,6 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
 
             if (tmp == dynamic_restart) {
                 glueHistory.fastclear();
-                glueHistory.initSize(100);
                 if (verbosity >= 3)
                     std::cout << "c Decided on dynamic restart strategy"
                     << std::endl;
@@ -2112,10 +2109,8 @@ inline void Solver::setDefaultRestartType()
     if (fixRestartType != auto_restart) restartType = fixRestartType;
     else restartType = static_restart;
 
-    if (restartType == dynamic_restart) {
-        glueHistory.fastclear();
-        glueHistory.initSize(100);
-    }
+    glueHistory.clear();
+    glueHistory.initSize(100);
 
     lastSelectedRestartType = restartType;
 }
@@ -2327,12 +2322,10 @@ void Solver::initialiseSolver()
 
     //Initialise restarts & dynamic restart datastructures
     setDefaultRestartType();
-    totalSumOfGlue = 0;
-    compTotSumGlue = conflicts;
 
     //Initialise avg. branch depth
     #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-    avgBranchDepth.fastclear();
+    avgBranchDepth.clear();
     avgBranchDepth.initSize(500);
     #endif //RANDOM_LOOKAROUND_SEARCHSPACE
 
