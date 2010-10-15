@@ -902,7 +902,7 @@ Lit Solver::pickBranchLit()
             sign = mtrand.randInt(1);
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         else if (avgBranchDepth.isvalid())
-            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
+            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
         #endif
         else
             sign = polarity[next];
