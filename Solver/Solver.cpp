@@ -1109,9 +1109,13 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
 
     if (out_learnt.size() == 1) return NULL;
 
+    //We can only on-the-fly subsume clauses that are not 2- or 3-long
+    //furthermore, we cannot subsume a clause that is marked for deletion
+    //due to its high glue value
     if (oldConfl.isClause() && !oldConfl.getClause()->isXor()
         && (oldConfl.getClause()->getGlue() <= maxGlue || lastSelectedRestartType != dynamic_restart)
-        && out_learnt.size() < oldConfl.getClause()->size()) {
+        && out_learnt.size() < oldConfl.getClause()->size())
+    {
         if (!subset(out_learnt, *oldConfl.getClause(), seen))
             return NULL;
         improvedClauseNo++;
