@@ -1444,11 +1444,11 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
             i--;
         } else {
             uncheckedEnqueue(first, &c);
-            #ifdef DYNAMICNBLEVEL
+            #ifdef DYNAMICALLY_UPDATE_GLUE
             if (update && c.learnt() && c.getGlue() > 2) { // GA
-                uint32_t nbLevels = calcNBLevels(c);
-                if (nbLevels+1 < c.getGlue())
-                    c.setGlue(nbLevels);
+                uint32_t glue = calcNBLevels(c);
+                if (glue+1 < c.getGlue())
+                    c.setGlue(glue);
             }
             #endif
         }
