@@ -201,6 +201,7 @@ public:
     uint32_t  maxDumpLearntsSize; ///<When dumping the learnt clauses, this is the maximum clause size that should be dumped
     bool      libraryUsage;       ///<Set to true if not used as a library. In fact, this is TRUE by default, and Main.cpp sets it to "FALSE". Disables some simplifications at the beginning of solving (mostly performStepsBeforeSolve() )
     bool      greedyUnbound;      ///<If set, then variables will be greedily unbounded (set to l_Undef). This is EXPERIMENTAL
+    uint32_t  maxGlue;            ///< Learnt clauses (when doing dynamic restarts) with glue above this value will be removed immediately on backtracking
     RestartType fixRestartType;   ///<If set, the solver will always choose the given restart strategy instead of automatically trying to guess a strategy. Note that even if set to dynamic_restart, there will be a few restarts made statically after each full restart.
     GaussianConfig gaussconfig;   ///<Configuration for the gaussian elimination can be set here
 
@@ -242,7 +243,7 @@ public:
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
     uint64_t nbGlue2; ///<Num learnt clauses that had a glue of 2 when created
     uint64_t nbBin; ///<Num learnt clauses that were binary when created
-    uint64_t lastNbBin; ///<Last time we seached for binary xors, the number of clauses in binaryClauses was this much
+    uint64_t lastNbBin; ///<Last time we seached for binary xors, the number of clauses in binaryClauses was this much    /**
     /**
     @brief When a clause becomes binary through shrinking, we increment this
 
@@ -258,6 +259,7 @@ public:
     uint64_t numShrinkedClauseLits; ///<Num literals removed by on-the-fly self-subsuming resolution
     uint64_t moreRecurMinLDo; ///< Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
     uint64_t updateTransCache;
+    uint64_t nbClOverMaxGlue;
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -382,6 +384,7 @@ protected:
     vec<Var>            lastDecisionLevel;
     #endif
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
+    vec<Clause*>        unWindGlue;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.

@@ -157,6 +157,8 @@ void printStats(Solver& solver)
     }
     #endif
 
+    printStatsLine("c clauses over max glue", solver.nbClOverMaxGlue, (double)solver.nbClOverMaxGlue/(double)solver.conflicts*100.0, "% of all clauses");
+
     //Search stats
     printStatsLine("c conflicts", solver.conflicts, (double)solver.conflicts/cpu_time, "/ sec");
     printStatsLine("c decisions", solver.decisions, (double)solver.rnd_decisions*100.0/(double)solver.decisions, "% random");
@@ -373,6 +375,9 @@ void printUsage(char** argv, Solver& S)
     printf("  --lfminimrec     = Always perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution (enhancement of \n");
     printf("                     'strong minimisation' in PrecoSat)\n");
+    printf("  --maxglue        = [0 - 2^32-1] default: %d. Glue value above which we\n", S.maxGlue);
+    printf("                     throw the clause away on backtrack. Only active\n");
+    printf("                     when dynamic restarts have been selected\n");
     printf("\n");
 }
 
@@ -660,6 +665,18 @@ int main(int argc, char** argv)
             S.doMinimLearntMore = false;
         } else if ((value = hasPrefix(argv[i], "--lfminimrec"))) {
             S.doMinimLMoreRecur = true;
+        } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
+            int glue = 16;
+            if (sscanf(value, "%d", &glue) < 0 || glue < 0) {
+                printf("ERROR! maxGlue: %s\n", value);
+                exit(0);
+            }
+            if (glue >= (1<< MAX_GLUE_BITS)-1) {
+                std::cout << "Due to memory-packing limitations, max glue cannot be more than "
+                << ((1<< MAX_GLUE_BITS)-2) << std::endl;
+                exit(-1);
+            }
+            S.maxGlue = (uint32_t)glue;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
