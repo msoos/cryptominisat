@@ -1,7 +1,10 @@
-/**************************************************************************************************
-Originally From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
-Substantially modified by: Mate Soos (2010)
-**************************************************************************************************/
+/*****************************************************************************
+SatELite -- (C) Niklas Een, Niklas Sorensson, 2004
+CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+
+Original code by SatELite authors are under an MIT licence.
+Modifications for CryptoMiniSat are under GPLv3.
+******************************************************************************/
 
 #ifndef XORSIMPLIFIER_H
 #define XORSIMPLIFIER_H
@@ -31,7 +34,7 @@ in the process, but one of them is going to be much smaller than it was original
 class XorSubsumer
 {
 public:
-    
+
     XorSubsumer(Solver& S2);
     const bool simplifyBySubsumption(const bool doFullSubsume = false);
     void unlinkModifiedClause(vec<Lit>& origClause, XorClauseSimp c);
@@ -46,25 +49,25 @@ public:
     const bool unEliminate(const Var var);
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
-    
+
 private:
-    
+
     friend class ClauseCleaner;
     friend class ClauseAllocator;
-    
+
     //Main
     vec<XorClauseSimp>        clauses;
     vec<vec<XorClauseSimp> >  occur;          // 'occur[index(lit)]' is a list of constraints containing 'lit'.
     Solver&                   solver;         // The Solver
-    
+
     // Temporaries (to reduce allocation overhead):
     //
     vec<char>                 seen_tmp;       // (used in various places)
-    
+
     //Start-up
     void addFromSolver(vec<XorClause*>& cs);
     void addBackToSolver();
-    
+
     // Subsumption:
     void findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed);
     bool isSubsumed(XorClause& ps);
@@ -77,7 +80,7 @@ private:
 
     //helper
     void testAllClauseAttach() const;
-    
+
     //dependent removal
     const bool removeDependent();
     void fillCannotEliminate();
@@ -90,13 +93,13 @@ private:
     map<Var, vector<XorClause*> > elimedOutVar;
     vec<char> var_elimed;
     uint32_t numElimed;
-    
+
     //Heule-process
     template<class T>
     void xorTwoClauses(const T& c1, const T& c2, vec<Lit>& xored);
     const bool localSubstitute();
     uint32_t localSubstituteUseful;
-    
+
     uint32_t clauses_subsumed;
     uint32_t clauses_cut;
     uint32_t origNClauses;

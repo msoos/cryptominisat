@@ -1,7 +1,10 @@
-/**************************************************************************************************
-Originally From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
-Substantially modified by: Mate Soos (2010)
-**************************************************************************************************/
+/*****************************************************************************
+SatELite -- (C) Niklas Een, Niklas Sorensson, 2004
+CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+
+Original code by SatELite authors are under an MIT licence.
+Modifications for CryptoMiniSat are under GPLv3.
+******************************************************************************/
 
 #include "Solver.h"
 #include "XorSubsumer.h"
