@@ -964,7 +964,7 @@ current decision level.
 @return NULL if the conflict doesn't on-the-fly subsume the last clause, and
 the pointer of the clause if it does
 */
-Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nbLevels, const bool update)
+Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &glue, const bool update)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -1053,7 +1053,8 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 
-    if (doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt);
+    if (doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt, calcNBLevels(out_learnt));
+    glue = calcNBLevels(out_learnt);
     tot_literals += out_learnt.size();
 
     // Find correct backtrack level:
@@ -1071,12 +1072,11 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
         out_btlevel       = level[p.var()];
     }
 
-    nbLevels = calcNBLevels(out_learnt);
     if (lastSelectedRestartType == dynamic_restart) {
         #ifdef UPDATEVARACTIVITY
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
             PropBy cl = reason[lastDecisionLevel[i]];
-            if (cl.isClause() && cl.getClause()->getGlue() < nbLevels)
+            if (cl.isClause() && cl.getClause()->getGlue() < glue)
                 varBumpActivity(lastDecisionLevel[i]);
         }
         lastDecisionLevel.clear();
@@ -1103,12 +1103,12 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
 Only uses binary and tertiary clauses already in the watchlists in native
 form to carry out the forward-self-subsuming resolution
 */
-void Solver::minimiseLeartFurther(vec<Lit>& cl)
+void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 {
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisClauseDoMinLMoreRecur = doMinimLMoreRecur || (cl.size() <= 8);
+    bool thisClauseDoMinLMoreRecur = doMinimLMoreRecur || (cl.size() <= 50 || glue <= 6);
     if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
     uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
     if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 3;
@@ -1124,7 +1124,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
         Lit lit = *l;
 
         if (thisClauseDoMinLMoreRecur) {
-            if ((conflicts < UPDATE_TRANSOTFSSR_CACHE && mtrand.randInt(cl.size()/2) != 0)
+            if ((conflicts < UPDATE_TRANSOTFSSR_CACHE && mtrand.randInt(cl.size()) != 0)
                 //|| moreRecurProp > 450
                 || (conflicts >= UPDATE_TRANSOTFSSR_CACHE && transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts)) {
                 for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
@@ -2369,6 +2369,7 @@ void Solver::initialiseSolver()
         else
             nbClBeforeRed = (nClauses() * learntsize_factor)/2;
     }
+
     testAllClauseAttach();
     findAllAttach();
 }

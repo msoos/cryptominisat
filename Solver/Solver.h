@@ -406,7 +406,7 @@ protected:
     vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     vector<transCache>  transOTFCache;
-    void                minimiseLeartFurther(vec<Lit>& cl);
+    void                minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue);
     void                transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp);
 
     ////////////
