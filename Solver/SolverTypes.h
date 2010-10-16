@@ -12,6 +12,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #define SOLVERTYPES_H
 
 #include <cassert>
+#include <iostream>
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
 #else
@@ -92,6 +93,12 @@ public:
 
 const Lit lit_Undef(var_Undef, false);  // Useful special constants.
 const Lit lit_Error(var_Undef, true );  //
+
+inline std::ostream& operator<<(std::ostream& cout, const Lit& lit)
+{
+    cout << (lit.sign() ? "-" : "") << (lit.var() + 1);
+    return cout;
+}
 
 //=================================================================================================
 // Lifted booleans:
