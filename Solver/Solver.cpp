@@ -1938,7 +1938,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     switch (restartType) {
     case dynamic_restart:
         if (glueHistory.isvalid() &&
-            glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()) {
+            0.9*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
             if (glueHistory.isvalid()) {
@@ -2181,7 +2181,7 @@ inline void Solver::setDefaultRestartType()
     else restartType = static_restart;
 
     glueHistory.clear();
-    glueHistory.initSize(100);
+    glueHistory.initSize(MIN_GLUE_RESTART);
 
     lastSelectedRestartType = restartType;
 }
