@@ -269,6 +269,12 @@ bool XorFinder::getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& 
     return false;
 }
 
+/**
+@brief Returns if the two clauses are equal
+
+NOTE: assumes that the clauses are of equal lenght AND contain the same
+variables (but the invertedness of the literals might differ)
+*/
 bool XorFinder::clauseEqual(const Clause& c1, const Clause& c2) const
 {
     assert(c1.size() == c2.size());
@@ -278,6 +284,9 @@ bool XorFinder::clauseEqual(const Clause& c1, const Clause& c2) const
     return true;
 }
 
+/**
+@brief Returns whether the number of inverted literals in the clause is pair or impair
+*/
 bool XorFinder::impairSigns(const Clause& c) const
 {
     uint32_t num = 0;
@@ -287,12 +296,21 @@ bool XorFinder::impairSigns(const Clause& c) const
     return num % 2;
 }
 
+/**
+@brief Gets as input a set of clauses of equal size and variable content, decides if there is an XOR in them
+
+@param impair If there is an XOR, this tells if that XOR contains an impair
+number of inverted literal or not
+@return True, if ther is an XOR, and False if not
+*/
 bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, const ClauseTable::iterator& end, bool& impair)
 {
     const uint32_t requiredSize = 1 << (begin->first->size()-1);
 
-    if (size < requiredSize)
-        return false;
+    //Note: "size" can be larger than requiredSize, since there might be
+    //a mix of imparied and paired num. inverted literals, and furthermore,
+    //clauses might be repeated
+    if (size < requiredSize) return false;
 
     #ifdef DEBUG_XORFIND2
     {
@@ -316,6 +334,7 @@ bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, c
     }
     #endif //DEBUG_XORFIND
 
+    //We now sort them according to literal content
     std::sort(begin, end, clause_sorter_secondary());
 
     uint32_t numPair = 0;

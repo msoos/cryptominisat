@@ -57,18 +57,6 @@ class XorFinder
         const bool findXors(uint32_t& sumLengths);
         bool getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& end, bool& impair);
 
-        struct clause_hasher {
-            size_t operator()(const Clause* c) const
-            {
-                size_t hash = 5381;
-                hash = ((hash << 5) + hash) ^ c->size();
-                for (uint32_t i = 0, size = c->size(); i < size; i++)
-                    hash = ((hash << 5) + hash) ^ (*c)[i].var();
-
-                return hash;
-            }
-        };
-
         /**
         @brief For sorting clauses according to their size&their var content. Clauses' variables must already be sorted
         */
@@ -102,7 +90,13 @@ class XorFinder
         };
 
         /**
-        @brief Sorts clauses with equal lenght and variable content according to their literals' signs
+        @brief Sorts clauses with equal length and variable content according to their literals' signs
+
+        NOTE: the length and variable content of c11 and c22 MUST be the same
+
+        Used to avoid the problem of having 2 clauses with exactly the same
+        content being counted as two different clauses (when counting the
+        (im)pairedness of XOR being searched)
         */
         struct clause_sorter_secondary {
             bool operator()(const pair<Clause*, uint32_t>& c11, const pair<Clause*, uint32_t>& c22) const
