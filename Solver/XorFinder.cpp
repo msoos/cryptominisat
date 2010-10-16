@@ -341,6 +341,14 @@ bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, c
     uint32_t numImpair = 0;
     countImpairs(begin, end, numImpair, numPair);
 
+    //if there are two XORs with equal variable sets, but different invertedness
+    //that leads to direct UNSAT result.
+    if (numImpair == requiredSize && numPair == requiredSize) {
+        solver.ok = false;
+        impair = true;
+        return true;
+    }
+
     if (numImpair == requiredSize) {
         impair = true;
         return true;
