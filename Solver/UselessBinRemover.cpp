@@ -180,8 +180,7 @@ all instances of it.
 void UselessBinRemover::removeBin(const Lit& lit1, const Lit& lit2)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "Removing useless bin: ";
-    lit1.print(); lit2.printFull();
+    std::cout << "Removing useless bin: " << lit1 << " " << lit2 << std::endl;
     #endif //VERBOSE_DEBUG
 
     removeWBinAll(solver.watches[(~lit1).toInt()], lit2);

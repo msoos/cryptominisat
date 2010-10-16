@@ -85,7 +85,7 @@ const bool VarReplacer::performReplaceInternal()
         uint32_t i = 0;
         for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
             if (it->var() == i) continue;
-            cout << "Replacing var " << i+1 << " with Lit " << (it->sign() ? "-" : "") <<  it->var()+1 << endl;
+            cout << "Replacing var " << i+1 << " with Lit " << *it << endl;
         }
     }
     #endif

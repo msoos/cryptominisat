@@ -1511,7 +1511,7 @@ PropagatedFrom Solver::propagate(const bool update)
         num_props += ws.size()/2 + 1;
 
         #ifdef VERBOSE_DEBUG
-        cout << "Propagating lit " << (p.sign() ? '-' : ' ') << p.var()+1 << endl;
+        cout << "Propagating lit " << p << endl;
         #endif
 
         i = i2 = j = ws.getData();

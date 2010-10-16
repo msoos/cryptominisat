@@ -401,7 +401,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     #ifdef VERBOSE_DEBUG
     cout << "-> Strenghtening clause :";
     c.clause->plainPrint();
-    cout << " with lit: " << (toRemoveLit.sign() ? "-" : "") << toRemoveLit.var()+1 << std::endl;
+    cout << " with lit: " << toRemoveLit << std::endl;
     #endif
 
     literals_removed++;
@@ -913,8 +913,7 @@ and contains all the non-learnt binary clauses
 const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "subsWNonExistBins called with lit "; lit.print();
-    std::cout << std::endl;
+    std::cout << "subsWNonExistBins called with lit " << lit << std::endl;
     #endif //VERBOSE_DEBUG
     toVisit.clear();
     solver.newDecisionLevel();
@@ -1350,7 +1349,7 @@ void inline Subsumer::fillSubs(const T& ps, uint32_t abs, vec<ClauseSimp>& out_s
                 out_lits.push(litSub);
                 #ifdef VERBOSE_DEBUG
                 if (litSub == lit_Undef) cout << "subsume0-d: ";
-                else cout << "subsume1-ed (lit: " << (litSub.sign() ? "-" : "") << litSub.var()+1 << "): ";
+                else cout << "subsume1-ed (lit: " << litSub << "): ";
                 it->clause->plainPrint();
                 #endif
             }

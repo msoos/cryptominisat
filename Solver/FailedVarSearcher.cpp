@@ -826,8 +826,7 @@ Used by hyperBinResolution() to add the newly discovered clauses
 void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "Adding extra bin: ";
-    lit1.print(); std::cout << " "; lit2.printFull();
+    std::cout << "Adding extra bin: " << lit1 << " " << lit2 << std::endl;
     #endif //VERBOSE_DEBUG
 
     tmpPs[0] = lit1;
