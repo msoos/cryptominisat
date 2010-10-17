@@ -1047,10 +1047,8 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         for (uint32_t i = 2; i < out_learnt.size(); i++)
             if (level[out_learnt[i].var()] > level[out_learnt[max_i].var()])
                 max_i = i;
-        Lit p             = out_learnt[max_i];
-        out_learnt[max_i] = out_learnt[1];
-        out_learnt[1]     = p;
-        out_btlevel       = level[p.var()];
+        std::swap(out_learnt[max_i], out_learnt[1]);
+        out_btlevel = level[out_learnt[1].var()];
     }
 
     nbLevels = calcNBLevels(out_learnt);
