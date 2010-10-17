@@ -2008,10 +2008,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
                     c->setGlue(glue); // LS
                 if (c->size() == 2)
                     nbBin++;
-                learnts_literals -= origSize - learnt_clause.size();
-            } else {
-                clauses_literals -= origSize - learnt_clause.size();
             }
+            clauses_literals -= origSize - learnt_clause.size();
         } else {  //no on-the-fly subsumption
             c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
             #ifdef STATS_NEEDED
