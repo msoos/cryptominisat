@@ -1007,13 +1007,13 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
                 assert(level[my_var] <= (int)decisionLevel());
                 if (level[my_var] >= (int)decisionLevel()) {
                     pathC++;
-                    #ifdef UPDATEVARACTIVITY
+                    #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
                     if (lastSelectedRestartType == dynamic_restart
                         && reason[q.var()].isClause()
                         && !reason[q.var()].isNULL()
                         && reason[q.var()].getClause()->learnt())
                         lastDecisionLevel.push(q.var());
-                    #endif
+                    #endif //#define UPDATEVARACTIVITY
                 } else {
                     out_learnt.push(q);
                     if (level[my_var] > out_btlevel)
@@ -1083,7 +1083,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
     }
 
     if (lastSelectedRestartType == dynamic_restart) {
-        #ifdef UPDATEVARACTIVITY
+        #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
             PropBy cl = reason[lastDecisionLevel[i]];
             if (cl.isClause() && cl.getClause()->getGlue() < glue)

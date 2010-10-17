@@ -380,7 +380,7 @@ protected:
     template<class T>
     const uint32_t      calcNBLevels(const T& ps);
     vec<uint64_t>       permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
-    #ifdef UPDATEVARACTIVITY
+    #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
     vec<Var>            lastDecisionLevel;
     #endif
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
