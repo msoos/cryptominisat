@@ -2450,7 +2450,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             status = simplifyProblem(500);
             printRestartStat();
             lastConflPrint = conflicts;
-            nextSimplify = conflicts * 1.5;
+            nextSimplify = conflicts * SIMPLIFY_MULTIPLIER_MULTIPLIER;
             if (status != l_Undef) break;
         }
 
