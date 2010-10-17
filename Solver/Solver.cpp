@@ -1169,6 +1169,8 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     uint32_t removedLits = 0;
     Lit *i = cl.getData();
     Lit *j= i;
+    //never remove the 0th literal
+    seen[cl[0].toInt()] = 1;
     for (Lit* end = cl.getDataEnd(); i != end; i++) {
         if (seen[i->toInt()]) *j++ = *i;
         else removedLits++;
