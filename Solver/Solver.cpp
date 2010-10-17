@@ -1063,18 +1063,16 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         #endif
     }
 
-    if (out_learnt.size() == 1) return NULL;
+    if (out_learnt.size() == 1
+        || !oldConfl.isClause()
+        || oldConfl.getClause()->isXor()
+        || out_learnt.size() >= oldConfl.getClause()->size()) return NULL;
 
-    if (oldConfl.isClause() && !oldConfl.getClause()->isXor()
-        && out_learnt.size() < oldConfl.getClause()->size()) {
-        if (!subset(out_learnt, *oldConfl.getClause(), seen))
-            return NULL;
-        improvedClauseNo++;
-        improvedClauseSize += oldConfl.getClause()->size() - out_learnt.size();
-        return oldConfl.getClause();
-    }
+    if (!subset(out_learnt, *oldConfl.getClause(), seen)) return NULL;
 
-    return NULL;
+    improvedClauseNo++;
+    improvedClauseSize += oldConfl.getClause()->size() - out_learnt.size();
+    return oldConfl.getClause();
 }
 
 /**
