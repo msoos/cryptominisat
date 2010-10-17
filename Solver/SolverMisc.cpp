@@ -299,6 +299,17 @@ void Solver::printRestartStat(const char* type)
         << std::setw(space) << clauses_literals
         << std::setw(space) << learnts_literals;
 
+        if (glueHistory.getTotalNumeElems() > 0) {
+            std::cout << std::setw(space) << std::fixed << std::setprecision(2) << glueHistory.getAvgAllDouble();
+        } else {
+            std::cout << std::setw(space) << "no data";
+        }
+        if (glueHistory.isvalid()) {
+            std::cout << std::setw(space) << std::fixed << std::setprecision(2) << glueHistory.getAvgDouble();
+        } else {
+            std::cout << std::setw(space) << "no data";
+        }
+
         #ifdef USE_GAUSS
         print_gauss_sum_stats();
         #endif //USE_GAUSS
@@ -322,7 +333,7 @@ void Solver::printEndSearchStat()
 void Solver::print_gauss_sum_stats()
 {
     if (gauss_matrixes.size() == 0 && verbosity >= 2) {
-        std::cout << "  no matrixes";
+        std::cout << "  --";
         return;
     }
 

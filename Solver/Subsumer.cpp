@@ -1154,7 +1154,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
         << std::endl;
 
-        if (numblockedClauseRemoved > 0 || blockTime > 0.0) {
+        if (numblockedClauseRemoved > 0 || blockTime > 0.1) {
             std::cout
             << "c Blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved
             << "    Time: " << std::fixed << std::setprecision(2) << std::setw(4) << blockTime << " s"

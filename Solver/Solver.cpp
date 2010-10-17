@@ -41,9 +41,14 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 //#define __builtin_prefetch(a,b)
 #endif //_MSC_VER
 
+#ifdef VERBOSE_DEBUG
+#define UNWINDING_DEBUG
+#endif
+
 //#define DEBUG_UNCHECKEDENQUEUE_LEVEL0
 //#define VERBOSE_DEBUG_POLARITIES
 //#define DEBUG_DYNAMIC_RESTART
+//#define UNWINDING_DEBUG
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -95,16 +100,18 @@ Solver::Solver() :
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , greedyUnbound    (false)
+        , maxGlue          (24)
         , fixRestartType   (auto_restart)
 
-        // Statistics: (formerly in 'SolverStats')
-        //
+        // Stats
         , starts(0), dynStarts(0), staticStarts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
         , nbGlue2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
         , numShrinkedClause(0), numShrinkedClauseLits(0)
-        , moreRecurMinLDo(0), moreRecurMinLDoLit(0), moreRecurMinLStop (0)
+        , moreRecurMinLDo(0)
+        , updateTransCache(0)
+        , nbClOverMaxGlue(0)
 
         #ifdef USE_GAUSS
         , sum_gauss_called (0)
@@ -113,17 +120,20 @@ Solver::Solver() :
         , sum_gauss_unit_truths (0)
         #endif //USE_GAUSS
         , ok               (true)
-        , var_inc          (128)
         , cla_inc          (1)
+        , qhead            (0)
+        , mtrand           ((unsigned long int)0)
+        , maxRestarts      (std::numeric_limits<uint32_t>::max())
 
+        //variables
+        , order_heap       (VarOrderLt(activity))
+        , var_inc          (128)
+
+        //learnts
         , numCleanedLearnts(1)
         , nbClBeforeRed    (NBCLAUSESBEFOREREDUCE)
         , nbCompensateSubsumer (0)
 
-        , qhead            (0)
-        , order_heap       (VarOrderLt(activity))
-        , mtrand((unsigned long int)0)
-        , maxRestarts(UINT_MAX)
         , MYFLAG           (0)
         #ifdef STATS_NEEDED
         , logger(verbosity)
@@ -213,15 +223,20 @@ Var Solver::newVar(bool dvar)
     Var v = nVars();
     watches   .push();          // (list for positive literal)
     watches   .push();          // (list for negative literal)
-    reason    .push(PropagatedFrom());
+    reason    .push(PropBy());
     assigns   .push(l_Undef);
     level     .push(-1);
     activity  .push(0);
     seen      .push_back(0);
     seen      .push_back(0);
-    seen2     .push_back(0);
-    seen2     .push_back(0);
     permDiff  .push(0);
+    unWindGlue.push(NULL);
+
+    //Transitive OTF self-subsuming resolution
+    seen2     .push_back(0);
+    seen2     .push_back(0);
+    transOTFCache.push_back(transCache());
+    transOTFCache.push_back(transCache());
 
     polarity  .push_back(defaultPolarity());
     #ifdef USE_OLD_POLARITIES
@@ -685,6 +700,21 @@ void Solver::cancelUntil(int level)
             #endif //USE_OLD_POLARITIES
             assigns[var] = l_Undef;
             insertVarOrder(var);
+            if (unWindGlue[var] != NULL) {
+                #ifdef UNWINDING_DEBUG
+                std::cout << "unwind, var:" << var
+                << " sublevel:" << sublevel
+                << " coming from:" << (trail.size()-1)
+                << " going until:" << (int)trail_lim[level]
+                << std::endl;
+                unWindGlue[var]->plainPrint();
+                #endif //UNWINDING_DEBUG
+
+                Clause*& clauseToFree = unWindGlue[var];
+                detachClause(*clauseToFree);
+                clauseAllocator.clauseFree(clauseToFree);
+                clauseToFree = NULL;
+            }
         }
         qhead = trail_lim[level];
         trail.shrink_(trail.size() - trail_lim[level]);
@@ -884,7 +914,7 @@ Lit Solver::pickBranchLit()
             sign = mtrand.randInt(1);
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         else if (avgBranchDepth.isvalid())
-            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getavg() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
+            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
         #endif
         else
             sign = polarity[next];
@@ -946,7 +976,7 @@ current decision level.
 @return NULL if the conflict doesn't on-the-fly subsume the last clause, and
 the pointer of the clause if it does
 */
-Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nbLevels, const bool update)
+Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &glue, const bool update)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -957,7 +987,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     int index   = trail.size() - 1;
     out_btlevel = 0;
 
-    PropagatedFrom oldConfl;
+    PropBy oldConfl;
 
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
@@ -1020,7 +1050,7 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     } else {
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++) {
-            PropagatedFrom c(reason[out_learnt[i].var()]);
+            PropBy c(reason[out_learnt[i].var()]);
 
             for (uint32_t k = 1, size = c.size(); k < size; k++) {
                 if (!seen[c[k].var()] && level[c[k].var()] > 0) {
@@ -1035,7 +1065,8 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 
-    if (doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt);
+    if (doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt, calcNBLevels(out_learnt));
+    glue = calcNBLevels(out_learnt);
     tot_literals += out_learnt.size();
 
     // Find correct backtrack level:
@@ -1051,21 +1082,24 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
         out_btlevel = level[out_learnt[1].var()];
     }
 
-    nbLevels = calcNBLevels(out_learnt);
     if (lastSelectedRestartType == dynamic_restart) {
         #ifdef UPDATEVARACTIVITY
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
-            PropagatedFrom cl = reason[lastDecisionLevel[i]];
-            if (cl.isClause() && cl.getClause()->getGlue() < nbLevels)
+            PropBy cl = reason[lastDecisionLevel[i]];
+            if (cl.isClause() && cl.getClause()->getGlue() < glue)
                 varBumpActivity(lastDecisionLevel[i]);
         }
         lastDecisionLevel.clear();
         #endif
     }
 
+    //We can only on-the-fly subsume clauses that are not 2- or 3-long
+    //furthermore, we cannot subsume a clause that is marked for deletion
+    //due to its high glue value
     if (out_learnt.size() == 1
         || !oldConfl.isClause()
         || oldConfl.getClause()->isXor()
+        || (oldConfl.getClause()->getGlue() > maxGlue && lastSelectedRestartType == dynamic_restart)
         || out_learnt.size() >= oldConfl.getClause()->size()) return NULL;
 
     if (!subset(out_learnt, *oldConfl.getClause(), seen)) return NULL;
@@ -1081,13 +1115,16 @@ Clause* Solver::analyze(PropagatedFrom confl, vec<Lit>& out_learnt, int& out_btl
 Only uses binary and tertiary clauses already in the watchlists in native
 form to carry out the forward-self-subsuming resolution
 */
-void Solver::minimiseLeartFurther(vec<Lit>& cl)
+void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 {
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisDoMinLMoreRecur = doMinimLMoreRecur || (cl.size() <= 5 && tot_literals < 80000000);
-    if (thisDoMinLMoreRecur) moreRecurMinLDo++;
+    bool thisClauseDoMinLMoreRecur = doMinimLMoreRecur || (cl.size() <= 50 || glue <= 6);
+    if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
+    uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
+    if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 3;
+    else if (tot_literals < 10000000) thisUpdateTransOTFSSCache /= 2;
 
     //To count the "amount of time" invested in doing transitive on-the-fly
     //self-subsuming resolution
@@ -1096,56 +1133,25 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
         if (seen[l->toInt()] == 0) continue;
-
         Lit lit = *l;
 
-        //Recursively self-subsume-resolve all "a OR c" when "a OR b" as well as
-        //"~b OR c" exists.
-        if (thisDoMinLMoreRecur && moreRecurProp > 450) {
-            //std::cout << "switched off"  << std::endl;
-            moreRecurMinLStop++;
-            thisDoMinLMoreRecur = false;
-        }
-        if (thisDoMinLMoreRecur) moreRecurMinLDoLit++;
-        if (thisDoMinLMoreRecur) {
-            //Don't come back to the starting point
-            seen2[(~lit).toInt()] = 1;
-            allAddedToSeen2.push(~lit);
-
-            toRecursiveProp.push(lit);
-            while(!toRecursiveProp.empty()) {
-                Lit thisLit = toRecursiveProp.top();
-                toRecursiveProp.pop();
-                //watched is messed: lit is in watched[~lit]
-                vec<Watched>& ws = watches[(~thisLit).toInt()];
-                moreRecurProp += ws.size() +10;
-                for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
-                    if (i->isBinary()) {
-                        moreRecurProp += 5;
-                        Lit otherLit = i->getOtherLit();
-                        //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
-                        if (seen2[otherLit.toInt()] != 0 || ~otherLit == lit) break;
-                        seen2[otherLit.toInt()] = 1;
-                        allAddedToSeen2.push(otherLit);
-                        seen[(~otherLit).toInt()] = 0;
-                        toRecursiveProp.push(~otherLit);
-                    } else {
-                        break;
-                    }
+        if (thisClauseDoMinLMoreRecur) {
+            if ((conflicts < UPDATE_TRANSOTFSSR_CACHE && mtrand.randInt(cl.size()) != 0)
+                //|| moreRecurProp > 450
+                || (conflicts >= UPDATE_TRANSOTFSSR_CACHE && transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts)) {
+                for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
+                    seen[(~(*it)).toInt()] = 0;
                 }
+            } else {
+                updateTransCache++;
+                transMinimAndUpdateCache(lit, moreRecurProp);
             }
-            assert(toRecursiveProp.empty());
-
-            for (Lit *it = allAddedToSeen2.getData(), *end = allAddedToSeen2.getDataEnd(); it != end; it++) {
-                seen2[it->toInt()] = 0;
-            }
-            allAddedToSeen2.clear();
         }
 
         //watched is messed: lit is in watched[~lit]
         vec<Watched>& ws = watches[(~lit).toInt()];
         for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
-            if (!thisDoMinLMoreRecur && i->isBinary()) {
+            if (i->isBinary()) {
                 seen[(~i->getOtherLit()).toInt()] = 0;
                 continue;
             }
@@ -1185,6 +1191,41 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl)
     #endif
 }
 
+void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
+{
+    vector<Lit>& allAddedToSeen2 = transOTFCache[lit.toInt()].lits;
+    allAddedToSeen2.clear();
+
+    toRecursiveProp.push(lit);
+    while(!toRecursiveProp.empty()) {
+        Lit thisLit = toRecursiveProp.top();
+        toRecursiveProp.pop();
+        //watched is messed: lit is in watched[~lit]
+        vec<Watched>& ws = watches[(~thisLit).toInt()];
+        moreRecurProp += ws.size() +10;
+        for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+            if (i->isBinary()) {
+                moreRecurProp += 5;
+                Lit otherLit = i->getOtherLit();
+                //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
+                if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) break;
+                seen2[otherLit.toInt()] = 1;
+                allAddedToSeen2.push_back(otherLit);
+                toRecursiveProp.push(~otherLit);
+            } else {
+                break;
+            }
+        }
+    }
+    assert(toRecursiveProp.empty());
+
+    for (vector<Lit>::const_iterator it = allAddedToSeen2.begin(), end = allAddedToSeen2.end(); it != end; it++) {
+        seen[(~(*it)).toInt()] = 0;
+        seen2[it->toInt()] = 0;
+    }
+
+    transOTFCache[lit.toInt()].conflictLastUpdated = conflicts;
+}
 
 /**
 @brief Check if 'p' can be removed from a learnt clause
@@ -1199,7 +1240,7 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     int top = analyze_toclear.size();
     while (analyze_stack.size() > 0) {
         assert(!reason[analyze_stack.last().var()].isNULL());
-        PropagatedFrom c(reason[analyze_stack.last().var()]);
+        PropBy c(reason[analyze_stack.last().var()]);
 
         analyze_stack.pop();
 
@@ -1250,7 +1291,7 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
                 assert(level[x] > 0);
                 out_conflict.push(~trail[i]);
             } else {
-                PropagatedFrom c = reason[x];
+                PropBy c = reason[x];
                 for (uint32_t j = 1, size = c.size(); j < size; j++)
                     if (level[c[j].var()] > 0)
                         seen[c[j].var()] = 1;
@@ -1275,7 +1316,7 @@ USE_OLD_POLARITIES is set
 @p p the fact to enqueue
 @p from Why was it propagated (binary clause, tertiary clause, normal clause)
 */
-void Solver::uncheckedEnqueue(const Lit p, const PropagatedFrom& from)
+void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
 {
 
     #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -1322,14 +1363,14 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
+inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
-        uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p));
+        uncheckedEnqueue(i->getOtherLit(), PropBy(p));
     } else if (val == l_False) {
-        confl = PropagatedFrom(p);
+        confl = PropBy(p);
         failBinLit = i->getOtherLit();
         qhead = trail.size();
         while (++i < end)
@@ -1345,17 +1386,17 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
-inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
+inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
-        uncheckedEnqueue(i->getOtherLit(), PropagatedFrom(p, i->getOtherLit2()));
+        uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
     } else if (val == l_False && val2.isUndef()) {
-        uncheckedEnqueue(i->getOtherLit2(), PropagatedFrom(p, i->getOtherLit()));
+        uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
     } else if (val == l_False && val2 == l_False) {
-        confl = PropagatedFrom(p, i->getOtherLit2());
+        confl = PropBy(p, i->getOtherLit2());
         failBinLit = i->getOtherLit();
         qhead = trail.size();
         while (++i < end)
@@ -1370,7 +1411,7 @@ inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, 
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
-inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl, const bool update)
+inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl, const bool update)
 {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
@@ -1409,7 +1450,7 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
         // Did not find watch -- clause is unit under assignment:
         *j++ = *i;
         if (value(first) == l_False) {
-            confl = PropagatedFrom(&c);
+            confl = PropBy(&c);
             qhead = trail.size();
             // Copy the remaining watches:
             while (++i < end)
@@ -1417,11 +1458,13 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
             i--;
         } else {
             uncheckedEnqueue(first, &c);
-            #ifdef DYNAMICNBLEVEL
+            #ifdef DYNAMICALLY_UPDATE_GLUE
             if (update && c.learnt() && c.getGlue() > 2) { // GA
-                uint32_t nbLevels = calcNBLevels(c);
-                if (nbLevels+1 < c.getGlue())
-                    c.setGlue(nbLevels);
+                uint32_t glue = calcNBLevels(c);
+                if (glue+1 < c.getGlue()) {
+                    //c.setGlue(std::min(nbLevels, MAX_THEORETICAL_GLUE);
+                    c.setGlue(glue);
+                }
             }
             #endif
         }
@@ -1438,7 +1481,7 @@ better memory-accesses since the watchlist is already in the memory...
 
 \todo maybe not worth it, and a variable-based watchlist should be used
 */
-inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropagatedFrom& confl)
+inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
 {
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(i->getOffset());
 
@@ -1474,7 +1517,7 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
         c[0] = c[0].unsign()^final;
         uncheckedEnqueue(c[0], (Clause*)&c);
     } else if (!final) {
-        confl = PropagatedFrom((Clause*)&c);
+        confl = PropBy((Clause*)&c);
         qhead = trail.size();
         // Copy the remaining watches:
         while (++i < end)
@@ -1493,9 +1536,9 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
 Basically, it goes through the watchlists recursively, and calls the appropirate
 propagaton function
 */
-PropagatedFrom Solver::propagate(const bool update)
+PropBy Solver::propagate(const bool update)
 {
-    PropagatedFrom confl;
+    PropBy confl;
     uint32_t num_props = 0;
 
     #ifdef VERBOSE_DEBUG
@@ -1554,7 +1597,7 @@ FoundWatch:
 
 This is used in special algorithms outside the main Solver class
 */
-PropagatedFrom Solver::propagateBin()
+PropBy Solver::propagateBin()
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
@@ -1568,12 +1611,12 @@ PropagatedFrom Solver::propagateBin()
                 //uncheckedEnqueue(k->impliedLit, k->clause);
                 uncheckedEnqueueLight(k->getOtherLit());
             } else if (val == l_False) {
-                return PropagatedFrom(p);
+                return PropBy(p);
             }
         }
     }
 
-    return PropagatedFrom();
+    return PropBy();
 }
 
 /**
@@ -1659,18 +1702,48 @@ void Solver::reduceDB()
 
 
     const uint32_t removeNum = (double)learnts.size() / (double)RATIOREMOVECLAUSES;
+    uint32_t totalNumRemoved = 0;
+    uint32_t totalNumNonRemoved = 0;
+    uint64_t totalGlueOfRemoved = 0;
+    uint64_t totalSizeOfRemoved = 0;
+    uint64_t totalGlueOfNonRemoved = 0;
+    uint64_t totalSizeOfNonRemoved = 0;
     for (i = j = 0; i != removeNum; i++){
         if (i+1 < removeNum)
             __builtin_prefetch(learnts[i+1], 0, 0);
         if (learnts[i]->size() > 2 && !locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->getGlue() > 2)) {
+            totalGlueOfRemoved += learnts[i]->getGlue();
+            totalSizeOfRemoved += learnts[i]->size();
+            totalNumRemoved++;
             removeClause(*learnts[i]);
-        } else
+        } else {
+            totalGlueOfNonRemoved += learnts[i]->getGlue();
+            totalSizeOfNonRemoved += learnts[i]->size();
+            totalNumNonRemoved++;
             learnts[j++] = learnts[i];
+        }
     }
     for (; i < learnts.size(); i++) {
+        totalGlueOfNonRemoved += learnts[i]->getGlue();
+        totalSizeOfNonRemoved += learnts[i]->size();
+        totalNumNonRemoved++;
         learnts[j++] = learnts[i];
     }
-    learnts.shrink(i - j);
+    learnts.shrink_(i - j);
+
+    if (verbosity >= 3) {
+        std::cout << "c rem-learnts " << std::setw(6) << totalNumRemoved
+        << "  avgGlue "
+        << std::fixed << std::setw(5) << std::setprecision(2)  << ((double)totalGlueOfRemoved/(double)totalNumRemoved)
+        << "  avgSize "
+        << std::fixed << std::setw(6) << std::setprecision(2) << ((double)totalSizeOfRemoved/(double)totalNumRemoved)
+        << "  || remain " << std::setw(6) << totalNumNonRemoved
+        << "  avgGlue "
+        << std::fixed << std::setw(5) << std::setprecision(2)  << ((double)totalGlueOfNonRemoved/(double)totalNumNonRemoved)
+        << "  avgSize "
+        << std::fixed << std::setw(6) << std::setprecision(2) << ((double)totalSizeOfNonRemoved/(double)totalNumNonRemoved)
+        << std::endl;
+    }
 
     clauseAllocator.consolidate(this);
 }
@@ -1795,11 +1868,15 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     vec<Lit>    learnt_clause;
     llbool      ret;
 
-    starts++;
-    if (restartType == static_restart)
-        staticStarts++;
-    else
-        dynStarts++;
+    if (simplifying == false) {
+        starts++;
+        if (restartType == static_restart) {
+            staticStarts++;
+        } else {
+            dynStarts++;
+        }
+    }
+    glueHistory.fastclear();
 
     #ifdef USE_GAUSS
     for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
@@ -1812,7 +1889,7 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     findAllAttach();
     for (;;) {
         if (needToInterrupt) interruptCleanly();
-        PropagatedFrom confl = propagate(update);
+        PropBy confl = propagate(update);
 
         if (!confl.isNULL()) {
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
@@ -1846,7 +1923,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     switch (restartType) {
     case dynamic_restart:
         if (glueHistory.isvalid() &&
-            ((glueHistory.getavg()) > (totalSumOfGlue / (double)(conflicts - compTotSumGlue)))) {
+            0.9*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
             if (glueHistory.isvalid()) {
@@ -1858,7 +1935,6 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
             }
             #endif
 
-            glueHistory.fastclear();
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
                 progress_estimate = progressEstimate();
@@ -1943,7 +2019,7 @@ conflict analysis, but this is the code that actually replaces the original
 clause with that of the shorter one
 @returns l_False if UNSAT
 */
-llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, int& conflictC, const bool update)
+llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& conflictC, const bool update)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Handling conflict: ";
@@ -1965,12 +2041,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         avgBranchDepth.push(decisionLevel());
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
-        if (restartType == dynamic_restart)
-            glueHistory.push(glue);
-
-        totalSumOfGlue += glue;
-    } else {
-        compTotSumGlue++;
+        if (restartType == dynamic_restart) glueHistory.push(glue);
     }
 
     #ifdef STATS_NEEDED
@@ -2017,12 +2088,22 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropagatedFrom confl, in
                 logger.set_group_name(c->getGroup(), "learnt clause");
             #endif
             if (c->size() > 2) {
-                learnts.push(c);
-                c->setGlue(glue); // LS
+                if (glue > maxGlue && lastSelectedRestartType == dynamic_restart) {
+                    nbClOverMaxGlue++;
+                    nbCompensateSubsumer++;
+                    unWindGlue[learnt_clause[0].var()] = c;
+                    #ifdef UNWINDING_DEBUG
+                    std::cout << "unwind, var:" << learnt_clause[0].var() << std::endl;
+                    c->plainPrint();
+                    #endif //VERBOSE_DEBUG
+                } else {
+                    learnts.push(c);
+                }
             } else {
                 binaryClauses.push(c);
                 nbBin++;
             }
+            c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
         }
         attachClause(*c);
         uncheckedEnqueue(learnt_clause[0], c);
@@ -2056,7 +2137,6 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
 
             if (tmp == dynamic_restart) {
                 glueHistory.fastclear();
-                glueHistory.initSize(100);
                 if (verbosity >= 3)
                     std::cout << "c Decided on dynamic restart strategy"
                     << std::endl;
@@ -2083,10 +2163,8 @@ inline void Solver::setDefaultRestartType()
     if (fixRestartType != auto_restart) restartType = fixRestartType;
     else restartType = static_restart;
 
-    if (restartType == dynamic_restart) {
-        glueHistory.fastclear();
-        glueHistory.initSize(100);
-    }
+    glueHistory.clear();
+    glueHistory.initSize(MIN_GLUE_RESTART);
 
     lastSelectedRestartType = restartType;
 }
@@ -2298,12 +2376,10 @@ void Solver::initialiseSolver()
 
     //Initialise restarts & dynamic restart datastructures
     setDefaultRestartType();
-    totalSumOfGlue = 0;
-    compTotSumGlue = conflicts;
 
     //Initialise avg. branch depth
     #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-    avgBranchDepth.fastclear();
+    avgBranchDepth.clear();
     avgBranchDepth.initSize(500);
     #endif //RANDOM_LOOKAROUND_SEARCHSPACE
 
@@ -2317,6 +2393,7 @@ void Solver::initialiseSolver()
         else
             nbClBeforeRed = (nClauses() * learntsize_factor)/2;
     }
+
     testAllClauseAttach();
     findAllAttach();
 }

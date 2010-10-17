@@ -25,6 +25,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "constants.h"
 #include "Watched.h"
 #include "Alg.h"
+#include "constants.h"
 
 template <class T>
 uint32_t calcAbstraction(const T& ps) {
@@ -84,9 +85,9 @@ protected:
     free it
     */
     uint32_t wasBinInternal:1;
-    uint32_t mySize:20; ///<The current size of the clause
+    uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
+    uint32_t mySize:19; ///<The current size of the clause
 
-    uint32_t glue;  ///<Clause glue -- clause activity according to GLUCOSE
     float miniSatAct; ///<Clause activity according to MiniSat
 
     uint32_t abst; //Abstraction of clause
@@ -227,12 +228,13 @@ public:
         return data[i];
     }
 
-    void setGlue(uint32_t newGlue)
+    void setGlue(const uint32_t newGlue)
     {
+        assert(newGlue <= MAX_THEORETICAL_GLUE);
         glue = newGlue;
     }
 
-    const uint32_t& getGlue() const
+    const uint32_t getGlue() const
     {
         return glue;
     }

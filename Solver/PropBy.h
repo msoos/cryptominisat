@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ************************************************************************/
 
-#ifndef PROPAGATEDFROM_H
-#define PROPAGATEDFROM_H
+#ifndef PROPBY_H
+#define PROPBY_H
 
 #include "SolverTypes.h"
 #include "Clause.h"
@@ -28,19 +28,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define DEBUG_PROPAGATEFROM
 
-class PropagatedFrom
+class PropBy
 {
     private:
         union {Clause* clause; uint32_t otherLit;};
         uint32_t otherLit2;
 
     public:
-        PropagatedFrom() :
+        PropBy() :
             clause(NULL)
             , otherLit2(0)
         {}
 
-        PropagatedFrom(Clause* c) :
+        PropBy(Clause* c) :
             clause(c)
             , otherLit2(0)
         {
@@ -49,13 +49,13 @@ class PropagatedFrom
             #endif
         }
 
-        PropagatedFrom(const Lit& lit) :
+        PropBy(const Lit& lit) :
             otherLit(lit.toInt())
             , otherLit2(1)
         {
         }
 
-        PropagatedFrom(const Lit& lit1, const Lit& lit2) :
+        PropBy(const Lit& lit1, const Lit& lit2) :
             otherLit(lit1.toInt())
             , otherLit2(2 + (lit2.toInt() << 2))
         {
@@ -150,4 +150,4 @@ class PropagatedFrom
         }
 };
 
-#endif //PROPAGATEDFROM_H
+#endif //PROPBY_H
