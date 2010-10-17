@@ -2204,7 +2204,6 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     printRestartStat("S");
     while(status == l_Undef && conflicts-origConflicts < numConfls) {
         status = search(100, -1, false);
-        starts--;
     }
     printRestartStat("S");
     if (status != l_Undef) goto end;
