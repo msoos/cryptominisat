@@ -85,6 +85,10 @@ static bool grouping = false;
 static bool debugLib = false;
 static bool debugNewVar = false;
 static bool printResult = true;
+
+static bool fileNamePresent = false;
+static bool twoFileNamesPresent = false;
+
 static std::vector<std::string> filesToRead;
 
 //=================================================================================================
@@ -237,7 +241,7 @@ static void readInAFile(B stuff, Solver& solver)
     #endif // DISABLE_ZLIB
 }
 
-void parseInAllFiles(Solver& S, int argc, char** argv)
+void parseInAllFiles(Solver& S, const char* filename)
 {
     double myTime = cpuTime();
     //FIRST read normal extra files
@@ -250,10 +254,10 @@ void parseInAllFiles(Solver& S, int argc, char** argv)
     }
 
     //Then read the main file or standard input
-    if (argc == 1) {
+    if (filename == NULL) {
         readInAFile(fileno(stdin), S);
     } else {
-        readInAFile(argv[1], S);
+        readInAFile(filename, S);
     }
 
     if (S.verbosity >= 1) {
@@ -432,7 +436,8 @@ void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_
     const char* value;
     char tmpFilename[201];
     tmpFilename[0] = '\0';
-    int j = 0;
+    uint32_t unparsedOptions = 0;
+    bool needTwoFileNames = false;
 
     for (int i = 0; i < argc; i++) {
         if ((value = hasPrefix(argv[i], "--polarity-mode="))) {
@@ -452,7 +457,7 @@ void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_
         } else if ((value = hasPrefix(argv[i], "--rnd-freq="))) {
             double rnd;
             if (sscanf(value, "%lf", &rnd) <= 0 || rnd < 0 || rnd > 1) {
-                printf("ERROR! illegal rnd-freq constant %s\n", value);
+                printf("ERROR! illegal rnRSE ERROR!d-freq constant %s\n", value);
                 exit(0);
             }
             S.random_var_freq = rnd;
@@ -675,10 +680,41 @@ void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
-        } else
-            argv[j++] = argv[i];
+        } else {
+            //std::cout << "argc:" << argc << " i:" << i << ", value:" << argv[i] << std::endl;
+            unparsedOptions++;
+            if (unparsedOptions == 2) {
+                if (!(argc <= i+2)) {
+                    std::cout << "You must give the input file as either:" << std::endl;
+                    std::cout << " -- last option if you want the output to the console" << std::endl;
+                    std::cout << " -- or one before the last option" << std::endl;
+                    std::cout << "It appears that you did neither. Maybe you forgot the '--' from an option?" << std::endl;
+                    exit(-1);
+                }
+                fileNamePresent = true;
+                if (argc == i+2) needTwoFileNames = true;
+            }
+            if (unparsedOptions == 3) {
+                if (!(argc <= i+1)) {
+                    std::cout << "You must give the output file as the last option. Exiting" << std::endl;
+                    exit(-1);
+                }
+                twoFileNamesPresent = true;
+            }
+            if (unparsedOptions == 4) {
+                std::cout << "You gave more than two filenames as parameters." << std::endl;
+                std::cout << "The first one is interpreted as the input, the second is the output." << std::endl;
+                std::cout << "However, the third one I cannot do anything with. EXITING" << std::endl;
+                exit(-1);
+            }
+        }
     }
-    argc = j;
+    if (unparsedOptions == 2 && needTwoFileNames == true) {
+        std::cout << "Command line wrong. You probably frogot to add "<< std::endl
+        << "the '--'  in front of one of the options, or you started" << std::endl
+        << "your output file with a hyphen ('-'). Exiting." << std::endl;
+        exit(-1);
+    }
     if (!debugLib) S.libraryUsage = false;
 }
 
@@ -706,15 +742,15 @@ int main(int argc, char** argv)
     signal(SIGINT,SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);
 
-    parseInAllFiles(S, argc, argv);
+    parseInAllFiles(S, (fileNamePresent ? argv[(twoFileNamesPresent ? argc-2 : argc-1)] : NULL));
 
     FILE* res = NULL;
-    if (argc >= 3) {
-        printf("c Outputting solution to file: %s\n" , argv[2]);
+    if (twoFileNamesPresent) {
+        printf("c Outputting solution to file: %s\n" , argv[argc-1]);
         res = fopen(argv[2], "wb");
         if (res == NULL) {
             int backup_errno = errno;
-            printf("Cannot open %s for writing. Problem: %s", argv[2], strerror(backup_errno));
+            printf("Cannot open %s for writing. Problem: %s", argv[argc-1], strerror(backup_errno));
             exit(1);
         }
     } else {
