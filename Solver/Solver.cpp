@@ -147,6 +147,7 @@ Solver::Solver() :
         , simpDB_assigns   (-1)
         , simpDB_props     (0)
 {
+    assert(maxGlue < MAX_THEORETICAL_GLUE);
     varReplacer = new VarReplacer(*this);
     clauseCleaner = new ClauseCleaner(*this);
     failedVarSearcher = new FailedVarSearcher(*this);
@@ -2446,7 +2447,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
 
         if (schedSimplification && conflicts >= nextSimplify) {
-            status = simplifyProblem(500);
+            status = simplifyProblem(NUM_CONFL_BURST_SEARCH);
             printRestartStat();
             lastConflPrint = conflicts;
             nextSimplify = conflicts * SIMPLIFY_MULTIPLIER_MULTIPLIER;
