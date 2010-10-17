@@ -58,7 +58,7 @@ ClauseAllocator::ClauseAllocator()
 ClauseAllocator::~ClauseAllocator()
 {
     for (uint32_t i = 0; i < dataStarts.size(); i++) {
-        free(dataStarts[i]);
+        delete [] dataStarts[i];
     }
 }
 
@@ -167,7 +167,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         << ")" << std::endl;
         #endif //DEBUG_CLAUSEALLOCATOR
 
-        uint32_t *dataStart = (uint32_t*)malloc(nextSize*sizeof(uint32_t));
+        uint32_t *dataStart = new uint32_t[nextSize];
         assert(dataStart != NULL);
         dataStarts.push(dataStart);
         sizes.push(0);
@@ -337,29 +337,28 @@ void ClauseAllocator::consolidate(Solver* solver)
     #endif //DEBUG_CLAUSEALLOCATOR
     vec<uint32_t> newMaxSizes;
     for (uint32_t i = 0; i < (1 << NUM_BITS_OUTER_OFFSET); i++) {
-        if (newMaxSizeNeed > 0) {
-            uint32_t thisMaxSize = std::min(newMaxSizeNeed, (int64_t)MAXSIZE);
-            if (i == 0) {
-                thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE);
-            } else {
-                assert(i > 0);
-                thisMaxSize = std::max(thisMaxSize, newMaxSizes[i-1]/2);
-                thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE*2);
-            }
-            newMaxSizeNeed -= thisMaxSize;
-            newMaxSizes.push(thisMaxSize);
-            //because the clauses don't always fit
-            //it might occur that there is enough place in total
-            //but the very last clause would need to be fragmented
-            //over multiple lists' ends :O
-            //So this "magic" constant could take care of that....
-            //or maybe not (if _very_ large clauses are used, always
-            //bad chance, etc. :O )
-            //NOTE: the + MIN_LIST_SIZE should take care of this above at
-            // newMaxSizeNeed = sum + MIN_LIST_SIZE;
+        if (newMaxSizeNeed <= 0) break;
+
+        uint32_t thisMaxSize = std::min(newMaxSizeNeed, (int64_t)MAXSIZE);
+        if (i == 0) {
+            thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE);
         } else {
-            break;
+            assert(i > 0);
+            thisMaxSize = std::max(thisMaxSize, newMaxSizes[i-1]/2);
+            thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE*2);
         }
+        newMaxSizeNeed -= thisMaxSize;
+        assert(thisMaxSize <= MAXSIZE);
+        newMaxSizes.push(thisMaxSize);
+        //because the clauses don't always fit
+        //it might occur that there is enough place in total
+        //but the very last clause would need to be fragmented
+        //over multiple lists' ends :O
+        //So this "magic" constant could take care of that....
+        //or maybe not (if _very_ large clauses are used, always
+        //bad chance, etc. :O )
+        //NOTE: the + MIN_LIST_SIZE should take care of this above at
+        // newMaxSizeNeed = sum + MIN_LIST_SIZE;
         #ifdef DEBUG_CLAUSEALLOCATOR
         std::cout << "c NEW MaxSizes:" << newMaxSizes[i] << std::endl;
         #endif //DEBUG_CLAUSEALLOCATOR
@@ -377,15 +376,11 @@ void ClauseAllocator::consolidate(Solver* solver)
     vec<vec<uint32_t> > newOrigClauseSizes;
     vec<uint32_t*> newDataStartsPointers;
     vec<uint32_t*> newDataStarts;
-    for (uint32_t i = 0; i < (1 << NUM_BITS_OUTER_OFFSET); i++) {
-        if (newMaxSizes[i] == 0) break;
+    for (uint32_t i = 0; i < newMaxSizes.size(); i++) {
         newSizes.push(0);
         newOrigClauseSizes.push();
-        uint32_t* pointer = (uint32_t*)malloc(newMaxSizes[i]*sizeof(uint32_t));
-        if (pointer == 0) {
-            std::cerr << "Cannot allocate enough memory!" << std::endl;
-            exit(-1);
-        }
+        uint32_t* pointer;
+        pointer = new uint32_t[newMaxSizes[i]];
         newDataStartsPointers.push(pointer);
         newDataStarts.push(pointer);
     }
@@ -417,7 +412,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     updateAllOffsetsAndPointers(solver);
 
     for (uint32_t i = 0; i < dataStarts.size(); i++)
-        free(dataStarts[i]);
+        delete [] dataStarts[i];
 
     dataStarts.clear();
     maxSizes.clear();
@@ -426,8 +421,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     currentlyUsedSizes.clear();
     origClauseSizes.clear();
 
-    for (uint32_t i = 0; i < (1 << NUM_BITS_OUTER_OFFSET); i++) {
-        if (newMaxSizes[i] == 0) break;
+    for (uint32_t i = 0; i < newMaxSizes.size(); i++) {
         dataStarts.push(newDataStarts[i]);
         maxSizes.push(newMaxSizes[i]);
         sizes.push(newSizes[i]);
