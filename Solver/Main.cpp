@@ -427,17 +427,12 @@ void printResultFunc(const Solver& S, const lbool ret, FILE* res)
     }
 }
 
-int main(int argc, char** argv)
+void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_of_solutions)
 {
-    Solver      S;
-    S.verbosity = 2;
+    const char* value;
     char tmpFilename[201];
     tmpFilename[0] = '\0';
-
-    const char* value;
     int j = 0;
-    unsigned long max_nr_of_solutions = 1;
-    unsigned long current_nr_of_solutions = 1;
 
     for (int i = 0; i < argc; i++) {
         if ((value = hasPrefix(argv[i], "--polarity-mode="))) {
@@ -685,6 +680,17 @@ int main(int argc, char** argv)
     }
     argc = j;
     if (!debugLib) S.libraryUsage = false;
+}
+
+int main(int argc, char** argv)
+{
+    Solver      S;
+    S.verbosity = 2;
+
+    unsigned long max_nr_of_solutions = 1;
+    unsigned long current_nr_of_solutions = 1;
+
+    parseCommandLine(argc, argv, S, max_nr_of_solutions);
 
     if (S.verbosity >= 1)
         printf("c This is CryptoMiniSat %s\n", VERSION);
