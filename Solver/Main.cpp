@@ -846,9 +846,8 @@ void* helperOneThreadSolve(void* pv)
     return result;
 }
 
-int Main::multiThreadSolve()
+int Main::multiThreadSolve(const uint32_t numThreads)
 {
-    uint32_t numThreads(3);
     vector<int> seeds;
     vector<pthread_t> threads;
     MTRand mtrand;
@@ -857,7 +856,6 @@ int Main::multiThreadSolve()
     threads.resize(numThreads);
     for (uint32_t i = 0; i < numThreads; i++) {
         seeds[i] = mtrand.randInt();
-        //int iret = pthread_create(&(threads[i]), NULL, oneThreadSolve(), (void*) &(seeds[i]));
         int iret = pthread_create(&(threads[i]), NULL, &helperOneThreadSolve, new myThreadArgs(this,&(seeds[i])));
 
         if (iret != 0) {
@@ -876,7 +874,6 @@ int Main::multiThreadSolve()
 int main(int argc, char** argv)
 {
     Main main(argc, argv);
-    return main.multiThreadSolve();
-    //return singleThreadSolve(argc, argv);
+    return main.multiThreadSolve(2);
 
 }

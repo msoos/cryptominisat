@@ -25,7 +25,7 @@ class Main
 
         int singleThreadSolve();
         void* oneThreadSolve( void *ptr );
-        int multiThreadSolve();
+        int multiThreadSolve(const uint32_t numThreads);
 
         static void printStats(Solver& solver);
 
