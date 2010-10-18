@@ -112,6 +112,8 @@ Solver::Solver() :
         , moreRecurMinLDo(0)
         , updateTransCache(0)
         , nbClOverMaxGlue(0)
+        , simpStartMult(SIMPLIFY_MULTIPLIER)
+        , simpStartMMult(SIMPLIFY_MULTIPLIER_MULTIPLIER)
 
         #ifdef USE_GAUSS
         , sum_gauss_called (0)
@@ -2423,7 +2425,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     int       nof_conflicts_fullrestart = restart_first * FULLRESTART_MULTIPLIER + conflicts; //at this point, do a full restart
     uint32_t  lastFullRestart = starts; //last time a full restart was made was at this number of restarts
     lbool     status = l_Undef; //Current status
-    uint64_t  nextSimplify = restart_first * SIMPLIFY_MULTIPLIER + conflicts; //Do simplifyProblem() at this number of conflicts
+    uint64_t  nextSimplify = restart_first * simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
 
     if (conflicts == 0) {
         performStepsBeforeSolve();
@@ -2450,7 +2452,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             status = simplifyProblem(NUM_CONFL_BURST_SEARCH);
             printRestartStat();
             lastConflPrint = conflicts;
-            nextSimplify = conflicts * SIMPLIFY_MULTIPLIER_MULTIPLIER;
+            nextSimplify = conflicts * simpStartMMult;
             if (status != l_Undef) break;
         }
 

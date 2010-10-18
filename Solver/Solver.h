@@ -260,6 +260,8 @@ public:
     uint64_t moreRecurMinLDo; ///< Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
     uint64_t updateTransCache;
     uint64_t nbClOverMaxGlue;
+    double simpStartMult;
+    double simpStartMMult;
 
     //Logging
     void needStats();              // Prepares the solver to output statistics

@@ -814,7 +814,12 @@ void* Main::oneThreadSolve( void *ptr )
     parseCommandLine(solver);
     printVersionInfo(solver.verbosity);
     setDoublePrecision(solver.verbosity);
-    solver.setSeed(*((int*)ptr));
+    uint32_t num = *((int*)ptr);
+    solver.setSeed(num);
+    if (num % 2) solver.fixRestartType = dynamic_restart;
+    else solver.fixRestartType = static_restart;
+    solver.simpStartMult *= 2*(num+1);
+    solver.simpStartMMult *= 2*(num+1);
 
     parseInAllFiles(solver);
     lbool ret = solver.solve();
