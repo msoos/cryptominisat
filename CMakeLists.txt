@@ -30,11 +30,11 @@ else(Boost_FOUND)
     message("Boost NOT found, so clauses will NOT be packed (slowdown)")
 endif(Boost_FOUND)
 
+FIND_PACKAGE(Threads REQUIRED)
+set(thread_library "${CMAKE_THREAD_LIBS_INIT}")
+
 add_definitions(-DVERSION="2.7.0")
 add_definitions(-DUSE_GAUSS)
-
-#FIND_PACKAGE(Threads REQUIRED)
-#set(thread_library "${CMAKE_THREAD_LIBS_INIT}")
 
 add_subdirectory(Solver)
 

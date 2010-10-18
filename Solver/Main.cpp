@@ -718,7 +718,25 @@ void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_
     if (!debugLib) S.libraryUsage = false;
 }
 
-int main(int argc, char** argv)
+FILE* openOutputFile(int argc, char** argv)
+{
+    FILE* res = NULL;
+    if (twoFileNamesPresent) {
+        printf("c Outputting solution to file: %s\n" , argv[argc-1]);
+        res = fopen(argv[2], "wb");
+        if (res == NULL) {
+            int backup_errno = errno;
+            printf("Cannot open %s for writing. Problem: %s", argv[argc-1], strerror(backup_errno));
+            exit(1);
+        }
+    } else {
+        printf("c Ouptutting solution to console\n");
+    }
+
+    return res;
+}
+
+int singleThreadSolve(int& argc, char**& argv)
 {
     Solver      S;
     S.verbosity = 2;
@@ -744,18 +762,7 @@ int main(int argc, char** argv)
 
     parseInAllFiles(S, (fileNamePresent ? argv[(twoFileNamesPresent ? argc-2 : argc-1)] : NULL));
 
-    FILE* res = NULL;
-    if (twoFileNamesPresent) {
-        printf("c Outputting solution to file: %s\n" , argv[argc-1]);
-        res = fopen(argv[2], "wb");
-        if (res == NULL) {
-            int backup_errno = errno;
-            printf("Cannot open %s for writing. Problem: %s", argv[argc-1], strerror(backup_errno));
-            exit(1);
-        }
-    } else {
-        printf("c Ouptutting solution to console\n");
-    }
+    FILE* res = openOutputFile(argc, argv);
 
     lbool ret;
     while(1)
@@ -765,7 +772,7 @@ int main(int argc, char** argv)
 
         std::cout << "c " << std::setw(8) << ++current_nr_of_solutions << " solution(s) found" << std::endl;
 
-        if (current_nr_of_solutions > max_nr_of_solutions) break;
+        if (current_nr_of_solutions >= max_nr_of_solutions) break;
         printf("c Prepare for next run...\n");
 
         vec<Lit> lits;
@@ -804,4 +811,65 @@ int main(int argc, char** argv)
     assert(false);
 
     return 0;
+}
+
+MTRand mtrand;
+int my_argc;
+char** my_argv;
+
+void *oneThreadSolve( void *ptr )
+{
+    Solver solver;
+    solver.verbosity = 2;
+    unsigned long max_nr_of_solutions = 1;
+
+    parseCommandLine(my_argc, my_argv, solver, max_nr_of_solutions);
+    solver.setSeed(*((int*)ptr));
+
+    parseInAllFiles(solver, (fileNamePresent ? my_argv[(twoFileNamesPresent ? my_argc-2 : my_argc-1)] : NULL));
+
+    lbool ret = solver.solve();
+    int retVal;
+    if (ret == l_True) retVal = 10;
+    if (ret == l_False) retVal = 20;
+    if (ret == l_Undef) retVal = 15;
+
+    FILE* res = openOutputFile(my_argc, my_argv);
+    printResultFunc(solver, ret, res);
+    printStats(solver);
+
+    exit(retVal);
+}
+
+int multiThreadSolve()
+{
+    uint32_t numThreads(2);
+    vector<int> seeds;
+    vector<pthread_t> threads;
+
+    seeds.resize(numThreads);
+    threads.resize(numThreads);
+    for (uint32_t i = 0; i < numThreads; i++) {
+        seeds[i] = mtrand.randInt();
+        int iret = pthread_create(&(threads[i]), NULL, oneThreadSolve, (void*) &(seeds[i]));
+        if (iret != 0) {
+            std::cout << "Error creating thread " << i << std::endl;
+            exit(-1);
+        }
+    }
+
+    for (uint32_t i = 0; i < numThreads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    return 0;
+}
+
+int main(int argc, char** argv)
+{
+    my_argc = argc;
+    my_argv = argv;
+    return multiThreadSolve();
+    //return singleThreadSolve(argc, argv);
+
 }
