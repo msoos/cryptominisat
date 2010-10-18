@@ -765,7 +765,7 @@ int main(int argc, char** argv)
 
         std::cout << "c " << std::setw(8) << ++current_nr_of_solutions << " solution(s) found" << std::endl;
 
-        if (current_nr_of_solutions > max_nr_of_solutions) break;
+        if (current_nr_of_solutions >= max_nr_of_solutions) break;
         printf("c Prepare for next run...\n");
 
         vec<Lit> lits;
