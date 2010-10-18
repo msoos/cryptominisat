@@ -30,6 +30,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "StateSaver.h"
 #include "UselessBinRemover.h"
 #include "OnlyNonLearntBins.h"
+#include "SCCFinder.h"
 
 #ifdef USE_GAUSS
 #include "Gaussian.h"
@@ -157,6 +158,8 @@ Solver::Solver() :
     subsumer = new Subsumer(*this);
     xorSubsumer = new XorSubsumer(*this);
     restartTypeChooser = new RestartTypeChooser(*this);
+    sCCFinder = new SCCFinder(*this);
+
     learntsFilename = new char[500];
     learntsFilename[0] = '\0';
     origFilename = new char[500];
@@ -1800,8 +1803,7 @@ const bool Solver::simplify()
         clauseCleaner->removeSatisfied(binaryClauses, ClauseCleaner::binaryClauses);
         if (!ok) return false;
 
-        XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
-        if (!xorFinder.fullFindXors(2, 2)) return false;
+        if (!sCCFinder->find2LongXors()) return false;
 
         lastNbBin = nbBin;
         becameBinary = 0;
@@ -2341,9 +2343,8 @@ void Solver::performStepsBeforeSolve()
         && !subsumer->simplifyBySubsumption())
         return;
 
-    if (findBinaryXors && binaryClauses.size() < MAX_CLAUSENUM_XORFIND) {
-        XorFinder xorFinder(*this, binaryClauses, ClauseCleaner::binaryClauses);
-        if (!xorFinder.fullFindXors(2, 2)) return;
+    if (findBinaryXors) {
+        if (!sCCFinder->find2LongXors()) return;
         if (doReplace && !varReplacer->performReplace(true)) return;
     }
 

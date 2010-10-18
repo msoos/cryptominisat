@@ -66,15 +66,10 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
 
     ClauseTable unsortedTable;
     unsortedTable.reserve(cls.size());
-    ClauseTable sortedTable;
-    sortedTable.reserve(cls.size());
 
     for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it ++) {
-        if (it+1 != end)
-            __builtin_prefetch(*(it+1), 0);
+        if (it+1 != end) __builtin_prefetch(*(it+1), 0);
         Clause& c = (**it);
-        //2-long clauses only need to be sorted, no need to
-        //detach&reattach
         if ((*it)->size() > 2) {
             bool sorted = true;
             for (uint32_t i = 0, size = c.size(); i+1 < size ; i++) {
@@ -86,8 +81,6 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
                 std::sort(c.getData(), c.getDataEnd());
                 solver.attachClause(c);
             }
-        } else {
-            std::sort(c.getData(), c.getData()+c.size());
         }
     }
 
@@ -98,57 +91,17 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
             toLeaveInPlace[i] = true;
             continue;
         }
-        if ((*it)->getSorted()) sortedTable.push_back(make_pair(*it, i));
-        else unsortedTable.push_back(make_pair(*it, i));
+        table.push_back(make_pair(*it, i));
     }
-
-    clause_sorter_primary sorter;
-
     std::sort(unsortedTable.begin(), unsortedTable.end(), clause_sorter_primary());
-    //std::sort(sortedTable.begin(), sortedTable.end(), clause_sorter_primary());
-    #ifdef DEBUG_XORFIND
-    for (uint32_t i = 0; i+1 < unsortedTable.size(); i++) {
-        assert(!sorter(unsortedTable[i+1], unsortedTable[i]));
-    }
-    for (uint32_t i = 0; i+1 < sortedTable.size(); i++) {
-        assert(!sorter(sortedTable[i+1], sortedTable[i]));
-    }
-    #endif //DEBUG_XORFIND
 
-    for (uint32_t i = 0, j = 0; i < unsortedTable.size() || j <  sortedTable.size();) {
-        if (j == sortedTable.size()) {
-            table.push_back(unsortedTable[i++]);
-            continue;
-        }
-        if (i == unsortedTable.size()) {
-            table.push_back(sortedTable[j++]);
-            continue;
-        }
-        if (sorter(unsortedTable[i], sortedTable[j])) {
-            table.push_back(unsortedTable[i++]);
-        } else {
-            table.push_back(sortedTable[j++]);
-        }
-    }
-    #ifdef DEBUG_XORFIND
-    for (uint32_t i = 0; i+1 < table.size(); i++) {
-        assert(!sorter(table[i+1], table[i]));
-        //table[i].first->plainPrint();
-    }
-    #endif //DEBUG_XORFIND
-
-    if (findXors(sumLengths) == false) goto end;
+    if (!findXors(sumLengths)) goto end;
     solver.ok = (solver.propagate().isNULL());
 
 end:
-    if (minSize == maxSize && minSize == 2) {
-        if (solver.verbosity >= 3 || (solver.conflicts == 0 && solver.verbosity >= 1)) {
-            printf("c Finding binary XORs:        %5.2lf s (found: %7d, avg size: %3.1lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
-        }
-    } else {
-        if (solver.verbosity >= 1 || (solver.verbosity >= 1 && foundXors > 0)) {
-            printf("c Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
-        }
+
+    if (solver.verbosity >= 1 || (solver.verbosity >= 1 && foundXors > 0)) {
+        printf("c Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
     }
 
     i = 0;
@@ -162,7 +115,6 @@ end:
             continue;
         }
         if (!toRemove[table[i-toSkip].second]) {
-            table[i-toSkip].first->setSorted();
             cls[j] = table[i-toSkip].first;
             j++;
         }

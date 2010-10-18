@@ -591,14 +591,12 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool
 
         if (!alsoLearnt && (*i)->learnt()) {
             *j++ = *i;
-            (*i)->setUnsorted();
             continue;
         }
 
         if (!addBinAndAddToCL && (*i)->size() == 2) {
             //don't add binary clauses in this case
             *j++ = *i;
-            (*i)->setUnsorted();
             continue;
         }
 

@@ -56,12 +56,6 @@ protected:
     uint32_t isLearnt:1; ///<Is the clause a learnt clause?
     uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
     /**
-    @brief Is the clause sorted in the binaryClauses[]?
-
-    If it is a new clause, this is set to FALSE
-    */
-    uint32_t sorted:1;
-    /**
     @brief Is the XOR equal to 1 or 0?
 
     i.e. "a + b" = TRUE or FALSE? -- we only have variables inside xor clauses,
@@ -183,7 +177,6 @@ public:
     void setStrenghtened()
     {
         strenghtened = true;
-        sorted = false;
         subsume0Done = false;
         calcAbstractionClause();
     }
@@ -191,21 +184,6 @@ public:
     void unsetStrenghtened()
     {
         strenghtened = false;
-    }
-
-    const bool getSorted() const
-    {
-        return sorted;
-    }
-
-    void setSorted()
-    {
-        sorted = true;
-    }
-
-    void setUnsorted()
-    {
-        sorted = false;
     }
 
     void subsume0Finished()

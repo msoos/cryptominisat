@@ -73,6 +73,7 @@ class PartHandler;
 class RestartTypeChooser;
 class StateSaver;
 class UselessBinRemover;
+class SCCFinder;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -516,6 +517,7 @@ protected:
     friend class OnlyNonLearntBins;
     friend class ClauseAllocator;
     friend class CompleteDetachReatacher;
+    friend class SCCFinder;
     Conglomerate*       conglomerate;
     VarReplacer*        varReplacer;
     ClauseCleaner*      clauseCleaner;
@@ -525,6 +527,7 @@ protected:
     XorSubsumer*        xorSubsumer;
     RestartTypeChooser* restartTypeChooser;
     MatrixFinder*       matrixFinder;
+    SCCFinder*          sCCFinder;
 
     /////////////////////////
     // Restart type handling

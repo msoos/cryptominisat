@@ -884,6 +884,7 @@ int main(int argc, char** argv)
     signal(SIGINT, SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);
 
-    return main.multiThreadSolve(4);
+    //return main.multiThreadSolve(4);
+    return main.singleThreadSolve();
 
 }
