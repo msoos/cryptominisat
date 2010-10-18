@@ -153,7 +153,7 @@ void Main::printStats(Solver& solver)
     printStatsLine("c CPU time", cpu_time, " s");
 }
 
-Solver* solverToInterrupt;
+vector<Solver*> solversToInterrupt;
 
 /**
 @brief For correctly and gracefully exiting
@@ -165,16 +165,19 @@ is used to achieve this
 */
 void SIGINT_handler(int signum)
 {
-    printf("\n");
-    printf("*** INTERRUPTED ***\n");
-    if (solverToInterrupt->needToDumpLearnts || solverToInterrupt->needToDumpOrig) {
-        solverToInterrupt->needToInterrupt = true;
-        printf("*** Please wait. We need to interrupt cleanly\n");
-        printf("*** This means we might need to finish some calculations\n");
+    for (uint32_t i = 0; i < solversToInterrupt.size(); i++) {
+        Solver& solver = *solversToInterrupt[i];
+        printf("\n");
         printf("*** INTERRUPTED ***\n");
-    } else {
-        Main::printStats(*solverToInterrupt);
-        exit(1);
+        if (solver.needToDumpLearnts || solver.needToDumpOrig) {
+            solver.needToInterrupt = true;
+            printf("*** Please wait. We need to interrupt cleanly\n");
+            printf("*** This means we might need to finish some calculations\n");
+            printf("*** INTERRUPTED ***\n");
+        } else {
+            Main::printStats(solver);
+            exit(1);
+        }
     }
 }
 
@@ -737,15 +740,12 @@ void Main::printVersionInfo(const uint32_t verbosity)
 int Main::singleThreadSolve()
 {
     Solver solver;
+    solversToInterrupt.push_back(&solver);
     solver.verbosity = 2;
 
     parseCommandLine(solver);
     printVersionInfo(solver.verbosity);
     setDoublePrecision(solver.verbosity);
-
-    solverToInterrupt = &solver;
-    signal(SIGINT, SIGINT_handler);
-    //signal(SIGHUP,SIGINT_handler);
 
     parseInAllFiles(solver);
     FILE* res = openOutputFile();
@@ -808,6 +808,7 @@ int Main::correctReturnValue(const lbool ret) const
 void* Main::oneThreadSolve( void *ptr )
 {
     Solver solver;
+    solversToInterrupt.push_back(&solver);
     solver.verbosity = 2;
 
     parseCommandLine(solver);
@@ -822,7 +823,9 @@ void* Main::oneThreadSolve( void *ptr )
     printResultFunc(solver, ret, res);
     printStats(solver);
 
-    return (void*)correctReturnValue(ret);
+    int retval = correctReturnValue(ret);
+    exit(retval);
+    return (void*)retval;
 }
 
 struct myThreadArgs
@@ -850,12 +853,11 @@ int Main::multiThreadSolve(const uint32_t numThreads)
 {
     vector<int> seeds;
     vector<pthread_t> threads;
-    MTRand mtrand;
 
     seeds.resize(numThreads);
     threads.resize(numThreads);
     for (uint32_t i = 0; i < numThreads; i++) {
-        seeds[i] = mtrand.randInt();
+        seeds[i] = i;
         int iret = pthread_create(&(threads[i]), NULL, &helperOneThreadSolve, new myThreadArgs(this,&(seeds[i])));
 
         if (iret != 0) {
@@ -874,6 +876,9 @@ int Main::multiThreadSolve(const uint32_t numThreads)
 int main(int argc, char** argv)
 {
     Main main(argc, argv);
-    return main.multiThreadSolve(2);
+    signal(SIGINT, SIGINT_handler);
+    //signal(SIGHUP,SIGINT_handler);
+
+    return main.multiThreadSolve(4);
 
 }
