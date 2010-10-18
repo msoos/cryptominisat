@@ -123,6 +123,7 @@ Solver::Solver() :
         , sum_gauss_unit_truths (0)
         #endif //USE_GAUSS
         , ok               (true)
+        , numBins          (0)
         , cla_inc          (1)
         , qhead            (0)
         , mtrand           ((unsigned long int)0)
@@ -189,8 +190,6 @@ Solver::~Solver()
     learnts.clear();
     for (uint32_t i = 0; i != clauses.size(); i++) clauseAllocator.clauseFree(clauses[i]);
     clauses.clear();
-    for (uint32_t i = 0; i != binaryClauses.size(); i++) clauseAllocator.clauseFree(binaryClauses[i]);
-    binaryClauses.clear();
     for (uint32_t i = 0; i != xorclauses.size(); i++) clauseAllocator.clauseFree(xorclauses[i]);
     xorclauses.clear();
     for (uint32_t i = 0; i != freeLater.size(); i++) clauseAllocator.clauseFree(freeLater[i]);
@@ -418,20 +417,10 @@ addClauseInt() conveys some meaningful message, which it might not, for example.
 template<class T>
 bool Solver::addLearntClause(T& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group)
 {
-    Clause* c = addClauseInt(ps, group);
+    Clause* c = addClauseInt(ps, group, true);
     if (c == NULL) return ok;
 
-    //compensate for addClauseInt's attachClause, which doesn't know
-    //that this is a learnt clause.
-    clauses_literals -= c->size();
-    learnts_literals += c->size();
-
     c->makeLearnt(glue, miniSatActivity);
-    if (c->size() > 2) learnts.push(c);
-    else {
-        nbBin++;
-        binaryClauses.push(c);
-    }
     return ok;
 }
 template bool Solver::addLearntClause(Clause& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group);
@@ -446,7 +435,7 @@ when the solver is in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
 */
 template <class T>
-Clause* Solver::addClauseInt(T& ps, uint32_t group)
+Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt)
 {
     assert(ok);
 
@@ -470,14 +459,19 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group)
         return NULL;
     }
 
-    Clause* c = clauseAllocator.Clause_new(ps, group);
-    attachClause(*c);
-
-    return c;
+    if (ps.size() > 2) {
+        Clause* c = clauseAllocator.Clause_new(ps, group);
+        attachClause(*c);
+        return c;
+    } else {
+        attachBinClause(ps[0], ps[1], learnt);
+        numBins++;
+        return NULL;
+    }
 }
 
-template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group);
-template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group);
+template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt);
+template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt);
 
 /**
 @brief Adds a clause to the problem. Calls addClauseInt() for heavy-lifting
@@ -530,10 +524,8 @@ bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
 
     Clause* c = addClauseInt(ps, group);
     if (c != NULL) {
-        if (c->size() > 2)
-            clauses.push(c);
-        else
-            binaryClauses.push(c);
+        if (c->size() > 2) clauses.push(c);
+        else numBins++;
     }
 
     return ok;
@@ -564,6 +556,15 @@ void Solver::attachClause(XorClause& c)
     clauses_literals += c.size();
 }
 
+void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
+{
+    watches[(~lit1).toInt()].push(Watched(lit2, learnt));
+    watches[(~lit2).toInt()].push(Watched(lit1, learnt));
+
+    if (learnt) learnts_literals += 2;
+    else clauses_literals += 2;
+}
+
 /**
 @brief Attach normal a clause to the watchlists
 
@@ -571,14 +572,11 @@ Handles 2, 3 and >3 clause sizes differently and specially
 */
 void Solver::attachClause(Clause& c)
 {
-    assert(c.size() > 1);
+    assert(c.size() > 2);
     uint32_t index0 = (~c[0]).toInt();
     uint32_t index1 = (~c[1]).toInt();
 
-    if (c.size() == 2) {
-        watches[index0].push(Watched(c[1]));
-        watches[index1].push(Watched(c[0]));
-    } else if (c.size() == 3) {
+    if (c.size() == 3) {
         watches[index0].push(Watched(c[1], c[2]));
         watches[index1].push(Watched(c[0], c[2]));
         watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
@@ -791,6 +789,27 @@ void Solver::tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const
     }
 }
 
+void Solver::tallyVotesBin(vector<double>& votes) const
+{
+    uint32_t i = 0;
+    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, i++) {
+        Lit lit = Lit::toLit(i);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                if (!it2->isLearnt()) {
+                    if (lit.sign()) votes[lit.var()]++;
+                    else votes[lit.var()]--;
+
+                    Lit lit2 = it2->getOtherLit();
+                    if (lit2.sign()) votes[lit2.var()]++;
+                    else votes[lit2.var()]--;
+                }
+            }
+        }
+    }
+}
+
 /**
 @brief Tally votes a default TRUE or FALSE value for the variable using the Jeroslow-Wang method
 
@@ -830,7 +849,7 @@ void Solver::calculateDefaultPolarities()
         votes.resize(nVars(), 0.0);
 
         tallyVotes(clauses, votes);
-        tallyVotes(binaryClauses, votes);
+        tallyVotesBin(votes);
         tallyVotes(varReplacer->getClauses(), votes);
         tallyVotes(xorclauses, votes);
 
@@ -1781,7 +1800,7 @@ const bool Solver::simplify()
         return true;
     }
 
-    double slowdown = (100000.0/(double)binaryClauses.size());
+    double slowdown = (100000.0/(double)numBins);
     slowdown = std::min(3.5, slowdown);
     slowdown = std::max(0.2, slowdown);
 
@@ -1800,7 +1819,7 @@ const bool Solver::simplify()
 
         clauseCleaner->cleanClauses(clauses, ClauseCleaner::clauses);
         clauseCleaner->cleanClauses(learnts, ClauseCleaner::learnts);
-        clauseCleaner->removeSatisfied(binaryClauses, ClauseCleaner::binaryClauses);
+        clauseCleaner->removeSatisfiedBins();
         if (!ok) return false;
 
         if (!sCCFinder->find2LongXors()) return false;
@@ -2105,8 +2124,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
                     learnts.push(c);
                 }
             } else {
-                binaryClauses.push(c);
                 nbBin++;
+                numBins++;
             }
             c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
         }
@@ -2240,7 +2259,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
             goto end;
         }
     } else*/ if (xorclauses.size() <= 200 && xorclauses.size() > 0 && nClauses() > 10000) {
-        XorFinder x(*this, clauses, ClauseCleaner::clauses);
+        XorFinder x(*this, clauses);
         x.addAllXorAsNorm();
     }
 
@@ -2339,7 +2358,7 @@ void Solver::performStepsBeforeSolve()
 
     if (doSubsumption
         && !libraryUsage
-        && clauses.size() + binaryClauses.size() + learnts.size() < 4800000
+        && clauses.size() + numBins + learnts.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
 
@@ -2349,7 +2368,7 @@ void Solver::performStepsBeforeSolve()
     }
 
     if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
-        XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
+        XorFinder xorFinder(*this, clauses);
         if (!xorFinder.fullFindXors(3, 7)) return;
     }
 

@@ -27,7 +27,7 @@ add_library(cryptominisatlib
     XorFinder.cpp
     MatrixFinder.cpp
     VarReplacer.cpp
-    FindUndef.cpp
+#   FindUndef.cpp
     ClauseCleaner.cpp
     RestartTypeChooser.cpp
     FailedVarSearcher.cpp

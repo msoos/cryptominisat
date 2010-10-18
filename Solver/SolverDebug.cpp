@@ -139,6 +139,25 @@ const bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
     return verificationOK;
 }
 
+const bool Solver::verifyBinClauses() const
+{
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        const vec<Watched>& cs = *it;
+
+        uint32_t i;
+        for (i = 0; i < cs.size(); i++) {
+            if (cs[i].isBinary()
+                && value(lit) != l_True
+                && value(cs[i].getOtherLit()) != l_True
+            ) return false;
+        }
+    }
+
+    return true;
+}
+
 const bool Solver::verifyClauses(const vec<Clause*>& cs) const
 {
     #ifdef VERBOSE_DEBUG
@@ -167,7 +186,7 @@ const bool Solver::verifyModel() const
 {
     bool verificationOK = true;
     verificationOK &= verifyClauses(clauses);
-    verificationOK &= verifyClauses(binaryClauses);
+    verificationOK &= verifyBinClauses();
     verificationOK &= verifyXorClauses(xorclauses);
 
     if (verbosity >=1 && verificationOK)

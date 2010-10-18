@@ -54,11 +54,7 @@ void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
     fprintf(outfile, "c \nc ---------------------------------\n");
     fprintf(outfile, "c learnt clauses from binaryClauses\n");
     fprintf(outfile, "c ---------------------------------\n");
-    for (uint32_t i = 0; i != binaryClauses.size(); i++) {
-        if (binaryClauses[i]->learnt()) {
-            binaryClauses[i]->print(outfile);
-        }
-    }
+    dumpBinClauses(false, true, outfile);
 
     fprintf(outfile, "c \nc ---------------------------------------\n");
     fprintf(outfile, "c clauses representing 2-long XOR clauses\n");
@@ -96,6 +92,43 @@ void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
     fclose(outfile);
 }
 
+const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
+{
+    uint32_t num = 0;
+
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                if (it2->isLearnt()) num += alsoLearnt;
+                else num+= alsoNonLearnt;
+            }
+        }
+    }
+
+    return num;
+}
+
+void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const
+{
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                bool toDump = false;
+                if (it2->isLearnt() && alsoLearnt) toDump = true;
+                if (!it2->isLearnt() && alsoNonLearnt) toDump = true;
+
+                if (toDump) it2->dump(outfile, lit);
+            }
+        }
+    }
+}
+
 void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) const
 {
     FILE* outfile = fopen(fileName, "w");
@@ -117,10 +150,7 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
         numClauses+=2;
     }
     //binary normal clauses
-    for (Clause *const *i = binaryClauses.getData(); i != binaryClauses.getDataEnd(); i++) {
-        if (!alsoLearntBin && (*i)->learnt()) continue;
-        numClauses++;
-    }
+    numClauses += countNumBinClauses(true, alsoLearntBin);
     //normal clauses
     numClauses += clauses.size();
     //previously eliminated clauses
@@ -161,10 +191,7 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c binary clauses\n");
     fprintf(outfile, "c ---------------\n");
-    for (Clause *const *i = binaryClauses.getData(); i != binaryClauses.getDataEnd(); i++) {
-        if (!alsoLearntBin && (*i)->learnt()) continue;
-        (*i)->print(outfile);
-    }
+    dumpBinClauses(true, alsoLearntBin, outfile);
 
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c normal clauses\n");
@@ -294,7 +321,7 @@ void Solver::printRestartStat(const char* type)
         << std::setw(space) << conflicts
         << std::setw(space) << order_heap.size()
         << std::setw(space) << clauses.size()
-        << std::setw(space) << binaryClauses.size()
+        << std::setw(space) << numBins
         << std::setw(space) << learnts.size()
         << std::setw(space) << clauses_literals
         << std::setw(space) << learnts_literals;

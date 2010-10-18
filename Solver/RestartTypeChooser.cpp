@@ -65,7 +65,7 @@ void RestartTypeChooser::addInfo()
 const RestartType RestartTypeChooser::choose()
 {
     pair<double, double> mypair = countVarsDegreeStDev();
-    if ((mypair.second  < 80 && 
+    if ((mypair.second  < 80 &&
         (avg() > (double)limit || ((avg() > (double)(limit*0.9) && stdDeviation(sameIns) < 5))))
         ||
         (mypair.second  < 80 && (double)solver.xorclauses.size() > (double)solver.nClauses()*0.1))
@@ -124,7 +124,7 @@ const std::pair<double, double> RestartTypeChooser::countVarsDegreeStDev() const
     vector<uint32_t> degrees;
     degrees.resize(solver.nVars(), 0);
     addDegrees(solver.clauses, degrees);
-    addDegrees(solver.binaryClauses, degrees);
+    addDegreesBin(degrees);
     addDegrees(solver.xorclauses, degrees);
     uint32_t sum = 0;
     uint32_t *i = &degrees[0], *j = i;
@@ -161,4 +161,19 @@ void RestartTypeChooser::addDegrees(const vec<T*>& cs, vector<uint32_t>& degrees
 
 template void RestartTypeChooser::addDegrees(const vec<Clause*>& cs, vector<uint32_t>& degrees) const;
 template void RestartTypeChooser::addDegrees(const vec<XorClause*>& cs, vector<uint32_t>& degrees) const;
+
+void RestartTypeChooser::addDegreesBin(vector<uint32_t>& degrees) const
+{
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                degrees[lit.var()]++;
+                degrees[it2->getOtherLit().var()]++;
+            }
+        }
+    }
+}
 

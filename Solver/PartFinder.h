@@ -35,21 +35,22 @@ using std::vector;
 using std::pair;
 
 class PartFinder {
-    
+
     public:
         PartFinder(Solver& solver);
         const bool findParts();
-        
+
         const map<uint32_t, vector<Var> >& getReverseTable() const; // part->var
         const uint32_t getVarPart(const Var var) const;
         const vector<uint32_t>& getTable() const; //var -> part
         const vector<Var>& getPartVars(const uint32_t part);
-    
+
     private:
         const uint32_t setParts();
-        template<class T>
-        void addToPart(const vec<T*>& cs);
-        
+        void addToPartBins();
+        template<class T> void addToPartClause(T& cl);
+        template<class T> void addToPart(const vec<T*>& cs);
+
         struct mysorter
         {
             bool operator () (const pair<uint32_t, uint32_t>& left, const pair<uint32_t, uint32_t>& right)
@@ -57,15 +58,16 @@ class PartFinder {
                 return left.second < right.second;
             }
         };
-        
+
         //const bool findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClause*>& xorsInMatrix);
         template<class T>
         void calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInPart, vector<uint32_t>& sumLitsInPart);
-        
+        void calcInBins(vector<uint32_t>& numClauseInPart, vector<uint32_t>& sumLitsInPart);
+
         map<uint32_t, vector<Var> > reverseTable; //part -> vars
         vector<uint32_t> table; //var -> part
         uint32_t part_no;
-        
+
         Solver& solver;
 };
 

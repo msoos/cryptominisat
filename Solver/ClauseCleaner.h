@@ -36,20 +36,20 @@ class ClauseCleaner
     public:
         ClauseCleaner(Solver& solver);
 
-        enum ClauseSetType {clauses, xorclauses, learnts, binaryClauses, simpClauses, xorSimpClauses};
+        enum ClauseSetType {clauses, binaryClauses, xorclauses, learnts};
 
         void cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit = 0);
 
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit = 0);
+        void removeSatisfiedBins(const uint32_t limit = 0);
         void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit = 0);
         void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit = 0);
         void removeAndCleanAll(const bool nolimit = false);
         bool satisfied(const Clause& c) const;
         bool satisfied(const XorClause& c) const;
 
-        void moveBinClausesToBinClauses();
-
     private:
+        const bool satisfied(const Watched& watched, Lit lit);
         const bool cleanClause(XorClause& c);
         const bool cleanClause(Clause*& c);
 
@@ -73,7 +73,7 @@ inline void ClauseCleaner::removeAndCleanAll(const bool nolimit)
     uint32_t limit = (double)solver.order_heap.size() * PERCENTAGECLEANCLAUSES;
     if (nolimit) limit = 0;
 
-    removeSatisfied(solver.binaryClauses, ClauseCleaner::binaryClauses, limit);
+    removeSatisfiedBins(limit);
     cleanClauses(solver.clauses, ClauseCleaner::clauses, limit);
     cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses, limit);
     cleanClauses(solver.learnts, ClauseCleaner::learnts, limit);

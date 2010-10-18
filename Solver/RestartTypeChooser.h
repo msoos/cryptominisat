@@ -58,6 +58,7 @@ class RestartTypeChooser
 
         template<class T>
         void addDegrees(const vec<T*>& cs, vector<uint32_t>& degrees) const;
+        void addDegreesBin(vector<uint32_t>& degrees) const;
 
         const Solver& solver;
         const uint32_t topX; ///<The how many is the top X? 100 is default

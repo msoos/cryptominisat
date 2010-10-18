@@ -47,7 +47,7 @@ clause
 class XorFinder
 {
     public:
-        XorFinder(Solver& _solver, vec<Clause*>& cls, ClauseCleaner::ClauseSetType _type);
+        XorFinder(Solver& _solver, vec<Clause*>& cls);
         const bool fullFindXors(const uint32_t minSize, const uint32_t maxSize);
         void addAllXorAsNorm();
 
@@ -139,7 +139,6 @@ class XorFinder
         void addXorAsNormal4(XorClause& c);
 
         vec<Clause*>& cls;
-        ClauseCleaner::ClauseSetType type;
 
         bool clauseEqual(const Clause& c1, const Clause& c2) const;
         bool impairSigns(const Clause& c) const;

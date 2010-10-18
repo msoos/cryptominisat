@@ -124,9 +124,9 @@ const bool VarReplacer::performReplaceInternal()
     lastReplacedVars = replacedVars;
 
     solver.testAllClauseAttach();
-    if (!replace_set(solver.binaryClauses, true)) goto end;
-    if (!replace_set(solver.clauses, false)) goto end;
-    if (!replace_set(solver.learnts, false)) goto end;
+    if (!replaceBins()) goto end;
+    if (!replace_set(solver.clauses)) goto end;
+    if (!replace_set(solver.learnts)) goto end;
     if (!replace_set(solver.xorclauses)) goto end;
     solver.testAllClauseAttach();
 
@@ -248,10 +248,69 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     return false;
 }
 
+const bool VarReplacer::replaceBins()
+{
+    uint32_t removedBinHalf = 0;
+    uint32_t wsLit = 0;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit1 = Lit::toLit(wsLit);
+        vec<Watched>& ws = *it;
+
+        Watched *i = ws.getData();
+        Watched *j = i;
+        for (Watched *end = ws.getDataEnd(); i != end; i++) {
+            if (!i->isBinary()) {
+                *j++ = *i;
+                continue;
+            }
+            Lit lit2 = i->getOtherLit();
+            Lit thisLit1 = lit1;
+
+            if (table[lit2.var()].var() != lit2.var()) {
+                i->setOtherLit(table[lit2.var()] ^ lit2.sign());
+                replacedLits++;
+            }
+
+            bool changedMain = false;
+            if (table[thisLit1.var()].var() != thisLit1.var()) {
+                thisLit1 = table[thisLit1.var()] ^ thisLit1.sign();
+                replacedLits++;
+                changedMain = true;
+            }
+
+            if (thisLit1 == lit2) {
+                if (solver.value(lit2) == l_Undef)
+                    solver.uncheckedEnqueue(lit2);
+                else if (solver.value(lit2) != l_True)
+                    solver.ok = false;
+                removedBinHalf++;
+                continue;
+            }
+
+            if (thisLit1 == ~lit2) {
+                removedBinHalf++;
+                continue;
+            }
+
+            if (changedMain) {
+                solver.watches[thisLit1.toInt()].push(Watched(lit2, i->getLearnt()));
+            } else {
+                *j++ = *i;
+            }
+        }
+        ws.shrink_(i-j);
+    }
+
+    assert(removedBinHalf % 2 == 0);
+    solver.numBins -= removedBinHalf/2;
+
+    return solver.ok;
+}
+
 /**
 @brief Replaces variables in normal clauses
 */
-const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
+const bool VarReplacer::replace_set(vec<Clause*>& cs)
 {
     Clause **a = cs.getData();
     Clause **r = a;
@@ -276,15 +335,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs, const bool binClauses)
                 return false;
             }
         } else {
-            if (!binClauses && c.size() == 2) {
-                solver.detachClause(c);
-                Clause *c2 = solver.clauseAllocator.Clause_new(c);
-                solver.clauseAllocator.clauseFree(&c);
-                solver.attachClause(*c2);
-                solver.becameBinary++;
-                solver.binaryClauses.push(c2);
-            } else
-                *a++ = *r;
+            *a++ = *r;
         }
     }
     cs.shrink(r-a);
@@ -325,9 +376,13 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         solver.uncheckedEnqueue(c[0]);
         solver.ok = (solver.propagate().isNULL());
         return true;
+    case 2:
+        solver.attachBinClause(c[0], c[1], c.learnt());
+        solver.becameBinary++;
+        solver.numBins++;
+        return true;
     default:
         solver.attachClause(c);
-
         return false;
     }
 
@@ -534,26 +589,12 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint
     assert(!ps[1].sign());
     #endif
 
-    Clause* c;
     ps[0] ^= xorEqualFalse;
-
-    c = solver.clauseAllocator.Clause_new(ps, group, false);
-    if (internal) {
-        solver.binaryClauses.push(c);
-        solver.becameBinary++;
-    } else
-        clauses.push(c);
-    solver.attachClause(*c);
+    solver.attachBinClause(ps[0], ps[1], false);
 
     ps[0] ^= true;
     ps[1] ^= true;
-    c = solver.clauseAllocator.Clause_new(ps, group, false);
-    if (internal) {
-        solver.binaryClauses.push(c);
-        solver.becameBinary++;
-    } else
-        clauses.push(c);
-    solver.attachClause(*c);
+    solver.attachBinClause(ps[0], ps[1], false);
 }
 
 template void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool internal);

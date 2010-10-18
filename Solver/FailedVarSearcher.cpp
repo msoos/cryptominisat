@@ -168,7 +168,7 @@ const bool FailedVarSearcher::search()
     uint32_t origHeapSize = solver.order_heap.size();
     StateSaver savedState(solver);
     Heap<Solver::VarOrderLt> order_heap_copy(solver.order_heap); //for hyperbin
-    uint64_t origBinClauses = solver.binaryClauses.size();
+    uint64_t origBinClauses = solver.numBins;
 
     //General Stats
     numFailed = 0;
@@ -297,7 +297,7 @@ end:
     bool removedOldLearnts = false;
     //Print results
     if (solver.verbosity >= 1)
-      printResults(myTime, solver.binaryClauses.size() - origBinClauses);
+      printResults(myTime, solver.numBins - origBinClauses);
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 

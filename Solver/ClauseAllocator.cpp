@@ -101,7 +101,7 @@ template XorClause* ClauseAllocator::XorClause_new(const XorClause& ps, const bo
 */
 Clause* ClauseAllocator::Clause_new(Clause& c)
 {
-    assert(c.size() > 0);
+    assert(c.size() > 2);
     void* mem = allocEnough(c.size());
     memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
     Clause& c2 = *(Clause*)mem;

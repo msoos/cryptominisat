@@ -38,9 +38,8 @@ using std::endl;
 
 using std::make_pair;
 
-XorFinder::XorFinder(Solver& _solver, vec<Clause*>& _cls, ClauseCleaner::ClauseSetType _type) :
+XorFinder::XorFinder(Solver& _solver, vec<Clause*>& _cls) :
     cls(_cls)
-    , type(_type)
     , solver(_solver)
 {
 }
@@ -51,9 +50,6 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
     double time = cpuTime();
     foundXors = 0;
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    if (type == ClauseCleaner::binaryClauses) {
-        solver.clauseCleaner->cleanClauses(solver.binaryClauses, ClauseCleaner::binaryClauses);
-    }
     if (!solver.ok) return false;
 
     toRemove.clear();

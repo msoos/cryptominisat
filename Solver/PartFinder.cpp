@@ -47,14 +47,14 @@ PartFinder::PartFinder(Solver& _solver) :
 const bool PartFinder::findParts()
 {
     assert(solver.doReplace);
-    
+
     double time = cpuTime();
-    
+
     table.clear();
     table.resize(solver.nVars(), std::numeric_limits<uint32_t>::max());
     reverseTable.clear();
     part_no = 0;
-    
+
     solver.clauseCleaner->removeAndCleanAll(true);
     if (!solver.ok) return false;
     while (solver.varReplacer->getNewToReplaceVars() > 0) {
@@ -64,13 +64,13 @@ const bool PartFinder::findParts()
         if (!solver.ok) return false;
     }
     assert(solver.varReplacer->getClauses().size() == 0);
-    
+
     addToPart(solver.clauses);
-    addToPart(solver.binaryClauses);
+    addToPartBins();
     addToPart(solver.xorclauses);
-    
+
     const uint32_t parts = setParts();
-    
+
     #ifndef NDEBUG
     for (map<uint32_t, vector<Var> >::const_iterator it = reverseTable.begin(); it != reverseTable.end(); it++) {
         for (uint32_t i2 = 0; i2 < it->second.size(); i2++) {
@@ -78,65 +78,87 @@ const bool PartFinder::findParts()
         }
     }
     #endif
-    
+
     if (solver.verbosity >= 3 || (solver.verbosity >=1 && parts > 1)) {
         std::cout << "c Found parts: " << std::setw(10) <<  parts
         << " time: " << std::setprecision(2) << std::setw(4) << cpuTime() - time
         << " s"
         << std::endl;
     }
-    
+
     return true;
 }
 
 template<class T>
 void PartFinder::addToPart(const vec<T*>& cs)
 {
-    set<uint32_t> tomerge;
-    vector<Var> newSet;
     for (T* const* c = cs.getData(), * const*end = c + cs.size(); c != end; c++) {
         if ((*c)->learnt()) continue;
-        tomerge.clear();
-        newSet.clear();
-        for (const Lit *l = (*c)->getData(), *end2 = l + (*c)->size(); l != end2; l++) {
-            if (table[l->var()] != std::numeric_limits<uint32_t>::max())
-                tomerge.insert(table[l->var()]);
-            else
-                newSet.push_back(l->var());
-        }
-        if (tomerge.size() == 1) {
-            //no trees to merge, only merge the clause into one tree
-            
-            const uint32_t into = *tomerge.begin();
-            map<uint32_t, vector<Var> >::iterator intoReverse = reverseTable.find(into);
-            for (uint32_t i = 0; i < newSet.size(); i++) {
-                intoReverse->second.push_back(newSet[i]);
-                table[newSet[i]] = into;
-            }
-            continue;
-        }
-        
-        for (set<uint32_t>::iterator it = tomerge.begin(); it != tomerge.end(); it++) {
-            newSet.insert(newSet.end(), reverseTable[*it].begin(), reverseTable[*it].end());
-            reverseTable.erase(*it);
-        }
-        
-        for (uint32_t i = 0; i < newSet.size(); i++)
-            table[newSet[i]] = part_no;
-        reverseTable[part_no] = newSet;
-        part_no++;
+        addToPartClause(**c);
     }
+}
+
+void PartFinder::addToPartBins()
+{
+    vec<Lit> lits(2);
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        lits[0] = lit;
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                if (it2->isLearnt()) continue;
+                lits[1] = it2->getOtherLit();
+                addToPartClause(lits);
+            }
+        }
+    }
+}
+
+template<class T>
+void PartFinder::addToPartClause(T& cl)
+{
+    set<uint32_t> tomerge;
+    vector<Var> newSet;
+    for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
+        if (table[l->var()] != std::numeric_limits<uint32_t>::max())
+            tomerge.insert(table[l->var()]);
+        else
+            newSet.push_back(l->var());
+    }
+    if (tomerge.size() == 1) {
+        //no trees to merge, only merge the clause into one tree
+
+        const uint32_t into = *tomerge.begin();
+        map<uint32_t, vector<Var> >::iterator intoReverse = reverseTable.find(into);
+        for (uint32_t i = 0; i < newSet.size(); i++) {
+            intoReverse->second.push_back(newSet[i]);
+            table[newSet[i]] = into;
+        }
+        return;
+    }
+
+    for (set<uint32_t>::iterator it = tomerge.begin(); it != tomerge.end(); it++) {
+        newSet.insert(newSet.end(), reverseTable[*it].begin(), reverseTable[*it].end());
+        reverseTable.erase(*it);
+    }
+
+    for (uint32_t i = 0; i < newSet.size(); i++)
+        table[newSet[i]] = part_no;
+    reverseTable[part_no] = newSet;
+    part_no++;
 }
 
 const uint32_t PartFinder::setParts()
 {
     vector<uint32_t> numClauseInPart(part_no, 0);
     vector<uint32_t> sumLitsInPart(part_no, 0);
-    
+
     calcIn(solver.clauses, numClauseInPart, sumLitsInPart);
-    calcIn(solver.binaryClauses, numClauseInPart, sumLitsInPart);
+    calcInBins(numClauseInPart, sumLitsInPart);
     calcIn(solver.xorclauses, numClauseInPart, sumLitsInPart);
- 
+
     uint32_t parts = 0;
     for (uint32_t i = 0; i < numClauseInPart.size(); i++) {
         if (sumLitsInPart[i] == 0) continue;
@@ -149,7 +171,7 @@ const uint32_t PartFinder::setParts()
         }
         parts++;
     }
-    
+
     if (parts > 1) {
         #ifdef VERBOSE_DEBUG
         for (map<uint32_t, vector<Var> >::iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
@@ -161,8 +183,27 @@ const uint32_t PartFinder::setParts()
         }
         #endif
     }
-    
+
     return parts;
+}
+
+void PartFinder::calcInBins(vector<uint32_t>& numClauseInPart, vector<uint32_t>& sumLitsInPart)
+{
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                if (it2->isLearnt()) continue;
+
+                const uint32_t part = table[lit.var()];
+                assert(part < part_no);
+                numClauseInPart[part]++;
+                sumLitsInPart[part] += 2;
+            }
+        }
+    }
 }
 
 template<class T>
@@ -173,7 +214,7 @@ void PartFinder::calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInPart, ve
         T& x = **c;
         const uint32_t part = table[x[0].var()];
         assert(part < part_no);
-        
+
         //for stats
         numClauseInPart[part]++;
         sumLitsInPart[part] += x.size();

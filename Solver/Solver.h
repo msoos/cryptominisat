@@ -244,7 +244,7 @@ public:
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
     uint64_t nbGlue2; ///<Num learnt clauses that had a glue of 2 when created
     uint64_t nbBin; ///<Num learnt clauses that were binary when created
-    uint64_t lastNbBin; ///<Last time we seached for binary xors, the number of clauses in binaryClauses was this much    /**
+    uint64_t lastNbBin; ///<Last time we seached for SCCs, numBins was this much
     /**
     @brief When a clause becomes binary through shrinking, we increment this
 
@@ -341,9 +341,9 @@ protected:
     bool                ok;               ///< If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
     ClauseAllocator     clauseAllocator;  ///< Handles memory allocation for claues
     vec<Clause*>        clauses;          ///< List of problem clauses that are normally larger than 2. Sometimes, due to on-the-fly self-subsuming resoulution, clauses here become 2-long. They are never purposfully put here such that they are long
-    vec<Clause*>        binaryClauses;    ///< Binary clauses are regularly moved here. When Clause::sorted is true, they are sorted here
     vec<XorClause*>     xorclauses;       ///< List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          ///< List of learnt clauses.
+    uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
     double              cla_inc;          ///< Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
@@ -468,9 +468,10 @@ protected:
     // Operations on clauses:
     /////////////////
     template <class T>
-    Clause*    addClauseInt(T& ps, uint32_t group);
+    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false);
     template<class T>
     XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group);
+    void       attachBinClause(const Lit lit1, const Lit lit2, const bool learnt);
     void       attachClause     (XorClause& c);
     void       attachClause     (Clause& c);             // Attach a clause to watcher lists.
     void       detachClause     (const XorClause& c);
@@ -554,6 +555,7 @@ protected:
     /////////////////////////////
     void       checkSolution    ();
     const bool verifyModel      () const;
+    const bool verifyBinClauses() const;
     const bool verifyClauses    (const vec<Clause*>& cs) const;
     const bool verifyXorClauses (const vec<XorClause*>& cs) const;
 
@@ -566,12 +568,15 @@ protected:
     void     interruptCleanly();
     void     addSymmBreakClauses();
     void     initialiseSolver();
+    void     dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const;
+    const uint32_t countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
 
     /////////////////////
     // Polarity chooser
     /////////////////////
     void calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
     bool defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
+    void tallyVotesBin(vector<double>& votes) const;
     void tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const;
     void tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const;
     void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
@@ -682,7 +687,7 @@ inline uint32_t      Solver::nAssigns      ()      const
 }
 inline uint32_t      Solver::nClauses      ()      const
 {
-    return clauses.size() + xorclauses.size()+binaryClauses.size();
+    return clauses.size() + xorclauses.size();
 }
 inline uint32_t      Solver::nLiterals      ()      const
 {

@@ -472,7 +472,6 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         if (!solver.ok) {
             return false;
         }
-        //solver.clauseCleaner->cleanXorClausesBewareNULL(clauses, ClauseCleaner::xorSimpClauses, *this);
         if (!solver.ok) return false;
         testAllClauseAttach();
 
