@@ -1,22 +1,10 @@
-/******************************************************************************************[Main.C]
+/*****************************************************************************
 MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
 CryptoMiniSat -- Copyright (c) 2009 Mate Soos
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-associated documentation files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
-OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-**************************************************************************************************/
+Original code by MiniSat authors are under an MIT licence.
+Modifications for CryptoMiniSat are under GPLv3 licence.
+******************************************************************************/
 
 /**
 @mainpage CryptoMiniSat
@@ -49,7 +37,6 @@ Here is a picture of of the above process in more detail:
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <vector>
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
 #else
@@ -57,52 +44,44 @@ Here is a picture of of the above process in more detail:
 #endif //_MSC_VER
 
 #include <signal.h>
-#include <string>
-using std::string;
-
-#ifndef DISABLE_ZLIB
-#include <zlib.h>
-#endif // DISABLE_ZLIB
 
 #ifdef STATS_NEEDED
 #include "Logger.h"
 #endif //STATS_NEEDED
 
-#include "Solver.h"
 #include "time_mem.h"
 #include "constants.h"
 #include "DimacsParser.h"
 
-using std::cout;
-using std::endl;
-
-/*************************************************************************************/
 #if defined(__linux__)
 #include <fpu_control.h>
 #endif
 
-static bool grouping = false;
-static bool debugLib = false;
-static bool debugNewVar = false;
-static bool printResult = true;
+#include "Main.h"
 
-static bool fileNamePresent = false;
-static bool twoFileNamesPresent = false;
-
-static std::vector<std::string> filesToRead;
-
-//=================================================================================================
+Main::Main(int _argc, char** _argv) :
+        grouping(false)
+        , debugLib (false)
+        , debugNewVar (false)
+        , printResult (true)
+        , max_nr_of_solutions (1)
+        , fileNamePresent (false)
+        , twoFileNamesPresent (false)
+        , argc(_argc)
+        , argv(_argv)
+{
+}
 
 template<class T, class T2>
-inline void printStatsLine(string left, T value, T2 value2, string extra)
+void Main::printStatsLine(string left, T value, T2 value2, string extra)
 {
-    cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
+    std::cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
 }
 
 template<class T>
-inline void printStatsLine(string left, T value, string extra = "")
+void Main::printStatsLine(string left, T value, string extra)
 {
-    cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
+    std::cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
 }
 
 /**
@@ -111,7 +90,7 @@ inline void printStatsLine(string left, T value, string extra = "")
 Prints all sorts of statistics, like number of restarts, time spent in
 SatELite-type simplification, number of unit claues found, etc.
 */
-void printStats(Solver& solver)
+void Main::printStats(Solver& solver)
 {
     double   cpu_time = cpuTime();
     uint64_t mem_used = memUsed();
@@ -174,6 +153,8 @@ void printStats(Solver& solver)
     printStatsLine("c CPU time", cpu_time, " s");
 }
 
+Solver* solverToInterrupt;
+
 /**
 @brief For correctly and gracefully exiting
 
@@ -182,30 +163,29 @@ the program must wait until it gets to a state where the learnt clauses are in
 a correct state, then dump these and quit normally. This interrupt hander
 is used to achieve this
 */
-Solver* solver;
-static void SIGINT_handler(int signum)
+void SIGINT_handler(int signum)
 {
     printf("\n");
     printf("*** INTERRUPTED ***\n");
-    if (solver->needToDumpLearnts || solver->needToDumpOrig) {
-        solver->needToInterrupt = true;
+    if (solverToInterrupt->needToDumpLearnts || solverToInterrupt->needToDumpOrig) {
+        solverToInterrupt->needToInterrupt = true;
         printf("*** Please wait. We need to interrupt cleanly\n");
         printf("*** This means we might need to finish some calculations\n");
         printf("*** INTERRUPTED ***\n");
     } else {
-        printStats(*solver);
+        Main::printStats(*solverToInterrupt);
         exit(1);
     }
 }
 
 #ifndef DISABLE_ZLIB
-static gzFile openGzFile(int inNum)
+gzFile Main::openGzFile(int inNum)
 {
     gzFile in = gzdopen(inNum, "rb");
     return in;
 }
 
-static gzFile openGzFile(const char* name)
+gzFile Main::openGzFile(const char* name)
 {
     gzFile in = gzopen(name, "rb");
     return in;
@@ -213,7 +193,7 @@ static gzFile openGzFile(const char* name)
 #endif //DISABLE_ZLIB
 
 template<class B>
-static void readInAFile(B stuff, Solver& solver)
+void Main::readInAFile(B stuff, Solver& solver)
 {
     if ((const char*)stuff == (const char*)fileno(stdin)) {
         std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
@@ -241,26 +221,27 @@ static void readInAFile(B stuff, Solver& solver)
     #endif // DISABLE_ZLIB
 }
 
-void parseInAllFiles(Solver& S, const char* filename)
+void Main::parseInAllFiles(Solver& solver)
 {
     double myTime = cpuTime();
-    //FIRST read normal extra files
+
+    //First read normal extra files
     if ((debugLib || debugNewVar) && filesToRead.size() > 0) {
         std::cout << "debugNewVar and debugLib must both be OFF to parse in extra files" << std::endl;
         exit(-1);
     }
     for (uint32_t i = 0; i < filesToRead.size(); i++) {
-        readInAFile(filesToRead[i].c_str(), S);
+        readInAFile(filesToRead[i].c_str(), solver);
     }
 
     //Then read the main file or standard input
-    if (filename == NULL) {
-        readInAFile(fileno(stdin), S);
+    if (!fileNamePresent) {
+        readInAFile(fileno(stdin), solver);
     } else {
-        readInAFile(filename, S);
+        readInAFile(argv[(twoFileNamesPresent ? argc-2 : argc-1)], solver);
     }
 
-    if (S.verbosity >= 1) {
+    if (solver.verbosity >= 1) {
         std::cout << "c Parsing time: "
         << std::fixed << std::setw(5) << std::setprecision(2) << (cpuTime() - myTime)
         << " s" << std::endl;
@@ -270,7 +251,7 @@ void parseInAllFiles(Solver& S, const char* filename)
 //=================================================================================================
 // Main:
 
-void printUsage(char** argv, Solver& S)
+void Main::printUsage(char** argv, Solver& S)
 {
 #ifdef DISABLE_ZLIB
     printf("USAGE: %s [options] <input-file> <result-output-file>\n\n  where input is plain DIMACS.\n\n", argv[0]);
@@ -386,7 +367,7 @@ void printUsage(char** argv, Solver& S)
 }
 
 
-const char* hasPrefix(const char* str, const char* prefix)
+const char* Main::hasPrefix(const char* str, const char* prefix)
 {
     int len = strlen(prefix);
     if (strncmp(str, prefix, len) == 0)
@@ -395,7 +376,7 @@ const char* hasPrefix(const char* str, const char* prefix)
         return NULL;
 }
 
-void printResultFunc(const Solver& S, const lbool ret, FILE* res)
+void Main::printResultFunc(const Solver& S, const lbool ret, FILE* res)
 {
     if (res != NULL) {
         if (ret == l_True) {
@@ -431,7 +412,7 @@ void printResultFunc(const Solver& S, const lbool ret, FILE* res)
     }
 }
 
-void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_of_solutions)
+void Main::parseCommandLine(Solver& S)
 {
     const char* value;
     char tmpFilename[201];
@@ -493,7 +474,7 @@ void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_
                 printf("ERROR! illegal seed %s\n", value);
                 exit(0);
             }
-            cout << "c seed:" << seed << endl;
+            std::cout << "c seed:" << seed << std::endl;
             S.setSeed(seed);
         } else if ((value = hasPrefix(argv[i], "--restrict="))) {
             uint32_t branchTo;
@@ -541,14 +522,14 @@ void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_
             }
             int tmp;
             if (sscanf(value, "%d", &tmp) < 0 || tmp < 0) {
-                cout << "ERROR! wrong maximum dumped learnt clause size is illegal: " << tmp << endl;
+                std::cout << "ERROR! wrong maximum dumped learnt clause size is illegal: " << tmp << std::endl;
                 exit(0);
             }
             S.maxDumpLearntsSize = (uint32_t)tmp;
         } else if ((value = hasPrefix(argv[i], "--maxsolutions="))) {
             int tmp;
             if (sscanf(value, "%d", &tmp) < 0 || tmp < 0) {
-                cout << "ERROR! wrong maximum number of solutions is illegal: " << tmp << endl;
+                std::cout << "ERROR! wrong maximum number of solutions is illegal: " << tmp << std::endl;
                 exit(0);
             }
             max_nr_of_solutions = (uint32_t)tmp;
@@ -625,7 +606,7 @@ void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_
                 printf("ERROR! savematrix: %s\n", value);
                 exit(0);
             }
-            cout << "c Matrix saved every " <<  every << " decision levels" << endl;
+            std::cout << "c Matrix saved every " <<  every << " decision levels" << std::endl;
             S.gaussconfig.only_nth_gauss_save = every;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv, S);
@@ -681,7 +662,7 @@ void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
         } else {
-            //std::cout << "argc:" << argc << " i:" << i << ", value:" << argv[i] << std::endl;
+            //std::std::cout << "argc:" << argc << " i:" << i << ", value:" << argv[i] << std::endl;
             unparsedOptions++;
             if (unparsedOptions == 2) {
                 if (!(argc <= i+2)) {
@@ -718,15 +699,16 @@ void parseCommandLine(int &argc, char**& argv, Solver& S, unsigned long &max_nr_
     if (!debugLib) S.libraryUsage = false;
 }
 
-FILE* openOutputFile(int argc, char** argv)
+FILE* Main::openOutputFile()
 {
     FILE* res = NULL;
     if (twoFileNamesPresent) {
-        printf("c Outputting solution to file: %s\n" , argv[argc-1]);
-        res = fopen(argv[2], "wb");
+        char* filename = argv[argc-1];
+        printf("c Outputting solution to file: %s\n" , filename);
+        res = fopen(filename, "wb");
         if (res == NULL) {
             int backup_errno = errno;
-            printf("Cannot open %s for writing. Problem: %s", argv[argc-1], strerror(backup_errno));
+            printf("Cannot open %s for writing. Problem: %s", filename, strerror(backup_errno));
             exit(1);
         }
     } else {
@@ -736,122 +718,148 @@ FILE* openOutputFile(int argc, char** argv)
     return res;
 }
 
-int singleThreadSolve(int& argc, char**& argv)
+void Main::setDoublePrecision(const uint32_t verbosity)
 {
-    Solver      S;
-    S.verbosity = 2;
-
-    unsigned long max_nr_of_solutions = 1;
-    unsigned long current_nr_of_solutions = 0;
-
-    parseCommandLine(argc, argv, S, max_nr_of_solutions);
-
-    if (S.verbosity >= 1)
-        printf("c This is CryptoMiniSat %s\n", VERSION);
-#if defined(__linux__)
+    #if defined(__linux__)
     fpu_control_t oldcw, newcw;
     _FPU_GETCW(oldcw);
     newcw = (oldcw & ~_FPU_EXTENDED) | _FPU_DOUBLE;
     _FPU_SETCW(newcw);
-    if (S.verbosity >= 1) printf("c WARNING: for repeatability, setting FPU to use double precision\n");
+    if (verbosity >= 1) printf("c WARNING: for repeatability, setting FPU to use double precision\n");
 #endif
-
-    solver = &S;
-    signal(SIGINT,SIGINT_handler);
-    //signal(SIGHUP,SIGINT_handler);
-
-    parseInAllFiles(S, (fileNamePresent ? argv[(twoFileNamesPresent ? argc-2 : argc-1)] : NULL));
-
-    FILE* res = openOutputFile(argc, argv);
-
-    lbool ret;
-    while(1)
-    {
-        ret = S.solve();
-        if ( ret != l_True ) break;
-
-        std::cout << "c " << std::setw(8) << ++current_nr_of_solutions << " solution(s) found" << std::endl;
-
-        if (current_nr_of_solutions >= max_nr_of_solutions) break;
-        printf("c Prepare for next run...\n");
-
-        vec<Lit> lits;
-        for (Var var = 0; var != S.nVars(); var++) {
-            if (S.model[var] != l_Undef) {
-                lits.push( Lit(var, (S.model[var] == l_True)? true : false) );
-            }
-        }
-        printResultFunc(S, ret, res);
-
-        S.addClause(lits);
-    }
-
-    printStats(S);
-    printf("c \n");
-    if (S.needToDumpLearnts) {
-        S.dumpSortedLearnts(S.learntsFilename, S.maxDumpLearntsSize);
-        cout << "c Sorted learnt clauses dumped to file '" << S.learntsFilename << "'" << endl;
-    }
-    if (S.needToDumpOrig) {
-        S.dumpOrigClauses(S.origFilename);
-        std::cout << "c Simplified original clauses dumped to file '" << S.origFilename << "'" << std::endl;
-    }
-    if (ret == l_Undef)
-        printf("c Not finished running -- maximum restart reached\n");
-
-    printResultFunc(S, ret, res);
-
-#ifdef NDEBUG
-    exit(ret == l_True ? 10 : 20);     // (faster than "return", which will invoke the destructor for 'Solver')
-#endif
-
-    if (ret == l_True) return 10;
-    if (ret == l_False) return 20;
-    if (ret == l_Undef) return 15;
-    assert(false);
-
-    return 0;
 }
 
-MTRand mtrand;
-int my_argc;
-char** my_argv;
+void Main::printVersionInfo(const uint32_t verbosity)
+{
+    if (verbosity >= 1) printf("c This is CryptoMiniSat %s\n", VERSION);
+}
 
-void *oneThreadSolve( void *ptr )
+int Main::singleThreadSolve()
 {
     Solver solver;
     solver.verbosity = 2;
-    unsigned long max_nr_of_solutions = 1;
 
-    parseCommandLine(my_argc, my_argv, solver, max_nr_of_solutions);
-    solver.setSeed(*((int*)ptr));
+    parseCommandLine(solver);
+    printVersionInfo(solver.verbosity);
+    setDoublePrecision(solver.verbosity);
 
-    parseInAllFiles(solver, (fileNamePresent ? my_argv[(twoFileNamesPresent ? my_argc-2 : my_argc-1)] : NULL));
+    solverToInterrupt = &solver;
+    signal(SIGINT, SIGINT_handler);
+    //signal(SIGHUP,SIGINT_handler);
 
-    lbool ret = solver.solve();
-    int retVal;
-    if (ret == l_True) retVal = 10;
-    if (ret == l_False) retVal = 20;
-    if (ret == l_Undef) retVal = 15;
+    parseInAllFiles(solver);
+    FILE* res = openOutputFile();
 
-    FILE* res = openOutputFile(my_argc, my_argv);
+    unsigned long current_nr_of_solutions = 0;
+    lbool ret = l_True;
+    while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
+        lbool ret = solver.solve();
+        current_nr_of_solutions++;
+
+        if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
+            if (solver.verbosity >= 1) std::cout << "c Prepare for next run..." << std::endl;
+            printResultFunc(solver, ret, res);
+
+            vec<Lit> lits;
+            for (Var var = 0; var != solver.nVars(); var++) {
+                if (solver.model[var] != l_Undef) {
+                    lits.push( Lit(var, (solver.model[var] == l_True)? true : false) );
+                }
+            }
+            solver.addClause(lits);
+        }
+    }
+
+    if (solver.needToDumpLearnts) {
+        solver.dumpSortedLearnts(solver.learntsFilename, solver.maxDumpLearntsSize);
+        std::cout << "c Sorted learnt clauses dumped to file '" << solver.learntsFilename << "'" << std::endl;
+    }
+    if (solver.needToDumpOrig) {
+        solver.dumpOrigClauses(solver.origFilename);
+        std::cout << "c Simplified original clauses dumped to file '" << solver.origFilename << "'" << std::endl;
+    }
+    if (ret == l_Undef && solver.verbosity >= 1) {
+        std::cout << "c Not finished running -- maximum restart reached" << std::endl;
+    }
     printResultFunc(solver, ret, res);
     printStats(solver);
 
-    exit(retVal);
+    return correctReturnValue(ret);
 }
 
-int multiThreadSolve()
+int Main::correctReturnValue(const lbool ret) const
 {
-    uint32_t numThreads(2);
+    int retval = -1;
+    if      (ret == l_True)  retval = 10;
+    else if (ret == l_False) retval = 20;
+    else if (ret == l_Undef) retval = 15;
+    else {
+        std::cerr << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True" << std::endl;
+        exit(-1);
+    }
+
+    #ifdef NDEBUG
+    // (faster than "return", which will invoke the destructor for 'Solver')
+    exit(retval);
+    #endif
+    return retval;
+}
+
+void* Main::oneThreadSolve( void *ptr )
+{
+    Solver solver;
+    solver.verbosity = 2;
+
+    parseCommandLine(solver);
+    printVersionInfo(solver.verbosity);
+    setDoublePrecision(solver.verbosity);
+    solver.setSeed(*((int*)ptr));
+
+    parseInAllFiles(solver);
+    lbool ret = solver.solve();
+
+    FILE* res = openOutputFile();
+    printResultFunc(solver, ret, res);
+    printStats(solver);
+
+    return (void*)correctReturnValue(ret);
+}
+
+struct myThreadArgs
+{
+    Main* This;
+    void* actual_arg ;
+    myThreadArgs(Main* t, void* p)
+        : This(t)
+        , actual_arg(p) {}
+};
+
+void* helperOneThreadSolve(void* pv)
+{
+    myThreadArgs* main_args = static_cast<myThreadArgs*>(pv);
+    Main* This = main_args->This;
+    void* args = main_args->actual_arg;
+
+    void* result = This->oneThreadSolve(args);
+
+    delete main_args;
+    return result;
+}
+
+int Main::multiThreadSolve()
+{
+    uint32_t numThreads(3);
     vector<int> seeds;
     vector<pthread_t> threads;
+    MTRand mtrand;
 
     seeds.resize(numThreads);
     threads.resize(numThreads);
     for (uint32_t i = 0; i < numThreads; i++) {
         seeds[i] = mtrand.randInt();
-        int iret = pthread_create(&(threads[i]), NULL, oneThreadSolve, (void*) &(seeds[i]));
+        //int iret = pthread_create(&(threads[i]), NULL, oneThreadSolve(), (void*) &(seeds[i]));
+        int iret = pthread_create(&(threads[i]), NULL, &helperOneThreadSolve, new myThreadArgs(this,&(seeds[i])));
+
         if (iret != 0) {
             std::cout << "Error creating thread " << i << std::endl;
             exit(-1);
@@ -867,9 +875,8 @@ int multiThreadSolve()
 
 int main(int argc, char** argv)
 {
-    my_argc = argc;
-    my_argv = argv;
-    return multiThreadSolve();
+    Main main(argc, argv);
+    return main.multiThreadSolve();
     //return singleThreadSolve(argc, argv);
 
 }

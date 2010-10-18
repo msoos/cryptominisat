@@ -58,6 +58,7 @@ static inline double cpuTime(void)
 
 
 #if defined(__linux__)
+#include <stdio.h>
 static inline int memReadStat(int field)
 {
     char    name[256];
