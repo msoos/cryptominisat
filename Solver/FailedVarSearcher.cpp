@@ -176,7 +176,7 @@ const bool FailedVarSearcher::search()
     numCalls++;
 
     //If failed var searching is going good, do successively more and more of it
-    if ((double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.05) numPropsMultiplier = std::max(numPropsMultiplier*1.5, 2.0);
+    if ((double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.10) numPropsMultiplier = std::max(numPropsMultiplier*1.3, 2.0);
     else numPropsMultiplier = 1.0;
     numProps = (uint64_t) ((double)numProps * numPropsMultiplier * 3.0);
 
@@ -212,7 +212,7 @@ const bool FailedVarSearcher::search()
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     if (solver.addExtraBins && !orderLits()) return false;
-    maxHyperBinProps = numProps/4;
+    maxHyperBinProps = numProps/6;
 
     //uint32_t fromBin;
     uint32_t fromVar;
