@@ -52,7 +52,7 @@ void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
     if (maxSize == 1) goto end;
 
     fprintf(outfile, "c \nc ---------------------------------\n");
-    fprintf(outfile, "c learnt clauses from binaryClauses\n");
+    fprintf(outfile, "c learnt binary clauses (extracted from watchlists)\n");
     fprintf(outfile, "c ---------------------------------\n");
     dumpBinClauses(false, true, outfile);
 
@@ -127,6 +127,19 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FIL
             }
         }
     }
+}
+
+const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
+{
+    uint32_t num = 0;
+    const vec<Watched>& ws = watches[lit.toInt()];
+    for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        if (it2->isBinary() && (alsoLearnt || !it2->getLearnt())) {
+            num++;
+        }
+    }
+
+    return num;
 }
 
 void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) const

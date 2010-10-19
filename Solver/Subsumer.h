@@ -21,7 +21,6 @@ using std::map;
 using std::priority_queue;
 
 class ClauseCleaner;
-class OnlyNonLearntBins;
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
@@ -41,7 +40,7 @@ public:
 
     //Called from main
     const bool simplifyBySubsumption(const bool alsoLearnt = false);
-    const bool subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins);
+    const bool subsumeWithBinaries();
     void newVar();
 
     //Used by cleaner
@@ -103,6 +102,7 @@ private:
     void freeMemory();
     void addBackToSolver();
     void removeWrong(vec<Clause*>& cs);
+    void removeWrongBins();
     void removeAssignedVarsFromEliminated();
 
     //Iterations
@@ -136,9 +136,11 @@ private:
     template<class T>
     subsume0Happened subsume0Orig(const T& ps, uint32_t abs);
     void subsume0Touched();
+    void makeNonLearntBin(const Lit lit1, const Lit lit2);
 
     //subsume1
     void subsume1(Clause& ps);
+    const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
     void strenghten(ClauseSimp& c, const Lit toRemoveLit);
     const bool cleanClause(Clause& c);
     void handleSize1Clause(const Lit lit);
@@ -162,8 +164,8 @@ private:
     bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
 
     //Subsume with Nonexistent Bins
-    const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
-    const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
+    const bool subsWNonExistBinsFull();
+    const bool subsWNonExistBins(const Lit& lit);
     void subsume0BIN(const Lit lit, const vec<char>& lits);
     bool subsNonExistentFinish;
     uint32_t doneNum;

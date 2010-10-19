@@ -43,8 +43,6 @@ VarReplacer::VarReplacer(Solver& _solver) :
 
 VarReplacer::~VarReplacer()
 {
-    for (uint32_t i = 0; i != clauses.size(); i++)
-        solver.clauseAllocator.clauseFree(clauses[i]);
 }
 
 /**
@@ -131,9 +129,6 @@ const bool VarReplacer::performReplaceInternal()
     solver.testAllClauseAttach();
 
 end:
-    for (uint32_t i = 0; i != clauses.size(); i++)
-        solver.removeClause(*clauses[i]);
-    clauses.clear();
 
     if (solver.verbosity >= 2) {
         std::cout << "c Replacing "
@@ -655,45 +650,4 @@ void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
 void VarReplacer::newVar()
 {
     table.push_back(Lit(table.size(), false));
-}
-
-/**
-@brief Attaches internal clauses to the watchlist of solver
-
-Sometimes we need to completely detach every clause. The fastest way to do
-that is to clear the watchlists. Then, we need to re-attach the clauses. This
-function is used in this last stage.
-
-Re-attaching is done, e.g. if many unitary clauses have been found through
-failed var searching
-*/
-void VarReplacer::reattachInternalClauses()
-{
-    Clause **i = clauses.getData();
-    Clause **j = i;
-    for (Clause **end = clauses.getDataEnd(); i != end; i++) {
-        if (solver.value((**i)[0]) == l_Undef &&
-            solver.value((**i)[1]) == l_Undef) {
-            solver.attachClause(**i);
-            *j++ = *i;
-        }
-
-        if (solver.value((**i)[0]) == l_False &&
-            solver.value((**i)[1]) == l_Undef) {
-            solver.uncheckedEnqueue((**i)[1]);
-        }
-
-        if (solver.value((**i)[0]) == l_Undef &&
-            solver.value((**i)[1]) == l_False) {
-            solver.uncheckedEnqueue((**i)[0]);
-        }
-
-        if (solver.value((**i)[0]) == l_False &&
-            solver.value((**i)[1]) == l_False) {
-            solver.ok = false;
-        }
-
-        //either is l_True, it is ignored
-    }
-    clauses.shrink(i-j);
 }

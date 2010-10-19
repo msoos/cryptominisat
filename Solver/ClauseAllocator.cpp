@@ -441,7 +441,6 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
 
     updatePointers(solver->clauses);
     updatePointers(solver->learnts);
-    updatePointers(solver->binaryClauses);
     updatePointers(solver->xorclauses);
     updatePointers(solver->freeLater);
     updatePointers(solver->unWindGlue);

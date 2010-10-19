@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "CompleteDetachReattacher.h"
 #include "VarReplacer.h"
+#include "ClauseCleaner.h"
 
 CompleteDetachReatacher::CompleteDetachReatacher(Solver& _solver) :
     solver(_solver)
@@ -26,60 +27,54 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver& _solver) :
 /**
 @brief Completely detach all clauses
 */
-void CompleteDetachReatacher::completelyDetach()
+void CompleteDetachReatacher::detachNonBins()
 {
     solver.clauses_literals = 0;
     solver.learnts_literals = 0;
-    for (uint32_t i = 0; i < solver.nVars(); i++) {
-        solver.watches[i*2].clear();
-        solver.watches[i*2+1].clear();
-    }
-}
 
-/**
-@brief Detach clauses that are non-native in the watchlists
-
-This effectively means all clauses that are of size >3. Native clauses
-might not need to be detached, because playing around with their content
-does not affect their ability to do propagations
-*/
-void CompleteDetachReatacher::detachPointerUsingClauses()
-{
-    solver.clauses_literals = 0;
-    solver.learnts_literals = 0;
+    std::pair<uint64_t, uint64_t> tmp1, tmp2;
     for (uint32_t i = 0; i < solver.nVars(); i++) {
-        clearWatchOfPointerUsers(solver.watches[i*2]);
-        clearWatchOfPointerUsers(solver.watches[i*2+1]);
+        tmp1 = clearWatchNotBin(solver.watches[i*2]);
+        tmp2 = clearWatchNotBin(solver.watches[i*2+1]);
     }
+
+    solver.learnts_literals += tmp1.first + tmp2.first;
+    solver.clauses_literals += tmp1.second + tmp2.second;
 }
 
 /**
 @brief Helper function for detachPointerUsingClauses()
 */
-void CompleteDetachReatacher::clearWatchOfPointerUsers(vec<Watched>& ws)
+const std::pair<uint32_t, uint32_t> CompleteDetachReatacher::clearWatchNotBin(vec<Watched>& ws)
 {
+    uint32_t numRemainNonLearnt = 0;
+    uint32_t numRemainLearnt = 0;
+
     Watched* i = ws.getData();
     Watched* j = i;
     for (Watched *end = ws.getDataEnd(); i != end; i++) {
-        if (i->isBinary() || i->isTriClause()) {
+        if (i->isBinary()) {
             *j++ = *i;
+        } else {
+            if (i->getLearnt()) numRemainLearnt++;
+            else numRemainNonLearnt++;
         }
     }
     ws.shrink_(i-j);
+
+    return std::make_pair(numRemainLearnt, numRemainNonLearnt);
 }
 
 /**
 @brief Completely attach all clauses
 */
-const bool CompleteDetachReatacher::completelyReattach()
+const bool CompleteDetachReatacher::reattachNonBins()
 {
     assert(solver.ok);
 
-    cleanAndAttachClauses(solver.binaryClauses, true);
-    cleanAndAttachClauses(solver.clauses, false);
-    cleanAndAttachClauses(solver.learnts, false);
-
-    solver.varReplacer->reattachInternalClauses();
+    solver.clauseCleaner->removeSatisfiedBins();
+    cleanAndAttachClauses(solver.clauses);
+    cleanAndAttachClauses(solver.learnts);
     cleanAndAttachClauses(solver.xorclauses);
 
     if (solver.ok) solver.ok = (solver.propagate().isNULL());
@@ -92,16 +87,16 @@ const bool CompleteDetachReatacher::completelyReattach()
 
 May change solver.ok to FALSE (!)
 */
-inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<Clause*>& cs, const bool lookingThroughBinary)
+inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<Clause*>& cs)
 {
     Clause **i = cs.getData();
     Clause **j = i;
     for (Clause **end = cs.getDataEnd(); i != end; i++) {
         if (cleanClause(*i)) {
             solver.attachClause(**i);
-            if (!lookingThroughBinary && (**i).size() == 2)
-                solver.binaryClauses.push(*i);
-            else
+            if ((**i).size() == 2) {
+                solver.numBins++;
+            } else
                 *j++ = *i;
         } else {
             solver.clauseAllocator.clauseFree(*i);

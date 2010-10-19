@@ -87,6 +87,7 @@ private:
     vec<char> cannot_eliminate;
     void addToCannotEliminate(Clause* it);
     void removeWrong(vec<Clause*>& cs);
+    void removeWrongBins();
 
     //Global stats
     double totalTime;

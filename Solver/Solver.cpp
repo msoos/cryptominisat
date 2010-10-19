@@ -29,7 +29,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "XorSubsumer.h"
 #include "StateSaver.h"
 #include "UselessBinRemover.h"
-#include "OnlyNonLearntBins.h"
 #include "SCCFinder.h"
 
 #ifdef USE_GAUSS
@@ -850,7 +849,6 @@ void Solver::calculateDefaultPolarities()
 
         tallyVotes(clauses, votes);
         tallyVotesBin(votes);
-        tallyVotes(varReplacer->getClauses(), votes);
         tallyVotes(xorclauses, votes);
 
         Var i = 0;
@@ -1622,7 +1620,7 @@ FoundWatch:
 
 This is used in special algorithms outside the main Solver class
 */
-PropBy Solver::propagateBin()
+PropBy Solver::propagateBin(const bool alsoLearnt)
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
@@ -1630,6 +1628,7 @@ PropBy Solver::propagateBin()
         propagations += wbin.size()/2;
         for(Watched *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
             if (!k->isBinary()) continue;
+            if (!alsoLearnt && k->isLearnt()) continue;
 
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
@@ -1642,6 +1641,56 @@ PropBy Solver::propagateBin()
     }
 
     return PropBy();
+}
+
+/**
+@brief Propagate recursively on non-learnt binaries, but do not propagate exceptLit if we reach it
+*/
+const bool Solver::propagateBinExcept(const bool alsoLearnt, const Lit& exceptLit)
+{
+    while (qhead < trail.size()) {
+        Lit p   = trail[qhead++];
+        vec<Watched> & ws = watches[p.toInt()];
+        propagations += ws.size()/2;
+        for(Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+            if (i->isBinary()) {
+                if (!alsoLearnt && i->getLearnt()) continue;
+                lbool val = value(i->getOtherLit());
+                if (val.isUndef() && i->getOtherLit() != exceptLit) {
+                    uncheckedEnqueueLight(i->getOtherLit());
+                } else if (val == l_False) {
+                    return false;
+                }
+            }
+            break;
+        }
+    }
+
+    return true;
+}
+
+/**
+@brief Propagate only for one hop(=non-recursively) on non-learnt bins
+*/
+const bool Solver::propagateBinOneLevel(const bool alsoLearnt)
+{
+    Lit p   = trail[qhead];
+    vec<Watched> & ws = watches[p.toInt()];
+    propagations += ws.size()/2;
+    for(Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+        if (i->isBinary()) {
+            if (!alsoLearnt && i->getLearnt()) continue;
+            lbool val = value(i->getOtherLit());
+            if (val.isUndef()) {
+                uncheckedEnqueueLight(i->getOtherLit());
+            } else if (val == l_False) {
+                return false;
+            }
+        }
+        break;
+    }
+
+    return true;
 }
 
 /**
@@ -2238,12 +2287,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (failedVarSearch && !failedVarSearcher->search()) goto end;
 
     if (doReplace && (regRemUselessBins || regSubsWNonExistBins)) {
-        OnlyNonLearntBins onlyNonLearntBins(*this);
-        if (!onlyNonLearntBins.fill()) goto end;
         if (regSubsWNonExistBins
-            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) goto end;
+            && !subsumer->subsumeWithBinaries()) goto end;
         if (regRemUselessBins) {
-            UselessBinRemover uselessBinRemover(*this, onlyNonLearntBins);
+            UselessBinRemover uselessBinRemover(*this);
             if (!uselessBinRemover.removeUslessBinFull()) goto end;
         }
     }
@@ -2350,10 +2397,8 @@ void Solver::performStepsBeforeSolve()
         && !failedVarSearcher->asymmBranch()) return;
 
     if (doReplace) {
-        OnlyNonLearntBins onlyNonLearntBins(*this);
-        if (!onlyNonLearntBins.fill()) return;
         if (subsWNonExistBins && !libraryUsage
-            && !subsumer->subsumeWithBinaries(&onlyNonLearntBins)) return;
+            && !subsumer->subsumeWithBinaries()) return;
     }
 
     if (doSubsumption
@@ -2545,13 +2590,13 @@ original problem, not just of what remained of it at the end inside this class
 void Solver::handleSATSolution()
 {
 
-    if (greedyUnbound) {
+    /*if (greedyUnbound) {
         double time = cpuTime();
         FindUndef finder(*this);
         const uint32_t unbounded = finder.unRoll();
         if (verbosity >= 1)
             printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
-    }
+    }*/
 
     partHandler->addSavedState();
     varReplacer->extendModelPossible();

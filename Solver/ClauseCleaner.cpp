@@ -72,20 +72,28 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
     if (lastNumUnitarySat[binaryClauses] + limit >= solver.get_unitary_learnts_num())
         return;
 
+    uint32_t numRemoveHalfNonLearnt = 0;
+    uint32_t numRemoveHalfLearnt = 0;
     uint32_t wsLit = 0;
     for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = Lit::toLit(wsLit);
-        vec<Watched>& cs = *it;
+        vec<Watched>& ws = *it;
 
-        uint32_t i,j;
-        for (i = j = 0; i < cs.size(); i++) {
-            if (cs[i].isBinary() && satisfied(cs[i], lit))
-                solver.clauses_literals -= 2;
+        Watched* i = ws.getData();
+        Watched* j = i;
+        for (Watched *end = ws.getDataEnd(); i != end; i++) {
+            if (i->isBinary() && satisfied(*i, lit))
+                if (i->getLearnt()) numRemoveHalfLearnt++;
+                else numRemoveHalfNonLearnt++;
             else
-                cs[j++] = cs[i];
+                *j++ = *i;
         }
-        cs.shrink_(i - j);
+        ws.shrink_(i - j);
     }
+
+    solver.clauses_literals -= (numRemoveHalfNonLearnt/2)*2;
+    solver.learnts_literals -= (numRemoveHalfLearnt/2)*2;
+    solver.numBins -= (numRemoveHalfLearnt+numRemoveHalfNonLearnt)/2;
 
     lastNumUnitarySat[binaryClauses] = solver.get_unitary_learnts_num();
 }

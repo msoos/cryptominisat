@@ -432,7 +432,9 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
-    PropBy   propagateBin();
+    PropBy   propagateBin(const bool alsoLearnt = true);
+    const bool propagateBinExcept(const bool alsoLearnt, const Lit& exceptLit);
+    const bool propagateBinOneLevel(const bool alsoLearnt);
     PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
     void     propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
     void     propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
@@ -568,8 +570,11 @@ protected:
     void     interruptCleanly();
     void     addSymmBreakClauses();
     void     initialiseSolver();
+
+    //Misc related binary clauses
     void     dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const;
     const uint32_t countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
+    const uint32_t getBinWatchSize(const bool alsoLearnt, const Lit lit);
 
     /////////////////////
     // Polarity chooser

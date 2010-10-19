@@ -66,13 +66,12 @@ const bool PartHandler::handle()
         configureNewSolver(newSolver);
         moveVariablesBetweenSolvers(newSolver, vars, part, partFinder);
 
-        assert(solver.varReplacer->getClauses().size() == 0);
         moveClauses(solver.clauses, newSolver, part, partFinder);
-        moveClauses(solver.binaryClauses, newSolver, part, partFinder);
         moveClauses(solver.xorclauses, newSolver, part, partFinder);
-        moveLearntClauses(solver.binaryClauses, newSolver, part, partFinder);
         moveLearntClauses(solver.learnts, newSolver, part, partFinder);
         assert(checkClauseMovement(newSolver, part, partFinder));
+
+        moveBinClauses(newSolver, part, partFinder);
 
         lbool status = newSolver.solve();
         assert(status != l_Undef);
@@ -224,7 +223,7 @@ const bool PartHandler::checkClauseMovement(const Solver& thisSolver, const uint
         return false;
     if (!checkOnlyThisPart(thisSolver.learnts, part, partFinder))
         return false;
-    if (!checkOnlyThisPart(thisSolver.binaryClauses, part, partFinder))
+    if (!checkOnlyThisPartBin(part, partFinder))
         return false;
     if (!checkOnlyThisPart(thisSolver.xorclauses, part, partFinder))
         return false;
@@ -245,6 +244,23 @@ const bool PartHandler::checkOnlyThisPart(const vec<T*>& cs, const uint32_t part
         const T& c = **it;
         for(const Lit *l = c.getData(), *end2 = l + c.size(); l != end2; l++) {
             if (partFinder.getVarPart(l->var()) != part) return false;
+        }
+    }
+
+    return true;
+}
+
+const bool PartHandler::checkOnlyThisPartBin(const uint32_t part, const PartFinder& partFinder) const
+{
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                if (partFinder.getVarPart(lit.var()) != part) return false;
+                if (partFinder.getVarPart(it2->getOtherLit().var()) != part) return false;
+            }
         }
     }
 
@@ -278,6 +294,43 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_
         clausesRemoved.push(*i);
     }
     cs.shrink(i-j);
+}
+
+void PartHandler::moveBinClauses(Solver& newSolver, const uint32_t part, PartFinder& partFinder)
+{
+    uint32_t wsLit = 0;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        vec<Watched>& ws = *it;
+        Watched *i = ws.getData();
+        Watched *j = i;
+        for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
+            if (i->isBinary()
+                && (partFinder.getVarPart(lit.var()) == part || partFinder.getVarPart(i->getOtherLit().var()) == part))
+            {
+                Lit lit2 = i->getOtherLit();
+                assert((partFinder.getVarPart(lit2.var()) == part && partFinder.getVarPart(lit.var()) == part) || i->getLearnt());
+                if (partFinder.getVarPart(lit2.var()) != part
+                    || partFinder.getVarPart(i->getOtherLit().var()) != part
+                    ) continue;
+
+                if (lit.toInt() < i->getOtherLit().toInt()) {
+                    vec<Lit> lits(2);
+                    lits[0] = lit;
+                    lits[1] = lit2;
+                    if (i->getLearnt())
+                        newSolver.addLearntClause(lits, 0, 0, 0);
+                    else {
+                        newSolver.addClause(lits);
+                        binClausesRemoved.push_back(std::make_pair(lit, lit2));
+                    }
+                }
+            } else {
+                *j++ = *i;
+            }
+        }
+        ws.shrink_(i-j);
+    }
 }
 
 /**
@@ -417,6 +470,15 @@ void PartHandler::readdRemovedClauses()
         assert(solver.ok);
     }
     xorClausesRemoved.clear();
+
+    vec<Lit> lits(2);
+    for (vector<pair<Lit, Lit> >::const_iterator it = binClausesRemoved.begin(), end = binClausesRemoved.end(); it != end; it++) {
+        lits[0] = it->first;
+        lits[1] = it->second;
+        solver.addClause(lits);
+        assert(solver.ok);
+    }
+
     solver.libraryCNFFile = backup_libraryCNFfile;
 }
 

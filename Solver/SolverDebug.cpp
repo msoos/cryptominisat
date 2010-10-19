@@ -34,13 +34,6 @@ void Solver::testAllClauseAttach() const
         }
     }
 
-    for (Clause *const*it = binaryClauses.getData(), *const*end = binaryClauses.getDataEnd(); it != end; it++) {
-        const Clause& c = **it;
-        assert(c.size() == 2);
-        assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], &c));
-        assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], &c));
-    }
-
     for (XorClause *const*it = xorclauses.getData(), *const*end = xorclauses.getDataEnd(); it != end; it++) {
         const XorClause& c = **it;
         assert(find(xorwatches[c[0].var()], &c));

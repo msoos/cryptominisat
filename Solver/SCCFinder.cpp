@@ -30,12 +30,17 @@ SCCFinder::SCCFinder(Solver& _solver) :
 
 void SCCFinder::fillGraph()
 {
-    for (Clause **it = solver.binaryClauses.getData(), **end = solver.binaryClauses.getDataEnd(); it != end; it++) {
-        Clause& c = **it;
-        Lit lit1 = c[0];
-        Lit lit2 = c[1];
-        boost::add_edge((~lit1).toInt(), (lit2).toInt(), graph);
-        boost::add_edge((~lit2).toInt(), (lit1).toInt(), graph);
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                Lit lit2 = it2->getOtherLit();
+                boost::add_edge((~lit).toInt(), (lit2).toInt(), graph);
+                boost::add_edge((~lit2).toInt(), (lit).toInt(), graph);
+            }
+        }
     }
 }
 

@@ -63,7 +63,6 @@ const bool PartFinder::findParts()
         solver.clauseCleaner->removeAndCleanAll(true);
         if (!solver.ok) return false;
     }
-    assert(solver.varReplacer->getClauses().size() == 0);
 
     addToPart(solver.clauses);
     addToPartBins();

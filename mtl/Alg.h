@@ -101,7 +101,8 @@ static void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
 static bool    findWBin(const vec<Watched>& ws, const Lit impliedLit);
 static void    removeWBin(vec<Watched> &ws, const Lit impliedLit);
 static void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
-static void    removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
+static const  uint32_t  removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
+static inline Watched&  findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2);
 
 //Xor Clause
 static bool    findWXCl(const vec<Watched>& ws, const ClauseOffset c);
@@ -173,15 +174,31 @@ static inline void removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
     ws.pop();
 }
 
-static inline void removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
+static inline const uint32_t removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
 {
+    uint32_t removed = 0;
     Watched *i = ws.getData();
     Watched *j = i;
     for (Watched* end = ws.getDataEnd(); i != end; i++) {
         if (!i->isBinary() || i->getOtherLit() != impliedLit)
             *j++ = *i;
+        else removed++;
     }
     ws.shrink(i-j);
+
+    return removed;
+}
+
+static inline Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2)
+{
+    vec<Watched>& ws = wsFull[(~lit1).toInt()];
+    for (Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+        if (i->isBinary() && i->getOtherLit() == lit2)
+            return *i;
+    }
+    assert(false);
+
+    return wsFull[0][0];
 }
 
 #endif

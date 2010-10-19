@@ -60,6 +60,7 @@ class PartHandler
         void moveVariablesBetweenSolvers(Solver& newSolver, vector<Var>& vars, const uint32_t part, const PartFinder& partFinder);
 
         //For moving clauses
+        void moveBinClauses(Solver& newSolver, const uint32_t part, PartFinder& partFinder);
         void moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
         void moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
         void moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder);
@@ -68,6 +69,7 @@ class PartHandler
         const bool checkClauseMovement(const Solver& thisSolver, const uint32_t part, const PartFinder& partFinder) const;
         template<class T>
         const bool checkOnlyThisPart(const vec<T*>& cs, const uint32_t part, const PartFinder& partFinder) const;
+        const bool checkOnlyThisPartBin(const uint32_t part, const PartFinder& partFinder) const;
 
         Solver& solver; ///<The base solver
         /**
@@ -78,22 +80,10 @@ class PartHandler
         */
         vec<lbool> savedState;
         vec<Var> decisionVarRemoved; ///<List of variables whose decision-ness has been removed (set to FALSE)
-        /**
-        @brief Clauses that have been moved to parts
 
-        We aggregate here clauses that have been moved to parts. There are
-        later re-added back to the solver such that the problem is complete
-        again.
-        */
+        //Clauses that have been moved to other parts
         vec<Clause*> clausesRemoved;
-
-        /**
-        @brief xor clauses that have been moved to parts
-
-        We aggregate here xor clauses that have been moved to parts. There are
-        later re-added back to the solver such that the problem is complete
-        again.
-        */
+        vector<pair<Lit, Lit> > binClausesRemoved;
         vec<XorClause*> xorClausesRemoved;
 };
 
