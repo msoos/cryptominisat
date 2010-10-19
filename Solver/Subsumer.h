@@ -40,7 +40,6 @@ public:
 
     //Called from main
     const bool simplifyBySubsumption(const bool alsoLearnt = false);
-    const bool subsumeWithBinaries();
     void newVar();
 
     //Used by cleaner
@@ -59,6 +58,8 @@ public:
     const map<Var, vector<Clause*> >& getElimedOutVar() const;
 
 private:
+
+    const bool subsumeWithBinaries();
 
     friend class ClauseCleaner;
     friend class ClauseAllocator;
@@ -96,7 +97,7 @@ private:
     void fillCannotEliminate();
     void clearAll();
     void setLimits(const bool alsoLearnt);
-    void subsume0AndSubsume1();
+    const bool subsume0AndSubsume1();
 
     //Finish-up
     void freeMemory();
@@ -142,7 +143,7 @@ private:
     void subsume1(Clause& ps);
     const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
     void strenghten(ClauseSimp& c, const Lit toRemoveLit);
-    const bool cleanClause(Clause& c);
+    //const bool cleanClause(Clause& c);
     void handleSize1Clause(const Lit lit);
 
     //Variable elimination
@@ -162,6 +163,7 @@ private:
     bool maybeEliminate(Var x);
     void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
     bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
+    const bool eliminateVars();
 
     //Subsume with Nonexistent Bins
     const bool subsWNonExistBinsFull();
@@ -205,7 +207,6 @@ private:
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
     uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
     uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
-    bool subsWithBins;         ///<Are we currently subsuming with binaries only?
 };
 
 template <class T, class T2>

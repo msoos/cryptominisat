@@ -68,7 +68,7 @@ ClauseAllocator::~ClauseAllocator()
 template<class T>
 Clause* ClauseAllocator::Clause_new(const T& ps, const unsigned int group, const bool learnt)
 {
-    assert(ps.size() > 0);
+    assert(ps.size() > 2);
     void* mem = allocEnough(ps.size());
     Clause* real= new (mem) Clause(ps, group, learnt);
     //assert(!(ps.size() == 2 && !real->wasBin()));

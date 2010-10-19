@@ -136,14 +136,14 @@ const bool Solver::verifyBinClauses() const
 {
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = Lit::toLit(wsLit);
-        const vec<Watched>& cs = *it;
+        Lit lit = ~Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
 
         uint32_t i;
-        for (i = 0; i < cs.size(); i++) {
-            if (cs[i].isBinary()
+        for (i = 0; i < ws.size(); i++) {
+            if (ws[i].isBinary()
                 && value(lit) != l_True
-                && value(cs[i].getOtherLit()) != l_True
+                && value(ws[i].getOtherLit()) != l_True
             ) return false;
         }
     }

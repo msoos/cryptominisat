@@ -72,10 +72,10 @@ const bool CompleteDetachReatacher::reattachNonBins()
 {
     assert(solver.ok);
 
-    solver.clauseCleaner->removeSatisfiedBins();
     cleanAndAttachClauses(solver.clauses);
     cleanAndAttachClauses(solver.learnts);
     cleanAndAttachClauses(solver.xorclauses);
+    solver.clauseCleaner->removeSatisfiedBins();
 
     if (solver.ok) solver.ok = (solver.propagate().isNULL());
 
@@ -148,10 +148,8 @@ inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
             return false;
 
         case 2: if (i != j) {
-            Clause *c2 = solver.clauseAllocator.Clause_new(ps, ps.getGroup(), ps.learnt());
-            solver.becameBinary++;
-            solver.clauseAllocator.clauseFree(cl);
-            cl = c2;
+            solver.attachBinClause(ps[0], ps[1], ps.learnt());
+            return false;
         }
 
         default:;

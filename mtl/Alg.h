@@ -98,8 +98,8 @@ static bool    findWCl(const vec<Watched>& ws, const ClauseOffset c);
 static void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
 
 //Binary clause
-static bool    findWBin(const vec<Watched>& ws, const Lit impliedLit);
-static void    removeWBin(vec<Watched> &ws, const Lit impliedLit);
+/*static bool    findWBin(const vec<Watched>& ws, const Lit impliedLit);
+static void    removeWBin(vec<Watched> &ws, const Lit impliedLit);*/
 static void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
 static const  uint32_t  removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
 static inline Watched&  findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2);
@@ -149,7 +149,7 @@ static inline void removeWXCl(vec<Watched> &ws, const ClauseOffset c)
 //////////////////
 // BINARY Clause
 //////////////////
-static inline bool findWBin(const vec<Watched>& ws, const Lit impliedLit)
+/*static inline bool findWBin(const vec<Watched>& ws, const Lit impliedLit)
 {
     uint32_t j = 0;
     for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
@@ -163,7 +163,7 @@ static inline void removeWBin(vec<Watched> &ws, const Lit impliedLit)
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
-}
+}*/
 
 static inline void removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
 {

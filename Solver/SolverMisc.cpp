@@ -92,23 +92,38 @@ void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
     fclose(outfile);
 }
 
+void Solver::printStrangeBinLit(const Lit lit) const
+{
+    const vec<Watched>& ws = watches[(~lit).toInt()];
+    for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        if (it2->isBinary()) {
+            std::cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->isLearnt()) << std::endl;
+        } else if (it2->isTriClause()) {
+            std::cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << std::endl;
+        } else {
+            std::cout << "cla:" << it2->getOffset() << std::endl;
+        }
+    }
+}
+
 const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
 {
     uint32_t num = 0;
 
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = Lit::toLit(wsLit);
+        Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+            if (it2->isBinary()) {
                 if (it2->isLearnt()) num += alsoLearnt;
                 else num+= alsoNonLearnt;
             }
         }
     }
 
-    return num;
+    assert(num % 2 == 0);
+    return num/2;
 }
 
 void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const

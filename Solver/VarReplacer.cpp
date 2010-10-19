@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include <iostream>
 #include <iomanip>
+#include <set>
 
 #include "ClauseCleaner.h"
 #include "PartHandler.h"
@@ -26,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define VERBOSE_DEBUG
 //#define DEBUG_REPLACER
 //#define REPLACE_STATISTICS
+//#define DEBUG_BIN_REPLACER
 
 #ifdef VERBOSE_DEBUG
 #include <iostream>
@@ -122,6 +124,11 @@ const bool VarReplacer::performReplaceInternal()
     lastReplacedVars = replacedVars;
 
     solver.testAllClauseAttach();
+    assert(solver.qhead == solver.trail.size());
+
+    solver.countNumBinClauses(true, false);
+    solver.countNumBinClauses(false, true);
+
     if (!replaceBins()) goto end;
     if (!replace_set(solver.clauses)) goto end;
     if (!replace_set(solver.learnts)) goto end;
@@ -129,6 +136,7 @@ const bool VarReplacer::performReplaceInternal()
     solver.testAllClauseAttach();
 
 end:
+    assert(solver.qhead == solver.trail.size());
 
     if (solver.verbosity >= 2) {
         std::cout << "c Replacing "
@@ -172,6 +180,9 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
 
         if (changed && handleUpdatedClause(c, origVar1, origVar2)) {
             if (!solver.ok) {
+                #ifdef VERBOSE_DEBUG
+                cout << "contradiction while replacing lits in xor clause" << std::endl;
+                #endif
                 for(;r != end; r++) solver.clauseAllocator.clauseFree(*r);
                 cs.shrink(r-a);
                 return false;
@@ -218,8 +229,9 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     switch (c.size()) {
     case 0:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
-        if (!c.xorEqualFalse())
+        if (!c.xorEqualFalse()) {
             solver.ok = false;
+        }
         return true;
     case 1:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
@@ -245,24 +257,34 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
 
 const bool VarReplacer::replaceBins()
 {
-    uint32_t removedBinHalf = 0;
+    #ifdef DEBUG_BIN_REPLACER
+    vec<uint32_t> removed(solver.nVars()*2, 0);
+    uint32_t replacedLitsBefore = replacedLits;
+    #endif
+
+    uint32_t removedLearnt = 0;
+    uint32_t removedNonLearnt = 0;
     uint32_t wsLit = 0;
     for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit1 = Lit::toLit(wsLit);
+        Lit lit1 = ~Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
         Watched *i = ws.getData();
         Watched *j = i;
-        for (Watched *end = ws.getDataEnd(); i != end; i++) {
+        for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
             if (!i->isBinary()) {
                 *j++ = *i;
                 continue;
             }
-            Lit lit2 = i->getOtherLit();
+            //std::cout << "bin: " << lit1 << " , " << i->getOtherLit() << " learnt : " <<  (i->isLearnt()) << std::endl;
             Lit thisLit1 = lit1;
+            Lit lit2 = i->getOtherLit();
+            Lit origLit2 = lit2;
+            assert(thisLit1.var() != lit2.var());
 
             if (table[lit2.var()].var() != lit2.var()) {
-                i->setOtherLit(table[lit2.var()] ^ lit2.sign());
+                lit2 = table[lit2.var()] ^ lit2.sign();
+                i->setOtherLit(lit2);
                 replacedLits++;
             }
 
@@ -274,30 +296,62 @@ const bool VarReplacer::replaceBins()
             }
 
             if (thisLit1 == lit2) {
-                if (solver.value(lit2) == l_Undef)
+                if (solver.value(lit2) == l_Undef) {
                     solver.uncheckedEnqueue(lit2);
-                else if (solver.value(lit2) != l_True)
+                } else if (solver.value(lit2) == l_False) {
+                    #ifdef VERBOSE_DEBUG
+                    std::cout << "Contradiction during replacement of lits in binary clause" << std::endl;
+                    #endif
                     solver.ok = false;
-                removedBinHalf++;
+                }
+                #ifdef DEBUG_BIN_REPLACER
+                removed[lit1.toInt()]++;
+                removed[origLit2.toInt()]++;
+                #endif
+
+                if (i->getLearnt()) removedLearnt++;
+                else removedNonLearnt++;
                 continue;
             }
 
             if (thisLit1 == ~lit2) {
-                removedBinHalf++;
+                #ifdef DEBUG_BIN_REPLACER
+                removed[lit1.toInt()]++;
+                removed[origLit2.toInt()]++;
+                #endif
+
+                if (i->getLearnt()) removedLearnt++;
+                else removedNonLearnt++;
                 continue;
             }
 
             if (changedMain) {
-                solver.watches[thisLit1.toInt()].push(Watched(lit2, i->getLearnt()));
+                solver.watches[(~thisLit1).toInt()].push(*i);
             } else {
                 *j++ = *i;
             }
         }
         ws.shrink_(i-j);
+        if (solver.ok) solver.ok = (solver.propagate().isNULL());
     }
 
-    assert(removedBinHalf % 2 == 0);
-    solver.numBins -= removedBinHalf/2;
+    #ifdef DEBUG_BIN_REPLACER
+    for (uint32_t i = 0; i < removed.size(); i++) {
+        if (removed[i] % 2 != 0) {
+            std::cout << "suspicious: " << Lit::toLit(i) << std::endl;
+            std::cout << "num: " << removed[i] << std::endl;
+        }
+    }
+    std::cout << "replacedLitsdiff: " << replacedLits - replacedLitsBefore << std::endl;
+    std::cout << "removedLearnt: " << removedLearnt << std::endl;
+    std::cout << "removedNonLearnt: " << removedNonLearnt << std::endl;
+    #endif
+
+    assert(removedLearnt % 2 == 0);
+    assert(removedNonLearnt % 2 == 0);
+    solver.learnts_literals -= removedLearnt;
+    solver.clauses_literals -= removedNonLearnt;
+    solver.numBins -= (removedLearnt + removedNonLearnt)/2;
 
     return solver.ok;
 }
@@ -311,6 +365,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
     Clause **r = a;
     for (Clause **end = a + cs.size(); r != end; r++) {
         Clause& c = **r;
+        assert(c.size() > 2);
         bool changed = false;
         Lit origLit1 = c[0];
         Lit origLit2 = c[1];
@@ -325,6 +380,9 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2, origLit3)) {
             if (!solver.ok) {
+                #ifdef VERBOSE_DEBUG
+                cout << "contradiction while replacing lits in normal clause" << std::endl;
+                #endif
                 for(;r != end; r++) solver.clauseAllocator.clauseFree(*r);
                 cs.shrink(r-a);
                 return false;
@@ -361,6 +419,11 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
 
     solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
 
+    #ifdef VERBOSE_DEBUG
+    cout << "clause after replacing: ";
+    c.plainPrint();
+    #endif
+
     if (satisfied) return true;
 
     switch(c.size()) {
@@ -373,8 +436,8 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         return true;
     case 2:
         solver.attachBinClause(c[0], c[1], c.learnt());
-        solver.becameBinary++;
         solver.numBins++;
+        solver.numNewBin++;
         return true;
     default:
         solver.attachClause(c);

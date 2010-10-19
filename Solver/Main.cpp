@@ -103,7 +103,7 @@ void Main::printStats(Solver& solver)
 
     //Learnts stats
     printStatsLine("c learnts DL2", solver.nbGlue2);
-    printStatsLine("c learnts size 2", solver.nbBin);
+    printStatsLine("c learnts size 2", solver.numNewBin);
     printStatsLine("c learnts size 1", solver.get_unitary_learnts_num(), (double)solver.get_unitary_learnts_num()/(double)solver.nVars()*100.0, "% of vars");
 
     //Subsumer stats
@@ -753,7 +753,7 @@ int Main::singleThreadSolve()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        lbool ret = solver.solve();
+        ret = solver.solve();
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {

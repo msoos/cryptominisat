@@ -243,7 +243,7 @@ public:
     uint64_t conflicts; ///<Num conflicts
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
     uint64_t nbGlue2; ///<Num learnt clauses that had a glue of 2 when created
-    uint64_t nbBin; ///<Num learnt clauses that were binary when created
+    uint64_t numNewBin; ///<Num learnt clauses that were binary when created
     uint64_t lastNbBin; ///<Last time we seached for SCCs, numBins was this much
     /**
     @brief When a clause becomes binary through shrinking, we increment this
@@ -251,7 +251,6 @@ public:
     It is used to determine if we should try to look for binary xors among
     the binary clauses
     */
-    uint64_t becameBinary;
     uint64_t lastSearchForBinaryXor; ///<Last time we looked for binary xors, this many bogoprops(=propagations) has been done
     uint64_t nbReduceDB; ///<Number of times learnt clause have been cleaned
     uint64_t improvedClauseNo; ///<Num clauses improved using on-the-fly subsumption
@@ -433,7 +432,7 @@ protected:
     void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
     PropBy   propagateBin(const bool alsoLearnt = true);
-    const bool propagateBinExcept(const bool alsoLearnt, const Lit& exceptLit);
+    const bool propagateBinExcept(const bool alsoLearnt, const Lit exceptLit);
     const bool propagateBinOneLevel(const bool alsoLearnt);
     PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
     void     propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
@@ -575,6 +574,7 @@ protected:
     void     dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const;
     const uint32_t countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
     const uint32_t getBinWatchSize(const bool alsoLearnt, const Lit lit);
+    void  printStrangeBinLit(const Lit lit) const;
 
     /////////////////////
     // Polarity chooser

@@ -32,7 +32,7 @@ void SCCFinder::fillGraph()
 {
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = Lit::toLit(wsLit);
+        Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
@@ -71,6 +71,7 @@ const bool SCCFinder::find2LongXors()
     double myTime = cpuTime();
     numXors = 0;
 
+    graph.clear();
     fillGraph();
     const bool retval = findSCC();
 
@@ -97,6 +98,13 @@ const bool SCCFinder::findSCC()
             //std::cout << "Its root vertex is:" << Lit::toLit(boost::get(&root[0], i)) << std::endl;
             lits[0] = Lit::toLit(i);
             lits[1] = Lit::toLit(boost::get(&root[0], i));
+            assert(lits[0] != lits[1]);
+
+            if (lits[0] == ~lits[1]) {
+                solver.ok = false;
+                return false;
+            }
+
             bool xorEqualsFalse = true;
             xorEqualsFalse ^= lits[0].sign() ^ lits[1].sign();
             lits[0] = lits[0].unsign();

@@ -191,7 +191,7 @@ void XorSubsumer::fillCannotEliminate()
 
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = Lit::toLit(wsLit);
+        Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && !it2->isLearnt()) {
@@ -320,20 +320,20 @@ void XorSubsumer::removeWrong(vec<Clause*>& cs)
 
 void XorSubsumer::removeWrongBins()
 {
-    uint32_t numRemoveHalfNonLearnt = 0;
+    uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
     for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = Lit::toLit(wsLit);
+        Lit lit = ~Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
         Watched* i = ws.getData();
         Watched* j = i;
-        for (Watched *end = ws.getDataEnd(); i != end; i++) {
+        for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
             if (i->isBinary()
-                && !i->isLearnt()
+                && i->isLearnt()
                 && (var_elimed[lit.var()] || var_elimed[i->getOtherLit().var()])
                 ) {
-                numRemoveHalfNonLearnt++;
+                numRemovedHalfLearnt++;
             } else {
                 *j++ = *i;
             }
@@ -341,8 +341,9 @@ void XorSubsumer::removeWrongBins()
         ws.shrink_(i - j);
     }
 
-    solver.clauses_literals -= (numRemoveHalfNonLearnt/2)*2;
-    solver.numBins -= numRemoveHalfNonLearnt/2;
+    assert(numRemovedHalfLearnt % 2 == 0);
+    solver.learnts_literals -= (numRemovedHalfLearnt/2)*2;
+    solver.numBins -= numRemovedHalfLearnt/2;
 }
 
 

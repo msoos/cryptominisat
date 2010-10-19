@@ -106,7 +106,7 @@ Solver::Solver() :
         // Stats
         , starts(0), dynStarts(0), staticStarts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
-        , nbGlue2(0), nbBin(0), lastNbBin(0), becameBinary(0), lastSearchForBinaryXor(0), nbReduceDB(0)
+        , nbGlue2(0), numNewBin(0), lastNbBin(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
         , numShrinkedClause(0), numShrinkedClauseLits(0)
         , moreRecurMinLDo(0)
@@ -465,6 +465,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt)
     } else {
         attachBinClause(ps[0], ps[1], learnt);
         numBins++;
+        numNewBin++;
         return NULL;
     }
 }
@@ -522,10 +523,7 @@ bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
     }
 
     Clause* c = addClauseInt(ps, group);
-    if (c != NULL) {
-        if (c->size() > 2) clauses.push(c);
-        else numBins++;
-    }
+    if (c != NULL) clauses.push(c);
 
     return ok;
 }
@@ -557,6 +555,7 @@ void Solver::attachClause(XorClause& c)
 
 void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
 {
+    assert(lit1.var() != lit2.var());
     watches[(~lit1).toInt()].push(Watched(lit2, learnt));
     watches[(~lit2).toInt()].push(Watched(lit1, learnt));
 
@@ -616,30 +615,23 @@ the clause is
 */
 void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address)
 {
-    assert(origSize > 1);
+    assert(origSize > 2);
 
-    if (origSize == 2) {
-        assert(findWBin(watches[(~lit1).toInt()], lit2));
-        assert(findWBin(watches[(~lit2).toInt()], lit1));
-        removeWBin(watches[(~lit1).toInt()], lit2);
-        removeWBin(watches[(~lit2).toInt()], lit1);
+    ClauseOffset offset = clauseAllocator.getOffset(address);
+    if (origSize == 3) {
+        //The clause might have been longer, and has only recently
+        //became 3-long. Check, and detach accordingly
+        if (findWCl(watches[(~lit1).toInt()], offset)) goto fullClause;
+
+        removeWTri(watches[(~lit1).toInt()], lit2, lit3);
+        removeWTri(watches[(~lit2).toInt()], lit1, lit3);
+        removeWTri(watches[(~lit3).toInt()], lit1, lit2);
     } else {
-        ClauseOffset offset = clauseAllocator.getOffset(address);
-        if (origSize == 3) {
-            //The clause might have been longer, and has only recently
-            //became 3-long. Check, and detach accordingly
-            if (findWCl(watches[(~lit1).toInt()], offset)) goto fullClause;
-
-            removeWTri(watches[(~lit1).toInt()], lit2, lit3);
-            removeWTri(watches[(~lit2).toInt()], lit1, lit3);
-            removeWTri(watches[(~lit3).toInt()], lit1, lit2);
-        } else {
-            fullClause:
-            assert(findWCl(watches[(~lit1).toInt()], offset));
-            assert(findWCl(watches[(~lit2).toInt()], offset));
-            removeWCl(watches[(~lit1).toInt()], offset);
-            removeWCl(watches[(~lit2).toInt()], offset);
-        }
+        fullClause:
+        assert(findWCl(watches[(~lit1).toInt()], offset));
+        assert(findWCl(watches[(~lit2).toInt()], offset));
+        removeWCl(watches[(~lit1).toInt()], offset);
+        removeWCl(watches[(~lit2).toInt()], offset);
     }
 
     if (address->learnt())
@@ -1210,7 +1202,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     cl.shrink_(i-j);
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "c Removed further " << toRemove << " lits" << std::endl;
+    std::cout << "c Removed further " << removedLits << " lits" << std::endl;
     #endif
 }
 
@@ -1624,9 +1616,9 @@ PropBy Solver::propagateBin(const bool alsoLearnt)
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
-        vec<Watched> & wbin = watches[p.toInt()];
+        const vec<Watched> & wbin = watches[p.toInt()];
         propagations += wbin.size()/2;
-        for(Watched *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+        for(const Watched *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
             if (!k->isBinary()) continue;
             if (!alsoLearnt && k->isLearnt()) continue;
 
@@ -1646,13 +1638,13 @@ PropBy Solver::propagateBin(const bool alsoLearnt)
 /**
 @brief Propagate recursively on non-learnt binaries, but do not propagate exceptLit if we reach it
 */
-const bool Solver::propagateBinExcept(const bool alsoLearnt, const Lit& exceptLit)
+const bool Solver::propagateBinExcept(const bool alsoLearnt, const Lit exceptLit)
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
-        vec<Watched> & ws = watches[p.toInt()];
+        const vec<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2;
-        for(Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+        for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
                 if (!alsoLearnt && i->getLearnt()) continue;
                 lbool val = value(i->getOtherLit());
@@ -1675,9 +1667,9 @@ const bool Solver::propagateBinExcept(const bool alsoLearnt, const Lit& exceptLi
 const bool Solver::propagateBinOneLevel(const bool alsoLearnt)
 {
     Lit p   = trail[qhead];
-    vec<Watched> & ws = watches[p.toInt()];
+    const vec<Watched> & ws = watches[p.toInt()];
     propagations += ws.size()/2;
-    for(Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+    for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
         if (i->isBinary()) {
             if (!alsoLearnt && i->getLearnt()) continue;
             lbool val = value(i->getOtherLit());
@@ -1761,15 +1753,15 @@ void Solver::reduceDB()
 
     nbReduceDB++;
     if (lastSelectedRestartType == dynamic_restart)
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
+        std::sort(learnts.getData(), learnts.getDataEnd(), reduceDB_ltGlucose());
     else
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
+        std::sort(learnts.getData(), learnts.getDataEnd(), reduceDB_ltMiniSat());
 
     #ifdef VERBOSE_DEBUG
     std::cout << "Cleaning clauses" << std::endl;
     for (uint32_t i = 0; i != learnts.size(); i++) {
-        std::cout << "activity:" << learnts[i]->activity()
-        << " \toldActivity:" << learnts[i]->oldActivity()
+        std::cout << "activity:" << learnts[i]->getGlue()
+        << " \toldActivity:" << learnts[i]->getMiniSatAct()
         << " \tsize:" << learnts[i]->size() << std::endl;
     }
     #endif
@@ -1783,8 +1775,7 @@ void Solver::reduceDB()
     uint64_t totalGlueOfNonRemoved = 0;
     uint64_t totalSizeOfNonRemoved = 0;
     for (i = j = 0; i != removeNum; i++){
-        if (i+1 < removeNum)
-            __builtin_prefetch(learnts[i+1], 0, 0);
+        if (i+1 < removeNum) __builtin_prefetch(learnts[i+1], 0, 0);
         if (learnts[i]->size() > 2 && !locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->getGlue() > 2)) {
             totalGlueOfRemoved += learnts[i]->getGlue();
             totalSizeOfRemoved += learnts[i]->size();
@@ -1862,7 +1853,7 @@ const bool Solver::simplify()
     std::cout << "right:" << (double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup << std::endl;*/
 
     if (findBinaryXors && regFindBinaryXors &&
-        (((double)abs64((int64_t)nbBin - (int64_t)lastNbBin + (int64_t)becameBinary)/BINARY_TO_XOR_APPROX) * slowdown) >
+        (((double)abs64((int64_t)numNewBin - (int64_t)lastNbBin)/BINARY_TO_XOR_APPROX) * slowdown) >
         ((double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup)) {
         lastSearchForBinaryXor = propagations;
 
@@ -1873,8 +1864,7 @@ const bool Solver::simplify()
 
         if (!sCCFinder->find2LongXors()) return false;
 
-        lastNbBin = nbBin;
-        becameBinary = 0;
+        lastNbBin = numNewBin;
     }
 
     // Remove satisfied clauses:
@@ -2141,7 +2131,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
         #endif
     //Normal learnt
     } else {
-        if (c) { //On-the-fly subsumption
+        if (c && learnt_clause.size() > 2) { //On-the-fly subsumption
             uint32_t origSize = c->size();
             detachClause(*c);
             for (uint32_t i = 0; i != learnt_clause.size(); i++)
@@ -2151,16 +2141,16 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
                 if (c->getGlue() > glue)
                     c->setGlue(glue); // LS
                 if (c->size() == 2)
-                    nbBin++;
+                    numNewBin++;
             }
-            clauses_literals -= origSize - learnt_clause.size();
+            attachClause(*c);
         } else {  //no on-the-fly subsumption
-            c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
                 logger.set_group_name(c->getGroup(), "learnt clause");
             #endif
-            if (c->size() > 2) {
+            if (learnt_clause.size() > 2) {
+                c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
                 if (glue > maxGlue && lastSelectedRestartType == dynamic_restart) {
                     nbClOverMaxGlue++;
                     nbCompensateSubsumer++;
@@ -2172,14 +2162,16 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
                 } else {
                     learnts.push(c);
                 }
+                c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
+                attachClause(*c);
+                uncheckedEnqueue(learnt_clause[0], c);
             } else {
-                nbBin++;
+                attachBinClause(learnt_clause[0], learnt_clause[1], false);
                 numBins++;
+                numNewBin++;
+                uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             }
-            c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
         }
-        attachClause(*c);
-        uncheckedEnqueue(learnt_clause[0], c);
     }
 
     varDecayActivity();
@@ -2286,17 +2278,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (failedVarSearch && !failedVarSearcher->search()) goto end;
 
-    if (doReplace && (regRemUselessBins || regSubsWNonExistBins)) {
-        if (regSubsWNonExistBins
-            && !subsumer->subsumeWithBinaries()) goto end;
-        if (regRemUselessBins) {
-            UselessBinRemover uselessBinRemover(*this);
-            if (!uselessBinRemover.removeUslessBinFull()) goto end;
-        }
-    }
-
     if (doSubsumption && !subsumer->simplifyBySubsumption(false)) goto end;
-
     if (doSubsumption && !subsumer->simplifyBySubsumption(true)) goto end;
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
@@ -2395,11 +2377,6 @@ void Solver::performStepsBeforeSolve()
 
     if (doAsymmBranch && !libraryUsage
         && !failedVarSearcher->asymmBranch()) return;
-
-    if (doReplace) {
-        if (subsWNonExistBins && !libraryUsage
-            && !subsumer->subsumeWithBinaries()) return;
-    }
 
     if (doSubsumption
         && !libraryUsage

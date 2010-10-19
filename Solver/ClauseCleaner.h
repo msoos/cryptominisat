@@ -42,8 +42,8 @@ class ClauseCleaner
 
         void cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit = 0);
         void removeSatisfiedBins(const uint32_t limit = 0);
-        void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit = 0);
-        void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit = 0);
+        //void removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit = 0);
+        //void removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit = 0);
         void removeAndCleanAll(const bool nolimit = false);
         bool satisfied(const Clause& c) const;
         bool satisfied(const XorClause& c) const;

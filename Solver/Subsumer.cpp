@@ -138,7 +138,7 @@ clause (will take the max() of the two)
 */
 void Subsumer::subsume0(Clause& ps)
 {
-    if (!subsWithBins) ps.subsume0Finished();
+    ps.subsume0Finished();
     #ifdef VERBOSE_DEBUG
     cout << "subsume0-ing with clause: ";
     ps.plainPrint();
@@ -276,7 +276,7 @@ void Subsumer::subsume1(Clause& ps)
 
     findSubsumed1(ps, ps.getAbst(), subs, subsLits);
     ps.unsetStrenghtened();
-    if (!subsWithBins) ps.subsume0Finished();
+    ps.subsume0Finished();
     for (uint32_t j = 0; j < subs.size(); j++) {
         if (subs[j].clause == NULL) continue;
         ClauseSimp c = subs[j];
@@ -368,6 +368,7 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
     clauses[c.index].clause = NULL;
 }
 
+
 /**
 @brief Cleans clause from false literals
 
@@ -379,7 +380,7 @@ lists.
 
 @param ps Clause to be cleaned
 */
-const bool Subsumer::cleanClause(Clause& ps)
+/*const bool Subsumer::cleanClause(Clause& ps)
 {
     bool retval = false;
 
@@ -408,7 +409,7 @@ const bool Subsumer::cleanClause(Clause& ps)
     ps.shrink(i-j);
 
     return retval;
-}
+}*/
 
 /**
 @brief Removes a literal from a clause
@@ -432,11 +433,11 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     #ifndef TOUCH_LESS
     touch(toRemoveLit);
     #endif
-    if (cleanClause(*c.clause)) {
+    /*if (cleanClause(*c.clause)) {
         unlinkClause(c);
         c.clause = NULL;
         return;
-    }
+    }*/
 
     switch (c.clause->size()) {
         case 0:
@@ -490,7 +491,7 @@ This function requires cl_touched to have been set. Then, it manages cl_touched.
 The clauses are called to perform subsume1() or subsume0() when appropriate, and
 when there is enough numMaxSubume1 and numMaxSubume0 is available.
 */
-void Subsumer::subsume0AndSubsume1()
+const bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
@@ -578,6 +579,8 @@ void Subsumer::subsume0AndSubsume1()
     end:
     unregisterIteration(s1);
     unregisterIteration(s0);
+
+    return solver.ok;
 }
 
 /**
@@ -704,20 +707,20 @@ void Subsumer::removeWrong(vec<Clause*>& cs)
 
 void Subsumer::removeWrongBins()
 {
-    uint32_t numRemoveHalfNonLearnt = 0;
+    uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
     for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = Lit::toLit(wsLit);
+        Lit lit = ~Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
         Watched* i = ws.getData();
         Watched* j = i;
-        for (Watched *end = ws.getDataEnd(); i != end; i++) {
+        for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
             if (i->isBinary()
-                && !i->isLearnt()
+                && i->isLearnt()
                 && (var_elimed[lit.var()] || var_elimed[i->getOtherLit().var()])
                 ) {
-                numRemoveHalfNonLearnt++;
+                numRemovedHalfLearnt++;
             } else {
                 *j++ = *i;
             }
@@ -725,8 +728,9 @@ void Subsumer::removeWrongBins()
         ws.shrink_(i - j);
     }
 
-    solver.clauses_literals -= (numRemoveHalfNonLearnt/2)*2;
-    solver.numBins -= numRemoveHalfNonLearnt/2;
+    assert(numRemovedHalfLearnt % 2 == 0);
+    solver.clauses_literals -= (numRemovedHalfLearnt/2)*2;
+    solver.numBins -= numRemovedHalfLearnt/2;
 }
 
 /**
@@ -768,36 +772,16 @@ and contains all the non-learnt binary clauses
 */
 const bool Subsumer::subsumeWithBinaries()
 {
-    clearAll();
-    clauseID = 0;
-    subsWithBins = true;
-
     //Clearing stats
     clauses_subsumed = 0;
     literals_removed = 0;
     double myTime = cpuTime();
     uint32_t origTrailSize = solver.trail.size();
 
-    clauses.reserve(solver.clauses.size());
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver(solver.clauses, true, false);
-    //solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
-    //addFromSolver(solver.learnts, true, false);
-    CompleteDetachReatacher reattacher(solver);
-    reattacher.detachNonBins();
-
-    #ifdef DEBUG_BINARIES
-    for (uint32_t i = 0; i < clauses.size(); i++) {
-        assert(clauses[i].clause->size() != 2);
-    }
-    #endif //DEBUG_BINARIES
-
-    numMaxSubsume0 = 2000000 * (numCalls);
-
     vec<Lit> lits(2);
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = Lit::toLit(wsLit);
+        Lit lit = ~Lit::toLit(wsLit);
         lits[0] = lit;
         const vec<Watched> ws_backup = *it;
         for (const Watched *it2 = ws_backup.getData(), *end2 = ws_backup.getDataEnd(); it2 != end2; it2++) {
@@ -819,25 +803,11 @@ const bool Subsumer::subsumeWithBinaries()
         << "  time: " << std::setprecision(2) << std::setw(5) <<  cpuTime() - myTime << " s"
         << std::endl;
     }
-    totalTime += cpuTime() - myTime;
     myTime = cpuTime();
 
     uint32_t oldTrailSize = solver.trail.size();
-    literals_removed = 0;
-    clauses_subsumed = 0;
     if (!subsWNonExistBinsFull()) return false;
     subsume0Touched();
-
-    #ifdef DEBUG_BINARIES
-    for (uint32_t i = 0; i < clauses.size(); i++) {
-        assert(clauses[i].clause == NULL || clauses[i].clause->size() != 2);
-    }
-    #endif //DEBUG_BINARIES
-
-    addBackToSolver();
-    reattacher.detachNonBins();
-    if (!reattacher.reattachNonBins()) return false;
-    freeMemory();
 
     if (solver.verbosity >= 1) {
         std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << clauses_subsumed
@@ -849,8 +819,6 @@ const bool Subsumer::subsumeWithBinaries()
     }
 
     totalTime += cpuTime() - myTime;
-    solver.order_heap.filter(Solver::VarFilter(solver));
-
     return true;
 }
 
@@ -994,6 +962,55 @@ void Subsumer::clearAll()
     cl_touched.clear();
 }
 
+const bool Subsumer::eliminateVars()
+{
+    #ifdef BIT_MORE_VERBOSITY
+    std::cout << "c VARIABLE ELIMINIATION -- touched_list size:" << touched_list.size() << std::endl;
+    #endif
+    vec<Var> init_order;
+    orderVarsForElim(init_order);   // (will untouch all variables)
+
+    for (bool first = true; numMaxElim > 0; first = false) {
+        uint32_t vars_elimed = 0;
+        vec<Var> order;
+
+        if (first) {
+            //init_order.copyTo(order);
+            for (uint32_t i = 0; i < init_order.size(); i++) {
+                const Var var = init_order[i];
+                if (!cannot_eliminate[var] && solver.decision_var[var])
+                    order.push(var);
+            }
+        } else {
+            for (uint32_t i = 0; i < touched_list.size(); i++) {
+                const Var var = touched_list[i];
+                if (!cannot_eliminate[var] && solver.decision_var[var])
+                    order.push(var);
+                touched[var] = false;
+            }
+            touched_list.clear();
+        }
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Order size:" << order.size() << std::endl;
+        #endif
+
+        for (uint32_t i = 0; i < order.size() && numMaxElim > 0; i++, numMaxElim--) {
+            if (maybeEliminate(order[i])) {
+                if (!solver.ok) return false;
+                vars_elimed++;
+            }
+        }
+        if (vars_elimed == 0) break;
+
+        numVarsElimed += vars_elimed;
+        #ifdef BIT_MORE_VERBOSITY
+        std::cout << "c  #var-elim: " << vars_elimed << std::endl;
+        #endif
+    }
+
+    return true;
+}
+
 /**
 @brief Main function in this class
 
@@ -1018,7 +1035,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     numVarsElimed = 0;
     blockTime = 0.0;
     clearAll();
-    subsWithBins = false;
 
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
@@ -1026,11 +1042,8 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         return false;
     fillCannotEliminate();
 
-    uint32_t expected_size;
-    if (!alsoLearnt)
-        expected_size = solver.clauses.size();
-    else
-        expected_size = solver.clauses.size()+ solver.learnts.size();
+    uint32_t expected_size = solver.clauses.size();
+    if (alsoLearnt) expected_size += solver.learnts.size();
     clauses.reserve(expected_size);
     cl_touched.reserve(expected_size);
 
@@ -1042,8 +1055,11 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     }
     CompleteDetachReatacher reattacher(solver);
     reattacher.detachNonBins();
-
     setLimits(alsoLearnt);
+
+    totalTime += myTime - cpuTime();
+    if (!subsumeWithBinaries()) return false;
+    myTime = cpuTime();
 
     //For debugging
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
@@ -1051,11 +1067,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     //numMaxSubsume0 = std::numeric_limits<uint32_t>::max();
     //numMaxSubsume1 = std::numeric_limits<uint32_t>::max();
     //numMaxBlockVars = std::numeric_limits<uint32_t>::max();
-
-    #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c  num clauses:" << clauses.size() << std::endl;
-    std::cout << "c  time to link in:" << cpuTime()-myTime << std::endl;
-    #endif
 
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (numMaxSubsume0 == 0) break;
@@ -1080,13 +1091,9 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  time until pre-subsume0 clauses and subsume1 2-learnts:" << cpuTime()-myTime << std::endl;
-    #endif
-
-    if (!solver.ok) return false;
-    #ifdef VERBOSE_DEBUG
-    std::cout << "c   pre-subsumed:" << clauses_subsumed << std::endl;
-    std::cout << "c   cl_touched:" << cl_touched.size() << std::endl;
-    std::cout << "c   clauses:" << clauses.size() << std::endl;
+    std::cout << "c  pre-subsumed:" << clauses_subsumed << std::endl;
+    std::cout << "c  cl_touched:" << cl_touched.size() << std::endl;
+    std::cout << "c  clauses:" << clauses.size() << std::endl;
     #endif
 
     if (clauses.size() > 10000000 ||
@@ -1095,63 +1102,12 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
     do {
-        #ifdef BIT_MORE_VERBOSITY
-        std::cout << "c time before the start of subsume0AndSubsume1(): " << cpuTime() - myTime << std::endl;
-        #endif
-        subsume0AndSubsume1();
-        if (!solver.ok) return false;
-
-        #ifdef BIT_MORE_VERBOSITY
-        std::cout << "c time until the end of subsume0AndSubsume1(): " << cpuTime() - myTime << std::endl;
-        #endif
+        if (!subsume0AndSubsume1()) return false;
 
         if (!solver.doVarElim) break;
+        break;
 
-        #ifdef BIT_MORE_VERBOSITY
-        printf("c VARIABLE ELIMINIATION\n");
-        std::cout << "c  toucheds list size:" << touched_list.size() << std::endl;
-        #endif
-        vec<Var> init_order;
-        orderVarsForElim(init_order);   // (will untouch all variables)
-
-        for (bool first = true; numMaxElim > 0; first = false) {
-            uint32_t vars_elimed = 0;
-            vec<Var> order;
-
-            if (first) {
-                //init_order.copyTo(order);
-                for (uint32_t i = 0; i < init_order.size(); i++) {
-                    const Var var = init_order[i];
-                    if (!cannot_eliminate[var] && solver.decision_var[var])
-                        order.push(var);
-                }
-            } else {
-                for (uint32_t i = 0; i < touched_list.size(); i++) {
-                    const Var var = touched_list[i];
-                    if (!cannot_eliminate[var] && solver.decision_var[var])
-                        order.push(var);
-                    touched[var] = false;
-                }
-                touched_list.clear();
-            }
-            #ifdef VERBOSE_DEBUG
-            std::cout << "Order size:" << order.size() << std::endl;
-            #endif
-
-            for (uint32_t i = 0; i < order.size() && numMaxElim > 0; i++, numMaxElim--) {
-                if (maybeEliminate(order[i])) {
-                    if (!solver.ok) return false;
-                    vars_elimed++;
-                }
-            }
-            if (vars_elimed == 0) break;
-
-            numVarsElimed += vars_elimed;
-            #ifdef BIT_MORE_VERBOSITY
-            printf("c  #var-elim: %d\n", vars_elimed);
-            std::cout << "c time until the end of varelim: " << cpuTime() - myTime << std::endl;
-            #endif
-        }
+        if (!eliminateVars()) return false;
     } while (cl_touched.size() > 100);
     endSimplifyBySubsumption:
 
@@ -1167,8 +1123,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     addBackToSolver();
     if (!reattacher.reattachNonBins()) return false;
-
-    freeMemory();
 
     if (solver.verbosity >= 1) {
         std::cout << "c lits-rem: " << std::setw(9) << literals_removed
