@@ -166,6 +166,7 @@ private:
     const bool eliminateVars();
 
     //Subsume with Nonexistent Bins
+    const bool subsWNonExitsBinsFullFull();
     const bool subsWNonExistBinsFull();
     const bool subsWNonExistBins(const Lit& lit);
     void subsume0BIN(const Lit lit, const vec<char>& lits);

@@ -803,7 +803,15 @@ const bool Subsumer::subsumeWithBinaries()
         << "  time: " << std::setprecision(2) << std::setw(5) <<  cpuTime() - myTime << " s"
         << std::endl;
     }
-    myTime = cpuTime();
+
+    return true;
+}
+
+const bool Subsumer::subsWNonExitsBinsFullFull()
+{
+    double myTime = cpuTime();
+    clauses_subsumed = 0;
+    literals_removed = 0;
 
     uint32_t oldTrailSize = solver.trail.size();
     if (!subsWNonExistBinsFull()) return false;
@@ -1027,13 +1035,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     if (solver.nClauses() > 20000000)  return true;
 
     double myTime = cpuTime();
-    uint32_t origTrailSize = solver.trail.size();
-    clauses_subsumed = 0;
-    literals_removed = 0;
-    numblockedClauseRemoved = 0;
     clauseID = 0;
-    numVarsElimed = 0;
-    blockTime = 0.0;
     clearAll();
 
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
@@ -1055,18 +1057,21 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     }
     CompleteDetachReatacher reattacher(solver);
     reattacher.detachNonBins();
-    setLimits(alsoLearnt);
-
     totalTime += myTime - cpuTime();
-    if (!subsumeWithBinaries()) return false;
-    myTime = cpuTime();
 
-    //For debugging
-    //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
-    //numMaxElim = std::numeric_limits<uint32_t>::max();
-    //numMaxSubsume0 = std::numeric_limits<uint32_t>::max();
-    //numMaxSubsume1 = std::numeric_limits<uint32_t>::max();
-    //numMaxBlockVars = std::numeric_limits<uint32_t>::max();
+    //Do stuff with binaries
+    numMaxSubsume0 = 200000*numCalls;
+    if (!subsumeWithBinaries()) return false;
+    if (!subsWNonExitsBinsFullFull()) return false;
+
+    setLimits(alsoLearnt);
+    myTime = cpuTime();
+    clauses_subsumed = 0;
+    literals_removed = 0;
+    numblockedClauseRemoved = 0;
+    numVarsElimed = 0;
+    blockTime = 0.0;
+    uint32_t origTrailSize = solver.trail.size();
 
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (numMaxSubsume0 == 0) break;
@@ -1100,7 +1105,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         (numMaxSubsume1 == 0 && numMaxElim == 0 && numMaxBlockVars == 0))
         goto endSimplifyBySubsumption;
 
-    if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
+    //if (solver.doBlockedClause && numCalls % 3 == 1) blockedClauseRemoval();
     do {
         if (!subsume0AndSubsume1()) return false;
 
@@ -1192,6 +1197,13 @@ void Subsumer::setLimits(const bool alsoLearnt)
     } else {
         numCalls++;
     }
+
+    //For debugging
+    //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
+    //numMaxElim = std::numeric_limits<uint32_t>::max();
+    //numMaxSubsume0 = std::numeric_limits<uint32_t>::max();
+    //numMaxSubsume1 = std::numeric_limits<uint32_t>::max();
+    //numMaxBlockVars = std::numeric_limits<uint32_t>::max();
 }
 
 /**
