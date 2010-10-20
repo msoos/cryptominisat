@@ -42,10 +42,6 @@ public:
     const bool simplifyBySubsumption(const bool alsoLearnt = false);
     void newVar();
 
-    //Used by cleaner
-    void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
-    ClauseSimp linkInClause(Clause& cl);
-
     //UnElimination
     void extendModel(Solver& solver2);
     const bool unEliminate(const Var var);
@@ -116,6 +112,10 @@ private:
     void touch(const Var x);
     void touch(const Lit p);
 
+    //Used by cleaner
+    void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
+    ClauseSimp linkInClause(Clause& cl);
+
     //Findsubsumed
     template<class T>
     void findSubsumed(const T& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
@@ -128,6 +128,19 @@ private:
     template<class T1, class T2>
     const Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
+
+    //binary clause-subsumption
+    struct BinSorter {
+        const bool operator()(const Watched& first, const Watched& second)
+        {
+            assert(first.isBinary() && second.isBinary());
+            if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
+            if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
+            if (!first.getLearnt()) return true;
+            return false;
+        };
+    };
+    void subsumeBinsWithBins();
 
     //subsume0
     struct subsume0Happened {

@@ -1046,6 +1046,53 @@ const bool Subsumer::eliminateVars()
     return true;
 }
 
+void Subsumer::subsumeBinsWithBins()
+{
+    double myTime = cpuTime();
+    uint32_t numBinsBefore = solver.numBins;
+
+    uint32_t wsLit = 0;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        vec<Watched>& ws = *it;
+        Lit lit = ~Lit::toLit(wsLit);
+        std::sort(ws.getData(), ws.getDataEnd(), BinSorter());
+
+        Watched* i = ws.getData();
+        Watched* j = i;
+
+        Lit lastLit = lit_Undef;
+        bool lastLearnt = false;
+        for (Watched *end = ws.getDataEnd(); i != end; i++) {
+            assert(i->isBinary());
+            if (i->getOtherLit() == lastLit) {
+                assert(i->getOtherLit() != lit);
+                //The sorting algorithm prefers non-learnt to learnt, so it is
+                //impossible to have non-learnt before learnt
+                assert(!(i->getLearnt() == false && lastLearnt == true));
+
+                removeWBin(solver.watches[(~(i->getOtherLit())).toInt()], lit, i->getLearnt());
+                if (i->getLearnt()) solver.learnts_literals -= 2;
+                else solver.clauses_literals -= 2;
+                solver.numBins--;
+            } else {
+                lastLit = i->getOtherLit();
+                lastLearnt = i->getLearnt();
+                *j++ = *i;
+            }
+        }
+        ws.shrink_(i-j);
+    }
+
+    if (solver.verbosity >= 3) {
+        std::cout << "c bin-w-bin subsume rem   "
+        << std::setw(10) << (numBinsBefore - solver.numBins) << " bins "
+        << " time: "
+        << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime)
+        << " s" << std::endl;
+    }
+    clauses_subsumed += (numBinsBefore - solver.numBins);
+}
+
 /**
 @brief Main function in this class
 
@@ -1088,6 +1135,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     //Do stuff with binaries
     numMaxSubsume0 = 1000000*numCalls;
+    subsumeBinsWithBins();
     if (!subsumeWithBinaries()) return false;
     if (!subsWNonExitsBinsFullFull()) return false;
 
