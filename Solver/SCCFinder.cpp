@@ -75,7 +75,7 @@ const bool SCCFinder::find2LongXors()
     fillGraph();
     const bool retval = findSCC();
 
-    if (solver.verbosity >= 2 || (solver.conflicts == 0 && solver.verbosity >= 1)) {
+    if (solver.verbosity > 2 || (solver.conflicts == 0 && solver.verbosity >= 1)) {
         std::cout << "c Finding binary XORs  T: "
         << std::fixed << std::setprecision(2) << std::setw(8) <<  (cpuTime() - myTime) << " s"
         << "  found: " << std::setw(7) << (numXors/2)
