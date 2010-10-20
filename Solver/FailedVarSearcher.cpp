@@ -363,8 +363,8 @@ const bool FailedVarSearcher::asymmBranch()
     Clause **i, **j;
     i = j = solver.clauses.getData();
     for (Clause **end = solver.clauses.getDataEnd(); i != end; i++) {
-        if (needToFinish || (**i).size() == 2 || asymmLastTimeWentUntil > 0) {
-            if (!needToFinish && (**i).size() != 2) {
+        if (needToFinish || asymmLastTimeWentUntil > 0) {
+            if (!needToFinish) {
                 asymmLastTimeWentUntil--;
                 thisTimeWentUntil++;
             }
