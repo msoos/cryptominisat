@@ -60,28 +60,24 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
     table.clear();
     table.reserve(cls.size());
 
-    ClauseTable unsortedTable;
-    unsortedTable.reserve(cls.size());
-
-    for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it ++) {
+    for (Clause **it = cls.getData(), **end = cls.getDataEnd(); it != end; it ++) {
         if (it+1 != end) __builtin_prefetch(*(it+1), 0);
         Clause& c = (**it);
-        if ((*it)->size() > 2) {
-            bool sorted = true;
-            for (uint32_t i = 0, size = c.size(); i+1 < size ; i++) {
-                sorted = (c[i].var() <= c[i+1].var());
-                if (!sorted) break;
-            }
-            if (!sorted) {
-                solver.detachClause(c);
-                std::sort(c.getData(), c.getDataEnd());
-                solver.attachClause(c);
-            }
+        assert((*it)->size() > 2);
+        bool sorted = true;
+        for (uint32_t i = 0, size = c.size(); i+1 < size ; i++) {
+            sorted = (c[i].var() <= c[i+1].var());
+            if (!sorted) break;
+        }
+        if (!sorted) {
+            solver.detachClause(c);
+            std::sort(c.getData(), c.getDataEnd());
+            solver.attachClause(c);
         }
     }
 
     uint32_t i = 0;
-    for (Clause **it = cls.getData(), **end = it + cls.size(); it != end; it++, i++) {
+    for (Clause **it = cls.getData(), **end = cls.getDataEnd(); it != end; it++, i++) {
         const uint32_t size = (*it)->size();
         if ( size > maxSize || size < minSize) {
             toLeaveInPlace[i] = true;
@@ -89,7 +85,7 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
         }
         table.push_back(make_pair(*it, i));
     }
-    std::sort(unsortedTable.begin(), unsortedTable.end(), clause_sorter_primary());
+    std::sort(table.begin(), table.end(), clause_sorter_primary());
 
     if (!findXors(sumLengths)) goto end;
     solver.ok = (solver.propagate().isNULL());

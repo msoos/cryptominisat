@@ -76,7 +76,7 @@ class XorFinder
                     assert(c2[i].var() <= c2[i+1].var());
                 #endif //DEBUG_XORFIND2
 
-                for (a = c11.first->getData(), b = c22.first->getData(), end = a + c11.first->size(); a != end; a++, b++) {
+                for (a = c11.first->getData(), b = c22.first->getData(), end = c11.first->getDataEnd(); a != end; a++, b++) {
                     if (a->var() != b->var())
                         return (a->var() > b->var());
                 }
@@ -103,8 +103,10 @@ class XorFinder
             {
                 const Clause& c1 = *(c11.first);
                 const Clause& c2 = *(c22.first);
+                assert(c1.size() == c2.size());
 
                 for (uint32_t i = 0, size = c1.size(); i < size; i++) {
+                    assert(c1[i].var() == c2[i].var());
                     if (c1[i].sign() !=  c2[i].sign())
                         return c1[i].sign();
                 }
