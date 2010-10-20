@@ -1654,7 +1654,6 @@ const bool Solver::propagateBinExcept(const bool alsoLearnt, const Lit exceptLit
                     return false;
                 }
             }
-            break;
         }
     }
 
@@ -1679,7 +1678,6 @@ const bool Solver::propagateBinOneLevel(const bool alsoLearnt)
                 return false;
             }
         }
-        break;
     }
 
     return true;
@@ -2277,6 +2275,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
     if (failedVarSearch && !failedVarSearcher->search()) goto end;
+
+    if (doReplace && regRemUselessBins) {
+        UselessBinRemover uselessBinRemover(*this);
+        if (!uselessBinRemover.removeUslessBinFull()) goto end;
+    }
 
     if (doSubsumption && !subsumer->simplifyBySubsumption(false)) goto end;
     if (doSubsumption && !subsumer->simplifyBySubsumption(true)) goto end;
