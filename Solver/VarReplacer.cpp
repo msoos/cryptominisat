@@ -332,7 +332,6 @@ const bool VarReplacer::replaceBins()
             }
         }
         ws.shrink_(i-j);
-        if (solver.ok) solver.ok = (solver.propagate().isNULL());
     }
 
     #ifdef DEBUG_BIN_REPLACER
@@ -353,6 +352,7 @@ const bool VarReplacer::replaceBins()
     solver.clauses_literals -= removedNonLearnt;
     solver.numBins -= (removedLearnt + removedNonLearnt)/2;
 
+    if (solver.ok) solver.ok = (solver.propagate().isNULL());
     return solver.ok;
 }
 
