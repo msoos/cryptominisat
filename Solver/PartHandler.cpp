@@ -368,6 +368,9 @@ void PartHandler::moveBinClauses(Solver& newSolver, const uint32_t part, PartFin
                         newSolver.addClause(lits);
                         numRemovedHalfNonLearnt++;
                     }
+                } else {
+                    if (i->getLearnt()) numRemovedHalfLearnt++;
+                    else numRemovedHalfNonLearnt++;
                 }
             } else {
                 *j++ = *i;
