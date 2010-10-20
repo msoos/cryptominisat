@@ -429,7 +429,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     updatePointers(solver->clauses);
     updatePointers(solver->learnts);
     updatePointers(solver->xorclauses);
-    updatePointers(solver->freeLater);
+    //updatePointers(solver->freeLater);
     updatePointers(solver->unWindGlue);
 
     //No need to update varreplacer, since it only stores binary clauses that

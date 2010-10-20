@@ -105,7 +105,7 @@ public:
         assert(ps.size() > 2);
         mySize = ps.size();
         isLearnt = learnt;
-        isRemoved = false;
+        //isRemoved = false;
         setGroup(_group);
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
@@ -289,7 +289,7 @@ public:
         return;
     }
     #endif //STATS_NEEDED
-    void setRemoved()
+    /*void setRemoved()
     {
         isRemoved = true;
     }
@@ -297,7 +297,7 @@ public:
     const bool removed() const
     {
         return isRemoved;
-    }
+    }*/
 
     void setFreed()
     {

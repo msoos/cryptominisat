@@ -187,8 +187,9 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
                 cs.shrink(r-a);
                 return false;
             }
-            c.setRemoved();
-            solver.freeLater.push(&c);
+            solver.clauseAllocator.clauseFree(&c);
+            //c.setRemoved();
+            //solver.freeLater.push(&c);
         } else {
             *a++ = *r;
         }

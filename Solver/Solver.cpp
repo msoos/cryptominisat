@@ -191,8 +191,8 @@ Solver::~Solver()
     clauses.clear();
     for (uint32_t i = 0; i != xorclauses.size(); i++) clauseAllocator.clauseFree(xorclauses[i]);
     xorclauses.clear();
-    for (uint32_t i = 0; i != freeLater.size(); i++) clauseAllocator.clauseFree(freeLater[i]);
-    freeLater.clear();
+    /*for (uint32_t i = 0; i != freeLater.size(); i++) clauseAllocator.clauseFree(freeLater[i]);
+    freeLater.clear();*/
     #endif //USE_POOLS
 
     delete varReplacer;
@@ -727,9 +727,9 @@ void Solver::clearGaussMatrixes()
     for (uint32_t i = 0; i < gauss_matrixes.size(); i++)
         delete gauss_matrixes[i];
     gauss_matrixes.clear();
-    for (uint32_t i = 0; i != freeLater.size(); i++)
+    /*for (uint32_t i = 0; i != freeLater.size(); i++)
         clauseAllocator.clauseFree(freeLater[i]);
-    freeLater.clear();
+    freeLater.clear();*/
 }
 #endif //USE_GAUSS
 
