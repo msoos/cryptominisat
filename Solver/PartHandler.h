@@ -69,7 +69,7 @@ class PartHandler
         const bool checkClauseMovement(const Solver& thisSolver, const uint32_t part, const PartFinder& partFinder) const;
         template<class T>
         const bool checkOnlyThisPart(const vec<T*>& cs, const uint32_t part, const PartFinder& partFinder) const;
-        const bool checkOnlyThisPartBin(const uint32_t part, const PartFinder& partFinder) const;
+        const bool checkOnlyThisPartBin(const Solver& thisSolver, const uint32_t part, const PartFinder& partFinder) const;
 
         Solver& solver; ///<The base solver
         /**

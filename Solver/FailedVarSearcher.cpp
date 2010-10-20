@@ -831,7 +831,7 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
 
     tmpPs[0] = lit1;
     tmpPs[1] = lit2;
-    solver.addLearntClause(tmpPs, 0, 0, 0);
+    solver.addClauseInt(tmpPs, 0 , true);
     tmpPs.growTo(2);
     assert(solver.ok);
 }

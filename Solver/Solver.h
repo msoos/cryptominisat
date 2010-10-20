@@ -123,9 +123,9 @@ public:
     template<class T>
     bool    addClause (T& ps, const uint32_t group = 0, const char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, const char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addLearntClause(T& ps, const uint32_t group = 0, const char* group_name = NULL, const uint32_t glue = 10, const float miniSatActivity = 10.0);
     template<class T>
-    bool addLearntClause(T& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group);
+    bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, const char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
@@ -468,8 +468,9 @@ protected:
     /////////////////
     // Operations on clauses:
     /////////////////
+    template<class T> const bool addClauseHelper(T& ps, const uint32_t group, const char* group_name);
     template <class T>
-    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false);
+    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0);
     template<class T>
     XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group);
     void       attachBinClause(const Lit lit1, const Lit lit2, const bool learnt);

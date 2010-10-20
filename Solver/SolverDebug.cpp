@@ -144,7 +144,10 @@ const bool Solver::verifyBinClauses() const
             if (ws[i].isBinary()
                 && value(lit) != l_True
                 && value(ws[i].getOtherLit()) != l_True
-            ) return false;
+            ) {
+                std::cout << "bin clause: " << lit << " , " << ws[i].getOtherLit() << " not satisfied!" << std::endl;
+                return false;
+            }
         }
     }
 

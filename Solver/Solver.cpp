@@ -404,28 +404,6 @@ template bool Solver::addXorClause(vec<Lit>& ps, bool xorEqualFalse, const uint3
 template bool Solver::addXorClause(XorClause& ps, bool xorEqualFalse, const uint32_t group, const char* group_name);
 
 /**
-@brief Adds a leant clause to the problem
-
-It is not a very good function, so if really needed, it should be corrected.
-It uses addClauseInt() for the heavy-lifting, and then makes the clause learnt.
-Not exactly a perfect method. For example, it assumes that the "ps" left by
-addClauseInt() conveys some meaningful message, which it might not, for example.
-
-\todo Correct this method, make it more robust
-*/
-template<class T>
-bool Solver::addLearntClause(T& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group)
-{
-    Clause* c = addClauseInt(ps, group, true);
-    if (c == NULL) return ok;
-
-    c->makeLearnt(glue, miniSatActivity);
-    return ok;
-}
-template bool Solver::addLearntClause(Clause& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group);
-template bool Solver::addLearntClause(vec<Lit>& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group);
-
-/**
 @brief Adds a clause to the problem. Should ONLY be called internally
 
 This code is very specific in that it must NOT be called with varibles in
@@ -434,7 +412,7 @@ when the solver is in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
 */
 template <class T>
-Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt)
+Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity)
 {
     assert(ok);
 
@@ -460,6 +438,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt)
 
     if (ps.size() > 2) {
         Clause* c = clauseAllocator.Clause_new(ps, group);
+        if (learnt) c->makeLearnt(glue, miniSatActivity);
         attachClause(*c);
         return c;
     } else {
@@ -470,19 +449,10 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt)
     }
 }
 
-template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt);
-template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt);
+template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity);
+template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity);
 
-/**
-@brief Adds a clause to the problem. Calls addClauseInt() for heavy-lifting
-
-Does some debug-related stuff (see "libraryCNFFile"), and checks whether the
-variables of the literals in "ps" have been eliminated/replaced etc. If so,
-it acts on them such that they are correct, and calls addClauseInt() to do
-the heavy-lifting
-*/
-template<class T>
-bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
+template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group, const char* group_name)
 {
     assert(decisionLevel() == 0);
     if (ps.size() > (0x01UL << 18)) {
@@ -502,8 +472,7 @@ bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
     }
     #endif
 
-    if (!ok)
-        return false;
+    if (!ok) return false;
     assert(qhead == trail.size());
     #ifndef NDEBUG
     for (Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
@@ -522,6 +491,22 @@ bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
         }
     }
 
+    return true;
+}
+
+
+/**
+@brief Adds a clause to the problem. Calls addClauseInt() for heavy-lifting
+
+Does some debug-related stuff (see "libraryCNFFile"), and checks whether the
+variables of the literals in "ps" have been eliminated/replaced etc. If so,
+it acts on them such that they are correct, and calls addClauseInt() to do
+the heavy-lifting
+*/
+template<class T>
+bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
+{
+    if (!addClauseHelper(ps, group, group_name)) return false;
     Clause* c = addClauseInt(ps, group);
     if (c != NULL) clauses.push(c);
 
@@ -530,6 +515,21 @@ bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
 
 template bool Solver::addClause(vec<Lit>& ps, const uint32_t group, const char* group_name);
 template bool Solver::addClause(Clause& ps, const uint32_t group, const char* group_name);
+
+
+template<class T>
+bool Solver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity)
+{
+    if (!addClauseHelper(ps, group, group_name)) return false;
+    Clause* c = addClauseInt(ps, group, true, glue, miniSatActivity);
+    if (c != NULL) learnts.push(c);
+
+    return ok;
+}
+
+template bool Solver::addLearntClause(vec<Lit>& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
+template bool Solver::addLearntClause(Clause& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
+
 
 /**
 @brief Attaches an xor clause to the watchlists
