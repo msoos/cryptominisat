@@ -33,12 +33,8 @@ void CompleteDetachReatacher::detachNonBins()
     std::pair<uint64_t, uint64_t> tmp;
 
     std::pair<uint64_t, uint64_t> myNumBinHalfs;
-    for (uint32_t i = 0; i < solver.nVars(); i++) {
-        tmp = clearWatchNotBin(solver.watches[i*2]);
-        myNumBinHalfs.first += tmp.first;
-        myNumBinHalfs.second += tmp.second;
-
-        tmp = clearWatchNotBin(solver.watches[i*2+1]);
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
+        tmp = clearWatchNotBin(*it);
         myNumBinHalfs.first += tmp.first;
         myNumBinHalfs.second += tmp.second;
     }
