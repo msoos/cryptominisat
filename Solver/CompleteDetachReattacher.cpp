@@ -30,19 +30,20 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver& _solver) :
 void CompleteDetachReatacher::detachNonBins()
 {
     uint32_t oldNumBins = solver.numBins;
-    solver.clauses_literals = 0;
-    solver.learnts_literals = 0;
 
-    std::pair<uint64_t, uint64_t> tmp1, tmp2;
+    std::pair<uint64_t, uint64_t> myNumBinHalfs;
     for (uint32_t i = 0; i < solver.nVars(); i++) {
-        tmp1 = clearWatchNotBin(solver.watches[i*2]);
-        tmp2 = clearWatchNotBin(solver.watches[i*2+1]);
+        std::pair<uint64_t, uint64_t> tmp = clearWatchNotBin(solver.watches[i*2]);
+        myNumBinHalfs.first += tmp.first;
+        myNumBinHalfs.second += tmp.second;
+        tmp = clearWatchNotBin(solver.watches[i*2+1]);
+        myNumBinHalfs.first += tmp.first;
+        myNumBinHalfs.second += tmp.second;
     }
 
-    solver.learnts_literals += tmp1.first + tmp2.first;
-    solver.clauses_literals += tmp1.second + tmp2.second;
-    solver.numBins += (solver.learnts_literals + solver.clauses_literals)/2;
-    //std::cout << "oldNumBins: " << oldNumBins << " , newNumBins: " << solver.numBins << std::endl;
+    solver.learnts_literals = myNumBinHalfs.first;
+    solver.clauses_literals = myNumBinHalfs.second;
+    solver.numBins = (solver.learnts_literals + solver.clauses_literals)/2;
     assert(solver.numBins == oldNumBins);
 }
 

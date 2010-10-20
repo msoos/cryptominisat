@@ -479,7 +479,6 @@ void Main::parseCommandLine(Solver& S)
                 printf("ERROR! illegal seed %s\n", value);
                 exit(0);
             }
-            std::cout << "c seed:" << seed << std::endl;
             S.setSeed(seed);
         } else if ((value = hasPrefix(argv[i], "--restrict="))) {
             uint32_t branchTo;

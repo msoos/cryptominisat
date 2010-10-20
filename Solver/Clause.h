@@ -304,7 +304,7 @@ public:
         isFreed = true;
     }
 
-    const bool freed() const
+    const bool getFreed() const
     {
         return isFreed;
     }

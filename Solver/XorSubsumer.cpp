@@ -194,7 +194,7 @@ void XorSubsumer::fillCannotEliminate()
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary() && !it2->isLearnt()) {
+            if (it2->isBinary() && !it2->getLearnt()) {
                 cannot_eliminate[lit.var()] = true;
                 cannot_eliminate[it2->getOtherLit().var()] = true;
             }
@@ -330,7 +330,7 @@ void XorSubsumer::removeWrongBins()
         Watched* j = i;
         for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
             if (i->isBinary()
-                && i->isLearnt()
+                && i->getLearnt()
                 && (var_elimed[lit.var()] || var_elimed[i->getOtherLit().var()])
                 ) {
                 numRemovedHalfLearnt++;
@@ -342,7 +342,7 @@ void XorSubsumer::removeWrongBins()
     }
 
     assert(numRemovedHalfLearnt % 2 == 0);
-    solver.learnts_literals -= (numRemovedHalfLearnt/2)*2;
+    solver.learnts_literals -= numRemovedHalfLearnt;
     solver.numBins -= numRemovedHalfLearnt/2;
 }
 

@@ -97,7 +97,7 @@ void Solver::printStrangeBinLit(const Lit lit) const
     const vec<Watched>& ws = watches[(~lit).toInt()];
     for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
         if (it2->isBinary()) {
-            std::cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->isLearnt()) << std::endl;
+            std::cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << std::endl;
         } else if (it2->isTriClause()) {
             std::cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << std::endl;
         } else {
@@ -116,7 +116,7 @@ const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool also
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-                if (it2->isLearnt()) num += alsoLearnt;
+                if (it2->getLearnt()) num += alsoLearnt;
                 else num+= alsoNonLearnt;
             }
         }
@@ -135,8 +135,8 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FIL
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
                 bool toDump = false;
-                if (it2->isLearnt() && alsoLearnt) toDump = true;
-                if (!it2->isLearnt() && alsoNonLearnt) toDump = true;
+                if (it2->getLearnt() && alsoLearnt) toDump = true;
+                if (!it2->getLearnt() && alsoNonLearnt) toDump = true;
 
                 if (toDump) it2->dump(outfile, lit);
             }
@@ -186,6 +186,10 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
     for (map<Var, vector<Clause*> >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
         const vector<Clause*>& cs = it->second;
         numClauses += cs.size();
+    }
+    const map<Var, vector<std::pair<Lit, Lit> > >& elimedOutVarBin = subsumer->getElimedOutVarBin();
+    for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
+        numClauses += it->second.size()*2;
     }
     fprintf(outfile, "p cnf %d %d\n", nVars(), numClauses);
 
@@ -237,6 +241,12 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
         const vector<Clause*>& cs = it->second;
         for (vector<Clause*>::const_iterator it2 = cs.begin(); it2 != cs.end(); it2++) {
             (*it2)->print(outfile);
+        }
+    }
+    for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
+        for (uint32_t i = 0; i < it->second.size(); i++) {
+            it->second[i].first.print(outfile);
+            it->second[i].second.printFull(outfile);
         }
     }
 

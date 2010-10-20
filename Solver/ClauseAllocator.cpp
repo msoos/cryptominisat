@@ -268,6 +268,7 @@ of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
 */
 void ClauseAllocator::clauseFree(Clause* c)
 {
+    assert(!c->getFreed());
     c->setFreed();
     uint32_t outerOffset = getOuterOffset(c);
     //uint32_t interOffset = getInterOffset(c, outerOffset);
@@ -377,7 +378,7 @@ void ClauseAllocator::consolidate(Solver* solver)
         uint32_t currentLoc = 0;
         for (uint32_t i2 = 0; i2 < origClauseSizes[i].size(); i2++) {
             Clause* oldPointer = (Clause*)(dataStarts[i] + currentLoc);
-            if (!oldPointer->freed()) {
+            if (!oldPointer->getFreed()) {
                 uint32_t sizeNeeded = (sizeof(Clause) + oldPointer->size()*sizeof(Lit))/sizeof(uint32_t);
                 if (newSizes[outerPart] + sizeNeeded > newMaxSizes[outerPart]) {
                     outerPart++;

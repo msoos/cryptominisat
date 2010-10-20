@@ -788,7 +788,7 @@ void Solver::tallyVotesBin(vec<double>& votes) const
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
-                if (!it2->isLearnt()) {
+                if (!it2->getLearnt()) {
                     if (lit.sign()) votes[lit.var()]++;
                     else votes[lit.var()]--;
 
@@ -1620,7 +1620,7 @@ PropBy Solver::propagateBin(const bool alsoLearnt)
         propagations += wbin.size()/2;
         for(const Watched *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
             if (!k->isBinary()) continue;
-            if (!alsoLearnt && k->isLearnt()) continue;
+            if (!alsoLearnt && k->getLearnt()) continue;
 
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
@@ -2388,6 +2388,7 @@ void Solver::performStepsBeforeSolve()
 
     if (findBinaryXors) {
         if (!sCCFinder->find2LongXors()) return;
+        lastNbBin = numNewBin;
         if (doReplace && !varReplacer->performReplace(true)) return;
     }
 

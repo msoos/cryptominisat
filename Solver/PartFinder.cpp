@@ -107,7 +107,7 @@ void PartFinder::addToPartBins()
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
-                if (it2->isLearnt()) continue;
+                if (it2->getLearnt()) continue;
                 lits[1] = it2->getOtherLit();
                 addToPartClause(lits);
             }
@@ -194,7 +194,7 @@ void PartFinder::calcInBins(vector<uint32_t>& numClauseInPart, vector<uint32_t>&
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
-                if (it2->isLearnt()) continue;
+                if (it2->getLearnt()) continue;
 
                 const uint32_t part = table[lit.var()];
                 assert(part < part_no);

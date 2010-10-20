@@ -56,6 +56,7 @@ public:
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
     const map<Var, vector<Clause*> >& getElimedOutVar() const;
+    const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
 
 private:
 
@@ -83,6 +84,7 @@ private:
     double totalTime;                      ///<Total time spent in this class
     uint32_t numElimed;                    ///<Total number of variables eliminated
     map<Var, vector<Clause*> > elimedOutVar; ///<Contains the clauses to use to uneliminate a variable
+    map<Var, vector<std::pair<Lit, Lit> > > elimedOutVarBin; ///<Contains the clauses to use to uneliminate a variable
 
     //Limits
     uint32_t numVarsElimed;               ///<Number of variables elimed in this run
@@ -159,11 +161,35 @@ private:
                 (!(y.first < x.first) && x.second < y.second);
         }
     };
+    class ClAndBin {
+        public:
+            ClAndBin(ClauseSimp& cl) :
+                clsimp(cl)
+                , lit1(lit_Undef)
+                , lit2(lit_Undef)
+                , isBin(false)
+            {}
+
+            ClAndBin(const Lit _lit1, const Lit _lit2) :
+                clsimp(NULL, 0)
+                , lit1(_lit1)
+                , lit2(_lit2)
+                , isBin(true)
+            {}
+
+            ClauseSimp clsimp;
+            Lit lit1;
+            Lit lit2;
+            bool isBin;
+    };
     void orderVarsForElim(vec<Var>& order);
+    const uint32_t numNonLearntBins(const Lit lit) const;
     bool maybeEliminate(Var x);
-    void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
-    bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
+    void removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const Var var);
+    void removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair<uint32_t, uint32_t>& removed);
+    bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
     const bool eliminateVars();
+    void fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit);
 
     //Subsume with Nonexistent Bins
     const bool subsWNonExitsBinsFullFull();
@@ -340,6 +366,11 @@ inline void Subsumer::newVar()
 inline const map<Var, vector<Clause*> >& Subsumer::getElimedOutVar() const
 {
     return elimedOutVar;
+}
+
+inline const map<Var, vector<std::pair<Lit, Lit> > >& Subsumer::getElimedOutVarBin() const
+{
+    return elimedOutVarBin;
 }
 
 inline const vec<char>& Subsumer::getVarElimed() const

@@ -196,11 +196,6 @@ class Watched {
             fprintf(outfile, "%s%d %s%d 0", (lit.sign() ?"-":""), lit.var()+1 , getOtherLit().sign() ? "-":"", getOtherLit().var()+1);
         }
 
-        const bool isLearnt() const
-        {
-            return false;
-        }
-
     private:
         const Lit data1AsLit() const
         {
