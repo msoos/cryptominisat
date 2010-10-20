@@ -66,19 +66,8 @@ protected:
     uint32_t isXorEqualFalse:1;
     uint32_t isXorClause:1; ///< Is the clause an XOR clause?
     uint32_t subsume0Done:1; ///Has normal subsumption been done with this clause?
-    uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
+    //uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
-    /**
-    @brief When the clause was allocated, was it a binary clause?
-
-    This is imporant, because if the cluause is binary AT THE MOMENT OF
-    ALLOCATION, it is allocated differently. Note that clauses can shrink, so
-    clauses may become binary, even though they were allocated the "normal" way,
-    i.e. with ClauseAllocator's special stack-allocation procedure. We need to
-    know if a cluase was allocated specially or not, so that we can properly
-    free it
-    */
-    uint32_t wasBinInternal:1;
     uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
     uint32_t mySize:19; ///<The current size of the clause
 
@@ -111,9 +100,9 @@ public:
     template<class V>
     Clause(const V& ps, const uint32_t _group, const bool learnt)
     {
-        wasBinInternal = (ps.size() == 2);
         isFreed = false;
         isXorClause = false;
+        assert(ps.size() > 2);
         mySize = ps.size();
         isLearnt = learnt;
         isRemoved = false;
@@ -318,16 +307,6 @@ public:
     const bool freed() const
     {
         return isFreed;
-    }
-
-    const bool wasBin() const
-    {
-        return wasBinInternal;
-    }
-
-    void setWasBin(const bool toSet)
-    {
-        wasBinInternal = toSet;
     }
 };
 

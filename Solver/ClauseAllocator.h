@@ -125,10 +125,6 @@ class ClauseAllocator {
         */
         vec<size_t> currentlyUsedSizes;
 
-        #ifdef USE_BOOST
-        boost::pool<> clausePoolBin;
-        #endif //USE_BOOST
-
         void* allocEnough(const uint32_t size);
 
         /**
