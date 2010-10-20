@@ -137,7 +137,7 @@ private:
     template<class T>
     subsume0Happened subsume0Orig(const T& ps, uint32_t abs);
     void subsume0Touched();
-    void makeNonLearntBin(const Lit lit1, const Lit lit2);
+    void makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt);
 
     //subsume1
     void subsume1(Clause& ps);

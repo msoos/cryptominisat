@@ -788,7 +788,7 @@ const bool Subsumer::subsumeWithBinaries()
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
                 lits[1] = it2->getOtherLit();
                 bool toMakeNonLearnt = subsume1(lits, it2->getLearnt());
-                if (toMakeNonLearnt) makeNonLearntBin(lit, it2->getOtherLit());
+                if (toMakeNonLearnt) makeNonLearntBin(lit, it2->getOtherLit(), it2->getLearnt());
                 if (!solver.ok) return false;
                 numMaxSubsume0--;
             }
@@ -830,10 +830,10 @@ const bool Subsumer::subsWNonExitsBinsFullFull()
     return true;
 }
 
-void Subsumer::makeNonLearntBin(const Lit lit1, const Lit lit2)
+void Subsumer::makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt)
 {
-    findWatchedOfBin(solver.watches, lit1 ,lit2).setLearnt(false);
-    findWatchedOfBin(solver.watches, lit2 ,lit1).setLearnt(false);
+    findWatchedOfBin(solver.watches, lit1 ,lit2, learnt).setLearnt(false);
+    findWatchedOfBin(solver.watches, lit2 ,lit1, learnt).setLearnt(false);
 }
 
 /**

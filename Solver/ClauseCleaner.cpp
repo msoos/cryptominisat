@@ -71,6 +71,8 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
         ws.shrink_(i - j);
     }
 
+    //std::cout << "removedHalfLeart: " << numRemovedHalfLearnt << std::endl;
+    //std::cout << "removedHalfNonLeart: " << numRemovedHalfNonLearnt << std::endl;
     assert(numRemovedHalfLearnt % 2 == 0);
     assert(numRemovedHalfNonLearnt % 2 == 0);
     solver.clauses_literals -= numRemovedHalfNonLearnt;
