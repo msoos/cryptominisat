@@ -581,9 +581,9 @@ protected:
     /////////////////////
     void calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
     bool defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
-    void tallyVotesBin(vector<double>& votes) const;
-    void tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const;
-    void tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const;
+    void tallyVotesBin(vec<double>& votes) const;
+    void tallyVotes(const vec<Clause*>& cs, vec<double>& votes) const;
+    void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
     void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
     vector<bool> polarity;      // The preferred polarity of each variable.
     #ifdef USE_OLD_POLARITIES

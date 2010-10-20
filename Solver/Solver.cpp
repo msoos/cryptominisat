@@ -763,7 +763,7 @@ inline bool Solver::defaultPolarity()
 @p votes[inout] Votes are tallied at this place for each variable
 @p cs The clause to tally votes for
 */
-void Solver::tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const
+void Solver::tallyVotes(const vec<Clause*>& cs, vec<double>& votes) const
 {
     for (const Clause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
         const Clause& c = **it;
@@ -773,18 +773,18 @@ void Solver::tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const
         if (c.size() > 63) divider = 0.0;
         else divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
 
-        for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++) {
+        for (const Lit *it2 = c.getData(), *end2 = c.getDataEnd(); it2 != end2; it2++) {
             if (it2->sign()) votes[it2->var()] += divider;
             else votes[it2->var()] -= divider;
         }
     }
 }
 
-void Solver::tallyVotesBin(vector<double>& votes) const
+void Solver::tallyVotesBin(vec<double>& votes) const
 {
-    uint32_t i = 0;
-    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, i++) {
-        Lit lit = Lit::toLit(i);
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
@@ -807,7 +807,7 @@ void Solver::tallyVotesBin(vector<double>& votes) const
 For XOR clause, we simply add some weight for a FALSE default, i.e. being in
 xor clauses makes the variabe more likely to be FALSE by default
 */
-void Solver::tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const
+void Solver::tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const
 {
     for (const XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it != end; it++) {
         const XorClause& c = **it;
@@ -815,8 +815,9 @@ void Solver::tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const
         if (c.size() > 63) divider = 0.0;
         else divider = 1.0/(double)((uint64_t)1<<(c.size()-1));
 
-        for (const Lit *it2 = &c[0], *end2 = it2 + c.size(); it2 != end2; it2++)
+        for (const Lit *it2 = c.getData(), *end2 = c.getDataEnd(); it2 != end2; it2++) {
             votes[it2->var()] += divider;
+        }
     }
 }
 
@@ -834,10 +835,9 @@ void Solver::calculateDefaultPolarities()
 
     assert(decisionLevel() == 0);
     if (polarity_mode == polarity_auto) {
-        double time = cpuTime();
+        double myTime = cpuTime();
 
-        vector<double> votes;
-        votes.resize(nVars(), 0.0);
+        vec<double> votes(nVars(), 0.0);
 
         tallyVotes(clauses, votes);
         tallyVotesBin(votes);
@@ -846,7 +846,7 @@ void Solver::calculateDefaultPolarities()
         Var i = 0;
         uint32_t posPolars = 0;
         uint32_t undecidedPolars = 0;
-        for (vector<double>::const_iterator it = votes.begin(), end = votes.end(); it != end; it++, i++) {
+        for (const double *it = votes.getData(), *end = votes.getDataEnd(); it != end; it++, i++) {
             polarity[i] = (*it >= 0.0);
             posPolars += (*it < 0.0);
             undecidedPolars += (*it == 0.0);
@@ -857,7 +857,7 @@ void Solver::calculateDefaultPolarities()
 
         if (verbosity >= 2) {
             std::cout << "c Calc default polars - "
-            << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << cpuTime()-time << " s"
+            << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime) << " s"
             << " pos: " << std::setw(7) << posPolars
             << " undec: " << std::setw(7) << undecidedPolars
             << " neg: " << std::setw(7) << nVars()-  undecidedPolars - posPolars
