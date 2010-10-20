@@ -1055,6 +1055,7 @@ void Subsumer::subsumeBinsWithBins()
     for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
         vec<Watched>& ws = *it;
         Lit lit = ~Lit::toLit(wsLit);
+        if (ws.size() < 2) continue;
         std::sort(ws.getData(), ws.getDataEnd(), BinSorter());
 
         Watched* i = ws.getData();
@@ -1065,11 +1066,11 @@ void Subsumer::subsumeBinsWithBins()
         for (Watched *end = ws.getDataEnd(); i != end; i++) {
             assert(i->isBinary());
             if (i->getOtherLit() == lastLit) {
-                assert(i->getOtherLit() != lit);
                 //The sorting algorithm prefers non-learnt to learnt, so it is
                 //impossible to have non-learnt before learnt
                 assert(!(i->getLearnt() == false && lastLearnt == true));
 
+                assert(i->getOtherLit().var() != lit.var());
                 removeWBin(solver.watches[(~(i->getOtherLit())).toInt()], lit, i->getLearnt());
                 if (i->getLearnt()) solver.learnts_literals -= 2;
                 else solver.clauses_literals -= 2;
@@ -1486,6 +1487,7 @@ const uint32_t Subsumer::numNonLearntBins(const Lit lit) const
     uint32_t num = 0;
     const vec<Watched>& ws = solver.watches[(~lit).toInt()];
     for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+        assert(it->isBinary());
         if (!it->getLearnt()) num++;
     }
 
@@ -1499,6 +1501,7 @@ void Subsumer::fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit l
 
     const vec<Watched>& ws = solver.watches[(~lit).toInt()];
     for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+        assert(it->isBinary());
         if (!it->getLearnt()) all.push(ClAndBin(lit, it->getOtherLit()));
     }
 }
