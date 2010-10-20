@@ -789,7 +789,7 @@ int Main::singleThreadSolve()
         std::cout << "c Not finished running -- maximum restart reached" << std::endl;
     }
     printResultFunc(solver, ret, res);
-    printStats(solver);
+    if (solver.verbosity >= 1) printStats(solver);
 
     return correctReturnValue(ret);
 }
