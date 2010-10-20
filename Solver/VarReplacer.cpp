@@ -136,7 +136,7 @@ const bool VarReplacer::performReplaceInternal()
     solver.testAllClauseAttach();
 
 end:
-    assert(solver.qhead == solver.trail.size());
+    assert(solver.qhead == solver.trail.size() || !solver.ok);
 
     if (solver.verbosity >= 2) {
         std::cout << "c Replacing "

@@ -29,9 +29,9 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver& _solver) :
 */
 void CompleteDetachReatacher::detachNonBins()
 {
+    uint32_t oldNumBins = solver.numBins;
     solver.clauses_literals = 0;
     solver.learnts_literals = 0;
-    solver.numBins = 0;
 
     std::pair<uint64_t, uint64_t> tmp1, tmp2;
     for (uint32_t i = 0; i < solver.nVars(); i++) {
@@ -42,6 +42,8 @@ void CompleteDetachReatacher::detachNonBins()
     solver.learnts_literals += tmp1.first + tmp2.first;
     solver.clauses_literals += tmp1.second + tmp2.second;
     solver.numBins += (solver.learnts_literals + solver.clauses_literals)/2;
+    //std::cout << "oldNumBins: " << oldNumBins << " , newNumBins: " << solver.numBins << std::endl;
+    assert(solver.numBins == oldNumBins);
 }
 
 /**
@@ -56,10 +58,9 @@ const std::pair<uint32_t, uint32_t> CompleteDetachReatacher::clearWatchNotBin(ve
     Watched* j = i;
     for (Watched *end = ws.getDataEnd(); i != end; i++) {
         if (i->isBinary()) {
-            *j++ = *i;
-        } else {
             if (i->getLearnt()) numRemainLearnt++;
             else numRemainNonLearnt++;
+            *j++ = *i;
         }
     }
     ws.shrink_(i-j);
@@ -96,10 +97,7 @@ inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<Clause*>& cs)
     for (Clause **end = cs.getDataEnd(); i != end; i++) {
         if (cleanClause(*i)) {
             solver.attachClause(**i);
-            if ((**i).size() == 2) {
-                solver.numBins++;
-            } else
-                *j++ = *i;
+            *j++ = *i;
         } else {
             solver.clauseAllocator.clauseFree(*i);
         }

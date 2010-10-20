@@ -177,12 +177,15 @@ void UselessBinRemover::removeBin(const Lit& lit1, const Lit& lit2)
     std::cout << "Removing useless bin: " << lit1 << " " << lit2 << std::endl;
     #endif //VERBOSE_DEBUG
 
-    uint32_t removed1 = removeWBinAll(solver.watches[(~lit1).toInt()], lit2);
-    uint32_t removed2 = removeWBinAll(solver.watches[(~lit2).toInt()], lit1);
+    std::pair<uint32_t, uint32_t> removed1 = removeWBinAll(solver.watches[(~lit1).toInt()], lit2);
+    std::pair<uint32_t, uint32_t> removed2 = removeWBinAll(solver.watches[(~lit2).toInt()], lit1);
     assert(removed1 == removed2);
 
-    solver.numBins--;
-    solver.clauses_literals -= removed1*2;
+    assert((removed1.first + removed2.first) % 2 == 0);
+    assert((removed1.second + removed2.second) % 2 == 0);
+    solver.learnts_literals -= (removed1.first + removed2.first);
+    solver.clauses_literals -= (removed1.second + removed2.second);
+    solver.numBins -= (removed1.first + removed2.first + removed1.second + removed2.second)/2;
 }
 
 /**

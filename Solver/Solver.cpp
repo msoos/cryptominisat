@@ -2382,7 +2382,7 @@ void Solver::performStepsBeforeSolve()
 
     if (doSubsumption
         && !libraryUsage
-        && clauses.size() + numBins + learnts.size() < 4800000
+        && clauses.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
 

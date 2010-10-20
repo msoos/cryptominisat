@@ -101,7 +101,7 @@ static void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
 /*static bool    findWBin(const vec<Watched>& ws, const Lit impliedLit);
 static void    removeWBin(vec<Watched> &ws, const Lit impliedLit);*/
 static void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
-static const  uint32_t  removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
+static const std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
 static Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2, const bool learnt);
 
 //Xor Clause
@@ -174,19 +174,26 @@ static inline void removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
     ws.pop();
 }
 
-static inline const uint32_t removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
+static inline const std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
 {
-    uint32_t removed = 0;
+    uint32_t removedLearnt = 0;
+    uint32_t removedNonLearnt = 0;
+
     Watched *i = ws.getData();
     Watched *j = i;
     for (Watched* end = ws.getDataEnd(); i != end; i++) {
         if (!i->isBinary() || i->getOtherLit() != impliedLit)
             *j++ = *i;
-        else removed++;
+        else {
+            if (i->getLearnt())
+                removedLearnt++;
+            else
+                removedNonLearnt++;
+        }
     }
-    ws.shrink(i-j);
+    ws.shrink_(i-j);
 
-    return removed;
+    return std::make_pair(removedLearnt, removedNonLearnt);
 }
 
 static inline Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2, const bool learnt)

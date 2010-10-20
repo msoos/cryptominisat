@@ -327,6 +327,9 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_
 
 void PartHandler::moveBinClauses(Solver& newSolver, const uint32_t part, PartFinder& partFinder)
 {
+    uint32_t numRemovedHalfNonLearnt = 0;
+    uint32_t numRemovedHalfLearnt = 0;
+
     uint32_t wsLit = 0;
     for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
         const Lit lit = ~Lit::toLit(wsLit);
@@ -346,6 +349,7 @@ void PartHandler::moveBinClauses(Solver& newSolver, const uint32_t part, PartFin
                     || partFinder.getVarPart(lit2.var()) != part
                     ) {
                     assert(i->getLearnt());
+                    numRemovedHalfLearnt++;
                     continue;
                 }
 
@@ -359,8 +363,10 @@ void PartHandler::moveBinClauses(Solver& newSolver, const uint32_t part, PartFin
                     if (i->getLearnt()) {
                         newSolver.addLearntClause(lits);
                         binClausesRemoved.push_back(std::make_pair(lit, lit2));
+                        numRemovedHalfLearnt++;
                     } else {
                         newSolver.addClause(lits);
+                        numRemovedHalfNonLearnt++;
                     }
                 }
             } else {
@@ -369,6 +375,10 @@ void PartHandler::moveBinClauses(Solver& newSolver, const uint32_t part, PartFin
         }
         ws.shrink_(i-j);
     }
+
+    solver.learnts_literals -= numRemovedHalfLearnt;
+    solver.clauses_literals -= numRemovedHalfNonLearnt;
+    solver.numBins -= (numRemovedHalfLearnt + numRemovedHalfNonLearnt)/2;
 }
 
 /**

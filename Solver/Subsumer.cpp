@@ -380,7 +380,7 @@ lists.
 
 @param ps Clause to be cleaned
 */
-/*const bool Subsumer::cleanClause(Clause& ps)
+const bool Subsumer::cleanClause(Clause& ps)
 {
     bool retval = false;
 
@@ -409,7 +409,7 @@ lists.
     ps.shrink(i-j);
 
     return retval;
-}*/
+}
 
 /**
 @brief Removes a literal from a clause
@@ -433,11 +433,11 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     #ifndef TOUCH_LESS
     touch(toRemoveLit);
     #endif
-    /*if (cleanClause(*c.clause)) {
+    if (cleanClause(*c.clause)) {
         unlinkClause(c);
         c.clause = NULL;
         return;
-    }*/
+    }
 
     switch (c.clause->size()) {
         case 0:
@@ -454,7 +454,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
         }
         case 2: {
             solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
-            solver.numBins++;
+            solver.numNewBin++;
             unlinkClause(c);
             c.clause = NULL;
             break;
@@ -1455,7 +1455,7 @@ bool Subsumer::maybeEliminate(const Var x)
                     }
                     case 2: {
                         solver.attachBinClause(dummy[0], dummy[1], false);
-                        solver.numBins++;
+                        solver.numNewBin++;
                         subsume1(dummy, false);
                         break;
                     }
