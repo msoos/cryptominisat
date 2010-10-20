@@ -478,7 +478,7 @@ void Solver::addSymmBreakClauses()
     #else
     gzFile in = gzopen("output", "rb");
     #endif // DISABLE_ZLIB
-    parser.parse_DIMACS(in);
+    parser.parse_DIMACS(in, verbosity);
     #ifdef DISABLE_ZLIB
     fclose(in);
     #else

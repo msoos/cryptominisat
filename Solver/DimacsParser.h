@@ -40,9 +40,9 @@ class DimacsParser
         DimacsParser(Solver* solver, const bool debugLib, const bool debugNewVar, const bool grouping, const bool addAsLearnt = false);
 
         #ifdef DISABLE_ZLIB
-        void parse_DIMACS(FILE * input_stream);
+        void parse_DIMACS(FILE * input_stream, const uint32_t verbosity);
         #else
-        void parse_DIMACS(gzFile input_stream);
+        void parse_DIMACS(gzFile input_stream, const uint32_t verbosity);
         #endif // DISABLE_ZLIB
 
     private:

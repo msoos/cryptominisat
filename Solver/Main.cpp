@@ -198,10 +198,12 @@ gzFile Main::openGzFile(const char* name)
 template<class B>
 void Main::readInAFile(B stuff, Solver& solver)
 {
-    if ((const char*)stuff == (const char*)fileno(stdin)) {
-        std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
-    } else {
-        std::cout << "c Reading file '" << stuff << "'" << std::endl;
+    if (solver.verbosity >= 1) {
+        if ((const char*)stuff == (const char*)fileno(stdin)) {
+            std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
+        } else {
+            std::cout << "c Reading file '" << stuff << "'" << std::endl;
+        }
     }
     #ifdef DISABLE_ZLIB
         FILE * in = fopen(stuff, "rb");
@@ -215,7 +217,7 @@ void Main::readInAFile(B stuff, Solver& solver)
     }
 
     DimacsParser parser(&solver, debugLib, debugNewVar, grouping);
-    parser.parse_DIMACS(in);
+    parser.parse_DIMACS(in, solver.verbosity);
 
     #ifdef DISABLE_ZLIB
         fclose(in);
@@ -693,6 +695,14 @@ void Main::parseCommandLine(Solver& S)
             }
         }
     }
+    if (S.verbosity >= 1) {
+        if (twoFileNamesPresent) {
+            std::cout << "c Outputting solution to file: " << argv[argc-1] << std::endl;
+        } else {
+            std::cout << "c Ouptutting solution to console" << std::endl;
+        }
+    }
+
     if (unparsedOptions == 2 && needTwoFileNames == true) {
         std::cout << "Command line wrong. You probably frogot to add "<< std::endl
         << "the '--'  in front of one of the options, or you started" << std::endl
@@ -707,15 +717,12 @@ FILE* Main::openOutputFile()
     FILE* res = NULL;
     if (twoFileNamesPresent) {
         char* filename = argv[argc-1];
-        printf("c Outputting solution to file: %s\n" , filename);
         res = fopen(filename, "wb");
         if (res == NULL) {
             int backup_errno = errno;
             printf("Cannot open %s for writing. Problem: %s", filename, strerror(backup_errno));
             exit(1);
         }
-    } else {
-        printf("c Ouptutting solution to console\n");
     }
 
     return res;
