@@ -1132,11 +1132,12 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     }
     CompleteDetachReatacher reattacher(solver);
     reattacher.detachNonBins();
-    totalTime += myTime - cpuTime();
 
     //Do stuff with binaries
-    numMaxSubsume0 = 1000000*numCalls;
     subsumeBinsWithBins();
+
+    totalTime += myTime - cpuTime();
+    numMaxSubsume0 = 1000000*numCalls;
     if (!subsumeWithBinaries()) return false;
     if (!subsWNonExitsBinsFullFull()) return false;
 
