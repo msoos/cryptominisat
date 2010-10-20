@@ -832,8 +832,11 @@ const bool Subsumer::subsWNonExitsBinsFullFull()
 
 void Subsumer::makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt)
 {
+    assert(learnt == true);
     findWatchedOfBin(solver.watches, lit1 ,lit2, learnt).setLearnt(false);
     findWatchedOfBin(solver.watches, lit2 ,lit1, learnt).setLearnt(false);
+    solver.learnts_literals -= 2;
+    solver.clauses_literals += 2;
 }
 
 /**
