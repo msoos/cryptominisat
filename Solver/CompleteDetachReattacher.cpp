@@ -31,6 +31,7 @@ void CompleteDetachReatacher::detachNonBins()
 {
     solver.clauses_literals = 0;
     solver.learnts_literals = 0;
+    solver.numBins = 0;
 
     std::pair<uint64_t, uint64_t> tmp1, tmp2;
     for (uint32_t i = 0; i < solver.nVars(); i++) {
@@ -40,6 +41,7 @@ void CompleteDetachReatacher::detachNonBins()
 
     solver.learnts_literals += tmp1.first + tmp2.first;
     solver.clauses_literals += tmp1.second + tmp2.second;
+    solver.numBins += (solver.learnts_literals + solver.clauses_literals)/2;
 }
 
 /**

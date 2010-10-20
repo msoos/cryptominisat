@@ -437,7 +437,6 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         return true;
     case 2:
         solver.attachBinClause(c[0], c[1], c.learnt());
-        solver.numBins++;
         solver.numNewBin++;
         return true;
     default:

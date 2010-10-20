@@ -443,7 +443,6 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt, const uin
         return c;
     } else {
         attachBinClause(ps[0], ps[1], learnt);
-        numBins++;
         numNewBin++;
         return NULL;
     }
@@ -559,6 +558,7 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
     watches[(~lit1).toInt()].push(Watched(lit2, learnt));
     watches[(~lit2).toInt()].push(Watched(lit1, learnt));
 
+    numBins++;
     if (learnt) learnts_literals += 2;
     else clauses_literals += 2;
 }
@@ -2165,7 +2165,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
                 uncheckedEnqueue(learnt_clause[0], c);
             } else {
                 attachBinClause(learnt_clause[0], learnt_clause[1], false);
-                numBins++;
                 numNewBin++;
                 uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             }
