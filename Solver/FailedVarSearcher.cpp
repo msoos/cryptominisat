@@ -751,7 +751,7 @@ void FailedVarSearcher::hyperBinResolution(const Lit& lit)
     }
     solver.cancelUntil(0);
 
-    std::sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
+    std::stable_sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
     /*************************
     //To check that the ordering is the right way
     // --> i.e. to avoid mistake present in Glucose's ordering
