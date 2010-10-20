@@ -53,6 +53,7 @@ class FailedVarSearcher {
 
         const bool search();
         const bool asymmBranch();
+        const double getTotalTime() const;
 
     private:
         //Main
@@ -196,6 +197,7 @@ class FailedVarSearcher {
         uint32_t goodBothSame;  ///<Records num. of literals that have been propagated to the same value by both "var" and "~var"
 
         //State between runs
+        double totalTime;
         bool finishedLastTimeVar;      ///<Did we finish going through all vars last time we launched search() ?
         uint32_t lastTimeWentUntilVar; ///<Last time we executed search() we went until this variable number (then time was up)
         bool finishedLastTimeBin;      ///<Currently not used, but should be used when reasoning on clause (a OR b) is enabled
@@ -225,6 +227,11 @@ class FailedVarSearcher {
 
         uint32_t numCalls; ///<Number of times search() has been called
 };
+
+inline const double FailedVarSearcher::getTotalTime() const
+{
+    return totalTime;
+}
 
 
 #endif //FAILEDVARSEARCHER_H

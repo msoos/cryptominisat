@@ -105,6 +105,7 @@ void Main::printStats(Solver& solver)
     printStatsLine("c learnts DL2", solver.nbGlue2);
     printStatsLine("c learnts size 2", solver.numNewBin);
     printStatsLine("c learnts size 1", solver.get_unitary_learnts_num(), (double)solver.get_unitary_learnts_num()/(double)solver.nVars()*100.0, "% of vars");
+    printStatsLine("c filedVS time", solver.getTotalTimeFailedVarSearcher(), solver.getTotalTimeFailedVarSearcher()/cpu_time*100.0, "% time");
 
     //Subsumer stats
     printStatsLine("c v-elim SatELite", solver.getNumElimSubsume(), (double)solver.getNumElimSubsume()/(double)solver.nVars()*100.0, "% vars");

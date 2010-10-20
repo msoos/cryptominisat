@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "XorSubsumer.h"
 #include "time_mem.h"
 #include "DimacsParser.h"
+#include "FailedVarSearcher.h"
 #include <iomanip>
 
 #ifdef USE_GAUSS
@@ -302,6 +303,11 @@ const uint32_t Solver::getNumXorTreesCrownSize() const
 const double Solver::getTotalTimeSubsumer() const
 {
     return subsumer->getTotalTime();
+}
+
+const double Solver::getTotalTimeFailedVarSearcher() const
+{
+    return failedVarSearcher->getTotalTime();
 }
 
 const double Solver::getTotalTimeXorSubsumer() const

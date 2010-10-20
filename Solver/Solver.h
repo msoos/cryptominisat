@@ -294,7 +294,9 @@ public:
     blocked clause elimination, subsumption and self-subsuming resolution
     using non-existent binary clauses.
     */
-    const double   getTotalTimeSubsumer() const;
+    const double getTotalTimeSubsumer() const;
+
+    const double getTotalTimeFailedVarSearcher() const;
 
     /**
     @brief Get total time spent in XorSubsumer.

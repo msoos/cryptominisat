@@ -43,6 +43,7 @@ using std::set;
 FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
     , tmpPs(2)
+    , totalTime(0)
     , finishedLastTimeVar(true)
     , lastTimeWentUntilVar(0)
     , finishedLastTimeBin(true)
@@ -319,6 +320,7 @@ end:
     }
 
     lastTimeFoundTruths = solver.trail.size() - origTrailSize;
+    totalTime += cpuTime() - myTime;
 
     savedState.restore();
 
@@ -553,6 +555,7 @@ const bool FailedVarSearcher::orderLits()
         << " props: " << std::setw(4) << (solver.propagations - oldProps)/1000 << "k"
         << std::endl;
     }
+    totalTime += cpuTime() - myTime;
     solver.propagations = oldProps;
 
     return true;
@@ -832,6 +835,7 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
     tmpPs[0] = lit1;
     tmpPs[1] = lit2;
     solver.addClauseInt(tmpPs, 0 , true);
+    tmpPs.clear();
     tmpPs.growTo(2);
     assert(solver.ok);
 }
