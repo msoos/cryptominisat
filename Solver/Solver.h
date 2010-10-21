@@ -176,7 +176,7 @@ public:
     bool      conglomerateXors;   ///<Do variable elimination at the XOR-level (xor-ing 2 xor clauses thereby removing a variable)
     bool      heuleProcess;       ///<Perform local subsitutuion as per Heule's theis
     bool      schedSimplification;///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
-    bool      doSubsumption;      ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
+    bool      doSatELite;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
     bool      doXorSubsumption;   ///<Should try to subsume & local-subsitute xor clauses
     bool      doPartHandler;      ///<Should try to find disconnected components and solve them individually?
     bool      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
@@ -184,16 +184,15 @@ public:
     bool      doVarElim;          ///<Perform variable elimination
     bool      doSubsume1;         ///<Perform self-subsuming resolution
     bool      doAsymmBranch;      ///<Perform asymmetric branching at the beginning of the solving
-    bool      doAsymmBranchReg;   ///<Perform asymmetric branching regularly
     bool      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
     bool      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
     bool      doMinimLMoreRecur;  ///<Always perform recursive/transitive on-the-fly self self-subsuming resolution --> an enhancement of "strong minimization" of PrecoSat
-    bool      failedVarSearch;    ///<Do Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
-    bool      addExtraBins;       ///<Should perform hyper-binary resolution during failed literal probing?
-    bool      remUselessBins;     ///<Should try to remove useless binary clauses at the beginning of solving?
-    bool      regRemUselessBins;  ///<Should try to remove useless binary clauses regularly?
-    bool      subsWNonExistBins;  ///<Try to do subsumption and self-subsuming resolution with non-existent binary clauses (i.e. binary clauses that don't exist but COULD exists)
-    bool      regSubsWNonExistBins;
+    bool      doFailedVarSearch;    ///<Do Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
+    bool      doRemUselessBins;     ///<Should try to remove useless binary clauses at the beginning of solving?
+    bool      doSubsWBins;
+    bool      doSubsWNonExistBins;  ///<Try to do subsumption and self-subsuming resolution with non-existent binary clauses (i.e. binary clauses that don't exist but COULD exists)
+
+    //interrupting & dumping
     bool      needToInterrupt;    ///<Used internally mostly. If set to TRUE, we will interrupt cleanly ASAP. The important thing is "cleanly", since we need to wait until a point when all datastructures are in a sane state (i.e. not in the middle of some algorithm)
     bool      needToDumpLearnts;  ///<If set to TRUE, learnt clauses will be dumped to the file speified by "learntsFilename"
     bool      needToDumpOrig;     ///<If set to TRUE, a simplified version of the original clause-set will be dumped to the file speified by "origFilename". The solution to this file should perfectly satisfy the problem

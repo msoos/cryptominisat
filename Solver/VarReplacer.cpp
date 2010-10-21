@@ -93,7 +93,7 @@ const bool VarReplacer::performReplaceInternal()
     Var var = 0;
     const vec<char>* removedVars = solver.doXorSubsumption ? &solver.xorSubsumer->getVarElimed() : NULL;
     const vec<lbool>* removedVars2 = solver.doPartHandler ?  &solver.partHandler->getSavedState() : NULL;
-    const vec<char>* removedVars3 = solver.doSubsumption ? &solver.subsumer->getVarElimed() : NULL;
+    const vec<char>* removedVars3 = solver.doSatELite ? &solver.subsumer->getVarElimed() : NULL;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
         if (it->var() == var
             || (removedVars != NULL && (*removedVars)[it->var()])

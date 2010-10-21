@@ -360,5 +360,13 @@ public:
     friend class MatrixFinder;
 };
 
+inline std::ostream& operator<<(std::ostream& cout, const Clause& cl)
+{
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        cout << cl[i] << " ";
+    }
+    return cout;
+}
+
 
 #endif //CLAUSE_H

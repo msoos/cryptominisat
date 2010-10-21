@@ -133,7 +133,8 @@ private:
     struct BinSorter {
         const bool operator()(const Watched& first, const Watched& second)
         {
-            assert(first.isBinary() && second.isBinary());
+            assert(first.isBinary());
+            assert(second.isBinary());
             if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
             if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
             if (!first.getLearnt()) return true;
@@ -158,7 +159,8 @@ private:
     void subsume1(Clause& ps);
     const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
     void strenghten(ClauseSimp& c, const Lit toRemoveLit);
-    const bool cleanClause(Clause& c);
+    const bool cleanClause(Clause& ps);
+    const bool cleanClause(vec<Lit>& ps) const;
     void handleSize1Clause(const Lit lit);
 
     //Variable elimination

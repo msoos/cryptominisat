@@ -234,7 +234,6 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
         (*i)->print(outfile);
     }
 
-    //map<Var, vector<Clause*> > elimedOutVar
     fprintf(outfile, "c -------------------------------\n");
     fprintf(outfile, "c previously eliminated variables\n");
     fprintf(outfile, "c -------------------------------\n");

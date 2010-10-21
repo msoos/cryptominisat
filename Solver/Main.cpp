@@ -327,7 +327,6 @@ void Main::printUsage(char** argv, Solver& S)
     printf("  --nosatelite     = Don't do clause subsumption, clause strengthening and\n");
     printf("                     variable elimination (implies -novarelim and -nosubsume1).\n");
     printf("  --noxorsubs      = Don't try to subsume xor-clauses.\n");
-    printf("  --nohyperbinres  = Don't carry out hyper-binary resolution\n");
     printf("  --nosolprint     = Don't print the satisfying assignment if the solution\n");
     printf("                     is SAT\n");
     printf("  --novarelim      = Don't perform variable elimination as per Een and Biere\n");
@@ -353,7 +352,7 @@ void Main::printUsage(char** argv, Solver& S)
 #endif //USE_GAUSS
     //printf("  --addoldlearnts  = Readd old learnts for failed variable searching.\n");
     //printf("                     These learnts are usually deleted, but may help\n");
-    printf("  --noextrabins    = Don't add binary clauses when doing failed lit probing.\n");
+    printf("  --nohyperbinres  = Don't add binary clauses when doing failed lit probing.\n");
     printf("  --noremovebins   = Don't remove useless binary clauses at the beginnning\n");
     printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
     printf("  --nosubswithbins = Don't subsume with non-existent bins at the beginnning\n");
@@ -557,7 +556,7 @@ void Main::parseCommandLine(Solver& S)
         } else if ((value = hasPrefix(argv[i], "--novarreplace"))) {
             S.doReplace = false;
         } else if ((value = hasPrefix(argv[i], "--nofailedvar"))) {
-            S.failedVarSearch = false;
+            S.doFailedVarSearch = false;
         } else if ((value = hasPrefix(argv[i], "--nodisablegauss"))) {
             S.gaussconfig.dontDisable = true;
         } else if ((value = hasPrefix(argv[i], "--maxnummatrixes="))) {
@@ -570,7 +569,7 @@ void Main::parseCommandLine(Solver& S)
         } else if ((value = hasPrefix(argv[i], "--noheuleprocess"))) {
             S.heuleProcess = false;
         } else if ((value = hasPrefix(argv[i], "--nosatelite"))) {
-            S.doSubsumption = false;
+            S.doSatELite = false;
         } else if ((value = hasPrefix(argv[i], "--noparthandler"))) {
             S.doPartHandler = false;
         } else if ((value = hasPrefix(argv[i], "--noxorsubs"))) {
@@ -631,20 +630,14 @@ void Main::parseCommandLine(Solver& S)
             printResult = false;
         //} else if ((value = hasPrefix(argv[i], "--addoldlearnts"))) {
         //    S.readdOldLearnts = true;
-        } else if ((value = hasPrefix(argv[i], "--noextrabins"))) {
-            S.addExtraBins = false;
+        } else if ((value = hasPrefix(argv[i], "--nohyperbinres"))) {
+            S.doHyperBinRes= false;
         } else if ((value = hasPrefix(argv[i], "--noremovebins"))) {
-            S.remUselessBins = false;
-        } else if ((value = hasPrefix(argv[i], "--noregremovebins"))) {
-            S.regRemUselessBins = false;
+            S.doRemUselessBins = false;
         } else if ((value = hasPrefix(argv[i], "--nosubswithbins"))) {
-            S.subsWNonExistBins = false;
-        } else if ((value = hasPrefix(argv[i], "--norsubswithbins"))) {
-            S.regSubsWNonExistBins = false;
+            S.doSubsWNonExistBins = false;
         } else if ((value = hasPrefix(argv[i], "--noasymm"))) {
             S.doAsymmBranch = false;
-        } else if ((value = hasPrefix(argv[i], "--norasymm"))) {
-            S.doAsymmBranchReg = false;
         } else if ((value = hasPrefix(argv[i], "--nosortwatched"))) {
             S.doSortWatched = false;
         } else if ((value = hasPrefix(argv[i], "--nolfminim"))) {

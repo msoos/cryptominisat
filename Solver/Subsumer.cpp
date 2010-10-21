@@ -74,8 +74,7 @@ void Subsumer::extendModel(Solver& solver2)
             std::copy(c.getData(), c.getDataEnd(), tmp.getData());
 
             #ifdef VERBOSE_DEBUG
-            std::cout << "Reinserting Clause: ";
-            c.plainPrint();
+            std::cout << "Reinserting elimed clause: " << c << std::endl;;
             #endif
 
             solver2.addClause(tmp);
@@ -133,6 +132,9 @@ const bool Subsumer::unEliminate(const Var var)
     solver.setDecisionVar(var, true);
     var_elimed[var] = false;
     numElimed--;
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Reinserting elimed var: " << var+1 << std::endl;
+    #endif
 
     //If the variable was removed because of
     //pure literal removal (by blocked clause
@@ -142,6 +144,9 @@ const bool Subsumer::unEliminate(const Var var)
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
     solver.libraryCNFFile = NULL;
     for (vector<Clause*>::iterator itt = it->second.begin(), end2 = it->second.end(); itt != end2; itt++) {
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Reinserting elimed clause: " << *itt << std::endl;;
+        #endif
         solver.addClause(**itt);
         solver.clauseAllocator.clauseFree(*itt);
     }
@@ -151,6 +156,9 @@ const bool Subsumer::unEliminate(const Var var)
         vec<Lit> lits(2);
         lits[0] = itt->first;
         lits[1] = itt->second;
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Reinserting bin clause: " << itt->first << " , " << itt->second << std::endl;
+        #endif
         solver.addClause(lits);
     }
     elimedOutVarBin.erase(it2);
@@ -394,10 +402,10 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
     if (elim != var_Undef) {
         assert(!cl.learnt());
         #ifdef VERBOSE_DEBUG
-        std::cout << "Eliminating clause: "; c.clause->plainPrint();
+        std::cout << "Eliminating non-bin clause: " << *c.clause << std::endl;
         std::cout << "On variable: " << elim+1 << std::endl;
         #endif //VERBOSE_DEBUG
-
+        elimedOutVar[elim].push_back(c.clause);
     } else {
         clauses_subsumed++;
         solver.clauseAllocator.clauseFree(c.clause);
@@ -437,6 +445,32 @@ const bool Subsumer::cleanClause(Clause& ps)
             #endif
             continue;
         }
+        if (val == l_True) {
+            *j++ = *i;
+            retval = true;
+            continue;
+        }
+        assert(false);
+    }
+    ps.shrink(i-j);
+
+    return retval;
+}
+
+const bool Subsumer::cleanClause(vec<Lit>& ps) const
+{
+    bool retval = false;
+
+    Lit *i = ps.getData();
+    Lit *j = i;
+    for (Lit *end = ps.getDataEnd(); i != end; i++) {
+        lbool val = solver.value(*i);
+        if (val == l_Undef) {
+            *j++ = *i;
+            continue;
+        }
+        if (val == l_False)
+            continue;
         if (val == l_True) {
             *j++ = *i;
             retval = true;
@@ -811,9 +845,9 @@ and contains all the non-learnt binary clauses
 const bool Subsumer::subsumeWithBinaries()
 {
     //Clearing stats
+    double myTime = cpuTime();
     clauses_subsumed = 0;
     literals_removed = 0;
-    double myTime = cpuTime();
     uint32_t origTrailSize = solver.trail.size();
 
     vec<Lit> lits(2);
@@ -1056,6 +1090,8 @@ void Subsumer::subsumeBinsWithBins()
         vec<Watched>& ws = *it;
         Lit lit = ~Lit::toLit(wsLit);
         if (ws.size() < 2) continue;
+
+        for (uint32_t i = 0; i < ws.size(); i++) assert(ws[i].isBinary());
         std::sort(ws.getData(), ws.getDataEnd(), BinSorter());
 
         Watched* i = ws.getData();
@@ -1138,8 +1174,8 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     totalTime += myTime - cpuTime();
     numMaxSubsume0 = 1000000*numCalls;
-    if (!subsumeWithBinaries()) return false;
-    if (!subsWNonExitsBinsFullFull()) return false;
+    if (solver.doSubsWBins && !subsumeWithBinaries()) return false;
+    if (solver.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
 
     setLimits(alsoLearnt);
     myTime = cpuTime();
@@ -1436,9 +1472,13 @@ void Subsumer::removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair
      pair<uint32_t, uint32_t>  tmp;
      for (uint32_t i = 0; i < todo.size(); i++) {
         ClAndBin& c = todo[i];
-        if (!c.isBin)
+        if (!c.isBin) {
             unlinkClause(c.clsimp, var);
-        else {
+        } else {
+            #ifdef VERBOSE_DEBUG
+            std::cout << "Eliminating bin clause: " << c.lit1 << " , " << c.lit2 << std::endl;
+            std::cout << "On variable: " << var+1 << std::endl;
+            #endif
             assert(var == c.lit1.var() || var == c.lit2.var());
             tmp = removeWBinAll(solver.watches[(~c.lit1).toInt()], c.lit2);
             //assert(tmp.first > 0 || tmp.second > 0);
@@ -1579,14 +1619,18 @@ bool Subsumer::maybeEliminate(const Var var)
     poss.clear();
     negs.clear();
     removeClauses(posAll, negAll, var);
-    /*for (uint32_t i = 0; i < solver.watches[lit.toInt()].size(); i++) {
+
+    #ifndef NDEBUG
+    for (uint32_t i = 0; i < solver.watches[lit.toInt()].size(); i++) {
         Watched& w = solver.watches[lit.toInt()][i];
-        assert(!w.isBinary() || w.getLearnt());
+        assert(w.isBinary() && w.getLearnt());
     }
     for (uint32_t i = 0; i < solver.watches[(~lit).toInt()].size(); i++) {
         Watched& w = solver.watches[(~lit).toInt()][i];
-        assert(!w.isBinary() || w.getLearnt());
-    }*/
+        assert(w.isBinary() && w.getLearnt());
+    }
+    #endif
+
     for (uint32_t i = 0; i < posAll.size(); i++) for (uint32_t j = 0; j < negAll.size(); j++){
         dummy.clear();
         bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
@@ -1599,6 +1643,11 @@ bool Subsumer::maybeEliminate(const Var var)
             string name = solver.logger.get_group_name(ps[i].clause->getGroup()) + " " + solver.logger.get_group_name(ns[j].clause->getGroup());
             solver.logger.set_group_name(group_num, name);
         }
+        #endif
+
+        if (cleanClause(dummy)) continue;
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Adding new clause due to varelim: " << dummy << std::endl;
         #endif
         switch (dummy.size()) {
             case 0:

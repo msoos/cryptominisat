@@ -34,16 +34,6 @@ using std::endl;
 static const uint16_t unassigned_col = std::numeric_limits<uint16_t>::max();
 static const Var unassigned_var = std::numeric_limits<Var>::max();
 
-ostream& operator << (ostream& os, const vec<Lit>& v)
-{
-    for (uint32_t i = 0; i != v.size(); i++) {
-        if (v[i].sign()) os << "-";
-        os << v[i].var()+1 << " ";
-    }
-
-    return os;
-}
-
 Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint32_t _matrix_no, const vector<XorClause*>& _xorclauses) :
         solver(_solver)
         , config(_config)

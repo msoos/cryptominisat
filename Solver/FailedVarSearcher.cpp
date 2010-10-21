@@ -212,7 +212,7 @@ const bool FailedVarSearcher::search()
     unPropagatedBin.resize(solver.nVars(), 0);
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
-    if (solver.addExtraBins && !orderLits()) return false;
+    if (solver.doHyperBinRes && !orderLits()) return false;
     maxHyperBinProps = numProps/4;
 
     //uint32_t fromBin;
@@ -440,6 +440,7 @@ const bool FailedVarSearcher::asymmBranch()
             std::cout << "-- Origsize:" << origSize << " newSize:" << (c2 == NULL ? 0 : c2->size()) << " toRemove:" << c.size() - done << " unused.size():" << unused.size() << std::endl;
             #endif
             extraDiff += 20;
+            //TODO cheating here: we don't detect a NULL return that is in fact a 2-long clause
             effectiveLit += origSize - (c2 == NULL ? 0 : c2->size());
             solver.clauseAllocator.clauseFree(&c);
 
@@ -603,7 +604,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
             Var x = solver.trail[c].var();
             propagated.setBit(x);
-            if (solver.addExtraBins) {
+            if (solver.doHyperBinRes) {
                 unPropagatedBin.setBit(x);
                 propagatedVars.push(x);
             }
@@ -629,7 +630,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     //Hyper-binary resolution, and its accompanying data-structure cleaning
-    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
+    if (solver.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
     propagatedVars.clear();
     unPropagatedBin.setZero();
 
@@ -648,7 +649,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
             Var     x  = solver.trail[c].var();
             if (propagated[x]) {
-                if (solver.addExtraBins) {
+                if (solver.doHyperBinRes) {
                     unPropagatedBin.setBit(x);
                     propagatedVars.push(x);
                 }
@@ -704,7 +705,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.cancelUntil(0);
     }
 
-    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
+    if (solver.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
 
     for(uint32_t i = 0; i != bothSame.size(); i++) {
         solver.uncheckedEnqueue(bothSame[i]);

@@ -159,10 +159,10 @@ void PartHandler::configureNewSolver(Solver& newSolver) const
     newSolver.conglomerateXors = solver.conglomerateXors;
     newSolver.schedSimplification = solver.schedSimplification;
     newSolver.doReplace = solver.doReplace;
-    newSolver.failedVarSearch = solver.failedVarSearch;
+    newSolver.doFailedVarSearch = solver.doFailedVarSearch;
     newSolver.gaussconfig.dontDisable = solver.gaussconfig.dontDisable;
     newSolver.heuleProcess = solver.heuleProcess;
-    newSolver.doSubsumption = solver.doSubsumption;
+    newSolver.doSatELite = solver.doSatELite;
     newSolver.doPartHandler = solver.doPartHandler;
     newSolver.fixRestartType = solver.fixRestartType;
     newSolver.var_inc = solver.var_inc;
@@ -170,11 +170,10 @@ void PartHandler::configureNewSolver(Solver& newSolver) const
 
     //Memory-usage reduction
     newSolver.schedSimplification = false;
-    newSolver.doSubsumption = false;
+    newSolver.doSatELite = false;
     newSolver.doXorSubsumption = false;
     newSolver.doPartHandler = false;
-    newSolver.subsWNonExistBins = false;
-    newSolver.regSubsWNonExistBins = false;
+    newSolver.doSubsWNonExistBins = false;
 }
 
 /**

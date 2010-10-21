@@ -76,7 +76,7 @@ Solver::Solver() :
         , conglomerateXors (true)
         , heuleProcess     (true)
         , schedSimplification(true)
-        , doSubsumption    (true)
+        , doSatELite       (true)
         , doXorSubsumption (true)
         , doPartHandler    (true)
         , doHyperBinRes    (true)
@@ -84,16 +84,13 @@ Solver::Solver() :
         , doVarElim        (true)
         , doSubsume1       (true)
         , doAsymmBranch    (true)
-        , doAsymmBranchReg (true)
         , doSortWatched    (true)
         , doMinimLearntMore(true)
         , doMinimLMoreRecur(false)
-        , failedVarSearch  (true)
-        , addExtraBins     (true)
-        , remUselessBins   (true)
-        , regRemUselessBins(true)
-        , subsWNonExistBins(true)
-        , regSubsWNonExistBins(true)
+        , doFailedVarSearch(true)
+        , doRemUselessBins (true)
+        , doSubsWBins      (true)
+        , doSubsWNonExistBins(true)
         , needToInterrupt  (false)
         , needToDumpLearnts(false)
         , needToDumpOrig   (false)
@@ -252,7 +249,7 @@ Var Solver::newVar(bool dvar)
 
     varReplacer->newVar();
     if (doPartHandler) partHandler->newVar();
-    if (doSubsumption || subsWNonExistBins || regSubsWNonExistBins) subsumer->newVar();
+    if (doSatELite) subsumer->newVar();
     if (doXorSubsumption) xorSubsumer->newVar();
 
     insertVarOrder(v);
@@ -2273,15 +2270,15 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
-    if (failedVarSearch && !failedVarSearcher->search()) goto end;
+    if (doFailedVarSearch && !failedVarSearcher->search()) goto end;
 
-    if (doReplace && regRemUselessBins) {
+    if (doReplace && doRemUselessBins) {
         UselessBinRemover uselessBinRemover(*this);
         if (!uselessBinRemover.removeUslessBinFull()) goto end;
     }
 
-    if (doSubsumption && !subsumer->simplifyBySubsumption(false)) goto end;
-    if (doSubsumption && !subsumer->simplifyBySubsumption(true)) goto end;
+    if (doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
+    if (doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
@@ -2294,7 +2291,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         x.addAllXorAsNorm();
     }
 
-    if (doAsymmBranchReg && !failedVarSearcher->asymmBranch()) goto end;
+    if (doAsymmBranch && !failedVarSearcher->asymmBranch()) goto end;
 
     //addSymmBreakClauses();
 
@@ -2380,7 +2377,7 @@ void Solver::performStepsBeforeSolve()
     if (doAsymmBranch && !libraryUsage
         && !failedVarSearcher->asymmBranch()) return;
 
-    if (doSubsumption
+    if (doSatELite
         && !libraryUsage
         && clauses.size() < 4800000
         && !subsumer->simplifyBySubsumption())
@@ -2587,18 +2584,15 @@ void Solver::handleSATSolution()
             std::cout << "c Solution needs extension. Extending." << std::endl;
         }
         Solver s;
-        s.doSubsumption = false;
+        s.doSatELite = false;
         s.doReplace = false;
         s.findBinaryXors = false;
         s.findNormalXors = false;
-        s.failedVarSearch = false;
+        s.doFailedVarSearch = false;
         s.conglomerateXors = false;
-        s.subsWNonExistBins = false;
-        s.regSubsWNonExistBins = false;
-        s.remUselessBins = false;
-        s.regRemUselessBins = false;
+        s.doSubsWNonExistBins = false;
+        s.doRemUselessBins = false;
         s.doAsymmBranch = false;
-        s.doAsymmBranchReg = false;
         s.greedyUnbound = greedyUnbound;
 
         vec<Lit> tmp;

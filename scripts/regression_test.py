@@ -38,6 +38,7 @@ class Tester:
         "/home/soos/Development/sat_solvers/satcomp09/"
     ignoreNoSolution = False
     arminFuzzer = False
+    extraOptions = ""
 
     def __init__(self):
         self.sumTime = 0.0
@@ -54,12 +55,14 @@ class Tester:
             "/home/soos/Development/sat_solvers/satcomp09/"
         self.ignoreNoSolution = False
         self.arminFuzzer = False
+        self.extraOptions = ""
 
     def execute(self, fname, randomizeNum, newVar, needToLimitTime):
         if os.path.isfile(self.cryptominisat) != True:
-            print "Cannot file CryptoMiniSat executable. Searched in: '%s'" % \
+            print "Error: Cannot find CryptoMiniSat executable. Searched in: '%s'" % \
                 self.cryptominisat
-            exit()
+            print "Error code 300"
+            exit(300)
 
         command = "%s --randomize=%d --debuglib " % (self.cryptominisat,
                 randomizeNum)
@@ -69,9 +72,8 @@ class Tester:
         None
         if self.verbose == False:
             command += "--verbosity=0 "
-            None
+        command += self.extraOptions + " "
         command += fname
-        None
         print "Executing: %s " % command
 
         if self.verbose:
@@ -103,8 +105,9 @@ class Tester:
 
     def read_found(self, filename):
         if (os.path.isfile(filename) == False) :
-            print "ERROR! Filename to be read '%s' is not a file!" % filename
-            exit(-1);
+            print "Error: Filename to be read '%s' is not a file!" % filename
+            print "Error code 400"
+            exit(400);
         f = open(filename, "r")
         text = f.read()
         mylines = text.splitlines()
@@ -113,7 +116,8 @@ class Tester:
         if len(mylines) == 0:
             print "Error! CryptoMiniSat output is empty!"
             print "output lines: ", mylines
-            exit(-1)
+            print "Error code 500"
+            exit(500)
 
         unsat = False
         if 'UNSAT' in mylines[0]:
@@ -121,8 +125,9 @@ class Tester:
         elif 'SAT' in mylines[0]:
             unsat = False
         else:
-            print "Error! Cannot find if SAT or UNSAT. Maybe didn't finish running?"
-            exit(-1)
+            print "Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?"
+            print "Error code 500"
+            exit(500)
 
         value = {}
         if len(mylines) > 1:
@@ -146,7 +151,8 @@ class Tester:
             else:
                 print "Error! Output is empty!"
                 print "output : ", lines
-                exit(-1)
+                print "Error code 500"
+                exit(500)
 
         value = {}
         unsat = False
@@ -170,10 +176,10 @@ class Tester:
 
         if self.ignoreNoSolution == False and (sLineFound == False or
                 unsat == False and vLineFound == False):
-            print "Cannot find line starting with 's' or 'v' in output!"
-            None
+            print "Error: Cannot find line starting with 's' or 'v' in output!"
             print output
-            exit()
+            print "Error code 500"
+            exit(500)
 
         if self.ignoreNoSolution == True and (sLineFound == False or
                 unsat == False and vLineFound == False):
@@ -211,14 +217,16 @@ class Tester:
                     'true'
 
         if unsat != indicated_unsat:
-            print "UNSAT vs. SAT problem!"
-            exit()
+            print "Error: UNSAT vs. SAT problem!"
+            print "Error code 700"
+            exit(700)
         else:
             for (k, v) in indicated_value.iteritems():
                 if indicated_value[k] != value[k]:
-                    print "Problem of found values: values %d: '%s', '%s' don't match!" % \
+                    print "Error: Problem of found values: values %d: '%s', '%s' don't match with those pre-indicated in solution file" % \
                         (k, value[k], indicated_value[k])
-                    exit()
+                    print "Error code 800"
+                    exit(800)
 
     def check_regular_clause(self, line, value):
         lits = line.split()
@@ -245,9 +253,9 @@ class Tester:
             numlit = int(lit)
             if numlit != 0:
                 if abs(numlit) not in value:
-                    print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % \
-                        abs(numlit)
-                    exit(-1)
+                    print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit)
+                    print "Error code 200"
+                    exit(200)
                 final ^= value[abs(numlit)]
                 final ^= numlit < 0
         if final == False:
@@ -373,6 +381,8 @@ class Tester:
     @staticmethod
     def usage():
         print "--num     (-n)     The number of times to randomize and solve the same instance. Default: 3"
+        print "--numStart         The rand number we should start at (default 0)"
+        print "--extraOptions     Add this as extra options to the solver (e.g. \"--novarelim\")"
         print "--verbose (-v)     Verbose output"
         print "--file    (-f)     The file to solve. Default: all files under ../tests/"
         print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
@@ -387,7 +397,16 @@ class Tester:
         print ""
         print "Example usage:"
         print "1) check already computed SAT solutions (UNSAT cannot be checked):"
-        print "   python regression_test.py -c -t ../../clusters/cluster93/ -d ../../satcomp09/ --ignore -n 1"
+        print "   python regression_test.py -c -t ../../clusters/cluster93/ -d ../../satcomp09/ \\"
+        print "        --ignore -n 1"
+        print ""
+        print "2) check file 'MYFILE' multiple times for correct answer:"
+        print "   python regression_test.py --file MYFILE --extraOptions=\"--nosubsume1 --noasymm\" \\"
+        print "       --numStart 20 --num 100"
+        print ""
+        print "3) fuzz the solver with precosat as solution-checker:"
+        print "   python regression_test.py --armin -n 1"
+
 
     def main(self):
         try:
@@ -396,6 +415,7 @@ class Tester:
                 "help",
                 "checkDirOnly",
                 "file=",
+                "numStart=",
                 "num=",
                 "gauss=",
                 "testdir=",
@@ -405,6 +425,7 @@ class Tester:
                 "diffCheckDir",
                 "ignore",
                 "armin",
+                "extraOptions="
                 ])
         except getopt.GetoptError, err:
             print str(err)
@@ -413,6 +434,7 @@ class Tester:
 
         fname = None
         debugLib = False
+        numStart = 0
         num = 3
         testDirSet = False
         for (opt, arg) in opts:
@@ -425,6 +447,8 @@ class Tester:
                 fname = arg
             elif opt in ("-n", "--num"):
                 num = int(arg)
+            elif opt in ("--numStart"):
+                numStart = int(arg)
             elif opt in ("-g", "--gauss"):
                 self.gaussUntil = int(arg)
             elif opt in ("-t", "--testdir"):
@@ -434,6 +458,8 @@ class Tester:
                 self.cryptominisat = arg
             elif opt in ("-s", "--speed"):
                 self.speed = True
+            elif opt in ("--extraOptions"):
+                self.extraOptions = arg
             elif opt in ("-c", "--checkDirOnly"):
                 self.checkDirOnly = True
             elif opt in ("-d", "--diffCheckDir"):
@@ -502,7 +528,7 @@ class Tester:
                     self.testDirNewVar = ""
                 for fname in dirList:
                     if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                        for i in range(num):
+                        for i in range(numStart, numStart+num):
                             self.check(fname=self.testDirNewVar + fname,
                                     fnameCheck=self.testDirNewVar +
                                     fname, randomizeNum=i, newVar=True)
@@ -512,7 +538,7 @@ class Tester:
                 self.testDir = ""
             for fname in dirList:
                 if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    for i in range(num):
+                    for i in range(numStart, numStart+num):
                         self.check(fname=self.testDir + fname,
                                    fnameCheck=self.testDir + fname,
                                    randomizeNum=i, newVar=False)
@@ -521,12 +547,13 @@ class Tester:
             if os.path.isfile(fname) == False:
                 print "Filename given '%s' is not a file!" % fname
                 exit(-1)
-            print "Checking fname %s" % fname
 
-            for i in range(num):
+            for i in range(numStart, numStart+num):
+                print "Checking fname %s" % fname
                 self.check(fname=fname, fnameCheck=fname, randomizeNum=i)
-
 
 test = Tester()
 test.main()
-
+print "Everything went ok."
+print "Exit code 0"
+exit(0)

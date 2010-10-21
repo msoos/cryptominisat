@@ -128,6 +128,8 @@ inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<XorClause*>& cs)
 inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
 {
     Clause& ps = *cl;
+    assert(ps.size() > 2);
+
     Lit *i = ps.getData();
     Lit *j = i;
     for (Lit *end = ps.getDataEnd(); i != end; i++) {
@@ -146,7 +148,7 @@ inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
             solver.uncheckedEnqueue(ps[0]);
             return false;
 
-        case 2: if (i != j) {
+        case 2: {
             solver.attachBinClause(ps[0], ps[1], ps.learnt());
             return false;
         }
