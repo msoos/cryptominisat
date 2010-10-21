@@ -1091,7 +1091,8 @@ void Subsumer::subsumeBinsWithBins()
         Lit lit = ~Lit::toLit(wsLit);
         if (ws.size() < 2) continue;
 
-        for (uint32_t i = 0; i < ws.size(); i++) assert(ws[i].isBinary());
+        for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++)
+            assert(it->isBinary());
         std::sort(ws.getData(), ws.getDataEnd(), BinSorter());
 
         Watched* i = ws.getData();
