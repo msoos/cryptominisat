@@ -528,6 +528,7 @@ void PartHandler::readdRemovedClauses()
         solver.addClause(lits);
         assert(solver.ok);
     }
+    binClausesRemoved.clear();
 
     solver.libraryCNFFile = backup_libraryCNFfile;
 }
