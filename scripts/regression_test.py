@@ -39,6 +39,7 @@ class Tester:
     ignoreNoSolution = False
     arminFuzzer = False
     extraOptions = ""
+    needDebugLib = True
 
     def __init__(self):
         self.sumTime = 0.0
@@ -56,6 +57,7 @@ class Tester:
         self.ignoreNoSolution = False
         self.arminFuzzer = False
         self.extraOptions = ""
+        self.needDebugLib = True
 
     def execute(self, fname, randomizeNum, newVar, needToLimitTime):
         if os.path.isfile(self.cryptominisat) != True:
@@ -64,18 +66,18 @@ class Tester:
             print "Error code 300"
             exit(300)
 
-        command = "%s --randomize=%d --debuglib " % (self.cryptominisat,
-                randomizeNum)
-        if newVar:
-            command += "--debugnewvar "
+        command = "%s --randomize=%d " % (self.cryptominisat,randomizeNum)
         command += "--gaussuntil=%d " % self.gaussUntil
-        None
+        if (self.needDebugLib) :
+            command += "--debuglib "
         if self.verbose == False:
             command += "--verbosity=0 "
+        if (newVar) :
+            command += "--debugnewvar "
         command += self.extraOptions + " "
         command += fname
-        print "Executing: %s " % command
 
+        print "Executing: %s " % command
         if self.verbose:
             print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
         if (needToLimitTime) :
@@ -266,8 +268,7 @@ class Tester:
         if debugLibPart == 1000000:
             print "Verifying solution for CNF file %s" % fname
         else:
-            print "Verifying solution for CNF file %s, part %d" % (fname,
-                    debugLibPart)
+            print "Verifying solution for CNF file %s, part %d" % (fname, debugLibPart)
 
         if fnmatch.fnmatch(fname, '*.gz'):
             f = gzip.open(fname, "r")
@@ -329,24 +330,22 @@ class Tester:
             print "Not checking solution, only checking speed of solving"
             return
 
-        largestPart = -1
-        dirList2 = os.listdir(".")
-        for fname_debug in dirList2:
-            if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
-                debugLibPart = int(fname_debug[fname_debug.index("t") +
-                                   1:fname_debug.rindex(".output")])
-                if largestPart < debugLibPart:
-                    largestPart = debugLibPart
+        if (self.needDebugLib) :
+            largestPart = -1
+            dirList2 = os.listdir(".")
+            for fname_debug in dirList2:
+                if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
+                    debugLibPart = int(fname_debug[fname_debug.index("t") + 1:fname_debug.rindex(".output")])
+                    largestPart = max(largestPart, debugLibPart)
 
-        for debugLibPart in range(1, largestPart + 1):
-            fname_debug = "debugLibPart%d.output" % debugLibPart
+            for debugLibPart in range(1, largestPart + 1):
+                fname_debug = "debugLibPart%d.output" % debugLibPart
 
-            (unsat, value) = self.read_found(fname_debug)
-            if unsat == False:
-                self.test_found(unsat, value, fnameCheck, debugLibPart)
-            else:
-                print "Not examining part %d -- it is UNSAT" % \
-                    debugLibPart
+                (unsat, value) = self.read_found(fname_debug)
+                if unsat == False:
+                    self.test_found(unsat, value, fnameCheck, debugLibPart)
+                else:
+                    print "Not examining part %d -- it is UNSAT" % (debugLibPart)
 
         print "Checking console output..."
         (unsat, value) = self.read_found_output(consoleOutput)
@@ -469,6 +468,7 @@ class Tester:
                 self.ignoreNoSolution = True
             elif opt in ("-a", "--armin"):
                 self.arminFuzzer = True
+                self.needDebugLib = False
             else:
                 assert False, "unhandled option"
 
