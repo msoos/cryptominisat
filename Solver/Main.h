@@ -24,11 +24,13 @@ class Main
         Main(int argc, char** argv);
 
         void parseCommandLine();
-        int singleThreadSolve();
-        const int oneThreadSolve();
-        int multiThreadSolve(const uint32_t numThreads);
 
+        const int singleThreadSolve();
+        const int oneThreadSolve();
+        const int multiThreadSolve();
         static void printStats(Solver& solver);
+
+        int numThreads;
 
     private:
 

@@ -61,7 +61,8 @@ Here is a picture of of the above process in more detail:
 #include "Main.h"
 
 Main::Main(int _argc, char** _argv) :
-        grouping(false)
+        numThreads(-1)
+        , grouping(false)
         , debugLib (false)
         , debugNewVar (false)
         , printResult (true)
@@ -367,6 +368,7 @@ void Main::printUsage(char** argv)
     printf("  --maxglue        = [0 - 2^32-1] default: %d. Glue value above which we\n", conf.maxGlue);
     printf("                     throw the clause away on backtrack. Only active\n");
     printf("                     when dynamic restarts have been selected\n");
+    printf("  --threads        = Num threads (default is automatic guessing)");
     printf("\n");
 }
 
@@ -647,8 +649,8 @@ void Main::parseCommandLine()
         } else if ((value = hasPrefix(argv[i], "--lfminimrec"))) {
             conf.doMinimLMoreRecur = true;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
-            int glue = 16;
-            if (sscanf(value, "%d", &glue) < 0 || glue < 0) {
+            int glue = 0;
+            if (sscanf(value, "%d", &glue) < 0 || glue < 2) {
                 printf("ERROR! maxGlue: %s\n", value);
                 exit(0);
             }
@@ -658,6 +660,12 @@ void Main::parseCommandLine()
                 exit(-1);
             }
             conf.maxGlue = (uint32_t)glue;
+        } else if ((value = hasPrefix(argv[i], "--threads="))) {
+            int numThreads = 0;
+            if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {
+                printf("ERROR! numThreads: %s\n", value);
+                exit(0);
+            }
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
@@ -739,7 +747,7 @@ void Main::printVersionInfo(const uint32_t verbosity)
     if (verbosity >= 1) printf("c This is CryptoMiniSat %s\n", VERSION);
 }
 
-int Main::singleThreadSolve()
+const int Main::singleThreadSolve()
 {
     Solver solver(conf);
     solverToInterrupt = &solver;
@@ -827,17 +835,23 @@ const int Main::oneThreadSolve()
     parseInAllFiles(solver);
     lbool ret = solver.solve();
 
-    FILE* res = openOutputFile();
-    printResultFunc(solver, ret, res);
-    printStats(solver);
+    int retval = 0;
+    #pragma omp single
+    {
+        FILE* res = openOutputFile();
+        printResultFunc(solver, ret, res);
+        printStats(solver);
 
-    int retval = correctReturnValue(ret);
-    exit(retval);
+        retval = correctReturnValue(ret);
+        exit(retval);
+    }
     return retval;
 }
 
-int Main::multiThreadSolve(const uint32_t numThreads)
+const int Main::multiThreadSolve()
 {
+    int finalRetVal;
+    if (numThreads != -1) omp_set_num_threads(numThreads);
     #pragma omp parallel
     {
         #pragma omp single
@@ -846,10 +860,13 @@ int Main::multiThreadSolve(const uint32_t numThreads)
                 std::cout << "c Using " << omp_get_num_threads()
                 << " threads" << std::endl;
         }
-        oneThreadSolve();
+        int retval = oneThreadSolve();
+
+        #pragma omp single
+        finalRetVal = retval;
     }
 
-    return 0;
+    return finalRetVal;
 }
 
 int main(int argc, char** argv)
@@ -859,7 +876,8 @@ int main(int argc, char** argv)
     signal(SIGINT, SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);
 
-    return main.multiThreadSolve(4);
-    //return main.singleThreadSolve();
-
+    if (main.numThreads == 1)
+        return main.singleThreadSolve();
+    else
+        return main.multiThreadSolve();
 }
