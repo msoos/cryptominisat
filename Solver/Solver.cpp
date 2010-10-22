@@ -374,20 +374,17 @@ bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, const
     }
     #endif
 
-    // Check if clause is satisfied and remove false/duplicate literals:
     if (varReplacer->getNumLastReplacedVars() || subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
         for (uint32_t i = 0; i != ps.size(); i++) {
+            Lit otherLit = varReplacer->getReplaceTable()[ps[i].var()];
+            if (otherLit.var() != ps[i].var()) {
+                ps[i] = Lit(otherLit.var(), false);
+                xorEqualFalse ^= otherLit.sign();
+            }
             if (subsumer->getVarElimed()[ps[i].var()] && !subsumer->unEliminate(ps[i].var()))
                 return false;
             else if (xorSubsumer->getVarElimed()[ps[i].var()] && !xorSubsumer->unEliminate(ps[i].var()))
                 return false;
-            else {
-                Lit otherLit = varReplacer->getReplaceTable()[ps[i].var()];
-                if (otherLit.var() != ps[i].var()) {
-                    ps[i] = Lit(otherLit.var(), false);
-                    xorEqualFalse ^= otherLit.sign();
-                }
-            }
         }
     }
 
@@ -2452,11 +2449,13 @@ elimination, etc.) and output the solution.
 */
 lbool Solver::solve(const vec<Lit>& assumps)
 {
-#ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG
     std::cout << "Solver::solve() called" << std::endl;
-#endif
+    #endif
     if (!ok) return l_False;
     assert(qhead == trail.size());
+    assert(subsumer->checkElimedUnassigned());
+    assert(xorSubsumer->checkElimedUnassigned());
 
     if (libraryCNFFile)
         fprintf(libraryCNFFile, "c Solver::solve() called\n");
@@ -2574,6 +2573,8 @@ void Solver::handleSATSolution()
         if (verbosity >= 1)
             printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
     }*/
+    assert(subsumer->checkElimedUnassigned());
+    assert(xorSubsumer->checkElimedUnassigned());
 
     partHandler->addSavedState();
     varReplacer->extendModelPossible();
@@ -2602,6 +2603,10 @@ void Solver::handleSATSolution()
             //assert(!(xorSubsumer->getVarElimed()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
 
             if (value(var) != l_Undef) {
+                #ifdef DEBUG_VARELIM
+                std::cout << "Setting var " << var + 1
+                << " in extend-solver to " << value(var) << std::endl;
+                #endif
                 tmp.clear();
                 tmp.push(Lit(var, value(var) == l_False));
                 s.addClause(tmp);
@@ -2614,7 +2619,7 @@ void Solver::handleSATSolution()
         lbool status = s.solve();
         release_assert(status == l_True && "c ERROR! Extension of model failed!");
 #ifdef VERBOSE_DEBUG
-        std::cout << "Solution extending finished." << std::endl;
+        std::cout << "Solution extending finished. Enqueuing results" << std::endl;
 #endif
         for (Var var = 0; var < nVars(); var++) {
             if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));

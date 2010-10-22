@@ -492,6 +492,7 @@ protected:
     void       findAllAttach() const;
     const bool findClause(XorClause* c) const;
     const bool findClause(Clause* c) const;
+    const bool xorClauseIsAttached(const XorClause& c) const;
 
     // Misc:
     //
@@ -560,7 +561,7 @@ protected:
     const bool verifyModel      () const;
     const bool verifyBinClauses() const;
     const bool verifyClauses    (const vec<Clause*>& cs) const;
-    const bool verifyXorClauses (const vec<XorClause*>& cs) const;
+    const bool verifyXorClauses () const;
 
     // Debug & etc:
     void     printLit         (const Lit l) const;

@@ -368,5 +368,17 @@ inline std::ostream& operator<<(std::ostream& cout, const Clause& cl)
     return cout;
 }
 
+inline std::ostream& operator<<(std::ostream& cout, const XorClause& cl)
+{
+    cout << "x";
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        cout << cl[i].var() + 1 << " ";
+    }
+    if (cl.xorEqualFalse()) cout << " =  false";
+    else cout << " = true";
+
+    return cout;
+}
+
 
 #endif //CLAUSE_H

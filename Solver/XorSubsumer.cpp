@@ -212,6 +212,10 @@ void XorSubsumer::fillCannotEliminate()
 
 void XorSubsumer::extendModel(Solver& solver2)
 {
+    #ifdef VERBOSE_DEBUG
+    std::cout << "XorSubsumer::extendModel(Solver& solver2) called" << std::endl;
+    #endif
+
     assert(checkElimedUnassigned());
     vec<Lit> tmp;
     typedef map<Var, vector<XorClause*> > elimType;
@@ -230,8 +234,7 @@ void XorSubsumer::extendModel(Solver& solver2)
             tmp.clear();
             tmp.growTo(c.size());
             std::copy(c.getData(), c.getDataEnd(), tmp.getData());
-            bool inverted = c.xorEqualFalse();
-            solver2.addXorClause(tmp, inverted);
+            solver2.addXorClause(tmp, c.xorEqualFalse());
             assert(solver2.ok);
         }
     }
@@ -430,11 +433,17 @@ const bool XorSubsumer::unEliminate(const Var var)
     var_elimed[var] = false;
     numElimed--;
     assert(it != elimedOutVar.end());
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Reinserting xor elimed var: " << var+1 << std::endl;
+    #endif
 
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
     solver.libraryCNFFile = NULL;
     for (vector<XorClause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         XorClause& c = **it2;
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Reinserting elimed clause: " << c << std::endl;;
+        #endif
         solver.addXorClause(c, c.xorEqualFalse());
         solver.clauseAllocator.clauseFree(&c);
     }
@@ -579,12 +588,15 @@ void XorSubsumer::findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed)
 
 const bool XorSubsumer::checkElimedUnassigned() const
 {
+    uint32_t checkNumElimed = 0;
     for (uint32_t i = 0; i < var_elimed.size(); i++) {
         if (var_elimed[i]) {
+            checkNumElimed++;
             assert(solver.assigns[i] == l_Undef);
             if (solver.assigns[i] != l_Undef) return false;
         }
     }
+    assert(numElimed == checkNumElimed);
 
     return true;
 }

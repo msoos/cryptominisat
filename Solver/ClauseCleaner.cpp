@@ -172,9 +172,9 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
             __builtin_prefetch(*(s+1), 1, 0);
 
         #ifdef DEBUG_ATTACH
-        assert(find(solver.xorwatches[(**s)[0].var()], *s));
-        assert(find(solver.xorwatches[(**s)[1].var()], *s));
-        if (solver.assigns[(**s)[0].var()]!=l_Undef || solver.assigns[(**s)[1].var()]!=l_Undef) {
+        XorClause& c = **s;
+        assert(solver.xorClauseIsAttached(c));
+        if (solver.assigns[c[0].var()]!=l_Undef || solver.assigns[c[1].var()]!=l_Undef) {
             satisfied(**s);
         }
         #endif //DEBUG_ATTACH
@@ -185,8 +185,7 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
             //(*s)->setRemoved();
         } else {
             #ifdef DEBUG_ATTACH
-            assert(find(solver.xorwatches[(**s)[0].var()], *s));
-            assert(find(solver.xorwatches[(**s)[1].var()], *s));
+            assert(solver.xorClauseIsAttached(c));
             #endif //DEBUG_ATTACH
             *ss++ = *s;
         }

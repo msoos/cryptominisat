@@ -164,8 +164,8 @@ const bool XorFinder::findXors(uint32_t& sumLengths)
             solver.varReplacer->replace(lits, impair, old_group);
 
             #ifdef VERBOSE_DEBUG
-            cout << "- Final 2-long xor-clause: ";
-            printXorClause(lits, impair);
+            cout << "- Final 2-long xor-clause: "
+            << lits[0] << " , " << lits[1] << " impair: " << impair << std::endl;
             #endif
             break;
         }
@@ -175,8 +175,7 @@ const bool XorFinder::findXors(uint32_t& sumLengths)
             solver.attachClause(*x);
 
             #ifdef VERBOSE_DEBUG
-            cout << "- Final xor-clause: ";
-            x->plainPrint();
+            cout << "- Final xor-clause: " << x << std::endl;;
             #endif
         }
         }

@@ -53,6 +53,10 @@ caller to call solver2.solve().
 */
 void Subsumer::extendModel(Solver& solver2)
 {
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Subsumer::extendModel(Solver& solver2) called" << std::endl;
+    #endif
+
     assert(checkElimedUnassigned());
     vec<Lit> tmp;
     typedef map<Var, vector<Clause*> > elimType;
@@ -133,7 +137,7 @@ const bool Subsumer::unEliminate(const Var var)
     var_elimed[var] = false;
     numElimed--;
     #ifdef VERBOSE_DEBUG
-    std::cout << "Reinserting elimed var: " << var+1 << std::endl;
+    std::cout << "Reinserting normal (non-xor) elimed var: " << var+1 << std::endl;
     #endif
 
     //If the variable was removed because of
@@ -1362,8 +1366,7 @@ template<class T>
 void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "findSubsumed: ";
-    printClause(ps);
+    cout << "findSubsumed: " << ps << std::endl;
     #endif
 
     for (uint32_t i = 0; i != ps.size(); i++)
@@ -1415,8 +1418,7 @@ template<class T>
 void Subsumer::findSubsumed1(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "findSubsumed1: ";
-    printClause(ps);
+    cout << "findSubsumed1: " << ps << std::endl;
     #endif
 
     Var minVar = var_Undef;
@@ -1950,12 +1952,15 @@ the running of this class.
 */
 const bool Subsumer::checkElimedUnassigned() const
 {
+    uint32_t checkNumElimed = 0;
     for (uint32_t i = 0; i < var_elimed.size(); i++) {
         if (var_elimed[i]) {
+            checkNumElimed++;
             assert(solver.assigns[i] == l_Undef);
             if (solver.assigns[i] != l_Undef) return false;
         }
     }
+    assert(numElimed == checkNumElimed);
 
     return true;
 }

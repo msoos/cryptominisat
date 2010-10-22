@@ -441,23 +441,28 @@ void Solver::print_gauss_sum_stats()
 */
 void Solver::sortWatched()
 {
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Sorting watchlists:" << std::endl;
+    #endif
     double myTime = cpuTime();
     for (vec<Watched> *i = watches.getData(), *end = watches.getDataEnd(); i != end; i++) {
+        if (i->size() == 0) continue;
         #ifdef VERBOSE_DEBUG
         vec<Watched>& ws = *i;
-        std::cout << "Before:" << std::endl;
+        std::cout << "Before sorting:" << std::endl;
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBinary()) std::cout << "Binary,";
             if (ws[i2].isTriClause()) std::cout << "Tri,";
             if (ws[i2].isClause()) std::cout << "Normal,";
             if (ws[i2].isXorClause()) std::cout << "Xor,";
         }
+        std::cout << std::endl;
         #endif //VERBOSE_DEBUG
 
         std::sort(i->getData(), i->getDataEnd(), WatchedSorter());
 
         #ifdef VERBOSE_DEBUG
-        std::cout << "After:" << std::endl;
+        std::cout << "After sorting:" << std::endl;
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBinary()) std::cout << "Binary,";
             if (ws[i2].isTriClause()) std::cout << "Tri,";

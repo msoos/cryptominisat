@@ -25,19 +25,14 @@ void Solver::testAllClauseAttach() const
 {
     for (Clause *const*it = clauses.getData(), *const*end = clauses.getDataEnd(); it != end; it++) {
         const Clause& c = **it;
-        if (c.size() > 2) {
-            assert(findWatchedCl(watches[(~c[0]).toInt()], &c));
-            assert(findWatchedCl(watches[(~c[1]).toInt()], &c));
-        } else {
-            assert(findWatchedBinCl(binwatches[(~c[0]).toInt()], &c));
-            assert(findWatchedBinCl(binwatches[(~c[1]).toInt()], &c));
-        }
+        assert(findWCl(watches[(~c[0]).toInt()], clauseAllocator.getOffset(&c)));
+        assert(findWCl(watches[(~c[1]).toInt()], clauseAllocator.getOffset(&c)));
     }
 
     for (XorClause *const*it = xorclauses.getData(), *const*end = xorclauses.getDataEnd(); it != end; it++) {
         const XorClause& c = **it;
-        assert(find(xorwatches[c[0].var()], &c));
-        assert(find(xorwatches[c[1].var()], &c));
+        assert(xorClauseIsAttached(c));
+
         if (assigns[c[0].var()]!=l_Undef || assigns[c[1].var()]!=l_Undef) {
             for (uint32_t i = 0; i < c.size();i++) {
                 assert(assigns[c[i].var()] != l_Undef);
@@ -46,22 +41,25 @@ void Solver::testAllClauseAttach() const
     }
 }
 
+const bool Solver::xorClauseIsAttached(const XorClause& c) const
+{
+    ClauseOffset offset = clauseAllocator.getOffset(&c);
+    bool attached = true;
+    attached &= findWXCl(watches[(c[0]).toInt()], offset);
+    attached &= findWXCl(watches[(~c[0]).toInt()], offset);
+    attached &= findWXCl(watches[(c[1]).toInt()], offset);
+    attached &= findWXCl(watches[(~c[1]).toInt()], offset);
+
+    return attached;
+}
+
 void Solver::findAllAttach() const
 {
-    for (uint32_t i = 0; i < binwatches.size(); i++) {
-        for (uint32_t i2 = 0; i2 < binwatches[i].size(); i2++) {
-            assert(findClause(binwatches[i][i2].clause));
-        }
-    }
     for (uint32_t i = 0; i < watches.size(); i++) {
         for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
-            assert(findClause(watches[i][i2].clause));
-        }
-    }
-
-    for (uint32_t i = 0; i < xorwatches.size(); i++) {
-        for (uint32_t i2 = 0; i2 < xorwatches[i].size(); i2++) {
-            assert(findClause(xorwatches[i][i2]));
+            const Watched& w = watches[i][i2];
+            if (w.isClause()) findClause(clauseAllocator.getPointer(w.getOffset()));
+            if (w.isXorClause()) findClause(clauseAllocator.getPointer(w.getOffset()));
         }
     }
 }
@@ -76,18 +74,11 @@ const bool Solver::findClause(XorClause* c) const
 
 const bool Solver::findClause(Clause* c) const
 {
-    for (uint32_t i = 0; i < binaryClauses.size(); i++) {
-        if (binaryClauses[i] == c) return true;
-    }
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i] == c) return true;
     }
     for (uint32_t i = 0; i < learnts.size(); i++) {
         if (learnts[i] == c) return true;
-    }
-    vec<Clause*> cs = varReplacer->getClauses();
-    for (uint32_t i = 0; i < cs.size(); i++) {
-        if (cs[i] == c) return true;
     }
 
     return false;
@@ -102,7 +93,7 @@ void Solver::checkSolution()
     model.clear();
 }
 
-const bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
+const bool Solver::verifyXorClauses() const
 {
     #ifdef VERBOSE_DEBUG
     cout << "Checking xor-clauses whether they have been properly satisfied." << endl;;
@@ -115,7 +106,7 @@ const bool Solver::verifyXorClauses(const vec<XorClause*>& cs) const
         bool final = c.xorEqualFalse();
 
         #ifdef VERBOSE_DEBUG
-        printXorClause(*cs[i], c.xorEqualFalse());
+        std::cout << "verifying xor clause: " << c << std::endl;
         #endif
 
         for (uint32_t j = 0; j < c.size(); j++) {
@@ -182,8 +173,9 @@ const bool Solver::verifyModel() const
 {
     bool verificationOK = true;
     verificationOK &= verifyClauses(clauses);
+    verificationOK &= verifyClauses(learnts);
     verificationOK &= verifyBinClauses();
-    verificationOK &= verifyXorClauses(xorclauses);
+    verificationOK &= verifyXorClauses();
 
     if (verbosity >=1 && verificationOK)
         printf("c Verified %d clauses.\n", clauses.size() + xorclauses.size());
