@@ -22,6 +22,16 @@ def setlimits():
     sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
+def unique_fuzz_file(file_name_begin):
+    counter = 1
+    while 1:
+        file_name = file_name_begin + '_' + str(counter) + ".cnf"
+        try:
+            fd = os.open(file_name, os.O_CREAT | os.O_EXCL)
+            return os.fdopen(fd), file_name
+        except OSError:
+            pass
+        counter += 1
 
 class Tester:
 
@@ -482,20 +492,26 @@ class Tester:
             i = 0
 
             while i < 100000000:
-                commands.getoutput("./fuzzsat > fuzzTest")
-                None
+                fileopened, file_name = unique_fuzz_file("fuzzTest");
+                fileopened.close()
+                commands.getoutput("./fuzzsat > %s" %(file_name))
+
                 for i3 in range(num):
-                    self.check(fname="fuzzTest", fnameCheck="fuzzTest",
+                    self.check(fname=file_name, fnameCheck=file_name,
                                randomizeNum=i3, needToLimitTime=True)
 
-                commands.getoutput("./cnffuzz > fuzzTest")
-                None
+                os.unlink(file_name)
+                fileopened, file_name = unique_fuzz_file("fuzzTest");
+                fileopened.close()
+                commands.getoutput("./cnffuzz > %s" % (file_name))
+
                 for i3 in range(num):
-                    self.check(fname="fuzzTest", fnameCheck="fuzzTest",
+                    self.check(fname=file_name, fnameCheck=file_name,
                                randomizeNum=i3, needToLimitTime=True)
 
                     i = i + 1
-                    None
+                os.unlink(file_name)
+
             exit()
 
         if self.checkDirOnly:
