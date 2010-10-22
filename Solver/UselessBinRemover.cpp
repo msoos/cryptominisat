@@ -20,15 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
-#include "OnlyNonLearntBins.h"
 
-/**
-@p _onlyNonLearntBins This class MUST be filled with all non-learnt binary
-clauses of _solver
-*/
-UselessBinRemover::UselessBinRemover(Solver& _solver, OnlyNonLearntBins& _onlyNonLearntBins) :
+//#define VERBOSE_DEBUG
+
+UselessBinRemover::UselessBinRemover(Solver& _solver) :
     solver(_solver)
-    , onlyNonLearntBins(_onlyNonLearntBins)
 {
 }
 
@@ -55,7 +51,9 @@ const bool UselessBinRemover::removeUslessBinFull()
     uint32_t origHeapSize = solver.order_heap.size();
     uint64_t origProps = solver.propagations;
     bool fixed = false;
-    uint32_t extraTime = solver.binaryClauses.size() / EXTRATIME_DIVIDER;
+    uint32_t extraTime = 0;
+    uint32_t numBinsBefore = solver.numBins;
+    solver.sortWatched(); //VERY important
 
     uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
     for (uint32_t i = 0; i != solver.order_heap.size(); i++) {
@@ -84,13 +82,11 @@ const bool UselessBinRemover::removeUslessBinFull()
         }
     }
 
-    uint32_t removedUselessBin = onlyNonLearntBins.removeBins();
-
     if (fixed) solver.order_heap.filter(Solver::VarFilter(solver));
 
     if (solver.verbosity >= 1) {
         std::cout
-        << "c Removed useless bin:" << std::setw(8) << removedUselessBin
+        << "c Removed useless bin:" << std::setw(8) << (numBinsBefore - solver.numBins)
         << "  fixed: " << std::setw(5) << (origHeapSize - solver.order_heap.size())
         << "  props: " << std::fixed << std::setprecision(2) << std::setw(6) << (double)(solver.propagations - origProps)/1000000.0 << "M"
         << "  time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << " s"
@@ -119,7 +115,7 @@ const bool UselessBinRemover::removeUselessBinaries(const Lit& lit)
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     //Propagate only one hop
-    failed = !onlyNonLearntBins.propagateBinOneLevel();
+    failed = !solver.propagateBinOneLevel(false);
     if (failed) return false;
     bool ret = true;
 
@@ -183,9 +179,15 @@ void UselessBinRemover::removeBin(const Lit& lit1, const Lit& lit2)
     std::cout << "Removing useless bin: " << lit1 << " " << lit2 << std::endl;
     #endif //VERBOSE_DEBUG
 
-    removeWBinAll(solver.watches[(~lit1).toInt()], lit2);
-    removeWBinAll(solver.watches[(~lit2).toInt()], lit1);
-    onlyNonLearntBins.removeBin(lit1, lit2);
+    std::pair<uint32_t, uint32_t> removed1 = removeWBinAll(solver.watches[(~lit1).toInt()], lit2);
+    std::pair<uint32_t, uint32_t> removed2 = removeWBinAll(solver.watches[(~lit2).toInt()], lit1);
+    assert(removed1 == removed2);
+
+    assert((removed1.first + removed2.first) % 2 == 0);
+    assert((removed1.second + removed2.second) % 2 == 0);
+    solver.learnts_literals -= (removed1.first + removed2.first);
+    solver.clauses_literals -= (removed1.second + removed2.second);
+    solver.numBins -= (removed1.first + removed2.first + removed1.second + removed2.second)/2;
 }
 
 /**
@@ -199,7 +201,7 @@ const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit& origLit, const 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     //if it's a cycle, it doesn't work, so don't propagate origLit
-    failed = !onlyNonLearntBins.propagateBinExcept(origLit);
+    failed = !solver.propagateBinExcept(false, origLit);
     if (failed) return false;
 
     assert(solver.decisionLevel() > 0);

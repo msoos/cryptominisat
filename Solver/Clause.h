@@ -56,12 +56,6 @@ protected:
     uint32_t isLearnt:1; ///<Is the clause a learnt clause?
     uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
     /**
-    @brief Is the clause sorted in the binaryClauses[]?
-
-    If it is a new clause, this is set to FALSE
-    */
-    uint32_t sorted:1;
-    /**
     @brief Is the XOR equal to 1 or 0?
 
     i.e. "a + b" = TRUE or FALSE? -- we only have variables inside xor clauses,
@@ -72,19 +66,8 @@ protected:
     uint32_t isXorEqualFalse:1;
     uint32_t isXorClause:1; ///< Is the clause an XOR clause?
     uint32_t subsume0Done:1; ///Has normal subsumption been done with this clause?
-    uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
+    //uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
-    /**
-    @brief When the clause was allocated, was it a binary clause?
-
-    This is imporant, because if the cluause is binary AT THE MOMENT OF
-    ALLOCATION, it is allocated differently. Note that clauses can shrink, so
-    clauses may become binary, even though they were allocated the "normal" way,
-    i.e. with ClauseAllocator's special stack-allocation procedure. We need to
-    know if a cluase was allocated specially or not, so that we can properly
-    free it
-    */
-    uint32_t wasBinInternal:1;
     uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
     uint32_t mySize:19; ///<The current size of the clause
 
@@ -117,12 +100,12 @@ public:
     template<class V>
     Clause(const V& ps, const uint32_t _group, const bool learnt)
     {
-        wasBinInternal = (ps.size() == 2);
         isFreed = false;
         isXorClause = false;
+        assert(ps.size() > 2);
         mySize = ps.size();
         isLearnt = learnt;
-        isRemoved = false;
+        //isRemoved = false;
         setGroup(_group);
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
@@ -183,7 +166,6 @@ public:
     void setStrenghtened()
     {
         strenghtened = true;
-        sorted = false;
         subsume0Done = false;
         calcAbstractionClause();
     }
@@ -191,21 +173,6 @@ public:
     void unsetStrenghtened()
     {
         strenghtened = false;
-    }
-
-    const bool getSorted() const
-    {
-        return sorted;
-    }
-
-    void setSorted()
-    {
-        sorted = true;
-    }
-
-    void setUnsorted()
-    {
-        sorted = false;
     }
 
     void subsume0Finished()
@@ -322,7 +289,7 @@ public:
         return;
     }
     #endif //STATS_NEEDED
-    void setRemoved()
+    /*void setRemoved()
     {
         isRemoved = true;
     }
@@ -330,26 +297,16 @@ public:
     const bool removed() const
     {
         return isRemoved;
-    }
+    }*/
 
     void setFreed()
     {
         isFreed = true;
     }
 
-    const bool freed() const
+    const bool getFreed() const
     {
         return isFreed;
-    }
-
-    const bool wasBin() const
-    {
-        return wasBinInternal;
-    }
-
-    void setWasBin(const bool toSet)
-    {
-        wasBinInternal = toSet;
     }
 };
 
@@ -402,6 +359,26 @@ public:
 
     friend class MatrixFinder;
 };
+
+inline std::ostream& operator<<(std::ostream& cout, const Clause& cl)
+{
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        cout << cl[i] << " ";
+    }
+    return cout;
+}
+
+inline std::ostream& operator<<(std::ostream& cout, const XorClause& cl)
+{
+    cout << "x";
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        cout << cl[i].var() + 1 << " ";
+    }
+    if (cl.xorEqualFalse()) cout << " =  false";
+    else cout << " = true";
+
+    return cout;
+}
 
 
 #endif //CLAUSE_H

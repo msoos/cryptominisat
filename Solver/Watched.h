@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ClauseOffset.h"
 #include "SolverTypes.h"
+#include <stdio.h>
 
 /**
 @brief An element in the watchlist. Natively contains 2- and 3-long clauses, others are referenced by pointer
@@ -62,9 +63,10 @@ class Watched {
         /**
         @brief Constructor for a binary clause
         */
-        Watched(const Lit lit)
+        Watched(const Lit lit, const bool learnt)
         {
             data1 = (uint32_t)0 + (lit.toInt() << 2);
+            setLearnt(learnt);
         }
 
         /**
@@ -129,6 +131,33 @@ class Watched {
         }
 
         /**
+        @brief Set the sole other lit of the binary clause
+        */
+        void setOtherLit(const Lit lit)
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isBinary());
+            #endif
+            data1 = lit.toInt() << 2;
+        }
+
+        const bool getLearnt() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isBinary());
+            #endif
+            return (bool)data2;
+        }
+
+        void setLearnt(const bool learnt)
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isBinary());
+            #endif
+            data2 = learnt;
+        }
+
+        /**
         @brief Get the 3rd literal of a 3-long clause
         */
         const Lit getOtherLit2() const
@@ -159,6 +188,12 @@ class Watched {
             assert(isClause() || isXorClause());
             #endif
             return (ClauseOffset)(data2);
+        }
+
+        void dump(FILE* outfile, const Lit lit) const
+        {
+            assert(isBinary());
+            fprintf(outfile, "%s%d %s%d 0", (lit.sign() ?"-":""), lit.var()+1 , getOtherLit().sign() ? "-":"", getOtherLit().var()+1);
         }
 
     private:

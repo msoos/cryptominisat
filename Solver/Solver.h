@@ -73,6 +73,7 @@ class PartHandler;
 class RestartTypeChooser;
 class StateSaver;
 class UselessBinRemover;
+class SCCFinder;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -122,9 +123,9 @@ public:
     template<class T>
     bool    addClause (T& ps, const uint32_t group = 0, const char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, const char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addLearntClause(T& ps, const uint32_t group = 0, const char* group_name = NULL, const uint32_t glue = 10, const float miniSatActivity = 10.0);
     template<class T>
-    bool addLearntClause(T& ps, const uint32_t glue, const float miniSatActivity, const uint32_t group);
+    bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, const char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
@@ -175,7 +176,7 @@ public:
     bool      conglomerateXors;   ///<Do variable elimination at the XOR-level (xor-ing 2 xor clauses thereby removing a variable)
     bool      heuleProcess;       ///<Perform local subsitutuion as per Heule's theis
     bool      schedSimplification;///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
-    bool      doSubsumption;      ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
+    bool      doSatELite;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
     bool      doXorSubsumption;   ///<Should try to subsume & local-subsitute xor clauses
     bool      doPartHandler;      ///<Should try to find disconnected components and solve them individually?
     bool      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
@@ -183,16 +184,15 @@ public:
     bool      doVarElim;          ///<Perform variable elimination
     bool      doSubsume1;         ///<Perform self-subsuming resolution
     bool      doAsymmBranch;      ///<Perform asymmetric branching at the beginning of the solving
-    bool      doAsymmBranchReg;   ///<Perform asymmetric branching regularly
     bool      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
     bool      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
     bool      doMinimLMoreRecur;  ///<Always perform recursive/transitive on-the-fly self self-subsuming resolution --> an enhancement of "strong minimization" of PrecoSat
-    bool      failedVarSearch;    ///<Do Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
-    bool      addExtraBins;       ///<Should perform hyper-binary resolution during failed literal probing?
-    bool      remUselessBins;     ///<Should try to remove useless binary clauses at the beginning of solving?
-    bool      regRemUselessBins;  ///<Should try to remove useless binary clauses regularly?
-    bool      subsWNonExistBins;  ///<Try to do subsumption and self-subsuming resolution with non-existent binary clauses (i.e. binary clauses that don't exist but COULD exists)
-    bool      regSubsWNonExistBins;
+    bool      doFailedVarSearch;    ///<Do Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
+    bool      doRemUselessBins;     ///<Should try to remove useless binary clauses at the beginning of solving?
+    bool      doSubsWBins;
+    bool      doSubsWNonExistBins;  ///<Try to do subsumption and self-subsuming resolution with non-existent binary clauses (i.e. binary clauses that don't exist but COULD exists)
+
+    //interrupting & dumping
     bool      needToInterrupt;    ///<Used internally mostly. If set to TRUE, we will interrupt cleanly ASAP. The important thing is "cleanly", since we need to wait until a point when all datastructures are in a sane state (i.e. not in the middle of some algorithm)
     bool      needToDumpLearnts;  ///<If set to TRUE, learnt clauses will be dumped to the file speified by "learntsFilename"
     bool      needToDumpOrig;     ///<If set to TRUE, a simplified version of the original clause-set will be dumped to the file speified by "origFilename". The solution to this file should perfectly satisfy the problem
@@ -242,15 +242,14 @@ public:
     uint64_t conflicts; ///<Num conflicts
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
     uint64_t nbGlue2; ///<Num learnt clauses that had a glue of 2 when created
-    uint64_t nbBin; ///<Num learnt clauses that were binary when created
-    uint64_t lastNbBin; ///<Last time we seached for binary xors, the number of clauses in binaryClauses was this much    /**
+    uint64_t numNewBin; ///<Num learnt clauses that were binary when created
+    uint64_t lastNbBin; ///<Last time we seached for SCCs, numBins was this much
     /**
     @brief When a clause becomes binary through shrinking, we increment this
 
     It is used to determine if we should try to look for binary xors among
     the binary clauses
     */
-    uint64_t becameBinary;
     uint64_t lastSearchForBinaryXor; ///<Last time we looked for binary xors, this many bogoprops(=propagations) has been done
     uint64_t nbReduceDB; ///<Number of times learnt clause have been cleaned
     uint64_t improvedClauseNo; ///<Num clauses improved using on-the-fly subsumption
@@ -260,6 +259,8 @@ public:
     uint64_t moreRecurMinLDo; ///< Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
     uint64_t updateTransCache;
     uint64_t nbClOverMaxGlue;
+    double simpStartMult;
+    double simpStartMMult;
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -292,7 +293,9 @@ public:
     blocked clause elimination, subsumption and self-subsuming resolution
     using non-existent binary clauses.
     */
-    const double   getTotalTimeSubsumer() const;
+    const double getTotalTimeSubsumer() const;
+
+    const double getTotalTimeFailedVarSearcher() const;
 
     /**
     @brief Get total time spent in XorSubsumer.
@@ -338,10 +341,10 @@ protected:
     bool                ok;               ///< If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
     ClauseAllocator     clauseAllocator;  ///< Handles memory allocation for claues
     vec<Clause*>        clauses;          ///< List of problem clauses that are normally larger than 2. Sometimes, due to on-the-fly self-subsuming resoulution, clauses here become 2-long. They are never purposfully put here such that they are long
-    vec<Clause*>        binaryClauses;    ///< Binary clauses are regularly moved here. When Clause::sorted is true, they are sorted here
     vec<XorClause*>     xorclauses;       ///< List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          ///< List of learnt clauses.
-    vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
+    uint32_t            numBins;
+    //vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
     double              cla_inc;          ///< Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          ///< The current assignments
@@ -429,7 +432,9 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
-    PropBy   propagateBin();
+    PropBy   propagateBin(const bool alsoLearnt = true);
+    const bool propagateBinExcept(const bool alsoLearnt, const Lit exceptLit);
+    const bool propagateBinOneLevel(const bool alsoLearnt);
     PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
     void     propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
     void     propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
@@ -464,10 +469,12 @@ protected:
     /////////////////
     // Operations on clauses:
     /////////////////
+    template<class T> const bool addClauseHelper(T& ps, const uint32_t group, const char* group_name);
     template <class T>
-    Clause*    addClauseInt(T& ps, uint32_t group);
+    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0);
     template<class T>
     XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group);
+    void       attachBinClause(const Lit lit1, const Lit lit2, const bool learnt);
     void       attachClause     (XorClause& c);
     void       attachClause     (Clause& c);             // Attach a clause to watcher lists.
     void       detachClause     (const XorClause& c);
@@ -485,6 +492,7 @@ protected:
     void       findAllAttach() const;
     const bool findClause(XorClause* c) const;
     const bool findClause(Clause* c) const;
+    const bool xorClauseIsAttached(const XorClause& c) const;
 
     // Misc:
     //
@@ -514,6 +522,7 @@ protected:
     friend class OnlyNonLearntBins;
     friend class ClauseAllocator;
     friend class CompleteDetachReatacher;
+    friend class SCCFinder;
     Conglomerate*       conglomerate;
     VarReplacer*        varReplacer;
     ClauseCleaner*      clauseCleaner;
@@ -523,6 +532,7 @@ protected:
     XorSubsumer*        xorSubsumer;
     RestartTypeChooser* restartTypeChooser;
     MatrixFinder*       matrixFinder;
+    SCCFinder*          sCCFinder;
 
     /////////////////////////
     // Restart type handling
@@ -549,8 +559,9 @@ protected:
     /////////////////////////////
     void       checkSolution    ();
     const bool verifyModel      () const;
+    const bool verifyBinClauses() const;
     const bool verifyClauses    (const vec<Clause*>& cs) const;
-    const bool verifyXorClauses (const vec<XorClause*>& cs) const;
+    const bool verifyXorClauses () const;
 
     // Debug & etc:
     void     printLit         (const Lit l) const;
@@ -562,13 +573,20 @@ protected:
     void     addSymmBreakClauses();
     void     initialiseSolver();
 
+    //Misc related binary clauses
+    void     dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const;
+    const uint32_t countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
+    const uint32_t getBinWatchSize(const bool alsoLearnt, const Lit lit);
+    void  printStrangeBinLit(const Lit lit) const;
+
     /////////////////////
     // Polarity chooser
     /////////////////////
     void calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
     bool defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
-    void tallyVotes(const vec<Clause*>& cs, vector<double>& votes) const;
-    void tallyVotes(const vec<XorClause*>& cs, vector<double>& votes) const;
+    void tallyVotesBin(vec<double>& votes) const;
+    void tallyVotes(const vec<Clause*>& cs, vec<double>& votes) const;
+    void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
     void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
     vector<bool> polarity;      // The preferred polarity of each variable.
     #ifdef USE_OLD_POLARITIES
@@ -677,7 +695,7 @@ inline uint32_t      Solver::nAssigns      ()      const
 }
 inline uint32_t      Solver::nClauses      ()      const
 {
-    return clauses.size() + xorclauses.size()+binaryClauses.size();
+    return clauses.size() + xorclauses.size();
 }
 inline uint32_t      Solver::nLiterals      ()      const
 {

@@ -14,7 +14,7 @@ target_link_libraries(cryptominisat
     cryptominisatlib
     ${ZLIB_LIBRARY}
 #    ${Boost_LIBRARIES}
-#    ${CMAKE_THREAD_LIBS_INIT}
+    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 add_library(cryptominisatlib
@@ -27,7 +27,7 @@ add_library(cryptominisatlib
     XorFinder.cpp
     MatrixFinder.cpp
     VarReplacer.cpp
-    FindUndef.cpp
+#   FindUndef.cpp
     ClauseCleaner.cpp
     RestartTypeChooser.cpp
     FailedVarSearcher.cpp
@@ -38,8 +38,9 @@ add_library(cryptominisatlib
     StateSaver.cpp
     ClauseAllocator.cpp
     UselessBinRemover.cpp
-    OnlyNonLearntBins.cpp
+#    OnlyNonLearntBins.cpp
     CompleteDetachReattacher.cpp
     DimacsParser.cpp
+    SCCFinder.cpp
 )
 

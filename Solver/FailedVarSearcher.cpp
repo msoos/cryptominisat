@@ -43,6 +43,7 @@ using std::set;
 FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
     , tmpPs(2)
+    , totalTime(0)
     , finishedLastTimeVar(true)
     , lastTimeWentUntilVar(0)
     , finishedLastTimeBin(true)
@@ -168,7 +169,7 @@ const bool FailedVarSearcher::search()
     uint32_t origHeapSize = solver.order_heap.size();
     StateSaver savedState(solver);
     Heap<Solver::VarOrderLt> order_heap_copy(solver.order_heap); //for hyperbin
-    uint64_t origBinClauses = solver.binaryClauses.size();
+    uint64_t origBinClauses = solver.numBins;
 
     //General Stats
     numFailed = 0;
@@ -211,7 +212,7 @@ const bool FailedVarSearcher::search()
     unPropagatedBin.resize(solver.nVars(), 0);
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
-    if (solver.addExtraBins && !orderLits()) return false;
+    if (solver.doHyperBinRes && !orderLits()) return false;
     maxHyperBinProps = numProps/6;
 
     //uint32_t fromBin;
@@ -297,7 +298,7 @@ end:
     bool removedOldLearnts = false;
     //Print results
     if (solver.verbosity >= 1)
-      printResults(myTime, solver.binaryClauses.size() - origBinClauses);
+      printResults(myTime, solver.numBins - origBinClauses);
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
@@ -305,8 +306,8 @@ end:
         double time = cpuTime();
         if ((int)origHeapSize - (int)solver.order_heap.size() >  (int)origHeapSize/15 && solver.nClauses() + solver.learnts.size() > 500000) {
             CompleteDetachReatacher reattacher(solver);
-            reattacher.completelyDetach();
-            const bool ret = reattacher.completelyReattach();
+            reattacher.detachNonBins();
+            const bool ret = reattacher.reattachNonBins();
             assert(ret == true);
             removedOldLearnts = true;
         } else {
@@ -319,6 +320,7 @@ end:
     }
 
     lastTimeFoundTruths = solver.trail.size() - origTrailSize;
+    totalTime += cpuTime() - myTime;
 
     savedState.restore();
 
@@ -363,8 +365,8 @@ const bool FailedVarSearcher::asymmBranch()
     Clause **i, **j;
     i = j = solver.clauses.getData();
     for (Clause **end = solver.clauses.getDataEnd(); i != end; i++) {
-        if (needToFinish || (**i).size() == 2 || asymmLastTimeWentUntil > 0) {
-            if (!needToFinish && (**i).size() != 2) {
+        if (needToFinish || asymmLastTimeWentUntil > 0) {
+            if (!needToFinish) {
                 asymmLastTimeWentUntil--;
                 thisTimeWentUntil++;
             }
@@ -438,6 +440,7 @@ const bool FailedVarSearcher::asymmBranch()
             std::cout << "-- Origsize:" << origSize << " newSize:" << (c2 == NULL ? 0 : c2->size()) << " toRemove:" << c.size() - done << " unused.size():" << unused.size() << std::endl;
             #endif
             extraDiff += 20;
+            //TODO cheating here: we don't detect a NULL return that is in fact a 2-long clause
             effectiveLit += origSize - (c2 == NULL ? 0 : c2->size());
             solver.clauseAllocator.clauseFree(&c);
 
@@ -553,6 +556,7 @@ const bool FailedVarSearcher::orderLits()
         << " props: " << std::setw(4) << (solver.propagations - oldProps)/1000 << "k"
         << std::endl;
     }
+    totalTime += cpuTime() - myTime;
     solver.propagations = oldProps;
 
     return true;
@@ -600,7 +604,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
             Var x = solver.trail[c].var();
             propagated.setBit(x);
-            if (solver.addExtraBins) {
+            if (solver.doHyperBinRes) {
                 unPropagatedBin.setBit(x);
                 propagatedVars.push(x);
             }
@@ -626,7 +630,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     //Hyper-binary resolution, and its accompanying data-structure cleaning
-    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
+    if (solver.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
     propagatedVars.clear();
     unPropagatedBin.setZero();
 
@@ -645,7 +649,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
             Var     x  = solver.trail[c].var();
             if (propagated[x]) {
-                if (solver.addExtraBins) {
+                if (solver.doHyperBinRes) {
                     unPropagatedBin.setBit(x);
                     propagatedVars.push(x);
                 }
@@ -701,7 +705,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.cancelUntil(0);
     }
 
-    if (solver.addExtraBins && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
+    if (solver.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
 
     for(uint32_t i = 0; i != bothSame.size(); i++) {
         solver.uncheckedEnqueue(bothSame[i]);
@@ -748,7 +752,7 @@ void FailedVarSearcher::hyperBinResolution(const Lit& lit)
     }
     solver.cancelUntil(0);
 
-    std::sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
+    std::stable_sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
     /*************************
     //To check that the ordering is the right way
     // --> i.e. to avoid mistake present in Glucose's ordering
@@ -831,7 +835,8 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
 
     tmpPs[0] = lit1;
     tmpPs[1] = lit2;
-    solver.addLearntClause(tmpPs, 0, 0, 0);
+    solver.addClauseInt(tmpPs, 0 , true);
+    tmpPs.clear();
     tmpPs.growTo(2);
     assert(solver.ok);
 }

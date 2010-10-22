@@ -34,28 +34,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 //=================================================================================================
 // Useful functions on vectors
 
-template<class T>
-static inline void printClause(T& ps)
-{
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        if (ps[i].sign()) printf("-");
-        printf("%d ", ps[i].var() + 1);
-    }
-    printf("0\n");
-}
-
-template<class T>
-static inline void printXorClause(T& ps, const bool xorEqualFalse)
-{
-    std::cout << "x";
-    if (xorEqualFalse) std::cout << "-";
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        std::cout << ps[i].var() + 1 << " ";
-    }
-    std::cout << "0" << std::endl;
-}
-
-
 template<class V, class T>
 static inline void remove(V& ts, const T& t)
 {
@@ -98,10 +76,11 @@ static bool    findWCl(const vec<Watched>& ws, const ClauseOffset c);
 static void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
 
 //Binary clause
-static bool    findWBin(const vec<Watched>& ws, const Lit impliedLit);
-static void    removeWBin(vec<Watched> &ws, const Lit impliedLit);
+//static bool    findWBin(const vec<Watched>& ws, const Lit impliedLit, const bool learnt);
+static void    removeWBin(vec<Watched> &ws, const Lit impliedLit, const bool learnt);
 static void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
-static void    removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
+static const std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
+static Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2, const bool learnt);
 
 //Xor Clause
 static bool    findWXCl(const vec<Watched>& ws, const ClauseOffset c);
@@ -148,17 +127,17 @@ static inline void removeWXCl(vec<Watched> &ws, const ClauseOffset c)
 //////////////////
 // BINARY Clause
 //////////////////
-static inline bool findWBin(const vec<Watched>& ws, const Lit impliedLit)
+/*static inline bool findWBin(const vec<Watched>& ws, const Lit impliedLit, const bool learnt)
 {
     uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
+    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit || ws[j].getLearnt() != learnt); j++);
     return j < ws.size();
-}
+}*/
 
-static inline void removeWBin(vec<Watched> &ws, const Lit impliedLit)
+static inline void removeWBin(vec<Watched> &ws, const Lit impliedLit, const bool learnt)
 {
     uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
+    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit || ws[j].getLearnt() != learnt); j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
@@ -173,15 +152,38 @@ static inline void removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
     ws.pop();
 }
 
-static inline void removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
+static inline const std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
 {
+    uint32_t removedLearnt = 0;
+    uint32_t removedNonLearnt = 0;
+
     Watched *i = ws.getData();
     Watched *j = i;
     for (Watched* end = ws.getDataEnd(); i != end; i++) {
         if (!i->isBinary() || i->getOtherLit() != impliedLit)
             *j++ = *i;
+        else {
+            if (i->getLearnt())
+                removedLearnt++;
+            else
+                removedNonLearnt++;
+        }
     }
-    ws.shrink(i-j);
+    ws.shrink_(i-j);
+
+    return std::make_pair(removedLearnt, removedNonLearnt);
+}
+
+static inline Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2, const bool learnt)
+{
+    vec<Watched>& ws = wsFull[(~lit1).toInt()];
+    for (Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+        if (i->isBinary() && i->getOtherLit() == lit2 && i->getLearnt() == learnt)
+            return *i;
+    }
+    assert(false);
+
+    return wsFull[0][0];
 }
 
 #endif

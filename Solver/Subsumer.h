@@ -21,7 +21,6 @@ using std::map;
 using std::priority_queue;
 
 class ClauseCleaner;
-class OnlyNonLearntBins;
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
@@ -41,12 +40,7 @@ public:
 
     //Called from main
     const bool simplifyBySubsumption(const bool alsoLearnt = false);
-    const bool subsumeWithBinaries(OnlyNonLearntBins* onlyNonLearntBins);
     void newVar();
-
-    //Used by cleaner
-    void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
-    ClauseSimp linkInClause(Clause& cl);
 
     //UnElimination
     void extendModel(Solver& solver2);
@@ -58,8 +52,11 @@ public:
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
     const map<Var, vector<Clause*> >& getElimedOutVar() const;
+    const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
 
 private:
+
+    const bool subsumeWithBinaries();
 
     friend class ClauseCleaner;
     friend class ClauseAllocator;
@@ -83,6 +80,7 @@ private:
     double totalTime;                      ///<Total time spent in this class
     uint32_t numElimed;                    ///<Total number of variables eliminated
     map<Var, vector<Clause*> > elimedOutVar; ///<Contains the clauses to use to uneliminate a variable
+    map<Var, vector<std::pair<Lit, Lit> > > elimedOutVarBin; ///<Contains the clauses to use to uneliminate a variable
 
     //Limits
     uint32_t numVarsElimed;               ///<Number of variables elimed in this run
@@ -97,12 +95,13 @@ private:
     void fillCannotEliminate();
     void clearAll();
     void setLimits(const bool alsoLearnt);
-    void subsume0AndSubsume1();
+    const bool subsume0AndSubsume1();
 
     //Finish-up
     void freeMemory();
     void addBackToSolver();
     void removeWrong(vec<Clause*>& cs);
+    void removeWrongBins();
     void removeAssignedVarsFromEliminated();
 
     //Iterations
@@ -112,6 +111,10 @@ private:
     //Touching
     void touch(const Var x);
     void touch(const Lit p);
+
+    //Used by cleaner
+    void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
+    ClauseSimp linkInClause(Clause& cl);
 
     //Findsubsumed
     template<class T>
@@ -126,6 +129,21 @@ private:
     const Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
 
+    //binary clause-subsumption
+    struct BinSorter {
+        const bool operator()(const Watched& first, const Watched& second)
+        {
+            assert(first.isBinary());
+            assert(second.isBinary());
+            if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
+            if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
+            if (first.getLearnt() == second.getLearnt()) return false;
+            if (!first.getLearnt()) return true;
+            return false;
+        };
+    };
+    void subsumeBinsWithBins();
+
     //subsume0
     struct subsume0Happened {
         bool subsumedNonLearnt;
@@ -136,11 +154,14 @@ private:
     template<class T>
     subsume0Happened subsume0Orig(const T& ps, uint32_t abs);
     void subsume0Touched();
+    void makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt);
 
     //subsume1
     void subsume1(Clause& ps);
+    const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
     void strenghten(ClauseSimp& c, const Lit toRemoveLit);
-    const bool cleanClause(Clause& c);
+    const bool cleanClause(Clause& ps);
+    const bool cleanClause(vec<Lit>& ps) const;
     void handleSize1Clause(const Lit lit);
 
     //Variable elimination
@@ -156,14 +177,40 @@ private:
                 (!(y.first < x.first) && x.second < y.second);
         }
     };
+    class ClAndBin {
+        public:
+            ClAndBin(ClauseSimp& cl) :
+                clsimp(cl)
+                , lit1(lit_Undef)
+                , lit2(lit_Undef)
+                , isBin(false)
+            {}
+
+            ClAndBin(const Lit _lit1, const Lit _lit2) :
+                clsimp(NULL, 0)
+                , lit1(_lit1)
+                , lit2(_lit2)
+                , isBin(true)
+            {}
+
+            ClauseSimp clsimp;
+            Lit lit1;
+            Lit lit2;
+            bool isBin;
+    };
     void orderVarsForElim(vec<Var>& order);
+    const uint32_t numNonLearntBins(const Lit lit) const;
     bool maybeEliminate(Var x);
-    void MigrateToPsNs(vec<ClauseSimp>& poss, vec<ClauseSimp>& negs, vec<ClauseSimp>& ps, vec<ClauseSimp>& ns, const Var x);
-    bool merge(const Clause& ps, const Clause& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
+    void removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const Var var);
+    void removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair<uint32_t, uint32_t>& removed);
+    bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
+    const bool eliminateVars();
+    void fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit);
 
     //Subsume with Nonexistent Bins
-    const bool subsWNonExistBinsFull(OnlyNonLearntBins* onlyNonLearntBins);
-    const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins);
+    const bool subsWNonExitsBinsFullFull();
+    const bool subsWNonExistBinsFull();
+    const bool subsWNonExistBins(const Lit& lit);
     void subsume0BIN(const Lit lit, const vec<char>& lits);
     bool subsNonExistentFinish;
     uint32_t doneNum;
@@ -203,7 +250,6 @@ private:
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
     uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
     uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
-    bool subsWithBins;         ///<Are we currently subsuming with binaries only?
 };
 
 template <class T, class T2>
@@ -336,6 +382,11 @@ inline void Subsumer::newVar()
 inline const map<Var, vector<Clause*> >& Subsumer::getElimedOutVar() const
 {
     return elimedOutVar;
+}
+
+inline const map<Var, vector<std::pair<Lit, Lit> > >& Subsumer::getElimedOutVarBin() const
+{
+    return elimedOutVarBin;
 }
 
 inline const vec<char>& Subsumer::getVarElimed() const

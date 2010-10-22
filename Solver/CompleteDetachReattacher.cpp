@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "CompleteDetachReattacher.h"
 #include "VarReplacer.h"
+#include "ClauseCleaner.h"
 
 CompleteDetachReatacher::CompleteDetachReatacher(Solver& _solver) :
     solver(_solver)
@@ -26,61 +27,57 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver& _solver) :
 /**
 @brief Completely detach all clauses
 */
-void CompleteDetachReatacher::completelyDetach()
+void CompleteDetachReatacher::detachNonBins()
 {
-    solver.clauses_literals = 0;
-    solver.learnts_literals = 0;
-    for (uint32_t i = 0; i < solver.nVars(); i++) {
-        solver.watches[i*2].clear();
-        solver.watches[i*2+1].clear();
-    }
-}
+    uint32_t oldNumBins = solver.numBins;
+    std::pair<uint64_t, uint64_t> tmp;
 
-/**
-@brief Detach clauses that are non-native in the watchlists
-
-This effectively means all clauses that are of size >3. Native clauses
-might not need to be detached, because playing around with their content
-does not affect their ability to do propagations
-*/
-void CompleteDetachReatacher::detachPointerUsingClauses()
-{
-    solver.clauses_literals = 0;
-    solver.learnts_literals = 0;
-    for (uint32_t i = 0; i < solver.nVars(); i++) {
-        clearWatchOfPointerUsers(solver.watches[i*2]);
-        clearWatchOfPointerUsers(solver.watches[i*2+1]);
+    std::pair<uint64_t, uint64_t> myNumBinHalfs;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
+        tmp = clearWatchNotBin(*it);
+        myNumBinHalfs.first += tmp.first;
+        myNumBinHalfs.second += tmp.second;
     }
+
+    solver.learnts_literals = myNumBinHalfs.first;
+    solver.clauses_literals = myNumBinHalfs.second;
+    solver.numBins = (solver.learnts_literals + solver.clauses_literals)/2;
+    assert(solver.numBins == oldNumBins);
 }
 
 /**
 @brief Helper function for detachPointerUsingClauses()
 */
-void CompleteDetachReatacher::clearWatchOfPointerUsers(vec<Watched>& ws)
+const std::pair<uint32_t, uint32_t> CompleteDetachReatacher::clearWatchNotBin(vec<Watched>& ws)
 {
+    uint32_t numRemainNonLearnt = 0;
+    uint32_t numRemainLearnt = 0;
+
     Watched* i = ws.getData();
     Watched* j = i;
     for (Watched *end = ws.getDataEnd(); i != end; i++) {
-        if (i->isBinary() || i->isTriClause()) {
+        if (i->isBinary()) {
+            if (i->getLearnt()) numRemainLearnt++;
+            else numRemainNonLearnt++;
             *j++ = *i;
         }
     }
     ws.shrink_(i-j);
+
+    return std::make_pair(numRemainLearnt, numRemainNonLearnt);
 }
 
 /**
 @brief Completely attach all clauses
 */
-const bool CompleteDetachReatacher::completelyReattach()
+const bool CompleteDetachReatacher::reattachNonBins()
 {
     assert(solver.ok);
 
-    cleanAndAttachClauses(solver.binaryClauses, true);
-    cleanAndAttachClauses(solver.clauses, false);
-    cleanAndAttachClauses(solver.learnts, false);
-
-    solver.varReplacer->reattachInternalClauses();
+    cleanAndAttachClauses(solver.clauses);
+    cleanAndAttachClauses(solver.learnts);
     cleanAndAttachClauses(solver.xorclauses);
+    solver.clauseCleaner->removeSatisfiedBins();
 
     if (solver.ok) solver.ok = (solver.propagate().isNULL());
 
@@ -92,17 +89,14 @@ const bool CompleteDetachReatacher::completelyReattach()
 
 May change solver.ok to FALSE (!)
 */
-inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<Clause*>& cs, const bool lookingThroughBinary)
+inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<Clause*>& cs)
 {
     Clause **i = cs.getData();
     Clause **j = i;
     for (Clause **end = cs.getDataEnd(); i != end; i++) {
         if (cleanClause(*i)) {
             solver.attachClause(**i);
-            if (!lookingThroughBinary && (**i).size() == 2)
-                solver.binaryClauses.push(*i);
-            else
-                *j++ = *i;
+            *j++ = *i;
         } else {
             solver.clauseAllocator.clauseFree(*i);
         }
@@ -134,6 +128,8 @@ inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<XorClause*>& cs)
 inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
 {
     Clause& ps = *cl;
+    assert(ps.size() > 2);
+
     Lit *i = ps.getData();
     Lit *j = i;
     for (Lit *end = ps.getDataEnd(); i != end; i++) {
@@ -152,11 +148,9 @@ inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
             solver.uncheckedEnqueue(ps[0]);
             return false;
 
-        case 2: if (i != j) {
-            Clause *c2 = solver.clauseAllocator.Clause_new(ps, ps.getGroup(), ps.learnt());
-            solver.becameBinary++;
-            solver.clauseAllocator.clauseFree(cl);
-            cl = c2;
+        case 2: {
+            solver.attachBinClause(ps[0], ps[1], ps.learnt());
+            return false;
         }
 
         default:;

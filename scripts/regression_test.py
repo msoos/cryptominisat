@@ -22,13 +22,23 @@ def setlimits():
     sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" % (os.getpid(), maxTime))
     resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
 
+def unique_fuzz_file(file_name_begin):
+    counter = 1
+    while 1:
+        file_name = file_name_begin + '_' + str(counter) + ".cnf"
+        try:
+            fd = os.open(file_name, os.O_CREAT | os.O_EXCL)
+            return os.fdopen(fd), file_name
+        except OSError:
+            pass
+        counter += 1
 
 class Tester:
 
     sumTime = 0.0
     sumProp = 0
     verbose = False
-    gaussUntil = 100
+    gaussUntil = 0
     testDir = "../tests/"
     testDirNewVar = "../tests/newVar/"
     cryptominisat = "../build/cryptominisat"
@@ -38,12 +48,14 @@ class Tester:
         "/home/soos/Development/sat_solvers/satcomp09/"
     ignoreNoSolution = False
     arminFuzzer = False
+    extraOptions = ""
+    needDebugLib = True
 
     def __init__(self):
         self.sumTime = 0.0
         self.sumProp = 0
         self.verbose = False
-        self.gaussUntil = 100
+        self.gaussUntil = 0
         self.testDir = "../tests/"
         self.testDirNewVar = "../tests/newVar/"
         self.cryptominisat = "../build/cryptominisat"
@@ -54,26 +66,28 @@ class Tester:
             "/home/soos/Development/sat_solvers/satcomp09/"
         self.ignoreNoSolution = False
         self.arminFuzzer = False
+        self.extraOptions = ""
+        self.needDebugLib = True
 
     def execute(self, fname, randomizeNum, newVar, needToLimitTime):
         if os.path.isfile(self.cryptominisat) != True:
-            print "Cannot file CryptoMiniSat executable. Searched in: '%s'" % \
+            print "Error: Cannot find CryptoMiniSat executable. Searched in: '%s'" % \
                 self.cryptominisat
-            exit()
+            print "Error code 300"
+            exit(300)
 
-        command = "%s --randomize=%d --debuglib " % (self.cryptominisat,
-                randomizeNum)
-        if newVar:
-            command += "--debugnewvar "
+        command = "%s --randomize=%d " % (self.cryptominisat,randomizeNum)
         command += "--gaussuntil=%d " % self.gaussUntil
-        None
+        if (self.needDebugLib) :
+            command += "--debuglib "
         if self.verbose == False:
             command += "--verbosity=0 "
-            None
+        if (newVar) :
+            command += "--debugnewvar "
+        command += self.extraOptions + " "
         command += fname
-        None
-        print "Executing: %s " % command
 
+        print "Executing: %s " % command
         if self.verbose:
             print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
         if (needToLimitTime) :
@@ -103,8 +117,9 @@ class Tester:
 
     def read_found(self, filename):
         if (os.path.isfile(filename) == False) :
-            print "ERROR! Filename to be read '%s' is not a file!" % filename
-            exit(-1);
+            print "Error: Filename to be read '%s' is not a file!" % filename
+            print "Error code 400"
+            exit(400);
         f = open(filename, "r")
         text = f.read()
         mylines = text.splitlines()
@@ -113,7 +128,8 @@ class Tester:
         if len(mylines) == 0:
             print "Error! CryptoMiniSat output is empty!"
             print "output lines: ", mylines
-            exit(-1)
+            print "Error code 500"
+            exit(500)
 
         unsat = False
         if 'UNSAT' in mylines[0]:
@@ -121,8 +137,9 @@ class Tester:
         elif 'SAT' in mylines[0]:
             unsat = False
         else:
-            print "Error! Cannot find if SAT or UNSAT. Maybe didn't finish running?"
-            exit(-1)
+            print "Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?"
+            print "Error code 500"
+            exit(500)
 
         value = {}
         if len(mylines) > 1:
@@ -146,7 +163,8 @@ class Tester:
             else:
                 print "Error! Output is empty!"
                 print "output : ", lines
-                exit(-1)
+                print "Error code 500"
+                exit(500)
 
         value = {}
         unsat = False
@@ -170,10 +188,10 @@ class Tester:
 
         if self.ignoreNoSolution == False and (sLineFound == False or
                 unsat == False and vLineFound == False):
-            print "Cannot find line starting with 's' or 'v' in output!"
-            None
+            print "Error: Cannot find line starting with 's' or 'v' in output!"
             print output
-            exit()
+            print "Error code 500"
+            exit(500)
 
         if self.ignoreNoSolution == True and (sLineFound == False or
                 unsat == False and vLineFound == False):
@@ -211,14 +229,16 @@ class Tester:
                     'true'
 
         if unsat != indicated_unsat:
-            print "UNSAT vs. SAT problem!"
-            exit()
+            print "Error: UNSAT vs. SAT problem!"
+            print "Error code 700"
+            exit(700)
         else:
             for (k, v) in indicated_value.iteritems():
                 if indicated_value[k] != value[k]:
-                    print "Problem of found values: values %d: '%s', '%s' don't match!" % \
+                    print "Error: Problem of found values: values %d: '%s', '%s' don't match with those pre-indicated in solution file" % \
                         (k, value[k], indicated_value[k])
-                    exit()
+                    print "Error code 800"
+                    exit(800)
 
     def check_regular_clause(self, line, value):
         lits = line.split()
@@ -245,9 +265,9 @@ class Tester:
             numlit = int(lit)
             if numlit != 0:
                 if abs(numlit) not in value:
-                    print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % \
-                        abs(numlit)
-                    exit(-1)
+                    print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit)
+                    print "Error code 200"
+                    exit(200)
                 final ^= value[abs(numlit)]
                 final ^= numlit < 0
         if final == False:
@@ -258,8 +278,7 @@ class Tester:
         if debugLibPart == 1000000:
             print "Verifying solution for CNF file %s" % fname
         else:
-            print "Verifying solution for CNF file %s, part %d" % (fname,
-                    debugLibPart)
+            print "Verifying solution for CNF file %s, part %d" % (fname, debugLibPart)
 
         if fnmatch.fnmatch(fname, '*.gz'):
             f = gzip.open(fname, "r")
@@ -321,24 +340,22 @@ class Tester:
             print "Not checking solution, only checking speed of solving"
             return
 
-        largestPart = -1
-        dirList2 = os.listdir(".")
-        for fname_debug in dirList2:
-            if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
-                debugLibPart = int(fname_debug[fname_debug.index("t") +
-                                   1:fname_debug.rindex(".output")])
-                if largestPart < debugLibPart:
-                    largestPart = debugLibPart
+        if (self.needDebugLib) :
+            largestPart = -1
+            dirList2 = os.listdir(".")
+            for fname_debug in dirList2:
+                if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
+                    debugLibPart = int(fname_debug[fname_debug.index("t") + 1:fname_debug.rindex(".output")])
+                    largestPart = max(largestPart, debugLibPart)
 
-        for debugLibPart in range(1, largestPart + 1):
-            fname_debug = "debugLibPart%d.output" % debugLibPart
+            for debugLibPart in range(1, largestPart + 1):
+                fname_debug = "debugLibPart%d.output" % debugLibPart
 
-            (unsat, value) = self.read_found(fname_debug)
-            if unsat == False:
-                self.test_found(unsat, value, fnameCheck, debugLibPart)
-            else:
-                print "Not examining part %d -- it is UNSAT" % \
-                    debugLibPart
+                (unsat, value) = self.read_found(fname_debug)
+                if unsat == False:
+                    self.test_found(unsat, value, fnameCheck, debugLibPart)
+                else:
+                    print "Not examining part %d -- it is UNSAT" % (debugLibPart)
 
         print "Checking console output..."
         (unsat, value) = self.read_found_output(consoleOutput)
@@ -373,6 +390,8 @@ class Tester:
     @staticmethod
     def usage():
         print "--num     (-n)     The number of times to randomize and solve the same instance. Default: 3"
+        print "--numStart         The rand number we should start at (default 0)"
+        print "--extraOptions     Add this as extra options to the solver (e.g. \"--novarelim\")"
         print "--verbose (-v)     Verbose output"
         print "--file    (-f)     The file to solve. Default: all files under ../tests/"
         print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
@@ -387,7 +406,16 @@ class Tester:
         print ""
         print "Example usage:"
         print "1) check already computed SAT solutions (UNSAT cannot be checked):"
-        print "   python regression_test.py -c -t ../../clusters/cluster93/ -d ../../satcomp09/ --ignore -n 1"
+        print "   python regression_test.py -c -t ../../clusters/cluster93/ -d ../../satcomp09/ \\"
+        print "        --ignore -n 1"
+        print ""
+        print "2) check file 'MYFILE' multiple times for correct answer:"
+        print "   python regression_test.py --file MYFILE --extraOptions=\"--nosubsume1 --noasymm\" \\"
+        print "       --numStart 20 --num 100"
+        print ""
+        print "3) fuzz the solver with precosat as solution-checker:"
+        print "   python regression_test.py --armin -n 1"
+
 
     def main(self):
         try:
@@ -396,6 +424,7 @@ class Tester:
                 "help",
                 "checkDirOnly",
                 "file=",
+                "numStart=",
                 "num=",
                 "gauss=",
                 "testdir=",
@@ -405,6 +434,7 @@ class Tester:
                 "diffCheckDir",
                 "ignore",
                 "armin",
+                "extraOptions="
                 ])
         except getopt.GetoptError, err:
             print str(err)
@@ -413,6 +443,7 @@ class Tester:
 
         fname = None
         debugLib = False
+        numStart = 0
         num = 3
         testDirSet = False
         for (opt, arg) in opts:
@@ -425,6 +456,8 @@ class Tester:
                 fname = arg
             elif opt in ("-n", "--num"):
                 num = int(arg)
+            elif opt in ("--numStart"):
+                numStart = int(arg)
             elif opt in ("-g", "--gauss"):
                 self.gaussUntil = int(arg)
             elif opt in ("-t", "--testdir"):
@@ -434,6 +467,8 @@ class Tester:
                 self.cryptominisat = arg
             elif opt in ("-s", "--speed"):
                 self.speed = True
+            elif opt in ("--extraOptions"):
+                self.extraOptions = arg
             elif opt in ("-c", "--checkDirOnly"):
                 self.checkDirOnly = True
             elif opt in ("-d", "--diffCheckDir"):
@@ -443,6 +478,7 @@ class Tester:
                 self.ignoreNoSolution = True
             elif opt in ("-a", "--armin"):
                 self.arminFuzzer = True
+                self.needDebugLib = False
             else:
                 assert False, "unhandled option"
 
@@ -456,20 +492,26 @@ class Tester:
             i = 0
 
             while i < 100000000:
-                commands.getoutput("./fuzzsat > fuzzTest")
-                None
+                fileopened, file_name = unique_fuzz_file("fuzzTest");
+                fileopened.close()
+                commands.getoutput("./fuzzsat > %s" %(file_name))
+
                 for i3 in range(num):
-                    self.check(fname="fuzzTest", fnameCheck="fuzzTest",
+                    self.check(fname=file_name, fnameCheck=file_name,
                                randomizeNum=i3, needToLimitTime=True)
 
-                commands.getoutput("./cnffuzz > fuzzTest")
-                None
+                os.unlink(file_name)
+                fileopened, file_name = unique_fuzz_file("fuzzTest");
+                fileopened.close()
+                commands.getoutput("./cnffuzz > %s" % (file_name))
+
                 for i3 in range(num):
-                    self.check(fname="fuzzTest", fnameCheck="fuzzTest",
+                    self.check(fname=file_name, fnameCheck=file_name,
                                randomizeNum=i3, needToLimitTime=True)
 
                     i = i + 1
-                    None
+                os.unlink(file_name)
+
             exit()
 
         if self.checkDirOnly:
@@ -502,7 +544,7 @@ class Tester:
                     self.testDirNewVar = ""
                 for fname in dirList:
                     if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                        for i in range(num):
+                        for i in range(numStart, numStart+num):
                             self.check(fname=self.testDirNewVar + fname,
                                     fnameCheck=self.testDirNewVar +
                                     fname, randomizeNum=i, newVar=True)
@@ -512,7 +554,7 @@ class Tester:
                 self.testDir = ""
             for fname in dirList:
                 if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                    for i in range(num):
+                    for i in range(numStart, numStart+num):
                         self.check(fname=self.testDir + fname,
                                    fnameCheck=self.testDir + fname,
                                    randomizeNum=i, newVar=False)
@@ -521,12 +563,13 @@ class Tester:
             if os.path.isfile(fname) == False:
                 print "Filename given '%s' is not a file!" % fname
                 exit(-1)
-            print "Checking fname %s" % fname
 
-            for i in range(num):
+            for i in range(numStart, numStart+num):
+                print "Checking fname %s" % fname
                 self.check(fname=fname, fnameCheck=fname, randomizeNum=i)
-
 
 test = Tester()
 test.main()
-
+print "Everything went ok."
+print "Exit code 0"
+exit(0)

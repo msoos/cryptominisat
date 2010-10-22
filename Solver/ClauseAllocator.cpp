@@ -44,9 +44,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MAXSIZE ((1 << (EFFECTIVELY_USEABLE_BITS-NUM_BITS_OUTER_OFFSET))-1)
 
 ClauseAllocator::ClauseAllocator()
-    #ifdef USE_BOOST
-    : clausePoolBin(sizeof(Clause) + 2*sizeof(Lit))
-    #endif //USE_BOOST
 {
     assert(MIN_LIST_SIZE < MAXSIZE);
     assert(sizeof(Clause) + 2*sizeof(Lit) > sizeof(NewPointerAndOffset));
@@ -68,7 +65,7 @@ ClauseAllocator::~ClauseAllocator()
 template<class T>
 Clause* ClauseAllocator::Clause_new(const T& ps, const unsigned int group, const bool learnt)
 {
-    assert(ps.size() > 0);
+    assert(ps.size() > 2);
     void* mem = allocEnough(ps.size());
     Clause* real= new (mem) Clause(ps, group, learnt);
     //assert(!(ps.size() == 2 && !real->wasBin()));
@@ -101,12 +98,10 @@ template XorClause* ClauseAllocator::XorClause_new(const XorClause& ps, const bo
 */
 Clause* ClauseAllocator::Clause_new(Clause& c)
 {
-    assert(c.size() > 0);
+    assert(c.size() > 2);
     void* mem = allocEnough(c.size());
     memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
     Clause& c2 = *(Clause*)mem;
-    c2.setWasBin(c.size() == 2);
-    //assert(!(c.size() == 2 && !c2.wasBin()));
 
     return &c2;
 }
@@ -273,21 +268,14 @@ of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
 */
 void ClauseAllocator::clauseFree(Clause* c)
 {
-    if (c->wasBin()) {
-        #ifdef USE_BOOST
-        clausePoolBin.free(c);
-        #else
-        free(c);
-        #endif
-    } else {
-        c->setFreed();
-        uint32_t outerOffset = getOuterOffset(c);
-        //uint32_t interOffset = getInterOffset(c, outerOffset);
-        currentlyUsedSizes[outerOffset] -= (sizeof(Clause) + c->size()*sizeof(Lit))/sizeof(uint32_t);
-        //above should be
-        //origClauseSizes[outerOffset][interOffset]
-        //but it cannot be :(
-    }
+    assert(!c->getFreed());
+    c->setFreed();
+    uint32_t outerOffset = getOuterOffset(c);
+    //uint32_t interOffset = getInterOffset(c, outerOffset);
+    currentlyUsedSizes[outerOffset] -= (sizeof(Clause) + c->size()*sizeof(Lit))/sizeof(uint32_t);
+    //above should be
+    //origClauseSizes[outerOffset][interOffset]
+    //but it cannot be :(
 }
 
 /**
@@ -390,7 +378,7 @@ void ClauseAllocator::consolidate(Solver* solver)
         uint32_t currentLoc = 0;
         for (uint32_t i2 = 0; i2 < origClauseSizes[i].size(); i2++) {
             Clause* oldPointer = (Clause*)(dataStarts[i] + currentLoc);
-            if (!oldPointer->freed()) {
+            if (!oldPointer->getFreed()) {
                 uint32_t sizeNeeded = (sizeof(Clause) + oldPointer->size()*sizeof(Lit))/sizeof(uint32_t);
                 if (newSizes[outerPart] + sizeNeeded > newMaxSizes[outerPart]) {
                     outerPart++;
@@ -441,9 +429,8 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
 
     updatePointers(solver->clauses);
     updatePointers(solver->learnts);
-    updatePointers(solver->binaryClauses);
     updatePointers(solver->xorclauses);
-    updatePointers(solver->freeLater);
+    //updatePointers(solver->freeLater);
     updatePointers(solver->unWindGlue);
 
     //No need to update varreplacer, since it only stores binary clauses that
@@ -496,7 +483,7 @@ template<class T>
 void ClauseAllocator::updatePointers(vec<T*>& toUpdate)
 {
     for (T **it = toUpdate.getData(), **end = toUpdate.getDataEnd(); it != end; it++) {
-        if (*it != NULL && !(*it)->wasBin()) {
+        if (*it != NULL) {
             *it = (T*)(((NewPointerAndOffset*)(*it))->newPointer);
         }
     }
@@ -508,9 +495,7 @@ void ClauseAllocator::updatePointers(vec<T*>& toUpdate)
 void ClauseAllocator::updatePointers(vector<Clause*>& toUpdate)
 {
     for (vector<Clause*>::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
-        if (!(*it)->wasBin()) {
-            *it = (((NewPointerAndOffset*)(*it))->newPointer);
-        }
+        *it = (((NewPointerAndOffset*)(*it))->newPointer);
     }
 }
 
@@ -520,9 +505,7 @@ void ClauseAllocator::updatePointers(vector<Clause*>& toUpdate)
 void ClauseAllocator::updatePointers(vector<XorClause*>& toUpdate)
 {
     for (vector<XorClause*>::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
-        if (!(*it)->wasBin()) {
-            *it = (XorClause*)(((NewPointerAndOffset*)(*it))->newPointer);
-        }
+        *it = (XorClause*)(((NewPointerAndOffset*)(*it))->newPointer);
     }
 }
 
@@ -532,8 +515,6 @@ void ClauseAllocator::updatePointers(vector<XorClause*>& toUpdate)
 void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
 {
     for (vector<pair<Clause*, uint32_t> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
-        if (!(it->first)->wasBin()) {
-            it->first = (((NewPointerAndOffset*)(it->first))->newPointer);
-        }
+        it->first = (((NewPointerAndOffset*)(it->first))->newPointer);
     }
 }

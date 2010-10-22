@@ -22,6 +22,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <cstdlib>
 #include <cassert>
+#include <iostream>
 #include <new>
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
@@ -50,7 +51,7 @@ class vec {
     static inline uint32_t imax(int x, int y) {
         int mask = (y-x) >> (sizeof(int)*8-1);
         return (x&mask) + (y&(~mask)); }
-    
+
     void     myCopy (const vec<T>& other);
 
 public:
@@ -122,7 +123,7 @@ void vec<T>::growTo(uint32_t size) {
     grow(size);
     for (uint32_t i = sz; i != size; i++) new (&data[i]) T();
     sz = size; }
-    
+
 template<class T>
 void vec<T>::myCopy(const vec<T>& other) {
     assert(sz == 0);

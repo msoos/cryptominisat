@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "XorSubsumer.h"
 #include "time_mem.h"
 #include "DimacsParser.h"
+#include "FailedVarSearcher.h"
 #include <iomanip>
 
 #ifdef USE_GAUSS
@@ -52,13 +53,9 @@ void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
     if (maxSize == 1) goto end;
 
     fprintf(outfile, "c \nc ---------------------------------\n");
-    fprintf(outfile, "c learnt clauses from binaryClauses\n");
+    fprintf(outfile, "c learnt binary clauses (extracted from watchlists)\n");
     fprintf(outfile, "c ---------------------------------\n");
-    for (uint32_t i = 0; i != binaryClauses.size(); i++) {
-        if (binaryClauses[i]->learnt()) {
-            binaryClauses[i]->print(outfile);
-        }
-    }
+    dumpBinClauses(false, true, outfile);
 
     fprintf(outfile, "c \nc ---------------------------------------\n");
     fprintf(outfile, "c clauses representing 2-long XOR clauses\n");
@@ -96,6 +93,71 @@ void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
     fclose(outfile);
 }
 
+void Solver::printStrangeBinLit(const Lit lit) const
+{
+    const vec<Watched>& ws = watches[(~lit).toInt()];
+    for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        if (it2->isBinary()) {
+            std::cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << std::endl;
+        } else if (it2->isTriClause()) {
+            std::cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << std::endl;
+        } else {
+            std::cout << "cla:" << it2->getOffset() << std::endl;
+        }
+    }
+}
+
+const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
+{
+    uint32_t num = 0;
+
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary()) {
+                if (it2->getLearnt()) num += alsoLearnt;
+                else num+= alsoNonLearnt;
+            }
+        }
+    }
+
+    assert(num % 2 == 0);
+    return num/2;
+}
+
+void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const
+{
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+                bool toDump = false;
+                if (it2->getLearnt() && alsoLearnt) toDump = true;
+                if (!it2->getLearnt() && alsoNonLearnt) toDump = true;
+
+                if (toDump) it2->dump(outfile, lit);
+            }
+        }
+    }
+}
+
+const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
+{
+    uint32_t num = 0;
+    const vec<Watched>& ws = watches[lit.toInt()];
+    for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        if (it2->isBinary() && (alsoLearnt || !it2->getLearnt())) {
+            num++;
+        }
+    }
+
+    return num;
+}
+
 void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) const
 {
     FILE* outfile = fopen(fileName, "w");
@@ -117,10 +179,7 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
         numClauses+=2;
     }
     //binary normal clauses
-    for (Clause *const *i = binaryClauses.getData(); i != binaryClauses.getDataEnd(); i++) {
-        if (!alsoLearntBin && (*i)->learnt()) continue;
-        numClauses++;
-    }
+    numClauses += countNumBinClauses(true, alsoLearntBin);
     //normal clauses
     numClauses += clauses.size();
     //previously eliminated clauses
@@ -128,6 +187,10 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
     for (map<Var, vector<Clause*> >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
         const vector<Clause*>& cs = it->second;
         numClauses += cs.size();
+    }
+    const map<Var, vector<std::pair<Lit, Lit> > >& elimedOutVarBin = subsumer->getElimedOutVarBin();
+    for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
+        numClauses += it->second.size()*2;
     }
     fprintf(outfile, "p cnf %d %d\n", nVars(), numClauses);
 
@@ -161,10 +224,7 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c binary clauses\n");
     fprintf(outfile, "c ---------------\n");
-    for (Clause *const *i = binaryClauses.getData(); i != binaryClauses.getDataEnd(); i++) {
-        if (!alsoLearntBin && (*i)->learnt()) continue;
-        (*i)->print(outfile);
-    }
+    dumpBinClauses(true, alsoLearntBin, outfile);
 
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c normal clauses\n");
@@ -174,7 +234,6 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
         (*i)->print(outfile);
     }
 
-    //map<Var, vector<Clause*> > elimedOutVar
     fprintf(outfile, "c -------------------------------\n");
     fprintf(outfile, "c previously eliminated variables\n");
     fprintf(outfile, "c -------------------------------\n");
@@ -182,6 +241,12 @@ void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) con
         const vector<Clause*>& cs = it->second;
         for (vector<Clause*>::const_iterator it2 = cs.begin(); it2 != cs.end(); it2++) {
             (*it2)->print(outfile);
+        }
+    }
+    for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
+        for (uint32_t i = 0; i < it->second.size(); i++) {
+            it->second[i].first.print(outfile);
+            it->second[i].second.printFull(outfile);
         }
     }
 
@@ -239,6 +304,11 @@ const double Solver::getTotalTimeSubsumer() const
     return subsumer->getTotalTime();
 }
 
+const double Solver::getTotalTimeFailedVarSearcher() const
+{
+    return failedVarSearcher->getTotalTime();
+}
+
 const double Solver::getTotalTimeXorSubsumer() const
 {
     return xorSubsumer->getTotalTime();
@@ -294,7 +364,7 @@ void Solver::printRestartStat(const char* type)
         << std::setw(space) << conflicts
         << std::setw(space) << order_heap.size()
         << std::setw(space) << clauses.size()
-        << std::setw(space) << binaryClauses.size()
+        << std::setw(space) << numBins
         << std::setw(space) << learnts.size()
         << std::setw(space) << clauses_literals
         << std::setw(space) << learnts_literals;
@@ -371,23 +441,28 @@ void Solver::print_gauss_sum_stats()
 */
 void Solver::sortWatched()
 {
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Sorting watchlists:" << std::endl;
+    #endif
     double myTime = cpuTime();
     for (vec<Watched> *i = watches.getData(), *end = watches.getDataEnd(); i != end; i++) {
+        if (i->size() == 0) continue;
         #ifdef VERBOSE_DEBUG
         vec<Watched>& ws = *i;
-        std::cout << "Before:" << std::endl;
+        std::cout << "Before sorting:" << std::endl;
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBinary()) std::cout << "Binary,";
             if (ws[i2].isTriClause()) std::cout << "Tri,";
             if (ws[i2].isClause()) std::cout << "Normal,";
             if (ws[i2].isXorClause()) std::cout << "Xor,";
         }
+        std::cout << std::endl;
         #endif //VERBOSE_DEBUG
 
         std::sort(i->getData(), i->getDataEnd(), WatchedSorter());
 
         #ifdef VERBOSE_DEBUG
-        std::cout << "After:" << std::endl;
+        std::cout << "After sorting:" << std::endl;
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBinary()) std::cout << "Binary,";
             if (ws[i2].isTriClause()) std::cout << "Tri,";
@@ -423,7 +498,7 @@ void Solver::addSymmBreakClauses()
     #else
     gzFile in = gzopen("output", "rb");
     #endif // DISABLE_ZLIB
-    parser.parse_DIMACS(in);
+    parser.parse_DIMACS(in, verbosity);
     #ifdef DISABLE_ZLIB
     fclose(in);
     #else

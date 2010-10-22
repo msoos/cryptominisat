@@ -13,6 +13,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 #include <cassert>
 #include <iostream>
+#include <Vec.h>
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
 #else
@@ -100,6 +101,14 @@ inline std::ostream& operator<<(std::ostream& cout, const Lit& lit)
     return cout;
 }
 
+inline std::ostream& operator<<(std::ostream& cout, const vec<Lit>& lits)
+{
+    for (uint32_t i = 0; i < lits.size(); i++) {
+        cout << lits[i] << " ";
+    }
+    return cout;
+}
+
 //=================================================================================================
 // Lifted booleans:
 
@@ -153,6 +162,14 @@ inline lbool boolToLBool(const bool b)
 const lbool l_True  = toLbool( 1);
 const lbool l_False = toLbool(-1);
 const lbool l_Undef = toLbool( 0);
+
+inline std::ostream& operator<<(std::ostream& cout, const lbool val)
+{
+    if (val == l_True) cout << "l_True";
+    if (val == l_False) cout << "l_False";
+    if (val == l_Undef) cout << "l_Undef";
+    return cout;
+}
 
 
 /**

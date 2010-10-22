@@ -34,48 +34,52 @@ ClauseCleaner::ClauseCleaner(Solver& _solver) :
     }
 }
 
-void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit)
+const bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
-    #ifdef DEBUG_CLEAN
-    assert(solver.decisionLevel() == 0);
-    #endif
-
-    if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
-        return;
-
-    uint32_t i,j;
-    for (i = j = 0; i < cs.size(); i++) {
-        if (satisfied(*cs[i]))
-            solver.removeClause(*cs[i]);
-        else
-            cs[j++] = cs[i];
-    }
-    cs.shrink(i - j);
-
-    lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
+    assert(watched.isBinary());
+    if (solver.value(lit) == l_True) return true;
+    if (solver.value(watched.getOtherLit()) == l_True) return true;
+    return false;
 }
 
-void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit)
+void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
 {
     #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
     #endif
 
-    if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
+    if (lastNumUnitarySat[binaryClauses] + limit >= solver.get_unitary_learnts_num())
         return;
 
-    Clause **i,**j, **end;
-    for (i = j = cs.getData(), end = i + cs.size(); i != end; i++) {
-        if (i+1 != end)
-            __builtin_prefetch(*(i+1), 0, 0);
-        if (satisfied(**i))
-            solver.removeClause(**i);
-        else
-            *j++ = *i;
-    }
-    cs.shrink(i - j);
+    uint32_t numRemovedHalfNonLearnt = 0;
+    uint32_t numRemovedHalfLearnt = 0;
+    uint32_t wsLit = 0;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        vec<Watched>& ws = *it;
 
-    lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
+        Watched* i = ws.getData();
+        Watched* j = i;
+        for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
+            if (i->isBinary() && satisfied(*i, lit)) {
+                if (i->getLearnt()) numRemovedHalfLearnt++;
+                else numRemovedHalfNonLearnt++;
+            } else {
+                *j++ = *i;
+            }
+        }
+        ws.shrink_(i - j);
+    }
+
+    //std::cout << "removedHalfLeart: " << numRemovedHalfLearnt << std::endl;
+    //std::cout << "removedHalfNonLeart: " << numRemovedHalfNonLearnt << std::endl;
+    assert(numRemovedHalfLearnt % 2 == 0);
+    assert(numRemovedHalfNonLearnt % 2 == 0);
+    solver.clauses_literals -= numRemovedHalfNonLearnt;
+    solver.learnts_literals -= numRemovedHalfLearnt;
+    solver.numBins -= (numRemovedHalfLearnt + numRemovedHalfNonLearnt)/2;
+
+    lastNumUnitarySat[binaryClauses] = solver.get_unitary_learnts_num();
 }
 
 void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit)
@@ -91,23 +95,13 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
     #endif //VERBOSE_DEBUG
 
     Clause **s, **ss, **end;
-    for (s = ss = cs.getData(), end = s + cs.size();  s != end;) {
+    for (s = ss = cs.getData(), end = s + cs.size();  s != end; s++) {
         if (s+1 != end)
             __builtin_prefetch(*(s+1), 1, 0);
         if (cleanClause(*s)) {
             solver.clauseAllocator.clauseFree(*s);
-            s++;
-        } else if (type != ClauseCleaner::binaryClauses && (*s)->size() == 2) {
-            if (!(*s)->wasBin()) {
-                Clause *c2 = solver.clauseAllocator.Clause_new(**s);
-                solver.clauseAllocator.clauseFree(*s);
-                *s = c2;
-            }
-            solver.binaryClauses.push(*s);
-            solver.becameBinary++;
-            s++;
         } else {
-            *ss++ = *s++;
+            *ss++ = *s;
         }
     }
     cs.shrink(s-ss);
@@ -147,10 +141,9 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
     if (i != j) {
         if (c.size() == 2) {
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
-            Clause *c2 = solver.clauseAllocator.Clause_new(c);
-            solver.clauseAllocator.clauseFree(&c);
-            cc = c2;
-            solver.attachClause(*c2);
+            solver.attachBinClause(c[0], c[1], c.learnt());
+            solver.numNewBin++;
+            return true;
         } else if (c.size() == 3) {
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             solver.attachClause(c);
@@ -179,20 +172,20 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
             __builtin_prefetch(*(s+1), 1, 0);
 
         #ifdef DEBUG_ATTACH
-        assert(find(solver.xorwatches[(**s)[0].var()], *s));
-        assert(find(solver.xorwatches[(**s)[1].var()], *s));
-        if (solver.assigns[(**s)[0].var()]!=l_Undef || solver.assigns[(**s)[1].var()]!=l_Undef) {
+        XorClause& c = **s;
+        assert(solver.xorClauseIsAttached(c));
+        if (solver.assigns[c[0].var()]!=l_Undef || solver.assigns[c[1].var()]!=l_Undef) {
             satisfied(**s);
         }
         #endif //DEBUG_ATTACH
 
         if (cleanClause(**s)) {
-            solver.freeLater.push(*s);
-            (*s)->setRemoved();
+            solver.clauseAllocator.clauseFree(*s);
+            //solver.freeLater.push(*s);
+            //(*s)->setRemoved();
         } else {
             #ifdef DEBUG_ATTACH
-            assert(find(solver.xorwatches[(**s)[0].var()], *s));
-            assert(find(solver.xorwatches[(**s)[1].var()], *s));
+            assert(solver.xorClauseIsAttached(c));
             #endif //DEBUG_ATTACH
             *ss++ = *s;
         }
@@ -265,26 +258,48 @@ bool ClauseCleaner::satisfied(const XorClause& c) const
     return final;
 }
 
-void ClauseCleaner::moveBinClausesToBinClauses()
+
+
+/*void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit)
 {
+    #ifdef DEBUG_CLEAN
     assert(solver.decisionLevel() == 0);
-    assert(solver.qhead == solver.trail.size());
+    #endif
 
-    vec<Clause*>& cs = solver.clauses;
-    Clause **s, **ss, **end;
-    for (s = ss = cs.getData(), end = s + cs.size();  s != end; s++) {
-        if (s+1 != end)
-            __builtin_prefetch(*(s+1), 1, 0);
+    if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
+        return;
 
-        if ((**s).size() == 2) {
-            solver.detachClause(**s);
-            Clause *c2 = solver.clauseAllocator.Clause_new(**s);
-            solver.clauseAllocator.clauseFree(*s);
-            solver.attachClause(*c2);
-            solver.becameBinary++;
-            solver.binaryClauses.push(c2);
-        } else
-            *ss++ = *s;
+    uint32_t i,j;
+    for (i = j = 0; i < cs.size(); i++) {
+        if (satisfied(*cs[i]))
+            solver.removeClause(*cs[i]);
+        else
+            cs[j++] = cs[i];
     }
-    cs.shrink(s-ss);
-}
+    cs.shrink(i - j);
+
+    lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
+}*/
+
+/*void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit)
+{
+    #ifdef DEBUG_CLEAN
+    assert(solver.decisionLevel() == 0);
+    #endif
+
+    if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
+        return;
+
+    Clause **i,**j, **end;
+    for (i = j = cs.getData(), end = i + cs.size(); i != end; i++) {
+        if (i+1 != end)
+            __builtin_prefetch(*(i+1), 0, 0);
+        if (satisfied(**i))
+            solver.removeClause(**i);
+        else
+            *j++ = *i;
+    }
+    cs.shrink(i - j);
+
+    lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
+}*/

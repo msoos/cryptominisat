@@ -9,9 +9,9 @@ ENDIF()
 
 PROJECT(cryptoms)
 if (CMAKE_COMPILER_IS_GNUCC)
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -Wall -Werror -g -mtune=native")
-    SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -O0 -ggdb")
-    SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -fprofile-use -Werror -O3 -g0 -fno-exceptions -DNDEBUG -mtune=native -fomit-frame-pointer")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -Wall -Werror -Wno-deprecated -g -mtune=native")
+    SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -Wno-deprecated -O0 -ggdb")
+    SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -fprofile-use -Werror -Wno-deprecated -O3 -g0 -fno-exceptions -DNDEBUG -mtune=native -fomit-frame-pointer")
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -30,11 +30,11 @@ else(Boost_FOUND)
     message("Boost NOT found, so clauses will NOT be packed (slowdown)")
 endif(Boost_FOUND)
 
+FIND_PACKAGE(Threads REQUIRED)
+set(thread_library "${CMAKE_THREAD_LIBS_INIT}")
+
 add_definitions(-DVERSION="2.7.0")
 add_definitions(-DUSE_GAUSS)
-
-#FIND_PACKAGE(Threads REQUIRED)
-#set(thread_library "${CMAKE_THREAD_LIBS_INIT}")
 
 add_subdirectory(Solver)
 

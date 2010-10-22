@@ -40,14 +40,13 @@ class CompleteDetachReatacher
 {
     public:
         CompleteDetachReatacher(Solver& solver);
-        const bool completelyReattach();
-        void completelyDetach();
-        void detachPointerUsingClauses();
+        const bool reattachNonBins();
+        void detachNonBins();
 
     private:
-        void clearWatchOfPointerUsers(vec<Watched>& ws);
+        const std::pair<uint32_t, uint32_t> clearWatchNotBin(vec<Watched>& ws);
 
-        void cleanAndAttachClauses(vec<Clause*>& cs, const bool lookingThroughBinary);
+        void cleanAndAttachClauses(vec<Clause*>& cs);
         void cleanAndAttachClauses(vec<XorClause*>& cs);
         const bool cleanClause(Clause*& ps);
         const bool cleanClause(XorClause& ps);

@@ -79,6 +79,7 @@ public:
     void clear(bool dealloc = false)   {
         elems.clear(dealloc);
         first = 0;
+        last = 0;
         maxsize=0;
         queuesize=0;
         sumofqueue=0;

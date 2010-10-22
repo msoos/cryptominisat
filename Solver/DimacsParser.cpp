@@ -374,7 +374,8 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         numXorClauses++;
     } else {
         if (addAsLearnt || learnt) {
-            solver->addLearntClause(lits, glue, miniSatAct, groupId);
+            assert(false);
+            solver->addLearntClause(lits, groupId, NULL, glue, miniSatAct);
             numLearntClauses++;
         } else {
             solver->addClause(lits, groupId, name.c_str());
@@ -423,9 +424,9 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
 }
 
 #ifdef DISABLE_ZLIB
-void DimacsParser::parse_DIMACS(FILE * input_stream)
+void DimacsParser::parse_DIMACS(FILE * input_stream, const uint32_t verbosity)
 #else
-void DimacsParser::parse_DIMACS(gzFile input_stream)
+void DimacsParser::parse_DIMACS(gzFile input_stream, const uint32_t verbosity)
 #endif // DISABLE_ZLIB
 {
     debugLibPart = 1;
@@ -437,15 +438,17 @@ void DimacsParser::parse_DIMACS(gzFile input_stream)
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
 
-    std::cout << "c -- clauses added: "
-    << std::setw(12) << numLearntClauses
-    << " learnts, "
-    << std::setw(12) << numNormClauses
-    << " normals, "
-    << std::setw(12) << numXorClauses
-    << " xors"
-    << std::endl;
+    if (verbosity >= 1) {
+        std::cout << "c -- clauses added: "
+        << std::setw(12) << numLearntClauses
+        << " learnts, "
+        << std::setw(12) << numNormClauses
+        << " normals, "
+        << std::setw(12) << numXorClauses
+        << " xors"
+        << std::endl;
 
-    std::cout << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)
-    << std::endl;
+        std::cout << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)
+        << std::endl;
+    }
 }

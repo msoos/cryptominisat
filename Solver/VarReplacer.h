@@ -49,7 +49,6 @@ class VarReplacer
 
         void extendModelPossible() const;
         void extendModelImpossible(Solver& solver2) const;
-        void reattachInternalClauses();
 
         const uint32_t getNumReplacedLits() const;
         const uint32_t getNumReplacedVars() const;
@@ -58,7 +57,6 @@ class VarReplacer
         const uint32_t getNumTrees() const;
         const vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
-        const vec<Clause*>& getClauses() const;
         const bool varHasBeenReplaced(const Var var) const;
         const bool replacingVar(const Var var) const;
         void newVar();
@@ -70,7 +68,8 @@ class VarReplacer
     private:
         const bool performReplaceInternal();
 
-        const bool replace_set(vec<Clause*>& cs, const bool binClauses);
+        const bool replace_set(vec<Clause*>& cs);
+        const bool replaceBins();
         const bool replace_set(vec<XorClause*>& cs);
         const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
         const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
@@ -82,14 +81,6 @@ class VarReplacer
 
         vector<Lit> table; ///<Stores which variables have been replaced by which literals. Index by: table[VAR]
         map<Var, vector<Var> > reverseTable; ///<mapping of variable to set of variables it replaces
-        /**
-        @brief Set of internal clauses -- they are attached
-
-        When a variable gets replaced by another one, we add 2 binary clauses
-        here, and attach these clauses. When we get to actually replace the
-        variables with one another, we remove these claues.
-        */
-        vec<Clause*> clauses;
 
         uint32_t replacedLits; ///<Num literals replaced during var-replacement
         uint32_t replacedVars; ///<Num vars replaced during var-replacement
@@ -136,11 +127,6 @@ inline const uint32_t VarReplacer::getNewToReplaceVars() const
 inline const vector<Lit>& VarReplacer::getReplaceTable() const
 {
     return table;
-}
-
-inline const vec<Clause*>& VarReplacer::getClauses() const
-{
-    return clauses;
 }
 
 inline const bool VarReplacer::varHasBeenReplaced(const Var var) const
