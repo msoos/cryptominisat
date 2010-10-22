@@ -872,7 +872,7 @@ const bool Subsumer::subsumeWithBinaries()
         if (numMaxSubsume0 < 0) break;
     }
 
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity  >= 1) {
         std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed
         << "  lits-rem: " << std::setw(9) << literals_removed
         << "  v-fix: " << std::setw(4) <<solver.trail.size() - origTrailSize
@@ -892,7 +892,7 @@ const bool Subsumer::subsWNonExitsBinsFullFull()
     uint32_t oldTrailSize = solver.trail.size();
     if (!subsWNonExistBinsFull()) return false;
 
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity  >= 1) {
         std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << clauses_subsumed
         << " l-rem: " << std::setw(6) << literals_removed
         << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
@@ -1123,7 +1123,7 @@ void Subsumer::subsumeBinsWithBins()
         ws.shrink_(i-j);
     }
 
-    if (solver.verbosity >= 3) {
+    if (solver.conf.verbosity  >= 3) {
         std::cout << "c bin-w-bin subsume rem   "
         << std::setw(10) << (numBinsBefore - solver.numBins) << " bins "
         << " time: "
@@ -1154,7 +1154,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
-    if (solver.doReplace && !solver.varReplacer->performReplace(true))
+    if (solver.conf.doReplace && !solver.varReplacer->performReplace(true))
         return false;
     fillCannotEliminate();
 
@@ -1177,8 +1177,8 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     totalTime += myTime - cpuTime();
     numMaxSubsume0 = 1000000*numCalls;
-    if (solver.doSubsWBins && !subsumeWithBinaries()) return false;
-    if (solver.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
+    if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
+    if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
 
     setLimits(alsoLearnt);
     myTime = cpuTime();
@@ -1225,7 +1225,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     do {
         if (!subsume0AndSubsume1()) return false;
 
-        if (!solver.doVarElim) break;
+        if (!solver.conf.doVarElim) break;
 
         if (!eliminateVars()) return false;
     } while (cl_touched.size() > 100);
@@ -1244,7 +1244,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     addBackToSolver();
     if (!reattacher.reattachNonBins()) return false;
 
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity  >= 1) {
         std::cout << "c lits-rem: " << std::setw(9) << literals_removed
         << "  cl-subs: " << std::setw(8) << clauses_subsumed
         << "  v-elim: " << std::setw(6) << numVarsElimed
@@ -1302,7 +1302,7 @@ void Subsumer::setLimits(const bool alsoLearnt)
     else
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
-    if (!solver.doSubsume1 || numCalls == 1)
+    if (!solver.conf.doSubsume1 || numCalls == 1)
         numMaxSubsume1 = 0;
     if (alsoLearnt) {
         numMaxElim = 0;

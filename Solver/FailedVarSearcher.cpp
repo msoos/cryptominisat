@@ -212,7 +212,7 @@ const bool FailedVarSearcher::search()
     unPropagatedBin.resize(solver.nVars(), 0);
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
-    if (solver.doHyperBinRes && !orderLits()) return false;
+    if (solver.conf.doHyperBinRes && !orderLits()) return false;
     maxHyperBinProps = numProps/6;
 
     //uint32_t fromBin;
@@ -251,7 +251,7 @@ const bool FailedVarSearcher::search()
             goto end;
     }
 
-    /*if (solver.verbosity >= 1) printResults(myTime);
+    /*if (solver.conf.verbosity  >= 1) printResults(myTime);
     if (finishedLastTimeBin || lastTimeWentUntilBin >= solver.binaryClauses.size())
         fromBin = 0;
     else
@@ -297,7 +297,7 @@ const bool FailedVarSearcher::search()
 end:
     bool removedOldLearnts = false;
     //Print results
-    if (solver.verbosity >= 1)
+    if (solver.conf.verbosity  >= 1)
       printResults(myTime, solver.numBins - origBinClauses);
 
     solver.order_heap.filter(Solver::VarFilter(solver));
@@ -313,7 +313,7 @@ end:
         } else {
             solver.clauseCleaner->removeAndCleanAll();
         }
-        if (solver.verbosity >= 1 && numFailed + goodBothSame > 100) {
+        if (solver.conf.verbosity  >= 1 && numFailed + goodBothSame > 100) {
             std::cout << "c Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
             << std::endl;
         }
@@ -460,7 +460,7 @@ const bool FailedVarSearcher::asymmBranch()
 
     asymmLastTimeWentUntil = thisTimeWentUntil;
 
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity  >= 1) {
         std::cout << "c asymm "
         << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
         << " lits-rem:" << effectiveLit
@@ -548,7 +548,7 @@ const bool FailedVarSearcher::orderLits()
     }
 
     //Print the results of the degree approximation
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity  >= 1) {
         std::cout << "c binary deg approx."
         << " time: " << std::fixed << std::setw(5) << std::setprecision(2) << cpuTime() - myTime << " s"
         << " num checked: " << std::setw(6) << numChecked
@@ -604,7 +604,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
             Var x = solver.trail[c].var();
             propagated.setBit(x);
-            if (solver.doHyperBinRes) {
+            if (solver.conf.doHyperBinRes) {
                 unPropagatedBin.setBit(x);
                 propagatedVars.push(x);
             }
@@ -630,7 +630,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     //Hyper-binary resolution, and its accompanying data-structure cleaning
-    if (solver.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
+    if (solver.conf.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
     propagatedVars.clear();
     unPropagatedBin.setZero();
 
@@ -649,7 +649,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
             Var     x  = solver.trail[c].var();
             if (propagated[x]) {
-                if (solver.doHyperBinRes) {
+                if (solver.conf.doHyperBinRes) {
                     unPropagatedBin.setBit(x);
                     propagatedVars.push(x);
                 }
@@ -705,7 +705,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.cancelUntil(0);
     }
 
-    if (solver.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
+    if (solver.conf.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
 
     for(uint32_t i = 0; i != bothSame.size(); i++) {
         solver.uncheckedEnqueue(bothSame[i]);

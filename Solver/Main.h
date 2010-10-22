@@ -23,18 +23,18 @@ class Main
     public:
         Main(int argc, char** argv);
 
+        void parseCommandLine();
         int singleThreadSolve();
-        void* oneThreadSolve( void *ptr );
+        const int oneThreadSolve();
         int multiThreadSolve(const uint32_t numThreads);
 
         static void printStats(Solver& solver);
 
     private:
 
-        void printUsage(char** argv, Solver& S);
+        void printUsage(char** argv);
         const char* hasPrefix(const char* str, const char* prefix);
         void printResultFunc(const Solver& S, const lbool ret, FILE* res);
-        void parseCommandLine(Solver& S);
 
         //File reading
         template<class B>
@@ -55,6 +55,9 @@ class Main
         static void printStatsLine(string left, T value, T2 value2, string extra);
         template<class T>
         static void printStatsLine(string left, T value, string extra = "");
+
+        SolverConf conf;
+        GaussianConfig gaussconfig;
 
         bool grouping;
         bool debugLib;

@@ -91,9 +91,9 @@ const bool VarReplacer::performReplaceInternal()
     #endif
 
     Var var = 0;
-    const vec<char>* removedVars = solver.doXorSubsumption ? &solver.xorSubsumer->getVarElimed() : NULL;
-    const vec<lbool>* removedVars2 = solver.doPartHandler ?  &solver.partHandler->getSavedState() : NULL;
-    const vec<char>* removedVars3 = solver.doSatELite ? &solver.subsumer->getVarElimed() : NULL;
+    const vec<char>* removedVars = solver.conf.doXorSubsumption ? &solver.xorSubsumer->getVarElimed() : NULL;
+    const vec<lbool>* removedVars2 = solver.conf.doPartHandler ?  &solver.partHandler->getSavedState() : NULL;
+    const vec<char>* removedVars3 = solver.conf.doSatELite ? &solver.subsumer->getVarElimed() : NULL;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
         if (it->var() == var
             || (removedVars != NULL && (*removedVars)[it->var()])
@@ -138,7 +138,7 @@ const bool VarReplacer::performReplaceInternal()
 end:
     assert(solver.qhead == solver.trail.size() || !solver.ok);
 
-    if (solver.verbosity >= 2) {
+    if (solver.conf.verbosity  >= 2) {
         std::cout << "c Replacing "
         << std::setw(8) << thisTimeReplaced << " vars"
         << " Replaced " <<  std::setw(8) << replacedLits<< " lits"

@@ -45,10 +45,10 @@ MatrixFinder::MatrixFinder(Solver& _solver) :
 inline const Var MatrixFinder::fingerprint(const XorClause& c) const
 {
     Var fingerprint = 0;
-    
+
     for (const Lit* a = &c[0], *end = a + c.size(); a != end; a++)
         fingerprint |= a->var();
-    
+
     return fingerprint;
 }
 
@@ -63,7 +63,7 @@ inline const bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const Xor
             i2++;
         }
     }
-    
+
     return (i1 == c1.size());
 }
 
@@ -74,18 +74,18 @@ const bool MatrixFinder::findMatrixes()
     reverseTable.clear();
     matrix_no = 0;
     double myTime = cpuTime();
-    
+
     if (solver.xorclauses.size() < MIN_GAUSS_XOR_CLAUSES ||
         solver.gaussconfig.decision_until <= 0 ||
         solver.xorclauses.size() > MAX_GAUSS_XOR_CLAUSES
         )
         return true;
-    
+
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     if (!solver.ok) return false;
 
     if (solver.gaussconfig.noMatrixFind) {
-        if (solver.verbosity >=1)
+        if (solver.conf.verbosity >=1)
             cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << endl;
         vector<XorClause*> xorclauses;
         xorclauses.reserve(solver.xorclauses.size());
@@ -94,7 +94,7 @@ const bool MatrixFinder::findMatrixes()
         solver.gauss_matrixes.push_back(new Gaussian(solver, solver.gaussconfig, 0, xorclauses));
         return true;
     }
-    
+
     for (XorClause** c = solver.xorclauses.getData(), **end = c + solver.xorclauses.size(); c != end; c++) {
         set<uint32_t> tomerge;
         vector<Var> newSet;
@@ -113,7 +113,7 @@ const bool MatrixFinder::findMatrixes()
             }
             continue;
         }
-        
+
         for (set<uint32_t>::iterator it = tomerge.begin(); it != tomerge.end(); it++) {
             newSet.insert(newSet.end(), reverseTable[*it].begin(), reverseTable[*it].end());
             reverseTable.erase(*it);
@@ -123,7 +123,7 @@ const bool MatrixFinder::findMatrixes()
         reverseTable[matrix_no] = newSet;
         matrix_no++;
     }
-    
+
     #ifdef VERBOSE_DEBUG
     for (map<uint32_t, vector<Var> >::iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
         cout << "-- set begin --" << endl;
@@ -133,10 +133,10 @@ const bool MatrixFinder::findMatrixes()
         cout << "-------" << endl;
     }
     #endif
-    
+
     uint32_t numMatrixes = setMatrixes();
-    
-    if (solver.verbosity >=1)
+
+    if (solver.conf.verbosity >=1)
         std::cout << "c Finding matrixes :    " << cpuTime() - myTime
         << " s (found  " << numMatrixes << ")"
         << endl;
@@ -153,45 +153,45 @@ const uint32_t MatrixFinder::setMatrixes()
     vector<pair<uint32_t, uint32_t> > numXorInMatrix;
     for (uint32_t i = 0; i < matrix_no; i++)
         numXorInMatrix.push_back(std::make_pair(i, 0));
-    
+
     vector<uint32_t> sumXorSizeInMatrix(matrix_no, 0);
     vector<vector<uint32_t> > xorSizesInMatrix(matrix_no);
     vector<vector<XorClause*> > xorsInMatrix(matrix_no);
-    
+
     #ifdef PART_FINDING
     vector<vector<Var> > xorFingerprintInMatrix(matrix_no);
     #endif
-    
+
     for (XorClause** c = solver.xorclauses.getData(), **end = c + solver.xorclauses.size(); c != end; c++) {
         XorClause& x = **c;
         const uint32_t matrix = table[x[0].var()];
         assert(matrix < matrix_no);
-        
+
         //for stats
         numXorInMatrix[matrix].second++;
         sumXorSizeInMatrix[matrix] += x.size();
         xorSizesInMatrix[matrix].push_back(x.size());
         xorsInMatrix[matrix].push_back(&x);
-        
+
         #ifdef PART_FINDING
         xorFingerprintInMatrix[matrix].push_back(fingerprint(x));
         #endif //PART_FINDING
     }
-    
+
     std::sort(numXorInMatrix.begin(), numXorInMatrix.end(), mysorter());
-    
+
     #ifdef PART_FINDING
     for (uint32_t i = 0; i < matrix_no; i++)
         findParts(xorFingerprintInMatrix[i], xorsInMatrix[i]);
     #endif //PART_FINDING
-    
+
     uint32_t realMatrixNum = 0;
     for (int a = matrix_no-1; a != -1; a--) {
         uint32_t i = numXorInMatrix[a].first;
-        
+
         if (numXorInMatrix[a].second < 3)
             continue;
-        
+
         const uint32_t totalSize = reverseTable[i].size()*numXorInMatrix[a].second;
         const double density = (double)sumXorSizeInMatrix[i]/(double)totalSize*100.0;
         double avg = (double)sumXorSizeInMatrix[i]/(double)numXorInMatrix[a].second;
@@ -200,28 +200,28 @@ const uint32_t MatrixFinder::setMatrixes()
             variance += pow((double)xorSizesInMatrix[i][i2]-avg, 2);
         variance /= (double)xorSizesInMatrix.size();
         const double stdDeviation = sqrt(variance);
-        
+
         if (numXorInMatrix[a].second >= solver.gaussconfig.minMatrixRows
             && numXorInMatrix[a].second <= solver.gaussconfig.maxMatrixRows
             && realMatrixNum <= solver.gaussconfig.maxNumMatrixes)
         {
-            if (solver.verbosity >=1)
+            if (solver.conf.verbosity >=1)
                 cout << "c Matrix no " << std::setw(2) << realMatrixNum;
             solver.gauss_matrixes.push_back(new Gaussian(solver, solver.gaussconfig, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
-            
+
         } else {
-            if (solver.verbosity >=1  /*&& numXorInMatrix[a].second >= 20*/)
+            if (solver.conf.verbosity >=1  /*&& numXorInMatrix[a].second >= 20*/)
                 cout << "c Unused Matrix ";
         }
-        if (solver.verbosity >=1 /*&& numXorInMatrix[a].second >= 20*/) {
+        if (solver.conf.verbosity >=1 /*&& numXorInMatrix[a].second >= 20*/) {
             cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
             cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
             cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
             cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << "  |" << endl;
         }
     }
-    
+
     return realMatrixNum;
 }
 

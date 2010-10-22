@@ -13,8 +13,8 @@ add_executable(cryptominisat Main.cpp)
 target_link_libraries(cryptominisat
     cryptominisatlib
     ${ZLIB_LIBRARY}
-#    ${Boost_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
+    ${Boost_LIBRARIES}
+#    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 add_library(cryptominisatlib
@@ -42,5 +42,6 @@ add_library(cryptominisatlib
     CompleteDetachReattacher.cpp
     DimacsParser.cpp
     SCCFinder.cpp
+    SolverConf.cpp
 )
 

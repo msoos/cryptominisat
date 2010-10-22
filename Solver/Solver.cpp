@@ -57,48 +57,11 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Solver::Solver() :
+Solver::Solver(const SolverConf& _conf, const GaussianConfig& _gaussconfig) :
         // Parameters: (formerly in 'SearchParams')
-        random_var_freq(0.02)
-        , clause_decay (1 / 0.999)
-        , restart_first(100), restart_inc(1.5), learntsize_factor((double)1/(double)3), learntsize_inc(1)
-
-        // More parameters:
-        //
-        , expensive_ccmin  (true)
-        , polarity_mode    (polarity_auto)
-        , verbosity        (0)
-        , restrictedPickBranch(0)
-        , findNormalXors   (true)
-        , findBinaryXors   (true)
-        , regFindBinaryXors(true)
-        , doReplace        (true)
-        , conglomerateXors (true)
-        , heuleProcess     (true)
-        , schedSimplification(true)
-        , doSatELite       (true)
-        , doXorSubsumption (true)
-        , doPartHandler    (true)
-        , doHyperBinRes    (true)
-        , doBlockedClause  (true)
-        , doVarElim        (true)
-        , doSubsume1       (true)
-        , doAsymmBranch    (true)
-        , doSortWatched    (true)
-        , doMinimLearntMore(true)
-        , doMinimLMoreRecur(false)
-        , doFailedVarSearch(true)
-        , doRemUselessBins (true)
-        , doSubsWBins      (true)
-        , doSubsWNonExistBins(true)
+        conf(_conf)
+        , gaussconfig(_gaussconfig)
         , needToInterrupt  (false)
-        , needToDumpLearnts(false)
-        , needToDumpOrig   (false)
-        , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
-        , libraryUsage     (true)
-        , greedyUnbound    (false)
-        , maxGlue          (24)
-        , fixRestartType   (auto_restart)
 
         // Stats
         , starts(0), dynStarts(0), staticStarts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
@@ -109,8 +72,6 @@ Solver::Solver() :
         , moreRecurMinLDo(0)
         , updateTransCache(0)
         , nbClOverMaxGlue(0)
-        , simpStartMult(SIMPLIFY_MULTIPLIER)
-        , simpStartMMult(SIMPLIFY_MULTIPLIER_MULTIPLIER)
 
         #ifdef USE_GAUSS
         , sum_gauss_called (0)
@@ -123,7 +84,6 @@ Solver::Solver() :
         , cla_inc          (1)
         , qhead            (0)
         , mtrand           ((unsigned long int)0)
-        , maxRestarts      (std::numeric_limits<uint32_t>::max())
 
         //variables
         , order_heap       (VarOrderLt(activity))
@@ -136,7 +96,7 @@ Solver::Solver() :
 
         , MYFLAG           (0)
         #ifdef STATS_NEEDED
-        , logger(verbosity)
+        , logger(conf.verbosity)
         , dynamic_behaviour_analysis(false) //do not document the proof as default
         #endif
         , learnt_clause_group(0)
@@ -147,7 +107,8 @@ Solver::Solver() :
         , simpDB_assigns   (-1)
         , simpDB_props     (0)
 {
-    assert(maxGlue < MAX_THEORETICAL_GLUE);
+    mtrand.seed(conf.origSeed);
+    assert(conf.maxGlue < MAX_THEORETICAL_GLUE);
     varReplacer = new VarReplacer(*this);
     clauseCleaner = new ClauseCleaner(*this);
     failedVarSearcher = new FailedVarSearcher(*this);
@@ -156,11 +117,6 @@ Solver::Solver() :
     xorSubsumer = new XorSubsumer(*this);
     restartTypeChooser = new RestartTypeChooser(*this);
     sCCFinder = new SCCFinder(*this);
-
-    learntsFilename = new char[500];
-    learntsFilename[0] = '\0';
-    origFilename = new char[500];
-    origFilename[0] = '\0';
 
     #ifdef USE_GAUSS
     matrixFinder = new MatrixFinder(*this);
@@ -181,17 +137,6 @@ Solver::~Solver()
     delete matrixFinder;
     #endif
 
-    #ifndef USE_POOLS
-    for (uint32_t i = 0; i != learnts.size(); i++) clauseAllocator.clauseFree(learnts[i]);
-    learnts.clear();
-    for (uint32_t i = 0; i != clauses.size(); i++) clauseAllocator.clauseFree(clauses[i]);
-    clauses.clear();
-    for (uint32_t i = 0; i != xorclauses.size(); i++) clauseAllocator.clauseFree(xorclauses[i]);
-    xorclauses.clear();
-    /*for (uint32_t i = 0; i != freeLater.size(); i++) clauseAllocator.clauseFree(freeLater[i]);
-    freeLater.clear();*/
-    #endif //USE_POOLS
-
     delete varReplacer;
     delete clauseCleaner;
     delete failedVarSearcher;
@@ -199,7 +144,6 @@ Solver::~Solver()
     delete subsumer;
     delete xorSubsumer;
     delete restartTypeChooser;
-    delete [] learntsFilename;
 
     if (libraryCNFFile)
         fclose(libraryCNFFile);
@@ -248,9 +192,9 @@ Var Solver::newVar(bool dvar)
     insertVarOrder(v);
 
     varReplacer->newVar();
-    if (doPartHandler) partHandler->newVar();
-    if (doSatELite) subsumer->newVar();
-    if (doXorSubsumption) xorSubsumer->newVar();
+    if (conf.doPartHandler) partHandler->newVar();
+    if (conf.doSatELite) subsumer->newVar();
+    if (conf.doXorSubsumption) xorSubsumer->newVar();
 
     insertVarOrder(v);
 
@@ -735,7 +679,7 @@ signed-ness, i.e. a FALSE default value. And vice-versa
 */
 inline bool Solver::defaultPolarity()
 {
-    switch(polarity_mode) {
+    switch(conf.polarity_mode) {
         case polarity_false:
             return true;
         case polarity_true:
@@ -828,7 +772,7 @@ void Solver::calculateDefaultPolarities()
     #endif
 
     assert(decisionLevel() == 0);
-    if (polarity_mode == polarity_auto) {
+    if (conf.polarity_mode == polarity_auto) {
         double myTime = cpuTime();
 
         vec<double> votes(nVars(), 0.0);
@@ -849,7 +793,7 @@ void Solver::calculateDefaultPolarities()
             #endif //VERBOSE_DEBUG_POLARITIES
         }
 
-        if (verbosity >= 2) {
+        if (conf.verbosity >= 2) {
             std::cout << "c Calc default polars - "
             << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime) << " s"
             << " pos: " << std::setw(7) << posPolars
@@ -892,12 +836,14 @@ Lit Solver::pickBranchLit()
 
     Var next = var_Undef;
 
-    bool random = mtrand.randDblExc() < random_var_freq;
+    bool random = mtrand.randDblExc() < conf.random_var_freq;
 
     // Random decision:
     if (random && !order_heap.empty()) {
-        if (restrictedPickBranch == 0) next = order_heap[mtrand.randInt(order_heap.size()-1)];
-        else next = order_heap[mtrand.randInt(std::min((uint32_t)order_heap.size()-1, restrictedPickBranch))];
+        if (conf.restrictPickBranch == 0)
+            next = order_heap[mtrand.randInt(order_heap.size()-1)];
+        else
+            next = order_heap[mtrand.randInt(std::min((uint32_t)order_heap.size()-1, conf.restrictPickBranch))];
 
         if (assigns[next] == l_Undef && decision_var[next])
             rnd_decisions++;
@@ -1047,7 +993,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
     // Simplify conflict clause:
     //
     uint32_t i, j;
-    if (expensive_ccmin) {
+    if (conf.expensive_ccmin) {
         uint32_t abstract_level = 0;
         for (i = 1; i < out_learnt.size(); i++)
             abstract_level |= abstractLevel(out_learnt[i].var()); // (maintain an abstraction of levels involved in conflict)
@@ -1074,7 +1020,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 
-    if (doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt, calcNBLevels(out_learnt));
+    if (conf.doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt, calcNBLevels(out_learnt));
     glue = calcNBLevels(out_learnt);
     tot_literals += out_learnt.size();
 
@@ -1108,7 +1054,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
     if (out_learnt.size() == 1
         || !oldConfl.isClause()
         || oldConfl.getClause()->isXor()
-        || (oldConfl.getClause()->getGlue() > maxGlue && lastSelectedRestartType == dynamic_restart)
+        || (oldConfl.getClause()->getGlue() > conf.maxGlue && lastSelectedRestartType == dynamic_restart)
         || out_learnt.size() >= oldConfl.getClause()->size()) return NULL;
 
     if (!subset(out_learnt, *oldConfl.getClause(), seen)) return NULL;
@@ -1129,7 +1075,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisClauseDoMinLMoreRecur = doMinimLMoreRecur || (cl.size() <= 50 || glue <= 6);
+    bool thisClauseDoMinLMoreRecur = conf.doMinimLMoreRecur || (cl.size() <= 50 || glue <= 6);
     if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
     uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
     if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 3;
@@ -1788,7 +1734,7 @@ void Solver::reduceDB()
     }
     learnts.shrink_(i - j);
 
-    if (verbosity >= 3) {
+    if (conf.verbosity >= 3) {
         std::cout << "c rem-learnts " << std::setw(6) << totalNumRemoved
         << "  avgGlue "
         << std::fixed << std::setw(5) << std::setprecision(2)  << ((double)totalGlueOfRemoved/(double)totalNumRemoved)
@@ -1844,7 +1790,7 @@ const bool Solver::simplify()
     std::cout << "left:" << ((double)(nbBin - lastNbBin + becameBinary)/BINARY_TO_XOR_APPROX) * slowdown  << std::endl;
     std::cout << "right:" << (double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup << std::endl;*/
 
-    if (findBinaryXors && regFindBinaryXors &&
+    if (conf.doFindEqLits && conf.doRegFindEqLits &&
         (((double)abs64((int64_t)numNewBin - (int64_t)lastNbBin)/BINARY_TO_XOR_APPROX) * slowdown) >
         ((double)order_heap.size() * PERCENTAGEPERFORMREPLACE * speedup)) {
         lastSearchForBinaryXor = propagations;
@@ -1863,7 +1809,7 @@ const bool Solver::simplify()
     clauseCleaner->removeAndCleanAll();
     if (!ok) return false;
 
-    if (doReplace && !varReplacer->performReplace())
+    if (conf.doReplace && !varReplacer->performReplace())
         return false;
 
     // Remove fixed variables from the variable heap:
@@ -1891,13 +1837,13 @@ of being updated, for example)
 */
 void Solver::interruptCleanly()
 {
-    if (needToDumpLearnts) {
-        dumpSortedLearnts(learntsFilename, maxDumpLearntsSize);
-        std::cout << "c Sorted learnt clauses dumped to file '" << learntsFilename << "'" << std::endl;
+    if (conf.needToDumpLearnts) {
+        dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
+        std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
     }
-    if (needToDumpOrig) {
-        dumpOrigClauses(origFilename);
-        std::cout << "c Simplified original clauses dumped to file '" << origFilename << "'" << std::endl;
+    if (conf.needToDumpOrig) {
+        dumpOrigClauses(conf.origFilename);
+        std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
     }
     exit(0);
 }
@@ -2143,7 +2089,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
             #endif
             if (learnt_clause.size() > 2) {
                 c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
-                if (glue > maxGlue && lastSelectedRestartType == dynamic_restart) {
+                if (glue > conf.maxGlue && lastSelectedRestartType == dynamic_restart) {
                     nbClOverMaxGlue++;
                     nbCompensateSubsumer++;
                     unWindGlue[learnt_clause[0].var()] = c;
@@ -2181,23 +2127,23 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
     uint32_t relativeStart = starts - lastFullRestart;
 
     if (relativeStart > RESTART_TYPE_DECIDER_FROM  && relativeStart < RESTART_TYPE_DECIDER_UNTIL) {
-        if (fixRestartType == auto_restart)
+        if (conf.fixRestartType == auto_restart)
             restartTypeChooser->addInfo();
 
         if (relativeStart == (RESTART_TYPE_DECIDER_UNTIL-1)) {
             RestartType tmp;
-            if (fixRestartType == auto_restart)
+            if (conf.fixRestartType == auto_restart)
                 tmp = restartTypeChooser->choose();
             else
-                tmp = fixRestartType;
+                tmp = conf.fixRestartType;
 
             if (tmp == dynamic_restart) {
                 glueHistory.fastclear();
-                if (verbosity >= 3)
+                if (conf.verbosity >= 3)
                     std::cout << "c Decided on dynamic restart strategy"
                     << std::endl;
             } else  {
-                if (verbosity >= 3)
+                if (conf.verbosity >= 3)
                     std::cout << "c Decided on static restart strategy"
                     << std::endl;
 
@@ -2216,7 +2162,7 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
 
 inline void Solver::setDefaultRestartType()
 {
-    if (fixRestartType != auto_restart) restartType = fixRestartType;
+    if (conf.fixRestartType != auto_restart) restartType = conf.fixRestartType;
     else restartType = static_restart;
 
     glueHistory.clear();
@@ -2243,11 +2189,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     StateSaver savedState(*this);;
 
     #ifdef BURST_SEARCH
-    if (verbosity >= 3)
+    if (conf.verbosity >= 3)
         std::cout << "c " << std::setw(24) << " "
         << "Simplifying problem for " << std::setw(8) << numConfls << " confls"
         << std::endl;
-    random_var_freq = 1;
+    conf.random_var_freq = 1;
     simplifying = true;
     uint64_t origConflicts = conflicts;
     #endif //BURST_SEARCH
@@ -2265,17 +2211,17 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (status != l_Undef) goto end;
     #endif //BURST_SEARCH
 
-    if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
+    if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
-    if (doFailedVarSearch && !failedVarSearcher->search()) goto end;
+    if (conf.doFailedLit && !failedVarSearcher->search()) goto end;
 
-    if (doReplace && doRemUselessBins) {
+    if (conf.doReplace && conf.doRemUselessBins) {
         UselessBinRemover uselessBinRemover(*this);
         if (!uselessBinRemover.removeUslessBinFull()) goto end;
     }
 
-    if (doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
-    if (doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
+    if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
+    if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
@@ -2288,15 +2234,15 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         x.addAllXorAsNorm();
     }
 
-    if (doAsymmBranch && !failedVarSearcher->asymmBranch()) goto end;
+    if (conf.doAsymmBranch && !failedVarSearcher->asymmBranch()) goto end;
 
     //addSymmBreakClauses();
 
-    if (doSortWatched) sortWatched();
+    if (conf.doSortWatched) sortWatched();
 
 end:
     #ifdef BURST_SEARCH
-    if (verbosity >= 3)
+    if (conf.verbosity >= 3)
         std::cout << "c Simplifying finished" << std::endl;
     #endif //#ifdef BURST_SEARCH
 
@@ -2327,12 +2273,12 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
         #ifdef USE_GAUSS
         clearGaussMatrixes();
         #endif //USE_GAUSS
-        nof_conflicts = restart_first + (double)restart_first*restart_inc;
+        nof_conflicts = conf.restart_first + (double)conf.restart_first*conf.restart_inc;
         nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
         restartType = static_restart;
         lastFullRestart = starts;
 
-        if (verbosity >= 3)
+        if (conf.verbosity >= 3)
             std::cout << "c Fully restarting" << std::endl;
         printRestartStat("F");
 
@@ -2342,7 +2288,7 @@ const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullr
                 return false;
         }*/
 
-        if (doPartHandler && !partHandler->handle())
+        if (conf.doPartHandler && !partHandler->handle())
             return false;
 
         //calculateDefaultPolarities();
@@ -2369,37 +2315,37 @@ void Solver::performStepsBeforeSolve()
     assert(qhead == trail.size());
     testAllClauseAttach();
 
-    if (doReplace && !varReplacer->performReplace()) return;
+    if (conf.doReplace && !varReplacer->performReplace()) return;
 
-    if (doAsymmBranch && !libraryUsage
+    if (conf.doAsymmBranch && !conf.libraryUsage
         && !failedVarSearcher->asymmBranch()) return;
 
-    if (doSatELite
-        && !libraryUsage
+    if (conf.doSatELite
+        && !conf.libraryUsage
         && clauses.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
 
-    if (findBinaryXors) {
+    if (conf.doFindEqLits) {
         if (!sCCFinder->find2LongXors()) return;
         lastNbBin = numNewBin;
-        if (doReplace && !varReplacer->performReplace(true)) return;
+        if (conf.doReplace && !varReplacer->performReplace(true)) return;
     }
 
-    if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
+    if (conf.doFindXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, clauses);
         if (!xorFinder.fullFindXors(3, 7)) return;
     }
 
     if (xorclauses.size() > 1) {
-        if (doXorSubsumption && !xorSubsumer->simplifyBySubsumption())
+        if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption())
             return;
 
-        if (doReplace && !varReplacer->performReplace())
+        if (conf.doReplace && !varReplacer->performReplace())
             return;
     }
 
-    if (doSortWatched) sortWatched();
+    if (conf.doSortWatched) sortWatched();
     testAllClauseAttach();
 }
 
@@ -2428,11 +2374,11 @@ void Solver::initialiseSolver()
     starts = 0;
     fullStarts = 0;
 
-    if (nClauses() * learntsize_factor < nbClBeforeRed) {
-        if (nClauses() * learntsize_factor < nbClBeforeRed/2)
+    if (nClauses() * conf.learntsize_factor < nbClBeforeRed) {
+        if (nClauses() * conf.learntsize_factor < nbClBeforeRed/2)
             nbClBeforeRed /= 4;
         else
-            nbClBeforeRed = (nClauses() * learntsize_factor)/2;
+            nbClBeforeRed = (nClauses() * conf.learntsize_factor)/2;
     }
 
     testAllClauseAttach();
@@ -2462,11 +2408,11 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     assumps.copyTo(assumptions);
     initialiseSolver();
-    int       nof_conflicts = restart_first; //Geometric restart policy, start with this many
-    int       nof_conflicts_fullrestart = restart_first * FULLRESTART_MULTIPLIER + conflicts; //at this point, do a full restart
+    int       nof_conflicts = conf.restart_first; //Geometric restart policy, start with this many
+    int       nof_conflicts_fullrestart = conf.restart_first * FULLRESTART_MULTIPLIER + conflicts; //at this point, do a full restart
     uint32_t  lastFullRestart = starts; //last time a full restart was made was at this number of restarts
     lbool     status = l_Undef; //Current status
-    uint64_t  nextSimplify = restart_first * simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
+    uint64_t  nextSimplify = conf.restart_first * conf.simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
 
     if (conflicts == 0) {
         performStepsBeforeSolve();
@@ -2478,7 +2424,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     printRestartStat("B");
     uint64_t lastConflPrint = conflicts;
     // Search:
-    while (status == l_Undef && starts < maxRestarts) {
+    while (status == l_Undef && starts < conf.maxRestarts) {
         #ifdef DEBUG_VARELIM
         assert(subsumer->checkElimedUnassigned());
         assert(xorSubsumer->checkElimedUnassigned());
@@ -2489,11 +2435,11 @@ lbool Solver::solve(const vec<Lit>& assumps)
             lastConflPrint = conflicts;
         }
 
-        if (schedSimplification && conflicts >= nextSimplify) {
+        if (conf.doSchedSimp && conflicts >= nextSimplify) {
             status = simplifyProblem(NUM_CONFL_BURST_SEARCH);
             printRestartStat();
             lastConflPrint = conflicts;
-            nextSimplify = conflicts * simpStartMMult;
+            nextSimplify = conflicts * conf.simpStartMMult;
             if (status != l_Undef) break;
         }
 
@@ -2505,7 +2451,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         #endif
 
         status = search(nof_conflicts, nof_conflicts_fullrestart);
-        nof_conflicts = (double)nof_conflicts * restart_inc;
+        nof_conflicts = (double)nof_conflicts * conf.restart_inc;
         if (status != l_Undef) break;
         if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart))
             return l_False;
@@ -2546,7 +2492,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     #endif
 
     cancelUntil(0);
-    if (doPartHandler && status != l_False) partHandler->readdRemovedClauses();
+    if (conf.doPartHandler && status != l_False) partHandler->readdRemovedClauses();
     restartTypeChooser->reset();
 
     #ifdef VERBOSE_DEBUG
@@ -2570,7 +2516,7 @@ void Solver::handleSATSolution()
         double time = cpuTime();
         FindUndef finder(*this);
         const uint32_t unbounded = finder.unRoll();
-        if (verbosity >= 1)
+        if (conf.verbosity >= 1)
             printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
     }*/
     assert(subsumer->checkElimedUnassigned());
@@ -2581,20 +2527,22 @@ void Solver::handleSATSolution()
     checkSolution();
 
     if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
-        if (verbosity >= 1) {
+        if (conf.verbosity >= 1) {
             std::cout << "c Solution needs extension. Extending." << std::endl;
         }
         Solver s;
-        s.doSatELite = false;
-        s.doReplace = false;
-        s.findBinaryXors = false;
-        s.findNormalXors = false;
-        s.doFailedVarSearch = false;
-        s.conglomerateXors = false;
-        s.doSubsWNonExistBins = false;
-        s.doRemUselessBins = false;
-        s.doAsymmBranch = false;
-        s.greedyUnbound = greedyUnbound;
+        s.conf = conf;
+        s.conf.doSatELite = false;
+        s.conf.doReplace = false;
+        s.conf.doFindEqLits = false;
+        s.conf.doRegFindEqLits = false;
+        s.conf.doFailedLit= false;
+        s.conf.doConglXors = false;
+        s.conf.doSubsWNonExistBins = false;
+        s.conf.doRemUselessBins = false;
+        s.conf.doAsymmBranch = false;
+        s.conf.doPartHandler = false;
+        s.conf.doSortWatched = false;
 
         vec<Lit> tmp;
         for (Var var = 0; var < nVars(); var++) {

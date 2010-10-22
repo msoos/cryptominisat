@@ -46,7 +46,7 @@ PartFinder::PartFinder(Solver& _solver) :
 
 const bool PartFinder::findParts()
 {
-    assert(solver.doReplace);
+    assert(solver.conf.doReplace);
 
     double time = cpuTime();
 
@@ -58,7 +58,7 @@ const bool PartFinder::findParts()
     solver.clauseCleaner->removeAndCleanAll(true);
     if (!solver.ok) return false;
     while (solver.varReplacer->getNewToReplaceVars() > 0) {
-        if (solver.doReplace && !solver.varReplacer->performReplace(true))
+        if (solver.conf.doReplace && !solver.varReplacer->performReplace(true))
             return false;
         solver.clauseCleaner->removeAndCleanAll(true);
         if (!solver.ok) return false;
@@ -78,7 +78,7 @@ const bool PartFinder::findParts()
     }
     #endif
 
-    if (solver.verbosity >= 3 || (solver.verbosity >=1 && parts > 1)) {
+    if (solver.conf.verbosity  >= 3 || (solver.conf.verbosity  >=1 && parts > 1)) {
         std::cout << "c Found parts: " << std::setw(10) <<  parts
         << " time: " << std::setprecision(2) << std::setw(4) << cpuTime() - time
         << " s"
@@ -161,7 +161,7 @@ const uint32_t PartFinder::setParts()
     uint32_t parts = 0;
     for (uint32_t i = 0; i < numClauseInPart.size(); i++) {
         if (sumLitsInPart[i] == 0) continue;
-        if (solver.verbosity >= 3 || ( solver.verbosity >= 1 && reverseTable.size() > 1) ) {
+        if (solver.conf.verbosity  >= 3 || ( solver.conf.verbosity  >= 1 && reverseTable.size() > 1) ) {
             std::cout << "c Found part " << std::setw(8) << i
             << " vars: " << std::setw(10) << reverseTable[i].size()
             << " clauses:" << std::setw(10) << numClauseInPart[i]

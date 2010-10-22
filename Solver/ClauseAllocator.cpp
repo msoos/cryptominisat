@@ -310,7 +310,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     //   Avoiding segfault (max is 16 outerOffsets, more than 10 is near)
     //2) There is too much empty, unused space (>30%)
     if ((double)sum/(double)sumAlloc > 0.7 && sizes.size() < 10) {
-        if (solver->verbosity >= 3) {
+        if (solver->conf.verbosity >= 3) {
             std::cout << "c Not consolidating memory." << std::endl;
         }
         return;
@@ -417,7 +417,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     }
     newOrigClauseSizes.moveTo(origClauseSizes);
 
-    if (solver->verbosity >= 3) {
+    if (solver->conf.verbosity >= 3) {
         std::cout << "c Consolidated memory. Time: "
         << cpuTime() - myTime << std::endl;
     }

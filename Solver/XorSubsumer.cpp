@@ -463,7 +463,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     clauseID = 0;
     uint32_t lastNumElimed = numElimed;
     localSubstituteUseful = 0;
-    while (solver.doReplace && solver.varReplacer->needsReplace()) {
+    while (solver.conf.doReplace && solver.varReplacer->needsReplace()) {
         if (!solver.varReplacer->performReplace())
             return false;
     }
@@ -512,12 +512,12 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
         if (!solver.ok) return false;
 
         fillCannotEliminate();
-        if (solver.conglomerateXors && !removeDependent()) {
+        if (solver.conf.doConglXors && !removeDependent()) {
             addBackToSolver();
             return false;
         }
 
-        if (solver.heuleProcess && !localSubstitute()) {
+        if (solver.conf.doHeuleProcess && !localSubstitute()) {
             addBackToSolver();
             return false;
         }
@@ -539,7 +539,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     removeWrongBins();
     addBackToSolver();
 
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity >= 1) {
         std::cout << "c x-sub: " << std::setw(5) << clauses_subsumed
         << " x-cut: " << std::setw(6) << clauses_cut
         << " vfix: " << std::setw(6) <<solver.trail.size() - origTrailSize

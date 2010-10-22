@@ -201,4 +201,6 @@ const llbool l_Continue = toLbool(3);
 
 lbool::lbool(llbool b) : value(b.value) {};
 
+enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
+
 #endif //SOLVERTYPES_H

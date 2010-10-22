@@ -37,6 +37,7 @@ Here is a picture of of the above process in more detail:
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <omp.h>
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
 #else
@@ -154,7 +155,7 @@ void Main::printStats(Solver& solver)
     printStatsLine("c CPU time", cpu_time, " s");
 }
 
-vector<Solver*> solversToInterrupt;
+Solver* solverToInterrupt;
 
 /**
 @brief For correctly and gracefully exiting
@@ -166,19 +167,17 @@ is used to achieve this
 */
 void SIGINT_handler(int signum)
 {
-    for (uint32_t i = 0; i < solversToInterrupt.size(); i++) {
-        Solver& solver = *solversToInterrupt[i];
-        printf("\n");
+    Solver& solver = *solverToInterrupt;
+    printf("\n");
+    printf("*** INTERRUPTED ***\n");
+    if (solver.conf.needToDumpLearnts || solver.conf.needToDumpOrig) {
+        solver.needToInterrupt = true;
+        printf("*** Please wait. We need to interrupt cleanly\n");
+        printf("*** This means we might need to finish some calculations\n");
         printf("*** INTERRUPTED ***\n");
-        if (solver.needToDumpLearnts || solver.needToDumpOrig) {
-            solver.needToInterrupt = true;
-            printf("*** Please wait. We need to interrupt cleanly\n");
-            printf("*** This means we might need to finish some calculations\n");
-            printf("*** INTERRUPTED ***\n");
-        } else {
-            Main::printStats(solver);
-            exit(1);
-        }
+    } else {
+        Main::printStats(solver);
+        exit(1);
     }
 }
 
@@ -199,7 +198,7 @@ gzFile Main::openGzFile(const char* name)
 template<class B>
 void Main::readInAFile(B stuff, Solver& solver)
 {
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity >= 1) {
         if ((const char*)stuff == (const char*)fileno(stdin)) {
             std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
         } else {
@@ -218,7 +217,7 @@ void Main::readInAFile(B stuff, Solver& solver)
     }
 
     DimacsParser parser(&solver, debugLib, debugNewVar, grouping);
-    parser.parse_DIMACS(in, solver.verbosity);
+    parser.parse_DIMACS(in);
 
     #ifdef DISABLE_ZLIB
         fclose(in);
@@ -247,7 +246,7 @@ void Main::parseInAllFiles(Solver& solver)
         readInAFile(argv[(twoFileNamesPresent ? argc-2 : argc-1)], solver);
     }
 
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity >= 1) {
         std::cout << "c Parsing time: "
         << std::fixed << std::setw(5) << std::setprecision(2) << (cpuTime() - myTime)
         << " s" << std::endl;
@@ -257,7 +256,7 @@ void Main::parseInAllFiles(Solver& solver)
 //=================================================================================================
 // Main:
 
-void Main::printUsage(char** argv, Solver& S)
+void Main::printUsage(char** argv)
 {
 #ifdef DISABLE_ZLIB
     printf("USAGE: %s [options] <input-file> <result-output-file>\n\n  where input is plain DIMACS.\n\n", argv[0]);
@@ -341,14 +340,14 @@ void Main::printUsage(char** argv, Solver& S)
     printf("  --noiterreduce   = Don't reduce iteratively the matrix that is updated\n");
     printf("  --maxmatrixrows  = [0 - 2^32-1] Set maximum no. of rows for gaussian matrix.\n");
     printf("                     Too large matrixes should bee discarded for\n");
-    printf("                     reasons of efficiency. Default: %d\n", S.gaussconfig.maxMatrixRows);
+    printf("                     reasons of efficiency. Default: %d\n", gaussconfig.maxMatrixRows);
     printf("  --minmatrixrows  = [0 - 2^32-1] Set minimum no. of rows for gaussian matrix.\n");
     printf("                     Normally, too small matrixes are discarded for\n");
-    printf("                     reasons of efficiency. Default: %d\n", S.gaussconfig.minMatrixRows);
+    printf("                     reasons of efficiency. Default: %d\n", gaussconfig.minMatrixRows);
     printf("  --savematrix     = [0 - 2^32-1] Save matrix every Nth decision level.\n");
-    printf("                     Default: %d\n", S.gaussconfig.only_nth_gauss_save);
+    printf("                     Default: %d\n", gaussconfig.only_nth_gauss_save);
     printf("  --maxnummatrixes = [0 - 2^32-1] Maximum number of matrixes to treat.\n");
-    printf("                     Default: %d\n", S.gaussconfig.maxNumMatrixes);
+    printf("                     Default: %d\n", gaussconfig.maxNumMatrixes);
 #endif //USE_GAUSS
     //printf("  --addoldlearnts  = Readd old learnts for failed variable searching.\n");
     //printf("                     These learnts are usually deleted, but may help\n");
@@ -365,7 +364,7 @@ void Main::printUsage(char** argv, Solver& S)
     printf("  --lfminimrec     = Always perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution (enhancement of \n");
     printf("                     'strong minimisation' in PrecoSat)\n");
-    printf("  --maxglue        = [0 - 2^32-1] default: %d. Glue value above which we\n", S.maxGlue);
+    printf("  --maxglue        = [0 - 2^32-1] default: %d. Glue value above which we\n", conf.maxGlue);
     printf("                     throw the clause away on backtrack. Only active\n");
     printf("                     when dynamic restarts have been selected\n");
     printf("\n");
@@ -417,24 +416,25 @@ void Main::printResultFunc(const Solver& S, const lbool ret, FILE* res)
     }
 }
 
-void Main::parseCommandLine(Solver& S)
+void Main::parseCommandLine()
 {
     const char* value;
     char tmpFilename[201];
     tmpFilename[0] = '\0';
     uint32_t unparsedOptions = 0;
     bool needTwoFileNames = false;
+    conf.verbosity = 2;
 
     for (int i = 0; i < argc; i++) {
         if ((value = hasPrefix(argv[i], "--polarity-mode="))) {
             if (strcmp(value, "true") == 0)
-                S.polarity_mode = Solver::polarity_true;
+                conf.polarity_mode = polarity_true;
             else if (strcmp(value, "false") == 0)
-                S.polarity_mode = Solver::polarity_false;
+                conf.polarity_mode = polarity_false;
             else if (strcmp(value, "rnd") == 0)
-                S.polarity_mode = Solver::polarity_rnd;
+                conf.polarity_mode = polarity_rnd;
             else if (strcmp(value, "auto") == 0)
-                S.polarity_mode = Solver::polarity_auto;
+                conf.polarity_mode = polarity_auto;
             else {
                 printf("ERROR! unknown polarity-mode %s\n", value);
                 exit(0);
@@ -446,7 +446,7 @@ void Main::parseCommandLine(Solver& S)
                 printf("ERROR! illegal rnRSE ERROR!d-freq constant %s\n", value);
                 exit(0);
             }
-            S.random_var_freq = rnd;
+            conf.random_var_freq = rnd;
 
         /*} else if ((value = hasPrefix(argv[i], "--decay="))) {
             double decay;
@@ -454,7 +454,7 @@ void Main::parseCommandLine(Solver& S)
                 printf("ERROR! illegal decay constant %s\n", value);
                 exit(0);
             }
-            S.var_decay = 1 / decay;*/
+            conf.var_decay = 1 / decay;*/
 
         } else if ((value = hasPrefix(argv[i], "--verbosity="))) {
             int verbosity = (int)strtol(value, NULL, 10);
@@ -462,15 +462,15 @@ void Main::parseCommandLine(Solver& S)
                 printf("ERROR! illegal verbosity level %s\n", value);
                 exit(0);
             }
-            S.verbosity = verbosity;
+            conf.verbosity = verbosity;
         #ifdef STATS_NEEDED
         } else if ((value = hasPrefix(argv[i], "--grouping"))) {
             grouping = true;
         } else if ((value = hasPrefix(argv[i], "--proof-log"))) {
-            S.needProofGraph();
+            conf.needProofGraph();
 
         } else if ((value = hasPrefix(argv[i], "--stats"))) {
-            S.needStats();
+            conf.needStats();
         #endif
 
         } else if ((value = hasPrefix(argv[i], "--randomize="))) {
@@ -479,40 +479,42 @@ void Main::parseCommandLine(Solver& S)
                 printf("ERROR! illegal seed %s\n", value);
                 exit(0);
             }
-            S.setSeed(seed);
+            conf.origSeed = seed;
         } else if ((value = hasPrefix(argv[i], "--restrict="))) {
             uint32_t branchTo;
             if (sscanf(value, "%d", &branchTo) < 0 || branchTo < 1) {
                 printf("ERROR! illegal restricted pick branch number %d\n", branchTo);
                 exit(0);
             }
-            S.restrictedPickBranch = branchTo;
+            conf.restrictPickBranch = branchTo;
         } else if ((value = hasPrefix(argv[i], "--gaussuntil="))) {
             uint32_t until;
             if (sscanf(value, "%d", &until) < 0) {
                 printf("ERROR! until %s\n", value);
                 exit(0);
             }
-            S.gaussconfig.decision_until = until;
+            gaussconfig.decision_until = until;
         } else if ((value = hasPrefix(argv[i], "--restarts="))) {
             uint32_t maxrest;
             if (sscanf(value, "%d", &maxrest) < 0 || maxrest == 0) {
                 printf("ERROR! illegal maximum restart number %d\n", maxrest);
                 exit(0);
             }
-            S.setMaxRestarts(maxrest);
+            conf.maxRestarts = maxrest;
         } else if ((value = hasPrefix(argv[i], "--dumplearnts="))) {
-            if (sscanf(value, "%400s", S.learntsFilename) < 0 || strlen(S.learntsFilename) == 0) {
-                printf("ERROR! wrong filename '%s'\n", S.learntsFilename);
+            if (sscanf(value, "%200s", tmpFilename) < 0 || strlen(tmpFilename) == 0) {
+                printf("ERROR! wrong filename '%s'\n", tmpFilename);
                 exit(0);
             }
-            S.needToDumpLearnts = true;
+            conf.learntsFilename.assign(tmpFilename);
+            conf.needToDumpLearnts = true;
         } else if ((value = hasPrefix(argv[i], "--dumporig="))) {
-            if (sscanf(value, "%400s", S.origFilename) < 0 || strlen(S.origFilename) == 0) {
-                printf("ERROR! wrong filename '%s'\n", S.origFilename);
+            if (sscanf(value, "%200s", tmpFilename) < 0 || strlen(tmpFilename) == 0) {
+                printf("ERROR! wrong filename '%s'\n", tmpFilename);
                 exit(0);
             }
-            S.needToDumpOrig = true;
+            conf.origFilename.assign(tmpFilename);
+            conf.needToDumpOrig = true;
         } else if ((value = hasPrefix(argv[i], "--alsoread="))) {
             if (sscanf(value, "%400s", tmpFilename) < 0 || strlen(tmpFilename) == 0) {
                 printf("ERROR! wrong filename '%s'\n", tmpFilename);
@@ -520,7 +522,7 @@ void Main::parseCommandLine(Solver& S)
             }
             filesToRead.push_back(tmpFilename);
         } else if ((value = hasPrefix(argv[i], "--maxdumplearnts="))) {
-            if (!S.needToDumpLearnts) {
+            if (!conf.needToDumpLearnts) {
                 printf("ERROR! -dumplearnts=<filename> must be first activated before issuing -maxdumplearnts=<size>\n");
                 exit(0);
             }
@@ -529,7 +531,7 @@ void Main::parseCommandLine(Solver& S)
                 std::cout << "ERROR! wrong maximum dumped learnt clause size is illegal: " << tmp << std::endl;
                 exit(0);
             }
-            S.maxDumpLearntsSize = (uint32_t)tmp;
+            conf.maxDumpLearntsSize = (uint32_t)tmp;
         } else if ((value = hasPrefix(argv[i], "--maxsolutions="))) {
             int tmp;
             if (sscanf(value, "%d", &tmp) < 0 || tmp < 0) {
@@ -538,72 +540,72 @@ void Main::parseCommandLine(Solver& S)
             }
             max_nr_of_solutions = (uint32_t)tmp;
         } else if ((value = hasPrefix(argv[i], "--greedyunbound"))) {
-            S.greedyUnbound = true;
+            conf.greedyUnbound = true;
         } else if ((value = hasPrefix(argv[i], "--nonormxorfind"))) {
-            S.findNormalXors = false;
+            conf.doFindXors = false;
         } else if ((value = hasPrefix(argv[i], "--nobinxorfind"))) {
-            S.findBinaryXors = false;
+            conf.doFindEqLits = false;
         } else if ((value = hasPrefix(argv[i], "--noregbxorfind"))) {
-            S.regFindBinaryXors = false;
+            conf.doRegFindEqLits = false;
         } else if ((value = hasPrefix(argv[i], "--noconglomerate"))) {
-            S.conglomerateXors = false;
+            conf.doConglXors = false;
         } else if ((value = hasPrefix(argv[i], "--nosimplify"))) {
-            S.schedSimplification = false;
+            conf.doSchedSimp = false;
         } else if ((value = hasPrefix(argv[i], "--debuglib"))) {
             debugLib = true;
         } else if ((value = hasPrefix(argv[i], "--debugnewvar"))) {
             debugNewVar = true;
         } else if ((value = hasPrefix(argv[i], "--novarreplace"))) {
-            S.doReplace = false;
+            conf.doReplace = false;
         } else if ((value = hasPrefix(argv[i], "--nofailedvar"))) {
-            S.doFailedVarSearch = false;
+            conf.doFailedLit = false;
         } else if ((value = hasPrefix(argv[i], "--nodisablegauss"))) {
-            S.gaussconfig.dontDisable = true;
+            gaussconfig.dontDisable = true;
         } else if ((value = hasPrefix(argv[i], "--maxnummatrixes="))) {
             uint32_t maxNumMatrixes;
             if (sscanf(value, "%d", &maxNumMatrixes) < 0) {
                 printf("ERROR! maxnummatrixes: %s\n", value);
                 exit(0);
             }
-            S.gaussconfig.maxNumMatrixes = maxNumMatrixes;
+            gaussconfig.maxNumMatrixes = maxNumMatrixes;
         } else if ((value = hasPrefix(argv[i], "--noheuleprocess"))) {
-            S.heuleProcess = false;
+            conf.doHeuleProcess = false;
         } else if ((value = hasPrefix(argv[i], "--nosatelite"))) {
-            S.doSatELite = false;
+            conf.doSatELite = false;
         } else if ((value = hasPrefix(argv[i], "--noparthandler"))) {
-            S.doPartHandler = false;
+            conf.doPartHandler = false;
         } else if ((value = hasPrefix(argv[i], "--noxorsubs"))) {
-            S.doXorSubsumption = false;
+            conf.doXorSubsumption = false;
         } else if ((value = hasPrefix(argv[i], "--nohyperbinres"))) {
-            S.doHyperBinRes = false;
+            conf.doHyperBinRes = false;
         } else if ((value = hasPrefix(argv[i], "--noblockedclause"))) {
-            S.doBlockedClause = false;
+            conf.doBlockedClause = false;
         } else if ((value = hasPrefix(argv[i], "--novarelim"))) {
-            S.doVarElim = false;
+            conf.doVarElim = false;
         } else if ((value = hasPrefix(argv[i], "--nosubsume1"))) {
-            S.doSubsume1 = false;
+            conf.doSubsume1 = false;
         } else if ((value = hasPrefix(argv[i], "--nomatrixfind"))) {
-            S.gaussconfig.noMatrixFind = true;
+            gaussconfig.noMatrixFind = true;
         } else if ((value = hasPrefix(argv[i], "--noiterreduce"))) {
-            S.gaussconfig.iterativeReduce = false;
+            gaussconfig.iterativeReduce = false;
         } else if ((value = hasPrefix(argv[i], "--noiterreduce"))) {
-            S.gaussconfig.iterativeReduce = false;
+            gaussconfig.iterativeReduce = false;
         } else if ((value = hasPrefix(argv[i], "--noordercol"))) {
-            S.gaussconfig.orderCols = false;
+            gaussconfig.orderCols = false;
         } else if ((value = hasPrefix(argv[i], "--maxmatrixrows"))) {
             uint32_t rows;
             if (sscanf(value, "%d", &rows) < 0) {
                 printf("ERROR! maxmatrixrows: %s\n", value);
                 exit(0);
             }
-            S.gaussconfig.maxMatrixRows = rows;
+            gaussconfig.maxMatrixRows = rows;
         } else if ((value = hasPrefix(argv[i], "--minmatrixrows"))) {
             uint32_t rows;
             if (sscanf(value, "%d", &rows) < 0) {
                 printf("ERROR! minmatrixrows: %s\n", value);
                 exit(0);
             }
-            S.gaussconfig.minMatrixRows = rows;
+            gaussconfig.minMatrixRows = rows;
         } else if ((value = hasPrefix(argv[i], "--savematrix"))) {
             uint32_t every;
             if (sscanf(value, "%d", &every) < 0) {
@@ -611,17 +613,17 @@ void Main::parseCommandLine(Solver& S)
                 exit(0);
             }
             std::cout << "c Matrix saved every " <<  every << " decision levels" << std::endl;
-            S.gaussconfig.only_nth_gauss_save = every;
+            gaussconfig.only_nth_gauss_save = every;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
-            printUsage(argv, S);
+            printUsage(argv);
             exit(0);
         } else if ((value = hasPrefix(argv[i], "--restart="))) {
             if (strcmp(value, "auto") == 0)
-                S.fixRestartType = auto_restart;
+                conf.fixRestartType = auto_restart;
             else if (strcmp(value, "static") == 0)
-                S.fixRestartType = static_restart;
+                conf.fixRestartType = static_restart;
             else if (strcmp(value, "dynamic") == 0)
-                S.fixRestartType = dynamic_restart;
+                conf.fixRestartType = dynamic_restart;
             else {
                 printf("ERROR! unknown restart type %s\n", value);
                 exit(0);
@@ -629,21 +631,21 @@ void Main::parseCommandLine(Solver& S)
         } else if ((value = hasPrefix(argv[i], "--nosolprint"))) {
             printResult = false;
         //} else if ((value = hasPrefix(argv[i], "--addoldlearnts"))) {
-        //    S.readdOldLearnts = true;
+        //    conf.readdOldLearnts = true;
         } else if ((value = hasPrefix(argv[i], "--nohyperbinres"))) {
-            S.doHyperBinRes= false;
+            conf.doHyperBinRes= false;
         } else if ((value = hasPrefix(argv[i], "--noremovebins"))) {
-            S.doRemUselessBins = false;
+            conf.doRemUselessBins = false;
         } else if ((value = hasPrefix(argv[i], "--nosubswithbins"))) {
-            S.doSubsWNonExistBins = false;
+            conf.doSubsWNonExistBins = false;
         } else if ((value = hasPrefix(argv[i], "--noasymm"))) {
-            S.doAsymmBranch = false;
+            conf.doAsymmBranch = false;
         } else if ((value = hasPrefix(argv[i], "--nosortwatched"))) {
-            S.doSortWatched = false;
+            conf.doSortWatched = false;
         } else if ((value = hasPrefix(argv[i], "--nolfminim"))) {
-            S.doMinimLearntMore = false;
+            conf.doMinimLearntMore = false;
         } else if ((value = hasPrefix(argv[i], "--lfminimrec"))) {
-            S.doMinimLMoreRecur = true;
+            conf.doMinimLMoreRecur = true;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 16;
             if (sscanf(value, "%d", &glue) < 0 || glue < 0) {
@@ -655,7 +657,7 @@ void Main::parseCommandLine(Solver& S)
                 << ((1<< MAX_GLUE_BITS)-2) << std::endl;
                 exit(-1);
             }
-            S.maxGlue = (uint32_t)glue;
+            conf.maxGlue = (uint32_t)glue;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);
@@ -688,7 +690,7 @@ void Main::parseCommandLine(Solver& S)
             }
         }
     }
-    if (S.verbosity >= 1) {
+    if (conf.verbosity >= 1) {
         if (twoFileNamesPresent) {
             std::cout << "c Outputting solution to file: " << argv[argc-1] << std::endl;
         } else {
@@ -702,7 +704,7 @@ void Main::parseCommandLine(Solver& S)
         << "your output file with a hyphen ('-'). Exiting." << std::endl;
         exit(-1);
     }
-    if (!debugLib) S.libraryUsage = false;
+    if (!debugLib) conf.libraryUsage = false;
 }
 
 FILE* Main::openOutputFile()
@@ -739,13 +741,11 @@ void Main::printVersionInfo(const uint32_t verbosity)
 
 int Main::singleThreadSolve()
 {
-    Solver solver;
-    solversToInterrupt.push_back(&solver);
-    solver.verbosity = 2;
+    Solver solver(conf);
+    solverToInterrupt = &solver;
 
-    parseCommandLine(solver);
-    printVersionInfo(solver.verbosity);
-    setDoublePrecision(solver.verbosity);
+    printVersionInfo(conf.verbosity);
+    setDoublePrecision(conf.verbosity);
 
     parseInAllFiles(solver);
     FILE* res = openOutputFile();
@@ -757,7 +757,7 @@ int Main::singleThreadSolve()
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
-            if (solver.verbosity >= 1) std::cout << "c Prepare for next run..." << std::endl;
+            if (conf.verbosity >= 1) std::cout << "c Prepare for next run..." << std::endl;
             printResultFunc(solver, ret, res);
 
             vec<Lit> lits;
@@ -770,19 +770,19 @@ int Main::singleThreadSolve()
         }
     }
 
-    if (solver.needToDumpLearnts) {
-        solver.dumpSortedLearnts(solver.learntsFilename, solver.maxDumpLearntsSize);
-        std::cout << "c Sorted learnt clauses dumped to file '" << solver.learntsFilename << "'" << std::endl;
+    if (conf.needToDumpLearnts) {
+        solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
+        std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
     }
-    if (solver.needToDumpOrig) {
-        solver.dumpOrigClauses(solver.origFilename);
-        std::cout << "c Simplified original clauses dumped to file '" << solver.origFilename << "'" << std::endl;
+    if (conf.needToDumpOrig) {
+        solver.dumpOrigClauses(conf.origFilename);
+        std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
     }
-    if (ret == l_Undef && solver.verbosity >= 1) {
+    if (ret == l_Undef && conf.verbosity >= 1) {
         std::cout << "c Not finished running -- maximum restart reached" << std::endl;
     }
     printResultFunc(solver, ret, res);
-    if (solver.verbosity >= 1) printStats(solver);
+    if (conf.verbosity >= 1) printStats(solver);
 
     return correctReturnValue(ret);
 }
@@ -805,21 +805,24 @@ int Main::correctReturnValue(const lbool ret) const
     return retval;
 }
 
-void* Main::oneThreadSolve( void *ptr )
+const int Main::oneThreadSolve()
 {
-    Solver solver;
-    solversToInterrupt.push_back(&solver);
-    solver.verbosity = 2;
+    SolverConf myConf = conf;
+    uint32_t num = omp_get_thread_num();
+    myConf.origSeed = num;
+    if (num > 0) {
+        if (num % 2) myConf.fixRestartType = dynamic_restart;
+        else myConf.fixRestartType = static_restart;
+        myConf.simpStartMult *= 2*(num+1);
+        myConf.simpStartMMult *= 2*(num+1);
+    }
+    if (num != 0) myConf.verbosity = 0;
 
-    parseCommandLine(solver);
-    printVersionInfo(solver.verbosity);
-    setDoublePrecision(solver.verbosity);
-    uint32_t num = *((int*)ptr);
-    solver.setSeed(num);
-    if (num % 2) solver.fixRestartType = dynamic_restart;
-    else solver.fixRestartType = static_restart;
-    solver.simpStartMult *= 2*(num+1);
-    solver.simpStartMMult *= 2*(num+1);
+    Solver solver(myConf);
+    if (num == 0) solverToInterrupt = &solver;
+
+    printVersionInfo(myConf.verbosity);
+    setDoublePrecision(myConf.verbosity);
 
     parseInAllFiles(solver);
     lbool ret = solver.solve();
@@ -830,49 +833,20 @@ void* Main::oneThreadSolve( void *ptr )
 
     int retval = correctReturnValue(ret);
     exit(retval);
-    return (void*)retval;
-}
-
-struct myThreadArgs
-{
-    Main* This;
-    void* actual_arg ;
-    myThreadArgs(Main* t, void* p)
-        : This(t)
-        , actual_arg(p) {}
-};
-
-void* helperOneThreadSolve(void* pv)
-{
-    myThreadArgs* main_args = static_cast<myThreadArgs*>(pv);
-    Main* This = main_args->This;
-    void* args = main_args->actual_arg;
-
-    void* result = This->oneThreadSolve(args);
-
-    delete main_args;
-    return result;
+    return retval;
 }
 
 int Main::multiThreadSolve(const uint32_t numThreads)
 {
-    vector<int> seeds;
-    vector<pthread_t> threads;
-
-    seeds.resize(numThreads);
-    threads.resize(numThreads);
-    for (uint32_t i = 0; i < numThreads; i++) {
-        seeds[i] = i;
-        int iret = pthread_create(&(threads[i]), NULL, &helperOneThreadSolve, new myThreadArgs(this,&(seeds[i])));
-
-        if (iret != 0) {
-            std::cout << "Error creating thread " << i << std::endl;
-            exit(-1);
+    #pragma omp parallel
+    {
+        #pragma omp single
+        {
+            if (conf.verbosity >= 1)
+                std::cout << "c Using " << omp_get_num_threads()
+                << " threads" << std::endl;
         }
-    }
-
-    for (uint32_t i = 0; i < numThreads; i++) {
-        pthread_join(threads[i], NULL);
+        oneThreadSolve();
     }
 
     return 0;
@@ -881,10 +855,11 @@ int Main::multiThreadSolve(const uint32_t numThreads)
 int main(int argc, char** argv)
 {
     Main main(argc, argv);
+    main.parseCommandLine();
     signal(SIGINT, SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);
 
-    //return main.multiThreadSolve(4);
-    return main.singleThreadSolve();
+    return main.multiThreadSolve(4);
+    //return main.singleThreadSolve();
 
 }

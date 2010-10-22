@@ -84,7 +84,7 @@ const bool UselessBinRemover::removeUslessBinFull()
 
     if (fixed) solver.order_heap.filter(Solver::VarFilter(solver));
 
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity >= 1) {
         std::cout
         << "c Removed useless bin:" << std::setw(8) << (numBinsBefore - solver.numBins)
         << "  fixed: " << std::setw(5) << (origHeapSize - solver.order_heap.size())

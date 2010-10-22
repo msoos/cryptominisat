@@ -175,7 +175,7 @@ void DimacsParser::printHeader(StreamBuffer& in)
     if (match(in, "p cnf")) {
         int vars    = parseInt(in, len);
         int clauses = parseInt(in, len);
-        if (solver->verbosity >= 1) {
+        if (solver->conf.verbosity >= 1) {
             std::cout << "c -- header says num vars:   " << std::setw(12) << vars << std::endl;
             std::cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << std::endl;
         }
@@ -423,11 +423,8 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
     }
 }
 
-#ifdef DISABLE_ZLIB
-void DimacsParser::parse_DIMACS(FILE * input_stream, const uint32_t verbosity)
-#else
-void DimacsParser::parse_DIMACS(gzFile input_stream, const uint32_t verbosity)
-#endif // DISABLE_ZLIB
+template <class T>
+void DimacsParser::parse_DIMACS(T input_stream)
 {
     debugLibPart = 1;
     numLearntClauses = 0;
@@ -438,7 +435,7 @@ void DimacsParser::parse_DIMACS(gzFile input_stream, const uint32_t verbosity)
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
 
-    if (verbosity >= 1) {
+    if (solver->conf.verbosity >= 1) {
         std::cout << "c -- clauses added: "
         << std::setw(12) << numLearntClauses
         << " learnts, "
@@ -452,3 +449,8 @@ void DimacsParser::parse_DIMACS(gzFile input_stream, const uint32_t verbosity)
         << std::endl;
     }
 }
+
+#ifndef DISABLE_ZLIB
+template void DimacsParser::parse_DIMACS(gzFile input_stream);
+#endif
+template void DimacsParser::parse_DIMACS(FILE* input_stream);

@@ -28,8 +28,8 @@ StateSaver::StateSaver(Solver& _solver) :
     backup_order_heap = solver.order_heap;
     backup_polarities = solver.polarity;
     backup_restartType = solver.restartType;
-    backup_random_var_freq = solver.random_var_freq;
     backup_propagations = solver.propagations;
+    backup_random_var_freq = solver.conf.random_var_freq;
 }
 
 void StateSaver::restore()
@@ -40,9 +40,9 @@ void StateSaver::restore()
     solver.order_heap = backup_order_heap;
     solver.polarity = backup_polarities;
     solver.restartType = backup_restartType;
-    solver.random_var_freq = backup_random_var_freq;
-    
+    solver.propagations = backup_propagations;
+    solver.conf.random_var_freq = backup_random_var_freq;
+
     //Finally, clear the order_heap from variables set/non-decisionned
     solver.order_heap.filter(Solver::VarFilter(solver));
-    solver.propagations = backup_propagations;
 }

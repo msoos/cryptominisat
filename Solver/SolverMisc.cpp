@@ -30,11 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 static const int space = 10;
 
-void Solver::dumpSortedLearnts(const char* fileName, const uint32_t maxSize)
+void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize)
 {
-    FILE* outfile = fopen(fileName, "w");
+    FILE* outfile = fopen(fileName.c_str(), "w");
     if (!outfile) {
-        printf("Error: Cannot open file '%s' to write learnt clauses!\n", fileName);
+        std::cout << "Error: Cannot open file '" << fileName << "' to write learnt clauses!" << std::endl;;
         exit(-1);
     }
 
@@ -158,11 +158,11 @@ const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
     return num;
 }
 
-void Solver::dumpOrigClauses(const char* fileName, const bool alsoLearntBin) const
+void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntBin) const
 {
-    FILE* outfile = fopen(fileName, "w");
+    FILE* outfile = fopen(fileName.c_str(), "w");
     if (!outfile) {
-        printf("Error: Cannot open file '%s' to write learnt clauses!\n", fileName);
+        std::cout << "Error: Cannot open file '" << fileName << "' to write learnt clauses!" << std::endl;
         exit(-1);
     }
 
@@ -314,18 +314,12 @@ const double Solver::getTotalTimeXorSubsumer() const
     return xorSubsumer->getTotalTime();
 }
 
-
-void Solver::setMaxRestarts(const uint32_t num)
-{
-    maxRestarts = num;
-}
-
 void Solver::printStatHeader() const
 {
     #ifdef STATS_NEEDED
-    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
+    if (conf.verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
     #else
-    if (verbosity >= 1) {
+    if (conf.verbosity >= 1) {
     #endif
         std::cout << "c "
         << "========================================================================================="
@@ -354,7 +348,7 @@ void Solver::printStatHeader() const
 
 void Solver::printRestartStat(const char* type)
 {
-    if (verbosity >= 2) {
+    if (conf.verbosity >= 2) {
         //printf("c | %9d | %7d %8d %8d | %8d %8d %6.0f |", (int)conflicts, (int)order_heap.size(), (int)(nClauses()-nbBin), (int)clauses_literals, (int)(nbclausesbeforereduce*curRestart+nbCompensateSubsumer), (int)(nLearnts()+nbBin), (double)learnts_literals/(double)(nLearnts()+nbBin));
 
         std::cout << "c "
@@ -391,9 +385,9 @@ void Solver::printRestartStat(const char* type)
 void Solver::printEndSearchStat()
 {
     #ifdef STATS_NEEDED
-    if (verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
+    if (conf.verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
     #else
-    if (verbosity >= 1) {
+    if (conf.verbosity >= 1) {
     #endif //STATS_NEEDED
         printRestartStat("E");
     }
@@ -402,7 +396,7 @@ void Solver::printEndSearchStat()
 #ifdef USE_GAUSS
 void Solver::print_gauss_sum_stats()
 {
-    if (gauss_matrixes.size() == 0 && verbosity >= 2) {
+    if (gauss_matrixes.size() == 0 && conf.verbosity >= 2) {
         std::cout << "  --";
         return;
     }
@@ -424,7 +418,7 @@ void Solver::print_gauss_sum_stats()
     sum_gauss_confl += useful_confl;
     sum_gauss_prop += useful_prop;
 
-    if (verbosity >= 2) {
+    if (conf.verbosity >= 2) {
         if (called == 0) {
             printf("      disabled      |\n");
         } else {
@@ -473,7 +467,7 @@ void Solver::sortWatched()
         #endif //VERBOSE_DEBUG
     }
 
-    if (verbosity >= 2) {
+    if (conf.verbosity >= 2) {
         std::cout << "c watched "
         << "sorting time: " << cpuTime() - myTime
         << std::endl;
@@ -498,7 +492,7 @@ void Solver::addSymmBreakClauses()
     #else
     gzFile in = gzopen("output", "rb");
     #endif // DISABLE_ZLIB
-    parser.parse_DIMACS(in, verbosity);
+    parser.parse_DIMACS(in);
     #ifdef DISABLE_ZLIB
     fclose(in);
     #else
@@ -522,8 +516,12 @@ newVar() and addClause(), addXorClause() commands are logged to this CNF
 file and then can be re-read with special arguments to the main program. This
 can help simulate a segfaulting library-call
 */
-void Solver::needLibraryCNFFile(const char* fileName)
+void Solver::needLibraryCNFFile(const std::string& fileName)
 {
-    libraryCNFFile = fopen(fileName, "w");
-    assert(libraryCNFFile != NULL);
+    libraryCNFFile = fopen(fileName.c_str(), "w");
+    if (libraryCNFFile == NULL) {
+        std::cout << "Couldn't open library-call dump file "
+        << libraryCNFFile << std::endl;
+        exit(-1);
+    }
 }

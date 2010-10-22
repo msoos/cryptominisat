@@ -177,7 +177,7 @@ const bool Solver::verifyModel() const
     verificationOK &= verifyBinClauses();
     verificationOK &= verifyXorClauses();
 
-    if (verbosity >=1 && verificationOK)
+    if (conf.verbosity >=1 && verificationOK)
         printf("c Verified %d clauses.\n", clauses.size() + xorclauses.size());
 
     return verificationOK;

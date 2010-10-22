@@ -31,7 +31,7 @@ PartHandler::PartHandler(Solver& s) :
 
 const bool PartHandler::handle()
 {
-    if (solver.doReplace == false)
+    if (solver.conf.doReplace == false)
         return true;
 
     PartFinder partFinder(solver);
@@ -59,7 +59,7 @@ const bool PartHandler::handle()
     for (uint32_t it = 0; it < sizes.size()-1; it++) {
         uint32_t part = sizes[it].first;
         vector<Var> vars = reverseTable[part];
-        if (solver.verbosity >= 1)
+        if (solver.conf.verbosity  >= 1)
             std::cout << "c Solving part " << part << std::endl;
 
         Solver newSolver;
@@ -108,14 +108,14 @@ const bool PartHandler::handle()
             }
         }
 
-        if (solver.verbosity >= 1) {
+        if (solver.conf.verbosity  >= 1) {
             std::cout << "c Solved part" << std::endl;
             std::cout << "c "
             << "========================================================================================="
             << std::endl;
         }
     }
-    if (solver.verbosity >= 1) {
+    if (solver.conf.verbosity  >= 1) {
         std::cout << "c Coming back to original instance"
         << std::endl;
         std::cout << "c "
@@ -149,31 +149,15 @@ need to pass all configurations from the original solver to the sub-solver.
 void PartHandler::configureNewSolver(Solver& newSolver) const
 {
     newSolver.mtrand.seed(solver.mtrand.randInt());
-    newSolver.random_var_freq = solver.random_var_freq;
-    newSolver.verbosity = solver.verbosity;
-    newSolver.restrictedPickBranch = solver.restrictedPickBranch;
-    newSolver.greedyUnbound = solver.greedyUnbound;
-    newSolver.findNormalXors = solver.findNormalXors;
-    newSolver.findBinaryXors = solver.findBinaryXors;
-    newSolver.regFindBinaryXors = solver.regFindBinaryXors;
-    newSolver.conglomerateXors = solver.conglomerateXors;
-    newSolver.schedSimplification = solver.schedSimplification;
-    newSolver.doReplace = solver.doReplace;
-    newSolver.doFailedVarSearch = solver.doFailedVarSearch;
-    newSolver.gaussconfig.dontDisable = solver.gaussconfig.dontDisable;
-    newSolver.heuleProcess = solver.heuleProcess;
-    newSolver.doSatELite = solver.doSatELite;
-    newSolver.doPartHandler = solver.doPartHandler;
-    newSolver.fixRestartType = solver.fixRestartType;
-    newSolver.var_inc = solver.var_inc;
-    newSolver.polarity_mode = solver.polarity_mode;
+    newSolver.conf = solver.conf;
+    newSolver.gaussconfig = solver.gaussconfig;
 
     //Memory-usage reduction
-    newSolver.schedSimplification = false;
-    newSolver.doSatELite = false;
-    newSolver.doXorSubsumption = false;
-    newSolver.doPartHandler = false;
-    newSolver.doSubsWNonExistBins = false;
+    newSolver.conf.doSchedSimp = false;
+    newSolver.conf.doSatELite = false;
+    newSolver.conf.doXorSubsumption = false;
+    newSolver.conf.doPartHandler = false;
+    newSolver.conf.doSubsWNonExistBins = false;
 }
 
 /**
