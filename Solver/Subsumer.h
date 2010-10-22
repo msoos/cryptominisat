@@ -137,6 +137,7 @@ private:
             assert(second.isBinary());
             if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
             if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
+            if (first.getLearnt() && second.getLearnt()) return false;
             if (!first.getLearnt()) return true;
             return false;
         };
