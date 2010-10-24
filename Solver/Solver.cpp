@@ -30,6 +30,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "StateSaver.h"
 #include "UselessBinRemover.h"
 #include "SCCFinder.h"
+#include "SharedUnitaryData.h"
 
 #ifdef USE_GAUSS
 #include "Gaussian.h"
@@ -57,7 +58,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig) :
+Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedUnitData* _sharedUnitData) :
         // Parameters: (formerly in 'SearchParams')
         conf(_conf)
         , gaussconfig(_gaussconfig)
@@ -79,12 +80,9 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig) :
         , updateTransCache(0)
         , nbClOverMaxGlue(0)
 
-        #ifdef USE_GAUSS
-        , sum_gauss_called (0)
-        , sum_gauss_confl  (0)
-        , sum_gauss_prop   (0)
-        , sum_gauss_unit_truths (0)
-        #endif //USE_GAUSS
+        , sharedUnitData(_sharedUnitData)
+        , lastSyncConf(0)
+
         , ok               (true)
         , numBins          (0)
         , cla_inc          (1)
@@ -2467,6 +2465,13 @@ lbool Solver::solve(const vec<Lit>& assumps)
         //if (avgBranchDepth.isvalid())
         //    std::cout << "avg branch depth:" << avgBranchDepth.getavg() << std::endl;
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
+
+        if (sharedUnitData != NULL && lastSyncConf + 20000 < conflicts) {
+            #pragma omp critical
+            status = (shareData() ? status : l_False);
+
+            lastSyncConf = conflicts;
+        }
     }
     printEndSearchStat();
 
@@ -2505,6 +2510,57 @@ lbool Solver::solve(const vec<Lit>& assumps)
     std::cout << "Solver::solve() finished" << std::endl;
     #endif
     return status;
+}
+
+const bool Solver::shareData()
+{
+    assert(sharedUnitData != NULL);
+    assert(decisionLevel() == 0);
+    uint32_t gotData = 0;
+    uint32_t sentData = 0;
+
+    SharedUnitData& shared = *sharedUnitData;
+    shared.value.growTo(nVars(), l_Undef);
+    for (uint32_t var = 0; var < nVars(); var++) {
+        const lbool thisVal = value(var);
+        const lbool otherVal = shared.value[var];
+
+        if (thisVal == l_Undef && otherVal == l_Undef) continue;
+        if (thisVal != l_Undef && otherVal != l_Undef) {
+            if (thisVal != otherVal) return false;
+            else continue;
+        }
+
+        if (otherVal != l_Undef) {
+            assert(thisVal == l_Undef);
+            Lit lit = Lit(var, (otherVal == l_True) ? false :  true);
+            lit = varReplacer->getReplaceTable()[lit.var()] ^ lit.sign();
+            if (value(lit) != l_Undef) continue;
+
+            //normal varelim
+            //if (conf.doSatELite && conf.doVarElim && subsumer->getVarElimed()[lit.var()]) continue;
+            //xor-varelim
+            //if (conf.doConglXors && xorSubsumer->getVarElimed()[lit.var()]) continue;
+            //part-handling
+            if (!decision_var[lit.var()]) continue;
+
+            uncheckedEnqueue(lit);
+            gotData++;
+        }
+
+        if (thisVal != l_Undef) {
+            assert(otherVal == l_Undef);
+            shared.value[var] = thisVal;
+            sentData++;
+        }
+    }
+
+    if (conf.verbosity >= 1 && (gotData > 0 || sentData > 0)) {
+        std::cout << "gotData: " << std::setw(8) << gotData
+        << ", sentData: " << std::setw(8) << sentData << std::endl;
+    }
+
+    return true;
 }
 
 /**

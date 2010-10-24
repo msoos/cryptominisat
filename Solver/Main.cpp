@@ -579,7 +579,7 @@ void Main::parseCommandLine()
             }
             conf.maxGlue = (uint32_t)glue;
         } else if ((value = hasPrefix(argv[i], "--threads="))) {
-            int numThreads = 0;
+            numThreads = 0;
             if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {
                 printf("ERROR! numThreads: %s\n", value);
                 exit(0);
@@ -734,17 +734,20 @@ int Main::correctReturnValue(const lbool ret) const
 const int Main::oneThreadSolve()
 {
     SolverConf myConf = conf;
-    uint32_t num = omp_get_thread_num();
+    int num = omp_get_thread_num();
     myConf.origSeed = num;
     if (num > 0) {
         if (num % 2) myConf.fixRestartType = dynamic_restart;
         else myConf.fixRestartType = static_restart;
         myConf.simpStartMult *= 2*(num+1);
         myConf.simpStartMMult *= 2*(num+1);
+        if (num == omp_get_num_threads()-1) {
+            myConf.doVarElim = false;
+        }
     }
     if (num != 0) myConf.verbosity = 0;
 
-    Solver solver(myConf, gaussconfig);
+    Solver solver(myConf, gaussconfig, &sharedUnitData);
     if (num == 0) solverToInterrupt = &solver;
 
     printVersionInfo(myConf.verbosity);

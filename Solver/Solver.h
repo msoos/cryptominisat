@@ -50,6 +50,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "GaussianConfig.h"
 #include "ClauseAllocator.h"
 #include "SolverConf.h"
+#include "SharedUnitaryData.h"
 
 #define release_assert(a) \
     do { \
@@ -115,7 +116,7 @@ public:
 
     // Constructor/Destructor:
     //
-    Solver(const SolverConf& conf = SolverConf(), const GaussConf& _gaussconfig = GaussConf());
+    Solver(const SolverConf& conf = SolverConf(), const GaussConf& _gaussconfig = GaussConf(), SharedUnitData* sharedUnitData = NULL);
     ~Solver();
 
     // Problem specification:
