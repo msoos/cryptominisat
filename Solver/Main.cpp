@@ -749,7 +749,7 @@ void Main::printVersionInfo(const uint32_t verbosity)
 
 const int Main::singleThreadSolve()
 {
-    Solver solver(conf);
+    Solver solver(conf, gaussconfig);
     solverToInterrupt = &solver;
 
     printVersionInfo(conf.verbosity);
@@ -826,7 +826,7 @@ const int Main::oneThreadSolve()
     }
     if (num != 0) myConf.verbosity = 0;
 
-    Solver solver(myConf);
+    Solver solver(myConf, gaussconfig);
     if (num == 0) solverToInterrupt = &solver;
 
     printVersionInfo(myConf.verbosity);

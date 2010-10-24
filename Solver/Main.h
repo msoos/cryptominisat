@@ -59,7 +59,7 @@ class Main
         static void printStatsLine(string left, T value, string extra = "");
 
         SolverConf conf;
-        GaussianConfig gaussconfig;
+        GaussConf gaussconfig;
 
         bool grouping;
         bool debugLib;

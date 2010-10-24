@@ -34,7 +34,7 @@ using std::endl;
 static const uint16_t unassigned_col = std::numeric_limits<uint16_t>::max();
 static const Var unassigned_var = std::numeric_limits<Var>::max();
 
-Gaussian::Gaussian(Solver& _solver, const GaussianConfig& _config, const uint32_t _matrix_no, const vector<XorClause*>& _xorclauses) :
+Gaussian::Gaussian(Solver& _solver, const GaussConf& _config, const uint32_t _matrix_no, const vector<XorClause*>& _xorclauses) :
         solver(_solver)
         , config(_config)
         , matrix_no(_matrix_no)

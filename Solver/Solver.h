@@ -115,7 +115,7 @@ public:
 
     // Constructor/Destructor:
     //
-    Solver(const SolverConf& conf = SolverConf(), const GaussianConfig& _gaussconfig = GaussianConfig());
+    Solver(const SolverConf& conf = SolverConf(), const GaussConf& _gaussconfig = GaussConf());
     ~Solver();
 
     // Problem specification:
@@ -159,7 +159,7 @@ public:
     // Mode of operation:
     //
     SolverConf conf;
-    GaussianConfig gaussconfig;   ///<Configuration for the gaussian elimination can be set here
+    GaussConf gaussconfig;   ///<Configuration for the gaussian elimination can be set here
     bool      needToInterrupt;    ///<Used internally mostly. If set to TRUE, we will interrupt cleanly ASAP. The important thing is "cleanly", since we need to wait until a point when all datastructures are in a sane state (i.e. not in the middle of some algorithm)
 
     // Statistics: (read-only member variable)

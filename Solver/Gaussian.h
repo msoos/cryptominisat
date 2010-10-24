@@ -51,7 +51,7 @@ class Clause;
 class Gaussian
 {
 public:
-    Gaussian(Solver& solver, const GaussianConfig& config, const uint32_t matrix_no, const vector<XorClause*>& xorclauses);
+    Gaussian(Solver& solver, const GaussConf& config, const uint32_t matrix_no, const vector<XorClause*>& xorclauses);
     ~Gaussian();
 
     const bool full_init();
@@ -74,9 +74,9 @@ public:
 
 protected:
     Solver& solver;
-    
+
     //Gauss high-level configuration
-    const GaussianConfig& config;
+    const GaussConf& config;
     const uint32_t matrix_no;
     vector<XorClause*> xorclauses;
 

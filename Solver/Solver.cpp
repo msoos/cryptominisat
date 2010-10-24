@@ -57,11 +57,17 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Solver::Solver(const SolverConf& _conf, const GaussianConfig& _gaussconfig) :
+Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig) :
         // Parameters: (formerly in 'SearchParams')
         conf(_conf)
         , gaussconfig(_gaussconfig)
         , needToInterrupt  (false)
+        #ifdef USE_GAUSS
+        , sum_gauss_called (0)
+        , sum_gauss_confl  (0)
+        , sum_gauss_prop   (0)
+        , sum_gauss_unit_truths (0)
+        #endif //USE_GAUSS
 
         // Stats
         , starts(0), dynStarts(0), staticStarts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
