@@ -62,7 +62,7 @@ SolverConf::SolverConf() :
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , greedyUnbound    (false)
-        , maxGlue          (24)
+        , maxGlue          (DEFAULT_MAX_GLUE)
         , fixRestartType   (auto_restart)
         , origSeed(0)
 {
