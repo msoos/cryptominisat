@@ -110,7 +110,7 @@ protected:
     int gauss_last_level;
     vector<pair<Clause*, uint32_t> > clauses_toclear;
     bool disabled; // Gauss is disabled
-    
+
     //State of current elimnation
     vec<uint32_t> propagatable_rows; //used to store which rows were deemed propagatable during elimination
     vector<unsigned char> changed_rows; //used to store which rows were deemed propagatable during elimination
@@ -154,9 +154,9 @@ protected:
     void disable_if_necessary();
     void reset_stats();
     void update_last_one_in_col(matrixset& m);
-    
+
 private:
-    
+
     //debug functions
     bool check_no_conflict(matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?
     const bool nothing_to_propagate(matrixset& m) const; // Are there any conflicts of propagations that matrixset 'm' clauses?
@@ -193,7 +193,7 @@ inline void Gaussian::canceling(const uint32_t sublevel)
         a++;
     }
     clauses_toclear.resize(clauses_toclear.size()-a);
-    
+
     if (messed_matrix_vars_since_reversal)
         return;
     int c = std::min((int)gauss_last_level, (int)(solver.trail.size())-1);
