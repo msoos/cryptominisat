@@ -28,7 +28,6 @@ class Main
         const int singleThreadSolve();
         const int oneThreadSolve();
         const int multiThreadSolve();
-        static void printStats(Solver& solver);
 
         int numThreads;
 
@@ -51,12 +50,6 @@ class Main
         void setDoublePrecision(const uint32_t verbosity);
         void printVersionInfo(const uint32_t verbosity);
         int correctReturnValue(const lbool ret) const;
-
-        //Stats
-        template<class T, class T2>
-        static void printStatsLine(string left, T value, T2 value2, string extra);
-        template<class T>
-        static void printStatsLine(string left, T value, string extra = "");
 
         SolverConf conf;
         GaussConf gaussconfig;

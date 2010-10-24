@@ -162,59 +162,6 @@ public:
     GaussConf gaussconfig;   ///<Configuration for the gaussian elimination can be set here
     bool      needToInterrupt;    ///<Used internally mostly. If set to TRUE, we will interrupt cleanly ASAP. The important thing is "cleanly", since we need to wait until a point when all datastructures are in a sane state (i.e. not in the middle of some algorithm)
 
-    // Statistics: (read-only member variable)
-    //
-    uint64_t starts; ///<Num restarts
-    uint64_t dynStarts; ///<Num dynamic restarts
-    uint64_t staticStarts; ///<Num static restarts: note that after full restart, we do a couple of static restarts always
-    /**
-    @brief Num full restarts
-
-    Full restarts are restarts that are made always, no matter what, after
-    a certan number of conflicts have passed. The problem will tried to be
-    decomposed into multiple parts, and then there will be a couple of static
-    restarts made. Finally, the problem will be determined to be MiniSat-type
-    or Glucose-type.
-
-    NOTE: I belive there is a point in having full restarts even if the
-    glue-clause vs. MiniSat clause can be fully resolved
-    */
-    uint64_t fullStarts;    ///<Number of full restarts made
-    uint64_t decisions;     ///<Number of decisions made
-    uint64_t rnd_decisions; ///<Numer of random decisions made
-    /**
-    @brief An approximation of accumulated propagation difficulty
-
-    It does not hold the number of propagations made. Rather, it hold a
-    value that is approximate of the difficulty of the propagations made
-    This makes sense, since it is not at all the same difficulty to proapgate
-    a 2-long clause than to propagate a 20-long clause. In certain algorihtms,
-    there is a need to know how difficult the propagation part was. This value
-    can be used in these algorihms. However, the reported "statistic" will be
-    bogus.
-    */
-    uint64_t propagations;
-    uint64_t conflicts; ///<Num conflicts
-    uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
-    uint64_t nbGlue2; ///<Num learnt clauses that had a glue of 2 when created
-    uint64_t numNewBin; ///<Num learnt clauses that were binary when created
-    uint64_t lastNbBin; ///<Last time we seached for SCCs, numBins was this much
-    /**
-    @brief When a clause becomes binary through shrinking, we increment this
-
-    It is used to determine if we should try to look for binary xors among
-    the binary clauses
-    */
-    uint64_t lastSearchForBinaryXor; ///<Last time we looked for binary xors, this many bogoprops(=propagations) has been done
-    uint64_t nbReduceDB; ///<Number of times learnt clause have been cleaned
-    uint64_t improvedClauseNo; ///<Num clauses improved using on-the-fly subsumption
-    uint64_t improvedClauseSize; ///<Num literals removed using on-the-fly subsumption
-    uint64_t numShrinkedClause; ///<Num clauses improved using on-the-fly self-subsuming resolution
-    uint64_t numShrinkedClauseLits; ///<Num literals removed by on-the-fly self-subsuming resolution
-    uint64_t moreRecurMinLDo; ///< Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
-    uint64_t updateTransCache;
-    uint64_t nbClOverMaxGlue;
-
     //Logging
     void needStats();              // Prepares the solver to output statistics
     void needProofGraph();         // Prepares the solver to output proof graphs during solving
@@ -235,8 +182,9 @@ public:
     #endif //USE_GAUSS
 
     //Printing statistics
-    const uint32_t getNumElimSubsume() const;       ///<Get variable elimination stats from Subsumer
-    const uint32_t getNumElimXorSubsume() const;    ///<Get variable elimination stats from XorSubsumer
+    void printStats();
+    const uint32_t getNumElimSubsume() const;       ///<Get number of variables eliminated
+    const uint32_t getNumElimXorSubsume() const;    ///<Get number of variables eliminated with xor-magic
     const uint32_t getNumXorTrees() const;          ///<Get the number of trees built from 2-long XOR-s. This is effectively the number of variables that replace other variables
     const uint32_t getNumXorTreesCrownSize() const; ///<Get the number of variables being replaced by other variables
     /**
@@ -259,17 +207,72 @@ public:
     const double   getTotalTimeXorSubsumer() const;
 
 protected:
+    //gauss
     #ifdef USE_GAUSS
     void print_gauss_sum_stats();
     void clearGaussMatrixes();
     vector<Gaussian*> gauss_matrixes;
-
-    //stats
     uint32_t sum_gauss_called;
     uint32_t sum_gauss_confl;
     uint32_t sum_gauss_prop;
     uint32_t sum_gauss_unit_truths;
     #endif //USE_GAUSS
+
+    // Statistics
+    //
+    template<class T, class T2>
+    void printStatsLine(std::string left, T value, T2 value2, std::string extra);
+    template<class T>
+    void printStatsLine(std::string left, T value, std::string extra = "");
+    uint64_t starts; ///<Num restarts
+    uint64_t dynStarts; ///<Num dynamic restarts
+    uint64_t staticStarts; ///<Num static restarts: note that after full restart, we do a couple of static restarts always
+    /**
+    @brief Num full restarts
+
+    Full restarts are restarts that are made always, no matter what, after
+    a certan number of conflicts have passed. The problem will tried to be
+    decomposed into multiple parts, and then there will be a couple of static
+    restarts made. Finally, the problem will be determined to be MiniSat-type
+    or Glucose-type.
+
+    NOTE: I belive there is a point in having full restarts even if the
+    glue-clause vs. MiniSat clause can be fully resolved
+    */
+    uint64_t fullStarts;    ///<Number of full restarts made
+    uint64_t decisions;     ///<Number of decisions made
+    uint64_t rnd_decisions; ///<Numer of random decisions made
+    /**
+    @brief An approximation of accumulated propagation difficulty
+
+    It does not hold the number of propagations made. Rather, it holds a
+    value that is approximate of the difficulty of the propagations made
+    This makes sense, since it is not at all the same difficulty to proapgate
+    a 2-long clause than to propagate a 20-long clause. In certain algorihtms,
+    there is a need to know how difficult the propagation part was. This value
+    can be used in these algorihms. However, the reported "statistic" will be
+    bogus.
+    */
+    uint64_t propagations;
+    uint64_t conflicts; ///<Num conflicts
+    uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
+    uint64_t nbGlue2; ///<Num learnt clauses that had a glue of 2 when created
+    uint64_t numNewBin; ///<new binary clauses that have been found through some form of resolution (shrinking, conflicts, etc.)
+    uint64_t lastNbBin; ///<Last time we seached for SCCs, numBins was this much
+    uint64_t lastSearchForBinaryXor; ///<Last time we looked for binary xors, this many bogoprops(=propagations) has been done
+    uint64_t nbReduceDB; ///<Number of times learnt clause have been cleaned
+    uint64_t improvedClauseNo; ///<Num clauses improved using on-the-fly subsumption
+    uint64_t improvedClauseSize; ///<Num literals removed using on-the-fly subsumption
+    uint64_t numShrinkedClause; ///<Num clauses improved using on-the-fly self-subsuming resolution
+    uint64_t numShrinkedClauseLits; ///<Num literals removed by on-the-fly self-subsuming resolution
+    uint64_t moreRecurMinLDo; ///<Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
+    uint64_t updateTransCache; ///<Number of times the transitive OTF-reduction cache has been updated
+    uint64_t nbClOverMaxGlue; ///<Number or clauses over maximum glue defined in maxGlue
+
+    //Multi-threading
+    SharedUnitData* sharedUnitData;
+    const bool shareData();
+    uint64_t lastSyncConf;
 
     // Helper structures:
     //

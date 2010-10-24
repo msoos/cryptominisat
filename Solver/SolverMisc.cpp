@@ -525,3 +525,85 @@ void Solver::needLibraryCNFFile(const std::string& fileName)
         exit(-1);
     }
 }
+
+template<class T, class T2>
+void Solver::printStatsLine(std::string left, T value, T2 value2, std::string extra)
+{
+    std::cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
+}
+
+template<class T>
+void Solver::printStatsLine(std::string left, T value, std::string extra)
+{
+    std::cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
+}
+
+/**
+@brief prints the statistics line at the end of solving
+
+Prints all sorts of statistics, like number of restarts, time spent in
+SatELite-type simplification, number of unit claues found, etc.
+*/
+void Solver::printStats()
+{
+    double   cpu_time = cpuTime();
+    uint64_t mem_used = memUsed();
+
+    //Restarts stats
+    printStatsLine("c restarts", starts);
+    printStatsLine("c dynamic restarts", dynStarts);
+    printStatsLine("c static restarts", staticStarts);
+    printStatsLine("c full restarts", fullStarts);
+
+    //Learnts stats
+    printStatsLine("c learnts DL2", nbGlue2);
+    printStatsLine("c learnts size 2", numNewBin);
+    printStatsLine("c learnts size 1", get_unitary_learnts_num(), (double)get_unitary_learnts_num()/(double)nVars()*100.0, "% of vars");
+    printStatsLine("c filedVS time", getTotalTimeFailedVarSearcher(), getTotalTimeFailedVarSearcher()/cpu_time*100.0, "% time");
+
+    //Subsumer stats
+    printStatsLine("c v-elim SatELite", getNumElimSubsume(), (double)getNumElimSubsume()/(double)nVars()*100.0, "% vars");
+    printStatsLine("c SatELite time", getTotalTimeSubsumer(), getTotalTimeSubsumer()/cpu_time*100.0, "% time");
+
+    //XorSubsumer stats
+    printStatsLine("c v-elim xor", getNumElimXorSubsume(), (double)getNumElimXorSubsume()/(double)nVars()*100.0, "% vars");
+    printStatsLine("c xor elim time", getTotalTimeXorSubsumer(), getTotalTimeXorSubsumer()/cpu_time*100.0, "% time");
+
+    //VarReplacer stats
+    printStatsLine("c num binary xor trees", getNumXorTrees());
+    printStatsLine("c binxor trees' crown", getNumXorTreesCrownSize(), (double)getNumXorTreesCrownSize()/(double)getNumXorTrees(), "leafs/tree");
+
+    //OTF clause improvement stats
+    printStatsLine("c OTF clause improved", improvedClauseNo, (double)improvedClauseNo/(double)conflicts, "clauses/conflict");
+    printStatsLine("c OTF impr. size diff", improvedClauseSize, (double)improvedClauseSize/(double)improvedClauseNo, " lits/clause");
+
+    //Clause-shrinking through watchlists
+    printStatsLine("c OTF cl watch-shrink", numShrinkedClause, (double)numShrinkedClause/(double)conflicts, "clauses/conflict");
+    printStatsLine("c OTF cl watch-sh-lit", numShrinkedClauseLits, (double)numShrinkedClauseLits/(double)numShrinkedClause, " lits/clause");
+    printStatsLine("c tried to recurMin cls", moreRecurMinLDo, (double)moreRecurMinLDo/(double)conflicts*100.0, " % of conflicts");
+    printStatsLine("c updated cache", updateTransCache, updateTransCache/(double)moreRecurMinLDo, " lits/tried recurMin");
+
+    #ifdef USE_GAUSS
+    if (gaussconfig.decision_until > 0) {
+        std::cout << "c " << std::endl;
+        printStatsLine("c gauss unit truths ", get_sum_gauss_unit_truths());
+        printStatsLine("c gauss called", get_sum_gauss_called());
+        printStatsLine("c gauss conflicts ", get_sum_gauss_confl(), (double)get_sum_gauss_confl() / (double)get_sum_gauss_called() * 100.0, " %");
+        printStatsLine("c gauss propagations ", get_sum_gauss_prop(), (double)get_sum_gauss_prop() / (double)get_sum_gauss_called() * 100.0, " %");
+        printStatsLine("c gauss useful", ((double)get_sum_gauss_prop() + (double)get_sum_gauss_confl())/ (double)get_sum_gauss_called() * 100.0, " %");
+        std::cout << "c " << std::endl;
+    }
+    #endif
+
+    printStatsLine("c clauses over max glue", nbClOverMaxGlue, (double)nbClOverMaxGlue/(double)conflicts*100.0, "% of all clauses");
+
+    //Search stats
+    printStatsLine("c conflicts", conflicts, (double)conflicts/cpu_time, "/ sec");
+    printStatsLine("c decisions", decisions, (double)rnd_decisions*100.0/(double)decisions, "% random");
+    printStatsLine("c bogo-props", propagations, (double)propagations/cpu_time, "/ sec");
+    printStatsLine("c conflict literals", tot_literals, (double)(max_literals - tot_literals)*100.0/ (double)max_literals, "% deleted");
+
+    //General stats
+    printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
+    printStatsLine("c CPU time", cpu_time, " s");
+}

@@ -74,88 +74,6 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-template<class T, class T2>
-void Main::printStatsLine(string left, T value, T2 value2, string extra)
-{
-    std::cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
-}
-
-template<class T>
-void Main::printStatsLine(string left, T value, string extra)
-{
-    std::cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
-}
-
-/**
-@brief prints the statistics line at the end of solving
-
-Prints all sorts of statistics, like number of restarts, time spent in
-SatELite-type simplification, number of unit claues found, etc.
-*/
-void Main::printStats(Solver& solver)
-{
-    double   cpu_time = cpuTime();
-    uint64_t mem_used = memUsed();
-
-    //Restarts stats
-    printStatsLine("c restarts", solver.starts);
-    printStatsLine("c dynamic restarts", solver.dynStarts);
-    printStatsLine("c static restarts", solver.staticStarts);
-    printStatsLine("c full restarts", solver.fullStarts);
-
-    //Learnts stats
-    printStatsLine("c learnts DL2", solver.nbGlue2);
-    printStatsLine("c learnts size 2", solver.numNewBin);
-    printStatsLine("c learnts size 1", solver.get_unitary_learnts_num(), (double)solver.get_unitary_learnts_num()/(double)solver.nVars()*100.0, "% of vars");
-    printStatsLine("c filedVS time", solver.getTotalTimeFailedVarSearcher(), solver.getTotalTimeFailedVarSearcher()/cpu_time*100.0, "% time");
-
-    //Subsumer stats
-    printStatsLine("c v-elim SatELite", solver.getNumElimSubsume(), (double)solver.getNumElimSubsume()/(double)solver.nVars()*100.0, "% vars");
-    printStatsLine("c SatELite time", solver.getTotalTimeSubsumer(), solver.getTotalTimeSubsumer()/cpu_time*100.0, "% time");
-
-    //XorSubsumer stats
-    printStatsLine("c v-elim xor", solver.getNumElimXorSubsume(), (double)solver.getNumElimXorSubsume()/(double)solver.nVars()*100.0, "% vars");
-    printStatsLine("c xor elim time", solver.getTotalTimeXorSubsumer(), solver.getTotalTimeXorSubsumer()/cpu_time*100.0, "% time");
-
-    //VarReplacer stats
-    printStatsLine("c num binary xor trees", solver.getNumXorTrees());
-    printStatsLine("c binxor trees' crown", solver.getNumXorTreesCrownSize(), (double)solver.getNumXorTreesCrownSize()/(double)solver.getNumXorTrees(), "leafs/tree");
-
-    //OTF clause improvement stats
-    printStatsLine("c OTF clause improved", solver.improvedClauseNo, (double)solver.improvedClauseNo/(double)solver.conflicts, "clauses/conflict");
-    printStatsLine("c OTF impr. size diff", solver.improvedClauseSize, (double)solver.improvedClauseSize/(double)solver.improvedClauseNo, " lits/clause");
-
-    //Clause-shrinking through watchlists
-    printStatsLine("c OTF cl watch-shrink", solver.numShrinkedClause, (double)solver.numShrinkedClause/(double)solver.conflicts, "clauses/conflict");
-    printStatsLine("c OTF cl watch-sh-lit", solver.numShrinkedClauseLits, (double)solver.numShrinkedClauseLits/(double)solver.numShrinkedClause, " lits/clause");
-    printStatsLine("c tried to recurMin cls", solver.moreRecurMinLDo, (double)solver.moreRecurMinLDo/(double)solver.conflicts*100.0, " % of conflicts");
-    printStatsLine("c updated cache", solver.updateTransCache, solver.updateTransCache/(double)solver.moreRecurMinLDo, " lits/tried recurMin");
-
-    #ifdef USE_GAUSS
-    if (solver.gaussconfig.decision_until > 0) {
-        std::cout << "c " << std::endl;
-        printStatsLine("c gauss unit truths ", solver.get_sum_gauss_unit_truths());
-        printStatsLine("c gauss called", solver.get_sum_gauss_called());
-        printStatsLine("c gauss conflicts ", solver.get_sum_gauss_confl(), (double)solver.get_sum_gauss_confl() / (double)solver.get_sum_gauss_called() * 100.0, " %");
-        printStatsLine("c gauss propagations ", solver.get_sum_gauss_prop(), (double)solver.get_sum_gauss_prop() / (double)solver.get_sum_gauss_called() * 100.0, " %");
-        printStatsLine("c gauss useful", ((double)solver.get_sum_gauss_prop() + (double)solver.get_sum_gauss_confl())/ (double)solver.get_sum_gauss_called() * 100.0, " %");
-        std::cout << "c " << std::endl;
-    }
-    #endif
-
-    printStatsLine("c clauses over max glue", solver.nbClOverMaxGlue, (double)solver.nbClOverMaxGlue/(double)solver.conflicts*100.0, "% of all clauses");
-
-    //Search stats
-    printStatsLine("c conflicts", solver.conflicts, (double)solver.conflicts/cpu_time, "/ sec");
-    printStatsLine("c decisions", solver.decisions, (double)solver.rnd_decisions*100.0/(double)solver.decisions, "% random");
-    printStatsLine("c bogo-props", solver.propagations, (double)solver.propagations/cpu_time, "/ sec");
-    printStatsLine("c conflict literals", solver.tot_literals, (double)(solver.max_literals - solver.tot_literals)*100.0/ (double)solver.max_literals, "% deleted");
-
-    //General stats
-    printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
-    printStatsLine("c CPU time", cpu_time, " s");
-}
-
 Solver* solverToInterrupt;
 
 /**
@@ -177,7 +95,7 @@ void SIGINT_handler(int signum)
         printf("*** This means we might need to finish some calculations\n");
         printf("*** INTERRUPTED ***\n");
     } else {
-        Main::printStats(solver);
+        if (solver.conf.verbosity >= 1) solver.printStats();
         exit(1);
     }
 }
@@ -790,7 +708,7 @@ const int Main::singleThreadSolve()
         std::cout << "c Not finished running -- maximum restart reached" << std::endl;
     }
     printResultFunc(solver, ret, res);
-    if (conf.verbosity >= 1) printStats(solver);
+    if (conf.verbosity >= 1) solver.printStats();
 
     return correctReturnValue(ret);
 }
@@ -840,7 +758,7 @@ const int Main::oneThreadSolve()
     {
         FILE* res = openOutputFile();
         printResultFunc(solver, ret, res);
-        printStats(solver);
+        solver.printStats();
 
         retval = correctReturnValue(ret);
         exit(retval);
