@@ -1508,7 +1508,7 @@ PropBy Solver::propagate(const bool update)
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
         Watched        *i, *i2, *j;
-        num_props += ws.size()/2 + 1;
+        num_props += ws.size()/2 + 2;
 
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << p << endl;
@@ -1560,9 +1560,9 @@ PropBy Solver::propagateBin(const bool alsoLearnt)
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
-        const vec<Watched> & wbin = watches[p.toInt()];
-        propagations += wbin.size()/2;
-        for(const Watched *k = wbin.getData(), *end = wbin.getDataEnd(); k != end; k++) {
+        const vec<Watched> & ws = watches[p.toInt()];
+        propagations += ws.size()/2 + 2;
+        for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
             if (!k->isBinary()) continue;
             if (!alsoLearnt && k->getLearnt()) continue;
 
@@ -1587,7 +1587,7 @@ const bool Solver::propagateBinExcept(const bool alsoLearnt, const Lit exceptLit
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
         const vec<Watched> & ws = watches[p.toInt()];
-        propagations += ws.size()/2;
+        propagations += ws.size()/2 + 2;
         for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
                 if (!alsoLearnt && i->getLearnt()) continue;
@@ -1611,7 +1611,7 @@ const bool Solver::propagateBinOneLevel(const bool alsoLearnt)
 {
     Lit p   = trail[qhead];
     const vec<Watched> & ws = watches[p.toInt()];
-    propagations += ws.size()/2;
+    propagations += ws.size()/2 + 2;
     for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
         if (i->isBinary()) {
             if (!alsoLearnt && i->getLearnt()) continue;
