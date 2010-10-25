@@ -13,6 +13,7 @@ add_executable(cryptominisat Main.cpp)
 target_link_libraries(cryptominisat
     cryptominisatlib
     ${ZLIB_LIBRARY}
+    ${Perftools_LIBRARIES}
     ${Boost_LIBRARIES}
 #    ${CMAKE_THREAD_LIBS_INIT}
 )
