@@ -84,6 +84,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , lastSyncConf(0)
         , sentUnitData(0)
         , gotUnitData(0)
+        , externalAddClause(false)
 
 
         , ok               (true)
@@ -393,6 +394,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt, const uin
         return c;
     } else {
         attachBinClause(ps[0], ps[1], learnt);
+        addNewBinClauseToShare(ps);
         numNewBin++;
         return NULL;
     }
@@ -455,9 +457,14 @@ the heavy-lifting
 template<class T>
 bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
 {
-    if (!addClauseHelper(ps, group, group_name)) return false;
+    externalAddClause = true;
+    if (!addClauseHelper(ps, group, group_name)) {
+        externalAddClause = false;
+        return false;
+    }
     Clause* c = addClauseInt(ps, group);
     if (c != NULL) clauses.push(c);
+    externalAddClause = false;
 
     return ok;
 }
@@ -2127,6 +2134,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
             } else {
                 attachBinClause(learnt_clause[0], learnt_clause[1], false);
                 numNewBin++;
+                addNewBinClauseToShare(learnt_clause);
                 uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             }
         }
@@ -2535,18 +2543,18 @@ const bool Solver::shareBinData()
 
     for (uint32_t wsLit = 0; wsLit < nVars()*2; wsLit++) {
         Lit lit1 = ~Lit::toLit(wsLit);
+        lit1 = varReplacer->getReplaceTable()[lit1.var()] ^ lit1.sign();
         if (!decision_var[lit1.var()] || value(lit1.var()) != l_Undef) continue;
 
         vector<Lit>& bins = shared.bins[wsLit];
         vec<Watched>& ws = watches[wsLit];
 
-        if (!ws.empty()) syncBinToOthers(lit1, bins, ws);
-
-        lit1 = varReplacer->getReplaceTable()[lit1.var()] ^ lit1.sign();
         if (bins.size() > syncFinish[wsLit] && !syncBinFromOthers(lit1, bins, syncFinish[wsLit], ws)) return false;
     }
 
-    if (conf.verbosity >= 3) {
+    syncBinToOthers();
+
+    if (conf.verbosity >= 4) {
         std::cout << "c got bins " << std::setw(10) << (gotBinData - oldGotBinData)
         << std::setw(10) << " sent bins " << (sentBinData - oldSentBinData) << std::endl;
     }
@@ -2554,8 +2562,24 @@ const bool Solver::shareBinData()
     return true;
 }
 
+template <class T>
+void Solver::addNewBinClauseToShare(T& ps)
+{
+    if (externalAddClause) return;
+    Lit lits[2];
+    lits[0] = ps[0];
+    lits[1] = ps[1];
+    if (lits[0].toInt() > lits[1].toInt()) std::swap(lits[0], lits[1]);
+    newBinClauses.push_back(std::make_pair(lits[0], lits[1]));
+}
+
+template void Solver::addNewBinClauseToShare(Clause& ps);
+template void Solver::addNewBinClauseToShare(XorClause& ps);
+template void Solver::addNewBinClauseToShare(vec<Lit>& ps);
+
 const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
 {
+    assert(decision_var[lit.var()]);
     vec<Lit> added;
     for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
         if (it->isBinary()) {
@@ -2590,27 +2614,26 @@ const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uin
     return ok;
 }
 
-void Solver::syncBinToOthers(const Lit lit, vector<Lit>& bins, const vec<Watched>& ws)
+void Solver::syncBinToOthers()
 {
-    vec<Lit> added;
-    for (vector<Lit>::iterator it = bins.begin(), end = bins.end(); it != end; it++) {
-        added.push(*it);
-        seen[it->toInt()] = true;
+    for(vector<std::pair<Lit, Lit> >::const_iterator it = newBinClauses.begin(), end = newBinClauses.end(); it != end; it++) {
+        addOneBinToOthers(it->first, it->second);
     }
 
-    vec<Lit> lits;
-    for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
-        if (it->isBinary()
-            && !seen[it->getOtherLit().toInt()]
-            && lit.toInt() < it->getOtherLit().toInt()
-            ) {
-            bins.push_back(it->getOtherLit());
-            sentBinData++;
-        }
+    newBinClauses.clear();
+}
+
+void Solver::addOneBinToOthers(const Lit lit1, const Lit lit2)
+{
+    assert(lit1.toInt() < lit2.toInt());
+
+    vector<Lit>& bins = sharedData->bins[(~lit1).toInt()];
+    for (vector<Lit>::const_iterator it = bins.begin(), end = bins.end(); it != end; it++) {
+        if (*it == lit2) return;
     }
 
-    for (uint32_t i = 0; i < added.size(); i++)
-        seen[added[i].toInt()] = false;
+    bins.push_back(lit2);
+    sentBinData++;
 }
 
 const bool Solver::shareUnitData()

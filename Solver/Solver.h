@@ -275,13 +275,17 @@ protected:
     const bool shareUnitData();
     uint64_t lastSyncConf;
     const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws);
-    void syncBinToOthers(const Lit lit, vector<Lit>& bins, const vec<Watched>& ws);
+    void syncBinToOthers();
+    void addOneBinToOthers(const Lit lit1, const Lit lit2);
     const bool shareBinData();
     uint32_t sentUnitData;
     uint32_t gotUnitData;
     uint32_t sentBinData;
     uint32_t gotBinData;
     vec<uint32_t> syncFinish;
+    vector<std::pair<Lit, Lit> > newBinClauses;
+    template <class T> void addNewBinClauseToShare(T& ps);
+    bool externalAddClause;
 
     // Helper structures:
     //

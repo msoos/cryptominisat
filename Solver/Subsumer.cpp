@@ -531,6 +531,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
         case 2: {
             solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
             solver.numNewBin++;
+            solver.addNewBinClauseToShare(*c.clause);
             unlinkClause(c);
             c.clause = NULL;
             break;
@@ -1661,6 +1662,7 @@ bool Subsumer::maybeEliminate(const Var var)
             case 2: {
                 solver.attachBinClause(dummy[0], dummy[1], false);
                 solver.numNewBin++;
+                solver.addNewBinClauseToShare(dummy);
                 subsume1(dummy, false);
                 break;
             }

@@ -438,6 +438,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     case 2:
         solver.attachBinClause(c[0], c[1], c.learnt());
         solver.numNewBin++;
+        solver.addNewBinClauseToShare(c);
         return true;
     default:
         solver.attachClause(c);
@@ -648,10 +649,12 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint
 
     ps[0] ^= xorEqualFalse;
     solver.attachBinClause(ps[0], ps[1], false);
+    solver.addNewBinClauseToShare(ps);
 
     ps[0] ^= true;
     ps[1] ^= true;
     solver.attachBinClause(ps[0], ps[1], false);
+    solver.addNewBinClauseToShare(ps);
 }
 
 /**

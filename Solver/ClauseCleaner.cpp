@@ -143,6 +143,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             solver.attachBinClause(c[0], c[1], c.learnt());
             solver.numNewBin++;
+            solver.addNewBinClauseToShare(c);
             return true;
         } else if (c.size() == 3) {
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
