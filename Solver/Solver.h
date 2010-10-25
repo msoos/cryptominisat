@@ -143,9 +143,9 @@ public:
 
     // Read state:
     //
-    lbool   value      (const Var& x) const;       ///<The current value of a variable.
-    lbool   value      (const Lit& p) const;       ///<The current value of a literal.
-    lbool   modelValue (const Lit& p) const;       ///<The value of a literal in the last model. The last call to solve must have been satisfiable.
+    lbool   value      (const Var x) const;       ///<The current value of a variable.
+    lbool   value      (const Lit p) const;       ///<The current value of a literal.
+    lbool   modelValue (const Lit p) const;       ///<The value of a literal in the last model. The last call to solve must have been satisfiable.
     uint32_t     nAssigns   ()      const;         ///<The current number of assigned literals.
     uint32_t     nClauses   ()      const;         ///<The current number of original clauses.
     uint32_t     nLiterals  ()      const;         ///<The current number of total literals.
@@ -453,7 +453,7 @@ protected:
     // Misc:
     //
     uint32_t decisionLevel    ()      const; // Gives the current decisionlevel.
-    uint32_t abstractLevel    (const Var& x) const; // Used to represent an abstraction of sets of decision levels.
+    uint32_t abstractLevel    (const Var x) const; // Used to represent an abstraction of sets of decision levels.
 
     /////////////////////////
     //Classes that must be friends, since they accomplish things on our datastructures
@@ -629,19 +629,19 @@ inline uint32_t      Solver::decisionLevel ()      const
 {
     return trail_lim.size();
 }
-inline uint32_t Solver::abstractLevel (const Var& x) const
+inline uint32_t Solver::abstractLevel (const Var x) const
 {
     return 1 << (level[x] & 31);
 }
-inline lbool    Solver::value         (const Var& x) const
+inline lbool    Solver::value         (const Var x) const
 {
     return assigns[x];
 }
-inline lbool    Solver::value         (const Lit& p) const
+inline lbool    Solver::value         (const Lit p) const
 {
     return assigns[p.var()] ^ p.sign();
 }
-inline lbool    Solver::modelValue    (const Lit& p) const
+inline lbool    Solver::modelValue    (const Lit p) const
 {
     return model[p.var()] ^ p.sign();
 }
