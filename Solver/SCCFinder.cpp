@@ -35,10 +35,21 @@ void SCCFinder::fillGraph()
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+            if (it2->isBinary() && lit.var() < it2->getOtherLit().var()) {
                 Lit lit2 = it2->getOtherLit();
-                boost::add_edge((~lit).toInt(), (lit2).toInt(), graph);
-                boost::add_edge((~lit2).toInt(), (lit).toInt(), graph);
+                if ((lit.sign() ^ lit2.sign()) == true) {
+                    if (!lit.sign() && lit2.sign()) { //pos, neg
+                        boost::add_edge((~lit2).toInt(), (lit).toInt(), graph);
+                    } else { //neg, pos
+                        boost::add_edge((~lit).toInt(), (lit2).toInt(), graph);
+                    }
+                } else {
+                    if (lit.sign() && lit2.sign()) { //neg, neg
+                        boost::add_edge((~lit).toInt(), (lit2).toInt(), graph);
+                    } else { //pos, pos
+                        boost::add_edge((~lit2).toInt(), (lit).toInt(), graph);
+                    }
+                }
             }
         }
     }
