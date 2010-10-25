@@ -1079,7 +1079,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisClauseDoMinLMoreRecur = conf.doMinimLMoreRecur || (cl.size() <= 50 || glue <= 6);
+    bool thisClauseDoMinLMoreRecur = conf.doMinimLMoreRecur || (cl.size() <= 6 || glue <= 10);
     if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
     uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
     if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 3;
@@ -1094,7 +1094,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         if (seen[l->toInt()] == 0) continue;
         Lit lit = *l;
 
-        if (thisClauseDoMinLMoreRecur) {
+        if (thisClauseDoMinLMoreRecur && moreRecurProp < 450) {
             if ((conflicts < UPDATE_TRANSOTFSSR_CACHE && mtrand.randInt(cl.size()) != 0)
                 //|| moreRecurProp > 450
                 || (conflicts >= UPDATE_TRANSOTFSSR_CACHE && transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts)) {
