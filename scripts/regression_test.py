@@ -59,7 +59,6 @@ class Tester:
         self.testDir = "../tests/"
         self.testDirNewVar = "../tests/newVar/"
         self.cryptominisat = "../build/cryptominisat"
-        self.speed = False
         self.checkDirOnly = False
         self.checkDirDifferent = False
         self.differentDirForCheck = \
@@ -102,9 +101,6 @@ class Tester:
             print "CPU limit of parent (pid %d) after child finished executing" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
-        if self.verbose:
-            print consoleOutput
-
         return consoleOutput
 
     def parse_consoleOutput(self, consoleOutput):
@@ -131,24 +127,30 @@ class Tester:
             print "Error code 500"
             exit(500)
 
-        unsat = False
-        if 'UNSAT' in mylines[0]:
-            unsat = True
-        elif 'SAT' in mylines[0]:
-            unsat = False
-        else:
-            print "Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?"
-            print "Error code 500"
-            exit(500)
+        satunsatfound = False;
 
         value = {}
-        if len(mylines) > 1:
-            myvars = mylines[1].split(' ')
+        for line in mylines:
+            if 'UNSAT' in line:
+                unsat = True
+                satunsatfound = True
+                continue;
+            if 'SAT' in line:
+                unsat = False
+                satunsatfound = True;
+                continue;
+            if (re.match('^c ', line)):  continue;
+            myvars = line.split(' ')
             for var in myvars:
+                if (var == 'v') : continue;
                 if (int(var) == 0) : break;
                 vvar = int(var)
                 value[abs(vvar)] = (vvar < 0) == False
         #print "Parsed values:", value
+        if (satunsatfound == False) :
+            print "Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?"
+            print "Error code 500"
+            exit(500)
 
         os.unlink(filename)
         return (unsat, value)
@@ -162,7 +164,7 @@ class Tester:
                 return (True, {})
             else:
                 print "Error! Output is empty!"
-                print "output : ", lines
+                print "output : ", output
                 print "Error code 500"
                 exit(500)
 
@@ -200,10 +202,9 @@ class Tester:
             return (True, [])
 
         if self.verbose:
-            print "FOUND:"
-            print "unsat: %d" % unsat
-            for (k, v) in value.iteritems():
-                print "var: %d, value: %s" % (k, v)
+            print "Found sat ? ",  (not unsat)
+            #for (k, v) in value.iteritems():
+            #    print "var: %d, value: %s" % (k, v)
 
         return (unsat, value)
 
@@ -336,11 +337,7 @@ class Tester:
         print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" % \
             (fname[:20] + "....cnf.gz", randomizeNum, self.sumProp, self.sumTime)
 
-        if self.speed == True:
-            print "Not checking solution, only checking speed of solving"
-            return
-
-        if (self.needDebugLib) :
+        if (self.needDebugLib and self.arminFuzzer == False) :
             largestPart = -1
             dirList2 = os.listdir(".")
             for fname_debug in dirList2:
@@ -379,11 +376,11 @@ class Tester:
             elif self.arminFuzzer == True:
                 if otherSolverUNSAT == False:
                     print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
+                    print "Console output: " , consoleOutput
                     exit()
                 else:
                     print "UNSAT verified by other solver"
-        self.test_expect(unsat, value, fname[:len(fname) - 6] +
-                         "output.gz")
+        self.test_expect(unsat, value, fname[:len(fname) - 6] + "output.gz")
         if unsat == False:
             self.test_found(unsat, value, fnameCheck)
 
