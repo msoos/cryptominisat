@@ -272,7 +272,7 @@ protected:
 
     //Multi-threading
     SharedData* sharedData;
-    const bool shareData();
+    const bool shareUnitData();
     uint64_t lastSyncConf;
     const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws);
     void syncBinToOthers(const Lit lit, vector<Lit>& bins, const vec<Watched>& ws);

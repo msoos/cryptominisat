@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "DimacsParser.h"
 #include "FailedVarSearcher.h"
 #include <iomanip>
+#include <omp.h>
 
 #ifdef USE_GAUSS
 #include "Gaussian.h"
@@ -582,6 +583,11 @@ void Solver::printStats()
     printStatsLine("c OTF cl watch-sh-lit", numShrinkedClauseLits, (double)numShrinkedClauseLits/(double)numShrinkedClause, " lits/clause");
     printStatsLine("c tried to recurMin cls", moreRecurMinLDo, (double)moreRecurMinLDo/(double)conflicts*100.0, " % of conflicts");
     printStatsLine("c updated cache", updateTransCache, updateTransCache/(double)moreRecurMinLDo, " lits/tried recurMin");
+
+    //Multi-threading
+    printStatsLine("c num threads" , omp_get_num_threads());
+    printStatsLine("c num units recevied", gotUnitData, (double)gotUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
+    printStatsLine("c num units sent", sentUnitData, (double)sentUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
 
     #ifdef USE_GAUSS
     if (gaussconfig.decision_until > 0) {

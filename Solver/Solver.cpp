@@ -370,8 +370,10 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt, const uin
     for (i = j = 0; i != ps.size(); i++) {
         if (value(ps[i]).getBool() || ps[i] == ~p)
             return NULL;
-        else if (value(ps[i]) != l_False && ps[i] != p)
+        else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
+            assert(decision_var[p.var()]);
+        }
     }
     ps.shrink(i - j);
 
@@ -1981,7 +1983,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     if (decisionLevel() == 0) {
         if (sharedData != NULL && lastSyncConf + SYNC_EVERY_CONFL < conflicts) {
             #pragma omp critical (unitData)
-            shareData();
+            shareUnitData();
             if (!ok) return false;
 
             #pragma omp critical (binData)
@@ -2613,7 +2615,7 @@ void Solver::syncBinToOthers(const Lit lit, vector<Lit>& bins, const vec<Watched
         seen[added[i].toInt()] = false;
 }
 
-const bool Solver::shareData()
+const bool Solver::shareUnitData()
 {
     assert(sharedData != NULL);
     assert(decisionLevel() == 0);
@@ -2623,7 +2625,9 @@ const bool Solver::shareData()
     SharedData& shared = *sharedData;
     shared.value.growTo(nVars(), l_Undef);
     for (uint32_t var = 0; var < nVars(); var++) {
-        const lbool thisVal = value(var);
+        Lit thisLit = Lit(var, false);
+        thisLit = varReplacer->getReplaceTable()[thisLit.var()] ^ thisLit.sign();
+        const lbool thisVal = value(thisLit);
         const lbool otherVal = shared.value[var];
 
         if (thisVal == l_Undef && otherVal == l_Undef) continue;
@@ -2638,37 +2642,31 @@ const bool Solver::shareData()
 
         if (otherVal != l_Undef) {
             assert(thisVal == l_Undef);
-            Lit lit = Lit(var, (otherVal == l_True) ? false :  true);
-            lit = varReplacer->getReplaceTable()[lit.var()] ^ lit.sign();
-            if (value(lit) != l_Undef) continue;
+            if (!decision_var[thisLit.var()]) continue;
+            Lit litToEnqueue = thisLit ^ (otherVal == l_False);
 
-            //normal varelim
-            //if (conf.doSatELite && conf.doVarElim && subsumer->getVarElimed()[lit.var()]) continue;
-            //xor-varelim
-            //if (conf.doConglXors && xorSubsumer->getVarElimed()[lit.var()]) continue;
-            //part-handling
-            if (!decision_var[lit.var()]) continue;
-
-            uncheckedEnqueue(lit);
+            uncheckedEnqueue(litToEnqueue);
             ok = propagate().isNULL();
             if (!ok) return false;
             thisGotUnitData++;
+            continue;
         }
 
         if (thisVal != l_Undef) {
             assert(otherVal == l_Undef);
             shared.value[var] = thisVal;
             thisSentUnitData++;
+            continue;
         }
     }
 
-    if (conf.verbosity >= 3 && (thisGotUnitData > 0 || thisSentUnitData > 0)) {
+    if (conf.verbosity >= 4 && (thisGotUnitData > 0 || thisSentUnitData > 0)) {
         std::cout << "c got units " << std::setw(8) << thisGotUnitData
         << " sent units " << std::setw(8) << thisSentUnitData << std::endl;
     }
 
     gotUnitData += thisGotUnitData;
-    sentUnitData += thisGotUnitData;
+    sentUnitData += thisSentUnitData;
 
     return true;
 }
