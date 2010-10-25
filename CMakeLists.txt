@@ -15,7 +15,7 @@ if (CMAKE_COMPILER_IS_GNUCC)
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#    SET(CMAKE_EXE_LINKER_FLAGS "-static")
+    SET(CMAKE_EXE_LINKER_FLAGS "-static")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 find_package(ZLIB  REQUIRED)
@@ -27,7 +27,7 @@ FIND_PACKAGE(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra)
-find_package(Perftools)
+#find_package(Perftools)
 
 add_definitions(-DVERSION="2.7.0")
 add_definitions(-DUSE_GAUSS)

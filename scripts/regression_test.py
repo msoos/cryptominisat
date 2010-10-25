@@ -50,6 +50,7 @@ class Tester:
     arminFuzzer = False
     extraOptions = ""
     needDebugLib = True
+    numThreads = 4
 
     def __init__(self):
         self.sumTime = 0.0
@@ -67,6 +68,7 @@ class Tester:
         self.arminFuzzer = False
         self.extraOptions = ""
         self.needDebugLib = True
+        self.numThreads = 4
 
     def execute(self, fname, randomizeNum, newVar, needToLimitTime):
         if os.path.isfile(self.cryptominisat) != True:
@@ -83,6 +85,7 @@ class Tester:
             command += "--verbosity=0 "
         if (newVar) :
             command += "--debugnewvar "
+        command += "--threads=%d " % self.numThreads
         command += self.extraOptions + " "
         command += fname
 
@@ -327,7 +330,7 @@ class Tester:
 
         if needToLimitTime == True:
             diffTime = time.time() - currTime
-            if diffTime > maxTimeLimit:
+            if diffTime > maxTimeLimit/self.numThreads:
                 print "Too much time to solve, aborted!"
                 return
             else:
@@ -337,7 +340,7 @@ class Tester:
         print "filename: %20s, exec: %3d, total props: %10d total time:%.2f" % \
             (fname[:20] + "....cnf.gz", randomizeNum, self.sumProp, self.sumTime)
 
-        if (self.needDebugLib and self.arminFuzzer == False) :
+        if (self.needDebugLib) :
             largestPart = -1
             dirList2 = os.listdir(".")
             for fname_debug in dirList2:
