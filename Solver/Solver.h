@@ -274,6 +274,14 @@ protected:
     SharedUnitData* sharedUnitData;
     const bool shareData();
     uint64_t lastSyncConf;
+    const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws);
+    void syncBinToOthers(const Lit lit, vector<Lit>& bins, const vec<Watched>& ws);
+    const bool shareBinData();
+    uint32_t sentUnitData;
+    uint32_t gotUnitData;
+    uint32_t sentBinData;
+    uint32_t gotBinData;
+    vec<uint32_t> syncFinish;
 
     // Helper structures:
     //

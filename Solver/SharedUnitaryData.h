@@ -21,10 +21,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Vec.h"
 #include "SolverTypes.h"
 
+#include <vector>
+
 class SharedUnitData
 {
     public:
         vec<lbool> value;
+        std::vector<std::vector<Lit> > bins;
 };
 
 #endif //SHARED_DATA_H

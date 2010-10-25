@@ -82,6 +82,9 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedUni
 
         , sharedUnitData(_sharedUnitData)
         , lastSyncConf(0)
+        , sentUnitData(0)
+        , gotUnitData(0)
+
 
         , ok               (true)
         , numBins          (0)
@@ -180,6 +183,9 @@ Var Solver::newVar(bool dvar)
     seen      .push_back(0);
     permDiff  .push(0);
     unWindGlue.push(NULL);
+
+    syncFinish.push(0);
+    syncFinish.push(0);
 
     //Transitive OTF self-subsuming resolution
     seen2     .push_back(0);
@@ -1972,8 +1978,19 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
     }
 
     // Simplify the set of problem clauses:
-    if (decisionLevel() == 0 && !simplify()) {
-        return l_False;
+    if (decisionLevel() == 0) {
+        if (sharedUnitData != NULL && lastSyncConf + 20000 < conflicts) {
+            #pragma omp critical (unitData)
+            shareData();
+            if (!ok) return false;
+
+            #pragma omp critical (binData)
+            shareBinData();
+            if (!ok) return false;
+
+            lastSyncConf = conflicts;
+        }
+        if (!simplify()) return l_False;
     }
 
     // Reduce the set of learnt clauses:
@@ -2465,13 +2482,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
         //if (avgBranchDepth.isvalid())
         //    std::cout << "avg branch depth:" << avgBranchDepth.getavg() << std::endl;
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
-
-        if (sharedUnitData != NULL && lastSyncConf + 20000 < conflicts) {
-            #pragma omp critical
-            status = (shareData() ? status : l_False);
-
-            lastSyncConf = conflicts;
-        }
     }
     printEndSearchStat();
 
@@ -2512,12 +2522,100 @@ lbool Solver::solve(const vec<Lit>& assumps)
     return status;
 }
 
+const bool Solver::shareBinData()
+{
+    assert(sharedUnitData != NULL);
+    assert(decisionLevel() == 0);
+    uint32_t oldGotBinData = gotBinData;
+    uint32_t oldSentBinData = sentBinData;
+
+    SharedUnitData& shared = *sharedUnitData;
+    if (shared.bins.size() != nVars()*2)
+        shared.bins.resize(nVars()*2);
+
+    uint32_t wsLit = 0;
+    for (vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit1 = ~Lit::toLit(wsLit);
+        lit1 = varReplacer->getReplaceTable()[lit1.var()] ^ lit1.sign();
+        if (!decision_var[lit1.var()] || value(lit1.var()) != l_Undef) continue;
+
+        vector<Lit>& bins = shared.bins[wsLit];
+        vec<Watched>& ws = *it;
+        if (bins.size() == syncFinish[wsLit] && ws.empty()) continue;
+        if (!ws.empty()) syncBinToOthers(lit1, bins, ws);
+        if (bins.size() > syncFinish[wsLit] && !syncBinFromOthers(lit1, bins, syncFinish[wsLit], ws)) return false;
+    }
+
+    if (conf.verbosity >= 3) {
+        std::cout << "c got bins " << std::setw(10) << (gotBinData - oldGotBinData)
+        << std::setw(10) << " sent bins " << (sentBinData - oldSentBinData) << std::endl;
+    }
+
+    return true;
+}
+
+const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
+{
+    vec<Lit> added;
+    for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+        if (it->isBinary()) {
+            added.push(it->getOtherLit());
+            seen[it->getOtherLit().toInt()] = true;
+        }
+    }
+
+    vec<Lit> lits;
+    for (uint32_t i = finished; i < bins.size(); i++) {
+        if (!seen[bins[i].toInt()]) {
+            Lit otherLit = bins[i];
+            otherLit = varReplacer->getReplaceTable()[otherLit.var()] ^ otherLit.sign();
+            if (decision_var[otherLit.var()] && value(otherLit.var()) == l_Undef) {
+                gotBinData++;
+                lits.clear();
+                lits.growTo(2);
+                lits[0] = lit;
+                lits[1] = otherLit;
+                addClauseInt(lits, 0, true);
+                if (!ok) goto end;
+
+            }
+        }
+    }
+    finished = bins.size();
+
+    end:
+    for (uint32_t i = 0; i < added.size(); i++)
+        seen[added[i].toInt()] = false;
+
+    return ok;
+}
+
+void Solver::syncBinToOthers(const Lit lit, vector<Lit>& bins, const vec<Watched>& ws)
+{
+    vec<Lit> added;
+    for (vector<Lit>::iterator it = bins.begin(), end = bins.end(); it != end; it++) {
+        added.push(*it);
+        seen[it->toInt()] = true;
+    }
+
+    vec<Lit> lits;
+    for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+        if (it->isBinary() && !seen[it->getOtherLit().toInt()]) {
+            bins.push_back(it->getOtherLit());
+            sentBinData++;
+        }
+    }
+
+    for (uint32_t i = 0; i < added.size(); i++)
+        seen[added[i].toInt()] = false;
+}
+
 const bool Solver::shareData()
 {
     assert(sharedUnitData != NULL);
     assert(decisionLevel() == 0);
-    uint32_t gotData = 0;
-    uint32_t sentData = 0;
+    uint32_t thisGotUnitData = 0;
+    uint32_t thisSentUnitData = 0;
 
     SharedUnitData& shared = *sharedUnitData;
     shared.value.growTo(nVars(), l_Undef);
@@ -2527,8 +2625,12 @@ const bool Solver::shareData()
 
         if (thisVal == l_Undef && otherVal == l_Undef) continue;
         if (thisVal != l_Undef && otherVal != l_Undef) {
-            if (thisVal != otherVal) return false;
-            else continue;
+            if (thisVal != otherVal) {
+                ok = false;
+                return false;
+            } else {
+                continue;
+            }
         }
 
         if (otherVal != l_Undef) {
@@ -2545,20 +2647,25 @@ const bool Solver::shareData()
             if (!decision_var[lit.var()]) continue;
 
             uncheckedEnqueue(lit);
-            gotData++;
+            ok = propagate().isNULL();
+            if (!ok) return false;
+            thisGotUnitData++;
         }
 
         if (thisVal != l_Undef) {
             assert(otherVal == l_Undef);
             shared.value[var] = thisVal;
-            sentData++;
+            thisSentUnitData++;
         }
     }
 
-    if (conf.verbosity >= 1 && (gotData > 0 || sentData > 0)) {
-        std::cout << "gotData: " << std::setw(8) << gotData
-        << ", sentData: " << std::setw(8) << sentData << std::endl;
+    if (conf.verbosity >= 3 && (thisGotUnitData > 0 || thisSentUnitData > 0)) {
+        std::cout << "c got units " << std::setw(8) << thisGotUnitData
+        << " sent units " << std::setw(8) << thisSentUnitData << std::endl;
     }
+
+    gotUnitData += thisGotUnitData;
+    sentUnitData += thisGotUnitData;
 
     return true;
 }
