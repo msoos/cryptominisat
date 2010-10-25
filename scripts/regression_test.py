@@ -491,7 +491,7 @@ class Tester:
             while i < 100000000:
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
-                commands.getoutput("./fuzzsat > %s" %(file_name))
+                commands.getstatusoutput("./fuzzsat > %s" %(file_name))
 
                 for i3 in range(num):
                     self.check(fname=file_name, fnameCheck=file_name,
@@ -500,7 +500,7 @@ class Tester:
                 os.unlink(file_name)
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
-                commands.getoutput("./cnffuzz > %s" % (file_name))
+                commands.getstatusoutput("./cnffuzz > %s" % (file_name))
 
                 for i3 in range(num):
                     self.check(fname=file_name, fnameCheck=file_name,
