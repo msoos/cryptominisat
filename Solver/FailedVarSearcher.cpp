@@ -44,10 +44,6 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
     solver(_solver)
     , tmpPs(2)
     , totalTime(0)
-    , finishedLastTimeVar(true)
-    , lastTimeWentUntilVar(0)
-    , finishedLastTimeBin(true)
-    , lastTimeWentUntilBin(0)
     , numPropsMultiplier(1.0)
     , lastTimeFoundTruths(0)
     , asymmLastTimeWentUntil(0)
@@ -179,7 +175,7 @@ const bool FailedVarSearcher::search()
     //If failed var searching is going good, do successively more and more of it
     if ((double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.10) numPropsMultiplier = std::max(numPropsMultiplier*1.3, 2.0);
     else numPropsMultiplier = 1.0;
-    numProps = (uint64_t) ((double)numProps * numPropsMultiplier * 3.0);
+    numProps = (uint64_t) ((double)numProps * numPropsMultiplier);
 
     //For BothSame
     propagated.resize(solver.nVars(), 0);
@@ -216,35 +212,24 @@ const bool FailedVarSearcher::search()
     maxHyperBinProps = numProps/6;
 
     //uint32_t fromBin;
-    uint32_t fromVar;
-    if (finishedLastTimeVar || lastTimeWentUntilVar >= solver.nVars())
-        fromVar = 0;
-    else
-        fromVar = lastTimeWentUntilVar;
-    finishedLastTimeVar = true;
-    lastTimeWentUntilVar = solver.nVars();
+    uint32_t fromVar = solver.mtrand.randInt(solver.nVars());
     origProps = solver.propagations;
-    for (Var var = fromVar; var < solver.nVars(); var++) {
+    for (uint32_t i = fromVar; i < solver.nVars(); i++) {
+        Var var = (fromVar + i) % solver.nVars();
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
-        if (solver.propagations - origProps >= numProps)  {
-            finishedLastTimeVar = false;
-            lastTimeWentUntilVar = var;
+        if (solver.propagations - origProps >= numProps)
             break;
-        }
         if (!tryBoth(Lit(var, false), Lit(var, true)))
             goto end;
     }
 
-    numProps = (double)numProps * 1.2;
     hyperbinProps = 0;
     while (!order_heap_copy.empty()) {
         Var var = order_heap_copy.removeMin();
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
-        if (solver.propagations - origProps >= numProps)  {
-            finishedLastTimeVar = false;
-            lastTimeWentUntilVar = var;
+        if (solver.propagations - origProps >= numProps * 1.2)  {
             break;
         }
         if (!tryBoth(Lit(var, false), Lit(var, true)))

@@ -198,11 +198,6 @@ class FailedVarSearcher {
 
         //State between runs
         double totalTime;
-        bool finishedLastTimeVar;      ///<Did we finish going through all vars last time we launched search() ?
-        uint32_t lastTimeWentUntilVar; ///<Last time we executed search() we went until this variable number (then time was up)
-        bool finishedLastTimeBin;      ///<Currently not used, but should be used when reasoning on clause (a OR b) is enabled
-        uint32_t lastTimeWentUntilBin; ///<Currently not used, but should be used when reasoning on clause (a OR b) is enabled
-
         double numPropsMultiplier; ///<If last time we called search() all went fine, then this is incremented, so we do more searching this time
         uint32_t lastTimeFoundTruths; ///<Records how many unit clauses we found last time we called search()
 
