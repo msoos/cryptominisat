@@ -45,7 +45,7 @@ class VarReplacer
         const bool performReplace(const bool always = false);
         const bool needsReplace();
         template<class T>
-        const bool replace(T& ps, const bool xorEqualFalse, const uint32_t group);
+        const bool replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin);
 
         void extendModelPossible() const;
         void extendModelImpossible(Solver& solver2) const;
@@ -73,8 +73,8 @@ class VarReplacer
         const bool replace_set(vec<XorClause*>& cs);
         const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
         const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
-        template<class T>
-        void addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint32_t group, const bool internal = false);
+        template <class T>
+        void addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint32_t group);
 
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);

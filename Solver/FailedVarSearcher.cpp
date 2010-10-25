@@ -653,7 +653,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
                         tmpPs[1] = Lit(lit2.var(), false);
                         invert = lit1.sign() ^ lit2.sign();
                     }
-                    if (!solver.varReplacer->replace(tmpPs, invert, 0))
+                    if (!solver.varReplacer->replace(tmpPs, invert, 0, true))
                         return false;
                     bothInvert += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
                     toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
@@ -674,7 +674,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
                         if (twoLongXors.find(tmp) != twoLongXors.end()) {
                             tmpPs[0] = Lit(tmp.var[0], false);
                             tmpPs[1] = Lit(tmp.var[1], false);
-                            if (!solver.varReplacer->replace(tmpPs, tmp.inverted, solver.xorclauses[*it]->getGroup()))
+                            if (!solver.varReplacer->replace(tmpPs, tmp.inverted, solver.xorclauses[*it]->getGroup(), true))
                                 return false;
                             newBinXor += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
                             toReplaceBefore = solver.varReplacer->getNewToReplaceVars();

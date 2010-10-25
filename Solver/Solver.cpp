@@ -264,7 +264,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
 
             ps[0] = ps[0].unsign();
             ps[1] = ps[1].unsign();
-            varReplacer->replace(ps, xorEqualFalse, group);
+            varReplacer->replace(ps, xorEqualFalse, group, true);
             return NULL;
         }
         default: {

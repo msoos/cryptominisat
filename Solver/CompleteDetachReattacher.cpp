@@ -184,7 +184,7 @@ inline const bool CompleteDetachReatacher::cleanClause(XorClause& ps)
         case 2: {
             ps[0] = ps[0].unsign();
             ps[1] = ps[1].unsign();
-            solver.varReplacer->replace(ps, ps.xorEqualFalse(), ps.getGroup());
+            solver.varReplacer->replace(ps, ps.xorEqualFalse(), ps.getGroup(), true);
             return false;
         }
 

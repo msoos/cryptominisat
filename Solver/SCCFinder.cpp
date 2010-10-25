@@ -110,7 +110,7 @@ const bool SCCFinder::findSCC()
             lits[0] = lits[0].unsign();
             lits[1] = lits[1].unsign();
 
-            if (!solver.varReplacer->replace(lits, xorEqualsFalse, 0))
+            if (!solver.varReplacer->replace(lits, xorEqualsFalse, 0, false))
                 return false;
             numXors++;
         }

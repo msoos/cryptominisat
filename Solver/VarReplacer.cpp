@@ -243,7 +243,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
         c[0] = c[0].unsign();
         c[1] = c[1].unsign();
-        addBinaryXorClause(c, c.xorEqualFalse(), c.getGroup(), true);
+        addBinaryXorClause(c, c.xorEqualFalse(), c.getGroup());
         return true;
     }
     default:
@@ -549,7 +549,7 @@ know that c=h, in which case we don't do anything
 @p group of clause they have been inspired from. Sometimes makes no sense...
 */
 template<class T>
-const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group)
+const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
@@ -607,7 +607,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
 
             table[lit.var()] = Lit(lit.var(), false);
             replacedVars++;
-            addBinaryXorClause(ps, xorEqualFalse, group);
+            if (needToAddAsBin) addBinaryXorClause(ps, xorEqualFalse, group);
             return true;
         }
     }
@@ -620,13 +620,13 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     //Follow backwards
     setAllThatPointsHereTo(var, lit);
     replacedVars++;
-    addBinaryXorClause(ps, xorEqualFalse, group);
+    if (needToAddAsBin) addBinaryXorClause(ps, xorEqualFalse, group);
 
     return true;
 }
 
-template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group);
-template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group);
+template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin);
+template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin);
 
 /**
 @brief Adds a binary xor to the internal/external clause set
@@ -638,10 +638,9 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 
 \todo Clean this messy internal/external thing using a better datastructure.
 */
-template<class T>
-void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint32_t group, const bool internal)
+template <class T>
+void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint32_t group)
 {
-    assert(internal || (replacedVars > lastReplacedVars));
     #ifdef DEBUG_REPLACER
     assert(!ps[0].sign());
     assert(!ps[1].sign());
@@ -654,9 +653,6 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint
     ps[1] ^= true;
     solver.attachBinClause(ps[0], ps[1], false);
 }
-
-template void VarReplacer::addBinaryXorClause(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool internal);
-template void VarReplacer::addBinaryXorClause(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool internal);
 
 /**
 @brief Returns if we already know that var = lit

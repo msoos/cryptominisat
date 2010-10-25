@@ -223,7 +223,7 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
         case 2: {
             c[0] = c[0].unsign();
             c[1] = c[1].unsign();
-            solver.varReplacer->replace(c, c.xorEqualFalse(), c.getGroup());
+            solver.varReplacer->replace(c, c.xorEqualFalse(), c.getGroup(), true);
             solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
             return true;
         }

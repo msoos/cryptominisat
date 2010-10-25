@@ -159,26 +159,14 @@ const bool XorFinder::findXors(uint32_t& sumLengths)
             }
         }
 
-        switch(lits.size()) {
-        case 2: {
-            solver.varReplacer->replace(lits, impair, old_group);
+        assert(lits.size() > 2);
+        XorClause* x = solver.clauseAllocator.XorClause_new(lits, impair, old_group);
+        solver.xorclauses.push(x);
+        solver.attachClause(*x);
 
-            #ifdef VERBOSE_DEBUG
-            cout << "- Final 2-long xor-clause: "
-            << lits[0] << " , " << lits[1] << " impair: " << impair << std::endl;
-            #endif
-            break;
-        }
-        default: {
-            XorClause* x = solver.clauseAllocator.XorClause_new(lits, impair, old_group);
-            solver.xorclauses.push(x);
-            solver.attachClause(*x);
-
-            #ifdef VERBOSE_DEBUG
-            cout << "- Final xor-clause: " << x << std::endl;;
-            #endif
-        }
-        }
+        #ifdef VERBOSE_DEBUG
+        cout << "- Final xor-clause: " << x << std::endl;;
+        #endif
 
         foundXors++;
         sumLengths += lits.size();
