@@ -2533,16 +2533,16 @@ const bool Solver::shareBinData()
     if (shared.bins.size() != nVars()*2)
         shared.bins.resize(nVars()*2);
 
-    uint32_t wsLit = 0;
-    for (vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (uint32_t wsLit = 0; wsLit < nVars()*2; wsLit++) {
         Lit lit1 = ~Lit::toLit(wsLit);
-        lit1 = varReplacer->getReplaceTable()[lit1.var()] ^ lit1.sign();
         if (!decision_var[lit1.var()] || value(lit1.var()) != l_Undef) continue;
 
         vector<Lit>& bins = shared.bins[wsLit];
-        vec<Watched>& ws = *it;
-        if (bins.size() == syncFinish[wsLit] && ws.empty()) continue;
+        vec<Watched>& ws = watches[wsLit];
+
         if (!ws.empty()) syncBinToOthers(lit1, bins, ws);
+
+        lit1 = varReplacer->getReplaceTable()[lit1.var()] ^ lit1.sign();
         if (bins.size() > syncFinish[wsLit] && !syncBinFromOthers(lit1, bins, syncFinish[wsLit], ws)) return false;
     }
 
@@ -2600,7 +2600,10 @@ void Solver::syncBinToOthers(const Lit lit, vector<Lit>& bins, const vec<Watched
 
     vec<Lit> lits;
     for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
-        if (it->isBinary() && !seen[it->getOtherLit().toInt()]) {
+        if (it->isBinary()
+            && !seen[it->getOtherLit().toInt()]
+            && lit.toInt() < it->getOtherLit().toInt()
+            ) {
             bins.push_back(it->getOtherLit());
             sentBinData++;
         }
