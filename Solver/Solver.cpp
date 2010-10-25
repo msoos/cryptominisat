@@ -2436,7 +2436,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     uint64_t  nextSimplify = conf.restart_first * conf.simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
 
     if (conflicts == 0) {
-        performStepsBeforeSolve();
+        if (conf.doPerformPreSimp) performStepsBeforeSolve();
         if (!ok) return l_False;
     }
     calculateDefaultPolarities();
@@ -2457,7 +2457,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
 
         if (conf.doSchedSimp && conflicts >= nextSimplify) {
-            status = simplifyProblem(NUM_CONFL_BURST_SEARCH);
+            status = simplifyProblem(conf.simpBurstSConf);
             printRestartStat();
             lastConflPrint = conflicts;
             nextSimplify = conflicts * conf.simpStartMMult;

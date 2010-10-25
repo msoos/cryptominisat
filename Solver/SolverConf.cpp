@@ -29,8 +29,13 @@ SolverConf::SolverConf() :
         , polarity_mode    (polarity_auto)
         , verbosity        (0)
         , restrictPickBranch(0)
+
+        //Simplification
+        , simpBurstSConf(NUM_CONFL_BURST_SEARCH)
         , simpStartMult(SIMPLIFY_MULTIPLIER)
         , simpStartMMult(SIMPLIFY_MULTIPLIER_MULTIPLIER)
+
+        , doPerformPreSimp (true)
 
         //optimisations to do
         , doFindXors       (true)

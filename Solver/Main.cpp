@@ -739,11 +739,14 @@ const int Main::oneThreadSolve()
     if (num > 0) {
         //if (num % 2) myConf.fixRestartType = dynamic_restart;
         //else myConf.fixRestartType = static_restart;
-        myConf.simpStartMult *= num;
-        myConf.simpStartMMult *= num;
-        /*if (num == omp_get_num_threads()-1) {
-            myConf.doVarElim = false;
-        }*/
+        myConf.simpBurstSConf *= 1.0 + num;
+        myConf.simpStartMult *= 1.0 + 0.2*num;
+        myConf.simpStartMMult *= 1.0 + 0.2*num;
+        int numThreads = omp_get_num_threads();
+        if (num == numThreads-1 && numThreads > 2) {
+            //myConf.doVarElim = false;
+            myConf.doPerformPreSimp = false;
+        }
     }
     if (num != 0) myConf.verbosity = 0;
 
