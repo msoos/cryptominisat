@@ -83,6 +83,7 @@ public:
     void     growTo (uint32_t size, const T& pad);
     void     clear  (bool dealloc = false);
     void     capacity (uint32_t size) { grow(size); }
+    const bool empty() const {return size() == 0;}
 
     // Stack interface:
     void     reserve(uint32_t res)     { if (cap < res) {cap = res; data = (T*)realloc(data, cap * sizeof(T));}}
