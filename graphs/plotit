@@ -28,6 +28,8 @@ set key left top
 #set output "Ligeling_vs_CryptoMiniSat2.6.1.png"
 #plot [80:] "./solveTimes97Graph" w lp title "CryptoMiniSat 2.6.1",  "./solveTimesLingelingGraph" w lp title "Lingeling"
 
-set output "CryptoMiniSat2.7.1-compare.png"
-plot [80:] "./solveTimesMiniSatGraph" w lp title "MiniSat 2.2", "./solveTimesLingelingGraph" w lp title "lingeling", "./solveTimesPrecoSat465Graph" w lp title "PrecoSat465", "./solveTimes97Graph" w lp title "CryptoMiniSat2.7.1"
+#set output "CryptoMiniSat2.7.1-compare.png"
+#plot [80:] "./solveTimesMiniSatGraph" w lp title "MiniSat 2.2", "./solveTimesLingelingGraph" w lp title "lingeling", "./solveTimesPrecoSat465Graph" w lp title "PrecoSat465", "./solveTimes97Graph" w lp title "CryptoMiniSat2.7.1"
 
+set output "With-without-tans-strong-minim.png"
+plot [80:] "./solveTimes97Graph" w lp title "With transitive strong minimisation", "./solveTimes97-nolfminimGraph" w lp title "Without transitive strong minimisation"
