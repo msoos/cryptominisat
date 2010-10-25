@@ -1856,6 +1856,7 @@ of being updated, for example)
 */
 void Solver::interruptCleanly()
 {
+    cancelUntil(0);
     if (conf.needToDumpLearnts) {
         dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
         std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
@@ -1864,7 +1865,6 @@ void Solver::interruptCleanly()
         dumpOrigClauses(conf.origFilename);
         std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
     }
-    exit(0);
 }
 
 
@@ -1908,7 +1908,6 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
     testAllClauseAttach();
     findAllAttach();
     for (;;) {
-        if (needToInterrupt) interruptCleanly();
         PropBy confl = propagate(update);
 
         if (!confl.isNULL()) {
@@ -1991,11 +1990,11 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
         if (sharedData != NULL && lastSyncConf + SYNC_EVERY_CONFL < conflicts) {
             #pragma omp critical (unitData)
             shareUnitData();
-            if (!ok) return false;
+            if (!ok) return l_False;
 
             #pragma omp critical (binData)
             shareBinData();
-            if (!ok) return false;
+            if (!ok) return l_False;
 
             lastSyncConf = conflicts;
         }
@@ -2490,6 +2489,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
         //if (avgBranchDepth.isvalid())
         //    std::cout << "avg branch depth:" << avgBranchDepth.getavg() << std::endl;
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
+        if (needToInterrupt) {
+            interruptCleanly();
+            return l_Undef;
+        }
     }
     printEndSearchStat();
 
@@ -2579,7 +2582,11 @@ template void Solver::addNewBinClauseToShare(vec<Lit>& ps);
 
 const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
 {
+    assert(varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
     assert(decision_var[lit.var()]);
+    assert(subsumer->getVarElimed()[lit.var()] == false);
+    assert(xorSubsumer->getVarElimed()[lit.var()] == false);
+
     vec<Lit> added;
     for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
         if (it->isBinary()) {
@@ -2594,6 +2601,8 @@ const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uin
             Lit otherLit = bins[i];
             otherLit = varReplacer->getReplaceTable()[otherLit.var()] ^ otherLit.sign();
             if (decision_var[otherLit.var()] && value(otherLit.var()) == l_Undef) {
+                assert(subsumer->getVarElimed()[otherLit.var()] == false);
+                assert(xorSubsumer->getVarElimed()[otherLit.var()] == false);
                 gotBinData++;
                 lits.clear();
                 lits.growTo(2);
@@ -2601,7 +2610,6 @@ const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uin
                 lits[1] = otherLit;
                 addClauseInt(lits, 0, true);
                 if (!ok) goto end;
-
             }
         }
     }
@@ -2663,8 +2671,10 @@ const bool Solver::shareUnitData()
 
         if (otherVal != l_Undef) {
             assert(thisVal == l_Undef);
-            if (!decision_var[thisLit.var()]) continue;
             Lit litToEnqueue = thisLit ^ (otherVal == l_False);
+            if (!decision_var[litToEnqueue.var()]) continue;
+            assert(subsumer->getVarElimed()[litToEnqueue.var()] == false);
+            assert(xorSubsumer->getVarElimed()[litToEnqueue.var()] == false);
 
             uncheckedEnqueue(litToEnqueue);
             ok = propagate().isNULL();

@@ -43,6 +43,8 @@ Here is a picture of of the above process in more detail:
 #else
 #include <stdint.h>
 #endif //_MSC_VER
+#include <map>
+#include <set>
 
 #include <signal.h>
 
@@ -74,7 +76,8 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-Solver* solverToInterrupt;
+std::map<uint32_t, Solver*> solversToInterrupt;
+std::set<uint32_t> finishedInterrupting;
 
 /**
 @brief For correctly and gracefully exiting
@@ -86,17 +89,20 @@ is used to achieve this
 */
 void SIGINT_handler(int signum)
 {
-    Solver& solver = *solverToInterrupt;
-    printf("\n");
-    printf("*** INTERRUPTED ***\n");
-    if (solver.conf.needToDumpLearnts || solver.conf.needToDumpOrig) {
-        solver.needToInterrupt = true;
-        printf("*** Please wait. We need to interrupt cleanly\n");
-        printf("*** This means we might need to finish some calculations\n");
+    #pragma omp critical
+    {
+        Solver& solver = *solversToInterrupt.begin()->second;
+        printf("\n");
         printf("*** INTERRUPTED ***\n");
-    } else {
-        if (solver.conf.verbosity >= 1) solver.printStats();
-        exit(1);
+        if (solver.conf.needToDumpLearnts || solver.conf.needToDumpOrig) {
+            solver.needToInterrupt = true;
+            printf("*** Please wait. We need to interrupt cleanly\n");
+            printf("*** This means we might need to finish some calculations\n");
+            printf("*** INTERRUPTED ***\n");
+        } else {
+            if (solver.conf.verbosity >= 1) solver.printStats();
+            exit(1);
+        }
     }
 }
 
@@ -304,7 +310,7 @@ void Main::printResultFunc(const Solver& S, const lbool ret, FILE* res)
 {
     if (res != NULL) {
         if (ret == l_True) {
-            printf("c SAT\n");
+            std::cout << "c SAT" << std::endl;
             fprintf(res, "SAT\n");
             if (printResult) {
                 for (Var var = 0; var != S.nVars(); var++)
@@ -313,25 +319,27 @@ void Main::printResultFunc(const Solver& S, const lbool ret, FILE* res)
                     fprintf(res, "0\n");
             }
         } else if (ret == l_False) {
-            printf("c UNSAT\n");
+            std::cout << "c UNSAT" << std::endl;
             fprintf(res, "UNSAT\n");
         } else {
-            printf("c INCONCLUSIVE\n");
+            std::cout << "c INCONCLUSIVE" << std::endl;
             fprintf(res, "INCONCLUSIVE\n");
         }
         fclose(res);
     } else {
         if (ret == l_True)
-            printf("s SATISFIABLE\n");
+            std::cout << "s SATISFIABLE" << std::endl;
         else if (ret == l_False)
-            printf("s UNSATISFIABLE\n");
+            std::cout << "s UNSATISFIABLE" << std::endl;
 
         if(ret == l_True && printResult) {
-            printf("v ");
+            std::stringstream toPrint;
+            toPrint << "v ";
             for (Var var = 0; var != S.nVars(); var++)
                 if (S.model[var] != l_Undef)
-                    printf("%s%d ", (S.model[var] == l_True)? "" : "-", var+1);
-                printf("0\n");
+                    toPrint << ((S.model[var] == l_True)? "" : "-") << var+1 << " ";
+                toPrint << "0" << std::endl;
+            std::cout << toPrint.str();
         }
     }
 }
@@ -668,7 +676,7 @@ void Main::printVersionInfo(const uint32_t verbosity)
 const int Main::singleThreadSolve()
 {
     Solver solver(conf, gaussconfig);
-    solverToInterrupt = &solver;
+    solversToInterrupt[0] = &solver;
 
     printVersionInfo(conf.verbosity);
     setDoublePrecision(conf.verbosity);
@@ -733,6 +741,7 @@ int Main::correctReturnValue(const lbool ret) const
 
 const int Main::oneThreadSolve()
 {
+    int numThreads = omp_get_num_threads();
     SolverConf myConf = conf;
     int num = omp_get_thread_num();
     myConf.origSeed = num;
@@ -742,7 +751,6 @@ const int Main::oneThreadSolve()
         myConf.simpBurstSConf *= 1.0 + num;
         myConf.simpStartMult *= 1.0 + 0.2*num;
         myConf.simpStartMMult *= 1.0 + 0.2*num;
-        int numThreads = omp_get_num_threads();
         if (num == numThreads-1 && numThreads > 2) {
             //myConf.doVarElim = false;
             myConf.doPerformPreSimp = false;
@@ -751,17 +759,36 @@ const int Main::oneThreadSolve()
     if (num != 0) myConf.verbosity = 0;
 
     Solver solver(myConf, gaussconfig, &sharedData);
-    if (num == 0) solverToInterrupt = &solver;
+    #pragma omp critical (solversToInterr)
+    {
+        solversToInterrupt[num] = &solver;
+    }
 
     printVersionInfo(myConf.verbosity);
     setDoublePrecision(myConf.verbosity);
 
     parseInAllFiles(solver);
     lbool ret = solver.solve();
+    #pragma omp critical (finishedInterrupt)
+    {
+        finishedInterrupting.insert(num);
+    }
 
     int retval = 0;
-    #pragma omp single
+    #pragma omp critical (solversToInterr)
     {
+        uint32_t numNeededInterrupt = 0;
+        for(int i = 0; i < numThreads; i++) {
+            if (i != num && solversToInterrupt.find(i) != solversToInterrupt.end()) {
+                solversToInterrupt[i]->needToInterrupt = true;
+                numNeededInterrupt++;
+            }
+        }
+        bool mustWait = true;
+        while (mustWait) {
+            #pragma omp critical (finishedInterrupt)
+            if (finishedInterrupting.size() == numNeededInterrupt+1) mustWait = false;
+        }
         FILE* res = openOutputFile();
         printResultFunc(solver, ret, res);
         solver.printStats();
