@@ -15,15 +15,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
 
-#ifndef SHARED_UNITARY_DATA_H
-#define SHARED_UNITARY_DATA_H
+#ifndef SHARED_DATA_H
+#define SHARED_DATA_H
 
 #include "Vec.h"
 #include "SolverTypes.h"
 
 #include <vector>
 
-class SharedUnitData
+class SharedData
 {
     public:
         vec<lbool> value;

@@ -30,7 +30,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "StateSaver.h"
 #include "UselessBinRemover.h"
 #include "SCCFinder.h"
-#include "SharedUnitaryData.h"
+#include "SharedData.h"
 
 #ifdef USE_GAUSS
 #include "Gaussian.h"
@@ -58,7 +58,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedUnitData* _sharedUnitData) :
+Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedData* _sharedData) :
         // Parameters: (formerly in 'SearchParams')
         conf(_conf)
         , gaussconfig(_gaussconfig)
@@ -80,7 +80,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedUni
         , updateTransCache(0)
         , nbClOverMaxGlue(0)
 
-        , sharedUnitData(_sharedUnitData)
+        , sharedData(_sharedData)
         , lastSyncConf(0)
         , sentUnitData(0)
         , gotUnitData(0)
@@ -1979,7 +1979,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
 
     // Simplify the set of problem clauses:
     if (decisionLevel() == 0) {
-        if (sharedUnitData != NULL && lastSyncConf + 20000 < conflicts) {
+        if (sharedData != NULL && lastSyncConf + SYNC_EVERY_CONFL < conflicts) {
             #pragma omp critical (unitData)
             shareData();
             if (!ok) return false;
@@ -2524,12 +2524,12 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
 const bool Solver::shareBinData()
 {
-    assert(sharedUnitData != NULL);
+    assert(sharedData != NULL);
     assert(decisionLevel() == 0);
     uint32_t oldGotBinData = gotBinData;
     uint32_t oldSentBinData = sentBinData;
 
-    SharedUnitData& shared = *sharedUnitData;
+    SharedData& shared = *sharedData;
     if (shared.bins.size() != nVars()*2)
         shared.bins.resize(nVars()*2);
 
@@ -2612,12 +2612,12 @@ void Solver::syncBinToOthers(const Lit lit, vector<Lit>& bins, const vec<Watched
 
 const bool Solver::shareData()
 {
-    assert(sharedUnitData != NULL);
+    assert(sharedData != NULL);
     assert(decisionLevel() == 0);
     uint32_t thisGotUnitData = 0;
     uint32_t thisSentUnitData = 0;
 
-    SharedUnitData& shared = *sharedUnitData;
+    SharedData& shared = *sharedData;
     shared.value.growTo(nVars(), l_Undef);
     for (uint32_t var = 0; var < nVars(); var++) {
         const lbool thisVal = value(var);

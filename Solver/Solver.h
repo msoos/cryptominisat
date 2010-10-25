@@ -50,7 +50,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "GaussianConfig.h"
 #include "ClauseAllocator.h"
 #include "SolverConf.h"
-#include "SharedUnitaryData.h"
+#include "SharedData.h"
 
 #define release_assert(a) \
     do { \
@@ -116,7 +116,7 @@ public:
 
     // Constructor/Destructor:
     //
-    Solver(const SolverConf& conf = SolverConf(), const GaussConf& _gaussconfig = GaussConf(), SharedUnitData* sharedUnitData = NULL);
+    Solver(const SolverConf& conf = SolverConf(), const GaussConf& _gaussconfig = GaussConf(), SharedData* sharedUnitData = NULL);
     ~Solver();
 
     // Problem specification:
@@ -271,7 +271,7 @@ protected:
     uint64_t nbClOverMaxGlue; ///<Number or clauses over maximum glue defined in maxGlue
 
     //Multi-threading
-    SharedUnitData* sharedUnitData;
+    SharedData* sharedData;
     const bool shareData();
     uint64_t lastSyncConf;
     const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws);

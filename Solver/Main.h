@@ -17,7 +17,7 @@ using std::string;
 #endif // DISABLE_ZLIB
 
 #include "Solver.h"
-#include "SharedUnitaryData.h"
+#include "SharedData.h"
 
 class Main
 {
@@ -64,7 +64,7 @@ class Main
         bool twoFileNamesPresent;
         std::vector<std::string> filesToRead;
 
-        SharedUnitData sharedUnitData;
+        SharedData sharedData;
 
         int argc;
         char** argv;
