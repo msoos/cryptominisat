@@ -2101,8 +2101,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
             if (c->learnt()) {
                 if (c->getGlue() > glue)
                     c->setGlue(glue); // LS
-                if (c->size() == 2)
-                    numNewBin++;
             }
             attachClause(*c);
         } else {  //no on-the-fly subsumption
