@@ -581,68 +581,43 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     assert(!solver.xorSubsumer->getVarElimed()[var2]);
     #endif
 
-    Var var = ps[0].var();
-    Lit lit = Lit(ps[1].var(), !xorEqualFalse);
-    assert(var != lit.var());
     cannot_eliminate[ps[0].var()] = true;
     cannot_eliminate[ps[1].var()] = true;
 
     //Detect circle
-    if (alreadyIn(var, lit)) return solver.ok;
+    Lit lit1 = ps[0];
+    lit1 = table[lit1.var()];
+    Lit lit2 = ps[1];
+    lit2 = table[lit2.var()] ^ !xorEqualFalse;
 
-    Lit lit1 = table[var];
-    bool inverted = false;
-
-    //This pointer is already set, try to invert
-    if (lit1.var() != var) {
-        Var tmp_var = var;
-
-        var = lit.var();
-        lit = Lit(tmp_var, lit.sign());
-        inverted = true;
+    //Already inside?
+    if (lit1.var() == lit2.var()) {
+        if (lit1.sign() != lit2.sign()) {
+            solver.ok = false;
+            return false;
+        }
+        return true;
     }
 
-    if (inverted) {
-        Lit lit2 = table[var];
-
-        //Inversion is also set, triangular cycle
-        //A->B, A->C, B->C. There is nothing to add
-        if (lit1.var() == lit2.var()) {
-            if ((lit1.sign() ^ lit2.sign()) != lit.sign()) {
-                #ifdef VERBOSE_DEBUG
-                cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
-                #endif
-                solver.ok = false;
-                return solver.ok;
-            }
-            return true;
-        }
-
-        //Inversion is also set
-        if (lit2.var() != var) {
-            assert(table[lit1.var()].var() == lit1.var());
-            setAllThatPointsHereTo(lit1.var(), Lit(lit.var(), lit1.sign()));
-
-            assert(table[lit2.var()].var() == lit2.var());
-            setAllThatPointsHereTo(lit2.var(), lit ^ lit2.sign());
-
-            table[lit.var()] = Lit(lit.var(), false);
-            replacedVars++;
-            if (needToAddAsBin) addBinaryXorClause(ps, xorEqualFalse, group, addBinAsLearnt);
-            return true;
-        }
-    }
-
-    //Follow forwards
-    Lit litX = table[lit.var()];
-    if (litX.var() != lit.var())
-        lit = litX ^ lit.sign();
-
-    //Follow backwards
-    setAllThatPointsHereTo(var, lit);
-    replacedVars++;
     if (needToAddAsBin) addBinaryXorClause(ps, xorEqualFalse, group, addBinAsLearnt);
 
+    if (reverseTable.find(lit1.var()) == reverseTable.end()) {
+        reverseTable[lit2.var()].push_back(lit1.var());
+        table[lit1.var()] = lit2 ^ lit1.sign();
+        replacedVars++;
+        return true;
+    }
+
+    if (reverseTable.find(lit2.var()) == reverseTable.end()) {
+        reverseTable[lit1.var()].push_back(lit2.var());
+        table[lit2.var()] = lit1 ^ lit2.sign();
+        replacedVars++;
+        return true;
+    }
+
+    //both have children
+    setAllThatPointsHereTo(lit1.var(), lit2 ^ lit1.sign()); //erases reverseTable[lit1.var()]
+    replacedVars++;
     return true;
 }
 
