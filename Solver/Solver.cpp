@@ -512,7 +512,12 @@ void Solver::attachClause(XorClause& c)
 
 void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
 {
+    #ifdef DEBUG_ATTACH
     assert(lit1.var() != lit2.var());
+    assert(assigns[lit1.var()] == l_Undef);
+    assert(assigns[lit2.var()] == l_Undef);
+    #endif //DEBUG_ATTACH
+
     watches[(~lit1).toInt()].push(Watched(lit2, learnt));
     watches[(~lit2).toInt()].push(Watched(lit1, learnt));
 
