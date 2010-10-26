@@ -228,7 +228,7 @@ xor clause-adding function addXorClause() in that it assumes that the variables
 inside are decision variables, have not been replaced, eliminated, etc.
 */
 template<class T>
-XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group)
+XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group, const bool learnt)
 {
     assert(qhead == trail.size());
     assert(decisionLevel() == 0);
@@ -273,10 +273,11 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
 
             ps[0] = ps[0].unsign();
             ps[1] = ps[1].unsign();
-            varReplacer->replace(ps, xorEqualFalse, group, true);
+            varReplacer->replace(ps, xorEqualFalse, group, true, learnt);
             return NULL;
         }
         default: {
+            assert(!learnt);
             XorClause* c = clauseAllocator.XorClause_new(ps, xorEqualFalse, group);
             attachClause(*c);
             return c;
@@ -284,8 +285,8 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
     }
 }
 
-template XorClause* Solver::addXorClauseInt(vec<Lit>& ps, bool xorEqualFalse, const uint32_t group);
-template XorClause* Solver::addXorClauseInt(XorClause& ps, bool xorEqualFalse, const uint32_t group);
+template XorClause* Solver::addXorClauseInt(vec<Lit>& ps, bool xorEqualFalse, const uint32_t group, const bool learnt);
+template XorClause* Solver::addXorClauseInt(XorClause& ps, bool xorEqualFalse, const uint32_t group, const bool learnt);
 
 /**
 @brief Adds an xor clause to the problem

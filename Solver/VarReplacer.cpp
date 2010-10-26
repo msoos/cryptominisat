@@ -555,7 +555,7 @@ know that c=h, in which case we don't do anything
 @p group of clause they have been inspired from. Sometimes makes no sense...
 */
 template<class T>
-const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin)
+const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addBinAsLearnt)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
@@ -616,7 +616,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
 
             table[lit.var()] = Lit(lit.var(), false);
             replacedVars++;
-            if (needToAddAsBin) addBinaryXorClause(ps, xorEqualFalse, group);
+            if (needToAddAsBin) addBinaryXorClause(ps, xorEqualFalse, group, addBinAsLearnt);
             return true;
         }
     }
@@ -629,13 +629,13 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     //Follow backwards
     setAllThatPointsHereTo(var, lit);
     replacedVars++;
-    if (needToAddAsBin) addBinaryXorClause(ps, xorEqualFalse, group);
+    if (needToAddAsBin) addBinaryXorClause(ps, xorEqualFalse, group, addBinAsLearnt);
 
     return true;
 }
 
-template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin);
-template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin);
+template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addBinAsLearnt);
+template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addBinAsLearnt);
 
 /**
 @brief Adds a binary xor to the internal/external clause set
@@ -648,7 +648,7 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 \todo Clean this messy internal/external thing using a better datastructure.
 */
 template <class T>
-void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint32_t group)
+void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt)
 {
     #ifdef DEBUG_REPLACER
     assert(!ps[0].sign());
@@ -656,12 +656,12 @@ void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint
     #endif
 
     ps[0] ^= xorEqualFalse;
-    solver.attachBinClause(ps[0], ps[1], false);
+    solver.attachBinClause(ps[0], ps[1], addBinAsLearnt);
     solver.addNewBinClauseToShare(ps);
 
     ps[0] ^= true;
     ps[1] ^= true;
-    solver.attachBinClause(ps[0], ps[1], false);
+    solver.attachBinClause(ps[0], ps[1], addBinAsLearnt);
     solver.addNewBinClauseToShare(ps);
 }
 
