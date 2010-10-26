@@ -2752,7 +2752,7 @@ void Solver::handleSATSolution()
             //assert(!(xorSubsumer->getVarElimed()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
 
             if (value(var) != l_Undef) {
-                #ifdef DEBUG_VARELIM
+                #ifdef VERBOSE_DEBUG
                 std::cout << "Setting var " << var + 1
                 << " in extend-solver to " << value(var) << std::endl;
                 #endif
