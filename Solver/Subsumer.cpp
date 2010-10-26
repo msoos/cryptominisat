@@ -827,6 +827,10 @@ void Subsumer::fillCannotEliminate()
             cannot_eliminate[c[i2].var()] = true;
     }
 
+    for (Var var = 0; var < solver.nVars(); var++) {
+        cannot_eliminate[var] |= solver.varReplacer->cannot_eliminate[var];
+    }
+
     #ifdef VERBOSE_DEBUG
     uint32_t tmpNum = 0;
     for (uint32_t i = 0; i < cannot_eliminate.size(); i++)
@@ -1155,10 +1159,8 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
-    do {
-        if (solver.conf.doReplace && !solver.varReplacer->performReplace(true))
-            return false;
-    } while(solver.varReplacer->getNumReplacedLits() > 0);
+    if (solver.conf.doReplace && !solver.varReplacer->performReplace(true))
+        return false;
     fillCannotEliminate();
 
     uint32_t expected_size = solver.clauses.size();

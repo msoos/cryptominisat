@@ -79,6 +79,7 @@ const bool VarReplacer::performReplaceInternal()
     solver.clauseCleaner->removeAndCleanAll(true);
     if (!solver.ok) return false;
     solver.testAllClauseAttach();
+    std::fill(cannot_eliminate.getData(), cannot_eliminate.getDataEnd(), false);
 
     #ifdef VERBOSE_DEBUG
     {
@@ -567,6 +568,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     Var var = ps[0].var();
     Lit lit = Lit(ps[1].var(), !xorEqualFalse);
     assert(var != lit.var());
+    cannot_eliminate[ps[0].var()] = true;
+    cannot_eliminate[ps[1].var()] = true;
 
     //Detect circle
     if (alreadyIn(var, lit)) return solver.ok;
@@ -712,4 +715,5 @@ void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
 void VarReplacer::newVar()
 {
     table.push_back(Lit(table.size(), false));
+    cannot_eliminate.push(false);
 }
