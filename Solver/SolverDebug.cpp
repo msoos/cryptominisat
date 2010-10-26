@@ -30,12 +30,6 @@ void Solver::testAllClauseAttach() const
     for (XorClause *const*it = xorclauses.getData(), *const*end = xorclauses.getDataEnd(); it != end; it++) {
         const XorClause& c = **it;
         assert(xorClauseIsAttached(c));
-
-        if (assigns[c[0].var()]!=l_Undef || assigns[c[1].var()]!=l_Undef) {
-            for (uint32_t i = 0; i < c.size();i++) {
-                assert(assigns[c[i].var()] != l_Undef);
-            }
-        }
     }
 }
 
