@@ -247,9 +247,10 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
             p = lit_Undef;
             if (!assigns[ps[i].var()].isUndef())
                 xorEqualFalse ^= assigns[ps[i].var()].getBool();
-        } else if (assigns[ps[i].var()].isUndef()) //just add
+        } else if (assigns[ps[i].var()].isUndef()) { //just add
             ps[j++] = p = ps[i];
-        else //modify xorEqualFalse instead of adding
+            assert(decision_var[p.var()]);
+        } else //modify xorEqualFalse instead of adding
             xorEqualFalse ^= (assigns[ps[i].var()].getBool());
     }
     ps.shrink(i - j);
