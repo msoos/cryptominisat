@@ -1305,7 +1305,6 @@ USE_OLD_POLARITIES is set
 */
 void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
 {
-
     #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
     #ifndef VERBOSE_DEBUG
     if (decisionLevel() == 0)
