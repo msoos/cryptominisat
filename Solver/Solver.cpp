@@ -2609,7 +2609,7 @@ const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uin
         }
     }
 
-    vec<Lit> lits;
+    vec<Lit> lits(2);
     for (uint32_t i = finished; i < bins.size(); i++) {
         if (!seen[bins[i].toInt()]) {
             Lit otherLit = bins[i];
@@ -2619,14 +2619,12 @@ const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uin
                 || value(otherLit.var()) != l_Undef
                 ) continue;
 
-            assert(subsumer->getVarElimed()[otherLit.var()] == false);
-            assert(xorSubsumer->getVarElimed()[otherLit.var()] == false);
             gotBinData++;
-            lits.clear();
-            lits.growTo(2);
             lits[0] = lit;
             lits[1] = otherLit;
             addClauseInt(lits, 0, true);
+            lits.clear();
+            lits.growTo(2);
             if (!ok) goto end;
         }
     }
