@@ -402,6 +402,7 @@ class Tester:
         print "--diffCheckDir(-d) Use with -c. The original files are at a different place"
         print "--ignore  (-i)     If no solution found, (timeout), ignore"
         print "--armin   (-a)     Use Armin Biere's fuzzer"
+        print "--threads          Use this number of threads (default: 4)"
         print "--help    (-h)     Print this help screen"
         print ""
         print "Example usage:"
@@ -434,7 +435,8 @@ class Tester:
                 "diffCheckDir",
                 "ignore",
                 "armin",
-                "extraOptions="
+                "extraOptions=",
+                "threads="
                 ])
         except getopt.GetoptError, err:
             print str(err)
@@ -479,6 +481,8 @@ class Tester:
             elif opt in ("-a", "--armin"):
                 self.arminFuzzer = True
                 self.needDebugLib = False
+            elif opt in ("--threads"):
+                self.numThreads = int(arg)
             else:
                 assert False, "unhandled option"
 
