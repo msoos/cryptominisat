@@ -121,8 +121,10 @@ const bool SCCFinder::findSCC()
             lits[0] = lits[0].unsign();
             lits[1] = lits[1].unsign();
 
-            if (!solver.varReplacer->replace(lits, xorEqualsFalse, 0, false))
-                return false;
+            solver.addXorClauseInt(lits, xorEqualsFalse, 0, true);
+            lits.clear();
+            lits.growTo(2);
+            if (!solver.ok) return false;
             numXors++;
         }
     }
