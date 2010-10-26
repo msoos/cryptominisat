@@ -2117,10 +2117,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
             for (uint32_t i = 0; i != learnt_clause.size(); i++)
                 (*c)[i] = learnt_clause[i];
             c->shrink(origSize - learnt_clause.size());
-            if (c->learnt()) {
-                if (c->getGlue() > glue)
-                    c->setGlue(glue); // LS
-            }
+            if (c->learnt() && c->getGlue() > glue)
+                c->setGlue(glue); // LS
             attachClause(*c);
             uncheckedEnqueue(learnt_clause[0], c);
         } else {  //no on-the-fly subsumption
