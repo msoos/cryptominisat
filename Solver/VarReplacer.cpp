@@ -570,15 +570,9 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
 
     assert(!solver.subsumer->getVarElimed()[ps[0].var()]);
     assert(!solver.xorSubsumer->getVarElimed()[ps[0].var()]);
-    Var var1 = table[ps[0].var()].var();
-    assert(!solver.subsumer->getVarElimed()[var1]);
-    assert(!solver.xorSubsumer->getVarElimed()[var1]);
 
     assert(!solver.subsumer->getVarElimed()[ps[1].var()]);
     assert(!solver.xorSubsumer->getVarElimed()[ps[1].var()]);
-    Var var2 = table[ps[1].var()].var();
-    assert(!solver.subsumer->getVarElimed()[var2]);
-    assert(!solver.xorSubsumer->getVarElimed()[var2]);
     #endif
 
     cannot_eliminate[ps[0].var()] = true;
@@ -599,7 +593,14 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
         return true;
     }
 
-    if (needToAddAsBin) addBinaryXorClause(ps, xorEqualFalse, group, addBinAsLearnt);
+    #ifdef DEBUG_REPLACER
+    assert(!solver.subsumer->getVarElimed()[lit1.var()]);
+    assert(!solver.xorSubsumer->getVarElimed()[lit1.var()]);
+    assert(!solver.subsumer->getVarElimed()[lit2.var()]);
+    assert(!solver.xorSubsumer->getVarElimed()[lit2.var()]);
+    #endif
+
+    addBinaryXorClause(ps, xorEqualFalse, group, addBinAsLearnt);
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
