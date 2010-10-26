@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "VarReplacer.h"
 
-#ifdef DEBUG_ATTACH
+#ifdef DEBUG_ATTACH_FULL
 void Solver::testAllClauseAttach() const
 {
     for (Clause *const*it = clauses.getData(), *const*end = clauses.getDataEnd(); it != end; it++) {
@@ -101,7 +101,7 @@ const bool Solver::findClause(Clause* c) const
 
     return false;
 }
-#endif //DEBUG_ATTACH
+#endif //DEBUG_ATTACH_FULL
 
 void Solver::checkSolution()
 {

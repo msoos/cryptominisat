@@ -69,10 +69,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 // Silent Debug
 ///////////////////
 
-//#define DEBUG_VARELIM
-//#define DEBUG_PROPAGATEFROM
-//#define DEBUG_WATCHED
-//#define DEBUG_ATTACH
+//#define DEBUG_ATTACH_FULL
 
 ///////////////////
 // Verbose Debug

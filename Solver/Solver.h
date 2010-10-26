@@ -801,7 +801,7 @@ static inline void logLits(FILE* f, const vec<Lit>& ls)
     fprintf(f, "] ");
 }
 
-#ifndef DEBUG_ATTACH
+#ifndef DEBUG_ATTACH_FULL
 inline void Solver::testAllClauseAttach() const
 {
     return;
@@ -810,7 +810,7 @@ inline void Solver::findAllAttach() const
 {
     return;
 }
-#endif //DEBUG_ATTACH
+#endif //DEBUG_ATTACH_FULL
 
 inline void Solver::uncheckedEnqueueLight(const Lit p)
 {
