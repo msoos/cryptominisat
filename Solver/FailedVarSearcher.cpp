@@ -573,6 +573,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     propagatedVars.clear();
     unPropagatedBin.setZero();
     bothSame.clear();
+    binXorToAdd.clear();
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
@@ -653,10 +654,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
                         tmpPs[1] = Lit(lit2.var(), false);
                         invert = lit1.sign() ^ lit2.sign();
                     }
-                    solver.addXorClauseInt(tmpPs, invert, 0);
-                    tmpPs.clear();
-                    tmpPs.growTo(2);
-                    if (!solver.ok) return false;
+                    binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], invert, 0));
                     bothInvert += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
                     toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
                 }
@@ -676,10 +674,7 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
                         if (twoLongXors.find(tmp) != twoLongXors.end()) {
                             tmpPs[0] = Lit(tmp.var[0], false);
                             tmpPs[1] = Lit(tmp.var[1], false);
-                            solver.addXorClauseInt(tmpPs, tmp.inverted, solver.xorclauses[*it]->getGroup());
-                            tmpPs.clear();
-                            tmpPs.growTo(2);
-                            if (!solver.ok) return false;
+                            binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], tmp.inverted, solver.xorclauses[*it]->getGroup()));
                             newBinXor += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
                             toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
                         }
@@ -702,6 +697,15 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
     goodBothSame += bothSame.size();
     solver.ok = (solver.propagate(false).isNULL());
     if (!solver.ok) return false;
+
+    for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
+        tmpPs[0] = binXorToAdd[i].lit1;
+        tmpPs[1] = binXorToAdd[i].lit2;
+        solver.addXorClauseInt(tmpPs, binXorToAdd[i].isEqualFalse, binXorToAdd[i].group);
+        tmpPs.clear();
+        tmpPs.growTo(2);
+        if (!solver.ok) return false;
+    }
 
     return true;
 }

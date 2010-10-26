@@ -115,6 +115,21 @@ class FailedVarSearcher {
             Var var[2];
             bool inverted;
         };
+
+        class BinXorToAdd
+        {
+            public:
+                BinXorToAdd(const Lit _lit1, const Lit _lit2, const bool _isEqualFalse, const uint32_t _group) :
+                    lit1(_lit1)
+                    , lit2(_lit2)
+                    , isEqualFalse(_isEqualFalse)
+                    , group(_group)
+                {}
+                Lit lit1;
+                Lit lit2;
+                bool isEqualFalse;
+                uint32_t group;
+        };
         const TwoLongXor getTwoLongXor(const XorClause& c);
         void addFromSolver(const vec<XorClause*>& cs);
         void removeVarFromXors(const Var var);
@@ -128,6 +143,7 @@ class FailedVarSearcher {
         std::set<TwoLongXor> twoLongXors;
         bool binXorFind;
         uint32_t lastTrailSize;
+        vector<BinXorToAdd> binXorToAdd;
 
         /**
         @brief Num. 2-long xor-found through Le Berre paper
