@@ -515,7 +515,6 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
     #ifdef DEBUG_ATTACH
     assert(lit1.var() != lit2.var());
     assert(assigns[lit1.var()] == l_Undef);
-    assert(assigns[lit2.var()] == l_Undef);
     #endif //DEBUG_ATTACH
 
     watches[(~lit1).toInt()].push(Watched(lit2, learnt));
@@ -536,6 +535,10 @@ void Solver::attachClause(Clause& c)
     assert(c.size() > 2);
     uint32_t index0 = (~c[0]).toInt();
     uint32_t index1 = (~c[1]).toInt();
+    #ifdef DEBUG_ATTACH
+    assert(c[0].var() != c[1].var());
+    assert(assigns[c[0].var()] == l_Undef);
+    #endif //DEBUG_ATTACH
 
     if (c.size() == 3) {
         watches[index0].push(Watched(c[1], c[2]));
