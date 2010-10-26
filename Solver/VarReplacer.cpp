@@ -593,6 +593,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
         return true;
     }
 
+    cannot_eliminate[lit1.var()] = true;
+    cannot_eliminate[lit2.var()] = true;
     #ifdef DEBUG_REPLACER
     assert(!solver.subsumer->getVarElimed()[lit1.var()]);
     assert(!solver.xorSubsumer->getVarElimed()[lit1.var()]);

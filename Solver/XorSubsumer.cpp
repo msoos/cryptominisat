@@ -201,6 +201,10 @@ void XorSubsumer::fillCannotEliminate()
         }
     }
 
+    for (Var var = 0; var < solver.nVars(); var++) {
+        cannot_eliminate[var] |= solver.varReplacer->cannot_eliminate[var];
+    }
+
     #ifdef VERBOSE_DEBUG
     uint32_t tmpNum = 0;
     for (uint32_t i = 0; i < cannot_eliminate.size(); i++)
