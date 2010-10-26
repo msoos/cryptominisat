@@ -586,13 +586,15 @@ void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3
         //became 3-long. Check, and detach accordingly
         if (findWCl(watches[(~lit1).toInt()], offset)) goto fullClause;
 
-        assert(findWTri(watches[(~lit1).toInt()], lit2, lit3));
-        assert(findWTri(watches[(~lit2).toInt()], lit1, lit3));
-        assert(findWTri(watches[(~lit3).toInt()], lit1, lit2));
+        removeWTri(watches[(~lit1).toInt()], lit2, lit3);
+        removeWTri(watches[(~lit2).toInt()], lit1, lit3);
+        removeWTri(watches[(~lit3).toInt()], lit1, lit2);
+
     } else {
         fullClause:
-        assert(findWCl(watches[(~lit1).toInt()], offset));
-        assert(findWCl(watches[(~lit2).toInt()], offset));
+        removeWCl(watches[(~lit1).toInt()], offset);
+        removeWCl(watches[(~lit2).toInt()], offset);
+
     }
 
     if (address->learnt())
