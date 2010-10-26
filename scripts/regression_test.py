@@ -15,8 +15,8 @@ import resource
 import time
 from subprocess import Popen, PIPE, STDOUT
 
-maxTime = 10
-maxTimeLimit = 5
+maxTime = 50
+maxTimeLimit = 40
 
 def setlimits():
     sys.stderr.write("Setting resource limit in child (pid %d): %d s \n" % (os.getpid(), maxTime))
