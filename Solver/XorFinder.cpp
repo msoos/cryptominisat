@@ -160,9 +160,9 @@ const bool XorFinder::findXors(uint32_t& sumLengths)
         }
 
         assert(lits.size() > 2);
-        XorClause* x = solver.clauseAllocator.XorClause_new(lits, impair, old_group);
-        solver.xorclauses.push(x);
-        solver.attachClause(*x);
+        XorClause* x = solver.addXorClauseInt(lits, impair, old_group);
+        if (x != NULL) solver.xorclauses.push(x);
+        if (!solver.ok) return false;
 
         #ifdef VERBOSE_DEBUG
         cout << "- Final xor-clause: " << x << std::endl;;
