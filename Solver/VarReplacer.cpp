@@ -555,7 +555,7 @@ know that c=h, in which case we don't do anything
 @p group of clause they have been inspired from. Sometimes makes no sense...
 */
 template<class T>
-const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addBinAsLearnt)
+const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
@@ -624,8 +624,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     return true;
 }
 
-template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addBinAsLearnt);
-template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addBinAsLearnt);
+template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin);
+template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin);
 
 /**
 @brief Adds a binary xor to the internal/external clause set
