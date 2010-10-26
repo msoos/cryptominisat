@@ -77,7 +77,7 @@ Main::Main(int _argc, char** _argv) :
 }
 
 std::map<uint32_t, Solver*> solversToInterrupt;
-std::set<uint32_t> finishedInterrupting;
+std::set<uint32_t> finished;
 
 /**
 @brief For correctly and gracefully exiting
@@ -769,25 +769,33 @@ const int Main::oneThreadSolve()
 
     parseInAllFiles(solver);
     lbool ret = solver.solve();
-    #pragma omp critical (finishedInterrupt)
+    #pragma omp critical (finished)
     {
-        finishedInterrupting.insert(num);
+        finished.insert(num);
     }
 
     int retval = 0;
-    #pragma omp critical (solversToInterr)
+    #pragma omp single
     {
-        uint32_t numNeededInterrupt = 0;
-        for(int i = 0; i < numThreads; i++) {
-            if (i != num && solversToInterrupt.find(i) != solversToInterrupt.end()) {
-                solversToInterrupt[i]->needToInterrupt = true;
-                numNeededInterrupt++;
+        int numNeededInterrupt = 0;
+        while(numNeededInterrupt != numThreads-1) {
+            #pragma omp critical (solversToInterr)
+            {
+                for(int i = 0; i < numThreads; i++) {
+                    if (i != num
+                        && solversToInterrupt.find(i) != solversToInterrupt.end()
+                        && solversToInterrupt[i]->needToInterrupt == false
+                        ) {
+                        solversToInterrupt[i]->needToInterrupt = true;
+                        numNeededInterrupt++;
+                    }
+                }
             }
         }
         bool mustWait = true;
         while (mustWait) {
-            #pragma omp critical (finishedInterrupt)
-            if (finishedInterrupting.size() == numNeededInterrupt+1) mustWait = false;
+            #pragma omp critical (finished)
+            if (finished.size() == (unsigned)numThreads) mustWait = false;
         }
         FILE* res = openOutputFile();
         printResultFunc(solver, ret, res);
