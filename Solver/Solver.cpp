@@ -2687,9 +2687,9 @@ const bool Solver::shareUnitData()
         if (otherVal != l_Undef) {
             assert(thisVal == l_Undef);
             Lit litToEnqueue = thisLit ^ (otherVal == l_False);
-            if (!decision_var[litToEnqueue.var()]) continue;
-            assert(subsumer->getVarElimed()[litToEnqueue.var()] == false);
-            assert(xorSubsumer->getVarElimed()[litToEnqueue.var()] == false);
+            if (subsumer->getVarElimed()[litToEnqueue.var()]
+                || xorSubsumer->getVarElimed()[litToEnqueue.var()]
+                ) continue;
 
             uncheckedEnqueue(litToEnqueue);
             ok = propagate().isNULL();
