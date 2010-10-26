@@ -2122,6 +2122,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& confl
                     c->setGlue(glue); // LS
             }
             attachClause(*c);
+            uncheckedEnqueue(learnt_clause[0], c);
         } else {  //no on-the-fly subsumption
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
