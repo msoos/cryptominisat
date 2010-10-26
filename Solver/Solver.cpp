@@ -503,6 +503,11 @@ void Solver::attachClause(XorClause& c)
     #ifdef DEBUG_ATTACH
     assert(assigns[c[0].var()] == l_Undef);
     assert(assigns[c[1].var()] == l_Undef);
+
+    for (uint32_t i = 0; i < c.size(); i++) {
+        assert(!subsumer->getVarElimed()[c[i].var()]);
+        assert(!xorSubsumer->getVarElimed()[c[i].var()]);
+    }
     #endif //DEBUG_ATTACH
 
     watches[Lit(c[0].var(), false).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
@@ -519,6 +524,12 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
     assert(lit1.var() != lit2.var());
     assert(assigns[lit1.var()] == l_Undef);
     assert(value(lit2) == l_Undef || value(lit2) == l_False);
+
+    assert(!subsumer->getVarElimed()[lit1.var()]);
+    assert(!subsumer->getVarElimed()[lit2.var()]);
+
+    assert(!xorSubsumer->getVarElimed()[lit1.var()]);
+    assert(!xorSubsumer->getVarElimed()[lit2.var()]);
     #endif //DEBUG_ATTACH
 
     watches[(~lit1).toInt()].push(Watched(lit2, learnt));
@@ -543,6 +554,11 @@ void Solver::attachClause(Clause& c)
     assert(c[0].var() != c[1].var());
     assert(assigns[c[0].var()] == l_Undef);
     assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
+
+    for (uint32_t i = 0; i < c.size(); i++) {
+        assert(!subsumer->getVarElimed()[c[i].var()]);
+        assert(!xorSubsumer->getVarElimed()[c[i].var()]);
+    }
     #endif //DEBUG_ATTACH
 
     if (c.size() == 3) {
