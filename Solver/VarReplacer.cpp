@@ -106,7 +106,7 @@ const bool VarReplacer::performReplaceInternal()
         #endif
         bool wasDecisionVar = solver.decision_var[var];
         solver.setDecisionVar(var, false);
-        cannot_eliminate[var] = true;
+        //cannot_eliminate[var] = true;
         solver.setDecisionVar(it->var(), true);
         assert(!removedVars[var]);
         assert(removedVars2[var] == l_Undef);
