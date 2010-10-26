@@ -91,14 +91,14 @@ const bool VarReplacer::performReplaceInternal()
     #endif
 
     Var var = 0;
-    const vec<char>* removedVars = solver.conf.doXorSubsumption ? &solver.xorSubsumer->getVarElimed() : NULL;
-    const vec<lbool>* removedVars2 = solver.conf.doPartHandler ?  &solver.partHandler->getSavedState() : NULL;
-    const vec<char>* removedVars3 = solver.conf.doSatELite ? &solver.subsumer->getVarElimed() : NULL;
+    const vec<char>& removedVars = solver.xorSubsumer->getVarElimed();
+    const vec<lbool>& removedVars2 = solver.partHandler->getSavedState();
+    const vec<char>& removedVars3 = solver.subsumer->getVarElimed();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
         if (it->var() == var
-            || (removedVars != NULL && (*removedVars)[it->var()])
-            || (removedVars2 != NULL && (*removedVars2)[it->var()] != l_Undef)
-            || (removedVars3!= NULL && (*removedVars3)[it->var()])
+            || removedVars[it->var()]
+            || removedVars2[it->var()] != l_Undef
+            || removedVars3[it->var()]
         ) continue;
         #ifdef VERBOSE_DEBUG
         cout << "Setting var " << var+1 << " to a non-decision var" << endl;

@@ -203,9 +203,9 @@ Var Solver::newVar(bool dvar)
     insertVarOrder(v);
 
     varReplacer->newVar();
-    if (conf.doPartHandler) partHandler->newVar();
-    if (conf.doSatELite) subsumer->newVar();
-    if (conf.doXorSubsumption) xorSubsumer->newVar();
+    partHandler->newVar();
+    subsumer->newVar();
+    xorSubsumer->newVar();
 
     insertVarOrder(v);
 
@@ -249,7 +249,8 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
                 xorEqualFalse ^= assigns[ps[i].var()].getBool();
         } else if (assigns[ps[i].var()].isUndef()) { //just add
             ps[j++] = p = ps[i];
-            assert(decision_var[p.var()]);
+            assert(!subsumer->getVarElimed()[p.var()]);
+            assert(!xorSubsumer->getVarElimed()[p.var()]);
         } else //modify xorEqualFalse instead of adding
             xorEqualFalse ^= (assigns[ps[i].var()].getBool());
     }
@@ -374,7 +375,8 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt, const uin
             return NULL;
         else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
-            assert(decision_var[p.var()]);
+            assert(!subsumer->getVarElimed()[p.var()]);
+            assert(!xorSubsumer->getVarElimed()[p.var()]);
         }
     }
     ps.shrink(i - j);
@@ -2556,7 +2558,10 @@ const bool Solver::shareBinData()
     for (uint32_t wsLit = 0; wsLit < nVars()*2; wsLit++) {
         Lit lit1 = ~Lit::toLit(wsLit);
         lit1 = varReplacer->getReplaceTable()[lit1.var()] ^ lit1.sign();
-        if (!decision_var[lit1.var()] || value(lit1.var()) != l_Undef) continue;
+        if (subsumer->getVarElimed()[lit1.var()]
+            || xorSubsumer->getVarElimed()[lit1.var()]
+            || value(lit1.var()) != l_Undef
+            ) continue;
 
         vector<Lit>& bins = shared.bins[wsLit];
         vec<Watched>& ws = watches[wsLit];
@@ -2592,7 +2597,6 @@ template void Solver::addNewBinClauseToShare(vec<Lit>& ps);
 const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
 {
     assert(varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
-    assert(decision_var[lit.var()]);
     assert(subsumer->getVarElimed()[lit.var()] == false);
     assert(xorSubsumer->getVarElimed()[lit.var()] == false);
 
@@ -2609,17 +2613,20 @@ const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uin
         if (!seen[bins[i].toInt()]) {
             Lit otherLit = bins[i];
             otherLit = varReplacer->getReplaceTable()[otherLit.var()] ^ otherLit.sign();
-            if (decision_var[otherLit.var()] && value(otherLit.var()) == l_Undef) {
-                assert(subsumer->getVarElimed()[otherLit.var()] == false);
-                assert(xorSubsumer->getVarElimed()[otherLit.var()] == false);
-                gotBinData++;
-                lits.clear();
-                lits.growTo(2);
-                lits[0] = lit;
-                lits[1] = otherLit;
-                addClauseInt(lits, 0, true);
-                if (!ok) goto end;
-            }
+            if (subsumer->getVarElimed()[otherLit.var()]
+                || xorSubsumer->getVarElimed()[otherLit.var()]
+                || value(otherLit.var()) != l_Undef
+                ) continue;
+
+            assert(subsumer->getVarElimed()[otherLit.var()] == false);
+            assert(xorSubsumer->getVarElimed()[otherLit.var()] == false);
+            gotBinData++;
+            lits.clear();
+            lits.growTo(2);
+            lits[0] = lit;
+            lits[1] = otherLit;
+            addClauseInt(lits, 0, true);
+            if (!ok) goto end;
         }
     }
     finished = bins.size();
