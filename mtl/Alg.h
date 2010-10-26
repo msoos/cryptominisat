@@ -125,6 +125,26 @@ static inline void removeWXCl(vec<Watched> &ws, const ClauseOffset c)
 }
 
 //////////////////
+// TRI Clause
+//////////////////
+
+static inline const bool findWTri(const vec<Watched> &ws, const Lit lit1, const Lit lit2)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isTriClause() || ws[j].getOtherLit() != lit1 || ws[j].getOtherLit2() != lit2); j++);
+    return(j < ws.size());
+}
+
+static inline void removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
+{
+    uint32_t j = 0;
+    for (; j < ws.size() && (!ws[j].isTriClause() || ws[j].getOtherLit() != lit1 || ws[j].getOtherLit2() != lit2); j++);
+    assert(j < ws.size());
+    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
+    ws.pop();
+}
+
+//////////////////
 // BINARY Clause
 //////////////////
 /*static inline bool findWBin(const vec<Watched>& ws, const Lit impliedLit, const bool learnt)
@@ -138,15 +158,6 @@ static inline void removeWBin(vec<Watched> &ws, const Lit impliedLit, const bool
 {
     uint32_t j = 0;
     for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit || ws[j].getLearnt() != learnt); j++);
-    assert(j < ws.size());
-    for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
-    ws.pop();
-}
-
-static inline void removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
-{
-    uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isTriClause() || ws[j].getOtherLit() != lit1 || ws[j].getOtherLit2() != lit2); j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();

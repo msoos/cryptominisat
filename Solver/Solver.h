@@ -461,6 +461,7 @@ protected:
     const bool findClause(XorClause* c) const;
     const bool findClause(Clause* c) const;
     const bool xorClauseIsAttached(const XorClause& c) const;
+    const bool normClauseIsAttached(const Clause& c) const;
 
     // Misc:
     //

@@ -20,13 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 
 #ifdef DEBUG_ATTACH
-//warning This needs to be fixed!
 void Solver::testAllClauseAttach() const
 {
     for (Clause *const*it = clauses.getData(), *const*end = clauses.getDataEnd(); it != end; it++) {
         const Clause& c = **it;
-        assert(findWCl(watches[(~c[0]).toInt()], clauseAllocator.getOffset(&c)));
-        assert(findWCl(watches[(~c[1]).toInt()], clauseAllocator.getOffset(&c)));
+        assert(normClauseIsAttached(c));
     }
 
     for (XorClause *const*it = xorclauses.getData(), *const*end = xorclauses.getDataEnd(); it != end; it++) {
@@ -39,6 +37,32 @@ void Solver::testAllClauseAttach() const
             }
         }
     }
+}
+
+const bool Solver::normClauseIsAttached(const Clause& c) const
+{
+    bool attached = true;
+    assert(c.size() > 2);
+
+    ClauseOffset offset = clauseAllocator.getOffset(&c);
+    if (c.size() == 3) {
+        //The clause might have been longer, and has only recently
+        //became 3-long. Check, and detach accordingly
+        if (findWCl(watches[(~c[0]).toInt()], offset)) goto fullClause;
+
+        Lit lit1 = c[0];
+        Lit lit2 = c[1];
+        Lit lit3 = c[2];
+        attached &= findWTri(watches[(~lit1).toInt()], lit2, lit3);
+        attached &= findWTri(watches[(~lit2).toInt()], lit1, lit3);
+        attached &= findWTri(watches[(~lit3).toInt()], lit1, lit2);
+    } else {
+        fullClause:
+        attached &= findWCl(watches[(~c[0]).toInt()], offset);
+        attached &= findWCl(watches[(~c[1]).toInt()], offset);
+    }
+
+    return attached;
 }
 
 const bool Solver::xorClauseIsAttached(const XorClause& c) const
