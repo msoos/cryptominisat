@@ -44,6 +44,21 @@ static inline void remove(V& ts, const T& t)
     ts.pop();
 }
 
+template<class V>
+static inline const uint32_t removeAll(V& ts, const Var t)
+{
+    Lit* i = ts.getData();
+    Lit* j = i;
+    for (Lit *end = ts.getDataEnd(); i != end; i++) {
+        if (i->var() != t) {
+            *j++ = *i;
+        }
+    }
+    ts.shrink(i-j);
+
+    return (i-j);
+}
+
 template<class V, class T>
 static inline void removeW(V& ts, const T& t)
 {
