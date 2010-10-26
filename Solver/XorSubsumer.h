@@ -88,6 +88,7 @@ private:
     void addToCannotEliminate(Clause* it);
     void removeWrong(vec<Clause*>& cs);
     void removeWrongBins();
+    void removeAssignedVarsFromEliminated();
 
     //Global stats
     double totalTime;

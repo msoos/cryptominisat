@@ -541,6 +541,7 @@ const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
     removeWrong(solver.learnts);
     removeWrongBins();
     addBackToSolver();
+    removeAssignedVarsFromEliminated();
 
     if (solver.conf.verbosity >= 1) {
         std::cout << "c x-sub: " << std::setw(5) << clauses_subsumed
@@ -602,4 +603,22 @@ const bool XorSubsumer::checkElimedUnassigned() const
     assert(numElimed == checkNumElimed);
 
     return true;
+}
+
+void XorSubsumer::removeAssignedVarsFromEliminated()
+{
+    for (Var var = 0; var < var_elimed.size(); var++) {
+        if (var_elimed[var] && solver.assigns[var] != l_Undef) {
+            var_elimed[var] = false;
+            solver.setDecisionVar(var, true);
+            numElimed--;
+            map<Var, vector<XorClause*> >::iterator it = elimedOutVar.find(var);
+            if (it != elimedOutVar.end()) {
+                for (uint32_t i = 0; i < it->second.size(); i++) {
+                    solver.clauseAllocator.clauseFree(it->second[i]);
+                }
+                elimedOutVar.erase(it);
+            }
+        }
+    }
 }
