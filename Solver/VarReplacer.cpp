@@ -567,6 +567,18 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     #ifdef DEBUG_REPLACER
     assert(solver.assigns[ps[0].var()].isUndef());
     assert(solver.assigns[ps[1].var()].isUndef());
+
+    assert(!solver.subsumer->getVarElimed()[ps[0].var()]);
+    assert(!solver.xorSubsumer->getVarElimed()[ps[0].var()]);
+    Var var1 = table[ps[0].var()].var();
+    assert(!solver.subsumer->getVarElimed()[var1]);
+    assert(!solver.xorSubsumer->getVarElimed()[var1]);
+
+    assert(!solver.subsumer->getVarElimed()[ps[1].var()]);
+    assert(!solver.xorSubsumer->getVarElimed()[ps[1].var()]);
+    Var var2 = table[ps[1].var()].var();
+    assert(!solver.subsumer->getVarElimed()[var2]);
+    assert(!solver.xorSubsumer->getVarElimed()[var2]);
     #endif
 
     Var var = ps[0].var();
