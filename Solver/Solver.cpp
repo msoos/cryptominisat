@@ -2601,10 +2601,10 @@ const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uin
     assert(subsumer->getVarElimed()[lit.var()] == false);
     assert(xorSubsumer->getVarElimed()[lit.var()] == false);
 
-    vec<Lit> added;
+    vec<Lit> addedToSeen;
     for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
         if (it->isBinary()) {
-            added.push(it->getOtherLit());
+            addedToSeen.push(it->getOtherLit());
             seen[it->getOtherLit().toInt()] = true;
         }
     }
@@ -2633,8 +2633,8 @@ const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uin
     finished = bins.size();
 
     end:
-    for (uint32_t i = 0; i < added.size(); i++)
-        seen[added[i].toInt()] = false;
+    for (uint32_t i = 0; i < addedToSeen.size(); i++)
+        seen[addedToSeen[i].toInt()] = false;
 
     return ok;
 }
