@@ -600,7 +600,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
                 #ifdef VERBOSE_DEBUG
                 cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
                 #endif
-                return (solver.ok = false);
+                solver.ok = false;
+                return solver.ok;
             }
             return true;
         }
