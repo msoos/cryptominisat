@@ -108,6 +108,9 @@ const bool VarReplacer::performReplaceInternal()
         solver.setDecisionVar(var, false);
         cannot_eliminate[var] = true;
         solver.setDecisionVar(it->var(), true);
+        assert(!removedVars[var]);
+        assert(removedVars2[var] == l_Undef);
+        assert(!removedVars3[var]);
 
         uint32_t& activity1 = solver.activity[var];
         uint32_t& activity2 = solver.activity[it->var()];
