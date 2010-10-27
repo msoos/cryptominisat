@@ -214,7 +214,7 @@ const bool FailedVarSearcher::search()
     //uint32_t fromBin;
     uint32_t fromVar = solver.mtrand.randInt(solver.nVars());
     origProps = solver.propagations;
-    for (uint32_t i = fromVar; i < solver.nVars(); i++) {
+    for (uint32_t i = 0; i < solver.nVars(); i++) {
         Var var = (fromVar + i) % solver.nVars();
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
