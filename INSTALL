@@ -70,19 +70,9 @@ the "HOWTO_MinGW32" text file. A short step-by-step is here:
 
 i586-mingw32msvc
 
-1) Install all libraries (libz) 
+2) Install all libraries (libz) 
 
 libz:
 get from source and compile as per "Solver/win32-howto"
 
-2) complie:
-
-go to the "Solver" subdir and execute:
-
-i586-mingw32msvc-g++ -O3 -g -DCROSS_COMPILE  -march=i586 -I../mtl/ -I../MTRand/ \
-/usr/i586-mingw32msvc/lib/libz.a Main.C Solver.C Logger.C  Clause.cpp \
-VarReplacer.cpp FindUndef.cpp XorFinder.cpp XorSubsumer.cpp Subsumer.cpp \
-Conglomerate.cpp PackedRow.cpp FailedVarSearcher.cpp PartFinder.cpp \
-PartHander.cpp -o cryptominisat.exe
-
-I test the generated binary under wine, in Linux.
+3) Execute the command in HOWTO_MinGW32

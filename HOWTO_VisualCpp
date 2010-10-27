@@ -19,7 +19,7 @@ VarReplacer.cpp XorFinder.cpp XorSubsumer.cpp Subsumer.cpp PartFinder.cpp \
 PartHandler.cpp FailedLitSearcher.cpp ClauseAllocator.cpp \
 UselessBinRemover.cpp StateSaver.cpp ClauseVivifier.cpp \
 SolverMisc.cpp SolverDebug.cpp CompleteDetachReattacher.cpp \
-DimacsParser.cpp SCCFinder.cpp 
+DimacsParser.cpp SCCFinder.cpp SolverConf.cpp
 
 executed from the 'Solver' subdirectory
 

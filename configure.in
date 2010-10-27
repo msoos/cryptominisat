@@ -32,12 +32,11 @@ AH_TEMPLATE([STATS_NEEDED],[Enable statistics generation code])
 AH_TEMPLATE([USE_GAUSS],[Enable gaussian elimination code])
 AC_DEFINE([USE_GAUSS])
 
-#search for pools
-AH_TEMPLATE([USE_POOLS], [Use memory pools to store packed clauses])
+#search for openmp
+AC_OPENMP
+
+#search for boost
 m4_include(m4-extra/boost.m4)
-BOOST_REQUIRE(1.40, AC_MSG_WARN([Cannot find boost library -- clauses will not be packed(slowdown)]))
-if test "${HAVE_BOOST}" == "1" ; then
-    BOOST_FIND_HEADER(boost/pool/pool.hpp,  AC_MSG_WARN([Could find boost pool library -- clauses will be packed]), AC_DEFINE([USE_POOLS]))
-fi
+BOOST_REQUIRE(1.40)
 
 AC_OUTPUT(Makefile Solver/Makefile)

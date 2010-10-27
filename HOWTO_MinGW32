@@ -25,7 +25,7 @@ boost build:
 ./bjam --layout=system variant=release threading=multi link=shared runtime-link=shared toolset=gcc target-os=windows threadapi=win32 --without-graph --without-graph_parallel --without-iostreams --without-math --without-python stage
 
 *****************************
-   how to compile stuff on debian mingw32-w32
+how to compile stuff on debian mingw32-w32
 *****************************
 make line:
 PATH=/usr/i586-mingw32msvc/bin:$PATH \ 
@@ -42,7 +42,7 @@ make install PREFIX=/usr/i586-mingw32msvc
 
 
 *****************************
-   how to compile stuff on debian mingw32-w64
+how to compile stuff on debian mingw32-w64
 *****************************
 make line:
 PATH=/usr/x86_64-w64-mingw32/bin:$PATH \
@@ -57,29 +57,28 @@ x86_64-w64-mingw32-ar qs libz.a adler32.o \
 
 
 *****************************
-   compile minisat
+compile minisat -- 32-bit
 *****************************
 
 i586-mingw32msvc-g++ -O3 -march=i586 -DVERSION=\"2.6.0\" -DCROSS_COMPILE  \
     -I../mtl/ -I../MTRand/ -DUSE_GAUSS Main.cpp \
     /usr/i586-mingw32msvc/lib/libz.a \
-    Solver.cpp  ClauseCleaner.cpp FindUndef.cpp \
+    Solver.cpp  ClauseCleaner.cpp SCCFinder.cpp ClauseVivifier.cpp \
     PackedRow.cpp RestartTypeChooser.cpp MatrixFinder.cpp Gaussian.cpp \
     VarReplacer.cpp XorFinder.cpp ClauseAllocator.cpp PartHandler.cpp \
-    Subsumer.cpp XorSubsumer.cpp FailedVarSearcher.cpp PartFinder.cpp \
+    Subsumer.cpp XorSubsumer.cpp FailedLitSearcher.cpp PartFinder.cpp \
     StateSaver.cpp UselessBinRemover.cpp SolverMisc.cpp \
-    CompleteDetachReattacher.cpp DimacsParser.cpp \
-    SolverDebug.cpp OnlyNonLearntBins.cpp -o cryptominisat.exe
+    CompleteDetachReattacher.cpp DimacsParser.cpp SolverConf.cpp \
+    SolverDebug.cpp -o cryptominisat.exe
 
 *****************************
-   useful for examining archives:
+useful for examining archives:
 *****************************
 
 i586-mingw32msvc-nm libz.a
 i586-mingw32msvc-objdump -G libz.a
 
-
 *****************************
-Useful
+Other useful scripts
 *****************************
 ./configure --host=x86_64-pc-linux --target=x86_64-pc-mingw32 
