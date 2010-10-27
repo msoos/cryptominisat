@@ -586,10 +586,12 @@ void Solver::printStats()
 
     //Multi-threading
     printStatsLine("c num threads" , omp_get_num_threads());
-    printStatsLine("c num units recevied", gotUnitData, (double)gotUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
-    printStatsLine("c num units sent", sentUnitData, (double)sentUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
-    printStatsLine("c num bins recevied", gotBinData);
-    printStatsLine("c num bins sent", sentBinData);
+    if (omp_get_num_threads() > 1) {
+        printStatsLine("c num units recevied", gotUnitData, (double)gotUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
+        printStatsLine("c num units sent", sentUnitData, (double)sentUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
+        printStatsLine("c num bins recevied", gotBinData);
+        printStatsLine("c num bins sent", sentBinData);
+    }
 
     #ifdef USE_GAUSS
     if (gaussconfig.decision_until > 0) {
