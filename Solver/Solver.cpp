@@ -1758,6 +1758,7 @@ void Solver::reduceDB()
     uint64_t totalSizeOfNonRemoved = 0;
     for (i = j = 0; i != removeNum; i++){
         if (i+1 < removeNum) __builtin_prefetch(learnts[i+1], 0, 0);
+        assert(learnts[i]->size() > 2);
         if (!locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->getGlue() > 2)) {
             totalGlueOfRemoved += learnts[i]->getGlue();
             totalSizeOfRemoved += learnts[i]->size();
