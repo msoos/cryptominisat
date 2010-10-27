@@ -1105,7 +1105,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
     if (out_learnt.size() == 1
         || !oldConfl.isClause()
         || oldConfl.getClause()->isXor()
-        || (oldConfl.getClause()->getGlue() > conf.maxGlue && lastSelectedRestartType == dynamic_restart)
+        || (oldConfl.getClause()->getGlue() > conf.maxGlue)
         || out_learnt.size() >= oldConfl.getClause()->size()) return NULL;
 
     if (!subset(out_learnt, *oldConfl.getClause(), seen)) return NULL;
@@ -1759,7 +1759,7 @@ void Solver::reduceDB()
     for (i = j = 0; i != removeNum; i++){
         if (i+1 < removeNum) __builtin_prefetch(learnts[i+1], 0, 0);
         assert(learnts[i]->size() > 2);
-        if (!locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->getGlue() > 2)) {
+        if (!locked(*learnts[i]) && learnts[i]->getGlue() > 2) {
             totalGlueOfRemoved += learnts[i]->getGlue();
             totalSizeOfRemoved += learnts[i]->size();
             totalNumRemoved++;
@@ -2141,7 +2141,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             #endif
             if (learnt_clause.size() > 2) {
                 c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
-                if (glue > conf.maxGlue && lastSelectedRestartType == dynamic_restart) {
+                if (glue > conf.maxGlue) {
                     nbClOverMaxGlue++;
                     nbCompensateSubsumer++;
                     unWindGlue[learnt_clause[0].var()] = c;
