@@ -246,7 +246,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
         return true;
     case 2: {
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
-        c[0] = c[0].unsign() ^ !c.xorEqualFalse();
+        c[0] = c[0].unsign() ^ c.xorEqualFalse();
         c[1] = c[1].unsign();
         addBinaryXorClause(c[0], c[1], c.getGroup());
         return true;
@@ -575,9 +575,6 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     assert(!solver.xorSubsumer->getVarElimed()[ps[1].var()]);
     #endif
 
-    cannot_eliminate[ps[0].var()] = true;
-    cannot_eliminate[ps[1].var()] = true;
-
     //Detect circle
     Lit lit1 = ps[0];
     lit1 = table[lit1.var()];
@@ -593,8 +590,6 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
         return true;
     }
 
-    cannot_eliminate[lit1.var()] = true;
-    cannot_eliminate[lit2.var()] = true;
     #ifdef DEBUG_REPLACER
     assert(!solver.subsumer->getVarElimed()[lit1.var()]);
     assert(!solver.xorSubsumer->getVarElimed()[lit1.var()]);
@@ -602,7 +597,9 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     assert(!solver.xorSubsumer->getVarElimed()[lit2.var()]);
     #endif
 
-    addBinaryXorClause(lit1, lit2, group, addBinAsLearnt);
+    cannot_eliminate[lit1.var()] = true;
+    cannot_eliminate[lit2.var()] = true;
+    addBinaryXorClause(lit1, lit2 ^ true, group, addBinAsLearnt);
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
