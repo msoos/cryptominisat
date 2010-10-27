@@ -2002,7 +2002,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
         assert(false);
         break;
     }
-    if (conflicts >= nof_conflicts_fullrestart)  {
+    if (conflicts >= nof_conflicts_fullrestart || needToInterrupt)  {
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis)
             progress_estimate = progressEstimate();
@@ -2504,6 +2504,11 @@ lbool Solver::solve(const vec<Lit>& assumps)
         #endif
 
         status = search(nof_conflicts, std::min(nof_conflicts_fullrestart, nextSimplify));
+        if (needToInterrupt) {
+            interruptCleanly();
+            return l_Undef;
+        }
+
         nof_conflicts = (double)nof_conflicts * conf.restart_inc;
         if (status != l_Undef) break;
         if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart , lastFullRestart))
@@ -2514,10 +2519,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
         //if (avgBranchDepth.isvalid())
         //    std::cout << "avg branch depth:" << avgBranchDepth.getavg() << std::endl;
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
-        if (needToInterrupt) {
-            interruptCleanly();
-            return l_Undef;
-        }
     }
     printEndSearchStat();
 
