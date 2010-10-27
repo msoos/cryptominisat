@@ -52,7 +52,6 @@ class FailedLitSearcher {
         FailedLitSearcher(Solver& _solver);
 
         const bool search();
-        const bool asymmBranch();
         const double getTotalTime() const;
 
     private:
@@ -216,26 +215,6 @@ class FailedLitSearcher {
         double totalTime;
         double numPropsMultiplier; ///<If last time we called search() all went fine, then this is incremented, so we do more searching this time
         uint32_t lastTimeFoundTruths; ///<Records how many unit clauses we found last time we called search()
-
-        /**
-        @brief Records data for asymmBranch()
-
-        Clauses are ordered accurding to sze in asymmBranch() and then some are
-        checked if we could shorten them. This value records that between calls
-        to asymmBranch() where we stopped last time in the list
-        */
-        uint32_t asymmLastTimeWentUntil;
-        /**
-        @brief Used in asymmBranch() to sort clauses according to size
-        */
-        struct sortBySize
-        {
-            const bool operator () (const Clause* x, const Clause* y)
-            {
-              return (x->size() > y->size());
-            }
-        };
-
         uint32_t numCalls; ///<Number of times search() has been called
 };
 

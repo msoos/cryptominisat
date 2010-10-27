@@ -53,7 +53,7 @@ SolverConf::SolverConf() :
         , doBlockedClause  (true)
         , doVarElim        (true)
         , doSubsume1       (true)
-        , doAsymmBranch    (true)
+        , doClausVivif     (true)
         , doSortWatched    (true)
         , doMinimLearntMore(true)
         , doMinimLMoreRecur(false)

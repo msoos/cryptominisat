@@ -31,6 +31,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "UselessBinRemover.h"
 #include "SCCFinder.h"
 #include "SharedData.h"
+#include "ClauseVivifier.h"
 
 #ifdef USE_GAUSS
 #include "Gaussian.h"
@@ -125,6 +126,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
     xorSubsumer = new XorSubsumer(*this);
     restartTypeChooser = new RestartTypeChooser(*this);
     sCCFinder = new SCCFinder(*this);
+    clauseVivifier = new ClauseVivifier(*this);
 
     #ifdef USE_GAUSS
     matrixFinder = new MatrixFinder(*this);
@@ -2290,7 +2292,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         x.addAllXorAsNorm();
     }
 
-    if (conf.doAsymmBranch && !failedLitSearcher->asymmBranch()) goto end;
+    if (conf.doClausVivif && !clauseVivifier->vivifyClauses()) goto end;
 
     //addSymmBreakClauses();
 
@@ -2373,8 +2375,8 @@ void Solver::performStepsBeforeSolve()
 
     if (conf.doReplace && !varReplacer->performReplace()) return;
 
-    if (conf.doAsymmBranch && !conf.libraryUsage
-        && !failedLitSearcher->asymmBranch()) return;
+    if (conf.doClausVivif && !conf.libraryUsage
+        && !clauseVivifier->vivifyClauses()) return;
 
     if (conf.doSatELite
         && !conf.libraryUsage
@@ -2772,7 +2774,7 @@ void Solver::handleSATSolution()
         s.conf.doConglXors = false;
         s.conf.doSubsWNonExistBins = false;
         s.conf.doRemUselessBins = false;
-        s.conf.doAsymmBranch = false;
+        s.conf.doClausVivif = false;
         s.conf.doPartHandler = false;
         s.conf.doSortWatched = false;
 

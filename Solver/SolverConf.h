@@ -57,7 +57,7 @@ class SolverConf
         bool      doBlockedClause;    ///<Should try to remove blocked clauses
         bool      doVarElim;          ///<Perform variable elimination
         bool      doSubsume1;         ///<Perform self-subsuming resolution
-        bool      doAsymmBranch;      ///<Perform asymmetric branching at the beginning of the solving
+        bool      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         bool      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         bool      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         bool      doMinimLMoreRecur;  ///<Always perform recursive/transitive on-the-fly self self-subsuming resolution --> an enhancement of "strong minimization" of PrecoSat

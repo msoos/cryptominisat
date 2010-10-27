@@ -281,7 +281,7 @@ void Main::printUsage(char** argv)
     printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
     printf("  --nosubswithbins = Don't subsume with non-existent bins at the beginnning\n");
     printf("  --norsubswithbins= Don't subsume with non-existent bins regularly \n");
-    printf("  --noasymm        = Don't do asymmetric branching at the beginnning\n");
+    printf("  --noclausevivif  = Don't do perform clause vivification\n");
     printf("  --norasymm       = Don't do asymmetric branching regularly\n");
     printf("  --nosortwatched  = Don't sort watches according to size: bin, tri, etc.\n");
     printf("  --nolfminim      = Don't do on-the-fly self-subsuming resolution\n");
@@ -566,8 +566,8 @@ void Main::parseCommandLine()
             conf.doRemUselessBins = false;
         } else if ((value = hasPrefix(argv[i], "--nosubswithbins"))) {
             conf.doSubsWNonExistBins = false;
-        } else if ((value = hasPrefix(argv[i], "--noasymm"))) {
-            conf.doAsymmBranch = false;
+        } else if ((value = hasPrefix(argv[i], "--noclausevivif"))) {
+            conf.doClausVivif = false;
         } else if ((value = hasPrefix(argv[i], "--nosortwatched"))) {
             conf.doSortWatched = false;
         } else if ((value = hasPrefix(argv[i], "--nolfminim"))) {

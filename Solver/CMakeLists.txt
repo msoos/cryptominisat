@@ -44,5 +44,6 @@ add_library(cryptominisatlib
     DimacsParser.cpp
     SCCFinder.cpp
     SolverConf.cpp
+    ClauseVivifier.cpp
 )
 
