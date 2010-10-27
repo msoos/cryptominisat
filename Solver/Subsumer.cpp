@@ -1233,6 +1233,10 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         if (!solver.conf.doVarElim) break;
 
         if (!eliminateVars()) return false;
+
+        //subsumeBinsWithBins();
+        //if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
+        solver.clauseCleaner->removeSatisfiedBins();
     } while (cl_touched.size() > 100);
     endSimplifyBySubsumption:
 
@@ -1286,19 +1290,19 @@ void Subsumer::setLimits(const bool alsoLearnt)
 {
     if (clauses.size() > 3500000) {
         numMaxSubsume0 = 900000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 5.0 * (0.8+(double)(numCalls)/4.0));
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 6.0 * (0.8+(double)(numCalls)/4.0));
         numMaxSubsume1 = 100000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(30000.0 * (0.8+(double)(numCalls)/3.0));
     }
     if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
         numMaxSubsume0 = 2000000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 3.0 * (0.8+(double)(numCalls)/4.0));
         numMaxSubsume1 = 300000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(50000.0 * (0.8+(double)(numCalls)/3.0));
     }
     if (clauses.size() <= 1500000) {
         numMaxSubsume0 = 4000000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/2.0));
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 3.0 * (0.8+(double)(numCalls)/2.0));
         numMaxSubsume1 = 400000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
     }
@@ -1497,6 +1501,10 @@ void Subsumer::removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair
             removed.second += tmp.second;
 
             elimedOutVarBin[var].push_back(std::make_pair(c.lit1, c.lit2));
+            #ifndef TOUCH_LESS
+            touch(c.lit1);
+            touch(c.lit2);
+            #endif
         }
     }
 }
@@ -1572,8 +1580,8 @@ bool Subsumer::maybeEliminate(const Var var)
     Lit lit = Lit(var, false);
 
     //Only exists in binary clauses -- don't delete it then
-    if (occur[lit.toInt()].size() == 0 && occur[(~lit).toInt()].size() == 0)
-        return false;
+    /*if (occur[lit.toInt()].size() == 0 && occur[(~lit).toInt()].size() == 0)
+        return false;*/
 
     const uint32_t numNonLearntPos = numNonLearntBins(lit);
     const uint32_t posSize = occur[lit.toInt()].size() + numNonLearntPos;
