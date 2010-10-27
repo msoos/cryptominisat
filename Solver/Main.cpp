@@ -278,7 +278,8 @@ void Main::printUsage(char** argv)
     printf("  --nohyperbinres  = Don't add binary clauses when doing failed lit probing.\n");
     printf("  --noremovebins   = Don't remove useless binary clauses at the beginnning\n");
     printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
-    printf("  --nosubswithbins = Don't subsume with non-existent bins at the beginnning\n");
+    printf("  --nosubswithnbins= Don't subsume with binary clauses\n");
+    printf("  --nosubswithnbins= Don't subsume with non-existent binary clauses\n");
     printf("  --norsubswithbins= Don't subsume with non-existent bins regularly \n");
     printf("  --noclausevivif  = Don't do perform clause vivification\n");
     printf("  --norasymm       = Don't do asymmetric branching regularly\n");
@@ -563,8 +564,10 @@ void Main::parseCommandLine()
             conf.doHyperBinRes= false;
         } else if ((value = hasPrefix(argv[i], "--noremovebins"))) {
             conf.doRemUselessBins = false;
-        } else if ((value = hasPrefix(argv[i], "--nosubswithbins"))) {
+        } else if ((value = hasPrefix(argv[i], "--nosubswithnbins"))) {
             conf.doSubsWNonExistBins = false;
+        } else if ((value = hasPrefix(argv[i], "--nosubswithbins"))) {
+            conf.doSubsWBins = false;
         } else if ((value = hasPrefix(argv[i], "--noclausevivif"))) {
             conf.doClausVivif = false;
         } else if ((value = hasPrefix(argv[i], "--nosortwatched"))) {
