@@ -246,9 +246,9 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
         return true;
     case 2: {
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
-        c[0] = c[0].unsign();
+        c[0] = c[0].unsign() ^ !c.xorEqualFalse();
         c[1] = c[1].unsign();
-        addBinaryXorClause(c, c.xorEqualFalse(), c.getGroup());
+        addBinaryXorClause(c[0], c[1], c.getGroup());
         return true;
     }
     default:
@@ -602,7 +602,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     assert(!solver.xorSubsumer->getVarElimed()[lit2.var()]);
     #endif
 
-    addBinaryXorClause(ps, xorEqualFalse, group, addBinAsLearnt);
+    addBinaryXorClause(lit1, lit2, group, addBinAsLearnt);
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
@@ -637,22 +637,15 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 
 \todo Clean this messy internal/external thing using a better datastructure.
 */
-template <class T>
-void VarReplacer::addBinaryXorClause(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt)
+void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group, const bool addBinAsLearnt)
 {
-    #ifdef DEBUG_REPLACER
-    assert(!ps[0].sign());
-    assert(!ps[1].sign());
-    #endif
+    solver.attachBinClause(lit1, lit2, addBinAsLearnt);
+    solver.addNewBinClauseToShare(lit1, lit2);
 
-    ps[0] ^= xorEqualFalse;
-    solver.attachBinClause(ps[0], ps[1], addBinAsLearnt);
-    solver.addNewBinClauseToShare(ps);
-
-    ps[0] ^= true;
-    ps[1] ^= true;
-    solver.attachBinClause(ps[0], ps[1], addBinAsLearnt);
-    solver.addNewBinClauseToShare(ps);
+    lit1 ^= true;
+    lit2 ^= true;
+    solver.attachBinClause(lit1, lit2, addBinAsLearnt);
+    solver.addNewBinClauseToShare(lit1, lit2);
 }
 
 /**

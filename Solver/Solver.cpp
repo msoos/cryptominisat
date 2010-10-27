@@ -2609,6 +2609,13 @@ void Solver::addNewBinClauseToShare(T& ps)
     newBinClauses.push_back(std::make_pair(lits[0], lits[1]));
 }
 
+void Solver::addNewBinClauseToShare(Lit lit1, Lit lit2)
+{
+    if (externalAddClause) return;
+    if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
+    newBinClauses.push_back(std::make_pair(lit1, lit2));
+}
+
 template void Solver::addNewBinClauseToShare(Clause& ps);
 template void Solver::addNewBinClauseToShare(XorClause& ps);
 template void Solver::addNewBinClauseToShare(vec<Lit>& ps);
