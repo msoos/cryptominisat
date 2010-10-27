@@ -23,7 +23,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "XorFinder.h"
 #include "ClauseCleaner.h"
 #include "RestartTypeChooser.h"
-#include "FailedVarSearcher.h"
+#include "FailedLitSearcher.h"
 #include "Subsumer.h"
 #include "PartHandler.h"
 #include "XorSubsumer.h"
@@ -119,7 +119,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
     assert(conf.maxGlue < MAX_THEORETICAL_GLUE);
     varReplacer = new VarReplacer(*this);
     clauseCleaner = new ClauseCleaner(*this);
-    failedVarSearcher = new FailedVarSearcher(*this);
+    failedLitSearcher = new FailedLitSearcher(*this);
     partHandler = new PartHandler(*this);
     subsumer = new Subsumer(*this);
     xorSubsumer = new XorSubsumer(*this);
@@ -147,7 +147,7 @@ Solver::~Solver()
 
     delete varReplacer;
     delete clauseCleaner;
-    delete failedVarSearcher;
+    delete failedLitSearcher;
     delete partHandler;
     delete subsumer;
     delete xorSubsumer;
@@ -2269,7 +2269,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
-    if (conf.doFailedLit && !failedVarSearcher->search()) goto end;
+    if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
     if (conf.doReplace && conf.doRemUselessBins) {
         UselessBinRemover uselessBinRemover(*this);
@@ -2290,7 +2290,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         x.addAllXorAsNorm();
     }
 
-    if (conf.doAsymmBranch && !failedVarSearcher->asymmBranch()) goto end;
+    if (conf.doAsymmBranch && !failedLitSearcher->asymmBranch()) goto end;
 
     //addSymmBreakClauses();
 
@@ -2374,7 +2374,7 @@ void Solver::performStepsBeforeSolve()
     if (conf.doReplace && !varReplacer->performReplace()) return;
 
     if (conf.doAsymmBranch && !conf.libraryUsage
-        && !failedVarSearcher->asymmBranch()) return;
+        && !failedLitSearcher->asymmBranch()) return;
 
     if (conf.doSatELite
         && !conf.libraryUsage

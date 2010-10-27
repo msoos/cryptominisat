@@ -68,7 +68,7 @@ class VarReplacer;
 class XorFinder;
 class FindUndef;
 class ClauseCleaner;
-class FailedVarSearcher;
+class FailedLitSearcher;
 class Subsumer;
 class XorSubsumer;
 class PartHandler;
@@ -197,7 +197,7 @@ public:
     */
     const double getTotalTimeSubsumer() const;
 
-    const double getTotalTimeFailedVarSearcher() const;
+    const double getTotalTimeFailedLitSearcher() const;
 
     /**
     @brief Get total time spent in XorSubsumer.
@@ -482,7 +482,7 @@ protected:
     friend class VarReplacer;
     friend class ClauseCleaner;
     friend class RestartTypeChooser;
-    friend class FailedVarSearcher;
+    friend class FailedLitSearcher;
     friend class Subsumer;
     friend class XorSubsumer;
     friend class PartHandler;
@@ -495,7 +495,7 @@ protected:
     Conglomerate*       conglomerate;
     VarReplacer*        varReplacer;
     ClauseCleaner*      clauseCleaner;
-    FailedVarSearcher*  failedVarSearcher;
+    FailedLitSearcher*  failedLitSearcher;
     PartHandler*        partHandler;
     Subsumer*           subsumer;
     XorSubsumer*        xorSubsumer;

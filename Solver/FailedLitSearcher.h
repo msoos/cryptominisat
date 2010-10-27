@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 
-#ifndef FAILEDVARSEARCHER_H
-#define FAILEDVARSEARCHER_H
+#ifndef FAILEDLITSEARCHER_H
+#define FAILEDLITSEARCHER_H
 
 #include <set>
 #include <map>
@@ -47,9 +47,9 @@ Perfoms in asymmBranch(): asymmetric branching, heuristically. Best paper
 on this is 'Vivifying Propositional Clausal Formulae', though we do it much
 more heuristically
 */
-class FailedVarSearcher {
+class FailedLitSearcher {
     public:
-        FailedVarSearcher(Solver& _solver);
+        FailedLitSearcher(Solver& _solver);
 
         const bool search();
         const bool asymmBranch();
@@ -239,7 +239,7 @@ class FailedVarSearcher {
         uint32_t numCalls; ///<Number of times search() has been called
 };
 
-inline const double FailedVarSearcher::getTotalTime() const
+inline const double FailedLitSearcher::getTotalTime() const
 {
     return totalTime;
 }

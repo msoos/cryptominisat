@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "XorSubsumer.h"
 #include "time_mem.h"
 #include "DimacsParser.h"
-#include "FailedVarSearcher.h"
+#include "FailedLitSearcher.h"
 #include <iomanip>
 #include <omp.h>
 
@@ -305,9 +305,9 @@ const double Solver::getTotalTimeSubsumer() const
     return subsumer->getTotalTime();
 }
 
-const double Solver::getTotalTimeFailedVarSearcher() const
+const double Solver::getTotalTimeFailedLitSearcher() const
 {
-    return failedVarSearcher->getTotalTime();
+    return failedLitSearcher->getTotalTime();
 }
 
 const double Solver::getTotalTimeXorSubsumer() const
@@ -560,7 +560,7 @@ void Solver::printStats()
     printStatsLine("c learnts DL2", nbGlue2);
     printStatsLine("c learnts size 2", numNewBin);
     printStatsLine("c learnts size 1", get_unitary_learnts_num(), (double)get_unitary_learnts_num()/(double)nVars()*100.0, "% of vars");
-    printStatsLine("c filedVS time", getTotalTimeFailedVarSearcher(), getTotalTimeFailedVarSearcher()/cpu_time*100.0, "% time");
+    printStatsLine("c filedLit time", getTotalTimeFailedLitSearcher(), getTotalTimeFailedLitSearcher()/cpu_time*100.0, "% time");
 
     //Subsumer stats
     printStatsLine("c v-elim SatELite", getNumElimSubsume(), (double)getNumElimSubsume()/(double)nVars()*100.0, "% vars");

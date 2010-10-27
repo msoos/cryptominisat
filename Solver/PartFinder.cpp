@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include <iomanip>
 #include <math.h>
-#include "FailedVarSearcher.h"
+#include "FailedLitSearcher.h"
 using std::set;
 using std::map;
 

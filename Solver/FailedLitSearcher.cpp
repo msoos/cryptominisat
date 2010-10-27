@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
 
-#include "FailedVarSearcher.h"
+#include "FailedLitSearcher.h"
 
 #include <iomanip>
 #include <utility>
@@ -40,7 +40,7 @@ using std::set;
 /**
 @brief Sets up variables that are used between calls to search()
 */
-FailedVarSearcher::FailedVarSearcher(Solver& _solver):
+FailedLitSearcher::FailedLitSearcher(Solver& _solver):
     solver(_solver)
     , tmpPs(2)
     , totalTime(0)
@@ -54,7 +54,7 @@ FailedVarSearcher::FailedVarSearcher(Solver& _solver):
 /**
 @brief Initialises datastructures for 2-long xor finding by shortening longer xors
 */
-void FailedVarSearcher::addFromSolver(const vec< XorClause* >& cs)
+void FailedLitSearcher::addFromSolver(const vec< XorClause* >& cs)
 {
     xorClauseSizes.clear();
     xorClauseSizes.growTo(cs.size());
@@ -82,7 +82,7 @@ void FailedVarSearcher::addFromSolver(const vec< XorClause* >& cs)
 The thus shortened xors are then treated if they are 2-long and if they
 appear twice: by propagating "var" and by propagating "~var"
 */
-inline void FailedVarSearcher::removeVarFromXors(const Var var)
+inline void FailedLitSearcher::removeVarFromXors(const Var var)
 {
     vector<uint32_t>& occ = occur[var];
     if (occ.empty()) return;
@@ -99,7 +99,7 @@ inline void FailedVarSearcher::removeVarFromXors(const Var var)
 /**
 @brief Undoes what removeVarFromXors() has done
 */
-inline void FailedVarSearcher::addVarFromXors(const Var var)
+inline void FailedLitSearcher::addVarFromXors(const Var var)
 {
     vector<uint32_t>& occ = occur[var];
     if (occ.empty()) return;
@@ -118,7 +118,7 @@ data structures and functions in place
 
 @p[in] c MUST be a 2-long xor clause under current assignement
 */
-const FailedVarSearcher::TwoLongXor FailedVarSearcher::getTwoLongXor(const XorClause& c)
+const FailedLitSearcher::TwoLongXor FailedLitSearcher::getTwoLongXor(const XorClause& c)
 {
     TwoLongXor tmp;
     uint32_t num = 0;
@@ -155,7 +155,7 @@ initialised, and their limits are set. Then tryBoth is called in two different
 forms: somewhat sequentially on varaibles x...z and then on randomly picked
 variables.
 */
-const bool FailedVarSearcher::search()
+const bool FailedLitSearcher::search()
 {
     uint64_t numProps = (solver.nClauses() < 500000 && solver.order_heap.size() < 50000) ? 22000000 : 8000000;
     numProps *= 3;
@@ -323,7 +323,7 @@ it is not part of failed literal probing, really. However, it is here because
 it seems to be a function that fits into the idology of failed literal probing.
 Maybe I am off-course and it should be in another class, or a class of its own.
 */
-const bool FailedVarSearcher::asymmBranch()
+const bool FailedLitSearcher::asymmBranch()
 {
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
 
@@ -470,7 +470,7 @@ Printed:
 5) Number of propagations
 6) Time in seconds
 */
-void FailedVarSearcher::printResults(const double myTime, uint32_t numBinAdded) const
+void FailedLitSearcher::printResults(const double myTime, uint32_t numBinAdded) const
 {
     std::cout << "c Flit: "<< std::setw(5) << numFailed <<
     " Blit: " << std::setw(6) << goodBothSame <<
@@ -490,7 +490,7 @@ a missing binary clauses (missing = could be added with hyper-binary
 resolution), then we add it at the 'right' place. Right in this sense means
 the literal that has the highest in-degree.
 */
-const bool FailedVarSearcher::orderLits()
+const bool FailedLitSearcher::orderLits()
 {
     uint64_t oldProps = solver.propagations;
     double myTime = cpuTime();
@@ -555,7 +555,7 @@ them, and hyper-bin resolves them, etc. It is imperative that from the
 SAT point of view, EITHER lit1 or lit2 MUST hold. So, if lit1 = ~lit2, it's OK.
 Also, if there is a binary clause 'lit1 or lit2' it's also OK.
 */
-const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
+const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 {
     if (binXorFind) {
         if (lastTrailSize < solver.trail.size()) {
@@ -719,7 +719,7 @@ not, then we add the relevant binary clauses at the right point. The "right"
 point is the point which has the highest in-degree. We approximated the degrees
 beforehand with orderLits()
 */
-void FailedVarSearcher::hyperBinResolution(const Lit& lit)
+void FailedLitSearcher::hyperBinResolution(const Lit& lit)
 {
     uint64_t oldProps = solver.propagations;
     #ifdef VERBOSE_DEBUG
@@ -798,7 +798,7 @@ Used to check which variables are propagated by a certain literal when
 propagating it only at the binary level
 @p[in] the literal to be propagated at the binary level
 */
-void FailedVarSearcher::fillImplies(const Lit& lit)
+void FailedLitSearcher::fillImplies(const Lit& lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueue(lit);
@@ -819,7 +819,7 @@ void FailedVarSearcher::fillImplies(const Lit& lit)
 
 Used by hyperBinResolution() to add the newly discovered clauses
 */
-void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
+void FailedLitSearcher::addBin(const Lit& lit1, const Lit& lit2)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Adding extra bin: " << lit1 << " " << lit2 << std::endl;
@@ -837,7 +837,7 @@ void FailedVarSearcher::addBin(const Lit& lit1, const Lit& lit2)
 /***************
 UNTESTED CODE
 *****************
-const bool FailedVarSearcher::tryAll(const Lit* begin, const Lit* end)
+const bool FailedLitSearcher::tryAll(const Lit* begin, const Lit* end)
 {
     propagated.setZero();
     BitArray propagated2;
