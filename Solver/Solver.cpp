@@ -1873,27 +1873,6 @@ const bool Solver::simplify()
 }
 
 /**
-@brief Used to dump claues and exit
-
-Only called when a clean interrupt has been asked for, and we are at a point
-where we can cleanly dump the datastructures (i.e. they are not in the middle
-of being updated, for example)
-*/
-void Solver::interruptCleanly()
-{
-    cancelUntil(0);
-    if (conf.needToDumpLearnts) {
-        dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
-        std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
-    }
-    if (conf.needToDumpOrig) {
-        dumpOrigClauses(conf.origFilename);
-        std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
-    }
-}
-
-
-/**
 @brief Search for a model
 
 Limits: must be below the specified number of conflicts and must keep the
@@ -2504,7 +2483,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
         status = search(nof_conflicts, std::min(nof_conflicts_fullrestart, nextSimplify));
         if (needToInterrupt) {
-            interruptCleanly();
+            cancelUntil(0);
             return l_Undef;
         }
 

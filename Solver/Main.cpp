@@ -797,6 +797,20 @@ const int Main::oneThreadSolve()
             #pragma omp critical (finished)
             if (finished.size() == (unsigned)numThreads) mustWait = false;
         }
+        if (conf.needToDumpLearnts) {
+            solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
+            if (conf.verbosity >= 1) {
+                std::cout << "c Sorted learnt clauses dumped to file '"
+                << conf.learntsFilename << "'" << std::endl;
+            }
+        }
+        if (conf.needToDumpOrig) {
+            solver.dumpOrigClauses(conf.origFilename);
+            if (conf.verbosity >= 1)
+                std::cout << "c Simplified original clauses dumped to file '"
+                << conf.origFilename << "'" << std::endl;
+        }
+
         FILE* res = openOutputFile();
         printResultFunc(solver, ret, res);
         solver.printStats();

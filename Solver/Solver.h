@@ -542,7 +542,6 @@ protected:
     void     printStatHeader  () const;
     void     printRestartStat (const char* type = "N");
     void     printEndSearchStat();
-    void     interruptCleanly();
     void     addSymmBreakClauses();
     void     initialiseSolver();
 
