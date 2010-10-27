@@ -61,15 +61,16 @@ compile minisat -- 32-bit
 *****************************
 
 i586-mingw32msvc-g++ -O3 -march=i586 -DVERSION=\"2.6.0\" -DCROSS_COMPILE  \
-    -I../mtl/ -I../MTRand/ -DUSE_GAUSS Main.cpp \
-    /usr/i586-mingw32msvc/lib/libz.a \
-    Solver.cpp  ClauseCleaner.cpp SCCFinder.cpp ClauseVivifier.cpp \
+    -I../mtl/ -I../MTRand/ -DUSE_GAUSS \
+    /usr/i586-mingw32msvc/lib/libz.a -fopenmp \
+    Main.cpp SolverDebug.cpp Solver.cpp \
+    ClauseCleaner.cpp SCCFinder.cpp ClauseVivifier.cpp \
     PackedRow.cpp RestartTypeChooser.cpp MatrixFinder.cpp Gaussian.cpp \
     VarReplacer.cpp XorFinder.cpp ClauseAllocator.cpp PartHandler.cpp \
     Subsumer.cpp XorSubsumer.cpp FailedLitSearcher.cpp PartFinder.cpp \
     StateSaver.cpp UselessBinRemover.cpp SolverMisc.cpp \
     CompleteDetachReattacher.cpp DimacsParser.cpp SolverConf.cpp \
-    SolverDebug.cpp -o cryptominisat.exe
+    -o cryptominisat.exe
 
 *****************************
 useful for examining archives:
