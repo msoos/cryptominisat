@@ -243,8 +243,8 @@ void Main::printUsage(char** argv)
     printf("  --alsoread       = <filename> Also read this file in\n");
     printf("                     Can be used to re-read dumped learnts, for example\n");
     printf("  --maxsolutions   = Search for given amount of solutions\n");
-    printf("  --nofailedvar    = Don't search for failed vars, and don't search for vars\n");
-    printf("                     doubly propagated to the same value\n");
+    printf("  --nofailedlit    = Don't search for failed literals, and don't search for lits\n");
+    printf("                     propagated both by 'varX' and '-varX'\n");
     printf("  --noheuleprocess = Don't try to minimise XORs by XOR-ing them together.\n");
     printf("                     Algo. as per global/local substitution in Heule's thesis\n");
     printf("  --nosatelite     = Don't do clause subsumption, clause strengthening and\n");
@@ -277,12 +277,9 @@ void Main::printUsage(char** argv)
     //printf("                     These learnts are usually deleted, but may help\n");
     printf("  --nohyperbinres  = Don't add binary clauses when doing failed lit probing.\n");
     printf("  --noremovebins   = Don't remove useless binary clauses at the beginnning\n");
-    printf("  --noregremovebins= Don't remove useless binary clauses regularly\n");
-    printf("  --nosubswithnbins= Don't subsume with binary clauses\n");
+    printf("  --nosubswithbins = Don't subsume with binary clauses\n");
     printf("  --nosubswithnbins= Don't subsume with non-existent binary clauses\n");
-    printf("  --norsubswithbins= Don't subsume with non-existent bins regularly \n");
     printf("  --noclausevivif  = Don't do perform clause vivification\n");
-    printf("  --norasymm       = Don't do asymmetric branching regularly\n");
     printf("  --nosortwatched  = Don't sort watches according to size: bin, tri, etc.\n");
     printf("  --nolfminim      = Don't do on-the-fly self-subsuming resolution\n");
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
@@ -485,7 +482,7 @@ void Main::parseCommandLine()
             debugNewVar = true;
         } else if ((value = hasPrefix(argv[i], "--novarreplace"))) {
             conf.doReplace = false;
-        } else if ((value = hasPrefix(argv[i], "--nofailedvar"))) {
+        } else if ((value = hasPrefix(argv[i], "--nofailedlit"))) {
             conf.doFailedLit = false;
         } else if ((value = hasPrefix(argv[i], "--nodisablegauss"))) {
             gaussconfig.dontDisable = true;
