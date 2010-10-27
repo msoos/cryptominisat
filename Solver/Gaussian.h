@@ -55,7 +55,7 @@ public:
     ~Gaussian();
 
     const bool full_init();
-    llbool find_truths(vec<Lit>& learnt_clause, int& conflictC);
+    llbool find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC);
 
     //statistics
     void print_stats() const;

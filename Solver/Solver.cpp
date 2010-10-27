@@ -1912,10 +1912,10 @@ clauseset is found. If all variables are decision variables, this means
 that the clause set is satisfiable. 'l_False' if the clause set is
 unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 */
-lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const bool update)
+lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const bool update)
 {
     assert(ok);
-    int         conflictC = 0;
+    uint64_t    conflictC = 0;
     vec<Lit>    learnt_clause;
     llbool      ret;
 
@@ -1966,7 +1966,7 @@ lbool Solver::search(int nof_conflicts, int nof_conflicts_fullrestart, const boo
 @returns l_Undef if it should restart instead. l_False if it reached UNSAT
          (through simplification)
 */
-llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_fullrestart, int& conflictC)
+llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const uint64_t conflictC)
 {
 
     // Reached bound on number of conflicts?
@@ -1994,7 +1994,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
         }
         break;
     case static_restart:
-        if (nof_conflicts >= 0 && conflictC >= nof_conflicts) {
+        if (conflictC >= nof_conflicts) {
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
                 progress_estimate = progressEstimate();
@@ -2007,7 +2007,7 @@ llbool Solver::new_decision(const int& nof_conflicts, const int& nof_conflicts_f
         assert(false);
         break;
     }
-    if (nof_conflicts_fullrestart >= 0 && (int)conflicts >= nof_conflicts_fullrestart)  {
+    if (conflicts >= nof_conflicts_fullrestart)  {
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis)
             progress_estimate = progressEstimate();
@@ -2080,7 +2080,7 @@ conflict analysis, but this is the code that actually replaces the original
 clause with that of the shorter one
 @returns l_False if UNSAT
 */
-llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, int& conflictC, const bool update)
+llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& conflictC, const bool update)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Handling conflict: ";
@@ -2325,9 +2325,9 @@ If so, we also do the things to be done if the full restart is effected.
 Currently, this means we try to find disconnected components and solve
 them with sub-solvers using class PartHandler
 */
-const bool Solver::checkFullRestart(int& nof_conflicts, int& nof_conflicts_fullrestart, uint32_t& lastFullRestart)
+const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart)
 {
-    if (nof_conflicts_fullrestart > 0 && (int)conflicts >= nof_conflicts_fullrestart) {
+    if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
         #ifdef USE_GAUSS
         clearGaussMatrixes();
         #endif //USE_GAUSS
@@ -2466,8 +2466,8 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     assumps.copyTo(assumptions);
     initialiseSolver();
-    int       nof_conflicts = conf.restart_first; //Geometric restart policy, start with this many
-    int       nof_conflicts_fullrestart = conf.restart_first * FULLRESTART_MULTIPLIER + conflicts; //at this point, do a full restart
+    uint64_t  nof_conflicts = conf.restart_first; //Geometric restart policy, start with this many
+    uint64_t  nof_conflicts_fullrestart = conf.restart_first * FULLRESTART_MULTIPLIER + conflicts; //at this point, do a full restart
     uint32_t  lastFullRestart = starts; //last time a full restart was made was at this number of restarts
     lbool     status = l_Undef; //Current status
     uint64_t  nextSimplify = conf.restart_first * conf.simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
@@ -2488,7 +2488,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
         assert(xorSubsumer->checkElimedUnassigned());
         #endif //DEBUG_VARELIM
 
-        if ((conflicts - lastConflPrint) > std::max(conflicts/100*6, (uint64_t)4000)) {
+        if ((conflicts - lastConflPrint) > std::min(std::max(conflicts/100*6, (uint64_t)4000), (uint64_t)20000)) {
             printRestartStat("N");
             lastConflPrint = conflicts;
         }
@@ -2497,7 +2497,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
             status = simplifyProblem(conf.simpBurstSConf);
             printRestartStat();
             lastConflPrint = conflicts;
-            nextSimplify = conflicts * conf.simpStartMMult;
+            nextSimplify = std::min((uint64_t)((double)conflicts * conf.simpStartMMult), conflicts + MAX_CONFL_BETWEEN_SIMPLIFY);
             if (status != l_Undef) break;
         }
 
@@ -2508,10 +2508,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
         }
         #endif
 
-        status = search(nof_conflicts, nof_conflicts_fullrestart);
+        status = search(nof_conflicts, std::min(nof_conflicts_fullrestart, nextSimplify));
         nof_conflicts = (double)nof_conflicts * conf.restart_inc;
         if (status != l_Undef) break;
-        if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart, lastFullRestart))
+        if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart , lastFullRestart))
             return l_False;
         if (!chooseRestartType(lastFullRestart))
             return l_False;

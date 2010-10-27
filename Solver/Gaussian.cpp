@@ -806,7 +806,7 @@ void Gaussian::disable_if_necessary()
             disabled = true;
 }
 
-llbool Gaussian::find_truths(vec<Lit>& learnt_clause, int& conflictC)
+llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
 {
     Clause* confl;
 
