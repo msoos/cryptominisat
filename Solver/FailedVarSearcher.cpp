@@ -585,35 +585,35 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.ok = (solver.propagate(false).isNULL());
         if (!solver.ok) return false;
         return true;
-    } else {
-        assert(solver.decisionLevel() > 0);
-        for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-            Var x = solver.trail[c].var();
-            propagated.setBit(x);
-            if (solver.conf.doHyperBinRes) {
-                unPropagatedBin.setBit(x);
-                propagatedVars.push(x);
-            }
-            if (solver.assigns[x].getBool()) propValue.setBit(x);
-            else propValue.clearBit(x);
-
-            if (binXorFind) removeVarFromXors(x);
-        }
-
-        if (binXorFind) {
-            for (uint32_t *it = investigateXor.getData(), *end = investigateXor.getDataEnd(); it != end; it++) {
-                if (xorClauseSizes[*it] == 2)
-                    twoLongXors.insert(getTwoLongXor(*solver.xorclauses[*it]));
-            }
-            for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-                addVarFromXors(solver.trail[c].var());
-            }
-            xorClauseTouched.setZero();
-            investigateXor.clear();
-        }
-
-        solver.cancelUntil(0);
     }
+
+    assert(solver.decisionLevel() > 0);
+    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+        Var x = solver.trail[c].var();
+        propagated.setBit(x);
+        if (solver.conf.doHyperBinRes) {
+            unPropagatedBin.setBit(x);
+            propagatedVars.push(x);
+        }
+        if (solver.assigns[x].getBool()) propValue.setBit(x);
+        else propValue.clearBit(x);
+
+        if (binXorFind) removeVarFromXors(x);
+    }
+
+    if (binXorFind) {
+        for (uint32_t *it = investigateXor.getData(), *end = investigateXor.getDataEnd(); it != end; it++) {
+            if (xorClauseSizes[*it] == 2)
+                twoLongXors.insert(getTwoLongXor(*solver.xorclauses[*it]));
+        }
+        for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+            addVarFromXors(solver.trail[c].var());
+        }
+        xorClauseTouched.setZero();
+        investigateXor.clear();
+    }
+
+    solver.cancelUntil(0);
 
     //Hyper-binary resolution, and its accompanying data-structure cleaning
     if (solver.conf.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
@@ -630,64 +630,63 @@ const bool FailedVarSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.ok = (solver.propagate(false).isNULL());
         if (!solver.ok) return false;
         return true;
-    } else {
-        assert(solver.decisionLevel() > 0);
-        for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-            Var     x  = solver.trail[c].var();
-            if (propagated[x]) {
-                if (solver.conf.doHyperBinRes) {
-                    unPropagatedBin.setBit(x);
-                    propagatedVars.push(x);
-                }
-                if (propValue[x] == solver.assigns[x].getBool()) {
-                    //they both imply the same
-                    bothSame.push(Lit(x, !propValue[x]));
-                } else if (c != (int)solver.trail_lim[0]) {
-                    bool invert;
-                    if (lit1.var() == lit2.var()) {
-                        assert(lit1.sign() == false && lit2.sign() == true);
-                        tmpPs[0] = Lit(lit1.var(), false);
-                        tmpPs[1] = Lit(x, false);
-                        invert = propValue[x];
-                    } else {
-                        tmpPs[0] = Lit(lit1.var(), false);
-                        tmpPs[1] = Lit(lit2.var(), false);
-                        invert = lit1.sign() ^ lit2.sign();
-                    }
-                    binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], invert, 0));
-                    bothInvert += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
-                    toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
-                }
-            }
-            if (solver.assigns[x].getBool()) propValue.setBit(x);
-            else propValue.clearBit(x);
-            if (binXorFind) removeVarFromXors(x);
-        }
-
-        //We now add the two-long xors that have been found through longer
-        //xor-shortening
-        if (binXorFind) {
-            if (twoLongXors.size() > 0) {
-                for (uint32_t *it = investigateXor.getData(), *end = it + investigateXor.size(); it != end; it++) {
-                    if (xorClauseSizes[*it] == 2) {
-                        TwoLongXor tmp = getTwoLongXor(*solver.xorclauses[*it]);
-                        if (twoLongXors.find(tmp) != twoLongXors.end()) {
-                            tmpPs[0] = Lit(tmp.var[0], false);
-                            tmpPs[1] = Lit(tmp.var[1], false);
-                            binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], tmp.inverted, solver.xorclauses[*it]->getGroup()));
-                            newBinXor += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
-                            toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
-                        }
-                    }
-                }
-            }
-            for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-                addVarFromXors(solver.trail[c].var());
-            }
-        }
-
-        solver.cancelUntil(0);
     }
+
+    assert(solver.decisionLevel() > 0);
+    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+        Var     x  = solver.trail[c].var();
+        if (propagated[x]) {
+            if (solver.conf.doHyperBinRes) {
+                unPropagatedBin.setBit(x);
+                propagatedVars.push(x);
+            }
+            if (propValue[x] == solver.assigns[x].getBool()) {
+                //they both imply the same
+                bothSame.push(Lit(x, !propValue[x]));
+            } else if (c != (int)solver.trail_lim[0]) {
+                bool invert;
+                if (lit1.var() == lit2.var()) {
+                    assert(lit1.sign() == false && lit2.sign() == true);
+                    tmpPs[0] = Lit(lit1.var(), false);
+                    tmpPs[1] = Lit(x, false);
+                    invert = propValue[x];
+                } else {
+                    tmpPs[0] = Lit(lit1.var(), false);
+                    tmpPs[1] = Lit(lit2.var(), false);
+                    invert = lit1.sign() ^ lit2.sign();
+                }
+                binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], invert, 0));
+                bothInvert += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
+                toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
+            }
+        }
+        if (solver.assigns[x].getBool()) propValue.setBit(x);
+        else propValue.clearBit(x);
+        if (binXorFind) removeVarFromXors(x);
+    }
+
+    //We now add the two-long xors that have been found through longer
+    //xor-shortening
+    if (binXorFind) {
+        if (twoLongXors.size() > 0) {
+            for (uint32_t *it = investigateXor.getData(), *end = it + investigateXor.size(); it != end; it++) {
+                if (xorClauseSizes[*it] == 2) {
+                    TwoLongXor tmp = getTwoLongXor(*solver.xorclauses[*it]);
+                    if (twoLongXors.find(tmp) != twoLongXors.end()) {
+                        tmpPs[0] = Lit(tmp.var[0], false);
+                        tmpPs[1] = Lit(tmp.var[1], false);
+                        binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], tmp.inverted, solver.xorclauses[*it]->getGroup()));
+                        newBinXor += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
+                        toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
+                    }
+                }
+            }
+        }
+        for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+            addVarFromXors(solver.trail[c].var());
+        }
+    }
+    solver.cancelUntil(0);
 
     if (solver.conf.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
 
