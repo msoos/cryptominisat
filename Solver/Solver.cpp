@@ -2444,6 +2444,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     uint32_t  lastFullRestart = starts; //last time a full restart was made was at this number of restarts
     lbool     status = l_Undef; //Current status
     uint64_t  nextSimplify = conf.restart_first * conf.simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
+    if (!conf.doSchedSimp) nextSimplify = std::numeric_limits<uint64_t>::max();
 
     if (conflicts == 0) {
         if (conf.doPerformPreSimp) performStepsBeforeSolve();
