@@ -1749,7 +1749,7 @@ void Solver::reduceDB()
     #endif
 
 
-    const uint32_t removeNum = (double)learnts.size() / (double)RATIOREMOVECLAUSES;
+    const uint32_t removeNum = (double)learnts.size() * (double)RATIOREMOVECLAUSES;
     uint32_t totalNumRemoved = 0;
     uint32_t totalNumNonRemoved = 0;
     uint64_t totalGlueOfRemoved = 0;
