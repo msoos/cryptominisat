@@ -1707,10 +1707,7 @@ bool  reduceDB_ltMiniSat::operator () (const Clause* x, const Clause* y) {
     const uint32_t xsize = x->size();
     const uint32_t ysize = y->size();
 
-    // First criteria
-    if (xsize > 2 && ysize == 2) return 1;
-    if (ysize > 2 && xsize == 2) return 0;
-
+    assert(xsize > 2 && ysize > 2);
     if (x->getMiniSatAct() == y->getMiniSatAct())
         return xsize > ysize;
     else return x->getMiniSatAct() < y->getMiniSatAct();
@@ -1720,10 +1717,7 @@ bool  reduceDB_ltGlucose::operator () (const Clause* x, const Clause* y) {
     const uint32_t xsize = x->size();
     const uint32_t ysize = y->size();
 
-    // First criteria
-    if (xsize > 2 && ysize == 2) return 1;
-    if (ysize > 2 && xsize == 2) return 0;
-
+    assert(xsize > 2 && ysize > 2);
     if (x->getGlue() > y->getGlue()) return 1;
     if (x->getGlue() < y->getGlue()) return 0;
     return xsize > ysize;
@@ -1764,7 +1758,7 @@ void Solver::reduceDB()
     uint64_t totalSizeOfNonRemoved = 0;
     for (i = j = 0; i != removeNum; i++){
         if (i+1 < removeNum) __builtin_prefetch(learnts[i+1], 0, 0);
-        if (learnts[i]->size() > 2 && !locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->getGlue() > 2)) {
+        if (!locked(*learnts[i]) && (lastSelectedRestartType == static_restart || learnts[i]->getGlue() > 2)) {
             totalGlueOfRemoved += learnts[i]->getGlue();
             totalSizeOfRemoved += learnts[i]->size();
             totalNumRemoved++;
