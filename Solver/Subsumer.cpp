@@ -1128,7 +1128,7 @@ void Subsumer::subsumeBinsWithBins()
         ws.shrink_(i-j);
     }
 
-    if (solver.conf.verbosity  >= 3) {
+    if (solver.conf.verbosity  >= 1) {
         std::cout << "c bin-w-bin subsume rem   "
         << std::setw(10) << (numBinsBefore - solver.numBins) << " bins "
         << " time: "
