@@ -1614,7 +1614,6 @@ PropBy Solver::propagateBin(const bool alsoLearnt)
 
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
-                //uncheckedEnqueue(k->impliedLit, k->clause);
                 uncheckedEnqueueLight(k->getOtherLit());
             } else if (val == l_False) {
                 return PropBy(p);

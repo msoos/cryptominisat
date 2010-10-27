@@ -658,7 +658,7 @@ propagating it only at the binary level
 void FailedLitSearcher::fillImplies(const Lit& lit)
 {
     solver.newDecisionLevel();
-    solver.uncheckedEnqueue(lit);
+    solver.uncheckedEnqueueLight(lit);
     failed = (!solver.propagate(false).isNULL());
     assert(!failed);
 
