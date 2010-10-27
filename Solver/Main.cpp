@@ -750,9 +750,10 @@ const int Main::oneThreadSolve()
         myConf.simpBurstSConf *= 1.0 + num;
         myConf.simpStartMult *= 1.0 + 0.2*num;
         myConf.simpStartMMult *= 1.0 + 0.2*num;
-        if (num == numThreads-1 && numThreads > 2) {
+        if (num == numThreads-1) {
             //myConf.doVarElim = false;
             myConf.doPerformPreSimp = false;
+            myConf.polarity_mode = polarity_false;
         }
     }
     if (num != 0) myConf.verbosity = 0;
