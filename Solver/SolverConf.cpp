@@ -36,6 +36,7 @@ SolverConf::SolverConf() :
         , simpStartMMult(SIMPLIFY_MULTIPLIER_MULTIPLIER)
 
         , doPerformPreSimp (true)
+        , failedLitMultiplier(2.0)
 
         //optimisations to do
         , doFindXors       (true)

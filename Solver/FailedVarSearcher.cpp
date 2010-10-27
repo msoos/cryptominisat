@@ -175,7 +175,7 @@ const bool FailedVarSearcher::search()
     //If failed var searching is going good, do successively more and more of it
     if ((double)lastTimeFoundTruths > (double)solver.order_heap.size() * 0.10) numPropsMultiplier = std::max(numPropsMultiplier*1.3, 2.0);
     else numPropsMultiplier = 1.0;
-    numProps = (uint64_t) ((double)numProps * numPropsMultiplier);
+    numProps = (uint64_t) ((double)numProps * numPropsMultiplier * solver.conf.failedLitMultiplier);
 
     //For BothSame
     propagated.resize(solver.nVars(), 0);
