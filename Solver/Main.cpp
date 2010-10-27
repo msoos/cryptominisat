@@ -93,12 +93,11 @@ void SIGINT_handler(int signum)
     {
         Solver& solver = *solversToInterrupt.begin()->second;
         printf("\n");
-        printf("*** INTERRUPTED ***\n");
+        std::cerr << "*** INTERRUPTED ***" << std::endl;
         if (solver.conf.needToDumpLearnts || solver.conf.needToDumpOrig) {
             solver.needToInterrupt = true;
-            printf("*** Please wait. We need to interrupt cleanly\n");
-            printf("*** This means we might need to finish some calculations\n");
-            printf("*** INTERRUPTED ***\n");
+            std::cerr << "*** Please wait. We need to interrupt cleanly" << std::endl;
+            std::cerr << "*** This means we might need to finish some calculations" << std::endl;
         } else {
             if (solver.conf.verbosity >= 1) solver.printStats();
             exit(1);
