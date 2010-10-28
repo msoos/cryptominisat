@@ -1,3 +1,23 @@
+ver 2.8.0beta2 28/10/2010
+* Boost dependency removed through implementation of Tarjan's algorithm
+  by hand. This also implies a much reduced memory footprint in case
+  there were many binary clauses
+
+ver 2.8.0beta1 27/10/2010
+* Binary clauses are now implicit. This allows for _very_ large problems
+  that contain mostly only binary clauses to work surprisingly well in terms
+  of subsumption and self-subsuming resolution. Also, variable elimination
+  should now be possible for these clauses (been tested problem with 120
+  million binary clauses)
+* Due to implicit binary clauses, we use Tarjan's algorithm, currently
+  from Boost -- this dependency will be removed soon
+* A preliminary multi-threading is possible. Unitary and binary clauses are
+  shared between the threads at regular intervals. Threading is with OpenMP
+  which should be available for all platforms
+* Lots and lots of bugfixes. On many occasions, clauses and xor-clauses have
+  been inserted into the watchlists when these clauses' variables were
+  fixed, leading to some very bad effects.
+
 ver 2.7.1 -- 10/10/2010
 * Bug in DIMACS-parsing fixed. We couldn't read back the dumped clauses'
   learnt state properly, which lead to parsing problems. Thanks to
