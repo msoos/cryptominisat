@@ -627,7 +627,7 @@ void Main::parseCommandLine()
         if (twoFileNamesPresent) {
             std::cout << "c Outputting solution to file: " << argv[argc-1] << std::endl;
         } else {
-            std::cout << "c Ouptutting solution to console" << std::endl;
+            std::cout << "c Outputting solution to console" << std::endl;
         }
     }
 
