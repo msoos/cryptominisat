@@ -24,110 +24,85 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "time_mem.h"
 
 SCCFinder::SCCFinder(Solver& _solver) :
-    graph(_solver.nVars()*2)
-    , solver(_solver)
+    solver(_solver)
 {}
-
-void SCCFinder::fillGraph()
-{
-    uint32_t wsLit = 0;
-    for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit.var() < it2->getOtherLit().var()) {
-                Lit lit2 = it2->getOtherLit();
-                if ((lit.sign() ^ lit2.sign()) == true) {
-                    if (!lit.sign() && lit2.sign()) { //pos, neg
-                        boost::add_edge((~lit2).toInt(), (lit).toInt(), graph);
-                    } else { //neg, pos
-                        boost::add_edge((~lit).toInt(), (lit2).toInt(), graph);
-                    }
-                } else {
-                    if (lit.sign() && lit2.sign()) { //neg, neg
-                        boost::add_edge((~lit).toInt(), (lit2).toInt(), graph);
-                    } else { //pos, pos
-                        boost::add_edge((~lit2).toInt(), (lit).toInt(), graph);
-                    }
-                }
-            }
-        }
-    }
-}
-
-void SCCFinder::readGraph()
-{
-    boost::graph_traits < boost::adjacency_list <> >::vertex_iterator it, end;
-    boost::graph_traits < boost::adjacency_list <> >::adjacency_iterator ai, a_end;
-    boost::property_map < boost::adjacency_list <>, boost::vertex_index_t >::type
-    index_map = get(boost::vertex_index, graph);
-
-    for (boost::tie(it, end) = boost::vertices(graph); it != end; ++it) {
-        std::cout << Lit::toLit(get(index_map, *it));
-        boost::tie(ai, a_end) = boost::adjacent_vertices(*it, graph);
-        if (ai == a_end)
-            std::cout << " has no children";
-        else
-            std::cout << " is the parent of ";
-        for (; ai != a_end; ++ai) {
-            std::cout << Lit::toLit(get(index_map, *ai));
-            if (boost::next(ai) != a_end)   std::cout << ", ";
-        }
-        std::cout << std::endl;
-    }
-}
 
 const bool SCCFinder::find2LongXors()
 {
     double myTime = cpuTime();
-    numXors = 0;
+    uint32_t oldNumReplace = solver.varReplacer->getNewToReplaceVars();
 
-    graph.clear();
-    fillGraph();
-    const bool retval = findSCC();
+    globalIndex = 0;
+    index.clear();
+    index.resize(solver.nVars()*2, std::numeric_limits<uint32_t>::max());
+    lowlink.clear();
+    lowlink.resize(solver.nVars()*2, std::numeric_limits<uint32_t>::max());
+    stackIndicator.clear();
+    stackIndicator.growTo(solver.nVars()*2, false);
+    assert(stack.empty());
+
+    for (uint32_t vertex = 0; vertex < solver.nVars()*2; vertex++) {
+        //Start a DFS at each node we haven't visited yet
+        if (index[vertex] == std::numeric_limits<uint32_t>::max())
+             tarjan(vertex);
+    }
 
     if (solver.conf.verbosity  > 2 || (solver.conflicts == 0 && solver.conf.verbosity  >= 1)) {
         std::cout << "c Finding binary XORs  T: "
         << std::fixed << std::setprecision(2) << std::setw(8) <<  (cpuTime() - myTime) << " s"
-        << "  found: " << std::setw(7) << (numXors/2)
+        << "  found: " << std::setw(7) << solver.varReplacer->getNewToReplaceVars() - oldNumReplace
         << std::endl;
     }
 
-    return retval;
+    return solver.ok;
 }
 
-const bool SCCFinder::findSCC()
+void SCCFinder::tarjan(uint32_t vertex)
 {
-    std::vector<uint32_t> component(boost::num_vertices(graph));
-    std::vector<uint32_t> root(boost::num_vertices(graph));
-    boost::strong_components(graph, &component[0], boost::root_map(&root[0]));
+    index[vertex] = globalIndex;  // Set the depth index for v
+    lowlink[vertex] = globalIndex;
+    globalIndex++;
+    stack.push(vertex); // Push v on the stack
+    stackIndicator[vertex] = true;
 
-    vec<Lit> lits(2);
-    for (std::vector<uint32_t>::size_type i = 0; i != component.size(); i++) {
-        if (i != boost::get(&root[0], i)) {
-            //std::cout << "Vertex " << Lit::toLit(i) << " is in component " << component[i] << std::endl;
-            //std::cout << "Its root vertex is:" << Lit::toLit(boost::get(&root[0], i)) << std::endl;
-            lits[0] = Lit::toLit(i);
-            lits[1] = Lit::toLit(boost::get(&root[0], i));
-            assert(lits[0] != lits[1]);
+    vec<Watched>& ws = solver.watches[(Lit::toLit(vertex)).toInt()];
+    // Consider successors of v
+    for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+        if (!it->isBinary()) continue;
+        Lit lit = it->getOtherLit();
 
-            if (lits[0] == ~lits[1]) {
-                solver.ok = false;
-                return false;
-            }
-
-            bool xorEqualsFalse = true;
-            xorEqualsFalse ^= lits[0].sign() ^ lits[1].sign();
-            lits[0] = lits[0].unsign();
-            lits[1] = lits[1].unsign();
-
-            solver.addXorClauseInt(lits, xorEqualsFalse, 0, true);
-            lits.clear();
-            lits.growTo(2);
-            if (!solver.ok) return false;
-            numXors++;
+        // Was successor v' visited?
+        if (index[lit.toInt()] ==  std::numeric_limits<uint32_t>::max()) {
+            tarjan(lit.toInt());
+            lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
+        } else if (stackIndicator[lit.toInt()])  {
+            lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
         }
     }
 
-    return true;
+    // Is v the root of an SCC?
+    if (lowlink[vertex] == index[vertex]) {
+        uint32_t vprime;
+        tmp.clear();
+        do {
+            assert(!stack.empty());
+            vprime = stack.top();
+            stack.pop();
+            stackIndicator[vprime] = false;
+            tmp.push(vprime);
+        } while (vprime != vertex);
+        if (tmp.size() >= 2) {
+            for (uint32_t i = 1; i < tmp.size(); i++) {
+                Lit lit1 = Lit::toLit(tmp[0]);
+                Lit lit2 = Lit::toLit(tmp[i]);
+                bool inverted = lit1.sign() ^ lit2.sign() ^ true;
+                if (solver.ok) {
+                    vec<Lit> lits(2);
+                    lits[0] = lit1.unsign();
+                    lits[1] = lit2.unsign();
+                    solver.addXorClause(lits, inverted);
+                }
+            }
+        }
+    }
 }

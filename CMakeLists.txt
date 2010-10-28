@@ -22,7 +22,6 @@ find_package(ZLIB  REQUIRED)
 link_directories( ${ZLIB_LIBRARY} )
 include_directories( ${ZLIB_INCLUDE_DIR} )
 
-find_package(Boost REQUIRED)
 FIND_PACKAGE(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 

@@ -21,11 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Vec.h"
 #include "Clause.h"
 #include "Solver.h"
-
-#include <boost/config.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/graph/strong_components.hpp>
+#include <stack>
 
 class SCCFinder {
     public:
@@ -33,10 +29,15 @@ class SCCFinder {
         const bool find2LongXors();
 
     private:
-        boost::adjacency_list <boost::vecS, boost::vecS, boost::directedS> graph;
-        void fillGraph();
-        void readGraph();
-        const bool findSCC();
+        void tarjan(uint32_t vertex);
+
+
+        uint32_t globalIndex;
+        vector<uint32_t> index;
+        vector<uint32_t> lowlink;
+        std::stack<uint32_t> stack;
+        vec<char> stackIndicator;
+        vec<uint32_t> tmp;
 
         uint32_t numXors;
         Solver& solver;

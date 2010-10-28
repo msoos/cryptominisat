@@ -7,9 +7,6 @@ increase the stack to a certain size. Setting it to 2 MB is good enough
 ZLIB might also pose problems. If you cannot correctly compile it under
 windows, I suggest you add the -DDISABLE_ZLIB to your compilation flags.
 
-You also need BOOST for the moment to compile the program. This is due to
-Tarjan's algorithm used to find strongly connected components
-
 The compilation instruction should finally be:
 
 cl /favor:INTEL64 /O2 /Fecryptominisat64.exe -DVERSION="__DATE__" \

@@ -36,7 +36,7 @@ AC_DEFINE([USE_GAUSS])
 AC_OPENMP
 
 #search for boost
-m4_include(m4-extra/boost.m4)
-BOOST_REQUIRE(1.40)
+#m4_include(m4-extra/boost.m4)
+#BOOST_REQUIRE(1.40)
 
 AC_OUTPUT(Makefile Solver/Makefile)

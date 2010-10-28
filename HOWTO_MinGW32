@@ -9,23 +9,8 @@ http://man.gnusquad.org/i586-mingw32msvc-ar/section-1/en/
 64-bit mingw32 build instructions:
 http://www.cadforte.com/wiki/index.php/How_to_build
 
-building libraries:
-http://wiki.njh.eu/Cross_Compiling_for_Win32
-
-http://stackoverflow.com/questions/1399252/boost-cross-compile-from-linux-to-windows
-
-in my user-config.jam: "using gcc : m : i586-mingw32msvc-g++ ;". I then run: "bjam toolset=gcc-m target-os=windows variant=debug --with-program_options".     
-So the whole command is: "./bjam --layout=system variant=release threading=multi link=shared runtime-link=shared toolset=gcc target-os=windows threadapi=win32 stage". cannot compile these libraries: -graph -graph_parallel -iostreams -math (partly) -python The others can be compiled.
-
-use --without-xxx to disable building unneeded libraries
-
-boost build:
-./bootstrap
-
-./bjam --layout=system variant=release threading=multi link=shared runtime-link=shared toolset=gcc target-os=windows threadapi=win32 --without-graph --without-graph_parallel --without-iostreams --without-math --without-python stage
-
 *****************************
-how to compile stuff on debian mingw32-w32
+how to compile zlib on debian mingw32-w32
 *****************************
 make line:
 PATH=/usr/i586-mingw32msvc/bin:$PATH \ 
@@ -40,9 +25,8 @@ i586-mingw32msvc-ar qs libz.a adler32.o \
 
 make install PREFIX=/usr/i586-mingw32msvc
 
-
 *****************************
-how to compile stuff on debian mingw32-w64
+how to compile zlib on debian mingw32-w64
 *****************************
 make line:
 PATH=/usr/x86_64-w64-mingw32/bin:$PATH \
