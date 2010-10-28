@@ -39,14 +39,10 @@ class Main
         void printResultFunc(const Solver& S, const lbool ret, FILE* res);
 
         //File reading
-        template<class B>
-        void readInAFile(B stuff, Solver& solver);
+        void readInAFile(const std::string& filename, Solver& solver);
+        void readInStandardInput(Solver& solver);
         void parseInAllFiles(Solver& solver);
         FILE* openOutputFile();
-        #ifndef DISABLE_ZLIB
-        gzFile openGzFile(int inNum);
-        gzFile openGzFile(const char* name);
-        #endif //DISABLE_ZLIB
 
         void setDoublePrecision(const uint32_t verbosity);
         void printVersionInfo(const uint32_t verbosity);

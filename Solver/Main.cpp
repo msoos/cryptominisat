@@ -105,38 +105,19 @@ void SIGINT_handler(int signum)
     }
 }
 
-#ifndef DISABLE_ZLIB
-gzFile Main::openGzFile(int inNum)
-{
-    gzFile in = gzdopen(inNum, "rb");
-    return in;
-}
-
-gzFile Main::openGzFile(const char* name)
-{
-    gzFile in = gzopen(name, "rb");
-    return in;
-}
-#endif //DISABLE_ZLIB
-
-template<class B>
-void Main::readInAFile(B stuff, Solver& solver)
+void Main::readInAFile(const std::string& filename, Solver& solver)
 {
     if (solver.conf.verbosity >= 1) {
-        if ((const char*)stuff == (const char*)fileno(stdin)) {
-            std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
-        } else {
-            std::cout << "c Reading file '" << stuff << "'" << std::endl;
-        }
+        std::cout << "c Reading file '" << filename << "'" << std::endl;
     }
     #ifdef DISABLE_ZLIB
-        FILE * in = fopen(stuff, "rb");
+        FILE * in = fopen(filename.c_str(), "rb");
     #else
-        gzFile in = openGzFile(stuff);
+        gzFile in = gzopen(filename.c_str(), "rb");
     #endif // DISABLE_ZLIB
 
     if (in == NULL) {
-        std::cout << "ERROR! Could not open file " << stuff << std::endl;
+        std::cout << "ERROR! Could not open file '" << filename << "' for reading" << std::endl;
         exit(1);
     }
 
@@ -149,6 +130,34 @@ void Main::readInAFile(B stuff, Solver& solver)
         gzclose(in);
     #endif // DISABLE_ZLIB
 }
+
+void Main::readInStandardInput(Solver& solver)
+{
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
+    }
+    #ifdef DISABLE_ZLIB
+        FILE * in = fopen(fileno(stdin), "rb");
+    #else
+        gzFile in = gzdopen(fileno(stdin), "rb");
+    #endif // DISABLE_ZLIB
+
+    if (in == NULL) {
+        std::cout << "ERROR! Could not open standard input for reading" << std::endl;
+        exit(1);
+    }
+
+    DimacsParser parser(&solver, debugLib, debugNewVar, grouping);
+    parser.parse_DIMACS(in);
+
+    #ifdef DISABLE_ZLIB
+        fclose(in);
+    #else
+        gzclose(in);
+    #endif // DISABLE_ZLIB
+}
+
+
 
 void Main::parseInAllFiles(Solver& solver)
 {
@@ -165,7 +174,7 @@ void Main::parseInAllFiles(Solver& solver)
 
     //Then read the main file or standard input
     if (!fileNamePresent) {
-        readInAFile(fileno(stdin), solver);
+        readInStandardInput(solver);
     } else {
         readInAFile(argv[(twoFileNamesPresent ? argc-2 : argc-1)], solver);
     }
