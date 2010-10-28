@@ -238,7 +238,7 @@ private:
     uint32_t numblockedClauseRemoved;
     const bool tryOneSetting(const Lit lit, const Lit negLit);
     priority_queue<VarOcc, vector<VarOcc>, MyComp> touchedBlockedVars;
-    vec<bool> touchedBlockedVarsBool;
+    vec<char> touchedBlockedVarsBool;
     void touchBlockedVar(const Var x);
     double blockTime;
 

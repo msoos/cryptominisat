@@ -61,7 +61,7 @@ class VarReplacer
         const bool replacingVar(const Var var) const;
         void newVar();
 
-        vec<bool> cannot_eliminate;
+        vec<char> cannot_eliminate;
 
         //No need to update, only stores binary clauses, that
         //have been allocated within pool
