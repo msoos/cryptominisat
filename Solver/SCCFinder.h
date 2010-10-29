@@ -29,8 +29,7 @@ class SCCFinder {
         const bool find2LongXors();
 
     private:
-        void tarjan(uint32_t vertex);
-
+        void tarjan(const uint32_t vertex);
 
         uint32_t globalIndex;
         vector<uint32_t> index;
@@ -39,7 +38,9 @@ class SCCFinder {
         vec<char> stackIndicator;
         vec<uint32_t> tmp;
 
-        uint32_t numXors;
+        uint32_t recurDepth;
+        uint32_t maxRecurDepth;
+
         Solver& solver;
 };
 

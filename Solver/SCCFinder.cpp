@@ -43,9 +43,13 @@ const bool SCCFinder::find2LongXors()
 
     for (uint32_t vertex = 0; vertex < solver.nVars()*2; vertex++) {
         //Start a DFS at each node we haven't visited yet
-        if (index[vertex] == std::numeric_limits<uint32_t>::max())
-             tarjan(vertex);
+        if (index[vertex] == std::numeric_limits<uint32_t>::max()) {
+            recurDepth = 0;
+            tarjan(vertex);
+            assert(stack.empty());
+        }
     }
+    //std::cout << "maximum recurDepth:" << maxRecurDepth << std::endl;
 
     if (solver.conf.verbosity  > 2 || (solver.conflicts == 0 && solver.conf.verbosity  >= 1)) {
         std::cout << "c Finding binary XORs  T: "
@@ -57,23 +61,26 @@ const bool SCCFinder::find2LongXors()
     return solver.ok;
 }
 
-void SCCFinder::tarjan(uint32_t vertex)
+void SCCFinder::tarjan(const uint32_t vertex)
 {
+    recurDepth++;
+    maxRecurDepth = std::max(recurDepth, maxRecurDepth);
     index[vertex] = globalIndex;  // Set the depth index for v
     lowlink[vertex] = globalIndex;
     globalIndex++;
     stack.push(vertex); // Push v on the stack
     stackIndicator[vertex] = true;
 
-    vec<Watched>& ws = solver.watches[(Lit::toLit(vertex)).toInt()];
+    const vec<Watched>& ws = solver.watches[(Lit::toLit(vertex)).toInt()];
     // Consider successors of v
-    for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+    for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
         if (!it->isBinary()) continue;
-        Lit lit = it->getOtherLit();
+        const Lit lit = it->getOtherLit();
 
         // Was successor v' visited?
         if (index[lit.toInt()] ==  std::numeric_limits<uint32_t>::max()) {
             tarjan(lit.toInt());
+            recurDepth--;
             lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
         } else if (stackIndicator[lit.toInt()])  {
             lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
@@ -93,14 +100,15 @@ void SCCFinder::tarjan(uint32_t vertex)
         } while (vprime != vertex);
         if (tmp.size() >= 2) {
             for (uint32_t i = 1; i < tmp.size(); i++) {
-                Lit lit1 = Lit::toLit(tmp[0]);
-                Lit lit2 = Lit::toLit(tmp[i]);
-                bool inverted = lit1.sign() ^ lit2.sign() ^ true;
-                if (solver.ok) {
-                    vec<Lit> lits(2);
-                    lits[0] = lit1.unsign();
-                    lits[1] = lit2.unsign();
-                    solver.addXorClause(lits, inverted);
+                if (!solver.ok) break;
+                vec<Lit> lits(2);
+                lits[0] = Lit::toLit(tmp[0]).unsign();
+                lits[1] = Lit::toLit(tmp[i]).unsign();
+                const bool xorEqualsFalse = Lit::toLit(tmp[0]).sign()
+                                            ^ Lit::toLit(tmp[i]).sign()
+                                            ^ true;
+                if (solver.value(lits[0]) == l_Undef && solver.value(lits[1]) == l_Undef) {
+                    solver.varReplacer->replace(lits, xorEqualsFalse, 0, true, false);
                 }
             }
         }

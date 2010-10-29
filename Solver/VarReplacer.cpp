@@ -555,7 +555,7 @@ know that c=h, in which case we don't do anything
 @p group of clause they have been inspired from. Sometimes makes no sense...
 */
 template<class T>
-const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt)
+const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt, const bool addToWatchLists)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
@@ -599,7 +599,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
 
     cannot_eliminate[lit1.var()] = true;
     cannot_eliminate[lit2.var()] = true;
-    addBinaryXorClause(lit1, lit2 ^ true, group, addBinAsLearnt);
+    if (addToWatchLists) addBinaryXorClause(lit1, lit2 ^ true, group, addBinAsLearnt);
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
@@ -621,8 +621,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     return true;
 }
 
-template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin);
-template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin);
+template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addToWatchLists);
+template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addToWatchLists);
 
 /**
 @brief Adds a binary xor to the internal/external clause set

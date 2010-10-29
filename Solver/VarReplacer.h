@@ -45,7 +45,7 @@ class VarReplacer
         const bool performReplace(const bool always = false);
         const bool needsReplace();
         template<class T>
-        const bool replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt = false);
+        const bool replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt = false, const bool addToWatchLists = true);
 
         void extendModelPossible() const;
         void extendModelImpossible(Solver& solver2) const;
