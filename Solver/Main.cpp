@@ -771,6 +771,7 @@ const int Main::oneThreadSolve()
     #pragma omp critical (solversToInterr)
     {
         solversToInterrupt[num] = &solver;
+        //std::cout << "Solver num " << num << " is to be interrupted " << std::endl;
     }
 
     printVersionInfo(myConf.verbosity);

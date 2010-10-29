@@ -853,7 +853,9 @@ void Solver::calculateDefaultPolarities()
             << std:: endl;
         }
     } else {
-        std::fill(polarity.begin(), polarity.end(), defaultPolarity());
+        for (uint32_t i = 0; i < polarity.size(); i++) {
+            polarity[i] = defaultPolarity();
+        }
     }
 
     #ifdef VERBOSE_DEBUG_POLARITIES
@@ -2324,6 +2326,11 @@ const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_confl
             return false;
 
         //calculateDefaultPolarities();
+        if (conf.polarity_mode != polarity_auto) {
+            for (uint32_t i = 0; i < polarity.size(); i++) {
+                polarity[i] = defaultPolarity();
+            }
+        }
 
         fullStarts++;
     }
