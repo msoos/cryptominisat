@@ -599,7 +599,27 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
 
     cannot_eliminate[lit1.var()] = true;
     cannot_eliminate[lit2.var()] = true;
-    if (addToWatchLists) addBinaryXorClause(lit1, lit2 ^ true, group, addBinAsLearnt);
+    if (addToWatchLists) {
+        lbool val1 = solver.value(lit1);
+        lbool val2 = solver.value(lit2);
+        if (val1 != l_Undef && val2 != l_Undef) {
+            if (val1 != val2) {
+                solver.ok = false;
+                return false;
+            }
+            return true;
+        }
+
+        if (val1 == l_Undef && val2 == l_Undef) {
+            addBinaryXorClause(lit1, lit2 ^ true, group, addBinAsLearnt);
+        } else {
+            //only combination left: exactly one l_Undef, exectly one l_True/l_False
+            if (val1 != l_Undef) solver.uncheckedEnqueue(lit2 ^ (val1 == l_False));
+            else solver.uncheckedEnqueue(lit1 ^ (val2 == l_False));
+            if (solver.ok) solver.ok = (solver.propagate().isNULL());
+            return true;
+        }
+    }
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
