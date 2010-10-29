@@ -1942,6 +1942,15 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
 llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const uint64_t conflictC)
 {
 
+    if (conflicts >= nof_conflicts_fullrestart || needToInterrupt)  {
+        #ifdef STATS_NEEDED
+        if (dynamic_behaviour_analysis)
+            progress_estimate = progressEstimate();
+        #endif
+        cancelUntil(0);
+        return l_Undef;
+    }
+
     // Reached bound on number of conflicts?
     switch (restartType) {
     case dynamic_restart:
@@ -1979,14 +1988,6 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
     case auto_restart:
         assert(false);
         break;
-    }
-    if (conflicts >= nof_conflicts_fullrestart || needToInterrupt)  {
-        #ifdef STATS_NEEDED
-        if (dynamic_behaviour_analysis)
-            progress_estimate = progressEstimate();
-        #endif
-        cancelUntil(0);
-        return l_Undef;
     }
 
     // Simplify the set of problem clauses:
