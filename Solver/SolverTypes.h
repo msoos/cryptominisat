@@ -21,6 +21,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #endif //_MSC_VER
 
 #include <stdio.h>
+#include "constants.h"
 
 //=================================================================================================
 // Variables, literals, lifted booleans, clauses:
