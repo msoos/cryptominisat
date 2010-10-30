@@ -107,14 +107,14 @@ static void    removeWXCl(vec<Watched> &ws, const ClauseOffset c);
 static inline bool findWCl(const vec<Watched>& ws, const ClauseOffset c)
 {
     uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getOffset() != c); j++);
+    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getNormOffset() != c); j++);
     return j < ws.size();
 }
 
 static inline void removeWCl(vec<Watched> &ws, const ClauseOffset c)
 {
     uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getOffset() != c); j++);
+    for (; j < ws.size() && (!ws[j].isClause() || ws[j].getNormOffset() != c); j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();
@@ -126,14 +126,14 @@ static inline void removeWCl(vec<Watched> &ws, const ClauseOffset c)
 static inline bool findWXCl(const vec<Watched>& ws, const ClauseOffset c)
 {
     uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getOffset() != c); j++);
+    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getXorOffset() != c); j++);
     return j < ws.size();
 }
 
 static inline void removeWXCl(vec<Watched> &ws, const ClauseOffset c)
 {
     uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getOffset() != c); j++);
+    for (; j < ws.size() && (!ws[j].isXorClause() || ws[j].getXorOffset() != c); j++);
     assert(j < ws.size());
     for (; j < ws.size()-1; j++) ws[j] = ws[j+1];
     ws.pop();

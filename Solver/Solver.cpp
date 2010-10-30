@@ -1425,7 +1425,8 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
         *j++ = *i;
         return;
     }
-    Clause& c = *clauseAllocator.getPointer(i->getOffset());
+    uint32_t offset = i->getNormOffset();
+    Clause& c = *clauseAllocator.getPointer(offset);
 
     // Make sure the false literal is data[1]:
     const Lit false_lit(~p);
@@ -1439,8 +1440,8 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
     // If 0th watch is true, then clause is already satisfied.
     const Lit& first = c[0];
     if (value(first).getBool()) {
-        j->setClause();
-        j->setOffset(i->getOffset());
+        j->setNormClause();
+        j->setNormOffset(offset);
         j->setBlockedLit(first);
         j++;
     } else {
@@ -1449,7 +1450,7 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
             if (value(*k) != l_False) {
                 c[1] = *k;
                 *k = false_lit;
-                watches[(~c[1]).toInt()].push(Watched(i->getOffset(), c[0]));
+                watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
                 return;
             }
         }
@@ -1490,7 +1491,7 @@ better memory-accesses since the watchlist is already in the memory...
 */
 inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
 {
-    XorClause& c = *(XorClause*)clauseAllocator.getPointer(i->getOffset());
+    XorClause& c = *(XorClause*)clauseAllocator.getPointer(i->getXorOffset());
 
     // Make sure the false literal is data[1]:
     if (c[0].var() == p.var()) {
@@ -1507,9 +1508,9 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
             Lit tmp(c[1]);
             c[1] = c[k];
             c[k] = tmp;
-            removeWXCl(watches[(~p).toInt()], i->getOffset());
-            watches[Lit(c[1].var(), false).toInt()].push(i->getOffset());
-            watches[Lit(c[1].var(), true).toInt()].push(i->getOffset());
+            removeWXCl(watches[(~p).toInt()], i->getXorOffset());
+            watches[Lit(c[1].var(), false).toInt()].push(i->getXorOffset());
+            watches[Lit(c[1].var(), true).toInt()].push(i->getXorOffset());
             return;
         }
 

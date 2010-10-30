@@ -471,7 +471,11 @@ void ClauseAllocator::updateOffsets(vec<vec<Watched> >& watches)
         vec<Watched>& list = watches[i];
         for (Watched *it = list.getData(), *end = list.getDataEnd(); it != end; it++) {
             if (!it->isClause() && !it->isXorClause()) continue;
-            it->setOffset(((NewPointerAndOffset*)(getPointer(it->getOffset())))->newOffset);
+            if (it->isClause()) {
+                it->setNormOffset(((NewPointerAndOffset*)(getPointer(it->getNormOffset())))->newOffset);
+            } else {
+                it->setXorOffset(((NewPointerAndOffset*)(getPointer(it->getXorOffset())))->newOffset);
+            }
         }
     }
 }

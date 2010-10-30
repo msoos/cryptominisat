@@ -102,8 +102,11 @@ void Solver::printStrangeBinLit(const Lit lit) const
             std::cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << std::endl;
         } else if (it2->isTriClause()) {
             std::cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << std::endl;
+        } else if (it2->isClause()) {
+            std::cout << "cla:" << it2->getNormOffset() << std::endl;
         } else {
-            std::cout << "cla:" << it2->getOffset() << std::endl;
+            assert(it2->isXorClause());
+            std::cout << "xor:" << it2->getXorOffset() << std::endl;
         }
     }
 }
