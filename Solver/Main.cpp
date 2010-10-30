@@ -150,9 +150,7 @@ void Main::readInStandardInput(Solver& solver)
     DimacsParser parser(&solver, debugLib, debugNewVar, grouping);
     parser.parse_DIMACS(in);
 
-    #ifdef DISABLE_ZLIB
-        fclose(in);
-    #else
+    #ifndef DISABLE_ZLIB
         gzclose(in);
     #endif // DISABLE_ZLIB
 }
