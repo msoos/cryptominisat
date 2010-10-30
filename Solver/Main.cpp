@@ -137,7 +137,7 @@ void Main::readInStandardInput(Solver& solver)
         std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
     }
     #ifdef DISABLE_ZLIB
-        FILE * in = fileno(stdin);
+        FILE * in = stdin;
     #else
         gzFile in = gzdopen(fileno(stdin), "rb");
     #endif // DISABLE_ZLIB
