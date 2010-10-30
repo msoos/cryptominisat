@@ -1,3 +1,11 @@
+ver 2.8.0beta3 30/10/2010
+* Bug in hand-coded Tarjan's algorithm. We were manipulating the
+  watchlists while using them. This lead to a segfault.
+* Bug in replace() -- we were using replace(), but the clauses were
+  not always attached (e.g. in ClauseDetacherReattacher) and so
+  the added binary clause was not always l_Undef,l_Undef. A very
+  subtle bug that could have caused solution-sanity problems
+
 ver 2.8.0beta2 28/10/2010
 * Boost dependency removed through implementation of Tarjan's algorithm
   by hand. This also implies a much reduced memory footprint in case
