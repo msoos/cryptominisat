@@ -1,3 +1,8 @@
+ver 2.8.0beta4 31/10/2010
+* class Watched is now tuned more towards operations that
+  are executed more. These now require no bit-shifting
+* Bug fix: debug code left in from DimacsParser removed
+
 ver 2.8.0beta3 30/10/2010
 * Bug in hand-coded Tarjan's algorithm. We were manipulating the
   watchlists while using them. This lead to a segfault.
