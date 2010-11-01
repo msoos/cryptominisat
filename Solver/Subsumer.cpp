@@ -1135,6 +1135,7 @@ void Subsumer::subsumeBinsWithBins()
         << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime)
         << " s" << std::endl;
     }
+    totalTime += cpuTime() - myTime;
     clauses_subsumed += (numBinsBefore - solver.numBins);
 }
 
@@ -1176,17 +1177,18 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     }
     CompleteDetachReatacher reattacher(solver);
     reattacher.detachNonBins();
+    totalTime += myTime - cpuTime();
 
     //Do stuff with binaries
-    subsumeBinsWithBins();
+    if (!alsoLearnt) {
+        subsumeBinsWithBins();
+        numMaxSubsume0 = 1000000*numCalls;
+        if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
+        if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
+    }
 
-    totalTime += myTime - cpuTime();
-    numMaxSubsume0 = 1000000*numCalls;
-    if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-    if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
-
-    setLimits(alsoLearnt);
     myTime = cpuTime();
+    setLimits(alsoLearnt);
     clauses_subsumed = 0;
     literals_removed = 0;
     numblockedClauseRemoved = 0;
