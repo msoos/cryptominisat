@@ -131,9 +131,13 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
         }
 
         if (val == l_True) {
+            if (!c.learnt()) for (i++ ;i != end; i++) solver.subsumer->touchExternal(*i);
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             return true;
         }
+
+        //Lit *i is l_False, it is being removed
+        if (!c.learnt()) solver.subsumer->touchExternal(*i);
     }
     c.shrink(i-j);
 

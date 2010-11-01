@@ -91,11 +91,12 @@ static bool    findWCl(const vec<Watched>& ws, const ClauseOffset c);
 static void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
 
 //Binary clause
-//static bool    findWBin(const vec<Watched>& ws, const Lit impliedLit, const bool learnt);
+static bool    findWBin(const vec<vec<Watched> >& wsFull, const Lit lit1, const Lit impliedLit);
 static void    removeWBin(vec<Watched> &ws, const Lit impliedLit, const bool learnt);
 static void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
 static const std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
 static Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2, const bool learnt);
+static Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2);
 
 //Xor Clause
 static bool    findWXCl(const vec<Watched>& ws, const ClauseOffset c);
@@ -162,12 +163,13 @@ static inline void removeWTri(vec<Watched> &ws, const Lit lit1, const Lit lit2)
 //////////////////
 // BINARY Clause
 //////////////////
-/*static inline bool findWBin(const vec<Watched>& ws, const Lit impliedLit, const bool learnt)
+static inline bool findWBin(const vec<vec<Watched> >& wsFull, const Lit lit1, const Lit impliedLit)
 {
     uint32_t j = 0;
-    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit || ws[j].getLearnt() != learnt); j++);
+    const vec<Watched>& ws = wsFull[(~lit1).toInt()];
+    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
     return j < ws.size();
-}*/
+}
 
 static inline void removeWBin(vec<Watched> &ws, const Lit impliedLit, const bool learnt)
 {
@@ -205,6 +207,18 @@ static inline Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit li
     vec<Watched>& ws = wsFull[(~lit1).toInt()];
     for (Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
         if (i->isBinary() && i->getOtherLit() == lit2 && i->getLearnt() == learnt)
+            return *i;
+    }
+    assert(false);
+
+    return wsFull[0][0];
+}
+
+static inline Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2)
+{
+    vec<Watched>& ws = wsFull[(~lit1).toInt()];
+    for (Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+        if (i->isBinary() && i->getOtherLit() == lit2)
             return *i;
     }
     assert(false);

@@ -712,7 +712,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool
         Clause& cl = *c.clause;
         for (uint32_t i = 0; i < cl.size(); i++) {
             occur[cl[i].toInt()].push(c);
-            touch(cl[i].var());
+            touch(cl[i]);
         }
 
         if (addBinAndAddToCL) {
@@ -1026,9 +1026,9 @@ Clears touchlists, occurrance lists, clauses, and variable touched lists
 */
 void Subsumer::clearAll()
 {
-    touched_list.clear();
-    touched.clear();
-    touched.growTo(solver.nVars(), false);
+    touchedVarsList.clear();
+    touchedVars.clear();
+    touchedVars.growTo(solver.nVars(), false);
     for (Var var = 0; var < solver.nVars(); var++) {
         if (solver.decision_var[var] && solver.assigns[var] == l_Undef) touch(var);
         occur[2*var].clear();
@@ -1058,13 +1058,13 @@ const bool Subsumer::eliminateVars()
                 //no need to set touched[var] to false -- orderVarsForElim did that already
             }
         } else {
-            for (uint32_t i = 0; i < touched_list.size(); i++) {
-                const Var var = touched_list[i];
+            for (uint32_t i = 0; i < touchedVarsList.size(); i++) {
+                const Var var = touchedVarsList[i];
                 if (!cannot_eliminate[var] && solver.decision_var[var])
                     order.push(var);
-                touched[var] = false;
+                touchedVars[var] = false;
             }
-            touched_list.clear();
+            touchedVarsList.clear();
         }
         #ifdef VERBOSE_DEBUG
         std::cout << "Order size:" << order.size() << std::endl;
@@ -1115,7 +1115,11 @@ void Subsumer::subsumeBinsWithBins()
                 assert(i->getOtherLit().var() != lit.var());
                 removeWBin(solver.watches[(~(i->getOtherLit())).toInt()], lit, i->getLearnt());
                 if (i->getLearnt()) solver.learnts_literals -= 2;
-                else solver.clauses_literals -= 2;
+                else {
+                    solver.clauses_literals -= 2;
+                    touch(lit);
+                    touch(i->getOtherLit());
+                }
                 solver.numBins--;
             } else {
                 lastLit = i->getOtherLit();
@@ -1135,6 +1139,24 @@ void Subsumer::subsumeBinsWithBins()
     }
     totalTime += cpuTime() - myTime;
     clauses_subsumed += (numBinsBefore - solver.numBins);
+}
+
+void Subsumer::addExternTouchVars()
+{
+    for (uint32_t i = 0; i < touchedVarsExtList.size(); i++) {
+        Var var = touchedVarsExtList[i];
+        touchedVarsExt[var] = false;
+        touch(var);
+    }
+    touchedVarsExtList.clear();
+}
+
+void Subsumer::addRemainingTouchedToExt()
+{
+    for (uint32_t i = 0; i < touchedVarsList.size(); i++) {
+        Var var = touchedVars[i];
+        touchExternal(var);
+    }
 }
 
 /**
@@ -1174,6 +1196,8 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     }
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     addFromSolver(solver.clauses, alsoLearnt);
+    if (!alsoLearnt) addExternTouchVars();
+
     CompleteDetachReatacher reattacher(solver);
     reattacher.detachNonBins();
     totalTime += myTime - cpuTime();
@@ -1235,6 +1259,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     removeWrong(solver.learnts);
     removeWrongBins();
     removeAssignedVarsFromEliminated();
+    if (!alsoLearnt) addRemainingTouchedToExt();
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
@@ -1660,9 +1685,19 @@ bool Subsumer::maybeEliminate(const Var var)
                 break;
             }
             case 2: {
-                solver.attachBinClause(dummy[0], dummy[1], false);
-                solver.numNewBin++;
-                solver.signalNewBinClause(dummy);
+                if (findWBin(solver.watches, dummy[0], dummy[1])) {
+                    Watched& w = findWatchedOfBin(solver.watches, dummy[0], dummy[1]);
+                    if (w.getLearnt()) {
+                        w.setLearnt(false);
+                        findWatchedOfBin(solver.watches, dummy[1], dummy[0], true).setLearnt(false);
+                        solver.learnts_literals -= 2;
+                        solver.clauses_literals += 2;
+                    }
+                } else {
+                    solver.attachBinClause(dummy[0], dummy[1], false);
+                    solver.numNewBin++;
+                    solver.signalNewBinClause(dummy);
+                }
                 subsume1(dummy, false);
                 break;
             }
@@ -1762,16 +1797,16 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
 {
     order.clear();
     vec<pair<int, Var> > cost_var;
-    for (uint32_t i = 0; i < touched_list.size(); i++){
-        Lit x = Lit(touched_list[i], false);
-        touched[x.var()] = false;
+    for (uint32_t i = 0; i < touchedVarsList.size(); i++){
+        Lit x = Lit(touchedVarsList[i], false);
+        touchedVars[x.var()] = false;
         //this is not perfect -- solver.watches[] is an over-approximation
         uint32_t pos = occur[x.toInt()].size() + solver.watches[(~x).toInt()].size();
         uint32_t neg = occur[x.toInt()].size() + solver.watches[x.toInt()].size();
         cost_var.push(std::make_pair(pos * neg, x.var()));
     }
 
-    touched_list.clear();
+    touchedVarsList.clear();
     std::sort(cost_var.getData(), cost_var.getData()+cost_var.size(), myComp());
 
     for (uint32_t x = 0; x < cost_var.size(); x++) {
