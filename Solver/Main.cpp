@@ -250,6 +250,7 @@ void Main::printUsage(char** argv)
     printf("  --alsoread       = <filename> Also read this file in\n");
     printf("                     Can be used to re-read dumped learnts, for example\n");
     printf("  --maxsolutions   = Search for given amount of solutions\n");
+    printf("                     Can only be used in single-threaded more (\"--threads=1\")\n");
     printf("  --nofailedlit    = Don't search for failed literals, and don't search for lits\n");
     printf("                     propagated both by 'varX' and '-varX'\n");
     printf("  --noheuleprocess = Don't try to minimise XORs by XOR-ing them together.\n");
@@ -831,6 +832,11 @@ const int Main::oneThreadSolve()
 
 const int Main::multiThreadSolve()
 {
+    if (max_nr_of_solutions > 1) {
+        std::cerr << "ERROR: When multi-threading, only one solution can be found" << std::endl;
+        std::cerr << "Please set option '--threads=1' on the command line." << std::endl;
+        exit(-1);
+    }
     int finalRetVal;
     if (numThreads != -1) omp_set_num_threads(numThreads);
     #pragma omp parallel
