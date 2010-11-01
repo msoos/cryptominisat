@@ -37,7 +37,7 @@ class ClauseVivifier {
         uint32_t lastTimeWentUntil;
 
         /**
-        @brief Used in asymmBranch() to sort clauses according to size
+        @brief Sort clauses according to size
         */
         struct sortBySize
         {

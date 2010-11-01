@@ -188,7 +188,6 @@ clause (will take the max() of the two)
 */
 void Subsumer::subsume0(Clause& ps)
 {
-    ps.subsume0Finished();
     #ifdef VERBOSE_DEBUG
     cout << "subsume0-ing with clause: ";
     ps.plainPrint();
@@ -326,7 +325,6 @@ void Subsumer::subsume1(Clause& ps)
 
     findSubsumed1(ps, ps.getAbst(), subs, subsLits);
     ps.unsetStrenghtened();
-    ps.subsume0Finished();
     for (uint32_t j = 0; j < subs.size(); j++) {
         if (subs[j].clause == NULL) continue;
         ClauseSimp c = subs[j];
@@ -1169,12 +1167,13 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     clauses.reserve(expected_size);
     cl_touched.reserve(expected_size);
 
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver(solver.clauses, alsoLearnt);
     if (alsoLearnt) {
         solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
+        std::sort(solver.learnts.getData(), solver.learnts.getDataEnd(), sortBySize());
         addFromSolver(solver.learnts, alsoLearnt);
     }
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    addFromSolver(solver.clauses, alsoLearnt);
     CompleteDetachReatacher reattacher(solver);
     reattacher.detachNonBins();
     totalTime += myTime - cpuTime();
@@ -1198,22 +1197,9 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (numMaxSubsume0 == 0) break;
-        if (clauses[i].clause != NULL && (!clauses[i].clause->subsume0IsFinished() || clauses[i].clause->learnt())) {
+        if (clauses[i].clause != NULL) {
             subsume0(*clauses[i].clause);
             numMaxSubsume0--;
-        }
-    }
-
-    //Because of touched, we will go through this anyway
-    //--> s0 will have the important clauses from here in it
-    //but for performance reasons, it's probably best to do it anyway
-    if (alsoLearnt) {
-        for (uint32_t i = 0; i < clauses.size(); i++) {
-            if (numMaxSubsume0 == 0) break;
-            if (clauses[i].clause != NULL && !clauses[i].clause->learnt()) {
-                subsume0(*clauses[i].clause);
-                numMaxSubsume0--;
-            }
         }
     }
 

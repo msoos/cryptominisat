@@ -65,7 +65,6 @@ protected:
     */
     uint32_t isXorEqualFalse:1;
     uint32_t isXorClause:1; ///< Is the clause an XOR clause?
-    uint32_t subsume0Done:1; ///Has normal subsumption been done with this clause?
     //uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
@@ -166,23 +165,12 @@ public:
     void setStrenghtened()
     {
         strenghtened = true;
-        subsume0Done = false;
         calcAbstractionClause();
     }
 
     void unsetStrenghtened()
     {
         strenghtened = false;
-    }
-
-    void subsume0Finished()
-    {
-        subsume0Done = 1;
-    }
-
-    const bool subsume0IsFinished()
-    {
-        return subsume0Done;
     }
 
     Lit& operator [] (uint32_t i)

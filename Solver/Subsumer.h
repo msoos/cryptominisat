@@ -150,6 +150,16 @@ private:
         uint32_t activity;
         float oldActivity;
     };
+    /**
+    @brief Sort clauses according to size
+    */
+    struct sortBySize
+    {
+        const bool operator () (const Clause* x, const Clause* y)
+        {
+            return (x->size() < y->size());
+        }
+    };
     void subsume0(Clause& ps);
     template<class T>
     subsume0Happened subsume0Orig(const T& ps, uint32_t abs);
