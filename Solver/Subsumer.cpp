@@ -271,6 +271,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
         if (it->clause == NULL) continue;
 
         Clause& c = *it->clause;
+        extraTimeNonExist += 5;
         extraTimeNonExist += c.size()*3;
         bool removed = false;
         for (uint32_t i = 0; i < c.size(); i++) {
@@ -934,7 +935,7 @@ const bool Subsumer::subsWNonExistBinsFull()
 {
     uint64_t oldProps = solver.propagations;
     uint64_t maxProp = MAX_BINARY_PROP;
-    //if (clauses.size() > 2000000) maxProp /= 2;
+    if (clauses.size() > 400000) maxProp /= 2;
     toVisitAll.growTo(solver.nVars()*2, false);
     extraTimeNonExist = 0;
 
@@ -942,7 +943,7 @@ const bool Subsumer::subsWNonExistBinsFull()
     uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
     for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
         Var var = solver.order_heap[(i+startFrom)%solver.order_heap.size()];
-        if (solver.propagations + extraTimeNonExist - oldProps > maxProp) break;
+        if (solver.propagations + extraTimeNonExist*500 > oldProps + maxProp) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
         doneNum++;
         extraTimeNonExist += 5;

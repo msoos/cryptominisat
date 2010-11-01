@@ -1578,10 +1578,12 @@ PropBy Solver::propagate(const bool update)
 
             if (i->isClause()) {
                 propNormalClause(i, j, end, p, confl, update);
+                num_props += 4;
                 goto FoundWatch;
             } //end CLAUSE
 
             if (i->isXorClause()) {
+                num_props += 10;
                 propXorClause(i, j, end, p, confl);
                 goto FoundWatch;
             } //end XORCLAUSE
