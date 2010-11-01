@@ -443,7 +443,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     case 2:
         solver.attachBinClause(c[0], c[1], c.learnt());
         solver.numNewBin++;
-        solver.addNewBinClauseToShare(c);
+        solver.signalNewBinClause(c);
         return true;
     default:
         solver.attachClause(c);
@@ -657,12 +657,12 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group, const bool addBinAsLearnt)
 {
     solver.attachBinClause(lit1, lit2, addBinAsLearnt);
-    solver.addNewBinClauseToShare(lit1, lit2);
+    solver.signalNewBinClause(lit1, lit2);
 
     lit1 ^= true;
     lit2 ^= true;
     solver.attachBinClause(lit1, lit2, addBinAsLearnt);
-    solver.addNewBinClauseToShare(lit1, lit2);
+    solver.signalNewBinClause(lit1, lit2);
 }
 
 /**

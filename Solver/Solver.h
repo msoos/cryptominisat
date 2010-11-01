@@ -285,8 +285,8 @@ protected:
     uint32_t gotBinData;
     vec<uint32_t> syncFinish;
     vector<std::pair<Lit, Lit> > newBinClauses;
-    template <class T> void addNewBinClauseToShare(T& ps);
-    void addNewBinClauseToShare(Lit lit1, Lit lit2);
+    template <class T> void signalNewBinClause(T& ps);
+    void signalNewBinClause(Lit lit1, Lit lit2);
     bool externalAddClause;
 
     // Helper structures:

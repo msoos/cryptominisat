@@ -400,7 +400,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt, const uin
         return c;
     } else {
         attachBinClause(ps[0], ps[1], learnt);
-        addNewBinClauseToShare(ps);
+        signalNewBinClause(ps);
         numNewBin++;
         return NULL;
     }
@@ -2140,7 +2140,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             } else {
                 attachBinClause(learnt_clause[0], learnt_clause[1], false);
                 numNewBin++;
-                addNewBinClauseToShare(learnt_clause);
+                signalNewBinClause(learnt_clause);
                 uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             }
         }
@@ -2583,26 +2583,21 @@ const bool Solver::shareBinData()
 }
 
 template <class T>
-void Solver::addNewBinClauseToShare(T& ps)
+void Solver::signalNewBinClause(T& ps)
 {
-    if (externalAddClause) return;
-    Lit lits[2];
-    lits[0] = ps[0];
-    lits[1] = ps[1];
-    if (lits[0].toInt() > lits[1].toInt()) std::swap(lits[0], lits[1]);
-    newBinClauses.push_back(std::make_pair(lits[0], lits[1]));
+    signalNewBinClause(ps[0], ps[1]);
 }
 
-void Solver::addNewBinClauseToShare(Lit lit1, Lit lit2)
+void Solver::signalNewBinClause(Lit lit1, Lit lit2)
 {
     if (externalAddClause) return;
     if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
 
-template void Solver::addNewBinClauseToShare(Clause& ps);
-template void Solver::addNewBinClauseToShare(XorClause& ps);
-template void Solver::addNewBinClauseToShare(vec<Lit>& ps);
+template void Solver::signalNewBinClause(Clause& ps);
+template void Solver::signalNewBinClause(XorClause& ps);
+template void Solver::signalNewBinClause(vec<Lit>& ps);
 
 const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
 {
