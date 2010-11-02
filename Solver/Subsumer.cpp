@@ -1149,19 +1149,17 @@ void Subsumer::subsumeBinsWithBins()
 
 void Subsumer::addExternTouchVars()
 {
-    for (uint32_t i = 0; i < touchedVarsExtList.size(); i++) {
-        Var var = touchedVarsExtList[i];
-        touchedVarsExt[var] = false;
-        touch(var);
+    for (Var *it = touchedVarsExtList.getData(), *end =  touchedVarsExtList.getDataEnd(); it != end; it++) {
+        touchedVarsExt[*it] = false;
+        touch(*it);
     }
     touchedVarsExtList.clear();
 }
 
 void Subsumer::addRemainingTouchedToExt()
 {
-    for (uint32_t i = 0; i < touchedVarsList.size(); i++) {
-        Var var = touchedVars[i];
-        touchExternal(var);
+    for (Var *it = touchedVarsList.getData(), *end =  touchedVarsList.getDataEnd(); it != end; it++) {
+        touchExternal(*it);
     }
 }
 
