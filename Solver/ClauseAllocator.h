@@ -95,6 +95,7 @@ class ClauseAllocator {
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
         const ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
+        const bool insideMemoryRange(const Clause* c) const;
 
         void updateAllOffsetsAndPointers(Solver* solver);
         template<class T>

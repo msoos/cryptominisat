@@ -227,6 +227,25 @@ inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
 }
 
 /**
+@brief Returns if the clause has been allocated in a stack
+
+Essentially, it tries each stack if the pointer could be part of it. If not,
+return false. Otherwise, returns true.
+*/
+const bool ClauseAllocator::insideMemoryRange(const Clause* ptr) const
+{
+    bool found = false;
+    for (uint32_t i = 0; i < sizes.size(); i++) {
+        if ((uint32_t*)ptr >= dataStarts[i] && (uint32_t*)ptr < dataStarts[i] + maxSizes[i]) {
+            found = true;
+            break;
+        }
+    }
+
+    return found;
+}
+
+/**
 @brief Given a pointer and its stack number, returns its position inside the stack
 */
 inline uint32_t ClauseAllocator::getInterOffset(const Clause* ptr, uint32_t outerOffset) const
@@ -436,7 +455,9 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     vec<PropBy>& reason = solver->reason;
     for (PropBy *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
         if (it->isClause() && !it->isNULL()) {
-            *it = PropBy((Clause*)((NewPointerAndOffset*)(it->getClause()))->newPointer);
+            if (insideMemoryRange(it->getClause())) {
+                *it = PropBy((Clause*)((NewPointerAndOffset*)(it->getClause()))->newPointer);
+            }
         }
     }
 }
