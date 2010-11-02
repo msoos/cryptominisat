@@ -147,6 +147,8 @@ const bool Subsumer::unEliminate(const Var var)
 
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
     solver.libraryCNFFile = NULL;
+
+    if (it == elimedOutVar.end()) goto next;
     for (vector<Clause*>::iterator itt = it->second.begin(), end2 = it->second.end(); itt != end2; itt++) {
         #ifdef VERBOSE_DEBUG
         std::cout << "Reinserting elimed clause: " << *itt << std::endl;;
@@ -156,6 +158,8 @@ const bool Subsumer::unEliminate(const Var var)
     }
     elimedOutVar.erase(it);
 
+    next:
+    if (it2 == elimedOutVarBin.end()) goto next2;
     for (vector<std::pair<Lit, Lit> >::iterator itt = it2->second.begin(), end2 = it2->second.end(); itt != end2; itt++) {
         vec<Lit> lits(2);
         lits[0] = itt->first;
@@ -167,6 +171,7 @@ const bool Subsumer::unEliminate(const Var var)
     }
     elimedOutVarBin.erase(it2);
 
+    next2:
     solver.libraryCNFFile = backup_libraryCNFfile;
 
     return solver.ok;
