@@ -1064,8 +1064,8 @@ const bool Subsumer::eliminateVars()
                 //no need to set touched[var] to false -- orderVarsForElim did that already
             }
         } else {
-            for (uint32_t i = 0; i < touchedVarsList.size(); i++) {
-                const Var var = touchedVarsList[i];
+            for (Var *it = touchedVarsList.getData(), *end = touchedVarsList.getDataEnd(); it != end; it++) {
+                const Var var = *it;
                 if (!cannot_eliminate[var] && solver.decision_var[var])
                     order.push(var);
                 touchedVars[var] = false;
