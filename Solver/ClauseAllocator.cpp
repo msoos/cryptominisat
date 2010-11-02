@@ -227,25 +227,6 @@ inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
 }
 
 /**
-@brief Returns if the clause has been allocated in a stack
-
-Essentially, it tries each stack if the pointer could be part of it. If not,
-return false. Otherwise, returns true.
-*/
-const bool ClauseAllocator::insideMemoryRange(const Clause* ptr) const
-{
-    bool found = false;
-    for (uint32_t i = 0; i < sizes.size(); i++) {
-        if ((uint32_t*)ptr >= dataStarts[i] && (uint32_t*)ptr < dataStarts[i] + maxSizes[i]) {
-            found = true;
-            break;
-        }
-    }
-
-    return found;
-}
-
-/**
 @brief Given a pointer and its stack number, returns its position inside the stack
 */
 inline uint32_t ClauseAllocator::getInterOffset(const Clause* ptr, uint32_t outerOffset) const
@@ -391,6 +372,8 @@ void ClauseAllocator::consolidate(Solver* solver)
                 newSizes[outerPart] += sizeNeeded;
                 newOrigClauseSizes[outerPart].push(sizeNeeded);
                 newDataStartsPointers[outerPart] += sizeNeeded;
+            } else {
+                (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newOffset = std::numeric_limits<uint32_t>::max();
             }
 
             currentLoc += origClauseSizes[i][i2];
@@ -453,11 +436,18 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     #endif //USE_GAUSS
 
     vec<PropBy>& reason = solver->reason;
-    for (PropBy *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++) {
+    Var var = 0;
+    for (PropBy *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++, var++) {
+        if ((uint32_t)solver->level[var] > solver->decisionLevel()
+            || solver->level[var] == 0
+            || solver->value(var) == l_Undef) {
+            *it = PropBy();
+            continue;
+        }
+
         if (it->isClause() && !it->isNULL()) {
-            if (insideMemoryRange(it->getClause())) {
-                *it = PropBy((Clause*)((NewPointerAndOffset*)(it->getClause()))->newPointer);
-            }
+            assert(((NewPointerAndOffset*)(it->getClause()))->newOffset != std::numeric_limits<uint32_t>::max());
+            *it = PropBy((Clause*)((NewPointerAndOffset*)(it->getClause()))->newPointer);
         }
     }
 }
