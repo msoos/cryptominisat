@@ -1809,10 +1809,9 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
         uint32_t neg = occur[x.toInt()].size() + solver.watches[x.toInt()].size();
         cost_var.push(std::make_pair(pos * neg, x.var()));
     }
-
     touchedVarsList.clear();
-    std::sort(cost_var.getData(), cost_var.getData()+cost_var.size(), myComp());
 
+    std::sort(cost_var.getData(), cost_var.getData()+cost_var.size(), myComp());
     for (uint32_t x = 0; x < cost_var.size(); x++) {
         if (cost_var[x].first != 0)
             order.push(cost_var[x].second);
