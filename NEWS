@@ -1,21 +1,27 @@
+ver 2.8.0beta5 2/11/2010
+* reason[] was taken to be correct, when in fact it is not updated during
+  canceling
+* Subsumer::unEliminate() erased iterators from std::map that was not inside
+  the map
+
 ver 2.8.0beta4 31/10/2010
-* class Watched is now tuned more towards operations that
-  are executed more. These now require no bit-shifting
+* class Watched is now tuned more towards operations that are executed 
+  more. These now require no bit-shifting
 * Bug fix: debug code left in from DimacsParser removed
 
 ver 2.8.0beta3 30/10/2010
-* Bug in hand-coded Tarjan's algorithm. We were manipulating the
-  watchlists while using them. This lead to a segfault.
-* Bug in replace() -- we were using replace(), but the clauses were
-  not always attached (e.g. in ClauseDetacherReattacher) and so
-  the added binary clause was not always l_Undef,l_Undef. A very
-  subtle bug that could have caused solution-sanity problems
+* Bug in hand-coded Tarjan's algorithm. We were manipulating the watchlists
+   while using them. This lead to a segfault.
+* Bug in replace() -- we were using replace(), but the clauses were not always
+  attached (e.g. in ClauseDetacherReattacher) and so the added binary clause
+  was not always l_Undef,l_Undef. A very subtle bug that could have caused
+  solution-sanity problems
 * Fixed bug with opening fileno(stdin)
 
 ver 2.8.0beta2 28/10/2010
-* Boost dependency removed through implementation of Tarjan's algorithm
-  by hand. This also implies a much reduced memory footprint in case
-  there were many binary clauses
+* Boost dependency removed through implementation of Tarjan's algorithm by
+  hand. This also implies a much reduced memory footprint in case there were
+  many binary clauses
 
 ver 2.8.0beta1 27/10/2010
 * Binary clauses are now implicit. This allows for _very_ large problems
