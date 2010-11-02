@@ -2587,6 +2587,7 @@ const bool Solver::shareBinData()
 template <class T>
 void Solver::signalNewBinClause(T& ps)
 {
+    assert(ps.size() == 2);
     signalNewBinClause(ps[0], ps[1]);
 }
 
