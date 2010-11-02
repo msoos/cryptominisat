@@ -131,15 +131,17 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
         }
 
         if (val == l_True) {
-            if (!c.learnt()) for (i++ ;i != end; i++) solver.subsumer->touchExternal(*i);
+            if (!c.learnt()) for (i = c.getData(); i != end; i++) solver.subsumer->touchExternal(*i);
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             return true;
         }
-
-        //Lit *i is l_False, it is being removed
-        if (!c.learnt()) solver.subsumer->touchExternal(*i);
     }
     c.shrink(i-j);
+
+    if (i-j > 0 && !c.learnt()) {
+        for (Lit *i2 = c.getData(), *end2 = c.getDataEnd(); i2 != end2; i2++)
+            solver.subsumer->touchExternal(*i2);
+    }
 
     assert(c.size() != 1);
     if (i != j) {
@@ -218,6 +220,11 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
         } else c.invert(val.getBool());
     }
     c.shrink(i-j);
+
+     if (i-j > 0 && !c.learnt()) {
+        for (Lit *i2 = c.getData(), *end2 = c.getDataEnd(); i2 != end2; i2++)
+            solver.subsumer->touchExternal(*i2);
+    }
 
     assert(c.size() != 1);
     switch (c.size()) {
