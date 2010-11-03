@@ -67,8 +67,7 @@ class Watched {
         Watched(const Lit lit, const bool learnt)
         {
             data1 = lit.toInt();
-            data2 = (uint32_t)0;
-            setLearnt(learnt);
+            data2 = (uint32_t)0 + (((uint32_t)learnt) << 2);
         }
 
         /**
@@ -161,6 +160,7 @@ class Watched {
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary());
+            assert(learnt == false);
             #endif
             data2 = (uint32_t)0 + (((uint32_t)learnt) << 2);
         }
