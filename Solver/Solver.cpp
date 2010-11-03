@@ -708,6 +708,19 @@ void Solver::cancelUntil(int level)
     #endif
 }
 
+void Solver::cancelUntilLight()
+{
+    assert((int)decisionLevel() > 0);
+
+    for (int sublevel = trail.size()-1; sublevel >= (int)trail_lim[0]; sublevel--) {
+        Var var = trail[sublevel].var();
+        assigns[var] = l_Undef;
+    }
+    qhead = trail_lim[0];
+    trail.shrink_(trail.size() - trail_lim[0]);
+    trail_lim.shrink_(trail_lim.size());
+}
+
 #ifdef USE_GAUSS
 void Solver::clearGaussMatrixes()
 {

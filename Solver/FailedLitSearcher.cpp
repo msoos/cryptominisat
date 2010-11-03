@@ -377,7 +377,7 @@ const bool FailedLitSearcher::orderLits()
         solver.uncheckedEnqueueLight(randLit);
         failed = (!solver.propagateBin().isNULL());
         if (failed) {
-            solver.cancelUntil(0);
+            solver.cancelUntilLight();
             solver.uncheckedEnqueue(~randLit);
             solver.ok = (solver.propagate(false).isNULL());
             if (!solver.ok) return false;
@@ -388,7 +388,7 @@ const bool FailedLitSearcher::orderLits()
             Lit x = solver.trail[c];
             litDegrees[x.toInt()]++;
         }
-        solver.cancelUntil(0);
+        solver.cancelUntilLight();
     }
 
     //Print the results of the degree approximation
@@ -438,7 +438,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     solver.uncheckedEnqueueLight(lit1);
     failed = (!solver.propagate(false).isNULL());
     if (failed) {
-        solver.cancelUntil(0);
+        solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit1);
         solver.ok = (solver.propagate(false).isNULL());
@@ -472,7 +472,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         investigateXor.clear();
     }
 
-    solver.cancelUntil(0);
+    solver.cancelUntilLight();
 
     //Hyper-binary resolution, and its accompanying data-structure cleaning
     if (solver.conf.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
@@ -483,7 +483,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     solver.uncheckedEnqueueLight(lit2);
     failed = (!solver.propagate(false).isNULL());
     if (failed) {
-        solver.cancelUntil(0);
+        solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit2);
         solver.ok = (solver.propagate(false).isNULL());
@@ -545,7 +545,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
             addVarFromXors(solver.trail[c].var());
         }
     }
-    solver.cancelUntil(0);
+    solver.cancelUntilLight();
 
     if (solver.conf.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
 
@@ -593,7 +593,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit& lit)
 
     assert(solver.decisionLevel() > 0);
     if (propagatedVars.size() - (solver.trail.size()-solver.trail_lim[0]) == 0) {
-        solver.cancelUntil(0);
+        solver.cancelUntilLight();
         goto end;
     }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
@@ -601,7 +601,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit& lit)
         unPropagatedBin.clearBit(x.var());
         toVisit.push(x);
     }
-    solver.cancelUntil(0);
+    solver.cancelUntilLight();
 
     std::stable_sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
     /*************************
@@ -670,7 +670,7 @@ void FailedLitSearcher::fillImplies(const Lit& lit)
         myimplies.setBit(x.var());
         myImpliesSet.push(x.var());
     }
-    solver.cancelUntil(0);
+    solver.cancelUntilLight();
 }
 
 /**
@@ -713,7 +713,7 @@ const bool FailedLitSearcher::tryAll(const Lit* begin, const Lit* end)
         solver.uncheckedEnqueue(*it);
         failed = (solver.propagate(false) != NULL);
         if (failed) {
-            solver.cancelUntil(0);
+            solver.cancelUntilLight();
             numFailed++;
             solver.uncheckedEnqueue(~(*it));
             solver.ok = (solver.propagate(false) == NULL);
@@ -738,7 +738,7 @@ const bool FailedLitSearcher::tryAll(const Lit* begin, const Lit* end)
                     }
                 }
             }
-            solver.cancelUntil(0);
+            solver.cancelUntilLight();
         }
         if (!last && !first) {
             propagated &= propagated2;

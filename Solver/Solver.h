@@ -417,6 +417,7 @@ protected:
     // Conflicting
     ///////////////
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
+    void     cancelUntilLight();
     Clause*  analyze          (PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update);
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')

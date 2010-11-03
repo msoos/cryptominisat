@@ -64,7 +64,7 @@ const bool UselessBinRemover::removeUslessBinFull()
         Lit lit(var, true);
         if (!removeUselessBinaries(lit)) {
             fixed = true;
-            solver.cancelUntil(0);
+            solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
             solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) return false;
@@ -74,7 +74,7 @@ const bool UselessBinRemover::removeUslessBinFull()
         lit = ~lit;
         if (!removeUselessBinaries(lit)) {
             fixed = true;
-            solver.cancelUntil(0);
+            solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
             solver.ok = (solver.propagate().isNULL());
             if (!solver.ok) return false;
@@ -123,7 +123,7 @@ const bool UselessBinRemover::removeUselessBinaries(const Lit& lit)
     assert(solver.decisionLevel() > 0);
     int c;
     if (solver.trail.size()-solver.trail_lim[0] == 0) {
-        solver.cancelUntil(0);
+        solver.cancelUntilLight();
         goto end;
     }
     //Fill oneHopAway and toDeleteSet with lits that are 1 hop away

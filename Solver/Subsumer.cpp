@@ -958,7 +958,7 @@ const bool Subsumer::subsWNonExistBinsFull()
         Lit lit(var, true);
         if (!subsWNonExistBins(lit)) {
             if (!solver.ok) return false;
-            solver.cancelUntil(0);
+            solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
             solver.ok = solver.propagate().isNULL();
             if (!solver.ok) return false;
@@ -971,7 +971,7 @@ const bool Subsumer::subsWNonExistBinsFull()
         lit = ~lit;
         if (!subsWNonExistBins(lit)) {
             if (!solver.ok) return false;
-            solver.cancelUntil(0);
+            solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
             solver.ok = solver.propagate().isNULL();
             if (!solver.ok) return false;
@@ -1007,8 +1007,12 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit)
     if (failed) return false;
 
     assert(solver.decisionLevel() > 0);
-    for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
-        Lit x = solver.trail[c];
+    if (!solver.multiLevelProp) {
+        solver.cancelUntilLight();
+        return solver.ok;
+    }
+    for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
+        Lit x = solver.trail[sublevel];
         toVisit.push(x);
         toVisitAll[x.toInt()] = true;
     }

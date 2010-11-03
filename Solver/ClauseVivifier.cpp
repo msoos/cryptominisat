@@ -116,7 +116,7 @@ const bool ClauseVivifier::vivifyClauses()
                 break;
             }
         }
-        solver.cancelUntil(0);
+        solver.cancelUntilLight();
         assert(solver.ok);
 
         if (unused.size() > 0 || (failed && done < lits.size())) {
