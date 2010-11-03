@@ -290,7 +290,7 @@ end:
         double time = cpuTime();
         if ((int)origHeapSize - (int)solver.order_heap.size() >  (int)origHeapSize/15 && solver.nClauses() + solver.learnts.size() > 500000) {
             CompleteDetachReatacher reattacher(solver);
-            reattacher.detachNonBins();
+            reattacher.detachNonBinsNonTris(true);
             const bool ret = reattacher.reattachNonBins();
             assert(ret == true);
             removedOldLearnts = true;

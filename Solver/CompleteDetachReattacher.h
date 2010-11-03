@@ -41,10 +41,29 @@ class CompleteDetachReatacher
     public:
         CompleteDetachReatacher(Solver& solver);
         const bool reattachNonBins();
-        void detachNonBins();
+        void detachNonBinsNonTris(const bool removeTri);
 
     private:
-        const std::pair<uint32_t, uint32_t> clearWatchNotBin(vec<Watched>& ws);
+        class ClausesStay {
+            public:
+                ClausesStay() :
+                    learntBins(0)
+                    , nonLearntBins(0)
+                    , tris(0)
+                {}
+
+                ClausesStay& operator+=(const ClausesStay& other) {
+                    learntBins += other.learntBins;
+                    nonLearntBins += other.nonLearntBins;
+                    tris += other.tris;
+                    return *this;
+                }
+
+                uint32_t learntBins;
+                uint32_t nonLearntBins;
+                uint32_t tris;
+        };
+        const ClausesStay clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri = false);
 
         void cleanAndAttachClauses(vec<Clause*>& cs);
         void cleanAndAttachClauses(vec<XorClause*>& cs);

@@ -786,7 +786,7 @@ void Subsumer::removeWrong(vec<Clause*>& cs)
     cs.shrink(i-j);
 }
 
-void Subsumer::removeWrongBins()
+void Subsumer::removeWrongBinsAndAllTris()
 {
     uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
@@ -797,6 +797,8 @@ void Subsumer::removeWrongBins()
         Watched* i = ws.getData();
         Watched* j = i;
         for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
+            if (i->isTriClause()) continue;
+
             if (i->isBinary()
                 && (var_elimed[lit.var()] || var_elimed[i->getOtherLit().var()])
                 ) {
@@ -1112,7 +1114,10 @@ void Subsumer::subsumeBinsWithBins()
         Lit lastLit = lit_Undef;
         bool lastLearnt = false;
         for (Watched *end = ws.getDataEnd(); i != end; i++) {
-            assert(i->isBinary());
+            if (!i->isBinary()) {
+                *j++ = *i;
+                continue;
+            }
             if (i->getOtherLit() == lastLit) {
                 //The sorting algorithm prefers non-learnt to learnt, so it is
                 //impossible to have non-learnt before learnt
@@ -1203,7 +1208,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     if (!alsoLearnt) addExternTouchVars();
 
     CompleteDetachReatacher reattacher(solver);
-    reattacher.detachNonBins();
+    reattacher.detachNonBinsNonTris(false);
     totalTime += myTime - cpuTime();
 
     //Do stuff with binaries
@@ -1261,7 +1266,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     assert(verifyIntegrity());
 
     removeWrong(solver.learnts);
-    removeWrongBins();
+    removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
     if (!alsoLearnt) addRemainingTouchedToExt();
 
@@ -1559,8 +1564,7 @@ const uint32_t Subsumer::numNonLearntBins(const Lit lit) const
     uint32_t num = 0;
     const vec<Watched>& ws = solver.watches[(~lit).toInt()];
     for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
-        assert(it->isBinary());
-        if (!it->getLearnt()) num++;
+        if (it->isBinary() && !it->getLearnt()) num++;
     }
 
     return num;
@@ -1573,8 +1577,7 @@ void Subsumer::fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit l
 
     const vec<Watched>& ws = solver.watches[(~lit).toInt()];
     for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
-        assert(it->isBinary());
-        if (!it->getLearnt()) all.push(ClAndBin(lit, it->getOtherLit()));
+        if (it->isBinary() &&!it->getLearnt()) all.push(ClAndBin(lit, it->getOtherLit()));
     }
 }
 
@@ -1654,11 +1657,11 @@ bool Subsumer::maybeEliminate(const Var var)
     #ifndef NDEBUG
     for (uint32_t i = 0; i < solver.watches[lit.toInt()].size(); i++) {
         Watched& w = solver.watches[lit.toInt()][i];
-        assert(w.isBinary() && w.getLearnt());
+        assert(w.isTriClause() || (w.isBinary() && w.getLearnt()));
     }
     for (uint32_t i = 0; i < solver.watches[(~lit).toInt()].size(); i++) {
         Watched& w = solver.watches[(~lit).toInt()][i];
-        assert(w.isBinary() && w.getLearnt());
+        assert(w.isTriClause() || (w.isBinary() && w.getLearnt()));
     }
     #endif
 

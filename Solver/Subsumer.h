@@ -107,7 +107,7 @@ private:
     void freeMemory();
     void addBackToSolver();
     void removeWrong(vec<Clause*>& cs);
-    void removeWrongBins();
+    void removeWrongBinsAndAllTris();
     void removeAssignedVarsFromEliminated();
 
     //Iterations
@@ -141,8 +141,14 @@ private:
     struct BinSorter {
         const bool operator()(const Watched& first, const Watched& second)
         {
-            assert(first.isBinary());
-            assert(second.isBinary());
+            assert(first.isBinary() || first.isTriClause());
+            assert(second.isBinary() || second.isTriClause());
+
+            if (first.isTriClause() && second.isTriClause()) return false;
+            if (first.isBinary() && second.isTriClause()) return true;
+            if (second.isBinary() && first.isTriClause()) return false;
+
+            assert(first.isBinary() && second.isBinary());
             if (first.getOtherLit().toInt() < second.getOtherLit().toInt()) return true;
             if (first.getOtherLit().toInt() > second.getOtherLit().toInt()) return false;
             if (first.getLearnt() == second.getLearnt()) return false;

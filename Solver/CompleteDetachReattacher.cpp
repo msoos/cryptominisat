@@ -25,46 +25,45 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver& _solver) :
 }
 
 /**
-@brief Completely detach all clauses
+@brief Completely detach all non-binary clauses
 */
-void CompleteDetachReatacher::detachNonBins()
+void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
 {
     uint32_t oldNumBins = solver.numBins;
-    std::pair<uint64_t, uint64_t> tmp;
+    ClausesStay stay;
 
-    std::pair<uint64_t, uint64_t> myNumBinHalfs;
     for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
-        tmp = clearWatchNotBin(*it);
-        myNumBinHalfs.first += tmp.first;
-        myNumBinHalfs.second += tmp.second;
+        stay += clearWatchNotBinNotTri(*it, removeTri);
     }
 
-    solver.learnts_literals = myNumBinHalfs.first;
-    solver.clauses_literals = myNumBinHalfs.second;
-    solver.numBins = (solver.learnts_literals + solver.clauses_literals)/2;
+    solver.learnts_literals = stay.learntBins;
+    solver.clauses_literals = stay.nonLearntBins;
+    solver.numBins = (stay.learntBins + stay.nonLearntBins)/2;
     assert(solver.numBins == oldNumBins);
 }
 
 /**
 @brief Helper function for detachPointerUsingClauses()
 */
-const std::pair<uint32_t, uint32_t> CompleteDetachReatacher::clearWatchNotBin(vec<Watched>& ws)
+const CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri)
 {
-    uint32_t numRemainNonLearnt = 0;
-    uint32_t numRemainLearnt = 0;
+    ClausesStay stay;
 
     Watched* i = ws.getData();
     Watched* j = i;
     for (Watched *end = ws.getDataEnd(); i != end; i++) {
         if (i->isBinary()) {
-            if (i->getLearnt()) numRemainLearnt++;
-            else numRemainNonLearnt++;
+            if (i->getLearnt()) stay.learntBins++;
+            else stay.nonLearntBins++;
+            *j++ = *i;
+        } else if (!removeTri && i->isTriClause()) {
+            stay.tris++;
             *j++ = *i;
         }
     }
     ws.shrink_(i-j);
 
-    return std::make_pair(numRemainLearnt, numRemainNonLearnt);
+    return stay;
 }
 
 /**
