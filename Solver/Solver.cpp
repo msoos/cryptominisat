@@ -1869,7 +1869,7 @@ const bool Solver::simplify()
     #endif //USE_GAUSS
 
     simpDB_assigns = nAssigns();
-    simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
+    simpDB_props   = 3*(clauses_literals + learnts_literals);   // (shouldn't depend on stats really, but it will do for now)
 
     testAllClauseAttach();
     return true;
