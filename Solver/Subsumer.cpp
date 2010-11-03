@@ -948,7 +948,7 @@ and contains all the non-learnt binary clauses
 const bool Subsumer::subsWNonExistBinsFull()
 {
     uint64_t oldProps = solver.propagations;
-    uint64_t maxProp = MAX_BINARY_PROP*10;
+    uint64_t maxProp = MAX_BINARY_PROP*3;
     toVisitAll.clear();
     toVisitAll.growTo(solver.nVars()*2, false);
     extraTimeNonExist = 0;
@@ -957,7 +957,7 @@ const bool Subsumer::subsWNonExistBinsFull()
     uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
     for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
         Var var = solver.order_heap[(startFrom + i) % solver.order_heap.size()];
-        if (solver.propagations + extraTimeNonExist*250 > oldProps + maxProp) break;
+        if (solver.propagations + extraTimeNonExist*150 > oldProps + maxProp) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
         doneNum++;
         extraTimeNonExist += 5;

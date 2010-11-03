@@ -157,8 +157,8 @@ variables.
 */
 const bool FailedLitSearcher::search()
 {
-    uint64_t numProps = 40 * 1000000;
-    uint64_t numPropsDifferent = (double)numProps*0.5;
+    uint64_t numProps = 50 * 1000000;
+    uint64_t numPropsDifferent = (double)numProps*2.0;
 
     assert(solver.decisionLevel() == 0);
     solver.testAllClauseAttach();
@@ -210,7 +210,7 @@ const bool FailedLitSearcher::search()
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     if (solver.conf.doHyperBinRes && !orderLits()) return false;
-    maxHyperBinProps = numProps/30;
+    maxHyperBinProps = numProps/20;
 
     //uint32_t fromBin;
     origProps = solver.propagations;

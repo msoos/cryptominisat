@@ -2398,21 +2398,22 @@ void Solver::performStepsBeforeSolve()
     testAllClauseAttach();
 
     if (conf.doReplace && !varReplacer->performReplace()) return;
+    if (conf.doFindEqLits) {
+        if (!sCCFinder->find2LongXors()) return;
+        lastNbBin = numNewBin;
+        if (conf.doReplace && !varReplacer->performReplace(true)) return;
+    }
 
     if (conf.doClausVivif && !conf.libraryUsage
         && !clauseVivifier->vivifyClauses()) return;
+
+    if (conf.doFailedLit && !failedLitSearcher->search()) return;
 
     if (conf.doSatELite
         && !conf.libraryUsage
         && clauses.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
-
-    if (conf.doFindEqLits) {
-        if (!sCCFinder->find2LongXors()) return;
-        lastNbBin = numNewBin;
-        if (conf.doReplace && !varReplacer->performReplace(true)) return;
-    }
 
     if (conf.doFindXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
         XorFinder xorFinder(*this, clauses);
