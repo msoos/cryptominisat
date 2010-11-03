@@ -156,7 +156,7 @@ variables.
 */
 const bool FailedLitSearcher::search()
 {
-    uint64_t numProps = 60 * 1000000;
+    uint64_t numProps = 70 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*0.5;
 
     assert(solver.decisionLevel() == 0);
@@ -209,7 +209,7 @@ const bool FailedLitSearcher::search()
     myimplies.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     if (solver.conf.doHyperBinRes && !orderLits()) return false;
-    maxHyperBinProps = numProps/6;
+    maxHyperBinProps = numProps/30;
 
     //uint32_t fromBin;
     uint32_t fromVar = solver.mtrand.randInt(solver.nVars());
@@ -224,7 +224,6 @@ const bool FailedLitSearcher::search()
             goto end;
     }
 
-    hyperbinProps = 0;
     origProps = solver.propagations;
     while (!order_heap_copy.empty()) {
         Var var = order_heap_copy.removeMin();
