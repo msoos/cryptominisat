@@ -70,12 +70,17 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 // Silent Debug
 ///////////////////
 
+#define SILENT_DEBUG
+
+#ifdef SILENT_DEBUG
 #define DEBUG_VARELIM
 #define DEBUG_PROPAGATEFROM
 #define DEBUG_WATCHED
 #define DEBUG_ATTACH
-//#define DEBUG_ATTACH_FULL
 #define DEBUG_REPLACER
+#endif
+
+//#define DEBUG_ATTACH_FULL
 
 ///////////////////
 // Verbose Debug
