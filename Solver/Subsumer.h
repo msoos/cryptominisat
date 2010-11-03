@@ -235,7 +235,7 @@ private:
     const bool subsWNonExitsBinsFullFull();
     const bool subsWNonExistBinsFull();
     const bool subsWNonExistBins(const Lit& lit);
-    void subsume0BIN(const Lit lit, const vec<char>& lits);
+    void subsume0BIN(const Lit lit, const vec<char>& lits, const uint32_t abst);
     bool subsNonExistentFinish;
     uint32_t doneNum;
     uint64_t extraTimeNonExist;

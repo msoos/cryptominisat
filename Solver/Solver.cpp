@@ -1640,7 +1640,6 @@ PropBy Solver::propagateBin(const bool alsoLearnt)
             }
         }
     }
-    multiLevelProp = false;
 
     return PropBy();
 }

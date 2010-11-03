@@ -264,7 +264,7 @@ the occurrence lists.
 @param[in] lit1 As defined above
 @param[in] lits The abstraction of the clause
 */
-void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
+void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, const uint32_t abst)
 {
     vec<ClauseSimp> subs;
     vec<ClauseSimp> subs2;
@@ -276,24 +276,27 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits)
         if (it->clause == NULL) continue;
 
         Clause& c = *it->clause;
-        extraTimeNonExist += 5;
-        extraTimeNonExist += c.size()*3;
+        if ((c.getAbst() & abst) == 0) continue;
+        extraTimeNonExist += c.size()*2;
         bool removed = false;
+        bool removedLit = false;
         for (uint32_t i = 0; i < c.size(); i++) {
             if (lits[c[i].toInt()]) {
                 subs.push(*it);
                 removed = true;
                 break;
             }
-        }
-        if (removed) continue;
 
-        for (uint32_t i = 0; i < c.size(); i++) {
-            if (lits[(~c[i]).toInt()]) {
+            if (!removedLit && lits[(~c[i]).toInt()]) {
                 subs2.push(*it);
                 subs2Lit.push(c[i]);
-                break;
+                removedLit = true;
             }
+        }
+
+        if (removed && removedLit) {
+            subs2.pop();
+            subs2Lit.pop();
         }
     }
 
@@ -1005,6 +1008,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit)
     solver.uncheckedEnqueueLight(lit);
     bool failed = (!solver.propagateBin(false).isNULL());
     if (failed) return false;
+    uint32_t abst = 0;
 
     assert(solver.decisionLevel() > 0);
     if (!solver.multiLevelProp) {
@@ -1014,16 +1018,22 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit)
     for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
         Lit x = solver.trail[sublevel];
         toVisit.push(x);
+        abst |= 1 << (x.var() & 31);
         toVisitAll[x.toInt()] = true;
+        solver.assigns[x.var()] = l_Undef;
     }
-    solver.cancelUntil(0);
+    solver.assigns[solver.trail[solver.trail_lim[0]].var()] = l_Undef;
+    solver.qhead = solver.trail_lim[0];
+    solver.trail.shrink_(solver.trail.size() - solver.trail_lim[0]);
+    solver.trail_lim.shrink_(solver.trail_lim.size());
+    //solver.cancelUntilLight();
 
     if (!solver.multiLevelProp) {
         //This has been performed above, with subsume1Partial of binary clauses:
         //this toVisit.size()<=1, there mustn't have been more than 1 binary
         //clause in the watchlist, so this has been performed above.
     } else {
-        subsume0BIN(~lit, toVisitAll);
+        subsume0BIN(~lit, toVisitAll, abst);
     }
 
     for (uint32_t i = 0; i < toVisit.size(); i++)
