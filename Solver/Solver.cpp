@@ -1607,8 +1607,11 @@ This is used in special algorithms outside the main Solver class
 */
 PropBy Solver::propagateBin(const bool alsoLearnt)
 {
+    multiLevelProp = false;
+    uint32_t origQhead = qhead + 1;
+
     while (qhead < trail.size()) {
-        Lit p   = trail[qhead++];
+        Lit p = trail[qhead++];
         const vec<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2 + 2;
         for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
@@ -1617,12 +1620,14 @@ PropBy Solver::propagateBin(const bool alsoLearnt)
 
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
+                if (qhead != origQhead) multiLevelProp = true;
                 uncheckedEnqueueLight(k->getOtherLit());
             } else if (val == l_False) {
                 return PropBy(p);
             }
         }
     }
+    multiLevelProp = false;
 
     return PropBy();
 }

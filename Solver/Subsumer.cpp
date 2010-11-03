@@ -1014,7 +1014,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit)
     }
     solver.cancelUntil(0);
 
-    if (toVisit.size() <= solver.getBinWatchSize(false, lit)) {
+    if (!solver.multiLevelProp) {
         //This has been performed above, with subsume1Partial of binary clauses:
         //this toVisit.size()<=1, there mustn't have been more than 1 binary
         //clause in the watchlist, so this has been performed above.
