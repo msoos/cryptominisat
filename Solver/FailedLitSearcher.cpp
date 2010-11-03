@@ -156,8 +156,9 @@ variables.
 */
 const bool FailedLitSearcher::search()
 {
-    uint64_t numProps = (solver.nClauses() < 500000 && solver.order_heap.size() < 50000) ? 22000000 : 8000000;
-    numProps *= 3;
+    uint64_t numProps = 60 * 1000000;
+    uint64_t numPropsDifferent = (double)numProps*0.5;
+
     assert(solver.decisionLevel() == 0);
     solver.testAllClauseAttach();
     double myTime = cpuTime();
@@ -217,18 +218,19 @@ const bool FailedLitSearcher::search()
         Var var = (fromVar + i) % solver.nVars();
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
-        if (solver.propagations - origProps >= numProps)
+        if (solver.propagations >= origProps + numProps)
             break;
         if (!tryBoth(Lit(var, false), Lit(var, true)))
             goto end;
     }
 
     hyperbinProps = 0;
+    origProps = solver.propagations;
     while (!order_heap_copy.empty()) {
         Var var = order_heap_copy.removeMin();
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
-        if (solver.propagations - origProps >= numProps * 1.2)  {
+        if (solver.propagations >= origProps + numPropsDifferent)  {
             break;
         }
         if (!tryBoth(Lit(var, false), Lit(var, true)))
