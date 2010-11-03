@@ -550,8 +550,6 @@ Handles 2, 3 and >3 clause sizes differently and specially
 void Solver::attachClause(Clause& c)
 {
     assert(c.size() > 2);
-    uint32_t index0 = (~c[0]).toInt();
-    uint32_t index1 = (~c[1]).toInt();
     #ifdef DEBUG_ATTACH
     assert(c[0].var() != c[1].var());
     assert(assigns[c[0].var()] == l_Undef);
@@ -564,13 +562,13 @@ void Solver::attachClause(Clause& c)
     #endif //DEBUG_ATTACH
 
     if (c.size() == 3) {
-        watches[index0].push(Watched(c[1], c[2]));
-        watches[index1].push(Watched(c[0], c[2]));
+        watches[(~c[0]).toInt()].push(Watched(c[1], c[2]));
+        watches[(~c[1]).toInt()].push(Watched(c[0], c[2]));
         watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(&c);
-        watches[index0].push(Watched(offset, c[c.size()/2]));
-        watches[index1].push(Watched(offset, c[c.size()/2]));
+        watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2]));
+        watches[(~c[1]).toInt()].push(Watched(offset, c[c.size()/2]));
     }
 
     if (c.learnt())
