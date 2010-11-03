@@ -1618,7 +1618,33 @@ FoundWatch:
 
 This is used in special algorithms outside the main Solver class
 */
-PropBy Solver::propagateBin(const bool alsoLearnt)
+PropBy Solver::propagateBin()
+{
+    while (qhead < trail.size()) {
+        Lit p = trail[qhead++];
+        const vec<Watched> & ws = watches[p.toInt()];
+        propagations += ws.size()/2 + 2;
+        for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
+            if (!k->isBinary()) continue;
+
+            lbool val = value(k->getOtherLit());
+            if (val.isUndef()) {
+                uncheckedEnqueueLight(k->getOtherLit());
+            } else if (val == l_False) {
+                return PropBy(p);
+            }
+        }
+    }
+
+    return PropBy();
+}
+
+/**
+@brief Only propagates binary clauses
+
+This is used in special algorithms outside the main Solver class
+*/
+PropBy Solver::propagateNonLearntBin()
 {
     multiLevelProp = false;
     uint32_t origQhead = qhead + 1;
@@ -1628,8 +1654,7 @@ PropBy Solver::propagateBin(const bool alsoLearnt)
         const vec<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2 + 2;
         for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
-            if (!k->isBinary()) continue;
-            if (!alsoLearnt && k->getLearnt()) continue;
+            if (!k->isNonLearntBinary()) break;
 
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {

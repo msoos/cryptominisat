@@ -402,7 +402,8 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
-    PropBy   propagateBin(const bool alsoLearnt = true);
+    PropBy   propagateBin();
+    PropBy   propagateNonLearntBin();
     bool     multiLevelProp;
     const bool propagateBinExcept(const bool alsoLearnt, const Lit exceptLit);
     const bool propagateBinOneLevel(const bool alsoLearnt);

@@ -48,6 +48,7 @@ FailedLitSearcher::FailedLitSearcher(Solver& _solver):
     , lastTimeFoundTruths(0)
     , numCalls(0)
 {
+    lastTimeStopped = solver.mtrand.randInt(solver.nVars());
 }
 
 /**
@@ -156,7 +157,7 @@ variables.
 */
 const bool FailedLitSearcher::search()
 {
-    uint64_t numProps = 70 * 1000000;
+    uint64_t numProps = 40 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*0.5;
 
     assert(solver.decisionLevel() == 0);
@@ -212,10 +213,10 @@ const bool FailedLitSearcher::search()
     maxHyperBinProps = numProps/30;
 
     //uint32_t fromBin;
-    uint32_t fromVar = solver.mtrand.randInt(solver.nVars());
     origProps = solver.propagations;
-    for (uint32_t i = 0; i < solver.nVars(); i++) {
-        Var var = (fromVar + i) % solver.nVars();
+    uint32_t i;
+    for (i = 0; i < solver.nVars(); i++) {
+        Var var = (lastTimeStopped + i) % solver.nVars();
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
         if (solver.propagations >= origProps + numProps)
@@ -223,6 +224,7 @@ const bool FailedLitSearcher::search()
         if (!tryBoth(Lit(var, false), Lit(var, true)))
             goto end;
     }
+    lastTimeStopped = (lastTimeStopped + i) % solver.nVars();
 
     origProps = solver.propagations;
     while (!order_heap_copy.empty()) {

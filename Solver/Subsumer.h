@@ -232,6 +232,22 @@ private:
     void fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit);
 
     //Subsume with Nonexistent Bins
+    struct BinSorter2 {
+        const bool operator()(const Watched& first, const Watched& second)
+        {
+            assert(first.isBinary() || first.isTriClause());
+            assert(second.isBinary() || second.isTriClause());
+
+            if (first.isTriClause() && second.isTriClause()) return false;
+            if (first.isBinary() && second.isTriClause()) return true;
+            if (second.isBinary() && first.isTriClause()) return false;
+
+            assert(first.isBinary() && second.isBinary());
+            if (first.getLearnt() && !second.getLearnt()) return true;
+            if (!first.getLearnt() && second.getLearnt()) return false;
+            return false;
+        };
+    };
     const bool subsWNonExitsBinsFullFull();
     const bool subsWNonExistBinsFull();
     const bool subsWNonExistBins(const Lit& lit);

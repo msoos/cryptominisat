@@ -111,6 +111,11 @@ class Watched {
             return ((data2&3) == 0);
         }
 
+        const bool isNonLearntBinary() const
+        {
+            return (data2 == 0);
+        }
+
         const bool isClause() const
         {
             return ((data2&3) == 1);

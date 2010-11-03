@@ -216,6 +216,7 @@ class FailedLitSearcher {
         double numPropsMultiplier; ///<If last time we called search() all went fine, then this is incremented, so we do more searching this time
         uint32_t lastTimeFoundTruths; ///<Records how many unit clauses we found last time we called search()
         uint32_t numCalls; ///<Number of times search() has been called
+        uint32_t lastTimeStopped;
 };
 
 inline const double FailedLitSearcher::getTotalTime() const

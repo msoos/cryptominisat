@@ -902,6 +902,10 @@ const bool Subsumer::subsWNonExitsBinsFullFull()
     double myTime = cpuTime();
     clauses_subsumed = 0;
     literals_removed = 0;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
+        if (it->size() < 2) continue;
+        std::sort(it->getData(), it->getDataEnd(), BinSorter2());
+    }
 
     uint32_t oldTrailSize = solver.trail.size();
     if (!subsWNonExistBinsFull()) return false;
@@ -945,15 +949,15 @@ const bool Subsumer::subsWNonExistBinsFull()
 {
     uint64_t oldProps = solver.propagations;
     uint64_t maxProp = MAX_BINARY_PROP*10;
-    if (clauses.size() > 400000) maxProp /= 2;
+    toVisitAll.clear();
     toVisitAll.growTo(solver.nVars()*2, false);
     extraTimeNonExist = 0;
 
     doneNum = 0;
     uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
     for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
-        Var var = solver.order_heap[(i+startFrom)%solver.order_heap.size()];
-        if (solver.propagations + extraTimeNonExist*150 > oldProps + maxProp) break;
+        Var var = solver.order_heap[(startFrom + i) % solver.order_heap.size()];
+        if (solver.propagations + extraTimeNonExist*250 > oldProps + maxProp) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
         doneNum++;
         extraTimeNonExist += 5;
@@ -1006,7 +1010,7 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit)
     toVisit.clear();
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    bool failed = (!solver.propagateBin(false).isNULL());
+    bool failed = (!solver.propagateNonLearntBin().isNULL());
     if (failed) return false;
     uint32_t abst = 0;
 
@@ -1242,13 +1246,13 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     blockTime = 0.0;
     uint32_t origTrailSize = solver.trail.size();
 
-    for (uint32_t i = 0; i < clauses.size(); i++) {
+    /*for (uint32_t i = 0; i < clauses.size(); i++) {
         if (numMaxSubsume0 == 0) break;
         if (clauses[i].clause != NULL) {
             subsume0(*clauses[i].clause);
             numMaxSubsume0--;
         }
-    }
+    }*/
 
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  time until pre-subsume0 clauses and subsume1 2-learnts:" << cpuTime()-myTime << std::endl;
@@ -1326,19 +1330,19 @@ void Subsumer::setLimits(const bool alsoLearnt)
 {
     if (clauses.size() > 3500000) {
         numMaxSubsume0 = 900000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 6.0 * (0.8+(double)(numCalls)/4.0));
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 5.0 * (0.8+(double)(numCalls)/4.0));
         numMaxSubsume1 = 100000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(30000.0 * (0.8+(double)(numCalls)/3.0));
     }
     if (clauses.size() <= 3500000 && clauses.size() > 1500000) {
         numMaxSubsume0 = 2000000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 3.0 * (0.8+(double)(numCalls)/4.0));
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 2.0 * (0.8+(double)(numCalls)/4.0));
         numMaxSubsume1 = 300000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(50000.0 * (0.8+(double)(numCalls)/3.0));
     }
     if (clauses.size() <= 1500000) {
         numMaxSubsume0 = 4000000 * (1+numCalls/2);
-        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 3.0 * (0.8+(double)(numCalls)/2.0));
+        numMaxElim = (uint32_t)((double)solver.order_heap.size() / 1.2 * (0.8+(double)(numCalls)));
         numMaxSubsume1 = 400000 * (1+numCalls/2);
         numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
     }
