@@ -39,7 +39,7 @@ void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
     solver.learnts_literals = stay.learntBins;
     solver.clauses_literals = stay.nonLearntBins;
     solver.numBins = (stay.learntBins + stay.nonLearntBins)/2;
-    assert(solver.numBins == oldNumBins);
+    release_assert(solver.numBins == oldNumBins);
 }
 
 /**

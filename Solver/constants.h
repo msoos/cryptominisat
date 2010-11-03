@@ -70,7 +70,9 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 // Silent Debug
 ///////////////////
 
+#ifndef NDEBUG
 #define SILENT_DEBUG
+#endif
 
 #ifdef SILENT_DEBUG
 #define DEBUG_VARELIM

@@ -293,7 +293,7 @@ end:
             CompleteDetachReatacher reattacher(solver);
             reattacher.detachNonBinsNonTris(true);
             const bool ret = reattacher.reattachNonBins();
-            assert(ret == true);
+            release_assert(ret == true);
             removedOldLearnts = true;
         } else {
             solver.clauseCleaner->removeAndCleanAll();

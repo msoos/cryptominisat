@@ -383,7 +383,7 @@ const bool XorSubsumer::removeDependent()
             inverted ^= !c2.xorEqualFalse();
             uint32_t group = c2.getGroup();
             uint32_t ret = removeAll(lits, var);
-            assert(ret == 2);
+            release_assert(ret == 2);
 
             #ifdef VERBOSE_DEBUG
             std::cout << "Eliminating var " << var + 1 << " present in 2 xor-clauses" << std::endl;
