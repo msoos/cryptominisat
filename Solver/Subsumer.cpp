@@ -549,6 +549,7 @@ const bool Subsumer::handleClBinTouched()
     assert(solver.ok);
     uint32_t clauses_subsumed_before = clauses_subsumed;
     uint32_t literals_removed_before = literals_removed;
+    uint32_t clBinSize = 0;
 
     vec<Lit> lits(2);
     for (list<NewBinaryClause>::const_iterator it = clBinTouched.begin(); it != clBinTouched.end(); it++) {
@@ -566,12 +567,14 @@ const bool Subsumer::handleClBinTouched()
             }
         }
         if (!solver.ok) return false;
+        clBinSize++;
     }
     clBinTouched.clear();
 
     if (solver.conf.verbosity >= 3) {
         std::cout << "c subs-w-newbins " << clauses_subsumed - clauses_subsumed_before
-        << " lits rem " << literals_removed - literals_removed_before << std::endl;
+        << " lits rem " << literals_removed - literals_removed_before
+        << " went through: " << clBinSize << std::endl;
     }
 
     return true;
