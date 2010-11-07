@@ -693,6 +693,14 @@ const bool Subsumer::subsume0AndSubsume1()
     } while (s1.size() > 100 || s0.size() > 100);
     assert(cl_touched.size() == 0);
 
+    for (CSet::iterator it = s0.begin(); it != s0.end(); ++it) {
+        if (it->clause != NULL) cl_touched.add(*it);
+    }
+
+    for (CSet::iterator it = s1.begin(); it != s1.end(); ++it) {
+        if (it->clause != NULL) cl_touched.add(*it);
+    }
+
     end:
     unregisterIteration(s1);
     unregisterIteration(s0);
