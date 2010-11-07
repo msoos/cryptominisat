@@ -210,7 +210,6 @@ public:
     inline void strengthen(const Lit p)
     {
         remove(*this, p);
-        setStrenghtened();
     }
 
     void calcAbstractionClause()
