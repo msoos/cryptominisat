@@ -996,6 +996,8 @@ const bool Subsumer::subsWNonExistBinsFull()
         extraTimeNonExist += 10;
     }
 
+    if (onlyNonLearntBins) delete onlyNonLearntBins;
+
     return true;
 }
 
