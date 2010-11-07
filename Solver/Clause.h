@@ -296,6 +296,14 @@ public:
     {
         return isFreed;
     }
+
+    void takeMaxOfStats(Clause& other)
+    {
+        if (other.getGlue() < getGlue())
+            setGlue(other.getGlue());
+        if (other.getMiniSatAct() > getMiniSatAct())
+            setMiniSatAct(other.getMiniSatAct());
+    }
 };
 
 /**

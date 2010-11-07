@@ -341,10 +341,7 @@ void Subsumer::subsume1(Clause& ps)
         if (subsLits[j] == lit_Undef) {
             if (ps.learnt()) {
                 if (c.clause->learnt()) {
-                    if (c.clause->getGlue() < ps.getGlue())
-                        ps.setGlue(c.clause->getGlue());
-                    if (c.clause->getMiniSatAct() > ps.getMiniSatAct())
-                        ps.setMiniSatAct(c.clause->getMiniSatAct());
+                    ps.takeMaxOfStats(*c.clause);
                 } else {
                     ps.makeNonLearnt();
                 }
