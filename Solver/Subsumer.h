@@ -21,6 +21,7 @@ using std::map;
 using std::priority_queue;
 
 class ClauseCleaner;
+class OnlyNonLearntBins;
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
@@ -250,7 +251,7 @@ private:
     };
     const bool subsWNonExitsBinsFullFull();
     const bool subsWNonExistBinsFull();
-    const bool subsWNonExistBins(const Lit& lit);
+    const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
     void subsume0BIN(const Lit lit, const vec<char>& lits, const uint32_t abst);
     bool subsNonExistentFinish;
     uint32_t doneNum;

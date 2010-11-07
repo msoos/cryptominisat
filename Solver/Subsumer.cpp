@@ -17,6 +17,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "VarReplacer.h"
 #include "XorFinder.h"
 #include "CompleteDetachReattacher.h"
+#include "OnlyNonLearntBins.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -948,10 +949,15 @@ and contains all the non-learnt binary clauses
 const bool Subsumer::subsWNonExistBinsFull()
 {
     uint64_t oldProps = solver.propagations;
-    uint64_t maxProp = MAX_BINARY_PROP*3;
+    uint64_t maxProp = MAX_BINARY_PROP*7;
     toVisitAll.clear();
     toVisitAll.growTo(solver.nVars()*2, false);
     extraTimeNonExist = 0;
+    OnlyNonLearntBins* onlyNonLearntBins = NULL;
+    if (solver.clauses_literals < 10*1000*1000) {
+        onlyNonLearntBins = new OnlyNonLearntBins(solver);
+        onlyNonLearntBins->fill();
+    }
 
     doneNum = 0;
     uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
@@ -963,7 +969,8 @@ const bool Subsumer::subsWNonExistBinsFull()
         extraTimeNonExist += 5;
 
         Lit lit(var, true);
-        if (!subsWNonExistBins(lit)) {
+        if (onlyNonLearntBins->getWatchSize(lit) == 0) goto next;
+        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
@@ -972,11 +979,13 @@ const bool Subsumer::subsWNonExistBinsFull()
             continue;
         }
         extraTimeNonExist += 10;
+        next:
 
         //in the meantime it could have got assigned
         if (solver.assigns[var] != l_Undef) continue;
         lit = ~lit;
-        if (!subsWNonExistBins(lit)) {
+        if (onlyNonLearntBins->getWatchSize(lit) == 0) continue;
+        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
@@ -1002,7 +1011,7 @@ binary clauses (this literal is the starting point in the binary graph)
 @param onlyNonLearntBins This class is initialised before calling this function
 and contains all the non-learnt binary clauses
 */
-const bool Subsumer::subsWNonExistBins(const Lit& lit)
+const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "subsWNonExistBins called with lit " << lit << std::endl;
@@ -1010,15 +1019,15 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit)
     toVisit.clear();
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    bool failed = (!solver.propagateNonLearntBin().isNULL());
+    bool failed;
+    if (onlyNonLearntBins == NULL)
+        failed = (!solver.propagateNonLearntBin().isNULL());
+    else
+        failed = !onlyNonLearntBins->propagate();
     if (failed) return false;
     uint32_t abst = 0;
 
     assert(solver.decisionLevel() > 0);
-    if (!solver.multiLevelProp) {
-        solver.cancelUntilLight();
-        return solver.ok;
-    }
     for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
         Lit x = solver.trail[sublevel];
         toVisit.push(x);
@@ -1032,7 +1041,8 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit)
     solver.trail_lim.shrink_(solver.trail_lim.size());
     //solver.cancelUntilLight();
 
-    if (!solver.multiLevelProp) {
+    if ((onlyNonLearntBins != NULL && toVisit.size() <= onlyNonLearntBins->getWatchSize(lit))
+        || (!solver.multiLevelProp)) {
         //This has been performed above, with subsume1Partial of binary clauses:
         //this toVisit.size()<=1, there mustn't have been more than 1 binary
         //clause in the watchlist, so this has been performed above.

@@ -39,7 +39,7 @@ add_library(cryptominisatlib
     StateSaver.cpp
     ClauseAllocator.cpp
     UselessBinRemover.cpp
-#    OnlyNonLearntBins.cpp
+    OnlyNonLearntBins.cpp
     CompleteDetachReattacher.cpp
     DimacsParser.cpp
     SCCFinder.cpp
