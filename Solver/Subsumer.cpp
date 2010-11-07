@@ -340,11 +340,8 @@ void Subsumer::subsume1(Clause& ps)
         ClauseSimp c = subs[j];
         if (subsLits[j] == lit_Undef) {
             if (ps.learnt()) {
-                if (c.clause->learnt()) {
-                    ps.takeMaxOfStats(*c.clause);
-                } else {
-                    ps.makeNonLearnt();
-                }
+                if (c.clause->learnt()) ps.takeMaxOfStats(*c.clause);
+                else ps.makeNonLearnt();
             }
             unlinkClause(c);
         } else {
