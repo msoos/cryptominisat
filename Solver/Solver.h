@@ -287,7 +287,6 @@ protected:
     vector<std::pair<Lit, Lit> > newBinClauses;
     template <class T> void signalNewBinClause(T& ps);
     void signalNewBinClause(Lit lit1, Lit lit2);
-    bool externalAddClause;
 
     // Helper structures:
     //
@@ -444,7 +443,7 @@ protected:
     /////////////////
     template<class T> const bool addClauseHelper(T& ps, const uint32_t group, const char* group_name);
     template <class T>
-    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0);
+    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0, const bool inOriginalInput = true);
     template<class T>
     XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group, const bool learnt = false);
     void       attachBinClause(const Lit lit1, const Lit lit2, const bool learnt);

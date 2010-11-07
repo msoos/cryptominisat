@@ -85,8 +85,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , lastSyncConf(0)
         , sentUnitData(0)
         , gotUnitData(0)
-        , externalAddClause(false)
-
 
         , ok               (true)
         , numBins          (0)
@@ -366,7 +364,9 @@ when the solver is in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
 */
 template <class T>
-Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity)
+Clause* Solver::addClauseInt(T& ps, uint32_t group
+                            , const bool learnt, const uint32_t glue, const float miniSatActivity
+                            , const bool inOriginalInput)
 {
     assert(ok);
 
@@ -400,14 +400,14 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group, const bool learnt, const uin
         return c;
     } else {
         attachBinClause(ps[0], ps[1], learnt);
-        signalNewBinClause(ps);
+        if (!inOriginalInput) signalNewBinClause(ps);
         numNewBin++;
         return NULL;
     }
 }
 
-template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity);
-template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity);
+template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
+template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
 
 template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group, const char* group_name)
 {
@@ -463,14 +463,9 @@ the heavy-lifting
 template<class T>
 bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
 {
-    externalAddClause = true;
-    if (!addClauseHelper(ps, group, group_name)) {
-        externalAddClause = false;
-        return false;
-    }
-    Clause* c = addClauseInt(ps, group);
+    if (!addClauseHelper(ps, group, group_name)) return false;
+    Clause* c = addClauseInt(ps, group, false, 0, 0, true);
     if (c != NULL) clauses.push(c);
-    externalAddClause = false;
 
     return ok;
 }
@@ -483,7 +478,7 @@ template<class T>
 bool Solver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity)
 {
     if (!addClauseHelper(ps, group, group_name)) return false;
-    Clause* c = addClauseInt(ps, group, true, glue, miniSatActivity);
+    Clause* c = addClauseInt(ps, group, true, glue, miniSatActivity, true);
     if (c != NULL) learnts.push(c);
 
     return ok;
@@ -2634,7 +2629,6 @@ void Solver::signalNewBinClause(T& ps)
 
 void Solver::signalNewBinClause(Lit lit1, Lit lit2)
 {
-    if (externalAddClause) return;
     if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
