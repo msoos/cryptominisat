@@ -897,9 +897,6 @@ First, it backward-subsumes and performs self-subsuming resolution using binary
 clauses on non-binary clauses. Then, it generates non-existing binary clauses
 (that could exist, but would be redundant), and performs self-subsuming
 resolution with them on the normal clauses using \function subsume0BIN().
-
-@param onlyNonLearntBins This class is initialised before calling this function
-and contains all the non-learnt binary clauses
 */
 const bool Subsumer::subsumeWithBinaries()
 {
@@ -982,9 +979,6 @@ This is the function that overviews the deletion of all clauses that could be
 inferred from non-existing binary clauses, and the strenghtening (through self-
 subsuming resolution) of clauses that could be strenghtened using non-existent
 binary clauses.
-
-@param onlyNonLearntBins This class is initialised before calling this function
-and contains all the non-learnt binary clauses
 */
 const bool Subsumer::subsWNonExistBinsFull()
 {
