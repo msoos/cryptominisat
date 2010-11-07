@@ -722,8 +722,8 @@ const int Main::singleThreadSolve()
     if (ret == l_Undef && conf.verbosity >= 1) {
         std::cout << "c Not finished running -- maximum restart reached" << std::endl;
     }
-    printResultFunc(solver, ret, res);
     if (conf.verbosity >= 1) solver.printStats();
+    printResultFunc(solver, ret, res);
 
     return correctReturnValue(ret);
 }
@@ -821,8 +821,8 @@ const int Main::oneThreadSolve()
         }
 
         FILE* res = openOutputFile();
+        if (conf.verbosity >= 1) solver.printStats();
         printResultFunc(solver, ret, res);
-        solver.printStats();
 
         retval = correctReturnValue(ret);
         exit(retval);
