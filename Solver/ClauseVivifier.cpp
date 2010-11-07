@@ -43,7 +43,7 @@ const bool ClauseVivifier::vivifyClauses()
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 30000*1000;
+    uint64_t maxNumProps = 60*1000*1000;
     uint64_t extraDiff = 0;
     uint64_t oldProps = solver.propagations;
     bool needToFinish = false;
