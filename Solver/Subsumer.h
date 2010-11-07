@@ -15,8 +15,10 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include "BitArray.h"
 #include <map>
 #include <vector>
+#include <list>
 #include <queue>
 using std::vector;
+using std::list;
 using std::map;
 using std::priority_queue;
 
@@ -182,6 +184,20 @@ private:
     void makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt);
 
     //subsume1
+    class NewBinaryClause
+    {
+        public:
+            NewBinaryClause(const Lit _lit1, const Lit _lit2, const bool _learnt) :
+                lit1(_lit1), lit2(_lit2), learnt(_learnt)
+            {};
+
+            const Lit lit1;
+            const Lit lit2;
+            const bool learnt;
+    };
+    list<NewBinaryClause> clBinTouched; ///<Binary clauses strengthened/added
+    const bool handleClBinTouched();
+
     void subsume1(Clause& ps);
     const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
     void strenghten(ClauseSimp& c, const Lit toRemoveLit);

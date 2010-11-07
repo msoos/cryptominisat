@@ -534,6 +534,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
             solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
             solver.numNewBin++;
             solver.signalNewBinClause(*c.clause);
+            clBinTouched.push_back(NewBinaryClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt()));
             unlinkClause(c);
             c.clause = NULL;
             break;
@@ -541,6 +542,39 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
         default:
             cl_touched.add(c);
     }
+}
+
+const bool Subsumer::handleClBinTouched()
+{
+    assert(solver.ok);
+    uint32_t clauses_subsumed_before = clauses_subsumed;
+    uint32_t literals_removed_before = literals_removed;
+
+    vec<Lit> lits(2);
+    for (list<NewBinaryClause>::const_iterator it = clBinTouched.begin(); it != clBinTouched.end(); it++) {
+        lits[0] = it->lit1;
+        lits[1] = it->lit2;
+        const bool learnt = it->learnt;
+
+        if (subsume1(lits, learnt)) {
+            //if we can't find it, that must be because it has been made non-learnt
+            //note: if it has been removed through elimination, it must't
+            //be able to subsume any non-learnt clauses, so we never enter here
+            if (findWBin(solver.watches, lits[0], lits[1], false)) {
+                findWatchedOfBin(solver.watches, lits[0], lits[1], learnt).setLearnt(false);
+                findWatchedOfBin(solver.watches, lits[1], lits[0], learnt).setLearnt(false);
+            }
+        }
+        if (!solver.ok) return false;
+    }
+    clBinTouched.clear();
+
+    if (solver.conf.verbosity >= 3) {
+        std::cout << "c subs-w-newbins " << clauses_subsumed - clauses_subsumed_before
+        << " lits rem " << literals_removed - literals_removed_before << std::endl;
+    }
+
+    return true;
 }
 
 /**
@@ -645,6 +679,7 @@ const bool Subsumer::subsume0AndSubsume1()
         }
         s1.clear();
 
+        if (!handleClBinTouched()) goto end;
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
             if (it->clause != NULL) {
                 s1.add(*it);
@@ -1241,6 +1276,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         numMaxSubsume0 = 1000000*numCalls;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
+        if (!handleClBinTouched()) return false;
     }
 
     myTime = cpuTime();

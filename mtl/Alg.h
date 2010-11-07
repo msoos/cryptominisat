@@ -92,6 +92,7 @@ static void    removeWCl(vec<Watched> &ws, const ClauseOffset c);
 
 //Binary clause
 static bool    findWBin(const vec<vec<Watched> >& wsFull, const Lit lit1, const Lit impliedLit);
+static bool    findWBin(const vec<vec<Watched> >& wsFull, const Lit lit1, const Lit impliedLit, const bool learnt);
 static void    removeWBin(vec<Watched> &ws, const Lit impliedLit, const bool learnt);
 static void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
 static const std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
@@ -168,6 +169,14 @@ static inline bool findWBin(const vec<vec<Watched> >& wsFull, const Lit lit1, co
     uint32_t j = 0;
     const vec<Watched>& ws = wsFull[(~lit1).toInt()];
     for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit); j++);
+    return j < ws.size();
+}
+
+static inline bool findWBin(const vec<vec<Watched> >& wsFull, const Lit lit1, const Lit impliedLit, const bool learnt)
+{
+    uint32_t j = 0;
+    const vec<Watched>& ws = wsFull[(~lit1).toInt()];
+    for (; j < ws.size() && (!ws[j].isBinary() || ws[j].getOtherLit() != impliedLit || ws[j].getLearnt() != learnt); j++);
     return j < ws.size();
 }
 
