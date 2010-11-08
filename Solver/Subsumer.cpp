@@ -1003,7 +1003,7 @@ const bool Subsumer::subsWNonExistBinsFull()
         extraTimeNonExist += 5;
 
         Lit lit(var, true);
-        if (onlyNonLearntBins->getWatchSize(lit) == 0) goto next;
+        if (onlyNonLearntBins != NULL && onlyNonLearntBins->getWatchSize(lit) == 0) goto next;
         if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntilLight();
@@ -1018,7 +1018,7 @@ const bool Subsumer::subsWNonExistBinsFull()
         //in the meantime it could have got assigned
         if (solver.assigns[var] != l_Undef) continue;
         lit = ~lit;
-        if (onlyNonLearntBins->getWatchSize(lit) == 0) continue;
+        if (onlyNonLearntBins != NULL && onlyNonLearntBins->getWatchSize(lit) == 0) continue;
         if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntilLight();
