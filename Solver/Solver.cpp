@@ -1998,7 +1998,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
     switch (restartType) {
     case dynamic_restart:
         if (glueHistory.isvalid() &&
-            glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()) {
+            glueHistory.getAvgDouble() > 0.9*glueHistory.getAvgAllDouble()) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
             if (glueHistory.isvalid()) {
