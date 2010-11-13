@@ -371,7 +371,7 @@ protected:
     class transCache {
         public:
             transCache() :
-                conflictLastUpdated(0)
+                conflictLastUpdated(std::numeric_limits<uint64_t>::max())
             {};
 
             vector<Lit> lits;

@@ -1137,7 +1137,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     bool thisClauseDoMinLMoreRecur = conf.doMinimLMoreRecur || (cl.size() <= 6 || glue <= 5);
     if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
     uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
-    if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 3;
+    if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 2;
     else if (tot_literals < 10000000) thisUpdateTransOTFSSCache /= 2;
 
     //To count the "amount of time" invested in doing transitive on-the-fly
@@ -1150,9 +1150,8 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         Lit lit = *l;
 
         if (thisClauseDoMinLMoreRecur && moreRecurProp < 450) {
-            if ((conflicts < UPDATE_TRANSOTFSSR_CACHE && mtrand.randInt(cl.size()) != 0)
-                //|| moreRecurProp > 450
-                || (conflicts >= UPDATE_TRANSOTFSSR_CACHE && transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts)) {
+            if (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
+                && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts)) {
                 for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
                     seen[(~(*it)).toInt()] = 0;
                 }
