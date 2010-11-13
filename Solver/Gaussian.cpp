@@ -791,7 +791,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
     if (solver.dynamic_behaviour_analysis)
         solver.logger.set_group_name(cla.getGroup(), "gauss prop clause");
     #endif
-    solver.uncheckedEnqueue(cla[0], &cla);
+    solver.uncheckedEnqueue(cla[0], solver.clauseAllocator.getOffset(&cla));
 
     return propagation;
 }
@@ -818,7 +818,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
         switch (g) {
         case conflict: {
             useful_confl++;
-            llbool ret = solver.handle_conflict(learnt_clause, confl, conflictC, true);
+            llbool ret = solver.handle_conflict(learnt_clause, solver.clauseAllocator.getOffset(confl), conflictC, true);
             solver.clauseAllocator.clauseFree(confl);
 
             if (ret != l_Nothing) return ret;

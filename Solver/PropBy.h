@@ -28,105 +28,112 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define DEBUG_PROPAGATEFROM
 
+#include "ClauseOffset.h"
+#include "ClauseAllocator.h"
+
 class PropBy
 {
     private:
-        union {Clause* clause; uint32_t otherLit;};
-        uint32_t otherLit2;
+        uint64_t propType:2;
+        //0: clause, NULL
+        //1: clause, non-null
+        //2: binary
+        //3: tertiary
+        uint64_t data1:30;
+        uint64_t data2:32;
 
     public:
         PropBy() :
-            clause(NULL)
-            , otherLit2(0)
+            propType(0)
+            , data1(0)
+            , data2(0)
         {}
 
-        PropBy(Clause* c) :
-            clause(c)
-            , otherLit2(0)
-        {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(c != NULL);
-            #endif
-        }
-
-        PropBy(const Lit& lit) :
-            otherLit(lit.toInt())
-            , otherLit2(1)
+        PropBy(ClauseOffset offset) :
+            propType(1)
+            , data2(offset)
         {
         }
 
-        PropBy(const Lit& lit1, const Lit& lit2) :
-            otherLit(lit1.toInt())
-            , otherLit2(2 + (lit2.toInt() << 2))
+        PropBy(const Lit lit) :
+            propType(2)
+            , data1(lit.toInt())
+        {
+        }
+
+        PropBy(const Lit lit1, const Lit lit2) :
+            propType(3)
+            , data1(lit1.toInt())
+            , data2(lit2.toInt())
         {
         }
 
         const bool isClause() const
         {
-            return ((otherLit2&3) == 0);
+            return ((propType&2) == 0);
         }
 
         const bool isBinary() const
         {
-            return ((otherLit2&3) == 1);
+            return (propType == 2);
         }
 
-        const bool isTriClause() const
+        const bool isTri() const
         {
-            return ((otherLit2&3) == 2);
+            return (propType == 3);
         }
 
         const Lit getOtherLit() const
         {
             #ifdef DEBUG_PROPAGATEFROM
-            assert(isBinary() || isTriClause());
+            assert(isBinary() || isTri());
             #endif
-            return Lit::toLit(otherLit);
+            return Lit::toLit(data1);
         }
 
         const Lit getOtherLit2() const
         {
             #ifdef DEBUG_PROPAGATEFROM
-            assert(isTriClause());
+            assert(isTri());
             #endif
-            return Lit::toLit(otherLit2 >> 2);
+            return Lit::toLit(data2);
         }
 
-        const Clause* getClause() const
+        const ClauseOffset getClause() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());
             #endif
-            return clause;
+            return data2;
         }
 
-        Clause* getClause()
+        ClauseOffset getClause()
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());
             #endif
-            return clause;
+            return data2;
         }
 
         const bool isNULL() const
         {
             if (!isClause()) return false;
-            return clause == NULL;
+            return propType == 0;
         }
 
-        const uint32_t size() const
+        /*const uint32_t size() const
         {
             if (isBinary()) return 2;
-            if (isTriClause()) return 3;
+            if (isTri()) return 3;
 
             #ifdef DEBUG_PROPAGATEFROM
             assert(!isNULL());
             #endif
 
             return getClause()->size();
-        }
+        }*/
 
-        const Lit operator[](uint32_t i) const
+        /*const Lit operator[](uint32_t i) const
         {
             if (isBinary()) {
                 #ifdef DEBUG_PROPAGATEFROM
@@ -147,6 +154,105 @@ class PropBy
             assert(!isNULL());
             #endif
             return (*getClause())[i];
+        }*/
+};
+
+class PropByFull
+{
+    private:
+        uint32_t type;
+        Clause* clause;
+        Lit lits[3];
+
+    public:
+        PropByFull(PropBy orig, Lit otherLit, ClauseAllocator& alloc) :
+            type(10)
+            , clause(NULL)
+        {
+            if (orig.isBinary() || orig.isTri()) {
+                lits[0] = otherLit;
+                lits[1] = orig.getOtherLit();
+                if (orig.isTri()) {
+                    lits[2] = orig.getOtherLit2();
+                    type = 2;
+                } else {
+                    type = 1;
+                }
+            }
+            if (orig.isClause()) {
+                type = 0;
+                if (orig.isNULL()) {
+                    clause = NULL;
+                } else {
+                    clause = alloc.getPointer(orig.getClause());
+                }
+            }
+        }
+
+        PropByFull() :
+            type(10)
+        {}
+
+        PropByFull(PropByFull& other) :
+            type(other.type)
+            , clause(other.clause)
+        {
+            memcpy(lits, other.lits, sizeof(Lit)*3);
+        }
+
+        const uint32_t size() const
+        {
+            switch (type) {
+                case 0 : return clause->size();
+                case 1 : return 2;
+                case 2 : return 3;
+                default:
+                    assert(false);
+                    return 0;
+            }
+        }
+
+        const bool isNULL() const
+        {
+            return type == 0 && clause == NULL;
+        }
+
+        const bool isClause() const
+        {
+            return type == 0;
+        }
+
+        const bool isBinary() const
+        {
+            return type == 1;
+        }
+
+        const bool isTri() const
+        {
+            return type == 2;
+        }
+
+        const Clause* getClause() const
+        {
+            return clause;
+        }
+
+        Clause* getClause()
+        {
+            return clause;
+        }
+
+        const Lit operator[](const uint32_t i) const
+        {
+            switch (type) {
+                case 0: {
+                    assert(clause != NULL);
+                    return (*clause)[i];
+                }
+                default : {
+                    return lits[i];
+                }
+            }
         }
 };
 

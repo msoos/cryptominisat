@@ -446,8 +446,8 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
         }
 
         if (it->isClause() && !it->isNULL()) {
-            assert(((NewPointerAndOffset*)(it->getClause()))->newOffset != std::numeric_limits<uint32_t>::max());
-            *it = PropBy((Clause*)((NewPointerAndOffset*)(it->getClause()))->newPointer);
+            assert(((NewPointerAndOffset*)(getPointer(it->getClause())))->newOffset != std::numeric_limits<uint32_t>::max());
+            *it = PropBy(((NewPointerAndOffset*)(getPointer(it->getClause())))->newOffset);
         }
     }
 }

@@ -628,7 +628,7 @@ inline bool Solver::locked(const Clause& c) const
 {
     if (c.size() <= 3) return true; //we don't know in this case :I
     PropBy from(reason[c[0].var()]);
-    return from.isClause() && from.getClause() == &c && value(c[0]) == l_True;
+    return from.isClause() && from.getClause() == clauseAllocator.getOffset(&c) && value(c[0]) == l_True;
 }
 
 inline void     Solver::newDecisionLevel()

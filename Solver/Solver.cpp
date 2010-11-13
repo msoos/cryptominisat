@@ -990,7 +990,7 @@ current decision level.
 @return NULL if the conflict doesn't on-the-fly subsume the last clause, and
 the pointer of the clause if it does
 */
-Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &glue, const bool update)
+Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &glue, const bool update)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -1001,7 +1001,8 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
     int index   = trail.size() - 1;
     out_btlevel = 0;
 
-    PropBy oldConfl;
+    PropByFull confl(conflHalf, failBinLit, clauseAllocator);
+    PropByFull oldConfl;
 
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
@@ -1010,9 +1011,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
             claBumpActivity(*confl.getClause());
 
         for (uint32_t j = (p == lit_Undef) ? 0 : 1, size = confl.size(); j != size; j++) {
-            Lit q;
-            if (j == 0 && !confl.isClause()) q = failBinLit;
-            else q = confl[j];
+            Lit q = confl[j];
             const Var my_var = q.var();
 
             if (!seen[my_var] && level[my_var] > 0) {
@@ -1025,7 +1024,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
                     if (lastSelectedRestartType == dynamic_restart
                         && reason[q.var()].isClause()
                         && !reason[q.var()].isNULL()
-                        && reason[q.var()].getClause()->learnt())
+                        && clauseAllocator.getPointer(reason[q.var()].getClause())->learnt())
                         lastDecisionLevel.push(q.var());
                     #endif //#define UPDATEVARACTIVITY
                 } else {
@@ -1040,7 +1039,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
         while (!seen[trail[index--].var()]);
         p     = trail[index+1];
         oldConfl = confl;
-        confl = reason[p.var()];
+        confl = PropByFull(reason[p.var()], failBinLit, clauseAllocator);
         if (confl.isClause()) __builtin_prefetch(confl.getClause(), 1, 0);
         seen[p.var()] = 0;
         pathC--;
@@ -1064,7 +1063,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
     } else {
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++) {
-            PropBy c(reason[out_learnt[i].var()]);
+            PropByFull c(reason[out_learnt[i].var()], failBinLit, clauseAllocator);
 
             for (uint32_t k = 1, size = c.size(); k < size; k++) {
                 if (!seen[c[k].var()] && level[c[k].var()] > 0) {
@@ -1100,7 +1099,7 @@ Clause* Solver::analyze(PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, ui
         #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
             PropBy cl = reason[lastDecisionLevel[i]];
-            if (cl.isClause() && cl.getClause()->getGlue() < glue)
+            if (cl.isClause() && clauseAllocator.getPointer(cl.getClause())->getGlue() < glue)
                 varBumpActivity(lastDecisionLevel[i]);
         }
         lastDecisionLevel.clear();
@@ -1253,7 +1252,7 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     int top = analyze_toclear.size();
     while (analyze_stack.size() > 0) {
         assert(!reason[analyze_stack.last().var()].isNULL());
-        PropBy c(reason[analyze_stack.last().var()]);
+        PropByFull c(reason[analyze_stack.last().var()], failBinLit, clauseAllocator);
 
         analyze_stack.pop();
 
@@ -1304,7 +1303,7 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
                 assert(level[x] > 0);
                 out_conflict.push(~trail[i]);
             } else {
-                PropBy c = reason[x];
+                PropByFull c(reason[x], failBinLit, clauseAllocator);
                 for (uint32_t j = 1, size = c.size(); j < size; j++)
                     if (level[c[j].var()] > 0)
                         seen[c[j].var()] = 1;
@@ -1463,14 +1462,14 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
         // Did not find watch -- clause is unit under assignment:
         *j++ = *i;
         if (value(first) == l_False) {
-            confl = PropBy(&c);
+            confl = PropBy(offset);
             qhead = trail.size();
             // Copy the remaining watches:
             while (++i < end)
                 *j++ = *i;
             i--;
         } else {
-            uncheckedEnqueue(first, &c);
+            uncheckedEnqueue(first, offset);
             #ifdef DYNAMICALLY_UPDATE_GLUE
             if (update && c.learnt() && c.getGlue() > 2) { // GA
                 uint32_t glue = calcNBLevels(c);
@@ -1496,7 +1495,8 @@ better memory-accesses since the watchlist is already in the memory...
 */
 inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
 {
-    XorClause& c = *(XorClause*)clauseAllocator.getPointer(i->getXorOffset());
+    ClauseOffset offset = i->getXorOffset();
+    XorClause& c = *(XorClause*)clauseAllocator.getPointer(offset);
 
     // Make sure the false literal is data[1]:
     if (c[0].var() == p.var()) {
@@ -1513,9 +1513,9 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
             Lit tmp(c[1]);
             c[1] = c[k];
             c[k] = tmp;
-            removeWXCl(watches[(~p).toInt()], i->getXorOffset());
-            watches[Lit(c[1].var(), false).toInt()].push(i->getXorOffset());
-            watches[Lit(c[1].var(), true).toInt()].push(i->getXorOffset());
+            removeWXCl(watches[(~p).toInt()], offset);
+            watches[Lit(c[1].var(), false).toInt()].push(offset);
+            watches[Lit(c[1].var(), true).toInt()].push(offset);
             return;
         }
 
@@ -1528,9 +1528,9 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
 
     if (assigns[c[0].var()].isUndef()) {
         c[0] = c[0].unsign()^final;
-        uncheckedEnqueue(c[0], (Clause*)&c);
+        uncheckedEnqueue(c[0], offset);
     } else if (!final) {
-        confl = PropBy((Clause*)&c);
+        confl = PropBy(offset);
         qhead = trail.size();
         // Copy the remaining watches:
         while (++i < end)
@@ -2154,7 +2154,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             if (c->learnt() && c->getGlue() > glue)
                 c->setGlue(glue); // LS
             attachClause(*c);
-            uncheckedEnqueue(learnt_clause[0], c);
+            uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
         } else {  //no on-the-fly subsumption
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
@@ -2175,7 +2175,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
                 }
                 c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
                 attachClause(*c);
-                uncheckedEnqueue(learnt_clause[0], c);
+                uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
             } else {
                 attachBinClause(learnt_clause[0], learnt_clause[1], false);
                 numNewBin++;
