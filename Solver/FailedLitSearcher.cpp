@@ -157,7 +157,7 @@ variables.
 */
 const bool FailedLitSearcher::search()
 {
-    uint64_t numProps = 50 * 1000000;
+    uint64_t numProps = 100 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     assert(solver.decisionLevel() == 0);
