@@ -856,7 +856,7 @@ void Subsumer::removeWrongBinsAndAllTris()
     }
 
     assert(numRemovedHalfLearnt % 2 == 0);
-    solver.clauses_literals -= numRemovedHalfLearnt;
+    solver.learnts_literals -= numRemovedHalfLearnt;
     solver.numBins -= numRemovedHalfLearnt/2;
 }
 
