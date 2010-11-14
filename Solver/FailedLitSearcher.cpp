@@ -385,8 +385,8 @@ const bool FailedLitSearcher::orderLits()
             continue;
         }
         assert(solver.decisionLevel() > 0);
-        for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
-            Lit x = solver.trail[c];
+        for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
+            Lit x = solver.trail[sublevel];
             litDegrees[x.toInt()]++;
         }
         solver.cancelUntilLight();
