@@ -58,7 +58,7 @@ class FailedLitSearcher {
         //Main
         const bool tryBoth(const Lit lit1, const Lit lit2);
         const bool tryAll(const Lit* begin, const Lit* end);
-        void printResults(const double myTime, uint32_t numBinAdded) const;
+        void printResults(const double myTime) const;
 
         Solver& solver; ///<The solver we are updating&working with
 
@@ -154,35 +154,28 @@ class FailedLitSearcher {
         uint32_t bothInvert;
 
         //finding HyperBins
-        /**
-        @brief For sorting literals according to their in-degree
-
-        Used to add the hyper-binary clause to the literal that makes the most
-        sense -- not the most trivial, but the one where it will make the most
-        impact (impact = makes the most routes in the graph longer)
-        */
-        struct litOrder
+        struct LitOrder2
         {
-            litOrder(const vector<uint32_t>& _litDegrees) :
-            litDegrees(_litDegrees)
+            LitOrder2(const vec<uint32_t>& _binSubLev) :
+            binSubLev(_binSubLev)
             {}
 
-            bool operator () (const Lit& x, const Lit& y) {
-                return litDegrees[x.toInt()] > litDegrees[y.toInt()];
+            const bool operator () (const Lit x, const Lit y) const
+            {
+                return binSubLev[x.var()] > binSubLev[y.var()];
             }
 
-            const vector<uint32_t>& litDegrees;
+            const vec<uint32_t>& binSubLev;
         };
+        uint32_t addedBin;
         void hyperBinResolution(const Lit& lit);
         BitArray unPropagatedBin;
+        BitArray needToVisit;
         vec<Var> propagatedVars;
-        void addBin(const Lit& lit1, const Lit& lit2);
-        void fillImplies(const Lit& lit);
-        BitArray myimplies; ///<variables that have been set by a lit propagated only at the binary level
+        void addBin(const Lit lit1, const Lit lit2);
+        void fillImplies(const Lit lit);
         vec<Var> myImpliesSet; ///<variables set in myimplies
         uint64_t hyperbinProps; ///<Number of bogoprops done by the hyper-binary resolution function hyperBinResolution()
-        vector<uint32_t> litDegrees;
-        const bool orderLits();
         /**
         @brief Controls hyper-binary resolution's time-usage
 

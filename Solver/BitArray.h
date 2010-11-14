@@ -66,22 +66,8 @@ public:
             t1++;
             t2++;
         }
-        
-        return *this;
-    }
 
-    const bool nothingInCommon(const BitArray& b) const
-    {
-        assert(size == b.size);
-        const uint64_t* t1 = mp;
-        const uint64_t* t2 = b.mp;
-        for (uint64_t i = 0; i < size; i++) {
-            if ((*t1)&(*t2)) return false;
-            t1++;
-            t2++;
-        }
-        
-        return true;
+        return *this;
     }
 
     BitArray& removeThese(const BitArray& b)

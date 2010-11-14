@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #else
 #include <stdint.h>
 #endif //_MSC_VER
+#include <stdio.h>
 
 //#define DEBUG_PROPAGATEFROM
 
@@ -255,5 +256,19 @@ class PropByFull
             }
         }
 };
+
+inline std::ostream& operator<<(std::ostream& cout, const PropByFull& propByFull)
+{
+
+    if (propByFull.isBinary()) {
+        cout << "binary: " << " ? , " << propByFull[1];
+    } else if (propByFull.isTri()) {
+        cout << "tri: " << " ? , " <<propByFull[1] << " , " << propByFull[2];
+    } else if (propByFull.isClause()) {
+        if (propByFull.isNULL()) cout << "null clause";
+        else cout << "clause:" << *propByFull.getClause();
+    }
+    return cout;
+}
 
 #endif //PROPBY_H

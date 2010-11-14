@@ -179,6 +179,7 @@ Var Solver::newVar(bool dvar)
     reason    .push(PropBy());
     assigns   .push(l_Undef);
     level     .push(-1);
+    binSubLev .push(0);
     activity  .push(0);
     seen      .push_back(0);
     seen      .push_back(0);
@@ -1616,6 +1617,7 @@ PropBy Solver::propagateBin()
 {
     while (qhead < trail.size()) {
         Lit p = trail[qhead++];
+        uint32_t lev = binSubLev[p.var()] + 1;
         const vec<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2 + 2;
         for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
@@ -1623,7 +1625,7 @@ PropBy Solver::propagateBin()
 
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
-                uncheckedEnqueueLight(k->getOtherLit());
+                uncheckedEnqueueLight2(k->getOtherLit(), lev);
             } else if (val == l_False) {
                 return PropBy(p);
             }
@@ -2394,12 +2396,16 @@ void Solver::performStepsBeforeSolve()
     assert(qhead == trail.size());
     testAllClauseAttach();
 
+    printRestartStat();
     if (conf.doReplace && !varReplacer->performReplace()) return;
 
     if (conf.doClausVivif && !conf.libraryUsage
         && !clauseVivifier->vivifyClauses()) return;
 
-    //if (conf.doFailedLit && !failedLitSearcher->search()) return;
+    bool saveDoHyperBin = conf.doHyperBinRes;
+    conf.doHyperBinRes = false;
+    if (conf.doFailedLit && !failedLitSearcher->search()) return;
+    conf.doHyperBinRes = saveDoHyperBin;
 
     if (conf.doSatELite
         && !conf.libraryUsage

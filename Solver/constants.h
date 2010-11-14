@@ -83,6 +83,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #endif
 
 //#define DEBUG_ATTACH_FULL
+#define DEBUG_HYPERBIN
 
 ///////////////////
 // Verbose Debug

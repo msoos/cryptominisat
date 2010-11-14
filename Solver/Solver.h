@@ -323,6 +323,7 @@ protected:
     vec<uint32_t>       trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     vec<PropBy>         reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<int32_t>        level;            ///< 'level[var]' contains the level at which the assignment was made.
+    vec<uint32_t>       binSubLev;
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
     vec<Lit>            assumptions;      ///< Current set of assumptions provided to solve by the user.
@@ -401,6 +402,7 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
+    void     uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel);
     PropBy   propagateBin();
     PropBy   propagateNonLearntBin();
     bool     multiLevelProp;
@@ -823,6 +825,15 @@ inline void Solver::uncheckedEnqueueLight(const Lit p)
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
+}
+
+inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel)
+{
+    assert(assigns[p.var()] == l_Undef);
+
+    assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    trail.push(p);
+    binSubLev[p.var()] = binSubLevel;
 }
 
 //=================================================================================================
