@@ -644,6 +644,7 @@ void Solver::detachModifiedClause(const Var var1, const Var var2, const uint32_t
     removeWXCl(watches[Lit(var2, false).toInt()], offset);
     removeWXCl(watches[Lit(var2, true).toInt()], offset);
 
+    assert(!address->learnt());
     clauses_literals -= origSize;
 }
 
