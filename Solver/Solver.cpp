@@ -1935,7 +1935,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
     vec<Lit>    learnt_clause;
     llbool      ret;
 
-    if (simplifying == false) {
+    if (!simplifying && update) {
         starts++;
         if (restartType == static_restart) {
             staticStarts++;
