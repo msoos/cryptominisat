@@ -2000,7 +2000,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
     switch (restartType) {
     case dynamic_restart:
         if (glueHistory.isvalid() &&
-            0.8*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()) {
+            0.9*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
             if (glueHistory.isvalid()) {
@@ -2403,10 +2403,10 @@ void Solver::performStepsBeforeSolve()
     if (conf.doClausVivif && !conf.libraryUsage
         && !clauseVivifier->vivifyClauses()) return;
 
-    bool saveDoHyperBin = conf.doHyperBinRes;
+    /*bool saveDoHyperBin = conf.doHyperBinRes;
     conf.doHyperBinRes = false;
     if (conf.doFailedLit && !failedLitSearcher->search()) return;
-    conf.doHyperBinRes = saveDoHyperBin;
+    conf.doHyperBinRes = saveDoHyperBin;*/
 
     if (conf.doSatELite
         && !conf.libraryUsage

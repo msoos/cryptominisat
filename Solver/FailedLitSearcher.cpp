@@ -209,7 +209,8 @@ const bool FailedLitSearcher::search()
     unPropagatedBin.resize(solver.nVars(), 0);
     needToVisit.resize(solver.nVars(), 0);
     hyperbinProps = 0;
-    maxHyperBinProps = numProps/4;
+    //maxHyperBinProps = (double)numProps/(std::max(20.0/(double)numCalls, 4.0));
+    maxHyperBinProps = (double)numProps/4.0;
 
     //uint32_t fromBin;
     origProps = solver.propagations;
