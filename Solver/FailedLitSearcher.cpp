@@ -157,7 +157,7 @@ variables.
 */
 const bool FailedLitSearcher::search()
 {
-    uint64_t numProps = 50 * 1000000;
+    uint64_t numProps = 100 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     assert(solver.decisionLevel() == 0);
@@ -166,7 +166,6 @@ const bool FailedLitSearcher::search()
     uint32_t origHeapSize = solver.order_heap.size();
     StateSaver savedState(solver);
     Heap<Solver::VarOrderLt> order_heap_copy(solver.order_heap); //for hyperbin
-    uint64_t origBinClauses = solver.numBins;
 
     //General Stats
     numFailed = 0;
@@ -206,11 +205,11 @@ const bool FailedLitSearcher::search()
     bothInvert = 0;
 
     //For HyperBin
+    addedBin = 0;
     unPropagatedBin.resize(solver.nVars(), 0);
-    myimplies.resize(solver.nVars(), 0);
+    needToVisit.resize(solver.nVars(), 0);
     hyperbinProps = 0;
-    if (solver.conf.doHyperBinRes && !orderLits()) return false;
-    maxHyperBinProps = numProps/20;
+    maxHyperBinProps = numProps/4;
 
     //uint32_t fromBin;
     origProps = solver.propagations;
@@ -285,7 +284,7 @@ end:
     bool removedOldLearnts = false;
     //Print results
     if (solver.conf.verbosity  >= 1)
-      printResults(myTime, solver.numBins - origBinClauses);
+      printResults(myTime);
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
@@ -330,81 +329,16 @@ Printed:
 5) Number of propagations
 6) Time in seconds
 */
-void FailedLitSearcher::printResults(const double myTime, uint32_t numBinAdded) const
+void FailedLitSearcher::printResults(const double myTime) const
 {
     std::cout << "c Flit: "<< std::setw(5) << numFailed <<
     " Blit: " << std::setw(6) << goodBothSame <<
     " bXBeca: " << std::setw(4) << newBinXor <<
     " bXProp: " << std::setw(4) << bothInvert <<
-    " Bins:" << std::setw(7) << numBinAdded <<
+    " Bins:" << std::setw(7) << addedBin <<
     " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
     " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
     << std::endl;
-}
-
-/**
-@brief Approximate in-degree of literals for better hyper-binary resolution
-
-This is carried out at the beginning of search() so that when we need to add
-a missing binary clauses (missing = could be added with hyper-binary
-resolution), then we add it at the 'right' place. Right in this sense means
-the literal that has the highest in-degree.
-*/
-const bool FailedLitSearcher::orderLits()
-{
-    uint64_t oldProps = solver.propagations;
-    double myTime = cpuTime();
-    uint32_t numChecked = 0;
-    if (litDegrees.size() != solver.nVars())
-        litDegrees.resize(solver.nVars()*2, 0);
-    BitArray alreadyTested;
-    alreadyTested.resize(solver.nVars()*2, 0);
-    uint32_t i;
-
-    //we randomly pick the literals, but don't pick the same twice
-    //to achieve it, we use the alradyTested data, that we check&update
-    for (i = 0; i < 3*solver.order_heap.size(); i++) {
-        if (solver.propagations - oldProps > 3000000) break;
-        if (solver.order_heap.size() < 1) break;
-        Var var = solver.order_heap[solver.mtrand.randInt(solver.order_heap.size()-1)];
-        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
-
-        Lit randLit(var, solver.mtrand.randInt(1));
-        if (alreadyTested[randLit.toInt()]) continue;
-        alreadyTested.setBit(randLit.toInt());
-
-        numChecked++;
-        solver.newDecisionLevel();
-        solver.uncheckedEnqueueLight(randLit);
-        failed = (!solver.propagateBin().isNULL());
-        if (failed) {
-            solver.cancelUntilLight();
-            solver.uncheckedEnqueue(~randLit);
-            solver.ok = (solver.propagate(false).isNULL());
-            if (!solver.ok) return false;
-            continue;
-        }
-        assert(solver.decisionLevel() > 0);
-        for (int c = solver.trail.size()-1; c > (int)solver.trail_lim[0]; c--) {
-            Lit x = solver.trail[c];
-            litDegrees[x.toInt()]++;
-        }
-        solver.cancelUntilLight();
-    }
-
-    //Print the results of the degree approximation
-    if (solver.conf.verbosity  >= 1) {
-        std::cout << "c binary deg approx."
-        << " time: " << std::fixed << std::setw(5) << std::setprecision(2) << cpuTime() - myTime << " s"
-        << " num checked: " << std::setw(6) << numChecked
-        << " i: " << std::setw(7) << i
-        << " props: " << std::setw(4) << (solver.propagations - oldProps)/1000 << "k"
-        << std::endl;
-    }
-    totalTime += cpuTime() - myTime;
-    solver.propagations = oldProps;
-
-    return true;
 }
 
 /**
@@ -430,10 +364,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     propagated.setZero();
     twoLongXors.clear();
-    propagatedVars.clear();
-    unPropagatedBin.setZero();
     bothSame.clear();
     binXorToAdd.clear();
+    #ifdef DEBUG_HYPERBIN
+    assert(propagatedVars.empty());
+    assert(unPropagatedBin.isZero());
+    #endif //DEBUG_HYPERBIN
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
@@ -451,10 +387,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x = solver.trail[c].var();
         propagated.setBit(x);
+
         if (solver.conf.doHyperBinRes) {
             unPropagatedBin.setBit(x);
             propagatedVars.push(x);
         }
+
         if (solver.assigns[x].getBool()) propValue.setBit(x);
         else propValue.clearBit(x);
 
@@ -476,9 +414,16 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     solver.cancelUntilLight();
 
     //Hyper-binary resolution, and its accompanying data-structure cleaning
-    if (solver.conf.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
-    propagatedVars.clear();
-    unPropagatedBin.setZero();
+    if (solver.conf.doHyperBinRes) {
+        if (hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
+        unPropagatedBin.removeThese(propagatedVars);
+        propagatedVars.clear();
+    }
+
+    #ifdef DEBUG_HYPERBIN
+    assert(propagatedVars.empty());
+    assert(unPropagatedBin.isZero());
+    #endif //DEBUG_HYPERBIN
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit2);
@@ -494,12 +439,8 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     assert(solver.decisionLevel() > 0);
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-        Var     x  = solver.trail[c].var();
+        Var x  = solver.trail[c].var();
         if (propagated[x]) {
-            if (solver.conf.doHyperBinRes) {
-                unPropagatedBin.setBit(x);
-                propagatedVars.push(x);
-            }
             if (propValue[x] == solver.assigns[x].getBool()) {
                 //they both imply the same
                 bothSame.push(Lit(x, !propValue[x]));
@@ -520,8 +461,15 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
                 toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
             }
         }
+
+        if (solver.conf.doHyperBinRes) {
+            unPropagatedBin.setBit(x);
+            propagatedVars.push(x);
+        }
+
         if (solver.assigns[x].getBool()) propValue.setBit(x);
         else propValue.clearBit(x);
+
         if (binXorFind) removeVarFromXors(x);
     }
 
@@ -548,7 +496,11 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
     solver.cancelUntilLight();
 
-    if (solver.conf.doHyperBinRes && hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
+    if (solver.conf.doHyperBinRes) {
+        if (hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
+        unPropagatedBin.removeThese(propagatedVars);
+        propagatedVars.clear();
+    }
 
     for(uint32_t i = 0; i != bothSame.size(); i++) {
         solver.uncheckedEnqueue(bothSame[i]);
@@ -581,19 +533,26 @@ beforehand with orderLits()
 */
 void FailedLitSearcher::hyperBinResolution(const Lit& lit)
 {
-    uint64_t oldProps = solver.propagations;
     #ifdef VERBOSE_DEBUG
     std::cout << "Checking one BTC vs UP" << std::endl;
     #endif //VERBOSE_DEBUG
+
+    #ifdef DEBUG_HYPERBIN
+    assert(needToVisit.isZero());
+    #endif //DEBUG_HYPERBIN
+
+    uint64_t oldProps = solver.propagations;
     vec<Lit> toVisit;
 
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight(lit);
+    solver.uncheckedEnqueueLight2(lit, 0);
     failed = (!solver.propagateBin().isNULL());
     assert(!failed);
 
     assert(solver.decisionLevel() > 0);
-    if (propagatedVars.size() - (solver.trail.size()-solver.trail_lim[0]) == 0) {
+    int32_t difference = propagatedVars.size() - (solver.trail.size()-solver.trail_lim[0]);
+    assert(difference >= 0);
+    if (difference == 0) {
         solver.cancelUntilLight();
         goto end;
     }
@@ -601,51 +560,51 @@ void FailedLitSearcher::hyperBinResolution(const Lit& lit)
         Lit x = solver.trail[c];
         unPropagatedBin.clearBit(x.var());
         toVisit.push(x);
+        needToVisit.setBit(x.var());
     }
+    std::sort(toVisit.getData(), toVisit.getDataEnd(), LitOrder2(solver.binSubLev));
     solver.cancelUntilLight();
 
-    std::stable_sort(toVisit.getData(), toVisit.getDataEnd(), litOrder(litDegrees));
     /*************************
     //To check that the ordering is the right way
-    // --> i.e. to avoid mistake present in Glucose's ordering
+    // --> i.e. to avoid mistake present in Glucose's ordering*/
+    /*std::cout << "--------------------" << std::endl;
     for (uint32_t i = 0; i < toVisit.size(); i++) {
-        std::cout << "i:" << std::setw(8) << i << " degree:" << litDegrees[toVisit[i].toInt()] << std::endl;
+        std::cout << "i:" << std::setw(8) << i
+        << " level:" << std::setw(3) << solver.binSubLev[toVisit[i].var()]
+        << " lit : " << toVisit[i]
+        << std::endl;
     }
-    std::cout << std::endl;
-    ***************************/
+    std::cout << "difference: " << difference << std::endl;
+    std::cout << "--------------------" << std::endl;*/
+    /***************************/
 
     //difference between UP and BTC is in unPropagatedBin
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Checking visit level " << end-l-1 << std::endl;
-        uint32_t thisLevel = 0;
-        #endif //VERBOSE_DEBUG
+        if (!needToVisit[l->var()]) continue;
         fillImplies(*l);
-        if (unPropagatedBin.nothingInCommon(myimplies)) goto next;
-        for (const Var *var = propagatedVars.getData(), *end2 = propagatedVars.getDataEnd(); var != end2; var++) {
-            if (unPropagatedBin[*var] && myimplies[*var]) {
-                #ifdef VERBOSE_DEBUG
-                thisLevel++;
-                #endif //VERBOSE_DEBUG
-                addBin(~*l, Lit(*var, !propValue[*var]));
-                unPropagatedBin.removeThese(myImpliesSet);
-                if (unPropagatedBin.isZero()) {
-                    myimplies.removeThese(myImpliesSet);
-                    myImpliesSet.clear();
-                    goto end;
-                }
-            }
+        for (const Var *var = myImpliesSet.getData(), *end2 = myImpliesSet.getDataEnd(); var != end2; var++) {
+
+            /*Lit otherLit = Lit(*var, !propValue[*var]);
+            std::cout << "adding Bin:" << (~*l) << " , " << otherLit << std::endl;
+            std::cout << PropByFull(solver.reason[otherLit.var()], solver.failBinLit, solver.clauseAllocator) << std::endl;*/
+
+            addBin(~*l, Lit(*var, !propValue[*var]));
+            unPropagatedBin.clearBit(*var);
+            difference--;
         }
-        next:
-        myimplies.removeThese(myImpliesSet);
+        assert(difference >= 0);
         myImpliesSet.clear();
-        #ifdef VERBOSE_DEBUG
-        if (thisLevel > 0) {
-            std::cout << "Added " << thisLevel << " level diff:" << end-l-1 << std::endl;
+
+        if (difference == 0) {
+            needToVisit.setZero();
+            goto end;
         }
-        #endif //VERBOSE_DEBUG
     }
+    #ifdef DEBUG_HYPERBIN
     assert(unPropagatedBin.isZero());
+    assert(needToVisit.isZero());
+    #endif //DEBUG_HYPERBIN
 
     end:
     hyperbinProps += solver.propagations - oldProps;
@@ -658,7 +617,7 @@ Used to check which variables are propagated by a certain literal when
 propagating it only at the binary level
 @p[in] the literal to be propagated at the binary level
 */
-void FailedLitSearcher::fillImplies(const Lit& lit)
+void FailedLitSearcher::fillImplies(const Lit lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
@@ -666,10 +625,12 @@ void FailedLitSearcher::fillImplies(const Lit& lit)
     assert(!failed);
 
     assert(solver.decisionLevel() > 0);
-    for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
-        Lit x = solver.trail[c];
-        myimplies.setBit(x.var());
-        myImpliesSet.push(x.var());
+    for (int sublevel = solver.trail.size()-1; sublevel >= (int)solver.trail_lim[0]; sublevel--) {
+        Var x = solver.trail[sublevel].var();
+        needToVisit.clearBit(x);
+        if (unPropagatedBin[x]) {
+            myImpliesSet.push(x);
+        }
     }
     solver.cancelUntilLight();
 }
@@ -679,18 +640,22 @@ void FailedLitSearcher::fillImplies(const Lit& lit)
 
 Used by hyperBinResolution() to add the newly discovered clauses
 */
-void FailedLitSearcher::addBin(const Lit& lit1, const Lit& lit2)
+void FailedLitSearcher::addBin(const Lit lit1, const Lit lit2)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Adding extra bin: " << lit1 << " " << lit2 << std::endl;
     #endif //VERBOSE_DEBUG
 
+    assert(solver.value(lit1) == l_Undef);
+    assert(solver.value(lit2) == l_Undef);
     tmpPs[0] = lit1;
     tmpPs[1] = lit2;
+
     solver.addClauseInt(tmpPs, 0 , true);
     tmpPs.clear();
     tmpPs.growTo(2);
     assert(solver.ok);
+    addedBin++;
 }
 
 

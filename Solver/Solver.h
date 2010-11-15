@@ -323,6 +323,7 @@ protected:
     vec<uint32_t>       trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     vec<PropBy>         reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<int32_t>        level;            ///< 'level[var]' contains the level at which the assignment was made.
+    vec<uint32_t>       binSubLev;
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
     vec<Lit>            assumptions;      ///< Current set of assumptions provided to solve by the user.
@@ -371,7 +372,7 @@ protected:
     class transCache {
         public:
             transCache() :
-                conflictLastUpdated(0)
+                conflictLastUpdated(std::numeric_limits<uint64_t>::max())
             {};
 
             vector<Lit> lits;
@@ -401,6 +402,7 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
+    void     uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel);
     PropBy   propagateBin();
     PropBy   propagateNonLearntBin();
     bool     multiLevelProp;
@@ -443,7 +445,7 @@ protected:
     /////////////////
     template<class T> const bool addClauseHelper(T& ps, const uint32_t group, const char* group_name);
     template <class T>
-    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0, const bool inOriginalInput = true);
+    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0, const bool inOriginalInput = false);
     template<class T>
     XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group, const bool learnt = false);
     void       attachBinClause(const Lit lit1, const Lit lit2, const bool learnt);
@@ -628,7 +630,7 @@ inline bool Solver::locked(const Clause& c) const
 {
     if (c.size() <= 3) return true; //we don't know in this case :I
     PropBy from(reason[c[0].var()]);
-    return from.isClause() && from.getClause() == &c && value(c[0]) == l_True;
+    return from.isClause() && from.getClause() == clauseAllocator.getOffset(&c) && value(c[0]) == l_True;
 }
 
 inline void     Solver::newDecisionLevel()
@@ -823,6 +825,15 @@ inline void Solver::uncheckedEnqueueLight(const Lit p)
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
+}
+
+inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel)
+{
+    assert(assigns[p.var()] == l_Undef);
+
+    assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    trail.push(p);
+    binSubLev[p.var()] = binSubLevel;
 }
 
 //=================================================================================================

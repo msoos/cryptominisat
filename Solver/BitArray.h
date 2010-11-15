@@ -36,14 +36,14 @@ public:
         , mp(NULL)
     {
     }
-    
+
     BitArray(const BitArray& b) :
         size(b.size)
     {
         mp = new uint64_t[size];
         memcpy(mp, b.mp, sizeof(uint64_t)*size);
     }
-    
+
     BitArray& operator=(const BitArray& b)
     {
         if (size != b.size) {
@@ -52,10 +52,10 @@ public:
             mp = new uint64_t[size];
         }
         memcpy(mp, b.mp, sizeof(uint64_t)*size);
-        
+
         return *this;
     }
-    
+
     BitArray& operator&=(const BitArray& b)
     {
         assert(size == b.size);
@@ -66,22 +66,8 @@ public:
             t1++;
             t2++;
         }
-        
-        return *this;
-    }
 
-    const bool nothingInCommon(const BitArray& b) const
-    {
-        assert(size == b.size);
-        const uint64_t* t1 = mp;
-        const uint64_t* t2 = b.mp;
-        for (uint64_t i = 0; i < size; i++) {
-            if ((*t1)&(*t2)) return false;
-            t1++;
-            t2++;
-        }
-        
-        return true;
+        return *this;
     }
 
     BitArray& removeThese(const BitArray& b)
@@ -107,7 +93,7 @@ public:
 
         return *this;
     }
-    
+
     void resize(uint32_t _size, const bool fill)
     {
         _size = _size/64 + (bool)(_size%64);
@@ -119,7 +105,7 @@ public:
         if (fill) setOne();
         else setZero();
     }
-    
+
     ~BitArray()
     {
         delete[] mp;
@@ -128,7 +114,7 @@ public:
     inline const bool isZero() const
     {
         const uint64_t*  mp2 = (const uint64_t*)mp;
-        
+
         for (uint32_t i = 0; i < size; i++) {
             if (mp2[i]) return false;
         }
@@ -139,7 +125,7 @@ public:
     {
         memset(mp, 0, size*sizeof(uint64_t));
     }
-    
+
     inline void setOne()
     {
         memset(mp, 0, size*sizeof(uint64_t));
@@ -150,7 +136,7 @@ public:
         #ifdef DEBUG_BITARRAY
         assert(size*64 > i);
         #endif
-        
+
         mp[i/64] &= ~((uint64_t)1 << (i%64));
     }
 
@@ -159,7 +145,7 @@ public:
         #ifdef DEBUG_BITARRAY
         assert(size*64 > i);
         #endif
-        
+
         mp[i/64] |= ((uint64_t)1 << (i%64));
     }
 
@@ -168,17 +154,17 @@ public:
         #ifdef DEBUG_BITARRAY
         assert(size*64 > i);
         #endif
-        
+
         return (mp[i/64] >> (i%64)) & 1;
     }
-    
+
     inline const uint32_t getSize() const
     {
         return size*64;
     }
 
 private:
-    
+
     uint32_t size;
     uint64_t* mp;
 };
