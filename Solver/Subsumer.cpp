@@ -994,6 +994,7 @@ const bool Subsumer::subsWNonExistBinsFull()
     if (solver.clauses_literals < 10*1000*1000) {
         onlyNonLearntBins = new OnlyNonLearntBins(solver);
         onlyNonLearntBins->fill();
+        solver.multiLevelProp = true;
     }
 
     doneNum = 0;
