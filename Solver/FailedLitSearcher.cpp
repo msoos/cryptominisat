@@ -564,7 +564,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     failed = (!solver.propagateBin(uselessBin).isNULL());
     assert(!failed);
 
-    if (solver.conf.doRemUselessLBins) {
+    if (solver.conf.doRemUselessLBins && !uselessBin.empty()) {
         for (const Lit *it = uselessBin.getData(), *end = uselessBin.getDataEnd(); it != end; it++) {
             if (!dontRemoveAncestor[it->var()] && findWBin(solver.watches, ~lit, *it, true)) {
                 removeWBin(solver.watches[lit.toInt()], *it, true);
