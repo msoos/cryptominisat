@@ -407,7 +407,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         else propValue.clearBit(x);
 
         if (binXorFind) removeVarFromXors(x);
-        lit1OTFCache.lits.push_back(~(solver.trail[c]));
+        if (c != (int)solver.trail_lim[0]) lit1OTFCache.lits.push_back(solver.trail[c]);
     }
 
     if (binXorFind) {
@@ -485,7 +485,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         else propValue.clearBit(x);
 
         if (binXorFind) removeVarFromXors(x);
-        lit2OTFCache.lits.push_back(~(solver.trail[c]));
+        if (c != (int)solver.trail_lim[0]) lit2OTFCache.lits.push_back(solver.trail[c]);
     }
 
     //We now add the two-long xors that have been found through longer
