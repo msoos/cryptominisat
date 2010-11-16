@@ -907,11 +907,13 @@ const bool Subsumer::subsumeWithBinaries()
     uint32_t origTrailSize = solver.trail.size();
 
     vec<Lit> lits(2);
-    uint32_t wsLit = 0;
-    for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+    uint32_t counter = 0;
+    uint32_t thisRand = solver.mtrand.randInt();
+    for (const vec<Watched> *it = solver.watches.getData(); counter != solver.nVars()*2; counter++) {
+        uint32_t wsLit = (counter + thisRand) % (solver.nVars()*2);
         Lit lit = ~Lit::toLit(wsLit);
         lits[0] = lit;
-        const vec<Watched> ws_backup = *it;
+        const vec<Watched> ws_backup = *(it + wsLit);
         for (const Watched *it2 = ws_backup.getData(), *end2 = ws_backup.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
                 lits[1] = it2->getOtherLit();
@@ -919,9 +921,10 @@ const bool Subsumer::subsumeWithBinaries()
                 if (toMakeNonLearnt) makeNonLearntBin(lit, it2->getOtherLit(), it2->getLearnt());
                 if (!solver.ok) return false;
                 numMaxSubsume0--;
+                if (numMaxSubsume0 <= 0) break;
             }
         }
-        if (numMaxSubsume0 < 0) break;
+        if (numMaxSubsume0 <= 0) break;
     }
 
     if (solver.conf.verbosity  >= 1) {
