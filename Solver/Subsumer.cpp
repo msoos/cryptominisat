@@ -1269,10 +1269,11 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
         std::sort(solver.learnts.getData(), solver.learnts.getDataEnd(), sortBySize());
         addFromSolver(solver.learnts, alsoLearnt);
+    } else {
+        solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+        addFromSolver(solver.clauses, alsoLearnt);
+        addExternTouchVars();
     }
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    addFromSolver(solver.clauses, alsoLearnt);
-    if (!alsoLearnt) addExternTouchVars();
 
     CompleteDetachReatacher reattacher(solver);
     reattacher.detachNonBinsNonTris(false);
@@ -1281,10 +1282,15 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     //Do stuff with binaries
     if (!alsoLearnt) {
         subsumeBinsWithBins();
-        numMaxSubsume0 = 1000000*numCalls;
+        numMaxSubsume0 = 300000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
         if (!handleClBinTouched()) return false;
+    } else {
+        numMaxSubsume0 = 30000;
+        if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
+        solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+        addFromSolver(solver.clauses, alsoLearnt);
     }
 
     myTime = cpuTime();
