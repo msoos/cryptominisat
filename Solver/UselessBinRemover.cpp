@@ -31,7 +31,7 @@ UselessBinRemover::UselessBinRemover(Solver& _solver) :
 /**
 @brief Time limiting
 */
-#define MAX_REMOVE_BIN_FULL_PROPS 20000000
+#define MAX_REMOVE_BIN_FULL_PROPS 60000000
 /**
 @brief We measure time in (bogo)propagations and "extra" time, time not accountable in (bogo)props
 */

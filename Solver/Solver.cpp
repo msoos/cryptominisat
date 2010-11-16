@@ -1135,7 +1135,8 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisClauseDoMinLMoreRecur = conf.doMinimLMoreRecur || (cl.size() <= 6 || glue <= 5);
+    //bool thisClauseDoMinLMoreRecur = conf.doMinimLMoreRecur || (cl.size() <= 6 || glue <= 3);
+    bool thisClauseDoMinLMoreRecur = conf.doMinimLMoreRecur || (cl.size() <= 5 && tot_literals < 80000000);
     if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
     uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
     if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 2;
@@ -2315,13 +2316,13 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
-    if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
-    if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
-
     if (conf.doReplace && conf.doRemUselessBins) {
         UselessBinRemover uselessBinRemover(*this);
         if (!uselessBinRemover.removeUslessBinFull()) goto end;
     }
+
+    if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
+    if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
@@ -2430,6 +2431,11 @@ void Solver::performStepsBeforeSolve()
     conf.doHyperBinRes = false;
     if (conf.doFailedLit && !failedLitSearcher->search()) return;
     conf.doHyperBinRes = saveDoHyperBin;*/
+
+    if (conf.doReplace && conf.doRemUselessBins) {
+        UselessBinRemover uselessBinRemover(*this);
+        if (!uselessBinRemover.removeUslessBinFull()) return;
+    }
 
     if (conf.doSatELite
         && !conf.libraryUsage
