@@ -1266,12 +1266,12 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     clauses.reserve(expected_size);
     cl_touched.reserve(expected_size);
 
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     if (alsoLearnt) {
         solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
         std::sort(solver.learnts.getData(), solver.learnts.getDataEnd(), sortBySize());
         addFromSolver(solver.learnts, alsoLearnt);
     } else {
-        solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
         addFromSolver(solver.clauses, alsoLearnt);
         addExternTouchVars();
     }
@@ -1290,7 +1290,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     } else {
         numMaxSubsume0 = 30000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-        solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
         addFromSolver(solver.clauses, alsoLearnt);
     }
 
