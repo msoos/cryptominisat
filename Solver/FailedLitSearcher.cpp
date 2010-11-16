@@ -211,7 +211,8 @@ const bool FailedLitSearcher::search()
     dontRemoveAncestor.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     maxHyperBinProps = numProps/4;
-    removedUseless = 0;
+    removedUselessLearnt = 0;
+    removedUselessNonLearnt = 0;
 
     //uint32_t fromBin;
     origProps = solver.propagations;
@@ -338,7 +339,8 @@ void FailedLitSearcher::printResults(const double myTime) const
     " bXBeca: " << std::setw(4) << newBinXor <<
     " bXProp: " << std::setw(4) << bothInvert <<
     " Bins:" << std::setw(7) << addedBin <<
-    " BRem:" << std::setw(7) << removedUseless <<
+    " BRemL:" << std::setw(7) << removedUselessLearnt <<
+    " BRemN:" << std::setw(7) << removedUselessNonLearnt <<
     " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
     " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
     << std::endl;
@@ -560,23 +562,33 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     vec<Lit> toVisit;
 
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight2(lit, 0, lit_Undef);
+    solver.uncheckedEnqueueLight2(lit, 0, lit_Undef, false);
     failed = (!solver.propagateBin(uselessBin).isNULL());
     assert(!failed);
 
     if (solver.conf.doRemUselessLBins && !uselessBin.empty()) {
         for (const Lit *it = uselessBin.getData(), *end = uselessBin.getDataEnd(); it != end; it++) {
-            if (!dontRemoveAncestor[it->var()] && findWBin(solver.watches, ~lit, *it, true)) {
+            if (dontRemoveAncestor[it->var()]) continue;
+
+            if (findWBin(solver.watches, ~lit, *it, true)) {
                 removeWBin(solver.watches[lit.toInt()], *it, true);
                 removeWBin(solver.watches[(~*it).toInt()], ~lit, true);
                 solver.learnts_literals -= 2;
                 solver.numBins--;
-                removedUseless++;
-
-                Var ancestorVar = solver.binSubLev[it->var()].lev2Ancestor.var();
-                dontRemoveAncestor.setBit(ancestorVar);
-                toClearDontRemoveAcestor.push(ancestorVar);
+                removedUselessLearnt++;
+            } else if (!solver.binPropData[it->var()].learntLeadHere) {
+                removeWBin(solver.watches[lit.toInt()], *it, false);
+                removeWBin(solver.watches[(~*it).toInt()], ~lit, false);
+                solver.clauses_literals -= 2;
+                solver.numBins--;
+                removedUselessNonLearnt++;
+            } else {
+                continue;
             }
+
+            Var ancestorVar = solver.binPropData[it->var()].lev2Ancestor.var();
+            dontRemoveAncestor.setBit(ancestorVar);
+            toClearDontRemoveAcestor.push(ancestorVar);
         }
         dontRemoveAncestor.removeThese(toClearDontRemoveAcestor);
         toClearDontRemoveAcestor.clear();
@@ -602,13 +614,13 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
         toVisit.push(x);
         needToVisit.setBit(x.var());
     }
-    std::sort(toVisit.getData(), toVisit.getDataEnd(), LitOrder2(solver.binSubLev));
+    std::sort(toVisit.getData(), toVisit.getDataEnd(), LitOrder2(solver.binPropData));
     solver.cancelUntilLight();
 
     #ifdef DEBUG_USELESS_LEARNT_BIN_REMOVAL
     if (solver.conf.doRemUselessLBins) {
         solver.newDecisionLevel();
-        solver.uncheckedEnqueueLight2(lit, 0, lit_Undef);
+        solver.uncheckedEnqueueLight2(lit, 0, lit_Undef, false);
         failed = (!solver.propagateBin(uselessBin).isNULL());
         uselessBin.clear();
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
@@ -626,7 +638,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     /*std::cout << "--------------------" << std::endl;
     for (uint32_t i = 0; i < toVisit.size(); i++) {
         std::cout << "i:" << std::setw(8) << i
-        << " level:" << std::setw(3) << solver.binSubLev[toVisit[i].var()]
+        << " level:" << std::setw(3) << solver.binPropData[toVisit[i].var()].lev
         << " lit : " << toVisit[i]
         << std::endl;
     }

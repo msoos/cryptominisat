@@ -207,6 +207,7 @@ enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 
 struct BinPropData {
     uint32_t lev;
     Lit lev2Ancestor;
+    bool learntLeadHere;
 };
 
 
