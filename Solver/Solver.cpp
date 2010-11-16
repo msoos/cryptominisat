@@ -192,8 +192,8 @@ Var Solver::newVar(bool dvar)
     //Transitive OTF self-subsuming resolution
     seen2     .push_back(0);
     seen2     .push_back(0);
-    transOTFCache.push_back(transCache());
-    transOTFCache.push_back(transCache());
+    transOTFCache.push_back(TransCache());
+    transOTFCache.push_back(TransCache());
 
     polarity  .push_back(defaultPolarity());
     #ifdef USE_OLD_POLARITIES

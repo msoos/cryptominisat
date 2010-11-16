@@ -369,9 +369,9 @@ protected:
     ////////////
     // Transitive on-the-fly self-subsuming resolution
     ///////////
-    class transCache {
+    class TransCache {
         public:
-            transCache() :
+            TransCache() :
                 conflictLastUpdated(std::numeric_limits<uint64_t>::max())
             {};
 
@@ -381,7 +381,7 @@ protected:
     vector<bool>        seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
     vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
-    vector<transCache>  transOTFCache;
+    vector<TransCache>  transOTFCache;
     void                minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue);
     void                transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp);
 
