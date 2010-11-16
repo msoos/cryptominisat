@@ -208,8 +208,10 @@ const bool FailedLitSearcher::search()
     addedBin = 0;
     unPropagatedBin.resize(solver.nVars(), 0);
     needToVisit.resize(solver.nVars(), 0);
+    dontRemoveAncestor.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     maxHyperBinProps = numProps/4;
+    removedUseless = 0;
 
     //uint32_t fromBin;
     origProps = solver.propagations;
@@ -336,6 +338,7 @@ void FailedLitSearcher::printResults(const double myTime) const
     " bXBeca: " << std::setw(4) << newBinXor <<
     " bXProp: " << std::setw(4) << bothInvert <<
     " Bins:" << std::setw(7) << addedBin <<
+    " BRem:" << std::setw(7) << removedUseless <<
     " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
     " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
     << std::endl;
@@ -370,6 +373,10 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     assert(propagatedVars.empty());
     assert(unPropagatedBin.isZero());
     #endif //DEBUG_HYPERBIN
+    #ifdef DEBUG_USELESS_LEARNT_BIN_REMOVAL
+    dontRemoveAncestor.isZero();
+    assert(uselessBin.empty());
+    #endif
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
@@ -539,7 +546,7 @@ not, then we add the relevant binary clauses at the right point. The "right"
 point is the point which has the highest in-degree. We approximated the degrees
 beforehand with orderLits()
 */
-void FailedLitSearcher::hyperBinResolution(const Lit& lit)
+void FailedLitSearcher::hyperBinResolution(const Lit lit)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Checking one BTC vs UP" << std::endl;
@@ -553,12 +560,37 @@ void FailedLitSearcher::hyperBinResolution(const Lit& lit)
     vec<Lit> toVisit;
 
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight2(lit, 0);
-    failed = (!solver.propagateBin().isNULL());
+    solver.uncheckedEnqueueLight2(lit, 0, lit_Undef);
+    failed = (!solver.propagateBin(uselessBin).isNULL());
     assert(!failed);
+
+    if (solver.conf.doRemUselessLBins) {
+        for (const Lit *it = uselessBin.getData(), *end = uselessBin.getDataEnd(); it != end; it++) {
+            if (!dontRemoveAncestor[it->var()] && findWBin(solver.watches, ~lit, *it, true)) {
+                removeWBin(solver.watches[lit.toInt()], *it, true);
+                removeWBin(solver.watches[(~*it).toInt()], ~lit, true);
+                solver.learnts_literals -= 2;
+                solver.numBins--;
+                removedUseless++;
+
+                Var ancestorVar = solver.binSubLev[it->var()].lev2Ancestor.var();
+                dontRemoveAncestor.setBit(ancestorVar);
+                toClearDontRemoveAcestor.push(ancestorVar);
+            }
+        }
+        dontRemoveAncestor.removeThese(toClearDontRemoveAcestor);
+        toClearDontRemoveAcestor.clear();
+    }
+    uselessBin.clear();
+    #ifdef DEBUG_USELESS_LEARNT_BIN_REMOVAL
+    dontRemoveAncestor.isZero();
+    #endif
 
     assert(solver.decisionLevel() > 0);
     int32_t difference = propagatedVars.size() - (solver.trail.size()-solver.trail_lim[0]);
+    #ifdef DEBUG_USELESS_LEARNT_BIN_REMOVAL
+    uint32_t propagated = solver.trail.size()-solver.trail_lim[0];
+    #endif
     assert(difference >= 0);
     if (difference == 0) {
         solver.cancelUntilLight();
@@ -572,6 +604,21 @@ void FailedLitSearcher::hyperBinResolution(const Lit& lit)
     }
     std::sort(toVisit.getData(), toVisit.getDataEnd(), LitOrder2(solver.binSubLev));
     solver.cancelUntilLight();
+
+    #ifdef DEBUG_USELESS_LEARNT_BIN_REMOVAL
+    if (solver.conf.doRemUselessLBins) {
+        solver.newDecisionLevel();
+        solver.uncheckedEnqueueLight2(lit, 0, lit_Undef);
+        failed = (!solver.propagateBin(uselessBin).isNULL());
+        uselessBin.clear();
+        for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
+            Lit x = solver.trail[c];
+        }
+        assert(!failed);
+        assert(propagated == solver.trail.size()-solver.trail_lim[0]);
+        solver.cancelUntilLight();
+    }
+    #endif
 
     /*************************
     //To check that the ordering is the right way

@@ -284,7 +284,8 @@ void Main::printUsage(char** argv)
     //printf("  --addoldlearnts  = Readd old learnts for failed variable searching.\n");
     //printf("                     These learnts are usually deleted, but may help\n");
     printf("  --nohyperbinres  = Don't add binary clauses when doing failed lit probing.\n");
-    printf("  --noremovebins   = Don't remove useless binary clauses at the beginnning\n");
+    printf("  --noremovebins   = Don't remove useless binary clauses\n");
+    printf("  --noremlbins     = Don't remove useless learnt binary clauses\n");
     printf("  --nosubswithbins = Don't subsume with binary clauses\n");
     printf("  --nosubswithnbins= Don't subsume with non-existent binary clauses\n");
     printf("  --noclausevivif  = Don't do perform clause vivification\n");
@@ -581,6 +582,8 @@ void Main::parseCommandLine()
             conf.doMinimLearntMore = false;
         } else if ((value = hasPrefix(argv[i], "--lfminimrec"))) {
             conf.doMinimLMoreRecur = true;
+        } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
+            conf.doRemUselessLBins = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 0;
             if (sscanf(value, "%d", &glue) < 0 || glue < 2) {
