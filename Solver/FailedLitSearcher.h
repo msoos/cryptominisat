@@ -156,16 +156,16 @@ class FailedLitSearcher {
         //finding HyperBins
         struct LitOrder2
         {
-            LitOrder2(const vec<BinPropData>& _binSubLev) :
-            binSubLev(_binSubLev)
+            LitOrder2(const vec<BinPropData>& _binPropData) :
+            binPropData(_binPropData)
             {}
 
             const bool operator () (const Lit x, const Lit y) const
             {
-                return binSubLev[x.var()].lev > binSubLev[y.var()].lev;
+                return binPropData[x.var()].lev > binPropData[y.var()].lev;
             }
 
-            const vec<BinPropData>& binSubLev;
+            const vec<BinPropData>& binPropData;
         };
         uint32_t addedBin;
         void hyperBinResolution(const Lit lit);
@@ -179,7 +179,8 @@ class FailedLitSearcher {
 
         //bin-removal within hyper-bin-res
         vec<Lit> uselessBin;
-        uint32_t removedUseless;
+        uint32_t removedUselessLearnt;
+        uint32_t removedUselessNonLearnt;
         BitArray dontRemoveAncestor;
         vec<Var> toClearDontRemoveAcestor;
         /**
