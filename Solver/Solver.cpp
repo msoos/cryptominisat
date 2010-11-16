@@ -2811,6 +2811,7 @@ void Solver::handleSATSolution()
         s.conf.doClausVivif = false;
         s.conf.doPartHandler = false;
         s.conf.doSortWatched = false;
+        s.conf.verbosity = 0;
 
         vec<Lit> tmp;
         for (Var var = 0; var < nVars(); var++) {
