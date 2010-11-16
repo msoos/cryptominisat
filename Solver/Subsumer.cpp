@@ -1302,14 +1302,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     blockTime = 0.0;
     uint32_t origTrailSize = solver.trail.size();
 
-    /*for (uint32_t i = 0; i < clauses.size(); i++) {
-        if (numMaxSubsume0 == 0) break;
-        if (clauses[i].clause != NULL) {
-            subsume0(*clauses[i].clause);
-            numMaxSubsume0--;
-        }
-    }*/
-
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  time until pre-subsume0 clauses and subsume1 2-learnts:" << cpuTime()-myTime << std::endl;
     std::cout << "c  pre-subsumed:" << clauses_subsumed << std::endl;
