@@ -55,6 +55,7 @@ const bool OnlyNonLearntBins::propagate()
 */
 const bool OnlyNonLearntBins::fill()
 {
+    uint32_t numBins = 0;
     double myTime = cpuTime();
     binwatches.growTo(solver.nVars()*2);
 
@@ -65,6 +66,7 @@ const bool OnlyNonLearntBins::fill()
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && !it2->getLearnt()) {
                 binwatches[wsLit].push(WatchedBin(it2->getOtherLit()));
+                numBins++;
             }
         }
     }
@@ -72,7 +74,9 @@ const bool OnlyNonLearntBins::fill()
     if (solver.conf.verbosity >= 3) {
         std::cout << "c Time to fill non-learnt binary watchlists:"
         << std::fixed << std::setprecision(2) << std::setw(5)
-        << cpuTime() - myTime << " s" << std::endl;
+        << cpuTime() - myTime << " s"
+        << " num non-learnt bins: " << std::setw(10) << numBins
+        << std::endl;
     }
 
     return true;
