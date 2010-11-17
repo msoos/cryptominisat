@@ -110,7 +110,7 @@ clause). Example:
 One-hop neighbours of a: b, c. But c can be reached through b! So, we remove
 a->c, the one-hop neighbour that is useless.
 */
-const bool UselessBinRemover::removeUselessBinaries(const Lit& lit)
+const bool UselessBinRemover::removeUselessBinaries(const Lit lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
@@ -173,7 +173,7 @@ const bool UselessBinRemover::removeUselessBinaries(const Lit& lit)
 The binary clause might be in twice, three times, etc. Take care to remove
 all instances of it.
 */
-void UselessBinRemover::removeBin(const Lit& lit1, const Lit& lit2)
+void UselessBinRemover::removeBin(const Lit lit1, const Lit lit2)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Removing useless bin: " << lit1 << " " << lit2 << std::endl;
@@ -196,7 +196,7 @@ void UselessBinRemover::removeBin(const Lit& lit1, const Lit& lit2)
 Removes adds to "wrong" the set of one-hop lits that can be reached from
 lit AND are one-hop away from origLit. These later need to be removed
 */
-const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit& origLit, const Lit& lit, vec<Lit>& wrong)
+const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit origLit, const Lit lit, vec<Lit>& wrong)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
