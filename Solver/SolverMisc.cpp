@@ -204,6 +204,12 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
         numClauses += it->second.size()*2;
     }
 
+    const map<Var, vector<XorClause*> >& xorElimedOutVar = xorSubsumer->getElimedOutVar();
+    for (map<Var, vector<XorClause*> >::const_iterator it = xorElimedOutVar.begin(); it != xorElimedOutVar.end(); it++) {
+        const vector<XorClause*>& cs = it->second;
+        numClauses += cs.size();
+    }
+
     fprintf(outfile, "p cnf %d %d\n", nVars(), numClauses);
 
     ////////////////////////////////////////////////////////////////////
@@ -269,6 +275,15 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
         for (uint32_t i = 0; i < it->second.size(); i++) {
             it->second[i].first.print(outfile);
             it->second[i].second.printFull(outfile);
+        }
+    }
+
+    fprintf(outfile, "c -------------------------------\n");
+    fprintf(outfile, "c previously xor-eliminated variables\n");
+    fprintf(outfile, "c -------------------------------\n");
+    for (map<Var, vector<XorClause*> >::const_iterator it = xorElimedOutVar.begin(); it != xorElimedOutVar.end(); it++) {
+        for (vector<XorClause*>::const_iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
+            (*it2)->print(outfile);
         }
     }
 

@@ -44,11 +44,13 @@ public:
     void linkInAlreadyClause(XorClauseSimp& c);
     void newVar();
     void extendModel(Solver& solver2);
+
     const uint32_t getNumElimed() const;
     const vec<char>& getVarElimed() const;
     const bool unEliminate(const Var var);
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
+    const map<Var, vector<XorClause*> >& getElimedOutVar() const;
 
 private:
 
@@ -154,5 +156,9 @@ inline const double XorSubsumer::getTotalTime() const
     return totalTime;
 }
 
+inline const map<Var, vector<XorClause*> >& XorSubsumer::getElimedOutVar() const
+{
+    return elimedOutVar;
+}
 
 #endif //XORSIMPLIFIER_H
