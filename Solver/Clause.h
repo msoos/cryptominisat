@@ -335,17 +335,17 @@ public:
         isXorEqualFalse ^= b;
     }
 
-    void print() const
+    void print(FILE* to = stdout) const
     {
-        printf("XOR Clause   group: %d, size: %d, learnt:%d, lits:\"", getGroup(), size(), learnt());
-        plainPrint();
+        plainPrint(to);
+        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
     }
 
     void plainPrint(FILE* to = stdout) const
     {
         fprintf(to, "x");
         if (xorEqualFalse())
-            printf("-");
+            fprintf(to, "-");
         for (uint32_t i = 0; i < size(); i++) {
             fprintf(to, "%d ", data[i].var() + 1);
         }

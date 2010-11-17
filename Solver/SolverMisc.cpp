@@ -190,6 +190,9 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     //normal clauses
     numClauses += clauses.size();
 
+    //xor clauses
+    numClauses += xorclauses.size();
+
     //previously eliminated clauses
     const map<Var, vector<Clause*> >& elimedOutVar = subsumer->getElimedOutVar();
     for (map<Var, vector<Clause*> >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
@@ -202,6 +205,8 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     }
 
     fprintf(outfile, "p cnf %d %d\n", nVars(), numClauses);
+
+    ////////////////////////////////////////////////////////////////////
 
     fprintf(outfile, "c \nc ---------\n");
     fprintf(outfile, "c unitaries\n");
@@ -239,6 +244,14 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     fprintf(outfile, "c normal clauses\n");
     fprintf(outfile, "c ---------------\n");
     for (Clause *const *i = clauses.getData(); i != clauses.getDataEnd(); i++) {
+        assert(!(*i)->learnt());
+        (*i)->print(outfile);
+    }
+
+    fprintf(outfile, "c \nc ------------\n");
+    fprintf(outfile, "c xor clauses\n");
+    fprintf(outfile, "c ---------------\n");
+    for (XorClause *const *i = xorclauses.getData(); i != xorclauses.getDataEnd(); i++) {
         assert(!(*i)->learnt());
         (*i)->print(outfile);
     }
