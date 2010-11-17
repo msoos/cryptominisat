@@ -219,7 +219,7 @@ void Subsumer::subsume0(Clause& ps)
 
 @note Use helper function
 
-@param ps The clause to use to backward-subsume (doesn't handle learnt clauses)
+@param ps The clause to use to backward-subsume
 @param[in] abs The abstraction of the clause
 @return Subsumed anything? If so, what was the max activity? Was it non-learnt?
 */
