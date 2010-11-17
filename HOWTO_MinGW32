@@ -54,6 +54,7 @@ i586-mingw32msvc-g++ -O3 -march=i586 -DVERSION=\"2.6.0\" -DCROSS_COMPILE  \
     Subsumer.cpp XorSubsumer.cpp FailedLitSearcher.cpp PartFinder.cpp \
     StateSaver.cpp UselessBinRemover.cpp SolverMisc.cpp \
     CompleteDetachReattacher.cpp DimacsParser.cpp SolverConf.cpp \
+    OnlyNonLearntBins.cpp \
     -o cryptominisat.exe
 
 *****************************

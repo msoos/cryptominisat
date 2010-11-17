@@ -18,6 +18,7 @@ cl /openmp /favor:INTEL64 /O2 /Fecryptominisat64.exe -DVERSION="__DATE__" \
     Subsumer.cpp XorSubsumer.cpp FailedLitSearcher.cpp PartFinder.cpp \
     StateSaver.cpp UselessBinRemover.cpp SolverMisc.cpp \
     CompleteDetachReattacher.cpp DimacsParser.cpp SolverConf.cpp \
+    OnlyNonLearntBins.cpp
 
 executed from the 'Solver' subdirectory
 
