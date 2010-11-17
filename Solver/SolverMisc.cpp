@@ -183,7 +183,8 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
         numClauses+=2;
     }
     //binary normal clauses
-    numClauses += countNumBinClauses(true, alsoLearntBin);
+    numClauses += countNumBinClauses(alsoLearntBin, true);
+
     //normal clauses
     numClauses += clauses.size();
     //previously eliminated clauses
@@ -228,7 +229,7 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c binary clauses\n");
     fprintf(outfile, "c ---------------\n");
-    dumpBinClauses(true, alsoLearntBin, outfile);
+    dumpBinClauses(alsoLearntBin, true, outfile);
 
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c normal clauses\n");
