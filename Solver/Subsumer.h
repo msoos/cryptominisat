@@ -93,8 +93,8 @@ private:
 
     //Limits
     uint32_t numVarsElimed;               ///<Number of variables elimed in this run
-    uint32_t numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
-    uint32_t numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
+    int64_t numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
+    int64_t numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
     uint32_t numMaxElim;                  ///<Max. number of variable elimination tries to do this run
     int64_t numMaxBlockToVisit;           ///<Max. number variable-blocking clauses to visit to do this run
     uint32_t numMaxBlockVars;             ///<Max. number variable-blocking tries to do this run
