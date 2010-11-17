@@ -2431,10 +2431,10 @@ void Solver::performStepsBeforeSolve()
     if (conf.doClausVivif && !conf.libraryUsage
         && !clauseVivifier->vivifyClauses()) return;
 
-    /*bool saveDoHyperBin = conf.doHyperBinRes;
+    bool saveDoHyperBin = conf.doHyperBinRes;
     conf.doHyperBinRes = false;
     if (conf.doFailedLit && !failedLitSearcher->search()) return;
-    conf.doHyperBinRes = saveDoHyperBin;*/
+    conf.doHyperBinRes = saveDoHyperBin;
 
     if (conf.doSatELite
         && !conf.libraryUsage
