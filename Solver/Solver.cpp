@@ -1697,21 +1697,20 @@ PropBy Solver::propagateNonLearntBin()
 /**
 @brief Propagate recursively on non-learnt binaries, but do not propagate exceptLit if we reach it
 */
-const bool Solver::propagateBinExcept(const bool alsoLearnt, const Lit exceptLit)
+const bool Solver::propagateBinExcept(const Lit exceptLit)
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
         const vec<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2 + 2;
         for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
-            if (i->isBinary()) {
-                if (!alsoLearnt && i->getLearnt()) continue;
-                lbool val = value(i->getOtherLit());
-                if (val.isUndef() && i->getOtherLit() != exceptLit) {
-                    uncheckedEnqueueLight(i->getOtherLit());
-                } else if (val == l_False) {
-                    return false;
-                }
+            if (!i->isNonLearntBinary()) break;
+
+            lbool val = value(i->getOtherLit());
+            if (val.isUndef() && i->getOtherLit() != exceptLit) {
+                uncheckedEnqueueLight(i->getOtherLit());
+            } else if (val == l_False) {
+                return false;
             }
         }
     }
@@ -1722,20 +1721,19 @@ const bool Solver::propagateBinExcept(const bool alsoLearnt, const Lit exceptLit
 /**
 @brief Propagate only for one hop(=non-recursively) on non-learnt bins
 */
-const bool Solver::propagateBinOneLevel(const bool alsoLearnt)
+const bool Solver::propagateBinOneLevel()
 {
     Lit p   = trail[qhead];
     const vec<Watched> & ws = watches[p.toInt()];
     propagations += ws.size()/2 + 2;
     for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
-        if (i->isBinary()) {
-            if (!alsoLearnt && i->getLearnt()) continue;
-            lbool val = value(i->getOtherLit());
-            if (val.isUndef()) {
-                uncheckedEnqueueLight(i->getOtherLit());
-            } else if (val == l_False) {
-                return false;
-            }
+        if (!i->isNonLearntBinary()) break;
+
+        lbool val = value(i->getOtherLit());
+        if (val.isUndef()) {
+            uncheckedEnqueueLight(i->getOtherLit());
+        } else if (val == l_False) {
+            return false;
         }
     }
 

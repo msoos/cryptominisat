@@ -115,7 +115,7 @@ const bool UselessBinRemover::removeUselessBinaries(const Lit& lit)
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     //Propagate only one hop
-    failed = !solver.propagateBinOneLevel(false);
+    failed = !solver.propagateBinOneLevel();
     if (failed) return false;
     bool ret = true;
 
@@ -201,7 +201,7 @@ const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit& origLit, const 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     //if it's a cycle, it doesn't work, so don't propagate origLit
-    failed = !solver.propagateBinExcept(false, origLit);
+    failed = !solver.propagateBinExcept(origLit);
     if (failed) return false;
 
     assert(solver.decisionLevel() > 0);
