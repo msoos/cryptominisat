@@ -1143,7 +1143,7 @@ const bool Subsumer::eliminateVars()
         std::cout << "Order size:" << order.size() << std::endl;
         #endif
 
-        for (uint32_t i = 0; i < order.size() && numMaxElim > 0; i++, numMaxElim--) {
+        for (uint32_t i = 0; i < order.size() && numMaxElim > 0; i++) {
             if (maybeEliminate(order[i])) {
                 if (!solver.ok) return false;
                 vars_elimed++;
@@ -1384,8 +1384,10 @@ void Subsumer::setLimits(const bool alsoLearnt)
     //numMaxSubsume0 = 0;
     //numMaxSubsume1 = 0;
 
-    numMaxElim = ((double)solver.order_heap.size() / 2.0) * ((double)numCalls/3.0);
-    numMaxElim = std::min(numMaxElim, (uint32_t)400000);
+    numMaxElim = 5*1000*1000;
+
+    //numMaxElim = 0;
+
     numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
 
     if (solver.order_heap.size() > 200000)
@@ -1676,6 +1678,7 @@ bool Subsumer::maybeEliminate(const Var var)
     const uint32_t negSize = occur[(~lit).toInt()].size() + numNonLearntNeg;
     vec<ClauseSimp>& poss = occur[lit.toInt()];
     vec<ClauseSimp>& negs = occur[(~lit).toInt()];
+    numMaxElim -= posSize + negSize;
 
     // Heuristic CUT OFF:
     if (posSize >= 10 && negSize >= 10) return false;
@@ -1703,6 +1706,7 @@ bool Subsumer::maybeEliminate(const Var var)
     assert(negAll.size() == negSize);
 
     // Count clauses/literals after elimination:
+    numMaxElim -= posSize * negSize + before_literals;
     uint32_t before_clauses = posSize + negSize;
     uint32_t after_clauses = 0;
     vec<Lit> dummy; //to reduce temporary data allocation
@@ -1717,6 +1721,7 @@ bool Subsumer::maybeEliminate(const Var var)
     }
 
     //Eliminate:
+    numMaxElim -= posSize * negSize + before_literals;
     poss.clear();
     negs.clear();
     removeClauses(posAll, negAll, var);
