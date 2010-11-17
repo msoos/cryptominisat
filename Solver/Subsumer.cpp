@@ -18,6 +18,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "XorFinder.h"
 #include "CompleteDetachReattacher.h"
 #include "OnlyNonLearntBins.h"
+#include "UselessBinRemover.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -1287,6 +1288,11 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
         if (!handleClBinTouched()) return false;
+
+        if (solver.conf.doReplace && solver.conf.doRemUselessBins) {
+            UselessBinRemover uselessBinRemover(solver);
+            if (!uselessBinRemover.removeUslessBinFull()) return false;
+        }
     } else {
         numMaxSubsume0 = 30000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;

@@ -28,7 +28,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "PartHandler.h"
 #include "XorSubsumer.h"
 #include "StateSaver.h"
-#include "UselessBinRemover.h"
 #include "SCCFinder.h"
 #include "SharedData.h"
 #include "ClauseVivifier.h"
@@ -2320,11 +2319,6 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
-
-    if (conf.doReplace && conf.doRemUselessBins) {
-        UselessBinRemover uselessBinRemover(*this);
-        if (!uselessBinRemover.removeUslessBinFull()) goto end;
-    }
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
