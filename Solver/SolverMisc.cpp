@@ -173,20 +173,23 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     uint32_t numClauses = 0;
     //unitary clauses
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++)
-      numClauses++;
+        numClauses++;
+
     //binary XOR clauses
     const vector<Lit>& table = varReplacer->getReplaceTable();
     for (Var var = 0; var != table.size(); var++) {
         Lit lit = table[var];
         if (lit.var() == var)
             continue;
-        numClauses+=2;
+        numClauses += 2;
     }
+
     //binary normal clauses
     numClauses += countNumBinClauses(alsoLearntBin, true);
 
     //normal clauses
     numClauses += clauses.size();
+
     //previously eliminated clauses
     const map<Var, vector<Clause*> >& elimedOutVar = subsumer->getElimedOutVar();
     for (map<Var, vector<Clause*> >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
@@ -197,6 +200,7 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
         numClauses += it->second.size()*2;
     }
+
     fprintf(outfile, "p cnf %d %d\n", nVars(), numClauses);
 
     fprintf(outfile, "c \nc ---------\n");
