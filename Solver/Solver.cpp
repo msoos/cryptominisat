@@ -2208,7 +2208,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
                 attachClause(*c);
                 uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
             } else {
-                attachBinClause(learnt_clause[0], learnt_clause[1], false);
+                attachBinClause(learnt_clause[0], learnt_clause[1], true);
                 numNewBin++;
                 signalNewBinClause(learnt_clause);
                 uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
