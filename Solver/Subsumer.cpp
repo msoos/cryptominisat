@@ -1880,9 +1880,10 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
         Lit x = Lit(touchedVarsList[i], false);
         touchedVars[x.var()] = false;
         //this is not perfect -- solver.watches[] is an over-approximation
-        uint32_t pos = occur[x.toInt()].size() + solver.watches[(~x).toInt()].size();
-        uint32_t neg = occur[x.toInt()].size() + solver.watches[x.toInt()].size();
-        cost_var.push(std::make_pair(pos * neg, x.var()));
+        uint32_t pos = occur[x.toInt()].size();
+        uint32_t neg = occur[(~x).toInt()].size();
+        uint32_t cost = pos * neg * 2 + numNonLearntBins(x) * neg + numNonLearntBins(~x) * pos;
+        cost_var.push(std::make_pair(cost, x.var()));
     }
     touchedVarsList.clear();
 
