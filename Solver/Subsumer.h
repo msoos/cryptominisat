@@ -92,6 +92,7 @@ private:
     map<Var, vector<std::pair<Lit, Lit> > > elimedOutVarBin; ///<Contains the clauses to use to uneliminate a variable
 
     //Limits
+    uint32_t savedClauseLits;
     uint32_t numVarsElimed;               ///<Number of variables elimed in this run
     int64_t numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
     int64_t numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run

@@ -391,6 +391,11 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
     Clause& cl = *c.clause;
 
     for (uint32_t i = 0; i < cl.size(); i++) {
+        if (elim != var_Undef) numMaxElim -= occur[cl[i].toInt()].size()/2;
+        else {
+            numMaxSubsume0 -= occur[cl[i].toInt()].size()/2;
+            numMaxSubsume1 -= occur[cl[i].toInt()].size()/2;
+        }
         maybeRemove(occur[cl[i].toInt()], &cl);
         #ifndef TOUCH_LESS
         touch(cl[i]);
@@ -447,6 +452,7 @@ const bool Subsumer::cleanClause(Clause& ps)
         }
         if (val == l_False) {
             removeW(occur[i->toInt()], &ps);
+            numMaxSubsume1 -= occur[i->toInt()].size()/2;
             #ifndef TOUCH_LESS
             touch(*i);
             #endif
@@ -509,6 +515,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     literals_removed++;
     c.clause->strengthen(toRemoveLit);
     removeW(occur[toRemoveLit.toInt()], c.clause);
+    numMaxSubsume1 -= occur[toRemoveLit.toInt()].size()/2;
     #ifndef TOUCH_LESS
     touch(toRemoveLit);
     #endif
@@ -1246,11 +1253,13 @@ lists? If so, variable elimination cannot take place.
 */
 const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 {
-    if (solver.nClauses() > 20000000)  return true;
+    if (solver.nClauses() > 50000000
+        || solver.clauses_literals > 500000000)  return true;
 
     double myTime = cpuTime();
     clauseID = 0;
     clearAll();
+    savedClauseLits = solver.clauses_literals;
 
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
@@ -1266,9 +1275,13 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     if (alsoLearnt) {
         solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
-        std::sort(solver.learnts.getData(), solver.learnts.getDataEnd(), sortBySize());
+
+        if (solver.learnts.size() < 10000000)
+            std::sort(solver.learnts.getData(), solver.learnts.getDataEnd(), sortBySize());
         addFromSolver(solver.learnts, alsoLearnt);
     } else {
+        if (solver.clauses.size() < 10000000)
+            std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
         addFromSolver(solver.clauses, alsoLearnt);
         addExternTouchVars();
     }
@@ -1378,15 +1391,30 @@ elimination must be excluded, for example (i.e. its limit must be 0)
 */
 void Subsumer::setLimits(const bool alsoLearnt)
 {
-    numMaxSubsume0 = 50*1000*1000;
-    numMaxSubsume1 = 10*1000*1000;
+    numMaxSubsume0 = 60*1000*1000;
+    numMaxSubsume1 = 20*1000*1000;
 
     //numMaxSubsume0 = 0;
     //numMaxSubsume1 = 0;
+    //numMaxSubsume0 = std::numeric_limits<int64_t>::max();
+    //numMaxSubsume1 = std::numeric_limits<int64_t>::max();
 
-    numMaxElim = 5*1000*1000;
+    numMaxElim = 500*1000*1000;
 
     //numMaxElim = 0;
+    //numMaxElim = std::numeric_limits<int64_t>::max();
+
+    if (savedClauseLits < 10000000) {
+        numMaxElim *= 2;
+        numMaxSubsume0 *= 2;
+        numMaxSubsume1 *= 2;
+    }
+
+    if (savedClauseLits < 3000000) {
+        numMaxElim *= 2;
+        numMaxSubsume0 *= 2;
+        numMaxSubsume1 *= 2;
+    }
 
     numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
 
@@ -1400,8 +1428,8 @@ void Subsumer::setLimits(const bool alsoLearnt)
 
     if (alsoLearnt) {
         numMaxElim = 0;
-        numMaxSubsume0 = 2*1000*1000;
-        numMaxSubsume1 = 500*1000;
+        numMaxSubsume0 = 5*1000*1000;
+        numMaxSubsume1 = 2*100*1000;
         numMaxBlockVars = 0;
         numMaxBlockToVisit = 0;
     } else {
@@ -1410,9 +1438,6 @@ void Subsumer::setLimits(const bool alsoLearnt)
 
     //For debugging
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
-    //numMaxElim = std::numeric_limits<uint32_t>::max();
-    //numMaxSubsume0 = std::numeric_limits<uint32_t>::max();
-    //numMaxSubsume1 = std::numeric_limits<uint32_t>::max();
     //numMaxBlockVars = std::numeric_limits<uint32_t>::max();
 }
 
@@ -1474,7 +1499,7 @@ void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subs
     }
 
     vec<ClauseSimp>& cs = occur[ps[min_i].toInt()];
-    numMaxSubsume0 -= cs.size() + 5 + ps.size()*2;
+    numMaxSubsume0 -= cs.size()*10 + 5;
     for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
         if (it+1 != end)
             __builtin_prefetch((it+1)->clause, 1, 1);
@@ -1530,7 +1555,7 @@ void Subsumer::findSubsumed1(const T& ps, uint32_t abs, vec<ClauseSimp>& out_sub
     }
     assert(minVar != var_Undef);
 
-    numMaxSubsume1 -= bestSize + 10 + ps.size()*2;
+    numMaxSubsume1 -= bestSize*10 + 10;
     fillSubs(ps, abs, out_subsumed, out_lits, Lit(minVar, true));
     fillSubs(ps, abs, out_subsumed, out_lits, Lit(minVar, false));
 }
@@ -1815,10 +1840,12 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
     if (ps.isBin) {
         assert(ps.lit1 == without_p);
         assert(ps.lit2 != without_p);
+
         seen_tmp[ps.lit2.toInt()] = 1;
         out_clause.push(ps.lit2);
     } else {
         Clause& c = *ps.clsimp.clause;
+        numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_p){
                 seen_tmp[c[i].toInt()] = 1;
@@ -1830,6 +1857,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
     if (qs.isBin) {
         assert(qs.lit1 == without_q);
         assert(qs.lit2 != without_q);
+
         if (seen_tmp[(~qs.lit2).toInt()]) {
             retval = false;
             goto end;
@@ -1838,6 +1866,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
             out_clause.push(qs.lit2);
     } else {
         Clause& c = *qs.clsimp.clause;
+        numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_q) {
                 if (seen_tmp[(~c[i]).toInt()]) {
@@ -1855,6 +1884,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
         seen_tmp[ps.lit2.toInt()] = 0;
     } else {
         Clause& c = *ps.clsimp.clause;
+        numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++)
             seen_tmp[c[i].toInt()] = 0;
     }
