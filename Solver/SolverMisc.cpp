@@ -504,7 +504,7 @@ void Solver::sortWatched()
         #endif //VERBOSE_DEBUG
     }
 
-    if (conf.verbosity >= 2) {
+    if (conf.verbosity >= 3) {
         std::cout << "c watched "
         << "sorting time: " << cpuTime() - myTime
         << std::endl;
