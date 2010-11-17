@@ -56,7 +56,7 @@ void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSi
     fprintf(outfile, "c \nc ---------------------------------\n");
     fprintf(outfile, "c learnt binary clauses (extracted from watchlists)\n");
     fprintf(outfile, "c ---------------------------------\n");
-    dumpBinClauses(false, true, outfile);
+    dumpBinClauses(true, false, outfile);
 
     fprintf(outfile, "c \nc ---------------------------------------\n");
     fprintf(outfile, "c clauses representing 2-long XOR clauses\n");
