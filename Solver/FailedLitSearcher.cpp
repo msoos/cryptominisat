@@ -560,6 +560,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
 
     uint64_t oldProps = solver.propagations;
     vec<Lit> toVisit;
+    uint64_t extraTime = 0;
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight2(lit, 0, lit_Undef, false);
@@ -570,6 +571,8 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
         for (const Lit *it = uselessBin.getData(), *end = uselessBin.getDataEnd(); it != end; it++) {
             if (dontRemoveAncestor[it->var()]) continue;
 
+            extraTime += solver.watches[lit.toInt()].size()/2;
+            extraTime += solver.watches[(~*it).toInt()].size()/2;
             if (findWBin(solver.watches, ~lit, *it, true)) {
                 removeWBin(solver.watches[lit.toInt()], *it, true);
                 removeWBin(solver.watches[(~*it).toInt()], ~lit, true);
@@ -674,7 +677,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     #endif //DEBUG_HYPERBIN
 
     end:
-    hyperbinProps += solver.propagations - oldProps;
+    hyperbinProps += solver.propagations - oldProps + extraTime;
 }
 
 /**
