@@ -1126,7 +1126,7 @@ const bool Subsumer::eliminateVars()
     vec<Var> init_order;
     orderVarsForElim(init_order);   // (will untouch all variables)
 
-    for (bool first = true; numMaxElim > 0; first = false) {
+    for (bool first = true; numMaxElim > 0 && numMaxElimVars > 0; first = false) {
         uint32_t vars_elimed = 0;
         vec<Var> order;
 
@@ -1150,10 +1150,11 @@ const bool Subsumer::eliminateVars()
         std::cout << "Order size:" << order.size() << std::endl;
         #endif
 
-        for (uint32_t i = 0; i < order.size() && numMaxElim > 0; i++) {
+        for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
             if (maybeEliminate(order[i])) {
                 if (!solver.ok) return false;
                 vars_elimed++;
+                numMaxElimVars--;
             }
         }
         if (vars_elimed == 0) break;
@@ -1416,6 +1417,8 @@ void Subsumer::setLimits(const bool alsoLearnt)
         numMaxSubsume1 *= 2;
     }
 
+    numMaxElimVars = (solver.order_heap.size()/2)*numCalls;
+
     numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
 
     if (solver.order_heap.size() > 200000)
@@ -1428,6 +1431,7 @@ void Subsumer::setLimits(const bool alsoLearnt)
 
     if (alsoLearnt) {
         numMaxElim = 0;
+        numMaxElimVars = 0;
         numMaxSubsume0 = 5*1000*1000;
         numMaxSubsume1 = 2*100*1000;
         numMaxBlockVars = 0;
