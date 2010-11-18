@@ -18,11 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ClauseVivifier.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
+#include <iomanip>
 
 //#define ASSYM_DEBUG
 
 ClauseVivifier::ClauseVivifier(Solver& _solver) :
     lastTimeWentUntil(0)
+    , numCalls(0)
     , solver(_solver)
 {}
 
@@ -37,13 +39,16 @@ Maybe I am off-course and it should be in another class, or a class of its own.
 */
 const bool ClauseVivifier::vivifyClauses()
 {
+    assert(solver.ok);
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     bool failed;
 
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 60*1000*1000;
+    uint64_t maxNumProps = 20*1000*1000;
+    if (solver.clauses_literals + solver.learnts_literals < 500000)
+        maxNumProps *=2;
     uint64_t extraDiff = 0;
     uint64_t oldProps = solver.propagations;
     bool needToFinish = false;
@@ -165,6 +170,87 @@ const bool ClauseVivifier::vivifyClauses()
         << " time: " << cpuTime() - myTime
         << std::endl;
     }
+
+    if (solver.ok)
+        return vivifyClauses2();
+    else
+        return solver.ok;
+}
+
+
+const bool ClauseVivifier::vivifyClauses2()
+{
+    assert(solver.ok);
+
+    vec<char> seen;
+    seen.growTo(solver.nVars()*2, 0);
+    uint32_t litsRem = 0;
+    uint32_t clShrinked = 0;
+    uint64_t countTime = 0;
+    uint64_t maxCountTime = 250000000;
+    if (solver.clauses_literals + solver.learnts_literals < 500000)
+        maxCountTime *= 2;
+    uint32_t clTried = 0;
+    vec<Lit> lits;
+    bool needToFinish = false;
+    double myTime = cpuTime();
+
+    numCalls++;
+    if (numCalls < 3) return true;
+
+    Clause** i = solver.clauses.getData();
+    Clause** j = i;
+    for (Clause** end = solver.clauses.getDataEnd(); i != end; i++) {
+        if (needToFinish) {
+            *j++ = *i;
+            continue;
+        }
+        if (countTime > maxCountTime) needToFinish = true;
+
+        Clause& cl = **i;
+        countTime += cl.size()*2;
+        clTried++;
+
+        for (uint32_t i2 = 0; i2 < cl.size(); i2++) seen[cl[i2].toInt()] = 1;
+        for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+            if (seen[l->toInt()] == 0) continue;
+            Lit lit = *l;
+
+            countTime += solver.transOTFCache[l->toInt()].lits.size();
+            for (vector<Lit>::const_iterator it2 = solver.transOTFCache[l->toInt()].lits.begin()
+                , end2 = solver.transOTFCache[l->toInt()].lits.end(); it2 != end2; it2++) {
+                seen[(~(*it2)).toInt()] = 0;
+            }
+        }
+
+        lits.clear();
+        for (const Lit *it2 = cl.getData(), *end2 = cl.getDataEnd(); it2 != end2; it2++) {
+            if (seen[it2->toInt()]) lits.push(*it2);
+            else litsRem++;
+            seen[it2->toInt()] = 0;
+        }
+        if (lits.size() < cl.size()) {
+            countTime += cl.size()*10;
+            solver.detachClause(cl);
+            clShrinked++;
+            Clause* c2 = solver.addClauseInt(lits, cl.getGroup());
+            solver.clauseAllocator.clauseFree(&cl);
+
+            if (c2 != NULL) *j++ = c2;
+            if (!solver.ok) needToFinish = true;
+        } else {
+            *j++ = *i;
+        }
+    }
+
+    solver.clauses.shrink(i-j);
+
+    std::cout << "c vivif2 -- "
+    << " cl tried " << std::setw(8) << clTried
+    << " cl shrink " << std::setw(8) << clShrinked
+    << " lits rem " << std::setw(10) << litsRem
+    << " time: " << cpuTime() - myTime
+    << std::endl;
 
     return solver.ok;
 }
