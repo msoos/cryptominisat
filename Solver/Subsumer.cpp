@@ -569,7 +569,7 @@ const bool Subsumer::handleClBinTouched()
             //if we can't find it, that must be because it has been made non-learnt
             //note: if it has been removed through elimination, it must't
             //be able to subsume any non-learnt clauses, so we never enter here
-            if (findWBin(solver.watches, lits[0], lits[1], false)) {
+            if (findWBin(solver.watches, lits[0], lits[1], true)) {
                 findWatchedOfBin(solver.watches, lits[0], lits[1], learnt).setLearnt(false);
                 findWatchedOfBin(solver.watches, lits[1], lits[0], learnt).setLearnt(false);
             }

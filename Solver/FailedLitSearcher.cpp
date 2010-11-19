@@ -599,6 +599,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     uselessBin.clear();
     #ifdef DEBUG_USELESS_LEARNT_BIN_REMOVAL
     dontRemoveAncestor.isZero();
+    uint64_t backupProps;
     #endif
 
     assert(solver.decisionLevel() > 0);
@@ -621,6 +622,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     solver.cancelUntilLight();
 
     #ifdef DEBUG_USELESS_LEARNT_BIN_REMOVAL
+    backupProps = solver.propagations;
     if (solver.conf.doRemUselessLBins) {
         solver.newDecisionLevel();
         solver.uncheckedEnqueueLight2(lit, 0, lit_Undef, false);
@@ -633,6 +635,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
         assert(propagated == solver.trail.size()-solver.trail_lim[0]);
         solver.cancelUntilLight();
     }
+    solver.propagations = backupProps;
     #endif
 
     /*************************
