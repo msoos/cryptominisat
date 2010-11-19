@@ -24,6 +24,7 @@ class ClauseVivifier {
     public:
         ClauseVivifier(Solver& solver);
         const bool vivifyClauses();
+        const bool vivifyClauses2();
 
     private:
 
@@ -47,6 +48,7 @@ class ClauseVivifier {
             }
         };
 
+        uint32_t numCalls;
         Solver& solver;
 };
 
