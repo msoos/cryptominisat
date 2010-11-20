@@ -196,7 +196,7 @@ const bool ClauseVivifier::vivifyClauses2()
     double myTime = cpuTime();
 
     numCalls++;
-    if (numCalls < 3) return true;
+    if (numCalls < 4) return true;
 
     Clause** i = solver.clauses.getData();
     Clause** j = i;
