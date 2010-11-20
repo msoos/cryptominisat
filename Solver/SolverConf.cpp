@@ -56,7 +56,7 @@ SolverConf::SolverConf() :
         , doClausVivif     (true)
         , doSortWatched    (true)
         , doMinimLearntMore(true)
-        , doMinimLMoreRecur(false)
+        , doMinimLMoreRecur(true)
         , doFailedLit      (true)
         , doRemUselessBins (true)
         , doSubsWBins      (true)

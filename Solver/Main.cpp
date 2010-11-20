@@ -292,9 +292,8 @@ void Main::printUsage(char** argv)
     printf("  --nosortwatched  = Don't sort watches according to size: bin, tri, etc.\n");
     printf("  --nolfminim      = Don't do on-the-fly self-subsuming resolution\n");
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
-    printf("  --lfminimrec     = Always perform recursive/transitive OTF self-\n");
-    printf("                     subsuming resolution (enhancement of \n");
-    printf("                     'strong minimisation' in PrecoSat)\n");
+    printf("  --norecotfssr    = Don't perform recursive/transitive OTF self-\n");
+    printf("                     subsuming resolution\n");
     printf("  --maxglue        = [0 - 2^32-1] default: %d. Glue value above which we\n", conf.maxGlue);
     printf("                     throw the clause away on backtrack. Only active\n");
     printf("                     when dynamic restarts have been selected\n");
@@ -580,8 +579,8 @@ void Main::parseCommandLine()
             conf.doSortWatched = false;
         } else if ((value = hasPrefix(argv[i], "--nolfminim"))) {
             conf.doMinimLearntMore = false;
-        } else if ((value = hasPrefix(argv[i], "--lfminimrec"))) {
-            conf.doMinimLMoreRecur = true;
+        } else if ((value = hasPrefix(argv[i], "--norecotfssr"))) {
+            conf.doMinimLMoreRecur = false;
         } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
             conf.doRemUselessLBins = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
