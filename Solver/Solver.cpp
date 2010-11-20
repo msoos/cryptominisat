@@ -785,12 +785,12 @@ void Solver::tallyVotesBin(vec<double>& votes) const
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
                 if (!it2->getLearnt()) {
-                    if (lit.sign()) votes[lit.var()]++;
-                    else votes[lit.var()]--;
+                    if (lit.sign()) votes[lit.var()] += 0.5;
+                    else votes[lit.var()] -= 0.5;
 
                     Lit lit2 = it2->getOtherLit();
-                    if (lit2.sign()) votes[lit2.var()]++;
-                    else votes[lit2.var()]--;
+                    if (lit2.sign()) votes[lit2.var()] += 0.5;
+                    else votes[lit2.var()] -= 0.5;
                 }
             }
         }
