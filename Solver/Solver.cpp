@@ -2571,10 +2571,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
             return l_False;
         if (!chooseRestartType(lastFullRestart))
             return l_False;
-        #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-        //if (avgBranchDepth.isvalid())
-        //    std::cout << "avg branch depth:" << avgBranchDepth.getavg() << std::endl;
-        #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     }
     printEndSearchStat();
 

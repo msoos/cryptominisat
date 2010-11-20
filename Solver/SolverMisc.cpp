@@ -411,6 +411,15 @@ void Solver::printRestartStat(const char* type)
             std::cout << std::setw(space) << "no data";
         }
 
+        #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
+        if (conf.doPrintAvgBranch) {
+            if (avgBranchDepth.isvalid())
+                std::cout << std::setw(space) << avgBranchDepth.getAvgUInt();
+            else
+                std::cout << std::setw(space) << "no data";
+        }
+        #endif //RANDOM_LOOKAROUND_SEARCHSPACE
+
         #ifdef USE_GAUSS
         print_gauss_sum_stats();
         #endif //USE_GAUSS

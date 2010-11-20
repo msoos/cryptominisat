@@ -251,6 +251,7 @@ void Main::printUsage(char** argv)
     printf("                     Can be used to re-read dumped learnts, for example\n");
     printf("  --maxsolutions   = Search for given amount of solutions\n");
     printf("                     Can only be used in single-threaded more (\"--threads=1\")\n");
+    printf("  --pavgbranch     = Print average branch depth\n");
     printf("  --nofailedlit    = Don't search for failed literals, and don't search for lits\n");
     printf("                     propagated both by 'varX' and '-varX'\n");
     printf("  --noheuleprocess = Don't try to minimise XORs by XOR-ing them together.\n");
@@ -473,6 +474,9 @@ void Main::parseCommandLine()
                 exit(0);
             }
             max_nr_of_solutions = (uint32_t)tmp;
+
+        } else if ((value = hasPrefix(argv[i], "--pavgbranch"))) {
+            conf.doPrintAvgBranch = true;
         } else if ((value = hasPrefix(argv[i], "--greedyunbound"))) {
             conf.greedyUnbound = true;
         } else if ((value = hasPrefix(argv[i], "--nonormxorfind"))) {
