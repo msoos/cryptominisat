@@ -62,6 +62,7 @@ SolverConf::SolverConf() :
         , doSubsWBins      (true)
         , doSubsWNonExistBins(true)
         , doRemUselessLBins(true)
+        , doMaxGlueDel     (true)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

@@ -66,6 +66,7 @@ class SolverConf
         bool      doSubsWBins;
         bool      doSubsWNonExistBins;  ///<Try to do subsumption and self-subsuming resolution with non-existent binary clauses (i.e. binary clauses that don't exist but COULD exists)
         bool      doRemUselessLBins; ///<Try to remove useless learnt binary clauses
+        bool      doMaxGlueDel;
 
         //interrupting & dumping
         uint32_t  maxRestarts;

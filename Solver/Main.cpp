@@ -297,6 +297,7 @@ void Main::printUsage(char** argv)
     printf("  --maxglue        = [0 - 2^32-1] default: %d. Glue value above which we\n", conf.maxGlue);
     printf("                     throw the clause away on backtrack. Only active\n");
     printf("                     when dynamic restarts have been selected\n");
+    printf("  --nomaxgluedel   = Don't delete clauses over max glue\n");
     printf("  --threads        = Num threads (default is automatic guessing)");
     printf("\n");
 }
@@ -595,6 +596,8 @@ void Main::parseCommandLine()
                 exit(-1);
             }
             conf.maxGlue = (uint32_t)glue;
+        } else if ((value = hasPrefix(argv[i], "--nomaxgluedel"))) {
+            conf.doMaxGlueDel = false;
         } else if ((value = hasPrefix(argv[i], "--threads="))) {
             numThreads = 0;
             if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {
