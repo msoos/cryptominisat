@@ -360,9 +360,9 @@ const double Solver::getTotalTimeSCC() const
 void Solver::printStatHeader() const
 {
     #ifdef STATS_NEEDED
-    if (conf.verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
+    if (conf.verbosity >= 2 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
     #else
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity >= 2) {
     #endif
         std::cout << "c "
         << "========================================================================================="
