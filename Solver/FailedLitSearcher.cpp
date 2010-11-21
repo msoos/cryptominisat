@@ -394,8 +394,10 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     assert(solver.decisionLevel() > 0);
     Solver::TransCache& lit1OTFCache = solver.transOTFCache[(~lit1).toInt()];
-    lit1OTFCache.conflictLastUpdated = solver.conflicts;
-    lit1OTFCache.lits.clear();
+    if (solver.conf.doCacheOTFSSR) {
+        lit1OTFCache.conflictLastUpdated = solver.conflicts;
+        lit1OTFCache.lits.clear();
+    }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x = solver.trail[c].var();
         propagated.setBit(x);
@@ -409,7 +411,8 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         else propValue.clearBit(x);
 
         if (binXorFind) removeVarFromXors(x);
-        if (c != (int)solver.trail_lim[0]) lit1OTFCache.lits.push_back(solver.trail[c]);
+        if (solver.conf.doCacheOTFSSR
+            && c != (int)solver.trail_lim[0]) lit1OTFCache.lits.push_back(solver.trail[c]);
     }
 
     if (binXorFind) {
@@ -452,8 +455,10 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     assert(solver.decisionLevel() > 0);
     Solver::TransCache& lit2OTFCache = solver.transOTFCache[(~lit2).toInt()];
-    lit2OTFCache.conflictLastUpdated = solver.conflicts;
-    lit2OTFCache.lits.clear();
+    if (solver.conf.doCacheOTFSSR) {
+        lit2OTFCache.conflictLastUpdated = solver.conflicts;
+        lit2OTFCache.lits.clear();
+    }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x  = solver.trail[c].var();
         if (propagated[x]) {
@@ -487,7 +492,8 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         else propValue.clearBit(x);
 
         if (binXorFind) removeVarFromXors(x);
-        if (c != (int)solver.trail_lim[0]) lit2OTFCache.lits.push_back(solver.trail[c]);
+        if (solver.conf.doCacheOTFSSR
+            && c != (int)solver.trail_lim[0]) lit2OTFCache.lits.push_back(solver.trail[c]);
     }
 
     //We now add the two-long xors that have been found through longer

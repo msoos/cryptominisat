@@ -68,6 +68,7 @@ class SolverConf
         bool      doRemUselessLBins; ///<Try to remove useless learnt binary clauses
         bool      doMaxGlueDel;
         bool      doPrintAvgBranch;
+        bool      doCacheOTFSSR;
 
         //interrupting & dumping
         uint32_t  maxRestarts;

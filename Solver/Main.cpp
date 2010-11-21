@@ -295,6 +295,8 @@ void Main::printUsage(char** argv)
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
     printf("  --norecotfssr    = Don't perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution\n");
+    printf("  --nocacheotfssr  = Don't cache 1-level equeue. Less memory used, but\n");
+    printf("                     disables trans OTFSSR, adv. clause vivifier, etc.\n");
     printf("  --maxglue        = [0 - 2^32-1] default: %d. Glue value above which we\n", conf.maxGlue);
     printf("                     throw the clause away on backtrack. Only active\n");
     printf("                     when dynamic restarts have been selected\n");
@@ -586,6 +588,8 @@ void Main::parseCommandLine()
             conf.doMinimLearntMore = false;
         } else if ((value = hasPrefix(argv[i], "--norecotfssr"))) {
             conf.doMinimLMoreRecur = false;
+        } else if ((value = hasPrefix(argv[i], "--nocacheotfssr"))) {
+            conf.doCacheOTFSSR = false;
         } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
             conf.doRemUselessLBins = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {

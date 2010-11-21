@@ -64,6 +64,7 @@ SolverConf::SolverConf() :
         , doRemUselessLBins(true)
         , doMaxGlueDel     (true)
         , doPrintAvgBranch (false)
+        , doCacheOTFSSR    (true)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

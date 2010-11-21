@@ -171,7 +171,7 @@ const bool ClauseVivifier::vivifyClauses()
         << std::endl;
     }
 
-    if (solver.ok)
+    if (solver.ok && solver.conf.doCacheOTFSSR)
         return vivifyClauses2();
     else
         return solver.ok;
