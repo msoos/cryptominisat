@@ -32,5 +32,5 @@ grep "Cleaning" * | awk 'BEGIN {time=0;} {time+=$9} END {print "cleaning up afte
 
 grep "s UNSAT" * | sed 's/.gz.out.*//' > solvedUNSAT
 
-grep CPU * | awk '{print $5}' > solveTimes
+grep CPU *.out | awk '{print $5}' > solveTimes
 
