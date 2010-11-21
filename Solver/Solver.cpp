@@ -2187,7 +2187,15 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         #endif
     //Normal learnt
     } else {
-        if (c && learnt_clause.size() > 2) { //On-the-fly subsumption
+        if (learnt_clause.size() == 2) {
+            attachBinClause(learnt_clause[0], learnt_clause[1], true);
+            numNewBin++;
+            signalNewBinClause(learnt_clause);
+            uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
+            goto end;
+        }
+
+        if (c) { //On-the-fly subsumption
             uint32_t origSize = c->size();
             detachClause(*c);
             for (uint32_t i = 0; i != learnt_clause.size(); i++)
@@ -2202,29 +2210,23 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             if (dynamic_behaviour_analysis)
                 logger.set_group_name(c->getGroup(), "learnt clause");
             #endif
-            if (learnt_clause.size() > 2) {
-                c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
-                if (conf.doMaxGlueDel && glue > conf.maxGlue) {
-                    nbClOverMaxGlue++;
-                    nbCompensateSubsumer++;
-                    unWindGlue[learnt_clause[0].var()] = c;
-                    #ifdef UNWINDING_DEBUG
-                    std::cout << "unwind, var:" << learnt_clause[0].var() << std::endl;
-                    c->plainPrint();
-                    #endif //VERBOSE_DEBUG
-                } else {
-                    learnts.push(c);
-                }
-                c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
-                attachClause(*c);
-                uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
+            c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
+            if (conf.doMaxGlueDel && glue > conf.maxGlue) {
+                nbClOverMaxGlue++;
+                nbCompensateSubsumer++;
+                unWindGlue[learnt_clause[0].var()] = c;
+                #ifdef UNWINDING_DEBUG
+                std::cout << "unwind, var:" << learnt_clause[0].var() << std::endl;
+                c->plainPrint();
+                #endif //VERBOSE_DEBUG
             } else {
-                attachBinClause(learnt_clause[0], learnt_clause[1], true);
-                numNewBin++;
-                signalNewBinClause(learnt_clause);
-                uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
+                learnts.push(c);
             }
+            c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
+            attachClause(*c);
+            uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
         }
+        end:;
     }
 
     varDecayActivity();
