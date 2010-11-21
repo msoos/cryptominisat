@@ -161,6 +161,8 @@ const bool FailedLitSearcher::search()
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     assert(solver.decisionLevel() == 0);
+    if (solver.nVars() == 0) return solver.ok;
+
     solver.testAllClauseAttach();
     double myTime = cpuTime();
     uint32_t origHeapSize = solver.order_heap.size();
