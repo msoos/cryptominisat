@@ -22,9 +22,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include <iomanip>
 #include "time_mem.h"
+#include "Subsumer.h"
+#include "XorSubsumer.h"
 
 SCCFinder::SCCFinder(Solver& _solver) :
     solver(_solver)
+    , varElimed1(_solver.subsumer->getVarElimed())
+    , varElimed2(_solver.xorSubsumer->getVarElimed())
+    , replaceTable(_solver.varReplacer->getReplaceTable())
+    , totalTime(0.0)
 {}
 
 const bool SCCFinder::find2LongXors()
@@ -51,12 +57,13 @@ const bool SCCFinder::find2LongXors()
     }
     //std::cout << "maximum recurDepth:" << maxRecurDepth << std::endl;
 
-    if (solver.conf.verbosity  > 2 || (solver.conflicts == 0 && solver.conf.verbosity  >= 1)) {
+    if (solver.conf.verbosity >= 2 || (solver.conflicts == 0 && solver.conf.verbosity  >= 1)) {
         std::cout << "c Finding binary XORs  T: "
         << std::fixed << std::setprecision(2) << std::setw(8) <<  (cpuTime() - myTime) << " s"
         << "  found: " << std::setw(7) << solver.varReplacer->getNewToReplaceVars() - oldNumReplace
         << std::endl;
     }
+    totalTime += (cpuTime() - myTime);
 
     return solver.ok;
 }
@@ -71,19 +78,32 @@ void SCCFinder::tarjan(const uint32_t vertex)
     stack.push(vertex); // Push v on the stack
     stackIndicator[vertex] = true;
 
-    const vec<Watched>& ws = solver.watches[(Lit::toLit(vertex)).toInt()];
-    // Consider successors of v
-    for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
-        if (!it->isBinary()) continue;
-        const Lit lit = it->getOtherLit();
+    Var vertexVar = Lit::toLit(vertex).var();
+    if (!varElimed1[vertexVar] && !varElimed2[vertexVar]) {
+        const vec<Watched>& ws = solver.watches[vertex];
+        for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+            if (!it->isBinary()) continue;
+            const Lit lit = it->getOtherLit();
 
-        // Was successor v' visited?
-        if (index[lit.toInt()] ==  std::numeric_limits<uint32_t>::max()) {
-            tarjan(lit.toInt());
-            recurDepth--;
-            lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
-        } else if (stackIndicator[lit.toInt()])  {
-            lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
+            doit(lit, vertex);
+        }
+
+        if (solver.conf.doExtendedSCC) {
+            Lit vertLit = Lit::toLit(vertex);
+            vector<Lit>& transCache = solver.transOTFCache[(~Lit::toLit(vertex)).toInt()].lits;
+            vector<Lit>::iterator it = transCache.begin();
+            vector<Lit>::iterator it2 = it;
+            uint32_t newSize = 0;
+            for (vector<Lit>::iterator end = transCache.end(); it != end; it++) {
+                Lit lit = *it;
+                lit = replaceTable[lit.var()] ^ lit.sign();
+                if (lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()]) continue;
+                *it2++ = lit;
+                newSize++;
+
+                doit(lit, vertex);
+            }
+            transCache.resize(newSize);
         }
     }
 

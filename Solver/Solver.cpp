@@ -110,6 +110,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , restartType      (static_restart)
         , lastSelectedRestartType (static_restart)
         , simplifying      (false)
+        , totalSimplifyTime(0.0)
         , simpDB_assigns   (-1)
         , simpDB_props     (0)
 {
@@ -1904,12 +1905,13 @@ const bool Solver::simplify()
     if (simpDB_props > 0) {
         return true;
     }
+    double myTime = cpuTime();
 
-    double slowdown = (100000.0/(double)numBins);
-    slowdown = std::min(3.5, slowdown);
-    slowdown = std::max(0.2, slowdown);
+    double slowdown = (100000.0/((double)numBins * 30000.0/((double)order_heap.size())));
+    slowdown = std::min(1.5, slowdown);
+    slowdown = std::max(0.01, slowdown);
 
-    double speedup = 50000000.0/(double)(propagations-lastSearchForBinaryXor);
+    double speedup = 200000000.0/(double)(propagations-lastSearchForBinaryXor);
     speedup = std::min(3.5, speedup);
     speedup = std::max(0.2, speedup);
 
@@ -1949,7 +1951,9 @@ const bool Solver::simplify()
     #endif //USE_GAUSS
 
     simpDB_assigns = nAssigns();
-    simpDB_props   = 3*(clauses_literals + learnts_literals);   // (shouldn't depend on stats really, but it will do for now)
+    simpDB_props = std::min((uint64_t)80000000, 4*clauses_literals + 4*learnts_literals); //at most 6 sec wait
+    simpDB_props = std::max((int64_t)30000000, simpDB_props); //at least 2 sec wait
+    totalSimplifyTime += cpuTime() - myTime;
 
     testAllClauseAttach();
     return true;

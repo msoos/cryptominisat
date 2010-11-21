@@ -197,8 +197,8 @@ public:
     using non-existent binary clauses.
     */
     const double getTotalTimeSubsumer() const;
-
     const double getTotalTimeFailedLitSearcher() const;
+    const double getTotalTimeSCC() const;
 
     /**
     @brief Get total time spent in XorSubsumer.
@@ -529,6 +529,7 @@ protected:
     void        reduceDB();       // Reduce the set of learnt clauses.
     const bool  simplify();       // Removes satisfied clauses and finds binary xors
     bool        simplifying;      ///<We are currently doing burst search
+    double      totalSimplifyTime;
     uint32_t    simpDB_assigns;   ///< Number of top-level assignments since last execution of 'simplify()'.
     int64_t     simpDB_props;     ///< Remaining number of propagations that must be made before next execution of 'simplify()'.
 

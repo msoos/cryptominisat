@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "time_mem.h"
 #include "DimacsParser.h"
 #include "FailedLitSearcher.h"
+#include "SCCFinder.h"
 #include <iomanip>
 #include <omp.h>
 
@@ -351,6 +352,11 @@ const double Solver::getTotalTimeXorSubsumer() const
     return xorSubsumer->getTotalTime();
 }
 
+const double Solver::getTotalTimeSCC() const
+{
+    return  sCCFinder->getTotalTime();
+}
+
 void Solver::printStatHeader() const
 {
     #ifdef STATS_NEEDED
@@ -600,6 +606,7 @@ void Solver::printStats()
     printStatsLine("c dynamic restarts", dynStarts);
     printStatsLine("c static restarts", staticStarts);
     printStatsLine("c full restarts", fullStarts);
+    printStatsLine("c total simplify time", totalSimplifyTime);
 
     //Learnts stats
     printStatsLine("c learnts DL2", nbGlue2);
@@ -618,6 +625,7 @@ void Solver::printStats()
     //VarReplacer stats
     printStatsLine("c num binary xor trees", getNumXorTrees());
     printStatsLine("c binxor trees' crown", getNumXorTreesCrownSize(), (double)getNumXorTreesCrownSize()/(double)getNumXorTrees(), "leafs/tree");
+    printStatsLine("c bin xor find time", getTotalTimeSCC());
 
     //OTF clause improvement stats
     printStatsLine("c OTF clause improved", improvedClauseNo, (double)improvedClauseNo/(double)conflicts, "clauses/conflict");

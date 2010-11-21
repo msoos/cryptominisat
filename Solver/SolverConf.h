@@ -69,6 +69,7 @@ class SolverConf
         bool      doMaxGlueDel;
         bool      doPrintAvgBranch;
         bool      doCacheOTFSSR;
+        bool      doExtendedSCC;
 
         //interrupting & dumping
         uint32_t  maxRestarts;

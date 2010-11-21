@@ -27,9 +27,11 @@ class SCCFinder {
     public:
         SCCFinder(Solver& solver);
         const bool find2LongXors();
+        const double getTotalTime() const;
 
     private:
         void tarjan(const uint32_t vertex);
+        void doit(const Lit lit, const uint32_t vertex);
 
         uint32_t globalIndex;
         vector<uint32_t> index;
@@ -42,6 +44,26 @@ class SCCFinder {
         uint32_t maxRecurDepth;
 
         Solver& solver;
+        const vec<char>& varElimed1;
+        const vec<char>& varElimed2;
+        const vector<Lit>& replaceTable;
+        double totalTime;
 };
+
+inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
+    // Was successor v' visited?
+    if (index[lit.toInt()] ==  std::numeric_limits<uint32_t>::max()) {
+        tarjan(lit.toInt());
+        recurDepth--;
+        lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
+    } else if (stackIndicator[lit.toInt()])  {
+        lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
+    }
+}
+
+inline const double SCCFinder::getTotalTime() const
+{
+    return totalTime;
+}
 
 #endif //SCCFINDER_H
