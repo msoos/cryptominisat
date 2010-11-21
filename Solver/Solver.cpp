@@ -1134,10 +1134,10 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisClauseDoMinLMoreRecur = conf.doMinimLMoreRecur && (cl.size() <= 6 || glue <= 5);
+    bool thisClauseDoMinLMoreRecur = conf.doMinimLMoreRecur && (cl.size() <= 5);
     if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
     uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
-    if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 2;
+    if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 3;
     else if (tot_literals < 10000000) thisUpdateTransOTFSSCache /= 2;
 
     //To count the "amount of time" invested in doing transitive on-the-fly
@@ -1149,9 +1149,10 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         if (seen[l->toInt()] == 0) continue;
         Lit lit = *l;
 
-        if (thisClauseDoMinLMoreRecur && moreRecurProp < 450) {
-            if (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
-                && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts)) {
+        if (thisClauseDoMinLMoreRecur) {
+            if (moreRecurProp < 450
+                || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
+                && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))) {
                 for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
                     seen[(~(*it)).toInt()] = 0;
                 }
