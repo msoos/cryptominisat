@@ -1137,8 +1137,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     bool thisClauseDoMinLMoreRecur = conf.doCacheOTFSSR && conf.doMinimLMoreRecur && (cl.size() <= 5);
     if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
     uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
-    if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 3;
-    else if (tot_literals < 10000000) thisUpdateTransOTFSSCache /= 2;
+    if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 2;
 
     //To count the "amount of time" invested in doing transitive on-the-fly
     //self-subsuming resolution
