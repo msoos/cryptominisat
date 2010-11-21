@@ -1134,8 +1134,21 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
-    bool thisClauseDoMinLMoreRecur = conf.doCacheOTFSSR && conf.doMinimLMoreRecur && (cl.size() <= 5);
-    if (thisClauseDoMinLMoreRecur) moreRecurMinLDo++;
+    bool clDoMinLRec = false;
+    if (conf.doCacheOTFSSR && conf.doMinimLMoreRecur) {
+        switch(lastSelectedRestartType) {
+            case dynamic_restart :
+                clDoMinLRec |= glue < 0.6*glueHistory.getAvgAllDouble();
+                //NOTE: No "break;" here on purpose
+            case static_restart :
+                clDoMinLRec |= cl.size() < 0.6*conflSizeHist.getAvgDouble();
+                break;
+            default :
+                assert(false);
+        }
+    }
+
+    if (clDoMinLRec) moreRecurMinLDo++;
     uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
     if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 2;
 
@@ -1148,7 +1161,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         if (seen[l->toInt()] == 0) continue;
         Lit lit = *l;
 
-        if (thisClauseDoMinLMoreRecur) {
+        if (clDoMinLRec) {
             if (moreRecurProp > 450
                 || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
                 && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))) {
@@ -2147,6 +2160,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         avgBranchDepth.push(decisionLevel());
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
         if (restartType == dynamic_restart) glueHistory.push(glue);
+        conflSizeHist.push(learnt_clause.size());
     }
 
     #ifdef STATS_NEEDED
@@ -2269,6 +2283,8 @@ inline void Solver::setDefaultRestartType()
 
     glueHistory.clear();
     glueHistory.initSize(MIN_GLUE_RESTART);
+    conflSizeHist.clear();
+    conflSizeHist.initSize(1000);
 
     lastSelectedRestartType = restartType;
 }
