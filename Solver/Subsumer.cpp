@@ -650,8 +650,8 @@ const bool Subsumer::subsume0AndSubsume1()
                 }
 
                 next:
-                if (ol_seenNeg[cl[j].toInt()]) continue;
-                ol_seenNeg[cl[j].toInt()] = 1;
+                if (ol_seenNeg[(~cl[j]).toInt()]) continue;
+                ol_seenNeg[(~cl[j]).toInt()] = 1;
 
                 vec<ClauseSimp>& n_occs = occur[(~cl[j]).toInt()];
                 for (uint32_t k = 0; k < n_occs.size(); k++) s1.add(n_occs[k]);
