@@ -1407,7 +1407,7 @@ void Subsumer::setLimits(const bool alsoLearnt)
         numMaxSubsume1 *= 2;
     }
 
-    numMaxElimVars = (solver.order_heap.size()/2)*numCalls;
+    numMaxElimVars = (solver.order_heap.size()/3)*numCalls;
 
     numMaxBlockToVisit = (int64_t)(80000.0 * (0.8+(double)(numCalls)/3.0));
 
