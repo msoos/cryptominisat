@@ -67,8 +67,11 @@ static inline int memReadStat(int field)
     FILE*   in = fopen(name, "rb");
     if (in == NULL) return 0;
     int     value;
-    for (; field >= 0; field--)
-        fscanf(in, "%d", &value);
+
+    int rvalue= 1;
+    for (; (field >= 0) && (rvalue == 1); field--)
+        rvalue = fscanf(in, "%d", &value);
+
     fclose(in);
     return value;
 }
