@@ -102,7 +102,7 @@ private:
     uint32_t numMaxBlockVars;             ///<Max. number variable-blocking tries to do this run
 
     //Start-up
-    void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false, const bool addBinAndAddToCL = true);
+    void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false);
     void fillCannotEliminate();
     void clearAll();
     void setLimits(const bool alsoLearnt);
