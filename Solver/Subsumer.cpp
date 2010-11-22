@@ -1320,6 +1320,9 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     std::cout << "c  pre-subsumed:" << clauses_subsumed << std::endl;
     std::cout << "c  cl_touched:" << cl_touched.size() << std::endl;
     std::cout << "c  clauses:" << clauses.size() << std::endl;
+    std::cout << "c  numMaxSubsume0:" << numMaxSubsume0 << std::endl;
+    std::cout << "c  numMaxSubsume1:" << numMaxSubsume1 << std::endl;
+    std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
     #endif
 
     if (clauses.size() > 10000000 ||
