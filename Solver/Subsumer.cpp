@@ -1118,7 +1118,7 @@ void Subsumer::clearAll()
 const bool Subsumer::eliminateVars()
 {
     #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c VARIABLE ELIMINIATION -- touched_list size:" << touched_list.size() << std::endl;
+    std::cout << "c VARIABLE ELIMINIATION -- touchedVarsList size:" << touchedVarsList.size() << std::endl;
     #endif
     vec<Var> init_order;
     orderVarsForElim(init_order);   // (will untouch all variables)
