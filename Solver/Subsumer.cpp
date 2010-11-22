@@ -665,10 +665,9 @@ const bool Subsumer::subsume0AndSubsume1()
         }
     } else {
         for (uint32_t i = 0; i < clauses.size(); i++) {
-            if (clauses[i].clause != NULL) {
-                s0.add(clauses[i]);
-                s1.add(clauses[i]);
-            }
+            if (clauses[i].clause == NULL) continue;
+            s0.add(clauses[i]);
+            s1.add(clauses[i]);
         }
     }
     cl_touched.clear();
@@ -681,19 +680,16 @@ const bool Subsumer::subsume0AndSubsume1()
         for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
             if (it->clause == NULL) continue;
             if (numMaxSubsume0 < 0) break;
-            if (it->clause != NULL) {
-                subsume0(*it->clause);
-            }
+            subsume0(*it->clause);
         }
         s0.clear();
 
         for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
+            if (it->clause == NULL) continue;
             if (numMaxSubsume1 < 0) break;
-            if (it->clause != NULL) {
-                subsume1(*it->clause);
-                s0.exclude(*it);
-                if (!solver.ok) goto end;
-            }
+            subsume1(*it->clause);
+            s0.exclude(*it);
+            if (!solver.ok) goto end;
         }
         s1.clear();
 
