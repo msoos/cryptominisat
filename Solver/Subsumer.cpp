@@ -619,6 +619,15 @@ const bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
+    #ifdef BIT_MORE_VERBOSITY
+    std::cout << "c  -- subsume0AndSubsume1() round --" << std::endl;
+    std::cout << "c  cl_touched.size() = " << cl_touched.size() << std::endl;
+    std::cout << "c  clauses.size() = " << clauses.size() << std::endl;
+    std::cout << "c  numMaxSubsume0:" << numMaxSubsume0 << std::endl;
+    std::cout << "c  numMaxSubsume1:" << numMaxSubsume1 << std::endl;
+    std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
+    #endif //BIT_MORE_VERBOSITY
+
     if (cl_touched.size() < clauses.size() / 2) {
         vec<char> ol_seenPos(solver.nVars()*2, 0);
         vec<char> ol_seenNeg(solver.nVars()*2, 0);
