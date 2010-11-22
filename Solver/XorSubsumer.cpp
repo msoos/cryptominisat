@@ -263,7 +263,8 @@ const bool XorSubsumer::localSubstitute()
                     std::cout << "Clause 2:"; c2.plainPrint();
                     #endif //VERBOSE_DEBUG
                     localSubstituteUseful++;
-                    solver.addXorClauseInt(tmp, c1.xorEqualFalse() ^ !c2.xorEqualFalse(), c1.getGroup());
+                    XorClause* ret = solver.addXorClauseInt(tmp, c1.xorEqualFalse() ^ !c2.xorEqualFalse(), c1.getGroup());
+                    release_assert(ret == NULL);
                     if (!solver.ok) {
                         #ifdef VERBOSE_DEBUG
                         std::cout << "solver.ok is false after local substitution" << std::endl;
