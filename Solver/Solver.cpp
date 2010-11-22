@@ -1981,11 +1981,8 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
 
     if (!simplifying && update) {
         starts++;
-        if (restartType == static_restart) {
-            staticStarts++;
-        } else {
-            dynStarts++;
-        }
+        if (restartType == static_restart) staticStarts++;
+        else dynStarts++;
     }
     glueHistory.fastclear();
 
