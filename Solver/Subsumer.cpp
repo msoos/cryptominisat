@@ -1390,11 +1390,6 @@ void Subsumer::setLimits(const bool alsoLearnt)
     numMaxSubsume0 = 60*1000*1000;
     numMaxSubsume1 = 20*1000*1000;
 
-    //numMaxSubsume0 = 0;
-    //numMaxSubsume1 = 0;
-    //numMaxSubsume0 = std::numeric_limits<int64_t>::max();
-    //numMaxSubsume1 = std::numeric_limits<int64_t>::max();
-
     numMaxElim = 500*1000*1000;
 
     //numMaxElim = 0;
@@ -1436,6 +1431,12 @@ void Subsumer::setLimits(const bool alsoLearnt)
     }
 
     //For debugging
+
+    //numMaxSubsume0 = 0;
+    //numMaxSubsume1 = 0;
+    //numMaxSubsume0 = std::numeric_limits<int64_t>::max();
+    //numMaxSubsume1 = std::numeric_limits<int64_t>::max();
+
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
     //numMaxBlockVars = std::numeric_limits<uint32_t>::max();
 }
