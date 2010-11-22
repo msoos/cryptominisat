@@ -293,13 +293,14 @@ private:
         }
     };
     void blockedClauseRemoval();
-    const bool allTautology(const vec<Lit>& ps, const Lit lit);
+    template<class T>
+    const bool allTautology(const T& ps, const Lit lit);
     uint32_t numblockedClauseRemoved;
-    const bool tryOneSetting(const Lit lit, const Lit negLit);
+    const bool tryOneSetting(const Lit lit);
     priority_queue<VarOcc, vector<VarOcc>, MyComp> touchedBlockedVars;
     vec<char> touchedBlockedVarsBool;
     void touchBlockedVar(const Var x);
-    double blockTime;
+    void blockedClauseElimAll(const Lit lit);
 
 
     //validity checking
@@ -367,6 +368,7 @@ call it when the number of occurrences of this variable changed
 inline void Subsumer::touch(const Lit p)
 {
     touch(p.var());
+    touchBlockedVar(p.var());
 }
 
 /**
