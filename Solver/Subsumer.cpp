@@ -1289,7 +1289,11 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     totalTime += myTime - cpuTime();
 
     //Do stuff with binaries
-    if (!alsoLearnt) {
+    if (alsoLearnt) {
+        numMaxSubsume1 = 500*1000*1000;
+        if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
+        addFromSolver(solver.clauses, alsoLearnt);
+    } else {
         subsumeBinsWithBins();
         numMaxSubsume1 = 2*1000*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
@@ -1300,10 +1304,6 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
             UselessBinRemover uselessBinRemover(solver);
             if (!uselessBinRemover.removeUslessBinFull()) return false;
         }
-    } else {
-        numMaxSubsume1 = 500*1000*1000;
-        if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-        addFromSolver(solver.clauses, alsoLearnt);
     }
 
     myTime = cpuTime();
