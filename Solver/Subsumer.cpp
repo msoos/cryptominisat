@@ -749,7 +749,7 @@ Which clauses are needed can be controlled by the parameters
 @param[in] addBinAndAddToCL If set to FALSE, binary clauses are not added, and
 clauses are never added to the cl_touched set.
 */
-void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool addBinAndAddToCL)
+void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt)
 {
     Clause **i = cs.getData();
     Clause **j = i;
@@ -762,12 +762,6 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool
             continue;
         }
 
-        if (!addBinAndAddToCL && (*i)->size() == 2) {
-            //don't add binary clauses in this case
-            *j++ = *i;
-            continue;
-        }
-
         ClauseSimp c(*i, clauseID++);
         clauses.push(c);
         Clause& cl = *c.clause;
@@ -776,9 +770,7 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt, const bool
             touch(cl[i]);
         }
 
-        if (addBinAndAddToCL) {
-            if (cl.getStrenghtened()) cl_touched.add(c);
-        }
+        if (cl.getStrenghtened()) cl_touched.add(c);
     }
     cs.shrink(i-j);
 }
