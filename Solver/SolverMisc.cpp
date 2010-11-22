@@ -535,8 +535,20 @@ void Solver::addSymmBreakClauses()
     double myTime = cpuTime();
     std::cout << "c Doing saucy" << std::endl;
     dumpOrigClauses("origProblem.cnf", true);
-    system("grep -v \"^c\" origProblem.cnf > origProblem2.cnf");
-    system("python saucyReader.py origProblem2.cnf > output");
+
+    int rvalue;
+    rvalue= system("grep -v \"^c\" origProblem.cnf > origProblem2.cnf");
+    if (rvalue >= 2) { // unsuccessful grep in POSIX standard
+        std::cout << "c impossible to complete saucy" << std::endl;
+        return;
+    }
+    rvalue= system("python saucyReader.py origProblem2.cnf > output");
+    if (rvalue != 0) { // unsuccessful saucyReader.py
+        std::cout << "c impossible to complete saucy" << std::endl;
+        return;
+    }
+
+
     DimacsParser parser(this, false, false, false, true);
 
     #ifdef DISABLE_ZLIB
