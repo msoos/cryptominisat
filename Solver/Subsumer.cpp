@@ -1422,8 +1422,8 @@ void Subsumer::setLimits(const bool alsoLearnt)
     if (alsoLearnt) {
         numMaxElim = 0;
         numMaxElimVars = 0;
-        numMaxSubsume0 = 5*1000*1000;
-        numMaxSubsume1 = 2*100*1000;
+        numMaxSubsume0 /= 2;
+        numMaxSubsume1 /= 2;
         numMaxBlockVars = 0;
         numMaxBlockToVisit = 0;
     } else {
