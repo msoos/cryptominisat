@@ -56,11 +56,11 @@ class CSet {
         /**
         @brief Add a clause to the set
         */
-        bool add(const ClauseSimp& c) {
+        const bool add(const ClauseSimp& c) {
             assert(c.clause != NULL);
             where.growTo(c.index+1, std::numeric_limits<uint32_t>::max());
             if (where[c.index] != std::numeric_limits<uint32_t>::max()) {
-                return true;
+                return false;
             }
             if (free.size() > 0){
                 where[c.index] = free.last();
@@ -70,6 +70,14 @@ class CSet {
                 where[c.index] = which.size();
                 which.push(c);
             }
+            return true;
+        }
+
+        const bool alreadyIn(const ClauseSimp& c) const {
+            assert(c.clause != NULL);
+            if (where.size() < c.index+1) return false;
+            if (where[c.index] != std::numeric_limits<uint32_t>::max())
+                return true;
             return false;
         }
 
