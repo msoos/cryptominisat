@@ -397,7 +397,7 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
         }
         maybeRemove(occur[cl[i].toInt()], &cl);
         #ifndef TOUCH_LESS
-        touch(cl[i]);
+        touch(cl[i], cl.learnt());
         #endif
     }
 
@@ -453,7 +453,7 @@ const bool Subsumer::cleanClause(Clause& ps)
             removeW(occur[i->toInt()], &ps);
             numMaxSubsume1 -= occur[i->toInt()].size()/2;
             #ifndef TOUCH_LESS
-            touch(*i);
+            touch(*i, ps.learnt());
             #endif
             continue;
         }
@@ -516,7 +516,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     removeW(occur[toRemoveLit.toInt()], c.clause);
     numMaxSubsume1 -= occur[toRemoveLit.toInt()].size()/2;
     #ifndef TOUCH_LESS
-    touch(toRemoveLit);
+    touch(toRemoveLit, c.clause->learnt());
     #endif
     if (cleanClause(*c.clause)) {
         unlinkClause(c);
@@ -731,7 +731,7 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
     clauses.push(c);
     for (uint32_t i = 0; i < cl.size(); i++) {
         occur[cl[i].toInt()].push(c);
-        touch(cl[i].var());
+        touch(cl[i], cl.learnt());
     }
     cl_touched.add(c);
 
@@ -1197,8 +1197,8 @@ void Subsumer::subsumeBinsWithBins()
                 if (i->getLearnt()) solver.learnts_literals -= 2;
                 else {
                     solver.clauses_literals -= 2;
-                    touch(lit);
-                    touch(i->getOtherLit());
+                    touch(lit, i->getLearnt());
+                    touch(i->getOtherLit(), i->getLearnt());
                 }
                 solver.numBins--;
             } else {
@@ -1615,8 +1615,8 @@ void Subsumer::removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair
 
             elimedOutVarBin[var].push_back(std::make_pair(c.lit1, c.lit2));
             #ifndef TOUCH_LESS
-            touch(c.lit1);
-            touch(c.lit2);
+            touch(c.lit1, false);
+            touch(c.lit2, false);
             #endif
         }
     }
@@ -2106,7 +2106,7 @@ void Subsumer::blockedClauseElimAll(const Lit lit)
         }
         removeWBin(solver.watches[(~i->getOtherLit()).toInt()], lit, i->getLearnt());
         elimedOutVarBin[lit.var()].push_back(std::make_pair(lit, i->getOtherLit()));
-        touch(i->getOtherLit());
+        touch(i->getOtherLit(), false);
         removedNum++;
     }
     ws.shrink_(i-j);

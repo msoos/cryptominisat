@@ -121,9 +121,7 @@ private:
 
     //Touching
     void touch(const Var x);
-    void touch(const Lit p);
-    void addExternTouchVars();
-    void addRemainingTouchedToExt();
+    void touch(const Lit p, const bool learnt);
 
     //Used by cleaner
     void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
@@ -365,10 +363,14 @@ inline void Subsumer::touchBlockedVar(const Var x)
 
 call it when the number of occurrences of this variable changed
 */
-inline void Subsumer::touch(const Lit p)
+inline void Subsumer::touch(const Lit p, const bool learnt)
 {
-    touch(p.var());
-    touchBlockedVar(p.var());
+    if (!learnt) {
+        touch(p.var());
+        touchBlockedVar(p.var());
+        ol_seenNeg[p.toInt()] = false;
+        ol_seenPos[p.toInt()] = false;
+    }
 }
 
 /**
