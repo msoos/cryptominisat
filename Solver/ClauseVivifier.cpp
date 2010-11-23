@@ -43,6 +43,7 @@ const bool ClauseVivifier::vivifyClauses()
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     bool failed;
 
+    numCalls++;
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
@@ -199,7 +200,6 @@ const bool ClauseVivifier::vivifyClauses2()
     bool needToFinish = false;
     double myTime = cpuTime();
 
-    numCalls++;
     if (numCalls < 3) return true;
 
     Clause** i = solver.clauses.getData();
