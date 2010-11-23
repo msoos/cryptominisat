@@ -50,7 +50,6 @@ public:
     const bool unEliminate(const Var var);
 
     //touching
-    void touchExternal(const Var var);
     void touchExternal(const Lit p);
 
     //Get-functions
@@ -75,8 +74,6 @@ private:
     vec<ClauseSimp>        clauses;
     vec<char>              touchedVars;        ///<Is set to true when a variable is part of a removed clause. Also true initially (upon variable creation).
     vec<Var>               touchedVarsList;   ///<A list of the true elements in 'touched'.
-    vec<char>              touchedVarsExt;
-    vec<Var>               touchedVarsExtList;
     CSet                   cl_touched;     ///<Clauses strengthened/added
     vec<vec<ClauseSimp> >  occur;          ///<occur[index(lit)]' is a list of constraints containing 'lit'.
     vec<CSet* >            iter_sets;      ///<Sets currently used in iterations.
@@ -333,14 +330,6 @@ inline void Subsumer::touch(const Var x)
     }
 }
 
-inline void Subsumer::touchExternal(const Var x)
-{
-    if (!touchedVarsExt[x]) {
-        touchedVarsExt[x] = 1;
-        touchedVarsExtList.push(x);
-    }
-}
-
 inline void Subsumer::touchExternal(const Lit p)
 {
     touchExternal(p.var());
@@ -451,7 +440,6 @@ inline void Subsumer::newVar()
     seen_tmp    .push(0);       // (one for each polarity)
     seen_tmp    .push(0);
     touchedVars   .push(0);
-    touchedVarsExt.push(0);
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
     cannot_eliminate.push(0);

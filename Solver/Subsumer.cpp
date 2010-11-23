@@ -1227,22 +1227,6 @@ void Subsumer::subsumeBinsWithBins()
     clauses_subsumed += (numBinsBefore - solver.numBins);
 }
 
-void Subsumer::addExternTouchVars()
-{
-    for (Var *it = touchedVarsExtList.getData(), *end =  touchedVarsExtList.getDataEnd(); it != end; it++) {
-        touchedVarsExt[*it] = false;
-        touch(*it);
-    }
-    touchedVarsExtList.clear();
-}
-
-void Subsumer::addRemainingTouchedToExt()
-{
-    for (Var *it = touchedVarsList.getData(), *end =  touchedVarsList.getDataEnd(); it != end; it++) {
-        touchExternal(*it);
-    }
-}
-
 /**
 @brief Main function in this class
 
@@ -1356,7 +1340,6 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     removeWrong(solver.learnts);
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
-    if (!alsoLearnt) addRemainingTouchedToExt();
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
