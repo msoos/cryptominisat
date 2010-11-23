@@ -1409,24 +1409,27 @@ elimination must be excluded, for example (i.e. its limit must be 0)
 */
 void Subsumer::setLimits()
 {
-    numMaxSubsume0 = 60*1000*1000;
-    numMaxSubsume1 = 20*1000*1000;
+    numMaxSubsume0 = 70*1000*1000;
+    numMaxSubsume1 = 40*1000*1000;
 
     numMaxElim = 500*1000*1000;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
 
-    if (savedClauseLits < 10000000) {
-        numMaxElim *= 2;
-        numMaxSubsume0 *= 2;
-        numMaxSubsume1 *= 2;
+    #ifdef BIT_MORE_VERBOSITY
+    std::cout << "c addedClauseLits: " << addedClauseLits << std::endl;
+    #endif
+    if (addedClauseLits < 10000000) {
+        numMaxElim *= 3;
+        numMaxSubsume0 *= 3;
+        numMaxSubsume1 *= 3;
     }
 
-    if (savedClauseLits < 3000000) {
-        numMaxElim *= 2;
-        numMaxSubsume0 *= 2;
-        numMaxSubsume1 *= 2;
+    if (addedClauseLits < 5000000) {
+        numMaxElim *= 4;
+        numMaxSubsume0 *= 4;
+        numMaxSubsume1 *= 4;
     }
 
     numMaxElimVars = (solver.order_heap.size()/3)*numCalls;
