@@ -871,6 +871,21 @@ void Solver::calculateDefaultPolarities()
     #endif //VERBOSE_DEBUG_POLARITIES
 }
 
+void Solver::saveOTFData()
+{
+    assert(decisionLevel() == 1);
+
+    Lit lev0Lit = trail[trail_lim[0]];
+    Solver::TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
+    oTFCache.conflictLastUpdated = conflicts;
+    oTFCache.lits.clear();
+
+    for (int sublevel = trail.size()-1; sublevel > (int)trail_lim[0]; sublevel--) {
+        Lit lit = trail[sublevel];
+        oTFCache.lits.push_back(lit);
+    }
+}
+
 //=================================================================================================
 // Major methods:
 
@@ -2011,6 +2026,8 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
             }
             if (at_least_one_continue) continue;
             #endif //USE_GAUSS
+
+            if (conf.doCacheOTFSSR  && decisionLevel() == 1) saveOTFData();
             ret = new_decision(nof_conflicts, nof_conflicts_fullrestart, conflictC);
             if (ret != l_Nothing) return ret;
         }

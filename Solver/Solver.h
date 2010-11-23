@@ -385,6 +385,7 @@ protected:
     bqueue<uint32_t>    conflSizeHist;
     void                minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue);
     void                transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp);
+    void                saveOTFData();
 
     ////////////
     //Logging
