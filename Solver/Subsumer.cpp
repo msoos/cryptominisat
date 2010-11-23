@@ -1745,13 +1745,13 @@ bool Subsumer::maybeEliminate(const Var var)
 
     // Heuristic CUT OFF2:
     if ((posSize >= 3 && negSize >= 3 && before_literals > 300)
-        && clauses.size() > 1500000)
+        && clauses.size() > 700000)
         return false;
     if ((posSize >= 5 && negSize >= 5 && before_literals > 400)
-        && clauses.size() <= 1500000 && clauses.size() > 200000)
+        && clauses.size() <= 700000 && clauses.size() > 100000)
         return false;
     if ((posSize >= 8 && negSize >= 8 && before_literals > 700)
-        && clauses.size() <= 200000)
+        && clauses.size() <= 100000)
         return false;
 
     vec<ClAndBin> posAll, negAll;
