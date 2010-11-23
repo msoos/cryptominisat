@@ -420,12 +420,14 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         }
         else if (solver.value(c[i]) != l_False && c[i] != p)
             c[j++] = p = c[i];
-        else {
-            if (!c.learnt()) solver.subsumer->touchExternal(c[i]);
-        }
     }
     c.shrink(i - j);
     c.setStrenghtened();
+
+    if (!c.learnt()) {
+        for (Lit *i2 = c.getData(), *end2 = c.getDataEnd(); i2 != end2; i2++)
+            solver.subsumer->touchExternal(*i2);
+    }
 
     solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
 

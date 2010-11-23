@@ -119,6 +119,9 @@ const bool ClauseVivifier::vivifyClauses()
             done += i2;
             failed = (!solver.propagate(false).isNULL());
             if (failed) {
+                for (uint32_t done2 = done; done2 < lits.size(); done2++) {
+                    solver.subsumer->touchExternal(lits[done2]);
+                }
                 break;
             }
         }
@@ -227,13 +230,15 @@ const bool ClauseVivifier::vivifyClauses2()
         lits.clear();
         for (const Lit *it2 = cl.getData(), *end2 = cl.getDataEnd(); it2 != end2; it2++) {
             if (seen[it2->toInt()]) lits.push(*it2);
-            else {
-                solver.subsumer->touchExternal(*it2);
-                litsRem++;
-            }
+            else litsRem++;
             seen[it2->toInt()] = 0;
         }
         if (lits.size() < cl.size()) {
+            if (!cl.learnt()) {
+                for (uint32_t i = 0; i < cl.size(); i++)
+                    solver.subsumer->touchExternal(cl[i]);
+            }
+
             countTime += cl.size()*10;
             solver.detachClause(cl);
             clShrinked++;
