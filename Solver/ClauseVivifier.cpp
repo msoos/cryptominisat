@@ -113,6 +113,7 @@ const bool ClauseVivifier::vivifyClauses()
                     solver.uncheckedEnqueueLight(~lits[done+i2]);
                 } else if (val == l_False) {
                     unused.push(lits[done+i2]);
+                    solver.subsumer->touchExternal(lits[done+i2]);
                 }
             }
             done += i2;
@@ -226,7 +227,10 @@ const bool ClauseVivifier::vivifyClauses2()
         lits.clear();
         for (const Lit *it2 = cl.getData(), *end2 = cl.getDataEnd(); it2 != end2; it2++) {
             if (seen[it2->toInt()]) lits.push(*it2);
-            else litsRem++;
+            else {
+                solver.subsumer->touchExternal(*it2);
+                litsRem++;
+            }
             seen[it2->toInt()] = 0;
         }
         if (lits.size() < cl.size()) {

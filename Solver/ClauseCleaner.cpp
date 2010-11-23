@@ -63,7 +63,11 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
         for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
             if (i->isBinary() && satisfied(*i, lit)) {
                 if (i->getLearnt()) numRemovedHalfLearnt++;
-                else numRemovedHalfNonLearnt++;
+                else {
+                    numRemovedHalfNonLearnt++;
+                    //solver.subsumer->touchExternal(lit);
+                    //solver.subsumer->touchExternal(i->getOtherLit());
+                }
             } else {
                 *j++ = *i;
             }
