@@ -1344,12 +1344,19 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  time until pre-subsume0 clauses and subsume1 2-learnts:" << cpuTime()-myTime << std::endl;
     std::cout << "c  pre-subsumed:" << clauses_subsumed << std::endl;
-    std::cout << "c  cl_touched:" << cl_touched.size() << std::endl;
+    std::cout << "c  cl_touched:" << cl_touched.nElems() << std::endl;
     std::cout << "c  clauses:" << clauses.size() << std::endl;
     std::cout << "c  numMaxSubsume0:" << numMaxSubsume0 << std::endl;
     std::cout << "c  numMaxSubsume1:" << numMaxSubsume1 << std::endl;
     std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
     #endif
+
+    /*for (ClauseSimp *it = clauses.getData(), *end = clauses.getDataEnd(); it != end; ++it) {
+        if (it->clause == NULL) continue;
+        //if (!it->clause->learnt()) continue;
+        subsume1(*it->clause);
+    }*/
+    //setLimits(alsoLearnt);
 
     if (clauses.size() > 10000000 ||
         (numMaxSubsume1 < 0 && numMaxElim == 0 && numMaxBlockVars == 0))
