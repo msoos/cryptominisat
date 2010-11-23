@@ -335,7 +335,6 @@ void Subsumer::subsume1(Clause& ps)
     #endif
 
     findSubsumed1(ps, ps.getAbst(), subs, subsLits);
-    ps.unsetStrenghtened();
     for (uint32_t j = 0; j < subs.size(); j++) {
         if (subs[j].clause == NULL) continue;
         ClauseSimp c = subs[j];
