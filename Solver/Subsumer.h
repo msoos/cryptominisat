@@ -104,6 +104,8 @@ private:
     void clearAll();
     void setLimits();
     const bool subsume0AndSubsume1();
+    vec<char> ol_seenPos;
+    vec<char> ol_seenNeg;
 
     //Finish-up
     void freeMemory();
@@ -332,7 +334,9 @@ inline void Subsumer::touch(const Var x)
 
 inline void Subsumer::touchExternal(const Lit p)
 {
-    touchExternal(p.var());
+    touch(p.var());
+    ol_seenNeg[p.toInt()] = false;
+    ol_seenPos[p.toInt()] = false;
 }
 
 /**
@@ -443,6 +447,11 @@ inline void Subsumer::newVar()
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
     cannot_eliminate.push(0);
+    ol_seenPos.push(0);
+    ol_seenPos.push(0);
+    ol_seenNeg.push(0);
+    ol_seenNeg.push(0);
+    touch(solver.nVars()-1);
 }
 
 inline const map<Var, vector<Clause*> >& Subsumer::getElimedOutVar() const

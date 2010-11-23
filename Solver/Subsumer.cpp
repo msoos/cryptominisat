@@ -619,27 +619,57 @@ const bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
-    #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c  -- subsume0AndSubsume1() round --" << std::endl;
-    std::cout << "c  cl_touched.size() = " << cl_touched.size() << std::endl;
-    std::cout << "c  clauses.size() = " << clauses.size() << std::endl;
-    std::cout << "c  numMaxSubsume0:" << numMaxSubsume0 << std::endl;
-    std::cout << "c  numMaxSubsume1:" << numMaxSubsume1 << std::endl;
-    std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
-    #endif //BIT_MORE_VERBOSITY
+    uint32_t clTouchedTodo = cl_touched.nElems();
+    clTouchedTodo /= 2;
+    if (alsoLearnt) {
+        clTouchedTodo /= 2;
+        clTouchedTodo = std::max(clTouchedTodo, (uint32_t)2000);
+        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)20000);
+    }
+    else {
+        clTouchedTodo = std::max(clTouchedTodo, (uint32_t)80000);
+        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)200000);
+    }
 
-    if (cl_touched.size() < clauses.size() / 2) {
-        vec<char> ol_seenPos(solver.nVars()*2, 0);
-        vec<char> ol_seenNeg(solver.nVars()*2, 0);
+    if (addedClauseLits < 5000000) clTouchedTodo *= 2;
+
+    registerIteration(s0);
+    registerIteration(s1);
+    vec<ClauseSimp> remClTouched;
+
+    // Fixed-point for 1-subsumption:
+    #ifdef BIT_MORE_VERBOSITY
+    std::cout << "c  cl_touched.nElems() = " << cl_touched.nElems() << std::endl;
+    #endif
+    do {
+        #ifdef VERBOSE_DEBUG
+        std::cout << "c  -- subsume0AndSubsume1() round --" << std::endl;
+        std::cout << "c  cl_touched.nElems() = " << cl_touched.nElems() << std::endl;
+        std::cout << "c  clauses.size() = " << clauses.size() << std::endl;
+        std::cout << "c  numMaxSubsume0:" << numMaxSubsume0 << std::endl;
+        std::cout << "c  numMaxSubsume1:" << numMaxSubsume1 << std::endl;
+        std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
+        #endif //VERBOSE_DEBUG
+
+        /*ol_seenNeg.clear();
+        ol_seenNeg.growTo(solver.nVars()*2, 0);
+        ol_seenPos.clear();
+        ol_seenPos.growTo(solver.nVars()*2, 0);*/
+        uint32_t s1Added = 0;
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
+
             if (it->clause == NULL) continue;
-            ClauseSimp& c = *it;
             Clause& cl = *it->clause;
+
+            bool tooMuch = s1Added > clTouchedTodo;
+            if (numMaxSubsume1 <= 0) tooMuch = false;
+            bool addedAnyway = true;
 
             uint32_t smallestPosSize = std::numeric_limits<uint32_t>::max();
             Lit smallestPos = lit_Undef;
-            s1.add(c);
-            for (uint32_t j = 0; j < cl.size(); j++) {
+            if (!tooMuch) s1Added += s1.add(*it);
+            else if (!s1.alreadyIn(*it)) addedAnyway = false;
+            for (uint32_t j = 0; j < cl.size() && addedAnyway; j++) {
                 if (ol_seenPos[cl[j].toInt()] || smallestPos == lit_Error) {
                     smallestPos = lit_Error;
                     goto next;
@@ -651,68 +681,73 @@ const bool Subsumer::subsume0AndSubsume1()
 
                 next:
                 if (ol_seenNeg[(~cl[j]).toInt()]) continue;
-                ol_seenNeg[(~cl[j]).toInt()] = 1;
-
                 vec<ClauseSimp>& n_occs = occur[(~cl[j]).toInt()];
-                for (uint32_t k = 0; k < n_occs.size(); k++) s1.add(n_occs[k]);
+                for (uint32_t k = 0; k < n_occs.size(); k++) {
+                    if (tooMuch && !s1.alreadyIn(n_occs[k])) {
+                        addedAnyway = false;
+                        goto next2;
+                    }
+                    s1Added += s1.add(n_occs[k]);
+                }
+                ol_seenNeg[(~cl[j]).toInt()] = 1;
             }
+            next2:;
 
-            if (smallestPos != lit_Undef && smallestPos != lit_Error) {
-                ol_seenPos[smallestPos.toInt()] = 1;
+            if (smallestPos != lit_Undef && smallestPos != lit_Error && addedAnyway) {
                 vec<ClauseSimp>& p_occs = occur[smallestPos.toInt()];
-                for (uint32_t k = 0; k < p_occs.size(); k++) s0.add(p_occs[k]);
+                for (uint32_t k = 0; k < p_occs.size(); k++) {
+                    if (tooMuch && !s0.alreadyIn(p_occs[k])) {
+                        addedAnyway = false;
+                        goto next3;
+                    }
+                    s0.add(p_occs[k]);
+                }
+                ol_seenPos[smallestPos.toInt()] = 1;
             }
-        }
-    } else {
-        for (uint32_t i = 0; i < clauses.size(); i++) {
-            if (clauses[i].clause == NULL) continue;
-            s0.add(clauses[i]);
-            s1.add(clauses[i]);
-        }
-    }
-    cl_touched.clear();
 
-    registerIteration(s0);
-    registerIteration(s1);
+            next3:
+            if (addedAnyway) remClTouched.push(*it);
+        }
+        //std::cout << "s0.nElems(): " << s0.nElems() << std::endl;
+        //std::cout << "s1.nElems(): " << s1.nElems() << std::endl;
 
-    // Fixed-point for 1-subsumption:
-    do {
+
+        const bool doneAll = (numMaxSubsume1 > 0);
         for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
             if (it->clause == NULL) continue;
-            if (numMaxSubsume0 < 0) break;
             subsume0(*it->clause);
+            if (!doneAll && numMaxSubsume0 < 0) break;
         }
         s0.clear();
 
-        for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
-            if (it->clause == NULL) continue;
-            if (numMaxSubsume1 < 0) break;
-            subsume1(*it->clause);
-            s0.exclude(*it);
-            if (!solver.ok) goto end;
+        if (doneAll) {
+            for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
+                if (it->clause == NULL) continue;
+                subsume1(*it->clause);
+                s0.exclude(*it);
+                if (!solver.ok) goto end;
+            }
+            s1.clear();
         }
-        s1.clear();
 
         if (!handleClBinTouched()) goto end;
-        for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
-            if (it->clause != NULL) {
-                s1.add(*it);
-                s0.add(*it);
-            }
+        for (ClauseSimp *it = remClTouched.getData(), *end = remClTouched.getDataEnd(); it != end; it++) {
+            if (it->clause == NULL) continue;
+            if (doneAll) it->clause->unsetStrenghtened();
+            cl_touched.exclude(*it);
         }
-        cl_touched.clear();
-    } while (s1.size() > 100 || s0.size() > 100);
-    assert(cl_touched.size() == 0);
 
-    for (CSet::iterator it = s0.begin(); it != s0.end(); ++it) {
-        if (it->clause != NULL) cl_touched.add(*it);
-    }
-
-    for (CSet::iterator it = s1.begin(); it != s1.end(); ++it) {
-        if (it->clause != NULL) cl_touched.add(*it);
-    }
+        #ifdef BIT_MORE_VERBOSITY
+        if (doneAll)
+            std::cout << "c Success with " << remClTouched.size() << " clauses, s1Added: " << s1Added << std::endl;
+        else
+            std::cout << "c No success with " << remClTouched.size() << " clauses, s1Added: " << s1Added << std::endl;
+        #endif //BIT_MORE_VERBOSITY
+        remClTouched.clear();
+    } while ((cl_touched.nElems() > 100) && numMaxSubsume0 > 0);
 
     end:
+    cl_touched.clear();
     unregisterIteration(s1);
     unregisterIteration(s0);
 
@@ -768,7 +803,7 @@ const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
         Clause& cl = *c.clause;
         for (uint32_t i = 0; i < cl.size(); i++) {
             occur[cl[i].toInt()].push(c);
-            touch(cl[i]);
+            //if (cl.getStrenghtened()) touch(cl[i], cl.learnt());
         }
         numLitsAdded += cl.size();
 
@@ -1330,7 +1365,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         //subsumeBinsWithBins();
         //if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         solver.clauseCleaner->removeSatisfiedBins();
-    } while (cl_touched.size() > 100);
+    } while (cl_touched.nElems() > 100);
     endSimplifyBySubsumption:
 
     if (!solver.ok) return false;
