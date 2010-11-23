@@ -176,14 +176,16 @@ const bool ClauseVivifier::vivifyClauses()
         << std::endl;
     }
 
-    if (solver.ok && solver.conf.doCacheOTFSSR)
-        return vivifyClauses2();
-    else
-        return solver.ok;
+    if (solver.ok && solver.conf.doCacheOTFSSR) {
+        if (!vivifyClauses2(solver.clauses)) return false;
+        if (/*solver.lastSelectedRestartType == static_restart &&*/ !vivifyClauses2(solver.learnts)) return false;
+    }
+
+    return solver.ok;
 }
 
 
-const bool ClauseVivifier::vivifyClauses2()
+const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
 {
     assert(solver.ok);
 
@@ -202,9 +204,9 @@ const bool ClauseVivifier::vivifyClauses2()
 
     if (numCalls < 3) return true;
 
-    Clause** i = solver.clauses.getData();
+    Clause** i = clauses.getData();
     Clause** j = i;
-    for (Clause** end = solver.clauses.getDataEnd(); i != end; i++) {
+    for (Clause** end = clauses.getDataEnd(); i != end; i++) {
         if (needToFinish) {
             *j++ = *i;
             continue;
@@ -242,7 +244,7 @@ const bool ClauseVivifier::vivifyClauses2()
             countTime += cl.size()*10;
             solver.detachClause(cl);
             clShrinked++;
-            Clause* c2 = solver.addClauseInt(lits, cl.getGroup());
+            Clause* c2 = solver.addClauseInt(lits, cl.getGroup(), cl.learnt());
             solver.clauseAllocator.clauseFree(&cl);
 
             if (c2 != NULL) *j++ = c2;
@@ -252,7 +254,7 @@ const bool ClauseVivifier::vivifyClauses2()
         }
     }
 
-    solver.clauses.shrink(i-j);
+    clauses.shrink(i-j);
 
     std::cout << "c vivif2 -- "
     << " cl tried " << std::setw(8) << clTried
