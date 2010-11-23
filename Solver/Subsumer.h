@@ -92,7 +92,7 @@ private:
     map<Var, vector<std::pair<Lit, Lit> > > elimedOutVarBin; ///<Contains the clauses to use to uneliminate a variable
 
     //Limits
-    uint32_t savedClauseLits;
+    uint64_t addedClauseLits;
     uint32_t numVarsElimed;               ///<Number of variables elimed in this run
     int64_t numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
     int64_t numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
@@ -102,10 +102,10 @@ private:
     uint32_t numMaxBlockVars;             ///<Max. number variable-blocking tries to do this run
 
     //Start-up
-    void addFromSolver(vec<Clause*>& cs, bool alsoLearnt = false);
+    const uint64_t addFromSolver(vec<Clause*>& cs);
     void fillCannotEliminate();
     void clearAll();
-    void setLimits(const bool alsoLearnt);
+    void setLimits();
     const bool subsume0AndSubsume1();
 
     //Finish-up
@@ -308,6 +308,7 @@ private:
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
     uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
     uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
+    bool alsoLearnt;
 };
 
 template <class T, class T2>

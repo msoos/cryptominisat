@@ -42,6 +42,7 @@ Subsumer::Subsumer(Solver& s):
     , totalTime(0.0)
     , numElimed(0)
     , numCalls(1)
+    , alsoLearnt(false)
 {
 };
 
@@ -748,8 +749,9 @@ Which clauses are needed can be controlled by the parameters
 @param[in] addBinAndAddToCL If set to FALSE, binary clauses are not added, and
 clauses are never added to the cl_touched set.
 */
-void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt)
+const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
 {
+    uint64_t numLitsAdded = 0;
     Clause **i = cs.getData();
     Clause **j = i;
     for (Clause **end = i + cs.size(); i !=  end; i++) {
@@ -768,10 +770,13 @@ void Subsumer::addFromSolver(vec<Clause*>& cs, const bool alsoLearnt)
             occur[cl[i].toInt()].push(c);
             touch(cl[i]);
         }
+        numLitsAdded += cl.size();
 
         if (cl.getStrenghtened()) cl_touched.add(c);
     }
     cs.shrink(i-j);
+
+    return numLitsAdded;
 }
 
 /**
@@ -1112,6 +1117,7 @@ void Subsumer::clearAll()
     }
     clauses.clear();
     cl_touched.clear();
+    addedClauseLits = 0;
 }
 
 const bool Subsumer::eliminateVars()
@@ -1248,15 +1254,15 @@ Performs, recursively:
 @param[in] alsoLearnt Should learnt clauses be also hooked into the occurrence
 lists? If so, variable elimination cannot take place.
 */
-const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
+const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
 {
+    alsoLearnt = _alsoLearnt;
     if (solver.nClauses() > 50000000
         || solver.clauses_literals > 500000000)  return true;
 
     double myTime = cpuTime();
     clauseID = 0;
     clearAll();
-    savedClauseLits = solver.clauses_literals;
 
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
@@ -1275,12 +1281,11 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
 
         if (solver.learnts.size() < 10000000)
             std::sort(solver.learnts.getData(), solver.learnts.getDataEnd(), sortBySize());
-        addFromSolver(solver.learnts, alsoLearnt);
+        addedClauseLits += addFromSolver(solver.learnts);
     } else {
         if (solver.clauses.size() < 10000000)
             std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
-        addFromSolver(solver.clauses, alsoLearnt);
-        addExternTouchVars();
+        addedClauseLits += addFromSolver(solver.clauses);
     }
 
     CompleteDetachReatacher reattacher(solver);
@@ -1291,7 +1296,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     if (alsoLearnt) {
         numMaxSubsume1 = 500*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-        addFromSolver(solver.clauses, alsoLearnt);
+        addedClauseLits += addFromSolver(solver.clauses);
     } else {
         if (solver.conf.doBlockedClause) {
             numMaxBlockToVisit = (int64_t)800*1000*1000;
@@ -1311,7 +1316,7 @@ const bool Subsumer::simplifyBySubsumption(const bool alsoLearnt)
     }
 
     myTime = cpuTime();
-    setLimits(alsoLearnt);
+    setLimits();
     clauses_subsumed = 0;
     literals_removed = 0;
     numVarsElimed = 0;
@@ -1384,7 +1389,7 @@ from the beginning.
 @param[in] alsoLearnt Have learnt clauses also been hooked in? If so, variable
 elimination must be excluded, for example (i.e. its limit must be 0)
 */
-void Subsumer::setLimits(const bool alsoLearnt)
+void Subsumer::setLimits()
 {
     numMaxSubsume0 = 60*1000*1000;
     numMaxSubsume1 = 20*1000*1000;
