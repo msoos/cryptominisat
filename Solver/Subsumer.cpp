@@ -620,8 +620,8 @@ const bool Subsumer::subsume0AndSubsume1()
     CSet s0, s1;
 
     //uint32_t clTouchedTodo = cl_touched.nElems();
-    uint32_t clTouchedTodo = 20000;
-    if (addedClauseLits < 1500000) clTouchedTodo *= 2;
+    uint32_t clTouchedTodo = 100000;
+    if (addedClauseLits > 1500000) clTouchedTodo /= 2;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
     if (addedClauseLits > 10000000) clTouchedTodo /= 2;
     if (alsoLearnt) {
@@ -633,7 +633,6 @@ const bool Subsumer::subsume0AndSubsume1()
         clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
     }
 
-    if (addedClauseLits < 5000000) clTouchedTodo *= 2;
     if (!solver.conf.doSubsume1) clTouchedTodo = 0;
 
     registerIteration(s0);
@@ -1452,6 +1451,18 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 4;
     }
 
+    if (addedClauseLits < 3000000) {
+        numMaxElim *= 4;
+        numMaxSubsume0 *= 4;
+        numMaxSubsume1 *= 4;
+    }
+
+    if (addedClauseLits < 1000000) {
+        numMaxElim *= 4;
+        numMaxSubsume0 *= 4;
+        numMaxSubsume1 *= 4;
+    }
+
     numMaxElimVars = (solver.order_heap.size()/3)*numCalls;
 
     if (solver.order_heap.size() > 200000)
@@ -1459,8 +1470,12 @@ void Subsumer::setLimits()
     else
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
-    if (!solver.conf.doSubsume1 || numCalls == 1)
+    if (!solver.conf.doSubsume1)
         numMaxSubsume1 = 0;
+
+    if (numCalls == 1) {
+        numMaxSubsume1 = 80*1000*1000;
+    }
 
     if (alsoLearnt) {
         numMaxElim = 0;
