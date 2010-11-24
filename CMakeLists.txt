@@ -29,7 +29,6 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra)
 #find_package(Perftools)
 
 add_definitions(-DVERSION="3.0.0")
-add_definitions(-DUSE_GAUSS)
 
 add_subdirectory(Solver)
 

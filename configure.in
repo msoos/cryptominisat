@@ -25,18 +25,14 @@ AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 
 #statistics generation
-AH_TEMPLATE([STATS_NEEDED],[Enable statistics generation code])
+#AH_TEMPLATE([STATS_NEEDED],[Enable statistics generation code])
 #AC_DEFINE([STATS_NEEDED])
 
 #gauss generation needed
-AH_TEMPLATE([USE_GAUSS],[Enable gaussian elimination code])
-AC_DEFINE([USE_GAUSS])
+#AH_TEMPLATE([USE_GAUSS],[Enable gaussian elimination code])
+#AC_DEFINE([USE_GAUSS])
 
 #search for openmp
 AC_OPENMP
-
-#search for boost
-#m4_include(m4-extra/boost.m4)
-#BOOST_REQUIRE(1.40)
 
 AC_OUTPUT(Makefile Solver/Makefile)
