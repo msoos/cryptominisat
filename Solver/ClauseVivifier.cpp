@@ -256,12 +256,14 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
 
     clauses.shrink(i-j);
 
-    std::cout << "c vivif2 -- "
-    << " cl tried " << std::setw(8) << clTried
-    << " cl shrink " << std::setw(8) << clShrinked
-    << " lits rem " << std::setw(10) << litsRem
-    << " time: " << cpuTime() - myTime
-    << std::endl;
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c vivif2 -- "
+        << " cl tried " << std::setw(8) << clTried
+        << " cl shrink " << std::setw(8) << clShrinked
+        << " lits rem " << std::setw(10) << litsRem
+        << " time: " << cpuTime() - myTime
+        << std::endl;
+    }
 
     return solver.ok;
 }
