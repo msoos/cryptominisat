@@ -728,10 +728,10 @@ const bool Subsumer::subsume0AndSubsume1()
             for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
                 if (it->clause == NULL) continue;
                 subsume1(*it->clause);
-                if (numMaxSubsume1 < 0) {
+                /*if (numMaxSubsume1 < 0) {
                     doneAll = false;
                     break;
-                }
+                }*/
                 //s0.exclude(*it);
                 if (!solver.ok) goto end;
             }
