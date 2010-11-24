@@ -27,7 +27,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <stdint.h>
 #endif //_MSC_VER
 
-#ifdef _MSC_VER
+#if defined (_MSC_VER) || defined(CROSS_COMPILE)
 #include <ctime>
 
 static inline double cpuTime(void)
@@ -35,14 +35,6 @@ static inline double cpuTime(void)
     return (double)clock() / CLOCKS_PER_SEC;
 }
 #else //_MSC_VER
-#ifdef CROSS_COMPILE
-#include <ctime>
-
-static inline double cpuTime(void)
-{
-    return (double)clock() / CLOCKS_PER_SEC;
-}
-#else //CROSS_COMPILE
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
