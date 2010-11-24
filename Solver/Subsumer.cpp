@@ -467,12 +467,6 @@ const bool Subsumer::cleanClause(Clause& ps)
     }
     ps.shrink(i-j);
 
-    if (i != j && !ps.learnt()) {
-        for (Lit *it = ps.getData(), *end = ps.getDataEnd(); it != end; it++) {
-            touchExternal(*it);
-        }
-    }
-
     return retval;
 }
 
@@ -524,8 +518,6 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     numMaxSubsume1 -= occur[toRemoveLit.toInt()].size()/2;
     #ifndef TOUCH_LESS
     touch(toRemoveLit, c.clause->learnt());
-    Clause& cl = *c.clause;
-    for (uint32_t i = 0; i < cl.size(); i++) touchExternal(cl[i]);
     #endif
     if (cleanClause(*c.clause)) {
         unlinkClause(c);
@@ -679,8 +671,8 @@ const bool Subsumer::subsume0AndSubsume1()
 
             uint32_t smallestPosSize = std::numeric_limits<uint32_t>::max();
             Lit smallestPos = lit_Undef;
-            /*if (!tooMuch) s1Added += s1.add(*it);
-            else if (!s1.alreadyIn(*it)) addedAnyway = false;*/
+            if (!tooMuch) s1Added += s1.add(*it);
+            else if (!s1.alreadyIn(*it)) addedAnyway = false;
             for (uint32_t j = 0; j < cl.size() && addedAnyway; j++) {
                 if (ol_seenPos[cl[j].toInt()] || smallestPos == lit_Error) {
                     smallestPos = lit_Error;
