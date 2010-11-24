@@ -41,9 +41,14 @@ const bool ClauseVivifier::vivifyClauses()
 {
     assert(solver.ok);
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    bool failed;
-
     numCalls++;
+
+    if (solver.ok && solver.conf.doCacheOTFSSR) {
+        if (!vivifyClauses2(solver.clauses)) return false;
+        if (/*solver.lastSelectedRestartType == static_restart &&*/ !vivifyClauses2(solver.learnts)) return false;
+    }
+
+    bool failed;
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
@@ -174,11 +179,6 @@ const bool ClauseVivifier::vivifyClauses()
         << " lits-rem:" << effectiveLit
         << " time: " << cpuTime() - myTime
         << std::endl;
-    }
-
-    if (solver.ok && solver.conf.doCacheOTFSSR) {
-        if (!vivifyClauses2(solver.clauses)) return false;
-        if (/*solver.lastSelectedRestartType == static_restart &&*/ !vivifyClauses2(solver.learnts)) return false;
     }
 
     return solver.ok;
