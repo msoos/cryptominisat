@@ -63,7 +63,7 @@ Here is a picture of of the above process in more detail:
 #include "Main.h"
 
 Main::Main(int _argc, char** _argv) :
-        numThreads(-1)
+        numThreads(1)
         , grouping(false)
         , debugLib (false)
         , debugNewVar (false)
@@ -302,7 +302,7 @@ void Main::printUsage(char** argv)
     printf("                     throw the clause away on backtrack. Only active\n");
     printf("                     when dynamic restarts have been selected\n");
     printf("  --nomaxgluedel   = Don't delete clauses over max glue\n");
-    printf("  --threads        = Num threads (default is automatic guessing)");
+    printf("  --threads        = Num threads (default is 1)");
     printf("\n");
 }
 
@@ -854,7 +854,10 @@ const int Main::multiThreadSolve()
         exit(-1);
     }
     int finalRetVal;
-    if (numThreads != -1) omp_set_num_threads(numThreads);
+    if (numThreads != -1) {
+        assert(numThreads > 0);
+        omp_set_num_threads(numThreads);
+    }
     #pragma omp parallel
     {
         #pragma omp single
