@@ -425,7 +425,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
 
     if (!c.learnt() && i != j) {
         for (Lit *i2 = c.getData(), *end2 = c.getDataEnd(); i2 != end2; i2++)
-            solver.subsumer->touchExternal(*i2);
+            solver.subsumer->touchChangeVars(*i2);
     }
 
     solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);

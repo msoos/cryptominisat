@@ -50,7 +50,7 @@ public:
     const bool unEliminate(const Var var);
 
     //touching
-    void touchExternal(const Lit p);
+    void touchChangeVars(const Lit p);
 
     //Get-functions
     const vec<char>& getVarElimed() const;
@@ -332,10 +332,9 @@ inline void Subsumer::touch(const Var x)
     }
 }
 
-inline void Subsumer::touchExternal(const Lit p)
+inline void Subsumer::touchChangeVars(const Lit p)
 {
-    touch(p.var());
-    ol_seenNeg[p.toInt()] = false;
+    ol_seenNeg[(~p).toInt()] = false;
     ol_seenPos[p.toInt()] = false;
 }
 
@@ -362,8 +361,6 @@ inline void Subsumer::touch(const Lit p, const bool learnt)
     if (!learnt) {
         touch(p.var());
         touchBlockedVar(p.var());
-        //ol_seenNeg[p.toInt()] = false;
-        //ol_seenPos[p.toInt()] = false;
     }
 }
 
@@ -447,10 +444,10 @@ inline void Subsumer::newVar()
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
     cannot_eliminate.push(0);
-    ol_seenPos.push(0);
-    ol_seenPos.push(0);
-    ol_seenNeg.push(0);
-    ol_seenNeg.push(0);
+    ol_seenPos.push(1);
+    ol_seenPos.push(1);
+    ol_seenNeg.push(1);
+    ol_seenNeg.push(1);
     touch(solver.nVars()-1);
 }
 

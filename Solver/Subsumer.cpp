@@ -653,10 +653,6 @@ const bool Subsumer::subsume0AndSubsume1()
         std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
         #endif //VERBOSE_DEBUG
 
-        /*ol_seenNeg.clear();
-        ol_seenNeg.growTo(solver.nVars()*2, 0);
-        ol_seenPos.clear();
-        ol_seenPos.growTo(solver.nVars()*2, 0);*/
         uint32_t s1Added = 0;
         vec<Lit> setNeg;
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
@@ -670,8 +666,11 @@ const bool Subsumer::subsume0AndSubsume1()
 
             uint32_t smallestPosSize = std::numeric_limits<uint32_t>::max();
             Lit smallestPos = lit_Undef;
+
             if (!tooMuch) s1Added += s1.add(*it);
             else if (!s1.alreadyIn(*it)) addedAnyway = false;
+            s0.add(*it);
+
             for (uint32_t j = 0; j < cl.size() && addedAnyway; j++) {
                 if (ol_seenPos[cl[j].toInt()] || smallestPos == lit_Error) {
                     smallestPos = lit_Error;
