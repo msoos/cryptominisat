@@ -627,16 +627,18 @@ const bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
-    uint32_t clTouchedTodo = cl_touched.nElems();
-    clTouchedTodo /= 4;
+    //uint32_t clTouchedTodo = cl_touched.nElems();
+    uint32_t clTouchedTodo = 20000;
+    if (addedClauseLits < 1500000) clTouchedTodo *= 2;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
+    if (addedClauseLits > 10000000) clTouchedTodo /= 2;
     if (alsoLearnt) {
         clTouchedTodo /= 2;
-        clTouchedTodo = std::max(clTouchedTodo, (uint32_t)1000);
-        //clTouchedTodo = std::min(clTouchedTodo, (uint32_t)50000);
+        /*clTouchedTodo = std::max(clTouchedTodo, (uint32_t)20000);
+        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
     } else {
-        clTouchedTodo = std::max(clTouchedTodo, (uint32_t)2000);
-        //clTouchedTodo = std::min(clTouchedTodo, (uint32_t)50000);
+        /*clTouchedTodo = std::max(clTouchedTodo, (uint32_t)20000);
+        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
     }
 
     if (addedClauseLits < 5000000) clTouchedTodo *= 2;
