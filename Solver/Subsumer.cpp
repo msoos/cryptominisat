@@ -467,6 +467,12 @@ const bool Subsumer::cleanClause(Clause& ps)
     }
     ps.shrink(i-j);
 
+    if (i != j && !ps.learnt()) {
+        for (Lit *it = ps.getData(), *end = ps.getDataEnd(); it != end; it++) {
+            touchExternal(*it);
+        }
+    }
+
     return retval;
 }
 
@@ -548,6 +554,8 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
             break;
         }
         default:
+            Clause& cl = *c.clause;
+            for (uint32_t i = 0; i < cl.size(); i++) touchExternal(cl[i]);
             cl_touched.add(c);
     }
 }
