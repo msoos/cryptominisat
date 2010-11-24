@@ -362,8 +362,8 @@ inline void Subsumer::touch(const Lit p, const bool learnt)
     if (!learnt) {
         touch(p.var());
         touchBlockedVar(p.var());
-        ol_seenNeg[p.toInt()] = false;
-        ol_seenPos[p.toInt()] = false;
+        //ol_seenNeg[p.toInt()] = false;
+        //ol_seenPos[p.toInt()] = false;
     }
 }
 
