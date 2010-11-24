@@ -1,3 +1,19 @@
+ver 3.0.0 25/11/2010
+* Added extended SCC and vivification using cached implications
+* Corrected subsumption code -- it is now more precise but slower
+* Corrected original problem & learnt dumping. Binary clauses were wrongly
+  dumped, and xor clauses were never dumped
+* Better time-limiting on subsumption, var-elimination, etc.
+* When a variable can be eliminated with no resulting clauses, it is elim-ed
+* On-the-fly transitive self-subsuming resolution is now carried out based
+  on short/long-term average clause sizes and glue numbers
+* More stats are printed. CPU times in stats are better in case a recent
+  (>2.6.26) version of the Linux kernel is used.
+* Multi-threaded solving is no longer default since it hasn't been really
+  tested in terms of performance
+* Lots of debug code is now enabled by default. It slows down things by
+  maybe 5% but keeps the code more sane
+
 ver 2.8.0beta5 2/11/2010
 * reason[] was taken to be correct, when in fact it is not updated during
   canceling
@@ -11,7 +27,7 @@ ver 2.8.0beta4 31/10/2010
 
 ver 2.8.0beta3 30/10/2010
 * Bug in hand-coded Tarjan's algorithm. We were manipulating the watchlists
-   while using them. This lead to a segfault.
+  while using them. This lead to a segfault.
 * Bug in replace() -- we were using replace(), but the clauses were not always
   attached (e.g. in ClauseDetacherReattacher) and so the added binary clause
   was not always l_Undef,l_Undef. A very subtle bug that could have caused

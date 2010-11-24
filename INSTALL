@@ -72,7 +72,4 @@ i586-mingw32msvc
 
 2) Install all libraries (libz) 
 
-libz:
-get from source and compile as per "Solver/win32-howto"
-
-3) Execute the command in HOWTO_MinGW32
+3) Get "libz" from source and compile as per "HOWTO_MINGW32"
