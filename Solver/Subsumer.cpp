@@ -524,6 +524,8 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     numMaxSubsume1 -= occur[toRemoveLit.toInt()].size()/2;
     #ifndef TOUCH_LESS
     touch(toRemoveLit, c.clause->learnt());
+    Clause& cl = *c.clause;
+    for (uint32_t i = 0; i < cl.size(); i++) touchExternal(cl[i]);
     #endif
     if (cleanClause(*c.clause)) {
         unlinkClause(c);
@@ -554,8 +556,6 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
             break;
         }
         default:
-            Clause& cl = *c.clause;
-            for (uint32_t i = 0; i < cl.size(); i++) touchExternal(cl[i]);
             cl_touched.add(c);
     }
 }
