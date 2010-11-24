@@ -1474,7 +1474,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 = 0;
 
     if (numCalls == 1) {
-        numMaxSubsume1 = 80*1000*1000;
+        numMaxSubsume1 = 10*1000*1000;
     }
 
     if (alsoLearnt) {
