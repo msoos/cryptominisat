@@ -133,7 +133,6 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
         }
 
         if (val == l_True) {
-            //if (!c.learnt()) for (i = c.getData(); i != end; i++) solver.subsumer->touchExternal(*i);
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             return true;
         }
