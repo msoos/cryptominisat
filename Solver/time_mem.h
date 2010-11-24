@@ -50,7 +50,7 @@ static inline double cpuTime(void)
 static inline double cpuTime(void)
 {
     struct rusage ru;
-    getrusage(RUSAGE_SELF, &ru);
+    getrusage(RUSAGE_THREAD, &ru);
     return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000;
 }
 #endif //CROSS_COMPILE
