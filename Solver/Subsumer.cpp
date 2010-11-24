@@ -677,8 +677,8 @@ const bool Subsumer::subsume0AndSubsume1()
 
             uint32_t smallestPosSize = std::numeric_limits<uint32_t>::max();
             Lit smallestPos = lit_Undef;
-            if (!tooMuch) s1Added += s1.add(*it);
-            else if (!s1.alreadyIn(*it)) addedAnyway = false;
+            /*if (!tooMuch) s1Added += s1.add(*it);
+            else if (!s1.alreadyIn(*it)) addedAnyway = false;*/
             for (uint32_t j = 0; j < cl.size() && addedAnyway; j++) {
                 if (ol_seenPos[cl[j].toInt()] || smallestPos == lit_Error) {
                     smallestPos = lit_Error;
