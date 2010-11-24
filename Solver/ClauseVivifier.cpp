@@ -119,17 +119,10 @@ const bool ClauseVivifier::vivifyClauses()
                     solver.uncheckedEnqueueLight(~lits[done+i2]);
                 } else if (val == l_False) {
                     unused.push(lits[done+i2]);
-                    solver.subsumer->touchExternal(lits[done+i2]);
                 }
             }
             done += i2;
             failed = (!solver.propagate(false).isNULL());
-            if (failed) {
-                for (uint32_t done2 = done; done2 < lits.size(); done2++) {
-                    solver.subsumer->touchExternal(lits[done2]);
-                }
-                break;
-            }
         }
         solver.cancelUntilLight();
         assert(solver.ok);
@@ -236,11 +229,6 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
             seen[it2->toInt()] = 0;
         }
         if (lits.size() < cl.size()) {
-            if (!cl.learnt()) {
-                for (uint32_t i = 0; i < cl.size(); i++)
-                    solver.subsumer->touchExternal(cl[i]);
-            }
-
             countTime += cl.size()*10;
             solver.detachClause(cl);
             clShrinked++;

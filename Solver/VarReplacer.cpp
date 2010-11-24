@@ -415,7 +415,6 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     for (i = j = 0, p = lit_Undef; i != origSize; i++) {
         if (solver.value(c[i]) == l_True || c[i] == ~p) {
             satisfied = true;
-            //if (!c.learnt()) for (uint32_t i2 = 0; i2 < origSize; i2++) solver.subsumer->touchExternal(c[i2]);
             break;
         }
         else if (solver.value(c[i]) != l_False && c[i] != p)

@@ -65,8 +65,6 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
                 if (i->getLearnt()) numRemovedHalfLearnt++;
                 else {
                     numRemovedHalfNonLearnt++;
-                    //solver.subsumer->touchExternal(lit);
-                    //solver.subsumer->touchExternal(i->getOtherLit());
                 }
             } else {
                 *j++ = *i;
@@ -141,11 +139,6 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
         }
     }
     c.shrink(i-j);
-
-    if (i-j > 0 && !c.learnt()) {
-        for (Lit *i2 = c.getData(), *end2 = c.getDataEnd(); i2 != end2; i2++)
-            solver.subsumer->touchExternal(*i2);
-    }
 
     assert(c.size() != 1);
     if (i != j) {
@@ -224,11 +217,6 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
         } else c.invert(val.getBool());
     }
     c.shrink(i-j);
-
-     /*if (i-j > 0 && !c.learnt()) {
-        for (Lit *i2 = c.getData(), *end2 = c.getDataEnd(); i2 != end2; i2++)
-            solver.subsumer->touchExternal(*i2);
-    }*/
 
     assert(c.size() != 1);
     switch (c.size()) {
