@@ -62,7 +62,7 @@ SolverConf::SolverConf() :
         , doSubsWBins      (true)
         , doSubsWNonExistBins(true)
         , doRemUselessLBins(true)
-        , doMaxGlueDel     (true)
+        , doMaxGlueDel     (false)
         , doPrintAvgBranch (false)
         , doCacheOTFSSR    (true)
         , doExtendedSCC    (true)
