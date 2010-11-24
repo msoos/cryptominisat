@@ -613,6 +613,13 @@ void Solver::printStats()
     double   cpu_time = cpuTime();
     uint64_t mem_used = memUsed();
 
+    int numThreads = omp_get_num_threads();
+    if (numThreads > 1) {
+        std::cout << "c Following stats are for *FIRST FINISHED THREAD ONLY*" << std::endl;
+        std::cout << "c Please use a utilty provided by your platform to get total thread time, etc." << std::endl;
+    }
+    printStatsLine("c num threads" , numThreads);
+
     //Restarts stats
     printStatsLine("c restarts", starts);
     printStatsLine("c dynamic restarts", dynStarts);
@@ -650,8 +657,7 @@ void Solver::printStats()
     printStatsLine("c updated cache", updateTransCache, updateTransCache/(double)moreRecurMinLDo, " lits/tried recurMin");
 
     //Multi-threading
-    printStatsLine("c num threads" , omp_get_num_threads());
-    if (omp_get_num_threads() > 1) {
+    if (numThreads > 1) {
         printStatsLine("c num units recevied", gotUnitData, (double)gotUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
         printStatsLine("c num units sent", sentUnitData, (double)sentUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
         printStatsLine("c num bins recevied", gotBinData);
