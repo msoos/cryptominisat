@@ -2078,7 +2078,7 @@ void Subsumer::blockedClauseRemoval()
        // }
     }
 
-    if (solver.conf.verbosity >= 2) {
+    if (solver.conf.verbosity >= 1) {
         std::cout
         << "c blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved
         << " vars: " << std::setw(6) << numElimed - numElimedBefore
