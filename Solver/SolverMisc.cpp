@@ -30,6 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Gaussian.h"
 #endif
 
+#ifndef _MSC_VER
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
+
 static const int space = 10;
 
 void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize)
@@ -593,13 +598,13 @@ void Solver::needLibraryCNFFile(const std::string& fileName)
 template<class T, class T2>
 void Solver::printStatsLine(std::string left, T value, T2 value2, std::string extra)
 {
-    std::cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
+    std::cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
 }
 
 template<class T>
 void Solver::printStatsLine(std::string left, T value, std::string extra)
 {
-    std::cout << std::fixed << std::left << std::setw(24) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
+    std::cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
 }
 
 /**
@@ -616,7 +621,11 @@ void Solver::printStats()
     int numThreads = omp_get_num_threads();
     if (numThreads > 1) {
         std::cout << "c Following stats are for *FIRST FINISHED THREAD ONLY*" << std::endl;
-        std::cout << "c Please use a utilty provided by your platform to get total thread time, etc." << std::endl;
+        #if !defined(_MSC_VER) && !defined(RUSAGE_THREAD)
+        std::cout << "c There is no platform-independent way to measure time per thread" << std::endl;
+        std::cout << "c All times indicated are sum of ALL threads" << std::endl;
+        std::cout << "c Use a utilty provided by your platform to get total thread time, etc." << std::endl;
+        #endif
     }
     printStatsLine("c num threads" , numThreads);
 
@@ -658,10 +667,10 @@ void Solver::printStats()
 
     //Multi-threading
     if (numThreads > 1) {
-        printStatsLine("c num units recevied", gotUnitData, (double)gotUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
-        printStatsLine("c num units sent", sentUnitData, (double)sentUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
-        printStatsLine("c num bins recevied", gotBinData);
-        printStatsLine("c num bins sent", sentBinData);
+        printStatsLine("c unit cls recevied", gotUnitData, (double)gotUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
+        printStatsLine("c unit cls sent", sentUnitData, (double)sentUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
+        printStatsLine("c bin cls recevied", gotBinData);
+        printStatsLine("c bin cls sent", sentBinData);
     }
 
     #ifdef USE_GAUSS
@@ -686,5 +695,14 @@ void Solver::printStats()
 
     //General stats
     printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
-    printStatsLine("c CPU time", cpu_time, " s");
+    if (numThreads > 1) {
+        #if !defined(_MSC_VER) && defined(RUSAGE_THREAD)
+        printStatsLine("c single-thread CPU time", cpu_time, " s");
+        printStatsLine("c all-threads sum CPU time", cpuTimeTotal(), " s");
+        #else
+        printStatsLine("c all-threads sum CPU time", cpu_time, " s");
+        #endif
+    } else {
+        printStatsLine("c CPU time", cpu_time, " s");
+    }
 }
