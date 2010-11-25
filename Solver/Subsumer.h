@@ -163,8 +163,8 @@ private:
     //subsume0
     struct subsume0Happened {
         bool subsumedNonLearnt;
-        uint32_t activity;
-        float oldActivity;
+        uint32_t glue;
+        float act;
     };
     /**
     @brief Sort clauses according to size
