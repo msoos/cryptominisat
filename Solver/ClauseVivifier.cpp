@@ -129,6 +129,7 @@ const bool ClauseVivifier::vivifyClauses()
             }
             done += i2;
             failed = (!solver.propagate(false).isNULL());
+            if (numCalls > 3 && failed) break;
         }
         solver.cancelUntilLight();
         assert(solver.ok);
