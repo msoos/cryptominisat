@@ -233,7 +233,7 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
             countTime += cl.size()*10;
             solver.detachClause(cl);
             clShrinked++;
-            Clause* c2 = solver.addClauseInt(lits, cl.getGroup(), cl.learnt());
+            Clause* c2 = solver.addClauseInt(lits, cl.getGroup(), cl.learnt(), cl.getGlue(), cl.getMiniSatAct());
             solver.clauseAllocator.clauseFree(&cl);
 
             if (c2 != NULL) *j++ = c2;
