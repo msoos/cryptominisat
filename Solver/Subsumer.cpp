@@ -242,7 +242,6 @@ Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 
         Clause* tmp = subs[i].clause;
         if (tmp->learnt()) {
-            solver.nbCompensateSubsumer++;
             ret.glue = std::min(ret.glue, tmp->getGlue());
             ret.act = std::max(ret.act, tmp->getMiniSatAct());
         } else {
@@ -342,7 +341,10 @@ void Subsumer::subsume1(Clause& ps)
         if (subsLits[j] == lit_Undef) {
             if (ps.learnt()) {
                 if (c.clause->learnt()) ps.takeMaxOfStats(*c.clause);
-                else ps.makeNonLearnt();
+                else {
+                    solver.nbCompensateSubsumer++;
+                    ps.makeNonLearnt();
+                }
             }
             unlinkClause(c);
         } else {
@@ -410,6 +412,9 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
 
     // Remove clause from clause touched set:
     cl_touched.exclude(c);
+
+    //Compensate if removing learnt
+    if (cl.learnt()) solver.nbCompensateSubsumer++;
 
     if (elim != var_Undef) {
         assert(!cl.learnt());
