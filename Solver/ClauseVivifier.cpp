@@ -41,9 +41,14 @@ const bool ClauseVivifier::vivifyClauses()
 {
     assert(solver.ok);
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    bool failed;
-
     numCalls++;
+
+    if (solver.ok && solver.conf.doCacheOTFSSR) {
+        if (!vivifyClauses2(solver.clauses)) return false;
+        if (/*solver.lastSelectedRestartType == static_restart &&*/ !vivifyClauses2(solver.learnts)) return false;
+    }
+
+    bool failed;
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
@@ -114,17 +119,10 @@ const bool ClauseVivifier::vivifyClauses()
                     solver.uncheckedEnqueueLight(~lits[done+i2]);
                 } else if (val == l_False) {
                     unused.push(lits[done+i2]);
-                    solver.subsumer->touchExternal(lits[done+i2]);
                 }
             }
             done += i2;
             failed = (!solver.propagate(false).isNULL());
-            if (failed) {
-                for (uint32_t done2 = done; done2 < lits.size(); done2++) {
-                    solver.subsumer->touchExternal(lits[done2]);
-                }
-                break;
-            }
         }
         solver.cancelUntilLight();
         assert(solver.ok);
@@ -176,11 +174,6 @@ const bool ClauseVivifier::vivifyClauses()
         << std::endl;
     }
 
-    if (solver.ok && solver.conf.doCacheOTFSSR) {
-        if (!vivifyClauses2(solver.clauses)) return false;
-        if (/*solver.lastSelectedRestartType == static_restart &&*/ !vivifyClauses2(solver.learnts)) return false;
-    }
-
     return solver.ok;
 }
 
@@ -194,7 +187,7 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
     uint32_t litsRem = 0;
     uint32_t clShrinked = 0;
     uint64_t countTime = 0;
-    uint64_t maxCountTime = 500000000;
+    uint64_t maxCountTime = 1500000000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxCountTime *= 2;
     uint32_t clTried = 0;
@@ -236,11 +229,6 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
             seen[it2->toInt()] = 0;
         }
         if (lits.size() < cl.size()) {
-            if (!cl.learnt()) {
-                for (uint32_t i = 0; i < cl.size(); i++)
-                    solver.subsumer->touchExternal(cl[i]);
-            }
-
             countTime += cl.size()*10;
             solver.detachClause(cl);
             clShrinked++;

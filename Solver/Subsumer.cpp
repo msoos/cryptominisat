@@ -619,19 +619,21 @@ const bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
-    uint32_t clTouchedTodo = cl_touched.nElems();
-    clTouchedTodo /= 2;
+    //uint32_t clTouchedTodo = cl_touched.nElems();
+    uint32_t clTouchedTodo = 100000;
+    if (addedClauseLits > 1500000) clTouchedTodo /= 2;
+    if (addedClauseLits > 3000000) clTouchedTodo /= 2;
+    if (addedClauseLits > 10000000) clTouchedTodo /= 2;
     if (alsoLearnt) {
         clTouchedTodo /= 2;
-        clTouchedTodo = std::max(clTouchedTodo, (uint32_t)2000);
-        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)20000);
-    }
-    else {
-        clTouchedTodo = std::max(clTouchedTodo, (uint32_t)80000);
-        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)200000);
+        /*clTouchedTodo = std::max(clTouchedTodo, (uint32_t)20000);
+        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
+    } else {
+        /*clTouchedTodo = std::max(clTouchedTodo, (uint32_t)20000);
+        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
     }
 
-    if (addedClauseLits < 5000000) clTouchedTodo *= 2;
+    if (!solver.conf.doSubsume1) clTouchedTodo = 0;
 
     registerIteration(s0);
     registerIteration(s1);
@@ -651,24 +653,24 @@ const bool Subsumer::subsume0AndSubsume1()
         std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
         #endif //VERBOSE_DEBUG
 
-        /*ol_seenNeg.clear();
-        ol_seenNeg.growTo(solver.nVars()*2, 0);
-        ol_seenPos.clear();
-        ol_seenPos.growTo(solver.nVars()*2, 0);*/
         uint32_t s1Added = 0;
+        vec<Lit> setNeg;
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
 
             if (it->clause == NULL) continue;
             Clause& cl = *it->clause;
 
-            bool tooMuch = s1Added > clTouchedTodo;
+            bool tooMuch = s1Added >= clTouchedTodo;
             if (numMaxSubsume1 <= 0) tooMuch = false;
             bool addedAnyway = true;
 
             uint32_t smallestPosSize = std::numeric_limits<uint32_t>::max();
             Lit smallestPos = lit_Undef;
+
             if (!tooMuch) s1Added += s1.add(*it);
             else if (!s1.alreadyIn(*it)) addedAnyway = false;
+            s0.add(*it);
+
             for (uint32_t j = 0; j < cl.size() && addedAnyway; j++) {
                 if (ol_seenPos[cl[j].toInt()] || smallestPos == lit_Error) {
                     smallestPos = lit_Error;
@@ -690,6 +692,7 @@ const bool Subsumer::subsume0AndSubsume1()
                     s1Added += s1.add(n_occs[k]);
                 }
                 ol_seenNeg[(~cl[j]).toInt()] = 1;
+                setNeg.push(~cl[j]);
             }
             next2:;
 
@@ -712,7 +715,7 @@ const bool Subsumer::subsume0AndSubsume1()
         //std::cout << "s1.nElems(): " << s1.nElems() << std::endl;
 
 
-        const bool doneAll = (numMaxSubsume1 > 0);
+        bool doneAll = (numMaxSubsume1 > 0);
         for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
             if (it->clause == NULL) continue;
             subsume0(*it->clause);
@@ -724,7 +727,11 @@ const bool Subsumer::subsume0AndSubsume1()
             for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
                 if (it->clause == NULL) continue;
                 subsume1(*it->clause);
-                s0.exclude(*it);
+                /*if (numMaxSubsume1 < 0) {
+                    doneAll = false;
+                    break;
+                }*/
+                //s0.exclude(*it);
                 if (!solver.ok) goto end;
             }
             s1.clear();
@@ -735,6 +742,10 @@ const bool Subsumer::subsume0AndSubsume1()
             if (it->clause == NULL) continue;
             if (doneAll) it->clause->unsetStrenghtened();
             cl_touched.exclude(*it);
+        }
+        if (!doneAll) {
+            for (Lit *l = setNeg.getData(), *end = setNeg.getDataEnd(); l != end; l++)
+                ol_seenNeg[l->toInt()] = 0;
         }
 
         #ifdef BIT_MORE_VERBOSITY
@@ -1416,8 +1427,8 @@ elimination must be excluded, for example (i.e. its limit must be 0)
 */
 void Subsumer::setLimits()
 {
-    numMaxSubsume0 = 70*1000*1000;
-    numMaxSubsume1 = 40*1000*1000;
+    numMaxSubsume0 = 130*1000*1000;
+    numMaxSubsume1 = 80*1000*1000;
 
     numMaxElim = 500*1000*1000;
 
@@ -1439,6 +1450,18 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 4;
     }
 
+    if (addedClauseLits < 3000000) {
+        numMaxElim *= 4;
+        numMaxSubsume0 *= 4;
+        numMaxSubsume1 *= 4;
+    }
+
+    if (addedClauseLits < 1000000) {
+        numMaxElim *= 4;
+        numMaxSubsume0 *= 4;
+        numMaxSubsume1 *= 4;
+    }
+
     numMaxElimVars = (solver.order_heap.size()/3)*numCalls;
 
     if (solver.order_heap.size() > 200000)
@@ -1446,8 +1469,12 @@ void Subsumer::setLimits()
     else
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
-    if (!solver.conf.doSubsume1 || numCalls == 1)
+    if (!solver.conf.doSubsume1)
         numMaxSubsume1 = 0;
+
+    if (numCalls == 1) {
+        numMaxSubsume1 = 10*1000*1000;
+    }
 
     if (alsoLearnt) {
         numMaxElim = 0;
