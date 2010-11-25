@@ -71,6 +71,12 @@ const bool ClauseVivifier::vivifyClauses()
         std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
     }
 
+    uint32_t queueByBy = 2;
+    if (numCalls > 8
+        && (solver.clauses_literals + solver.learnts_literals < 4000000)
+        && (solver.clauses.size() < 50000))
+        queueByBy = 1;
+
     Clause **i, **j;
     i = j = solver.clauses.getData();
     for (Clause **end = solver.clauses.getDataEnd(); i != end; i++) {
@@ -113,7 +119,7 @@ const bool ClauseVivifier::vivifyClauses()
         solver.newDecisionLevel();
         for (; done < lits.size();) {
             uint32_t i2 = 0;
-            for (; i2 < 2 && done+i2 < lits.size(); i2++) {
+            for (; (i2 < queueByBy) && ((done+i2) < lits.size()); i2++) {
                 lbool val = solver.value(lits[done+i2]);
                 if (val == l_Undef) {
                     solver.uncheckedEnqueueLight(~lits[done+i2]);
