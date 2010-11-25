@@ -423,7 +423,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     c.shrink(i - j);
     c.setStrenghtened();
 
-    if (!c.learnt() && i != j) {
+    if (!c.learnt()) {
         for (Lit *i2 = c.getData(), *end2 = c.getDataEnd(); i2 != end2; i2++)
             solver.subsumer->touchChangeVars(*i2);
     }
