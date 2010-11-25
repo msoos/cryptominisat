@@ -196,7 +196,7 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
     uint64_t maxCountTime = 500000000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxCountTime *= 2;
-    if (numCalls > 8) maxCountTime*= 3;
+    if (numCalls >= 5) maxCountTime*= 3;
     uint32_t clTried = 0;
     vec<Lit> lits;
     bool needToFinish = false;
