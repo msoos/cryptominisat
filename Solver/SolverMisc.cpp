@@ -391,6 +391,9 @@ void Solver::printStatHeader() const
         << std::setw(space) << "Learnts"
         << std::setw(space) << "ClLits"
         << std::setw(space) << "LtLits"
+        << std::setw(space) << "MTavgCS"
+        << std::setw(space) << "LTAvgG"
+        //<< std::setw(space) << "STAvgG"
         << std::endl;
     }
 }
@@ -412,16 +415,22 @@ void Solver::printRestartStat(const char* type)
         << std::setw(space) << clauses_literals
         << std::setw(space) << learnts_literals;
 
+        if (conflSizeHist.isvalid()) {
+            std::cout << std::setw(space) << std::fixed << std::setprecision(2) << conflSizeHist.getAvgDouble();
+        } else {
+            std::cout << std::setw(space) << "no data";
+        }
+
         if (glueHistory.getTotalNumeElems() > 0) {
             std::cout << std::setw(space) << std::fixed << std::setprecision(2) << glueHistory.getAvgAllDouble();
         } else {
             std::cout << std::setw(space) << "no data";
         }
-        if (glueHistory.isvalid()) {
+        /*if (glueHistory.isvalid()) {
             std::cout << std::setw(space) << std::fixed << std::setprecision(2) << glueHistory.getAvgDouble();
         } else {
             std::cout << std::setw(space) << "no data";
-        }
+        }*/
 
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         if (conf.doPrintAvgBranch) {
