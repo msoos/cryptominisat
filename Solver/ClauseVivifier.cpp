@@ -52,9 +52,11 @@ const bool ClauseVivifier::vivifyClauses()
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 20*1000*1000;
+    uint64_t maxNumProps = 50*1000*1000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
-        maxNumProps *=2;
+        maxNumProps *= 2;
+    if (solver.clauses_literals + solver.learnts_literals < 200000)
+        maxNumProps *= 2;
     uint64_t extraDiff = 0;
     uint64_t oldProps = solver.propagations;
     bool needToFinish = false;
@@ -129,7 +131,7 @@ const bool ClauseVivifier::vivifyClauses()
             }
             done += i2;
             failed = (!solver.propagate(false).isNULL());
-            if (numCalls > 3 && failed) break;
+            if (/*numCalls > 3 &&*/ failed) break;
         }
         solver.cancelUntilLight();
         assert(solver.ok);
