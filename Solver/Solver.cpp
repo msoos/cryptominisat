@@ -1157,7 +1157,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
                 clDoMinLRec |= glue < 0.6*glueHistory.getAvgAllDouble();
                 //NOTE: No "break;" here on purpose
             case static_restart :
-                clDoMinLRec |= cl.size() < 0.6*conflSizeHist.getAvgDouble();
+                clDoMinLRec |= cl.size() < 0.7*conflSizeHist.getAvgDouble();
                 break;
             default :
                 assert(false);
