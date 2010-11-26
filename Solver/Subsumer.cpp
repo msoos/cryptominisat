@@ -630,12 +630,13 @@ const bool Subsumer::subsume0AndSubsume1()
     CSet s0, s1;
 
     //uint32_t clTouchedTodo = cl_touched.nElems();
-    uint32_t clTouchedTodo = 100000;
+    uint32_t clTouchedTodo = 60000;
     if (addedClauseLits > 1500000) clTouchedTodo /= 2;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
-    if (addedClauseLits > 10000000) clTouchedTodo /= 2;
+    if (addedClauseLits > 6000000) clTouchedTodo /= 3;
+    if (addedClauseLits > 10000000) clTouchedTodo /= 3;
     if (alsoLearnt) {
-        clTouchedTodo /= 2;
+        clTouchedTodo /= 6;
         /*clTouchedTodo = std::max(clTouchedTodo, (uint32_t)20000);
         clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
     } else {
@@ -1460,13 +1461,13 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 4;
     }
 
-    if (addedClauseLits < 3000000) {
+    if (addedClauseLits < 3000000 && !alsoLearnt) {
         numMaxElim *= 4;
         numMaxSubsume0 *= 4;
         numMaxSubsume1 *= 4;
     }
 
-    if (addedClauseLits < 1000000) {
+    if (addedClauseLits < 1000000 && !alsoLearnt) {
         numMaxElim *= 4;
         numMaxSubsume0 *= 4;
         numMaxSubsume1 *= 4;
@@ -1490,7 +1491,7 @@ void Subsumer::setLimits()
         numMaxElim = 0;
         numMaxElimVars = 0;
         numMaxSubsume0 /= 2;
-        numMaxSubsume1 /= 2;
+        numMaxSubsume1 /= 5;
         numMaxBlockVars = 0;
         numMaxBlockToVisit = 0;
     } else {
