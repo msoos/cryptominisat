@@ -2331,6 +2331,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
+
+    if (conf.doClausVivif && !clauseVivifier->vivifyClauses()) goto end;
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
@@ -2343,8 +2345,6 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         XorFinder x(*this, clauses);
         x.addAllXorAsNorm();
     }
-
-    if (conf.doClausVivif && !clauseVivifier->vivifyClauses()) goto end;
 
     //addSymmBreakClauses();
 
