@@ -363,6 +363,7 @@ void ClauseAllocator::consolidate(Solver* solver)
                 uint32_t sizeNeeded = (sizeof(Clause) + oldPointer->size()*sizeof(Lit))/sizeof(uint32_t);
                 if (newSizes[outerPart] + sizeNeeded > newMaxSizes[outerPart]) {
                     outerPart++;
+                    assert(outerPart < newMaxSizes.size());
                 }
                 memcpy(newDataStartsPointers[outerPart], dataStarts[i] + currentLoc, sizeNeeded*sizeof(uint32_t));
 
