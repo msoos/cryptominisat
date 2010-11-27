@@ -104,7 +104,7 @@ public:
         assert(ps.size() > 2);
         mySize = ps.size();
         isLearnt = learnt;
-        //isRemoved = false;
+        isRemoved = false;
         setGroup(_group);
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
