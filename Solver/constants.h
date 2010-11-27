@@ -67,6 +67,19 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define SYNC_EVERY_CONFL 6000
 
 ///////////////////
+// Verbose Debug
+///////////////////
+
+//#define VERBOSE_DEBUG_XOR
+//#define VERBOSE_DEBUG
+#ifdef VERBOSE_DEBUG
+#define SILENT_DEBUG
+#define DEBUG_USELESS_LEARNT_BIN_REMOVAL
+#define DEBUG_ATTACH_FULL
+#endif
+
+
+///////////////////
 // Silent Debug
 ///////////////////
 
@@ -85,21 +98,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #endif
 
 //#define DEBUG_ATTACH_FULL
-
-///////////////////
-// Verbose Debug
-///////////////////
-
-//#define VERBOSE_DEBUG_XOR
-//#define VERBOSE_DEBUG
-#ifdef VERBOSE_DEBUG
-#define DEBUG_VARELIM
-#define DEBUG_PROPAGATEFROM
-#define DEBUG_WATCHED
-#define DEBUG_ATTACH
-#define DEBUG_ATTACH_FULL
-#define DEBUG_REPLACER
-#endif
 
 ///////////////////
 //  For Automake tools
