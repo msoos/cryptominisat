@@ -61,7 +61,6 @@ void XorSubsumer::subsume0(XorClauseSimp ps)
             assert(tmp->size() == ps.clause->size());
             if (ps.clause->xorEqualFalse() == tmp->xorEqualFalse()) {
                 unlinkClause(subs[i]);
-                solver.clauseAllocator.clauseFree(tmp);
             } else {
                 solver.ok = false;
                 return;
@@ -106,10 +105,16 @@ void XorSubsumer::unlinkClause(XorClauseSimp c, const Var elim)
         removeW(occur[cl[i].var()], &cl);
     }
 
-    if (elim != var_Undef)
-        elimedOutVar[elim].push_back(c.clause);
-
+    if (elim != var_Undef) {
+        XorElimedClause data;
+        for (Lit *it = cl.getData(), *end = cl.getDataEnd(); it != end; it++) {
+            data.lits.push_back(it->unsign());
+        }
+        data.xorEqualFalse = cl.xorEqualFalse();
+        elimedOutVar[elim].push_back(data);
+    }
     solver.detachClause(cl);
+    solver.clauseAllocator.clauseFree(c.clause);
 
     clauses[c.index].clause = NULL;
 }
@@ -222,23 +227,23 @@ void XorSubsumer::extendModel(Solver& solver2)
 
     assert(checkElimedUnassigned());
     vec<Lit> tmp;
-    typedef map<Var, vector<XorClause*> > elimType;
+    typedef map<Var, vector<XorElimedClause> > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
         #ifdef VERBOSE_DEBUG
         Var var = it->first;
         std::cout << "Reinserting elimed var: " << var+1 << std::endl;
         #endif
 
-        for (vector<XorClause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-            XorClause& c = **it2;
+        for (vector<XorElimedClause>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
+            XorElimedClause& c = *it2;
             #ifdef VERBOSE_DEBUG
             std::cout << "Reinserting Clause: ";
             c.plainPrint();
             #endif
             tmp.clear();
-            tmp.growTo(c.size());
-            std::copy(c.getData(), c.getDataEnd(), tmp.getData());
-            solver2.addXorClause(tmp, c.xorEqualFalse());
+            tmp.growTo(c.lits.size());
+            std::copy(c.lits.begin(), c.lits.end(), tmp.getData());
+            solver2.addXorClause(tmp, c.xorEqualFalse);
             assert(solver2.ok);
         }
     }
@@ -394,7 +399,6 @@ const bool XorSubsumer::removeDependent()
             XorClauseSimp toUnlink0 = occ[0];
             XorClauseSimp toUnlink1 = occ[1];
             unlinkClause(toUnlink0);
-            solver.clauseAllocator.clauseFree(toUnlink0.clause);
             unlinkClause(toUnlink1, var);
             solver.setDecisionVar(var, false);
             var_elimed[var] = true;
@@ -432,7 +436,8 @@ inline void XorSubsumer::addToCannotEliminate(Clause* it)
 const bool XorSubsumer::unEliminate(const Var var)
 {
     assert(var_elimed[var]);
-    typedef map<Var, vector<XorClause*> > elimType;
+    vec<Lit> tmp;
+    typedef map<Var, vector<XorElimedClause> > elimType;
     elimType::iterator it = elimedOutVar.find(var);
 
     //MUST set to decision, since it would never have been eliminated
@@ -447,13 +452,15 @@ const bool XorSubsumer::unEliminate(const Var var)
 
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
     solver.libraryCNFFile = NULL;
-    for (vector<XorClause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-        XorClause& c = **it2;
+    for (vector<XorElimedClause>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
+        XorElimedClause& c = *it2;
         #ifdef VERBOSE_DEBUG
         std::cout << "Reinserting elimed clause: " << c << std::endl;;
         #endif
-        solver.addXorClause(c, c.xorEqualFalse());
-        solver.clauseAllocator.clauseFree(&c);
+        tmp.clear();
+        tmp.growTo(c.lits.size());
+        std::copy(c.lits.begin(), c.lits.end(), tmp.getData());
+        solver.addXorClause(tmp, c.xorEqualFalse);
     }
     solver.libraryCNFFile = backup_libraryCNFfile;
     elimedOutVar.erase(it);
@@ -617,13 +624,8 @@ void XorSubsumer::removeAssignedVarsFromEliminated()
             var_elimed[var] = false;
             solver.setDecisionVar(var, true);
             numElimed--;
-            map<Var, vector<XorClause*> >::iterator it = elimedOutVar.find(var);
-            if (it != elimedOutVar.end()) {
-                for (uint32_t i = 0; i < it->second.size(); i++) {
-                    solver.clauseAllocator.clauseFree(it->second[i]);
-                }
-                elimedOutVar.erase(it);
-            }
+            map<Var, vector<XorElimedClause> >::iterator it = elimedOutVar.find(var);
+            if (it != elimedOutVar.end()) elimedOutVar.erase(it);
         }
     }
 }

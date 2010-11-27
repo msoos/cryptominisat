@@ -428,9 +428,6 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     //updatePointers(solver->varReplacer->clauses, oldToNewPointer);
     updatePointers(solver->partHandler->clausesRemoved);
     updatePointers(solver->partHandler->xorClausesRemoved);
-    for(map<Var, vector<XorClause*> >::iterator it = solver->xorSubsumer->elimedOutVar.begin(); it != solver->xorSubsumer->elimedOutVar.end(); it++) {
-        updatePointers(it->second);
-    }
 
     #ifdef USE_GAUSS
     for (uint32_t i = 0; i < solver->gauss_matrixes.size(); i++) {

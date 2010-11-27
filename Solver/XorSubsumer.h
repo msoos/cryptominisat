@@ -50,7 +50,24 @@ public:
     const bool unEliminate(const Var var);
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
-    const map<Var, vector<XorClause*> >& getElimedOutVar() const;
+
+    struct XorElimedClause
+    {
+        vector<Lit> lits;
+        bool xorEqualFalse;
+
+        void plainPrint(FILE* to = stdout) const
+        {
+            fprintf(to, "x");
+            if (xorEqualFalse) fprintf(to, "-");
+            for (size_t i = 0; i < lits.size(); i++) {
+                assert(!lits[i].sign());
+                fprintf(to, "%d ", lits[i].var() + 1);
+            }
+            fprintf(to, "0\n");
+        }
+    };
+    const map<Var, vector<XorElimedClause> >& getElimedOutVar() const;
 
 private:
 
@@ -94,7 +111,7 @@ private:
 
     //Global stats
     double totalTime;
-    map<Var, vector<XorClause*> > elimedOutVar;
+    map<Var, vector<XorElimedClause> > elimedOutVar;
     vec<char> var_elimed;
     uint32_t numElimed;
 
@@ -156,7 +173,7 @@ inline const double XorSubsumer::getTotalTime() const
     return totalTime;
 }
 
-inline const map<Var, vector<XorClause*> >& XorSubsumer::getElimedOutVar() const
+inline const map<Var, vector<XorSubsumer::XorElimedClause> >& XorSubsumer::getElimedOutVar() const
 {
     return elimedOutVar;
 }
