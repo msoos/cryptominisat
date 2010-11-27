@@ -210,10 +210,10 @@ public:
 
 protected:
     //gauss
+    const bool clearGaussMatrixes();
+    vector<Gaussian*> gauss_matrixes;
     #ifdef USE_GAUSS
     void print_gauss_sum_stats();
-    void clearGaussMatrixes();
-    vector<Gaussian*> gauss_matrixes;
     uint32_t sum_gauss_called;
     uint32_t sum_gauss_confl;
     uint32_t sum_gauss_prop;
@@ -314,7 +314,7 @@ protected:
     vec<XorClause*>     xorclauses;       ///< List of problem xor-clauses. Will be freed
     vec<Clause*>        learnts;          ///< List of learnt clauses.
     uint32_t            numBins;
-    //vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
+    vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
     double              cla_inc;          ///< Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          ///< The current assignments

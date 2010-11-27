@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Clause.h"
 #include <algorithm>
 #include "ClauseCleaner.h"
+#include "VarReplacer.h"
 
 using std::ostream;
 using std::cout;
@@ -131,7 +132,7 @@ uint32_t Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& o
     uint32_t num_xorclauses  = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
         XorClause& c = *xorclauses[i];
-        //if (c.removed()) continue;
+        if (c.removed()) continue;
         num_xorclauses++;
 
         for (uint32_t i2 = 0; i2 < c.size(); i2++) {
@@ -224,7 +225,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     uint32_t matrix_row = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
         const XorClause& c = *xorclauses[i];
-        //if (c.removed()) continue;
+        if (c.removed()) continue;
 
         origMat.matrix.getVarsetAt(matrix_row).set(c, var_to_col, origMat.num_cols);
         origMat.matrix.getMatrixAt(matrix_row).set(c, var_to_col, origMat.num_cols);
@@ -770,28 +771,58 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
     #endif
 
     m.matrix.getVarsetAt(row).fill(tmp_clause, solver.assigns, col_to_var_original);
-    Clause& cla = *(Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")matrix prop clause: ";
-    cla.plainPrint();
+    cout << "(" << matrix_no << ")matrix prop clause: " << tmp_clause << std::endl;
     cout << endl;
     #endif
 
-    assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
-    assert(solver.assigns[cla[0].var()].isUndef());
-    if (cla.size() == 1) {
-        solver.cancelUntil(0);
-        solver.uncheckedEnqueue(cla[0]);
-        solver.clauseAllocator.clauseFree(&cla);
-        return unit_propagation;
-    }
+    switch(tmp_clause.size()) {
+        case 0:
+            //This would mean nothing, empty = true, always true in xors
+            assert(false);
+            break;
+        case 1:
+            solver.cancelUntil(0);
+            solver.uncheckedEnqueue(tmp_clause[0]);
+            return unit_propagation;
+        case 2: {
+            solver.cancelUntil(0);
+            bool xorEqualFalse = false ^ tmp_clause[0].sign() ^ tmp_clause[1].sign();
+            Lit lit1 = tmp_clause[0].unsign();
+            Lit lit2 = tmp_clause[1].unsign();
+            tmp_clause[0] = lit1;
+            tmp_clause[1] = lit2;
+            lbool lit1Val = solver.value(lit1);
+            lbool lit2Val = solver.value(lit2);
+            if (lit1Val == l_Undef && lit2Val == l_Undef) {
+                solver.varReplacer->replace(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
+            } else if (lit1Val != l_Undef && lit2Val == l_Undef) {
+                solver.uncheckedEnqueue(lit2 ^ (lit1Val == l_False) ^ xorEqualFalse);
+            } else if (lit1Val == l_Undef && lit2Val != l_Undef) {
+                solver.uncheckedEnqueue(lit1 ^ (lit2Val == l_False) ^ xorEqualFalse);
+            } else {
+                assert(lit1Val != l_Undef && lit2Val != l_Undef);
+                //It's a propagation! Cannot be a conflict.
+                //assert((lit1Val.getBool() ^ lit2Val.getBool()) == !xorEqualFalse);
+                //it must propagate, this would propagate nothing
+                assert(false);
+            }
+            return unit_propagation;
+            break;
+        }
+        default:
+            Clause& cla = *(Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
+            assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
+            assert(solver.assigns[cla[0].var()].isUndef());
 
-    clauses_toclear.push_back(std::make_pair(&cla, solver.trail.size()-1));
-    #ifdef STATS_NEEDED
-    if (solver.dynamic_behaviour_analysis)
-        solver.logger.set_group_name(cla.getGroup(), "gauss prop clause");
-    #endif
-    solver.uncheckedEnqueue(cla[0], solver.clauseAllocator.getOffset(&cla));
+            clauses_toclear.push_back(std::make_pair(&cla, solver.trail.size()-1));
+            #ifdef STATS_NEEDED
+            if (solver.dynamic_behaviour_analysis)
+                solver.logger.set_group_name(cla.getGroup(), "gauss prop clause");
+            #endif
+            solver.uncheckedEnqueue(cla[0], solver.clauseAllocator.getOffset(&cla));
+            return propagation;
+    }
 
     return propagation;
 }

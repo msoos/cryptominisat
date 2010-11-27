@@ -78,8 +78,9 @@ const bool MatrixFinder::findMatrixes()
     if (solver.xorclauses.size() < MIN_GAUSS_XOR_CLAUSES ||
         solver.gaussconfig.decision_until <= 0 ||
         solver.xorclauses.size() > MAX_GAUSS_XOR_CLAUSES
-        )
+        ) {
         return true;
+    }
 
     solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
     if (!solver.ok) return false;
@@ -218,7 +219,7 @@ const uint32_t MatrixFinder::setMatrixes()
             cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
             cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
             cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
-            cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << "  |" << endl;
+            cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << endl;
         }
     }
 

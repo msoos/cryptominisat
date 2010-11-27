@@ -477,11 +477,15 @@ void Solver::print_gauss_sum_stats()
 
     if (conf.verbosity >= 2) {
         if (called == 0) {
-            printf("      disabled      |\n");
+            std::cout << " --";
         } else {
-            printf(" %3.0lf%% |", (double)useful_prop/(double)called*100.0);
-            printf(" %3.0lf%% |", (double)useful_confl/(double)called*100.0);
-            printf(" %3.0lf%% |\n", 100.0-(double)disabled/(double)gauss_matrixes.size()*100.0);
+            std::cout
+            << std::fixed << std::setprecision(1) << std::setw(5)
+            << ((double)useful_prop/(double)called*100.0) << " %"
+            << std::fixed << std::setprecision(1) << std::setw(5)
+            << ((double)useful_confl/(double)called*100.0) << " %"
+            << std::fixed << std::setprecision(1) << std::setw(5)
+            << (100.0-(double)disabled/(double)gauss_matrixes.size()*100.0) << " %";
         }
     }
 }

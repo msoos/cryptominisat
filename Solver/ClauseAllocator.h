@@ -69,7 +69,7 @@ class ClauseAllocator {
         template<class T>
         Clause* Clause_new(const T& ps, const uint32_t group, const bool learnt = false);
         template<class T>
-        XorClause* XorClause_new(const T& ps, const bool inverted, const uint32_t group);
+        XorClause* XorClause_new(const T& ps, const bool xorEqualFalse, const uint32_t group);
         Clause* Clause_new(Clause& c);
 
         const ClauseOffset getOffset(const Clause* ptr) const;

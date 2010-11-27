@@ -31,11 +31,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "SCCFinder.h"
 #include "SharedData.h"
 #include "ClauseVivifier.h"
-
-#ifdef USE_GAUSS
 #include "Gaussian.h"
 #include "MatrixFinder.h"
-#endif //USE_GAUSS
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -125,10 +122,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
     restartTypeChooser = new RestartTypeChooser(*this);
     sCCFinder = new SCCFinder(*this);
     clauseVivifier = new ClauseVivifier(*this);
-
-    #ifdef USE_GAUSS
     matrixFinder = new MatrixFinder(*this);
-    #endif //USE_GAUSS
 
     #ifdef STATS_NEEDED
     logger.setSolver(this);
@@ -140,11 +134,8 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
 */
 Solver::~Solver()
 {
-    #ifdef USE_GAUSS
     clearGaussMatrixes();
     delete matrixFinder;
-    #endif
-
     delete varReplacer;
     delete clauseCleaner;
     delete failedLitSearcher;
@@ -718,17 +709,22 @@ void Solver::cancelUntilLight()
     trail_lim.shrink_(trail_lim.size());
 }
 
-#ifdef USE_GAUSS
-void Solver::clearGaussMatrixes()
+const bool Solver::clearGaussMatrixes()
 {
+    #ifdef USE_GAUSS
+    bool ret = gauss_matrixes.size() > 0;
     for (uint32_t i = 0; i < gauss_matrixes.size(); i++)
         delete gauss_matrixes[i];
     gauss_matrixes.clear();
-    /*for (uint32_t i = 0; i != freeLater.size(); i++)
+
+    for (uint32_t i = 0; i != freeLater.size(); i++)
         clauseAllocator.clauseFree(freeLater[i]);
-    freeLater.clear();*/
+    freeLater.clear();
+
+    return ret;
+    #endif //USE_GAUSS
+    return false;
 }
-#endif //USE_GAUSS
 
 /**
 @brief Returns what polarity[] should be set as default based on polarity_mode
@@ -2279,13 +2275,11 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
                     std::cout << "c Decided on dynamic restart strategy"
                     << std::endl;
             } else  {
-                if (conf.verbosity >= 3)
+                if (conf.verbosity >= 1)
                     std::cout << "c Decided on static restart strategy"
                     << std::endl;
 
-                #ifdef USE_GAUSS
                 if (!matrixFinder->findMatrixes()) return false;
-                #endif //USE_GAUSS
             }
             lastSelectedRestartType = tmp;
             restartType = tmp;
@@ -2319,10 +2313,7 @@ to try to simplifcy the problem at hand.
 const lbool Solver::simplifyProblem(const uint32_t numConfls)
 {
     testAllClauseAttach();
-    #ifdef USE_GAUSS
-    bool gauss_was_cleared = (gauss_matrixes.size() == 0);
-    clearGaussMatrixes();
-    #endif //USE_GAUSS
+    bool gaussWasCleared = clearGaussMatrixes();
 
     StateSaver savedState(*this);;
 
@@ -2382,10 +2373,8 @@ end:
     savedState.restore();
     simplifying = false;
 
-    #ifdef USE_GAUSS
-    if (status == l_Undef && !gauss_was_cleared && !matrixFinder->findMatrixes())
+    if (status == l_Undef && gaussWasCleared && !matrixFinder->findMatrixes())
         status = l_False;
-    #endif //USE_GAUSS
 
     testAllClauseAttach();
 

@@ -65,7 +65,7 @@ protected:
     */
     uint32_t isXorEqualFalse:1;
     uint32_t isXorClause:1; ///< Is the clause an XOR clause?
-    //uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
+    uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
     uint32_t mySize:19; ///<The current size of the clause
@@ -276,7 +276,7 @@ public:
         return;
     }
     #endif //STATS_NEEDED
-    /*void setRemoved()
+    void setRemoved()
     {
         isRemoved = true;
     }
@@ -284,7 +284,7 @@ public:
     const bool removed() const
     {
         return isRemoved;
-    }*/
+    }
 
     void setFreed()
     {

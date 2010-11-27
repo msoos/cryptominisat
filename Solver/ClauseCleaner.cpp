@@ -183,9 +183,9 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
         #endif //DEBUG_ATTACH
 
         if (cleanClause(**s)) {
-            solver.clauseAllocator.clauseFree(*s);
-            //solver.freeLater.push(*s);
-            //(*s)->setRemoved();
+            //solver.clauseAllocator.clauseFree(*s);
+            solver.freeLater.push(*s);
+            (*s)->setRemoved();
         } else {
             #ifdef DEBUG_ATTACH_FULL
             assert(solver.xorClauseIsAttached(c));

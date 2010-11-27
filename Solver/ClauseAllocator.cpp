@@ -81,11 +81,11 @@ template Clause* ClauseAllocator::Clause_new(const XorClause& ps, const unsigned
 @brief Allocates space&initializes an xor clause
 */
 template<class T>
-XorClause* ClauseAllocator::XorClause_new(const T& ps, const bool inverted, const unsigned int group)
+XorClause* ClauseAllocator::XorClause_new(const T& ps, const bool xorEqualFalse, const unsigned int group)
 {
     assert(ps.size() > 0);
     void* mem = allocEnough(ps.size());
-    XorClause* real= new (mem) XorClause(ps, inverted, group);
+    XorClause* real= new (mem) XorClause(ps, xorEqualFalse, group);
     //assert(!(ps.size() == 2 && !real->wasBin()));
 
     return real;
@@ -413,7 +413,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     updatePointers(solver->clauses);
     updatePointers(solver->learnts);
     updatePointers(solver->xorclauses);
-    //updatePointers(solver->freeLater);
+    updatePointers(solver->freeLater);
     updatePointers(solver->unWindGlue);
 
     //No need to update varreplacer, since it only stores binary clauses that

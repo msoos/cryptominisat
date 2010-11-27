@@ -23,10 +23,10 @@ add_library(cryptominisatlib
     Solver.cpp
     SolverDebug.cpp
     SolverMisc.cpp
-#   Gaussian.cpp
+    Gaussian.cpp
     PackedRow.cpp
     XorFinder.cpp
-#   MatrixFinder.cpp
+    MatrixFinder.cpp
     VarReplacer.cpp
 #   FindUndef.cpp
     ClauseCleaner.cpp
