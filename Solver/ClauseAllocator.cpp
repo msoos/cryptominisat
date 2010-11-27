@@ -361,6 +361,12 @@ void ClauseAllocator::consolidate(Solver* solver)
             Clause* oldPointer = (Clause*)(dataStarts[i] + currentLoc);
             if (!oldPointer->getFreed()) {
                 uint32_t sizeNeeded = (sizeof(Clause) + oldPointer->size()*sizeof(Lit))/sizeof(uint32_t);
+
+                //Next line is needed, because in case of isRemoved()
+                //, the size of the clause could become 0, thus having less
+                // than enough space to carry the NewPointerAndOffset info
+                sizeNeeded = std::max(sizeNeeded, (uint32_t)((sizeof(Clause) + 2*sizeof(Lit))/sizeof(uint32_t)));
+
                 if (newSizes[outerPart] + sizeNeeded > newMaxSizes[outerPart]) {
                     outerPart++;
                     assert(outerPart < newMaxSizes.size());
