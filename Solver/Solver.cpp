@@ -2475,9 +2475,7 @@ void Solver::initialiseSolver()
     //Clear up previous stuff like model, final conflict, matrixes
     model.clear();
     conflict.clear();
-    #ifdef USE_GAUSS
     clearGaussMatrixes();
-    #endif //USE_GAUSS
 
     //Initialise restarts & dynamic restart datastructures
     setDefaultRestartType();
