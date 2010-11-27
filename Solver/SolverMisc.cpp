@@ -479,13 +479,13 @@ void Solver::print_gauss_sum_stats()
         if (called == 0) {
             std::cout << " --";
         } else {
-            std::cout
+            std::cout << " "
             << std::fixed << std::setprecision(1) << std::setw(5)
-            << ((double)useful_prop/(double)called*100.0) << " %"
+            << ((double)useful_prop/(double)called*100.0) << "% "
             << std::fixed << std::setprecision(1) << std::setw(5)
-            << ((double)useful_confl/(double)called*100.0) << " %"
+            << ((double)useful_confl/(double)called*100.0) << "% "
             << std::fixed << std::setprecision(1) << std::setw(5)
-            << (100.0-(double)disabled/(double)gauss_matrixes.size()*100.0) << " %";
+            << (100.0-(double)disabled/(double)gauss_matrixes.size()*100.0) << "%";
         }
     }
 }
