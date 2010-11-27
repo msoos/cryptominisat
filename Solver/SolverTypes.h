@@ -21,6 +21,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #endif //_MSC_VER
 
 #include <stdio.h>
+#include <vector>
 #include "constants.h"
 
 //=================================================================================================
@@ -108,6 +109,14 @@ inline std::ostream& operator<<(std::ostream& cout, const vec<Lit>& lits)
         cout << lits[i] << " ";
     }
     return cout;
+}
+
+inline void printClause(FILE* outFile, const std::vector<Lit>& clause)
+{
+    for (size_t i = 0; i < clause.size(); i++) {
+        fprintf(outFile,"%s%d ", clause[i].sign() ? "-" : "", clause[i].var()+1);
+    }
+    fprintf(outFile, "0\n");
 }
 
 //=================================================================================================

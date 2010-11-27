@@ -57,7 +57,7 @@ public:
     const uint32_t getNumElimed() const;
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
-    const map<Var, vector<Clause*> >& getElimedOutVar() const;
+    const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
     const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
 
 private:
@@ -85,7 +85,7 @@ private:
     vec<char> var_elimed;                  ///<Contains TRUE if var has been eliminated
     double totalTime;                      ///<Total time spent in this class
     uint32_t numElimed;                    ///<Total number of variables eliminated
-    map<Var, vector<Clause*> > elimedOutVar; ///<Contains the clauses to use to uneliminate a variable
+    map<Var, vector<vector<Lit> > > elimedOutVar; ///<Contains the clauses to use to uneliminate a variable
     map<Var, vector<std::pair<Lit, Lit> > > elimedOutVarBin; ///<Contains the clauses to use to uneliminate a variable
 
     //Limits
@@ -451,7 +451,7 @@ inline void Subsumer::newVar()
     touch(solver.nVars()-1);
 }
 
-inline const map<Var, vector<Clause*> >& Subsumer::getElimedOutVar() const
+inline const map<Var, vector<vector<Lit> > >& Subsumer::getElimedOutVar() const
 {
     return elimedOutVar;
 }

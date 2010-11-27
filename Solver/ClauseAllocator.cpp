@@ -428,9 +428,6 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     //updatePointers(solver->varReplacer->clauses, oldToNewPointer);
     updatePointers(solver->partHandler->clausesRemoved);
     updatePointers(solver->partHandler->xorClausesRemoved);
-    for(map<Var, vector<Clause*> >::iterator it = solver->subsumer->elimedOutVar.begin(); it != solver->subsumer->elimedOutVar.end(); it++) {
-        updatePointers(it->second);
-    }
     for(map<Var, vector<XorClause*> >::iterator it = solver->xorSubsumer->elimedOutVar.begin(); it != solver->xorSubsumer->elimedOutVar.end(); it++) {
         updatePointers(it->second);
     }

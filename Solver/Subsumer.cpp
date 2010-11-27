@@ -63,7 +63,7 @@ void Subsumer::extendModel(Solver& solver2)
 
     assert(checkElimedUnassigned());
     vec<Lit> tmp;
-    typedef map<Var, vector<Clause*> > elimType;
+    typedef map<Var, vector<vector<Lit> > > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
         #ifndef NDEBUG
         Var var = it->first;
@@ -75,11 +75,10 @@ void Subsumer::extendModel(Solver& solver2)
         assert(!solver.order_heap.inHeap(var));
         #endif
 
-        for (vector<Clause*>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-            Clause& c = **it2;
+        for (vector<vector<Lit> >::const_iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
             tmp.clear();
-            tmp.growTo(c.size());
-            std::copy(c.getData(), c.getDataEnd(), tmp.getData());
+            tmp.growTo(it2->size());
+            std::copy(it2->begin(), it2->end(), tmp.getData());
 
             #ifdef VERBOSE_DEBUG
             std::cout << "Reinserting elimed clause: " << c << std::endl;;
@@ -130,7 +129,7 @@ const bool Subsumer::unEliminate(const Var var)
 {
     assert(var_elimed[var]);
     vec<Lit> tmp;
-    typedef map<Var, vector<Clause*> > elimType;
+    typedef map<Var, vector<vector<Lit> > > elimType;
     typedef map<Var, vector<std::pair<Lit, Lit> > > elimType2;
     elimType::iterator it = elimedOutVar.find(var);
     elimType2::iterator it2 = elimedOutVarBin.find(var);
@@ -153,25 +152,28 @@ const bool Subsumer::unEliminate(const Var var)
     solver.libraryCNFFile = NULL;
 
     if (it == elimedOutVar.end()) goto next;
-    for (vector<Clause*>::iterator itt = it->second.begin(), end2 = it->second.end(); itt != end2; itt++) {
+    for (vector<vector<Lit> >::iterator itt = it->second.begin(), end2 = it->second.end(); itt != end2; itt++) {
         #ifdef VERBOSE_DEBUG
         std::cout << "Reinserting elimed clause: " << *itt << std::endl;;
         #endif
-        solver.addClause(**itt);
-        solver.clauseAllocator.clauseFree(*itt);
+        tmp.clear();
+        tmp.growTo(itt->size());
+        std::copy(itt->begin(), itt->end(), tmp.getData());
+        solver.addClause(tmp);
     }
     elimedOutVar.erase(it);
 
     next:
     if (it2 == elimedOutVarBin.end()) goto next2;
     for (vector<std::pair<Lit, Lit> >::iterator itt = it2->second.begin(), end2 = it2->second.end(); itt != end2; itt++) {
-        vec<Lit> lits(2);
-        lits[0] = itt->first;
-        lits[1] = itt->second;
+        tmp.clear();
+        tmp.growTo(2);
+        tmp[0] = itt->first;
+        tmp[1] = itt->second;
         #ifdef VERBOSE_DEBUG
         std::cout << "Reinserting bin clause: " << itt->first << " , " << itt->second << std::endl;
         #endif
-        solver.addClause(lits);
+        solver.addClause(tmp);
     }
     elimedOutVarBin.erase(it2);
 
@@ -423,11 +425,13 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
         std::cout << "Eliminating non-bin clause: " << *c.clause << std::endl;
         std::cout << "On variable: " << elim+1 << std::endl;
         #endif //VERBOSE_DEBUG
-        elimedOutVar[elim].push_back(c.clause);
+        vector<Lit> lits(c.clause->size());
+        std::copy(c.clause->getData(), c.clause->getDataEnd(), lits.begin());
+        elimedOutVar[elim].push_back(lits);
     } else {
         clauses_subsumed++;
-        solver.clauseAllocator.clauseFree(c.clause);
     }
+    solver.clauseAllocator.clauseFree(c.clause);
 
     clauses[c.index].clause = NULL;
 }
@@ -1521,17 +1525,12 @@ void Subsumer::removeAssignedVarsFromEliminated()
             var_elimed[var] = false;
             solver.setDecisionVar(var, true);
             numElimed--;
-            map<Var, vector<Clause*> >::iterator it = elimedOutVar.find(var);
-            if (it != elimedOutVar.end()) {
-                for (uint32_t i = 0; i < it->second.size(); i++) {
-                    solver.clauseAllocator.clauseFree(it->second[i]);
-                }
-                elimedOutVar.erase(it);
-            }
+
+            map<Var, vector<vector<Lit> > >::iterator it = elimedOutVar.find(var);
+            if (it != elimedOutVar.end()) elimedOutVar.erase(it);
+
             map<Var, vector<std::pair<Lit, Lit> > >::iterator it2 = elimedOutVarBin.find(var);
-            if (it2 != elimedOutVarBin.end()) {
-                elimedOutVarBin.erase(it2);
-            }
+            if (it2 != elimedOutVarBin.end()) elimedOutVarBin.erase(it2);
         }
     }
 }
