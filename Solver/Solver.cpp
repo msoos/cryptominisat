@@ -706,6 +706,7 @@ void Solver::cancelUntilLight()
 
 const bool Solver::clearGaussMatrixes()
 {
+    assert(decisionLevel() == 0);
     #ifdef USE_GAUSS
     bool ret = gauss_matrixes.size() > 0;
     for (uint32_t i = 0; i < gauss_matrixes.size(); i++)

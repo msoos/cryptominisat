@@ -567,6 +567,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
     #endif
 
+    assert(solver.decisionLevel() == 0);
     assert(ps.size() == 2);
     assert(!ps[0].sign());
     assert(!ps[1].sign());
