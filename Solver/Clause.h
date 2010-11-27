@@ -281,7 +281,7 @@ public:
         isRemoved = true;
     }
 
-    const bool removed() const
+    const bool getRemoved() const
     {
         return isRemoved;
     }
