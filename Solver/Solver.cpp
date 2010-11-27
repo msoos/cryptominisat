@@ -2584,10 +2584,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     }
     printEndSearchStat();
 
-    #ifdef USE_GAUSS
-    clearGaussMatrixes();
-    #endif //USE_GAUSS
-
     #ifdef VERBOSE_DEBUG
     if (status == l_True)
         std::cout << "Solution  is SAT" << std::endl;
