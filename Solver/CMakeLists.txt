@@ -45,5 +45,6 @@ add_library(cryptominisatlib
     SCCFinder.cpp
     SolverConf.cpp
     ClauseVivifier.cpp
+    DataSync.cpp
 )
 

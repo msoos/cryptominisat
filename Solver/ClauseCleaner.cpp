@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ClauseCleaner.h"
 #include "VarReplacer.h"
+#include "DataSync.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -145,7 +146,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             solver.attachBinClause(c[0], c[1], c.learnt());
             solver.numNewBin++;
-            solver.signalNewBinClause(c);
+            solver.dataSync->signalNewBinClause(c);
             return true;
         } else if (c.size() == 3) {
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);

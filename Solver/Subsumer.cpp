@@ -19,6 +19,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "CompleteDetachReattacher.h"
 #include "OnlyNonLearntBins.h"
 #include "UselessBinRemover.h"
+#include "DataSync.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -546,7 +547,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
         case 2: {
             solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
             solver.numNewBin++;
-            solver.signalNewBinClause(*c.clause);
+            solver.dataSync->signalNewBinClause(*c.clause);
             clBinTouched.push_back(NewBinaryClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt()));
             unlinkClause(c);
             c.clause = NULL;
@@ -1862,7 +1863,7 @@ bool Subsumer::maybeEliminate(const Var var)
                 } else {
                     solver.attachBinClause(dummy[0], dummy[1], false);
                     solver.numNewBin++;
-                    solver.signalNewBinClause(dummy);
+                    solver.dataSync->signalNewBinClause(dummy);
                 }
                 subsume1(dummy, false);
                 break;

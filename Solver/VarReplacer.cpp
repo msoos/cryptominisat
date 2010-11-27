@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ClauseCleaner.h"
 #include "PartHandler.h"
 #include "time_mem.h"
+#include "DataSync.h"
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_REPLACER
@@ -448,7 +449,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     case 2:
         solver.attachBinClause(c[0], c[1], c.learnt());
         solver.numNewBin++;
-        solver.signalNewBinClause(c);
+        solver.dataSync->signalNewBinClause(c);
         return true;
     default:
         solver.attachClause(c);
@@ -662,12 +663,12 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group, const bool addBinAsLearnt)
 {
     solver.attachBinClause(lit1, lit2, addBinAsLearnt);
-    solver.signalNewBinClause(lit1, lit2);
+    solver.dataSync->signalNewBinClause(lit1, lit2);
 
     lit1 ^= true;
     lit2 ^= true;
     solver.attachBinClause(lit1, lit2, addBinAsLearnt);
-    solver.signalNewBinClause(lit1, lit2);
+    solver.dataSync->signalNewBinClause(lit1, lit2);
 }
 
 /**

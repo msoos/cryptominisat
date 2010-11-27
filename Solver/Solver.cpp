@@ -33,6 +33,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "ClauseVivifier.h"
 #include "Gaussian.h"
 #include "MatrixFinder.h"
+#include "DataSync.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -55,7 +56,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedData* _sharedData) :
+Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedData* sharedData) :
         // Parameters: (formerly in 'SearchParams')
         conf(_conf)
         , gaussconfig(_gaussconfig)
@@ -76,11 +77,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , moreRecurMinLDo(0)
         , updateTransCache(0)
         , nbClOverMaxGlue(0)
-
-        , sharedData(_sharedData)
-        , lastSyncConf(0)
-        , sentUnitData(0)
-        , gotUnitData(0)
 
         , ok               (true)
         , numBins          (0)
@@ -123,6 +119,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
     sCCFinder = new SCCFinder(*this);
     clauseVivifier = new ClauseVivifier(*this);
     matrixFinder = new MatrixFinder(*this);
+    dataSync = new DataSync(*this, sharedData);
 
     #ifdef STATS_NEEDED
     logger.setSolver(this);
@@ -177,9 +174,6 @@ Var Solver::newVar(bool dvar)
     permDiff  .push(0);
     unWindGlue.push(NULL);
 
-    syncFinish.push(0);
-    syncFinish.push(0);
-
     //Transitive OTF self-subsuming resolution
     seen2     .push_back(0);
     seen2     .push_back(0);
@@ -198,6 +192,7 @@ Var Solver::newVar(bool dvar)
     partHandler->newVar();
     subsumer->newVar();
     xorSubsumer->newVar();
+    dataSync->newVar();
 
     insertVarOrder(v);
 
@@ -392,7 +387,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
         return c;
     } else {
         attachBinClause(ps[0], ps[1], learnt);
-        if (!inOriginalInput) signalNewBinClause(ps);
+        if (!inOriginalInput) dataSync->signalNewBinClause(ps);
         numNewBin++;
         return NULL;
     }
@@ -2089,17 +2084,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
 
     // Simplify the set of problem clauses:
     if (decisionLevel() == 0) {
-        if (sharedData != NULL && lastSyncConf + SYNC_EVERY_CONFL < conflicts) {
-            #pragma omp critical (unitData)
-            shareUnitData();
-            if (!ok) return l_False;
-
-            #pragma omp critical (binData)
-            shareBinData();
-            if (!ok) return l_False;
-
-            lastSyncConf = conflicts;
-        }
+        if (!dataSync->syncData()) return l_False;
         if (!simplify()) return l_False;
     }
 
@@ -2204,7 +2189,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         if (learnt_clause.size() == 2) {
             attachBinClause(learnt_clause[0], learnt_clause[1], true);
             numNewBin++;
-            signalNewBinClause(learnt_clause);
+            dataSync->signalNewBinClause(learnt_clause);
             uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             goto end;
         }
@@ -2634,180 +2619,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     std::cout << "Solver::solve() finished" << std::endl;
     #endif
     return status;
-}
-
-const bool Solver::shareBinData()
-{
-    assert(sharedData != NULL);
-    assert(decisionLevel() == 0);
-    uint32_t oldGotBinData = gotBinData;
-    uint32_t oldSentBinData = sentBinData;
-
-    SharedData& shared = *sharedData;
-    if (shared.bins.size() != nVars()*2)
-        shared.bins.resize(nVars()*2);
-
-    for (uint32_t wsLit = 0; wsLit < nVars()*2; wsLit++) {
-        Lit lit1 = ~Lit::toLit(wsLit);
-        lit1 = varReplacer->getReplaceTable()[lit1.var()] ^ lit1.sign();
-        if (subsumer->getVarElimed()[lit1.var()]
-            || xorSubsumer->getVarElimed()[lit1.var()]
-            || value(lit1.var()) != l_Undef
-            ) continue;
-
-        vector<Lit>& bins = shared.bins[wsLit];
-        vec<Watched>& ws = watches[wsLit];
-
-        if (bins.size() > syncFinish[wsLit] && !syncBinFromOthers(lit1, bins, syncFinish[wsLit], ws)) return false;
-    }
-
-    syncBinToOthers();
-
-    if (conf.verbosity >= 4) {
-        std::cout << "c got bins " << std::setw(10) << (gotBinData - oldGotBinData)
-        << std::setw(10) << " sent bins " << (sentBinData - oldSentBinData) << std::endl;
-    }
-
-    return true;
-}
-
-template <class T>
-void Solver::signalNewBinClause(T& ps)
-{
-    assert(ps.size() == 2);
-    signalNewBinClause(ps[0], ps[1]);
-}
-
-void Solver::signalNewBinClause(Lit lit1, Lit lit2)
-{
-    if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
-    newBinClauses.push_back(std::make_pair(lit1, lit2));
-}
-
-template void Solver::signalNewBinClause(Clause& ps);
-template void Solver::signalNewBinClause(XorClause& ps);
-template void Solver::signalNewBinClause(vec<Lit>& ps);
-
-const bool Solver::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
-{
-    assert(varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
-    assert(subsumer->getVarElimed()[lit.var()] == false);
-    assert(xorSubsumer->getVarElimed()[lit.var()] == false);
-
-    vec<Lit> addedToSeen;
-    for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
-        if (it->isBinary()) {
-            addedToSeen.push(it->getOtherLit());
-            seen[it->getOtherLit().toInt()] = true;
-        }
-    }
-
-    vec<Lit> lits(2);
-    for (uint32_t i = finished; i < bins.size(); i++) {
-        if (!seen[bins[i].toInt()]) {
-            Lit otherLit = bins[i];
-            otherLit = varReplacer->getReplaceTable()[otherLit.var()] ^ otherLit.sign();
-            if (subsumer->getVarElimed()[otherLit.var()]
-                || xorSubsumer->getVarElimed()[otherLit.var()]
-                || value(otherLit.var()) != l_Undef
-                ) continue;
-
-            gotBinData++;
-            lits[0] = lit;
-            lits[1] = otherLit;
-            addClauseInt(lits, 0, true);
-            lits.clear();
-            lits.growTo(2);
-            if (!ok) goto end;
-        }
-    }
-    finished = bins.size();
-
-    end:
-    for (uint32_t i = 0; i < addedToSeen.size(); i++)
-        seen[addedToSeen[i].toInt()] = false;
-
-    return ok;
-}
-
-void Solver::syncBinToOthers()
-{
-    for(vector<std::pair<Lit, Lit> >::const_iterator it = newBinClauses.begin(), end = newBinClauses.end(); it != end; it++) {
-        addOneBinToOthers(it->first, it->second);
-    }
-
-    newBinClauses.clear();
-}
-
-void Solver::addOneBinToOthers(const Lit lit1, const Lit lit2)
-{
-    assert(lit1.toInt() < lit2.toInt());
-
-    vector<Lit>& bins = sharedData->bins[(~lit1).toInt()];
-    for (vector<Lit>::const_iterator it = bins.begin(), end = bins.end(); it != end; it++) {
-        if (*it == lit2) return;
-    }
-
-    bins.push_back(lit2);
-    sentBinData++;
-}
-
-const bool Solver::shareUnitData()
-{
-    assert(sharedData != NULL);
-    assert(decisionLevel() == 0);
-    uint32_t thisGotUnitData = 0;
-    uint32_t thisSentUnitData = 0;
-
-    SharedData& shared = *sharedData;
-    shared.value.growTo(nVars(), l_Undef);
-    for (uint32_t var = 0; var < nVars(); var++) {
-        Lit thisLit = Lit(var, false);
-        thisLit = varReplacer->getReplaceTable()[thisLit.var()] ^ thisLit.sign();
-        const lbool thisVal = value(thisLit);
-        const lbool otherVal = shared.value[var];
-
-        if (thisVal == l_Undef && otherVal == l_Undef) continue;
-        if (thisVal != l_Undef && otherVal != l_Undef) {
-            if (thisVal != otherVal) {
-                ok = false;
-                return false;
-            } else {
-                continue;
-            }
-        }
-
-        if (otherVal != l_Undef) {
-            assert(thisVal == l_Undef);
-            Lit litToEnqueue = thisLit ^ (otherVal == l_False);
-            if (subsumer->getVarElimed()[litToEnqueue.var()]
-                || xorSubsumer->getVarElimed()[litToEnqueue.var()]
-                ) continue;
-
-            uncheckedEnqueue(litToEnqueue);
-            ok = propagate().isNULL();
-            if (!ok) return false;
-            thisGotUnitData++;
-            continue;
-        }
-
-        if (thisVal != l_Undef) {
-            assert(otherVal == l_Undef);
-            shared.value[var] = thisVal;
-            thisSentUnitData++;
-            continue;
-        }
-    }
-
-    if (conf.verbosity >= 4 && (thisGotUnitData > 0 || thisSentUnitData > 0)) {
-        std::cout << "c got units " << std::setw(8) << thisGotUnitData
-        << " sent units " << std::setw(8) << thisSentUnitData << std::endl;
-    }
-
-    gotUnitData += thisGotUnitData;
-    sentUnitData += thisSentUnitData;
-
-    return true;
 }
 
 /**

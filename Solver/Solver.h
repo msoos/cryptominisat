@@ -50,7 +50,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "GaussianConfig.h"
 #include "ClauseAllocator.h"
 #include "SolverConf.h"
-#include "SharedData.h"
 
 #define release_assert(a) \
     do { \
@@ -77,6 +76,8 @@ class StateSaver;
 class UselessBinRemover;
 class SCCFinder;
 class ClauseVivifier;
+class SharedData;
+class DataSync;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -272,21 +273,7 @@ protected:
     uint64_t nbClOverMaxGlue; ///<Number or clauses over maximum glue defined in maxGlue
 
     //Multi-threading
-    SharedData* sharedData;
-    const bool shareUnitData();
-    uint64_t lastSyncConf;
-    const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws);
-    void syncBinToOthers();
-    void addOneBinToOthers(const Lit lit1, const Lit lit2);
-    const bool shareBinData();
-    uint32_t sentUnitData;
-    uint32_t gotUnitData;
-    uint32_t sentBinData;
-    uint32_t gotBinData;
-    vec<uint32_t> syncFinish;
-    vector<std::pair<Lit, Lit> > newBinClauses;
-    template <class T> void signalNewBinClause(T& ps);
-    void signalNewBinClause(Lit lit1, Lit lit2);
+    DataSync* dataSync;
 
     // Helper structures:
     //
@@ -501,6 +488,7 @@ protected:
     friend class CompleteDetachReatacher;
     friend class SCCFinder;
     friend class ClauseVivifier;
+    friend class DataSync;
     Conglomerate*       conglomerate;
     VarReplacer*        varReplacer;
     ClauseCleaner*      clauseCleaner;

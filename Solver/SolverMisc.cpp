@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "time_mem.h"
 #include "DimacsParser.h"
 #include "FailedLitSearcher.h"
+#include "DataSync.h"
 #include "SCCFinder.h"
 #include <iomanip>
 #include <omp.h>
@@ -671,10 +672,10 @@ void Solver::printStats()
 
     //Multi-threading
     if (numThreads > 1) {
-        printStatsLine("c unit cls recevied", gotUnitData, (double)gotUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
-        printStatsLine("c unit cls sent", sentUnitData, (double)sentUnitData/(double)get_unitary_learnts_num()*100.0, "% of units");
-        printStatsLine("c bin cls recevied", gotBinData);
-        printStatsLine("c bin cls sent", sentBinData);
+        printStatsLine("c unit cls recevied", dataSync->getRecvUnitData(), (double)dataSync->getRecvUnitData()/(double)get_unitary_learnts_num()*100.0, "% of units");
+        printStatsLine("c unit cls sent", dataSync->getSentUnitData(), (double)dataSync->getSentUnitData()/(double)get_unitary_learnts_num()*100.0, "% of units");
+        printStatsLine("c bin cls recevied", dataSync->getRecvBinData());
+        printStatsLine("c bin cls sent", dataSync->getSentBinData());
     }
 
     #ifdef USE_GAUSS
