@@ -157,11 +157,11 @@ variables.
 */
 const bool FailedLitSearcher::search()
 {
-    uint64_t numProps = 100 * 1000000;
-    uint64_t numPropsDifferent = (double)numProps*2.0;
-
     assert(solver.decisionLevel() == 0);
     if (solver.nVars() == 0) return solver.ok;
+
+    uint64_t numProps = 100 * 1000000;
+    uint64_t numPropsDifferent = (double)numProps*2.0;
 
     solver.testAllClauseAttach();
     double myTime = cpuTime();
