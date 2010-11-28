@@ -244,6 +244,8 @@ const bool FailedLitSearcher::search()
 
     if (solver.conf.verbosity  >= 1) printResults(myTime);
 
+    if (numCalls >= 2 && !tryCacheAddBin()) goto end;
+    //if (numCalls >= 2 && !tryCacheBoth()) goto end;
 
 end:
     bool removedOldLearnts = false;
@@ -696,4 +698,148 @@ void FailedLitSearcher::addBin(const Lit lit1, const Lit lit2)
     tmpPs.growTo(2);
     assert(solver.ok);
     addedBin++;
+}
+
+const bool FailedLitSearcher::tryCacheAddBin()
+{
+    assert(solver.decisionLevel() == 0);
+    vec<char> seen(solver.nVars()*2, 0);
+    vec<Lit> lits;
+    uint32_t added = 0;
+    double myTime = cpuTime();
+    uint64_t extraTime = 0;
+    uint64_t maxTime = 100*1000*1000;
+    if (solver.clauses_literals + solver.learnts_literals < 5000000)
+        maxTime *= 2;
+    if (solver.clauses_literals + solver.learnts_literals < 3000000)
+        maxTime *= 2;
+    if (solver.clauses_literals + solver.learnts_literals < 1000000)
+        maxTime *= 2;
+
+    uint64_t done1 = 0;
+    uint64_t done2 = 0;
+
+    for (uint32_t i = 1; i < solver.order_heap.size(); i++) for (uint32_t sig1 = 0; sig1 < 2; sig1++)  {
+        Lit lit = Lit(solver.order_heap[solver.order_heap.size()-i], sig1);
+        if (solver.value(lit.var()) != l_Undef
+            || solver.subsumer->getVarElimed()[lit.var()]
+            || solver.xorSubsumer->getVarElimed()[lit.var()])
+            continue;
+
+        vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
+        if (cache.size() < 20) continue;
+        extraTime += cache.size();
+        for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+            if (solver.value(it->var()) != l_Undef
+            || solver.subsumer->getVarElimed()[it->var()]
+            || solver.xorSubsumer->getVarElimed()[it->var()])
+            continue;
+            seen[it->toInt()] = true;
+        }
+
+        if (extraTime > maxTime) break;
+        done1++;
+
+        for (uint32_t i2 = 0; i2 < solver.nVars()*2; i2++) {
+            Lit lit2 = Lit::toLit(i2);
+            if (solver.value(lit2.var()) != l_Undef
+            || solver.subsumer->getVarElimed()[lit2.var()]
+            || solver.xorSubsumer->getVarElimed()[lit2.var()]
+            || seen[lit2.toInt()] || seen[(~lit2).toInt()]
+            || lit == lit2
+            || lit == ~lit2)
+            continue;
+
+            const vector<Lit>& cache2 = solver.transOTFCache[(~lit2).toInt()].lits;
+            if (cache2.size() < 5) continue;
+            done2++;
+            extraTime += cache2.size();
+            for (vector<Lit>::const_iterator it = cache2.begin(), end = cache2.end(); it != end; it++) {
+                if (seen[(~*it).toInt()]) {
+                    lits.clear();
+                    lits.growTo(2);
+                    lits[0] = ~lit;
+                    lits[1] = ~lit2;
+                    assert(lit != lit2);
+
+                    solver.addClauseInt(lits, 0 , true);
+                    assert(solver.ok);
+                    added++;
+                    cache.push_back(~lit2);
+                    break;
+                }
+            }
+        }
+
+        for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++)
+            seen[it->toInt()] = false;
+    }
+
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c cacheBin added: " << std::setw(10) << added
+        << " done1: " << std::setw(10) << done1
+        << " done2: " << std::setw(10) << std::fixed << std::setprecision(2) << (double)done2/(1000000.0) << " M"
+        << " time: " << std::setw(10) << std::fixed << std::setprecision(2) <<  (cpuTime() - myTime)
+        << std::endl;
+    }
+
+    return true;
+}
+
+const bool FailedLitSearcher::tryCacheBoth()
+{
+    assert(solver.decisionLevel() == 0);
+    assert(solver.ok);
+
+    double myTime = cpuTime();
+    uint64_t extraTime = 0;
+    vec<char> seen(solver.nVars()*2, 0);
+    vec<Lit> toEnqueue;
+    uint32_t added = 0;
+
+    for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
+        Lit lit = Lit(solver.order_heap[i], false);
+        Lit lit2 = ~lit;
+        if (solver.value(lit.var()) != l_Undef
+            || solver.subsumer->getVarElimed()[lit.var()]
+            || solver.xorSubsumer->getVarElimed()[lit.var()])
+            continue;
+
+        vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
+        const vector<Lit>& cache2 = solver.transOTFCache[(~lit2).toInt()].lits;
+        if (cache.size() < 2 || cache2.size() < 2) continue;
+
+        extraTime += cache.size() + cache2.size();
+        for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+            if (solver.value(it->var()) != l_Undef
+            || solver.subsumer->getVarElimed()[it->var()]
+            || solver.xorSubsumer->getVarElimed()[it->var()])
+            continue;
+            seen[it->toInt()] = true;
+        }
+
+        for (vector<Lit>::const_iterator it = cache2.begin(), end = cache2.end(); it != end; it++) {
+            if (seen[it->toInt()]) toEnqueue.push(*it);
+        }
+
+        for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++)
+            seen[it->toInt()] = false;
+
+        for (Lit *it = toEnqueue.getData(), *end = toEnqueue.getDataEnd(); it != end; it++) {
+            solver.uncheckedEnqueue(*it);
+            added++;
+        }
+        toEnqueue.clear();
+
+        solver.ok = solver.propagate().isNULL();
+        if (!solver.ok) return false;
+    }
+
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c bothCache added: " << std::setw(10) << added
+        << " time: " << std::setw(10) << std::fixed << std::setprecision(2) <<  (cpuTime() - myTime)
+        << std::endl;
+    }
+
+    return true;
 }

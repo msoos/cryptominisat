@@ -58,6 +58,10 @@ class FailedLitSearcher {
         //Main
         const bool tryBoth(const Lit lit1, const Lit lit2);
         const bool tryAll(const Lit* begin, const Lit* end);
+
+        const bool tryCacheAddBin();
+        const bool tryCacheBoth();
+
         void printResults(const double myTime) const;
 
         Solver& solver; ///<The solver we are updating&working with
