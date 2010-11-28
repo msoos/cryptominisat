@@ -242,54 +242,11 @@ const bool FailedLitSearcher::search()
             goto end;
     }
 
-    /*if (solver.conf.verbosity  >= 1) printResults(myTime);
-    if (finishedLastTimeBin || lastTimeWentUntilBin >= solver.binaryClauses.size())
-        fromBin = 0;
-    else
-        fromBin = lastTimeWentUntilBin;
-    finishedLastTimeBin = true;
-    lastTimeWentUntilBin = solver.nVars();
-    for (uint32_t binCl = 0; binCl < solver.binaryClauses.size(); binCl++) {
-        if ((double)(solver.propagations - origProps) >= 1.1*(double)numProps)  {
-            finishedLastTimeBin = false;
-            lastTimeWentUntilBin = binCl;
-            break;
-        }
+    if (solver.conf.verbosity  >= 1) printResults(myTime);
 
-        Clause& cl = *solver.binaryClauses[binCl];
-        if (solver.value(cl[0]) == l_Undef && solver.value(cl[1]) == l_Undef) {
-            if (!tryBoth(cl[0], cl[1]))
-                goto end;
-        }
-    }*/
-
-    /*for (Clause **it = solver.clauses.getData(), **end = solver.clauses.getDataEnd(); it != end; it++) {
-        Clause& c = **it;
-        for (uint i = 0; i < c.size(); i++) {
-            if (solver.value(c[i]) != l_Undef) goto next;
-        }
-        if (!tryAll(c.getData(), c.getDataEnd()))
-            goto end;
-
-        next:;
-    }
-
-    for (Clause **it = solver.learnts.getData(), **end = solver.learnts.getDataEnd(); it != end; it++) {
-        Clause& c = **it;
-        for (uint i = 0; i < c.size(); i++) {
-            if (solver.value(c[i]) != l_Undef) goto next2;
-        }
-        if (!tryAll(c.getData(), c.getDataEnd()))
-            goto end;
-
-        next2:;
-    }*/
 
 end:
     bool removedOldLearnts = false;
-    //Print results
-    if (solver.conf.verbosity  >= 1)
-      printResults(myTime);
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
