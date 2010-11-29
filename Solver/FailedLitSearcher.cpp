@@ -710,7 +710,8 @@ const bool FailedLitSearcher::tryCacheAddBin()
     uint32_t added = 0;
 
     uint64_t extraTime = 0;
-    uint64_t maxTime = 3000L*1000L*1000L;
+    uint64_t maxTime1 = 50L*1000L*1000L;
+    uint64_t maxTime2 = 2000L*1000L*1000L;
     double myTime = cpuTime();
 
     vector<vector<Lit> > litReachable;
@@ -723,7 +724,7 @@ const bool FailedLitSearcher::tryCacheAddBin()
             || solver.xorSubsumer->getVarElimed()[lit.var()])
             continue;
 
-        if (extraTime > 1000L*1000L*1000L) break;
+        if (extraTime > maxTime1) break;
 
         vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
         extraTime += cache.size();
@@ -746,7 +747,7 @@ const bool FailedLitSearcher::tryCacheAddBin()
             || solver.xorSubsumer->getVarElimed()[lit.var()])
             continue;
 
-        if (extraTime > maxTime) break;
+        if (extraTime > maxTime2) break;
 
         vector<Lit>& litReach1 = litReachable[(lit).toInt()];
         vector<Lit>& litReach2 = litReachable[(~lit).toInt()];
