@@ -783,7 +783,7 @@ const bool FailedLitSearcher::tryCacheAddBin()
 
                 extraTime += 3;
                 //if (!(it->sign() == false && it2->sign() == true) && !propagatesCache(~(*it), *it2, extraTime)) {
-                if (!propagatesCache(*it, ~(*it2), extraTime) || !propagatesCache(*it2, ~(*it), extraTime)) {
+                if (!propagatesCache(*it, ~(*it2), extraTime) && !propagatesCache(*it2, ~(*it), extraTime)) {
                     lits.clear();
                     lits.growTo(2);
                     lits[0] = ~(*it);
