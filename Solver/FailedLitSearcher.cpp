@@ -244,7 +244,7 @@ const bool FailedLitSearcher::search()
 
     if (solver.conf.verbosity  >= 1) printResults(myTime);
 
-    if (numCalls >= 3 && (numCalls % 2) == 1 && !tryCacheAddBin()) goto end;
+    //if (numCalls >= 3 && (numCalls % 2) == 1 && !tryCacheAddBin()) goto end;
     //if (numCalls >= 2 && !tryCacheBoth()) goto end;
 
 end:
