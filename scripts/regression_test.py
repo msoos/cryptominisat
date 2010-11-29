@@ -56,7 +56,7 @@ class Tester:
         self.sumTime = 0.0
         self.sumProp = 0
         self.verbose = False
-        self.gaussUntil = 0
+        self.gaussUntil = 100
         self.testDir = "../tests/"
         self.testDirNewVar = "../tests/newVar/"
         self.cryptominisat = "../build/cryptominisat"
