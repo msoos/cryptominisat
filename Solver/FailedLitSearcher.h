@@ -59,9 +59,6 @@ class FailedLitSearcher {
         const bool tryBoth(const Lit lit1, const Lit lit2);
         const bool tryAll(const Lit* begin, const Lit* end);
 
-        const bool tryCacheAddBin();
-        const bool tryCacheBoth();
-
         void printResults(const double myTime) const;
 
         Solver& solver; ///<The solver we are updating&working with
@@ -147,6 +144,11 @@ class FailedLitSearcher {
         bool binXorFind;
         uint32_t lastTrailSize;
         vector<BinXorToAdd> binXorToAdd;
+
+        //Cache stuff
+        const bool tryCacheAddBin();
+        const bool tryCacheBoth();
+        const bool propagatesCache(const Lit a, const Lit b, uint64_t& extraTime) const;
 
         /**
         @brief Num. 2-long xor-found through Le Berre paper
