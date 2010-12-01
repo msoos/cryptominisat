@@ -887,6 +887,8 @@ void Solver::calcReachability()
             || solver.subsumer->getVarElimed()[it->var()]
             || solver.xorSubsumer->getVarElimed()[it->var()])
             continue;*/
+            assert(*it != lit);
+            assert(*it != ~lit);
             if (litReachable[it->toInt()].lit == lit_Undef || litReachable[it->toInt()].numInCache < cacheSize) {
                 litReachable[it->toInt()].lit = lit;
                 litReachable[it->toInt()].numInCache = cacheSize;
