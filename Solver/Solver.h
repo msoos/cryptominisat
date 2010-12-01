@@ -365,6 +365,15 @@ protected:
             vector<Lit> lits;
             uint64_t conflictLastUpdated;
     };
+    class LitReachData {
+        public:
+            LitReachData() :
+                lit(lit_Undef)
+                , numInCache(0)
+            {}
+            Lit lit;
+            uint32_t numInCache;
+    };
     vector<bool>        seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
     vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
@@ -373,6 +382,8 @@ protected:
     void                minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue);
     void                transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp);
     void                saveOTFData();
+    vector<LitReachData>litReachable;
+    void                calcReachability();
 
     ////////////
     //Logging
