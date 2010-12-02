@@ -128,7 +128,7 @@ public:
 
     inline void setOne()
     {
-        memset(mp, 0, size*sizeof(uint64_t));
+        memset(mp, 0xff, size*sizeof(uint64_t));
     }
 
     inline void clearBit(const uint32_t i)

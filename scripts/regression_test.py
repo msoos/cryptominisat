@@ -250,6 +250,7 @@ class Tester:
         for lit in lits:
             numlit = int(lit)
             if numlit != 0:
+                if (abs(numlit) not in value): continue
                 if numlit < 0:
                     final |= ~value[abs(numlit)]
                 else:

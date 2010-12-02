@@ -155,6 +155,7 @@ const bool Solver::verifyBinClauses() const
                 && value(ws[i].getOtherLit()) != l_True
             ) {
                 std::cout << "bin clause: " << lit << " , " << ws[i].getOtherLit() << " not satisfied!" << std::endl;
+                std::cout << "value of unsat bin clause: " << value(lit) << " , " << value(ws[i].getOtherLit()) << std::endl;
                 return false;
             }
         }
