@@ -19,12 +19,11 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 //#define DEBUG_COMMENT_PARSING
 
-DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _debugNewVar, const bool _grouping, const bool _addAsLearnt):
+DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _debugNewVar, const bool _grouping):
     solver(_solver)
     , debugLib(_debugLib)
     , debugNewVar(_debugNewVar)
     , grouping(_grouping)
-    , addAsLearnt(_addAsLearnt)
     , groupId(0)
 {}
 
@@ -175,7 +174,7 @@ void DimacsParser::printHeader(StreamBuffer& in)
     if (match(in, "p cnf")) {
         int vars    = parseInt(in, len);
         int clauses = parseInt(in, len);
-        if (solver->conf.verbosity >= 1) {
+        if (solver->getVerbosity() >= 1) {
             std::cout << "c -- header says num vars:   " << std::setw(12) << vars << std::endl;
             std::cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << std::endl;
         }
@@ -373,7 +372,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         solver->addXorClause(lits, xorEqualFalse, groupId, name.c_str());
         numXorClauses++;
     } else {
-        if (addAsLearnt || learnt) {
+        if (learnt) {
             solver->addLearntClause(lits, groupId, NULL, glue, miniSatAct);
             numLearntClauses++;
         } else {
@@ -434,7 +433,7 @@ void DimacsParser::parse_DIMACS(T input_stream)
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->getVerbosity() >= 1) {
         std::cout << "c -- clauses added: "
         << std::setw(12) << numLearntClauses
         << " learnts, "

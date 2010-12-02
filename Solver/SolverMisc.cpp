@@ -559,7 +559,7 @@ void Solver::addSymmBreakClauses()
     }
 
 
-    DimacsParser parser(this, false, false, false, true);
+    DimacsParser parser(this, false, false, false);
 
     #ifdef DISABLE_ZLIB
     FILE * in = fopen("output", "rb");

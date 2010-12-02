@@ -94,12 +94,12 @@ void SIGINT_handler(int signum)
         Solver& solver = *solversToInterrupt.begin()->second;
         printf("\n");
         std::cerr << "*** INTERRUPTED ***" << std::endl;
-        if (solver.conf.needToDumpLearnts || solver.conf.needToDumpOrig) {
-            solver.needToInterrupt = true;
+        if (solver.getNeedToDumpLearnts() || solver.getNeedToDumpOrig()) {
+            solver.setNeedToInterrupt();
             std::cerr << "*** Please wait. We need to interrupt cleanly" << std::endl;
             std::cerr << "*** This means we might need to finish some calculations" << std::endl;
         } else {
-            if (solver.conf.verbosity >= 1) solver.printStats();
+            if (solver.getVerbosity() >= 1) solver.printStats();
             exit(1);
         }
     }
@@ -107,7 +107,7 @@ void SIGINT_handler(int signum)
 
 void Main::readInAFile(const std::string& filename, Solver& solver)
 {
-    if (solver.conf.verbosity >= 1) {
+    if (conf.verbosity >= 1) {
         std::cout << "c Reading file '" << filename << "'" << std::endl;
     }
     #ifdef DISABLE_ZLIB
@@ -133,7 +133,7 @@ void Main::readInAFile(const std::string& filename, Solver& solver)
 
 void Main::readInStandardInput(Solver& solver)
 {
-    if (solver.conf.verbosity >= 1) {
+    if (solver.getVerbosity()) {
         std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
     }
     #ifdef DISABLE_ZLIB
@@ -177,7 +177,7 @@ void Main::parseInAllFiles(Solver& solver)
         readInAFile(argv[(twoFileNamesPresent ? argc-2 : argc-1)], solver);
     }
 
-    if (solver.conf.verbosity >= 1) {
+    if (conf.verbosity >= 1) {
         std::cout << "c Parsing time: "
         << std::fixed << std::setw(5) << std::setprecision(2) << (cpuTime() - myTime)
         << " s" << std::endl;

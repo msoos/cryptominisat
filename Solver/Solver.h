@@ -135,8 +135,6 @@ public:
     //
     lbool    solve       (const vec<Lit>& assumps); ///<Search for a model that respects a given set of assumptions.
     lbool    solve       ();                        ///<Search without assumptions.
-    void     handleSATSolution();                   ///<Extends model, if needed, and fills "model"
-    void     handleUNSATSolution();                 ///<If conflict really was zero-length, sets OK to false
     bool     okay         () const;                 ///<FALSE means solver is in a conflicting state
 
     // Variable mode:
@@ -158,12 +156,6 @@ public:
     //
     vec<lbool> model;             ///<If problem is satisfiable, this vector contains the model (if any).
     vec<Lit>   conflict;          ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
-
-    // Mode of operation:
-    //
-    SolverConf conf;
-    GaussConf gaussconfig;   ///<Configuration for the gaussian elimination can be set here
-    bool      needToInterrupt;    ///<Used internally mostly. If set to TRUE, we will interrupt cleanly ASAP. The important thing is "cleanly", since we need to wait until a point when all datastructures are in a sane state (i.e. not in the middle of some algorithm)
 
     //Logging
     void needStats();              // Prepares the solver to output statistics
@@ -209,8 +201,27 @@ public:
     */
     const double   getTotalTimeXorSubsumer() const;
 
+    const uint32_t getVerbosity() const;
+    void setNeedToInterrupt();
+    const bool getNeedToDumpLearnts() const;
+    const bool getNeedToDumpOrig() const;
+
 protected:
-    //gauss
+    // Mode of operation:
+    //
+    SolverConf conf;
+    /**
+    @brief If set to TRUE, we will interrupt cleanly ASAP.
+
+    The important thing is "cleanly", since we need to wait until a point when
+    all datastructures are in a sane state (i.e. not in the middle of some
+    algorithm)
+    */
+    bool      needToInterrupt;
+
+    //Gauss
+    //
+    GaussConf gaussconfig;   ///<Configuration for the gaussian elimination can be set here
     const bool clearGaussMatrixes();
     vector<Gaussian*> gauss_matrixes;
     #ifdef USE_GAUSS
@@ -421,6 +432,12 @@ protected:
     llbool   handle_conflict  (vec<Lit>& learnt_clause, PropBy confl, uint64_t& conflictC, const bool update);// Handles the conflict clause
     llbool   new_decision     (const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const uint64_t conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
+    ///////////////
+    // Solution handling
+    ///////////////
+    void     handleSATSolution();   ///<Extends model, if needed, and fills "model"
+    void     handleUNSATSolution(); ///<If conflict really was zero-length, sets OK to false
+
     /////////////////
     // Maintaining Variable/Clause activity:
     /////////////////
@@ -565,6 +582,25 @@ protected:
 //=================================================================================================
 // Implementation of inline methods:
 
+inline const uint32_t Solver::getVerbosity() const
+{
+    return conf.verbosity;
+}
+
+inline void Solver::setNeedToInterrupt()
+{
+    needToInterrupt = true;
+}
+
+inline const bool Solver::getNeedToDumpLearnts() const
+{
+    return conf.needToDumpLearnts;
+}
+
+inline const bool Solver::getNeedToDumpOrig() const
+{
+    return conf.needToDumpOrig;
+}
 
 inline void Solver::insertVarOrder(Var x)
 {

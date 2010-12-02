@@ -59,8 +59,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedData* sharedData) :
         // Parameters: (formerly in 'SearchParams')
         conf(_conf)
-        , gaussconfig(_gaussconfig)
         , needToInterrupt  (false)
+        , gaussconfig(_gaussconfig)
         #ifdef USE_GAUSS
         , sum_gauss_called (0)
         , sum_gauss_confl  (0)

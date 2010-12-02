@@ -37,7 +37,7 @@ class Solver;
 class DimacsParser
 {
     public:
-        DimacsParser(Solver* solver, const bool debugLib, const bool debugNewVar, const bool grouping, const bool addAsLearnt = false);
+        DimacsParser(Solver* solver, const bool debugLib, const bool debugNewVar, const bool grouping);
 
         template <class T>
         void parse_DIMACS(T input_stream);
@@ -63,7 +63,6 @@ class DimacsParser
         const bool debugLib;
         const bool debugNewVar;
         const bool grouping;
-        const bool addAsLearnt;
 
         uint32_t debugLibPart; ///<printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
         uint32_t groupId;
