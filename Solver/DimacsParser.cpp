@@ -11,7 +11,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <iostream>
 #include <iomanip>
 
-#include "Solver.h"
+#include "MTSolver.h"
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_COMMENT_PARSING
@@ -19,7 +19,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 //#define DEBUG_COMMENT_PARSING
 
-DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _debugNewVar, const bool _grouping):
+DimacsParser::DimacsParser(MTSolver* _solver, const bool _debugLib, const bool _debugNewVar, const bool _grouping):
     solver(_solver)
     , debugLib(_debugLib)
     , debugNewVar(_debugNewVar)

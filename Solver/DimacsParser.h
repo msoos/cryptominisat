@@ -29,7 +29,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "Logger.h"
 #endif //STATS_NEEDED
 
-class Solver;
+class MTSolver;
 
 /**
 @brief Parses up a DIMACS file that my be zipped
@@ -37,7 +37,7 @@ class Solver;
 class DimacsParser
 {
     public:
-        DimacsParser(Solver* solver, const bool debugLib, const bool debugNewVar, const bool grouping);
+        DimacsParser(MTSolver* solver, const bool debugLib, const bool debugNewVar, const bool grouping);
 
         template <class T>
         void parse_DIMACS(T input_stream);
@@ -59,7 +59,7 @@ class DimacsParser
         std::string stringify(uint32_t x);
 
 
-        Solver *solver;
+        MTSolver *solver;
         const bool debugLib;
         const bool debugNewVar;
         const bool grouping;

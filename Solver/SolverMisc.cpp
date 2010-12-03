@@ -559,6 +559,7 @@ void Solver::addSymmBreakClauses()
     }
 
 
+    /*
     DimacsParser parser(this, false, false, false);
 
     #ifdef DISABLE_ZLIB
@@ -572,6 +573,7 @@ void Solver::addSymmBreakClauses()
     #else
     gzclose(in);
     #endif // DISABLE_ZLIB
+    */
     std::cout << "c Finished saucy, time: " << (cpuTime() - myTime) << std::endl;
 }
 
@@ -618,12 +620,11 @@ void Solver::printStatsLine(std::string left, T value, std::string extra)
 Prints all sorts of statistics, like number of restarts, time spent in
 SatELite-type simplification, number of unit claues found, etc.
 */
-void Solver::printStats()
+void Solver::printStats(const int numThreads)
 {
     double   cpu_time = cpuTime();
     uint64_t mem_used = memUsed();
 
-    int numThreads = omp_get_num_threads();
     if (numThreads > 1) {
         std::cout << "c Following stats are for *FIRST FINISHED THREAD ONLY*" << std::endl;
         #if !defined(_MSC_VER) && !defined(RUSAGE_THREAD)

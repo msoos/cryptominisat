@@ -37,7 +37,6 @@ Here is a picture of of the above process in more detail:
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <omp.h>
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
 #else
@@ -76,7 +75,7 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-std::map<uint32_t, Solver*> solversToInterrupt;
+MTSolver* solversToInterrupt;
 std::set<uint32_t> finished;
 
 /**
@@ -89,23 +88,20 @@ is used to achieve this
 */
 void SIGINT_handler(int signum)
 {
-    #pragma omp critical
-    {
-        Solver& solver = *solversToInterrupt.begin()->second;
-        printf("\n");
-        std::cerr << "*** INTERRUPTED ***" << std::endl;
-        if (solver.getNeedToDumpLearnts() || solver.getNeedToDumpOrig()) {
-            solver.setNeedToInterrupt();
-            std::cerr << "*** Please wait. We need to interrupt cleanly" << std::endl;
-            std::cerr << "*** This means we might need to finish some calculations" << std::endl;
-        } else {
-            if (solver.getVerbosity() >= 1) solver.printStats();
-            exit(1);
-        }
+    MTSolver& solver = *solversToInterrupt;
+    printf("\n");
+    std::cerr << "*** INTERRUPTED ***" << std::endl;
+    if (solver.getNeedToDumpLearnts() || solver.getNeedToDumpOrig()) {
+        solver.setNeedToInterrupt();
+        std::cerr << "*** Please wait. We need to interrupt cleanly" << std::endl;
+        std::cerr << "*** This means we might need to finish some calculations" << std::endl;
+    } else {
+        if (solver.getVerbosity() >= 1) solver.printStats();
+        exit(1);
     }
 }
 
-void Main::readInAFile(const std::string& filename, Solver& solver)
+void Main::readInAFile(const std::string& filename, MTSolver& solver)
 {
     if (conf.verbosity >= 1) {
         std::cout << "c Reading file '" << filename << "'" << std::endl;
@@ -131,7 +127,7 @@ void Main::readInAFile(const std::string& filename, Solver& solver)
     #endif // DISABLE_ZLIB
 }
 
-void Main::readInStandardInput(Solver& solver)
+void Main::readInStandardInput(MTSolver& solver)
 {
     if (solver.getVerbosity()) {
         std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
@@ -157,7 +153,7 @@ void Main::readInStandardInput(Solver& solver)
 
 
 
-void Main::parseInAllFiles(Solver& solver)
+void Main::parseInAllFiles(MTSolver& solver)
 {
     double myTime = cpuTime();
 
@@ -315,7 +311,7 @@ const char* Main::hasPrefix(const char* str, const char* prefix)
         return NULL;
 }
 
-void Main::printResultFunc(const Solver& S, const lbool ret, FILE* res)
+void Main::printResultFunc(const MTSolver& S, const lbool ret, FILE* res)
 {
     if (res != NULL) {
         if (ret == l_True) {
@@ -695,12 +691,13 @@ void Main::printVersionInfo(const uint32_t verbosity)
     if (verbosity >= 1) printf("c This is CryptoMiniSat %s\n", VERSION);
 }
 
-const int Main::singleThreadSolve()
+const int Main::solve()
 {
-    Solver solver(conf, gaussconfig);
-    solversToInterrupt[0] = &solver;
+    MTSolver solver(numThreads, conf, gaussconfig);
+    solversToInterrupt = &solver;
 
     printVersionInfo(conf.verbosity);
+    solver.printNumThreads();
     setDoublePrecision(conf.verbosity);
 
     parseInAllFiles(solver);
@@ -761,119 +758,6 @@ int Main::correctReturnValue(const lbool ret) const
     return retval;
 }
 
-const int Main::oneThreadSolve()
-{
-    int numThreads = omp_get_num_threads();
-    SolverConf myConf = conf;
-    int num = omp_get_thread_num();
-    myConf.origSeed = num;
-    if (num > 0) {
-        //if (num % 2) myConf.fixRestartType = dynamic_restart;
-        //else myConf.fixRestartType = static_restart;
-        myConf.simpBurstSConf *= 1.0 + num;
-        myConf.simpStartMult *= 1.0 + 0.2*num;
-        myConf.simpStartMMult *= 1.0 + 0.2*num;
-        if (num == numThreads-1) {
-            //myConf.doVarElim = false;
-            myConf.doPerformPreSimp = false;
-            myConf.polarity_mode = polarity_false;
-        }
-    }
-    if (num != 0) myConf.verbosity = 0;
-
-    Solver solver(myConf, gaussconfig, &sharedData);
-    #pragma omp critical (solversToInterr)
-    {
-        solversToInterrupt[num] = &solver;
-        //std::cout << "Solver num " << num << " is to be interrupted " << std::endl;
-    }
-
-    printVersionInfo(myConf.verbosity);
-    setDoublePrecision(myConf.verbosity);
-
-    parseInAllFiles(solver);
-    lbool ret = solver.solve();
-    #pragma omp critical (finished)
-    {
-        finished.insert(num);
-    }
-
-    int retval = 0;
-    #pragma omp single
-    {
-        int numNeededInterrupt = 0;
-        while(numNeededInterrupt != numThreads-1) {
-            #pragma omp critical (solversToInterr)
-            {
-                for(int i = 0; i < numThreads; i++) {
-                    if (i != num
-                        && solversToInterrupt.find(i) != solversToInterrupt.end()
-                        && solversToInterrupt[i]->needToInterrupt == false
-                        ) {
-                        solversToInterrupt[i]->needToInterrupt = true;
-                        numNeededInterrupt++;
-                    }
-                }
-            }
-        }
-        bool mustWait = true;
-        while (mustWait) {
-            #pragma omp critical (finished)
-            if (finished.size() == (unsigned)numThreads) mustWait = false;
-        }
-        if (conf.needToDumpLearnts) {
-            solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
-            if (conf.verbosity >= 1) {
-                std::cout << "c Sorted learnt clauses dumped to file '"
-                << conf.learntsFilename << "'" << std::endl;
-            }
-        }
-        if (conf.needToDumpOrig) {
-            solver.dumpOrigClauses(conf.origFilename);
-            if (conf.verbosity >= 1)
-                std::cout << "c Simplified original clauses dumped to file '"
-                << conf.origFilename << "'" << std::endl;
-        }
-
-        FILE* res = openOutputFile();
-        if (conf.verbosity >= 1) solver.printStats();
-        printResultFunc(solver, ret, res);
-
-        retval = correctReturnValue(ret);
-        exit(retval);
-    }
-    return retval;
-}
-
-const int Main::multiThreadSolve()
-{
-    if (max_nr_of_solutions > 1) {
-        std::cerr << "ERROR: When multi-threading, only one solution can be found" << std::endl;
-        std::cerr << "Please set option '--threads=1' on the command line." << std::endl;
-        exit(-1);
-    }
-    int finalRetVal;
-    if (numThreads != -1) {
-        assert(numThreads > 0);
-        omp_set_num_threads(numThreads);
-    }
-    #pragma omp parallel
-    {
-        #pragma omp single
-        {
-            if (conf.verbosity >= 1)
-                std::cout << "c Using " << omp_get_num_threads()
-                << " threads" << std::endl;
-        }
-        int retval = oneThreadSolve();
-
-        #pragma omp single
-        finalRetVal = retval;
-    }
-
-    return finalRetVal;
-}
-
 int main(int argc, char** argv)
 {
     Main main(argc, argv);
@@ -881,8 +765,5 @@ int main(int argc, char** argv)
     signal(SIGINT, SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);
 
-    if (main.numThreads == 1)
-        return main.singleThreadSolve();
-    else
-        return main.multiThreadSolve();
+    return main.solve();
 }

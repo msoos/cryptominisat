@@ -106,7 +106,7 @@ string Logger::cut_name_to_size(const string& name) const
         ret.resize(len-1);
         len--;
     }
-    
+
     if (len > SND_WIDTH-3) {
         ret[SND_WIDTH-3] = '\0';
         ret[SND_WIDTH-4] = '.';
@@ -121,7 +121,7 @@ void Logger::set_group_name(const uint group, const char* name_tmp)
 {
     if (!statistics_on && !proof_graph_on)
         return;
-    
+
     string name;
     if (name_tmp == NULL) return;
     else name = name_tmp;
@@ -156,19 +156,16 @@ string Logger::get_var_name(const Var var) const
 }
 
 // sets the variable's name
-void Logger::set_variable_name(const uint var, char* name_tmp)
+void Logger::set_variable_name(const uint var, const string& name_tmp)
 {
     if (!statistics_on && !proof_graph_on)
         return;
-    
+
     new_var(var);
-    
+
     string name;
-    if (name_tmp == NULL)
-        name = "";
-    else
-        name = name_tmp;
-    
+    name = name_tmp;
+
     if (varnames[var] == "Noname") {
         varnames[var] = name;
     } else if (varnames[var] != name) {
@@ -181,7 +178,7 @@ void Logger::first_begin()
 {
     if (begin_called)
         return;
-    
+
     begin();
 }
 
@@ -191,7 +188,7 @@ void Logger::begin()
     if (proof_graph_on) {
         std::stringstream filename;
         filename << "proofs/" << runid << "-proof" << proofStarts++ << "-" << S->starts << ".dot";
-        
+
         if (S->starts == 0)
             history.push_back(uniqueid);
         else {
@@ -217,13 +214,13 @@ void Logger::conflict(const confl_type type, const uint goback_level, const uint
 {
     first_begin();
     assert(!(proof == NULL && proof_graph_on));
-    
+
     const uint goback_sublevel = S->trail_lim[goback_level];
 
     if (proof_graph_on) {
         uniqueid++;
         fprintf(proof,"node%d [shape=polygon,sides=5,label=\"",uniqueid);
-        
+
         if (!mini_proof) {
             for (uint32_t i = 0; i != learnt_clause.size(); i++) {
                 if (learnt_clause[i].sign()) fprintf(proof,"-");
@@ -242,7 +239,7 @@ void Logger::conflict(const confl_type type, const uint goback_level, const uint
         else
             fprintf(proof,"%s\"", groupnames[group].c_str());
         fprintf(proof,"];\n");
-        
+
         if (!mini_proof)
             history.resize(goback_sublevel+1);
         else
@@ -254,12 +251,12 @@ void Logger::conflict(const confl_type type, const uint goback_level, const uint
         times_group_caused_conflict[group]++;
         depths_of_conflicts_for_group[group].sum += S->decisionLevel();
         depths_of_conflicts_for_group[group].num ++;
-        
+
         no_conflicts++;
         sum_conflict_depths += S->trail.size() - S->trail_lim[0];
         sum_decisions_on_branches += S->decisionLevel();
         sum_propagations_on_branches += S->trail.size() - S->trail_lim[0] - S->decisionLevel();
-        
+
         if (branch_depth_distrib.size() <= S->decisionLevel())
             branch_depth_distrib.resize(S->decisionLevel()+1, 0);
         branch_depth_distrib[S->decisionLevel()]++;
@@ -275,7 +272,7 @@ void Logger::propagation(const Lit lit, Clause* c)
 {
     first_begin();
     assert(!(proof == NULL && proof_graph_on));
-    
+
     uint group;
     prop_type type;
     if (c == NULL) {
@@ -292,7 +289,7 @@ void Logger::propagation(const Lit lit, Clause* c)
     //graph
     if (proof_graph_on && (!mini_proof || type == guess_type)) {
         uniqueid++;
-        
+
         fprintf(proof,"node%d [shape=box, label=\"",uniqueid);;
         if (lit.sign())
             fprintf(proof,"-");
@@ -302,16 +299,16 @@ void Logger::propagation(const Lit lit, Clause* c)
             fprintf(proof,"Var: %d\"];\n",lit.var());
 
         fprintf(proof,"node%d -> node%d [label=\"",history[history.size()-1],uniqueid);
-        
+
         switch (type) {
         case simple_propagation_type:
             fprintf(proof,"%s\"];\n", groupnames[group].c_str());
             break;
-            
+
         case add_clause_type:
             fprintf(proof,"red. from clause\"];\n");
             break;
-            
+
         case guess_type:
             fprintf(proof,"guess\",style=bold];\n");
             break;
@@ -336,7 +333,7 @@ void Logger::propagation(const Lit lit, Clause* c)
         case guess_type:
             no_decisions++;
             times_var_guessed[lit.var()]++;
-            
+
             depths_of_assigns_for_var[lit.var()].sum += S->decisionLevel();
             depths_of_assigns_for_var[lit.var()].num ++;
             break;
@@ -349,7 +346,7 @@ void Logger::end(const finish_type finish)
 {
     first_begin();
     assert(!(proof == NULL && proof_graph_on));
-    
+
     if (proof_graph_on) {
         uniqueid++;
         switch (finish) {
@@ -377,7 +374,7 @@ void Logger::end(const finish_type finish)
         if (finish == restarting)
             reset_statistics();
     }
-    
+
     if (model_found || unsat_model_found)
         begin_called = false;
 }
@@ -531,7 +528,7 @@ void Logger::print_vars(const vector<pair<double, uint> >& to_print) const
     uint i = 0;
     for (vector<pair<double, uint> >::const_iterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++)
         print_line(it->second+1, cut_name_to_size(varnames[it->second]), it->first);
-    
+
     print_footer();
 }
 
@@ -541,7 +538,7 @@ void Logger::print_vars(const vector<pair<uint, uint> >& to_print) const
     for (vector<pair<uint, uint> >::const_iterator it = to_print.begin(); it != to_print.end() && i < max_print_lines; it++, i++) {
         print_line(it->second+1, cut_name_to_size(varnames[it->second]), it->first);
     }
-    
+
     print_footer();
 }
 
@@ -585,7 +582,7 @@ void Logger::print_branch_depth_distrib() const
     ofstream branch_depth_file;
     branch_depth_file.open(ss.str().c_str());
     i = 0;
-    
+
     for (map<uint, uint>::iterator it = range_stat.begin(); it != range_stat.end(); it++, i++) {
         std::stringstream ss2;
         ss2 << it->first*range << " - " << it->first*range + range-1;
@@ -610,50 +607,50 @@ void Logger::print_learnt_clause_distrib() const
 {
     map<uint, uint> learnt_sizes;
     const vec<Clause*>& learnts = S->get_learnts();
-    
+
     uint maximum = 0;
-    
+
     for (uint i = 0; i < learnts.size(); i++)
     {
         uint size = learnts[i]->size();
         maximum = std::max(maximum, size);
-        
+
         map<uint, uint>::iterator it = learnt_sizes.find(size);
         if (it == learnt_sizes.end())
             learnt_sizes[size] = 1;
         else
             it->second++;
     }
-    
+
     learnt_sizes[0] = S->get_unitary_learnts_num();
-    
+
     uint slice = (maximum+1)/max_print_lines + (bool)((maximum+1)%max_print_lines);
-    
+
     print_footer();
     print_simple_line(" Learnt clause length distribution");
     print_line("Length between", "no. cl.");
     print_footer();
-    
+
     uint until = slice;
     uint from = 0;
     while(until < maximum+1) {
         std::stringstream ss2;
         ss2 << from << " - " << until-1;
-        
+
         uint sum = 0;
         for (; from < until; from++) {
             map<uint, uint>::const_iterator it = learnt_sizes.find(from);
             if (it != learnt_sizes.end())
                 sum += it->second;
         }
-        
+
         print_line(ss2.str(), sum);
-        
+
         until += slice;
     }
-    
+
     print_footer();
-    
+
     print_leearnt_clause_graph_distrib(maximum, learnt_sizes);
 }
 
@@ -677,16 +674,16 @@ void Logger::print_leearnt_clause_graph_distrib(const uint maximum, const map<ui
         hmax = std::max(hmax, sum);
     }
     slices.resize(no_slices, 0);
-    
+
     uint height = max_print_lines;
     uint hslice = (hmax+1)/height + (bool)((hmax+1)%height);
     if (hslice == 0) return;
-    
+
     print_simple_line(" Learnt clause distribution in graph form");
     print_footer();
     string yaxis = "Number";
     uint middle = (height-yaxis.size())/2;
-    
+
     for (int i = height-1; i > 0; i--) {
         cout << "| ";
         if (height-1-i >= middle && height-1-i-middle < yaxis.size())
@@ -754,7 +751,7 @@ void Logger::printstats() const
     uint len2 = len + tmp.str().length()%2 + (fullwidth-2)%2;
     cout << "||" << std::setfill('*') << std::setw(len) << "*" << tmp.str() << std::setw(len2) << "*" << "||" << endl;
     cout << "+" << std::setfill('=') << std::setw(fullwidth) << "=" << std::setfill(' ') << "+" << endl;
-    
+
     cout.setf(std::ios_base::left);
     cout.precision(2);
     print_statistics_note();
@@ -781,7 +778,7 @@ void Logger::print_matrix_stats() const
     print_footer();
     print_simple_line(" Matrix statistics");
     print_footer();
-    
+
     uint i = 0;
     for (vector<Gaussian*>::const_iterator it = S->gauss_matrixes.begin(), end = S->gauss_matrixes.end(); it != end; it++, i++) {
         std::stringstream s;
@@ -789,20 +786,20 @@ void Logger::print_matrix_stats() const
         std::stringstream tmp;
         tmp << std::boolalpha << !(*it)->get_disabled();
         print_line(s.str(), tmp.str());
-        
+
         s.str("");
         s << "Matrix " << i << " called";
         print_line(s.str(), (*it)->get_called());
-        
+
         s.str("");
         s << "Matrix " << i << " propagations";
         print_line(s.str(), (*it)->get_useful_prop());
-        
+
         s.str("");
         s << "Matrix " << i << " conflicts";
         print_line(s.str(), (*it)->get_useful_confl());
     }
-    
+
     print_footer();
 }
 #endif //USE_GAUSS
@@ -817,18 +814,18 @@ void Logger::print_advanced_stats() const
     print_line("Avg. branch depth", (double)sum_conflict_depths/(double)no_conflicts);
     print_line("No. decisions", no_decisions);
     print_line("No. propagations",no_propagations);
-    
+
     //printf("no progatations/no decisions (i.e. one decision gives how many propagations on average *for the whole search graph*): %f\n", (double)no_propagations/(double)no_decisions);
     //printf("no propagations/sum decisions on branches (if you look at one specific branch, what is the average number of propagations you will find?): %f\n", (double)no_propagations/(double)sum_decisions_on_branches);
-    
+
     print_simple_line("sum decisions on branches/no. branches");
     print_simple_line(" (in a given branch, what is the avg.");
     print_line("  no. of decisions?)",(double)sum_decisions_on_branches/(double)no_conflicts);
-    
+
     print_simple_line("sum propagations on branches/no. branches");
     print_simple_line(" (in a given branch, what is the");
     print_line("  avg. no. of propagations?)",(double)sum_propagations_on_branches/(double)no_conflicts);
-    
+
     print_footer();
 }
 
@@ -849,7 +846,7 @@ void Logger::reset_statistics()
     assert(S->decisionLevel() == 0);
     assert(times_var_guessed.size() == times_var_propagated.size());
     assert(times_group_caused_conflict.size() == times_group_caused_propagation.size());
-    
+
     typedef vector<uint>::iterator vecit;
     for (vecit it = times_var_guessed.begin(); it != times_var_guessed.end(); it++)
         *it = 0;
@@ -887,7 +884,7 @@ void Logger::reset_statistics()
     }
     for (uint i = 0; i < depths_of_assigns_unit.size(); i++)
         depths_of_assigns_unit[i] = false;
-    
+
     for (uint i = 0; i < depths_of_propagations_unit.size(); i++)
         depths_of_propagations_unit[i] = false;
 

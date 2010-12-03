@@ -16,7 +16,7 @@ using std::string;
 #include <zlib.h>
 #endif // DISABLE_ZLIB
 
-#include "Solver.h"
+#include "MTSolver.h"
 #include "SharedData.h"
 
 class Main
@@ -26,22 +26,18 @@ class Main
 
         void parseCommandLine();
 
-        const int singleThreadSolve();
-        const int oneThreadSolve();
-        const int multiThreadSolve();
-
-        int numThreads;
+        const int solve();
 
     private:
 
         void printUsage(char** argv);
         const char* hasPrefix(const char* str, const char* prefix);
-        void printResultFunc(const Solver& S, const lbool ret, FILE* res);
+        void printResultFunc(const MTSolver& S, const lbool ret, FILE* res);
 
         //File reading
-        void readInAFile(const std::string& filename, Solver& solver);
-        void readInStandardInput(Solver& solver);
-        void parseInAllFiles(Solver& solver);
+        void readInAFile(const std::string& filename, MTSolver& solver);
+        void readInStandardInput(MTSolver& solver);
+        void parseInAllFiles(MTSolver& solver);
         FILE* openOutputFile();
 
         void setDoublePrecision(const uint32_t verbosity);
@@ -50,6 +46,7 @@ class Main
 
         SolverConf conf;
         GaussConf gaussconfig;
+        int numThreads;
 
         bool grouping;
         bool debugLib;
@@ -59,8 +56,6 @@ class Main
         bool fileNamePresent;
         bool twoFileNamesPresent;
         std::vector<std::string> filesToRead;
-
-        SharedData sharedData;
 
         int argc;
         char** argv;

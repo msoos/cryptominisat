@@ -133,9 +133,9 @@ public:
 
     // Solving:
     //
-    lbool    solve       (const vec<Lit>& assumps); ///<Search for a model that respects a given set of assumptions.
-    lbool    solve       ();                        ///<Search without assumptions.
-    bool     okay         () const;                 ///<FALSE means solver is in a conflicting state
+    const lbool    solve       (const vec<Lit>& assumps); ///<Search for a model that respects a given set of assumptions.
+    const lbool    solve       ();                        ///<Search without assumptions.
+    const bool     okay         () const;                 ///<FALSE means solver is in a conflicting state
 
     // Variable mode:
     //
@@ -143,14 +143,14 @@ public:
 
     // Read state:
     //
-    lbool   value      (const Var x) const;       ///<The current value of a variable.
-    lbool   value      (const Lit p) const;       ///<The current value of a literal.
-    lbool   modelValue (const Lit p) const;       ///<The value of a literal in the last model. The last call to solve must have been satisfiable.
-    uint32_t     nAssigns   ()      const;         ///<The current number of assigned literals.
-    uint32_t     nClauses   ()      const;         ///<The current number of original clauses.
-    uint32_t     nLiterals  ()      const;         ///<The current number of total literals.
-    uint32_t     nLearnts   ()      const;         ///<The current number of learnt clauses.
-    uint32_t     nVars      ()      const;         ///<The current number of variables.
+    const lbool   value      (const Var x) const;       ///<The current value of a variable.
+    const lbool   value      (const Lit p) const;       ///<The current value of a literal.
+    const lbool   modelValue (const Lit p) const;       ///<The value of a literal in the last model. The last call to solve must have been satisfiable.
+    const uint32_t     nAssigns   ()      const;         ///<The current number of assigned literals.
+    const uint32_t     nClauses   ()      const;         ///<The current number of original clauses.
+    const uint32_t     nLiterals  ()      const;         ///<The current number of total literals.
+    const uint32_t     nLearnts   ()      const;         ///<The current number of learnt clauses.
+    const uint32_t     nVars      ()      const;         ///<The current number of variables.
 
     // Extra results: (read-only member variable)
     //
@@ -160,7 +160,7 @@ public:
     //Logging
     void needStats();              // Prepares the solver to output statistics
     void needProofGraph();         // Prepares the solver to output proof graphs during solving
-    void setVariableName(const Var var, const char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
+    void setVariableName(const Var var, const std::string& name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
     const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
     const vec<Clause*>& get_learnts() const; //Get all learnt clauses that are >1 long
     const vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
@@ -177,7 +177,7 @@ public:
     #endif //USE_GAUSS
 
     //Printing statistics
-    void printStats();
+    void printStats(const int numThreads = 1);
     const uint32_t getNumElimSubsume() const;       ///<Get number of variables eliminated
     const uint32_t getNumElimXorSubsume() const;    ///<Get number of variables eliminated with xor-magic
     const uint32_t getNumXorTrees() const;          ///<Get the number of trees built from 2-long XOR-s. This is effectively the number of variables that replace other variables
@@ -203,6 +203,7 @@ public:
 
     const uint32_t getVerbosity() const;
     void setNeedToInterrupt();
+    const bool getNeedToInterrupt() const;
     const bool getNeedToDumpLearnts() const;
     const bool getNeedToDumpOrig() const;
 
@@ -477,8 +478,8 @@ protected:
 
     // Misc:
     //
-    uint32_t decisionLevel    ()      const; // Gives the current decisionlevel.
-    uint32_t abstractLevel    (const Var x) const; // Used to represent an abstraction of sets of decision levels.
+    const uint32_t decisionLevel    ()      const; // Gives the current decisionlevel.
+    const uint32_t abstractLevel    (const Var x) const; // Used to represent an abstraction of sets of decision levels.
 
     /////////////////////////
     //Classes that must be friends, since they accomplish things on our datastructures
@@ -592,6 +593,11 @@ inline void Solver::setNeedToInterrupt()
     needToInterrupt = true;
 }
 
+inline const bool Solver::getNeedToInterrupt() const
+{
+    return needToInterrupt;
+}
+
 inline const bool Solver::getNeedToDumpLearnts() const
 {
     return conf.needToDumpLearnts;
@@ -672,43 +678,43 @@ inline void     Solver::newDecisionLevel()
         return trail.size() - trail_lim[level-1] - 1;
     return trail_lim[level] - trail_lim[level-1] - 1;
 }*/
-inline uint32_t      Solver::decisionLevel ()      const
+inline const uint32_t      Solver::decisionLevel ()      const
 {
     return trail_lim.size();
 }
-inline uint32_t Solver::abstractLevel (const Var x) const
+inline const uint32_t Solver::abstractLevel (const Var x) const
 {
     return 1 << (level[x] & 31);
 }
-inline lbool    Solver::value         (const Var x) const
+inline const lbool    Solver::value         (const Var x) const
 {
     return assigns[x];
 }
-inline lbool    Solver::value         (const Lit p) const
+inline const lbool    Solver::value         (const Lit p) const
 {
     return assigns[p.var()] ^ p.sign();
 }
-inline lbool    Solver::modelValue    (const Lit p) const
+inline const lbool    Solver::modelValue    (const Lit p) const
 {
     return model[p.var()] ^ p.sign();
 }
-inline uint32_t      Solver::nAssigns      ()      const
+inline const uint32_t      Solver::nAssigns      ()      const
 {
     return trail.size();
 }
-inline uint32_t      Solver::nClauses      ()      const
+inline const uint32_t      Solver::nClauses      ()      const
 {
     return clauses.size() + xorclauses.size();
 }
-inline uint32_t      Solver::nLiterals      ()      const
+inline const uint32_t      Solver::nLiterals      ()      const
 {
     return clauses_literals + learnts_literals;
 }
-inline uint32_t      Solver::nLearnts      ()      const
+inline const uint32_t      Solver::nLearnts      ()      const
 {
     return learnts.size();
 }
-inline uint32_t      Solver::nVars         ()      const
+inline const uint32_t      Solver::nVars         ()      const
 {
     return assigns.size();
 }
@@ -723,12 +729,12 @@ inline void     Solver::setDecisionVar(Var v, bool b)
         insertVarOrder(v);
     }
 }
-inline lbool     Solver::solve         ()
+inline const lbool     Solver::solve         ()
 {
     vec<Lit> tmp;
     return solve(tmp);
 }
-inline bool     Solver::okay          ()      const
+inline const bool     Solver::okay          ()      const
 {
     return ok;
 }
@@ -743,14 +749,14 @@ inline void     Solver::needProofGraph()
     dynamic_behaviour_analysis = true;    // Sets the solver and the logger up to generate proof graphs during solving
     logger.proof_graph_on = true;
 }
-inline void     Solver::setVariableName(const Var var, const char* name)
+inline void     Solver::setVariableName(const Var var, const std::string& name)
 {
     while (var >= nVars()) newVar();
     if (dynamic_behaviour_analysis)
         logger.set_variable_name(var, name);
 } // Sets the varible 'var'-s name to 'name' in the logger
 #else
-inline void     Solver::setVariableName(const Var var, const char* name)
+inline void Solver::setVariableName(const Var var, const std::string& name)
 {}
 #endif
 

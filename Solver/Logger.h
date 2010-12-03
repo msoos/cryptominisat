@@ -51,7 +51,7 @@ public:
         sum(0)
         , num(0)
         {}
-    
+
     uint sum;
     uint num;
 };
@@ -74,7 +74,7 @@ public:
 
     //functions to add/name variables
     void new_var(const Var var);
-    void set_variable_name(const uint var, char* name_tmp);
+    void set_variable_name(const uint var, const std::string& name_tmp);
 
     //function to name clause groups
     void set_group_name(const uint group, const char* name_tmp);
@@ -90,11 +90,11 @@ public:
     bool proof_graph_on;
     bool mini_proof;
     bool statistics_on;
-    
+
 private:
     void new_group(const uint group);
     string cut_name_to_size(const string& name) const;
-    
+
     void print_groups(const vector<pair<uint, uint> >& to_print) const;
     void print_groups(const vector<pair<double, uint> >& to_print) const;
     void print_vars(const vector<pair<uint, uint> >& to_print) const;
@@ -120,7 +120,7 @@ private:
     void print_line(const string& str, const T& num) const;
     void print_simple_line(const string& str) const;
     void print_center_line(const string& str) const;
-    
+
     void print_confl_order() const;
     void print_prop_order() const;
     void print_assign_var_order() const;
@@ -173,9 +173,9 @@ private:
 
     //message display properties
     const int& verbosity;
-    
+
     const Solver* S;
-    
+
     void first_begin();
     bool begin_called;
     uint proofStarts;

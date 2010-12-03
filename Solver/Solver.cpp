@@ -2510,7 +2510,7 @@ polarities, and start the loop. Finally, we either report UNSAT or extend the
 found solution with all the intermediary simplifications (e.g. variable
 elimination, etc.) and output the solution.
 */
-lbool Solver::solve(const vec<Lit>& assumps)
+const lbool Solver::solve(const vec<Lit>& assumps)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Solver::solve() called" << std::endl;
