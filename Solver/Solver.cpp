@@ -979,7 +979,7 @@ Lit Solver::pickBranchLit()
         }
 
         next = order_heap.removeMin();
-        if (!simplifying && next != var_Undef && value(next) == l_Undef && decision_var[next]) {
+        if (!simplifying && value(next) == l_Undef && decision_var[next]) {
             signSet = true;
             if (avgBranchDepth.isvalid())
                 signSetTo = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
@@ -988,6 +988,7 @@ Lit Solver::pickBranchLit()
             Lit nextLit = Lit(next, signSetTo);
             Lit lit2 = litReachable[nextLit.toInt()].lit;
             if (lit2 != lit_Undef && value(lit2.var()) == l_Undef && decision_var[lit2.var()]) {
+                insertVarOrder(next);
                 next = litReachable[nextLit.toInt()].lit.var();
                 signSetTo = litReachable[nextLit.toInt()].lit.sign();
             }
