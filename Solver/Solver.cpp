@@ -987,7 +987,7 @@ Lit Solver::pickBranchLit()
                 signSetTo = polarity[next];
             Lit nextLit = Lit(next, signSetTo);
             Lit lit2 = litReachable[nextLit.toInt()].lit;
-            if (lit2 != lit_Undef && value(lit2.var()) == l_Undef && decision_var[lit2.var()]) {
+            if (lit2 != lit_Undef && value(lit2.var()) == l_Undef && decision_var[lit2.var()] && mtrand.randInt(1) == 1) {
                 insertVarOrder(next);
                 next = litReachable[nextLit.toInt()].lit.var();
                 signSetTo = litReachable[nextLit.toInt()].lit.sign();
