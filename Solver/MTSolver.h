@@ -110,7 +110,7 @@ public:
     void printNumThreads() const;
 
     private:
-        void setUpFinish(const int threadNum);
+        void setUpFinish(const lbool retVal, const int threadNum);
 
         SolverConf conf;
         GaussConf gaussConfig;

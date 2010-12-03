@@ -91,23 +91,27 @@ const lbool MTSolver::solve()
 
             finishedThread = threadNum;
             retVal = ret;
-            setUpFinish(threadNum);
+            setUpFinish(retVal, threadNum);
         }
     }
 
     return retVal;
 }
 
-void MTSolver::setUpFinish(const int threadNum)
+void MTSolver::setUpFinish(const lbool retVal, const int threadNum)
 {
     Solver& solver = *solvers[threadNum];
     model.clear();
-    model.growTo(solver.model.size());
-    std::copy(solver.model.getData(), solver.model.getDataEnd(), model.getData());
+    if (retVal == l_True) {
+        model.growTo(solver.model.size());
+        std::copy(solver.model.getData(), solver.model.getDataEnd(), model.getData());
+    }
 
     conflict.clear();
-    conflict.growTo(solver.conflict.size());
-    std::copy(solver.conflict.getData(), solver.conflict.getDataEnd(), conflict.getData());
+    if (retVal == l_False) {
+        conflict.growTo(solver.conflict.size());
+        std::copy(solver.conflict.getData(), solver.conflict.getDataEnd(), conflict.getData());
+    }
 }
 
 Var MTSolver::newVar(bool dvar)
