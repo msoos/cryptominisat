@@ -37,9 +37,7 @@ public:
     //
     const lbool    solve       (const vec<Lit>& assumps); ///<Search for a model that respects a given set of assumptions.
     const lbool    solve       ();                        ///<Search without assumptions.
-    void     handleSATSolution();                   ///<Extends model, if needed, and fills "model"
-    void     handleUNSATSolution();                 ///<If conflict really was zero-length, sets OK to false
-    const bool     okay         () const;                 ///<FALSE means solver is in a conflicting state
+    const bool     okay        () const;                 ///<FALSE means solver is in a conflicting state
 
     // Variable mode:
     //
@@ -201,4 +199,44 @@ inline const lbool MTSolver::solve()
 {
     vec<Lit> tmp;
     return solve(tmp);
+}
+
+inline const uint32_t MTSolver::getNumElimSubsume() const
+{
+    return solvers[finishedThread]->getNumElimSubsume();
+}
+
+inline const uint32_t MTSolver::getNumElimXorSubsume() const
+{
+    return solvers[finishedThread]->getNumElimXorSubsume();
+}
+
+inline const uint32_t MTSolver::getNumXorTrees() const
+{
+    return solvers[finishedThread]->getNumXorTrees();
+}
+
+inline const uint32_t MTSolver::getNumXorTreesCrownSize() const
+{
+    return solvers[finishedThread]->getNumXorTreesCrownSize();
+}
+
+inline const double MTSolver::getTotalTimeSubsumer() const
+{
+    return solvers[finishedThread]->getTotalTimeSubsumer();
+}
+
+inline const double MTSolver::getTotalTimeFailedLitSearcher() const
+{
+    return solvers[finishedThread]->getTotalTimeFailedLitSearcher();
+}
+
+inline const double MTSolver::getTotalTimeSCC() const
+{
+    return solvers[finishedThread]->getTotalTimeSCC();
+}
+
+inline const double MTSolver::getTotalTimeXorSubsumer() const
+{
+    return solvers[finishedThread]->getTotalTimeXorSubsumer();
 }
