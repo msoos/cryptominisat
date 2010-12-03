@@ -57,7 +57,7 @@ void MTSolver::setupOneSolver()
 
 
 
-const lbool MTSolver::solve()
+const lbool MTSolver::solve(const vec<Lit>& assumps)
 {
     std::set<uint32_t> finished;
     lbool retVal;
@@ -65,7 +65,8 @@ const lbool MTSolver::solve()
     #pragma omp parallel num_threads(numThreads)
     {
         int threadNum = omp_get_thread_num();
-        lbool ret = solvers[threadNum]->solve();
+        vec<Lit> assumpsLocal(assumps);
+        lbool ret = solvers[threadNum]->solve(assumpsLocal);
 
         #pragma omp critical (finished)
         {

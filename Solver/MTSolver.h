@@ -196,3 +196,9 @@ inline const bool MTSolver::okay() const
 {
     return solvers[finishedThread]->okay();
 }
+
+inline const lbool MTSolver::solve()
+{
+    vec<Lit> tmp;
+    return solve(tmp);
+}
