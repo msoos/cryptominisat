@@ -15,13 +15,10 @@ MTSolver::MTSolver(const int _numThreads, const SolverConf& _conf, const GaussCo
     , gaussConfig(_gaussConfig)
     , numThreads(_numThreads)
 {
-    if (numThreads != -1) {
-        assert(numThreads > 0);
-        omp_set_num_threads(numThreads);
-    }
+    omp_set_dynamic(0);
     solvers.resize(numThreads, NULL);
 
-    #pragma omp parallel
+    #pragma omp parallel num_threads(numThreads)
     {
         setupOneSolver();
     }
@@ -65,7 +62,7 @@ const lbool MTSolver::solve()
     std::set<uint32_t> finished;
     lbool retVal;
 
-    #pragma omp parallel
+    #pragma omp parallel num_threads(numThreads)
     {
         int threadNum = omp_get_thread_num();
         lbool ret = solvers[threadNum]->solve();
@@ -116,7 +113,7 @@ void MTSolver::setUpFinish(const int threadNum)
 Var MTSolver::newVar(bool dvar)
 {
     uint32_t ret = 0;
-    #pragma omp parallel for firstprivate(ret)
+    #pragma omp parallel for firstprivate(ret) num_threads(numThreads)
     for (uint32_t i = 0; i < solvers.size(); i++) {
         ret = solvers[i]->newVar();
     }
@@ -127,7 +124,7 @@ Var MTSolver::newVar(bool dvar)
 template<class T> bool MTSolver::addClause (T& ps, const uint32_t group, const char* group_name)
 {
     bool globalRet = true;
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(numThreads)
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
         std::copy(ps.getData(), ps.getDataEnd(), copyPS.getData());
@@ -146,7 +143,7 @@ template bool MTSolver::addClause(Clause& ps, const uint32_t group, const char* 
 template<class T> bool MTSolver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity)
 {
     bool globalRet = true;
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(numThreads)
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
         std::copy(ps.getData(), ps.getDataEnd(), copyPS.getData());
@@ -165,7 +162,7 @@ template bool MTSolver::addLearntClause(Clause& ps, const uint32_t group, const 
 template<class T> bool MTSolver::addXorClause (T& ps, bool xorEqualFalse, const uint32_t group, const char* group_name)
 {
     bool globalRet = true;
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(numThreads)
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
         std::copy(ps.getData(), ps.getDataEnd(), copyPS.getData());
