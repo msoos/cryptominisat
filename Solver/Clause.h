@@ -68,7 +68,8 @@ protected:
     uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
-    uint32_t mySize:19; ///<The current size of the clause
+    uint32_t gateReplaced:1;
+    uint32_t mySize:18; ///<The current size of the clause
 
     float miniSatAct; ///<Clause activity according to MiniSat
 
@@ -105,10 +106,12 @@ public:
         mySize = ps.size();
         isLearnt = learnt;
         isRemoved = false;
+        gateReplaced = false;
         setGroup(_group);
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
         miniSatAct = 0;
+        glue = MAX_THEORETICAL_GLUE;
         setStrenghtened();
     }
 
@@ -212,6 +215,13 @@ public:
         remove(*this, p);
     }
 
+    inline void add(const Lit p)
+    {
+        mySize++;
+        (*this)[mySize-1] = p;
+        setStrenghtened();
+    }
+
     void calcAbstractionClause()
     {
         abst = calcAbstraction(*this);
@@ -284,6 +294,14 @@ public:
     const bool getRemoved() const
     {
         return isRemoved;
+    }
+
+    void setGateReplaced() {
+        gateReplaced = true;
+    }
+
+    const bool getGateReplaced() const {
+        return gateReplaced;
     }
 
     void setFreed()
