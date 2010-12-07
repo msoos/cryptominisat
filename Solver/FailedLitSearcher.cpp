@@ -242,11 +242,9 @@ const bool FailedLitSearcher::search()
             goto end;
     }
 
-    if (solver.conf.verbosity  >= 1) printResults(myTime);
-
 
 end:
-    bool removedOldLearnts = false;
+    if (solver.conf.verbosity  >= 1) printResults(myTime);
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
@@ -257,7 +255,6 @@ end:
             reattacher.detachNonBinsNonTris(true);
             const bool ret = reattacher.reattachNonBins();
             release_assert(ret == true);
-            removedOldLearnts = true;
         } else {
             solver.clauseCleaner->removeAndCleanAll();
         }
