@@ -1318,7 +1318,7 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
                 moreRecurProp += 5;
                 Lit otherLit = i->getOtherLit();
                 //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
-                if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) break;
+                if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) continue;
                 seen2[otherLit.toInt()] = 1;
                 allAddedToSeen2.push_back(otherLit);
                 toRecursiveProp.push(~otherLit);
