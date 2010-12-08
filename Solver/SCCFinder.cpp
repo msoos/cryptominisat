@@ -92,7 +92,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
         if (solver.conf.doExtendedSCC) {
             Lit vertLit = Lit::toLit(vertex);
-            vector<Lit>& transCache = solver.transOTFCache[(~Lit::toLit(vertex)).toInt()].lits;
+            vector<Lit>& transCache = solver.transOTFCache[(~vertLit).toInt()].lits;
             vector<Lit>::iterator it = transCache.begin();
             vector<Lit>::iterator it2 = it;
             uint32_t newSize = 0;
