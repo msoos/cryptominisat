@@ -179,6 +179,8 @@ Var Solver::newVar(bool dvar)
     seen2     .push_back(0);
     transOTFCache.push_back(TransCache());
     transOTFCache.push_back(TransCache());
+    litReachable.push_back(LitReachData());
+    litReachable.push_back(LitReachData());
 
     polarity  .push_back(defaultPolarity());
     #ifdef USE_OLD_POLARITIES
@@ -863,6 +865,54 @@ void Solver::calculateDefaultPolarities()
     #endif //VERBOSE_DEBUG_POLARITIES
 }
 
+void Solver::calcReachability()
+{
+    double myTime = cpuTime();
+
+    for (uint32_t i = 0; i < nVars()*2; i++) {
+        litReachable[i] = LitReachData();
+    }
+
+    for (uint32_t i = 0; i < order_heap.size(); i++) for (uint32_t sig1 = 0; sig1 < 2; sig1++)  {
+        Lit lit = Lit(order_heap[i], sig1);
+        if (value(lit.var()) != l_Undef
+            || subsumer->getVarElimed()[lit.var()]
+            || xorSubsumer->getVarElimed()[lit.var()])
+            continue;
+
+        vector<Lit>& cache = transOTFCache[(~lit).toInt()].lits;
+        uint32_t cacheSize = cache.size();
+        for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+            /*if (solver.value(it->var()) != l_Undef
+            || solver.subsumer->getVarElimed()[it->var()]
+            || solver.xorSubsumer->getVarElimed()[it->var()])
+            continue;*/
+            assert(*it != lit);
+            assert(*it != ~lit);
+            if (litReachable[it->toInt()].lit == lit_Undef || litReachable[it->toInt()].numInCache < cacheSize) {
+                litReachable[it->toInt()].lit = lit;
+                litReachable[it->toInt()].numInCache = cacheSize;
+            }
+        }
+    }
+
+    /*for (uint32_t i = 0; i < nVars()*2; i++) {
+        std::sort(litReachable[i].begin(), litReachable[i].end(), MySorterX(transOTFCache));
+    }*/
+
+    /*for (uint32_t i = 0; i < nVars()*2; i++) {
+        vector<Lit>& myset = litReachable[i];
+        for (uint32_t i2 = 0; i2 < myset.size(); i2++) {
+            std::cout << transOTFCache[myset[i2].toInt()].lits.size() << " , ";
+        }
+        std::cout << std::endl;
+    }*/
+
+    if (conf.verbosity >= 1) {
+        std::cout << "c calculated reachability. Time: " << (cpuTime() - myTime) << std::endl;
+    }
+}
+
 void Solver::saveOTFData()
 {
     assert(decisionLevel() == 1);
@@ -917,14 +967,33 @@ Lit Solver::pickBranchLit()
             rnd_decisions++;
     }
 
+    bool signSet = false;
+    bool signSetTo = false;
     // Activity based decision:
-    while (next == var_Undef || assigns[next] != l_Undef || !decision_var[next])
+    while (next == var_Undef
+      || assigns[next] != l_Undef
+      || !decision_var[next]) {
         if (order_heap.empty()) {
             next = var_Undef;
             break;
-        } else {
-            next = order_heap.removeMin();
         }
+
+        next = order_heap.removeMin();
+        if (!simplifying && value(next) == l_Undef && decision_var[next]) {
+            signSet = true;
+            if (avgBranchDepth.isvalid())
+                signSetTo = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
+            else
+                signSetTo = polarity[next];
+            Lit nextLit = Lit(next, signSetTo);
+            Lit lit2 = litReachable[nextLit.toInt()].lit;
+            if (lit2 != lit_Undef && value(lit2.var()) == l_Undef && decision_var[lit2.var()] && mtrand.randInt(1) == 1) {
+                insertVarOrder(next);
+                next = litReachable[nextLit.toInt()].lit.var();
+                signSetTo = litReachable[nextLit.toInt()].lit.sign();
+            }
+        }
+    }
 
     //if "simplifying" is set, i.e. if we are in a burst-search mode, then
     //randomly pick a sign. Otherwise, if RANDOM_LOOKAROUND_SEARCHSPACE is
@@ -932,15 +1001,19 @@ Lit Solver::pickBranchLit()
     //randomly based on the average branch depth. Otherwise, we just go for the
     //polarity that has been saved
     bool sign;
-    if (next != var_Undef) {
-        if (simplifying && random)
-            sign = mtrand.randInt(1);
-        #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-        else if (avgBranchDepth.isvalid())
-            sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
-        #endif
-        else
-            sign = polarity[next];
+    if (next != var_Undef)  {
+        if (signSet) {
+            sign = signSetTo;
+        } else {
+            if (simplifying && random)
+                sign = mtrand.randInt(1);
+            #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
+            else if (avgBranchDepth.isvalid())
+                sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
+            #endif
+            else
+                sign = polarity[next];
+        }
     }
 
     assert(next == var_Undef || value(next) == l_Undef);
@@ -2349,6 +2422,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     //addSymmBreakClauses();
 
     if (conf.doSortWatched) sortWatched();
+    calcReachability();
 
 end:
     #ifdef BURST_SEARCH
@@ -2465,6 +2539,8 @@ void Solver::performStepsBeforeSolve()
     }
 
     if (conf.doSortWatched) sortWatched();
+    calcReachability();
+
     testAllClauseAttach();
 }
 
