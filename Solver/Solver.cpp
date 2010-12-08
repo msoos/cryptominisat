@@ -877,7 +877,9 @@ void Solver::calcReachability()
         Lit lit = Lit(order_heap[i], sig1);
         if (value(lit.var()) != l_Undef
             || subsumer->getVarElimed()[lit.var()]
-            || xorSubsumer->getVarElimed()[lit.var()])
+            || xorSubsumer->getVarElimed()[lit.var()]
+            || varReplacer->getReplaceTable()[lit.var()].var() != lit.var()
+            || partHandler->getSavedState()[lit.var()] != l_Undef)
             continue;
 
         vector<Lit>& cache = transOTFCache[(~lit).toInt()].lits;
@@ -885,7 +887,8 @@ void Solver::calcReachability()
         for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
             /*if (solver.value(it->var()) != l_Undef
             || solver.subsumer->getVarElimed()[it->var()]
-            || solver.xorSubsumer->getVarElimed()[it->var()])
+            || solver.xorSubsumer->getVarElimed()[it->var()]
+            || partHandler->getSavedState()[lit.var()] != l_Undef)
             continue;*/
             assert(*it != lit);
             assert(*it != ~lit);

@@ -24,11 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "time_mem.h"
 #include "Subsumer.h"
 #include "XorSubsumer.h"
+#include "PartHandler.h"
 
 SCCFinder::SCCFinder(Solver& _solver) :
     solver(_solver)
     , varElimed1(_solver.subsumer->getVarElimed())
     , varElimed2(_solver.xorSubsumer->getVarElimed())
+    , varPartHandled(_solver.partHandler->getSavedState())
     , replaceTable(_solver.varReplacer->getReplaceTable())
     , totalTime(0.0)
 {}
@@ -97,7 +99,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             for (vector<Lit>::iterator end = transCache.end(); it != end; it++) {
                 Lit lit = *it;
                 lit = replaceTable[lit.var()] ^ lit.sign();
-                if (lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()]) continue;
+                if (lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()] || varPartHandled[lit.var()] != l_Undef) continue;
                 *it2++ = lit;
                 newSize++;
 
