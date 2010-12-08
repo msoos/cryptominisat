@@ -916,6 +916,27 @@ void Solver::calcReachability()
     }
 }
 
+const bool Solver::failPossibleDueCache()
+{
+    assert(ok);
+
+    for (Lit *l = failedCacheLits.getData(), *end = failedCacheLits.getDataEnd(); l != end; l++) {
+        const Lit lit = ~*l;
+        if (value(lit.var()) != l_Undef
+            || subsumer->getVarElimed()[lit.var()]
+            || xorSubsumer->getVarElimed()[lit.var()]
+            || varReplacer->getReplaceTable()[lit.var()].var() != lit.var()
+            || partHandler->getSavedState()[lit.var()] != l_Undef)
+            continue;
+
+        uncheckedEnqueue(lit);
+    }
+    failedCacheLits.clear();
+    ok = propagate().isNULL();
+
+    return ok;
+}
+
 void Solver::saveOTFData()
 {
     assert(decisionLevel() == 1);
@@ -1319,6 +1340,10 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
                 Lit otherLit = i->getOtherLit();
                 //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
                 if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) continue;
+                if (otherLit == lit) {
+                    failedCacheLits.push(~lit);
+                    continue;
+                }
                 seen2[otherLit.toInt()] = 1;
                 allAddedToSeen2.push_back(otherLit);
                 toRecursiveProp.push(~otherLit);
@@ -2652,13 +2677,15 @@ const lbool Solver::solve(const vec<Lit>& assumps)
             cancelUntil(0);
             return l_Undef;
         }
+        if (status != l_Undef) break;
 
         nof_conflicts = (double)nof_conflicts * conf.restart_inc;
-        if (status != l_Undef) break;
         if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart , lastFullRestart))
             return l_False;
         if (!chooseRestartType(lastFullRestart))
             return l_False;
+
+        if (!failPossibleDueCache()) return l_False;
     }
     printEndSearchStat();
 

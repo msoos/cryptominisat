@@ -100,6 +100,10 @@ void SCCFinder::tarjan(const uint32_t vertex)
                 Lit lit = *it;
                 lit = replaceTable[lit.var()] ^ lit.sign();
                 if (lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()] || varPartHandled[lit.var()] != l_Undef) continue;
+                if (lit == ~vertLit) {
+                    solver.failedCacheLits.push(vertLit);
+                    continue;
+                }
                 *it2++ = lit;
                 newSize++;
 
