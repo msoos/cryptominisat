@@ -202,7 +202,7 @@ public:
     const double   getTotalTimeXorSubsumer() const;
 
     const uint32_t getVerbosity() const;
-    void setNeedToInterrupt();
+    void setNeedToInterrupt(const bool value = true);
     const bool getNeedToInterrupt() const;
     const bool getNeedToDumpLearnts() const;
     const bool getNeedToDumpOrig() const;
@@ -601,9 +601,9 @@ inline const uint32_t Solver::getVerbosity() const
     return conf.verbosity;
 }
 
-inline void Solver::setNeedToInterrupt()
+inline void Solver::setNeedToInterrupt(const bool value)
 {
-    needToInterrupt = true;
+    needToInterrupt = value;
 }
 
 inline const bool Solver::getNeedToInterrupt() const

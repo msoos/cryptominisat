@@ -80,7 +80,7 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
         {
             int numNeededInterrupt = 0;
             for(int i = 0; i < numThreadsLocal; i++) {
-                if (i != threadNum && solvers[i]->getNeedToInterrupt() == false) {
+                if (i != threadNum) {
                     solvers[i]->setNeedToInterrupt();
                     numNeededInterrupt++;
                 }
@@ -105,6 +105,10 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
         }
         numThreads = numThreadsLocal;
         solvers.resize(numThreads);
+    }
+
+    for(int i = 0; i < numThreads; i++) {
+        solvers[i]->setNeedToInterrupt(false);
     }
 
     return retVal;
