@@ -114,7 +114,7 @@ public:
         GaussConf gaussConfig;
 
 
-        const int numThreads;
+        int numThreads;
         void setupOneSolver();
         std::vector<Solver*> solvers;
         SharedData sharedData;

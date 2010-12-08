@@ -18,8 +18,8 @@ MTSolver::MTSolver(const int _numThreads, const SolverConf& _conf, const GaussCo
     omp_set_dynamic(0);
     solvers.resize(numThreads, NULL);
 
-    #pragma omp parallel num_threads(numThreads)
-    {
+    #pragma omp parallel for //num_threads(numThreads)
+    for (int i = 0; i < numThreads; i++) {
         setupOneSolver();
     }
     finishedThread = 0;
@@ -62,8 +62,12 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
     std::set<uint32_t> finished;
     lbool retVal;
 
+    int numThreadsLocal;
     #pragma omp parallel num_threads(numThreads)
     {
+        #pragma omp single
+        numThreadsLocal = omp_get_num_threads();
+
         int threadNum = omp_get_thread_num();
         vec<Lit> assumpsLocal(assumps);
         lbool ret = solvers[threadNum]->solve(assumpsLocal);
@@ -76,24 +80,32 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
         #pragma omp single
         {
             int numNeededInterrupt = 0;
-            for(int i = 0; i < numThreads; i++) {
+            for(int i = 0; i < numThreadsLocal; i++) {
                 if (i != threadNum && solvers[i]->getNeedToInterrupt() == false) {
                     solvers[i]->setNeedToInterrupt();
                     numNeededInterrupt++;
                 }
             }
-            assert(numNeededInterrupt == numThreads-1);
+            assert(numNeededInterrupt == numThreadsLocal-1);
 
             bool mustWait = true;
             while (mustWait) {
                 #pragma omp critical (finished)
-                if (finished.size() == (unsigned)numThreads) mustWait = false;
+                if (finished.size() == (unsigned)numThreadsLocal) mustWait = false;
             }
 
             finishedThread = threadNum;
             retVal = ret;
             setUpFinish(retVal, threadNum);
         }
+    }
+
+    if (numThreads != numThreadsLocal) {
+        for (int i = numThreadsLocal; i < numThreads; i++) {
+            delete solvers[i];
+        }
+        numThreads = numThreadsLocal;
+        solvers.resize(numThreads);
     }
 
     return retVal;
