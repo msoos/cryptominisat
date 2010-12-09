@@ -1684,16 +1684,15 @@ PropBy Solver::propagate(const bool update)
     while (qhead < trail.size()) {
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
-        Watched        *i, *i2, *j;
+        Watched        *i, *j;
         num_props += ws.size()/2 + 2;
 
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << p << endl;
         #endif
 
-        i = i2 = j = ws.getData();
-        i2++;
-        for (Watched *end = ws.getDataEnd(); i != end; i++, i2++) {
+        i = j = ws.getData();
+        for (Watched *end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
                 propBinaryClause(i, j, end, p, confl);
                 goto FoundWatch;
