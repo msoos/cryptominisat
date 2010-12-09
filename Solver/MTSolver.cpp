@@ -15,9 +15,9 @@ MTSolver::MTSolver(const int _numThreads, const SolverConf& _conf, const GaussCo
     , gaussConfig(_gaussConfig)
     , numThreads(_numThreads)
 {
-    omp_set_dynamic(0);
     solvers.resize(numThreads, NULL);
 
+    omp_set_dynamic(0);
     #pragma omp parallel for
     for (int i = 0; i < numThreads; i++) {
         setupOneSolver(i);
