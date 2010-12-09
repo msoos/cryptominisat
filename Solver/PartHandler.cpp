@@ -68,8 +68,8 @@ const bool PartHandler::handle()
 
         moveBinClauses(newSolver, part, partFinder);
         moveClauses(solver.clauses, newSolver, part, partFinder);
-        moveClauses(solver.xorclauses, newSolver, part, partFinder);
-        moveLearntClauses(solver.learnts, newSolver, part, partFinder);
+        moveClauses(solver.learnts, newSolver, part, partFinder);
+        moveXorClauses(solver.xorclauses, newSolver, part, partFinder);
         assert(checkClauseMovement(newSolver, part, partFinder));
 
         lbool status = newSolver.solve();
@@ -303,7 +303,8 @@ void PartHandler::moveClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_
         std::copy(c.getData(), c.getDataEnd(), tmp.getData());
         newSolver.addClause(tmp, c.getGroup());
         //NOTE: we need the tmp because otherwise, the addClause could have changed "c", which we need to re-add later!
-        clausesRemoved.push(*i);
+        if (!c.learnt()) clausesRemoved.push(*i);
+        else solver.clauseAllocator.clauseFree(*i);
     }
     cs.shrink(i-j);
 }
@@ -345,10 +346,10 @@ void PartHandler::moveBinClauses(Solver& newSolver, const uint32_t part, PartFin
                     assert(partFinder.getVarPart(lit2.var()) == part);
                     if (i->getLearnt()) {
                         newSolver.addLearntClause(lits);
-                        binClausesRemoved.push_back(std::make_pair(lit, lit2));
                         numRemovedHalfLearnt++;
                     } else {
                         newSolver.addClause(lits);
+                        binClausesRemoved.push_back(std::make_pair(lit, lit2));
                         numRemovedHalfNonLearnt++;
                     }
                 } else {
@@ -373,7 +374,7 @@ void PartHandler::moveBinClauses(Solver& newSolver, const uint32_t part, PartFin
 The variables that form part of the part will determine if the clause is in the
 part or not
 */
-void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder)
+void PartHandler::moveXorClauses(vec<XorClause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder)
 {
     XorClause **i, **j, **end;
     for (i = j = cs.getData(), end = i + cs.size(); i != end; i++) {
@@ -392,60 +393,6 @@ void PartHandler::moveClauses(vec<XorClause*>& cs, Solver& newSolver, const uint
         newSolver.addXorClause(tmp, c.xorEqualFalse(), c.getGroup());
         //NOTE: we need the tmp because otherwise, the addXorClause could have changed "c", which we need to re-add later!
         xorClausesRemoved.push(*i);
-    }
-    cs.shrink(i-j);
-}
-
-/**
-@brief Move learnt clauses from original to the part
-
-The variables that form part of the part will determine if the clause is in the
-part or not.
-
-Note that learnt clauses might be in both the orignal and the sub-part. In this
-case, the learnt clause is deleted, since it unneccesarily connects two
-components that otherwise would be distinct
-*/
-void PartHandler::moveLearntClauses(vec<Clause*>& cs, Solver& newSolver, const uint32_t part, PartFinder& partFinder)
-{
-    Clause **i, **j, **end;
-    for (i = j = cs.getData(), end = i + cs.size() ; i != end; i++) {
-        if (!(**i).learnt()) {
-            *j++ = *i;
-            continue;
-        }
-
-        Clause& c = **i;
-        assert(c.size() > 0);
-        uint32_t clause_part = partFinder.getVarPart(c[0].var());
-        bool removed = false;
-        for (const Lit* l = c.getData(), *end = l + c.size(); l != end; l++) {
-            if (partFinder.getVarPart(l->var()) != clause_part) {
-                #ifdef VERBOSE_DEBUG
-                std::cout << "Learnt clause in both parts:"; c.plainPrint();
-                #endif
-
-                removed = true;
-                solver.removeClause(c);
-                break;
-            }
-        }
-        if (removed) continue;
-        if (clause_part == part) {
-            #ifdef VERBOSE_DEBUG
-            //std::cout << "Learnt clause in this part:"; c.plainPrint();
-            #endif
-
-            solver.detachClause(c);
-            newSolver.addLearntClause(c, c.getGroup(), NULL, c.getGlue(), c.getMiniSatAct());
-            solver.clauseAllocator.clauseFree(&c);
-        } else {
-            #ifdef VERBOSE_DEBUG
-            std::cout << "Learnt clause in other part:"; c.plainPrint();
-            #endif
-
-            *j++ = *i;
-        }
     }
     cs.shrink(i-j);
 }
