@@ -1540,7 +1540,7 @@ inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, 
 }
 
 /**
-@brief Propagates a tertiary (3-long) clause
+@brief Propagates a normal (n-long where n > 3) clause
 
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
@@ -1607,7 +1607,7 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
 }
 
 /**
-@brief Propagates a tertiary (3-long) clause
+@brief Propagates an XOR clause
 
 Strangely enough, we need to have 4 literals in the wathclists:
 for the first two varialbles, BOTH negations (v and ~v). This means quite some
