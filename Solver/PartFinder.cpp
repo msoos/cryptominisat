@@ -64,9 +64,12 @@ const bool PartFinder::findParts()
         if (!solver.ok) return false;
     }
 
+    removeVarsOnlyInLearnts();
     addToPart(solver.clauses);
     addToPartBins();
     addToPart(solver.xorclauses);
+
+    //checkLearntBinAdded();
 
     const uint32_t parts = setParts();
 
@@ -88,6 +91,117 @@ const bool PartFinder::findParts()
     return true;
 }
 
+void PartFinder::checkLearntBinAdded()
+{
+    uint32_t wsLit = 0;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        vec<Watched>& ws = *it;
+        Watched* i = ws.getData();
+        for (const Watched *end2 = ws.getDataEnd(); i != end2; i++) {
+            if (i->isBinary() && i->getLearnt()) {
+                if (table[lit.var()] == std::numeric_limits<uint32_t>::max()
+                    || table[i->getOtherLit().var()] == std::numeric_limits<uint32_t>::max()
+                ) {
+                    std::cout << " max: " << lit << " , " << i->getOtherLit() << std::endl;
+                }
+            }
+        }
+    }
+}
+
+void PartFinder::removeVarsOnlyInLearnts()
+{
+    vec<char> usedVar(solver.nVars(), false);
+
+    addClausesToUsed(solver.clauses, usedVar);
+    addClausesToUsed(solver.xorclauses, usedVar);
+    addBinsToUsed(usedVar);
+
+    removeLearntClausesNotInVars(usedVar);
+    removeBinClausesNotInVars(usedVar);
+}
+
+void PartFinder::removeLearntClausesNotInVars(vec<char>& usedVar)
+{
+    Clause** i = solver.learnts.getData();
+    Clause** j = i;
+    for (Clause **end = solver.learnts.getDataEnd(); i != end; i++) {
+        Clause& cl = **i;
+        assert(cl.learnt());
+
+        bool removeIt = false;
+        for (Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
+            if (!usedVar[l->var()]) {
+                removeIt = true;
+                break;
+            }
+        }
+
+        if (removeIt) {
+            solver.detachClause(cl);
+            solver.clauseAllocator.clauseFree(&cl);
+        } else {
+            *j++ = *i;
+        }
+    }
+    solver.learnts.shrink_(i-j);
+}
+
+void PartFinder::removeBinClausesNotInVars(vec<char>& usedVar)
+{
+    uint64_t removedHalfLearnt = 0;
+
+    uint32_t wsLit = 0;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        vec<Watched>& ws = *it;
+        Watched* i = ws.getData();
+        Watched* j = i;
+        for (const Watched *end2 = ws.getDataEnd(); i != end2; i++) {
+            if (i->isBinary() && i->getLearnt()) {
+                if (usedVar[lit.var()] && usedVar[i->getOtherLit().var()])
+                    *j++ = *i;
+                else
+                    removedHalfLearnt++;
+            } else {
+                *j++ = *i;
+            }
+        }
+        ws.shrink_(i-j);
+    }
+
+    solver.learnts_literals -= removedHalfLearnt;
+    solver.numBins -= removedHalfLearnt/2;
+}
+
+template<class T>
+void PartFinder::addClausesToUsed(const vec<T*>& cs, vec<char>& usedVar)
+{
+    for (T *const*c = cs.getData(), *const*end = cs.getDataEnd(); c != end; c++) {
+        const T& cl = **c;
+        if (cl.learnt()) continue;
+
+        for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++)
+            usedVar[l->var()] = true;
+    }
+}
+
+void PartFinder::addBinsToUsed(vec<char>& usedVar)
+{
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary() && lit < it2->getOtherLit() && !it2->getLearnt()) {
+                usedVar[lit.var()] = true;
+                usedVar[it2->getOtherLit().var()] = true;
+            }
+        }
+    }
+}
+
 template<class T>
 void PartFinder::addToPart(const vec<T*>& cs)
 {
@@ -106,8 +220,7 @@ void PartFinder::addToPartBins()
         lits[0] = lit;
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit < it2->getOtherLit()) {
-                if (it2->getLearnt()) continue;
+            if (it2->isBinary() && lit < it2->getOtherLit() && !it2->getLearnt()) {
                 lits[1] = it2->getOtherLit();
                 addToPartClause(lits);
             }

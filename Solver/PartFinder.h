@@ -46,6 +46,15 @@ class PartFinder {
         const vector<Var>& getPartVars(const uint32_t part);
 
     private:
+        //removing learnt clauses that contain vars that are no longer in any clauses
+        void removeVarsOnlyInLearnts();
+        template<class T>
+        void addClausesToUsed(const vec<T*>& cs, vec<char>& usedVar);
+        void addBinsToUsed(vec<char>& usedVar);
+        void removeLearntClausesNotInVars(vec<char>& usedVar);
+        void removeBinClausesNotInVars(vec<char>& usedVar);
+        void checkLearntBinAdded();
+
         const uint32_t setParts();
         void addToPartBins();
         template<class T> void addToPartClause(const T& cl);
