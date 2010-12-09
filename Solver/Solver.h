@@ -880,7 +880,7 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
     binPropData[p.var()].lev = binSubLevel;
-    binPropData[p.var()].lev2Ancestor = lev2Ancestor;
+    binPropData[p.var()].lev1Ancestor = lev2Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
 }
 

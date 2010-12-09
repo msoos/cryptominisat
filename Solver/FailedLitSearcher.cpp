@@ -553,7 +553,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
                 continue;
             }
 
-            Var ancestorVar = solver.binPropData[it->var()].lev2Ancestor.var();
+            Var ancestorVar = solver.binPropData[it->var()].lev1Ancestor.var();
             dontRemoveAncestor.setBit(ancestorVar);
             toClearDontRemoveAcestor.push(ancestorVar);
         }
@@ -619,6 +619,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     //difference between UP and BTC is in unPropagatedBin
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
         if (!needToVisit[l->var()]) continue;
+        if (!solver.binPropData[l->var()].hasChildren) continue;
         fillImplies(*l);
         for (const Var *var = myImpliesSet.getData(), *end2 = myImpliesSet.getDataEnd(); var != end2; var++) {
 

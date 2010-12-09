@@ -1744,24 +1744,35 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
     while (qhead < trail.size()) {
         Lit p = trail[qhead++];
 
-        uint32_t lev = binPropData[p.var()].lev + 1;
-
-        Lit lev2Ancestor;
-        if (lev == 2) lev2Ancestor = p;
-        else if (lev < 1) lev2Ancestor = lit_Undef;
-        else lev2Ancestor = binPropData[p.var()].lev2Ancestor;
+        //setting up binPropData
+        uint32_t lev = binPropData[p.var()].lev;
+        Lit lev1Ancestor;
+        switch (lev) {
+            case 0 :
+                lev1Ancestor = lit_Undef;
+                break;
+            case 1:
+                lev1Ancestor = p;
+                break;
+            default:
+                lev1Ancestor = binPropData[p.var()].lev1Ancestor;
+        }
+        lev++;
         const bool learntLeadHere = binPropData[p.var()].learntLeadHere;
+        bool& hasChildren = binPropData[p.var()].hasChildren;
+        hasChildren = false;
 
         //std::cout << "lev: " << lev << " ~p: "  << ~p << std::endl;
         const vec<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2 + 2;
         for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
+            hasChildren = true;
             if (!k->isBinary()) continue;
 
             //std::cout << (~p) << ", " << k->getOtherLit() << " learnt: " << k->getLearnt() << std::endl;
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
-                uncheckedEnqueueLight2(k->getOtherLit(), lev, lev2Ancestor, learntLeadHere || k->getLearnt());
+                uncheckedEnqueueLight2(k->getOtherLit(), lev, lev1Ancestor, learntLeadHere || k->getLearnt());
             } else if (val == l_False) {
                 return PropBy(p);
             } else {
@@ -1770,10 +1781,10 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
                 if (lev > 1
                     && level[lit2.var()] != 0
                     && binPropData[lit2.var()].lev == 1
-                    && binPropData[lit2.var()].lev2Ancestor != lev2Ancestor) {
-                    //Was propagated at level 1, and again here, this binary clause is useless
+                    && lev1Ancestor != lit2) {
+                    //Was propagated at level 1, and again here, original level 1 binary clause is useless
                     binPropData[lit2.var()].lev = lev;
-                    binPropData[lit2.var()].lev2Ancestor = lev2Ancestor;
+                    binPropData[lit2.var()].lev1Ancestor = lev1Ancestor;
                     binPropData[lit2.var()].learntLeadHere = learntLeadHere || k->getLearnt();
                     uselessBin.push(lit2);
                 }
