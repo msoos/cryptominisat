@@ -106,7 +106,7 @@ void PartFinder::addToPartBins()
         lits[0] = lit;
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+            if (it2->isBinary() && lit < it2->getOtherLit()) {
                 if (it2->getLearnt()) continue;
                 lits[1] = it2->getOtherLit();
                 addToPartClause(lits);
@@ -116,7 +116,7 @@ void PartFinder::addToPartBins()
 }
 
 template<class T>
-void PartFinder::addToPartClause(T& cl)
+void PartFinder::addToPartClause(const T& cl)
 {
     set<uint32_t> tomerge;
     vector<Var> newSet;

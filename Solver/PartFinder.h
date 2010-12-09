@@ -48,7 +48,7 @@ class PartFinder {
     private:
         const uint32_t setParts();
         void addToPartBins();
-        template<class T> void addToPartClause(T& cl);
+        template<class T> void addToPartClause(const T& cl);
         template<class T> void addToPart(const vec<T*>& cs);
 
         struct mysorter
