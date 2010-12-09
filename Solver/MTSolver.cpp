@@ -135,7 +135,7 @@ Var MTSolver::newVar(bool dvar)
     uint32_t ret = 0;
     #pragma omp parallel for firstprivate(ret)
     for (uint32_t i = 0; i < solvers.size(); i++) {
-        ret = solvers[i]->newVar();
+        ret = solvers[i]->newVar(dvar);
     }
 
     return ret;
