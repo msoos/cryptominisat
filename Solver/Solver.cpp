@@ -1785,9 +1785,12 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
 }
 
 /**
-@brief Only propagates binary clauses
+@brief Only propagates non-learnt binary clauses
 
 This is used in special algorithms outside the main Solver class
+Beware, it MUST have the watchlist sorted to work properly: will "break;" on
+learnt binary or any non-binary or clause in watchlist (example sort:
+Subsumer::BinSorter2 )
 */
 PropBy Solver::propagateNonLearntBin()
 {
