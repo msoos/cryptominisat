@@ -1877,6 +1877,30 @@ bool Subsumer::maybeEliminate(const Var var)
         if (!solver.ok) return true;
     }
 
+    for (uint32_t i = 0; i < solver.watches[lit.toInt()].size(); i++) {
+        Watched& w = solver.watches[lit.toInt()][i];
+        if (!w.isBinary()) continue;
+        assert(w.getLearnt());
+        const Lit lit1 = w.getOtherLit();
+        if (solver.value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
+
+        for (uint32_t i2 = 0; i2 < solver.watches[(~lit).toInt()].size(); i2++) {
+            Watched& w2 = solver.watches[(~lit).toInt()][i2];
+            if (!w2.isBinary()) continue;
+            assert(w2.getLearnt());
+            const Lit lit2 = w2.getOtherLit();
+            if (solver.value(lit2) != l_Undef || var_elimed[lit2.var()]) continue;
+
+            dummy.clear();
+            dummy.growTo(2);
+            dummy[0] = lit1;
+            dummy[1] = lit2;
+            Clause* tmpOK = solver.addClauseInt(dummy, 0, true);
+            release_assert(tmpOK == NULL);
+            release_assert(solver.ok);
+        }
+    }
+
     assert(occur[lit.toInt()].size() == 0 &&  occur[(~lit).toInt()].size() == 0);
     var_elimed[var] = true;
     numElimed++;
