@@ -1749,7 +1749,7 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
         Lit lev2Ancestor;
         if (lev == 2) lev2Ancestor = p;
         else if (lev < 1) lev2Ancestor = lit_Undef;
-        else binPropData[p.var()].lev2Ancestor;
+        else lev2Ancestor = binPropData[p.var()].lev2Ancestor;
         const bool learntLeadHere = binPropData[p.var()].learntLeadHere;
 
         //std::cout << "lev: " << lev << " ~p: "  << ~p << std::endl;
