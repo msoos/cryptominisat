@@ -6,7 +6,7 @@
 void MTSolver::printNumThreads() const
 {
     if (conf.verbosity >= 1) {
-        std::cout << "c Using " << numThreads << " threads" << std::endl;
+        std::cout << "c Using " << numThreads << " thread(s)" << std::endl;
     }
 }
 
