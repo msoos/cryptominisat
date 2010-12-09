@@ -2210,44 +2210,33 @@ const bool Subsumer::checkElimedUnassigned() const
 
 const bool Subsumer::findGates()
 {
-    vector<Gate> gates;
+    gates.clear();
     double myTime = cpuTime();
-    uint64_t totalGateSize = 0;
+    totalGateSize = 0;
 
     for (const ClauseSimp *it = clauses.getData(), *end = clauses.getDataEnd(); it != end; it++) {
         if (it->clause == NULL) continue;
 
         const Clause& cl = *it->clause;
-        for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
-            Lit eqLit = ~*l;
-            bool isEqual = true;
-            for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
-                if (*l2 == *l) continue;
-                Lit otherLit = *l2;
-                const vector<Lit>& cache = solver.transOTFCache[(~otherLit).toInt()].lits;
-                bool OK = false;
-                for (vector<Lit>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-                    if (*cacheLit == eqLit) {
-                        OK = true;
-                        break;
-                    }
-                }
-                if (!OK) {
-                    isEqual = false;
-                    break;
-                }
-            }
 
-            if (isEqual) {
-                Gate gate;
-                for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
-                    if (*l2 == *l) continue;
-                    gate.lits.push_back(*l2);
-                }
-                gate.eqLit = eqLit;
-                gates.push_back(gate);
-                totalGateSize += gate.lits.size();
+        uint8_t numSizeZeroCache = 0;
+        Lit which = lit_Undef;
+        for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
+            Lit lit = *l;
+            const vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
+            if (cache.size() == 0) {
+                numSizeZeroCache++;
+                if (numSizeZeroCache > 1) break;
+                which = lit;
             }
+        }
+        if (numSizeZeroCache > 1) continue;
+
+        if (numSizeZeroCache == 1) {
+            findGate(which, cl);
+        } else {
+            for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++)
+                findGate(*l, cl);
         }
     }
 
@@ -2273,8 +2262,39 @@ const bool Subsumer::findGates()
         << " time: " << (cpuTime() - myTime) << std::endl;
     }
 
-
     return solver.ok;
+}
+
+void Subsumer::findGate(const Lit eqLit, const Clause& cl)
+{
+    bool isEqual = true;
+    for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
+        if (*l2 == eqLit) continue;
+        Lit otherLit = *l2;
+        const vector<Lit>& cache = solver.transOTFCache[(~otherLit).toInt()].lits;
+        bool OK = false;
+        for (vector<Lit>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
+            if (*cacheLit == ~eqLit) {
+                OK = true;
+                break;
+            }
+        }
+        if (!OK) {
+            isEqual = false;
+            break;
+        }
+    }
+
+    if (isEqual) {
+        Gate gate;
+        for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
+            if (*l2 == eqLit) continue;
+            gate.lits.push_back(*l2);
+        }
+        gate.eqLit = ~eqLit;
+        gates.push_back(gate);
+        totalGateSize += gate.lits.size();
+    }
 }
 
 const uint32_t Subsumer::replaceGate(const Gate& gate)

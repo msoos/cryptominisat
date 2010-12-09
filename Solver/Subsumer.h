@@ -311,8 +311,11 @@ private:
         }
     };
     const bool findGates();
+    void findGate(const Lit eqLit, const Clause& cl);
     const uint32_t replaceGate(const Gate& gate);
     int64_t gateLitsRemoved;
+    uint64_t totalGateSize;
+    vector<Gate> gates;
 
 
     //validity checking
