@@ -892,7 +892,8 @@ void Solver::calcReachability()
             continue;*/
             assert(*it != lit);
             assert(*it != ~lit);
-            if (litReachable[it->toInt()].lit == lit_Undef || litReachable[it->toInt()].numInCache < cacheSize) {
+            if (litReachable[it->toInt()].lit == lit_Undef || litReachable[it->toInt()].numInCache <= cacheSize) {
+                if (litReachable[it->toInt()].numInCache == cacheSize && mtrand.randInt(1) == 0) continue;
                 litReachable[it->toInt()].lit = lit;
                 litReachable[it->toInt()].numInCache = cacheSize;
             }
