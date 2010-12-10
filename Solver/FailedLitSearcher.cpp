@@ -426,18 +426,10 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
                 //they both imply the same
                 bothSame.push(Lit(x, !propValue[x]));
             } else if (c != (int)solver.trail_lim[0]) {
-                bool invert;
-                if (lit1.var() == lit2.var()) {
-                    assert(lit1.sign() == false && lit2.sign() == true);
-                    tmpPs[0] = Lit(lit1.var(), false);
-                    tmpPs[1] = Lit(x, false);
-                    invert = propValue[x];
-                } else {
-                    tmpPs[0] = Lit(lit1.var(), false);
-                    tmpPs[1] = Lit(lit2.var(), false);
-                    invert = lit1.sign() ^ lit2.sign();
-                }
-                binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], invert, 0));
+                assert(lit1.var() == lit2.var());
+                tmpPs[0] = Lit(lit1.var(), false);
+                tmpPs[1] = Lit(x, false);
+                binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], propValue[x], 0));
                 bothInvert += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
                 toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
             }
