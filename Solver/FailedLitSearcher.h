@@ -168,6 +168,7 @@ class FailedLitSearcher {
             const vec<BinPropData>& binPropData;
         };
         uint32_t addedBin;
+        void hyperBinResAll(const Lit litProp, const vector<Lit>& oldCache);
         void hyperBinResolution(const Lit lit);
         BitArray unPropagatedBin;
         BitArray needToVisit;
@@ -176,6 +177,11 @@ class FailedLitSearcher {
         void fillImplies(const Lit lit);
         vec<Var> myImpliesSet; ///<variables set in myimplies
         uint64_t hyperbinProps; ///<Number of bogoprops done by the hyper-binary resolution function hyperBinResolution()
+
+        //Cache equivalence within hyperbin
+        const bool performAddBinLaters();
+        vector<std::pair<Lit, Lit> > addBinLater;
+        uint32_t addedCacheBin;
 
         //bin-removal within hyper-bin-res
         vec<Lit> uselessBin;
