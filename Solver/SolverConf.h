@@ -71,6 +71,7 @@ class SolverConf
         bool      doCacheOTFSSR;
         bool      doExtendedSCC;
         bool      doGateFind;
+        bool      doAddBinCache;
 
         //interrupting & dumping
         uint32_t  maxRestarts;

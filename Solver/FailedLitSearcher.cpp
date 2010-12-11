@@ -515,17 +515,19 @@ const bool FailedLitSearcher::performAddBinLaters()
 
 void FailedLitSearcher::hyperBinResAll(const Lit litProp, const vector<Lit>& oldCache)
 {
-    //Not forgetting stuff already known at one point from cache
-    for (vector<Lit>::const_iterator it = oldCache.begin(), end = oldCache.end(); it != end; it++) {
-    const Lit lit = *it;
-    if (solver.value(lit.var()) != l_Undef
-        || solver.subsumer->getVarElimed()[lit.var()]
-        || solver.xorSubsumer->getVarElimed()[lit.var()]
-        || solver.varReplacer->getReplaceTable()[lit.var()].var() != lit.var()
-        || solver.partHandler->getSavedState()[lit.var()] != l_Undef)
-        continue;
+    if (solver.conf.doAddBinCache) {
+        //Not forgetting stuff already known at one point from cache
+        for (vector<Lit>::const_iterator it = oldCache.begin(), end = oldCache.end(); it != end; it++) {
+        const Lit lit = *it;
+        if (solver.value(lit.var()) != l_Undef
+            || solver.subsumer->getVarElimed()[lit.var()]
+            || solver.xorSubsumer->getVarElimed()[lit.var()]
+            || solver.varReplacer->getReplaceTable()[lit.var()].var() != lit.var()
+            || solver.partHandler->getSavedState()[lit.var()] != l_Undef)
+            continue;
 
-        if (!unPropagatedBin[it->var()]) addBinLater.push_back(std::make_pair(~litProp, *it));
+            if (!unPropagatedBin[it->var()]) addBinLater.push_back(std::make_pair(~litProp, *it));
+        }
     }
 
     //Hyper-binary resolution
