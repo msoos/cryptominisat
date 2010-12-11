@@ -160,7 +160,7 @@ const bool FailedLitSearcher::search()
 {
     assert(solver.decisionLevel() == 0);
     if (solver.nVars() == 0) return solver.ok;
-    if (!bothCache()) return false;
+    if (solver.conf.doCacheOTFSSR && numCalls > 0 && !bothCache()) return false;
 
     uint64_t numProps = 100 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
@@ -753,12 +753,15 @@ const bool FailedLitSearcher::bothCache()
         vector<Lit> const* cache1;
         vector<Lit> const* cache2;
 
+        bool startWithTrue;
         if (solver.transOTFCache[lit.toInt()].lits.size() < solver.transOTFCache[(~lit).toInt()].lits.size()) {
             cache1 = &solver.transOTFCache[lit.toInt()].lits;
             cache2 = &solver.transOTFCache[(~lit).toInt()].lits;
+            startWithTrue = false;
         } else {
             cache1 = &solver.transOTFCache[(~lit).toInt()].lits;
             cache2 = &solver.transOTFCache[lit.toInt()].lits;
+            startWithTrue = true;
         }
 
         if (cache1->size() == 0) continue;
@@ -787,7 +790,8 @@ const bool FailedLitSearcher::bothCache()
                     tmp.clear();
                     tmp.push(Lit(var, false));
                     tmp.push(Lit(it->var(), false));
-                    solver.addXorClauseInt(tmp, true, 0);
+                    bool sign = true ^ startWithTrue ^ it->sign();
+                    solver.addXorClauseInt(tmp, sign , 0);
                     if  (!solver.ok) goto end;
                     bXProp++;
                 }
