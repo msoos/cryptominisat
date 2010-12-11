@@ -1404,6 +1404,8 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
 
+    if (solver.conf.doGateFind && (alsoLearnt || numCalls == 2) &&!findGates()) return false;
+
     solver.order_heap.filter(Solver::VarFilter(solver));
 
     addBackToSolver();
@@ -2241,4 +2243,191 @@ const bool Subsumer::checkElimedUnassigned() const
     assert(numElimed == checkNumElimed);
 
     return true;
+}
+
+const bool Subsumer::findGates()
+{
+    gates.clear();
+    double myTime = cpuTime();
+    totalGateSize = 0;
+
+    for (const ClauseSimp *it = clauses.getData(), *end = clauses.getDataEnd(); it != end; it++) {
+        if (it->clause == NULL) continue;
+
+        const Clause& cl = *it->clause;
+
+        uint8_t numSizeZeroCache = 0;
+        Lit which = lit_Undef;
+        for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
+            Lit lit = *l;
+            const vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
+            if (cache.size() == 0) {
+                numSizeZeroCache++;
+                if (numSizeZeroCache > 1) break;
+                which = lit;
+            }
+        }
+        if (numSizeZeroCache > 1) continue;
+
+        if (numSizeZeroCache == 1) {
+            findGate(which, cl);
+        } else {
+            for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++)
+                findGate(*l, cl);
+        }
+    }
+
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c gates found : " << gates.size()
+        << " avg size: " << std::fixed << std::setw(4) << std::setprecision(2) << ((double)totalGateSize/(double)gates.size())
+        << " time: " << (cpuTime() - myTime) << std::endl;
+    }
+
+    myTime = cpuTime();
+    std::sort(gates.begin(), gates.end(), GateSorter());
+
+    uint32_t numGateReplaced = 0;
+    gateLitsRemoved = 0;
+    for (vector<Gate>::const_iterator it = gates.begin(), end = gates.end(); it != end; it++) {
+        numGateReplaced += replaceGate(*it);
+        if (!solver.ok) break;
+    }
+
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c gates replaced : " << numGateReplaced
+        << " lits-rem: " << gateLitsRemoved
+        << " time: " << (cpuTime() - myTime) << std::endl;
+    }
+
+    return solver.ok;
+}
+
+void Subsumer::findGate(const Lit eqLit, const Clause& cl)
+{
+    bool isEqual = true;
+    for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
+        if (*l2 == eqLit) continue;
+        Lit otherLit = *l2;
+        const vector<Lit>& cache = solver.transOTFCache[(~otherLit).toInt()].lits;
+        bool OK = false;
+        for (vector<Lit>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
+            if (*cacheLit == ~eqLit) {
+                OK = true;
+                break;
+            }
+        }
+        if (!OK) {
+            isEqual = false;
+            break;
+        }
+    }
+
+    if (isEqual) {
+        Gate gate;
+        for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
+            if (*l2 == eqLit) continue;
+            gate.lits.push_back(*l2);
+        }
+        gate.eqLit = ~eqLit;
+        gates.push_back(gate);
+        totalGateSize += gate.lits.size();
+    }
+}
+
+const uint32_t Subsumer::replaceGate(const Gate& gate)
+{
+    assert(solver.ok);
+
+    uint32_t numReplaced = 0;
+    vec<ClauseSimp> subs;
+    findSubsumed(gate.lits, calcAbstraction(gate.lits), subs);
+    for (uint32_t i = 0; i < subs.size(); i++) {
+        ClauseSimp c = subs[i];
+        Clause* cl = subs[i].clause;
+
+        bool inside = false;
+        for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
+            if (gate.eqLit == ~(*l)) {
+                inside = true;
+                break;
+            }
+        }
+        if (inside) {
+            //don't remove the definition of the gate ;)
+            continue;
+        }
+        if (!cl->learnt()) {
+            if (((cl->size() - gate.lits.size() + 1 <= 3) || (gate.lits.size() > 8)) && !cl->getGateReplaced()) {
+                cl->setGateReplaced();
+                cl = solver.clauseAllocator.Clause_new(*cl, cl->getGroup(), true);
+                c = linkInClause(*cl);
+            } else {
+                continue;
+            }
+        }
+        assert(cl->learnt());
+        numReplaced++;
+
+        for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
+            gateLitsRemoved++;
+            cl->strengthen(*it);
+            maybeRemove(occur[it->toInt()], cl);
+            /*#ifndef TOUCH_LESS
+            touch(*it, cl.learnt());
+            #endif*/
+        }
+
+        //Don't add the literal twice
+        inside = false;
+        for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
+            if (gate.eqLit == (*l)) {
+                inside = true;
+                break;
+            }
+        }
+        if (!inside) {
+            gateLitsRemoved--;
+            cl->add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
+            occur[gate.eqLit.toInt()].push(c);
+        }
+
+        //Clean the clause
+        if (cleanClause(*c.clause)) {
+            unlinkClause(c);
+            c.clause = NULL;
+            continue;
+        }
+
+        //Handle clause
+        switch (c.clause->size()) {
+            case 0:
+                solver.ok = false;
+                return numReplaced;
+                break;
+            case 1: {
+                handleSize1Clause((*c.clause)[0]);
+                unlinkClause(c);
+                if (!solver.ok) return numReplaced;
+                c.clause = NULL;
+                break;
+            }
+            case 2: {
+                solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
+                solver.numNewBin++;
+                solver.dataSync->signalNewBinClause(*c.clause);
+                clBinTouched.push_back(NewBinaryClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt()));
+                unlinkClause(c);
+                c.clause = NULL;
+                break;
+            }
+            default:
+                if (!cl->learnt()) {
+                    for (Lit *i2 = cl->getData(), *end2 = cl->getDataEnd(); i2 != end2; i2++)
+                    touchChangeVars(*i2);
+                }
+                cl_touched.add(c);
+        }
+    }
+
+    return numReplaced;
 }

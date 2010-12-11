@@ -300,6 +300,24 @@ private:
     void touchBlockedVar(const Var x);
     void blockedClauseElimAll(const Lit lit);
 
+    //Gate extraction
+    class Gate {
+    public:
+        Lit eqLit;
+        vector<Lit> lits;
+    };
+    struct GateSorter {
+        const bool operator() (const Gate& gate1, const Gate& gate2) {
+            return (gate1.lits.size() > gate2.lits.size());
+        }
+    };
+    const bool findGates();
+    void findGate(const Lit eqLit, const Clause& cl);
+    const uint32_t replaceGate(const Gate& gate);
+    int64_t gateLitsRemoved;
+    uint64_t totalGateSize;
+    vector<Gate> gates;
+
 
     //validity checking
     const bool verifyIntegrity();
