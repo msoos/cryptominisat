@@ -57,7 +57,7 @@ class FailedLitSearcher {
     private:
         //Main
         const bool tryBoth(const Lit lit1, const Lit lit2);
-        const bool tryAll(const Lit* begin, const Lit* end);
+        const bool bothCache();
         void printResults(const double myTime) const;
 
         Solver& solver; ///<The solver we are updating&working with
