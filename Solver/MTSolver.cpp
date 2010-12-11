@@ -184,7 +184,6 @@ template<class T> bool MTSolver::addXorClause (T& ps, bool xorEqualFalse, const 
         std::copy(ps.getData(), ps.getDataEnd(), copyPS.getData());
         bool ret = solvers[i]->addXorClause(copyPS, xorEqualFalse, group, group_name);
         if (ret == false) {
-            #pragma omp critical
             globalRet = false;
         }
     }
