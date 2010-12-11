@@ -893,6 +893,43 @@ void Subsumer::removeWrong(vec<Clause*>& cs)
     cs.shrink(i-j);
 }
 
+void Subsumer::removeBinsAndTris(const Var var)
+{
+    uint32_t numRemovedLearnt = 0;
+
+    Lit lit = Lit(var, false);
+
+    numRemovedLearnt += removeBinAndTrisHelper(lit, solver.watches[(~lit).toInt()]);
+    numRemovedLearnt += removeBinAndTrisHelper(~lit, solver.watches[lit.toInt()]);
+
+    solver.learnts_literals -= numRemovedLearnt*2;
+    solver.numBins -= numRemovedLearnt;
+
+}
+
+const uint32_t Subsumer::removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws)
+{
+    uint32_t numRemovedLearnt = 0;
+
+    Watched* i = ws.getData();
+    Watched* j = i;
+    for (Watched *end = ws.getDataEnd(); i != end; i++) {
+        if (i->isTriClause()) continue;
+
+        if (i->isBinary()) {
+            assert(i->getLearnt());
+            removeWBin(solver.watches[(~(i->getOtherLit())).toInt()], lit, i->getLearnt());
+            numRemovedLearnt++;
+            continue;
+        }
+
+        assert(false);
+    }
+    ws.shrink_(i - j);
+
+    return numRemovedLearnt;
+}
+
 void Subsumer::removeWrongBinsAndAllTris()
 {
     uint32_t numRemovedHalfLearnt = 0;
@@ -1813,7 +1850,7 @@ bool Subsumer::maybeEliminate(const Var var)
     numMaxElim -= posSize * negSize + before_literals;
     poss.clear();
     negs.clear();
-    addLearntBinaries(var);
+    //addLearntBinaries(var);
     removeClauses(posAll, negAll, var);
 
     #ifndef NDEBUG
@@ -1879,6 +1916,8 @@ bool Subsumer::maybeEliminate(const Var var)
         }
         if (!solver.ok) return true;
     }
+
+    //removeBinsAndTris(var);
 
     assert(occur[lit.toInt()].size() == 0 &&  occur[(~lit).toInt()].size() == 0);
     var_elimed[var] = true;
