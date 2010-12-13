@@ -255,71 +255,7 @@ Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
 
     return ret;
 }
-/**
-@brief Backward-subsumption&self-subsuming resolution for binary clause sets
 
-Takes in a set of binary clauses:
-lit1 OR lits[0]
-lit1 OR lits[1]
-...
-and backward-subsumes clauses in the occurence lists with it, as well as
-performing self-subsuming resolution using these binary clauses on clauses in
-the occurrence lists.
-
-@param[in] lit1 As defined above
-@param[in] lits The abstraction of the clause
-*/
-void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, const uint32_t abst)
-{
-    vec<ClauseSimp> subs;
-    vec<ClauseSimp> subs2;
-    vec<Lit> subs2Lit;
-
-    vec<ClauseSimp>& cs = occur[lit1.toInt()];
-    for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
-        if (it+1 != end) __builtin_prefetch((it+1)->clause, 0, 1);
-        if (it->clause == NULL) continue;
-
-        Clause& c = *it->clause;
-        if ((c.getAbst() & abst) == 0) continue;
-        extraTimeNonExist += c.size()*2;
-        bool removed = false;
-        bool removedLit = false;
-        for (uint32_t i = 0; i < c.size(); i++) {
-            if (lits[c[i].toInt()]) {
-                subs.push(*it);
-                removed = true;
-                break;
-            }
-
-            if (!removedLit && lits[(~c[i]).toInt()]) {
-                subs2.push(*it);
-                subs2Lit.push(c[i]);
-                removedLit = true;
-            }
-        }
-
-        if (removed && removedLit) {
-            subs2.pop();
-            subs2Lit.pop();
-        }
-    }
-
-    for (uint32_t i = 0; i < subs.size(); i++){
-        unlinkClause(subs[i]);
-    }
-
-    for (uint32_t i = 0; i < subs2.size(); i++) {
-        strenghten(subs2[i], subs2Lit[i]);
-        if (!solver.ok) break;
-    }
-
-    #ifdef VERBOSE_DEBUG
-    if (!solver.ok) {
-        std::cout << "solver.ok is false when returning from subsume0BIN()" << std::endl;
-    }
-    #endif //VERBOSE_DEBUG
-}
 /**
 @brief Backward subsumption and self-subsuming resolution
 
@@ -1048,9 +984,10 @@ const bool Subsumer::subsWNonExitsBinsFullFull()
 
     uint32_t oldTrailSize = solver.trail.size();
     if (!subsWNonExistBinsFull()) return false;
+    if (!subsumeNonExist()) return false;
 
     if (solver.conf.verbosity  >= 1) {
-        std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << clauses_subsumed
+        std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << subsumedNonExist
         << " l-rem: " << std::setw(6) << literals_removed
         << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
         << " done: " << std::setw(6) << doneNumNonExist
@@ -1085,8 +1022,6 @@ const bool Subsumer::subsWNonExistBinsFull()
 {
     uint64_t oldProps = solver.propagations;
     uint64_t maxProp = MAX_BINARY_PROP*7;
-    toVisitAll.clear();
-    toVisitAll.growTo(solver.nVars()*2, false);
     extraTimeNonExist = 0;
     OnlyNonLearntBins* onlyNonLearntBins = NULL;
     if (solver.clauses_literals < 10*1000*1000) {
@@ -1154,7 +1089,6 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
     #ifdef VERBOSE_DEBUG
     std::cout << "subsWNonExistBins called with lit " << lit << std::endl;
     #endif //VERBOSE_DEBUG
-    toVisit.clear();
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
     bool failed;
@@ -1163,14 +1097,14 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
     else
         failed = !onlyNonLearntBins->propagate();
     if (failed) return false;
-    uint32_t abst = 0;
+
+    vector<Lit>& thisCache = binNonLearntCache[(~lit).toInt()];
+    thisCache.clear();
 
     assert(solver.decisionLevel() > 0);
     for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
         Lit x = solver.trail[sublevel];
-        toVisit.push(x);
-        abst |= 1 << (x.var() & 31);
-        toVisitAll[x.toInt()] = true;
+        thisCache.push_back(x);
         solver.assigns[x.var()] = l_Undef;
     }
     solver.assigns[solver.trail[solver.trail_lim[0]].var()] = l_Undef;
@@ -1178,18 +1112,6 @@ const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNo
     solver.trail.shrink_(solver.trail.size() - solver.trail_lim[0]);
     solver.trail_lim.shrink_(solver.trail_lim.size());
     //solver.cancelUntilLight();
-
-    if ((onlyNonLearntBins != NULL && toVisit.size() <= onlyNonLearntBins->getWatchSize(lit))
-        || (!solver.multiLevelProp)) {
-        //This has been performed above, with subsume1Partial of binary clauses:
-        //this toVisit.size()<=1, there mustn't have been more than 1 binary
-        //clause in the watchlist, so this has been performed above.
-    } else {
-        subsume0BIN(~lit, toVisitAll, abst);
-    }
-
-    for (uint32_t i = 0; i < toVisit.size(); i++)
-        toVisitAll[toVisit[i].toInt()] = false;
 
     return solver.ok;
 }
@@ -1373,6 +1295,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     if (alsoLearnt) {
         numMaxSubsume1 = 500*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
+        subsumeNonExist();
         addedClauseLits += addFromSolver(solver.clauses);
     } else {
         if (solver.conf.doBlockedClause) {
@@ -2286,20 +2209,20 @@ const bool Subsumer::checkElimedUnassigned() const
 
 const bool Subsumer::findGates()
 {
-    gates.clear();
+    orGates.clear();
     double myTime = cpuTime();
-    totalGateSize = 0;
+    totalOrGateSize = 0;
 
     for (const ClauseSimp *it = clauses.getData(), *end = clauses.getDataEnd(); it != end; it++) {
         if (it->clause == NULL) continue;
-
         const Clause& cl = *it->clause;
+        if (cl.learnt()) continue;
 
         uint8_t numSizeZeroCache = 0;
         Lit which = lit_Undef;
         for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
             Lit lit = *l;
-            const vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
+            const vector<Lit>& cache = binNonLearntCache[(~lit).toInt()];
             if (cache.size() == 0) {
                 numSizeZeroCache++;
                 if (numSizeZeroCache > 1) break;
@@ -2309,26 +2232,26 @@ const bool Subsumer::findGates()
         if (numSizeZeroCache > 1) continue;
 
         if (numSizeZeroCache == 1) {
-            findGate(which, cl);
+            findOrGate(which, cl);
         } else {
             for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++)
-                findGate(*l, cl);
+                findOrGate(*l, cl);
         }
     }
 
     if (solver.conf.verbosity >= 1) {
-        std::cout << "c gates found : " << gates.size()
-        << " avg size: " << std::fixed << std::setw(4) << std::setprecision(2) << ((double)totalGateSize/(double)gates.size())
+        std::cout << "c gates found : " << orGates.size()
+        << " avg size: " << std::fixed << std::setw(4) << std::setprecision(2) << ((double)totalOrGateSize/(double)orGates.size())
         << " time: " << (cpuTime() - myTime) << std::endl;
     }
 
     myTime = cpuTime();
-    std::sort(gates.begin(), gates.end(), GateSorter());
+    std::sort(orGates.begin(), orGates.end(), OrGateSorter());
 
     uint32_t numGateReplaced = 0;
     gateLitsRemoved = 0;
-    for (vector<Gate>::const_iterator it = gates.begin(), end = gates.end(); it != end; it++) {
-        numGateReplaced += replaceGate(*it);
+    for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+        numGateReplaced += replaceOrGate(*it);
         if (!solver.ok) break;
     }
 
@@ -2341,13 +2264,14 @@ const bool Subsumer::findGates()
     return solver.ok;
 }
 
-void Subsumer::findGate(const Lit eqLit, const Clause& cl)
+void Subsumer::findOrGate(const Lit eqLit, const Clause& cl)
 {
+    assert(!cl.learnt());
     bool isEqual = true;
     for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
         if (*l2 == eqLit) continue;
         Lit otherLit = *l2;
-        const vector<Lit>& cache = solver.transOTFCache[(~otherLit).toInt()].lits;
+        const vector<Lit>& cache = binNonLearntCache[(~otherLit).toInt()];
         bool OK = false;
         for (vector<Lit>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
             if (*cacheLit == ~eqLit) {
@@ -2362,18 +2286,18 @@ void Subsumer::findGate(const Lit eqLit, const Clause& cl)
     }
 
     if (isEqual) {
-        Gate gate;
+        OrGate gate;
         for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
             if (*l2 == eqLit) continue;
             gate.lits.push_back(*l2);
         }
         gate.eqLit = ~eqLit;
-        gates.push_back(gate);
-        totalGateSize += gate.lits.size();
+        orGates.push_back(gate);
+        totalOrGateSize += gate.lits.size();
     }
 }
 
-const uint32_t Subsumer::replaceGate(const Gate& gate)
+const uint32_t Subsumer::replaceOrGate(const OrGate& gate)
 {
     assert(solver.ok);
 
@@ -2395,16 +2319,6 @@ const uint32_t Subsumer::replaceGate(const Gate& gate)
             //don't remove the definition of the gate ;)
             continue;
         }
-        if (!cl->learnt()) {
-            if (((cl->size() - gate.lits.size() + 1 <= 3) || (gate.lits.size() > 8)) && !cl->getGateReplaced()) {
-                cl->setGateReplaced();
-                cl = solver.clauseAllocator.Clause_new(*cl, cl->getGroup(), true);
-                c = linkInClause(*cl);
-            } else {
-                continue;
-            }
-        }
-        assert(cl->learnt());
         numReplaced++;
 
         for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
@@ -2469,4 +2383,40 @@ const uint32_t Subsumer::replaceGate(const Gate& gate)
     }
 
     return numReplaced;
+}
+
+const bool Subsumer::subsumeNonExist()
+{
+    for (const ClauseSimp *it = clauses.getData(), *end = clauses.getDataEnd(); it != end; it++) {
+        if (it->clause == NULL) continue;
+        const Clause& cl = *it->clause;
+
+
+        for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+            seen_tmp[l->toInt()] = true;
+        }
+
+        bool toRemove = false;
+        for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+            vector<Lit>& cache = binNonLearntCache[l->toInt()];
+            for (vector<Lit>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
+                if (seen_tmp[cacheLit->toInt()]) {
+                    toRemove = true;
+                    break;
+                }
+            }
+            if (toRemove) break;
+        }
+
+        for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+            seen_tmp[l->toInt()] = false;
+        }
+
+        if (toRemove) {
+            unlinkClause(*it);
+            subsumedNonExist++;
+        }
+    }
+
+    return true;
 }

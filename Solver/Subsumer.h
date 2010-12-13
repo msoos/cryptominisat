@@ -271,11 +271,11 @@ private:
     const bool subsWNonExitsBinsFullFull();
     const bool subsWNonExistBinsFull();
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
-    void subsume0BIN(const Lit lit, const vec<char>& lits, const uint32_t abst);
-    uint32_t doneNum;
+    const bool subsumeNonExist();
+    uint32_t doneNumNonExist;
     uint64_t extraTimeNonExist;
-    vec<Lit> toVisit;      ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (list)
-    vec<char> toVisitAll;  ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (contains '1' for literal.toInt() that we visited)
+    vector<vector<Lit> > binNonLearntCache;
+    uint32_t subsumedNonExist;
 
     //Blocked clause elimination
     class VarOcc {
@@ -303,22 +303,22 @@ private:
     void blockedClauseElimAll(const Lit lit);
 
     //Gate extraction
-    class Gate {
+    class OrGate {
     public:
         Lit eqLit;
         vector<Lit> lits;
     };
-    struct GateSorter {
-        const bool operator() (const Gate& gate1, const Gate& gate2) {
+    struct OrGateSorter {
+        const bool operator() (const OrGate& gate1, const OrGate& gate2) {
             return (gate1.lits.size() > gate2.lits.size());
         }
     };
     const bool findGates();
-    void findGate(const Lit eqLit, const Clause& cl);
-    const uint32_t replaceGate(const Gate& gate);
+    void findOrGate(const Lit eqLit, const Clause& cl);
+    const uint32_t replaceOrGate(const OrGate& gate);
     int64_t gateLitsRemoved;
-    uint64_t totalGateSize;
-    vector<Gate> gates;
+    uint64_t totalOrGateSize;
+    vector<OrGate> orGates;
 
 
     //validity checking
@@ -470,6 +470,9 @@ inline void Subsumer::newVar()
     ol_seenNeg.push(1);
     ol_seenNeg.push(1);
     touch(solver.nVars()-1);
+
+    binNonLearntCache.push_back(vector<Lit>());
+    binNonLearntCache.push_back(vector<Lit>());
 }
 
 inline const map<Var, vector<vector<Lit> > >& Subsumer::getElimedOutVar() const
