@@ -272,7 +272,6 @@ private:
     const bool subsWNonExistBinsFull();
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
     void subsume0BIN(const Lit lit, const vec<char>& lits, const uint32_t abst);
-    bool subsNonExistentFinish;
     uint32_t doneNum;
     uint64_t extraTimeNonExist;
     vec<Lit> toVisit;      ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (list)

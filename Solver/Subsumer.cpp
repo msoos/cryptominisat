@@ -1053,7 +1053,7 @@ const bool Subsumer::subsWNonExitsBinsFullFull()
         std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << clauses_subsumed
         << " l-rem: " << std::setw(6) << literals_removed
         << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
-        << " done: " << std::setw(6) << doneNum
+        << " done: " << std::setw(6) << doneNumNonExist
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         << std::endl;
     }
@@ -1095,13 +1095,13 @@ const bool Subsumer::subsWNonExistBinsFull()
         solver.multiLevelProp = true;
     }
 
-    doneNum = 0;
+    doneNumNonExist = 0;
     uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
     for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
         Var var = solver.order_heap[(startFrom + i) % solver.order_heap.size()];
         if (solver.propagations + extraTimeNonExist*150 > oldProps + maxProp) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
-        doneNum++;
+        doneNumNonExist++;
         extraTimeNonExist += 5;
 
         Lit lit(var, true);
