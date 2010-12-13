@@ -1268,7 +1268,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         Lit lit = *l;
 
         if (clDoMinLRec) {
-            if (moreRecurProp >= 0
+            if (moreRecurProp >= 450
                 || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
                     && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
                ) {
@@ -1341,7 +1341,7 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
                 moreRecurProp += 5;
                 Lit otherLit = i->getOtherLit();
                 //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
-                if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) continue;
+                if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) break;
                 if (otherLit == lit) {
                     failedCacheLits.push(~lit);
                     continue;
@@ -2698,7 +2698,7 @@ const lbool Solver::solve(const vec<Lit>& assumps)
         if (!chooseRestartType(lastFullRestart))
             return l_False;
 
-        if (!failPossibleDueCache()) return l_False;
+        //if (!failPossibleDueCache()) return l_False;
     }
     printEndSearchStat();
 
