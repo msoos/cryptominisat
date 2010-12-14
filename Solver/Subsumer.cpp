@@ -2234,12 +2234,12 @@ const bool Subsumer::findOrGatesAndTreat()
 
     end:
     if (solver.conf.verbosity >= 1) {
-        std::cout << "c gates found : " << orGates.size()
+        std::cout << "c gates found : " << std::setw(6) << orGates.size()
         << " avg size: " << std::fixed << std::setw(4) << std::setprecision(2) << ((double)totalOrGateSize/(double)orGates.size())
-        << " cl-shorten: " << numOrGateReplaced
-        << " lits-rem: " << gateLitsRemoved
-        << " var-repl: " << (solver.varReplacer->getNewToReplaceVars() - oldNumVarToReplace)
-        << " T: " << (cpuTime() - myTime) << std::endl;
+        << " cl-shorten: " << std::setw(5) << numOrGateReplaced
+        << " lits-rem: " << std::setw(6) << gateLitsRemoved
+        << " var-repl: " << std::setw(3) << (solver.varReplacer->getNewToReplaceVars() - oldNumVarToReplace)
+        << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
     }
 
     return solver.ok;
