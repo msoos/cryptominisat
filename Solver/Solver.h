@@ -337,6 +337,8 @@ protected:
     Heap<VarOrderLt>    order_heap;       ///< A priority queue of variables ordered with respect to the variable activity. All variables here MUST be decision variables. If you changed the decision variables, you MUST filter this
     vec<uint32_t>       activity;         ///< A heuristic measurement of the activity of a variable.
     uint32_t            var_inc;          ///< Amount to bump next variable with.
+    vector<std::pair<uint64_t, uint64_t> > lTPolCount;
+    void bumpUIPPolCount(const vec<Lit>& lit);
 
     /////////////////
     // Learnt clause cleaning

@@ -219,6 +219,9 @@ const bool FailedLitSearcher::search()
     removedUselessLearnt = 0;
     removedUselessNonLearnt = 0;
 
+    vector<UIPNegPosDist> negPosDist;
+    uint32_t varPolCount = 0;
+
     //uint32_t fromBin;
     origProps = solver.propagations;
     uint32_t i;
@@ -233,16 +236,49 @@ const bool FailedLitSearcher::search()
     }
     lastTimeStopped = (lastTimeStopped + i) % solver.nVars();
 
+    //Calculate best vars to try
+    for (vector<std::pair<uint64_t, uint64_t> >::iterator it = solver.lTPolCount.begin(), end = solver.lTPolCount.end(); it != end; it++, varPolCount++) {
+        UIPNegPosDist tmp;
+        tmp.var = varPolCount;
+        tmp.dist = std::abs((long int) (it->first - it->second));
+
+        if (it->first > 4  && it->second > 4)
+            negPosDist.push_back(tmp);
+
+        it->first = 0;
+        it->second = 0;
+    }
+    std::sort(negPosDist.begin(), negPosDist.end(), NegPosSorter());
+    /*for (uint32_t i = 0; i < negPosDist.size(); i++) {
+        const UIPNegPosDist& u = negPosDist[i];
+        std::cout << "var: " << (u.var + 1) << " dist: " << u.dist << std::endl;
+    }*/
+    //std::cout << "c negPosDist.size() : " << negPosDist.size() << std::endl;
+
     origProps = solver.propagations;
-    while (!order_heap_copy.empty()) {
-        Var var = order_heap_copy.removeMin();
-        if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
-            continue;
-        if (solver.propagations >= origProps + numPropsDifferent)  {
-            break;
+    //hyperbinProps = 0;
+    if (negPosDist.size() < 100) {
+        while (!order_heap_copy.empty()) {
+            Var var = order_heap_copy.removeMin();
+            if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
+                continue;
+            if (solver.propagations >= origProps + numPropsDifferent)  {
+                break;
+            }
+            if (!tryBoth(Lit(var, false), Lit(var, true)))
+                goto end;
         }
-        if (!tryBoth(Lit(var, false), Lit(var, true)))
-            goto end;
+    } else {
+        for (uint32_t i = 0; i < negPosDist.size(); i++) {
+            Var var = negPosDist[i].var;
+            if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
+                continue;
+            if (solver.propagations >= origProps + numPropsDifferent)  {
+                break;
+            }
+            if (!tryBoth(Lit(var, false), Lit(var, true)))
+                goto end;
+        }
     }
 
 

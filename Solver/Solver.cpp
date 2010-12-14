@@ -187,8 +187,10 @@ Var Solver::newVar(bool dvar)
     oldPolarity.push_back(defaultPolarity());
     #endif //USE_OLD_POLARITIES
 
+    //Variable heap, long-term polarity count
     decision_var.push_back(dvar);
     insertVarOrder(v);
+    lTPolCount.push_back(std::make_pair(0,0));
 
     varReplacer->newVar();
     partHandler->newVar();
@@ -2302,6 +2304,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         #endif
     //Normal learnt
     } else {
+        bumpUIPPolCount(learnt_clause);
         if (learnt_clause.size() == 2) {
             attachBinClause(learnt_clause[0], learnt_clause[1], true);
             numNewBin++;
@@ -2348,6 +2351,16 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     if (update && restartType == static_restart) claDecayActivity();
 
     return l_Nothing;
+}
+
+void Solver::bumpUIPPolCount(const vec<Lit>& lits)
+{
+    for (const Lit *l = lits.getData(), *end = lits.getDataEnd(); l != end; l++) {
+        uint32_t factor = 1;
+        if (l == lits.getData()) factor = 10;
+        if (l->sign()) lTPolCount[l->var()].second += factor;
+        else lTPolCount[l->var()].first += factor;
+    }
 }
 
 /**
