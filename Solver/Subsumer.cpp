@@ -1383,6 +1383,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     totalTime += cpuTime() - myTime;
 
     solver.testAllClauseAttach();
+    solver.checkNoWrongAttach();
     return true;
 }
 

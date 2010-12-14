@@ -570,6 +570,7 @@ protected:
     void     printEndSearchStat();
     void     addSymmBreakClauses();
     void     initialiseSolver();
+    void     checkNoWrongAttach() const;
 
     //Misc related binary clauses
     void     dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const;
@@ -856,6 +857,10 @@ static inline void logLits(FILE* f, const vec<Lit>& ls)
 
 #ifndef DEBUG_ATTACH_FULL
 inline void Solver::testAllClauseAttach() const
+{
+    return;
+}
+inline void Solver::checkNoWrongAttach() const
 {
     return;
 }

@@ -2077,6 +2077,7 @@ const bool Solver::simplify()
     totalSimplifyTime += cpuTime() - myTime;
 
     testAllClauseAttach();
+    checkNoWrongAttach();
     return true;
 }
 
@@ -2478,6 +2479,7 @@ end:
         status = l_False;
 
     testAllClauseAttach();
+    checkNoWrongAttach();
 
     if (!ok) return l_False;
     return status;
