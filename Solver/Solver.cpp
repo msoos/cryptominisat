@@ -535,11 +535,11 @@ void Solver::attachClause(Clause& c)
 {
     assert(c.size() > 2);
     #ifdef DEBUG_ATTACH
-    assert(c[0].var() != c[1].var());
     assert(assigns[c[0].var()] == l_Undef);
     assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
 
     for (uint32_t i = 0; i < c.size(); i++) {
+        if (i > 0) assert(c[i-1].var() != c[i].var());
         assert(!subsumer->getVarElimed()[c[i].var()]);
         assert(!xorSubsumer->getVarElimed()[c[i].var()]);
     }
