@@ -313,12 +313,30 @@ private:
             return (gate1.lits.size() > gate2.lits.size());
         }
     };
-    const bool findGates();
-    void findOrGate(const Lit eqLit, const Clause& cl);
-    const uint32_t replaceOrGate(const OrGate& gate);
+    struct OrGateSorter2 {
+        const bool operator() (const OrGate& gate1, const OrGate& gate2) {
+            if (gate1.lits.size() > gate2.lits.size()) return true;
+            if (gate1.lits.size() < gate2.lits.size()) return false;
+
+            assert(gate1.lits.size() == gate2.lits.size());
+            for (uint32_t i = 0; i < gate1.lits.size(); i++) {
+                if (gate1.lits[i] < gate2.lits[i]) return true;
+                if (gate1.lits[i] > gate2.lits[i]) return false;
+            }
+
+            return false;
+        }
+    };
+    const bool findOrGatesAndTreat();
+    void findOrGates(const bool learntGatesToo);
+    void findOrGate(const Lit eqLit, const Clause& cl, const bool learntGatesToo);
+    const bool shortenWithOrGate(const OrGate& gate);
     int64_t gateLitsRemoved;
     uint64_t totalOrGateSize;
     vector<OrGate> orGates;
+    vec<char> leftHandOfGate;
+    uint32_t numOrGateReplaced;
+    const bool findEqOrGates();
 
 
     //validity checking
