@@ -1364,7 +1364,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
 
-    if (solver.conf.doGateFind && (alsoLearnt || numCalls == 2) && !findOrGatesAndTreat()) return false;
+    if (solver.conf.doGateFind && alsoLearnt && !findOrGatesAndTreat()) return false;
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
