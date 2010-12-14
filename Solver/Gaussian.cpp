@@ -554,6 +554,11 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     assert(best_row != UINT_MAX);
 
     m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
+    #ifdef DEBUG_ATTACH
+    for (uint32_t i = 0; i < tmp_clause.size(); i++) {
+        if (i > 0) assert(tmp_clause[i-1].var() != tmp_clause[i].var());
+    }
+    #endif //DEBUG_ATTACH
     confl = (Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
     Clause& cla = *confl;
     #ifdef STATS_NEEDED
@@ -775,6 +780,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
     cout << "(" << matrix_no << ")matrix prop clause: " << tmp_clause << std::endl;
     cout << endl;
     #endif
+
+    #ifdef DEBUG_ATTACH
+    for (uint32_t i = 0; i < tmp_clause.size(); i++) {
+        if (i > 0) assert(tmp_clause[i-1].var() != tmp_clause[i].var());
+    }
+    #endif //DEBUG_ATTACH
 
     switch(tmp_clause.size()) {
         case 0:
