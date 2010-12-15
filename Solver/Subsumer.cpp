@@ -2217,6 +2217,7 @@ const bool Subsumer::findOrGatesAndTreat()
     leftHandOfGate.clear();
     leftHandOfGate.growTo(solver.nVars()*2, false);
     uint32_t oldNumVarToReplace = solver.varReplacer->getNewToReplaceVars();
+    uint32_t oldNumBins = solver.numBins;
     gateLitsRemoved = 0;
     numOrGateReplaced = 0;
 
@@ -2235,9 +2236,10 @@ const bool Subsumer::findOrGatesAndTreat()
     end:
     if (solver.conf.verbosity >= 1) {
         std::cout << "c gates found : " << std::setw(6) << orGates.size()
-        << " avg size: " << std::fixed << std::setw(4) << std::setprecision(2) << ((double)totalOrGateSize/(double)orGates.size())
+        << " avg size: " << std::fixed << std::setw(4) << std::setprecision(1) << ((double)totalOrGateSize/(double)orGates.size())
         << " cl-shorten: " << std::setw(5) << numOrGateReplaced
         << " lits-rem: " << std::setw(6) << gateLitsRemoved
+        << " bin-add: " << std::setw(6) << (solver.numBins - oldNumBins)
         << " var-repl: " << std::setw(3) << (solver.varReplacer->getNewToReplaceVars() - oldNumVarToReplace)
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
     }
