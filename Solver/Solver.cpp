@@ -932,7 +932,7 @@ const bool Solver::failPossibleDueCache()
             || partHandler->getSavedState()[lit.var()] != l_Undef)
             continue;
 
-        uncheckedEnqueue(lit);
+        uncheckedEnqueue(~lit);
     }
     failedCacheLits.clear();
     ok = propagate().isNULL();
