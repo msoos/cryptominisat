@@ -2284,7 +2284,7 @@ void Subsumer::findOrGates(const bool learntGatesToo)
         for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
             Lit lit = *l;
             vector<Lit> const* cache;
-            if (learntGatesToo) cache = &binNonLearntCache[(~lit).toInt()];
+            if (!learntGatesToo) cache = &binNonLearntCache[(~lit).toInt()];
             else cache = &solver.transOTFCache[(~lit).toInt()].lits;
 
             if (cache->size() == 0) {
@@ -2311,7 +2311,7 @@ void Subsumer::findOrGate(const Lit eqLit, const Clause& cl, const bool learntGa
         if (*l2 == eqLit) continue;
         Lit otherLit = *l2;
         vector<Lit> const* cache;
-        if (learntGatesToo) cache = &binNonLearntCache[(~otherLit).toInt()];
+        if (!learntGatesToo) cache = &binNonLearntCache[(~otherLit).toInt()];
         else cache = &solver.transOTFCache[(~otherLit).toInt()].lits;
 
         bool OK = false;
