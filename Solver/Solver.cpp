@@ -1331,12 +1331,11 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
     vector<Lit>& allAddedToSeen2 = transOTFCache[lit.toInt()].lits;
     allAddedToSeen2.clear();
 
-    toRecursiveProp.push(lit);
+    toRecursiveProp.push(~lit);
     while(!toRecursiveProp.empty()) {
         Lit thisLit = toRecursiveProp.top();
         toRecursiveProp.pop();
-        //watched is messed: lit is in watched[~lit]
-        vec<Watched>& ws = watches[(~thisLit).toInt()];
+        vec<Watched>& ws = watches[thisLit.toInt()];
         moreRecurProp += ws.size() +10;
         for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
@@ -1350,7 +1349,7 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
                 }
                 seen2[otherLit.toInt()] = 1;
                 allAddedToSeen2.push_back(otherLit);
-                toRecursiveProp.push(~otherLit);
+                toRecursiveProp.push(otherLit);
             } else {
                 break;
             }
