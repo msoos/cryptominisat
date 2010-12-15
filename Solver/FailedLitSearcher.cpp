@@ -215,7 +215,7 @@ const bool FailedLitSearcher::search()
     needToVisit.resize(solver.nVars(), 0);
     dontRemoveAncestor.resize(solver.nVars(), 0);
     hyperbinProps = 0;
-    maxHyperBinProps = numProps/4;
+    maxHyperBinProps = numProps/3;
     removedUselessLearnt = 0;
     removedUselessNonLearnt = 0;
 
@@ -256,7 +256,7 @@ const bool FailedLitSearcher::search()
     //std::cout << "c negPosDist.size() : " << negPosDist.size() << std::endl;
 
     origProps = solver.propagations;
-    //hyperbinProps = 0;
+    hyperbinProps = 0;
     if (negPosDist.size() < 100) {
         while (!order_heap_copy.empty()) {
             Var var = order_heap_copy.removeMin();
