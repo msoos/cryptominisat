@@ -2244,6 +2244,31 @@ const bool Subsumer::findOrGatesAndTreat()
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
     }
 
+    /*for (uint32_t i = 0; i < orGates.size(); i++) {
+        const OrGate& v = orGates[i];
+        std::cout << " " << v.eqLit << " = ";
+        for (uint32_t i2 = 0; i2 < v.lits.size(); i2++) {
+            std::cout << v.lits[i2] << " , ";
+        }
+        std::cout << std::endl;
+    }
+
+    myTime = cpuTime();
+    orGates.clear();
+    totalOrGateSize = 0;
+    leftHandOfGate.clear();
+    leftHandOfGate.growTo(solver.nVars()*2, false);
+    oldNumVarToReplace = solver.varReplacer->getNewToReplaceVars();
+    oldNumBins = solver.numBins;
+    gateLitsRemoved = 0;
+    numOrGateReplaced = 0;
+    findOrGates(true);
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c gates found : " << std::setw(6) << orGates.size()
+        << " avg size: " << std::fixed << std::setw(4) << std::setprecision(1) << ((double)totalOrGateSize/(double)orGates.size())
+        << std::endl;
+    }*/
+
     return solver.ok;
 }
 
