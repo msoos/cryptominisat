@@ -2381,16 +2381,17 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
                 remove(lits, *it);
             }
             lits.push(gate.eqLit);
+            if (lits[0].var() != lits[1].var()
+                && (solver.cacheContainsBinCl(lits[0], lits[1])
+                    || solver.cacheContainsBinCl(lits[1], lits[0]))
+                ) continue;
 
             #ifdef VERBOSE_ORGATE_REPLACE
             std::cout << "Adding learnt clause " << lits << " due to gate replace-avoid" << std::endl;
             #endif
 
             Clause* c2 = solver.addClauseInt(lits, 0, true);
-            if (c2 != NULL) {
-                if (alsoLearnt) linkInClause(*c2);
-                else solver.learnts.push(c2);
-            }
+            assert(c2 == NULL);
             if (!solver.ok)  return false;
             continue;
         }

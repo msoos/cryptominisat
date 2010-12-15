@@ -721,3 +721,13 @@ void Solver::printStats(const int numThreads)
         printStatsLine("c CPU time", cpu_time, " s");
     }
 }
+
+const bool Solver::cacheContainsBinCl(const Lit lit1, const Lit lit2) const
+{
+    const vector<Lit>& cache = transOTFCache[(~lit1).toInt()].lits;
+    for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+        if (*it == lit2) return true;
+    }
+
+    return false;
+}

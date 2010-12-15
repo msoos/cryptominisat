@@ -400,6 +400,7 @@ protected:
     void                saveOTFData();
     vector<LitReachData>litReachable;
     void                calcReachability();
+    const bool          cacheContainsBinCl(const Lit lit1, const Lit lit2) const;
 
     ////////////
     //Logging
