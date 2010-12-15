@@ -2356,8 +2356,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
 void Solver::bumpUIPPolCount(const vec<Lit>& lits)
 {
     for (const Lit *l = lits.getData(), *end = lits.getDataEnd(); l != end; l++) {
-        uint32_t factor = 1;
-        if (l == lits.getData()) factor = 10;
+        uint32_t factor = 0;
+        if (l == lits.getData()) factor = 1;
         if (l->sign()) lTPolCount[l->var()].second += factor;
         else lTPolCount[l->var()].first += factor;
     }

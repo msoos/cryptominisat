@@ -248,8 +248,8 @@ const bool FailedLitSearcher::search()
         if (it->first > 4  && it->second > 4)
             negPosDist.push_back(tmp);
 
-        it->first = 0;
-        it->second = 0;
+        //it->first = pos/2;
+        //it->second = neg/2;
     }
     std::sort(negPosDist.begin(), negPosDist.end(), NegPosSorter());
     /*for (uint32_t i = 0; i < negPosDist.size(); i++) {
