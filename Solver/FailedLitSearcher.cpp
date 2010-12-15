@@ -162,7 +162,7 @@ const bool FailedLitSearcher::search()
     if (solver.nVars() == 0) return solver.ok;
     if (solver.conf.doCacheOTFSSR && numCalls > 0 && !bothCache()) return false;
 
-    uint64_t numProps = 100 * 1000000;
+    uint64_t numProps = 80 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     solver.testAllClauseAttach();
