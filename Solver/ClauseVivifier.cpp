@@ -28,6 +28,22 @@ ClauseVivifier::ClauseVivifier(Solver& _solver) :
     , solver(_solver)
 {}
 
+const bool ClauseVivifier::vivify()
+{
+    assert(solver.ok);
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    numCalls++;
+
+    if (solver.conf.doCacheOTFSSR) {
+        if (!vivifyClausesCache(solver.clauses)) return false;
+        if (!vivifyClausesCache(solver.learnts)) return false;
+    }
+
+    if (!vivifyClausesNormal()) return false;
+
+    return true;
+}
+
 
 /**
 @brief Performs clause vivification (by Hamadi et al.)
@@ -37,17 +53,9 @@ it is not part of failed literal probing, really. However, it is here because
 it seems to be a function that fits into the idology of failed literal probing.
 Maybe I am off-course and it should be in another class, or a class of its own.
 */
-const bool ClauseVivifier::vivifyClauses()
+const bool ClauseVivifier::vivifyClausesNormal()
 {
     assert(solver.ok);
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    numCalls++;
-
-    if (solver.ok && solver.conf.doCacheOTFSSR) {
-        if (!vivifyClauses2(solver.clauses)) return false;
-        if (/*solver.lastSelectedRestartType == static_restart &&*/ !vivifyClauses2(solver.learnts)) return false;
-    }
-
     bool failed;
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
@@ -185,7 +193,7 @@ const bool ClauseVivifier::vivifyClauses()
 }
 
 
-const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
+const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses)
 {
     assert(solver.ok);
 

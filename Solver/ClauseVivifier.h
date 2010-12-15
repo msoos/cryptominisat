@@ -23,10 +23,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class ClauseVivifier {
     public:
         ClauseVivifier(Solver& solver);
-        const bool vivifyClauses();
-        const bool vivifyClauses2(vec<Clause*>& clauses);
+        const bool vivify();
 
     private:
+
+        //Actual algorithms used
+        const bool vivifyClausesNormal();
+        const bool vivifyClausesCache(vec<Clause*>& clauses);
 
         /**
         @brief Records data for asymmBranch()

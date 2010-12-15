@@ -2472,7 +2472,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         x.addAllXorAsNorm();
     }
 
-    if (conf.doClausVivif && !clauseVivifier->vivifyClauses()) goto end;
+    if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
 
     //addSymmBreakClauses();
 
@@ -2562,7 +2562,7 @@ void Solver::performStepsBeforeSolve()
     if (conf.doReplace && !varReplacer->performReplace()) return;
 
     if (conf.doClausVivif && !conf.libraryUsage
-        && !clauseVivifier->vivifyClauses()) return;
+        && !clauseVivifier->vivify()) return;
 
     bool saveDoHyperBin = conf.doHyperBinRes;
     conf.doHyperBinRes = false;
