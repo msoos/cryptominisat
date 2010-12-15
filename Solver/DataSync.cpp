@@ -77,10 +77,9 @@ const bool DataSync::shareBinData()
             ) continue;
 
         vector<Lit>& bins = shared.bins[wsLit];
-        vec<Watched>& ws = solver.watches[wsLit];
 
         if (bins.size() > syncFinish[wsLit]
-            && !syncBinFromOthers(lit1, bins, syncFinish[wsLit], ws)) return false;
+            && !syncBinFromOthers(lit1, bins, syncFinish[wsLit])) return false;
     }
 
     syncBinToOthers();
@@ -110,18 +109,24 @@ template void DataSync::signalNewBinClause(Clause& ps);
 template void DataSync::signalNewBinClause(XorClause& ps);
 template void DataSync::signalNewBinClause(vec<Lit>& ps);
 
-const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
+const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished)
 {
     assert(solver.varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
     assert(solver.subsumer->getVarElimed()[lit.var()] == false);
     assert(solver.xorSubsumer->getVarElimed()[lit.var()] == false);
 
     vec<Lit> addedToSeen;
-    for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+    const vec<Watched>& ws = solver.watches[(~lit).toInt()];
+    for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
         if (it->isBinary()) {
             addedToSeen.push(it->getOtherLit());
             seen[it->getOtherLit().toInt()] = true;
         }
+    }
+    const vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
+    for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+        addedToSeen.push(*it);
+        seen[it->toInt()] = true;
     }
 
     vec<Lit> lits(2);
