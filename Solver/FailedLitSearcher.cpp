@@ -240,7 +240,10 @@ const bool FailedLitSearcher::search()
     for (vector<std::pair<uint64_t, uint64_t> >::iterator it = solver.lTPolCount.begin(), end = solver.lTPolCount.end(); it != end; it++, varPolCount++) {
         UIPNegPosDist tmp;
         tmp.var = varPolCount;
-        tmp.dist = std::abs((long int) (it->first - it->second));
+        int64_t pos = it->first;
+        int64_t neg = it->second;
+        int64_t diff = std::abs((long int) (pos-neg));
+        tmp.dist = pos*pos + neg*neg - diff*diff;
 
         if (it->first > 4  && it->second > 4)
             negPosDist.push_back(tmp);
