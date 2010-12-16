@@ -273,7 +273,7 @@ private:
     const bool subsumeNonExist();
     uint32_t doneNumNonExist;
     uint64_t extraTimeNonExist;
-    vector<vector<Lit> > binNonLearntCache;
+    vector<TransCache> binNonLearntCache;
 
     //Blocked clause elimination
     class VarOcc {
@@ -487,8 +487,8 @@ inline void Subsumer::newVar()
     ol_seenNeg.push(1);
     touch(solver.nVars()-1);
 
-    binNonLearntCache.push_back(vector<Lit>());
-    binNonLearntCache.push_back(vector<Lit>());
+    binNonLearntCache.push_back(TransCache());
+    binNonLearntCache.push_back(TransCache());
 }
 
 inline const map<Var, vector<vector<Lit> > >& Subsumer::getElimedOutVar() const

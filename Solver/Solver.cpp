@@ -945,7 +945,7 @@ void Solver::saveOTFData()
     assert(decisionLevel() == 1);
 
     Lit lev0Lit = trail[trail_lim[0]];
-    Solver::TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
+    TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
     oTFCache.conflictLastUpdated = conflicts;
     oTFCache.lits.clear();
 

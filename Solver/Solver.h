@@ -50,6 +50,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "GaussianConfig.h"
 #include "ClauseAllocator.h"
 #include "SolverConf.h"
+#include "TransCache.h"
 
 #define release_assert(a) \
     do { \
@@ -370,15 +371,6 @@ protected:
     ////////////
     // Transitive on-the-fly self-subsuming resolution
     ///////////
-    class TransCache {
-        public:
-            TransCache() :
-                conflictLastUpdated(std::numeric_limits<uint64_t>::max())
-            {};
-
-            vector<Lit> lits;
-            uint64_t conflictLastUpdated;
-    };
     class LitReachData {
         public:
             LitReachData() :

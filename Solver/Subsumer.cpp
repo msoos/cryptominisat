@@ -1088,8 +1088,9 @@ const bool Subsumer::subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBi
         failed = !onlyNonLearntBins->propagate();
     if (failed) return false;
 
-    vector<Lit>& thisCache = binNonLearntCache[(~lit).toInt()];
+    vector<Lit>& thisCache = binNonLearntCache[(~lit).toInt()].lits;
     thisCache.clear();
+    binNonLearntCache[(~lit).toInt()].conflictLastUpdated = solver.conflicts;
 
     assert(solver.decisionLevel() > 0);
     for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
@@ -2302,7 +2303,7 @@ void Subsumer::findOrGates(const bool learntGatesToo)
         for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
             Lit lit = *l;
             vector<Lit> const* cache;
-            if (!learntGatesToo) cache = &binNonLearntCache[(~lit).toInt()];
+            if (!learntGatesToo) cache = &binNonLearntCache[(~lit).toInt()].lits;
             else cache = &solver.transOTFCache[(~lit).toInt()].lits;
 
             if (cache->size() == 0) {
@@ -2330,7 +2331,7 @@ void Subsumer::findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learn
         if (*l2 == eqLit) continue;
         Lit otherLit = *l2;
         vector<Lit> const* cache;
-        if (!learntGatesToo) cache = &binNonLearntCache[(~otherLit).toInt()];
+        if (!learntGatesToo) cache = &binNonLearntCache[(~otherLit).toInt()].lits;
         else cache = &solver.transOTFCache[(~otherLit).toInt()].lits;
 
         bool OK = false;
@@ -2510,7 +2511,7 @@ const bool Subsumer::subsumeNonExist()
 
         bool toRemove = false;
         for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-            vector<Lit>& cache = binNonLearntCache[l->toInt()];
+            vector<Lit>& cache = binNonLearntCache[l->toInt()].lits;
             for (vector<Lit>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
                 if (seen_tmp[cacheLit->toInt()]) {
                     toRemove = true;

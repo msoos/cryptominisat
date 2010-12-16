@@ -394,7 +394,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     assert(solver.decisionLevel() > 0);
     vector<Lit> oldCache;
-    Solver::TransCache& lit1OTFCache = solver.transOTFCache[(~lit1).toInt()];
+    TransCache& lit1OTFCache = solver.transOTFCache[(~lit1).toInt()];
     if (solver.conf.doCacheOTFSSR) {
         lit1OTFCache.conflictLastUpdated = solver.conflicts;
         oldCache.swap(lit1OTFCache.lits);
@@ -454,7 +454,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     assert(solver.decisionLevel() > 0);
-    Solver::TransCache& lit2OTFCache = solver.transOTFCache[(~lit2).toInt()];
+    TransCache& lit2OTFCache = solver.transOTFCache[(~lit2).toInt()];
     if (solver.conf.doCacheOTFSSR) {
         lit2OTFCache.conflictLastUpdated = solver.conflicts;
         oldCache.swap(lit2OTFCache.lits);
