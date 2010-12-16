@@ -329,14 +329,14 @@ private:
     };
     const bool findOrGatesAndTreat();
     void findOrGates(const bool learntGatesToo);
-    void findOrGate(const Lit eqLit, const Clause& cl, const bool learntGatesToo);
+    void findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learntGatesToo);
     const bool shortenWithOrGate(const OrGate& gate);
     int64_t gateLitsRemoved;
     uint64_t totalOrGateSize;
     vector<OrGate> orGates;
-    vec<char> leftHandOfGate;
     uint32_t numOrGateReplaced;
     const bool findEqOrGates();
+    vec<char> defOfOrGate;
 
 
     //validity checking

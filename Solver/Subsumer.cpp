@@ -2214,12 +2214,12 @@ const bool Subsumer::findOrGatesAndTreat()
     double myTime = cpuTime();
     orGates.clear();
     totalOrGateSize = 0;
-    leftHandOfGate.clear();
-    leftHandOfGate.growTo(solver.nVars()*2, false);
     uint32_t oldNumVarToReplace = solver.varReplacer->getNewToReplaceVars();
     uint32_t oldNumBins = solver.numBins;
     gateLitsRemoved = 0;
     numOrGateReplaced = 0;
+    defOfOrGate.clear();
+    defOfOrGate.growTo(clauses.size(), false);
 
     findOrGates(false);
     for (uint32_t i = 0; i < orGates.size(); i++) {
@@ -2321,16 +2321,17 @@ void Subsumer::findOrGates(const bool learntGatesToo)
         if (numSizeZeroCache > 1) continue;
 
         if (numSizeZeroCache == 1) {
-            findOrGate(which, cl, learntGatesToo);
+            findOrGate(which, *it, learntGatesToo);
         } else {
             for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++)
-                findOrGate(*l, cl, learntGatesToo);
+                findOrGate(*l, *it, learntGatesToo);
         }
     }
 }
 
-void Subsumer::findOrGate(const Lit eqLit, const Clause& cl, const bool learntGatesToo)
+void Subsumer::findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learntGatesToo)
 {
+    Clause& cl = *c.clause;
     bool isEqual = true;
     for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
         if (*l2 == eqLit) continue;
@@ -2361,7 +2362,8 @@ void Subsumer::findOrGate(const Lit eqLit, const Clause& cl, const bool learntGa
         gate.eqLit = ~eqLit;
         orGates.push_back(gate);
         totalOrGateSize += gate.lits.size();
-        leftHandOfGate[gate.eqLit.toInt()] = true;
+        assert(c.index < defOfOrGate.size());
+        defOfOrGate[c.index] = true;
     }
 }
 
@@ -2391,12 +2393,10 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         // c V d V -g
         // now, if we replace (a V b) with g and we replace (c V d) with f, then
         // we have just lost the definition of the gates!!
-        if (cl->size() == gate.lits.size() + 1) {
+        if (c.index < defOfOrGate.size() && defOfOrGate[c.index] && cl->size() == gate.lits.size() + 1) {
+            replaceDef = true;
             for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
                 if (gate.eqLit == ~(*l)) exactReplace = true;
-                if (leftHandOfGate[(~(*l)).toInt()]) {
-                    replaceDef = true;
-                }
             }
         }
         if (exactReplace) continue;
