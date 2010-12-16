@@ -268,14 +268,12 @@ private:
             return false;
         };
     };
-    const bool subsWNonExitsBinsFullFull();
     const bool subsWNonExistBinsFull();
     const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
     const bool subsumeNonExist();
     uint32_t doneNumNonExist;
     uint64_t extraTimeNonExist;
     vector<vector<Lit> > binNonLearntCache;
-    uint32_t subsumedNonExist;
 
     //Blocked clause elimination
     class VarOcc {

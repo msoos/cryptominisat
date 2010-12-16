@@ -972,33 +972,6 @@ const bool Subsumer::subsumeWithBinaries()
     return true;
 }
 
-const bool Subsumer::subsWNonExitsBinsFullFull()
-{
-    double myTime = cpuTime();
-    clauses_subsumed = 0;
-    literals_removed = 0;
-    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
-        if (it->size() < 2) continue;
-        std::sort(it->getData(), it->getDataEnd(), BinSorter2());
-    }
-
-    uint32_t oldTrailSize = solver.trail.size();
-    if (!subsWNonExistBinsFull()) return false;
-    if (!subsumeNonExist()) return false;
-
-    if (solver.conf.verbosity  >= 1) {
-        std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << subsumedNonExist
-        << " l-rem: " << std::setw(6) << literals_removed
-        << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
-        << " done: " << std::setw(6) << doneNumNonExist
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
-        << std::endl;
-    }
-
-    totalTime += cpuTime() - myTime;
-    return true;
-}
-
 void Subsumer::makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt)
 {
     assert(learnt == true);
@@ -1020,6 +993,13 @@ binary clauses.
 */
 const bool Subsumer::subsWNonExistBinsFull()
 {
+    double myTime = cpuTime();
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
+        if (it->size() < 2) continue;
+        std::sort(it->getData(), it->getDataEnd(), BinSorter2());
+    }
+
+    uint32_t oldTrailSize = solver.trail.size();
     uint64_t oldProps = solver.propagations;
     uint64_t maxProp = MAX_BINARY_PROP*7;
     extraTimeNonExist = 0;
@@ -1068,6 +1048,16 @@ const bool Subsumer::subsWNonExistBinsFull()
     }
 
     if (onlyNonLearntBins) delete onlyNonLearntBins;
+
+
+    if (solver.conf.verbosity  >= 1) {
+        std::cout << "c Calc non-exist non-lernt bins"
+        << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
+        << " done: " << std::setw(6) << doneNumNonExist
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        << std::endl;
+    }
+    totalTime += cpuTime() - myTime;
 
     return true;
 }
@@ -1306,7 +1296,10 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         subsumeBinsWithBins();
         numMaxSubsume1 = 2*1000*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-        if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
+        if (solver.conf.doSubsWNonExistBins) {
+            if (!subsWNonExistBinsFull()) return false;
+            if (!subsumeNonExist()) return false;
+        }
         if (!handleClBinTouched()) return false;
 
         if (solver.conf.doReplace && solver.conf.doRemUselessBins) {
@@ -2503,6 +2496,9 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
 
 const bool Subsumer::subsumeNonExist()
 {
+    double myTime = cpuTime();
+
+    clauses_subsumed = 0;
     for (const ClauseSimp *it = clauses.getData(), *end = clauses.getDataEnd(); it != end; it++) {
         if (it->clause == NULL) continue;
         const Clause& cl = *it->clause;
@@ -2531,9 +2527,15 @@ const bool Subsumer::subsumeNonExist()
         if (toRemove) {
             // std::cout << "cl-rem subs w/ non-existent: " << cl << std::endl;
             unlinkClause(*it);
-            subsumedNonExist++;
         }
     }
+
+    if (solver.conf.verbosity  >= 1) {
+        std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << clauses_subsumed
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        << std::endl;
+    }
+    totalTime += cpuTime() - myTime;
 
     return true;
 }
