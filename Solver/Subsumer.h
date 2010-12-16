@@ -268,8 +268,8 @@ private:
             return false;
         };
     };
-    const bool subsWNonExistBinsFull();
-    const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
+    const bool subsWNonExistBinsFill();
+    const bool subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
     const bool subsumeNonExist();
     uint32_t doneNumNonExist;
     uint64_t extraTimeNonExist;

@@ -991,7 +991,7 @@ inferred from non-existing binary clauses, and the strenghtening (through self-
 subsuming resolution) of clauses that could be strenghtened using non-existent
 binary clauses.
 */
-const bool Subsumer::subsWNonExistBinsFull()
+const bool Subsumer::subsWNonExistBinsFill()
 {
     double myTime = cpuTime();
     for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
@@ -1021,7 +1021,7 @@ const bool Subsumer::subsWNonExistBinsFull()
 
         Lit lit(var, true);
         if (onlyNonLearntBins != NULL && onlyNonLearntBins->getWatchSize(lit) == 0) goto next;
-        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
+        if (!subsWNonExistBinsFillHelper(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
@@ -1036,7 +1036,7 @@ const bool Subsumer::subsWNonExistBinsFull()
         if (solver.assigns[var] != l_Undef) continue;
         lit = ~lit;
         if (onlyNonLearntBins != NULL && onlyNonLearntBins->getWatchSize(lit) == 0) continue;
-        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
+        if (!subsWNonExistBinsFillHelper(lit, onlyNonLearntBins)) {
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
@@ -1074,7 +1074,7 @@ binary clauses (this literal is the starting point in the binary graph)
 @param onlyNonLearntBins This class is initialised before calling this function
 and contains all the non-learnt binary clauses
 */
-const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
+const bool Subsumer::subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "subsWNonExistBins called with lit " << lit << std::endl;
@@ -1297,7 +1297,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         numMaxSubsume1 = 2*1000*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         if (solver.conf.doSubsWNonExistBins) {
-            if (!subsWNonExistBinsFull()) return false;
+            if (!subsWNonExistBinsFill()) return false;
             if (!subsumeNonExist()) return false;
         }
         if (!handleClBinTouched()) return false;
