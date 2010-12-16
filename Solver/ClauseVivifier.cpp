@@ -34,7 +34,7 @@ const bool ClauseVivifier::vivify()
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
-    if (solver.conf.doCacheOTFSSR) {
+    if (solver.conf.doCacheOTFSSR && numCalls >= 3) {
         if (!vivifyClausesCache(solver.clauses)) return false;
         if (!vivifyClausesCache(solver.learnts)) return false;
     }
@@ -210,8 +210,6 @@ const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses)
     vec<Lit> lits;
     bool needToFinish = false;
     double myTime = cpuTime();
-
-    if (numCalls < 3) return true;
 
     Clause** i = clauses.getData();
     Clause** j = i;
