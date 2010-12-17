@@ -336,6 +336,8 @@ private:
     const bool findEqOrGates();
     vec<char> defOfOrGate;
 
+    const bool andGateRemCl();
+    void findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others);
 
     //validity checking
     const bool verifyIntegrity();

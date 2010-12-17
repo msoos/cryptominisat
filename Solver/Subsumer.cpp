@@ -21,6 +21,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "UselessBinRemover.h"
 #include "DataSync.h"
 #include "BothCache.h"
+#include <set>
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -2270,6 +2271,8 @@ const bool Subsumer::findOrGatesAndTreat()
         << std::endl;
     }*/
 
+    if (!andGateRemCl()) return false;
+
     clauses_subsumed = old_clauses_subsumed;
 
     return solver.ok;
@@ -2548,4 +2551,119 @@ const bool Subsumer::subsumeNonExist()
     totalTime += cpuTime() - myTime;
 
     return true;
+}
+
+const bool Subsumer::andGateRemCl()
+{
+    assert(solver.ok);
+    double myTime = cpuTime();
+    uint32_t numFound = 0;
+    vec<ClauseSimp> others;
+    std::set<uint32_t> clToUnlink;
+    vec<Lit> lits;
+    uint64_t totalSize = 0;
+
+    for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+        const OrGate& gate = *it;
+        if (gate.lits.size() > 2) continue;
+        assert(gate.lits.size() == 2);
+
+        vec<ClauseSimp>& cs = occur[(~(gate.lits[0])).toInt()];
+        for (ClauseSimp *it2 = cs.getData(), *end2 = cs.getDataEnd(); it2 != end2; it2++) {
+            const Clause& cl = *it2->clause;
+            for (uint32_t i = 0; i < cl.size(); i++) {
+                if (cl[i] == ~(gate.lits[0])) continue;
+                if (cl[i] == ~(gate.lits[1])) goto end;
+                seen_tmp[cl[i].toInt()] = true;
+            }
+            findAndGateOtherCl(~(gate.lits[1]), cl.size(), others);
+            for (ClauseSimp *c2 = others.getData(), *end3 = others.getDataEnd(); c2 != end3; c2++) {
+                assert(c2->index != it2->index);
+                /*std::cout << "clause 1: " << cl << std::endl;
+                std::cout << "clause 2: " << *c2->clause << std::endl;
+                std::cout << "gate eqLit: " << gate.eqLit << std::endl;
+                std::cout << "gate lits: ";
+                for (uint32_t i = 0; i < gate.lits.size(); i++) {
+                    std::cout << gate.lits[i] << " , ";
+                }
+                std::cout << std::endl;*/
+                lits.clear();
+                bool dontAddAtAll = false;
+                for (uint32_t i = 0; i < cl.size(); i++) {
+                    if (   cl[i] != ~(gate.lits[0])
+                        && cl[i] != ~(gate.eqLit)) lits.push(cl[i]);
+
+                    if (cl[i] == gate.eqLit) dontAddAtAll = true;
+                }
+                clToUnlink.insert(c2->index);
+                clToUnlink.insert(it2->index);
+                numFound++;
+                totalSize += cl.size();
+                if (dontAddAtAll) continue;
+
+                lits.push(~(gate.eqLit));
+                bool learnt = c2->clause->learnt() && cl.learnt();
+                if (cleanClause(lits)) continue;
+                switch (lits.size()) {
+                    case 0:
+                        solver.ok = false;
+                        return false;
+                        break;
+                    case 1: {
+                        handleSize1Clause(lits[0]);
+                        if (!solver.ok) return false;
+                        break;
+                    }
+                    case 2: {
+                        solver.attachBinClause(lits[0], lits[1], learnt);
+                        solver.numNewBin++;
+                        solver.dataSync->signalNewBinClause(lits);
+                        break;
+                    }
+                    default:
+                        Clause* clNew = solver.clauseAllocator.Clause_new(lits, cl.getGroup(), learnt);
+                        if (learnt) clNew->setGlue(std::min(cl.getGlue(), c2->clause->getGlue()));
+                        linkInClause(*clNew);
+                }
+            }
+
+            end:
+            others.clear();
+            for (uint32_t i = 0; i < cl.size(); i++) {
+                seen_tmp[cl[i].toInt()] = false;
+            }
+        }
+
+        for(std::set<uint32_t>::const_iterator it2 = clToUnlink.begin(), end2 = clToUnlink.end(); it2 != end2; it2++) {
+            unlinkClause(clauses[*it2]);
+        }
+        clToUnlink.clear();
+    }
+
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c andGate cl-rem: " << numFound
+        << " avg size: " << ((double)totalSize/(double)numFound)
+        << " time : " << (cpuTime() - myTime)
+        << std::endl;
+    }
+
+    return true;
+}
+
+void Subsumer::findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others)
+{
+    vec<ClauseSimp>& cs = occur[lit.toInt()];
+    for (ClauseSimp *it = cs.getData(), *end = cs.getDataEnd(); it != end; it++) {
+        const Clause& cl = *it->clause;
+        if (cl.size() != size) continue;
+        bool OK = true;
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            if (cl[i] == lit) continue;
+            if (!seen_tmp[cl[i].toInt()]) {
+                OK = false;
+                break;
+            }
+        }
+        if (OK) others.push(*it);
+    }
 }
