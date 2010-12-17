@@ -2220,6 +2220,7 @@ const bool Subsumer::findOrGatesAndTreat()
     numOrGateReplaced = 0;
     defOfOrGate.clear();
     defOfOrGate.growTo(clauses.size(), false);
+    uint32_t old_clauses_subsumed = clauses_subsumed;
 
     findOrGates(false);
     for (uint32_t i = 0; i < orGates.size(); i++) {
@@ -2268,6 +2269,8 @@ const bool Subsumer::findOrGatesAndTreat()
         << " avg size: " << std::fixed << std::setw(4) << std::setprecision(1) << ((double)totalOrGateSize/(double)orGates.size())
         << std::endl;
     }*/
+
+    clauses_subsumed = old_clauses_subsumed;
 
     return solver.ok;
 }
