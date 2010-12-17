@@ -79,6 +79,7 @@ class SCCFinder;
 class ClauseVivifier;
 class SharedData;
 class DataSync;
+class BothCache;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -515,6 +516,7 @@ protected:
     friend class SCCFinder;
     friend class ClauseVivifier;
     friend class DataSync;
+    friend class BothCache;
     Conglomerate*       conglomerate;
     VarReplacer*        varReplacer;
     ClauseCleaner*      clauseCleaner;

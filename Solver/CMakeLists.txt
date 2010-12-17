@@ -47,5 +47,6 @@ add_library(cryptominisatlib
     ClauseVivifier.cpp
     DataSync.cpp
     MTSolver.cpp
+    BothCache.cpp
 )
 

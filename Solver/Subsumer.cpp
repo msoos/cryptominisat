@@ -20,6 +20,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "OnlyNonLearntBins.h"
 #include "UselessBinRemover.h"
 #include "DataSync.h"
+#include "BothCache.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -1375,6 +1376,11 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         << std::endl;
     }
     totalTime += cpuTime() - myTime;
+
+    if (!alsoLearnt) {
+        BothCache bothCache(solver);
+        if (!bothCache.tryBoth(binNonLearntCache)) return false;
+    }
 
     solver.testAllClauseAttach();
     solver.checkNoWrongAttach();
