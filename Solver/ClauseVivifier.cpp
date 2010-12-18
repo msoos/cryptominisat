@@ -34,9 +34,10 @@ const bool ClauseVivifier::vivify()
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
-    if (solver.conf.doCacheOTFSSR && numCalls >= 3) {
-        if (!vivifyClausesCache(solver.clauses)) return false;
-        if (!vivifyClausesCache(solver.learnts)) return false;
+    if (solver.conf.doCacheOTFSSR && numCalls >= 2) {
+        if (!vivifyClausesCache(solver.clauses, solver.transOTFCache)) return false;
+        if (!vivifyClausesCache(solver.clauses, solver.subsumer->getBinNonLearntCache())) return false;
+        if (!vivifyClausesCache(solver.learnts, solver.transOTFCache)) return false;
     }
 
     if (!vivifyClausesNormal()) return false;
@@ -193,7 +194,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
 }
 
 
-const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses)
+const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses, const vector<TransCache>& cache)
 {
     assert(solver.ok);
 
@@ -229,9 +230,9 @@ const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses)
             if (seen[l->toInt()] == 0) continue;
             Lit lit = *l;
 
-            countTime += solver.transOTFCache[l->toInt()].lits.size();
-            for (vector<Lit>::const_iterator it2 = solver.transOTFCache[l->toInt()].lits.begin()
-                , end2 = solver.transOTFCache[l->toInt()].lits.end(); it2 != end2; it2++) {
+            countTime += cache[l->toInt()].lits.size();
+            for (vector<Lit>::const_iterator it2 = cache[l->toInt()].lits.begin()
+                , end2 = cache[l->toInt()].lits.end(); it2 != end2; it2++) {
                 seen[(~(*it2)).toInt()] = 0;
             }
         }

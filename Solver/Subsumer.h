@@ -59,6 +59,7 @@ public:
     const double getTotalTime() const;
     const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
     const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
+    const vector<TransCache>& getBinNonLearntCache() const;
 
 private:
 
@@ -516,6 +517,11 @@ inline const uint32_t Subsumer::getNumElimed() const
 inline const double Subsumer::getTotalTime() const
 {
     return totalTime;
+}
+
+inline const vector<TransCache>& Subsumer::getBinNonLearntCache() const
+{
+    return binNonLearntCache;
 }
 
 #endif //SIMPLIFIER_H

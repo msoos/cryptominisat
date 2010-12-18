@@ -2572,6 +2572,9 @@ void Solver::performStepsBeforeSolve()
         && !subsumer->simplifyBySubsumption())
         return;
 
+    if (conf.doClausVivif
+        && !clauseVivifier->vivifyClausesCache(clauses, subsumer->getBinNonLearntCache())) return;
+
     if (conf.doFindEqLits) {
         if (!sCCFinder->find2LongXors()) return;
         lastNbBin = numNewBin;

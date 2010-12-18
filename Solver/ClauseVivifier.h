@@ -24,12 +24,12 @@ class ClauseVivifier {
     public:
         ClauseVivifier(Solver& solver);
         const bool vivify();
+        const bool vivifyClausesCache(vec<Clause*>& clauses, const vector<TransCache>& cache);
 
     private:
 
         //Actual algorithms used
         const bool vivifyClausesNormal();
-        const bool vivifyClausesCache(vec<Clause*>& clauses);
 
         /**
         @brief Records data for asymmBranch()
