@@ -264,30 +264,27 @@ const bool FailedLitSearcher::search()
 
     origProps = solver.propagations;
     hyperbinProps = 0;
-    if (negPosDist.size() < 100) {
-        while (!order_heap_copy.empty()) {
-            Var var = order_heap_copy.removeMin();
-            if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
-                continue;
-            if (solver.propagations >= origProps + numPropsDifferent)  {
-                break;
-            }
-            if (!tryBoth(Lit(var, false), Lit(var, true)))
-                goto end;
+    for (uint32_t i = 0; i < negPosDist.size(); i++) {
+        Var var = negPosDist[i].var;
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
+            continue;
+        if (solver.propagations >= origProps + numPropsDifferent)  {
+            break;
         }
-    } else {
-        for (uint32_t i = 0; i < negPosDist.size(); i++) {
-            Var var = negPosDist[i].var;
-            if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
-                continue;
-            if (solver.propagations >= origProps + numPropsDifferent)  {
-                break;
-            }
-            if (!tryBoth(Lit(var, false), Lit(var, true)))
-                goto end;
-        }
+        if (!tryBoth(Lit(var, false), Lit(var, true)))
+            goto end;
     }
 
+    while (!order_heap_copy.empty()) {
+        Var var = order_heap_copy.removeMin();
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
+            continue;
+        if (solver.propagations >= origProps + numPropsDifferent)  {
+            break;
+        }
+        if (!tryBoth(Lit(var, false), Lit(var, true)))
+            goto end;
+    }
 
 end:
     if (solver.conf.verbosity  >= 1) printResults(myTime);
