@@ -1466,6 +1466,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
 
     #ifdef UNCHECKEDENQUEUE_DEBUG
     assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
+    assert(decisionLevel() == 0 || !xorSubsumer->getVarElimed()[p.var()]);
     Var repl = varReplacer->getReplaceTable()[p.var()].var();
     if (repl != p.var()) {
         assert(!subsumer->getVarElimed()[repl]);
