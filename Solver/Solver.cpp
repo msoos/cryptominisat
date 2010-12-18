@@ -1463,7 +1463,13 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     std::cout << "uncheckedEnqueue var " << p.var()+1 << " to " << !p.sign() << " level: " << decisionLevel() << " sublevel: " << trail.size() << std::endl;
     #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
 
-    //assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
+    assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
+    Var repl = varReplacer->getReplaceTable()[p.var()].var();
+    if (repl != p.var()) {
+        assert(!subsumer->getVarElimed()[repl]);
+        assert(!xorSubsumer->getVarElimed()[repl]);
+        assert(partHandler->getSavedState()[repl] != l_Undef);
+    }
 
     assert(assigns[p.var()].isUndef());
     const Var v = p.var();
