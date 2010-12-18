@@ -438,9 +438,9 @@ protected:
     /////////////////
     // Searching
     /////////////////
-    lbool    search           (const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const bool update = true);      // Search for a given number of conflicts.
+    lbool    search           (const uint64_t nof_conflicts, const uint64_t maxNumConfl, const bool update = true);      // Search for a given number of conflicts.
     llbool   handle_conflict  (vec<Lit>& learnt_clause, PropBy confl, uint64_t& conflictC, const bool update);// Handles the conflict clause
-    llbool   new_decision     (const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const uint64_t conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
+    llbool   new_decision     (const uint64_t nof_conflicts, const uint64_t maxNumConfl, const uint64_t conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
     ///////////////
     // Solution handling
@@ -534,7 +534,7 @@ protected:
     /////////////////////////
     const bool  chooseRestartType(const uint32_t& lastFullRestart);
     void        setDefaultRestartType();
-    const bool  checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart);
+    const bool  checkFullRestart(uint32_t& lastFullRestart);
     RestartType restartType;             ///<Used internally to determine which restart strategy is currently in use
     RestartType lastSelectedRestartType; ///<The last selected restart type. Used when we are just after a full restart, and need to know how to really act
 
@@ -547,6 +547,7 @@ protected:
     const bool  simplify();       // Removes satisfied clauses and finds binary xors
     bool        simplifying;      ///<We are currently doing burst search
     double      totalSimplifyTime;
+    uint32_t    numSimplifyRounds;
     uint32_t    simpDB_assigns;   ///< Number of top-level assignments since last execution of 'simplify()'.
     int64_t     simpDB_props;     ///< Remaining number of propagations that must be made before next execution of 'simplify()'.
 

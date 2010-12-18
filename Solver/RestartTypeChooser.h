@@ -53,17 +53,20 @@ class RestartTypeChooser
     private:
         void calcHeap();
         const double avg() const;
-        const std::pair<double, double> countVarsDegreeStDev() const;
         const double stdDeviation(vector<uint32_t>& measure) const;
 
+        /*const std::pair<double, double> countVarsDegreeStDev() const;
         template<class T>
         void addDegrees(const vec<T*>& cs, vector<uint32_t>& degrees) const;
-        void addDegreesBin(vector<uint32_t>& degrees) const;
+        void addDegreesBin(vector<uint32_t>& degrees) const;*/
 
         const Solver& solver;
-        const uint32_t topX; ///<The how many is the top X? 100 is default
-        const uint32_t limit; ///<If top x contains on average this many common varables, we select MiniSat-type
+        const double topXPerc; ///<The how many is the top X? 100 is default
+        const double limitPerc; ///<If top x contains on average this many common varables, we select MiniSat-type
+
         vector<Var> sameIns;
+        uint32_t topX;
+        uint32_t limit;
 
         vector<Var> firstVars; ///<The top x variables (in terms of var activity)
         vector<Var> firstVarsOld; ///<The previous top x variables (in terms of var activity)
@@ -71,7 +74,10 @@ class RestartTypeChooser
 
 inline void RestartTypeChooser::reset()
 {
+    firstVarsOld.clear();
     sameIns.clear();
+    topX = 0;
+    limit = 0;
 }
 
 #endif //RESTARTTYPECHOOSER_H

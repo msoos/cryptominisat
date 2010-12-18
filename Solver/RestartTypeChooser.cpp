@@ -26,8 +26,8 @@ using std::pair;
 
 RestartTypeChooser::RestartTypeChooser(const Solver& s) :
     solver(s)
-    , topX(100)
-    , limit(40)
+    , topXPerc(0.01)
+    , limitPerc(0.0018)
 {
 }
 
@@ -39,6 +39,18 @@ accumulate data. Finally, choose() is called to choose the restart type
 */
 void RestartTypeChooser::addInfo()
 {
+    if (firstVarsOld.empty()) {
+        double size = std::max(solver.order_heap.size(), 10000U);
+        topX = (uint32_t)(topXPerc*size) + 1;
+        limit = (uint32_t)(limitPerc*size) + 1;
+        #ifdef VERBOSE_DEBUG
+        std::cout << "c topX for chooser: " << topX << std::endl;
+        std::cout << "c limit for chooser: " << limit << std::endl;
+        #endif
+    }
+    assert(topX != 0);
+    assert(limit != 0);
+
     firstVarsOld = firstVars;
     calcHeap();
     uint32_t sameIn = 0;
@@ -49,13 +61,13 @@ void RestartTypeChooser::addInfo()
                 sameIn++;
         }
         #ifdef VERBOSE_DEBUG
-        std::cout << "    Same vars in first&second first 100: " << sameIn << std::endl;
+        std::cout << "c Same vars in first&second: " << sameIn << std::endl;
         #endif
         sameIns.push_back(sameIn);
     }
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "Avg same vars in first&second first 100: " << avg() << " standard Deviation:" << stdDeviation(sameIns) <<std::endl;
+    std::cout << "c Avg same vars in first&second: " << avg() << " standard Deviation:" << stdDeviation(sameIns) <<std::endl;
     #endif
 }
 
@@ -64,14 +76,27 @@ void RestartTypeChooser::addInfo()
 */
 const RestartType RestartTypeChooser::choose()
 {
-    pair<double, double> mypair = countVarsDegreeStDev();
-    if ((mypair.second  < 80 &&
-        (avg() > (double)limit || ((avg() > (double)(limit*0.9) && stdDeviation(sameIns) < 5))))
-        ||
-        (mypair.second  < 80 && (double)solver.xorclauses.size() > (double)solver.nClauses()*0.1))
+    #ifdef VERBOSE_DEBUG
+    std::cout << "c restart choosing time. Avg: " << avg() <<
+    " , stdDeviation : " << stdDeviation(sameIns) << std::endl;
+    std::cout << "c topX for chooser: " << topX << std::endl;
+    std::cout << "c limit for chooser: " << limit << std::endl;
+    #endif
+    //pair<double, double> mypair = countVarsDegreeStDev();
+    if ((avg() > (double)limit
+        || ((avg() > (double)(limit*0.9) && stdDeviation(sameIns) < 5)))
+        || ((double)solver.xorclauses.size() > (double)solver.nClauses()*0.1)
+       ) {
+        #ifdef VERBOSE_DEBUG
+        std::cout << "c restartTypeChooser chose STATIC restarts" << std::endl;
+        #endif
         return static_restart;
-    else
+    } else {
+        #ifdef VERBOSE_DEBUG
+        std::cout << "c restartTypeChooser chose DYNAMIC restarts" << std::endl;
+        #endif
         return dynamic_restart;
+    }
 }
 
 /**
@@ -102,7 +127,6 @@ const double RestartTypeChooser::stdDeviation(vector<uint32_t>& measure) const
 void RestartTypeChooser::calcHeap()
 {
     firstVars.clear();
-    firstVars.reserve(topX);
     #ifdef PRINT_VARS
     std::cout << "First vars:" << std::endl;
     #endif
@@ -119,7 +143,7 @@ void RestartTypeChooser::calcHeap()
     #endif
 }
 
-const std::pair<double, double> RestartTypeChooser::countVarsDegreeStDev() const
+/*const std::pair<double, double> RestartTypeChooser::countVarsDegreeStDev() const
 {
     vector<uint32_t> degrees;
     degrees.resize(solver.nVars(), 0);
@@ -175,5 +199,5 @@ void RestartTypeChooser::addDegreesBin(vector<uint32_t>& degrees) const
             }
         }
     }
-}
+}*/
 

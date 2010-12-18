@@ -104,6 +104,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , lastSelectedRestartType (static_restart)
         , simplifying      (false)
         , totalSimplifyTime(0.0)
+        , numSimplifyRounds(0)
         , simpDB_assigns   (-1)
         , simpDB_props     (0)
 {
@@ -2095,7 +2096,7 @@ clauseset is found. If all variables are decision variables, this means
 that the clause set is satisfiable. 'l_False' if the clause set is
 unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 */
-lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const bool update)
+lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, const bool update)
 {
     assert(ok);
     uint64_t    conflictC = 0;
@@ -2136,7 +2137,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
             #endif //USE_GAUSS
 
             if (conf.doCacheOTFSSR  && decisionLevel() == 1) saveOTFData();
-            ret = new_decision(nof_conflicts, nof_conflicts_fullrestart, conflictC);
+            ret = new_decision(nof_conflicts, maxNumConfl, conflictC);
             if (ret != l_Nothing) return ret;
         }
     }
@@ -2148,10 +2149,10 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
 @returns l_Undef if it should restart instead. l_False if it reached UNSAT
          (through simplification)
 */
-llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const uint64_t conflictC)
+llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumConfl, const uint64_t conflictC)
 {
 
-    if (conflicts >= nof_conflicts_fullrestart || needToInterrupt)  {
+    if (conflicts >= maxNumConfl || needToInterrupt)  {
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis)
             progress_estimate = progressEstimate();
@@ -2384,7 +2385,7 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
 
             if (tmp == dynamic_restart) {
                 glueHistory.fastclear();
-                if (conf.verbosity >= 3)
+                if (conf.verbosity >= 1)
                     std::cout << "c Decided on dynamic restart strategy"
                     << std::endl;
             } else  {
@@ -2492,6 +2493,7 @@ end:
 
     testAllClauseAttach();
     checkNoWrongAttach();
+    numSimplifyRounds++;
 
     if (!ok) return l_False;
     return status;
@@ -2504,38 +2506,34 @@ If so, we also do the things to be done if the full restart is effected.
 Currently, this means we try to find disconnected components and solve
 them with sub-solvers using class PartHandler
 */
-const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart)
+const bool Solver::checkFullRestart(uint32_t& lastFullRestart)
 {
-    if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
-        #ifdef USE_GAUSS
-        clearGaussMatrixes();
-        #endif //USE_GAUSS
-        nof_conflicts = conf.restart_first + (double)conf.restart_first*conf.restart_inc;
-        nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
-        restartType = static_restart;
-        lastFullRestart = starts;
+    #ifdef USE_GAUSS
+    clearGaussMatrixes();
+    #endif //USE_GAUSS
 
-        if (conf.verbosity >= 3)
-            std::cout << "c Fully restarting" << std::endl;
-        printRestartStat("F");
+    restartType = static_restart;
+    lastFullRestart = starts;
+    fullStarts++;
 
-        /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
-            XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-            if (!xorFinder.doNoPart(3, 10))
-                return false;
-        }*/
+    if (conf.verbosity >= 3)
+        std::cout << "c Fully restarting" << std::endl;
+    printRestartStat("F");
 
-        if (conf.doPartHandler && !partHandler->handle())
+    /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
+        XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
+        if (!xorFinder.doNoPart(3, 10))
             return false;
+    }*/
 
-        //calculateDefaultPolarities();
-        if (conf.polarity_mode != polarity_auto) {
-            for (uint32_t i = 0; i < polarity.size(); i++) {
-                polarity[i] = defaultPolarity();
-            }
+    if (conf.doPartHandler && !partHandler->handle())
+        return false;
+
+    //calculateDefaultPolarities();
+    if (conf.polarity_mode != polarity_auto) {
+        for (uint32_t i = 0; i < polarity.size(); i++) {
+            polarity[i] = defaultPolarity();
         }
-
-        fullStarts++;
     }
 
     return true;
@@ -2657,7 +2655,6 @@ const lbool Solver::solve(const vec<Lit>& assumps)
     assumps.copyTo(assumptions);
     initialiseSolver();
     uint64_t  nof_conflicts = conf.restart_first; //Geometric restart policy, start with this many
-    uint64_t  nof_conflicts_fullrestart = conf.restart_first * FULLRESTART_MULTIPLIER + conflicts; //at this point, do a full restart
     uint32_t  lastFullRestart = starts; //last time a full restart was made was at this number of restarts
     lbool     status = l_Undef; //Current status
     uint64_t  nextSimplify = conf.restart_first * conf.simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
@@ -2690,7 +2687,11 @@ const lbool Solver::solve(const vec<Lit>& assumps)
             lastConflPrint = conflicts;
             nextSimplify = std::min((uint64_t)((double)conflicts * conf.simpStartMMult), conflicts + MAX_CONFL_BETWEEN_SIMPLIFY);
             if (status != l_Undef) break;
+
+            if (numSimplifyRounds%2 == 0 && !checkFullRestart(lastFullRestart)) return l_False;
+            nof_conflicts = conf.restart_first;
         }
+        if (!chooseRestartType(lastFullRestart)) return l_False;
 
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis) {
@@ -2699,7 +2700,7 @@ const lbool Solver::solve(const vec<Lit>& assumps)
         }
         #endif
 
-        status = search(nof_conflicts, std::min(nof_conflicts_fullrestart, nextSimplify));
+        status = search(nof_conflicts, nextSimplify);
         if (needToInterrupt) {
             cancelUntil(0);
             return l_Undef;
@@ -2707,10 +2708,6 @@ const lbool Solver::solve(const vec<Lit>& assumps)
         if (status != l_Undef) break;
 
         nof_conflicts = (double)nof_conflicts * conf.restart_inc;
-        if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart , lastFullRestart))
-            return l_False;
-        if (!chooseRestartType(lastFullRestart))
-            return l_False;
 
         if (!failPossibleDueCache()) return l_False;
     }
