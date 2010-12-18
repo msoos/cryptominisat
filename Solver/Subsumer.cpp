@@ -2233,6 +2233,8 @@ const bool Subsumer::findOrGatesAndTreat()
         if (!shortenWithOrGate(*it)) goto end;
     }
 
+    if (!andGateRemCl()) goto end;
+
     if (!findEqOrGates()) goto end;
 
     end:
@@ -2270,8 +2272,6 @@ const bool Subsumer::findOrGatesAndTreat()
         << " avg size: " << std::fixed << std::setw(4) << std::setprecision(1) << ((double)totalOrGateSize/(double)orGates.size())
         << std::endl;
     }*/
-
-    if (!andGateRemCl()) return false;
 
     clauses_subsumed = old_clauses_subsumed;
 
