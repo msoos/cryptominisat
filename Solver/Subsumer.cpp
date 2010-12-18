@@ -2392,13 +2392,13 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         std::cout << "origClause: " << *cl << std::endl;
         #endif
 
-        bool replaceDef = false;
-        bool exactReplace = false;
         //Let's say there are two gates:
         // a V b V -f
         // c V d V -g
         // now, if we replace (a V b) with g and we replace (c V d) with f, then
         // we have just lost the definition of the gates!!
+        bool replaceDef = false;
+        bool exactReplace = false;
         if (c.index < defOfOrGate.size() && defOfOrGate[c.index] && cl->size() == gate.lits.size() + 1) {
             replaceDef = true;
             for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
