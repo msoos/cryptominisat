@@ -1468,7 +1468,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     if (repl != p.var()) {
         assert(!subsumer->getVarElimed()[repl]);
         assert(!xorSubsumer->getVarElimed()[repl]);
-        assert(partHandler->getSavedState()[repl] != l_Undef);
+        assert(partHandler->getSavedState()[repl] == l_Undef);
     }
 
     assert(assigns[p.var()].isUndef());
@@ -1486,6 +1486,17 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     if (dynamic_behaviour_analysis)
         logger.propagation(p, from);
     #endif
+}
+
+
+void Solver::uncheckedEnqueueExtend(const Lit p, const PropBy& from)
+{
+    assert(assigns[p.var()].isUndef());
+    const Var v = p.var();
+    assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    level   [v] = decisionLevel();
+    reason  [v] = from;
+    trail.push(p);
 }
 
 /*_________________________________________________________________________________________________
@@ -2828,7 +2839,7 @@ void Solver::handleSATSolution()
         std::cout << "Solution extending finished. Enqueuing results" << std::endl;
 #endif
         for (Var var = 0; var < nVars(); var++) {
-            if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
+            if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueueExtend(Lit(var, s.model[var] == l_False));
         }
         ok = (propagate().isNULL());
         release_assert(ok && "c ERROR! Extension of model failed!");
