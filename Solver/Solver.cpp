@@ -2563,16 +2563,19 @@ void Solver::performStepsBeforeSolve()
     if (conf.doClausVivif && !conf.libraryUsage
         && !clauseVivifier->vivify()) return;
 
-    bool saveDoHyperBin = conf.doHyperBinRes;
+    /*bool saveDoHyperBin = conf.doHyperBinRes;
     conf.doHyperBinRes = false;
     if (conf.doFailedLit && !failedLitSearcher->search()) return;
-    conf.doHyperBinRes = saveDoHyperBin;
+    conf.doHyperBinRes = saveDoHyperBin;*/
 
     if (conf.doSatELite
         && !conf.libraryUsage
         && clauses.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
+
+    if (conf.doClausVivif
+        && !clauseVivifier->vivifyClausesCache(clauses, subsumer->getBinNonLearntCache())) return;
 
     if (conf.doFindEqLits) {
         if (!sCCFinder->find2LongXors()) return;

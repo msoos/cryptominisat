@@ -34,9 +34,10 @@ const bool ClauseVivifier::vivify()
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
-    if (solver.conf.doCacheOTFSSR && numCalls >= 3) {
-        if (!vivifyClausesCache(solver.clauses)) return false;
-        if (!vivifyClausesCache(solver.learnts)) return false;
+    if (solver.conf.doCacheOTFSSR && numCalls >= 2) {
+        if (!vivifyClausesCache(solver.clauses, solver.transOTFCache)) return false;
+        if (!vivifyClausesCache(solver.clauses, solver.subsumer->getBinNonLearntCache())) return false;
+        if (!vivifyClausesCache(solver.learnts, solver.transOTFCache)) return false;
     }
 
     if (!vivifyClausesNormal()) return false;
@@ -60,7 +61,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 20*1000*1000;
+    uint64_t maxNumProps = 80*1000*1000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxNumProps *=2;
     uint64_t extraDiff = 0;
@@ -74,7 +75,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
     vec<Lit> lits;
     vec<Lit> unused;
 
-    if (solver.clauses.size() < 1000000) {
+    if (solver.clauses.size() < 5000000) {
         //if too many clauses, random order will do perfectly well
         std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
     }
@@ -137,7 +138,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
             }
             done += i2;
             failed = (!solver.propagate(false).isNULL());
-            if (numCalls > 3 && failed) break;
+            if (failed) break;
         }
         solver.cancelUntilLight();
         assert(solver.ok);
@@ -193,7 +194,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
 }
 
 
-const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses)
+const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses, const vector<TransCache>& cache)
 {
     assert(solver.ok);
 
@@ -229,9 +230,9 @@ const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses)
             if (seen[l->toInt()] == 0) continue;
             Lit lit = *l;
 
-            countTime += solver.transOTFCache[l->toInt()].lits.size();
-            for (vector<Lit>::const_iterator it2 = solver.transOTFCache[l->toInt()].lits.begin()
-                , end2 = solver.transOTFCache[l->toInt()].lits.end(); it2 != end2; it2++) {
+            countTime += cache[l->toInt()].lits.size();
+            for (vector<Lit>::const_iterator it2 = cache[l->toInt()].lits.begin()
+                , end2 = cache[l->toInt()].lits.end(); it2 != end2; it2++) {
                 seen[(~(*it2)).toInt()] = 0;
             }
         }

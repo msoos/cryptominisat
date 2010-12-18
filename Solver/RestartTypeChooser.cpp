@@ -65,10 +65,9 @@ void RestartTypeChooser::addInfo()
 const RestartType RestartTypeChooser::choose()
 {
     pair<double, double> mypair = countVarsDegreeStDev();
-    if ((mypair.second  < 80 &&
-        (avg() > (double)limit || ((avg() > (double)(limit*0.9) && stdDeviation(sameIns) < 5))))
-        ||
-        (mypair.second  < 80 && (double)solver.xorclauses.size() > (double)solver.nClauses()*0.1))
+    if ((avg() > (double)limit
+        || ((avg() > (double)(limit*0.9) && stdDeviation(sameIns) < 5)))
+        || ((double)solver.xorclauses.size() > (double)solver.nClauses()*0.1))
         return static_restart;
     else
         return dynamic_restart;
