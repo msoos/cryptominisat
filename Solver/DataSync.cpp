@@ -163,6 +163,10 @@ void DataSync::syncBinToOthers()
         addOneBinToOthers(it->first, it->second);
     }
 
+    for (uint32_t i = 0; i < sharedData->bins.size(); i++) {
+        syncFinish[i] = sharedData->bins[i].size();
+    }
+
     newBinClauses.clear();
 }
 
