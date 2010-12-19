@@ -142,7 +142,7 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, u
             recvBinData++;
             lits[0] = lit;
             lits[1] = otherLit;
-            solver.addClauseInt(lits, 0, true);
+            solver.addClauseInt(lits, 0, true, 2, 0, true);
             lits.clear();
             lits.growTo(2);
             if (!solver.ok) goto end;
