@@ -2710,8 +2710,10 @@ const lbool Solver::solve(const vec<Lit>& assumps)
             nextSimplify = std::min((uint64_t)((double)conflicts * conf.simpStartMMult), conflicts + MAX_CONFL_BETWEEN_SIMPLIFY);
             if (status != l_Undef) break;
 
-            if (numSimplifyRounds%2 == 0 && !checkFullRestart(lastFullRestart)) return l_False;
-            nof_conflicts = conf.restart_first;
+            if ((numSimplifyRounds == 1 ||  numSimplifyRounds == 3)) {
+                if (!checkFullRestart(lastFullRestart)) return l_False;
+                nof_conflicts = conf.restart_first;
+            }
         }
         if (!chooseRestartType(lastFullRestart)) return l_False;
 

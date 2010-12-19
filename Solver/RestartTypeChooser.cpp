@@ -86,6 +86,7 @@ const RestartType RestartTypeChooser::choose()
     if ((avg() > (double)limit
         || ((avg() > (double)(limit*0.9) && stdDeviation(sameIns) < 5)))
         || ((double)solver.xorclauses.size() > (double)solver.nClauses()*0.1)
+        || (solver.order_heap.size() < 10000)
        ) {
         #ifdef VERBOSE_DEBUG
         std::cout << "c restartTypeChooser chose STATIC restarts" << std::endl;

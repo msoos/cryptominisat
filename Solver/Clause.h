@@ -78,9 +78,6 @@ protected:
     uint32_t group;
     #endif
 
-    #ifdef _MSC_VER
-    Lit     data[1];
-    #else
     /**
     @brief Stores the literals in the clause
 
@@ -90,8 +87,7 @@ protected:
     glue, etc. We allocate therefore the clause manually, taking care that
     there is enough space for data[] to hold the literals
     */
-    Lit     data[0];
-    #endif //_MSC_VER
+    Lit     data[];
 
 #ifdef _MSC_VER
 public:

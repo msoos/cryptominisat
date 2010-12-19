@@ -2327,10 +2327,10 @@ void Subsumer::findOrGates(const bool learntGatesToo)
         if (numSizeZeroCache > 1) continue;
 
         if (numSizeZeroCache == 1) {
-            findOrGate(which, *it, learntGatesToo);
+            findOrGate(~which, *it, learntGatesToo);
         } else {
             for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++)
-                findOrGate(*l, *it, learntGatesToo);
+                findOrGate(~*l, *it, learntGatesToo);
         }
     }
 }
@@ -2340,7 +2340,7 @@ void Subsumer::findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learn
     Clause& cl = *c.clause;
     bool isEqual = true;
     for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
-        if (*l2 == eqLit) continue;
+        if (*l2 == ~eqLit) continue;
         Lit otherLit = *l2;
         vector<Lit> const* cache;
         if (!learntGatesToo) cache = &binNonLearntCache[(~otherLit).toInt()].lits;
@@ -2348,7 +2348,7 @@ void Subsumer::findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learn
 
         bool OK = false;
         for (vector<Lit>::const_iterator cacheLit = cache->begin(), endCache = cache->end(); cacheLit != endCache; cacheLit++) {
-            if (*cacheLit == ~eqLit) {
+            if (*cacheLit == eqLit) {
                 OK = true;
                 break;
             }
@@ -2362,10 +2362,10 @@ void Subsumer::findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learn
     if (isEqual) {
         OrGate gate;
         for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
-            if (*l2 == eqLit) continue;
+            if (*l2 == ~eqLit) continue;
             gate.lits.push_back(*l2);
         }
-        gate.eqLit = ~eqLit;
+        gate.eqLit = eqLit;
         orGates.push_back(gate);
         totalOrGateSize += gate.lits.size();
         assert(c.index < defOfOrGate.size());
@@ -2399,7 +2399,7 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         // we have just lost the definition of the gates!!
         bool replaceDef = false;
         bool exactReplace = false;
-        if (c.index < defOfOrGate.size() && defOfOrGate[c.index] && cl->size() == gate.lits.size() + 1) {
+        if (c.index < defOfOrGate.size() && defOfOrGate[c.index] /*&& cl->size() == gate.lits.size() + 1*/) {
             replaceDef = true;
             for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
                 if (gate.eqLit == ~(*l)) exactReplace = true;
@@ -2429,20 +2429,6 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
             continue;
         }
 
-        numOrGateReplaced++;
-        #ifdef VERBOSE_ORGATE_REPLACE
-        std::cout << "Cl changed (due to gate) : " << *cl << std::endl;
-        #endif
-
-        for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
-            gateLitsRemoved++;
-            cl->strengthen(*it);
-            maybeRemove(occur[it->toInt()], cl);
-            /*#ifndef TOUCH_LESS
-            touch(*it, cl.learnt());
-            #endif*/
-        }
-
         bool inside = false;
         bool invertInside = false;
         for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
@@ -2458,6 +2444,20 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         if (invertInside) {
             unlinkClause(c);
             continue;
+        }
+
+        numOrGateReplaced++;
+        #ifdef VERBOSE_ORGATE_REPLACE
+        std::cout << "Cl changed (due to gate) : " << *cl << std::endl;
+        #endif
+
+        for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
+            gateLitsRemoved++;
+            cl->strengthen(*it);
+            maybeRemove(occur[it->toInt()], cl);
+            /*#ifndef TOUCH_LESS
+            touch(*it, cl.learnt());
+            #endif*/
         }
 
         if (!inside) {
@@ -2537,10 +2537,7 @@ const bool Subsumer::subsumeNonExist()
             seen_tmp[l->toInt()] = false;
         }
 
-        if (toRemove) {
-            // std::cout << "cl-rem subs w/ non-existent: " << cl << std::endl;
-            unlinkClause(*it);
-        }
+        if (toRemove) unlinkClause(*it);
     }
 
     if (solver.conf.verbosity  >= 1) {
@@ -2574,6 +2571,7 @@ const bool Subsumer::andGateRemCl()
             for (uint32_t i = 0; i < cl.size(); i++) {
                 if (cl[i] == ~(gate.lits[0])) continue;
                 if (cl[i] == ~(gate.lits[1])) goto end;
+                if (cl[i] == gate.eqLit) goto end;
                 seen_tmp[cl[i].toInt()] = true;
             }
             findAndGateOtherCl(~(gate.lits[1]), cl.size(), others);
@@ -2656,6 +2654,7 @@ void Subsumer::findAndGateOtherCl(const Lit lit, const uint32_t size, vec<Clause
     for (ClauseSimp *it = cs.getData(), *end = cs.getDataEnd(); it != end; it++) {
         const Clause& cl = *it->clause;
         if (cl.size() != size) continue;
+
         bool OK = true;
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == lit) continue;
