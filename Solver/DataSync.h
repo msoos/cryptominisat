@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SharedData.h"
 #include "Solver.h"
+#include "mpi/mpi.h"
 
 class DataSync
 {
@@ -41,17 +42,30 @@ class DataSync
         void syncBinToOthers();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
         const bool shareBinData();
+        const bool syncUnit(const lbool otherVal, const Var var, SharedData* shared, uint32_t& thisGotUnitData, uint32_t& thisSentUnitData);
+
+        //MPI
+        const bool syncFromMPI();
+        void syncToMPI();
 
         //stuff to sync
         vector<std::pair<Lit, Lit> > newBinClauses;
 
         //stats
         uint64_t lastSyncConf;
+
+        //Syncing to threads/processes
         vec<uint32_t> syncFinish;
+        vec<uint32_t> syncMPIFinish;
+        MPI_Request sendReq;
+        uint32_t *mpiSendData;
+
         uint32_t sentUnitData;
         uint32_t recvUnitData;
         uint32_t sentBinData;
         uint32_t recvBinData;
+        uint32_t mpiRecvBinData;
+        uint32_t mpiSentBinData;
 
         //misc
         vec<char> seen;
@@ -62,6 +76,8 @@ class DataSync
         uint32_t numCalls;
         int threadNum;
         int numThreads;
+        int mpiRank;
+        int mpiSize;
 };
 
 inline const uint32_t DataSync::getSentUnitData() const

@@ -115,7 +115,7 @@ public:
 
 
         int numThreads;
-        void setupOneSolver(const int num);
+        void setupOneSolver(const int num, const uint32_t origSeed);
         std::vector<Solver*> solvers;
         SharedData sharedData;
         int finishedThread;

@@ -36,8 +36,11 @@ MTSolver::MTSolver(const int _numThreads, const SolverConf& _conf, const GaussCo
 
     omp_set_dynamic(0);
     omp_set_num_threads(numThreads);
+    MTRand myRand(conf.origSeed);
     for (int i = 0; i < numThreads; i++) {
-        setupOneSolver(i);
+        uint32_t rand = conf.origSeed;
+        if (i > 0) rand = myRand.randInt();
+        setupOneSolver(i, rand);
     }
     finishedThread = 0;
 }
@@ -49,10 +52,10 @@ MTSolver::~MTSolver()
     }
 }
 
-void MTSolver::setupOneSolver(const int num)
+void MTSolver::setupOneSolver(const int num, const uint32_t origSeed)
 {
     SolverConf myConf = conf;
-    myConf.origSeed = num;
+    myConf.origSeed = origSeed;
     if (num > 0) {
         //if (num % 2) myConf.fixRestartType = dynamic_restart;
         //else myConf.fixRestartType = static_restart;

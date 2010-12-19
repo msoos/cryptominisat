@@ -14,9 +14,9 @@ if (CMAKE_COMPILER_IS_GNUCC)
     SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -fprofile-use -Werror -Wno-deprecated -O3 -g0 -DNDEBUG -mtune=native -fomit-frame-pointer")
 endif(CMAKE_COMPILER_IS_GNUCC)
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    SET(CMAKE_EXE_LINKER_FLAGS "-static")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#    SET(CMAKE_EXE_LINKER_FLAGS "-static")
+#ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 find_package(ZLIB  REQUIRED)
 link_directories( ${ZLIB_LIBRARY} )
@@ -27,6 +27,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra)
 #find_package(Perftools)
+
+find_package(MPI REQUIRED)
 
 add_definitions(-DVERSION="3.0.0")
 add_definitions(-DUSE_GAUSS)

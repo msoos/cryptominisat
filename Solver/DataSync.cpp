@@ -19,23 +19,47 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Subsumer.h"
 #include "VarReplacer.h"
 #include "XorSubsumer.h"
+#include "PartHandler.h"
 #include <iomanip>
 #include "omp.h"
+#include "mpi/mpi.h"
+
+#ifdef VERBOSE_DEBUG
+#define VERBOSE_DEBUG_MPI_SENDRCV
+#endif
+
+//#define VERBOSE_DEBUG_MPI_SENDRCV
 
 DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     lastSyncConf(0)
+    , mpiSendData(NULL)
     , sentUnitData(0)
     , recvUnitData(0)
+    , sentBinData(0)
+    , recvBinData(0)
+    , mpiRecvBinData(0)
+    , mpiSentBinData(0)
     , sharedData(_sharedData)
     , solver(_solver)
     , numCalls(0)
 {
     threadNum = omp_get_thread_num();
     numThreads = omp_get_num_threads();
+    int err;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    assert(err == MPI_SUCCESS);
+
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    assert(err == MPI_SUCCESS);
+    release_assert(!(mpiSize > 1 && mpiRank == 0));
+
+    assert(sizeof(unsigned) == sizeof(uint32_t));
 }
 
 void DataSync::newVar()
 {
+    syncMPIFinish.push(0);
+    syncMPIFinish.push(0);
     syncFinish.push(0);
     syncFinish.push(0);
     seen.push(false);
@@ -45,7 +69,7 @@ void DataSync::newVar()
 const bool DataSync::syncData()
 {
     numCalls++;
-    if (numThreads == 1) return true;
+    if (mpiSize == 1 && numThreads == 1) return true;
     if (sharedData == NULL
         || lastSyncConf + SYNC_EVERY_CONFL >= solver.conflicts) return true;
 
@@ -61,9 +85,119 @@ const bool DataSync::syncData()
     ok = shareBinData();
     if (!ok) return false;
 
+    if (mpiSize > 1 && threadNum == 0 && numCalls % 3 == 2) {
+        if (!syncFromMPI()) return false;
+        syncToMPI();
+    }
+
     lastSyncConf = solver.conflicts;
 
     return true;
+}
+
+const bool DataSync::syncFromMPI()
+{
+    int err;
+    MPI_Status status;
+    int flag;
+    int count;
+    uint32_t thisMpiRecvBinData = 0;
+    uint32_t thisGotUnitData = 0;
+    uint32_t tmp = 0;
+
+    err = MPI_Iprobe(0, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+    assert(err == MPI_SUCCESS);
+    if (flag == false) return true;
+
+    err = MPI_Get_count(&status, MPI_UNSIGNED, &count);
+    assert(err == MPI_SUCCESS);
+    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+    std::cout << "-->> MPI " << mpiRank << " Received " << count << " uint32_t-s" << std::endl;
+    #endif
+
+    uint32_t* buf = new uint32_t[count];
+    err = MPI_Recv((unsigned*)buf, count, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &status);
+    assert(err == MPI_SUCCESS);
+
+    uint32_t at = 0;
+    assert(solver.nVars() == buf[at]);
+    at++;
+    for (Var var = 0; var < solver.nVars(); var++, at++) {
+        const lbool otherVal = toLbool(buf[at]);
+        if (!syncUnit(otherVal, var, NULL, thisGotUnitData, tmp)) {
+            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+            std::cout << "-->> MPI " << mpiRank << " solver FALSE" << std::endl;
+            #endif
+            goto end;
+        }
+    }
+    solver.ok = solver.propagate().isNULL();
+    if (!solver.ok) goto end;
+
+    assert(buf[at] == solver.nVars()*2);
+    at++;
+    for (uint32_t wsLit = 0; wsLit < solver.nVars()*2; wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        uint32_t num = buf[at];
+        at++;
+        for (uint32_t i = 0; i < num; i++, at++) {
+            Lit otherLit = Lit::toLit(buf[at]);
+            addOneBinToOthers(lit, otherLit);
+            thisMpiRecvBinData++;
+        }
+    }
+    mpiRecvBinData += thisMpiRecvBinData;
+
+    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+    std::cout << "-->> MPI " << mpiRank << " Received " << thisMpiRecvBinData << " bins" << std::endl;
+    #endif
+
+    end:
+    delete buf;
+    return solver.ok;
+}
+
+void DataSync::syncToMPI()
+{
+    int err;
+    if (mpiSendData != NULL) {
+        MPI_Status status;
+        err = MPI_Wait(&sendReq, &status);
+        assert(err == MPI_SUCCESS);
+        delete mpiSendData;
+        mpiSendData = NULL;
+    }
+
+    uint32_t thisMpiSentBinData = 0;
+    vector<uint32_t> data;
+    data.push_back((uint32_t)solver.nVars());
+    for (Var var = 0; var < solver.nVars(); var++) {
+        data.push_back((uint32_t)solver.value(var).getchar());
+    }
+
+    data.push_back((uint32_t)solver.nVars()*2);
+    uint32_t at = 0;
+    for(vector<vector<Lit> >::const_iterator it = sharedData->bins.begin(), end = sharedData->bins.end(); it != end; it++, at++) {
+        const vector<Lit>& binSet = *it;
+        uint32_t sizeToSend = binSet.size() - syncMPIFinish[at];
+        data.push_back(sizeToSend);
+        for (uint32_t i = syncMPIFinish[at]; i < binSet.size(); i++) {
+            data.push_back(binSet[i].toInt());
+            thisMpiSentBinData++;
+        }
+        syncMPIFinish[at] = binSet.size();
+    }
+    mpiSentBinData += thisMpiSentBinData;
+
+    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+    std::cout << "-->> MPI " << mpiRank << " Sent " << data.size() << " uint32_t -s" << std::endl;
+    std::cout << "-->> MPI " << mpiRank << " Sent " << thisMpiSentBinData << " bins " << std::endl;
+    #endif
+
+    mpiSendData = new uint32_t[data.size()];
+    std::copy(data.begin(), data.end(), mpiSendData);
+    err = MPI_Isend(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &sendReq);
+    assert(err == MPI_SUCCESS);
 }
 
 const bool DataSync::shareBinData()
@@ -198,41 +332,8 @@ const bool DataSync::shareUnitData()
     SharedData& shared = *sharedData;
     shared.value.growTo(solver.nVars(), l_Undef);
     for (uint32_t var = 0; var < solver.nVars(); var++) {
-        Lit thisLit = Lit(var, false);
-        thisLit = solver.varReplacer->getReplaceTable()[thisLit.var()] ^ thisLit.sign();
-        const lbool thisVal = solver.value(thisLit);
         const lbool otherVal = shared.value[var];
-
-        if (thisVal == l_Undef && otherVal == l_Undef) continue;
-        if (thisVal != l_Undef && otherVal != l_Undef) {
-            if (thisVal != otherVal) {
-                solver.ok = false;
-                return false;
-            } else {
-                continue;
-            }
-        }
-
-        if (otherVal != l_Undef) {
-            assert(thisVal == l_Undef);
-            Lit litToEnqueue = thisLit ^ (otherVal == l_False);
-            if (solver.subsumer->getVarElimed()[litToEnqueue.var()]
-                || solver.xorSubsumer->getVarElimed()[litToEnqueue.var()]
-                ) continue;
-
-            solver.uncheckedEnqueue(litToEnqueue);
-            solver.ok = solver.propagate().isNULL();
-            if (!solver.ok) return false;
-            thisGotUnitData++;
-            continue;
-        }
-
-        if (thisVal != l_Undef) {
-            assert(otherVal == l_Undef);
-            shared.value[var] = thisVal;
-            thisSentUnitData++;
-            continue;
-        }
+        if (!syncUnit(otherVal, var, sharedData, thisGotUnitData, thisSentUnitData)) return false;
     }
 
     if (solver.conf.verbosity >= 3 && (thisGotUnitData > 0 || thisSentUnitData > 0)) {
@@ -242,6 +343,47 @@ const bool DataSync::shareUnitData()
 
     recvUnitData += thisGotUnitData;
     sentUnitData += thisSentUnitData;
+
+    return true;
+}
+
+const bool DataSync::syncUnit(const lbool otherVal, const Var var, SharedData* shared, uint32_t& thisGotUnitData, uint32_t& thisSentUnitData)
+{
+    Lit thisLit = Lit(var, false);
+    thisLit = solver.varReplacer->getReplaceTable()[thisLit.var()] ^ thisLit.sign();
+    const lbool thisVal = solver.value(thisLit);
+
+    if (thisVal == l_Undef && otherVal == l_Undef) return true;
+    if (thisVal != l_Undef && otherVal != l_Undef) {
+        if (thisVal != otherVal) {
+            solver.ok = false;
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    if (otherVal != l_Undef) {
+        assert(thisVal == l_Undef);
+        Lit litToEnqueue = thisLit ^ (otherVal == l_False);
+        if (solver.subsumer->getVarElimed()[litToEnqueue.var()]
+            || solver.xorSubsumer->getVarElimed()[litToEnqueue.var()]
+            || solver.partHandler->getSavedState()[litToEnqueue.var()] != l_Undef
+            ) return true;
+
+        solver.uncheckedEnqueue(litToEnqueue);
+        solver.ok = solver.propagate().isNULL();
+        if (!solver.ok) return false;
+        thisGotUnitData++;
+        return true;
+    }
+
+    if (shared != NULL && thisVal != l_Undef) {
+        assert(otherVal == l_Undef);
+        shared->value[var] = thisVal;
+        thisSentUnitData++;
+        return true;
+    }
 
     return true;
 }

@@ -44,6 +44,7 @@ Here is a picture of of the above process in more detail:
 #endif //_MSC_VER
 #include <map>
 #include <set>
+#include "mpi.h"
 
 #include <signal.h>
 
@@ -54,6 +55,7 @@ Here is a picture of of the above process in more detail:
 #include "time_mem.h"
 #include "constants.h"
 #include "DimacsParser.h"
+#include "DataSyncServer.h"
 
 #if defined(__linux__)
 #include <fpu_control.h>
@@ -696,6 +698,16 @@ void Main::printVersionInfo(const uint32_t verbosity)
 
 const int Main::solve()
 {
+    int err, mpiRank, mpiSize;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    assert(err == MPI_SUCCESS);
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    assert(err == MPI_SUCCESS);
+    if (mpiSize > 1 && mpiRank > 1) {
+        conf.verbosity = 0;
+        conf.origSeed = mpiRank;
+    }
+
     MTSolver solver(numThreads, conf, gaussconfig);
     solversToInterrupt = &solver;
 
@@ -763,10 +775,38 @@ int Main::correctReturnValue(const lbool ret) const
 
 int main(int argc, char** argv)
 {
-    Main main(argc, argv);
-    main.parseCommandLine();
-    signal(SIGINT, SIGINT_handler);
-    //signal(SIGHUP,SIGINT_handler);
+    int err;
+    err = MPI_Init(&argc, &argv);
+    assert(err == MPI_SUCCESS);
 
-    return main.solve();
+    int mpiRank, mpiSize;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    assert(err == MPI_SUCCESS);
+
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    assert(err == MPI_SUCCESS);
+
+    int ret;
+    if (mpiSize > 1 && mpiRank == 0) {
+        DataSyncServer server;
+        ret = server.actAsServer();
+        if (!ret) {
+            FILE *f;
+            f = fopen("finish", "w");
+            fprintf(f, "UNSAT sync");
+            fclose(f);
+        }
+    } else {
+        Main main(argc, argv);
+        main.parseCommandLine();
+        signal(SIGINT, SIGINT_handler);
+        //signal(SIGHUP,SIGINT_handler);
+        ret = main.solve();
+    }
+
+    err = MPI_Finalize();
+    assert(err == MPI_SUCCESS);
+
+    return ret;
 }
+
