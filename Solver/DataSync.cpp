@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include "XorSubsumer.h"
 #include <iomanip>
+#include "omp.h"
 
 DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     lastSyncConf(0)
@@ -27,7 +28,11 @@ DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     , recvUnitData(0)
     , sharedData(_sharedData)
     , solver(_solver)
-{}
+    , numCalls(0)
+{
+    threadNum = omp_get_thread_num();
+    numThreads = omp_get_num_threads();
+}
 
 void DataSync::newVar()
 {
@@ -39,6 +44,7 @@ void DataSync::newVar()
 
 const bool DataSync::syncData()
 {
+    numCalls++;
     if (sharedData == NULL
         || lastSyncConf + SYNC_EVERY_CONFL >= solver.conflicts) return true;
 
@@ -161,6 +167,7 @@ void DataSync::syncBinToOthers()
 {
     for(vector<std::pair<Lit, Lit> >::const_iterator it = newBinClauses.begin(), end = newBinClauses.end(); it != end; it++) {
         addOneBinToOthers(it->first, it->second);
+        sentBinData++;
     }
 
     for (uint32_t i = 0; i < sharedData->bins.size(); i++) {
@@ -180,7 +187,6 @@ void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2)
     }
 
     bins.push_back(lit2);
-    sentBinData++;
 }
 
 const bool DataSync::shareUnitData()
