@@ -218,3 +218,16 @@ void Solver::checkLiteralCount()
         assert((int)clauses_literals == cnt);
     }
 }
+
+#ifdef DEBUG_ATTACH_FULL
+void Solver::checkNoWrongAttach() const
+{
+    for (Clause *const*i = learnts.getData(), *const*end = learnts.getDataEnd(); i != end; i++) {
+
+        const Clause& cl = **i;
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            if (i > 0) assert(cl[i-1].var() != cl[i].var());
+        }
+    }
+}
+#endif //DEBUG_ATTACH_FULL

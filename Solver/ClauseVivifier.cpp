@@ -28,6 +28,23 @@ ClauseVivifier::ClauseVivifier(Solver& _solver) :
     , solver(_solver)
 {}
 
+const bool ClauseVivifier::vivify()
+{
+    assert(solver.ok);
+    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
+    numCalls++;
+
+    if (solver.conf.doCacheOTFSSR && numCalls >= 2) {
+        if (!vivifyClausesCache(solver.clauses, solver.transOTFCache)) return false;
+        if (!vivifyClausesCache(solver.clauses, solver.subsumer->getBinNonLearntCache())) return false;
+        if (!vivifyClausesCache(solver.learnts, solver.transOTFCache)) return false;
+    }
+
+    if (!vivifyClausesNormal()) return false;
+
+    return true;
+}
+
 
 /**
 @brief Performs clause vivification (by Hamadi et al.)
@@ -37,22 +54,14 @@ it is not part of failed literal probing, really. However, it is here because
 it seems to be a function that fits into the idology of failed literal probing.
 Maybe I am off-course and it should be in another class, or a class of its own.
 */
-const bool ClauseVivifier::vivifyClauses()
+const bool ClauseVivifier::vivifyClausesNormal()
 {
     assert(solver.ok);
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    numCalls++;
-
-    if (solver.ok && solver.conf.doCacheOTFSSR) {
-        if (!vivifyClauses2(solver.clauses)) return false;
-        if (/*solver.lastSelectedRestartType == static_restart &&*/ !vivifyClauses2(solver.learnts)) return false;
-    }
-
     bool failed;
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 20*1000*1000;
+    uint64_t maxNumProps = 80*1000*1000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxNumProps *=2;
     uint64_t extraDiff = 0;
@@ -66,7 +75,7 @@ const bool ClauseVivifier::vivifyClauses()
     vec<Lit> lits;
     vec<Lit> unused;
 
-    if (solver.clauses.size() < 1000000) {
+    if (solver.clauses.size() < 5000000) {
         //if too many clauses, random order will do perfectly well
         std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
     }
@@ -129,7 +138,7 @@ const bool ClauseVivifier::vivifyClauses()
             }
             done += i2;
             failed = (!solver.propagate(false).isNULL());
-            if (numCalls > 3 && failed) break;
+            if (failed) break;
         }
         solver.cancelUntilLight();
         assert(solver.ok);
@@ -185,7 +194,7 @@ const bool ClauseVivifier::vivifyClauses()
 }
 
 
-const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
+const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses, const vector<TransCache>& cache)
 {
     assert(solver.ok);
 
@@ -202,8 +211,6 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
     vec<Lit> lits;
     bool needToFinish = false;
     double myTime = cpuTime();
-
-    if (numCalls < 3) return true;
 
     Clause** i = clauses.getData();
     Clause** j = i;
@@ -223,9 +230,9 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
             if (seen[l->toInt()] == 0) continue;
             Lit lit = *l;
 
-            countTime += solver.transOTFCache[l->toInt()].lits.size();
-            for (vector<Lit>::const_iterator it2 = solver.transOTFCache[l->toInt()].lits.begin()
-                , end2 = solver.transOTFCache[l->toInt()].lits.end(); it2 != end2; it2++) {
+            countTime += cache[l->toInt()].lits.size();
+            for (vector<Lit>::const_iterator it2 = cache[l->toInt()].lits.begin()
+                , end2 = cache[l->toInt()].lits.end(); it2 != end2; it2++) {
                 seen[(~(*it2)).toInt()] = 0;
             }
         }

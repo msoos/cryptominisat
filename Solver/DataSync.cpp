@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include "XorSubsumer.h"
 #include <iomanip>
+#include "omp.h"
 
 DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     lastSyncConf(0)
@@ -27,7 +28,11 @@ DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     , recvUnitData(0)
     , sharedData(_sharedData)
     , solver(_solver)
-{}
+    , numCalls(0)
+{
+    threadNum = omp_get_thread_num();
+    numThreads = omp_get_num_threads();
+}
 
 void DataSync::newVar()
 {
@@ -39,6 +44,8 @@ void DataSync::newVar()
 
 const bool DataSync::syncData()
 {
+    numCalls++;
+    if (numThreads == 1) return true;
     if (sharedData == NULL
         || lastSyncConf + SYNC_EVERY_CONFL >= solver.conflicts) return true;
 
@@ -77,10 +84,9 @@ const bool DataSync::shareBinData()
             ) continue;
 
         vector<Lit>& bins = shared.bins[wsLit];
-        vec<Watched>& ws = solver.watches[wsLit];
 
         if (bins.size() > syncFinish[wsLit]
-            && !syncBinFromOthers(lit1, bins, syncFinish[wsLit], ws)) return false;
+            && !syncBinFromOthers(lit1, bins, syncFinish[wsLit])) return false;
     }
 
     syncBinToOthers();
@@ -110,18 +116,24 @@ template void DataSync::signalNewBinClause(Clause& ps);
 template void DataSync::signalNewBinClause(XorClause& ps);
 template void DataSync::signalNewBinClause(vec<Lit>& ps);
 
-const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
+const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished)
 {
     assert(solver.varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
     assert(solver.subsumer->getVarElimed()[lit.var()] == false);
     assert(solver.xorSubsumer->getVarElimed()[lit.var()] == false);
 
     vec<Lit> addedToSeen;
-    for (Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+    const vec<Watched>& ws = solver.watches[(~lit).toInt()];
+    for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
         if (it->isBinary()) {
             addedToSeen.push(it->getOtherLit());
             seen[it->getOtherLit().toInt()] = true;
         }
+    }
+    const vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
+    for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+        addedToSeen.push(*it);
+        seen[it->toInt()] = true;
     }
 
     vec<Lit> lits(2);
@@ -137,7 +149,7 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, u
             recvBinData++;
             lits[0] = lit;
             lits[1] = otherLit;
-            solver.addClauseInt(lits, 0, true);
+            solver.addClauseInt(lits, 0, true, 2, 0, true);
             lits.clear();
             lits.growTo(2);
             if (!solver.ok) goto end;
@@ -156,6 +168,11 @@ void DataSync::syncBinToOthers()
 {
     for(vector<std::pair<Lit, Lit> >::const_iterator it = newBinClauses.begin(), end = newBinClauses.end(); it != end; it++) {
         addOneBinToOthers(it->first, it->second);
+        sentBinData++;
+    }
+
+    for (uint32_t i = 0; i < sharedData->bins.size(); i++) {
+        syncFinish[i] = sharedData->bins[i].size();
     }
 
     newBinClauses.clear();
@@ -171,7 +188,6 @@ void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2)
     }
 
     bins.push_back(lit2);
-    sentBinData++;
 }
 
 const bool DataSync::shareUnitData()

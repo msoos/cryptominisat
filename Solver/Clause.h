@@ -68,7 +68,7 @@ protected:
     uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
-    uint32_t mySize:19; ///<The current size of the clause
+    uint32_t mySize:18; ///<The current size of the clause
 
     float miniSatAct; ///<Clause activity according to MiniSat
 
@@ -78,9 +78,6 @@ protected:
     uint32_t group;
     #endif
 
-    #ifdef _MSC_VER
-    Lit     data[1];
-    #else
     /**
     @brief Stores the literals in the clause
 
@@ -90,8 +87,7 @@ protected:
     glue, etc. We allocate therefore the clause manually, taking care that
     there is enough space for data[] to hold the literals
     */
-    Lit     data[0];
-    #endif //_MSC_VER
+    Lit     data[];
 
 #ifdef _MSC_VER
 public:
@@ -109,6 +105,7 @@ public:
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
         miniSatAct = 0;
+        glue = MAX_THEORETICAL_GLUE;
         setStrenghtened();
     }
 
@@ -210,6 +207,13 @@ public:
     inline void strengthen(const Lit p)
     {
         remove(*this, p);
+    }
+
+    inline void add(const Lit p)
+    {
+        mySize++;
+        (*this)[mySize-1] = p;
+        setStrenghtened();
     }
 
     void calcAbstractionClause()

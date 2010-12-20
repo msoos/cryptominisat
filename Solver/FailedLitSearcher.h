@@ -57,7 +57,7 @@ class FailedLitSearcher {
     private:
         //Main
         const bool tryBoth(const Lit lit1, const Lit lit2);
-        const bool tryAll(const Lit* begin, const Lit* end);
+        const bool bothCache();
         void printResults(const double myTime) const;
 
         Solver& solver; ///<The solver we are updating&working with
@@ -167,7 +167,20 @@ class FailedLitSearcher {
 
             const vec<BinPropData>& binPropData;
         };
+        struct BinAddData
+        {
+            vector<Lit> lits;
+            Lit lit;
+        };
+        struct BinAddDataSorter
+        {
+            const bool operator() (const BinAddData& a, const BinAddData& b) const
+            {
+                return (a.lits.size() > b.lits.size());
+            }
+        };
         uint32_t addedBin;
+        void hyperBinResAll(const Lit litProp, const vector<Lit>& oldCache);
         void hyperBinResolution(const Lit lit);
         BitArray unPropagatedBin;
         BitArray needToVisit;
@@ -176,6 +189,12 @@ class FailedLitSearcher {
         void fillImplies(const Lit lit);
         vec<Var> myImpliesSet; ///<variables set in myimplies
         uint64_t hyperbinProps; ///<Number of bogoprops done by the hyper-binary resolution function hyperBinResolution()
+        void addMyImpliesSetAsBins(Lit lit, int32_t& difference);
+
+        //Cache equivalence within hyperbin
+        const bool performAddBinLaters();
+        vector<std::pair<Lit, Lit> > addBinLater;
+        uint32_t addedCacheBin;
 
         //bin-removal within hyper-bin-res
         vec<Lit> uselessBin;
@@ -189,6 +208,20 @@ class FailedLitSearcher {
         Don't do more than this many propagations within hyperBinResolution()
         */
         uint64_t maxHyperBinProps;
+
+        struct UIPNegPosDist
+        {
+            int64_t dist;
+            Var var;
+        };
+
+        struct NegPosSorter
+        {
+            const bool operator() (const UIPNegPosDist& a, const UIPNegPosDist& b) const
+            {
+                return (a.dist < b.dist);
+            }
+        };
 
         //Temporaries
         vec<Lit> tmpPs;

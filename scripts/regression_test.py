@@ -35,23 +35,6 @@ def unique_fuzz_file(file_name_begin):
 
 class Tester:
 
-    sumTime = 0.0
-    sumProp = 0
-    verbose = False
-    gaussUntil = 0
-    testDir = "../tests/"
-    testDirNewVar = "../tests/newVar/"
-    cryptominisat = "../build/cryptominisat"
-    speed = False
-    checkDirDifferent = True
-    differentDirForCheck = \
-        "/home/soos/Development/sat_solvers/satcomp09/"
-    ignoreNoSolution = False
-    arminFuzzer = False
-    extraOptions = ""
-    needDebugLib = True
-    numThreads = 4
-
     def __init__(self):
         self.sumTime = 0.0
         self.sumProp = 0
@@ -437,7 +420,8 @@ class Tester:
                 "ignore",
                 "armin",
                 "extraOptions=",
-                "threads="
+                "threads=",
+		"nodebuglib"
                 ])
         except getopt.GetoptError, err:
             print str(err)
@@ -482,6 +466,8 @@ class Tester:
             elif opt in ("-a", "--armin"):
                 self.arminFuzzer = True
                 self.needDebugLib = False
+	    elif opt in ("--nodebuglib"):
+		self.needDebugLib = False
             elif opt in ("--threads"):
                 self.numThreads = int(arg)
             else:

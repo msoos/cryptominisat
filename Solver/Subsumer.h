@@ -59,6 +59,7 @@ public:
     const double getTotalTime() const;
     const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
     const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
+    const vector<TransCache>& getBinNonLearntCache() const;
 
 private:
 
@@ -247,6 +248,10 @@ private:
     const bool eliminateVars();
     void fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit);
 
+    void addLearntBinaries(const Var var);
+    void removeBinsAndTris(const Var var);
+    const uint32_t removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws);
+
     //Subsume with Nonexistent Bins
     struct BinSorter2 {
         const bool operator()(const Watched& first, const Watched& second)
@@ -264,15 +269,12 @@ private:
             return false;
         };
     };
-    const bool subsWNonExitsBinsFullFull();
-    const bool subsWNonExistBinsFull();
-    const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
-    void subsume0BIN(const Lit lit, const vec<char>& lits, const uint32_t abst);
-    bool subsNonExistentFinish;
-    uint32_t doneNum;
+    const bool subsWNonExistBinsFill();
+    const bool subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
+    const bool subsumeNonExist();
+    uint32_t doneNumNonExist;
     uint64_t extraTimeNonExist;
-    vec<Lit> toVisit;      ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (list)
-    vec<char> toVisitAll;  ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (contains '1' for literal.toInt() that we visited)
+    vector<TransCache> binNonLearntCache;
 
     //Blocked clause elimination
     class VarOcc {
@@ -299,6 +301,44 @@ private:
     void touchBlockedVar(const Var x);
     void blockedClauseElimAll(const Lit lit);
 
+    //Gate extraction
+    class OrGate {
+    public:
+        Lit eqLit;
+        vector<Lit> lits;
+    };
+    struct OrGateSorter {
+        const bool operator() (const OrGate& gate1, const OrGate& gate2) {
+            return (gate1.lits.size() > gate2.lits.size());
+        }
+    };
+    struct OrGateSorter2 {
+        const bool operator() (const OrGate& gate1, const OrGate& gate2) {
+            if (gate1.lits.size() > gate2.lits.size()) return true;
+            if (gate1.lits.size() < gate2.lits.size()) return false;
+
+            assert(gate1.lits.size() == gate2.lits.size());
+            for (uint32_t i = 0; i < gate1.lits.size(); i++) {
+                if (gate1.lits[i] < gate2.lits[i]) return true;
+                if (gate1.lits[i] > gate2.lits[i]) return false;
+            }
+
+            return false;
+        }
+    };
+    const bool findOrGatesAndTreat();
+    void findOrGates(const bool learntGatesToo);
+    void findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learntGatesToo);
+    const bool shortenWithOrGate(const OrGate& gate);
+    int64_t gateLitsRemoved;
+    uint64_t totalOrGateSize;
+    vector<OrGate> orGates;
+    uint32_t numOrGateReplaced;
+    const bool findEqOrGates();
+    vec<char> defOfOrGate;
+
+    const bool andGateRemCl();
+    void findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others);
 
     //validity checking
     const bool verifyIntegrity();
@@ -449,6 +489,9 @@ inline void Subsumer::newVar()
     ol_seenNeg.push(1);
     ol_seenNeg.push(1);
     touch(solver.nVars()-1);
+
+    binNonLearntCache.push_back(TransCache());
+    binNonLearntCache.push_back(TransCache());
 }
 
 inline const map<Var, vector<vector<Lit> > >& Subsumer::getElimedOutVar() const
@@ -474,6 +517,11 @@ inline const uint32_t Subsumer::getNumElimed() const
 inline const double Subsumer::getTotalTime() const
 {
     return totalTime;
+}
+
+inline const vector<TransCache>& Subsumer::getBinNonLearntCache() const
+{
+    return binNonLearntCache;
 }
 
 #endif //SIMPLIFIER_H

@@ -244,7 +244,12 @@ const bool PartHandler::checkOnlyThisPartBin(const Solver& thisSolver, const uin
                 if (partFinder.getVarPart(lit.var()) != part
                     || partFinder.getVarPart(it2->getOtherLit().var()) != part
                     ) {
-                    std::cout << "bin incorrectly moved to this part:" << lit << " , " << it2->getOtherLit() << std::endl;
+                    std::cout << "bin incorrectly moved to this part:" << lit << " , " << it2->getOtherLit()
+                    << ", learnt: "<< it2->getLearnt() << std::endl;
+                    std::cout << "this part: " << part
+                    << ", lit1 " << lit << " part : " << partFinder.getVarPart(lit.var())
+                    << ", lit2 " << it2->getOtherLit() << " part : " << partFinder.getVarPart(it2->getOtherLit().var())
+                    << std::endl;
                     retval = false;
                 }
             }

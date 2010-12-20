@@ -37,7 +37,7 @@ class DataSync
     private:
         //functions
         const bool shareUnitData();
-        const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws);
+        const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished);
         void syncBinToOthers();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
         const bool shareBinData();
@@ -59,6 +59,9 @@ class DataSync
         //main data
         SharedData* sharedData;
         Solver& solver;
+        uint32_t numCalls;
+        int threadNum;
+        int numThreads;
 };
 
 inline const uint32_t DataSync::getSentUnitData() const

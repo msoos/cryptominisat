@@ -140,6 +140,7 @@ const bool VarReplacer::performReplaceInternal()
     if (!replace_set(solver.learnts)) goto end;
     if (!replace_set(solver.xorclauses)) goto end;
     solver.testAllClauseAttach();
+    solver.checkNoWrongAttach();
 
 end:
     assert(solver.qhead == solver.trail.size() || !solver.ok);

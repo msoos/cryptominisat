@@ -297,6 +297,7 @@ void Main::printUsage(char** argv)
     printf("  --maxgluedel     = Automatically delete clauses over max glue. See '--maxglue'\n");
     printf("  --maxglue        = [0 - 2^%d-1] default: %d. Glue value above which we\n", MAX_GLUE_BITS, conf.maxGlue);
     printf("                     throw the clause away on backtrack.\n");
+    printf("  --nogates        = Don't find&replace gates\n");
     printf("  --threads        = Num threads (default is 1)");
     printf("\n");
 }
@@ -604,6 +605,8 @@ void Main::parseCommandLine()
             conf.maxGlue = (uint32_t)glue;
         } else if ((value = hasPrefix(argv[i], "--maxgluedel"))) {
             conf.doMaxGlueDel = true;
+        } else if ((value = hasPrefix(argv[i], "--nogates"))) {
+            conf.doGateFind = false;
         } else if ((value = hasPrefix(argv[i], "--threads="))) {
             numThreads = 0;
             if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {

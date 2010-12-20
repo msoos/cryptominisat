@@ -1,3 +1,20 @@
+/***************************************************************************
+CryptoMiniSat -- Copyright (c) 2010 Mate Soos
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*****************************************************************************/
+
 #include "MTSolver.h"
 
 #include <set>
@@ -6,7 +23,7 @@
 void MTSolver::printNumThreads() const
 {
     if (conf.verbosity >= 1) {
-        std::cout << "c Using " << numThreads << " threads" << std::endl;
+        std::cout << "c Using " << numThreads << " thread(s)" << std::endl;
     }
 }
 
@@ -15,10 +32,10 @@ MTSolver::MTSolver(const int _numThreads, const SolverConf& _conf, const GaussCo
     , gaussConfig(_gaussConfig)
     , numThreads(_numThreads)
 {
-    omp_set_dynamic(0);
     solvers.resize(numThreads, NULL);
 
-    #pragma omp parallel for
+    omp_set_dynamic(0);
+    omp_set_num_threads(numThreads);
     for (int i = 0; i < numThreads; i++) {
         setupOneSolver(i);
     }
@@ -133,9 +150,8 @@ void MTSolver::setUpFinish(const lbool retVal, const int threadNum)
 Var MTSolver::newVar(bool dvar)
 {
     uint32_t ret = 0;
-    #pragma omp parallel for firstprivate(ret)
     for (uint32_t i = 0; i < solvers.size(); i++) {
-        ret = solvers[i]->newVar();
+        ret = solvers[i]->newVar(dvar);
     }
 
     return ret;
@@ -144,7 +160,6 @@ Var MTSolver::newVar(bool dvar)
 template<class T> bool MTSolver::addClause (T& ps, const uint32_t group, const char* group_name)
 {
     bool globalRet = true;
-    #pragma omp parallel for
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
         std::copy(ps.getData(), ps.getDataEnd(), copyPS.getData());
@@ -163,7 +178,6 @@ template bool MTSolver::addClause(Clause& ps, const uint32_t group, const char* 
 template<class T> bool MTSolver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity)
 {
     bool globalRet = true;
-    #pragma omp parallel for
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
         std::copy(ps.getData(), ps.getDataEnd(), copyPS.getData());
@@ -182,13 +196,11 @@ template bool MTSolver::addLearntClause(Clause& ps, const uint32_t group, const 
 template<class T> bool MTSolver::addXorClause (T& ps, bool xorEqualFalse, const uint32_t group, const char* group_name)
 {
     bool globalRet = true;
-    #pragma omp parallel for
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
         std::copy(ps.getData(), ps.getDataEnd(), copyPS.getData());
         bool ret = solvers[i]->addXorClause(copyPS, xorEqualFalse, group, group_name);
         if (ret == false) {
-            #pragma omp critical
             globalRet = false;
         }
     }

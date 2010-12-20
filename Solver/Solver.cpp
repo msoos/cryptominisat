@@ -104,6 +104,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , lastSelectedRestartType (static_restart)
         , simplifying      (false)
         , totalSimplifyTime(0.0)
+        , numSimplifyRounds(0)
         , simpDB_assigns   (-1)
         , simpDB_props     (0)
 {
@@ -187,8 +188,10 @@ Var Solver::newVar(bool dvar)
     oldPolarity.push_back(defaultPolarity());
     #endif //USE_OLD_POLARITIES
 
+    //Variable heap, long-term polarity count
     decision_var.push_back(dvar);
     insertVarOrder(v);
+    lTPolCount.push_back(std::make_pair(0,0));
 
     varReplacer->newVar();
     partHandler->newVar();
@@ -535,11 +538,11 @@ void Solver::attachClause(Clause& c)
 {
     assert(c.size() > 2);
     #ifdef DEBUG_ATTACH
-    assert(c[0].var() != c[1].var());
     assert(assigns[c[0].var()] == l_Undef);
     assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
 
     for (uint32_t i = 0; i < c.size(); i++) {
+        if (i > 0) assert(c[i-1].var() != c[i].var());
         assert(!subsumer->getVarElimed()[c[i].var()]);
         assert(!xorSubsumer->getVarElimed()[c[i].var()]);
     }
@@ -892,7 +895,8 @@ void Solver::calcReachability()
             continue;*/
             assert(*it != lit);
             assert(*it != ~lit);
-            if (litReachable[it->toInt()].lit == lit_Undef || litReachable[it->toInt()].numInCache < cacheSize) {
+            if (litReachable[it->toInt()].lit == lit_Undef || litReachable[it->toInt()].numInCache </*=*/ cacheSize) {
+                //if (litReachable[it->toInt()].numInCache == cacheSize && mtrand.randInt(1) == 0) continue;
                 litReachable[it->toInt()].lit = lit;
                 litReachable[it->toInt()].numInCache = cacheSize;
             }
@@ -929,7 +933,7 @@ const bool Solver::failPossibleDueCache()
             || partHandler->getSavedState()[lit.var()] != l_Undef)
             continue;
 
-        uncheckedEnqueue(lit);
+        uncheckedEnqueue(~lit);
     }
     failedCacheLits.clear();
     ok = propagate().isNULL();
@@ -942,7 +946,7 @@ void Solver::saveOTFData()
     assert(decisionLevel() == 1);
 
     Lit lev0Lit = trail[trail_lim[0]];
-    Solver::TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
+    TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
     oTFCache.conflictLastUpdated = conflicts;
     oTFCache.lits.clear();
 
@@ -1267,9 +1271,10 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         Lit lit = *l;
 
         if (clDoMinLRec) {
-            if (moreRecurProp > 450
+            if (moreRecurProp >= 0
                 || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
-                && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))) {
+                    && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
+               ) {
                 for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
                     seen[(~(*it)).toInt()] = 0;
                 }
@@ -1327,12 +1332,11 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
     vector<Lit>& allAddedToSeen2 = transOTFCache[lit.toInt()].lits;
     allAddedToSeen2.clear();
 
-    toRecursiveProp.push(lit);
+    toRecursiveProp.push(~lit);
     while(!toRecursiveProp.empty()) {
         Lit thisLit = toRecursiveProp.top();
         toRecursiveProp.pop();
-        //watched is messed: lit is in watched[~lit]
-        vec<Watched>& ws = watches[(~thisLit).toInt()];
+        vec<Watched>& ws = watches[thisLit.toInt()];
         moreRecurProp += ws.size() +10;
         for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
@@ -1346,7 +1350,7 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
                 }
                 seen2[otherLit.toInt()] = 1;
                 allAddedToSeen2.push_back(otherLit);
-                toRecursiveProp.push(~otherLit);
+                toRecursiveProp.push(otherLit);
             } else {
                 break;
             }
@@ -1460,7 +1464,16 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     std::cout << "uncheckedEnqueue var " << p.var()+1 << " to " << !p.sign() << " level: " << decisionLevel() << " sublevel: " << trail.size() << std::endl;
     #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
 
-    //assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
+    #ifdef UNCHECKEDENQUEUE_DEBUG
+    assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
+    assert(decisionLevel() == 0 || !xorSubsumer->getVarElimed()[p.var()]);
+    Var repl = varReplacer->getReplaceTable()[p.var()].var();
+    if (repl != p.var()) {
+        assert(!subsumer->getVarElimed()[repl]);
+        assert(!xorSubsumer->getVarElimed()[repl]);
+        assert(partHandler->getSavedState()[repl] == l_Undef);
+    }
+    #endif
 
     assert(assigns[p.var()].isUndef());
     const Var v = p.var();
@@ -1477,6 +1490,16 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     if (dynamic_behaviour_analysis)
         logger.propagation(p, from);
     #endif
+}
+
+void Solver::uncheckedEnqueueExtend(const Lit p, const PropBy& from)
+{
+    assert(assigns[p.var()].isUndef());
+    const Var v = p.var();
+    assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    level   [v] = decisionLevel();
+    reason  [v] = from;
+    trail.push(p);
 }
 
 /*_________________________________________________________________________________________________
@@ -1743,24 +1766,35 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
     while (qhead < trail.size()) {
         Lit p = trail[qhead++];
 
-        uint32_t lev = binPropData[p.var()].lev + 1;
-
-        Lit lev2Ancestor;
-        if (lev == 2) lev2Ancestor = p;
-        else if (lev < 1) lev2Ancestor = lit_Undef;
-        else binPropData[p.var()].lev2Ancestor;
+        //setting up binPropData
+        uint32_t lev = binPropData[p.var()].lev;
+        Lit lev1Ancestor;
+        switch (lev) {
+            case 0 :
+                lev1Ancestor = lit_Undef;
+                break;
+            case 1:
+                lev1Ancestor = p;
+                break;
+            default:
+                lev1Ancestor = binPropData[p.var()].lev1Ancestor;
+        }
+        lev++;
         const bool learntLeadHere = binPropData[p.var()].learntLeadHere;
+        bool& hasChildren = binPropData[p.var()].hasChildren;
+        hasChildren = false;
 
         //std::cout << "lev: " << lev << " ~p: "  << ~p << std::endl;
         const vec<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2 + 2;
         for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
+            hasChildren = true;
             if (!k->isBinary()) continue;
 
             //std::cout << (~p) << ", " << k->getOtherLit() << " learnt: " << k->getLearnt() << std::endl;
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
-                uncheckedEnqueueLight2(k->getOtherLit(), lev, lev2Ancestor, learntLeadHere || k->getLearnt());
+                uncheckedEnqueueLight2(k->getOtherLit(), lev, lev1Ancestor, learntLeadHere || k->getLearnt());
             } else if (val == l_False) {
                 return PropBy(p);
             } else {
@@ -1769,10 +1803,10 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
                 if (lev > 1
                     && level[lit2.var()] != 0
                     && binPropData[lit2.var()].lev == 1
-                    && binPropData[lit2.var()].lev2Ancestor != lev2Ancestor) {
-                    //Was propagated at level 1, and again here, this binary clause is useless
+                    && lev1Ancestor != lit2) {
+                    //Was propagated at level 1, and again here, original level 1 binary clause is useless
                     binPropData[lit2.var()].lev = lev;
-                    binPropData[lit2.var()].lev2Ancestor = lev2Ancestor;
+                    binPropData[lit2.var()].lev1Ancestor = lev1Ancestor;
                     binPropData[lit2.var()].learntLeadHere = learntLeadHere || k->getLearnt();
                     uselessBin.push(lit2);
                 }
@@ -2066,6 +2100,7 @@ const bool Solver::simplify()
     totalSimplifyTime += cpuTime() - myTime;
 
     testAllClauseAttach();
+    checkNoWrongAttach();
     return true;
 }
 
@@ -2082,7 +2117,7 @@ clauseset is found. If all variables are decision variables, this means
 that the clause set is satisfiable. 'l_False' if the clause set is
 unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 */
-lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const bool update)
+lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, const bool update)
 {
     assert(ok);
     uint64_t    conflictC = 0;
@@ -2123,7 +2158,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
             #endif //USE_GAUSS
 
             if (conf.doCacheOTFSSR  && decisionLevel() == 1) saveOTFData();
-            ret = new_decision(nof_conflicts, nof_conflicts_fullrestart, conflictC);
+            ret = new_decision(nof_conflicts, maxNumConfl, conflictC);
             if (ret != l_Nothing) return ret;
         }
     }
@@ -2135,10 +2170,10 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
 @returns l_Undef if it should restart instead. l_False if it reached UNSAT
          (through simplification)
 */
-llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const uint64_t conflictC)
+llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumConfl, const uint64_t conflictC)
 {
 
-    if (conflicts >= nof_conflicts_fullrestart || needToInterrupt)  {
+    if (conflicts >= maxNumConfl || needToInterrupt)  {
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis)
             progress_estimate = progressEstimate();
@@ -2290,6 +2325,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         #endif
     //Normal learnt
     } else {
+        bumpUIPPolCount(learnt_clause);
         if (learnt_clause.size() == 2) {
             attachBinClause(learnt_clause[0], learnt_clause[1], true);
             numNewBin++;
@@ -2338,6 +2374,16 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     return l_Nothing;
 }
 
+void Solver::bumpUIPPolCount(const vec<Lit>& lits)
+{
+    for (const Lit *l = lits.getData(), *end = lits.getDataEnd(); l != end; l++) {
+        uint32_t factor = 0;
+        if (l == lits.getData()) factor = 1;
+        if (l->sign()) lTPolCount[l->var()].second += factor;
+        else lTPolCount[l->var()].first += factor;
+    }
+}
+
 /**
 @brief After a full restart, determines which restar type to use
 
@@ -2360,7 +2406,7 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
 
             if (tmp == dynamic_restart) {
                 glueHistory.fastclear();
-                if (conf.verbosity >= 3)
+                if (conf.verbosity >= 1)
                     std::cout << "c Decided on dynamic restart strategy"
                     << std::endl;
             } else  {
@@ -2447,7 +2493,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         x.addAllXorAsNorm();
     }
 
-    if (conf.doClausVivif && !clauseVivifier->vivifyClauses()) goto end;
+    if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
 
     //addSymmBreakClauses();
 
@@ -2467,6 +2513,8 @@ end:
         status = l_False;
 
     testAllClauseAttach();
+    checkNoWrongAttach();
+    numSimplifyRounds++;
 
     if (!ok) return l_False;
     return status;
@@ -2479,38 +2527,34 @@ If so, we also do the things to be done if the full restart is effected.
 Currently, this means we try to find disconnected components and solve
 them with sub-solvers using class PartHandler
 */
-const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart)
+const bool Solver::checkFullRestart(uint32_t& lastFullRestart)
 {
-    if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
-        #ifdef USE_GAUSS
-        clearGaussMatrixes();
-        #endif //USE_GAUSS
-        nof_conflicts = conf.restart_first + (double)conf.restart_first*conf.restart_inc;
-        nof_conflicts_fullrestart = (double)nof_conflicts_fullrestart * FULLRESTART_MULTIPLIER_MULTIPLIER;
-        restartType = static_restart;
-        lastFullRestart = starts;
+    #ifdef USE_GAUSS
+    clearGaussMatrixes();
+    #endif //USE_GAUSS
 
-        if (conf.verbosity >= 3)
-            std::cout << "c Fully restarting" << std::endl;
-        printRestartStat("F");
+    restartType = static_restart;
+    lastFullRestart = starts;
+    fullStarts++;
 
-        /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
-            XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-            if (!xorFinder.doNoPart(3, 10))
-                return false;
-        }*/
+    if (conf.verbosity >= 3)
+        std::cout << "c Fully restarting" << std::endl;
+    printRestartStat("F");
 
-        if (conf.doPartHandler && !partHandler->handle())
+    /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
+        XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
+        if (!xorFinder.doNoPart(3, 10))
             return false;
+    }*/
 
-        //calculateDefaultPolarities();
-        if (conf.polarity_mode != polarity_auto) {
-            for (uint32_t i = 0; i < polarity.size(); i++) {
-                polarity[i] = defaultPolarity();
-            }
+    if (conf.doPartHandler && !partHandler->handle())
+        return false;
+
+    //calculateDefaultPolarities();
+    if (conf.polarity_mode != polarity_auto) {
+        for (uint32_t i = 0; i < polarity.size(); i++) {
+            polarity[i] = defaultPolarity();
         }
-
-        fullStarts++;
     }
 
     return true;
@@ -2536,7 +2580,7 @@ void Solver::performStepsBeforeSolve()
     if (conf.doReplace && !varReplacer->performReplace()) return;
 
     if (conf.doClausVivif && !conf.libraryUsage
-        && !clauseVivifier->vivifyClauses()) return;
+        && !clauseVivifier->vivify()) return;
 
     bool saveDoHyperBin = conf.doHyperBinRes;
     conf.doHyperBinRes = false;
@@ -2548,6 +2592,9 @@ void Solver::performStepsBeforeSolve()
         && clauses.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
+
+    if (conf.doClausVivif
+        && !clauseVivifier->vivifyClausesCache(clauses, subsumer->getBinNonLearntCache())) return;
 
     if (conf.doFindEqLits) {
         if (!sCCFinder->find2LongXors()) return;
@@ -2632,7 +2679,6 @@ const lbool Solver::solve(const vec<Lit>& assumps)
     assumps.copyTo(assumptions);
     initialiseSolver();
     uint64_t  nof_conflicts = conf.restart_first; //Geometric restart policy, start with this many
-    uint64_t  nof_conflicts_fullrestart = conf.restart_first * FULLRESTART_MULTIPLIER + conflicts; //at this point, do a full restart
     uint32_t  lastFullRestart = starts; //last time a full restart was made was at this number of restarts
     lbool     status = l_Undef; //Current status
     uint64_t  nextSimplify = conf.restart_first * conf.simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
@@ -2665,7 +2711,13 @@ const lbool Solver::solve(const vec<Lit>& assumps)
             lastConflPrint = conflicts;
             nextSimplify = std::min((uint64_t)((double)conflicts * conf.simpStartMMult), conflicts + MAX_CONFL_BETWEEN_SIMPLIFY);
             if (status != l_Undef) break;
+
+            if ((numSimplifyRounds == 1 ||  numSimplifyRounds == 3)) {
+                if (!checkFullRestart(lastFullRestart)) return l_False;
+                nof_conflicts = conf.restart_first;
+            }
         }
+        if (!chooseRestartType(lastFullRestart)) return l_False;
 
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis) {
@@ -2674,7 +2726,7 @@ const lbool Solver::solve(const vec<Lit>& assumps)
         }
         #endif
 
-        status = search(nof_conflicts, std::min(nof_conflicts_fullrestart, nextSimplify));
+        status = search(nof_conflicts, nextSimplify);
         if (needToInterrupt) {
             cancelUntil(0);
             return l_Undef;
@@ -2682,10 +2734,6 @@ const lbool Solver::solve(const vec<Lit>& assumps)
         if (status != l_Undef) break;
 
         nof_conflicts = (double)nof_conflicts * conf.restart_inc;
-        if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart , lastFullRestart))
-            return l_False;
-        if (!chooseRestartType(lastFullRestart))
-            return l_False;
 
         if (!failPossibleDueCache()) return l_False;
     }
@@ -2794,7 +2842,7 @@ void Solver::handleSATSolution()
         std::cout << "Solution extending finished. Enqueuing results" << std::endl;
 #endif
         for (Var var = 0; var < nVars(); var++) {
-            if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
+            if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueueExtend(Lit(var, s.model[var] == l_False));
         }
         ok = (propagate().isNULL());
         release_assert(ok && "c ERROR! Extension of model failed!");

@@ -8,17 +8,8 @@ include_directories(${cryptoms_SOURCE_DIR}/MTRand)
 # include_directories ( ${Boost_INCLUDE_DIRS} )
 
 
-add_executable(cryptominisat Main.cpp)
-
-target_link_libraries(cryptominisat
-    cryptominisatlib
-    ${ZLIB_LIBRARY}
-    ${Perftools_LIBRARIES}
-#    ${Boost_LIBRARIES}
-#    ${CMAKE_THREAD_LIBS_INIT}
-)
-
-add_library(cryptominisatlib
+add_executable(cryptominisat
+    Main.cpp
     Logger.cpp
     Solver.cpp
     SolverDebug.cpp
@@ -47,5 +38,12 @@ add_library(cryptominisatlib
     ClauseVivifier.cpp
     DataSync.cpp
     MTSolver.cpp
+    BothCache.cpp
 )
 
+target_link_libraries(cryptominisat
+    ${ZLIB_LIBRARY}
+    ${Perftools_LIBRARIES}
+#    ${Boost_LIBRARIES}
+#    ${CMAKE_THREAD_LIBS_INIT}
+)

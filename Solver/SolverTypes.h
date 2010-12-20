@@ -80,6 +80,9 @@ public:
     bool operator <  (const Lit& p) const {
         return x < p.x;     // '<' guarantees that p, ~p are adjacent in the ordering.
     }
+    bool operator >  (const Lit& p) const {
+        return x > p.x;
+    }
     inline void print(FILE* outfile = stdout) const
     {
         fprintf(outfile,"%s%d", sign() ? "-" : "", var()+1);
@@ -223,8 +226,9 @@ enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 
 
 struct BinPropData {
     uint32_t lev;
-    Lit lev2Ancestor;
+    Lit lev1Ancestor;
     bool learntLeadHere;
+    bool hasChildren;
 };
 
 

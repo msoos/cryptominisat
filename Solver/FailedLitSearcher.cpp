@@ -30,6 +30,8 @@ using std::set;
 #include "ClauseCleaner.h"
 #include "StateSaver.h"
 #include "CompleteDetachReattacher.h"
+#include "PartHandler.h"
+#include "BothCache.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -159,8 +161,12 @@ const bool FailedLitSearcher::search()
 {
     assert(solver.decisionLevel() == 0);
     if (solver.nVars() == 0) return solver.ok;
+    if (solver.conf.doCacheOTFSSR && numCalls > 0) {
+        BothCache bothCache(solver);
+        if (!bothCache.tryBoth(solver.transOTFCache)) return false;
+    }
 
-    uint64_t numProps = 100 * 1000000;
+    uint64_t numProps = 80 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     solver.testAllClauseAttach();
@@ -208,13 +214,17 @@ const bool FailedLitSearcher::search()
 
     //For HyperBin
     addedBin = 0;
+    addedCacheBin = 0;
     unPropagatedBin.resize(solver.nVars(), 0);
     needToVisit.resize(solver.nVars(), 0);
     dontRemoveAncestor.resize(solver.nVars(), 0);
     hyperbinProps = 0;
-    maxHyperBinProps = numProps/4;
+    maxHyperBinProps = numProps/3;
     removedUselessLearnt = 0;
     removedUselessNonLearnt = 0;
+
+    vector<UIPNegPosDist> negPosDist;
+    uint32_t varPolCount = 0;
 
     //uint32_t fromBin;
     origProps = solver.propagations;
@@ -230,7 +240,41 @@ const bool FailedLitSearcher::search()
     }
     lastTimeStopped = (lastTimeStopped + i) % solver.nVars();
 
+    //Calculate best vars to try
+    for (vector<std::pair<uint64_t, uint64_t> >::iterator it = solver.lTPolCount.begin(), end = solver.lTPolCount.end(); it != end; it++, varPolCount++) {
+        UIPNegPosDist tmp;
+        tmp.var = varPolCount;
+        int64_t pos = it->first;
+        int64_t neg = it->second;
+        int64_t diff = std::abs((long int) (pos-neg));
+        tmp.dist = pos*pos + neg*neg - diff*diff;
+
+        if (it->first > 4  && it->second > 4)
+            negPosDist.push_back(tmp);
+
+        //it->first = pos/2;
+        //it->second = neg/2;
+    }
+    std::sort(negPosDist.begin(), negPosDist.end(), NegPosSorter());
+    /*for (uint32_t i = 0; i < negPosDist.size(); i++) {
+        const UIPNegPosDist& u = negPosDist[i];
+        std::cout << "var: " << (u.var + 1) << " dist: " << u.dist << std::endl;
+    }*/
+    //std::cout << "c negPosDist.size() : " << negPosDist.size() << std::endl;
+
     origProps = solver.propagations;
+    hyperbinProps = 0;
+    for (uint32_t i = 0; i < negPosDist.size(); i++) {
+        Var var = negPosDist[i].var;
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
+            continue;
+        if (solver.propagations >= origProps + numPropsDifferent)  {
+            break;
+        }
+        if (!tryBoth(Lit(var, false), Lit(var, true)))
+            goto end;
+    }
+
     while (!order_heap_copy.empty()) {
         Var var = order_heap_copy.removeMin();
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
@@ -241,7 +285,6 @@ const bool FailedLitSearcher::search()
         if (!tryBoth(Lit(var, false), Lit(var, true)))
             goto end;
     }
-
 
 end:
     if (solver.conf.verbosity  >= 1) printResults(myTime);
@@ -294,9 +337,10 @@ void FailedLitSearcher::printResults(const double myTime) const
     " Blit: " << std::setw(6) << goodBothSame <<
     " bXBeca: " << std::setw(4) << newBinXor <<
     " bXProp: " << std::setw(4) << bothInvert <<
-    " Bins:" << std::setw(7) << addedBin <<
+    " Bin:"   << std::setw(7) << addedBin <<
     " BRemL:" << std::setw(7) << removedUselessLearnt <<
     " BRemN:" << std::setw(7) << removedUselessNonLearnt <<
+    " CBin: " << std::setw(7) << addedCacheBin <<
     " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
     " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
     << std::endl;
@@ -330,6 +374,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     #ifdef DEBUG_HYPERBIN
     assert(propagatedVars.empty());
     assert(unPropagatedBin.isZero());
+    assert(addBinLater.empty());
     #endif //DEBUG_HYPERBIN
     #ifdef DEBUG_USELESS_LEARNT_BIN_REMOVAL
     dontRemoveAncestor.isZero();
@@ -349,10 +394,11 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     assert(solver.decisionLevel() > 0);
-    Solver::TransCache& lit1OTFCache = solver.transOTFCache[(~lit1).toInt()];
+    vector<Lit> oldCache;
+    TransCache& lit1OTFCache = solver.transOTFCache[(~lit1).toInt()];
     if (solver.conf.doCacheOTFSSR) {
         lit1OTFCache.conflictLastUpdated = solver.conflicts;
-        lit1OTFCache.lits.clear();
+        oldCache.swap(lit1OTFCache.lits);
     }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x = solver.trail[c].var();
@@ -386,16 +432,14 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.cancelUntilLight();
 
-    //Hyper-binary resolution, and its accompanying data-structure cleaning
-    if (solver.conf.doHyperBinRes) {
-        if (hyperbinProps < maxHyperBinProps) hyperBinResolution(lit1);
-        unPropagatedBin.removeThese(propagatedVars);
-        propagatedVars.clear();
-    }
+    if (solver.conf.doHyperBinRes) hyperBinResAll(lit1, oldCache);
+    oldCache.clear();
+    if (!performAddBinLaters()) return false;
 
     #ifdef DEBUG_HYPERBIN
     assert(propagatedVars.empty());
     assert(unPropagatedBin.isZero());
+    assert(addBinLater.empty());
     #endif //DEBUG_HYPERBIN
 
     solver.newDecisionLevel();
@@ -411,10 +455,10 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     assert(solver.decisionLevel() > 0);
-    Solver::TransCache& lit2OTFCache = solver.transOTFCache[(~lit2).toInt()];
+    TransCache& lit2OTFCache = solver.transOTFCache[(~lit2).toInt()];
     if (solver.conf.doCacheOTFSSR) {
         lit2OTFCache.conflictLastUpdated = solver.conflicts;
-        lit2OTFCache.lits.clear();
+        oldCache.swap(lit2OTFCache.lits);
     }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x  = solver.trail[c].var();
@@ -423,18 +467,10 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
                 //they both imply the same
                 bothSame.push(Lit(x, !propValue[x]));
             } else if (c != (int)solver.trail_lim[0]) {
-                bool invert;
-                if (lit1.var() == lit2.var()) {
-                    assert(lit1.sign() == false && lit2.sign() == true);
-                    tmpPs[0] = Lit(lit1.var(), false);
-                    tmpPs[1] = Lit(x, false);
-                    invert = propValue[x];
-                } else {
-                    tmpPs[0] = Lit(lit1.var(), false);
-                    tmpPs[1] = Lit(lit2.var(), false);
-                    invert = lit1.sign() ^ lit2.sign();
-                }
-                binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], invert, 0));
+                assert(lit1.var() == lit2.var());
+                tmpPs[0] = Lit(lit1.var(), false);
+                tmpPs[1] = Lit(x, false);
+                binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], propValue[x], 0));
                 bothInvert += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
                 toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
             }
@@ -477,11 +513,9 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
     solver.cancelUntilLight();
 
-    if (solver.conf.doHyperBinRes) {
-        if (hyperbinProps < maxHyperBinProps) hyperBinResolution(lit2);
-        unPropagatedBin.removeThese(propagatedVars);
-        propagatedVars.clear();
-    }
+    if (solver.conf.doHyperBinRes) hyperBinResAll(lit2, oldCache);
+    oldCache.clear();
+    if (!performAddBinLaters()) return false;
 
     for(uint32_t i = 0; i != bothSame.size(); i++) {
         solver.uncheckedEnqueue(bothSame[i]);
@@ -500,6 +534,47 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     return true;
+}
+
+const bool FailedLitSearcher::performAddBinLaters()
+{
+    assert(solver.ok);
+    for (vector<std::pair<Lit, Lit> >::const_iterator it = addBinLater.begin(), end = addBinLater.end(); it != end; it++) {
+        tmpPs[0] = it->first;
+        tmpPs[1] = it->second;
+        Clause *c = solver.addClauseInt(tmpPs, 0, true);
+        release_assert(c == NULL);
+        tmpPs.clear();
+        tmpPs.growTo(2);
+        if (!solver.ok) return false;
+        addedCacheBin++;
+    }
+    addBinLater.clear();
+
+    return true;
+}
+
+void FailedLitSearcher::hyperBinResAll(const Lit litProp, const vector<Lit>& oldCache)
+{
+    if (solver.conf.doAddBinCache) {
+        //Not forgetting stuff already known at one point from cache
+        for (vector<Lit>::const_iterator it = oldCache.begin(), end = oldCache.end(); it != end; it++) {
+        const Lit lit = *it;
+        if (solver.value(lit.var()) != l_Undef
+            || solver.subsumer->getVarElimed()[lit.var()]
+            || solver.xorSubsumer->getVarElimed()[lit.var()]
+            || solver.varReplacer->getReplaceTable()[lit.var()].var() != lit.var()
+            || solver.partHandler->getSavedState()[lit.var()] != l_Undef)
+            continue;
+
+            if (!unPropagatedBin[it->var()]) addBinLater.push_back(std::make_pair(~litProp, *it));
+        }
+    }
+
+    //Hyper-binary resolution
+    if (hyperbinProps < maxHyperBinProps) hyperBinResolution(litProp);
+    unPropagatedBin.removeThese(propagatedVars);
+    propagatedVars.clear();
 }
 
 /**
@@ -553,7 +628,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
                 continue;
             }
 
-            Var ancestorVar = solver.binPropData[it->var()].lev2Ancestor.var();
+            Var ancestorVar = solver.binPropData[it->var()].lev1Ancestor.var();
             dontRemoveAncestor.setBit(ancestorVar);
             toClearDontRemoveAcestor.push(ancestorVar);
         }
@@ -619,17 +694,9 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     //difference between UP and BTC is in unPropagatedBin
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
         if (!needToVisit[l->var()]) continue;
+        if (!solver.binPropData[l->var()].hasChildren) continue;
         fillImplies(*l);
-        for (const Var *var = myImpliesSet.getData(), *end2 = myImpliesSet.getDataEnd(); var != end2; var++) {
-
-            /*Lit otherLit = Lit(*var, !propValue[*var]);
-            std::cout << "adding Bin:" << (~*l) << " , " << otherLit << std::endl;
-            std::cout << PropByFull(solver.reason[otherLit.var()], solver.failBinLit, solver.clauseAllocator) << std::endl;*/
-
-            addBin(~*l, Lit(*var, !propValue[*var]));
-            unPropagatedBin.clearBit(*var);
-            difference--;
-        }
+        addMyImpliesSetAsBins(*l, difference);
         assert(difference >= 0);
         myImpliesSet.clear();
 
@@ -645,6 +712,66 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
 
     end:
     hyperbinProps += solver.propagations - oldProps + extraTime;
+}
+
+void FailedLitSearcher::addMyImpliesSetAsBins(Lit lit, int32_t& difference)
+{
+    if (myImpliesSet.size() == 0) return;
+    if (myImpliesSet.size() == 1) {
+        Var var = myImpliesSet[0];
+        Lit l2 = Lit(var, !propValue[var]);
+        addBin(~lit, l2);
+        unPropagatedBin.clearBit(var);
+        difference--;
+        return;
+    }
+
+    vector<BinAddData> litsAddedEach;
+    uint32_t i = 0;
+    for (const Var *var = myImpliesSet.getData(), *end2 = myImpliesSet.getDataEnd(); var != end2; var++, i++) {
+        Lit l2 = Lit(*var, !propValue[*var]);
+        solver.newDecisionLevel();
+        solver.uncheckedEnqueueLight(l2);
+        failed = (!solver.propagateBin(uselessBin).isNULL());
+        assert(!failed);
+        uselessBin.clear();
+
+        BinAddData addData;
+        addData.lit = l2;
+        assert(solver.decisionLevel() > 0);
+        for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
+            Lit x = solver.trail[sublevel];
+            addData.lits.push_back(x);
+        }
+        solver.cancelUntilLight();
+        litsAddedEach.push_back(addData);
+    }
+    std::sort(litsAddedEach.begin(), litsAddedEach.end(), BinAddDataSorter());
+
+    while(!litsAddedEach.empty()) {
+        assert(!litsAddedEach.empty());
+        BinAddData b = *litsAddedEach.begin();
+        litsAddedEach.erase(litsAddedEach.begin());
+
+        addBin(~lit, b.lit);
+        assert(unPropagatedBin[b.lit.var()]);
+        unPropagatedBin.clearBit(b.lit.var());
+        difference--;
+        for (uint32_t i = 0; i < b.lits.size(); i++) {
+            Lit alsoAddedLit = b.lits[i];
+            if (unPropagatedBin[alsoAddedLit.var()]) {
+                unPropagatedBin.clearBit(alsoAddedLit.var());
+                difference--;
+                for (vector<BinAddData>::iterator it2 = litsAddedEach.begin(); it2 != litsAddedEach.end(); it2++) {
+                    if (it2->lit == alsoAddedLit) {
+                        litsAddedEach.erase(it2);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    assert(litsAddedEach.empty());
 }
 
 /**
@@ -694,3 +821,5 @@ void FailedLitSearcher::addBin(const Lit lit1, const Lit lit2)
     assert(solver.ok);
     addedBin++;
 }
+
+

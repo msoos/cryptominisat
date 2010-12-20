@@ -50,6 +50,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "GaussianConfig.h"
 #include "ClauseAllocator.h"
 #include "SolverConf.h"
+#include "TransCache.h"
 
 #define release_assert(a) \
     do { \
@@ -78,6 +79,7 @@ class SCCFinder;
 class ClauseVivifier;
 class SharedData;
 class DataSync;
+class BothCache;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -337,6 +339,8 @@ protected:
     Heap<VarOrderLt>    order_heap;       ///< A priority queue of variables ordered with respect to the variable activity. All variables here MUST be decision variables. If you changed the decision variables, you MUST filter this
     vec<uint32_t>       activity;         ///< A heuristic measurement of the activity of a variable.
     uint32_t            var_inc;          ///< Amount to bump next variable with.
+    vector<std::pair<uint64_t, uint64_t> > lTPolCount;
+    void bumpUIPPolCount(const vec<Lit>& lit);
 
     /////////////////
     // Learnt clause cleaning
@@ -368,15 +372,6 @@ protected:
     ////////////
     // Transitive on-the-fly self-subsuming resolution
     ///////////
-    class TransCache {
-        public:
-            TransCache() :
-                conflictLastUpdated(std::numeric_limits<uint64_t>::max())
-            {};
-
-            vector<Lit> lits;
-            uint64_t conflictLastUpdated;
-    };
     class LitReachData {
         public:
             LitReachData() :
@@ -398,6 +393,7 @@ protected:
     void                saveOTFData();
     vector<LitReachData>litReachable;
     void                calcReachability();
+    const bool          cacheContainsBinCl(const Lit lit1, const Lit lit2) const;
 
     ////////////
     //Logging
@@ -415,6 +411,7 @@ protected:
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
+    void     uncheckedEnqueueExtend (const Lit p, const PropBy& from = PropBy());
     void     uncheckedEnqueueLight (const Lit p);
     void     uncheckedEnqueueLight2(const Lit p, const uint32_t binPropDatael, const Lit lev2Ancestor, const bool learntLeadHere);
     PropBy   propagateBin(vec<Lit>& uselessBin);
@@ -442,9 +439,9 @@ protected:
     /////////////////
     // Searching
     /////////////////
-    lbool    search           (const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const bool update = true);      // Search for a given number of conflicts.
+    lbool    search           (const uint64_t nof_conflicts, const uint64_t maxNumConfl, const bool update = true);      // Search for a given number of conflicts.
     llbool   handle_conflict  (vec<Lit>& learnt_clause, PropBy confl, uint64_t& conflictC, const bool update);// Handles the conflict clause
-    llbool   new_decision     (const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const uint64_t conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
+    llbool   new_decision     (const uint64_t nof_conflicts, const uint64_t maxNumConfl, const uint64_t conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
     ///////////////
     // Solution handling
@@ -520,6 +517,7 @@ protected:
     friend class SCCFinder;
     friend class ClauseVivifier;
     friend class DataSync;
+    friend class BothCache;
     Conglomerate*       conglomerate;
     VarReplacer*        varReplacer;
     ClauseCleaner*      clauseCleaner;
@@ -537,7 +535,7 @@ protected:
     /////////////////////////
     const bool  chooseRestartType(const uint32_t& lastFullRestart);
     void        setDefaultRestartType();
-    const bool  checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart);
+    const bool  checkFullRestart(uint32_t& lastFullRestart);
     RestartType restartType;             ///<Used internally to determine which restart strategy is currently in use
     RestartType lastSelectedRestartType; ///<The last selected restart type. Used when we are just after a full restart, and need to know how to really act
 
@@ -550,6 +548,7 @@ protected:
     const bool  simplify();       // Removes satisfied clauses and finds binary xors
     bool        simplifying;      ///<We are currently doing burst search
     double      totalSimplifyTime;
+    uint32_t    numSimplifyRounds;
     uint32_t    simpDB_assigns;   ///< Number of top-level assignments since last execution of 'simplify()'.
     int64_t     simpDB_props;     ///< Remaining number of propagations that must be made before next execution of 'simplify()'.
 
@@ -570,6 +569,7 @@ protected:
     void     printEndSearchStat();
     void     addSymmBreakClauses();
     void     initialiseSolver();
+    void     checkNoWrongAttach() const;
 
     //Misc related binary clauses
     void     dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const;
@@ -859,6 +859,10 @@ inline void Solver::testAllClauseAttach() const
 {
     return;
 }
+inline void Solver::checkNoWrongAttach() const
+{
+    return;
+}
 inline void Solver::findAllAttach() const
 {
     return;
@@ -880,7 +884,7 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
     binPropData[p.var()].lev = binSubLevel;
-    binPropData[p.var()].lev2Ancestor = lev2Ancestor;
+    binPropData[p.var()].lev1Ancestor = lev2Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
 }
 
