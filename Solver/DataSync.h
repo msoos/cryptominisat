@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SharedData.h"
 #include "Solver.h"
-#include "mpi/mpi.h"
+#include "mpi.h"
 
 class DataSync
 {

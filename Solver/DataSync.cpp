@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PartHandler.h"
 #include <iomanip>
 #include "omp.h"
-#include "mpi/mpi.h"
+#include "mpi.h"
 
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_DEBUG_MPI_SENDRCV
