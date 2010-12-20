@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Subsumer.h"
 #include "VarReplacer.h"
 #include "XorSubsumer.h"
+#include "PartHandler.h"
 #include <iomanip>
 #include "omp.h"
 
@@ -218,6 +219,7 @@ const bool DataSync::shareUnitData()
             Lit litToEnqueue = thisLit ^ (otherVal == l_False);
             if (solver.subsumer->getVarElimed()[litToEnqueue.var()]
                 || solver.xorSubsumer->getVarElimed()[litToEnqueue.var()]
+                || solver.partHandler->getSavedState()[litToEnqueue.var()] != l_Undef
                 ) continue;
 
             solver.uncheckedEnqueue(litToEnqueue);
