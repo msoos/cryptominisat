@@ -2716,6 +2716,7 @@ const lbool Solver::solve(const vec<Lit>& assumps)
                 if (!checkFullRestart(lastFullRestart)) return l_False;
                 nof_conflicts = conf.restart_first;
             }
+            if (numSimplifyRounds % 3 == 0) nof_conflicts = conf.restart_first;
         }
         if (!chooseRestartType(lastFullRestart)) return l_False;
 
