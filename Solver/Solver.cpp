@@ -1563,7 +1563,7 @@ inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, 
 }
 
 /**
-@brief Propagates a tertiary (3-long) clause
+@brief Propagates a normal (n-long where n > 3) clause
 
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
@@ -1630,7 +1630,7 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
 }
 
 /**
-@brief Propagates a tertiary (3-long) clause
+@brief Propagates an XOR clause
 
 Strangely enough, we need to have 4 literals in the wathclists:
 for the first two varialbles, BOTH negations (v and ~v). This means quite some
@@ -1707,16 +1707,15 @@ PropBy Solver::propagate(const bool update)
     while (qhead < trail.size()) {
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
-        Watched        *i, *i2, *j;
+        Watched        *i, *j;
         num_props += ws.size()/2 + 2;
 
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << p << endl;
         #endif
 
-        i = i2 = j = ws.getData();
-        i2++;
-        for (Watched *end = ws.getDataEnd(); i != end; i++, i2++) {
+        i = j = ws.getData();
+        for (Watched *end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
                 propBinaryClause(i, j, end, p, confl);
                 goto FoundWatch;
@@ -1820,9 +1819,12 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
 }
 
 /**
-@brief Only propagates binary clauses
+@brief Only propagates non-learnt binary clauses
 
 This is used in special algorithms outside the main Solver class
+Beware, it MUST have the watchlist sorted to work properly: will "break;" on
+learnt binary or any non-binary or clause in watchlist (example sort:
+Subsumer::BinSorter2 )
 */
 PropBy Solver::propagateNonLearntBin()
 {
@@ -2714,6 +2716,7 @@ const lbool Solver::solve(const vec<Lit>& assumps)
                 if (!checkFullRestart(lastFullRestart)) return l_False;
                 nof_conflicts = conf.restart_first;
             }
+            if (numSimplifyRounds % 3 == 0) nof_conflicts = conf.restart_first;
         }
         if (!chooseRestartType(lastFullRestart)) return l_False;
 
