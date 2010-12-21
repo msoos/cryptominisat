@@ -301,6 +301,7 @@ void Main::printUsage(char** argv)
     printf("                     throw the clause away on backtrack.\n");
     printf("  --nogates        = Don't find&replace gates\n");
     printf("  --threads        = Num threads (default is 1)");
+    printf("  --syncconf       = Sync unit&bin clauses every no. conflicts\n");
     printf("\n");
 }
 
@@ -615,6 +616,13 @@ void Main::parseCommandLine()
                 printf("ERROR! numThreads: %s\n", value);
                 exit(0);
             }
+        } else if ((value = hasPrefix(argv[i], "--syncconf="))) {
+            int syncEveryConf = 0;
+            if (sscanf(value, "%d", &syncEveryConf) < 0 || syncEveryConf < 1) {
+                printf("ERROR! syncconf: %s\n", value);
+                exit(0);
+            }
+            conf.syncEveryConf = syncEveryConf;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

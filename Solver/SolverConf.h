@@ -40,6 +40,7 @@ class SolverConf
         double simpStartMMult;
         bool doPerformPreSimp;
         double failedLitMultiplier;
+        uint32_t  syncEveryConf;
 
         //Optimisations to do
         bool      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses

@@ -62,7 +62,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
 
 //Parameters for syncing between threads
-#define SYNC_EVERY_CONFL 6000
+#define SYNC_EVERY_CONFL 3000
 
 ///////////////////
 // Verbose Debug

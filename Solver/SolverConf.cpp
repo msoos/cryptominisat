@@ -34,9 +34,9 @@ SolverConf::SolverConf() :
         , simpBurstSConf(NUM_CONFL_BURST_SEARCH)
         , simpStartMult(SIMPLIFY_MULTIPLIER)
         , simpStartMMult(SIMPLIFY_MULTIPLIER_MULTIPLIER)
-
         , doPerformPreSimp (true)
         , failedLitMultiplier(2.0)
+        , syncEveryConf(SYNC_EVERY_CONFL)
 
         //optimisations to do
         , doFindXors       (true)

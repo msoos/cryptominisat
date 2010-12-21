@@ -71,7 +71,7 @@ const bool DataSync::syncData()
     numCalls++;
     if (mpiSize == 1 && numThreads == 1) return true;
     if (sharedData == NULL
-        || lastSyncConf + SYNC_EVERY_CONFL >= solver.conflicts) return true;
+        || lastSyncConf + solver.conf.syncEveryConf >= solver.conflicts) return true;
 
     assert(sharedData != NULL);
     assert(solver.decisionLevel() == 0);
