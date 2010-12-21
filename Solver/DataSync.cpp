@@ -85,9 +85,16 @@ const bool DataSync::syncData()
     ok = shareBinData();
     if (!ok) return false;
 
-    if (mpiSize > 1 && threadNum == 0 && numCalls % 3 == 2) {
-        if (!syncFromMPI()) return false;
-        syncToMPI();
+    if (mpiSize > 1 && threadNum == 0) {
+        #pragma omp critical (unitData)
+        {
+            #pragma omp critical (binData)
+            {
+            ok = syncFromMPI();
+            if (ok && numCalls % 2 == 2) syncToMPI();
+            }
+        }
+        if (!ok) return false;
     }
 
     lastSyncConf = solver.conflicts;
