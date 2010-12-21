@@ -35,11 +35,11 @@ class SolverConf
         int       polarity_mode;      ///<Controls which polarity the decision heuristic chooses. Auto means Jeroslow-Wang          (default: polarity_auto)
         int       verbosity;          ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2)
         Var       restrictPickBranch; ///<Pick variables to branch on preferentally from the highest [0, restrictedPickBranch]. If set to 0, preferentiality is turned off (i.e. picked randomly between [0, all])
-        uint32_t simpBurstSConf;
-        double simpStartMult;
-        double simpStartMMult;
-        bool doPerformPreSimp;
-        double failedLitMultiplier;
+        uint32_t  simpBurstSConf;
+        double    simpStartMult;
+        double    simpStartMMult;
+        bool      doPerformPreSimp;
+        double    failedLitMultiplier;
         uint32_t  syncEveryConf;
 
         //Optimisations to do
