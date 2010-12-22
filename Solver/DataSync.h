@@ -60,8 +60,6 @@ class DataSync
         SharedData* sharedData;
         Solver& solver;
         uint32_t numCalls;
-        int threadNum;
-        int numThreads;
 };
 
 inline const uint32_t DataSync::getSentUnitData() const

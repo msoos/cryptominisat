@@ -31,8 +31,6 @@ DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     , solver(_solver)
     , numCalls(0)
 {
-    threadNum = omp_get_thread_num();
-    numThreads = omp_get_num_threads();
 }
 
 void DataSync::newVar()
@@ -46,7 +44,7 @@ void DataSync::newVar()
 const bool DataSync::syncData()
 {
     numCalls++;
-    if (numThreads == 1) return true;
+    if (solver.numThreads == 1) return true;
     if (sharedData == NULL
         || lastSyncConf + SYNC_EVERY_CONFL >= solver.conflicts) return true;
 

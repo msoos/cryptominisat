@@ -34,8 +34,6 @@ MTSolver::MTSolver(const int _numThreads, const SolverConf& _conf, const GaussCo
 {
     solvers.resize(numThreads, NULL);
 
-    omp_set_dynamic(0);
-    omp_set_num_threads(numThreads);
     for (int i = 0; i < numThreads; i++) {
         setupOneSolver(i);
     }
@@ -77,15 +75,16 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
     std::set<uint32_t> finished;
     lbool retVal;
 
+    omp_set_num_threads(numThreads);
     int numThreadsLocal;
-    #pragma omp parallel num_threads(numThreads)
+    #pragma omp parallel
     {
         #pragma omp single
         numThreadsLocal = omp_get_num_threads();
 
         int threadNum = omp_get_thread_num();
         vec<Lit> assumpsLocal(assumps);
-        lbool ret = solvers[threadNum]->solve(assumpsLocal);
+        lbool ret = solvers[threadNum]->solve(assumpsLocal, numThreadsLocal, threadNum);
 
         #pragma omp critical (finished)
         {
