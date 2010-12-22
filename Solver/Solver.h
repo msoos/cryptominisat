@@ -135,8 +135,8 @@ public:
 
     // Solving:
     //
-    const lbool    solve       (const vec<Lit>& assumps); ///<Search for a model that respects a given set of assumptions.
-    const lbool    solve       ();                        ///<Search without assumptions.
+    const lbool    solve       (const vec<Lit>& assumps, const uint32_t numThreads = 1, const uint32_t threadNum = 0); ///<Search for a model that respects a given set of assumptions.
+    const lbool    solve       (const uint32_t numThreads = 1, const uint32_t threadNum = 0);                        ///<Search without assumptions.
     const bool     okay         () const;                 ///<FALSE means solver is in a conflicting state
 
     // Variable mode:
@@ -221,6 +221,8 @@ protected:
     algorithm)
     */
     bool      needToInterrupt;
+    uint32_t  numThreads;
+    uint32_t  threadNum;
 
     //Gauss
     //
@@ -742,10 +744,10 @@ inline void     Solver::setDecisionVar(Var v, bool b)
         insertVarOrder(v);
     }
 }
-inline const lbool     Solver::solve         ()
+inline const lbool     Solver::solve         (const uint32_t _numThreads, const uint32_t _threadNum)
 {
     vec<Lit> tmp;
-    return solve(tmp);
+    return solve(tmp, numThreads, threadNum);
 }
 inline const bool     Solver::okay          ()      const
 {

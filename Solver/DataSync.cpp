@@ -43,8 +43,6 @@ DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     , solver(_solver)
     , numCalls(0)
 {
-    threadNum = omp_get_thread_num();
-    numThreads = omp_get_num_threads();
     int err;
     err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     assert(err == MPI_SUCCESS);
@@ -69,7 +67,7 @@ void DataSync::newVar()
 const bool DataSync::syncData()
 {
     numCalls++;
-    if (mpiSize == 1 && numThreads == 1) return true;
+    if (mpiSize == 1 && solver.numThreads == 1) return true;
     if (sharedData == NULL
         || lastSyncConf + solver.conf.syncEveryConf >= solver.conflicts) return true;
 
@@ -85,7 +83,7 @@ const bool DataSync::syncData()
     ok = shareBinData();
     if (!ok) return false;
 
-    if (mpiSize > 1 && threadNum == 0) {
+    if (mpiSize > 1 && solver.threadNum == 0) {
         #pragma omp critical (unitData)
         {
             #pragma omp critical (binData)

@@ -74,8 +74,6 @@ class DataSync
         SharedData* sharedData;
         Solver& solver;
         uint32_t numCalls;
-        int threadNum;
-        int numThreads;
         int mpiRank;
         int mpiSize;
 };
