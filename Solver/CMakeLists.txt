@@ -40,13 +40,19 @@ add_executable(cryptominisat
     DataSync.cpp
     MTSolver.cpp
     BothCache.cpp
-    DataSyncServer.cpp
 )
+
+if (MPI_FOUND)
+    add_library(MPIServer DataSyncServer.cpp)
+else (MPI_FOUND)
+    add_library(MPIServer)
+endif(MPI_FOUND)
 
 target_link_libraries(cryptominisat
     ${ZLIB_LIBRARY}
     ${Perftools_LIBRARIES}
     ${MPI_LIBRARY}
+    MPIServer
 #    ${Boost_LIBRARIES}
 #    ${CMAKE_THREAD_LIBS_INIT}
 )

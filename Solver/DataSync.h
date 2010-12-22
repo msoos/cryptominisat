@@ -17,7 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SharedData.h"
 #include "Solver.h"
+#ifdef USE_MPI
 #include "mpi.h"
+#endif //USE_MPI
 
 class DataSync
 {
@@ -44,10 +46,12 @@ class DataSync
         const bool shareBinData();
         const bool syncUnit(const lbool otherVal, const Var var, SharedData* shared, uint32_t& thisGotUnitData, uint32_t& thisSentUnitData);
 
+        #ifdef USE_MPI
         //MPI
         const bool syncFromMPI();
         void syncToMPI();
         void getNeedToInterruptFromMPI();
+        #endif
 
         //stuff to sync
         vector<std::pair<Lit, Lit> > newBinClauses;

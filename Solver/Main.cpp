@@ -44,7 +44,10 @@ Here is a picture of of the above process in more detail:
 #endif //_MSC_VER
 #include <map>
 #include <set>
+
+#ifdef USE_MPI
 #include "mpi.h"
+#endif //USE_MPI
 
 #include <signal.h>
 
@@ -706,6 +709,7 @@ void Main::printVersionInfo(const uint32_t verbosity)
 
 const int Main::solve()
 {
+    #ifdef USE_MPI
     int err, mpiRank, mpiSize;
     err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     assert(err == MPI_SUCCESS);
@@ -725,6 +729,7 @@ const int Main::solve()
             conf.fixRestartType = dynamic_restart;
         }
     }
+    #endif //USE_MPI
 
     MTSolver solver(numThreads, conf, gaussconfig);
     solversToInterrupt = &solver;
@@ -756,7 +761,9 @@ const int Main::solve()
         }
     }
 
+    #ifdef USE_MPI
     if (mpiSize == 1 || mpiRank == 1) {
+    #endif
         if (conf.needToDumpLearnts) {
             solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
             std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
@@ -768,13 +775,17 @@ const int Main::solve()
         if (ret == l_Undef && conf.verbosity >= 1) {
             std::cout << "c Not finished running -- maximum restart reached" << std::endl;
         }
+    #ifdef USE_MPI
     }
+    #endif
 
+    #ifdef USE_MPI
     if (mpiSize > 1) {
         char* buf = NULL;
         err = MPI_Send((unsigned*)buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD);
         assert(err == MPI_SUCCESS);
     }
+    #endif
 
     if (conf.verbosity >= 1) solver.printStats();
     printResultFunc(solver, ret, res);

@@ -34,5 +34,19 @@ AC_FUNC_MEMCMP
 
 #search for openmp
 AC_OPENMP
+builtin(include, m4-extra/ax_mpi.m4)
+AH_TEMPLATE([USE_MPI],[Enable MPI interface])
+AX_MPI([MPI_ENABLE="yes"],
+       [MPI_ENABLE="no"
+        AC_MSG_WARN([No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.])])
 
-AC_OUTPUT(Makefile Solver/Makefile)
+AS_IF([test AS_VAR_GET([MPI_ENABLE])],[
+    CXX=$MPICXX
+#    CC=$MPICC
+#    FC=$MPIFC
+    AC_DEFINE([USE_MPI])
+    AM_CONDITIONAL([MPIBUILD], true)],[
+    AM_CONDITIONAL([MPIBUILD], false)]
+)
+AC_CONFIG_FILES([Makefile Solver/Makefile])
+AC_OUTPUT

@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PartHandler.h"
 #include <iomanip>
 #include "omp.h"
-#include "mpi.h"
 
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_DEBUG_MPI_SENDRCV
@@ -43,6 +42,7 @@ DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     , solver(_solver)
     , numCalls(0)
 {
+    #ifdef USE_MPI
     int err;
     err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     assert(err == MPI_SUCCESS);
@@ -52,12 +52,16 @@ DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     release_assert(!(mpiSize > 1 && mpiRank == 0));
 
     assert(sizeof(unsigned) == sizeof(uint32_t));
+    #endif
 }
 
 void DataSync::newVar()
 {
+    #ifdef USE_MPI
     syncMPIFinish.push(0);
     syncMPIFinish.push(0);
+    #endif
+
     syncFinish.push(0);
     syncFinish.push(0);
     seen.push(false);
@@ -66,7 +70,12 @@ void DataSync::newVar()
 
 const bool DataSync::syncData()
 {
+    #ifdef USE_MPI
     if (mpiSize == 1 && solver.numThreads == 1) return true;
+    #else
+    if (solver.numThreads == 1) return true;
+    #endif
+
     if (sharedData == NULL
         || lastSyncConf + solver.conf.syncEveryConf >= solver.conflicts) return true;
     numCalls++;
@@ -83,6 +92,7 @@ const bool DataSync::syncData()
     ok = shareBinData();
     if (!ok) return false;
 
+    #ifdef USE_MPI
     if (mpiSize > 1 && solver.threadNum == 0) {
         #pragma omp critical (unitData)
         {
@@ -96,12 +106,14 @@ const bool DataSync::syncData()
     }
 
     getNeedToInterruptFromMPI();
+    #endif //USE_MPI
 
     lastSyncConf = solver.conflicts;
 
     return true;
 }
 
+#ifdef USE_MPI
 void DataSync::getNeedToInterruptFromMPI()
 {
     int flag;
@@ -220,6 +232,7 @@ void DataSync::syncToMPI()
     err = MPI_Isend(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &sendReq);
     assert(err == MPI_SUCCESS);
 }
+#endif //USE_MPI
 
 const bool DataSync::shareBinData()
 {
