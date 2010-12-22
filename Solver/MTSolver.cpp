@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <set>
 #include <omp.h>
+#include <time.h>
 
 void MTSolver::printNumThreads() const
 {
@@ -99,6 +100,7 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
                     solvers[i]->setNeedToInterrupt();
                     numNeededInterrupt++;
                 }
+                #pragma omp flush //flush needToInterrupt on other threads
             }
             assert(numNeededInterrupt == numThreadsLocal-1);
 
@@ -106,6 +108,11 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
             while (mustWait) {
                 #pragma omp critical (finished)
                 if (finished.size() == (unsigned)numThreadsLocal) mustWait = false;
+
+                timespec req, rem;
+                req.tv_nsec = 10000000;
+                req.tv_sec = 0;
+                nanosleep(&req, &rem);
             }
 
             finishedThread = threadNum;

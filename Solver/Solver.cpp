@@ -2143,6 +2143,11 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
     for (;;) {
         PropBy confl = propagate(update);
 
+        if (needToInterrupt) {
+            cancelUntil(0);
+            return l_Undef;
+        }
+
         if (!confl.isNULL()) {
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
             if (ret != l_Nothing) return ret;
@@ -2468,9 +2473,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     restartType = static_restart;
 
     printRestartStat("S");
-    while(status == l_Undef && conflicts-origConflicts < numConfls) {
+    while(status == l_Undef && conflicts-origConflicts < numConfls && needToInterrupt == false) {
         status = search(100, std::numeric_limits<uint64_t>::max(), false);
     }
+    if (needToInterrupt) return l_Undef;
     printRestartStat("S");
     if (status != l_Undef) goto end;
     #endif //BURST_SEARCH
@@ -2478,6 +2484,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
+
+    if (needToInterrupt) return l_Undef;
 
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
