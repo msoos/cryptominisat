@@ -142,6 +142,7 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, u
             otherLit = solver.varReplacer->getReplaceTable()[otherLit.var()] ^ otherLit.sign();
             if (solver.subsumer->getVarElimed()[otherLit.var()]
                 || solver.xorSubsumer->getVarElimed()[otherLit.var()]
+                || solver.partHandler->getSavedState()[otherLit.var()] != l_Undef
                 || solver.value(otherLit.var()) != l_Undef
                 ) continue;
 
