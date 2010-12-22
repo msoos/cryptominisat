@@ -756,16 +756,19 @@ const int Main::solve()
         }
     }
 
-    if (conf.needToDumpLearnts) {
-        solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
-        std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
+    if (mpiSize == 1 || mpiRank == 1) {
+        if (conf.needToDumpLearnts) {
+            solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
+            std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
+        }
+        if (conf.needToDumpOrig) {
+            solver.dumpOrigClauses(conf.origFilename);
+            std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
+        }
+        if (ret == l_Undef && conf.verbosity >= 1) {
+            std::cout << "c Not finished running -- maximum restart reached" << std::endl;
+        }
     }
-    if (conf.needToDumpOrig) {
-        solver.dumpOrigClauses(conf.origFilename);
-        std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
-    }
-    if (ret == l_Undef && conf.verbosity >= 1) {
-        std::cout << "c Not finished running -- maximum restart reached" << std::endl;
     }
     if (conf.verbosity >= 1) solver.printStats();
     printResultFunc(solver, ret, res);
