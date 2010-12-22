@@ -66,10 +66,10 @@ void DataSync::newVar()
 
 const bool DataSync::syncData()
 {
-    numCalls++;
     if (mpiSize == 1 && solver.numThreads == 1) return true;
     if (sharedData == NULL
         || lastSyncConf + solver.conf.syncEveryConf >= solver.conflicts) return true;
+    numCalls++;
 
     assert(sharedData != NULL);
     assert(solver.decisionLevel() == 0);
