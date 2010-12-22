@@ -1980,6 +1980,7 @@ void Solver::reduceDB()
     uint64_t totalSizeOfRemoved = 0;
     uint64_t totalGlueOfNonRemoved = 0;
     uint64_t totalSizeOfNonRemoved = 0;
+    uint32_t numThreeLongLearnt = 0;
     for (i = j = 0; i != removeNum; i++){
         if (i+1 < removeNum) __builtin_prefetch(learnts[i+1], 0, 0);
         assert(learnts[i]->size() > 2);
@@ -1995,6 +1996,7 @@ void Solver::reduceDB()
             totalGlueOfNonRemoved += learnts[i]->getGlue();
             totalSizeOfNonRemoved += learnts[i]->size();
             totalNumNonRemoved++;
+            numThreeLongLearnt += (learnts[i]->size()==3);
             learnts[j++] = learnts[i];
         }
     }
@@ -2002,6 +2004,7 @@ void Solver::reduceDB()
         totalGlueOfNonRemoved += learnts[i]->getGlue();
         totalSizeOfNonRemoved += learnts[i]->size();
         totalNumNonRemoved++;
+        numThreeLongLearnt += (learnts[i]->size()==3);
         learnts[j++] = learnts[i];
     }
     learnts.shrink_(i - j);
@@ -2017,6 +2020,8 @@ void Solver::reduceDB()
         << std::fixed << std::setw(5) << std::setprecision(2)  << ((double)totalGlueOfNonRemoved/(double)totalNumNonRemoved)
         << "  avgSize "
         << std::fixed << std::setw(6) << std::setprecision(2) << ((double)totalSizeOfNonRemoved/(double)totalNumNonRemoved)
+        << "  3-long: "
+        << std::setw(6) << numThreeLongLearnt
         << std::endl;
     }
 
