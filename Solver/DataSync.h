@@ -47,6 +47,7 @@ class DataSync
         //MPI
         const bool syncFromMPI();
         void syncToMPI();
+        void getNeedToInterruptFromMPI();
 
         //stuff to sync
         vector<std::pair<Lit, Lit> > newBinClauses;

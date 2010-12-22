@@ -95,9 +95,25 @@ const bool DataSync::syncData()
         if (!ok) return false;
     }
 
+    getNeedToInterruptFromMPI();
+
     lastSyncConf = solver.conflicts;
 
     return true;
+}
+
+void DataSync::getNeedToInterruptFromMPI()
+{
+    int flag;
+    MPI_Status status;
+    int err = MPI_Iprobe(0, 1, MPI_COMM_WORLD, &flag, &status);
+    assert(err == MPI_SUCCESS);
+    if (flag == false) return;
+
+    char* buf = NULL;
+    err = MPI_Recv((unsigned*)buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &status);
+    assert(err == MPI_SUCCESS);
+    solver.setNeedToInterrupt();
 }
 
 const bool DataSync::syncFromMPI()
@@ -110,7 +126,7 @@ const bool DataSync::syncFromMPI()
     uint32_t thisGotUnitData = 0;
     uint32_t tmp = 0;
 
-    err = MPI_Iprobe(0, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+    err = MPI_Iprobe(0, 0, MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
     if (flag == false) return true;
 

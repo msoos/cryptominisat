@@ -769,7 +769,13 @@ const int Main::solve()
             std::cout << "c Not finished running -- maximum restart reached" << std::endl;
         }
     }
+
+    if (mpiSize > 1) {
+        char* buf = NULL;
+        err = MPI_Send((unsigned*)buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD);
+        assert(err == MPI_SUCCESS);
     }
+
     if (conf.verbosity >= 1) solver.printStats();
     printResultFunc(solver, ret, res);
 
