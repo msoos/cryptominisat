@@ -686,6 +686,8 @@ void Solver::printStats(const int numThreads)
         printStatsLine("c unit cls sent", dataSync->getSentUnitData(), (double)dataSync->getSentUnitData()/(double)get_unitary_learnts_num()*100.0, "% of units");
         printStatsLine("c bin cls recevied", dataSync->getRecvBinData());
         printStatsLine("c bin cls sent", dataSync->getSentBinData());
+        printStatsLine("c tri cls recevied", dataSync->getRecvTriData());
+        printStatsLine("c tri cls sent", dataSync->getSentTriData());
     }
 
     #ifdef USE_GAUSS

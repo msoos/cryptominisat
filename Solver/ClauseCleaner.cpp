@@ -151,6 +151,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
         } else if (c.size() == 3) {
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             solver.attachClause(c);
+            solver.dataSync->signalNewTriClause(c);
         } else {
             if (c.learnt())
                 solver.learnts_literals -= i-j;

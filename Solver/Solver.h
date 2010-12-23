@@ -671,7 +671,7 @@ inline void Solver::claBumpActivity (Clause& c)
 
 inline void Solver::claDecayActivity()
 {
-    //cla_inc *= clause_decay;
+    cla_inc *= conf.clause_decay;
 }
 
 inline bool Solver::locked(const Clause& c) const

@@ -30,17 +30,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define VERBOSE_DEBUG_MPI_SENDRCV
 
 DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
-    lastSyncConf(0)
-    , mpiSendData(NULL)
-    , sentUnitData(0)
+    sentUnitData(0)
     , recvUnitData(0)
     , sentBinData(0)
     , recvBinData(0)
+    , sentTriData(0)
+    , recvTriData(0)
+    #ifdef USE_MPI
     , mpiRecvBinData(0)
     , mpiSentBinData(0)
+    #endif
     , sharedData(_sharedData)
     , solver(_solver)
     , numCalls(0)
+    , lastSyncConf(0)
 {
     #ifdef USE_MPI
     int err;
@@ -64,6 +67,8 @@ void DataSync::newVar()
 
     syncFinish.push(0);
     syncFinish.push(0);
+    syncFinishTri.push(0);
+    syncFinishTri.push(0);
     seen.push(false);
     seen.push(false);
 }
@@ -90,6 +95,10 @@ const bool DataSync::syncData()
 
     #pragma omp critical (binData)
     ok = shareBinData();
+    if (!ok) return false;
+
+    #pragma omp critical (triData)
+    ok = shareTriData();
     if (!ok) return false;
 
     #ifdef USE_MPI
@@ -268,11 +277,14 @@ const bool DataSync::shareBinData()
 }
 
 template <class T>
-void DataSync::signalNewBinClause(T& ps)
+void DataSync::signalNewBinClause(const T& ps)
 {
     assert(ps.size() == 2);
     signalNewBinClause(ps[0], ps[1]);
 }
+template void DataSync::signalNewBinClause(const Clause& ps);
+template void DataSync::signalNewBinClause(const XorClause& ps);
+template void DataSync::signalNewBinClause(const vec<Lit>& ps);
 
 void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
 {
@@ -280,15 +292,157 @@ void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
 
-template void DataSync::signalNewBinClause(Clause& ps);
-template void DataSync::signalNewBinClause(XorClause& ps);
-template void DataSync::signalNewBinClause(vec<Lit>& ps);
+template<class T>
+void DataSync::signalNewTriClause(const T& ps)
+{
+    assert(ps.size() == 3);
+    signalNewTriClause(ps[0], ps[1], ps[2]);
+}
+template void DataSync::signalNewTriClause(const Clause& ps);
+template void DataSync::signalNewTriClause(const vec<Lit>& ps);
+
+void DataSync::signalNewTriClause(const Lit lit1, const Lit lit2, const Lit lit3)
+{
+    Lit lits[3];
+    lits[0] = lit1;
+    lits[1] = lit2;
+    lits[2] = lit3;
+    std::sort(lits + 0, lits + 3);
+    newTriClauses.push_back(TriClause(lits[0], lits[1], lits[2]));
+}
+
+const bool DataSync::shareTriData()
+{
+    uint32_t oldRecvTriData = recvTriData;
+    uint32_t oldSentTriData = sentTriData;
+
+    SharedData& shared = *sharedData;
+    if (shared.tris.size() != solver.nVars()*2)
+        shared.tris.resize(solver.nVars()*2);
+
+    for (uint32_t wsLit = 0; wsLit < solver.nVars()*2; wsLit++) {
+        Lit lit1 = ~Lit::toLit(wsLit);
+        lit1 = solver.varReplacer->getReplaceTable()[lit1.var()] ^ lit1.sign();
+        if (solver.subsumer->getVarElimed()[lit1.var()]
+            || solver.xorSubsumer->getVarElimed()[lit1.var()]
+            || solver.partHandler->getSavedState()[lit1.var()] != l_Undef
+            || solver.value(lit1.var()) != l_Undef
+            ) continue;
+
+        vector<TriClause>& tris = shared.tris[wsLit];
+
+        if (tris.size() > syncFinishTri[wsLit]
+            && !syncTriFromOthers(lit1, tris, syncFinishTri[wsLit])) return false;
+    }
+
+    syncTriToOthers();
+
+    if (solver.conf.verbosity >= 3) {
+        std::cout << "c got tris " << std::setw(10) << (recvTriData - oldRecvTriData)
+        << std::setw(10) << " sent tris " << (sentTriData - oldSentTriData) << std::endl;
+    }
+
+    return true;
+}
+
+const bool DataSync::syncTriFromOthers(const Lit lit1, const vector<TriClause>& tris, uint32_t& finished)
+{
+    assert(solver.ok);
+    assert(solver.varReplacer->getReplaceTable()[lit1.var()].var() == lit1.var());
+    assert(solver.subsumer->getVarElimed()[lit1.var()] == false);
+    assert(solver.xorSubsumer->getVarElimed()[lit1.var()] == false);
+    assert(solver.partHandler->getSavedState()[lit1.var()] == l_Undef);
+
+    vec<Lit> tmp;
+    for (uint32_t i = finished; i < tris.size(); i++) {
+        const TriClause& cl = tris[i];
+
+        Lit lit2 = solver.varReplacer->getReplaceTable()[cl.lit2.var()] ^ cl.lit2.sign();
+        if (solver.subsumer->getVarElimed()[lit2.var()]
+            || solver.xorSubsumer->getVarElimed()[lit2.var()]
+            || solver.partHandler->getSavedState()[lit2.var()] != l_Undef
+            ) continue;
+
+        Lit lit3 = solver.varReplacer->getReplaceTable()[cl.lit3.var()] ^ cl.lit3.sign();
+        if (solver.subsumer->getVarElimed()[lit3.var()]
+            || solver.xorSubsumer->getVarElimed()[lit3.var()]
+            || solver.partHandler->getSavedState()[lit3.var()] != l_Undef
+            ) continue;
+
+        bool alreadyInside = false;
+        const vec<Watched>& ws = solver.watches[(~lit1).toInt()];
+        for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+            if (it->isTriClause()) {
+                if (it->getOtherLit() == lit2
+                    && it->getOtherLit2() == lit3) alreadyInside = true;
+
+                if (it->getOtherLit2() == lit2
+                    && it->getOtherLit() == lit3) alreadyInside = true;
+            }
+        }
+        if (alreadyInside) continue;
+
+        const vec<Watched>& ws2 = solver.watches[(~lit2).toInt()];
+        for (const Watched *it = ws2.getData(), *end = ws2.getDataEnd(); it != end; it++) {
+            if (it->isTriClause()) {
+                if (it->getOtherLit() == lit1
+                    && it->getOtherLit2() == lit3) alreadyInside = true;
+
+                if (it->getOtherLit2() == lit3
+                    && it->getOtherLit() == lit1) alreadyInside = true;
+            }
+        }
+        if (alreadyInside) continue;
+
+        tmp.clear();
+        tmp.growTo(3);
+        tmp[0] = lit1;
+        tmp[1] = lit2;
+        tmp[2] = lit3;
+        Clause* c = solver.addClauseInt(tmp, 0, true, 3, 0, true);
+        if (c != NULL) solver.learnts.push(c);
+        if (!solver.ok) return false;
+        recvTriData++;
+    }
+    finished = tris.size();
+
+    return true;
+}
+
+void DataSync::syncTriToOthers()
+{
+    for(vector<TriClause>::const_iterator it = newTriClauses.begin(), end = newTriClauses.end(); it != end; it++) {
+        addOneTriToOthers(it->lit1, it->lit2, it->lit3);
+        sentTriData++;
+    }
+
+    for (uint32_t i = 0; i < sharedData->tris.size(); i++) {
+        syncFinishTri[i] = sharedData->tris[i].size();
+    }
+
+    newTriClauses.clear();
+}
+
+void DataSync::addOneTriToOthers(const Lit lit1, const Lit lit2, const Lit lit3)
+{
+    assert(lit1.toInt() < lit2.toInt());
+    assert(lit2.toInt() < lit3.toInt());
+
+    vector<TriClause>& tris = sharedData->tris[(~lit1).toInt()];
+    for (vector<TriClause>::const_iterator it = tris.begin(), end = tris.end(); it != end; it++) {
+        if (it->lit2 == lit2
+            && it->lit3 == lit3) return;
+    }
+
+    tris.push_back(TriClause(lit1, lit2, lit3));
+}
 
 const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished)
 {
     assert(solver.varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
     assert(solver.subsumer->getVarElimed()[lit.var()] == false);
     assert(solver.xorSubsumer->getVarElimed()[lit.var()] == false);
+    assert(solver.partHandler->getSavedState()[lit.var()] == l_Undef);
 
     vec<Lit> addedToSeen;
     const vec<Watched>& ws = solver.watches[(~lit).toInt()];

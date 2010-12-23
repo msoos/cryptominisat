@@ -496,6 +496,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
             break;
         }
         default:
+            if (c.clause->size() == 3) solver.dataSync->signalNewTriClause(*c.clause);
             cl_touched.add(c);
     }
 }
@@ -1833,6 +1834,7 @@ bool Subsumer::maybeEliminate(const Var var)
                 break;
             }
             default: {
+                if (dummy.size() == 3) solver.dataSync->signalNewTriClause(dummy);
                 Clause* cl = solver.clauseAllocator.Clause_new(dummy, group_num);
                 ClauseSimp c = linkInClause(*cl);
                 if (numMaxSubsume1 > 0) subsume1(*c.clause);
@@ -2500,6 +2502,7 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
                     for (Lit *i2 = cl->getData(), *end2 = cl->getDataEnd(); i2 != end2; i2++)
                     touchChangeVars(*i2);
                 }
+                if (c.clause->size() == 3) solver.dataSync->signalNewTriClause(*c.clause);
                 cl_touched.add(c);
         }
     }
@@ -2619,6 +2622,7 @@ const bool Subsumer::andGateRemCl()
                         break;
                     }
                     default:
+                        if (lits.size() == 3) solver.dataSync->signalNewTriClause(lits);
                         Clause* clNew = solver.clauseAllocator.Clause_new(lits, cl.getGroup(), learnt);
                         if (learnt) clNew->setGlue(std::min(cl.getGlue(), c2->clause->getGlue()));
                         linkInClause(*clNew);
