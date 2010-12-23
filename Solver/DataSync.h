@@ -25,33 +25,49 @@ class DataSync
         void newVar();
         const bool syncData();
 
-
-        template <class T> void signalNewBinClause(T& ps);
+        //New clause signalation
+        template <class T> void signalNewBinClause(const T& ps);
         void signalNewBinClause(Lit lit1, Lit lit2);
+        template <class T> void signalNewTriClause(const T& ps);
+        void signalNewTriClause(const Lit lit1, const Lit lit2, const Lit lit3);
 
+        //Get methods
         const uint32_t getSentUnitData() const;
         const uint32_t getRecvUnitData() const;
         const uint32_t getSentBinData() const;
         const uint32_t getRecvBinData() const;
+        const uint32_t getSentTriData() const;
+        const uint32_t getRecvTriData() const;
 
     private:
-        //functions
+        //unitary shring functions
         const bool shareUnitData();
-        const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished);
-        void syncBinToOthers();
-        void addOneBinToOthers(const Lit lit1, const Lit lit2);
-        const bool shareBinData();
+        uint32_t sentUnitData;
+        uint32_t recvUnitData;
 
-        //stuff to sync
+        //bin sharing functions
+        const bool    shareBinData();
         vector<std::pair<Lit, Lit> > newBinClauses;
+        const bool    syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished);
+        void          syncBinToOthers();
+        void          addOneBinToOthers(const Lit lit1, const Lit lit2);
+        vec<uint32_t> syncFinish;
+        uint32_t      sentBinData;
+        uint32_t      recvBinData;
+
+        //tri sharing functions
+        const bool        shareTriData();
+        vector<TriClause> newTriClauses;
+        const bool        syncTriFromOthers(const Lit lit1, const vector<TriClause>& tris, uint32_t& finished);
+        void              syncTriToOthers();
+        void              addOneTriToOthers(const Lit lit1, const Lit lit2, const Lit lit3);
+        vec<uint32_t>     syncFinishTri;
+        uint32_t          sentTriData;
+        uint32_t          recvTriData;
 
         //stats
         uint64_t lastSyncConf;
-        vec<uint32_t> syncFinish;
-        uint32_t sentUnitData;
-        uint32_t recvUnitData;
-        uint32_t sentBinData;
-        uint32_t recvBinData;
+        uint32_t numCalls;
 
         //misc
         vec<char> seen;
@@ -59,7 +75,6 @@ class DataSync
         //main data
         SharedData* sharedData;
         Solver& solver;
-        uint32_t numCalls;
 };
 
 inline const uint32_t DataSync::getSentUnitData() const
@@ -80,5 +95,15 @@ inline const uint32_t DataSync::getSentBinData() const
 inline const uint32_t DataSync::getRecvBinData() const
 {
     return recvBinData;
+}
+
+inline const uint32_t DataSync::getSentTriData() const
+{
+    return sentTriData;
+}
+
+inline const uint32_t DataSync::getRecvTriData() const
+{
+    return recvTriData;
 }
 

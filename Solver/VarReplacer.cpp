@@ -453,6 +453,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         solver.dataSync->signalNewBinClause(c);
         return true;
     default:
+        if (c.size() == 3) solver.dataSync->signalNewTriClause(c);
         solver.attachClause(c);
         return false;
     }

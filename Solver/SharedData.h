@@ -23,11 +23,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 
+class TriClause {
+    public:
+        TriClause() {};
+        TriClause(const Lit _lit1, const Lit _lit2, const Lit _lit3) :
+            lit1(_lit1)
+            , lit2(_lit2)
+            , lit3(_lit3)
+        {}
+        Lit lit1;
+        Lit lit2;
+        Lit lit3;
+};
+
 class SharedData
 {
     public:
         vec<lbool> value;
         std::vector<std::vector<Lit> > bins;
+        std::vector<std::vector<TriClause> > tris;
 };
 
 #endif //SHARED_DATA_H
