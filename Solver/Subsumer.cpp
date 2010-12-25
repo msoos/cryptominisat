@@ -1162,7 +1162,7 @@ const bool Subsumer::eliminateVars()
         #endif
 
         for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
-            if (maybeEliminate(order[i])) {
+            if (solver.mtrand.randInt(7) != 0 && maybeEliminate(order[i])) {
                 if (!solver.ok) return false;
                 vars_elimed++;
                 numMaxElimVars--;
