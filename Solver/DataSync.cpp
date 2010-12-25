@@ -199,13 +199,6 @@ const bool DataSync::syncFromMPI()
     }
     mpiRecvBinData += thisMpiRecvBinData;
 
-    if (at == count) {
-        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-        std::cout << "-->> MPI " << mpiRank << " only received up to bin from Server" << std::endl;
-        #endif
-        goto end;
-    }
-    std::cout << "-->> MPI " << mpiRank << " received up to tri from Server" << std::endl;
     assert(buf[at] == solver.nVars()*2);
     at++;
     for (uint32_t wsLit = 0; wsLit < solver.nVars()*2; wsLit++) {
