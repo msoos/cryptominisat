@@ -30,7 +30,10 @@ class TriClause {
             lit1(_lit1)
             , lit2(_lit2)
             , lit3(_lit3)
-        {}
+        {
+            assert(lit1 < lit2);
+            assert(lit2 < lit3);
+        }
         Lit lit1;
         Lit lit2;
         Lit lit3;

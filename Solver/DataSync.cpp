@@ -37,8 +37,11 @@ DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     , sentTriData(0)
     , recvTriData(0)
     #ifdef USE_MPI
+    , mpiRecvUnitData(0)
     , mpiRecvBinData(0)
     , mpiSentBinData(0)
+    , mpiRecvTriData(0)
+    , mpiSentTriData(0)
     #endif
     , sharedData(_sharedData)
     , solver(_solver)
@@ -63,6 +66,8 @@ void DataSync::newVar()
     #ifdef USE_MPI
     syncMPIFinish.push(0);
     syncMPIFinish.push(0);
+    syncMPIFinishTri.push(0);
+    syncMPIFinishTri.push(0);
     #endif
 
     syncFinish.push(0);
@@ -105,12 +110,13 @@ const bool DataSync::syncData()
     if (mpiSize > 1 && solver.threadNum == 0) {
         #pragma omp critical (unitData)
         {
-            #pragma omp critical (binData)
-            {
+        #pragma omp critical (binData)
+        {
+        #pragma omp critical (triData)
+        {
             ok = syncFromMPI();
-            if (ok && numCalls % 2 == 2) syncToMPI();
-            }
-        }
+            if (ok && numCalls % 2 == 1) syncToMPI();
+        }}}
         if (!ok) return false;
     }
 
@@ -143,9 +149,11 @@ const bool DataSync::syncFromMPI()
     MPI_Status status;
     int flag;
     int count;
-    uint32_t thisMpiRecvBinData = 0;
-    uint32_t thisGotUnitData = 0;
     uint32_t tmp = 0;
+
+    uint32_t thisMpiRecvUnitData = 0;
+    uint32_t thisMpiRecvBinData = 0;
+    uint32_t thisMpiRecvTriData = 0;
 
     err = MPI_Iprobe(0, 0, MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
@@ -161,12 +169,12 @@ const bool DataSync::syncFromMPI()
     err = MPI_Recv((unsigned*)buf, count, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &status);
     assert(err == MPI_SUCCESS);
 
-    uint32_t at = 0;
+    int at = 0;
     assert(solver.nVars() == buf[at]);
     at++;
     for (Var var = 0; var < solver.nVars(); var++, at++) {
         const lbool otherVal = toLbool(buf[at]);
-        if (!syncUnit(otherVal, var, NULL, thisGotUnitData, tmp)) {
+        if (!syncUnit(otherVal, var, NULL, thisMpiRecvUnitData, tmp)) {
             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
             std::cout << "-->> MPI " << mpiRank << " solver FALSE" << std::endl;
             #endif
@@ -175,6 +183,7 @@ const bool DataSync::syncFromMPI()
     }
     solver.ok = solver.propagate().isNULL();
     if (!solver.ok) goto end;
+    mpiRecvUnitData += thisMpiRecvUnitData;
 
     assert(buf[at] == solver.nVars()*2);
     at++;
@@ -190,11 +199,36 @@ const bool DataSync::syncFromMPI()
     }
     mpiRecvBinData += thisMpiRecvBinData;
 
-    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-    std::cout << "-->> MPI " << mpiRank << " Received " << thisMpiRecvBinData << " bins" << std::endl;
-    #endif
+    if (at == count) {
+        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+        std::cout << "-->> MPI " << mpiRank << " only received up to bin from Server" << std::endl;
+        #endif
+        goto end;
+    }
+    std::cout << "-->> MPI " << mpiRank << " received up to tri from Server" << std::endl;
+    assert(buf[at] == solver.nVars()*2);
+    at++;
+    for (uint32_t wsLit = 0; wsLit < solver.nVars()*2; wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        uint32_t num = buf[at];
+        at++;
+        for (uint32_t i = 0; i < num; i++, at++) {
+            Lit otherLit = Lit::toLit(buf[at]);
+            at++;
+            Lit otherLit2 = Lit::toLit(buf[at]);
+            addOneTriToOthers(lit, otherLit, otherLit2);
+            thisMpiRecvTriData++;
+        }
+    }
+    mpiRecvTriData += thisMpiRecvTriData;
 
     end:
+    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+    std::cout << "-->> MPI " << mpiRank << " Received " << thisMpiRecvUnitData << " units" << std::endl;
+    std::cout << "-->> MPI " << mpiRank << " Received " << thisMpiRecvBinData << " bins" << std::endl;
+    std::cout << "-->> MPI " << mpiRank << " Received " << thisMpiRecvTriData << " tris" << std::endl;
+    #endif
+
     delete buf;
     return solver.ok;
 }
@@ -210,30 +244,58 @@ void DataSync::syncToMPI()
         mpiSendData = NULL;
     }
 
-    uint32_t thisMpiSentBinData = 0;
     vector<uint32_t> data;
     data.push_back((uint32_t)solver.nVars());
     for (Var var = 0; var < solver.nVars(); var++) {
         data.push_back((uint32_t)solver.value(var).getchar());
     }
 
+    uint32_t thisMpiSentBinData = 0;
     data.push_back((uint32_t)solver.nVars()*2);
-    uint32_t at = 0;
-    for(vector<vector<Lit> >::const_iterator it = sharedData->bins.begin(), end = sharedData->bins.end(); it != end; it++, at++) {
+    uint32_t wsLit = 0;
+    for(vector<vector<Lit> >::const_iterator it = sharedData->bins.begin(), end = sharedData->bins.end(); it != end; it++, wsLit++) {
+        Lit lit1 = ~Lit::toLit(wsLit);
         const vector<Lit>& binSet = *it;
-        uint32_t sizeToSend = binSet.size() - syncMPIFinish[at];
+        assert(binSet.size() >= syncMPIFinish[wsLit]);
+        uint32_t sizeToSend = binSet.size() - syncMPIFinish[wsLit];
         data.push_back(sizeToSend);
-        for (uint32_t i = syncMPIFinish[at]; i < binSet.size(); i++) {
+        for (uint32_t i = syncMPIFinish[wsLit]; i < binSet.size(); i++) {
+            assert(lit1 < binSet[i]);
             data.push_back(binSet[i].toInt());
             thisMpiSentBinData++;
         }
-        syncMPIFinish[at] = binSet.size();
+        syncMPIFinish[wsLit] = binSet.size();
     }
+    assert(wsLit == solver.nVars()*2);
     mpiSentBinData += thisMpiSentBinData;
+
+    uint32_t thisMpiSentTriData = 0;
+    data.push_back((uint32_t)solver.nVars()*2);
+    wsLit = 0;
+    for(vector<vector<TriClause> >::const_iterator it = sharedData->tris.begin(), end = sharedData->tris.end(); it != end; it++, wsLit++) {
+        Lit lit1 = ~Lit::toLit(wsLit);
+        const vector<TriClause>& triSet = *it;
+        assert(triSet.size() >= syncMPIFinishTri[wsLit]);
+        uint32_t sizeToSend = triSet.size() - syncMPIFinishTri[wsLit];
+        data.push_back(sizeToSend);
+        for (uint32_t i = syncMPIFinishTri[wsLit]; i < triSet.size(); i++) {
+            assert(triSet[i].lit1 == lit1);
+            assert(lit1 < triSet[i].lit2);
+            assert(triSet[i].lit2 < triSet[i].lit3);
+
+            data.push_back(triSet[i].lit2.toInt());
+            data.push_back(triSet[i].lit3.toInt());
+            thisMpiSentTriData++;
+        }
+        syncMPIFinishTri[wsLit] = triSet.size();
+    }
+    assert(wsLit == solver.nVars()*2);
+    mpiSentTriData += thisMpiSentTriData;
 
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "-->> MPI " << mpiRank << " Sent " << data.size() << " uint32_t -s" << std::endl;
     std::cout << "-->> MPI " << mpiRank << " Sent " << thisMpiSentBinData << " bins " << std::endl;
+    std::cout << "-->> MPI " << mpiRank << " Sent " << thisMpiSentTriData << " tris " << std::endl;
     #endif
 
     mpiSendData = new uint32_t[data.size()];
@@ -260,7 +322,7 @@ const bool DataSync::shareBinData()
             || solver.value(lit1.var()) != l_Undef
             ) continue;
 
-        vector<Lit>& bins = shared.bins[wsLit];
+        const vector<Lit>& bins = shared.bins[wsLit];
 
         if (bins.size() > syncFinish[wsLit]
             && !syncBinFromOthers(lit1, bins, syncFinish[wsLit])) return false;
@@ -356,6 +418,8 @@ const bool DataSync::syncTriFromOthers(const Lit lit1, const vector<TriClause>& 
     vec<Lit> tmp;
     for (uint32_t i = finished; i < tris.size(); i++) {
         const TriClause& cl = tris[i];
+        assert(tris[i].lit1 < tris[i].lit2);
+        assert(tris[i].lit2 < tris[i].lit3);
 
         Lit lit2 = solver.varReplacer->getReplaceTable()[cl.lit2.var()] ^ cl.lit2.sign();
         if (solver.subsumer->getVarElimed()[lit2.var()]
@@ -388,8 +452,8 @@ const bool DataSync::syncTriFromOthers(const Lit lit1, const vector<TriClause>& 
                 if (it->getOtherLit() == lit1
                     && it->getOtherLit2() == lit3) alreadyInside = true;
 
-                if (it->getOtherLit2() == lit3
-                    && it->getOtherLit() == lit1) alreadyInside = true;
+                if (it->getOtherLit2() == lit1
+                    && it->getOtherLit() == lit3) alreadyInside = true;
             }
         }
         if (alreadyInside) continue;
@@ -425,8 +489,10 @@ void DataSync::syncTriToOthers()
 
 void DataSync::addOneTriToOthers(const Lit lit1, const Lit lit2, const Lit lit3)
 {
-    assert(lit1.toInt() < lit2.toInt());
-    assert(lit2.toInt() < lit3.toInt());
+    assert(lit1 < lit2);
+    assert(lit2 < lit3);
+    assert(lit1.var() != lit2.var());
+    assert(lit2.var() != lit3.var());
 
     vector<TriClause>& tris = sharedData->tris[(~lit1).toInt()];
     for (vector<TriClause>::const_iterator it = tris.begin(), end = tris.end(); it != end; it++) {

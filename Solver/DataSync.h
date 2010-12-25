@@ -15,8 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
+#ifndef DATASYNC_H
+#define DATASYNC_H
+
 #include "SharedData.h"
 #include "Solver.h"
+
 #ifdef USE_MPI
 #include "mpi.h"
 #endif //USE_MPI
@@ -75,13 +79,17 @@ class DataSync
         void          syncToMPI();
         void          getNeedToInterruptFromMPI();
         vec<uint32_t> syncMPIFinish;
+        vec<uint32_t> syncMPIFinishTri;
         MPI_Request   sendReq;
         uint32_t*     mpiSendData;
 
         int           mpiRank;
         int           mpiSize;
+        uint32_t      mpiRecvUnitData;
         uint32_t      mpiRecvBinData;
         uint32_t      mpiSentBinData;
+        uint32_t      mpiRecvTriData;
+        uint32_t      mpiSentTriData;
         #endif
 
         //misc
@@ -124,3 +132,4 @@ inline const uint32_t DataSync::getRecvTriData() const
     return recvTriData;
 }
 
+#endif //DATASYNC_H
