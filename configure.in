@@ -37,8 +37,7 @@ AC_OPENMP
 builtin(include, m4-extra/ax_mpi.m4)
 AH_TEMPLATE([USE_MPI],[Enable MPI interface])
 AX_MPI([MPI_ENABLE="yes"],
-       [MPI_ENABLE="no"
-        AC_MSG_WARN([No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.])])
+       [AC_MSG_WARN([No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.])])
 
 AS_IF([test AS_VAR_GET([MPI_ENABLE])],[
     CXX=$MPICXX
