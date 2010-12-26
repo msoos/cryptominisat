@@ -47,6 +47,7 @@ Here is a picture of of the above process in more detail:
 
 #ifdef USE_MPI
 #include "mpi.h"
+#include "DataSyncServer.h"
 #endif //USE_MPI
 
 #include <signal.h>
@@ -58,7 +59,6 @@ Here is a picture of of the above process in more detail:
 #include "time_mem.h"
 #include "constants.h"
 #include "DimacsParser.h"
-#include "DataSyncServer.h"
 
 #if defined(__linux__)
 #include <fpu_control.h>
@@ -813,6 +813,8 @@ int Main::correctReturnValue(const lbool ret) const
 
 int main(int argc, char** argv)
 {
+    int ret;
+#ifdef USE_MPI
     int err;
     err = MPI_Init(&argc, &argv);
     assert(err == MPI_SUCCESS);
@@ -824,7 +826,6 @@ int main(int argc, char** argv)
     err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     assert(err == MPI_SUCCESS);
 
-    int ret;
     if (mpiSize > 1 && mpiRank == 0) {
         DataSyncServer server;
         ret = server.actAsServer();
@@ -835,15 +836,18 @@ int main(int argc, char** argv)
             fclose(f);
         }
     } else {
+#endif //USE_MPI
         Main main(argc, argv);
         main.parseCommandLine();
         signal(SIGINT, SIGINT_handler);
         //signal(SIGHUP,SIGINT_handler);
         ret = main.solve();
+#ifdef USE_MPI
     }
 
     err = MPI_Finalize();
     assert(err == MPI_SUCCESS);
+#endif //USE_MPI
 
     return ret;
 }
