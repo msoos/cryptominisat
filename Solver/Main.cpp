@@ -30,6 +30,7 @@ Here is a picture of of the above process in more detail:
 
 */
 
+#include "constants.h"
 #include <ctime>
 #include <cstring>
 #include <errno.h>
