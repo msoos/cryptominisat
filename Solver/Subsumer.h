@@ -336,6 +336,11 @@ private:
     uint32_t numOrGateReplaced;
     const bool findEqOrGates();
     vec<char> defOfOrGate;
+    void createNewVar();
+    const bool doAllOptimisationWithGates();
+    uint32_t andGateNumFound;
+    uint32_t andGateTotalSize;
+    vec<char> dontElim;
 
     const bool andGateRemCl();
     void findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others);
@@ -489,6 +494,7 @@ inline void Subsumer::newVar()
     ol_seenNeg.push(1);
     ol_seenNeg.push(1);
     touch(solver.nVars()-1);
+    dontElim.push(0);
 
     binNonLearntCache.push_back(TransCache());
     binNonLearntCache.push_back(TransCache());

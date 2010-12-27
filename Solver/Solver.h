@@ -100,6 +100,20 @@ struct reduceDB_ltGlucose
     bool operator () (const Clause* x, const Clause* y);
 };
 
+struct UIPNegPosDist
+{
+    int64_t dist;
+    Var var;
+};
+
+struct NegPosSorter
+{
+    const bool operator() (const UIPNegPosDist& a, const UIPNegPosDist& b) const
+    {
+        return (a.dist < b.dist);
+    }
+};
+
 /**
 @brief The main solver class
 
@@ -343,6 +357,7 @@ protected:
     uint32_t            var_inc;          ///< Amount to bump next variable with.
     vector<std::pair<uint64_t, uint64_t> > lTPolCount;
     void bumpUIPPolCount(const vec<Lit>& lit);
+    vector<UIPNegPosDist> negPosDist;
 
     /////////////////
     // Learnt clause cleaning

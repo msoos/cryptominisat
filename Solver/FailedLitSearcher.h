@@ -209,20 +209,6 @@ class FailedLitSearcher {
         */
         uint64_t maxHyperBinProps;
 
-        struct UIPNegPosDist
-        {
-            int64_t dist;
-            Var var;
-        };
-
-        struct NegPosSorter
-        {
-            const bool operator() (const UIPNegPosDist& a, const UIPNegPosDist& b) const
-            {
-                return (a.dist < b.dist);
-            }
-        };
-
         //Temporaries
         vec<Lit> tmpPs;
 
