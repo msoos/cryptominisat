@@ -2286,8 +2286,9 @@ void Subsumer::createNewVar()
     newGates.erase(std::unique(newGates.begin(), newGates.end() ), newGates.end() );
 
     uint32_t addedNum = 0;
-    for (uint32_t i = 0; i < std::min(newGates.size(), 100U); i++) {
+    for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
+        if (i > 100 && n.num < 500) break;
         const Var newVar = solver.newVar();
         dontElim[newVar] = true;
         const Lit newLit = Lit(newVar, false);
