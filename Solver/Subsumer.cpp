@@ -1304,6 +1304,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         numMaxSubsume1 = 2*1000*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         if (solver.conf.doSubsWNonExistBins) {
+            if (numCalls > 7) makeAllBinsNonLearnt();
             if (!subsWNonExistBinsFill()) return false;
             if (!subsumeNonExist()) return false;
         }
@@ -2811,4 +2812,25 @@ void Subsumer::findAndGateOtherCl(const Lit lit, const uint32_t size, vec<Clause
         }
         if (OK) others.push(*it);
     }
+}
+
+void Subsumer::makeAllBinsNonLearnt()
+{
+    uint32_t changedHalfToNonLearnt = 0;
+    uint32_t wsLit = 0;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        vec<Watched>& ws = *it;
+
+        for (Watched *i = ws.getData(), *end2 = ws.getDataEnd(); i != end2; i++) {
+            if (i->isBinary() && i->getLearnt()) {
+                i->setLearnt(false);
+                changedHalfToNonLearnt++;
+            }
+        }
+    }
+
+    assert(changedHalfToNonLearnt % 2 == 0);
+    solver.learnts_literals -= changedHalfToNonLearnt;
+    solver.clauses_literals += changedHalfToNonLearnt;
 }

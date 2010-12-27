@@ -269,6 +269,7 @@ private:
             return false;
         };
     };
+    void makeAllBinsNonLearnt();
     const bool subsWNonExistBinsFill();
     const bool subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
     const bool subsumeNonExist();
