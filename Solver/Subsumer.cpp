@@ -2249,7 +2249,7 @@ void Subsumer::createNewVar()
 
     vec<Lit> lits;
     vec<ClauseSimp> subs;
-    if (solver.negPosDist.size() == 0) return true;
+    if (solver.negPosDist.size() == 0) return;
     uint32_t size = std::min((uint32_t)solver.negPosDist.size()-1, 400U);
     for (uint32_t tries = 0; tries < 120000; tries++) {
         Var var1 = solver.negPosDist[solver.mtrand.randInt(size)].var;
