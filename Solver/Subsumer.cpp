@@ -2249,7 +2249,8 @@ void Subsumer::createNewVar()
 
     vec<Lit> lits;
     vec<ClauseSimp> subs;
-    uint32_t size = std::min((uint32_t)solver.negPosDist.size(), 100U);
+    if (solver.negPosDist.size() == 0) return true;
+    uint32_t size = std::min((uint32_t)solver.negPosDist.size()-1, 400U);
     for (uint32_t tries = 0; tries < 120000; tries++) {
         Var var1 = solver.negPosDist[solver.mtrand.randInt(size)].var;
         Var var2 = solver.negPosDist[solver.mtrand.randInt(size)].var;
