@@ -2677,7 +2677,7 @@ polarities, and start the loop. Finally, we either report UNSAT or extend the
 found solution with all the intermediary simplifications (e.g. variable
 elimination, etc.) and output the solution.
 */
-const lbool Solver::solve(const vec<Lit>& assumps, const uint32_t _numThreads , const uint32_t _threadNum)
+const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const int _threadNum)
 {
     numThreads = _numThreads;
     threadNum = _threadNum;

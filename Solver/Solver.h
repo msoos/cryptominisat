@@ -149,8 +149,8 @@ public:
 
     // Solving:
     //
-    const lbool    solve       (const vec<Lit>& assumps, const uint32_t numThreads = 1, const uint32_t threadNum = 0); ///<Search for a model that respects a given set of assumptions.
-    const lbool    solve       (const uint32_t numThreads = 1, const uint32_t threadNum = 0);                        ///<Search without assumptions.
+    const lbool    solve       (const vec<Lit>& assumps, const int numThreads = 1, const int threadNum = 0); ///<Search for a model that respects a given set of assumptions.
+    const lbool    solve       (const int numThreads = 1, const int threadNum = 0);                        ///<Search without assumptions.
     const bool     okay         () const;                 ///<FALSE means solver is in a conflicting state
 
     // Variable mode:
@@ -235,8 +235,8 @@ protected:
     algorithm)
     */
     bool      needToInterrupt;
-    uint32_t  numThreads;
-    uint32_t  threadNum;
+    int       numThreads;
+    int       threadNum;
 
     //Gauss
     //
@@ -759,7 +759,7 @@ inline void     Solver::setDecisionVar(Var v, bool b)
         insertVarOrder(v);
     }
 }
-inline const lbool     Solver::solve         (const uint32_t _numThreads, const uint32_t _threadNum)
+inline const lbool     Solver::solve         (const int _numThreads, const int _threadNum)
 {
     vec<Lit> tmp;
     return solve(tmp, numThreads, threadNum);
