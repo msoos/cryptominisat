@@ -2714,19 +2714,45 @@ const bool Subsumer::andGateRemCl()
     std::set<uint32_t> clToUnlink;
     vec<Lit> lits;
     andGateTotalSize = 0;
+    vec<char> seen2(solver.nVars()*2, false);
 
     for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
         const OrGate& gate = *it;
         if (gate.lits.size() > 2) continue;
         assert(gate.lits.size() == 2);
 
+        if (occur[(~(gate.lits[0])).toInt()].empty() || occur[(~(gate.lits[1])).toInt()].empty())
+            continue;
+        const vec<ClauseSimp>& csOther = occur[(~(gate.lits[1])).toInt()];
+        uint32_t abstraction = 0;
+        for (const ClauseSimp *it2 = csOther.getData(), *end2 = csOther.getDataEnd(); it2 != end2; it2++) {
+            const Clause& cl = *it2->clause;
+            for (uint32_t i = 0; i < cl.size(); i++) {
+                seen2[cl[i].toInt()] = true;
+                abstraction |= 1 << (cl[i].var() & 31);
+            }
+        }
+        abstraction |= 1 << (gate.lits[0].var() & 31);
+
         vec<ClauseSimp>& cs = occur[(~(gate.lits[0])).toInt()];
         for (ClauseSimp *it2 = cs.getData(), *end2 = cs.getDataEnd(); it2 != end2; it2++) {
             const Clause& cl = *it2->clause;
+            if ((cl.getAbst() | abstraction) != abstraction) continue;
+            bool needCont = false;
             for (uint32_t i = 0; i < cl.size(); i++) {
                 if (cl[i] == ~(gate.lits[0])) continue;
-                if (cl[i] == ~(gate.lits[1])) goto end;
-                if (cl[i] == gate.eqLit) goto end;
+                if (   cl[i] == ~(gate.lits[1])
+                    || cl[i] == gate.eqLit
+                    || !seen2[cl[i].toInt()]
+                   ) {
+                    needCont = true;
+                    break;
+                }
+            }
+            if (needCont) continue;
+
+            for (uint32_t i = 0; i < cl.size(); i++) {
+                if (cl[i] == ~(gate.lits[0])) continue;
                 seen_tmp[cl[i].toInt()] = true;
             }
             findAndGateOtherCl(~(gate.lits[1]), cl.size(), others);
@@ -2781,12 +2807,13 @@ const bool Subsumer::andGateRemCl()
                 }
             }
 
-            end:
             others.clear();
             for (uint32_t i = 0; i < cl.size(); i++) {
                 seen_tmp[cl[i].toInt()] = false;
             }
         }
+
+        std::fill(seen2.getData(), seen2.getDataEnd(), 0);
 
         for(std::set<uint32_t>::const_iterator it2 = clToUnlink.begin(), end2 = clToUnlink.end(); it2 != end2; it2++) {
             unlinkClause(clauses[*it2]);
