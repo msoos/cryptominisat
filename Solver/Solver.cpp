@@ -2308,7 +2308,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         avgBranchDepth.push(decisionLevel());
         #endif //RANDOM_LOOKAROUND_SEARCHSPACE
-        if (restartType == dynamic_restart) glueHistory.push(glue);
+        glueHistory.push(glue);
         conflSizeHist.push(learnt_clause.size());
     }
 
