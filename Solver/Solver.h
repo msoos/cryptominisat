@@ -134,7 +134,7 @@ public:
 
     // Constructor/Destructor:
     //
-    Solver(const SolverConf& conf = SolverConf(), const GaussConf& _gaussconfig = GaussConf(), SharedData* sharedUnitData = NULL);
+    Solver(const SolverConf& conf = SolverConf(), const GaussConf& _gaussconfig = GaussConf(), SharedData* sharedData = NULL);
     ~Solver();
 
     // Problem specification:
