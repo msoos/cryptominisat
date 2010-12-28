@@ -1264,7 +1264,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 
     //To count the "amount of time" invested in doing transitive on-the-fly
     //self-subsuming resolution
-    uint32_t moreRecurProp = 0;
+    //uint32_t moreRecurProp = 0;
 
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
@@ -1272,17 +1272,17 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         Lit lit = *l;
 
         if (clDoMinLRec) {
-            if (moreRecurProp >= 0
+            /*if (moreRecurProp >= 450
                 || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
                     && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
-               ) {
+               ) {*/
                 for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
                     seen[(~(*it)).toInt()] = 0;
                 }
-            } else {
+            /*} else {
                 updateTransCache++;
                 transMinimAndUpdateCache(lit, moreRecurProp);
-            }
+            }*/
         }
 
         //watched is messed: lit is in watched[~lit]
