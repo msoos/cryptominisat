@@ -162,11 +162,12 @@ void PartHandler::configureNewSolver(Solver& newSolver) const
     newSolver.gaussconfig = solver.gaussconfig;
 
     //Memory-usage reduction
-    newSolver.conf.doSchedSimp = false;
-    newSolver.conf.doSatELite = false;
-    newSolver.conf.doXorSubsumption = false;
+    //newSolver.conf.doSchedSimp = false;
+    //newSolver.conf.doSatELite = false;
+    //newSolver.conf.doXorSubsumption = false;
     newSolver.conf.doPartHandler = false;
-    newSolver.conf.doSubsWNonExistBins = false;
+    newSolver.conf.libraryUsage = true;
+    //newSolver.conf.doSubsWNonExistBins = false;
 }
 
 /**
