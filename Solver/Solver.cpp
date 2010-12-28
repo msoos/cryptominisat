@@ -2416,7 +2416,6 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
                 tmp = conf.fixRestartType;
 
             if (tmp == dynamic_restart) {
-                glueHistory.fastclear();
                 if (conf.verbosity >= 1)
                     std::cout << "c Decided on dynamic restart strategy"
                     << std::endl;
