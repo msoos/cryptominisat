@@ -92,6 +92,7 @@ inline const vector<Var>& PartFinder::getTable() const
 
 inline const uint32_t PartFinder::getVarPart(const Var var) const
 {
+    if (var >= table.size()) return false;
     return table[var];
 }
 

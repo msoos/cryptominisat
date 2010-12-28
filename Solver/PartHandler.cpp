@@ -84,6 +84,9 @@ const bool PartHandler::handle()
         //Check that the newly found solution is really unassigned in the
         //original solver
         for (Var var = 0; var < newSolver.nVars(); var++) {
+            //Check for vars added through extended resolution
+            if (partFinder.getVarPart(var) != part) continue;
+
             if (newSolver.model[var] != l_Undef) {
                 assert(solver.assigns[var] == l_Undef);
             }
@@ -91,12 +94,18 @@ const bool PartHandler::handle()
 
         assert(newSolver.decisionLevel() == 0);
         for (uint32_t i = 0; i < newSolver.trail.size(); i++) {
+            //Check for vars added through extended resolution
+            if (partFinder.getVarPart(newSolver.trail[i].var()) != part) continue;
+
             solver.uncheckedEnqueue(newSolver.trail[i]);
         }
         solver.ok = (solver.propagate().isNULL());
         assert(solver.ok);
 
         for (Var var = 0; var < newSolver.nVars(); var++) {
+            //Check for vars added through extended resolution
+            if (partFinder.getVarPart(var) != part) continue;
+
             if (newSolver.model[var] != l_Undef) {
                 //Must have been decision var in the old solver!??
                 //assert(std::find(decisionVarRemoved.getData(), decisionVarRemoved.getDataEnd(), var) != decisionVarRemoved.getDataEnd());
