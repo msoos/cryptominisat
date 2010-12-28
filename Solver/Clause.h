@@ -221,7 +221,7 @@ public:
         abst = calcAbstraction(*this);
     }
 
-    uint32_t getAbst()
+    const uint32_t getAbst() const
     {
         return abst;
     }
