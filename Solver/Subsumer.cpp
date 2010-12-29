@@ -2330,8 +2330,12 @@ void Subsumer::createNewVar()
     }
     finishedAddingVars = true;
 
-    std::cout << "c Added " << addedNum << " vars "
-    << " time: " << (cpuTime() - myTime) << std::endl;
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c Added " << addedNum << " vars "
+        << " time: " << (cpuTime() - myTime) << std::endl;
+    }
+    //std::cout << "c Added " << addedNum << " vars "
+    //<< " time: " << (cpuTime() - myTime) << " numThread: " << solver.threadNum << std::endl;
 }
 
 const bool Subsumer::findOrGatesAndTreat()
