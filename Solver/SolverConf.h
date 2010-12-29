@@ -31,6 +31,7 @@ class SolverConf
         int       restart_first;      ///<The initial restart limit.                                                                (default 100)
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
         double    learntsize_factor;  ///<The intitial limit for learnt clauses is a factor of the original clauses.                (default 1 / 3)
+        double    agilityG;
         bool      expensive_ccmin;    ///<Should clause minimisation by Sorensson&Biere be used?                                    (default TRUE)
         int       polarity_mode;      ///<Controls which polarity the decision heuristic chooses. Auto means Jeroslow-Wang          (default: polarity_auto)
         int       verbosity;          ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2)

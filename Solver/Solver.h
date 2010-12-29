@@ -379,6 +379,11 @@ protected:
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
     vec<Clause*>        unWindGlue;
 
+    // For agility-based restarts
+    void increaseAgility(const bool flipped);
+    double agility;
+    double agilityLimit;
+
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
     //
@@ -903,6 +908,12 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     binPropData[p.var()].lev = binSubLevel;
     binPropData[p.var()].lev1Ancestor = lev2Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
+}
+
+inline void Solver::increaseAgility(const bool flipped)
+{
+    agility *= conf.agilityG;
+    if (flipped) agility += 1.0 - conf.agilityG;
 }
 
 //=================================================================================================

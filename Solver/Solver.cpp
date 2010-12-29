@@ -94,6 +94,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , nbCompensateSubsumer (0)
 
         , MYFLAG           (0)
+        , agilityLimit     (0.2)
         #ifdef STATS_NEEDED
         , logger(conf.verbosity)
         , dynamic_behaviour_analysis(false) //do not document the proof as default
@@ -1484,6 +1485,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     #ifdef USE_OLD_POLARITIES
     oldPolarity[p.var()] = polarity[p.var()];
     #endif //USE_OLD_POLARITIES
+    if (!from.isNULL()) increaseAgility(polarity[p.var()] != p.sign());
     polarity[p.var()] = p.sign();
     trail.push(p);
 
@@ -2136,6 +2138,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
         else dynStarts++;
     }
     glueHistory.fastclear();
+    agility = 0.0;
 
     #ifdef USE_GAUSS
     for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
@@ -2196,8 +2199,8 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumC
     // Reached bound on number of conflicts?
     switch (restartType) {
     case dynamic_restart:
-        if (glueHistory.isvalid() &&
-            0.95*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()) {
+        if ((conflictC > MIN_GLUE_RESTART && agility < agilityLimit)
+            /*|| (glueHistory.isvalid() && 0.7*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
             if (glueHistory.isvalid()) {
@@ -2213,6 +2216,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumC
             if (dynamic_behaviour_analysis)
                 progress_estimate = progressEstimate();
             #endif
+
             cancelUntil(0);
             return l_Undef;
         }

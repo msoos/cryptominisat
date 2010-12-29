@@ -24,6 +24,7 @@ SolverConf::SolverConf() :
         , restart_first(100)
         , restart_inc(1.5)
         , learntsize_factor((double)1/(double)3)
+        , agilityG(0.9999)
 
         , expensive_ccmin  (true)
         , polarity_mode    (polarity_auto)
