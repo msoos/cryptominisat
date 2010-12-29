@@ -2287,7 +2287,7 @@ void Subsumer::createNewVar()
     newGates.erase(std::unique(newGates.begin(), newGates.end() ), newGates.end() );
 
     uint32_t addedNum = 0;
-    #pragma omp ciritcal (ERSync)
+    #pragma omp critical (ERSync)
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
         if (i > 100 && n.num < 500) break;
@@ -2362,9 +2362,11 @@ const bool Subsumer::findOrGatesAndTreat()
     }
     if (!solver.ok) return false;
 
-    #pragma omp ciritcal (ERSync)
-    if (solver.threadNum != solver.dataSync->getThreadAddingVars()
-        || !solver.dataSync->getEREnded()) return true;
+    bool needToExit;
+    #pragma omp critical (ERSync)
+    needToExit = (solver.threadNum != solver.dataSync->getThreadAddingVars()
+        || !solver.dataSync->getEREnded());
+    if (needToExit) return true;
 
     myTime = cpuTime();
     orGates.clear();
