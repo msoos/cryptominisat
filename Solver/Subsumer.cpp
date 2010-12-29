@@ -2719,6 +2719,7 @@ const bool Subsumer::subsumeNonExist()
 
 const bool Subsumer::andGateRemCl()
 {
+    //double myTime = cpuTime();
     assert(solver.ok);
     andGateNumFound = 0;
     vec<ClauseSimp> others;
@@ -2831,6 +2832,8 @@ const bool Subsumer::andGateRemCl()
         }
         clToUnlink.clear();
     }
+
+    //std::cout << "c andgate time : " << (cpuTime() - myTime) << std::endl;
 
     return true;
 }
