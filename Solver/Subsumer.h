@@ -63,6 +63,8 @@ public:
     const uint32_t getNumERVars() const;
     void incNumERVars(const uint32_t num);
     void setVarNonEliminable(const Var var);
+    const bool getFinishedAddingVars() const;
+    void setFinishedAddingVarsFalse();
 
 private:
 
@@ -346,6 +348,7 @@ private:
     uint32_t andGateTotalSize;
     vec<char> dontElim;
     uint32_t numERVars;
+    bool finishedAddingVars;
 
     const bool andGateRemCl();
     void findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others);
@@ -548,6 +551,16 @@ inline void Subsumer::incNumERVars(const uint32_t num)
 inline void Subsumer::setVarNonEliminable(const Var var)
 {
     dontElim[var] = true;
+}
+
+inline const bool Subsumer::getFinishedAddingVars() const
+{
+    return finishedAddingVars;
+}
+
+inline void Subsumer::setFinishedAddingVarsFalse()
+{
+    finishedAddingVars = false;
 }
 
 #endif //SIMPLIFIER_H

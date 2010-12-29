@@ -389,11 +389,11 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
         Clause* c = clauseAllocator.Clause_new(ps, group);
         if (learnt) c->makeLearnt(glue, miniSatActivity);
         attachClause(*c);
-        if (ps.size() == 3 && !inOriginalInput) dataSync->signalNewTriClause(ps);
+        if (ps.size() == 3 && !inOriginalInput) dataSync->signalNewTriClause(ps, learnt);
         return c;
     } else {
         attachBinClause(ps[0], ps[1], learnt);
-        if (!inOriginalInput) dataSync->signalNewBinClause(ps);
+        if (!inOriginalInput) dataSync->signalNewBinClause(ps, learnt);
         numNewBin++;
         return NULL;
     }

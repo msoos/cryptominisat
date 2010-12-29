@@ -49,10 +49,10 @@ class DataSync
 
         //bin sharing functions
         const bool    shareBinData();
-        vector<std::pair<Lit, Lit> > newBinClauses;
-        const bool    syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished);
+        vector<BinClause> newBinClauses;
+        const bool    syncBinFromOthers(const Lit lit, const vector<BinClause>& bins, uint32_t& finished);
         void          syncBinToOthers();
-        void          addOneBinToOthers(const Lit lit1, const Lit lit2);
+        void          addOneBinToOthers(const Lit lit1, const Lit lit2, const bool leanrt);
         vec<uint32_t> syncFinish;
         uint32_t      sentBinData;
         uint32_t      recvBinData;
@@ -121,5 +121,6 @@ inline const int DataSync::getThreadAddingVars() const
 
 inline const bool DataSync::getEREnded() const
 {
+    if (sharedData == NULL) return false;
     return sharedData->EREnded;
 }

@@ -46,6 +46,7 @@ Subsumer::Subsumer(Solver& s):
     , totalTime(0.0)
     , numElimed(0)
     , numERVars(0)
+    , finishedAddingVars(false)
     , numCalls(1)
     , alsoLearnt(false)
 {
@@ -2327,6 +2328,7 @@ void Subsumer::createNewVar()
         addedNum++;
         numERVars++;
     }
+    finishedAddingVars = true;
 
     std::cout << "c Added " << addedNum << " vars "
     << " time: " << (cpuTime() - myTime) << std::endl;

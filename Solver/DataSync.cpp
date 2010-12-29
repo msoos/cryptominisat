@@ -58,10 +58,11 @@ const bool DataSync::syncData()
     assert(solver.decisionLevel() == 0);
 
     bool ok;
-    #pragma omp ciritcal (ERSync)
+    #pragma omp critical (ERSync)
     {
         if (!sharedData->EREnded
-            && sharedData->threadAddingVars == solver.threadNum)
+            && sharedData->threadAddingVars == solver.threadNum
+            && solver.subsumer->getFinishedAddingVars())
             syncERVarsFromHere();
 
         if (sharedData->EREnded
@@ -69,7 +70,7 @@ const bool DataSync::syncData()
             && sharedData->othersSyncedER.find(solver.threadNum) !=  sharedData->othersSyncedER.end())
             syncERVarsToHere();
 
-        if (sharedData->othersSyncedER.size() == (solver.numThreads-1)) {
+        if (sharedData->othersSyncedER.size() == (uint32_t)(solver.numThreads-1)) {
             sharedData->threadAddingVars = (sharedData->threadAddingVars+1) % solver.numThreads;
             sharedData->EREnded = false;
             sharedData->othersSyncedER.clear();
@@ -77,23 +78,25 @@ const bool DataSync::syncData()
 
         #pragma omp critical (unitData)
         ok = shareUnitData();
-        if (!ok) return false;
+        if (!ok) goto end;
 
         #pragma omp critical (binData)
         ok = shareBinData();
-        if (!ok) return false;
+        if (!ok) goto end;
 
         #pragma omp critical (triData)
         ok = shareTriData();
-        if (!ok) return false;
+        if (!ok) goto end;
+
+        end:;
     }
 
     lastSyncConf = solver.conflicts;
 
-    return true;
+    return solver.ok;
 }
 
-void DataSync::syncERVarsHere()
+void DataSync::syncERVarsToHere()
 {
     for (uint32_t i = 0; i < sharedData->numNewERVars; i++) {
         Var var = solver.newVar();
@@ -101,6 +104,7 @@ void DataSync::syncERVarsHere()
     }
     solver.subsumer->incNumERVars(sharedData->numNewERVars);
     sharedData->othersSyncedER.insert(solver.threadNum);
+    solver.subsumer->setFinishedAddingVarsFalse();
 }
 
 void DataSync::syncERVarsFromHere()
@@ -127,7 +131,7 @@ const bool DataSync::shareBinData()
             || solver.value(lit1.var()) != l_Undef
             ) continue;
 
-        vector<Lit>& bins = shared.bins[wsLit];
+        vector<BinClause>& bins = shared.bins[wsLit];
 
         if (bins.size() > syncFinish[wsLit]
             && !syncBinFromOthers(lit1, bins, syncFinish[wsLit])) return false;
@@ -156,7 +160,7 @@ template void DataSync::signalNewBinClause(const vec<Lit>& ps, const bool learnt
 void DataSync::signalNewBinClause(Lit lit1, Lit lit2, const bool learnt)
 {
     if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
-    newBinClauses.push_back(std::make_pair(lit1, lit2, learnt));
+    newBinClauses.push_back(BinClause(lit1, lit2, learnt));
 }
 
 template<class T>
@@ -304,7 +308,7 @@ void DataSync::addOneTriToOthers(const Lit lit1, const Lit lit2, const Lit lit3)
     tris.push_back(TriClause(lit1, lit2, lit3));
 }
 
-const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished)
+const bool DataSync::syncBinFromOthers(const Lit lit, const vector<BinClause>& bins, uint32_t& finished)
 {
     assert(solver.varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
     assert(solver.subsumer->getVarElimed()[lit.var()] == false);
@@ -327,8 +331,8 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, u
 
     vec<Lit> lits(2);
     for (uint32_t i = finished; i < bins.size(); i++) {
-        if (!seen[bins[i].toInt()]) {
-            Lit otherLit = bins[i];
+        if (!seen[bins[i].lit2.toInt()]) {
+            Lit otherLit = bins[i].lit2;
             otherLit = solver.varReplacer->getReplaceTable()[otherLit.var()] ^ otherLit.sign();
             if (solver.subsumer->getVarElimed()[otherLit.var()]
                 || solver.xorSubsumer->getVarElimed()[otherLit.var()]
@@ -356,8 +360,8 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, u
 
 void DataSync::syncBinToOthers()
 {
-    for(vector<std::pair<Lit, Lit> >::const_iterator it = newBinClauses.begin(), end = newBinClauses.end(); it != end; it++) {
-        addOneBinToOthers(it->first, it->second);
+    for(vector<BinClause>::const_iterator it = newBinClauses.begin(), end = newBinClauses.end(); it != end; it++) {
+        addOneBinToOthers(it->lit1, it->lit2, it->learnt);
         sentBinData++;
     }
 
@@ -368,16 +372,16 @@ void DataSync::syncBinToOthers()
     newBinClauses.clear();
 }
 
-void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2)
+void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2, const bool learnt)
 {
     assert(lit1.toInt() < lit2.toInt());
 
-    vector<Lit>& bins = sharedData->bins[(~lit1).toInt()];
-    for (vector<Lit>::const_iterator it = bins.begin(), end = bins.end(); it != end; it++) {
-        if (*it == lit2) return;
+    vector<BinClause>& bins = sharedData->bins[(~lit1).toInt()];
+    for (vector<BinClause>::const_iterator it = bins.begin(), end = bins.end(); it != end; it++) {
+        if (it->lit2 == lit2 && it->learnt == learnt) return;
     }
 
-    bins.push_back(lit2);
+    bins.push_back(BinClause(lit1, lit2, learnt));
 }
 
 const bool DataSync::shareUnitData()
