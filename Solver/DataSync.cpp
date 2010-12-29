@@ -67,7 +67,7 @@ const bool DataSync::syncData()
 
         if (sharedData->EREnded
             && sharedData->threadAddingVars != solver.threadNum
-            && sharedData->othersSyncedER.find(solver.threadNum) !=  sharedData->othersSyncedER.end())
+            && sharedData->othersSyncedER.find(solver.threadNum) == sharedData->othersSyncedER.end())
             syncERVarsToHere();
 
         if (sharedData->othersSyncedER.size() == (uint32_t)(solver.numThreads-1)) {
@@ -104,7 +104,6 @@ void DataSync::syncERVarsToHere()
     }
     solver.subsumer->incNumERVars(sharedData->numNewERVars);
     sharedData->othersSyncedER.insert(solver.threadNum);
-    solver.subsumer->setFinishedAddingVarsFalse();
 }
 
 void DataSync::syncERVarsFromHere()
@@ -112,6 +111,7 @@ void DataSync::syncERVarsFromHere()
     sharedData->EREnded = true;
     sharedData->numNewERVars = solver.subsumer->getNumERVars() - sharedData->lastNewERVars;
     sharedData->lastNewERVars = solver.subsumer->getNumERVars();
+    solver.subsumer->setFinishedAddingVarsFalse();
 }
 
 const bool DataSync::shareBinData()
