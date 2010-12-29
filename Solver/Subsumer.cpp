@@ -2367,7 +2367,7 @@ const bool Subsumer::findOrGatesAndTreat()
     bool needToExit;
     #pragma omp critical (ERSync)
     needToExit = (solver.threadNum != solver.dataSync->getThreadAddingVars()
-        || !solver.dataSync->getEREnded());
+        || solver.dataSync->getEREnded());
     if (needToExit) return true;
 
     myTime = cpuTime();
