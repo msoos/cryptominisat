@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class BinClause {
     public:
-        TriClause() {};
-        TriClause(const Lit _lit1, const Lit _lit2, const bool _learnt = true) :
+        BinClause() {};
+        BinClause(const Lit _lit1, const Lit _lit2, const bool _learnt = true) :
         lit1(_lit1)
         , lit2(_lit2)
         , learnt(_learnt)
@@ -49,7 +49,7 @@ class TriClause {
         Lit lit1;
         Lit lit2;
         Lit lit3;
-        const bool learnt;
+        bool learnt;
 };
 
 class SharedData
