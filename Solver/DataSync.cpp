@@ -58,21 +58,55 @@ const bool DataSync::syncData()
     assert(solver.decisionLevel() == 0);
 
     bool ok;
-    #pragma omp critical (unitData)
-    ok = shareUnitData();
-    if (!ok) return false;
+    #pragma omp ciritcal (ERSync)
+    {
+        if (!sharedData->EREnded
+            && sharedData->threadAddingVars == solver.threadNum)
+            syncERVarsFromHere();
 
-    #pragma omp critical (binData)
-    ok = shareBinData();
-    if (!ok) return false;
+        if (sharedData->EREnded
+            && sharedData->threadAddingVars != solver.threadNum
+            && sharedData->othersSyncedER.find(solver.threadNum) !=  sharedData->othersSyncedER.end())
+            syncERVarsToHere();
 
-    #pragma omp critical (triData)
-    ok = shareTriData();
-    if (!ok) return false;
+        if (sharedData->othersSyncedER.size() == (solver.numThreads-1)) {
+            sharedData->threadAddingVars = (sharedData->threadAddingVars+1) % solver.numThreads;
+            sharedData->EREnded = false;
+            sharedData->othersSyncedER.clear();
+        }
+
+        #pragma omp critical (unitData)
+        ok = shareUnitData();
+        if (!ok) return false;
+
+        #pragma omp critical (binData)
+        ok = shareBinData();
+        if (!ok) return false;
+
+        #pragma omp critical (triData)
+        ok = shareTriData();
+        if (!ok) return false;
+    }
 
     lastSyncConf = solver.conflicts;
 
     return true;
+}
+
+void DataSync::syncERVarsHere()
+{
+    for (uint32_t i = 0; i < sharedData->numNewERVars; i++) {
+        solver.newVar();
+    }
+    solver.subsumer->incNumERVars(sharedData->numNewERVars);
+    sharedData->othersSyncedER.insert(solver.threadNum);
+}
+
+void DataSync::syncERVarsFromHere()
+{
+    sharedData->EREnded = true;
+    sharedData->numNewERVars = solver.subsumer->getNumERVars() - sharedData->lastNewERVars;
+    sharedData->lastNewERVars = solver.subsumer->getNumERVars();
 }
 
 const bool DataSync::shareBinData()
@@ -109,38 +143,38 @@ const bool DataSync::shareBinData()
 }
 
 template <class T>
-void DataSync::signalNewBinClause(const T& ps)
+void DataSync::signalNewBinClause(const T& ps, const bool learnt)
 {
     assert(ps.size() == 2);
-    signalNewBinClause(ps[0], ps[1]);
+    signalNewBinClause(ps[0], ps[1], learnt);
 }
-template void DataSync::signalNewBinClause(const Clause& ps);
-template void DataSync::signalNewBinClause(const XorClause& ps);
-template void DataSync::signalNewBinClause(const vec<Lit>& ps);
+template void DataSync::signalNewBinClause(const Clause& ps, const bool learnt);
+template void DataSync::signalNewBinClause(const XorClause& ps, const bool learnt);
+template void DataSync::signalNewBinClause(const vec<Lit>& ps, const bool learnt);
 
-void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
+void DataSync::signalNewBinClause(Lit lit1, Lit lit2, const bool learnt)
 {
     if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
-    newBinClauses.push_back(std::make_pair(lit1, lit2));
+    newBinClauses.push_back(std::make_pair(lit1, lit2, learnt));
 }
 
 template<class T>
-void DataSync::signalNewTriClause(const T& ps)
+void DataSync::signalNewTriClause(const T& ps, const bool learnt)
 {
     assert(ps.size() == 3);
-    signalNewTriClause(ps[0], ps[1], ps[2]);
+    signalNewTriClause(ps[0], ps[1], ps[2], learnt);
 }
-template void DataSync::signalNewTriClause(const Clause& ps);
-template void DataSync::signalNewTriClause(const vec<Lit>& ps);
+template void DataSync::signalNewTriClause(const Clause& ps, const bool learnt);
+template void DataSync::signalNewTriClause(const vec<Lit>& ps, const bool learnt);
 
-void DataSync::signalNewTriClause(const Lit lit1, const Lit lit2, const Lit lit3)
+void DataSync::signalNewTriClause(const Lit lit1, const Lit lit2, const Lit lit3, const bool learnt)
 {
     Lit lits[3];
     lits[0] = lit1;
     lits[1] = lit2;
     lits[2] = lit3;
     std::sort(lits + 0, lits + 3);
-    newTriClauses.push_back(TriClause(lits[0], lits[1], lits[2]));
+    newTriClauses.push_back(TriClause(lits[0], lits[1], lits[2], learnt));
 }
 
 const bool DataSync::shareTriData()

@@ -45,6 +45,7 @@ Subsumer::Subsumer(Solver& s):
     solver(s)
     , totalTime(0.0)
     , numElimed(0)
+    , numERVars(0)
     , numCalls(1)
     , alsoLearnt(false)
 {
@@ -2286,6 +2287,7 @@ void Subsumer::createNewVar()
     newGates.erase(std::unique(newGates.begin(), newGates.end() ), newGates.end() );
 
     uint32_t addedNum = 0;
+    #pragma omp ciritcal (ERSync)
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
         if (i > 100 && n.num < 500) break;
@@ -2323,6 +2325,7 @@ void Subsumer::createNewVar()
         defOfOrGate[c.index] = true;
 
         addedNum++;
+        numERVars++;
     }
 
     std::cout << "c Added " << addedNum << " vars "
@@ -2358,6 +2361,10 @@ const bool Subsumer::findOrGatesAndTreat()
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
     }
     if (!solver.ok) return false;
+
+    #pragma omp ciritcal (ERSync)
+    if (solver.threadNum != solver.dataSync->getThreadAddingVars()
+        || !solver.dataSync->getEREnded()) return true;
 
     myTime = cpuTime();
     orGates.clear();

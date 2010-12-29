@@ -60,6 +60,8 @@ public:
     const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
     const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
     const vector<TransCache>& getBinNonLearntCache() const;
+    const uint32_t getNumERVars() const;
+    void incNumERVars(const uint32_t num);
 
 private:
 
@@ -342,6 +344,7 @@ private:
     uint32_t andGateNumFound;
     uint32_t andGateTotalSize;
     vec<char> dontElim;
+    uint32_t numERVars;
 
     const bool andGateRemCl();
     void findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others);
@@ -529,6 +532,16 @@ inline const double Subsumer::getTotalTime() const
 inline const vector<TransCache>& Subsumer::getBinNonLearntCache() const
 {
     return binNonLearntCache;
+}
+
+inline const uint32_t Subsumer::getNumERVars() const
+{
+    return numERVars;
+}
+
+inline void Subsumer::incNumERVars(const uint32_t num)
+{
+    numERVars += num;
 }
 
 #endif //SIMPLIFIER_H
