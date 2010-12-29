@@ -96,7 +96,8 @@ const bool DataSync::syncData()
 void DataSync::syncERVarsHere()
 {
     for (uint32_t i = 0; i < sharedData->numNewERVars; i++) {
-        solver.newVar();
+        Var var = solver.newVar();
+        solver.subsumer->setVarNonEliminable(var);
     }
     solver.subsumer->incNumERVars(sharedData->numNewERVars);
     sharedData->othersSyncedER.insert(solver.threadNum);

@@ -62,6 +62,7 @@ public:
     const vector<TransCache>& getBinNonLearntCache() const;
     const uint32_t getNumERVars() const;
     void incNumERVars(const uint32_t num);
+    void setVarNonEliminable(const Var var);
 
 private:
 
@@ -542,6 +543,11 @@ inline const uint32_t Subsumer::getNumERVars() const
 inline void Subsumer::incNumERVars(const uint32_t num)
 {
     numERVars += num;
+}
+
+inline void Subsumer::setVarNonEliminable(const Var var)
+{
+    dontElim[var] = true;
 }
 
 #endif //SIMPLIFIER_H
