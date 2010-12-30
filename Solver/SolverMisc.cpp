@@ -145,7 +145,7 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FIL
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+            if (it2->isBinary() && lit < it2->getOtherLit()) {
                 bool toDump = false;
                 if (it2->getLearnt() && alsoLearnt) toDump = true;
                 if (!it2->getLearnt() && alsoNonLearnt) toDump = true;
