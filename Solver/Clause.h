@@ -90,7 +90,7 @@ protected:
     #ifdef __GNUC__
     Lit     data[];
     #else
-    #warning Dangerous packing. We love C++. More info: stackoverflow.com/questions/688471/variable-sized-struct-c
+    //NOTE: Dangerous packing. We love C++. More info: stackoverflow.com/questions/688471/variable-sized-struct-c
     Lit     data[1];
     #endif //__GNUC__
 
