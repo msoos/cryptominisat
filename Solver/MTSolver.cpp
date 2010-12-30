@@ -60,9 +60,9 @@ void MTSolver::setupOneSolver(const int num)
     if (num > 0) {
         if (num % 6 == 0) myConf.fixRestartType = dynamic_restart;
         else if (num % 6 == 4) myConf.fixRestartType = static_restart;
-        myConf.simpBurstSConf *= 1.0 + std::max(0.2*(double)num, 2.0);
-        myConf.simpStartMult *= 1.0 - std::max(0.1*(double)num, 0.7);
-        myConf.simpStartMMult *= 1.0 - std::max(0.1*(double)num, 0.7);
+        myConf.simpBurstSConf *= 1.0f + std::max(0.2f*(float)num, 2.0f);
+        myConf.simpStartMult *= 1.0f - std::max(0.1f*(float)num, 0.7f);
+        myConf.simpStartMMult *= 1.0f - std::max(0.1f*(float)num, 0.7f);
         if (num % 6 == 5) {
             myConf.doVarElim = false;
             myConf.polarity_mode = polarity_false;
