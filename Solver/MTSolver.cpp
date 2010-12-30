@@ -21,6 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <omp.h>
 #include <time.h>
 
+#if defined( _WIN32 ) || defined( _WIN64 )
+#include <windows.h>
+#endif
+
 void MTSolver::printNumThreads() const
 {
     if (conf.verbosity >= 1) {
@@ -109,10 +113,14 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
                 #pragma omp critical (finished)
                 if (finished.size() == (unsigned)numThreadsLocal) mustWait = false;
 
+                #if defined( _WIN32 ) || defined( _WIN64 )
+                Sleep(1);
+                #else
                 timespec req, rem;
                 req.tv_nsec = 10000000;
                 req.tv_sec = 0;
                 nanosleep(&req, &rem);
+                #endif
             }
 
             finishedThread = threadNum;
