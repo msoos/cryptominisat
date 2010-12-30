@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 #include <omp.h>
 #include <time.h>
+#include <algorithm>
 
 #if defined( _WIN32 ) || defined( _WIN64 )
 #include <windows.h>
