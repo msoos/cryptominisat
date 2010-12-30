@@ -2414,9 +2414,9 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
 
         if (relativeStart == (RESTART_TYPE_DECIDER_UNTIL-1)) {
             RestartType tmp;
-            if (conf.fixRestartType == auto_restart)
+            if (conf.fixRestartType == auto_restart) {
                 tmp = restartTypeChooser->choose();
-            else
+            } else
                 tmp = conf.fixRestartType;
 
             if (tmp == dynamic_restart) {
@@ -2430,6 +2430,12 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
 
                 if (!matrixFinder->findMatrixes()) return false;
             }
+
+            tmp = dynamic_restart;
+            if (conf.verbosity >= 1)
+                std::cout << "c Forcing dynamic restart strategy"
+                << std::endl;
+
             lastSelectedRestartType = tmp;
             restartType = tmp;
             restartTypeChooser->reset();
