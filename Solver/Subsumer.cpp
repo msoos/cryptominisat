@@ -47,7 +47,7 @@ Subsumer::Subsumer(Solver& s):
     , numElimed(0)
     , numERVars(0)
     , finishedAddingVars(false)
-    , numCalls(1)
+    , numCalls(0)
     , alsoLearnt(false)
 {
 };
@@ -1261,6 +1261,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     double myTime = cpuTime();
     clauseID = 0;
     clearAll();
+    if (!alsoLearnt) numCalls++;
 
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
@@ -1306,7 +1307,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         numMaxSubsume1 = 2*1000*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         if (solver.conf.doSubsWNonExistBins) {
-            if (numCalls > 7) makeAllBinsNonLearnt();
+            if (numCalls > 3) makeAllBinsNonLearnt();
             if (!subsWNonExistBinsFill()) return false;
             if (!subsumeNonExist()) return false;
         }
@@ -1367,7 +1368,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
 
-    if (solver.conf.doGateFind && alsoLearnt && numCalls > 7 && !findOrGatesAndTreat()) return false;
+    if (solver.conf.doGateFind && alsoLearnt && numCalls > 3 && !findOrGatesAndTreat()) return false;
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
@@ -1464,8 +1465,6 @@ void Subsumer::setLimits()
         numMaxSubsume1 /= 2;
         numMaxBlockVars = 0;
         numMaxBlockToVisit = 0;
-    } else {
-        numCalls++;
     }
 
     //For debugging
