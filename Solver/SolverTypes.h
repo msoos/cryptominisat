@@ -85,7 +85,7 @@ public:
     }
     inline void print(FILE* outfile = stdout) const
     {
-        fprintf(outfile,"%s%d", sign() ? "-" : "", var()+1);
+        fprintf(outfile,"%s%d ", sign() ? "-" : "", var()+1);
     }
     inline void printFull(FILE* outfile = stdout) const
     {
