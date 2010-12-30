@@ -183,7 +183,7 @@ public:
     const uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     void dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
-    void dumpOrigClauses(const std::string& fileName, const bool alsoLearntBin = false) const;
+    void dumpOrigClauses(const std::string& fileName) const;
 
     #ifdef USE_GAUSS
     const uint32_t get_sum_gauss_called() const;
