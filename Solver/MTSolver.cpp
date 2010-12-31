@@ -243,9 +243,9 @@ void MTSolver::dumpSortedLearnts(const std::string& fileName, const uint32_t max
     solvers[finishedThread]->dumpSortedLearnts(fileName, maxSize);
 }
 
-void MTSolver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntBin) const
+void MTSolver::dumpOrigClauses(const std::string& fileName) const
 {
-    solvers[finishedThread]->dumpSortedLearnts(fileName, alsoLearntBin);
+    solvers[finishedThread]->dumpOrigClauses(fileName);
 }
 
 void MTSolver::setVariableName(const Var var, const std::string& name)
