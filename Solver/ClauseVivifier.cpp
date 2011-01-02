@@ -38,6 +38,7 @@ const bool ClauseVivifier::vivify()
         if (!vivifyClausesCache(solver.clauses, solver.transOTFCache)) return false;
         if (!vivifyClausesCache(solver.clauses, solver.subsumer->getBinNonLearntCache())) return false;
         if (!vivifyClausesCache(solver.learnts, solver.transOTFCache)) return false;
+        if (!vivifyClausesCache(solver.learnts, solver.subsumer->getBinNonLearntCache())) return false;
     }
 
     if (!vivifyClausesNormal()) return false;
