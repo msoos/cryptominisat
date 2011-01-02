@@ -90,7 +90,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             doit(lit, vertex);
         }
 
-        if (solver.conf.doExtendedSCC) {
+        if (solver.conf.doExtendedSCC && solver.conf.doCacheOTFSSR) {
             Lit vertLit = Lit::toLit(vertex);
             vector<Lit>& transCache = solver.transOTFCache[(~vertLit).toInt()].lits;
             vector<Lit>::iterator it = transCache.begin();

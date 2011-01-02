@@ -1341,6 +1341,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 
 void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
 {
+    assert(conf.doCacheOTFSSR);
     vector<Lit>& allAddedToSeen2 = transOTFCache[lit.toInt()].lits;
     allAddedToSeen2.clear();
 
