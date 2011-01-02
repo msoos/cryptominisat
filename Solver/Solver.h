@@ -192,6 +192,9 @@ public:
     const uint32_t get_sum_gauss_unit_truths() const;
     #endif //USE_GAUSS
 
+    void syncData();
+    void finishAddingVars();
+
     //Printing statistics
     void printStats(const int numThreads = 1);
     const uint32_t getNumElimSubsume() const;       ///<Get number of variables eliminated

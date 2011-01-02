@@ -111,7 +111,7 @@ void DataSync::syncERVarsFromHere()
     sharedData->EREnded = true;
     sharedData->numNewERVars = solver.subsumer->getNumERVars() - sharedData->lastNewERVars;
     sharedData->lastNewERVars = solver.subsumer->getNumERVars();
-    solver.subsumer->setFinishedAddingVarsFalse();
+    solver.subsumer->setFinishedAddingVars(false);
 }
 
 const bool DataSync::shareBinData()

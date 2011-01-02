@@ -124,6 +124,20 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
                 #endif
             }
 
+            //Sync ER-ed vars
+            if (ret != l_False) {
+                //Finish the adding of currently selected thread
+                //May Sync a bit, but maybe not all(!!)
+                for (int i = 0; i < numThreadsLocal; i++) {
+                    solvers[i]->finishAddingVars();
+                    solvers[i]->syncData();
+                }
+                //Sync all
+                for (int i = 0; i < numThreadsLocal; i++) {
+                    solvers[i]->syncData();
+                }
+            }
+
             finishedThread = threadNum;
             retVal = ret;
             setUpFinish(retVal, threadNum);
