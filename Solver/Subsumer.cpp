@@ -1446,10 +1446,7 @@ void Subsumer::setLimits()
 
     numMaxElimVars = (solver.order_heap.size()/3)*numCalls;
 
-    if (solver.order_heap.size() > 200000)
-        numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
-    else
-        numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
+    numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
     if (!solver.conf.doSubsume1)
         numMaxSubsume1 = 0;
