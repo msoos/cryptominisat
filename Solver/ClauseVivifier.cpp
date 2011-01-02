@@ -66,7 +66,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 80*1000*1000;
+    uint64_t maxNumProps = 20*1000*1000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxNumProps *=2;
     uint64_t extraDiff = 0;
@@ -80,7 +80,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
     vec<Lit> lits;
     vec<Lit> unused;
 
-    if (solver.clauses.size() < 5000000) {
+    if (solver.clauses.size() < 1000000) {
         //if too many clauses, random order will do perfectly well
         std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
     }
