@@ -2527,12 +2527,20 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         x.addAllXorAsNorm();
     }
 
-    if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
-
     //addSymmBreakClauses();
 
     if (conf.doSortWatched) sortWatched();
     if (conf.doCacheOTFSSR) calcReachability();
+
+    //Free memory if possible
+    for (Var var = 0; var < nVars(); var++) {
+        if (value(var) != l_Undef) {
+            vector<Lit> tmp1;
+            transOTFCache[Lit(var, false).toInt()].lits.swap(tmp1);
+            vector<Lit> tmp2;
+            transOTFCache[Lit(var, true).toInt()].lits.swap(tmp2);
+        }
+    }
 
 end:
     #ifdef BURST_SEARCH
