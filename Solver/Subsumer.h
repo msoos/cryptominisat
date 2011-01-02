@@ -64,7 +64,7 @@ public:
     void incNumERVars(const uint32_t num);
     void setVarNonEliminable(const Var var);
     const bool getFinishedAddingVars() const;
-    void setFinishedAddingVarsFalse();
+    void setFinishedAddingVars(const bool val);
 
 private:
 
@@ -558,9 +558,9 @@ inline const bool Subsumer::getFinishedAddingVars() const
     return finishedAddingVars;
 }
 
-inline void Subsumer::setFinishedAddingVarsFalse()
+inline void Subsumer::setFinishedAddingVars(const bool val)
 {
-    finishedAddingVars = false;
+    finishedAddingVars = val;
 }
 
 #endif //SIMPLIFIER_H

@@ -87,7 +87,12 @@ protected:
     glue, etc. We allocate therefore the clause manually, taking care that
     there is enough space for data[] to hold the literals
     */
+    #ifdef __GNUC__
     Lit     data[];
+    #else
+    //NOTE: Dangerous packing. We love C++. More info: stackoverflow.com/questions/688471/variable-sized-struct-c
+    Lit     data[1];
+    #endif //__GNUC__
 
 #ifdef _MSC_VER
 public:

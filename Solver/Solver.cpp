@@ -641,6 +641,16 @@ void Solver::detachModifiedClause(const Var var1, const Var var2, const uint32_t
     clauses_literals -= origSize;
 }
 
+void Solver::syncData()
+{
+    dataSync->syncData();
+}
+
+void Solver::finishAddingVars()
+{
+    subsumer->setFinishedAddingVars(true);
+}
+
 /**
 @brief Revert to the state at given level
 
