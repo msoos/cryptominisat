@@ -2531,7 +2531,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     //addSymmBreakClauses();
 
     if (conf.doSortWatched) sortWatched();
-    calcReachability();
+    if (conf.doCacheOTFSSR) calcReachability();
 
 end:
     #ifdef BURST_SEARCH
