@@ -66,6 +66,7 @@ SolverConf::SolverConf() :
         , doMaxGlueDel     (false)
         , doPrintAvgBranch (false)
         , doCacheOTFSSR    (true)
+        , doCacheNLBins    (true)
         , doExtendedSCC    (true)
         , doGateFind       (true)
         , doAddBinCache    (false)

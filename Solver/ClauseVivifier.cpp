@@ -34,11 +34,15 @@ const bool ClauseVivifier::vivify()
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
-    if (solver.conf.doCacheOTFSSR && numCalls >= 2) {
-        if (!vivifyClausesCache(solver.clauses, solver.transOTFCache)) return false;
-        if (!vivifyClausesCache(solver.clauses, solver.subsumer->getBinNonLearntCache())) return false;
-        if (!vivifyClausesCache(solver.learnts, solver.transOTFCache)) return false;
-        if (!vivifyClausesCache(solver.learnts, solver.subsumer->getBinNonLearntCache())) return false;
+    if (numCalls >= 2) {
+        if (solver.conf.doCacheOTFSSR) {
+            if (!vivifyClausesCache(solver.clauses, solver.transOTFCache)) return false;
+            if (!vivifyClausesCache(solver.learnts, solver.transOTFCache)) return false;
+        }
+        if (solver.conf.doCacheNLBins) {
+            if (!vivifyClausesCache(solver.clauses, solver.subsumer->getBinNonLearntCache())) return false;
+            if (!vivifyClausesCache(solver.learnts, solver.subsumer->getBinNonLearntCache())) return false;
+        }
     }
 
     if (!vivifyClausesNormal()) return false;

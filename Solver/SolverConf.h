@@ -69,6 +69,7 @@ class SolverConf
         bool      doMaxGlueDel;
         bool      doPrintAvgBranch;
         bool      doCacheOTFSSR;
+        bool      doCacheNLBins;
         bool      doExtendedSCC;
         bool      doGateFind;
         bool      doAddBinCache;

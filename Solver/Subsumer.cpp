@@ -1299,7 +1299,8 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         subsumeBinsWithBins();
         numMaxSubsume1 = 2*1000*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-        if (solver.conf.doSubsWNonExistBins) {
+        if (solver.conf.doSubsWNonExistBins
+            && solver.conf.doCacheNLBins) {
             if (numCalls > 3) makeAllBinsNonLearnt();
             if (!subsWNonExistBinsFill()) return false;
             if (!subsumeNonExist()) return false;
@@ -1361,7 +1362,10 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
 
-    if (solver.conf.doGateFind && alsoLearnt && numCalls > 3 && !findOrGatesAndTreat()) return false;
+    if (solver.conf.doGateFind
+        && solver.conf.doCacheNLBins
+        && alsoLearnt && numCalls > 3
+        && !findOrGatesAndTreat()) return false;
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
