@@ -1282,7 +1282,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         if (seen[l->toInt()] == 0) continue;
         Lit lit = *l;
 
-        if (clDoMinLRec) {
+        if (clDoMinLRec && conf.doCacheOTFSSR) {
             /*if (moreRecurProp >= 450
                 || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
                     && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
