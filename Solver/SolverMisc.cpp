@@ -169,7 +169,7 @@ const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
     return num;
 }
 
-void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntBin) const
+void Solver::dumpOrigClauses(const std::string& fileName) const
 {
     FILE* outfile = fopen(fileName.c_str(), "w");
     if (!outfile) {
@@ -192,7 +192,7 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     }
 
     //binary normal clauses
-    numClauses += countNumBinClauses(alsoLearntBin, true);
+    numClauses += countNumBinClauses(false, true);
 
     //normal clauses
     numClauses += clauses.size();
@@ -251,7 +251,7 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c binary clauses\n");
     fprintf(outfile, "c ---------------\n");
-    dumpBinClauses(alsoLearntBin, true, outfile);
+    dumpBinClauses(false, true, outfile);
 
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c normal clauses\n");
@@ -544,7 +544,7 @@ void Solver::addSymmBreakClauses()
     }
     double myTime = cpuTime();
     std::cout << "c Doing saucy" << std::endl;
-    dumpOrigClauses("origProblem.cnf", true);
+    dumpOrigClauses("origProblem.cnf");
 
     int rvalue;
     rvalue= system("grep -v \"^c\" origProblem.cnf > origProblem2.cnf");
