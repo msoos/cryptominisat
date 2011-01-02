@@ -576,14 +576,7 @@ const bool Subsumer::subsume0AndSubsume1()
     if (addedClauseLits > 1500000) clTouchedTodo /= 2;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
     if (addedClauseLits > 10000000) clTouchedTodo /= 2;
-    if (alsoLearnt) {
-        clTouchedTodo /= 4;
-        /*clTouchedTodo = std::max(clTouchedTodo, (uint32_t)20000);
-        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
-    } else {
-        /*clTouchedTodo = std::max(clTouchedTodo, (uint32_t)20000);
-        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
-    }
+    if (alsoLearnt) clTouchedTodo /= 4;
 
     if (!solver.conf.doSubsume1) clTouchedTodo = 0;
 
