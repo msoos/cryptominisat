@@ -2280,7 +2280,7 @@ void Subsumer::createNewVar()
     #pragma omp critical (ERSync)
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
-        if (i > 100 && n.num < 500) break;
+        if (i > 100 && n.num < 500  || i > 1000) break;
         const Var newVar = solver.newVar();
         dontElim[newVar] = true;
         const Lit newLit = Lit(newVar, false);
