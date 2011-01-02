@@ -2514,6 +2514,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (needToInterrupt) return l_Undef;
 
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
+    if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
