@@ -2237,20 +2237,44 @@ class NewGateData
         uint32_t numClRem;
 };
 
+struct SecondSorter
+{
+    const bool operator() (const std::pair<Var, uint32_t> p1, const std::pair<Var, uint32_t> p2)
+    {
+        return p1.second > p2.second;
+    }
+};
 
 void Subsumer::createNewVar()
 {
     double myTime = cpuTime();
     vector<NewGateData> newGates;
-
     vec<Lit> lits;
     vec<ClauseSimp> subs;
+
     if (solver.negPosDist.size() == 0) return;
     uint32_t size = std::min((uint32_t)solver.negPosDist.size()-1, 400U);
+
+    /*vector<std::pair<Var, uint32_t> > otherSort;
+    for (Var var = 0; var < solver.nVars(); var++) {
+        uint32_t num = occur[Lit(var, false).toInt()].size() + occur[Lit(var, true).toInt()].size();
+        if (num == 0) continue;
+        otherSort.push_back(std::make_pair(var, num));
+    }
+    std::sort(otherSort.begin(), otherSort.end(), SecondSorter());
+    if (otherSort.size() == 0) return;
+    uint32_t size2 = std::min(otherSort.size()-1, (size_t)3000U);*/
+
     uint32_t tries = 0;
     for (; tries < std::min(100000U, size*size/2); tries++) {
-        Var var1 = solver.negPosDist[solver.mtrand.randInt(size)].var;
-        Var var2 = solver.negPosDist[solver.mtrand.randInt(size)].var;
+        Var var1, var2;
+        /*if (solver.mtrand.randInt(1) == 1) {
+            var1 = otherSort[solver.mtrand.randInt(size2)].first;
+            var2 = otherSort[solver.mtrand.randInt(size2)].first;
+        } else*/ {
+            var1 = solver.negPosDist[solver.mtrand.randInt(size)].var;
+            var2 = solver.negPosDist[solver.mtrand.randInt(size)].var;
+        }
         if (var1 == var2) continue;
 
         if (solver.value(var1) != l_Undef
