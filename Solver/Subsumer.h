@@ -17,6 +17,8 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include <vector>
 #include <list>
 #include <queue>
+#include <set>
+
 using std::vector;
 using std::list;
 using std::map;
@@ -85,6 +87,7 @@ private:
     vec<CSet* >            iter_sets;      ///<Sets currently used in iterations.
     vec<char>              cannot_eliminate;///<Variables that cannot be eliminated due to, e.g. XOR-clauses
     vec<char>              seen_tmp;       ///<Used in various places to help perform algorithms
+    vec<char>              seen_tmp2;      ///<Used in various places to help perform algorithms
 
     //Global stats
     Solver& solver;                        ///<The solver this simplifier is connected to
@@ -349,7 +352,9 @@ private:
     uint32_t numERVars;
     bool finishedAddingVars;
 
-    const bool andGateRemCl();
+    const bool treatAndGates();
+    const bool treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential);
+    const bool treatAndGateClause(vec<ClauseSimp>& others, std::set<uint32_t>& clToUnlink, const OrGate& gate, const Clause& cl, const uint32_t clIndex);
     void findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others);
 
     //validity checking
@@ -492,6 +497,8 @@ inline void Subsumer::newVar()
     occur       .push();
     seen_tmp    .push(0);       // (one for each polarity)
     seen_tmp    .push(0);
+    seen_tmp2   .push(0);       // (one for each polarity)
+    seen_tmp2   .push(0);
     touchedVars   .push(0);
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
