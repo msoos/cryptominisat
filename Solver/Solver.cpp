@@ -94,7 +94,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , nbCompensateSubsumer (0)
 
         , MYFLAG           (0)
-        , agilityLimit     (0.2)
         #ifdef STATS_NEEDED
         , logger(conf.verbosity)
         , dynamic_behaviour_analysis(false) //do not document the proof as default
