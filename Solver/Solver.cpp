@@ -2145,11 +2145,6 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
     for (;;) {
         PropBy confl = propagate(update);
 
-        if (needToInterrupt) {
-            cancelUntil(0);
-            return l_Undef;
-        }
-
         if (!confl.isNULL()) {
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
             if (ret != l_Nothing) return ret;
