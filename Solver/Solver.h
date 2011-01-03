@@ -379,7 +379,6 @@ protected:
     // For agility-based restarts
     void increaseAgility(const bool flipped);
     double agility;
-    double agilityLimit;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
