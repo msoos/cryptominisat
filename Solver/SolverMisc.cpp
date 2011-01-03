@@ -86,10 +86,7 @@ void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSi
     fprintf(outfile, "c \nc --------------------\n");
     fprintf(outfile, "c clauses from learnts\n");
     fprintf(outfile, "c --------------------\n");
-    if (lastSelectedRestartType == dynamic_restart)
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
-    else
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
+    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
         if (learnts[i]->size() <= maxSize) {
             learnts[i]->print(outfile);
@@ -316,10 +313,7 @@ const vec<Clause*>& Solver::get_learnts() const
 
 const vec<Clause*>& Solver::get_sorted_learnts()
 {
-    if (lastSelectedRestartType == dynamic_restart)
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
-    else
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
+    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
     return learnts;
 }
 

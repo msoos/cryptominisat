@@ -46,7 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ClauseAllocator::ClauseAllocator()
 {
     assert(MIN_LIST_SIZE < MAXSIZE);
-    assert(sizeof(Clause) + 2*sizeof(Lit) > sizeof(NewPointerAndOffset));
+    assert(sizeof(Clause) + 2*sizeof(Lit) >= sizeof(NewPointerAndOffset));
 }
 
 /**

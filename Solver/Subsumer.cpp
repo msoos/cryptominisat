@@ -214,8 +214,6 @@ void Subsumer::subsume0(Clause& ps)
         if (!ret.subsumedNonLearnt) {
             if (ps.getGlue() > ret.glue)
                 ps.setGlue(ret.glue);
-            if (ps.getMiniSatAct() < ret.act)
-                ps.setMiniSatAct(ret.act);
         } else {
             solver.nbCompensateSubsumer++;
             ps.makeNonLearnt();
@@ -238,7 +236,6 @@ Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
     subsume0Happened ret;
     ret.subsumedNonLearnt = false;
     ret.glue = std::numeric_limits<uint32_t>::max();
-    ret.act = std::numeric_limits< float >::min();
 
     vec<ClauseSimp> subs;
     findSubsumed(ps, abs, subs);
@@ -251,7 +248,6 @@ Subsumer::subsume0Happened Subsumer::subsume0Orig(const T& ps, uint32_t abs)
         Clause* tmp = subs[i].clause;
         if (tmp->learnt()) {
             ret.glue = std::min(ret.glue, tmp->getGlue());
-            ret.act = std::max(ret.act, tmp->getMiniSatAct());
         } else {
             ret.subsumedNonLearnt = true;
         }

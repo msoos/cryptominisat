@@ -270,7 +270,7 @@ const bool DataSync::syncTriFromOthers(const Lit lit1, const vector<TriClause>& 
         tmp[0] = lit1;
         tmp[1] = lit2;
         tmp[2] = lit3;
-        Clause* c = solver.addClauseInt(tmp, 0, cl.learnt, 3, 0, true);
+        Clause* c = solver.addClauseInt(tmp, 0, cl.learnt, 3, true);
         if (c != NULL) solver.learnts.push(c);
         if (!solver.ok) return false;
         recvTriData++;
@@ -343,7 +343,7 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<BinClause>& b
             recvBinData++;
             lits[0] = lit;
             lits[1] = otherLit;
-            solver.addClauseInt(lits, 0, bins[i].learnt, 2, 0, true);
+            solver.addClauseInt(lits, 0, bins[i].learnt, 2, true);
             lits.clear();
             lits.growTo(2);
             if (!solver.ok) goto end;

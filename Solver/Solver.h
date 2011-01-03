@@ -90,11 +90,6 @@ using std::endl;
 //=================================================================================================
 // Solver -- the main class:
 
-struct reduceDB_ltMiniSat
-{
-    bool operator () (const Clause* x, const Clause* y);
-};
-
 struct reduceDB_ltGlucose
 {
     bool operator () (const Clause* x, const Clause* y);
@@ -143,7 +138,7 @@ public:
     template<class T>
     bool    addClause (T& ps, const uint32_t group = 0, const char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool    addLearntClause(T& ps, const uint32_t group = 0, const char* group_name = NULL, const uint32_t glue = 10, const float miniSatActivity = 10.0);
+    bool    addLearntClause(T& ps, const uint32_t group = 0, const char* group_name = NULL, const uint32_t glue = 10);
     template<class T>
     bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, const char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
@@ -335,7 +330,6 @@ protected:
     vec<Clause*>        learnts;          ///< List of learnt clauses.
     uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
-    double              cla_inc;          ///< Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          ///< The current assignments
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
@@ -477,17 +471,15 @@ protected:
     /////////////////
     // Maintaining Variable/Clause activity:
     /////////////////
-    void     claBumpActivity (Clause& c);
     void     varDecayActivity ();                      // Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
     void     varBumpActivity  (Var v);                 // Increase a variable with the current 'bump' value.
-    void     claDecayActivity ();                      // Decay all clauses with the specified factor. Implemented by increasing the 'bump' value instead.
 
     /////////////////
     // Operations on clauses:
     /////////////////
     template<class T> const bool addClauseHelper(T& ps, const uint32_t group, const char* group_name);
     template <class T>
-    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0, const bool inOriginalInput = false);
+    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const bool inOriginalInput = false);
     template<class T>
     XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group, const bool learnt = false);
     void       attachBinClause(const Lit lit1, const Lit lit2, const bool learnt);
@@ -680,21 +672,6 @@ inline void Solver::varBumpActivity(Var v)
     // Update order_heap with respect to new activity:
     if (order_heap.inHeap(v))
         order_heap.decrease(v);
-}
-
-inline void Solver::claBumpActivity (Clause& c)
-{
-    if ( (c.getMiniSatAct() += cla_inc) > 1e20 ) {
-        // Rescale:
-        for (uint32_t i = 0; i < learnts.size(); i++)
-            learnts[i]->getMiniSatAct() *= 1e-17;
-        cla_inc *= 1e-20;
-    }
-}
-
-inline void Solver::claDecayActivity()
-{
-    cla_inc *= conf.clause_decay;
 }
 
 inline bool Solver::locked(const Clause& c) const

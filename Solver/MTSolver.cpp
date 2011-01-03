@@ -203,13 +203,13 @@ template<class T> bool MTSolver::addClause (T& ps, const uint32_t group, const c
 template bool MTSolver::addClause(vec<Lit>& ps, const uint32_t group, const char* group_name);
 template bool MTSolver::addClause(Clause& ps, const uint32_t group, const char* group_name);
 
-template<class T> bool MTSolver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity)
+template<class T> bool MTSolver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue)
 {
     bool globalRet = true;
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
         std::copy(ps.getData(), ps.getDataEnd(), copyPS.getData());
-        bool ret = solvers[i]->addLearntClause(copyPS, group, group_name, glue, miniSatActivity);
+        bool ret = solvers[i]->addLearntClause(copyPS, group, group_name, glue);
         if (ret == false) {
             #pragma omp critical
             globalRet = false;
@@ -218,8 +218,8 @@ template<class T> bool MTSolver::addLearntClause(T& ps, const uint32_t group, co
 
     return globalRet;
 }
-template bool MTSolver::addLearntClause(vec<Lit>& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
-template bool MTSolver::addLearntClause(Clause& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
+template bool MTSolver::addLearntClause(vec<Lit>& ps, const uint32_t group, const char* group_name, const uint32_t glue);
+template bool MTSolver::addLearntClause(Clause& ps, const uint32_t group, const char* group_name, const uint32_t glue);
 
 template<class T> bool MTSolver::addXorClause (T& ps, bool xorEqualFalse, const uint32_t group, const char* group_name)
 {

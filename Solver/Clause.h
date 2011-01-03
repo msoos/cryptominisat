@@ -70,8 +70,6 @@ protected:
     uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
     uint32_t mySize:18; ///<The current size of the clause
 
-    float miniSatAct; ///<Clause activity according to MiniSat
-
     uint32_t abst; //Abstraction of clause
 
     #ifdef STATS_NEEDED
@@ -109,7 +107,6 @@ public:
         setGroup(_group);
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
-        miniSatAct = 0;
         glue = MAX_THEORETICAL_GLUE;
         setStrenghtened();
     }
@@ -142,21 +139,6 @@ public:
     const bool learnt() const
     {
         return isLearnt;
-    }
-
-    float& getMiniSatAct()
-    {
-        return miniSatAct;
-    }
-
-    void setMiniSatAct(const float newMiniSatAct)
-    {
-        miniSatAct = newMiniSatAct;
-    }
-
-    const float& getMiniSatAct() const
-    {
-        return miniSatAct;
     }
 
     const bool getStrenghtened() const
@@ -202,10 +184,9 @@ public:
         isLearnt = false;
     }
 
-    void makeLearnt(const uint32_t newGlue, const float newMiniSatAct)
+    void makeLearnt(const uint32_t newGlue)
     {
         glue = newGlue;
-        miniSatAct = newMiniSatAct;
         isLearnt = true;
     }
 
@@ -254,7 +235,7 @@ public:
     void print(FILE* to = stdout) const
     {
         plainPrint(to);
-        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
+        fprintf(to, "c clause learnt %s glue %d group %d\n", (learnt() ? "yes" : "no"), getGlue(), getGroup());
     }
 
     void plainPrint(FILE* to = stdout) const
@@ -308,8 +289,6 @@ public:
     {
         if (other.getGlue() < getGlue())
             setGlue(other.getGlue());
-        if (other.getMiniSatAct() > getMiniSatAct())
-            setMiniSatAct(other.getMiniSatAct());
     }
 };
 
@@ -346,7 +325,7 @@ public:
     void print(FILE* to = stdout) const
     {
         plainPrint(to);
-        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
+        fprintf(to, "c clause learnt %s glue %d group %d\n", (learnt() ? "yes" : "no"), getGlue(), getGroup());
     }
 
     void plainPrint(FILE* to = stdout) const

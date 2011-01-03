@@ -80,7 +80,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
 
         , ok               (true)
         , numBins          (0)
-        , cla_inc          (1)
         , qhead            (0)
         , mtrand           ((unsigned long int)0)
 
@@ -357,7 +356,7 @@ and only internally
 */
 template <class T>
 Clause* Solver::addClauseInt(T& ps, uint32_t group
-                            , const bool learnt, const uint32_t glue, const float miniSatActivity
+                            , const bool learnt, const uint32_t glue
                             , const bool inOriginalInput)
 {
     assert(ok);
@@ -387,7 +386,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
 
     if (ps.size() > 2) {
         Clause* c = clauseAllocator.Clause_new(ps, group);
-        if (learnt) c->makeLearnt(glue, miniSatActivity);
+        if (learnt) c->makeLearnt(glue);
         attachClause(*c);
         if (ps.size() == 3 && !inOriginalInput) dataSync->signalNewTriClause(ps, learnt);
         return c;
@@ -399,8 +398,8 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
     }
 }
 
-template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
-template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
+template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt, const uint32_t glue, const bool inOriginalInput);
+template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt, const uint32_t glue, const bool inOriginalInput);
 
 template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group, const char* group_name)
 {
@@ -457,7 +456,7 @@ template<class T>
 bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
 {
     if (!addClauseHelper(ps, group, group_name)) return false;
-    Clause* c = addClauseInt(ps, group, false, 0, 0, true);
+    Clause* c = addClauseInt(ps, group, false, 0, true);
     if (c != NULL) clauses.push(c);
 
     return ok;
@@ -468,17 +467,17 @@ template bool Solver::addClause(Clause& ps, const uint32_t group, const char* gr
 
 
 template<class T>
-bool Solver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity)
+bool Solver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue)
 {
     if (!addClauseHelper(ps, group, group_name)) return false;
-    Clause* c = addClauseInt(ps, group, true, glue, miniSatActivity, true);
+    Clause* c = addClauseInt(ps, group, true, glue, true);
     if (c != NULL) learnts.push(c);
 
     return ok;
 }
 
-template bool Solver::addLearntClause(vec<Lit>& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
-template bool Solver::addLearntClause(Clause& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
+template bool Solver::addLearntClause(vec<Lit>& ps, const uint32_t group, const char* group_name, const uint32_t glue);
+template bool Solver::addLearntClause(Clause& ps, const uint32_t group, const char* group_name, const uint32_t glue);
 
 
 /**
@@ -1127,9 +1126,6 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
 
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
-
-        if (update && restartType == static_restart && confl.isClause() && confl.getClause()->learnt())
-            claBumpActivity(*confl.getClause());
 
         for (uint32_t j = (p == lit_Undef) ? 0 : 1, size = confl.size(); j != size; j++) {
             Lit q = confl[j];
@@ -1940,16 +1936,6 @@ inline const uint32_t Solver::calcNBLevels(const T& ps)
 |    Remove half of the learnt clauses, minus the clauses locked by the current assignment. Locked
 |    clauses are clauses that are reason to some assignment. Binary clauses are never removed.
 |________________________________________________________________________________________________@*/
-bool  reduceDB_ltMiniSat::operator () (const Clause* x, const Clause* y) {
-    const uint32_t xsize = x->size();
-    const uint32_t ysize = y->size();
-
-    assert(xsize > 2 && ysize > 2);
-    if (x->getMiniSatAct() == y->getMiniSatAct())
-        return xsize > ysize;
-    else return x->getMiniSatAct() < y->getMiniSatAct();
-}
-
 bool  reduceDB_ltGlucose::operator () (const Clause* x, const Clause* y) {
     const uint32_t xsize = x->size();
     const uint32_t ysize = y->size();
@@ -1971,10 +1957,7 @@ void Solver::reduceDB()
     uint32_t     i, j;
 
     nbReduceDB++;
-    if (lastSelectedRestartType == dynamic_restart)
-        std::sort(learnts.getData(), learnts.getDataEnd(), reduceDB_ltGlucose());
-    else
-        std::sort(learnts.getData(), learnts.getDataEnd(), reduceDB_ltMiniSat());
+    std::sort(learnts.getData(), learnts.getDataEnd(), reduceDB_ltGlucose());
 
     #ifdef VERBOSE_DEBUG
     std::cout << "Cleaning clauses" << std::endl;
@@ -2394,7 +2377,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     }
 
     varDecayActivity();
-    if (update && restartType == static_restart) claDecayActivity();
 
     return l_Nothing;
 }
