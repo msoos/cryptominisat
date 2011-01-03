@@ -1977,7 +1977,7 @@ void Solver::reduceDB()
     #endif
 
 
-    const uint32_t removeNum = (double)learnts.size() * (double)RATIOREMOVECLAUSES;
+    uint32_t removeNum = (double)learnts.size() * (double)RATIOREMOVECLAUSES;
     uint32_t totalNumRemoved = 0;
     uint32_t totalNumNonRemoved = 0;
     uint64_t totalGlueOfRemoved = 0;
@@ -1985,7 +1985,7 @@ void Solver::reduceDB()
     uint64_t totalGlueOfNonRemoved = 0;
     uint64_t totalSizeOfNonRemoved = 0;
     uint32_t numThreeLongLearnt = 0;
-    for (i = j = 0; i != removeNum; i++){
+    for (i = j = 0; i != std::min(removeNum, learnts.size()); i++){
         if (i+1 < removeNum) __builtin_prefetch(learnts[i+1], 0, 0);
         assert(learnts[i]->size() > 2);
         if (!locked(*learnts[i])
@@ -2001,6 +2001,7 @@ void Solver::reduceDB()
             totalSizeOfNonRemoved += learnts[i]->size();
             totalNumNonRemoved++;
             numThreeLongLearnt += (learnts[i]->size()==3);
+            removeNum++;
             learnts[j++] = learnts[i];
         }
     }
