@@ -260,8 +260,7 @@ public:
     void plainPrint(FILE* to = stdout) const
     {
         for (uint32_t i = 0; i < size(); i++) {
-            if (data[i].sign()) fprintf(to, "-");
-            fprintf(to, "%d ", data[i].var() + 1);
+            data[i].print(to);
         }
         fprintf(to, "0\n");
     }
