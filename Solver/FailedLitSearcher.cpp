@@ -394,11 +394,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     assert(solver.decisionLevel() > 0);
-    vector<Lit> oldCache;
+    //vector<Lit> oldCache;
     TransCache& lit1OTFCache = solver.transOTFCache[(~lit1).toInt()];
     if (solver.conf.doCacheOTFSSR) {
         lit1OTFCache.conflictLastUpdated = solver.conflicts;
-        oldCache.swap(lit1OTFCache.lits);
+        //oldCache.swap(lit1OTFCache.lits);
+        lit1OTFCache.lits.clear();
     }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x = solver.trail[c].var();
@@ -432,8 +433,8 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.cancelUntilLight();
 
-    if (solver.conf.doHyperBinRes) hyperBinResAll(lit1, oldCache);
-    oldCache.clear();
+    if (solver.conf.doHyperBinRes) hyperBinResAll(lit1/*, oldCache*/);
+    //oldCache.clear();
     if (!performAddBinLaters()) return false;
 
     #ifdef DEBUG_HYPERBIN
@@ -458,7 +459,8 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     TransCache& lit2OTFCache = solver.transOTFCache[(~lit2).toInt()];
     if (solver.conf.doCacheOTFSSR) {
         lit2OTFCache.conflictLastUpdated = solver.conflicts;
-        oldCache.swap(lit2OTFCache.lits);
+        //oldCache.swap(lit2OTFCache.lits);
+        lit2OTFCache.lits.clear();
     }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x  = solver.trail[c].var();
@@ -513,8 +515,8 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
     solver.cancelUntilLight();
 
-    if (solver.conf.doHyperBinRes) hyperBinResAll(lit2, oldCache);
-    oldCache.clear();
+    if (solver.conf.doHyperBinRes) hyperBinResAll(lit2/*, oldCache*/);
+    //oldCache.clear();
     if (!performAddBinLaters()) return false;
 
     for(uint32_t i = 0; i != bothSame.size(); i++) {
@@ -554,9 +556,9 @@ const bool FailedLitSearcher::performAddBinLaters()
     return true;
 }
 
-void FailedLitSearcher::hyperBinResAll(const Lit litProp, const vector<Lit>& oldCache)
+void FailedLitSearcher::hyperBinResAll(const Lit litProp/*, const vector<Lit>& oldCache*/)
 {
-    if (solver.conf.doAddBinCache) {
+    /*if (solver.conf.doAddBinCache) {
         //Not forgetting stuff already known at one point from cache
         for (vector<Lit>::const_iterator it = oldCache.begin(), end = oldCache.end(); it != end; it++) {
         const Lit lit = *it;
@@ -569,7 +571,7 @@ void FailedLitSearcher::hyperBinResAll(const Lit litProp, const vector<Lit>& old
 
             if (!unPropagatedBin[it->var()]) addBinLater.push_back(std::make_pair(~litProp, *it));
         }
-    }
+    }*/
 
     //Hyper-binary resolution
     if (hyperbinProps < maxHyperBinProps) hyperBinResolution(litProp);

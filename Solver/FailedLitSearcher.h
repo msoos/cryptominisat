@@ -180,7 +180,7 @@ class FailedLitSearcher {
             }
         };
         uint32_t addedBin;
-        void hyperBinResAll(const Lit litProp, const vector<Lit>& oldCache);
+        void hyperBinResAll(const Lit litProp/*, const vector<Lit>& oldCache*/);
         void hyperBinResolution(const Lit lit);
         BitArray unPropagatedBin;
         BitArray needToVisit;

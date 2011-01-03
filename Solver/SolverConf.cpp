@@ -69,7 +69,6 @@ SolverConf::SolverConf() :
         , doCacheNLBins    (true)
         , doExtendedSCC    (true)
         , doGateFind       (true)
-        , doAddBinCache    (false)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)
