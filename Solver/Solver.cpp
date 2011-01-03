@@ -2155,6 +2155,14 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
         PropBy confl = propagate(update);
 
         if (!confl.isNULL()) {
+            /*if (conflicts % 100 == 99) {
+                std::cout << "dyn: " << (restartType == dynamic_restart)
+                << ", confl: " << conflicts
+                << ", rest: " << starts
+                << ", agility : " << std::fixed << std::setprecision(2) << agility
+                << ", agilityLimit : " << std::fixed << std::setprecision(2) << conf.agilityLimit << std::endl;
+            }*/
+
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
             if (ret != l_Nothing) return ret;
         } else {
