@@ -72,6 +72,7 @@ class SolverConf
         bool      doCacheNLBins;
         bool      doExtendedSCC;
         bool      doGateFind;
+        bool      doAlwaysFMinim;
 
         //interrupting & dumping
         uint32_t  maxRestarts;

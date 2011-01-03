@@ -1247,12 +1247,15 @@ form to carry out the forward-self-subsuming resolution
 */
 void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 {
+    if (!conf.doCacheOTFSSR || !conf.doMinimLMoreRecur) return;
     //80 million is kind of a hack. It seems that the longer the solving
     //the slower this operation gets. So, limiting the "time" with total
     //number of conflict literals is maybe a good way of doing this
     bool clDoMinLRec = false;
-    if (conf.doCacheOTFSSR && conf.doMinimLMoreRecur) {
-        switch(lastSelectedRestartType) {
+    if (conf.doAlwaysFMinim)
+        clDoMinLRec = true;
+    else {
+        switch(subRestartType) {
             case dynamic_restart :
                 clDoMinLRec |= glue < 0.6*glueHistory.getAvgAllDouble();
                 //NOTE: No "break;" here on purpose
@@ -1282,7 +1285,12 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
                 || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
                     && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
                ) {*/
-                for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
+                const TransCache& cache1 = transOTFCache[l->toInt()];
+                for (vector<Lit>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
+                    seen[(~(*it)).toInt()] = 0;
+                }
+                const TransCache& cache2 = subsumer->getBinNonLearntCache()[l->toInt()];
+                for (vector<Lit>::const_iterator it = cache2.lits.begin(), end2 = cache2.lits.end(); it != end2; it++) {
                     seen[(~(*it)).toInt()] = 0;
                 }
             /*} else {
