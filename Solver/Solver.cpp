@@ -100,7 +100,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , learnt_clause_group(0)
         , libraryCNFFile   (NULL)
         , restartType      (static_restart)
-        , lastSelectedRestartType (static_restart)
+        , subRestartType   (static_restart)
         , simplifying      (false)
         , totalSimplifyTime(0.0)
         , numSimplifyRounds(0)
@@ -1020,7 +1020,7 @@ Lit Solver::pickBranchLit()
         if (!simplifying && value(next) == l_Undef && decision_var[next]) {
             signSet = true;
             if (avgBranchDepth.isvalid())
-                signSetTo = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
+                signSetTo = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((subRestartType == static_restart) ? 2 : 1) ) == 1);
             else
                 signSetTo = polarity[next];
             Lit nextLit = Lit(next, signSetTo);
@@ -1047,7 +1047,7 @@ Lit Solver::pickBranchLit()
                 sign = mtrand.randInt(1);
             #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
             else if (avgBranchDepth.isvalid())
-                sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
+                sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((subRestartType == static_restart) ? 2 : 1) ) == 1);
             #endif
             else
                 sign = polarity[next];
@@ -1138,7 +1138,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
                 if (level[my_var] >= (int)decisionLevel()) {
                     pathC++;
                     #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
-                    if (lastSelectedRestartType == dynamic_restart
+                    if (subRestartType == dynamic_restart
                         && reason[q.var()].isClause()
                         && !reason[q.var()].isNULL()
                         && clauseAllocator.getPointer(reason[q.var()].getClause())->learnt())
@@ -1212,16 +1212,16 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
         out_btlevel = level[out_learnt[1].var()];
     }
 
-    if (lastSelectedRestartType == dynamic_restart) {
-        #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
+    #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
+    if (subRestartType == dynamic_restart) {
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
             PropBy cl = reason[lastDecisionLevel[i]];
             if (cl.isClause() && clauseAllocator.getPointer(cl.getClause())->getGlue() < glue)
                 varBumpActivity(lastDecisionLevel[i]);
         }
         lastDecisionLevel.clear();
-        #endif
     }
+    #endif
 
     //We can only on-the-fly subsume clauses that are not 2- or 3-long
     //furthermore, we cannot subsume a clause that is marked for deletion
@@ -1989,7 +1989,7 @@ void Solver::reduceDB()
         if (i+1 < removeNum) __builtin_prefetch(learnts[i+1], 0, 0);
         assert(learnts[i]->size() > 2);
         if (!locked(*learnts[i])
-            && (lastSelectedRestartType == static_restart || learnts[i]->getGlue() > 2)
+            && learnts[i]->getGlue() > 2
             && learnts[i]->size() > 3) { //we cannot update activity of 3-longs because of wathclists
 
             totalGlueOfRemoved += learnts[i]->getGlue();
@@ -2418,21 +2418,17 @@ const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
                 if (conf.verbosity >= 1)
                     std::cout << "c Decided on dynamic restart strategy"
                     << std::endl;
+                conf.agilityLimit = 0.2;
             } else  {
                 if (conf.verbosity >= 1)
                     std::cout << "c Decided on static restart strategy"
                     << std::endl;
-
-                if (!matrixFinder->findMatrixes()) return false;
+                conf.agilityLimit = 0.1;
             }
+            if (!matrixFinder->findMatrixes()) return false;
 
-            tmp = dynamic_restart;
-            if (conf.verbosity >= 1)
-                std::cout << "c Forcing dynamic restart strategy"
-                << std::endl;
-
-            lastSelectedRestartType = tmp;
-            restartType = tmp;
+            subRestartType = tmp;
+            restartType = dynamic_restart;
             restartTypeChooser->reset();
         }
     }
@@ -2450,7 +2446,7 @@ inline void Solver::setDefaultRestartType()
     conflSizeHist.clear();
     conflSizeHist.initSize(1000);
 
-    lastSelectedRestartType = restartType;
+    subRestartType = restartType;
 }
 
 /**
@@ -2554,13 +2550,14 @@ If so, we also do the things to be done if the full restart is effected.
 Currently, this means we try to find disconnected components and solve
 them with sub-solvers using class PartHandler
 */
-const bool Solver::checkFullRestart(uint32_t& lastFullRestart)
+const bool Solver::fullRestart(uint32_t& lastFullRestart)
 {
     #ifdef USE_GAUSS
     clearGaussMatrixes();
     #endif //USE_GAUSS
 
     restartType = static_restart;
+    subRestartType = static_restart;
     lastFullRestart = starts;
     fullStarts++;
 
@@ -2741,8 +2738,8 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
             nextSimplify = std::min((uint64_t)((double)conflicts * conf.simpStartMMult), conflicts + MAX_CONFL_BETWEEN_SIMPLIFY);
             if (status != l_Undef) break;
 
-            if ((numSimplifyRounds == 1 ||  numSimplifyRounds == 3)) {
-                if (!checkFullRestart(lastFullRestart)) return l_False;
+            if ((numSimplifyRounds == 1 ||  numSimplifyRounds % 5 == 3)) {
+                if (!fullRestart(lastFullRestart)) return l_False;
                 nof_conflicts = conf.restart_first;
             }
             if (numSimplifyRounds % 3 == 0) nof_conflicts = conf.restart_first;

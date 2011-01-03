@@ -551,9 +551,9 @@ protected:
     /////////////////////////
     const bool  chooseRestartType(const uint32_t& lastFullRestart);
     void        setDefaultRestartType();
-    const bool  checkFullRestart(uint32_t& lastFullRestart);
+    const bool  fullRestart(uint32_t& lastFullRestart);
     RestartType restartType;             ///<Used internally to determine which restart strategy is currently in use
-    RestartType lastSelectedRestartType; ///<The last selected restart type. Used when we are just after a full restart, and need to know how to really act
+    RestartType subRestartType;
 
     //////////////////////////
     // Problem simplification
