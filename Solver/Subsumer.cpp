@@ -2301,7 +2301,7 @@ void Subsumer::createNewVar()
         findSubsumed(lits, calcAbstraction(lits), subs);
 
         uint32_t potential = 0;
-        if (tries < 2000) {
+        if (tries < 1000) {
             OrGate gate;
             gate.eqLit = Lit(0,false);
             gate.lits.push_back(lit1);
