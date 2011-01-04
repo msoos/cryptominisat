@@ -2205,7 +2205,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumC
     switch (restartType) {
     case dynamic_restart:
         if ((conflictC > MIN_GLUE_RESTART && agility < conf.agilityLimit)
-            /*|| (glueHistory.isvalid() && 0.7*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/) {
+            /*|| (glueHistory.isvalid() && 0.95*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
             if (glueHistory.isvalid()) {
