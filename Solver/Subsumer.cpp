@@ -1351,17 +1351,16 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     endSimplifyBySubsumption:
 
     if (!solver.ok) return false;
+    if (solver.conf.doGateFind
+        && solver.conf.doCacheNLBins
+        && alsoLearnt && numCalls > 3
+        && !findOrGatesAndTreat()) return false;
 
     assert(verifyIntegrity());
 
     removeWrong(solver.learnts);
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
-
-    if (solver.conf.doGateFind
-        && solver.conf.doCacheNLBins
-        && alsoLearnt && numCalls > 3
-        && !findOrGatesAndTreat()) return false;
 
     solver.order_heap.filter(Solver::VarFilter(solver));
 
