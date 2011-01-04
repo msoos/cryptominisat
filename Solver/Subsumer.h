@@ -355,7 +355,8 @@ private:
     const bool treatAndGates();
     const bool treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential);
     const bool treatAndGateClause(vec<ClauseSimp>& others, std::set<uint32_t>& clToUnlink, const OrGate& gate, const Clause& cl, const uint32_t clIndex);
-    void findAndGateOtherCl(const Lit lit, const uint32_t size, const uint32_t abst2, vec<ClauseSimp>& others);
+    void findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, vec<ClauseSimp>& others);
+    vector<vector<ClauseSimp> > sizeSortedOcc;
 
     //validity checking
     const bool verifyIntegrity();
