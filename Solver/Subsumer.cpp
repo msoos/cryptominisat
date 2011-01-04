@@ -1350,12 +1350,12 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     } while (cl_touched.nElems() > 100);
     endSimplifyBySubsumption:
 
-    if (!solver.ok) return false;
     if (solver.conf.doGateFind
         && solver.conf.doCacheNLBins
         && alsoLearnt && numCalls > 3
         && !findOrGatesAndTreat()) return false;
 
+    assert(solver.ok);
     assert(verifyIntegrity());
 
     removeWrong(solver.learnts);
