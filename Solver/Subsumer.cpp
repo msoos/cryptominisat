@@ -1409,7 +1409,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
 
     assert(verifyIntegrity());
 
-     if (alsoLearnt && numCalls > 3
+     if (alsoLearnt && numCalls > 3 && solver.conf.doGateFind
         && !findOrGatesAndTreat()) return false;
 
     removeWrong(solver.learnts);

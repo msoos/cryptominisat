@@ -301,7 +301,8 @@ void Main::printUsage(char** argv)
     printf("  --maxgluedel     = Automatically delete clauses over max glue. See '--maxglue'\n");
     printf("  --maxglue        = [0 - 2^%d-1] default: %d. Glue value above which we\n", MAX_GLUE_BITS, conf.maxGlue);
     printf("                     throw the clause away on backtrack.\n");
-    printf("  --threads        = Num threads (default is 1)");
+    printf("  --threads        = Num threads (default is 1)\n");
+    printf("  --nogatefind     = Don't find gates&do ER\n");
     printf("\n");
 }
 
@@ -594,6 +595,8 @@ void Main::parseCommandLine()
             conf.doCacheOTFSSR = false;
         } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
             conf.doRemUselessLBins = false;
+        } else if ((value = hasPrefix(argv[i], "--nogatefind"))) {
+            conf.doGateFind = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 0;
             if (sscanf(value, "%d", &glue) < 0 || glue < 2) {

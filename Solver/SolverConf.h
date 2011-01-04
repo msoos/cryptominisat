@@ -70,6 +70,7 @@ class SolverConf
         bool      doPrintAvgBranch;
         bool      doCacheOTFSSR;
         bool      doExtendedSCC;
+        bool      doGateFind;
 
         //interrupting & dumping
         uint32_t  maxRestarts;
