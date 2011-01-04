@@ -12,4 +12,4 @@ cryptominisat_SOURCES = Main.cpp \
 	SolverMisc.cpp SolverDebug.cpp ClauseAllocator.cpp \
 	UselessBinRemover.cpp SCCFinder.cpp ClauseVivifier.cpp \
 	CompleteDetachReattacher.cpp DimacsParser.cpp \
-	OnlyNonLearntBins.cpp SolverConf.cpp
+	OnlyNonLearntBins.cpp SolverConf.cpp DataSync.cpp
