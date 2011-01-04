@@ -614,6 +614,10 @@ void Main::parseCommandLine()
                 printf("ERROR! numThreads: %s\n", value);
                 exit(0);
             }
+            if (numThreads > 1) {
+                std::cout << "Sorry, currently, multithreading is NOT supported due to ER" << std::endl;
+                exit(-1);
+            }
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
             exit(0);

@@ -132,6 +132,13 @@ public:
         shrink(1);
     }
 
+    void add(const Lit lit)
+    {
+        mySize++;
+        data[mySize-1] = lit;
+        setStrenghtened();
+    }
+
     const bool isXor()
     {
         return isXorClause;
@@ -217,7 +224,7 @@ public:
         abst = calcAbstraction(*this);
     }
 
-    uint32_t getAbst()
+    const uint32_t getAbst() const
     {
         return abst;
     }

@@ -16,6 +16,7 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include <map>
 #include <vector>
 #include <list>
+#include <set>
 #include <queue>
 using std::vector;
 using std::list;
@@ -79,6 +80,7 @@ private:
     vec<CSet* >            iter_sets;      ///<Sets currently used in iterations.
     vec<char>              cannot_eliminate;///<Variables that cannot be eliminated due to, e.g. XOR-clauses
     vec<char>              seen_tmp;       ///<Used in various places to help perform algorithms
+    vec<char>              seen_tmp2;      ///<Used in various places to help perform algorithms
 
     //Global stats
     Solver& solver;                        ///<The solver this simplifier is connected to
@@ -271,6 +273,7 @@ private:
     bool subsNonExistentFinish;
     uint32_t doneNum;
     uint64_t extraTimeNonExist;
+    vector<TransCache> binNonLearntCache;
     vec<Lit> toVisit;      ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (list)
     vec<char> toVisitAll;  ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (contains '1' for literal.toInt() that we visited)
 
@@ -299,6 +302,53 @@ private:
     void touchBlockedVar(const Var x);
     void blockedClauseElimAll(const Lit lit);
 
+    //Gate extraction
+    class OrGate {
+    public:
+        Lit eqLit;
+        vector<Lit> lits;
+    };
+    struct OrGateSorter {
+        const bool operator() (const OrGate& gate1, const OrGate& gate2) {
+            return (gate1.lits.size() > gate2.lits.size());
+        }
+    };
+    struct OrGateSorter2 {
+        const bool operator() (const OrGate& gate1, const OrGate& gate2) {
+            if (gate1.lits.size() > gate2.lits.size()) return true;
+            if (gate1.lits.size() < gate2.lits.size()) return false;
+
+            assert(gate1.lits.size() == gate2.lits.size());
+            for (uint32_t i = 0; i < gate1.lits.size(); i++) {
+                if (gate1.lits[i] < gate2.lits[i]) return true;
+                if (gate1.lits[i] > gate2.lits[i]) return false;
+            }
+
+            return false;
+        }
+    };
+    const bool findOrGatesAndTreat();
+    void findOrGates(const bool learntGatesToo);
+    void findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learntGatesToo);
+    const bool shortenWithOrGate(const OrGate& gate);
+    int64_t gateLitsRemoved;
+    uint64_t totalOrGateSize;
+    vector<OrGate> orGates;
+    uint32_t numOrGateReplaced;
+    const bool findEqOrGates();
+    vec<char> defOfOrGate;
+    void createNewVar();
+    const bool doAllOptimisationWithGates();
+    uint32_t andGateNumFound;
+    uint32_t andGateTotalSize;
+    vec<char> dontElim;
+    uint32_t numERVars;
+    bool finishedAddingVars;
+
+    const bool treatAndGates();
+    const bool treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential);
+    const bool treatAndGateClause(vec<ClauseSimp>& others, std::set<uint32_t>& clToUnlink, const OrGate& gate, const Clause& cl, const uint32_t clIndex);
+    void findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others);
 
     //validity checking
     const bool verifyIntegrity();
@@ -440,6 +490,8 @@ inline void Subsumer::newVar()
     occur       .push();
     seen_tmp    .push(0);       // (one for each polarity)
     seen_tmp    .push(0);
+    seen_tmp2   .push(0);       // (one for each polarity)
+    seen_tmp2   .push(0);
     touchedVars   .push(0);
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
@@ -449,6 +501,10 @@ inline void Subsumer::newVar()
     ol_seenNeg.push(1);
     ol_seenNeg.push(1);
     touch(solver.nVars()-1);
+    dontElim.push(0);
+
+    binNonLearntCache.push_back(TransCache());
+    binNonLearntCache.push_back(TransCache());
 }
 
 inline const map<Var, vector<vector<Lit> > >& Subsumer::getElimedOutVar() const

@@ -80,6 +80,9 @@ public:
     bool operator <  (const Lit& p) const {
         return x < p.x;     // '<' guarantees that p, ~p are adjacent in the ordering.
     }
+    bool operator >  (const Lit& p) const {
+        return x > p.x;
+    }
     inline void print(FILE* outfile = stdout) const
     {
         fprintf(outfile,"%s%d ", sign() ? "-" : "", var()+1);

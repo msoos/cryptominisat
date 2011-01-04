@@ -189,6 +189,7 @@ Var Solver::newVar(bool dvar)
 
     decision_var.push_back(dvar);
     insertVarOrder(v);
+    lTPolCount.push_back(std::make_pair(0,0));
 
     varReplacer->newVar();
     partHandler->newVar();
@@ -917,7 +918,7 @@ void Solver::saveOTFData()
     assert(decisionLevel() == 1);
 
     Lit lev0Lit = trail[trail_lim[0]];
-    Solver::TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
+    TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
     oTFCache.conflictLastUpdated = conflicts;
     oTFCache.lits.clear();
 
@@ -2259,6 +2260,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         #endif
     //Normal learnt
     } else {
+        bumpUIPPolCount(learnt_clause);
         if (learnt_clause.size() == 2) {
             attachBinClause(learnt_clause[0], learnt_clause[1], true);
             numNewBin++;
@@ -2782,4 +2784,14 @@ void Solver::handleUNSATSolution()
 {
     if (conflict.size() == 0)
         ok = false;
+}
+
+void Solver::bumpUIPPolCount(const vec<Lit>& lits)
+{
+    for (const Lit *l = lits.getData(), *end = lits.getDataEnd(); l != end; l++) {
+        uint32_t factor = 0;
+        if (l == lits.getData()) factor = 1;
+        if (l->sign()) lTPolCount[l->var()].second += factor;
+        else lTPolCount[l->var()].first += factor;
+    }
 }
