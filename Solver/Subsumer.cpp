@@ -2312,7 +2312,7 @@ void Subsumer::createNewVar()
         findSubsumed(lits, calcAbstraction(lits), subs);
 
         uint32_t potential = 0;
-        if (tries < 2000) {
+        if (tries < 10000) {
             OrGate gate;
             gate.eqLit = Lit(0,false);
             gate.lits.push_back(lit1);
@@ -2332,7 +2332,7 @@ void Subsumer::createNewVar()
     uint32_t addedNum = 0;
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
-        if ((i > 100 && n.numLitRem < 500 && n.numClRem < 20) || i > 1000) break;
+        if ((i > 100 && n.numLitRem < 500 && n.numClRem < 15) || i > 1000) break;
         const Var newVar = solver.newVar();
         dontElim[newVar] = true;
         const Lit newLit = Lit(newVar, false);
@@ -2740,10 +2740,18 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     if (occur[(~(gate.lits[0])).toInt()].empty() || occur[(~(gate.lits[1])).toInt()].empty())
         return true;
 
+    for (uint32_t i = 0; i < sizeSortedOcc.size(); i++)
+        sizeSortedOcc[i].clear();
+
     const vec<ClauseSimp>& csOther = occur[(~(gate.lits[1])).toInt()];
+    //std::cout << "csother: " << csOther.size() << std::endl;
     uint32_t abstraction = 0;
+    uint32_t maxSize = 0;
     for (const ClauseSimp *it2 = csOther.getData(), *end2 = csOther.getDataEnd(); it2 != end2; it2++) {
         const Clause& cl = *it2->clause;
+        maxSize = std::max(maxSize, cl.size());
+        if (sizeSortedOcc.size() < maxSize+1) sizeSortedOcc.resize(maxSize+1);
+        sizeSortedOcc[cl.size()].push_back(*it2);
         for (uint32_t i = 0; i < cl.size(); i++) {
             seen_tmp2[cl[i].toInt()] = true;
             abstraction |= 1 << (cl[i].var() & 31);
@@ -2752,14 +2760,18 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     abstraction |= 1 << (gate.lits[0].var() & 31);
 
     vec<ClauseSimp>& cs = occur[(~(gate.lits[0])).toInt()];
+    //std::cout << "cs: " << cs.size() << std::endl;
     for (ClauseSimp *it2 = cs.getData(), *end2 = cs.getDataEnd(); it2 != end2; it2++) {
         const Clause& cl = *it2->clause;
         if ((cl.getAbst() | abstraction) != abstraction) continue;
+        if (cl.size() > maxSize) continue;
+        if (sizeSortedOcc[cl.size()].empty()) continue;
+
         bool needCont = false;
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == ~(gate.lits[0])) continue;
             if (   cl[i] == ~(gate.lits[1])
-                || cl[i] == gate.eqLit
+                || cl[i].var() == gate.eqLit.var()
                 || !seen_tmp2[cl[i].toInt()]
                 ) {
                 needCont = true;
@@ -2775,7 +2787,7 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
             abst2 |= 1 << (cl[i].var() & 31);
         }
         abst2 |= 1 << ((~(gate.lits[1])).var() & 31);
-        findAndGateOtherCl(~(gate.lits[1]), cl.size(), abst2, others);
+        findAndGateOtherCl(sizeSortedOcc[cl.size()], ~(gate.lits[1]), abst2, others);
         foundPotential += others.size();
         if (reallyRemove && !treatAndGateClause(others, clToUnlink, gate, cl, it2->index))
             return false;
@@ -2853,12 +2865,10 @@ const bool Subsumer::treatAndGateClause(vec<ClauseSimp>& others, std::set<uint32
     return true;
 }
 
-inline void Subsumer::findAndGateOtherCl(const Lit lit, const uint32_t size, const uint32_t abst2, vec<ClauseSimp>& others)
+inline void Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, vec<ClauseSimp>& others)
 {
-    vec<ClauseSimp>& cs = occur[lit.toInt()];
-    for (ClauseSimp *it = cs.getData(), *end = cs.getDataEnd(); it != end; it++) {
+    for (vector<ClauseSimp>::const_iterator it = sizeSortedOcc.begin(), end = sizeSortedOcc.end(); it != end; it++) {
         const Clause& cl = *it->clause;
-        if (cl.size() != size) continue;
         if (cl.getAbst() != abst2) continue;
 
         bool OK = true;
