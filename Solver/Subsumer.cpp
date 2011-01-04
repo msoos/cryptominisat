@@ -2812,11 +2812,14 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
         }
         if (needCont) continue;
 
+        uint32_t abst2 = 0;
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == ~(gate.lits[0])) continue;
             seen_tmp[cl[i].toInt()] = true;
+            abst2 |= 1 << (cl[i].var() & 31);
         }
-        findAndGateOtherCl(~(gate.lits[1]), cl.size(), others);
+        abst2 |= 1 << ((~(gate.lits[1])).var() & 31);
+        findAndGateOtherCl(~(gate.lits[1]), cl.size(), abst2, others);
         foundPotential += others.size();
         if (reallyRemove && !treatAndGateClause(others, clToUnlink, gate, cl, it2->index))
             return false;
@@ -2895,12 +2898,13 @@ const bool Subsumer::treatAndGateClause(vec<ClauseSimp>& others, std::set<uint32
     return true;
 }
 
-void Subsumer::findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others)
+inline void Subsumer::findAndGateOtherCl(const Lit lit, const uint32_t size, const uint32_t abst2, vec<ClauseSimp>& others)
 {
     vec<ClauseSimp>& cs = occur[lit.toInt()];
     for (ClauseSimp *it = cs.getData(), *end = cs.getDataEnd(); it != end; it++) {
         const Clause& cl = *it->clause;
         if (cl.size() != size) continue;
+        if (cl.getAbst() != abst2) continue;
 
         bool OK = true;
         for (uint32_t i = 0; i < cl.size(); i++) {
