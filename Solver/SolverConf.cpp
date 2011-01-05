@@ -67,6 +67,7 @@ SolverConf::SolverConf() :
         , doCacheOTFSSR    (true)
         , doExtendedSCC    (true)
         , doGateFind       (true)
+        , doER             (true)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

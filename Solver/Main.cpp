@@ -303,6 +303,7 @@ void Main::printUsage(char** argv)
     printf("                     throw the clause away on backtrack.\n");
     printf("  --threads        = Num threads (default is 1)\n");
     printf("  --nogatefind     = Don't find gates&do ER\n");
+    printf("  --noer           = Don't do ER\n");
     printf("\n");
 }
 
@@ -597,6 +598,8 @@ void Main::parseCommandLine()
             conf.doRemUselessLBins = false;
         } else if ((value = hasPrefix(argv[i], "--nogatefind"))) {
             conf.doGateFind = false;
+        } else if ((value = hasPrefix(argv[i], "--noer"))) {
+            conf.doER = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 0;
             if (sscanf(value, "%d", &glue) < 0 || glue < 2) {
