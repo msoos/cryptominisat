@@ -2229,8 +2229,8 @@ class NewGateData
         {}
         const bool operator<(const NewGateData& n2) const
         {
-            uint32_t value1 = numClRem*10 + numLitRem;
-            uint32_t value2 = n2.numClRem*10 + n2.numLitRem;
+            uint32_t value1 = numClRem*25 + numLitRem;
+            uint32_t value2 = n2.numClRem*25 + n2.numLitRem;
             if (value1 != value2) return(value1 > value2);
             if (lit1 != n2.lit1) return(lit1 > n2.lit1);
             if (lit2 != n2.lit2) return(lit2 > n2.lit2);
@@ -2332,7 +2332,9 @@ void Subsumer::createNewVar()
     uint32_t addedNum = 0;
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
-        if ((i > 100 && n.numLitRem < 500 && n.numClRem < 15) || i > 1000) break;
+        if ((i > 100 && n.numLitRem < 1000 && n.numClRem < 25)
+            || i > ((double)solver.order_heap.size()*0.01)
+            || i > 1000) break;
         const Var newVar = solver.newVar();
         dontElim[newVar] = true;
         const Lit newLit = Lit(newVar, false);
