@@ -2398,6 +2398,7 @@ const bool Subsumer::findOrGatesAndTreat()
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
     }
     if (!solver.ok) return false;
+    if (!solver.conf.doER) return true;
 
     bool needToExit;
     #pragma omp critical (ERSync)

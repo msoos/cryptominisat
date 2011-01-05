@@ -298,7 +298,8 @@ void Main::printUsage(char** argv)
     printf("  --maxglue        = [0 - 2^%d-1] default: %d. Glue value above which we\n", MAX_GLUE_BITS, conf.maxGlue);
     printf("                     throw the clause away on backtrack.\n");
     printf("  --nogates        = Don't find&replace gates\n");
-    printf("  --threads        = Num threads (default is 1)");
+    printf("  --noer           = Don't do ER\n");
+    printf("  --threads        = Num threads (default is 1)\n");
     printf("\n");
 }
 
@@ -607,6 +608,8 @@ void Main::parseCommandLine()
             conf.doMaxGlueDel = true;
         } else if ((value = hasPrefix(argv[i], "--nogates"))) {
             conf.doGateFind = false;
+        } else if ((value = hasPrefix(argv[i], "--noer"))) {
+            conf.doER = false;
         } else if ((value = hasPrefix(argv[i], "--threads="))) {
             numThreads = 0;
             if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {
