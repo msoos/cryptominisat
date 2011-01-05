@@ -2318,10 +2318,11 @@ void Subsumer::createNewVar()
     newGates.erase(std::unique(newGates.begin(), newGates.end() ), newGates.end() );
 
     uint32_t addedNum = 0;
-    #pragma omp critical (ERSync)
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
-        if ((i > 100 && n.numLitRem < 500 && n.numClRem < 15) || i > 1000) break;
+        if ((i > 100 && n.numLitRem < 1000 && n.numClRem < 25)
+            || i > ((double)solver.order_heap.size()*0.01)
+            || i > 1000) break;
         const Var newVar = solver.newVar();
         dontElim[newVar] = true;
         const Lit newLit = Lit(newVar, false);
