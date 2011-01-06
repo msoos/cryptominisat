@@ -1397,7 +1397,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
 
         if (!solver.conf.doVarElim) break;
 
-        if (!eliminateVars()) return false;
+        if (numCalls < 5 && !eliminateVars()) return false;
 
         //subsumeBinsWithBins();
         //if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
@@ -1409,7 +1409,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
 
     assert(verifyIntegrity());
 
-     if (alsoLearnt && numCalls > 3 && solver.conf.doGateFind
+     if (alsoLearnt && numCalls >= 5 && solver.conf.doGateFind
         && !findOrGatesAndTreat()) return false;
 
     removeWrong(solver.learnts);
