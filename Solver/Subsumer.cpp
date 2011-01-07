@@ -1183,6 +1183,7 @@ void Subsumer::clearAll()
     cl_touched.clear();
     defOfOrGate.clear();
     addedClauseLits = 0;
+    numLearntBinVarRemAdded = 0;
 }
 
 const bool Subsumer::eliminateVars()
@@ -1397,7 +1398,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
 
         if (!solver.conf.doVarElim) break;
 
-        if (numCalls < 5 && !eliminateVars()) return false;
+        if (!eliminateVars()) return false;
 
         //subsumeBinsWithBins();
         //if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
@@ -1429,6 +1430,8 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
         << std::endl;
+
+        std::cout << "c learnt bin added due to v-elim: " << numLearntBinVarRemAdded << std::endl;
     }
     totalTime += cpuTime() - myTime;
 
@@ -1823,6 +1826,7 @@ bool Subsumer::maybeEliminate(const Var var)
     numMaxElim -= posSize * negSize + before_literals;
     poss.clear();
     negs.clear();
+    if (numCalls >= 5) addLearntBinaries(var);
     removeClauses(posAll, negAll, var);
 
     #ifndef NDEBUG
@@ -1894,6 +1898,43 @@ bool Subsumer::maybeEliminate(const Var var)
     numElimed++;
     solver.setDecisionVar(var, false);
     return true;
+}
+
+void Subsumer::addLearntBinaries(const Var var)
+{
+    vec<Lit> tmp;
+    Lit lit = Lit(var, false);
+    const vec<Watched>& ws = solver.watches[lit.toInt()];
+    const vec<Watched>& ws2 = solver.watches[(~lit).toInt()];
+
+    for (const Watched *w1 = ws.getData(), *end1 = ws.getDataEnd(); w1 != end1; w1++) {
+        if (!w1->isBinary()) continue;
+        const bool numOneIsLearnt = w1->getLearnt();
+        const Lit lit1 = w1->getOtherLit();
+        if (solver.value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
+
+        for (const Watched *w2 = ws2.getData(), *end2 = ws2.getDataEnd(); w2 != end2; w2++) {
+            if (!w2->isBinary()) continue;
+            const bool numTwoIsLearnt = w2->getLearnt();
+            if (!numOneIsLearnt && !numTwoIsLearnt) {
+                //At least one must be learnt
+                continue;
+            }
+
+            const Lit lit2 = w2->getOtherLit();
+            if (solver.value(lit2) != l_Undef || var_elimed[lit2.var()]) continue;
+
+            tmp.clear();
+            tmp.growTo(2);
+            tmp[0] = lit1;
+            tmp[1] = lit2;
+            Clause* tmpOK = solver.addClauseInt(tmp, 0, true);
+            numLearntBinVarRemAdded++;
+            release_assert(tmpOK == NULL);
+            release_assert(solver.ok);
+        }
+    }
+    assert(solver.value(lit) == l_Undef);
 }
 
 /**

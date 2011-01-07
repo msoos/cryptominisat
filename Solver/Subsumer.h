@@ -240,9 +240,11 @@ private:
             Lit lit2;
             bool isBin;
     };
+    uint32_t numLearntBinVarRemAdded;
     void orderVarsForElim(vec<Var>& order);
     const uint32_t numNonLearntBins(const Lit lit) const;
     bool maybeEliminate(Var x);
+    void addLearntBinaries(const Var var);
     void removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const Var var);
     void removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair<uint32_t, uint32_t>& removed);
     bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
