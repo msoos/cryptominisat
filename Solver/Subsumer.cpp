@@ -417,32 +417,6 @@ const bool Subsumer::cleanClause(Clause& ps)
     return retval;
 }
 
-const bool Subsumer::cleanClause(vec<Lit>& ps) const
-{
-    bool retval = false;
-
-    Lit *i = ps.getData();
-    Lit *j = i;
-    for (Lit *end = ps.getDataEnd(); i != end; i++) {
-        lbool val = solver.value(*i);
-        if (val == l_Undef) {
-            *j++ = *i;
-            continue;
-        }
-        if (val == l_False)
-            continue;
-        if (val == l_True) {
-            *j++ = *i;
-            retval = true;
-            continue;
-        }
-        assert(false);
-    }
-    ps.shrink(i-j);
-
-    return retval;
-}
-
 /**
 @brief Removes a literal from a clause
 
@@ -466,10 +440,17 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     #ifndef TOUCH_LESS
     touch(toRemoveLit, c.clause->learnt());
     #endif
+
+    handleUpdatedClause(c);
+    return;
+}
+
+const bool Subsumer::handleUpdatedClause(ClauseSimp& c)
+{
     if (cleanClause(*c.clause)) {
         unlinkClause(c);
         c.clause = NULL;
-        return;
+        return true;
     }
 
     switch (c.clause->size()) {
@@ -478,12 +459,12 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
             std::cout << "Strenghtened clause to 0-size -> UNSAT"<< std::endl;
             #endif //VERBOSE_DEBUG
             solver.ok = false;
-            break;
+            return solver.ok;
         case 1: {
             handleSize1Clause((*c.clause)[0]);
             unlinkClause(c);
             c.clause = NULL;
-            break;
+            return solver.ok;
         }
         case 2: {
             solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
@@ -492,12 +473,14 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
             clBinTouched.push_back(NewBinaryClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt()));
             unlinkClause(c);
             c.clause = NULL;
-            break;
+            return solver.ok;
         }
         default:
             if (c.clause->size() == 3) solver.dataSync->signalNewTriClause(*c.clause);
             cl_touched.add(c);
     }
+
+    return true;
 }
 
 const bool Subsumer::handleClBinTouched()
@@ -572,7 +555,7 @@ const bool Subsumer::subsume0AndSubsume1()
     if (addedClauseLits > 1500000) clTouchedTodo /= 2;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
     if (addedClauseLits > 10000000) clTouchedTodo /= 2;
-    if (alsoLearnt) clTouchedTodo /= 4;
+    if (alsoLearnt) clTouchedTodo /= 8;
 
     if (!solver.conf.doSubsume1) clTouchedTodo = 0;
 
@@ -1431,9 +1414,9 @@ void Subsumer::setLimits()
     }
 
     if (addedClauseLits < 1000000) {
-        numMaxElim *= 4;
-        numMaxSubsume0 *= 4;
-        numMaxSubsume1 *= 4;
+        numMaxElim *= 3;
+        numMaxSubsume0 *= 3;
+        numMaxSubsume1 *= 3;
     }
 
     numMaxElimVars = (solver.order_heap.size()/3)*numCalls;
@@ -1450,8 +1433,8 @@ void Subsumer::setLimits()
     if (alsoLearnt) {
         numMaxElim = 0;
         numMaxElimVars = 0;
-        numMaxSubsume0 /= 2;
-        numMaxSubsume1 /= 3;
+        numMaxSubsume0 /= 3;
+        numMaxSubsume1 /= 5;
         numMaxBlockVars = 0;
         numMaxBlockToVisit = 0;
     }
@@ -1770,7 +1753,7 @@ bool Subsumer::maybeEliminate(const Var var)
     numMaxElim -= posSize * negSize + before_literals;
     poss.clear();
     negs.clear();
-    //addLearntBinaries(var);
+    if (numCalls >= 4) addLearntBinaries(var);
     removeClauses(posAll, negAll, var);
 
     #ifndef NDEBUG
@@ -1798,44 +1781,16 @@ bool Subsumer::maybeEliminate(const Var var)
         }
         #endif
 
-        if (cleanClause(dummy)) continue;
         #ifdef VERBOSE_DEBUG
         std::cout << "Adding new clause due to varelim: " << dummy << std::endl;
         #endif
-        switch (dummy.size()) {
-            case 0:
-                solver.ok = false;
-                break;
-            case 1: {
-                handleSize1Clause(dummy[0]);
-                break;
-            }
-            case 2: {
-                if (findWBin(solver.watches, dummy[0], dummy[1])) {
-                    Watched& w = findWatchedOfBin(solver.watches, dummy[0], dummy[1]);
-                    if (w.getLearnt()) {
-                        w.setLearnt(false);
-                        findWatchedOfBin(solver.watches, dummy[1], dummy[0], true).setLearnt(false);
-                        solver.learnts_literals -= 2;
-                        solver.clauses_literals += 2;
-                    }
-                } else {
-                    solver.attachBinClause(dummy[0], dummy[1], false);
-                    solver.numNewBin++;
-                    solver.dataSync->signalNewBinClause(dummy);
-                }
-                subsume1(dummy, false);
-                break;
-            }
-            default: {
-                if (dummy.size() == 3) solver.dataSync->signalNewTriClause(dummy);
-                Clause* cl = solver.clauseAllocator.Clause_new(dummy, group_num);
-                ClauseSimp c = linkInClause(*cl);
-                if (numMaxSubsume1 > 0) subsume1(*c.clause);
-                else subsume0(*c.clause);
-            }
+        Clause* newCl = solver.addClauseInt(dummy, group_num, false, 0, false, false);
+        if (newCl != NULL) {
+            ClauseSimp newClSimp = linkInClause(*newCl);
+            if (numMaxSubsume1 > 0) subsume1(*newCl);
+            else subsume0(*newCl);
         }
-        if (!solver.ok) return true;
+        if (!solver.ok) return false;
     }
 
     //removeBinsAndTris(var);
@@ -1875,7 +1830,7 @@ void Subsumer::addLearntBinaries(const Var var)
             tmp.growTo(2);
             tmp[0] = lit1;
             tmp[1] = lit2;
-            Clause* tmpOK = solver.addClauseInt(tmp, 0, true);
+            Clause* tmpOK = solver.addClauseInt(tmp, 0, true, 2, false, false);
             release_assert(tmpOK == NULL);
             release_assert(solver.ok);
         }
@@ -2250,6 +2205,8 @@ void Subsumer::createNewVar()
     vector<NewGateData> newGates;
     vec<Lit> lits;
     vec<ClauseSimp> subs;
+    numMaxSubsume0 = 600*1000*1000;
+    uint64_t numOp = 0;
 
     if (solver.negPosDist.size() == 0) return;
     uint32_t size = std::min((uint32_t)solver.negPosDist.size()-1, 400U);
@@ -2266,6 +2223,7 @@ void Subsumer::createNewVar()
 
     uint32_t tries = 0;
     for (; tries < std::min(100000U, size*size/2); tries++) {
+        if (numMaxSubsume0 < 0) break;
         Var var1, var2;
         /*if (solver.mtrand.randInt(1) == 1) {
             var1 = otherSort[solver.mtrand.randInt(size2)].first;
@@ -2300,12 +2258,12 @@ void Subsumer::createNewVar()
         findSubsumed(lits, calcAbstraction(lits), subs);
 
         uint32_t potential = 0;
-        if (tries < 10000) {
+        if (numOp < 1000*1000*1000) {
             OrGate gate;
             gate.eqLit = Lit(0,false);
             gate.lits.push_back(lit1);
             gate.lits.push_back(lit2);
-            treatAndGate(gate, false, potential);
+            treatAndGate(gate, false, potential, numOp);
         }
 
         if (potential > 5 || subs.size() > 100
@@ -2320,9 +2278,9 @@ void Subsumer::createNewVar()
     uint32_t addedNum = 0;
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
-        if ((i > 100 && n.numLitRem < 1000 && n.numClRem < 25)
+        if ((i > 50 && n.numLitRem < 1000 && n.numClRem < 25)
             || i > ((double)solver.order_heap.size()*0.01)
-            || i > 1000) break;
+            || i > 100) break;
         const Var newVar = solver.newVar();
         dontElim[newVar] = true;
         const Lit newLit = Lit(newVar, false);
@@ -2350,7 +2308,7 @@ void Subsumer::createNewVar()
         lits.push(~newLit);
         lits.push(n.lit1);
         lits.push(n.lit2);
-        cl = solver.addClauseInt(lits, 0);
+        cl = solver.addClauseInt(lits, 0, false, 0, false, false);
         assert(cl != NULL);
         assert(solver.ok);
         ClauseSimp c = linkInClause(*cl);
@@ -2626,7 +2584,7 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
             std::cout << "Adding learnt clause " << lits << " due to gate replace-avoid" << std::endl;
             #endif
 
-            Clause* c2 = solver.addClauseInt(lits, 0, true);
+            Clause* c2 = solver.addClauseInt(lits, 0);
             assert(c2 == NULL);
             if (!solver.ok)  return false;
             continue;
@@ -2668,43 +2626,12 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
             cl->add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
             occur[gate.eqLit.toInt()].push(c);
         }
+        cl->setGlue(std::max(cl->getGlue(), 3U)-1);
 
-        //Clean the clause
-        if (cleanClause(*c.clause)) {
-            unlinkClause(c);
-            c.clause = NULL;
-            continue;
-        }
-
-        //Handle clause
-        switch (c.clause->size()) {
-            case 0:
-                solver.ok = false;
-                return false;
-                break;
-            case 1: {
-                handleSize1Clause((*c.clause)[0]);
-                unlinkClause(c);
-                if (!solver.ok) return false;
-                c.clause = NULL;
-                break;
-            }
-            case 2: {
-                solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
-                solver.numNewBin++;
-                solver.dataSync->signalNewBinClause(*c.clause);
-                clBinTouched.push_back(NewBinaryClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt()));
-                unlinkClause(c);
-                c.clause = NULL;
-                break;
-            }
-            default:
-                if (!cl->learnt()) {
-                    for (Lit *i2 = cl->getData(), *end2 = cl->getDataEnd(); i2 != end2; i2++)
-                    touchChangeVars(*i2);
-                }
-                if (c.clause->size() == 3) solver.dataSync->signalNewTriClause(*c.clause);
-                cl_touched.add(c);
+        if (!handleUpdatedClause(c)) return false;
+        if (c.clause != NULL && !cl->learnt()) {
+            for (Lit *i2 = cl->getData(), *end2 = cl->getDataEnd(); i2 != end2; i2++)
+                touchChangeVars(*i2);
         }
     }
 
@@ -2763,11 +2690,12 @@ const bool Subsumer::treatAndGates()
     andGateTotalSize = 0;
     uint32_t foundPotential;
     //double myTime = cpuTime();
+    uint64_t numOp = 0;
 
     for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
         const OrGate& gate = *it;
         if (gate.lits.size() > 2) continue;
-        if (!treatAndGate(gate, true, foundPotential)) return false;
+        if (!treatAndGate(gate, true, foundPotential, numOp)) return false;
     }
 
     //std::cout << "c andgate time : " << (cpuTime() - myTime) << std::endl;
@@ -2775,11 +2703,11 @@ const bool Subsumer::treatAndGates()
     return true;
 }
 
-const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential)
+const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp)
 {
     assert(gate.lits.size() == 2);
     std::set<uint32_t> clToUnlink;
-    vec<ClauseSimp> others;
+    ClauseSimp other;
     foundPotential = 0;
 
     if (occur[(~(gate.lits[0])).toInt()].empty() || occur[(~(gate.lits[1])).toInt()].empty())
@@ -2794,6 +2722,8 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     uint32_t maxSize = 0;
     for (const ClauseSimp *it2 = csOther.getData(), *end2 = csOther.getDataEnd(); it2 != end2; it2++) {
         const Clause& cl = *it2->clause;
+        numOp += cl.size();
+
         maxSize = std::max(maxSize, cl.size());
         if (sizeSortedOcc.size() < maxSize+1) sizeSortedOcc.resize(maxSize+1);
         sizeSortedOcc[cl.size()].push_back(*it2);
@@ -2811,19 +2741,19 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
         if ((cl.getAbst() | abstraction) != abstraction) continue;
         if (cl.size() > maxSize) continue;
         if (sizeSortedOcc[cl.size()].empty()) continue;
+        numOp += cl.size();
 
-        bool needCont = false;
+        bool OK = true;
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == ~(gate.lits[0])) continue;
-            if (   cl[i] == ~(gate.lits[1])
+            if (cl[i] == ~(gate.lits[1])
                 || cl[i].var() == gate.eqLit.var()
-                || !seen_tmp2[cl[i].toInt()]
-                ) {
-                needCont = true;
+                || !seen_tmp2[cl[i].toInt()]) {
+                OK = false;
                 break;
             }
         }
-        if (needCont) continue;
+        if (!OK) continue;
 
         uint32_t abst2 = 0;
         for (uint32_t i = 0; i < cl.size(); i++) {
@@ -2832,12 +2762,16 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
             abst2 |= 1 << (cl[i].var() & 31);
         }
         abst2 |= 1 << ((~(gate.lits[1])).var() & 31);
-        findAndGateOtherCl(sizeSortedOcc[cl.size()], ~(gate.lits[1]), abst2, others);
-        foundPotential += others.size();
-        if (reallyRemove && !treatAndGateClause(others, clToUnlink, gate, cl, it2->index))
-            return false;
+        numOp += sizeSortedOcc[cl.size()].size()*5;
+        bool found = findAndGateOtherCl(sizeSortedOcc[cl.size()], ~(gate.lits[1]), abst2, other);
+        foundPotential += found;
+        if (reallyRemove && found) {
+            assert(other.index != it2->index);
+            clToUnlink.insert(other.index);
+            clToUnlink.insert(it2->index);
+            if (!treatAndGateClause(other, gate, cl)) return false;
+        }
 
-        others.clear();
         for (uint32_t i = 0; i < cl.size(); i++) {
             seen_tmp[cl[i].toInt()] = false;
         }
@@ -2853,80 +2787,46 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     return true;
 }
 
-const bool Subsumer::treatAndGateClause(vec<ClauseSimp>& others, std::set<uint32_t>& clToUnlink, const OrGate& gate, const Clause& cl, const uint32_t clIndex)
+const bool Subsumer::treatAndGateClause(ClauseSimp& other, const OrGate& gate, const Clause& cl)
 {
     vec<Lit> lits;
-    for (ClauseSimp *c2 = others.getData(), *end3 = others.getDataEnd(); c2 != end3; c2++) {
-        assert(c2->index != clIndex);
-        /*std::cout << "clause 1: " << cl << std::endl;
-        std::cout << "clause 2: " << *c2->clause << std::endl;
-        std::cout << "gate eqLit: " << gate.eqLit << std::endl;
-        std::cout << "gate lits: ";
-        for (uint32_t i = 0; i < gate.lits.size(); i++) {
-            std::cout << gate.lits[i] << " , ";
-        }
-        std::cout << std::endl;*/
 
-        lits.clear();
-        bool dontAddAtAll = false;
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            if (   cl[i] != ~(gate.lits[0])
-                && cl[i] != ~(gate.eqLit)) lits.push(cl[i]);
-
-            if (cl[i] == gate.eqLit) dontAddAtAll = true;
-        }
-        clToUnlink.insert(c2->index);
-        clToUnlink.insert(clIndex);
-        andGateNumFound++;
-        andGateTotalSize += cl.size();
-        if (dontAddAtAll) continue;
-
-        lits.push(~(gate.eqLit));
-        bool learnt = c2->clause->learnt() && cl.learnt();
-        if (cleanClause(lits)) continue;
-        switch (lits.size()) {
-            case 0:
-                solver.ok = false;
-                return false;
-                break;
-            case 1: {
-                handleSize1Clause(lits[0]);
-                if (!solver.ok) return false;
-                break;
-            }
-            case 2: {
-                solver.attachBinClause(lits[0], lits[1], learnt);
-                solver.numNewBin++;
-                solver.dataSync->signalNewBinClause(lits);
-                break;
-            }
-            default:
-                if (lits.size() == 3) solver.dataSync->signalNewTriClause(lits);
-                Clause* clNew = solver.clauseAllocator.Clause_new(lits, cl.getGroup(), learnt);
-                if (learnt) clNew->setGlue(std::min(cl.getGlue(), c2->clause->getGlue()));
-                linkInClause(*clNew);
-        }
+    lits.clear();
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        assert(cl[i].var() != gate.eqLit.var());
+        if (cl[i] != ~(gate.lits[0])) lits.push(cl[i]);
     }
+    andGateNumFound++;
+    andGateTotalSize += cl.size();
+
+    lits.push(~(gate.eqLit));
+    bool learnt = other.clause->learnt() && cl.learnt();
+    uint32_t minGlue = 0;
+    if (learnt) minGlue = std::min(other.clause->getGlue(), cl.getGlue());
+    Clause *clNew = solver.addClauseInt(lits, other.clause->getGroup(), learnt, minGlue, false, false);
+    if (clNew != NULL) linkInClause(*clNew);
+    if (!solver.ok) return false;
 
     return true;
 }
 
-inline void Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, vec<ClauseSimp>& others)
+inline const bool Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, ClauseSimp& other)
 {
     for (vector<ClauseSimp>::const_iterator it = sizeSortedOcc.begin(), end = sizeSortedOcc.end(); it != end; it++) {
         const Clause& cl = *it->clause;
         if (cl.getAbst() != abst2) continue;
 
-        bool OK = true;
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == lit) continue;
-            if (!seen_tmp[cl[i].toInt()]) {
-                OK = false;
-                break;
-            }
+            if (!seen_tmp[cl[i].toInt()]) goto next;
         }
-        if (OK) others.push(*it);
+        other = *it;
+        return true;
+
+        next:;
     }
+
+    return false;
 }
 
 void Subsumer::makeAllBinsNonLearnt()

@@ -134,6 +134,7 @@ private:
     //Used by cleaner
     void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
+    const bool handleUpdatedClause(ClauseSimp& c);
 
     //Findsubsumed
     template<class T>
@@ -209,7 +210,6 @@ private:
     const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
     void strenghten(ClauseSimp& c, const Lit toRemoveLit);
     const bool cleanClause(Clause& ps);
-    const bool cleanClause(vec<Lit>& ps) const;
     void handleSize1Clause(const Lit lit);
 
     //Variable elimination
@@ -353,9 +353,9 @@ private:
     bool finishedAddingVars;
 
     const bool treatAndGates();
-    const bool treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential);
-    const bool treatAndGateClause(vec<ClauseSimp>& others, std::set<uint32_t>& clToUnlink, const OrGate& gate, const Clause& cl, const uint32_t clIndex);
-    void findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, vec<ClauseSimp>& others);
+    const bool treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp);
+    const bool treatAndGateClause(ClauseSimp& other, const OrGate& gate, const Clause& cl);
+    const bool findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, ClauseSimp& other);
     vector<vector<ClauseSimp> > sizeSortedOcc;
 
     //validity checking
