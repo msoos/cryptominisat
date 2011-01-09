@@ -183,9 +183,6 @@ Var Solver::newVar(bool dvar)
     litReachable.push_back(LitReachData());
 
     polarity  .push_back(defaultPolarity());
-    #ifdef USE_OLD_POLARITIES
-    oldPolarity.push_back(defaultPolarity());
-    #endif //USE_OLD_POLARITIES
 
     //Variable heap, long-term polarity count
     decision_var.push_back(dvar);
@@ -652,8 +649,7 @@ void Solver::finishAddingVars()
 /**
 @brief Revert to the state at given level
 
-Also reverts all stuff in Gass-elimination, as well as resetting the old
-default polarities if USE_OLD_POLARITIES is set (which is by default NOT set).
+Also reverts all stuff in Gass-elimination
 */
 void Solver::cancelUntil(int level)
 {
@@ -675,9 +671,6 @@ void Solver::cancelUntil(int level)
             #ifdef VERBOSE_DEBUG
             cout << "Canceling var " << var+1 << " sublevel: " << sublevel << endl;
             #endif
-            #ifdef USE_OLD_POLARITIES
-            polarity[var] = oldPolarity[var];
-            #endif //USE_OLD_POLARITIES
             assigns[var] = l_Undef;
             insertVarOrder(var);
             if (unWindGlue[var] != NULL) {
@@ -1464,9 +1457,7 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
 
 Call this when a fact has been found. Sets the value, enqueues it for
 propagation, sets its level, sets why it was propagated, saves the polarity,
-and does some logging if logging is enabled. May also save the "old" polarity
-(i.e. polarity that was in polarities[] at p.var()] of the variable if
-USE_OLD_POLARITIES is set
+and does some logging if logging is enabled
 
 @p p the fact to enqueue
 @p from Why was it propagated (binary clause, tertiary clause, normal clause)
@@ -1496,9 +1487,6 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     level   [v] = decisionLevel();
     reason  [v] = from;
-    #ifdef USE_OLD_POLARITIES
-    oldPolarity[p.var()] = polarity[p.var()];
-    #endif //USE_OLD_POLARITIES
     if (!from.isNULL()) increaseAgility(polarity[p.var()] != p.sign());
     polarity[p.var()] = p.sign();
     trail.push(p);
