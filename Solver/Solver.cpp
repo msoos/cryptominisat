@@ -2141,6 +2141,8 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
     }
     glueHistory.fastclear();
     agility = 0.0;
+    numAgilityTooHigh = 0;
+    lastConflAgilityTooHigh = std::numeric_limits<uint64_t>::max();
 
     #ifdef USE_GAUSS
     for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
@@ -2157,10 +2159,11 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
         if (!confl.isNULL()) {
             /*if (conflicts % 100 == 99) {
                 std::cout << "dyn: " << (restartType == dynamic_restart)
-                << ", confl: " << conflicts
-                << ", rest: " << starts
-                << ", agility : " << std::fixed << std::setprecision(2) << agility
-                << ", agilityLimit : " << std::fixed << std::setprecision(2) << conf.agilityLimit << std::endl;
+                << ", confl: " << std::setw(6) << conflictC
+                << ", rest: " << std::setw(6) << starts
+                << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2) << agility
+                << ", agilityTooHigh: " << std::setw(4) << numAgilityTooHigh
+                << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2) << conf.agilityLimit << std::endl;
             }*/
 
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
@@ -2202,9 +2205,16 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumC
     }
 
     // Reached bound on number of conflicts?
+    if (conflictC > MIN_GLUE_RESTART
+        && ((agility < conf.agilityLimit && lastConflAgilityTooHigh != conflictC)
+        /*|| (glueHistory.isvalid() && 0.6*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/)) {
+        numAgilityTooHigh++;
+        lastConflAgilityTooHigh = conflictC;
+    }
+
     switch (restartType) {
     case dynamic_restart:
-        if ((conflictC > MIN_GLUE_RESTART && agility < conf.agilityLimit)
+        if ((numAgilityTooHigh > MIN_GLUE_RESTART)
             /*|| (glueHistory.isvalid() && 0.95*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
