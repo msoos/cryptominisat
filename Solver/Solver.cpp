@@ -1312,7 +1312,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 
             //watches are mostly sorted, so it's more-or-less OK to break
             //  if non-bi or non-tri is encountered
-            break;
+            //break;
         }
     }
 
