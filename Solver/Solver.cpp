@@ -1600,7 +1600,7 @@ inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *en
             if (update && c.learnt() && c.getGlue() > 2) { // GA
                 uint32_t glue = calcNBLevels(c);
                 if (glue+1 < c.getGlue()) {
-                    //c.setGlue(std::min(nbLevels, MAX_THEORETICAL_GLUE);
+                    //c.setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
                     c.setGlue(glue);
                 }
             }
