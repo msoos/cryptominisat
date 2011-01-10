@@ -1,5 +1,7 @@
-ver 3.0.0 25/11/2010
+ver 2.9.0 10/01/2011
 * Added extended SCC and vivification using cached implications
+* Reachability testing and related branching heuristic using cached
+  implications
 * Corrected subsumption code -- it is now more precise but slower
 * Corrected original problem & learnt dumping. Binary clauses were wrongly
   dumped, and xor clauses were never dumped

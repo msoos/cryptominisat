@@ -1,4 +1,4 @@
-AC_INIT(cryptominisat, 3.0.0)
+AC_INIT(cryptominisat, 2.9.0)
 
 dnl use libtool
 AC_PROG_LIBTOOL
