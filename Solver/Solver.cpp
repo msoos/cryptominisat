@@ -2168,7 +2168,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumC
     }
 
     // Reached bound on number of conflicts?
-    if (conflictC > MIN_GLUE_RESTART
+    if (conflictC > MIN_GLUE_RESTART/2
         && ((agility < conf.agilityLimit && lastConflAgilityTooHigh != conflictC)
         /*|| (glueHistory.isvalid() && 0.6*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/)) {
         numAgilityTooHigh++;
@@ -2177,7 +2177,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumC
 
     switch (restartType) {
     case dynamic_restart:
-        if ((numAgilityTooHigh > MIN_GLUE_RESTART)
+        if ((numAgilityTooHigh > MIN_GLUE_RESTART/2)
             /*|| (glueHistory.isvalid() && 0.95*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
