@@ -30,6 +30,7 @@ using std::set;
 #include "ClauseCleaner.h"
 #include "StateSaver.h"
 #include "CompleteDetachReattacher.h"
+#include "PartHandler.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch(a,b,c)
@@ -243,6 +244,7 @@ const bool FailedLitSearcher::search()
     }
 
     if (solver.conf.verbosity  >= 1) printResults(myTime);
+    tryMultiLevelAll();
 
 
 end:
@@ -696,4 +698,145 @@ void FailedLitSearcher::addBin(const Lit lit1, const Lit lit2)
     tmpPs.growTo(2);
     assert(solver.ok);
     addedBin++;
+}
+
+void FailedLitSearcher::fillToTry(vec<Var>& toTry)
+{
+    uint32_t max = std::min(solver.negPosDist.size()-1, (size_t)300);
+    while(true) {
+        Var var = solver.negPosDist[solver.mtrand.randInt(max)].var;
+        if (solver.value(var) != l_Undef
+            || solver.subsumer->getVarElimed()[var]
+            || solver.xorSubsumer->getVarElimed()[var]
+            || solver.partHandler->getSavedState()[var] != l_Undef
+            ) continue;
+
+        bool OK = true;
+        for (uint32_t i = 0; i < toTry.size(); i++) {
+            if (toTry[i] == var) {
+                OK = false;
+                break;
+            }
+        }
+        if (OK) {
+            toTry.push(var);
+            return;
+        }
+    }
+}
+
+const bool FailedLitSearcher::tryMultiLevelAll()
+{
+    assert(solver.ok);
+    uint32_t backupNumUnits = solver.trail.size();
+    double myTime = cpuTime();
+    uint32_t numTries = 0;
+    uint32_t finished = 0;
+    uint64_t beforeProps = solver.propagations;
+    uint32_t enqueued = 0;
+    uint32_t numFailed = 0;
+
+    uint32_t varPolCount = 0;
+    for (vector<std::pair<uint64_t, uint64_t> >::iterator it = solver.lTPolCount.begin(), end = solver.lTPolCount.end(); it != end; it++, varPolCount++) {
+        UIPNegPosDist tmp;
+        tmp.var = varPolCount;
+        int64_t pos = it->first;
+        int64_t neg = it->second;
+        int64_t diff = std::abs((long int) (pos-neg));
+        tmp.dist = pos*pos + neg*neg - diff*diff;
+        if (it->first > 4  && it->second > 4)
+            solver.negPosDist.push_back(tmp);
+    }
+    std::sort(solver.negPosDist.begin(), solver.negPosDist.end(), NegPosSorter());
+
+    if (solver.negPosDist.size() < 30) return true;
+
+    propagated.resize(solver.nVars(), 0);
+    propagated2.resize(solver.nVars(), 0);
+    propValue.resize(solver.nVars(), 0);
+    assert(propagated.isZero());
+    assert(propagated2.isZero());
+
+    vec<Var> toTry;
+    while(solver.propagations < beforeProps + 300*1000*1000) {
+        toTry.clear();
+        for (uint32_t i = 0; i < 3; i++) {
+            fillToTry(toTry);
+        }
+        numTries++;
+        if (!tryMultiLevel(toTry, enqueued, finished, numFailed)) goto end;
+    }
+
+    end:
+    assert(propagated.isZero());
+    assert(propagated2.isZero());
+
+    std::cout
+    << "c multiLevelBoth tried " <<  numTries
+    << " finished: " << finished
+    << " units: " << (solver.trail.size() - backupNumUnits)
+    << " enqueued: " << enqueued
+    << " numFailed: " << numFailed
+    << " time: " << (cpuTime() - myTime)
+    << std::endl;
+
+    return solver.ok;
+}
+
+const bool FailedLitSearcher::tryMultiLevel(const vec<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed)
+{
+    assert(solver.ok);
+
+    vec<Lit> toEnqueue;
+    bool first = true;
+    bool last = false;
+    //std::cout << "//////////////////" << std::endl;
+    for (uint32_t comb = 0; comb < (1U << vars.size()); comb++) {
+        last = (comb == (1U << vars.size())-1);
+        solver.newDecisionLevel();
+        for (uint32_t i = 0; i < vars.size(); i++) {
+            solver.uncheckedEnqueueLight(Lit(vars[i], comb&(0x1 << i)));
+            //std::cout << "lit: " << Lit(vars[i], comb&(1U << i)) << std::endl;
+        }
+        //std::cout << "---" << std::endl;
+        bool failed = !(solver.propagate(false).isNULL());
+        if (failed) {
+            solver.cancelUntilLight();
+            if (!first) propagated.setZero();
+            numFailed++;
+            return true;
+        }
+
+        for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
+            Var x = solver.trail[sublevel].var();
+            if (first) {
+                propagated.setBit(x);
+                if (solver.assigns[x].getBool()) propValue.setBit(x);
+                else propValue.clearBit(x);
+            } else if (last) {
+                if (propagated[x] && solver.assigns[x].getBool() == propValue[x])
+                    toEnqueue.push(Lit(x, !propValue[x]));
+            } else {
+                if (solver.assigns[x].getBool() == propValue[x]) {
+                    propagated2.setBit(x);
+                }
+            }
+        }
+        solver.cancelUntilLight();
+        if (!first && !last) propagated &= propagated2;
+        propagated2.setZero();
+        if (propagated.isZero()) return true;
+        first = false;
+    }
+    propagated.setZero();
+    finished++;
+
+    for (Lit *l = toEnqueue.getData(), *end = toEnqueue.getDataEnd(); l != end; l++) {
+        enqueued++;
+        solver.uncheckedEnqueue(*l);
+    }
+    solver.ok = solver.propagate().isNULL();
+    //exit(-1);
+
+    return solver.ok;
 }

@@ -2305,28 +2305,14 @@ void Subsumer::createNewVar()
     vec<Lit> lits;
     vec<ClauseSimp> subs;
 
-    vector<UIPNegPosDist> negPosDist;
-    uint32_t varPolCount = 0;
-    for (vector<std::pair<uint64_t, uint64_t> >::iterator it = solver.lTPolCount.begin(), end = solver.lTPolCount.end(); it != end; it++, varPolCount++) {
-        UIPNegPosDist tmp;
-        tmp.var = varPolCount;
-        int64_t pos = it->first;
-        int64_t neg = it->second;
-        int64_t diff = std::abs((long int) (pos-neg));
-        tmp.dist = pos*pos + neg*neg - diff*diff;
-        if (it->first > 4  && it->second > 4)
-            negPosDist.push_back(tmp);
-    }
-    std::sort(negPosDist.begin(), negPosDist.end(), NegPosSorter());
-
-    if (negPosDist.size() == 0) return;
-    uint32_t size = std::min((uint32_t)negPosDist.size()-1, 400U);
+    if (solver.negPosDist.size() == 0) return;
+    uint32_t size = std::min((uint32_t)solver.negPosDist.size()-1, 400U);
 
     uint32_t tries = 0;
     for (; tries < std::min(100000U, size*size/2); tries++) {
         Var var1, var2;
-        var1 = negPosDist[solver.mtrand.randInt(size)].var;
-        var2 = negPosDist[solver.mtrand.randInt(size)].var;
+        var1 = solver.negPosDist[solver.mtrand.randInt(size)].var;
+        var2 = solver.negPosDist[solver.mtrand.randInt(size)].var;
         if (var1 == var2) continue;
 
         if (solver.value(var1) != l_Undef

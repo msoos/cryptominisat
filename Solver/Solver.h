@@ -351,6 +351,7 @@ protected:
     uint32_t            var_inc;          ///< Amount to bump next variable with.
     vector<std::pair<uint64_t, uint64_t> > lTPolCount;
     void bumpUIPPolCount(const vec<Lit>& lit);
+    vector<UIPNegPosDist> negPosDist;
 
     /////////////////
     // Learnt clause cleaning
