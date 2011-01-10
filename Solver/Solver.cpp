@@ -356,7 +356,7 @@ and only internally
 template <class T>
 Clause* Solver::addClauseInt(T& ps, uint32_t group
                             , const bool learnt, const uint32_t glue, const float miniSatActivity
-                            , const bool inOriginalInput)
+                            , const bool inOriginalInput, const bool attach)
 {
     assert(ok);
 
@@ -386,7 +386,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
     if (ps.size() > 2) {
         Clause* c = clauseAllocator.Clause_new(ps, group);
         if (learnt) c->makeLearnt(glue, miniSatActivity);
-        attachClause(*c);
+        if (attach) attachClause(*c);
         return c;
     } else {
         attachBinClause(ps[0], ps[1], learnt);
@@ -396,8 +396,8 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
     }
 }
 
-template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
-template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
+template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput, const bool attach);
+template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput, const bool attach);
 
 template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group, const char* group_name)
 {

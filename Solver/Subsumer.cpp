@@ -2403,7 +2403,7 @@ void Subsumer::createNewVar()
         lits.push(~newLit);
         lits.push(n.lit1);
         lits.push(n.lit2);
-        cl = solver.addClauseInt(lits, 0);
+        cl = solver.addClauseInt(lits, 0, false, 3, 0, false, false);
         assert(cl != NULL);
         assert(solver.ok);
         ClauseSimp c = linkInClause(*cl);
@@ -2778,7 +2778,7 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
 {
     assert(gate.lits.size() == 2);
     std::set<uint32_t> clToUnlink;
-    vec<ClauseSimp> others;
+    ClauseSimp other;
     foundPotential = 0;
 
     if (occur[(~(gate.lits[0])).toInt()].empty() || occur[(~(gate.lits[1])).toInt()].empty())
@@ -2831,12 +2831,11 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
             abst2 |= 1 << (cl[i].var() & 31);
         }
         abst2 |= 1 << ((~(gate.lits[1])).var() & 31);
-        findAndGateOtherCl(sizeSortedOcc[cl.size()], ~(gate.lits[1]), abst2, others);
-        foundPotential += others.size();
-        if (reallyRemove && !treatAndGateClause(others, clToUnlink, gate, cl, it2->index))
+        const bool foundOther = findAndGateOtherCl(sizeSortedOcc[cl.size()], ~(gate.lits[1]), abst2, other);
+        foundPotential += foundOther;
+        if (reallyRemove && foundOther && !treatAndGateClause(other, clToUnlink, gate, cl, it2->index))
             return false;
 
-        others.clear();
         for (uint32_t i = 0; i < cl.size(); i++) {
             seen_tmp[cl[i].toInt()] = false;
         }
@@ -2852,64 +2851,62 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     return true;
 }
 
-const bool Subsumer::treatAndGateClause(vec<ClauseSimp>& others, std::set<uint32_t>& clToUnlink, const OrGate& gate, const Clause& cl, const uint32_t clIndex)
+const bool Subsumer::treatAndGateClause(ClauseSimp other, std::set<uint32_t>& clToUnlink, const OrGate& gate, const Clause& cl, const uint32_t clIndex)
 {
     vec<Lit> lits;
-    for (ClauseSimp *c2 = others.getData(), *end3 = others.getDataEnd(); c2 != end3; c2++) {
-        assert(c2->index != clIndex);
-        /*std::cout << "clause 1: " << cl << std::endl;
-        std::cout << "clause 2: " << *c2->clause << std::endl;
-        std::cout << "gate eqLit: " << gate.eqLit << std::endl;
-        std::cout << "gate lits: ";
-        for (uint32_t i = 0; i < gate.lits.size(); i++) {
-            std::cout << gate.lits[i] << " , ";
-        }
-        std::cout << std::endl;*/
+    assert(other.index != clIndex);
+    /*std::cout << "clause 1: " << cl << std::endl;
+    std::cout << "clause 2: " << *c2->clause << std::endl;
+    std::cout << "gate eqLit: " << gate.eqLit << std::endl;
+    std::cout << "gate lits: ";
+    for (uint32_t i = 0; i < gate.lits.size(); i++) {
+        std::cout << gate.lits[i] << " , ";
+    }
+    std::cout << std::endl;*/
 
-        lits.clear();
-        bool dontAddAtAll = false;
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            if (   cl[i] != ~(gate.lits[0])
-                && cl[i] != ~(gate.eqLit)) lits.push(cl[i]);
+    lits.clear();
+    bool dontAddAtAll = false;
+    for (uint32_t i = 0; i < cl.size(); i++) {
+        if (   cl[i] != ~(gate.lits[0])
+            && cl[i] != ~(gate.eqLit)) lits.push(cl[i]);
 
-            if (cl[i] == gate.eqLit) dontAddAtAll = true;
-        }
-        clToUnlink.insert(c2->index);
-        clToUnlink.insert(clIndex);
-        andGateNumFound++;
-        andGateTotalSize += cl.size();
-        if (dontAddAtAll) continue;
+        if (cl[i] == gate.eqLit) dontAddAtAll = true;
+    }
+    clToUnlink.insert(other.index);
+    clToUnlink.insert(clIndex);
+    andGateNumFound++;
+    andGateTotalSize += cl.size();
+    if (dontAddAtAll) return true;
 
-        lits.push(~(gate.eqLit));
-        bool learnt = c2->clause->learnt() && cl.learnt();
-        if (cleanClause(lits)) continue;
-        switch (lits.size()) {
-            case 0:
-                solver.ok = false;
-                return false;
-                break;
-            case 1: {
-                handleSize1Clause(lits[0]);
-                if (!solver.ok) return false;
-                break;
-            }
-            case 2: {
-                solver.attachBinClause(lits[0], lits[1], learnt);
-                solver.numNewBin++;
-                solver.dataSync->signalNewBinClause(lits);
-                break;
-            }
-            default:
-                Clause* clNew = solver.clauseAllocator.Clause_new(lits, cl.getGroup(), learnt);
-                if (learnt) clNew->setGlue(std::min(cl.getGlue(), c2->clause->getGlue()));
-                linkInClause(*clNew);
+    lits.push(~(gate.eqLit));
+    bool learnt = other.clause->learnt() && cl.learnt();
+    if (cleanClause(lits)) return true;
+    switch (lits.size()) {
+        case 0:
+            solver.ok = false;
+            return false;
+            break;
+        case 1: {
+            handleSize1Clause(lits[0]);
+            if (!solver.ok) return false;
+            break;
         }
+        case 2: {
+            solver.attachBinClause(lits[0], lits[1], learnt);
+            solver.numNewBin++;
+            solver.dataSync->signalNewBinClause(lits);
+            break;
+        }
+        default:
+            Clause* clNew = solver.clauseAllocator.Clause_new(lits, cl.getGroup(), learnt);
+            if (learnt) clNew->setGlue(std::min(cl.getGlue(), other.clause->getGlue()));
+            linkInClause(*clNew);
     }
 
     return true;
 }
 
-inline void Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, vec<ClauseSimp>& others)
+const bool Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, ClauseSimp& other)
 {
     for (vector<ClauseSimp>::const_iterator it = sizeSortedOcc.begin(), end = sizeSortedOcc.end(); it != end; it++) {
         const Clause& cl = *it->clause;
@@ -2923,6 +2920,9 @@ inline void Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc
                 break;
             }
         }
-        if (OK) others.push(*it);
+        other = *it;
+        return true;
     }
+
+    return false;
 }
