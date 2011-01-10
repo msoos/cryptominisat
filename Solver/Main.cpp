@@ -301,7 +301,7 @@ void Main::printUsage(char** argv)
     printf("  --maxgluedel     = Automatically delete clauses over max glue. See '--maxglue'\n");
     printf("  --maxglue        = [0 - 2^%d-1] default: %d. Glue value above which we\n", MAX_GLUE_BITS, conf.maxGlue);
     printf("                     throw the clause away on backtrack.\n");
-    printf("  --threads        = Num threads (default is 1)");
+    printf("  --threads        = Num threads (default is 1)\n");
     printf("\n");
 }
 
