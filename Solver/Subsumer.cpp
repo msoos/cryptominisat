@@ -1115,7 +1115,6 @@ const bool Subsumer::eliminateVars()
     orderVarsForElim(init_order);   // (will untouch all variables)
 
     for (bool first = true; numMaxElim > 0 && numMaxElimVars > 0; first = false) {
-        uint32_t vars_elimed = 0;
         vec<Var> order;
 
         if (first) {
@@ -1138,16 +1137,14 @@ const bool Subsumer::eliminateVars()
         std::cout << "Order size:" << order.size() << std::endl;
         #endif
 
+        uint32_t oldNumElimed = numElimed;
         for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
-            if (solver.mtrand.randInt(7) != 0 && !dontElim[order[i]] && maybeEliminate(order[i])) {
-                if (!solver.ok) return false;
-                vars_elimed++;
-                numMaxElimVars--;
-            }
+            if (solver.mtrand.randInt(7) != 0 && !dontElim[order[i]] && !maybeEliminate(order[i]))
+                return false;
         }
-        if (vars_elimed == 0) break;
+        if (numElimed - oldNumElimed == 0) break;
 
-        numVarsElimed += vars_elimed;
+        numVarsElimed += numElimed - oldNumElimed;
         #ifdef BIT_MORE_VERBOSITY
         std::cout << "c  #var-elim: " << vars_elimed << std::endl;
         #endif
@@ -1690,16 +1687,17 @@ idea to eliminate a variable or not.
 */
 bool Subsumer::maybeEliminate(const Var var)
 {
+    assert(solver.ok);
     assert(!var_elimed[var]);
     assert(!cannot_eliminate[var]);
     assert(solver.decision_var[var]);
-    if (solver.value(var) != l_Undef) return false;
+    if (solver.value(var) != l_Undef) return true;
 
     Lit lit = Lit(var, false);
 
     //Only exists in binary clauses -- don't delete it then
     /*if (occur[lit.toInt()].size() == 0 && occur[(~lit).toInt()].size() == 0)
-        return false;*/
+        return true;*/
 
     const uint32_t numNonLearntPos = numNonLearntBins(lit);
     const uint32_t posSize = occur[lit.toInt()].size() + numNonLearntPos;
@@ -1710,7 +1708,7 @@ bool Subsumer::maybeEliminate(const Var var)
     numMaxElim -= posSize + negSize;
 
     // Heuristic CUT OFF:
-    if (posSize >= 10 && negSize >= 10) return false;
+    if (posSize >= 10 && negSize >= 10) return true;
 
     // Count clauses/literals before elimination:
     uint32_t before_literals = numNonLearntNeg*2 + numNonLearntPos*2;
@@ -1720,13 +1718,13 @@ bool Subsumer::maybeEliminate(const Var var)
     // Heuristic CUT OFF2:
     if ((posSize >= 3 && negSize >= 3 && before_literals > 300)
         && clauses.size() > 700000)
-        return false;
+        return true;
     if ((posSize >= 5 && negSize >= 5 && before_literals > 400)
         && clauses.size() <= 700000 && clauses.size() > 100000)
-        return false;
+        return true;
     if ((posSize >= 8 && negSize >= 8 && before_literals > 700)
         && clauses.size() <= 100000)
-        return false;
+        return true;
 
     vec<ClAndBin> posAll, negAll;
     fillClAndBin(posAll, poss, lit);
@@ -1745,7 +1743,7 @@ bool Subsumer::maybeEliminate(const Var var)
         bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
         if (ok){
             after_clauses++;
-            if (after_clauses > before_clauses) return false;
+            if (after_clauses > before_clauses) return true;
         }
     }
 
@@ -1798,6 +1796,7 @@ bool Subsumer::maybeEliminate(const Var var)
     assert(occur[lit.toInt()].size() == 0 &&  occur[(~lit).toInt()].size() == 0);
     var_elimed[var] = true;
     numElimed++;
+    numMaxElimVars--;
     solver.setDecisionVar(var, false);
     return true;
 }
