@@ -387,7 +387,9 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
         }
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2, origLit3)) {
+            solver.clauseAllocator.clauseFree(*r);
             if (!solver.ok) {
+                r++;
                 #ifdef VERBOSE_DEBUG
                 cout << "contradiction while replacing lits in normal clause" << std::endl;
                 #endif
