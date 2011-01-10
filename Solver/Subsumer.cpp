@@ -2204,7 +2204,7 @@ void Subsumer::createNewVar()
     vector<NewGateData> newGates;
     vec<Lit> lits;
     vec<ClauseSimp> subs;
-    numMaxSubsume0 = 600*1000*1000;
+    numMaxSubsume0 = 300*1000*1000;
     uint64_t numOp = 0;
 
     if (solver.negPosDist.size() == 0) return;
@@ -2257,7 +2257,7 @@ void Subsumer::createNewVar()
         findSubsumed(lits, calcAbstraction(lits), subs);
 
         uint32_t potential = 0;
-        if (numOp < 1000*1000*1000) {
+        if (numOp < 100*1000*1000) {
             OrGate gate;
             gate.eqLit = Lit(0,false);
             gate.lits.push_back(lit1);
