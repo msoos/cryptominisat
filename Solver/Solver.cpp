@@ -1948,8 +1948,8 @@ void Solver::reduceDB()
     uint64_t totalGlueOfNonRemoved = 0;
     uint64_t totalSizeOfNonRemoved = 0;
     uint32_t numThreeLongLearnt = 0;
-    for (i = j = 0; i != std::min(removeNum, learnts.size()); i++){
-        if (i+1 < removeNum) __builtin_prefetch(learnts[i+1], 0, 0);
+    for (i = j = 0; i < std::min(removeNum, learnts.size()); i++){
+        if (i+1 < learnts.size()) __builtin_prefetch(learnts[i+1], 0, 0);
         assert(learnts[i]->size() > 2);
         if (!locked(*learnts[i])
             && learnts[i]->getGlue() > 2
