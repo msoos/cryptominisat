@@ -103,6 +103,7 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
             __builtin_prefetch(*(s+1), 1, 0);
         if (cleanClause(*s)) {
             solver.clauseAllocator.clauseFree(*s);
+            if (type == learnts) solver.nbCompensateSubsumer++;
         } else {
             *ss++ = *s;
         }

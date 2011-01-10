@@ -387,6 +387,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
         }
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2, origLit3)) {
+            if (c.learnt()) solver.nbCompensateSubsumer++;
             solver.clauseAllocator.clauseFree(*r);
             if (!solver.ok) {
                 r++;
