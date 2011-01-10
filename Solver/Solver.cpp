@@ -1462,7 +1462,7 @@ and does some logging if logging is enabled
 @p p the fact to enqueue
 @p from Why was it propagated (binary clause, tertiary clause, normal clause)
 */
-void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
+void Solver::uncheckedEnqueue(const Lit p, const PropBy from)
 {
     #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
     #ifndef VERBOSE_DEBUG
@@ -1482,13 +1482,13 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     }
     #endif
 
-    assert(assigns[p.var()].isUndef());
     const Var v = p.var();
+    assert(value(v).isUndef());
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     level   [v] = decisionLevel();
     reason  [v] = from;
     if (!from.isNULL()) increaseAgility(polarity[p.var()] != p.sign());
-    polarity[p.var()] = p.sign();
+    polarity[v] = p.sign();
     trail.push(p);
 
     #ifdef STATS_NEEDED
