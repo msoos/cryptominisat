@@ -106,11 +106,17 @@ void Main::readInAFile(const std::string& filename, MTSolver& solver)
     if (conf.verbosity >= 1) {
         std::cout << "c Reading file '" << filename << "'" << std::endl;
     }
+
+    char* fname = (char*)calloc(filename.length()+1, sizeof(char));
+    assert(fname != NULL);
+    memcpy(fname, filename.c_str(), filename.length());
+    fname[filename.length()] = '\0';
     #ifdef DISABLE_ZLIB
-        FILE * in = fopen(filename.c_str(), "rb");
+        FILE * in = fopen(fname, "rb");
     #else
-        gzFile in = gzopen(filename.c_str(), "rb");
+        gzFile in = gzopen(fname, "rb");
     #endif // DISABLE_ZLIB
+    free(fname);
 
     if (in == NULL) {
         std::cout << "ERROR! Could not open file '" << filename << "' for reading" << std::endl;
@@ -170,7 +176,8 @@ void Main::parseInAllFiles(MTSolver& solver)
     if (!fileNamePresent) {
         readInStandardInput(solver);
     } else {
-        readInAFile(argv[(twoFileNamesPresent ? argc-2 : argc-1)], solver);
+        string filename = argv[(twoFileNamesPresent ? argc-2 : argc-1)];
+        readInAFile(filename, solver);
     }
 
     if (conf.verbosity >= 1) {
