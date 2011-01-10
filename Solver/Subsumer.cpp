@@ -1267,7 +1267,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         subsumeNonExist();
         addedClauseLits += addFromSolver(solver.clauses);
     } else {
-        if (solver.conf.doBlockedClause) {
+        if (solver.conf.doBlockedClause && solver.conf.doVarElim) {
             numMaxBlockToVisit = (int64_t)800*1000*1000;
             blockedClauseRemoval();
         }
@@ -1433,7 +1433,6 @@ void Subsumer::setLimits()
         numMaxSubsume0 /= 3;
         numMaxSubsume1 /= 5;
         numMaxBlockVars = 0;
-        numMaxBlockToVisit = 0;
     }
 
     //For debugging
@@ -2047,7 +2046,7 @@ void Subsumer::blockedClauseRemoval()
     }
 
     uint32_t triedToBlock = 0;
-    while (numMaxBlockToVisit > 0 && !touchedBlockedVars.empty() && numMaxElimVars > 0) {
+    while (numMaxBlockToVisit > 0 && !touchedBlockedVars.empty()) {
         VarOcc vo = touchedBlockedVars.top();
         touchedBlockedVars.pop();
         touchedBlockedVarsBool[vo.var] = false;
