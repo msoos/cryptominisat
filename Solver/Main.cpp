@@ -541,16 +541,16 @@ void Main::parseCommandLine()
             gaussconfig.iterativeReduce = false;
         } else if ((value = hasPrefix(argv[i], "--noordercol"))) {
             gaussconfig.orderCols = false;
-        } else if ((value = hasPrefix(argv[i], "--maxmatrixrows"))) {
-            uint32_t rows;
-            if (sscanf(value, "%d", &rows) < 0) {
+        } else if ((value = hasPrefix(argv[i], "--maxmatrixrows="))) {
+            int rows;
+            if (sscanf(value, "%d", &rows) < 0 || rows < 0) {
                 printf("ERROR! maxmatrixrows: %s\n", value);
                 exit(0);
             }
-            gaussconfig.maxMatrixRows = rows;
-        } else if ((value = hasPrefix(argv[i], "--minmatrixrows"))) {
-            uint32_t rows;
-            if (sscanf(value, "%d", &rows) < 0) {
+            gaussconfig.maxMatrixRows = (uint32_t)rows;
+        } else if ((value = hasPrefix(argv[i], "--minmatrixrows="))) {
+            int rows;
+            if (sscanf(value, "%d", &rows) < 0 || rows < 0) {
                 printf("ERROR! minmatrixrows: %s\n", value);
                 exit(0);
             }
@@ -561,7 +561,6 @@ void Main::parseCommandLine()
                 printf("ERROR! savematrix: %s\n", value);
                 exit(0);
             }
-            std::cout << "c Matrix saved every " <<  every << " decision levels" << std::endl;
             gaussconfig.only_nth_gauss_save = every;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
