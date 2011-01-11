@@ -1861,7 +1861,6 @@ bool Subsumer::maybeEliminate(const Var var)
                 } else {
                     solver.attachBinClause(dummy[0], dummy[1], false);
                     solver.numNewBin++;
-                    solver.dataSync->signalNewBinClause(dummy);
                 }
                 subsume1(dummy, false);
                 break;
