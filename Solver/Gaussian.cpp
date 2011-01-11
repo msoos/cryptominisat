@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include "ClauseCleaner.h"
 #include "VarReplacer.h"
+#include "DataSync.h"
 
 using std::ostream;
 using std::cout;
@@ -585,6 +586,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
         solver.watches[(~lit2).toInt()].push(Watched(lit1, true));
         solver.numBins++;
         solver.learnts_literals += 2;
+        solver.dataSync->signalNewBinClause(lit1, lit2);
 
         lit1 = ~lit1;
         lit2 = ~lit2;
@@ -592,6 +594,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
         solver.watches[(~lit1).toInt()].push(Watched(lit2, true));
         solver.numBins++;
         solver.learnts_literals += 2;
+        solver.dataSync->signalNewBinClause(lit1, lit2);
 
         confl = PropBy(lit1);
         solver.failBinLit = lit2;
