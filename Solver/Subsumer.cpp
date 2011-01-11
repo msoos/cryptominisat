@@ -1781,7 +1781,7 @@ bool Subsumer::maybeEliminate(const Var var)
         #ifdef VERBOSE_DEBUG
         std::cout << "Adding new clause due to varelim: " << dummy << std::endl;
         #endif
-        Clause* newCl = solver.addClauseInt(dummy, group_num, false, 0, false, false);
+        Clause* newCl = solver.addClauseInt(dummy, group_num, false, 0, true, false);
         if (newCl != NULL) {
             ClauseSimp newClSimp = linkInClause(*newCl);
             if (numMaxSubsume1 > 0) subsume1(*newCl);
@@ -1828,7 +1828,7 @@ void Subsumer::addLearntBinaries(const Var var)
             tmp.growTo(2);
             tmp[0] = lit1;
             tmp[1] = lit2;
-            Clause* tmpOK = solver.addClauseInt(tmp, 0, true, 2, false, false);
+            Clause* tmpOK = solver.addClauseInt(tmp, 0, true, 2, true, false);
             release_assert(tmpOK == NULL);
             release_assert(solver.ok);
         }
