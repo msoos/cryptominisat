@@ -81,7 +81,7 @@ const bool Gaussian::full_init()
         solver.clauseCleaner->cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses);
         if (!solver.ok) return false;
         init();
-        Clause* confl;
+        PropBy confl;
         gaussian_ret g = gaussian(confl);
         switch (g) {
         case unit_conflict:
@@ -329,7 +329,7 @@ inline void Gaussian::update_last_one_in_col(matrixset& m)
         *i = m.num_rows;
 }
 
-Gaussian::gaussian_ret Gaussian::gaussian(Clause*& confl)
+Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
 {
     if (solver.decisionLevel() >= badlevel)
         return nothing;
@@ -549,33 +549,23 @@ uint32_t Gaussian::eliminate(matrixset& m, uint32_t& conflict_row)
     return i;
 }
 
-Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matrixset& m, const uint32_t size, const uint32_t maxlevel, const uint32_t best_row)
+Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrixset& m, const uint32_t size, const uint32_t maxlevel, const uint32_t best_row)
 {
     assert(best_row != UINT_MAX);
 
+    const bool xorEqualFalse = !m.matrix.getVarsetAt(best_row).is_true();
     m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
-    #ifdef DEBUG_ATTACH
-    for (uint32_t i = 0; i < tmp_clause.size(); i++) {
-        if (i > 0) assert(tmp_clause[i-1].var() != tmp_clause[i].var());
-    }
-    #endif //DEBUG_ATTACH
-    confl = (Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
-    Clause& cla = *confl;
-    #ifdef STATS_NEEDED
-    if (solver.dynamic_behaviour_analysis)
-        solver.logger.set_group_name(confl->getGroup(), "learnt gauss clause");
+
+    #ifdef VERBOSE_DEBUG
+    cout << "(" << matrix_no << ")Found conflict:" << tmp_clause << std::endl;
     #endif
 
-    if (cla.size() <= 1) {
+    if (tmp_clause.size() <= 1) {
+        if (!tmp_clause.empty()) confl = PropBy(tmp_clause[0]);
+        else confl = PropBy();
         solver.ok = false;
         return unit_conflict;
     }
-
-    assert(cla.size() >= 2);
-    #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Found conflict:";
-    cla.plainPrint();
-    #endif
 
     if (maxlevel != solver.decisionLevel()) {
         #ifdef STATS_NEEDED
@@ -586,6 +576,36 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     }
     const uint32_t curr_dec_level = solver.decisionLevel();
     assert(maxlevel == curr_dec_level);
+
+    if (tmp_clause.size() == 2) {
+        Lit lit1 = tmp_clause[0];
+        Lit lit2 = tmp_clause[1];
+
+        solver.watches[(~lit1).toInt()].push(Watched(lit2, true));
+        solver.watches[(~lit2).toInt()].push(Watched(lit1, true));
+        solver.numBins++;
+        solver.learnts_literals += 2;
+
+        lit1 = ~lit1;
+        lit2 = ~lit2;
+        solver.watches[(~lit2).toInt()].push(Watched(lit1, true));
+        solver.watches[(~lit1).toInt()].push(Watched(lit2, true));
+        solver.numBins++;
+        solver.learnts_literals += 2;
+
+        confl = PropBy(lit1);
+        solver.failBinLit = lit2;
+        return conflict;
+    }
+
+    Clause* conflPtr = (Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
+    confl = solver.clauseAllocator.getOffset(conflPtr);
+
+    Clause& cla = *conflPtr;
+    #ifdef STATS_NEEDED
+    if (solver.dynamic_behaviour_analysis)
+        solver.logger.set_group_name(cla.getGroup(), "learnt gauss clause");
+    #endif
 
     uint32_t maxsublevel = 0;
     uint32_t maxsublevel_at = UINT_MAX;
@@ -609,7 +629,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(Clause*& confl, const matri
     return conflict;
 }
 
-Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint32_t last_row, Clause*& confl)
+Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(matrixset& m, uint32_t last_row, PropBy& confl)
 {
     int32_t maxlevel = std::numeric_limits<int32_t>::max();
     uint32_t size = UINT_MAX;
@@ -847,7 +867,7 @@ void Gaussian::disable_if_necessary()
 
 llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
 {
-    Clause* confl;
+    PropBy confl;
 
     disable_if_necessary();
     if (should_check_gauss(solver.decisionLevel(), solver.starts)) {
@@ -857,8 +877,9 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
         switch (g) {
         case conflict: {
             useful_confl++;
-            llbool ret = solver.handle_conflict(learnt_clause, solver.clauseAllocator.getOffset(confl), conflictC, true);
-            solver.clauseAllocator.clauseFree(confl);
+            llbool ret = solver.handle_conflict(learnt_clause, confl, conflictC, true);
+            if (confl.isClause())
+                solver.clauseAllocator.clauseFree(solver.clauseAllocator.getPointer(confl.getClause()));
 
             if (ret != l_Nothing) return ret;
             return l_Continue;
@@ -871,12 +892,9 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
         case unit_conflict: {
             unit_truths++;
             useful_confl++;
-            if (confl->size() == 0) {
-                solver.clauseAllocator.clauseFree(confl);
-                return l_False;
-            }
+            if (confl.isNULL()) return l_False;
 
-            Lit lit = (*confl)[0];
+            Lit lit = confl.getOtherLit();
             #ifdef STATS_NEEDED
             if (solver.dynamic_behaviour_analysis)
                 solver.logger.conflict(Logger::gauss_confl_type, 0, confl->getGroup(), *confl);
@@ -884,14 +902,8 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
 
             solver.cancelUntil(0);
 
-            if (solver.assigns[lit.var()].isDef()) {
-                solver.clauseAllocator.clauseFree(confl);
-                return l_False;
-            }
-
+            if (solver.assigns[lit.var()].isDef()) return l_False;
             solver.uncheckedEnqueue(lit);
-
-            solver.clauseAllocator.clauseFree(confl);
             return l_Continue;
         }
         case nothing:
