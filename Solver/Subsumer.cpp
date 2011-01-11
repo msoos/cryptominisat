@@ -1975,12 +1975,7 @@ template<class T>
 const bool Subsumer::allTautology(const T& ps, const Lit lit)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "allTautology: ";
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        if (ps[i].sign()) printf("-");
-        printf("%d ", ps[i].var() + 1);
-    }
-    printf("0\n");
+    cout << "allTautology: " << ps << std::endl;
     #endif
 
     numMaxBlockToVisit -= ps.size()*2;
@@ -2030,7 +2025,7 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
 void Subsumer::blockedClauseRemoval()
 {
     if (numMaxBlockToVisit < 0) return;
-    if (solver.order_heap.size() < 1) return;
+    if (solver.order_heap.empty()) return;
 
     double myTime = cpuTime();
     numblockedClauseRemoved = 0;
