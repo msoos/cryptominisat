@@ -2092,7 +2092,9 @@ void Subsumer::blockedClauseRemoval()
         touchedBlockedVars.pop();
         touchedBlockedVarsBool[vo.var] = false;
 
-        if (solver.assigns[vo.var] != l_Undef || !solver.decision_var[vo.var] || cannot_eliminate[vo.var])
+        if (solver.value(vo.var) != l_Undef
+            || !solver.decision_var[vo.var]
+            || cannot_eliminate[vo.var])
             continue;
 
         triedToBlock++;
@@ -2164,7 +2166,8 @@ void Subsumer::blockedClauseElimAll(const Lit lit)
             *j++ = *i;
             continue;
         }
-        removeWBin(solver.watches[(~i->getOtherLit()).toInt()], lit, i->getLearnt());
+        assert(!i->getLearnt());
+        removeWBin(solver.watches[(~i->getOtherLit()).toInt()], lit, false);
         elimedOutVarBin[lit.var()].push_back(std::make_pair(lit, i->getOtherLit()));
         touch(i->getOtherLit(), false);
         removedNum++;
