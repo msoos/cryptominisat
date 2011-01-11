@@ -2103,6 +2103,8 @@ void Subsumer::blockedClauseRemoval()
        // }
     }
 
+    removeWrongBinsAndAllTris();
+
     if (solver.conf.verbosity >= 1) {
         std::cout
         << "c blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved
