@@ -752,7 +752,7 @@ const int Main::singleThreadSolve()
         std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
     }
     if (ret == l_Undef && conf.verbosity >= 1) {
-        std::cout << "c Not finished running -- maximum restart reached" << std::endl;
+        std::cout << "c Not finished running -- signal caught or maximum restart reached" << std::endl;
     }
     if (conf.verbosity >= 1) solver.printStats();
     printResultFunc(solver, ret, res);
@@ -864,11 +864,21 @@ const int Main::oneThreadSolve()
 
 const int Main::multiThreadSolve()
 {
+    bool exitHere = false;
     if (max_nr_of_solutions > 1) {
         std::cerr << "ERROR: When multi-threading, only one solution can be found" << std::endl;
+        exitHere = true;
+    }
+    if (debugLib) {
+        std::cerr << "ERROR: When multi-threading, --debuglib cannot be used" << std::endl;
+        exitHere = true;
+    }
+    if (exitHere) {
+        std::cerr << "libarary in this version of CryptoMS is not multi-threaded :(" << std::endl;
         std::cerr << "Please set option '--threads=1' on the command line." << std::endl;
         exit(-1);
     }
+
     int finalRetVal;
     if (numThreads != -1) {
         assert(numThreads > 0);
