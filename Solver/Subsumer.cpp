@@ -1877,7 +1877,6 @@ bool Subsumer::maybeEliminate(const Var var)
                 } else {
                     solver.attachBinClause(dummy[0], dummy[1], false);
                     solver.numNewBin++;
-                    solver.dataSync->signalNewBinClause(dummy);
                 }
                 subsume1(dummy, false);
                 break;
@@ -2075,12 +2074,7 @@ template<class T>
 const bool Subsumer::allTautology(const T& ps, const Lit lit)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "allTautology: ";
-    for (uint32_t i = 0; i < ps.size(); i++) {
-        if (ps[i].sign()) printf("-");
-        printf("%d ", ps[i].var() + 1);
-    }
-    printf("0\n");
+    cout << "allTautology: " << ps << std::endl;
     #endif
 
     numMaxBlockToVisit -= ps.size()*2;
@@ -2130,7 +2124,7 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
 void Subsumer::blockedClauseRemoval()
 {
     if (numMaxBlockToVisit < 0) return;
-    if (solver.order_heap.size() < 1) return;
+    if (solver.order_heap.empty()) return;
 
     double myTime = cpuTime();
     numblockedClauseRemoved = 0;
@@ -2151,7 +2145,9 @@ void Subsumer::blockedClauseRemoval()
         touchedBlockedVars.pop();
         touchedBlockedVarsBool[vo.var] = false;
 
-        if (solver.assigns[vo.var] != l_Undef || !solver.decision_var[vo.var] || cannot_eliminate[vo.var])
+        if (solver.value(vo.var) != l_Undef
+            || !solver.decision_var[vo.var]
+            || cannot_eliminate[vo.var])
             continue;
 
         triedToBlock++;
@@ -2161,6 +2157,8 @@ void Subsumer::blockedClauseRemoval()
             tryOneSetting(lit);
        // }
     }
+
+    removeWrongBinsAndAllTris();
 
     if (solver.conf.verbosity >= 1) {
         std::cout
@@ -2221,7 +2219,8 @@ void Subsumer::blockedClauseElimAll(const Lit lit)
             *j++ = *i;
             continue;
         }
-        removeWBin(solver.watches[(~i->getOtherLit()).toInt()], lit, i->getLearnt());
+        assert(!i->getLearnt());
+        removeWBin(solver.watches[(~i->getOtherLit()).toInt()], lit, false);
         elimedOutVarBin[lit.var()].push_back(std::make_pair(lit, i->getOtherLit()));
         touch(i->getOtherLit(), false);
         removedNum++;
