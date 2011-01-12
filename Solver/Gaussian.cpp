@@ -216,7 +216,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
     changed_rows.resize(origMat.num_rows);
-    memset(&changed_rows[0], 0, sizeof(char)*changed_rows.size());
+    memset(&changed_rows[0], 0, sizeof(unsigned char)*changed_rows.size());
 
     origMat.last_one_in_col.resize(origMat.num_cols);
     std::fill(origMat.last_one_in_col.begin(), origMat.last_one_in_col.end(), origMat.num_rows);
@@ -301,7 +301,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     assert(solver.decisionLevel() == 0 || check_last_one_in_cols(m));
     #endif
 
-    memset(&changed_rows[0], 0, sizeof(char)*changed_rows.size());
+    memset(&changed_rows[0], 0, sizeof(unsigned char)*changed_rows.size());
 
     uint32_t last = 0;
     uint32_t col = 0;
