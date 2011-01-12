@@ -674,6 +674,9 @@ void Solver::printStats(const int numThreads)
     printStatsLine("c tried to recurMin cls", moreRecurMinLDo, (double)moreRecurMinLDo/(double)conflicts*100.0, " % of conflicts");
     printStatsLine("c updated cache", updateTransCache, updateTransCache/(double)moreRecurMinLDo, " lits/tried recurMin");
 
+    printStatsLine("c OTF Gate-Rem cl", OTFGateRemSucc, (double)OTFGateRemSucc/(double)conflicts, "clauses/conflict");
+    printStatsLine("c OTF Gate-rem lits", OTFGateRemLits, (double)OTFGateRemLits/(double)OTFGateRemSucc, "lits/confl");
+
     //Multi-threading
     if (numThreads > 1) {
         printStatsLine("c unit cls recevied", dataSync->getRecvUnitData(), (double)dataSync->getRecvUnitData()/(double)get_unitary_learnts_num()*100.0, "% of units");

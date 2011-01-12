@@ -299,6 +299,8 @@ protected:
     uint64_t moreRecurMinLDo; ///<Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
     uint64_t updateTransCache; ///<Number of times the transitive OTF-reduction cache has been updated
     uint64_t nbClOverMaxGlue; ///<Number or clauses over maximum glue defined in maxGlue
+    uint64_t OTFGateRemLits;
+    uint64_t OTFGateRemSucc;
 
     //Multi-threading
     DataSync* dataSync;
