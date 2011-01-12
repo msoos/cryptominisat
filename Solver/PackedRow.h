@@ -94,7 +94,7 @@ public:
 
     bool popcnt_is_one() const
     {
-        char popcount = 0;
+        uint32_t popcount = 0;
         for (uint32_t i = 0; i != size; i++) {
             uint64_t tmp = mp[i];
             while(tmp) {
