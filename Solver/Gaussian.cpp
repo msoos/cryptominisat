@@ -381,7 +381,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
         ret = handle_matrix_prop_and_confl(cur_matrixset, last_row, confl);
     //}
     #ifdef DEBUG_GAUSS
-    assert(ret == conflict || nothing_to_propagate(cur_matrixset));
+    assert(ret == conflict || ret == unit_conflict || nothing_to_propagate(cur_matrixset));
     #endif
 
     if (!cur_matrixset.num_cols || !cur_matrixset.num_rows) {
