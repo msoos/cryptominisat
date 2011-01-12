@@ -570,7 +570,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
     assert(best_row != UINT_MAX);
 
     const bool xorEqualFalse = !m.matrix.getVarsetAt(best_row).is_true();
-    m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
+    const bool wasUndef = m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
+    assert(!wasUndef);
 
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Found conflict:" << tmp_clause << std::endl;
