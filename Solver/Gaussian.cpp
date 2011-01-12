@@ -580,9 +580,10 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
     #endif
 
     if (tmp_clause.size() <= 1) {
-        if (!tmp_clause.empty()) confl = PropBy(tmp_clause[0]);
-        else confl = PropBy();
-        solver.ok = false;
+        if (!tmp_clause.empty()) {
+            confl = PropBy(tmp_clause[0]);
+            solver.ok = false;
+        } else confl = PropBy();
         return unit_conflict;
     }
 
