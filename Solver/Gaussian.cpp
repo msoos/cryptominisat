@@ -74,6 +74,7 @@ inline void Gaussian::set_matrixset_to_cur()
 const bool Gaussian::full_init()
 {
     assert(solver.ok);
+    assert(solver.decisionLevel() == 0);
 
     if (!should_init()) return true;
     reset_stats();
@@ -215,7 +216,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
     changed_rows.resize(origMat.num_rows);
-    memset(&changed_rows[0], 0, sizeof(char)*changed_rows.size());
+    memset(&changed_rows[0], 0, sizeof(unsigned char)*changed_rows.size());
 
     origMat.last_one_in_col.resize(origMat.num_cols);
     std::fill(origMat.last_one_in_col.begin(), origMat.last_one_in_col.end(), origMat.num_rows);
@@ -300,7 +301,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     assert(solver.decisionLevel() == 0 || check_last_one_in_cols(m));
     #endif
 
-    memset(&changed_rows[0], 0, sizeof(char)*changed_rows.size());
+    memset(&changed_rows[0], 0, sizeof(unsigned char)*changed_rows.size());
 
     uint32_t last = 0;
     uint32_t col = 0;
@@ -380,12 +381,12 @@ Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
         ret = handle_matrix_prop_and_confl(cur_matrixset, last_row, confl);
     //}
     #ifdef DEBUG_GAUSS
-    assert(ret == conflict || nothing_to_propagate(cur_matrixset));
+    assert(ret == conflict || ret == unit_conflict || nothing_to_propagate(cur_matrixset));
     #endif
 
     if (!cur_matrixset.num_cols || !cur_matrixset.num_rows) {
         badlevel = solver.decisionLevel();
-        return nothing;
+        return ret;
     }
 
     if (ret == nothing &&
@@ -569,16 +570,20 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
     assert(best_row != UINT_MAX);
 
     const bool xorEqualFalse = !m.matrix.getVarsetAt(best_row).is_true();
-    m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
+    const bool wasUndef = m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
+    assert(!wasUndef);
 
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Found conflict:" << tmp_clause << std::endl;
+    cout << "(" << matrix_no << ")matrix confl clause:"
+    << tmp_clause << " , "
+    << "xorEqualFalse:" << xorEqualFalse << std::endl;
     #endif
 
     if (tmp_clause.size() <= 1) {
-        if (!tmp_clause.empty()) confl = PropBy(tmp_clause[0]);
-        else confl = PropBy();
-        solver.ok = false;
+        if (!tmp_clause.empty()) {
+            confl = PropBy(tmp_clause[0]);
+            solver.ok = false;
+        } else confl = PropBy();
         return unit_conflict;
     }
 
@@ -807,15 +812,13 @@ void Gaussian::analyse_confl(const matrixset& m, const uint32_t row, int32_t& ma
 Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t row)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")matrix prop found!" << endl;
-    cout << m.matrix.getMatrixAt(row) << endl;
-    cout << "(" << matrix_no << ")matrix row:";
+    cout << "(" << matrix_no << ")matrix prop" << endl;
     #ifdef VERBOSE_DEBUG_MORE
-    print_matrix_row(m.matrix.getMatrixAt(row));
-    cout << endl;
+    cout << "(" << matrix_no << ")matrix row:" << m.matrix.getMatrixAt(row) << endl;
     #endif
     #endif
 
+    bool xorEqualFalse = !m.matrix.getVarsetAt(row).is_true();
     m.matrix.getVarsetAt(row).fill(tmp_clause, solver.assigns, col_to_var_original);
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix prop clause: " << tmp_clause << std::endl;
@@ -833,31 +836,16 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             return unit_propagation;
         case 2: {
             solver.cancelUntil(0);
-            bool xorEqualFalse = false ^ tmp_clause[0].sign() ^ tmp_clause[1].sign();
-            Lit lit1 = tmp_clause[0].unsign();
-            Lit lit2 = tmp_clause[1].unsign();
-            tmp_clause[0] = lit1;
-            tmp_clause[1] = lit2;
-            lbool lit1Val = solver.value(lit1);
-            lbool lit2Val = solver.value(lit2);
-            if (lit1Val == l_Undef && lit2Val == l_Undef) {
-                solver.varReplacer->replace(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
-            } else if (lit1Val != l_Undef && lit2Val == l_Undef) {
-                solver.uncheckedEnqueue(lit2 ^ (lit1Val == l_False) ^ xorEqualFalse);
-            } else if (lit1Val == l_Undef && lit2Val != l_Undef) {
-                solver.uncheckedEnqueue(lit1 ^ (lit2Val == l_False) ^ xorEqualFalse);
-            } else {
-                assert(lit1Val != l_Undef && lit2Val != l_Undef);
-                //It's a propagation! Cannot be a conflict.
-                //assert((lit1Val.getBool() ^ lit2Val.getBool()) == !xorEqualFalse);
-                //it must propagate, this would propagate nothing
-                assert(false);
-            }
+            tmp_clause[0] = tmp_clause[0].unsign();
+            tmp_clause[1] = tmp_clause[1].unsign();
+            XorClause* cl = solver.addXorClauseInt(tmp_clause, xorEqualFalse, 0);
+            assert(cl == NULL);
+            assert(solver.ok);
             return unit_propagation;
             break;
         }
         default:
-            Clause& cla = *(Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
+            Clause& cla = *(Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
             assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
             assert(solver.assigns[cla[0].var()].isUndef());
 
@@ -914,6 +902,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
                 #ifdef VERBOSE_DEBUG
                 std::cout << "(" << matrix_no << ")zero-length conflict. UNSAT" << std::endl;
                 #endif
+                solver.ok = false;
                 return l_False;
             }
 
@@ -928,15 +917,16 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
             #ifdef VERBOSE_DEBUG
             std::cout << "(" << matrix_no << ")one-length conflict" << std::endl;
             #endif
-            if (solver.assigns[lit.var()].isDef()) {
+            if (solver.value(lit) != l_Undef) {
                 assert(solver.value(lit) == l_False);
                 #ifdef VERBOSE_DEBUG
-                std::cout << "(" << matrix_no << ")one-length conflict set to other -> UNSAT" << std::endl;
+                std::cout << "(" << matrix_no << ") -> UNSAT" << std::endl;
                 #endif
+                solver.ok = false;
                 return l_False;
             }
             #ifdef VERBOSE_DEBUG
-            std::cout << "(" << matrix_no << ")one-length conflict -> setting to correct value" << std::endl;
+            std::cout << "(" << matrix_no << ") -> setting to correct value" << std::endl;
             #endif
             solver.uncheckedEnqueue(lit);
             return l_Continue;
@@ -1055,12 +1045,20 @@ const bool Gaussian::nothing_to_propagate(matrixset& m) const
 {
     for(PackedMatrix::iterator r = m.matrix.beginMatrix(), end = m.matrix.endMatrix(); r != end; ++r) {
         if ((*r).popcnt_is_one()
-            && solver.assigns[m.col_to_var[(*r).scan(0)]].isUndef())
+            && solver.assigns[m.col_to_var[(*r).scan(0)]].isUndef()) {
+            #ifdef VERBOSE_DEBUG
+            std::cout << "row " << (*r) << " is a propagation, but we didn't catch it" << std::endl;
+            #endif
             return false;
+        }
     }
     for(PackedMatrix::iterator r = m.matrix.beginMatrix(), end = m.matrix.endMatrix(); r != end; ++r) {
-        if ((*r).isZero() && (*r).is_true())
+        if ((*r).isZero() && (*r).is_true()) {
+            #ifdef VERBOSE_DEBUG
+            std::cout << "row " << (*r) << " is a conflict, but we didn't catch it" << std::endl;
+            #endif
             return false;
+        }
     }
     return true;
 }

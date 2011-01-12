@@ -2077,6 +2077,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
     testAllClauseAttach();
     findAllAttach();
     for (;;) {
+        assert(ok);
         PropBy confl = propagate(update);
 
         if (!confl.isNULL()) {
@@ -2093,6 +2094,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
             if (at_least_one_continue) continue;
             #endif //USE_GAUSS
 
+            assert(ok);
             if (conf.doCacheOTFSSR  && decisionLevel() == 1) saveOTFData();
             ret = new_decision(nof_conflicts, nof_conflicts_fullrestart, conflictC);
             if (ret != l_Nothing) return ret;
