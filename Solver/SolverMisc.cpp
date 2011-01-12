@@ -661,8 +661,8 @@ void Solver::printStats()
     printStatsLine("c bin xor find time", getTotalTimeSCC());
 
     //OTF clause improvement stats
-    printStatsLine("c OTF clause improved", improvedClauseNo, (double)improvedClauseNo/(double)conflicts, "clauses/conflict");
-    printStatsLine("c OTF impr. size diff", improvedClauseSize, (double)improvedClauseSize/(double)improvedClauseNo, " lits/clause");
+    printStatsLine("c OTF clause subsumed", improvedClauseNo, (double)improvedClauseNo/(double)conflicts, "clauses/conflict");
+    printStatsLine("c OTF subs. size diff", improvedClauseSize, (double)improvedClauseSize/(double)improvedClauseNo, " lits/clause");
 
     //Clause-shrinking through watchlists
     printStatsLine("c OTF cl watch-shrink", numShrinkedClause, (double)numShrinkedClause/(double)conflicts, "clauses/conflict");
