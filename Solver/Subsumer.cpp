@@ -395,6 +395,7 @@ parameter is different from var_Undef.
 void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
 {
     Clause& cl = *c.clause;
+    assert(!defOfOrGate[c.index]);
 
     for (uint32_t i = 0; i < cl.size(); i++) {
         if (elim != var_Undef) numMaxElim -= occur[cl[i].toInt()].size()/2;
@@ -2415,6 +2416,8 @@ const bool Subsumer::findOrGatesAndTreat()
 
     double myTime = cpuTime();
     orGates.clear();
+    for (size_t i = 0; i < gateOcc.size(); i++) gateOcc[i].clear();
+
     totalOrGateSize = 0;
     uint32_t oldNumVarToReplace = solver.varReplacer->getNewToReplaceVars();
     uint32_t oldNumBins = solver.numBins;
@@ -2422,9 +2425,8 @@ const bool Subsumer::findOrGatesAndTreat()
     numOrGateReplaced = 0;
 
     findOrGates(false);
-    if (!doAllOptimisationWithGates()) goto end;
+    doAllOptimisationWithGates();
 
-    end:
     if (solver.conf.verbosity >= 1) {
         std::cout << "c ORs : " << std::setw(6) << orGates.size()
         << " avg-s: " << std::fixed << std::setw(4) << std::setprecision(1) << ((double)totalOrGateSize/(double)orGates.size())
@@ -2437,22 +2439,43 @@ const bool Subsumer::findOrGatesAndTreat()
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
     }
     if (!solver.ok) return false;
-    if (!solver.conf.doER) return true;
 
-    myTime = cpuTime();
+    if (solver.conf.doER) {
+        vector<OrGate> backupOrGates = orGates;
+        if (!carryOutER()) return false;
+        for (vector<OrGate>::const_iterator it = backupOrGates.begin(), end = backupOrGates.end(); it != end; it++) {
+            orGates.push_back(*it);
+        }
+    }
+
+    for (vector<OrGate>::iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+        OrGate& gate = *it;
+        for (uint32_t i = 0; i < gate.lits.size(); i++) {
+            Lit lit = gate.lits[i];
+            gateOcc[lit.toInt()].push_back(&(*it));
+        }
+    }
+
+    clauses_subsumed = old_clauses_subsumed;
+
+    return solver.ok;
+}
+
+const bool Subsumer::carryOutER()
+{
+    double myTime = cpuTime();
     orGates.clear();
     totalOrGateSize = 0;
-    oldNumVarToReplace = solver.varReplacer->getNewToReplaceVars();
-    oldNumBins = solver.numBins;
+    uint32_t oldNumVarToReplace = solver.varReplacer->getNewToReplaceVars();
+    uint32_t oldNumBins = solver.numBins;
     gateLitsRemoved = 0;
     numOrGateReplaced = 0;
     defOfOrGate.clear();
     defOfOrGate.growTo(clauses.size(), false);
 
     createNewVar();
-    if (!doAllOptimisationWithGates()) goto end2;
+    doAllOptimisationWithGates();
 
-    end2:
     if (solver.conf.verbosity >= 1) {
         std::cout << "c ORs : " << std::setw(6) << orGates.size()
         << " avg-s: " << std::fixed << std::setw(4) << std::setprecision(1) << ((double)totalOrGateSize/(double)orGates.size())
@@ -2464,35 +2487,6 @@ const bool Subsumer::findOrGatesAndTreat()
         << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
     }
-    if (!solver.ok) return false;
-
-    /*for (uint32_t i = 0; i < orGates.size(); i++) {
-        const OrGate& v = orGates[i];
-        std::cout << " " << v.eqLit << " = ";
-        for (uint32_t i2 = 0; i2 < v.lits.size(); i2++) {
-            std::cout << v.lits[i2] << " , ";
-        }
-        std::cout << std::endl;
-    }
-
-    myTime = cpuTime();
-    orGates.clear();
-    totalOrGateSize = 0;
-    leftHandOfGate.clear();
-    leftHandOfGate.growTo(solver.nVars()*2, false);
-    oldNumVarToReplace = solver.varReplacer->getNewToReplaceVars();
-    oldNumBins = solver.numBins;
-    gateLitsRemoved = 0;
-    numOrGateReplaced = 0;
-    findOrGates(true);
-    if (solver.conf.verbosity >= 1) {
-        std::cout << "c gates found : " << std::setw(6) << orGates.size()
-        << " avg size: " << std::fixed << std::setw(4) << std::setprecision(1) << ((double)totalOrGateSize/(double)orGates.size())
-        << std::endl;
-    }*/
-
-    clauses_subsumed = old_clauses_subsumed;
-
     return solver.ok;
 }
 
@@ -2632,9 +2626,9 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         // c V d V -g
         // now, if we replace (a V b) with g and we replace (c V d) with f, then
         // we have just lost the definition of the gates!!
-        bool replaceDef = false;
+        /*bool replaceDef = false;
         bool exactReplace = false;
-        if (defOfOrGate[c.index] /*&& cl->size() == gate.lits.size() + 1*/) {
+        if (defOfOrGate[c.index]) {
             replaceDef = true;
             for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
                 if (gate.eqLit == ~(*l)) exactReplace = true;
@@ -2658,7 +2652,8 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
             assert(c2 == NULL);
             if (!solver.ok)  return false;
             continue;
-        }
+        }*/
+        if (defOfOrGate[c.index]) continue;
 
         bool inside = false;
         bool invertInside = false;
@@ -2795,6 +2790,7 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
         if ((cl.getAbst() | abstraction) != abstraction) continue;
         if (cl.size() > maxSize) continue;
         if (sizeSortedOcc[cl.size()].empty()) continue;
+        if (defOfOrGate[it2->index]) continue;
 
         bool needCont = false;
         for (uint32_t i = 0; i < cl.size(); i++) {
@@ -2895,6 +2891,7 @@ const bool Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc,
 {
     for (vector<ClauseSimp>::const_iterator it = sizeSortedOcc.begin(), end = sizeSortedOcc.end(); it != end; it++) {
         const Clause& cl = *it->clause;
+        if (defOfOrGate[it->index]) continue;
         if (cl.getAbst() != abst2) continue;
 
         bool OK = true;

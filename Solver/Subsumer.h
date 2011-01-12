@@ -26,6 +26,12 @@ using std::priority_queue;
 class ClauseCleaner;
 class OnlyNonLearntBins;
 
+class OrGate {
+    public:
+        Lit eqLit;
+        vector<Lit> lits;
+};
+
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
 
@@ -60,6 +66,7 @@ public:
     const double getTotalTime() const;
     const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
     const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
+    const vector<OrGate*>& getGateOcc(const Lit lit) const;
 
 private:
 
@@ -305,11 +312,6 @@ private:
     void blockedClauseElimAll(const Lit lit);
 
     //Gate extraction
-    class OrGate {
-    public:
-        Lit eqLit;
-        vector<Lit> lits;
-    };
     struct OrGateSorter {
         const bool operator() (const OrGate& gate1, const OrGate& gate2) {
             return (gate1.lits.size() > gate2.lits.size());
@@ -336,9 +338,11 @@ private:
     int64_t gateLitsRemoved;
     uint64_t totalOrGateSize;
     vector<OrGate> orGates;
+    vector<vector<OrGate*> > gateOcc;
     uint32_t numOrGateReplaced;
     const bool findEqOrGates();
     vec<char> defOfOrGate;
+    const bool carryOutER();
     void createNewVar();
     const bool doAllOptimisationWithGates();
     uint32_t andGateNumFound;
@@ -505,6 +509,8 @@ inline void Subsumer::newVar()
     ol_seenNeg.push(1);
     touch(solver.nVars()-1);
     dontElim.push(0);
+    gateOcc.push_back(vector<OrGate*>());
+    gateOcc.push_back(vector<OrGate*>());
 
     binNonLearntCache.push_back(TransCache());
     binNonLearntCache.push_back(TransCache());
@@ -533,6 +539,11 @@ inline const uint32_t Subsumer::getNumElimed() const
 inline const double Subsumer::getTotalTime() const
 {
     return totalTime;
+}
+
+inline const vector<OrGate*>& Subsumer::getGateOcc(const Lit lit) const
+{
+    return gateOcc[lit.toInt()];
 }
 
 #endif //SIMPLIFIER_H

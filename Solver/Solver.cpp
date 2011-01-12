@@ -42,7 +42,9 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 #ifdef VERBOSE_DEBUG
 #define UNWINDING_DEBUG
+#define VERBOSE_DEBUG_GATE
 #endif
+
 
 //#define DEBUG_UNCHECKEDENQUEUE_LEVEL0
 //#define VERBOSE_DEBUG_POLARITIES
@@ -77,6 +79,8 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , moreRecurMinLDo(0)
         , updateTransCache(0)
         , nbClOverMaxGlue(0)
+        , OTFGateRemLits(0)
+        , OTFGateRemSucc(0)
 
         , ok               (true)
         , numBins          (0)
@@ -1162,9 +1166,18 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 
+
     if (conf.doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt, calcNBLevels(out_learnt));
     glue = calcNBLevels(out_learnt);
     tot_literals += out_learnt.size();
+
+    #ifdef VERBOSE_DEBUG_GATE
+    std::cout << "Final clause: " << out_learnt << std::endl;
+    for (uint32_t i = 0; i < out_learnt.size(); i++) {
+        std::cout << "val out_learnt[" << i << "]:" << value(out_learnt[i]) << std::endl;
+        std::cout << "lev out_learnt[" << i << "]:" << level[out_learnt[i].var()] << std::endl;
+    }
+    #endif
 
     // Find correct backtrack level:
     //
@@ -1178,6 +1191,9 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
         std::swap(out_learnt[max_i], out_learnt[1]);
         out_btlevel = level[out_learnt[1].var()];
     }
+    #ifdef VERBOSE_DEBUG_GATE
+    std::cout << "out_btlevel: " << out_btlevel << std::endl;
+    #endif
 
     if (lastSelectedRestartType == dynamic_restart) {
         #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
@@ -1240,6 +1256,109 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     uint32_t moreRecurProp = 0;
 
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
+
+    if (conf.doGateFind) {
+        bool gateRemSuccess = false;
+        vec<Lit> oldCl = cl;
+        while (true) {
+            for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+                const vector<OrGate*>& gates = subsumer->getGateOcc(*l);
+                if (gates.empty()) continue;
+
+                for (vector<OrGate*>::const_iterator it2 = gates.begin(), end2 = gates.end(); it2 != end2; it2++) {
+                    OrGate& gate = **it2;
+                    bool OK = true;
+                    for (uint32_t i = 0; i < gate.lits.size(); i++) {
+                        if (!seen[gate.lits[i].toInt()]) {
+                            OK = false;
+                            break;
+                        }
+                    }
+                    if (!OK) continue;
+
+                    //Treat gate
+                    #ifdef VERBOSE_DEBUG_GATE
+                    std::cout << "Gate: eqLit "  << gate.eqLit << " lits ";
+                    for (uint32_t i = 0; i < gate.lits.size(); i++) {
+                        std::cout << gate.lits[i] << ", ";
+                    }
+                    std::cout << " origclause: ";
+                    for (uint32_t i = 0; i < gate.origCl.size(); i++) {
+                        std::cout << gate.origCl[i] << ", ";
+                    }
+                    std::cout << std::endl;
+                    #endif
+
+                    gate.eqLit = varReplacer->getReplaceTable()[gate.eqLit.var()] ^ gate.eqLit.sign();
+                    if (subsumer->getVarElimed()[gate.eqLit.var()]) continue;
+                    if (xorSubsumer->getVarElimed()[gate.eqLit.var()]) continue;
+                    if (partHandler->getSavedState()[gate.eqLit.var()] != l_Undef) continue;
+
+                    bool firstInside = false;
+                    Lit *lit1 = cl.getData();
+                    Lit *lit2 = cl.getData();
+                    bool first = true;
+                    for (Lit *end3 = cl.getDataEnd(); lit1 != end3; lit1++, first = false) {
+                        bool in = false;
+                        for (uint32_t i = 0; i < gate.lits.size(); i++) {
+                            if (*lit1 == gate.lits[i]) {
+                                in = true;
+                                if (first) firstInside = true;
+                            }
+                        }
+                        if (in) {
+                            seen[lit1->toInt()] = false;
+                        } else {
+                            *lit2++ = *lit1;
+                        }
+                    }
+                    if (!seen[gate.eqLit.toInt()]) {
+                        *lit2++ = gate.eqLit;
+                        seen[gate.eqLit.toInt()] = true;
+                    }
+                    assert(!seen[(~gate.eqLit).toInt()]);
+                    cl.shrink_(lit1-lit2);
+                    OTFGateRemLits += lit1-lit2;
+                    #ifdef VERBOSE_DEBUG_GATE
+                    std::cout << "Old clause: " << oldCl << std::endl;
+                    for (uint32_t i = 0; i < oldCl.size(); i++) {
+                        std::cout << "-> Lit " << oldCl[i] << " lev: " << level[oldCl[i].var()] << " val: " << value(oldCl[i]) <<std::endl;
+                    }
+                    std::cout << "New clause: " << cl << std::endl;
+                    for (uint32_t i = 0; i < cl.size(); i++) {
+                        std::cout << "-> Lit " << cl[i] << " lev: " << level[cl[i].var()] << " val: " << value(cl[i]) << std::endl;
+                    }
+                    #endif
+
+                    if (firstInside) {
+                        uint32_t swapWith = std::numeric_limits<uint32_t>::max();
+                        for (uint32_t i = 0; i < cl.size(); i++) {
+                            if (cl[i] == gate.eqLit) swapWith = i;
+                        }
+                        std::swap(cl[swapWith], cl[0]);
+                    }
+                    #ifdef VERBOSE_DEBUG_GATE
+                    std::cout << "New clause2: " << cl << std::endl;
+                    for (uint32_t i = 0; i < cl.size(); i++) {
+                        std::cout << "-> Lit " << cl[i] << " lev: " << level[cl[i].var()] << std::endl;
+                    }
+                    #endif
+
+                    gateRemSuccess = true;
+
+                    //Do this recurively, again
+                    goto next;
+                }
+            }
+            break;
+            next:;
+        }
+        OTFGateRemSucc += gateRemSuccess;
+        #ifdef VERBOSE_DEBUG_GATE
+        if (gateRemSuccess) std::cout << "--------" << std::endl;
+        #endif
+    }
+
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
         if (seen[l->toInt()] == 0) continue;
         Lit lit = *l;
