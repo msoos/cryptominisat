@@ -29,6 +29,9 @@ using std::ostream;
 using std::cout;
 using std::endl;
 
+#define VERBOSE_DEBUG
+#define DEBUG_GAUSS
+
 #ifdef VERBOSE_DEBUG
 #include <iterator>
 #endif
@@ -87,6 +90,9 @@ const bool Gaussian::full_init()
         switch (g) {
         case unit_conflict:
         case conflict:
+            #ifdef VERBOSE_DEBUG
+            cout << "(" << matrix_no << ")conflict at level 0" << std::endl;
+            #endif
             solver.ok = false;
             return false;
         case unit_propagation:
@@ -189,7 +195,7 @@ uint32_t Gaussian::select_columnorder(vector<uint16_t>& var_to_col, matrixset& o
         }
     }
 
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG_MORE
     cout << "(" << matrix_no << ")col_to_var:";
     std::copy(origMat.col_to_var.begin(), origMat.col_to_var.end(), std::ostream_iterator<uint32_t>(cout, ","));
     cout << endl;
@@ -237,7 +243,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
 
 void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint32_t col)
 {
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG_MORE
     cout << "(" << matrix_no << ")Updating matrix var " << var+1 << " (col " << col << ", m.last_one_in_col[col]: " << m.last_one_in_col[col] << ")" << endl;
     cout << "m.num_rows:" << m.num_rows << endl;
     #endif
@@ -283,7 +289,9 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
 {
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Updating matrix." << endl;
+    #ifdef VERBOSE_DEBUG_MORE
     print_matrix(m);
+    #endif
     uint32_t num_updated = 0;
     #endif
 
@@ -314,7 +322,9 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
 
     #ifdef VERBOSE_DEBUG
     cout << "Matrix update finished, updated " << num_updated << " cols" << endl;
+    #ifdef VERBOSE_DEBUG_MORE
     print_matrix(m);
+    #endif
     #endif
 
     /*cout << "num_rows:" << m.num_rows;
@@ -400,7 +410,9 @@ uint32_t Gaussian::eliminate(matrixset& m, uint32_t& conflict_row)
     cout << "(" << matrix_no << ")";
     cout << "Starting elimination" << endl;
     cout << "m.least_column_changed:" << m.least_column_changed << endl;
+    #ifdef VERBOSE_DEBUG_MORE
     print_last_one_in_cols(m);
+    #endif
 
     uint32_t number_of_row_additions = 0;
     uint32_t no_exchanged = 0;
@@ -524,8 +536,10 @@ uint32_t Gaussian::eliminate(matrixset& m, uint32_t& conflict_row)
     #ifdef VERBOSE_DEBUG
     cout << "Finished elimination" << endl;
     cout << "Returning with i,j:" << i << ", " << j << "(" << m.num_rows << ", " << m.num_cols << ")" << endl;
+    #ifdef VERBOSE_DEBUG_MORE
     print_matrix(m);
     print_last_one_in_cols(m);
+    #endif
     cout << "(" << matrix_no << ")Exchanged:" << no_exchanged << " row additions:" << number_of_row_additions << endl;
     #endif
 
@@ -537,7 +551,7 @@ uint32_t Gaussian::eliminate(matrixset& m, uint32_t& conflict_row)
         assert(m.matrix.getMatrixAt(row).popcnt() == m.matrix.getMatrixAt(row).popcnt(col));
         assert(!(m.col_to_var[col] == unassigned_var && m.matrix.getMatrixAt(row)[col]));
         if (m.col_to_var[col] == unassigned_var || !m.matrix.getMatrixAt(row)[col]) {
-            #ifdef VERBOSE_DEBUG
+            #ifdef VERBOSE_DEBUG_MORE
             cout << "row:" << row << " col:" << col << " m.last_one_in_col[col]-1: " << m.last_one_in_col[col]-1 << endl;
             #endif
             assert(m.col_to_var[col] == unassigned_var || std::min((uint16_t)(m.last_one_in_col[col]-1), m.num_rows) == row);
@@ -730,12 +744,14 @@ void Gaussian::analyse_confl(const matrixset& m, const uint32_t row, int32_t& ma
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix conflict found!" << endl;
     cout << "(" << matrix_no << ")conflict clause's vars: ";
+    #ifdef VERBOSE_DEBUG_MORE
     print_matrix_row_with_assigns(m.matrix.getVarsetAt(row));
     cout << endl;
 
     cout << "(" << matrix_no << ")corresponding matrix's row (should be empty): ";
     print_matrix_row(m.matrix.getMatrixAt(row));
     cout << endl;
+    #endif
     #endif
 
     int32_t this_maxlevel = 0;
@@ -794,8 +810,10 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
     cout << "(" << matrix_no << ")matrix prop found!" << endl;
     cout << m.matrix.getMatrixAt(row) << endl;
     cout << "(" << matrix_no << ")matrix row:";
+    #ifdef VERBOSE_DEBUG_MORE
     print_matrix_row(m.matrix.getMatrixAt(row));
     cout << endl;
+    #endif
     #endif
 
     m.matrix.getVarsetAt(row).fill(tmp_clause, solver.assigns, col_to_var_original);
@@ -892,7 +910,12 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
         case unit_conflict: {
             unit_truths++;
             useful_confl++;
-            if (confl.isNULL()) return l_False;
+            if (confl.isNULL()) {
+                #ifdef VERBOSE_DEBUG
+                std::cout << "(" << matrix_no << ")zero-length conflict. UNSAT" << std::endl;
+                #endif
+                return l_False;
+            }
 
             Lit lit = confl.getOtherLit();
             #ifdef STATS_NEEDED
@@ -902,7 +925,19 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
 
             solver.cancelUntil(0);
 
-            if (solver.assigns[lit.var()].isDef()) return l_False;
+            #ifdef VERBOSE_DEBUG
+            std::cout << "(" << matrix_no << ")one-length conflict" << std::endl;
+            #endif
+            if (solver.assigns[lit.var()].isDef()) {
+                assert(solver.value(lit) == l_False);
+                #ifdef VERBOSE_DEBUG
+                std::cout << "(" << matrix_no << ")one-length conflict set to other -> UNSAT" << std::endl;
+                #endif
+                return l_False;
+            }
+            #ifdef VERBOSE_DEBUG
+            std::cout << "(" << matrix_no << ")one-length conflict -> setting to correct value" << std::endl;
+            #endif
             solver.uncheckedEnqueue(lit);
             return l_Continue;
         }
