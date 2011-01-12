@@ -33,7 +33,7 @@ bool PackedRow::operator ==(const PackedRow& b) const
     assert(b.size > 0);
     assert(size == b.size);
     #endif
-    
+
     return (std::equal(b.mp-1, b.mp+size, mp-1));
 }
 
@@ -44,7 +44,7 @@ bool PackedRow::operator !=(const PackedRow& b) const
     assert(b.size > 0);
     assert(size == b.size);
     #endif
-    
+
     return (!std::equal(b.mp-1, b.mp+size, mp-1));
 }
 
@@ -83,7 +83,7 @@ uint32_t PackedRow::popcnt(const uint32_t from) const
 void PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const
 {
     bool final = !is_true_internal;
-    
+
     tmp_clause.clear();
     uint32_t col = 0;
     bool wasundef = false;
