@@ -219,6 +219,16 @@ const llbool l_Continue = toLbool(3);
 
 lbool::lbool(llbool b) : value(b.value) {};
 
+inline std::ostream& operator<<(std::ostream& os, const llbool val)
+{
+    if (val == l_True) os << "l_True";
+    if (val == l_False) os << "l_False";
+    if (val == l_Undef) os << "l_Undef";
+    if (val == l_Nothing) os << "l_Nothing";
+    if (val == l_Continue) os << "l_Continue";
+    return os;
+}
+
 enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
 struct BinPropData {

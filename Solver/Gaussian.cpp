@@ -574,7 +574,9 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
     assert(!wasUndef);
 
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Found conflict:" << tmp_clause << std::endl;
+    cout << "(" << matrix_no << ")matrix confl clause:"
+    << tmp_clause << " , "
+    << "xorEqualFalse:" << xorEqualFalse << std::endl;
     #endif
 
     if (tmp_clause.size() <= 1) {
@@ -809,12 +811,9 @@ void Gaussian::analyse_confl(const matrixset& m, const uint32_t row, int32_t& ma
 Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t row)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")matrix prop found!" << endl;
-    cout << m.matrix.getMatrixAt(row) << endl;
-    cout << "(" << matrix_no << ")matrix row:";
+    cout << "(" << matrix_no << ")matrix prop" << endl;
     #ifdef VERBOSE_DEBUG_MORE
-    print_matrix_row(m.matrix.getMatrixAt(row));
-    cout << endl;
+    cout << "(" << matrix_no << ")matrix row:" << m.matrix.getMatrixAt(row) << endl;
     #endif
     #endif
 
@@ -931,15 +930,15 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
             #ifdef VERBOSE_DEBUG
             std::cout << "(" << matrix_no << ")one-length conflict" << std::endl;
             #endif
-            if (solver.assigns[lit.var()].isDef()) {
+            if (solver.value(lit) != l_Undef) {
                 assert(solver.value(lit) == l_False);
                 #ifdef VERBOSE_DEBUG
-                std::cout << "(" << matrix_no << ")one-length conflict set to other -> UNSAT" << std::endl;
+                std::cout << "(" << matrix_no << ") -> UNSAT" << std::endl;
                 #endif
                 return l_False;
             }
             #ifdef VERBOSE_DEBUG
-            std::cout << "(" << matrix_no << ")one-length conflict -> setting to correct value" << std::endl;
+            std::cout << "(" << matrix_no << ") -> setting to correct value" << std::endl;
             #endif
             solver.uncheckedEnqueue(lit);
             return l_Continue;
@@ -1058,12 +1057,20 @@ const bool Gaussian::nothing_to_propagate(matrixset& m) const
 {
     for(PackedMatrix::iterator r = m.matrix.beginMatrix(), end = m.matrix.endMatrix(); r != end; ++r) {
         if ((*r).popcnt_is_one()
-            && solver.assigns[m.col_to_var[(*r).scan(0)]].isUndef())
+            && solver.assigns[m.col_to_var[(*r).scan(0)]].isUndef()) {
+            #ifdef VERBOSE_DEBUG
+            std::cout << "row " << (*r) << " is a propagation, but we didn't catch it" << std::endl;
+            #endif
             return false;
+        }
     }
     for(PackedMatrix::iterator r = m.matrix.beginMatrix(), end = m.matrix.endMatrix(); r != end; ++r) {
-        if ((*r).isZero() && (*r).is_true())
+        if ((*r).isZero() && (*r).is_true()) {
+            #ifdef VERBOSE_DEBUG
+            std::cout << "row " << (*r) << " is a conflict, but we didn't catch it" << std::endl;
+            #endif
             return false;
+        }
     }
     return true;
 }
