@@ -80,7 +80,7 @@ uint32_t PackedRow::popcnt(const uint32_t from) const
     return popcnt;
 }
 
-void PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const
+const bool PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const
 {
     bool final = !is_true_internal;
 
@@ -91,8 +91,8 @@ void PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vect
         if ((mp[i] >> i2) &1) {
             const Var& var = col_to_var_original[col];
             assert(var != std::numeric_limits<Var>::max());
-            
-            const lbool& val = assigns[var];
+
+            const lbool val = assigns[var];
             const bool val_bool = val.getBool();
             tmp_clause.push(Lit(var, val_bool));
             final ^= val_bool;
@@ -111,5 +111,7 @@ void PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vect
         //assert(ps != ps_first+1);
     } else
         assert(!final);
+
+    return wasundef;
 }
 

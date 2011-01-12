@@ -196,18 +196,20 @@ public:
 
         is_true_internal = !v.xorEqualFalse();
     }
-    
-    void fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;
-    
+
+    const bool fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;
+
     inline unsigned long int scan(const unsigned long int var) const
     {
         #ifdef DEBUG_ROW
         assert(size > 0);
         #endif
-        
-        for(uint32_t i = var; i != size*64; i++)
+
+        for(uint32_t i = var; i != size*64; i++) {
             if (this->operator[](i)) return i;
-            return std::numeric_limits<unsigned long int>::max();
+        }
+
+        return std::numeric_limits<unsigned long int>::max();
     }
 
     friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
