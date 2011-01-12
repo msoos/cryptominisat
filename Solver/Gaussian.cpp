@@ -29,8 +29,8 @@ using std::ostream;
 using std::cout;
 using std::endl;
 
-#define VERBOSE_DEBUG
-#define DEBUG_GAUSS
+//#define VERBOSE_DEBUG
+//#define DEBUG_GAUSS
 
 #ifdef VERBOSE_DEBUG
 #include <iterator>
