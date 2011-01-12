@@ -818,6 +818,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
     #endif
     #endif
 
+    bool xorEqualFalse = !m.matrix.getVarsetAt(row).is_true();
     m.matrix.getVarsetAt(row).fill(tmp_clause, solver.assigns, col_to_var_original);
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix prop clause: " << tmp_clause << std::endl;
@@ -835,31 +836,16 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             return unit_propagation;
         case 2: {
             solver.cancelUntil(0);
-            bool xorEqualFalse = false ^ tmp_clause[0].sign() ^ tmp_clause[1].sign();
-            Lit lit1 = tmp_clause[0].unsign();
-            Lit lit2 = tmp_clause[1].unsign();
-            tmp_clause[0] = lit1;
-            tmp_clause[1] = lit2;
-            lbool lit1Val = solver.value(lit1);
-            lbool lit2Val = solver.value(lit2);
-            if (lit1Val == l_Undef && lit2Val == l_Undef) {
-                solver.varReplacer->replace(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
-            } else if (lit1Val != l_Undef && lit2Val == l_Undef) {
-                solver.uncheckedEnqueue(lit2 ^ (lit1Val == l_False) ^ xorEqualFalse);
-            } else if (lit1Val == l_Undef && lit2Val != l_Undef) {
-                solver.uncheckedEnqueue(lit1 ^ (lit2Val == l_False) ^ xorEqualFalse);
-            } else {
-                assert(lit1Val != l_Undef && lit2Val != l_Undef);
-                //It's a propagation! Cannot be a conflict.
-                //assert((lit1Val.getBool() ^ lit2Val.getBool()) == !xorEqualFalse);
-                //it must propagate, this would propagate nothing
-                assert(false);
-            }
+            tmp_clause[0] = tmp_clause[0].unsign();
+            tmp_clause[1] = tmp_clause[1].unsign();
+            XorClause* cl = solver.addXorClauseInt(tmp_clause, xorEqualFalse, 0);
+            assert(cl == NULL);
+            assert(solver.ok);
             return unit_propagation;
             break;
         }
         default:
-            Clause& cla = *(Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, false, solver.learnt_clause_group++);
+            Clause& cla = *(Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
             assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
             assert(solver.assigns[cla[0].var()].isUndef());
 
@@ -936,6 +922,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
                 #ifdef VERBOSE_DEBUG
                 std::cout << "(" << matrix_no << ") -> UNSAT" << std::endl;
                 #endif
+                solver.ok = false;
                 return l_False;
             }
             #ifdef VERBOSE_DEBUG
