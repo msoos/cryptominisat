@@ -527,8 +527,6 @@ void Main::parseCommandLine()
             conf.doXorSubsumption = false;
         } else if ((value = hasPrefix(argv[i], "--nohyperbinres"))) {
             conf.doHyperBinRes = false;
-        } else if ((value = hasPrefix(argv[i], "--noblockedclause"))) {
-            conf.doBlockedClause = false;
         } else if ((value = hasPrefix(argv[i], "--novarelim"))) {
             conf.doVarElim = false;
         } else if ((value = hasPrefix(argv[i], "--nosubsume1"))) {
