@@ -26,6 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <windows.h>
 #endif
 
+#ifdef _MSC_VER
+using namespace std;
+#endif
+
 void MTSolver::printNumThreads() const
 {
     if (conf.verbosity >= 1) {
@@ -60,9 +64,16 @@ void MTSolver::setupOneSolver(const int num)
     if (num > 0) {
         if (num % 6 == 0) myConf.fixRestartType = dynamic_restart;
         else if (num % 6 == 4) myConf.fixRestartType = static_restart;
+        #ifdef _MSC_VER
+        myConf.simpBurstSConf *= 1.0f + max(0.2f*(float)num, 2.0f);
+        myConf.simpStartMult *= 1.0f - max(0.1f*(float)num, 0.7f);
+        myConf.simpStartMMult *= 1.0f - max(0.1f*(float)num, 0.7f);
+        #else
         myConf.simpBurstSConf *= 1.0f + std::max(0.2f*(float)num, 2.0f);
         myConf.simpStartMult *= 1.0f - std::max(0.1f*(float)num, 0.7f);
         myConf.simpStartMMult *= 1.0f - std::max(0.1f*(float)num, 0.7f);
+        #endif //_MSC_VER
+
         if (num % 6 == 5) {
             myConf.doVarElim = false;
             myConf.polarity_mode = polarity_false;
