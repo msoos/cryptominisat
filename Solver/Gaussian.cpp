@@ -386,7 +386,7 @@ Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
 
     if (!cur_matrixset.num_cols || !cur_matrixset.num_rows) {
         badlevel = solver.decisionLevel();
-        return nothing;
+        return ret;
     }
 
     if (ret == nothing &&
