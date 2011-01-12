@@ -2048,7 +2048,8 @@ void Subsumer::blockedClauseRemoval()
 
         if (solver.value(vo.var) != l_Undef
             || !solver.decision_var[vo.var]
-            || cannot_eliminate[vo.var])
+            || cannot_eliminate[vo.var]
+            || dontElim[vo.var])
             continue;
 
         triedToBlock++;
