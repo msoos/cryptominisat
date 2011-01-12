@@ -192,6 +192,7 @@ class FailedLitSearcher {
         uint64_t maxHyperBinProps;
 
         //Multi-level
+        void calcNegPosDist();
         const bool tryMultiLevel(const vec<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed);
         const bool tryMultiLevelAll();
         void fillToTry(vec<Var>& toTry);

@@ -244,7 +244,8 @@ const bool FailedLitSearcher::search()
     }
 
     if (solver.conf.verbosity  >= 1) printResults(myTime);
-    tryMultiLevelAll();
+    calcNegPosDist();
+    //if (!tryMultiLevelAll()) goto end;
 
 
 end:
@@ -725,17 +726,8 @@ void FailedLitSearcher::fillToTry(vec<Var>& toTry)
     }
 }
 
-const bool FailedLitSearcher::tryMultiLevelAll()
+void FailedLitSearcher::calcNegPosDist()
 {
-    assert(solver.ok);
-    uint32_t backupNumUnits = solver.trail.size();
-    double myTime = cpuTime();
-    uint32_t numTries = 0;
-    uint32_t finished = 0;
-    uint64_t beforeProps = solver.propagations;
-    uint32_t enqueued = 0;
-    uint32_t numFailed = 0;
-
     uint32_t varPolCount = 0;
     for (vector<std::pair<uint64_t, uint64_t> >::iterator it = solver.lTPolCount.begin(), end = solver.lTPolCount.end(); it != end; it++, varPolCount++) {
         UIPNegPosDist tmp;
@@ -748,6 +740,20 @@ const bool FailedLitSearcher::tryMultiLevelAll()
             solver.negPosDist.push_back(tmp);
     }
     std::sort(solver.negPosDist.begin(), solver.negPosDist.end(), NegPosSorter());
+}
+
+const bool FailedLitSearcher::tryMultiLevelAll()
+{
+    assert(solver.ok);
+    uint32_t backupNumUnits = solver.trail.size();
+    double myTime = cpuTime();
+    uint32_t numTries = 0;
+    uint32_t finished = 0;
+    uint64_t beforeProps = solver.propagations;
+    uint32_t enqueued = 0;
+    uint32_t numFailed = 0;
+
+
 
     if (solver.negPosDist.size() < 30) return true;
 
