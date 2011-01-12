@@ -74,6 +74,7 @@ inline void Gaussian::set_matrixset_to_cur()
 const bool Gaussian::full_init()
 {
     assert(solver.ok);
+    assert(solver.decisionLevel() == 0);
 
     if (!should_init()) return true;
     reset_stats();
@@ -914,6 +915,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
                 #ifdef VERBOSE_DEBUG
                 std::cout << "(" << matrix_no << ")zero-length conflict. UNSAT" << std::endl;
                 #endif
+                solver.ok = false;
                 return l_False;
             }
 
