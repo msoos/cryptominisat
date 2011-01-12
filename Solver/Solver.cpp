@@ -885,7 +885,8 @@ void Solver::calcReachability()
             || subsumer->getVarElimed()[lit.var()]
             || xorSubsumer->getVarElimed()[lit.var()]
             || varReplacer->getReplaceTable()[lit.var()].var() != lit.var()
-            || partHandler->getSavedState()[lit.var()] != l_Undef)
+            || partHandler->getSavedState()[lit.var()] != l_Undef
+            || !decision_var[lit.var()])
             continue;
 
         vector<Lit>& cache = transOTFCache[(~lit).toInt()].lits;
@@ -2117,6 +2118,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
     testAllClauseAttach();
     findAllAttach();
     for (;;) {
+        assert(ok);
         PropBy confl = propagate(update);
 
         if (!confl.isNULL()) {
@@ -2142,6 +2144,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
             if (at_least_one_continue) continue;
             #endif //USE_GAUSS
 
+            assert(ok);
             if (conf.doCacheOTFSSR  && decisionLevel() == 1) saveOTFData();
             ret = new_decision(nof_conflicts, maxNumConfl, conflictC);
             if (ret != l_Nothing) return ret;

@@ -525,8 +525,6 @@ void Main::parseCommandLine()
             conf.doXorSubsumption = false;
         } else if ((value = hasPrefix(argv[i], "--nohyperbinres"))) {
             conf.doHyperBinRes = false;
-        } else if ((value = hasPrefix(argv[i], "--noblockedclause"))) {
-            conf.doBlockedClause = false;
         } else if ((value = hasPrefix(argv[i], "--novarelim"))) {
             conf.doVarElim = false;
         } else if ((value = hasPrefix(argv[i], "--nosubsume1"))) {
@@ -744,7 +742,7 @@ const int Main::solve()
         std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
     }
     if (ret == l_Undef && conf.verbosity >= 1) {
-        std::cout << "c Not finished running -- maximum restart reached" << std::endl;
+        std::cout << "c Not finished running -- signal caught or maximum restart reached" << std::endl;
     }
     if (conf.verbosity >= 1) solver.printStats();
     printResultFunc(solver, ret, res);
