@@ -2789,28 +2789,18 @@ const bool Subsumer::treatAndGateClause(ClauseSimp other, std::set<uint32_t>& cl
 
     lits.push(~(gate.eqLit));
     bool learnt = other.clause->learnt() && cl.learnt();
-    if (cleanClause(lits)) return true;
-    switch (lits.size()) {
-        case 0:
-            solver.ok = false;
-            return false;
-            break;
-        case 1: {
-            handleSize1Clause(lits[0]);
-            if (!solver.ok) return false;
-            break;
-        }
-        case 2: {
-            solver.attachBinClause(lits[0], lits[1], learnt);
-            solver.numNewBin++;
-            solver.dataSync->signalNewBinClause(lits);
-            break;
-        }
-        default:
-            Clause* clNew = solver.clauseAllocator.Clause_new(lits, cl.getGroup(), learnt);
-            if (learnt) clNew->setGlue(std::min(cl.getGlue(), other.clause->getGlue()));
-            linkInClause(*clNew);
-    }
+    uint32_t glue;
+    if (!learnt) glue = 0;
+    else glue = std::min(other.clause->getGlue(), cl.getGlue());
+
+    #ifdef VERBOSE_ORGATE_REPLACE
+    std::cout << "new clause:" << lits << std::endl;
+    std::cout << "-----------" << std::endl;
+    #endif
+
+    Clause* c = solver.addClauseInt(lits, cl.getGroup(), learnt, glue, 0, false, false);
+    if (c != NULL) linkInClause(*c);
+    if (!solver.ok) return false;
 
     return true;
 }
