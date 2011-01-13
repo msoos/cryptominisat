@@ -1329,9 +1329,6 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     assert(solver.ok);
     assert(verifyIntegrity());
 
-     if (alsoLearnt && numCalls >= 5 && solver.conf.doGateFind
-        && !findOrGatesAndTreat()) return false;
-
     removeWrong(solver.learnts);
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
