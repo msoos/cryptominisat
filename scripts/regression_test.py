@@ -433,6 +433,7 @@ class Tester:
                 "diffCheckDir",
                 "ignore",
                 "armin",
+                "nodebuglib",
                 "extraOptions=",
                 "threads="
                 ])
@@ -474,6 +475,8 @@ class Tester:
                 self.checkDirDifferent = True
             elif opt in ("-i", "--ignore"):
                 self.ignoreNoSolution = True
+            elif opt in ("--nodebuglib"):
+                self.needDebugLib = False
             elif opt in ("-a", "--armin"):
                 self.arminFuzzer = True
                 self.needDebugLib = False
