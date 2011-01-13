@@ -29,10 +29,12 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
 #define BIT_MORE_VERBOSITY
+#define VERBOSE_ORGATE_REPLACE
 #endif
 
 //#define BIT_MORE_VERBOSITY
 //#define TOUCH_LESS
+//#define VERBOSE_ORGATE_REPLACE
 
 #ifdef VERBOSE_DEBUG
 using std::cout;
@@ -2588,10 +2590,16 @@ void Subsumer::findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learn
             if (*l2 == ~eqLit) continue;
             gate.lits.push_back(*l2);
         }
+        //std::sort(gate.lits.begin(), gate.lits.end());
         gate.eqLit = eqLit;
+        //gate.num = orGates.size();
         orGates.push_back(gate);
         totalOrGateSize += gate.lits.size();
         defOfOrGate[c.index] = true;
+
+        #ifdef VERBOSE_ORGATE_REPLACE
+        std::cout << "Found gate : " << gate << std::endl;
+        #endif
     }
 }
 
@@ -2604,16 +2612,6 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
     for (uint32_t i = 0; i < subs.size(); i++) {
         ClauseSimp c = subs[i];
         Clause* cl = subs[i].clause;
-
-        #ifdef VERBOSE_ORGATE_REPLACE
-        std::cout << "gate used: eqLit " << gate.eqLit << std::endl;
-        for (uint32_t i = 0; i < gate.lits.size(); i++) {
-            std::cout << "lit: " << gate.lits[i] << " , ";
-        }
-        std::cout << std::endl;
-        std::cout << "origClause: " << *cl << std::endl;
-        #endif
-
         if (defOfOrGate[c.index]) continue;
 
         bool inside = false;
@@ -2625,10 +2623,13 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         }
         if (inside) continue;
 
-        numOrGateReplaced++;
         #ifdef VERBOSE_ORGATE_REPLACE
-        std::cout << "Cl changed (due to gate) : " << *cl << std::endl;
+        std::cout << "OR gate-based cl-shortening" << std::endl;
+        std::cout << "Gate used: " << gate << std::endl;
+        std::cout << "orig Clause: " << *cl << std::endl;
         #endif
+
+        numOrGateReplaced++;
 
         for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
             gateLitsRemoved++;
@@ -2642,6 +2643,11 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         gateLitsRemoved--;
         cl->add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
         occur[gate.eqLit.toInt()].push(c);
+
+        #ifdef VERBOSE_ORGATE_REPLACE
+        std::cout << "new  Clause : " << *cl << std::endl;
+        std::cout << "-----------" << std::endl;
+        #endif
 
         if (!handleUpdatedClause(c)) return false;
         if (c.clause != NULL && !cl->learnt()) {
@@ -2759,14 +2765,13 @@ const bool Subsumer::treatAndGateClause(ClauseSimp other, std::set<uint32_t>& cl
 {
     vec<Lit> lits;
     assert(other.index != clIndex);
-    /*std::cout << "clause 1: " << cl << std::endl;
-    std::cout << "clause 2: " << *c2->clause << std::endl;
-    std::cout << "gate eqLit: " << gate.eqLit << std::endl;
-    std::cout << "gate lits: ";
-    for (uint32_t i = 0; i < gate.lits.size(); i++) {
-        std::cout << gate.lits[i] << " , ";
-    }
-    std::cout << std::endl;*/
+
+    #ifdef VERBOSE_ORGATE_REPLACE
+    std::cout << "AND gate-based cl rem" << std::endl;
+    std::cout << "clause 1: " << cl << std::endl;
+    std::cout << "clause 2: " << *other.clause << std::endl;
+    std::cout << "gate : " << gate << std::endl;
+    #endif
 
     lits.clear();
     bool dontAddAtAll = false;

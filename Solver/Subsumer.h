@@ -18,6 +18,7 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include <list>
 #include <set>
 #include <queue>
+#include <iomanip>
 using std::vector;
 using std::list;
 using std::map;
@@ -30,7 +31,20 @@ class OrGate {
     public:
         Lit eqLit;
         vector<Lit> lits;
+        //uint32_t num;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
+{
+    os << " gate ";
+    //os << " no. " << std::setw(4) << gate.num;
+    os << " lits: ";
+    for (uint32_t i = 0; i < gate.lits.size(); i++) {
+        os << gate.lits[i] << " ";
+    }
+    os << " eqLit: " << gate.eqLit;
+    return os;
+}
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
