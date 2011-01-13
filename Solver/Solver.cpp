@@ -1267,6 +1267,12 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 
                 for (vector<OrGate*>::const_iterator it2 = gates.begin(), end2 = gates.end(); it2 != end2; it2++) {
                     OrGate& gate = **it2;
+                    gate.eqLit = varReplacer->getReplaceTable()[gate.eqLit.var()] ^ gate.eqLit.sign();
+                    if (subsumer->getVarElimed()[gate.eqLit.var()]
+                        || xorSubsumer->getVarElimed()[gate.eqLit.var()]
+                        || partHandler->getSavedState()[gate.eqLit.var()] != l_Undef
+                        || !decision_var[gate.eqLit.var()]) continue;
+
                     bool OK = true;
                     for (uint32_t i = 0; i < gate.lits.size(); i++) {
                         if (!seen[gate.lits[i].toInt()]) {
@@ -1288,11 +1294,6 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
                     }
                     std::cout << std::endl;
                     #endif
-
-                    gate.eqLit = varReplacer->getReplaceTable()[gate.eqLit.var()] ^ gate.eqLit.sign();
-                    if (subsumer->getVarElimed()[gate.eqLit.var()]) continue;
-                    if (xorSubsumer->getVarElimed()[gate.eqLit.var()]) continue;
-                    if (partHandler->getSavedState()[gate.eqLit.var()] != l_Undef) continue;
 
                     bool firstInside = false;
                     Lit *lit1 = cl.getData();
