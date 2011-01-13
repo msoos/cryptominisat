@@ -223,8 +223,6 @@ const bool FailedLitSearcher::search()
     removedUselessLearnt = 0;
     removedUselessNonLearnt = 0;
 
-    uint32_t varPolCount = 0;
-
     //uint32_t fromBin;
     origProps = solver.propagations;
     uint32_t i;
@@ -239,28 +237,7 @@ const bool FailedLitSearcher::search()
     }
     lastTimeStopped = (lastTimeStopped + i) % solver.nVars();
 
-    solver.negPosDist.clear();
-    //Calculate best vars to try
-    for (vector<std::pair<uint64_t, uint64_t> >::iterator it = solver.lTPolCount.begin(), end = solver.lTPolCount.end(); it != end; it++, varPolCount++) {
-        UIPNegPosDist tmp;
-        tmp.var = varPolCount;
-        int64_t pos = it->first;
-        int64_t neg = it->second;
-        int64_t diff = std::abs((long int) (pos-neg));
-        tmp.dist = pos*pos + neg*neg - diff*diff;
-
-        if (it->first > 4  && it->second > 4)
-            solver.negPosDist.push_back(tmp);
-
-        //it->first = pos/2;
-        //it->second = neg/2;
-    }
-    std::sort(solver.negPosDist.begin(), solver.negPosDist.end(), NegPosSorter());
-    /*for (uint32_t i = 0; i < solver.negPosDist.size(); i++) {
-        const UIPNegPosDist& u = solver.negPosDist[i];
-        std::cout << "var: " << (u.var + 1) << " dist: " << u.dist << std::endl;
-    }*/
-    //std::cout << "c negPosDist.size() : " << solver.negPosDist.size() << std::endl;
+    calcNegPosDist();
 
     origProps = solver.propagations;
     hyperbinProps = 0;
@@ -285,8 +262,6 @@ const bool FailedLitSearcher::search()
         if (!tryBoth(Lit(var, false), Lit(var, true)))
             goto end;
     }
-
-    calcNegPosDist();
     //if (!tryMultiLevelAll()) goto end;
 
 end:

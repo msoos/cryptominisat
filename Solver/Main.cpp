@@ -304,8 +304,6 @@ void Main::printUsage(char** argv)
     printf("  --maxgluedel     = Automatically delete clauses over max glue. See '--maxglue'\n");
     printf("  --maxglue        = [0 - 2^%d-1] default: %d. Glue value above which we\n", MAX_GLUE_BITS, conf.maxGlue);
     printf("                     throw the clause away on backtrack.\n");
-    printf("  --nogates        = Don't find&replace gates\n");
-    printf("  --noer           = Don't do ER\n");
     printf("  --threads        = Num threads (default is 1)\n");
     printf("  --nogatefind     = Don't find gates&do ER\n");
     printf("  --noer           = Don't do ER\n");
@@ -616,19 +614,11 @@ void Main::parseCommandLine()
             conf.maxGlue = (uint32_t)glue;
         } else if ((value = hasPrefix(argv[i], "--maxgluedel"))) {
             conf.doMaxGlueDel = true;
-        } else if ((value = hasPrefix(argv[i], "--nogates"))) {
-            conf.doGateFind = false;
-        } else if ((value = hasPrefix(argv[i], "--noer"))) {
-            conf.doER = false;
         } else if ((value = hasPrefix(argv[i], "--threads="))) {
             numThreads = 0;
             if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {
                 printf("ERROR! numThreads: %s\n", value);
                 exit(0);
-            }
-            if (numThreads > 1) {
-                std::cout << "Sorry, currently, multithreading is NOT supported due to ER" << std::endl;
-                exit(-1);
             }
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);
