@@ -2820,6 +2820,8 @@ const bool Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc,
                 break;
             }
         }
+        if (!OK) continue;
+
         other = *it;
         return true;
     }
