@@ -2708,9 +2708,12 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     uint32_t maxSize = 0;
     for (const ClauseSimp *it2 = csOther.getData(), *end2 = csOther.getDataEnd(); it2 != end2; it2++) {
         const Clause& cl = *it2->clause;
+        if (defOfOrGate[it2->index]) continue;
+
         maxSize = std::max(maxSize, cl.size());
         if (sizeSortedOcc.size() < maxSize+1) sizeSortedOcc.resize(maxSize+1);
         sizeSortedOcc[cl.size()].push_back(*it2);
+
         for (uint32_t i = 0; i < cl.size(); i++) {
             seen_tmp2[cl[i].toInt()] = true;
             abstraction |= 1 << (cl[i].var() & 31);
@@ -2722,10 +2725,10 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     //std::cout << "cs: " << cs.size() << std::endl;
     for (ClauseSimp *it2 = cs.getData(), *end2 = cs.getDataEnd(); it2 != end2; it2++) {
         const Clause& cl = *it2->clause;
-        if ((cl.getAbst() | abstraction) != abstraction) continue;
-        if (cl.size() > maxSize) continue;
-        if (sizeSortedOcc[cl.size()].empty()) continue;
-        if (defOfOrGate[it2->index]) continue;
+        if (defOfOrGate[it2->index]
+            || (cl.getAbst() | abstraction) != abstraction
+            || cl.size() > maxSize
+            || sizeSortedOcc[cl.size()].empty()) continue;
 
         bool needCont = false;
         for (uint32_t i = 0; i < cl.size(); i++) {
@@ -2826,8 +2829,8 @@ const bool Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc,
 {
     for (vector<ClauseSimp>::const_iterator it = sizeSortedOcc.begin(), end = sizeSortedOcc.end(); it != end; it++) {
         const Clause& cl = *it->clause;
-        if (defOfOrGate[it->index]) continue;
-        if (cl.getAbst() != abst2) continue;
+        if (defOfOrGate[it->index]
+            || cl.getAbst() != abst2) continue;
 
         bool OK = true;
         for (uint32_t i = 0; i < cl.size(); i++) {
