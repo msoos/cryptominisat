@@ -531,10 +531,16 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     #ifndef TOUCH_LESS
     touch(toRemoveLit, c.clause->learnt());
     #endif
+
+    handleUpdatedClause(c);
+}
+
+const bool Subsumer::handleUpdatedClause(ClauseSimp& c)
+{
     if (cleanClause(*c.clause)) {
         unlinkClause(c);
         c.clause = NULL;
-        return;
+        return true;
     }
 
     switch (c.clause->size()) {
@@ -543,12 +549,12 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
             std::cout << "Strenghtened clause to 0-size -> UNSAT"<< std::endl;
             #endif //VERBOSE_DEBUG
             solver.ok = false;
-            break;
+            return solver.ok;
         case 1: {
             handleSize1Clause((*c.clause)[0]);
             unlinkClause(c);
             c.clause = NULL;
-            break;
+            return solver.ok;
         }
         case 2: {
             solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
@@ -557,11 +563,13 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
             clBinTouched.push_back(NewBinaryClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt()));
             unlinkClause(c);
             c.clause = NULL;
-            break;
+            return solver.ok;
         }
         default:
             cl_touched.add(c);
     }
+
+    return true;
 }
 
 const bool Subsumer::handleClBinTouched()
@@ -2621,56 +2629,16 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         std::cout << "origClause: " << *cl << std::endl;
         #endif
 
-        //Let's say there are two gates:
-        // a V b V -f
-        // c V d V -g
-        // now, if we replace (a V b) with g and we replace (c V d) with f, then
-        // we have just lost the definition of the gates!!
-        /*bool replaceDef = false;
-        bool exactReplace = false;
-        if (defOfOrGate[c.index]) {
-            replaceDef = true;
-            for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
-                if (gate.eqLit == ~(*l)) exactReplace = true;
-            }
-        }
-        if (exactReplace) continue;
-        if (replaceDef) {
-            if (cl->size() != 3) continue;
-            vec<Lit> lits(cl->size());
-            std::copy(cl->getData(), cl->getDataEnd(), lits.getData());
-            for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
-                remove(lits, *it);
-            }
-            lits.push(gate.eqLit);
-
-            #ifdef VERBOSE_ORGATE_REPLACE
-            std::cout << "Adding learnt clause " << lits << " due to gate replace-avoid" << std::endl;
-            #endif
-
-            Clause* c2 = solver.addClauseInt(lits, 0, true);
-            assert(c2 == NULL);
-            if (!solver.ok)  return false;
-            continue;
-        }*/
         if (defOfOrGate[c.index]) continue;
 
         bool inside = false;
-        bool invertInside = false;
         for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
-            if (gate.eqLit == (*l)) {
+            if (gate.eqLit.var() == l->var()) {
                 inside = true;
                 break;
             }
-            if (gate.eqLit == ~(*l)) {
-                invertInside = true;
-                break;
-            }
         }
-        if (invertInside) {
-            unlinkClause(c);
-            continue;
-        }
+        if (inside) continue;
 
         numOrGateReplaced++;
         #ifdef VERBOSE_ORGATE_REPLACE
@@ -2681,52 +2649,19 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
             gateLitsRemoved++;
             cl->strengthen(*it);
             maybeRemove(occur[it->toInt()], cl);
-            /*#ifndef TOUCH_LESS
-            touch(*it, cl.learnt());
-            #endif*/
+            #ifndef TOUCH_LESS
+            touch(*it, cl->learnt());
+            #endif
         }
 
-        if (!inside) {
-            gateLitsRemoved--;
-            cl->add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
-            occur[gate.eqLit.toInt()].push(c);
-        }
+        gateLitsRemoved--;
+        cl->add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
+        occur[gate.eqLit.toInt()].push(c);
 
-        //Clean the clause
-        if (cleanClause(*c.clause)) {
-            unlinkClause(c);
-            c.clause = NULL;
-            continue;
-        }
-
-        //Handle clause
-        switch (c.clause->size()) {
-            case 0:
-                solver.ok = false;
-                return false;
-                break;
-            case 1: {
-                handleSize1Clause((*c.clause)[0]);
-                unlinkClause(c);
-                if (!solver.ok) return false;
-                c.clause = NULL;
-                break;
-            }
-            case 2: {
-                solver.attachBinClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt());
-                solver.numNewBin++;
-                solver.dataSync->signalNewBinClause(*c.clause);
-                clBinTouched.push_back(NewBinaryClause((*c.clause)[0], (*c.clause)[1], (*c.clause).learnt()));
-                unlinkClause(c);
-                c.clause = NULL;
-                break;
-            }
-            default:
-                if (!cl->learnt()) {
-                    for (Lit *i2 = cl->getData(), *end2 = cl->getDataEnd(); i2 != end2; i2++)
-                    touchChangeVars(*i2);
-                }
-                cl_touched.add(c);
+        if (!handleUpdatedClause(c)) return false;
+        if (c.clause != NULL && !cl->learnt()) {
+            for (Lit *i2 = cl->getData(), *end2 = cl->getDataEnd(); i2 != end2; i2++)
+                touchChangeVars(*i2);
         }
     }
 

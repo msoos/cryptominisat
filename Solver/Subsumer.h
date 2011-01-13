@@ -134,6 +134,7 @@ private:
     //Used by cleaner
     void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
+    const bool handleUpdatedClause(ClauseSimp& c);
 
     //Findsubsumed
     template<class T>
