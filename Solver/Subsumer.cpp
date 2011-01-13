@@ -794,14 +794,16 @@ Increments clauseID
 */
 ClauseSimp Subsumer::linkInClause(Clause& cl)
 {
-    ClauseSimp c(&cl, clauseID++);
+    ClauseSimp c(&cl, clauses.size());
     clauses.push(c);
+    defOfOrGate.push(false);
+    assert(defOfOrGate.size() == clauses.size());
+
     for (uint32_t i = 0; i < cl.size(); i++) {
         occur[cl[i].toInt()].push(c);
-        touch(cl[i], cl.learnt());
+        if (cl.getStrenghtened()) touch(cl[i], cl.learnt());
     }
-    cl_touched.add(c);
-    defOfOrGate.push(false);
+    if (cl.getStrenghtened()) cl_touched.add(c);
 
     return c;
 }
@@ -830,17 +832,8 @@ const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
             continue;
         }
 
-        ClauseSimp c(*i, clauseID++);
-        clauses.push(c);
-        Clause& cl = *c.clause;
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            occur[cl[i].toInt()].push(c);
-            //if (cl.getStrenghtened()) touch(cl[i], cl.learnt());
-        }
-        defOfOrGate.push(false);
-        numLitsAdded += cl.size();
-
-        if (cl.getStrenghtened()) cl_touched.add(c);
+        linkInClause(**i);
+        numLitsAdded += (*i)->size();
     }
     cs.shrink(i-j);
 
@@ -1320,7 +1313,6 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         || solver.clauses_literals > 500000000)  return true;
 
     double myTime = cpuTime();
-    clauseID = 0;
     clearAll();
 
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
@@ -1328,11 +1320,6 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     if (solver.conf.doReplace && !solver.varReplacer->performReplace(true))
         return false;
     fillCannotEliminate();
-
-    uint32_t expected_size = solver.clauses.size();
-    if (alsoLearnt) expected_size += solver.learnts.size();
-    clauses.reserve(expected_size);
-    cl_touched.reserve(expected_size);
 
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     if (alsoLearnt) {
@@ -2478,8 +2465,6 @@ const bool Subsumer::carryOutER()
     uint32_t oldNumBins = solver.numBins;
     gateLitsRemoved = 0;
     numOrGateReplaced = 0;
-    defOfOrGate.clear();
-    defOfOrGate.growTo(clauses.size(), false);
 
     createNewVar();
     doAllOptimisationWithGates();

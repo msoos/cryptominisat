@@ -363,8 +363,7 @@ private:
 
     uint32_t clauses_subsumed; ///<Number of clauses subsumed in this run
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
-    uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
-    uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
+    uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called also stores a pointer to the clause
     bool alsoLearnt;
 };
 
