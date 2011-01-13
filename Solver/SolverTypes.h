@@ -23,6 +23,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <stdio.h>
 #include <vector>
 #include "constants.h"
+#include <iomanip>
+#include <sstream>
 
 //=================================================================================================
 // Variables, literals, lifted booleans, clauses:
@@ -100,10 +102,12 @@ public:
 const Lit lit_Undef(var_Undef, false);  // Useful special constants.
 const Lit lit_Error(var_Undef, true );  //
 
-inline std::ostream& operator<<(std::ostream& cout, const Lit& lit)
+inline std::ostream& operator<<(std::ostream& os, const Lit& lit)
 {
-    cout << (lit.sign() ? "-" : "") << (lit.var() + 1);
-    return cout;
+    std::stringstream ss;
+    ss << (lit.sign() ? "-" : "") << (lit.var() + 1);
+    os << std::setw(6) << ss.str();
+    return os;
 }
 
 inline std::ostream& operator<<(std::ostream& cout, const vec<Lit>& lits)

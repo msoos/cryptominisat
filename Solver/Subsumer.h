@@ -16,8 +16,10 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include <map>
 #include <vector>
 #include <list>
+#include <set>
 #include <queue>
 #include <set>
+#include <iomanip>
 
 using std::vector;
 using std::list;
@@ -31,7 +33,20 @@ class OrGate {
     public:
         Lit eqLit;
         vector<Lit> lits;
+        //uint32_t num;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
+{
+    os << " gate ";
+    //os << " no. " << std::setw(4) << gate.num;
+    os << " lits: ";
+    for (uint32_t i = 0; i < gate.lits.size(); i++) {
+        os << gate.lits[i] << " ";
+    }
+    os << " eqLit: " << gate.eqLit;
+    return os;
+}
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
@@ -253,16 +268,17 @@ private:
             Lit lit2;
             bool isBin;
     };
+    uint32_t numLearntBinVarRemAdded;
     void orderVarsForElim(vec<Var>& order);
     const uint32_t numNonLearntBins(const Lit lit) const;
     bool maybeEliminate(Var x);
+    void addLearntBinaries(const Var var);
     void removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const Var var);
     void removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair<uint32_t, uint32_t>& removed);
     bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
     const bool eliminateVars();
     void fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit);
 
-    void addLearntBinaries(const Var var);
     void removeBinsAndTris(const Var var);
     const uint32_t removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws);
 
@@ -358,7 +374,7 @@ private:
 
     const bool treatAndGates();
     const bool treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp);
-    const bool treatAndGateClause(ClauseSimp& other, const OrGate& gate, const Clause& cl);
+    const bool treatAndGateClause(const ClauseSimp& other, const OrGate& gate, const Clause& cl);
     const bool findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, ClauseSimp& other);
     vector<vector<ClauseSimp> > sizeSortedOcc;
 
@@ -367,8 +383,7 @@ private:
 
     uint32_t clauses_subsumed; ///<Number of clauses subsumed in this run
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
-    uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
-    uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
+    uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called also stores a pointer to the clause
     bool alsoLearnt;
 };
 

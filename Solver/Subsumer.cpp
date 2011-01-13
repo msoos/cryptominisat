@@ -31,10 +31,12 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
 #define BIT_MORE_VERBOSITY
+#define VERBOSE_ORGATE_REPLACE
 #endif
 
 //#define BIT_MORE_VERBOSITY
 //#define TOUCH_LESS
+//#define VERBOSE_ORGATE_REPLACE
 
 #ifdef VERBOSE_DEBUG
 using std::cout;
@@ -443,7 +445,6 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     #endif
 
     handleUpdatedClause(c);
-    return;
 }
 
 const bool Subsumer::handleUpdatedClause(ClauseSimp& c)
@@ -699,14 +700,16 @@ Increments clauseID
 */
 ClauseSimp Subsumer::linkInClause(Clause& cl)
 {
-    ClauseSimp c(&cl, clauseID++);
+    ClauseSimp c(&cl, clauses.size());
     clauses.push(c);
+    defOfOrGate.push(false);
+    assert(defOfOrGate.size() == clauses.size());
+
     for (uint32_t i = 0; i < cl.size(); i++) {
         occur[cl[i].toInt()].push(c);
-        touch(cl[i], cl.learnt());
+        if (cl.getStrenghtened()) touch(cl[i], cl.learnt());
     }
-    cl_touched.add(c);
-    defOfOrGate.push(false);
+    if (cl.getStrenghtened()) cl_touched.add(c);
 
     return c;
 }
@@ -735,16 +738,8 @@ const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
             continue;
         }
 
-        ClauseSimp c(*i, clauseID++);
-        clauses.push(c);
-        Clause& cl = *c.clause;
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            occur[cl[i].toInt()].push(c);
-        }
-        defOfOrGate.push(false);
-        numLitsAdded += cl.size();
-
-        if (cl.getStrenghtened()) cl_touched.add(c);
+        linkInClause(**i);
+        numLitsAdded += (*i)->size();
     }
     cs.shrink(i-j);
 
@@ -1105,6 +1100,7 @@ void Subsumer::clearAll()
     cl_touched.clear();
     defOfOrGate.clear();
     addedClauseLits = 0;
+    numLearntBinVarRemAdded = 0;
 }
 
 const bool Subsumer::eliminateVars()
@@ -1229,7 +1225,6 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         || solver.clauses_literals > 500000000)  return true;
 
     double myTime = cpuTime();
-    clauseID = 0;
     clearAll();
     if (!alsoLearnt) numCalls++;
 
@@ -1238,11 +1233,6 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     if (solver.conf.doReplace && !solver.varReplacer->performReplace(true))
         return false;
     fillCannotEliminate();
-
-    uint32_t expected_size = solver.clauses.size();
-    if (alsoLearnt) expected_size += solver.learnts.size();
-    clauses.reserve(expected_size);
-    cl_touched.reserve(expected_size);
 
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     if (alsoLearnt) {
@@ -1339,6 +1329,9 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     assert(solver.ok);
     assert(verifyIntegrity());
 
+     if (alsoLearnt && numCalls >= 5 && solver.conf.doGateFind
+        && !findOrGatesAndTreat()) return false;
+
     removeWrong(solver.learnts);
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
@@ -1356,6 +1349,8 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
         << std::endl;
+
+        std::cout << "c learnt bin added due to v-elim: " << numLearntBinVarRemAdded << std::endl;
     }
     totalTime += cpuTime() - myTime;
 
@@ -1829,7 +1824,8 @@ void Subsumer::addLearntBinaries(const Var var)
             tmp.growTo(2);
             tmp[0] = lit1;
             tmp[1] = lit2;
-            Clause* tmpOK = solver.addClauseInt(tmp, 0, true, 2, true, false);
+            Clause* tmpOK = solver.addClauseInt(tmp, 0, true, 2, true);
+            numLearntBinVarRemAdded++;
             release_assert(tmpOK == NULL);
             release_assert(solver.ok);
         }
@@ -2211,27 +2207,12 @@ void Subsumer::createNewVar()
     if (solver.negPosDist.size() == 0) return;
     uint32_t size = std::min((uint32_t)solver.negPosDist.size()-1, 400U);
 
-    /*vector<std::pair<Var, uint32_t> > otherSort;
-    for (Var var = 0; var < solver.nVars(); var++) {
-        uint32_t num = occur[Lit(var, false).toInt()].size() + occur[Lit(var, true).toInt()].size();
-        if (num == 0) continue;
-        otherSort.push_back(std::make_pair(var, num));
-    }
-    std::sort(otherSort.begin(), otherSort.end(), SecondSorter());
-    if (otherSort.size() == 0) return;
-    uint32_t size2 = std::min(otherSort.size()-1, (size_t)3000U);*/
 
     uint32_t tries = 0;
     for (; tries < std::min(100000U, size*size/2); tries++) {
-        if (numMaxSubsume0 < 0) break;
         Var var1, var2;
-        /*if (solver.mtrand.randInt(1) == 1) {
-            var1 = otherSort[solver.mtrand.randInt(size2)].first;
-            var2 = otherSort[solver.mtrand.randInt(size2)].first;
-        } else*/ {
-            var1 = solver.negPosDist[solver.mtrand.randInt(size)].var;
-            var2 = solver.negPosDist[solver.mtrand.randInt(size)].var;
-        }
+        var1 = solver.negPosDist[solver.mtrand.randInt(size)].var;
+        var2 = solver.negPosDist[solver.mtrand.randInt(size)].var;
         if (var1 == var2) continue;
 
         if (solver.value(var1) != l_Undef
@@ -2281,6 +2262,7 @@ void Subsumer::createNewVar()
         if ((i > 50 && n.numLitRem < 1000 && n.numClRem < 25)
             || i > ((double)solver.order_heap.size()*0.01)
             || i > 100) break;
+
         const Var newVar = solver.newVar();
         dontElim[newVar] = true;
         const Lit newLit = Lit(newVar, false);
@@ -2359,13 +2341,13 @@ const bool Subsumer::findOrGatesAndTreat()
     }
     if (!solver.ok) return false;
 
-    bool needToExit;
+    bool cannotDoER;
     #pragma omp critical (ERSync)
-    needToExit = (solver.threadNum != solver.dataSync->getThreadAddingVars()
+    cannotDoER = (solver.threadNum != solver.dataSync->getThreadAddingVars()
         || solver.dataSync->getEREnded());
-    if (needToExit) return true;
 
-    if (solver.conf.doER) {
+
+    if (solver.conf.doER && !cannotDoER) {
         vector<OrGate> backupOrGates = orGates;
         if (!carryOutER()) return false;
         for (vector<OrGate>::const_iterator it = backupOrGates.begin(), end = backupOrGates.end(); it != end; it++) {
@@ -2520,10 +2502,16 @@ void Subsumer::findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learn
             if (*l2 == ~eqLit) continue;
             gate.lits.push_back(*l2);
         }
+        //std::sort(gate.lits.begin(), gate.lits.end());
         gate.eqLit = eqLit;
+        //gate.num = orGates.size();
         orGates.push_back(gate);
         totalOrGateSize += gate.lits.size();
         defOfOrGate[c.index] = true;
+
+        #ifdef VERBOSE_ORGATE_REPLACE
+        std::cout << "Found gate : " << gate << std::endl;
+        #endif
     }
 }
 
@@ -2537,90 +2525,42 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         ClauseSimp c = subs[i];
         Clause* cl = subs[i].clause;
 
-        #ifdef VERBOSE_ORGATE_REPLACE
-        std::cout << "gate used: eqLit " << gate.eqLit << std::endl;
-        for (uint32_t i = 0; i < gate.lits.size(); i++) {
-            std::cout << "lit: " << gate.lits[i] << " , ";
-        }
-        std::cout << std::endl;
-        std::cout << "origClause: " << *cl << std::endl;
-        #endif
-
-        //Let's say there are two gates:
-        // a V b V -f
-        // c V d V -g
-        // now, if we replace (a V b) with g and we replace (c V d) with f, then
-        // we have just lost the definition of the gates!!
-        /*bool replaceDef = false;
-        bool exactReplace = false;
-        if (defOfOrGate[c.index]) {
-            replaceDef = true;
-            for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
-                if (gate.eqLit == ~(*l)) exactReplace = true;
-            }
-        }
-        if (exactReplace) continue;
-        if (replaceDef) {
-            if (cl->size() != 3) continue;
-            vec<Lit> lits(cl->size());
-            std::copy(cl->getData(), cl->getDataEnd(), lits.getData());
-            for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
-                remove(lits, *it);
-            }
-            lits.push(gate.eqLit);
-            if (lits[0].var() != lits[1].var()
-                && (solver.cacheContainsBinCl(lits[0], lits[1])
-                    || solver.cacheContainsBinCl(lits[1], lits[0]))
-                ) continue;
-
-            #ifdef VERBOSE_ORGATE_REPLACE
-            std::cout << "Adding learnt clause " << lits << " due to gate replace-avoid" << std::endl;
-            #endif
-
-            Clause* c2 = solver.addClauseInt(lits, 0);
-            assert(c2 == NULL);
-            if (!solver.ok)  return false;
-            continue;
-        }*/
         if (defOfOrGate[c.index]) continue;
 
         bool inside = false;
-        bool invertInside = false;
         for (Lit *l = cl->getData(), *end = cl->getDataEnd(); l != end; l++) {
-            if (gate.eqLit == (*l)) {
+            if (gate.eqLit.var() == l->var()) {
                 inside = true;
                 break;
             }
-            if (gate.eqLit == ~(*l)) {
-                invertInside = true;
-                break;
-            }
         }
-        if (invertInside) {
-            unlinkClause(c);
-            continue;
-        }
+        if (inside) continue;
+
+        #ifdef VERBOSE_ORGATE_REPLACE
+        std::cout << "OR gate-based cl-shortening" << std::endl;
+        std::cout << "Gate used: " << gate << std::endl;
+        std::cout << "orig Clause: " << *cl << std::endl;
+        #endif
 
         numOrGateReplaced++;
-        #ifdef VERBOSE_ORGATE_REPLACE
-        std::cout << "Cl changed (due to gate) : " << *cl << std::endl;
-        #endif
 
         for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
             gateLitsRemoved++;
             cl->strengthen(*it);
             maybeRemove(occur[it->toInt()], cl);
-            /*#ifndef TOUCH_LESS
-            touch(*it, cl.learnt());
-            #endif*/
+            #ifndef TOUCH_LESS
+            touch(*it, cl->learnt());
+            #endif
         }
 
-        if (!inside) {
-            gateLitsRemoved--;
-            cl->add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
-            occur[gate.eqLit.toInt()].push(c);
-        }
-        cl->setGlue(std::max(cl->getGlue(), 3U)-1);
+        gateLitsRemoved--;
+        cl->add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
+        occur[gate.eqLit.toInt()].push(c);
+
+        #ifdef VERBOSE_ORGATE_REPLACE
+        std::cout << "new  Clause : " << *cl << std::endl;
+        std::cout << "-----------" << std::endl;
+        #endif
 
         if (!handleUpdatedClause(c)) return false;
         if (c.clause != NULL && !cl->learnt()) {
@@ -2675,6 +2615,7 @@ const bool Subsumer::subsumeNonExist()
     return true;
 }
 
+
 const bool Subsumer::treatAndGates()
 {
     assert(solver.ok);
@@ -2717,10 +2658,12 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     for (const ClauseSimp *it2 = csOther.getData(), *end2 = csOther.getDataEnd(); it2 != end2; it2++) {
         const Clause& cl = *it2->clause;
         numOp += cl.size();
+        if (defOfOrGate[it2->index]) continue;
 
         maxSize = std::max(maxSize, cl.size());
         if (sizeSortedOcc.size() < maxSize+1) sizeSortedOcc.resize(maxSize+1);
         sizeSortedOcc[cl.size()].push_back(*it2);
+
         for (uint32_t i = 0; i < cl.size(); i++) {
             seen_tmp2[cl[i].toInt()] = true;
             abstraction |= 1 << (cl[i].var() & 31);
@@ -2732,18 +2675,19 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     //std::cout << "cs: " << cs.size() << std::endl;
     for (ClauseSimp *it2 = cs.getData(), *end2 = cs.getDataEnd(); it2 != end2; it2++) {
         const Clause& cl = *it2->clause;
-        if ((cl.getAbst() | abstraction) != abstraction) continue;
-        if (cl.size() > maxSize) continue;
-        if (sizeSortedOcc[cl.size()].empty()) continue;
-        if (defOfOrGate[it2->index]) continue;
+        if (defOfOrGate[it2->index]
+            || (cl.getAbst() | abstraction) != abstraction
+            || cl.size() > maxSize
+            || sizeSortedOcc[cl.size()].empty()) continue;
         numOp += cl.size();
 
         bool OK = true;
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == ~(gate.lits[0])) continue;
-            if (cl[i] == ~(gate.lits[1])
+            if (   cl[i] == ~(gate.lits[1])
                 || cl[i].var() == gate.eqLit.var()
-                || !seen_tmp2[cl[i].toInt()]) {
+                || !seen_tmp2[cl[i].toInt()]
+                ) {
                 OK = false;
                 break;
             }
@@ -2757,14 +2701,16 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
             abst2 |= 1 << (cl[i].var() & 31);
         }
         abst2 |= 1 << ((~(gate.lits[1])).var() & 31);
+
         numOp += sizeSortedOcc[cl.size()].size()*5;
-        bool found = findAndGateOtherCl(sizeSortedOcc[cl.size()], ~(gate.lits[1]), abst2, other);
-        foundPotential += found;
-        if (reallyRemove && found) {
+        const bool foundOther = findAndGateOtherCl(sizeSortedOcc[cl.size()], ~(gate.lits[1]), abst2, other);
+        foundPotential += foundOther;
+        if (reallyRemove && foundOther) {
             assert(other.index != it2->index);
             clToUnlink.insert(other.index);
             clToUnlink.insert(it2->index);
             if (!treatAndGateClause(other, gate, cl)) return false;
+            return false;
         }
 
         for (uint32_t i = 0; i < cl.size(); i++) {
@@ -2782,24 +2728,40 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     return true;
 }
 
-const bool Subsumer::treatAndGateClause(ClauseSimp& other, const OrGate& gate, const Clause& cl)
+const bool Subsumer::treatAndGateClause(const ClauseSimp& other, const OrGate& gate, const Clause& cl)
 {
     vec<Lit> lits;
 
+    #ifdef VERBOSE_ORGATE_REPLACE
+    std::cout << "AND gate-based cl rem" << std::endl;
+    std::cout << "clause 1: " << cl << std::endl;
+    std::cout << "clause 2: " << *other.clause << std::endl;
+    std::cout << "gate : " << gate << std::endl;
+    #endif
+
     lits.clear();
     for (uint32_t i = 0; i < cl.size(); i++) {
+        if (   cl[i] != ~(gate.lits[0])
+            && cl[i] != ~(gate.eqLit)) lits.push(cl[i]);
+
         assert(cl[i].var() != gate.eqLit.var());
-        if (cl[i] != ~(gate.lits[0])) lits.push(cl[i]);
     }
     andGateNumFound++;
     andGateTotalSize += cl.size();
 
     lits.push(~(gate.eqLit));
     bool learnt = other.clause->learnt() && cl.learnt();
-    uint32_t minGlue = 0;
-    if (learnt) minGlue = std::min(other.clause->getGlue(), cl.getGlue());
-    Clause *clNew = solver.addClauseInt(lits, other.clause->getGroup(), learnt, minGlue, false, false);
-    if (clNew != NULL) linkInClause(*clNew);
+    uint32_t glue;
+    if (!learnt) glue = 0;
+    else glue = std::min(other.clause->getGlue(), cl.getGlue());
+
+    #ifdef VERBOSE_ORGATE_REPLACE
+    std::cout << "new clause:" << lits << std::endl;
+    std::cout << "-----------" << std::endl;
+    #endif
+
+    Clause* c = solver.addClauseInt(lits, cl.getGroup(), learnt, glue, false, false);
+    if (c != NULL) linkInClause(*c);
     if (!solver.ok) return false;
 
     return true;
@@ -2809,8 +2771,8 @@ inline const bool Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSor
 {
     for (vector<ClauseSimp>::const_iterator it = sizeSortedOcc.begin(), end = sizeSortedOcc.end(); it != end; it++) {
         const Clause& cl = *it->clause;
-        if (defOfOrGate[it->index]) continue;
-        if (cl.getAbst() != abst2) continue;
+        if (defOfOrGate[it->index]
+            || cl.getAbst() != abst2) continue;
 
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == lit) continue;

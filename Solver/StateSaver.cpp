@@ -46,6 +46,7 @@ void StateSaver::restore()
 
     //Finally, clear the order_heap from variables set/non-decisionned
     solver.order_heap.filter(Solver::VarFilter(solver));
+
     for (Var var = 0; var < solver.nVars(); var++) {
         if (solver.decision_var[var]
             && solver.value(var) == l_Undef

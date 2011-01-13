@@ -307,6 +307,8 @@ void Main::printUsage(char** argv)
     printf("  --nogates        = Don't find&replace gates\n");
     printf("  --noer           = Don't do ER\n");
     printf("  --threads        = Num threads (default is 1)\n");
+    printf("  --nogatefind     = Don't find gates&do ER\n");
+    printf("  --noer           = Don't do ER\n");
     printf("\n");
 }
 
@@ -596,6 +598,10 @@ void Main::parseCommandLine()
             conf.doCacheOTFSSR = false;
         } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
             conf.doRemUselessLBins = false;
+        } else if ((value = hasPrefix(argv[i], "--nogatefind"))) {
+            conf.doGateFind = false;
+        } else if ((value = hasPrefix(argv[i], "--noer"))) {
+            conf.doER = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 0;
             if (sscanf(value, "%d", &glue) < 0 || glue < 2) {
@@ -619,6 +625,10 @@ void Main::parseCommandLine()
             if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {
                 printf("ERROR! numThreads: %s\n", value);
                 exit(0);
+            }
+            if (numThreads > 1) {
+                std::cout << "Sorry, currently, multithreading is NOT supported due to ER" << std::endl;
+                exit(-1);
             }
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             printf("ERROR! unknown flag %s\n", argv[i]);

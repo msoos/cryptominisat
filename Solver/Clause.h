@@ -198,7 +198,7 @@ public:
     inline void add(const Lit p)
     {
         mySize++;
-        (*this)[mySize-1] = p;
+        data[mySize-1] = p;
         setStrenghtened();
     }
 
