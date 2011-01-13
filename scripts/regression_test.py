@@ -42,7 +42,6 @@ class Tester:
     testDir = "../tests/"
     testDirNewVar = "../tests/newVar/"
     cryptominisat = "../build/cryptominisat"
-    speed = False
     checkDirDifferent = True
     differentDirForCheck = \
         "/home/soos/Development/sat_solvers/satcomp09/"
@@ -398,7 +397,6 @@ class Tester:
         print "--gauss   (-g)     Execute gaussian elimination until this depth. Default: 10000"
         print "--testdir (-t)     The directory where the files to test are. Default: \"../tests/\""
         print "--exe     (-e)     Where the cryptominisat executable is located. Default: \"../build/cryptominisat\""
-        print "--speed   (-s)     Only solve, don't verify the result"
         print "--checkDirOnly(-c) Check all solutions in directory"
         print "--diffCheckDir(-d) Use with -c. The original files are at a different place"
         print "--ignore  (-i)     If no solution found, (timeout), ignore"
@@ -431,7 +429,6 @@ class Tester:
                 "gauss=",
                 "testdir=",
                 "exe=",
-                "speed",
                 "verbose",
                 "diffCheckDir",
                 "ignore",
@@ -468,8 +465,6 @@ class Tester:
                 testDirSet = True
             elif opt in ("-e", "--exe"):
                 self.cryptominisat = arg
-            elif opt in ("-s", "--speed"):
-                self.speed = True
             elif opt in ("--extraOptions"):
                 self.extraOptions = arg
             elif opt in ("-c", "--checkDirOnly"):
