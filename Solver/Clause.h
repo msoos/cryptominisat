@@ -193,6 +193,7 @@ public:
     inline void strengthen(const Lit p)
     {
         remove(*this, p);
+        setStrenghtened();
     }
 
     inline void add(const Lit p)
