@@ -461,7 +461,7 @@ const bool Subsumer::handleUpdatedClause(ClauseSimp& c)
             std::cout << "Strenghtened clause to 0-size -> UNSAT"<< std::endl;
             #endif //VERBOSE_DEBUG
             solver.ok = false;
-            return solver.ok;
+            return false;
         case 1: {
             solver.uncheckedEnqueue((*c.clause)[0]);
             unlinkClause(c);
