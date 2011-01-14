@@ -2719,8 +2719,7 @@ const bool Subsumer::treatAndGateClause(const ClauseSimp& other, const OrGate& g
 
     lits.clear();
     for (uint32_t i = 0; i < cl.size(); i++) {
-        if (   cl[i] != ~(gate.lits[0])
-            && cl[i] != ~(gate.eqLit)) lits.push(cl[i]);
+        if (cl[i] != ~(gate.lits[0])) lits.push(cl[i]);
 
         assert(cl[i].var() != gate.eqLit.var());
     }
