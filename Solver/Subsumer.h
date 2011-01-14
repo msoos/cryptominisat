@@ -232,7 +232,6 @@ private:
     const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
     void strenghten(ClauseSimp& c, const Lit toRemoveLit);
     const bool cleanClause(Clause& ps);
-    void handleSize1Clause(const Lit lit);
 
     //Variable elimination
     /**

@@ -463,7 +463,7 @@ const bool Subsumer::handleUpdatedClause(ClauseSimp& c)
             solver.ok = false;
             return solver.ok;
         case 1: {
-            handleSize1Clause((*c.clause)[0]);
+            solver.uncheckedEnqueue((*c.clause)[0]);
             unlinkClause(c);
             c.clause = NULL;
             return solver.ok;
@@ -519,26 +519,6 @@ const bool Subsumer::handleClBinTouched()
     }
 
     return true;
-}
-
-/**
-@brief Handles if a clause became 1-long (unitary)
-
-Either sets&propagates the value, ignores the value (if already set),
-or sets solver.ok = FALSE
-
-@param[in] lit The single literal the clause has
-*/
-inline void Subsumer::handleSize1Clause(const Lit lit)
-{
-    if (solver.value(lit) == l_False) {
-        solver.ok = false;
-    } else if (solver.value(lit) == l_Undef) {
-        solver.uncheckedEnqueue(lit);
-        solver.ok = solver.propagate().isNULL();
-    } else {
-        assert(solver.value(lit) == l_True);
-    }
 }
 
 /**
