@@ -1346,7 +1346,8 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         addedClauseLits += addFromSolver(solver.clauses);
     } else {
-        if (solver.conf.doBlockedClause && solver.conf.doVarElim) {
+        if ((solver.conf.doBlockedClause || numCalls == 2)
+            && solver.conf.doVarElim) {
             numMaxBlockToVisit = (int64_t)800*1000*1000;
             blockedClauseRemoval();
         }

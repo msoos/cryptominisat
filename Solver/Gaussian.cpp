@@ -597,6 +597,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
     const uint32_t curr_dec_level = solver.decisionLevel();
     assert(maxlevel == curr_dec_level);
 
+    uint32_t maxsublevel = 0;
     if (tmp_clause.size() == 2) {
         Lit lit1 = tmp_clause[0];
         Lit lit2 = tmp_clause[1];
@@ -615,39 +616,49 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
         solver.learnts_literals += 2;
         solver.dataSync->signalNewBinClause(lit1, lit2);
 
+        lit1 = ~lit1;
+        lit2 = ~lit2;
+        uint32_t sublevel1 = find_sublevel(lit1.var());
+        uint32_t sublevel2 = find_sublevel(lit2.var());
+        if (sublevel1 > sublevel2) {
+            maxsublevel = sublevel1;
+            std::swap(lit1, lit2);
+        } else {
+            maxsublevel = sublevel2;
+        }
+
         confl = PropBy(lit1);
         solver.failBinLit = lit2;
-        return conflict;
-    }
+    } else {
+        Clause* conflPtr = (Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
+        confl = solver.clauseAllocator.getOffset(conflPtr);
+        Clause& cla = *conflPtr;
 
-    Clause* conflPtr = (Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
-    confl = solver.clauseAllocator.getOffset(conflPtr);
+        #ifdef STATS_NEEDED
+        if (solver.dynamic_behaviour_analysis)
+            solver.logger.set_group_name(cla.getGroup(), "learnt gauss clause");
+        #endif
 
-    Clause& cla = *conflPtr;
-    #ifdef STATS_NEEDED
-    if (solver.dynamic_behaviour_analysis)
-        solver.logger.set_group_name(cla.getGroup(), "learnt gauss clause");
-    #endif
-
-    uint32_t maxsublevel = 0;
-    uint32_t maxsublevel_at = UINT_MAX;
-    for (uint32_t i = 0, size = cla.size(); i != size; i++) if (solver.level[cla[i].var()] == (int32_t)curr_dec_level) {
-        uint32_t tmp = find_sublevel(cla[i].var());
-        if (tmp >= maxsublevel) {
-            maxsublevel = tmp;
-            maxsublevel_at = i;
+        uint32_t maxsublevel_at = UINT_MAX;
+        for (uint32_t i = 0, size = cla.size(); i != size; i++) if (solver.level[cla[i].var()] == (int32_t)curr_dec_level) {
+            uint32_t tmp = find_sublevel(cla[i].var());
+            if (tmp >= maxsublevel) {
+                maxsublevel = tmp;
+                maxsublevel_at = i;
+            }
         }
-    }
-    #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ") || Sublevel of confl: " << maxsublevel << " (due to var:" << cla[maxsublevel_at].var()-1 << ")" << endl;
-    #endif
+        #ifdef VERBOSE_DEBUG
+        cout << "(" << matrix_no << ") || Sublevel of confl: " << maxsublevel << " (due to var:" << cla[maxsublevel_at].var()-1 << ")" << endl;
+        #endif
 
-    Lit tmp(cla[maxsublevel_at]);
-    cla[maxsublevel_at] = cla[1];
-    cla[1] = tmp;
+        Lit tmp(cla[maxsublevel_at]);
+        cla[maxsublevel_at] = cla[1];
+        cla[1] = tmp;
+    }
 
     cancel_until_sublevel(maxsublevel+1);
     messed_matrix_vars_since_reversal = true;
+
     return conflict;
 }
 
