@@ -2688,7 +2688,6 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
             clToUnlink.insert(other.index);
             clToUnlink.insert(it2->index);
             if (!treatAndGateClause(other, gate, cl)) return false;
-            return false;
         }
 
         for (uint32_t i = 0; i < cl.size(); i++) {
