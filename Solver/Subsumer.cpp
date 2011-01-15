@@ -2662,7 +2662,7 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
         bool OK = true;
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == ~(gate.lits[0])) continue;
-            if (   cl[i] == ~(gate.lits[1])
+            if (   cl[i].var() == ~(gate.lits[1].var())
                 || cl[i].var() == gate.eqLit.var()
                 || !seen_tmp2[cl[i].toInt()]
                 ) {
