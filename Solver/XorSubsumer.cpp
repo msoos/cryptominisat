@@ -469,7 +469,7 @@ const bool XorSubsumer::unEliminate(const Var var)
 }
 
 
-const bool XorSubsumer::simplifyBySubsumption(const bool doFullSubsume)
+const bool XorSubsumer::simplifyBySubsumption()
 {
     double myTime = cpuTime();
     uint32_t origTrailSize = solver.trail.size();
