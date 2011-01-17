@@ -5,7 +5,13 @@ AC_PROG_LIBTOOL
 
 dnl we are C++
 AC_LANG_CPLUSPLUS
+if test -n "${CXXFLAGS}"; then
+  user_set_cxxflags=yes
+fi
 AC_PROG_CXX
+if test X$user_set_cxxflags != Xyes; then
+  CXXFLAGS="-g -O2"
+fi
 AC_LANG(C++)
 
 dnl AC_CONFIG_AUX_DIR([m4-extra])
