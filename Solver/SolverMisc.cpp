@@ -273,12 +273,12 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
     fprintf(outfile, "c previously eliminated variables\n");
     fprintf(outfile, "c -------------------------------\n");
     for (map<Var, vector<vector<Lit> > >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
-        fprintf(outfile, "c ########### cls for eliminated var %d ### start\n", it->first);
+        fprintf(outfile, "c ########### cls for eliminated var %d ### start\n", it->first + 1);
         const vector<vector<Lit> >& cs = it->second;
         for (vector<vector<Lit> >::const_iterator it2 = cs.begin(); it2 != cs.end(); it2++) {
             printClause(outfile, *it2);
         }
-        fprintf(outfile, "c ########### cls for eliminated var %d ### finish\n", it->first);
+        fprintf(outfile, "c ########### cls for eliminated var %d ### finish\n", it->first + 1);
     }
     for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
         for (uint32_t i = 0; i < it->second.size(); i++) {
