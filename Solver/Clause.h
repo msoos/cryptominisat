@@ -90,7 +90,7 @@ protected:
     glue, etc. We allocate therefore the clause manually, taking care that
     there is enough space for data[] to hold the literals
     */
-    Lit     data[0];
+    Lit     data[];
     #endif //_MSC_VER
 
 #ifdef _MSC_VER
