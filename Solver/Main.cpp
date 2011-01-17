@@ -301,6 +301,8 @@ void Main::printUsage(char** argv)
     printf("  --nosortwatched  = Don't sort watches according to size: bin, tri, etc.\n");
     printf("  --nolfminim      = Don't do on-the-fly self-subsuming resolution\n");
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
+    printf("  --nocalcreach    = Don't calculate reachability and interfere with\n");
+    printf("                     variable decisions accordingly\n");
     printf("  --norecotfssr    = Don't perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution\n");
     printf("  --nocacheotfssr  = Don't cache 1-level equeue. Less memory used, but\n");
@@ -592,6 +594,8 @@ void Main::parseCommandLine()
             conf.doSortWatched = false;
         } else if ((value = hasPrefix(argv[i], "--nolfminim"))) {
             conf.doMinimLearntMore = false;
+        } else if ((value = hasPrefix(argv[i], "--nocalcreach"))) {
+            conf.doCalcReach = false;
         } else if ((value = hasPrefix(argv[i], "--norecotfssr"))) {
             conf.doMinimLMoreRecur = false;
         } else if ((value = hasPrefix(argv[i], "--nocacheotfssr"))) {
