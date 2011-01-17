@@ -772,7 +772,7 @@ const int Main::oneThreadSolve()
     int num = omp_get_thread_num();
     myConf.origSeed = num;
     if (num > 0) {
-        //if (num % 2) myConf.fixRestartType = dynamic_restart;
+        if (num % 4 == 3) myConf.fixRestartType = dynamic_restart;
         if (num % 4 == 2) myConf.doCalcReach = false;
         //else myConf.fixRestartType = static_restart;
         myConf.simpBurstSConf *= 1.0 + num;
