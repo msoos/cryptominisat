@@ -76,8 +76,8 @@ void Solver::findAllAttach() const
     for (uint32_t i = 0; i < watches.size(); i++) {
         for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
             const Watched& w = watches[i][i2];
-            if (w.isClause()) findClause(clauseAllocator.getPointer(w.getOffset()));
-            if (w.isXorClause()) findClause(clauseAllocator.getPointer(w.getOffset()));
+            if (w.isClause()) findClause(clauseAllocator.getPointer(w.getNormOffset()));
+            if (w.isXorClause()) findClause(clauseAllocator.getPointer(w.getXorOffset()));
         }
     }
 }
