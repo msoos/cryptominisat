@@ -66,6 +66,7 @@ SolverConf::SolverConf() :
         , doPrintAvgBranch (false)
         , doCacheOTFSSR    (true)
         , doExtendedSCC    (true)
+        , doCalcReach      (true)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

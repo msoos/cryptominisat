@@ -773,6 +773,7 @@ const int Main::oneThreadSolve()
     myConf.origSeed = num;
     if (num > 0) {
         //if (num % 2) myConf.fixRestartType = dynamic_restart;
+        if (num % 4 == 2) myConf.doCalcReach = false;
         //else myConf.fixRestartType = static_restart;
         myConf.simpBurstSConf *= 1.0 + num;
         myConf.simpStartMult *= 1.0 + 0.2*num;

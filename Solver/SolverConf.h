@@ -70,6 +70,7 @@ class SolverConf
         bool      doPrintAvgBranch;
         bool      doCacheOTFSSR;
         bool      doExtendedSCC;
+        bool      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
 
         //interrupting & dumping
         uint32_t  maxRestarts;
