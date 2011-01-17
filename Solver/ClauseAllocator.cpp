@@ -36,8 +36,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //For listing each and every clause location:
 //#define DEBUG_CLAUSEALLOCATOR2
 
-#define MIN_LIST_SIZE (300000 * (sizeof(Clause) + 4*sizeof(Lit))/sizeof(uint32_t))
-//#define MIN_LIST_SIZE (100 * (sizeof(Clause) + 4*sizeof(Lit))/sizeof(uint32_t))
+#define MIN_LIST_SIZE (300000 * (sizeof(Clause) + 4*sizeof(Lit))/sizeof(BASE_DATA_TYPE))
+//#define MIN_LIST_SIZE (100 * (sizeof(Clause) + 4*sizeof(Lit))/sizeof(BASE_DATA_TYPE))
 #define ALLOC_GROW_MULT 4
 //We shift stuff around in Watched, so not all of 32 bits are useable.
 #define EFFECTIVELY_USEABLE_BITS 30
@@ -118,8 +118,8 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     assert(maxSizes.size() == dataStarts.size());
     assert(origClauseSizes.size() == dataStarts.size());
 
-    assert(sizeof(Clause)%sizeof(uint32_t) == 0);
-    assert(sizeof(Lit)%sizeof(uint32_t) == 0);
+    assert(sizeof(Clause)%sizeof(BASE_DATA_TYPE) == 0);
+    assert(sizeof(Lit)%sizeof(BASE_DATA_TYPE) == 0);
 
     if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET)) {
         std::cerr << "Memory manager cannot handle the load. Sorry. Exiting." << std::endl;
@@ -127,7 +127,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     }
     assert(size > 2);
 
-    uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(uint32_t);
+    uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(BASE_DATA_TYPE);
     bool found = false;
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
@@ -155,7 +155,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         << ")" << std::endl;
         #endif //DEBUG_CLAUSEALLOCATOR
 
-        uint32_t *dataStart = new uint32_t[nextSize];
+        BASE_DATA_TYPE *dataStart = new BASE_DATA_TYPE[nextSize];
         assert(dataStart != NULL);
         dataStarts.push(dataStart);
         sizes.push(0);
@@ -209,7 +209,7 @@ inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
 {
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
-        if ((uint32_t*)ptr >= dataStarts[i] && (uint32_t*)ptr < dataStarts[i] + maxSizes[i]) {
+        if ((BASE_DATA_TYPE*)ptr >= dataStarts[i] && (BASE_DATA_TYPE*)ptr < dataStarts[i] + maxSizes[i]) {
             which = i;
             break;
         }
@@ -224,7 +224,7 @@ inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
 */
 inline uint32_t ClauseAllocator::getInterOffset(const Clause* ptr, uint32_t outerOffset) const
 {
-    return ((uint32_t*)ptr - dataStarts[outerOffset]);
+    return ((BASE_DATA_TYPE*)ptr - dataStarts[outerOffset]);
 }
 
 /**
@@ -246,7 +246,7 @@ void ClauseAllocator::clauseFree(Clause* c)
     c->setFreed();
     uint32_t outerOffset = getOuterOffset(c);
     //uint32_t interOffset = getInterOffset(c, outerOffset);
-    currentlyUsedSizes[outerOffset] -= (sizeof(Clause) + c->size()*sizeof(Lit))/sizeof(uint32_t);
+    currentlyUsedSizes[outerOffset] -= (sizeof(Clause) + c->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
     //above should be
     //origClauseSizes[outerOffset][interOffset]
     //but it cannot be :(
@@ -336,13 +336,13 @@ void ClauseAllocator::consolidate(Solver* solver)
 
     vec<uint32_t> newSizes;
     vec<vec<uint32_t> > newOrigClauseSizes;
-    vec<uint32_t*> newDataStartsPointers;
-    vec<uint32_t*> newDataStarts;
+    vec<BASE_DATA_TYPE*> newDataStartsPointers;
+    vec<BASE_DATA_TYPE*> newDataStarts;
     for (uint32_t i = 0; i < newMaxSizes.size(); i++) {
         newSizes.push(0);
         newOrigClauseSizes.push();
-        uint32_t* pointer;
-        pointer = new uint32_t[newMaxSizes[i]];
+        BASE_DATA_TYPE* pointer;
+        pointer = new BASE_DATA_TYPE[newMaxSizes[i]];
         newDataStartsPointers.push(pointer);
         newDataStarts.push(pointer);
     }
@@ -353,18 +353,18 @@ void ClauseAllocator::consolidate(Solver* solver)
         for (uint32_t i2 = 0; i2 < origClauseSizes[i].size(); i2++) {
             Clause* oldPointer = (Clause*)(dataStarts[i] + currentLoc);
             if (!oldPointer->getFreed()) {
-                uint32_t sizeNeeded = (sizeof(Clause) + oldPointer->size()*sizeof(Lit))/sizeof(uint32_t);
+                uint32_t sizeNeeded = (sizeof(Clause) + oldPointer->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
 
                 //Next line is needed, because in case of isRemoved()
                 //, the size of the clause could become 0, thus having less
                 // than enough space to carry the NewPointerAndOffset info
-                sizeNeeded = std::max(sizeNeeded, (uint32_t)((sizeof(Clause) + 2*sizeof(Lit))/sizeof(uint32_t)));
+                sizeNeeded = std::max(sizeNeeded, (uint32_t)((sizeof(Clause) + 2*sizeof(Lit))/sizeof(BASE_DATA_TYPE)));
 
                 if (newSizes[outerPart] + sizeNeeded > newMaxSizes[outerPart]) {
                     outerPart++;
                     assert(outerPart < newMaxSizes.size());
                 }
-                memcpy(newDataStartsPointers[outerPart], dataStarts[i] + currentLoc, sizeNeeded*sizeof(uint32_t));
+                memcpy(newDataStartsPointers[outerPart], dataStarts[i] + currentLoc, sizeNeeded*sizeof(BASE_DATA_TYPE));
 
                 (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newOffset = combineOuterInterOffsets(outerPart, newSizes[outerPart]);
                 (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newPointer = (Clause*)newDataStartsPointers[outerPart];
