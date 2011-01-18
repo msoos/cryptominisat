@@ -1540,20 +1540,11 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
     Clause& c = *clauseAllocator.getPointer(offset);
 
     // Make sure the false literal is data[1]:
-    //if (offset ==  262752) std::cout << "target clause before swap: " << c << std::endl;
-
     const Lit lit2 = c.size()>2 ? c[2] : c[0];
     if (c[0] == ~p) {
         std::swap(c[0], c[1]);
     }
     if (c.size() > 2) assert(lit2 == c[2]);
-    //c.print(stdout);
-    /*for (uint32_t ix = 0; ix < c.size(); ix++) {
-        printf("target %d", c[ix].toInt());
-    }
-    printf("\n");*/
-    //if (offset ==  262752) std::cout << "target clause after swap: " << c << std::endl;
-
     assert(c[1] == ~p);
 
     // If 0th watch is true, then clause is already satisfied.
