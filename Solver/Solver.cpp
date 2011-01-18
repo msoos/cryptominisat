@@ -2541,7 +2541,7 @@ void Solver::performStepsBeforeSolve()
     }
 
     if (conf.doSortWatched) sortWatched();
-    calcReachability();
+    if (conf.doCacheOTFSSR && conf.doCalcReach) calcReachability();
 
     testAllClauseAttach();
 }
