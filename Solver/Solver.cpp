@@ -2529,11 +2529,11 @@ const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_confl
 void Solver::printAllClauses()
 {
     for (uint32_t i = 0; i < clauses.size(); i++) {
-        std::cout << "clause num " << i << " offset: " << clauseAllocator.getOffset(clauses[i]) << " cl: " << *clauses[i] << std::endl;
+        std::cout << "Normal clause num " << clauseAllocator.getOffset(clauses[i]) << " cl: " << *clauses[i] << std::endl;
     }
 
     for (uint32_t i = 0; i < xorclauses.size(); i++) {
-        std::cout << "xorclause num " << i << " : " << *xorclauses[i] << std::endl;
+        std::cout << "xorclause num " << *xorclauses[i] << std::endl;
     }
 
     uint32_t wsLit = 0;
@@ -2545,9 +2545,9 @@ void Solver::printAllClauses()
             if (it2->isBinary()) {
                 std::cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << std::endl;
             } else if (it2->isClause()) {
-                std::cout << "Normal Clause: " << it2->getNormOffset() << std::endl;
+                std::cout << "Normal clause num " << it2->getNormOffset() << std::endl;
             } else if (it2->isXorClause()) {
-                std::cout << "Xor Clause: " << it2->getXorOffset() << std::endl;
+                std::cout << "Xor clause num " << it2->getXorOffset() << std::endl;
             } else if (it2->isTriClause()) {
                 std::cout << "Tri clause:"
                 << lit << " , "
