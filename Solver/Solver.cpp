@@ -1433,7 +1433,14 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     #ifndef VERBOSE_DEBUG
     if (decisionLevel() == 0)
     #endif //VERBOSE_DEBUG
-    std::cout << "uncheckedEnqueue var " << p.var()+1 << " to " << !p.sign() << " level: " << decisionLevel() << " sublevel: " << trail.size() << std::endl;
+    std::cout << "uncheckedEnqueue var " << p.var()+1
+    << " to val " << !p.sign()
+    << " level: " << decisionLevel()
+    << " sublevel: " << trail.size()
+    << " by: " << from << std::endl;
+    if (from.isClause()) {
+        std::cout << "by clause: " << *clauseAllocator.getPointer(from.getClause()) << std::endl;
+    }
     #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
 
     //assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
@@ -2078,9 +2085,17 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
 
     testAllClauseAttach();
     findAllAttach();
+    #ifdef VERBOSE_DEBUG
+    std::cout << "c started Solver::search()" << std::endl;
+    //printAllClauses();
+    #endif //VERBOSE_DEBUG
     for (;;) {
         assert(ok);
         PropBy confl = propagate(update);
+        #ifdef VERBOSE_DEBUG
+        std::cout << "c Solver::search() has finished propagation" << std::endl;
+        //printAllClauses();
+        #endif //VERBOSE_DEBUG
 
         if (!confl.isNULL()) {
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
@@ -2493,21 +2508,31 @@ const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_confl
 
 void Solver::printAllClauses()
 {
-	for (uint32_t i = 0; i < clauses.size(); i++) {
-		std::cout << "clause num " << i << " : " << *clauses[i] << std::endl;
-	}	
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        std::cout << "clause num " << i << " offset: " << clauseAllocator.getOffset(clauses[i]) << " cl: " << *clauses[i] << std::endl;
+    }
 
-	for (uint32_t i = 0; i < xorclauses.size(); i++) {
-		std::cout << "xorclause num " << i << " : " << *xorclauses[i] << std::endl;
-	}	
+    for (uint32_t i = 0; i < xorclauses.size(); i++) {
+        std::cout << "xorclause num " << i << " : " << *xorclauses[i] << std::endl;
+    }
 
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
+        std::cout << "watches[" << lit << "]" << std::endl;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-		std::cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << std::endl;
+                std::cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << std::endl;
+            } else if (it2->isClause()) {
+                std::cout << "Normal Clause: " << it2->getNormOffset() << std::endl;
+            } else if (it2->isXorClause()) {
+                std::cout << "Xor Clause: " << it2->getXorOffset() << std::endl;
+            } else if (it2->isTriClause()) {
+                std::cout << "Tri clause:"
+                << lit << " , "
+                << it2->getOtherLit() << " , "
+                << it2->getOtherLit2() << std::endl;
             }
         }
     }

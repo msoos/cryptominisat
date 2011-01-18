@@ -40,6 +40,12 @@ Maybe I am off-course and it should be in another class, or a class of its own.
 const bool ClauseVivifier::vivifyClauses()
 {
     assert(solver.ok);
+    #ifdef VERBOSE_DEBUG
+    std::cout << "c clauseVivifier started" << std::endl;
+    //solver.printAllClauses();
+    #endif //VERBOSE_DEBUG
+    
+    
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
