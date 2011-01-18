@@ -1538,13 +1538,14 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
     }
     const uint32_t offset = i->getNormOffset();
     Clause& c = *clauseAllocator.getPointer(offset);
-
+    
     // Make sure the false literal is data[1]:
-    const Lit lit2 = c.size()>2 ? c[2] : c[0];
+    //const Lit lit2 = c.size()>2 ? c[2] : c[0];
     if (c[0] == ~p) {
         std::swap(c[0], c[1]);
     }
-    if (c.size() > 2) assert(lit2 == c[2]);
+    //if (c.size() > 2) assert(lit2 == c[2]);
+    
     assert(c[1] == ~p);
 
     // If 0th watch is true, then clause is already satisfied.
