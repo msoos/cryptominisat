@@ -543,6 +543,7 @@ protected:
     const bool verifyXorClauses () const;
 
     // Debug & etc:
+    void     printAllClauses();
     void     printLit         (const Lit l) const;
     void     checkLiteralCount();
     void     printStatHeader  () const;

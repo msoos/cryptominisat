@@ -2491,6 +2491,29 @@ const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_confl
     return true;
 }
 
+void Solver::printAllClauses()
+{
+	for (uint32_t i = 0; i < clauses.size(); i++) {
+		std::cout << "clause num " << i << " : " << *clauses[i] << std::endl;
+	}	
+
+	for (uint32_t i = 0; i < xorclauses.size(); i++) {
+		std::cout << "xorclause num " << i << " : " << *xorclauses[i] << std::endl;
+	}	
+
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary()) {
+		std::cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << std::endl;
+            }
+        }
+    }
+	
+}
+
 /**
 @brief Performs a set of pre-optimisations before the beggining of solving
 
@@ -2518,6 +2541,9 @@ void Solver::performStepsBeforeSolve()
     if (conf.doFailedLit && !failedLitSearcher->search()) return;
     conf.doHyperBinRes = saveDoHyperBin;
 
+    #ifdef VERBOSE_DEBUG
+    printAllClauses();
+    #endif //VERBOSE_DEBUG
     if (conf.doSatELite
         && !conf.libraryUsage
         && clauses.size() < 4800000
