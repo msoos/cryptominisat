@@ -409,10 +409,10 @@ protected:
     const bool propagateBinExcept(const Lit exceptLit);
     const bool propagateBinOneLevel();
     PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
-    void     propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
-    void     propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
-    void     propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl, const bool update);
-    void     propXorClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
+    const bool propTriClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
+    const bool propBinaryClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
+    const bool propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update);
+    const bool propXorClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
     void     sortWatched();
 
     ///////////////

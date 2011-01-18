@@ -14,6 +14,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <limits.h>
 #include <vector>
 #include <iomanip>
+#include <algorithm>
 
 #include "Clause.h"
 #include "time_mem.h"
@@ -1480,7 +1481,7 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
+inline const bool Solver::propBinaryClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
@@ -1490,10 +1491,10 @@ inline void Solver::propBinaryClause(Watched* &i, Watched* &j, const Watched *en
         confl = PropBy(p);
         failBinLit = i->getOtherLit();
         qhead = trail.size();
-        while (++i < end)
-            *j++ = *i;
-        i--;
+        return false;
     }
+
+    return true;
 }
 
 /**
@@ -1503,7 +1504,7 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
-inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
+inline const bool Solver::propTriClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
@@ -1516,10 +1517,10 @@ inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, 
         confl = PropBy(p, i->getOtherLit2());
         failBinLit = i->getOtherLit();
         qhead = trail.size();
-        while (++i < end)
-            *j++ = *i;
-        i--;
+        return false;
     }
+    
+    return true;
 }
 
 /**
@@ -1528,65 +1529,74 @@ inline void Solver::propTriClause(Watched* &i, Watched* &j, const Watched *end, 
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
-inline void Solver::propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl, const bool update)
+inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update)
 {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
         *j++ = *i;
-        return;
+        return true;
     }
-    uint32_t offset = i->getNormOffset();
+    const uint32_t offset = i->getNormOffset();
     Clause& c = *clauseAllocator.getPointer(offset);
 
     // Make sure the false literal is data[1]:
-    const Lit false_lit(~p);
-    if (c[0] == false_lit) {
-        c[0] = c[1];
-        c[1] = false_lit;
-    }
+    //if (offset ==  262752) std::cout << "target clause before swap: " << c << std::endl;
 
-    assert(c[1] == false_lit);
+    const Lit lit2 = c.size()>2 ? c[2] : c[0];
+    if (c[0] == ~p) {
+        std::swap(c[0], c[1]);
+    }
+    if (c.size() > 2) assert(lit2 == c[2]);
+    //c.print(stdout);
+    /*for (uint32_t ix = 0; ix < c.size(); ix++) {
+        printf("target %d", c[ix].toInt());
+    }
+    printf("\n");*/
+    //if (offset ==  262752) std::cout << "target clause after swap: " << c << std::endl;
+
+    assert(c[1] == ~p);
 
     // If 0th watch is true, then clause is already satisfied.
-    const Lit& first = c[0];
+    const Lit first = c[0];
     if (value(first).getBool()) {
         j->setNormClause();
         j->setNormOffset(offset);
         j->setBlockedLit(first);
         j++;
-    } else {
-        // Look for new watch:
-        for (Lit *k = &c[2], *end2 = c.getDataEnd(); k != end2; k++) {
-            if (value(*k) != l_False) {
-                c[1] = *k;
-                *k = false_lit;
-                watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
-                return;
-            }
-        }
-
-        // Did not find watch -- clause is unit under assignment:
-        *j++ = *i;
-        if (value(first) == l_False) {
-            confl = PropBy(offset);
-            qhead = trail.size();
-            // Copy the remaining watches:
-            while (++i < end)
-                *j++ = *i;
-            i--;
-        } else {
-            uncheckedEnqueue(first, offset);
-            #ifdef DYNAMICALLY_UPDATE_GLUE
-            if (update && c.learnt() && c.getGlue() > 2) { // GA
-                uint32_t glue = calcNBLevels(c);
-                if (glue+1 < c.getGlue()) {
-                    //c.setGlue(std::min(nbLevels, MAX_THEORETICAL_GLUE);
-                    c.setGlue(glue);
-                }
-            }
-            #endif
-        }
+        return true;
     }
+    // Look for new watch:
+    for (Lit *k = c.getData() + 2, *end2 = c.getDataEnd(); k != end2; k++) {
+        if (value(*k) != l_False) {
+            c[1] = *k;
+            *k = ~p;
+            watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
+            //if (offset ==  262752) std::cout << "target clause after look for new watch success: " << c << std::endl;
+            return true;
+        }
+        //if (offset ==  262752) std::cout << "target clause after look for new watch failure: " << c << std::endl;
+    }
+
+    // Did not find watch -- clause is unit under assignment:
+    *j++ = *i;
+    if (value(first) == l_False) {
+        confl = PropBy(offset);
+        qhead = trail.size();
+        return false;
+    } else {
+        uncheckedEnqueue(first, offset);
+        #ifdef DYNAMICALLY_UPDATE_GLUE
+        if (update && c.learnt() && c.getGlue() > 2) { // GA
+            uint32_t glue = calcNBLevels(c);
+            if (glue+1 < c.getGlue()) {
+                //c.setGlue(std::min(nbLevels, MAX_THEORETICAL_GLUE);
+                c.setGlue(glue);
+            }
+        }
+        #endif
+    }
+    
+    return true;
 }
 
 /**
@@ -1599,7 +1609,7 @@ better memory-accesses since the watchlist is already in the memory...
 
 \todo maybe not worth it, and a variable-based watchlist should be used
 */
-inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl)
+inline const bool Solver::propXorClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
 {
     ClauseOffset offset = i->getXorOffset();
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(offset);
@@ -1622,7 +1632,7 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
             removeWXCl(watches[(~p).toInt()], offset);
             watches[Lit(c[1].var(), false).toInt()].push(offset);
             watches[Lit(c[1].var(), true).toInt()].push(offset);
-            return;
+            return true;
         }
 
         c[k] = c[k].unsign() ^ val.getBool();
@@ -1638,15 +1648,14 @@ inline void Solver::propXorClause(Watched* &i, Watched* &j, const Watched *end, 
     } else if (!final) {
         confl = PropBy(offset);
         qhead = trail.size();
-        // Copy the remaining watches:
-        while (++i < end)
-            *j++ = *i;
-        i--;
+        return false;
     } else {
         Lit tmp(c[0]);
         c[0] = c[1];
         c[1] = tmp;
     }
+    
+    return true;
 }
 
 /**
@@ -1672,35 +1681,54 @@ PropBy Solver::propagate(const bool update)
 
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << p << endl;
+        cout << "ws origSize: "<< ws.size() << endl;
         #endif
 
+        
         i = j = ws.getData();
-        for (Watched *end = ws.getDataEnd(); i != end; i++) {
+        Watched *end = ws.getDataEnd();
+        for (; i != end; i++) {
+            #ifdef VERBOSE_DEBUG
+            cout << "end-i: " << end-i << endl;
+            cout << "end-j: " << end-j << endl;
+            cout << "i-j: " << i-j << endl;
+            if (i->isClause())
+                std::cout << "clause num " << i->getNormOffset() << " as i of prop: " << *clauseAllocator.getPointer(i->getNormOffset()) << std::endl;
+            #endif
             if (i->isBinary()) {
-                propBinaryClause(i, j, end, p, confl);
-                goto FoundWatch;
+                if (!propBinaryClause(i, j, end, p, confl)) break;
+                else continue;
             } //end BINARY
 
             if (i->isTriClause()) {
-                propTriClause(i, j, end, p, confl);
-                goto FoundWatch;
+                if (!propTriClause(i, j, end, p, confl)) break;
+                else continue;
             } //end TRICLAUSE
 
             if (i->isClause()) {
-                propNormalClause(i, j, end, p, confl, update);
                 num_props += 4;
-                goto FoundWatch;
+                if (!propNormalClause(i, j, end, p, confl, update)) break;
+                else {
+                    std::cout << "clause num " << i->getNormOffset() << " after propNorm: " << *clauseAllocator.getPointer(i->getNormOffset()) << std::endl;
+                    continue;
+                }
             } //end CLAUSE
 
             if (i->isXorClause()) {
                 num_props += 10;
-                propXorClause(i, j, end, p, confl);
-                goto FoundWatch;
+                if (!propXorClause(i, j, end, p, confl)) break;
+                else continue;
             } //end XORCLAUSE
-FoundWatch:
-            ;
         }
-        ws.shrink_(i - j);
+        if (i != end) {
+            i++;
+            assert(i <= end);
+            assert(i >= j);
+            //copy remaining watches
+            memmove(j, i, sizeof(Watched)*(end-i));
+        }
+        assert(i >= j);
+        ws.shrink_(i-j);
     }
     propagations += num_props;
     simpDB_props -= num_props;
