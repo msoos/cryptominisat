@@ -1439,7 +1439,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     << " level: " << decisionLevel()
     << " sublevel: " << trail.size()
     << " by: " << from << std::endl;
-    if (from.isClause()) {
+    if (from.isClause() && !from.isNULL()) {
         std::cout << "by clause: " << *clauseAllocator.getPointer(from.getClause()) << std::endl;
     }
     #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
