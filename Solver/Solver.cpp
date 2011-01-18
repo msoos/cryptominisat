@@ -452,6 +452,9 @@ the heavy-lifting
 template<class T>
 bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
 {
+    #ifdef VERBOSE_DEBUG
+    std::cout << "addClause() called with new clause: " << ps << std::endl;
+    #endif //VERBOSE_DEBUG
     if (!addClauseHelper(ps, group, group_name)) return false;
     Clause* c = addClauseInt(ps, group, false, 0, 0, true);
     if (c != NULL) clauses.push(c);
