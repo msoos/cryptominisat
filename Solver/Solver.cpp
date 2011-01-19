@@ -1723,8 +1723,6 @@ PropBy Solver::propagate(const bool update)
         }
         if (i != end) {
             i++;
-            assert(i <= end);
-            assert(i >= j);
             //copy remaining watches
             memmove(j, i, sizeof(Watched)*(end-i));
         }
