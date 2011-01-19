@@ -302,7 +302,7 @@ protected:
     vec<Clause*>        learnts;          ///< List of learnt clauses.
     uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
-    double              cla_inc;          ///< Amount to bump learnt clause oldActivity with
+    float               cla_inc;          ///< Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          ///< The current assignments
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
