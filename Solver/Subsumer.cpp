@@ -155,10 +155,10 @@ const bool Subsumer::unEliminate(const Var var)
     for (vector<vector<Lit> >::iterator itt = it->second.begin(), end2 = it->second.end(); itt != end2; itt++) {
         #ifdef VERBOSE_DEBUG
         std::cout << "Reinserting elimed clause: ";
-	for (uint32_t i = 0; i < itt->size(); i++) {
- 		std::cout << (*itt)[i] << " , ";
-	}
-	std::cout << std::endl;
+        for (uint32_t i = 0; i < itt->size(); i++) {
+            std::cout << (*itt)[i] << " , ";
+        }
+        std::cout << std::endl;
         #endif
         tmp.clear();
         tmp.growTo(itt->size());
