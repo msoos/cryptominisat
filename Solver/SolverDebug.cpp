@@ -218,3 +218,36 @@ void Solver::checkLiteralCount()
         assert((int)clauses_literals == cnt);
     }
 }
+
+void Solver::printAllClauses()
+{
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        std::cout << "Normal clause num " << clauseAllocator.getOffset(clauses[i]) << " cl: " << *clauses[i] << std::endl;
+    }
+
+    for (uint32_t i = 0; i < xorclauses.size(); i++) {
+        std::cout << "xorclause num " << *xorclauses[i] << std::endl;
+    }
+
+    uint32_t wsLit = 0;
+    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        const vec<Watched>& ws = *it;
+        std::cout << "watches[" << lit << "]" << std::endl;
+        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary()) {
+                std::cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << std::endl;
+            } else if (it2->isClause()) {
+                std::cout << "Normal clause num " << it2->getNormOffset() << std::endl;
+            } else if (it2->isXorClause()) {
+                std::cout << "Xor clause num " << it2->getXorOffset() << std::endl;
+            } else if (it2->isTriClause()) {
+                std::cout << "Tri clause:"
+                << lit << " , "
+                << it2->getOtherLit() << " , "
+                << it2->getOtherLit2() << std::endl;
+            }
+        }
+    }
+
+}
