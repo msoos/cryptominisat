@@ -1571,13 +1571,13 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
             c[1] = *k;
             *k = ~p;
             watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
-            //if (offset ==  262752) std::cout << "target clause after look for new watch success: " << c << std::endl;
             return true;
         }
-        //if (offset ==  262752) std::cout << "target clause after look for new watch failure: " << c << std::endl;
     }
 
+    #ifdef VERBOSE_DEBUG
     printf("Did not find watch\n");
+    #endif
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
