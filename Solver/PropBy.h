@@ -158,6 +158,20 @@ class PropBy
         }*/
 };
 
+inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
+{
+    if (pb.isBinary()) {
+        os << " binary, other lit= " << pb.getOtherLit();
+    } else if (pb.isClause()) {
+        os << " clause, num= " << pb.getClause();
+    } else if (pb.isNULL()) {
+        os << " NULL";
+    } else if (pb.isTri()) {
+        os << " tri, other 2 lits= " << pb.getOtherLit() << " , "<< pb.getOtherLit2();
+    }
+    return os;
+}
+
 class PropByFull
 {
     private:

@@ -81,7 +81,7 @@ void Subsumer::extendModel(Solver& solver2)
             std::copy(it2->begin(), it2->end(), tmp.getData());
 
             #ifdef VERBOSE_DEBUG
-            std::cout << "Reinserting elimed clause: " << c << std::endl;;
+            std::cout << "Reinserting elimed clause: " << tmp << std::endl;;
             #endif
 
             solver2.addClause(tmp);
@@ -154,7 +154,11 @@ const bool Subsumer::unEliminate(const Var var)
     if (it == elimedOutVar.end()) goto next;
     for (vector<vector<Lit> >::iterator itt = it->second.begin(), end2 = it->second.end(); itt != end2; itt++) {
         #ifdef VERBOSE_DEBUG
-        std::cout << "Reinserting elimed clause: " << *itt << std::endl;;
+        std::cout << "Reinserting elimed clause: ";
+	for (uint32_t i = 0; i < itt->size(); i++) {
+ 		std::cout << (*itt)[i] << " , ";
+	}
+	std::cout << std::endl;
         #endif
         tmp.clear();
         tmp.growTo(itt->size());

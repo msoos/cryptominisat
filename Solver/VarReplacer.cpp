@@ -63,7 +63,8 @@ that problems don't creep up
 const bool VarReplacer::performReplaceInternal()
 {
     #ifdef VERBOSE_DEBUG
-    cout << "Replacer started." << endl;
+    cout << "PerformReplacInternal started." << endl;
+    //solver.printAllClauses();
     #endif
     double time = cpuTime();
 

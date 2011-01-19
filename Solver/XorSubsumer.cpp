@@ -454,12 +454,12 @@ const bool XorSubsumer::unEliminate(const Var var)
     solver.libraryCNFFile = NULL;
     for (vector<XorElimedClause>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         XorElimedClause& c = *it2;
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Reinserting elimed clause: " << c << std::endl;;
-        #endif
         tmp.clear();
         tmp.growTo(c.lits.size());
         std::copy(c.lits.begin(), c.lits.end(), tmp.getData());
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Reinserting elimed clause: " << tmp << std::endl;;
+        #endif
         solver.addXorClause(tmp, c.xorEqualFalse);
     }
     solver.libraryCNFFile = backup_libraryCNFfile;
