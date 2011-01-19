@@ -1549,11 +1549,10 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
     assert(c[1] == ~p);
 
     // If 0th watch is true, then clause is already satisfied.
-    const Lit first = c[0];
-    if (value(first).getBool()) {
+    if (value(c[0]).getBool()) {
         j->setNormClause();
         j->setNormOffset(offset);
-        j->setBlockedLit(first);
+        j->setBlockedLit(c[0]);
         j++;
         return true;
     }
@@ -1569,14 +1568,15 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
         //if (offset ==  262752) std::cout << "target clause after look for new watch failure: " << c << std::endl;
     }
 
+    printf("Did not find watch\n");
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
-    if (value(first) == l_False) {
+    if (value(c[0]) == l_False) {
         confl = PropBy(offset);
         qhead = trail.size();
         return false;
     } else {
-        uncheckedEnqueue(first, offset);
+        uncheckedEnqueue(c[0], offset);
         #ifdef DYNAMICALLY_UPDATE_GLUE
         if (update && c.learnt() && c.getGlue() > 2) { // GA
             uint32_t glue = calcNBLevels(c);
