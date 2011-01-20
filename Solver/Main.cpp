@@ -700,7 +700,14 @@ void Main::setDoublePrecision(const uint32_t verbosity)
 
 void Main::printVersionInfo(const uint32_t verbosity)
 {
-    if (verbosity >= 1) printf("c This is CryptoMiniSat %s\n", VERSION);
+    if (verbosity >= 1) {
+        printf("c This is CryptoMiniSat %s\n", VERSION);
+        #ifdef __GNUC__
+        printf("c compiled with gcc version %s\n",  __VERSION__);
+        #else
+        print("c compiled with non-gcc compiler\n");
+        #endif
+    }
 }
 
 const int Main::singleThreadSolve()
