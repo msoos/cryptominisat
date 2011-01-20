@@ -1679,6 +1679,9 @@ PropBy Solver::propagate(const bool update)
         vec<Watched>&  ws  = watches[p.toInt()];
         Watched        *i, *j;
         num_props += ws.size()/2 + 2;
+        if (qhead < trail.size()) {
+            __builtin_prefetch(watches[trail[qhead].toInt()].getData(), 1, 1);
+        }
 
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << p << endl;
