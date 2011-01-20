@@ -705,7 +705,7 @@ void Main::printVersionInfo(const uint32_t verbosity)
         #ifdef __GNUC__
         printf("c compiled with gcc version %s\n",  __VERSION__);
         #else
-        print("c compiled with non-gcc compiler\n");
+        printf("c compiled with non-gcc compiler\n");
         #endif
     }
 }
