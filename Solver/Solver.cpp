@@ -1689,7 +1689,6 @@ PropBy Solver::propagate(const bool update)
         cout << "ws origSize: "<< ws.size() << endl;
         #endif
 
-
         i = j = ws.getData();
         Watched *end = ws.getDataEnd();
         for (; i != end; i++) {
@@ -1698,7 +1697,9 @@ PropBy Solver::propagate(const bool update)
             cout << "end-j: " << end-j << endl;
             cout << "i-j: " << i-j << endl;
             if (i->isClause())
-                std::cout << "clause num " << i->getNormOffset() << " as i of prop: " << *clauseAllocator.getPointer(i->getNormOffset()) << std::endl;
+                std::cout << "clause num " << i->getNormOffset()
+                << " as i of prop: " << *clauseAllocator.getPointer(i->getNormOffset())
+                << std::endl;
             #endif
             if (i->isBinary()) {
                 if (!propBinaryClause(i, j, end, p, confl)) break;
