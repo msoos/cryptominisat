@@ -44,7 +44,7 @@ x86_64-w64-mingw32-ar qs libz.a adler32.o \
 compile minisat -- 32-bit
 *****************************
 
-i586-mingw32msvc-g++ -O3 -march=i586 -DVERSION=\"2.6.0\" -DCROSS_COMPILE  \
+i586-mingw32msvc-g++ -O3 -fno-tree-pre -march=i586 -DVERSION=\"2.6.0\" -DCROSS_COMPILE  \
     -I../mtl/ -I../MTRand/ -DUSE_GAUSS \
     /usr/i586-mingw32msvc/lib/libz.a -fopenmp \
     Main.cpp SolverDebug.cpp Solver.cpp \
