@@ -35,8 +35,8 @@ AC_FUNC_MEMCMP
 #AC_DEFINE([STATS_NEEDED])
 
 #gauss generation needed
-#AH_TEMPLATE([USE_GAUSS],[Enable gaussian elimination code])
-#AC_DEFINE([USE_GAUSS])
+AH_TEMPLATE([USE_GAUSS],[Enable gaussian elimination code])
+AC_DEFINE([USE_GAUSS])
 
 #search for openmp
 AC_OPENMP
