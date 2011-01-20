@@ -2114,7 +2114,7 @@ void Subsumer::blockedClauseRemoval()
 
     if (solver.conf.verbosity >= 1) {
         std::cout
-        << "c blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved
+        << "c spec. var-rem cls: " << std::setw(8) << numblockedClauseRemoved
         << " vars: " << std::setw(6) << numElimed - numElimedBefore
         << " tried: " << std::setw(11) << triedToBlock
         << " T: " << std::fixed << std::setprecision(2) << std::setw(4) << cpuTime() - myTime
