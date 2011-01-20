@@ -1710,7 +1710,9 @@ PropBy Solver::propagate(const bool update)
                 num_props += 4;
                 if (!propNormalClause(i, j, end, p, confl, update)) break;
                 else {
+                    #ifdef VERBOSE_DEBUG
                     std::cout << "clause num " << i->getNormOffset() << " after propNorm: " << *clauseAllocator.getPointer(i->getNormOffset()) << std::endl;
+                    #endif
                     continue;
                 }
             } //end CLAUSE
