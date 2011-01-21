@@ -31,6 +31,11 @@ ClauseVivifier::ClauseVivifier(Solver& _solver) :
 const bool ClauseVivifier::vivify()
 {
     assert(solver.ok);
+    #ifdef VERBOSE_DEBUG
+    std::cout << "c clauseVivifier started" << std::endl;
+    //solver.printAllClauses();
+    #endif //VERBOSE_DEBUG
+
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
@@ -62,6 +67,7 @@ Maybe I am off-course and it should be in another class, or a class of its own.
 const bool ClauseVivifier::vivifyClausesNormal()
 {
     assert(solver.ok);
+
     bool failed;
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;

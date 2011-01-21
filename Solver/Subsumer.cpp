@@ -88,7 +88,7 @@ void Subsumer::extendModel(Solver& solver2)
             std::copy(it2->begin(), it2->end(), tmp.getData());
 
             #ifdef VERBOSE_DEBUG
-            std::cout << "Reinserting elimed clause: " << c << std::endl;;
+            std::cout << "Reinserting elimed clause: " << tmp << std::endl;;
             #endif
 
             solver2.addClause(tmp);
@@ -161,7 +161,11 @@ const bool Subsumer::unEliminate(const Var var)
     if (it == elimedOutVar.end()) goto next;
     for (vector<vector<Lit> >::iterator itt = it->second.begin(), end2 = it->second.end(); itt != end2; itt++) {
         #ifdef VERBOSE_DEBUG
-        std::cout << "Reinserting elimed clause: " << *itt << std::endl;;
+        std::cout << "Reinserting elimed clause: ";
+        for (uint32_t i = 0; i < itt->size(); i++) {
+            std::cout << (*itt)[i] << " , ";
+        }
+        std::cout << std::endl;
         #endif
         tmp.clear();
         tmp.growTo(itt->size());
@@ -2039,7 +2043,7 @@ void Subsumer::blockedClauseRemoval()
 
     if (solver.conf.verbosity >= 1) {
         std::cout
-        << "c blocked clauses removed: " << std::setw(8) << numblockedClauseRemoved
+        << "c spec. var-rem cls: " << std::setw(8) << numblockedClauseRemoved
         << " vars: " << std::setw(6) << numElimed - numElimedBefore
         << " tried: " << std::setw(11) << triedToBlock
         << " T: " << std::fixed << std::setprecision(2) << std::setw(4) << cpuTime() - myTime

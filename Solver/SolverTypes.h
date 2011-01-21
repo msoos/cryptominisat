@@ -128,7 +128,7 @@ inline void printClause(FILE* outFile, const std::vector<Lit>& clause)
 
 inline void printClause(FILE* outFile, const vec<Lit>& clause)
 {
-    for (size_t i = 0; i < clause.size(); i++) {
+    for (uint32_t i = 0; i < clause.size(); i++) {
         fprintf(outFile,"%s%d ", clause[i].sign() ? "-" : "", clause[i].var()+1);
     }
     fprintf(outFile, "0\n");

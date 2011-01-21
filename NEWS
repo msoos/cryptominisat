@@ -1,4 +1,4 @@
-ver 2.9.0 10/01/2011
+ver 2.9.0 20/01/2011
 * Added extended SCC and vivification using cached implications
 * Reachability testing and related branching heuristic using cached
   implications
@@ -15,6 +15,9 @@ ver 2.9.0 10/01/2011
   tested in terms of performance
 * Lots of debug code is now enabled by default. It slows down things by
   maybe 5% but keeps the code more sane
+* gcc bug 47365  has been found and workaround is automated through the
+  configure script. If you build using hand-crafted Makefiles, you will bump
+  into this bug for sure.
 
 ver 2.8.0beta5 2/11/2010
 * reason[] was taken to be correct, when in fact it is not updated during

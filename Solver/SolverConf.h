@@ -74,6 +74,7 @@ class SolverConf
         bool      doGateFind;
         bool      doAlwaysFMinim;
         bool      doER;
+        bool      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
 
         //interrupting & dumping
         uint32_t  maxRestarts;

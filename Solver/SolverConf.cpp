@@ -71,6 +71,7 @@ SolverConf::SolverConf() :
         , doGateFind       (true)
         , doAlwaysFMinim   (true)
         , doER             (true)
+        , doCalcReach      (true)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

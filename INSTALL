@@ -1,4 +1,14 @@
 -----------
+GCC bug
+----------
+Beware, GCC has a bug affecting propagation in CryptoMiniSat:
+
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=47365
+
+This seems to affect all gcc versions 4.5.x and is latent in
+trunk of upcoming 4.6.0
+
+-----------
 Libraries needed
 -----------
 You will need the following libraries to compile the sources:
@@ -9,16 +19,6 @@ Building the source
 -----------------
 There are two ways to build the source. With cmake or with autotools.
 I personally use cmake.
-
------------------
-Building using cmake
------------------
-* Install cmake
-* Go into the 'build' directory
-* Issue 'cmake ../'
-* Issue 'make'
-* Issue './cryptominisat satfile.cnf'
-  to test your new code.
 
 ------------------
 Building using autotools

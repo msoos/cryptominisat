@@ -57,7 +57,6 @@ const bool SCCFinder::find2LongXors()
             assert(stack.empty());
         }
     }
-    //std::cout << "maximum recurDepth:" << maxRecurDepth << std::endl;
 
     if (solver.conf.verbosity >= 2 || (solver.conflicts == 0 && solver.conf.verbosity  >= 1)) {
         std::cout << "c Finding binary XORs  T: "
@@ -73,7 +72,6 @@ const bool SCCFinder::find2LongXors()
 void SCCFinder::tarjan(const uint32_t vertex)
 {
     recurDepth++;
-    maxRecurDepth = std::max(recurDepth, maxRecurDepth);
     index[vertex] = globalIndex;  // Set the depth index for v
     lowlink[vertex] = globalIndex;
     globalIndex++;

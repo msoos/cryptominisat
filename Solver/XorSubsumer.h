@@ -36,7 +36,7 @@ class XorSubsumer
 public:
 
     XorSubsumer(Solver& S2);
-    const bool simplifyBySubsumption(const bool doFullSubsume = false);
+    const bool simplifyBySubsumption();
     void unlinkModifiedClause(vec<Lit>& origClause, XorClauseSimp c);
     void unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, XorClauseSimp c);
     void unlinkClause(XorClauseSimp cc, Var elim = var_Undef);

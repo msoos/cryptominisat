@@ -1,4 +1,4 @@
-Mate Soos <soos.mate@gmail.com>
+Mate Soos <soos.mate@gmail.com> and others
 
 People whose code has been incorporated:
 - Niklas Eén
@@ -15,13 +15,18 @@ Special thanks to:
 - the gcc compiler team
 - libstdc team
 - Bjarne Stroustrup for C++
+- Karsten Nohl for starting the project
 
 Bug-hunting thanks to:
 - Martin Maurer for helping with Visual C-specific things
   and reporting on multiple important bugs
+- Vegard Nossum for extensive help with many issues, incl. gcc
+  bug and some latent bugs
 - Trevor Hansen, for fuzztesting the code on millions of problems
   and reporting on a good number of bugs
 - Vijay Ganesh for finding a lots of bugs
+- Oliver Kullmann for help and ideas with gcc bug hunting
 - Users of STP (Simple Theorem Prover) for their feedback
-- Rob None for debugging memory manager-related problems
+- Robert Aston for debugging memory manager-related problems
 - Yuri Pirola for some long-standing bugs
+- and a long list of people for bug reports
