@@ -214,7 +214,8 @@ class Watched {
         void dump(FILE* outfile, const Lit lit) const
         {
             assert(isBinary());
-            fprintf(outfile, "%s%d %s%d 0\n", (lit.sign() ?"-":""), lit.var()+1 , getOtherLit().sign() ? "-":"", getOtherLit().var()+1);
+            lit.print(outfile);
+            getOtherLit().printFull(outfile);
         }
 
         void setNormClause()

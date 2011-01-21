@@ -92,6 +92,7 @@ public:
         if (sz == cap) {
             cap = imax(2, (cap*3+1)>>1);
             data = (T*)realloc(data, cap * sizeof(T));
+            assert(data != NULL);
         }
         new (&data[sz]) T();
         sz++;
@@ -101,6 +102,7 @@ public:
         if (sz == cap) {
             cap = imax(2, (cap*3+1)>>1);
             data = (T*)realloc(data, cap * sizeof(T));
+            assert(data != NULL);
         }
         data[sz++] = elem;
     }

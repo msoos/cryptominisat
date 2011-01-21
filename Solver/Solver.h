@@ -90,14 +90,23 @@ using std::endl;
 //=================================================================================================
 // Solver -- the main class:
 
-struct reduceDB_ltMiniSat
+struct reduceDB_ltGlucose
 {
     bool operator () (const Clause* x, const Clause* y);
 };
 
-struct reduceDB_ltGlucose
+struct UIPNegPosDist
 {
-    bool operator () (const Clause* x, const Clause* y);
+    int64_t dist;
+    Var var;
+};
+
+struct NegPosSorter
+{
+    const bool operator() (const UIPNegPosDist& a, const UIPNegPosDist& b) const
+    {
+        return (a.dist < b.dist);
+    }
 };
 
 /**
@@ -120,7 +129,7 @@ public:
 
     // Constructor/Destructor:
     //
-    Solver(const SolverConf& conf = SolverConf(), const GaussConf& _gaussconfig = GaussConf(), SharedData* sharedUnitData = NULL);
+    Solver(const SolverConf& conf = SolverConf(), const GaussConf& _gaussconfig = GaussConf(), SharedData* sharedData = NULL);
     ~Solver();
 
     // Problem specification:
@@ -129,14 +138,14 @@ public:
     template<class T>
     bool    addClause (T& ps, const uint32_t group = 0, const char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool    addLearntClause(T& ps, const uint32_t group = 0, const char* group_name = NULL, const uint32_t glue = 10, const float miniSatActivity = 10.0);
+    bool    addLearntClause(T& ps, const uint32_t group = 0, const char* group_name = NULL, const uint32_t glue = 10);
     template<class T>
     bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, const char* group_name = NULL);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
-    const lbool    solve       (const vec<Lit>& assumps, const uint32_t numThreads = 1, const uint32_t threadNum = 0); ///<Search for a model that respects a given set of assumptions.
-    const lbool    solve       (const uint32_t numThreads = 1, const uint32_t threadNum = 0);                        ///<Search without assumptions.
+    const lbool    solve       (const vec<Lit>& assumps, const int numThreads = 1, const int threadNum = 0); ///<Search for a model that respects a given set of assumptions.
+    const lbool    solve       (const int numThreads = 1, const int threadNum = 0);                        ///<Search without assumptions.
     const bool     okay         () const;                 ///<FALSE means solver is in a conflicting state
 
     // Variable mode:
@@ -169,7 +178,7 @@ public:
     const uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     void dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
-    void dumpOrigClauses(const std::string& fileName, const bool alsoLearntBin = false) const;
+    void dumpOrigClauses(const std::string& fileName) const;
 
     #ifdef USE_GAUSS
     const uint32_t get_sum_gauss_called() const;
@@ -177,6 +186,9 @@ public:
     const uint32_t get_sum_gauss_prop() const;
     const uint32_t get_sum_gauss_unit_truths() const;
     #endif //USE_GAUSS
+
+    void syncData();
+    void finishAddingVars();
 
     //Printing statistics
     void printStats(const int numThreads = 1);
@@ -221,8 +233,8 @@ protected:
     algorithm)
     */
     bool      needToInterrupt;
-    uint32_t  numThreads;
-    uint32_t  threadNum;
+    int       numThreads;
+    int       threadNum;
 
     //Gauss
     //
@@ -287,6 +299,8 @@ protected:
     uint64_t moreRecurMinLDo; ///<Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
     uint64_t updateTransCache; ///<Number of times the transitive OTF-reduction cache has been updated
     uint64_t nbClOverMaxGlue; ///<Number or clauses over maximum glue defined in maxGlue
+    uint64_t OTFGateRemLits;
+    uint64_t OTFGateRemSucc;
 
     //Multi-threading
     DataSync* dataSync;
@@ -318,7 +332,6 @@ protected:
     vec<Clause*>        learnts;          ///< List of learnt clauses.
     uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
-    double              cla_inc;          ///< Amount to bump learnt clause oldActivity with
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          ///< The current assignments
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
@@ -343,6 +356,7 @@ protected:
     uint32_t            var_inc;          ///< Amount to bump next variable with.
     vector<std::pair<uint64_t, uint64_t> > lTPolCount;
     void bumpUIPPolCount(const vec<Lit>& lit);
+    vector<UIPNegPosDist> negPosDist;
 
     /////////////////
     // Learnt clause cleaning
@@ -363,6 +377,12 @@ protected:
     #endif
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
     vec<Clause*>        unWindGlue;
+
+    // For agility-based restarts
+    void increaseAgility(const bool flipped);
+    double agility;
+    uint32_t numAgilityTooHigh;
+    uint64_t lastConflAgilityTooHigh;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
@@ -387,8 +407,6 @@ protected:
     vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     vector<TransCache>  transOTFCache;
-    vec<Lit>            failedCacheLits;
-    const bool          failPossibleDueCache();
     bqueue<uint32_t>    conflSizeHist;
     void                minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue);
     void                transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp);
@@ -412,7 +430,7 @@ protected:
     ////////////////
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
-    void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
+    void     uncheckedEnqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueExtend (const Lit p, const PropBy& from = PropBy());
     void     uncheckedEnqueueLight (const Lit p);
     void     uncheckedEnqueueLight2(const Lit p, const uint32_t binPropDatael, const Lit lev2Ancestor, const bool learntLeadHere);
@@ -422,10 +440,10 @@ protected:
     const bool propagateBinExcept(const Lit exceptLit);
     const bool propagateBinOneLevel();
     PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
-    void     propTriClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
-    void     propBinaryClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
-    void     propNormalClause(Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl, const bool update);
-    void     propXorClause   (Watched* &i, Watched* &j, const Watched *end, const Lit& p, PropBy& confl);
+    const bool propTriClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
+    const bool propBinaryClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
+    const bool propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update);
+    const bool propXorClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
     void     sortWatched();
 
     ///////////////
@@ -454,17 +472,15 @@ protected:
     /////////////////
     // Maintaining Variable/Clause activity:
     /////////////////
-    void     claBumpActivity (Clause& c);
     void     varDecayActivity ();                      // Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
     void     varBumpActivity  (Var v);                 // Increase a variable with the current 'bump' value.
-    void     claDecayActivity ();                      // Decay all clauses with the specified factor. Implemented by increasing the 'bump' value instead.
 
     /////////////////
     // Operations on clauses:
     /////////////////
     template<class T> const bool addClauseHelper(T& ps, const uint32_t group, const char* group_name);
     template <class T>
-    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0, const bool inOriginalInput = false);
+    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const bool inOriginalInput = false, const bool attach = true);
     template<class T>
     XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group, const bool learnt = false);
     void       attachBinClause(const Lit lit1, const Lit lit2, const bool learnt);
@@ -537,9 +553,9 @@ protected:
     /////////////////////////
     const bool  chooseRestartType(const uint32_t& lastFullRestart);
     void        setDefaultRestartType();
-    const bool  checkFullRestart(uint32_t& lastFullRestart);
+    const bool  fullRestart(uint32_t& lastFullRestart);
     RestartType restartType;             ///<Used internally to determine which restart strategy is currently in use
-    RestartType lastSelectedRestartType; ///<The last selected restart type. Used when we are just after a full restart, and need to know how to really act
+    RestartType subRestartType;
 
     //////////////////////////
     // Problem simplification
@@ -564,6 +580,7 @@ protected:
     const bool verifyXorClauses () const;
 
     // Debug & etc:
+    void     printAllClauses();
     void     printLit         (const Lit l) const;
     void     checkLiteralCount();
     void     printStatHeader  () const;
@@ -589,9 +606,6 @@ protected:
     void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
     void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
     vector<bool> polarity;      // The preferred polarity of each variable.
-    #ifdef USE_OLD_POLARITIES
-    vector<bool> oldPolarity;   // The polarity before the last setting. Good for unsetting polairties that have been changed since the last conflict
-    #endif //USE_OLD_POLARITIES
 };
 
 
@@ -657,21 +671,6 @@ inline void Solver::varBumpActivity(Var v)
     // Update order_heap with respect to new activity:
     if (order_heap.inHeap(v))
         order_heap.decrease(v);
-}
-
-inline void Solver::claBumpActivity (Clause& c)
-{
-    if ( (c.getMiniSatAct() += cla_inc) > 1e20 ) {
-        // Rescale:
-        for (uint32_t i = 0; i < learnts.size(); i++)
-            learnts[i]->getMiniSatAct() *= 1e-17;
-        cla_inc *= 1e-20;
-    }
-}
-
-inline void Solver::claDecayActivity()
-{
-    cla_inc *= conf.clause_decay;
 }
 
 inline bool Solver::locked(const Clause& c) const
@@ -744,7 +743,7 @@ inline void     Solver::setDecisionVar(Var v, bool b)
         insertVarOrder(v);
     }
 }
-inline const lbool     Solver::solve         (const uint32_t _numThreads, const uint32_t _threadNum)
+inline const lbool     Solver::solve         (const int _numThreads, const int _threadNum)
 {
     vec<Lit> tmp;
     return solve(tmp, numThreads, threadNum);
@@ -888,6 +887,12 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     binPropData[p.var()].lev = binSubLevel;
     binPropData[p.var()].lev1Ancestor = lev2Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
+}
+
+inline void Solver::increaseAgility(const bool flipped)
+{
+    agility *= conf.agilityG;
+    if (flipped) agility += 1.0 - conf.agilityG;
 }
 
 //=================================================================================================

@@ -23,6 +23,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <stdio.h>
 #include <vector>
 #include "constants.h"
+#include <iomanip>
+#include <sstream>
 
 //=================================================================================================
 // Variables, literals, lifted booleans, clauses:
@@ -85,7 +87,7 @@ public:
     }
     inline void print(FILE* outfile = stdout) const
     {
-        fprintf(outfile,"%s%d", sign() ? "-" : "", var()+1);
+        fprintf(outfile,"%s%d ", sign() ? "-" : "", var()+1);
     }
     inline void printFull(FILE* outfile = stdout) const
     {
@@ -100,10 +102,12 @@ public:
 const Lit lit_Undef(var_Undef, false);  // Useful special constants.
 const Lit lit_Error(var_Undef, true );  //
 
-inline std::ostream& operator<<(std::ostream& cout, const Lit& lit)
+inline std::ostream& operator<<(std::ostream& os, const Lit& lit)
 {
-    cout << (lit.sign() ? "-" : "") << (lit.var() + 1);
-    return cout;
+    std::stringstream ss;
+    ss << (lit.sign() ? "-" : "") << (lit.var() + 1);
+    os << std::setw(6) << ss.str();
+    return os;
 }
 
 inline std::ostream& operator<<(std::ostream& cout, const vec<Lit>& lits)
@@ -124,7 +128,7 @@ inline void printClause(FILE* outFile, const std::vector<Lit>& clause)
 
 inline void printClause(FILE* outFile, const vec<Lit>& clause)
 {
-    for (size_t i = 0; i < clause.size(); i++) {
+    for (uint32_t i = 0; i < clause.size(); i++) {
         fprintf(outFile,"%s%d ", clause[i].sign() ? "-" : "", clause[i].var()+1);
     }
     fprintf(outFile, "0\n");
@@ -221,6 +225,16 @@ const llbool l_Nothing  = toLbool(2);
 const llbool l_Continue = toLbool(3);
 
 lbool::lbool(llbool b) : value(b.value) {};
+
+inline std::ostream& operator<<(std::ostream& os, const llbool val)
+{
+    if (val == l_True) os << "l_True";
+    if (val == l_False) os << "l_False";
+    if (val == l_Undef) os << "l_Undef";
+    if (val == l_Nothing) os << "l_Nothing";
+    if (val == l_Continue) os << "l_Continue";
+    return os;
+}
 
 enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 

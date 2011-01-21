@@ -34,10 +34,6 @@ using std::vector;
 #include "ClauseOffset.h"
 #include "Watched.h"
 
-#ifdef USE_BOOST
-#include <boost/pool/pool.hpp>
-#endif //USE_BOOST
-
 #define NUM_BITS_OUTER_OFFSET 4
 
 
@@ -54,12 +50,6 @@ needed. When instructed, it consolidates the unused space (i.e. clauses free()-e
 Essentially, it is a stack-like allocator for clauses. It is useful to have
 this, because this way, we can address clauses according to their number,
 which is 32-bit, instead of their address, which might be 64-bit
-
-2-long clauses are specially treated. If BOOST is enabled, a special memory
-allocator is used for 2-long clauses. If BOOST is not available, then regular
-memory allocation is used (i.e. not stack-based). This is because for 2-long
-clauses, a 64-bit pointer doesn't cause problems (while for other clauses, it
-does)
 */
 class ClauseAllocator {
     public:

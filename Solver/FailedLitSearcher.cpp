@@ -223,9 +223,6 @@ const bool FailedLitSearcher::search()
     removedUselessLearnt = 0;
     removedUselessNonLearnt = 0;
 
-    vector<UIPNegPosDist> negPosDist;
-    uint32_t varPolCount = 0;
-
     //uint32_t fromBin;
     origProps = solver.propagations;
     uint32_t i;
@@ -240,32 +237,12 @@ const bool FailedLitSearcher::search()
     }
     lastTimeStopped = (lastTimeStopped + i) % solver.nVars();
 
-    //Calculate best vars to try
-    for (vector<std::pair<uint64_t, uint64_t> >::iterator it = solver.lTPolCount.begin(), end = solver.lTPolCount.end(); it != end; it++, varPolCount++) {
-        UIPNegPosDist tmp;
-        tmp.var = varPolCount;
-        int64_t pos = it->first;
-        int64_t neg = it->second;
-        int64_t diff = std::abs((long int) (pos-neg));
-        tmp.dist = pos*pos + neg*neg - diff*diff;
-
-        if (it->first > 4  && it->second > 4)
-            negPosDist.push_back(tmp);
-
-        //it->first = pos/2;
-        //it->second = neg/2;
-    }
-    std::sort(negPosDist.begin(), negPosDist.end(), NegPosSorter());
-    /*for (uint32_t i = 0; i < negPosDist.size(); i++) {
-        const UIPNegPosDist& u = negPosDist[i];
-        std::cout << "var: " << (u.var + 1) << " dist: " << u.dist << std::endl;
-    }*/
-    //std::cout << "c negPosDist.size() : " << negPosDist.size() << std::endl;
+    calcNegPosDist();
 
     origProps = solver.propagations;
     hyperbinProps = 0;
-    for (uint32_t i = 0; i < negPosDist.size(); i++) {
-        Var var = negPosDist[i].var;
+    for (uint32_t i = 0; i < solver.negPosDist.size(); i++) {
+        Var var = solver.negPosDist[i].var;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
         if (solver.propagations >= origProps + numPropsDifferent)  {
@@ -285,6 +262,7 @@ const bool FailedLitSearcher::search()
         if (!tryBoth(Lit(var, false), Lit(var, true)))
             goto end;
     }
+    //if (!tryMultiLevelAll()) goto end;
 
 end:
     if (solver.conf.verbosity  >= 1) printResults(myTime);
@@ -394,11 +372,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     assert(solver.decisionLevel() > 0);
-    vector<Lit> oldCache;
+    //vector<Lit> oldCache;
     TransCache& lit1OTFCache = solver.transOTFCache[(~lit1).toInt()];
     if (solver.conf.doCacheOTFSSR) {
         lit1OTFCache.conflictLastUpdated = solver.conflicts;
-        oldCache.swap(lit1OTFCache.lits);
+        //oldCache.swap(lit1OTFCache.lits);
+        lit1OTFCache.lits.clear();
     }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x = solver.trail[c].var();
@@ -432,8 +411,8 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.cancelUntilLight();
 
-    if (solver.conf.doHyperBinRes) hyperBinResAll(lit1, oldCache);
-    oldCache.clear();
+    if (solver.conf.doHyperBinRes) hyperBinResAll(lit1/*, oldCache*/);
+    //oldCache.clear();
     if (!performAddBinLaters()) return false;
 
     #ifdef DEBUG_HYPERBIN
@@ -458,7 +437,8 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     TransCache& lit2OTFCache = solver.transOTFCache[(~lit2).toInt()];
     if (solver.conf.doCacheOTFSSR) {
         lit2OTFCache.conflictLastUpdated = solver.conflicts;
-        oldCache.swap(lit2OTFCache.lits);
+        //oldCache.swap(lit2OTFCache.lits);
+        lit2OTFCache.lits.clear();
     }
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x  = solver.trail[c].var();
@@ -513,8 +493,8 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
     solver.cancelUntilLight();
 
-    if (solver.conf.doHyperBinRes) hyperBinResAll(lit2, oldCache);
-    oldCache.clear();
+    if (solver.conf.doHyperBinRes) hyperBinResAll(lit2/*, oldCache*/);
+    //oldCache.clear();
     if (!performAddBinLaters()) return false;
 
     for(uint32_t i = 0; i != bothSame.size(); i++) {
@@ -554,9 +534,9 @@ const bool FailedLitSearcher::performAddBinLaters()
     return true;
 }
 
-void FailedLitSearcher::hyperBinResAll(const Lit litProp, const vector<Lit>& oldCache)
+void FailedLitSearcher::hyperBinResAll(const Lit litProp/*, const vector<Lit>& oldCache*/)
 {
-    if (solver.conf.doAddBinCache) {
+    /*if (solver.conf.doAddBinCache) {
         //Not forgetting stuff already known at one point from cache
         for (vector<Lit>::const_iterator it = oldCache.begin(), end = oldCache.end(); it != end; it++) {
         const Lit lit = *it;
@@ -569,7 +549,7 @@ void FailedLitSearcher::hyperBinResAll(const Lit litProp, const vector<Lit>& old
 
             if (!unPropagatedBin[it->var()]) addBinLater.push_back(std::make_pair(~litProp, *it));
         }
-    }
+    }*/
 
     //Hyper-binary resolution
     if (hyperbinProps < maxHyperBinProps) hyperBinResolution(litProp);
@@ -822,4 +802,148 @@ void FailedLitSearcher::addBin(const Lit lit1, const Lit lit2)
     addedBin++;
 }
 
+void FailedLitSearcher::fillToTry(vec<Var>& toTry)
+{
+    uint32_t max = std::min(solver.negPosDist.size()-1, (size_t)300);
+    while(true) {
+        Var var = solver.negPosDist[solver.mtrand.randInt(max)].var;
+        if (solver.value(var) != l_Undef
+            || solver.subsumer->getVarElimed()[var]
+            || solver.xorSubsumer->getVarElimed()[var]
+            || solver.partHandler->getSavedState()[var] != l_Undef
+            ) continue;
 
+        bool OK = true;
+        for (uint32_t i = 0; i < toTry.size(); i++) {
+            if (toTry[i] == var) {
+                OK = false;
+                break;
+            }
+        }
+        if (OK) {
+            toTry.push(var);
+            return;
+        }
+    }
+}
+
+void FailedLitSearcher::calcNegPosDist()
+{
+    uint32_t varPolCount = 0;
+    for (vector<std::pair<uint64_t, uint64_t> >::iterator it = solver.lTPolCount.begin(), end = solver.lTPolCount.end(); it != end; it++, varPolCount++) {
+        UIPNegPosDist tmp;
+        tmp.var = varPolCount;
+        int64_t pos = it->first;
+        int64_t neg = it->second;
+        int64_t diff = std::abs((long int) (pos-neg));
+        tmp.dist = pos*pos + neg*neg - diff*diff;
+        if (it->first > 4  && it->second > 4)
+            solver.negPosDist.push_back(tmp);
+    }
+    std::sort(solver.negPosDist.begin(), solver.negPosDist.end(), NegPosSorter());
+}
+
+const bool FailedLitSearcher::tryMultiLevelAll()
+{
+    assert(solver.ok);
+    uint32_t backupNumUnits = solver.trail.size();
+    double myTime = cpuTime();
+    uint32_t numTries = 0;
+    uint32_t finished = 0;
+    uint64_t beforeProps = solver.propagations;
+    uint32_t enqueued = 0;
+    uint32_t numFailed = 0;
+
+
+
+    if (solver.negPosDist.size() < 30) return true;
+
+    propagated.resize(solver.nVars(), 0);
+    propagated2.resize(solver.nVars(), 0);
+    propValue.resize(solver.nVars(), 0);
+    assert(propagated.isZero());
+    assert(propagated2.isZero());
+
+    vec<Var> toTry;
+    while(solver.propagations < beforeProps + 300*1000*1000) {
+        toTry.clear();
+        for (uint32_t i = 0; i < 3; i++) {
+            fillToTry(toTry);
+        }
+        numTries++;
+        if (!tryMultiLevel(toTry, enqueued, finished, numFailed)) goto end;
+    }
+
+    end:
+    assert(propagated.isZero());
+    assert(propagated2.isZero());
+
+    std::cout
+    << "c multiLevelBoth tried " <<  numTries
+    << " finished: " << finished
+    << " units: " << (solver.trail.size() - backupNumUnits)
+    << " enqueued: " << enqueued
+    << " numFailed: " << numFailed
+    << " time: " << (cpuTime() - myTime)
+    << std::endl;
+
+    return solver.ok;
+}
+
+const bool FailedLitSearcher::tryMultiLevel(const vec<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed)
+{
+    assert(solver.ok);
+
+    vec<Lit> toEnqueue;
+    bool first = true;
+    bool last = false;
+    //std::cout << "//////////////////" << std::endl;
+    for (uint32_t comb = 0; comb < (1U << vars.size()); comb++) {
+        last = (comb == (1U << vars.size())-1);
+        solver.newDecisionLevel();
+        for (uint32_t i = 0; i < vars.size(); i++) {
+            solver.uncheckedEnqueueLight(Lit(vars[i], comb&(0x1 << i)));
+            //std::cout << "lit: " << Lit(vars[i], comb&(1U << i)) << std::endl;
+        }
+        //std::cout << "---" << std::endl;
+        bool failed = !(solver.propagate(false).isNULL());
+        if (failed) {
+            solver.cancelUntilLight();
+            if (!first) propagated.setZero();
+            numFailed++;
+            return true;
+        }
+
+        for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
+            Var x = solver.trail[sublevel].var();
+            if (first) {
+                propagated.setBit(x);
+                if (solver.assigns[x].getBool()) propValue.setBit(x);
+                else propValue.clearBit(x);
+            } else if (last) {
+                if (propagated[x] && solver.assigns[x].getBool() == propValue[x])
+                    toEnqueue.push(Lit(x, !propValue[x]));
+            } else {
+                if (solver.assigns[x].getBool() == propValue[x]) {
+                    propagated2.setBit(x);
+                }
+            }
+        }
+        solver.cancelUntilLight();
+        if (!first && !last) propagated &= propagated2;
+        propagated2.setZero();
+        if (propagated.isZero()) return true;
+        first = false;
+    }
+    propagated.setZero();
+    finished++;
+
+    for (Lit *l = toEnqueue.getData(), *end = toEnqueue.getDataEnd(); l != end; l++) {
+        enqueued++;
+        solver.uncheckedEnqueue(*l);
+    }
+    solver.ok = solver.propagate().isNULL();
+    //exit(-1);
+
+    return solver.ok;
+}

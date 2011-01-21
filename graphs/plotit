@@ -1,5 +1,5 @@
 #set term epslatex color rounded size 4.9,2.2
-#set term png rounded size 1024,768
+#set term postscript size 8,4
 set term png rounded size 800,600
 
 set pointsize 1
@@ -31,5 +31,8 @@ set key left top
 #set output "CryptoMiniSat2.7.1-compare.png"
 #plot [80:] "./solveTimesMiniSatGraph" w lp title "MiniSat 2.2", "./solveTimesLingelingGraph" w lp title "lingeling", "./solveTimesPrecoSat465Graph" w lp title "PrecoSat465", "./solveTimes97Graph" w lp title "CryptoMiniSat2.7.1"
 
-set output "With-without-tans-strong-minim.png"
-plot [80:] "./solveTimes97Graph" w lp title "With transitive strong minimisation", "./solveTimes97-nolfminimGraph" w lp title "Without transitive strong minimisation"
+#set output "With-without-tans-strong-minim.png"
+#plot [80:] "./solveTimes97Graph" w lp title "With transitive strong minimisation", "./solveTimes97-nolfminimGraph" w lp title "Without transitive strong minimisation"
+
+set output "CryptoMiniSat3Beta-compare.eps"
+plot [80:] "./solveTimesMiniSatGraph" w lp title "MiniSat 2.2", "./solveTimesLingelingGraph" w lp title "lingeling", "./solveTimesPrecoSat465Graph" w lp title "PrecoSat465", "./solveTimes129Graph" w lp title "CryptoMiniSat3Beta"

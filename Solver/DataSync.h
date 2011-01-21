@@ -33,10 +33,10 @@ class DataSync
         const bool syncData();
 
         //New clause signalation
-        template <class T> void signalNewBinClause(const T& ps);
-        void signalNewBinClause(Lit lit1, Lit lit2);
-        template <class T> void signalNewTriClause(const T& ps);
-        void signalNewTriClause(const Lit lit1, const Lit lit2, const Lit lit3);
+        template <class T> void signalNewBinClause(const T& ps, const bool learnt = true);
+        void signalNewBinClause(Lit lit1, Lit lit2, const bool learnt = true);
+        template <class T> void signalNewTriClause(const T& ps, const bool learnt = true);
+        void signalNewTriClause(const Lit lit1, const Lit lit2, const Lit lit3, const bool learnt = true);
 
         //Get methods
         const uint32_t getSentUnitData() const;
@@ -45,6 +45,8 @@ class DataSync
         const uint32_t getRecvBinData() const;
         const uint32_t getSentTriData() const;
         const uint32_t getRecvTriData() const;
+        const int getThreadAddingVars() const;
+        const bool getEREnded() const;
 
     private:
         //unitary shring functions
@@ -55,10 +57,10 @@ class DataSync
 
         //bin sharing functions
         const bool    shareBinData();
-        vector<std::pair<Lit, Lit> > newBinClauses;
-        const bool    syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished);
+        vector<BinClause> newBinClauses;
+        const bool    syncBinFromOthers(const Lit lit, const vector<BinClause>& bins, uint32_t& finished);
         void          syncBinToOthers();
-        void          addOneBinToOthers(const Lit lit1, const Lit lit2);
+        void          addOneBinToOthers(const Lit lit1, const Lit lit2, const bool leanrt);
         vec<uint32_t> syncFinish;
         uint32_t      sentBinData;
         uint32_t      recvBinData;
@@ -91,6 +93,10 @@ class DataSync
         uint32_t      mpiRecvTriData;
         uint32_t      mpiSentTriData;
         #endif
+
+        //ER sharing
+        void syncERVarsToHere();
+        void syncERVarsFromHere();
 
         //misc
         vec<char> seen;
@@ -130,6 +136,18 @@ inline const uint32_t DataSync::getSentTriData() const
 inline const uint32_t DataSync::getRecvTriData() const
 {
     return recvTriData;
+}
+
+inline const int DataSync::getThreadAddingVars() const
+{
+    if (sharedData == NULL) return 0;
+    else return sharedData->threadAddingVars;
+}
+
+inline const bool DataSync::getEREnded() const
+{
+    if (sharedData == NULL) return false;
+    return sharedData->EREnded;
 }
 
 #endif //DATASYNC_H

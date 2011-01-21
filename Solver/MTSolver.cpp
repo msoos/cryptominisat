@@ -20,6 +20,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 #include <omp.h>
 #include <time.h>
+#include <algorithm>
+
+#if defined( _WIN32 ) || defined( _WIN64 )
+#include <windows.h>
+#endif
+
+#ifdef _MSC_VER
+using namespace std;
+#endif
 
 void MTSolver::printNumThreads() const
 {
@@ -58,9 +67,16 @@ void MTSolver::setupOneSolver(const int num, const uint32_t origSeed)
     if (num > 0) {
         if (num % 6 == 0) myConf.fixRestartType = dynamic_restart;
         else if (num % 6 == 4) myConf.fixRestartType = static_restart;
-        myConf.simpBurstSConf *= 1.0 + std::max(0.2*(double)num, 2.0);
-        myConf.simpStartMult *= 1.0 - std::max(0.1*(double)num, 0.7);
-        myConf.simpStartMMult *= 1.0 - std::max(0.1*(double)num, 0.7);
+        #ifdef _MSC_VER
+        myConf.simpBurstSConf *= 1.0f + max(0.2f*(float)num, 2.0f);
+        myConf.simpStartMult *= 1.0f - max(0.1f*(float)num, 0.7f);
+        myConf.simpStartMMult *= 1.0f - max(0.1f*(float)num, 0.7f);
+        #else
+        myConf.simpBurstSConf *= 1.0f + std::max(0.2f*(float)num, 2.0f);
+        myConf.simpStartMult *= 1.0f - std::max(0.1f*(float)num, 0.7f);
+        myConf.simpStartMMult *= 1.0f - std::max(0.1f*(float)num, 0.7f);
+        #endif //_MSC_VER
+
         if (num % 6 == 5) {
             myConf.doVarElim = false;
             myConf.polarity_mode = polarity_false;
@@ -112,10 +128,28 @@ const lbool MTSolver::solve(const vec<Lit>& assumps)
                 #pragma omp critical (finished)
                 if (finished.size() == (unsigned)numThreadsLocal) mustWait = false;
 
+                #if defined( _WIN32 ) || defined( _WIN64 )
+                Sleep(1);
+                #else
                 timespec req, rem;
                 req.tv_nsec = 10000000;
                 req.tv_sec = 0;
                 nanosleep(&req, &rem);
+                #endif
+            }
+
+            //Sync ER-ed vars
+            if (ret != l_False) {
+                //Finish the adding of currently selected thread
+                //May Sync a bit, but maybe not all(!!)
+                for (int i = 0; i < numThreadsLocal; i++) {
+                    solvers[i]->finishAddingVars();
+                    solvers[i]->syncData();
+                }
+                //Sync all
+                for (int i = 0; i < numThreadsLocal; i++) {
+                    solvers[i]->syncData();
+                }
             }
 
             finishedThread = threadNum;
@@ -183,13 +217,13 @@ template<class T> bool MTSolver::addClause (T& ps, const uint32_t group, const c
 template bool MTSolver::addClause(vec<Lit>& ps, const uint32_t group, const char* group_name);
 template bool MTSolver::addClause(Clause& ps, const uint32_t group, const char* group_name);
 
-template<class T> bool MTSolver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity)
+template<class T> bool MTSolver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue)
 {
     bool globalRet = true;
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
         std::copy(ps.getData(), ps.getDataEnd(), copyPS.getData());
-        bool ret = solvers[i]->addLearntClause(copyPS, group, group_name, glue, miniSatActivity);
+        bool ret = solvers[i]->addLearntClause(copyPS, group, group_name, glue);
         if (ret == false) {
             #pragma omp critical
             globalRet = false;
@@ -198,8 +232,8 @@ template<class T> bool MTSolver::addLearntClause(T& ps, const uint32_t group, co
 
     return globalRet;
 }
-template bool MTSolver::addLearntClause(vec<Lit>& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
-template bool MTSolver::addLearntClause(Clause& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
+template bool MTSolver::addLearntClause(vec<Lit>& ps, const uint32_t group, const char* group_name, const uint32_t glue);
+template bool MTSolver::addLearntClause(Clause& ps, const uint32_t group, const char* group_name, const uint32_t glue);
 
 template<class T> bool MTSolver::addXorClause (T& ps, bool xorEqualFalse, const uint32_t group, const char* group_name)
 {
@@ -237,9 +271,9 @@ void MTSolver::dumpSortedLearnts(const std::string& fileName, const uint32_t max
     solvers[finishedThread]->dumpSortedLearnts(fileName, maxSize);
 }
 
-void MTSolver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntBin) const
+void MTSolver::dumpOrigClauses(const std::string& fileName) const
 {
-    solvers[finishedThread]->dumpSortedLearnts(fileName, alsoLearntBin);
+    solvers[finishedThread]->dumpOrigClauses(fileName);
 }
 
 void MTSolver::setVariableName(const Var var, const std::string& name)

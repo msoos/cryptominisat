@@ -86,10 +86,7 @@ void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSi
     fprintf(outfile, "c \nc --------------------\n");
     fprintf(outfile, "c clauses from learnts\n");
     fprintf(outfile, "c --------------------\n");
-    if (lastSelectedRestartType == dynamic_restart)
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
-    else
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
+    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
         if (learnts[i]->size() <= maxSize) {
             learnts[i]->print(outfile);
@@ -145,7 +142,7 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FIL
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
+            if (it2->isBinary() && lit < it2->getOtherLit()) {
                 bool toDump = false;
                 if (it2->getLearnt() && alsoLearnt) toDump = true;
                 if (!it2->getLearnt() && alsoNonLearnt) toDump = true;
@@ -169,7 +166,7 @@ const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
     return num;
 }
 
-void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntBin) const
+void Solver::dumpOrigClauses(const std::string& fileName) const
 {
     FILE* outfile = fopen(fileName.c_str(), "w");
     if (!outfile) {
@@ -192,7 +189,7 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     }
 
     //binary normal clauses
-    numClauses += countNumBinClauses(alsoLearntBin, true);
+    numClauses += countNumBinClauses(false, true);
 
     //normal clauses
     numClauses += clauses.size();
@@ -251,7 +248,7 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c binary clauses\n");
     fprintf(outfile, "c ---------------\n");
-    dumpBinClauses(alsoLearntBin, true, outfile);
+    dumpBinClauses(false, true, outfile);
 
     fprintf(outfile, "c \nc ------------\n");
     fprintf(outfile, "c normal clauses\n");
@@ -273,10 +270,12 @@ void Solver::dumpOrigClauses(const std::string& fileName, const bool alsoLearntB
     fprintf(outfile, "c previously eliminated variables\n");
     fprintf(outfile, "c -------------------------------\n");
     for (map<Var, vector<vector<Lit> > >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
+        fprintf(outfile, "c ########### cls for eliminated var %d ### start\n", it->first + 1);
         const vector<vector<Lit> >& cs = it->second;
         for (vector<vector<Lit> >::const_iterator it2 = cs.begin(); it2 != cs.end(); it2++) {
             printClause(outfile, *it2);
         }
+        fprintf(outfile, "c ########### cls for eliminated var %d ### finish\n", it->first + 1);
     }
     for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
         for (uint32_t i = 0; i < it->second.size(); i++) {
@@ -316,10 +315,7 @@ const vec<Clause*>& Solver::get_learnts() const
 
 const vec<Clause*>& Solver::get_sorted_learnts()
 {
-    if (lastSelectedRestartType == dynamic_restart)
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
-    else
-        std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltMiniSat());
+    std::sort(learnts.getData(), learnts.getData()+learnts.size(), reduceDB_ltGlucose());
     return learnts;
 }
 
@@ -553,7 +549,7 @@ void Solver::addSymmBreakClauses()
     }
     double myTime = cpuTime();
     std::cout << "c Doing saucy" << std::endl;
-    dumpOrigClauses("origProblem.cnf", true);
+    dumpOrigClauses("origProblem.cnf");
 
     int rvalue;
     rvalue= system("grep -v \"^c\" origProblem.cnf > origProblem2.cnf");
@@ -671,8 +667,8 @@ void Solver::printStats(const int numThreads)
     printStatsLine("c bin xor find time", getTotalTimeSCC());
 
     //OTF clause improvement stats
-    printStatsLine("c OTF clause improved", improvedClauseNo, (double)improvedClauseNo/(double)conflicts, "clauses/conflict");
-    printStatsLine("c OTF impr. size diff", improvedClauseSize, (double)improvedClauseSize/(double)improvedClauseNo, " lits/clause");
+    printStatsLine("c OTF clause subsumed", improvedClauseNo, (double)improvedClauseNo/(double)conflicts, "clauses/conflict");
+    printStatsLine("c OTF subs. size diff", improvedClauseSize, (double)improvedClauseSize/(double)improvedClauseNo, " lits/clause");
 
     //Clause-shrinking through watchlists
     printStatsLine("c OTF cl watch-shrink", numShrinkedClause, (double)numShrinkedClause/(double)conflicts, "clauses/conflict");
@@ -680,11 +676,14 @@ void Solver::printStats(const int numThreads)
     printStatsLine("c tried to recurMin cls", moreRecurMinLDo, (double)moreRecurMinLDo/(double)conflicts*100.0, " % of conflicts");
     printStatsLine("c updated cache", updateTransCache, updateTransCache/(double)moreRecurMinLDo, " lits/tried recurMin");
 
+    printStatsLine("c OTF Gate-Rem cl", OTFGateRemSucc, (double)OTFGateRemSucc/(double)conflicts, "clauses/conflict");
+    printStatsLine("c OTF Gate-rem lits", OTFGateRemLits, (double)OTFGateRemLits/(double)OTFGateRemSucc, "lits/confl");
+
     //Multi-threading
     if (numThreads > 1) {
-        printStatsLine("c unit cls recevied", dataSync->getRecvUnitData(), (double)dataSync->getRecvUnitData()/(double)get_unitary_learnts_num()*100.0, "% of units");
+        printStatsLine("c unit cls received", dataSync->getRecvUnitData(), (double)dataSync->getRecvUnitData()/(double)get_unitary_learnts_num()*100.0, "% of units");
         printStatsLine("c unit cls sent", dataSync->getSentUnitData(), (double)dataSync->getSentUnitData()/(double)get_unitary_learnts_num()*100.0, "% of units");
-        printStatsLine("c bin cls recevied", dataSync->getRecvBinData());
+        printStatsLine("c bin cls received", dataSync->getRecvBinData());
         printStatsLine("c bin cls sent", dataSync->getSentBinData());
         printStatsLine("c tri cls recevied", dataSync->getRecvTriData());
         printStatsLine("c tri cls sent", dataSync->getSentTriData());

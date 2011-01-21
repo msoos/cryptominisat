@@ -41,7 +41,6 @@ class SCCFinder {
         vec<uint32_t> tmp;
 
         uint32_t recurDepth;
-        uint32_t maxRecurDepth;
 
         Solver& solver;
         const vec<char>& varElimed1;

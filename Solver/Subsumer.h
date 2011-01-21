@@ -16,7 +16,11 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include <map>
 #include <vector>
 #include <list>
+#include <set>
 #include <queue>
+#include <set>
+#include <iomanip>
+
 using std::vector;
 using std::list;
 using std::map;
@@ -24,6 +28,25 @@ using std::priority_queue;
 
 class ClauseCleaner;
 class OnlyNonLearntBins;
+
+class OrGate {
+    public:
+        Lit eqLit;
+        vector<Lit> lits;
+        //uint32_t num;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
+{
+    os << " gate ";
+    //os << " no. " << std::setw(4) << gate.num;
+    os << " lits: ";
+    for (uint32_t i = 0; i < gate.lits.size(); i++) {
+        os << gate.lits[i] << " ";
+    }
+    os << " eqLit: " << gate.eqLit;
+    return os;
+}
 
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
@@ -60,6 +83,12 @@ public:
     const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
     const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
     const vector<TransCache>& getBinNonLearntCache() const;
+    const uint32_t getNumERVars() const;
+    void incNumERVars(const uint32_t num);
+    void setVarNonEliminable(const Var var);
+    const bool getFinishedAddingVars() const;
+    void setFinishedAddingVars(const bool val);
+    const vector<OrGate*>& getGateOcc(const Lit lit) const;
 
 private:
 
@@ -80,6 +109,7 @@ private:
     vec<CSet* >            iter_sets;      ///<Sets currently used in iterations.
     vec<char>              cannot_eliminate;///<Variables that cannot be eliminated due to, e.g. XOR-clauses
     vec<char>              seen_tmp;       ///<Used in various places to help perform algorithms
+    vec<char>              seen_tmp2;      ///<Used in various places to help perform algorithms
 
     //Global stats
     Solver& solver;                        ///<The solver this simplifier is connected to
@@ -126,6 +156,7 @@ private:
     //Used by cleaner
     void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
+    const bool handleUpdatedClause(ClauseSimp& c);
 
     //Findsubsumed
     template<class T>
@@ -165,7 +196,6 @@ private:
     struct subsume0Happened {
         bool subsumedNonLearnt;
         uint32_t glue;
-        float act;
     };
     /**
     @brief Sort clauses according to size
@@ -202,8 +232,6 @@ private:
     const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
     void strenghten(ClauseSimp& c, const Lit toRemoveLit);
     const bool cleanClause(Clause& ps);
-    const bool cleanClause(vec<Lit>& ps) const;
-    void handleSize1Clause(const Lit lit);
 
     //Variable elimination
     /**
@@ -239,16 +267,17 @@ private:
             Lit lit2;
             bool isBin;
     };
+    uint32_t numLearntBinVarRemAdded;
     void orderVarsForElim(vec<Var>& order);
     const uint32_t numNonLearntBins(const Lit lit) const;
     bool maybeEliminate(Var x);
+    void addLearntBinaries(const Var var);
     void removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const Var var);
     void removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair<uint32_t, uint32_t>& removed);
     bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
     const bool eliminateVars();
     void fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit);
 
-    void addLearntBinaries(const Var var);
     void removeBinsAndTris(const Var var);
     const uint32_t removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws);
 
@@ -269,6 +298,7 @@ private:
             return false;
         };
     };
+    void makeAllBinsNonLearnt();
     const bool subsWNonExistBinsFill();
     const bool subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
     const bool subsumeNonExist();
@@ -302,11 +332,6 @@ private:
     void blockedClauseElimAll(const Lit lit);
 
     //Gate extraction
-    class OrGate {
-    public:
-        Lit eqLit;
-        vector<Lit> lits;
-    };
     struct OrGateSorter {
         const bool operator() (const OrGate& gate1, const OrGate& gate2) {
             return (gate1.lits.size() > gate2.lits.size());
@@ -333,12 +358,24 @@ private:
     int64_t gateLitsRemoved;
     uint64_t totalOrGateSize;
     vector<OrGate> orGates;
+    vector<vector<OrGate*> > gateOcc;
     uint32_t numOrGateReplaced;
     const bool findEqOrGates();
     vec<char> defOfOrGate;
+    const bool carryOutER();
+    void createNewVar();
+    const bool doAllOptimisationWithGates();
+    uint32_t andGateNumFound;
+    uint32_t andGateTotalSize;
+    vec<char> dontElim;
+    uint32_t numERVars;
+    bool finishedAddingVars;
 
-    const bool andGateRemCl();
-    void findAndGateOtherCl(const Lit lit, const uint32_t size, vec<ClauseSimp>& others);
+    const bool treatAndGates();
+    const bool treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp);
+    const bool treatAndGateClause(const ClauseSimp& other, const OrGate& gate, const Clause& cl);
+    const bool findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, ClauseSimp& other);
+    vector<vector<ClauseSimp> > sizeSortedOcc;
 
     //validity checking
     const bool verifyIntegrity();
@@ -346,7 +383,6 @@ private:
     uint32_t clauses_subsumed; ///<Number of clauses subsumed in this run
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
     uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
-    uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
     bool alsoLearnt;
 };
 
@@ -480,6 +516,8 @@ inline void Subsumer::newVar()
     occur       .push();
     seen_tmp    .push(0);       // (one for each polarity)
     seen_tmp    .push(0);
+    seen_tmp2   .push(0);       // (one for each polarity)
+    seen_tmp2   .push(0);
     touchedVars   .push(0);
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
@@ -489,6 +527,9 @@ inline void Subsumer::newVar()
     ol_seenNeg.push(1);
     ol_seenNeg.push(1);
     touch(solver.nVars()-1);
+    dontElim.push(0);
+    gateOcc.push_back(vector<OrGate*>());
+    gateOcc.push_back(vector<OrGate*>());
 
     binNonLearntCache.push_back(TransCache());
     binNonLearntCache.push_back(TransCache());
@@ -522,6 +563,36 @@ inline const double Subsumer::getTotalTime() const
 inline const vector<TransCache>& Subsumer::getBinNonLearntCache() const
 {
     return binNonLearntCache;
+}
+
+inline const uint32_t Subsumer::getNumERVars() const
+{
+    return numERVars;
+}
+
+inline void Subsumer::incNumERVars(const uint32_t num)
+{
+    numERVars += num;
+}
+
+inline void Subsumer::setVarNonEliminable(const Var var)
+{
+    dontElim[var] = true;
+}
+
+inline const bool Subsumer::getFinishedAddingVars() const
+{
+    return finishedAddingVars;
+}
+
+inline void Subsumer::setFinishedAddingVars(const bool val)
+{
+    finishedAddingVars = val;
+}
+
+inline const vector<OrGate*>& Subsumer::getGateOcc(const Lit lit) const
+{
+    return gateOcc[lit.toInt()];
 }
 
 #endif //SIMPLIFIER_H

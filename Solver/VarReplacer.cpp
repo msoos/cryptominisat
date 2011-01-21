@@ -63,7 +63,8 @@ that problems don't creep up
 const bool VarReplacer::performReplaceInternal()
 {
     #ifdef VERBOSE_DEBUG
-    cout << "Replacer started." << endl;
+    cout << "PerformReplacInternal started." << endl;
+    //solver.printAllClauses();
     #endif
     double time = cpuTime();
 
@@ -387,7 +388,10 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
         }
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2, origLit3)) {
+            if (c.learnt()) solver.nbCompensateSubsumer++;
+            solver.clauseAllocator.clauseFree(*r);
             if (!solver.ok) {
+                r++;
                 #ifdef VERBOSE_DEBUG
                 cout << "contradiction while replacing lits in normal clause" << std::endl;
                 #endif
@@ -563,7 +567,7 @@ know that c=h, in which case we don't do anything
 @p group of clause they have been inspired from. Sometimes makes no sense...
 */
 template<class T>
-const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt, const bool addToWatchLists)
+const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
@@ -631,9 +635,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     assert(val1 == l_Undef && val2 == l_Undef);
     #endif //DEBUG_REPLACER
 
-    if (addToWatchLists) {
-        addBinaryXorClause(lit1, lit2 ^ true, group, addBinAsLearnt);
-    }
+    addBinaryXorClause(lit1, lit2 ^ true, group, false);
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
@@ -655,8 +657,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     return true;
 }
 
-template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addToWatchLists);
-template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool needToAddAsBin, const bool addToWatchLists);
+template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group);
+template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group);
 
 /**
 @brief Adds a binary xor to the internal/external clause set

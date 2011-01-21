@@ -31,13 +31,23 @@ ClauseVivifier::ClauseVivifier(Solver& _solver) :
 const bool ClauseVivifier::vivify()
 {
     assert(solver.ok);
+    #ifdef VERBOSE_DEBUG
+    std::cout << "c clauseVivifier started" << std::endl;
+    //solver.printAllClauses();
+    #endif //VERBOSE_DEBUG
+
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
-    if (solver.conf.doCacheOTFSSR && numCalls >= 2) {
-        if (!vivifyClausesCache(solver.clauses, solver.transOTFCache)) return false;
-        if (!vivifyClausesCache(solver.clauses, solver.subsumer->getBinNonLearntCache())) return false;
-        if (!vivifyClausesCache(solver.learnts, solver.transOTFCache)) return false;
+    if (numCalls >= 2) {
+        if (solver.conf.doCacheOTFSSR) {
+            if (!vivifyClausesCache(solver.clauses, solver.transOTFCache)) return false;
+            if (!vivifyClausesCache(solver.learnts, solver.transOTFCache)) return false;
+        }
+        if (solver.conf.doCacheNLBins) {
+            if (!vivifyClausesCache(solver.clauses, solver.subsumer->getBinNonLearntCache())) return false;
+            if (!vivifyClausesCache(solver.learnts, solver.subsumer->getBinNonLearntCache())) return false;
+        }
     }
 
     if (!vivifyClausesNormal()) return false;
@@ -57,11 +67,12 @@ Maybe I am off-course and it should be in another class, or a class of its own.
 const bool ClauseVivifier::vivifyClausesNormal()
 {
     assert(solver.ok);
+
     bool failed;
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 80*1000*1000;
+    uint64_t maxNumProps = 20*1000*1000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxNumProps *=2;
     uint64_t extraDiff = 0;
@@ -75,7 +86,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
     vec<Lit> lits;
     vec<Lit> unused;
 
-    if (solver.clauses.size() < 5000000) {
+    if (solver.clauses.size() < 1000000) {
         //if too many clauses, random order will do perfectly well
         std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
     }
@@ -247,7 +258,7 @@ const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses, const vecto
             countTime += cl.size()*10;
             solver.detachClause(cl);
             clShrinked++;
-            Clause* c2 = solver.addClauseInt(lits, cl.getGroup(), cl.learnt(), cl.getGlue(), cl.getMiniSatAct());
+            Clause* c2 = solver.addClauseInt(lits, cl.getGroup(), cl.learnt(), cl.getGlue());
             solver.clauseAllocator.clauseFree(&cl);
 
             if (c2 != NULL) *j++ = c2;

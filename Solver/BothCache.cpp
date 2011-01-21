@@ -29,8 +29,8 @@ BothCache::BothCache(Solver& _solver) :
 
 const bool BothCache::tryBoth(vector<TransCache>& cache)
 {
-    vec<char> seen(solver.nVars(), 0);
-    vec<char> val(solver.nVars(), 0);
+    vec<bool> seen(solver.nVars(), 0);
+    vec<bool> val(solver.nVars(), 0);
     vec<Lit> tmp;
     uint32_t bProp = 0;
     uint32_t bXProp = 0;

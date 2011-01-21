@@ -112,11 +112,17 @@ void Main::readInAFile(const std::string& filename, MTSolver& solver)
     if (conf.verbosity >= 1) {
         std::cout << "c Reading file '" << filename << "'" << std::endl;
     }
+
+    char* fname = (char*)calloc(filename.length()+1, sizeof(char));
+    assert(fname != NULL);
+    memcpy(fname, filename.c_str(), filename.length());
+    fname[filename.length()] = '\0';
     #ifdef DISABLE_ZLIB
-        FILE * in = fopen(filename.c_str(), "rb");
+        FILE * in = fopen(fname, "rb");
     #else
-        gzFile in = gzopen(filename.c_str(), "rb");
+        gzFile in = gzopen(fname, "rb");
     #endif // DISABLE_ZLIB
+    free(fname);
 
     if (in == NULL) {
         std::cout << "ERROR! Could not open file '" << filename << "' for reading" << std::endl;
@@ -176,7 +182,8 @@ void Main::parseInAllFiles(MTSolver& solver)
     if (!fileNamePresent) {
         readInStandardInput(solver);
     } else {
-        readInAFile(argv[(twoFileNamesPresent ? argc-2 : argc-1)], solver);
+        string filename = argv[(twoFileNamesPresent ? argc-2 : argc-1)];
+        readInAFile(filename, solver);
     }
 
     if (conf.verbosity >= 1) {
@@ -296,16 +303,19 @@ void Main::printUsage(char** argv)
     printf("  --nosortwatched  = Don't sort watches according to size: bin, tri, etc.\n");
     printf("  --nolfminim      = Don't do on-the-fly self-subsuming resolution\n");
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
+    printf("  --nocalcreach    = Don't calculate reachability and interfere with\n");
+    printf("                     variable decisions accordingly\n");
     printf("  --norecotfssr    = Don't perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution\n");
     printf("  --nocacheotfssr  = Don't cache 1-level equeue. Less memory used, but\n");
     printf("                     disables trans OTFSSR, adv. clause vivifier, etc.\n");
-    printf("  --maxgluedel     = Automatically delete clauses over max glue. See '--maxglue'\n");
+    printf("  --maxgluedel     = Automatically delete clauses over max glue. See --maxglue\n");
     printf("  --maxglue        = [0 - 2^%d-1] default: %d. Glue value above which we\n", MAX_GLUE_BITS, conf.maxGlue);
-    printf("                     throw the clause away on backtrack.\n");
-    printf("  --nogates        = Don't find&replace gates\n");
-    printf("  --threads        = Num threads (default is 1)");
+    printf("                     throw the clause away on backtrack if maxgluedel is set\n");
     printf("  --syncconf       = Sync unit&bin clauses every no. conflicts\n");
+    printf("  --threads        = Num threads (default is 1)\n");
+    printf("  --nogatefind     = Don't find gates&do ER\n");
+    printf("  --noer           = Don't do ER\n");
     printf("\n");
 }
 
@@ -524,8 +534,6 @@ void Main::parseCommandLine()
             conf.doXorSubsumption = false;
         } else if ((value = hasPrefix(argv[i], "--nohyperbinres"))) {
             conf.doHyperBinRes = false;
-        } else if ((value = hasPrefix(argv[i], "--noblockedclause"))) {
-            conf.doBlockedClause = false;
         } else if ((value = hasPrefix(argv[i], "--novarelim"))) {
             conf.doVarElim = false;
         } else if ((value = hasPrefix(argv[i], "--nosubsume1"))) {
@@ -538,16 +546,16 @@ void Main::parseCommandLine()
             gaussconfig.iterativeReduce = false;
         } else if ((value = hasPrefix(argv[i], "--noordercol"))) {
             gaussconfig.orderCols = false;
-        } else if ((value = hasPrefix(argv[i], "--maxmatrixrows"))) {
-            uint32_t rows;
-            if (sscanf(value, "%d", &rows) < 0) {
+        } else if ((value = hasPrefix(argv[i], "--maxmatrixrows="))) {
+            int rows;
+            if (sscanf(value, "%d", &rows) < 0 || rows < 0) {
                 printf("ERROR! maxmatrixrows: %s\n", value);
                 exit(0);
             }
-            gaussconfig.maxMatrixRows = rows;
-        } else if ((value = hasPrefix(argv[i], "--minmatrixrows"))) {
-            uint32_t rows;
-            if (sscanf(value, "%d", &rows) < 0) {
+            gaussconfig.maxMatrixRows = (uint32_t)rows;
+        } else if ((value = hasPrefix(argv[i], "--minmatrixrows="))) {
+            int rows;
+            if (sscanf(value, "%d", &rows) < 0 || rows < 0) {
                 printf("ERROR! minmatrixrows: %s\n", value);
                 exit(0);
             }
@@ -558,7 +566,6 @@ void Main::parseCommandLine()
                 printf("ERROR! savematrix: %s\n", value);
                 exit(0);
             }
-            std::cout << "c Matrix saved every " <<  every << " decision levels" << std::endl;
             gaussconfig.only_nth_gauss_save = every;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0) {
             printUsage(argv);
@@ -592,12 +599,18 @@ void Main::parseCommandLine()
             conf.doSortWatched = false;
         } else if ((value = hasPrefix(argv[i], "--nolfminim"))) {
             conf.doMinimLearntMore = false;
+        } else if ((value = hasPrefix(argv[i], "--nocalcreach"))) {
+            conf.doCalcReach = false;
         } else if ((value = hasPrefix(argv[i], "--norecotfssr"))) {
             conf.doMinimLMoreRecur = false;
         } else if ((value = hasPrefix(argv[i], "--nocacheotfssr"))) {
             conf.doCacheOTFSSR = false;
         } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
             conf.doRemUselessLBins = false;
+        } else if ((value = hasPrefix(argv[i], "--nogatefind"))) {
+            conf.doGateFind = false;
+        } else if ((value = hasPrefix(argv[i], "--noer"))) {
+            conf.doER = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 0;
             if (sscanf(value, "%d", &glue) < 0 || glue < 2) {
@@ -612,8 +625,6 @@ void Main::parseCommandLine()
             conf.maxGlue = (uint32_t)glue;
         } else if ((value = hasPrefix(argv[i], "--maxgluedel"))) {
             conf.doMaxGlueDel = true;
-        } else if ((value = hasPrefix(argv[i], "--nogates"))) {
-            conf.doGateFind = false;
         } else if ((value = hasPrefix(argv[i], "--threads="))) {
             numThreads = 0;
             if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {
@@ -705,7 +716,14 @@ void Main::setDoublePrecision(const uint32_t verbosity)
 
 void Main::printVersionInfo(const uint32_t verbosity)
 {
-    if (verbosity >= 1) printf("c This is CryptoMiniSat %s\n", VERSION);
+    if (verbosity >= 1) {
+        printf("c This is CryptoMiniSat %s\n", VERSION);
+        #ifdef __GNUC__
+        printf("c compiled with gcc version %s\n",  __VERSION__);
+        #else
+        printf("c compiled with non-gcc compiler\n");
+        #endif
+    }
 }
 
 const int Main::solve()

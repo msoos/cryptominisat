@@ -27,6 +27,7 @@ NOTE: On 64-bit systems, this datastructure needs 128 bits :O
 class ClauseSimp
 {
     public:
+        ClauseSimp() {};
         ClauseSimp(Clause* c, const uint32_t _index) :
         clause(c)
         , index(_index)

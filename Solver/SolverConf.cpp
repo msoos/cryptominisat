@@ -20,10 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SolverConf::SolverConf() :
         random_var_freq(0.02)
-        , clause_decay (1.0 / 0.999)
         , restart_first(100)
         , restart_inc(1.5)
         , learntsize_factor((double)1/(double)3)
+        , agilityG(0.9999)
+        , agilityLimit(0.1)
 
         , expensive_ccmin  (true)
         , polarity_mode    (polarity_auto)
@@ -50,7 +51,7 @@ SolverConf::SolverConf() :
         , doXorSubsumption (true)
         , doPartHandler    (true)
         , doHyperBinRes    (true)
-        , doBlockedClause  (true)
+        , doBlockedClause  (false)
         , doVarElim        (true)
         , doSubsume1       (true)
         , doClausVivif     (true)
@@ -65,9 +66,12 @@ SolverConf::SolverConf() :
         , doMaxGlueDel     (false)
         , doPrintAvgBranch (false)
         , doCacheOTFSSR    (true)
+        , doCacheNLBins    (true)
         , doExtendedSCC    (true)
         , doGateFind       (true)
-        , doAddBinCache    (false)
+        , doAlwaysFMinim   (true)
+        , doER             (true)
+        , doCalcReach      (true)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

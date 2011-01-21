@@ -94,17 +94,38 @@ const bool DataSync::syncData()
     assert(solver.decisionLevel() == 0);
 
     bool ok;
-    #pragma omp critical (unitData)
-    ok = shareUnitData();
-    if (!ok) return false;
+    #pragma omp critical (ERSync)
+    {
+        if (!sharedData->EREnded
+            && sharedData->threadAddingVars == solver.threadNum
+            && solver.subsumer->getFinishedAddingVars())
+            syncERVarsFromHere();
 
-    #pragma omp critical (binData)
-    ok = shareBinData();
-    if (!ok) return false;
+        if (sharedData->EREnded
+            && sharedData->threadAddingVars != solver.threadNum
+            && sharedData->othersSyncedER.find(solver.threadNum) == sharedData->othersSyncedER.end())
+            syncERVarsToHere();
 
-    #pragma omp critical (triData)
-    ok = shareTriData();
-    if (!ok) return false;
+        if (sharedData->othersSyncedER.size() == (uint32_t)(solver.numThreads-1)) {
+            sharedData->threadAddingVars = (sharedData->threadAddingVars+1) % solver.numThreads;
+            sharedData->EREnded = false;
+            sharedData->othersSyncedER.clear();
+        }
+
+        #pragma omp critical (unitData)
+        ok = shareUnitData();
+        if (!ok) goto end;
+
+        #pragma omp critical (binData)
+        ok = shareBinData();
+        if (!ok) goto end;
+
+        #pragma omp critical (triData)
+        ok = shareTriData();
+        if (!ok) goto end;
+
+        end:;
+    }
 
     #ifdef USE_MPI
     if (mpiSize > 1 && solver.threadNum == 0) {
@@ -125,7 +146,25 @@ const bool DataSync::syncData()
 
     lastSyncConf = solver.conflicts;
 
-    return true;
+    return solver.ok;
+}
+
+void DataSync::syncERVarsToHere()
+{
+    for (uint32_t i = 0; i < sharedData->numNewERVars; i++) {
+        Var var = solver.newVar();
+        solver.subsumer->setVarNonEliminable(var);
+    }
+    solver.subsumer->incNumERVars(sharedData->numNewERVars);
+    sharedData->othersSyncedER.insert(solver.threadNum);
+}
+
+void DataSync::syncERVarsFromHere()
+{
+    sharedData->EREnded = true;
+    sharedData->numNewERVars = solver.subsumer->getNumERVars() - sharedData->lastNewERVars;
+    sharedData->lastNewERVars = solver.subsumer->getNumERVars();
+    solver.subsumer->setFinishedAddingVars(false);
 }
 
 #ifdef USE_MPI
@@ -193,7 +232,7 @@ const bool DataSync::syncFromMPI()
         at++;
         for (uint32_t i = 0; i < num; i++, at++) {
             Lit otherLit = Lit::toLit(buf[at]);
-            addOneBinToOthers(lit, otherLit);
+            addOneBinToOthers(lit, otherLit, true);
             thisMpiRecvBinData++;
         }
     }
@@ -246,15 +285,18 @@ void DataSync::syncToMPI()
     uint32_t thisMpiSentBinData = 0;
     data.push_back((uint32_t)solver.nVars()*2);
     uint32_t wsLit = 0;
-    for(vector<vector<Lit> >::const_iterator it = sharedData->bins.begin(), end = sharedData->bins.end(); it != end; it++, wsLit++) {
+    for(vector<vector<BinClause> >::const_iterator it = sharedData->bins.begin()
+        , end = sharedData->bins.end(); it != end; it++, wsLit++
+    ) {
         Lit lit1 = ~Lit::toLit(wsLit);
-        const vector<Lit>& binSet = *it;
+        const vector<BinClause>& binSet = *it;
         assert(binSet.size() >= syncMPIFinish[wsLit]);
         uint32_t sizeToSend = binSet.size() - syncMPIFinish[wsLit];
         data.push_back(sizeToSend);
         for (uint32_t i = syncMPIFinish[wsLit]; i < binSet.size(); i++) {
-            assert(lit1 < binSet[i]);
-            data.push_back(binSet[i].toInt());
+            assert(lit1 == binSet[i].lit1);
+            assert(lit1 < binSet[i].lit2);
+            data.push_back(binSet[i].lit2.toInt());
             thisMpiSentBinData++;
         }
         syncMPIFinish[wsLit] = binSet.size();
@@ -265,7 +307,9 @@ void DataSync::syncToMPI()
     uint32_t thisMpiSentTriData = 0;
     data.push_back((uint32_t)solver.nVars()*2);
     wsLit = 0;
-    for(vector<vector<TriClause> >::const_iterator it = sharedData->tris.begin(), end = sharedData->tris.end(); it != end; it++, wsLit++) {
+    for(vector<vector<TriClause> >::const_iterator it = sharedData->tris.begin()
+        , end = sharedData->tris.end(); it != end; it++, wsLit++
+    ) {
         Lit lit1 = ~Lit::toLit(wsLit);
         const vector<TriClause>& triSet = *it;
         assert(triSet.size() >= syncMPIFinishTri[wsLit]);
@@ -315,7 +359,7 @@ const bool DataSync::shareBinData()
             || solver.value(lit1.var()) != l_Undef
             ) continue;
 
-        const vector<Lit>& bins = shared.bins[wsLit];
+        vector<BinClause>& bins = shared.bins[wsLit];
 
         if (bins.size() > syncFinish[wsLit]
             && !syncBinFromOthers(lit1, bins, syncFinish[wsLit])) return false;
@@ -332,38 +376,38 @@ const bool DataSync::shareBinData()
 }
 
 template <class T>
-void DataSync::signalNewBinClause(const T& ps)
+void DataSync::signalNewBinClause(const T& ps, const bool learnt)
 {
     assert(ps.size() == 2);
-    signalNewBinClause(ps[0], ps[1]);
+    signalNewBinClause(ps[0], ps[1], learnt);
 }
-template void DataSync::signalNewBinClause(const Clause& ps);
-template void DataSync::signalNewBinClause(const XorClause& ps);
-template void DataSync::signalNewBinClause(const vec<Lit>& ps);
+template void DataSync::signalNewBinClause(const Clause& ps, const bool learnt);
+template void DataSync::signalNewBinClause(const XorClause& ps, const bool learnt);
+template void DataSync::signalNewBinClause(const vec<Lit>& ps, const bool learnt);
 
-void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
+void DataSync::signalNewBinClause(Lit lit1, Lit lit2, const bool learnt)
 {
     if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
-    newBinClauses.push_back(std::make_pair(lit1, lit2));
+    newBinClauses.push_back(BinClause(lit1, lit2, learnt));
 }
 
 template<class T>
-void DataSync::signalNewTriClause(const T& ps)
+void DataSync::signalNewTriClause(const T& ps, const bool learnt)
 {
     assert(ps.size() == 3);
-    signalNewTriClause(ps[0], ps[1], ps[2]);
+    signalNewTriClause(ps[0], ps[1], ps[2], learnt);
 }
-template void DataSync::signalNewTriClause(const Clause& ps);
-template void DataSync::signalNewTriClause(const vec<Lit>& ps);
+template void DataSync::signalNewTriClause(const Clause& ps, const bool learnt);
+template void DataSync::signalNewTriClause(const vec<Lit>& ps, const bool learnt);
 
-void DataSync::signalNewTriClause(const Lit lit1, const Lit lit2, const Lit lit3)
+void DataSync::signalNewTriClause(const Lit lit1, const Lit lit2, const Lit lit3, const bool learnt)
 {
     Lit lits[3];
     lits[0] = lit1;
     lits[1] = lit2;
     lits[2] = lit3;
     std::sort(lits + 0, lits + 3);
-    newTriClauses.push_back(TriClause(lits[0], lits[1], lits[2]));
+    newTriClauses.push_back(TriClause(lits[0], lits[1], lits[2], learnt));
 }
 
 const bool DataSync::shareTriData()
@@ -456,7 +500,7 @@ const bool DataSync::syncTriFromOthers(const Lit lit1, const vector<TriClause>& 
         tmp[0] = lit1;
         tmp[1] = lit2;
         tmp[2] = lit3;
-        Clause* c = solver.addClauseInt(tmp, 0, true, 3, 0, true);
+        Clause* c = solver.addClauseInt(tmp, 0, cl.learnt, 3, true);
         if (c != NULL) solver.learnts.push(c);
         if (!solver.ok) return false;
         recvTriData++;
@@ -496,7 +540,7 @@ void DataSync::addOneTriToOthers(const Lit lit1, const Lit lit2, const Lit lit3)
     tris.push_back(TriClause(lit1, lit2, lit3));
 }
 
-const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished)
+const bool DataSync::syncBinFromOthers(const Lit lit, const vector<BinClause>& bins, uint32_t& finished)
 {
     assert(solver.varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
     assert(solver.subsumer->getVarElimed()[lit.var()] == false);
@@ -519,8 +563,8 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, u
 
     vec<Lit> lits(2);
     for (uint32_t i = finished; i < bins.size(); i++) {
-        if (!seen[bins[i].toInt()]) {
-            Lit otherLit = bins[i];
+        if (!seen[bins[i].lit2.toInt()]) {
+            Lit otherLit = bins[i].lit2;
             otherLit = solver.varReplacer->getReplaceTable()[otherLit.var()] ^ otherLit.sign();
             if (solver.subsumer->getVarElimed()[otherLit.var()]
                 || solver.xorSubsumer->getVarElimed()[otherLit.var()]
@@ -531,7 +575,7 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, u
             recvBinData++;
             lits[0] = lit;
             lits[1] = otherLit;
-            solver.addClauseInt(lits, 0, true, 2, 0, true);
+            solver.addClauseInt(lits, 0, bins[i].learnt, 2, true);
             lits.clear();
             lits.growTo(2);
             if (!solver.ok) goto end;
@@ -548,8 +592,8 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, u
 
 void DataSync::syncBinToOthers()
 {
-    for(vector<std::pair<Lit, Lit> >::const_iterator it = newBinClauses.begin(), end = newBinClauses.end(); it != end; it++) {
-        addOneBinToOthers(it->first, it->second);
+    for(vector<BinClause>::const_iterator it = newBinClauses.begin(), end = newBinClauses.end(); it != end; it++) {
+        addOneBinToOthers(it->lit1, it->lit2, it->learnt);
         sentBinData++;
     }
 
@@ -560,16 +604,16 @@ void DataSync::syncBinToOthers()
     newBinClauses.clear();
 }
 
-void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2)
+void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2, const bool learnt)
 {
     assert(lit1.toInt() < lit2.toInt());
 
-    vector<Lit>& bins = sharedData->bins[(~lit1).toInt()];
-    for (vector<Lit>::const_iterator it = bins.begin(), end = bins.end(); it != end; it++) {
-        if (*it == lit2) return;
+    vector<BinClause>& bins = sharedData->bins[(~lit1).toInt()];
+    for (vector<BinClause>::const_iterator it = bins.begin(), end = bins.end(); it != end; it++) {
+        if (it->lit2 == lit2 && it->learnt == learnt) return;
     }
 
-    bins.push_back(lit2);
+    bins.push_back(BinClause(lit1, lit2, learnt));
 }
 
 const bool DataSync::shareUnitData()

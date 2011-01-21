@@ -57,7 +57,6 @@ const bool SCCFinder::find2LongXors()
             assert(stack.empty());
         }
     }
-    //std::cout << "maximum recurDepth:" << maxRecurDepth << std::endl;
 
     if (solver.conf.verbosity >= 2 || (solver.conflicts == 0 && solver.conf.verbosity  >= 1)) {
         std::cout << "c Finding binary XORs  T: "
@@ -73,7 +72,6 @@ const bool SCCFinder::find2LongXors()
 void SCCFinder::tarjan(const uint32_t vertex)
 {
     recurDepth++;
-    maxRecurDepth = std::max(recurDepth, maxRecurDepth);
     index[vertex] = globalIndex;  // Set the depth index for v
     lowlink[vertex] = globalIndex;
     globalIndex++;
@@ -90,7 +88,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             doit(lit, vertex);
         }
 
-        if (solver.conf.doExtendedSCC) {
+        if (solver.conf.doExtendedSCC && solver.conf.doCacheOTFSSR) {
             Lit vertLit = Lit::toLit(vertex);
             vector<Lit>& transCache = solver.transOTFCache[(~vertLit).toInt()].lits;
             vector<Lit>::iterator it = transCache.begin();
@@ -100,10 +98,6 @@ void SCCFinder::tarjan(const uint32_t vertex)
                 Lit lit = *it;
                 lit = replaceTable[lit.var()] ^ lit.sign();
                 if (lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()] || varPartHandled[lit.var()] != l_Undef) continue;
-                if (lit == ~vertLit) {
-                    solver.failedCacheLits.push(vertLit);
-                    continue;
-                }
                 *it2++ = lit;
                 newSize++;
 
@@ -134,7 +128,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
                                             ^ Lit::toLit(tmp[i]).sign()
                                             ^ true;
                 if (solver.value(lits[0]) == l_Undef && solver.value(lits[1]) == l_Undef) {
-                    solver.varReplacer->replace(lits, xorEqualsFalse, 0, true, false);
+                    solver.varReplacer->replace(lits, xorEqualsFalse, 0);
                 }
             }
         }

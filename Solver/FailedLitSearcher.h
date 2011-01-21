@@ -66,6 +66,7 @@ class FailedLitSearcher {
 
         //bothprop finding
         BitArray propagated; ///<These lits have been propagated by propagating the lit picked
+        BitArray propagated2; ///<These lits have been propagated by propagating the lit picked
         BitArray propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
         /**
         @brief Lits that have been propagated to the same value both by "var" and "~var"
@@ -180,7 +181,7 @@ class FailedLitSearcher {
             }
         };
         uint32_t addedBin;
-        void hyperBinResAll(const Lit litProp, const vector<Lit>& oldCache);
+        void hyperBinResAll(const Lit litProp/*, const vector<Lit>& oldCache*/);
         void hyperBinResolution(const Lit lit);
         BitArray unPropagatedBin;
         BitArray needToVisit;
@@ -209,19 +210,11 @@ class FailedLitSearcher {
         */
         uint64_t maxHyperBinProps;
 
-        struct UIPNegPosDist
-        {
-            int64_t dist;
-            Var var;
-        };
-
-        struct NegPosSorter
-        {
-            const bool operator() (const UIPNegPosDist& a, const UIPNegPosDist& b) const
-            {
-                return (a.dist < b.dist);
-            }
-        };
+        //Multi-level
+        void calcNegPosDist();
+        const bool tryMultiLevel(const vec<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed);
+        const bool tryMultiLevelAll();
+        void fillToTry(vec<Var>& toTry);
 
         //Temporaries
         vec<Lit> tmpPs;

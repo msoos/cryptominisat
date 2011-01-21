@@ -49,7 +49,7 @@ for the class that it can hold the literals as well. I.e. it malloc()-s
     sizeof(Clause)+LENGHT*sizeof(Lit)
 to hold the clause.
 */
-class Clause
+struct Clause
 {
 protected:
 
@@ -70,8 +70,6 @@ protected:
     uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
     uint32_t mySize:18; ///<The current size of the clause
 
-    float miniSatAct; ///<Clause activity according to MiniSat
-
     uint32_t abst; //Abstraction of clause
 
     #ifdef STATS_NEEDED
@@ -87,7 +85,12 @@ protected:
     glue, etc. We allocate therefore the clause manually, taking care that
     there is enough space for data[] to hold the literals
     */
+    #ifdef __GNUC__
     Lit     data[];
+    #else
+    //NOTE: Dangerous packing. We love C++. More info: stackoverflow.com/questions/688471/variable-sized-struct-c
+    Lit     data[1];
+    #endif //__GNUC__
 
 #ifdef _MSC_VER
 public:
@@ -104,7 +107,6 @@ public:
         setGroup(_group);
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
-        miniSatAct = 0;
         glue = MAX_THEORETICAL_GLUE;
         setStrenghtened();
     }
@@ -137,21 +139,6 @@ public:
     const bool learnt() const
     {
         return isLearnt;
-    }
-
-    float& getMiniSatAct()
-    {
-        return miniSatAct;
-    }
-
-    void setMiniSatAct(const float newMiniSatAct)
-    {
-        miniSatAct = newMiniSatAct;
-    }
-
-    const float& getMiniSatAct() const
-    {
-        return miniSatAct;
     }
 
     const bool getStrenghtened() const
@@ -197,22 +184,22 @@ public:
         isLearnt = false;
     }
 
-    void makeLearnt(const uint32_t newGlue, const float newMiniSatAct)
+    void makeLearnt(const uint32_t newGlue)
     {
         glue = newGlue;
-        miniSatAct = newMiniSatAct;
         isLearnt = true;
     }
 
     inline void strengthen(const Lit p)
     {
         remove(*this, p);
+        setStrenghtened();
     }
 
     inline void add(const Lit p)
     {
         mySize++;
-        (*this)[mySize-1] = p;
+        data[mySize-1] = p;
         setStrenghtened();
     }
 
@@ -221,7 +208,7 @@ public:
         abst = calcAbstraction(*this);
     }
 
-    uint32_t getAbst()
+    const uint32_t getAbst() const
     {
         return abst;
     }
@@ -249,14 +236,13 @@ public:
     void print(FILE* to = stdout) const
     {
         plainPrint(to);
-        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
+        fprintf(to, "c clause learnt %s glue %d group %d\n", (learnt() ? "yes" : "no"), getGlue(), getGroup());
     }
 
     void plainPrint(FILE* to = stdout) const
     {
         for (uint32_t i = 0; i < size(); i++) {
-            if (data[i].sign()) fprintf(to, "-");
-            fprintf(to, "%d ", data[i].var() + 1);
+            data[i].print(to);
         }
         fprintf(to, "0\n");
     }
@@ -304,8 +290,6 @@ public:
     {
         if (other.getGlue() < getGlue())
             setGlue(other.getGlue());
-        if (other.getMiniSatAct() > getMiniSatAct())
-            setMiniSatAct(other.getMiniSatAct());
     }
 };
 
@@ -342,7 +326,7 @@ public:
     void print(FILE* to = stdout) const
     {
         plainPrint(to);
-        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
+        fprintf(to, "c clause learnt %s glue %d group %d\n", (learnt() ? "yes" : "no"), getGlue(), getGroup());
     }
 
     void plainPrint(FILE* to = stdout) const

@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
 #include "StateSaver.h"
+#include "PartHandler.h"
 
 StateSaver::StateSaver(Solver& _solver) :
     solver(_solver)
@@ -45,4 +46,10 @@ void StateSaver::restore()
 
     //Finally, clear the order_heap from variables set/non-decisionned
     solver.order_heap.filter(Solver::VarFilter(solver));
+
+    for (Var var = 0; var < solver.nVars(); var++) {
+        if (solver.decision_var[var]
+            && solver.value(var) == l_Undef
+            && solver.partHandler->getSavedState()[var] == l_Undef) solver.insertVarOrder(var);
+    }
 }

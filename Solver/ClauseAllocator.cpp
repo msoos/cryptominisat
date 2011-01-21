@@ -46,7 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ClauseAllocator::ClauseAllocator()
 {
     assert(MIN_LIST_SIZE < MAXSIZE);
-    assert(sizeof(Clause) + 2*sizeof(Lit) > sizeof(NewPointerAndOffset));
+    assert(sizeof(Clause) + 2*sizeof(Lit) >= sizeof(NewPointerAndOffset));
 }
 
 /**
@@ -125,14 +125,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         std::cerr << "Memory manager cannot handle the load. Sorry. Exiting." << std::endl;
         exit(-1);
     }
-
-    if (size == 2) {
-        #ifdef USE_BOOST
-        return clausePoolBin.malloc();
-        #else
-        return malloc(sizeof(Clause) + 2*sizeof(Lit));
-        #endif
-    }
+    assert(size > 2);
 
     uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(uint32_t);
     bool found = false;
