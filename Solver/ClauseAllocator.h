@@ -81,6 +81,8 @@ class ClauseAllocator {
 
         void consolidate(Solver* solver);
 
+        const uint32_t getNewClauseNum();
+
     private:
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
@@ -92,8 +94,10 @@ class ClauseAllocator {
         void updatePointers(vector<Clause*>& toUpdate);
         void updatePointers(vector<XorClause*>& toUpdate);
         void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate);
-
         void updateOffsets(vec<vec<Watched> >& watches);
+        void checkGoodPropBy(const Solver* solver);
+
+        void releaseClauseNum(const uint32_t num);
 
         vec<uint32_t*> dataStarts; ///<Stacks start at these positions
         vec<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack
@@ -128,6 +132,9 @@ class ClauseAllocator {
             uint32_t newOffset; ///<The new offset where the clause now resides
             Clause* newPointer; ///<The new place
         };
+
+        vec<uint32_t> freedNums;  //Free clause nums that can be used now
+        uint32_t maxClauseNum;
 };
 
 #endif //CLAUSEALLOCATOR_H

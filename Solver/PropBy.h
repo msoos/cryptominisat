@@ -50,8 +50,9 @@ class PropBy
             , data2(0)
         {}
 
-        PropBy(ClauseOffset offset) :
+        PropBy(ClauseOffset offset, const bool watchNum) :
             propType(1)
+            , data1(watchNum)
             , data2(offset)
         {
         }
@@ -122,6 +123,14 @@ class PropBy
             return propType == 0;
         }
 
+        const bool getWatchNum() const
+        {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(isClause());
+            #endif
+            return data1;
+        }
+
         /*const uint32_t size() const
         {
             if (isBinary()) return 2;
@@ -178,9 +187,10 @@ class PropByFull
         uint32_t type;
         Clause* clause;
         Lit lits[3];
+        ClauseData data;
 
     public:
-        PropByFull(PropBy orig, Lit otherLit, ClauseAllocator& alloc) :
+        PropByFull(PropBy orig, Lit otherLit, ClauseAllocator& alloc, vec<ClauseData>& clauseData) :
             type(10)
             , clause(NULL)
         {
@@ -200,6 +210,13 @@ class PropByFull
                     clause = NULL;
                 } else {
                     clause = alloc.getPointer(orig.getClause());
+                    data = clauseData[clause->getNum()];
+                    if (orig.getWatchNum()) {
+                        std::swap(data[0], data[1]);
+                        #ifdef VERBOSE_DEBUG
+                        std::cout << "PropByFull: swap needed for clause " << (*clause) << std::endl;
+                        #endif
+                    }
                 }
             }
         }
@@ -260,13 +277,16 @@ class PropByFull
         const Lit operator[](const uint32_t i) const
         {
             switch (type) {
-                case 0: {
+                case 0:
                     assert(clause != NULL);
+
+                    if (i <= 1) return (*clause)[data[i]];
+                    if (i == data[0]) return (*clause)[(data[1] == 0 ? 1 : 0)];
+                    if (i == data[1]) return (*clause)[(data[0] == 1 ? 0 : 1)];
                     return (*clause)[i];
-                }
-                default : {
+
+                default :
                     return lits[i];
-                }
             }
         }
 };

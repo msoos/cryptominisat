@@ -1126,7 +1126,7 @@ const bool Subsumer::eliminateVars()
 
         numVarsElimed += numElimed - oldNumElimed;
         #ifdef BIT_MORE_VERBOSITY
-        std::cout << "c  #var-elim: " << vars_elimed << std::endl;
+        std::cout << "c  #var-elim: " << (numElimed - oldNumElimed) << std::endl;
         #endif
     }
 
@@ -1463,7 +1463,11 @@ template<class T>
 void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "findSubsumed: " << ps << std::endl;
+    cout << "findSubsumed: ";
+    for (uint32_t i = 0; i < ps.size(); i++) {
+        std::cout << ps[i] << " , ";
+    }
+    std::cout << std::endl;
     #endif
 
     for (uint32_t i = 0; i != ps.size(); i++)
@@ -2632,14 +2636,14 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     const vec<ClauseSimp>& csOther = occur[(~(gate.lits[1])).toInt()];
     //std::cout << "csother: " << csOther.size() << std::endl;
     uint32_t abstraction = 0;
-    uint32_t maxSize = 0;
+    uint16_t maxSize = 0;
     for (const ClauseSimp *it2 = csOther.getData(), *end2 = csOther.getDataEnd(); it2 != end2; it2++) {
         const Clause& cl = *it2->clause;
         numOp += cl.size();
         if (defOfOrGate[it2->index]) continue;
 
         maxSize = std::max(maxSize, cl.size());
-        if (sizeSortedOcc.size() < maxSize+1) sizeSortedOcc.resize(maxSize+1);
+        if (sizeSortedOcc.size() < (uint32_t)maxSize+1) sizeSortedOcc.resize(maxSize+1);
         sizeSortedOcc[cl.size()].push_back(*it2);
 
         for (uint32_t i = 0; i < cl.size(); i++) {

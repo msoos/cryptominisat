@@ -337,6 +337,7 @@ protected:
     uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
+    vec<ClauseData>     clauseData;       ///< Which lit is watched in clause
     vec<lbool>          assigns;          ///< The current assignments
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
@@ -680,8 +681,25 @@ inline void Solver::varBumpActivity(Var v)
 inline bool Solver::locked(const Clause& c) const
 {
     if (c.size() <= 3) return true; //we don't know in this case :I
-    PropBy from(reason[c[0].var()]);
-    return from.isClause() && !from.isNULL() && from.getClause() == clauseAllocator.getOffset(&c) && value(c[0]) == l_True;
+    const ClauseData& data = clauseData[c.getNum()];
+    const PropBy from1(reason[c[data[0]].var()]);
+    const PropBy from2(reason[c[data[1]].var()]);
+
+    if (from1.isClause()
+        && !from1.isNULL()
+        && from1.getWatchNum() == 0
+        && from1.getClause() == clauseAllocator.getOffset(&c)
+        && value(c[data[0]]) == l_True
+    ) return true;
+
+    if (from2.isClause()
+        && !from2.isNULL()
+        && from2.getWatchNum() == 1
+        && from2.getClause() == clauseAllocator.getOffset(&c)
+        && value(c[data[1]]) == l_True
+        ) return true;
+
+    return false;
 }
 
 inline void     Solver::newDecisionLevel()

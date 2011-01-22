@@ -173,8 +173,9 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
         XorClause& c = **r;
 
         bool changed = false;
-        Var origVar1 = c[0].var();
-        Var origVar2 = c[1].var();
+        const ClauseData& data = solver.clauseData[c.getNum()];
+        Var origVar1 = c[data[0]].var();
+        Var origVar2 = c[data[1]].var();
 
         for (Lit *l = &c[0], *end2 = l + c.size(); l != end2; l++) {
             Lit newlit = table[l->var()];
@@ -375,9 +376,11 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
     for (Clause **end = a + cs.size(); r != end; r++) {
         Clause& c = **r;
         assert(c.size() > 2);
+
         bool changed = false;
-        Lit origLit1 = c[0];
-        Lit origLit2 = c[1];
+        const ClauseData& data = solver.clauseData[c.getNum()];
+        Lit origLit1 = c[data[0]];
+        Lit origLit2 = c[data[1]];
         Lit origLit3 = (c.size() == 3) ? c[2] : lit_Undef;
         for (Lit *l = c.getData(), *end2 = l + c.size();  l != end2; l++) {
             if (table[l->var()].var() != l->var()) {

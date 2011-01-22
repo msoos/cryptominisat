@@ -221,7 +221,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
     assert(qhead == trail.size());
     assert(decisionLevel() == 0);
 
-    if (ps.size() > (0x01UL << 18)) {
+    if (ps.size() > std::numeric_limits<uint16_t>::max()) {
         std::cout << "Too long clause!" << std::endl;
         exit(-1);
     }
@@ -499,10 +499,16 @@ void Solver::attachClause(XorClause& c)
     }
     #endif //DEBUG_ATTACH
 
-    watches[Lit(c[0].var(), false).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
-    watches[Lit(c[0].var(), true).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
-    watches[Lit(c[1].var(), false).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
-    watches[Lit(c[1].var(), true).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
+    watches[Lit(c[0].var(), false).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 0));
+    watches[Lit(c[0].var(), true).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 0));
+    watches[Lit(c[1].var(), false).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 1));
+    watches[Lit(c[1].var(), true).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 1));
+    const uint32_t clauseNum = c.getNum();
+    ClauseData d(0, 1);
+    if (clauseData.size() > clauseNum)
+        clauseData[clauseNum] = d;
+    else
+        clauseData.push(d);
 
     clauses_literals += c.size();
 }
@@ -548,14 +554,22 @@ void Solver::attachClause(Clause& c)
     }
     #endif //DEBUG_ATTACH
 
+    ClauseData data(0, 1);
     if (c.size() == 3) {
         watches[(~c[0]).toInt()].push(Watched(c[1], c[2]));
         watches[(~c[1]).toInt()].push(Watched(c[0], c[2]));
         watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(&c);
-        watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2]));
-        watches[(~c[1]).toInt()].push(Watched(offset, c[c.size()/2]));
+        watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2], 0));
+        watches[(~c[1]).toInt()].push(Watched(offset, c[c.size()/2], 1));
+    }
+    const uint32_t clauseNum = c.getNum();
+    if (clauseData.size() > clauseNum)
+        clauseData[clauseNum] = data;
+    else {
+        clauseData.growTo(clauseNum);
+        clauseData.push(data);
     }
 
     if (c.learnt())
@@ -577,7 +591,8 @@ void Solver::detachClause(const XorClause& c)
 */
 void Solver::detachClause(const Clause& c)
 {
-    detachModifiedClause(c[0], c[1], (c.size() == 3) ? c[2] : lit_Undef,  c.size(), &c);
+    const ClauseData& data =clauseData[c.getNum()];
+    detachModifiedClause(c[data[0]], c[data[1]], (c.size() == 3) ? c[2] : lit_Undef,  c.size(), &c);
 }
 
 /**
@@ -1098,7 +1113,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     int index   = trail.size() - 1;
     out_btlevel = 0;
 
-    PropByFull confl(conflHalf, failBinLit, clauseAllocator);
+    PropByFull confl(conflHalf, failBinLit, clauseAllocator, clauseData);
     PropByFull oldConfl;
 
     do {
@@ -1133,8 +1148,8 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
         while (!seen[trail[index--].var()]);
         p     = trail[index+1];
         oldConfl = confl;
-        confl = PropByFull(reason[p.var()], failBinLit, clauseAllocator);
-        if (confl.isClause()) __builtin_prefetch(confl.getClause(), 1, 0);
+        confl = PropByFull(reason[p.var()], failBinLit, clauseAllocator, clauseData);
+        //if (confl.isClause()) __builtin_prefetch(confl.getClause(), 1, 0);
         seen[p.var()] = 0;
         pathC--;
 
@@ -1157,7 +1172,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     } else {
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++) {
-            PropByFull c(reason[out_learnt[i].var()], failBinLit, clauseAllocator);
+            PropByFull c(reason[out_learnt[i].var()], failBinLit, clauseAllocator, clauseData);
 
             for (uint32_t k = 1, size = c.size(); k < size; k++) {
                 if (!seen[c[k].var()] && level[c[k].var()] > 0) {
@@ -1298,11 +1313,11 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
                     for (uint32_t i = 0; i < gate.lits.size(); i++) {
                         std::cout << gate.lits[i] << ", ";
                     }
-                    std::cout << " origclause: ";
+                    /*std::cout << " origclause: ";
                     for (uint32_t i = 0; i < gate.origCl.size(); i++) {
                         std::cout << gate.origCl[i] << ", ";
                     }
-                    std::cout << std::endl;
+                    std::cout << std::endl;*/
                     #endif
 
                     bool firstInside = false;
@@ -1479,7 +1494,7 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     int top = analyze_toclear.size();
     while (analyze_stack.size() > 0) {
         assert(!reason[analyze_stack.last().var()].isNULL());
-        PropByFull c(reason[analyze_stack.last().var()], failBinLit, clauseAllocator);
+        PropByFull c(reason[analyze_stack.last().var()], failBinLit, clauseAllocator, clauseData);
 
         analyze_stack.pop();
 
@@ -1530,7 +1545,7 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
                 assert(level[x] > 0);
                 out_conflict.push(~trail[i]);
             } else {
-                PropByFull c(reason[x], failBinLit, clauseAllocator);
+                PropByFull c(reason[x], failBinLit, clauseAllocator, clauseData);
                 for (uint32_t j = 1, size = c.size(); j < size; j++)
                     if (level[c[j].var()] > 0)
                         seen[c[j].var()] = 1;
@@ -1682,39 +1697,32 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
     }
     const uint32_t offset = i->getNormOffset();
     Clause& c = *clauseAllocator.getPointer(offset);
+    const uint32_t clauseNum = c.getNum();
+    ClauseData& data = clauseData[clauseNum];
+    const bool watchNum = i->getWatchNum();
+    #ifdef VERBOSE_DEBUG
+    printf("PropNorm. Watches: %d, %d -- this is watchNum %d\n", data[0], data[1], watchNum);
+    #endif
+    assert(c[data[watchNum]] == ~p);
 
-    // Make sure the false literal is data[1]:
-    //const Lit lit2 = c.size()>2 ? c[2] : c[0];
-    if (c[0] == ~p) {
-        std::swap(c[0], c[1]);
-    }
-    //if (c.size() > 2) assert(lit2 == c[2]);
-
-    assert(c[1] == ~p);
-
-    // If 0th watch is true, then clause is already satisfied.
-    if (value(c[0]).getBool()) {
+    // If other watch is true, then clause is already satisfied.
+    if (value(c[data[!watchNum]]).getBool()) {
         #ifdef VERBOSE_DEBUG
-        printf("Zeroth watch is true\n");
+        printf("Other watch is true\n");
         #endif
-        j->setNormClause();
-        j->setNormOffset(offset);
-        j->setBlockedLit(c[0]);
+        *j = Watched(offset, i->getBlockedLit(), watchNum);
         j++;
         return true;
     }
     // Look for new watch:
-    for (Lit *k = c.getData() + 2, *end2 = c.getDataEnd(); k != end2; k++) {
-        #ifdef VERBOSE_DEBUG
-        printf("Skip watch\n");
-        #endif
-        if (value(*k) != l_False) {
+    for (uint16_t numLit = 0, size = c.size(); numLit < size; numLit++) {
+        if (numLit == data[0] || numLit == data[1]) continue;
+        if (value(c[numLit]) != l_False) {
             #ifdef VERBOSE_DEBUG
-            printf("new watch\n");
+            printf("new watch: %d watchNum: %d\n", numLit, watchNum);
             #endif
-            c[1] = *k;
-            *k = ~p;
-            watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
+            data[watchNum] = numLit;
+            watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
             return true;
         }
     }
@@ -1724,12 +1732,18 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
     #endif
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
-    if (value(c[0]) == l_False) {
-        confl = PropBy(offset);
+    if (value(c[data[!watchNum]]) == l_False) {
+        #ifdef VERBOSE_DEBUG
+        printf("PropNorm causing conflict\n");
+        #endif
+        confl = PropBy(offset, !watchNum);
         qhead = trail.size();
         return false;
     } else {
-        uncheckedEnqueue(c[0], offset);
+        #ifdef VERBOSE_DEBUG
+        printf("PropNorm causing propagation\n");
+        #endif
+        uncheckedEnqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
         #ifdef DYNAMICALLY_UPDATE_GLUE
         if (update && c.learnt() && c.getGlue() > 2) { // GA
             uint32_t glue = calcNBLevels(c);
@@ -1758,25 +1772,27 @@ inline const bool Solver::propXorClause(Watched* &i, Watched* &j, Watched *end, 
 {
     ClauseOffset offset = i->getXorOffset();
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(offset);
+    const uint32_t clauseNum = c.getNum();
+    ClauseData& data = clauseData[clauseNum];
+    const bool watchNum = i->getWatchNum();
 
     // Make sure the false literal is data[1]:
-    if (c[0].var() == p.var()) {
-        Lit tmp(c[0]);
-        c[0] = c[1];
-        c[1] = tmp;
-    }
-    assert(c[1].var() == p.var());
+//     if (c[0].var() == p.var()) {
+//         Lit tmp(c[0]);
+//         c[0] = c[1];
+//         c[1] = tmp;
+//     }
+//     assert(c[1].var() == p.var());
+    assert(c[data[0]].var() == p.var() || c[data[1]].var() == p.var());
 
     bool final = c.xorEqualFalse();
-    for (uint32_t k = 0, size = c.size(); k != size; k++ ) {
+    for (uint32_t k = 0, size = c.size(); k != size; k++) {
         const lbool& val = assigns[c[k].var()];
-        if (val.isUndef() && k >= 2) {
-            Lit tmp(c[1]);
-            c[1] = c[k];
-            c[k] = tmp;
+        if (val.isUndef() && k != data[0] && k != data[1]) {
+            data[watchNum] = k;
             removeWXCl(watches[(~p).toInt()], offset);
-            watches[Lit(c[1].var(), false).toInt()].push(offset);
-            watches[Lit(c[1].var(), true).toInt()].push(offset);
+            watches[Lit(c[k].var(), false).toInt()].push(Watched(offset, watchNum));
+            watches[Lit(c[k].var(), true).toInt()].push(Watched(offset, watchNum));
             return true;
         }
 
@@ -1789,9 +1805,9 @@ inline const bool Solver::propXorClause(Watched* &i, Watched* &j, Watched *end, 
 
     if (assigns[c[0].var()].isUndef()) {
         c[0] = c[0].unsign()^final;
-        uncheckedEnqueue(c[0], offset);
+        uncheckedEnqueue(c[0], PropBy(offset, watchNum));
     } else if (!final) {
-        confl = PropBy(offset);
+        confl = PropBy(offset, watchNum);
         qhead = trail.size();
         return false;
     } else {
@@ -2092,10 +2108,9 @@ void Solver::reduceDB()
     std::sort(learnts.getData(), learnts.getDataEnd(), reduceDB_ltGlucose());
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "Cleaning clauses" << std::endl;
+    std::cout << "Cleaning learnt clauses. Learnt clauses after sort: " << std::endl;
     for (uint32_t i = 0; i != learnts.size(); i++) {
         std::cout << "activity:" << learnts[i]->getGlue()
-        << " \toldActivity:" << learnts[i]->getMiniSatAct()
         << " \tsize:" << learnts[i]->size() << std::endl;
     }
     #endif
@@ -2507,7 +2522,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             if (c->learnt() && c->getGlue() > glue)
                 c->setGlue(glue); // LS
             attachClause(*c);
-            uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
+            uncheckedEnqueue(learnt_clause[0], PropBy(clauseAllocator.getOffset(c), 0));
         } else {  //no on-the-fly subsumption
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
@@ -2527,7 +2542,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             }
             c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
             attachClause(*c);
-            uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
+            uncheckedEnqueue(learnt_clause[0], PropBy(clauseAllocator.getOffset(c), 0));
         }
         end:;
     }

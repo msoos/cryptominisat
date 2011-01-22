@@ -631,7 +631,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
         solver.failBinLit = lit2;
     } else {
         Clause* conflPtr = (Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
-        confl = solver.clauseAllocator.getOffset(conflPtr);
+        confl = PropBy(solver.clauseAllocator.getOffset(conflPtr), 0);
         Clause& cla = *conflPtr;
 
         #ifdef STATS_NEEDED
@@ -868,7 +868,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             if (solver.dynamic_behaviour_analysis)
                 solver.logger.set_group_name(cla.getGroup(), "gauss prop clause");
             #endif
-            solver.uncheckedEnqueue(cla[0], solver.clauseAllocator.getOffset(&cla));
+            solver.uncheckedEnqueue(cla[0], PropBy(solver.clauseAllocator.getOffset(&cla), 0));
             return propagation;
     }
 
