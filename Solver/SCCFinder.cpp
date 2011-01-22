@@ -101,7 +101,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
                 *it2++ = LitExtra(lit, it->getOnlyNLBin());
                 newSize++;
 
-                doit(lit, vertex);
+                if (lit != ~vertLit) doit(lit, vertex);
             }
             transCache.resize(newSize);
         }
