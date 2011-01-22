@@ -915,9 +915,11 @@ void Solver::calcReachability()
             || solver.xorSubsumer->getVarElimed()[it->var()]
             || partHandler->getSavedState()[lit.var()] != l_Undef)
             continue;*/
-            assert(it->getLit() != lit);
-            assert(it->getLit() != ~lit);
-            if (litReachable[it->getLit().toInt()].lit == lit_Undef || litReachable[it->getLit().toInt()].numInCache </*=*/ cacheSize) {
+            if (it->getLit() == lit || it->getLit() == ~lit) continue;
+
+            if (litReachable[it->getLit().toInt()].lit == lit_Undef
+                || litReachable[it->getLit().toInt()].numInCache </*=*/ cacheSize
+            ) {
                 //if (litReachable[it->toInt()].numInCache == cacheSize && mtrand.randInt(1) == 0) continue;
                 litReachable[it->getLit().toInt()].lit = lit;
                 litReachable[it->getLit().toInt()].numInCache = cacheSize;
