@@ -1717,9 +1717,10 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
         return true;
     }
     // Look for new watch:
+    uint32_t other = std::numeric_limits<uint32_t>::max();
     for (uint16_t numLit = 0, size = c.size(); numLit < size; numLit++) {
         if (numLit == data[0] || numLit == data[1]) continue;
-        if (value(c[numLit]) != l_False) {
+        if (value(c[numLit]) == l_True) {
             #ifdef VERBOSE_DEBUG
             printf("new watch: %d watchNum: %d\n", numLit, watchNum);
             #endif
@@ -1727,6 +1728,15 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
             watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
             return true;
         }
+        if (value(c[numLit]) == l_Undef) other = numLit;
+    }
+    if (other != std::numeric_limits<uint32_t>::max()) {
+        #ifdef VERBOSE_DEBUG
+        printf("new watch: %d watchNum: %d\n", other, watchNum);
+        #endif
+        data[watchNum] = other;
+        watches[(~c[other]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
+        return true;
     }
 
     #ifdef VERBOSE_DEBUG
