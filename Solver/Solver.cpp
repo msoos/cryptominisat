@@ -1863,7 +1863,7 @@ PropBy Solver::propagate(const bool update)
             #endif
 
             if (i2 != end && i2->isClause() && !value(i2->getBlockedLit()).getBool()) {
-                __builtin_prefetch(clauseAllocator.getPointer(i2->getNormOffset()), 1, 0);
+                __builtin_prefetch(clauseAllocator.getPointer(i2->getNormOffset()), 0, 0);
             }
 
             if (i->isBinary()) {
