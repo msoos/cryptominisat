@@ -36,11 +36,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "MatrixFinder.h"
 #include "DataSync.h"
 
-#ifdef _MSC_VER
-#define __builtin_prefetch(a,b,c)
-//#define __builtin_prefetch(a,b)
-#endif //_MSC_VER
-
 #ifdef VERBOSE_DEBUG
 #define UNWINDING_DEBUG
 #define VERBOSE_DEBUG_GATE
@@ -1560,6 +1555,7 @@ and does some logging if logging is enabled
 */
 void Solver::uncheckedEnqueue(const Lit p, const PropBy from)
 {
+    __builtin_prefetch(watches.getData()+p.toInt(), 1, 0);
     #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
     #ifndef VERBOSE_DEBUG
     if (decisionLevel() == 0)
@@ -1593,6 +1589,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy from)
     if (!from.isNULL()) increaseAgility(polarity[p.var()] != p.sign());
     polarity[v] = p.sign();
     trail.push(p);
+    __builtin_prefetch(watches[p.toInt()].getData(), 1, 0);
 
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
@@ -1825,11 +1822,8 @@ PropBy Solver::propagate(const bool update)
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
         __builtin_prefetch(ws.getData(), 1, 0);
-        Watched        *i, *j;
+        Watched        *i, *j, *i2;
         num_props += ws.size()/2 + 2;
-        if (qhead < trail.size()) {
-            __builtin_prefetch(watches[trail[qhead].toInt()].getData(), 1, 1);
-        }
 
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << p << endl;
@@ -1837,8 +1831,9 @@ PropBy Solver::propagate(const bool update)
         #endif
 
         i = j = ws.getData();
+        i2 = i+1;
         Watched *end = ws.getDataEnd();
-        for (; i != end; i++) {
+        for (; i != end; i++, i2++) {
             #ifdef VERBOSE_DEBUG
             cout << "end-i: " << end-i << endl;
             cout << "end-j: " << end-j << endl;
@@ -1848,6 +1843,11 @@ PropBy Solver::propagate(const bool update)
                 << " as i of prop: " << *clauseAllocator.getPointer(i->getNormOffset())
                 << std::endl;
             #endif
+
+            if (i2 != end && i2->isClause() && !value(i2->getBlockedLit()).getBool()) {
+                __builtin_prefetch(clauseAllocator.getPointer(i2->getNormOffset()), 1, 0);
+            }
+
             if (i->isBinary()) {
                 if (!propBinaryClause(i, j, end, p, confl)) break;
                 else continue;
