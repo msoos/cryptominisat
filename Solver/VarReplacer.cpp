@@ -573,6 +573,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
     #endif
 
+    assert(solver.ok);
     assert(solver.decisionLevel() == 0);
     assert(ps.size() == 2);
     assert(!ps[0].sign());
@@ -615,11 +616,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     lbool val1 = solver.value(lit1);
     lbool val2 = solver.value(lit2);
     if (val1 != l_Undef && val2 != l_Undef) {
-        if (val1 != val2) {
-            solver.ok = false;
-            return false;
-        }
-        return true;
+        if (val1 != val2) solver.ok = false;
+        return solver.ok;
     }
 
     if ((val1 != l_Undef && val2 == l_Undef) || (val2 != l_Undef && val1 == l_Undef)) {
@@ -627,7 +625,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
         if (val1 != l_Undef) solver.uncheckedEnqueue(lit2 ^ (val1 == l_False));
         else solver.uncheckedEnqueue(lit1 ^ (val2 == l_False));
 
-        if (solver.ok) solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate().isNULL());
         return solver.ok;
     }
 
@@ -635,7 +633,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     assert(val1 == l_Undef && val2 == l_Undef);
     #endif //DEBUG_REPLACER
 
-    addBinaryXorClause(lit1, lit2 ^ true, group, false);
+    addBinaryXorClause(lit1, lit2 ^ true, group);
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
@@ -670,14 +668,14 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 
 \todo Clean this messy internal/external thing using a better datastructure.
 */
-void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group, const bool addBinAsLearnt)
+void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group)
 {
-    solver.attachBinClause(lit1, lit2, addBinAsLearnt);
+    solver.attachBinClause(lit1, lit2, false);
     solver.dataSync->signalNewBinClause(lit1, lit2);
 
     lit1 ^= true;
     lit2 ^= true;
-    solver.attachBinClause(lit1, lit2, addBinAsLearnt);
+    solver.attachBinClause(lit1, lit2, false);
     solver.dataSync->signalNewBinClause(lit1, lit2);
 }
 
