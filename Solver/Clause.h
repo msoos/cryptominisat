@@ -86,7 +86,7 @@ protected:
     there is enough space for data[] to hold the literals
     */
     #ifdef __GNUC__
-    Lit     data[];
+    Lit     data[0];
     #else
     //NOTE: Dangerous packing. We love C++. More info: stackoverflow.com/questions/688471/variable-sized-struct-c
     Lit     data[1];
