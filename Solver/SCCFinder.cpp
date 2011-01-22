@@ -90,15 +90,15 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
         if (solver.conf.doExtendedSCC && solver.conf.doCacheOTFSSR) {
             Lit vertLit = Lit::toLit(vertex);
-            vector<Lit>& transCache = solver.transOTFCache[(~vertLit).toInt()].lits;
-            vector<Lit>::iterator it = transCache.begin();
-            vector<Lit>::iterator it2 = it;
+            vector<LitExtra>& transCache = solver.transOTFCache[(~vertLit).toInt()].lits;
+            vector<LitExtra>::iterator it = transCache.begin();
+            vector<LitExtra>::iterator it2 = it;
             uint32_t newSize = 0;
-            for (vector<Lit>::iterator end = transCache.end(); it != end; it++) {
-                Lit lit = *it;
+            for (vector<LitExtra>::iterator end = transCache.end(); it != end; it++) {
+                Lit lit = it->getLit();
                 lit = replaceTable[lit.var()] ^ lit.sign();
                 if (lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()] || varPartHandled[lit.var()] != l_Undef) continue;
-                *it2++ = lit;
+                *it2++ = LitExtra(lit, it->getOnlyNLBin());
                 newSize++;
 
                 doit(lit, vertex);

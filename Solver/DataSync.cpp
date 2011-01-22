@@ -323,10 +323,10 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<BinClause>& b
             seen[it->getOtherLit().toInt()] = true;
         }
     }
-    const vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
-    for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
-        addedToSeen.push(*it);
-        seen[it->toInt()] = true;
+    const vector<LitExtra>& cache = solver.transOTFCache[(~lit).toInt()].lits;
+    for (vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+        addedToSeen.push(it->getLit());
+        seen[it->getLit().toInt()] = true;
     }
 
     vec<Lit> lits(2);

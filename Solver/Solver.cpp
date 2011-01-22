@@ -897,20 +897,20 @@ void Solver::calcReachability()
             || !decision_var[lit.var()])
             continue;
 
-        vector<Lit>& cache = transOTFCache[(~lit).toInt()].lits;
+        vector<LitExtra>& cache = transOTFCache[(~lit).toInt()].lits;
         uint32_t cacheSize = cache.size();
-        for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+        for (vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
             /*if (solver.value(it->var()) != l_Undef
             || solver.subsumer->getVarElimed()[it->var()]
             || solver.xorSubsumer->getVarElimed()[it->var()]
             || partHandler->getSavedState()[lit.var()] != l_Undef)
             continue;*/
-            assert(*it != lit);
-            assert(*it != ~lit);
-            if (litReachable[it->toInt()].lit == lit_Undef || litReachable[it->toInt()].numInCache </*=*/ cacheSize) {
+            assert(it->getLit() != lit);
+            assert(it->getLit() != ~lit);
+            if (litReachable[it->getLit().toInt()].lit == lit_Undef || litReachable[it->getLit().toInt()].numInCache </*=*/ cacheSize) {
                 //if (litReachable[it->toInt()].numInCache == cacheSize && mtrand.randInt(1) == 0) continue;
-                litReachable[it->toInt()].lit = lit;
-                litReachable[it->toInt()].numInCache = cacheSize;
+                litReachable[it->getLit().toInt()].lit = lit;
+                litReachable[it->getLit().toInt()].numInCache = cacheSize;
             }
         }
     }
@@ -939,12 +939,13 @@ void Solver::saveOTFData()
     Lit lev0Lit = trail[trail_lim[0]];
     TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
     oTFCache.conflictLastUpdated = conflicts;
-    oTFCache.lits.clear();
 
+    vector<LitExtra> lits;
     for (int sublevel = trail.size()-1; sublevel > (int)trail_lim[0]; sublevel--) {
         Lit lit = trail[sublevel];
-        oTFCache.lits.push_back(lit);
+        lits.push_back(LitExtra(lit, false));
     }
+    oTFCache.merge(lits);
 }
 
 //=================================================================================================
@@ -1384,12 +1385,8 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
                     && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
                ) {*/
                 const TransCache& cache1 = transOTFCache[l->toInt()];
-                for (vector<Lit>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
-                    seen[(~(*it)).toInt()] = 0;
-                }
-                const TransCache& cache2 = subsumer->getBinNonLearntCache()[l->toInt()];
-                for (vector<Lit>::const_iterator it = cache2.lits.begin(), end2 = cache2.lits.end(); it != end2; it++) {
-                    seen[(~(*it)).toInt()] = 0;
+                for (vector<LitExtra>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
+                    seen[(~(it->getLit())).toInt()] = 0;
                 }
             /*} else {
                 updateTransCache++;
@@ -1443,8 +1440,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
 {
     assert(conf.doCacheOTFSSR);
-    vector<Lit>& allAddedToSeen2 = transOTFCache[lit.toInt()].lits;
-    allAddedToSeen2.clear();
+    vector<LitExtra> allAddedToSeen2;
 
     toRecursiveProp.push(~lit);
     while(!toRecursiveProp.empty()) {
@@ -1459,18 +1455,17 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
                 //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
                 if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) continue;
                 seen2[otherLit.toInt()] = 1;
-                allAddedToSeen2.push_back(otherLit);
+                allAddedToSeen2.push_back(LitExtra(otherLit, false));
                 toRecursiveProp.push(otherLit);
-            } else {
-                break;
             }
         }
     }
     assert(toRecursiveProp.empty());
+    transOTFCache[lit.toInt()].merge(allAddedToSeen2);
 
-    for (vector<Lit>::const_iterator it = allAddedToSeen2.begin(), end = allAddedToSeen2.end(); it != end; it++) {
-        seen[(~(*it)).toInt()] = 0;
-        seen2[it->toInt()] = 0;
+    for (vector<LitExtra>::const_iterator it = transOTFCache[lit.toInt()].lits.begin(), end = transOTFCache[lit.toInt()].lits.end(); it != end; it++) {
+        seen[(~(it->getLit())).toInt()] = 0;
+        seen2[it->getLit().toInt()] = 0;
     }
 
     transOTFCache[lit.toInt()].conflictLastUpdated = conflicts;
@@ -2674,9 +2669,9 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     //Free memory if possible
     for (Var var = 0; var < nVars(); var++) {
         if (value(var) != l_Undef) {
-            vector<Lit> tmp1;
+            vector<LitExtra> tmp1;
             transOTFCache[Lit(var, false).toInt()].lits.swap(tmp1);
-            vector<Lit> tmp2;
+            vector<LitExtra> tmp2;
             transOTFCache[Lit(var, true).toInt()].lits.swap(tmp2);
         }
     }
@@ -2777,9 +2772,6 @@ void Solver::performStepsBeforeSolve()
         && clauses.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
-
-    if (conf.doClausVivif
-        && !clauseVivifier->vivifyClausesCache(clauses, subsumer->getBinNonLearntCache())) return;
 
     if (conf.doFindEqLits) {
         if (!sCCFinder->find2LongXors()) return;

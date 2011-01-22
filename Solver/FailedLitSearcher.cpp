@@ -373,12 +373,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     assert(solver.decisionLevel() > 0);
     //vector<Lit> oldCache;
-    TransCache& lit1OTFCache = solver.transOTFCache[(~lit1).toInt()];
-    if (solver.conf.doCacheOTFSSR) {
-        lit1OTFCache.conflictLastUpdated = solver.conflicts;
-        //oldCache.swap(lit1OTFCache.lits);
-        lit1OTFCache.lits.clear();
-    }
+    vector<LitExtra> lit1OTFCache;
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x = solver.trail[c].var();
         propagated.setBit(x);
@@ -393,8 +388,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
         if (binXorFind) removeVarFromXors(x);
         if (solver.conf.doCacheOTFSSR && c != (int)solver.trail_lim[0]) {
-            lit1OTFCache.lits.push_back(solver.trail[c]);
+            lit1OTFCache.push_back(LitExtra(solver.trail[c], false));
         }
+    }
+    if (solver.conf.doCacheOTFSSR) {
+        solver.transOTFCache[(~lit1).toInt()].merge(lit1OTFCache);
+        solver.transOTFCache[(~lit1).toInt()].conflictLastUpdated = solver.conflicts;
     }
 
     if (binXorFind) {
@@ -434,12 +433,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     assert(solver.decisionLevel() > 0);
-    TransCache& lit2OTFCache = solver.transOTFCache[(~lit2).toInt()];
-    if (solver.conf.doCacheOTFSSR) {
-        lit2OTFCache.conflictLastUpdated = solver.conflicts;
-        //oldCache.swap(lit2OTFCache.lits);
-        lit2OTFCache.lits.clear();
-    }
+    vector<LitExtra> lit2OTFCache;
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x  = solver.trail[c].var();
         if (propagated[x]) {
@@ -466,8 +460,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
         if (binXorFind) removeVarFromXors(x);
         if (solver.conf.doCacheOTFSSR && c != (int)solver.trail_lim[0]) {
-            lit2OTFCache.lits.push_back(solver.trail[c]);
+            lit2OTFCache.push_back(LitExtra(solver.trail[c], false));
         }
+    }
+    if (solver.conf.doCacheOTFSSR) {
+        solver.transOTFCache[(~lit2).toInt()].merge(lit2OTFCache);
+        solver.transOTFCache[(~lit2).toInt()].conflictLastUpdated = solver.conflicts;
     }
 
     //We now add the two-long xors that have been found through longer

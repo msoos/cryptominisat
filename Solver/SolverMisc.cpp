@@ -723,11 +723,11 @@ void Solver::printStats(const int numThreads)
     }
 }
 
-const bool Solver::cacheContainsBinCl(const Lit lit1, const Lit lit2) const
+const bool Solver::cacheContainsBinCl(const Lit lit1, const Lit lit2, const bool learnt) const
 {
-    const vector<Lit>& cache = transOTFCache[(~lit1).toInt()].lits;
-    for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
-        if (*it == lit2) return true;
+    const vector<LitExtra>& cache = transOTFCache[(~lit1).toInt()].lits;
+    for (vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+        if (it->getLit() == lit2 && (!learnt || it->getOnlyNLBin())) return true;
     }
 
     return false;
