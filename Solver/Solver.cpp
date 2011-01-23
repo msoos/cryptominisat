@@ -381,6 +381,14 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
         return NULL;
     }
 
+    //Randomise clause
+    assert(ps.size() >= 2);
+    for(uint32_t i2 = 0; i2 < (uint32_t)(ps.size()-1); i2++) {
+        uint32_t r = mtrand.randInt(ps.size()-i2-1);
+        std::swap(ps[i2], ps[i2+r]);
+    }
+
+
     if (ps.size() > 2) {
         Clause* c = clauseAllocator.Clause_new(ps, group);
         if (learnt) c->makeLearnt(glue);
