@@ -2952,12 +2952,14 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
     uint64_t  nextSimplify = conf.restart_first * conf.simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
     if (!conf.doSchedSimp) nextSimplify = std::numeric_limits<uint64_t>::max();
 
+    uint64_t oldConflicts = conflicts;
     if (conflicts == 0) {
         if (conf.doPerformPreSimp) performStepsBeforeSolve();
         if (!ok) return l_False;
     }
     calculateDefaultPolarities();
 
+    bool firstRearrangeDone = false;
     printStatHeader();
     printRestartStat("B");
     uint64_t lastConflPrint = conflicts;
@@ -2971,6 +2973,10 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
         if ((conflicts - lastConflPrint) > std::min(std::max(conflicts/100*6, (uint64_t)4000), (uint64_t)20000)) {
             printRestartStat("N");
             lastConflPrint = conflicts;
+        }
+        if (conflicts-oldConflicts > 5000 && numSimplifyRounds == 0 && !firstRearrangeDone) {
+            reArrangeClauses();
+            firstRearrangeDone = true;
         }
 
         if (conf.doSchedSimp && conflicts >= nextSimplify) {
