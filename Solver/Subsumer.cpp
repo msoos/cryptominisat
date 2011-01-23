@@ -960,7 +960,7 @@ const bool Subsumer::subsWNonExistBinsFill()
 
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t oldProps = solver.propagations;
-    uint64_t maxProp = MAX_BINARY_PROP*7;
+    uint64_t maxProp = MAX_BINARY_PROP;
     extraTimeNonExist = 0;
     OnlyNonLearntBins* onlyNonLearntBins = NULL;
     if (solver.clauses_literals < 10*1000*1000) {
