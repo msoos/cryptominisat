@@ -2676,6 +2676,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
     if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
+    reArrangeClauses();
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
@@ -2721,6 +2722,58 @@ end:
 
     if (!ok) return l_False;
     return status;
+}
+
+struct PolaritySorter
+{
+    PolaritySorter(const vector<bool>& _polarity) :
+        polarity(_polarity)
+    {};
+
+    const bool operator()(const Lit lit1, const Lit lit2) {
+        bool pol1 = !polarity[lit1.var()] ^ lit1.sign();
+        bool pol2 = !polarity[lit2.var()] ^ lit2.sign();
+        if (pol1 == true && pol2 == false) return true;
+        return false;
+    }
+
+    const vector<bool>& polarity;
+};
+
+void Solver::reArrangeClauses()
+{
+    assert(decisionLevel() == 0);
+    assert(ok);
+
+    double myTime = cpuTime();
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        Clause& c = *clauses[i];
+        if (c.size() == 3) continue;
+
+        ClauseData& data = clauseData[c.getNum()];
+        Lit lit1 = c[data[0]];
+        Lit lit2 = c[data[1]];
+        assert(lit1 != lit2);
+
+        std::sort(c.getData(), c.getDataEnd(), PolaritySorter(polarity));
+
+        uint32_t foundDatas = 0;
+        for (uint32_t i = 0; i < c.size(); i++) {
+            if (c[i] == lit1) {
+                data[0] = i;
+                foundDatas++;
+            }
+            if (c[i] == lit2) {
+                data[1] = i;
+                foundDatas++;
+            }
+        }
+        assert(foundDatas == 2);
+    }
+
+    if (conf.verbosity >= 3) {
+        std::cout << "c Time to rearrange lits in clauses " << (cpuTime() - myTime) << std::endl;
+    }
 }
 
 /**
