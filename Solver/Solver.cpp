@@ -1403,23 +1403,25 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         #endif
     }
 
+    uint32_t moreRecurProp = 0;
+
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
         if (seen[l->toInt()] == 0) continue;
         Lit lit = *l;
 
         if (clDoMinLRec && conf.doCacheOTFSSR) {
-            /*if (moreRecurProp >= 450
+            if (moreRecurProp >= 450
                 || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
                     && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
-               ) {*/
+               ) {
                 const TransCache& cache1 = transOTFCache[l->toInt()];
                 for (vector<LitExtra>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
                     seen[(~(it->getLit())).toInt()] = 0;
                 }
-            /*} else {
+            } else {
                 updateTransCache++;
                 transMinimAndUpdateCache(lit, moreRecurProp);
-            }*/
+            }
         }
 
         //watched is messed: lit is in watched[~lit]
@@ -1468,7 +1470,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
 {
     assert(conf.doCacheOTFSSR);
-    vector<LitExtra> allAddedToSeen2;
+    vector<LitExtra> lits;
 
     toRecursiveProp.push(~lit);
     while(!toRecursiveProp.empty()) {
@@ -1483,13 +1485,13 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
                 //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
                 if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) continue;
                 seen2[otherLit.toInt()] = 1;
-                allAddedToSeen2.push_back(LitExtra(otherLit, false));
+                lits.push_back(LitExtra(otherLit, false));
                 toRecursiveProp.push(otherLit);
             }
         }
     }
     assert(toRecursiveProp.empty());
-    transOTFCache[lit.toInt()].merge(allAddedToSeen2);
+    transOTFCache[lit.toInt()].merge(lits);
 
     for (vector<LitExtra>::const_iterator it = transOTFCache[lit.toInt()].lits.begin(), end = transOTFCache[lit.toInt()].lits.end(); it != end; it++) {
         seen[(~(it->getLit())).toInt()] = 0;
