@@ -612,6 +612,7 @@ protected:
     void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
     vector<bool> polarity;      // The preferred polarity of each variable.
     void reArrangeClauses();
+    void reArrangeClause(Clause* clause);
 };
 
 

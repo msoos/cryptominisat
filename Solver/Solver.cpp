@@ -664,6 +664,22 @@ void Solver::finishAddingVars()
     subsumer->setFinishedAddingVars(true);
 }
 
+struct PolaritySorter
+{
+    PolaritySorter(const vector<bool>& _polarity) :
+    polarity(_polarity)
+    {};
+
+    const bool operator()(const Lit lit1, const Lit lit2) {
+        bool pol1 = !polarity[lit1.var()] ^ lit1.sign();
+        bool pol2 = !polarity[lit2.var()] ^ lit2.sign();
+        if (pol1 == true && pol2 == false) return true;
+        return false;
+    }
+
+    const vector<bool>& polarity;
+};
+
 /**
 @brief Revert to the state at given level
 
@@ -2525,6 +2541,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             goto end;
         }
 
+        std::sort(learnt_clause.getData()+1, learnt_clause.getDataEnd(), PolaritySorter(polarity));
         if (c) { //On-the-fly subsumption
             uint32_t origSize = c->size();
             detachClause(*c);
@@ -2724,21 +2741,31 @@ end:
     return status;
 }
 
-struct PolaritySorter
+void Solver::reArrangeClause(Clause* clause)
 {
-    PolaritySorter(const vector<bool>& _polarity) :
-        polarity(_polarity)
-    {};
+    Clause& c = *clause;
+    if (c.size() == 3) return;
 
-    const bool operator()(const Lit lit1, const Lit lit2) {
-        bool pol1 = !polarity[lit1.var()] ^ lit1.sign();
-        bool pol2 = !polarity[lit2.var()] ^ lit2.sign();
-        if (pol1 == true && pol2 == false) return true;
-        return false;
+    ClauseData& data = clauseData[c.getNum()];
+    Lit lit1 = c[data[0]];
+    Lit lit2 = c[data[1]];
+    assert(lit1 != lit2);
+
+    std::sort(c.getData(), c.getDataEnd(), PolaritySorter(polarity));
+
+    uint32_t foundDatas = 0;
+    for (uint32_t i = 0; i < c.size(); i++) {
+        if (c[i] == lit1) {
+            data[0] = i;
+            foundDatas++;
+        }
+        if (c[i] == lit2) {
+            data[1] = i;
+            foundDatas++;
+        }
     }
-
-    const vector<bool>& polarity;
-};
+    assert(foundDatas == 2);
+}
 
 void Solver::reArrangeClauses()
 {
@@ -2747,28 +2774,10 @@ void Solver::reArrangeClauses()
 
     double myTime = cpuTime();
     for (uint32_t i = 0; i < clauses.size(); i++) {
-        Clause& c = *clauses[i];
-        if (c.size() == 3) continue;
-
-        ClauseData& data = clauseData[c.getNum()];
-        Lit lit1 = c[data[0]];
-        Lit lit2 = c[data[1]];
-        assert(lit1 != lit2);
-
-        std::sort(c.getData(), c.getDataEnd(), PolaritySorter(polarity));
-
-        uint32_t foundDatas = 0;
-        for (uint32_t i = 0; i < c.size(); i++) {
-            if (c[i] == lit1) {
-                data[0] = i;
-                foundDatas++;
-            }
-            if (c[i] == lit2) {
-                data[1] = i;
-                foundDatas++;
-            }
-        }
-        assert(foundDatas == 2);
+        reArrangeClause(clauses[i]);
+    }
+    for (uint32_t i = 0; i < learnts.size(); i++) {
+        reArrangeClause(learnts[i]);
     }
 
     if (conf.verbosity >= 3) {
