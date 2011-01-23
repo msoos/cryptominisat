@@ -1299,7 +1299,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
 
-    if (conf.doGateFind) {
+    if (conf.doGateFind && clDoMinLRec) {
         bool gateRemSuccess = false;
         vec<Lit> oldCl = cl;
         while (true) {
