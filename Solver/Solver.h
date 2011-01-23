@@ -343,7 +343,7 @@ protected:
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     vec<PropBy>         reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
-    vec<int32_t>        level;            ///< 'level[var]' contains the level at which the assignment was made.
+    vec<uint32_t>       level;            ///< 'level[var]' contains the level at which the assignment was made.
     vec<BinPropData>    binPropData;
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
@@ -456,7 +456,7 @@ protected:
     ///////////////
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.
     void     cancelUntilLight();
-    Clause*  analyze          (PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update);
+    Clause*  analyze          (PropBy confl, vec<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &nblevels, const bool update);
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.

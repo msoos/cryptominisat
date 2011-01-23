@@ -166,7 +166,7 @@ Var Solver::newVar(bool dvar)
     watches   .push();          // (list for negative literal)
     reason    .push(PropBy());
     assigns   .push(l_Undef);
-    level     .push(-1);
+    level     .push(std::numeric_limits<uint32_t>::max());
     binPropData.push();
     activity  .push(0);
     seen      .push_back(0);
@@ -1120,7 +1120,7 @@ current decision level.
 @return NULL if the conflict doesn't on-the-fly subsume the last clause, and
 the pointer of the clause if it does
 */
-Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &glue, const bool update)
+Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue, const bool update)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -1144,8 +1144,8 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
             if (!seen[my_var] && level[my_var] > 0) {
                 varBumpActivity(my_var);
                 seen[my_var] = 1;
-                assert(level[my_var] <= (int)decisionLevel());
-                if (level[my_var] >= (int)decisionLevel()) {
+                assert(level[my_var] <= decisionLevel());
+                if (level[my_var] >= decisionLevel()) {
                     pathC++;
                     #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
                     if (subRestartType == dynamic_restart
@@ -2493,7 +2493,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     cout << endl;
     #endif
 
-    int backtrack_level;
+    uint32_t backtrack_level;
     uint32_t glue;
 
     conflicts++;
