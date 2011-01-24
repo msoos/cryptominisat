@@ -674,18 +674,27 @@ void Solver::finishAddingVars()
 
 struct PolaritySorter
 {
-    PolaritySorter(const vector<bool>& _polarity) :
-    polarity(_polarity)
+    PolaritySorter(const vector<bool>& _polarity, const vec<uint32_t>& _level) :
+        polarity(_polarity)
+        , level(_level)
     {};
 
     const bool operator()(const Lit lit1, const Lit lit2) {
-        bool pol1 = !polarity[lit1.var()] ^ lit1.sign();
-        bool pol2 = !polarity[lit2.var()] ^ lit2.sign();
+        const bool pol1 = !polarity[lit1.var()] ^ lit1.sign();
+        const bool pol2 = !polarity[lit2.var()] ^ lit2.sign();
+
+        //Tie 1: polarity
         if (pol1 == true && pol2 == false) return true;
-        return false;
+        if (pol1 == false && pol2 == true) return false;
+
+        //Tie 2: last level
+        assert(pol1 == pol2);
+        if (pol1 == true) return level[lit1.var()] < level[lit2.var()];
+        else return level[lit1.var()] > level[lit2.var()];
     }
 
     const vector<bool>& polarity;
+    const vec<uint32_t>& level;
 };
 
 /**
@@ -2551,7 +2560,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             goto end;
         }
 
-        std::sort(learnt_clause.getData()+1, learnt_clause.getDataEnd(), PolaritySorter(polarity));
+        std::sort(learnt_clause.getData()+1, learnt_clause.getDataEnd(), PolaritySorter(polarity, level));
         if (c) { //On-the-fly subsumption
             uint32_t origSize = c->size();
             detachClause(*c);
@@ -2761,7 +2770,7 @@ void Solver::reArrangeClause(Clause* clause)
     Lit lit2 = c[data[1]];
     assert(lit1 != lit2);
 
-    std::sort(c.getData(), c.getDataEnd(), PolaritySorter(polarity));
+    std::sort(c.getData(), c.getDataEnd(), PolaritySorter(polarity, level));
 
     uint32_t foundDatas = 0;
     for (uint32_t i = 0; i < c.size(); i++) {
