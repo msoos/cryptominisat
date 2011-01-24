@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include "VarReplacer.h"
 #include "PartHandler.h"
 #include "Gaussian.h"
+#include <sys/mman.h>
 
 //For mild debug info:
 //#define DEBUG_CLAUSEALLOCATOR
@@ -56,7 +57,7 @@ ClauseAllocator::ClauseAllocator() :
 ClauseAllocator::~ClauseAllocator()
 {
     for (uint32_t i = 0; i < dataStarts.size(); i++) {
-        delete [] dataStarts[i];
+        free(dataStarts[i]);
     }
 }
 
@@ -155,8 +156,11 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         << ")" << std::endl;
         #endif //DEBUG_CLAUSEALLOCATOR
 
-        uint32_t *dataStart = new uint32_t[nextSize];
+        uint32_t *dataStart;
+        posix_memalign((void**)&dataStart, getpagesize(), sizeof(uint32_t) * nextSize);
         assert(dataStart != NULL);
+        int err = madvise(dataStart, sizeof(uint32_t) * nextSize, MADV_RANDOM);
+        assert(err == 0);
         dataStarts.push(dataStart);
         sizes.push(0);
         maxSizes.push(nextSize);
@@ -347,7 +351,10 @@ void ClauseAllocator::consolidate(Solver* solver)
         newSizes.push(0);
         newOrigClauseSizes.push();
         uint32_t* pointer;
-        pointer = new uint32_t[newMaxSizes[i]];
+        posix_memalign((void**)&pointer, getpagesize(), sizeof(uint32_t) * newMaxSizes[i]);
+        assert(pointer != NULL);
+        int err = madvise(pointer, sizeof(uint32_t) * newMaxSizes[i], MADV_RANDOM);
+        assert(err == 0);
         newDataStartsPointers.push(pointer);
         newDataStarts.push(pointer);
     }
@@ -388,7 +395,7 @@ void ClauseAllocator::consolidate(Solver* solver)
     updateAllOffsetsAndPointers(solver);
 
     for (uint32_t i = 0; i < dataStarts.size(); i++)
-        delete [] dataStarts[i];
+        free(dataStarts[i]);
 
     dataStarts.clear();
     maxSizes.clear();
