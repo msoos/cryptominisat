@@ -32,11 +32,21 @@ class LitExtra {
             return x&1;
         }
 
-        const bool operator<(const LitExtra& other) const
+        const bool operator<(const LitExtra other) const
         {
             if (getOnlyNLBin() && !other.getOnlyNLBin()) return false;
             if (!getOnlyNLBin() && other.getOnlyNLBin()) return true;
             return (getLit() < other.getLit());
+        }
+
+        const bool operator==(const LitExtra other) const
+        {
+            return x == other.x;
+        }
+
+        const bool operator!=(const LitExtra other) const
+        {
+            return x != other.x;
         }
     private:
         uint32_t x;
@@ -52,6 +62,7 @@ class TransCache {
         void merge(std::vector<LitExtra>& otherLits)
         {
             std::sort(lits.begin(), lits.end());
+            lits.erase(std::unique(lits.begin(), lits.end()), lits.end());
             std::sort(otherLits.begin(), otherLits.end());
 
             //swap to keep original place if possible
