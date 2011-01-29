@@ -571,7 +571,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
 
     const bool xorEqualFalse = !m.matrix.getVarsetAt(best_row).is_true();
     const bool wasUndef = m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
-    assert(!wasUndef);
+    release_assert(!wasUndef);
 
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")matrix confl clause:"
@@ -850,8 +850,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             tmp_clause[0] = tmp_clause[0].unsign();
             tmp_clause[1] = tmp_clause[1].unsign();
             XorClause* cl = solver.addXorClauseInt(tmp_clause, xorEqualFalse, 0);
-            assert(cl == NULL);
-            assert(solver.ok);
+            release_assert(cl == NULL);
+            release_assert(solver.ok);
             return unit_propagation;
             break;
         }
