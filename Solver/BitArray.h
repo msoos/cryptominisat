@@ -94,6 +94,16 @@ public:
         return *this;
     }
 
+    template<class T>
+    BitArray& removeTheseLit(const T& rem)
+    {
+        for (uint32_t i = 0; i < rem.size(); i++) {
+            clearBit(rem[i].var());
+        }
+
+        return *this;
+    }
+
     void resize(uint32_t _size, const bool fill)
     {
         _size = _size/64 + (bool)(_size%64);

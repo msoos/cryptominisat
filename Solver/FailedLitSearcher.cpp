@@ -326,7 +326,9 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         investigateXor.clear();
     }
 
-    propagated.setZero();
+    propagated.removeThese(propagatedBitSet);
+    assert(propagated.isZero());
+    propagatedBitSet.clear();
     twoLongXors.clear();
     bothSame.clear();
     binXorToAdd.clear();
@@ -360,6 +362,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x = solver.trail[c].var();
         propagated.setBit(x);
+        propagatedBitSet.push_back(x);
 
         if (solver.conf.doHyperBinRes) {
             unPropagatedBin.setBit(x);
@@ -637,8 +640,8 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
         myImpliesSet.clear();
 
         if (difference == 0) {
-            needToVisit.setZero();
-            goto end;
+            needToVisit.removeTheseLit(toVisit);
+            break;
         }
     }
     #ifdef DEBUG_HYPERBIN
