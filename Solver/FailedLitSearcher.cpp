@@ -240,7 +240,7 @@ const bool FailedLitSearcher::search()
     calcNegPosDist();
 
     origProps = solver.propagations;
-    hyperbinProps = 0;
+    /*hyperbinProps = 0;
     for (uint32_t i = 0; i < solver.negPosDist.size(); i++) {
         Var var = solver.negPosDist[i].var;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
@@ -250,7 +250,7 @@ const bool FailedLitSearcher::search()
         }
         if (!tryBoth(Lit(var, false), Lit(var, true)))
             goto end;
-    }
+    }*/
 
     while (!order_heap_copy.empty()) {
         Var var = order_heap_copy.removeMin();
