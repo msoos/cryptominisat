@@ -246,7 +246,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     case 1:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
         solver.uncheckedEnqueue(Lit(c[0].var(), c.xorEqualFalse()));
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         return true;
     case 2: {
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
@@ -362,7 +362,7 @@ const bool VarReplacer::replaceBins()
     solver.clauses_literals -= removedNonLearnt;
     solver.numBins -= (removedLearnt + removedNonLearnt)/2;
 
-    if (solver.ok) solver.ok = (solver.propagate().isNULL());
+    if (solver.ok) solver.ok = (solver.propagate<true>().isNULL());
     return solver.ok;
 }
 
@@ -452,7 +452,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         return true;
     case 1 :
         solver.uncheckedEnqueue(c[0]);
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         return true;
     case 2:
         solver.attachBinClause(c[0], c[1], c.learnt());
@@ -512,7 +512,7 @@ void VarReplacer::extendModelPossible() const
                 assert(solver.assigns[i].getBool() == (solver.assigns[it->var()].getBool() ^ it->sign()));
             }
         }
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         assert(solver.ok);
     }
 }
@@ -628,7 +628,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
         if (val1 != l_Undef) solver.uncheckedEnqueue(lit2 ^ (val1 == l_False));
         else solver.uncheckedEnqueue(lit1 ^ (val2 == l_False));
 
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         return solver.ok;
     }
 

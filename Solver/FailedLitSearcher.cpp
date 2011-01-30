@@ -361,12 +361,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
-    failed = (!solver.propagate(false).isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit1);
-        solver.ok = (solver.propagate(false).isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         if (!solver.ok) return false;
         return true;
     }
@@ -422,12 +422,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit2);
-    failed = (!solver.propagate(false).isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit2);
-        solver.ok = (solver.propagate(false).isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         if (!solver.ok) return false;
         return true;
     }
@@ -499,7 +499,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.uncheckedEnqueue(bothSame[i]);
     }
     goodBothSame += bothSame.size();
-    solver.ok = (solver.propagate(false).isNULL());
+    solver.ok = (solver.propagate<true>().isNULL());
     if (!solver.ok) return false;
 
     for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
@@ -763,7 +763,7 @@ void FailedLitSearcher::fillImplies(const Lit lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    failed = (!solver.propagate(false).isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     assert(!failed);
 
     assert(solver.decisionLevel() > 0);
@@ -904,7 +904,7 @@ const bool FailedLitSearcher::tryMultiLevel(const vec<Var>& vars, uint32_t& enqu
             //std::cout << "lit: " << Lit(vars[i], comb&(1U << i)) << std::endl;
         }
         //std::cout << "---" << std::endl;
-        bool failed = !(solver.propagate(false).isNULL());
+        bool failed = !(solver.propagate<false>(false).isNULL());
         if (failed) {
             solver.cancelUntilLight();
             if (!first) propagated.setZero();
@@ -940,7 +940,7 @@ const bool FailedLitSearcher::tryMultiLevel(const vec<Var>& vars, uint32_t& enqu
         enqueued++;
         solver.uncheckedEnqueue(*l);
     }
-    solver.ok = solver.propagate().isNULL();
+    solver.ok = solver.propagate<true>().isNULL();
     //exit(-1);
 
     return solver.ok;

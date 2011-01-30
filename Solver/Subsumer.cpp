@@ -984,7 +984,7 @@ const bool Subsumer::subsWNonExistBinsFill()
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
-            solver.ok = solver.propagate().isNULL();
+            solver.ok = solver.propagate<true>().isNULL();
             if (!solver.ok) return false;
             continue;
         }
@@ -999,7 +999,7 @@ const bool Subsumer::subsWNonExistBinsFill()
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
-            solver.ok = solver.propagate().isNULL();
+            solver.ok = solver.propagate<true>().isNULL();
             if (!solver.ok) return false;
             continue;
         }

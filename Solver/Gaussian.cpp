@@ -100,7 +100,7 @@ const bool Gaussian::full_init()
         case propagation:
             unit_truths += last_trail_size - solver.trail.size();
             do_again_gauss = true;
-            solver.ok = (solver.propagate().isNULL());
+            solver.ok = (solver.propagate<true>().isNULL());
             if (!solver.ok) return false;
             break;
         case nothing:

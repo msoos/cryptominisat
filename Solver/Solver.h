@@ -444,10 +444,16 @@ protected:
     bool     multiLevelProp;
     const bool propagateBinExcept(const Lit exceptLit);
     const bool propagateBinOneLevel();
-    PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
-    const bool propTriClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
-    const bool propBinaryClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
+    template<bool full>
+    PropBy     propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
+    template<bool full>
+    const bool propTriClause   (Watched* i, Watched *end, const Lit p, PropBy& confl);
+    template<bool full>
+    const bool propBinaryClause(Watched* i, Watched *end, const Lit p, PropBy& confl);
+    vec<uint32_t> popularity;
+    template<bool full>
     const bool propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update);
+    template<bool full>
     const bool propXorClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
     void     sortWatched();
 
