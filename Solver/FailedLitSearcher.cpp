@@ -166,7 +166,7 @@ const bool FailedLitSearcher::search()
         if (!bothCache.tryBoth(solver.transOTFCache)) return false;
     }
 
-    uint64_t numProps = 80 * 1000000;
+    uint64_t numProps = 100 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     solver.testAllClauseAttach();
@@ -219,7 +219,7 @@ const bool FailedLitSearcher::search()
     needToVisit.resize(solver.nVars(), 0);
     dontRemoveAncestor.resize(solver.nVars(), 0);
     hyperbinProps = 0;
-    maxHyperBinProps = numProps/3;
+    maxHyperBinProps = numProps/4;
     removedUselessLearnt = 0;
     removedUselessNonLearnt = 0;
 
