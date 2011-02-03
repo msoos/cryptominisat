@@ -208,7 +208,7 @@ class PropByFull
             type(10)
         {}
 
-        PropByFull(PropByFull& other) :
+        PropByFull(const PropByFull& other) :
             type(other.type)
             , clause(other.clause)
         {
