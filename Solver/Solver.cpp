@@ -1665,10 +1665,10 @@ void Solver::delayedEnqueueUpdate()
         if (pseudoLevel < trail_lim.size()
             && trail_lim[pseudoLevel] == i) pseudoLevel++;
 
-        Lit p = trail[i];
-        Var v = p.var();
+        const Lit p = trail[i];
+        const Var v = p.var();
         level[v] = pseudoLevel;
-        increaseAgility(polarity[p.var()] != p.sign());
+        increaseAgility(polarity[v] != p.sign());
         polarity[v] = p.sign();
         popularity[v]++;
     }
