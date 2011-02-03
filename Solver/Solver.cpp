@@ -708,7 +708,7 @@ struct PolaritySorter
 
 Also reverts all stuff in Gass-elimination
 */
-void Solver::cancelUntil(int level)
+void Solver::cancelUntil(uint32_t level)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Canceling until level " << level;
@@ -716,7 +716,7 @@ void Solver::cancelUntil(int level)
     cout << endl;
     #endif
 
-    if ((int)decisionLevel() > level) {
+    if (decisionLevel() > level) {
 
         #ifdef USE_GAUSS
         for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++)
