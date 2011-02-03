@@ -392,7 +392,7 @@ protected:
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
     //
-    vector<bool>        seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
+    vec<char>           seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
     vec<Lit>            analyze_stack;
     vec<Lit>            analyze_toclear;
 
@@ -408,7 +408,7 @@ protected:
             Lit lit;
             uint32_t numInCache;
     };
-    vector<bool>        seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
+    vec<char>           seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
     vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     vector<TransCache>  transOTFCache;

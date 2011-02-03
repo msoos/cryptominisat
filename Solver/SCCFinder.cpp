@@ -93,7 +93,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             vector<LitExtra>& transCache = solver.transOTFCache[(~vertLit).toInt()].lits;
             vector<LitExtra>::iterator it = transCache.begin();
             vector<LitExtra>::iterator it2 = it;
-            uint32_t newSize = 0;
+            size_t newSize = 0;
             for (vector<LitExtra>::iterator end = transCache.end(); it != end; it++) {
                 Lit lit = it->getLit();
                 lit = replaceTable[lit.var()] ^ lit.sign();

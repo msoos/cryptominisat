@@ -171,15 +171,15 @@ Var Solver::newVar(bool dvar)
     level     .push(std::numeric_limits<uint32_t>::max());
     binPropData.push();
     activity  .push(0);
-    seen      .push_back(0);
-    seen      .push_back(0);
+    seen      .push(0);
+    seen      .push(0);
     permDiff  .push(0);
     unWindGlue.push(NULL);
     popularity.push(0);
 
     //Transitive OTF self-subsuming resolution
-    seen2     .push_back(0);
-    seen2     .push_back(0);
+    seen2     .push(0);
+    seen2     .push(0);
     transOTFCache.push_back(TransCache());
     transOTFCache.push_back(TransCache());
     litReachable.push_back(LitReachData());
@@ -995,12 +995,12 @@ void Solver::saveOTFData()
     TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
     oTFCache.conflictLastUpdated = conflicts;
 
-    vector<LitExtra> lits;
+    vector<Lit> lits;
     for (int sublevel = trail.size()-1; sublevel > (int)trail_lim[0]; sublevel--) {
         Lit lit = trail[sublevel];
-        lits.push_back(LitExtra(lit, false));
+        lits.push_back(lit);
     }
-    oTFCache.merge(lits);
+    oTFCache.merge(lits, false, seen);
 }
 
 //=================================================================================================
@@ -1114,7 +1114,7 @@ Lit Solver::pickBranchLit()
 Assumes 'seen' is cleared (will leave it cleared)
 */
 template<class T1, class T2>
-bool subset(const T1& A, const T2& B, vector<bool>& seen)
+bool subset(const T1& A, const T2& B, vec<char>& seen)
 {
     for (uint32_t i = 0; i != B.size(); i++)
         seen[B[i].toInt()] = 1;
@@ -1497,7 +1497,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
 {
     assert(conf.doCacheOTFSSR);
-    vector<LitExtra> lits;
+    vector<Lit> lits;
 
     toRecursiveProp.push(~lit);
     while(!toRecursiveProp.empty()) {
@@ -1512,17 +1512,20 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
                 //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
                 if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) continue;
                 seen2[otherLit.toInt()] = 1;
-                lits.push_back(LitExtra(otherLit, false));
+                lits.push_back(otherLit);
                 toRecursiveProp.push(otherLit);
             }
         }
     }
     assert(toRecursiveProp.empty());
-    transOTFCache[lit.toInt()].merge(lits);
 
-    for (vector<LitExtra>::const_iterator it = transOTFCache[lit.toInt()].lits.begin(), end = transOTFCache[lit.toInt()].lits.end(); it != end; it++) {
-        seen[(~(it->getLit())).toInt()] = 0;
-        seen2[it->getLit().toInt()] = 0;
+    for (vector<Lit>::const_iterator  it = lits.begin(), end = lits.end(); it != end; it++) {
+        seen2[it->toInt()] = 0;
+    }
+    transOTFCache[lit.toInt()].merge(lits, false, seen2);
+
+    for (vector<LitExtra>::const_iterator  it = transOTFCache[lit.toInt()].lits.begin(), end = transOTFCache[lit.toInt()].lits.end(); it != end; it++) {
+        seen[it->getLit().toInt()] = 0;
     }
 
     transOTFCache[lit.toInt()].conflictLastUpdated = conflicts;

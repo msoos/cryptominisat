@@ -1047,11 +1047,11 @@ const bool Subsumer::subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBi
         failed = !onlyNonLearntBins->propagate();
     if (failed) return false;
 
-    vector<LitExtra> lits;
+    vector<Lit> lits;
     assert(solver.decisionLevel() > 0);
     for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
         Lit x = solver.trail[sublevel];
-        lits.push_back(LitExtra(x, true));
+        lits.push_back(x);
         solver.assigns[x.var()] = l_Undef;
     }
     solver.assigns[solver.trail[solver.trail_lim[0]].var()] = l_Undef;
@@ -1060,8 +1060,8 @@ const bool Subsumer::subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBi
     solver.trail_lim.shrink_(solver.trail_lim.size());
     //solver.cancelUntilLight();
 
+    solver.transOTFCache[(~lit).toInt()].merge(lits, true, solver.seen);
     solver.transOTFCache[(~lit).toInt()].conflictLastUpdated = solver.conflicts;
-    solver.transOTFCache[(~lit).toInt()].merge(lits);
     return solver.ok;
 }
 /**

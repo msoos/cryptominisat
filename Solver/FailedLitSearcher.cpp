@@ -373,7 +373,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     assert(solver.decisionLevel() > 0);
     //vector<Lit> oldCache;
-    vector<LitExtra> lit1OTFCache;
+    vector<Lit> lit1OTFCache;
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x = solver.trail[c].var();
         propagated.setBit(x);
@@ -388,11 +388,11 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
         if (binXorFind) removeVarFromXors(x);
         if (solver.conf.doCacheOTFSSR && c != (int)solver.trail_lim[0]) {
-            lit1OTFCache.push_back(LitExtra(solver.trail[c], false));
+            lit1OTFCache.push_back(solver.trail[c]);
         }
     }
     if (solver.conf.doCacheOTFSSR) {
-        solver.transOTFCache[(~lit1).toInt()].merge(lit1OTFCache);
+        solver.transOTFCache[(~lit1).toInt()].merge(lit1OTFCache, false, solver.seen);
         solver.transOTFCache[(~lit1).toInt()].conflictLastUpdated = solver.conflicts;
     }
 
@@ -433,7 +433,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     assert(solver.decisionLevel() > 0);
-    vector<LitExtra> lit2OTFCache;
+    vector<Lit> lit2OTFCache;
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x  = solver.trail[c].var();
         if (propagated[x]) {
@@ -460,11 +460,11 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
         if (binXorFind) removeVarFromXors(x);
         if (solver.conf.doCacheOTFSSR && c != (int)solver.trail_lim[0]) {
-            lit2OTFCache.push_back(LitExtra(solver.trail[c], false));
+            lit2OTFCache.push_back(solver.trail[c]);
         }
     }
     if (solver.conf.doCacheOTFSSR) {
-        solver.transOTFCache[(~lit2).toInt()].merge(lit2OTFCache);
+        solver.transOTFCache[(~lit2).toInt()].merge(lit2OTFCache, false, solver.seen);
         solver.transOTFCache[(~lit2).toInt()].conflictLastUpdated = solver.conflicts;
     }
 
