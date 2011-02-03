@@ -2721,7 +2721,6 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
     if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
-    reArrangeClauses();
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
@@ -2756,6 +2755,7 @@ end:
     #endif //#ifdef BURST_SEARCH
 
     savedState.restore();
+    reArrangeClauses();
     simplifying = false;
 
     if (status == l_Undef && gaussWasCleared && !matrixFinder->findMatrixes())
