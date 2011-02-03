@@ -1895,8 +1895,8 @@ PropBy Solver::propagate(const bool update)
         cout << "ws origSize: "<< ws.size() << endl;
         #endif
 
-        i = j = ws.getData();
-        i2 = i+1;
+        i = i2 = j = ws.getData();
+        i2++;
         Watched *end = ws.getDataEnd();
         for (; i != end; i++, i2++) {
             #ifdef VERBOSE_DEBUG_PROP
