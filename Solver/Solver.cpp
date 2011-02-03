@@ -1736,14 +1736,14 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p
     const uint32_t clauseNum = c.getNum();
     ClauseData& data = clauseData[clauseNum];
     const bool watchNum = i->getWatchNum();
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG_PROP
     printf("PropNorm. Watches: %d, %d -- this is watchNum %d\n", data[0], data[1], watchNum);
     #endif
     assert(c[data[watchNum]] == ~p);
 
     // If other watch is true, then clause is already satisfied.
     if (value(c[data[!watchNum]]).getBool()) {
-        #ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUG_PROP
         printf("Other watch is true\n");
         #endif
         *j = Watched(offset, i->getBlockedLit(), watchNum);
@@ -1755,7 +1755,7 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p
     for (uint16_t numLit = 0, size = c.size(); numLit < size; numLit++) {
         if (numLit == data[0] || numLit == data[1]) continue;
         if (value(c[numLit]) == l_True) {
-            #ifdef VERBOSE_DEBUG
+            #ifdef VERBOSE_DEBUG_PROP
             printf("new watch: %d watchNum: %d\n", numLit, watchNum);
             #endif
             data[watchNum] = numLit;
@@ -1765,7 +1765,7 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p
         if (value(c[numLit]) == l_Undef) other = numLit;
     }
     if (other != std::numeric_limits<uint32_t>::max()) {
-        #ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUG_PROP
         printf("new watch: %d watchNum: %d\n", other, watchNum);
         #endif
         data[watchNum] = other;
@@ -1773,20 +1773,20 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p
         return true;
     }
 
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG_PROP
     printf("Did not find watch\n");
     #endif
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[data[!watchNum]]) == l_False) {
-        #ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUG_PROP
         printf("PropNorm causing conflict\n");
         #endif
         confl = PropBy(offset, !watchNum);
         qhead = trail.size();
         return false;
     } else {
-        #ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUG_PROP
         printf("PropNorm causing propagation\n");
         #endif
         if (full) uncheckedEnqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
@@ -1880,7 +1880,7 @@ PropBy Solver::propagate(const bool update)
     PropBy confl;
     uint32_t num_props = 0;
 
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG_PROP
     cout << "Propagation started" << endl;
     #endif
 
@@ -1890,7 +1890,7 @@ PropBy Solver::propagate(const bool update)
         Watched        *i, *j, *i2;
         num_props += ws.size()/2 + 2;
 
-        #ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUG_PROP
         cout << "Propagating lit " << p << endl;
         cout << "ws origSize: "<< ws.size() << endl;
         #endif
@@ -1899,7 +1899,7 @@ PropBy Solver::propagate(const bool update)
         i2 = i+1;
         Watched *end = ws.getDataEnd();
         for (; i != end; i++, i2++) {
-            #ifdef VERBOSE_DEBUG
+            #ifdef VERBOSE_DEBUG_PROP
             cout << "end-i: " << end-i << endl;
             cout << "end-j: " << end-j << endl;
             cout << "i-j: " << i-j << endl;
@@ -1929,7 +1929,7 @@ PropBy Solver::propagate(const bool update)
                 num_props += 4;
                 if (!propNormalClause<full>(i, j, p, confl, update)) break;
                 else {
-                    #ifdef VERBOSE_DEBUG
+                    #ifdef VERBOSE_DEBUG_PROP
                     std::cout << "clause num " << i->getNormOffset() << " after propNorm: " << *clauseAllocator.getPointer(i->getNormOffset()) << std::endl;
                     #endif
                     continue;
