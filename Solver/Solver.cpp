@@ -1672,6 +1672,9 @@ void Solver::delayedEnqueueUpdate()
         polarity[v] = p.sign();
         popularity[v]++;
     }
+
+    lastDelayedEnqueueUpdate = trail.size();
+    lastDelayedEnqueueUpdateLevel = decisionLevel();
 }
 
 void Solver::uncheckedEnqueueExtend(const Lit p, const PropBy& from)
@@ -2191,6 +2194,7 @@ void Solver::reduceDB()
     #endif
 
 
+    delayedEnqueueUpdate();
     uint32_t removeNum = (double)learnts.size() * (double)RATIOREMOVECLAUSES;
     uint32_t totalNumRemoved = 0;
     uint32_t totalNumNonRemoved = 0;
