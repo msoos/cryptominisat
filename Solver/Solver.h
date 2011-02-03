@@ -902,17 +902,15 @@ inline void Solver::findAllAttach() const
 
 inline void Solver::uncheckedEnqueueLight(const Lit p)
 {
-    __builtin_prefetch(watches.getData()+p.toInt(), 1, 0);
     assert(assigns[p.var()] == l_Undef);
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
-    __builtin_prefetch(watches[p.toInt()].getData(), 1, 0);
+    __builtin_prefetch(watches[p.toInt()].getData());
 }
 
 inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev2Ancestor, const bool learntLeadHere)
 {
-    __builtin_prefetch(watches.getData()+p.toInt(), 1, 0);
     assert(assigns[p.var()] == l_Undef);
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
@@ -920,7 +918,7 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     binPropData[p.var()].lev = binSubLevel;
     binPropData[p.var()].lev1Ancestor = lev2Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
-    __builtin_prefetch(watches[p.toInt()].getData(), 1, 0);
+    __builtin_prefetch(watches[p.toInt()].getData(), 0);
 }
 
 inline void Solver::increaseAgility(const bool flipped)

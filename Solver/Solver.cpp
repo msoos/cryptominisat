@@ -1613,7 +1613,6 @@ and does some logging if logging is enabled
 */
 void Solver::uncheckedEnqueue(const Lit p, const PropBy from)
 {
-    __builtin_prefetch(watches.getData()+p.toInt(), 1, 0);
     #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
     #ifndef VERBOSE_DEBUG
     if (decisionLevel() == 0)
@@ -1647,7 +1646,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy from)
     if (!from.isNULL()) increaseAgility(polarity[p.var()] != p.sign());
     polarity[v] = p.sign();
     trail.push(p);
-    __builtin_prefetch(watches[p.toInt()].getData(), 1, 0);
+    __builtin_prefetch(watches[p.toInt()].getData());
     popularity[v]++;
 
     #ifdef STATS_NEEDED
@@ -1888,7 +1887,6 @@ PropBy Solver::propagate(const bool update)
     while (qhead < trail.size()) {
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
-        __builtin_prefetch(ws.getData(), 1, 0);
         Watched        *i, *j, *i2;
         num_props += ws.size()/2 + 2;
 
@@ -1912,7 +1910,7 @@ PropBy Solver::propagate(const bool update)
             #endif
 
             if (i2 != end && i2->isClause() && !value(i2->getBlockedLit()).getBool()) {
-                __builtin_prefetch(clauseAllocator.getPointer(i2->getNormOffset()), 0, 0);
+                __builtin_prefetch(clauseAllocator.getPointer(i2->getNormOffset()), 0);
             }
 
             if (i->isBinary()) {
@@ -2183,7 +2181,7 @@ void Solver::reduceDB()
     uint64_t totalSizeOfNonRemoved = 0;
     uint32_t numThreeLongLearnt = 0;
     for (i = j = 0; i < std::min(removeNum, learnts.size()); i++){
-        if (i+1 < learnts.size()) __builtin_prefetch(learnts[i+1], 0, 0);
+        if (i+1 < learnts.size()) __builtin_prefetch(learnts[i+1], 0);
         assert(learnts[i]->size() > 2);
         if (!locked(*learnts[i])
             && learnts[i]->getGlue() > 2
