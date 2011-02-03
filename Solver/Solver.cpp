@@ -99,6 +99,8 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         #endif
         , learnt_clause_group(0)
         , libraryCNFFile   (NULL)
+        , lastDelayedEnqueueUpdate (0)
+        , lastDelayedEnqueueUpdateLevel (0)
         , restartType      (static_restart)
         , subRestartType   (static_restart)
         , simplifying      (false)
@@ -754,6 +756,8 @@ void Solver::cancelUntil(uint32_t level)
     #ifdef VERBOSE_DEBUG
     cout << "Canceling finished. (now at level: " << decisionLevel() << " sublevel: " << trail.size()-1 << ")" << endl;
     #endif
+    lastDelayedEnqueueUpdate = trail.size();
+    lastDelayedEnqueueUpdateLevel = decisionLevel();
 }
 
 void Solver::cancelUntilLight()
@@ -1641,18 +1645,33 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy from)
     const Var v = p.var();
     assert(value(v).isUndef());
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
-    level   [v] = decisionLevel();
     reason  [v] = from;
-    if (!from.isNULL()) increaseAgility(polarity[p.var()] != p.sign());
-    polarity[v] = p.sign();
     trail.push(p);
     __builtin_prefetch(watches[p.toInt()].getData());
-    popularity[v]++;
+
+    if (decisionLevel() == 0) level[v] = 0;
 
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
         logger.propagation(p, from);
     #endif
+}
+
+void Solver::delayedEnqueueUpdate()
+{
+    uint32_t pseudoLevel = lastDelayedEnqueueUpdateLevel;
+
+    for (uint32_t i = lastDelayedEnqueueUpdate; i < trail.size(); i++) {
+        if (pseudoLevel < trail_lim.size()
+            && trail_lim[pseudoLevel] == i) pseudoLevel++;
+
+        Lit p = trail[i];
+        Var v = p.var();
+        level[v] = pseudoLevel;
+        increaseAgility(polarity[p.var()] != p.sign());
+        polarity[v] = p.sign();
+        popularity[v]++;
+    }
 }
 
 void Solver::uncheckedEnqueueExtend(const Lit p, const PropBy& from)
@@ -2522,6 +2541,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     uint32_t backtrack_level;
     uint32_t glue;
 
+    delayedEnqueueUpdate();
     conflicts++;
     conflictC++;
     if (decisionLevel() == 0)

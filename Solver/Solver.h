@@ -431,14 +431,21 @@ protected:
     FILE     *libraryCNFFile;           //The file that all calls from the library are logged
 
     /////////////////
-    // Propagating
+    // Unchecked enqueue
     ////////////////
-    Lit      pickBranchLit    ();                                                      // Return the next decision variable.
-    void     newDecisionLevel ();                                                      // Begins a new decision level.
+    uint32_t lastDelayedEnqueueUpdate;
+    uint32_t lastDelayedEnqueueUpdateLevel;
+    void     delayedEnqueueUpdate();
     void     uncheckedEnqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueExtend (const Lit p, const PropBy& from = PropBy());
     void     uncheckedEnqueueLight (const Lit p);
     void     uncheckedEnqueueLight2(const Lit p, const uint32_t binPropDatael, const Lit lev2Ancestor, const bool learntLeadHere);
+
+    /////////////////
+    // Propagating
+    ////////////////
+    Lit      pickBranchLit    ();                                                      // Return the next decision variable.
+    void     newDecisionLevel ();                                                      // Begins a new decision level.
     PropBy   propagateBin(vec<Lit>& uselessBin);
     PropBy   propagateNonLearntBin();
     bool     multiLevelProp;
