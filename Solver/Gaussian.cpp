@@ -803,7 +803,7 @@ void Gaussian::analyse_confl(const matrixset& m, const uint32_t row, uint32_t& m
 
 
     #ifdef VERBOSE_DEBUG
-    if (maxlevel != std::numeric_limits<int32_t>::max())
+    if (maxlevel != std::numeric_limits<uint32_t>::max())
         cout << "(" << matrix_no << ")Better conflict found.";
     else
         cout << "(" << matrix_no << ")Found a possible conflict.";
