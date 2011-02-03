@@ -1674,7 +1674,7 @@ is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
 template<bool full>
-inline const bool Solver::propBinaryClause(Watched* i,Watched *end, const Lit p, PropBy& confl)
+inline const bool Solver::propBinaryClause(Watched* i, const Lit p, PropBy& confl)
 {
     lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
@@ -1698,7 +1698,7 @@ is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
 template<bool full>
-inline const bool Solver::propTriClause(Watched* i, Watched *end, const Lit p, PropBy& confl)
+inline const bool Solver::propTriClause(Watched* i, const Lit p, PropBy& confl)
 {
     lbool val = value(i->getOtherLit());
     lbool val2 = value(i->getOtherLit2());
@@ -1725,7 +1725,7 @@ We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
 template<bool full>
-inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update)
+inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl, const bool update)
 {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
@@ -1817,7 +1817,7 @@ better memory-accesses since the watchlist is already in the memory...
 \todo maybe not worth it, and a variable-based watchlist should be used
 */
 template<bool full>
-inline const bool Solver::propXorClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
+inline const bool Solver::propXorClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl)
 {
     ClauseOffset offset = i->getXorOffset();
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(offset);
@@ -1917,19 +1917,19 @@ PropBy Solver::propagate(const bool update)
 
             if (i->isBinary()) {
                 *j++ = *i;
-                if (!propBinaryClause<full>(i, end, p, confl)) break;
+                if (!propBinaryClause<full>(i, p, confl)) break;
                 else continue;
             } //end BINARY
 
             if (i->isTriClause()) {
                 *j++ = *i;
-                if (!propTriClause<full>(i, end, p, confl)) break;
+                if (!propTriClause<full>(i, p, confl)) break;
                 else continue;
             } //end TRICLAUSE
 
             if (i->isClause()) {
                 num_props += 4;
-                if (!propNormalClause<full>(i, j, end, p, confl, update)) break;
+                if (!propNormalClause<full>(i, j, p, confl, update)) break;
                 else {
                     #ifdef VERBOSE_DEBUG
                     std::cout << "clause num " << i->getNormOffset() << " after propNorm: " << *clauseAllocator.getPointer(i->getNormOffset()) << std::endl;
@@ -1940,7 +1940,7 @@ PropBy Solver::propagate(const bool update)
 
             if (i->isXorClause()) {
                 num_props += 10;
-                if (!propXorClause<full>(i, j, end, p, confl)) break;
+                if (!propXorClause<full>(i, j, p, confl)) break;
                 else continue;
             } //end XORCLAUSE
         }

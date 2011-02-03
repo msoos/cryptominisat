@@ -447,20 +447,20 @@ protected:
     template<bool full>
     PropBy     propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
     template<bool full>
-    const bool propTriClause   (Watched* i, Watched *end, const Lit p, PropBy& confl);
+    const bool propTriClause   (Watched* i, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propBinaryClause(Watched* i, Watched *end, const Lit p, PropBy& confl);
+    const bool propBinaryClause(Watched* i, const Lit p, PropBy& confl);
     vec<uint32_t> popularity;
     template<bool full>
-    const bool propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update);
+    const bool propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl, const bool update);
     template<bool full>
-    const bool propXorClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
+    const bool propXorClause   (Watched* &i, Watched* &j, const Lit p, PropBy& confl);
     void     sortWatched();
 
     ///////////////
     // Conflicting
     ///////////////
-    void     cancelUntil      (int level);                                             // Backtrack until a certain level.
+    void     cancelUntil      (uint32_t level);                                             // Backtrack until a certain level.
     void     cancelUntilLight();
     Clause*  analyze          (PropBy confl, vec<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &nblevels, const bool update);
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
