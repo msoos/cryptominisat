@@ -907,6 +907,58 @@ inline void Solver::findAllAttach() const
 }
 #endif //DEBUG_ATTACH_FULL
 
+/**
+@brief Enqueues&sets a new fact that has been found
+
+Call this when a fact has been found. Sets the value, enqueues it for
+propagation, sets its level, sets why it was propagated, saves the polarity,
+and does some logging if logging is enabled
+
+@p p the fact to enqueue
+@p from Why was it propagated (binary clause, tertiary clause, normal clause)
+*/
+inline void  Solver::uncheckedEnqueue(const Lit p, const PropBy from)
+{
+    #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
+    #ifndef VERBOSE_DEBUG
+    if (decisionLevel() == 0)
+    #endif //VERBOSE_DEBUG
+    std::cout << "uncheckedEnqueue var " << p.var()+1
+    << " to val " << !p.sign()
+    << " level: " << decisionLevel()
+    << " sublevel: " << trail.size()
+    << " by: " << from << std::endl;
+    if (from.isClause() && !from.isNULL()) {
+        std::cout << "by clause: " << *clauseAllocator.getPointer(from.getClause()) << std::endl;
+    }
+    #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
+
+    #ifdef UNCHECKEDENQUEUE_DEBUG
+    assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
+    assert(decisionLevel() == 0 || !xorSubsumer->getVarElimed()[p.var()]);
+    Var repl = varReplacer->getReplaceTable()[p.var()].var();
+    if (repl != p.var()) {
+        assert(!subsumer->getVarElimed()[repl]);
+        assert(!xorSubsumer->getVarElimed()[repl]);
+        assert(partHandler->getSavedState()[repl] == l_Undef);
+    }
+    #endif
+
+    const Var v = p.var();
+    assert(value(v).isUndef());
+    assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    reason  [v] = from;
+    trail.push(p);
+    __builtin_prefetch(watches[p.toInt()].getData());
+
+    if (decisionLevel() == 0) level[v] = 0;
+
+    #ifdef STATS_NEEDED
+    if (dynamic_behaviour_analysis)
+        logger.propagation(p, from);
+    #endif
+}
+
 inline void Solver::uncheckedEnqueueLight(const Lit p)
 {
     assert(assigns[p.var()] == l_Undef);
