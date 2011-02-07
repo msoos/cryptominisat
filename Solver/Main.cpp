@@ -315,7 +315,6 @@ void Main::printUsage(char** argv)
     printf("  --syncconf       = Sync unit&bin clauses every no. conflicts\n");
     printf("  --threads        = Num threads (default is 1)\n");
     printf("  --nogatefind     = Don't find gates&do ER\n");
-    printf("  --noer           = Don't do ER\n");
     printf("  --noalwaysfmin   = Don't always try to further minimise -- only sometimes\n");
     printf("\n");
 }
@@ -610,8 +609,6 @@ void Main::parseCommandLine()
             conf.doRemUselessLBins = false;
         } else if ((value = hasPrefix(argv[i], "--nogatefind"))) {
             conf.doGateFind = false;
-        } else if ((value = hasPrefix(argv[i], "--noer"))) {
-            conf.doER = false;
         } else if ((value = hasPrefix(argv[i], "--noalwaysfmin"))) {
             conf.doAlwaysFMinim = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
