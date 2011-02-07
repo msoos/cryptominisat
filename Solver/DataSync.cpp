@@ -56,6 +56,7 @@ DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     assert(err == MPI_SUCCESS);
     release_assert(!(mpiSize > 1 && mpiRank == 0));
+    assert(!(mpiSize > 0 && sharedData == NULL));
 
     assert(sizeof(unsigned) == sizeof(uint32_t));
     #endif
