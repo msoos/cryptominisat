@@ -40,7 +40,7 @@ SolverConf::SolverConf() :
         , syncEveryConf(SYNC_EVERY_CONFL)
 
         //optimisations to do
-        , doFindXors       (true)
+        , doFindXors       (false)
         , doFindEqLits     (true)
         , doRegFindEqLits  (true)
         , doReplace        (true)
