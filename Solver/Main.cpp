@@ -737,8 +737,8 @@ const int Main::solve()
     if (mpiSize > 1 && mpiRank > 1) {
         conf.verbosity = 0;
         conf.origSeed = mpiRank;
-        conf.simpStartMult *= 0.6;
-        conf.simpStartMMult *= 0.6;
+        conf.simpStartMult *= 0.9;
+        conf.simpStartMMult *= 0.9;
         if (mpiRank % 6 == 3) {
             conf.polarity_mode = polarity_false;
             conf.fixRestartType = dynamic_restart;
