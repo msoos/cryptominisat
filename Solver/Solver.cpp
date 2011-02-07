@@ -2660,6 +2660,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     testAllClauseAttach();
     bool gaussWasCleared = clearGaussMatrixes();
 
+    reArrangeClauses();
     StateSaver savedState(*this);;
 
     #ifdef BURST_SEARCH
@@ -2729,7 +2730,6 @@ end:
     #endif //#ifdef BURST_SEARCH
 
     savedState.restore();
-    reArrangeClauses();
     simplifying = false;
 
     if (status == l_Undef && gaussWasCleared && !matrixFinder->findMatrixes())
