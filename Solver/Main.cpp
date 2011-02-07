@@ -670,13 +670,6 @@ void Main::parseCommandLine()
             }
         }
     }
-    if (conf.verbosity >= 1) {
-        if (twoFileNamesPresent) {
-            std::cout << "c Outputting solution to file: " << argv[argc-1] << std::endl;
-        } else {
-            std::cout << "c Outputting solution to console" << std::endl;
-        }
-    }
 
     if (unparsedOptions == 2 && needTwoFileNames == true) {
         std::cout << "Command line wrong. You probably frogot to add "<< std::endl
@@ -749,6 +742,18 @@ const int Main::solve()
         }
     }
     #endif //USE_MPI
+
+    if ((conf.verbosity >= 1)
+        #ifdef USE_MPI
+        && (mpiSize == 1 || (mpiSize>1 && mpiRank == 1))
+        #endif
+        ){
+        if (twoFileNamesPresent) {
+            std::cout << "c Outputting solution to file: " << argv[argc-1] << std::endl;
+        } else {
+            std::cout << "c Outputting solution to console" << std::endl;
+        }
+    }
 
     MTSolver solver(numThreads, conf, gaussconfig);
     solversToInterrupt = &solver;
