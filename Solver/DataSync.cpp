@@ -97,20 +97,22 @@ const bool DataSync::syncData()
     bool ok;
     #pragma omp critical (ERSync)
     {
-        if (!sharedData->EREnded
-            && sharedData->threadAddingVars == solver.threadNum
-            && solver.subsumer->getFinishedAddingVars())
-            syncERVarsFromHere();
+        if (solver.conf.doER) {
+            if (!sharedData->EREnded
+                && sharedData->threadAddingVars == solver.threadNum
+                && solver.subsumer->getFinishedAddingVars())
+                syncERVarsFromHere();
 
-        if (sharedData->EREnded
-            && sharedData->threadAddingVars != solver.threadNum
-            && sharedData->othersSyncedER.find(solver.threadNum) == sharedData->othersSyncedER.end())
-            syncERVarsToHere();
+            if (sharedData->EREnded
+                && sharedData->threadAddingVars != solver.threadNum
+                && sharedData->othersSyncedER.find(solver.threadNum) == sharedData->othersSyncedER.end())
+                syncERVarsToHere();
 
-        if (sharedData->othersSyncedER.size() == (uint32_t)(solver.numThreads-1)) {
-            sharedData->threadAddingVars = (sharedData->threadAddingVars+1) % solver.numThreads;
-            sharedData->EREnded = false;
-            sharedData->othersSyncedER.clear();
+            if (sharedData->othersSyncedER.size() == (uint32_t)(solver.numThreads-1)) {
+                sharedData->threadAddingVars = (sharedData->threadAddingVars+1) % solver.numThreads;
+                sharedData->EREnded = false;
+                sharedData->othersSyncedER.clear();
+            }
         }
 
         #pragma omp critical (unitData)
