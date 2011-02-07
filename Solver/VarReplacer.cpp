@@ -173,8 +173,9 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
         XorClause& c = **r;
 
         bool changed = false;
-        Var origVar1 = c[0].var();
-        Var origVar2 = c[1].var();
+        const ClauseData& data = solver.clauseData[c.getNum()];
+        Var origVar1 = c[data[0]].var();
+        Var origVar2 = c[data[1]].var();
 
         for (Lit *l = &c[0], *end2 = l + c.size(); l != end2; l++) {
             Lit newlit = table[l->var()];
@@ -245,7 +246,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     case 1:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
         solver.uncheckedEnqueue(Lit(c[0].var(), c.xorEqualFalse()));
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         return true;
     case 2: {
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
@@ -361,7 +362,7 @@ const bool VarReplacer::replaceBins()
     solver.clauses_literals -= removedNonLearnt;
     solver.numBins -= (removedLearnt + removedNonLearnt)/2;
 
-    if (solver.ok) solver.ok = (solver.propagate().isNULL());
+    if (solver.ok) solver.ok = (solver.propagate<true>().isNULL());
     return solver.ok;
 }
 
@@ -375,9 +376,11 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
     for (Clause **end = a + cs.size(); r != end; r++) {
         Clause& c = **r;
         assert(c.size() > 2);
+
         bool changed = false;
-        Lit origLit1 = c[0];
-        Lit origLit2 = c[1];
+        const ClauseData& data = solver.clauseData[c.getNum()];
+        Lit origLit1 = c[data[0]];
+        Lit origLit2 = c[data[1]];
         Lit origLit3 = (c.size() == 3) ? c[2] : lit_Undef;
         for (Lit *l = c.getData(), *end2 = l + c.size();  l != end2; l++) {
             if (table[l->var()].var() != l->var()) {
@@ -449,7 +452,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         return true;
     case 1 :
         solver.uncheckedEnqueue(c[0]);
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         return true;
     case 2:
         solver.attachBinClause(c[0], c[1], c.learnt());
@@ -509,7 +512,7 @@ void VarReplacer::extendModelPossible() const
                 assert(solver.assigns[i].getBool() == (solver.assigns[it->var()].getBool() ^ it->sign()));
             }
         }
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         assert(solver.ok);
     }
 }
@@ -573,6 +576,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
     #endif
 
+    assert(solver.ok);
     assert(solver.decisionLevel() == 0);
     assert(ps.size() == 2);
     assert(!ps[0].sign());
@@ -615,11 +619,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     lbool val1 = solver.value(lit1);
     lbool val2 = solver.value(lit2);
     if (val1 != l_Undef && val2 != l_Undef) {
-        if (val1 != val2) {
-            solver.ok = false;
-            return false;
-        }
-        return true;
+        if (val1 != val2) solver.ok = false;
+        return solver.ok;
     }
 
     if ((val1 != l_Undef && val2 == l_Undef) || (val2 != l_Undef && val1 == l_Undef)) {
@@ -627,7 +628,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
         if (val1 != l_Undef) solver.uncheckedEnqueue(lit2 ^ (val1 == l_False));
         else solver.uncheckedEnqueue(lit1 ^ (val2 == l_False));
 
-        if (solver.ok) solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         return solver.ok;
     }
 
@@ -635,7 +636,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     assert(val1 == l_Undef && val2 == l_Undef);
     #endif //DEBUG_REPLACER
 
-    addBinaryXorClause(lit1, lit2 ^ true, group, false);
+    addBinaryXorClause(lit1, lit2 ^ true, group);
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
@@ -670,14 +671,14 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 
 \todo Clean this messy internal/external thing using a better datastructure.
 */
-void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group, const bool addBinAsLearnt)
+void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group)
 {
-    solver.attachBinClause(lit1, lit2, addBinAsLearnt);
+    solver.attachBinClause(lit1, lit2, false);
     solver.dataSync->signalNewBinClause(lit1, lit2);
 
     lit1 ^= true;
     lit2 ^= true;
-    solver.attachBinClause(lit1, lit2, addBinAsLearnt);
+    solver.attachBinClause(lit1, lit2, false);
     solver.dataSync->signalNewBinClause(lit1, lit2);
 }
 

@@ -66,7 +66,7 @@ const bool UselessBinRemover::removeUslessBinFull()
             fixed = true;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate().isNULL());
+            solver.ok = (solver.propagate<true>().isNULL());
             if (!solver.ok) return false;
             continue;
         }
@@ -76,7 +76,7 @@ const bool UselessBinRemover::removeUslessBinFull()
             fixed = true;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
-            solver.ok = (solver.propagate().isNULL());
+            solver.ok = (solver.propagate<true>().isNULL());
             if (!solver.ok) return false;
             continue;
         }

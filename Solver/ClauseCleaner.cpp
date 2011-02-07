@@ -120,14 +120,18 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
 inline const bool ClauseCleaner::cleanClause(Clause*& cc)
 {
     Clause& c = *cc;
+    assert(c.size() > 2);
 
-    Lit origLit1 = c[0];
-    Lit origLit2 = c[1];
+    ClauseData& data = solver.clauseData[c.getNum()];
+    ClauseData oldData = data;
     uint32_t origSize = c.size();
+    Lit origLit1 = c[data[0]];
+    Lit origLit2 = c[data[1]];
     Lit origLit3 = (origSize == 3) ? c[2] : lit_Undef;
 
     Lit *i, *j, *end;
-    for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
+    uint32_t num = 0;
+    for (i = j = c.getData(), end = i + c.size();  i != end; i++, num++) {
         lbool val = solver.value(*i);
         if (val == l_Undef) {
             *j++ = *i;
@@ -138,6 +142,8 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
             solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             return true;
         }
+        if (num < oldData[0]) data[0]--;
+        if (num < oldData[1]) data[1]--;
     }
     c.shrink(i-j);
 
@@ -207,10 +213,14 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
 
 inline const bool ClauseCleaner::cleanClause(XorClause& c)
 {
-    Lit *i, *j, *end;
-    Var origVar1 = c[0].var();
-    Var origVar2 = c[1].var();
+    assert(c.size() > 2);
+
+    const ClauseData& data = solver.clauseData[c.getNum()];
     uint32_t origSize = c.size();
+    Var origVar1 = c[data[0]].var();
+    Var origVar2 = c[data[1]].var();
+
+    Lit *i, *j, *end;
     for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
         const lbool& val = solver.assigns[i->var()];
         if (val.isUndef()) {

@@ -27,7 +27,7 @@ BothCache::BothCache(Solver& _solver) :
     solver(_solver)
 {};
 
-const bool BothCache::tryBoth(vector<TransCache>& cache)
+const bool BothCache::tryBoth(const vector<TransCache>& cache)
 {
     vec<bool> seen(solver.nVars(), 0);
     vec<bool> val(solver.nVars(), 0);
@@ -46,8 +46,8 @@ const bool BothCache::tryBoth(vector<TransCache>& cache)
             continue;
 
         Lit lit = Lit(var, false);
-        vector<Lit> const* cache1;
-        vector<Lit> const* cache2;
+        vector<LitExtra> const* cache1;
+        vector<LitExtra> const* cache2;
 
         bool startWithTrue;
         if (cache[lit.toInt()].lits.size() < cache[(~lit).toInt()].lits.size()) {
@@ -62,31 +62,31 @@ const bool BothCache::tryBoth(vector<TransCache>& cache)
 
         if (cache1->size() == 0) continue;
 
-        for (vector<Lit>::const_iterator it = cache1->begin(), end = cache1->end(); it != end; it++) {
-            seen[it->var()] = true;
-            val[it->var()] = it->sign();
+        for (vector<LitExtra>::const_iterator it = cache1->begin(), end = cache1->end(); it != end; it++) {
+            seen[it->getLit().var()] = true;
+            val[it->getLit().var()] = it->getLit().sign();
         }
 
-        for (vector<Lit>::const_iterator it = cache2->begin(), end = cache2->end(); it != end; it++) {
-            if (seen[it->var()]) {
-                Var var2 = it->var();
+        for (vector<LitExtra>::const_iterator it = cache2->begin(), end = cache2->end(); it != end; it++) {
+            if (seen[it->getLit().var()]) {
+                Var var2 = it->getLit().var();
                 if (solver.subsumer->getVarElimed()[var2]
                     || solver.xorSubsumer->getVarElimed()[var2]
                     || solver.varReplacer->getReplaceTable()[var2].var() != var2
                     || solver.partHandler->getSavedState()[var2] != l_Undef)
                     continue;
 
-                if  (val[it->var()] == it->sign()) {
+                if  (val[it->getLit().var()] == it->getLit().sign()) {
                     tmp.clear();
-                    tmp.push(*it);
+                    tmp.push(it->getLit());
                     solver.addClauseInt(tmp, 0, true);
                     if  (!solver.ok) goto end;
                     bProp++;
                 } else {
                     tmp.clear();
                     tmp.push(Lit(var, false));
-                    tmp.push(Lit(it->var(), false));
-                    bool sign = true ^ startWithTrue ^ it->sign();
+                    tmp.push(Lit(it->getLit().var(), false));
+                    bool sign = true ^ startWithTrue ^ it->getLit().sign();
                     solver.addXorClauseInt(tmp, sign , 0);
                     if  (!solver.ok) goto end;
                     bXProp++;
@@ -94,8 +94,8 @@ const bool BothCache::tryBoth(vector<TransCache>& cache)
             }
         }
 
-        for (vector<Lit>::const_iterator it = cache1->begin(), end = cache1->end(); it != end; it++) {
-            seen[it->var()] = false;
+        for (vector<LitExtra>::const_iterator it = cache1->begin(), end = cache1->end(); it != end; it++) {
+            seen[it->getLit().var()] = false;
         }
     }
 

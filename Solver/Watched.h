@@ -46,18 +46,18 @@ class Watched {
         /**
         @brief Constructor for a long normal clause
         */
-        Watched(const ClauseOffset offset, Lit blockedLit)
+        Watched(const ClauseOffset offset, Lit blockedLit, const bool watchNum)
         {
-            data1 = blockedLit.toInt();
+            data1 = watchNum + (blockedLit.toInt() << 1);
             data2 = (uint32_t)1 + ((uint32_t)offset << 2);
         }
 
         /**
         @brief Constructor for an xor-clause
         */
-        Watched(const ClauseOffset offset)
+        Watched(const ClauseOffset offset, const bool watchNum)
         {
-            data1 = (uint32_t)offset;
+            data1 = watchNum + ((uint32_t)offset<<1);
             data2 = (uint32_t)2;
         }
 
@@ -189,7 +189,15 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isClause());
             #endif
-            return data1AsLit();
+            return Lit::toLit(data1>>1);
+        }
+
+        const bool getWatchNum() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isClause() || isXorClause());
+            #endif
+            return data1&1;
         }
 
         /**
@@ -208,7 +216,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isXorClause());
             #endif
-            return (ClauseOffset)(data1);
+            return (ClauseOffset)(data1>>1);
         }
 
         void dump(FILE* outfile, const Lit lit) const

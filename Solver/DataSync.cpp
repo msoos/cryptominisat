@@ -220,7 +220,7 @@ const bool DataSync::syncFromMPI()
             goto end;
         }
     }
-    solver.ok = solver.propagate().isNULL();
+    solver.ok = solver.propagate<true>().isNULL();
     if (!solver.ok) goto end;
     mpiRecvUnitData += thisMpiRecvUnitData;
 
@@ -555,10 +555,10 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<BinClause>& b
             seen[it->getOtherLit().toInt()] = true;
         }
     }
-    const vector<Lit>& cache = solver.transOTFCache[(~lit).toInt()].lits;
-    for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
-        addedToSeen.push(*it);
-        seen[it->toInt()] = true;
+    const vector<LitExtra>& cache = solver.transOTFCache[(~lit).toInt()].lits;
+    for (vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+        addedToSeen.push(it->getLit());
+        seen[it->getLit().toInt()] = true;
     }
 
     vec<Lit> lits(2);
@@ -664,7 +664,7 @@ const bool DataSync::syncUnit(const lbool otherVal, const Var var, SharedData* s
             ) return true;
 
         solver.uncheckedEnqueue(litToEnqueue);
-        solver.ok = solver.propagate().isNULL();
+        solver.ok = solver.propagate<true>().isNULL();
         if (!solver.ok) return false;
         thisGotUnitData++;
         return true;

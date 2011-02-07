@@ -24,7 +24,7 @@ class ClauseVivifier {
     public:
         ClauseVivifier(Solver& solver);
         const bool vivify();
-        const bool vivifyClausesCache(vec<Clause*>& clauses, const vector<TransCache>& cache);
+        const bool vivifyClausesCache(vec<Clause*>& clauses);
 
     private:
 

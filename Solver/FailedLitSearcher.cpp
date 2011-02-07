@@ -166,7 +166,7 @@ const bool FailedLitSearcher::search()
         if (!bothCache.tryBoth(solver.transOTFCache)) return false;
     }
 
-    uint64_t numProps = 80 * 1000000;
+    uint64_t numProps = 100 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     solver.testAllClauseAttach();
@@ -219,7 +219,7 @@ const bool FailedLitSearcher::search()
     needToVisit.resize(solver.nVars(), 0);
     dontRemoveAncestor.resize(solver.nVars(), 0);
     hyperbinProps = 0;
-    maxHyperBinProps = numProps/3;
+    maxHyperBinProps = numProps/4;
     removedUselessLearnt = 0;
     removedUselessNonLearnt = 0;
 
@@ -345,7 +345,9 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         investigateXor.clear();
     }
 
-    propagated.setZero();
+    propagated.removeThese(propagatedBitSet);
+    assert(propagated.isZero());
+    propagatedBitSet.clear();
     twoLongXors.clear();
     bothSame.clear();
     binXorToAdd.clear();
@@ -361,27 +363,23 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
-    failed = (!solver.propagate(false).isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit1);
-        solver.ok = (solver.propagate(false).isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         if (!solver.ok) return false;
         return true;
     }
 
     assert(solver.decisionLevel() > 0);
     //vector<Lit> oldCache;
-    TransCache& lit1OTFCache = solver.transOTFCache[(~lit1).toInt()];
-    if (solver.conf.doCacheOTFSSR) {
-        lit1OTFCache.conflictLastUpdated = solver.conflicts;
-        //oldCache.swap(lit1OTFCache.lits);
-        lit1OTFCache.lits.clear();
-    }
+    vector<Lit> lit1OTFCache;
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x = solver.trail[c].var();
         propagated.setBit(x);
+        propagatedBitSet.push_back(x);
 
         if (solver.conf.doHyperBinRes) {
             unPropagatedBin.setBit(x);
@@ -393,8 +391,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
         if (binXorFind) removeVarFromXors(x);
         if (solver.conf.doCacheOTFSSR && c != (int)solver.trail_lim[0]) {
-            lit1OTFCache.lits.push_back(solver.trail[c]);
+            lit1OTFCache.push_back(solver.trail[c]);
         }
+    }
+    if (solver.conf.doCacheOTFSSR) {
+        solver.transOTFCache[(~lit1).toInt()].merge(lit1OTFCache, false, solver.seen);
+        solver.transOTFCache[(~lit1).toInt()].conflictLastUpdated = solver.conflicts;
     }
 
     if (binXorFind) {
@@ -423,23 +425,18 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit2);
-    failed = (!solver.propagate(false).isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit2);
-        solver.ok = (solver.propagate(false).isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         if (!solver.ok) return false;
         return true;
     }
 
     assert(solver.decisionLevel() > 0);
-    TransCache& lit2OTFCache = solver.transOTFCache[(~lit2).toInt()];
-    if (solver.conf.doCacheOTFSSR) {
-        lit2OTFCache.conflictLastUpdated = solver.conflicts;
-        //oldCache.swap(lit2OTFCache.lits);
-        lit2OTFCache.lits.clear();
-    }
+    vector<Lit> lit2OTFCache;
     for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
         Var x  = solver.trail[c].var();
         if (propagated[x]) {
@@ -466,8 +463,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
         if (binXorFind) removeVarFromXors(x);
         if (solver.conf.doCacheOTFSSR && c != (int)solver.trail_lim[0]) {
-            lit2OTFCache.lits.push_back(solver.trail[c]);
+            lit2OTFCache.push_back(solver.trail[c]);
         }
+    }
+    if (solver.conf.doCacheOTFSSR) {
+        solver.transOTFCache[(~lit2).toInt()].merge(lit2OTFCache, false, solver.seen);
+        solver.transOTFCache[(~lit2).toInt()].conflictLastUpdated = solver.conflicts;
     }
 
     //We now add the two-long xors that have been found through longer
@@ -501,7 +502,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.uncheckedEnqueue(bothSame[i]);
     }
     goodBothSame += bothSame.size();
-    solver.ok = (solver.propagate(false).isNULL());
+    solver.ok = (solver.propagate<true>().isNULL());
     if (!solver.ok) return false;
 
     for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
@@ -681,8 +682,8 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
         myImpliesSet.clear();
 
         if (difference == 0) {
-            needToVisit.setZero();
-            goto end;
+            needToVisit.removeTheseLit(toVisit);
+            break;
         }
     }
     #ifdef DEBUG_HYPERBIN
@@ -765,7 +766,7 @@ void FailedLitSearcher::fillImplies(const Lit lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    failed = (!solver.propagate(false).isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     assert(!failed);
 
     assert(solver.decisionLevel() > 0);
@@ -906,7 +907,7 @@ const bool FailedLitSearcher::tryMultiLevel(const vec<Var>& vars, uint32_t& enqu
             //std::cout << "lit: " << Lit(vars[i], comb&(1U << i)) << std::endl;
         }
         //std::cout << "---" << std::endl;
-        bool failed = !(solver.propagate(false).isNULL());
+        bool failed = !(solver.propagate<false>(false).isNULL());
         if (failed) {
             solver.cancelUntilLight();
             if (!first) propagated.setZero();
@@ -942,7 +943,7 @@ const bool FailedLitSearcher::tryMultiLevel(const vec<Var>& vars, uint32_t& enqu
         enqueued++;
         solver.uncheckedEnqueue(*l);
     }
-    solver.ok = solver.propagate().isNULL();
+    solver.ok = solver.propagate<true>().isNULL();
     //exit(-1);
 
     return solver.ok;

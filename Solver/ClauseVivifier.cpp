@@ -41,12 +41,8 @@ const bool ClauseVivifier::vivify()
 
     if (numCalls >= 2) {
         if (solver.conf.doCacheOTFSSR) {
-            if (!vivifyClausesCache(solver.clauses, solver.transOTFCache)) return false;
-            if (!vivifyClausesCache(solver.learnts, solver.transOTFCache)) return false;
-        }
-        if (solver.conf.doCacheNLBins) {
-            if (!vivifyClausesCache(solver.clauses, solver.subsumer->getBinNonLearntCache())) return false;
-            if (!vivifyClausesCache(solver.learnts, solver.subsumer->getBinNonLearntCache())) return false;
+            if (!vivifyClausesCache(solver.clauses)) return false;
+            if (!vivifyClausesCache(solver.learnts)) return false;
         }
     }
 
@@ -148,7 +144,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
                 }
             }
             done += i2;
-            failed = (!solver.propagate(false).isNULL());
+            failed = (!solver.propagate<false>(false).isNULL());
             if (failed) break;
         }
         solver.cancelUntilLight();
@@ -205,7 +201,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
 }
 
 
-const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses, const vector<TransCache>& cache)
+const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses)
 {
     assert(solver.ok);
 
@@ -222,6 +218,7 @@ const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses, const vecto
     vec<Lit> lits;
     bool needToFinish = false;
     double myTime = cpuTime();
+    const vector<TransCache>& cache = solver.transOTFCache;
 
     Clause** i = clauses.getData();
     Clause** j = i;
@@ -242,9 +239,9 @@ const bool ClauseVivifier::vivifyClausesCache(vec<Clause*>& clauses, const vecto
             Lit lit = *l;
 
             countTime += cache[l->toInt()].lits.size();
-            for (vector<Lit>::const_iterator it2 = cache[l->toInt()].lits.begin()
+            for (vector<LitExtra>::const_iterator it2 = cache[l->toInt()].lits.begin()
                 , end2 = cache[l->toInt()].lits.end(); it2 != end2; it2++) {
-                seen[(~(*it2)).toInt()] = 0;
+                seen[(~(it2->getLit())).toInt()] = 0;
             }
         }
 

@@ -78,7 +78,7 @@ const bool CompleteDetachReatacher::reattachNonBins()
     cleanAndAttachClauses(solver.xorclauses);
     solver.clauseCleaner->removeSatisfiedBins();
 
-    if (solver.ok) solver.ok = (solver.propagate().isNULL());
+    if (solver.ok) solver.ok = (solver.propagate<true>().isNULL());
 
     return solver.ok;
 }

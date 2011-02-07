@@ -36,11 +36,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "MatrixFinder.h"
 #include "DataSync.h"
 
-#ifdef _MSC_VER
-#define __builtin_prefetch(a,b,c)
-//#define __builtin_prefetch(a,b)
-#endif //_MSC_VER
-
 #ifdef VERBOSE_DEBUG
 #define UNWINDING_DEBUG
 #define VERBOSE_DEBUG_GATE
@@ -104,6 +99,8 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         #endif
         , learnt_clause_group(0)
         , libraryCNFFile   (NULL)
+        , lastDelayedEnqueueUpdate (0)
+        , lastDelayedEnqueueUpdateLevel (0)
         , restartType      (static_restart)
         , subRestartType   (static_restart)
         , simplifying      (false)
@@ -171,17 +168,18 @@ Var Solver::newVar(bool dvar)
     watches   .push();          // (list for negative literal)
     reason    .push(PropBy());
     assigns   .push(l_Undef);
-    level     .push(-1);
+    level     .push(std::numeric_limits<uint32_t>::max());
     binPropData.push();
     activity  .push(0);
-    seen      .push_back(0);
-    seen      .push_back(0);
+    seen      .push(0);
+    seen      .push(0);
     permDiff  .push(0);
     unWindGlue.push(NULL);
+    popularity.push(0);
 
     //Transitive OTF self-subsuming resolution
-    seen2     .push_back(0);
-    seen2     .push_back(0);
+    seen2     .push(0);
+    seen2     .push(0);
     transOTFCache.push_back(TransCache());
     transOTFCache.push_back(TransCache());
     litReachable.push_back(LitReachData());
@@ -226,7 +224,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
     assert(qhead == trail.size());
     assert(decisionLevel() == 0);
 
-    if (ps.size() > (0x01UL << 18)) {
+    if (ps.size() > std::numeric_limits<uint16_t>::max()) {
         std::cout << "Too long clause!" << std::endl;
         exit(-1);
     }
@@ -256,7 +254,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
         }
         case 1: {
             uncheckedEnqueue(Lit(ps[0].var(), xorEqualFalse));
-            ok = (propagate().isNULL());
+            ok = (propagate<true>().isNULL());
             return NULL;
         }
         case 2: {
@@ -382,9 +380,17 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
         return NULL;
     } else if (ps.size() == 1) {
         uncheckedEnqueue(ps[0]);
-        ok = (propagate().isNULL());
+        ok = (propagate<true>().isNULL());
         return NULL;
     }
+
+    //Randomise clause
+    assert(ps.size() >= 2);
+    for(uint32_t i2 = 0; i2 < (uint32_t)(ps.size()-1); i2++) {
+        uint32_t r = mtrand.randInt(ps.size()-i2-1);
+        std::swap(ps[i2], ps[i2+r]);
+    }
+
 
     if (ps.size() > 2) {
         Clause* c = clauseAllocator.Clause_new(ps, group);
@@ -504,10 +510,16 @@ void Solver::attachClause(XorClause& c)
     }
     #endif //DEBUG_ATTACH
 
-    watches[Lit(c[0].var(), false).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
-    watches[Lit(c[0].var(), true).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
-    watches[Lit(c[1].var(), false).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
-    watches[Lit(c[1].var(), true).toInt()].push(clauseAllocator.getOffset((Clause*)&c));
+    watches[Lit(c[0].var(), false).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 0));
+    watches[Lit(c[0].var(), true).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 0));
+    watches[Lit(c[1].var(), false).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 1));
+    watches[Lit(c[1].var(), true).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 1));
+    const uint32_t clauseNum = c.getNum();
+    ClauseData d(0, 1);
+    if (clauseData.size() > clauseNum)
+        clauseData[clauseNum] = d;
+    else
+        clauseData.push(d);
 
     clauses_literals += c.size();
 }
@@ -553,14 +565,22 @@ void Solver::attachClause(Clause& c)
     }
     #endif //DEBUG_ATTACH
 
+    ClauseData data(0, 1);
     if (c.size() == 3) {
         watches[(~c[0]).toInt()].push(Watched(c[1], c[2]));
         watches[(~c[1]).toInt()].push(Watched(c[0], c[2]));
         watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(&c);
-        watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2]));
-        watches[(~c[1]).toInt()].push(Watched(offset, c[c.size()/2]));
+        watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2], 0));
+        watches[(~c[1]).toInt()].push(Watched(offset, c[c.size()/2], 1));
+    }
+    const uint32_t clauseNum = c.getNum();
+    if (clauseData.size() > clauseNum)
+        clauseData[clauseNum] = data;
+    else {
+        clauseData.growTo(clauseNum);
+        clauseData.push(data);
     }
 
     if (c.learnt())
@@ -582,7 +602,8 @@ void Solver::detachClause(const XorClause& c)
 */
 void Solver::detachClause(const Clause& c)
 {
-    detachModifiedClause(c[0], c[1], (c.size() == 3) ? c[2] : lit_Undef,  c.size(), &c);
+    const ClauseData& data =clauseData[c.getNum()];
+    detachModifiedClause(c[data[0]], c[data[1]], (c.size() == 3) ? c[2] : lit_Undef,  c.size(), &c);
 }
 
 /**
@@ -654,12 +675,42 @@ void Solver::finishAddingVars()
     subsumer->setFinishedAddingVars(true);
 }
 
+struct PolaritySorter
+{
+    PolaritySorter(const vector<bool>& _polarity, const vec<uint32_t>& _level, const vec<uint32_t>& _popularity) :
+        polarity(_polarity)
+        , level(_level)
+        , popularity(_popularity)
+    {};
+
+    const bool operator()(const Lit lit1, const Lit lit2) {
+        const bool pol1 = !polarity[lit1.var()] ^ lit1.sign();
+        const bool pol2 = !polarity[lit2.var()] ^ lit2.sign();
+
+        //Tie 1: polarity
+        if (pol1 == true && pol2 == false) return true;
+        if (pol1 == false && pol2 == true) return false;
+
+        return (popularity[lit1.var()] > popularity[lit2.var()]);
+
+        /*
+        //Tie 2: last level
+        assert(pol1 == pol2);
+        if (pol1 == true) return level[lit1.var()] < level[lit2.var()];
+        else return level[lit1.var()] > level[lit2.var()];*/
+    }
+
+    const vector<bool>& polarity;
+    const vec<uint32_t>& level;
+    const vec<uint32_t>& popularity;
+};
+
 /**
 @brief Revert to the state at given level
 
 Also reverts all stuff in Gass-elimination
 */
-void Solver::cancelUntil(int level)
+void Solver::cancelUntil(uint32_t level)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Canceling until level " << level;
@@ -667,7 +718,7 @@ void Solver::cancelUntil(int level)
     cout << endl;
     #endif
 
-    if ((int)decisionLevel() > level) {
+    if (decisionLevel() > level) {
 
         #ifdef USE_GAUSS
         for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end= gauss_matrixes.end(); gauss != end; gauss++)
@@ -705,6 +756,8 @@ void Solver::cancelUntil(int level)
     #ifdef VERBOSE_DEBUG
     cout << "Canceling finished. (now at level: " << decisionLevel() << " sublevel: " << trail.size()-1 << ")" << endl;
     #endif
+    lastDelayedEnqueueUpdate = trail.size();
+    lastDelayedEnqueueUpdateLevel = decisionLevel();
 }
 
 void Solver::cancelUntilLight()
@@ -897,20 +950,22 @@ void Solver::calcReachability()
             || !decision_var[lit.var()])
             continue;
 
-        vector<Lit>& cache = transOTFCache[(~lit).toInt()].lits;
+        vector<LitExtra>& cache = transOTFCache[(~lit).toInt()].lits;
         uint32_t cacheSize = cache.size();
-        for (vector<Lit>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+        for (vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
             /*if (solver.value(it->var()) != l_Undef
             || solver.subsumer->getVarElimed()[it->var()]
             || solver.xorSubsumer->getVarElimed()[it->var()]
             || partHandler->getSavedState()[lit.var()] != l_Undef)
             continue;*/
-            assert(*it != lit);
-            assert(*it != ~lit);
-            if (litReachable[it->toInt()].lit == lit_Undef || litReachable[it->toInt()].numInCache </*=*/ cacheSize) {
+            if (it->getLit() == lit || it->getLit() == ~lit) continue;
+
+            if (litReachable[it->getLit().toInt()].lit == lit_Undef
+                || litReachable[it->getLit().toInt()].numInCache </*=*/ cacheSize
+            ) {
                 //if (litReachable[it->toInt()].numInCache == cacheSize && mtrand.randInt(1) == 0) continue;
-                litReachable[it->toInt()].lit = lit;
-                litReachable[it->toInt()].numInCache = cacheSize;
+                litReachable[it->getLit().toInt()].lit = lit;
+                litReachable[it->getLit().toInt()].numInCache = cacheSize;
             }
         }
     }
@@ -939,12 +994,13 @@ void Solver::saveOTFData()
     Lit lev0Lit = trail[trail_lim[0]];
     TransCache& oTFCache = transOTFCache[(~lev0Lit).toInt()];
     oTFCache.conflictLastUpdated = conflicts;
-    oTFCache.lits.clear();
 
+    vector<Lit> lits;
     for (int sublevel = trail.size()-1; sublevel > (int)trail_lim[0]; sublevel--) {
         Lit lit = trail[sublevel];
-        oTFCache.lits.push_back(lit);
+        lits.push_back(lit);
     }
+    oTFCache.merge(lits, false, seen);
 }
 
 //=================================================================================================
@@ -1058,7 +1114,7 @@ Lit Solver::pickBranchLit()
 Assumes 'seen' is cleared (will leave it cleared)
 */
 template<class T1, class T2>
-bool subset(const T1& A, const T2& B, vector<bool>& seen)
+bool subset(const T1& A, const T2& B, vec<char>& seen)
 {
     for (uint32_t i = 0; i != B.size(); i++)
         seen[B[i].toInt()] = 1;
@@ -1091,7 +1147,7 @@ current decision level.
 @return NULL if the conflict doesn't on-the-fly subsume the last clause, and
 the pointer of the clause if it does
 */
-Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &glue, const bool update)
+Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue, const bool update)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -1102,7 +1158,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     int index   = trail.size() - 1;
     out_btlevel = 0;
 
-    PropByFull confl(conflHalf, failBinLit, clauseAllocator);
+    PropByFull confl(conflHalf, failBinLit, clauseAllocator, clauseData);
     PropByFull oldConfl;
 
     do {
@@ -1115,8 +1171,8 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
             if (!seen[my_var] && level[my_var] > 0) {
                 varBumpActivity(my_var);
                 seen[my_var] = 1;
-                assert(level[my_var] <= (int)decisionLevel());
-                if (level[my_var] >= (int)decisionLevel()) {
+                assert(level[my_var] <= decisionLevel());
+                if (level[my_var] >= decisionLevel()) {
                     pathC++;
                     #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
                     if (subRestartType == dynamic_restart
@@ -1137,8 +1193,8 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
         while (!seen[trail[index--].var()]);
         p     = trail[index+1];
         oldConfl = confl;
-        confl = PropByFull(reason[p.var()], failBinLit, clauseAllocator);
-        if (confl.isClause()) __builtin_prefetch(confl.getClause(), 1, 0);
+        confl = PropByFull(reason[p.var()], failBinLit, clauseAllocator, clauseData);
+        //if (confl.isClause()) __builtin_prefetch(confl.getClause(), 1, 0);
         seen[p.var()] = 0;
         pathC--;
 
@@ -1161,7 +1217,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     } else {
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++) {
-            PropByFull c(reason[out_learnt[i].var()], failBinLit, clauseAllocator);
+            PropByFull c(reason[out_learnt[i].var()], failBinLit, clauseAllocator, clauseData);
 
             for (uint32_t k = 1, size = c.size(); k < size; k++) {
                 if (!seen[c[k].var()] && level[c[k].var()] > 0) {
@@ -1270,7 +1326,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 
     for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
 
-    if (conf.doGateFind) {
+    if (conf.doGateFind && clDoMinLRec) {
         bool gateRemSuccess = false;
         vec<Lit> oldCl = cl;
         while (true) {
@@ -1302,11 +1358,11 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
                     for (uint32_t i = 0; i < gate.lits.size(); i++) {
                         std::cout << gate.lits[i] << ", ";
                     }
-                    std::cout << " origclause: ";
+                    /*std::cout << " origclause: ";
                     for (uint32_t i = 0; i < gate.origCl.size(); i++) {
                         std::cout << gate.origCl[i] << ", ";
                     }
-                    std::cout << std::endl;
+                    std::cout << std::endl;*/
                     #endif
 
                     bool firstInside = false;
@@ -1374,27 +1430,25 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         #endif
     }
 
+    uint32_t moreRecurProp = 0;
+
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
         if (seen[l->toInt()] == 0) continue;
         Lit lit = *l;
 
         if (clDoMinLRec && conf.doCacheOTFSSR) {
-            /*if (moreRecurProp >= 450
+            if (moreRecurProp >= 450
                 || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
                     && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
-               ) {*/
+               ) {
                 const TransCache& cache1 = transOTFCache[l->toInt()];
-                for (vector<Lit>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
-                    seen[(~(*it)).toInt()] = 0;
+                for (vector<LitExtra>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
+                    seen[(~(it->getLit())).toInt()] = 0;
                 }
-                const TransCache& cache2 = subsumer->getBinNonLearntCache()[l->toInt()];
-                for (vector<Lit>::const_iterator it = cache2.lits.begin(), end2 = cache2.lits.end(); it != end2; it++) {
-                    seen[(~(*it)).toInt()] = 0;
-                }
-            /*} else {
+            } else {
                 updateTransCache++;
                 transMinimAndUpdateCache(lit, moreRecurProp);
-            }*/
+            }
         }
 
         //watched is messed: lit is in watched[~lit]
@@ -1443,8 +1497,7 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
 {
     assert(conf.doCacheOTFSSR);
-    vector<Lit>& allAddedToSeen2 = transOTFCache[lit.toInt()].lits;
-    allAddedToSeen2.clear();
+    vector<Lit> lits;
 
     toRecursiveProp.push(~lit);
     while(!toRecursiveProp.empty()) {
@@ -1459,18 +1512,20 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
                 //don't do indefinite recursion, and don't remove "a" when doing self-subsuming-resolution with 'a OR b'
                 if (seen2[otherLit.toInt()] != 0 || otherLit == ~lit) continue;
                 seen2[otherLit.toInt()] = 1;
-                allAddedToSeen2.push_back(otherLit);
+                lits.push_back(otherLit);
                 toRecursiveProp.push(otherLit);
-            } else {
-                break;
             }
         }
     }
     assert(toRecursiveProp.empty());
 
-    for (vector<Lit>::const_iterator it = allAddedToSeen2.begin(), end = allAddedToSeen2.end(); it != end; it++) {
-        seen[(~(*it)).toInt()] = 0;
+    for (vector<Lit>::const_iterator  it = lits.begin(), end = lits.end(); it != end; it++) {
         seen2[it->toInt()] = 0;
+    }
+    transOTFCache[lit.toInt()].merge(lits, false, seen2);
+
+    for (vector<LitExtra>::const_iterator  it = transOTFCache[lit.toInt()].lits.begin(), end = transOTFCache[lit.toInt()].lits.end(); it != end; it++) {
+        seen[it->getLit().toInt()] = 0;
     }
 
     transOTFCache[lit.toInt()].conflictLastUpdated = conflicts;
@@ -1489,7 +1544,7 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     int top = analyze_toclear.size();
     while (analyze_stack.size() > 0) {
         assert(!reason[analyze_stack.last().var()].isNULL());
-        PropByFull c(reason[analyze_stack.last().var()], failBinLit, clauseAllocator);
+        PropByFull c(reason[analyze_stack.last().var()], failBinLit, clauseAllocator, clauseData);
 
         analyze_stack.pop();
 
@@ -1540,7 +1595,7 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
                 assert(level[x] > 0);
                 out_conflict.push(~trail[i]);
             } else {
-                PropByFull c(reason[x], failBinLit, clauseAllocator);
+                PropByFull c(reason[x], failBinLit, clauseAllocator, clauseData);
                 for (uint32_t j = 1, size = c.size(); j < size; j++)
                     if (level[c[j].var()] > 0)
                         seen[c[j].var()] = 1;
@@ -1552,57 +1607,24 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
     seen[p.var()] = 0;
 }
 
-
-/**
-@brief Enqueues&sets a new fact that has been found
-
-Call this when a fact has been found. Sets the value, enqueues it for
-propagation, sets its level, sets why it was propagated, saves the polarity,
-and does some logging if logging is enabled
-
-@p p the fact to enqueue
-@p from Why was it propagated (binary clause, tertiary clause, normal clause)
-*/
-void Solver::uncheckedEnqueue(const Lit p, const PropBy from)
+void Solver::delayedEnqueueUpdate()
 {
-    #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
-    #ifndef VERBOSE_DEBUG
-    if (decisionLevel() == 0)
-    #endif //VERBOSE_DEBUG
-    std::cout << "uncheckedEnqueue var " << p.var()+1
-    << " to val " << !p.sign()
-    << " level: " << decisionLevel()
-    << " sublevel: " << trail.size()
-    << " by: " << from << std::endl;
-    if (from.isClause() && !from.isNULL()) {
-        std::cout << "by clause: " << *clauseAllocator.getPointer(from.getClause()) << std::endl;
+    uint32_t pseudoLevel = lastDelayedEnqueueUpdateLevel;
+
+    for (uint32_t i = lastDelayedEnqueueUpdate; i < trail.size(); i++) {
+        if (pseudoLevel < trail_lim.size()
+            && trail_lim[pseudoLevel] == i) pseudoLevel++;
+
+        const Lit p = trail[i];
+        const Var v = p.var();
+        level[v] = pseudoLevel;
+        increaseAgility(polarity[v] != p.sign());
+        polarity[v] = p.sign();
+        popularity[v]++;
     }
-    #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
 
-    #ifdef UNCHECKEDENQUEUE_DEBUG
-    assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
-    assert(decisionLevel() == 0 || !xorSubsumer->getVarElimed()[p.var()]);
-    Var repl = varReplacer->getReplaceTable()[p.var()].var();
-    if (repl != p.var()) {
-        assert(!subsumer->getVarElimed()[repl]);
-        assert(!xorSubsumer->getVarElimed()[repl]);
-        assert(partHandler->getSavedState()[repl] == l_Undef);
-    }
-    #endif
-
-    const Var v = p.var();
-    assert(value(v).isUndef());
-    assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
-    level   [v] = decisionLevel();
-    reason  [v] = from;
-    if (!from.isNULL()) increaseAgility(polarity[p.var()] != p.sign());
-    polarity[v] = p.sign();
-    trail.push(p);
-
-    #ifdef STATS_NEEDED
-    if (dynamic_behaviour_analysis)
-        logger.propagation(p, from);
-    #endif
+    lastDelayedEnqueueUpdate = trail.size();
+    lastDelayedEnqueueUpdateLevel = decisionLevel();
 }
 
 void Solver::uncheckedEnqueueExtend(const Lit p, const PropBy& from)
@@ -1615,17 +1637,6 @@ void Solver::uncheckedEnqueueExtend(const Lit p, const PropBy& from)
     trail.push(p);
 }
 
-/*_________________________________________________________________________________________________
-|
-|  propagate : [void]  ->  [Clause*]
-|
-|  Description:
-|    Propagates all enqueued facts. If a conflict arises, the conflicting clause is returned,
-|    otherwise NULL.
-|
-|    Post-conditions:
-|      * the propagation queue is empty, even if there was a conflict.
-|________________________________________________________________________________________________@*/
 /**
 @brief Propagates a binary clause
 
@@ -1633,12 +1644,13 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-inline const bool Solver::propBinaryClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
+template<bool full>
+inline const bool Solver::propBinaryClause(Watched* i, const Lit p, PropBy& confl)
 {
-    *j++ = *i;
     lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
-        uncheckedEnqueue(i->getOtherLit(), PropBy(p));
+        if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p));
+        else      uncheckedEnqueueLight(i->getOtherLit());
     } else if (val == l_False) {
         confl = PropBy(p);
         failBinLit = i->getOtherLit();
@@ -1656,15 +1668,17 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
-inline const bool Solver::propTriClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
+template<bool full>
+inline const bool Solver::propTriClause(Watched* i, const Lit p, PropBy& confl)
 {
-    *j++ = *i;
     lbool val = value(i->getOtherLit());
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
-        uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
+        if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
+        else      uncheckedEnqueueLight(i->getOtherLit());
     } else if (val == l_False && val2.isUndef()) {
-        uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
+        if (full) uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
+        else      uncheckedEnqueueLight(i->getOtherLit2());
     } else if (val == l_False && val2 == l_False) {
         confl = PropBy(p, i->getOtherLit2());
         failBinLit = i->getOtherLit();
@@ -1681,7 +1695,8 @@ inline const bool Solver::propTriClause(Watched* &i, Watched* &j, Watched *end, 
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
-inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update)
+template<bool full>
+inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl, const bool update)
 {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
@@ -1690,54 +1705,64 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *en
     }
     const uint32_t offset = i->getNormOffset();
     Clause& c = *clauseAllocator.getPointer(offset);
+    const uint32_t clauseNum = c.getNum();
+    ClauseData& data = clauseData[clauseNum];
+    const bool watchNum = i->getWatchNum();
+    #ifdef VERBOSE_DEBUG_PROP
+    printf("PropNorm. Watches: %d, %d -- this is watchNum %d\n", data[0], data[1], watchNum);
+    #endif
+    assert(c[data[watchNum]] == ~p);
 
-    // Make sure the false literal is data[1]:
-    //const Lit lit2 = c.size()>2 ? c[2] : c[0];
-    if (c[0] == ~p) {
-        std::swap(c[0], c[1]);
-    }
-    //if (c.size() > 2) assert(lit2 == c[2]);
-
-    assert(c[1] == ~p);
-
-    // If 0th watch is true, then clause is already satisfied.
-    if (value(c[0]).getBool()) {
-        #ifdef VERBOSE_DEBUG
-        printf("Zeroth watch is true\n");
+    // If other watch is true, then clause is already satisfied.
+    if (value(c[data[!watchNum]]).getBool()) {
+        #ifdef VERBOSE_DEBUG_PROP
+        printf("Other watch is true\n");
         #endif
-        j->setNormClause();
-        j->setNormOffset(offset);
-        j->setBlockedLit(c[0]);
+        *j = Watched(offset, i->getBlockedLit(), watchNum);
         j++;
         return true;
     }
     // Look for new watch:
-    for (Lit *k = c.getData() + 2, *end2 = c.getDataEnd(); k != end2; k++) {
-        #ifdef VERBOSE_DEBUG
-        printf("Skip watch\n");
-        #endif
-        if (value(*k) != l_False) {
-            #ifdef VERBOSE_DEBUG
-            printf("new watch\n");
+    uint32_t other = std::numeric_limits<uint32_t>::max();
+    for (uint16_t numLit = 0, size = c.size(); numLit < size; numLit++) {
+        if (numLit == data[0] || numLit == data[1]) continue;
+        if (value(c[numLit]) == l_True) {
+            #ifdef VERBOSE_DEBUG_PROP
+            printf("new watch: %d watchNum: %d\n", numLit, watchNum);
             #endif
-            c[1] = *k;
-            *k = ~p;
-            watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
+            data[watchNum] = numLit;
+            watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
             return true;
         }
+        if (value(c[numLit]) == l_Undef) other = numLit;
+    }
+    if (other != std::numeric_limits<uint32_t>::max()) {
+        #ifdef VERBOSE_DEBUG_PROP
+        printf("new watch: %d watchNum: %d\n", other, watchNum);
+        #endif
+        data[watchNum] = other;
+        watches[(~c[other]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));;
+        return true;
     }
 
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG_PROP
     printf("Did not find watch\n");
     #endif
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
-    if (value(c[0]) == l_False) {
-        confl = PropBy(offset);
+    if (value(c[data[!watchNum]]) == l_False) {
+        #ifdef VERBOSE_DEBUG_PROP
+        printf("PropNorm causing conflict\n");
+        #endif
+        confl = PropBy(offset, !watchNum);
         qhead = trail.size();
         return false;
     } else {
-        uncheckedEnqueue(c[0], offset);
+        #ifdef VERBOSE_DEBUG_PROP
+        printf("PropNorm causing propagation\n");
+        #endif
+        if (full) uncheckedEnqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
+        else      uncheckedEnqueueLight(c[data[!watchNum]]);
         #ifdef DYNAMICALLY_UPDATE_GLUE
         if (update && c.learnt() && c.getGlue() > 2) { // GA
             uint32_t glue = calcNBLevels(c);
@@ -1762,29 +1787,32 @@ better memory-accesses since the watchlist is already in the memory...
 
 \todo maybe not worth it, and a variable-based watchlist should be used
 */
-inline const bool Solver::propXorClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
+template<bool full>
+inline const bool Solver::propXorClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl)
 {
     ClauseOffset offset = i->getXorOffset();
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(offset);
+    const uint32_t clauseNum = c.getNum();
+    ClauseData& data = clauseData[clauseNum];
+    const bool watchNum = i->getWatchNum();
 
     // Make sure the false literal is data[1]:
-    if (c[0].var() == p.var()) {
-        Lit tmp(c[0]);
-        c[0] = c[1];
-        c[1] = tmp;
-    }
-    assert(c[1].var() == p.var());
+//     if (c[0].var() == p.var()) {
+//         Lit tmp(c[0]);
+//         c[0] = c[1];
+//         c[1] = tmp;
+//     }
+//     assert(c[1].var() == p.var());
+    assert(c[data[0]].var() == p.var() || c[data[1]].var() == p.var());
 
     bool final = c.xorEqualFalse();
-    for (uint32_t k = 0, size = c.size(); k != size; k++ ) {
+    for (uint32_t k = 0, size = c.size(); k != size; k++) {
         const lbool& val = assigns[c[k].var()];
-        if (val.isUndef() && k >= 2) {
-            Lit tmp(c[1]);
-            c[1] = c[k];
-            c[k] = tmp;
+        if (val.isUndef() && k != data[0] && k != data[1]) {
+            data[watchNum] = k;
             removeWXCl(watches[(~p).toInt()], offset);
-            watches[Lit(c[1].var(), false).toInt()].push(offset);
-            watches[Lit(c[1].var(), true).toInt()].push(offset);
+            watches[Lit(c[k].var(), false).toInt()].push(Watched(offset, watchNum));
+            watches[Lit(c[k].var(), true).toInt()].push(Watched(offset, watchNum));
             return true;
         }
 
@@ -1797,9 +1825,10 @@ inline const bool Solver::propXorClause(Watched* &i, Watched* &j, Watched *end, 
 
     if (assigns[c[0].var()].isUndef()) {
         c[0] = c[0].unsign()^final;
-        uncheckedEnqueue(c[0], offset);
+        if (full) uncheckedEnqueue(c[0], PropBy(offset, watchNum));
+        else      uncheckedEnqueueLight(c[0]);
     } else if (!final) {
-        confl = PropBy(offset);
+        confl = PropBy(offset, watchNum);
         qhead = trail.size();
         return false;
     } else {
@@ -1817,34 +1846,32 @@ inline const bool Solver::propXorClause(Watched* &i, Watched* &j, Watched *end, 
 Basically, it goes through the watchlists recursively, and calls the appropirate
 propagaton function
 */
+template<bool full>
 PropBy Solver::propagate(const bool update)
 {
     PropBy confl;
     uint32_t num_props = 0;
 
-    #ifdef VERBOSE_DEBUG
+    #ifdef VERBOSE_DEBUG_PROP
     cout << "Propagation started" << endl;
     #endif
 
     while (qhead < trail.size()) {
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
-        __builtin_prefetch(ws.getData(), 1, 0);
-        Watched        *i, *j;
+        Watched        *i, *j, *i2;
         num_props += ws.size()/2 + 2;
-        if (qhead < trail.size()) {
-            __builtin_prefetch(watches[trail[qhead].toInt()].getData(), 1, 1);
-        }
 
-        #ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUG_PROP
         cout << "Propagating lit " << p << endl;
         cout << "ws origSize: "<< ws.size() << endl;
         #endif
 
-        i = j = ws.getData();
+        i = i2 = j = ws.getData();
+        i2++;
         Watched *end = ws.getDataEnd();
-        for (; i != end; i++) {
-            #ifdef VERBOSE_DEBUG
+        for (; i != end; i++, i2++) {
+            #ifdef VERBOSE_DEBUG_PROP
             cout << "end-i: " << end-i << endl;
             cout << "end-j: " << end-j << endl;
             cout << "i-j: " << i-j << endl;
@@ -1853,21 +1880,28 @@ PropBy Solver::propagate(const bool update)
                 << " as i of prop: " << *clauseAllocator.getPointer(i->getNormOffset())
                 << std::endl;
             #endif
+
+            if (i2 != end && i2->isClause() && !value(i2->getBlockedLit()).getBool()) {
+                __builtin_prefetch(clauseAllocator.getPointer(i2->getNormOffset()), 0);
+            }
+
             if (i->isBinary()) {
-                if (!propBinaryClause(i, j, end, p, confl)) break;
+                *j++ = *i;
+                if (!propBinaryClause<full>(i, p, confl)) break;
                 else continue;
             } //end BINARY
 
             if (i->isTriClause()) {
-                if (!propTriClause(i, j, end, p, confl)) break;
+                *j++ = *i;
+                if (!propTriClause<full>(i, p, confl)) break;
                 else continue;
             } //end TRICLAUSE
 
             if (i->isClause()) {
                 num_props += 4;
-                if (!propNormalClause(i, j, end, p, confl, update)) break;
+                if (!propNormalClause<full>(i, j, p, confl, update)) break;
                 else {
-                    #ifdef VERBOSE_DEBUG
+                    #ifdef VERBOSE_DEBUG_PROP
                     std::cout << "clause num " << i->getNormOffset() << " after propNorm: " << *clauseAllocator.getPointer(i->getNormOffset()) << std::endl;
                     #endif
                     continue;
@@ -1876,14 +1910,17 @@ PropBy Solver::propagate(const bool update)
 
             if (i->isXorClause()) {
                 num_props += 10;
-                if (!propXorClause(i, j, end, p, confl)) break;
+                if (!propXorClause<full>(i, j, p, confl)) break;
                 else continue;
             } //end XORCLAUSE
         }
         if (i != end) {
             i++;
             //copy remaining watches
-            memmove(j, i, sizeof(Watched)*(end-i));
+            for(Watched *ii = i, *jj = j; ii != end; ii++) {
+                *jj++ = *ii;
+            }
+            //memmove(j, i, sizeof(Watched)*(end-i));
         }
         assert(i >= j);
         ws.shrink_(i-j);
@@ -1897,6 +1934,8 @@ PropBy Solver::propagate(const bool update)
 
     return confl;
 }
+template PropBy Solver::propagate <true>(const bool update);
+template PropBy Solver::propagate <false>(const bool update);
 
 /**
 @brief Only propagates binary clauses
@@ -2097,15 +2136,15 @@ void Solver::reduceDB()
     std::sort(learnts.getData(), learnts.getDataEnd(), reduceDB_ltGlucose());
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "Cleaning clauses" << std::endl;
+    std::cout << "Cleaning learnt clauses. Learnt clauses after sort: " << std::endl;
     for (uint32_t i = 0; i != learnts.size(); i++) {
         std::cout << "activity:" << learnts[i]->getGlue()
-        << " \toldActivity:" << learnts[i]->getMiniSatAct()
         << " \tsize:" << learnts[i]->size() << std::endl;
     }
     #endif
 
 
+    delayedEnqueueUpdate();
     uint32_t removeNum = (double)learnts.size() * (double)RATIOREMOVECLAUSES;
     uint32_t totalNumRemoved = 0;
     uint32_t totalNumNonRemoved = 0;
@@ -2115,7 +2154,7 @@ void Solver::reduceDB()
     uint64_t totalSizeOfNonRemoved = 0;
     uint32_t numThreeLongLearnt = 0;
     for (i = j = 0; i < std::min(removeNum, learnts.size()); i++){
-        if (i+1 < learnts.size()) __builtin_prefetch(learnts[i+1], 0, 0);
+        if (i+1 < learnts.size()) __builtin_prefetch(learnts[i+1], 0);
         assert(learnts[i]->size() > 2);
         if (!locked(*learnts[i])
             && learnts[i]->getGlue() > 2
@@ -2180,7 +2219,7 @@ const bool Solver::simplify()
     testAllClauseAttach();
     assert(decisionLevel() == 0);
 
-    if (!ok || !propagate().isNULL()) {
+    if (!ok || !propagate<true>().isNULL()) {
         ok = false;
         return false;
     }
@@ -2270,8 +2309,8 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
     }
     glueHistory.fastclear();
     agility = 0.0;
-    numAgilityTooHigh = 0;
-    lastConflAgilityTooHigh = std::numeric_limits<uint64_t>::max();
+    numAgilityTooLow = 0;
+    lastConflAgilityTooLow = std::numeric_limits<uint64_t>::max();
 
     #ifdef USE_GAUSS
     for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
@@ -2288,7 +2327,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
     #endif //VERBOSE_DEBUG
     for (;;) {
         assert(ok);
-        PropBy confl = propagate(update);
+        PropBy confl = propagate<true>(update);
         #ifdef VERBOSE_DEBUG
         std::cout << "c Solver::search() has finished propagation" << std::endl;
         //printAllClauses();
@@ -2300,7 +2339,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
                 << ", confl: " << std::setw(6) << conflictC
                 << ", rest: " << std::setw(6) << starts
                 << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2) << agility
-                << ", agilityTooHigh: " << std::setw(4) << numAgilityTooHigh
+                << ", agilityTooLow: " << std::setw(4) << numAgilityTooLow
                 << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2) << conf.agilityLimit << std::endl;
             }*/
 
@@ -2345,15 +2384,15 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumC
 
     // Reached bound on number of conflicts?
     if (conflictC > MIN_GLUE_RESTART/2
-        && ((agility < conf.agilityLimit && lastConflAgilityTooHigh != conflictC)
+        && ((agility < conf.agilityLimit && lastConflAgilityTooLow != conflictC)
         /*|| (glueHistory.isvalid() && 0.6*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/)) {
-        numAgilityTooHigh++;
-        lastConflAgilityTooHigh = conflictC;
+        numAgilityTooLow++;
+        lastConflAgilityTooLow = conflictC;
     }
 
     switch (restartType) {
     case dynamic_restart:
-        if ((numAgilityTooHigh > MIN_GLUE_RESTART/2)
+        if ((numAgilityTooLow > MIN_GLUE_RESTART/2)
             /*|| (glueHistory.isvalid() && 0.95*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
@@ -2453,9 +2492,10 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     cout << endl;
     #endif
 
-    int backtrack_level;
+    uint32_t backtrack_level;
     uint32_t glue;
 
+    delayedEnqueueUpdate();
     conflicts++;
     conflictC++;
     if (decisionLevel() == 0)
@@ -2503,6 +2543,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             goto end;
         }
 
+        std::sort(learnt_clause.getData()+1, learnt_clause.getDataEnd(), PolaritySorter(polarity, level, popularity));
         if (c) { //On-the-fly subsumption
             uint32_t origSize = c->size();
             detachClause(*c);
@@ -2512,7 +2553,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             if (c->learnt() && c->getGlue() > glue)
                 c->setGlue(glue); // LS
             attachClause(*c);
-            uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
+            uncheckedEnqueue(learnt_clause[0], PropBy(clauseAllocator.getOffset(c), 0));
         } else {  //no on-the-fly subsumption
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
@@ -2532,7 +2573,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             }
             c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
             attachClause(*c);
-            uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
+            uncheckedEnqueue(learnt_clause[0], PropBy(clauseAllocator.getOffset(c), 0));
         }
         end:;
     }
@@ -2619,6 +2660,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     testAllClauseAttach();
     bool gaussWasCleared = clearGaussMatrixes();
 
+    reArrangeClauses();
     StateSaver savedState(*this);;
 
     #ifdef BURST_SEARCH
@@ -2674,9 +2716,9 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     //Free memory if possible
     for (Var var = 0; var < nVars(); var++) {
         if (value(var) != l_Undef) {
-            vector<Lit> tmp1;
+            vector<LitExtra> tmp1;
             transOTFCache[Lit(var, false).toInt()].lits.swap(tmp1);
-            vector<Lit> tmp2;
+            vector<LitExtra> tmp2;
             transOTFCache[Lit(var, true).toInt()].lits.swap(tmp2);
         }
     }
@@ -2699,6 +2741,54 @@ end:
 
     if (!ok) return l_False;
     return status;
+}
+
+void Solver::reArrangeClause(Clause* clause)
+{
+    Clause& c = *clause;
+    if (c.size() == 3) return;
+
+    ClauseData& data = clauseData[c.getNum()];
+    Lit lit1 = c[data[0]];
+    Lit lit2 = c[data[1]];
+    assert(lit1 != lit2);
+
+    std::sort(c.getData(), c.getDataEnd(), PolaritySorter(polarity, level, popularity));
+
+    uint32_t foundDatas = 0;
+    for (uint32_t i = 0; i < c.size(); i++) {
+        if (c[i] == lit1) {
+            data[0] = i;
+            foundDatas++;
+        }
+        if (c[i] == lit2) {
+            data[1] = i;
+            foundDatas++;
+        }
+    }
+    assert(foundDatas == 2);
+}
+
+void Solver::reArrangeClauses()
+{
+    assert(decisionLevel() == 0);
+    assert(ok);
+
+    double myTime = cpuTime();
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        reArrangeClause(clauses[i]);
+    }
+    for (uint32_t i = 0; i < learnts.size(); i++) {
+        reArrangeClause(learnts[i]);
+    }
+
+    for (Var v = 0; v < nVars(); v++) {
+        popularity[v] = 0;
+    }
+
+    if (conf.verbosity >= 3) {
+        std::cout << "c Time to rearrange lits in clauses " << (cpuTime() - myTime) << std::endl;
+    }
 }
 
 /**
@@ -2777,9 +2867,6 @@ void Solver::performStepsBeforeSolve()
         && clauses.size() < 4800000
         && !subsumer->simplifyBySubsumption())
         return;
-
-    if (conf.doClausVivif
-        && !clauseVivifier->vivifyClausesCache(clauses, subsumer->getBinNonLearntCache())) return;
 
     if (conf.doFindEqLits) {
         if (!sCCFinder->find2LongXors()) return;
@@ -2871,12 +2958,14 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
     uint64_t  nextSimplify = conf.restart_first * conf.simpStartMult + conflicts; //Do simplifyProblem() at this number of conflicts
     if (!conf.doSchedSimp) nextSimplify = std::numeric_limits<uint64_t>::max();
 
+    uint64_t oldConflicts = conflicts;
     if (conflicts == 0) {
         if (conf.doPerformPreSimp) performStepsBeforeSolve();
         if (!ok) return l_False;
     }
     calculateDefaultPolarities();
 
+    bool firstRearrangeDone = false;
     printStatHeader();
     printRestartStat("B");
     uint64_t lastConflPrint = conflicts;
@@ -2890,6 +2979,10 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
         if ((conflicts - lastConflPrint) > std::min(std::max(conflicts/100*6, (uint64_t)4000), (uint64_t)20000)) {
             printRestartStat("N");
             lastConflPrint = conflicts;
+        }
+        if (conflicts-oldConflicts > 5000 && numSimplifyRounds == 0 && !firstRearrangeDone) {
+            reArrangeClauses();
+            firstRearrangeDone = true;
         }
 
         if (conf.doSchedSimp && conflicts >= nextSimplify) {
@@ -3030,7 +3123,7 @@ void Solver::handleSATSolution()
         for (Var var = 0; var < nVars(); var++) {
             if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueueExtend(Lit(var, s.model[var] == l_False));
         }
-        ok = (propagate().isNULL());
+        ok = (propagate<true>().isNULL());
         release_assert(ok && "c ERROR! Extension of model failed!");
     }
     checkSolution();

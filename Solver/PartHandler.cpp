@@ -99,7 +99,7 @@ const bool PartHandler::handle()
 
             solver.uncheckedEnqueue(newSolver.trail[i]);
         }
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<true>().isNULL());
         assert(solver.ok);
 
         for (Var var = 0; var < newSolver.nVars(); var++) {

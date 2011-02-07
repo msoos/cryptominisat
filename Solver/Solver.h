@@ -61,6 +61,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
         } \
     } while (0)
 
+#ifndef __GNUC__
+#define __builtin_prefetch(a,b,c)
+#endif //__GNUC__
+
 class Gaussian;
 class MatrixFinder;
 class Conglomerate;
@@ -333,12 +337,13 @@ protected:
     uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
+    vec<ClauseData>     clauseData;       ///< Which lit is watched in clause
     vec<lbool>          assigns;          ///< The current assignments
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     vec<PropBy>         reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
-    vec<int32_t>        level;            ///< 'level[var]' contains the level at which the assignment was made.
+    vec<uint32_t>       level;            ///< 'level[var]' contains the level at which the assignment was made.
     vec<BinPropData>    binPropData;
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
@@ -381,13 +386,13 @@ protected:
     // For agility-based restarts
     void increaseAgility(const bool flipped);
     double agility;
-    uint32_t numAgilityTooHigh;
-    uint64_t lastConflAgilityTooHigh;
+    uint32_t numAgilityTooLow;
+    uint64_t lastConflAgilityTooLow;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
     //
-    vector<bool>        seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
+    vec<char>           seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
     vec<Lit>            analyze_stack;
     vec<Lit>            analyze_toclear;
 
@@ -403,7 +408,7 @@ protected:
             Lit lit;
             uint32_t numInCache;
     };
-    vector<bool>        seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
+    vec<char>           seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
     vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     vector<TransCache>  transOTFCache;
@@ -413,7 +418,7 @@ protected:
     void                saveOTFData();
     vector<LitReachData>litReachable;
     void                calcReachability();
-    const bool          cacheContainsBinCl(const Lit lit1, const Lit lit2) const;
+    const bool          cacheContainsBinCl(const Lit lit1, const Lit lit2, const bool learnt) const;
 
     ////////////
     //Logging
@@ -426,32 +431,45 @@ protected:
     FILE     *libraryCNFFile;           //The file that all calls from the library are logged
 
     /////////////////
-    // Propagating
+    // Unchecked enqueue
     ////////////////
-    Lit      pickBranchLit    ();                                                      // Return the next decision variable.
-    void     newDecisionLevel ();                                                      // Begins a new decision level.
+    uint32_t lastDelayedEnqueueUpdate;
+    uint32_t lastDelayedEnqueueUpdateLevel;
+    void     delayedEnqueueUpdate();
     void     uncheckedEnqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueExtend (const Lit p, const PropBy& from = PropBy());
     void     uncheckedEnqueueLight (const Lit p);
     void     uncheckedEnqueueLight2(const Lit p, const uint32_t binPropDatael, const Lit lev2Ancestor, const bool learntLeadHere);
+
+    /////////////////
+    // Propagating
+    ////////////////
+    Lit      pickBranchLit    ();                                                      // Return the next decision variable.
+    void     newDecisionLevel ();                                                      // Begins a new decision level.
     PropBy   propagateBin(vec<Lit>& uselessBin);
     PropBy   propagateNonLearntBin();
     bool     multiLevelProp;
     const bool propagateBinExcept(const Lit exceptLit);
     const bool propagateBinOneLevel();
-    PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
-    const bool propTriClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
-    const bool propBinaryClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
-    const bool propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update);
-    const bool propXorClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
+    template<bool full>
+    PropBy     propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
+    template<bool full>
+    const bool propTriClause   (Watched* i, const Lit p, PropBy& confl);
+    template<bool full>
+    const bool propBinaryClause(Watched* i, const Lit p, PropBy& confl);
+    vec<uint32_t> popularity;
+    template<bool full>
+    const bool propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl, const bool update);
+    template<bool full>
+    const bool propXorClause   (Watched* &i, Watched* &j, const Lit p, PropBy& confl);
     void     sortWatched();
 
     ///////////////
     // Conflicting
     ///////////////
-    void     cancelUntil      (int level);                                             // Backtrack until a certain level.
+    void     cancelUntil      (uint32_t level);                                             // Backtrack until a certain level.
     void     cancelUntilLight();
-    Clause*  analyze          (PropBy confl, vec<Lit>& out_learnt, int& out_btlevel, uint32_t &nblevels, const bool update);
+    Clause*  analyze          (PropBy confl, vec<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &nblevels, const bool update);
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
@@ -606,6 +624,8 @@ protected:
     void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
     void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
     vector<bool> polarity;      // The preferred polarity of each variable.
+    void reArrangeClauses();
+    void reArrangeClause(Clause* clause);
 };
 
 
@@ -676,8 +696,25 @@ inline void Solver::varBumpActivity(Var v)
 inline bool Solver::locked(const Clause& c) const
 {
     if (c.size() <= 3) return true; //we don't know in this case :I
-    PropBy from(reason[c[0].var()]);
-    return from.isClause() && !from.isNULL() && from.getClause() == clauseAllocator.getOffset(&c) && value(c[0]) == l_True;
+    const ClauseData& data = clauseData[c.getNum()];
+    const PropBy from1(reason[c[data[0]].var()]);
+    const PropBy from2(reason[c[data[1]].var()]);
+
+    if (from1.isClause()
+        && !from1.isNULL()
+        && from1.getWatchNum() == 0
+        && from1.getClause() == clauseAllocator.getOffset(&c)
+        && value(c[data[0]]) == l_True
+    ) return true;
+
+    if (from2.isClause()
+        && !from2.isNULL()
+        && from2.getWatchNum() == 1
+        && from2.getClause() == clauseAllocator.getOffset(&c)
+        && value(c[data[1]]) == l_True
+        ) return true;
+
+    return false;
 }
 
 inline void     Solver::newDecisionLevel()
@@ -870,12 +907,65 @@ inline void Solver::findAllAttach() const
 }
 #endif //DEBUG_ATTACH_FULL
 
+/**
+@brief Enqueues&sets a new fact that has been found
+
+Call this when a fact has been found. Sets the value, enqueues it for
+propagation, sets its level, sets why it was propagated, saves the polarity,
+and does some logging if logging is enabled
+
+@p p the fact to enqueue
+@p from Why was it propagated (binary clause, tertiary clause, normal clause)
+*/
+inline void  Solver::uncheckedEnqueue(const Lit p, const PropBy from)
+{
+    #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
+    #ifndef VERBOSE_DEBUG
+    if (decisionLevel() == 0)
+    #endif //VERBOSE_DEBUG
+    std::cout << "uncheckedEnqueue var " << p.var()+1
+    << " to val " << !p.sign()
+    << " level: " << decisionLevel()
+    << " sublevel: " << trail.size()
+    << " by: " << from << std::endl;
+    if (from.isClause() && !from.isNULL()) {
+        std::cout << "by clause: " << *clauseAllocator.getPointer(from.getClause()) << std::endl;
+    }
+    #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
+
+    #ifdef UNCHECKEDENQUEUE_DEBUG
+    assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
+    assert(decisionLevel() == 0 || !xorSubsumer->getVarElimed()[p.var()]);
+    Var repl = varReplacer->getReplaceTable()[p.var()].var();
+    if (repl != p.var()) {
+        assert(!subsumer->getVarElimed()[repl]);
+        assert(!xorSubsumer->getVarElimed()[repl]);
+        assert(partHandler->getSavedState()[repl] == l_Undef);
+    }
+    #endif
+
+    const Var v = p.var();
+    assert(value(v).isUndef());
+    assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    reason  [v] = from;
+    trail.push(p);
+    __builtin_prefetch(watches[p.toInt()].getData());
+
+    if (decisionLevel() == 0) level[v] = 0;
+
+    #ifdef STATS_NEEDED
+    if (dynamic_behaviour_analysis)
+        logger.propagation(p, from);
+    #endif
+}
+
 inline void Solver::uncheckedEnqueueLight(const Lit p)
 {
     assert(assigns[p.var()] == l_Undef);
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
+    __builtin_prefetch(watches[p.toInt()].getData());
 }
 
 inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev2Ancestor, const bool learntLeadHere)
@@ -887,6 +977,7 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     binPropData[p.var()].lev = binSubLevel;
     binPropData[p.var()].lev1Ancestor = lev2Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
+    __builtin_prefetch(watches[p.toInt()].getData(), 0);
 }
 
 inline void Solver::increaseAgility(const bool flipped)

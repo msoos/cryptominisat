@@ -316,6 +316,7 @@ void Main::printUsage(char** argv)
     printf("  --threads        = Num threads (default is 1)\n");
     printf("  --nogatefind     = Don't find gates&do ER\n");
     printf("  --noer           = Don't do ER\n");
+    printf("  --noalwaysfmin   = Don't always try to further minimise -- only sometimes\n");
     printf("\n");
 }
 
@@ -611,6 +612,8 @@ void Main::parseCommandLine()
             conf.doGateFind = false;
         } else if ((value = hasPrefix(argv[i], "--noer"))) {
             conf.doER = false;
+        } else if ((value = hasPrefix(argv[i], "--noalwaysfmin"))) {
+            conf.doAlwaysFMinim = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 0;
             if (sscanf(value, "%d", &glue) < 0 || glue < 2) {

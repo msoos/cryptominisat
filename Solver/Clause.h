@@ -20,6 +20,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <vector>
 #include <sys/types.h>
 #include <string.h>
+#include <limits>
 
 #include "SolverTypes.h"
 #include "constants.h"
@@ -53,8 +54,8 @@ struct Clause
 {
 protected:
 
-    uint32_t isLearnt:1; ///<Is the clause a learnt clause?
-    uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
+    uint16_t isLearnt:1; ///<Is the clause a learnt clause?
+    uint16_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
     /**
     @brief Is the XOR equal to 1 or 0?
 
@@ -63,13 +64,14 @@ protected:
 
     NOTE: ONLY set if the clause is an xor clause.
     */
-    uint32_t isXorEqualFalse:1;
-    uint32_t isXorClause:1; ///< Is the clause an XOR clause?
-    uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
-    uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
-    uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
-    uint32_t mySize:18; ///<The current size of the clause
+    uint16_t isXorEqualFalse:1;
+    uint16_t isXorClause:1; ///< Is the clause an XOR clause?
+    uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
+    uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
+    uint16_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
+    uint16_t mySize; ///<The current size of the clause
 
+    uint32_t num;
     uint32_t abst; //Abstraction of clause
 
     #ifdef STATS_NEEDED
@@ -86,7 +88,7 @@ protected:
     there is enough space for data[] to hold the literals
     */
     #ifdef __GNUC__
-    Lit     data[];
+    Lit     data[0];
     #else
     //NOTE: Dangerous packing. We love C++. More info: stackoverflow.com/questions/688471/variable-sized-struct-c
     Lit     data[1];
@@ -96,8 +98,9 @@ protected:
 public:
 #endif //_MSC_VER
     template<class V>
-    Clause(const V& ps, const uint32_t _group, const bool learnt)
+    Clause(const V& ps, const uint32_t _group, const bool learnt, const uint32_t clauseNum)
     {
+        num = clauseNum;
         isFreed = false;
         isXorClause = false;
         assert(ps.size() > 2);
@@ -114,7 +117,7 @@ public:
 public:
     friend class ClauseAllocator;
 
-    const uint32_t size() const
+    const uint16_t size() const
     {
         return mySize;
     }
@@ -291,6 +294,11 @@ public:
         if (other.getGlue() < getGlue())
             setGlue(other.getGlue());
     }
+
+    const uint32_t getNum() const
+    {
+        return num;
+    }
 };
 
 /**
@@ -303,8 +311,8 @@ class XorClause : public Clause
 protected:
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
-    XorClause(const V& ps, const bool xorEqualFalse, const uint32_t _group) :
-        Clause(ps, _group, false)
+    XorClause(const V& ps, const bool xorEqualFalse, const uint32_t _group, const uint32_t clauseNum) :
+        Clause(ps, _group, false, clauseNum)
     {
         isXorEqualFalse = xorEqualFalse;
         isXorClause = true;
@@ -363,5 +371,36 @@ inline std::ostream& operator<<(std::ostream& cout, const XorClause& cl)
     return cout;
 }
 
+struct ClauseData
+{
+    ClauseData()
+    {
+        litPos[0] = std::numeric_limits<uint16_t>::max();
+        litPos[1] = std::numeric_limits<uint16_t>::max();
+    };
+    ClauseData(const uint16_t lit1Pos, const uint16_t lit2Pos)
+    {
+        litPos[0] = lit1Pos;
+        litPos[1] = lit2Pos;
+    };
+
+    const uint16_t operator[](const bool which) const
+    {
+        return litPos[which];
+    }
+
+    uint16_t& operator[](const bool which)
+    {
+        return litPos[which];
+    }
+
+    void operator=(const ClauseData& other)
+    {
+        litPos[0] = other.litPos[0];
+        litPos[1] = other.litPos[1];
+    }
+
+    uint16_t litPos[2];
+};
 
 #endif //CLAUSE_H

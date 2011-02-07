@@ -52,8 +52,9 @@ const bool Solver::normClauseIsAttached(const Clause& c) const
         attached &= findWTri(watches[(~lit3).toInt()], lit1, lit2);
     } else {
         fullClause:
-        attached &= findWCl(watches[(~c[0]).toInt()], offset);
-        attached &= findWCl(watches[(~c[1]).toInt()], offset);
+        const ClauseData& data = clauseData[c.getNum()];
+        attached &= findWCl(watches[(~c[data[0]]).toInt()], offset);
+        attached &= findWCl(watches[(~c[data[1]]).toInt()], offset);
     }
 
     return attached;

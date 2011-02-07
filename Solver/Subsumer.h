@@ -82,7 +82,6 @@ public:
     const double getTotalTime() const;
     const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
     const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
-    const vector<TransCache>& getBinNonLearntCache() const;
     const uint32_t getNumERVars() const;
     void incNumERVars(const uint32_t num);
     void setVarNonEliminable(const Var var);
@@ -304,7 +303,6 @@ private:
     const bool subsumeNonExist();
     uint32_t doneNumNonExist;
     uint64_t extraTimeNonExist;
-    vector<TransCache> binNonLearntCache;
 
     //Blocked clause elimination
     class VarOcc {
@@ -530,9 +528,6 @@ inline void Subsumer::newVar()
     dontElim.push(0);
     gateOcc.push_back(vector<OrGate*>());
     gateOcc.push_back(vector<OrGate*>());
-
-    binNonLearntCache.push_back(TransCache());
-    binNonLearntCache.push_back(TransCache());
 }
 
 inline const map<Var, vector<vector<Lit> > >& Subsumer::getElimedOutVar() const
@@ -558,11 +553,6 @@ inline const uint32_t Subsumer::getNumElimed() const
 inline const double Subsumer::getTotalTime() const
 {
     return totalTime;
-}
-
-inline const vector<TransCache>& Subsumer::getBinNonLearntCache() const
-{
-    return binNonLearntCache;
 }
 
 inline const uint32_t Subsumer::getNumERVars() const

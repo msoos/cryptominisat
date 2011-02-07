@@ -960,7 +960,7 @@ const bool Subsumer::subsWNonExistBinsFill()
 
     uint32_t oldTrailSize = solver.trail.size();
     uint64_t oldProps = solver.propagations;
-    uint64_t maxProp = MAX_BINARY_PROP*7;
+    uint64_t maxProp = MAX_BINARY_PROP;
     extraTimeNonExist = 0;
     OnlyNonLearntBins* onlyNonLearntBins = NULL;
     if (solver.clauses_literals < 10*1000*1000) {
@@ -984,7 +984,7 @@ const bool Subsumer::subsWNonExistBinsFill()
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
-            solver.ok = solver.propagate().isNULL();
+            solver.ok = solver.propagate<true>().isNULL();
             if (!solver.ok) return false;
             continue;
         }
@@ -999,7 +999,7 @@ const bool Subsumer::subsWNonExistBinsFill()
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
-            solver.ok = solver.propagate().isNULL();
+            solver.ok = solver.propagate<true>().isNULL();
             if (!solver.ok) return false;
             continue;
         }
@@ -1047,14 +1047,11 @@ const bool Subsumer::subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBi
         failed = !onlyNonLearntBins->propagate();
     if (failed) return false;
 
-    vector<Lit>& thisCache = binNonLearntCache[(~lit).toInt()].lits;
-    thisCache.clear();
-    binNonLearntCache[(~lit).toInt()].conflictLastUpdated = solver.conflicts;
-
+    vector<Lit> lits;
     assert(solver.decisionLevel() > 0);
     for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
         Lit x = solver.trail[sublevel];
-        thisCache.push_back(x);
+        lits.push_back(x);
         solver.assigns[x.var()] = l_Undef;
     }
     solver.assigns[solver.trail[solver.trail_lim[0]].var()] = l_Undef;
@@ -1063,6 +1060,8 @@ const bool Subsumer::subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBi
     solver.trail_lim.shrink_(solver.trail_lim.size());
     //solver.cancelUntilLight();
 
+    solver.transOTFCache[(~lit).toInt()].merge(lits, true, solver.seen);
+    solver.transOTFCache[(~lit).toInt()].conflictLastUpdated = solver.conflicts;
     return solver.ok;
 }
 /**
@@ -1127,7 +1126,7 @@ const bool Subsumer::eliminateVars()
 
         numVarsElimed += numElimed - oldNumElimed;
         #ifdef BIT_MORE_VERBOSITY
-        std::cout << "c  #var-elim: " << vars_elimed << std::endl;
+        std::cout << "c  #var-elim: " << (numElimed - oldNumElimed) << std::endl;
         #endif
     }
 
@@ -1338,7 +1337,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
 
     if (!alsoLearnt) {
         BothCache bothCache(solver);
-        if (!bothCache.tryBoth(binNonLearntCache)) return false;
+        if (!bothCache.tryBoth(solver.transOTFCache)) return false;
     }
 
     solver.testAllClauseAttach();
@@ -1464,7 +1463,11 @@ template<class T>
 void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "findSubsumed: " << ps << std::endl;
+    cout << "findSubsumed: ";
+    for (uint32_t i = 0; i < ps.size(); i++) {
+        std::cout << ps[i] << " , ";
+    }
+    std::cout << std::endl;
     #endif
 
     for (uint32_t i = 0; i != ps.size(); i++)
@@ -2433,11 +2436,9 @@ void Subsumer::findOrGates(const bool learntGatesToo)
         Lit which = lit_Undef;
         for (const Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++) {
             Lit lit = *l;
-            vector<Lit> const* cache;
-            if (!learntGatesToo) cache = &binNonLearntCache[(~lit).toInt()].lits;
-            else cache = &solver.transOTFCache[(~lit).toInt()].lits;
+            const vector<LitExtra>& cache = solver.transOTFCache[(~lit).toInt()].lits;
 
-            if (cache->size() == 0) {
+            if (cache.size() == 0) {
                 numSizeZeroCache++;
                 if (numSizeZeroCache > 1) break;
                 which = lit;
@@ -2461,13 +2462,12 @@ void Subsumer::findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learn
     for (const Lit *l2 = cl.getData(), *end3 = cl.getDataEnd(); l2 != end3; l2++) {
         if (*l2 == ~eqLit) continue;
         Lit otherLit = *l2;
-        vector<Lit> const* cache;
-        if (!learntGatesToo) cache = &binNonLearntCache[(~otherLit).toInt()].lits;
-        else cache = &solver.transOTFCache[(~otherLit).toInt()].lits;
+        const vector<LitExtra>& cache = solver.transOTFCache[(~otherLit).toInt()].lits;
 
         bool OK = false;
-        for (vector<Lit>::const_iterator cacheLit = cache->begin(), endCache = cache->end(); cacheLit != endCache; cacheLit++) {
-            if (*cacheLit == eqLit) {
+        for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
+            if ((learntGatesToo || cacheLit->getOnlyNLBin()) &&
+                cacheLit->getLit() == eqLit) {
                 OK = true;
                 break;
             }
@@ -2570,9 +2570,9 @@ const bool Subsumer::subsumeNonExist()
 
         bool toRemove = false;
         for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-            vector<Lit>& cache = binNonLearntCache[l->toInt()].lits;
-            for (vector<Lit>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-                if (seen_tmp[cacheLit->toInt()]) {
+            const vector<LitExtra>& cache = solver.transOTFCache[l->toInt()].lits;
+            for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
+                if (cacheLit->getOnlyNLBin() && seen_tmp[cacheLit->getLit().toInt()]) {
                     toRemove = true;
                     break;
                 }
@@ -2636,14 +2636,14 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     const vec<ClauseSimp>& csOther = occur[(~(gate.lits[1])).toInt()];
     //std::cout << "csother: " << csOther.size() << std::endl;
     uint32_t abstraction = 0;
-    uint32_t maxSize = 0;
+    uint16_t maxSize = 0;
     for (const ClauseSimp *it2 = csOther.getData(), *end2 = csOther.getDataEnd(); it2 != end2; it2++) {
         const Clause& cl = *it2->clause;
         numOp += cl.size();
         if (defOfOrGate[it2->index]) continue;
 
         maxSize = std::max(maxSize, cl.size());
-        if (sizeSortedOcc.size() < maxSize+1) sizeSortedOcc.resize(maxSize+1);
+        if (sizeSortedOcc.size() < (uint32_t)maxSize+1) sizeSortedOcc.resize(maxSize+1);
         sizeSortedOcc[cl.size()].push_back(*it2);
 
         for (uint32_t i = 0; i < cl.size(); i++) {
