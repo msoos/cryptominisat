@@ -594,7 +594,8 @@ void Solver::attachClause(Clause& c)
 */
 void Solver::detachClause(const XorClause& c)
 {
-    detachModifiedClause(c[0].var(), c[1].var(), c.size(), &c);
+    const ClauseData& data =clauseData[c.getNum()];
+    detachModifiedClause(c[data[0]].var(), c[data[1]].var(), c.size(), &c);
 }
 
 /**
@@ -1158,7 +1159,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
     int index   = trail.size() - 1;
     out_btlevel = 0;
 
-    PropByFull confl(conflHalf, failBinLit, clauseAllocator, clauseData);
+    PropByFull confl(conflHalf, failBinLit, clauseAllocator, clauseData, assigns);
     PropByFull oldConfl;
 
     do {
@@ -1193,7 +1194,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
         while (!seen[trail[index--].var()]);
         p     = trail[index+1];
         oldConfl = confl;
-        confl = PropByFull(reason[p.var()], failBinLit, clauseAllocator, clauseData);
+        confl = PropByFull(reason[p.var()], failBinLit, clauseAllocator, clauseData, assigns);
         //if (confl.isClause()) __builtin_prefetch(confl.getClause(), 1, 0);
         seen[p.var()] = 0;
         pathC--;
@@ -1217,7 +1218,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
     } else {
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++) {
-            PropByFull c(reason[out_learnt[i].var()], failBinLit, clauseAllocator, clauseData);
+            PropByFull c(reason[out_learnt[i].var()], failBinLit, clauseAllocator, clauseData, assigns);
 
             for (uint32_t k = 1, size = c.size(); k < size; k++) {
                 if (!seen[c[k].var()] && level[c[k].var()] > 0) {
@@ -1544,7 +1545,7 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     int top = analyze_toclear.size();
     while (analyze_stack.size() > 0) {
         assert(!reason[analyze_stack.last().var()].isNULL());
-        PropByFull c(reason[analyze_stack.last().var()], failBinLit, clauseAllocator, clauseData);
+        PropByFull c(reason[analyze_stack.last().var()], failBinLit, clauseAllocator, clauseData, assigns);
 
         analyze_stack.pop();
 
@@ -1595,7 +1596,7 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
                 assert(level[x] > 0);
                 out_conflict.push(~trail[i]);
             } else {
-                PropByFull c(reason[x], failBinLit, clauseAllocator, clauseData);
+                PropByFull c(reason[x], failBinLit, clauseAllocator, clauseData, assigns);
                 for (uint32_t j = 1, size = c.size(); j < size; j++)
                     if (level[c[j].var()] > 0)
                         seen[c[j].var()] = 1;
@@ -1796,18 +1797,11 @@ inline const bool Solver::propXorClause(Watched* &i, Watched* &j, const Lit p, P
     ClauseData& data = clauseData[clauseNum];
     const bool watchNum = i->getWatchNum();
 
-    // Make sure the false literal is data[1]:
-//     if (c[0].var() == p.var()) {
-//         Lit tmp(c[0]);
-//         c[0] = c[1];
-//         c[1] = tmp;
-//     }
-//     assert(c[1].var() == p.var());
-    assert(c[data[0]].var() == p.var() || c[data[1]].var() == p.var());
+    assert(c[data[watchNum]].var() == p.var());
 
     bool final = c.xorEqualFalse();
     for (uint32_t k = 0, size = c.size(); k != size; k++) {
-        const lbool& val = assigns[c[k].var()];
+        const lbool val = assigns[c[k].var()];
         if (val.isUndef() && k != data[0] && k != data[1]) {
             data[watchNum] = k;
             removeWXCl(watches[(~p).toInt()], offset);
@@ -1816,25 +1810,21 @@ inline const bool Solver::propXorClause(Watched* &i, Watched* &j, const Lit p, P
             return true;
         }
 
-        c[k] = c[k].unsign() ^ val.getBool();
         final ^= val.getBool();
     }
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
-
-    if (assigns[c[0].var()].isUndef()) {
-        c[0] = c[0].unsign()^final;
-        if (full) uncheckedEnqueue(c[0], PropBy(offset, watchNum));
-        else      uncheckedEnqueueLight(c[0]);
+    if (value(c[data[!watchNum]].var()) == l_Undef) {
+        Lit tmp = c[data[!watchNum]].unsign()^final;
+        if (full) uncheckedEnqueue(tmp, PropBy(offset, !watchNum));
+        else      uncheckedEnqueueLight(tmp);
     } else if (!final) {
-        confl = PropBy(offset, watchNum);
+        confl = PropBy(offset, !watchNum);
         qhead = trail.size();
         return false;
     } else {
-        Lit tmp(c[0]);
-        c[0] = c[1];
-        c[1] = tmp;
+        //Satisfied, we are happy
     }
 
     return true;
