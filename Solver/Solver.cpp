@@ -1862,6 +1862,7 @@ PropBy Solver::propagate(const bool update)
         while (qhead2 < trail.size()) {
             Lit p = trail[qhead2++];     // 'p' is enqueued fact to propagate.
             vec<Watched>& ws = watches[p.toInt()];
+            num_props += ws.size()/2 + 2;
             i = ws.getData();
             end = ws.getDataEnd();
             for (; i != end; i++) {
@@ -1874,7 +1875,7 @@ PropBy Solver::propagate(const bool update)
 
         Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>& ws = watches[p.toInt()];
-        num_props += ws.size()/2 + 2;
+        num_props += ws.size()/2;
 
         #ifdef VERBOSE_DEBUG_PROP
         cout << "Propagating lit " << p << endl;
