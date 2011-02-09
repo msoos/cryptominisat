@@ -1851,15 +1851,29 @@ PropBy Solver::propagate(const bool update)
 {
     PropBy confl;
     uint32_t num_props = 0;
+    Watched *i, *j, *i2, *end;
 
     #ifdef VERBOSE_DEBUG_PROP
     cout << "Propagation started" << endl;
     #endif
 
     while (qhead < trail.size()) {
-        Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
-        vec<Watched>&  ws  = watches[p.toInt()];
-        Watched        *i, *j, *i2;
+        uint32_t qhead2 = qhead;
+        while (qhead2 < trail.size()) {
+            Lit p = trail[qhead2++];     // 'p' is enqueued fact to propagate.
+            vec<Watched>& ws = watches[p.toInt()];
+            i = ws.getData();
+            end = ws.getDataEnd();
+            for (; i != end; i++) {
+                if (i->isBinary()) {
+                    if (!propBinaryClause<full>(i, p, confl)) goto end;
+                    else continue;
+                } //end BINARY
+            }
+        }
+
+        Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
+        vec<Watched>& ws = watches[p.toInt()];
         num_props += ws.size()/2 + 2;
 
         #ifdef VERBOSE_DEBUG_PROP
@@ -1887,8 +1901,7 @@ PropBy Solver::propagate(const bool update)
 
             if (i->isBinary()) {
                 *j++ = *i;
-                if (!propBinaryClause<full>(i, p, confl)) break;
-                else continue;
+                continue;
             } //end BINARY
 
             if (i->isTriClause()) {
@@ -1917,14 +1930,16 @@ PropBy Solver::propagate(const bool update)
         if (i != end) {
             i++;
             //copy remaining watches
-            for(Watched *ii = i, *jj = j; ii != end; ii++) {
-                *jj++ = *ii;
+            Watched *j2;
+            for(i2 = i, j2 = j; i2 != end; i2++) {
+                *j2++ = *i2;
             }
             //memmove(j, i, sizeof(Watched)*(end-i));
         }
         assert(i >= j);
         ws.shrink_(i-j);
     }
+end:
     propagations += num_props;
     simpDB_props -= num_props;
 
