@@ -153,20 +153,20 @@ class PropByFull
         uint16_t isize;
         Clause* clause;
         Lit lits[3];
-        Lit *xorLits;
+        vector<bool> xorLits;
         ClauseData data;
 
     public:
         ~PropByFull()
         {
-            delete [] xorLits;
+            //delete [] xorLits;
         }
 
         PropByFull(PropBy orig, Lit otherLit, ClauseAllocator& alloc, const vec<ClauseData>& clauseData, const vec<lbool>& assigns) :
             type(10)
             , isize(0)
             , clause(NULL)
-            , xorLits(NULL)
+            //, xorLits(NULL)
         {
             if (orig.isBinary() || orig.isTri()) {
                 lits[0] = otherLit;
@@ -197,25 +197,25 @@ class PropByFull
                 } else {
                     type = 3;
 
-                    xorLits = new Lit[isize];
+                    xorLits.resize(isize, 0);
                     bool final = ((XorClause*)clause)->xorEqualFalse();
                     for (uint32_t i = 0; i < isize; i++) {
                         Lit lit = clause->operator[](i);
                         bool val = assigns[lit.var()].getBool();
-                        xorLits[i] = Lit(lit.var(),val);
+                        xorLits[i] = val;
                         final ^= val;
                     }
-                    std::swap(xorLits[0], xorLits[data[0]]);
+                    /*std::swap(xorLits[0], xorLits[data[0]]);
                     if (data[1] == 0)
                         std::swap(xorLits[1], xorLits[data[0]]);
                     else
-                        std::swap(xorLits[1], xorLits[data[1]]);
+                        std::swap(xorLits[1], xorLits[data[1]]);*/
 
                     if (!final) {
                         //conflict-causing clause
                     } else {
                         //propagating clause
-                        xorLits[1] ^= true;
+                        xorLits[data[1]] = xorLits[data[1]] ^ true; 
                     }
                 }
             }
@@ -223,22 +223,23 @@ class PropByFull
 
         PropByFull() :
             type(10)
-            , xorLits(NULL)
+            //, xorLits(NULL)
         {}
 
         PropByFull(const PropByFull& other) :
             type(other.type)
             , isize(other.isize)
             , clause(other.clause)
+            , xorLits(other.xorLits)
             , data(other.data)
         {
             memcpy(lits, other.lits, sizeof(Lit)*3);
-            if (other.xorLits) {
+            /*if (other.xorLits) {
                 xorLits = new Lit[isize];
                 memcpy(xorLits, other.xorLits, sizeof(Lit)*isize);
             } else {
                 xorLits = NULL;
-            }
+            }*/
         }
 
         PropByFull& operator=(const PropByFull& other)
@@ -247,14 +248,15 @@ class PropByFull
             isize = other.isize;
             clause = other.clause;
             data = other.data;
-            delete xorLits;
+            xorLits = other.xorLits;
+            //delete xorLits;
             memcpy(lits, other.lits, sizeof(Lit)*3);
-            if (other.xorLits) {
+            /*if (other.xorLits) {
                 xorLits = new Lit[isize];
                 memcpy(xorLits, other.xorLits, sizeof(Lit)*isize);
             } else {
                 xorLits = NULL;
-            }
+            }*/
 
             return *this;
         }
@@ -306,7 +308,14 @@ class PropByFull
                     return (*clause)[i];
 
                 case 3:
-                    return xorLits[i];
+                    uint16_t val;
+                    if (i <= 1) val = data[i];
+                    else if (i == data[0]) val = (data[1] == 0 ? 1 : 0);
+                    else if (i == data[1]) val = (data[0] == 1 ? 0 : 1);
+                    else val = i;
+
+                    return (*clause)[val] ^ xorLits[val];
+                    //return xorLits[i];
 
                 default :
                     return lits[i];

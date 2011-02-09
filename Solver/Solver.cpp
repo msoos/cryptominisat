@@ -232,6 +232,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
     Lit p;
     uint32_t i, j;
     for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
+        ps[i] = ps[i].unsign();
         if (ps[i].var() == p.var()) {
             //added, but easily removed
             j--;
