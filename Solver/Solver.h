@@ -769,7 +769,7 @@ inline const uint32_t      Solver::nVars         ()      const
 }
 inline void     Solver::setPolarity   (Var v, bool b)
 {
-    polarity    [v] = (char)b;
+    polarity[v] = b;
 }
 inline void     Solver::setDecisionVar(Var v, bool b)
 {
