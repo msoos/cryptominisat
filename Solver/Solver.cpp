@@ -185,7 +185,7 @@ Var Solver::newVar(bool dvar)
     litReachable.push_back(LitReachData());
     litReachable.push_back(LitReachData());
 
-    polarity  .push_back(defaultPolarity());
+    polarity  .push_back(0);
 
     //Variable heap, long-term polarity count
     decision_var.push_back(dvar);
@@ -791,13 +791,7 @@ const bool Solver::clearGaussMatrixes()
     return false;
 }
 
-/**
-@brief Returns what polarity[] should be set as default based on polarity_mode
-
-since polarity is filled with Lit::sign() , "true" here means an inverted
-signed-ness, i.e. a FALSE default value. And vice-versa
-*/
-inline bool Solver::defaultPolarity()
+inline bool Solver::getPolarity(const Var var)
 {
     switch(conf.polarity_mode) {
         case polarity_false:
@@ -807,7 +801,21 @@ inline bool Solver::defaultPolarity()
         case polarity_rnd:
             return mtrand.randInt(1);
         case polarity_auto:
-            return true;
+            if (avgBranchDepth.isvalid()) {
+                uint32_t multiplier;
+                switch(subRestartType) {
+                    case static_restart:
+                        multiplier = 2;
+                        break;
+                    default:
+                        multiplier = 1;
+                }
+                const bool random = mtrand.randInt(avgBranchDepth.getAvgUInt() * multiplier) == 1;
+
+                return polarity[var] ^ random;
+            } else {
+                return polarity[var];
+            }
         default:
             assert(false);
     }
@@ -923,7 +931,7 @@ void Solver::calculateDefaultPolarities()
         }
     } else {
         for (uint32_t i = 0; i < polarity.size(); i++) {
-            polarity[i] = defaultPolarity();
+            polarity[i] = getPolarity(i);
         }
     }
 
@@ -1017,8 +1025,6 @@ We do three things here:
 Then, we pick a sign (True/False):
 \li If we are in search-burst mode ("simplifying" is set), we pick a sign
 totally randomly
-\li If RANDOM_LOOKAROUND_SEARCHSPACE is set, we take the previously saved
-polarity, and with some chance, flip it
 \li Otherwise, we simply take the saved polarity
 */
 Lit Solver::pickBranchLit()
@@ -1056,10 +1062,8 @@ Lit Solver::pickBranchLit()
         next = order_heap.removeMin();
         if (!simplifying && value(next) == l_Undef && decision_var[next]) {
             signSet = true;
-            if (avgBranchDepth.isvalid())
-                signSetTo = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((subRestartType == static_restart) ? 2 : 1) ) == 1);
-            else
-                signSetTo = polarity[next];
+            signSetTo = getPolarity(next);
+
             Lit nextLit = Lit(next, signSetTo);
             Lit lit2 = litReachable[nextLit.toInt()].lit;
             if (lit2 != lit_Undef && value(lit2.var()) == l_Undef && decision_var[lit2.var()] && mtrand.randInt(1) == 1) {
@@ -1071,8 +1075,8 @@ Lit Solver::pickBranchLit()
     }
 
     //if "simplifying" is set, i.e. if we are in a burst-search mode, then
-    //randomly pick a sign. Otherwise, if RANDOM_LOOKAROUND_SEARCHSPACE is
-    //defined, we check the default polarity, and we may change it a bit
+    //randomly pick a sign. Otherwise, we check the default polarity,
+    // and we may change it a bit
     //randomly based on the average branch depth. Otherwise, we just go for the
     //polarity that has been saved
     bool sign;
@@ -1082,12 +1086,8 @@ Lit Solver::pickBranchLit()
         } else {
             if (simplifying && random)
                 sign = mtrand.randInt(1);
-            #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
-            else if (avgBranchDepth.isvalid())
-                sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((subRestartType == static_restart) ? 2 : 1) ) == 1);
-            #endif
             else
-                sign = polarity[next];
+                sign = getPolarity(next);
         }
     }
 
@@ -2503,9 +2503,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     learnt_clause.clear();
     Clause* c = analyze(confl, learnt_clause, backtrack_level, glue, update);
     if (update) {
-        #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         avgBranchDepth.push(decisionLevel());
-        #endif //RANDOM_LOOKAROUND_SEARCHSPACE
         glueHistory.push(glue);
         conflSizeHist.push(learnt_clause.size());
     }
@@ -2822,13 +2820,6 @@ const bool Solver::fullRestart(uint32_t& lastFullRestart)
     if (conf.doPartHandler && !partHandler->handle())
         return false;
 
-    //calculateDefaultPolarities();
-    if (conf.polarity_mode != polarity_auto) {
-        for (uint32_t i = 0; i < polarity.size(); i++) {
-            polarity[i] = defaultPolarity();
-        }
-    }
-
     return true;
 }
 
@@ -2907,10 +2898,8 @@ void Solver::initialiseSolver()
     setDefaultRestartType();
 
     //Initialise avg. branch depth
-    #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
     avgBranchDepth.clear();
     avgBranchDepth.initSize(500);
-    #endif //RANDOM_LOOKAROUND_SEARCHSPACE
 
     //Initialise number of restarts&full restarts
     starts = 0;

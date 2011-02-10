@@ -348,9 +348,7 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
     vec<Lit>            assumptions;      ///< Current set of assumptions provided to solve by the user.
-    #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
     bqueue<uint32_t>    avgBranchDepth;   ///< Avg branch depth. We collect this, and use it to do random look-around in the searchspace during simplifyProblem()
-    #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     MTRand              mtrand;           ///< random number generator
 
     /////////////////
@@ -618,7 +616,7 @@ protected:
     // Polarity chooser
     /////////////////////
     void calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
-    bool defaultPolarity(); //if polarity_mode is not polarity_auto, this returns the default polarity of the variable
+    bool getPolarity(const Var var);
     void tallyVotesBin(vec<double>& votes) const;
     void tallyVotes(const vec<Clause*>& cs, vec<double>& votes) const;
     void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
