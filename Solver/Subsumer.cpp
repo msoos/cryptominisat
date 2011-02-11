@@ -1240,7 +1240,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         if (solver.conf.doSubsWNonExistBins
             && solver.conf.doCacheNLBins) {
-            if (numCalls > 3) makeAllBinsNonLearnt();
+            //if (numCalls > 3) makeAllBinsNonLearnt();
             if (!subsWNonExistBinsFill()) return false;
             if (!subsumeNonExist()) return false;
         }
@@ -1714,7 +1714,7 @@ bool Subsumer::maybeEliminate(const Var var)
     numMaxElim -= posSize * negSize + before_literals;
     poss.clear();
     negs.clear();
-    if (numCalls >= 4) addLearntBinaries(var);
+    //if (numCalls >= 4) addLearntBinaries(var);
 
     removeClauses(posAll, negAll, var);
     for (uint32_t i = 0; i < posAll.size(); i++) for (uint32_t j = 0; j < negAll.size(); j++){
