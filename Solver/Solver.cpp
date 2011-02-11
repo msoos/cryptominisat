@@ -1837,13 +1837,13 @@ PropBy Solver::propagate(const bool update)
     PropBy confl;
     uint32_t num_props = 0;
     Watched *i, *j, *i2, *end;
+    uint32_t qhead2 = qhead;
 
     #ifdef VERBOSE_DEBUG_PROP
     cout << "Propagation started" << endl;
     #endif
 
     while (qhead < trail.size()) {
-        uint32_t qhead2 = qhead;
         while (qhead2 < trail.size()) {
             Lit p = trail[qhead2++];     // 'p' is enqueued fact to propagate.
             vec<Watched>& ws = watches[p.toInt()];
