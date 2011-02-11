@@ -25,11 +25,17 @@ class ClauseVivifier {
         ClauseVivifier(Solver& solver);
         const bool vivify();
         const bool vivifyClausesCache(vec<Clause*>& clauses);
+        const bool calcAndSubsume();
 
     private:
 
         //Actual algorithms used
         const bool vivifyClausesNormal();
+
+        const bool subsWNonExistBinsFill();
+        void subsumeNonExist();
+        const bool subsNonExistHelper(Clause& cl);
+        const bool subsWNonExistBinsFillHelper(const Lit lit);
 
         /**
         @brief Records data for asymmBranch()

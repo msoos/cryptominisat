@@ -2692,6 +2692,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (needToInterrupt) return l_Undef;
 
+    if (conf.doClausVivif && !clauseVivifier->calcAndSubsume()) goto end;
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
     if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
@@ -2855,6 +2856,11 @@ void Solver::performStepsBeforeSolve()
     #ifdef VERBOSE_DEBUG
     printAllClauses();
     #endif //VERBOSE_DEBUG
+
+    if (conf.doClausVivif && !conf.libraryUsage
+        && !clauseVivifier->calcAndSubsume())
+        return;
+
     if (conf.doSatELite
         && !conf.libraryUsage
         && clauses.size() < 4800000

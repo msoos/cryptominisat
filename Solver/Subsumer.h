@@ -27,7 +27,6 @@ using std::map;
 using std::priority_queue;
 
 class ClauseCleaner;
-class OnlyNonLearntBins;
 
 class OrGate {
     public:
@@ -277,29 +276,7 @@ private:
     void removeBinsAndTris(const Var var);
     const uint32_t removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws);
 
-    //Subsume with Nonexistent Bins
-    struct BinSorter2 {
-        const bool operator()(const Watched& first, const Watched& second)
-        {
-            assert(first.isBinary() || first.isTriClause());
-            assert(second.isBinary() || second.isTriClause());
-
-            if (first.isTriClause() && second.isTriClause()) return false;
-            if (first.isBinary() && second.isTriClause()) return true;
-            if (second.isBinary() && first.isTriClause()) return false;
-
-            assert(first.isBinary() && second.isBinary());
-            if (first.getLearnt() && !second.getLearnt()) return true;
-            if (!first.getLearnt() && second.getLearnt()) return false;
-            return false;
-        };
-    };
     void makeAllBinsNonLearnt();
-    const bool subsWNonExistBinsFill();
-    const bool subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
-    const bool subsumeNonExist();
-    uint32_t doneNumNonExist;
-    uint64_t extraTimeNonExist;
 
     //Blocked clause elimination
     class VarOcc {

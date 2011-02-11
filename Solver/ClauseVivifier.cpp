@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define ASSYM_DEBUG
 
+#define MAX_BINARY_PROP 60000000
+
+
 ClauseVivifier::ClauseVivifier(Solver& _solver) :
     lastTimeWentUntil(0)
     , numCalls(0)
@@ -49,6 +52,194 @@ const bool ClauseVivifier::vivify()
     if (!vivifyClausesNormal()) return false;
 
     return true;
+}
+
+const bool ClauseVivifier::calcAndSubsume()
+{
+    assert(solver.ok);
+
+    if (!subsWNonExistBinsFill()) return false;
+    subsumeNonExist();
+
+    return true;
+}
+
+struct BinSorter2 {
+    const bool operator()(const Watched& first, const Watched& second)
+    {
+        if (!first.isBinary() && !second.isBinary()) return false;
+        if (first.isBinary() && !second.isBinary()) return true;
+        if (second.isBinary() && !first.isBinary()) return false;
+
+        if (!first.getLearnt() && second.getLearnt()) return true;
+        if (first.getLearnt() && !second.getLearnt()) return false;
+        return false;
+    };
+    };
+
+const bool ClauseVivifier::subsNonExistHelper(Clause& cl)
+{
+    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+        solver.seen[l->toInt()] = true;
+    }
+
+    bool toRemove = false;
+    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+        const vector<LitExtra>& cache = solver.transOTFCache[l->toInt()].lits;
+        for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
+            if (cacheLit->getOnlyNLBin() && solver.seen[cacheLit->getLit().toInt()]) {
+                toRemove = true;
+                break;
+            }
+        }
+        if (toRemove) break;
+    }
+
+    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+        solver.seen[l->toInt()] = false;
+    }
+
+    return toRemove;
+}
+
+void ClauseVivifier::subsumeNonExist()
+{
+    double myTime = cpuTime();
+    uint32_t clRem = 0;
+    Clause **i, **j;
+    i = j = solver.clauses.getData();
+    for (Clause **end = solver.clauses.getDataEnd(); i != end; i++) {
+        if (subsNonExistHelper(**i)) {
+
+            solver.removeClause(**i);
+            clRem ++;
+        } else {
+            *j++ = *i;
+        }
+    }
+    solver.clauses.shrink(i-j);
+
+    i = j = solver.learnts.getData();
+    for (Clause **end = solver.learnts.getDataEnd(); i != end; i++) {
+        if (subsNonExistHelper(**i)) {
+
+            solver.removeClause(**i);
+            clRem ++;
+        } else {
+            *j++ = *i;
+        }
+    }
+    solver.learnts.shrink(i-j);
+
+    if (solver.conf.verbosity  >= 1) {
+        std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << clRem
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        << std::endl;
+    }
+}
+
+/**
+@brief Call subsWNonExistBins with randomly picked starting literals
+
+This is the function that overviews the deletion of all clauses that could be
+inferred from non-existing binary clauses, and the strenghtening (through self-
+subsuming resolution) of clauses that could be strenghtened using non-existent
+binary clauses.
+*/
+const bool ClauseVivifier::subsWNonExistBinsFill()
+{
+    double myTime = cpuTime();
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
+        if (it->size() < 2) continue;
+        std::sort(it->getData(), it->getDataEnd(), BinSorter2());
+    }
+
+    uint32_t oldTrailSize = solver.trail.size();
+    uint64_t oldProps = solver.propagations;
+    uint64_t maxProp = MAX_BINARY_PROP*3;
+
+    uint32_t extraTimeNonExist = 0;
+    uint32_t doneNumNonExist = 0;
+    uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
+    for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
+        Var var = solver.order_heap[(startFrom + i) % solver.order_heap.size()];
+        if (solver.propagations + extraTimeNonExist*150 > oldProps + maxProp) break;
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+        doneNumNonExist++;
+        extraTimeNonExist += 5;
+
+        Lit lit(var, true);
+        if (!subsWNonExistBinsFillHelper(lit)) {
+            if (!solver.ok) return false;
+            solver.cancelUntilLight();
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = solver.propagate<true>().isNULL();
+            if (!solver.ok) return false;
+            continue;
+        }
+        extraTimeNonExist += 10;
+
+        //in the meantime it could have got assigned
+        if (solver.assigns[var] != l_Undef) continue;
+        lit = ~lit;
+        if (!subsWNonExistBinsFillHelper(lit)) {
+            if (!solver.ok) return false;
+            solver.cancelUntilLight();
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = solver.propagate<true>().isNULL();
+            if (!solver.ok) return false;
+            continue;
+        }
+        extraTimeNonExist += 10;
+    }
+
+    if (solver.conf.verbosity  >= 1) {
+        std::cout << "c Calc non-exist non-lernt bins"
+        << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
+        << " done: " << std::setw(6) << doneNumNonExist
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        << std::endl;
+    }
+
+    return true;
+}
+
+/**
+@brief Subsumes&strenghtens clauses with non-existent binary clauses
+
+Generates binary clauses that could exist, then calls \function subsume0BIN()
+with them, thus performing self-subsuming resolution and subsumption on the
+clauses.
+
+@param[in] lit This literal is the starting point of this set of non-existent
+binary clauses (this literal is the starting point in the binary graph)
+*/
+const bool ClauseVivifier::subsWNonExistBinsFillHelper(const Lit lit)
+{
+    #ifdef VERBOSE_DEBUG
+    std::cout << "subsWNonExistBins called with lit " << lit << std::endl;
+    #endif //VERBOSE_DEBUG
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueueLight(lit);
+    bool failed = (!solver.propagateNonLearntBin().isNULL());
+    if (failed) return false;
+
+    vector<Lit> lits;
+    assert(solver.decisionLevel() > 0);
+    for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
+        Lit x = solver.trail[sublevel];
+        lits.push_back(x);
+        solver.assigns[x.var()] = l_Undef;
+    }
+    solver.assigns[solver.trail[solver.trail_lim[0]].var()] = l_Undef;
+    solver.qhead = solver.trail_lim[0];
+    solver.trail.shrink_(solver.trail.size() - solver.trail_lim[0]);
+    solver.trail_lim.shrink_(solver.trail_lim.size());
+    //solver.cancelUntilLight();
+
+    solver.transOTFCache[(~lit).toInt()].merge(lits, true, solver.seen);
+    solver.transOTFCache[(~lit).toInt()].conflictLastUpdated = solver.conflicts;
+    return solver.ok;
 }
 
 

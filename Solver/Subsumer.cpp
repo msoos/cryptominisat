@@ -17,7 +17,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "VarReplacer.h"
 #include "XorFinder.h"
 #include "CompleteDetachReattacher.h"
-#include "OnlyNonLearntBins.h"
 #include "UselessBinRemover.h"
 #include "DataSync.h"
 #include "BothCache.h"
@@ -928,130 +927,6 @@ void Subsumer::makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learn
     solver.clauses_literals += 2;
 }
 
-#define MAX_BINARY_PROP 60000000
-
-/**
-@brief Call subsWNonExistBins with randomly picked starting literals
-
-This is the function that overviews the deletion of all clauses that could be
-inferred from non-existing binary clauses, and the strenghtening (through self-
-subsuming resolution) of clauses that could be strenghtened using non-existent
-binary clauses.
-*/
-const bool Subsumer::subsWNonExistBinsFill()
-{
-    double myTime = cpuTime();
-    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
-        if (it->size() < 2) continue;
-        std::sort(it->getData(), it->getDataEnd(), BinSorter2());
-    }
-
-    uint32_t oldTrailSize = solver.trail.size();
-    uint64_t oldProps = solver.propagations;
-    uint64_t maxProp = MAX_BINARY_PROP;
-    extraTimeNonExist = 0;
-    OnlyNonLearntBins* onlyNonLearntBins = NULL;
-    if (solver.clauses_literals < 10*1000*1000) {
-        onlyNonLearntBins = new OnlyNonLearntBins(solver);
-        onlyNonLearntBins->fill();
-        solver.multiLevelProp = true;
-    }
-
-    doneNumNonExist = 0;
-    uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
-    for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
-        Var var = solver.order_heap[(startFrom + i) % solver.order_heap.size()];
-        if (solver.propagations + extraTimeNonExist*150 > oldProps + maxProp) break;
-        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
-        doneNumNonExist++;
-        extraTimeNonExist += 5;
-
-        Lit lit(var, true);
-        if (onlyNonLearntBins != NULL && onlyNonLearntBins->getWatchSize(lit) == 0) goto next;
-        if (!subsWNonExistBinsFillHelper(lit, onlyNonLearntBins)) {
-            if (!solver.ok) return false;
-            solver.cancelUntilLight();
-            solver.uncheckedEnqueue(~lit);
-            solver.ok = solver.propagate<true>().isNULL();
-            if (!solver.ok) return false;
-            continue;
-        }
-        extraTimeNonExist += 10;
-        next:
-
-        //in the meantime it could have got assigned
-        if (solver.assigns[var] != l_Undef) continue;
-        lit = ~lit;
-        if (onlyNonLearntBins != NULL && onlyNonLearntBins->getWatchSize(lit) == 0) continue;
-        if (!subsWNonExistBinsFillHelper(lit, onlyNonLearntBins)) {
-            if (!solver.ok) return false;
-            solver.cancelUntilLight();
-            solver.uncheckedEnqueue(~lit);
-            solver.ok = solver.propagate<true>().isNULL();
-            if (!solver.ok) return false;
-            continue;
-        }
-        extraTimeNonExist += 10;
-    }
-
-    if (onlyNonLearntBins) delete onlyNonLearntBins;
-
-
-    if (solver.conf.verbosity  >= 1) {
-        std::cout << "c Calc non-exist non-lernt bins"
-        << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
-        << " done: " << std::setw(6) << doneNumNonExist
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
-        << std::endl;
-    }
-    totalTime += cpuTime() - myTime;
-
-    return true;
-}
-
-/**
-@brief Subsumes&strenghtens clauses with non-existent binary clauses
-
-Generates binary clauses that could exist, then calls \function subsume0BIN()
-with them, thus performing self-subsuming resolution and subsumption on the
-clauses.
-
-@param[in] lit This literal is the starting point of this set of non-existent
-binary clauses (this literal is the starting point in the binary graph)
-@param onlyNonLearntBins This class is initialised before calling this function
-and contains all the non-learnt binary clauses
-*/
-const bool Subsumer::subsWNonExistBinsFillHelper(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
-{
-    #ifdef VERBOSE_DEBUG
-    std::cout << "subsWNonExistBins called with lit " << lit << std::endl;
-    #endif //VERBOSE_DEBUG
-    solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight(lit);
-    bool failed;
-    if (onlyNonLearntBins == NULL)
-        failed = (!solver.propagateNonLearntBin().isNULL());
-    else
-        failed = !onlyNonLearntBins->propagate();
-    if (failed) return false;
-
-    vector<Lit> lits;
-    assert(solver.decisionLevel() > 0);
-    for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
-        Lit x = solver.trail[sublevel];
-        lits.push_back(x);
-        solver.assigns[x.var()] = l_Undef;
-    }
-    solver.assigns[solver.trail[solver.trail_lim[0]].var()] = l_Undef;
-    solver.qhead = solver.trail_lim[0];
-    solver.trail.shrink_(solver.trail.size() - solver.trail_lim[0]);
-    solver.trail_lim.shrink_(solver.trail_lim.size());
-    //solver.cancelUntilLight();
-
-    solver.transOTFCache[(~lit).toInt()].merge(lits, true, solver.seen);
-    solver.transOTFCache[(~lit).toInt()].conflictLastUpdated = solver.conflicts;
-    return solver.ok;
-}
 /**
 @brief Clears and deletes (almost) everything in this class
 
@@ -1226,7 +1101,6 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     if (alsoLearnt) {
         numMaxSubsume1 = 500*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-        subsumeNonExist();
         addedClauseLits += addFromSolver(solver.clauses);
     } else {
         if ((solver.conf.doBlockedClause || numCalls == 2)
@@ -1238,12 +1112,7 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         subsumeBinsWithBins();
         numMaxSubsume1 = 2*1000*1000*1000;
         if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-        if (solver.conf.doSubsWNonExistBins
-            && solver.conf.doCacheNLBins) {
-            //if (numCalls > 3) makeAllBinsNonLearnt();
-            if (!subsWNonExistBinsFill()) return false;
-            if (!subsumeNonExist()) return false;
-        }
+        //if (numCalls > 3) makeAllBinsNonLearnt();
         if (!handleClBinTouched()) return false;
 
         if (solver.conf.doReplace && solver.conf.doRemUselessBins) {
@@ -2554,51 +2423,6 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
 
     return solver.ok;
 }
-
-const bool Subsumer::subsumeNonExist()
-{
-    double myTime = cpuTime();
-
-    clauses_subsumed = 0;
-    uint32_t num = 0;
-    for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++, num++) {
-        if (*it == NULL) continue;
-        Clause& cl = **it;
-
-
-        for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-            seen_tmp[l->toInt()] = true;
-        }
-
-        bool toRemove = false;
-        for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-            const vector<LitExtra>& cache = solver.transOTFCache[l->toInt()].lits;
-            for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-                if (cacheLit->getOnlyNLBin() && seen_tmp[cacheLit->getLit().toInt()]) {
-                    toRemove = true;
-                    break;
-                }
-            }
-            if (toRemove) break;
-        }
-
-        for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-            seen_tmp[l->toInt()] = false;
-        }
-
-        if (toRemove) unlinkClause(ClauseSimp(num), cl);
-    }
-
-    if (solver.conf.verbosity  >= 1) {
-        std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << clauses_subsumed
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
-        << std::endl;
-    }
-    totalTime += cpuTime() - myTime;
-
-    return true;
-}
-
 
 const bool Subsumer::treatAndGates()
 {

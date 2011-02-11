@@ -30,7 +30,6 @@ add_executable(cryptominisat
     StateSaver.cpp
     ClauseAllocator.cpp
     UselessBinRemover.cpp
-    OnlyNonLearntBins.cpp
     CompleteDetachReattacher.cpp
     DimacsParser.cpp
     SCCFinder.cpp
