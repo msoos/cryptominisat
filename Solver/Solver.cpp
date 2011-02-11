@@ -511,16 +511,14 @@ void Solver::attachClause(XorClause& c)
     }
     #endif //DEBUG_ATTACH
 
+    ClauseData data(0, 1);
     watches[Lit(c[0].var(), false).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 0));
     watches[Lit(c[0].var(), true).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 0));
     watches[Lit(c[1].var(), false).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 1));
     watches[Lit(c[1].var(), true).toInt()].push(Watched(clauseAllocator.getOffset((Clause*)&c), 1));
     const uint32_t clauseNum = c.getNum();
-    ClauseData d(0, 1);
-    if (clauseData.size() > clauseNum)
-        clauseData[clauseNum] = d;
-    else
-        clauseData.push_back(d);
+    if (clauseData.size() <= clauseNum) clauseData.resize(clauseNum+1, ClauseData());
+    clauseData[clauseNum] = data;
 
     clauses_literals += c.size();
 }
@@ -577,12 +575,8 @@ void Solver::attachClause(Clause& c)
         watches[(~c[1]).toInt()].push(Watched(offset, c[c.size()/2], 1));
     }
     const uint32_t clauseNum = c.getNum();
-    if (clauseData.size() > clauseNum)
-        clauseData[clauseNum] = data;
-    else {
-        clauseData.resize(clauseNum, ClauseData());
-        clauseData.push_back(data);
-    }
+    if (clauseData.size() <= clauseNum) clauseData.resize(clauseNum+1, ClauseData());
+    clauseData[clauseNum] = data;
 
     if (c.learnt())
         learnts_literals += c.size();
