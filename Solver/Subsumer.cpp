@@ -532,6 +532,8 @@ when there is enough numMaxSubume1 and numMaxSubume0 is available.
 */
 const bool Subsumer::subsume0AndSubsume1()
 {
+    s0.clear();
+    s1.clear();
     //uint32_t clTouchedTodo = cl_touched.nElems();
     uint32_t clTouchedTodo = 100000;
     if (addedClauseLits > 1500000) clTouchedTodo /= 2;
