@@ -42,6 +42,7 @@ public:
     // Variable mode:
     //
     void    setDecisionVar (Var v, bool b);         ///<Declare if a variable should be eligible for selection in the decision heuristic.
+    void    setPolarity(Var v, bool b);             ///< Declare which polarity the decision heuristic should use for a variable
 
     // Read state:
     //

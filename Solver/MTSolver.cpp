@@ -196,6 +196,20 @@ Var MTSolver::newVar(bool dvar)
     return ret;
 }
 
+void MTSolver::setPolarity(Var v, bool b)
+{
+    for (uint32_t i = 0; i < solvers.size(); i++) {
+        solvers[i]->setPolarity(v, b);
+    }
+}
+
+void MTSolver::setDecisionVar(Var v, bool b)
+{
+    for (uint32_t i = 0; i < solvers.size(); i++) {
+        solvers[i]->setDecisionVar(v, b);
+    }
+}
+
 template<class T> bool MTSolver::addClause (T& ps, const uint32_t group, const char* group_name)
 {
     bool globalRet = true;

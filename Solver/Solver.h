@@ -113,6 +113,50 @@ struct NegPosSorter
     }
 };
 
+class Polarity
+{
+    public:
+        Polarity() :
+            data(0)
+        {}
+
+        Polarity& operator=(const Polarity& other)
+        {
+            data = other.data;
+
+            return *this;
+        }
+
+        const bool isForced() const
+        {
+            return data&1;
+        }
+
+        void setForced(const bool val)
+        {
+            data = (unsigned char)1 | ((unsigned char)(val)<<1);
+        }
+
+        void setVal(const bool val)
+        {
+            if (isForced()) return;
+            else data = ((unsigned char)(val)<<1);
+        }
+
+        const bool getVal() const
+        {
+            return data&2;
+        }
+
+    private:
+        const bool getForced() const
+        {
+            return data&2;
+        }
+
+        unsigned char data;
+};
+
 /**
 @brief The main solver class
 
@@ -155,6 +199,7 @@ public:
     // Variable mode:
     //
     void    setDecisionVar (Var v, bool b);         ///<Declare if a variable should be eligible for selection in the decision heuristic.
+    void    setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable
 
     // Read state:
     //
@@ -620,8 +665,7 @@ protected:
     void tallyVotesBin(vec<double>& votes) const;
     void tallyVotes(const vec<Clause*>& cs, vec<double>& votes) const;
     void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
-    void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
-    vector<bool> polarity;      // The preferred polarity of each variable.
+    vector<Polarity> polarity;      // The preferred polarity of each variable.
     void reArrangeClauses();
     void reArrangeClause(Clause* clause);
 };
@@ -769,7 +813,8 @@ inline const uint32_t      Solver::nVars         ()      const
 }
 inline void     Solver::setPolarity   (Var v, bool b)
 {
-    polarity[v] = b;
+    assert(v < nVars());
+    polarity[v].setForced(!b);
 }
 inline void     Solver::setDecisionVar(Var v, bool b)
 {

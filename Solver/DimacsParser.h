@@ -51,6 +51,7 @@ class DimacsParser
         float parseFloat(StreamBuffer& in);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in, vec<Lit>& lits);
+        void readDefaultPolarity(StreamBuffer& in);
         void parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_t& glue);
         void readFullClause(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);

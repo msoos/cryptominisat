@@ -431,7 +431,7 @@ void PartHandler::addSavedState()
             solver.uncheckedEnqueue(Lit(var, savedState[var] == l_False));
             assert(solver.assigns[var] == savedState[var]);
             savedState[var] = l_Undef;
-            solver.polarity[var] = (solver.assigns[var] == l_False);
+            solver.polarity[var].setVal(solver.assigns[var] == l_False);
         }
     }
 

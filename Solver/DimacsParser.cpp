@@ -379,6 +379,22 @@ void DimacsParser::readFullClause(StreamBuffer& in)
     }
 }
 
+void DimacsParser::readDefaultPolarity(StreamBuffer& in)
+{
+    uint32_t len;
+    int parsed_lit = parseInt(in, len);
+    Var var = abs(parsed_lit);
+    assert(var > 0);
+
+    if (!debugNewVar) {
+        while ((var-1) >= solver->nVars()) solver->newVar();
+    }
+
+    solver->setPolarity(var-1, parsed_lit > 0);
+    skipLine(in);
+}
+
+
 /**
 @brief The main function: parses in a full DIMACS file
 
@@ -403,6 +419,10 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             ++in;
             parseString(in, str);
             parseComments(in, str);
+            break;
+        case 'd':
+            ++in;
+            readDefaultPolarity(in);
             break;
         default:
             readFullClause(in);
