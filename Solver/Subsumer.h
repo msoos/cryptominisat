@@ -105,7 +105,7 @@ private:
     vec<Var>               touchedVarsList;   ///<A list of the true elements in 'touched'.
     CSet                   cl_touched;     ///<Clauses strengthened/added
     vec<vec<ClauseSimp> >  occur;          ///<occur[index(lit)]' is a list of constraints containing 'lit'.
-    vec<CSet* >            iter_sets;      ///<Sets currently used in iterations.
+    CSet s0, s1;
     vec<char>              cannot_eliminate;///<Variables that cannot be eliminated due to, e.g. XOR-clauses
     vec<char>              seen_tmp;       ///<Used in various places to help perform algorithms
     vec<char>              seen_tmp2;      ///<Used in various places to help perform algorithms
@@ -143,10 +143,6 @@ private:
     void removeWrong(vec<Clause*>& cs);
     void removeWrongBinsAndAllTris();
     void removeAssignedVarsFromEliminated();
-
-    //Iterations
-    void registerIteration  (CSet& iter_set) { iter_sets.push(&iter_set); }
-    void unregisterIteration(CSet& iter_set) { remove(iter_sets, &iter_set); }
 
     //Touching
     void touch(const Var x);

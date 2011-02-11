@@ -325,7 +325,7 @@ const bool Subsumer::subsume1(vec<Lit>& ps, const bool wasLearnt)
 /**
 @brief Removes&free-s a clause from everywhere
 
-Removes clause from occurence lists, from Subsumer::clauses, and iter_sets.
+Removes clause from occurence lists, from Subsumer::clauses
 
 If clause is to be removed because the variable in it is eliminated, the clause
 is saved in elimedOutVar[] before it is fully removed.
@@ -352,10 +352,8 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
     }
 
     // Remove from iterator vectors/sets:
-    for (uint32_t i = 0; i < iter_sets.size(); i++) {
-        CSet& cs = *iter_sets[i];
-        cs.exclude(c);
-    }
+    s0.exclude(c);
+    s1.exclude(c);
 
     // Remove clause from clause touched set:
     cl_touched.exclude(c);
@@ -534,8 +532,6 @@ when there is enough numMaxSubume1 and numMaxSubume0 is available.
 */
 const bool Subsumer::subsume0AndSubsume1()
 {
-    CSet s0, s1;
-
     //uint32_t clTouchedTodo = cl_touched.nElems();
     uint32_t clTouchedTodo = 100000;
     if (addedClauseLits > 1500000) clTouchedTodo /= 2;
@@ -545,8 +541,6 @@ const bool Subsumer::subsume0AndSubsume1()
 
     if (!solver.conf.doSubsume1) clTouchedTodo = 0;
 
-    registerIteration(s0);
-    registerIteration(s1);
     vec<ClauseSimp> remClTouched;
 
     // Fixed-point for 1-subsumption:
@@ -669,8 +663,6 @@ const bool Subsumer::subsume0AndSubsume1()
 
     end:
     cl_touched.clear();
-    unregisterIteration(s1);
-    unregisterIteration(s0);
 
     return solver.ok;
 }
