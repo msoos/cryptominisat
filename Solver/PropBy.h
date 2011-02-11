@@ -130,41 +130,6 @@ class PropBy
             #endif
             return data1;
         }
-
-        /*const uint32_t size() const
-        {
-            if (isBinary()) return 2;
-            if (isTri()) return 3;
-
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(!isNULL());
-            #endif
-
-            return getClause()->size();
-        }*/
-
-        /*const Lit operator[](uint32_t i) const
-        {
-            if (isBinary()) {
-                #ifdef DEBUG_PROPAGATEFROM
-                assert(i == 1);
-                #endif
-                return getOtherLit();
-            }
-
-            if (isTriClause()) {
-                #ifdef DEBUG_PROPAGATEFROM
-                assert(i <= 2);
-                #endif
-                if (i == 1) return getOtherLit();
-                if (i == 2) return getOtherLit2();
-            }
-
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(!isNULL());
-            #endif
-            return (*getClause())[i];
-        }*/
 };
 
 inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
@@ -184,15 +149,19 @@ inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
 class PropByFull
 {
     private:
-        uint32_t type;
+        uint16_t type;
+        uint16_t isize;
         Clause* clause;
         Lit lits[3];
+        vector<bool> xorLits;
         ClauseData data;
 
     public:
-        PropByFull(PropBy orig, Lit otherLit, ClauseAllocator& alloc, vector<ClauseData>& clauseData) :
+        PropByFull(PropBy orig, Lit otherLit, ClauseAllocator& alloc, const vector<ClauseData>& clauseData, const vec<lbool>& assigns) :
             type(10)
+            , isize(0)
             , clause(NULL)
+            //, xorLits(NULL)
         {
             if (orig.isBinary() || orig.isTri()) {
                 lits[0] = otherLit;
@@ -200,22 +169,48 @@ class PropByFull
                 if (orig.isTri()) {
                     lits[2] = orig.getOtherLit2();
                     type = 2;
+                    isize = 3;
                 } else {
                     type = 1;
+                    isize = 2;
                 }
             }
             if (orig.isClause()) {
-                type = 0;
                 if (orig.isNULL()) {
+                    type = 0;
+                    isize = 0;
                     clause = NULL;
+                    return;
+                }
+                clause = alloc.getPointer(orig.getClause());
+                data = clauseData[clause->getNum()];
+                if (orig.getWatchNum()) std::swap(data[0], data[1]);
+                isize = clause->size();
+
+                if (!(clause->isXor())) {
+                    type = 0;
                 } else {
-                    clause = alloc.getPointer(orig.getClause());
-                    data = clauseData[clause->getNum()];
-                    if (orig.getWatchNum()) {
-                        std::swap(data[0], data[1]);
-                        #ifdef VERBOSE_DEBUG
-                        std::cout << "PropByFull: swap needed for clause " << (*clause) << std::endl;
-                        #endif
+                    type = 3;
+
+                    xorLits.resize(isize, 0);
+                    bool final = ((XorClause*)clause)->xorEqualFalse();
+                    for (uint32_t i = 0; i < isize; i++) {
+                        Lit lit = clause->operator[](i);
+                        bool val = assigns[lit.var()].getBool();
+                        xorLits[i] = val;
+                        final ^= val;
+                    }
+                    /*std::swap(xorLits[0], xorLits[data[0]]);
+                    if (data[1] == 0)
+                        std::swap(xorLits[1], xorLits[data[0]]);
+                    else
+                        std::swap(xorLits[1], xorLits[data[1]]);*/
+
+                    if (!final) {
+                        //conflict-causing clause
+                    } else {
+                        //propagating clause
+                        xorLits[data[1]] = xorLits[data[1]] ^ true;
                     }
                 }
             }
@@ -223,25 +218,47 @@ class PropByFull
 
         PropByFull() :
             type(10)
+            //, xorLits(NULL)
         {}
 
-        PropByFull(PropByFull& other) :
+        PropByFull(const PropByFull& other) :
             type(other.type)
+            , isize(other.isize)
             , clause(other.clause)
+            , xorLits(other.xorLits)
+            , data(other.data)
         {
             memcpy(lits, other.lits, sizeof(Lit)*3);
+            /*if (other.xorLits) {
+                xorLits = new Lit[isize];
+                memcpy(xorLits, other.xorLits, sizeof(Lit)*isize);
+            } else {
+                xorLits = NULL;
+            }*/
+        }
+
+        PropByFull& operator=(const PropByFull& other)
+        {
+            type = other.type,
+            isize = other.isize;
+            clause = other.clause;
+            data = other.data;
+            xorLits = other.xorLits;
+            //delete xorLits;
+            memcpy(lits, other.lits, sizeof(Lit)*3);
+            /*if (other.xorLits) {
+                xorLits = new Lit[isize];
+                memcpy(xorLits, other.xorLits, sizeof(Lit)*isize);
+            } else {
+                xorLits = NULL;
+            }*/
+
+            return *this;
         }
 
         const uint32_t size() const
         {
-            switch (type) {
-                case 0 : return clause->size();
-                case 1 : return 2;
-                case 2 : return 3;
-                default:
-                    assert(false);
-                    return 0;
-            }
+            return isize;
         }
 
         const bool isNULL() const
@@ -284,6 +301,16 @@ class PropByFull
                     if (i == data[0]) return (*clause)[(data[1] == 0 ? 1 : 0)];
                     if (i == data[1]) return (*clause)[(data[0] == 1 ? 0 : 1)];
                     return (*clause)[i];
+
+                case 3:
+                    uint16_t val;
+                    if (i <= 1) val = data[i];
+                    else if (i == data[0]) val = (data[1] == 0 ? 1 : 0);
+                    else if (i == data[1]) val = (data[0] == 1 ? 0 : 1);
+                    else val = i;
+
+                    return (*clause)[val] ^ xorLits[val];
+                    //return xorLits[i];
 
                 default :
                     return lits[i];

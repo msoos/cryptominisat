@@ -48,8 +48,8 @@ class Watched {
         */
         Watched(const ClauseOffset offset, Lit blockedLit, const bool watchNum)
         {
-            data1 = watchNum + (blockedLit.toInt() << 1);
-            data2 = (uint32_t)1 + ((uint32_t)offset << 2);
+            data1 = watchNum | (blockedLit.toInt() << 1);
+            data2 = (uint32_t)1 | ((uint32_t)offset << 2);
         }
 
         /**
@@ -57,8 +57,8 @@ class Watched {
         */
         Watched(const ClauseOffset offset, const bool watchNum)
         {
-            data1 = watchNum + ((uint32_t)offset<<1);
-            data2 = (uint32_t)2;
+            data1 = watchNum;
+            data2 = (uint32_t)2 | ((uint32_t)offset << 2);
         }
 
         /**
@@ -67,7 +67,7 @@ class Watched {
         Watched(const Lit lit, const bool learnt)
         {
             data1 = lit.toInt();
-            data2 = (uint32_t)0 + (((uint32_t)learnt) << 2);
+            data2 = (uint32_t)0 | (((uint32_t)learnt) << 2);
         }
 
         /**
@@ -76,7 +76,7 @@ class Watched {
         Watched(const Lit lit1, const Lit lit2)
         {
             data1 = lit1.toInt();
-            data2 = (uint32_t)3 + (lit2.toInt()<< 2);
+            data2 = (uint32_t)3 | (lit2.toInt()<< 2);
         }
 
         void setNormOffset(const ClauseOffset offset)
@@ -84,7 +84,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isClause());
             #endif
-            data2 = (uint32_t)1 + ((uint32_t)offset << 2);
+            data2 = (uint32_t)1 | ((uint32_t)offset << 2);
         }
 
         void setXorOffset(const ClauseOffset offset)
@@ -92,7 +92,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isXorClause());
             #endif
-            data1 = (uint32_t)offset;
+            data2 = (uint32_t)2 | ((uint32_t)offset << 2);
         }
 
         /**
@@ -167,7 +167,7 @@ class Watched {
             assert(isBinary());
             assert(learnt == false);
             #endif
-            data2 = (uint32_t)0 + (((uint32_t)learnt) << 2);
+            data2 = (uint32_t)0 | (((uint32_t)learnt) << 2);
         }
 
         /**
@@ -216,7 +216,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isXorClause());
             #endif
-            return (ClauseOffset)(data1>>1);
+            return (ClauseOffset)(data2 >> 2);
         }
 
         void dump(FILE* outfile, const Lit lit) const
@@ -224,11 +224,6 @@ class Watched {
             assert(isBinary());
             lit.print(outfile);
             getOtherLit().printFull(outfile);
-        }
-
-        void setNormClause()
-        {
-            data2 = 1;
         }
 
     private:

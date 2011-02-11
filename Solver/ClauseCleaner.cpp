@@ -215,18 +215,24 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
 {
     assert(c.size() > 2);
 
-    const ClauseData& data = solver.clauseData[c.getNum()];
+    ClauseData& data = solver.clauseData[c.getNum()];
     uint32_t origSize = c.size();
+    ClauseData oldData = data;
     Var origVar1 = c[data[0]].var();
     Var origVar2 = c[data[1]].var();
 
+    uint32_t num = 0;
     Lit *i, *j, *end;
-    for (i = j = c.getData(), end = i + c.size();  i != end; i++) {
+    for (i = j = c.getData(), end = i + c.size();  i != end; i++, num++) {
         const lbool& val = solver.assigns[i->var()];
         if (val.isUndef()) {
             *j = *i;
             j++;
-        } else c.invert(val.getBool());
+        } else {
+            c.invert(val.getBool());
+            if (num < oldData[0]) data[0]--;
+            if (num < oldData[1]) data[1]--;
+        }
     }
     c.shrink(i-j);
 
