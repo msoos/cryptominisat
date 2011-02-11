@@ -11,7 +11,7 @@ Modifications for CryptoMiniSat are under GPLv3.
 
 #include "Solver.h"
 #include "Vec.h"
-#include "XSet.h"
+#include "CSet.h"
 
 class ClauseCleaner;
 
@@ -37,11 +37,11 @@ public:
 
     XorSubsumer(Solver& S2);
     const bool simplifyBySubsumption();
-    void unlinkModifiedClause(vec<Lit>& origClause, XorClauseSimp c);
-    void unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, XorClauseSimp c);
-    void unlinkClause(XorClauseSimp cc, Var elim = var_Undef);
-    XorClauseSimp linkInClause(XorClause& cl);
-    void linkInAlreadyClause(XorClauseSimp& c);
+    void unlinkModifiedClause(vec<Lit>& origClause, ClauseSimp c);
+    void unlinkModifiedClauseNoDetachNoNULL(vec<Lit>& origClause, ClauseSimp c);
+    void unlinkClause(ClauseSimp cc, Var elim = var_Undef);
+    ClauseSimp linkInClause(XorClause& cl);
+    void linkInAlreadyClause(ClauseSimp& c);
     void newVar();
     void extendModel(Solver& solver2);
 
@@ -75,22 +75,23 @@ private:
     friend class ClauseAllocator;
 
     //Main
-    vec<XorClauseSimp>        clauses;
-    vec<vec<XorClauseSimp> >  occur;          // 'occur[index(lit)]' is a list of constraints containing 'lit'.
-    Solver&                   solver;         // The Solver
+    vec<XorClause*>        clauses;
+    vec<AbstData>          clauseData;
+    vec<vec<ClauseSimp> >  occur;          // 'occur[index(lit)]' is a list of constraints containing 'lit'.
+    Solver&                solver;         // The Solver
 
     // Temporaries (to reduce allocation overhead):
     //
-    vec<char>                 seen_tmp;       // (used in various places)
+    vec<char>              seen_tmp;       // (used in various places)
 
     //Start-up
     void addFromSolver(vec<XorClause*>& cs);
     void addBackToSolver();
 
     // Subsumption:
-    void findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed);
+    void findSubsumed(XorClause& ps, uint32_t index, vec<ClauseSimp>& out_subsumed);
     bool isSubsumed(XorClause& ps);
-    void subsume0(XorClauseSimp ps);
+    void subsume0(ClauseSimp ps, XorClause& cl);
     template<class T1, class T2>
     bool subset(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
@@ -124,7 +125,6 @@ private:
     uint32_t clauses_subsumed;
     uint32_t clauses_cut;
     uint32_t origNClauses;
-    uint32_t clauseID;
 };
 
 inline bool XorSubsumer::subsetAbst(uint32_t A, uint32_t B)

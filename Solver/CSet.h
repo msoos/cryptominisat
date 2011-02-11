@@ -13,7 +13,7 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include <stdint.h>
 #endif //_MSC_VER
 
-class Clause;
+#include "Clause.h"
 
 
 /**
@@ -27,14 +27,37 @@ NOTE: On 64-bit systems, this datastructure needs 128 bits :O
 class ClauseSimp
 {
     public:
-        ClauseSimp() {};
-        ClauseSimp(Clause* c, const uint32_t _index) :
-        clause(c)
-        , index(_index)
+        ClauseSimp() :
+            index(std::numeric_limits< uint32_t >::max())
+            {};
+        ClauseSimp(const uint32_t _index) :
+            index(_index)
         {}
 
-        Clause* clause; ///<The clause to be stored
         uint32_t index; ///<The index of the clause in Subsumer::clauses
+
+        const bool operator<(const ClauseSimp& other) const
+        {
+            return index<other.index;
+        }
+
+        const bool operator!=(const ClauseSimp& other) const
+        {
+            return index != other.index;
+        }
+};
+
+struct AbstData
+{
+    AbstData(Clause& c) :
+        abst(calcAbstraction(c))
+        , size(c.size())
+        , defOfOrGate(false)
+    {
+    };
+    uint32_t abst;
+    uint16_t size;
+    char     defOfOrGate;
 };
 
 /**
@@ -58,7 +81,7 @@ class CSet {
         @brief Add a clause to the set
         */
         const bool add(const ClauseSimp& c) {
-            assert(c.clause != NULL);
+            assert(c.index != std::numeric_limits< uint32_t >::max());
             where.growTo(c.index+1, std::numeric_limits<uint32_t>::max());
             if (where[c.index] != std::numeric_limits<uint32_t>::max()) {
                 return false;
@@ -75,7 +98,7 @@ class CSet {
         }
 
         const bool alreadyIn(const ClauseSimp& c) const {
-            assert(c.clause != NULL);
+            assert(c.index != std::numeric_limits< uint32_t >::max());
             if (where.size() < c.index+1) return false;
             if (where[c.index] != std::numeric_limits<uint32_t>::max())
                 return true;
@@ -88,13 +111,13 @@ class CSet {
         Handles it correctly if the clause was not in the set anyway
         */
         bool exclude(const ClauseSimp& c) {
-            assert(c.clause != NULL);
+            assert(c.index != std::numeric_limits< uint32_t >::max());
             if (c.index >= where.size() || where[c.index] == std::numeric_limits<uint32_t>::max()) {
                 //not inside
                 return false;
             }
             free.push(where[c.index]);
-            which[where[c.index]].clause = NULL;
+            which[where[c.index]].index =std::numeric_limits< uint32_t >::max();
             where[c.index] = std::numeric_limits<uint32_t>::max();
             return true;
         }
@@ -104,7 +127,7 @@ class CSet {
         */
         void clear(void) {
             for (uint32_t i = 0; i < which.size(); i++)  {
-                if (which[i].clause != NULL) {
+                if (which[i].index != std::numeric_limits< uint32_t >::max()) {
                     where[which[i].index] = std::numeric_limits<uint32_t>::max();
                 }
             }

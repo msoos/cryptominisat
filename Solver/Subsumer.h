@@ -100,15 +100,16 @@ private:
     /**
     @brief Clauses to be treated are moved here ClauseSimp::index refers to the index of the clause here
     */
-    vec<ClauseSimp>        clauses;
-    vec<char>              touchedVars;        ///<Is set to true when a variable is part of a removed clause. Also true initially (upon variable creation).
-    vec<Var>               touchedVarsList;   ///<A list of the true elements in 'touched'.
-    CSet                   cl_touched;     ///<Clauses strengthened/added
-    vec<vec<ClauseSimp> >  occur;          ///<occur[index(lit)]' is a list of constraints containing 'lit'.
+    vec<Clause*>           clauses;
+    vec<AbstData>          clauseData;
+    vec<char>              touchedVars;      ///<true when a variable is part of a removed clause.
+    vec<Var>               touchedVarsList;  ///<A list of the true elements in 'touched'.
+    CSet                   cl_touched;       ///<Clauses strengthened/added
+    vec<vec<ClauseSimp> >  occur;            ///<occur[index(lit)]' is a list of constraints containing 'lit'.
     CSet s0, s1;
     vec<char>              cannot_eliminate;///<Variables that cannot be eliminated due to, e.g. XOR-clauses
-    vec<char>              seen_tmp;       ///<Used in various places to help perform algorithms
-    vec<char>              seen_tmp2;      ///<Used in various places to help perform algorithms
+    vec<char>              seen_tmp;        ///<Used in various places to help perform algorithms
+    vec<char>              seen_tmp2;       ///<Used in various places to help perform algorithms
 
     //Global stats
     Solver& solver;                        ///<The solver this simplifier is connected to
@@ -149,17 +150,17 @@ private:
     void touch(const Lit p, const bool learnt);
 
     //Used by cleaner
-    void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
+    void unlinkClause(ClauseSimp cc, Clause& cl, const Var elim = var_Undef);
     ClauseSimp linkInClause(Clause& cl);
-    const bool handleUpdatedClause(ClauseSimp& c);
+    const bool handleUpdatedClause(ClauseSimp& c, Clause& cl);
 
     //Findsubsumed
     template<class T>
-    void findSubsumed(const T& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
+    void findSubsumed(const uint32_t index,  const T& ps, const uint32_t abst, vec<ClauseSimp>& out_subsumed);
     template<class T>
-    void findSubsumed1(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits);
+    void findSubsumed1(const uint32_t index, const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits);
     template<class T>
-    void fillSubs(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits, const Lit lit);
+    void fillSubs(const T& ps, const uint32_t index, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits, const Lit lit);
     template<class T2>
     bool subset(const uint32_t aSize, const T2& B);
     template<class T1, class T2>
@@ -188,7 +189,7 @@ private:
     void subsumeBinsWithBins();
 
     //subsume0
-    struct subsume0Happened {
+    struct Sub0Ret {
         bool subsumedNonLearnt;
         uint32_t glue;
     };
@@ -202,9 +203,9 @@ private:
             return (x->size() < y->size());
         }
     };
-    void subsume0(Clause& ps);
+    void subsume0(ClauseSimp c, Clause& ps);
     template<class T>
-    subsume0Happened subsume0Orig(const T& ps, uint32_t abs);
+    Sub0Ret subsume0(const uint32_t index, const T& ps, uint32_t abs);
     void subsume0Touched();
     void makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt);
 
@@ -223,10 +224,10 @@ private:
     list<NewBinaryClause> clBinTouched; ///<Binary clauses strengthened/added
     const bool handleClBinTouched();
 
-    void subsume1(Clause& ps);
+    void subsume1(ClauseSimp c, Clause& ps);
     const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
-    void strenghten(ClauseSimp& c, const Lit toRemoveLit);
-    const bool cleanClause(Clause& ps);
+    void strenghten(ClauseSimp& c, Clause& cl, const Lit toRemoveLit);
+    const bool cleanClause(ClauseSimp& c, Clause& ps);
 
     //Variable elimination
     /**
@@ -251,7 +252,7 @@ private:
             {}
 
             ClAndBin(const Lit _lit1, const Lit _lit2) :
-                clsimp(NULL, 0)
+                clsimp(std::numeric_limits< uint32_t >::max())
                 , lit1(_lit1)
                 , lit2(_lit2)
                 , isBin(true)
@@ -355,7 +356,6 @@ private:
     vector<vector<OrGate*> > gateOcc;
     uint32_t numOrGateReplaced;
     const bool findEqOrGates();
-    vec<char> defOfOrGate;
     const bool carryOutER();
     void createNewVar();
     const bool doAllOptimisationWithGates();

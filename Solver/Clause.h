@@ -72,7 +72,6 @@ protected:
     uint16_t mySize; ///<The current size of the clause
 
     uint32_t num;
-    uint32_t abst; //Abstraction of clause
 
     #ifdef STATS_NEEDED
     uint32_t group;
@@ -152,7 +151,6 @@ public:
     void setStrenghtened()
     {
         strenghtened = true;
-        calcAbstractionClause();
     }
 
     void unsetStrenghtened()
@@ -204,16 +202,6 @@ public:
         mySize++;
         data[mySize-1] = p;
         setStrenghtened();
-    }
-
-    void calcAbstractionClause()
-    {
-        abst = calcAbstraction(*this);
-    }
-
-    const uint32_t getAbst() const
-    {
-        return abst;
     }
 
     const Lit* getData() const

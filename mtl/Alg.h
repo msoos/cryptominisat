@@ -63,7 +63,7 @@ template<class V, class T>
 static inline void removeW(V& ts, const T& t)
 {
     uint32_t j = 0;
-    for (; j < ts.size() && ts[j].clause != t; j++);
+    for (; j < ts.size() && ts[j] != t; j++);
     assert(j < ts.size());
     for (; j < ts.size()-1; j++) ts[j] = ts[j+1];
     ts.pop();
