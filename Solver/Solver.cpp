@@ -519,7 +519,7 @@ void Solver::attachClause(XorClause& c)
     if (clauseData.size() > clauseNum)
         clauseData[clauseNum] = d;
     else
-        clauseData.push(d);
+        clauseData.push_back(d);
 
     clauses_literals += c.size();
 }
@@ -579,8 +579,8 @@ void Solver::attachClause(Clause& c)
     if (clauseData.size() > clauseNum)
         clauseData[clauseNum] = data;
     else {
-        clauseData.growTo(clauseNum);
-        clauseData.push(data);
+        clauseData.resize(clauseNum, ClauseData());
+        clauseData.push_back(data);
     }
 
     if (c.learnt())
@@ -2847,6 +2847,7 @@ void Solver::performStepsBeforeSolve()
 
     bool saveDoHyperBin = conf.doHyperBinRes;
     conf.doHyperBinRes = false;
+    clauseAllocator.consolidate(this, true);
     if (conf.doFailedLit && !failedLitSearcher->search()) return;
     conf.doHyperBinRes = saveDoHyperBin;
 

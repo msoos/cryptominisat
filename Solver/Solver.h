@@ -337,7 +337,7 @@ protected:
     uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
     vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
-    vec<ClauseData>     clauseData;       ///< Which lit is watched in clause
+    vector<ClauseData>  clauseData;       ///< Which lit is watched in clause
     vec<lbool>          assigns;          ///< The current assignments
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.

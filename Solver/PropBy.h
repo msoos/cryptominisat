@@ -190,7 +190,7 @@ class PropByFull
         ClauseData data;
 
     public:
-        PropByFull(PropBy orig, Lit otherLit, ClauseAllocator& alloc, vec<ClauseData>& clauseData) :
+        PropByFull(PropBy orig, Lit otherLit, ClauseAllocator& alloc, vector<ClauseData>& clauseData) :
             type(10)
             , clause(NULL)
         {

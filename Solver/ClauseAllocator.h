@@ -79,7 +79,7 @@ class ClauseAllocator {
 
         void clauseFree(Clause* c);
 
-        void consolidate(Solver* solver);
+        void consolidate(Solver* solver, const bool force = false);
 
         const uint32_t getNewClauseNum();
 
@@ -87,6 +87,8 @@ class ClauseAllocator {
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
         const ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
+
+        void renumberClauses(vector<Clause*>& clauses, Solver* solver);
 
         void updateAllOffsetsAndPointers(Solver* solver);
         template<class T>

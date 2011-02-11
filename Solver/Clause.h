@@ -299,6 +299,11 @@ public:
     {
         return num;
     }
+
+    void setNum(const uint32_t newNum)
+    {
+        num = newNum;
+    }
 };
 
 /**
