@@ -157,6 +157,59 @@ class Polarity
         unsigned char data;
 };
 
+class AgilityData
+{
+    public:
+        AgilityData(const double _agilityG) :
+            agilityG(_agilityG)
+            , agility(0)
+            , numTooLow(0)
+            , lastConflTooLow(0)
+        {}
+
+        void update(const bool flipped)
+        {
+            agility *= agilityG;
+            if (flipped) agility += 1.0 - agilityG;
+        }
+
+        const double getAgility() const
+        {
+            return agility;
+        }
+
+        void tooLow(const uint64_t confl)
+        {
+            if (confl < MIN_GLUE_RESTART/2) return;
+            if (lastConflTooLow == confl) return;
+
+            //If it was a long time ago, don't penalise
+            if (lastConflTooLow + 5000 < confl)
+                numTooLow = 0;
+
+            numTooLow++;
+            lastConflTooLow = confl;
+        }
+
+        const uint32_t getNumTooLow() const
+        {
+            return numTooLow;
+        }
+
+        void reset()
+        {
+            agility = 0;
+            numTooLow = 0;
+            lastConflTooLow = 0;
+        }
+
+    private:
+        const double agilityG;
+        double agility;
+        uint32_t numTooLow;
+        uint64_t lastConflTooLow;
+};
+
 /**
 @brief The main solver class
 
@@ -426,12 +479,6 @@ protected:
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
     vec<Clause*>        unWindGlue;
 
-    // For agility-based restarts
-    void increaseAgility(const bool flipped);
-    double agility;
-    uint32_t numAgilityTooLow;
-    uint64_t lastConflAgilityTooLow;
-
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
     //
@@ -617,6 +664,7 @@ protected:
     const bool  fullRestart(uint32_t& lastFullRestart);
     RestartType restartType;             ///<Used internally to determine which restart strategy is currently in use
     RestartType subRestartType;
+    AgilityData agility;
 
     //////////////////////////
     // Problem simplification
@@ -1021,12 +1069,6 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     binPropData[p.var()].lev1Ancestor = lev2Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
     __builtin_prefetch(watches[p.toInt()].getData(), 0);
-}
-
-inline void Solver::increaseAgility(const bool flipped)
-{
-    agility *= conf.agilityG;
-    if (flipped) agility += 1.0 - conf.agilityG;
 }
 
 //=================================================================================================

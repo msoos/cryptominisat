@@ -103,6 +103,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , lastDelayedEnqueueUpdateLevel (0)
         , restartType      (static_restart)
         , subRestartType   (static_restart)
+        , agility          (conf.agilityG)
         , simplifying      (false)
         , totalSimplifyTime(0.0)
         , numSimplifyRounds(0)
@@ -1614,7 +1615,7 @@ void Solver::delayedEnqueueUpdate()
         const Lit p = trail[i];
         const Var v = p.var();
         level[v] = pseudoLevel;
-        increaseAgility(polarity[v].getVal() != p.sign());
+        agility.update(polarity[v].getVal() != p.sign());
         polarity[v].setVal(p.sign());
         popularity[v]++;
     }
@@ -2309,9 +2310,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
         else dynStarts++;
     }
     glueHistory.fastclear();
-    agility = 0.0;
-    numAgilityTooLow = 0;
-    lastConflAgilityTooLow = std::numeric_limits<uint64_t>::max();
+    agility.reset();
 
     #ifdef USE_GAUSS
     for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
@@ -2339,8 +2338,8 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
                 std::cout << "dyn: " << (restartType == dynamic_restart)
                 << ", confl: " << std::setw(6) << conflictC
                 << ", rest: " << std::setw(6) << starts
-                << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2) << agility
-                << ", agilityTooLow: " << std::setw(4) << numAgilityTooLow
+                << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2) << agility.getAgility()
+                << ", agilityTooLow: " << std::setw(4) << agility.getNumTooLow()
                 << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2) << conf.agilityLimit << std::endl;
             }*/
 
@@ -2384,16 +2383,11 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumC
     }
 
     // Reached bound on number of conflicts?
-    if (conflictC > MIN_GLUE_RESTART/2
-        && ((agility < conf.agilityLimit && lastConflAgilityTooLow != conflictC)
-        /*|| (glueHistory.isvalid() && 0.6*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/)) {
-        numAgilityTooLow++;
-        lastConflAgilityTooLow = conflictC;
-    }
+    if (agility.getAgility() < conf.agilityLimit) agility.tooLow(conflictC);
 
     switch (restartType) {
     case dynamic_restart:
-        if ((numAgilityTooLow > MIN_GLUE_RESTART/2)
+        if ((agility.getNumTooLow() > MIN_GLUE_RESTART/2)
             /*|| (glueHistory.isvalid() && 0.95*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/) {
 
             #ifdef DEBUG_DYNAMIC_RESTART
