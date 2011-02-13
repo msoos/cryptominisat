@@ -35,7 +35,7 @@ using std::vector;
 #include "Watched.h"
 
 #define NUM_BITS_OUTER_OFFSET 4
-
+#define BASE_DATA_TYPE char
 
 class Clause;
 class XorClause;
@@ -101,7 +101,7 @@ class ClauseAllocator {
 
         void releaseClauseNum(const uint32_t num);
 
-        vec<uint32_t*> dataStarts; ///<Stacks start at these positions
+        vec<BASE_DATA_TYPE*> dataStarts; ///<Stacks start at these positions
         vec<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack
         /**
         @brief Clauses in the stack had this size when they were allocated
