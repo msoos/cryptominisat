@@ -313,7 +313,7 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force)
     #ifdef DEBUG_CLAUSEALLOCATOR
     std::cout << "c ------ Consolidating Memory ------------" << std::endl;
     #endif //DEBUG_CLAUSEALLOCATOR
-    int64_t newMaxSizeNeed = (double)sum*1.2 + MIN_LIST_SIZE;
+    int64_t newMaxSizeNeed = (double)sum*1.2 + MIN_LIST_SIZE*15;
     #ifdef DEBUG_CLAUSEALLOCATOR
     std::cout << "c newMaxSizeNeed = " << newMaxSizeNeed << std::endl;
     #endif //DEBUG_CLAUSEALLOCATOR
@@ -386,11 +386,31 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force)
 
     renumberClauses(clauses, solver);
     std::sort(clauses.begin(), clauses.end(), ClauseSorter());
+    //putClausesIntoDatastruct(clauses);
 
     uint32_t outerPart = 0;
-    for (uint32_t i = 0; i < clauses.size(); i++) {
-        Clause* oldPointer = clauses[i];
-        uint32_t sizeNeeded = (sizeof(Clause) + oldPointer->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
+    //uint64_t skippedNum = 0;
+    for (uint32_t i = 0; i < clauses.size();) {
+        /*uint8_t toSkip = 0;
+        Clause* clause = getClause(toSkip, (128-(uint64_t)(newDataStartsPointers[outerPart]))%128);
+        //assert(toSkip == 0);
+        //assert(clause != NULL);
+        //Clause* clause = clauses[i];
+        if (toSkip) {
+            if (newSizes[outerPart] + toSkip > newMaxSizes[outerPart]) {
+                outerPart++;
+                assert(outerPart < newMaxSizes.size());
+            } else {
+                newDataStartsPointers[outerPart] += toSkip;
+                newOrigClauseSizes[outerPart][newOrigClauseSizes[outerPart].size()-1] += toSkip;
+                newSizes[outerPart] += toSkip;
+            }
+            continue;
+        }*/
+        Clause* clause = clauses[i];
+        i++;
+
+        uint32_t sizeNeeded = (sizeof(Clause) + clause->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
 
         //Next line is needed, because in case of isRemoved()
         //, the size of the clause could become 0, thus having less
@@ -401,10 +421,11 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force)
             outerPart++;
             assert(outerPart < newMaxSizes.size());
         }
-        memcpy(newDataStartsPointers[outerPart], (uint32_t*)oldPointer, sizeNeeded*sizeof(BASE_DATA_TYPE));
+        memcpy(newDataStartsPointers[outerPart], (BASE_DATA_TYPE*)clause, sizeNeeded*sizeof(BASE_DATA_TYPE));
 
-        (*((NewPointerAndOffset*)(oldPointer))).newOffset = combineOuterInterOffsets(outerPart, newSizes[outerPart]);
-        (*((NewPointerAndOffset*)(oldPointer))).newPointer = (Clause*)newDataStartsPointers[outerPart];
+        NewPointerAndOffset& ptr = *((NewPointerAndOffset*)clause);
+        ptr.newOffset = combineOuterInterOffsets(outerPart, newSizes[outerPart]);
+        ptr.newPointer = (Clause*)newDataStartsPointers[outerPart];
 
         newSizes[outerPart] += sizeNeeded;
         newOrigClauseSizes[outerPart].push(sizeNeeded);
@@ -435,6 +456,83 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force)
         std::cout << "c Consolidated memory. Time: "
         << cpuTime() - myTime << std::endl;
     }
+}
+
+void ClauseAllocator::putClausesIntoDatastruct(std::vector<Clause*>& clauses)
+{
+    sizeSortedCls.clear();
+    sizeSortedCls.resize(128);
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        Clause* c = clauses[i];
+        if (c->size() <= 3) {
+            threeLongClauses.push_back(c);
+            continue;
+        }
+        uint32_t size = sizeof(Clause)+sizeof(Lit)*c->size();
+        uint32_t modsize = size%128;
+        sizeSortedCls[modsize].push_back(clauses[i]);
+    }
+
+    for (size_t i = 0; i < sizeSortedCls.size(); i++) {
+        std::sort(sizeSortedCls[i].begin(), sizeSortedCls[i].end(), ClauseSorter());
+    }
+}
+
+Clause* ClauseAllocator::getClause(uint8_t& skip, const uint8_t mod128)
+{
+    if (!threeLongClauses.empty()) {
+        Clause* tmp = threeLongClauses[threeLongClauses.size()-1];
+        threeLongClauses.pop_back();
+        return tmp;
+    }
+
+    if (!sizeSortedCls[mod128].empty()) {
+        Clause* tmp = sizeSortedCls[mod128][sizeSortedCls[mod128].size()-1];
+        sizeSortedCls[mod128].pop_back();
+        return tmp;
+    } else {
+        //Prefer to put something large on a cacheline where no exact thing will fit
+        for (size_t i = 0; i < sizeSortedCls.size(); i++) {
+            if (!sizeSortedCls[i].empty()) {
+                Clause* tmp = sizeSortedCls[i][sizeSortedCls[i].size()-1];
+                uint32_t size = sizeof(Clause) + sizeof(Lit)*tmp->size();
+                if (size > mod128 && size <= 128) continue;
+                sizeSortedCls[i].pop_back();
+                return tmp;
+            }
+        }
+
+        //always place something on starting cacheline
+        if (mod128 == 0) {
+            for (size_t i = 0; i < sizeSortedCls.size(); i++) {
+                if (!sizeSortedCls[i].empty()) {
+                    Clause* tmp = sizeSortedCls[i][sizeSortedCls[i].size()-1];
+                    sizeSortedCls[i].pop_back();
+                    return tmp;
+                }
+            }
+        }
+        /*for (size_t i = 40; i < sizeSortedCls.size(); i++) {
+            if (!sizeSortedCls[i].empty()) {
+                Clause* tmp = sizeSortedCls[i][sizeSortedCls[i].size()-1];
+                sizeSortedCls[i].pop_back();
+                return tmp;
+            }
+        }
+        for (size_t i = 0; i < 40; i++) {
+            if (!sizeSortedCls[i].empty()) {
+                Clause* tmp = sizeSortedCls[i][sizeSortedCls[i].size()-1];
+                sizeSortedCls[i].pop_back();
+                return tmp;
+            }
+        }*/
+        assert(mod128 != 0);
+        skip = mod128;
+        return NULL;
+    }
+
+    assert(false);
+    return NULL;
 }
 
 void ClauseAllocator::checkGoodPropBy(const Solver* solver)
