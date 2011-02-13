@@ -141,7 +141,7 @@ ClauseSimp XorSubsumer::linkInClause(XorClause& cl)
 {
     ClauseSimp c(clauses.size());
     clauses.push(&cl);
-    clauseData.push(AbstData(cl));
+    clauseData.push(AbstData(cl, false));
     for (uint32_t i = 0; i < cl.size(); i++) {
         occur[cl[i].var()].push(c);
     }

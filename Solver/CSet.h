@@ -49,10 +49,10 @@ class ClauseSimp
 
 struct AbstData
 {
-    AbstData(Clause& c) :
+    AbstData(Clause& c, const bool _defOfOrGate) :
         abst(calcAbstraction(c))
         , size(c.size())
-        , defOfOrGate(false)
+        , defOfOrGate(_defOfOrGate)
     {
     };
     uint32_t abst;

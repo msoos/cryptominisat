@@ -478,6 +478,7 @@ const bool Subsumer::handleUpdatedClause(ClauseSimp& c, Clause& cl)
             if (cl.size() == 3) solver.dataSync->signalNewTriClause(cl);
             cl_touched.add(c);
     }
+    clauseData[c.index] = AbstData(cl, clauseData[c.index].defOfOrGate);
 
     return true;
 }
@@ -674,7 +675,7 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
 {
     ClauseSimp c(clauses.size());
     clauses.push(&cl);
-    clauseData.push(AbstData(cl));
+    clauseData.push(AbstData(cl, false));
     assert(clauseData.size() == clauses.size());
 
     for (uint32_t i = 0; i < cl.size(); i++) {
@@ -2408,6 +2409,7 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         gateLitsRemoved--;
         cl.add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
         occur[gate.eqLit.toInt()].push(c);
+        clauseData[c.index] = AbstData(cl, clauseData[c.index].defOfOrGate);
 
         #ifdef VERBOSE_ORGATE_REPLACE
         std::cout << "new  Clause : " << *cl << std::endl;
