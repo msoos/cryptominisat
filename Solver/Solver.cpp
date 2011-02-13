@@ -767,7 +767,7 @@ void Solver::cancelUntilLight()
     }
     qhead = trail_lim[0];
     trail.shrink_(trail.size() - trail_lim[0]);
-    trail_lim.shrink_(trail_lim.size());
+    trail_lim.clear();
 }
 
 const bool Solver::clearGaussMatrixes()
