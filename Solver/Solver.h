@@ -441,7 +441,6 @@ protected:
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     vec<PropBy>         reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
-    vec<uint32_t>       level;            ///< 'level[var]' contains the level at which the assignment was made.
     vec<BinPropData>    binPropData;
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
@@ -449,11 +448,21 @@ protected:
     bqueue<uint32_t>    avgBranchDepth;   ///< Avg branch depth. We collect this, and use it to do random look-around in the searchspace during simplifyProblem()
     MTRand              mtrand;           ///< random number generator
 
+
+    //Var stuff
+    ///'level[var]' contains the level at which the assignment was made.
+    vec<uint32_t> level;
+    ///Popularity of variable
+    vec<uint32_t> popularity;
+    ///A heuristic measurement of the activity of a variable.
+    vec<uint32_t> activity;
+    ///Whether var has been eliminated (var-elim, different component, etc.)
+    vec<char> eliminated;
+
     /////////////////
     // Variable activities
     /////////////////
     Heap<VarOrderLt>    order_heap;       ///< A priority queue of variables ordered with respect to the variable activity. All variables here MUST be decision variables. If you changed the decision variables, you MUST filter this
-    vec<uint32_t>       activity;         ///< A heuristic measurement of the activity of a variable.
     uint32_t            var_inc;          ///< Amount to bump next variable with.
     vector<std::pair<uint64_t, uint64_t> > lTPolCount;
     void bumpUIPPolCount(const vec<Lit>& lit);
@@ -473,16 +482,14 @@ protected:
     template<class T>
     const uint32_t      calcNBLevels(const T& ps);
     vec<uint64_t>       permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
-    #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
-    vec<Var>            lastDecisionLevel;
-    #endif
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
     vec<Clause*>        unWindGlue;
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
     //
-    vec<char>           seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
+    vec<char>           seen;  ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
+    vec<char>           seen2; ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
     vec<Lit>            analyze_stack;
     vec<Lit>            analyze_toclear;
 
@@ -498,9 +505,6 @@ protected:
             Lit lit;
             uint32_t numInCache;
     };
-    vec<char>           seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
-    vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
-    std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     vector<TransCache>  transOTFCache;
     bqueue<uint32_t>    conflSizeHist;
     void                minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue);
@@ -547,7 +551,6 @@ protected:
     const bool propTriClause   (Watched* i, const Lit p, PropBy& confl);
     template<bool full>
     const bool propBinaryClause(Watched* i, const Lit p, PropBy& confl);
-    vec<uint32_t> popularity;
     template<bool full>
     const bool propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl, const bool update);
     template<bool full>

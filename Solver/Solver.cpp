@@ -1158,6 +1158,10 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
     PropByFull confl(conflHalf, failBinLit, clauseAllocator, clauseData, assigns);
     PropByFull oldConfl;
 
+    #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
+    vec<Var> lastDecisionLevel;
+    #endif
+
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
 
@@ -1495,6 +1499,7 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
 {
     assert(conf.doCacheOTFSSR);
     vector<Lit> lits;
+    std::stack<Lit> toRecursiveProp;
 
     toRecursiveProp.push(~lit);
     while(!toRecursiveProp.empty()) {
