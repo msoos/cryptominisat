@@ -135,9 +135,9 @@ class ClauseAllocator {
             Clause* newPointer; ///<The new place
         };
 
-        vector<vector<Clause*> > sizeSortedCls;
+        vector<Clause*> otherClauses;
         vector<Clause*> threeLongClauses;
-        Clause* getClause(uint8_t& skip, const uint8_t mod128);
+        Clause* getClause();
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 
         vec<uint32_t> freedNums;  //Free clause nums that can be used now
