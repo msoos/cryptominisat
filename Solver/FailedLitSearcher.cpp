@@ -363,7 +363,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
-    failed = (!solver.propagate<false>(false).isNULL());
+    failed = (!solver.propagate<false>().isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
@@ -425,7 +425,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit2);
-    failed = (!solver.propagate<false>(false).isNULL());
+    failed = (!solver.propagate<false>().isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
@@ -766,7 +766,7 @@ void FailedLitSearcher::fillImplies(const Lit lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    failed = (!solver.propagate<false>(false).isNULL());
+    failed = (!solver.propagate<false>().isNULL());
     assert(!failed);
 
     assert(solver.decisionLevel() > 0);
@@ -907,7 +907,7 @@ const bool FailedLitSearcher::tryMultiLevel(const vec<Var>& vars, uint32_t& enqu
             //std::cout << "lit: " << Lit(vars[i], comb&(1U << i)) << std::endl;
         }
         //std::cout << "---" << std::endl;
-        bool failed = !(solver.propagate<false>(false).isNULL());
+        bool failed = !(solver.propagate<false>().isNULL());
         if (failed) {
             solver.cancelUntilLight();
             if (!first) propagated.setZero();

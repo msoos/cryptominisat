@@ -1139,7 +1139,7 @@ current decision level.
 @return NULL if the conflict doesn't on-the-fly subsume the last clause, and
 the pointer of the clause if it does
 */
-Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue, const bool update)
+Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -1693,7 +1693,7 @@ We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
 template<bool full>
-inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl, const bool update)
+inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl)
 {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
@@ -1763,15 +1763,6 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p
         #endif
         if (full) uncheckedEnqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
         else      uncheckedEnqueueLight(c[data[!watchNum]]);
-        #ifdef DYNAMICALLY_UPDATE_GLUE
-        if (update && c.learnt() && c.getGlue() > 2) { // GA
-            uint32_t glue = calcNBLevels(c);
-            if (glue+1 < c.getGlue()) {
-                //c.setGlue(std::min(nbLevels, MAX_THEORETICAL_GLUE);
-                c.setGlue(glue);
-            }
-        }
-        #endif
     }
 
     return true;
@@ -1837,7 +1828,7 @@ Basically, it goes through the watchlists recursively, and calls the appropirate
 propagaton function
 */
 template<bool full>
-PropBy Solver::propagate(const bool update)
+PropBy Solver::propagate()
 {
     PropBy confl;
     uint64_t oldPropagations = propagations;
@@ -1901,7 +1892,7 @@ PropBy Solver::propagate(const bool update)
             } //end TRICLAUSE
 
             if (i->isClause()) {
-                if (!propNormalClause<full>(i, j, p, confl, update)) break;
+                if (!propNormalClause<full>(i, j, p, confl)) break;
                 else {
                     #ifdef VERBOSE_DEBUG_PROP
                     std::cout << "clause num " << i->getNormOffset() << " after propNorm: " << *clauseAllocator.getPointer(i->getNormOffset()) << std::endl;
@@ -1936,8 +1927,8 @@ end:
 
     return confl;
 }
-template PropBy Solver::propagate <true>(const bool update);
-template PropBy Solver::propagate <false>(const bool update);
+template PropBy Solver::propagate <true>();
+template PropBy Solver::propagate <false>();
 
 /**
 @brief Only propagates binary clauses
@@ -2327,7 +2318,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t maxNumConfl, c
     #endif //VERBOSE_DEBUG
     for (;;) {
         assert(ok);
-        PropBy confl = propagate<true>(update);
+        PropBy confl = propagate<true>();
         #ifdef VERBOSE_DEBUG
         std::cout << "c Solver::search() has finished propagation" << std::endl;
         //printAllClauses();
@@ -2496,7 +2487,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     if (decisionLevel() == 0)
         return l_False;
     learnt_clause.clear();
-    Clause* c = analyze(confl, learnt_clause, backtrack_level, glue, update);
+    Clause* c = analyze(confl, learnt_clause, backtrack_level, glue);
     if (update) {
         avgBranchDepth.push(decisionLevel());
         glueHistory.push(glue);

@@ -564,13 +564,13 @@ protected:
     const bool propagateBinExcept(const Lit exceptLit);
     const bool propagateBinOneLevel();
     template<bool full>
-    PropBy     propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
+    PropBy     propagate(); // Perform unit propagation. Returns possibly conflicting clause.
     template<bool full>
     const bool propTriClause   (Watched* i, const Lit p, PropBy& confl);
     template<bool full>
     const bool propBinaryClause(Watched* i, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl, const bool update);
+    const bool propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl);
     template<bool full>
     const bool propXorClause   (Watched* &i, Watched* &j, const Lit p, PropBy& confl);
     void     sortWatched();
@@ -580,7 +580,7 @@ protected:
     ///////////////
     void     cancelUntil      (uint32_t level);                                             // Backtrack until a certain level.
     void     cancelUntilLight();
-    Clause*  analyze          (PropBy confl, vec<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &nblevels, const bool update);
+    Clause*  analyze          (PropBy confl, vec<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &nblevels);
     void     analyzeFinal     (Lit p, vec<Lit>& out_conflict);                         // COULD THIS BE IMPLEMENTED BY THE ORDINARIY "analyze" BY SOME REASONABLE GENERALIZATION?
     bool     litRedundant     (Lit p, uint32_t abstract_levels);                       // (helper method for 'analyze()')
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
