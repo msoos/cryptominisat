@@ -371,8 +371,10 @@ const bool XorSubsumer::removeDependent()
             std::cout << "-> Removing dependent clause "; occ[0].clause->plainPrint();
             #endif //VERBOSE_DEBUG
             unlinkClause(occ[0], var);
+            assert(solver.varData[var].elimed == ELIMED_NONE);
             solver.setDecisionVar(var, false);
             var_elimed[var] = true;
+            solver.varData[var].elimed = ELIMED_XORVARELIM;
             numElimed++;
         } else if (occ.size() == 2) {
             vec<Lit> lits;
@@ -400,6 +402,7 @@ const bool XorSubsumer::removeDependent()
             unlinkClause(toUnlink1, var);
             solver.setDecisionVar(var, false);
             var_elimed[var] = true;
+            solver.varData[var].elimed = ELIMED_XORVARELIM;
             numElimed++;
 
             for (uint32_t i = 0; i < lits.size(); i++)
@@ -434,6 +437,7 @@ inline void XorSubsumer::addToCannotEliminate(Clause* it)
 const bool XorSubsumer::unEliminate(const Var var)
 {
     assert(var_elimed[var]);
+    assert(solver.varData[var].elimed = ELIMED_XORVARELIM);
     vec<Lit> tmp;
     typedef map<Var, vector<XorElimedClause> > elimType;
     elimType::iterator it = elimedOutVar.find(var);
@@ -442,6 +446,7 @@ const bool XorSubsumer::unEliminate(const Var var)
     //had it not been decision var
     solver.setDecisionVar(var, true);
     var_elimed[var] = false;
+    solver.varData[var].elimed = ELIMED_NONE;
     numElimed--;
     assert(it != elimedOutVar.end());
     #ifdef VERBOSE_DEBUG
@@ -617,7 +622,10 @@ void XorSubsumer::removeAssignedVarsFromEliminated()
 {
     for (Var var = 0; var < var_elimed.size(); var++) {
         if (var_elimed[var] && solver.assigns[var] != l_Undef) {
+            assert(solver.varData[var].elimed = ELIMED_XORVARELIM);
+
             var_elimed[var] = false;
+            solver.varData[var].elimed = ELIMED_NONE;
             solver.setDecisionVar(var, true);
             numElimed--;
             map<Var, vector<XorElimedClause> >::iterator it = elimedOutVar.find(var);

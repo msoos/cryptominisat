@@ -94,32 +94,27 @@ const bool VarReplacer::performReplaceInternal()
     #endif
 
     Var var = 0;
-    const vec<char>& removedVars = solver.xorSubsumer->getVarElimed();
-    const vec<lbool>& removedVars2 = solver.partHandler->getSavedState();
-    const vec<char>& removedVars3 = solver.subsumer->getVarElimed();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
         if (it->var() == var
-            || removedVars[it->var()]
-            || removedVars2[it->var()] != l_Undef
-            || removedVars3[it->var()]
+            || solver.varData[it->var()].elimed == ELIMED_XORVARELIM
+            || solver.varData[it->var()].elimed == ELIMED_DECOMPOSE
+            || solver.varData[it->var()].elimed == ELIMED_VARELIM
         ) continue;
+
+
         #ifdef VERBOSE_DEBUG
         cout << "Setting var " << var+1 << " to a non-decision var" << endl;
         #endif
         bool wasDecisionVar = solver.decision_var[var];
         solver.setDecisionVar(var, false);
-        //cannot_eliminate[var] = true;
         solver.setDecisionVar(it->var(), true);
-        assert(!removedVars[var]);
-        assert(removedVars2[var] == l_Undef);
-        assert(!removedVars3[var]);
 
-        uint32_t& activity1 = solver.activity[var];
-        uint32_t& activity2 = solver.activity[it->var()];
+        uint32_t& activity1 = solver.varData[var].activity;
+        uint32_t& activity2 = solver.varData[it->var()].activity;
         if (wasDecisionVar && activity1 > activity2) {
             activity2 = activity1;
             solver.order_heap.update(it->var());
-            solver.polarity[it->var()].setVal(solver.polarity[var].getVal()^it->sign());
+            solver.varData[it->var()].polarity.setVal(solver.varData[var].polarity.getVal()^it->sign());
         }
 
         activity1 = 0.0;
@@ -585,11 +580,10 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     assert(solver.assigns[ps[0].var()].isUndef());
     assert(solver.assigns[ps[1].var()].isUndef());
 
-    assert(!solver.subsumer->getVarElimed()[ps[0].var()]);
-    assert(!solver.xorSubsumer->getVarElimed()[ps[0].var()]);
-
-    assert(!solver.subsumer->getVarElimed()[ps[1].var()]);
-    assert(!solver.xorSubsumer->getVarElimed()[ps[1].var()]);
+    assert(solver.varData[ps[0].var()].elimed == ELIMED_NONE
+            || solver.varData[ps[0].var()].elimed == ELIMED_VARREPLACER);
+    assert(solver.varData[ps[1].var()].elimed == ELIMED_NONE
+            || solver.varData[ps[1].var()].elimed == ELIMED_VARREPLACER) ;
     #endif
 
     //Detect circle
@@ -641,6 +635,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
         table[lit1.var()] = lit2 ^ lit1.sign();
+        solver.varData[lit1.var()].elimed = ELIMED_VARREPLACER;
         replacedVars++;
         return true;
     }
@@ -648,6 +643,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     if (reverseTable.find(lit2.var()) == reverseTable.end()) {
         reverseTable[lit1.var()].push_back(lit2.var());
         table[lit2.var()] = lit1 ^ lit2.sign();
+        solver.varData[lit2.var()].elimed = ELIMED_VARREPLACER;
         replacedVars++;
         return true;
     }
@@ -731,6 +727,7 @@ void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
         reverseTable.erase(it);
     }
     table[var] = lit;
+    solver.varData[var].elimed = ELIMED_VARREPLACER;
     reverseTable[lit.var()].push_back(var);
 }
 

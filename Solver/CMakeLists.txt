@@ -19,6 +19,7 @@ add_executable(cryptominisat
     XorFinder.cpp
     MatrixFinder.cpp
     VarReplacer.cpp
+    VarRenamer.cpp
 #   FindUndef.cpp
     ClauseCleaner.cpp
     RestartTypeChooser.cpp

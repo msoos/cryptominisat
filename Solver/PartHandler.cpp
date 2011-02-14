@@ -110,9 +110,11 @@ const bool PartHandler::handle()
                 //Must have been decision var in the old solver!??
                 //assert(std::find(decisionVarRemoved.getData(), decisionVarRemoved.getDataEnd(), var) != decisionVarRemoved.getDataEnd());
                 assert(savedState[var] == l_Undef);
+                assert(solver.varData[var].elimed == ELIMED_NONE);
                 assert(partFinder.getVarPart(var) == part);
                 if (newSolver.assigns[var] == l_Undef) {
                     savedState[var] = newSolver.model[var];
+                    solver.varData[var].elimed = ELIMED_DECOMPOSE;
                 }
             }
         }
@@ -139,7 +141,7 @@ const bool PartHandler::handle()
     for (Var var = 0; var < solver.nVars(); var++) {
         if (savedState[var] != l_Undef) {
             assert(solver.decision_var[var] == false);
-            assert(solver.assigns[var] == l_Undef || solver.level[var] == 0);
+            assert(solver.assigns[var] == l_Undef || solver.varData[var].level == 0);
         }
     }
 
@@ -188,7 +190,7 @@ void PartHandler::moveVariablesBetweenSolvers(Solver& newSolver, vector<Var>& va
             }
             #endif //VERBOSE_DEBUG
             newSolver.newVar(solver.decision_var[var]);
-            newSolver.activity[var] = solver.activity[var];
+            newSolver.varData[var].activity = solver.varData[var].activity;
             newSolver.order_heap.update(var);
             assert(partFinder.getVarPart(var) == part);
             if (solver.decision_var[var]) {
@@ -427,11 +429,14 @@ void PartHandler::addSavedState()
     solver.newDecisionLevel();
     for (Var var = 0; var < savedState.size(); var++) {
         if (savedState[var] != l_Undef) {
+            assert(solver.varData[var].elimed == ELIMED_DECOMPOSE);
             assert(solver.assigns[var] == l_Undef);
+
             solver.uncheckedEnqueue(Lit(var, savedState[var] == l_False));
             assert(solver.assigns[var] == savedState[var]);
             savedState[var] = l_Undef;
-            solver.polarity[var].setVal(solver.assigns[var] == l_False);
+            solver.varData[var].elimed = ELIMED_NONE;
+            solver.varData[var].polarity.setVal(solver.assigns[var] == l_False);
         }
     }
 

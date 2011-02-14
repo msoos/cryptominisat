@@ -30,7 +30,7 @@ class StateSaver
         Solver& solver;
         Heap<Solver::VarOrderLt> backup_order_heap;
         vector<Polarity> backup_polarities;
-        vec<uint32_t> backup_activity;
+        vector<uint32_t> backup_activity;
         uint32_t backup_var_inc;
         RestartType backup_restartType;
         uint32_t backup_random_var_freq;

@@ -84,7 +84,7 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , mtrand           ((unsigned long int)0)
 
         //variables
-        , order_heap       (VarOrderLt(activity))
+        , order_heap       (VarOrderLt(varData))
         , var_inc          (128)
 
         //learnts
@@ -169,14 +169,12 @@ Var Solver::newVar(bool dvar)
     watches   .push();          // (list for negative literal)
     reason    .push(PropBy());
     assigns   .push(l_Undef);
-    level     .push(std::numeric_limits<uint32_t>::max());
+    varData.push_back(VarData());
     binPropData.push();
-    activity  .push(0);
     seen      .push(0);
     seen      .push(0);
     permDiff  .push(0);
     unWindGlue.push(NULL);
-    popularity.push(0);
 
     //Transitive OTF self-subsuming resolution
     seen2     .push(0);
@@ -185,8 +183,6 @@ Var Solver::newVar(bool dvar)
     transOTFCache.push_back(TransCache());
     litReachable.push_back(LitReachData());
     litReachable.push_back(LitReachData());
-
-    polarity  .push_back(Polarity());
 
     //Variable heap, long-term polarity count
     decision_var.push_back(dvar);
@@ -674,21 +670,19 @@ void Solver::finishAddingVars()
 
 struct PolaritySorter
 {
-    PolaritySorter(const vector<Polarity>& _polarity, const vec<uint32_t>& _level, const vec<uint32_t>& _popularity) :
-        polarity(_polarity)
-        , level(_level)
-        , popularity(_popularity)
+    PolaritySorter(const vector<VarData>& _varData) :
+        varData(_varData)
     {};
 
     const bool operator()(const Lit lit1, const Lit lit2) {
-        const bool pol1 = !polarity[lit1.var()].getVal() ^ lit1.sign();
-        const bool pol2 = !polarity[lit2.var()].getVal() ^ lit2.sign();
+        const bool pol1 = !varData[lit1.var()].polarity.getVal() ^ lit1.sign();
+        const bool pol2 = !varData[lit2.var()].polarity.getVal() ^ lit2.sign();
 
         //Tie 1: polarity
         if (pol1 == true && pol2 == false) return true;
         if (pol1 == false && pol2 == true) return false;
 
-        return (popularity[lit1.var()] > popularity[lit2.var()]);
+        return (varData[lit1.var()].popularity > varData[lit2.var()].popularity);
 
         /*
         //Tie 2: last level
@@ -697,9 +691,7 @@ struct PolaritySorter
         else return level[lit1.var()] > level[lit2.var()];*/
     }
 
-    const vector<Polarity>& polarity;
-    const vec<uint32_t>& level;
-    const vec<uint32_t>& popularity;
+    const vector<VarData>& varData;
 };
 
 /**
@@ -809,9 +801,9 @@ inline bool Solver::getPolarity(const Var var)
                 }
                 const bool random = mtrand.randInt(avgBranchDepth.getAvgUInt() * multiplier) == 1;
 
-                return polarity[var].getVal() ^ random;
+                return varData[var].polarity.getVal() ^ random;
             } else {
-                return polarity[var].getVal();
+                return varData[var].polarity.getVal();
             }
         default:
             assert(false);
@@ -910,7 +902,7 @@ void Solver::calculateDefaultPolarities()
         uint32_t posPolars = 0;
         uint32_t undecidedPolars = 0;
         for (const double *it = votes.getData(), *end = votes.getDataEnd(); it != end; it++, i++) {
-            polarity[i].setVal(*it >= 0.0);
+            varData[i].polarity.setVal(*it >= 0.0);
             posPolars += (*it < 0.0);
             undecidedPolars += (*it == 0.0);
             #ifdef VERBOSE_DEBUG_POLARITIES
@@ -927,8 +919,8 @@ void Solver::calculateDefaultPolarities()
             << std:: endl;
         }
     } else {
-        for (uint32_t i = 0; i < polarity.size(); i++) {
-            polarity[i].setVal(getPolarity(i));
+        for (uint32_t i = 0; i < varData.size(); i++) {
+            varData[i].polarity.setVal(getPolarity(i));
         }
     }
 
@@ -1169,11 +1161,11 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
             Lit q = confl[j];
             const Var my_var = q.var();
 
-            if (!seen[my_var] && level[my_var] > 0) {
+            if (!seen[my_var] && varData[my_var].level > 0) {
                 varBumpActivity(my_var);
                 seen[my_var] = 1;
-                assert(level[my_var] <= decisionLevel());
-                if (level[my_var] >= decisionLevel()) {
+                assert(varData[my_var].level <= decisionLevel());
+                if (varData[my_var].level >= decisionLevel()) {
                     pathC++;
                     #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
                     if (subRestartType == dynamic_restart
@@ -1184,8 +1176,8 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
                     #endif //#define UPDATEVARACTIVITY
                 } else {
                     out_learnt.push(q);
-                    if (level[my_var] > out_btlevel)
-                        out_btlevel = level[my_var];
+                    if (varData[my_var].level > out_btlevel)
+                        out_btlevel = varData[my_var].level;
                 }
             }
         }
@@ -1221,7 +1213,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
             PropByFull c(reason[out_learnt[i].var()], failBinLit, clauseAllocator, clauseData, assigns);
 
             for (uint32_t k = 1, size = c.size(); k < size; k++) {
-                if (!seen[c[k].var()] && level[c[k].var()] > 0) {
+                if (!seen[c[k].var()] && varData[c[k].var()].level > 0) {
                     out_learnt[j++] = out_learnt[i];
                     break;
                 }
@@ -1253,10 +1245,10 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
     else {
         uint32_t max_i = 1;
         for (uint32_t i = 2; i < out_learnt.size(); i++)
-            if (level[out_learnt[i].var()] > level[out_learnt[max_i].var()])
+            if (varData[out_learnt[i].var()].level > varData[out_learnt[max_i].var()].level)
                 max_i = i;
         std::swap(out_learnt[max_i], out_learnt[1]);
-        out_btlevel = level[out_learnt[1].var()];
+        out_btlevel = varData[out_learnt[1].var()].level;
     }
     #ifdef VERBOSE_DEBUG_GATE
     std::cout << "out_btlevel: " << out_btlevel << std::endl;
@@ -1552,7 +1544,7 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
 
         for (uint32_t i = 1, size = c.size(); i < size; i++) {
             Lit p  = c[i];
-            if (!seen[p.var()] && level[p.var()] > 0) {
+            if (!seen[p.var()] && varData[p.var()].level > 0) {
                 if (!reason[p.var()].isNULL() && (abstractLevel(p.var()) & abstract_levels) != 0) {
                     seen[p.var()] = 1;
                     analyze_stack.push(p);
@@ -1594,12 +1586,12 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
         Var x = trail[i].var();
         if (seen[x]) {
             if (reason[x].isNULL()) {
-                assert(level[x] > 0);
+                assert(varData[x].level > 0);
                 out_conflict.push(~trail[i]);
             } else {
                 PropByFull c(reason[x], failBinLit, clauseAllocator, clauseData, assigns);
                 for (uint32_t j = 1, size = c.size(); j < size; j++)
-                    if (level[c[j].var()] > 0)
+                    if (varData[c[j].var()].level > 0)
                         seen[c[j].var()] = 1;
             }
             seen[x] = 0;
@@ -1619,10 +1611,10 @@ void Solver::delayedEnqueueUpdate()
 
         const Lit p = trail[i];
         const Var v = p.var();
-        level[v] = pseudoLevel;
-        agility.update(polarity[v].getVal() != p.sign());
-        polarity[v].setVal(p.sign());
-        popularity[v]++;
+        varData[v].level = pseudoLevel;
+        agility.update(varData[v].polarity.getVal() != p.sign());
+        varData[v].polarity.setVal(p.sign());
+        varData[v].popularity++;
     }
 
     lastDelayedEnqueueUpdate = trail.size();
@@ -1634,7 +1626,7 @@ void Solver::uncheckedEnqueueExtend(const Lit p, const PropBy& from)
     assert(assigns[p.var()].isUndef());
     const Var v = p.var();
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
-    level   [v] = decisionLevel();
+    varData [v].level = decisionLevel();
     reason  [v] = from;
     trail.push(p);
 }
@@ -1993,7 +1985,7 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
                 assert(val == l_True);
                 Lit lit2 = k->getOtherLit();
                 if (lev > 1
-                    && level[lit2.var()] != 0
+                    && varData[lit2.var()].level != 0
                     && binPropData[lit2.var()].lev == 1
                     && lev1Ancestor != lit2) {
                     //Was propagated at level 1, and again here, original level 1 binary clause is useless
@@ -2102,7 +2094,7 @@ inline const uint32_t Solver::calcNBLevels(const T& ps)
     MYFLAG++;
     uint32_t nbLevels = 0;
     for(const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
-        int32_t lev = level[l->var()];
+        int32_t lev = varData[l->var()].level;
         if (permDiff[lev] != MYFLAG) {
             permDiff[lev] = MYFLAG;
             nbLevels++;
@@ -2541,7 +2533,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             goto end;
         }
 
-        std::sort(learnt_clause.getData()+1, learnt_clause.getDataEnd(), PolaritySorter(polarity, level, popularity));
+        std::sort(learnt_clause.getData()+1, learnt_clause.getDataEnd(), PolaritySorter(varData));
         if (c) { //On-the-fly subsumption
             uint32_t origSize = c->size();
             detachClause(*c);
@@ -2752,7 +2744,7 @@ void Solver::reArrangeClause(Clause* clause)
     Lit lit2 = c[data[1]];
     assert(lit1 != lit2);
 
-    std::sort(c.getData(), c.getDataEnd(), PolaritySorter(polarity, level, popularity));
+    std::sort(c.getData(), c.getDataEnd(), PolaritySorter(varData));
 
     uint32_t foundDatas = 0;
     for (uint32_t i = 0; i < c.size(); i++) {
@@ -2782,7 +2774,7 @@ void Solver::reArrangeClauses()
     }
 
     for (Var v = 0; v < nVars(); v++) {
-        popularity[v] = 0;
+        varData[v].popularity = 0;
     }
 
     if (conf.verbosity >= 3) {

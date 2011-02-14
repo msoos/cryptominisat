@@ -20,14 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 StateSaver::StateSaver(Solver& _solver) :
     solver(_solver)
-    , backup_order_heap(Solver::VarOrderLt(solver.activity))
+    , backup_order_heap(Solver::VarOrderLt(solver.varData))
 {
     //Saving Solver state
     backup_var_inc = solver.var_inc;
-    backup_activity.growTo(solver.activity.size());
-    std::copy(solver.activity.getData(), solver.activity.getDataEnd(), backup_activity.getData());
+    backup_activity.resize(solver.varData.size());
+    backup_polarities.resize(solver.varData.size());
+    for (uint32_t i = 0; i < solver.varData.size(); i++) {
+        backup_activity[i] = solver.varData[i].activity;
+        backup_polarities[i] = solver.varData[i].polarity;
+    }
     backup_order_heap = solver.order_heap;
-    backup_polarities = solver.polarity;
     backup_restartType = solver.restartType;
     backup_propagations = solver.propagations;
     backup_random_var_freq = solver.conf.random_var_freq;
@@ -37,9 +40,11 @@ void StateSaver::restore()
 {
     //Restore Solver state
     solver.var_inc = backup_var_inc;
-    std::copy(backup_activity.getData(), backup_activity.getDataEnd(), solver.activity.getData());
+    for (uint32_t i = 0; i < solver.varData.size(); i++) {
+        solver.varData[i].activity = backup_activity[i];
+        solver.varData[i].polarity = backup_polarities[i];
+    }
     solver.order_heap = backup_order_heap;
-    solver.polarity = backup_polarities;
     solver.restartType = backup_restartType;
     solver.propagations = backup_propagations;
     solver.conf.random_var_freq = backup_random_var_freq;

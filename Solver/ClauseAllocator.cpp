@@ -471,8 +471,8 @@ void ClauseAllocator::checkGoodPropBy(const Solver* solver)
     const vec<PropBy>& reason = solver->reason;
     Var var = 0;
     for (const PropBy *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++, var++) {
-        if ((uint32_t)solver->level[var] > solver->decisionLevel()
-            || solver->level[var] == 0
+        if ((uint32_t)solver->varData[var].level > solver->decisionLevel()
+            || solver->varData[var].level == 0
             || solver->value(var) == l_Undef
         ) {
             continue;
@@ -512,8 +512,8 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     vec<PropBy>& reason = solver->reason;
     Var var = 0;
     for (PropBy *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++, var++) {
-        if ((uint32_t)solver->level[var] > solver->decisionLevel()
-            || solver->level[var] == 0
+        if ((uint32_t)solver->varData[var].level > solver->decisionLevel()
+            || solver->varData[var].level == 0
             || solver->value(var) == l_Undef) {
             *it = PropBy();
             continue;

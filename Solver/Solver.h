@@ -210,6 +210,34 @@ class AgilityData
         uint64_t lastConflTooLow;
 };
 
+enum ElimedBy {ELIMED_NONE = 0, ELIMED_VARELIM = 1, ELIMED_XORVARELIM = 2, ELIMED_VARREPLACER = 3, ELIMED_DECOMPOSE = 4};
+
+struct VarData
+{
+    VarData() :
+        level(std::numeric_limits< uint32_t >::max())
+        , popularity(0)
+        , activity(0)
+        , elimed(ELIMED_NONE)
+        , polarity(Polarity())
+    {}
+
+    ///'level[var]' contains the level at which the assignment was made.
+    uint32_t level;
+
+    ///Popularity of variable
+    uint32_t popularity;
+
+    ///A heuristic measurement of the activity of a variable.
+    uint32_t activity;
+
+    ///Whether var has been eliminated (var-elim, different component, etc.)
+    char elimed;
+
+    ///The preferred polarity of each variable.
+    Polarity polarity;
+};
+
 /**
 @brief The main solver class
 
@@ -410,11 +438,11 @@ protected:
     // Helper structures:
     //
     struct VarOrderLt {
-        const vec<uint32_t>&  activity;
-        bool operator () (Var x, Var y) const {
-            return activity[x] > activity[y];
+        const vector<VarData>&  varData;
+        const bool operator () (const Var x, const Var y) const {
+            return varData[x].activity > varData[y].activity;
         }
-        VarOrderLt(const vec<uint32_t>&  act) : activity(act) { }
+        VarOrderLt(const vector<VarData>& _varData) : varData(_varData) { }
     };
 
     struct VarFilter {
@@ -447,17 +475,7 @@ protected:
     vec<Lit>            assumptions;      ///< Current set of assumptions provided to solve by the user.
     bqueue<uint32_t>    avgBranchDepth;   ///< Avg branch depth. We collect this, and use it to do random look-around in the searchspace during simplifyProblem()
     MTRand              mtrand;           ///< random number generator
-
-
-    //Var stuff
-    ///'level[var]' contains the level at which the assignment was made.
-    vec<uint32_t> level;
-    ///Popularity of variable
-    vec<uint32_t> popularity;
-    ///A heuristic measurement of the activity of a variable.
-    vec<uint32_t> activity;
-    ///Whether var has been eliminated (var-elim, different component, etc.)
-    vec<char> eliminated;
+    vector<VarData>     varData;
 
     /////////////////
     // Variable activities
@@ -716,7 +734,6 @@ protected:
     void tallyVotesBin(vec<double>& votes) const;
     void tallyVotes(const vec<Clause*>& cs, vec<double>& votes) const;
     void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
-    vector<Polarity> polarity;      // The preferred polarity of each variable.
     void reArrangeClauses();
     void reArrangeClause(Clause* clause);
 };
@@ -762,12 +779,12 @@ inline void Solver::varDecayActivity()
 }
 inline void Solver::varBumpActivity(Var v)
 {
-    if ( (activity[v] += var_inc) > (0x1U) << 24 ) {
+    if ( (varData[v].activity += var_inc) > (0x1U) << 24 ) {
         //printf("RESCALE!!!!!!\n");
         //std::cout << "var_inc: " << var_inc << std::endl;
         // Rescale:
         for (Var var = 0; var != nVars(); var++) {
-            activity[var] >>= 14;
+            varData[var].activity >>= 14;
         }
         var_inc >>= 14;
         //var_inc = 1;
@@ -828,7 +845,7 @@ inline const uint32_t      Solver::decisionLevel ()      const
 }
 inline const uint32_t Solver::abstractLevel (const Var x) const
 {
-    return 1 << (level[x] & 31);
+    return 1 << (varData[x].level & 31);
 }
 inline const lbool    Solver::value         (const Var x) const
 {
@@ -865,7 +882,7 @@ inline const uint32_t      Solver::nVars         ()      const
 inline void     Solver::setPolarity   (Var v, bool b)
 {
     assert(v < nVars());
-    polarity[v].setForced(!b);
+    varData[v].polarity.setForced(!b);
 }
 inline void     Solver::setDecisionVar(Var v, bool b)
 {
@@ -1045,7 +1062,7 @@ inline void  Solver::uncheckedEnqueue(const Lit p, const PropBy from)
     trail.push(p);
     __builtin_prefetch(watches[p.toInt()].getData());
 
-    if (decisionLevel() == 0) level[v] = 0;
+    if (decisionLevel() == 0) varData[v].level = 0;
 
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)

@@ -569,6 +569,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
 {
     assert(best_row != UINT_MAX);
 
+    solver.delayedEnqueueUpdate();
     const bool xorEqualFalse = !m.matrix.getVarsetAt(best_row).is_true();
     const bool wasUndef = m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver.assigns, col_to_var_original);
     release_assert(!wasUndef);
@@ -640,7 +641,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
         #endif
 
         uint32_t maxsublevel_at = UINT_MAX;
-        for (uint32_t i = 0, size = cla.size(); i != size; i++) if (solver.level[cla[i].var()] == curr_dec_level) {
+        for (uint32_t i = 0, size = cla.size(); i != size; i++) if (solver.varData[cla[i].var()].level == curr_dec_level) {
             uint32_t tmp = find_sublevel(cla[i].var());
             if (tmp >= maxsublevel) {
                 maxsublevel = tmp;
@@ -777,8 +778,8 @@ void Gaussian::analyse_confl(const matrixset& m, const uint32_t row, uint32_t& m
         const Var real_var = col_to_var_original[var];
         assert(real_var < solver.nVars());
 
-        if (solver.level[real_var] > this_maxlevel)
-            this_maxlevel = solver.level[real_var];
+        if (solver.varData[real_var].level > this_maxlevel)
+            this_maxlevel = solver.varData[real_var].level;
         var++;
         this_size++;
     }

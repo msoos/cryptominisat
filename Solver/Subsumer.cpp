@@ -134,6 +134,7 @@ added back again.
 const bool Subsumer::unEliminate(const Var var)
 {
     assert(var_elimed[var]);
+    assert(solver.varData[var].elimed == ELIMED_VARELIM);
     vec<Lit> tmp;
     typedef map<Var, vector<vector<Lit> > > elimType;
     typedef map<Var, vector<std::pair<Lit, Lit> > > elimType2;
@@ -144,6 +145,7 @@ const bool Subsumer::unEliminate(const Var var)
     //never have removed it
     solver.setDecisionVar(var, true);
     var_elimed[var] = false;
+    solver.varData[var].elimed = ELIMED_NONE;
     numElimed--;
     #ifdef VERBOSE_DEBUG
     std::cout << "Reinserting normal (non-xor) elimed var: " << var+1 << std::endl;
@@ -1295,7 +1297,9 @@ void Subsumer::removeAssignedVarsFromEliminated()
 {
     for (Var var = 0; var < var_elimed.size(); var++) {
         if (var_elimed[var] && solver.assigns[var] != l_Undef) {
+            assert(solver.varData[var].elimed == ELIMED_VARELIM);
             var_elimed[var] = false;
+            solver.varData[var].elimed = ELIMED_NONE;
             solver.setDecisionVar(var, true);
             numElimed--;
 
@@ -1522,6 +1526,7 @@ bool Subsumer::maybeEliminate(const Var var)
 {
     assert(solver.ok);
     assert(!var_elimed[var]);
+    assert(solver.varData[var].elimed == ELIMED_NONE);
     assert(!cannot_eliminate[var]);
     assert(solver.decision_var[var]);
     if (solver.value(var) != l_Undef) return true;
@@ -1642,6 +1647,7 @@ bool Subsumer::maybeEliminate(const Var var)
 
     assert(occur[lit.toInt()].size() == 0 &&  occur[(~lit).toInt()].size() == 0);
     var_elimed[var] = true;
+    solver.varData[var].elimed = ELIMED_VARELIM;
     numElimed++;
     numMaxElimVars--;
     solver.setDecisionVar(var, false);
@@ -1944,6 +1950,7 @@ const bool Subsumer::tryOneSetting(const Lit lit)
     blockedClauseElimAll(~lit);
 
     var_elimed[lit.var()] = true;
+    solver.varData[lit.var()].elimed = ELIMED_VARELIM;
     numElimed++;
     numMaxElimVars--;
     solver.setDecisionVar(lit.var(), false);
