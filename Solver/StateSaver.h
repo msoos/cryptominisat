@@ -35,6 +35,7 @@ class StateSaver
         RestartType backup_restartType;
         uint32_t backup_random_var_freq;
         uint64_t backup_propagations;
+        uint64_t backup_bogoProps;
 };
 
 #endif //STATESAVER__H

@@ -67,7 +67,10 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         #endif //USE_GAUSS
 
         // Stats
-        , starts(0), dynStarts(0), staticStarts(0), fullStarts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
+        , starts(0), dynStarts(0), staticStarts(0), fullStarts(0), decisions(0), rnd_decisions(0)
+        , propagations(0)
+        , bogoProps(0)
+        , conflicts(0)
         , clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
         , nbGlue2(0), numNewBin(0), lastNbBin(0), lastSearchForBinaryXor(0), nbReduceDB(0)
         , improvedClauseNo(0), improvedClauseSize(0)
@@ -1697,6 +1700,7 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p
         *j++ = *i;
         return true;
     }
+    bogoProps += 6;
     const uint32_t offset = i->getNormOffset();
     Clause& c = *clauseAllocator.getPointer(offset);
     const uint32_t clauseNum = c.getNum();
@@ -1726,6 +1730,7 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p
             #endif
             data[watchNum] = numLit;
             watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
+            bogoProps += 6;
             return true;
         }
         if (value(c[numLit]) == l_Undef) other = numLit;
@@ -1736,6 +1741,7 @@ inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, const Lit p
         #endif
         data[watchNum] = other;
         watches[(~c[other]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));;
+        bogoProps += 6;
         return true;
     }
 
@@ -1784,6 +1790,7 @@ better memory-accesses since the watchlist is already in the memory...
 template<bool full>
 inline const bool Solver::propXorClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl)
 {
+    bogoProps += 20;
     ClauseOffset offset = i->getXorOffset();
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(offset);
     const uint32_t clauseNum = c.getNum();
@@ -1833,7 +1840,7 @@ template<bool full>
 PropBy Solver::propagate(const bool update)
 {
     PropBy confl;
-    uint32_t num_props = 0;
+    uint64_t oldPropagations = propagations;
     Watched *i, *j, *i2, *end;
     uint32_t qhead2 = qhead;
 
@@ -1845,7 +1852,7 @@ PropBy Solver::propagate(const bool update)
         while (qhead2 < trail.size()) {
             Lit p = trail[qhead2++];     // 'p' is enqueued fact to propagate.
             vec<Watched>& ws = watches[p.toInt()];
-            num_props += ws.size()/2 + 2;
+            bogoProps += 2;
             i = ws.getData();
             end = ws.getDataEnd();
             for (; i != end; i++) {
@@ -1858,7 +1865,6 @@ PropBy Solver::propagate(const bool update)
 
         Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>& ws = watches[p.toInt()];
-        num_props += ws.size()/2;
 
         #ifdef VERBOSE_DEBUG_PROP
         cout << "Propagating lit " << p << endl;
@@ -1895,7 +1901,6 @@ PropBy Solver::propagate(const bool update)
             } //end TRICLAUSE
 
             if (i->isClause()) {
-                num_props += 4;
                 if (!propNormalClause<full>(i, j, p, confl, update)) break;
                 else {
                     #ifdef VERBOSE_DEBUG_PROP
@@ -1906,7 +1911,6 @@ PropBy Solver::propagate(const bool update)
             } //end CLAUSE
 
             if (i->isXorClause()) {
-                num_props += 10;
                 if (!propXorClause<full>(i, j, p, confl)) break;
                 else continue;
             } //end XORCLAUSE
@@ -1924,8 +1928,7 @@ PropBy Solver::propagate(const bool update)
         ws.shrink_(i-j);
     }
 end:
-    propagations += num_props;
-    simpDB_props -= num_props;
+    simpDB_props -= (propagations-oldPropagations);
 
     #ifdef VERBOSE_DEBUG
     cout << "Propagation ended." << endl;
@@ -1970,7 +1973,7 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
 
         //std::cout << "lev: " << lev << " ~p: "  << ~p << std::endl;
         const vec<Watched> & ws = watches[p.toInt()];
-        propagations += ws.size()/2 + 2;
+        bogoProps += 2;
         for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
             hasChildren = true;
             if (!k->isBinary()) continue;
@@ -2018,7 +2021,7 @@ PropBy Solver::propagateNonLearntBin()
     while (qhead < trail.size()) {
         Lit p = trail[qhead++];
         const vec<Watched> & ws = watches[p.toInt()];
-        propagations += ws.size()/2 + 2;
+        bogoProps += 2;
         for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
             if (!k->isNonLearntBinary()) break;
 
@@ -2043,7 +2046,7 @@ const bool Solver::propagateBinExcept(const Lit exceptLit)
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
         const vec<Watched> & ws = watches[p.toInt()];
-        propagations += ws.size()/2 + 2;
+        bogoProps += 2;
         for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
             if (!i->isNonLearntBinary()) break;
 
@@ -2066,7 +2069,7 @@ const bool Solver::propagateBinOneLevel()
 {
     Lit p   = trail[qhead];
     const vec<Watched> & ws = watches[p.toInt()];
-    propagations += ws.size()/2 + 2;
+    bogoProps += 2;
     for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
         if (!i->isNonLearntBinary()) break;
 

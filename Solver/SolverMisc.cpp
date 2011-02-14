@@ -704,7 +704,8 @@ void Solver::printStats(const int numThreads)
     //Search stats
     printStatsLine("c conflicts", conflicts, (double)conflicts/cpu_time, "/ sec");
     printStatsLine("c decisions", decisions, (double)rnd_decisions*100.0/(double)decisions, "% random");
-    printStatsLine("c bogo-props", propagations, (double)propagations/cpu_time, "/ sec");
+    printStatsLine("c bogo-props", bogoProps, (double)bogoProps/cpu_time, "/ sec");
+    printStatsLine("c props", propagations, (double)propagations/cpu_time, "/ sec");
     printStatsLine("c conflict literals", tot_literals, (double)(max_literals - tot_literals)*100.0/ (double)max_literals, "% deleted");
 
     //General stats

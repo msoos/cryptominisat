@@ -414,6 +414,7 @@ protected:
     bogus.
     */
     uint64_t propagations;
+    uint64_t bogoProps;
     uint64_t conflicts; ///<Num conflicts
     uint64_t clauses_literals, learnts_literals, max_literals, tot_literals;
     uint64_t nbGlue2; ///<Num learnt clauses that had a glue of 2 when created
@@ -1059,6 +1060,7 @@ inline void  Solver::uncheckedEnqueue(const Lit p, const PropBy from)
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     reason  [v] = from;
     trail.push(p);
+    propagations++;
     __builtin_prefetch(watches[p.toInt()].getData());
 
     if (decisionLevel() == 0) varData[v].level = 0;

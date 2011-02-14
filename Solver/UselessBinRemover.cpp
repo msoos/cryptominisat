@@ -31,7 +31,7 @@ UselessBinRemover::UselessBinRemover(Solver& _solver) :
 /**
 @brief Time limiting
 */
-#define MAX_REMOVE_BIN_FULL_PROPS 20000000
+#define MAX_REMOVE_BIN_FULL_PROPS 10000000
 /**
 @brief We measure time in (bogo)propagations and "extra" time, time not accountable in (bogo)props
 */
@@ -49,7 +49,7 @@ const bool UselessBinRemover::removeUslessBinFull()
     toDeleteSet.clear();
     toDeleteSet.growTo(solver.nVars()*2, 0);
     uint32_t origHeapSize = solver.order_heap.size();
-    uint64_t origProps = solver.propagations;
+    uint64_t origBogoProps = solver.bogoProps;
     bool fixed = false;
     uint32_t extraTime = 0;
     uint32_t numBinsBefore = solver.numBins;
@@ -58,7 +58,7 @@ const bool UselessBinRemover::removeUslessBinFull()
     uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
     for (uint32_t i = 0; i != solver.order_heap.size(); i++) {
         Var var = solver.order_heap[(i+startFrom)%solver.order_heap.size()];
-        if (solver.propagations - origProps + extraTime > MAX_REMOVE_BIN_FULL_PROPS) break;
+        if (solver.bogoProps - origBogoProps + extraTime > MAX_REMOVE_BIN_FULL_PROPS) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
 
         Lit lit(var, true);
@@ -88,7 +88,7 @@ const bool UselessBinRemover::removeUslessBinFull()
         std::cout
         << "c Removed useless bin:" << std::setw(8) << (numBinsBefore - solver.numBins)
         << "  fixed: " << std::setw(5) << (origHeapSize - solver.order_heap.size())
-        << "  props: " << std::fixed << std::setprecision(2) << std::setw(6) << (double)(solver.propagations - origProps)/1000000.0 << "M"
+        << "  bprops: " << std::fixed << std::setprecision(2) << std::setw(6) << (double)(solver.bogoProps - origBogoProps)/1000000.0 << "M"
         << "  time: " << std::fixed << std::setprecision(2) << std::setw(5) << cpuTime() - myTime << " s"
         << std::endl;
     }

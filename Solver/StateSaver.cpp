@@ -32,6 +32,7 @@ StateSaver::StateSaver(Solver& _solver) :
     }
     backup_order_heap = solver.order_heap;
     backup_restartType = solver.restartType;
+    backup_bogoProps = solver.bogoProps;
     backup_propagations = solver.propagations;
     backup_random_var_freq = solver.conf.random_var_freq;
 }
@@ -46,6 +47,7 @@ void StateSaver::restore()
     }
     solver.order_heap = backup_order_heap;
     solver.restartType = backup_restartType;
+    solver.bogoProps = backup_bogoProps;
     solver.propagations = backup_propagations;
     solver.conf.random_var_freq = backup_random_var_freq;
 

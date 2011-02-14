@@ -163,10 +163,10 @@ const bool FailedLitSearcher::search()
     if (solver.nVars() == 0) return solver.ok;
     if (solver.conf.doCacheOTFSSR && numCalls > 0) {
         BothCache bothCache(solver);
-        if (!bothCache.tryBoth(solver.transOTFCache)) return false;
+        if (!bothCache.tryBoth()) return false;
     }
 
-    uint64_t numProps = 100 * 1000000;
+    uint64_t numProps = 30 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     solver.testAllClauseAttach();
@@ -224,13 +224,13 @@ const bool FailedLitSearcher::search()
     removedUselessNonLearnt = 0;
 
     //uint32_t fromBin;
-    origProps = solver.propagations;
+    origBogoProps = solver.bogoProps;
     uint32_t i;
     for (i = 0; i < solver.nVars(); i++) {
         Var var = (lastTimeStopped + i) % solver.nVars();
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
-        if (solver.propagations >= origProps + numProps)
+        if (solver.bogoProps >= origBogoProps + numProps)
             break;
         if (!tryBoth(Lit(var, false), Lit(var, true)))
             goto end;
@@ -239,13 +239,13 @@ const bool FailedLitSearcher::search()
 
     calcNegPosDist();
 
-    origProps = solver.propagations;
+    origBogoProps = solver.bogoProps;
     hyperbinProps = 0;
     for (uint32_t i = 0; i < solver.negPosDist.size(); i++) {
         Var var = solver.negPosDist[i].var;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
-        if (solver.propagations >= origProps + numPropsDifferent)  {
+        if (solver.bogoProps >= origBogoProps + numPropsDifferent)  {
             break;
         }
         if (!tryBoth(Lit(var, false), Lit(var, true)))
@@ -256,7 +256,7 @@ const bool FailedLitSearcher::search()
         Var var = order_heap_copy.removeMin();
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var])
             continue;
-        if (solver.propagations >= origProps + numPropsDifferent)  {
+        if (solver.bogoProps >= origBogoProps + numPropsDifferent)  {
             break;
         }
         if (!tryBoth(Lit(var, false), Lit(var, true)))
@@ -319,7 +319,7 @@ void FailedLitSearcher::printResults(const double myTime) const
     " BRemL:" << std::setw(7) << removedUselessLearnt <<
     " BRemN:" << std::setw(7) << removedUselessNonLearnt <<
     " CBin: " << std::setw(7) << addedCacheBin <<
-    " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(solver.propagations - origProps)/1000000.0  << "M"
+    " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(solver.bogoProps - origBogoProps)/1000000.0  << "M"
     " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
     << std::endl;
 }
@@ -578,7 +578,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     assert(needToVisit.isZero());
     #endif //DEBUG_HYPERBIN
 
-    uint64_t oldProps = solver.propagations;
+    uint64_t oldBogoProps = solver.bogoProps;
     vec<Lit> toVisit;
     uint64_t extraTime = 0;
 
@@ -642,7 +642,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     solver.cancelUntilLight();
 
     #ifdef DEBUG_USELESS_LEARNT_BIN_REMOVAL
-    backupProps = solver.propagations;
+    backupBogoProps = solver.bogoProps;
     if (solver.conf.doRemUselessLBins) {
         solver.newDecisionLevel();
         solver.uncheckedEnqueueLight2(lit, 0, lit_Undef, false);
@@ -655,7 +655,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
         assert(propagated == solver.trail.size()-solver.trail_lim[0]);
         solver.cancelUntilLight();
     }
-    solver.propagations = backupProps;
+    solver.bogoProps = backupBogoProps;
     #endif
 
     /*************************
@@ -692,7 +692,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     #endif //DEBUG_HYPERBIN
 
     end:
-    hyperbinProps += solver.propagations - oldProps + extraTime;
+    hyperbinProps += solver.bogoProps- oldBogoProps + extraTime;
 }
 
 void FailedLitSearcher::addMyImpliesSetAsBins(Lit lit, int32_t& difference)
@@ -851,7 +851,7 @@ const bool FailedLitSearcher::tryMultiLevelAll()
     double myTime = cpuTime();
     uint32_t numTries = 0;
     uint32_t finished = 0;
-    uint64_t beforeProps = solver.propagations;
+    uint64_t oldBogoProps = solver.bogoProps;
     uint32_t enqueued = 0;
     uint32_t numFailed = 0;
 
@@ -866,7 +866,7 @@ const bool FailedLitSearcher::tryMultiLevelAll()
     assert(propagated2.isZero());
 
     vec<Var> toTry;
-    while(solver.propagations < beforeProps + 300*1000*1000) {
+    while(solver.bogoProps < oldBogoProps + 300*1000*1000) {
         toTry.clear();
         for (uint32_t i = 0; i < 3; i++) {
             fillToTry(toTry);

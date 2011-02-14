@@ -234,7 +234,7 @@ class FailedLitSearcher {
         */
         uint32_t toReplaceBefore;
         uint32_t origTrailSize; ///<Records num. of 0-depth assignments at the start-up of search()
-        uint64_t origProps;     ///<Records num. of bogoprops at the start-up of search()
+        uint64_t origBogoProps; ///<Records num. of bogoprops at the start-up of search()
         uint32_t numFailed;     ///<Records num. of failed literals during search()
         uint32_t goodBothSame;  ///<Records num. of literals that have been propagated to the same value by both "var" and "~var"
 

@@ -155,15 +155,15 @@ const bool ClauseVivifier::subsWNonExistBinsFill()
     }
 
     uint32_t oldTrailSize = solver.trail.size();
-    uint64_t oldProps = solver.propagations;
-    uint64_t maxProp = MAX_BINARY_PROP*3;
+    uint64_t oldBogoProps = solver.bogoProps;
+    uint64_t maxProp = MAX_BINARY_PROP*2;
 
     uint32_t extraTimeNonExist = 0;
     uint32_t doneNumNonExist = 0;
     uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
     for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
         Var var = solver.order_heap[(startFrom + i) % solver.order_heap.size()];
-        if (solver.propagations + extraTimeNonExist*150 > oldProps + maxProp) break;
+        if (solver.bogoProps + extraTimeNonExist*150 > oldBogoProps + maxProp) break;
         if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
         doneNumNonExist++;
         extraTimeNonExist += 5;
@@ -259,11 +259,11 @@ const bool ClauseVivifier::vivifyClausesNormal()
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 20*1000*1000;
+    uint64_t maxNumProps = 7*1000*1000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxNumProps *=2;
     uint64_t extraDiff = 0;
-    uint64_t oldProps = solver.propagations;
+    uint64_t oldBogoProps = solver.bogoProps;
     bool needToFinish = false;
     uint32_t checkedClauses = 0;
     uint32_t potentialClauses = solver.clauses.size();
@@ -297,7 +297,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
         }
 
         //if done enough, stop doing it
-        if (solver.propagations-oldProps + extraDiff > maxNumProps) {
+        if (solver.bogoProps-oldBogoProps + extraDiff > maxNumProps) {
             //std::cout << "Need to finish -- ran out of prop" << std::endl;
             needToFinish = true;
         }
