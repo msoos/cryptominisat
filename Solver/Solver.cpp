@@ -2097,7 +2097,7 @@ inline const uint32_t Solver::calcNBLevels(const T& ps)
     MYFLAG++;
     uint32_t nbLevels = 0;
     for(const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
-        int32_t lev = varData[l->var()].level;
+        uint32_t lev = varData[l->var()].level;
         if (permDiff[lev] != MYFLAG) {
             permDiff[lev] = MYFLAG;
             nbLevels++;
