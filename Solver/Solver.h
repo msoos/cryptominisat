@@ -828,6 +828,7 @@ inline void Solver::uncheckedEnqueueLight(const Lit p)
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
+    __builtin_prefetch(watches[p.toInt()].getData());
 }
 
 inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev2Ancestor, const bool learntLeadHere)
@@ -839,6 +840,7 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     binPropData[p.var()].lev = binSubLevel;
     binPropData[p.var()].lev2Ancestor = lev2Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
+    __builtin_prefetch(watches[p.toInt()].getData());
 }
 
 //=================================================================================================

@@ -99,8 +99,8 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
 
     Clause **s, **ss, **end;
     for (s = ss = cs.getData(), end = s + cs.size();  s != end; s++) {
-        if (s+1 != end)
-            __builtin_prefetch(*(s+1), 1, 0);
+        if (s+1 != end) __builtin_prefetch(*(s+1));
+
         if (cleanClause(*s)) {
             solver.clauseAllocator.clauseFree(*s);
         } else {

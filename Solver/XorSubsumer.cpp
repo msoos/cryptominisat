@@ -14,10 +14,6 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include <iomanip>
 #include "VarReplacer.h"
 
-#ifdef _MSC_VER
-#define __builtin_prefetch(a,b,c)
-#endif //_MSC_VER
-
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_DEBUGSUBSUME0
@@ -163,8 +159,7 @@ void XorSubsumer::addFromSolver(vec<XorClause*>& cs)
     clauses.clear();
     XorClause **i = cs.getData();
     for (XorClause **end = i + cs.size(); i !=  end; i++) {
-        if (i+1 != end)
-            __builtin_prefetch(*(i+1), 1, 1);
+        if (i+1 != end) __builtin_prefetch(*(i+1));
 
         linkInClause(**i);
     }
@@ -589,8 +584,7 @@ void XorSubsumer::findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed)
 
     vec<XorClauseSimp>& cs = occur[ps[min_i].var()];
     for (XorClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
-        if (it+1 != end)
-            __builtin_prefetch((it+1)->clause, 1, 1);
+        if (it+1 != end) __builtin_prefetch((it+1)->clause);
 
         if (it->clause != &ps && subsetAbst(ps.getAbst(), it->clause->getAbst()) && ps.size() <= it->clause->size() && subset(ps, *it->clause)) {
             out_subsumed.push(*it);

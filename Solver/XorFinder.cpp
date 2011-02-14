@@ -61,7 +61,7 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
     table.reserve(cls.size());
 
     for (Clause **it = cls.getData(), **end = cls.getDataEnd(); it != end; it ++) {
-        if (it+1 != end) __builtin_prefetch(*(it+1), 0);
+        if (it+1 != end) __builtin_prefetch(*(it+1));
         Clause& c = (**it);
         assert((*it)->size() > 2);
         bool sorted = true;

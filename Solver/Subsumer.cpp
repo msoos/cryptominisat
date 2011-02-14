@@ -281,7 +281,7 @@ void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, const uint32_t
 
     vec<ClauseSimp>& cs = occur[lit1.toInt()];
     for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
-        if (it+1 != end) __builtin_prefetch((it+1)->clause, 0, 1);
+        if (it+1 != end) __builtin_prefetch((it+1)->clause);
         if (it->clause == NULL) continue;
 
         Clause& c = *it->clause;
@@ -815,8 +815,7 @@ const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
     Clause **i = cs.getData();
     Clause **j = i;
     for (Clause **end = i + cs.size(); i !=  end; i++) {
-        if (i+1 != end)
-            __builtin_prefetch(*(i+1), 1, 1);
+        if (i+1 != end) __builtin_prefetch(*(i+1));
 
         if (!alsoLearnt && (*i)->learnt()) {
             *j++ = *i;
@@ -1567,8 +1566,7 @@ void Subsumer::findSubsumed(const T& ps, uint32_t abs, vec<ClauseSimp>& out_subs
     vec<ClauseSimp>& cs = occur[ps[min_i].toInt()];
     numMaxSubsume0 -= cs.size()*10 + 5;
     for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
-        if (it+1 != end)
-            __builtin_prefetch((it+1)->clause, 1, 1);
+        if (it+1 != end) __builtin_prefetch((it+1)->clause);
 
         if (it->clause != (Clause*)&ps
             && subsetAbst(abs, it->clause->getAbst())
@@ -1637,8 +1635,7 @@ void inline Subsumer::fillSubs(const T& ps, uint32_t abs, vec<ClauseSimp>& out_s
     Lit litSub;
     vec<ClauseSimp>& cs = occur[lit.toInt()];
     for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++) {
-        if (it+1 != end)
-            __builtin_prefetch((it+1)->clause, 1, 1);
+        if (it+1 != end) __builtin_prefetch((it+1)->clause);
 
         if (it->clause != (Clause*)&ps
             && subsetAbst(abs, it->clause->getAbst())
@@ -2039,7 +2036,7 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
     const vec<Watched>& ws = solver.watches[(~lit).toInt()];
 
     for (const ClauseSimp *it = cs.getData(), *end = cs.getDataEnd(); it != end; it++){
-        if (it+1 != end) __builtin_prefetch((it+1)->clause, 1, 1);
+        if (it+1 != end) __builtin_prefetch((it+1)->clause);
 
         const Clause& c = *it->clause;
         numMaxBlockToVisit -= c.size();

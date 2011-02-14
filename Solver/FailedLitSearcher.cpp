@@ -31,10 +31,6 @@ using std::set;
 #include "StateSaver.h"
 #include "CompleteDetachReattacher.h"
 
-#ifdef _MSC_VER
-#define __builtin_prefetch(a,b,c)
-#endif //_MSC_VER
-
 //#define VERBOSE_DEUBUG
 
 /**
@@ -65,8 +61,7 @@ void FailedLitSearcher::addFromSolver(const vec< XorClause* >& cs)
 
     uint32_t i = 0;
     for (XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it !=  end; it++, i++) {
-        if (it+1 != end)
-            __builtin_prefetch(*(it+1), 0, 0);
+        if (it+1 != end) __builtin_prefetch(*(it+1));
 
         const XorClause& cl = **it;
         xorClauseSizes[i] = cl.size();

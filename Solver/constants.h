@@ -106,3 +106,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif //HAVE_CONFIG_H
+
+#ifdef _MSC_VER
+#define __builtin_prefetch()
+#endif //_MSC_VER

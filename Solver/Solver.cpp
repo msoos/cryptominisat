@@ -36,11 +36,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "MatrixFinder.h"
 #include "DataSync.h"
 
-#ifdef _MSC_VER
-#define __builtin_prefetch(a,b,c)
-//#define __builtin_prefetch(a,b)
-#endif //_MSC_VER
-
 #ifdef VERBOSE_DEBUG
 #define UNWINDING_DEBUG
 #endif
@@ -707,7 +702,7 @@ void Solver::cancelUntilLight()
     }
     qhead = trail_lim[0];
     trail.shrink_(trail.size() - trail_lim[0]);
-    trail_lim.shrink_(trail_lim.size());
+    trail_lim.clear();
 }
 
 const bool Solver::clearGaussMatrixes()
@@ -1127,7 +1122,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
         p     = trail[index+1];
         oldConfl = confl;
         confl = PropByFull(reason[p.var()], failBinLit, clauseAllocator);
-        if (confl.isClause()) __builtin_prefetch(confl.getClause(), 1, 0);
+        if (confl.isClause()) __builtin_prefetch(confl.getClause());
         seen[p.var()] = 0;
         pathC--;
 
@@ -1456,6 +1451,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     #endif //USE_OLD_POLARITIES
     polarity[p.var()] = p.sign();
     trail.push(p);
+    __builtin_prefetch(watches[p.toInt()].getData());
 
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
@@ -1677,12 +1673,8 @@ PropBy Solver::propagate(const bool update)
     while (qhead < trail.size()) {
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>&  ws  = watches[p.toInt()];
-        __builtin_prefetch(ws.getData(), 1, 0);
         Watched        *i, *j;
         num_props += ws.size()/2 + 2;
-        if (qhead < trail.size()) {
-            __builtin_prefetch(watches[trail[qhead].toInt()].getData(), 1, 1);
-        }
 
         #ifdef VERBOSE_DEBUG
         cout << "Propagating lit " << p << endl;
@@ -1961,7 +1953,7 @@ void Solver::reduceDB()
     uint64_t totalGlueOfNonRemoved = 0;
     uint64_t totalSizeOfNonRemoved = 0;
     for (i = j = 0; i != removeNum; i++){
-        if (i+1 < removeNum) __builtin_prefetch(learnts[i+1], 0, 0);
+        if (i+1 < removeNum) __builtin_prefetch(learnts[i+1]);
         assert(learnts[i]->size() > 2);
         if (!locked(*learnts[i])
             && (lastSelectedRestartType == static_restart || learnts[i]->getGlue() > 2)
