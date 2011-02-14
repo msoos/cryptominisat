@@ -75,7 +75,7 @@ struct BinSorter2 {
         if (first.getLearnt() && !second.getLearnt()) return false;
         return false;
     };
-    };
+};
 
 const bool ClauseVivifier::subsNonExistHelper(Clause& cl)
 {
