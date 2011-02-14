@@ -2110,8 +2110,6 @@ void Subsumer::blockedClauseRemoval()
        // }
     }
 
-    removeWrongBinsAndAllTris();
-
     if (solver.conf.verbosity >= 1) {
         std::cout
         << "c spec. var-rem cls: " << std::setw(8) << numblockedClauseRemoved
