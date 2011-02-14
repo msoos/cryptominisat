@@ -117,44 +117,43 @@ class Polarity
 {
     public:
         Polarity() :
-            data(0)
+            isForced(false)
+            , forcedVal(false)
+            , intLastVal(false)
         {}
 
-        Polarity& operator=(const Polarity& other)
+        const bool getForced() const
         {
-            data = other.data;
-
-            return *this;
-        }
-
-        const bool isForced() const
-        {
-            return data&1;
+            return isForced;
         }
 
         void setForced(const bool val)
         {
-            data = (unsigned char)1 | ((unsigned char)(val)<<1);
+            isForced = true;
+            forcedVal = val;
         }
 
-        void setVal(const bool val)
+        void setLastVal(const bool val)
         {
-            if (isForced()) return;
-            else data = ((unsigned char)(val)<<1);
+            intLastVal = val;
+        }
+
+        const bool getLastVal() const
+        {
+            return intLastVal;
         }
 
         const bool getVal() const
         {
-            return data&2;
+            if (isForced) return forcedVal;
+            else return intLastVal;
         }
 
     private:
-        const bool getForced() const
-        {
-            return data&2;
-        }
 
-        unsigned char data;
+        unsigned char isForced:1;
+        unsigned char forcedVal:1;
+        unsigned char intLastVal:1;
 };
 
 class AgilityData

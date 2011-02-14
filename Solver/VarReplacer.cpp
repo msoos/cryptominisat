@@ -114,7 +114,7 @@ const bool VarReplacer::performReplaceInternal()
         if (wasDecisionVar && activity1 > activity2) {
             activity2 = activity1;
             solver.order_heap.update(it->var());
-            solver.varData[it->var()].polarity.setVal(solver.varData[var].polarity.getVal()^it->sign());
+            solver.varData[it->var()].polarity.setLastVal(solver.varData[var].polarity.getVal()^it->sign());
         }
 
         activity1 = 0.0;

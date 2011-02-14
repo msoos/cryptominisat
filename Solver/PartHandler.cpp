@@ -436,7 +436,7 @@ void PartHandler::addSavedState()
             assert(solver.assigns[var] == savedState[var]);
             savedState[var] = l_Undef;
             solver.varData[var].elimed = ELIMED_NONE;
-            solver.varData[var].polarity.setVal(solver.assigns[var] == l_False);
+            solver.varData[var].polarity.setLastVal(solver.assigns[var] == l_False);
         }
     }
 

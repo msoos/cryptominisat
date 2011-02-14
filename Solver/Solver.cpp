@@ -675,8 +675,8 @@ struct PolaritySorter
     {};
 
     const bool operator()(const Lit lit1, const Lit lit2) {
-        const bool pol1 = !varData[lit1.var()].polarity.getVal() ^ lit1.sign();
-        const bool pol2 = !varData[lit2.var()].polarity.getVal() ^ lit2.sign();
+        const bool pol1 = !varData[lit1.var()].polarity.getLastVal() ^ lit1.sign();
+        const bool pol2 = !varData[lit2.var()].polarity.getLastVal() ^ lit2.sign();
 
         //Tie 1: polarity
         if (pol1 == true && pol2 == false) return true;
@@ -902,7 +902,7 @@ void Solver::calculateDefaultPolarities()
         uint32_t posPolars = 0;
         uint32_t undecidedPolars = 0;
         for (const double *it = votes.getData(), *end = votes.getDataEnd(); it != end; it++, i++) {
-            varData[i].polarity.setVal(*it >= 0.0);
+            varData[i].polarity.setLastVal(*it >= 0.0);
             posPolars += (*it < 0.0);
             undecidedPolars += (*it == 0.0);
             #ifdef VERBOSE_DEBUG_POLARITIES
@@ -920,7 +920,7 @@ void Solver::calculateDefaultPolarities()
         }
     } else {
         for (uint32_t i = 0; i < varData.size(); i++) {
-            varData[i].polarity.setVal(getPolarity(i));
+            varData[i].polarity.setLastVal(getPolarity(i));
         }
     }
 
@@ -1612,8 +1612,8 @@ void Solver::delayedEnqueueUpdate()
         const Lit p = trail[i];
         const Var v = p.var();
         varData[v].level = pseudoLevel;
-        agility.update(varData[v].polarity.getVal() != p.sign());
-        varData[v].polarity.setVal(p.sign());
+        agility.update(varData[v].polarity.getLastVal() != p.sign());
+        varData[v].polarity.setLastVal(p.sign());
         varData[v].popularity++;
     }
 
