@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ClauseCleaner.h"
 #include "time_mem.h"
 #include <iomanip>
+#include "BothCache.h"
 
 //#define ASSYM_DEBUG
 
@@ -59,6 +60,8 @@ const bool ClauseVivifier::calcAndSubsume()
     assert(solver.ok);
 
     if (!subsWNonExistBinsFill()) return false;
+    BothCache bCache(solver);
+    bCache.tryBoth();
     subsumeNonExist();
 
     return true;

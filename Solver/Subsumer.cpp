@@ -19,7 +19,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "CompleteDetachReattacher.h"
 #include "UselessBinRemover.h"
 #include "DataSync.h"
-#include "BothCache.h"
 #include <set>
 #include "PartHandler.h"
 
@@ -1194,11 +1193,6 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         std::cout << "c learnt bin added due to v-elim: " << numLearntBinVarRemAdded << std::endl;
     }
     totalTime += cpuTime() - myTime;
-
-    if (!alsoLearnt) {
-        BothCache bothCache(solver);
-        if (!bothCache.tryBoth(solver.transOTFCache)) return false;
-    }
 
     solver.testAllClauseAttach();
     solver.checkNoWrongAttach();

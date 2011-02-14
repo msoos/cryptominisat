@@ -7,7 +7,7 @@ class BothCache
 {
     public:
         BothCache(Solver& solver);
-        const bool tryBoth(const vector<TransCache>& cache);
+        const bool tryBoth();
 
     private:
         Solver& solver;

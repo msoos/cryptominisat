@@ -27,7 +27,7 @@ BothCache::BothCache(Solver& _solver) :
     solver(_solver)
 {};
 
-const bool BothCache::tryBoth(const vector<TransCache>& cache)
+const bool BothCache::tryBoth()
 {
     vec<bool> seen(solver.nVars(), 0);
     vec<bool> val(solver.nVars(), 0);
@@ -50,13 +50,13 @@ const bool BothCache::tryBoth(const vector<TransCache>& cache)
         vector<LitExtra> const* cache2;
 
         bool startWithTrue;
-        if (cache[lit.toInt()].lits.size() < cache[(~lit).toInt()].lits.size()) {
-            cache1 = &cache[lit.toInt()].lits;
-            cache2 = &cache[(~lit).toInt()].lits;
+        if (solver.transOTFCache[lit.toInt()].lits.size() < solver.transOTFCache[(~lit).toInt()].lits.size()) {
+            cache1 = &solver.transOTFCache[lit.toInt()].lits;
+            cache2 = &solver.transOTFCache[(~lit).toInt()].lits;
             startWithTrue = false;
         } else {
-            cache1 = &cache[(~lit).toInt()].lits;
-            cache2 = &cache[lit.toInt()].lits;
+            cache1 = &solver.transOTFCache[(~lit).toInt()].lits;
+            cache2 = &solver.transOTFCache[lit.toInt()].lits;
             startWithTrue = true;
         }
 
