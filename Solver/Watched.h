@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ClauseOffset.h"
 #include "SolverTypes.h"
 #include <stdio.h>
+#include <limits>
 #include "constants.h"
 
 /**
@@ -51,6 +52,11 @@ class Watched {
             data1 = blockedLit.toInt();
             data2 = (uint32_t)1 + ((uint32_t)offset << 2);
         }
+
+        Watched() :
+            data1 (std::numeric_limits<uint32_t>::max())
+            , data2(std::numeric_limits<uint32_t>::max())
+        {}
 
         /**
         @brief Constructor for an xor-clause

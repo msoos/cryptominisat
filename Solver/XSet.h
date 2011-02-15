@@ -32,7 +32,7 @@ class XorClauseSimp
         clause(c)
         , index(_index)
         {}
-        
+
         XorClause* clause;
         uint32_t index;
 };
@@ -42,13 +42,13 @@ class XSet {
     vec<uint32_t>       where;  // Map clause ID to position in 'which'.
     vec<XorClauseSimp> which;  // List of clauses (for fast iteration). May contain 'Clause_NULL'.
     vec<uint32_t>       free;   // List of positions holding 'Clause_NULL'.
-    
+
     public:
         //XorClauseSimp& operator [] (uint32_t index) { return which[index]; }
         void reserve(uint32_t size) { where.reserve(size);}
         uint32_t size(void) const { return which.size(); }
         uint32_t nElems(void) const { return which.size() - free.size(); }
-        
+
         bool add(const XorClauseSimp& c) {
             assert(c.clause != NULL);
             where.growTo(c.index+1, std::numeric_limits<uint32_t>::max());
@@ -65,7 +65,7 @@ class XSet {
             }
             return false;
         }
-        
+
         bool exclude(const XorClauseSimp& c) {
             assert(c.clause != NULL);
             if (c.index >= where.size() || where[c.index] == std::numeric_limits<uint32_t>::max()) {
@@ -77,7 +77,7 @@ class XSet {
             where[c.index] = std::numeric_limits<uint32_t>::max();
             return true;
         }
-        
+
         void clear(void) {
             for (uint32_t i = 0; i < which.size(); i++)  {
                 if (which[i].clause != NULL) {
@@ -87,40 +87,40 @@ class XSet {
             which.clear();
             free.clear();
         }
-        
+
         class iterator
         {
             public:
                 iterator(XorClauseSimp* _it) :
                 it(_it)
                 {}
-                
+
                 void operator++()
                 {
                     it++;
                 }
-                
+
                 const bool operator!=(const iterator& iter) const
                 {
                     return (it != iter.it);;
                 }
-                
+
                 XorClauseSimp& operator*() {
                     return *it;
                 }
-                
+
                 XorClauseSimp*& operator->() {
                     return it;
                 }
             private:
                 XorClauseSimp* it;
         };
-        
+
         iterator begin()
         {
             return iterator(which.getData());
         }
-        
+
         iterator end()
         {
             return iterator(which.getData() + which.size());

@@ -30,6 +30,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <stdint.h>
 #endif //_MSC_VER
 
+#include <malloc.h>
+#include <string.h>
+
+
 //=================================================================================================
 // Automatically resizable arrays
 //
@@ -90,8 +94,7 @@ public:
     void     push  (void)
     {
         if (sz == cap) {
-            cap = imax(2, (cap*3+1)>>1);
-            data = (T*)realloc(data, cap * sizeof(T));
+            grow(cap+1);
         }
         new (&data[sz]) T();
         sz++;
@@ -99,8 +102,7 @@ public:
     void     push  (const T& elem)
     {
         if (sz == cap) {
-            cap = imax(2, (cap*3+1)>>1);
-            data = (T*)realloc(data, cap * sizeof(T));
+            grow(cap+1);
         }
         data[sz++] = elem;
     }
@@ -124,7 +126,8 @@ void vec<T>::grow(uint32_t min_cap) {
     if (min_cap <= cap) return;
     if (cap == 0) cap = (min_cap >= 2) ? min_cap : 2;
     else          do cap = (cap*3+1) >> 1; while (cap < min_cap);
-    data = (T*)realloc(data, cap * sizeof(T)); }
+    data = (T*)realloc(data, cap * sizeof(T));
+}
 
 template<class T>
 void vec<T>::growTo(uint32_t size, const T& pad) {

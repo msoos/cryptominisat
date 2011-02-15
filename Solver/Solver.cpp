@@ -773,10 +773,10 @@ void Solver::tallyVotes(const vec<Clause*>& cs, vec<double>& votes) const
 void Solver::tallyVotesBin(vec<double>& votes) const
 {
     uint32_t wsLit = 0;
-    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (const vec2<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        const vec2<Watched>& ws = *it;
+        for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
                 if (!it2->getLearnt()) {
                     if (lit.sign()) votes[lit.var()] += 0.5;
@@ -1256,8 +1256,8 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         }
 
         //watched is messed: lit is in watched[~lit]
-        vec<Watched>& ws = watches[(~lit).toInt()];
-        for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+        vec2<Watched>& ws = watches[(~lit).toInt()];
+        for (vec2<Watched>::iterator i = ws.getData(), end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
                 seen[(~i->getOtherLit()).toInt()] = 0;
                 continue;
@@ -1308,9 +1308,9 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
         Lit thisLit = toRecursiveProp.top();
         toRecursiveProp.pop();
         //watched is messed: lit is in watched[~lit]
-        vec<Watched>& ws = watches[(~thisLit).toInt()];
+        vec2<Watched>& ws = watches[(~thisLit).toInt()];
         moreRecurProp += ws.size() +10;
-        for (Watched* i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+        for (vec2<Watched>::iterator i = ws.getData(), end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
                 moreRecurProp += 5;
                 Lit otherLit = i->getOtherLit();
@@ -1451,7 +1451,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     #endif //USE_OLD_POLARITIES
     polarity[p.var()] = p.sign();
     trail.push(p);
-    __builtin_prefetch(watches[p.toInt()].getData());
+    __builtin_prefetch(watches.getData() + p.toInt());
 
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
@@ -1477,7 +1477,7 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-inline const bool Solver::propBinaryClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
+inline const bool Solver::propBinaryClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
@@ -1500,7 +1500,7 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
-inline const bool Solver::propTriClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
+inline const bool Solver::propTriClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
@@ -1525,7 +1525,7 @@ inline const bool Solver::propTriClause(Watched* &i, Watched* &j, Watched *end, 
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
-inline const bool Solver::propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update)
+inline const bool Solver::propNormalClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, vec2<Watched>::iterator end, const Lit p, PropBy& confl, const bool update)
 {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
@@ -1606,7 +1606,7 @@ better memory-accesses since the watchlist is already in the memory...
 
 \todo maybe not worth it, and a variable-based watchlist should be used
 */
-inline const bool Solver::propXorClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl)
+inline const bool Solver::propXorClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, vec2<Watched>::iterator end, const Lit p, PropBy& confl)
 {
     ClauseOffset offset = i->getXorOffset();
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(offset);
@@ -1672,8 +1672,7 @@ PropBy Solver::propagate(const bool update)
 
     while (qhead < trail.size()) {
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
-        vec<Watched>&  ws  = watches[p.toInt()];
-        Watched        *i, *j;
+        vec2<Watched>&  ws  = watches[p.toInt()];
         num_props += ws.size()/2 + 2;
 
         #ifdef VERBOSE_DEBUG
@@ -1681,8 +1680,10 @@ PropBy Solver::propagate(const bool update)
         cout << "ws origSize: "<< ws.size() << endl;
         #endif
 
-        i = j = ws.getData();
-        Watched *end = ws.getDataEnd();
+        vec2<Watched>::iterator i = ws.getData();
+        vec2<Watched>::iterator j = i;
+
+        vec2<Watched>::iterator end = ws.getDataEnd();
         for (; i != end; i++) {
             #ifdef VERBOSE_DEBUG
             cout << "end-i: " << end-i << endl;
@@ -1694,12 +1695,12 @@ PropBy Solver::propagate(const bool update)
                 << std::endl;
             #endif
             if (i->isBinary()) {
-                if (!propBinaryClause(i, j, end, p, confl)) break;
+                if (!propBinaryClause(i, j, p, confl)) break;
                 else continue;
             } //end BINARY
 
             if (i->isTriClause()) {
-                if (!propTriClause(i, j, end, p, confl)) break;
+                if (!propTriClause(i, j, p, confl)) break;
                 else continue;
             } //end TRICLAUSE
 
@@ -1723,9 +1724,14 @@ PropBy Solver::propagate(const bool update)
         if (i != end) {
             i++;
             //copy remaining watches
-            memmove(j, i, sizeof(Watched)*(end-i));
+            vec2<Watched>::iterator j2 = i;
+            vec2<Watched>::iterator i2 = j;
+            for(i2 = i, j2 = j; i2 != end; i2++) {
+                *j2++ = *i2;
+            }
+            //memmove(j, i, sizeof(Watched)*(end-i));
         }
-        assert(i >= j);
+        //assert(i >= j);
         ws.shrink_(i-j);
     }
     propagations += num_props;
@@ -1761,9 +1767,9 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
         const bool learntLeadHere = binPropData[p.var()].learntLeadHere;
 
         //std::cout << "lev: " << lev << " ~p: "  << ~p << std::endl;
-        const vec<Watched> & ws = watches[p.toInt()];
+        const vec2<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2 + 2;
-        for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
+        for(vec2<Watched>::const_iterator k = ws.getData(), end = ws.getDataEnd(); k != end; k++) {
             if (!k->isBinary()) continue;
 
             //std::cout << (~p) << ", " << k->getOtherLit() << " learnt: " << k->getLearnt() << std::endl;
@@ -1805,9 +1811,9 @@ PropBy Solver::propagateNonLearntBin()
 
     while (qhead < trail.size()) {
         Lit p = trail[qhead++];
-        const vec<Watched> & ws = watches[p.toInt()];
+        const vec2<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2 + 2;
-        for(const Watched *k = ws.getData(), *end = ws.getDataEnd(); k != end; k++) {
+        for(vec2<Watched>::const_iterator k = ws.getData(), end = ws.getDataEnd(); k != end; k++) {
             if (!k->isNonLearntBinary()) break;
 
             lbool val = value(k->getOtherLit());
@@ -1830,9 +1836,9 @@ const bool Solver::propagateBinExcept(const Lit exceptLit)
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
-        const vec<Watched> & ws = watches[p.toInt()];
+        const vec2<Watched> & ws = watches[p.toInt()];
         propagations += ws.size()/2 + 2;
-        for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+        for(vec2<Watched>::const_iterator i = ws.getData(), end = ws.getDataEnd(); i != end; i++) {
             if (!i->isNonLearntBinary()) break;
 
             lbool val = value(i->getOtherLit());
@@ -1853,9 +1859,9 @@ const bool Solver::propagateBinExcept(const Lit exceptLit)
 const bool Solver::propagateBinOneLevel()
 {
     Lit p   = trail[qhead];
-    const vec<Watched> & ws = watches[p.toInt()];
+    const vec2<Watched> & ws = watches[p.toInt()];
     propagations += ws.size()/2 + 2;
-    for(const Watched *i = ws.getData(), *end = ws.getDataEnd(); i != end; i++) {
+    for(vec2<Watched>::const_iterator i = ws.getData(), end = ws.getDataEnd(); i != end; i++) {
         if (!i->isNonLearntBinary()) break;
 
         lbool val = value(i->getOtherLit());

@@ -78,8 +78,8 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
     Var vertexVar = Lit::toLit(vertex).var();
     if (!varElimed1[vertexVar] && !varElimed2[vertexVar]) {
-        const vec<Watched>& ws = solver.watches[vertex];
-        for (const Watched *it = ws.getData(), *end = ws.getDataEnd(); it != end; it++) {
+        const vec2<Watched>& ws = solver.watches[vertex];
+        for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
             if (!it->isBinary()) continue;
             const Lit lit = it->getOtherLit();
 

@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdlib.h>
 #include "Vec.h"
+#include "Vec2.h"
 #include <map>
 #include <vector>
 using std::map;
@@ -93,7 +94,7 @@ class ClauseAllocator {
         void updatePointers(vector<XorClause*>& toUpdate);
         void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate);
 
-        void updateOffsets(vec<vec<Watched> >& watches);
+        void updateOffsets(vec<vec2<Watched> >& watches);
 
         vec<uint32_t*> dataStarts; ///<Stacks start at these positions
         vec<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack

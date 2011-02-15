@@ -40,6 +40,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include "PropBy.h"
 #include "Vec.h"
+#include "Vec2.h"
 #include "Heap.h"
 #include "Alg.h"
 #include "MersenneTwister.h"
@@ -303,7 +304,7 @@ protected:
     uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
     float               cla_inc;          ///< Amount to bump learnt clause oldActivity with
-    vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
+    vec<vec2<Watched> > watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          ///< The current assignments
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
@@ -409,10 +410,10 @@ protected:
     const bool propagateBinExcept(const Lit exceptLit);
     const bool propagateBinOneLevel();
     PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
-    const bool propTriClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
-    const bool propBinaryClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
-    const bool propNormalClause(Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl, const bool update);
-    const bool propXorClause   (Watched* &i, Watched* &j, Watched *end, const Lit p, PropBy& confl);
+    const bool propTriClause   (vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl);
+    const bool propBinaryClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl);
+    const bool propNormalClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, vec2<Watched>::iterator end, const Lit p, PropBy& confl, const bool update);
+    const bool propXorClause   (vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, vec2<Watched>::iterator end, const Lit p, PropBy& confl);
     void     sortWatched();
 
     ///////////////
@@ -828,7 +829,7 @@ inline void Solver::uncheckedEnqueueLight(const Lit p)
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
-    __builtin_prefetch(watches[p.toInt()].getData());
+    __builtin_prefetch(watches.getData() + p.toInt());
 }
 
 inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev2Ancestor, const bool learntLeadHere)
@@ -840,7 +841,7 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     binPropData[p.var()].lev = binSubLevel;
     binPropData[p.var()].lev2Ancestor = lev2Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
-    __builtin_prefetch(watches[p.toInt()].getData());
+    __builtin_prefetch(watches.getData() + p.toInt());
 }
 
 //=================================================================================================

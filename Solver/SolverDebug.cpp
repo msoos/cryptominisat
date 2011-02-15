@@ -144,18 +144,17 @@ const bool Solver::verifyXorClauses() const
 const bool Solver::verifyBinClauses() const
 {
     uint32_t wsLit = 0;
-    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (const vec2<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
+        const vec2<Watched>& ws = *it;
 
-        uint32_t i;
-        for (i = 0; i < ws.size(); i++) {
-            if (ws[i].isBinary()
+        for (vec2<Watched>::const_iterator i = ws.getData(), end = ws.getDataEnd() ; i != end; i++) {
+            if (i->isBinary()
                 && value(lit) != l_True
-                && value(ws[i].getOtherLit()) != l_True
+                && value(i->getOtherLit()) != l_True
             ) {
-                std::cout << "bin clause: " << lit << " , " << ws[i].getOtherLit() << " not satisfied!" << std::endl;
-                std::cout << "value of unsat bin clause: " << value(lit) << " , " << value(ws[i].getOtherLit()) << std::endl;
+                std::cout << "bin clause: " << lit << " , " << i->getOtherLit() << " not satisfied!" << std::endl;
+                std::cout << "value of unsat bin clause: " << value(lit) << " , " << value(i->getOtherLit()) << std::endl;
                 return false;
             }
         }
@@ -230,11 +229,11 @@ void Solver::printAllClauses()
     }
 
     uint32_t wsLit = 0;
-    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (vec2<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
+        const vec2<Watched>& ws = *it;
         std::cout << "watches[" << lit << "]" << std::endl;
-        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary()) {
                 std::cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << std::endl;
             } else if (it2->isClause()) {

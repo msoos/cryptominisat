@@ -103,8 +103,8 @@ void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSi
 
 void Solver::printStrangeBinLit(const Lit lit) const
 {
-    const vec<Watched>& ws = watches[(~lit).toInt()];
-    for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+    const vec2<Watched>& ws = watches[(~lit).toInt()];
+    for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
         if (it2->isBinary()) {
             std::cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << std::endl;
         } else if (it2->isTriClause()) {
@@ -123,10 +123,10 @@ const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool also
     uint32_t num = 0;
 
     uint32_t wsLit = 0;
-    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (const vec2<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        const vec2<Watched>& ws = *it;
+        for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary()) {
                 if (it2->getLearnt()) num += alsoLearnt;
                 else num+= alsoNonLearnt;
@@ -141,10 +141,10 @@ const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool also
 void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const
 {
     uint32_t wsLit = 0;
-    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (const vec2<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        const vec2<Watched>& ws = *it;
+        for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
                 bool toDump = false;
                 if (it2->getLearnt() && alsoLearnt) toDump = true;
@@ -159,8 +159,8 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FIL
 const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
 {
     uint32_t num = 0;
-    const vec<Watched>& ws = watches[lit.toInt()];
-    for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+    const vec2<Watched>& ws = watches[lit.toInt()];
+    for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
         if (it2->isBinary() && (alsoLearnt || !it2->getLearnt())) {
             num++;
         }
@@ -503,7 +503,7 @@ void Solver::sortWatched()
     std::cout << "Sorting watchlists:" << std::endl;
     #endif
     double myTime = cpuTime();
-    for (vec<Watched> *i = watches.getData(), *end = watches.getDataEnd(); i != end; i++) {
+    for (vec2<Watched> *i = watches.getData(), *end = watches.getDataEnd(); i != end; i++) {
         if (i->size() == 0) continue;
         #ifdef VERBOSE_DEBUG
         vec<Watched>& ws = *i;
