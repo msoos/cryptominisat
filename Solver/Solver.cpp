@@ -1576,7 +1576,7 @@ inline const bool Solver::propNormalClause(vec2<Watched>::iterator &i, vec2<Watc
         if (full) uncheckedEnqueue(c[0], offset);
         else      uncheckedEnqueueLight(c[0]);
         #ifdef DYNAMICALLY_UPDATE_GLUE
-        if (update && c.learnt() && c.getGlue() > 2) { // GA
+        if (update && full && c.learnt() && c.getGlue() > 2) {
             uint32_t glue = calcNBLevels(c);
             if (glue+1 < c.getGlue()) {
                 //c.setGlue(std::min(nbLevels, MAX_THEORETICAL_GLUE);
