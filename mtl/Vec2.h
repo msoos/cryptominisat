@@ -232,8 +232,6 @@ public:
     void     push  (const T& elem)
     {
         if (sz >= CACHE_NUM) {
-            //cap = imax(2, (cap*3+1)>>1);
-            //data = (T*)realloc(data, cap * sizeof(T));
             grow(sz+1);
         }
         if (sz < CACHE_NUM) localData[sz] = elem;
@@ -248,7 +246,8 @@ void vec2<T>::grow(uint32_t min_cap) {
     if (min_cap <= cap) return;
     if (cap == 0) cap = (min_cap >= 2) ? min_cap : 2;
     else          do cap = (cap*3+1) >> 1; while (cap < min_cap);
-    data = (T*)realloc(data, cap * sizeof(T)); }
+    data = (T*)realloc(data, cap * sizeof(T));
+}
 
 template<class T>
 void vec2<T>::clear(bool dealloc)
