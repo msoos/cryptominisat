@@ -89,7 +89,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , nbClBeforeRed    (NBCLAUSESBEFOREREDUCE)
         , nbCompensateSubsumer (0)
 
-        , MYFLAG           (0)
         #ifdef STATS_NEEDED
         , logger(conf.verbosity)
         , dynamic_behaviour_analysis(false) //do not document the proof as default
@@ -167,7 +166,6 @@ Var Solver::newVar(bool dvar)
     activity  .push(0);
     seen      .push_back(0);
     seen      .push_back(0);
-    permDiff  .push(0);
     unWindGlue.push(NULL);
 
     //Transitive OTF self-subsuming resolution
@@ -1863,6 +1861,19 @@ const bool Solver::propagateBinOneLevel()
     return true;
 }
 
+struct LevelSorter
+{
+    LevelSorter(const vec<int32_t>& _level) :
+        level(_level)
+    {}
+
+    const bool operator()(const Lit lit1, const Lit lit2) const {
+        return level[lit1.var()] < level[lit2.var()];
+    }
+
+    const vec<int32_t>& level;
+};
+
 /**
 @brief Calculates the glue of a clause
 
@@ -1873,14 +1884,17 @@ i.e. if we are in GLUCOSE mode (not MiniSat mode)
 template<class T>
 inline const uint32_t Solver::calcNBLevels(const T& ps)
 {
-    MYFLAG++;
     uint32_t nbLevels = 0;
     for(const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
         int32_t lev = level[l->var()];
-        if (permDiff[lev] != MYFLAG) {
-            permDiff[lev] = MYFLAG;
+        if (!seen[lev]) {
             nbLevels++;
+            seen[lev] = 1;
         }
+    }
+    for(const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
+        int32_t lev = level[l->var()];
+        seen[lev] = 0;
     }
     return nbLevels;
 }

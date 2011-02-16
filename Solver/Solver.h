@@ -337,10 +337,10 @@ protected:
     /////////////////////////
     // For glue calculation & dynamic restarts
     /////////////////////////
-    uint64_t            MYFLAG; ///<For glue calculation
+    //uint64_t            MYFLAG; ///<For glue calculation
     template<class T>
     const uint32_t      calcNBLevels(const T& ps);
-    vec<uint64_t>       permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
+    //vec<uint64_t>       permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
     #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
     vec<Var>            lastDecisionLevel;
     #endif
