@@ -52,10 +52,6 @@ class vec2 {
     vec2<T>&  operator = (vec2<T>& other) { assert(0); return *this; }
     vec2      (vec2<T>& other) { assert(0); }
 
-    static inline uint32_t imax(int x, int y) {
-        int mask = (y-x) >> (sizeof(int)*8-1);
-        return (x&mask) + (y&(~mask)); }
-
 public:
     class iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
         public:
