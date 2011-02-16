@@ -1685,15 +1685,6 @@ PropBy Solver::propagate(const bool update)
 
         vec2<Watched>::iterator end = ws.getDataEnd();
         for (; i != end; i++) {
-            #ifdef VERBOSE_DEBUG
-            cout << "end-i: " << end-i << endl;
-            cout << "end-j: " << end-j << endl;
-            cout << "i-j: " << i-j << endl;
-            if (i->isClause())
-                std::cout << "clause num " << i->getNormOffset()
-                << " as i of prop: " << *clauseAllocator.getPointer(i->getNormOffset())
-                << std::endl;
-            #endif
             if (i->isBinary()) {
                 if (!propBinaryClause(i, j, p, confl)) break;
                 else continue;
@@ -1708,9 +1699,6 @@ PropBy Solver::propagate(const bool update)
                 num_props += 4;
                 if (!propNormalClause(i, j, end, p, confl, update)) break;
                 else {
-                    #ifdef VERBOSE_DEBUG
-                    std::cout << "clause num " << i->getNormOffset() << " after propNorm: " << *clauseAllocator.getPointer(i->getNormOffset()) << std::endl;
-                    #endif
                     continue;
                 }
             } //end CLAUSE
