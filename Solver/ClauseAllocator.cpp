@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include "VarReplacer.h"
 #include "PartHandler.h"
 #include "Gaussian.h"
+#include <sys/mman.h>
 
 //For mild debug info:
 //#define DEBUG_CLAUSEALLOCATOR
@@ -36,8 +37,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //For listing each and every clause location:
 //#define DEBUG_CLAUSEALLOCATOR2
 
-#define MIN_LIST_SIZE (300000 * (sizeof(Clause) + 4*sizeof(Lit))/sizeof(uint32_t))
-//#define MIN_LIST_SIZE (100 * (sizeof(Clause) + 4*sizeof(Lit))/sizeof(uint32_t))
+#define MIN_LIST_SIZE (300000 * (sizeof(Clause) + 4*sizeof(Lit))/sizeof(BASE_DATA_TYPE))
+//#define MIN_LIST_SIZE (100 * (sizeof(Clause) + 4*sizeof(Lit))/sizeof(BASE_DATA_TYPE))
 #define ALLOC_GROW_MULT 4
 //We shift stuff around in Watched, so not all of 32 bits are useable.
 #define EFFECTIVELY_USEABLE_BITS 30
@@ -46,7 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ClauseAllocator::ClauseAllocator()
 {
     assert(MIN_LIST_SIZE < MAXSIZE);
-    assert(sizeof(Clause) + 2*sizeof(Lit) > sizeof(NewPointerAndOffset));
+    assert(sizeof(Clause) + 2*sizeof(Lit) >= sizeof(NewPointerAndOffset));
 }
 
 /**
@@ -55,7 +56,7 @@ ClauseAllocator::ClauseAllocator()
 ClauseAllocator::~ClauseAllocator()
 {
     for (uint32_t i = 0; i < dataStarts.size(); i++) {
-        delete [] dataStarts[i];
+        free(dataStarts[i]);
     }
 }
 
@@ -83,10 +84,9 @@ template Clause* ClauseAllocator::Clause_new(const XorClause& ps, const unsigned
 template<class T>
 XorClause* ClauseAllocator::XorClause_new(const T& ps, const bool xorEqualFalse, const unsigned int group)
 {
-    assert(ps.size() > 0);
+    assert(ps.size() > 2);
     void* mem = allocEnough(ps.size());
     XorClause* real= new (mem) XorClause(ps, xorEqualFalse, group);
-    //assert(!(ps.size() == 2 && !real->wasBin()));
 
     return real;
 }
@@ -118,8 +118,8 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     assert(maxSizes.size() == dataStarts.size());
     assert(origClauseSizes.size() == dataStarts.size());
 
-    assert(sizeof(Clause)%sizeof(uint32_t) == 0);
-    assert(sizeof(Lit)%sizeof(uint32_t) == 0);
+    assert(sizeof(Clause)%sizeof(BASE_DATA_TYPE) == 0);
+    assert(sizeof(Lit)%sizeof(BASE_DATA_TYPE) == 0);
 
     if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET)) {
         std::cerr << "Memory manager cannot handle the load. Sorry. Exiting." << std::endl;
@@ -127,7 +127,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     }
     assert(size > 2);
 
-    uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(uint32_t);
+    uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(BASE_DATA_TYPE);
     bool found = false;
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
@@ -155,8 +155,11 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         << ")" << std::endl;
         #endif //DEBUG_CLAUSEALLOCATOR
 
-        uint32_t *dataStart = new uint32_t[nextSize];
+        BASE_DATA_TYPE *dataStart;
+        posix_memalign((void**)&dataStart, getpagesize(), sizeof(BASE_DATA_TYPE) * nextSize);
         assert(dataStart != NULL);
+        int err = madvise(dataStart, sizeof(BASE_DATA_TYPE) * nextSize, MADV_RANDOM);
+        assert(err == 0);
         dataStarts.push(dataStart);
         sizes.push(0);
         maxSizes.push(nextSize);
@@ -209,7 +212,7 @@ inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
 {
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
-        if ((uint32_t*)ptr >= dataStarts[i] && (uint32_t*)ptr < dataStarts[i] + maxSizes[i]) {
+        if ((BASE_DATA_TYPE*)ptr >= dataStarts[i] && (BASE_DATA_TYPE*)ptr < dataStarts[i] + maxSizes[i]) {
             which = i;
             break;
         }
@@ -224,7 +227,7 @@ inline uint32_t ClauseAllocator::getOuterOffset(const Clause* ptr) const
 */
 inline uint32_t ClauseAllocator::getInterOffset(const Clause* ptr, uint32_t outerOffset) const
 {
-    return ((uint32_t*)ptr - dataStarts[outerOffset]);
+    return ((BASE_DATA_TYPE*)ptr - dataStarts[outerOffset]);
 }
 
 /**
@@ -243,10 +246,11 @@ of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
 void ClauseAllocator::clauseFree(Clause* c)
 {
     assert(!c->getFreed());
+
     c->setFreed();
     uint32_t outerOffset = getOuterOffset(c);
     //uint32_t interOffset = getInterOffset(c, outerOffset);
-    currentlyUsedSizes[outerOffset] -= (sizeof(Clause) + c->size()*sizeof(Lit))/sizeof(uint32_t);
+    currentlyUsedSizes[outerOffset] -= (sizeof(Clause) + c->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
     //above should be
     //origClauseSizes[outerOffset][interOffset]
     //but it cannot be :(
@@ -260,9 +264,12 @@ small compared to the problem size. If it is small, it does nothing. If it is
 large, then it allocates new stacks, copies the non-freed clauses to these new
 stacks, updates all pointers and offsets, and frees the original stacks.
 */
-void ClauseAllocator::consolidate(Solver* solver)
+void ClauseAllocator::consolidate(Solver* solver, const bool force)
 {
     double myTime = cpuTime();
+    #ifdef DEBUG_PROPAGATEFROM
+    checkGoodPropBy(solver);
+    #endif
 
     //if (dataStarts.size() > 2) {
     uint32_t sum = 0;
@@ -283,7 +290,9 @@ void ClauseAllocator::consolidate(Solver* solver)
     //1) There is too much memory allocated. Re-allocation will save space
     //   Avoiding segfault (max is 16 outerOffsets, more than 10 is near)
     //2) There is too much empty, unused space (>30%)
-    if ((double)sum/(double)sumAlloc > 0.7 && sizes.size() < 10) {
+    if (!force
+        && ((double)sum/(double)sumAlloc > 0.7 && sizes.size() < 10)
+       ) {
         if (solver->conf.verbosity >= 3) {
             std::cout << "c Not consolidating memory." << std::endl;
         }
@@ -336,54 +345,67 @@ void ClauseAllocator::consolidate(Solver* solver)
 
     vec<uint32_t> newSizes;
     vec<vec<uint32_t> > newOrigClauseSizes;
-    vec<uint32_t*> newDataStartsPointers;
-    vec<uint32_t*> newDataStarts;
+    vec<BASE_DATA_TYPE*> newDataStartsPointers;
+    vec<BASE_DATA_TYPE*> newDataStarts;
     for (uint32_t i = 0; i < newMaxSizes.size(); i++) {
         newSizes.push(0);
         newOrigClauseSizes.push();
-        uint32_t* pointer;
-        pointer = new uint32_t[newMaxSizes[i]];
+        BASE_DATA_TYPE* pointer;
+        posix_memalign((void**)&pointer, getpagesize(), sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
+        assert(pointer != NULL);
+        int err = madvise(pointer, sizeof(BASE_DATA_TYPE) * newMaxSizes[i], MADV_RANDOM);
+        assert(err == 0);
         newDataStartsPointers.push(pointer);
         newDataStarts.push(pointer);
     }
 
-    uint32_t outerPart = 0;
+    vector<Clause*> clauses;
     for (uint32_t i = 0; i < dataStarts.size(); i++) {
         uint32_t currentLoc = 0;
         for (uint32_t i2 = 0; i2 < origClauseSizes[i].size(); i2++) {
             Clause* oldPointer = (Clause*)(dataStarts[i] + currentLoc);
             if (!oldPointer->getFreed()) {
-                uint32_t sizeNeeded = (sizeof(Clause) + oldPointer->size()*sizeof(Lit))/sizeof(uint32_t);
-
-                //Next line is needed, because in case of isRemoved()
-                //, the size of the clause could become 0, thus having less
-                // than enough space to carry the NewPointerAndOffset info
-                sizeNeeded = std::max(sizeNeeded, (uint32_t)((sizeof(Clause) + 2*sizeof(Lit))/sizeof(uint32_t)));
-
-                if (newSizes[outerPart] + sizeNeeded > newMaxSizes[outerPart]) {
-                    outerPart++;
-                    assert(outerPart < newMaxSizes.size());
-                }
-                memcpy(newDataStartsPointers[outerPart], dataStarts[i] + currentLoc, sizeNeeded*sizeof(uint32_t));
-
-                (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newOffset = combineOuterInterOffsets(outerPart, newSizes[outerPart]);
-                (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newPointer = (Clause*)newDataStartsPointers[outerPart];
-
-                newSizes[outerPart] += sizeNeeded;
-                newOrigClauseSizes[outerPart].push(sizeNeeded);
-                newDataStartsPointers[outerPart] += sizeNeeded;
+                clauses.push_back(oldPointer);
             } else {
-                (*((NewPointerAndOffset*)(dataStarts[i] + currentLoc))).newOffset = std::numeric_limits<uint32_t>::max();
+                (*((NewPointerAndOffset*)(oldPointer))).newOffset = std::numeric_limits<uint32_t>::max();
             }
-
             currentLoc += origClauseSizes[i][i2];
         }
+    }
+
+    putClausesIntoDatastruct(clauses);
+
+    uint32_t outerPart = 0;
+    //uint64_t skippedNum = 0;
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        Clause* clause = getClause();
+
+        uint32_t sizeNeeded = (sizeof(Clause) + clause->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
+
+        //Next line is needed, because in case of isRemoved()
+        //, the size of the clause could become 0, thus having less
+        // than enough space to carry the NewPointerAndOffset info
+        sizeNeeded = std::max(sizeNeeded, (uint32_t)((sizeof(Clause) + 2*sizeof(Lit))/sizeof(BASE_DATA_TYPE)));
+
+        if (newSizes[outerPart] + sizeNeeded > newMaxSizes[outerPart]) {
+            outerPart++;
+            assert(outerPart < newMaxSizes.size());
+        }
+        memcpy(newDataStartsPointers[outerPart], (BASE_DATA_TYPE*)clause, sizeNeeded*sizeof(BASE_DATA_TYPE));
+
+        NewPointerAndOffset& ptr = *((NewPointerAndOffset*)clause);
+        ptr.newOffset = combineOuterInterOffsets(outerPart, newSizes[outerPart]);
+        ptr.newPointer = (Clause*)newDataStartsPointers[outerPart];
+
+        newSizes[outerPart] += sizeNeeded;
+        newOrigClauseSizes[outerPart].push(sizeNeeded);
+        newDataStartsPointers[outerPart] += sizeNeeded;
     }
 
     updateAllOffsetsAndPointers(solver);
 
     for (uint32_t i = 0; i < dataStarts.size(); i++)
-        delete [] dataStarts[i];
+        free(dataStarts[i]);
 
     dataStarts.clear();
     maxSizes.clear();
@@ -405,6 +427,52 @@ void ClauseAllocator::consolidate(Solver* solver)
         << cpuTime() - myTime << std::endl;
     }
 }
+
+void ClauseAllocator::putClausesIntoDatastruct(std::vector<Clause*>& clauses)
+{
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        Clause* c = clauses[i];
+        if (c->size() <= 3) {
+            threeLongClauses.push_back(c);
+            continue;
+        }
+        otherClauses.push_back(c);
+    }
+}
+
+Clause* ClauseAllocator::getClause()
+{
+    if (!threeLongClauses.empty()) {
+        Clause* tmp = threeLongClauses[threeLongClauses.size()-1];
+        threeLongClauses.pop_back();
+        return tmp;
+    }
+
+    assert(!otherClauses.empty());
+    Clause* tmp = otherClauses[otherClauses.size()-1];
+    otherClauses.pop_back();
+    return tmp;
+}
+
+void ClauseAllocator::checkGoodPropBy(const Solver* solver)
+{
+    const vec<PropBy>& reason = solver->reason;
+    Var var = 0;
+    for (const PropBy *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++, var++) {
+        if ((uint32_t)solver->level[var] > solver->decisionLevel()
+            || solver->level[var] == 0
+            || solver->value(var) == l_Undef
+        ) {
+            continue;
+        }
+
+        if (it->isClause() && !it->isNULL()) {
+            assert(!getPointer(it->getClause())->getFreed());
+            assert(!getPointer(it->getClause())->getRemoved());
+        }
+    }
+}
+
 
 void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
 {
@@ -505,4 +573,9 @@ void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
     for (vector<pair<Clause*, uint32_t> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
         it->first = (((NewPointerAndOffset*)(it->first))->newPointer);
     }
+}
+
+inline void ClauseAllocator::releaseClauseNum(const uint32_t num)
+{
+    freedNums.push(num);
 }

@@ -2569,6 +2569,7 @@ void Solver::performStepsBeforeSolve()
 
     bool saveDoHyperBin = conf.doHyperBinRes;
     conf.doHyperBinRes = false;
+    clauseAllocator.consolidate(this, true);
     if (conf.doFailedLit && !failedLitSearcher->search()) return;
     conf.doHyperBinRes = saveDoHyperBin;
 

@@ -36,7 +36,7 @@ using std::vector;
 #include "Watched.h"
 
 #define NUM_BITS_OUTER_OFFSET 4
-
+#define BASE_DATA_TYPE char
 
 class Clause;
 class XorClause;
@@ -80,7 +80,9 @@ class ClauseAllocator {
 
         void clauseFree(Clause* c);
 
-        void consolidate(Solver* solver);
+        void consolidate(Solver* solver, const bool force = false);
+
+        const uint32_t getNewClauseNum();
 
     private:
         uint32_t getOuterOffset(const Clause* c) const;
@@ -93,10 +95,12 @@ class ClauseAllocator {
         void updatePointers(vector<Clause*>& toUpdate);
         void updatePointers(vector<XorClause*>& toUpdate);
         void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate);
-
         void updateOffsets(vec<vec2<Watched> >& watches);
+        void checkGoodPropBy(const Solver* solver);
 
-        vec<uint32_t*> dataStarts; ///<Stacks start at these positions
+        void releaseClauseNum(const uint32_t num);
+
+        vec<BASE_DATA_TYPE*> dataStarts; ///<Stacks start at these positions
         vec<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack
         /**
         @brief Clauses in the stack had this size when they were allocated
@@ -129,6 +133,13 @@ class ClauseAllocator {
             uint32_t newOffset; ///<The new offset where the clause now resides
             Clause* newPointer; ///<The new place
         };
+
+        vector<Clause*> otherClauses;
+        vector<Clause*> threeLongClauses;
+        Clause* getClause();
+        void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
+
+        vec<uint32_t> freedNums;  //Free clause nums that can be used now
 };
 
 #endif //CLAUSEALLOCATOR_H
