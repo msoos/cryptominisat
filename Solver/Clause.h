@@ -132,7 +132,7 @@ public:
         shrink(1);
     }
 
-    const bool isXor()
+    const bool isXor() const
     {
         return isXorClause;
     }
@@ -218,7 +218,7 @@ public:
         abst = calcAbstraction(*this);
     }
 
-    uint32_t getAbst()
+    const uint32_t getAbst() const
     {
         return abst;
     }
