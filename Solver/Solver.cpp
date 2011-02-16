@@ -1443,7 +1443,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
 
     assert(assigns[p.var()].isUndef());
     const Var v = p.var();
-    assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    assigns [v] = boolToLBool(!p.sign());
     level   [v] = decisionLevel();
     reason  [v] = from;
     #ifdef USE_OLD_POLARITIES
