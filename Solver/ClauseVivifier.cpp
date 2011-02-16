@@ -44,8 +44,8 @@ const bool ClauseVivifier::vivifyClauses()
     std::cout << "c clauseVivifier started" << std::endl;
     //solver.printAllClauses();
     #endif //VERBOSE_DEBUG
-    
-    
+
+
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
@@ -134,7 +134,7 @@ const bool ClauseVivifier::vivifyClauses()
                 }
             }
             done += i2;
-            failed = (!solver.propagate(false).isNULL());
+            failed = (!solver.propagate<false>(false).isNULL());
             if (numCalls > 3 && failed) break;
         }
         solver.cancelUntilLight();

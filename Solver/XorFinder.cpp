@@ -88,7 +88,7 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
     std::sort(table.begin(), table.end(), clause_sorter_primary());
 
     if (!findXors(sumLengths)) goto end;
-    solver.ok = (solver.propagate().isNULL());
+    solver.ok = (solver.propagate<true>().isNULL());
 
 end:
 

@@ -93,7 +93,7 @@ const bool PartHandler::handle()
         for (uint32_t i = 0; i < newSolver.trail.size(); i++) {
             solver.uncheckedEnqueue(newSolver.trail[i]);
         }
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<false>().isNULL());
         assert(solver.ok);
 
         for (Var var = 0; var < newSolver.nVars(); var++) {

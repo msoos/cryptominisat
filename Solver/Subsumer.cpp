@@ -616,7 +616,7 @@ inline void Subsumer::handleSize1Clause(const Lit lit)
         solver.ok = false;
     } else if (solver.value(lit) == l_Undef) {
         solver.uncheckedEnqueue(lit);
-        solver.ok = solver.propagate().isNULL();
+        solver.ok = solver.propagate<false>().isNULL();
     } else {
         assert(solver.value(lit) == l_True);
     }
@@ -1076,7 +1076,7 @@ const bool Subsumer::subsWNonExistBinsFull()
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
-            solver.ok = solver.propagate().isNULL();
+            solver.ok = solver.propagate<false>().isNULL();
             if (!solver.ok) return false;
             continue;
         }
@@ -1091,7 +1091,7 @@ const bool Subsumer::subsWNonExistBinsFull()
             if (!solver.ok) return false;
             solver.cancelUntilLight();
             solver.uncheckedEnqueue(~lit);
-            solver.ok = solver.propagate().isNULL();
+            solver.ok = solver.propagate<false>().isNULL();
             if (!solver.ok) return false;
             continue;
         }

@@ -515,7 +515,7 @@ const bool XorSubsumer::simplifyBySubsumption()
         }
 
         propagated =  (solver.qhead != solver.trail.size());
-        solver.ok = (solver.propagate().isNULL());
+        solver.ok = (solver.propagate<false>().isNULL());
         if (!solver.ok) {
             return false;
         }

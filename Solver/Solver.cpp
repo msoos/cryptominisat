@@ -248,7 +248,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
         }
         case 1: {
             uncheckedEnqueue(Lit(ps[0].var(), xorEqualFalse));
-            ok = (propagate().isNULL());
+            ok = (propagate<false>().isNULL());
             return NULL;
         }
         case 2: {
@@ -374,7 +374,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
         return NULL;
     } else if (ps.size() == 1) {
         uncheckedEnqueue(ps[0]);
-        ok = (propagate().isNULL());
+        ok = (propagate<false>().isNULL());
         return NULL;
     }
 
@@ -1477,12 +1477,14 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
+template<bool full>
 inline const bool Solver::propBinaryClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
-        uncheckedEnqueue(i->getOtherLit(), PropBy(p));
+        if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p));
+        else      uncheckedEnqueueLight(i->getOtherLit());
     } else if (val == l_False) {
         confl = PropBy(p);
         failBinLit = i->getOtherLit();
@@ -1500,15 +1502,18 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
+template<bool full>
 inline const bool Solver::propTriClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl)
 {
     *j++ = *i;
     lbool val = value(i->getOtherLit());
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
-        uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
+        if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
+        else      uncheckedEnqueueLight(i->getOtherLit());
     } else if (val == l_False && val2.isUndef()) {
-        uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
+        if (full) uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
+        else      uncheckedEnqueueLight(i->getOtherLit2());
     } else if (val == l_False && val2 == l_False) {
         confl = PropBy(p, i->getOtherLit2());
         failBinLit = i->getOtherLit();
@@ -1525,6 +1530,7 @@ inline const bool Solver::propTriClause(vec2<Watched>::iterator &i, vec2<Watched
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
+template<bool full>
 inline const bool Solver::propNormalClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, vec2<Watched>::iterator end, const Lit p, PropBy& confl, const bool update)
 {
     if (value(i->getBlockedLit()).getBool()) {
@@ -1581,7 +1587,8 @@ inline const bool Solver::propNormalClause(vec2<Watched>::iterator &i, vec2<Watc
         qhead = trail.size();
         return false;
     } else {
-        uncheckedEnqueue(c[0], offset);
+        if (full) uncheckedEnqueue(c[0], offset);
+        else      uncheckedEnqueueLight(c[0]);
         #ifdef DYNAMICALLY_UPDATE_GLUE
         if (update && c.learnt() && c.getGlue() > 2) { // GA
             uint32_t glue = calcNBLevels(c);
@@ -1606,6 +1613,7 @@ better memory-accesses since the watchlist is already in the memory...
 
 \todo maybe not worth it, and a variable-based watchlist should be used
 */
+template<bool full>
 inline const bool Solver::propXorClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, vec2<Watched>::iterator end, const Lit p, PropBy& confl)
 {
     ClauseOffset offset = i->getXorOffset();
@@ -1641,7 +1649,8 @@ inline const bool Solver::propXorClause(vec2<Watched>::iterator &i, vec2<Watched
 
     if (assigns[c[0].var()].isUndef()) {
         c[0] = c[0].unsign()^final;
-        uncheckedEnqueue(c[0], offset);
+        if (full) uncheckedEnqueue(c[0], offset);
+        else      uncheckedEnqueueLight(c[0]);
     } else if (!final) {
         confl = PropBy(offset);
         qhead = trail.size();
@@ -1661,6 +1670,7 @@ inline const bool Solver::propXorClause(vec2<Watched>::iterator &i, vec2<Watched
 Basically, it goes through the watchlists recursively, and calls the appropirate
 propagaton function
 */
+template<bool full>
 PropBy Solver::propagate(const bool update)
 {
     PropBy confl;
@@ -1686,18 +1696,18 @@ PropBy Solver::propagate(const bool update)
         vec2<Watched>::iterator end = ws.getDataEnd();
         for (; i != end; i++) {
             if (i->isBinary()) {
-                if (!propBinaryClause(i, j, p, confl)) break;
+                if (!propBinaryClause<full>(i, j, p, confl)) break;
                 else continue;
             } //end BINARY
 
             if (i->isTriClause()) {
-                if (!propTriClause(i, j, p, confl)) break;
+                if (!propTriClause<full>(i, j, p, confl)) break;
                 else continue;
             } //end TRICLAUSE
 
             if (i->isClause()) {
                 num_props += 4;
-                if (!propNormalClause(i, j, end, p, confl, update)) break;
+                if (!propNormalClause<full>(i, j, end, p, confl, update)) break;
                 else {
                     continue;
                 }
@@ -1705,7 +1715,7 @@ PropBy Solver::propagate(const bool update)
 
             if (i->isXorClause()) {
                 num_props += 10;
-                if (!propXorClause(i, j, end, p, confl)) break;
+                if (!propXorClause<full>(i, j, end, p, confl)) break;
                 else continue;
             } //end XORCLAUSE
         }
@@ -1731,6 +1741,8 @@ PropBy Solver::propagate(const bool update)
 
     return confl;
 }
+template PropBy Solver::propagate<true>(const bool update);
+template PropBy Solver::propagate<false>(const bool update);
 
 /**
 @brief Only propagates binary clauses
@@ -2007,7 +2019,7 @@ const bool Solver::simplify()
     testAllClauseAttach();
     assert(decisionLevel() == 0);
 
-    if (!ok || !propagate().isNULL()) {
+    if (!ok || !propagate<false>().isNULL()) {
         ok = false;
         return false;
     }
@@ -2111,7 +2123,7 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
     #endif //VERBOSE_DEBUG
     for (;;) {
         assert(ok);
-        PropBy confl = propagate(update);
+        PropBy confl = propagate<true>(update);
         #ifdef VERBOSE_DEBUG
         std::cout << "c Solver::search() has finished propagation" << std::endl;
         //printAllClauses();
@@ -2807,7 +2819,7 @@ void Solver::handleSATSolution()
         for (Var var = 0; var < nVars(); var++) {
             if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
         }
-        ok = (propagate().isNULL());
+        ok = (propagate<false>().isNULL());
         release_assert(ok && "c ERROR! Extension of model failed!");
     }
     checkSolution();

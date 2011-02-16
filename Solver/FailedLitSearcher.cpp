@@ -338,12 +338,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
-    failed = (!solver.propagate(false).isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit1);
-        solver.ok = (solver.propagate(false).isNULL());
+        solver.ok = (solver.propagate<false>(false).isNULL());
         if (!solver.ok) return false;
         return true;
     }
@@ -401,12 +401,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit2);
-    failed = (!solver.propagate(false).isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit2);
-        solver.ok = (solver.propagate(false).isNULL());
+        solver.ok = (solver.propagate<false>(false).isNULL());
         if (!solver.ok) return false;
         return true;
     }
@@ -488,7 +488,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.uncheckedEnqueue(bothSame[i]);
     }
     goodBothSame += bothSame.size();
-    solver.ok = (solver.propagate(false).isNULL());
+    solver.ok = (solver.propagate<false>(false).isNULL());
     if (!solver.ok) return false;
 
     for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
@@ -659,7 +659,7 @@ void FailedLitSearcher::fillImplies(const Lit lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    failed = (!solver.propagate(false).isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     assert(!failed);
 
     assert(solver.decisionLevel() > 0);

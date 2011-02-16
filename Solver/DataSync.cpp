@@ -205,7 +205,7 @@ const bool DataSync::shareUnitData()
                 ) continue;
 
             solver.uncheckedEnqueue(litToEnqueue);
-            solver.ok = solver.propagate().isNULL();
+            solver.ok = solver.propagate<false>().isNULL();
             if (!solver.ok) return false;
             thisGotUnitData++;
             continue;
