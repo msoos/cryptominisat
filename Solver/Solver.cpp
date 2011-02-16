@@ -35,6 +35,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "Gaussian.h"
 #include "MatrixFinder.h"
 #include "DataSync.h"
+#include "BothCache.h"
 
 #ifdef VERBOSE_DEBUG
 #define UNWINDING_DEBUG
@@ -2455,6 +2456,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
+    if (conf.doFailedLit) {
+        BothCache both(*this);
+        if (!both.tryBoth()) goto end;
+    }
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
     if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;

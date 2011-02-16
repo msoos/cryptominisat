@@ -37,6 +37,7 @@ add_executable(cryptominisat
     SolverConf.cpp
     ClauseVivifier.cpp
     DataSync.cpp
+    BothCache.cpp
 )
 
 target_link_libraries(cryptominisat
