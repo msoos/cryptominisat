@@ -187,10 +187,15 @@ void Solver::printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) con
 
 void Solver::dumpOrigClauses(const std::string& fileName) const
 {
-    FILE* outfile = fopen(fileName.c_str(), "w");
-    if (!outfile) {
-        std::cout << "Error: Cannot open file '" << fileName << "' to write learnt clauses!" << std::endl;
-        exit(-1);
+    FILE* outfile;
+    if (fileName != std::string("stdout")) {
+        outfile = fopen(fileName.c_str(), "w");
+        if (!outfile) {
+            std::cout << "Error: Cannot open file '" << fileName << "' to write learnt clauses!" << std::endl;
+            exit(-1);
+        }
+    } else  {
+        outfile = stdout;
     }
 
     uint32_t numClauses = 0;
@@ -314,7 +319,7 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
         }
     }
 
-    fclose(outfile);
+    if (fileName != "stdout") fclose(outfile);
 }
 
 const vector<Lit> Solver::get_unitary_learnts() const

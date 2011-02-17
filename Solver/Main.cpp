@@ -752,13 +752,26 @@ const int Main::singleThreadSolve()
         std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
     }
     if (conf.needToDumpOrig) {
-        solver.dumpOrigClauses(conf.origFilename);
-        std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
+        if (ret == l_False && conf.origFilename == "stdout") {
+            std::cout << "p cnf 0 1" << std::endl;
+            std::cout << "0";
+        } else if (ret == l_True && conf.origFilename == "stdout") {
+            std::cout << "p cnf " << solver.model.size() << " " << solver.model.size() << std::endl;
+            for (uint32_t i = 0; i < solver.model.size(); i++) {
+                std::cout << (solver.model[i] == l_True ? "" : "-") << i+1 << " 0" << std::endl;
+            }
+        } else {
+            solver.dumpOrigClauses(conf.origFilename);
+            if (conf.verbosity >= 1)
+                std::cout << "c Simplified original clauses dumped to file '"
+                << conf.origFilename << "'" << std::endl;
+        }
     }
     if (ret == l_Undef && conf.verbosity >= 1) {
         std::cout << "c Not finished running -- signal caught or maximum restart reached" << std::endl;
     }
     if (conf.verbosity >= 1) solver.printStats();
+
     printResultFunc(solver, ret, res);
 
     return correctReturnValue(ret);
