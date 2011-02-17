@@ -208,7 +208,7 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
     }
     const map<Var, vector<std::pair<Lit, Lit> > >& elimedOutVarBin = subsumer->getElimedOutVarBin();
     for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
-        numClauses += it->second.size()*2;
+        numClauses += it->second.size();
     }
 
     const map<Var, vector<XorSubsumer::XorElimedClause> >& xorElimedOutVar = xorSubsumer->getElimedOutVar();
