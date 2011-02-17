@@ -2456,7 +2456,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
-    if (conf.doFailedLit) {
+    if (conf.doFailedLit && conf.doCacheOTFSSR) {
         BothCache both(*this);
         if (!both.tryBoth()) goto end;
     }
