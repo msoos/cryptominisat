@@ -491,13 +491,15 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     solver.ok = (solver.propagate<false>(false).isNULL());
     if (!solver.ok) return false;
 
-    for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
-        tmpPs[0] = binXorToAdd[i].lit1;
-        tmpPs[1] = binXorToAdd[i].lit2;
-        solver.addXorClauseInt(tmpPs, binXorToAdd[i].isEqualFalse, binXorToAdd[i].group);
-        tmpPs.clear();
-        tmpPs.growTo(2);
-        if (!solver.ok) return false;
+    if (solver.conf.doBXor) {
+        for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
+            tmpPs[0] = binXorToAdd[i].lit1;
+            tmpPs[1] = binXorToAdd[i].lit2;
+            solver.addXorClauseInt(tmpPs, binXorToAdd[i].isEqualFalse, binXorToAdd[i].group);
+            tmpPs.clear();
+            tmpPs.growTo(2);
+            if (!solver.ok) return false;
+        }
     }
 
     return true;

@@ -303,6 +303,7 @@ void Main::printUsage(char** argv)
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
     printf("  --nocalcreach    = Don't calculate reachability and interfere with\n");
     printf("                     variable decisions accordingly\n");
+    printf("  --nobxor         = Don't find equivalent lits during failed lit search\n");
     printf("  --norecotfssr    = Don't perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution\n");
     printf("  --nocacheotfssr  = Don't cache 1-level equeue. Less memory used, but\n");
@@ -602,6 +603,8 @@ void Main::parseCommandLine()
             conf.doCacheOTFSSR = false;
         } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
             conf.doRemUselessLBins = false;
+        } else if ((value = hasPrefix(argv[i], "--nobxor"))) {
+            conf.doBXor = false;
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 0;
             if (sscanf(value, "%d", &glue) < 0 || glue < 2) {
