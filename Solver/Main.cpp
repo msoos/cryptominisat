@@ -346,10 +346,13 @@ void Main::printResultFunc(const Solver& S, const lbool ret, FILE* res)
         }
         fclose(res);
     } else {
-        if (ret == l_True)
-            std::cout << "s SATISFIABLE" << std::endl;
-        else if (ret == l_False)
-            std::cout << "s UNSATISFIABLE" << std::endl;
+        if (ret == l_True) {
+            if (!printResult) std::cout << "c SATISFIABLE" << std::endl;
+            else              std::cout << "s SATISFIABLE" << std::endl;
+        } else if (ret == l_False) {
+            if (!printResult) std::cout << "c UNSATISFIABLE" << std::endl;
+            else              std::cout << "s UNSATISFIABLE" << std::endl;
+        }
 
         if(ret == l_True && printResult) {
             std::stringstream toPrint;
