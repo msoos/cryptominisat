@@ -2748,6 +2748,7 @@ lbool Solver::solve(const vec<Lit>& assumps)
     cancelUntil(0);
     if (conf.doPartHandler && status != l_False) partHandler->readdRemovedClauses();
     restartTypeChooser->reset();
+    if (status == l_Undef) clauseCleaner->removeAndCleanAll(true);
 
     #ifdef VERBOSE_DEBUG
     std::cout << "Solver::solve() finished" << std::endl;
