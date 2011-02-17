@@ -178,6 +178,7 @@ public:
     void dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
     void dumpOrigClauses(const std::string& fileName) const;
+    void printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const;
 
     #ifdef USE_GAUSS
     const uint32_t get_sum_gauss_called() const;

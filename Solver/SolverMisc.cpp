@@ -169,6 +169,22 @@ const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
     return num;
 }
 
+void Solver::printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const
+{
+    if (value(litP1) == l_True) {
+        litP1.printFull(outfile);
+    } else if (value(litP1) == l_False) {
+        litP2.printFull(outfile);
+    } else if (value(litP2) == l_True) {
+        litP2.printFull(outfile);
+    } else if (value(litP2) == l_False) {
+        litP1.printFull(outfile);
+    } else {
+        litP1.print(outfile);
+        litP2.printFull(outfile);
+    }
+}
+
 void Solver::dumpOrigClauses(const std::string& fileName) const
 {
     FILE* outfile = fopen(fileName.c_str(), "w");
@@ -240,8 +256,10 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
         if (lit.var() == var)
             continue;
 
-        fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
-        fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
+        Lit litP1 = ~lit;
+        Lit litP2 = Lit(var, false);
+        printBinClause(litP1, litP2, outfile);
+        printBinClause(~litP1, ~litP2, outfile);
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis)
             fprintf(outfile, "c name of two vars that are anti/equivalent: '%s' and '%s'\n", logger.get_var_name(lit.var()).c_str(), logger.get_var_name(var).c_str());
