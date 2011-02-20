@@ -575,7 +575,3 @@ void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
     }
 }
 
-inline void ClauseAllocator::releaseClauseNum(const uint32_t num)
-{
-    freedNums.push(num);
-}

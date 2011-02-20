@@ -138,8 +138,6 @@ class ClauseAllocator {
         vector<Clause*> threeLongClauses;
         Clause* getClause();
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
-
-        vec<uint32_t> freedNums;  //Free clause nums that can be used now
 };
 
 #endif //CLAUSEALLOCATOR_H
