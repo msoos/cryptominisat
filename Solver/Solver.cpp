@@ -1438,7 +1438,11 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     reason  [v] = from;
     polarity[p.var()] = p.sign();
     trail.push(p);
+    #if WATCHED_CACHE_NUM > 0
     __builtin_prefetch(watches.getData() + p.toInt());
+    #else
+    __builtin_prefetch(watches[p.toInt()].getData());
+    #endif
 
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)

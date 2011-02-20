@@ -37,13 +37,13 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 // NOTE! Don't use this vector on datatypes that cannot be re-located in memory (with realloc)
 
 
-#define CACHE_NUM 20
+#define WATCHED_CACHE_NUM 20
 
 template<class T>
 class vec2 {
     uint32_t sz;
     uint32_t cap;
-    T localData[CACHE_NUM];
+    T localData[WATCHED_CACHE_NUM];
     T*  data;
 
     void     grow(uint32_t min_cap);
@@ -119,12 +119,12 @@ public:
             }
 
             T& operator*() {
-                if (at >= CACHE_NUM) return realData.data[at-CACHE_NUM];
+                if (at >= WATCHED_CACHE_NUM) return realData.data[at-WATCHED_CACHE_NUM];
                 else return realData.localData[at];
             }
 
             T* operator->() {
-                if (at >= CACHE_NUM) return realData.data + (at-CACHE_NUM);
+                if (at >= WATCHED_CACHE_NUM) return realData.data + (at-WATCHED_CACHE_NUM);
                 else return realData.localData + at;
             }
 
@@ -178,12 +178,12 @@ public:
             }
 
             const T& operator*() {
-                if (at >= CACHE_NUM) return realData.data[at-CACHE_NUM];
+                if (at >= WATCHED_CACHE_NUM) return realData.data[at-WATCHED_CACHE_NUM];
                 else return realData.localData[at];
             }
 
             const T* operator->() {
-                if (at >= CACHE_NUM) return realData.data + (at-CACHE_NUM);
+                if (at >= WATCHED_CACHE_NUM) return realData.data + (at-WATCHED_CACHE_NUM);
                 else return realData.localData + at;
             }
 
@@ -227,18 +227,18 @@ public:
     // Stack interface:
     void     push  (const T& elem)
     {
-        if (sz >= CACHE_NUM) {
+        if (sz >= WATCHED_CACHE_NUM) {
             grow(sz+1);
         }
-        if (sz < CACHE_NUM) localData[sz] = elem;
-        else data[sz-CACHE_NUM] = elem;
+        if (sz < WATCHED_CACHE_NUM) localData[sz] = elem;
+        else data[sz-WATCHED_CACHE_NUM] = elem;
         sz++;
     }
 };
 
 template<class T>
 void vec2<T>::grow(uint32_t min_cap) {
-    if (min_cap <= CACHE_NUM) return;
+    if (min_cap <= WATCHED_CACHE_NUM) return;
     if (min_cap <= cap) return;
     if (cap == 0) cap = (min_cap >= 2) ? min_cap : 2;
     else          do cap = (cap*3+1) >> 1; while (cap < min_cap);
@@ -266,8 +266,8 @@ vec2<T>::vec2(const vec2<T>& other) :
 {
     sz = other.sz;
     grow(sz);
-    memcpy(localData, other.localData, sizeof(T)*CACHE_NUM);
-    if (sz > CACHE_NUM) memcpy(data, other.data, sizeof(T)*(sz-CACHE_NUM));
+    memcpy(localData, other.localData, sizeof(T)*WATCHED_CACHE_NUM);
+    if (sz > WATCHED_CACHE_NUM) memcpy(data, other.data, sizeof(T)*(sz-WATCHED_CACHE_NUM));
 }
 
 
