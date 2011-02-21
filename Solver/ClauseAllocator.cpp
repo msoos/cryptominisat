@@ -156,7 +156,8 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         #endif //DEBUG_CLAUSEALLOCATOR
 
         BASE_DATA_TYPE *dataStart;
-        posix_memalign((void**)&dataStart, getpagesize(), sizeof(BASE_DATA_TYPE) * nextSize);
+        int ret = posix_memalign((void**)&dataStart, getpagesize(), sizeof(BASE_DATA_TYPE) * nextSize);
+        if (ret != 0) exit(-1);
         assert(dataStart != NULL);
         int err = madvise(dataStart, sizeof(BASE_DATA_TYPE) * nextSize, MADV_RANDOM);
         assert(err == 0);
@@ -351,7 +352,8 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force)
         newSizes.push(0);
         newOrigClauseSizes.push();
         BASE_DATA_TYPE* pointer;
-        posix_memalign((void**)&pointer, getpagesize(), sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
+        int ret = posix_memalign((void**)&pointer, getpagesize(), sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
+        if (ret != 0) exit(-1);
         assert(pointer != NULL);
         int err = madvise(pointer, sizeof(BASE_DATA_TYPE) * newMaxSizes[i], MADV_RANDOM);
         assert(err == 0);
