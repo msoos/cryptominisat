@@ -670,7 +670,6 @@ const bool Subsumer::subsume0AndSubsume1()
         uint32_t s1Added = 0;
         vec<Lit> setNeg;
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
-
             if (it->clause == NULL) continue;
             Clause& cl = *it->clause;
 
