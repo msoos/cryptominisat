@@ -31,7 +31,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #endif
 
 //#define BIT_MORE_VERBOSITY
-//#define TOUCH_LESS
 
 #ifdef VERBOSE_DEBUG
 using std::cout;
@@ -406,9 +405,7 @@ void Subsumer::unlinkClause(ClauseSimp c, const Var elim)
             numMaxSubsume1 -= occur[cl[i].toInt()].size()/2;
         }
         maybeRemove(occur[cl[i].toInt()], &cl);
-        #ifndef TOUCH_LESS
-        touch(cl[i], cl.learnt());
-        #endif
+        touchedVars.touch(cl[i], cl.learnt());
     }
 
     // Remove from iterator vectors/sets:
@@ -467,9 +464,7 @@ const bool Subsumer::cleanClause(Clause& ps)
         if (val == l_False) {
             removeW(occur[i->toInt()], &ps);
             numMaxSubsume1 -= occur[i->toInt()].size()/2;
-            #ifndef TOUCH_LESS
-            touch(*i, ps.learnt());
-            #endif
+            touchedVars.touch(*i, ps.learnt());
             continue;
         }
         if (val == l_True) {
@@ -530,9 +525,8 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     c.clause->strengthen(toRemoveLit);
     removeW(occur[toRemoveLit.toInt()], c.clause);
     numMaxSubsume1 -= occur[toRemoveLit.toInt()].size()/2;
-    #ifndef TOUCH_LESS
-    touch(toRemoveLit, c.clause->learnt());
-    #endif
+    touchedVars.touch(toRemoveLit, c.clause->learnt());
+
     if (cleanClause(*c.clause)) {
         unlinkClause(c);
         c.clause = NULL;
@@ -791,7 +785,7 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
     clauses.push(c);
     for (uint32_t i = 0; i < cl.size(); i++) {
         occur[cl[i].toInt()].push(c);
-        touch(cl[i], cl.learnt());
+        touchedVars.touch(cl[i], cl.learnt());
     }
     cl_touched.add(c);
 
@@ -1165,17 +1159,14 @@ Clears touchlists, occurrance lists, clauses, and variable touched lists
 */
 void Subsumer::clearAll()
 {
-    touchedVarsList.clear();
     touchedVars.clear();
-    touchedVars.growTo(solver.nVars(), false);
-    for (Var var = 0; var < solver.nVars(); var++) {
-        if (solver.decision_var[var] && solver.assigns[var] == l_Undef) touch(var);
-        occur[2*var].clear();
-        occur[2*var+1].clear();
-    }
     clauses.clear();
     cl_touched.clear();
     addedClauseLits = 0;
+    for (Var var = 0; var < solver.nVars(); var++) {
+        occur[2*var].clear();
+        occur[2*var+1].clear();
+    }
 }
 
 const bool Subsumer::eliminateVars()
@@ -1198,13 +1189,12 @@ const bool Subsumer::eliminateVars()
                 //no need to set touched[var] to false -- orderVarsForElim did that already
             }
         } else {
-            for (Var *it = touchedVarsList.getData(), *end = touchedVarsList.getDataEnd(); it != end; it++) {
+            for (vector<Var>::const_iterator it = touchedVars.begin(), end = touchedVars.begin(); it != end; it++) {
                 const Var var = *it;
                 if (!cannot_eliminate[var] && solver.decision_var[var])
                     order.push(var);
-                touchedVars[var] = false;
             }
-            touchedVarsList.clear();
+            touchedVars.clear();
         }
         #ifdef VERBOSE_DEBUG
         std::cout << "Order size:" << order.size() << std::endl;
@@ -1261,8 +1251,8 @@ void Subsumer::subsumeBinsWithBins()
                 if (i->getLearnt()) solver.learnts_literals -= 2;
                 else {
                     solver.clauses_literals -= 2;
-                    touch(lit, i->getLearnt());
-                    touch(i->getOtherLit(), i->getLearnt());
+                    touchedVars.touch(lit, i->getLearnt());
+                    touchedVars.touch(i->getOtherLit(), i->getLearnt());
                 }
                 solver.numBins--;
             } else {
@@ -1305,6 +1295,11 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     double myTime = cpuTime();
     clauseID = 0;
     clearAll();
+
+    //touch all variables
+    for (Var var = 0; var < solver.nVars(); var++) {
+        if (solver.decision_var[var] && solver.assigns[var] == l_Undef) touchedVars.touch(var);
+    }
 
     //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
 
@@ -1679,10 +1674,8 @@ void Subsumer::removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair
             removed.second += tmp.second;
 
             elimedOutVarBin[var].push_back(std::make_pair(c.lit1, c.lit2));
-            #ifndef TOUCH_LESS
-            touch(c.lit1, false);
-            touch(c.lit2, false);
-            #endif
+            touchedVars.touch(c.lit1, false);
+            touchedVars.touch(c.lit2, false);
         }
     }
 }
@@ -1968,16 +1961,15 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
 {
     order.clear();
     vec<pair<int, Var> > cost_var;
-    for (uint32_t i = 0; i < touchedVarsList.size(); i++){
-        Lit x = Lit(touchedVarsList[i], false);
-        touchedVars[x.var()] = false;
+    for (vector<Var>::const_iterator it = touchedVars.begin(), end = touchedVars.end(); it != end ; it++){
+        Lit x = Lit(*it, false);
         //this is not perfect -- solver.watches[] is an over-approximation
         uint32_t pos = occur[x.toInt()].size();
         uint32_t neg = occur[(~x).toInt()].size();
         uint32_t cost = pos * neg * 2 + numNonLearntBins(x) * neg + numNonLearntBins(~x) * pos;
         cost_var.push(std::make_pair(cost, x.var()));
     }
-    touchedVarsList.clear();
+    touchedVars.clear();
 
     std::sort(cost_var.getData(), cost_var.getData()+cost_var.size(), myComp());
     for (uint32_t x = 0; x < cost_var.size(); x++) {
@@ -2168,7 +2160,7 @@ void Subsumer::blockedClauseElimAll(const Lit lit)
         assert(!i->getLearnt());
         removeWBin(solver.watches[(~i->getOtherLit()).toInt()], lit, false);
         elimedOutVarBin[lit.var()].push_back(std::make_pair(lit, i->getOtherLit()));
-        touch(i->getOtherLit(), false);
+        touchedVars.touch(i->getOtherLit(), false);
         removedNum++;
     }
     ws.shrink_(i-j);

@@ -25,6 +25,55 @@ using std::priority_queue;
 class ClauseCleaner;
 class OnlyNonLearntBins;
 
+class TouchList
+{
+    public:
+        void resize(uint32_t size)
+        {
+            touched.resize(size, 0);
+        }
+
+        void addOne(Var var)
+        {
+            assert(touched.size() == var);
+            touched.push_back(1);
+            touchedList.push_back(var);
+        }
+
+        void touch(Lit lit, const bool learnt)
+        {
+            if (!learnt) touch(lit.var());
+        }
+
+        void touch(Var var)
+        {
+            if (!touched[var]) {
+                touchedList.push_back(var);
+                touched[var]= 1;
+            }
+        }
+
+        void clear()
+        {
+            touchedList.clear();
+            std::fill(touched.begin(), touched.end(), 0);
+        }
+
+        vector<Var>::const_iterator begin() const
+        {
+            return touchedList.begin();
+        }
+
+        vector<Var>::const_iterator end() const
+        {
+            return touchedList.end();
+        }
+
+    private:
+        vector<Var> touchedList;
+        vector<char> touched;
+};
+
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
 
@@ -72,8 +121,7 @@ private:
     @brief Clauses to be treated are moved here ClauseSimp::index refers to the index of the clause here
     */
     vec<ClauseSimp>        clauses;
-    vec<char>              touchedVars;        ///<Is set to true when a variable is part of a removed clause. Also true initially (upon variable creation).
-    vec<Var>               touchedVarsList;   ///<A list of the true elements in 'touched'.
+    TouchList              touchedVars;        ///<Is set to true when a variable is part of a removed clause. Also true initially (upon variable creation).
     CSet                   cl_touched;     ///<Clauses strengthened/added
     vec<vec<ClauseSimp> >  occur;          ///<occur[index(lit)]' is a list of constraints containing 'lit'.
     vec<CSet* >            iter_sets;      ///<Sets currently used in iterations.
@@ -117,10 +165,6 @@ private:
     //Iterations
     void registerIteration  (CSet& iter_set) { iter_sets.push(&iter_set); }
     void unregisterIteration(CSet& iter_set) { remove(iter_sets, &iter_set); }
-
-    //Touching
-    void touch(const Var x);
-    void touch(const Lit p, const bool learnt);
 
     //Used by cleaner
     void unlinkClause(ClauseSimp cc, const Var elim = var_Undef);
@@ -318,20 +362,6 @@ void maybeRemove(vec<T>& ws, const T2& elem)
 }
 
 /**
-@brief Put varible in touched_list
-
-call it when the number of occurrences of this variable changed.
-
-@param[in] x The varible that must be put into touched_list
-*/
-inline void Subsumer::touch(const Var x)
-{
-    if (!touchedVars[x]) {
-        touchedVars[x] = 1;
-        touchedVarsList.push(x);
-    }
-}
-
 inline void Subsumer::touchChangeVars(const Lit p)
 {
     ol_seenNeg[(~p).toInt()] = false;
@@ -348,19 +378,6 @@ inline void Subsumer::touchBlockedVar(const Var x)
     if (!touchedBlockedVarsBool[x]) {
         touchedBlockedVars.push(VarOcc(x, occur[Lit(x, false).toInt()].size()*occur[Lit(x, true).toInt()].size()));
         touchedBlockedVarsBool[x] = 1;
-    }
-}
-
-/**
-@brief Put variable of literal in touched_list
-
-call it when the number of occurrences of this variable changed
-*/
-inline void Subsumer::touch(const Lit p, const bool learnt)
-{
-    if (!learnt) {
-        touch(p.var());
-        touchBlockedVar(p.var());
     }
 }
 
@@ -440,7 +457,7 @@ inline void Subsumer::newVar()
     occur       .push();
     seen_tmp    .push(0);       // (one for each polarity)
     seen_tmp    .push(0);
-    touchedVars   .push(0);
+    touchedVars .addOne(solver.nVars()-1);
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
     cannot_eliminate.push(0);
@@ -448,7 +465,6 @@ inline void Subsumer::newVar()
     ol_seenPos.push(1);
     ol_seenNeg.push(1);
     ol_seenNeg.push(1);
-    touch(solver.nVars()-1);
 }
 
 inline const map<Var, vector<vector<Lit> > >& Subsumer::getElimedOutVar() const
