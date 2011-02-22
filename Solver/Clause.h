@@ -55,6 +55,7 @@ protected:
 
     uint32_t isLearnt:1; ///<Is the clause a learnt clause?
     uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
+    uint32_t changed:1; ///<Var inside clause has been changed
     /**
     @brief Is the XOR equal to 1 or 0?
 
@@ -68,7 +69,7 @@ protected:
     uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint32_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
-    uint32_t mySize:19; ///<The current size of the clause
+    uint32_t mySize:18; ///<The current size of the clause
 
     float miniSatAct; ///<Clause activity according to MiniSat
 
@@ -110,6 +111,7 @@ public:
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
         miniSatAct = 0;
         setStrenghtened();
+        setChanged();
     }
 
 public:
@@ -118,6 +120,22 @@ public:
     const uint32_t size() const
     {
         return mySize;
+    }
+
+    const bool getChanged() const
+    {
+        return changed;
+    }
+
+    void setChanged()
+    {
+        setStrenghtened();
+        changed = 1;
+    }
+
+    void unsetChanged()
+    {
+        changed = 0;
     }
 
     void shrink (const uint32_t i)

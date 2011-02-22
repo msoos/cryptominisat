@@ -627,21 +627,10 @@ const bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
-    //uint32_t clTouchedTodo = cl_touched.nElems();
     uint32_t clTouchedTodo = 100000;
-    if (addedClauseLits > 1500000) clTouchedTodo /= 2;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
     if (addedClauseLits > 10000000) clTouchedTodo /= 2;
-    if (alsoLearnt) {
-        clTouchedTodo /= 2;
-        /*clTouchedTodo = std::max(clTouchedTodo, (uint32_t)20000);
-        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
-    } else {
-        /*clTouchedTodo = std::max(clTouchedTodo, (uint32_t)20000);
-        clTouchedTodo = std::min(clTouchedTodo, (uint32_t)5000);*/
-    }
-
-    if (!solver.conf.doSubsume1) clTouchedTodo = 0;
+    if (alsoLearnt) clTouchedTodo /= 2;
 
     registerIteration(s0);
     registerIteration(s1);
@@ -662,109 +651,65 @@ const bool Subsumer::subsume0AndSubsume1()
         #endif //VERBOSE_DEBUG
 
         uint32_t s1Added = 0;
-        vec<Lit> setNeg;
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
             if (it->clause == NULL) continue;
             Clause& cl = *it->clause;
 
-            bool tooMuch = s1Added >= clTouchedTodo;
-            if (numMaxSubsume1 <= 0) tooMuch = false;
-            bool addedAnyway = true;
-
-            uint32_t smallestPosSize = std::numeric_limits<uint32_t>::max();
-            Lit smallestPos = lit_Undef;
-
-            if (!tooMuch) s1Added += s1.add(*it);
-            else if (!s1.alreadyIn(*it)) addedAnyway = false;
+            if (s1Added >= clTouchedTodo) break;
             s0.add(*it);
+            s1.add(*it);
 
-            for (uint32_t j = 0; j < cl.size() && addedAnyway; j++) {
-                if (ol_seenPos[cl[j].toInt()] || smallestPos == lit_Error) {
-                    smallestPos = lit_Error;
-                    goto next;
-                }
-                if (occur[cl[j].toInt()].size() < smallestPosSize) {
-                    smallestPos = cl[j];
-                    smallestPosSize = occur[cl[j].toInt()].size();
-                }
-
-                next:
-                if (ol_seenNeg[(~cl[j]).toInt()]) continue;
-                vec<ClauseSimp>& n_occs = occur[(~cl[j]).toInt()];
-                for (uint32_t k = 0; k < n_occs.size(); k++) {
-                    if (tooMuch && !s1.alreadyIn(n_occs[k])) {
-                        addedAnyway = false;
-                        goto next2;
+            for (uint32_t j = 0; j < cl.size(); j++) {
+                if (!ol_seenPos[cl[j].toInt()]) {
+                    vec<ClauseSimp>& occs = occur[(cl[j]).toInt()];
+                    for (uint32_t k = 0; k < occs.size(); k++) {
+                        s0.add(occs[k]);
                     }
-                    s1Added += s1.add(n_occs[k]);
+                }
+                ol_seenPos[cl[j].toInt()] = 1;
+
+                if (!ol_seenNeg[(~cl[j]).toInt()]) {
+                    vec<ClauseSimp>& occs = occur[(~cl[j]).toInt()];
+                    for (uint32_t k = 0; k < occs.size(); k++) {
+                        s1Added += s1.add(occs[k]);
+                    }
                 }
                 ol_seenNeg[(~cl[j]).toInt()] = 1;
-                setNeg.push(~cl[j]);
-            }
-            next2:;
-
-            if (smallestPos != lit_Undef && smallestPos != lit_Error && addedAnyway) {
-                vec<ClauseSimp>& p_occs = occur[smallestPos.toInt()];
-                for (uint32_t k = 0; k < p_occs.size(); k++) {
-                    if (tooMuch && !s0.alreadyIn(p_occs[k])) {
-                        addedAnyway = false;
-                        goto next3;
-                    }
-                    s0.add(p_occs[k]);
-                }
-                ol_seenPos[smallestPos.toInt()] = 1;
             }
 
-            next3:
-            if (addedAnyway) remClTouched.push(*it);
+            remClTouched.push(*it);
+            it->clause->unsetStrenghtened();
+            if (numMaxSubsume1 > 0) {
+                it->clause->unsetChanged();
+            }
         }
         //std::cout << "s0.nElems(): " << s0.nElems() << std::endl;
         //std::cout << "s1.nElems(): " << s1.nElems() << std::endl;
 
+        for (uint32_t i = 0; i < remClTouched.size(); i++) {
+            cl_touched.exclude(remClTouched[i]);
+        }
+        remClTouched.clear();
 
-        bool doneAll = (numMaxSubsume1 > 0);
         for (CSet::iterator it = s0.begin(), end = s0.end(); it != end; ++it) {
             if (it->clause == NULL) continue;
             subsume0(*it->clause);
-            if (!doneAll && numMaxSubsume0 < 0) break;
         }
         s0.clear();
 
-        if (doneAll) {
+        if (numMaxSubsume1 > 0) {
             for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
                 if (it->clause == NULL) continue;
                 subsume1(*it->clause);
-                /*if (numMaxSubsume1 < 0) {
-                    doneAll = false;
-                    break;
-                }*/
-                //s0.exclude(*it);
                 if (!solver.ok) goto end;
             }
             s1.clear();
         }
 
         if (!handleClBinTouched()) goto end;
-        for (ClauseSimp *it = remClTouched.getData(), *end = remClTouched.getDataEnd(); it != end; it++) {
-            if (it->clause == NULL) continue;
-            if (doneAll) it->clause->unsetStrenghtened();
-            cl_touched.exclude(*it);
-        }
-        if (!doneAll) {
-            for (Lit *l = setNeg.getData(), *end = setNeg.getDataEnd(); l != end; l++)
-                ol_seenNeg[l->toInt()] = 0;
-        }
-
-        #ifdef BIT_MORE_VERBOSITY
-        if (doneAll)
-            std::cout << "c Success with " << remClTouched.size() << " clauses, s1Added: " << s1Added << std::endl;
-        else
-            std::cout << "c No success with " << remClTouched.size() << " clauses, s1Added: " << s1Added << std::endl;
-        #endif //BIT_MORE_VERBOSITY
-        remClTouched.clear();
     } while ((cl_touched.nElems() > 100) && numMaxSubsume0 > 0);
-
     end:
+
     cl_touched.clear();
     unregisterIteration(s1);
     unregisterIteration(s0);
@@ -786,8 +731,13 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
     for (uint32_t i = 0; i < cl.size(); i++) {
         occur[cl[i].toInt()].push(c);
         touchedVars.touch(cl[i], cl.learnt());
+        if (cl.getChanged()) {
+            ol_seenPos[cl[i].toInt()] = 0;
+            ol_seenNeg[(~cl[i]).toInt()] = 0;
+        }
     }
-    cl_touched.add(c);
+    if (cl.getStrenghtened() || cl.getChanged() || (!cl.learnt() && alsoLearnt))
+        cl_touched.add(c);
 
     return c;
 }
@@ -815,16 +765,8 @@ const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
             continue;
         }
 
-        ClauseSimp c(*i, clauseID++);
-        clauses.push(c);
-        Clause& cl = *c.clause;
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            occur[cl[i].toInt()].push(c);
-            //if (cl.getStrenghtened()) touch(cl[i], cl.learnt());
-        }
-        numLitsAdded += cl.size();
-
-        if (cl.getStrenghtened()) cl_touched.add(c);
+        ClauseSimp c = linkInClause(**i);
+        numLitsAdded += (*i)->size();
     }
     cs.shrink(i-j);
 
@@ -1166,6 +1108,10 @@ void Subsumer::clearAll()
     for (Var var = 0; var < solver.nVars(); var++) {
         occur[2*var].clear();
         occur[2*var+1].clear();
+        ol_seenNeg[2*var    ] = 1;
+        ol_seenNeg[2*var + 1] = 1;
+        ol_seenPos[2*var    ] = 1;
+        ol_seenPos[2*var + 1] = 1;
     }
 }
 

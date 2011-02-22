@@ -98,9 +98,6 @@ public:
     void extendModel(Solver& solver2);
     const bool unEliminate(const Var var);
 
-    //touching
-    void touchChangeVars(const Lit p);
-
     //Get-functions
     const vec<char>& getVarElimed() const;
     const uint32_t getNumElimed() const;
@@ -359,13 +356,6 @@ void maybeRemove(vec<T>& ws, const T2& elem)
 {
     if (ws.size() > 0)
         removeW(ws, elem);
-}
-
-/**
-inline void Subsumer::touchChangeVars(const Lit p)
-{
-    ol_seenNeg[(~p).toInt()] = false;
-    ol_seenPos[p.toInt()] = false;
 }
 
 /**
