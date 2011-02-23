@@ -110,7 +110,6 @@ public:
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
         miniSatAct = 0;
-        setStrenghtened();
         setChanged();
     }
 
