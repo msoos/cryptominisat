@@ -22,7 +22,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "DataSync.h"
 
 #ifdef _MSC_VER
-#define __builtin_prefetch(a,b,c)
+#define __builtin_prefetch
 #endif //_MSC_VER
 
 //#define VERBOSE_DEBUG

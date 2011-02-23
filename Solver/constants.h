@@ -107,5 +107,5 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #endif //HAVE_CONFIG_H
 
 #ifdef _MSC_VER
-#define __builtin_prefetch()
+#define __builtin_prefetch
 #endif //_MSC_VER
