@@ -208,6 +208,8 @@ const bool FailedLitSearcher::search()
     dontRemoveAncestor.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     maxHyperBinProps = numProps/4;
+    if (solver.order_heap.size() < 20000)
+        maxHyperBinProps*=2;
     removedUselessLearnt = 0;
     removedUselessNonLearnt = 0;
 
