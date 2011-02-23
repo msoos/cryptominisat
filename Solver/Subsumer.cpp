@@ -1396,6 +1396,8 @@ void Subsumer::setLimits()
     //numMaxSubsume1 = 0;
     //numMaxSubsume0 = std::numeric_limits<int64_t>::max();
     //numMaxSubsume1 = std::numeric_limits<int64_t>::max();
+    //numMaxElimVars = std::numeric_limits<int32_t>::max();
+    //numMaxElim     = std::numeric_limits<int64_t>::max();
 
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
     //numMaxBlockVars = std::numeric_limits<uint32_t>::max();
