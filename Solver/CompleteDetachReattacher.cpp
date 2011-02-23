@@ -83,6 +83,19 @@ const bool CompleteDetachReatacher::reattachNonBins()
     return solver.ok;
 }
 
+struct MySorter
+{
+    MySorter(vector<bool>& polarity) :
+        pol(polarity)
+    {}
+
+    const bool operator()(const Lit lit1, const Lit lit2) const
+    {
+        return (pol[lit1.var()] == false && pol[lit2.var()] == true);
+    }
+    vector<bool>& pol;
+};
+
 /**
 @brief Cleans clauses from failed literals/removes satisfied clauses from cs
 
@@ -92,7 +105,9 @@ inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<Clause*>& cs)
 {
     Clause **i = cs.getData();
     Clause **j = i;
+    MySorter sorter(solver.polarity);
     for (Clause **end = cs.getDataEnd(); i != end; i++) {
+        std::sort((*i)->getData(), (*i)->getDataEnd(), sorter);
         if (cleanClause(*i)) {
             solver.attachClause(**i);
             *j++ = *i;
