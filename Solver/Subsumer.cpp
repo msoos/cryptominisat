@@ -42,7 +42,6 @@ Subsumer::Subsumer(Solver& s):
     , totalTime(0.0)
     , numElimed(0)
     , numCalls(1)
-    , alsoLearnt(false)
 {
 };
 
@@ -630,7 +629,6 @@ const bool Subsumer::subsume0AndSubsume1()
     uint32_t clTouchedTodo = 100000;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
     if (addedClauseLits > 10000000) clTouchedTodo /= 2;
-    if (alsoLearnt) clTouchedTodo /= 2;
 
     registerIteration(s0);
     registerIteration(s1);
@@ -736,7 +734,7 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
             ol_seenNeg[(~cl[i]).toInt()] = 0;
         }
     }
-    if (cl.getStrenghtened() || cl.getChanged() || (!cl.learnt() && alsoLearnt))
+    if (cl.getStrenghtened() || cl.getChanged())
         cl_touched.add(c);
 
     return c;
@@ -759,11 +757,6 @@ const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
     Clause **j = i;
     for (Clause **end = i + cs.size(); i !=  end; i++) {
         if (i+1 != end) __builtin_prefetch(*(i+1));
-
-        if (!alsoLearnt && (*i)->learnt()) {
-            *j++ = *i;
-            continue;
-        }
 
         ClauseSimp c = linkInClause(**i);
         numLitsAdded += (*i)->size();
@@ -1229,12 +1222,9 @@ Performs, recursively:
 * self-subsuming resolution
 * variable elimination
 
-@param[in] alsoLearnt Should learnt clauses be also hooked into the occurrence
-lists? If so, variable elimination cannot take place.
 */
-const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
+const bool Subsumer::simplifyBySubsumption()
 {
-    alsoLearnt = _alsoLearnt;
     if (solver.nClauses() > 50000000
         || solver.clauses_literals > 500000000)  return true;
 
@@ -1253,50 +1243,42 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
         return false;
     fillCannotEliminate();
 
-    uint32_t expected_size = solver.clauses.size();
-    if (alsoLearnt) expected_size += solver.learnts.size();
+    uint32_t expected_size = solver.clauses.size() + solver.learnts.size();
     clauses.reserve(expected_size);
     cl_touched.reserve(expected_size);
 
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    if (alsoLearnt) {
-        solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
+    solver.clauseCleaner->cleanClauses(solver.learnts, ClauseCleaner::learnts);
 
-        if (solver.learnts.size() < 10000000)
-            std::sort(solver.learnts.getData(), solver.learnts.getDataEnd(), sortBySize());
-        addedClauseLits += addFromSolver(solver.learnts);
-    } else {
-        if (solver.clauses.size() < 10000000)
-            std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
-        addedClauseLits += addFromSolver(solver.clauses);
-    }
+    if (solver.clauses.size() < 10000000)
+        std::sort(solver.clauses.getData(), solver.clauses.getDataEnd(), sortBySize());
+    addedClauseLits += addFromSolver(solver.clauses);
+
+    if (solver.learnts.size() < 300000)
+        std::sort(solver.learnts.getData(), solver.learnts.getDataEnd(), sortBySize());
+    addedClauseLits += addFromSolver(solver.learnts);
 
     CompleteDetachReatacher reattacher(solver);
     reattacher.detachNonBinsNonTris(false);
     totalTime += myTime - cpuTime();
 
     //Do stuff with binaries
-    if (alsoLearnt) {
-        numMaxSubsume1 = 500*1000*1000;
-        if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-        addedClauseLits += addFromSolver(solver.clauses);
-    } else {
-        if ((solver.conf.doBlockedClause || numCalls == 2)
-            && solver.conf.doVarElim) {
-            numMaxBlockToVisit = (int64_t)800*1000*1000;
-            blockedClauseRemoval();
-        }
+    subsumeBinsWithBins();
+    numMaxSubsume1 = 500*1000*1000;
+    if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
+    if ((solver.conf.doBlockedClause)
+        && solver.conf.doVarElim) {
+        numMaxBlockToVisit = (int64_t)800*1000*1000;
+        blockedClauseRemoval();
+    }
 
-        subsumeBinsWithBins();
-        numMaxSubsume1 = 2*1000*1000*1000;
-        if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-        if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
-        if (!handleClBinTouched()) return false;
+    numMaxSubsume1 = 2*1000*1000*1000;
+    if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
+    if (!handleClBinTouched()) return false;
 
-        if (solver.conf.doReplace && solver.conf.doRemUselessBins) {
-            UselessBinRemover uselessBinRemover(solver);
-            if (!uselessBinRemover.removeUslessBinFull()) return false;
-        }
+    if (solver.conf.doReplace && solver.conf.doRemUselessBins) {
+        UselessBinRemover uselessBinRemover(solver);
+        if (!uselessBinRemover.removeUslessBinFull()) return false;
     }
 
     myTime = cpuTime();
@@ -1315,13 +1297,6 @@ const bool Subsumer::simplifyBySubsumption(const bool _alsoLearnt)
     std::cout << "c  numMaxSubsume1:" << numMaxSubsume1 << std::endl;
     std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
     #endif
-
-    /*for (ClauseSimp *it = clauses.getData(), *end = clauses.getDataEnd(); it != end; ++it) {
-        if (it->clause == NULL) continue;
-        //if (!it->clause->learnt()) continue;
-        subsume1(*it->clause);
-    }*/
-    //setLimits(alsoLearnt);
 
     if (clauses.size() > 10000000 ||
         (numMaxSubsume1 < 0 && numMaxElim == 0 && numMaxBlockVars == 0))
@@ -1375,16 +1350,15 @@ It is important to have limits, otherwise the time taken to perfom these tasks
 could be huge. Furthermore, it seems that there is a benefit in doing these
 simplifications slowly, instead of trying to use them as much as possible
 from the beginning.
-
-@param[in] alsoLearnt Have learnt clauses also been hooked in? If so, variable
-elimination must be excluded, for example (i.e. its limit must be 0)
 */
 void Subsumer::setLimits()
 {
     numMaxSubsume0 = 130*1000*1000;
     numMaxSubsume1 = 80*1000*1000;
+    numMaxSubsume0 *= 2;
+    numMaxSubsume1 *= 2;
 
-    numMaxElim = 500*1000*1000;
+    numMaxElim = 100*1000*1000;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1667,8 +1641,9 @@ const uint32_t Subsumer::numNonLearntBins(const Lit lit) const
 
 void Subsumer::fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit)
 {
-    for (uint32_t i = 0; i < cs.size(); i++)
-        all.push(ClAndBin(cs[i]));
+    for (uint32_t i = 0; i < cs.size(); i++) {
+        if (!cs[i].clause->learnt()) all.push(ClAndBin(cs[i]));
+    }
 
     const vec2<Watched>& ws = solver.watches[(~lit).toInt()];
     for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
@@ -1698,27 +1673,38 @@ bool Subsumer::maybeEliminate(const Var var)
     /*if (occur[lit.toInt()].size() == 0 && occur[(~lit).toInt()].size() == 0)
         return false;*/
 
-    const uint32_t numNonLearntPos = numNonLearntBins(lit);
-    const uint32_t posSize = occur[lit.toInt()].size() + numNonLearntPos;
-    const uint32_t numNonLearntNeg = numNonLearntBins(~lit);
-    const uint32_t negSize = occur[(~lit).toInt()].size() + numNonLearntNeg;
     vec<ClauseSimp>& poss = occur[lit.toInt()];
     vec<ClauseSimp>& negs = occur[(~lit).toInt()];
+    const uint32_t numNonLearntPos = numNonLearntBins(lit);
+    const uint32_t numNonLearntNeg = numNonLearntBins(~lit);
+    uint32_t before_literals = numNonLearntNeg*2 + numNonLearntPos*2;
+
+    uint32_t posSize = 0;
+    for (uint32_t i = 0; i < poss.size(); i++)
+        if (!poss[i].clause->learnt()) {
+            posSize++;
+            before_literals += poss[i].clause->size();
+        }
+    posSize =+ numNonLearntPos;
+
+    uint32_t negSize = 0;
+    for (uint32_t i = 0; i < negs.size(); i++)
+        if (!negs[i].clause->learnt()) {
+            negSize++;
+            before_literals += negs[i].clause->size();
+        }
+    negSize += numNonLearntNeg;
+
     numMaxElim -= posSize + negSize;
 
     // Heuristic CUT OFF:
     if (posSize >= 10 && negSize >= 10) return false;
 
-    // Count clauses/literals before elimination:
-    uint32_t before_literals = numNonLearntNeg*2 + numNonLearntPos*2;
-    for (uint32_t i = 0; i < poss.size(); i++) before_literals += poss[i].clause->size();
-    for (uint32_t i = 0; i < negs.size(); i++) before_literals += negs[i].clause->size();
-
     // Heuristic CUT OFF2:
-    if ((posSize >= 3 && negSize >= 3 && before_literals > 300)
+    if ((posSize >= 4 && negSize >= 4 && before_literals > 300)
         && clauses.size() > 700000)
         return false;
-    if ((posSize >= 5 && negSize >= 5 && before_literals > 400)
+    if ((posSize >= 6 && negSize >= 6 && before_literals > 400)
         && clauses.size() <= 700000 && clauses.size() > 100000)
         return false;
     if ((posSize >= 8 && negSize >= 8 && before_literals > 700)
@@ -1728,8 +1714,6 @@ bool Subsumer::maybeEliminate(const Var var)
     vec<ClAndBin> posAll, negAll;
     fillClAndBin(posAll, poss, lit);
     fillClAndBin(negAll, negs, ~lit);
-    assert(posAll.size() == posSize);
-    assert(negAll.size() == negSize);
 
     // Count clauses/literals after elimination:
     numMaxElim -= posSize * negSize + before_literals;
@@ -1748,10 +1732,22 @@ bool Subsumer::maybeEliminate(const Var var)
 
     //Eliminate:
     numMaxElim -= posSize * negSize + before_literals;
+
+    //removing clauses (both non-learnt and learnt)
+    vec<ClauseSimp> tmp1 = poss;
     poss.clear();
+    for (uint32_t i = 0; i < tmp1.size(); i++) {
+        if (tmp1[i].clause->learnt()) unlinkClause(tmp1[i]);
+    }
+    vec<ClauseSimp> tmp2 = negs;
     negs.clear();
+    for (uint32_t i = 0; i < tmp2.size(); i++) {
+        if (tmp2[i].clause->learnt()) unlinkClause(tmp2[i]);
+    }
+
     removeClauses(posAll, negAll, var);
 
+    //check watchlists
     #ifndef NDEBUG
     const vec2<Watched>& ws1 = solver.watches[lit.toInt()];
     for (vec2<Watched>::const_iterator i = ws1.getData(), end = ws1.getDataEnd(); i != end; i++) {
@@ -1845,7 +1841,6 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
         out_clause.push(ps.lit2);
     } else {
         Clause& c = *ps.clsimp.clause;
-        numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_p){
                 seen_tmp[c[i].toInt()] = 1;
@@ -1866,7 +1861,6 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
             out_clause.push(qs.lit2);
     } else {
         Clause& c = *qs.clsimp.clause;
-        numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_q) {
                 if (seen_tmp[(~c[i]).toInt()]) {
@@ -1884,7 +1878,6 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
         seen_tmp[ps.lit2.toInt()] = 0;
     } else {
         Clause& c = *ps.clsimp.clause;
-        numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++)
             seen_tmp[c[i].toInt()] = 0;
     }

@@ -91,7 +91,7 @@ public:
     Subsumer(Solver& S2);
 
     //Called from main
-    const bool simplifyBySubsumption(const bool alsoLearnt = false);
+    const bool simplifyBySubsumption();
     void newVar();
 
     //UnElimination
@@ -348,7 +348,6 @@ private:
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
     uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
     uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
-    bool alsoLearnt;
 };
 
 template <class T, class T2>
