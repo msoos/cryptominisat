@@ -1287,11 +1287,6 @@ const bool Subsumer::simplifyBySubsumption()
         (numMaxSubsume1 < 0 && numMaxElim == 0 && numMaxBlockVars == 0))
         goto endSimplifyBySubsumption;
 
-    for (uint32_t i = 0; i < clauses.size(); i++) {
-        if (clauses[i].clause == NULL) continue;
-        subsume1(*clauses[i].clause);
-    }
-
     do {
         if (!subsume0AndSubsume1()) return false;
 
