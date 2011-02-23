@@ -1388,16 +1388,7 @@ void Subsumer::setLimits()
     if (numCalls == 1) {
         numMaxSubsume1 = 10*1000*1000;
     }
-
-    if (alsoLearnt) {
-        numMaxElim = 0;
-        numMaxElimVars = 0;
-        numMaxSubsume0 /= 2;
-        numMaxSubsume1 /= 2;
-        numMaxBlockVars = 0;
-    } else {
-        numCalls++;
-    }
+    numCalls++;
 
     //For debugging
 
