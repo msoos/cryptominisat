@@ -2464,7 +2464,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
         BothCache both(*this);
         if (!both.tryBoth()) goto end;
     }
-    if (order_heap.size() < 100000) conf.doCacheOTFSSR = true;
+    if (order_heap.size() < 70000) conf.doCacheOTFSSR = true;
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
     if (conf.doSatELite && !subsumer->simplifyBySubsumption()) goto end;
@@ -2571,7 +2571,7 @@ void Solver::performStepsBeforeSolve()
     if (conf.doClausVivif && !conf.libraryUsage
         && !clauseVivifier->vivifyClauses()) return;
 
-    if (order_heap.size() > 100000) conf.doCacheOTFSSR = false;
+    if (order_heap.size() > 70000) conf.doCacheOTFSSR = false;
     bool saveDoHyperBin = conf.doHyperBinRes;
     conf.doHyperBinRes = false;
     clauseAllocator.consolidate(this, true);
