@@ -93,23 +93,6 @@ const bool DataSync::shareBinData()
     return true;
 }
 
-template <class T>
-void DataSync::signalNewBinClause(T& ps)
-{
-    assert(ps.size() == 2);
-    signalNewBinClause(ps[0], ps[1]);
-}
-
-void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
-{
-    if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
-    newBinClauses.push_back(std::make_pair(lit1, lit2));
-}
-
-template void DataSync::signalNewBinClause(Clause& ps);
-template void DataSync::signalNewBinClause(XorClause& ps);
-template void DataSync::signalNewBinClause(vec<Lit>& ps);
-
 const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec2<Watched>& ws)
 {
     assert(solver.varReplacer->getReplaceTable()[lit.var()].var() == lit.var());

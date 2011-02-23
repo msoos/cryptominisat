@@ -81,3 +81,17 @@ inline const uint32_t DataSync::getRecvBinData() const
     return recvBinData;
 }
 
+template <class T>
+inline void DataSync::signalNewBinClause(T& ps)
+{
+    if (sharedData == NULL) return;
+    assert(ps.size() == 2);
+    signalNewBinClause(ps[0], ps[1]);
+}
+
+inline void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
+{
+    if (sharedData == NULL) return;
+    if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
+    newBinClauses.push_back(std::make_pair(lit1, lit2));
+}
