@@ -655,7 +655,7 @@ const bool Subsumer::subsume0AndSubsume1()
 
             if (s1Added >= clTouchedTodo) break;
             s0.add(*it);
-            s1.add(*it);
+            s1Added += s1.add(*it);
 
             for (uint32_t j = 0; j < cl.size(); j++) {
                 if (!ol_seenPos[cl[j].toInt()]) {
