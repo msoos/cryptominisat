@@ -126,7 +126,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
                                             ^ Lit::toLit(tmp[i]).sign()
                                             ^ true;
                 if (solver.value(lits[0]) == l_Undef && solver.value(lits[1]) == l_Undef) {
-                    solver.varReplacer->replace(lits, xorEqualsFalse, 0);
+                    solver.varReplacer->replace(lits, xorEqualsFalse, 0, true, false);
                 }
             }
         }
