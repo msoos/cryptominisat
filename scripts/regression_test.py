@@ -88,17 +88,23 @@ class Tester:
         command += self.extraOptions + " "
         command += fname
 
+        command = "../build/cryptominisat --nosolprint --nonormxorfind --nosatelite --restarts=1 --nobinxorfind --dumporig=stdout "
+        command += fname
+        command += " | grep -v '^c' | ../build/intocr "
+        command += " | ../build/cryptominisat | grep -v '^c' | ../build/outofcr"
+
         print "Executing: %s " % command
-        if self.verbose:
-            print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
-        if (needToLimitTime) :
-            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
-        else:
-            p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE)
-        if self.verbose:
-            print "CPU limit of parent (pid %d) after startup of child" % \
-                os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
-        consoleOutput = p.communicate()[0]
+        #if self.verbose:
+            #print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
+        #if (needToLimitTime) :
+            #p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE, preexec_fn=setlimits)
+        #else:
+            #p = subprocess.Popen(command.rsplit(), stdout=subprocess.PIPE)
+        #if self.verbose:
+            #print "CPU limit of parent (pid %d) after startup of child" % \
+                #os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
+        #consoleOutput = p.communicate()[0]
+        consoleOutput = commands.getoutput(command)
         if self.verbose:
             print "CPU limit of parent (pid %d) after child finished executing" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)

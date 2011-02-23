@@ -2467,8 +2467,7 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (order_heap.size() < 100000) conf.doCacheOTFSSR = true;
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
-    if (conf.doSatELite && !subsumer->simplifyBySubsumption(false)) goto end;
-    if (conf.doSatELite && !subsumer->simplifyBySubsumption(true)) goto end;
+    if (conf.doSatELite && !subsumer->simplifyBySubsumption()) goto end;
 
     /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
         XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);

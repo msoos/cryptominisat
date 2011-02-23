@@ -91,7 +91,7 @@ public:
     Subsumer(Solver& S2);
 
     //Called from main
-    const bool simplifyBySubsumption(const bool alsoLearnt = false);
+    const bool simplifyBySubsumption();
     void newVar();
 
     //UnElimination
@@ -139,7 +139,7 @@ private:
     int64_t numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
     int64_t numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
     int64_t numMaxElim;                  ///<Max. number of variable elimination tries to do this run
-    uint32_t numMaxElimVars;
+    int32_t numMaxElimVars;
     int64_t numMaxBlockToVisit;           ///<Max. number variable-blocking clauses to visit to do this run
     uint32_t numMaxBlockVars;             ///<Max. number variable-blocking tries to do this run
 
@@ -254,8 +254,7 @@ private:
     */
     struct myComp {
         bool operator () (const std::pair<int, Var>& x, const std::pair<int, Var>& y) {
-            return x.first < y.first ||
-                (!(y.first < x.first) && x.second < y.second);
+            return x.first < y.first;
         }
     };
     class ClAndBin {
@@ -348,7 +347,6 @@ private:
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
     uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
     uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
-    bool alsoLearnt;
 };
 
 template <class T, class T2>
