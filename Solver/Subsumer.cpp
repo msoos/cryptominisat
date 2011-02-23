@@ -708,7 +708,6 @@ const bool Subsumer::subsume0AndSubsume1()
     } while ((cl_touched.nElems() > 100) && numMaxSubsume0 > 0);
     end:
 
-    cl_touched.clear();
     unregisterIteration(s1);
     unregisterIteration(s0);
 
@@ -1113,46 +1112,32 @@ const bool Subsumer::eliminateVars()
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c VARIABLE ELIMINIATION -- touchedVarsList size:" << touchedVarsList.size() << std::endl;
     #endif
-    vec<Var> init_order;
-    orderVarsForElim(init_order);   // (will untouch all variables)
 
-    for (bool first = true; numMaxElim > 0 && numMaxElimVars > 0; first = false) {
-        uint32_t vars_elimed = 0;
-        vec<Var> order;
+    uint32_t vars_elimed = 0;
 
-        if (first) {
-            for (uint32_t i = 0; i < init_order.size(); i++) {
-                const Var var = init_order[i];
-                if (!cannot_eliminate[var] && solver.decision_var[var])
-                    order.push(var);
-                //no need to set touched[var] to false -- orderVarsForElim did that already
-            }
-        } else {
-            for (vector<Var>::const_iterator it = touchedVars.begin(), end = touchedVars.begin(); it != end; it++) {
-                const Var var = *it;
-                if (!cannot_eliminate[var] && solver.decision_var[var])
-                    order.push(var);
-            }
-            touchedVars.clear();
+    vec<Var> order;
+    orderVarsForElim(order);
+
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Order size:" << order.size() << std::endl;
+    #endif
+
+    for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
+        Var var = order[i];
+        if (!cannot_eliminate[var]
+            && solver.decision_var[var]
+            && maybeEliminate(order[i])
+            ) {
+            if (!solver.ok) return false;
+            vars_elimed++;
+            numMaxElimVars--;
         }
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Order size:" << order.size() << std::endl;
-        #endif
-
-        for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
-            if (maybeEliminate(order[i])) {
-                if (!solver.ok) return false;
-                vars_elimed++;
-                numMaxElimVars--;
-            }
-        }
-        if (vars_elimed == 0) break;
-
-        numVarsElimed += vars_elimed;
-        #ifdef BIT_MORE_VERBOSITY
-        std::cout << "c  #var-elim: " << vars_elimed << std::endl;
-        #endif
     }
+    numVarsElimed += vars_elimed;
+
+    #ifdef BIT_MORE_VERBOSITY
+    std::cout << "c  #var-elim: " << vars_elimed << std::endl;
+    #endif
 
     return true;
 }
@@ -1312,7 +1297,7 @@ const bool Subsumer::simplifyBySubsumption()
         //subsumeBinsWithBins();
         //if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         solver.clauseCleaner->removeSatisfiedBins();
-    } while (cl_touched.nElems() > 100);
+    } while (cl_touched.nElems() > 100 && numMaxSubsume0 > 0);
     endSimplifyBySubsumption:
 
     if (!solver.ok) return false;
@@ -1902,18 +1887,24 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
     vec<pair<int, Var> > cost_var;
     for (vector<Var>::const_iterator it = touchedVars.begin(), end = touchedVars.end(); it != end ; it++){
         Lit x = Lit(*it, false);
-        //this is not perfect -- solver.watches[] is an over-approximation
-        uint32_t pos = occur[x.toInt()].size();
-        uint32_t neg = occur[(~x).toInt()].size();
+        uint32_t pos = 0;
+        const vec<ClauseSimp>& poss = occur[x.toInt()];
+        for (uint32_t i = 0; i < poss.size(); i++)
+            if (!poss[i].clause->learnt()) pos++;
+
+        uint32_t neg = 0;
+        const vec<ClauseSimp>& negs = occur[(~x).toInt()];
+        for (uint32_t i = 0; i < negs.size(); i++)
+            if (!negs[i].clause->learnt()) neg++;
+
         uint32_t cost = pos * neg * 2 + numNonLearntBins(x) * neg + numNonLearntBins(~x) * pos;
         cost_var.push(std::make_pair(cost, x.var()));
     }
     touchedVars.clear();
 
-    std::sort(cost_var.getData(), cost_var.getData()+cost_var.size(), myComp());
+    std::sort(cost_var.getData(), cost_var.getDataEnd(), myComp());
     for (uint32_t x = 0; x < cost_var.size(); x++) {
-        if (cost_var[x].first != 0)
-            order.push(cost_var[x].second);
+        order.push(cost_var[x].second);
     }
 }
 
