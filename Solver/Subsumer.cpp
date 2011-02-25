@@ -1229,6 +1229,10 @@ const bool Subsumer::simplifyBySubsumption()
     fillCannotEliminate();
 
     uint32_t expected_size = solver.clauses.size() + solver.learnts.size();
+    if (expected_size > 10000000 ||
+        (numMaxSubsume1 < 0 && numMaxElim == 0 && numMaxBlockVars == 0))
+        return solver.ok;
+
     clauses.reserve(expected_size);
     cl_touched.reserve(expected_size);
 
@@ -1283,10 +1287,6 @@ const bool Subsumer::simplifyBySubsumption()
     std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
     #endif
 
-    if (clauses.size() > 10000000 ||
-        (numMaxSubsume1 < 0 && numMaxElim == 0 && numMaxBlockVars == 0))
-        goto endSimplifyBySubsumption;
-
     do {
         if (!subsume0AndSubsume1()) return false;
 
@@ -1298,7 +1298,6 @@ const bool Subsumer::simplifyBySubsumption()
         //if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         solver.clauseCleaner->removeSatisfiedBins();
     } while (cl_touched.nElems() > 100 && numMaxSubsume0 > 0);
-    endSimplifyBySubsumption:
 
     if (!solver.ok) return false;
 
