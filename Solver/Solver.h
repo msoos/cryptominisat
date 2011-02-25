@@ -405,7 +405,7 @@ protected:
     void     newDecisionLevel ();                                                      // Begins a new decision level.
     void     uncheckedEnqueue (const Lit p, const PropBy& from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     uncheckedEnqueueLight (const Lit p);
-    void     uncheckedEnqueueLight2(const Lit p, const uint32_t binPropDatael, const Lit lev2Ancestor, const bool learntLeadHere);
+    void     uncheckedEnqueueLight2(const Lit p, const uint32_t binPropDatael, const Lit lev1Ancestor, const bool learntLeadHere);
     PropBy   propagateBin(vec<Lit>& uselessBin);
     PropBy   propagateNonLearntBin();
     bool     multiLevelProp;
@@ -842,14 +842,14 @@ inline void Solver::uncheckedEnqueueLight(const Lit p)
     #endif
 }
 
-inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev2Ancestor, const bool learntLeadHere)
+inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev1Ancestor, const bool learntLeadHere)
 {
     assert(assigns[p.var()] == l_Undef);
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
     binPropData[p.var()].lev = binSubLevel;
-    binPropData[p.var()].lev2Ancestor = lev2Ancestor;
+    binPropData[p.var()].lev1Ancestor = lev1Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
     #if WATCHED_CACHE_NUM > 0
     __builtin_prefetch(watches.getData() + p.toInt());

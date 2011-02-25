@@ -168,6 +168,20 @@ class FailedLitSearcher {
 
             const vec<BinPropData>& binPropData;
         };
+        struct BinAddData
+        {
+            vector<Lit> lits;
+            Lit lit;
+        };
+        struct BinAddDataSorter
+        {
+            const bool operator() (const BinAddData& a, const BinAddData& b) const
+            {
+                return (a.lits.size() > b.lits.size());
+            }
+        };
+        void addMyImpliesSetAsBins(Lit lit, int32_t& difference);
+
         uint32_t addedBin;
         void hyperBinResolution(const Lit lit);
         BitArray unPropagatedBin;

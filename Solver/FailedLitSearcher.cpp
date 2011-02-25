@@ -558,7 +558,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
                 continue;
             }
 
-            Var ancestorVar = solver.binPropData[it->var()].lev2Ancestor.var();
+            Var ancestorVar = solver.binPropData[it->var()].lev1Ancestor.var();
             dontRemoveAncestor.setBit(ancestorVar);
             toClearDontRemoveAcestor.push(ancestorVar);
         }
@@ -624,17 +624,10 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     //difference between UP and BTC is in unPropagatedBin
     for (Lit *l = toVisit.getData(), *end = toVisit.getDataEnd(); l != end; l++) {
         if (!needToVisit[l->var()]) continue;
+        if (!solver.binPropData[l->var()].hasChildren) continue;
         fillImplies(*l);
-        for (const Var *var = myImpliesSet.getData(), *end2 = myImpliesSet.getDataEnd(); var != end2; var++) {
+        addMyImpliesSetAsBins(*l, difference);
 
-            /*Lit otherLit = Lit(*var, !propValue[*var]);
-            std::cout << "adding Bin:" << (~*l) << " , " << otherLit << std::endl;
-            std::cout << PropByFull(solver.reason[otherLit.var()], solver.failBinLit, solver.clauseAllocator) << std::endl;*/
-
-            addBin(~*l, Lit(*var, !propValue[*var]));
-            unPropagatedBin.clearBit(*var);
-            difference--;
-        }
         assert(difference >= 0);
         myImpliesSet.clear();
 
@@ -676,6 +669,67 @@ void FailedLitSearcher::fillImplies(const Lit lit)
     }
     solver.cancelUntilLight();
 }
+
+void FailedLitSearcher::addMyImpliesSetAsBins(Lit lit, int32_t& difference)
+{
+    if (myImpliesSet.size() == 0) return;
+    if (myImpliesSet.size() == 1) {
+        Var var = myImpliesSet[0];
+        Lit l2 = Lit(var, !propValue[var]);
+        addBin(~lit, l2);
+        unPropagatedBin.clearBit(var);
+        difference--;
+        return;
+    }
+
+    vector<BinAddData> litsAddedEach;
+    uint32_t i = 0;
+    for (const Var *var = myImpliesSet.getData(), *end2 = myImpliesSet.getDataEnd(); var != end2; var++, i++) {
+        Lit l2 = Lit(*var, !propValue[*var]);
+        solver.newDecisionLevel();
+        solver.uncheckedEnqueueLight(l2);
+        failed = (!solver.propagateBin(uselessBin).isNULL());
+        assert(!failed);
+        uselessBin.clear();
+
+        BinAddData addData;
+        addData.lit = l2;
+        assert(solver.decisionLevel() > 0);
+        for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
+            Lit x = solver.trail[sublevel];
+            addData.lits.push_back(x);
+        }
+        solver.cancelUntilLight();
+        litsAddedEach.push_back(addData);
+    }
+    std::sort(litsAddedEach.begin(), litsAddedEach.end(), BinAddDataSorter());
+
+    while(!litsAddedEach.empty()) {
+        assert(!litsAddedEach.empty());
+        BinAddData b = *litsAddedEach.begin();
+        litsAddedEach.erase(litsAddedEach.begin());
+
+        addBin(~lit, b.lit);
+        assert(unPropagatedBin[b.lit.var()]);
+        unPropagatedBin.clearBit(b.lit.var());
+        difference--;
+        for (uint32_t i = 0; i < b.lits.size(); i++) {
+            Lit alsoAddedLit = b.lits[i];
+            if (unPropagatedBin[alsoAddedLit.var()]) {
+                unPropagatedBin.clearBit(alsoAddedLit.var());
+                difference--;
+                for (vector<BinAddData>::iterator it2 = litsAddedEach.begin(); it2 != litsAddedEach.end(); it2++) {
+                    if (it2->lit == alsoAddedLit) {
+                        litsAddedEach.erase(it2);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    assert(litsAddedEach.empty());
+}
+
 
 /**
 @brief Adds a learnt binary clause to the solver
