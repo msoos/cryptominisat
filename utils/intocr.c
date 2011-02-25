@@ -50,8 +50,13 @@ int main(int argc, char** argv)
       //infile = fdopen(0, "r");
       printf("c reading from stdin\n");
   } else {
-      infile = fopen(argv[1], "r");
-      assert(infile != NULL);
+      if (argv[1][0] == 'x') {
+          needOutFile = 0;
+          infile = stdin;
+      } else {
+        infile = fopen(argv[1], "r");
+        assert(infile != NULL);
+      }
   }
 
   if(fscanf(infile, "p cnf %lu %lu\n", &nr_of_variables, &nr_of_clauses) != 2)

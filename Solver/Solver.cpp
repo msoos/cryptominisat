@@ -1674,7 +1674,6 @@ PropBy Solver::propagate(const bool update)
         while (qhead2 < trail.size()) {
             Lit p = trail[qhead2++];     // 'p' is enqueued fact to propagate.
             vec<Watched>& ws = watches[p.toInt()];
-            num_props += 2;
             vec2<Watched>::iterator i = ws.getData();
             vec2<Watched>::iterator end = ws.getDataEnd();
             for (; i != end; i++) {
