@@ -29,7 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include "VarReplacer.h"
 #include "PartHandler.h"
 #include "Gaussian.h"
+
+#ifndef _MSC_VER
 #include <sys/mman.h>
+#endif //_MSC_VER
+
 
 //For mild debug info:
 //#define DEBUG_CLAUSEALLOCATOR
@@ -156,11 +160,16 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         #endif //DEBUG_CLAUSEALLOCATOR
 
         BASE_DATA_TYPE *dataStart;
+        #ifdef _MSC_VER
+        dataStart = (BASE_DATA_TYPE *)malloc(sizeof(BASE_DATA_TYPE) * nextSize);
+        #else
         int ret = posix_memalign((void**)&dataStart, getpagesize(), sizeof(BASE_DATA_TYPE) * nextSize);
         if (ret != 0) exit(-1);
         assert(dataStart != NULL);
         int err = madvise(dataStart, sizeof(BASE_DATA_TYPE) * nextSize, MADV_RANDOM);
         assert(err == 0);
+        #endif // _MSC_VER
+
         dataStarts.push(dataStart);
         sizes.push(0);
         maxSizes.push(nextSize);
@@ -352,11 +361,16 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force)
         newSizes.push(0);
         newOrigClauseSizes.push();
         BASE_DATA_TYPE* pointer;
+        #ifdef _MSC_VER
+        pointer = (BASE_DATA_TYPE*)malloc(sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
+        #else
         int ret = posix_memalign((void**)&pointer, getpagesize(), sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
         if (ret != 0) exit(-1);
         assert(pointer != NULL);
         int err = madvise(pointer, sizeof(BASE_DATA_TYPE) * newMaxSizes[i], MADV_RANDOM);
         assert(err == 0);
+        #endif
+
         newDataStartsPointers.push(pointer);
         newDataStarts.push(pointer);
     }
