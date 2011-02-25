@@ -1469,9 +1469,8 @@ is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
 template<bool full>
-inline const bool Solver::propBinaryClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl)
+inline const bool Solver::propBinaryClause(vec2<Watched>::iterator &i, const Lit p, PropBy& confl)
 {
-    *j++ = *i;
     lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
         if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p));
@@ -1494,9 +1493,8 @@ is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
 template<bool full>
-inline const bool Solver::propTriClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl)
+inline const bool Solver::propTriClause(vec2<Watched>::iterator &i, const Lit p, PropBy& confl)
 {
-    *j++ = *i;
     lbool val = value(i->getOtherLit());
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
@@ -1665,6 +1663,7 @@ template<bool full>
 PropBy Solver::propagate(const bool update)
 {
     PropBy confl;
+    uint32_t qhead2 = qhead;
     uint32_t num_props = 0;
 
     #ifdef VERBOSE_DEBUG
@@ -1672,7 +1671,21 @@ PropBy Solver::propagate(const bool update)
     #endif
 
     while (qhead < trail.size()) {
-        Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
+        while (qhead2 < trail.size()) {
+            Lit p = trail[qhead2++];     // 'p' is enqueued fact to propagate.
+            vec<Watched>& ws = watches[p.toInt()];
+            num_props += 2;
+            vec2<Watched>::iterator i = ws.getData();
+            vec2<Watched>::iterator end = ws.getDataEnd();
+            for (; i != end; i++) {
+                if (i->isBinary()) {
+                    if (!propBinaryClause<full>(i, p, confl)) goto end;
+                    else continue;
+                } //end BINARY
+            }
+        }
+
+        Lit p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec2<Watched>&  ws  = watches[p.toInt()];
         num_props += ws.size()/2 + 2;
 
@@ -1687,12 +1700,14 @@ PropBy Solver::propagate(const bool update)
         vec2<Watched>::iterator end = ws.getDataEnd();
         for (; i != end; i++) {
             if (i->isBinary()) {
-                if (!propBinaryClause<full>(i, j, p, confl)) break;
-                else continue;
+                *j++ = *i;
+                //no need to propagate, it's propaged above
+                continue;
             } //end BINARY
 
             if (i->isTriClause()) {
-                if (!propTriClause<full>(i, j, p, confl)) break;
+                *j++ = *i;
+                if (!propTriClause<full>(i, p, confl)) break;
                 else continue;
             } //end TRICLAUSE
 
@@ -1723,6 +1738,7 @@ PropBy Solver::propagate(const bool update)
         //assert(i >= j);
         ws.shrink_(i-j);
     }
+    end:
     propagations += num_props;
     simpDB_props -= num_props;
 
