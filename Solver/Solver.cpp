@@ -1713,9 +1713,7 @@ PropBy Solver::propagate(const bool update)
             if (i->isClause()) {
                 num_props += 4;
                 if (!propNormalClause<full>(i, j, end, p, confl, update)) break;
-                else {
-                    continue;
-                }
+                else continue;
             } //end CLAUSE
 
             if (i->isXorClause()) {
