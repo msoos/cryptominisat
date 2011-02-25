@@ -1431,12 +1431,12 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
 
     //assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
 
-    assert(assigns[p.var()].isUndef());
     const Var v = p.var();
+    assert(value(v).isUndef());
     assigns [v] = boolToLBool(!p.sign());
     level   [v] = decisionLevel();
     reason  [v] = from;
-    polarity[p.var()] = p.sign();
+    polarity[v] = p.sign();
     trail.push(p);
     #if WATCHED_CACHE_NUM > 0
     __builtin_prefetch(watches.getData() + p.toInt());
