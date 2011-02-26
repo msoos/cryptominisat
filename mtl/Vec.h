@@ -89,6 +89,9 @@ public:
     void     capacity (uint32_t size) { grow(size); }
     const bool empty() const {return size() == 0;}
 
+    typedef T* iterator;
+    typedef const T* const_iterator;
+
     // Stack interface:
     void     reserve(uint32_t res)     { if (cap < res) {cap = res; data = (T*)realloc(data, cap * sizeof(T));}}
     void     push  (void)
