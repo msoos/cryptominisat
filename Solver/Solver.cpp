@@ -1496,6 +1496,8 @@ template<bool full>
 inline const bool Solver::propTriClause(vec2<Watched>::iterator &i, const Lit p, PropBy& confl)
 {
     lbool val = value(i->getOtherLit());
+    if (val == l_True) return true;
+
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
         if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
