@@ -682,6 +682,7 @@ void FailedLitSearcher::addMyImpliesSetAsBins(Lit lit, int32_t& difference)
         return;
     }
 
+    uint64_t backupProps = solver.propagations;
     vector<BinAddData> litsAddedEach;
     uint32_t i = 0;
     for (const Var *var = myImpliesSet.getData(), *end2 = myImpliesSet.getDataEnd(); var != end2; var++, i++) {
@@ -728,6 +729,7 @@ void FailedLitSearcher::addMyImpliesSetAsBins(Lit lit, int32_t& difference)
         }
     }
     assert(litsAddedEach.empty());
+    solver.propagations = backupProps;
 }
 
 
