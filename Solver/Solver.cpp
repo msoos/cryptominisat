@@ -1441,7 +1441,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     #if WATCHED_CACHE_NUM > 0
     __builtin_prefetch(watches.getData() + p.toInt());
     #else
-    __builtin_prefetch(watches[p.toInt()].getData());
+    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].getData());
     #endif
 
     #ifdef STATS_NEEDED
