@@ -1683,6 +1683,14 @@ PropBy Solver::propagate(const bool update)
                     if (!propBinaryClause<full>(i, p, confl)) goto end;
                     else continue;
                 } //end BINARY
+
+                if (full && i->isClause()) {
+                    __builtin_prefetch(assigns.getData() + i->getBlockedLit().var());
+                }
+
+                if (full && i->isTriClause()) {
+                    __builtin_prefetch(assigns.getData() + i->getOtherLit().var());
+                }
             }
         }
 
