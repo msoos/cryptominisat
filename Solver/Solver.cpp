@@ -1441,7 +1441,7 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     #if WATCHED_CACHE_NUM > 0
     __builtin_prefetch(watches.getData() + p.toInt());
     #else
-    __builtin_prefetch(watches[p.toInt()].getData());
+    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].getData());
     #endif
 
     #ifdef STATS_NEEDED
@@ -1673,7 +1673,7 @@ PropBy Solver::propagate(const bool update)
     #endif
 
     while (qhead < trail.size()) {
-        while (qhead2 < trail.size()) {
+        while (qhead2 < trail.size() && full) {
             Lit p = trail[qhead2++];     // 'p' is enqueued fact to propagate.
             vec<Watched>& ws = watches[p.toInt()];
             vec2<Watched>::iterator i = ws.getData();
@@ -1710,8 +1710,8 @@ PropBy Solver::propagate(const bool update)
         for (; i != end; i++) {
             if (i->isBinary()) {
                 *j++ = *i;
-                //no need to propagate, it's propaged above
-                continue;
+                if (!full && !propBinaryClause<full>(i, p, confl)) break;
+                else continue;
             } //end BINARY
 
             if (i->isTriClause()) {

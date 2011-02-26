@@ -838,7 +838,7 @@ inline void Solver::uncheckedEnqueueLight(const Lit p)
     #if WATCHED_CACHE_NUM > 0
     __builtin_prefetch(watches.getData() + p.toInt());
     #else
-    __builtin_prefetch(watches[p.toInt()].getData());
+    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].getData());
     #endif
 }
 
@@ -854,7 +854,7 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     #if WATCHED_CACHE_NUM > 0
     __builtin_prefetch(watches.getData() + p.toInt());
     #else
-    __builtin_prefetch(watches[p.toInt()].getData());
+    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].getData());
     #endif
 }
 
