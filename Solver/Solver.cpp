@@ -433,6 +433,10 @@ template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group
         }
     }
 
+    for (uint32_t i = 0; i < ps.size(); i++) {
+        std::swap(ps[i], ps[(mtrand.randInt() % (ps.size()-i)) + i]);
+    }
+
     return true;
 }
 
