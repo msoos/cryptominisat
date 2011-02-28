@@ -858,5 +858,53 @@ inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLev
     binPropData[p.var()].learntLeadHere = learntLeadHere;
 }
 
+/**
+@brief Enqueues&sets a new fact that has been found
+
+Call this when a fact has been found. Sets the value, enqueues it for
+propagation, sets its level, sets why it was propagated, saves the polarity,
+and does some logging if logging is enabled.
+
+@p p the fact to enqueue
+@p from Why was it propagated (binary clause, tertiary clause, normal clause)
+*/
+inline void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
+{
+    #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
+    #ifndef VERBOSE_DEBUG
+    if (decisionLevel() == 0)
+    #endif //VERBOSE_DEBUG
+    std::cout << "uncheckedEnqueue var " << p.var()+1
+    << " to val " << !p.sign()
+    << " level: " << decisionLevel()
+    << " sublevel: " << trail.size()
+    << " by: " << from << std::endl;
+    if (from.isClause() && !from.isNULL()) {
+        std::cout << "by clause: " << *clauseAllocator.getPointer(from.getClause()) << std::endl;
+    }
+    #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
+
+    //assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
+
+    const Var v = p.var();
+    assert(value(v).isUndef());
+    #if WATCHED_CACHE_NUM > 0
+    __builtin_prefetch(watches.getData() + p.toInt());
+    #else
+    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].getData());
+    #endif
+
+    assigns [v] = boolToLBool(!p.sign());
+    level   [v] = decisionLevel();
+    reason  [v] = from;
+    polarity[v] = p.sign();
+    trail.push(p);
+
+    #ifdef STATS_NEEDED
+    if (dynamic_behaviour_analysis)
+        logger.propagation(p, from);
+    #endif
+}
+
 //=================================================================================================
 #endif //SOLVER_H
