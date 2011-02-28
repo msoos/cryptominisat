@@ -36,9 +36,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 //
 // NOTE! Don't use this vector on datatypes that cannot be re-located in memory (with realloc)
 
-
+#if 0
 #define WATCHED_CACHE_NUM 20
-
 template<class T>
 class vec2 {
     uint32_t sz;
@@ -269,6 +268,12 @@ vec2<T>::vec2(const vec2<T>& other) :
     memcpy(localData, other.localData, sizeof(T)*WATCHED_CACHE_NUM);
     if (sz > WATCHED_CACHE_NUM) memcpy(data, other.data, sizeof(T)*(sz-WATCHED_CACHE_NUM));
 }
+#else
 
+//make vec2 equivalent to vec
+#define WATCHED_CACHE_NUM 0
+#define vec2 vec
+
+#endif //if 1
 
 #endif
