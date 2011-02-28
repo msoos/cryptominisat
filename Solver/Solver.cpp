@@ -1665,7 +1665,6 @@ template<bool full>
 PropBy Solver::propagate(const bool update)
 {
     PropBy confl;
-    uint32_t qhead2 = qhead;
     uint32_t num_props = 0;
 
     #ifdef VERBOSE_DEBUG
@@ -1673,27 +1672,6 @@ PropBy Solver::propagate(const bool update)
     #endif
 
     while (qhead < trail.size()) {
-        while (qhead2 < trail.size()) {
-            Lit p = trail[qhead2++];     // 'p' is enqueued fact to propagate.
-            vec<Watched>& ws = watches[p.toInt()];
-            vec2<Watched>::iterator i = ws.getData();
-            vec2<Watched>::iterator end = ws.getDataEnd();
-            for (; i != end; i++) {
-                if (i->isBinary()) {
-                    if (!propBinaryClause<full>(i, p, confl)) goto end;
-                    else continue;
-                } //end BINARY
-
-                if (full && i->isClause()) {
-                    __builtin_prefetch(assigns.getData() + i->getBlockedLit().var());
-                }
-
-                if (full && i->isTriClause()) {
-                    __builtin_prefetch(assigns.getData() + i->getOtherLit().var());
-                }
-            }
-        }
-
         Lit p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec2<Watched>&  ws  = watches[p.toInt()];
         num_props += ws.size()/2 + 2;
@@ -1710,8 +1688,8 @@ PropBy Solver::propagate(const bool update)
         for (; i != end; i++) {
             if (i->isBinary()) {
                 *j++ = *i;
-                //no need to propagate, it's propaged above
-                continue;
+                if (!propBinaryClause<full>(i, p, confl)) break;
+                else continue;
             } //end BINARY
 
             if (i->isTriClause()) {
@@ -1745,7 +1723,6 @@ PropBy Solver::propagate(const bool update)
         //assert(i >= j);
         ws.shrink_(i-j);
     }
-    end:
     propagations += num_props;
     simpDB_props -= num_props;
 
