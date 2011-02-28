@@ -2480,9 +2480,10 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     restartType = static_restart;
 
     printRestartStat("S");
-    while(status == l_Undef && conflicts-origConflicts < numConfls) {
+    while(status == l_Undef && conflicts-origConflicts < numConfls && needToInterrupt == false) {
         status = search(100, std::numeric_limits<uint64_t>::max(), false);
     }
+    if (needToInterrupt) return l_Undef;
     printRestartStat("S");
     if (status != l_Undef) goto end;
     #endif //BURST_SEARCH
