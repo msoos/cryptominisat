@@ -104,7 +104,9 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , simpDB_props     (0)
 {
     mtrand.seed(conf.origSeed);
+    #ifdef ENABLE_UNWIND_GLUE
     assert(conf.maxGlue < MAX_THEORETICAL_GLUE);
+    #endif //ENABLE_UNWIND_GLUE
     varReplacer = new VarReplacer(*this);
     clauseCleaner = new ClauseCleaner(*this);
     failedLitSearcher = new FailedLitSearcher(*this);
@@ -167,7 +169,9 @@ Var Solver::newVar(bool dvar)
     activity  .push(0);
     seen      .push_back(0);
     seen      .push_back(0);
+    #ifdef ENABLE_UNWIND_GLUE
     unWindGlue.push(NULL);
+    #endif //ENABLE_UNWIND_GLUE
 
     //Transitive OTF self-subsuming resolution
     seen2     .push_back(0);
@@ -658,6 +662,7 @@ void Solver::cancelUntil(int level)
             #endif
             assigns[var] = l_Undef;
             insertVarOrder(var);
+            #ifdef ENABLE_UNWIND_GLUE
             if (unWindGlue[var] != NULL) {
                 #ifdef UNWINDING_DEBUG
                 std::cout << "unwind, var:" << var
@@ -673,6 +678,7 @@ void Solver::cancelUntil(int level)
                 clauseAllocator.clauseFree(clauseToFree);
                 clauseToFree = NULL;
             }
+            #endif //ENABLE_UNWIND_GLUE
         }
         qhead = trail_lim[level];
         trail.shrink_(trail.size() - trail_lim[level]);
@@ -1186,7 +1192,9 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     if (out_learnt.size() == 1
         || !oldConfl.isClause()
         || oldConfl.getClause()->isXor()
+        #ifdef ENABLE_UNWIND_GLUE
         || (conf.doMaxGlueDel && oldConfl.getClause()->getGlue() > conf.maxGlue)
+        #endif //ENABLE_UNWIND_GLUE
         || out_learnt.size() >= oldConfl.getClause()->size()) return NULL;
 
     if (!subset(out_learnt, *oldConfl.getClause(), seen)) return NULL;
@@ -2301,6 +2309,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
                 logger.set_group_name(c->getGroup(), "learnt clause");
             #endif
             c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
+            #ifdef ENABLE_UNWIND_GLUE
             if (conf.doMaxGlueDel && glue > conf.maxGlue) {
                 nbClOverMaxGlue++;
                 nbCompensateSubsumer++;
@@ -2310,8 +2319,11 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
                 c->plainPrint();
                 #endif //VERBOSE_DEBUG
             } else {
+                #endif //ENABLE_UNWIND_GLUE
                 learnts.push(c);
+                #ifdef ENABLE_UNWIND_GLUE
             }
+            #endif //ENABLE_UNWIND_GLUE
             c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
             attachClause(*c);
             uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));

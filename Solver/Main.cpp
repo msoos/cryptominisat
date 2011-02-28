@@ -308,8 +308,10 @@ void Main::printUsage(char** argv)
     printf("                     subsuming resolution\n");
     printf("  --nocacheotfssr  = Don't cache 1-level equeue. Less memory used, but\n");
     printf("                     disables trans OTFSSR, adv. clause vivifier, etc.\n");
+    #ifdef ENABLE_UNWIND_GLUE
     printf("  --maxgluedel     = Automatically delete clauses over max glue. See '--maxglue'\n");
     printf("  --maxglue        = [0 - 2^%d-1] default: %d. Glue value above which we\n", MAX_GLUE_BITS, conf.maxGlue);
+    #endif //ENABLE_UNWIND_GLUE
     printf("                     throw the clause away on backtrack.\n");
     printf("  --threads        = Num threads (default is 1)\n");
     printf("\n");
@@ -608,6 +610,7 @@ void Main::parseCommandLine()
             conf.doRemUselessLBins = false;
         } else if ((value = hasPrefix(argv[i], "--nobxor"))) {
             conf.doBXor = false;
+        #ifdef ENABLE_UNWIND_GLUE
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 0;
             if (sscanf(value, "%d", &glue) < 0 || glue < 2) {
@@ -622,6 +625,7 @@ void Main::parseCommandLine()
             conf.maxGlue = (uint32_t)glue;
         } else if ((value = hasPrefix(argv[i], "--maxgluedel"))) {
             conf.doMaxGlueDel = true;
+        #endif //ENABLE_UNWIND_GLUE
         } else if ((value = hasPrefix(argv[i], "--threads="))) {
             numThreads = 0;
             if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {

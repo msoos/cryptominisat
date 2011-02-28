@@ -66,7 +66,9 @@ class SolverConf
         bool      doSubsWBins;
         bool      doSubsWNonExistBins;  ///<Try to do subsumption and self-subsuming resolution with non-existent binary clauses (i.e. binary clauses that don't exist but COULD exists)
         bool      doRemUselessLBins; ///<Try to remove useless learnt binary clauses
+        #ifdef ENABLE_UNWIND_GLUE
         bool      doMaxGlueDel;
+        #endif //ENABLE_UNWIND_GLUE
         bool      doPrintAvgBranch;
         bool      doCacheOTFSSR;
         bool      doExtendedSCC;
@@ -82,7 +84,9 @@ class SolverConf
         uint32_t  maxDumpLearntsSize; ///<When dumping the learnt clauses, this is the maximum clause size that should be dumped
         bool      libraryUsage;       ///<Set to true if not used as a library. In fact, this is TRUE by default, and Main.cpp sets it to "FALSE". Disables some simplifications at the beginning of solving (mostly performStepsBeforeSolve() )
         bool      greedyUnbound;      ///<If set, then variables will be greedily unbounded (set to l_Undef). This is EXPERIMENTAL
+        #ifdef ENABLE_UNWIND_GLUE
         uint32_t  maxGlue;            ///< Learnt clauses (when doing dynamic restarts) with glue above this value will be removed immediately on backtracking
+        #endif //ENABLE_UNWIND_GLUE
         RestartType fixRestartType;   ///<If set, the solver will always choose the given restart strategy instead of automatically trying to guess a strategy. Note that even if set to dynamic_restart, there will be a few restarts made statically after each full restart.
 
         uint32_t origSeed;

@@ -62,7 +62,9 @@ SolverConf::SolverConf() :
         , doSubsWBins      (true)
         , doSubsWNonExistBins(true)
         , doRemUselessLBins(true)
+        #ifdef ENABLE_UNWIND_GLUE
         , doMaxGlueDel     (false)
+        #endif //ENABLE_UNWIND_GLUE
         , doPrintAvgBranch (false)
         , doCacheOTFSSR    (true)
         , doExtendedSCC    (true)
@@ -75,7 +77,9 @@ SolverConf::SolverConf() :
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , greedyUnbound    (false)
+        #ifdef ENABLE_UNWIND_GLUE
         , maxGlue          (DEFAULT_MAX_GLUE)
+        #endif //ENABLE_UNWIND_GLUE
         , fixRestartType   (auto_restart)
         , origSeed(0)
 {

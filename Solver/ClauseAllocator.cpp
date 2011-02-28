@@ -498,7 +498,9 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     updatePointers(solver->learnts);
     updatePointers(solver->xorclauses);
     updatePointers(solver->freeLater);
+    #ifdef ENABLE_UNWIND_GLUE
     updatePointers(solver->unWindGlue);
+    #endif //ENABLE_UNWIND_GLUE
 
     //No need to update varreplacer, since it only stores binary clauses that
     //must have been allocated such as to use the pool

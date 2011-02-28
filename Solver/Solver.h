@@ -347,7 +347,9 @@ protected:
     vec<Var>            lastDecisionLevel;
     #endif
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
+    #ifdef ENABLE_UNWIND_GLUE
     vec<Clause*>        unWindGlue;
+    #endif //ENABLE_UNWIND_GLUE
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
