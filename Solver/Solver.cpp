@@ -1433,16 +1433,17 @@ void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
 
     const Var v = p.var();
     assert(value(v).isUndef());
-    assigns [v] = boolToLBool(!p.sign());
-    level   [v] = decisionLevel();
-    reason  [v] = from;
-    polarity[v] = p.sign();
-    trail.push(p);
     #if WATCHED_CACHE_NUM > 0
     __builtin_prefetch(watches.getData() + p.toInt());
     #else
     if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].getData());
     #endif
+
+    assigns [v] = boolToLBool(!p.sign());
+    level   [v] = decisionLevel();
+    reason  [v] = from;
+    polarity[v] = p.sign();
+    trail.push(p);
 
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)
