@@ -1664,7 +1664,7 @@ bool Subsumer::maybeEliminate(const Var var)
             posSize++;
             before_literals += poss[i].clause->size();
         }
-    posSize =+ numNonLearntPos;
+    posSize += numNonLearntPos;
 
     uint32_t negSize = 0;
     for (uint32_t i = 0; i < negs.size(); i++)
