@@ -1299,7 +1299,7 @@ const bool Subsumer::simplifyBySubsumption()
         //subsumeBinsWithBins();
         //if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         solver.clauseCleaner->removeSatisfiedBins();
-    } while (cl_touched.nElems() > 100 && numMaxSubsume0 > 0);
+    } while (cl_touched.nElems() > 100);
 
     if (!solver.ok) return false;
 
