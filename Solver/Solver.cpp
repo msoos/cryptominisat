@@ -1219,10 +1219,10 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     if (conf.doCacheOTFSSR && conf.doMinimLMoreRecur) {
         switch(lastSelectedRestartType) {
             case dynamic_restart :
-                clDoMinLRec |= glue < 0.6*glueHistory.getAvgAllDouble();
+                clDoMinLRec |= glue < 0.65*glueHistory.getAvgAllDouble();
                 //NOTE: No "break;" here on purpose
             case static_restart :
-                clDoMinLRec |= cl.size() < 0.6*conflSizeHist.getAvgDouble();
+                clDoMinLRec |= cl.size() < 0.65*conflSizeHist.getAvgDouble();
                 break;
             default :
                 assert(false);
