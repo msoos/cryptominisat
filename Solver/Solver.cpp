@@ -1504,9 +1504,7 @@ inline const bool Solver::propNormalClause(vec2<Watched>::iterator &i, vec2<Watc
         #ifdef VERBOSE_DEBUG
         printf("Zeroth watch is true\n");
         #endif
-        j->setNormClause();
-        j->setNormOffset(offset);
-        j->setBlockedLit(c[0]);
+        *j = Watched(offset, c[0]);
         j++;
         return true;
     }
