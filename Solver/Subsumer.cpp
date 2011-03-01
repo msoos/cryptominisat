@@ -1891,7 +1891,9 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
         for (uint32_t i = 0; i < negs.size(); i++)
             if (!negs[i].clause->learnt()) neg++;
 
-        uint32_t cost = pos * neg * 2 + numNonLearntBins(x) * neg + numNonLearntBins(~x) * pos;
+        uint32_t nNonLPos = numNonLearntBins(x);
+        uint32_t nNonLNeg = numNonLearntBins(~x);
+        uint32_t cost = pos*neg/4 +  nNonLPos*neg*2 + nNonLNeg*pos*2 + nNonLNeg*nNonLPos*6;
         cost_var.push(std::make_pair(cost, x.var()));
     }
     touchedVars.clear();
