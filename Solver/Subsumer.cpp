@@ -1110,7 +1110,7 @@ void Subsumer::clearAll()
 const bool Subsumer::eliminateVars()
 {
     #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c VARIABLE ELIMINIATION -- touchedVarsList size:" << touchedVarsList.size() << std::endl;
+    std::cout << "c VARIABLE ELIMINIATION -- touchedVars size:" << touchedVars.size() << std::endl;
     #endif
 
     uint32_t vars_elimed = 0;
@@ -1119,23 +1119,25 @@ const bool Subsumer::eliminateVars()
     orderVarsForElim(order);
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "Order size:" << order.size() << std::endl;
+    std::cout << "c #order size:" << order.size() << std::endl;
     #endif
 
+    uint32_t numtry = 0;
     for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
         Var var = order[i];
-        if (!cannot_eliminate[var]
-            && solver.decision_var[var]
-            && maybeEliminate(order[i])
-            ) {
-            if (!solver.ok) return false;
-            vars_elimed++;
-            numMaxElimVars--;
+        if (!cannot_eliminate[var] && solver.decision_var[var]) {
+            numtry++;
+            if (maybeEliminate(order[i])) {
+                if (!solver.ok) return false;
+                vars_elimed++;
+                numMaxElimVars--;
+            }
         }
     }
     numVarsElimed += vars_elimed;
 
     #ifdef BIT_MORE_VERBOSITY
+    std::cout << "c  #try to eliminate: " << numtry << std::endl;
     std::cout << "c  #var-elim: " << vars_elimed << std::endl;
     #endif
 
