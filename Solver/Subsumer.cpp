@@ -649,6 +649,7 @@ const bool Subsumer::subsume0AndSubsume1()
         #endif //VERBOSE_DEBUG
 
         uint32_t s1Added = 0;
+        const bool doSubs1Next = (numMaxSubsume1 > 0);
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
             if (it->clause == NULL) continue;
             Clause& cl = *it->clause;
@@ -677,9 +678,7 @@ const bool Subsumer::subsume0AndSubsume1()
 
             remClTouched.push(*it);
             it->clause->unsetStrenghtened();
-            if (numMaxSubsume1 > 0) {
-                it->clause->unsetChanged();
-            }
+            if (doSubs1Next) it->clause->unsetChanged();
         }
         //std::cout << "s0.nElems(): " << s0.nElems() << std::endl;
         //std::cout << "s1.nElems(): " << s1.nElems() << std::endl;
@@ -695,7 +694,7 @@ const bool Subsumer::subsume0AndSubsume1()
         }
         s0.clear();
 
-        if (numMaxSubsume1 > 0) {
+        if (doSubs1Next) {
             for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
                 if (it->clause == NULL) continue;
                 subsume1(*it->clause);
