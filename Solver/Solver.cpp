@@ -956,10 +956,20 @@ Lit Solver::pickBranchLit()
 
     Var next = var_Undef;
 
+    /* Skip variables which have already been defined (this will usually happen
+     * because of propagations/implicit assignments) */
+    for (unsigned int i = decisionLevel(); i < branching_variables.size(); ++i) {
+        Var v = branching_variables[i];
+        if (assigns[v] == l_Undef) {
+            next = v;
+            break;
+        }
+    }
+
     bool random = mtrand.randDblExc() < conf.random_var_freq;
 
     // Random decision:
-    if (random && !order_heap.empty()) {
+    if (next == var_Undef && random && !order_heap.empty()) {
         if (conf.restrictPickBranch == 0)
             next = order_heap[mtrand.randInt(order_heap.size()-1)];
         else

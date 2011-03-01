@@ -158,6 +158,7 @@ public:
     // Variable mode:
     //
     void    setDecisionVar (Var v, bool b);         ///<Declare if a variable should be eligible for selection in the decision heuristic.
+    void    addBranchingVariable (Var v);
 
     // Read state:
     //
@@ -335,6 +336,7 @@ protected:
     bqueue<uint32_t>    avgBranchDepth;   ///< Avg branch depth. We collect this, and use it to do random look-around in the searchspace during simplifyProblem()
     #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     MTRand              mtrand;           ///< random number generator
+    vector<Var>         branching_variables;
 
     /////////////////
     // Variable activities
@@ -720,6 +722,10 @@ inline void     Solver::setDecisionVar(Var v, bool b)
     if (b) {
         insertVarOrder(v);
     }
+}
+inline void      Solver::addBranchingVariable(Var v)
+{
+    branching_variables.push_back(v);
 }
 inline lbool     Solver::solve         ()
 {

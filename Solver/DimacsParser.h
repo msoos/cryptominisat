@@ -53,6 +53,7 @@ class DimacsParser
         void readClause(StreamBuffer& in, vec<Lit>& lits);
         void parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_t& glue, float& miniSatAct);
         void readFullClause(StreamBuffer& in);
+        void readBranchingOrder(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);
         void printHeader(StreamBuffer& in);
         void parseComments(StreamBuffer& in, const std::string str);

@@ -390,6 +390,22 @@ void DimacsParser::readFullClause(StreamBuffer& in)
     }
 }
 
+void DimacsParser::readBranchingOrder(StreamBuffer& in)
+{
+    skipWhitespace(in);
+
+    while (1) {
+        int parsed_var;
+        uint32_t len;
+
+        parsed_var = parseInt(in, len);
+        if (parsed_var == 0)
+            break;
+
+        solver->addBranchingVariable(parsed_var - 1);
+    }
+}
+
 /**
 @brief The main function: parses in a full DIMACS file
 
@@ -414,6 +430,10 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             ++in;
             parseString(in, str);
             parseComments(in, str);
+            break;
+        case 'b':
+            ++in;
+            readBranchingOrder(in);
             break;
         default:
             readFullClause(in);
