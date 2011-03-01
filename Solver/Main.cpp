@@ -299,12 +299,15 @@ void Main::printUsage(char** argv)
     printf("                     (called 'strong minimisation' in PrecoSat)\n");
     printf("  --nocalcreach    = Don't calculate reachability and interfere with\n");
     printf("                     variable decisions accordingly\n");
+    printf("  --nobxor         = Don't find equivalent lits during failed lit search\n");
     printf("  --norecotfssr    = Don't perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution\n");
     printf("  --nocacheotfssr  = Don't cache 1-level equeue. Less memory used, but\n");
     printf("                     disables trans OTFSSR, adv. clause vivifier, etc.\n");
+    #ifdef ENABLE_UNWIND_GLUE
     printf("  --maxgluedel     = Automatically delete clauses over max glue. See '--maxglue'\n");
     printf("  --maxglue        = [0 - 2^%d-1] default: %d. Glue value above which we\n", MAX_GLUE_BITS, conf.maxGlue);
+    #endif //ENABLE_UNWIND_GLUE
     printf("                     throw the clause away on backtrack.\n");
     printf("  --threads        = Num threads (default is 1)\n");
     printf("  --nogatefind     = Don't find gates&do ER\n");
@@ -344,10 +347,13 @@ void Main::printResultFunc(const MTSolver& S, const lbool ret, FILE* res)
         }
         fclose(res);
     } else {
-        if (ret == l_True)
-            std::cout << "s SATISFIABLE" << std::endl;
-        else if (ret == l_False)
-            std::cout << "s UNSATISFIABLE" << std::endl;
+        if (ret == l_True) {
+            if (!printResult) std::cout << "c SATISFIABLE" << std::endl;
+            else              std::cout << "s SATISFIABLE" << std::endl;
+        } else if (ret == l_False) {
+            if (!printResult) std::cout << "c UNSATISFIABLE" << std::endl;
+            else              std::cout << "s UNSATISFIABLE" << std::endl;
+        }
 
         if(ret == l_True && printResult) {
             std::stringstream toPrint;
@@ -607,6 +613,9 @@ void Main::parseCommandLine()
             conf.doER = false;
         } else if ((value = hasPrefix(argv[i], "--noalwaysfmin"))) {
             conf.doAlwaysFMinim = false;
+        } else if ((value = hasPrefix(argv[i], "--nobxor"))) {
+            conf.doBXor = false;
+        #ifdef ENABLE_UNWIND_GLUE
         } else if ((value = hasPrefix(argv[i], "--maxglue="))) {
             int glue = 0;
             if (sscanf(value, "%d", &glue) < 0 || glue < 2) {
@@ -621,6 +630,7 @@ void Main::parseCommandLine()
             conf.maxGlue = (uint32_t)glue;
         } else if ((value = hasPrefix(argv[i], "--maxgluedel"))) {
             conf.doMaxGlueDel = true;
+        #endif //ENABLE_UNWIND_GLUE
         } else if ((value = hasPrefix(argv[i], "--threads="))) {
             numThreads = 0;
             if (sscanf(value, "%d", &numThreads) < 0 || numThreads < 1) {
@@ -752,13 +762,26 @@ const int Main::solve()
         std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
     }
     if (conf.needToDumpOrig) {
-        solver.dumpOrigClauses(conf.origFilename);
-        std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
+        if (ret == l_False && conf.origFilename == "stdout") {
+            std::cout << "p cnf 0 1" << std::endl;
+            std::cout << "0";
+        } else if (ret == l_True && conf.origFilename == "stdout") {
+            std::cout << "p cnf " << solver.model.size() << " " << solver.model.size() << std::endl;
+            for (uint32_t i = 0; i < solver.model.size(); i++) {
+                std::cout << (solver.model[i] == l_True ? "" : "-") << i+1 << " 0" << std::endl;
+            }
+        } else {
+            solver.dumpOrigClauses(conf.origFilename);
+            if (conf.verbosity >= 1)
+                std::cout << "c Simplified original clauses dumped to file '"
+                << conf.origFilename << "'" << std::endl;
+        }
     }
     if (ret == l_Undef && conf.verbosity >= 1) {
         std::cout << "c Not finished running -- signal caught or maximum restart reached" << std::endl;
     }
     if (conf.verbosity >= 1) solver.printStats();
+
     printResultFunc(solver, ret, res);
 
     return correctReturnValue(ret);

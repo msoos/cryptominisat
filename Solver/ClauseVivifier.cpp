@@ -338,7 +338,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
                 }
             }
             done += i2;
-            failed = (!solver.propagate<false>().isNULL());
+            failed = (!solver.propagate<false>(false).isNULL());
             if (failed) break;
         }
         solver.cancelUntilLight();

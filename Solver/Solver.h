@@ -40,6 +40,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include "PropBy.h"
 #include "Vec.h"
+#include "Vec2.h"
 #include "Heap.h"
 #include "Alg.h"
 #include "MersenneTwister.h"
@@ -279,7 +280,7 @@ public:
     // Variable mode:
     //
     void    setDecisionVar (Var v, bool b);         ///<Declare if a variable should be eligible for selection in the decision heuristic.
-    void    setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable
+    void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
 
     // Read state:
     //
@@ -308,6 +309,7 @@ public:
     void dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
     void needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
     void dumpOrigClauses(const std::string& fileName) const;
+    void printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const;
 
     #ifdef USE_GAUSS
     const uint32_t get_sum_gauss_called() const;
@@ -462,7 +464,7 @@ protected:
     vec<Clause*>        learnts;          ///< List of learnt clauses.
     uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
-    vec<vec<Watched> >  watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
+    vec<vec2<Watched> > watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vector<ClauseData>  clauseData;       ///< Which lit is watched in clause
     vec<lbool>          assigns;          ///< The current assignments
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
@@ -496,12 +498,16 @@ protected:
     /////////////////////////
     // For glue calculation & dynamic restarts
     /////////////////////////
-    uint64_t            MYFLAG; ///<For glue calculation
+    //uint64_t            MYFLAG; ///<For glue calculation
     template<class T>
     const uint32_t      calcNBLevels(const T& ps);
-    vec<uint64_t>       permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
+    #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
+    vec<Var>            lastDecisionLevel;
+    #endif
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
+    #ifdef ENABLE_UNWIND_GLUE
     vec<Clause*>        unWindGlue;
+    #endif //ENABLE_UNWIND_GLUE
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
@@ -564,15 +570,15 @@ protected:
     const bool propagateBinExcept(const Lit exceptLit);
     const bool propagateBinOneLevel();
     template<bool full>
-    PropBy     propagate(); // Perform unit propagation. Returns possibly conflicting clause.
+    PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
     template<bool full>
-    const bool propTriClause   (Watched* i, const Lit p, PropBy& confl);
+    const bool propTriClause   (vec2<Watched>::iterator &i, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propBinaryClause(Watched* i, const Lit p, PropBy& confl);
+    const bool propBinaryClause(vec2<Watched>::iterator &i, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propNormalClause(Watched* &i, Watched* &j, const Lit p, PropBy& confl);
+    const bool propNormalClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propXorClause   (Watched* &i, Watched* &j, const Lit p, PropBy& confl);
+    const bool propXorClause   (vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl);
     void     sortWatched();
 
     ///////////////
@@ -736,6 +742,7 @@ protected:
     void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
     void reArrangeClauses();
     void reArrangeClause(Clause* clause);
+    vector<bool> polarity;      // The preferred polarity of each variable.
 };
 
 
@@ -1057,11 +1064,16 @@ inline void  Solver::uncheckedEnqueue(const Lit p, const PropBy from)
 
     const Var v = p.var();
     assert(value(v).isUndef());
+    #if WATCHED_CACHE_NUM > 0
+    __builtin_prefetch(watches.getData() + p.toInt());
+    #else
+    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].getData());
+    #endif
+
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     reason  [v] = from;
     trail.push(p);
     propagations++;
-    __builtin_prefetch(watches[p.toInt()].getData());
 
     if (decisionLevel() == 0) varData[v].level = 0;
 
@@ -1073,21 +1085,31 @@ inline void  Solver::uncheckedEnqueue(const Lit p, const PropBy from)
 
 inline void Solver::uncheckedEnqueueLight(const Lit p)
 {
-    assert(assigns[p.var()] == l_Undef);
+    assert(value(p.var()) == l_Undef);
+    #if WATCHED_CACHE_NUM > 0
+    __builtin_prefetch(watches.getData() + p.toInt());
+    #else
+    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].getData());
+    #endif
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
-    __builtin_prefetch(watches[p.toInt()].getData());
+    if (decisionLevel() == 0) varData[p.var()].level = 0;
 }
 
-inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev2Ancestor, const bool learntLeadHere)
+inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev1Ancestor, const bool learntLeadHere)
 {
-    assert(assigns[p.var()] == l_Undef);
+    assert(value(p.var()) == l_Undef);
+    #if WATCHED_CACHE_NUM > 0
+    __builtin_prefetch(watches.getData() + p.toInt());
+    #else
+    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].getData());
+    #endif
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
     binPropData[p.var()].lev = binSubLevel;
-    binPropData[p.var()].lev1Ancestor = lev2Ancestor;
+    binPropData[p.var()].lev1Ancestor = lev1Ancestor;
     binPropData[p.var()].learntLeadHere = learntLeadHere;
     __builtin_prefetch(watches[p.toInt()].getData(), 0);
 }

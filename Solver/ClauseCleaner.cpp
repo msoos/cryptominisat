@@ -19,10 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include "DataSync.h"
 
-#ifdef _MSC_VER
-#define __builtin_prefetch(a,b,c)
-#endif //_MSC_VER
-
 //#define DEBUG_CLEAN
 //#define VERBOSE_DEBUG
 
@@ -55,13 +51,13 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
     uint32_t numRemovedHalfNonLearnt = 0;
     uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
-    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (vec2<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
-        vec<Watched>& ws = *it;
+        vec2<Watched>& ws = *it;
 
-        Watched* i = ws.getData();
-        Watched* j = i;
-        for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
+        vec2<Watched>::iterator i = ws.getData();
+        vec2<Watched>::iterator j = i;
+        for (vec2<Watched>::iterator end2 = ws.getDataEnd(); i != end2; i++) {
             if (i->isBinary() && satisfied(*i, lit)) {
                 if (i->getLearnt()) numRemovedHalfLearnt++;
                 else {
@@ -99,8 +95,8 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
 
     Clause **s, **ss, **end;
     for (s = ss = cs.getData(), end = s + cs.size();  s != end; s++) {
-        if (s+1 != end)
-            __builtin_prefetch(*(s+1), 1, 0);
+        if (s+1 != end) __builtin_prefetch(*(s+1));
+
         if (cleanClause(*s)) {
             solver.clauseAllocator.clauseFree(*s);
             if (type == learnts) solver.nbCompensateSubsumer++;

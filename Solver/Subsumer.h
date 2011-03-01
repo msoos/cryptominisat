@@ -47,6 +47,55 @@ inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
     return os;
 }
 
+class TouchList
+{
+    public:
+        void resize(uint32_t size)
+        {
+            touched.resize(size, 0);
+        }
+
+        void addOne(Var var)
+        {
+            assert(touched.size() == var);
+            touched.push_back(1);
+            touchedList.push_back(var);
+        }
+
+        void touch(Lit lit, const bool learnt)
+        {
+            if (!learnt) touch(lit.var());
+        }
+
+        void touch(Var var)
+        {
+            if (!touched[var]) {
+                touchedList.push_back(var);
+                touched[var]= 1;
+            }
+        }
+
+        void clear()
+        {
+            touchedList.clear();
+            std::fill(touched.begin(), touched.end(), 0);
+        }
+
+        vector<Var>::const_iterator begin() const
+        {
+            return touchedList.begin();
+        }
+
+        vector<Var>::const_iterator end() const
+        {
+            return touchedList.end();
+        }
+
+    private:
+        vector<Var> touchedList;
+        vector<char> touched;
+};
+
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
 
@@ -64,15 +113,12 @@ public:
     Subsumer(Solver& S2);
 
     //Called from main
-    const bool simplifyBySubsumption(const bool alsoLearnt = false);
+    const bool simplifyBySubsumption();
     void newVar();
 
     //UnElimination
     void extendModel(Solver& solver2);
     const bool unEliminate(const Var var);
-
-    //touching
-    void touchChangeVars(const Lit p);
 
     //Get-functions
     const vec<char>& getVarElimed() const;
@@ -101,8 +147,7 @@ private:
     */
     vec<Clause*>           clauses;
     vec<AbstData>          clauseData;
-    vec<char>              touchedVars;      ///<true when a variable is part of a removed clause.
-    vec<Var>               touchedVarsList;  ///<A list of the true elements in 'touched'.
+    TouchList              touchedVars;  ///<A list of the true elements in 'touched'.
     CSet                   cl_touched;       ///<Clauses strengthened/added
     vec<vec<ClauseSimp> >  occur;            ///<occur[index(lit)]' is a list of constraints containing 'lit'.
     CSet s0, s1;
@@ -124,7 +169,7 @@ private:
     int64_t numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
     int64_t numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
     int64_t numMaxElim;                  ///<Max. number of variable elimination tries to do this run
-    uint32_t numMaxElimVars;
+    int32_t numMaxElimVars;
     int64_t numMaxBlockToVisit;           ///<Max. number variable-blocking clauses to visit to do this run
     uint32_t numMaxBlockVars;             ///<Max. number variable-blocking tries to do this run
 
@@ -143,10 +188,6 @@ private:
     void removeWrong(vec<Clause*>& cs);
     void removeWrongBinsAndAllTris();
     void removeAssignedVarsFromEliminated();
-
-    //Touching
-    void touch(const Var x);
-    void touch(const Lit p, const bool learnt);
 
     //Used by cleaner
     void unlinkClause(ClauseSimp cc, Clause& cl, const Var elim = var_Undef);
@@ -237,8 +278,7 @@ private:
     */
     struct myComp {
         bool operator () (const std::pair<int, Var>& x, const std::pair<int, Var>& y) {
-            return x.first < y.first ||
-                (!(y.first < x.first) && x.second < y.second);
+            return x.first < y.first;
         }
     };
     class ClAndBin {
@@ -354,7 +394,7 @@ private:
     uint32_t clauses_subsumed; ///<Number of clauses subsumed in this run
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
     uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
-    bool alsoLearnt;
+    uint32_t clauseID;         ///<We need to have clauseIDs since clauses don't natively have them. The ClauseID is stored by ClauseSimp, which also stores a pointer to the clause
 };
 
 template <class T, class T2>
@@ -362,27 +402,6 @@ void maybeRemove(vec<T>& ws, const T2& elem)
 {
     if (ws.size() > 0)
         removeW(ws, elem);
-}
-
-/**
-@brief Put varible in touched_list
-
-call it when the number of occurrences of this variable changed.
-
-@param[in] x The varible that must be put into touched_list
-*/
-inline void Subsumer::touch(const Var x)
-{
-    if (!touchedVars[x]) {
-        touchedVars[x] = 1;
-        touchedVarsList.push(x);
-    }
-}
-
-inline void Subsumer::touchChangeVars(const Lit p)
-{
-    ol_seenNeg[(~p).toInt()] = false;
-    ol_seenPos[p.toInt()] = false;
 }
 
 /**
@@ -395,19 +414,6 @@ inline void Subsumer::touchBlockedVar(const Var x)
     if (!touchedBlockedVarsBool[x]) {
         touchedBlockedVars.push(VarOcc(x, occur[Lit(x, false).toInt()].size()*occur[Lit(x, true).toInt()].size()));
         touchedBlockedVarsBool[x] = 1;
-    }
-}
-
-/**
-@brief Put variable of literal in touched_list
-
-call it when the number of occurrences of this variable changed
-*/
-inline void Subsumer::touch(const Lit p, const bool learnt)
-{
-    if (!learnt) {
-        touch(p.var());
-        touchBlockedVar(p.var());
     }
 }
 
@@ -489,7 +495,7 @@ inline void Subsumer::newVar()
     seen_tmp    .push(0);
     seen_tmp2   .push(0);       // (one for each polarity)
     seen_tmp2   .push(0);
-    touchedVars   .push(0);
+    touchedVars .addOne(solver.nVars()-1);
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
     cannot_eliminate.push(0);
@@ -497,7 +503,6 @@ inline void Subsumer::newVar()
     ol_seenPos.push(1);
     ol_seenNeg.push(1);
     ol_seenNeg.push(1);
-    touch(solver.nVars()-1);
     dontElim.push(0);
     gateOcc.push_back(vector<OrGate*>());
     gateOcc.push_back(vector<OrGate*>());

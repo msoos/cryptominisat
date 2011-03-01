@@ -33,10 +33,6 @@ using std::set;
 #include "PartHandler.h"
 #include "BothCache.h"
 
-#ifdef _MSC_VER
-#define __builtin_prefetch(a,b,c)
-#endif //_MSC_VER
-
 //#define VERBOSE_DEUBUG
 
 /**
@@ -67,8 +63,7 @@ void FailedLitSearcher::addFromSolver(const vec< XorClause* >& cs)
 
     uint32_t i = 0;
     for (XorClause * const*it = cs.getData(), * const*end = it + cs.size(); it !=  end; it++, i++) {
-        if (it+1 != end)
-            __builtin_prefetch(*(it+1), 0, 0);
+        if (it+1 != end) __builtin_prefetch(*(it+1));
 
         const XorClause& cl = **it;
         xorClauseSizes[i] = cl.size();
@@ -220,6 +215,8 @@ const bool FailedLitSearcher::search()
     dontRemoveAncestor.resize(solver.nVars(), 0);
     hyperbinProps = 0;
     maxHyperBinProps = numProps/4;
+    if (solver.order_heap.size() < 20000)
+        maxHyperBinProps*=2;
     removedUselessLearnt = 0;
     removedUselessNonLearnt = 0;
 
@@ -363,12 +360,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit1);
-    failed = (!solver.propagate<false>().isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit1);
-        solver.ok = (solver.propagate<true>().isNULL());
+        solver.ok = (solver.propagate<false>(false).isNULL());
         if (!solver.ok) return false;
         return true;
     }
@@ -425,12 +422,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit2);
-    failed = (!solver.propagate<false>().isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
         solver.uncheckedEnqueue(~lit2);
-        solver.ok = (solver.propagate<true>().isNULL());
+        solver.ok = (solver.propagate<false>(false).isNULL());
         if (!solver.ok) return false;
         return true;
     }
@@ -502,16 +499,18 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         solver.uncheckedEnqueue(bothSame[i]);
     }
     goodBothSame += bothSame.size();
-    solver.ok = (solver.propagate<true>().isNULL());
+    solver.ok = (solver.propagate<false>(false).isNULL());
     if (!solver.ok) return false;
 
-    for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
-        tmpPs[0] = binXorToAdd[i].lit1;
-        tmpPs[1] = binXorToAdd[i].lit2;
-        solver.addXorClauseInt(tmpPs, binXorToAdd[i].isEqualFalse, binXorToAdd[i].group);
-        tmpPs.clear();
-        tmpPs.growTo(2);
-        if (!solver.ok) return false;
+    if (solver.conf.doBXor) {
+        for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
+            tmpPs[0] = binXorToAdd[i].lit1;
+            tmpPs[1] = binXorToAdd[i].lit2;
+            solver.addXorClauseInt(tmpPs, binXorToAdd[i].isEqualFalse, binXorToAdd[i].group);
+            tmpPs.clear();
+            tmpPs.growTo(2);
+            if (!solver.ok) return false;
+        }
     }
 
     return true;
@@ -678,6 +677,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
         if (!solver.binPropData[l->var()].hasChildren) continue;
         fillImplies(*l);
         addMyImpliesSetAsBins(*l, difference);
+
         assert(difference >= 0);
         myImpliesSet.clear();
 
@@ -766,7 +766,7 @@ void FailedLitSearcher::fillImplies(const Lit lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
-    failed = (!solver.propagate<false>().isNULL());
+    failed = (!solver.propagate<false>(false).isNULL());
     assert(!failed);
 
     assert(solver.decisionLevel() > 0);

@@ -100,8 +100,8 @@ void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSi
 
 void Solver::printStrangeBinLit(const Lit lit) const
 {
-    const vec<Watched>& ws = watches[(~lit).toInt()];
-    for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+    const vec2<Watched>& ws = watches[(~lit).toInt()];
+    for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
         if (it2->isBinary()) {
             std::cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << std::endl;
         } else if (it2->isTriClause()) {
@@ -120,10 +120,10 @@ const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool also
     uint32_t num = 0;
 
     uint32_t wsLit = 0;
-    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (const vec2<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        const vec2<Watched>& ws = *it;
+        for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary()) {
                 if (it2->getLearnt()) num += alsoLearnt;
                 else num+= alsoNonLearnt;
@@ -138,10 +138,10 @@ const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool also
 void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const
 {
     uint32_t wsLit = 0;
-    for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (const vec2<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
-        const vec<Watched>& ws = *it;
-        for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+        const vec2<Watched>& ws = *it;
+        for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit < it2->getOtherLit()) {
                 bool toDump = false;
                 if (it2->getLearnt() && alsoLearnt) toDump = true;
@@ -156,8 +156,8 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FIL
 const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
 {
     uint32_t num = 0;
-    const vec<Watched>& ws = watches[lit.toInt()];
-    for (const Watched *it2 = ws.getData(), *end2 = ws.getDataEnd(); it2 != end2; it2++) {
+    const vec2<Watched>& ws = watches[lit.toInt()];
+    for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
         if (it2->isBinary() && (alsoLearnt || !it2->getLearnt())) {
             num++;
         }
@@ -166,12 +166,33 @@ const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
     return num;
 }
 
+void Solver::printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const
+{
+    if (value(litP1) == l_True) {
+        litP1.printFull(outfile);
+    } else if (value(litP1) == l_False) {
+        litP2.printFull(outfile);
+    } else if (value(litP2) == l_True) {
+        litP2.printFull(outfile);
+    } else if (value(litP2) == l_False) {
+        litP1.printFull(outfile);
+    } else {
+        litP1.print(outfile);
+        litP2.printFull(outfile);
+    }
+}
+
 void Solver::dumpOrigClauses(const std::string& fileName) const
 {
-    FILE* outfile = fopen(fileName.c_str(), "w");
-    if (!outfile) {
-        std::cout << "Error: Cannot open file '" << fileName << "' to write learnt clauses!" << std::endl;
-        exit(-1);
+    FILE* outfile;
+    if (fileName != std::string("stdout")) {
+        outfile = fopen(fileName.c_str(), "w");
+        if (!outfile) {
+            std::cout << "Error: Cannot open file '" << fileName << "' to write learnt clauses!" << std::endl;
+            exit(-1);
+        }
+    } else  {
+        outfile = stdout;
     }
 
     uint32_t numClauses = 0;
@@ -205,7 +226,7 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
     }
     const map<Var, vector<std::pair<Lit, Lit> > >& elimedOutVarBin = subsumer->getElimedOutVarBin();
     for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
-        numClauses += it->second.size()*2;
+        numClauses += it->second.size();
     }
 
     const map<Var, vector<XorSubsumer::XorElimedClause> >& xorElimedOutVar = xorSubsumer->getElimedOutVar();
@@ -237,8 +258,10 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
         if (lit.var() == var)
             continue;
 
-        fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
-        fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
+        Lit litP1 = ~lit;
+        Lit litP2 = Lit(var, false);
+        printBinClause(litP1, litP2, outfile);
+        printBinClause(~litP1, ~litP2, outfile);
         #ifdef STATS_NEEDED
         if (dynamic_behaviour_analysis)
             fprintf(outfile, "c name of two vars that are anti/equivalent: '%s' and '%s'\n", logger.get_var_name(lit.var()).c_str(), logger.get_var_name(var).c_str());
@@ -293,7 +316,7 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
         }
     }
 
-    fclose(outfile);
+    if (fileName != "stdout") fclose(outfile);
 }
 
 const vector<Lit> Solver::get_unitary_learnts() const
@@ -504,7 +527,7 @@ void Solver::sortWatched()
     std::cout << "Sorting watchlists:" << std::endl;
     #endif
     double myTime = cpuTime();
-    for (vec<Watched> *i = watches.getData(), *end = watches.getDataEnd(); i != end; i++) {
+    for (vec2<Watched> *i = watches.getData(), *end = watches.getDataEnd(); i != end; i++) {
         if (i->size() == 0) continue;
         #ifdef VERBOSE_DEBUG
         vec<Watched>& ws = *i;

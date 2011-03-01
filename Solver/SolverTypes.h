@@ -246,4 +246,6 @@ struct BinPropData {
 };
 
 
+
+
 #endif //SOLVERTYPES_H

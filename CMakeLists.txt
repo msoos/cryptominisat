@@ -13,9 +13,9 @@ if (CMAKE_COMPILER_IS_GNUCC)
     SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -Werror -Wno-deprecated -O3 -g -DNDEBUG -mtune=native -fomit-frame-pointer") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
 
-#IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#    SET(CMAKE_EXE_LINKER_FLAGS "-static")
-#ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    SET(CMAKE_EXE_LINKER_FLAGS "-static")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 find_package(ZLIB  REQUIRED)
 link_directories( ${ZLIB_LIBRARY} )
@@ -31,6 +31,7 @@ add_definitions(-DVERSION="2.9.0")
 add_definitions(-DUSE_GAUSS)
 
 add_subdirectory(Solver)
+add_subdirectory(utils)
 
 add_custom_target(copy ALL
     COMMENT "Copying binaries from subdirs to build directory")
@@ -38,6 +39,8 @@ add_custom_target(copy ALL
 add_custom_command(
     TARGET copy
     COMMAND ${CMAKE_COMMAND} -E copy Solver/cryptominisat .
+    COMMAND ${CMAKE_COMMAND} -E copy utils/outofcr .
+    COMMAND ${CMAKE_COMMAND} -E copy utils/intocr .
 )
 
 add_dependencies(copy cryptominisat)

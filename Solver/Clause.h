@@ -54,8 +54,9 @@ struct Clause
 {
 protected:
 
-    uint16_t isLearnt:1; ///<Is the clause a learnt clause?
-    uint16_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
+    uint32_t isLearnt:1; ///<Is the clause a learnt clause?
+    uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
+    uint32_t changed:1; ///<Var inside clause has been changed
     /**
     @brief Is the XOR equal to 1 or 0?
 
@@ -110,7 +111,7 @@ public:
 
         memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
         glue = MAX_THEORETICAL_GLUE;
-        setStrenghtened();
+        setChanged();
     }
 
 public:
@@ -119,6 +120,22 @@ public:
     const uint16_t size() const
     {
         return mySize;
+    }
+
+    const bool getChanged() const
+    {
+        return changed;
+    }
+
+    void setChanged()
+    {
+        setStrenghtened();
+        changed = 1;
+    }
+
+    void unsetChanged()
+    {
+        changed = 0;
     }
 
     void shrink (const uint32_t i)
@@ -133,7 +150,7 @@ public:
         shrink(1);
     }
 
-    const bool isXor()
+    const bool isXor() const
     {
         return isXorClause;
     }
@@ -201,7 +218,7 @@ public:
     {
         mySize++;
         data[mySize-1] = p;
-        setStrenghtened();
+        setChanged();
     }
 
     const Lit* getData() const

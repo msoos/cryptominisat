@@ -241,7 +241,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     case 1:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
         solver.uncheckedEnqueue(Lit(c[0].var(), c.xorEqualFalse()));
-        solver.ok = (solver.propagate<true>().isNULL());
+        solver.ok = (solver.propagate<false>().isNULL());
         return true;
     case 2: {
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
@@ -270,13 +270,13 @@ const bool VarReplacer::replaceBins()
     uint32_t removedLearnt = 0;
     uint32_t removedNonLearnt = 0;
     uint32_t wsLit = 0;
-    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (vec2<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit1 = ~Lit::toLit(wsLit);
-        vec<Watched>& ws = *it;
+        vec2<Watched>& ws = *it;
 
-        Watched *i = ws.getData();
-        Watched *j = i;
-        for (Watched *end2 = ws.getDataEnd(); i != end2; i++) {
+        vec2<Watched>::iterator i = ws.getData();
+        vec2<Watched>::iterator j = i;
+        for (vec2<Watched>::iterator end2 = ws.getDataEnd(); i != end2; i++) {
             if (!i->isBinary()) {
                 *j++ = *i;
                 continue;
@@ -357,7 +357,7 @@ const bool VarReplacer::replaceBins()
     solver.clauses_literals -= removedNonLearnt;
     solver.numBins -= (removedLearnt + removedNonLearnt)/2;
 
-    if (solver.ok) solver.ok = (solver.propagate<true>().isNULL());
+    if (solver.ok) solver.ok = (solver.propagate<false>().isNULL());
     return solver.ok;
 }
 
@@ -425,12 +425,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
             c[j++] = p = c[i];
     }
     c.shrink(i - j);
-    c.setStrenghtened();
-
-    if (!c.learnt()) {
-        for (Lit *i2 = c.getData(), *end2 = c.getDataEnd(); i2 != end2; i2++)
-            solver.subsumer->touchChangeVars(*i2);
-    }
+    c.setChanged();
 
     solver.detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
 
@@ -447,7 +442,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         return true;
     case 1 :
         solver.uncheckedEnqueue(c[0]);
-        solver.ok = (solver.propagate<true>().isNULL());
+        solver.ok = (solver.propagate<false>().isNULL());
         return true;
     case 2:
         solver.attachBinClause(c[0], c[1], c.learnt());
@@ -507,7 +502,7 @@ void VarReplacer::extendModelPossible() const
                 assert(solver.assigns[i].getBool() == (solver.assigns[it->var()].getBool() ^ it->sign()));
             }
         }
-        solver.ok = (solver.propagate<true>().isNULL());
+        solver.ok = (solver.propagate<false>().isNULL());
         assert(solver.ok);
     }
 }
@@ -565,7 +560,7 @@ know that c=h, in which case we don't do anything
 @p group of clause they have been inspired from. Sometimes makes no sense...
 */
 template<class T>
-const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group)
+const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt, const bool addToWatchLists)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
@@ -622,7 +617,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
         if (val1 != l_Undef) solver.uncheckedEnqueue(lit2 ^ (val1 == l_False));
         else solver.uncheckedEnqueue(lit1 ^ (val2 == l_False));
 
-        solver.ok = (solver.propagate<true>().isNULL());
+        if (solver.ok) solver.ok = (solver.propagate<false>().isNULL());
         return solver.ok;
     }
 
@@ -630,7 +625,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     assert(val1 == l_Undef && val2 == l_Undef);
     #endif //DEBUG_REPLACER
 
-    addBinaryXorClause(lit1, lit2 ^ true, group);
+    if (addToWatchLists)
+        addBinaryXorClause(lit1, lit2 ^ true, group, addBinAsLearnt);
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
@@ -654,8 +650,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     return true;
 }
 
-template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group);
-template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group);
+template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt, const bool addToWatchLists);
+template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt, const bool addToWatchLists);
 
 /**
 @brief Adds a binary xor to the internal/external clause set
@@ -667,15 +663,15 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 
 \todo Clean this messy internal/external thing using a better datastructure.
 */
-void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group)
+void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group, const bool learnt)
 {
     solver.attachBinClause(lit1, lit2, false);
-    solver.dataSync->signalNewBinClause(lit1, lit2);
+    solver.dataSync->signalNewBinClause(lit1, lit2, learnt);
 
     lit1 ^= true;
     lit2 ^= true;
     solver.attachBinClause(lit1, lit2, false);
-    solver.dataSync->signalNewBinClause(lit1, lit2);
+    solver.dataSync->signalNewBinClause(lit1, lit2, learnt);
 }
 
 /**

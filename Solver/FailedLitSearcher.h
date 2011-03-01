@@ -181,6 +181,7 @@ class FailedLitSearcher {
                 return (a.lits.size() > b.lits.size());
             }
         };
+
         uint32_t addedBin;
         void hyperBinResAll(const Lit litProp/*, const vector<Lit>& oldCache*/);
         void hyperBinResolution(const Lit lit);
