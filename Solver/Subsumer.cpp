@@ -626,7 +626,7 @@ const bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
-    uint32_t clTouchedTodo = 100000;
+    uint32_t clTouchedTodo = 10000;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
     if (addedClauseLits > 10000000) clTouchedTodo /= 2;
 
@@ -1340,9 +1340,8 @@ from the beginning.
 void Subsumer::setLimits()
 {
     numMaxSubsume0 = 130*1000*1000;
-    numMaxSubsume1 = 80*1000*1000;
-    numMaxSubsume0 *= 2;
-    numMaxSubsume1 *= 2;
+    numMaxSubsume1 = 20*1000*1000;
+    numMaxSubsume0 *= 3;
 
     numMaxElim = 100*1000*1000;
 
@@ -1355,7 +1354,6 @@ void Subsumer::setLimits()
     if (addedClauseLits < 10000000) {
         numMaxElim *= 3;
         numMaxSubsume0 *= 3;
-        numMaxSubsume1 *= 3;
     }
 
     if (addedClauseLits < 5000000) {
@@ -1387,7 +1385,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 = 0;
 
     if (numCalls == 1) {
-        numMaxSubsume1 = 10*1000*1000;
+        numMaxSubsume1 = 3*1000*1000;
     }
     numCalls++;
 
