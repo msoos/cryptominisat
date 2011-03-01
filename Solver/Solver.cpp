@@ -1501,22 +1501,13 @@ inline const bool Solver::propNormalClause(vec2<Watched>::iterator &i, vec2<Watc
 
     // If 0th watch is true, then clause is already satisfied.
     if (value(c[0]).getBool()) {
-        #ifdef VERBOSE_DEBUG
-        printf("Zeroth watch is true\n");
-        #endif
         *j = Watched(offset, c[0]);
         j++;
         return true;
     }
     // Look for new watch:
     for (Lit *k = c.getData() + 2, *end2 = c.getDataEnd(); k != end2; k++) {
-        #ifdef VERBOSE_DEBUG
-        printf("Skip watch\n");
-        #endif
         if (value(*k) != l_False) {
-            #ifdef VERBOSE_DEBUG
-            printf("new watch\n");
-            #endif
             c[1] = *k;
             *k = ~p;
             watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
@@ -1524,9 +1515,6 @@ inline const bool Solver::propNormalClause(vec2<Watched>::iterator &i, vec2<Watc
         }
     }
 
-    #ifdef VERBOSE_DEBUG
-    printf("Did not find watch\n");
-    #endif
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
