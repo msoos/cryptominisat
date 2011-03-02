@@ -1,0 +1,90 @@
+%\documentclass[runningheads]{llncs}
+\documentclass[final]{ieee}
+
+\usepackage{microtype} %This gives MUCH better PDF results!
+%\usepackage[active]{srcltx} %DVI search
+\usepackage[cmex10]{amsmath}
+\usepackage{amssymb}
+\usepackage{fnbreak} %warn for split footnotes
+\usepackage{url}
+%\usepackage{qtree} %for drawing trees
+%\usepackage{fancybox} % if we need rounded corners
+%\usepackage{pict2e} % large circles can be drawn
+%\usepackage{courier} %for using courier in texttt{}
+%\usepackage{nth} %allows to \nth{4} to make 1st 2nd, etc.
+%\usepackage{subfigure} %allows to have side-by-side figures
+%\usepackage{booktabs} %nice tables
+%\usepackage{multirow} %allow multiple cells with rows in tabular
+\usepackage[utf8]{inputenc} % allows to write Faugere correctly
+\usepackage[bookmarks=true, citecolor=black, linkcolor=black, colorlinks=true]{hyperref}
+\hypersetup{
+pdfauthor = {Mate Soos},
+pdftitle = {CryptoMiniSat ``Strange Night''},
+pdfsubject = {SAT Race 2010},
+pdfkeywords = {SAT Solver, DPLL},
+pdfcreator = {PdfLaTeX with hyperref package},
+pdfproducer = {PdfLaTex}}
+%\usepackage{butterma}
+
+%\usepackage{pstricks}
+\usepackage{graphicx,epsfig,xcolor}
+\usepackage[algoruled, linesnumbered, lined]{algorithm2e} %algorithms
+
+\begin{document}
+\title{CryptoMiniSat ``Strange Night''}
+\author{Mate Soos\\Security Research Labs}
+
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+\section{Introduction}
+This solver description presents the feature-set of a set of CryptoMiniSat binaries, commonly called ``Strange Night''. CryptoMiniSat aims to be a modern SAT Solver that unifies the ideas presented in SatELite \cite{DBLP:conf/sat/EenB05}, PrecoSat \cite{precosat}, GLUCOSE \cite{glucose} and MiniSat \cite{EenS03MiniSat} with the xor-clause handling of version 1 of CryptoMiniSat \cite{DBLP:conf/sat/SoosNC09} to create a formula that can solve many types of different problem instances under reasonable time.
+
+\section{New Features}
+The differences between CryptoMiniSat ``Strange Night'' and its older version submitted to the SAT Race, CryptoMiniSat-2.4, is detailed below.
+
+\subsection{Cache}
+CryptoMiniSat employs a new implication cache mechanism. This allows many interesting additions and quirks. One of the major advantages of this technique is that it's no longer neccessary to fully and recursively propagate binary clauses before long clauses, as the conflict clause can always be cheaply cleaned from the literals that uneccessarily ended up in it. The cache also allows to perform strengthening at very high speeds of any clause using only conceptually existing binary clauses.
+%On a modern computer, strengthening with tens of millions of such binary clauses takes less than 1 second for hundreds of thousands of clauses.
+The main disadvantage of the cache is its potentially large memory footprint, using multiple gigabytes of memory. In this sense, the cache is a form of time-memory trade-off.
+
+\subsection{Implicitly Stored Binary Clauses}
+Binary clauses are stored implicitly in the watchlists. This reduces the memory footprint and makes the subsumption routine faster. %However, it is an expensive technique in terms of programming time and leads to code bloat. In the long-term, lambda functions in C++0x could make this a more acceptable technique.
+
+\subsection{Improved Subsumption Routine}
+Subsumption, strengthening, and variable elimination is difficult to get right. One of the most important factors is the interaction between different routines such as strengthening and variable elimination. Furthermore, the time to carry out every algorithm to fixed-point is typically too high. The subsumption routine has been much improved since the 2.4 series of releases, which should alleviate some of these problems.
+
+\subsection{Failed literal probing}
+The failed literal probing code has been improved in two major way. Firstly, it now uses a form of less heavy-weight propagation, e.g. it no longer saves polarities. Secondly, its accompanying hyper-binary resolution code has also been much improved thanks to advice from Armin Biere.
+
+\subsection{Prefetching}
+A new prefetch scheme has been implmented which prefetches watchlists exactly when a literal has been enqueued for propagation. This typically means that there is plenty of time for the watchlist to arrive in cache before its actual use.
+
+\subsection{Multi-threading}
+A simplistic multi-threading has been added to the solver. Multi-threading is implemented using OpenMP and shares unitary and binary clauses between threads. Binary clauses are not shared if they are in the cache of the receiving thread.
+
+\subsection{Code Documentation}
+The source code has been extensively documented, having multi-thousand lines of comments added. This work has been carried out to allow others to extend the program more easily.
+
+%\subsection{Memory Manager}
+%A memory manager has been developed to get around the limination of 64-bit pointers taking too much space when using the program on a 64-bit architecture. A form of clause-packing has been implemented in the memory manager to place certain clauses close together.
+
+\section*{Acknowledgements}
+Part of the development took part while the author was financed by the PLANETE team of INRIA. The author was partially supported by the RFID-AP Projet of ANR, project number \texttt{ANR-07-SESU-009}.
+
+This version of CryptoMiniSat would not have been possible without the help of many, including but not limited to Martin Maurer, Trevor Hansen, Vijay Ganesh and Vegard Nossum.
+
+Experiments carried out to tune CryptoMiniSat were performed using the Grid'5000
+experimental testbed, being developed under the INRIA ALADDIN development 
+action with support from CNRS, RENATER and several Universities as well 
+as other funding bodies \cite{Grid5000}.
+
+
+\bibliographystyle{splncs}
+\bibliography{sigproc}
+
+\vfill
+\pagebreak
+
+\end{document}
