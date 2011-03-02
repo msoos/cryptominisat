@@ -742,7 +742,6 @@ protected:
     void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
     void reArrangeClauses();
     void reArrangeClause(Clause* clause);
-    vector<bool> polarity;      // The preferred polarity of each variable.
 };
 
 

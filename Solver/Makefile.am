@@ -12,10 +12,5 @@ cryptominisat_SOURCES = Main.cpp \
 	SolverMisc.cpp SolverDebug.cpp ClauseAllocator.cpp \
 	UselessBinRemover.cpp SCCFinder.cpp ClauseVivifier.cpp \
 	CompleteDetachReattacher.cpp DimacsParser.cpp \
-<<<<<<< HEAD
 	SolverConf.cpp \
 	MTSolver.cpp BothCache.cpp DataSync.cpp
-=======
-	OnlyNonLearntBins.cpp SolverConf.cpp DataSync.cpp \
-	BothCache.cpp
->>>>>>> cryptominisat-2.9.0-plus

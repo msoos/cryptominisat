@@ -1509,8 +1509,7 @@ void Solver::transMinimAndUpdateCache(const Lit lit, uint32_t& moreRecurProp)
     while(!toRecursiveProp.empty()) {
         Lit thisLit = toRecursiveProp.top();
         toRecursiveProp.pop();
-        //watched is messed: lit is in watched[~lit]
-        vec2<Watched>& ws = watches[(~thisLit).toInt()];
+        vec2<Watched>& ws = watches[thisLit.toInt()];
         moreRecurProp += ws.size() +10;
         for (vec2<Watched>::iterator i = ws.getData(), end = ws.getDataEnd(); i != end; i++) {
             if (i->isBinary()) {
@@ -2060,19 +2059,6 @@ const bool Solver::propagateBinOneLevel()
 
     return true;
 }
-
-struct LevelSorter
-{
-    LevelSorter(const vec<int32_t>& _level) :
-        level(_level)
-    {}
-
-    const bool operator()(const Lit lit1, const Lit lit2) const {
-        return level[lit1.var()] < level[lit2.var()];
-    }
-
-    const vec<int32_t>& level;
-};
 
 /**
 @brief Calculates the glue of a clause
@@ -2679,10 +2665,6 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
-    if (conf.doFailedLit && conf.doCacheOTFSSR) {
-        BothCache both(*this);
-        if (!both.tryBoth()) goto end;
-    }
     if (order_heap.size() < 70000) conf.doCacheOTFSSR = true;
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 

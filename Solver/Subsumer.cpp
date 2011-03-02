@@ -1169,7 +1169,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 3;
     }
 
-    numMaxElimVars = (solver.order_heap.size()/3)*numCalls;
+    numMaxElimVars = (solver.order_heap.size()/3)*2*numCalls;
 
     numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
@@ -1179,8 +1179,6 @@ void Subsumer::setLimits()
     if (numCalls == 1) {
         numMaxSubsume1 = 3*1000*1000;
     }
-
-    numCalls++;
 
     //For debugging
 
@@ -1519,20 +1517,6 @@ bool Subsumer::maybeEliminate(const Var var)
     for (uint32_t i = 0; i < tmp2.size(); i++) {
         if (clauses[tmp2[i].index]->learnt()) unlinkClause(tmp2[i], *clauses[tmp2[i].index]);
     }
-
-    removeClauses(posAll, negAll, var);
-
-    //check watchlists
-    #ifndef NDEBUG
-    const vec2<Watched>& ws1 = solver.watches[lit.toInt()];
-    for (vec2<Watched>::const_iterator i = ws1.getData(), end = ws1.getDataEnd(); i != end; i++) {
-        assert(i->isTriClause() || (i->isBinary() && i->getLearnt()));
-    }
-    const vec2<Watched>& ws2 = solver.watches[(~lit).toInt()];
-    for (vec2<Watched>::const_iterator i = ws2.getData(), end = ws2.getDataEnd(); i != end; i++) {
-        assert(i->isTriClause() || (i->isBinary() && i->getLearnt()));
-    }
-    #endif
 
     removeClauses(posAll, negAll, var);
     for (uint32_t i = 0; i < posAll.size(); i++) for (uint32_t j = 0; j < negAll.size(); j++){
