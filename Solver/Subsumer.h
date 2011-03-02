@@ -81,6 +81,11 @@ class TouchList
             std::fill(touched.begin(), touched.end(), 0);
         }
 
+        const uint32_t size() const
+        {
+            return touchedList.size();
+        }
+
         vector<Var>::const_iterator begin() const
         {
             return touchedList.begin();

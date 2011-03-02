@@ -527,7 +527,7 @@ const bool Subsumer::subsume0AndSubsume1()
     s1.clear();
     //uint32_t clTouchedTodo = cl_touched.nElems();
 
-    uint32_t clTouchedTodo = 100000;
+    uint32_t clTouchedTodo = 10000;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
     if (addedClauseLits > 10000000) clTouchedTodo /= 2;
 
@@ -548,6 +548,7 @@ const bool Subsumer::subsume0AndSubsume1()
         #endif //VERBOSE_DEBUG
 
         uint32_t s1Added = 0;
+        const bool doSubs1Next = (numMaxSubsume1 > 0);
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
             if (it->index == std::numeric_limits< uint32_t >::max()) continue;
             Clause& cl = *clauses[it->index];
@@ -576,7 +577,7 @@ const bool Subsumer::subsume0AndSubsume1()
 
             remClTouched.push(*it);
             cl.unsetStrenghtened();
-            if (numMaxSubsume1 > 0) cl.unsetChanged();
+            if (doSubs1Next) cl.unsetChanged();
         }
         //std::cout << "s0.nElems(): " << s0.nElems() << std::endl;
         //std::cout << "s1.nElems(): " << s1.nElems() << std::endl;
@@ -593,7 +594,7 @@ const bool Subsumer::subsume0AndSubsume1()
         }
         s0.clear();
 
-        if (numMaxSubsume1 > 0) {
+        if (doSubs1Next) {
             for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
                 if (it->index == std::numeric_limits< uint32_t >::max()) continue;
                 subsume1(*it, *clauses[it->index]);
@@ -902,7 +903,7 @@ void Subsumer::clearAll()
 const bool Subsumer::eliminateVars()
 {
     #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c VARIABLE ELIMINIATION -- touchedVarsList size:" << touchedVarsList.size() << std::endl;
+    std::cout << "c VARIABLE ELIMINIATION -- touchedVars size:" << touchedVars.size() << std::endl;
     #endif
     uint32_t vars_elimed = 0;
 
@@ -910,23 +911,25 @@ const bool Subsumer::eliminateVars()
     orderVarsForElim(order);
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "Order size:" << order.size() << std::endl;
+    std::cout << "c #order size:" << order.size() << std::endl;
     #endif
 
+    uint32_t numtry = 0;
     for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
         Var var = order[i];
-        if (!cannot_eliminate[var]
-            && solver.decision_var[var]
-            && maybeEliminate(order[i])
-            ) {
-            if (!solver.ok) return false;
-            vars_elimed++;
-            numMaxElimVars--;
+        if (!cannot_eliminate[var] && solver.decision_var[var]) {
+            numtry++;
+            if (maybeEliminate(order[i])) {
+                if (!solver.ok) return false;
+                vars_elimed++;
+                numMaxElimVars--;
+            }
         }
     }
     numVarsElimed += vars_elimed;
 
     #ifdef BIT_MORE_VERBOSITY
+    std::cout << "c  #try to eliminate: " << numtry << std::endl;
     std::cout << "c  #var-elim: " << vars_elimed << std::endl;
     #endif
 
@@ -1084,7 +1087,7 @@ const bool Subsumer::simplifyBySubsumption()
         //subsumeBinsWithBins();
         //if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
         solver.clauseCleaner->removeSatisfiedBins();
-    } while (cl_touched.nElems() > 100 && numMaxSubsume0 > 0);
+    } while (cl_touched.nElems() > 100);
 
     if (solver.conf.doGateFind
         && solver.conf.doCacheNLBins
@@ -1132,9 +1135,8 @@ from the beginning.
 void Subsumer::setLimits()
 {
     numMaxSubsume0 = 130*1000*1000;
-    numMaxSubsume1 = 80*1000*1000;
-    numMaxSubsume0 *= 2;
-    numMaxSubsume1 *= 2;
+    numMaxSubsume1 = 20*1000*1000;
+    numMaxSubsume0 *= 3;
 
     numMaxElim = 100*1000*1000;
 
@@ -1147,7 +1149,6 @@ void Subsumer::setLimits()
     if (addedClauseLits < 10000000) {
         numMaxElim *= 3;
         numMaxSubsume0 *= 3;
-        numMaxSubsume1 *= 3;
     }
 
     if (addedClauseLits < 5000000) {
@@ -1176,7 +1177,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 = 0;
 
     if (numCalls == 1) {
-        numMaxSubsume1 = 10*1000*1000;
+        numMaxSubsume1 = 3*1000*1000;
     }
 
     numCalls++;
@@ -1459,7 +1460,7 @@ bool Subsumer::maybeEliminate(const Var var)
             posSize++;
             before_literals += clauses[poss[i].index]->size();
         }
-    posSize =+ numNonLearntPos;
+    posSize += numNonLearntPos;
 
     uint32_t negSize = 0;
     for (uint32_t i = 0; i < negs.size(); i++)
@@ -1500,7 +1501,7 @@ bool Subsumer::maybeEliminate(const Var var)
         bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
         if (ok){
             after_clauses++;
-            if (after_clauses > before_clauses) return true;
+            if (after_clauses > (before_clauses+ ((bool)(solver.order_heap.size() < 25000)) )) return false;
         }
     }
 
@@ -1733,7 +1734,9 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
         for (uint32_t i = 0; i < negs.size(); i++)
             if (!clauses[negs[i].index]->learnt()) neg++;
 
-        uint32_t cost = pos * neg * 2 + numNonLearntBins(x) * neg + numNonLearntBins(~x) * pos;
+        uint32_t nNonLPos = numNonLearntBins(x);
+        uint32_t nNonLNeg = numNonLearntBins(~x);
+        uint32_t cost = pos*neg/4 +  nNonLPos*neg*2 + nNonLNeg*pos*2 + nNonLNeg*nNonLPos*6;
         cost_var.push(std::make_pair(cost, x.var()));
     }
     touchedVars.clear();
