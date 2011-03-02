@@ -1702,7 +1702,7 @@ bool Subsumer::maybeEliminate(const Var var)
         bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
         if (ok){
             after_clauses++;
-            if (after_clauses > before_clauses) return false;
+            if (after_clauses > (before_clauses+ ((bool)(solver.order_heap.size() < 25000)) )) return false;
         }
     }
 
