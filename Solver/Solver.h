@@ -37,6 +37,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Logger.h"
 #endif //STATS_NEEDED
 
+//#define ANIMATE3D
 
 #include "PropBy.h"
 #include "Vec.h"
@@ -917,6 +918,9 @@ inline void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     #endif
 
     assigns [v] = boolToLBool(!p.sign());
+    #ifdef ANIMATE3D
+    fprintf(stderr, "s %u %d\n", v, p.sign());
+    #endif
     level   [v] = decisionLevel();
     reason  [v] = from;
     polarity[v] = p.sign();

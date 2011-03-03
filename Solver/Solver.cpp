@@ -665,6 +665,9 @@ void Solver::cancelUntil(int level)
             cout << "Canceling var " << var+1 << " sublevel: " << sublevel << endl;
             #endif
             assigns[var] = l_Undef;
+            #ifdef ANIMATE3D
+            fprintf(stderr, "u %u\n", var);
+            #endif
             insertVarOrder(var);
             #ifdef ENABLE_UNWIND_GLUE
             if (unWindGlue[var] != NULL) {
