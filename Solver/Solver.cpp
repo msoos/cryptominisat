@@ -433,6 +433,10 @@ template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group
         }
     }
 
+    for (uint32_t i = 0; i < ps.size(); i++) {
+        std::swap(ps[i], ps[(mtrand.randInt() % (ps.size()-i)) + i]);
+    }
+
     return true;
 }
 
@@ -2277,6 +2281,9 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             goto end;
         }
 
+        if (learnt_clause.size() > 3) {
+            std::sort(learnt_clause.getData()+1, learnt_clause.getDataEnd(), PolaritySorter(polarity));
+        }
         if (c) { //On-the-fly subsumption
             uint32_t origSize = c->size();
             detachClause(*c);

@@ -100,6 +100,20 @@ struct reduceDB_ltGlucose
     bool operator () (const Clause* x, const Clause* y);
 };
 
+struct PolaritySorter
+{
+    PolaritySorter(vector<bool>& polarity) :
+        pol(polarity)
+    {}
+
+    const bool operator()(const Lit lit1, const Lit lit2) const
+    {
+        return ((((pol[lit1.var()])^(lit1.sign())) == false)
+                && (((pol[lit2.var()])^(lit2.sign())) == true));
+    }
+    vector<bool>& pol;
+};
+
 /**
 @brief The main solver class
 
