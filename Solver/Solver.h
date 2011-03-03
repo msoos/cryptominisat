@@ -862,7 +862,12 @@ inline void Solver::uncheckedEnqueueLight(const Lit p)
 
     assigns [p.var()] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push(p);
-    if (decisionLevel() == 0) level[p.var()] = 0;
+    if (decisionLevel() == 0) {
+        level[p.var()] = 0;
+        #ifdef ANIMATE3D
+        fprintf(stderr, "s %u %d\n", p.var(), p.sign());
+        #endif
+    }
 }
 
 inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev1Ancestor, const bool learntLeadHere)
