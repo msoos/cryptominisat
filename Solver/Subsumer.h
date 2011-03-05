@@ -379,7 +379,7 @@ private:
     uint32_t numOrGateReplaced;
     const bool findEqOrGates();
     const bool carryOutER();
-    void createNewVar();
+    void createNewVars();
     const bool doAllOptimisationWithGates();
     uint32_t andGateNumFound;
     uint32_t andGateTotalSize;

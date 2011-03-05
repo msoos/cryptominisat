@@ -1985,7 +1985,7 @@ struct SecondSorter
     }
 };
 
-void Subsumer::createNewVar()
+void Subsumer::createNewVars()
 {
     double myTime = cpuTime();
     vector<NewGateData> newGates;
@@ -2171,7 +2171,7 @@ const bool Subsumer::carryOutER()
         clauseData[i].defOfOrGate = false;
     }
 
-    createNewVar();
+    createNewVars();
     doAllOptimisationWithGates();
 
     if (solver.conf.verbosity >= 1) {
