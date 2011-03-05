@@ -1168,11 +1168,12 @@ void Subsumer::setLimits()
 
     numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
-    if (!solver.conf.doSubsume1)
-        numMaxSubsume1 = 0;
-
     if (numCalls == 1) {
         numMaxSubsume1 = 3*1000*1000;
+    }
+
+    if (!solver.conf.doSubsume1) {
+        numMaxSubsume1 = 0;
     }
 
     //For debugging
