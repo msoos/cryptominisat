@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Solver.h"
 #include "SharedData.h"
 #include <string>
+#include <iostream>
 
 class MTSolver
 {
@@ -251,6 +252,10 @@ can help simulate a segfaulting library-call
 */
 inline void MTSolver::needLibraryCNFFile(const std::string& fileName)
 {
+    if (libraryCNFFile != NULL) {
+        std::cerr << "ERROR: Library CNF file is already open!" << std::endl;
+        exit(-1);
+    }
     libraryCNFFile = fopen(fileName.c_str(), "w");
     if (libraryCNFFile == NULL) {
         std::cout << "Couldn't open library-call dump file "
