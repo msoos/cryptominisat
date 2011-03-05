@@ -449,8 +449,6 @@ const bool XorSubsumer::unEliminate(const Var var)
     std::cout << "Reinserting xor elimed var: " << var+1 << std::endl;
     #endif
 
-    FILE* backup_libraryCNFfile = solver.libraryCNFFile;
-    solver.libraryCNFFile = NULL;
     for (vector<XorElimedClause>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         XorElimedClause& c = *it2;
         tmp.clear();
@@ -461,7 +459,6 @@ const bool XorSubsumer::unEliminate(const Var var)
         #endif
         solver.addXorClause(tmp, c.xorEqualFalse);
     }
-    solver.libraryCNFFile = backup_libraryCNFfile;
     elimedOutVar.erase(it);
 
     return solver.ok;

@@ -155,9 +155,6 @@ const bool Subsumer::unEliminate(const Var var)
     //elimination, there are no clauses to re-insert
     if (it == elimedOutVar.end() && it2 == elimedOutVarBin.end()) return solver.ok;
 
-    FILE* backup_libraryCNFfile = solver.libraryCNFFile;
-    solver.libraryCNFFile = NULL;
-
     if (it == elimedOutVar.end()) goto next;
     for (vector<vector<Lit> >::iterator itt = it->second.begin(), end2 = it->second.end(); itt != end2; itt++) {
         #ifdef VERBOSE_DEBUG
@@ -189,8 +186,6 @@ const bool Subsumer::unEliminate(const Var var)
     elimedOutVarBin.erase(it2);
 
     next2:
-    solver.libraryCNFFile = backup_libraryCNFfile;
-
     return solver.ok;
 }
 

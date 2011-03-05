@@ -611,23 +611,6 @@ void Solver::printLit(const Lit l) const
     printf("%s%d:%c", l.sign() ? "-" : "", l.var()+1, value(l) == l_True ? '1' : (value(l) == l_False ? '0' : 'X'));
 }
 
-/**
-@brief Sets that we need a CNF file that documents all commands
-
-newVar() and addClause(), addXorClause() commands are logged to this CNF
-file and then can be re-read with special arguments to the main program. This
-can help simulate a segfaulting library-call
-*/
-void Solver::needLibraryCNFFile(const std::string& fileName)
-{
-    libraryCNFFile = fopen(fileName.c_str(), "w");
-    if (libraryCNFFile == NULL) {
-        std::cout << "Couldn't open library-call dump file "
-        << libraryCNFFile << std::endl;
-        exit(-1);
-    }
-}
-
 template<class T, class T2>
 void Solver::printStatsLine(std::string left, T value, T2 value2, std::string extra)
 {

@@ -458,8 +458,6 @@ parts might be connected through the added clauses)
 */
 void PartHandler::readdRemovedClauses()
 {
-    FILE* backup_libraryCNFfile = solver.libraryCNFFile;
-    solver.libraryCNFFile = NULL;
     for (Clause **it = clausesRemoved.getData(), **end = clausesRemoved.getDataEnd(); it != end; it++) {
         solver.addClause(**it, (*it)->getGroup());
         assert(solver.ok);
@@ -480,7 +478,5 @@ void PartHandler::readdRemovedClauses()
         assert(solver.ok);
     }
     binClausesRemoved.clear();
-
-    solver.libraryCNFFile = backup_libraryCNFfile;
 }
 

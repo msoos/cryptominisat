@@ -38,7 +38,8 @@ void MTSolver::printNumThreads() const
 }
 
 MTSolver::MTSolver(const int _numThreads, const SolverConf& _conf, const GaussConf& _gaussConfig) :
-    conf(_conf)
+    libraryCNFFile(NULL)
+    , conf(_conf)
     , gaussConfig(_gaussConfig)
     , numThreads(_numThreads)
 {
@@ -55,6 +56,9 @@ MTSolver::~MTSolver()
     for (uint32_t i = 0; i < solvers.size(); i++) {
         delete solvers[i];
     }
+
+    if (libraryCNFFile) fclose(libraryCNFFile);
+    libraryCNFFile = NULL;
 }
 
 void MTSolver::setupOneSolver(const int num)
@@ -89,6 +93,9 @@ void MTSolver::setupOneSolver(const int num)
 
 const lbool MTSolver::solve(const vec<Lit>& assumps)
 {
+    if (libraryCNFFile)
+        fprintf(libraryCNFFile, "c Solver::solve() called\n");
+
     std::set<uint32_t> finished;
     lbool retVal;
 
@@ -192,6 +199,7 @@ Var MTSolver::newVar(bool dvar)
     for (uint32_t i = 0; i < solvers.size(); i++) {
         ret = solvers[i]->newVar(dvar);
     }
+    if (libraryCNFFile) fprintf(libraryCNFFile, "c Solver::newVar() called\n");
 
     return ret;
 }
@@ -212,6 +220,11 @@ void MTSolver::setDecisionVar(Var v, bool b)
 
 template<class T> bool MTSolver::addClause (T& ps, const uint32_t group, const char* group_name)
 {
+    if (libraryCNFFile) {
+        for (uint32_t i = 0; i != ps.size(); i++) ps[i].print(libraryCNFFile);
+        fprintf(libraryCNFFile, "0\n");
+    }
+
     bool globalRet = true;
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
@@ -248,6 +261,12 @@ template bool MTSolver::addLearntClause(Clause& ps, const uint32_t group, const 
 
 template<class T> bool MTSolver::addXorClause (T& ps, bool xorEqualFalse, const uint32_t group, const char* group_name)
 {
+    if (libraryCNFFile) {
+        fprintf(libraryCNFFile, "x");
+        for (uint32_t i = 0; i < ps.size(); i++) ps[i].print(libraryCNFFile);
+        fprintf(libraryCNFFile, "0\n");
+    }
+
     bool globalRet = true;
     for (uint32_t i = 0; i < solvers.size(); i++) {
         vec<Lit> copyPS(ps.size());
@@ -293,6 +312,3 @@ void MTSolver::setVariableName(const Var var, const std::string& name)
         solvers[i]->setVariableName(var, name);
     }
 }
-
-//void needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
-

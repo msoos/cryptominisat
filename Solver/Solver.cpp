@@ -101,7 +101,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , dynamic_behaviour_analysis(false) //do not document the proof as default
         #endif
         , learnt_clause_group(0)
-        , libraryCNFFile   (NULL)
         , lastDelayedEnqueueUpdate (0)
         , lastDelayedEnqueueUpdateLevel (0)
         , restartType      (static_restart)
@@ -148,9 +147,6 @@ Solver::~Solver()
     delete subsumer;
     delete xorSubsumer;
     delete restartTypeChooser;
-
-    if (libraryCNFFile)
-        fclose(libraryCNFFile);
 }
 
 //=================================================================================================
@@ -209,9 +205,6 @@ Var Solver::newVar(bool dvar)
     if (dynamic_behaviour_analysis)
         logger.new_var(v);
     #endif
-
-    if (libraryCNFFile)
-        fprintf(libraryCNFFile, "c Solver::newVar() called\n");
 
     return v;
 }
@@ -288,8 +281,7 @@ template XorClause* Solver::addXorClauseInt(XorClause& ps, bool xorEqualFalse, c
 /**
 @brief Adds an xor clause to the problem
 
-Calls addXorClauseInt() for the heavy-lifting. Basically, this does a bit
-of debug-related stuff (see "libraryCNFFile"), and then checks if any of the
+Calls addXorClauseInt() for the heavy-lifting. Basically, this checks if any of the
 variables have been eliminated, replaced, etc. If so, it treats it correctly,
 and then calls addXorClauseInt() to actually add the xor clause.
 
@@ -305,12 +297,6 @@ bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, const
     if (ps.size() > (0x01UL << 18)) {
         std::cout << "Too long clause!" << std::endl;
         exit(-1);
-    }
-
-    if (libraryCNFFile) {
-        fprintf(libraryCNFFile, "x");
-        for (uint32_t i = 0; i < ps.size(); i++) ps[i].print(libraryCNFFile);
-        fprintf(libraryCNFFile, "0\n");
     }
 
     #ifdef STATS_NEEDED
@@ -423,11 +409,6 @@ template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group
         exit(-1);
     }
 
-    if (libraryCNFFile) {
-        for (uint32_t i = 0; i != ps.size(); i++) ps[i].print(libraryCNFFile);
-        fprintf(libraryCNFFile, "0\n");
-    }
-
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis) {
         logger.set_group_name(group, group_name);
@@ -461,7 +442,7 @@ template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group
 /**
 @brief Adds a clause to the problem. Calls addClauseInt() for heavy-lifting
 
-Does some debug-related stuff (see "libraryCNFFile"), and checks whether the
+Checks whether the
 variables of the literals in "ps" have been eliminated/replaced etc. If so,
 it acts on them such that they are correct, and calls addClauseInt() to do
 the heavy-lifting
@@ -2920,9 +2901,6 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
     assert(qhead == trail.size());
     assert(subsumer->checkElimedUnassigned());
     assert(xorSubsumer->checkElimedUnassigned());
-
-    if (libraryCNFFile)
-        fprintf(libraryCNFFile, "c Solver::solve() called\n");
 
     assumps.copyTo(assumptions);
     initialiseSolver();

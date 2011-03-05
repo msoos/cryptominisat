@@ -307,7 +307,6 @@ public:
     const vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
     const uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     void dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file
-    void needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
     void dumpOrigClauses(const std::string& fileName) const;
     void printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const;
 
@@ -546,7 +545,6 @@ protected:
     bool     dynamic_behaviour_analysis; // Is logger running?
     #endif
     uint32_t learnt_clause_group;       //the group number of learnt clauses. Incremented at each added learnt clause
-    FILE     *libraryCNFFile;           //The file that all calls from the library are logged
 
     /////////////////
     // Unchecked enqueue

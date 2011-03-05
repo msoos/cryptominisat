@@ -110,10 +110,10 @@ public:
 
     private:
         void setUpFinish(const lbool retVal, const int threadNum);
+        FILE* libraryCNFFile;
 
         SolverConf conf;
         GaussConf gaussConfig;
-
 
         int numThreads;
         void setupOneSolver(const int num);
@@ -240,4 +240,21 @@ inline const double MTSolver::getTotalTimeSCC() const
 inline const double MTSolver::getTotalTimeXorSubsumer() const
 {
     return solvers[finishedThread]->getTotalTimeXorSubsumer();
+}
+
+/**
+@brief Sets that we need a CNF file that documents all commands
+
+newVar() and addClause(), addXorClause() commands are logged to this CNF
+file and then can be re-read with special arguments to the main program. This
+can help simulate a segfaulting library-call
+*/
+inline void MTSolver::needLibraryCNFFile(const std::string& fileName)
+{
+    libraryCNFFile = fopen(fileName.c_str(), "w");
+    if (libraryCNFFile == NULL) {
+        std::cout << "Couldn't open library-call dump file "
+        << libraryCNFFile << std::endl;
+        exit(-1);
+    }
 }
