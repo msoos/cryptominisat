@@ -85,6 +85,7 @@ class ClauseVivifier;
 class SharedData;
 class DataSync;
 class BothCache;
+class CalcDefPolars;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -669,6 +670,7 @@ protected:
     friend class ClauseVivifier;
     friend class DataSync;
     friend class BothCache;
+    friend class CalcDefPolars;
     Conglomerate*       conglomerate;
     VarReplacer*        varReplacer;
     ClauseCleaner*      clauseCleaner;
@@ -732,12 +734,7 @@ protected:
 
     /////////////////////
     // Polarity chooser
-    /////////////////////
-    void calculateDefaultPolarities(); //Calculates the default polarity for each var, and fills defaultPolarities[] with it
     bool getPolarity(const Var var);
-    void tallyVotesBin(vec<double>& votes) const;
-    void tallyVotes(const vec<Clause*>& cs, vec<double>& votes) const;
-    void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
     void reArrangeClauses();
     void reArrangeClause(Clause* clause);
 };

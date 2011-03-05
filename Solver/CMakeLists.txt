@@ -39,6 +39,7 @@ add_executable(cryptominisat
     DataSync.cpp
     MTSolver.cpp
     BothCache.cpp
+    CalcDefPolars.cpp
 )
 
 target_link_libraries(cryptominisat
