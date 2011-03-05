@@ -571,9 +571,9 @@ protected:
     template<bool full>
     PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
     template<bool full>
-    const bool propTriClause   (vec2<Watched>::iterator &i, const Lit p, PropBy& confl);
+    const bool propTriClause   (const vec2<Watched>::iterator &i, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propBinaryClause(vec2<Watched>::iterator &i, const Lit p, PropBy& confl);
+    const bool propBinaryClause(const vec2<Watched>::iterator &i, const Lit p, PropBy& confl);
     template<bool full>
     const bool propNormalClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, const Lit p, PropBy& confl);
     template<bool full>

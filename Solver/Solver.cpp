@@ -1527,7 +1527,7 @@ is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
 template<bool full>
-inline const bool Solver::propBinaryClause(vec2<Watched>::iterator &i, const Lit p, PropBy& confl)
+inline const bool Solver::propBinaryClause(const vec2<Watched>::iterator &i, const Lit p, PropBy& confl)
 {
     lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
@@ -1551,7 +1551,7 @@ is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
 template<bool full>
-inline const bool Solver::propTriClause(vec2<Watched>::iterator &i, const Lit p, PropBy& confl)
+inline const bool Solver::propTriClause(const vec2<Watched>::iterator &i, const Lit p, PropBy& confl)
 {
     lbool val = value(i->getOtherLit());
     if (val == l_True) return true;
