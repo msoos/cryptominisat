@@ -1698,28 +1698,12 @@ PropBy Solver::propagate(const bool update)
 {
     PropBy confl;
     uint64_t oldPropagations = propagations;
-    uint32_t qhead2 = qhead;
 
     #ifdef VERBOSE_DEBUG_PROP
     cout << "Propagation started" << endl;
     #endif
 
     while (qhead < trail.size()) {
-        while (qhead2 < trail.size()) {
-            Lit p = trail[qhead2++];     // 'p' is enqueued fact to propagate.
-            vec<Watched>& ws = watches[p.toInt()];
-            bogoProps += 2;
-            Watched *i, *end;
-            i = ws.getData();
-            end = ws.getDataEnd();
-            for (; i != end; i++) {
-                if (i->isBinary()) {
-                    if (!propBinaryClause<full>(i, p, confl)) goto end;
-                    else continue;
-                } //end BINARY
-            }
-        }
-
         Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>& ws = watches[p.toInt()];
 
@@ -1773,7 +1757,6 @@ PropBy Solver::propagate(const bool update)
         //assert(i >= j);
         ws.shrink_(i-j);
     }
-end:
     simpDB_props -= (propagations-oldPropagations);
 
     #ifdef VERBOSE_DEBUG
