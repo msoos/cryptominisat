@@ -1240,7 +1240,7 @@ void Subsumer::findSubsumed(const uint32_t index, const T& ps, uint32_t abs, vec
     #endif
 
     for (uint32_t i = 0; i != ps.size(); i++)
-        seen_tmp[ps[i].toInt()] = 1;
+        seen[ps[i].toInt()] = 1;
 
     uint32_t min_i = 0;
     for (uint32_t i = 1; i < ps.size(); i++){
@@ -1266,7 +1266,7 @@ void Subsumer::findSubsumed(const uint32_t index, const T& ps, uint32_t abs, vec
     }
 
     for (uint32_t i = 0; i != ps.size(); i++)
-        seen_tmp[ps[i].toInt()] = 0;
+        seen[ps[i].toInt()] = 0;
 }
 
 /**
@@ -1637,14 +1637,14 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
         assert(ps.lit1 == without_p);
         assert(ps.lit2 != without_p);
 
-        seen_tmp[ps.lit2.toInt()] = 1;
+        seen[ps.lit2.toInt()] = 1;
         out_clause.push(ps.lit2);
     } else {
         Clause& c = *clauses[ps.clsimp.index];
         numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_p){
-                seen_tmp[c[i].toInt()] = 1;
+                seen[c[i].toInt()] = 1;
                 out_clause.push(c[i]);
             }
         }
@@ -1654,22 +1654,22 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
         assert(qs.lit1 == without_q);
         assert(qs.lit2 != without_q);
 
-        if (seen_tmp[(~qs.lit2).toInt()]) {
+        if (seen[(~qs.lit2).toInt()]) {
             retval = false;
             goto end;
         }
-        if (!seen_tmp[qs.lit2.toInt()])
+        if (!seen[qs.lit2.toInt()])
             out_clause.push(qs.lit2);
     } else {
         Clause& c = *clauses[qs.clsimp.index];
         numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_q) {
-                if (seen_tmp[(~c[i]).toInt()]) {
+                if (seen[(~c[i]).toInt()]) {
                     retval = false;
                     goto end;
                 }
-                if (!seen_tmp[c[i].toInt()])
+                if (!seen[c[i].toInt()])
                     out_clause.push(c[i]);
             }
         }
@@ -1677,12 +1677,12 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
 
     end:
     if (ps.isBin) {
-        seen_tmp[ps.lit2.toInt()] = 0;
+        seen[ps.lit2.toInt()] = 0;
     } else {
         Clause& c = *clauses[ps.clsimp.index];
         numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++)
-            seen_tmp[c[i].toInt()] = 0;
+            seen[c[i].toInt()] = 0;
     }
 
     return retval;
@@ -1769,7 +1769,7 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
 
     numMaxBlockToVisit -= ps.size()*2;
     for (const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
-        if (*l != ~lit) seen_tmp[l->toInt()] = true;
+        if (*l != ~lit) seen[l->toInt()] = true;
     }
 
     bool allIsTautology = true;
@@ -1780,7 +1780,7 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
         const Clause& c = *clauses[it->index];
         numMaxBlockToVisit -= c.size();
         for (const Lit *l = c.getData(), *end2 = c.getDataEnd(); l != end2; l++) {
-            if (seen_tmp[(~(*l)).toInt()]) {
+            if (seen[(~(*l)).toInt()]) {
                 goto next;
             }
         }
@@ -1794,7 +1794,7 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
     numMaxBlockToVisit -= ws.size();
     for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
         if (!it->isNonLearntBinary()) continue;
-        if (seen_tmp[(~it->getOtherLit()).toInt()]) continue;
+        if (seen[(~it->getOtherLit()).toInt()]) continue;
         else {
             allIsTautology = false;
             break;
@@ -1803,7 +1803,7 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
 
     end:
     for (const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
-        seen_tmp[l->toInt()] = false;
+        seen[l->toInt()] = false;
     }
 
     return allIsTautology;
@@ -2405,7 +2405,7 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
         sizeSortedOcc[cl.size()].push_back(*it2);
 
         for (uint32_t i = 0; i < cl.size(); i++) {
-            seen_tmp2[cl[i].toInt()] = true;
+            seen2[cl[i].toInt()] = true;
             abstraction |= 1 << (cl[i].var() & 31);
         }
     }
@@ -2426,7 +2426,7 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
             if (cl[i] == ~(gate.lits[0])) continue;
             if (   cl[i].var() == ~(gate.lits[1].var())
                 || cl[i].var() == gate.eqLit.var()
-                || !seen_tmp2[cl[i].toInt()]
+                || !seen2[cl[i].toInt()]
                 ) {
                 OK = false;
                 break;
@@ -2437,7 +2437,7 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
         uint32_t abst2 = 0;
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == ~(gate.lits[0])) continue;
-            seen_tmp[cl[i].toInt()] = true;
+            seen[cl[i].toInt()] = true;
             abst2 |= 1 << (cl[i].var() & 31);
         }
         abst2 |= 1 << ((~(gate.lits[1])).var() & 31);
@@ -2453,11 +2453,11 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
         }
 
         for (uint32_t i = 0; i < cl.size(); i++) {
-            seen_tmp[cl[i].toInt()] = false;
+            seen[cl[i].toInt()] = false;
         }
     }
 
-    std::fill(seen_tmp2.getData(), seen_tmp2.getDataEnd(), 0);
+    std::fill(seen2.getData(), seen2.getDataEnd(), 0);
 
     for(std::set<ClauseSimp>::const_iterator it2 = clToUnlink.begin(), end2 = clToUnlink.end(); it2 != end2; it2++) {
         unlinkClause(*it2, *clauses[it2->index]);
@@ -2515,7 +2515,7 @@ inline const bool Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSor
         const Clause& cl = *clauses[it->index];
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (cl[i] == lit) continue;
-            if (!seen_tmp[cl[i].toInt()]) goto next;
+            if (!seen[cl[i].toInt()]) goto next;
         }
         other = *it;
         return true;
@@ -2569,7 +2569,7 @@ void Subsumer::findXors()
     /*for (vector<Xor>::iterator it = xors.begin(), end = xors.end(); it != end; it++) {
         const Xor& thisXor = *it;
         for (vector<Var>::iterator it2 = thisXor.begin(), end2 = thisXor.end(); it2 != end2; it2++) {
-            seen_tmp[];
+            seen[];
         }
     }*/
 
@@ -2586,7 +2586,7 @@ void Subsumer::findXor(ClauseSimp c, vector<Xor>& xors, vector<vector<uint32_t> 
     uint32_t whichOne = 0;
     uint32_t i = 0;
     for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++, i++) {
-        seen_tmp[l->var()] = 1;
+        seen[l->var()] = 1;
         rhs ^= l->sign();
         whichOne += ((uint32_t)l->sign()) << i;
     }
@@ -2632,7 +2632,7 @@ void Subsumer::findXor(ClauseSimp c, vector<Xor>& xors, vector<vector<uint32_t> 
     }
 
     for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++, i++) {
-        seen_tmp[l->var()] = 0;
+        seen[l->var()] = 0;
     }
 }
 
@@ -2640,7 +2640,7 @@ void Subsumer::findXorMatch(const vec2<Watched>& ws, const Lit lit, FoundXors& f
 {
     for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++)  {
         if (it->isBinary()
-            && seen_tmp[it->getOtherLit().var()]
+            && seen[it->getOtherLit().var()]
             && !foundCls.alreadyInside(lit, it->getOtherLit()))
         {
             foundCls.add(lit, it->getOtherLit());
@@ -2660,7 +2660,7 @@ void Subsumer::findXorMatch(const vec<ClauseSimp>& occ, FoundXors& foundCls) con
             bool rhs = true;
             uint32_t i = 0;
             for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++, i++) {
-                if (!seen_tmp[l->var()]) goto end;
+                if (!seen[l->var()]) goto end;
                 rhs ^= l->sign();
             }
             //either the invertedness has to match, or the size must be smaller

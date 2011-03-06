@@ -157,8 +157,8 @@ private:
     vec<vec<ClauseSimp> >  occur;            ///<occur[index(lit)]' is a list of constraints containing 'lit'.
     CSet s0, s1;
     vec<char>              cannot_eliminate;///<Variables that cannot be eliminated due to, e.g. XOR-clauses
-    vec<char>              seen_tmp;        ///<Used in various places to help perform algorithms
-    vec<char>              seen_tmp2;       ///<Used in various places to help perform algorithms
+    vec<char>              seen;        ///<Used in various places to help perform algorithms
+    vec<char>              seen2;       ///<Used in various places to help perform algorithms
 
     //Global stats
     Solver& solver;                        ///<The solver this simplifier is connected to
@@ -661,7 +661,7 @@ bool Subsumer::subset(const uint32_t aSize, const T2& B)
 {
     uint32_t num = 0;
     for (uint32_t i = 0; i != B.size(); i++) {
-        num += seen_tmp[B[i].toInt()];
+        num += seen[B[i].toInt()];
     }
     return num == aSize;
 }
@@ -686,10 +686,10 @@ const Lit Subsumer::subset1(const T1& A, const T2& B)
     Lit retLit = lit_Undef;
 
     for (uint32_t i = 0; i != B.size(); i++)
-        seen_tmp[B[i].toInt()] = 1;
+        seen[B[i].toInt()] = 1;
     for (uint32_t i = 0; i != A.size(); i++) {
-        if (!seen_tmp[A[i].toInt()]) {
-            if (retLit == lit_Undef && seen_tmp[(~A[i]).toInt()])
+        if (!seen[A[i].toInt()]) {
+            if (retLit == lit_Undef && seen[(~A[i]).toInt()])
                 retLit = ~A[i];
             else {
                 retLit = lit_Error;
@@ -700,7 +700,7 @@ const Lit Subsumer::subset1(const T1& A, const T2& B)
 
     end:
     for (uint32_t i = 0; i != B.size(); i++)
-        seen_tmp[B[i].toInt()] = 0;
+        seen[B[i].toInt()] = 0;
     return retLit;
 }
 
@@ -709,16 +709,16 @@ const Lit Subsumer::subset1(const T1& A, const T2& B)
 
 @note: MUST be called if a new var has been added to the solver
 
-Adds occurrence list places, increments seen_tmp, etc.
+Adds occurrence list places, increments seen, etc.
 */
 inline void Subsumer::newVar()
 {
     occur       .push();
     occur       .push();
-    seen_tmp    .push(0);       // (one for each polarity)
-    seen_tmp    .push(0);
-    seen_tmp2   .push(0);       // (one for each polarity)
-    seen_tmp2   .push(0);
+    seen    .push(0);       // (one for each polarity)
+    seen    .push(0);
+    seen2   .push(0);       // (one for each polarity)
+    seen2   .push(0);
     touchedVars .addOne(solver.nVars()-1);
     var_elimed  .push(0);
     touchedBlockedVarsBool.push(0);
