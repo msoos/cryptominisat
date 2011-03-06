@@ -2551,28 +2551,33 @@ void Subsumer::findXors()
 {
     double myTime = cpuTime();
     //Lowest variable <---> XOR map
-    vector<vector<Xor> > xors;
-    xors.resize(solver.nVars());
-    uint32_t numFound = 0;
+    vector<vector<uint32_t> > xorIndex;
+    xorIndex.resize(solver.nVars());
+    vector<Xor> xors;
 
     for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++) {
         if (*it == NULL) continue;
         std::sort((*it)->getData(), (*it)->getDataEnd());
     }
 
-    uint32_t wsLit = 0;
-    for (vec<vec<ClauseSimp> >::iterator it = occur.getData(), end = occur.getDataEnd(); it != end; it++, wsLit++) {
-        //Lit lit1 = ~Lit::toLit(wsLit);
-        for (vec<ClauseSimp>::iterator it2 = it->getData(), end2 = it->getDataEnd(); it2 != end2; it2++) {
-            findXor(*it2, xors, numFound);
-        }
+    uint32_t i = 0;
+    for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++, i++) {
+        if (*it == NULL) continue;
+        findXor(i, xors, xorIndex);
     }
 
-    std::cout << "c XOR finding finished. Num XORs: " << numFound
+    /*for (vector<Xor>::iterator it = xors.begin(), end = xors.end(); it != end; it++) {
+        const Xor& thisXor = *it;
+        for (vector<Var>::iterator it2 = thisXor.begin(), end2 = thisXor.end(); it2 != end2; it2++) {
+            seen_tmp[];
+        }
+    }*/
+
+    std::cout << "c XOR finding finished. Num XORs: " << xors.size()
     << " Time: " << (cpuTime() - myTime) << std::endl;
 }
 
-void Subsumer::findXor(ClauseSimp c, vector<vector<Xor> >& xors, uint32_t& numFound)
+void Subsumer::findXor(ClauseSimp c, vector<Xor>& xors, vector<vector<uint32_t> >& xorIndex)
 {
     const Clause& cl = *clauses[c.index];
     if (cl.size() >= 10) return; //for speed
@@ -2599,13 +2604,20 @@ void Subsumer::findXor(ClauseSimp c, vector<vector<Xor> >& xors, uint32_t& numFo
 
     if (foundCls.foundAll()) {
         Xor thisXor(cl, rhs);
-        assert(xors.size() > cl[0].var());
-        vector<Xor>& whereToFind = xors[cl[0].var()];
-        vector<Xor>::const_iterator it = std::find(whereToFind.begin(), whereToFind.end(), thisXor);
-        if (it == whereToFind.end()) {
-            numFound++;
+        assert(xorIndex.size() > cl[0].var());
+        const vector<uint32_t>& whereToFind = xorIndex[cl[0].var()];
+        bool found = false;
+        for (vector<uint32_t>::const_iterator it = whereToFind.begin(), end = whereToFind.end(); it != end; it++) {
+            if (xors[*it] == thisXor) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            xors.push_back(thisXor);
+            uint32_t thisXorIndex = xors.size()-1;
             for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-                xors[l->var()].push_back(thisXor);
+                xorIndex[l->var()].push_back(thisXorIndex);
             }
 
             /*if (!foundCls.allTheSameSize(clauseData)) {

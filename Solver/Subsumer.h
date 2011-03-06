@@ -536,7 +536,7 @@ private:
             const bool rhs;
     };
     void findXors();
-    void findXor(ClauseSimp c, vector<vector<Xor> >&xors, uint32_t& numFound);
+    void findXor(ClauseSimp c, vector<Xor>& xors, vector<vector<uint32_t> >& xorIndex);
     void findXorMatch(const vec<ClauseSimp>& occ, FoundXors& foundCls) const;
     void findXorMatch(const vec2<Watched>& ws, const Lit lit, FoundXors& foundCls) const;
 
