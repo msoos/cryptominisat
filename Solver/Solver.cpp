@@ -2470,6 +2470,11 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     #ifdef BURST_SEARCH
     restartType = static_restart;
 
+    if (conf.doFindEqLits) {
+        if (!sCCFinder->find2LongXors()) goto end;
+        lastNbBin = numNewBin;
+    }
+    if (conf.doReplace && !varReplacer->performReplace(true)) goto end;
     printRestartStat("S");
     while(status == l_Undef && conflicts-origConflicts < numConfls && needToInterrupt == false) {
         status = search(100, std::numeric_limits<uint64_t>::max(), false);
@@ -2479,26 +2484,20 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (status != l_Undef) goto end;
     #endif //BURST_SEARCH
 
-    if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
-
     if (order_heap.size() < 70000) conf.doCacheOTFSSR = true;
-    if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
+    if (conf.doFailedLit) {
+        bool saveDoHyperBin = conf.doHyperBinRes;
+        if (conflicts < 50000) conf.doHyperBinRes = false;
+        clauseAllocator.consolidate(this, true);
+        if (!failedLitSearcher->search()) goto end;
+        conf.doHyperBinRes = saveDoHyperBin;
+    }
 
     if (needToInterrupt) return l_Undef;
     if (conf.doClausVivif && !clauseVivifier->calcAndSubsume()) goto end;
     if (conf.doSatELite && !subsumer->simplifyBySubsumption()) goto end;
     if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
-
-    /*if (findNormalXors && xorclauses.size() > 200 && clauses.size() < MAX_CLAUSENUM_XORFIND/8) {
-        XorFinder xorFinder(*this, clauses, ClauseCleaner::clauses);
-        if (!xorFinder.doNoPart(3, 7)) {
-            status = l_False;
-            goto end;
-        }
-    } else*/ if (xorclauses.size() <= 200 && xorclauses.size() > 0 && nClauses() > 10000) {
-        XorFinder x(*this, clauses);
-        x.addAllXorAsNorm();
-    }
+    if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
     //addSymmBreakClauses();
 
@@ -2618,74 +2617,6 @@ const bool Solver::fullRestart(uint32_t& lastFullRestart)
 }
 
 /**
-@brief Performs a set of pre-optimisations before the beggining of solving
-
-This is somewhat different than the set of optimisations carried out during
-solving in simplifyProblem(). For instance, binary xors are searched fully
-here, while there, no search for them is carried out. Also, the ordering
-is different.
-
-\todo experiment to use simplifyProblem() instead of this, with the only
-addition of binary clause search. Maybe it will do just as good (or better).
-*/
-void Solver::performStepsBeforeSolve()
-{
-    assert(qhead == trail.size());
-    testAllClauseAttach();
-
-    printRestartStat();
-    if (conf.doReplace && !varReplacer->performReplace()) return;
-
-    if (conf.doClausVivif && !conf.libraryUsage
-        && !clauseVivifier->vivify()) return;
-
-    if (order_heap.size() > 70000) conf.doCacheOTFSSR = false;
-    bool saveDoHyperBin = conf.doHyperBinRes;
-    conf.doHyperBinRes = false;
-    clauseAllocator.consolidate(this, true);
-    if (conf.doFailedLit && !failedLitSearcher->search()) return;
-    conf.doHyperBinRes = saveDoHyperBin;
-
-    #ifdef VERBOSE_DEBUG
-    printAllClauses();
-    #endif //VERBOSE_DEBUG
-
-    if (conf.doClausVivif && !conf.libraryUsage
-        && !clauseVivifier->calcAndSubsume())
-        return;
-
-    if (conf.doSatELite
-        && !conf.libraryUsage
-        && clauses.size() < 4800000
-        && !subsumer->simplifyBySubsumption())
-        return;
-
-    if (conf.doFindEqLits) {
-        if (!sCCFinder->find2LongXors()) return;
-        lastNbBin = numNewBin;
-        if (conf.doReplace && !varReplacer->performReplace(true)) return;
-    }
-
-    if (conf.doFindXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
-        XorFinder xorFinder(*this, clauses);
-        if (!xorFinder.fullFindXors(3, 7)) return;
-    }
-
-    if (xorclauses.size() > 1) {
-        if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption())
-            return;
-
-        if (conf.doReplace && !varReplacer->performReplace())
-            return;
-    }
-
-    if (conf.doSortWatched) sortWatched();
-    if (conf.doCacheOTFSSR && conf.doCalcReach) calcReachability();
-
-    testAllClauseAttach();
-}
-
-/**
 @brief Initialises model, restarts, learnt cluause cleaning, burst-search, etc.
 */
 void Solver::initialiseSolver()
@@ -2747,7 +2678,7 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
 
     uint64_t oldConflicts = conflicts;
     if (conflicts == 0) {
-        if (conf.doPerformPreSimp) performStepsBeforeSolve();
+        if (conf.doPerformPreSimp) simplifyProblem(conf.simpBurstSConf*2);
         if (!ok) return l_False;
     }
     CalcDefPolars polarityCalc(*this);

@@ -696,7 +696,6 @@ protected:
     //////////////////////////
     // Problem simplification
     //////////////////////////
-    void        performStepsBeforeSolve();
     const lbool simplifyProblem(const uint32_t numConfls);
     void        reduceDB();       // Reduce the set of learnt clauses.
     const bool  simplify();       // Removes satisfied clauses and finds binary xors
