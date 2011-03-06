@@ -13,9 +13,9 @@ if (CMAKE_COMPILER_IS_GNUCC)
     SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -Werror -Wno-deprecated -O3 -g -DNDEBUG -mtune=native -fomit-frame-pointer") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    SET(CMAKE_EXE_LINKER_FLAGS "-static")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#    SET(CMAKE_EXE_LINKER_FLAGS "-static")
+#ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 find_package(ZLIB  REQUIRED)
 link_directories( ${ZLIB_LIBRARY} )
