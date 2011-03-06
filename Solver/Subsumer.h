@@ -288,7 +288,8 @@ private:
     };
     class ClAndBin {
         public:
-            ClAndBin(ClauseSimp& cl) :
+            ClAndBin();
+            ClAndBin(ClauseSimp cl) :
                 clsimp(cl)
                 , lit1(lit_Undef)
                 , lit2(lit_Undef)
@@ -306,7 +307,22 @@ private:
             Lit lit1;
             Lit lit2;
             bool isBin;
+
+            const std::string print(const vec<Clause*>&clauses) const
+            {
+                std::stringstream ss;
+                if (isBin) {
+                    ss << lit1 << " , " << lit2;
+                } else {
+                    if (clauses[clsimp.index])
+                        ss << *clauses[clsimp.index];
+                    else
+                        ss << "NULL";
+                }
+                return ss.str();
+            }
     };
+
     uint32_t numLearntBinVarRemAdded;
     void orderVarsForElim(vec<Var>& order);
     const uint32_t numNonLearntBins(const Lit lit) const;
@@ -323,7 +339,210 @@ private:
 
     void makeAllBinsNonLearnt();
 
+    ////////////////////////////////
+    //XOR finding
+    ////////////////////////////////
+    class Xor
+    {
+    public:
+        Xor(const Clause& cl, const bool _rhs) :
+            rhs(_rhs)
+        {
+            for (uint32_t i = 0; i < cl.size(); i++) {
+                vars.push_back(cl[i].var());
+            }
+        }
+
+        /*const bool operator<(const Xor& other) const
+        {
+            if (rhs != other.rhs) return (rhs == true);
+            if (other.vars.size() != vars.size()) return (vars.size() < other.vars.size());
+            for (uint32_t i = 0; i < vars.size(); i++) {
+                if (vars[i] != other.vars[i]) return (vars[i]<other.vars[i]);
+            }
+            return false;
+        }*/
+
+        const bool operator==(const Xor& other) const
+        {
+            return (rhs == other.rhs && vars == other.vars);
+        }
+
+        vector<Var> vars;
+        bool rhs;
+    };
+    class FoundXors
+    {
+        public:
+            FoundXors(const ClauseSimp c, const Clause& cl, const AbstData& clData, const bool _rhs, const uint32_t whichOne) :
+                origCl(cl)
+                , abst(clData.abst)
+                , size(clData.size)
+                , rhs(_rhs)
+            {
+                foundComb.resize(1UL<<cl.size(), false);
+                foundComb[whichOne] = true;
+                indexes.insert(c.index);
+                clauses.push_back(ClAndBin(c));
+            }
+
+            const uint32_t getAbst() const
+            {
+                return abst;
+            }
+
+            const uint32_t getSize() const
+            {
+                return size;
+            }
+
+            const bool getRHS() const
+            {
+                return rhs;
+            }
+
+            const bool alreadyInside(const ClauseSimp c)
+            {
+                return indexes.find(c.index) != indexes.end();
+            }
+
+            const bool alreadyInside(Lit lit1, Lit lit2)
+            {
+                if (lit1 > lit2) std::swap(lit1, lit2);
+                for (uint32_t i = 0; i < clauses.size(); i++) {
+                    if (!clauses[i].isBin) continue;
+                    if (clauses[i].lit1 == lit1
+                        && clauses[i].lit2 == lit2) return true;
+                }
+
+                return false;
+            }
+
+            void add(const ClauseSimp c, const Clause& cl)
+            {
+                assert(!alreadyInside(c));
+                indexes.insert(c.index);
+                clauses.push_back(ClAndBin(c));
+
+                vector<uint32_t> varsMissing;
+                uint32_t origI = 0;
+                uint32_t i = 0;
+                uint32_t whichOne = 0;
+
+                for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++, i++, origI++) {
+                    //some variables might be missing
+                    while(cl[i].var() != origCl[origI].var()) {
+                        varsMissing.push_back(origI);
+                        origI++;
+                        assert(origI < origCl.size());
+                    }
+                    whichOne += ((uint32_t)l->sign()) << origI;
+                }
+
+                //set to true every combination for the missing variables
+                for (uint32_t i = 0; i < 1UL<<(varsMissing.size()); i++) {
+                    uint32_t thisWhichOne = whichOne;
+                    for (uint32_t i2 = 0; i2 < varsMissing.size(); i2++) {
+                        if (bit(i, i2)) thisWhichOne+= 1<<(varsMissing[i2]);
+                    }
+                    foundComb[thisWhichOne] = true;
+                }
+            }
+
+            const bool foundAll() const
+            {
+                bool OK = true;
+                for (uint32_t i = 0; i < foundComb.size(); i++) {
+                    if ((NumberOfSetBits(i)%2) == rhs) {
+                        //std::cout << "%2 of hamm. weight of " << i << " = " <<rhs << std::endl;
+                        continue;
+                    }
+                    if (!foundComb[i]) {
+                        OK = false;
+                        break;
+                    }
+                }
+                return OK;
+            }
+
+            void add(Lit lit1, Lit lit2)
+            {
+                uint32_t whichOne = 0;
+                vector<Var> varsMissing;
+                if (lit1 > lit2) std::swap(lit1, lit2);
+                clauses.push_back(ClAndBin(lit1, lit2));
+                for (uint32_t i = 0; i < origCl.size(); i++) {
+                    if (lit1.var() == origCl[i].var()) whichOne += ((uint32_t)lit1.sign()) << i;
+                    else if (lit2.var() == origCl[i].var()) whichOne += ((uint32_t)lit2.sign()) << i;
+                    else varsMissing.push_back(i);
+                }
+
+                //set to true every combination for the missing variables
+                for (uint32_t i = 0; i < 1UL<<(varsMissing.size()); i++) {
+                    uint32_t thisWhichOne = whichOne;
+                    for (uint32_t i2 = 0; i2 < varsMissing.size(); i2++) {
+                        if (bit(i, i2)) thisWhichOne+= 1<<(varsMissing[i2]);
+                    }
+                    foundComb[thisWhichOne] = true;
+                }
+            }
+
+            const vector<ClAndBin>& getClauses() const
+            {
+                return clauses;
+            }
+
+            const bool allTheSameSize(const vec<AbstData>& clauseData) const
+            {
+                uint16_t origSize = origCl.size();
+                for (uint32_t i = 0; i < clauses.size(); i++) {
+                    if (clauses[i].isBin) return false;
+                    if (clauseData[clauses[i].clsimp.index].size != origSize) return false;
+                }
+
+                return true;
+            }
+
+        private:
+            const uint32_t NumberOfSetBits(uint32_t i) const
+            {
+                i = i - ((i >> 1) & 0x55555555);
+                i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+                return (((i + (i >> 4)) & 0xF0F0F0F) * 0x1010101) >> 24;
+            }
+
+            const bool bit(const uint32_t a, const uint32_t b) const
+            {
+                return (((a)>>(b))&1);
+            }
+
+            //bitfield to indicate which of the following is already set
+            //-1 -2 -3
+            //-1  2  3
+            // 1 -2  3
+            // 1  2 -3
+            //order the above according to sign: if sign:
+            //LSB ... MSB
+            // 1 1 1
+            // 1 0 0
+            // 0 1 0
+            // 0 0 1
+            vector<bool> foundComb;
+            vector<ClAndBin> clauses;
+            std::set<uint32_t> indexes;
+            const Clause& origCl;
+            const uint32_t abst;
+            const uint16_t size;
+            const bool rhs;
+    };
+    void findXors();
+    void findXor(ClauseSimp c, vector<vector<Xor> >&xors, uint32_t& numFound);
+    void findXorMatch(const vec<ClauseSimp>& occ, FoundXors& foundCls) const;
+    void findXorMatch(const vec2<Watched>& ws, const Lit lit, FoundXors& foundCls) const;
+
+    ////////////////////////////////
     //Blocked clause elimination
+    ///////////////////////////////
     class VarOcc {
         public:
             VarOcc(const Var& v, const uint32_t num) :

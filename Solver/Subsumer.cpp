@@ -20,6 +20,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "UselessBinRemover.h"
 #include "DataSync.h"
 #include <set>
+#include <algorithm>
 #include "PartHandler.h"
 
 #ifdef _MSC_VER
@@ -1069,6 +1070,8 @@ const bool Subsumer::simplifyBySubsumption()
     std::cout << "c  numMaxSubsume1:" << numMaxSubsume1 << std::endl;
     std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
     #endif
+
+    findXors();
 
     do {
         if (!subsume0AndSubsume1()) return false;
@@ -2542,4 +2545,117 @@ void Subsumer::makeAllBinsNonLearnt()
     assert(changedHalfToNonLearnt % 2 == 0);
     solver.learnts_literals -= changedHalfToNonLearnt;
     solver.clauses_literals += changedHalfToNonLearnt;
+}
+
+void Subsumer::findXors()
+{
+    double myTime = cpuTime();
+    //Lowest variable <---> XOR map
+    vector<vector<Xor> > xors;
+    xors.resize(solver.nVars());
+    uint32_t numFound = 0;
+
+    for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++) {
+        if (*it == NULL) continue;
+        std::sort((*it)->getData(), (*it)->getDataEnd());
+    }
+
+    uint32_t wsLit = 0;
+    for (vec<vec<ClauseSimp> >::iterator it = occur.getData(), end = occur.getDataEnd(); it != end; it++, wsLit++) {
+        //Lit lit1 = ~Lit::toLit(wsLit);
+        for (vec<ClauseSimp>::iterator it2 = it->getData(), end2 = it->getDataEnd(); it2 != end2; it2++) {
+            findXor(*it2, xors, numFound);
+        }
+    }
+
+    std::cout << "c XOR finding finished. Num XORs: " << numFound
+    << " Time: " << (cpuTime() - myTime) << std::endl;
+}
+
+void Subsumer::findXor(ClauseSimp c, vector<vector<Xor> >& xors, uint32_t& numFound)
+{
+    const Clause& cl = *clauses[c.index];
+    if (cl.size() >= 10) return; //for speed
+
+    bool rhs = true;
+    uint32_t whichOne = 0;
+    uint32_t i = 0;
+    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++, i++) {
+        seen_tmp[l->var()] = 1;
+        rhs ^= l->sign();
+        whichOne += ((uint32_t)l->sign()) << i;
+    }
+
+    FoundXors foundCls(c, cl, clauseData[c.index], rhs, whichOne);
+    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+        findXorMatch(occur[(*l).toInt()], foundCls);
+        findXorMatch(occur[(~*l).toInt()], foundCls);
+        findXorMatch(solver.watches[(~(*l)).toInt()], *l, foundCls);
+        findXorMatch(solver.watches[(*l).toInt()], ~(*l), foundCls);
+    }
+    //if (foundCls.size() > 3)
+    //    std::cout << "size: " << foundCls.size() << std::endl;
+
+
+    if (foundCls.foundAll()) {
+        Xor thisXor(cl, rhs);
+        assert(xors.size() > cl[0].var());
+        vector<Xor>& whereToFind = xors[cl[0].var()];
+        vector<Xor>::const_iterator it = std::find(whereToFind.begin(), whereToFind.end(), thisXor);
+        if (it == whereToFind.end()) {
+            numFound++;
+            for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+                xors[l->var()].push_back(thisXor);
+            }
+
+            /*if (!foundCls.allTheSameSize(clauseData)) {
+                std::cout << "--- XOR---" << std::endl;
+                const vector<ClAndBin>& cls = foundCls.getClauses();
+                for (uint32_t i = 0; i < cls.size(); i++) {
+                    std::cout << cls[i].print(clauses) << std::endl;
+                }
+                std::cout << "--- XOR END ---" << std::endl;
+            }*/
+        }
+    }
+
+    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++, i++) {
+        seen_tmp[l->var()] = 0;
+    }
+}
+
+void Subsumer::findXorMatch(const vec2<Watched>& ws, const Lit lit, FoundXors& foundCls) const
+{
+    for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++)  {
+        if (it->isBinary()
+            && seen_tmp[it->getOtherLit().var()]
+            && !foundCls.alreadyInside(lit, it->getOtherLit()))
+        {
+            foundCls.add(lit, it->getOtherLit());
+        }
+    }
+}
+
+void Subsumer::findXorMatch(const vec<ClauseSimp>& occ, FoundXors& foundCls) const
+{
+    for (const ClauseSimp *it = occ.getData(), *end = occ.getDataEnd(); it != end; it++) {
+        if (clauseData[it->index].size <= foundCls.getSize()
+            && ((clauseData[it->index].abst|foundCls.getAbst())== foundCls.getAbst())
+            && !foundCls.alreadyInside(*it)
+        ) {
+            Clause& cl = *clauses[it->index];
+
+            bool rhs = true;
+            uint32_t i = 0;
+            for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++, i++) {
+                if (!seen_tmp[l->var()]) goto end;
+                rhs ^= l->sign();
+            }
+            //either the invertedness has to match, or the size must be smaller
+            if (rhs != foundCls.getRHS() && cl.size() == foundCls.getSize()) continue;
+
+            foundCls.add(it->index, cl);
+            end:;
+        }
+    }
 }
