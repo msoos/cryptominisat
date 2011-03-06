@@ -1087,7 +1087,7 @@ const bool Subsumer::simplifyBySubsumption()
 
     if (solver.conf.doGateFind
         && solver.conf.doCacheNLBins
-        && numCalls > 3
+        && numCalls > 2
         && !findOrGatesAndTreat()) return false;
 
     assert(solver.ok);
