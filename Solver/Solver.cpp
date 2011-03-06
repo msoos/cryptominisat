@@ -772,38 +772,6 @@ const bool Solver::clearGaussMatrixes()
     return false;
 }
 
-inline bool Solver::getPolarity(const Var var)
-{
-    switch(conf.polarity_mode) {
-        case polarity_false:
-            return true;
-        case polarity_true:
-            return false;
-        case polarity_rnd:
-            return mtrand.randInt(1);
-        case polarity_auto:
-            if (avgBranchDepth.isvalid()) {
-                uint32_t multiplier;
-                switch(subRestartType) {
-                    case static_restart:
-                        multiplier = 2;
-                        break;
-                    default:
-                        multiplier = 1;
-                }
-                const bool random = mtrand.randInt(avgBranchDepth.getAvgUInt() * multiplier) == 1;
-
-                return varData[var].polarity.getVal() ^ random;
-            } else {
-                return varData[var].polarity.getVal();
-            }
-        default:
-            assert(false);
-    }
-
-    return true;
-}
-
 void Solver::calcReachability()
 {
     double myTime = cpuTime();
