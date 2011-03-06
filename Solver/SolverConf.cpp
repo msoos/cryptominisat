@@ -72,7 +72,7 @@ SolverConf::SolverConf() :
         , doExtendedSCC    (true)
         , doGateFind       (true)
         , doAlwaysFMinim   (true)
-        , doER             (true)
+        , doER             (false)
         , doCalcReach      (true)
         , doBXor           (true)
 
