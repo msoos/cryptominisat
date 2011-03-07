@@ -2678,11 +2678,13 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
 
     uint64_t oldConflicts = conflicts;
     if (conflicts == 0) {
-        if (conf.doPerformPreSimp) simplifyProblem(conf.simpBurstSConf*2);
+        if (conf.doPerformPreSimp) status = simplifyProblem(conf.simpBurstSConf*2);
         if (!ok) return l_False;
     }
-    CalcDefPolars polarityCalc(*this);
-    polarityCalc.calculate();
+    if (status == l_Undef) {
+        CalcDefPolars polarityCalc(*this);
+        polarityCalc.calculate();
+    }
 
     bool firstRearrangeDone = false;
     printStatHeader();

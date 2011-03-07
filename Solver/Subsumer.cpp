@@ -501,7 +501,7 @@ const bool Subsumer::handleClBinTouched()
     }
     clBinTouched.clear();
 
-    if (solver.conf.verbosity >= 3) {
+    if (solver.conf.verbosity >= 4) {
         std::cout << "c subs-w-newbins " << clauses_subsumed - clauses_subsumed_before
         << " lits rem " << literals_removed - literals_removed_before
         << " went through: " << clBinSize << std::endl;
