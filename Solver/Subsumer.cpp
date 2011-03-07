@@ -771,10 +771,6 @@ void Subsumer::fillCannotEliminate()
             cannot_eliminate[c[i2].var()] = true;
     }
 
-    for (Var var = 0; var < solver.nVars(); var++) {
-        cannot_eliminate[var] |= solver.varReplacer->cannot_eliminate[var];
-    }
-
     #ifdef VERBOSE_DEBUG
     uint32_t tmpNum = 0;
     for (uint32_t i = 0; i < cannot_eliminate.size(); i++)
@@ -882,7 +878,9 @@ const bool Subsumer::eliminateVars()
     uint32_t numtry = 0;
     for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
         Var var = order[i];
-        if (!cannot_eliminate[var] && solver.decision_var[var]) {
+        if (!cannot_eliminate[var]
+            && !solver.varReplacer->cannot_eliminate[var]
+            && solver.decision_var[var]) {
             numtry++;
             if (maybeEliminate(order[i])) {
                 if (!solver.ok) return false;
@@ -1402,6 +1400,7 @@ bool Subsumer::maybeEliminate(const Var var)
     assert(!var_elimed[var]);
     assert(solver.varData[var].elimed == ELIMED_NONE);
     assert(!cannot_eliminate[var]);
+    assert(!solver.varReplacer->cannot_eliminate[var]);
     assert(solver.decision_var[var]);
     if (solver.value(var) != l_Undef) return true;
 
@@ -1804,6 +1803,7 @@ void Subsumer::blockedClauseRemoval()
         if (solver.value(vo.var) != l_Undef
             || !solver.decision_var[vo.var]
             || cannot_eliminate[vo.var]
+            || solver.varReplacer->cannot_eliminate[vo.var]
             || dontElim[vo.var])
             continue;
 
