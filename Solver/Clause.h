@@ -109,7 +109,7 @@ public:
         isRemoved = false;
         setGroup(_group);
 
-        memcpy(data, ps.getData(), ps.size()*sizeof(Lit));
+        for (uint32_t i = 0; i < ps.size(); i++) data[i] = ps[i];
         glue = MAX_THEORETICAL_GLUE;
         setChanged();
     }
