@@ -2727,7 +2727,10 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
             cancelUntil(0);
             return l_Undef;
         }
-        if (status != l_Undef) break;
+        if (status != l_Undef) {
+            delayedEnqueueUpdate();
+            break;
+        }
 
         nof_conflicts = (double)nof_conflicts * conf.restart_inc;
     }
