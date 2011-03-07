@@ -698,7 +698,6 @@ void Subsumer::removeBinsAndTris(const Var var)
 
     solver.learnts_literals -= numRemovedLearnt*2;
     solver.numBins -= numRemovedLearnt;
-
 }
 
 const uint32_t Subsumer::removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws)
