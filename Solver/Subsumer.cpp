@@ -1037,7 +1037,33 @@ const bool Subsumer::simplifyBySubsumption()
     std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
     #endif
 
-    findXors();
+    for (uint32_t i = 0; i < clauses.size(); i++) {
+        if (clauses[i] == NULL) continue;
+        const Clause& cl = *clauses[i];
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            if (var_elimed[cl[i].var()]) {
+                std::cout << "Elmied var -- Lit " << cl[i] << " in clause?" << std::endl;
+                std::cout << "wrongly left in clause: " << cl << std::endl;
+                exit(-1);
+            }
+        }
+    }
+
+    uint32_t wsLit = 0;
+    for (const vec2<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        Lit lit = ~Lit::toLit(wsLit);
+        const vec2<Watched>& ws = *it;
+        for (vec2<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
+            if (it2->isBinary()) {
+                if (var_elimed[lit.var()] || var_elimed[it2->getOtherLit().var()]) {
+                    std::cout << "One var elimed: " << lit << " , " << it2->getOtherLit() << std::endl;
+                    exit(-1);
+                }
+            }
+        }
+    }
+
+    if (solver.conf.doFindXors && !findXors()) return false;
 
     do {
         if (!subsume0AndSubsume1()) return false;
@@ -2514,13 +2540,13 @@ void Subsumer::makeAllBinsNonLearnt()
     solver.clauses_literals += changedHalfToNonLearnt;
 }
 
-void Subsumer::findXors()
+const bool Subsumer::findXors()
 {
     double myTime = cpuTime();
     //Lowest variable <---> XOR map
-    vector<vector<uint32_t> > xorIndex;
+    xors.clear();
+    xorIndex.clear();
     xorIndex.resize(solver.nVars());
-    vector<Xor> xors;
 
     for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++) {
         if (*it == NULL) continue;
@@ -2530,21 +2556,90 @@ void Subsumer::findXors()
     uint32_t i = 0;
     for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++, i++) {
         if (*it == NULL) continue;
-        findXor(i, xors, xorIndex);
+        findXor(i);
     }
 
-    /*for (vector<Xor>::iterator it = xors.begin(), end = xors.end(); it != end; it++) {
-        const Xor& thisXor = *it;
-        for (vector<Var>::iterator it2 = thisXor.begin(), end2 = thisXor.end(); it2 != end2; it2++) {
-            seen[];
-        }
-    }*/
+    uint32_t index = 0;
+    uint32_t doneSomething = 0;
+    for (vector<Xor>::iterator it = xors.begin(), end = xors.end(); it != end; it++, index++) {
+        doneSomething += tryToXor(*it, index);
+        if (!solver.ok) goto end;
+    }
 
-    std::cout << "c XOR finding finished. Num XORs: " << xors.size()
-    << " Time: " << (cpuTime() - myTime) << std::endl;
+    end:
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c XOR finding finished. Num XORs: " << std::setw(6) << xors.size()
+        << " Done something: " << std::setw(6) << doneSomething
+        << " Time: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime) << std::setw(6) << std::endl;
+    }
+
+    return solver.ok;
 }
 
-void Subsumer::findXor(ClauseSimp c, vector<Xor>& xors, vector<vector<uint32_t> >& xorIndex)
+const uint32_t Subsumer::tryToXor(const Xor& thisXor, const uint32_t thisIndex)
+{
+    uint32_t doneSomething = 0;
+    for (vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
+        seen[*it] = 1;
+    }
+
+    for (vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
+        const vector<uint32_t>& indexes = xorIndex[*it];
+        for (vector<uint32_t>::const_iterator it2 = indexes.begin(), end2 = indexes.end(); it2 != end2; it2++) {
+            if (*it2 == thisIndex) continue;
+            if (xors[*it2].vars.size() <= thisXor.vars.size()) {
+                const Xor& otherXor = xors[*it2];
+                uint32_t wrong = 0;
+                for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
+                    if (!seen[*it3]) {
+                        wrong++;
+                        if (wrong > 1 || (wrong>0 && otherXor.vars.size() < thisXor.vars.size())) break;
+                    }
+                }
+                if (wrong == 0 || (wrong == 1 && otherXor.vars.size() == thisXor.vars.size())) {
+                    doneSomething++;
+                    /*std::cout << "Two xors to do something about: " << std::endl;
+                    std::cout << thisXor << std::endl;
+                    std::cout << otherXor << std::endl;*/
+                    vec<Lit> XORofTwo;
+                    for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
+                        if (!seen[*it3]) {
+                            XORofTwo.push(Lit(*it3, false));
+                        }
+                    }
+                    if (wrong > 0) {
+                        for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
+                            seen2[*it3] = 1;
+                        }
+
+                        for (vector<Var>::const_iterator it3 = thisXor.vars.begin(), end3 = thisXor.vars.end(); it3 != end3; it3++) {
+                            if (!seen2[*it3]) {
+                                XORofTwo.push(Lit(*it3, false));
+                            }
+                        }
+
+                        for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
+                            seen2[*it3] = 0;
+                        }
+                    }
+                    bool finalRHS = thisXor.rhs ^ otherXor.rhs;
+                    XorClause* c = solver.addXorClauseInt(XORofTwo, !finalRHS, 0, true);
+                    assert(c == NULL);
+                    if (!solver.ok) goto end;;
+                }
+            }
+        }
+    }
+
+    end:
+    for (vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
+        seen[*it] = 0;
+    }
+
+    return doneSomething;
+}
+
+void Subsumer::findXor(ClauseSimp c)
 {
     const Clause& cl = *clauses[c.index];
     if (cl.size() >= 10) return; //for speed

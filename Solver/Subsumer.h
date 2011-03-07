@@ -101,6 +101,45 @@ class TouchList
         vector<char> touched;
 };
 
+class Xor
+{
+    public:
+        Xor(const Clause& cl, const bool _rhs) :
+            rhs(_rhs)
+        {
+            for (uint32_t i = 0; i < cl.size(); i++) {
+                vars.push_back(cl[i].var());
+            }
+        }
+
+        /*const bool operator<(const Xor& other) const
+        {
+            if (rhs != other.rhs) return (rhs == true);
+            if (other.vars.size() != vars.size()) return (vars.size() < other.vars.size());
+            for (uint32_t i = 0; i < vars.size(); i++) {
+                if (vars[i] != other.vars[i]) return (vars[i]<other.vars[i]);
+            }
+            return false;
+        }*/
+
+        const bool operator==(const Xor& other) const
+        {
+            return (rhs == other.rhs && vars == other.vars);
+        }
+
+        vector<Var> vars;
+        bool rhs;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)
+{
+    for (uint32_t i = 0; i < thisXor.vars.size(); i++) {
+        os << Lit(thisXor.vars[i], false) << " ";
+    }
+    os << " =  " << std::boolalpha << thisXor.rhs << std::noboolalpha;
+    return os;
+}
+
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
 
@@ -341,35 +380,6 @@ private:
     ////////////////////////////////
     //XOR finding
     ////////////////////////////////
-    class Xor
-    {
-    public:
-        Xor(const Clause& cl, const bool _rhs) :
-            rhs(_rhs)
-        {
-            for (uint32_t i = 0; i < cl.size(); i++) {
-                vars.push_back(cl[i].var());
-            }
-        }
-
-        /*const bool operator<(const Xor& other) const
-        {
-            if (rhs != other.rhs) return (rhs == true);
-            if (other.vars.size() != vars.size()) return (vars.size() < other.vars.size());
-            for (uint32_t i = 0; i < vars.size(); i++) {
-                if (vars[i] != other.vars[i]) return (vars[i]<other.vars[i]);
-            }
-            return false;
-        }*/
-
-        const bool operator==(const Xor& other) const
-        {
-            return (rhs == other.rhs && vars == other.vars);
-        }
-
-        vector<Var> vars;
-        bool rhs;
-    };
     class FoundXors
     {
         public:
@@ -398,6 +408,11 @@ private:
             const bool getRHS() const
             {
                 return rhs;
+            }
+
+            const Clause& getOrigCl() const
+            {
+                return origCl;
             }
 
             const bool alreadyInside(const ClauseSimp c)
@@ -534,10 +549,13 @@ private:
             const uint16_t size;
             const bool rhs;
     };
-    void findXors();
-    void findXor(ClauseSimp c, vector<Xor>& xors, vector<vector<uint32_t> >& xorIndex);
+    vector<vector<uint32_t> > xorIndex;
+    vector<Xor> xors;
+    const bool findXors();
+    void findXor(ClauseSimp c);
     void findXorMatch(const vec<ClauseSimp>& occ, FoundXors& foundCls) const;
     void findXorMatch(const vec2<Watched>& ws, const Lit lit, FoundXors& foundCls) const;
+    const uint32_t tryToXor(const Xor& thisXor, const uint32_t thisIndex);
 
     ////////////////////////////////
     //Blocked clause elimination
