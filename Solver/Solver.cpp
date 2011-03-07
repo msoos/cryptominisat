@@ -2604,12 +2604,6 @@ const bool Solver::fullRestart(uint32_t& lastFullRestart)
         std::cout << "c Fully restarting" << std::endl;
     printRestartStat("F");
 
-    /*if (findNormalXors && clauses.size() < MAX_CLAUSENUM_XORFIND) {
-        XorFinder xorFinder(this, clauses, ClauseCleaner::clauses);
-        if (!xorFinder.doNoPart(3, 10))
-            return false;
-    }*/
-
     if (conf.doPartHandler && !partHandler->handle())
         return false;
 
