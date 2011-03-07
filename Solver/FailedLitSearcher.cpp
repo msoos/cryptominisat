@@ -161,7 +161,7 @@ const bool FailedLitSearcher::search()
         if (!bothCache.tryBoth()) return false;
     }
 
-    uint64_t numProps = 30 * 1000000;
+    uint64_t numProps = 10 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     solver.testAllClauseAttach();
