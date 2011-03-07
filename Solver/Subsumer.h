@@ -190,7 +190,6 @@ private:
     //Finish-up
     void freeMemory();
     void addBackToSolver();
-    void removeWrong(vec<Clause*>& cs);
     void removeWrongBinsAndAllTris();
     void removeAssignedVarsFromEliminated();
 

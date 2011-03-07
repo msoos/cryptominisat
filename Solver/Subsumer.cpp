@@ -687,37 +687,6 @@ void Subsumer::addBackToSolver()
     }
 }
 
-/**
-@brief Remove clauses from input that contain eliminated variables
-
-Used to remove learnt clauses that still reference a variable that has been
-eliminated.
-*/
-void Subsumer::removeWrong(vec<Clause*>& cs)
-{
-    Clause **i = cs.getData();
-    Clause **j = i;
-    for (Clause **end =  i + cs.size(); i != end; i++) {
-        Clause& c = **i;
-        if (!c.learnt())  {
-            *j++ = *i;
-            continue;
-        }
-        bool remove = false;
-        for (Lit *l = c.getData(), *end2 = l+c.size(); l != end2; l++) {
-            if (var_elimed[l->var()]) {
-                remove = true;
-                //solver.detachClause(c);
-                solver.clauseAllocator.clauseFree(&c);
-                break;
-            }
-        }
-        if (!remove)
-            *j++ = *i;
-    }
-    cs.shrink(i-j);
-}
-
 void Subsumer::removeBinsAndTris(const Var var)
 {
     uint32_t numRemovedLearnt = 0;
@@ -1093,7 +1062,6 @@ const bool Subsumer::simplifyBySubsumption()
     assert(solver.ok);
     assert(verifyIntegrity());
 
-    removeWrong(solver.learnts);
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
 
