@@ -560,29 +560,11 @@ private:
     ////////////////////////////////
     //Blocked clause elimination
     ///////////////////////////////
-    class VarOcc {
-        public:
-            VarOcc(const Var& v, const uint32_t num) :
-                var(v)
-                , occurnum(num)
-            {}
-            Var var;
-            uint32_t occurnum;
-    };
-    struct MyComp {
-        const bool operator() (const VarOcc& l1, const VarOcc& l2) const {
-            return l1.occurnum > l2.occurnum;
-        }
-    };
     void blockedClauseRemoval();
     template<class T>
     const bool allTautology(const T& ps, const Lit lit);
-    uint32_t numblockedClauseRemoved;
-    const bool tryOneSetting(const Lit lit);
-    priority_queue<VarOcc, vector<VarOcc>, MyComp> touchedBlockedVars;
-    vec<char> touchedBlockedVarsBool;
+    const uint32_t tryOneSetting(const Lit lit);
     void touchBlockedVar(const Var x);
-    void blockedClauseElimAll(const Lit lit);
 
     //Gate extraction
     struct OrGateSorter {
@@ -643,19 +625,6 @@ void maybeRemove(vec<T>& ws, const T2& elem)
 {
     if (ws.size() > 0)
         removeW(ws, elem);
-}
-
-/**
-@brief Put varible in touchedBlockedVars
-
-call it when the number of occurrences of this variable changed.
-*/
-inline void Subsumer::touchBlockedVar(const Var x)
-{
-    if (!touchedBlockedVarsBool[x]) {
-        touchedBlockedVars.push(VarOcc(x, occur[Lit(x, false).toInt()].size()*occur[Lit(x, true).toInt()].size()));
-        touchedBlockedVarsBool[x] = 1;
-    }
 }
 
 /**
@@ -738,7 +707,6 @@ inline void Subsumer::newVar()
     seen2   .push(0);
     touchedVars .addOne(solver.nVars()-1);
     var_elimed  .push(0);
-    touchedBlockedVarsBool.push(0);
     cannot_eliminate.push(0);
     ol_seenPos.push(1);
     ol_seenPos.push(1);
