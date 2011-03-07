@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PartHandler.h"
 #include "time_mem.h"
 #include "DataSync.h"
+#include "SolutionExtender.h"
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_REPLACER
@@ -502,8 +503,6 @@ void VarReplacer::extendModelPossible() const
                 assert(solver.assigns[i].getBool() == (solver.assigns[it->var()].getBool() ^ it->sign()));
             }
         }
-        solver.ok = (solver.propagate<false>().isNULL());
-        assert(solver.ok);
     }
 }
 
@@ -514,14 +513,14 @@ This function will add to solver2 clauses that represent the relationship of
 the variables to their replaced cousins. Then, calling solver2.solve() should
 take care of everything
 */
-void VarReplacer::extendModelImpossible(Solver& solver2) const
+void VarReplacer::extendModelImpossible(SolutionExtender* extender) const
 {
 
     #ifdef VERBOSE_DEBUG
     std::cout << "extendModelImpossible() called" << std::endl;
     #endif //VERBOSE_DEBUG
 
-    vec<Lit> tmpClause;
+    vector<Lit> tmpClause;
     uint32_t i = 0;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
         if (it->var() == i) continue;
@@ -530,16 +529,14 @@ void VarReplacer::extendModelImpossible(Solver& solver2) const
             assert(solver.assigns[i] == l_Undef);
 
             tmpClause.clear();
-            tmpClause.push(Lit(it->var(), true));
-            tmpClause.push(Lit(i, it->sign()));
-            solver2.addClause(tmpClause);
-            assert(solver2.ok);
+            tmpClause.push_back(Lit(it->var(), true));
+            tmpClause.push_back(Lit(i, it->sign()));
+            extender->addClause(tmpClause);
 
             tmpClause.clear();
-            tmpClause.push(Lit(it->var(), false));
-            tmpClause.push(Lit(i, it->sign()^true));
-            solver2.addClause(tmpClause);
-            assert(solver2.ok);
+            tmpClause.push_back(Lit(it->var(), false));
+            tmpClause.push_back(Lit(i, it->sign()^true));
+            extender->addClause(tmpClause);
         }
     }
 }

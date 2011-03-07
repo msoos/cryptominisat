@@ -14,6 +14,7 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include "CSet.h"
 
 class ClauseCleaner;
+class SolutionExtender;
 
 /**
 @brief Handles xor-subsumption and variable elimination at the XOR level
@@ -43,7 +44,7 @@ public:
     ClauseSimp linkInClause(XorClause& cl);
     void linkInAlreadyClause(ClauseSimp& c);
     void newVar();
-    void extendModel(Solver& solver2);
+    void extendModel(SolutionExtender* solver2);
 
     const uint32_t getNumElimed() const;
     const vec<char>& getVarElimed() const;

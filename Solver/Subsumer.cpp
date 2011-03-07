@@ -22,6 +22,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <set>
 #include <algorithm>
 #include "PartHandler.h"
+#include "SolutionExtender.h"
 
 #ifdef _MSC_VER
 #define __builtin_prefetch
@@ -61,55 +62,46 @@ caller to call solver2.solve().
 
 @p solver2 The external solver the variables' clauses are added to
 */
-void Subsumer::extendModel(Solver& solver2)
+void Subsumer::extendModel(SolutionExtender* extender)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Subsumer::extendModel(Solver& solver2) called" << std::endl;
     #endif
 
     assert(checkElimedUnassigned());
-    vec<Lit> tmp;
+    vector<Lit> tmp;
     typedef map<Var, vector<vector<Lit> > > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
-        #ifndef NDEBUG
         Var var = it->first;
         #ifdef VERBOSE_DEBUG
         std::cout << "Reinserting elimed var: " << var+1 << std::endl;
         #endif
         assert(!solver.decision_var[var]);
-        assert(solver.assigns[var] == l_Undef);
         assert(!solver.order_heap.inHeap(var));
-        #endif
 
         for (vector<vector<Lit> >::const_iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-            tmp.clear();
-            tmp.growTo(it2->size());
-            std::copy(it2->begin(), it2->end(), tmp.getData());
+            tmp.resize(it2->size(), lit_Undef);
+            std::copy(it2->begin(), it2->end(), tmp.begin());
 
             #ifdef VERBOSE_DEBUG
             std::cout << "Reinserting elimed clause: " << tmp << std::endl;;
             #endif
 
-            solver2.addClause(tmp);
-            assert(solver2.ok);
+            extender->addClause(tmp);
         }
     }
 
     typedef map<Var, vector<std::pair<Lit, Lit> > > elimType2;
     for (elimType2::iterator it = elimedOutVarBin.begin(), end = elimedOutVarBin.end(); it != end; it++) {
-        #ifndef NDEBUG
         Var var = it->first;
         #ifdef VERBOSE_DEBUG
         std::cout << "Reinserting elimed var: " << var+1 << std::endl;
         #endif
         assert(!solver.decision_var[var]);
-        assert(solver.assigns[var] == l_Undef);
         assert(!solver.order_heap.inHeap(var));
-        #endif
 
         for (vector<std::pair<Lit, Lit> >::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-            tmp.clear();
-            tmp.growTo(2);
+            tmp.resize(2, lit_Undef);
             tmp[0] = it2->first;
             tmp[1] = it2->second;
 
@@ -117,8 +109,7 @@ void Subsumer::extendModel(Solver& solver2)
             std::cout << "Reinserting bin clause: " << it2->first << " , " << it2->second << std::endl;
             #endif
 
-            solver2.addClause(tmp);
-            assert(solver2.ok);
+            extender->addClause(tmp);
         }
     }
 }

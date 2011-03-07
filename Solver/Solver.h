@@ -86,6 +86,7 @@ class SharedData;
 class DataSync;
 class BothCache;
 class CalcDefPolars;
+class SolutionExtender;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_UNCHECKEDENQUEUE_LEVEL0
@@ -597,12 +598,6 @@ protected:
     llbool   handle_conflict  (vec<Lit>& learnt_clause, PropBy confl, uint64_t& conflictC, const bool update);// Handles the conflict clause
     llbool   new_decision     (const uint64_t nof_conflicts, const uint64_t maxNumConfl, const uint64_t conflictC);  // Handles the case when all propagations have been made, and now a decision must be made
 
-    ///////////////
-    // Solution handling
-    ///////////////
-    void     handleSATSolution();   ///<Extends model, if needed, and fills "model"
-    void     handleUNSATSolution(); ///<If conflict really was zero-length, sets OK to false
-
     /////////////////
     // Maintaining Variable/Clause activity:
     /////////////////
@@ -671,6 +666,7 @@ protected:
     friend class DataSync;
     friend class BothCache;
     friend class CalcDefPolars;
+    friend class SolutionExtender;
     Conglomerate*       conglomerate;
     VarReplacer*        varReplacer;
     ClauseCleaner*      clauseCleaner;

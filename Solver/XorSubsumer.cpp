@@ -13,6 +13,7 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include "assert.h"
 #include <iomanip>
 #include "VarReplacer.h"
+#include "SolutionExtender.h"
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
@@ -213,14 +214,14 @@ void XorSubsumer::fillCannotEliminate()
     #endif
 }
 
-void XorSubsumer::extendModel(Solver& solver2)
+void XorSubsumer::extendModel(SolutionExtender* extender)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "XorSubsumer::extendModel(Solver& solver2) called" << std::endl;
     #endif
 
     assert(checkElimedUnassigned());
-    vec<Lit> tmp;
+    vector<Lit> tmpClause;
     typedef map<Var, vector<XorElimedClause> > elimType;
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
         #ifdef VERBOSE_DEBUG
@@ -234,11 +235,8 @@ void XorSubsumer::extendModel(Solver& solver2)
             std::cout << "Reinserting Clause: ";
             c.plainPrint();
             #endif
-            tmp.clear();
-            tmp.growTo(c.lits.size());
-            std::copy(c.lits.begin(), c.lits.end(), tmp.getData());
-            solver2.addXorClause(tmp, c.xorEqualFalse);
-            assert(solver2.ok);
+            tmpClause = c.lits;
+            extender->addXorClause(tmpClause, c.xorEqualFalse);
         }
     }
 }

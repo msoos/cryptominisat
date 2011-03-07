@@ -27,6 +27,7 @@ using std::map;
 using std::priority_queue;
 
 class ClauseCleaner;
+class SolutionExtender;
 
 class OrGate {
     public:
@@ -161,7 +162,7 @@ public:
     void newVar();
 
     //UnElimination
-    void extendModel(Solver& solver2);
+    void extendModel(SolutionExtender* solver2);
     const bool unEliminate(const Var var);
 
     //Get-functions

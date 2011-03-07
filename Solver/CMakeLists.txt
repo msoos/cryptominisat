@@ -40,6 +40,7 @@ add_executable(cryptominisat
     MTSolver.cpp
     BothCache.cpp
     CalcDefPolars.cpp
+    SolutionExtender.cpp
 )
 
 target_link_libraries(cryptominisat

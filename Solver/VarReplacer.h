@@ -34,6 +34,8 @@ using std::vector;
 #include "Clause.h"
 #include "Vec.h"
 
+class SolutionExtender;
+
 /**
 @brief Replaces variables with their anti/equivalents
 */
@@ -48,7 +50,7 @@ class VarReplacer
         const bool replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt = false, const bool addToWatchLists = true);
 
         void extendModelPossible() const;
-        void extendModelImpossible(Solver& solver2) const;
+        void extendModelImpossible(SolutionExtender* extender) const;
 
         const uint32_t getNumReplacedLits() const;
         const uint32_t getNumReplacedVars() const;

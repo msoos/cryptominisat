@@ -37,6 +37,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "DataSync.h"
 #include "BothCache.h"
 #include "CalcDefPolars.h"
+#include "SolutionExtender.h"
 
 #ifdef VERBOSE_DEBUG
 #define UNWINDING_DEBUG
@@ -2745,8 +2746,12 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
         std::cout << "Solutions is UNKNOWN" << std::endl;
     #endif //VERBOSE_DEBUG
 
-    if (status == l_True) handleSATSolution();
-    else if (status == l_False) handleUNSATSolution();
+    if (status == l_True) {
+        SolutionExtender extender(*this);
+        extender.extend();
+    } else if (status == l_False) {
+        if (conflict.size() == 0) ok = false;
+    }
 
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis) {
@@ -2768,97 +2773,4 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
     std::cout << "Solver::solve() finished" << std::endl;
     #endif
     return status;
-}
-
-/**
-@brief Extends a SAT solution to the full solution
-
-variable elimination, variable replacement, sub-part solving, etc. all need to
-be handled correctly to arrive at a solution that is a solution to ALL of the
-original problem, not just of what remained of it at the end inside this class
-(i.e. we need to combine things from the helper classes)
-*/
-void Solver::handleSATSolution()
-{
-
-    /*if (greedyUnbound) {
-        double time = cpuTime();
-        FindUndef finder(*this);
-        const uint32_t unbounded = finder.unRoll();
-        if (conf.verbosity >= 1)
-            printf("c Greedy unbounding     :%5.2lf s, unbounded: %7d vars\n", cpuTime()-time, unbounded);
-    }*/
-    assert(subsumer->checkElimedUnassigned());
-    assert(xorSubsumer->checkElimedUnassigned());
-
-    partHandler->addSavedState();
-    varReplacer->extendModelPossible();
-    checkSolution();
-
-    if (subsumer->getNumElimed() || xorSubsumer->getNumElimed()) {
-        if (conf.verbosity >= 1) {
-            std::cout << "c Solution needs extension. Extending." << std::endl;
-        }
-        Solver s;
-        s.conf = conf;
-        s.conf.doSatELite = false;
-        s.conf.doReplace = false;
-        s.conf.doFindEqLits = false;
-        s.conf.doRegFindEqLits = false;
-        s.conf.doFailedLit= false;
-        s.conf.doConglXors = false;
-        s.conf.doSubsWNonExistBins = false;
-        s.conf.doRemUselessBins = false;
-        s.conf.doClausVivif = false;
-        s.conf.doPartHandler = false;
-        s.conf.doSortWatched = false;
-        s.conf.verbosity = 0;
-
-        vec<Lit> tmp;
-        for (Var var = 0; var < nVars(); var++) {
-            s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || xorSubsumer->getVarElimed()[var]);
-
-            //assert(!(xorSubsumer->getVarElimed()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
-
-            if (value(var) != l_Undef) {
-                #ifdef VERBOSE_DEBUG
-                std::cout << "Setting var " << var + 1
-                << " in extend-solver to " << value(var) << std::endl;
-                #endif
-                tmp.clear();
-                tmp.push(Lit(var, value(var) == l_False));
-                s.addClause(tmp);
-            }
-        }
-        varReplacer->extendModelImpossible(s);
-        subsumer->extendModel(s);
-        xorSubsumer->extendModel(s);
-
-        lbool status = s.solve();
-        release_assert(status == l_True && "c ERROR! Extension of model failed!");
-#ifdef VERBOSE_DEBUG
-        std::cout << "Solution extending finished. Enqueuing results" << std::endl;
-#endif
-        for (Var var = 0; var < nVars(); var++) {
-            if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueueExtend(Lit(var, s.model[var] == l_False));
-        }
-        ok = (propagate<false>().isNULL());
-        release_assert(ok && "c ERROR! Extension of model failed!");
-    }
-    checkSolution();
-    //Copy model:
-    model.growTo(nVars());
-    for (Var var = 0; var != nVars(); var++) model[var] = value(var);
-}
-
-/**
-@brief When problem is decided to be UNSAT, this is called
-
-There is basically nothing to be handled for the moment, but this could be
-made extensible
-*/
-void Solver::handleUNSATSolution()
-{
-    if (conflict.size() == 0)
-        ok = false;
 }
