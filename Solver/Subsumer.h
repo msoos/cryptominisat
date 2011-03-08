@@ -178,19 +178,20 @@ public:
 private:
 
     const bool subsumeWithBinaries();
+    void AsymmTE();
 
     friend class ClauseCleaner;
     friend class ClauseAllocator;
 
     //Main
-    /**
-    @brief Clauses to be treated are moved here ClauseSimp::index refers to the index of the clause here
-    */
-    vec<Clause*>           clauses;
-    vec<AbstData>          clauseData;
+    vector<Clause*>           clauses;  ///<ClauseSimp::index refers to the index of the clause here
+    vector<AbstData>          clauseData;
+    vector<vector<ClauseSimp> >  occur;            ///<occur[index(lit)]' is a list of constraints containing 'lit'.
+
+
+    //Touched, elimed, etc.
     TouchList              touchedVars;  ///<A list of the true elements in 'touched'.
     CSet                   cl_touched;       ///<Clauses strengthened/added
-    vec<vec<ClauseSimp> >  occur;            ///<occur[index(lit)]' is a list of constraints containing 'lit'.
     CSet s0, s1;
     vec<char>              cannot_eliminate;///<Variables that cannot be eliminated due to, e.g. XOR-clauses
     vec<char>              seen;        ///<Used in various places to help perform algorithms
@@ -362,11 +363,11 @@ private:
     const uint32_t numNonLearntBins(const Lit lit) const;
     bool maybeEliminate(Var x);
     void addLearntBinaries(const Var var);
-    void removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const Var var);
-    void removeClausesHelper(vec<ClAndBin>& todo, const Lit lit, std::pair<uint32_t, uint32_t>& removed);
+    void removeClauses(vector<ClAndBin>& posAll, vector<ClAndBin>& negAll, const Var var);
+    void removeClausesHelper(vector<ClAndBin>& todo, const Lit lit, std::pair<uint32_t, uint32_t>& removed);
     bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
     const bool eliminateVars();
-    void fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit);
+    void fillClAndBin(vector<ClAndBin>& all, vector<ClauseSimp>& cs, const Lit lit);
 
     void removeBinsAndTris(const Var var);
     const uint32_t removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws);
@@ -549,7 +550,7 @@ private:
     vector<Xor> xors;
     const bool findXors();
     void findXor(ClauseSimp c);
-    void findXorMatch(const vec<ClauseSimp>& occ, FoundXors& foundCls) const;
+    void findXorMatch(const vector<ClauseSimp>& occ, FoundXors& foundCls) const;
     void findXorMatch(const vec2<Watched>& ws, const Lit lit, FoundXors& foundCls) const;
     const uint32_t tryToXor(const Xor& thisXor, const uint32_t thisIndex);
 
@@ -619,7 +620,7 @@ private:
 };
 
 template <class T, class T2>
-void maybeRemove(vec<T>& ws, const T2& elem)
+void maybeRemove(T& ws, const T2& elem)
 {
     if (ws.size() > 0)
         removeW(ws, elem);
@@ -697,8 +698,8 @@ Adds occurrence list places, increments seen, etc.
 */
 inline void Subsumer::newVar()
 {
-    occur       .push();
-    occur       .push();
+    occur   .push_back(vector<ClauseSimp>());
+    occur   .push_back(vector<ClauseSimp>());
     seen    .push(0);       // (one for each polarity)
     seen    .push(0);
     seen2   .push(0);       // (one for each polarity)

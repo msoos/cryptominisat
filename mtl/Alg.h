@@ -67,7 +67,7 @@ static inline void removeW(V& ts, const T& t)
     for (; j < ts.size() && ts[j] != t; j++);
     assert(j < ts.size());
     for (; j < ts.size()-1; j++) ts[j] = ts[j+1];
-    ts.pop();
+    ts.pop_back();
 }
 
 template<class V, class T>

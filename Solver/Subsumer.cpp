@@ -442,7 +442,7 @@ const bool Subsumer::subsume0AndSubsume1()
 
             for (uint32_t j = 0; j < cl.size(); j++) {
                 if (!ol_seenPos[cl[j].toInt()]) {
-                    vec<ClauseSimp>& occs = occur[(cl[j]).toInt()];
+                    vector<ClauseSimp>& occs = occur[(cl[j]).toInt()];
                     for (uint32_t k = 0; k < occs.size(); k++) {
                         s0.add(occs[k]);
                     }
@@ -450,7 +450,7 @@ const bool Subsumer::subsume0AndSubsume1()
                 ol_seenPos[cl[j].toInt()] = 1;
 
                 if (!ol_seenNeg[(~cl[j]).toInt()]) {
-                    vec<ClauseSimp>& occs = occur[(~cl[j]).toInt()];
+                    vector<ClauseSimp>& occs = occur[(~cl[j]).toInt()];
                     for (uint32_t k = 0; k < occs.size(); k++) {
                         s1Added += s1.add(occs[k]);
                     }
@@ -503,12 +503,12 @@ Increments clauseID
 ClauseSimp Subsumer::linkInClause(Clause& cl)
 {
     ClauseSimp c(clauses.size());
-    clauses.push(&cl);
-    clauseData.push(AbstData(cl, false));
+    clauses.push_back(&cl);
+    clauseData.push_back(AbstData(cl, false));
     assert(clauseData.size() == clauses.size());
 
     for (uint32_t i = 0; i < cl.size(); i++) {
-        occur[cl[i].toInt()].push(c);
+        occur[cl[i].toInt()].push_back(c);
         touchedVars.touch(cl[i], cl.learnt());
         if (cl.getChanged()) {
             ol_seenPos[cl[i].toInt()] = 0;
@@ -553,7 +553,8 @@ const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
 void Subsumer::freeMemory()
 {
     for (uint32_t i = 0; i < occur.size(); i++) {
-        occur[i].clear(true);
+        vector<ClauseSimp> tmp;
+        occur[i].swap(tmp);
     }
 }
 
@@ -1129,9 +1130,9 @@ void Subsumer::findSubsumed(const uint32_t index, const T& ps, uint32_t abs, vec
             min_i = i;
     }
 
-    vec<ClauseSimp>& cs = occur[ps[min_i].toInt()];
+    vector<ClauseSimp>& cs = occur[ps[min_i].toInt()];
     numMaxSubsume0 -= cs.size()*10 + 5;
-    for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
+    for (vector<ClauseSimp>::iterator it = cs.begin(), end = cs.end(); it != end; it++){
         if (it->index != index
             && subsetAbst(abs, clauseData[it->index].abst)
             && ps.size() <= clauseData[it->index].size) {
@@ -1197,8 +1198,8 @@ template<class T>
 void inline Subsumer::fillSubs(const T& ps, const uint32_t index, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits, const Lit lit)
 {
     Lit litSub;
-    vec<ClauseSimp>& cs = occur[lit.toInt()];
-    for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++) {
+    vector<ClauseSimp>& cs = occur[lit.toInt()];
+    for (vector<ClauseSimp>::const_iterator it = cs.begin(), end = cs.end(); it != end; it++) {
         if (it->index != index
             && subsetAbst(abs, clauseData[it->index].abst)
             && ps.size() <= clauseData[it->index].size) {
@@ -1218,7 +1219,7 @@ void inline Subsumer::fillSubs(const T& ps, const uint32_t index, uint32_t abs, 
 }
 
 
-void Subsumer::removeClausesHelper(vec<ClAndBin>& todo, const Lit lit, std::pair<uint32_t, uint32_t>& removed)
+void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit, std::pair<uint32_t, uint32_t>& removed)
 {
      pair<uint32_t, uint32_t>  tmp;
      for (uint32_t i = 0; i < todo.size(); i++) {
@@ -1266,7 +1267,7 @@ introducing the eliminated variables.
 @param[out] ns Where thre clauses from negs have been moved
 @param[in] var The variable that is being eliminated
 */
-void Subsumer::removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const Var var)
+void Subsumer::removeClauses(vector<ClAndBin>& posAll, vector<ClAndBin>& negAll, const Var var)
 {
     pair<uint32_t, uint32_t> removed;
     removed.first = 0;
@@ -1291,15 +1292,15 @@ const uint32_t Subsumer::numNonLearntBins(const Lit lit) const
     return num;
 }
 
-void Subsumer::fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit)
+void Subsumer::fillClAndBin(vector<ClAndBin>& all, vector<ClauseSimp>& cs, const Lit lit)
 {
     for (uint32_t i = 0; i < cs.size(); i++) {
-        if (!clauses[cs[i].index]->learnt()) all.push(ClAndBin(cs[i]));
+        if (!clauses[cs[i].index]->learnt()) all.push_back(ClAndBin(cs[i]));
     }
 
     const vec2<Watched>& ws = solver.watches[(~lit).toInt()];
     for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
-        if (it->isBinary() &&!it->getLearnt()) all.push(ClAndBin(lit, it->getOtherLit()));
+        if (it->isBinary() &&!it->getLearnt()) all.push_back(ClAndBin(lit, it->getOtherLit()));
     }
 }
 
@@ -1328,8 +1329,8 @@ bool Subsumer::maybeEliminate(const Var var)
     /*if (occur[lit.toInt()].size() == 0 && occur[(~lit).toInt()].size() == 0)
         return true;*/
 
-    vec<ClauseSimp>& poss = occur[lit.toInt()];
-    vec<ClauseSimp>& negs = occur[(~lit).toInt()];
+    vector<ClauseSimp>& poss = occur[lit.toInt()];
+    vector<ClauseSimp>& negs = occur[(~lit).toInt()];
     const uint32_t numNonLearntPos = numNonLearntBins(lit);
     const uint32_t numNonLearntNeg = numNonLearntBins(~lit);
     uint32_t before_literals = numNonLearntNeg*2 + numNonLearntPos*2;
@@ -1366,7 +1367,7 @@ bool Subsumer::maybeEliminate(const Var var)
         && clauses.size() <= 100000)
         return true;
 
-    vec<ClAndBin> posAll, negAll;
+    vector<ClAndBin> posAll, negAll;
     fillClAndBin(posAll, poss, lit);
     fillClAndBin(negAll, negs, ~lit);
 
@@ -1389,12 +1390,12 @@ bool Subsumer::maybeEliminate(const Var var)
     numMaxElim -= posSize * negSize + before_literals;
 
     //removing clauses (both non-learnt and learnt)
-    vec<ClauseSimp> tmp1 = poss;
+    vector<ClauseSimp> tmp1 = poss;
     poss.clear();
     for (uint32_t i = 0; i < tmp1.size(); i++) {
         if (clauses[tmp1[i].index]->learnt()) unlinkClause(tmp1[i], *clauses[tmp1[i].index]);
     }
-    vec<ClauseSimp> tmp2 = negs;
+    vector<ClauseSimp> tmp2 = negs;
     negs.clear();
     for (uint32_t i = 0; i < tmp2.size(); i++) {
         if (clauses[tmp2[i].index]->learnt()) unlinkClause(tmp2[i], *clauses[tmp2[i].index]);
@@ -1591,12 +1592,12 @@ void Subsumer::orderVarsForElim(vec<Var>& order)
     for (vector<Var>::const_iterator it = touchedVars.begin(), end = touchedVars.end(); it != end ; it++){
         Lit x = Lit(*it, false);
         uint32_t pos = 0;
-        const vec<ClauseSimp>& poss = occur[x.toInt()];
+        const vector<ClauseSimp>& poss = occur[x.toInt()];
         for (uint32_t i = 0; i < poss.size(); i++)
             if (!clauses[poss[i].index]->learnt()) pos++;
 
         uint32_t neg = 0;
-        const vec<ClauseSimp>& negs = occur[(~x).toInt()];
+        const vector<ClauseSimp>& negs = occur[(~x).toInt()];
         for (uint32_t i = 0; i < negs.size(); i++)
             if (!clauses[negs[i].index]->learnt()) neg++;
 
@@ -1657,10 +1658,10 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
     }
 
     bool allIsTautology = true;
-    const vec<ClauseSimp>& cs = occur[lit.toInt()];
+    const vector<ClauseSimp>& cs = occur[lit.toInt()];
     const vec2<Watched>& ws = solver.watches[(~lit).toInt()];
 
-    for (const ClauseSimp *it = cs.getData(), *end = cs.getDataEnd(); it != end; it++){
+    for (vector<ClauseSimp>::const_iterator it = cs.begin(), end = cs.end(); it != end; it++){
         const Clause& c = *clauses[it->index];
         numMaxBlockToVisit--;
         if (c.learnt()) continue;
@@ -1739,8 +1740,8 @@ const bool Subsumer::containsCannotElim(const Clause& cl)
 const uint32_t Subsumer::tryOneSetting(const Lit lit)
 {
     uint32_t blocked = 0;
-    vec<ClauseSimp> occCopy = occur[lit.toInt()];
-    for(ClauseSimp *it = occCopy.getData(), *end = occCopy.getDataEnd(); it != end; it++) {
+    vector<ClauseSimp> occCopy = occur[lit.toInt()];
+    for(vector<ClauseSimp>::iterator it = occCopy.begin(), end = occCopy.end(); it != end; it++) {
         Clause& cl = *clauses[it->index];
         numMaxBlockToVisit--;
         if (containsCannotElim(cl)) continue;
@@ -2103,7 +2104,7 @@ const bool Subsumer::findEqOrGates()
 void Subsumer::findOrGates(const bool learntGatesToo)
 {
     uint32_t num = 0;
-    for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++, num++) {
+    for (vector<Clause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++, num++) {
         if (*it == NULL) continue;
         const Clause& cl = **it;
         if (!learntGatesToo && cl.learnt()) continue;
@@ -2210,7 +2211,7 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
 
         gateLitsRemoved--;
         cl.add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
-        occur[gate.eqLit.toInt()].push(c);
+        occur[gate.eqLit.toInt()].push_back(c);
         clauseData[c.index] = AbstData(cl, clauseData[c.index].defOfOrGate);
 
         #ifdef VERBOSE_ORGATE_REPLACE
@@ -2259,11 +2260,11 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     for (uint32_t i = 0; i < sizeSortedOcc.size(); i++)
         sizeSortedOcc[i].clear();
 
-    const vec<ClauseSimp>& csOther = occur[(~(gate.lits[1])).toInt()];
+    const vector<ClauseSimp>& csOther = occur[(~(gate.lits[1])).toInt()];
     //std::cout << "csother: " << csOther.size() << std::endl;
     uint32_t abstraction = 0;
     uint16_t maxSize = 0;
-    for (const ClauseSimp *it2 = csOther.getData(), *end2 = csOther.getDataEnd(); it2 != end2; it2++) {
+    for (vector<ClauseSimp>::const_iterator it2 = csOther.begin(), end2 = csOther.end(); it2 != end2; it2++) {
         if (clauseData[it2->index].defOfOrGate) continue;
         const Clause& cl = *clauses[it2->index];
         numOp += cl.size();
@@ -2279,9 +2280,9 @@ const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, u
     }
     abstraction |= 1 << (gate.lits[0].var() & 31);
 
-    vec<ClauseSimp>& cs = occur[(~(gate.lits[0])).toInt()];
+    vector<ClauseSimp>& cs = occur[(~(gate.lits[0])).toInt()];
     //std::cout << "cs: " << cs.size() << std::endl;
-    for (ClauseSimp *it2 = cs.getData(), *end2 = cs.getDataEnd(); it2 != end2; it2++) {
+    for (vector<ClauseSimp>::iterator it2 = cs.begin(), end2 = cs.end(); it2 != end2; it2++) {
         if (clauseData[it2->index].defOfOrGate
             || (clauseData[it2->index].abst | abstraction) != abstraction
             || clauseData[it2->index].size > maxSize
@@ -2423,13 +2424,13 @@ const bool Subsumer::findXors()
     xorIndex.clear();
     xorIndex.resize(solver.nVars());
 
-    for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++) {
+    for (vector<Clause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
         if (*it == NULL) continue;
         std::sort((*it)->getData(), (*it)->getDataEnd());
     }
 
     uint32_t i = 0;
-    for (Clause **it = clauses.getData(), **end = clauses.getDataEnd(); it != end; it++, i++) {
+    for (vector<Clause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++, i++) {
         if (*it == NULL) continue;
         findXor(i);
     }
@@ -2585,9 +2586,9 @@ void Subsumer::findXorMatch(const vec2<Watched>& ws, const Lit lit, FoundXors& f
     }
 }
 
-void Subsumer::findXorMatch(const vec<ClauseSimp>& occ, FoundXors& foundCls) const
+void Subsumer::findXorMatch(const vector<ClauseSimp>& occ, FoundXors& foundCls) const
 {
-    for (const ClauseSimp *it = occ.getData(), *end = occ.getDataEnd(); it != end; it++) {
+    for (vector<ClauseSimp>::const_iterator it = occ.begin(), end = occ.end(); it != end; it++) {
         if (clauseData[it->index].size <= foundCls.getSize()
             && ((clauseData[it->index].abst|foundCls.getAbst())== foundCls.getAbst())
             && !foundCls.alreadyInside(*it)

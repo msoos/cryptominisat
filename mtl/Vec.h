@@ -83,6 +83,7 @@ public:
     void     shrink (uint32_t nelems)  { assert(nelems <= sz); for (uint32_t i = 0; i != nelems; i++) sz--, data[sz].~T(); }
     void     shrink_(uint32_t nelems)  { assert(nelems <= sz); sz -= nelems; }
     void     pop    (void)             { sz--, data[sz].~T(); }
+    void     pop_back    (void)             { pop(); }
     void     growTo (uint32_t size);
     void     growTo (uint32_t size, const T& pad);
     void     clear  (bool dealloc = false);
