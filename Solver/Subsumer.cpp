@@ -764,7 +764,8 @@ const bool Subsumer::eliminateVars()
     uint32_t numtry = 0;
     for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
         Var var = order[i];
-        if (!cannot_eliminate[var]
+        if (solver.value(var) == l_Undef
+            && !cannot_eliminate[var]
             && !solver.varReplacer->cannot_eliminate[var]
             && solver.decision_var[var]) {
             numtry++;
@@ -1319,7 +1320,7 @@ bool Subsumer::maybeEliminate(const Var var)
     assert(!cannot_eliminate[var]);
     assert(!solver.varReplacer->cannot_eliminate[var]);
     assert(solver.decision_var[var]);
-    if (solver.value(var) != l_Undef) return true;
+    assert(solver.value(var) == l_Undef);
 
     Lit lit = Lit(var, false);
 
@@ -1703,9 +1704,9 @@ void Subsumer::blockedClauseRemoval()
 
     uint32_t triedToBlock = 0;
     uint32_t blocked = 0;
-    for (uint32_t var = 0; numMaxBlockToVisit > 0 && var < solver.nVars(); var++) {
+    for (uint32_t var = 0; var < solver.nVars(); var++) {
         if (solver.value(var) != l_Undef
-            || !solver.decision_var[var]
+            || solver.varData[var].elimed != ELIMED_NONE
             || cannot_eliminate[var]
             || solver.varReplacer->cannot_eliminate[var]
             || dontElim[var])
@@ -1720,7 +1721,7 @@ void Subsumer::blockedClauseRemoval()
     if (solver.conf.verbosity >= 1) {
         std::cout
         << "c blocked cls: " << std::setw(8) << blocked
-        << " tried: " << std::setw(11) << triedToBlock
+        << " tried vars: " << std::setw(11) << triedToBlock
         << " T: " << std::fixed << std::setprecision(2) << std::setw(4) << cpuTime() - myTime
         << " s" << std::endl;
     }
