@@ -710,6 +710,7 @@ void Solver::cancelUntil(uint32_t level)
             #ifdef VERBOSE_DEBUG
             cout << "Canceling var " << var+1 << " sublevel: " << sublevel << endl;
             #endif
+            assert(assigns[var] != l_Undef);
             assigns[var] = l_Undef;
             insertVarOrder(var);
             #ifdef ENABLE_UNWIND_GLUE

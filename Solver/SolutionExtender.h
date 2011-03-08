@@ -19,6 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define __SOLUTIONEXTENDER_H__
 
 #include "Solver.h"
+#include "SolverTypes.h"
+
+#ifdef VERBOSE_DEBUG
+#define VERBOSE_DEBUG_RECONSTRUCT
+#endif
+
+//#define VERBOSE_DEBUG_RECONSTRUCT
 
 class SolutionExtender
 {
@@ -84,6 +91,11 @@ class SolutionExtender
                 return lits.end();
             }
 
+            const vector<Lit>& getLits() const
+            {
+                return lits;
+            }
+
         private:
             vector<Lit> lits;
             const bool isXor;
@@ -92,18 +104,49 @@ class SolutionExtender
     public:
         SolutionExtender(Solver& solver);
         void extend();
-        void addClause(const vector<Lit>& lits);
+        const bool addClause(const vector<Lit>& lits);
+        void addBlockedClause(const BlockedClause& cl);
         void addXorClause(const vector<Lit>& lits, const bool xorEqualFalse);
 
+        void enqueue(const Lit lit)
+        {
+            assigns[lit.var()] = boolToLBool(!lit.sign());
+            trail.push_back(lit);
+            #ifdef VERBOSE_DEBUG_RECONSTRUCT
+            std::cout << "c Enqueueing lit " << lit << " during solution reconstruction" << std::endl;
+            #endif
+            solver.varData[lit.var()].level = std::numeric_limits< uint32_t >::max();
+        }
+
+        const lbool value(const Lit lit) const
+        {
+            return assigns[lit.var()] ^ lit.sign();
+        }
+
+        const lbool value(const Var var) const
+        {
+            return assigns[var];
+        }
+
     private:
-        void propagateCl(MyClause& cl);
-        void propagate();
+        const bool propagateCl(MyClause& cl);
+        const bool propagate();
+        const bool satisfiedNorm(const vector<Lit>& lits) const;
+        const bool satisfiedXor(const vector<Lit>& lits, const bool rhs) const;
         const Lit pickBranchLit();
+
+        const uint32_t nVars()
+        {
+            return assigns.size();
+        }
 
         vector<vector<MyClause*> > occur;
         vector<MyClause*> clauses;
 
         Solver& solver;
+        uint32_t qhead;
+        vector<Lit> trail;
+        vector<lbool> assigns;
 };
 
 #endif //__SOLUTIONEXTENDER_H__

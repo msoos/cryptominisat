@@ -118,6 +118,14 @@ inline std::ostream& operator<<(std::ostream& cout, const vec<Lit>& lits)
     return cout;
 }
 
+inline std::ostream& operator<<(std::ostream& cout, const std::vector<Lit>& lits)
+{
+    for (uint32_t i = 0; i < lits.size(); i++) {
+        cout << lits[i] << " ";
+    }
+    return cout;
+}
+
 inline void printClause(FILE* outFile, const std::vector<Lit>& clause)
 {
     for (size_t i = 0; i < clause.size(); i++) {
@@ -243,6 +251,26 @@ struct BinPropData {
     Lit lev1Ancestor;
     bool learntLeadHere;
     bool hasChildren;
+};
+
+class OrGate {
+    public:
+        Lit eqLit;
+        std::vector<Lit> lits;
+        //uint32_t num;
+};
+
+struct BlockedClause {
+    BlockedClause()
+    {}
+
+    BlockedClause(const Lit _blockedOn, const std::vector<Lit>& _lits) :
+        blockedOn(_blockedOn)
+        , lits(_lits)
+    {}
+
+    Lit blockedOn;
+    std::vector<Lit> lits;
 };
 
 

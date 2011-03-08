@@ -29,13 +29,6 @@ using std::priority_queue;
 class ClauseCleaner;
 class SolutionExtender;
 
-class OrGate {
-    public:
-        Lit eqLit;
-        vector<Lit> lits;
-        //uint32_t num;
-};
-
 inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
 {
     os << " gate ";
@@ -162,22 +155,25 @@ public:
     void newVar();
 
     //UnElimination
-    void extendModel(SolutionExtender* solver2);
+    void extendModel(SolutionExtender* extender) const;
     const bool unEliminate(const Var var);
 
     //Get-functions
-    const vec<char>& getVarElimed() const;
+    const vector<char>& getVarElimed() const;
+    const vector<char>& getVarBlocked() const;
+
     const uint32_t getNumElimed() const;
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
-    const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
-    const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
+    /*const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
+    const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;*/
     const uint32_t getNumERVars() const;
     void incNumERVars(const uint32_t num);
     void setVarNonEliminable(const Var var);
     const bool getFinishedAddingVars() const;
     void setFinishedAddingVars(const bool val);
     const vector<OrGate*>& getGateOcc(const Lit lit) const;
+    const vector<BlockedClause>& getBlockedClauses() const;
 
 private:
 
@@ -202,11 +198,10 @@ private:
 
     //Global stats
     Solver& solver;                        ///<The solver this simplifier is connected to
-    vec<char> var_elimed;                  ///<Contains TRUE if var has been eliminated
+    vector<char> var_elimed;                  ///<Contains TRUE if var has been eliminated
+    vector<char> var_blocked;                  ///<Contains TRUE if var has been eliminated
     double totalTime;                      ///<Total time spent in this class
     uint32_t numElimed;                    ///<Total number of variables eliminated
-    map<Var, vector<vector<Lit> > > elimedOutVar; ///<Contains the clauses to use to uneliminate a variable
-    map<Var, vector<std::pair<Lit, Lit> > > elimedOutVarBin; ///<Contains the clauses to use to uneliminate a variable
 
     //Limits
     uint64_t addedClauseLits;
@@ -234,7 +229,7 @@ private:
     void removeAssignedVarsFromEliminated();
 
     //Used by cleaner
-    void unlinkClause(ClauseSimp cc, Clause& cl, const Var elim = var_Undef);
+    void unlinkClause(ClauseSimp cc, Clause& cl, const Lit elim = lit_Undef);
     ClauseSimp linkInClause(Clause& cl);
     const bool handleUpdatedClause(ClauseSimp& c, Clause& cl);
 
@@ -368,7 +363,7 @@ private:
     bool maybeEliminate(Var x);
     void addLearntBinaries(const Var var);
     void removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const Var var);
-    void removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair<uint32_t, uint32_t>& removed);
+    void removeClausesHelper(vec<ClAndBin>& todo, const Lit lit, std::pair<uint32_t, uint32_t>& removed);
     bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
     const bool eliminateVars();
     void fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit);
@@ -566,6 +561,7 @@ private:
     const bool allTautology(const T& ps, const Lit lit);
     const uint32_t tryOneSetting(const Lit lit);
     void touchBlockedVar(const Var x);
+    vector<BlockedClause> blockedClauses;
 
     //Gate extraction
     struct OrGateSorter {
@@ -707,7 +703,6 @@ inline void Subsumer::newVar()
     seen2   .push(0);       // (one for each polarity)
     seen2   .push(0);
     touchedVars .addOne(solver.nVars()-1);
-    var_elimed  .push(0);
     cannot_eliminate.push(0);
     ol_seenPos.push(1);
     ol_seenPos.push(1);
@@ -716,19 +711,18 @@ inline void Subsumer::newVar()
     dontElim.push(0);
     gateOcc.push_back(vector<OrGate*>());
     gateOcc.push_back(vector<OrGate*>());
+
+    //variable status
+    var_elimed .push_back(0);
+    var_blocked.push_back(0);
 }
 
-inline const map<Var, vector<vector<Lit> > >& Subsumer::getElimedOutVar() const
+inline const vector<BlockedClause>& Subsumer::getBlockedClauses() const
 {
-    return elimedOutVar;
+    return blockedClauses;
 }
 
-inline const map<Var, vector<std::pair<Lit, Lit> > >& Subsumer::getElimedOutVarBin() const
-{
-    return elimedOutVarBin;
-}
-
-inline const vec<char>& Subsumer::getVarElimed() const
+inline const vector<char>& Subsumer::getVarElimed() const
 {
     return var_elimed;
 }

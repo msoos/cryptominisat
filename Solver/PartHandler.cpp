@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <assert.h>
 #include <iomanip>
+#include "SolutionExtender.h"
 
 //#define VERBOSE_DEBUG
 
@@ -423,20 +424,20 @@ of the sub-parts.
 
 Sets all saved states to l_Undef, i.e. unassigns them
 */
-void PartHandler::addSavedState()
+void PartHandler::addSavedState(SolutionExtender* extender)
 {
     //Don't add these (non-0-decison-level!) solutions to the 0th decision level
     solver.newDecisionLevel();
     for (Var var = 0; var < savedState.size(); var++) {
         if (savedState[var] != l_Undef) {
             assert(solver.varData[var].elimed == ELIMED_DECOMPOSE);
-            assert(solver.assigns[var] == l_Undef);
+            assert(extender->value(var) == l_Undef);
 
-            solver.uncheckedEnqueue(Lit(var, savedState[var] == l_False));
-            assert(solver.assigns[var] == savedState[var]);
+            extender->enqueue(Lit(var, savedState[var] == l_False));
+            assert(extender->value(var) == savedState[var]);
             savedState[var] = l_Undef;
             solver.varData[var].elimed = ELIMED_NONE;
-            solver.varData[var].polarity.setLastVal(solver.assigns[var] == l_False);
+            solver.varData[var].polarity.setLastVal(extender->value(var) == l_False);
         }
     }
 

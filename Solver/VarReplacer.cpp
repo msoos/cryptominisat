@@ -475,45 +475,13 @@ const vector<Var> VarReplacer::getReplacingVars() const
 }
 
 /**
-@brief Given a partial model, it tries to extend it to variables that have been replaced
-
-Cannot extend it fully, because it might be that a replaced d&f, but a was
-later variable-eliminated. That's where extendModelImpossible() comes in
-*/
-void VarReplacer::extendModelPossible() const
-{
-    #ifdef VERBOSE_DEBUG
-    std::cout << "extendModelPossible() called" << std::endl;
-    #endif //VERBOSE_DEBUG
-    uint32_t i = 0;
-    for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
-        if (it->var() == i) continue;
-
-        #ifdef VERBOSE_DEBUG
-        cout << "Extending model: var "; solver.printLit(Lit(i, false));
-        cout << " to "; solver.printLit(*it);
-        cout << endl;
-        #endif
-
-        if (solver.assigns[it->var()] != l_Undef) {
-            if (solver.assigns[i] == l_Undef) {
-                bool val = (solver.assigns[it->var()] == l_False);
-                solver.uncheckedEnqueue(Lit(i, val ^ it->sign()));
-            } else {
-                assert(solver.assigns[i].getBool() == (solver.assigns[it->var()].getBool() ^ it->sign()));
-            }
-        }
-    }
-}
-
-/**
 @brief Used when a variable was eliminated, but it replaced some other variables
 
 This function will add to solver2 clauses that represent the relationship of
 the variables to their replaced cousins. Then, calling solver2.solve() should
 take care of everything
 */
-void VarReplacer::extendModelImpossible(SolutionExtender* extender) const
+void VarReplacer::extendModel(SolutionExtender* extender) const
 {
 
     #ifdef VERBOSE_DEBUG
@@ -524,20 +492,17 @@ void VarReplacer::extendModelImpossible(SolutionExtender* extender) const
     uint32_t i = 0;
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
         if (it->var() == i) continue;
-        if (solver.assigns[it->var()] == l_Undef) {
-            assert(solver.assigns[it->var()] == l_Undef);
-            assert(solver.assigns[i] == l_Undef);
+        tmpClause.clear();
+        tmpClause.push_back(Lit(it->var(), true));
+        tmpClause.push_back(Lit(i, it->sign()));
+        bool OK = extender->addClause(tmpClause);
+        assert(OK);
 
-            tmpClause.clear();
-            tmpClause.push_back(Lit(it->var(), true));
-            tmpClause.push_back(Lit(i, it->sign()));
-            extender->addClause(tmpClause);
-
-            tmpClause.clear();
-            tmpClause.push_back(Lit(it->var(), false));
-            tmpClause.push_back(Lit(i, it->sign()^true));
-            extender->addClause(tmpClause);
-        }
+        tmpClause.clear();
+        tmpClause.push_back(Lit(it->var(), false));
+        tmpClause.push_back(Lit(i, it->sign()^true));
+        OK = extender->addClause(tmpClause);
+        assert(OK);
     }
 }
 

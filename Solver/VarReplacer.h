@@ -49,8 +49,7 @@ class VarReplacer
         template<class T>
         const bool replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt = false, const bool addToWatchLists = true);
 
-        void extendModelPossible() const;
-        void extendModelImpossible(SolutionExtender* extender) const;
+        void extendModel(SolutionExtender* extender) const;
 
         const uint32_t getNumReplacedLits() const;
         const uint32_t getNumReplacedVars() const;

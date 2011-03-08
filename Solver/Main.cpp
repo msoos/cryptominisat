@@ -302,6 +302,7 @@ void Main::printUsage(char** argv)
     printf("  --nobxor         = Don't find equivalent lits during failed lit search\n");
     printf("  --norecotfssr    = Don't perform recursive/transitive OTF self-\n");
     printf("                     subsuming resolution\n");
+    printf("  --noblocked      = No blocked-clause removal\n");
     printf("  --nocacheotfssr  = Don't cache 1-level equeue. Less memory used, but\n");
     printf("                     disables trans OTFSSR, adv. clause vivifier, etc.\n");
     #ifdef ENABLE_UNWIND_GLUE
@@ -605,6 +606,8 @@ void Main::parseCommandLine()
             conf.doMinimLMoreRecur = false;
         } else if ((value = hasPrefix(argv[i], "--nocacheotfssr"))) {
             conf.doCacheOTFSSR = false;
+        } else if ((value = hasPrefix(argv[i], "--noblocked"))) {
+            conf.doBlockedClause = false;
         } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
             conf.doRemUselessLBins = false;
         } else if ((value = hasPrefix(argv[i], "--nogatefind"))) {

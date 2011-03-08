@@ -43,7 +43,7 @@ class SCCFinder {
         uint32_t recurDepth;
 
         Solver& solver;
-        const vec<char>& varElimed1;
+        const vector<char>& varElimed1;
         const vec<char>& varElimed2;
         const vec<lbool>& varPartHandled;
         const vector<Lit>& replaceTable;

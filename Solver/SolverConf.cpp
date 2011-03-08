@@ -51,7 +51,7 @@ SolverConf::SolverConf() :
         , doXorSubsumption (true)
         , doPartHandler    (true)
         , doHyperBinRes    (true)
-        , doBlockedClause  (false)
+        , doBlockedClause  (true)
         , doVarElim        (true)
         , doSubsume1       (true)
         , doClausVivif     (true)

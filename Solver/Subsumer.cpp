@@ -54,63 +54,11 @@ Subsumer::Subsumer(Solver& s):
 {
 };
 
-/**
-@brief Extends the model to include eliminated variables
-
-Adds the clauses to the parameter solver2, and then relies on the
-caller to call solver2.solve().
-
-@p solver2 The external solver the variables' clauses are added to
-*/
-void Subsumer::extendModel(SolutionExtender* extender)
+void Subsumer::extendModel(SolutionExtender* extender) const
 {
-    #ifdef VERBOSE_DEBUG
-    std::cout << "Subsumer::extendModel(Solver& solver2) called" << std::endl;
-    #endif
-
-    assert(checkElimedUnassigned());
-    vector<Lit> tmp;
-    typedef map<Var, vector<vector<Lit> > > elimType;
-    for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
-        Var var = it->first;
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Reinserting elimed var: " << var+1 << std::endl;
-        #endif
-        assert(!solver.decision_var[var]);
-        assert(!solver.order_heap.inHeap(var));
-
-        for (vector<vector<Lit> >::const_iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-            tmp.resize(it2->size(), lit_Undef);
-            std::copy(it2->begin(), it2->end(), tmp.begin());
-
-            #ifdef VERBOSE_DEBUG
-            std::cout << "Reinserting elimed clause: " << tmp << std::endl;;
-            #endif
-
-            extender->addClause(tmp);
-        }
-    }
-
-    typedef map<Var, vector<std::pair<Lit, Lit> > > elimType2;
-    for (elimType2::iterator it = elimedOutVarBin.begin(), end = elimedOutVarBin.end(); it != end; it++) {
-        Var var = it->first;
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Reinserting elimed var: " << var+1 << std::endl;
-        #endif
-        assert(!solver.decision_var[var]);
-        assert(!solver.order_heap.inHeap(var));
-
-        for (vector<std::pair<Lit, Lit> >::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-            tmp.resize(2, lit_Undef);
-            tmp[0] = it2->first;
-            tmp[1] = it2->second;
-
-            #ifdef VERBOSE_DEBUG
-            std::cout << "Reinserting bin clause: " << it2->first << " , " << it2->second << std::endl;
-            #endif
-
-            extender->addClause(tmp);
-        }
+    //go through in reverse order
+    for (vector<BlockedClause>::const_reverse_iterator it = blockedClauses.rbegin(), end = blockedClauses.rend(); it != end; it++) {
+        extender->addBlockedClause(*it);
     }
 }
 
@@ -124,60 +72,8 @@ added back again.
 */
 const bool Subsumer::unEliminate(const Var var)
 {
-    assert(var_elimed[var]);
-    assert(solver.varData[var].elimed == ELIMED_VARELIM);
-    vec<Lit> tmp;
-    typedef map<Var, vector<vector<Lit> > > elimType;
-    typedef map<Var, vector<std::pair<Lit, Lit> > > elimType2;
-    elimType::iterator it = elimedOutVar.find(var);
-    elimType2::iterator it2 = elimedOutVarBin.find(var);
-
-    //it MUST have been decision var, otherwise we would
-    //never have removed it
-    solver.setDecisionVar(var, true);
-    var_elimed[var] = false;
-    solver.varData[var].elimed = ELIMED_NONE;
-    numElimed--;
-    #ifdef VERBOSE_DEBUG
-    std::cout << "Reinserting normal (non-xor) elimed var: " << var+1 << std::endl;
-    #endif
-
-    //If the variable was removed because of
-    //pure literal removal (by blocked clause
-    //elimination, there are no clauses to re-insert
-    if (it == elimedOutVar.end() && it2 == elimedOutVarBin.end()) return solver.ok;
-
-    if (it == elimedOutVar.end()) goto next;
-    for (vector<vector<Lit> >::iterator itt = it->second.begin(), end2 = it->second.end(); itt != end2; itt++) {
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Reinserting elimed clause: ";
-        for (uint32_t i = 0; i < itt->size(); i++) {
-            std::cout << (*itt)[i] << " , ";
-        }
-        std::cout << std::endl;
-        #endif
-        tmp.clear();
-        tmp.growTo(itt->size());
-        std::copy(itt->begin(), itt->end(), tmp.getData());
-        solver.addClause(tmp);
-    }
-    elimedOutVar.erase(it);
-
-    next:
-    if (it2 == elimedOutVarBin.end()) goto next2;
-    for (vector<std::pair<Lit, Lit> >::iterator itt = it2->second.begin(), end2 = it2->second.end(); itt != end2; itt++) {
-        tmp.clear();
-        tmp.growTo(2);
-        tmp[0] = itt->first;
-        tmp[1] = itt->second;
-        #ifdef VERBOSE_DEBUG
-        std::cout << "Reinserting bin clause: " << itt->first << " , " << itt->second << std::endl;
-        #endif
-        solver.addClause(tmp);
-    }
-    elimedOutVarBin.erase(it2);
-
-    next2:
+    //TODO
+    assert(false);
     return solver.ok;
 }
 
@@ -321,12 +217,12 @@ is saved in elimedOutVar[] before it is fully removed.
 @param[in] elim If the clause is removed because of variable elmination, this
 parameter is different from var_Undef.
 */
-void Subsumer::unlinkClause(ClauseSimp c, Clause& cl, const Var elim)
+void Subsumer::unlinkClause(ClauseSimp c, Clause& cl, const Lit elim)
 {
     assert(!clauseData[c.index].defOfOrGate);
 
     for (uint32_t i = 0; i < cl.size(); i++) {
-        if (elim != var_Undef) numMaxElim -= occur[cl[i].toInt()].size()/2;
+        if (elim != lit_Undef) numMaxElim -= occur[cl[i].toInt()].size()/2;
         else {
             numMaxSubsume0 -= occur[cl[i].toInt()].size()/2;
             numMaxSubsume1 -= occur[cl[i].toInt()].size()/2;
@@ -343,7 +239,7 @@ void Subsumer::unlinkClause(ClauseSimp c, Clause& cl, const Var elim)
     //Compensate if removing learnt
     if (cl.learnt()) solver.nbCompensateSubsumer++;
 
-    if (elim != var_Undef) {
+    if (elim != lit_Undef) {
         assert(!cl.learnt());
         #ifdef VERBOSE_DEBUG
         std::cout << "Eliminating non-bin clause: " << *c.clause << std::endl;
@@ -351,7 +247,7 @@ void Subsumer::unlinkClause(ClauseSimp c, Clause& cl, const Var elim)
         #endif //VERBOSE_DEBUG
         vector<Lit> lits(cl.size());
         std::copy(cl.getData(), cl.getDataEnd(), lits.begin());
-        elimedOutVar[elim].push_back(lits);
+        blockedClauses.push_back(BlockedClause(elim, lits));
     } else {
         clauses_subsumed++;
         solver.clauseAllocator.clauseFree(&cl);
@@ -1184,21 +1080,23 @@ from elimedOutVar[].
 */
 void Subsumer::removeAssignedVarsFromEliminated()
 {
-    for (Var var = 0; var < var_elimed.size(); var++) {
-        if (var_elimed[var] && solver.assigns[var] != l_Undef) {
-            assert(solver.varData[var].elimed == ELIMED_VARELIM);
-            var_elimed[var] = false;
-            solver.varData[var].elimed = ELIMED_NONE;
-            solver.setDecisionVar(var, true);
-            numElimed--;
+    vector<BlockedClause>::iterator i = blockedClauses.begin();
+    vector<BlockedClause>::iterator j = blockedClauses.begin();
 
-            map<Var, vector<vector<Lit> > >::iterator it = elimedOutVar.find(var);
-            if (it != elimedOutVar.end()) elimedOutVar.erase(it);
-
-            map<Var, vector<std::pair<Lit, Lit> > >::iterator it2 = elimedOutVarBin.find(var);
-            if (it2 != elimedOutVarBin.end()) elimedOutVarBin.erase(it2);
+    for (vector<BlockedClause>::iterator end = blockedClauses.end(); i != end; i++) {
+        if (solver.value(i->blockedOn) != l_Undef) {
+            const Var var = i->blockedOn.var();
+            if (solver.varData[var].elimed == ELIMED_VARELIM) {
+                var_elimed[var] = false;
+                solver.varData[var].elimed = ELIMED_NONE;
+                solver.setDecisionVar(var, true);
+                numElimed--;
+            }
+        } else {
+            *j++ = *i;
         }
     }
+    blockedClauses.resize(blockedClauses.size()-(i-j));
 }
 
 /**
@@ -1319,20 +1217,20 @@ void inline Subsumer::fillSubs(const T& ps, const uint32_t index, uint32_t abs, 
 }
 
 
-void Subsumer::removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair<uint32_t, uint32_t>& removed)
+void Subsumer::removeClausesHelper(vec<ClAndBin>& todo, const Lit lit, std::pair<uint32_t, uint32_t>& removed)
 {
      pair<uint32_t, uint32_t>  tmp;
      for (uint32_t i = 0; i < todo.size(); i++) {
         ClAndBin& c = todo[i];
         if (!c.isBin) {
             if (clauses[c.clsimp.index] != NULL)
-                unlinkClause(c.clsimp, *clauses[c.clsimp.index], var);
+                unlinkClause(c.clsimp, *clauses[c.clsimp.index], lit);
         } else {
             #ifdef VERBOSE_DEBUG
             std::cout << "Eliminating bin clause: " << c.lit1 << " , " << c.lit2 << std::endl;
             std::cout << "On variable: " << var+1 << std::endl;
             #endif
-            assert(var == c.lit1.var() || var == c.lit2.var());
+            assert(lit == c.lit1 || lit == c.lit2);
             tmp = removeWBinAll(solver.watches[(~c.lit1).toInt()], c.lit2);
             //assert(tmp.first > 0 || tmp.second > 0);
             removed.first += tmp.first;
@@ -1343,7 +1241,10 @@ void Subsumer::removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair
             removed.first += tmp.first;
             removed.second += tmp.second;
 
-            elimedOutVarBin[var].push_back(std::make_pair(c.lit1, c.lit2));
+            vector<Lit> lits;
+            lits.push_back(c.lit1);
+            lits.push_back(c.lit2);
+            blockedClauses.push_back(BlockedClause(lit, lits));
             touchedVars.touch(c.lit1, false);
             touchedVars.touch(c.lit2, false);
         }
@@ -1370,8 +1271,8 @@ void Subsumer::removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const
     removed.first = 0;
     removed.second = 0;
 
-    removeClausesHelper(posAll, var, removed);
-    removeClausesHelper(negAll, var, removed);
+    removeClausesHelper(posAll, Lit(var, false), removed);
+    removeClausesHelper(negAll, Lit(var, true), removed);
 
     solver.learnts_literals -= removed.first;
     solver.clauses_literals -= removed.second;
@@ -1479,7 +1380,7 @@ bool Subsumer::maybeEliminate(const Var var)
         bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
         if (ok){
             after_clauses++;
-            if (after_clauses > (before_clauses+ ((bool)(solver.order_heap.size() < 25000)) )) return false;
+            if (after_clauses > before_clauses) return false;
         }
     }
 
@@ -1835,6 +1736,11 @@ const uint32_t Subsumer::tryOneSetting(const Lit lit)
         numMaxBlockToVisit--;
         if (cl.learnt()) continue;
         if (allTautology(cl, ~lit)) {
+            vector<Lit> remCl;
+            for (Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++)
+                remCl.push_back(*l);
+            blockedClauses.push_back(BlockedClause(lit, remCl));
+            var_blocked[lit.var()] = true;
             unlinkClause(*it, cl);
             blocked++;
         }
@@ -1849,6 +1755,12 @@ const uint32_t Subsumer::tryOneSetting(const Lit lit)
         if (!i->isNonLearntBinary()) goto next;
         lits[0] = i->getOtherLit();
         if (allTautology(lits, ~lit)) {
+            vector<Lit> remCl;
+            remCl.push_back(lit);
+            remCl.push_back(i->getOtherLit());
+            blockedClauses.push_back(BlockedClause(lit, remCl));
+            var_blocked[lit.var()] = true;
+
             removeWBin(solver.watches[(~i->getOtherLit()).toInt()], lit, false);
             blocked++;
             solver.numBins--;

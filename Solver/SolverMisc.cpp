@@ -219,15 +219,8 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
     numClauses += xorclauses.size();
 
     //previously eliminated clauses
-    const map<Var, vector<vector<Lit> > >& elimedOutVar = subsumer->getElimedOutVar();
-    for (map<Var, vector<vector<Lit> > >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
-        const vector<vector<Lit> >& cs = it->second;
-        numClauses += cs.size();
-    }
-    const map<Var, vector<std::pair<Lit, Lit> > >& elimedOutVarBin = subsumer->getElimedOutVarBin();
-    for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
-        numClauses += it->second.size();
-    }
+    const vector<BlockedClause>& blockedClauses = subsumer->getBlockedClauses();
+    numClauses += blockedClauses.size();
 
     const map<Var, vector<XorSubsumer::XorElimedClause> >& xorElimedOutVar = xorSubsumer->getElimedOutVar();
     for (map<Var, vector<XorSubsumer::XorElimedClause> >::const_iterator it = xorElimedOutVar.begin(); it != xorElimedOutVar.end(); it++) {
@@ -292,19 +285,12 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
     fprintf(outfile, "c -------------------------------\n");
     fprintf(outfile, "c previously eliminated variables\n");
     fprintf(outfile, "c -------------------------------\n");
-    for (map<Var, vector<vector<Lit> > >::const_iterator it = elimedOutVar.begin(); it != elimedOutVar.end(); it++) {
-        fprintf(outfile, "c ########### cls for eliminated var %d ### start\n", it->first + 1);
-        const vector<vector<Lit> >& cs = it->second;
-        for (vector<vector<Lit> >::const_iterator it2 = cs.begin(); it2 != cs.end(); it2++) {
-            printClause(outfile, *it2);
-        }
-        fprintf(outfile, "c ########### cls for eliminated var %d ### finish\n", it->first + 1);
-    }
-    for (map<Var, vector<std::pair<Lit, Lit> > >::const_iterator it = elimedOutVarBin.begin(); it != elimedOutVarBin.end(); it++) {
-        for (uint32_t i = 0; i < it->second.size(); i++) {
-            it->second[i].first.print(outfile);
-            it->second[i].second.printFull(outfile);
-        }
+    for (vector<BlockedClause>::const_iterator it = blockedClauses.begin(); it != blockedClauses.end(); it++) {
+        fprintf(outfile, "c ########### start cls for eliminated/blocked lit ");
+        it->blockedOn.print(outfile);
+        fprintf(outfile, "\n");
+        printClause(outfile, it->lits);
+        fprintf(outfile, "c ########### end cls for eliminated/blocked lit\n");
     }
 
     fprintf(outfile, "c -------------------------------\n");

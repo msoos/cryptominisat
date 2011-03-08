@@ -29,6 +29,8 @@ using std::map;
 using std::vector;
 using std::pair;
 
+class SolutionExtender;
+
 /**
 @brief Disconnected components are treated here
 
@@ -44,7 +46,7 @@ class PartHandler
         const bool handle();
         const vec<lbool>& getSavedState();
         void newVar();
-        void addSavedState();
+        void addSavedState(SolutionExtender* extender);
         void readdRemovedClauses();
 
         friend class ClauseAllocator;
