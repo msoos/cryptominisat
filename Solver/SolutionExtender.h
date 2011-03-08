@@ -134,6 +134,7 @@ class SolutionExtender
         const bool satisfiedNorm(const vector<Lit>& lits) const;
         const bool satisfiedXor(const vector<Lit>& lits, const bool rhs) const;
         const Lit pickBranchLit();
+        //const bool replace(vector<Lit>& lits, Lit& blockedOn);
 
         const uint32_t nVars()
         {

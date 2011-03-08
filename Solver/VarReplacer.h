@@ -58,6 +58,7 @@ class VarReplacer
         const uint32_t getNumTrees() const;
         const vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
+        const map<Var, vector<Var> >&getReverseTable() const;
         const bool varHasBeenReplaced(const Var var) const;
         const bool replacingVar(const Var var) const;
         void newVar();
@@ -144,6 +145,11 @@ inline const bool VarReplacer::replacingVar(const Var var) const
 inline const uint32_t VarReplacer::getNumTrees() const
 {
     return reverseTable.size();
+}
+
+inline const map<Var, vector<Var> >& VarReplacer::getReverseTable() const
+{
+    return reverseTable;
 }
 
 #endif //VARREPLACER_H

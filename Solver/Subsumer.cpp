@@ -1728,6 +1728,14 @@ void Subsumer::blockedClauseRemoval()
     clauses_subsumed = numSubsBefore;
 }
 
+const bool Subsumer::containsCannotElim(const Clause& cl)
+{
+    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+        if (cannot_eliminate[l->var()]) return true;
+    }
+    return false;
+}
+
 const uint32_t Subsumer::tryOneSetting(const Lit lit)
 {
     uint32_t blocked = 0;
@@ -1735,6 +1743,8 @@ const uint32_t Subsumer::tryOneSetting(const Lit lit)
     for(ClauseSimp *it = occCopy.getData(), *end = occCopy.getDataEnd(); it != end; it++) {
         Clause& cl = *clauses[it->index];
         numMaxBlockToVisit--;
+        if (containsCannotElim(cl)) continue;
+
         if (cl.learnt()) continue;
         if (allTautology(cl, ~lit)) {
             vector<Lit> remCl;
@@ -1754,6 +1764,8 @@ const uint32_t Subsumer::tryOneSetting(const Lit lit)
     vec2<Watched>::iterator j = ws.getData();
     for (vec2<Watched>::iterator end = ws.getDataEnd(); i != end; i++) {
         if (!i->isNonLearntBinary()) goto next;
+        if (cannot_eliminate[i->getOtherLit().var()]) continue;
+
         lits[0] = i->getOtherLit();
         if (allTautology(lits, ~lit)) {
             vector<Lit> remCl;

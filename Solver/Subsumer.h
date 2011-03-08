@@ -560,6 +560,7 @@ private:
     template<class T>
     const bool allTautology(const T& ps, const Lit lit);
     const uint32_t tryOneSetting(const Lit lit);
+    const bool containsCannotElim(const Clause& cl);
     void touchBlockedVar(const Var x);
     vector<BlockedClause> blockedClauses;
 
