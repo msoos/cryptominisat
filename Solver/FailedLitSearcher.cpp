@@ -190,7 +190,7 @@ const bool FailedLitSearcher::search()
     //For 2-long xor (rule 6 of  Equivalent literal propagation in the DLL procedure by Chu-Min Li)
     toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
     lastTrailSize = solver.trail.size();
-    binXorFind = true;
+    binXorFind = solver.conf.doBXor;
     twoLongXors.clear();
     if (solver.xorclauses.size() < 5 ||
         solver.xorclauses.size() > 30000 ||
@@ -440,7 +440,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
             if (propValue[x] == solver.assigns[x].getBool()) {
                 //they both imply the same
                 bothSame.push(Lit(x, !propValue[x]));
-            } else if (c != (int)solver.trail_lim[0]) {
+            } else if (c != (int)solver.trail_lim[0] && solver.conf.doBXor) {
                 assert(lit1.var() == lit2.var());
                 tmpPs[0] = Lit(lit1.var(), false);
                 tmpPs[1] = Lit(x, false);
@@ -502,15 +502,13 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     solver.ok = (solver.propagate<false>(false).isNULL());
     if (!solver.ok) return false;
 
-    if (solver.conf.doBXor) {
-        for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
-            tmpPs[0] = binXorToAdd[i].lit1;
-            tmpPs[1] = binXorToAdd[i].lit2;
-            solver.addXorClauseInt(tmpPs, binXorToAdd[i].isEqualFalse, binXorToAdd[i].group);
-            tmpPs.clear();
-            tmpPs.growTo(2);
-            if (!solver.ok) return false;
-        }
+    for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
+        tmpPs[0] = binXorToAdd[i].lit1;
+        tmpPs[1] = binXorToAdd[i].lit2;
+        solver.addXorClauseInt(tmpPs, binXorToAdd[i].isEqualFalse, binXorToAdd[i].group);
+        tmpPs.clear();
+        tmpPs.growTo(2);
+        if (!solver.ok) return false;
     }
 
     return true;
