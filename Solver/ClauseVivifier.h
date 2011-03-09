@@ -33,8 +33,6 @@ class ClauseVivifier {
         const bool vivifyClausesNormal();
 
         const bool subsWNonExistBinsFill();
-        void subsumeNonExist();
-        const bool subsNonExistHelper(Clause& cl);
         const bool subsWNonExistBinsFillHelper(const Lit lit);
 
         /**

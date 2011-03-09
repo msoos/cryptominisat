@@ -25,6 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define MAX_BINARY_PROP 60000000
 
+#ifdef VERBOSE_DEBUG
+#define VERBOSE_SUBSUME_NONEXIST
+#endif
+
+//#define VERBOSE_SUBSUME_NONEXIST
+
 
 ClauseVivifier::ClauseVivifier(Solver& _solver) :
     lastTimeWentUntil(0)
@@ -62,7 +68,6 @@ const bool ClauseVivifier::calcAndSubsume()
     if (!subsWNonExistBinsFill()) return false;
     BothCache bCache(solver);
     bCache.tryBoth();
-    subsumeNonExist();
 
     return true;
 }
@@ -79,67 +84,6 @@ struct BinSorter2 {
         return false;
     };
 };
-
-const bool ClauseVivifier::subsNonExistHelper(Clause& cl)
-{
-    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-        solver.seen[l->toInt()] = true;
-    }
-
-    bool toRemove = false;
-    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-        const vector<LitExtra>& cache = solver.transOTFCache[l->toInt()].lits;
-        for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-            if (cacheLit->getOnlyNLBin() && solver.seen[cacheLit->getLit().toInt()]) {
-                toRemove = true;
-                break;
-            }
-        }
-        if (toRemove) break;
-    }
-
-    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-        solver.seen[l->toInt()] = false;
-    }
-
-    return toRemove;
-}
-
-void ClauseVivifier::subsumeNonExist()
-{
-    double myTime = cpuTime();
-    uint32_t clRem = 0;
-    Clause **i, **j;
-    i = j = solver.clauses.getData();
-    for (Clause **end = solver.clauses.getDataEnd(); i != end; i++) {
-        if (subsNonExistHelper(**i)) {
-
-            solver.removeClause(**i);
-            clRem ++;
-        } else {
-            *j++ = *i;
-        }
-    }
-    solver.clauses.shrink(i-j);
-
-    i = j = solver.learnts.getData();
-    for (Clause **end = solver.learnts.getDataEnd(); i != end; i++) {
-        if (subsNonExistHelper(**i)) {
-
-            solver.removeClause(**i);
-            clRem ++;
-        } else {
-            *j++ = *i;
-        }
-    }
-    solver.learnts.shrink(i-j);
-
-    if (solver.conf.verbosity  >= 1) {
-        std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << clRem
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
-        << std::endl;
-    }
-}
 
 /**
 @brief Call subsWNonExistBins with randomly picked starting literals
@@ -197,7 +141,7 @@ const bool ClauseVivifier::subsWNonExistBinsFill()
     }
 
     if (solver.conf.verbosity  >= 1) {
-        std::cout << "c Calc non-exist non-lernt bins"
+        std::cout << "c Calc non-exist non-learnt bins"
         << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
         << " done: " << std::setw(6) << doneNumNonExist
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
@@ -262,7 +206,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 7*1000*1000;
+    uint64_t maxNumProps = 5*1000*1000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxNumProps *=2;
     uint64_t extraDiff = 0;
