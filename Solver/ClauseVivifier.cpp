@@ -49,11 +49,9 @@ const bool ClauseVivifier::vivify()
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
-    if (numCalls >= 2) {
-        if (solver.conf.doCacheOTFSSR) {
-            if (!vivifyClausesCache(solver.clauses)) return false;
-            if (!vivifyClausesCache(solver.learnts)) return false;
-        }
+    if (solver.conf.doCacheOTFSSR) {
+        if (!vivifyClausesCache(solver.clauses)) return false;
+        if (!vivifyClausesCache(solver.learnts)) return false;
     }
 
     if (!vivifyClausesNormal()) return false;
