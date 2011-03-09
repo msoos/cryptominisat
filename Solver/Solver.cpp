@@ -2497,8 +2497,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
 
     if (needToInterrupt) return l_Undef;
     if (conf.doClausVivif && !clauseVivifier->calcAndSubsume()) goto end;
-    if (conf.doSatELite && !subsumer->simplifyBySubsumption()) goto end;
     if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
+    if (conf.doSatELite && !subsumer->simplifyBySubsumption()) goto end;
     if (conf.doXorSubsumption && !xorSubsumer->simplifyBySubsumption()) goto end;
 
     //addSymmBreakClauses();
