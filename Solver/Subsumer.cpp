@@ -1047,7 +1047,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 3;
     }
 
-    numMaxElimVars = (solver.order_heap.size()/3)*2*numCalls;
+    numMaxElimVars = (solver.order_heap.size()/3);
 
     numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
