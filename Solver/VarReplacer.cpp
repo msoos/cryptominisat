@@ -26,10 +26,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "DataSync.h"
 #include "SolutionExtender.h"
 
+#ifdef VERBOSE_DEBUG
+#define REPLACE_STATISTICS
+#define VERBOSE_DEBUG_BIN_REPLACER
+#endif
+
 //#define VERBOSE_DEBUG
 //#define DEBUG_REPLACER
 //#define REPLACE_STATISTICS
 //#define DEBUG_BIN_REPLACER
+//#define VERBOSE_DEBUG_BIN_REPLACER
 
 #ifdef VERBOSE_DEBUG
 #include <iostream>
@@ -75,8 +81,8 @@ const bool VarReplacer::performReplaceInternal()
         if (table[i].var() != i)
             numRedir++;
     }
-    std::cout << "Number of trees:" << reverseTable.size() << std::endl;
-    std::cout << "Number of redirected nodes:" << numRedir << std::endl;
+    std::cout << "c Number of trees:" << reverseTable.size() << std::endl;
+    std::cout << "c Number of redirected nodes:" << numRedir << std::endl;
     #endif //REPLACE_STATISTICS
 
     solver.clauseCleaner->removeAndCleanAll(true);
@@ -340,16 +346,18 @@ const bool VarReplacer::replaceBins()
         ws.shrink_(i-j);
     }
 
-    #ifdef DEBUG_BIN_REPLACER
+    #ifdef VERBOSE_DEBUG_BIN_REPLACER
+    std:cout << "c debug bin replacer start" << std::endl;
     for (uint32_t i = 0; i < removed.size(); i++) {
         if (removed[i] % 2 != 0) {
-            std::cout << "suspicious: " << Lit::toLit(i) << std::endl;
-            std::cout << "num: " << removed[i] << std::endl;
+            std::cout << "c suspicious: " << Lit::toLit(i) << std::endl;
+            std::cout << "c num: " << removed[i] << std::endl;
         }
     }
-    std::cout << "replacedLitsdiff: " << replacedLits - replacedLitsBefore << std::endl;
-    std::cout << "removedLearnt: " << removedLearnt << std::endl;
-    std::cout << "removedNonLearnt: " << removedNonLearnt << std::endl;
+    std::cout << "c replacedLitsdiff: " << replacedLits - replacedLitsBefore << std::endl;
+    std::cout << "c removedLearnt: " << removedLearnt << std::endl;
+    std::cout << "c removedNonLearnt: " << removedNonLearnt << std::endl;
+    std::cout << "c debug bin replacer end" << std::endl;
     #endif
 
     assert(removedLearnt % 2 == 0);
@@ -485,7 +493,7 @@ void VarReplacer::extendModel(SolutionExtender* extender) const
 {
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "extendModelImpossible() called" << std::endl;
+    std::cout << "c VarReplacer::extendModel() called" << std::endl;
     #endif //VERBOSE_DEBUG
 
     vector<Lit> tmpClause;
