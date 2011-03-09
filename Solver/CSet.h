@@ -57,7 +57,7 @@ struct AbstData
     };
     uint32_t abst;
     uint16_t size;
-    char     defOfOrGate;
+    bool     defOfOrGate;
 };
 
 /**
