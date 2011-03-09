@@ -362,10 +362,12 @@ private:
     void orderVarsForElim(vec<Var>& order);
     const uint32_t numNonLearntBins(const Lit lit) const;
     bool maybeEliminate(Var x);
+    vec<Lit> dummy;
+    vector<Lit> dummy2;
     void addLearntBinaries(const Var var);
     void removeClauses(vector<ClAndBin>& posAll, vector<ClAndBin>& negAll, const Var var);
     void removeClausesHelper(vector<ClAndBin>& todo, const Lit lit, std::pair<uint32_t, uint32_t>& removed);
-    bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
+    bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, const bool really);
     const bool eliminateVars();
     void fillClAndBin(vector<ClAndBin>& all, vector<ClauseSimp>& cs, const Lit lit);
 

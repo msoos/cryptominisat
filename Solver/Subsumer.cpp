@@ -1377,11 +1377,9 @@ bool Subsumer::maybeEliminate(const Var var)
     numMaxElim -= posSize * negSize + before_literals;
     uint32_t before_clauses = posSize + negSize;
     uint32_t after_clauses = 0;
-    vec<Lit> dummy; //to reduce temporary data allocation
     for (uint32_t i = 0; i < posAll.size(); i++) for (uint32_t j = 0; j < negAll.size(); j++){
         // Merge clauses. If 'y' and '~y' exist, clause will not be created.
-        dummy.clear();
-        bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
+        bool ok = merge(posAll[i], negAll[j], lit, ~lit, false);
         if (ok){
             after_clauses++;
             if (after_clauses > before_clauses) return false;
@@ -1405,8 +1403,7 @@ bool Subsumer::maybeEliminate(const Var var)
 
     removeClauses(posAll, negAll, var);
     for (uint32_t i = 0; i < posAll.size(); i++) for (uint32_t j = 0; j < negAll.size(); j++){
-        dummy.clear();
-        bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
+        bool ok = merge(posAll[i], negAll[j], lit, ~lit, true);
         if (!ok) continue;
 
         uint32_t group_num = 0;
@@ -1515,25 +1512,44 @@ And without_p = ~without_q
 @param[in] var The variable that is being eliminated
 @return FALSE if clause is always satisfied ('out_clause' should not be used)
 */
-bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause)
+bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, const bool really)
 {
     if (!ps.isBin && clauses[ps.clsimp.index] == NULL) return false;
     if (!qs.isBin && clauses[qs.clsimp.index] == NULL) return false;
 
+    dummy.clear();
+    dummy2.clear();
     bool retval = true;
     if (ps.isBin) {
         assert(ps.lit1 == without_p);
         assert(ps.lit2 != without_p);
 
         seen[ps.lit2.toInt()] = 1;
-        out_clause.push(ps.lit2);
+        dummy.push(ps.lit2);
+        dummy2.push_back(ps.lit2);
     } else {
         Clause& c = *clauses[ps.clsimp.index];
         numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_p){
                 seen[c[i].toInt()] = 1;
-                out_clause.push(c[i]);
+                dummy.push(c[i]);
+                dummy2.push_back(c[i]);
+            }
+        }
+    }
+
+    if (!ps.isBin && really) {
+        for (uint32_t i= 0; i < dummy.size(); i++) {
+            const vector<LitExtra>& cache = solver.transOTFCache[dummy[i].toInt()].lits;
+            for(vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+                if (it->getOnlyNLBin()
+                    && !seen[(~(it->getLit())).toInt()]
+                    ) {
+                    Lit toAdd = ~(it->getLit());
+                    dummy2.push_back(toAdd);
+                    seen[toAdd.toInt()] = 1;
+                }
             }
         }
     }
@@ -1547,7 +1563,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
             goto end;
         }
         if (!seen[qs.lit2.toInt()])
-            out_clause.push(qs.lit2);
+            dummy.push(qs.lit2);
     } else {
         Clause& c = *clauses[qs.clsimp.index];
         numMaxElim -= c.size();
@@ -1558,19 +1574,25 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
                     goto end;
                 }
                 if (!seen[c[i].toInt()])
-                    out_clause.push(c[i]);
+                    dummy.push(c[i]);
+            }
+            if (really) {
+                const vector<LitExtra>& cache = solver.transOTFCache[c[i].toInt()].lits;
+                for(vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+                    if (it->getOnlyNLBin()
+                        && seen[((it->getLit())).toInt()]
+                        ) {
+                        retval = false;
+                        goto end;
+                    }
+                }
             }
         }
     }
 
     end:
-    if (ps.isBin) {
-        seen[ps.lit2.toInt()] = 0;
-    } else {
-        Clause& c = *clauses[ps.clsimp.index];
-        numMaxElim -= c.size();
-        for (uint32_t i = 0; i < c.size(); i++)
-            seen[c[i].toInt()] = 0;
+    for (vector<Lit>::const_iterator it = dummy2.begin(), end = dummy2.end(); it != end; it++) {
+        seen[it->toInt()] = 0;
     }
 
     return retval;
