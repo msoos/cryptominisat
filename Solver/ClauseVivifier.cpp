@@ -65,7 +65,7 @@ const bool ClauseVivifier::calcAndSubsume()
 
     if (!subsWNonExistBinsFill()) return false;
     BothCache bCache(solver);
-    bCache.tryBoth();
+    if (!bCache.tryBoth()) return false;
 
     return true;
 }
