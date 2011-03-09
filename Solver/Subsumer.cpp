@@ -1354,7 +1354,7 @@ bool Subsumer::maybeEliminate(const Var var)
     numMaxElim -= posSize + negSize;
 
     // Heuristic CUT OFF:
-    if (posSize >= 10 && negSize >= 10) return true;
+    if (posSize >= 10 && negSize >= 10) return false;
 
     // Heuristic CUT OFF2:
     if ((posSize >= 4 && negSize >= 4 && before_literals > 300)
@@ -1362,10 +1362,10 @@ bool Subsumer::maybeEliminate(const Var var)
         return false;
     if ((posSize >= 6 && negSize >= 6 && before_literals > 400)
         && clauses.size() <= 700000 && clauses.size() > 100000)
-        return true;
+        return false;
     if ((posSize >= 8 && negSize >= 8 && before_literals > 700)
         && clauses.size() <= 100000)
-        return true;
+        return false;
 
     vector<ClAndBin> posAll, negAll;
     fillClAndBin(posAll, poss, lit);
@@ -1427,7 +1427,7 @@ bool Subsumer::maybeEliminate(const Var var)
         } else {
             if (dummy.size() == 2) subsume0(std::numeric_limits< uint32_t >::max(), dummy, calcAbstraction(dummy));
         }
-        if (!solver.ok) return false;
+        if (!solver.ok) return true;
     }
     for(uint32_t i = 0; i < posAll.size(); i++) {
         if (!posAll[i].isBin && clauses[posAll[i].clsimp.index] != NULL) {
