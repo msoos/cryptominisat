@@ -927,6 +927,7 @@ const bool Subsumer::simplifyBySubsumption()
     std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
     #endif
 
+    #ifdef DEBUG_VAR_ELIM
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i] == NULL) continue;
         const Clause& cl = *clauses[i];
@@ -952,6 +953,7 @@ const bool Subsumer::simplifyBySubsumption()
             }
         }
     }
+    #endif
 
     if (solver.conf.doFindXors && !findXors()) return false;
 
