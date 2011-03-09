@@ -2451,7 +2451,9 @@ to try to simplifcy the problem at hand.
 */
 const lbool Solver::simplifyProblem(const uint32_t numConfls)
 {
+    assert(ok);
     testAllClauseAttach();
+
     bool gaussWasCleared = clearGaussMatrixes();
 
     reArrangeClauses();
