@@ -80,6 +80,7 @@ SolverConf::SolverConf() :
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)
         , doFindEqLitsWithGates(true)
+        , doCleanCache     (true)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

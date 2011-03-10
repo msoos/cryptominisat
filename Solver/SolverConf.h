@@ -83,6 +83,7 @@ class SolverConf
         bool      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
         bool      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
         bool      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
+        bool      doCleanCache;  ///<Clean cache of useless literals and update literals to their parents in var-replacer
 
         //interrupting & dumping
         uint32_t  maxRestarts;

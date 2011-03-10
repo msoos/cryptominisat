@@ -40,12 +40,7 @@ class SCCFinder {
         vec<char> stackIndicator;
         vec<uint32_t> tmp;
 
-        uint32_t recurDepth;
-
         Solver& solver;
-        const vector<char>& varElimed1;
-        const vec<char>& varElimed2;
-        const vec<lbool>& varPartHandled;
         const vector<Lit>& replaceTable;
         double totalTime;
 };
@@ -54,7 +49,6 @@ inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
     // Was successor v' visited?
     if (index[lit.toInt()] ==  std::numeric_limits<uint32_t>::max()) {
         tarjan(lit.toInt());
-        recurDepth--;
         lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
     } else if (stackIndicator[lit.toInt()])  {
         lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);

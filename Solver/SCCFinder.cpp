@@ -28,9 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SCCFinder::SCCFinder(Solver& _solver) :
     solver(_solver)
-    , varElimed1(_solver.subsumer->getVarElimed())
-    , varElimed2(_solver.xorSubsumer->getVarElimed())
-    , varPartHandled(_solver.partHandler->getSavedState())
     , replaceTable(_solver.varReplacer->getReplaceTable())
     , totalTime(0.0)
 {}
@@ -52,7 +49,6 @@ const bool SCCFinder::find2LongXors()
     for (uint32_t vertex = 0; vertex < solver.nVars()*2; vertex++) {
         //Start a DFS at each node we haven't visited yet
         if (index[vertex] == std::numeric_limits<uint32_t>::max()) {
-            recurDepth = 0;
             tarjan(vertex);
             assert(stack.empty());
         }
@@ -71,7 +67,6 @@ const bool SCCFinder::find2LongXors()
 
 void SCCFinder::tarjan(const uint32_t vertex)
 {
-    recurDepth++;
     index[vertex] = globalIndex;  // Set the depth index for v
     lowlink[vertex] = globalIndex;
     globalIndex++;
@@ -79,7 +74,11 @@ void SCCFinder::tarjan(const uint32_t vertex)
     stackIndicator[vertex] = true;
 
     Var vertexVar = Lit::toLit(vertex).var();
-    if (!varElimed1[vertexVar] && !varElimed2[vertexVar]) {
+    if (solver.varData[vertexVar].elimed == ELIMED_NONE
+        || solver.varData[vertexVar].elimed == ELIMED_VARREPLACER) {
+        Lit vertLit = Lit::toLit(vertex);
+        __builtin_prefetch(solver.transOTFCache[(~vertLit).toInt()].lits.data());
+
         const vec2<Watched>& ws = solver.watches[vertex];
         for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
             if (!it->isBinary()) continue;
@@ -89,21 +88,12 @@ void SCCFinder::tarjan(const uint32_t vertex)
         }
 
         if (solver.conf.doExtendedSCC && solver.conf.doCacheOTFSSR) {
-            Lit vertLit = Lit::toLit(vertex);
             vector<LitExtra>& transCache = solver.transOTFCache[(~vertLit).toInt()].lits;
             vector<LitExtra>::iterator it = transCache.begin();
-            vector<LitExtra>::iterator it2 = it;
-            size_t newSize = 0;
             for (vector<LitExtra>::iterator end = transCache.end(); it != end; it++) {
                 Lit lit = it->getLit();
-                lit = replaceTable[lit.var()] ^ lit.sign();
-                if (lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()] || varPartHandled[lit.var()] != l_Undef) continue;
-                *it2++ = LitExtra(lit, it->getOnlyNLBin());
-                newSize++;
-
                 if (lit != ~vertLit) doit(lit, vertex);
             }
-            transCache.resize(newSize);
         }
     }
 

@@ -2367,17 +2367,8 @@ const lbool Solver::simplifyProblem(const uint32_t numConfls)
     //addSymmBreakClauses();
 
     if (conf.doSortWatched) sortWatched();
+    if (conf.doCacheOTFSSR && conf.doCleanCache && !cleanCache()) goto end;
     if (conf.doCacheOTFSSR &&  conf.doCalcReach) calcReachability();
-
-    //Free memory if possible
-    for (Var var = 0; var < nVars(); var++) {
-        if (value(var) != l_Undef) {
-            vector<LitExtra> tmp1;
-            transOTFCache[Lit(var, false).toInt()].lits.swap(tmp1);
-            vector<LitExtra> tmp2;
-            transOTFCache[Lit(var, true).toInt()].lits.swap(tmp2);
-        }
-    }
 
 end:
     #ifdef BURST_SEARCH
@@ -2397,6 +2388,90 @@ end:
 
     if (!ok) return l_False;
     return status;
+}
+
+const bool Solver::cleanCache()
+{
+    assert(ok);
+    double myTime = cpuTime();
+    uint64_t numUpdated = 0;
+    uint64_t numCleaned = 0;
+    uint64_t numFreed = 0;
+
+    //Free memory if possible
+    for (Var var = 0; var < nVars(); var++) {
+        if (value(var) != l_Undef
+            || varData[var].elimed == ELIMED_VARELIM
+            || varData[var].elimed == ELIMED_XORVARELIM
+            || varData[var].elimed == ELIMED_DECOMPOSE
+            ) {
+            vector<LitExtra> tmp1;
+            numFreed += transOTFCache[Lit(var, false).toInt()].lits.capacity();
+            transOTFCache[Lit(var, false).toInt()].lits.swap(tmp1);
+
+            vector<LitExtra> tmp2;
+            numFreed += transOTFCache[Lit(var, true).toInt()].lits.capacity();
+            transOTFCache[Lit(var, true).toInt()].lits.swap(tmp2);
+        }
+    }
+
+    uint32_t wsLit = 0;
+    const vector<Lit>& replaceTable = varReplacer->getReplaceTable();
+    for(vector<TransCache>::iterator trans = transOTFCache.begin(), transEnd = transOTFCache.end(); trans != transEnd; trans++, wsLit++) {
+        Lit vertLit = ~Lit::toLit(wsLit);
+        vector<LitExtra>::iterator it = trans->lits.begin();
+        vector<LitExtra>::iterator it2 = it;
+        size_t origSize = trans->lits.size();
+        size_t newSize = 0;
+        for (vector<LitExtra>::iterator end = trans->lits.end(); it != end; it++) {
+            Lit lit = it->getLit();
+            if (value(lit.var()) != l_Undef) continue;
+            if (seen[lit.toInt()]) {
+                seen2[lit.toInt()] |= it2->getOnlyNLBin();
+                continue;
+            }
+            if (varData[lit.var()].elimed == ELIMED_VARREPLACER) {
+                lit = replaceTable[lit.var()] ^ lit.sign();
+                if (lit == vertLit
+                    || varData[lit.var()].elimed != ELIMED_NONE) continue;
+                *it2 = LitExtra(lit, it->getOnlyNLBin());
+                numUpdated++;
+            } else {
+                *it2 = *it;
+            }
+            seen[it2->getLit().toInt()] = true;
+            seen2[it2->getLit().toInt()] |= it->getOnlyNLBin();
+            it2++;
+            newSize++;
+        }
+        trans->lits.resize(newSize);
+
+        it = trans->lits.begin();
+        it2 = trans->lits.begin();
+        newSize = 0;
+        for (vector<LitExtra>::iterator end = trans->lits.end(); it != end; it++) {
+            Lit lit = it->getLit();
+            if (!seen[lit.toInt()]) continue;
+
+            seen[lit.toInt()] = false;
+            const bool learnt = seen2[lit.toInt()];
+            seen2[lit.toInt()] = false;
+            *it2++ = LitExtra(lit, learnt);
+            newSize++;
+        }
+        trans->lits.resize(newSize);
+        numCleaned += origSize-trans->lits.size();
+    }
+
+    if (conf.verbosity >= 1) {
+        std::cout << "c Cache cleaned."
+        << " Updated: " << std::setw(7) << numUpdated/1000 << " K"
+        << " Cleaned: " << std::setw(7) << numCleaned/1000 << " K"
+        << " Freed: " << std::setw(7) << numFreed/1000 << " K"
+        << " T: " << std::setprecision(2) << std::fixed  << (cpuTime()-myTime) << std::endl;
+    }
+
+    return true;
 }
 
 void Solver::reArrangeClause(Clause* clause)
@@ -2589,6 +2664,8 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
             return l_Undef;
         }
         if (status != l_Undef) break;
+        //BothCache bCache(*this);
+        //if (!bCache.tryBoth()) status = l_False;
 
         nof_conflicts = (double)nof_conflicts * conf.restart_inc;
     }
