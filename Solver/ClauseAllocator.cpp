@@ -485,19 +485,18 @@ Clause* ClauseAllocator::getClause()
 
 void ClauseAllocator::checkGoodPropBy(const Solver* solver)
 {
-    const vec<PropBy>& reason = solver->reason;
     Var var = 0;
-    for (const PropBy *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++, var++) {
-        if ((uint32_t)solver->varData[var].level > solver->decisionLevel()
-            || solver->varData[var].level == 0
+    for (vector<VarData>::const_iterator it = solver->varData.begin(), end = solver->varData.end(); it != end; it++, var++) {
+        if ((uint32_t)it->level > solver->decisionLevel()
+            || it->level == 0
             || solver->value(var) == l_Undef
         ) {
             continue;
         }
 
-        if (it->isClause() && !it->isNULL()) {
-            assert(!getPointer(it->getClause())->getFreed());
-            assert(!getPointer(it->getClause())->getRemoved());
+        if (it->reason.isClause() && !it->reason.isNULL()) {
+            assert(!getPointer(it->reason.getClause())->getFreed());
+            assert(!getPointer(it->reason.getClause())->getRemoved());
         }
     }
 }
@@ -528,19 +527,18 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     }
     #endif //USE_GAUSS
 
-    vec<PropBy>& reason = solver->reason;
     Var var = 0;
-    for (PropBy *it = reason.getData(), *end = reason.getDataEnd(); it != end; it++, var++) {
-        if ((uint32_t)solver->varData[var].level > solver->decisionLevel()
-            || solver->varData[var].level == 0
+    for (vector<VarData>::iterator it = solver->varData.begin(), end = solver->varData.end(); it != end; it++, var++) {
+        if ((uint32_t)it->level > solver->decisionLevel()
+            || it->level == 0
             || solver->value(var) == l_Undef) {
-            *it = PropBy();
+            it->reason = PropBy();
             continue;
         }
 
-        if (it->isClause() && !it->isNULL()) {
-            assert(((NewPointerAndOffset*)(getPointer(it->getClause())))->newOffset != std::numeric_limits<uint32_t>::max());
-            *it = PropBy(((NewPointerAndOffset*)(getPointer(it->getClause())))->newOffset, it->getWatchNum());
+        if (it->reason.isClause() && !it->reason.isNULL()) {
+            assert(((NewPointerAndOffset*)(getPointer(it->reason.getClause())))->newOffset != std::numeric_limits<uint32_t>::max());
+            it->reason = PropBy(((NewPointerAndOffset*)(getPointer(it->reason.getClause())))->newOffset, it->reason.getWatchNum());
         }
     }
 }

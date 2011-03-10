@@ -218,17 +218,14 @@ struct VarData
 {
     VarData() :
         level(std::numeric_limits< uint32_t >::max())
-        , popularity(0)
         , activity(0)
         , elimed(ELIMED_NONE)
         , polarity(Polarity())
+        , reason(PropBy())
     {}
 
     ///'level[var]' contains the level at which the assignment was made.
     uint32_t level;
-
-    ///Popularity of variable
-    uint32_t popularity;
 
     ///A heuristic measurement of the activity of a variable.
     uint32_t activity;
@@ -238,6 +235,8 @@ struct VarData
 
     ///The preferred polarity of each variable.
     Polarity polarity;
+
+    PropBy reason;
 };
 
 /**
@@ -471,7 +470,6 @@ protected:
     vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        ///< Separator indices for different decision levels in 'trail'.
-    vec<PropBy>         reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
     vec<BinPropData>    binPropData;
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
@@ -551,9 +549,6 @@ protected:
     /////////////////
     // Enqueue
     ////////////////
-    uint32_t lastDelayedEnqueueUpdate;
-    uint32_t lastDelayedEnqueueUpdateLevel;
-    void     delayedEnqueueUpdate();
     void     enqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void     enqueueLight (const Lit p);
     void     enqueueLight2(const Lit p, const uint32_t binPropDatael, const Lit lev2Ancestor, const bool learntLeadHere);
@@ -802,8 +797,8 @@ inline bool Solver::locked(const Clause& c) const
 {
     if (c.size() <= 3) return true; //we don't know in this case :I
     const ClauseData& data = clauseData[c.getNum()];
-    const PropBy from1(reason[c[data[0]].var()]);
-    const PropBy from2(reason[c[data[1]].var()]);
+    const PropBy from1(varData[c[data[0]].var()].reason);
+    const PropBy from2(varData[c[data[1]].var()].reason);
 
     if (from1.isClause()
         && !from1.isNULL()
@@ -1059,11 +1054,12 @@ inline void  Solver::enqueue(const Lit p, const PropBy from)
     #endif
 
     assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
-    reason  [v] = from;
+    varData[v].reason = from;
     trail.push(p);
     propagations++;
 
-    if (decisionLevel() == 0) varData[v].level = 0;
+    varData[v].level = decisionLevel();
+    agility.update(varData[v].polarity.getLastVal() != p.sign());
 
     #ifdef STATS_NEEDED
     if (dynamic_behaviour_analysis)

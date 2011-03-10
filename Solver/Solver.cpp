@@ -103,8 +103,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , dynamic_behaviour_analysis(false) //do not document the proof as default
         #endif
         , learnt_clause_group(0)
-        , lastDelayedEnqueueUpdate (0)
-        , lastDelayedEnqueueUpdateLevel (0)
         , restartType      (static_restart)
         , subRestartType   (static_restart)
         , agility          (conf.agilityG)
@@ -170,7 +168,6 @@ Var Solver::newVar(bool dvar)
     Var v = nVars();
     watches   .push();          // (list for positive literal)
     watches   .push();          // (list for negative literal)
-    reason    .push(PropBy());
     assigns   .push(l_Undef);
     varData.push_back(VarData());
     binPropData.push();
@@ -672,14 +669,12 @@ struct PolaritySorter
         //Tie 1: polarity
         if (pol1 == true && pol2 == false) return true;
         if (pol1 == false && pol2 == true) return false;
+        return false;
 
-        return (varData[lit1.var()].popularity > varData[lit2.var()].popularity);
-
-        /*
         //Tie 2: last level
-        assert(pol1 == pol2);
-        if (pol1 == true) return level[lit1.var()] < level[lit2.var()];
-        else return level[lit1.var()] > level[lit2.var()];*/
+        /*assert(pol1 == pol2);
+        if (pol1 == true) return varData[lit1.var()].level < varData[lit2.var()].level;
+        else return varData[lit1.var()].level > varData[lit2.var()].level;*/
     }
 
     const vector<VarData>& varData;
@@ -739,8 +734,6 @@ void Solver::cancelUntil(uint32_t level)
     #ifdef VERBOSE_DEBUG
     cout << "Canceling finished. (now at level: " << decisionLevel() << " sublevel: " << trail.size()-1 << ")" << endl;
     #endif
-    lastDelayedEnqueueUpdate = trail.size();
-    lastDelayedEnqueueUpdateLevel = decisionLevel();
 }
 
 void Solver::cancelUntilLight()
@@ -1014,9 +1007,9 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
                     pathC++;
                     #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
                     if (subRestartType == dynamic_restart
-                        && reason[q.var()].isClause()
-                        && !reason[q.var()].isNULL()
-                        && clauseAllocator.getPointer(reason[q.var()].getClause())->learnt())
+                        && varData[q.var()].reason.isClause()
+                        && !varData[q.var()].reason.isNULL()
+                        && clauseAllocator.getPointer(varData[q.var()].reason.getClause())->learnt())
                         lastDecisionLevel.push(q.var());
                     #endif //#define UPDATEVARACTIVITY
                 } else {
@@ -1031,7 +1024,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
         while (!seen[trail[index--].var()]);
         p     = trail[index+1];
         oldConfl = confl;
-        confl = PropByFull(reason[p.var()], failBinLit, clauseAllocator, clauseData, assigns);
+        confl = PropByFull(varData[p.var()].reason, failBinLit, clauseAllocator, clauseData, assigns);
         //if (confl.isClause()) __builtin_prefetch(confl.getClause(), 1, 0);
         seen[p.var()] = 0;
         pathC--;
@@ -1050,12 +1043,12 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
 
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++)
-            if (reason[out_learnt[i].var()].isNULL() || !litRedundant(out_learnt[i], abstract_level))
+            if (varData[out_learnt[i].var()].reason.isNULL() || !litRedundant(out_learnt[i], abstract_level))
                 out_learnt[j++] = out_learnt[i];
     } else {
         out_learnt.copyTo(analyze_toclear);
         for (i = j = 1; i < out_learnt.size(); i++) {
-            PropByFull c(reason[out_learnt[i].var()], failBinLit, clauseAllocator, clauseData, assigns);
+            PropByFull c(varData[out_learnt[i].var()].reason, failBinLit, clauseAllocator, clauseData, assigns);
 
             for (uint32_t k = 1, size = c.size(); k < size; k++) {
                 if (!seen[c[k].var()] && varData[c[k].var()].level > 0) {
@@ -1102,7 +1095,7 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, uint32_t& out_bt
     #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
     if (subRestartType == dynamic_restart) {
         for(uint32_t i = 0; i != lastDecisionLevel.size(); i++) {
-            PropBy cl = reason[lastDecisionLevel[i]];
+            PropBy cl = varData[lastDecisionLevel[i]].reason;
             if (cl.isClause() && clauseAllocator.getPointer(cl.getClause())->getGlue() < glue)
                 varBumpActivity(lastDecisionLevel[i]);
         }
@@ -1284,15 +1277,15 @@ bool Solver::litRedundant(Lit p, uint32_t abstract_levels)
     analyze_stack.push(p);
     int top = analyze_toclear.size();
     while (analyze_stack.size() > 0) {
-        assert(!reason[analyze_stack.last().var()].isNULL());
-        PropByFull c(reason[analyze_stack.last().var()], failBinLit, clauseAllocator, clauseData, assigns);
+        assert(!varData[analyze_stack.last().var()].reason.isNULL());
+        PropByFull c(varData[analyze_stack.last().var()].reason, failBinLit, clauseAllocator, clauseData, assigns);
 
         analyze_stack.pop();
 
         for (uint32_t i = 1, size = c.size(); i < size; i++) {
             Lit p  = c[i];
             if (!seen[p.var()] && varData[p.var()].level > 0) {
-                if (!reason[p.var()].isNULL() && (abstractLevel(p.var()) & abstract_levels) != 0) {
+                if (!varData[p.var()].reason.isNULL() && (abstractLevel(p.var()) & abstract_levels) != 0) {
                     seen[p.var()] = 1;
                     analyze_stack.push(p);
                     analyze_toclear.push(p);
@@ -1332,11 +1325,11 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
     for (int32_t i = (int32_t)trail.size()-1; i >= (int32_t)trail_lim[0]; i--) {
         Var x = trail[i].var();
         if (seen[x]) {
-            if (reason[x].isNULL()) {
+            if (varData[x].reason.isNULL()) {
                 assert(varData[x].level > 0);
                 out_conflict.push(~trail[i]);
             } else {
-                PropByFull c(reason[x], failBinLit, clauseAllocator, clauseData, assigns);
+                PropByFull c(varData[x].reason, failBinLit, clauseAllocator, clauseData, assigns);
                 for (uint32_t j = 1, size = c.size(); j < size; j++)
                     if (varData[c[j].var()].level > 0)
                         seen[c[j].var()] = 1;
@@ -1346,26 +1339,6 @@ void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
     }
 
     seen[p.var()] = 0;
-}
-
-void Solver::delayedEnqueueUpdate()
-{
-    uint32_t pseudoLevel = lastDelayedEnqueueUpdateLevel;
-
-    for (uint32_t i = lastDelayedEnqueueUpdate; i < trail.size(); i++) {
-        if (pseudoLevel < trail_lim.size()
-            && trail_lim[pseudoLevel] == i) pseudoLevel++;
-
-        const Lit p = trail[i];
-        const Var v = p.var();
-        varData[v].level = pseudoLevel;
-        agility.update(varData[v].polarity.getLastVal() != p.sign());
-        varData[v].polarity.setLastVal(p.sign());
-        varData[v].popularity++;
-    }
-
-    lastDelayedEnqueueUpdate = trail.size();
-    lastDelayedEnqueueUpdateLevel = decisionLevel();
 }
 
 /*_________________________________________________________________________________________________
@@ -1833,7 +1806,6 @@ void Solver::reduceDB()
     #endif
 
 
-    delayedEnqueueUpdate();
     uint32_t removeNum = (double)learnts.size() * (double)RATIOREMOVECLAUSES;
     uint32_t totalNumRemoved = 0;
     uint32_t totalNumNonRemoved = 0;
@@ -2177,7 +2149,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     uint32_t backtrack_level;
     uint32_t glue;
 
-    delayedEnqueueUpdate();
     conflicts++;
     conflictC++;
     if (decisionLevel() == 0)
@@ -2467,10 +2438,6 @@ void Solver::reArrangeClauses()
         reArrangeClause(learnts[i]);
     }
 
-    for (Var v = 0; v < nVars(); v++) {
-        varData[v].popularity = 0;
-    }
-
     if (conf.verbosity >= 3) {
         std::cout << "c Time to rearrange lits in clauses " << (cpuTime() - myTime) << std::endl;
     }
@@ -2621,10 +2588,7 @@ const lbool Solver::solve(const vec<Lit>& assumps, const int _numThreads , const
             cancelUntil(0);
             return l_Undef;
         }
-        if (status != l_Undef) {
-            delayedEnqueueUpdate();
-            break;
-        }
+        if (status != l_Undef) break;
 
         nof_conflicts = (double)nof_conflicts * conf.restart_inc;
     }
