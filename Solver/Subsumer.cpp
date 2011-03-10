@@ -326,7 +326,7 @@ const bool Subsumer::handleUpdatedClause(ClauseSimp& c, Clause& cl)
 {
     if (cleanClause(c, cl)) {
         unlinkClause(c, cl);
-        c.index = NULL;
+        c.index = std::numeric_limits< uint32_t >::max();
         return true;
     }
 
