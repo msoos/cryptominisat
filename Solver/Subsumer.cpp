@@ -2268,6 +2268,7 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
             occur[gate.eqLit.toInt()].push_back(c);
             clauseData[c.index] = AbstData(*clauses[c.index], clauseData[c.index].defOfOrGate);
             if (!handleUpdatedClause(c, *clauses[c.index])) return false;
+            if (c.index == std::numeric_limits< uint32_t >::max()) continue;
         }
 
         numOrGateReplaced++;
