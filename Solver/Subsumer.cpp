@@ -2104,25 +2104,30 @@ const bool Subsumer::doAllOptimisationWithGates()
     std::sort(orGates.begin(), orGates.end(), OrGateSorter2());
 
     //OR gate treatment
-    for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
-        if (!shortenWithOrGate(*it)) return false;
+    if (solver.conf.doShortenWithOrGates) {
+        for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+            if (!shortenWithOrGate(*it)) return false;
+        }
     }
 
     //AND gate treatment
-    andGateNumFound = 0;
-    vec<Lit> lits;
-    andGateTotalSize = 0;
-    uint32_t foundPotential;
-    //double myTime = cpuTime();
-    uint64_t numOp = 0;
-    for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
-        const OrGate& gate = *it;
-        if (gate.lits.size() > 2) continue;
-        if (!treatAndGate(gate, true, foundPotential, numOp)) return false;
+    if (solver.conf.doRemClWithAndGates) {
+        andGateNumFound = 0;
+        vec<Lit> lits;
+        andGateTotalSize = 0;
+        uint32_t foundPotential;
+        //double myTime = cpuTime();
+        uint64_t numOp = 0;
+        for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+            const OrGate& gate = *it;
+            if (gate.lits.size() > 2) continue;
+            if (!treatAndGate(gate, true, foundPotential, numOp)) return false;
+        }
     }
 
     //EQ gate treatment
-    if (!findEqOrGates()) return false;
+    if (solver.conf.doFindEqLitsWithGates
+        && !findEqOrGates()) return false;
 
     return true;
 }

@@ -79,7 +79,10 @@ class SolverConf
         bool      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
         bool      doBXor;
         bool      doAsymmTE;
-        bool      doOTFGateShorten;
+        bool      doOTFGateShorten; ///<Shorten learnt clauses on the fly with gates
+        bool      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
+        bool      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
+        bool      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
 
         //interrupting & dumping
         uint32_t  maxRestarts;

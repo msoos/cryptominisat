@@ -313,6 +313,9 @@ void Main::printUsage(char** argv)
     printf("  --threads        = Num threads (default is 1)\n");
     printf("  --nogatefind     = Don't find gates&do ER\n");
     printf("  --noer           = Don't do ER\n");
+    printf("  --nogorshort     = Don't shorten clauses with or gates during subsumption\n");
+    printf("  --nogandrem      = Don't remove clauses with and gates during subsumption\n");
+    printf("  --nogeqlit       = Don't find equivalent literals using gates during subsumption\n");
     printf("  --noalwaysfmin   = Don't always try to further minimise -- only sometimes\n");
     printf("\n");
 }
@@ -614,6 +617,12 @@ void Main::parseCommandLine()
             conf.doGateFind = false;
         } else if ((value = hasPrefix(argv[i], "--noer"))) {
             conf.doER = false;
+        } else if ((value = hasPrefix(argv[i], "--nogorshort"))) {
+            conf.doShortenWithOrGates = false;
+        } else if ((value = hasPrefix(argv[i], "--nogandrem"))) {
+            conf.doRemClWithAndGates = false;
+        } else if ((value = hasPrefix(argv[i], "--nogeqlit"))) {
+            conf.doFindEqLitsWithGates = false;
         } else if ((value = hasPrefix(argv[i], "--noalwaysfmin"))) {
             conf.doAlwaysFMinim = false;
         } else if ((value = hasPrefix(argv[i], "--nobxor"))) {

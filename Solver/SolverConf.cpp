@@ -77,6 +77,9 @@ SolverConf::SolverConf() :
         , doBXor           (true)
         , doAsymmTE        (true)
         , doOTFGateShorten (false)
+        , doShortenWithOrGates(true)
+        , doRemClWithAndGates(true)
+        , doFindEqLitsWithGates(true)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)
