@@ -847,7 +847,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             break;
         case 1:
             solver.cancelUntil(0);
-            solver.uncheckedEnqueue(tmp_clause[0]);
+            solver.enqueue(tmp_clause[0]);
             return unit_propagation;
         case 2: {
             solver.cancelUntil(0);
@@ -869,7 +869,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             if (solver.dynamic_behaviour_analysis)
                 solver.logger.set_group_name(cla.getGroup(), "gauss prop clause");
             #endif
-            solver.uncheckedEnqueue(cla[0], PropBy(solver.clauseAllocator.getOffset(&cla), 0));
+            solver.enqueue(cla[0], PropBy(solver.clauseAllocator.getOffset(&cla), 0));
             return propagation;
     }
 
@@ -943,7 +943,7 @@ llbool Gaussian::find_truths(vec<Lit>& learnt_clause, uint64_t& conflictC)
             #ifdef VERBOSE_DEBUG
             std::cout << "(" << matrix_no << ") -> setting to correct value" << std::endl;
             #endif
-            solver.uncheckedEnqueue(lit);
+            solver.enqueue(lit);
             return l_Continue;
         }
         case nothing:

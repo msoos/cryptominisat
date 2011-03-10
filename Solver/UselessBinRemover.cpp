@@ -65,7 +65,7 @@ const bool UselessBinRemover::removeUslessBinFull()
         if (!removeUselessBinaries(lit)) {
             fixed = true;
             solver.cancelUntilLight();
-            solver.uncheckedEnqueue(~lit);
+            solver.enqueue(~lit);
             solver.ok = (solver.propagate<false>().isNULL());
             if (!solver.ok) return false;
             continue;
@@ -75,7 +75,7 @@ const bool UselessBinRemover::removeUslessBinFull()
         if (!removeUselessBinaries(lit)) {
             fixed = true;
             solver.cancelUntilLight();
-            solver.uncheckedEnqueue(~lit);
+            solver.enqueue(~lit);
             solver.ok = (solver.propagate<false>().isNULL());
             if (!solver.ok) return false;
             continue;
@@ -113,7 +113,7 @@ a->c, the one-hop neighbour that is useless.
 const bool UselessBinRemover::removeUselessBinaries(const Lit lit)
 {
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight(lit);
+    solver.enqueueLight(lit);
     //Propagate only one hop
     failed = !solver.propagateBinOneLevel();
     if (failed) return false;
@@ -199,7 +199,7 @@ lit AND are one-hop away from origLit. These later need to be removed
 const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit origLit, const Lit lit, vec<Lit>& wrong)
 {
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight(lit);
+    solver.enqueueLight(lit);
     //if it's a cycle, it doesn't work, so don't propagate origLit
     failed = !solver.propagateBinExcept(origLit);
     if (failed) return false;

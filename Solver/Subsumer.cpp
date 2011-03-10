@@ -340,7 +340,7 @@ const bool Subsumer::handleUpdatedClause(ClauseSimp& c, Clause& cl)
             solver.ok = false;
             return false;
         case 1: {
-            solver.uncheckedEnqueue(cl[0]);
+            solver.enqueue(cl[0]);
             unlinkClause(c, cl);
             c.index = std::numeric_limits< uint32_t >::max();
             solver.propagate<false>();

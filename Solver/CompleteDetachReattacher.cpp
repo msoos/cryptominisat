@@ -145,7 +145,7 @@ inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
             solver.ok = false;
             return false;
         case 1:
-            solver.uncheckedEnqueue(ps[0]);
+            solver.enqueue(ps[0]);
             return false;
 
         case 2: {
@@ -178,7 +178,7 @@ inline const bool CompleteDetachReatacher::cleanClause(XorClause& ps)
             if (ps.xorEqualFalse() == false) solver.ok = false;
             return false;
         case 1:
-            solver.uncheckedEnqueue(Lit(ps[0].var(), ps.xorEqualFalse()));
+            solver.enqueue(Lit(ps[0].var(), ps.xorEqualFalse()));
             return false;
 
         case 2: {

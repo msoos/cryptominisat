@@ -45,7 +45,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #endif
 
 
-//#define DEBUG_UNCHECKEDENQUEUE_LEVEL0
+//#define DEBUG_ENQUEUE_LEVEL0
 //#define VERBOSE_DEBUG_POLARITIES
 //#define DEBUG_DYNAMIC_RESTART
 //#define UNWINDING_DEBUG
@@ -254,7 +254,7 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
             return NULL;
         }
         case 1: {
-            uncheckedEnqueue(Lit(ps[0].var(), xorEqualFalse));
+            enqueue(Lit(ps[0].var(), xorEqualFalse));
             ok = (propagate<false>().isNULL());
             return NULL;
         }
@@ -373,7 +373,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
         ok = false;
         return NULL;
     } else if (ps.size() == 1) {
-        uncheckedEnqueue(ps[0]);
+        enqueue(ps[0]);
         ok = (propagate<false>().isNULL());
         return NULL;
     }
@@ -1368,16 +1368,6 @@ void Solver::delayedEnqueueUpdate()
     lastDelayedEnqueueUpdateLevel = decisionLevel();
 }
 
-void Solver::uncheckedEnqueueExtend(const Lit p, const PropBy& from)
-{
-    assert(assigns[p.var()].isUndef());
-    const Var v = p.var();
-    assigns [v] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
-    varData [v].level = decisionLevel();
-    reason  [v] = from;
-    trail.push(p);
-}
-
 /*_________________________________________________________________________________________________
 |
 |  propagate : [void]  ->  [Clause*]
@@ -1401,8 +1391,8 @@ inline const bool Solver::propBinaryClause(const vec2<Watched>::iterator &i, con
 {
     lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
-        if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p));
-        else      uncheckedEnqueueLight(i->getOtherLit());
+        if (full) enqueue(i->getOtherLit(), PropBy(p));
+        else      enqueueLight(i->getOtherLit());
     } else if (val == l_False) {
         confl = PropBy(p);
         failBinLit = i->getOtherLit();
@@ -1428,11 +1418,11 @@ inline const bool Solver::propTriClause(const vec2<Watched>::iterator &i, const 
 
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
-        if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
-        else      uncheckedEnqueueLight(i->getOtherLit());
+        if (full) enqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
+        else      enqueueLight(i->getOtherLit());
     } else if (val == l_False && val2.isUndef()) {
-        if (full) uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
-        else      uncheckedEnqueueLight(i->getOtherLit2());
+        if (full) enqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
+        else      enqueueLight(i->getOtherLit2());
     } else if (val == l_False && val2 == l_False) {
         confl = PropBy(p, i->getOtherLit2());
         failBinLit = i->getOtherLit();
@@ -1497,8 +1487,8 @@ inline const bool Solver::propNormalClause(vec2<Watched>::iterator &i, vec2<Watc
         qhead = trail.size();
         return false;
     } else {
-        if (full) uncheckedEnqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
-        else      uncheckedEnqueueLight(c[data[!watchNum]]);
+        if (full) enqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
+        else      enqueueLight(c[data[!watchNum]]);
     }
 
     return true;
@@ -1544,8 +1534,8 @@ inline const bool Solver::propXorClause(vec2<Watched>::iterator &i, vec2<Watched
     *j++ = *i;
     if (value(c[data[!watchNum]].var()) == l_Undef) {
         Lit tmp = c[data[!watchNum]].unsign()^final;
-        if (full) uncheckedEnqueue(tmp, PropBy(offset, !watchNum));
-        else      uncheckedEnqueueLight(tmp);
+        if (full) enqueue(tmp, PropBy(offset, !watchNum));
+        else      enqueueLight(tmp);
     } else if (!final) {
         confl = PropBy(offset, !watchNum);
         qhead = trail.size();
@@ -1675,7 +1665,7 @@ PropBy Solver::propagateBin(vec<Lit>& uselessBin)
             //std::cout << (~p) << ", " << k->getOtherLit() << " learnt: " << k->getLearnt() << std::endl;
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
-                uncheckedEnqueueLight2(k->getOtherLit(), lev, lev1Ancestor, learntLeadHere || k->getLearnt());
+                enqueueLight2(k->getOtherLit(), lev, lev1Ancestor, learntLeadHere || k->getLearnt());
             } else if (val == l_False) {
                 return PropBy(p);
             } else {
@@ -1722,7 +1712,7 @@ PropBy Solver::propagateNonLearntBin()
             lbool val = value(k->getOtherLit());
             if (val.isUndef()) {
                 if (qhead != origQhead) multiLevelProp = true;
-                uncheckedEnqueueLight(k->getOtherLit());
+                enqueueLight(k->getOtherLit());
             } else if (val == l_False) {
                 return PropBy(p);
             }
@@ -1746,7 +1736,7 @@ const bool Solver::propagateBinExcept(const Lit exceptLit)
 
             lbool val = value(i->getOtherLit());
             if (val.isUndef() && i->getOtherLit() != exceptLit) {
-                uncheckedEnqueueLight(i->getOtherLit());
+                enqueueLight(i->getOtherLit());
             } else if (val == l_False) {
                 return false;
             }
@@ -1769,7 +1759,7 @@ const bool Solver::propagateBinOneLevel()
 
         lbool val = value(i->getOtherLit());
         if (val.isUndef()) {
-            uncheckedEnqueueLight(i->getOtherLit());
+            enqueueLight(i->getOtherLit());
         } else if (val == l_False) {
             return false;
         }
@@ -2162,7 +2152,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t maxNumC
     // Increase decision level and enqueue 'next'
     assert(value(next) == l_Undef);
     newDecisionLevel();
-    uncheckedEnqueue(next);
+    enqueue(next);
 
     return l_Nothing;
 }
@@ -2216,7 +2206,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     assert(value(learnt_clause[0]) == l_Undef);
     //Unitary learnt
     if (learnt_clause.size() == 1) {
-        uncheckedEnqueue(learnt_clause[0]);
+        enqueue(learnt_clause[0]);
         assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
 
         #ifdef VERBOSE_DEBUG
@@ -2229,7 +2219,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             attachBinClause(learnt_clause[0], learnt_clause[1], true);
             numNewBin++;
             dataSync->signalNewBinClause(learnt_clause);
-            uncheckedEnqueue(learnt_clause[0], PropBy(learnt_clause[1]));
+            enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             goto end;
         }
 
@@ -2243,7 +2233,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             if (c->learnt() && c->getGlue() > glue)
                 c->setGlue(glue); // LS
             attachClause(*c);
-            uncheckedEnqueue(learnt_clause[0], PropBy(clauseAllocator.getOffset(c), 0));
+            enqueue(learnt_clause[0], PropBy(clauseAllocator.getOffset(c), 0));
         } else {  //no on-the-fly subsumption
             #ifdef STATS_NEEDED
             if (dynamic_behaviour_analysis)
@@ -2267,7 +2257,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             #endif //ENABLE_UNWIND_GLUE
             c->setGlue(std::min(glue, MAX_THEORETICAL_GLUE));
             attachClause(*c);
-            uncheckedEnqueue(learnt_clause[0], PropBy(clauseAllocator.getOffset(c), 0));
+            enqueue(learnt_clause[0], PropBy(clauseAllocator.getOffset(c), 0));
         }
         end:;
     }

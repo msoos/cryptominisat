@@ -359,12 +359,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     #endif
 
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight(lit1);
+    solver.enqueueLight(lit1);
     failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
-        solver.uncheckedEnqueue(~lit1);
+        solver.enqueue(~lit1);
         solver.ok = (solver.propagate<false>(false).isNULL());
         if (!solver.ok) return false;
         return true;
@@ -421,12 +421,12 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     #endif //DEBUG_HYPERBIN
 
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight(lit2);
+    solver.enqueueLight(lit2);
     failed = (!solver.propagate<false>(false).isNULL());
     if (failed) {
         solver.cancelUntilLight();
         numFailed++;
-        solver.uncheckedEnqueue(~lit2);
+        solver.enqueue(~lit2);
         solver.ok = (solver.propagate<false>(false).isNULL());
         if (!solver.ok) return false;
         return true;
@@ -496,7 +496,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     if (!performAddBinLaters()) return false;
 
     for(uint32_t i = 0; i != bothSame.size(); i++) {
-        solver.uncheckedEnqueue(bothSame[i]);
+        solver.enqueue(bothSame[i]);
     }
     goodBothSame += bothSame.size();
     solver.ok = (solver.propagate<false>(false).isNULL());
@@ -580,7 +580,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     uint64_t extraTime = 0;
 
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight2(lit, 0, lit_Undef, false);
+    solver.enqueueLight2(lit, 0, lit_Undef, false);
     failed = (!solver.propagateBin(uselessBin).isNULL());
     assert(!failed);
 
@@ -642,7 +642,7 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
     backupBogoProps = solver.bogoProps;
     if (solver.conf.doRemUselessLBins) {
         solver.newDecisionLevel();
-        solver.uncheckedEnqueueLight2(lit, 0, lit_Undef, false);
+        solver.enqueueLight2(lit, 0, lit_Undef, false);
         failed = (!solver.propagateBin(uselessBin).isNULL());
         uselessBin.clear();
         for (int c = solver.trail.size()-1; c >= (int)solver.trail_lim[0]; c--) {
@@ -710,7 +710,7 @@ void FailedLitSearcher::addMyImpliesSetAsBins(Lit lit, int32_t& difference)
     for (const Var *var = myImpliesSet.getData(), *end2 = myImpliesSet.getDataEnd(); var != end2; var++, i++) {
         Lit l2 = Lit(*var, !propValue[*var]);
         solver.newDecisionLevel();
-        solver.uncheckedEnqueueLight(l2);
+        solver.enqueueLight(l2);
         failed = (!solver.propagateBin(uselessBin).isNULL());
         assert(!failed);
         uselessBin.clear();
@@ -763,7 +763,7 @@ propagating it only at the binary level
 void FailedLitSearcher::fillImplies(const Lit lit)
 {
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight(lit);
+    solver.enqueueLight(lit);
     failed = (!solver.propagate<false>(false).isNULL());
     assert(!failed);
 
@@ -901,7 +901,7 @@ const bool FailedLitSearcher::tryMultiLevel(const vec<Var>& vars, uint32_t& enqu
         last = (comb == (1U << vars.size())-1);
         solver.newDecisionLevel();
         for (uint32_t i = 0; i < vars.size(); i++) {
-            solver.uncheckedEnqueueLight(Lit(vars[i], comb&(0x1 << i)));
+            solver.enqueueLight(Lit(vars[i], comb&(0x1 << i)));
             //std::cout << "lit: " << Lit(vars[i], comb&(1U << i)) << std::endl;
         }
         //std::cout << "---" << std::endl;
@@ -939,7 +939,7 @@ const bool FailedLitSearcher::tryMultiLevel(const vec<Var>& vars, uint32_t& enqu
 
     for (Lit *l = toEnqueue.getData(), *end = toEnqueue.getDataEnd(); l != end; l++) {
         enqueued++;
-        solver.uncheckedEnqueue(*l);
+        solver.enqueue(*l);
     }
     solver.ok = solver.propagate<true>().isNULL();
     //exit(-1);

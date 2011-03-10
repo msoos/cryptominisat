@@ -89,7 +89,7 @@ class CalcDefPolars;
 class SolutionExtender;
 
 #ifdef VERBOSE_DEBUG
-#define DEBUG_UNCHECKEDENQUEUE_LEVEL0
+#define DEBUG_ENQUEUE_LEVEL0
 using std::cout;
 using std::endl;
 #endif
@@ -549,15 +549,14 @@ protected:
     uint32_t learnt_clause_group;       //the group number of learnt clauses. Incremented at each added learnt clause
 
     /////////////////
-    // Unchecked enqueue
+    // Enqueue
     ////////////////
     uint32_t lastDelayedEnqueueUpdate;
     uint32_t lastDelayedEnqueueUpdateLevel;
     void     delayedEnqueueUpdate();
-    void     uncheckedEnqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
-    void     uncheckedEnqueueExtend (const Lit p, const PropBy& from = PropBy());
-    void     uncheckedEnqueueLight (const Lit p);
-    void     uncheckedEnqueueLight2(const Lit p, const uint32_t binPropDatael, const Lit lev2Ancestor, const bool learntLeadHere);
+    void     enqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
+    void     enqueueLight (const Lit p);
+    void     enqueueLight2(const Lit p, const uint32_t binPropDatael, const Lit lev2Ancestor, const bool learntLeadHere);
 
     /////////////////
     // Propagating
@@ -1024,13 +1023,13 @@ and does some logging if logging is enabled
 @p p the fact to enqueue
 @p from Why was it propagated (binary clause, tertiary clause, normal clause)
 */
-inline void  Solver::uncheckedEnqueue(const Lit p, const PropBy from)
+inline void  Solver::enqueue(const Lit p, const PropBy from)
 {
-    #ifdef DEBUG_UNCHECKEDENQUEUE_LEVEL0
+    #ifdef DEBUG_ENQUEUE_LEVEL0
     #ifndef VERBOSE_DEBUG
     if (decisionLevel() == 0)
     #endif //VERBOSE_DEBUG
-    std::cout << "uncheckedEnqueue var " << p.var()+1
+    std::cout << "enqueue var " << p.var()+1
     << " to val " << !p.sign()
     << " level: " << decisionLevel()
     << " sublevel: " << trail.size()
@@ -1038,9 +1037,9 @@ inline void  Solver::uncheckedEnqueue(const Lit p, const PropBy from)
     if (from.isClause() && !from.isNULL()) {
         std::cout << "by clause: " << *clauseAllocator.getPointer(from.getClause()) << std::endl;
     }
-    #endif //DEBUG_UNCHECKEDENQUEUE_LEVEL0
+    #endif //DEBUG_ENQUEUE_LEVEL0
 
-    #ifdef UNCHECKEDENQUEUE_DEBUG
+    #ifdef ENQUEUE_DEBUG
     assert(decisionLevel() == 0 || !subsumer->getVarElimed()[p.var()]);
     assert(decisionLevel() == 0 || !xorSubsumer->getVarElimed()[p.var()]);
     Var repl = varReplacer->getReplaceTable()[p.var()].var();
@@ -1072,7 +1071,7 @@ inline void  Solver::uncheckedEnqueue(const Lit p, const PropBy from)
     #endif
 }
 
-inline void Solver::uncheckedEnqueueLight(const Lit p)
+inline void Solver::enqueueLight(const Lit p)
 {
     assert(value(p.var()) == l_Undef);
     #if WATCHED_CACHE_NUM > 0
@@ -1086,7 +1085,7 @@ inline void Solver::uncheckedEnqueueLight(const Lit p)
     if (decisionLevel() == 0) varData[p.var()].level = 0;
 }
 
-inline void Solver::uncheckedEnqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev1Ancestor, const bool learntLeadHere)
+inline void Solver::enqueueLight2(const Lit p, const uint32_t binSubLevel, const Lit lev1Ancestor, const bool learntLeadHere)
 {
     assert(value(p.var()) == l_Undef);
     #if WATCHED_CACHE_NUM > 0

@@ -415,7 +415,7 @@ const bool DataSync::shareUnitData()
                 || solver.partHandler->getSavedState()[litToEnqueue.var()] != l_Undef
                 ) continue;
 
-            solver.uncheckedEnqueue(litToEnqueue);
+            solver.enqueue(litToEnqueue);
             solver.ok = solver.propagate<false>().isNULL();
             if (!solver.ok) return false;
             thisGotUnitData++;

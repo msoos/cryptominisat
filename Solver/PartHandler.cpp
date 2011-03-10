@@ -98,7 +98,7 @@ const bool PartHandler::handle()
             //Check for vars added through extended resolution
             if (partFinder.getVarPart(newSolver.trail[i].var()) != part) continue;
 
-            solver.uncheckedEnqueue(newSolver.trail[i]);
+            solver.enqueue(newSolver.trail[i]);
         }
         solver.ok = (solver.propagate<false>().isNULL());
         assert(solver.ok);

@@ -247,7 +247,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
         return true;
     case 1:
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
-        solver.uncheckedEnqueue(Lit(c[0].var(), c.xorEqualFalse()));
+        solver.enqueue(Lit(c[0].var(), c.xorEqualFalse()));
         solver.ok = (solver.propagate<false>().isNULL());
         return true;
     case 2: {
@@ -309,7 +309,7 @@ const bool VarReplacer::replaceBins()
 
             if (thisLit1 == lit2) {
                 if (solver.value(lit2) == l_Undef) {
-                    solver.uncheckedEnqueue(lit2);
+                    solver.enqueue(lit2);
                 } else if (solver.value(lit2) == l_False) {
                     #ifdef VERBOSE_DEBUG
                     std::cout << "Contradiction during replacement of lits in binary clause" << std::endl;
@@ -450,7 +450,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
         solver.ok = false;
         return true;
     case 1 :
-        solver.uncheckedEnqueue(c[0]);
+        solver.enqueue(c[0]);
         solver.ok = (solver.propagate<false>().isNULL());
         return true;
     case 2:
@@ -584,8 +584,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
 
     if ((val1 != l_Undef && val2 == l_Undef) || (val2 != l_Undef && val1 == l_Undef)) {
         //exactly one l_Undef, exectly one l_True/l_False
-        if (val1 != l_Undef) solver.uncheckedEnqueue(lit2 ^ (val1 == l_False));
-        else solver.uncheckedEnqueue(lit1 ^ (val2 == l_False));
+        if (val1 != l_Undef) solver.enqueue(lit2 ^ (val1 == l_False));
+        else solver.enqueue(lit1 ^ (val2 == l_False));
 
         if (solver.ok) solver.ok = (solver.propagate<false>().isNULL());
         return solver.ok;

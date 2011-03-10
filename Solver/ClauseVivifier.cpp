@@ -117,7 +117,7 @@ const bool ClauseVivifier::subsWNonExistBinsFill()
         if (!subsWNonExistBinsFillHelper(lit)) {
             if (!solver.ok) return false;
             solver.cancelUntilLight();
-            solver.uncheckedEnqueue(~lit);
+            solver.enqueue(~lit);
             solver.ok = solver.propagate<true>().isNULL();
             if (!solver.ok) return false;
             continue;
@@ -130,7 +130,7 @@ const bool ClauseVivifier::subsWNonExistBinsFill()
         if (!subsWNonExistBinsFillHelper(lit)) {
             if (!solver.ok) return false;
             solver.cancelUntilLight();
-            solver.uncheckedEnqueue(~lit);
+            solver.enqueue(~lit);
             solver.ok = solver.propagate<true>().isNULL();
             if (!solver.ok) return false;
             continue;
@@ -165,7 +165,7 @@ const bool ClauseVivifier::subsWNonExistBinsFillHelper(const Lit lit)
     std::cout << "subsWNonExistBins called with lit " << lit << std::endl;
     #endif //VERBOSE_DEBUG
     solver.newDecisionLevel();
-    solver.uncheckedEnqueueLight(lit);
+    solver.enqueueLight(lit);
     bool failed = (!solver.propagateNonLearntBin().isNULL());
     if (failed) return false;
 
@@ -274,7 +274,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
             for (; (i2 < queueByBy) && ((done+i2) < lits.size()); i2++) {
                 lbool val = solver.value(lits[done+i2]);
                 if (val == l_Undef) {
-                    solver.uncheckedEnqueueLight(~lits[done+i2]);
+                    solver.enqueueLight(~lits[done+i2]);
                 } else if (val == l_False) {
                     unused.push(lits[done+i2]);
                 }
