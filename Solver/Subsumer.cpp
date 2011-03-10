@@ -968,9 +968,18 @@ const bool Subsumer::simplifyBySubsumption()
         solver.clauseCleaner->removeSatisfiedBins();
     } while (cl_touched.nElems() > 100);
 
-    if (solver.conf.doGateFind
-        && solver.conf.doCacheNLBins
-        && !findOrGatesAndTreat()) return false;
+    if (solver.conf.doCacheNLBins) {
+        if (solver.conf.doGateFind
+            && !findOrGatesAndTreat()) return false;
+
+        if (solver.conf.doER
+            && !extendedResolution()) return false;
+
+        setLimits();
+        for (vector<AbstData>::iterator it = clauseData.begin(), end = clauseData.end(); it != end; it++)
+            it->defOfOrGate = false;
+        if (!subsume0AndSubsume1()) return false;
+    }
 
     assert(solver.ok);
     assert(verifyIntegrity());
@@ -2010,6 +2019,14 @@ const bool Subsumer::findOrGatesAndTreat()
     findOrGates(false);
     doAllOptimisationWithGates();
 
+    for (vector<OrGate>::iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+        OrGate& gate = *it;
+        for (uint32_t i = 0; i < gate.lits.size(); i++) {
+            Lit lit = gate.lits[i];
+            gateOcc[lit.toInt()].push_back(&(*it));
+        }
+    }
+
     if (solver.conf.verbosity >= 1) {
         std::cout << "c ORs : " << std::setw(6) << orGates.size()
         << " avg-s: " << std::fixed << std::setw(4) << std::setprecision(1) << ((double)totalOrGateSize/(double)orGates.size())
@@ -2021,37 +2038,23 @@ const bool Subsumer::findOrGatesAndTreat()
         << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
     }
-    if (!solver.ok) return false;
-
-    bool cannotDoER;
-    #pragma omp critical (ERSync)
-    cannotDoER = (solver.threadNum != solver.dataSync->getThreadAddingVars()
-        || solver.dataSync->getEREnded());
-
-
-    if (solver.conf.doER && !cannotDoER) {
-        vector<OrGate> backupOrGates = orGates;
-        if (!carryOutER()) return false;
-        for (vector<OrGate>::const_iterator it = backupOrGates.begin(), end = backupOrGates.end(); it != end; it++) {
-            orGates.push_back(*it);
-        }
-    }
-
-    for (vector<OrGate>::iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
-        OrGate& gate = *it;
-        for (uint32_t i = 0; i < gate.lits.size(); i++) {
-            Lit lit = gate.lits[i];
-            gateOcc[lit.toInt()].push_back(&(*it));
-        }
-    }
 
     clauses_subsumed = old_clauses_subsumed;
 
     return solver.ok;
 }
 
-const bool Subsumer::carryOutER()
+const bool Subsumer::extendedResolution()
 {
+    assert(solver.ok);
+    bool cannotDoER;
+    #pragma omp critical (ERSync)
+    cannotDoER = (solver.threadNum != solver.dataSync->getThreadAddingVars()
+        || solver.dataSync->getEREnded());
+
+    if (cannotDoER) return true;
+
+    vector<OrGate> backupOrGates = orGates;
     double myTime = cpuTime();
     orGates.clear();
     totalOrGateSize = 0;
@@ -2077,22 +2080,45 @@ const bool Subsumer::carryOutER()
         << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
     }
+
+    orGates = backupOrGates;
+
+    for (vector<OrGate>::const_iterator it = backupOrGates.begin(), end = backupOrGates.end(); it != end; it++) {
+        orGates.push_back(*it);
+    }
+
     return solver.ok;
 }
 
 const bool Subsumer::doAllOptimisationWithGates()
 {
     assert(solver.ok);
+
+    //sorting
     for (uint32_t i = 0; i < orGates.size(); i++) {
         std::sort(orGates[i].lits.begin(), orGates[i].lits.end());
     }
     std::sort(orGates.begin(), orGates.end(), OrGateSorter2());
 
+    //OR gate treatment
     for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
         if (!shortenWithOrGate(*it)) return false;
     }
 
-    if (!treatAndGates()) return false;
+    //AND gate treatment
+    andGateNumFound = 0;
+    vec<Lit> lits;
+    andGateTotalSize = 0;
+    uint32_t foundPotential;
+    //double myTime = cpuTime();
+    uint64_t numOp = 0;
+    for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+        const OrGate& gate = *it;
+        if (gate.lits.size() > 2) continue;
+        if (!treatAndGate(gate, true, foundPotential, numOp)) return false;
+    }
+
+    //EQ gate treatment
     if (!findEqOrGates()) return false;
 
     return true;
@@ -2205,16 +2231,8 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
     for (uint32_t i = 0; i < subs.size(); i++) {
         ClauseSimp c = subs[i];
         if (clauseData[c.index].defOfOrGate) continue;
-        Clause& cl = *clauses[c.index];
-
+        //Clause& cl = *clauses[c.index];
         bool inside = false;
-        for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-            if (gate.eqLit.var() == l->var()) {
-                inside = true;
-                break;
-            }
-        }
-        if (inside) continue;
 
         #ifdef VERBOSE_ORGATE_REPLACE
         std::cout << "OR gate-based cl-shortening" << std::endl;
@@ -2222,51 +2240,53 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         std::cout << "orig Clause: " << *cl << std::endl;
         #endif
 
-        numOrGateReplaced++;
-
-        for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
-            gateLitsRemoved++;
-            cl.strengthen(*it);
-            maybeRemove(occur[it->toInt()], c);
-            touchedVars.touch(*it, cl.learnt());
+        for (Lit *l = clauses[c.index]->getData(), *end = clauses[c.index]->getDataEnd(); l != end; l++) {
+            if (gate.eqLit.var() == l->var()) {
+                inside = true;
+                break;
+            }
         }
 
-        gateLitsRemoved--;
-        cl.add(gate.eqLit); //we can add, because we removed above. Otherwise this is segfault
-        occur[gate.eqLit.toInt()].push_back(c);
-        clauseData[c.index] = AbstData(cl, clauseData[c.index].defOfOrGate);
+        if (!inside) {
+            vec<Lit> lits;
+            for (uint32_t i = 0; i < clauses[c.index]->size(); i++) {
+                const Lit lit = (*clauses[c.index])[i];
+                lits.push(lit);
+                ol_seenPos[lit.toInt()] = 0;
+                ol_seenNeg[(~lit).toInt()] = 0;
+            }
+            lits.push(gate.eqLit);
+            uint32_t group = clauses[c.index]->getGroup();
+            bool learnt = clauses[c.index]->learnt();
+            solver.clauseAllocator.clauseFree(clauses[c.index]);
+
+            clauses[c.index] = solver.clauseAllocator.Clause_new(lits, group, learnt);
+            gateLitsRemoved--;
+            occur[gate.eqLit.toInt()].push_back(c);
+            clauseData[c.index] = AbstData(*clauses[c.index], clauseData[c.index].defOfOrGate);
+            if (!handleUpdatedClause(c, *clauses[c.index])) return false;
+        }
+
+        numOrGateReplaced++;
+
+        Clause& cl = *clauses[c.index];
+        for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
+            gateLitsRemoved++;
+            if (std::find(cl.getData(), cl.getDataEnd(), *it) == cl.getDataEnd()) continue;
+            if (!strenghten(c, cl, *it)) return false;
+            if (c.index == std::numeric_limits< uint32_t >::max()) goto next;
+        }
+        cl_touched.add(c);
 
         #ifdef VERBOSE_ORGATE_REPLACE
         std::cout << "new  Clause : " << *cl << std::endl;
         std::cout << "-----------" << std::endl;
         #endif
 
-        if (!handleUpdatedClause(c, cl)) return false;
+        next:;
     }
 
     return solver.ok;
-}
-
-const bool Subsumer::treatAndGates()
-{
-    assert(solver.ok);
-
-    andGateNumFound = 0;
-    vec<Lit> lits;
-    andGateTotalSize = 0;
-    uint32_t foundPotential;
-    //double myTime = cpuTime();
-    uint64_t numOp = 0;
-
-    for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
-        const OrGate& gate = *it;
-        if (gate.lits.size() > 2) continue;
-        if (!treatAndGate(gate, true, foundPotential, numOp)) return false;
-    }
-
-    //std::cout << "c andgate time : " << (cpuTime() - myTime) << std::endl;
-
-    return true;
 }
 
 const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp)
@@ -2415,6 +2435,103 @@ inline const bool Subsumer::findAndGateOtherCl(const vector<ClauseSimp>& sizeSor
     }
 
     return false;
+}
+
+void Subsumer::otfShortenWithGates(vec<Lit>& cl)
+{
+    bool gateRemSuccess = false;
+    vec<Lit> oldCl = cl;
+    while (true) {
+        for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+            const vector<OrGate*>& gates = gateOcc[l->toInt()];
+            if (gates.empty()) continue;
+
+            for (vector<OrGate*>::const_iterator it2 = gates.begin(), end2 = gates.end(); it2 != end2; it2++) {
+                OrGate& gate = **it2;
+
+                gate.eqLit = solver.varReplacer->getReplaceTable()[gate.eqLit.var()] ^ gate.eqLit.sign();
+                if (solver.varData[gate.eqLit.var()].elimed != ELIMED_NONE) continue;
+
+                bool OK = true;
+                for (uint32_t i = 0; i < gate.lits.size(); i++) {
+                    if (!seen[gate.lits[i].toInt()]) {
+                        OK = false;
+                        break;
+                    }
+                }
+                if (!OK) continue;
+
+                //Treat gate
+                #ifdef VERBOSE_DEBUG_GATE
+                std::cout << "Gate: eqLit "  << gate.eqLit << " lits ";
+                for (uint32_t i = 0; i < gate.lits.size(); i++) {
+                    std::cout << gate.lits[i] << ", ";
+                }
+                #endif
+
+                bool firstInside = false;
+                Lit *lit1 = cl.getData();
+                Lit *lit2 = cl.getData();
+                bool first = true;
+                for (Lit *end3 = cl.getDataEnd(); lit1 != end3; lit1++, first = false) {
+                    bool in = false;
+                    for (uint32_t i = 0; i < gate.lits.size(); i++) {
+                        if (*lit1 == gate.lits[i]) {
+                            in = true;
+                            if (first) firstInside = true;
+                        }
+                    }
+                    if (in) {
+                        seen[lit1->toInt()] = false;
+                    } else {
+                        *lit2++ = *lit1;
+                    }
+                }
+                if (!seen[gate.eqLit.toInt()]) {
+                    *lit2++ = gate.eqLit;
+                    seen[gate.eqLit.toInt()] = true;
+                }
+                assert(!seen[(~gate.eqLit).toInt()]);
+                cl.shrink_(lit1-lit2);
+                solver.OTFGateRemLits += lit1-lit2;
+                #ifdef VERBOSE_DEBUG_GATE
+                std::cout << "Old clause: " << oldCl << std::endl;
+                for (uint32_t i = 0; i < oldCl.size(); i++) {
+                    std::cout << "-> Lit " << oldCl[i] << " lev: " << level[oldCl[i].var()] << " val: " << value(oldCl[i]) <<std::endl;
+                }
+                std::cout << "New clause: " << cl << std::endl;
+                for (uint32_t i = 0; i < cl.size(); i++) {
+                    std::cout << "-> Lit " << cl[i] << " lev: " << level[cl[i].var()] << " val: " << value(cl[i]) << std::endl;
+                }
+                #endif
+
+                if (firstInside) {
+                    uint32_t swapWith = std::numeric_limits<uint32_t>::max();
+                    for (uint32_t i = 0; i < cl.size(); i++) {
+                        if (cl[i] == gate.eqLit) swapWith = i;
+                    }
+                    std::swap(cl[swapWith], cl[0]);
+                }
+                #ifdef VERBOSE_DEBUG_GATE
+                std::cout << "New clause2: " << cl << std::endl;
+                for (uint32_t i = 0; i < cl.size(); i++) {
+                    std::cout << "-> Lit " << cl[i] << " lev: " << level[cl[i].var()] << std::endl;
+                }
+                #endif
+
+                gateRemSuccess = true;
+
+                //Do this recursively, again
+                goto next;
+            }
+        }
+        break;
+        next:;
+    }
+    solver.OTFGateRemSucc += gateRemSuccess;
+    #ifdef VERBOSE_DEBUG_GATE
+    if (gateRemSuccess) std::cout << "--------" << std::endl;
+    #endif
 }
 
 void Subsumer::makeAllBinsNonLearnt()

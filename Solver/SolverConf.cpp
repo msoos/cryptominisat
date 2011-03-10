@@ -76,6 +76,7 @@ SolverConf::SolverConf() :
         , doCalcReach      (true)
         , doBXor           (true)
         , doAsymmTE        (true)
+        , doOTFGateShorten (false)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

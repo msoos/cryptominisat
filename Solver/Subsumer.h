@@ -153,6 +153,7 @@ public:
     //Called from main
     const bool simplifyBySubsumption();
     void newVar();
+    void otfShortenWithGates(vec<Lit>& cl);
 
     //UnElimination
     void extendModel(SolutionExtender* extender) const;
@@ -161,19 +162,17 @@ public:
     //Get-functions
     const vector<char>& getVarElimed() const;
     const vector<char>& getVarBlocked() const;
-
     const uint32_t getNumElimed() const;
     const bool checkElimedUnassigned() const;
     const double getTotalTime() const;
-    /*const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
-    const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;*/
     const uint32_t getNumERVars() const;
+    const vector<BlockedClause>& getBlockedClauses() const;
+
+    //ER
     void incNumERVars(const uint32_t num);
     void setVarNonEliminable(const Var var);
     const bool getFinishedAddingVars() const;
     void setFinishedAddingVars(const bool val);
-    const vector<OrGate*>& getGateOcc(const Lit lit) const;
-    const vector<BlockedClause>& getBlockedClauses() const;
 
 private:
 
@@ -587,26 +586,29 @@ private:
     void findOrGates(const bool learntGatesToo);
     void findOrGate(const Lit eqLit, const ClauseSimp& c, const bool learntGatesToo);
     const bool shortenWithOrGate(const OrGate& gate);
+    const bool findEqOrGates();
+    const bool doAllOptimisationWithGates();
+    const bool treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp);
+    const bool treatAndGateClause(const ClauseSimp& other, const OrGate& gate, const Clause& cl);
+    const bool findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, ClauseSimp& other);
+
     int64_t gateLitsRemoved;
     uint64_t totalOrGateSize;
     vector<OrGate> orGates;
     vector<vector<OrGate*> > gateOcc;
     uint32_t numOrGateReplaced;
-    const bool findEqOrGates();
-    const bool carryOutER();
-    void createNewVars();
-    const bool doAllOptimisationWithGates();
     uint32_t andGateNumFound;
     uint32_t andGateTotalSize;
+    vector<vector<ClauseSimp> > sizeSortedOcc; //temp for and-gate treatment
+
+    //Extended resolution
+    const bool extendedResolution();
+    void createNewVars();
     vec<char> dontElim;
     uint32_t numERVars;
     bool finishedAddingVars;
 
-    const bool treatAndGates();
-    const bool treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp);
-    const bool treatAndGateClause(const ClauseSimp& other, const OrGate& gate, const Clause& cl);
-    const bool findAndGateOtherCl(const vector<ClauseSimp>& sizeSortedOcc, const Lit lit, const uint32_t abst2, ClauseSimp& other);
-    vector<vector<ClauseSimp> > sizeSortedOcc;
+
 
     //validity checking
     const bool verifyIntegrity();
@@ -769,9 +771,5 @@ inline void Subsumer::setFinishedAddingVars(const bool val)
     finishedAddingVars = val;
 }
 
-inline const vector<OrGate*>& Subsumer::getGateOcc(const Lit lit) const
-{
-    return gateOcc[lit.toInt()];
-}
 
 #endif //SIMPLIFIER_H
