@@ -221,8 +221,6 @@ parameter is different from var_Undef.
 */
 void Subsumer::unlinkClause(ClauseSimp c, Clause& cl, const Lit elim)
 {
-    assert(!clauseData[c.index].defOfOrGate);
-
     for (uint32_t i = 0; i < cl.size(); i++) {
         if (elim != lit_Undef) numMaxElim -= occur[cl[i].toInt()].size()/2;
         else {
@@ -1102,7 +1100,10 @@ void Subsumer::AsymmTE()
         }
 
         end:
-        if (toRemove) unlinkClause(index, cl);
+        if (toRemove) {
+            assert(!clauseData[index].defOfOrGate);
+            unlinkClause(index, cl);
+        }
 
         for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
             seen[l->toInt()] = false;
@@ -1647,6 +1648,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
         dummy2.push_back(ps.lit2);
     } else {
         Clause& c = *clauses[ps.clsimp.index];
+        assert(!clauseData[ps.clsimp.index].defOfOrGate);
         numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_p){
@@ -1684,6 +1686,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
             dummy.push(qs.lit2);
     } else {
         Clause& c = *clauses[qs.clsimp.index];
+        assert(!clauseData[qs.clsimp.index].defOfOrGate);
         numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_q) {
