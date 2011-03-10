@@ -324,6 +324,8 @@ const bool Subsumer::strenghten(ClauseSimp& c, Clause& cl, const Lit toRemoveLit
 
 const bool Subsumer::handleUpdatedClause(ClauseSimp& c, Clause& cl)
 {
+    assert(solver.ok);
+
     if (cleanClause(c, cl)) {
         unlinkClause(c, cl);
         c.index = std::numeric_limits< uint32_t >::max();
@@ -2239,7 +2241,6 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
     for (uint32_t i = 0; i < subs.size(); i++) {
         ClauseSimp c = subs[i];
         if (clauseData[c.index].defOfOrGate) continue;
-        //Clause& cl = *clauses[c.index];
         bool inside = false;
 
         #ifdef VERBOSE_ORGATE_REPLACE
@@ -2250,8 +2251,13 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
 
         for (Lit *l = clauses[c.index]->getData(), *end = clauses[c.index]->getDataEnd(); l != end; l++) {
             if (gate.eqLit.var() == l->var()) {
-                inside = true;
-                break;
+                if (gate.eqLit == *l) {
+                    inside = true;
+                    break;
+                } else {
+                    unlinkClause(c, *clauses[c.index]);
+                    goto next;
+                }
             }
         }
 
@@ -2272,20 +2278,20 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
             gateLitsRemoved--;
             occur[gate.eqLit.toInt()].push_back(c);
             clauseData[c.index] = AbstData(*clauses[c.index], clauseData[c.index].defOfOrGate);
+            cl_touched.add(c);
             if (!handleUpdatedClause(c, *clauses[c.index])) return false;
             if (c.index == std::numeric_limits< uint32_t >::max()) continue;
         }
 
         numOrGateReplaced++;
 
-        Clause& cl = *clauses[c.index];
         for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
+            Clause& cl = *clauses[c.index];
             gateLitsRemoved++;
             if (std::find(cl.getData(), cl.getDataEnd(), *it) == cl.getDataEnd()) continue;
             if (!strenghten(c, cl, *it)) return false;
             if (c.index == std::numeric_limits< uint32_t >::max()) goto next;
         }
-        cl_touched.add(c);
 
         #ifdef VERBOSE_ORGATE_REPLACE
         std::cout << "new  Clause : " << *cl << std::endl;
@@ -2295,7 +2301,7 @@ const bool Subsumer::shortenWithOrGate(const OrGate& gate)
         next:;
     }
 
-    return solver.ok;
+    return true;
 }
 
 const bool Subsumer::treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp)
