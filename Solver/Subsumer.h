@@ -306,7 +306,7 @@ private:
 
     void subsume1(ClauseSimp c, Clause& ps);
     const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
-    void strenghten(ClauseSimp& c, Clause& cl, const Lit toRemoveLit);
+    const bool strenghten(ClauseSimp& c, Clause& cl, const Lit toRemoveLit);
     const bool cleanClause(ClauseSimp& c, Clause& ps);
 
     //Variable elimination

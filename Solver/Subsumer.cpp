@@ -305,7 +305,7 @@ May return with solver.ok being FALSE, and may set&propagate variable values.
 @param c Clause to be cleaned of the literal
 @param[in] toRemoveLit The literal to be removed from the clause
 */
-void Subsumer::strenghten(ClauseSimp& c, Clause& cl, const Lit toRemoveLit)
+const bool Subsumer::strenghten(ClauseSimp& c, Clause& cl, const Lit toRemoveLit)
 {
     #ifdef VERBOSE_DEBUG
     cout << "-> Strenghtening clause :";
@@ -319,7 +319,7 @@ void Subsumer::strenghten(ClauseSimp& c, Clause& cl, const Lit toRemoveLit)
     numMaxSubsume1 -= occur[toRemoveLit.toInt()].size()/2;
     touchedVars.touch(toRemoveLit, cl.learnt());
 
-    handleUpdatedClause(c, cl);
+    return handleUpdatedClause(c, cl);
 }
 
 const bool Subsumer::handleUpdatedClause(ClauseSimp& c, Clause& cl)
