@@ -32,11 +32,13 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #ifdef VERBOSE_DEBUG
 #define BIT_MORE_VERBOSITY
 #define VERBOSE_ORGATE_REPLACE
+#define VERBOSE_ASYMTE
 #endif
 
 //#define BIT_MORE_VERBOSITY
 //#define TOUCH_LESS
 //#define VERBOSE_ORGATE_REPLACE
+//#define VERBOSE_DEBUG_ASYMTE
 
 
 #ifdef VERBOSE_DEBUG
@@ -899,11 +901,6 @@ const bool Subsumer::simplifyBySubsumption()
     subsumeBinsWithBins();
     numMaxSubsume1 = 500*1000*1000;
     if (solver.conf.doSubsWBins && !subsumeWithBinaries()) return false;
-    if ((solver.conf.doBlockedClause)
-        && solver.conf.doVarElim) {
-        numMaxBlockToVisit = (int64_t)8000ULL*1000ULL*1000ULL;
-        blockedClauseRemoval();
-    }
 
     if (solver.conf.doReplace && solver.conf.doRemUselessBins) {
         UselessBinRemover uselessBinRemover(solver);
@@ -957,6 +954,8 @@ const bool Subsumer::simplifyBySubsumption()
 
     if (solver.conf.doFindXors && !findXors()) return false;
 
+    if (solver.conf.doAsymmTE) AsymmTE();
+
     do {
         if (!subsume0AndSubsume1()) return false;
 
@@ -1000,6 +999,116 @@ const bool Subsumer::simplifyBySubsumption()
     solver.testAllClauseAttach();
     solver.checkNoWrongAttach();
     return true;
+}
+
+void Subsumer::AsymmTE()
+{
+    uint32_t abst;
+    vector<Lit> tmpCl;
+    const double myTime = cpuTime();
+    uint32_t clauses_subsumed_old = clauses_subsumed;
+    uint32_t blocked = 0;
+
+    uint32_t index = clauses.size()-1;
+    int64_t numToDo = 1ULL*1000ULL*1000ULL;
+    for (vector<Clause*>::reverse_iterator it = clauses.rbegin(), end = clauses.rend(); it != end; it++, index--) {
+        if (*it == NULL || (**it).learnt()) {
+            continue;
+        }
+
+        Clause& cl = **it;
+        tmpCl.clear();
+        for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+            seen[l->toInt()] = true;
+            tmpCl.push_back(*l);
+        }
+
+        for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+            const vector<LitExtra>& cache = solver.transOTFCache[l->toInt()].lits;
+            for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
+                if (cacheLit->getOnlyNLBin()
+                    && !seen[(~cacheLit->getLit()).toInt()]) {
+                    Lit toAdd = ~(cacheLit->getLit());
+                    tmpCl.push_back(toAdd);
+                    seen[toAdd.toInt()] = true;
+                }
+            }
+        }
+
+        //subsumption with non-learnt binary clauses
+        bool toRemove = false;
+        //for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
+        for (const Lit* l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+            const vector<LitExtra>& cache = solver.transOTFCache[l->toInt()].lits;
+            for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
+                if (cacheLit->getOnlyNLBin()
+                    && solver.seen[cacheLit->getLit().toInt()]) {
+                    toRemove = true;
+                    #ifdef VERBOSE_DEBUG_ASYMTE
+                    std::cout << "c AsymLitAdd removing: " << cl << std::endl;
+                    #endif
+                    goto end;
+                }
+            }
+        }
+
+        if (solver.conf.doBlockedClause) {
+            for (const Lit* l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
+                if (cannot_eliminate[(~*l).var()]) continue;
+                //if (solver.varReplacer->cannot_eliminate[(~*l).var()]) continue;
+
+                if (allTautologySlim(~*l)) {
+                    vector<Lit> remCl;
+                    for (Lit *l2 = cl.getData(), *end2 = cl.getDataEnd(); l2 != end2; l2++)
+                        remCl.push_back(*l2);
+                    blockedClauses.push_back(BlockedClause(*l, remCl));
+                    var_blocked[l->var()] = true;
+                    blocked++;
+                    toRemove = true;
+                    goto end;
+                }
+            }
+        }
+
+        if (numToDo < 0) goto end;
+        //subsumption with non-learnt larger clauses
+        abst = calcAbstraction(tmpCl);
+        for (vector<Lit>::const_iterator it = tmpCl.begin(), end = tmpCl.end(); it != end; it++) {
+            const vector<ClauseSimp>& occ = occur[it->toInt()];
+            numToDo -= occ.size();
+            for (vector<ClauseSimp>::const_iterator it2 = occ.begin(), end2 = occ.end(); it2 != end2; it2++) {
+                if (it2->index != index
+                    && subsetAbst(clauseData[it2->index].abst, abst)
+                    && clauses[it2->index] != NULL
+                    && !clauses[it2->index]->learnt()
+                    && subsetReverse(*clauses[it2->index])
+                )  {
+                    #ifdef VERBOSE_DEBUG_ASYMTE
+                    std::cout << "c AsymTE removing: " << cl << " -- subsumed by cl: " << *clauses[it2->index] << std::endl;
+                    #endif
+                    toRemove = true;
+                    goto end;
+                }
+            }
+        }
+
+        end:
+        if (toRemove) unlinkClause(index, cl);
+
+        for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
+            seen[l->toInt()] = false;
+        }
+    }
+
+    if (solver.conf.verbosity >= 1) {
+        std::cout << "c AsymmTElim"
+        << " cl-rem: " << (clauses_subsumed - clauses_subsumed_old)
+        << " blocked: " << blocked
+        << " time : " << (cpuTime() - myTime)
+        << std::endl;
+    }
+
+    clauses_subsumed = clauses_subsumed_old;
 }
 
 /**
@@ -1670,148 +1779,37 @@ const bool Subsumer::verifyIntegrity()
     return true;
 }
 
-template<class T>
-const bool Subsumer::allTautology(const T& ps, const Lit lit)
+inline const bool Subsumer::allTautologySlim(const Lit lit)
 {
     #ifdef VERBOSE_DEBUG
     cout << "allTautology: " << ps << std::endl;
     #endif
 
-    for (const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
-        if (*l != ~lit) seen[l->toInt()] = true;
-    }
-
-    bool allIsTautology = true;
     const vector<ClauseSimp>& cs = occur[lit.toInt()];
     const vec2<Watched>& ws = solver.watches[(~lit).toInt()];
+
+    numMaxBlockToVisit--;
+    for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
+        if (!it->isNonLearntBinary()) continue;
+        if (seen[(~it->getOtherLit()).toInt()] && it->getOtherLit() != lit) continue;
+        else return false;
+    }
 
     for (vector<ClauseSimp>::const_iterator it = cs.begin(), end = cs.end(); it != end; it++){
         const Clause& c = *clauses[it->index];
         numMaxBlockToVisit--;
         if (c.learnt()) continue;
         for (const Lit *l = c.getData(), *end2 = c.getDataEnd(); l != end2; l++) {
-            if (seen[(~(*l)).toInt()]) {
+            if (seen[(~(*l)).toInt()] && *l != lit) {
                 goto next;
             }
         }
-        allIsTautology = false;
-        break;
+        return false;
 
         next:;
     }
-    if (!allIsTautology) goto end;
 
-    numMaxBlockToVisit--;
-    for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
-        if (!it->isNonLearntBinary()) continue;
-        if (seen[(~it->getOtherLit()).toInt()]) continue;
-        else {
-            allIsTautology = false;
-            break;
-        }
-    }
-
-    end:
-    for (const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
-        seen[l->toInt()] = false;
-    }
-
-    return allIsTautology;
-}
-
-void Subsumer::blockedClauseRemoval()
-{
-    if (numMaxBlockToVisit < 0) return;
-    if (solver.order_heap.empty()) return;
-
-    double myTime = cpuTime();
-    uint32_t numSubsBefore = clauses_subsumed;
-
-    uint32_t triedToBlock = 0;
-    uint32_t blocked = 0;
-    for (uint32_t var = 0; var < solver.nVars(); var++) {
-        if (solver.value(var) != l_Undef
-            || solver.varData[var].elimed != ELIMED_NONE
-            || cannot_eliminate[var]
-            || solver.varReplacer->cannot_eliminate[var]
-            || dontElim[var])
-            continue;
-
-        triedToBlock++;
-        Lit lit = Lit(var, false);
-        blocked += tryOneSetting(lit);
-        blocked += tryOneSetting(~lit);
-    }
-
-    if (solver.conf.verbosity >= 1) {
-        std::cout
-        << "c blocked cls: " << std::setw(8) << blocked
-        << " tried vars: " << std::setw(11) << triedToBlock
-        << " T: " << std::fixed << std::setprecision(2) << std::setw(4) << cpuTime() - myTime
-        << " s" << std::endl;
-    }
-    clauses_subsumed = numSubsBefore;
-}
-
-const bool Subsumer::containsCannotElim(const Clause& cl)
-{
-    for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-        if (cannot_eliminate[l->var()]) return true;
-    }
-    return false;
-}
-
-const uint32_t Subsumer::tryOneSetting(const Lit lit)
-{
-    uint32_t blocked = 0;
-    vector<ClauseSimp> occCopy = occur[lit.toInt()];
-    for(vector<ClauseSimp>::iterator it = occCopy.begin(), end = occCopy.end(); it != end; it++) {
-        Clause& cl = *clauses[it->index];
-        numMaxBlockToVisit--;
-        if (containsCannotElim(cl)) continue;
-
-        if (cl.learnt()) continue;
-        if (allTautology(cl, ~lit)) {
-            vector<Lit> remCl;
-            for (Lit *l = cl.getData(), *end2 = cl.getDataEnd(); l != end2; l++)
-                remCl.push_back(*l);
-            blockedClauses.push_back(BlockedClause(lit, remCl));
-            var_blocked[lit.var()] = true;
-            unlinkClause(*it, cl);
-            blocked++;
-        }
-    }
-
-    numMaxBlockToVisit--;
-    vec<Lit> lits(1);
-    vec2<Watched>& ws = solver.watches[(~lit).toInt()];
-    vec2<Watched>::iterator i = ws.getData();
-    vec2<Watched>::iterator j = ws.getData();
-    for (vec2<Watched>::iterator end = ws.getDataEnd(); i != end; i++) {
-        if (!i->isNonLearntBinary()) goto next;
-        if (cannot_eliminate[i->getOtherLit().var()]) continue;
-
-        lits[0] = i->getOtherLit();
-        if (allTautology(lits, ~lit)) {
-            vector<Lit> remCl;
-            remCl.push_back(lit);
-            remCl.push_back(i->getOtherLit());
-            blockedClauses.push_back(BlockedClause(lit, remCl));
-            var_blocked[lit.var()] = true;
-
-            removeWBin(solver.watches[(~i->getOtherLit()).toInt()], lit, false);
-            blocked++;
-            solver.numBins--;
-            solver.clauses_literals -= 2;
-            continue;
-        }
-
-        next:
-        *j++ = *i;
-    }
-    ws.shrink_(i-j);
-
-    return blocked;
+    return true;
 }
 
 /**

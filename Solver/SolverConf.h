@@ -78,6 +78,7 @@ class SolverConf
         bool      doER;
         bool      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
         bool      doBXor;
+        bool      doAsymmTE;
 
         //interrupting & dumping
         uint32_t  maxRestarts;

@@ -243,6 +243,7 @@ private:
     void fillSubs(const T& ps, const uint32_t index, uint32_t abs, vec<ClauseSimp>& out_subsumed, vec<Lit>& out_lits, const Lit lit);
     template<class T2>
     bool subset(const uint32_t aSize, const T2& B);
+    bool subsetReverse(const Clause& B) const;
     template<class T1, class T2>
     const Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
@@ -559,12 +560,7 @@ private:
     ////////////////////////////////
     //Blocked clause elimination
     ///////////////////////////////
-    void blockedClauseRemoval();
-    template<class T>
-    const bool allTautology(const T& ps, const Lit lit);
-    const uint32_t tryOneSetting(const Lit lit);
-    const bool containsCannotElim(const Clause& cl);
-    void touchBlockedVar(const Var x);
+    const bool allTautologySlim(const Lit lit);
     vector<BlockedClause> blockedClauses;
 
     //Gate extraction
@@ -653,6 +649,13 @@ bool Subsumer::subset(const uint32_t aSize, const T2& B)
     return num == aSize;
 }
 
+inline bool Subsumer::subsetReverse(const Clause& B) const
+{
+    for (uint32_t i = 0; i != B.size(); i++) {
+        if (!seen[B[i].toInt()]) return false;
+    }
+    return true;
+}
 
 /**
 @brief Decides if A subsumes B, or if not, if A could strenghten B
