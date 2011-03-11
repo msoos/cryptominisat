@@ -70,10 +70,10 @@ std::string DimacsParser::untilEnd(StreamBuffer& in)
 /**
 @brief Parses in an integer
 */
-int DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
+int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
 {
     lenParsed = 0;
-    int     val = 0;
+    int32_t val = 0;
     bool    neg = false;
     skipWhitespace(in);
     if      (*in == '-') neg = true, ++in;
@@ -132,7 +132,7 @@ void DimacsParser::parseString(StreamBuffer& in, std::string& str)
 */
 void DimacsParser::readClause(StreamBuffer& in, vec<Lit>& lits)
 {
-    int     parsed_lit;
+    int32_t parsed_lit;
     Var     var;
     uint32_t len;
     lits.clear();
@@ -141,6 +141,10 @@ void DimacsParser::readClause(StreamBuffer& in, vec<Lit>& lits)
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
         if (!debugNewVar) {
+            if (var >= ((uint32_t)1)<<25) {
+                std::cout << "ERROR! Variable requested is far too large: " << var << std::endl;
+                exit(-1);
+            }
             while (var >= solver->nVars()) solver->newVar();
         }
         lits.push( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );

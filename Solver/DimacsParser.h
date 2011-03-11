@@ -47,7 +47,7 @@ class DimacsParser
         void skipWhitespace(StreamBuffer& in);
         void skipLine(StreamBuffer& in);
         std::string untilEnd(StreamBuffer& in);
-        int parseInt(StreamBuffer& in, uint32_t& len);
+        int32_t parseInt(StreamBuffer& in, uint32_t& len);
         float parseFloat(StreamBuffer& in);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in, vec<Lit>& lits);
