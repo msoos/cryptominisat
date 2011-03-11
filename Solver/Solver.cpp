@@ -160,6 +160,11 @@ classes used inside Solver
 Var Solver::newVar(bool dvar)
 {
     Var v = nVars();
+    if (v >= 1<<30) {
+        std::cout << "ERROR! Variable requested is far too large" << std::endl;
+        exit(-1);
+    }
+
     watches   .push();          // (list for positive literal)
     watches   .push();          // (list for negative literal)
     reason    .push(PropBy());
