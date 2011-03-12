@@ -582,8 +582,10 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
     if (tmp_clause.size() <= 1) {
         if (!tmp_clause.empty()) {
             confl = PropBy(tmp_clause[0]);
+        } else {
+            confl = PropBy();
             solver.ok = false;
-        } else confl = PropBy();
+        }
         return unit_conflict;
     }
 
@@ -850,7 +852,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             release_assert(cl == NULL);
             release_assert(solver.ok);
             return unit_propagation;
-            break;
         }
         default:
             Clause& cla = *(Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
