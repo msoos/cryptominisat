@@ -1230,9 +1230,7 @@ const bool Subsumer::simplifyBySubsumption()
     fillCannotEliminate();
 
     uint32_t expected_size = solver.clauses.size() + solver.learnts.size();
-    if (expected_size > 10000000 ||
-        (numMaxSubsume1 < 0 && numMaxElim == 0 && numMaxBlockVars == 0))
-        return solver.ok;
+    if (expected_size > 10000000) return solver.ok;
 
     clauses.reserve(expected_size);
     cl_touched.reserve(expected_size);
