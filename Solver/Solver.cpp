@@ -2476,7 +2476,7 @@ end:
     savedState.restore();
     simplifying = false;
 
-    if (status == l_Undef && gaussWasCleared && !matrixFinder->findMatrixes())
+    if (status == l_Undef && ok && gaussWasCleared && !matrixFinder->findMatrixes())
         status = l_False;
 
     testAllClauseAttach();

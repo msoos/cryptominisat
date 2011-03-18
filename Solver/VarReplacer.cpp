@@ -198,6 +198,13 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
             c.setRemoved();
             solver.freeLater.push(&c);
         } else {
+            #ifdef SILENT_DEBUG
+            uint32_t numUndef = 0;
+            for (uint32_t i = 0; i < c.size(); i++) {
+                if (solver.value(c[i]) == l_Undef) numUndef++;
+            }
+            assert(numUndef >= 2);
+            #endif
             *a++ = *r;
         }
     }

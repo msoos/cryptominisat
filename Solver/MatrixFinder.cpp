@@ -69,6 +69,9 @@ inline const bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const Xor
 
 const bool MatrixFinder::findMatrixes()
 {
+    assert(solver.decisionLevel() == 0);
+    assert(solver.ok);
+
     table.clear();
     table.resize(solver.nVars(), var_Undef);
     reverseTable.clear();
