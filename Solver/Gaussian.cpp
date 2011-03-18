@@ -854,6 +854,10 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             return unit_propagation;
         }
         default:
+            if (solver.decisionLevel() == 0) {
+                solver.uncheckedEnqueue(tmp_clause[0]);
+                return unit_propagation;
+            }
             Clause& cla = *(Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
             assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
             assert(solver.assigns[cla[0].var()].isUndef());
@@ -864,7 +868,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
                 solver.logger.set_group_name(cla.getGroup(), "gauss prop clause");
             #endif
             solver.uncheckedEnqueue(cla[0], solver.clauseAllocator.getOffset(&cla));
-            if (solver.decisionLevel() == 0) return unit_propagation;
             return propagation;
     }
 
