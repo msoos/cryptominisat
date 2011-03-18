@@ -864,6 +864,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
                 solver.logger.set_group_name(cla.getGroup(), "gauss prop clause");
             #endif
             solver.uncheckedEnqueue(cla[0], solver.clauseAllocator.getOffset(&cla));
+            if (solver.decisionLevel() == 0) return unit_propagation;
             return propagation;
     }
 
