@@ -94,6 +94,15 @@ public:
 
     bool popcnt_is_one() const
     {
+        #if __GNUC__ >= 4
+        int ret = 0;
+        for (uint32_t i = 0; i != size; i++) {
+            ret += __builtin_popcount(mp[i]&0xffffffff);
+            ret += __builtin_popcount(mp[i]>>32);
+            if (ret > 1) return false;
+        }
+        return ret == 1;
+        #else
         uint32_t popcount = 0;
         for (uint32_t i = 0; i != size; i++) {
             uint64_t tmp = mp[i];
@@ -103,6 +112,7 @@ public:
             }
         }
         return popcount == 1;
+        #endif
     }
 
     bool popcnt_is_one(uint32_t from) const
