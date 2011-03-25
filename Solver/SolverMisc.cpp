@@ -412,6 +412,7 @@ void Solver::printStatHeader() const
         << std::setw(space) << "Confl"
         << std::setw(space) << "Vars"
         << std::setw(space) << "NormCls"
+        << std::setw(space) << "XorCls"
         << std::setw(space) << "BinCls"
         << std::setw(space) << "Learnts"
         << std::setw(space) << "ClLits"
@@ -432,6 +433,7 @@ void Solver::printRestartStat(const char* type)
         << std::setw(space) << conflicts
         << std::setw(space) << order_heap.size()
         << std::setw(space) << clauses.size()
+        << std::setw(space) << xorclauses.size()
         << std::setw(space) << numBins
         << std::setw(space) << learnts.size()
         << std::setw(space) << clauses_literals
