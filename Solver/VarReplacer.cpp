@@ -203,7 +203,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
             for (uint32_t i = 0; i < c.size(); i++) {
                 if (solver.value(c[i]) == l_Undef) numUndef++;
             }
-            assert(numUndef >= 2);
+            assert(numUndef >= 2 || numUndef == 0);
             #endif
             *a++ = *r;
         }
