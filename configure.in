@@ -11,7 +11,7 @@ if test -n "${CXXFLAGS}"; then
 fi
 AC_PROG_CXX
 if test X$user_set_cxxflags != Xyes; then
-  CXXFLAGS="-g -O2"
+  CXXFLAGS="-g -O3"
 fi
 AC_LANG(C++)
 
@@ -160,4 +160,4 @@ if test "$use_static" = "yes"; then
   LDFLAGS="$LDFLAGS -all-static"
 fi
 
-AC_OUTPUT(Makefile Solver/Makefile)
+AC_OUTPUT(Makefile Solver/Makefile tests/Makefile)

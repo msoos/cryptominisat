@@ -3,7 +3,14 @@
 AUTOMAKE_OPTIONS = foreign 1.4
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = Solver
+SUBDIRS = Solver tests
+
+profile:
+	make clean
+	make CXXFLAGS="$(CXXFLAGS) -fprofile-generate" -j8
+	make check CXXFLAGS="$(CXXFLAGS) -fprofile-generate"
+	make mostlyclean
+	make CXXFLAGS="$(CXXFLAGS) -fprofile-use" -j8
 
 all-local: Solver
 	cp Solver/cryptominisat .
