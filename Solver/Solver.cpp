@@ -968,7 +968,10 @@ Lit Solver::pickBranchLit()
      * because of propagations/implicit assignments) */
     for (unsigned int i = decisionLevel(); i < branching_variables.size(); ++i) {
         Var v = branching_variables[i];
-        if (assigns[v] == l_Undef) {
+        if (v < nVars()
+	    && !subsumer->getVarElimed()[v]
+	    && !xorSubsumer->getVarElimed()[v]
+	    && assigns[v] == l_Undef) {
             next = v;
             break;
         }
