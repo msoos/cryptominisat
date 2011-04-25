@@ -441,6 +441,7 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             break;
         default:
             readFullClause(in);
+            if (!solver->okay()) return;
             break;
         }
     }
