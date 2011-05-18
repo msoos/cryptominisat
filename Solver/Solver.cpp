@@ -20,7 +20,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "time_mem.h"
 
 #include "VarReplacer.h"
-#include "FindUndef.h"
 #include "XorFinder.h"
 #include "ClauseCleaner.h"
 #include "RestartTypeChooser.h"
