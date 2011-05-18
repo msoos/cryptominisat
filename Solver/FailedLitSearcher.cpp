@@ -324,7 +324,9 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
     }
 
     propagated.removeThese(propagatedBitSet);
+    #ifdef DEBUG_FAILEDLIT
     assert(propagated.isZero());
+    #endif
     propagatedBitSet.clear();
     twoLongXors.clear();
     bothSame.clear();
