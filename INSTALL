@@ -23,15 +23,17 @@ I personally use cmake.
 ------------------
 Building using autotools
 ------------------
-* Go to the 'build' directory
-* Issue '../configure'
-* Issue 'make'
-* Issue './cryptominisat satfile.cnf' to test your new code
+$ mkdir build
+$ cd build
+$ ../configure
+$ make
+
+Use like: ./cryptominisat satfile.cnf
 
 If you got your source from the GIT/SVN, then you should do the following
 before doing the above::
 * Install automake, autoconf, libtool
-* Issue 'make -f Makefile.cvs' in the root dir of the source
+* Issue 'make -f Makefile.cvs' in the root dir
 
 ---------
 Please read help
