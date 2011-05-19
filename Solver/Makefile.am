@@ -6,15 +6,13 @@ libcryptominisat_la_LDFLAGS = -release 2.9.1 -no-undefined
 AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir) -I$(srcdir)/../MTRand -I$(srcdir)/../mtl $(OPENMP_CXXFLAGS)
 
 pkgincludesubdir = $(includedir)/cryptominisat/Solver
-pkgincludesub_HEADERS = BitArray.h Clause.h CSet.h FindUndef.h MatrixFinder.h PartFinder.h Solver.h Subsumer.h Watched.h \
+pkgincludesub_HEADERS = BitArray.h Clause.h CSet.h MatrixFinder.h PartFinder.h Solver.h Subsumer.h Watched.h \
 	BoundedQueue.h ClauseOffset.h DimacsParser.h GaussianConfig.h OnlyNonLearntBins.h PartHandler.h SolverTypes.h \
 	time_mem.h XorFinder.h ClauseAllocator.h CompleteDetachReattacher.h DoublePackedRow.h Gaussian.h PackedMatrix.h \
-	PropagatedFrom.h StateSaver.h UselessBinRemover.h  XorSubsumer.h ClauseCleaner.h constants.h FailedVarSearcher.h \
-	Logger.h PackedRow.h RestartTypeChooser.h StreamBuffer.h VarReplacer.h XSet.h
+	PropBy.h StateSaver.h UselessBinRemover.h  XorSubsumer.h ClauseCleaner.h constants.h FailedLitSearcher.h \
+	Logger.h PackedRow.h RestartTypeChooser.h StreamBuffer.h VarReplacer.h XSet.h BothCache.h
 
-bin_PROGRAMS = cryptominisat
-cryptominisat_LDFLAGS = -lz $(OPENMP_CXXFLAGS)
-cryptominisat_SOURCES = Main.cpp \
+libcryptominisat_la_SOURCES = \
 	ClauseCleaner.cpp FailedLitSearcher.cpp \
 	PartFinder.cpp VarReplacer.cpp \
 	MatrixFinder.cpp \
@@ -26,3 +24,8 @@ cryptominisat_SOURCES = Main.cpp \
 	CompleteDetachReattacher.cpp DimacsParser.cpp \
 	OnlyNonLearntBins.cpp SolverConf.cpp DataSync.cpp \
 	BothCache.cpp
+
+bin_PROGRAMS = cryptominisat
+cryptominisat_LDADD = libcryptominisat.la
+cryptominisat_LDFLAGS = -lz $(OPENMP_CXXFLAGS)
+cryptominisat_SOURCES = Main.cpp
