@@ -1739,13 +1739,6 @@ bool Subsumer::maybeEliminate(const Var var)
         if (!ok) continue;
 
         uint32_t group_num = 0;
-        #ifdef STATS_NEEDED
-        group_num = solver.learnt_clause_group++;
-        if (solver.dynamic_behaviour_analysis) {
-            string name = solver.logger.get_group_name(ps[i].clause->getGroup()) + " " + solver.logger.get_group_name(ns[j].clause->getGroup());
-            solver.logger.set_group_name(group_num, name);
-        }
-        #endif
 
         if (cleanClause(dummy)) continue;
         #ifdef VERBOSE_DEBUG

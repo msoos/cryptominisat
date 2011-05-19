@@ -590,10 +590,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
     }
 
     if (maxlevel != solver.decisionLevel()) {
-        #ifdef STATS_NEEDED
-        if (solver.dynamic_behaviour_analysis)
-            solver.logger.conflict(Logger::gauss_confl_type, maxlevel, confl->getGroup(), *confl);
-        #endif
         solver.cancelUntil(maxlevel);
     }
     const uint32_t curr_dec_level = solver.decisionLevel();
@@ -635,11 +631,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(PropBy& confl, const matrix
         Clause* conflPtr = (Clause*)solver.clauseAllocator.XorClause_new(tmp_clause, xorEqualFalse, solver.learnt_clause_group++);
         confl = solver.clauseAllocator.getOffset(conflPtr);
         Clause& cla = *conflPtr;
-
-        #ifdef STATS_NEEDED
-        if (solver.dynamic_behaviour_analysis)
-            solver.logger.set_group_name(cla.getGroup(), "learnt gauss clause");
-        #endif
 
         uint32_t maxsublevel_at = UINT_MAX;
         for (uint32_t i = 0, size = cla.size(); i != size; i++) if (solver.level[cla[i].var()] == (int32_t)curr_dec_level) {
@@ -863,10 +854,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             assert(solver.assigns[cla[0].var()].isUndef());
 
             clauses_toclear.push_back(std::make_pair(&cla, solver.trail.size()-1));
-            #ifdef STATS_NEEDED
-            if (solver.dynamic_behaviour_analysis)
-                solver.logger.set_group_name(cla.getGroup(), "gauss prop clause");
-            #endif
             solver.uncheckedEnqueue(cla[0], solver.clauseAllocator.getOffset(&cla));
             return propagation;
     }

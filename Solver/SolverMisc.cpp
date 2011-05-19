@@ -51,10 +51,6 @@ void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSi
     fprintf(outfile, "c ---------\n");
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         trail[i].printFull(outfile);
-        #ifdef STATS_NEEDED
-        if (dynamic_behaviour_analysis)
-            fprintf(outfile, "c name of var: %s\n", logger.get_var_name(trail[i].var()).c_str());
-        #endif //STATS_NEEDED
     }
 
     fprintf(outfile, "c conflicts %lu\n", (unsigned long)conflicts);
@@ -77,10 +73,6 @@ void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSi
 
             fprintf(outfile, "%s%d %d 0\n", (!lit.sign() ? "-" : ""), lit.var()+1, var+1);
             fprintf(outfile, "%s%d -%d 0\n", (lit.sign() ? "-" : ""), lit.var()+1, var+1);
-            #ifdef STATS_NEEDED
-            if (dynamic_behaviour_analysis)
-                fprintf(outfile, "c name of two vars that are anti/equivalent: '%s' and '%s'\n", logger.get_var_name(lit.var()).c_str(), logger.get_var_name(var).c_str());
-            #endif //STATS_NEEDED
         }
     }
     fprintf(outfile, "c \nc --------------------\n");
@@ -247,10 +239,6 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
     fprintf(outfile, "c ---------\n");
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
         trail[i].printFull(outfile);
-        #ifdef STATS_NEEDED
-        if (dynamic_behaviour_analysis)
-            fprintf(outfile, "c name of var: %s\n", logger.get_var_name(trail[i].var()).c_str());
-        #endif //STATS_NEEDED
     }
 
     fprintf(outfile, "c \nc ---------------------------------------\n");
@@ -265,10 +253,6 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
         Lit litP2 = Lit(var, false);
         printBinClause(litP1, litP2, outfile);
         printBinClause(~litP1, ~litP2, outfile);
-        #ifdef STATS_NEEDED
-        if (dynamic_behaviour_analysis)
-            fprintf(outfile, "c name of two vars that are anti/equivalent: '%s' and '%s'\n", logger.get_var_name(lit.var()).c_str(), logger.get_var_name(var).c_str());
-        #endif //STATS_NEEDED
     }
 
     fprintf(outfile, "c \nc ------------\n");
@@ -390,11 +374,7 @@ const double Solver::getTotalTimeSCC() const
 
 void Solver::printStatHeader() const
 {
-    #ifdef STATS_NEEDED
-    if (conf.verbosity >= 2 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
-    #else
     if (conf.verbosity >= 2) {
-    #endif
         std::cout << "c "
         << "========================================================================================="
         << std::endl;
@@ -469,11 +449,7 @@ void Solver::printRestartStat(const char* type)
 
 void Solver::printEndSearchStat()
 {
-    #ifdef STATS_NEEDED
-    if (conf.verbosity >= 1 && !(dynamic_behaviour_analysis && logger.statistics_on)) {
-    #else
     if (conf.verbosity >= 1) {
-    #endif //STATS_NEEDED
         printRestartStat("E");
     }
 }

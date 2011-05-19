@@ -88,11 +88,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , numCleanedLearnts(1)
         , nbClBeforeRed    (NBCLAUSESBEFOREREDUCE)
         , nbCompensateSubsumer (0)
-
-        #ifdef STATS_NEEDED
-        , logger(conf.verbosity)
-        , dynamic_behaviour_analysis(false) //do not document the proof as default
-        #endif
         , learnt_clause_group(0)
         , libraryCNFFile   (NULL)
         , restartType      (static_restart)
@@ -118,9 +113,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
     matrixFinder = new MatrixFinder(*this);
     dataSync = new DataSync(*this, sharedData);
 
-    #ifdef STATS_NEEDED
-    logger.setSolver(this);
-    #endif
 }
 
 /**
@@ -197,11 +189,6 @@ Var Solver::newVar(bool dvar)
     dataSync->newVar();
 
     insertVarOrder(v);
-
-    #ifdef STATS_NEEDED
-    if (dynamic_behaviour_analysis)
-        logger.new_var(v);
-    #endif
 
     if (libraryCNFFile)
         fprintf(libraryCNFFile, "c Solver::newVar() called\n");
@@ -304,13 +291,6 @@ bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, const
         for (uint32_t i = 0; i < ps.size(); i++) ps[i].print(libraryCNFFile);
         fprintf(libraryCNFFile, "0\n");
     }
-
-    #ifdef STATS_NEEDED
-    if (dynamic_behaviour_analysis) {
-        logger.set_group_name(group, group_name);
-        learnt_clause_group = std::max(group+1, learnt_clause_group);
-    }
-    #endif
 
     if (!ok)
         return false;
@@ -951,8 +931,6 @@ We do three things here:
 Then, we pick a sign (True/False):
 \li If we are in search-burst mode ("simplifying" is set), we pick a sign
 totally randomly
-\li If RANDOM_LOOKAROUND_SEARCHSPACE is set, we take the previously saved
-polarity, and with some chance, flip it
 \li Otherwise, we simply take the saved polarity
 */
 Lit Solver::pickBranchLit()
@@ -1029,10 +1007,8 @@ Lit Solver::pickBranchLit()
         } else {
             if (simplifying && random)
                 sign = mtrand.randInt(1);
-            #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
             else if (avgBranchDepth.isvalid())
                 sign = polarity[next] ^ (mtrand.randInt(avgBranchDepth.getAvgUInt() * ((lastSelectedRestartType == static_restart) ? 2 : 1) ) == 1);
-            #endif
             else
                 sign = polarity[next];
         }
@@ -1061,7 +1037,7 @@ Lit Solver::pickBranchLit()
 Assumes 'seen' is cleared (will leave it cleared)
 */
 template<class T1, class T2>
-bool subset(const T1& A, const T2& B, vector<bool>& seen)
+bool subset(const T1& A, const T2& B, vector<char>& seen)
 {
     for (uint32_t i = 0; i != B.size(); i++)
         seen[B[i].toInt()] = 1;
@@ -1124,13 +1100,11 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
                 assert(level[my_var] <= (int)decisionLevel());
                 if (level[my_var] >= (int)decisionLevel()) {
                     pathC++;
-                    #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
                     if (lastSelectedRestartType == dynamic_restart
                         && reason[q.var()].isClause()
                         && !reason[q.var()].isNULL()
                         && clauseAllocator.getPointer(reason[q.var()].getClause())->learnt())
                         lastDecisionLevel.push(q.var());
-                    #endif //#define UPDATEVARACTIVITY
                 } else {
                     out_learnt.push(q);
                     if (level[my_var] > out_btlevel)
@@ -2142,10 +2116,6 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
 {
 
     if (conflicts >= nof_conflicts_fullrestart || needToInterrupt)  {
-        #ifdef STATS_NEEDED
-        if (dynamic_behaviour_analysis)
-            progress_estimate = progressEstimate();
-        #endif
         cancelUntil(0);
         return l_Undef;
     }
@@ -2166,10 +2136,6 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
             }
             #endif
 
-            #ifdef STATS_NEEDED
-            if (dynamic_behaviour_analysis)
-                progress_estimate = progressEstimate();
-            #endif
             cancelUntil(0);
             return l_Undef;
         }
@@ -2262,9 +2228,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     learnt_clause.clear();
     Clause* c = analyze(confl, learnt_clause, backtrack_level, glue, update);
     if (update) {
-        #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
         avgBranchDepth.push(decisionLevel());
-        #endif //RANDOM_LOOKAROUND_SEARCHSPACE
         if (restartType == dynamic_restart) glueHistory.push(glue);
         conflSizeHist.push(learnt_clause.size());
     }
@@ -2608,10 +2572,8 @@ void Solver::initialiseSolver()
     setDefaultRestartType();
 
     //Initialise avg. branch depth
-    #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
     avgBranchDepth.clear();
     avgBranchDepth.initSize(500);
-    #endif //RANDOM_LOOKAROUND_SEARCHSPACE
 
     //Initialise number of restarts&full restarts
     starts = 0;

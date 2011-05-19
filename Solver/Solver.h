@@ -33,10 +33,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <stdint.h>
 #endif //_MSC_VER
 
-#ifdef STATS_NEEDED
-#include "Logger.h"
-#endif //STATS_NEEDED
-
 //#define ANIMATE3D
 
 #include "PropBy.h"
@@ -103,7 +99,7 @@ struct reduceDB_ltGlucose
 
 struct PolaritySorter
 {
-    PolaritySorter(vector<bool>& polarity) :
+    PolaritySorter(vector<char>& polarity) :
         pol(polarity)
     {}
 
@@ -112,7 +108,7 @@ struct PolaritySorter
         return ((((pol[lit1.var()])^(lit1.sign())) == false)
                 && (((pol[lit2.var()])^(lit2.sign())) == true));
     }
-    vector<bool>& pol;
+    vector<char>& pol;
 };
 
 /**
@@ -196,12 +192,10 @@ public:
     void dumpOrigClauses(const std::string& fileName) const;
     void printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const;
 
-    #ifdef USE_GAUSS
     const uint32_t get_sum_gauss_called() const;
     const uint32_t get_sum_gauss_confl() const;
     const uint32_t get_sum_gauss_prop() const;
     const uint32_t get_sum_gauss_unit_truths() const;
-    #endif //USE_GAUSS
 
     //Printing statistics
     void printStats();
@@ -232,13 +226,11 @@ protected:
     //gauss
     const bool clearGaussMatrixes();
     vector<Gaussian*> gauss_matrixes;
-    #ifdef USE_GAUSS
     void print_gauss_sum_stats();
     uint32_t sum_gauss_called;
     uint32_t sum_gauss_confl;
     uint32_t sum_gauss_prop;
     uint32_t sum_gauss_unit_truths;
-    #endif //USE_GAUSS
 
     // Statistics
     //
@@ -324,7 +316,7 @@ protected:
     float               cla_inc;          ///< Amount to bump learnt clause oldActivity with
     vec<vec2<Watched> > watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          ///< The current assignments
-    vector<bool>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
+    vector<char>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vec<uint32_t>       trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     vec<PropBy>         reason;           ///< 'reason[var]' is the clause that implied the variables current value, or 'NULL' if none.
@@ -333,9 +325,7 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
     vec<Lit>            assumptions;      ///< Current set of assumptions provided to solve by the user.
-    #ifdef RANDOM_LOOKAROUND_SEARCHSPACE
     bqueue<uint32_t>    avgBranchDepth;   ///< Avg branch depth. We collect this, and use it to do random look-around in the searchspace during simplifyProblem()
-    #endif //RANDOM_LOOKAROUND_SEARCHSPACE
     MTRand              mtrand;           ///< random number generator
     vector<Var>         branching_variables;
 
@@ -360,9 +350,7 @@ protected:
     template<class T>
     const uint32_t      calcNBLevels(const T& ps);
     //vec<uint64_t>       permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
-    #ifdef UPDATE_VAR_ACTIVITY_BASED_ON_GLUE
     vec<Var>            lastDecisionLevel;
-    #endif
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
     #ifdef ENABLE_UNWIND_GLUE
     vec<Clause*>        unWindGlue;
@@ -371,7 +359,7 @@ protected:
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is
     // used, exept 'seen' wich is used in several places.
     //
-    vector<bool>        seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
+    vector<char>        seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
     vec<Lit>            analyze_stack;
     vec<Lit>            analyze_toclear;
 
@@ -396,7 +384,7 @@ protected:
             Lit lit;
             uint32_t numInCache;
     };
-    vector<bool>        seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
+    vector<char>        seen2;            ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther(). contains 2 * numVars() elements, all zeroed out
     vec<Lit>            allAddedToSeen2;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     std::stack<Lit>     toRecursiveProp;  ///<To reduce temoprary data creation overhead. Used in minimiseLeartFurther()
     vector<TransCache>  transOTFCache;
@@ -410,10 +398,6 @@ protected:
     ////////////
     //Logging
     ///////////
-    #ifdef STATS_NEEDED
-    Logger   logger;                     // dynamic logging, statistics
-    bool     dynamic_behaviour_analysis; // Is logger running?
-    #endif
     uint32_t learnt_clause_group;       //the group number of learnt clauses. Incremented at each added learnt clause
     FILE     *libraryCNFFile;           //The file that all calls from the library are logged
 
@@ -595,7 +579,7 @@ protected:
     void tallyVotes(const vec<Clause*>& cs, vec<double>& votes) const;
     void tallyVotes(const vec<XorClause*>& cs, vec<double>& votes) const;
     void setPolarity(Var v, bool b); // Declare which polarity the decision heuristic should use for a variable. Requires mode 'polarity_user'.
-    vector<bool> polarity;      // The preferred polarity of each variable.
+    vector<char> polarity;      // The preferred polarity of each variable.
 };
 
 
@@ -737,29 +721,9 @@ inline bool     Solver::okay          ()      const
 {
     return ok;
 }
-#ifdef STATS_NEEDED
-inline void     Solver::needStats()
-{
-    dynamic_behaviour_analysis = true;    // Sets the solver and the logger up to generate statistics
-    logger.statistics_on = true;
-}
-inline void     Solver::needProofGraph()
-{
-    dynamic_behaviour_analysis = true;    // Sets the solver and the logger up to generate proof graphs during solving
-    logger.proof_graph_on = true;
-}
-inline void     Solver::setVariableName(const Var var, const char* name)
-{
-    while (var >= nVars()) newVar();
-    if (dynamic_behaviour_analysis)
-        logger.set_variable_name(var, name);
-} // Sets the varible 'var'-s name to 'name' in the logger
-#else
 inline void     Solver::setVariableName(const Var var, const char* name)
 {}
-#endif
 
-#ifdef USE_GAUSS
 inline const uint32_t Solver::get_sum_gauss_unit_truths() const
 {
     return sum_gauss_unit_truths;
@@ -779,7 +743,6 @@ inline const uint32_t Solver::get_sum_gauss_prop() const
 {
     return sum_gauss_prop;
 }
-#endif
 
 inline const uint32_t Solver::get_unitary_learnts_num() const
 {

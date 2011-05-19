@@ -48,10 +48,6 @@ Here is a picture of of the above process in more detail:
 
 #include <signal.h>
 
-#ifdef STATS_NEEDED
-#include "Logger.h"
-#endif //STATS_NEEDED
-
 #include "time_mem.h"
 #include "constants.h"
 #include "DimacsParser.h"
@@ -201,14 +197,6 @@ void Main::printUsage(char** argv)
     //printf("  -decay         = <num> [ 0 - 1 ]\n");
     printf("  --rnd-freq       = <num> [ 0 - 1 ]\n");
     printf("  --verbosity      = {0,1,2}\n");
-    #ifdef STATS_NEEDED
-    printf("  --proof-log      = Logs the proof into files 'proofN.dot', where N is the\n");
-    printf("                     restart number. The log can then be visualized using\n");
-    printf("                     the 'dot' program from the graphviz package\n");
-    printf("  --grouping       = Lets you group clauses, and customize the groups' names.\n");
-    printf("                     This helps when printing statistics\n");
-    printf("  --stats          = Computes and prints statistics during the search\n");
-    #endif
     printf("  --randomize      = <seed> [0 - 2^32-1] Sets random seed, used for picking\n");
     printf("                     decision variables (default = 0)\n");
     printf("  --restrict       = <num> [1 - varnum] when picking random variables to branch\n");

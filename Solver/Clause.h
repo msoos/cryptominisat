@@ -75,10 +75,6 @@ protected:
 
     uint32_t abst; //Abstraction of clause
 
-    #ifdef STATS_NEEDED
-    uint32_t group;
-    #endif
-
     #ifdef _MSC_VER
     Lit     data[1];
     #else
@@ -275,16 +271,6 @@ public:
         fprintf(to, "0\n");
     }
 
-    #ifdef STATS_NEEDED
-    const uint32_t getGroup() const
-    {
-        return group;
-    }
-    void setGroup(const uint32_t _group)
-    {
-        group = _group;
-    }
-    #else
     const uint32_t getGroup() const
     {
         return 0;
@@ -293,7 +279,6 @@ public:
     {
         return;
     }
-    #endif //STATS_NEEDED
     void setRemoved()
     {
         isRemoved = true;
