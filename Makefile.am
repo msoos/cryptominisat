@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = foreign 1.4
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = Solver tests
+SUBDIRS = Solver tests mtl MTRand
 
 profile:
 	make clean
@@ -11,13 +11,6 @@ profile:
 	make check CXXFLAGS="$(CXXFLAGS) -fprofile-generate"
 	make mostlyclean
 	make CXXFLAGS="$(CXXFLAGS) -fprofile-use" -j8
-
-pkgincludesubdir = $(includedir)/cryptominisat/mtl
-pkgincludesub_HEADERS = mtl/Alg.h  mtl/BasicHeap.h  mtl/BoxedVec.h  mtl/Heap.h  mtl/Map.h  mtl/Queue.h  mtl/Vec.h
-
-pkgincludesubdir = $(includedir)/cryptominisat/MTRand
-pkgincludesub_HEADERS = MTRand/MersenneTwister.h
-
 
 
 all-local: Solver
