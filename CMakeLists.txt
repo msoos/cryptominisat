@@ -44,4 +44,4 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy utils/intocr .
 )
 
-add_dependencies(copy cryptominisat)
+add_dependencies(copy cryptominisat outofcr intocr)
