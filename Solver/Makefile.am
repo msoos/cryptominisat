@@ -10,7 +10,7 @@ pkgincludesub_HEADERS = BitArray.h Clause.h CSet.h MatrixFinder.h PartFinder.h S
 	BoundedQueue.h ClauseOffset.h DimacsParser.h GaussianConfig.h OnlyNonLearntBins.h PartHandler.h SolverTypes.h \
 	time_mem.h XorFinder.h ClauseAllocator.h CompleteDetachReattacher.h DoublePackedRow.h Gaussian.h PackedMatrix.h \
 	PropBy.h StateSaver.h UselessBinRemover.h  XorSubsumer.h ClauseCleaner.h constants.h FailedLitSearcher.h \
-	Logger.h PackedRow.h RestartTypeChooser.h StreamBuffer.h VarReplacer.h XSet.h BothCache.h
+	Logger.h PackedRow.h RestartTypeChooser.h StreamBuffer.h VarReplacer.h XSet.h BothCache.h SolverConf.h
 
 libcryptominisat_2_9_1_la_SOURCES = \
 	ClauseCleaner.cpp FailedLitSearcher.cpp \
