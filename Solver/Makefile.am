@@ -1,7 +1,7 @@
 #noinst_LTLIBRARIES = libcryptominisat.la
-lib_LTLIBRARIES = libcryptominisat-2.9.1.la
+lib_LTLIBRARIES = libcryptominisat.la
 
-libcryptominisat_2_9_1_la_LDFLAGS = -release 2.9.1 -no-undefined
+libcryptominisat_la_LDFLAGS = -release 2.9.1 -no-undefined
 
 AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir) -I$(srcdir)/../MTRand -I$(srcdir)/../mtl $(OPENMP_CXXFLAGS)
 
@@ -12,7 +12,7 @@ pkgincludesub_HEADERS = BitArray.h Clause.h CSet.h MatrixFinder.h PartFinder.h S
 	PropBy.h StateSaver.h UselessBinRemover.h  XorSubsumer.h ClauseCleaner.h constants.h FailedLitSearcher.h \
 	Logger.h PackedRow.h RestartTypeChooser.h StreamBuffer.h VarReplacer.h XSet.h BothCache.h SolverConf.h
 
-libcryptominisat_2_9_1_la_SOURCES = \
+libcryptominisat_la_SOURCES = \
 	ClauseCleaner.cpp FailedLitSearcher.cpp \
 	PartFinder.cpp VarReplacer.cpp \
 	MatrixFinder.cpp \
@@ -26,6 +26,6 @@ libcryptominisat_2_9_1_la_SOURCES = \
 	BothCache.cpp
 
 bin_PROGRAMS = cryptominisat
-cryptominisat_LDADD = libcryptominisat-2.9.1.la
+cryptominisat_LDADD = libcryptominisat.la
 cryptominisat_LDFLAGS = -lz $(OPENMP_CXXFLAGS)
 cryptominisat_SOURCES = Main.cpp
