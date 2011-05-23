@@ -31,7 +31,7 @@ XorSubsumer::XorSubsumer(Solver& s):
     , numElimed(0)
     , localSubstituteUseful(0)
 {
-};
+}
 
 // Will put NULL in 'cs' if clause removed.
 void XorSubsumer::subsume0(XorClauseSimp ps)

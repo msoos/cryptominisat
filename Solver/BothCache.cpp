@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 BothCache::BothCache(Solver& _solver) :
     solver(_solver)
-{};
+{}
 
 const bool BothCache::tryBoth()
 {

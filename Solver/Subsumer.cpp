@@ -43,7 +43,7 @@ Subsumer::Subsumer(Solver& s):
     , numElimed(0)
     , numCalls(1)
 {
-};
+}
 
 /**
 @brief Extends the model to include eliminated variables

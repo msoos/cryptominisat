@@ -217,7 +217,7 @@ public:
 const llbool l_Nothing  = toLbool(2);
 const llbool l_Continue = toLbool(3);
 
-lbool::lbool(llbool b) : value(b.value) {};
+lbool::lbool(llbool b) : value(b.value) {}
 
 inline std::ostream& operator<<(std::ostream& os, const llbool val)
 {
