@@ -90,7 +90,7 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
 end:
 
     if (solver.conf.verbosity >= 1 || (solver.conf.verbosity >= 1 && foundXors > 0)) {
-        printf("c Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
+        printf("c Finding non-binary XORs:    %5.2f s (found: %7d, avg size: %3.1f)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
     }
 
     i = 0;

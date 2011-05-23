@@ -408,28 +408,28 @@ void Main::parseCommandLine()
         #endif
 
         } else if ((value = hasPrefix(argv[i], "--randomize="))) {
-            uint32_t seed;
+            int seed;
             if (sscanf(value, "%d", &seed) < 0) {
                 printf("ERROR! illegal seed %s\n", value);
                 exit(0);
             }
             conf.origSeed = seed;
         } else if ((value = hasPrefix(argv[i], "--restrict="))) {
-            uint32_t branchTo;
+            int branchTo;
             if (sscanf(value, "%d", &branchTo) < 0 || branchTo < 1) {
                 printf("ERROR! illegal restricted pick branch number %d\n", branchTo);
                 exit(0);
             }
             conf.restrictPickBranch = branchTo;
         } else if ((value = hasPrefix(argv[i], "--gaussuntil="))) {
-            uint32_t until;
+            int until;
             if (sscanf(value, "%d", &until) < 0) {
                 printf("ERROR! until %s\n", value);
                 exit(0);
             }
             gaussconfig.decision_until = until;
         } else if ((value = hasPrefix(argv[i], "--restarts="))) {
-            uint32_t maxrest;
+            int maxrest;
             if (sscanf(value, "%d", &maxrest) < 0 || maxrest == 0) {
                 printf("ERROR! illegal maximum restart number %d\n", maxrest);
                 exit(0);
@@ -501,7 +501,7 @@ void Main::parseCommandLine()
         } else if ((value = hasPrefix(argv[i], "--nodisablegauss"))) {
             gaussconfig.dontDisable = true;
         } else if ((value = hasPrefix(argv[i], "--maxnummatrixes="))) {
-            uint32_t maxNumMatrixes;
+            int maxNumMatrixes;
             if (sscanf(value, "%d", &maxNumMatrixes) < 0) {
                 printf("ERROR! maxnummatrixes: %s\n", value);
                 exit(0);
@@ -544,7 +544,7 @@ void Main::parseCommandLine()
             }
             gaussconfig.minMatrixRows = rows;
         } else if ((value = hasPrefix(argv[i], "--savematrix"))) {
-            uint32_t every;
+            int every;
             if (sscanf(value, "%d", &every) < 0) {
                 printf("ERROR! savematrix: %s\n", value);
                 exit(0);
