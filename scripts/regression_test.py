@@ -361,7 +361,7 @@ class Tester:
         (unsat, value) = self.read_found_output(consoleOutput)
         otherSolverUNSAT = True
         if self.arminFuzzer and unsat:
-            toexec = "./precosat %s" % fname
+            toexec = "./PrecoSat %s" % fname
             None
             print "Solving with other solver.."
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
@@ -413,7 +413,7 @@ class Tester:
         print "   python regression_test.py --file MYFILE --extraOptions=\"--nosubsume1 --noasymm\" \\"
         print "       --numStart 20 --num 100"
         print ""
-        print "3) fuzz the solver with precosat as solution-checker:"
+        print "3) fuzz the solver with PrecoSat as solution-checker:"
         print "   python regression_test.py --armin -n 1"
 
 
