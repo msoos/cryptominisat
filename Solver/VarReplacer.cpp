@@ -119,7 +119,7 @@ const bool VarReplacer::performReplaceInternal()
         if (wasDecisionVar && activity1 > activity2) {
             activity2 = activity1;
             solver.order_heap.update(it->var());
-            solver.polarity[it->var()] = solver.polarity[var]^it->sign();
+            solver.polarity[it->var()] = ((bool)solver.polarity[var]) ^ it->sign();
         }
 
         activity1 = 0.0;
