@@ -48,6 +48,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EFFECTIVELY_USEABLE_BITS 30
 #define MAXSIZE ((1 << (EFFECTIVELY_USEABLE_BITS-NUM_BITS_OUTER_OFFSET))-1)
 
+using namespace CMSat;
+
 ClauseAllocator::ClauseAllocator()
 {
     assert(MIN_LIST_SIZE < MAXSIZE);
@@ -592,4 +594,3 @@ void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
         it->first = (((NewPointerAndOffset*)(it->first))->newPointer);
     }
 }
-

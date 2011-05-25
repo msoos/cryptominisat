@@ -3,6 +3,8 @@
 
 #include "Solver.h"
 
+namespace CMSat {
+
 class BothCache
 {
     public:
@@ -12,5 +14,7 @@ class BothCache
     private:
         Solver& solver;
 };
+
+}
 
 #endif //BOTHCACHE_H

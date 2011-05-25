@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Solver.h"
 
+namespace CMSat {
+
 /**
 @brief Helper class to completely detaches all(or only non-native) clauses, and then re-attach all
 
@@ -72,3 +74,5 @@ class CompleteDetachReatacher
 
         Solver& solver;
 };
+
+}

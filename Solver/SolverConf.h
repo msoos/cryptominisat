@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SolverTypes.h"
 #include "constants.h"
 
+namespace CMSat {
+
 class SolverConf
 {
     public:
@@ -91,5 +93,7 @@ class SolverConf
 
         uint32_t origSeed;
 };
+
+}
 
 #endif //SOLVERCONF_H

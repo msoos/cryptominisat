@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define DEBUG_MATRIX
 
+namespace CMSat {
+
 class PackedMatrix
 {
 public:
@@ -38,7 +40,7 @@ public:
         , numCols(0)
     {
     }
-    
+
     PackedMatrix(const PackedMatrix& b) :
         numRows(b.numRows)
         , numCols(b.numCols)
@@ -46,16 +48,16 @@ public:
         #ifdef DEBUG_MATRIX
         assert(b.numRows > 0 && b.numCols > 0);
         #endif
-        
+
         mp = new uint64_t[numRows*2*(numCols+1)];
         memcpy(mp, b.mp, sizeof(uint64_t)*numRows*2*(numCols+1));
     }
-    
+
     ~PackedMatrix()
     {
         delete[] mp;
     }
-    
+
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
         num_cols = num_cols / 64 + (bool)(num_cols % 64);
@@ -66,31 +68,31 @@ public:
         numRows = num_rows;
         numCols = num_cols;
     }
-    
+
     void resizeNumRows(const uint32_t num_rows)
     {
         #ifdef DEBUG_MATRIX
         assert(num_rows <= numRows);
         #endif
-        
+
         numRows = num_rows;
     }
-    
+
     PackedMatrix& operator=(const PackedMatrix& b)
     {
         #ifdef DEBUG_MATRIX
         //assert(b.numRows > 0 && b.numCols > 0);
         #endif
-        
+
         if (numRows*2*(numCols+1) < b.numRows*2*(b.numCols+1)) {
             delete[] mp;
             mp = new uint64_t[b.numRows*2*(b.numCols+1)];
         }
-        
+
         numRows = b.numRows;
         numCols = b.numCols;
         memcpy(mp, b.mp, sizeof(uint64_t)*numRows*2*(numCols+1));
-        
+
         return *this;
     }
 
@@ -99,7 +101,7 @@ public:
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
         #endif
-        
+
         return PackedRow(numCols, mp+i*2*(numCols+1));
     }
     inline PackedRow getVarsetAt(const uint32_t i)
@@ -107,28 +109,28 @@ public:
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
         #endif
-        
+
         return PackedRow(numCols, mp+i*2*(numCols+1)+(numCols+1));
     }
-    
+
     inline const PackedRow getMatrixAt(const uint32_t i) const
     {
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
         #endif
-        
+
         return PackedRow(numCols, mp+i*2*(numCols+1));
     }
-    
+
     inline const PackedRow getVarsetAt(const uint32_t i) const
     {
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
         #endif
-        
+
         return PackedRow(numCols, mp+i*2*(numCols+1)+(numCols+1));
     }
-    
+
     class iterator
     {
     public:
@@ -136,83 +138,84 @@ public:
         {
             return PackedRow(numCols, mp);
         }
-        
+
         iterator& operator++()
         {
             mp += 2*(numCols+1);
             return *this;
         }
-        
+
         iterator operator+(const uint32_t num) const
         {
             iterator ret(*this);
             ret.mp += 2*(numCols+1)*num;
             return ret;
         }
-        
+
         const uint32_t operator-(const iterator& b) const
         {
             return (mp - b.mp)/(2*(numCols+1));
         }
-        
+
         void operator+=(const uint32_t num)
         {
             mp += 2*(numCols+1)*num;
         }
-        
+
         const bool operator!=(const iterator& it) const
         {
             return mp != it.mp;
         }
-        
+
         const bool operator==(const iterator& it) const
         {
             return mp == it.mp;
         }
-        
+
     private:
         friend class PackedMatrix;
-        
+
         iterator(uint64_t* _mp, const uint32_t _numCols) :
             mp(_mp)
             , numCols(_numCols)
         {}
-        
+
         uint64_t* mp;
         const uint32_t numCols;
     };
-    
+
     inline iterator beginMatrix()
     {
         return iterator(mp, numCols);
     }
-    
+
     inline iterator endMatrix()
     {
         return iterator(mp+numRows*2*(numCols+1), numCols);
     }
-    
+
     inline iterator beginVarset()
     {
         return iterator(mp+(numCols+1), numCols);
     }
-    
+
     inline iterator endVarset()
     {
         return iterator(mp+(numCols+1)+numRows*2*(numCols+1), numCols);
     }
-    
+
     inline const uint32_t getSize() const
     {
         return numRows;
     }
 
 private:
-    
+
     uint64_t* mp;
     uint32_t numRows;
     uint32_t numCols;
 };
 
-#endif //PACKEDMATRIX_H
+}
 
+#endif //PACKEDMATRIX_H

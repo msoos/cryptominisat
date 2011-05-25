@@ -34,6 +34,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 // Useful functions on vectors
 
+namespace CMSat {
+
 template<class V, class T>
 static inline void remove(V& ts, const T& t)
 {
@@ -241,6 +243,8 @@ static inline Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit li
 
     assert(false);
     return *ws.getData();
+}
+
 }
 
 #endif //__ALG_H__

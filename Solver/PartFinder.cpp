@@ -29,13 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iomanip>
 #include <math.h>
 #include "FailedLitSearcher.h"
-using std::set;
-using std::map;
 
 //#define VERBOSE_DEBUG
 
-using std::cout;
-using std::endl;
+using namespace CMSat;
+using std::set;
+using std::map;
 
 //#define PART_FINDING
 
@@ -219,4 +218,3 @@ void PartFinder::calcIn(const vec<T*>& cs, vector<uint32_t>& numClauseInPart, ve
         sumLitsInPart[part] += x.size();
     }
 }
-

@@ -10,7 +10,6 @@ include_directories(${cryptoms_SOURCE_DIR}/MTRand)
 
 add_executable(cryptominisat
     Main.cpp
-    Logger.cpp
     Solver.cpp
     SolverDebug.cpp
     SolverMisc.cpp

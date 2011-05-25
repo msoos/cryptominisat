@@ -30,11 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define REPLACE_STATISTICS
 //#define DEBUG_BIN_REPLACER
 
-#ifdef VERBOSE_DEBUG
-#include <iostream>
-using std::cout;
-using std::endl;
-#endif
+using namespace CMSat;
 
 VarReplacer::VarReplacer(Solver& _solver) :
     replacedLits(0)

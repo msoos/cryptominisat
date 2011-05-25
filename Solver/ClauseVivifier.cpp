@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define ASSYM_DEBUG
 
+using namespace CMSat;
+
 ClauseVivifier::ClauseVivifier(Solver& _solver) :
     lastTimeWentUntil(0)
     , numCalls(0)

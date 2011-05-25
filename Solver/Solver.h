@@ -57,6 +57,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
         } \
     } while (0)
 
+namespace CMSat {
+
 class Gaussian;
 class MatrixFinder;
 class Conglomerate;
@@ -891,11 +893,8 @@ inline void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     reason  [v] = from;
     polarity[v] = p.sign();
     trail.push(p);
+}
 
-    #ifdef STATS_NEEDED
-    if (dynamic_behaviour_analysis)
-        logger.propagation(p, from);
-    #endif
 }
 
 #endif //SOLVER_H

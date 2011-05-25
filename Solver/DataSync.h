@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SharedData.h"
 #include "Solver.h"
 
+namespace CMSat {
+
 class DataSync
 {
     public:
@@ -94,4 +96,6 @@ inline void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
     if (sharedData == NULL) return;
     if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
     newBinClauses.push_back(std::make_pair(lit1, lit2));
+}
+
 }

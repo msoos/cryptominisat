@@ -19,10 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <utility>
 #include "Solver.h"
-using std::pair;
 
 //#define VERBOSE_DEBUG
 //#define PRINT_VARS
+
+using namespace CMSat;
+
+using std::pair;
 
 RestartTypeChooser::RestartTypeChooser(const Solver& s) :
     solver(s)
@@ -176,4 +179,3 @@ void RestartTypeChooser::addDegreesBin(vector<uint32_t>& degrees) const
         }
     }
 }
-

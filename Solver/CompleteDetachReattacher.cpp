@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
 
+using namespace CMSat;
+
 CompleteDetachReatacher::CompleteDetachReatacher(Solver& _solver) :
     solver(_solver)
 {

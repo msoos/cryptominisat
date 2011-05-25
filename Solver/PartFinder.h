@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Clause.h"
 
+namespace CMSat {
+
 class Solver;
 
 using std::map;
@@ -89,6 +91,8 @@ inline const uint32_t PartFinder::getVarPart(const Var var) const
 inline const vector<Var>& PartFinder::getPartVars(const uint32_t part)
 {
     return reverseTable[part];
+}
+
 }
 
 #endif //PARTFINDER_H

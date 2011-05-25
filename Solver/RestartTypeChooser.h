@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SolverTypes.h"
 
+namespace CMSat {
+
 using std::vector;
 
 class Solver;
@@ -72,6 +74,8 @@ class RestartTypeChooser
 inline void RestartTypeChooser::reset()
 {
     sameIns.clear();
+}
+
 }
 
 #endif //RESTARTTYPECHOOSER_H

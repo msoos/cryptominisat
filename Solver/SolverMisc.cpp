@@ -36,6 +36,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/resource.h>
 #endif
 
+using namespace CMSat;
+
 static const int space = 10;
 
 void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize)

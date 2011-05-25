@@ -34,6 +34,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <malloc.h>
 #include <string.h>
 
+namespace CMSat {
+
 // Automatically resizable arrays
 // NOTE! Don't use this vector on datatypes that cannot be re-located in memory (with realloc)
 template<class T> class vec {
@@ -160,6 +162,8 @@ void vec<T>::clear(bool dealloc) {
             cap = 0;
         }
     }
+}
+
 }
 
 #endif //__VEC_H__

@@ -32,6 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <limits>
 #include "constants.h"
 
+namespace CMSat {
+
 /**
 @brief An element in the watchlist. Natively contains 2- and 3-long clauses, others are referenced by pointer
 
@@ -265,6 +267,8 @@ inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
     //from now on, none is binary or tertiary
     //don't bother sorting these
     return false;
+}
+
 }
 
 #endif //WATCHED_H

@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SolverConf.h"
 #include <limits>
 
+using namespace CMSat;
+
 SolverConf::SolverConf() :
         random_var_freq(0.02)
         , clause_decay (1 / 0.999)

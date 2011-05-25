@@ -13,8 +13,9 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include <stdint.h>
 #endif //_MSC_VER
 
-class Clause;
+namespace CMSat {
 
+class Clause;
 
 /**
 @brief A class to hold a clause and a related index
@@ -201,6 +202,8 @@ class CSet {
             return const_iterator(which.getData() + which.size());
         }
 };
+
+}
 
 #endif //CSET_H
 

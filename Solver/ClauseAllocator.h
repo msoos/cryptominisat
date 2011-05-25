@@ -28,8 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Vec.h"
 #include <map>
 #include <vector>
-using std::map;
-using std::vector;
 
 #include "ClauseOffset.h"
 #include "Watched.h"
@@ -37,10 +35,14 @@ using std::vector;
 #define NUM_BITS_OUTER_OFFSET 4
 #define BASE_DATA_TYPE char
 
+namespace CMSat {
+
+using std::map;
+using std::vector;
+
 class Clause;
 class XorClause;
 class Solver;
-
 
 /**
 @brief Allocates memory for (xor) clauses
@@ -138,5 +140,7 @@ class ClauseAllocator {
         Clause* getClause();
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 };
+
+}
 
 #endif //CLAUSEALLOCATOR_H

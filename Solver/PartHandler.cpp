@@ -23,11 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define VERBOSE_DEBUG
 
+using namespace CMSat;
+
 PartHandler::PartHandler(Solver& s) :
     solver(s)
 {
 }
-
 
 const bool PartHandler::handle()
 {
@@ -516,4 +517,3 @@ void PartHandler::readdRemovedClauses()
 
     solver.libraryCNFFile = backup_libraryCNFfile;
 }
-

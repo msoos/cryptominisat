@@ -58,6 +58,8 @@ Here is a picture of of the above process in more detail:
 
 #include "Main.h"
 
+using namespace CMSat;
+
 Main::Main(int _argc, char** _argv) :
         numThreads(1)
         , grouping(false)
@@ -74,32 +76,6 @@ Main::Main(int _argc, char** _argv) :
 
 std::map<uint32_t, Solver*> solversToInterrupt;
 std::set<uint32_t> finished;
-
-/**
-@brief For correctly and gracefully exiting
-
-It can happen that the user requests a dump of the learnt clauses. In this case,
-the program must wait until it gets to a state where the learnt clauses are in
-a correct state, then dump these and quit normally. This interrupt hander
-is used to achieve this
-*/
-void SIGINT_handler(int signum)
-{
-    #pragma omp critical
-    {
-        Solver& solver = *solversToInterrupt.begin()->second;
-        printf("\n");
-        std::cerr << "*** INTERRUPTED ***" << std::endl;
-        if (solver.conf.needToDumpLearnts || solver.conf.needToDumpOrig) {
-            solver.needToInterrupt = true;
-            std::cerr << "*** Please wait. We need to interrupt cleanly" << std::endl;
-            std::cerr << "*** This means we might need to finish some calculations" << std::endl;
-        } else {
-            if (solver.conf.verbosity >= 1) solver.printStats();
-            exit(1);
-        }
-    }
-}
 
 void Main::readInAFile(const std::string& filename, Solver& solver)
 {
@@ -395,16 +371,6 @@ void Main::parseCommandLine()
                 exit(0);
             }
             conf.verbosity = verbosity;
-        #ifdef STATS_NEEDED
-        } else if ((value = hasPrefix(argv[i], "--grouping"))) {
-            grouping = true;
-        } else if ((value = hasPrefix(argv[i], "--proof-log"))) {
-            conf.needProofGraph();
-
-        } else if ((value = hasPrefix(argv[i], "--stats"))) {
-            conf.needStats();
-        #endif
-
         } else if ((value = hasPrefix(argv[i], "--randomize="))) {
             int seed;
             if (sscanf(value, "%d", &seed) < 0) {
@@ -901,6 +867,32 @@ const int Main::multiThreadSolve()
     }
 
     return finalRetVal;
+}
+
+/**
+@brief For correctly and gracefully exiting
+
+It can happen that the user requests a dump of the learnt clauses. In this case,
+the program must wait until it gets to a state where the learnt clauses are in
+a correct state, then dump these and quit normally. This interrupt hander
+is used to achieve this
+*/
+void SIGINT_handler(int signum)
+{
+    #pragma omp critical
+    {
+        Solver& solver = *solversToInterrupt.begin()->second;
+        printf("\n");
+        std::cerr << "*** INTERRUPTED ***" << std::endl;
+        if (solver.conf.needToDumpLearnts || solver.conf.needToDumpOrig) {
+            solver.needToInterrupt = true;
+            std::cerr << "*** Please wait. We need to interrupt cleanly" << std::endl;
+            std::cerr << "*** This means we might need to finish some calculations" << std::endl;
+        } else {
+            if (solver.conf.verbosity >= 1) solver.printStats();
+            exit(1);
+        }
+    }
 }
 
 int main(int argc, char** argv)

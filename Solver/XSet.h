@@ -13,6 +13,8 @@ From: Solver.C -- (C) Niklas Een, Niklas Sorensson, 2004
 #include <stdint.h>
 #endif //_MSC_VER
 
+namespace CMSat {
+
 class XorClause;
 
 template <class T>
@@ -129,3 +131,4 @@ class XSet {
 
 #endif //XSET_H
 
+}

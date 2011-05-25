@@ -34,8 +34,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include <limits>
 
-using std::vector;
+namespace CMSat {
 
+using std::vector;
 
 class PackedMatrix;
 
@@ -222,10 +223,10 @@ public:
         return std::numeric_limits<unsigned long int>::max();
     }
 
-    friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
-
 private:
     friend class PackedMatrix;
+    friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
+
     PackedRow(const uint32_t _size, uint64_t*  const _mp) :
         mp(_mp+1)
         , is_true_internal(*_mp)
@@ -237,7 +238,15 @@ private:
     const uint32_t size;
 };
 
-std::ostream& operator << (std::ostream& os, const PackedRow& m);
+inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
+{
+    for(uint32_t i = 0; i < m.size*64; i++) {
+        os << m[i];
+    }
+    os << " -- xor: " << m.is_true();
+    return os;
+}
+
+}
 
 #endif //PACKEDROW_H
-

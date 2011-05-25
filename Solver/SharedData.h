@@ -23,11 +23,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 
+namespace CMSat {
+
 class SharedData
 {
     public:
         vec<lbool> value;
         std::vector<std::vector<Lit> > bins;
 };
+
+}
 
 #endif //SHARED_DATA_H

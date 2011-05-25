@@ -49,6 +49,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 // Constructor/Destructor:
 //**********************************
 
+using namespace CMSat;
+
 /**
 @brief Sets a sane default config and allocates handler classes
 */
@@ -390,13 +392,6 @@ template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group
         for (uint32_t i = 0; i != ps.size(); i++) ps[i].print(libraryCNFFile);
         fprintf(libraryCNFFile, "0\n");
     }
-
-    #ifdef STATS_NEEDED
-    if (dynamic_behaviour_analysis) {
-        logger.set_group_name(group, group_name);
-        learnt_clause_group = std::max(group+1, learnt_clause_group);
-    }
-    #endif
 
     if (!ok) return false;
     assert(qhead == trail.size());
@@ -2142,10 +2137,6 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
         break;
     case static_restart:
         if (conflictC >= nof_conflicts) {
-            #ifdef STATS_NEEDED
-            if (dynamic_behaviour_analysis)
-                progress_estimate = progressEstimate();
-            #endif
             cancelUntil(0);
             return l_Undef;
         }
@@ -2232,11 +2223,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         if (restartType == dynamic_restart) glueHistory.push(glue);
         conflSizeHist.push(learnt_clause.size());
     }
-
-    #ifdef STATS_NEEDED
-    if (dynamic_behaviour_analysis)
-        logger.conflict(Logger::simple_confl_type, backtrack_level, confl->getGroup(), learnt_clause);
-    #endif
     cancelUntil(backtrack_level);
 
     #ifdef VERBOSE_DEBUG
@@ -2279,10 +2265,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             attachClause(*c);
             uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
         } else {  //no on-the-fly subsumption
-            #ifdef STATS_NEEDED
-            if (dynamic_behaviour_analysis)
-                logger.set_group_name(c->getGroup(), "learnt clause");
-            #endif
             c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
             #ifdef ENABLE_UNWIND_GLUE
             if (conf.doMaxGlueDel && glue > conf.maxGlue) {
@@ -2649,13 +2631,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
             if (status != l_Undef) break;
         }
 
-        #ifdef STATS_NEEDED
-        if (dynamic_behaviour_analysis) {
-            logger.end(Logger::restarting);
-            logger.begin();
-        }
-        #endif
-
         status = search(nof_conflicts, std::min(nof_conflicts_fullrestart, nextSimplify));
         if (needToInterrupt) {
             cancelUntil(0);
@@ -2682,17 +2657,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
 
     if (status == l_True) handleSATSolution();
     else if (status == l_False) handleUNSATSolution();
-
-    #ifdef STATS_NEEDED
-    if (dynamic_behaviour_analysis) {
-        if (status == l_True)
-            logger.end(Logger::model_found);
-        else if (status == l_False)
-            logger.end(Logger::unsat_model_found);
-        else if (status == l_Undef)
-            logger.end(Logger::restarting);
-    }
-    #endif
 
     cancelUntil(0);
     if (conf.doPartHandler && status != l_False) partHandler->readdRemovedClauses();

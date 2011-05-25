@@ -13,6 +13,8 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include "Vec.h"
 #include "XSet.h"
 
+namespace CMSat {
+
 class ClauseCleaner;
 
 /**
@@ -176,6 +178,8 @@ inline const double XorSubsumer::getTotalTime() const
 inline const map<Var, vector<XorSubsumer::XorElimedClause> >& XorSubsumer::getElimedOutVar() const
 {
     return elimedOutVar;
+}
+
 }
 
 #endif //XORSIMPLIFIER_H

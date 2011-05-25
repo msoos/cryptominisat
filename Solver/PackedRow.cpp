@@ -17,14 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "PackedRow.h"
 
-std::ostream& operator << (std::ostream& os, const PackedRow& m)
-{
-    for(uint32_t i = 0; i < m.size*64; i++) {
-        os << m[i];
-    }
-    os << " -- xor: " << m.is_true();
-    return os;
-}
+using namespace CMSat;
 
 bool PackedRow::operator ==(const PackedRow& b) const
 {
@@ -114,4 +107,3 @@ const bool PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, cons
 
     return wasundef;
 }
-

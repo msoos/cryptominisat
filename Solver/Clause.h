@@ -27,6 +27,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "Alg.h"
 #include "constants.h"
 
+namespace CMSat {
+
 template <class T>
 uint32_t calcAbstraction(const T& ps) {
     uint32_t abstraction = 0;
@@ -361,5 +363,6 @@ inline std::ostream& operator<<(std::ostream& cout, const XorClause& cl)
     return cout;
 }
 
+}
 
 #endif //CLAUSE_H

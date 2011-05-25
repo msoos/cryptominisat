@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Subsumer.h"
 #include "XorSubsumer.h"
 
+namespace CMSat {
+
 /**
 @brief Cleans clauses from false literals & removes satisfied clauses
 */
@@ -77,6 +79,8 @@ inline void ClauseCleaner::removeAndCleanAll(const bool nolimit)
     cleanClauses(solver.clauses, ClauseCleaner::clauses, limit);
     cleanClauses(solver.xorclauses, ClauseCleaner::xorclauses, limit);
     cleanClauses(solver.learnts, ClauseCleaner::learnts, limit);
+}
+
 }
 
 #endif //CLAUSECLEANER_H

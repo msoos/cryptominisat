@@ -31,6 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
 
+namespace CMSat {
+
 class Solver;
 
 using std::pair;
@@ -149,5 +151,7 @@ class XorFinder
 
         Solver& solver;
 };
+
+}
 
 #endif //XORFINDER_H

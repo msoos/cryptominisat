@@ -27,15 +27,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include <iomanip>
 #include <math.h>
-using std::set;
-using std::map;
 
 //#define VERBOSE_DEBUG
-
-using std::cout;
-using std::endl;
-
 //#define PART_FINDING
+
+using namespace CMSat;
+
+using std::set;
+using std::map;
 
 MatrixFinder::MatrixFinder(Solver& _solver) :
     solver(_solver)
@@ -90,7 +89,7 @@ const bool MatrixFinder::findMatrixes()
 
     if (solver.gaussconfig.noMatrixFind) {
         if (solver.conf.verbosity >=1)
-            cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << endl;
+            std::cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << std::endl;
         vector<XorClause*> xorclauses;
         xorclauses.reserve(solver.xorclauses.size());
         for (uint32_t i = 0; i < solver.xorclauses.size(); i++)
@@ -130,11 +129,11 @@ const bool MatrixFinder::findMatrixes()
 
     #ifdef VERBOSE_DEBUG
     for (map<uint32_t, vector<Var> >::iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
-        cout << "-- set begin --" << endl;
+        std::cout << "-- set begin --" << std::endl;
         for (vector<Var>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-            cout << *it2 << ", ";
+            std::cout << *it2 << ", ";
         }
-        cout << "-------" << endl;
+        std::cout << "-------" << std::endl;
     }
     #endif
 
@@ -143,7 +142,7 @@ const bool MatrixFinder::findMatrixes()
     if (solver.conf.verbosity >=1)
         std::cout << "c Finding matrixes :    " << cpuTime() - myTime
         << " s (found  " << numMatrixes << ")"
-        << endl;
+        << std::endl;
 
     for (vector<Gaussian*>::iterator gauss = solver.gauss_matrixes.begin(), end = solver.gauss_matrixes.end(); gauss != end; gauss++) {
         if (!(*gauss)->full_init()) return false;
@@ -210,19 +209,19 @@ const uint32_t MatrixFinder::setMatrixes()
             && realMatrixNum <= solver.gaussconfig.maxNumMatrixes)
         {
             if (solver.conf.verbosity >=1)
-                cout << "c Matrix no " << std::setw(2) << realMatrixNum;
+                std::cout << "c Matrix no " << std::setw(2) << realMatrixNum;
             solver.gauss_matrixes.push_back(new Gaussian(solver, solver.gaussconfig, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
 
         } else {
             if (solver.conf.verbosity >=1  /*&& numXorInMatrix[a].second >= 20*/)
-                cout << "c Unused Matrix ";
+                std::cout << "c Unused Matrix ";
         }
         if (solver.conf.verbosity >=1 /*&& numXorInMatrix[a].second >= 20*/) {
-            cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
-            cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
-            cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
-            cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << endl;
+            std::cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
+            std::cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
+            std::cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
+            std::cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << std::endl;
         }
     }
 
@@ -239,10 +238,10 @@ void MatrixFinder::findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClau
             if (ai == ai2) continue;
             const Var fingerprint2 = xorFingerprintInMatrix[ai2];
             if (((fingerprint & fingerprint2) == fingerprint) && firstPartOfSecond(**a, **a2)) {
-                cout << "First part of second:" << endl;
+                std::cout << "First part of second:" << std::endl;
                 (*a)->plainPrint();
                 (*a2)->plainPrint();
-                cout << "END" << endl;
+                std::cout << "END" << std::endl;
             }
         }
     }

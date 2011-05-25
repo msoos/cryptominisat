@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Solver.h"
 #include <stack>
 
+namespace CMSat {
+
 class SCCFinder {
     public:
         SCCFinder(Solver& solver);
@@ -63,6 +65,8 @@ inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
 inline const double SCCFinder::getTotalTime() const
 {
     return totalTime;
+}
+
 }
 
 #endif //SCCFINDER_H

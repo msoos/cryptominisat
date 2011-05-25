@@ -16,6 +16,9 @@ Modifications for CryptoMiniSat are under GPLv3.
 #include <vector>
 #include <list>
 #include <queue>
+
+namespace CMSat {
+
 using std::vector;
 using std::list;
 using std::map;
@@ -482,6 +485,8 @@ inline const uint32_t Subsumer::getNumElimed() const
 inline const double Subsumer::getTotalTime() const
 {
     return totalTime;
+}
+
 }
 
 #endif //SIMPLIFIER_H

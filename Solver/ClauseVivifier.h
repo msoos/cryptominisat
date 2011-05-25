@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Solver.h"
 
+namespace CMSat {
+
 class ClauseVivifier {
     public:
         ClauseVivifier(Solver& solver);
@@ -51,5 +53,7 @@ class ClauseVivifier {
         uint32_t numCalls;
         Solver& solver;
 };
+
+}
 
 #endif //CLAUSEVIVIFIER_H

@@ -22,8 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <limits>
 #include <string>
 #include <utility>
-using std::string;
-using std::pair;
 
 #ifdef _MSC_VER
 #include <msvc/stdint.h>
@@ -40,11 +38,11 @@ using std::pair;
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
 
-#ifdef VERBOSE_DEBUG
+namespace CMSat {
+
+using std::string;
+using std::pair;
 using std::vector;
-using std::cout;
-using std::endl;
-#endif
 
 class Clause;
 
@@ -238,6 +236,8 @@ inline void Gaussian::set_disabled(const bool toset)
     disabled = toset;
 }
 
-std::ostream& operator << (std::ostream& os, const vec<Lit>& v);
+//std::ostream& operator << (std::ostream& os, const vec<Lit>& v);
+
+}
 
 #endif //GAUSSIAN_H

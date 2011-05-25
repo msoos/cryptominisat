@@ -25,6 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
 #include <vector>
+
+namespace CMSat {
+
 using std::map;
 using std::vector;
 using std::pair;
@@ -106,6 +109,6 @@ inline void PartHandler::newVar()
     savedState.push(l_Undef);
 }
 
-
+}
 
 #endif //PARTHANDLER_H

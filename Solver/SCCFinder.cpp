@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Subsumer.h"
 #include "XorSubsumer.h"
 
+using namespace CMSat;
+
 SCCFinder::SCCFinder(Solver& _solver) :
     solver(_solver)
     , varElimed1(_solver.subsumer->getVarElimed())

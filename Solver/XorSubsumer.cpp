@@ -20,10 +20,7 @@ Modifications for CryptoMiniSat are under GPLv3.
 #define BIT_MORE_VERBOSITY
 #endif
 
-#ifdef VERBOSE_DEBUG
-using std::cout;
-using std::endl;
-#endif //VERBOSE_DEBUG
+using namespace CMSat;
 
 XorSubsumer::XorSubsumer(Solver& s):
     solver(s)

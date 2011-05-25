@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define VERBOSE_DEBUG
 
+using namespace CMSat;
+
 UselessBinRemover::UselessBinRemover(Solver& _solver) :
     solver(_solver)
 {
@@ -224,4 +226,3 @@ const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit origLit, const L
 
     return true;
 }
-

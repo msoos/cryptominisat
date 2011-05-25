@@ -32,6 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ClauseOffset.h"
 #include "ClauseAllocator.h"
 
+namespace CMSat {
+
 class PropBy
 {
     private:
@@ -121,41 +123,6 @@ class PropBy
             if (!isClause()) return false;
             return propType == 0;
         }
-
-        /*const uint32_t size() const
-        {
-            if (isBinary()) return 2;
-            if (isTri()) return 3;
-
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(!isNULL());
-            #endif
-
-            return getClause()->size();
-        }*/
-
-        /*const Lit operator[](uint32_t i) const
-        {
-            if (isBinary()) {
-                #ifdef DEBUG_PROPAGATEFROM
-                assert(i == 1);
-                #endif
-                return getOtherLit();
-            }
-
-            if (isTriClause()) {
-                #ifdef DEBUG_PROPAGATEFROM
-                assert(i <= 2);
-                #endif
-                if (i == 1) return getOtherLit();
-                if (i == 2) return getOtherLit2();
-            }
-
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(!isNULL());
-            #endif
-            return (*getClause())[i];
-        }*/
 };
 
 inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
@@ -283,6 +250,8 @@ inline std::ostream& operator<<(std::ostream& cout, const PropByFull& propByFull
         else cout << "clause:" << *propByFull.getClause();
     }
     return cout;
+}
+
 }
 
 #endif //PROPBY_H

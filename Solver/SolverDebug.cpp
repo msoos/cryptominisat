@@ -16,8 +16,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 
 #include "Solver.h"
-
 #include "VarReplacer.h"
+
+using namespace CMSat;
 
 #ifdef DEBUG_ATTACH_FULL
 void Solver::testAllClauseAttach() const

@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "StateSaver.h"
 
+using namespace CMSat;
+
 StateSaver::StateSaver(Solver& _solver) :
     solver(_solver)
     , backup_order_heap(Solver::VarOrderLt(solver.activity))

@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Solver.h"
 
+namespace CMSat {
+
 /**
 @brief Handles propagation, addition&removal of non-learnt binary clauses
 
@@ -63,6 +65,8 @@ inline const uint32_t OnlyNonLearntBins::getWatchSize(const Lit lit) const
 inline const vec<vec<OnlyNonLearntBins::WatchedBin> >& OnlyNonLearntBins::getBinWatches() const
 {
     return binwatches;
+}
+
 }
 
 #endif //ONLYNONLEARNTBINS_H

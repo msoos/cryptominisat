@@ -27,12 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define VERBOSE_DEBUG
 
-#ifdef VERBOSE_DEBUG
-#include <iostream>
-using std::cout;
-using std::endl;
-#endif
-
+using namespace CMSat;
 using std::make_pair;
 
 XorFinder::XorFinder(Solver& _solver, vec<Clause*>& _cls) :
@@ -462,4 +457,3 @@ void XorFinder::addXorAsNormal4(XorClause& c)
     tmp = solver.addClauseInt(vars2, c.getGroup());
     if (tmp) solver.clauses.push(tmp);
 }
-

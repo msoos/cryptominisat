@@ -26,13 +26,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
 #include <vector>
-using std::map;
-using std::vector;
 
 #include "Solver.h"
 #include "SolverTypes.h"
 #include "Clause.h"
 #include "Vec.h"
+
+namespace CMSat {
+
+using std::map;
+using std::vector;
 
 /**
 @brief Replaces variables with their anti/equivalents
@@ -144,5 +147,7 @@ inline const uint32_t VarReplacer::getNumTrees() const
 {
     return reverseTable.size();
 }
+
+};
 
 #endif //VARREPLACER_H

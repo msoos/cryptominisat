@@ -18,6 +18,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 #include "Vec.h"
 
+namespace CMSat {
+
 template <class T>
 class bqueue {
     vec<T>  elems;
@@ -88,5 +90,7 @@ public:
         sumOfAllElems = 0;
     }
 };
+
+}
 
 #endif //BOUNDEDQUEUE_H

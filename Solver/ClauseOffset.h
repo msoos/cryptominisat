@@ -7,6 +7,10 @@
 #include <stdint.h>
 #endif //_MSC_VER
 
+namespace CMSat {
+
 typedef uint32_t ClauseOffset;
+
+}
 
 #endif //CLAUSEOFFSET_H

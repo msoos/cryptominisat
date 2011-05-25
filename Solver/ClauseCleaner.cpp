@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define DEBUG_CLEAN
 //#define VERBOSE_DEBUG
 
+using namespace CMSat;
+
 ClauseCleaner::ClauseCleaner(Solver& _solver) :
     solver(_solver)
 {
@@ -257,49 +259,3 @@ bool ClauseCleaner::satisfied(const XorClause& c) const
     }
     return final;
 }
-
-
-
-/*void ClauseCleaner::removeSatisfied(vec<XorClause*>& cs, ClauseSetType type, const uint32_t limit)
-{
-    #ifdef DEBUG_CLEAN
-    assert(solver.decisionLevel() == 0);
-    #endif
-
-    if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
-        return;
-
-    uint32_t i,j;
-    for (i = j = 0; i < cs.size(); i++) {
-        if (satisfied(*cs[i]))
-            solver.removeClause(*cs[i]);
-        else
-            cs[j++] = cs[i];
-    }
-    cs.shrink(i - j);
-
-    lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
-}*/
-
-/*void ClauseCleaner::removeSatisfied(vec<Clause*>& cs, ClauseSetType type, const uint32_t limit)
-{
-    #ifdef DEBUG_CLEAN
-    assert(solver.decisionLevel() == 0);
-    #endif
-
-    if (lastNumUnitarySat[type] + limit >= solver.get_unitary_learnts_num())
-        return;
-
-    Clause **i,**j, **end;
-    for (i = j = cs.getData(), end = i + cs.size(); i != end; i++) {
-        if (i+1 != end)
-            __builtin_prefetch(*(i+1), 0, 0);
-        if (satisfied(**i))
-            solver.removeClause(**i);
-        else
-            *j++ = *i;
-    }
-    cs.shrink(i - j);
-
-    lastNumUnitarySat[type] = solver.get_unitary_learnts_num();
-}*/

@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Clause.h"
 #include "Solver.h"
 
+namespace CMSat {
+
 class Solver;
 
 using std::map;
@@ -36,14 +38,14 @@ using std::vector;
 using std::pair;
 
 class MatrixFinder {
-    
+
     public:
         MatrixFinder(Solver& solver);
         const bool findMatrixes();
-    
+
     private:
         const uint32_t setMatrixes();
-        
+
         struct mysorter
         {
             bool operator () (const pair<uint32_t, uint32_t>& left, const pair<uint32_t, uint32_t>& right)
@@ -51,17 +53,18 @@ class MatrixFinder {
                 return left.second < right.second;
             }
         };
-        
+
         void findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClause*>& xorsInMatrix);
         inline const Var fingerprint(const XorClause& c) const;
         inline const bool firstPartOfSecond(const XorClause& c1, const XorClause& c2) const;
-        
+
         map<uint32_t, vector<Var> > reverseTable; //matrix -> vars
         vector<Var> table; //var -> matrix
         uint32_t matrix_no;
-        
+
         Solver& solver;
 };
 
+}
 
 #endif //MATRIXFINDER_H

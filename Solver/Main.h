@@ -10,7 +10,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #define MAIN_H
 
 #include <string>
-using std::string;
 #include <vector>
 #ifndef DISABLE_ZLIB
 #include <zlib.h>
@@ -18,6 +17,10 @@ using std::string;
 
 #include "Solver.h"
 #include "SharedData.h"
+
+namespace CMSat {
+
+using std::string;
 
 class Main
 {
@@ -65,5 +68,7 @@ class Main
         int argc;
         char** argv;
 };
+
+}
 
 #endif //MAIN_H

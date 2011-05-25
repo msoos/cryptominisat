@@ -19,6 +19,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 //#define DEBUG_COMMENT_PARSING
 
+using namespace CMSat;
+
 DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _debugNewVar, const bool _grouping, const bool _addAsLearnt):
     solver(_solver)
     , debugLib(_debugLib)

@@ -30,8 +30,10 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 // NOTE! Variables are just integers. No abstraction here. They should be chosen from 0..N,
 // so that they can be used as array indices.
 
+namespace CMSat {
+
 typedef uint32_t Var;
-#define var_Undef (0xffffffffU >>1)
+static const uint32_t var_Undef = 0xffffffffU >>1;
 enum RestartType {dynamic_restart, static_restart, auto_restart};
 
 /**
@@ -93,8 +95,8 @@ public:
     }
 };
 
-const Lit lit_Undef(var_Undef, false);  // Useful special constants.
-const Lit lit_Error(var_Undef, true );  //
+static const Lit lit_Undef(var_Undef, false);  // Useful special constants.
+static const Lit lit_Error(var_Undef, true );  //
 
 inline std::ostream& operator<<(std::ostream& cout, const Lit& lit)
 {
@@ -238,5 +240,6 @@ struct BinPropData {
     bool hasChildren;
 };
 
+}
 
 #endif //SOLVERTYPES_H

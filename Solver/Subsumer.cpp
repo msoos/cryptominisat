@@ -32,10 +32,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 //#define BIT_MORE_VERBOSITY
 
-#ifdef VERBOSE_DEBUG
-using std::cout;
-using std::endl;
-#endif //VERBOSE_DEBUG
+using namespace CMSat;
 
 Subsumer::Subsumer(Solver& s):
     solver(s)

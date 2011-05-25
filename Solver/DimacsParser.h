@@ -25,9 +25,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <zlib.h>
 #endif // DISABLE_ZLIB
 
-#ifdef STATS_NEEDED
-#include "Logger.h"
-#endif //STATS_NEEDED
+namespace CMSat {
 
 class Solver;
 
@@ -73,5 +71,7 @@ class DimacsParser
         uint32_t numNormClauses; ///<Number of non-learnt, non-xor claues added
         uint32_t numXorClauses; ///<Number of non-learnt xor clauses added
 };
+
+}
 
 #endif //DIMACSPARSER_H

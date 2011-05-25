@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #endif //_MSC_VER
 
+namespace CMSat {
+
 /**
 @brief Removes binary clauses that are effectively useless to have
 
@@ -77,5 +79,7 @@ class UselessBinRemover {
 
         Solver& solver; ///<The solver class e want to remove useless binary clauses from
 };
+
+}
 
 #endif //USELESSBINREMOVER_H

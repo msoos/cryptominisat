@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "XorSubsumer.h"
 #include <iomanip>
 
+using namespace CMSat;
+
 DataSync::DataSync(Solver& _solver, SharedData* _sharedData) :
     lastSyncConf(0)
     , sentUnitData(0)
