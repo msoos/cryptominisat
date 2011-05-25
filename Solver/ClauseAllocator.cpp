@@ -535,11 +535,11 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
 /**
 @brief A dumb helper function to update offsets
 */
-void ClauseAllocator::updateOffsets(vec<vec2<Watched> >& watches)
+void ClauseAllocator::updateOffsets(vec<vec<Watched> >& watches)
 {
     for (uint32_t i = 0;  i < watches.size(); i++) {
-        vec2<Watched>& list = watches[i];
-        for (vec2<Watched>::iterator it = list.getData(), end = list.getDataEnd(); it != end; it++) {
+        vec<Watched>& list = watches[i];
+        for (vec<Watched>::iterator it = list.getData(), end = list.getDataEnd(); it != end; it++) {
             if (!it->isClause() && !it->isXorClause()) continue;
             if (it->isClause()) {
                 it->setNormOffset(((NewPointerAndOffset*)(getPointer(it->getNormOffset())))->newOffset);

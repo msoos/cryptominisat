@@ -77,7 +77,7 @@ const bool DataSync::shareBinData()
             ) continue;
 
         vector<Lit>& bins = shared.bins[wsLit];
-        vec2<Watched>& ws = solver.watches[wsLit];
+        vec<Watched>& ws = solver.watches[wsLit];
 
         if (bins.size() > syncFinish[wsLit]
             && !syncBinFromOthers(lit1, bins, syncFinish[wsLit], ws)) return false;
@@ -93,14 +93,14 @@ const bool DataSync::shareBinData()
     return true;
 }
 
-const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec2<Watched>& ws)
+const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
 {
     assert(solver.varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
     assert(solver.subsumer->getVarElimed()[lit.var()] == false);
     assert(solver.xorSubsumer->getVarElimed()[lit.var()] == false);
 
     vec<Lit> addedToSeen;
-    for (vec2<Watched>::iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
+    for (vec<Watched>::iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
         if (it->isBinary()) {
             addedToSeen.push(it->getOtherLit());
             seen[it->getOtherLit().toInt()] = true;

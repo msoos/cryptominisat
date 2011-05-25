@@ -37,7 +37,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include "PropBy.h"
 #include "Vec.h"
-#include "Vec2.h"
 #include "Heap.h"
 #include "Alg.h"
 #include "MersenneTwister.h"
@@ -314,7 +313,7 @@ protected:
     uint32_t            numBins;
     vec<XorClause*>     freeLater;        ///< xor clauses that need to be freed later (this is needed due to Gauss) \todo Get rid of this
     float               cla_inc;          ///< Amount to bump learnt clause oldActivity with
-    vec<vec2<Watched> > watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
+    vec<vec<Watched> > watches;          ///< 'watches[lit]' is a list of constraints watching 'lit' (will go there if literal becomes true).
     vec<lbool>          assigns;          ///< The current assignments
     vector<char>        decision_var;     ///< Declares if a variable is eligible for selection in the decision heuristic.
     vec<Lit>            trail;            ///< Assignment stack; stores all assigments made in the order they were made.
@@ -417,13 +416,13 @@ protected:
     template<bool full>
     PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
     template<bool full>
-    const bool propTriClause   (vec2<Watched>::iterator &i, const Lit p, PropBy& confl);
+    const bool propTriClause   (vec<Watched>::iterator &i, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propBinaryClause(vec2<Watched>::iterator &i, const Lit p, PropBy& confl);
+    const bool propBinaryClause(vec<Watched>::iterator &i, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propNormalClause(vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, vec2<Watched>::iterator end, const Lit p, PropBy& confl, const bool update);
+    const bool propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, vec<Watched>::iterator end, const Lit p, PropBy& confl, const bool update);
     template<bool full>
-    const bool propXorClause   (vec2<Watched>::iterator &i, vec2<Watched>::iterator &j, vec2<Watched>::iterator end, const Lit p, PropBy& confl);
+    const bool propXorClause   (vec<Watched>::iterator &i, vec<Watched>::iterator &j, vec<Watched>::iterator end, const Lit p, PropBy& confl);
     void     sortWatched();
 
     ///////////////

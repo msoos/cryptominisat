@@ -63,7 +63,7 @@ class CompleteDetachReatacher
                 uint32_t nonLearntBins;
                 uint32_t tris;
         };
-        const ClausesStay clearWatchNotBinNotTri(vec2<Watched>& ws, const bool removeTri = false);
+        const ClausesStay clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri = false);
 
         void cleanAndAttachClauses(vec<Clause*>& cs);
         void cleanAndAttachClauses(vec<XorClause*>& cs);

@@ -37,7 +37,7 @@ class DataSync
     private:
         //functions
         const bool shareUnitData();
-        const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec2<Watched>& ws);
+        const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws);
         void syncBinToOthers();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
         const bool shareBinData();

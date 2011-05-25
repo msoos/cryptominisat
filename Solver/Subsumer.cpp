@@ -826,13 +826,13 @@ void Subsumer::removeWrongBinsAndAllTris()
 {
     uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
-    for (vec2<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
-        vec2<Watched>& ws = *it;
+        vec<Watched>& ws = *it;
 
-        vec2<Watched>::iterator i = ws.getData();
-        vec2<Watched>::iterator j = i;
-        for (vec2<Watched>::iterator end2 = ws.getDataEnd(); i != end2; i++) {
+        vec<Watched>::iterator i = ws.getData();
+        vec<Watched>::iterator j = i;
+        for (vec<Watched>::iterator end2 = ws.getDataEnd(); i != end2; i++) {
             if (i->isTriClause()) continue;
 
             if (i->isBinary()
@@ -901,12 +901,12 @@ const bool Subsumer::subsumeWithBinaries()
     vec<Lit> lits(2);
     uint32_t counter = 0;
     uint32_t thisRand = solver.mtrand.randInt();
-    for (const vec2<Watched> *it = solver.watches.getData(); counter != solver.nVars()*2; counter++) {
+    for (const vec<Watched> *it = solver.watches.getData(); counter != solver.nVars()*2; counter++) {
         uint32_t wsLit = (counter + thisRand) % (solver.nVars()*2);
         Lit lit = ~Lit::toLit(wsLit);
         lits[0] = lit;
-        const vec2<Watched> ws_backup = *(it + wsLit);
-        for (vec2<Watched>::const_iterator it2 = ws_backup.getData(), end2 = ws_backup.getDataEnd(); it2 != end2; it2++) {
+        const vec<Watched> ws_backup = *(it + wsLit);
+        for (vec<Watched>::const_iterator it2 = ws_backup.getData(), end2 = ws_backup.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
                 lits[1] = it2->getOtherLit();
                 bool toMakeNonLearnt = subsume1(lits, it2->getLearnt());
@@ -933,7 +933,7 @@ const bool Subsumer::subsWNonExitsBinsFullFull()
     double myTime = cpuTime();
     clauses_subsumed = 0;
     literals_removed = 0;
-    for (vec2<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
         if (it->size() < 2) continue;
         std::sort(it->getData(), it->getDataEnd(), BinSorter2());
     }
@@ -1149,19 +1149,19 @@ void Subsumer::subsumeBinsWithBins()
     uint32_t numBinsBefore = solver.numBins;
 
     uint32_t wsLit = 0;
-    for (vec2<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        vec2<Watched>& ws = *it;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+        vec<Watched>& ws = *it;
         Lit lit = ~Lit::toLit(wsLit);
         if (ws.size() < 2) continue;
 
         std::sort(ws.getData(), ws.getDataEnd(), BinSorter());
 
-        vec2<Watched>::iterator i = ws.getData();
-        vec2<Watched>::iterator j = i;
+        vec<Watched>::iterator i = ws.getData();
+        vec<Watched>::iterator j = i;
 
         Lit lastLit = lit_Undef;
         bool lastLearnt = false;
-        for (vec2<Watched>::iterator end = ws.getDataEnd(); i != end; i++) {
+        for (vec<Watched>::iterator end = ws.getDataEnd(); i != end; i++) {
             if (!i->isBinary()) {
                 *j++ = *i;
                 continue;
@@ -1605,8 +1605,8 @@ void Subsumer::removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const
 const uint32_t Subsumer::numNonLearntBins(const Lit lit) const
 {
     uint32_t num = 0;
-    const vec2<Watched>& ws = solver.watches[(~lit).toInt()];
-    for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
+    const vec<Watched>& ws = solver.watches[(~lit).toInt()];
+    for (vec<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
         if (it->isBinary() && !it->getLearnt()) num++;
     }
 
@@ -1619,8 +1619,8 @@ void Subsumer::fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit l
         if (!cs[i].clause->learnt()) all.push(ClAndBin(cs[i]));
     }
 
-    const vec2<Watched>& ws = solver.watches[(~lit).toInt()];
-    for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
+    const vec<Watched>& ws = solver.watches[(~lit).toInt()];
+    for (vec<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
         if (it->isBinary() &&!it->getLearnt()) all.push(ClAndBin(lit, it->getOtherLit()));
     }
 }
@@ -1723,12 +1723,12 @@ bool Subsumer::maybeEliminate(const Var var)
 
     //check watchlists
     #ifndef NDEBUG
-    const vec2<Watched>& ws1 = solver.watches[lit.toInt()];
-    for (vec2<Watched>::const_iterator i = ws1.getData(), end = ws1.getDataEnd(); i != end; i++) {
+    const vec<Watched>& ws1 = solver.watches[lit.toInt()];
+    for (vec<Watched>::const_iterator i = ws1.getData(), end = ws1.getDataEnd(); i != end; i++) {
         assert(i->isTriClause() || (i->isBinary() && i->getLearnt()));
     }
-    const vec2<Watched>& ws2 = solver.watches[(~lit).toInt()];
-    for (vec2<Watched>::const_iterator i = ws2.getData(), end = ws2.getDataEnd(); i != end; i++) {
+    const vec<Watched>& ws2 = solver.watches[(~lit).toInt()];
+    for (vec<Watched>::const_iterator i = ws2.getData(), end = ws2.getDataEnd(); i != end; i++) {
         assert(i->isTriClause() || (i->isBinary() && i->getLearnt()));
     }
     #endif
@@ -1938,7 +1938,7 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
 
     bool allIsTautology = true;
     const vec<ClauseSimp>& cs = occur[lit.toInt()];
-    const vec2<Watched>& ws = solver.watches[(~lit).toInt()];
+    const vec<Watched>& ws = solver.watches[(~lit).toInt()];
 
     for (const ClauseSimp *it = cs.getData(), *end = cs.getDataEnd(); it != end; it++){
         if (it+1 != end) __builtin_prefetch((it+1)->clause);
@@ -1958,7 +1958,7 @@ const bool Subsumer::allTautology(const T& ps, const Lit lit)
     if (!allIsTautology) goto end;
 
     numMaxBlockToVisit -= ws.size();
-    for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
+    for (vec<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
         if (!it->isNonLearntBinary()) continue;
         if (seen_tmp[(~it->getOtherLit()).toInt()]) continue;
         else {
@@ -2032,9 +2032,9 @@ const bool Subsumer::tryOneSetting(const Lit lit)
     }
 
     vec<Lit> lits(1);
-    const vec2<Watched>& ws = solver.watches[(~lit).toInt()];
+    const vec<Watched>& ws = solver.watches[(~lit).toInt()];
     numMaxBlockToVisit -= ws.size();
-    for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
+    for (vec<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
         if (!it->isNonLearntBinary()) continue;
         lits[0] = it->getOtherLit();
         if (!allTautology(lits, ~lit)) return false;
@@ -2063,10 +2063,10 @@ void Subsumer::blockedClauseElimAll(const Lit lit)
     }
 
     uint32_t removedNum = 0;
-    vec2<Watched>& ws = solver.watches[(~lit).toInt()];
-    vec2<Watched>::iterator i = ws.getData();
-    vec2<Watched>::iterator j = i;
-    for (vec2<Watched>::iterator end = ws.getDataEnd(); i != end; i++) {
+    vec<Watched>& ws = solver.watches[(~lit).toInt()];
+    vec<Watched>::iterator i = ws.getData();
+    vec<Watched>::iterator j = i;
+    for (vec<Watched>::iterator end = ws.getDataEnd(); i != end; i++) {
         if (!i->isNonLearntBinary()) {
             *j++ = *i;
             continue;

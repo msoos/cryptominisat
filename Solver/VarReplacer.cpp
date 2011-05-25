@@ -280,13 +280,13 @@ const bool VarReplacer::replaceBins()
     uint32_t removedLearnt = 0;
     uint32_t removedNonLearnt = 0;
     uint32_t wsLit = 0;
-    for (vec2<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
         Lit lit1 = ~Lit::toLit(wsLit);
-        vec2<Watched>& ws = *it;
+        vec<Watched>& ws = *it;
 
-        vec2<Watched>::iterator i = ws.getData();
-        vec2<Watched>::iterator j = i;
-        for (vec2<Watched>::iterator end2 = ws.getDataEnd(); i != end2; i++) {
+        vec<Watched>::iterator i = ws.getData();
+        vec<Watched>::iterator j = i;
+        for (vec<Watched>::iterator end2 = ws.getDataEnd(); i != end2; i++) {
             if (!i->isBinary()) {
                 *j++ = *i;
                 continue;
