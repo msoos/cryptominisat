@@ -17,8 +17,8 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************************************/
 
-#ifndef Vec_h
-#define Vec_h
+#ifndef __VEC_H__
+#define __VEC_H__
 
 #include <cstdlib>
 #include <cassert>
@@ -34,13 +34,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <string.h>
 
 
-//=================================================================================================
-// Automatically resizable arrays
-//
-// NOTE! Don't use this vector on datatypes that cannot be re-located in memory (with realloc)
 
-template<class T>
-class vec {
+// Automatically resizable arrays
+// NOTE! Don't use this vector on datatypes that cannot be re-located in memory (with realloc)
+template<class T> class vec {
     T*  data;
     uint32_t sz;
     uint32_t cap;
@@ -166,5 +163,4 @@ void vec<T>::clear(bool dealloc) {
     }
 }
 
-
-#endif
+#endif //__VEC_H__

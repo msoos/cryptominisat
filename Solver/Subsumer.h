@@ -10,7 +10,6 @@ Modifications for CryptoMiniSat are under GPLv3.
 #define SIMPLIFIER_H
 
 #include "Solver.h"
-#include "Queue.h"
 #include "CSet.h"
 #include "BitArray.h"
 #include <map>
