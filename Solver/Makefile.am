@@ -11,7 +11,8 @@ pkgincludesub_HEADERS = BitArray.h Clause.h CSet.h MatrixFinder.h PartFinder.h S
 	time_mem.h XorFinder.h ClauseAllocator.h CompleteDetachReattacher.h DoublePackedRow.h Gaussian.h PackedMatrix.h \
 	PropBy.h StateSaver.h UselessBinRemover.h  XorSubsumer.h ClauseCleaner.h constants.h FailedLitSearcher.h \
 	PackedRow.h RestartTypeChooser.h StreamBuffer.h VarReplacer.h XSet.h BothCache.h SolverConf.h \
-	SCCFinder.h SharedData.h ClauseVivifier.h DataSync.h Main.h
+	SCCFinder.h SharedData.h ClauseVivifier.h DataSync.h Main.h \
+	msvc/stdint.h
 
 libcryptominisat_la_SOURCES = \
 	ClauseCleaner.cpp FailedLitSearcher.cpp \

@@ -19,7 +19,7 @@ XorSubsumer.cpp Subsumer.cpp PartFinder.cpp PartHandler.cpp
 FailedLitSearcher.cpp ClauseAllocator.cpp UselessBinRemover.cpp
 StateSaver.cpp ClauseVivifier.cpp SolverMisc.cpp SolverDebug.cpp
 CompleteDetachReattacher.cpp DimacsParser.cpp SCCFinder.cpp SolverConf.cpp
-OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp Gaussian.cpp
+OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp Gaussian.cpp BothCache.cpp
 
 32-bit version:
 
@@ -30,8 +30,8 @@ XorSubsumer.cpp Subsumer.cpp PartFinder.cpp PartHandler.cpp
 FailedLitSearcher.cpp ClauseAllocator.cpp UselessBinRemover.cpp
 StateSaver.cpp ClauseVivifier.cpp SolverMisc.cpp SolverDebug.cpp
 CompleteDetachReattacher.cpp DimacsParser.cpp SCCFinder.cpp SolverConf.cpp
-OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp Gaussian.cpp
+OnlyNonLearntBins.cpp DataSync.cpp MatrixFinder.cpp Gaussian.cpp BothCache.cpp
 
 executed from the 'Solver' subdirectory
 
---- Bulid instructions by Martin Maurer
+--- Build instructions by Martin Maurer
