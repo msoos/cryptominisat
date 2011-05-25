@@ -145,10 +145,6 @@ AC_CHECK_SIZEOF([size_t])
 AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 
-#statistics generation
-#AH_TEMPLATE([STATS_NEEDED],[Enable statistics generation code])
-#AC_DEFINE([STATS_NEEDED])
-
 #gauss generation needed
 AH_TEMPLATE([USE_GAUSS],[Enable gaussian elimination code])
 AC_DEFINE([USE_GAUSS])
