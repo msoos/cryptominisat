@@ -155,6 +155,11 @@ AC_DEFINE([USE_GAUSS])
 #search for openmp
 AC_OPENMP
 
+#check zlib
+AC_CHECK_LIB([z], [gzread], ,
+                 [AC_MSG_ERROR([zlib not found, see http://www.zlib.net])])
+
+
 if test "$use_static" = "yes"; then
   LDFLAGS="$LDFLAGS -all-static"
 fi
