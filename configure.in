@@ -11,7 +11,7 @@ if test -n "${CXXFLAGS}"; then
 fi
 AC_PROG_CXX
 if test X$user_set_cxxflags != Xyes; then
-  CXXFLAGS="-g -O3 -Wall"
+  CXXFLAGS="-g -O3 -Wall -pedantic -Werror"
 fi
 AC_LANG(C++)
 

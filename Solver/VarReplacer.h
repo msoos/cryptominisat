@@ -148,6 +148,6 @@ inline const uint32_t VarReplacer::getNumTrees() const
     return reverseTable.size();
 }
 
-};
+}
 
 #endif //VARREPLACER_H

@@ -489,7 +489,6 @@ protected:
     friend class VarFilter;
     friend class Gaussian;
     friend class FindUndef;
-    friend class Logger;
     friend class XorFinder;
     friend class Conglomerate;
     friend class MatrixFinder;
