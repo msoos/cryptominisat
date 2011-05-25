@@ -45,9 +45,9 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 //#define DEBUG_DYNAMIC_RESTART
 //#define UNWINDING_DEBUG
 
-//=================================================================================================
+//**********************************
 // Constructor/Destructor:
-
+//**********************************
 
 /**
 @brief Sets a sane default config and allocates handler classes
@@ -134,9 +134,9 @@ Solver::~Solver()
         fclose(libraryCNFFile);
 }
 
-//=================================================================================================
-// Minor methods:
-
+//**********************************
+// Minor methods
+//**********************************
 
 /**
 @brief Creates a new SAT variable in the solver
@@ -917,9 +917,9 @@ void Solver::saveOTFData()
     }
 }
 
-//=================================================================================================
+//**********************************
 // Major methods:
-
+//**********************************
 
 /**
 @brief Picks a branching variable and its value (True/False)

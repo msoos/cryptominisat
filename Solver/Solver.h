@@ -83,9 +83,6 @@ using std::cout;
 using std::endl;
 #endif
 
-//=================================================================================================
-// Solver -- the main class:
-
 struct reduceDB_ltMiniSat
 {
     bool operator () (const Clause* x, const Clause* y);
@@ -582,9 +579,10 @@ protected:
 };
 
 
-//=================================================================================================
-// Implementation of inline methods:
 
+//**********************************
+// Implementation of inline methods
+//**********************************
 
 inline void Solver::insertVarOrder(Var x)
 {
@@ -781,8 +779,9 @@ inline void Solver::removeClause(T& c)
     clauseAllocator.clauseFree(&c);
 }
 
-//=================================================================================================
+//**********************************
 // Debug + etc:
+//**********************************
 
 static inline void logLit(FILE* f, Lit l)
 {
@@ -899,5 +898,4 @@ inline void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     #endif
 }
 
-//=================================================================================================
 #endif //SOLVER_H

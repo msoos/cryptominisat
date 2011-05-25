@@ -35,9 +35,6 @@ uint32_t calcAbstraction(const T& ps) {
     return abstraction;
 }
 
-//=================================================================================================
-// Clause -- a simple class for representing a clause:
-
 class MatrixFinder;
 class ClauseAllocator;
 

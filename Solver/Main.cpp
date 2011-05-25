@@ -181,8 +181,6 @@ void Main::parseInAllFiles(Solver& solver)
     }
 }
 
-//=================================================================================================
-// Main:
 
 void Main::printUsage(char** argv)
 {

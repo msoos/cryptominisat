@@ -31,7 +31,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <stdint.h>
 #endif //_MSC_VER
 
-//=================================================================================================
+
 // Useful functions on vectors
 
 template<class V, class T>

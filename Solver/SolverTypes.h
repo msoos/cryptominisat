@@ -7,9 +7,8 @@ Original code by MiniSat and glucose authors are under an MIT licence.
 Modifications for CryptoMiniSat are under GPLv3 licence.
 ******************************************************************************/
 
-
-#ifndef SOLVERTYPES_H
-#define SOLVERTYPES_H
+#ifndef __SOLVERTYPES_H__
+#define __SOLVERTYPES_H__
 
 #include <cassert>
 #include <iostream>
@@ -24,9 +23,9 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <vector>
 #include "constants.h"
 
-//=================================================================================================
+//**********************************
 // Variables, literals, lifted booleans, clauses:
-
+//**********************************
 
 // NOTE! Variables are just integers. No abstraction here. They should be chosen from 0..N,
 // so that they can be used as array indices.
@@ -127,8 +126,9 @@ inline void printClause(FILE* outFile, const vec<Lit>& clause)
     fprintf(outFile, "0\n");
 }
 
-//=================================================================================================
-// Lifted booleans:
+//**********************************
+// Lifted booleans
+//**********************************
 
 class llbool;
 
@@ -237,8 +237,6 @@ struct BinPropData {
     bool learntLeadHere;
     bool hasChildren;
 };
-
-
 
 
 #endif //SOLVERTYPES_H
