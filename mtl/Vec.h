@@ -18,8 +18,8 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ********************************************************************************************/
 
-#ifndef __VEC_H__
-#define __VEC_H__
+#ifndef VEC_H
+#define VEC_H
 
 #include <cstdlib>
 #include <cassert>
