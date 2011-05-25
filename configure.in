@@ -15,8 +15,10 @@ if test X$user_set_cxxflags != Xyes; then
 fi
 AC_LANG(C++)
 
-AC_MSG_CHECKING([for gcc bug number 47365])
-AC_TRY_RUN([
+AC_CACHE_CHECK([for gcc bug number 47365],
+               fpre_cv_bug,
+               [
+                    AC_TRY_RUN([
 extern "C" {
 #include <assert.h>
 #include <stdint.h>
@@ -109,13 +111,14 @@ int main(int argc, char** argv)
         assigns[1] = false;
         return prop(*cl, Lit(0, true));
 }
-],[FPRE_BUG=no], [FPRE_BUG=yes])
+],[fpre_cv_bug=no], [fpre_cv_bug=yes],[fpre_cv_bug=cross])
+])
 
-if test "x$FPRE_BUG" = "xyes" ; then
-    AC_MSG_RESULT([Your gcc is broken. Disabling -ftree-pre, but this may slow down CryptoMS])
-    CXXFLAGS="$CXXFLAGS -fno-tree-pre"
-else
+if test "x$fpre_cv_bug" = "xno" ; then
     AC_MSG_RESULT([Your gcc version doesn't _seem_ broken])
+else
+    AC_MSG_RESULT([Your gcc may be broken. Disabling -ftree-pre, but this may slow down CryptoMS])
+    CXXFLAGS="$CXXFLAGS -fno-tree-pre"
 fi
 
 # Enable static linking
@@ -142,8 +145,8 @@ AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([size_t])
 
 # checks for library functions
-AC_FUNC_MALLOC
-AC_FUNC_MEMCMP
+#AC_FUNC_MALLOC
+#AC_FUNC_MEMCMP
 
 #gauss generation needed
 AH_TEMPLATE([USE_GAUSS],[Enable gaussian elimination code])
