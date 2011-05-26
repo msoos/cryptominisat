@@ -1,3 +1,14 @@
+ver 2.9.1 26/05/2011
+* Subsumption is now in one go instead handling learnt&non-learnt in different
+  runs.
+* Hyper-bin resolution is fixed(?). The algorithm has become too complex to
+  tell if it's correct -- a complete rewrite will be made for the next version
+* Lots of Gaussian bugs have been fixed -- thanks go to Vegard Nossum
+* A lot of compilation issues have been fixed to the point that the program
+  now compiles with "-pedantic -Wall -Werror" on many different systems.
+  Thanks for this go to: Martin Albrecht, Robert Aston, Martin Maurer, Vegard
+  Nossum and others on the CryptoMiniSat mailing list
+
 ver 2.9.0 20/01/2011
 * Added extended SCC and vivification using cached implications
 * Reachability testing and related branching heuristic using cached
