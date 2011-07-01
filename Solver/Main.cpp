@@ -227,7 +227,6 @@ void Main::printUsage(char** argv)
     printf("                     is SAT\n");
     printf("  --novarelim      = Don't perform variable elimination as per Een and Biere\n");
     printf("  --nosubsume1     = Don't perform clause contraction through resolution\n");
-    printf("  --noparthandler  = Don't find and solve subroblems with subsolvers\n");
 #ifdef USE_GAUSS
     printf("  --nomatrixfind   = Don't find distinct matrixes. Put all xors into one\n");
     printf("                     big matrix\n");
@@ -475,8 +474,6 @@ void Main::parseCommandLine()
             conf.doHeuleProcess = false;
         } else if ((value = hasPrefix(argv[i], "--nosatelite"))) {
             conf.doSatELite = false;
-        } else if ((value = hasPrefix(argv[i], "--noparthandler"))) {
-            conf.doPartHandler = false;
         } else if ((value = hasPrefix(argv[i], "--noxorsubs"))) {
             conf.doXorSubsumption = false;
         } else if ((value = hasPrefix(argv[i], "--nohyperbinres"))) {

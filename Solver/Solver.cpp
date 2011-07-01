@@ -25,7 +25,6 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "RestartTypeChooser.h"
 #include "FailedLitSearcher.h"
 #include "Subsumer.h"
-#include "PartHandler.h"
 #include "XorSubsumer.h"
 #include "StateSaver.h"
 #include "SCCFinder.h"
@@ -106,7 +105,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
     varReplacer = new VarReplacer(*this);
     clauseCleaner = new ClauseCleaner(*this);
     failedLitSearcher = new FailedLitSearcher(*this);
-    partHandler = new PartHandler(*this);
     subsumer = new Subsumer(*this);
     xorSubsumer = new XorSubsumer(*this);
     restartTypeChooser = new RestartTypeChooser(*this);
@@ -127,7 +125,6 @@ Solver::~Solver()
     delete varReplacer;
     delete clauseCleaner;
     delete failedLitSearcher;
-    delete partHandler;
     delete subsumer;
     delete xorSubsumer;
     delete restartTypeChooser;
@@ -185,7 +182,6 @@ Var Solver::newVar(bool dvar)
     insertVarOrder(v);
 
     varReplacer->newVar();
-    partHandler->newVar();
     subsumer->newVar();
     xorSubsumer->newVar();
     dataSync->newVar();
@@ -861,7 +857,6 @@ void Solver::calcReachability()
         if (value(lit.var()) != l_Undef
             || subsumer->getVarElimed()[lit.var()]
             || xorSubsumer->getVarElimed()[lit.var()]
-            || partHandler->getSavedState()[lit.var()] != l_Undef
             || !decision_var[lit.var()])
             continue;
 
@@ -2437,8 +2432,6 @@ end:
 @brief Should we perform a full restart?
 
 If so, we also do the things to be done if the full restart is effected.
-Currently, this means we try to find disconnected components and solve
-them with sub-solvers using class PartHandler
 */
 const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart)
 {
@@ -2460,9 +2453,6 @@ const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_confl
             if (!xorFinder.doNoPart(3, 10))
                 return false;
         }*/
-
-        if (conf.doPartHandler && !partHandler->handle())
-            return false;
 
         //calculateDefaultPolarities();
         if (conf.polarity_mode != polarity_auto) {
@@ -2659,7 +2649,6 @@ lbool Solver::solve(const vec<Lit>& assumps)
     else if (status == l_False) handleUNSATSolution();
 
     cancelUntil(0);
-    if (conf.doPartHandler && status != l_False) partHandler->readdRemovedClauses();
     restartTypeChooser->reset();
     if (status == l_Undef) clauseCleaner->removeAndCleanAll(true);
 
@@ -2690,7 +2679,6 @@ void Solver::handleSATSolution()
     assert(subsumer->checkElimedUnassigned());
     assert(xorSubsumer->checkElimedUnassigned());
 
-    partHandler->addSavedState();
     varReplacer->extendModelPossible();
     checkSolution();
 
@@ -2709,13 +2697,16 @@ void Solver::handleSATSolution()
         s.conf.doSubsWNonExistBins = false;
         s.conf.doRemUselessBins = false;
         s.conf.doClausVivif = false;
-        s.conf.doPartHandler = false;
         s.conf.doSortWatched = false;
         s.conf.verbosity = 0;
 
         vec<Lit> tmp;
         for (Var var = 0; var < nVars(); var++) {
-            s.newVar(decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var) || xorSubsumer->getVarElimed()[var]);
+            s.newVar(decision_var[var]
+            || subsumer->getVarElimed()[var]
+            || varReplacer->varHasBeenReplaced(var)
+            || xorSubsumer->getVarElimed()[var]
+            );
 
             //assert(!(xorSubsumer->getVarElimed()[var] && (decision_var[var] || subsumer->getVarElimed()[var] || varReplacer->varHasBeenReplaced(var))));
 

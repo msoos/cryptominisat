@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Subsumer.h"
 #include "XorSubsumer.h"
 //#include "VarReplacer.h"
-#include "PartHandler.h"
 #include "Gaussian.h"
 
 #ifndef _MSC_VER
@@ -507,8 +506,6 @@ void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver)
     //No need to update varreplacer, since it only stores binary clauses that
     //must have been allocated such as to use the pool
     //updatePointers(solver->varReplacer->clauses, oldToNewPointer);
-    updatePointers(solver->partHandler->clausesRemoved);
-    updatePointers(solver->partHandler->xorClausesRemoved);
 
     #ifdef USE_GAUSS
     for (uint32_t i = 0; i < solver->gauss_matrixes.size(); i++) {

@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 
 #include "ClauseCleaner.h"
-#include "PartHandler.h"
 #include "time_mem.h"
 #include "DataSync.h"
 
@@ -91,12 +90,10 @@ const bool VarReplacer::performReplaceInternal()
 
     Var var = 0;
     const vec<char>& removedVars = solver.xorSubsumer->getVarElimed();
-    const vec<lbool>& removedVars2 = solver.partHandler->getSavedState();
     const vec<char>& removedVars3 = solver.subsumer->getVarElimed();
     for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, var++) {
         if (it->var() == var
             || removedVars[it->var()]
-            || removedVars2[it->var()] != l_Undef
             || removedVars3[it->var()]
         ) continue;
         #ifdef VERBOSE_DEBUG
@@ -107,7 +104,6 @@ const bool VarReplacer::performReplaceInternal()
         //cannot_eliminate[var] = true;
         solver.setDecisionVar(it->var(), true);
         assert(!removedVars[var]);
-        assert(removedVars2[var] == l_Undef);
         assert(!removedVars3[var]);
 
         uint32_t& activity1 = solver.activity[var];

@@ -50,7 +50,6 @@ SolverConf::SolverConf() :
         , doSchedSimp      (true)
         , doSatELite       (true)
         , doXorSubsumption (true)
-        , doPartHandler    (true)
         , doHyperBinRes    (true)
         , doBlockedClause  (false)
         , doVarElim        (true)

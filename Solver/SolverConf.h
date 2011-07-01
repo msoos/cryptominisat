@@ -54,7 +54,6 @@ class SolverConf
         bool      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
         bool      doSatELite;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
         bool      doXorSubsumption;   ///<Should try to subsume & local-subsitute xor clauses
-        bool      doPartHandler;      ///<Should try to find disconnected components and solve them individually?
         bool      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
         bool      doBlockedClause;    ///<Should try to remove blocked clauses
         bool      doVarElim;          ///<Perform variable elimination

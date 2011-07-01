@@ -22,9 +22,7 @@ add_executable(cryptominisat
     ClauseCleaner.cpp
     RestartTypeChooser.cpp
     FailedLitSearcher.cpp
-    PartFinder.cpp
     Subsumer.cpp
-    PartHandler.cpp
     XorSubsumer.cpp
     StateSaver.cpp
     ClauseAllocator.cpp

@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VarReplacer.h"
 #include "Subsumer.h"
 #include "XorSubsumer.h"
-#include "PartHandler.h"
 
 namespace CMSat {
 
@@ -43,8 +42,7 @@ const bool BothCache::tryBoth()
         if (solver.value(var) != l_Undef
             || solver.subsumer->getVarElimed()[var]
             || solver.xorSubsumer->getVarElimed()[var]
-            || solver.varReplacer->getReplaceTable()[var].var() != var
-            || solver.partHandler->getSavedState()[var] != l_Undef)
+            || solver.varReplacer->getReplaceTable()[var].var() != var)
             continue;
 
         Lit lit = Lit(var, false);
@@ -74,8 +72,7 @@ const bool BothCache::tryBoth()
                 Var var2 = it->var();
                 if (solver.subsumer->getVarElimed()[var2]
                     || solver.xorSubsumer->getVarElimed()[var2]
-                    || solver.varReplacer->getReplaceTable()[var2].var() != var2
-                    || solver.partHandler->getSavedState()[var2] != l_Undef)
+                    || solver.varReplacer->getReplaceTable()[var2].var() != var2)
                     continue;
 
                 if  (val[it->var()] == it->sign()) {
