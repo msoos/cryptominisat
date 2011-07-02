@@ -9,7 +9,7 @@ ENDIF()
 
 PROJECT(cryptoms)
 if (CMAKE_COMPILER_IS_GNUCC)
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -fno-omit-frame-pointer -Wall -Werror -Wno-deprecated -g -mtune=native")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -fno-omit-frame-pointer -pedantic -Wall -Werror -Wno-deprecated -g -mtune=native")
     SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -Wno-deprecated -O0 -ggdb")
     SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -Werror -Wno-deprecated -O3 -g -DNDEBUG -mtune=native -fomit-frame-pointer") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
