@@ -286,7 +286,6 @@ const bool VarReplacer::replaceBins()
             //std::cout << "bin: " << lit1 << " , " << i->getOtherLit() << " learnt : " <<  (i->isLearnt()) << std::endl;
             Lit thisLit1 = lit1;
             Lit lit2 = i->getOtherLit();
-            Lit origLit2 = lit2;
             assert(thisLit1.var() != lit2.var());
 
             if (table[lit2.var()].var() != lit2.var()) {

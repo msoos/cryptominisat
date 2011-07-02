@@ -245,8 +245,6 @@ const bool FailedLitSearcher::search()
 
 
 end:
-    bool removedOldLearnts = false;
-
     solver.order_heap.filter(Solver::VarFilter(solver));
 
     if (solver.ok && (numFailed || goodBothSame)) {
@@ -256,7 +254,6 @@ end:
             reattacher.detachNonBinsNonTris(true);
             const bool ret = reattacher.reattachNonBins();
             release_assert(ret == true);
-            removedOldLearnts = true;
         } else {
             solver.clauseCleaner->removeAndCleanAll();
         }

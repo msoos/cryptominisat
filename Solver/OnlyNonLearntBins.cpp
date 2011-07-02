@@ -63,7 +63,6 @@ const bool OnlyNonLearntBins::fill()
 
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary() && !it2->getLearnt()) {

@@ -118,7 +118,6 @@ const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool also
 
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.getData(), end2 = ws.getDataEnd(); it2 != end2; it2++) {
             if (it2->isBinary()) {

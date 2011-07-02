@@ -753,7 +753,7 @@ const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
     for (Clause **end = i + cs.size(); i !=  end; i++) {
         if (i+1 != end) __builtin_prefetch(*(i+1));
 
-        ClauseSimp c = linkInClause(**i);
+        linkInClause(**i);
         numLitsAdded += (*i)->size();
     }
     cs.shrink(i-j);

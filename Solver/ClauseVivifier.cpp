@@ -229,7 +229,6 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
         for (uint32_t i2 = 0; i2 < cl.size(); i2++) seen[cl[i2].toInt()] = 1;
         for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
             if (seen[l->toInt()] == 0) continue;
-            Lit lit = *l;
 
             countTime += solver.transOTFCache[l->toInt()].lits.size();
             for (vector<Lit>::const_iterator it2 = solver.transOTFCache[l->toInt()].lits.begin()
