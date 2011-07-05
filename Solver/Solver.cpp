@@ -1506,10 +1506,17 @@ inline const bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watche
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
+        if (full && c.learnt()) {
+            std::cout << "Confl by learnt size: " << c.size() << std::endl;
+        }
         confl = PropBy(offset);
         qhead = trail.size();
         return false;
     } else {
+        if (full && c.learnt()) {
+            std::cout << "Prop by learnt size: " << c.size() << std::endl;
+        }
+
         if (full) uncheckedEnqueue(c[0], offset);
         else      uncheckedEnqueueLight(c[0]);
         #ifdef DYNAMICALLY_UPDATE_GLUE
@@ -2197,6 +2204,11 @@ clause with that of the shorter one
 */
 llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& conflictC, const bool update)
 {
+    if (conflicts > 10000) {
+        assert(conflicts == 10001);
+        std::cout << "That's all folks! Num confls: " << conflicts << std::endl;
+        exit(-1);
+    }
     #ifdef VERBOSE_DEBUG
     cout << "Handling conflict: ";
     for (uint32_t i = 0; i < learnt_clause.size(); i++)
@@ -2219,6 +2231,8 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         conflSizeHist.push(learnt_clause.size());
     }
     cancelUntil(backtrack_level);
+    std::cout << "Learnt clause: " << learnt_clause << std::endl;
+    c = NULL;
 
     #ifdef VERBOSE_DEBUG
     cout << "Learning:";
