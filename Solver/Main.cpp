@@ -562,6 +562,7 @@ void Main::parseCommandLine()
             }
             conf.maxConfl = maxconfl;
         } else if ((value = hasPrefix(argv[i], "--plain"))) {
+            conf.isPlain = true;
             conf.doFindXors = false;
             conf.doFindEqLits = false;
             conf.doRegFindEqLits = false;

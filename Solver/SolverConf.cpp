@@ -73,6 +73,7 @@ SolverConf::SolverConf() :
         , doBXor           (true)
         , doOTFSubsume     (true)
         , maxConfl         (std::numeric_limits<uint64_t>::max())
+        , isPlain          (false)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

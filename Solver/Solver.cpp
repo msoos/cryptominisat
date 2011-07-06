@@ -1513,6 +1513,7 @@ inline const bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watche
         if (full && c.learnt() && !simplifying) {
             std::cout << "Confl by learnt size: " << c.size() << std::endl;
             std::cout << "Confl by learnt glue: " << c.getGlue() << std::endl;
+            assert(!conf.isPlain || c.getGlue() > 1);
         }
         #endif //DUMP_STATS
         confl = PropBy(offset);
@@ -1523,6 +1524,7 @@ inline const bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watche
         if (full && c.learnt() && !simplifying) {
             std::cout << "Prop by learnt size: " << c.size() << std::endl;
             std::cout << "Prop by learnt glue: " << c.getGlue() << std::endl;
+            assert(!conf.isPlain || c.getGlue() > 1);
         }
         #endif //DUMP_STATS
 
@@ -2248,6 +2250,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     #ifdef DUMP_STATS
     std::cout << "Learnt clause size: " << learnt_clause << std::endl;
     std::cout << "Learnt clause glue: " << glue << std::endl;
+    assert(learnt_clause.size() == 1 || glue > 1);
     #endif //#ifdef DUMP_STATS
 
     #ifdef VERBOSE_DEBUG

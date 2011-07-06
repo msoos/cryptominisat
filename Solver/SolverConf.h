@@ -77,6 +77,7 @@ class SolverConf
         bool      doBXor;
         bool      doOTFSubsume; ///On-the-fly subsumption
         uint64_t  maxConfl;
+        bool      isPlain; ///<We are in 'plain' mode: glues can never be 1
 
         //interrupting & dumping
         uint32_t  maxRestarts;
