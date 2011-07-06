@@ -2088,6 +2088,16 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
         //printAllClauses();
         #endif //VERBOSE_DEBUG
 
+        if (conflicts > conf.maxConfl) {
+            if (conf.verbosity >= 0) {
+                std::cout << "c Interrupting: limit on number of conflicts, "
+                << conf.maxConfl
+                << " reached! " << std::endl;
+            }
+            needToInterrupt = true;
+            return l_Undef;
+        }
+
         if (!confl.isNULL()) {
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
             if (ret != l_Nothing) return ret;
@@ -2211,11 +2221,6 @@ clause with that of the shorter one
 */
 llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& conflictC, const bool update)
 {
-    if (conflicts > 10000) {
-        assert(conflicts == 10001);
-        std::cout << "That's all folks! Num confls: " << conflicts << std::endl;
-        exit(-1);
-    }
     #ifdef VERBOSE_DEBUG
     cout << "Handling conflict: ";
     for (uint32_t i = 0; i < learnt_clause.size(); i++)
