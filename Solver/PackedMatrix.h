@@ -134,6 +134,8 @@ public:
     class iterator
     {
     public:
+        friend class PackedMatrix;
+
         PackedRow operator*()
         {
             return PackedRow(numCols, mp);
@@ -173,8 +175,6 @@ public:
         }
 
     private:
-        friend class PackedMatrix;
-
         iterator(uint64_t* _mp, const uint32_t _numCols) :
             mp(_mp)
             , numCols(_numCols)
