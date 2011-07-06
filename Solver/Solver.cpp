@@ -1507,16 +1507,22 @@ inline const bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watche
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
-        if (full && c.learnt()) {
+        #ifdef DUMP_STATS
+        if (full && c.learnt() && !simplifying) {
             std::cout << "Confl by learnt size: " << c.size() << std::endl;
+            std::cout << "Confl by learnt glue: " << c.getGlue() << std::endl;
         }
+        #endif //DUMP_STATS
         confl = PropBy(offset);
         qhead = trail.size();
         return false;
     } else {
-        if (full && c.learnt()) {
+        #ifdef DUMP_STATS
+        if (full && c.learnt() && !simplifying) {
             std::cout << "Prop by learnt size: " << c.size() << std::endl;
+            std::cout << "Prop by learnt glue: " << c.getGlue() << std::endl;
         }
+        #endif //DUMP_STATS
 
         if (full) uncheckedEnqueue(c[0], offset);
         else      uncheckedEnqueueLight(c[0]);
@@ -2232,7 +2238,10 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         conflSizeHist.push(learnt_clause.size());
     }
     cancelUntil(backtrack_level);
-    std::cout << "Learnt clause: " << learnt_clause << std::endl;
+    #ifdef DUMP_STATS
+    std::cout << "Learnt clause size: " << learnt_clause << std::endl;
+    std::cout << "Learnt clause glue: " << glue << std::endl;
+    #endif //#ifdef DUMP_STATS
 
     #ifdef VERBOSE_DEBUG
     cout << "Learning:";
