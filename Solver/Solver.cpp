@@ -1177,7 +1177,8 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     //We can only on-the-fly subsume clauses that are not 2- or 3-long
     //furthermore, we cannot subsume a clause that is marked for deletion
     //due to its high glue value
-    if (out_learnt.size() == 1
+    if (!conf.doOTFSubsume
+        || out_learnt.size() == 1
         || !oldConfl.isClause()
         || oldConfl.getClause()->isXor()
         #ifdef ENABLE_UNWIND_GLUE
@@ -2232,7 +2233,6 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     }
     cancelUntil(backtrack_level);
     std::cout << "Learnt clause: " << learnt_clause << std::endl;
-    c = NULL;
 
     #ifdef VERBOSE_DEBUG
     cout << "Learning:";

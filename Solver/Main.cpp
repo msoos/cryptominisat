@@ -263,6 +263,7 @@ void Main::printUsage(char** argv)
     printf("                     subsuming resolution\n");
     printf("  --nocacheotfssr  = Don't cache 1-level equeue. Less memory used, but\n");
     printf("                     disables trans OTFSSR, adv. clause vivifier, etc.\n");
+    printf("  --nootfsubsume   = Don't do on-the-fly subsumption after conf. gen.\n");
     #ifdef ENABLE_UNWIND_GLUE
     printf("  --maxgluedel     = Automatically delete clauses over max glue. See '--maxglue'\n");
     printf("  --maxglue        = [0 - 2^%d-1] default: %d. Glue value above which we\n", MAX_GLUE_BITS, conf.maxGlue);
@@ -549,6 +550,8 @@ void Main::parseCommandLine()
             conf.doMinimLMoreRecur = false;
         } else if ((value = hasPrefix(argv[i], "--nocacheotfssr"))) {
             conf.doCacheOTFSSR = false;
+        } else if ((value = hasPrefix(argv[i], "--nootfsubsume"))) {
+            conf.doOTFSubsume = false;
         } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
             conf.doRemUselessLBins = false;
         } else if ((value = hasPrefix(argv[i], "--nobxor"))) {

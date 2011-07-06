@@ -71,6 +71,7 @@ SolverConf::SolverConf() :
         , doExtendedSCC    (true)
         , doCalcReach      (true)
         , doBXor           (true)
+        , doOTFSubsume     (true)
 
         , maxRestarts      (std::numeric_limits<uint32_t>::max())
         , needToDumpLearnts(false)

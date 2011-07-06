@@ -75,6 +75,7 @@ class SolverConf
         bool      doExtendedSCC;
         bool      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
         bool      doBXor;
+        bool      doOTFSubsume; ///On-the-fly subsumption
 
         //interrupting & dumping
         uint32_t  maxRestarts;
