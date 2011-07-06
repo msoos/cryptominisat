@@ -587,6 +587,7 @@ void Main::parseCommandLine()
             conf.doCalcReach = false;
             conf.doBXor = false;
             conf.doMinimLMoreRecur = false;
+            conf.doMinimLearntMore = false;
             conf.doCacheOTFSSR = false;
         } else if ((value = hasPrefix(argv[i], "--nobxor"))) {
             conf.doBXor = false;
