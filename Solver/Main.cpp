@@ -270,6 +270,7 @@ void Main::printUsage(char** argv)
     #endif //ENABLE_UNWIND_GLUE
     printf("                     throw the clause away on backtrack.\n");
     printf("  --threads        = Num threads (default is 1)\n");
+    printf("  --plain          = Get rid of all simplification algorithms\n");
     printf("\n");
 }
 
@@ -487,8 +488,6 @@ void Main::parseCommandLine()
             gaussconfig.noMatrixFind = true;
         } else if ((value = hasPrefix(argv[i], "--noiterreduce"))) {
             gaussconfig.iterativeReduce = false;
-        } else if ((value = hasPrefix(argv[i], "--noiterreduce"))) {
-            gaussconfig.iterativeReduce = false;
         } else if ((value = hasPrefix(argv[i], "--noordercol"))) {
             gaussconfig.orderCols = false;
         } else if ((value = hasPrefix(argv[i], "--maxmatrixrows="))) {
@@ -554,6 +553,33 @@ void Main::parseCommandLine()
             conf.doOTFSubsume = false;
         } else if ((value = hasPrefix(argv[i], "--noremlbins"))) {
             conf.doRemUselessLBins = false;
+        } else if ((value = hasPrefix(argv[i], "--plain"))) {
+            conf.doFindXors = false;
+            conf.doFindEqLits = false;
+            conf.doRegFindEqLits = false;
+            conf.doExtendedSCC = false;
+            conf.doConglXors = false;
+            conf.doSchedSimp = false;
+            conf.doReplace = false;
+            conf.doFailedLit = false;
+            conf.doHeuleProcess = false;
+            conf.doSatELite = false;
+            conf.doXorSubsumption = false;
+            printResult = false;
+            conf.doVarElim = false;
+            //nomatrixfind
+            gaussconfig.orderCols = false;
+            gaussconfig.iterativeReduce = false;
+            conf.doHyperBinRes = false;
+            conf.doRemUselessBins = false;
+            conf.doRemUselessLBins = false;
+            conf.doSubsWBins = false;
+            conf.doSubsWNonExistBins = false;
+            conf.doClausVivif = false;
+            conf.doCalcReach = false;
+            conf.doBXor = false;
+            conf.doMinimLMoreRecur = false;
+            conf.doCacheOTFSSR = false;
         } else if ((value = hasPrefix(argv[i], "--nobxor"))) {
             conf.doBXor = false;
         #ifdef ENABLE_UNWIND_GLUE
