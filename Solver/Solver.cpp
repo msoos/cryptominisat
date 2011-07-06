@@ -1146,7 +1146,9 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 
-    if (conf.doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt, calcNBLevels(out_learnt));
+    if (conf.doMinimLearntMore && out_learnt.size() > 1)
+        minimiseLeartFurther(out_learnt, calcNBLevels(out_learnt));
+
     glue = calcNBLevels(out_learnt);
     tot_literals += out_learnt.size();
 
