@@ -231,6 +231,10 @@ class Watched {
             data2 = 1;
         }
 
+        #ifdef DUMP_STATS
+        int glue;
+        #endif
+
     private:
         const Lit data1AsLit() const
         {

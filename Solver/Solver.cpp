@@ -499,6 +499,16 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
     watches[(~lit1).toInt()].push(Watched(lit2, learnt));
     watches[(~lit2).toInt()].push(Watched(lit1, learnt));
 
+    #ifdef DUMP_STATS
+    if (learnt) {
+        watches[(~lit1).toInt()].last().glue = 2;
+        watches[(~lit2).toInt()].last().glue = 2;
+    } else {
+        watches[(~lit1).toInt()].last().glue = -1;
+        watches[(~lit2).toInt()].last().glue = -1;
+    }
+    #endif
+
     numBins++;
     if (learnt) learnts_literals += 2;
     else clauses_literals += 2;
@@ -527,6 +537,19 @@ void Solver::attachClause(Clause& c)
         watches[(~c[0]).toInt()].push(Watched(c[1], c[2]));
         watches[(~c[1]).toInt()].push(Watched(c[0], c[2]));
         watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
+
+        #ifdef DUMP_STATS
+        if (c.learnt()) {
+            watches[(~c[0]).toInt()].last().glue = 2;
+            watches[(~c[1]).toInt()].last().glue = 2;
+            watches[(~c[2]).toInt()].last().glue = 2;
+        } else {
+            watches[(~c[0]).toInt()].last().glue = -1;
+            watches[(~c[1]).toInt()].last().glue = -1;
+            watches[(~c[2]).toInt()].last().glue = -1;
+        }
+        #endif
+
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(&c);
         watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2]));
@@ -1426,10 +1449,27 @@ inline const bool Solver::propBinaryClause(vec<Watched>::iterator &i, const Lit 
     if (val.isUndef()) {
         if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p));
         else      uncheckedEnqueueLight(i->getOtherLit());
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        assert(((i->glue > 0) == i->getLearnt()));
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Prop by learnt size: " << 2 << std::endl;
+            std::cout << "Prop by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
     } else if (val == l_False) {
         confl = PropBy(p);
         failBinLit = i->getOtherLit();
         qhead = trail.size();
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        assert(((i->glue > 0) == i->getLearnt()));
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Confl by learnt size: " << 2 << std::endl;
+            std::cout << "Confl by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
+
         return false;
     }
 
@@ -1453,13 +1493,35 @@ inline const bool Solver::propTriClause(vec<Watched>::iterator &i, const Lit p, 
     if (val.isUndef() && val2 == l_False) {
         if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
         else      uncheckedEnqueueLight(i->getOtherLit());
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Prop by learnt size: " << 3 << std::endl;
+            std::cout << "Prop by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
     } else if (val == l_False && val2.isUndef()) {
         if (full) uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
         else      uncheckedEnqueueLight(i->getOtherLit2());
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Prop by learnt size: " << 3 << std::endl;
+            std::cout << "Prop by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
     } else if (val == l_False && val2 == l_False) {
         confl = PropBy(p, i->getOtherLit2());
         failBinLit = i->getOtherLit();
         qhead = trail.size();
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Confl by learnt size: " << 3 << std::endl;
+            std::cout << "Confl by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
+
         return false;
     }
 
