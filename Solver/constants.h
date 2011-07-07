@@ -22,6 +22,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 // Settings (magic constants)
 ///////////////////
 
+//#define DUMP_STATS
+
 //Parameters for learnt-clause cleaning
 #define RATIOREMOVECLAUSES 1.0/2.0
 #define NBCLAUSESBEFOREREDUCE 20000
