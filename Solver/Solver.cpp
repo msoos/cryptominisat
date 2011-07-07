@@ -499,6 +499,16 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
     watches[(~lit1).toInt()].push(Watched(lit2, learnt));
     watches[(~lit2).toInt()].push(Watched(lit1, learnt));
 
+    #ifdef DUMP_STATS
+    if (learnt) {
+        watches[(~lit1).toInt()].last().glue = 2;
+        watches[(~lit2).toInt()].last().glue = 2;
+    } else {
+        watches[(~lit1).toInt()].last().glue = -1;
+        watches[(~lit2).toInt()].last().glue = -1;
+    }
+    #endif
+
     numBins++;
     if (learnt) learnts_literals += 2;
     else clauses_literals += 2;
@@ -527,6 +537,19 @@ void Solver::attachClause(Clause& c)
         watches[(~c[0]).toInt()].push(Watched(c[1], c[2]));
         watches[(~c[1]).toInt()].push(Watched(c[0], c[2]));
         watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
+
+        #ifdef DUMP_STATS
+        if (c.learnt()) {
+            watches[(~c[0]).toInt()].last().glue = 2;
+            watches[(~c[1]).toInt()].last().glue = 2;
+            watches[(~c[2]).toInt()].last().glue = 2;
+        } else {
+            watches[(~c[0]).toInt()].last().glue = -1;
+            watches[(~c[1]).toInt()].last().glue = -1;
+            watches[(~c[2]).toInt()].last().glue = -1;
+        }
+        #endif
+
     } else {
         ClauseOffset offset = clauseAllocator.getOffset(&c);
         watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2]));
@@ -1146,7 +1169,9 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     for (uint32_t j = 0; j != analyze_toclear.size(); j++)
         seen[analyze_toclear[j].var()] = 0;    // ('seen[]' is now cleared)
 
-    if (conf.doMinimLearntMore && out_learnt.size() > 1) minimiseLeartFurther(out_learnt, calcNBLevels(out_learnt));
+    if (conf.doMinimLearntMore && out_learnt.size() > 1)
+        minimiseLeartFurther(out_learnt, calcNBLevels(out_learnt));
+
     glue = calcNBLevels(out_learnt);
     tot_literals += out_learnt.size();
 
@@ -1177,7 +1202,8 @@ Clause* Solver::analyze(PropBy conflHalf, vec<Lit>& out_learnt, int& out_btlevel
     //We can only on-the-fly subsume clauses that are not 2- or 3-long
     //furthermore, we cannot subsume a clause that is marked for deletion
     //due to its high glue value
-    if (out_learnt.size() == 1
+    if (!conf.doOTFSubsume
+        || out_learnt.size() == 1
         || !oldConfl.isClause()
         || oldConfl.getClause()->isXor()
         #ifdef ENABLE_UNWIND_GLUE
@@ -1423,10 +1449,27 @@ inline const bool Solver::propBinaryClause(vec<Watched>::iterator &i, const Lit 
     if (val.isUndef()) {
         if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p));
         else      uncheckedEnqueueLight(i->getOtherLit());
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        assert(((i->glue > 0) == i->getLearnt()));
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Prop by learnt size: " << 2 << std::endl;
+            std::cout << "Prop by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
     } else if (val == l_False) {
         confl = PropBy(p);
         failBinLit = i->getOtherLit();
         qhead = trail.size();
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        assert(((i->glue > 0) == i->getLearnt()));
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Confl by learnt size: " << 2 << std::endl;
+            std::cout << "Confl by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
+
         return false;
     }
 
@@ -1450,13 +1493,35 @@ inline const bool Solver::propTriClause(vec<Watched>::iterator &i, const Lit p, 
     if (val.isUndef() && val2 == l_False) {
         if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
         else      uncheckedEnqueueLight(i->getOtherLit());
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Prop by learnt size: " << 3 << std::endl;
+            std::cout << "Prop by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
     } else if (val == l_False && val2.isUndef()) {
         if (full) uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
         else      uncheckedEnqueueLight(i->getOtherLit2());
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Prop by learnt size: " << 3 << std::endl;
+            std::cout << "Prop by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
     } else if (val == l_False && val2 == l_False) {
         confl = PropBy(p, i->getOtherLit2());
         failBinLit = i->getOtherLit();
         qhead = trail.size();
+        #ifdef DUMP_STATS
+        assert(conf.isPlain);
+        if (full && i->glue > 0 && !simplifying) {
+            std::cout << "Confl by learnt size: " << 3 << std::endl;
+            std::cout << "Confl by learnt glue: " << i->glue << std::endl;
+        }
+        #endif //DUMP_STATS
+
         return false;
     }
 
@@ -1506,10 +1571,25 @@ inline const bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watche
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
+        #ifdef DUMP_STATS
+        if (full && c.learnt() && !simplifying) {
+            std::cout << "Confl by learnt size: " << c.size() << std::endl;
+            std::cout << "Confl by learnt glue: " << c.getGlue() << std::endl;
+            assert(!conf.isPlain || c.getGlue() > 1);
+        }
+        #endif //DUMP_STATS
         confl = PropBy(offset);
         qhead = trail.size();
         return false;
     } else {
+        #ifdef DUMP_STATS
+        if (full && c.learnt() && !simplifying) {
+            std::cout << "Prop by learnt size: " << c.size() << std::endl;
+            std::cout << "Prop by learnt glue: " << c.getGlue() << std::endl;
+            assert(!conf.isPlain || c.getGlue() > 1);
+        }
+        #endif //DUMP_STATS
+
         if (full) uncheckedEnqueue(c[0], offset);
         else      uncheckedEnqueueLight(c[0]);
         #ifdef DYNAMICALLY_UPDATE_GLUE
@@ -2074,6 +2154,16 @@ lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_
         //printAllClauses();
         #endif //VERBOSE_DEBUG
 
+        if (conflicts > conf.maxConfl) {
+            if (conf.verbosity >= 0) {
+                std::cout << "c Interrupting: limit on number of conflicts, "
+                << conf.maxConfl
+                << " reached! " << std::endl;
+            }
+            needToInterrupt = true;
+            return l_Undef;
+        }
+
         if (!confl.isNULL()) {
             ret = handle_conflict(learnt_clause, confl, conflictC, update);
             if (ret != l_Nothing) return ret;
@@ -2219,6 +2309,11 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         conflSizeHist.push(learnt_clause.size());
     }
     cancelUntil(backtrack_level);
+    #ifdef DUMP_STATS
+    std::cout << "Learnt clause size: " << learnt_clause << std::endl;
+    std::cout << "Learnt clause glue: " << glue << std::endl;
+    assert(learnt_clause.size() == 1 || glue > 1);
+    #endif //#ifdef DUMP_STATS
 
     #ifdef VERBOSE_DEBUG
     cout << "Learning:";

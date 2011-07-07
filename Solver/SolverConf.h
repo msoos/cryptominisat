@@ -75,6 +75,9 @@ class SolverConf
         bool      doExtendedSCC;
         bool      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
         bool      doBXor;
+        bool      doOTFSubsume; ///On-the-fly subsumption
+        uint64_t  maxConfl;
+        bool      isPlain; ///<We are in 'plain' mode: glues can never be 1
 
         //interrupting & dumping
         uint32_t  maxRestarts;

@@ -22,6 +22,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 // Settings (magic constants)
 ///////////////////
 
+//#define DUMP_STATS
+
 //Parameters for learnt-clause cleaning
 #define RATIOREMOVECLAUSES 1.0/2.0
 #define NBCLAUSESBEFOREREDUCE 20000
@@ -58,7 +60,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define MAX_GLUE_BITS 7
 #define MAX_THEORETICAL_GLUE ((uint32_t)((1 << MAX_GLUE_BITS)-1))
 #define MIN_GLUE_RESTART 100
+
+#ifndef DUMP_STATS
 #define DYNAMICALLY_UPDATE_GLUE
+#endif //DUMP_STATS
+
 //#define ENABLE_UNWIND_GLUE
 
 //Parameters for syncing between threads
