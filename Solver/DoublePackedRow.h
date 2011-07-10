@@ -28,9 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SolverTypes.h"
 
-namespace MINISAT
+namespace CMSat
 {
-using namespace MINISAT;
+using namespace CMSat;
 
 class DoublePackedRow
 {
