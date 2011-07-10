@@ -24,30 +24,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #endif //_MSC_VER
 #include <vector>
-using std::vector;
 
 #include "Solver.h"
+
+namespace CMSat
+{
+
+using std::vector;
 
 class FindUndef {
     public:
         FindUndef(Solver& _solver);
         const uint32_t unRoll();
-        
+
     private:
         Solver& solver;
-        
+
         void moveBinToNormal();
         void moveBinFromNormal();
         bool updateTables();
         void fillPotential();
         void unboundIsPotentials();
-        
+
         vector<bool> dontLookAtClause; //If set to TRUE, then that clause already has only 1 lit that is true, so it can be skipped during updateFixNeed()
         vector<uint32_t> satisfies;
         vector<bool> isPotential;
         uint32_t isPotentialSum;
         uint32_t binPosition;
-        
+
+};
+
 };
 
 #endif //

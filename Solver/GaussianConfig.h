@@ -26,6 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "PackedRow.h"
 
+namespace CMSat
+{
+
 class GaussConf
 {
     public:
@@ -53,6 +56,8 @@ class GaussConf
     uint32_t maxMatrixRows; //The maximum matrix size -- no. of rows
     uint32_t minMatrixRows; //The minimum matrix size -- no. of rows
     uint32_t maxNumMatrixes; //Maximum number of matrixes
+};
+
 };
 
 #endif //GAUSSIANCONFIG_H

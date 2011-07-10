@@ -28,6 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #endif //_MSC_VER
 
+namespace CMSat
+{
+
 class BitArray
 {
 public:
@@ -177,6 +180,8 @@ private:
 
     uint32_t size;
     uint64_t* mp;
+};
+
 };
 
 #endif //BITARRAY_H
