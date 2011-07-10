@@ -26,6 +26,9 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <zlib.h>
 #endif // DISABLE_ZLIB
 
+namespace CMSat
+{
+
 class StreamBuffer
 {
     #ifdef DISABLE_ZLIB
@@ -68,6 +71,8 @@ public:
         pos++;
         assureLookahead();
     }
+};
+
 };
 
 #endif //STREAMBUFFER_H
