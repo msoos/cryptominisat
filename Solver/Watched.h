@@ -231,7 +231,7 @@ class Watched {
             data2 = 1;
         }
 
-        #ifdef DUMP_STATS
+        #ifdef DUMP_STATS_FULL
         int glue;
         #endif
 

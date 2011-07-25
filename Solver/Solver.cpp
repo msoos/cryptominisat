@@ -499,7 +499,7 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt)
     watches[(~lit1).toInt()].push(Watched(lit2, learnt));
     watches[(~lit2).toInt()].push(Watched(lit1, learnt));
 
-    #ifdef DUMP_STATS
+    #ifdef DUMP_STATS_FULL
     if (learnt) {
         watches[(~lit1).toInt()].last().glue = 2;
         watches[(~lit2).toInt()].last().glue = 2;
@@ -538,7 +538,7 @@ void Solver::attachClause(Clause& c)
         watches[(~c[1]).toInt()].push(Watched(c[0], c[2]));
         watches[(~c[2]).toInt()].push(Watched(c[0], c[1]));
 
-        #ifdef DUMP_STATS
+        #ifdef DUMP_STATS_FULL
         if (c.learnt()) {
             watches[(~c[0]).toInt()].last().glue = 2;
             watches[(~c[1]).toInt()].last().glue = 2;
@@ -1449,26 +1449,24 @@ inline const bool Solver::propBinaryClause(vec<Watched>::iterator &i, const Lit 
     if (val.isUndef()) {
         if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p));
         else      uncheckedEnqueueLight(i->getOtherLit());
-        #ifdef DUMP_STATS
-        assert(conf.isPlain);
+        #ifdef DUMP_STATS_FULL
         assert(((i->glue > 0) == i->getLearnt()));
         if (full && i->glue > 0 && !simplifying) {
             std::cout << "Prop by learnt size: " << 2 << std::endl;
             std::cout << "Prop by learnt glue: " << i->glue << std::endl;
         }
-        #endif //DUMP_STATS
+        #endif //DUMP_STATS_FULL
     } else if (val == l_False) {
         confl = PropBy(p);
         failBinLit = i->getOtherLit();
         qhead = trail.size();
-        #ifdef DUMP_STATS
-        assert(conf.isPlain);
+        #ifdef DUMP_STATS_FULL
         assert(((i->glue > 0) == i->getLearnt()));
         if (full && i->glue > 0 && !simplifying) {
             std::cout << "Confl by learnt size: " << 2 << std::endl;
             std::cout << "Confl by learnt glue: " << i->glue << std::endl;
         }
-        #endif //DUMP_STATS
+        #endif //DUMP_STATS_FULL
 
         return false;
     }
@@ -1493,34 +1491,34 @@ inline const bool Solver::propTriClause(vec<Watched>::iterator &i, const Lit p, 
     if (val.isUndef() && val2 == l_False) {
         if (full) uncheckedEnqueue(i->getOtherLit(), PropBy(p, i->getOtherLit2()));
         else      uncheckedEnqueueLight(i->getOtherLit());
-        #ifdef DUMP_STATS
+        #ifdef DUMP_STATS_FULL
         assert(conf.isPlain);
         if (full && i->glue > 0 && !simplifying) {
             std::cout << "Prop by learnt size: " << 3 << std::endl;
             std::cout << "Prop by learnt glue: " << i->glue << std::endl;
         }
-        #endif //DUMP_STATS
+        #endif //DUMP_STATS_FULL
     } else if (val == l_False && val2.isUndef()) {
         if (full) uncheckedEnqueue(i->getOtherLit2(), PropBy(p, i->getOtherLit()));
         else      uncheckedEnqueueLight(i->getOtherLit2());
-        #ifdef DUMP_STATS
+        #ifdef DUMP_STATS_FULL
         assert(conf.isPlain);
         if (full && i->glue > 0 && !simplifying) {
             std::cout << "Prop by learnt size: " << 3 << std::endl;
             std::cout << "Prop by learnt glue: " << i->glue << std::endl;
         }
-        #endif //DUMP_STATS
+        #endif //DUMP_STATS_FULL
     } else if (val == l_False && val2 == l_False) {
         confl = PropBy(p, i->getOtherLit2());
         failBinLit = i->getOtherLit();
         qhead = trail.size();
-        #ifdef DUMP_STATS
+        #ifdef DUMP_STATS_FULL
         assert(conf.isPlain);
         if (full && i->glue > 0 && !simplifying) {
             std::cout << "Confl by learnt size: " << 3 << std::endl;
             std::cout << "Confl by learnt glue: " << i->glue << std::endl;
         }
-        #endif //DUMP_STATS
+        #endif //DUMP_STATS_FULL
 
         return false;
     }
@@ -1571,24 +1569,24 @@ inline const bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watche
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
-        #ifdef DUMP_STATS
+        #ifdef DUMP_STATS_FULL
         if (full && c.learnt() && !simplifying) {
             std::cout << "Confl by learnt size: " << c.size() << std::endl;
             std::cout << "Confl by learnt glue: " << c.getGlue() << std::endl;
             assert(!conf.isPlain || c.getGlue() > 1);
         }
-        #endif //DUMP_STATS
+        #endif //DUMP_STATS_FULL
         confl = PropBy(offset);
         qhead = trail.size();
         return false;
     } else {
-        #ifdef DUMP_STATS
+        #ifdef DUMP_STATS_FULL
         if (full && c.learnt() && !simplifying) {
             std::cout << "Prop by learnt size: " << c.size() << std::endl;
             std::cout << "Prop by learnt glue: " << c.getGlue() << std::endl;
             assert(!conf.isPlain || c.getGlue() > 1);
         }
-        #endif //DUMP_STATS
+        #endif //DUMP_STATS_FULL
 
         if (full) uncheckedEnqueue(c[0], offset);
         else      uncheckedEnqueueLight(c[0]);
@@ -2310,8 +2308,12 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
     }
     cancelUntil(backtrack_level);
     #ifdef DUMP_STATS
-    std::cout << "Learnt clause size: " << learnt_clause << std::endl;
-    std::cout << "Learnt clause glue: " << glue << std::endl;
+    std::cout << "Learnt clause: " << learnt_clause
+    << " glue: " << glue
+    << " declevel: " << decisionLevel()
+    << " traillen: " << trail.size()
+    << " abst: " << calcAbstraction(learnt_clause)
+    << std::endl;
     assert(learnt_clause.size() == 1 || glue > 1);
     #endif //#ifdef DUMP_STATS
 
