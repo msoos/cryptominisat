@@ -1281,13 +1281,12 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl, const uint32_t glue)
             }
 
             if (i->isTriClause()) {
-                if (seen[(~i->getOtherLit()).toInt()] && seen[i->getOtherLit2().toInt()]) {
+                if (seen[i->getOtherLit2().toInt()]) {
                     seen[(~i->getOtherLit()).toInt()] = 0;
                 }
-                if (seen[(~i->getOtherLit2()).toInt()] && seen[i->getOtherLit().toInt()]) {
+                if (seen[i->getOtherLit().toInt()]) {
                     seen[(~i->getOtherLit2()).toInt()] = 0;
                 }
-                continue;
             }
         }
     }
