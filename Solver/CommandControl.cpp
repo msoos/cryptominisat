@@ -1184,7 +1184,7 @@ const Lit CommandControl::pickBranchLit()
 
         if (value(next) == l_Undef && control->decision_var[next]) {
             rnd_decisions++;
-            sign = getPolarity(next);
+            sign = !getPolarity(next);
         }
     }
 
@@ -1205,7 +1205,7 @@ const Lit CommandControl::pickBranchLit()
         if (value(next) == l_Undef
             && control->decision_var[next]
         ) {
-            sign = getPolarity(next);
+            sign = !getPolarity(next);
 
             Lit nextLit = Lit(next, sign);
             Lit lit2 = control->litReachable[nextLit.toInt()].lit;

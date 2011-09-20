@@ -256,51 +256,6 @@ inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
     return os;
 }
 
-class Polarity
-{
-    public:
-        Polarity() :
-            isForced(false)
-            , forcedVal(false)
-            , intLastVal(false)
-        {}
-
-        const bool getForced() const
-        {
-            return isForced;
-        }
-
-        void setForced(const bool val)
-        {
-            isForced = true;
-            forcedVal = val;
-        }
-
-        void setLastVal(const bool val)
-        {
-            intLastVal = val;
-        }
-
-        const bool getLastVal() const
-        {
-            return intLastVal;
-        }
-
-        const bool getVal() const
-        {
-            if (isForced)
-                return forcedVal;
-            else
-                return intLastVal;
-        }
-
-    private:
-
-        unsigned char isForced:1;
-        unsigned char forcedVal:1;
-        unsigned char intLastVal:1;
-};
-
 class AgilityData
 {
     public:

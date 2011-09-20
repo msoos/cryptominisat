@@ -236,16 +236,16 @@ inline bool CommandControl::getPolarity(const Var var)
 {
     switch(conf.polarity_mode) {
         case polarity_false:
-            return true;
-        case polarity_true:
             return false;
+        case polarity_true:
+            return true;
         case polarity_rnd:
             return mtrand.randInt(1);
         case polarity_auto:
             if (avgBranchDepth.isvalid()) {
-                return varData[var].polarity.getVal() ^ (mtrand.randInt(avgBranchDepth.getAvgUInt()) == 1);
+                return !varData[var].polarity ^ (mtrand.randInt(avgBranchDepth.getAvgUInt()) == 1);
             } else {
-                return varData[var].polarity.getVal();
+                return !varData[var].polarity;
             }
         default:
             assert(false);

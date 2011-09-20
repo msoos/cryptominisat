@@ -120,7 +120,6 @@ const bool VarReplacer::performReplace()
         uint32_t& activity2 = control->varData[it->var()].activity;
         if (wasDecisionVar && activity1 > activity2) {
             activity2 = activity1;
-            control->varData[it->var()].polarity.setLastVal(control->varData[var].polarity.getVal()^it->sign());
         }
 
         activity1 = 0.0;

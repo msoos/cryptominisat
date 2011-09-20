@@ -52,7 +52,7 @@ struct VarData
         level(std::numeric_limits< uint32_t >::max())
         , activity(0)
         , elimed(ELIMED_NONE)
-        , polarity(Polarity())
+        , polarity(false)
         , reason(PropBy())
     {}
 
@@ -66,7 +66,7 @@ struct VarData
     char elimed;
 
     ///The preferred polarity of each variable.
-    Polarity polarity;
+    bool polarity;
 
     PropBy reason;
 };
@@ -80,8 +80,8 @@ struct PolaritySorter
     {};
 
     const bool operator()(const Lit lit1, const Lit lit2) {
-        const bool pol1 = !varData[lit1.var()].polarity.getLastVal() ^ lit1.sign();
-        const bool pol2 = !varData[lit2.var()].polarity.getLastVal() ^ lit2.sign();
+        const bool pol1 = varData[lit1.var()].polarity ^ lit1.sign();
+        const bool pol2 = varData[lit2.var()].polarity ^ lit2.sign();
 
         //Tie 1: polarity
         if (pol1 == true && pol2 == false) return true;
@@ -112,7 +112,6 @@ public:
 
     // Variable mode:
     //
-    void setPolarity(const Var v, const bool b);      ///<Declare which polarity the decision heuristic should use for a variable.
     virtual const Var newVar(const bool dvar = true);
 
     // Read state:
@@ -256,12 +255,6 @@ inline const uint32_t Solver::nVars         ()      const
     return assigns.size();
 }
 
-inline void     Solver::setPolarity   (Var v, bool b)
-{
-    assert(v < nVars());
-    varData[v].polarity.setForced(!b);
-}
-
 inline const bool     Solver::okay          ()      const
 {
     return ok;
@@ -307,8 +300,8 @@ inline void  Solver::enqueue(const Lit p, const PropBy from)
     propagations++;
 
     varData[v].level = decisionLevel();
-    agility.update(varData[v].polarity.getLastVal() != p.sign());
-    varData[v].polarity.setLastVal(p.sign());
+    agility.update(varData[v].polarity != !p.sign());
+    varData[v].polarity = !p.sign();
 }
 
 inline void Solver::enqueueComplex(const Lit p, const Lit ancestor, const bool learntStep)
