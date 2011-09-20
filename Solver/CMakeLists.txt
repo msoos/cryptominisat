@@ -28,7 +28,6 @@ add_library(cryptoms
 )
 
 target_link_libraries(cryptoms
-    MV
     m4ri
 )
 
