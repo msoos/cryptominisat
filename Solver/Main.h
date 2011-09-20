@@ -10,14 +10,19 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #define MAIN_H
 
 #include <string>
-using std::string;
 #include <vector>
+#include <memory>
+
 #ifndef DISABLE_ZLIB
 #include <zlib.h>
 #endif // DISABLE_ZLIB
 
-#include "MTSolver.h"
-#include "SharedData.h"
+#include "SolverTypes.h"
+#include "SolverConf.h"
+
+class ThreadControl;
+
+using std::string;
 
 class Main
 {
@@ -25,38 +30,39 @@ class Main
         Main(int argc, char** argv);
 
         void parseCommandLine();
-
         const int solve();
 
     private:
 
-        void printUsage(char** argv);
-        const char* hasPrefix(const char* str, const char* prefix);
-        void printResultFunc(const MTSolver& S, const lbool ret, FILE* res);
+        ThreadControl* control;
 
         //File reading
-        void readInAFile(const std::string& filename, MTSolver& solver);
-        void readInStandardInput(MTSolver& solver);
-        void parseInAllFiles(MTSolver& solver);
-        FILE* openOutputFile();
+        void readInAFile(const std::string& filename);
+        void readInStandardInput();
+        void parseInAllFiles();
 
-        void setDoublePrecision(const uint32_t verbosity);
+        //Helper functions
+        void printResultFunc(const lbool ret);
         void printVersionInfo(const uint32_t verbosity);
         int correctReturnValue(const lbool ret) const;
 
+        //Config
         SolverConf conf;
-        GaussConf gaussconfig;
         int numThreads;
-
-        bool grouping;
         bool debugLib;
         bool debugNewVar;
         bool printResult;
-        uint32_t max_nr_of_solutions;
-        bool fileNamePresent;
-        bool twoFileNamesPresent;
-        std::vector<std::string> filesToRead;
 
+        //Multi-start solving
+        uint32_t max_nr_of_solutions;
+        bool doBanFoundSolution;
+
+        //Files to read & write
+        bool fileNamePresent;
+        std::vector<std::string> filesToRead;
+        std::string outputFile;
+
+        //Command line arguments
         int argc;
         char** argv;
 };

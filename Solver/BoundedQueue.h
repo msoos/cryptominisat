@@ -20,7 +20,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 template <class T>
 class bqueue {
-    vec<T>  elems;
+    std::vector<T>  elems;
     uint32_t first;
     uint32_t last;
     int64_t  sumofqueue;
@@ -40,7 +40,11 @@ public:
         , queuesize(0)
     {}
 
-    void initSize(const uint32_t size) {growTo(size);} // Init size of bounded size queue
+    // Init size of bounded size queue
+    void initSize(const uint32_t size)
+    {
+        resize(size);
+    }
 
     void push(const T x) {
         if (queuesize==maxsize) {
@@ -66,8 +70,8 @@ public:
     uint64_t getTotalNumeElems() const {return totalNumElems;}
     int isvalid() const {return (queuesize==maxsize);}
 
-    void growTo(const uint32_t size) {
-        elems.growTo(size);
+    void resize(const uint32_t size) {
+        elems.resize(size);
         first=0; maxsize=size; queuesize = 0;
         for(uint32_t i=0;i<size;i++) elems[i]=0;
     }
@@ -76,8 +80,8 @@ public:
 
     int  size(void)    { return queuesize; }
 
-    void clear(bool dealloc = false)   {
-        elems.clear(dealloc);
+    void clear()   {
+        elems.clear();
         first = 0;
         last = 0;
         maxsize=0;

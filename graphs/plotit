@@ -36,3 +36,10 @@ set key left top
 
 set output "CryptoMiniSat3Beta-compare.eps"
 plot [80:] "./solveTimesMiniSatGraph" w lp title "MiniSat 2.2", "./solveTimesLingelingGraph" w lp title "lingeling", "./solveTimesPrecoSat465Graph" w lp title "PrecoSat465", "./solveTimes129Graph" w lp title "CryptoMiniSat3Beta"
+
+
+#set term png rounded size 700,400
+set term postscript eps color lw 1.5 "Helvetica" 29 size 7,3
+set output "CryptoMiniSat-Competition.eps"
+plot [80:] "./solveTimesMiniSatGraph" w lp title "MiniSat 2.2", "./solveTimesLingelingGraph" w lp title "lingeling", "./solveTimesPrecoSat465Graph" w lp title "PrecoSat465", "./solveTimes129Graph" w lp title "CryptoMiniSat SAT Comp'11"
+

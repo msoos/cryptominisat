@@ -1,20 +1,26 @@
-/*****************************************************************************
-MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
-glucose -- Gilles Audemard, Laurent Simon (2008)
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-
-Original code by MiniSat and glucose authors are under an MIT licence.
-Modifications for CryptoMiniSat are under GPLv3 licence.
-******************************************************************************/
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
 #ifndef CLAUSE_H
 #define CLAUSE_H
-
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
 
 #include <cstdio>
 #include <vector>
@@ -27,19 +33,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "Watched.h"
 #include "Alg.h"
 #include "constants.h"
+#include "ClauseAllocator.h"
 
-template <class T>
-uint32_t calcAbstraction(const T& ps) {
-    uint32_t abstraction = 0;
-    for (uint32_t i = 0; i != ps.size(); i++)
-        abstraction |= 1 << (ps[i].var() & 31);
-    return abstraction;
-}
-
-//=================================================================================================
-// Clause -- a simple class for representing a clause:
-
-class MatrixFinder;
 class ClauseAllocator;
 
 /**
@@ -57,16 +52,7 @@ protected:
     uint32_t isLearnt:1; ///<Is the clause a learnt clause?
     uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
     uint32_t changed:1; ///<Var inside clause has been changed
-    /**
-    @brief Is the XOR equal to 1 or 0?
 
-    i.e. "a + b" = TRUE or FALSE? -- we only have variables inside xor clauses,
-    so this is important to know
-
-    NOTE: ONLY set if the clause is an xor clause.
-    */
-    uint16_t isXorEqualFalse:1;
-    uint16_t isXorClause:1; ///< Is the clause an XOR clause?
     uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
@@ -74,47 +60,35 @@ protected:
 
     uint32_t num;
 
-    #ifdef STATS_NEEDED
-    uint32_t group;
-    #endif
+    Lit* getData()
+    {
+        return (Lit*)((char*)this + sizeof(Clause));
+    }
 
-    /**
-    @brief Stores the literals in the clause
+    const Lit* getData() const
+    {
+        return (Lit*)((char*)this + sizeof(Clause));
+    }
 
-    This is the reason why we cannot have an instance of this class as it is:
-    it cannot hold any literals in that case! This is a trick so that the
-    literals are at the same place as the data of the clause, i.e. its size,
-    glue, etc. We allocate therefore the clause manually, taking care that
-    there is enough space for data[] to hold the literals
-    */
-    #ifdef __GNUC__
-    Lit     data[0];
-    #else
-    //NOTE: Dangerous packing. We love C++. More info: stackoverflow.com/questions/688471/variable-sized-struct-c
-    Lit     data[1];
-    #endif //__GNUC__
-
-#ifdef _MSC_VER
 public:
-#endif //_MSC_VER
     template<class V>
-    Clause(const V& ps, const uint32_t _group, const bool learnt, const uint32_t clauseNum)
+    Clause(const V& ps, const uint32_t clauseNum)
     {
         num = clauseNum;
         isFreed = false;
-        isXorClause = false;
         assert(ps.size() > 2);
         mySize = ps.size();
-        isLearnt = learnt;
+        isLearnt = false;
         isRemoved = false;
-        setGroup(_group);
 
-        for (uint32_t i = 0; i < ps.size(); i++) data[i] = ps[i];
+        for (uint32_t i = 0; i < ps.size(); i++) getData()[i] = ps[i];
         glue = MAX_THEORETICAL_GLUE;
         setChanged();
     }
 
-public:
+    typedef Lit* iterator;
+    typedef const Lit* const_iterator;
+
     friend class ClauseAllocator;
 
     const uint16_t size() const
@@ -145,14 +119,17 @@ public:
         if (i > 0) setStrenghtened();
     }
 
+    void resize (const uint32_t i)
+    {
+        assert(i <= size());
+        if (i == size()) return;
+        mySize = i;
+        setStrenghtened();
+    }
+
     void pop()
     {
         shrink(1);
-    }
-
-    const bool isXor() const
-    {
-        return isXorClause;
     }
 
     const bool learnt() const
@@ -175,14 +152,14 @@ public:
         strenghtened = false;
     }
 
-    Lit& operator [] (uint32_t i)
+    Lit& operator [] (const uint32_t i)
     {
-        return data[i];
+        return *(getData() + i);
     }
 
-    const Lit& operator [] (uint32_t i) const
+    const Lit& operator [] (const uint32_t i) const
     {
-        return data[i];
+        return *(getData() + i);
     }
 
     void setGlue(const uint32_t newGlue)
@@ -217,63 +194,30 @@ public:
     inline void add(const Lit p)
     {
         mySize++;
-        data[mySize-1] = p;
+        getData()[mySize-1] = p;
         setChanged();
     }
 
-    const Lit* getData() const
+    const Lit* begin() const
     {
-        return data;
+        return getData();
     }
 
-    Lit* getData()
+    Lit* begin()
     {
-        return data;
+        return getData();
     }
 
-    const Lit* getDataEnd() const
+    const Lit* end() const
     {
-        return data+size();
+        return getData()+size();
     }
 
-    Lit* getDataEnd()
+    Lit* end()
     {
-        return data+size();
+        return getData()+size();
     }
 
-    void print(FILE* to = stdout) const
-    {
-        plainPrint(to);
-        fprintf(to, "c clause learnt %s glue %d group %d\n", (learnt() ? "yes" : "no"), getGlue(), getGroup());
-    }
-
-    void plainPrint(FILE* to = stdout) const
-    {
-        for (uint32_t i = 0; i < size(); i++) {
-            data[i].print(to);
-        }
-        fprintf(to, "0\n");
-    }
-
-    #ifdef STATS_NEEDED
-    const uint32_t getGroup() const
-    {
-        return group;
-    }
-    void setGroup(const uint32_t _group)
-    {
-        group = _group;
-    }
-    #else
-    const uint32_t getGroup() const
-    {
-        return 0;
-    }
-    void setGroup(const uint32_t _group)
-    {
-        return;
-    }
-    #endif //STATS_NEEDED
     void setRemoved()
     {
         isRemoved = true;
@@ -311,74 +255,12 @@ public:
     }
 };
 
-/**
-@brief Holds an xor clause. Similarly to Clause, it cannot be directly used
-
-The space is not allocated for the literals. See Clause for details
-*/
-class XorClause : public Clause
-{
-protected:
-    // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
-    template<class V>
-    XorClause(const V& ps, const bool xorEqualFalse, const uint32_t _group, const uint32_t clauseNum) :
-        Clause(ps, _group, false, clauseNum)
-    {
-        isXorEqualFalse = xorEqualFalse;
-        isXorClause = true;
-    }
-
-public:
-    friend class ClauseAllocator;
-
-    inline const bool xorEqualFalse() const
-    {
-        return isXorEqualFalse;
-    }
-
-    inline void invert(const bool b)
-    {
-        isXorEqualFalse ^= b;
-    }
-
-    void print(FILE* to = stdout) const
-    {
-        plainPrint(to);
-        fprintf(to, "c clause learnt %s glue %d group %d\n", (learnt() ? "yes" : "no"), getGlue(), getGroup());
-    }
-
-    void plainPrint(FILE* to = stdout) const
-    {
-        fprintf(to, "x");
-        if (xorEqualFalse())
-            fprintf(to, "-");
-        for (uint32_t i = 0; i < size(); i++) {
-            fprintf(to, "%d ", data[i].var() + 1);
-        }
-        fprintf(to, "0\n");
-    }
-
-    friend class MatrixFinder;
-};
-
-inline std::ostream& operator<<(std::ostream& cout, const Clause& cl)
+inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
 {
     for (uint32_t i = 0; i < cl.size(); i++) {
-        cout << cl[i] << " ";
+        os << cl[i] << " ";
     }
-    return cout;
-}
-
-inline std::ostream& operator<<(std::ostream& cout, const XorClause& cl)
-{
-    cout << "x";
-    for (uint32_t i = 0; i < cl.size(); i++) {
-        cout << cl[i].var() + 1 << " ";
-    }
-    if (cl.xorEqualFalse()) cout << " =  false";
-    else cout << " = true";
-
-    return cout;
+    return os;
 }
 
 struct ClauseData

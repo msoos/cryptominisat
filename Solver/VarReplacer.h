@@ -1,40 +1,53 @@
-/***************************************************************************
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*****************************************************************************/
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
 #ifndef VARREPLACER_H
 #define VARREPLACER_H
 
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
-
 #include <map>
 #include <vector>
-using std::map;
-using std::vector;
 
-#include "Solver.h"
+#include "constants.h"
 #include "SolverTypes.h"
 #include "Clause.h"
 #include "Vec.h"
 
+//#define VERBOSE_DEBUG
+
+using std::map;
+using std::vector;
 class SolutionExtender;
+class ThreadControl;
+
+class LaterAddBinXor
+{
+    public:
+        LaterAddBinXor(const Lit _lit1, const Lit _lit2) :
+            lit1(_lit1)
+            , lit2(_lit2)
+        {}
+
+        Lit lit1;
+        Lit lit2;
+};
 
 /**
 @brief Replaces variables with their anti/equivalents
@@ -42,12 +55,11 @@ class SolutionExtender;
 class VarReplacer
 {
     public:
-        VarReplacer(Solver& solver);
+        VarReplacer(ThreadControl* control);
         ~VarReplacer();
-        const bool performReplace(const bool always = false);
+        const bool performReplace();
         const bool needsReplace();
-        template<class T>
-        const bool replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt = false, const bool addToWatchLists = true);
+        const bool replace(Lit lit1, Lit lit2, const bool xorEqualFalse);
 
         void extendModel(SolutionExtender* extender) const;
 
@@ -62,25 +74,21 @@ class VarReplacer
         const bool varHasBeenReplaced(const Var var) const;
         const bool replacingVar(const Var var) const;
         void newVar();
-
-        vec<char> cannot_eliminate;
+        const bool addLaterAddBinXor();
 
         //No need to update, only stores binary clauses, that
         //have been allocated within pool
         //friend class ClauseAllocator;
 
     private:
-        const bool performReplaceInternal();
-
-        const bool replace_set(vec<Clause*>& cs);
+        const bool replace_set(vector<Clause*>& cs);
         const bool replaceBins();
-        const bool replace_set(vec<XorClause*>& cs);
         const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
-        const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
-        void addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group, const bool learnt = false);
+        void addBinaryXorClause(Lit lit1, Lit lit2);
 
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);
+        vector<LaterAddBinXor> laterAddBinXor;
 
         vector<Lit> table; ///<Stores which variables have been replaced by which literals. Index by: table[VAR]
         map<Var, vector<Var> > reverseTable; ///<mapping of variable to set of variables it replaces
@@ -88,24 +96,8 @@ class VarReplacer
         uint32_t replacedLits; ///<Num literals replaced during var-replacement
         uint32_t replacedVars; ///<Num vars replaced during var-replacement
         uint32_t lastReplacedVars; ///<Last time performReplace() was called, "replacedVars" contained this
-        Solver& solver; ///<The solver we are working with
+        ThreadControl* control; ///<The solver we are working with
 };
-
-inline const bool VarReplacer::performReplace(const bool always)
-{
-    //uint32_t limit = std::min((uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE), FIXCLEANREPLACE);
-    uint32_t limit = (uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE);
-    if ((always && getNewToReplaceVars() > 0) || getNewToReplaceVars() > limit)
-        return performReplaceInternal();
-
-    return true;
-}
-
-inline const bool VarReplacer::needsReplace()
-{
-    uint32_t limit = (uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE);
-    return (getNewToReplaceVars() > limit);
-}
 
 inline const uint32_t VarReplacer::getNumReplacedLits() const
 {

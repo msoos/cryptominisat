@@ -1,0 +1,8 @@
+There are multiple software here, with different licences:
+
+* DSHARP is licenced under MIT, by Christian Muise
+* SharpSAT is licenced under MIT, by  Marc Thurley
+* MiniSat code, which appears in some files (Solver.cpp, etc.)
+  is licenced under MIT by Niklas Een and Niklas Sorensson
+* SatELite is licenced under MIT by Niklas Een
+* CryptoMiniSat is lincenced under LGPL by Mate SOOS

@@ -84,24 +84,24 @@ class Heap {
     Heap(const Comp& c) : lt(c) { }
     Heap(const Heap<Comp>& other) : lt(other.lt) {
         heap.growTo(other.heap.size());
-        std::copy(other.heap.getData(), other.heap.getDataEnd(), heap.getData());
+        std::copy(other.heap.begin(), other.heap.end(), heap.begin());
         indices.growTo(other.indices.size());
-        std::copy(other.indices.getData(), other.indices.getDataEnd(), indices.getData());
+        std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
-    
+
     void operator=(const Heap<Comp>& other)
     {
         if (other.heap.size() > heap.size())
             heap.growTo(other.heap.size());
         else
             heap.shrink(heap.size()-other.heap.size());
-        std::copy(other.heap.getData(), other.heap.getDataEnd(), heap.getData());
-        
+        std::copy(other.heap.begin(), other.heap.end(), heap.begin());
+
         if (other.indices.size() > indices.size())
             indices.growTo(other.indices.size());
         else
             indices.shrink(indices.size() - other.indices.size());
-        std::copy(other.indices.getData(), other.indices.getDataEnd(), indices.getData());
+        std::copy(other.indices.begin(), other.indices.end(), indices.begin());
     }
 
     uint32_t  size      ()          const { return heap.size(); }
@@ -122,31 +122,31 @@ class Heap {
 
         indices[n] = heap.size();
         heap.push(n);
-        percolateUp(indices[n]); 
+        percolateUp(indices[n]);
     }
 
 
     uint32_t  removeMin()
     {
-        uint32_t x            = heap[0];
-        heap[0]          = heap.last();
+        uint32_t x       = heap[0];
+        heap[0]          = heap.back();
         indices[heap[0]] = 0;
         indices[x]       = std::numeric_limits<uint32_t>::max();
         heap.pop();
         if (heap.size() > 1) percolateDown(0);
-        return x; 
+        return x;
     }
 
 
-    void clear(bool dealloc = false) 
-    { 
+    void clear(bool dealloc = false)
+    {
         for (uint32_t i = 0; i != heap.size(); i++)
             indices[heap[i]] = std::numeric_limits<uint32_t>::max();
 #ifndef NDEBUG
         for (uint32_t i = 0; i != indices.size(); i++)
             assert(indices[i] == std::numeric_limits<uint32_t>::max());
 #endif
-        heap.clear(dealloc); 
+        heap.clear(dealloc);
     }
 
 

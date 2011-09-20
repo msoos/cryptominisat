@@ -17,21 +17,14 @@ You will need the following libraries to compile the sources:
 -----------------
 Building the source
 -----------------
-There are two ways to build the source. With cmake or with autotools.
-I personally use cmake.
+CMake is needed to build the code. Install cmake then issue:
 
-------------------
-Building using autotools
-------------------
-* Go to the 'build' directory
-* Issue '../configure'
-* Issue 'make'
-* Issue './cryptominisat satfile.cnf' to test your new code
+$ mkdir build
+$ cd build
+$ cmake ../
+$ make -j8
 
-If you got your source from the GIT/SVN, then you should do the following
-before doing the above::
-* Install automake, autoconf, libtool
-* Issue 'make -f Makefile.cvs' in the root dir of the source
+CMake should work on Windows&Mac OS as well.
 
 ---------
 Please read help

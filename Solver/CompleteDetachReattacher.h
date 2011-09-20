@@ -1,24 +1,33 @@
-/**************************************************************************
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+#include "constants.h"
+#include "Vec.h"
+#include "Watched.h"
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*****************************************************************************/
-
-#include "Solver.h"
+class ThreadControl;
+class Clause;
 
 /**
-@brief Helper class to completely detaches all(or only non-native) clauses, and then re-attach all
+@brief Helper class to completely detaches all(or only non-native) clauses
 
 Used in classes that (may) do a lot of clause-changning, in which case
 detaching&reattaching of clauses would be neccessary to do
@@ -27,23 +36,19 @@ individually, which is \b very slow
 A main use-case is the following:
 -# detach all clauses
 -# play around with all clauses as desired. Cannot call solver.propagate() here
--# attach all clauses again
-
-A somewhat more complicated, but more interesting use-case is the following:
--# detach only non-natively stored clauses from watchlists
--# play around wil all clauses as desired. 2- and 3-long clauses can still
-be propagated with solver.propagate() -- this is quite a nice trick, in fact
--# detach all clauses (i.e. also native ones)
--# attach all clauses
+-# attach again
 */
 class CompleteDetachReatacher
 {
     public:
-        CompleteDetachReatacher(Solver& solver);
+        CompleteDetachReatacher(ThreadControl* control);
         const bool reattachNonBins();
         void detachNonBinsNonTris(const bool removeTri);
 
     private:
+        void cleanAndAttachClauses(vector<Clause*>& cs);
+        const bool cleanClause(Clause*& cl);
+
         class ClausesStay {
             public:
                 ClausesStay() :
@@ -63,12 +68,7 @@ class CompleteDetachReatacher
                 uint32_t nonLearntBins;
                 uint32_t tris;
         };
-        const ClausesStay clearWatchNotBinNotTri(vec2<Watched>& ws, const bool removeTri = false);
+        const ClausesStay clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri = false);
 
-        void cleanAndAttachClauses(vec<Clause*>& cs);
-        void cleanAndAttachClauses(vec<XorClause*>& cs);
-        const bool cleanClause(Clause*& ps);
-        const bool cleanClause(XorClause& ps);
-
-        Solver& solver;
+        ThreadControl* control;
 };

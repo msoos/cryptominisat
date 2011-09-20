@@ -1,52 +1,55 @@
-/*****************************************************************************
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-******************************************************************************/
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
 #include <iostream>
 #include <vector>
-#include "../Solver/SolverTypes.h"
+#include <iomanip>
+
+#include "SolverTypes.h"
 #include "SCCFinder.h"
 #include "VarReplacer.h"
-#include <iomanip>
 #include "time_mem.h"
-#include "Subsumer.h"
-#include "XorSubsumer.h"
-#include "PartHandler.h"
+#include "ThreadControl.h"
 
-SCCFinder::SCCFinder(Solver& _solver) :
-    solver(_solver)
-    , replaceTable(_solver.varReplacer->getReplaceTable())
+SCCFinder::SCCFinder(ThreadControl* _control) :
+    control(_control)
+    , replaceTable(_control->varReplacer->getReplaceTable())
     , totalTime(0.0)
 {}
 
 const bool SCCFinder::find2LongXors()
 {
     double myTime = cpuTime();
-    uint32_t oldNumReplace = solver.varReplacer->getNewToReplaceVars();
+    uint32_t oldNumReplace = control->varReplacer->getNewToReplaceVars();
 
     globalIndex = 0;
     index.clear();
-    index.resize(solver.nVars()*2, std::numeric_limits<uint32_t>::max());
+    index.resize(control->nVars()*2, std::numeric_limits<uint32_t>::max());
     lowlink.clear();
-    lowlink.resize(solver.nVars()*2, std::numeric_limits<uint32_t>::max());
+    lowlink.resize(control->nVars()*2, std::numeric_limits<uint32_t>::max());
     stackIndicator.clear();
-    stackIndicator.growTo(solver.nVars()*2, false);
+    stackIndicator.resize(control->nVars()*2, false);
     assert(stack.empty());
 
-    for (uint32_t vertex = 0; vertex < solver.nVars()*2; vertex++) {
+    for (uint32_t vertex = 0; vertex < control->nVars()*2; vertex++) {
         //Start a DFS at each node we haven't visited yet
         if (index[vertex] == std::numeric_limits<uint32_t>::max()) {
             tarjan(vertex);
@@ -54,15 +57,18 @@ const bool SCCFinder::find2LongXors()
         }
     }
 
-    if (solver.conf.verbosity >= 2 || (solver.conflicts == 0 && solver.conf.verbosity  >= 1)) {
+    if (control->ok)
+        control->varReplacer->addLaterAddBinXor();
+
+    if (control->conf.verbosity >= 1) {
         std::cout << "c Finding binary XORs  T: "
         << std::fixed << std::setprecision(2) << std::setw(8) <<  (cpuTime() - myTime) << " s"
-        << "  found: " << std::setw(7) << solver.varReplacer->getNewToReplaceVars() - oldNumReplace
+        << "  found: " << std::setw(7) << control->varReplacer->getNewToReplaceVars() - oldNumReplace
         << std::endl;
     }
     totalTime += (cpuTime() - myTime);
 
-    return solver.ok;
+    return control->ok;
 }
 
 void SCCFinder::tarjan(const uint32_t vertex)
@@ -74,21 +80,22 @@ void SCCFinder::tarjan(const uint32_t vertex)
     stackIndicator[vertex] = true;
 
     Var vertexVar = Lit::toLit(vertex).var();
-    if (solver.varData[vertexVar].elimed == ELIMED_NONE
-        || solver.varData[vertexVar].elimed == ELIMED_VARREPLACER) {
+    if (control->varData[vertexVar].elimed == ELIMED_NONE
+        || control->varData[vertexVar].elimed == ELIMED_QUEUED_VARREPLACER
+    ) {
         Lit vertLit = Lit::toLit(vertex);
-        __builtin_prefetch(solver.transOTFCache[(~vertLit).toInt()].lits.data());
+        vector<LitExtra>& transCache = control->implCache[(~vertLit).toInt()].lits;
+        if (transCache.size() > 0) __builtin_prefetch(&transCache[0]);
 
-        const vec2<Watched>& ws = solver.watches[vertex];
-        for (vec2<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
+        const vec<Watched>& ws = control->watches[vertex];
+        for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
             if (!it->isBinary()) continue;
             const Lit lit = it->getOtherLit();
 
             doit(lit, vertex);
         }
 
-        if (solver.conf.doExtendedSCC && solver.conf.doCacheOTFSSR) {
-            vector<LitExtra>& transCache = solver.transOTFCache[(~vertLit).toInt()].lits;
+        if (control->conf.doExtendedSCC && control->conf.doCache) {
             vector<LitExtra>::iterator it = transCache.begin();
             for (vector<LitExtra>::iterator end = transCache.end(); it != end; it++) {
                 Lit lit = it->getLit();
@@ -106,19 +113,19 @@ void SCCFinder::tarjan(const uint32_t vertex)
             vprime = stack.top();
             stack.pop();
             stackIndicator[vprime] = false;
-            tmp.push(vprime);
+            tmp.push_back(vprime);
         } while (vprime != vertex);
         if (tmp.size() >= 2) {
             for (uint32_t i = 1; i < tmp.size(); i++) {
-                if (!solver.ok) break;
-                vec<Lit> lits(2);
+                if (!control->ok) break;
+                vector<Lit> lits(2);
                 lits[0] = Lit::toLit(tmp[0]).unsign();
                 lits[1] = Lit::toLit(tmp[i]).unsign();
                 const bool xorEqualsFalse = Lit::toLit(tmp[0]).sign()
                                             ^ Lit::toLit(tmp[i]).sign()
                                             ^ true;
-                if (solver.value(lits[0]) == l_Undef && solver.value(lits[1]) == l_Undef) {
-                    solver.varReplacer->replace(lits, xorEqualsFalse, 0, true, false);
+                if (control->value(lits[0]) == l_Undef && control->value(lits[1]) == l_Undef) {
+                    control->varReplacer->replace(lits[0], lits[1], xorEqualsFalse);
                 }
             }
         }

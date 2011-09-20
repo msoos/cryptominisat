@@ -24,12 +24,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cassert>
 #include <iostream>
 #include <new>
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
-
+#include "../Solver/constants.h"
 #include <malloc.h>
 #include <string.h>
 
@@ -47,10 +42,6 @@ class vec {
 
     void     init(uint32_t size, const T& pad);
     void     grow(uint32_t min_cap);
-
-    // Don't allow copying (error prone):
-    vec<T>&  operator = (vec<T>& other) { assert(0); return *this; }
-             //vec        (vec<T>& other) { assert(0); }
 
     static inline uint32_t imax(int x, int y) {
         int mask = (y-x) >> (sizeof(int)*8-1);
@@ -73,10 +64,10 @@ public:
 
     // Ownership of underlying array:
     T*       release  (void)           { T* ret = data; data = NULL; sz = 0; cap = 0; return ret; }
-    const T* getData() const {return data; }
-    const T* getDataEnd() const {return data + size(); }
-    T* getData() {return data; }
-    T* getDataEnd() {return data + size(); }
+    const T* begin() const {return data; }
+    const T* end() const {return data + size(); }
+    T* begin() {return data; }
+    T* end() {return data + size(); }
 
     // Size operations:
     uint32_t size   (void) const       { return sz; }
@@ -112,12 +103,21 @@ public:
     }
     void     push_ (const T& elem)     { assert(sz < cap); data[sz++] = elem; }
 
-    const T& last  (void) const        { return data[sz-1]; }
-    T&       last  (void)              { return data[sz-1]; }
+    const T& back  (void) const        { return data[sz-1]; }
+    T&       back  (void)              { return data[sz-1]; }
 
     // Vector interface:
     const T& operator [] (uint32_t index) const  { return data[index]; }
     T&       operator [] (uint32_t index)        { return data[index]; }
+    vec<T>& operator = (const vec<T>& other)
+    {
+        clear();
+        growTo(other.size());
+        for(uint32_t i = 0; i < other.size(); i++)
+            data[i] = other[i];
+
+        return *this;
+    }
 
 
     // Duplicatation (preferred instead):

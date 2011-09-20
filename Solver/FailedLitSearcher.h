@@ -1,19 +1,23 @@
-/***************************************************************************
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-****************************************************************************/
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
 #ifndef FAILEDLITSEARCHER_H
 #define FAILEDLITSEARCHER_H
@@ -21,14 +25,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 #include <map>
 #include <vector>
-using std::set;
-using std::map;
-using std::vector;
 
 #include "SolverTypes.h"
 #include "Clause.h"
 #include "BitArray.h"
-class Solver;
+
+using std::set;
+using std::map;
+using std::vector;
+
+class ThreadControl;
+
+//#define DEBUG_REMOVE_USELESS_BIN
 
 /**
 @brief Responsible for doing failed var searching and related algorithms
@@ -49,7 +57,7 @@ more heuristically
 */
 class FailedLitSearcher {
     public:
-        FailedLitSearcher(Solver& _solver);
+        FailedLitSearcher(ThreadControl* _control);
 
         const bool search();
         const double getTotalTime() const;
@@ -57,10 +65,9 @@ class FailedLitSearcher {
     private:
         //Main
         const bool tryBoth(const Lit lit1, const Lit lit2);
-        const bool bothCache();
         void printResults(const double myTime) const;
 
-        Solver& solver; ///<The solver we are updating&working with
+        ThreadControl* control; ///<The solver we are updating&working with
 
         bool failed; ///<For checking that a specific propagation failed (=conflict). It is used in many places
 
@@ -74,7 +81,7 @@ class FailedLitSearcher {
 
         value that the literal has been propagated to is available in propValue
         */
-        vec<Lit> bothSame;
+        vector<Lit> bothSame;
 
         //2-long xor-finding
         /**
@@ -117,109 +124,31 @@ class FailedLitSearcher {
             bool inverted;
         };
 
-        class BinXorToAdd
-        {
-            public:
-                BinXorToAdd(const Lit _lit1, const Lit _lit2, const bool _isEqualFalse, const uint32_t _group) :
-                    lit1(_lit1)
-                    , lit2(_lit2)
-                    , isEqualFalse(_isEqualFalse)
-                    , group(_group)
-                {}
-                Lit lit1;
-                Lit lit2;
-                bool isEqualFalse;
-                uint32_t group;
-        };
-        const TwoLongXor getTwoLongXor(const XorClause& c);
-        void addFromSolver(const vec<XorClause*>& cs);
-        void removeVarFromXors(const Var var);
-        void addVarFromXors(const Var var);
+        //Cache update
+        vector<Lit> litOTFCache;
+        vector<Lit> litOTFCacheNL;
 
-        uint32_t newBinXor;
-        vec<uint32_t> xorClauseSizes;
-        vector<vector<uint32_t> > occur; ///<Occurence list for XORs. Indexed by variables
-        BitArray xorClauseTouched;
-        vec<uint32_t> investigateXor;
-        std::set<TwoLongXor> twoLongXors;
-        bool binXorFind;
-        uint32_t lastTrailSize;
-        vector<BinXorToAdd> binXorToAdd;
-
-        /**
-        @brief Num. 2-long xor-found through Le Berre paper
-
-        In case:
-        -# (a->b, ~a->~b) -> a=b
-        -#  binary clause (a,c) exists:  (a->g, c->~g) -> a = ~c
-        */
-        uint32_t bothInvert;
-
-        //finding HyperBins
-        struct LitOrder2
-        {
-            LitOrder2(const vec<BinPropData>& _binPropData) :
-            binPropData(_binPropData)
-            {}
-
-            const bool operator () (const Lit x, const Lit y) const
-            {
-                return binPropData[x.var()].lev > binPropData[y.var()].lev;
-            }
-
-            const vec<BinPropData>& binPropData;
-        };
-        struct BinAddData
-        {
-            vector<Lit> lits;
-            Lit lit;
-        };
-        struct BinAddDataSorter
-        {
-            const bool operator() (const BinAddData& a, const BinAddData& b) const
-            {
-                return (a.lits.size() > b.lits.size());
-            }
-        };
-
+        //For hyper-bin resolution
+        std::set<BinaryClause> uselessBin;
         uint32_t addedBin;
-        void hyperBinResAll(const Lit litProp/*, const vector<Lit>& oldCache*/);
-        void hyperBinResolution(const Lit lit);
-        BitArray unPropagatedBin;
-        BitArray needToVisit;
-        vec<Var> propagatedVars;
-        void addBin(const Lit lit1, const Lit lit2);
-        void fillImplies(const Lit lit);
-        vec<Var> myImpliesSet; ///<variables set in myimplies
-        uint64_t hyperbinProps; ///<Number of bogoprops done by the hyper-binary resolution function hyperBinResolution()
-        void addMyImpliesSetAsBins(Lit lit, int32_t& difference);
-
-        //Cache equivalence within hyperbin
-        const bool performAddBinLaters();
-        vector<std::pair<Lit, Lit> > addBinLater;
-        uint32_t addedCacheBin;
-
-        //bin-removal within hyper-bin-res
-        vec<Lit> uselessBin;
-        uint32_t removedUselessLearnt;
-        uint32_t removedUselessNonLearnt;
-        BitArray dontRemoveAncestor;
-        vec<Var> toClearDontRemoveAcestor;
-        /**
-        @brief Controls hyper-binary resolution's time-usage
-
-        Don't do more than this many propagations within hyperBinResolution()
-        */
-        uint64_t maxHyperBinProps;
+        uint32_t removedBins;
+        void hyperBinResAll();
+        void removeUselessBins();
+        #ifdef DEBUG_REMOVE_USELESS_BIN
+        void testBinRemoval(const Lit origLit);
+        void fillTestUselessBinRemoval(const Lit lit);
+        vector<Var> origNLBEnqueuedVars;
+        vector<Var> origEnqueuedVars;
+        #endif
 
         //Multi-level
         void calcNegPosDist();
-        const bool tryMultiLevel(const vec<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed);
+        const bool tryMultiLevel(const vector<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed);
         const bool tryMultiLevelAll();
-        void fillToTry(vec<Var>& toTry);
+        void fillToTry(vector<Var>& toTry);
 
         //Temporaries
-        vec<Lit> tmpPs;
+        vector<Lit> tmpPs;
 
         //State for this run
         /**
@@ -233,7 +162,6 @@ class FailedLitSearcher {
         finding through longer xor-shortening, and then compare the changes
         made
         */
-        uint32_t toReplaceBefore;
         uint32_t origTrailSize; ///<Records num. of 0-depth assignments at the start-up of search()
         uint64_t origBogoProps; ///<Records num. of bogoprops at the start-up of search()
         uint32_t numFailed;     ///<Records num. of failed literals during search()
@@ -244,7 +172,6 @@ class FailedLitSearcher {
         double numPropsMultiplier; ///<If last time we called search() all went fine, then this is incremented, so we do more searching this time
         uint32_t lastTimeFoundTruths; ///<Records how many unit clauses we found last time we called search()
         uint32_t numCalls; ///<Number of times search() has been called
-        uint32_t lastTimeStopped;
 };
 
 inline const double FailedLitSearcher::getTotalTime() const

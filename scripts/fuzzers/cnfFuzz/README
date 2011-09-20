@@ -1,0 +1,9 @@
+This is the 2009 edition of:
+
+cnfdd.c - delta debugger for CNFs in DIMACS format
+mtcnfdd.c - multithreaded version (needs -pthread to compile)
+cnfuzz.c - fuzzer for CNFs in DIMACS format
+
+See our SAT'2010 papers for more details and COPYING for the license.
+
+Armin Biere, April 2010.

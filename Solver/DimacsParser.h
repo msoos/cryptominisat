@@ -25,11 +25,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <zlib.h>
 #endif // DISABLE_ZLIB
 
-#ifdef STATS_NEEDED
-#include "Logger.h"
-#endif //STATS_NEEDED
-
-class MTSolver;
+class ThreadControl;
 
 /**
 @brief Parses up a DIMACS file that my be zipped
@@ -37,20 +33,19 @@ class MTSolver;
 class DimacsParser
 {
     public:
-        DimacsParser(MTSolver* solver, const bool debugLib, const bool debugNewVar, const bool grouping);
+        DimacsParser(ThreadControl* control, const bool debugLib, const bool debugNewVar);
 
-        template <class T>
-        void parse_DIMACS(T input_stream);
+        template <class T> void parse_DIMACS(T input_stream);
 
     private:
         void parse_DIMACS_main(StreamBuffer& in);
         void skipWhitespace(StreamBuffer& in);
         void skipLine(StreamBuffer& in);
         std::string untilEnd(StreamBuffer& in);
-        int parseInt(StreamBuffer& in, uint32_t& len);
+        int32_t parseInt(StreamBuffer& in, uint32_t& len);
         float parseFloat(StreamBuffer& in);
         void parseString(StreamBuffer& in, std::string& str);
-        void readClause(StreamBuffer& in, vec<Lit>& lits);
+        void readClause(StreamBuffer& in, std::vector<Lit>& lits);
         void readDefaultPolarity(StreamBuffer& in);
         void parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_t& glue);
         void readFullClause(StreamBuffer& in);
@@ -60,17 +55,14 @@ class DimacsParser
         std::string stringify(uint32_t x);
 
 
-        MTSolver *solver;
+        ThreadControl *control;
         const bool debugLib;
         const bool debugNewVar;
-        const bool grouping;
 
         uint32_t debugLibPart; ///<printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
-        uint32_t groupId;
-        vec<Lit> lits; ///<To reduce temporary creation overhead
+        std::vector<Lit> lits; ///<To reduce temporary creation overhead
         uint32_t numLearntClauses; ///<Number of learnt non-xor clauses added
         uint32_t numNormClauses; ///<Number of non-learnt, non-xor claues added
-        uint32_t numXorClauses; ///<Number of non-learnt xor clauses added
 };
 
 #endif //DIMACSPARSER_H

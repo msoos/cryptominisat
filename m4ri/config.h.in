@@ -1,0 +1,94 @@
+/* src/config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* L1 cache size (in Bytes) */
+// #cmakedefine  CPU_L1_CACHE
+#define CPU_L1_CACHE 32768
+
+/* L2 cache size (in Bytes) */
+// #cmakedefine  CPU_L2_CACHE
+#define CPU_L2_CACHE 262144
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#cmakedefine  HAVE_DLFCN_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine  HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#cmakedefine  HAVE_MEMORY_H
+
+/* Support mmx instructions */
+#cmakedefine  HAVE_MMX
+
+/* Support aligned allocations */
+#cmakedefine  HAVE_MM_MALLOC
+
+/* Define if OpenMP is enabled */
+#cmakedefine  HAVE_OPENMP
+
+/* Support SSE (Streaming SIMD Extensions) instructions */
+#cmakedefine  HAVE_SSE
+
+/* Support SSE2 (Streaming SIMD Extensions 2) instructions */
+#cmakedefine  HAVE_SSE2
+
+/* Support SSE3 (Streaming SIMD Extensions 3) instructions */
+#cmakedefine  HAVE_SSE3
+
+/* Support SSSE3 (Supplemental Streaming SIMD Extensions 3) instructions */
+#cmakedefine  HAVE_SSSE3
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine  HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#cmakedefine  HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#cmakedefine  HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#cmakedefine  HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#cmakedefine  HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#cmakedefine  HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine  HAVE_UNISTD_H
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+// #cmakedefine  LT_OBJDIR
+
+/* Define whether debugging is enabled */
+// #cmakedefine  NDEBUG
+
+/* Name of package */
+// #cmakedefine  PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+// #cmakedefine  PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+// #cmakedefine  PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+// #cmakedefine  PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+// #cmakedefine  PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+// #cmakedefine  PACKAGE_URL
+
+/* Define to the version of this package. */
+// #cmakedefine  PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+// #cmakedefine  STDC_HEADERS
+
+/* Version number of package */
+// #cmakedefine  VERSION

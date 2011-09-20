@@ -1,47 +1,44 @@
-/***********************************************************************
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-************************************************************************/
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
 #ifndef CLAUSEALLOCATOR_H
 #define CLAUSEALLOCATOR_H
 
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
 
+#include "constants.h"
+#include "ClauseOffset.h"
 #include <stdlib.h>
 #include "Vec.h"
-#include "Vec2.h"
 #include <map>
 #include <vector>
-using std::map;
-using std::vector;
 
-#include "ClauseOffset.h"
 #include "Watched.h"
 
 #define NUM_BITS_OUTER_OFFSET 4
-#define BASE_DATA_TYPE char
 
 class Clause;
-class XorClause;
-class Solver;
+class ThreadControl;
 
+using std::map;
+using std::vector;
 
 /**
 @brief Allocates memory for (xor) clauses
@@ -57,10 +54,7 @@ class ClauseAllocator {
         ClauseAllocator();
         ~ClauseAllocator();
 
-        template<class T>
-        Clause* Clause_new(const T& ps, const uint32_t group, const bool learnt = false);
-        template<class T>
-        XorClause* XorClause_new(const T& ps, const bool xorEqualFalse, const uint32_t group);
+        template<class T> Clause* Clause_new(const T& ps);
         Clause* Clause_new(Clause& c);
 
         const ClauseOffset getOffset(const Clause* ptr) const;
@@ -80,38 +74,32 @@ class ClauseAllocator {
 
         void clauseFree(Clause* c);
 
-        void consolidate(Solver* solver, const bool force = false);
-
-        const uint32_t getNewClauseNum();
+        void consolidate(ThreadControl* control, const bool force = false);
 
     private:
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
         const ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
 
-        void renumberClauses(vector<Clause*>& clauses, Solver* solver);
-
-        void updateAllOffsetsAndPointers(Solver* solver);
+        void updateAllOffsetsAndPointers(ThreadControl* control);
         template<class T>
-        void updatePointers(vec<T*>& toUpdate);
+        void updatePointers(vector<T*>& toUpdate);
         void updatePointers(vector<Clause*>& toUpdate);
-        void updatePointers(vector<XorClause*>& toUpdate);
         void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate);
-        void updateOffsets(vec<vec2<Watched> >& watches);
+        void updateOffsets(vector<vec<Watched> >& watches);
 
-        void checkGoodPropBy(const Solver* solver);
-        void releaseClauseNum(const uint32_t num);
+        void checkGoodPropBy(const ThreadControl* control);
 
-        vec<BASE_DATA_TYPE*> dataStarts; ///<Stacks start at these positions
-        vec<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack
+        vector<char*> dataStarts; ///<Stacks start at these positions
+        vector<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack
         /**
         @brief Clauses in the stack had this size when they were allocated
         This my NOT be their current size: the clauses may be shrinked during
         the running of the solver. Therefore, it is imperative that their orignal
         size is saved. This way, we can later move clauses around.
         */
-        vec<vec<uint32_t> > origClauseSizes;
-        vec<size_t> maxSizes; ///<The number of 32-bit datapieces allocated in each stack
+        vector<vector<uint32_t> > origClauseSizes;
+        vector<size_t> maxSizes; ///<The number of 32-bit datapieces allocated in each stack
         /**
         @brief The estimated used size of the stack
         This is incremented by clauseSize each time a clause is allocated, and
@@ -119,7 +107,7 @@ class ClauseAllocator {
         problem is, that clauses can shrink, and thus this value will be an
         overestimation almost all the time
         */
-        vec<size_t> currentlyUsedSizes;
+        vector<size_t> currentlyUsedSizes;
 
         void* allocEnough(const uint32_t size);
 
@@ -141,7 +129,10 @@ class ClauseAllocator {
         Clause* getClause();
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 
-        vec<uint32_t> freedNums;  //Free clause nums that can be used now
+        const uint32_t getNewClauseNum();
+        void renumberClauses(vector<Clause*>& clauses, ThreadControl* solver);
+        void releaseClauseNum(const uint32_t num);
+        vector<uint32_t> freedNums;  //Free clause nums that can be used now
         uint32_t maxClauseNum;
 };
 

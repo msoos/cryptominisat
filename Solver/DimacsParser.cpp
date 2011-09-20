@@ -10,8 +10,11 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <vector>
+#include <fstream>
+#include "ThreadControl.h"
 
-#include "MTSolver.h"
+using std::vector;
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_COMMENT_PARSING
@@ -19,12 +22,10 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 //#define DEBUG_COMMENT_PARSING
 
-DimacsParser::DimacsParser(MTSolver* _solver, const bool _debugLib, const bool _debugNewVar, const bool _grouping):
-    solver(_solver)
+DimacsParser::DimacsParser(ThreadControl* _control, const bool _debugLib, const bool _debugNewVar):
+    control(_control)
     , debugLib(_debugLib)
     , debugNewVar(_debugNewVar)
-    , grouping(_grouping)
-    , groupId(0)
 {}
 
 /**
@@ -69,15 +70,21 @@ std::string DimacsParser::untilEnd(StreamBuffer& in)
 /**
 @brief Parses in an integer
 */
-int DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
+int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
 {
     lenParsed = 0;
-    int     val = 0;
+    int32_t val = 0;
     bool    neg = false;
     skipWhitespace(in);
-    if      (*in == '-') neg = true, ++in;
-    else if (*in == '+') ++in;
-    if (*in < '0' || *in > '9') printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
+    if      (*in == '-')
+        neg = true, ++in;
+    else if (*in == '+')
+        ++in;
+
+    if (*in < '0' || *in > '9') {
+        std::cout << "PARSE ERROR! Unexpected char: " << *in << std::endl;
+        exit(3);
+    }
     while (*in >= '0' && *in <= '9') {
         lenParsed++;
         val = val*10 + (*in - '0'),
@@ -91,7 +98,7 @@ float DimacsParser::parseFloat(StreamBuffer& in)
     uint32_t len;
     uint32_t main = parseInt(in, len);
     if (*in != '.') {
-        printf("PARSE ERROR! Float does not contain a dot! Instead it contains: %c\n", *in);
+        std::cout << "PARSE ERROR! Float does not contain a dot! Instead it contains: " << *in << std::endl;
         exit(3);
     }
     ++in;
@@ -129,9 +136,9 @@ void DimacsParser::parseString(StreamBuffer& in, std::string& str)
 @brief Reads in a clause and puts it in lit
 @p[out] lits
 */
-void DimacsParser::readClause(StreamBuffer& in, vec<Lit>& lits)
+void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
 {
-    int     parsed_lit;
+    int32_t parsed_lit;
     Var     var;
     uint32_t len;
     lits.clear();
@@ -140,9 +147,14 @@ void DimacsParser::readClause(StreamBuffer& in, vec<Lit>& lits)
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
         if (!debugNewVar) {
-            while (var >= solver->nVars()) solver->newVar();
+            if (var >= ((uint32_t)1)<<25) {
+                std::cout << "ERROR! Variable requested is far too large: " << var << std::endl;
+                exit(-1);
+            }
+            while (var >= control->nVars())
+                control->newVar();
         }
-        lits.push( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
+        lits.push_back( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
 }
 
@@ -174,12 +186,13 @@ void DimacsParser::printHeader(StreamBuffer& in)
     if (match(in, "p cnf")) {
         int vars    = parseInt(in, len);
         int clauses = parseInt(in, len);
-        if (solver->getVerbosity() >= 1) {
+        if (control->getVerbosity() >= 1) {
             std::cout << "c -- header says num vars:   " << std::setw(12) << vars << std::endl;
             std::cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << std::endl;
         }
     } else {
-        printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
+        std::cout << "PARSE ERROR! Unexpected char: " << *in << std::endl;
+        exit(3);
     }
 }
 
@@ -207,37 +220,40 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         skipWhitespace(in);
         if (var <= 0) std::cout << "PARSE ERROR! Var number must be a positive integer" << std::endl, exit(3);
         std::string name = untilEnd(in);
-        solver->setVariableName(var-1, name.c_str());
+        //control->setVariableName(var-1, name.c_str());
 
         #ifdef DEBUG_COMMENT_PARSING
         std::cout << "Parsed 'c var'" << std::endl;
         #endif //DEBUG_COMMENT_PARSING
     } else if (debugLib && str == "Solver::solve()") {
-        lbool ret = solver->solve();
+        lbool ret = control->solve();
         std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
-        FILE* res = fopen(s.c_str(), "w");
+        std::ofstream partFile;
+        partFile.open(s.c_str());
         if (ret == l_True) {
-            fprintf(res, "SAT\n");
-            for (Var i = 0; i != solver->nVars(); i++) {
-                if (solver->model[i] != l_Undef)
-                    fprintf(res, "%s%d ", (solver->model[i]==l_True)?"":"-", i+1);
+            partFile << "SAT" << std::endl;
+            for (Var i = 0; i != control->nVars(); i++) {
+                if (control->model[i] != l_Undef)
+                    partFile
+                    << ((control->model[i]==l_True) ? "" : "-")
+                    << (i+1) <<  " ";
             }
-            fprintf(res, "0\n");
+            partFile << "0" << std::endl;;
         } else if (ret == l_False) {
-            fprintf(res, "UNSAT\n");
+            partFile << "UNSAT" << std::endl;
         } else if (ret == l_Undef) {
             assert(false);
         } else {
             assert(false);
         }
-        fclose(res);
+        partFile.close();
         debugLibPart++;
 
         #ifdef DEBUG_COMMENT_PARSING
         std::cout << "Parsed Solver::solve()" << std::endl;
         #endif //DEBUG_COMMENT_PARSING
     } else if (debugNewVar && str == "Solver::newVar()") {
-        solver->newVar();
+        control->newVar();
 
         #ifdef DEBUG_COMMENT_PARSING
         std::cout << "Parsed Solver::newVar()" << std::endl;
@@ -261,12 +277,10 @@ void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_
     //Parse in if we are a learnt clause or not
     ++in;
     parseString(in, str);
-    //std::cout << str<< std::endl;
     if (str != "learnt") goto addTheClause;
 
     ++in;
     parseString(in, str);
-    //std::cout << str<< std::endl;
     if (str == "yes") learnt = true;
     else if (str == "no") {
         learnt = false;
@@ -275,19 +289,14 @@ void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_
     else {
         std::cout << "parsed in instead of yes/no: '" << str << "'" << std::endl;
         goto addTheClause;
-        //std::cout << "PARSE ERROR: line contains \"c learnt\" but is not followed by yes/no" << std::endl;
-        //exit(-1);
     }
-    //std::std::cout << "Learnt? " << learnt << std::endl;
 
     //Parse in Glue value
     ++in;
     parseString(in, str);
     if (str != "glue") goto addTheClause;
-    //std::std::cout << "read GLUE" << std::endl;
     ++in;
     glue = parseInt(in, len);
-    //std::cout << "glue: " << glue << std::endl;
 
     addTheClause:
     skipLine(in);
@@ -300,7 +309,6 @@ void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_
 We might have lines like:
 \li "c clause learnt yes glue 4 miniSatAct 5.2" which we need to parse up and
 make the clause learnt.
-\li Also, groupings can be given with "c group NUM NAME" after the clause.
 \li Furthermore, we need to take care, since comments might mean orders like
 "c Solver::newVar() called", which needs to be parsed with parseComments()
 -- this, we delegate
@@ -310,38 +318,13 @@ void DimacsParser::readFullClause(StreamBuffer& in)
     bool xor_clause = false;
     bool learnt = false;
     uint32_t glue = 100;
-    std::string name;
     std::string str;
-    uint32_t len;
     bool needToParseComments = false;
 
     //read in the actual clause
     if ( *in == 'x') xor_clause = true, ++in;
     readClause(in, lits);
     skipLine(in);
-
-    //now read in grouping information, etc.
-    if (!grouping) groupId++;
-    else {
-        if (*in != 'c') {
-            std::cout << "PARSE ERROR! Group must be present after earch clause ('c' missing after clause line)" << std::endl;
-            exit(3);
-        }
-        ++in;
-
-        parseString(in, str);
-        if (str != "g" && str != "group") {
-            std::cout << "PARSE ERROR! Group must be present after each clause('group' missing)!" << std::endl;
-            std::cout << "Instead of 'group' there was:" << str << std::endl;
-            exit(3);
-        }
-
-        groupId = parseInt(in, len);
-        if (groupId <= 0) printf("PARSE ERROR! Group number must be a positive integer\n"), exit(3);
-
-        skipWhitespace(in);
-        name = untilEnd(in);
-    }
 
     //Parse comments or parse clause type (learnt, glue value, etc.)
     if (*in == 'c') {
@@ -355,18 +338,13 @@ void DimacsParser::readFullClause(StreamBuffer& in)
     }
 
     if (xor_clause) {
-        bool xorEqualFalse = false;
-        for (uint32_t i = 0; i < lits.size(); i++)
-            xorEqualFalse ^= lits[i].sign();
-
-        solver->addXorClause(lits, xorEqualFalse, groupId, name.c_str());
-        numXorClauses++;
+        assert(false && "Cannot read XOR clause!");
     } else {
         if (learnt) {
-            solver->addLearntClause(lits, groupId, NULL, glue);
+            control->addLearntClause(lits, glue);
             numLearntClauses++;
         } else {
-            solver->addClause(lits, groupId, name.c_str());
+            control->addClause(lits);
             numNormClauses++;
         }
     }
@@ -387,13 +365,12 @@ void DimacsParser::readDefaultPolarity(StreamBuffer& in)
     assert(var > 0);
 
     if (!debugNewVar) {
-        while ((var-1) >= solver->nVars()) solver->newVar();
+        while ((var-1) >= control->nVars()) control->newVar();
     }
 
-    solver->setPolarity(var-1, parsed_lit > 0);
+    control->setPolarity(var-1, parsed_lit > 0);
     skipLine(in);
 }
-
 
 /**
 @brief The main function: parses in a full DIMACS file
@@ -423,7 +400,6 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
         case 'd':
             ++in;
             readDefaultPolarity(in);
-            break;
         default:
             readFullClause(in);
             break;
@@ -431,29 +407,25 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
     }
 }
 
-template <class T>
-void DimacsParser::parse_DIMACS(T input_stream)
+template <class T> void DimacsParser::parse_DIMACS(T input_stream)
 {
     debugLibPart = 1;
     numLearntClauses = 0;
     numNormClauses = 0;
-    numXorClauses = 0;
-    uint32_t origNumVars = solver->nVars();
+    const uint32_t origNumVars = control->nVars();
 
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
 
-    if (solver->getVerbosity() >= 1) {
+    if (control->getVerbosity() >= 1) {
         std::cout << "c -- clauses added: "
         << std::setw(12) << numLearntClauses
         << " learnts, "
         << std::setw(12) << numNormClauses
-        << " normals, "
-        << std::setw(12) << numXorClauses
-        << " xors"
+        << " normals "
         << std::endl;
 
-        std::cout << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)
+        std::cout << "c -- vars added " << std::setw(10) << (control->nVars() - origNumVars)
         << std::endl;
     }
 }

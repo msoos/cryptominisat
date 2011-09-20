@@ -18,19 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef WATCHED_H
 #define WATCHED_H
 
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
-
 //#define DEBUG_WATCHED
 
+#include "constants.h"
 #include "ClauseOffset.h"
 #include "SolverTypes.h"
-#include <stdio.h>
 #include <limits>
-#include "constants.h"
 
 /**
 @brief An element in the watchlist. Natively contains 2- and 3-long clauses, others are referenced by pointer
@@ -49,7 +42,7 @@ class Watched {
         */
         Watched(const ClauseOffset offset, Lit blockedLit, const bool watchNum)
         {
-            data1 = watchNum | (blockedLit.toInt() << 1);
+            data1 = (uint32_t)watchNum | (blockedLit.toInt() << 1);
             data2 = (uint32_t)1 | ((uint32_t)offset << 2);
         }
 
@@ -57,15 +50,6 @@ class Watched {
             data1 (std::numeric_limits<uint32_t>::max())
             , data2(std::numeric_limits<uint32_t>::max())
         {}
-
-        /**
-        @brief Constructor for an xor-clause
-        */
-        Watched(const ClauseOffset offset, const bool watchNum)
-        {
-            data1 = watchNum;
-            data2 = (uint32_t)2 | ((uint32_t)offset << 2);
-        }
 
         /**
         @brief Constructor for a binary clause
@@ -93,14 +77,6 @@ class Watched {
             data2 = (uint32_t)1 | ((uint32_t)offset << 2);
         }
 
-        void setXorOffset(const ClauseOffset offset)
-        {
-            #ifdef DEBUG_WATCHED
-            assert(isXorClause());
-            #endif
-            data2 = (uint32_t)2 | ((uint32_t)offset << 2);
-        }
-
         /**
         @brief To update the example literal (blocked literal) of a >3-long normal clause
         */
@@ -125,11 +101,6 @@ class Watched {
         const bool isClause() const
         {
             return ((data2&3) == 1);
-        }
-
-        const bool isXorClause() const
-        {
-            return ((data2&3) == 2);
         }
 
         const bool isTriClause() const
@@ -164,7 +135,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isBinary());
             #endif
-            return (bool)(data2 >> 2);
+            return (data2 >> 2)&0x1;
         }
 
         void setLearnt(const bool learnt)
@@ -201,7 +172,7 @@ class Watched {
         const bool getWatchNum() const
         {
             #ifdef DEBUG_WATCHED
-            assert(isClause() || isXorClause());
+            assert(isClause());
             #endif
             return data1&1;
         }
@@ -215,21 +186,6 @@ class Watched {
             assert(isClause());
             #endif
             return (ClauseOffset)(data2 >> 2);
-        }
-
-        const ClauseOffset getXorOffset() const
-        {
-            #ifdef DEBUG_WATCHED
-            assert(isXorClause());
-            #endif
-            return (ClauseOffset)(data2 >> 2);
-        }
-
-        void dump(FILE* outfile, const Lit lit) const
-        {
-            assert(isBinary());
-            lit.print(outfile);
-            getOtherLit().printFull(outfile);
         }
 
     private:

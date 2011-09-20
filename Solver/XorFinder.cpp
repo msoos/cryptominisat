@@ -1,465 +1,609 @@
-/***********************************************************************************
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-**************************************************************************************************/
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+ */
 
 #include "XorFinder.h"
-
-#include <algorithm>
-#include <utility>
-#include <iostream>
-#include "Solver.h"
-#include "VarReplacer.h"
-#include "ClauseCleaner.h"
 #include "time_mem.h"
+#include "ThreadControl.h"
+#include "VarReplacer.h"
+#include "Subsumer.h"
+#include <limits>
+#include "m4ri.h"
 
-//#define VERBOSE_DEBUG
+XorFinder::XorFinder(Subsumer* _subsumer, ThreadControl* _control) :
+    subsumer(_subsumer)
+    , control(_control)
+    , seen(_subsumer->seen)
+    , seen2(_subsumer->seen2)
+{}
 
-#ifdef VERBOSE_DEBUG
-#include <iostream>
-using std::cout;
-using std::endl;
-#endif
-
-using std::make_pair;
-
-XorFinder::XorFinder(Solver& _solver, vec<Clause*>& _cls) :
-    cls(_cls)
-    , solver(_solver)
+const bool XorFinder::findXors()
 {
+    double myTime = cpuTime();
+    xors.clear();
+    xorOcc.clear();
+    xorOcc.resize(control->nVars());
+    triedAlready.clear();
+    triedAlready.resize(subsumer->clauses.size());
+
+    size_t i = 0;
+    for (vector<Clause*>::iterator it = subsumer->clauses.begin(), end = subsumer->clauses.end(); it != end; it++, i++) {
+        if (*it == NULL)
+            continue;
+
+        if (!triedAlready[i]) {
+            triedAlready[i] = 1;
+            findXor(i);
+        }
+    }
+
+    if (control->getVerbosity() >= 1) {
+        std::cout << "c XOR finding finished. Num XORs: " << std::setw(6) << xors.size()
+        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime) << std::setw(6) << std::endl;
+    }
+
+    if (xors.size() > 0)
+        extractInfo();
+
+    /*uint32_t index = 0;
+    uint32_t doneSomething = 0;
+    for (vector<Xor>::iterator it = xors.begin(), end = xors.end(); it != end; it++, index++) {
+        doneSomething += tryToXor(*it, index);
+
+        if (!control->okay())
+            goto end;
+    }*/
+
+    return control->okay();
 }
 
-const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSize)
+bool XorFinder::extractInfo()
 {
-    uint32_t sumLengths = 0;
     double time = cpuTime();
-    foundXors = 0;
-    solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
-    if (!solver.ok) return false;
-
-    toRemove.clear();
-    toRemove.resize(cls.size(), false);
-    toLeaveInPlace.clear();
-    toLeaveInPlace.resize(cls.size(), false);
-
-    table.clear();
-    table.reserve(cls.size());
-
-    for (Clause **it = cls.getData(), **end = cls.getDataEnd(); it != end; it ++) {
-        if (it+1 != end) __builtin_prefetch(*(it+1));
-        Clause& c = (**it);
-        assert((*it)->size() > 2);
-        bool sorted = true;
-        for (uint32_t i = 0, size = c.size(); i+1 < size ; i++) {
-            sorted = (c[i].var() <= c[i+1].var());
-            if (!sorted) break;
-        }
-        if (!sorted) {
-            solver.detachClause(c);
-            std::sort(c.getData(), c.getDataEnd());
-            solver.attachClause(c);
+    vector<uint32_t> varsIn(control->nVars(), 0);
+    for(vector<Xor>::const_iterator it = xors.begin(), end = xors.end(); it != end; it++) {
+        for(vector<Var>::const_iterator it2 = it->vars.begin(), end2 = it->vars.end(); it2 != end2; it2++) {
+            varsIn[*it2]++;
         }
     }
 
-    uint32_t i = 0;
-    for (Clause **it = cls.getData(), **end = cls.getDataEnd(); it != end; it++, i++) {
-        const uint32_t size = (*it)->size();
-        if ( size > maxSize || size < minSize) {
-            toLeaveInPlace[i] = true;
-            continue;
-        }
-        table.push_back(make_pair(*it, i));
-    }
-    std::sort(table.begin(), table.end(), clause_sorter_primary());
-
-    if (!findXors(sumLengths)) goto end;
-    solver.ok = (solver.propagate<true>().isNULL());
-
-end:
-
-    if (solver.conf.verbosity >= 1 || (solver.conf.verbosity >= 1 && foundXors > 0)) {
-        printf("c Finding non-binary XORs:    %5.2lf s (found: %7d, avg size: %3.1lf)\n", cpuTime()-time, foundXors, (double)sumLengths/(double)foundXors);
-    }
-
-    i = 0;
-    uint32_t j = 0;
-    uint32_t toSkip = 0;
-    for (uint32_t end = cls.size(); i != end; i++) {
-        if (toLeaveInPlace[i]) {
-            cls[j] = cls[i];
-            j++;
-            toSkip++;
-            continue;
-        }
-        if (!toRemove[table[i-toSkip].second]) {
-            cls[j] = table[i-toSkip].first;
-            j++;
-        }
-    }
-    cls.shrink(i-j);
-
-    return solver.ok;
-}
-
-
-/**
-@brief Finds xors in clauseTable -- datastructures must already be set up
-
-Identifies sets of clauses of the same length and variable content, and then
-tries to merge them into an XOR.
-*/
-const bool XorFinder::findXors(uint32_t& sumLengths)
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "Finding Xors started" << endl;
-    #endif
-
-    sumLengths = 0;
-
-    ClauseTable::iterator begin = table.begin();
-    ClauseTable::iterator end = table.begin();
-    vec<Lit> lits;
-    bool impair;
-    while (getNextXor(begin,  end, impair)) {
-        const Clause& c = *(begin->first);
-        lits.clear();
-        for (const Lit *it = &c[0], *cend = it+c.size() ; it != cend; it++) {
-            lits.push(Lit(it->var(), false));
-        }
-        uint32_t old_group = c.getGroup();
-
-        #ifdef VERBOSE_DEBUG
-        cout << "- Found clauses:" << endl;
-        #endif
-
-        for (ClauseTable::iterator it = begin; it != end; it++) {
-            //This clause belongs to the xor we found?
-            //(i.e. does it have the correct number of inverted literals?)
-            if (impairSigns(*it->first) == impair){
-                #ifdef VERBOSE_DEBUG
-                it->first->plainPrint();
-                #endif
-                toRemove[it->second] = true;
-                solver.removeClause(*it->first);
+    //Pre-filter XORs -- don't use any XOR which is not connected to ANY
+    //other XOR. These cannot be XOR-ed with anything anyway
+    size_t i = 0;
+    vector<size_t> xorsToUse;
+    for(vector<Xor>::const_iterator it = xors.begin(), end = xors.end(); it != end; it++, i++) {
+        const Xor& thisXor = *it;
+        bool makeItIn = false;
+        for(vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
+            if (varsIn[*it] > 1) {
+                makeItIn = true;
+                break;
             }
         }
+        //If this clause is not connected to ANY other, skip
+        if (!makeItIn)
+            continue;
 
-        assert(lits.size() > 2);
-        XorClause* x = solver.addXorClauseInt(lits, impair, old_group);
-        if (x != NULL) solver.xorclauses.push(x);
-        if (!solver.ok) return false;
-
-        #ifdef VERBOSE_DEBUG
-        cout << "- Final xor-clause: " << x << std::endl;;
-        #endif
-
-        foundXors++;
-        sumLengths += lits.size();
+        xorsToUse.push_back(i);
     }
 
-    return solver.ok;
-}
+    //Cut above-filtered XORs into blocks
+    cutIntoBlocks(xorsToUse);
+    std::cout << "c Cut XORs into " << numBlocks << " block(s), sum vars: " << numVarsInBlocks
+    << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time) << std::endl;
 
-/**
-@brief Moves to the next set of begin&end pointers that contain an xor
+    //These mappings will be needed for the matrixes, which will have far less
+    //variables than control->nVars()
+    outerToInterVarMap.clear();
+    outerToInterVarMap.resize(control->nVars(), std::numeric_limits<size_t>::max());
+    interToOUterVarMap.clear();
+    interToOUterVarMap.resize(control->nVars(), std::numeric_limits<size_t>::max());
 
-@p begin[inout] start searching here in XorFinder::table
-@p end[inout] end iterator of XorFinder::table until which the xor spans
-*/
-bool XorFinder::getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& end, bool& impair)
-{
-    ClauseTable::iterator tableEnd = table.end();
+    //Go through each block, and extract info
+    time = cpuTime();
+    newUnits = 0;
+    newBins = 0;
+    i = 0;
+    for(vector<vector<Var> >::const_iterator it = blocks.begin(), end = blocks.end(); it != end; it++, i++) {
+        //If block is already merged, skip
+        if (it->empty())
+            continue;
 
-    while(begin != tableEnd && end != tableEnd) {
-        begin = end;
-        end++;
-        uint32_t size = (end == tableEnd ? 0:1);
-        while(end != tableEnd && clause_vareq(begin->first, end->first)) {
-            size++;
-            end++;
-        }
-        if (size > 0 && isXor(size, begin, end, impair))
-            return true;
+        //const uint64_t oldNewUnits = newUnits;
+        //const uint64_t oldNewBins = newBins;
+        if (!extractInfoFromBlock(*it, i))
+            return false;
+
+        //std::cout << "New units this round: " << (newUnits - oldNewUnits) << std::endl;
+        //std::cout << "New bins this round: " << (newBins - oldNewBins) << std::endl;
     }
-
-    return false;
-}
-
-/**
-@brief Returns if the two clauses are equal
-
-NOTE: assumes that the clauses are of equal lenght AND contain the same
-variables (but the invertedness of the literals might differ)
-*/
-bool XorFinder::clauseEqual(const Clause& c1, const Clause& c2) const
-{
-    assert(c1.size() == c2.size());
-    for (uint32_t i = 0, size = c1.size(); i < size; i++)
-        if (c1[i].sign() !=  c2[i].sign()) return false;
+    std::cout << "c Extracted XOR info. Units: " << newUnits << " Bins: " << newBins
+    << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time)
+    << std::endl;
 
     return true;
 }
 
-/**
-@brief Returns whether the number of inverted literals in the clause is pair or impair
-*/
-bool XorFinder::impairSigns(const Clause& c) const
+bool XorFinder::extractInfoFromBlock(const vector<Var>& block, const size_t blockNum)
 {
-    uint32_t num = 0;
-    for (const Lit *it = &c[0], *end = it + c.size(); it != end; it++)
-        num += it->sign();
+    assert(control->okay());
 
-    return num % 2;
+    //Outer-inner var mapping is needed because not all vars are in the matrix
+    size_t num = 0;
+    for(vector<Var>::const_iterator it2 = block.begin(), end2 = block.end(); it2 != end2; it2++, num++) {
+        outerToInterVarMap[*it2] = num;
+        interToOUterVarMap[num] = *it2;
+    }
+
+    //Get corresponding XORs
+    vector<size_t> thisXors = getXorsForBlock(blockNum);
+    assert(thisXors.size() > 1 && "We pre-filter the set such that *every* block contains at least 2 xors");
+
+    //Set up matrix
+    size_t numCols = block.size()+1; //we need augmented column
+    size_t matSize = numCols*thisXors.size();
+    if (matSize > 1000L*1000L*100L) {
+        //this matrix is way too large, skip :(
+        return control->okay();
+    }
+    mzd_t *mat = mzd_init(thisXors.size(), numCols);
+    assert(mzd_is_zero(mat));
+
+    //Fill row-by-row
+    size_t row = 0;
+    for(vector<size_t>::const_iterator it = thisXors.begin(), end2 = thisXors.end(); it != end2; it++, row++) {
+        const Xor& thisXor = xors[*it];
+        assert(thisXor.vars.size() > 2 && "All XORs must be larger than 2-long");
+        for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end3 = thisXor.vars.end(); it2 != end3; it2++) {
+            const Var var = outerToInterVarMap[*it2];
+            assert(var < numCols);
+            mzd_write_bit(mat, row, var, 1);
+        }
+        if (thisXor.rhs)
+            mzd_write_bit(mat, row, numCols-1, 1);
+    }
+
+    //Fully echelonize
+    mzd_echelonize(mat, true);
+
+    //Examine every row if it gives some new short truth
+    vector<Var> vars;
+    for(size_t i = 0; i < row; i++) {
+        //Extract places where it's '1'
+        vars.clear();
+        for(size_t c = 0; c < numCols-1; c++) {
+            if (mzd_read_bit(mat, i, c))
+                vars.push_back(interToOUterVarMap[c]);
+
+            //No point in going on, we cannot do anything with >2-long XORs
+            if (vars.size() > 2)
+                break;
+        }
+
+        //Extract RHS
+        const bool rhs = mzd_read_bit(mat, i, numCols-1);
+
+        switch(vars.size()) {
+            case 0:
+                //0-long XOR clause is equal to 1? If so, it's UNSAT
+                if (rhs) {
+                    vector<Lit> lits;
+                    control->addXorClauseInt(lits, 1);
+                    assert(!control->okay());
+                    goto end;
+                }
+                break;
+
+            case 1: {
+                newUnits++;
+                vector<Lit> lits;
+                control->addXorClauseInt(lits, rhs);
+                if (!control->okay())
+                    goto end;
+                break;
+            }
+
+            case 2: {
+                newBins++;
+                vector<Lit> lits;
+                lits.push_back(Lit(vars[0], false));
+                lits.push_back(Lit(vars[1], false));
+                control->addXorClauseInt(lits, rhs);
+                if (!control->okay())
+                    goto end;
+                break;
+            }
+
+            default:
+                //if resulting xor is larger than 2-long, we cannot extract anything.
+                break;
+        }
+    }
+
+    //Free mat, and return what need to be returned
+    end:
+    mzd_free(mat);
+
+    return control->okay();
 }
 
-/**
-@brief Gets as input a set of clauses of equal size and variable content, decides if there is an XOR in them
-
-@param impair If there is an XOR, this tells if that XOR contains an impair
-number of inverted literal or not
-@return True, if ther is an XOR, and False if not
-*/
-bool XorFinder::isXor(const uint32_t size, const ClauseTable::iterator& begin, const ClauseTable::iterator& end, bool& impair)
+vector<size_t> XorFinder::getXorsForBlock(const size_t blockNum)
 {
-    const uint32_t requiredSize = 1 << (begin->first->size()-1);
+    vector<size_t> xorsInThisBlock;
 
-    //Note: "size" can be larger than requiredSize, since there might be
-    //a mix of imparied and paired num. inverted literals, and furthermore,
-    //clauses might be repeated
-    if (size < requiredSize) return false;
+    for(size_t i = 0; i < xors.size(); i++) {
+        const Xor& thisXor = xors[i];
+        assert(thisXor.vars.size() > 2 && "XORs are always at least 3-long!");
 
-    #ifdef DEBUG_XORFIND2
-    {
-        vec<Var> vars;
-        Clause& c = *begin->first;
-        for (uint32_t i = 0; i < c.size(); i++)
-            vars.push(c[i].var());
-        for (ClauseTable::iterator it = begin; it != end; it++) {
-            Clause& c = *it->first;
-            for (uint32_t i = 0; i < c.size(); i++)
-                assert(vars[i] == c[i].var());
-        }
-        clause_sorter_primary sorter;
+        if (varToBlock[thisXor.vars[0]] == blockNum) {
+            xorsInThisBlock.push_back(i);
 
-        for (ClauseTable::iterator it = begin; it != end; it++) {
-            ClauseTable::iterator it2 = it;
-            it2++;
-            if (it2 == end) break;
-            assert(!sorter(*it2, *it));
+            for(vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
+                assert(varToBlock[*it] == blockNum && "if any vars are in this block, ALL block are in this block");
+            }
         }
     }
-    #endif //DEBUG_XORFIND
 
-    //We now sort them according to literal content
-    std::sort(begin, end, clause_sorter_secondary());
-
-    uint32_t numPair = 0;
-    uint32_t numImpair = 0;
-    countImpairs(begin, end, numImpair, numPair);
-
-    //if there are two XORs with equal variable sets, but different invertedness
-    //that leads to direct UNSAT result.
-    if (numImpair == requiredSize && numPair == requiredSize) {
-        solver.ok = false;
-        impair = true;
-        return true;
-    }
-
-    if (numImpair == requiredSize) {
-        impair = true;
-        return true;
-    }
-
-    if (numPair == requiredSize) {
-        impair = false;
-        return true;
-    }
-
-    return false;
+    return xorsInThisBlock;
 }
 
-/**
-@brief Counts number of negations in the literals in clauses between begin&end, and returns the number of clauses with pair, and impair literals
-*/
-void XorFinder::countImpairs(const ClauseTable::iterator& begin, const ClauseTable::iterator& end, uint32_t& numImpair, uint32_t& numPair) const
+void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
 {
-    numImpair = 0;
-    numPair = 0;
+    //Clearing data we will fill below
+    numBlocks = 0;
+    varToBlock.clear();
+    varToBlock.resize(control->nVars(), std::numeric_limits<size_t>::max());
+    blocks.clear();
 
-    ClauseTable::const_iterator it = begin;
-    ClauseTable::const_iterator it2 = begin;
-    it2++;
+    //Go through each XOR, and either make a new block for it
+    //or merge it into an existing block
+    //or merge it into an existing block AND merge blocks it joins together
+    for(vector<size_t>::const_iterator it = xorsToUse.begin(), end = xorsToUse.end(); it != end; it++) {
+        const Xor& thisXor = xors[*it];
 
-    bool impair = impairSigns(*it->first);
-    numImpair += impair;
-    numPair += !impair;
-
-    for (; it2 != end;) {
-        if (!clauseEqual(*it->first, *it2->first)) {
-            bool impair = impairSigns(*it2->first);
-            numImpair += impair;
-            numPair += !impair;
+        //Calc blocks for this XOR
+        set<size_t> blocksBelongTo;
+        for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+            if (varToBlock[*it2] != std::numeric_limits<size_t>::max())
+                blocksBelongTo.insert(varToBlock[*it2]);
         }
-        it++;
-        it2++;
+
+        switch(blocksBelongTo.size()) {
+            case 0: {
+                //Create new block
+                vector<Var> block;
+                for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+                    varToBlock[*it2] = blocks.size();
+                    block.push_back(*it2);
+                }
+                blocks.push_back(block);
+                numBlocks++;
+
+                continue;
+            }
+
+            case 1: {
+                //Add to existing block
+                const size_t blockNum = *blocksBelongTo.begin();
+                vector<Var>& block = blocks[blockNum];
+                for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+                    if (varToBlock[*it2] == std::numeric_limits<size_t>::max()) {
+                        block.push_back(*it2);
+                        varToBlock[*it2] = blockNum;
+                    }
+                }
+                continue;
+            }
+
+            default: {
+                //Merge blocks into first block
+                const size_t blockNum = *blocksBelongTo.begin();
+                set<size_t>::const_iterator it2 = blocksBelongTo.begin();
+                vector<Var>& finalBlock = blocks[blockNum];
+                it2++; //don't merge the first into the first
+                for(set<size_t>::const_iterator end2 = blocksBelongTo.end(); it2 != end2; it2++) {
+                    for(vector<Var>::const_iterator it3 = blocks[*it2].begin(), end3 = blocks[*it2].end(); it3 != end3; it3++) {
+                        finalBlock.push_back(*it3);
+                        varToBlock[*it3] = blockNum;
+                    }
+                    blocks[*it2].clear();
+                    numBlocks--;
+                }
+
+                //add remaining vars
+                for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+                    if (varToBlock[*it2] == std::numeric_limits<size_t>::max()) {
+                        finalBlock.push_back(*it2);
+                        varToBlock[*it2] = blockNum;
+                    }
+                }
+            }
+        }
     }
-}
 
-/**
-@brief Converts all xor clauses to normal clauses
+    //caclulate stats
+    numVarsInBlocks = 0;
+    for(vector<vector<Var> >::const_iterator it = blocks.begin(), end = blocks.end(); it != end; it++) {
 
-Sometimes it's not worth the hassle of having xor clauses and normal clauses.
-This function converts xor clauses to normal clauses, and removes the normal
-clauses.
-
-\todo It currently only works for 3- and 4-long clauses. Larger clauses should
-also be handled.
-*/
-void XorFinder::addAllXorAsNorm()
-{
-    uint32_t added = 0;
-    XorClause **i = solver.xorclauses.getData(), **j = i;
-    for (XorClause **end = solver.xorclauses.getDataEnd(); i != end; i++) {
-        if ((*i)->size() > 3) {
-            *j++ = *i;
+        //this set has been merged into another set. Skip
+        if (it->empty())
             continue;
+
+        //std::cout << "Block vars: " << it->size() << std::endl;
+        numVarsInBlocks += it->size();
+    }
+    //std::cout << "Sum vars in blocks: " << numVarsInBlocks << std::endl;
+}
+
+/*const uint32_t XorFinder::tryToXor(const Xor& thisXor, const uint32_t thisIndex)
+{
+    uint32_t doneSomething = 0;
+    for (vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
+        seen[*it] = 1;
+    }
+
+    vector<Lit> XORofTwo;
+    for (vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
+        const vector<uint32_t>& indexes = xorOcc[*it];
+        for (vector<uint32_t>::const_iterator it2 = indexes.begin(), end2 = indexes.end(); it2 != end2; it2++) {
+            if (*it2 == thisIndex) continue;
+            if (xors[*it2].vars.size() <= thisXor.vars.size()) {
+                const Xor& otherXor = xors[*it2];
+                uint32_t wrong = 0;
+                for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
+                    if (!seen[*it3]) {
+                        wrong++;
+                        if (wrong > 1 || (wrong>0 && otherXor.vars.size() < thisXor.vars.size())) break;
+                    }
+                }
+                if ((wrong == 0 && thisXor.vars.size()-otherXor.vars.size() <= 2)
+                    || (wrong == 1 && otherXor.vars.size()-thisXor.vars.size() <= 1)) {
+                    //std::cout << "Two xors to do something about: " << std::endl;
+                    //std::cout << thisXor << std::endl;
+                    //std::cout << otherXor << std::endl;
+                    XORofTwo.clear();
+
+                    //If there is something missing from otherXOR
+                    if (wrong > 0) {
+                        for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
+                            if (!seen[*it3]) {
+                                XORofTwo.push_back(Lit(*it3, false));
+                            }
+                        }
+                    }
+
+                    //If there is something extra in thisXOR
+                    assert(otherXor.vars.size() <= thisXor.vars.size());
+                    for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
+                        seen2[*it3] = 1;
+                    }
+
+                    for (vector<Var>::const_iterator it3 = thisXor.vars.begin(), end3 = thisXor.vars.end(); it3 != end3; it3++) {
+                        if (!seen2[*it3]) {
+                            XORofTwo.push_back(Lit(*it3, false));
+                        }
+                    }
+
+                    for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
+                        seen2[*it3] = 0;
+                    }
+
+                    assert(XORofTwo.size() <=2);
+                    //std::cout << "final XOR: " << XORofTwo << " rhs: " << finalRHS << std::endl;
+                    if (!control->addXorClauseInt(XORofTwo, thisXor.rhs ^ otherXor.rhs))
+                        goto end;
+                    doneSomething++;
+                }
+            }
         }
-        added++;
-        if ((*i)->size() == 3) addXorAsNormal3(**i);
-        //if ((*i)->size() == 4) addXorAsNormal4(**i);
-        solver.removeClause(**i);
     }
-    solver.xorclauses.shrink(i-j);
-    if (solver.conf.verbosity >= 1) {
-        std::cout << "c Added XOR as norm:" << added << std::endl;
+
+    end:
+    for (vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
+        seen[*it] = 0;
     }
-}
 
-/**
-@brief Utility function for addAllXorAsNorm() for converting 3-long xor clauses to normal clauses
+    return doneSomething;
+}*/
 
-\todo clean this up, it's ugly
-*/
-void XorFinder::addXorAsNormal3(XorClause& c)
+void XorFinder::findXor(ClauseIndex c)
 {
-    assert(c.size() == 3);
-    Clause *tmp;
-    vec<Var> vars;
-    vec<Lit> vars2(c.size());
-    const bool inverted = c.xorEqualFalse();
+    const Clause& cl = *subsumer->clauses[c.index];
+    if (cl.size() >= 6)
+        return; //for speed
 
-    for (uint32_t i = 0; i < c.size(); i++) {
-        vars.push(c[i].var());
+    //Calculate parameters of base clause. Also set 'seen' for easy check in 'findXorMatch()'
+    bool rhs = true;
+    uint32_t whichOne = 0;
+    uint32_t i = 0;
+    for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++, i++) {
+        seen[l->var()] = 1;
+        rhs ^= l->sign();
+        whichOne += ((uint32_t)l->sign()) << i;
     }
 
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], false ^ inverted);
-    vars2[2] = Lit(vars[2], false ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
+    //Set this clause as the base for the FoundXors
+    FoundXors foundCls(c, cl, subsumer->clauseData[c.index], rhs, whichOne);
 
-    vars2[0] = Lit(vars[0], true ^ inverted);
-    vars2[1] = Lit(vars[1], true ^ inverted);
-    vars2[2] = Lit(vars[2], false ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
+    const Lit *l = cl.begin();
+    for (const Lit *end = cl.end(); l != end; l++) {
+        findXorMatch(subsumer->occur[(*l).toInt()], foundCls);
+        findXorMatch(subsumer->occur[(~*l).toInt()], foundCls);
 
-    vars2[0] = Lit(vars[0], true ^ inverted);
-    vars2[1] = Lit(vars[1], false ^ inverted);
-    vars2[2] = Lit(vars[2], true ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
+        findXorMatch(control->watches[(~(*l)).toInt()], *l, foundCls);
+        findXorMatch(control->watches[(*l).toInt()], ~(*l), foundCls);
 
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], true ^ inverted);
-    vars2[2] = Lit(vars[2], true ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
+        findXorMatch(control->implCache[(*l).toInt()].lits, *l, foundCls);
+        findXorMatch(control->implCache[(~*l).toInt()].lits, ~(*l), foundCls);
+
+        if (foundCls.foundAll())
+            break;
+
+    }
+
+
+    if (foundCls.foundAll()) {
+        Xor thisXor(cl, rhs);
+        assert(xorOcc.size() > cl[0].var());
+        #ifdef VERBOSE_DEBUG_XOR_FINDER
+        std::cout << "XOR found: " << cl << std::endl;
+        #endif
+
+        const vector<uint32_t>& whereToFind = xorOcc[cl[0].var()];
+        bool found = false;
+        for (vector<uint32_t>::const_iterator it = whereToFind.begin(), end = whereToFind.end(); it != end; it++) {
+            if (xors[*it] == thisXor) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            xors.push_back(thisXor);
+            uint32_t thisXorIndex = xors.size()-1;
+            for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
+                xorOcc[l->var()].push_back(thisXorIndex);
+            }
+        }
+    }
+
+    //Clear 'seen'
+    for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++, i++) {
+        seen[l->var()] = 0;
+    }
 }
 
-/**
-@brief Utility function for addAllXorAsNorm() for converting 4-long xor clauses to normal clauses
-
-\todo clean this up, it's ugly
-*/
-void XorFinder::addXorAsNormal4(XorClause& c)
+void XorFinder::findXorMatch(const vec<Watched>& ws, const Lit lit, FoundXors& foundCls) const
 {
-    assert(c.size() == 4);
-    Clause *tmp;
-    vec<Var> vars;
-    vec<Lit> vars2(c.size());
-    const bool inverted = !c.xorEqualFalse();
-
-    for (uint32_t i = 0; i < c.size(); i++) {
-        vars.push(c[i].var());
+    for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++)  {
+        if (it->isBinary()
+            && seen[it->getOtherLit().var()]
+            )
+        {
+            foundCls.add(lit, it->getOtherLit(), it->getLearnt());
+        }
     }
-
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], false ^ inverted);
-    vars2[2] = Lit(vars[2], false ^ inverted);
-    vars2[3] = Lit(vars[3], true ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], true ^ inverted);
-    vars2[2] = Lit(vars[2], false ^ inverted);
-    vars2[3] = Lit(vars[3], false ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], false ^ inverted);
-    vars2[2] = Lit(vars[2], true ^ inverted);
-    vars2[3] = Lit(vars[3], false ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], false ^ inverted);
-    vars2[2] = Lit(vars[2], false ^ inverted);
-    vars2[3] = Lit(vars[3], true ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], false ^ inverted);
-    vars2[1] = Lit(vars[1], true ^ inverted);
-    vars2[2] = Lit(vars[2], true ^ inverted);
-    vars2[3] = Lit(vars[3], true ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], true ^ inverted);
-    vars2[1] = Lit(vars[1], false ^ inverted);
-    vars2[2] = Lit(vars[2], true ^ inverted);
-    vars2[3] = Lit(vars[3], true ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], true ^ inverted);
-    vars2[1] = Lit(vars[1], true ^ inverted);
-    vars2[2] = Lit(vars[2], false ^ inverted);
-    vars2[3] = Lit(vars[3], true ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
-
-    vars2[0] = Lit(vars[0], true ^ inverted);
-    vars2[1] = Lit(vars[1], true ^ inverted);
-    vars2[2] = Lit(vars[2], true ^ inverted);
-    vars2[3] = Lit(vars[3], false ^ inverted);
-    tmp = solver.addClauseInt(vars2, c.getGroup());
-    if (tmp) solver.clauses.push(tmp);
 }
 
+void XorFinder::findXorMatch(const vector<LitExtra>& lits, const Lit lit, FoundXors& foundCls) const
+{
+    for (vector<LitExtra>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++)  {
+        if (seen[it->getLit().var()]) {
+            foundCls.add(lit, it->getLit(), !it->getOnlyNLBin());
+        }
+    }
+}
+
+void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
+{
+    vector<Lit> tmpClause;
+    //seen2 is clear
+
+    for (Occur::const_iterator it = occ.begin(), end = occ.end(); it != end; it++) {
+        const uint32_t index = it->index;
+        if (subsumer->clauseData[index].size <= foundCls.getSize()) { //Must not be larger than the original clauses
+            Clause& cl = *subsumer->clauses[index];
+            tmpClause.clear();
+            //std::cout << "Orig clause: " << foundCls.getOrigCl() << std::endl;
+
+            bool rhs = true;
+            uint32_t i = 0;
+            for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++, i++) {
+                if (!seen[l->var()]) {
+                    //If this literal is not meant to be inside the XOR, then try to find a replacement for it from the cache
+                    bool found = false;
+                    const vector<LitExtra>& cache = control->implCache[Lit(l->var(), true).toInt()].lits;
+                    for(vector<LitExtra>::const_iterator it2 = cache.begin(), end2 = cache.end(); it2 != end2 && !found; it2++) {
+                        if (seen[l->var()] && !seen2[l->var()]) {
+                            found = true;
+                            seen2[l->var()] = true;
+                            rhs ^= it2->getLit().sign();
+                            tmpClause.push_back(it2->getLit());
+                            //std::cout << "Added trans lit: " << tmpClause.back() << std::endl;
+                        }
+                    }
+
+                    //Didn't find replacement
+                    if (!found)
+                        goto end;
+                } else {
+                    if (!seen2[l->var()]) { //Fine, it's inside the orig clause, but we might have already added this lit
+                        seen2[l->var()] = true;
+                        rhs ^= l->sign();
+                        tmpClause.push_back(*l);
+                        //std::cout << "Added lit: " << tmpClause.back() << std::endl;
+                    } else {
+                        goto end; //HACK: we don't want both 'lit' and '~lit' end up in the clause
+                    }
+                }
+            }
+            //either the invertedness has to match, or the size must be smaller
+            if (rhs != foundCls.getRHS() && cl.size() == foundCls.getSize())
+                goto end;
+
+            //If the size of this clause is the same of the base clause, then
+            //there is no point in using this clause as a base for another XOR
+            //because exactly the same things will be found.
+            if (cl.size() == foundCls.getSize())
+                triedAlready[index] = 1;
+
+            std::sort(tmpClause.begin(), tmpClause.end());
+            //std::cout << "OK!" << std::endl;
+            foundCls.add(it->index, tmpClause);
+
+            end:;
+            //std::cout << "Not OK" << std::endl;
+            //Clear 'seen2'
+            for(vector<Lit>::const_iterator it = tmpClause.begin(), end = tmpClause.end(); it != end; it++) {
+                seen2[it->var()] = false;
+            }
+        }
+    }
+}
+
+void XorFinder::findXorMatch(const Occur& occ, FoundXors& foundCls)
+{
+    for (Occur::const_iterator it = occ.begin(), end = occ.end(); it != end; it++) {
+        const uint32_t index = it->index;
+        if (subsumer->clauseData[index].size <= foundCls.getSize() //Must not be larger than the original clause
+            && ((subsumer->clauseData[index].abst | foundCls.getAbst()) == foundCls.getAbst()) //Doesn't contain literals not in the original clause
+        ) {
+            const Clause& cl = *subsumer->clauses[index];
+
+            bool rhs = true;
+            uint32_t i = 0;
+            for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++, i++) {
+                if (!seen[l->var()]) goto end;
+                rhs ^= l->sign();
+            }
+            //either the invertedness has to match, or the size must be smaller
+            if (rhs != foundCls.getRHS() && cl.size() == foundCls.getSize())
+                continue;
+
+            //If the size of this clause is the same of the base clause, then
+            //there is no point in using this clause as a base for another XOR
+            //because exactly the same things will be found.
+            if (cl.size() == foundCls.getSize())
+                triedAlready[index] = 1;
+
+            foundCls.add(it->index, cl);
+            end:;
+        }
+    }
+}

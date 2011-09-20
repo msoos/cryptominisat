@@ -1,41 +1,44 @@
-/*****************************************************************************
-MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
-glucose -- Gilles Audemard, Laurent Simon (2008)
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-
-Original code by MiniSat and glucose authors are under an MIT licence.
-Modifications for CryptoMiniSat are under GPLv3 licence.
-******************************************************************************/
-
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
 #ifndef SOLVERTYPES_H
 #define SOLVERTYPES_H
 
-#include <cassert>
-#include <iostream>
-#include <Vec.h>
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
-
-#include <stdio.h>
-#include <vector>
 #include "constants.h"
+#include "Vec.h"
+
+#include <iostream>
+#include <vector>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
+#include <limits>
+#include <vector>
+using std::vector;
 
-//=================================================================================================
-// Variables, literals, lifted booleans, clauses:
-
-
-// NOTE! Variables are just integers. No abstraction here. They should be chosen from 0..N,
-// so that they can be used as array indices.
-
+//Typedefs
 typedef uint32_t Var;
-#define var_Undef (0xffffffffU >>1)
+static const Var var_Undef(0xffffffffU >>1);
 enum RestartType {dynamic_restart, static_restart, auto_restart};
+enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
 /**
 @brief A Literal, i.e. a variable with a sign
@@ -46,7 +49,7 @@ class Lit
     explicit Lit(uint32_t i) : x(i) { };
 public:
     Lit() : x(2*var_Undef) {}   // (lit_Undef)
-    explicit Lit(Var var, bool sign) : x((var+var) + (int)sign) { }
+    explicit Lit(Var var, bool sign) : x((2*var) | (uint32_t)sign) { }
 
     const uint32_t& toInt() const { // Guarantees small, positive integers suitable for array indexing.
         return x;
@@ -85,37 +88,23 @@ public:
     bool operator >  (const Lit& p) const {
         return x > p.x;
     }
-    inline void print(FILE* outfile = stdout) const
-    {
-        fprintf(outfile,"%s%d ", sign() ? "-" : "", var()+1);
-    }
-    inline void printFull(FILE* outfile = stdout) const
-    {
-        fprintf(outfile,"%s%d 0\n", sign() ? "-" : "", var()+1);
-    }
     static Lit toLit(uint32_t data)
     {
         return Lit(data);
     }
 };
 
-const Lit lit_Undef(var_Undef, false);  // Useful special constants.
-const Lit lit_Error(var_Undef, true );  //
+static const Lit lit_Undef(var_Undef, false);  // Useful special constants.
+static const Lit lit_Error(var_Undef, true );  //
 
-inline std::ostream& operator<<(std::ostream& os, const Lit& lit)
+inline std::ostream& operator<<(std::ostream& os, const Lit lit)
 {
-    std::stringstream ss;
-    ss << (lit.sign() ? "-" : "") << (lit.var() + 1);
-    os << std::setw(6) << ss.str();
-    return os;
-}
-
-inline std::ostream& operator<<(std::ostream& cout, const vec<Lit>& lits)
-{
-    for (uint32_t i = 0; i < lits.size(); i++) {
-        cout << lits[i] << " ";
+    if (lit == lit_Undef) {
+        os << "lit_Undef";
+    } else {
+        os << (lit.sign() ? "-" : "") << (lit.var() + 1);
     }
-    return cout;
+    return os;
 }
 
 inline std::ostream& operator<<(std::ostream& cout, const std::vector<Lit>& lits)
@@ -126,27 +115,8 @@ inline std::ostream& operator<<(std::ostream& cout, const std::vector<Lit>& lits
     return cout;
 }
 
-inline void printClause(FILE* outFile, const std::vector<Lit>& clause)
-{
-    for (size_t i = 0; i < clause.size(); i++) {
-        fprintf(outFile,"%s%d ", clause[i].sign() ? "-" : "", clause[i].var()+1);
-    }
-    fprintf(outFile, "0\n");
-}
 
-inline void printClause(FILE* outFile, const vec<Lit>& clause)
-{
-    for (uint32_t i = 0; i < clause.size(); i++) {
-        fprintf(outFile,"%s%d ", clause[i].sign() ? "-" : "", clause[i].var()+1);
-    }
-    fprintf(outFile, "0\n");
-}
-
-//=================================================================================================
-// Lifted booleans:
-
-class llbool;
-
+///Class that can hold: True, False, Undef
 class lbool
 {
     char     value;
@@ -157,7 +127,6 @@ public:
     inline char getchar() const {
         return value;
     }
-    inline lbool(llbool b);
 
     inline const bool isUndef() const {
         return !value;
@@ -204,60 +173,11 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
     return cout;
 }
 
-
-/**
-@brief A very hackish lbool that also supports l_Nothing and l_Continue
-*/
-class llbool
-{
-    char value;
-
-public:
-    llbool(): value(0) {};
-    llbool(lbool v) :
-            value(v.value) {};
-    llbool(char a) :
-            value(a) {}
-
-    inline const bool operator!=(const llbool& v) const {
-        return (v.value != value);
-    }
-
-    inline const bool operator==(const llbool& v) const {
-        return (v.value == value);
-    }
-
-    friend class lbool;
-};
-const llbool l_Nothing  = toLbool(2);
-const llbool l_Continue = toLbool(3);
-
-lbool::lbool(llbool b) : value(b.value) {};
-
-inline std::ostream& operator<<(std::ostream& os, const llbool val)
-{
-    if (val == l_True) os << "l_True";
-    if (val == l_False) os << "l_False";
-    if (val == l_Undef) os << "l_Undef";
-    if (val == l_Nothing) os << "l_Nothing";
-    if (val == l_Continue) os << "l_Continue";
-    return os;
-}
-
-enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
-
-struct BinPropData {
-    uint32_t lev;
-    Lit lev1Ancestor;
-    bool learntLeadHere;
-    bool hasChildren;
-};
-
-class OrGate {
-    public:
-        Lit eqLit;
-        std::vector<Lit> lits;
-        //uint32_t num;
+struct PropData {
+    bool learntStep; //Step that lead here from ancestor is learnt
+    Lit ancestor;
+    bool hyperBin; //It's a hyper-binary clause
+    bool hyperBinNotAdded; //It's a hyper-binary clause, but was never added because all the rest was zero-level
 };
 
 struct BlockedClause {
@@ -273,7 +193,195 @@ struct BlockedClause {
     std::vector<Lit> lits;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const BlockedClause& bl)
+{
+    os << bl.lits << " blocked on: " << bl.blockedOn;
+
+    return os;
+}
+
+class BinaryClause {
+    public:
+        BinaryClause(const Lit _lit1, const Lit _lit2, const bool _learnt) :
+            lit1(_lit1)
+            , lit2(_lit2)
+            , learnt(_learnt)
+        {
+            if (lit1 > lit2) std::swap(lit1, lit2);
+        }
+
+        const bool operator<(const BinaryClause& other) const
+        {
+            if (lit1 < other.lit1) return true;
+            if (lit1 > other.lit1) return false;
+
+            if (lit2 < other.lit2) return true;
+            if (lit2 > other.lit2) return false;
+            return (learnt && !other.learnt);
+        }
+
+        const bool operator==(const BinaryClause& other) const
+        {
+            return (lit1 == other.lit1
+                    && lit2 == other.lit2
+                    && learnt == other.learnt);
+        }
+
+        const Lit getLit1() const
+        {
+            return lit1;
+        }
+
+        const Lit getLit2() const
+        {
+            return lit2;
+        }
+
+        const bool getLearnt() const
+        {
+            return learnt;
+        }
+
+    private:
+        Lit lit1;
+        Lit lit2;
+        bool learnt;
+};
 
 
+inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
+{
+    os << val.getLit1() << " , " << val.getLit2()
+    << " learnt: " << std::boolalpha << val.getLearnt() << std::noboolalpha;
+    return os;
+}
+
+class Polarity
+{
+    public:
+        Polarity() :
+            isForced(false)
+            , forcedVal(false)
+            , intLastVal(false)
+        {}
+
+        const bool getForced() const
+        {
+            return isForced;
+        }
+
+        void setForced(const bool val)
+        {
+            isForced = true;
+            forcedVal = val;
+        }
+
+        void setLastVal(const bool val)
+        {
+            intLastVal = val;
+        }
+
+        const bool getLastVal() const
+        {
+            return intLastVal;
+        }
+
+        const bool getVal() const
+        {
+            if (isForced)
+                return forcedVal;
+            else
+                return intLastVal;
+        }
+
+    private:
+
+        unsigned char isForced:1;
+        unsigned char forcedVal:1;
+        unsigned char intLastVal:1;
+};
+
+class AgilityData
+{
+    public:
+        AgilityData(const double _agilityG, const uint32_t _forgetLowAgilityAfter, const uint32_t _countAgilityFromThisConfl) :
+            agilityG(_agilityG)
+            , agility(0)
+            , numTooLow(0)
+            , lastConflTooLow(0)
+            , forgetLowAgilityAfter(_forgetLowAgilityAfter)
+            , countAgilityFromThisConfl(_countAgilityFromThisConfl)
+        {
+            assert(agilityG < 1 && agilityG > 0);
+        }
+
+        void update(const bool flipped)
+        {
+            agility *= agilityG;
+            if (flipped) agility += 1.0 - agilityG;
+        }
+
+        const double getAgility() const
+        {
+            return agility;
+        }
+
+        void tooLow(const uint64_t confl)
+        {
+            if (confl < countAgilityFromThisConfl) return;
+            assert(lastConflTooLow != confl);
+
+            //If it was a long time ago, don't penalise
+            if (lastConflTooLow + forgetLowAgilityAfter < confl)
+                numTooLow = 0;
+
+            numTooLow++;
+            lastConflTooLow = confl;
+        }
+
+        const uint32_t getNumTooLow() const
+        {
+            return numTooLow;
+        }
+
+        void reset()
+        {
+            agility = 0;
+            numTooLow = 0;
+            lastConflTooLow = 0;
+        }
+
+    private:
+        const double agilityG;
+        double agility;
+
+        //Number of 'recent' conflicts too low (recent = before forgetLowAgilityAfter)
+        uint32_t numTooLow;
+
+        //The last conflict number where we observed the agility to be too low
+        uint64_t lastConflTooLow;
+
+        //Forget that agilities were too low after this many 'good' (high agility) conflicts
+        uint32_t forgetLowAgilityAfter;
+
+        //Take into account agility from this number of conflicts (no calculation before)
+        uint32_t countAgilityFromThisConfl;
+};
+
+struct SearchFuncParams
+{
+    SearchFuncParams(uint64_t _conflictsToDo, uint64_t _maxNumConfl = std::numeric_limits< uint64_t >::max(), const bool _update = true) :
+        needToStopSearch(false)
+        , conflictsDoneThisRestart(0)
+        , conflictsToDo(_conflictsToDo)
+        , update(_update)
+    {}
+
+    bool needToStopSearch;
+    uint64_t conflictsDoneThisRestart;
+
+    const uint64_t conflictsToDo;
+    const bool update;
+};
 
 #endif //SOLVERTYPES_H

@@ -1,19 +1,23 @@
-/***********************************************************************************
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-**************************************************************************************************/
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
 #ifndef PACKEDROW_H
 #define PACKEDROW_H
@@ -94,6 +98,15 @@ public:
 
     bool popcnt_is_one() const
     {
+        #if __GNUC__ >= 4
+        int ret = 0;
+        for (uint32_t i = 0; i != size; i++) {
+            ret += __builtin_popcount(mp[i]&0xffffffff);
+            ret += __builtin_popcount(mp[i]>>32);
+            if (ret > 1) return false;
+        }
+        return ret == 1;
+        #else
         uint32_t popcount = 0;
         for (uint32_t i = 0; i != size; i++) {
             uint64_t tmp = mp[i];
@@ -103,6 +116,7 @@ public:
             }
         }
         return popcount == 1;
+        #endif
     }
 
     bool popcnt_is_one(uint32_t from) const
@@ -197,7 +211,7 @@ public:
         is_true_internal = !v.xorEqualFalse();
     }
 
-    const bool fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;
+    const bool fill(vector<Lit>& tmp_clause, const vector<lbool>& assigns, const vector<Var>& col_to_var_original) const;
 
     inline unsigned long int scan(const unsigned long int var) const
     {

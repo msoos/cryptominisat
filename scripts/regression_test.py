@@ -38,7 +38,7 @@ class Tester:
         self.sumTime = 0.0
         self.sumProp = 0
         self.verbose = False
-        self.gaussUntil = 100
+        self.gaussUntil = 0
         self.testDir = "../tests/"
         self.testDirNewVar = "../tests/newVar/"
         self.cryptominisat = "../build/cryptominisat"
@@ -50,7 +50,7 @@ class Tester:
         self.arminFuzzer = False
         self.extraOptions = ""
         self.needDebugLib = True
-        self.numThreads = 4
+        self.numThreads = 1
 
     def execute(self, fname, randomizeNum, newVar, needToLimitTime):
         if os.path.isfile(self.cryptominisat) != True:
@@ -60,7 +60,7 @@ class Tester:
             exit(300)
 
         command = "%s --randomize=%d " % (self.cryptominisat,randomizeNum)
-        command += "--gaussuntil=%d " % self.gaussUntil
+        if (self.gaussUntil != 0) : command += "--gaussuntil=%d " % self.gaussUntil
         if (self.needDebugLib) :
             command += "--debuglib "
         if self.verbose == False:
@@ -438,6 +438,7 @@ class Tester:
                 sys.exit()
             elif opt in ("-f", "--file"):
                 fname = arg
+                self.needDebugLib = False
             elif opt in ("-n", "--num"):
                 num = int(arg)
             elif opt in ("--numStart"):
@@ -478,18 +479,36 @@ class Tester:
             i = 0
 
             while i < 100000000:
+                #fuzzTest
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
-                commands.getstatusoutput("./fuzzsat > %s" %(file_name))
+                out = commands.getstatusoutput("./fuzzSat > %s" %(file_name))
+                print "fuzzSat :", out
 
                 for i3 in range(num):
                     self.check(fname=file_name, fnameCheck=file_name,
-                               randomizeNum=i3, needToLimitTime=True)
+                            randomizeNum=i3, needToLimitTime=True)
 
                 os.unlink(file_name)
+
+                #cnfFuzz
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
-                commands.getstatusoutput("./cnffuzz > %s" % (file_name))
+                out = commands.getstatusoutput("./cnfFuzz > %s" % (file_name))
+                print "cnfFuzzSat: ", out
+
+                for i3 in range(num):
+                    self.check(fname=file_name, fnameCheck=file_name,
+                            randomizeNum=i3, needToLimitTime=True)
+
+                    i = i + 1
+                os.unlink(file_name)
+
+                #vegardFuzz
+                fileopened, file_name = unique_fuzz_file("fuzzTest");
+                fileopened.close()
+                out = commands.getstatusoutput("./vegardFuzz > %s" % (file_name))
+                print "vegardFuzz: ", out
 
                 for i3 in range(num):
                     self.check(fname=file_name, fnameCheck=file_name,

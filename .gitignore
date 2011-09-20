@@ -5,4 +5,5 @@ cmake_install.cmake
 CMakeCache*
 cluster*
 docs/html
+scripts/fuzzTest*.cnf
 *~
