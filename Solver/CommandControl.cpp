@@ -313,16 +313,16 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
     glue = calcNBLevels(out_learnt);
 
     //Cache-based minimisation
-    if (conf.doCache
-        && conf.doMinimLearntMore
-        && out_learnt.size() > 1
-        && (conf.doAlwaysFMinim
-            || glue < 0.65*glueHistory.getAvgAllDouble()
-            || out_learnt.size() < 0.65*conflSizeHist.getAvgDouble()
-            )
-    ) {
+//     if (conf.doCache
+//         && conf.doMinimLearntMore
+//         && out_learnt.size() > 1
+//         && (conf.doAlwaysFMinim
+//             || glue < 0.65*glueHistory.getAvgAllDouble()
+//             || out_learnt.size() < 0.65*conflSizeHist.getAvgDouble()
+//             )
+//     ) {
         minimiseLearntFurther(out_learnt, calcNBLevels(out_learnt));
-    }
+//     }
 
     //Calc stats
     glue = calcNBLevels(out_learnt);
