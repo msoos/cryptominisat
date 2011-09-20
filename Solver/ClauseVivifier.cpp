@@ -41,6 +41,7 @@ const bool ClauseVivifier::SortBySize::operator()(const Clause* x, const Clause*
 ClauseVivifier::ClauseVivifier(ThreadControl* _control) :
     numCalls(0)
     , control(_control)
+    , seen(_control->seen)
 {}
 
 const bool ClauseVivifier::vivify()
@@ -76,6 +77,14 @@ struct BinSorter2 {
         return false;
     };
 };
+
+void ClauseVivifier::makeNonLearntBin(const Lit lit1, const Lit lit2)
+{
+    findWatchedOfBin(control->watches, lit1 ,lit2, true).setLearnt(false);
+    findWatchedOfBin(control->watches, lit2 ,lit1, true).setLearnt(false);
+    control->learntsLits -= 2;
+    control->clausesLits += 2;
+}
 
 /**
 @brief Performs clause vivification (by Hamadi et al.)
@@ -128,12 +137,6 @@ const bool ClauseVivifier::vivifyClausesNormal()
             //std::cout << "Need to finish -- ran out of prop" << std::endl;
             needToFinish = true;
         }
-
-        //if bad performance, stop doing it
-        /*if ((i-control->clauses.begin() > 5000 && effectiveLit < 300)) {
-            std::cout << "Need to finish -- not effective" << std::endl;
-            needToFinish = true;
-        }*/
 
         Clause& c = **i;
         extraDiff += c.size();
@@ -218,63 +221,126 @@ const bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
 {
     assert(control->ok);
 
-    vector<char> seen;
-    seen.resize(control->nVars()*2, 0);
+    //Stats
     uint32_t litsRem = 0;
     uint32_t clShrinked = 0;
+    uint32_t clRemoved = 0;
     uint64_t countTime = 0;
     uint64_t maxCountTime = 500000000;
     if (control->clausesLits + control->learntsLits < 500000)
         maxCountTime *= 2;
-    if (numCalls >= 5) maxCountTime*= 3;
     uint32_t clTried = 0;
+    double myTime = cpuTime();
+
+    //Temps
     vector<Lit> lits;
     bool needToFinish = false;
-    double myTime = cpuTime();
 
     vector<Clause*>::iterator i = clauses.begin();
     vector<Clause*>::iterator j = i;
     for (vector<Clause*>::iterator end = clauses.end(); i != end; i++) {
+        //Check status
         if (needToFinish) {
             *j++ = *i;
             continue;
         }
-        if (countTime > maxCountTime) needToFinish = true;
+        if (countTime > maxCountTime)
+            needToFinish = true;
 
+        //Setup
         Clause& cl = **i;
         assert(cl.size() > 2);
         countTime += cl.size()*2;
         clTried++;
+        bool isSubsumed = false;
 
-        for (uint32_t i2 = 0; i2 < cl.size(); i2++) seen[cl[i2].toInt()] = 1;
+        //Fill 'seen'
+        for (uint32_t i2 = 0; i2 < cl.size(); i2++)
+            seen[cl[i2].toInt()] = 1;
+
+        //Go through each literal and subsume/strengthen with it
         for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
-            if (seen[l->toInt()] == 0) continue;
+            //If already removed, we cannot strengthen with it
+            if (seen[l->toInt()] == 0)
+                continue;
 
+            //Setup
+            const Lit lit = *l;
             countTime += control->implCache[l->toInt()].lits.size();
-            for (vector<LitExtra>::const_iterator it2 = control->implCache[l->toInt()].lits.begin()
-                , end2 = control->implCache[l->toInt()].lits.end(); it2 != end2; it2++
+
+            //Go through the watchlist
+            const vec<Watched>& thisW = control->watches[(~lit).toInt()];
+            for(vec<Watched>::const_iterator wit = thisW.begin(), wend = thisW.end(); wit != wend; wit++) {
+                //Strengthening
+                if (wit->isBinary())
+                    seen[(~wit->getOtherLit()).toInt()] = 0;
+
+                if (wit->isTriClause()) {
+                    if (seen[(wit->getOtherLit()).toInt()])
+                        seen[(~wit->getOtherLit2()).toInt()] = 0;
+                    else if (seen[wit->getOtherLit2().toInt()])
+                        seen[(~wit->getOtherLit()).toInt()] = 0;
+                }
+
+                //Subsumption
+                if (wit->isBinary() &&
+                    seen[wit->getOtherLit().toInt()]
+                ) {
+                    isSubsumed = true;
+                    //If subsuming non-learnt with learnt, make the learnt into non-learnt
+                    if (wit->getLearnt() && !cl.learnt())
+                        makeNonLearntBin(lit, wit->getOtherLit());
+                    break;
+                }
+
+                if (wit->isTriClause()
+                    && cl.learnt() //We cannot distinguish between learnt and non-learnt, so we have to do with only learnt here
+                    && seen[wit->getOtherLit().toInt()]
+                    && seen[wit->getOtherLit2().toInt()]
+                ) {
+                    isSubsumed = true;
+                    //If subsuming non-learnt with learnt, make the learnt into non-learnt
+                    break;
+                }
+            }
+            if (isSubsumed)
+                break;
+
+            //Go through the cache
+            for (vector<LitExtra>::const_iterator it2 = control->implCache[lit.toInt()].lits.begin()
+                , end2 = control->implCache[lit.toInt()].lits.end(); it2 != end2; it2++
             ) {
                 seen[(~(it2->getLit())).toInt()] = 0;
             }
         }
 
+        //Clear 'seen' and fill new clause data
         lits.clear();
         for (const Lit *it2 = cl.begin(), *end2 = cl.end(); it2 != end2; it2++) {
             if (seen[it2->toInt()]) lits.push_back(*it2);
             else litsRem++;
             seen[it2->toInt()] = 0;
         }
-        if (lits.size() < cl.size()) {
-            countTime += cl.size()*10;
-            control->detachClause(cl);
+
+        //If nothing to do, then move along
+        if (lits.size() == cl.size() && !isSubsumed) {
+            *j++ = *i;
+            continue;
+        }
+
+        //Else either remove or shrink
+        countTime += cl.size()*10;
+        control->detachClause(cl);
+        if (isSubsumed) {
+            clRemoved++;
+            control->clAllocator->clauseFree(&cl);
+        } else {
             clShrinked++;
             Clause* c2 = control->addClauseInt(lits, cl.learnt(), cl.getGlue());
             control->clAllocator->clauseFree(&cl);
 
             if (c2 != NULL) *j++ = c2;
             if (!control->ok) needToFinish = true;
-        } else {
-            *j++ = *i;
         }
     }
 
@@ -283,9 +349,10 @@ const bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
     if (control->conf.verbosity >= 1) {
         std::cout << "c vivif2 -- "
         << " cl tried " << std::setw(8) << clTried
-        << " cl shrink " << std::setw(8) << clShrinked
-        << " lits rem " << std::setw(10) << litsRem
-        << " time: " << cpuTime() - myTime
+        << " cl-sh " << std::setw(7) << clShrinked
+        << " cl-rem " << std::setw(7) << clRemoved
+        << " lit-rem " << std::setw(7) << litsRem
+        << " time: " << (cpuTime() - myTime)
         << std::endl;
     }
 

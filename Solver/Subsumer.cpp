@@ -614,67 +614,6 @@ void Subsumer::removeWrongBinsAndAllTris()
 }
 
 /**
-@brief Subsumes&strenghtens normal clauses with (non-existing) binary clauses
-
-First, it backward-subsumes and performs self-subsuming resolution using binary
-clauses on non-binary clauses. Then, it generates non-existing binary clauses
-(that could exist, but would be redundant), and performs self-subsuming
-resolution with them on the normal clauses using \function subsume0BIN().
-*/
-const bool Subsumer::subsumeWithBinaries()
-{
-    //Clearing stats
-    double myTime = cpuTime();
-    clauses_subsumed = 0;
-    clauses_strengthened = 0;
-    int64_t binMaxSubsume = numMaxSubsume0/3;
-    toDecrease = &binMaxSubsume;
-    const uint32_t origTrailSize = control->trail.size();
-
-    vector<Lit> lits(2);
-    uint32_t counter = 0;
-    uint32_t thisRand = control->mtrand.randInt();
-    for (vector<vec<Watched> >::const_iterator it = control->watches.begin(); counter != control->nVars()*2; counter++) {
-        uint32_t wsLit = (counter + thisRand) % (control->nVars()*2);
-        Lit lit = ~Lit::toLit(wsLit);
-        lits[0] = lit;
-        const vec<Watched> ws_backup = *(it + wsLit);
-        for (vec<Watched>::const_iterator it2 = ws_backup.begin(), end2 = ws_backup.end(); it2 != end2; it2++) {
-            if (it2->isBinary() && lit.toInt() < it2->getOtherLit().toInt()) {
-                lits[1] = it2->getOtherLit();
-                bool toMakeNonLearnt = subsume1(lits, it2->getLearnt());
-                if (toMakeNonLearnt) makeNonLearntBin(lit, it2->getOtherLit(), it2->getLearnt());
-                if (!control->ok) return false;
-            }
-        }
-        if (numMaxSubsume0 < 0) break;
-    }
-
-    if (control->conf.verbosity  >= 1) {
-        std::cout << "c subs with bin: " << std::setw(8) << clauses_subsumed
-        << "  lits-rem: " << std::setw(9) << clauses_strengthened
-        << "  v-fix: " << std::setw(4) <<control->trail.size() - origTrailSize
-        << "  time: " << std::setprecision(2) << std::setw(5) <<  cpuTime() - myTime << " s"
-        << std::endl;
-    }
-    printLimits();
-
-    clauses_subsumed = 0;
-    clauses_strengthened = 0;
-
-    return true;
-}
-
-void Subsumer::makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt)
-{
-    assert(learnt == true);
-    findWatchedOfBin(control->watches, lit1 ,lit2, learnt).setLearnt(false);
-    findWatchedOfBin(control->watches, lit2 ,lit1, learnt).setLearnt(false);
-    control->learntsLits -= 2;
-    control->clausesLits += 2;
-}
-
-/**
 @brief Clears and deletes (almost) everything in this class
 
 Clears touchlists, occurrance lists, clauses, and variable touched lists
@@ -908,7 +847,6 @@ const bool Subsumer::simplifyBySubsumption()
 
     //Do stuff with binaries
     subsumeBinsWithBins();
-    if (control->conf.doSubsWBins && !subsumeWithBinaries()) return false;
     printLimits();
 
     #ifdef DEBUG_VAR_ELIM

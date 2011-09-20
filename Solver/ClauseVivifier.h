@@ -24,6 +24,7 @@
 
 #include <vector>
 #include "constants.h"
+#include "SolverTypes.h"
 using std::vector;
 
 class ThreadControl;
@@ -39,6 +40,7 @@ class ClauseVivifier {
         //Actual algorithms used
         const bool vivifyClausesNormal();
         const bool vivifyClausesCache(vector<Clause*>& clauses);
+        void       makeNonLearntBin(const Lit lit1, const Lit lit2);
 
         ///Sort clauses according to size
         struct SortBySize
@@ -46,8 +48,10 @@ class ClauseVivifier {
             const bool operator () (const Clause* x, const Clause* y);
         };
 
+        //Misc data
         uint32_t numCalls;
         ThreadControl* control;
+        vector<uint16_t>& seen;
 };
 
 #endif //CLAUSEVIVIFIER_H
