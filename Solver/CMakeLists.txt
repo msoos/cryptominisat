@@ -25,6 +25,7 @@ add_library(cryptoms
     ThreadControl.cpp
     XorFinder.cpp
     GateFinder.cpp
+    ConflGraphCreator.cpp
 )
 
 target_link_libraries(cryptoms
