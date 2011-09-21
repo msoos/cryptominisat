@@ -24,7 +24,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 //#define DEBUG_ENQUEUE_LEVEL0
 //#define VERBOSE_DEBUG_POLARITIES
 //#define DEBUG_DYNAMIC_RESTART
-//#define UNWINDING_DEBUG
+//#define DELAYED_NORM_WATCH_UPDATE
 
 /**
 @brief Sets a sane default config and allocates handler classes
@@ -233,7 +233,10 @@ template<bool simple> inline const bool Solver::propNormalClause(vec<Watched>::i
         return true;
     }
     // Look for new watch:
+
+#ifdef DELAYED_NORM_WATCH_UPDATE
     uint16_t other = std::numeric_limits<uint16_t>::max();
+#endif
     for (uint16_t numLit = 0, size = c.size(); numLit < size; numLit++) {
         if (numLit == data[0] || numLit == data[1]) continue;
         if (value(c[numLit]) == l_True) {
@@ -245,8 +248,21 @@ template<bool simple> inline const bool Solver::propNormalClause(vec<Watched>::i
             i--;
             return true;
         }
+#ifdef DELAYED_NORM_WATCH_UPDATE
         if (value(c[numLit]) == l_Undef && other == std::numeric_limits<uint16_t>::max()) other = numLit;
+#else
+        if (value(c[numLit]) == l_Undef) {
+            data[watchNum] = numLit;
+            watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
+            bogoProps += 2;
+            j--;
+            *i = *j;
+            i--;
+            return true;
+        }
+#endif
     }
+#ifdef DELAYED_NORM_WATCH_UPDATE
     if (other != std::numeric_limits<uint16_t>::max()) {
         data[watchNum] = other;
         watches[(~c[other]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
@@ -256,6 +272,7 @@ template<bool simple> inline const bool Solver::propNormalClause(vec<Watched>::i
         i--;
         return true;
     }
+#endif
 
     // Did not find watch -- clause is unit under assignment:
     if (value(c[data[!watchNum]]) == l_False) {
