@@ -324,7 +324,7 @@ const PropBy Solver::propagate(const bool update)
     std::cout << "Propagation started" << std::endl;
     #endif
 
-    while (qhead < trail.size()) {
+    while (qhead < trail.size() && confl.isNULL()) {
         Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>& ws = watches[p.toInt()];
 
