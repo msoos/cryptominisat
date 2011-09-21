@@ -220,7 +220,7 @@ void Main::parseCommandLine()
     ("verbosity", po::value<int>()->default_value(conf.verbosity), "[0-4] Verbosity of solver")
     ("randomize", po::value<uint32_t>()->default_value(conf.origSeed), "[0..] Sets random seed")
     ("restart", po::value<std::string>()->default_value("auto"), "{auto,static,dynamic}  Restart strategy to follow.")
-    ("threads", po::value<uint32_t>()->default_value(numThreads), "Threads to use")
+    ("threads,t", po::value<uint32_t>()->default_value(numThreads), "Threads to use")
     ("nosolprint", "Don't print assignment if solution is SAT")
     ("nosimplify", "Don't do regular simplification rounds")
     //("greedyunbound", "Greedily unbound variables that are not needed for SAT")
@@ -653,7 +653,7 @@ const int Main::solve()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = control->solve();
+        ret = control->solve(numThreads);
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {

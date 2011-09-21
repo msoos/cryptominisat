@@ -514,7 +514,7 @@ void ThreadControl::toDetachFree()
     //findAllAttach();
 }
 
-const lbool ThreadControl::solve()
+const lbool ThreadControl::solve(const int numThreads)
 {
     restPrinter->printStatHeader();
     restPrinter->printRestartStat("B");
@@ -529,7 +529,7 @@ const lbool ThreadControl::solve()
     if (status == l_Undef)
         status = simplifyProblem(conf.simpBurstSConf);
 
-    omp_set_num_threads(1);
+    omp_set_num_threads(numThreads);
 
     while (status == l_Undef) {
         restPrinter->printRestartStat("N");

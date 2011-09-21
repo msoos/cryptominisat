@@ -55,7 +55,7 @@ class ThreadControl : public Solver
 
         //////////////////////////////
         //Solving
-        const lbool solve();
+        const lbool solve(const int threads);
         void        setNeedToInterrupt();
         vector<lbool>  model;
         const lbool   modelValue (const Lit p) const;  ///<Found model value for lit
