@@ -110,9 +110,20 @@ class CommandControl : public Solver
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
         void     analyze          (PropBy confl, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &nblevels);
         void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
-        bool     litRedundant     (Lit p, uint32_t abstract_levels);       ///<helper method for 'analyze()'
-        uint32_t abstractLevel    (const Var x) const;                     ///< Used to represent an abstraction of sets of decision levels.
         template<class T> const uint32_t calcNBLevels(const T& ps); ///<Calculates the glue of a clause
+
+        //////////////
+        // Conflict minimisation
+        void            prune_removable(vector<Lit>& out_learnt);
+        void            find_removable(const vector<Lit>& out_learnt, uint32_t abstract_level);
+        int             quick_keeper(Lit p, uint32_t abstract_level, bool maykeep);
+        int             dfs_removable(Lit p, uint32_t abstract_level);
+        void            mark_needed_removable(Lit p);
+        int             res_removable();
+        uint32_t        abstractLevel(const Var x) const;
+        vector<PropBy> trace_reasons; // clauses to resolve to give CC
+        vector<Lit>     trace_lits_minim; // lits maybe used in minimization
+
 
         /////////////////
         //Graphical conflict generation
@@ -227,9 +238,9 @@ inline bool CommandControl::locked(const Clause& c) const
     return false;
 }
 
-inline uint32_t CommandControl::abstractLevel (const Var x) const
+inline uint32_t CommandControl::abstractLevel(const Var x) const
 {
-    return 1 << (varData[x].level & 31);
+    return ((uint32_t)1) << (varData[x].level % 32);
 }
 
 inline bool CommandControl::getPolarity(const Var var)
