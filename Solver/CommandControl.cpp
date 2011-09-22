@@ -199,15 +199,12 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
     int index = trail.size() - 1;
     out_btlevel = 0;
 
-    uint32_t numResolutions = 0;
+    uint32_t numIterations = 0;
 
     //std::cout << "---- Start analysis -----" << std::endl;
     out_learnt.push_back(lit_Undef); //make space for ~p
     do {
-        //otherwise should be UIP
-        if (p != lit_Undef) {
-            numResolutions++;
-        }
+        numIterations++;
 
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
@@ -274,6 +271,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
 
             case null_clause_t:
             default:
+                //otherwise should be UIP
                 assert(false && "Error in conflict analysis");
                 break;
         }
