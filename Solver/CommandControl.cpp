@@ -349,18 +349,8 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
     std::cout << "out_btlevel: " << out_btlevel << std::endl;
     #endif
 
-    /*OTF subsume
-    //We can only on-the-fly subsume clauses that are not 2- or 3-long
-    //furthermore, we cannot subsume a clause that is marked for deletion
-    //due to its high glue value
-    if (out_learnt.size() == 1
-        || !oldConfl.isClause()
-        || out_learnt.size() >= oldConfl.getClause()->size()) return NULL;
 
-    if (!subset(out_learnt, *oldConfl.getClause())) return NULL;
 
-    improvedClauseNo++;
-    improvedClauseSize += oldConfl.getClause()->size() - out_learnt.size();*/
 }
 
 /**
