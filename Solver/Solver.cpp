@@ -140,14 +140,13 @@ void Solver::attachClause(const Clause& c, const uint16_t point1, const uint16_t
 
     //For compatibility reasons, even TRI-clauses have a clauseData entry
     //TODO: get rid of this uselessness. TRI-clauses don't need an  entry in clauseData!
-    const uint32_t num = c.getNum();
-    if (clauseData.size() <= num)
-        clauseData.resize(num + 1);
+    if (c.size() != 3) {
+        const uint32_t num = c.getNum();
+        if (clauseData.size() <= num)
+            clauseData.resize(num + 1);
 
-    if (c.size() == 3)
-        clauseData[num] = ClauseData(0, 1);
-    else
         clauseData[num] = ClauseData(point1, point2);
+    }
 }
 
 /**
@@ -155,8 +154,12 @@ void Solver::attachClause(const Clause& c, const uint16_t point1, const uint16_t
 */
 void Solver::detachClause(const Clause& c)
 {
-    const ClauseData& data =clauseData[c.getNum()];
-    detachModifiedClause(c[data[0]], c[data[1]], (c.size() == 3) ? c[2] : lit_Undef,  c.size(), &c);
+    if (c.size() > 3) {
+        const ClauseData& data =clauseData[c.getNum()];
+        detachModifiedClause(c[data[0]], c[data[1]], (c.size() == 3) ? c[2] : lit_Undef,  c.size(), &c);
+    } else {
+        detachModifiedClause(c[0], c[1], c[2], c.size(), &c);
+    }
 }
 
 /**

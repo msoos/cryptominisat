@@ -121,11 +121,23 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
     assert(c.size() > 2);
     const uint32_t origSize = c.size();
 
-    ClauseData& data = control->clauseData[c.getNum()];
-    const ClauseData oldData = data;
-    const Lit origLit1 = c[data[0]];
-    const Lit origLit2 = c[data[1]];
-    const Lit origLit3 = (origSize == 3) ? c[2] : lit_Undef;
+    Lit origLit1 = lit_Undef;
+    Lit origLit2 = lit_Undef;
+    Lit origLit3 = lit_Undef;
+
+    uint16_t* data = NULL;
+    ClauseData oldData;
+
+    if (c.size() == 3) {
+        origLit1 = c[0];
+        origLit2 = c[1];
+        origLit3 = c[2];
+    } else {
+        data = control->clauseData[c.getNum()].litPos;
+        oldData = control->clauseData[c.getNum()];
+        origLit1 = c[data[0]];
+        origLit2 = c[data[1]];
+    }
 
     Lit *i, *j, *end;
     uint32_t num = 0;
@@ -140,8 +152,11 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
             control->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             return true;
         }
-        if (num < oldData[0]) data[0]--;
-        if (num < oldData[1]) data[1]--;
+
+        if (origSize > 3) {
+            if (num < oldData[0]) data[0]--;
+            if (num < oldData[1]) data[1]--;
+        }
     }
     c.shrink(i-j);
 
@@ -154,6 +169,7 @@ inline const bool ClauseCleaner::cleanClause(Clause*& cc)
         } else if (c.size() == 3) {
             control->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             control->attachClause(c);
+            control->clAllocator->releaseClauseNum(&c);
         } else {
             if (c.learnt())
                 control->learntsLits -= i-j;

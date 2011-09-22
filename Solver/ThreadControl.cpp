@@ -1127,14 +1127,9 @@ const bool ThreadControl::normClauseIsAttached(const Clause& c) const
         attached &= findWTri(watches[(~lit3).toInt()], lit1, lit2);
     } else {
         fullClause:
-        #ifdef SHARE_CLAUSES
         const ClauseData& data = clauseData[c.getNum()];
         attached &= findWCl(watches[(~c[data[0]]).toInt()], offset);
         attached &= findWCl(watches[(~c[data[1]]).toInt()], offset);
-        #else
-        attached &= findWCl(watches[(~c[0]).toInt()], offset);
-        attached &= findWCl(watches[(~c[1]).toInt()], offset);
-        #endif
     }
 
     return attached;

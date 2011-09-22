@@ -265,11 +265,19 @@ const bool VarReplacer::replace_set(vector<Clause*>& cs)
         assert(c.size() > 2);
 
         bool changed = false;
-        const ClauseData& data = control->clauseData[c.getNum()];
-        const Lit origLit1 = c[data[0]];
-        const Lit origLit2 = c[data[1]];
+        Lit origLit1 = lit_Undef;
+        Lit origLit2 = lit_Undef;
+        Lit origLit3 = lit_Undef;
+        if (c.size() == 3) {
+            origLit1 = c[0];
+            origLit2 = c[1];
+            origLit3 = c[2];
+        } else {
+            const ClauseData& data = control->clauseData[c.getNum()];
+            origLit1 = c[data[0]];
+            origLit2 = c[data[1]];
+        }
 
-        Lit origLit3 = (c.size() == 3) ? c[2] : lit_Undef;
         for (Lit *l = c.begin(), *end2 = l + c.size();  l != end2; l++) {
             if (table[l->var()].var() != l->var()) {
                 changed = true;
@@ -339,6 +347,10 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
     case 2:
         control->attachBinClause(c[0], c[1], c.learnt());
         return true;
+    case 3:
+        control->clAllocator->releaseClauseNum(&c);
+        //NO BREAK, since 3-long is just like a long one, except
+        //we might need to free the clause number
     default:
         control->attachClause(c);
         return false;

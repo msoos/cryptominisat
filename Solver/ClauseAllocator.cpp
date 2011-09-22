@@ -75,7 +75,7 @@ Clause* ClauseAllocator::Clause_new(const T& ps)
 {
     assert(ps.size() > 2);
     void* mem = allocEnough(ps.size());
-    Clause* real= new (mem) Clause(ps, getNewClauseNum());
+    Clause* real= new (mem) Clause(ps, getNewClauseNum(ps.size()));
 
     return real;
 }
@@ -104,16 +104,17 @@ if that is impossible, it creates a new stack, and adds the clause there
 */
 void* ClauseAllocator::allocEnough(const uint32_t size)
 {
+    //Sanity checks
     assert(sizes.size() == dataStarts.size());
     assert(maxSizes.size() == dataStarts.size());
     assert(origClauseSizes.size() == dataStarts.size());
-
     if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET)) {
         std::cerr << "Memory manager cannot handle the load. Sorry. Exiting." << std::endl;
         exit(-1);
     }
     assert(size > 2);
 
+    //Try to quickly find a place at the end of a dataStart
     uint32_t needed = sizeof(Clause)+sizeof(Lit)*size;
     bool found = false;
     uint32_t which = std::numeric_limits<uint32_t>::max();
@@ -125,6 +126,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         }
     }
 
+    //OOps, no luck, try the hard way, allocating space, etc.
     if (!found) {
         uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0) {
@@ -239,7 +241,7 @@ of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
 void ClauseAllocator::clauseFree(Clause* c)
 {
     assert(!c->getFreed());
-    releaseClauseNum(c->getNum());
+    releaseClauseNum(c);
 
     c->setFreed();
     uint32_t outerOffset = getOuterOffset(c);
@@ -383,9 +385,7 @@ void ClauseAllocator::consolidate(ThreadControl* control, const bool force)
         }
     }
 
-    #ifdef SHARE_CLAUSE
     renumberClauses(clauses, control);
-    #endif
     putClausesIntoDatastruct(clauses);
 
     uint32_t outerPart = 0;
@@ -556,8 +556,12 @@ void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
     }
 }
 
-const uint32_t ClauseAllocator::getNewClauseNum()
+const uint32_t ClauseAllocator::getNewClauseNum(const uint32_t size)
 {
+    //If size is 3, it's special, nothing to do really
+    if (size == 3)
+        return std::numeric_limits<uint32_t>::max();
+
     uint32_t toret;
     if (freedNums.empty()) {
         toret = maxClauseNum;
@@ -571,18 +575,24 @@ const uint32_t ClauseAllocator::getNewClauseNum()
 
 void ClauseAllocator::renumberClauses(vector<Clause*>& clauses, ThreadControl* control)
 {
-    vector<ClauseData> newData(maxClauseNum);
+    vector<ClauseData> newData;
     freedNums.clear();
     maxClauseNum = 0;
     for (vector<Clause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
-        newData[maxClauseNum] = control->clauseData[(*it)->getNum()];
-        (*it)->setNum(maxClauseNum++);
+        assert((**it).size() > 2);
+        if ((**it).size() > 3) {
+            newData.push_back(control->clauseData[(*it)->getNum()]);
+            (*it)->setNum(maxClauseNum);
+            maxClauseNum++;
+        }
     }
     control->clauseData.swap(newData);
 }
 
-inline void ClauseAllocator::releaseClauseNum(const uint32_t num)
+void ClauseAllocator::releaseClauseNum(Clause* cl)
 {
-    freedNums.push_back(num);
+    if (cl->getNum() != std::numeric_limits<uint32_t>::max()) {
+        freedNums.push_back(cl->getNum());
+        cl->setNum(std::numeric_limits<uint32_t>::max());
+    }
 }
-

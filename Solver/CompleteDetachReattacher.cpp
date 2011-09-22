@@ -140,7 +140,14 @@ const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
             return false;
         }
 
-        default:;
+        case 3: {
+            control->clAllocator->releaseClauseNum(cl);
+            break;
+        }
+
+        default: {
+            break;
+        }
     }
 
     return true;

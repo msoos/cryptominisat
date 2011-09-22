@@ -72,7 +72,8 @@ class ClauseAllocator {
                             +(offset >> NUM_BITS_OUTER_OFFSET));
         }
 
-        void clauseFree(Clause* c);
+        void clauseFree(Clause* c); ///Frees memory and associated clause number
+        void releaseClauseNum(Clause* cl); ///<used when long clause becomes 3-long
 
         void consolidate(ThreadControl* control, const bool force = false);
 
@@ -129,9 +130,8 @@ class ClauseAllocator {
         Clause* getClause();
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 
-        const uint32_t getNewClauseNum();
+        const uint32_t getNewClauseNum(const uint32_t size);
         void renumberClauses(vector<Clause*>& clauses, ThreadControl* solver);
-        void releaseClauseNum(const uint32_t num);
         vector<uint32_t> freedNums;  //Free clause nums that can be used now
         uint32_t maxClauseNum;
 };
