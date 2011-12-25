@@ -182,7 +182,7 @@ private:
     uint64_t* mp;
 };
 
-};
+}
 
 #endif //BITARRAY_H
 

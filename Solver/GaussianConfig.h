@@ -58,6 +58,6 @@ class GaussConf
     uint32_t maxNumMatrixes; //Maximum number of matrixes
 };
 
-};
+}
 
 #endif //GAUSSIANCONFIG_H

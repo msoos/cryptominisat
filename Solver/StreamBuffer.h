@@ -73,6 +73,6 @@ public:
     }
 };
 
-};
+}
 
 #endif //STREAMBUFFER_H
