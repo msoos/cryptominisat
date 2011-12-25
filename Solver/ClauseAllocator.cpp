@@ -162,15 +162,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size) throw (std::bad_alloc)
         #endif //DEBUG_CLAUSEALLOCATOR
 
         BASE_DATA_TYPE *dataStart;
-        #if 1
         dataStart = (BASE_DATA_TYPE *)malloc(sizeof(BASE_DATA_TYPE) * nextSize);
-        #else
-        int ret = posix_memalign((void**)&dataStart, getpagesize(), sizeof(BASE_DATA_TYPE) * nextSize);
-        if (ret != 0) throw std::bad_alloc();
-        assert(dataStart != NULL);
-        int err = madvise(dataStart, sizeof(BASE_DATA_TYPE) * nextSize, MADV_RANDOM);
-        assert(err == 0);
-        #endif
 
         dataStarts.push(dataStart);
         sizes.push(0);
@@ -361,16 +353,7 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force) throw (std::
         newSizes.push(0);
         newOrigClauseSizes.push();
         BASE_DATA_TYPE* pointer;
-        #if 1
         pointer = (BASE_DATA_TYPE*)malloc(sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
-        #else
-        int ret = posix_memalign((void**)&pointer, getpagesize(), sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
-        if (ret != 0) throw std::bad_alloc();
-        assert(pointer != NULL);
-        int err = madvise(pointer, sizeof(BASE_DATA_TYPE) * newMaxSizes[i], MADV_RANDOM);
-        assert(err == 0);
-        #endif
-
         newDataStartsPointers.push(pointer);
         newDataStarts.push(pointer);
     }
