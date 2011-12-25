@@ -521,8 +521,9 @@ const lbool ThreadControl::solve(const int numThreads)
 
     //Initialise stuff
     vector<lbool> solution;
-    uint32_t numConfls = 20000;
-    nextCleanLimit = 15000;
+    uint32_t numConfls = 40000;
+    nextCleanLimit = 20000;
+    nextCleanLimitInc = 20000;
 
     //Solve in infinite loop
     lbool status = ok ? l_Undef : l_False;
@@ -736,7 +737,8 @@ void ThreadControl::waitAllThreads()
     assert(toDetach.empty());
     moveClausesHere();
     reduceDB();
-    nextCleanLimit += 40000;
+    nextCleanLimit += nextCleanLimitInc;
+    nextCleanLimitInc *= 1.2;
 }
 
 void ThreadControl::printStats()

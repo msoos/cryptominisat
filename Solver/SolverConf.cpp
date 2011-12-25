@@ -23,7 +23,7 @@
 #include <limits>
 
 SolverConf::SolverConf() :
-        ratioRemoveClauses(1.0/2.0)
+        ratioRemoveClauses(1.0/3.0)
         , var_inc(128)
         , random_var_freq(0)
         , restart_first(100)
@@ -35,8 +35,8 @@ SolverConf::SolverConf() :
 
         //Agilities
         , agilityG                  (0.9999)
-        , agilityLimit              (0.1)
-        , numTooLowAgilitiesLimit   (50)
+        , agilityLimit              (0.2)
+        , numTooLowAgilitiesLimit   (100)
         , forgetLowAgilityAfter     (1000)
         , countAgilityFromThisConfl (50)
 
@@ -45,7 +45,7 @@ SolverConf::SolverConf() :
         , maxConflBtwSimp  (500000)
 
         , doPerformPreSimp (true)
-        , failedLitMultiplier(2.0)
+        , failedLitMultiplier(1.0)
         , nbClBeforeRedStart(20000)
 
         //Glues

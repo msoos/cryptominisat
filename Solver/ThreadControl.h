@@ -175,6 +175,7 @@ class ThreadControl : public Solver
         bool                 needToInterrupt;
         uint64_t             sumConflicts;
         uint64_t             nextCleanLimit;
+        uint64_t             nextCleanLimitInc;
         uint32_t             numDecisionVars;
         void setDecisionVar(const uint32_t var);
         void unsetDecisionVar(const uint32_t var);
