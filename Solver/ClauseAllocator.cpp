@@ -272,7 +272,6 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force) throw (std::
     checkGoodPropBy(solver);
     #endif
 
-    //if (dataStarts.size() > 2) {
     uint32_t sum = 0;
     for (uint32_t i = 0; i < sizes.size(); i++) {
         sum += currentlyUsedSizes[i];
