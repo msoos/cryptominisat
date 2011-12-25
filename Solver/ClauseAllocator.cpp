@@ -126,8 +126,6 @@ void* ClauseAllocator::allocEnough(const uint32_t size) throw (std::bad_alloc)
     assert(sizeof(Clause)%sizeof(BASE_DATA_TYPE) == 0);
     assert(sizeof(Lit)%sizeof(BASE_DATA_TYPE) == 0);
 
-    if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET))
-        throw std::bad_alloc();
     assert(size > 2 && "Clause size cannot be 2 or less, those are stored natively");
 
     const uint32_t needed = (sizeof(Clause) + sizeof(Lit)*size) / sizeof(BASE_DATA_TYPE);
@@ -142,6 +140,11 @@ void* ClauseAllocator::allocEnough(const uint32_t size) throw (std::bad_alloc)
     }
 
     if (!found) {
+        //Checking whether we are out of memory, because the offset that we can
+        //store is too little
+        if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET))
+            throw std::bad_alloc();
+
         uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0) {
             nextSize = std::min((uint32_t)(maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT), (uint32_t)MAXSIZE);
