@@ -80,8 +80,8 @@ struct PolaritySorter
     {};
 
     const bool operator()(const Lit lit1, const Lit lit2) {
-        const bool pol1 = varData[lit1.var()].polarity ^ lit1.sign();
-        const bool pol2 = varData[lit2.var()].polarity ^ lit2.sign();
+        const bool pol1 = !varData[lit1.var()].polarity ^ lit1.sign();
+        const bool pol2 = !varData[lit2.var()].polarity ^ lit2.sign();
 
         //Tie 1: polarity
         if (pol1 == true && pol2 == false) return true;
@@ -291,7 +291,7 @@ inline void  Solver::enqueue(const Lit p, const PropBy from)
     assert(value(v).isUndef());
     if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].begin());
 
-    assigns [v] = boolToLBool(!p.sign());
+    assigns[v] = boolToLBool(!p.sign());
     #ifdef ANIMATE3D
     std::cerr << "s " << v << " " << p.sign() << std::endl;
     #endif

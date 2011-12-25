@@ -143,7 +143,7 @@ public:
     inline const bool operator!=(lbool b) const {
         return value != b.value;
     }
-    lbool operator^(const bool b) const {
+    lbool operator^(const char b) const {
         return b ? lbool(-value) : lbool(value);
     }
     //lbool operator ^ (const bool b) const { return b ? lbool(-value) : lbool(value); }

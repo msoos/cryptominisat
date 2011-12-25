@@ -204,6 +204,7 @@ class ThreadControl : public Solver
         void findAllAttach() const;
         const bool findClause(const Clause* c) const;
         void checkNoWrongAttach() const;
+        void calcClauseDistrib();
 };
 
 inline void ThreadControl::setDecisionVar(const uint32_t var)

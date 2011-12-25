@@ -534,6 +534,7 @@ const lbool ThreadControl::solve(const int numThreads)
 
     while (status == l_Undef) {
         restPrinter->printRestartStat("N");
+        calcClauseDistrib();
 
         //This is crucial, since we need to attach() clauses to threads
         clauseCleaner->removeAndCleanAll(true);
@@ -564,6 +565,10 @@ const lbool ThreadControl::solve(const int numThreads)
 
             if (statuses[i] == l_False)
                 status = l_False;
+        }
+
+        for (size_t i = 0; i < varData.size(); i++) {
+            varData[i].polarity = threads[0]->getSavedPolarity(i);
         }
 
         #pragma omp parallel for
@@ -801,6 +806,62 @@ void ThreadControl::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLear
             }
         }
     }
+}
+
+void ThreadControl::calcClauseDistrib()
+{
+    size_t size3 = 0;
+    size_t size4 = 0;
+    size_t size5 = 0;
+    size_t sizeLarge = 0;
+    for(vector<Clause*>::const_iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
+        switch((*it)->size()) {
+            case 0:
+            case 1:
+            case 2:
+                assert(false);
+                break;
+            case 3:
+                size3++;
+                break;
+            case 4:
+                size4++;
+                break;
+            case 5:
+                size5++;
+                break;
+            default:
+                sizeLarge++;
+                break;
+        }
+    }
+
+    for(vector<Clause*>::const_iterator it = learnts.begin(), end = learnts.end(); it != end; it++) {
+        switch((*it)->size()) {
+            case 0:
+            case 1:
+            case 2:
+                assert(false);
+                break;
+            case 3:
+                size3++;
+                break;
+            case 4:
+                size4++;
+                break;
+            case 5:
+                size5++;
+                break;
+            default:
+                sizeLarge++;
+                break;
+        }
+    }
+
+    std::cout << "c size3: " << size3
+    << " size4: " << size4
+    << " size5: " << size5
+    << " larger: " << sizeLarge << std::endl;
 }
 
 void ThreadControl::dumpSortedLearnts(std::ostream& os, const uint32_t maxSize)

@@ -197,7 +197,7 @@ sets failBinLit
 */
 inline const bool Solver::propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl)
 {
-    lbool val = value(i->getOtherLit());
+    const lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
         enqueue(i->getOtherLit(), PropBy(~p));
     } else if (val == l_False) {
