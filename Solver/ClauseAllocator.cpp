@@ -130,7 +130,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size) throw (std::bad_alloc)
         throw std::bad_alloc();
     assert(size > 2 && "Clause size cannot be 2 or less, those are stored natively");
 
-    uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(BASE_DATA_TYPE);
+    const uint32_t needed = (sizeof(Clause) + sizeof(Lit)*size) / sizeof(BASE_DATA_TYPE);
     bool found = false;
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
