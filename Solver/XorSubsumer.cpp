@@ -337,10 +337,11 @@ void XorSubsumer::removeWrongBins()
             if (i->isBinary()
                 && i->getLearnt()
                 && (var_elimed[lit.var()] || var_elimed[i->getOtherLit().var()])
-                ) {
+            ) {
                 numRemovedHalfLearnt++;
             } else {
-                assert(!i->isBinary() || (!var_elimed[lit.var()] && !var_elimed[i->getOtherLit().var()]));
+                assert(!i->isBinary()
+                        || (!var_elimed[lit.var()] && !var_elimed[i->getOtherLit().var()]));
                 *j++ = *i;
             }
         }
