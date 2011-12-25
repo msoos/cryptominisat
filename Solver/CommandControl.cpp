@@ -1247,10 +1247,10 @@ const lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t max
     initialiseSolver();
     lbool status = l_Undef; //Current status
 
-    if (conf.polarity_mode == polarity_auto) {
+    /*if (conf.polarity_mode == polarity_auto) {
         CalcDefPolars polarityCalc(control);
         polarityCalc.calculate();
-    }
+    }*/
 
     uint64_t lastRestartPrint = numConflicts;
 
