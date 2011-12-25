@@ -425,13 +425,15 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force) throw (std::
 
 void ClauseAllocator::putClausesIntoDatastruct(std::vector<Clause*>& clauses)
 {
+    otherClauses.clear();
+    threeLongClauses.clear();
     for (uint32_t i = 0; i < clauses.size(); i++) {
         Clause* c = clauses[i];
         if (c->size() <= 3) {
             threeLongClauses.push_back(c);
-            continue;
+        } else {
+            otherClauses.push_back(c);
         }
-        otherClauses.push_back(c);
     }
 }
 
