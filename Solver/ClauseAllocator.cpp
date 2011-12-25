@@ -128,7 +128,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size) throw (std::bad_alloc)
 
     if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET))
         throw std::bad_alloc();
-    assert(size > 2);
+    assert(size > 2 && "Clause size cannot be 2 or less, those are stored natively");
 
     uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(BASE_DATA_TYPE);
     bool found = false;
