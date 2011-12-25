@@ -257,16 +257,6 @@ template<bool simple> inline const bool Solver::propNormalClause(vec<Watched>::i
         }
 #ifdef DELAYED_NORM_WATCH_UPDATE
         if (value(c[numLit]) == l_Undef && other == std::numeric_limits<uint16_t>::max()) other = numLit;
-#else
-        if (value(c[numLit]) == l_Undef) {
-            data[watchNum] = numLit;
-            watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
-            bogoProps += 2;
-            j--;
-            *i = *j;
-            i--;
-            return true;
-        }
 #endif
     }
 #ifdef DELAYED_NORM_WATCH_UPDATE
