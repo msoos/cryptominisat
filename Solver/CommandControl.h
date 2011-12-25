@@ -49,6 +49,7 @@ class CommandControl : public Solver
         void           printStats();
         const uint64_t getNumConflicts() const;
         void           setNeedToInterrupt();
+        bool           getSavedPolarity(Var var) const;
 
     protected:
         friend class CalcDefPolars;
@@ -269,6 +270,11 @@ inline const lbool CommandControl::solve(const uint64_t maxConfls)
 {
     vector<Lit> tmp;
     return solve(tmp, maxConfls);
+}
+
+inline bool CommandControl::getSavedPolarity(const Var var) const
+{
+    return varData[var].polarity;
 }
 
 #endif //__COMMAND_CONTROL_H__
