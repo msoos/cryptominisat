@@ -81,6 +81,8 @@ public:
     Clause(const V& ps, const uint32_t _group, const bool learnt)
     {
         isFreed = false;
+        glue = 0; //To stop valgrind from complaining
+        isXorEqualFalse = false; //To stop valgrind from complaining
         isXorClause = false;
         assert(ps.size() > 2);
         mySize = ps.size();
