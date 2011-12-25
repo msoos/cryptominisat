@@ -141,7 +141,9 @@ const bool Subsumer::unEliminate(const Var var)
     //If the variable was removed because of
     //pure literal removal (by blocked clause
     //elimination, there are no clauses to re-insert
-    if (it == elimedOutVar.end() && it2 == elimedOutVarBin.end()) return solver.ok;
+    if (it == elimedOutVar.end() && it2 == elimedOutVarBin.end()) {
+        return solver.ok;
+    }
 
     FILE* backup_libraryCNFfile = solver.libraryCNFFile;
     solver.libraryCNFFile = NULL;
@@ -1694,10 +1696,11 @@ bool Subsumer::maybeEliminate(const Var var)
     for (uint32_t i = 0; i < posAll.size(); i++) for (uint32_t j = 0; j < negAll.size(); j++){
         // Merge clauses. If 'y' and '~y' exist, clause will not be created.
         dummy.clear();
-        bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
+        const bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
         if (ok){
             after_clauses++;
-            if (after_clauses > (before_clauses+ ((bool)(solver.order_heap.size() < 25000)) )) return false;
+            if (after_clauses > (before_clauses+ ((bool)(solver.order_heap.size() < 25000)) ))
+                return false;
         }
     }
 
@@ -1737,7 +1740,9 @@ bool Subsumer::maybeEliminate(const Var var)
 
         uint32_t group_num = 0;
 
-        if (cleanClause(dummy)) continue;
+        if (cleanClause(dummy))
+            continue;
+
         #ifdef VERBOSE_DEBUG
         std::cout << "Adding new clause due to varelim: " << dummy << std::endl;
         #endif
