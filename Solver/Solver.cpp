@@ -2818,8 +2818,12 @@ void Solver::handleSATSolution()
 #ifdef VERBOSE_DEBUG
         std::cout << "Solution extending finished. Enqueuing results" << std::endl;
 #endif
+        //need to start new decision level, otherwise uncheckedEnqueue will
+        //enqueue to decision level 0 in certain cases :S
+        newDecisionLevel();
         for (Var var = 0; var < nVars(); var++) {
-            if (assigns[var] == l_Undef && s.model[var] != l_Undef) uncheckedEnqueue(Lit(var, s.model[var] == l_False));
+            if (assigns[var] == l_Undef && s.model[var] != l_Undef)
+                uncheckedEnqueue(Lit(var, s.model[var] == l_False));
         }
         ok = (propagate<false>().isNULL());
         release_assert(ok && "c ERROR! Extension of model failed!");
