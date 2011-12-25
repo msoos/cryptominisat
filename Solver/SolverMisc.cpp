@@ -40,13 +40,11 @@ using namespace CMSat;
 
 static const int space = 10;
 
-void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize)
+bool Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize)
 {
     FILE* outfile = fopen(fileName.c_str(), "w");
-    if (!outfile) {
-        std::cout << "Error: Cannot open file '" << fileName << "' to write learnt clauses!" << std::endl;;
-        exit(-1);
-    }
+    if (!outfile)
+        return false;
 
     fprintf(outfile, "c \nc ---------\n");
     fprintf(outfile, "c unitaries\n");
@@ -93,6 +91,7 @@ void Solver::dumpSortedLearnts(const std::string& fileName, const uint32_t maxSi
     end:
 
     fclose(outfile);
+    return true;
 }
 
 void Solver::printStrangeBinLit(const Lit lit) const
@@ -178,15 +177,13 @@ void Solver::printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) con
     }
 }
 
-void Solver::dumpOrigClauses(const std::string& fileName) const
+bool Solver::dumpOrigClauses(const std::string& fileName) const
 {
     FILE* outfile;
     if (fileName != std::string("stdout")) {
         outfile = fopen(fileName.c_str(), "w");
-        if (!outfile) {
-            std::cout << "Error: Cannot open file '" << fileName << "' to write learnt clauses!" << std::endl;
-            exit(-1);
-        }
+        if (!outfile)
+            return false;
     } else  {
         outfile = stdout;
     }
@@ -305,6 +302,7 @@ void Solver::dumpOrigClauses(const std::string& fileName) const
     }
 
     if (fileName != "stdout") fclose(outfile);
+    return true;
 }
 
 const vector<Lit> Solver::get_unitary_learnts() const
@@ -594,14 +592,10 @@ newVar() and addClause(), addXorClause() commands are logged to this CNF
 file and then can be re-read with special arguments to the main program. This
 can help simulate a segfaulting library-call
 */
-void Solver::needLibraryCNFFile(const std::string& fileName)
+bool Solver::needLibraryCNFFile(const std::string& fileName)
 {
     libraryCNFFile = fopen(fileName.c_str(), "w");
-    if (libraryCNFFile == NULL) {
-        std::cout << "Couldn't open library-call dump file "
-        << libraryCNFFile << std::endl;
-        exit(-1);
-    }
+    return libraryCNFFile != NULL;
 }
 
 template<class T, class T2>

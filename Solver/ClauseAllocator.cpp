@@ -117,7 +117,7 @@ Clause* ClauseAllocator::Clause_new(Clause& c)
 It tries to add the clause to the end of any already created stacks
 if that is impossible, it creates a new stack, and adds the clause there
 */
-void* ClauseAllocator::allocEnough(const uint32_t size)
+void* ClauseAllocator::allocEnough(const uint32_t size) throw (std::bad_alloc)
 {
     assert(sizes.size() == dataStarts.size());
     assert(maxSizes.size() == dataStarts.size());
@@ -126,10 +126,8 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     assert(sizeof(Clause)%sizeof(BASE_DATA_TYPE) == 0);
     assert(sizeof(Lit)%sizeof(BASE_DATA_TYPE) == 0);
 
-    if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET)) {
-        std::cerr << "Memory manager cannot handle the load. Sorry. Exiting." << std::endl;
-        exit(-1);
-    }
+    if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET))
+        throw std::bad_alloc();
     assert(size > 2);
 
     uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(BASE_DATA_TYPE);
@@ -165,7 +163,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         dataStart = (BASE_DATA_TYPE *)malloc(sizeof(BASE_DATA_TYPE) * nextSize);
         #else
         int ret = posix_memalign((void**)&dataStart, getpagesize(), sizeof(BASE_DATA_TYPE) * nextSize);
-        if (ret != 0) exit(-1);
+        if (ret != 0) throw std::bad_alloc();
         assert(dataStart != NULL);
         int err = madvise(dataStart, sizeof(BASE_DATA_TYPE) * nextSize, MADV_RANDOM);
         assert(err == 0);
@@ -275,7 +273,7 @@ small compared to the problem size. If it is small, it does nothing. If it is
 large, then it allocates new stacks, copies the non-freed clauses to these new
 stacks, updates all pointers and offsets, and frees the original stacks.
 */
-void ClauseAllocator::consolidate(Solver* solver, const bool force)
+void ClauseAllocator::consolidate(Solver* solver, const bool force) throw (std::bad_alloc)
 {
     double myTime = cpuTime();
     #ifdef DEBUG_PROPAGATEFROM
@@ -349,10 +347,8 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force)
     std::cout << "c ------------------" << std::endl;
     #endif //DEBUG_CLAUSEALLOCATOR
 
-    if (newMaxSizeNeed > 0) {
-        std::cerr << "We cannot handle the memory need load. Exiting." << std::endl;
-        exit(-1);
-    }
+    if (newMaxSizeNeed > 0)
+        throw std::bad_alloc();
 
     vec<uint32_t> newSizes;
     vec<vec<uint32_t> > newOrigClauseSizes;
@@ -366,7 +362,7 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force)
         pointer = (BASE_DATA_TYPE*)malloc(sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
         #else
         int ret = posix_memalign((void**)&pointer, getpagesize(), sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
-        if (ret != 0) exit(-1);
+        if (ret != 0) throw std::bad_alloc();
         assert(pointer != NULL);
         int err = madvise(pointer, sizeof(BASE_DATA_TYPE) * newMaxSizes[i], MADV_RANDOM);
         assert(err == 0);

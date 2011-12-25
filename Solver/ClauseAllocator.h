@@ -81,7 +81,7 @@ class ClauseAllocator {
 
         void clauseFree(Clause* c);
 
-        void consolidate(Solver* solver, const bool force = false);
+        void consolidate(Solver* solver, const bool force = false) throw (std::bad_alloc);
 
         const uint32_t getNewClauseNum();
 
@@ -120,7 +120,7 @@ class ClauseAllocator {
         */
         vec<size_t> currentlyUsedSizes;
 
-        void* allocEnough(const uint32_t size);
+        void* allocEnough(const uint32_t size) throw (std::bad_alloc);
 
         /**
         @brief The clause's data is replaced by this to aid updating

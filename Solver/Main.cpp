@@ -735,8 +735,12 @@ const int Main::singleThreadSolve()
     }
 
     if (conf.needToDumpLearnts) {
-        solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
-        std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
+        if (solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize))
+            std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
+        else {
+            std::cout << "Error: Cannot open file '" << conf.learntsFilename << "' to write learnt clauses!" << std::endl;;
+            exit(-1);
+        }
     }
     if (conf.needToDumpOrig) {
         if (ret == l_False && conf.origFilename == "stdout") {
@@ -748,7 +752,10 @@ const int Main::singleThreadSolve()
                 std::cout << (solver.model[i] == l_True ? "" : "-") << i+1 << " 0" << std::endl;
             }
         } else {
-            solver.dumpOrigClauses(conf.origFilename);
+            if (!solver.dumpOrigClauses(conf.origFilename)) {
+                std::cout << "Error: Cannot open file '" << conf.origFilename << "' to write learnt clauses!" << std::endl;
+                exit(-1);
+            }
             if (conf.verbosity >= 1)
                 std::cout << "c Simplified original clauses dumped to file '"
                 << conf.origFilename << "'" << std::endl;
@@ -844,14 +851,20 @@ const int Main::oneThreadSolve()
             if (finished.size() == (unsigned)numThreads) mustWait = false;
         }
         if (conf.needToDumpLearnts) {
-            solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
+            if (!solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize)) {
+                std::cout << "Error: Cannot open file '" << conf.learntsFilename << "' to write learnt clauses!" << std::endl;;
+                exit(-1);
+            }
             if (conf.verbosity >= 1) {
                 std::cout << "c Sorted learnt clauses dumped to file '"
                 << conf.learntsFilename << "'" << std::endl;
             }
         }
         if (conf.needToDumpOrig) {
-            solver.dumpOrigClauses(conf.origFilename);
+            if (!solver.dumpOrigClauses(conf.origFilename)) {
+                std::cout << "Error: Cannot open file '" << conf.origFilename << "' to write learnt clauses!" << std::endl;
+                exit(-1);
+            }
             if (conf.verbosity >= 1)
                 std::cout << "c Simplified original clauses dumped to file '"
                 << conf.origFilename << "'" << std::endl;
@@ -939,8 +952,20 @@ int main(int argc, char** argv)
     signal(SIGINT, SIGINT_handler);
     //signal(SIGHUP,SIGINT_handler);
 
-    if (main.numThreads == 1)
-        return main.singleThreadSolve();
-    else
-        return main.multiThreadSolve();
+    try {
+        if (main.numThreads == 1)
+            return main.singleThreadSolve();
+        else
+            return main.multiThreadSolve();
+    } catch (std::bad_alloc) {
+        std::cerr << "Memory manager cannot handle the load. Sorry. Exiting." << std::endl;
+        exit(-1);
+    } catch (std::out_of_range oor) {
+        std::cerr << oor.what() << std::endl;
+        exit(-1);
+    } catch (CMSat::DimacsParseError dpe) {
+        std::cerr << "PARSE ERROR!" << dpe.what() << std::endl;
+        exit(3);
+    }
+    return 0;
 }

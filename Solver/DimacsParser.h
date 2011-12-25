@@ -9,6 +9,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #ifndef DIMACSPARSER_H
 #define DIMACSPARSER_H
 
+#include <stdexcept>
 #include <string>
 #include "SolverTypes.h"
 #include "constants.h"
@@ -29,6 +30,13 @@ namespace CMSat {
 
 class Solver;
 
+class DimacsParseError : public std::runtime_error
+{
+    public:
+        explicit DimacsParseError(const std::string& arg);
+        virtual ~DimacsParseError() throw();
+};
+
 /**
 @brief Parses up a DIMACS file that my be zipped
 */
@@ -45,16 +53,16 @@ class DimacsParser
         void skipWhitespace(StreamBuffer& in);
         void skipLine(StreamBuffer& in);
         std::string untilEnd(StreamBuffer& in);
-        int32_t parseInt(StreamBuffer& in, uint32_t& len);
-        float parseFloat(StreamBuffer& in);
+        int32_t parseInt(StreamBuffer& in, uint32_t& len) throw (DimacsParseError);
+        float parseFloat(StreamBuffer& in) throw (DimacsParseError);
         void parseString(StreamBuffer& in, std::string& str);
-        void readClause(StreamBuffer& in, vec<Lit>& lits);
+        void readClause(StreamBuffer& in, vec<Lit>& lits) throw (DimacsParseError);
         void parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_t& glue, float& miniSatAct);
-        void readFullClause(StreamBuffer& in);
+        void readFullClause(StreamBuffer& in) throw (DimacsParseError);
         void readBranchingOrder(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);
-        void printHeader(StreamBuffer& in);
-        void parseComments(StreamBuffer& in, const std::string str);
+        void printHeader(StreamBuffer& in) throw (DimacsParseError);
+        void parseComments(StreamBuffer& in, const std::string str) throw (DimacsParseError);
         std::string stringify(uint32_t x);
 
 

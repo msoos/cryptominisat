@@ -21,6 +21,11 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 
 using namespace CMSat;
 
+DimacsParseError::DimacsParseError(const std::string& arg)
+  : std::runtime_error(arg) { }
+
+DimacsParseError::~DimacsParseError() throw() { }
+
 DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _debugNewVar, const bool _grouping, const bool _addAsLearnt):
     solver(_solver)
     , debugLib(_debugLib)
@@ -72,7 +77,7 @@ std::string DimacsParser::untilEnd(StreamBuffer& in)
 /**
 @brief Parses in an integer
 */
-int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
+int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed) throw (DimacsParseError)
 {
     lenParsed = 0;
     int32_t val = 0;
@@ -80,7 +85,11 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
     skipWhitespace(in);
     if      (*in == '-') neg = true, ++in;
     else if (*in == '+') ++in;
-    if (*in < '0' || *in > '9') printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
+    if (*in < '0' || *in > '9') {
+        std::ostringstream ostr;
+        ostr << "Unexpected char (parseInt): " << *in;
+        throw DimacsParseError(ostr.str());
+    }
     while (*in >= '0' && *in <= '9') {
         lenParsed++;
         val = val*10 + (*in - '0'),
@@ -89,13 +98,14 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
     return neg ? -val : val;
 }
 
-float DimacsParser::parseFloat(StreamBuffer& in)
+float DimacsParser::parseFloat(StreamBuffer& in) throw (DimacsParseError)
 {
     uint32_t len;
     uint32_t main = parseInt(in, len);
     if (*in != '.') {
-        printf("PARSE ERROR! Float does not contain a dot! Instead it contains: %c\n", *in);
-        exit(3);
+        std::ostringstream ostr;
+        ostr << "Float does not contain a dot! Instead it contains: " << *in;
+        throw DimacsParseError(ostr.str());
     }
     ++in;
     uint32_t sub = parseInt(in, len);
@@ -132,7 +142,7 @@ void DimacsParser::parseString(StreamBuffer& in, std::string& str)
 @brief Reads in a clause and puts it in lit
 @p[out] lits
 */
-void DimacsParser::readClause(StreamBuffer& in, vec<Lit>& lits)
+void DimacsParser::readClause(StreamBuffer& in, vec<Lit>& lits) throw (DimacsParseError)
 {
     int32_t parsed_lit;
     Var     var;
@@ -144,8 +154,9 @@ void DimacsParser::readClause(StreamBuffer& in, vec<Lit>& lits)
         var = abs(parsed_lit)-1;
         if (!debugNewVar) {
             if (var >= ((uint32_t)1)<<25) {
-                std::cout << "ERROR! Variable requested is far too large: " << var << std::endl;
-                exit(-1);
+                std::ostringstream ostr;
+                ostr << "Variable requested is far too large: " << var;
+                throw DimacsParseError(ostr.str());
             }
             while (var >= solver->nVars()) solver->newVar();
         }
@@ -174,7 +185,7 @@ completely wrong, thanks to MiniSat printing the header, but not checking it.
 Not checking it is \b not a problem. The problem is printing it such that
 people believe it's validated
 */
-void DimacsParser::printHeader(StreamBuffer& in)
+void DimacsParser::printHeader(StreamBuffer& in) throw (DimacsParseError)
 {
     uint32_t len;
 
@@ -186,7 +197,9 @@ void DimacsParser::printHeader(StreamBuffer& in)
             std::cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << std::endl;
         }
     } else {
-        printf("PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
+        std::ostringstream ostr;
+        ostr << "Unexpected char: " << *in;
+        throw DimacsParseError(ostr.str());
     }
 }
 
@@ -202,7 +215,7 @@ solution to debugLibPartX.out, where X is a number that starts with 1 and
 increases to N, where N is the number of solve() instructions
 \li variable names in the form of "c var VARNUM NAME"
 */
-void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
+void DimacsParser::parseComments(StreamBuffer& in, const std::string str) throw (DimacsParseError)
 {
     uint32_t len;
     #ifdef DEBUG_COMMENT_PARSING
@@ -212,7 +225,8 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
     if (str == "v" || str == "var") {
         int var = parseInt(in, len);
         skipWhitespace(in);
-        if (var <= 0) std::cout << "PARSE ERROR! Var number must be a positive integer" << std::endl, exit(3);
+        if (var <= 0)
+            throw DimacsParseError("Var number must be a positive integer");
         std::string name = untilEnd(in);
         solver->setVariableName(var-1, name.c_str());
 
@@ -268,12 +282,10 @@ void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_
     //Parse in if we are a learnt clause or not
     ++in;
     parseString(in, str);
-    //std::cout << str<< std::endl;
     if (str != "learnt") goto addTheClause;
 
     ++in;
     parseString(in, str);
-    //std::cout << str<< std::endl;
     if (str == "yes") learnt = true;
     else if (str == "no") {
         learnt = false;
@@ -282,28 +294,21 @@ void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_
     else {
         std::cout << "parsed in instead of yes/no: '" << str << "'" << std::endl;
         goto addTheClause;
-        //std::cout << "PARSE ERROR: line contains \"c learnt\" but is not followed by yes/no" << std::endl;
-        //exit(-1);
     }
-    //std::std::cout << "Learnt? " << learnt << std::endl;
 
     //Parse in Glue value
     ++in;
     parseString(in, str);
     if (str != "glue") goto addTheClause;
-    //std::std::cout << "read GLUE" << std::endl;
     ++in;
     glue = parseInt(in, len);
-    //std::cout << "glue: " << glue << std::endl;
 
     //Parse in MiniSat activity
     ++in;
     parseString(in, str);
     if (str != "miniSatAct") goto addTheClause;
-    //std::cout << "read MINISATACT" << std::endl;
     ++in;
     miniSatAct = parseFloat(in);
-    //std::cout << "MiniSatAct:" << miniSatAct << std::endl;
 
     addTheClause:
     skipLine(in);
@@ -321,7 +326,7 @@ make the clause learnt.
 "c Solver::newVar() called", which needs to be parsed with parseComments()
 -- this, we delegate
 */
-void DimacsParser::readFullClause(StreamBuffer& in)
+void DimacsParser::readFullClause(StreamBuffer& in) throw (DimacsParseError)
 {
     bool xor_clause = false;
     bool learnt = false;
@@ -340,21 +345,21 @@ void DimacsParser::readFullClause(StreamBuffer& in)
     //now read in grouping information, etc.
     if (!grouping) groupId++;
     else {
-        if (*in != 'c') {
-            std::cout << "PARSE ERROR! Group must be present after earch clause ('c' missing after clause line)" << std::endl;
-            exit(3);
-        }
+        if (*in != 'c')
+            throw DimacsParseError("Group must be present after each clause ('c' missing after clause line)");
         ++in;
 
         parseString(in, str);
         if (str != "g" && str != "group") {
-            std::cout << "PARSE ERROR! Group must be present after each clause('group' missing)!" << std::endl;
-            std::cout << "Instead of 'group' there was:" << str << std::endl;
-            exit(3);
+            std::ostringstream ostr;
+            ostr << "Group must be present after each clause('group' missing)!" << std:: endl
+                 << "Instead of 'group' there was: " << str;
+            throw DimacsParseError(ostr.str());
         }
 
         groupId = parseInt(in, len);
-        if (groupId <= 0) printf("PARSE ERROR! Group number must be a positive integer\n"), exit(3);
+        if (groupId <= 0)
+            throw DimacsParseError("Group number must be a positive integer");
 
         skipWhitespace(in);
         name = untilEnd(in);

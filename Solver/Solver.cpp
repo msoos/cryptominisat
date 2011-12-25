@@ -147,13 +147,11 @@ classes used inside Solver
 @p dvar The new variable should be used as a decision variable?
    NOTE: this has effects on the meaning of a SATISFIABLE result
 */
-Var Solver::newVar(bool dvar)
+Var Solver::newVar(bool dvar) throw (std::out_of_range)
 {
     Var v = nVars();
-    if (v >= 1<<30) {
-        std::cout << "ERROR! Variable requested is far too large" << std::endl;
-        exit(-1);
-    }
+    if (v >= 1<<30)
+        throw std::out_of_range("ERROR! Variable requested is far too large");
 
     watches   .push();          // (list for positive literal)
     watches   .push();          // (list for negative literal)
@@ -202,15 +200,13 @@ xor clause-adding function addXorClause() in that it assumes that the variables
 inside are decision variables, have not been replaced, eliminated, etc.
 */
 template<class T>
-XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group, const bool learnt)
+XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group, const bool learnt) throw (std::out_of_range)
 {
     assert(qhead == trail.size());
     assert(decisionLevel() == 0);
 
-    if (ps.size() > (0x01UL << 18)) {
-        std::cout << "Too long clause!" << std::endl;
-        exit(-1);
-    }
+    if (ps.size() > (0x01UL << 18))
+        throw std::out_of_range("Too long clause!");
     std::sort(ps.getData(), ps.getDataEnd());
     Lit p;
     uint32_t i, j;
@@ -276,13 +272,11 @@ and then calls addXorClauseInt() to actually add the xor clause.
 @p xorEqualFalse The xor must be equal to TRUE or false?
 */
 template<class T>
-bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, const char* group_name)
+bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, const char* group_name) throw (std::out_of_range)
 {
     assert(decisionLevel() == 0);
-    if (ps.size() > (0x01UL << 18)) {
-        std::cout << "Too long clause!" << std::endl;
-        exit(-1);
-    }
+    if (ps.size() > (0x01UL << 18))
+        throw std::out_of_range("Too long clause!");
 
     if (libraryCNFFile) {
         fprintf(libraryCNFFile, "x");
@@ -376,13 +370,11 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
 template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
 template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
 
-template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group, const char* group_name)
+template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group, const char* group_name) throw (std::out_of_range)
 {
     assert(decisionLevel() == 0);
-    if (ps.size() > (0x01UL << 18)) {
-        std::cout << "Too long clause!" << std::endl;
-        exit(-1);
-    }
+    if (ps.size() > (0x01UL << 18))
+        throw std::out_of_range("Too long clause!");
 
     if (libraryCNFFile) {
         for (uint32_t i = 0; i != ps.size(); i++) ps[i].print(libraryCNFFile);
