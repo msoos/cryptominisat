@@ -123,12 +123,9 @@ void* ClauseAllocator::allocEnough(const uint32_t size) throw (std::bad_alloc)
     assert(maxSizes.size() == dataStarts.size());
     assert(origClauseSizes.size() == dataStarts.size());
 
-    assert(sizeof(Clause)%sizeof(BASE_DATA_TYPE) == 0);
-    assert(sizeof(Lit)%sizeof(BASE_DATA_TYPE) == 0);
-
     assert(size > 2 && "Clause size cannot be 2 or less, those are stored natively");
 
-    const uint32_t needed = (sizeof(Clause) + sizeof(Lit)*size) / sizeof(BASE_DATA_TYPE);
+    const uint32_t needed = sizeof(Clause) + sizeof(Lit)*size;
     bool found = false;
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
@@ -254,7 +251,7 @@ void ClauseAllocator::clauseFree(Clause* c)
     c->setFreed();
     uint32_t outerOffset = getOuterOffset(c);
     //uint32_t interOffset = getInterOffset(c, outerOffset);
-    currentlyUsedSizes[outerOffset] -= (sizeof(Clause) + c->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
+    currentlyUsedSizes[outerOffset] -= sizeof(Clause) + c->size()*sizeof(Lit);
     //above should be
     //origClauseSizes[outerOffset][interOffset]
     //but it cannot be :(
@@ -353,7 +350,7 @@ void ClauseAllocator::consolidate(Solver* solver, const bool force) throw (std::
         newSizes.push(0);
         newOrigClauseSizes.push();
         BASE_DATA_TYPE* pointer;
-        pointer = (BASE_DATA_TYPE*)malloc(sizeof(BASE_DATA_TYPE) * newMaxSizes[i]);
+        pointer = (BASE_DATA_TYPE*)malloc(newMaxSizes[i]);
         newDataStartsPointers.push(pointer);
         newDataStarts.push(pointer);
     }
