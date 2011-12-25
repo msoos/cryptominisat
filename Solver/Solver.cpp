@@ -242,7 +242,11 @@ template<bool simple> inline const bool Solver::propNormalClause(vec<Watched>::i
 #endif
     for (uint16_t numLit = 0, size = c.size(); numLit < size; numLit++) {
         if (numLit == data[0] || numLit == data[1]) continue;
+#ifdef DELAYED_NORM_WATCH_UPDATE
         if (value(c[numLit]) == l_True) {
+#else
+        if (value(c[numLit]) != l_False) {
+#endif
             data[watchNum] = numLit;
             watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
             bogoProps += 2;
