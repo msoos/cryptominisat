@@ -94,11 +94,15 @@ void SCCFinder::tarjan(const uint32_t vertex)
             vector<Lit>::iterator it = transCache.begin();
             vector<Lit>::iterator it2 = it;
             uint32_t newSize = 0;
+            Lit prevLit = lit_Error;
             for (vector<Lit>::iterator end = transCache.end(); it != end; it++) {
                 Lit lit = *it;
                 lit = replaceTable[lit.var()] ^ lit.sign();
-                if (lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()]) continue;
+                if (lit == prevLit || lit == vertLit || varElimed1[lit.var()] || varElimed2[lit.var()])
+                    continue;
+
                 *it2++ = lit;
+                prevLit = lit;
                 newSize++;
 
                 doit(lit, vertex);

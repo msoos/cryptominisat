@@ -2475,6 +2475,7 @@ lbool Solver::simplifyProblem(const uint32_t numConfls)
         BothCache both(*this);
         if (!both.tryBoth()) goto end;
     }
+    if (conf.doCacheOTFSSR) cleanCache();
     if (order_heap.size() < 70000) conf.doCacheOTFSSR = true;
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
@@ -2843,4 +2844,58 @@ void Solver::handleUNSATSolution()
 {
     if (conflict.size() == 0)
         ok = false;
+}
+
+void Solver::cleanCache()
+{
+    for(uint32_t i = 0; i < nVars(); i++) {
+        if (subsumer->getVarElimed()[i] || value(i) != l_Undef) {
+            vector<Lit> tmp1;
+            transOTFCache[Lit(i, false).toInt()].lits.swap(tmp1);
+            vector<Lit> tmp2;
+            transOTFCache[Lit(i, true).toInt()].lits.swap(tmp2);
+            continue;
+        }
+
+        for(int which = 0; which < 2; which++) {
+            cleanCachePart(Lit(i, which));
+
+        }
+    }
+}
+
+void Solver::cleanCachePart(const Lit vertLit)
+{
+    vector<Lit>& transCache = transOTFCache[(~vertLit).toInt()].lits;
+    assert(seen_vec.empty());
+
+    vector<Lit>::iterator it = transCache.begin();
+    vector<Lit>::iterator it2 = it;
+
+    size_t newSize = 0;
+    for (vector<Lit>::iterator end = transCache.end(); it != end; it++) {
+        Lit lit = *it;
+        lit = varReplacer->getReplaceTable()[lit.var()] ^ lit.sign();
+        if (lit == vertLit
+            || seen[lit.toInt()]
+            || subsumer->getVarElimed()[lit.var()]
+            || subsumer->getVarElimed()[lit.var()]
+        ) continue;
+
+        *it2++ = lit;
+
+        //Don't allow the same value to be in the cache twice
+        seen[lit.toInt()] = 1;
+        seen_vec.push_back(lit);
+
+        //Increase valid size
+        newSize++;
+    }
+    transCache.resize(newSize);
+
+    //Clear up seen
+    for(vector<Lit>::const_iterator it = seen_vec.begin(), end = seen_vec.end(); it != end; it++) {
+        seen[it->toInt()] = 0;
+    }
+    seen_vec.clear();
 }

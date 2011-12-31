@@ -357,6 +357,7 @@ protected:
     // used, exept 'seen' wich is used in several places.
     //
     vector<char>        seen; ///<Used in multiple places. Contains 2 * numVars() elements, all zeroed out
+    vector<Lit>         seen_vec;
     vec<Lit>            analyze_stack;
     vec<Lit>            analyze_toclear;
 
@@ -391,6 +392,8 @@ protected:
     void                saveOTFData();
     vector<LitReachData>litReachable;
     void                calcReachability();
+    void                cleanCache();
+    void                cleanCachePart(const Lit vertLit);
 
     ////////////
     //Logging
