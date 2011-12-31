@@ -9,7 +9,7 @@ class BothCache
 {
     public:
         BothCache(Solver& solver);
-        const bool tryBoth();
+        bool tryBoth();
 
     private:
         Solver& solver;

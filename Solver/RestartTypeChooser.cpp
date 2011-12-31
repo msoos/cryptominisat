@@ -65,7 +65,7 @@ void RestartTypeChooser::addInfo()
 /**
 @brief After accumulation of data, this function finally decides which type to choose
 */
-const RestartType RestartTypeChooser::choose()
+RestartType RestartTypeChooser::choose()
 {
     pair<double, double> mypair = countVarsDegreeStDev();
     if ((mypair.second  < 80 &&
@@ -80,7 +80,7 @@ const RestartType RestartTypeChooser::choose()
 /**
 @brief Calculates average for topx variable activity changes
 */
-const double RestartTypeChooser::avg() const
+double RestartTypeChooser::avg() const
 {
     double sum = 0.0;
     for (uint32_t i = 0; i != sameIns.size(); i++)
@@ -91,7 +91,7 @@ const double RestartTypeChooser::avg() const
 /**
 @brief Calculates standard deviation for topx variable activity changes
 */
-const double RestartTypeChooser::stdDeviation(vector<uint32_t>& measure) const
+double RestartTypeChooser::stdDeviation(vector<uint32_t>& measure) const
 {
     double average = avg();
     double variance = 0.0;
@@ -122,7 +122,7 @@ void RestartTypeChooser::calcHeap()
     #endif
 }
 
-const std::pair<double, double> RestartTypeChooser::countVarsDegreeStDev() const
+std::pair<double, double> RestartTypeChooser::countVarsDegreeStDev() const
 {
     vector<uint32_t> degrees;
     degrees.resize(solver.nVars(), 0);

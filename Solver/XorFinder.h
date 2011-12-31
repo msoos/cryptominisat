@@ -50,13 +50,13 @@ class XorFinder
 {
     public:
         XorFinder(Solver& _solver, vec<Clause*>& cls);
-        const bool fullFindXors(const uint32_t minSize, const uint32_t maxSize);
+        bool fullFindXors(const uint32_t minSize, const uint32_t maxSize);
         void addAllXorAsNorm();
 
     private:
         typedef vector<pair<Clause*, uint32_t> > ClauseTable;
 
-        const bool findXors(uint32_t& sumLengths);
+        bool findXors(uint32_t& sumLengths);
         bool getNextXor(ClauseTable::iterator& begin, ClauseTable::iterator& end, bool& impair);
 
         /**

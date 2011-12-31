@@ -32,7 +32,6 @@ DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _de
     , debugNewVar(_debugNewVar)
     , grouping(_grouping)
     , addAsLearnt(_addAsLearnt)
-    , groupId(0)
 {}
 
 /**
@@ -228,7 +227,7 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str) throw 
         if (var <= 0)
             throw DimacsParseError("Var number must be a positive integer");
         std::string name = untilEnd(in);
-        solver->setVariableName(var-1, name.c_str());
+        //Don't do anythint with NAME, just forget it
 
         #ifdef DEBUG_COMMENT_PARSING
         std::cout << "Parsed 'c var'" << std::endl;
@@ -343,8 +342,7 @@ void DimacsParser::readFullClause(StreamBuffer& in) throw (DimacsParseError)
     skipLine(in);
 
     //now read in grouping information, etc.
-    if (!grouping) groupId++;
-    else {
+    if (grouping) {
         if (*in != 'c')
             throw DimacsParseError("Group must be present after each clause ('c' missing after clause line)");
         ++in;
@@ -357,9 +355,9 @@ void DimacsParser::readFullClause(StreamBuffer& in) throw (DimacsParseError)
             throw DimacsParseError(ostr.str());
         }
 
-        groupId = parseInt(in, len);
-        if (groupId <= 0)
-            throw DimacsParseError("Group number must be a positive integer");
+        int groupId = parseInt(in, len);
+        groupId++;
+        //Don't do anything with grupId
 
         skipWhitespace(in);
         name = untilEnd(in);
@@ -381,14 +379,14 @@ void DimacsParser::readFullClause(StreamBuffer& in) throw (DimacsParseError)
         for (uint32_t i = 0; i < lits.size(); i++)
             xorEqualFalse ^= lits[i].sign();
 
-        solver->addXorClause(lits, xorEqualFalse, groupId, name.c_str());
+        solver->addXorClause(lits, xorEqualFalse);
         numXorClauses++;
     } else {
         if (addAsLearnt || learnt) {
-            solver->addLearntClause(lits, groupId, NULL, glue, miniSatAct);
+            solver->addLearntClause(lits, glue, miniSatAct);
             numLearntClauses++;
         } else {
-            solver->addClause(lits, groupId, name.c_str());
+            solver->addClause(lits);
             numNormClauses++;
         }
     }

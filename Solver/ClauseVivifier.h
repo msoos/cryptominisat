@@ -25,8 +25,8 @@ namespace CMSat {
 class ClauseVivifier {
     public:
         ClauseVivifier(Solver& solver);
-        const bool vivifyClauses();
-        const bool vivifyClauses2(vec<Clause*>& clauses);
+        bool vivifyClauses();
+        bool vivifyClauses2(vec<Clause*>& clauses);
 
     private:
 
@@ -44,7 +44,7 @@ class ClauseVivifier {
         */
         struct sortBySize
         {
-            const bool operator () (const Clause* x, const Clause* y)
+            bool operator () (const Clause* x, const Clause* y)
             {
               return (x->size() > y->size());
             }

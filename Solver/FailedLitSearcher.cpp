@@ -115,7 +115,7 @@ data structures and functions in place
 
 @p[in] c MUST be a 2-long xor clause under current assignement
 */
-const FailedLitSearcher::TwoLongXor FailedLitSearcher::getTwoLongXor(const XorClause& c)
+FailedLitSearcher::TwoLongXor FailedLitSearcher::getTwoLongXor(const XorClause& c)
 {
     TwoLongXor tmp;
     uint32_t num = 0;
@@ -152,7 +152,7 @@ initialised, and their limits are set. Then tryBoth is called in two different
 forms: somewhat sequentially on varaibles x...z and then on randomly picked
 variables.
 */
-const bool FailedLitSearcher::search()
+bool FailedLitSearcher::search()
 {
     assert(solver.decisionLevel() == 0);
     if (solver.nVars() == 0) return solver.ok;
@@ -309,7 +309,7 @@ them, and hyper-bin resolves them, etc. It is imperative that from the
 SAT point of view, EITHER lit1 or lit2 MUST hold. So, if lit1 = ~lit2, it's OK.
 Also, if there is a binary clause 'lit1 or lit2' it's also OK.
 */
-const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
+bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 {
     if (binXorFind) {
         if (lastTrailSize < solver.trail.size()) {
@@ -438,7 +438,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
                     tmpPs[1] = Lit(lit2.var(), false);
                     invert = lit1.sign() ^ lit2.sign();
                 }
-                binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], invert, 0));
+                binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], invert));
                 bothInvert += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
                 toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
             }
@@ -468,7 +468,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
                     if (twoLongXors.find(tmp) != twoLongXors.end()) {
                         tmpPs[0] = Lit(tmp.var[0], false);
                         tmpPs[1] = Lit(tmp.var[1], false);
-                        binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], tmp.inverted, solver.xorclauses[*it]->getGroup()));
+                        binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], tmp.inverted));
                         newBinXor += solver.varReplacer->getNewToReplaceVars() - toReplaceBefore;
                         toReplaceBefore = solver.varReplacer->getNewToReplaceVars();
                     }
@@ -498,7 +498,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         for (uint32_t i = 0; i < binXorToAdd.size(); i++) {
             tmpPs[0] = binXorToAdd[i].lit1;
             tmpPs[1] = binXorToAdd[i].lit2;
-            solver.addXorClauseInt(tmpPs, binXorToAdd[i].isEqualFalse, binXorToAdd[i].group);
+            solver.addXorClauseInt(tmpPs, binXorToAdd[i].isEqualFalse);
             tmpPs.clear();
             tmpPs.growTo(2);
             if (!solver.ok) return false;
@@ -750,7 +750,7 @@ void FailedLitSearcher::addBin(const Lit lit1, const Lit lit2)
     tmpPs[0] = lit1;
     tmpPs[1] = lit2;
 
-    solver.addClauseInt(tmpPs, 0 , true);
+    solver.addClauseInt(tmpPs, true);
     tmpPs.clear();
     tmpPs.growTo(2);
     assert(solver.ok);

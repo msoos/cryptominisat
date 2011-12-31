@@ -47,7 +47,7 @@ static inline void remove(V& ts, const T& t)
 }
 
 template<class V>
-static inline const uint32_t removeAll(V& ts, const Var t)
+static inline uint32_t removeAll(V& ts, const Var t)
 {
     Lit* i = ts.getData();
     Lit* j = i;
@@ -97,7 +97,7 @@ static bool    findWBin(const vec<vec<Watched> >& wsFull, const Lit lit1, const 
 static bool    findWBin(const vec<vec<Watched> >& wsFull, const Lit lit1, const Lit impliedLit, const bool learnt);
 static void    removeWBin(vec<Watched> &ws, const Lit impliedLit, const bool learnt);
 static void    removeWTri(vec<Watched> &ws, const Lit lit1, Lit lit2);
-static const std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
+static std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit);
 static Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2, const bool learnt);
 static Watched& findWatchedOfBin(vec<vec<Watched> >& wsFull, const Lit lit1, const Lit lit2);
 
@@ -151,7 +151,7 @@ static inline void removeWXCl(vec<Watched> &ws, const ClauseOffset c)
 // TRI Clause
 //////////////////
 
-static inline const bool findWTri(const vec<Watched> &ws, const Lit lit1, const Lit lit2)
+static inline bool findWTri(const vec<Watched> &ws, const Lit lit1, const Lit lit2)
 {
     vec<Watched>::const_iterator i = ws.getData(), end = ws.getDataEnd();
     for (; i != end && (!i->isTriClause() || i->getOtherLit() != lit1 || i->getOtherLit2() != lit2); i++);
@@ -199,7 +199,7 @@ static inline void removeWBin(vec<Watched> &ws, const Lit impliedLit, const bool
     ws.shrink_(1);
 }
 
-static inline const std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
+static inline std::pair<uint32_t, uint32_t>  removeWBinAll(vec<Watched> &ws, const Lit impliedLit)
 {
     uint32_t removedLearnt = 0;
     uint32_t removedNonLearnt = 0;

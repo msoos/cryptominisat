@@ -39,7 +39,7 @@ void DataSync::newVar()
     seen.push(false);
 }
 
-const bool DataSync::syncData()
+bool DataSync::syncData()
 {
     if (sharedData == NULL
         || lastSyncConf + SYNC_EVERY_CONFL >= solver.conflicts) return true;
@@ -61,7 +61,7 @@ const bool DataSync::syncData()
     return true;
 }
 
-const bool DataSync::shareBinData()
+bool DataSync::shareBinData()
 {
     uint32_t oldRecvBinData = recvBinData;
     uint32_t oldSentBinData = sentBinData;
@@ -95,7 +95,7 @@ const bool DataSync::shareBinData()
     return true;
 }
 
-const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
+bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws)
 {
     assert(solver.varReplacer->getReplaceTable()[lit.var()].var() == lit.var());
     assert(solver.subsumer->getVarElimed()[lit.var()] == false);
@@ -122,7 +122,7 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<Lit>& bins, u
             recvBinData++;
             lits[0] = lit;
             lits[1] = otherLit;
-            solver.addClauseInt(lits, 0, true, 2, 0, true);
+            solver.addClauseInt(lits, true, 2, 0, true);
             lits.clear();
             lits.growTo(2);
             if (!solver.ok) goto end;
@@ -159,7 +159,7 @@ void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2)
     sentBinData++;
 }
 
-const bool DataSync::shareUnitData()
+bool DataSync::shareUnitData()
 {
     uint32_t thisGotUnitData = 0;
     uint32_t thisSentUnitData = 0;

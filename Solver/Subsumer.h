@@ -61,7 +61,7 @@ class TouchList
             std::fill(touched.begin(), touched.end(), 0);
         }
 
-        const uint32_t size() const
+        uint32_t size() const
         {
             return touchedList.size();
         }
@@ -98,24 +98,24 @@ public:
     Subsumer(Solver& S2);
 
     //Called from main
-    const bool simplifyBySubsumption();
+    bool simplifyBySubsumption();
     void newVar();
 
     //UnElimination
     void extendModel(Solver& solver2);
-    const bool unEliminate(const Var var);
+    bool unEliminate(const Var var);
 
     //Get-functions
     const vec<char>& getVarElimed() const;
-    const uint32_t getNumElimed() const;
-    const bool checkElimedUnassigned() const;
-    const double getTotalTime() const;
+    uint32_t getNumElimed() const;
+    bool checkElimedUnassigned() const;
+    double getTotalTime() const;
     const map<Var, vector<vector<Lit> > >& getElimedOutVar() const;
     const map<Var, vector<std::pair<Lit, Lit> > >& getElimedOutVarBin() const;
 
 private:
 
-    const bool subsumeWithBinaries();
+    bool subsumeWithBinaries();
 
     friend class ClauseCleaner;
     friend class ClauseAllocator;
@@ -151,11 +151,11 @@ private:
     uint32_t numMaxBlockVars;             ///<Max. number variable-blocking tries to do this run
 
     //Start-up
-    const uint64_t addFromSolver(vec<Clause*>& cs);
+    uint64_t addFromSolver(vec<Clause*>& cs);
     void fillCannotEliminate();
     void clearAll();
     void setLimits();
-    const bool subsume0AndSubsume1();
+    bool subsume0AndSubsume1();
     vec<char> ol_seenPos;
     vec<char> ol_seenNeg;
 
@@ -184,12 +184,12 @@ private:
     template<class T2>
     bool subset(const uint32_t aSize, const T2& B);
     template<class T1, class T2>
-    const Lit subset1(const T1& A, const T2& B);
+    Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(uint32_t A, uint32_t B);
 
     //binary clause-subsumption
     struct BinSorter {
-        const bool operator()(const Watched& first, const Watched& second)
+        bool operator()(const Watched& first, const Watched& second)
         {
             assert(first.isBinary() || first.isTriClause());
             assert(second.isBinary() || second.isTriClause());
@@ -219,7 +219,7 @@ private:
     */
     struct sortBySize
     {
-        const bool operator () (const Clause* x, const Clause* y)
+        bool operator () (const Clause* x, const Clause* y)
         {
             return (x->size() < y->size());
         }
@@ -243,13 +243,13 @@ private:
             const bool learnt;
     };
     list<NewBinaryClause> clBinTouched; ///<Binary clauses strengthened/added
-    const bool handleClBinTouched();
+    bool handleClBinTouched();
 
     void subsume1(Clause& ps);
-    const bool subsume1(vec<Lit>& ps, const bool wasLearnt);
+    bool subsume1(vec<Lit>& ps, const bool wasLearnt);
     void strenghten(ClauseSimp& c, const Lit toRemoveLit);
-    const bool cleanClause(Clause& ps);
-    const bool cleanClause(vec<Lit>& ps) const;
+    bool cleanClause(Clause& ps);
+    bool cleanClause(vec<Lit>& ps) const;
     void handleSize1Clause(const Lit lit);
 
     //Variable elimination
@@ -286,17 +286,17 @@ private:
             bool isBin;
     };
     void orderVarsForElim(vec<Var>& order);
-    const uint32_t numNonLearntBins(const Lit lit) const;
+    uint32_t numNonLearntBins(const Lit lit) const;
     bool maybeEliminate(Var x);
     void removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const Var var);
     void removeClausesHelper(vec<ClAndBin>& todo, const Var var, std::pair<uint32_t, uint32_t>& removed);
     bool merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, vec<Lit>& out_clause);
-    const bool eliminateVars();
+    bool eliminateVars();
     void fillClAndBin(vec<ClAndBin>& all, vec<ClauseSimp>& cs, const Lit lit);
 
     //Subsume with Nonexistent Bins
     struct BinSorter2 {
-        const bool operator()(const Watched& first, const Watched& second)
+        bool operator()(const Watched& first, const Watched& second)
         {
             assert(first.isBinary() || first.isTriClause());
             assert(second.isBinary() || second.isTriClause());
@@ -311,9 +311,9 @@ private:
             return false;
         };
     };
-    const bool subsWNonExitsBinsFullFull();
-    const bool subsWNonExistBinsFull();
-    const bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
+    bool subsWNonExitsBinsFullFull();
+    bool subsWNonExistBinsFull();
+    bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
     void subsume0BIN(const Lit lit, const vec<char>& lits, const uint32_t abst);
     bool subsNonExistentFinish;
     uint32_t doneNum;
@@ -332,15 +332,15 @@ private:
             uint32_t occurnum;
     };
     struct MyComp {
-        const bool operator() (const VarOcc& l1, const VarOcc& l2) const {
+        bool operator() (const VarOcc& l1, const VarOcc& l2) const {
             return l1.occurnum > l2.occurnum;
         }
     };
     void blockedClauseRemoval();
     template<class T>
-    const bool allTautology(const T& ps, const Lit lit);
+    bool allTautology(const T& ps, const Lit lit);
     uint32_t numblockedClauseRemoved;
-    const bool tryOneSetting(const Lit lit);
+    bool tryOneSetting(const Lit lit);
     priority_queue<VarOcc, vector<VarOcc>, MyComp> touchedBlockedVars;
     vec<char> touchedBlockedVarsBool;
     void touchBlockedVar(const Var x);
@@ -348,7 +348,7 @@ private:
 
 
     //validity checking
-    const bool verifyIntegrity();
+    bool verifyIntegrity();
 
     uint32_t clauses_subsumed; ///<Number of clauses subsumed in this run
     uint32_t literals_removed; ///<Number of literals removed from clauses through self-subsuming resolution in this run
@@ -416,7 +416,7 @@ clause B
 and returns the literal to remove if (2) is true
 */
 template<class T1, class T2>
-const Lit Subsumer::subset1(const T1& A, const T2& B)
+Lit Subsumer::subset1(const T1& A, const T2& B)
 {
     Lit retLit = lit_Undef;
 
@@ -477,12 +477,12 @@ inline const vec<char>& Subsumer::getVarElimed() const
     return var_elimed;
 }
 
-inline const uint32_t Subsumer::getNumElimed() const
+inline uint32_t Subsumer::getNumElimed() const
 {
     return numElimed;
 }
 
-inline const double Subsumer::getTotalTime() const
+inline double Subsumer::getTotalTime() const
 {
     return totalTime;
 }

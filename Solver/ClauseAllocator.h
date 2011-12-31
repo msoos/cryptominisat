@@ -59,12 +59,12 @@ class ClauseAllocator {
         ~ClauseAllocator();
 
         template<class T>
-        Clause* Clause_new(const T& ps, const uint32_t group, const bool learnt = false);
+        Clause* Clause_new(const T& ps, const bool learnt = false);
         template<class T>
-        XorClause* XorClause_new(const T& ps, const bool xorEqualFalse, const uint32_t group);
+        XorClause* XorClause_new(const T& ps, const bool xorEqualFalse);
         Clause* Clause_new(Clause& c);
 
-        const ClauseOffset getOffset(const Clause* ptr) const;
+        ClauseOffset getOffset(const Clause* ptr) const;
 
         /**
         @brief Returns the pointer of a clause given its offset
@@ -83,12 +83,12 @@ class ClauseAllocator {
 
         void consolidate(Solver* solver, const bool force = false) throw (std::bad_alloc);
 
-        const uint32_t getNewClauseNum();
+        uint32_t getNewClauseNum();
 
     private:
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
-        const ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
+        ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
 
         void updateAllOffsetsAndPointers(Solver* solver);
         template<class T>

@@ -42,7 +42,7 @@ class CompleteDetachReatacher
 {
     public:
         CompleteDetachReatacher(Solver& solver);
-        const bool reattachNonBins();
+        bool reattachNonBins();
         void detachNonBinsNonTris(const bool removeTri);
 
     private:
@@ -69,8 +69,8 @@ class CompleteDetachReatacher
 
         void cleanAndAttachClauses(vec<Clause*>& cs);
         void cleanAndAttachClauses(vec<XorClause*>& cs);
-        const bool cleanClause(Clause*& ps);
-        const bool cleanClause(XorClause& ps);
+        bool cleanClause(Clause*& ps);
+        bool cleanClause(XorClause& ps);
 
         Solver& solver;
 };

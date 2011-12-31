@@ -35,7 +35,7 @@ SCCFinder::SCCFinder(Solver& _solver) :
     , totalTime(0.0)
 {}
 
-const bool SCCFinder::find2LongXors()
+bool SCCFinder::find2LongXors()
 {
     double myTime = cpuTime();
     uint32_t oldNumReplace = solver.varReplacer->getNewToReplaceVars();
@@ -128,7 +128,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
                                             ^ Lit::toLit(tmp[i]).sign()
                                             ^ true;
                 if (solver.value(lits[0]) == l_Undef && solver.value(lits[1]) == l_Undef) {
-                    solver.varReplacer->replace(lits, xorEqualsFalse, 0, true, false);
+                    solver.varReplacer->replace(lits, xorEqualsFalse, true, false);
                 }
             }
         }

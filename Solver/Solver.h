@@ -101,7 +101,7 @@ struct PolaritySorter
         pol(polarity)
     {}
 
-    const bool operator()(const Lit lit1, const Lit lit2) const
+    bool operator()(const Lit lit1, const Lit lit2) const
     {
         return (((((bool)pol[lit1.var()])^(lit1.sign())) == false)
                 && ((((bool)pol[lit2.var()])^(lit2.sign())) == true));
@@ -136,11 +136,11 @@ public:
     //
     Var     newVar    (bool dvar = true) throw (std::out_of_range);           // Add a new variable with parameters specifying variable mode.
     template<class T>
-    bool    addClause (T& ps, const uint32_t group = 0, const char* group_name = NULL);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addClause (T& ps);  // Add a clause to the solver. NOTE! 'ps' may be shrunk by this method!
     template<class T>
-    bool    addLearntClause(T& ps, const uint32_t group = 0, const char* group_name = NULL, const uint32_t glue = 10, const float miniSatActivity = 10.0);
+    bool    addLearntClause(T& ps, const uint32_t glue = 10, const float miniSatActivity = 10.0);
     template<class T>
-    bool    addXorClause (T& ps, bool xorEqualFalse, const uint32_t group = 0, const char* group_name = NULL) throw (std::out_of_range);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
+    bool    addXorClause (T& ps, bool xorEqualFalse) throw (std::out_of_range);  // Add a xor-clause to the solver. NOTE! 'ps' may be shrunk by this method!
 
     // Solving:
     //
@@ -180,27 +180,26 @@ public:
     //Logging
     void needStats();              // Prepares the solver to output statistics
     void needProofGraph();         // Prepares the solver to output proof graphs during solving
-    void setVariableName(const Var var, const char* name); // Sets the name of the variable 'var' to 'name'. Useful for statistics and proof logs (i.e. used by 'logger')
     const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
     const vec<Clause*>& get_learnts() const; //Get all learnt clauses that are >1 long
-    const vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
-    const uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
+    vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
+    uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     bool dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file; returns true for success, false for failure
     bool needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
     bool dumpOrigClauses(const std::string& fileName) const;
     void printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const;
 
-    const uint32_t get_sum_gauss_called() const;
-    const uint32_t get_sum_gauss_confl() const;
-    const uint32_t get_sum_gauss_prop() const;
-    const uint32_t get_sum_gauss_unit_truths() const;
+    uint32_t get_sum_gauss_called() const;
+    uint32_t get_sum_gauss_confl() const;
+    uint32_t get_sum_gauss_prop() const;
+    uint32_t get_sum_gauss_unit_truths() const;
 
     //Printing statistics
     void printStats();
-    const uint32_t getNumElimSubsume() const;       ///<Get number of variables eliminated
-    const uint32_t getNumElimXorSubsume() const;    ///<Get number of variables eliminated with xor-magic
-    const uint32_t getNumXorTrees() const;          ///<Get the number of trees built from 2-long XOR-s. This is effectively the number of variables that replace other variables
-    const uint32_t getNumXorTreesCrownSize() const; ///<Get the number of variables being replaced by other variables
+    uint32_t getNumElimSubsume() const;       ///<Get number of variables eliminated
+    uint32_t getNumElimXorSubsume() const;    ///<Get number of variables eliminated with xor-magic
+    uint32_t getNumXorTrees() const;          ///<Get the number of trees built from 2-long XOR-s. This is effectively the number of variables that replace other variables
+    uint32_t getNumXorTreesCrownSize() const; ///<Get the number of variables being replaced by other variables
     /**
     @brief Get total time spent in Subsumer.
 
@@ -208,9 +207,9 @@ public:
     blocked clause elimination, subsumption and self-subsuming resolution
     using non-existent binary clauses.
     */
-    const double getTotalTimeSubsumer() const;
-    const double getTotalTimeFailedLitSearcher() const;
-    const double getTotalTimeSCC() const;
+    double getTotalTimeSubsumer() const;
+    double getTotalTimeFailedLitSearcher() const;
+    double getTotalTimeSCC() const;
 
     /**
     @brief Get total time spent in XorSubsumer.
@@ -218,11 +217,11 @@ public:
     This included subsumption, variable elimination through XOR, and local
     substitution (see Heule's Thesis)
     */
-    const double   getTotalTimeXorSubsumer() const;
+    double   getTotalTimeXorSubsumer() const;
 
 protected:
     //gauss
-    const bool clearGaussMatrixes();
+    bool clearGaussMatrixes();
     vector<Gaussian*> gauss_matrixes;
     void print_gauss_sum_stats();
     uint32_t sum_gauss_called;
@@ -346,7 +345,7 @@ protected:
     /////////////////////////
     //uint64_t            MYFLAG; ///<For glue calculation
     template<class T>
-    const uint32_t      calcNBLevels(const T& ps);
+    uint32_t      calcNBLevels(const T& ps);
     //vec<uint64_t>       permDiff;  ///<permDiff[var] is used to count the number of different decision level variables in learnt clause (filled with data from MYFLAG )
     vec<Var>            lastDecisionLevel;
     bqueue<uint32_t>    glueHistory;  ///< Set of last decision levels in (glue of) conflict clauses. Used for dynamic restarting
@@ -396,7 +395,6 @@ protected:
     ////////////
     //Logging
     ///////////
-    uint32_t learnt_clause_group;       //the group number of learnt clauses. Incremented at each added learnt clause
     FILE     *libraryCNFFile;           //The file that all calls from the library are logged
 
     /////////////////
@@ -410,18 +408,18 @@ protected:
     PropBy   propagateBin(vec<Lit>& uselessBin);
     PropBy   propagateNonLearntBin();
     bool     multiLevelProp;
-    const bool propagateBinExcept(const Lit exceptLit);
-    const bool propagateBinOneLevel();
+    bool propagateBinExcept(const Lit exceptLit);
+    bool propagateBinOneLevel();
     template<bool full>
     PropBy   propagate(const bool update = true); // Perform unit propagation. Returns possibly conflicting clause.
     template<bool full>
-    const bool propTriClause   (vec<Watched>::iterator &i, const Lit p, PropBy& confl);
+    bool propTriClause   (vec<Watched>::iterator &i, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propBinaryClause(vec<Watched>::iterator &i, const Lit p, PropBy& confl);
+    bool propBinaryClause(vec<Watched>::iterator &i, const Lit p, PropBy& confl);
     template<bool full>
-    const bool propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, vec<Watched>::iterator end, const Lit p, PropBy& confl, const bool update);
+    bool propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl, const bool update);
     template<bool full>
-    const bool propXorClause   (vec<Watched>::iterator &i, vec<Watched>::iterator &j, vec<Watched>::iterator end, const Lit p, PropBy& confl);
+    bool propXorClause   (vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl);
     void     sortWatched();
 
     ///////////////
@@ -452,11 +450,11 @@ protected:
     /////////////////
     // Operations on clauses:
     /////////////////
-    template<class T> const bool addClauseHelper(T& ps, const uint32_t group, const char* group_name) throw (std::out_of_range);
+    template<class T> bool addClauseHelper(T& ps) throw (std::out_of_range);
     template <class T>
-    Clause*    addClauseInt(T& ps, uint32_t group, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0, const bool inOriginalInput = false);
+    Clause*    addClauseInt(T& ps, const bool learnt = false, const uint32_t glue = 10, const float miniSatActivity = 10.0, const bool inOriginalInput = false);
     template<class T>
-    XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group, const bool learnt = false) throw (std::out_of_range);
+    XorClause* addXorClauseInt(T& ps, bool xorEqualFalse, const bool learnt = false) throw (std::out_of_range);
     void       attachBinClause(const Lit lit1, const Lit lit2, const bool learnt);
     void       attachClause     (XorClause& c);
     void       attachClause     (Clause& c);             // Attach a clause to watcher lists.
@@ -473,10 +471,10 @@ protected:
     ///////////////////////////
     void       testAllClauseAttach() const;
     void       findAllAttach() const;
-    const bool findClause(XorClause* c) const;
-    const bool findClause(Clause* c) const;
-    const bool xorClauseIsAttached(const XorClause& c) const;
-    const bool normClauseIsAttached(const Clause& c) const;
+    bool findClause(XorClause* c) const;
+    bool findClause(Clause* c) const;
+    bool xorClauseIsAttached(const XorClause& c) const;
+    bool normClauseIsAttached(const Clause& c) const;
 
     // Misc:
     //
@@ -521,9 +519,9 @@ protected:
     /////////////////////////
     // Restart type handling
     /////////////////////////
-    const bool  chooseRestartType(const uint32_t& lastFullRestart);
+    bool  chooseRestartType(const uint32_t& lastFullRestart);
     void        setDefaultRestartType();
-    const bool  checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart);
+    bool  checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart);
     RestartType restartType;             ///<Used internally to determine which restart strategy is currently in use
     RestartType lastSelectedRestartType; ///<The last selected restart type. Used when we are just after a full restart, and need to know how to really act
 
@@ -531,9 +529,9 @@ protected:
     // Problem simplification
     //////////////////////////
     void        performStepsBeforeSolve();
-    const lbool simplifyProblem(const uint32_t numConfls);
+    lbool simplifyProblem(const uint32_t numConfls);
     void        reduceDB();       // Reduce the set of learnt clauses.
-    const bool  simplify();       // Removes satisfied clauses and finds binary xors
+    bool  simplify();       // Removes satisfied clauses and finds binary xors
     bool        simplifying;      ///<We are currently doing burst search
     double      totalSimplifyTime;
     uint32_t    simpDB_assigns;   ///< Number of top-level assignments since last execution of 'simplify()'.
@@ -543,10 +541,10 @@ protected:
     // SAT solution verification
     /////////////////////////////
     void       checkSolution    ();
-    const bool verifyModel      () const;
-    const bool verifyBinClauses() const;
-    const bool verifyClauses    (const vec<Clause*>& cs) const;
-    const bool verifyXorClauses () const;
+    bool verifyModel      () const;
+    bool verifyBinClauses() const;
+    bool verifyClauses    (const vec<Clause*>& cs) const;
+    bool verifyXorClauses () const;
 
     // Debug & etc:
     void     printAllClauses();
@@ -560,8 +558,8 @@ protected:
 
     //Misc related binary clauses
     void     dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const;
-    const uint32_t countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
-    const uint32_t getBinWatchSize(const bool alsoLearnt, const Lit lit);
+    uint32_t countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
+    uint32_t getBinWatchSize(const bool alsoLearnt, const Lit lit);
     void  printStrangeBinLit(const Lit lit) const;
 
     /////////////////////
@@ -716,59 +714,34 @@ inline bool     Solver::okay          ()      const
 {
     return ok;
 }
-inline void     Solver::setVariableName(const Var var, const char* name)
-{}
 
-inline const uint32_t Solver::get_sum_gauss_unit_truths() const
+inline uint32_t Solver::get_sum_gauss_unit_truths() const
 {
     return sum_gauss_unit_truths;
 }
 
-inline const uint32_t Solver::get_sum_gauss_called() const
+inline uint32_t Solver::get_sum_gauss_called() const
 {
     return sum_gauss_called;
 }
 
-inline const uint32_t Solver::get_sum_gauss_confl() const
+inline uint32_t Solver::get_sum_gauss_confl() const
 {
     return sum_gauss_confl;
 }
 
-inline const uint32_t Solver::get_sum_gauss_prop() const
+inline uint32_t Solver::get_sum_gauss_prop() const
 {
     return sum_gauss_prop;
 }
 
-inline const uint32_t Solver::get_unitary_learnts_num() const
+inline uint32_t Solver::get_unitary_learnts_num() const
 {
     if (decisionLevel() > 0)
         return trail_lim[0];
     else
         return trail.size();
 }
-
-//////////////////
-// Xor Clause
-//////////////////
-
-
-/*inline void Solver::calculate_xor_clause(Clause& c2) const {
-    if (c2.isXor() && ((XorClause*)&c2)->updateNeeded())  {
-        XorClause& c = *((XorClause*)&c2);
-        bool final = c.xorEqualFalse();
-        for (int k = 0, size = c.size(); k != size; k++ ) {
-            const lbool& val = assigns[c[k].var()];
-            assert(val != l_Undef);
-
-            c[k] = c[k].unsign() ^ val.getBool();
-            final ^= val.getBool();
-        }
-        if (final)
-            c[0] = c[0].unsign() ^ !assigns[c[0].var()].getBool();
-
-        c.setUpdateNeeded(false);
-    }
-}*/
 
 template<class T>
 inline void Solver::removeClause(T& c)

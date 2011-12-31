@@ -45,7 +45,7 @@ UselessBinRemover::UselessBinRemover(Solver& _solver) :
 We pick variables starting randomly at a place and going on until we stop:
 we limit ourselves in time using (bogo)propagations and "extratime"
 */
-const bool UselessBinRemover::removeUslessBinFull()
+bool UselessBinRemover::removeUslessBinFull()
 {
     double myTime = cpuTime();
     toDeleteSet.clear();
@@ -112,7 +112,7 @@ clause). Example:
 One-hop neighbours of a: b, c. But c can be reached through b! So, we remove
 a->c, the one-hop neighbour that is useless.
 */
-const bool UselessBinRemover::removeUselessBinaries(const Lit lit)
+bool UselessBinRemover::removeUselessBinaries(const Lit lit)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);
@@ -198,7 +198,7 @@ void UselessBinRemover::removeBin(const Lit lit1, const Lit lit2)
 Removes adds to "wrong" the set of one-hop lits that can be reached from
 lit AND are one-hop away from origLit. These later need to be removed
 */
-const bool UselessBinRemover::fillBinImpliesMinusLast(const Lit origLit, const Lit lit, vec<Lit>& wrong)
+bool UselessBinRemover::fillBinImpliesMinusLast(const Lit origLit, const Lit lit, vec<Lit>& wrong)
 {
     solver.newDecisionLevel();
     solver.uncheckedEnqueueLight(lit);

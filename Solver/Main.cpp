@@ -703,7 +703,7 @@ void Main::printVersionInfo(const uint32_t verbosity)
     }
 }
 
-const int Main::singleThreadSolve()
+int Main::singleThreadSolve()
 {
     Solver solver(conf, gaussconfig);
     solversToInterrupt[0] = &solver;
@@ -789,7 +789,7 @@ int Main::correctReturnValue(const lbool ret) const
     return retval;
 }
 
-const int Main::oneThreadSolve()
+int Main::oneThreadSolve()
 {
     int numThreads = omp_get_num_threads();
     SolverConf myConf = conf;
@@ -880,7 +880,7 @@ const int Main::oneThreadSolve()
     return retval;
 }
 
-const int Main::multiThreadSolve()
+int Main::multiThreadSolve()
 {
     bool exitHere = false;
     if (max_nr_of_solutions > 1) {

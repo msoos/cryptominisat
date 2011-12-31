@@ -102,7 +102,7 @@ class XSet {
                     it++;
                 }
 
-                const bool operator!=(const iterator& iter) const
+                bool operator!=(const iterator& iter) const
                 {
                     return (it != iter.it);;
                 }

@@ -73,7 +73,6 @@ class DimacsParser
         const bool addAsLearnt;
 
         uint32_t debugLibPart; ///<printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
-        uint32_t groupId;
         vec<Lit> lits; ///<To reduce temporary creation overhead
         uint32_t numLearntClauses; ///<Number of learnt non-xor clauses added
         uint32_t numNormClauses; ///<Number of non-learnt, non-xor claues added

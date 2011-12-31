@@ -28,8 +28,8 @@ namespace CMSat {
 class SCCFinder {
     public:
         SCCFinder(Solver& solver);
-        const bool find2LongXors();
-        const double getTotalTime() const;
+        bool find2LongXors();
+        double getTotalTime() const;
 
     private:
         void tarjan(const uint32_t vertex);
@@ -62,7 +62,7 @@ inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
     }
 }
 
-inline const double SCCFinder::getTotalTime() const
+inline double SCCFinder::getTotalTime() const
 {
     return totalTime;
 }

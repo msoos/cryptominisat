@@ -71,7 +71,7 @@ const CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNo
 /**
 @brief Completely attach all clauses
 */
-const bool CompleteDetachReatacher::reattachNonBins()
+bool CompleteDetachReatacher::reattachNonBins()
 {
     assert(solver.ok);
 
@@ -128,7 +128,7 @@ inline void CompleteDetachReatacher::cleanAndAttachClauses(vec<XorClause*>& cs)
 /**
 @brief Not only cleans a clause from false literals, but if clause is satisfied, it reports it
 */
-inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
+inline bool CompleteDetachReatacher::cleanClause(Clause*& cl)
 {
     Clause& ps = *cl;
     assert(ps.size() > 2);
@@ -165,7 +165,7 @@ inline const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
 /**
 @brief Not only cleans a clause from false literals, but if clause is satisfied, it reports it
 */
-inline const bool CompleteDetachReatacher::cleanClause(XorClause& ps)
+inline bool CompleteDetachReatacher::cleanClause(XorClause& ps)
 {
     Lit *i = ps.getData(), *j = i;
     for (Lit *end = ps.getDataEnd(); i != end; i++) {
@@ -187,7 +187,7 @@ inline const bool CompleteDetachReatacher::cleanClause(XorClause& ps)
         case 2: {
             ps[0] = ps[0].unsign();
             ps[1] = ps[1].unsign();
-            solver.varReplacer->replace(ps, ps.xorEqualFalse(), ps.getGroup());
+            solver.varReplacer->replace(ps, ps.xorEqualFalse());
             return false;
         }
 

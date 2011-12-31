@@ -39,7 +39,7 @@ it is not part of failed literal probing, really. However, it is here because
 it seems to be a function that fits into the idology of failed literal probing.
 Maybe I am off-course and it should be in another class, or a class of its own.
 */
-const bool ClauseVivifier::vivifyClauses()
+bool ClauseVivifier::vivifyClauses()
 {
     assert(solver.ok);
     #ifdef VERBOSE_DEBUG
@@ -156,7 +156,7 @@ const bool ClauseVivifier::vivifyClauses()
                 remove(lits, unused[i2]);
             }
 
-            Clause *c2 = solver.addClauseInt(lits, c.getGroup());
+            Clause *c2 = solver.addClauseInt(lits);
             #ifdef ASSYM_DEBUG
             std::cout << "-- Origsize:" << origSize << " newSize:" << (c2 == NULL ? 0 : c2->size()) << " toRemove:" << c.size() - done << " unused.size():" << unused.size() << std::endl;
             #endif
@@ -193,7 +193,7 @@ const bool ClauseVivifier::vivifyClauses()
 }
 
 
-const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
+bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
 {
     assert(solver.ok);
 
@@ -247,7 +247,7 @@ const bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
             countTime += cl.size()*10;
             solver.detachClause(cl);
             clShrinked++;
-            Clause* c2 = solver.addClauseInt(lits, cl.getGroup(), cl.learnt(), cl.getGlue(), cl.getMiniSatAct());
+            Clause* c2 = solver.addClauseInt(lits, cl.learnt(), cl.getGlue(), cl.getMiniSatAct());
             solver.clauseAllocator.clauseFree(&cl);
 
             if (c2 != NULL) *j++ = c2;

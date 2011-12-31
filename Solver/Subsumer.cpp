@@ -120,7 +120,7 @@ added back again.
 
 @p var The variable to be added back again
 */
-const bool Subsumer::unEliminate(const Var var)
+bool Subsumer::unEliminate(const Var var)
 {
     assert(var_elimed[var]);
     vec<Lit> tmp;
@@ -358,7 +358,7 @@ void Subsumer::subsume1(Clause& ps)
     }
 }
 
-const bool Subsumer::subsume1(vec<Lit>& ps, const bool wasLearnt)
+bool Subsumer::subsume1(vec<Lit>& ps, const bool wasLearnt)
 {
     vec<ClauseSimp>    subs;
     vec<Lit>           subsLits;
@@ -447,7 +447,7 @@ lists.
 
 @param ps Clause to be cleaned
 */
-const bool Subsumer::cleanClause(Clause& ps)
+bool Subsumer::cleanClause(Clause& ps)
 {
     bool retval = false;
 
@@ -477,7 +477,7 @@ const bool Subsumer::cleanClause(Clause& ps)
     return retval;
 }
 
-const bool Subsumer::cleanClause(vec<Lit>& ps) const
+bool Subsumer::cleanClause(vec<Lit>& ps) const
 {
     bool retval = false;
 
@@ -558,7 +558,7 @@ void Subsumer::strenghten(ClauseSimp& c, const Lit toRemoveLit)
     }
 }
 
-const bool Subsumer::handleClBinTouched()
+bool Subsumer::handleClBinTouched()
 {
     assert(solver.ok);
     uint32_t clauses_subsumed_before = clauses_subsumed;
@@ -621,7 +621,7 @@ This function requires cl_touched to have been set. Then, it manages cl_touched.
 The clauses are called to perform subsume1() or subsume0() when appropriate, and
 when there is enough numMaxSubume1 and numMaxSubume0 is available.
 */
-const bool Subsumer::subsume0AndSubsume1()
+bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
@@ -747,7 +747,7 @@ Which clauses are needed can be controlled by the parameters
 @param[in] addBinAndAddToCL If set to FALSE, binary clauses are not added, and
 clauses are never added to the cl_touched set.
 */
-const uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
+uint64_t Subsumer::addFromSolver(vec<Clause*>& cs)
 {
     uint64_t numLitsAdded = 0;
     Clause **i = cs.getData();
@@ -889,7 +889,7 @@ clauses on non-binary clauses. Then, it generates non-existing binary clauses
 (that could exist, but would be redundant), and performs self-subsuming
 resolution with them on the normal clauses using \function subsume0BIN().
 */
-const bool Subsumer::subsumeWithBinaries()
+bool Subsumer::subsumeWithBinaries()
 {
     //Clearing stats
     double myTime = cpuTime();
@@ -927,7 +927,7 @@ const bool Subsumer::subsumeWithBinaries()
     return true;
 }
 
-const bool Subsumer::subsWNonExitsBinsFullFull()
+bool Subsumer::subsWNonExitsBinsFullFull()
 {
     double myTime = cpuTime();
     clauses_subsumed = 0;
@@ -972,7 +972,7 @@ inferred from non-existing binary clauses, and the strenghtening (through self-
 subsuming resolution) of clauses that could be strenghtened using non-existent
 binary clauses.
 */
-const bool Subsumer::subsWNonExistBinsFull()
+bool Subsumer::subsWNonExistBinsFull()
 {
     uint64_t oldProps = solver.propagations;
     uint64_t maxProp = MAX_BINARY_PROP*7;
@@ -1040,7 +1040,7 @@ binary clauses (this literal is the starting point in the binary graph)
 @param onlyNonLearntBins This class is initialised before calling this function
 and contains all the non-learnt binary clauses
 */
-const bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
+bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "subsWNonExistBins called with lit " << lit << std::endl;
@@ -1105,7 +1105,7 @@ void Subsumer::clearAll()
     }
 }
 
-const bool Subsumer::eliminateVars()
+bool Subsumer::eliminateVars()
 {
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c VARIABLE ELIMINIATION -- touchedVars size:" << touchedVars.size() << std::endl;
@@ -1208,7 +1208,7 @@ Performs, recursively:
 * variable elimination
 
 */
-const bool Subsumer::simplifyBySubsumption()
+bool Subsumer::simplifyBySubsumption()
 {
     if (solver.nClauses() > 50000000
         || solver.clauses_literals > 500000000)  return true;
@@ -1601,7 +1601,7 @@ void Subsumer::removeClauses(vec<ClAndBin>& posAll, vec<ClAndBin>& negAll, const
     solver.numBins -= (removed.first + removed.second)/2;
 }
 
-const uint32_t Subsumer::numNonLearntBins(const Lit lit) const
+uint32_t Subsumer::numNonLearntBins(const Lit lit) const
 {
     uint32_t num = 0;
     const vec<Watched>& ws = solver.watches[(~lit).toInt()];
@@ -1738,8 +1738,6 @@ bool Subsumer::maybeEliminate(const Var var)
         bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
         if (!ok) continue;
 
-        uint32_t group_num = 0;
-
         if (cleanClause(dummy))
             continue;
 
@@ -1771,7 +1769,7 @@ bool Subsumer::maybeEliminate(const Var var)
                 break;
             }
             default: {
-                Clause* cl = solver.clauseAllocator.Clause_new(dummy, group_num);
+                Clause* cl = solver.clauseAllocator.Clause_new(dummy);
                 ClauseSimp c = linkInClause(*cl);
                 if (numMaxSubsume1 > 0) subsume1(*c.clause);
                 else subsume0(*c.clause);
@@ -1902,7 +1900,7 @@ less than occur[var].size(), returns FALSE
 
 @return TRUE if they are OK
 */
-const bool Subsumer::verifyIntegrity()
+bool Subsumer::verifyIntegrity()
 {
     vector<uint32_t> occurNum(solver.nVars()*2, 0);
 
@@ -1927,7 +1925,7 @@ const bool Subsumer::verifyIntegrity()
 }
 
 template<class T>
-const bool Subsumer::allTautology(const T& ps, const Lit lit)
+bool Subsumer::allTautology(const T& ps, const Lit lit)
 {
     #ifdef VERBOSE_DEBUG
     cout << "allTautology: " << ps << std::endl;
@@ -2024,7 +2022,7 @@ void Subsumer::blockedClauseRemoval()
     }
 }
 
-const bool Subsumer::tryOneSetting(const Lit lit)
+bool Subsumer::tryOneSetting(const Lit lit)
 {
     numMaxBlockToVisit -= occur[lit.toInt()].size();
     for(ClauseSimp *it = occur[lit.toInt()].getData(), *end = occur[lit.toInt()].getDataEnd(); it != end; it++) {
@@ -2096,7 +2094,7 @@ the running of this class.
 
 @return TRUE if they are all unassigned
 */
-const bool Subsumer::checkElimedUnassigned() const
+bool Subsumer::checkElimedUnassigned() const
 {
     uint32_t checkNumElimed = 0;
     for (uint32_t i = 0; i < var_elimed.size(); i++) {

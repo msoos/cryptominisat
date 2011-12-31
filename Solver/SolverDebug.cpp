@@ -34,7 +34,7 @@ void Solver::testAllClauseAttach() const
     }
 }
 
-const bool Solver::normClauseIsAttached(const Clause& c) const
+bool Solver::normClauseIsAttached(const Clause& c) const
 {
     bool attached = true;
     assert(c.size() > 2);
@@ -60,7 +60,7 @@ const bool Solver::normClauseIsAttached(const Clause& c) const
     return attached;
 }
 
-const bool Solver::xorClauseIsAttached(const XorClause& c) const
+bool Solver::xorClauseIsAttached(const XorClause& c) const
 {
     ClauseOffset offset = clauseAllocator.getOffset(&c);
     bool attached = true;
@@ -83,7 +83,7 @@ void Solver::findAllAttach() const
     }
 }
 
-const bool Solver::findClause(XorClause* c) const
+bool Solver::findClause(XorClause* c) const
 {
     for (uint32_t i = 0; i < xorclauses.size(); i++) {
         if (xorclauses[i] == c) return true;
@@ -91,7 +91,7 @@ const bool Solver::findClause(XorClause* c) const
     return false;
 }
 
-const bool Solver::findClause(Clause* c) const
+bool Solver::findClause(Clause* c) const
 {
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i] == c) return true;
@@ -112,7 +112,7 @@ void Solver::checkSolution()
     model.clear();
 }
 
-const bool Solver::verifyXorClauses() const
+bool Solver::verifyXorClauses() const
 {
     #ifdef VERBOSE_DEBUG
     cout << "Checking xor-clauses whether they have been properly satisfied." << endl;;
@@ -142,7 +142,7 @@ const bool Solver::verifyXorClauses() const
     return verificationOK;
 }
 
-const bool Solver::verifyBinClauses() const
+bool Solver::verifyBinClauses() const
 {
     uint32_t wsLit = 0;
     for (const vec<Watched> *it = watches.getData(), *end = watches.getDataEnd(); it != end; it++, wsLit++) {
@@ -164,7 +164,7 @@ const bool Solver::verifyBinClauses() const
     return true;
 }
 
-const bool Solver::verifyClauses(const vec<Clause*>& cs) const
+bool Solver::verifyClauses(const vec<Clause*>& cs) const
 {
     #ifdef VERBOSE_DEBUG
     cout << "Checking clauses whether they have been properly satisfied." << endl;;
@@ -188,7 +188,7 @@ const bool Solver::verifyClauses(const vec<Clause*>& cs) const
     return verificationOK;
 }
 
-const bool Solver::verifyModel() const
+bool Solver::verifyModel() const
 {
     bool verificationOK = true;
     verificationOK &= verifyClauses(clauses);

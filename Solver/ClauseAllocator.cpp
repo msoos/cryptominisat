@@ -69,34 +69,34 @@ ClauseAllocator::~ClauseAllocator()
 @brief Allocates space&initializes a clause
 */
 template<class T>
-Clause* ClauseAllocator::Clause_new(const T& ps, const unsigned int group, const bool learnt)
+Clause* ClauseAllocator::Clause_new(const T& ps, const bool learnt)
 {
     assert(ps.size() > 2);
     void* mem = allocEnough(ps.size());
-    Clause* real= new (mem) Clause(ps, group, learnt);
+    Clause* real= new (mem) Clause(ps, learnt);
     //assert(!(ps.size() == 2 && !real->wasBin()));
 
     return real;
 }
 
-template Clause* ClauseAllocator::Clause_new(const vec<Lit>& ps, const unsigned int group, const bool learnt);
-template Clause* ClauseAllocator::Clause_new(const Clause& ps, const unsigned int group, const bool learnt);
-template Clause* ClauseAllocator::Clause_new(const XorClause& ps, const unsigned int group, const bool learnt);
+template Clause* ClauseAllocator::Clause_new(const vec<Lit>& ps, const bool learnt);
+template Clause* ClauseAllocator::Clause_new(const Clause& ps, const bool learnt);
+template Clause* ClauseAllocator::Clause_new(const XorClause& ps, const bool learnt);
 
 /**
 @brief Allocates space&initializes an xor clause
 */
 template<class T>
-XorClause* ClauseAllocator::XorClause_new(const T& ps, const bool xorEqualFalse, const unsigned int group)
+XorClause* ClauseAllocator::XorClause_new(const T& ps, const bool xorEqualFalse)
 {
     assert(ps.size() > 2);
     void* mem = allocEnough(ps.size());
-    XorClause* real= new (mem) XorClause(ps, xorEqualFalse, group);
+    XorClause* real= new (mem) XorClause(ps, xorEqualFalse);
 
     return real;
 }
-template XorClause* ClauseAllocator::XorClause_new(const vec<Lit>& ps, const bool inverted, const unsigned int group);
-template XorClause* ClauseAllocator::XorClause_new(const XorClause& ps, const bool inverted, const unsigned int group);
+template XorClause* ClauseAllocator::XorClause_new(const vec<Lit>& ps, const bool inverted);
+template XorClause* ClauseAllocator::XorClause_new(const XorClause& ps, const bool inverted);
 
 /**
 @brief Allocates space for a new clause & copies a give clause to it
@@ -191,7 +191,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size) throw (std::bad_alloc)
 Calculates the stack frame and the position of the pointer in the stack, and
 rerturns a 32-bit value that is a concatenation of these two
 */
-const ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
+ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
 {
     uint32_t outerOffset = getOuterOffset(ptr);
     uint32_t interOffset = getInterOffset(ptr, outerOffset);
@@ -201,7 +201,7 @@ const ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
 /**
 @brief Combines the stack number and the internal offset into one 32-bit number
 */
-inline const ClauseOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
+inline ClauseOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
 {
     return (outerOffset | (interOffset << NUM_BITS_OUTER_OFFSET));
 }

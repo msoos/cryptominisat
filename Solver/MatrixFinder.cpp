@@ -41,7 +41,7 @@ MatrixFinder::MatrixFinder(Solver& _solver) :
 {
 }
 
-inline const Var MatrixFinder::fingerprint(const XorClause& c) const
+inline Var MatrixFinder::fingerprint(const XorClause& c) const
 {
     Var fingerprint = 0;
 
@@ -51,7 +51,7 @@ inline const Var MatrixFinder::fingerprint(const XorClause& c) const
     return fingerprint;
 }
 
-inline const bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const XorClause& c2) const
+inline bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const XorClause& c2) const
 {
     uint32_t i1, i2;
     for (i1 = 0, i2 = 0; i1 < c1.size() && i2 < c2.size();) {
@@ -66,7 +66,7 @@ inline const bool MatrixFinder::firstPartOfSecond(const XorClause& c1, const Xor
     return (i1 == c1.size());
 }
 
-const bool MatrixFinder::findMatrixes()
+bool MatrixFinder::findMatrixes()
 {
     assert(solver.decisionLevel() == 0);
     assert(solver.ok);
@@ -151,7 +151,7 @@ const bool MatrixFinder::findMatrixes()
     return true;
 }
 
-const uint32_t MatrixFinder::setMatrixes()
+uint32_t MatrixFinder::setMatrixes()
 {
     vector<pair<uint32_t, uint32_t> > numXorInMatrix;
     for (uint32_t i = 0; i < matrix_no; i++)

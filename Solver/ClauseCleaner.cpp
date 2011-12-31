@@ -33,7 +33,7 @@ ClauseCleaner::ClauseCleaner(Solver& _solver) :
     }
 }
 
-const bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
+bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
     assert(watched.isBinary());
     if (solver.value(lit) == l_True) return true;
@@ -114,7 +114,7 @@ void ClauseCleaner::cleanClauses(vec<Clause*>& cs, ClauseSetType type, const uin
     #endif
 }
 
-inline const bool ClauseCleaner::cleanClause(Clause*& cc)
+inline bool ClauseCleaner::cleanClause(Clause*& cc)
 {
     Clause& c = *cc;
 
@@ -201,7 +201,7 @@ void ClauseCleaner::cleanClauses(vec<XorClause*>& cs, ClauseSetType type, const 
     #endif
 }
 
-inline const bool ClauseCleaner::cleanClause(XorClause& c)
+inline bool ClauseCleaner::cleanClause(XorClause& c)
 {
     Lit *i, *j, *end;
     Var origVar1 = c[0].var();
@@ -225,7 +225,7 @@ inline const bool ClauseCleaner::cleanClause(XorClause& c)
         case 2: {
             c[0] = c[0].unsign();
             c[1] = c[1].unsign();
-            solver.varReplacer->replace(c, c.xorEqualFalse(), c.getGroup());
+            solver.varReplacer->replace(c, c.xorEqualFalse());
             solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
             return true;
         }

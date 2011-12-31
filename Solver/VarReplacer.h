@@ -45,23 +45,23 @@ class VarReplacer
     public:
         VarReplacer(Solver& solver);
         ~VarReplacer();
-        const bool performReplace(const bool always = false);
-        const bool needsReplace();
+        bool performReplace(const bool always = false);
+        bool needsReplace();
         template<class T>
-        const bool replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt = false, const bool addToWatchLists = true);
+        bool replace(T& ps, const bool xorEqualFalse, const bool addBinAsLearnt = false, const bool addToWatchLists = true);
 
         void extendModelPossible() const;
         void extendModelImpossible(Solver& solver2) const;
 
-        const uint32_t getNumReplacedLits() const;
-        const uint32_t getNumReplacedVars() const;
-        const uint32_t getNumLastReplacedVars() const;
-        const uint32_t getNewToReplaceVars() const;
-        const uint32_t getNumTrees() const;
-        const vector<Var> getReplacingVars() const;
+        uint32_t getNumReplacedLits() const;
+        uint32_t getNumReplacedVars() const;
+        uint32_t getNumLastReplacedVars() const;
+        uint32_t getNewToReplaceVars() const;
+        uint32_t getNumTrees() const;
+        vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
-        const bool varHasBeenReplaced(const Var var) const;
-        const bool replacingVar(const Var var) const;
+        bool varHasBeenReplaced(const Var var) const;
+        bool replacingVar(const Var var) const;
         void newVar();
 
         vec<char> cannot_eliminate;
@@ -71,14 +71,14 @@ class VarReplacer
         //friend class ClauseAllocator;
 
     private:
-        const bool performReplaceInternal();
+        bool performReplaceInternal();
 
-        const bool replace_set(vec<Clause*>& cs);
-        const bool replaceBins();
-        const bool replace_set(vec<XorClause*>& cs);
-        const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
-        const bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
-        void addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group, const bool addBinAsLearnt = false);
+        bool replace_set(vec<Clause*>& cs);
+        bool replaceBins();
+        bool replace_set(vec<XorClause*>& cs);
+        bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
+        bool handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2);
+        void addBinaryXorClause(Lit lit1, Lit lit2, const bool addBinAsLearnt = false);
 
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);
@@ -92,7 +92,7 @@ class VarReplacer
         Solver& solver; ///<The solver we are working with
 };
 
-inline const bool VarReplacer::performReplace(const bool always)
+inline bool VarReplacer::performReplace(const bool always)
 {
     //uint32_t limit = std::min((uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE), FIXCLEANREPLACE);
     uint32_t limit = (uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE);
@@ -102,28 +102,28 @@ inline const bool VarReplacer::performReplace(const bool always)
     return true;
 }
 
-inline const bool VarReplacer::needsReplace()
+inline bool VarReplacer::needsReplace()
 {
     uint32_t limit = (uint32_t)((double)solver.order_heap.size()*PERCENTAGEPERFORMREPLACE);
     return (getNewToReplaceVars() > limit);
 }
 
-inline const uint32_t VarReplacer::getNumReplacedLits() const
+inline uint32_t VarReplacer::getNumReplacedLits() const
 {
     return replacedLits;
 }
 
-inline const uint32_t VarReplacer::getNumReplacedVars() const
+inline uint32_t VarReplacer::getNumReplacedVars() const
 {
     return replacedVars;
 }
 
-inline const uint32_t VarReplacer::getNumLastReplacedVars() const
+inline uint32_t VarReplacer::getNumLastReplacedVars() const
 {
     return lastReplacedVars;
 }
 
-inline const uint32_t VarReplacer::getNewToReplaceVars() const
+inline uint32_t VarReplacer::getNewToReplaceVars() const
 {
     return replacedVars-lastReplacedVars;
 }
@@ -133,17 +133,17 @@ inline const vector<Lit>& VarReplacer::getReplaceTable() const
     return table;
 }
 
-inline const bool VarReplacer::varHasBeenReplaced(const Var var) const
+inline bool VarReplacer::varHasBeenReplaced(const Var var) const
 {
     return table[var].var() != var;
 }
 
-inline const bool VarReplacer::replacingVar(const Var var) const
+inline bool VarReplacer::replacingVar(const Var var) const
 {
     return (reverseTable.find(var) != reverseTable.end());
 }
 
-inline const uint32_t VarReplacer::getNumTrees() const
+inline uint32_t VarReplacer::getNumTrees() const
 {
     return reverseTable.size();
 }

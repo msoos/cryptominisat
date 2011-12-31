@@ -49,22 +49,22 @@ class RestartTypeChooser
     public:
         RestartTypeChooser(const Solver& s);
         void addInfo();
-        const RestartType choose();
+        RestartType choose();
         void reset();
 
     private:
         void calcHeap();
-        const double avg() const;
-        const std::pair<double, double> countVarsDegreeStDev() const;
-        const double stdDeviation(vector<uint32_t>& measure) const;
+        double avg() const;
+        std::pair<double, double> countVarsDegreeStDev() const;
+        double stdDeviation(vector<uint32_t>& measure) const;
 
         template<class T>
         void addDegrees(const vec<T*>& cs, vector<uint32_t>& degrees) const;
         void addDegreesBin(vector<uint32_t>& degrees) const;
 
         const Solver& solver;
-        const uint32_t topX; ///<The how many is the top X? 100 is default
-        const uint32_t limit; ///<If top x contains on average this many common varables, we select MiniSat-type
+        uint32_t topX; ///<The how many is the top X? 100 is default
+        uint32_t limit; ///<If top x contains on average this many common varables, we select MiniSat-type
         vector<Var> sameIns;
 
         vector<Var> firstVars; ///<The top x variables (in terms of var activity)

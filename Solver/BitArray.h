@@ -124,7 +124,7 @@ public:
         delete[] mp;
     }
 
-    inline const bool isZero() const
+    inline bool isZero() const
     {
         const uint64_t*  mp2 = (const uint64_t*)mp;
 
@@ -162,7 +162,7 @@ public:
         mp[i/64] |= ((uint64_t)1 << (i%64));
     }
 
-    inline const bool operator[](const uint32_t& i) const
+    inline bool operator[](const uint32_t& i) const
     {
         #ifdef DEBUG_BITARRAY
         assert(size*64 > i);
@@ -171,7 +171,7 @@ public:
         return (mp[i/64] >> (i%64)) & 1;
     }
 
-    inline const uint32_t getSize() const
+    inline uint32_t getSize() const
     {
         return size*64;
     }

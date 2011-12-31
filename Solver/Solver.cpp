@@ -89,7 +89,6 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , numCleanedLearnts(1)
         , nbClBeforeRed    (NBCLAUSESBEFOREREDUCE)
         , nbCompensateSubsumer (0)
-        , learnt_clause_group(0)
         , libraryCNFFile   (NULL)
         , restartType      (static_restart)
         , lastSelectedRestartType (static_restart)
@@ -200,7 +199,7 @@ xor clause-adding function addXorClause() in that it assumes that the variables
 inside are decision variables, have not been replaced, eliminated, etc.
 */
 template<class T>
-XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t group, const bool learnt) throw (std::out_of_range)
+XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const bool learnt) throw (std::out_of_range)
 {
     assert(qhead == trail.size());
     assert(decisionLevel() == 0);
@@ -243,20 +242,20 @@ XorClause* Solver::addXorClauseInt(T& ps, bool xorEqualFalse, const uint32_t gro
 
             ps[0] = ps[0].unsign();
             ps[1] = ps[1].unsign();
-            varReplacer->replace(ps, xorEqualFalse, group, learnt);
+            varReplacer->replace(ps, xorEqualFalse, learnt);
             return NULL;
         }
         default: {
             assert(!learnt);
-            XorClause* c = clauseAllocator.XorClause_new(ps, xorEqualFalse, group);
+            XorClause* c = clauseAllocator.XorClause_new(ps, xorEqualFalse);
             attachClause(*c);
             return c;
         }
     }
 }
 
-template XorClause* Solver::addXorClauseInt(vec<Lit>& ps, bool xorEqualFalse, const uint32_t group, const bool learnt);
-template XorClause* Solver::addXorClauseInt(XorClause& ps, bool xorEqualFalse, const uint32_t group, const bool learnt);
+template XorClause* Solver::addXorClauseInt(vec<Lit>& ps, bool xorEqualFalse, const bool learnt);
+template XorClause* Solver::addXorClauseInt(XorClause& ps, bool xorEqualFalse, const bool learnt);
 
 /**
 @brief Adds an xor clause to the problem
@@ -272,7 +271,7 @@ and then calls addXorClauseInt() to actually add the xor clause.
 @p xorEqualFalse The xor must be equal to TRUE or false?
 */
 template<class T>
-bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, const char* group_name) throw (std::out_of_range)
+bool Solver::addXorClause(T& ps, bool xorEqualFalse) throw (std::out_of_range)
 {
     assert(decisionLevel() == 0);
     if (ps.size() > (0x01UL << 18))
@@ -307,14 +306,14 @@ bool Solver::addXorClause(T& ps, bool xorEqualFalse, const uint32_t group, const
         }
     }
 
-    XorClause* c = addXorClauseInt(ps, xorEqualFalse, group);
+    XorClause* c = addXorClauseInt(ps, xorEqualFalse);
     if (c != NULL) xorclauses.push(c);
 
     return ok;
 }
 
-template bool Solver::addXorClause(vec<Lit>& ps, bool xorEqualFalse, const uint32_t group, const char* group_name);
-template bool Solver::addXorClause(XorClause& ps, bool xorEqualFalse, const uint32_t group, const char* group_name);
+template bool Solver::addXorClause(vec<Lit>& ps, bool xorEqualFalse);
+template bool Solver::addXorClause(XorClause& ps, bool xorEqualFalse);
 
 /**
 @brief Adds a clause to the problem. Should ONLY be called internally
@@ -325,7 +324,7 @@ when the solver is in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
 */
 template <class T>
-Clause* Solver::addClauseInt(T& ps, uint32_t group
+Clause* Solver::addClauseInt(T& ps
                             , const bool learnt, const uint32_t glue, const float miniSatActivity
                             , const bool inOriginalInput)
 {
@@ -355,7 +354,7 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
     }
 
     if (ps.size() > 2) {
-        Clause* c = clauseAllocator.Clause_new(ps, group);
+        Clause* c = clauseAllocator.Clause_new(ps);
         if (learnt) c->makeLearnt(glue, miniSatActivity);
         attachClause(*c);
         return c;
@@ -367,10 +366,10 @@ Clause* Solver::addClauseInt(T& ps, uint32_t group
     }
 }
 
-template Clause* Solver::addClauseInt(Clause& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
-template Clause* Solver::addClauseInt(vec<Lit>& ps, const uint32_t group, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
+template Clause* Solver::addClauseInt(Clause& ps, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
+template Clause* Solver::addClauseInt(vec<Lit>& ps, const bool learnt, const uint32_t glue, const float miniSatActivity, const bool inOriginalInput);
 
-template<class T> const bool Solver::addClauseHelper(T& ps, const uint32_t group, const char* group_name) throw (std::out_of_range)
+template<class T> bool Solver::addClauseHelper(T& ps) throw (std::out_of_range)
 {
     assert(decisionLevel() == 0);
     if (ps.size() > (0x01UL << 18))
@@ -417,34 +416,34 @@ it acts on them such that they are correct, and calls addClauseInt() to do
 the heavy-lifting
 */
 template<class T>
-bool Solver::addClause(T& ps, const uint32_t group, const char* group_name)
+bool Solver::addClause(T& ps)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "addClause() called with new clause: " << ps << std::endl;
     #endif //VERBOSE_DEBUG
-    if (!addClauseHelper(ps, group, group_name)) return false;
-    Clause* c = addClauseInt(ps, group, false, 0, 0, true);
+    if (!addClauseHelper(ps)) return false;
+    Clause* c = addClauseInt(ps, false, 0, 0, true);
     if (c != NULL) clauses.push(c);
 
     return ok;
 }
 
-template bool Solver::addClause(vec<Lit>& ps, const uint32_t group, const char* group_name);
-template bool Solver::addClause(Clause& ps, const uint32_t group, const char* group_name);
+template bool Solver::addClause(vec<Lit>& ps);
+template bool Solver::addClause(Clause& ps);
 
 
 template<class T>
-bool Solver::addLearntClause(T& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity)
+bool Solver::addLearntClause(T& ps, const uint32_t glue, const float miniSatActivity)
 {
-    if (!addClauseHelper(ps, group, group_name)) return false;
-    Clause* c = addClauseInt(ps, group, true, glue, miniSatActivity, true);
+    if (!addClauseHelper(ps)) return false;
+    Clause* c = addClauseInt(ps, true, glue, miniSatActivity, true);
     if (c != NULL) learnts.push(c);
 
     return ok;
 }
 
-template bool Solver::addLearntClause(vec<Lit>& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
-template bool Solver::addLearntClause(Clause& ps, const uint32_t group, const char* group_name, const uint32_t glue, const float miniSatActivity);
+template bool Solver::addLearntClause(vec<Lit>& ps, const uint32_t glue, const float miniSatActivity);
+template bool Solver::addLearntClause(Clause& ps, const uint32_t glue, const float miniSatActivity);
 
 
 /**
@@ -700,7 +699,7 @@ void Solver::cancelUntilLight()
     trail_lim.clear();
 }
 
-const bool Solver::clearGaussMatrixes()
+bool Solver::clearGaussMatrixes()
 {
     assert(decisionLevel() == 0);
     #ifdef USE_GAUSS
@@ -1435,7 +1434,7 @@ is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
 template<bool full>
-inline const bool Solver::propBinaryClause(vec<Watched>::iterator &i, const Lit p, PropBy& confl)
+inline bool Solver::propBinaryClause(vec<Watched>::iterator &i, const Lit p, PropBy& confl)
 {
     lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
@@ -1474,7 +1473,7 @@ is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
 template<bool full>
-inline const bool Solver::propTriClause(vec<Watched>::iterator &i, const Lit p, PropBy& confl)
+inline bool Solver::propTriClause(vec<Watched>::iterator &i, const Lit p, PropBy& confl)
 {
     lbool val = value(i->getOtherLit());
     if (val == l_True) return true;
@@ -1525,7 +1524,7 @@ We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
 template<bool full>
-inline const bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, vec<Watched>::iterator end, const Lit p, PropBy& confl, const bool update)
+inline bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl, const bool update)
 {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
@@ -1607,7 +1606,7 @@ better memory-accesses since the watchlist is already in the memory...
 \todo maybe not worth it, and a variable-based watchlist should be used
 */
 template<bool full>
-inline const bool Solver::propXorClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, vec<Watched>::iterator end, const Lit p, PropBy& confl)
+inline bool Solver::propXorClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl)
 {
     ClauseOffset offset = i->getXorOffset();
     XorClause& c = *(XorClause*)clauseAllocator.getPointer(offset);
@@ -1702,13 +1701,13 @@ PropBy Solver::propagate(const bool update)
 
             if (i->isClause()) {
                 num_props += 4;
-                if (!propNormalClause<full>(i, j, end, p, confl, update)) break;
+                if (!propNormalClause<full>(i, j, p, confl, update)) break;
                 else continue;
             } //end CLAUSE
 
             if (i->isXorClause()) {
                 num_props += 10;
-                if (!propXorClause<full>(i, j, end, p, confl)) break;
+                if (!propXorClause<full>(i, j, p, confl)) break;
                 else continue;
             } //end XORCLAUSE
         }
@@ -1831,7 +1830,7 @@ PropBy Solver::propagateNonLearntBin()
 /**
 @brief Propagate recursively on non-learnt binaries, but do not propagate exceptLit if we reach it
 */
-const bool Solver::propagateBinExcept(const Lit exceptLit)
+bool Solver::propagateBinExcept(const Lit exceptLit)
 {
     while (qhead < trail.size()) {
         Lit p   = trail[qhead++];
@@ -1855,7 +1854,7 @@ const bool Solver::propagateBinExcept(const Lit exceptLit)
 /**
 @brief Propagate only for one hop(=non-recursively) on non-learnt bins
 */
-const bool Solver::propagateBinOneLevel()
+bool Solver::propagateBinOneLevel()
 {
     Lit p   = trail[qhead];
     const vec<Watched> & ws = watches[p.toInt()];
@@ -1880,7 +1879,7 @@ struct LevelSorter
         level(_level)
     {}
 
-    const bool operator()(const Lit lit1, const Lit lit2) const {
+    bool operator()(const Lit lit1, const Lit lit2) const {
         return level[lit1.var()] < level[lit2.var()];
     }
 
@@ -1895,7 +1894,7 @@ existing clause. Only used if the glue-based activity heuristic is enabled,
 i.e. if we are in GLUCOSE mode (not MiniSat mode)
 */
 template<class T>
-inline const uint32_t Solver::calcNBLevels(const T& ps)
+inline uint32_t Solver::calcNBLevels(const T& ps)
 {
     uint32_t nbLevels = 0;
     for(const Lit *l = ps.getData(), *end = ps.getDataEnd(); l != end; l++) {
@@ -2029,7 +2028,7 @@ We remove satisfied clauses, clean clauses from assigned literals, find
 binary xor-clauses and replace variables with one another. Heuristics are
 used to check if we need to find binary xor clauses or not.
 */
-const bool Solver::simplify()
+bool Solver::simplify()
 {
     testAllClauseAttach();
     assert(decisionLevel() == 0);
@@ -2349,7 +2348,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
             attachClause(*c);
             uncheckedEnqueue(learnt_clause[0], clauseAllocator.getOffset(c));
         } else {  //no on-the-fly subsumption
-            c = clauseAllocator.Clause_new(learnt_clause, learnt_clause_group++, true);
+            c = clauseAllocator.Clause_new(learnt_clause, true);
             #ifdef ENABLE_UNWIND_GLUE
             if (conf.doMaxGlueDel && glue > conf.maxGlue) {
                 nbClOverMaxGlue++;
@@ -2383,7 +2382,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
 
 Uses class RestartTypeChooser to do the heavy-lifting
 */
-const bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
+bool Solver::chooseRestartType(const uint32_t& lastFullRestart)
 {
     uint32_t relativeStart = starts - lastFullRestart;
 
@@ -2439,7 +2438,7 @@ It burst-searches for given number of conflicts, then it tries all sorts of
 things like variable elimination, subsumption, failed literal probing, etc.
 to try to simplifcy the problem at hand.
 */
-const lbool Solver::simplifyProblem(const uint32_t numConfls)
+lbool Solver::simplifyProblem(const uint32_t numConfls)
 {
     testAllClauseAttach();
     bool gaussWasCleared = clearGaussMatrixes();
@@ -2522,7 +2521,7 @@ end:
 
 If so, we also do the things to be done if the full restart is effected.
 */
-const bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart)
+bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart)
 {
     if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
         #ifdef USE_GAUSS

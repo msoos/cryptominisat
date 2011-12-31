@@ -55,7 +55,7 @@ which have been removed by other methods:
 NOTE: If any new such algoirhtms are added, this part MUST be updated such
 that problems don't creep up
 */
-const bool VarReplacer::performReplaceInternal()
+bool VarReplacer::performReplaceInternal()
 {
     #ifdef VERBOSE_DEBUG
     cout << "PerformReplacInternal started." << endl;
@@ -156,7 +156,7 @@ end:
 /**
 @brief Replaces vars in xorclauses
 */
-const bool VarReplacer::replace_set(vec<XorClause*>& cs)
+bool VarReplacer::replace_set(vec<XorClause*>& cs)
 {
     XorClause **a = cs.getData();
     XorClause **r = a;
@@ -208,7 +208,7 @@ const bool VarReplacer::replace_set(vec<XorClause*>& cs)
 /**
 @brief Helper function for replace_set()
 */
-const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2)
+bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, const Var origVar2)
 {
     uint32_t origSize = c.size();
     std::sort(c.getData(), c.getDataEnd());
@@ -249,7 +249,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
         solver.detachModifiedClause(origVar1, origVar2, origSize, &c);
         c[0] = c[0].unsign() ^ c.xorEqualFalse();
         c[1] = c[1].unsign();
-        addBinaryXorClause(c[0], c[1], c.getGroup());
+        addBinaryXorClause(c[0], c[1]);
         return true;
     }
     default:
@@ -262,7 +262,7 @@ const bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, co
     return false;
 }
 
-const bool VarReplacer::replaceBins()
+bool VarReplacer::replaceBins()
 {
     #ifdef DEBUG_BIN_REPLACER
     vec<uint32_t> removed(solver.nVars()*2, 0);
@@ -365,7 +365,7 @@ const bool VarReplacer::replaceBins()
 /**
 @brief Replaces variables in normal clauses
 */
-const bool VarReplacer::replace_set(vec<Clause*>& cs)
+bool VarReplacer::replace_set(vec<Clause*>& cs)
 {
     Clause **a = cs.getData();
     Clause **r = a;
@@ -405,7 +405,7 @@ const bool VarReplacer::replace_set(vec<Clause*>& cs)
 /**
 @brief Helper function for replace_set()
 */
-const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3)
+bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3)
 {
     bool satisfied = false;
     std::sort(c.getData(), c.getData() + c.size());
@@ -457,7 +457,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
 /**
 @brief Returns variables that have been replaced
 */
-const vector<Var> VarReplacer::getReplacingVars() const
+vector<Var> VarReplacer::getReplacingVars() const
 {
     vector<Var> replacingVars;
 
@@ -555,7 +555,7 @@ know that c=h, in which case we don't do anything
 @p group of clause they have been inspired from. Sometimes makes no sense...
 */
 template<class T>
-const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt, const bool addToWatchLists)
+bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const bool addBinAsLearnt, const bool addToWatchLists)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "replace() called with var " << ps[0].var()+1 << " and var " << ps[1].var()+1 << " with xorEqualFalse " << xorEqualFalse << std::endl;
@@ -624,7 +624,7 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     #endif //DEBUG_REPLACER
 
     if (addToWatchLists)
-        addBinaryXorClause(lit1, lit2 ^ true, group, addBinAsLearnt);
+        addBinaryXorClause(lit1, lit2 ^ true, addBinAsLearnt);
 
     if (reverseTable.find(lit1.var()) == reverseTable.end()) {
         reverseTable[lit2.var()].push_back(lit1.var());
@@ -646,8 +646,8 @@ const bool VarReplacer::replace(T& ps, const bool xorEqualFalse, const uint32_t 
     return true;
 }
 
-template const bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt, const bool addToWatchLists);
-template const bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const uint32_t group, const bool addBinAsLearnt, const bool addToWatchLists);
+template bool VarReplacer::replace(vec<Lit>& ps, const bool xorEqualFalse, const bool addBinAsLearnt, const bool addToWatchLists);
+template bool VarReplacer::replace(XorClause& ps, const bool xorEqualFalse, const bool addBinAsLearnt, const bool addToWatchLists);
 
 /**
 @brief Adds a binary xor to the internal/external clause set
@@ -659,7 +659,7 @@ so we add this to the binary clauses of Solver, and we recover it next time.
 
 \todo Clean this messy internal/external thing using a better datastructure.
 */
-void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const uint32_t group, const bool addBinAsLearnt)
+void VarReplacer::addBinaryXorClause(Lit lit1, Lit lit2, const bool addBinAsLearnt)
 {
     solver.attachBinClause(lit1, lit2, addBinAsLearnt);
     solver.dataSync->signalNewBinClause(lit1, lit2);

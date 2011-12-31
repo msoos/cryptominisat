@@ -134,7 +134,7 @@ public:
         return is_true_internal;
     }
 
-    inline const bool isZero() const
+    inline bool isZero() const
     {
         for (uint32_t i = 0; i != size; i++) {
             if (mp[i]) return false;
@@ -183,7 +183,7 @@ public:
         }
     }
 
-    inline const bool operator[](const uint32_t& i) const
+    inline bool operator[](const uint32_t& i) const
     {
         #ifdef DEBUG_ROW
         assert(size*64 > i);
@@ -208,7 +208,7 @@ public:
         is_true_internal = !v.xorEqualFalse();
     }
 
-    const bool fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;
+    bool fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const;
 
     inline unsigned long int scan(const unsigned long int var) const
     {

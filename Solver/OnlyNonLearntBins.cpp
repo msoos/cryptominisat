@@ -33,7 +33,7 @@ OnlyNonLearntBins::OnlyNonLearntBins(Solver& _solver) :
 /**
 @brief Propagate recursively on non-learnt binaries
 */
-const bool OnlyNonLearntBins::propagate()
+bool OnlyNonLearntBins::propagate()
 {
     while (solver.qhead < solver.trail.size()) {
         Lit p = solver.trail[solver.qhead++];
@@ -55,7 +55,7 @@ const bool OnlyNonLearntBins::propagate()
 /**
 @brief Fill internal watchlists with non-binary clauses
 */
-const bool OnlyNonLearntBins::fill()
+bool OnlyNonLearntBins::fill()
 {
     uint32_t numBins = 0;
     double myTime = cpuTime();

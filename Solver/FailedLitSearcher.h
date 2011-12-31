@@ -55,13 +55,13 @@ class FailedLitSearcher {
     public:
         FailedLitSearcher(Solver& _solver);
 
-        const bool search();
-        const double getTotalTime() const;
+        bool search();
+        double getTotalTime() const;
 
     private:
         //Main
-        const bool tryBoth(const Lit lit1, const Lit lit2);
-        const bool tryAll(const Lit* begin, const Lit* end);
+        bool tryBoth(const Lit lit1, const Lit lit2);
+        bool tryAll(const Lit* begin, const Lit* end);
         void printResults(const double myTime) const;
 
         Solver& solver; ///<The solver we are updating&working with
@@ -94,7 +94,7 @@ class FailedLitSearcher {
         class TwoLongXor
         {
         public:
-            const bool operator==(const TwoLongXor& other) const
+            bool operator==(const TwoLongXor& other) const
             {
                 if (var[0] == other.var[0]
                     && var[1] == other.var[1]
@@ -102,7 +102,7 @@ class FailedLitSearcher {
                     return true;
                 return false;
             }
-            const bool operator<(const TwoLongXor& other) const
+            bool operator<(const TwoLongXor& other) const
             {
                 if (var[0] < other.var[0]) return true;
                 if (var[0] > other.var[0]) return false;
@@ -123,18 +123,16 @@ class FailedLitSearcher {
         class BinXorToAdd
         {
             public:
-                BinXorToAdd(const Lit _lit1, const Lit _lit2, const bool _isEqualFalse, const uint32_t _group) :
+                BinXorToAdd(const Lit _lit1, const Lit _lit2, const bool _isEqualFalse) :
                     lit1(_lit1)
                     , lit2(_lit2)
                     , isEqualFalse(_isEqualFalse)
-                    , group(_group)
                 {}
                 Lit lit1;
                 Lit lit2;
                 bool isEqualFalse;
-                uint32_t group;
         };
-        const TwoLongXor getTwoLongXor(const XorClause& c);
+        TwoLongXor getTwoLongXor(const XorClause& c);
         void addFromSolver(const vec<XorClause*>& cs);
         void removeVarFromXors(const Var var);
         void addVarFromXors(const Var var);
@@ -165,7 +163,7 @@ class FailedLitSearcher {
             binPropData(_binPropData)
             {}
 
-            const bool operator () (const Lit x, const Lit y) const
+            bool operator () (const Lit x, const Lit y) const
             {
                 return binPropData[x.var()].lev > binPropData[y.var()].lev;
             }
@@ -179,7 +177,7 @@ class FailedLitSearcher {
         };
         struct BinAddDataSorter
         {
-            const bool operator() (const BinAddData& a, const BinAddData& b) const
+            bool operator() (const BinAddData& a, const BinAddData& b) const
             {
                 return (a.lits.size() > b.lits.size());
             }
@@ -238,7 +236,7 @@ class FailedLitSearcher {
         uint32_t lastTimeStopped;
 };
 
-inline const double FailedLitSearcher::getTotalTime() const
+inline double FailedLitSearcher::getTotalTime() const
 {
     return totalTime;
 }

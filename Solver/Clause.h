@@ -78,7 +78,7 @@ protected:
 public:
 #endif //_MSC_VER
     template<class V>
-    Clause(const V& ps, const uint32_t _group, const bool learnt)
+    Clause(const V& ps, const bool learnt)
     {
         isFreed = false;
         glue = 0; //To stop valgrind from complaining
@@ -88,7 +88,6 @@ public:
         mySize = ps.size();
         isLearnt = learnt;
         isRemoved = false;
-        setGroup(_group);
 
         assert(ps.size() > 0);
         memcpy(getData(), ps.getData(), ps.size()*sizeof(Lit));
@@ -99,12 +98,12 @@ public:
 public:
     friend class ClauseAllocator;
 
-    const uint32_t size() const
+    uint32_t size() const
     {
         return mySize;
     }
 
-    const bool getChanged() const
+    bool getChanged() const
     {
         return changed;
     }
@@ -132,12 +131,12 @@ public:
         shrink(1);
     }
 
-    const bool isXor() const
+    bool isXor() const
     {
         return isXorClause;
     }
 
-    const bool learnt() const
+    bool learnt() const
     {
         return isLearnt;
     }
@@ -157,7 +156,7 @@ public:
         return miniSatAct;
     }
 
-    const bool getStrenghtened() const
+    bool getStrenghtened() const
     {
         return strenghtened;
     }
@@ -189,7 +188,7 @@ public:
         glue = newGlue;
     }
 
-    const uint32_t getGlue() const
+    uint32_t getGlue() const
     {
         return glue;
     }
@@ -218,7 +217,7 @@ public:
         abst = calcAbstraction(*this);
     }
 
-    const uint32_t getAbst() const
+    uint32_t getAbst() const
     {
         return abst;
     }
@@ -246,7 +245,7 @@ public:
     void print(FILE* to = stdout) const
     {
         plainPrint(to);
-        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
+        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct());
     }
 
     void plainPrint(FILE* to = stdout) const
@@ -258,20 +257,12 @@ public:
         fprintf(to, "0\n");
     }
 
-    const uint32_t getGroup() const
-    {
-        return 0;
-    }
-    void setGroup(const uint32_t _group)
-    {
-        return;
-    }
     void setRemoved()
     {
         isRemoved = true;
     }
 
-    const bool getRemoved() const
+    bool getRemoved() const
     {
         return isRemoved;
     }
@@ -281,7 +272,7 @@ public:
         isFreed = true;
     }
 
-    const bool getFreed() const
+    bool getFreed() const
     {
         return isFreed;
     }
@@ -305,8 +296,8 @@ class XorClause : public Clause
 protected:
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
-    XorClause(const V& ps, const bool xorEqualFalse, const uint32_t _group) :
-        Clause(ps, _group, false)
+    XorClause(const V& ps, const bool xorEqualFalse) :
+        Clause(ps, false)
     {
         isXorEqualFalse = xorEqualFalse;
         isXorClause = true;
@@ -315,7 +306,7 @@ protected:
 public:
     friend class ClauseAllocator;
 
-    inline const bool xorEqualFalse() const
+    inline bool xorEqualFalse() const
     {
         return isXorEqualFalse;
     }
@@ -328,7 +319,7 @@ public:
     void print(FILE* to = stdout) const
     {
         plainPrint(to);
-        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f group %d\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct(), getGroup());
+        fprintf(to, "c clause learnt %s glue %d miniSatAct %.3f\n", (learnt() ? "yes" : "no"), getGlue(), getMiniSatAct());
     }
 
     void plainPrint(FILE* to = stdout) const

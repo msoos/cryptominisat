@@ -42,13 +42,13 @@ class OnlyNonLearntBins
         };
 
         //propagation
-        const bool propagate();
+        bool propagate();
 
         //Management of clauses
-        const bool fill();
+        bool fill();
 
         //helper
-        inline const uint32_t getWatchSize(const Lit lit) const;
+        inline uint32_t getWatchSize(const Lit lit) const;
         inline const vec<vec<WatchedBin> >& getBinWatches() const;
 
     private:
@@ -57,7 +57,7 @@ class OnlyNonLearntBins
         Solver& solver;
 };
 
-inline const uint32_t OnlyNonLearntBins::getWatchSize(const Lit lit) const
+inline uint32_t OnlyNonLearntBins::getWatchSize(const Lit lit) const
 {
     return binwatches[lit.toInt()].size();
 }

@@ -28,7 +28,7 @@ BothCache::BothCache(Solver& _solver) :
     solver(_solver)
 {}
 
-const bool BothCache::tryBoth()
+bool BothCache::tryBoth()
 {
     vec<bool> seen(solver.nVars(), 0);
     vec<bool> val(solver.nVars(), 0);
@@ -78,7 +78,7 @@ const bool BothCache::tryBoth()
                 if  (val[it->var()] == it->sign()) {
                     tmp.clear();
                     tmp.push(*it);
-                    solver.addClauseInt(tmp, 0, true);
+                    solver.addClauseInt(tmp, true);
                     if  (!solver.ok) goto end;
                     bProp++;
                 } else {
@@ -86,7 +86,7 @@ const bool BothCache::tryBoth()
                     tmp.push(Lit(var, false));
                     tmp.push(Lit(it->var(), false));
                     bool sign = true ^ startWithTrue ^ it->sign();
-                    solver.addXorClauseInt(tmp, sign , 0);
+                    solver.addXorClauseInt(tmp, sign);
                     if  (!solver.ok) goto end;
                     bXProp++;
                 }

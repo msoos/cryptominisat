@@ -57,7 +57,7 @@ class CSet {
         /**
         @brief Add a clause to the set
         */
-        const bool add(const ClauseSimp& c) {
+        bool add(const ClauseSimp& c) {
             assert(c.clause != NULL);
             where.growTo(c.index+1, std::numeric_limits<uint32_t>::max());
             if (where[c.index] != std::numeric_limits<uint32_t>::max()) {
@@ -74,7 +74,7 @@ class CSet {
             return true;
         }
 
-        const bool alreadyIn(const ClauseSimp& c) const {
+        bool alreadyIn(const ClauseSimp& c) const {
             assert(c.clause != NULL);
             if (where.size() < c.index+1) return false;
             if (where[c.index] != std::numeric_limits<uint32_t>::max())
@@ -129,7 +129,7 @@ class CSet {
                     it++;
                 }
 
-                const bool operator!=(const iterator& iter) const
+                bool operator!=(const iterator& iter) const
                 {
                     return (it != iter.it);;
                 }
@@ -162,7 +162,7 @@ class CSet {
                     it++;
                 }
 
-                const bool operator!=(const const_iterator& iter) const
+                bool operator!=(const const_iterator& iter) const
                 {
                     return (it != iter.it);;
                 }

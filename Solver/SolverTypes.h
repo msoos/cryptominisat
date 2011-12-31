@@ -146,25 +146,24 @@ public:
     }
     inline lbool(llbool b);
 
-    inline const bool isUndef() const {
+    inline bool isUndef() const {
         return !value;
     }
-    inline const bool isDef() const {
+    inline bool isDef() const {
         return value;
     }
-    inline const bool getBool() const {
+    inline bool getBool() const {
         return value == 1;
     }
-    inline const bool operator==(lbool b) const {
+    inline bool operator==(lbool b) const {
         return value == b.value;
     }
-    inline const bool operator!=(lbool b) const {
+    inline bool operator!=(lbool b) const {
         return value != b.value;
     }
     lbool operator^(const bool b) const {
         return b ? lbool(-value) : lbool(value);
     }
-    //lbool operator ^ (const bool b) const { return b ? lbool(-value) : lbool(value); }
 
     friend lbool toLbool(const char v);
     friend lbool boolToLBool(const bool b);
@@ -206,11 +205,11 @@ public:
     llbool(char a) :
             value(a) {}
 
-    inline const bool operator!=(const llbool& v) const {
+    inline bool operator!=(const llbool& v) const {
         return (v.value != value);
     }
 
-    inline const bool operator==(const llbool& v) const {
+    inline bool operator==(const llbool& v) const {
         return (v.value == value);
     }
 

@@ -51,9 +51,9 @@ class ClauseCleaner
         bool satisfied(const XorClause& c) const;
 
     private:
-        const bool satisfied(const Watched& watched, Lit lit);
-        const bool cleanClause(XorClause& c);
-        const bool cleanClause(Clause*& c);
+        bool satisfied(const Watched& watched, Lit lit);
+        bool cleanClause(XorClause& c);
+        bool cleanClause(Clause*& c);
 
         uint32_t lastNumUnitarySat[6]; ///<Last time we cleaned from satisfied clauses, this many unitary clauses were known
         uint32_t lastNumUnitaryClean[6]; ///<Last time we cleaned from satisfied clauses&false literals, this many unitary clauses were known

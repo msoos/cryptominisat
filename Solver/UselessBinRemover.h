@@ -47,15 +47,15 @@ binary clauses are not removed.
 class UselessBinRemover {
     public:
         UselessBinRemover(Solver& solver);
-        const bool removeUslessBinFull();
+        bool removeUslessBinFull();
 
     private:
         bool failed; ///<Has the previous propagation failed? (=conflict)
         uint32_t extraTime; ///<Time that cannot be meausured in bogoprops (~propagation time)
 
         //Remove useless binaries
-        const bool fillBinImpliesMinusLast(const Lit origLit, const Lit lit, vec<Lit>& wrong);
-        const bool removeUselessBinaries(const Lit lit);
+        bool fillBinImpliesMinusLast(const Lit origLit, const Lit lit, vec<Lit>& wrong);
+        bool removeUselessBinaries(const Lit lit);
         void removeBin(const Lit lit1, const Lit lit2);
         /**
         @brief Don't delete the same binary twice, and don't assume that deleted binaries still exist

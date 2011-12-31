@@ -25,24 +25,24 @@ class DataSync
     public:
         DataSync(Solver& solver, SharedData* sharedData);
         void newVar();
-        const bool syncData();
+        bool syncData();
 
 
         template <class T> void signalNewBinClause(T& ps);
         void signalNewBinClause(Lit lit1, Lit lit2);
 
-        const uint32_t getSentUnitData() const;
-        const uint32_t getRecvUnitData() const;
-        const uint32_t getSentBinData() const;
-        const uint32_t getRecvBinData() const;
+        uint32_t getSentUnitData() const;
+        uint32_t getRecvUnitData() const;
+        uint32_t getSentBinData() const;
+        uint32_t getRecvBinData() const;
 
     private:
         //functions
-        const bool shareUnitData();
-        const bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws);
+        bool shareUnitData();
+        bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, vec<Watched>& ws);
         void syncBinToOthers();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
-        const bool shareBinData();
+        bool shareBinData();
 
         //stuff to sync
         vector<std::pair<Lit, Lit> > newBinClauses;
@@ -63,22 +63,22 @@ class DataSync
         Solver& solver;
 };
 
-inline const uint32_t DataSync::getSentUnitData() const
+inline uint32_t DataSync::getSentUnitData() const
 {
     return sentUnitData;
 }
 
-inline const uint32_t DataSync::getRecvUnitData() const
+inline uint32_t DataSync::getRecvUnitData() const
 {
     return recvUnitData;
 }
 
-inline const uint32_t DataSync::getSentBinData() const
+inline uint32_t DataSync::getSentBinData() const
 {
     return sentBinData;
 }
 
-inline const uint32_t DataSync::getRecvBinData() const
+inline uint32_t DataSync::getRecvBinData() const
 {
     return recvBinData;
 }

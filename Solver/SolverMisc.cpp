@@ -111,7 +111,7 @@ void Solver::printStrangeBinLit(const Lit lit) const
     }
 }
 
-const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
+uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
 {
     uint32_t num = 0;
 
@@ -148,7 +148,7 @@ void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FIL
     }
 }
 
-const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
+uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit)
 {
     uint32_t num = 0;
     const vec<Watched>& ws = watches[lit.toInt()];
@@ -305,7 +305,7 @@ bool Solver::dumpOrigClauses(const std::string& fileName) const
     return true;
 }
 
-const vector<Lit> Solver::get_unitary_learnts() const
+vector<Lit> Solver::get_unitary_learnts() const
 {
     vector<Lit> unitaries;
     if (decisionLevel() > 0) {
@@ -331,42 +331,42 @@ const vec<Clause*>& Solver::get_sorted_learnts()
     return learnts;
 }
 
-const uint32_t Solver::getNumElimSubsume() const
+uint32_t Solver::getNumElimSubsume() const
 {
     return subsumer->getNumElimed();
 }
 
-const uint32_t Solver::getNumElimXorSubsume() const
+uint32_t Solver::getNumElimXorSubsume() const
 {
     return xorSubsumer->getNumElimed();
 }
 
-const uint32_t Solver::getNumXorTrees() const
+uint32_t Solver::getNumXorTrees() const
 {
     return varReplacer->getNumTrees();
 }
 
-const uint32_t Solver::getNumXorTreesCrownSize() const
+uint32_t Solver::getNumXorTreesCrownSize() const
 {
     return varReplacer->getNumReplacedVars();
 }
 
-const double Solver::getTotalTimeSubsumer() const
+double Solver::getTotalTimeSubsumer() const
 {
     return subsumer->getTotalTime();
 }
 
-const double Solver::getTotalTimeFailedLitSearcher() const
+double Solver::getTotalTimeFailedLitSearcher() const
 {
     return failedLitSearcher->getTotalTime();
 }
 
-const double Solver::getTotalTimeXorSubsumer() const
+double Solver::getTotalTimeXorSubsumer() const
 {
     return xorSubsumer->getTotalTime();
 }
 
-const double Solver::getTotalTimeSCC() const
+double Solver::getTotalTimeSCC() const
 {
     return  sCCFinder->getTotalTime();
 }

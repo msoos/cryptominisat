@@ -71,22 +71,22 @@ class PropBy
         {
         }
 
-        const bool isClause() const
+        bool isClause() const
         {
             return ((propType&2) == 0);
         }
 
-        const bool isBinary() const
+        bool isBinary() const
         {
             return (propType == 2);
         }
 
-        const bool isTri() const
+        bool isTri() const
         {
             return (propType == 3);
         }
 
-        const Lit getOtherLit() const
+        Lit getOtherLit() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(isBinary() || isTri());
@@ -94,7 +94,7 @@ class PropBy
             return Lit::toLit(data1);
         }
 
-        const Lit getOtherLit2() const
+        Lit getOtherLit2() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(isTri());
@@ -102,7 +102,7 @@ class PropBy
             return Lit::toLit(data2);
         }
 
-        const ClauseOffset getClause() const
+        ClauseOffset getClause() const
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());
@@ -118,7 +118,7 @@ class PropBy
             return data2;
         }
 
-        const bool isNULL() const
+        bool isNULL() const
         {
             if (!isClause()) return false;
             return propType == 0;
@@ -182,7 +182,7 @@ class PropByFull
             memcpy(lits, other.lits, sizeof(Lit)*3);
         }
 
-        const uint32_t size() const
+        uint32_t size() const
         {
             switch (type) {
                 case 0 : return clause->size();
@@ -194,22 +194,22 @@ class PropByFull
             }
         }
 
-        const bool isNULL() const
+        bool isNULL() const
         {
             return type == 0 && clause == NULL;
         }
 
-        const bool isClause() const
+        bool isClause() const
         {
             return type == 0;
         }
 
-        const bool isBinary() const
+        bool isBinary() const
         {
             return type == 1;
         }
 
-        const bool isTri() const
+        bool isTri() const
         {
             return type == 2;
         }
@@ -224,7 +224,7 @@ class PropByFull
             return clause;
         }
 
-        const Lit operator[](const uint32_t i) const
+        Lit operator[](const uint32_t i) const
         {
             switch (type) {
                 case 0: {

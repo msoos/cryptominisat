@@ -29,9 +29,9 @@ class Main
 
         void parseCommandLine();
 
-        const int singleThreadSolve();
-        const int oneThreadSolve();
-        const int multiThreadSolve();
+        int singleThreadSolve();
+        int oneThreadSolve();
+        int multiThreadSolve();
 
         int numThreads;
 
