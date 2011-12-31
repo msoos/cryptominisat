@@ -35,7 +35,7 @@ class StateSaver
         vec<uint32_t> backup_activity;
         uint32_t backup_var_inc;
         RestartType backup_restartType;
-        uint32_t backup_random_var_freq;
+        double backup_random_var_freq;
         uint64_t backup_propagations;
 };
 
