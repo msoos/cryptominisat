@@ -2685,8 +2685,9 @@ lbool Solver::solve(const vec<Lit>& assumps)
     if (conflicts == 0) {
         if (conf.doPerformPreSimp) performStepsBeforeSolve();
         if (!ok) return l_False;
+
+        calculateDefaultPolarities();
     }
-    calculateDefaultPolarities();
 
     printStatHeader();
     printRestartStat("B");
