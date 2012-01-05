@@ -1,3 +1,13 @@
+ver 2.9.2 5/01/2011
+* Bug in --maxsolutions fixed thanks to Martin Maurer
+* CalcDefPolars was taking >10% time for certain problems. Fixed thanks to
+  Vegard Nossum
+* "strengthened" qualifier removed from Clause
+* Bug in StateSaver of saving&restoring double to unsigned fixed thanks to
+  Martin Maurer
+* Cache cleaning is finally fixed
+* Disabling part-finding as it made us loose 3+ points at SAT Comp'11
+
 ver 2.9.1 26/05/2011
 * Subsumption is now in one go instead handling learnt&non-learnt in different
   runs.
