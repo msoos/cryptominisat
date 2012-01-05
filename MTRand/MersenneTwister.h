@@ -70,9 +70,9 @@ class MTRand {
 // Data
 public:
 	typedef unsigned long uint32;  // unsigned integer type, at least 32 bits
-	
-	enum { N = 624 };       // length of state vector
-	enum { SAVE = N + 1 };  // length of array for save()
+
+	static const int N = 624;       // length of state vector
+	static const int SAVE = N + 1;  // length of array for save()
 
 protected:
 	enum { M = 397 };  // period parameter
@@ -229,9 +229,9 @@ inline void MTRand::seed( uint32 *const bigSeed, const uint32 seedLength )
 	// in each element are discarded.
 	// Just call seed() if you want to get array from /dev/urandom
 	initialize(19650218UL);
-	register int i = 1;
+	register unsigned i = 1;
 	register uint32 j = 0;
-	register int k = ( N > seedLength ? N : seedLength );
+	register int k = ( (uint32)N > seedLength ? N : seedLength );
 	for( ; k; --k )
 	{
 		state[i] =
@@ -239,7 +239,7 @@ inline void MTRand::seed( uint32 *const bigSeed, const uint32 seedLength )
 		state[i] += ( bigSeed[j] & 0xffffffffUL ) + j;
 		state[i] &= 0xffffffffUL;
 		++i;  ++j;
-		if( i >= N ) { state[0] = state[N-1];  i = 1; }
+		if( i >= (unsigned)N ) { state[0] = state[N-1];  i = 1; }
 		if( j >= seedLength ) j = 0;
 	}
 	for( k = N - 1; k; --k )
@@ -249,7 +249,7 @@ inline void MTRand::seed( uint32 *const bigSeed, const uint32 seedLength )
 		state[i] -= i;
 		state[i] &= 0xffffffffUL;
 		++i;
-		if( i >= N ) { state[0] = state[N-1];  i = 1; }
+		if( i >= (unsigned)N ) { state[0] = state[N-1];  i = 1; }
 	}
 	state[0] = 0x80000000UL;  // MSB is 1, assuring non-zero initial array
 	reload();
@@ -288,9 +288,9 @@ inline void MTRand::initialize( const uint32 seed )
 	// only MSBs of the state array.  Modified 9 Jan 2002 by Makoto Matsumoto.
 	register uint32 *s = state;
 	register uint32 *r = state;
-	register int i = 1;
+	register unsigned i = 1;
 	*s++ = seed & 0xffffffffUL;
-	for( ; i < N; ++i )
+	for( ; i < (unsigned)N; ++i )
 	{
 		*s++ = ( 1812433253UL * ( *r ^ (*r >> 30) ) + i ) & 0xffffffffUL;
 		r++;
