@@ -676,7 +676,7 @@ bool Subsumer::subsume0AndSubsume1()
             }
 
             remClTouched.push(*it);
-            it->clause->unsetStrenghtened();
+            it->clause->unsetChanged();
             if (doSubs1Next) it->clause->unsetChanged();
         }
         //std::cout << "s0.nElems(): " << s0.nElems() << std::endl;
@@ -731,7 +731,7 @@ ClauseSimp Subsumer::linkInClause(Clause& cl)
             ol_seenNeg[(~cl[i]).toInt()] = 0;
         }
     }
-    if (cl.getStrenghtened() || cl.getChanged())
+    if (cl.getChanged())
         cl_touched.add(c);
 
     return c;

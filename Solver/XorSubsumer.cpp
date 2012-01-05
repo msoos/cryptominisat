@@ -170,7 +170,7 @@ void XorSubsumer::addBackToSolver()
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i].clause != NULL) {
             solver.xorclauses.push(clauses[i].clause);
-            clauses[i].clause->unsetStrenghtened();
+            clauses[i].clause->unsetChanged();
         }
     }
     for (Var var = 0; var < solver.nVars(); var++) {

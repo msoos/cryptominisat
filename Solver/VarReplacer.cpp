@@ -226,7 +226,9 @@ bool VarReplacer::handleUpdatedClause(XorClause& c, const Var origVar1, const Va
         else c.invert(solver.assigns[c[i].var()].getBool()); //modify xorEqualFalse instead of adding
     }
     c.shrink(i - j);
-    c.setStrenghtened();
+
+    //Even if i==j, the clause *has* changed
+    c.setChanged();
 
     #ifdef VERBOSE_DEBUG
     cout << "xor-clause after replacing: ";

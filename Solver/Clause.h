@@ -53,7 +53,6 @@ struct Clause
 protected:
 
     uint32_t isLearnt:1; ///<Is the clause a learnt clause?
-    uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
     uint32_t changed:1; ///<Var inside clause has been changed
     /**
     @brief Is the XOR equal to 1 or 0?
@@ -110,7 +109,6 @@ public:
 
     void setChanged()
     {
-        setStrenghtened();
         changed = 1;
     }
 
@@ -123,7 +121,8 @@ public:
     {
         assert(i <= size());
         mySize -= i;
-        if (i > 0) setStrenghtened();
+        if (i > 0)
+            setChanged();
     }
 
     void pop()
@@ -154,22 +153,6 @@ public:
     const float& getMiniSatAct() const
     {
         return miniSatAct;
-    }
-
-    bool getStrenghtened() const
-    {
-        return strenghtened;
-    }
-
-    void setStrenghtened()
-    {
-        strenghtened = true;
-        calcAbstractionClause();
-    }
-
-    void unsetStrenghtened()
-    {
-        strenghtened = false;
     }
 
     Lit& operator [] (const uint32_t i)
@@ -209,7 +192,7 @@ public:
     inline void strengthen(const Lit p)
     {
         remove(*this, p);
-        setStrenghtened();
+        setChanged();
     }
 
     void calcAbstractionClause()
