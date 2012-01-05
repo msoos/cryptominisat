@@ -28,7 +28,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra)
 #find_package(Perftools)
 
-add_definitions(-DVERSION="2.9.1")
+add_definitions(-DVERSION="2.9.2")
 add_definitions(-DUSE_GAUSS)
 
 add_subdirectory(Solver)
