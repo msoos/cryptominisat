@@ -20,10 +20,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "OnlyNonLearntBins.h"
 #include "UselessBinRemover.h"
 #include "DataSync.h"
-
-#ifdef _MSC_VER
-#define __builtin_prefetch
-#endif //_MSC_VER
+#include "constants.h"
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
