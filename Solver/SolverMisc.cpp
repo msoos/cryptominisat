@@ -396,6 +396,8 @@ void Solver::printStatHeader() const
         << std::setw(space) << "Learnts"
         << std::setw(space) << "ClLits"
         << std::setw(space) << "LtLits"
+        << std::setw(space) << "LGlueHist"
+        << std::setw(space) << "SGlueHist"
         << std::endl;
     }
 }
