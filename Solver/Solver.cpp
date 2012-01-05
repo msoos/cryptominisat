@@ -1250,7 +1250,8 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
         if (clDoMinLRec) {
             if (moreRecurProp > 450
                 || (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
-                && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))) {
+                && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
+            ) {
                 for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
                     seen[(~(*it)).toInt()] = 0;
                 }
