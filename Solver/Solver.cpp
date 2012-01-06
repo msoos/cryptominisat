@@ -2479,7 +2479,12 @@ lbool Solver::simplifyProblem(const uint32_t numConfls)
     if (conf.doCacheOTFSSR) cleanCache();
     if (conf.doClausVivif && !clauseVivifier->vivifyClauses()) goto end;
 
-    if (conf.doCacheOTFSSRSet && order_heap.size() < 200000) conf.doCacheOTFSSR = true;
+    if (conf.doCacheOTFSSRSet && order_heap.size() < 200000) {
+        if (conf.doCacheOTFSSR == false && conf.verbosity > 0) {
+            std::cout << "c turning cache ON because the number of active variables is lower now" << std::endl;
+        }
+        conf.doCacheOTFSSR = true;
+    }
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
     if (conf.doSatELite && !subsumer->simplifyBySubsumption()) goto end;
@@ -2581,7 +2586,7 @@ void Solver::performStepsBeforeSolve()
     order_heap.filter(Solver::VarFilter(*this));
     if (order_heap.size() > 300000) {
         if (conf.verbosity > 0) {
-            std::cout << "c turning cache OFF because there are too many variables" << std::endl;
+            std::cout << "c turning cache OFF because there are too many active variables" << std::endl;
         }
         conf.doCacheOTFSSR = false;
     }
