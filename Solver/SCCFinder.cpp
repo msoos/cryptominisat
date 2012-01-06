@@ -132,6 +132,8 @@ void SCCFinder::tarjan(const uint32_t vertex)
                                             ^ Lit::toLit(tmp[i]).sign()
                                             ^ true;
                 if (solver.value(lits[0]) == l_Undef && solver.value(lits[1]) == l_Undef) {
+                    //Cannot add to watchlists, because we are going THROUGH the watchlists (in a higher frame)
+                    //so it might end up kicking the chair under ourselves
                     solver.varReplacer->replace(lits, xorEqualsFalse, true, false);
                 }
             }

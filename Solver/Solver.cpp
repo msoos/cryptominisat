@@ -1224,10 +1224,10 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
     if (conf.doCacheOTFSSR && conf.doMinimLMoreRecur) {
         switch(lastSelectedRestartType) {
             case dynamic_restart :
-                clDoMinLRec |= glue < 0.65*glueHistory.getAvgAllDouble();
+                clDoMinLRec |= glue < 0.6*glueHistory.getAvgAllDouble();
                 //NOTE: No "break;" here on purpose
             case static_restart :
-                clDoMinLRec |= cl.size() < 0.65*conflSizeHist.getAvgDouble();
+                clDoMinLRec |= cl.size() < 0.6*conflSizeHist.getAvgDouble();
                 break;
             default :
                 assert(false);
@@ -2477,7 +2477,9 @@ lbool Solver::simplifyProblem(const uint32_t numConfls)
         if (!both.tryBoth()) goto end;
     }
     if (conf.doCacheOTFSSR) cleanCache();
-    if (order_heap.size() < 70000) conf.doCacheOTFSSR = true;
+    if (conf.doClausVivif && !clauseVivifier->vivifyClauses()) goto end;
+
+    if (conf.doCacheOTFSSRSet && order_heap.size() < 200000) conf.doCacheOTFSSR = true;
     if (conf.doFailedLit && !failedLitSearcher->search()) goto end;
 
     if (conf.doSatELite && !subsumer->simplifyBySubsumption()) goto end;
@@ -2576,15 +2578,21 @@ void Solver::performStepsBeforeSolve()
     printRestartStat();
     if (conf.doReplace && !varReplacer->performReplace()) return;
 
-    if (conf.doClausVivif && !conf.libraryUsage
-        && !clauseVivifier->vivifyClauses()) return;
+    order_heap.filter(Solver::VarFilter(*this));
+    if (order_heap.size() > 300000) {
+        if (conf.verbosity > 0) {
+            std::cout << "c turning cache OFF because there are too many variables" << std::endl;
+        }
+        conf.doCacheOTFSSR = false;
+    }
 
-    if (order_heap.size() > 70000) conf.doCacheOTFSSR = false;
     bool saveDoHyperBin = conf.doHyperBinRes;
     conf.doHyperBinRes = false;
     clauseAllocator.consolidate(this, true);
     if (conf.doFailedLit && !failedLitSearcher->search()) return;
     conf.doHyperBinRes = saveDoHyperBin;
+    if (conf.doClausVivif && !conf.libraryUsage
+        && !clauseVivifier->vivifyClauses()) return;
 
     #ifdef VERBOSE_DEBUG
     printAllClauses();

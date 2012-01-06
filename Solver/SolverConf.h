@@ -72,6 +72,7 @@ class SolverConf
         #endif //ENABLE_UNWIND_GLUE
         bool      doPrintAvgBranch;
         bool      doCacheOTFSSR;
+        bool      doCacheOTFSSRSet;
         bool      doExtendedSCC;
         bool      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
         bool      doBXor;

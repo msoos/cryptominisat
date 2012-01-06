@@ -116,6 +116,7 @@ public:
 private:
 
     bool subsumeWithBinaries();
+    bool subsumeWithBin(vec<Clause*>& cls, bool learnt, uint32_t& subsumed, uint32_t& lit_rem);
 
     friend class ClauseCleaner;
     friend class ClauseAllocator;
@@ -311,15 +312,8 @@ private:
             return false;
         };
     };
-    bool subsWNonExitsBinsFullFull();
-    bool subsWNonExistBinsFull();
-    bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
     void subsume0BIN(const Lit lit, const vec<char>& lits, const uint32_t abst);
-    bool subsNonExistentFinish;
     uint32_t doneNum;
-    uint64_t extraTimeNonExist;
-    vec<Lit> toVisit;      ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (list)
-    vec<char> toVisitAll;  ///<Literals that we have visited from a given literal during subsumption w/ non-existent binaries (contains '1' for literal.toInt() that we visited)
 
     //Blocked clause elimination
     class VarOcc {

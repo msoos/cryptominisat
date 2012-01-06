@@ -549,6 +549,7 @@ void Main::parseCommandLine()
         } else if ((value = hasPrefix(argv[i], "--norecotfssr"))) {
             conf.doMinimLMoreRecur = false;
         } else if ((value = hasPrefix(argv[i], "--nocacheotfssr"))) {
+            conf.doCacheOTFSSRSet = false;
             conf.doCacheOTFSSR = false;
         } else if ((value = hasPrefix(argv[i], "--nootfsubsume"))) {
             conf.doOTFSubsume = false;

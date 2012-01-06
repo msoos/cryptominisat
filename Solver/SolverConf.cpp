@@ -68,6 +68,7 @@ SolverConf::SolverConf() :
         #endif //ENABLE_UNWIND_GLUE
         , doPrintAvgBranch (false)
         , doCacheOTFSSR    (true)
+        , doCacheOTFSSRSet (true)
         , doExtendedSCC    (true)
         , doCalcReach      (true)
         , doBXor           (true)

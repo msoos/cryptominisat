@@ -157,7 +157,7 @@ bool FailedLitSearcher::search()
     assert(solver.decisionLevel() == 0);
     if (solver.nVars() == 0) return solver.ok;
 
-    uint64_t numProps = 100 * 1000000;
+    uint64_t numProps = 150 * 1000000;
     uint64_t numPropsDifferent = (double)numProps*2.0;
 
     solver.testAllClauseAttach();
@@ -627,7 +627,17 @@ void FailedLitSearcher::hyperBinResolution(const Lit lit)
         if (!needToVisit[l->var()]) continue;
         if (!solver.binPropData[l->var()].hasChildren) continue;
         fillImplies(*l);
-        addMyImpliesSetAsBins(*l, difference);
+        //addMyImpliesSetAsBins(*l, difference);
+        for (const Var *var = myImpliesSet.getData(), *end2 = myImpliesSet.getDataEnd(); var != end2; var++) {
+            /*Lit otherLit = Lit(*var, !propValue[*var]);
+            std::cout << "adding Bin:" << (~*l) << " , " << otherLit << std::endl;
+            std::cout << PropByFull(solver.reason[otherLit.var()], solver.failBinLit, solver.clauseAllocator) << std::endl;*/
+
+            addBin(~*l, Lit(*var, !propValue[*var]));
+            unPropagatedBin.clearBit(*var);
+            difference--;
+        }
+
 
         assert(difference >= 0);
         myImpliesSet.clear();
@@ -671,7 +681,7 @@ void FailedLitSearcher::fillImplies(const Lit lit)
     solver.cancelUntilLight();
 }
 
-void FailedLitSearcher::addMyImpliesSetAsBins(Lit lit, int32_t& difference)
+/*void FailedLitSearcher::addMyImpliesSetAsBins(Lit lit, int32_t& difference)
 {
     if (myImpliesSet.size() == 0) return;
     if (myImpliesSet.size() == 1) {
@@ -731,7 +741,7 @@ void FailedLitSearcher::addMyImpliesSetAsBins(Lit lit, int32_t& difference)
     }
     assert(litsAddedEach.empty());
     solver.propagations = backupProps;
-}
+}*/
 
 
 /**

@@ -53,7 +53,7 @@ bool ClauseVivifier::vivifyClauses()
 
     if (solver.ok && solver.conf.doCacheOTFSSR) {
         if (!vivifyClauses2(solver.clauses)) return false;
-        if (/*solver.lastSelectedRestartType == static_restart &&*/ !vivifyClauses2(solver.learnts)) return false;
+        if (!vivifyClauses2(solver.learnts)) return false;
     }
 
     bool failed;
@@ -202,16 +202,14 @@ bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
     uint32_t litsRem = 0;
     uint32_t clShrinked = 0;
     uint64_t countTime = 0;
-    uint64_t maxCountTime = 500000000;
+    /*uint64_t maxCountTime = 500000000;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxCountTime *= 2;
-    if (numCalls >= 5) maxCountTime*= 3;
+    if (numCalls >= 5) maxCountTime*= 3;*/
     uint32_t clTried = 0;
     vec<Lit> lits;
     bool needToFinish = false;
     double myTime = cpuTime();
-
-    if (numCalls < 3) return true;
 
     Clause** i = clauses.getData();
     Clause** j = i;
@@ -220,7 +218,7 @@ bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
             *j++ = *i;
             continue;
         }
-        if (countTime > maxCountTime) needToFinish = true;
+        //if (countTime > maxCountTime) needToFinish = true;
 
         Clause& cl = **i;
         countTime += cl.size()*2;
