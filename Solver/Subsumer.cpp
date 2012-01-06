@@ -825,6 +825,8 @@ resolution with them on the normal clauses using \function subsume0BIN().
 */
 bool Subsumer::subsumeWithBinaries()
 {
+    assert(solver.ok);
+
     uint32_t subsumed = 0;
     uint32_t lit_rem = 0;
     if (!subsumeWithBin(solver.clauses, false, subsumed, lit_rem))
@@ -846,7 +848,7 @@ bool Subsumer::subsumeWithBin(
     , uint32_t& subsumed_num
     , uint32_t& lit_rem
 ) {
-    //Temporaries, relly
+    //Temporaries
     vector<Lit> lits_set;
     vector<char> seen_tmp2;
     seen_tmp2.resize(solver.nVars()*2);
@@ -869,8 +871,8 @@ bool Subsumer::subsumeWithBin(
 
         bool subsumed = false;
         for(size_t i = 0; i < c.size() && !subsumed; i++) {
-            vec<Watched>& ws = solver.watches[(~c[i]).toInt()];
-            for(vec<Watched>::iterator it = ws.getData(), end = ws.getDataEnd(); it != end && !subsumed; it++) {
+            const vec<Watched>& ws = solver.watches[(~c[i]).toInt()];
+            for(vec<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end && !subsumed; it++) {
                 if (!it->isBinary())
                     continue;
 
@@ -892,10 +894,20 @@ bool Subsumer::subsumeWithBin(
 
         if (subsumed) {
             subsumed_num++;
+#ifdef VERBOSE_DEBUG
+            std::cout << "Removing: ";
+            c.plainPrint();
+#endif
             solver.removeClause(c);
         } else if (to_remove.size() > 0) {
             lit_rem += to_remove.size();
-            solver.removeClause(c);
+            solver.detachClause(c);
+
+#ifdef VERBOSE_DEBUG
+            std::cout << "Detached clause: (ptr: " << (&c) << " ) ";
+            c.plainPrint();;
+#endif
+
             vec<Lit> lits;
             for(size_t i = 0; i < c.size(); i++) {
                 if (seen_tmp2[c[i].toInt()])
@@ -903,13 +915,14 @@ bool Subsumer::subsumeWithBin(
             }
 
             Clause *c2 = solver.addClauseInt(lits, c.learnt(), c.getGlue(), c.getMiniSatAct());
+            solver.clauseAllocator.clauseFree(&c);
             if (c2 != NULL) {
-                solver.attachClause(*c2);
                 *cit++ = c2;
             }
 
-            if (!solver.ok)
+            if (!solver.ok) {
                 break;
+            }
         } else {
             *cit++ = *cit2;
         }
