@@ -833,8 +833,10 @@ bool Subsumer::subsumeWithBinaries()
     if (!subsumeWithBin(solver.learnts, true, subsumed, lit_rem))
         return false;
 
-    std::cout << "c Subs-w-b: " << subsumed
-    << " lit-rem-w-b: " << lit_rem << std::endl;
+    if (solver.conf.verbosity > 0) {
+        std::cout << "c Subs-w-b: " << subsumed
+        << " lit-rem-w-b: " << lit_rem << std::endl;
+    }
     return true;
 }
 
