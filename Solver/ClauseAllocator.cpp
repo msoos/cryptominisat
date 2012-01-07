@@ -106,9 +106,8 @@ Clause* ClauseAllocator::Clause_new(Clause& c)
     assert(c.size() > 2);
     void* mem = allocEnough(c.size());
     memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
-    Clause& c2 = *(Clause*)mem;
 
-    return &c2;
+    return (Clause*)mem;
 }
 
 /**
