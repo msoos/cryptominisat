@@ -35,22 +35,6 @@ def unique_fuzz_file(file_name_begin):
 
 class Tester:
 
-    sumTime = 0.0
-    sumProp = 0
-    verbose = False
-    gaussUntil = 0
-    testDir = "../tests/"
-    testDirNewVar = "../tests/newVar/"
-    cryptominisat = "../build/cryptominisat"
-    checkDirDifferent = True
-    differentDirForCheck = \
-        "/home/soos/Development/sat_solvers/satcomp09/"
-    ignoreNoSolution = False
-    arminFuzzer = False
-    extraOptions = ""
-    needDebugLib = True
-    numThreads = 4
-
     def __init__(self):
         self.sumTime = 0.0
         self.sumProp = 0
@@ -524,6 +508,11 @@ class Tester:
                 exit()
             else:
                 print "You gave testdir (where solutions are):", self.testDir
+            
+            if self.checkDirDifferent == False:
+                print "You must give checkDirDifferent when testing solutions"
+                exit()
+
             dirList = os.listdir(self.testDir)
             for fname in dirList:
                 myMatch = ""
@@ -535,9 +524,9 @@ class Tester:
                     myDir = self.testDir
                     if self.checkDirDifferent:
                         fname = fname[:len(fname) - 4]  #remove trailing .out
-                        myDir = self.differentDirForCheck
-                        self.check(fname=self.testDir + fname,
-                                   fnameCheck=myDir + fname, needSolve=False)
+                        self.check(fname=self.testDir + fname
+                                   , fnameCheck=self.differentDirForCheck + fname
+                                   , needSolve=False)
             exit()
 
         if fname == None:
