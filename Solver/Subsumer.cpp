@@ -1086,8 +1086,6 @@ bool Subsumer::simplifyBySubsumption()
         if (solver.decision_var[var] && solver.assigns[var] == l_Undef) touchedVars.touch(var);
     }
 
-    //if (solver.xorclauses.size() < 30000 && solver.clauses.size() < MAX_CLAUSENUM_XORFIND/10) addAllXorAsNorm();
-
     if (solver.conf.doReplace && !solver.varReplacer->performReplace(true))
         return false;
     if (solver.conf.doSubsWBins && !subsumeWithBinaries())
