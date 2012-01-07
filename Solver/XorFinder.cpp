@@ -351,31 +351,35 @@ void XorFinder::addXorAsNormal3(XorClause& c)
     assert(c.size() == 3);
     Clause *tmp;
     vec<Var> vars;
-    vec<Lit> vars2(c.size());
     const bool inverted = c.xorEqualFalse();
 
     for (uint32_t i = 0; i < c.size(); i++) {
         vars.push(c[i].var());
     }
 
+    vec<Lit> vars2;
+    vars2.growTo(3);
     vars2[0] = Lit(vars[0], false ^ inverted);
     vars2[1] = Lit(vars[1], false ^ inverted);
     vars2[2] = Lit(vars[2], false ^ inverted);
     tmp = solver.addClauseInt(vars2);
     if (tmp) solver.clauses.push(tmp);
 
+    vars2.growTo(3);
     vars2[0] = Lit(vars[0], true ^ inverted);
     vars2[1] = Lit(vars[1], true ^ inverted);
     vars2[2] = Lit(vars[2], false ^ inverted);
     tmp = solver.addClauseInt(vars2);
     if (tmp) solver.clauses.push(tmp);
 
+    vars2.growTo(3);
     vars2[0] = Lit(vars[0], true ^ inverted);
     vars2[1] = Lit(vars[1], false ^ inverted);
     vars2[2] = Lit(vars[2], true ^ inverted);
     tmp = solver.addClauseInt(vars2);
     if (tmp) solver.clauses.push(tmp);
 
+    vars2.growTo(3);
     vars2[0] = Lit(vars[0], false ^ inverted);
     vars2[1] = Lit(vars[1], true ^ inverted);
     vars2[2] = Lit(vars[2], true ^ inverted);
