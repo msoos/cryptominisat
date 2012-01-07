@@ -329,6 +329,14 @@ Clause* Solver::addClauseInt(T& ps
                             , const bool inOriginalInput)
 {
     assert(ok);
+#ifdef VERBOSE_DEBUG
+    std::cout << "Adding new clause: " << std::endl;
+    for(size_t i = 0; i< ps.size(); i++) {
+        printLit(ps[i]);
+        std::cout << " ";
+    }
+    std::cout << std::endl;
+#endif //VERBOSE_DEBUG
 
     std::sort(ps.getData(), ps.getDataEnd());
     Lit p = lit_Undef;
