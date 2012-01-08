@@ -823,36 +823,47 @@ clauses on non-binary clauses. Then, it generates non-existing binary clauses
 (that could exist, but would be redundant), and performs self-subsuming
 resolution with them on the normal clauses using \function subsume0BIN().
 */
-bool Subsumer::subsumeWithBinaries()
+bool Subsumer::subsumeWithBinTri()
 {
     assert(solver.ok);
 
-    uint32_t subsumed = 0;
-    uint32_t lit_rem = 0;
-    if (!subsumeWithBin(solver.clauses, false, subsumed, lit_rem))
+    double mytime = cpuTime();
+    uint32_t subsumed_bin = 0;
+    uint32_t subsumed_tri = 0;
+    uint32_t lit_rem_bin = 0;
+    uint32_t lit_rem_tri = 0;
+    if (!subsumeWithBinTri(solver.clauses, false, subsumed_bin, subsumed_tri, lit_rem_bin, lit_rem_tri))
         return false;
 
-    if (!subsumeWithBin(solver.learnts, true, subsumed, lit_rem))
+    if (!subsumeWithBinTri(solver.learnts, true, subsumed_bin, subsumed_tri, lit_rem_bin, lit_rem_tri))
         return false;
 
     if (solver.conf.verbosity > 0) {
-        std::cout << "c Subs-w-b: " << subsumed
-        << " lit-rem-w-b: " << lit_rem << std::endl;
+        std::cout
+        << "c subs-w-b: " << subsumed_bin
+        << " subs-w-t: " << subsumed_tri
+        << " lit-rem-w-b: " << lit_rem_bin
+        << " lit-rem-w-t: " << lit_rem_tri
+        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - mytime)
+        << std::endl;
     }
     return true;
 }
 
-bool Subsumer::subsumeWithBin(
+bool Subsumer::subsumeWithBinTri(
     vec<Clause*>& cls
     , bool learnt
-    , uint32_t& subsumed_num
-    , uint32_t& lit_rem
+    , uint32_t& subsumed_bin_num
+    , uint32_t& subsumed_tri_num
+    , uint32_t& lit_rem_bin
+    , uint32_t& lit_rem_tri
 ) {
     //Temporaries
     vector<Lit> lits_set;
     vector<char> seen_tmp2;
     seen_tmp2.resize(solver.nVars()*2);
-    vector<Lit> to_remove;
+    uint32_t to_remove_bin = 0;
+    uint32_t to_remove_tri = 0;
 
     Clause** cit = cls.getData();
     Clause** cit2 =  cit;
@@ -873,34 +884,65 @@ bool Subsumer::subsumeWithBin(
         for(size_t i = 0; i < c.size() && !subsumed; i++) {
             const vec<Watched>& ws = solver.watches[(~c[i]).toInt()];
             for(vec<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end && !subsumed; it++) {
-                if (!it->isBinary())
-                    continue;
-
-                if (seen_tmp[it->getOtherLit().toInt()])
+                //Handle tri clause
+                if (it->isTriClause() && c.size() > 3)
                 {
-                    if (!learnt && it->getLearnt())
-                        makeNonLearntBin(c[i], it->getOtherLit(), it->getLearnt());
-                    subsumed = true;
+                    if (learnt //we cannot decide if TRI is learnt or not
+                        && seen_tmp[it->getOtherLit().toInt()]
+                        && seen_tmp[it->getOtherLit2().toInt()]
+                    ) {
+                        subsumed_tri_num++;
+                        subsumed = true;
+                    }
+
+                    if (seen_tmp2[c[i].toInt()]) { //we may have removed it already
+                        //one way
+                        if (seen_tmp2[(~it->getOtherLit()).toInt()]
+                            && seen_tmp2[(it->getOtherLit2()).toInt()]
+                        ) {
+                            to_remove_tri++;
+                            seen_tmp2[(~it->getOtherLit()).toInt()] = 0;
+                        }
+
+                        //other way
+                        if (seen_tmp2[(it->getOtherLit()).toInt()]
+                            && seen_tmp2[(~it->getOtherLit2()).toInt()]
+                        ) {
+                            to_remove_tri++;
+                            seen_tmp2[(~it->getOtherLit2()).toInt()] = 0;
+                        }
+                    }
                 }
 
-                if (seen_tmp2[c[i].toInt()] //we may have removed it already
-                    && seen_tmp2[(~it->getOtherLit()).toInt()]
-                ) {
-                    to_remove.push_back((~it->getOtherLit()));
-                    seen_tmp2[(~it->getOtherLit()).toInt()] = 0;
+                //Handle Binary clause
+                if (it->isBinary()) {
+                    if (seen_tmp[it->getOtherLit().toInt()])
+                    {
+                        if (!learnt && it->getLearnt())
+                            makeNonLearntBin(c[i], it->getOtherLit(), it->getLearnt());
+                        subsumed_bin_num++;
+                        subsumed = true;
+                    }
+
+                    if (seen_tmp2[c[i].toInt()] //we may have removed it already
+                        && seen_tmp2[(~it->getOtherLit()).toInt()]
+                    ) {
+                        to_remove_bin++;
+                        seen_tmp2[(~it->getOtherLit()).toInt()] = 0;
+                    }
                 }
             }
         }
 
         if (subsumed) {
-            subsumed_num++;
 #ifdef VERBOSE_DEBUG
             std::cout << "Removing: ";
             c.plainPrint();
 #endif
             solver.removeClause(c);
-        } else if (to_remove.size() > 0) {
-            lit_rem += to_remove.size();
+        } else if (to_remove_bin > 0 || to_remove_tri > 0) {
+            lit_rem_bin += to_remove_bin;
+            lit_rem_tri += to_remove_tri;
             solver.detachClause(c);
 
 #ifdef VERBOSE_DEBUG
@@ -932,7 +974,8 @@ bool Subsumer::subsumeWithBin(
             seen_tmp2[it->toInt()] = 0;
         }
         lits_set.clear();
-        to_remove.clear();
+        to_remove_bin = 0;
+        to_remove_tri = 0;
     }
     cls.shrink(cit2-cit);
 
@@ -1088,7 +1131,7 @@ bool Subsumer::simplifyBySubsumption()
 
     if (solver.conf.doReplace && !solver.varReplacer->performReplace(true))
         return false;
-    if (solver.conf.doSubsWBins && !subsumeWithBinaries())
+    if (solver.conf.doSubsWBins && !subsumeWithBinTri())
         return false;
 
     fillCannotEliminate();

@@ -115,8 +115,15 @@ public:
 
 private:
 
-    bool subsumeWithBinaries();
-    bool subsumeWithBin(vec<Clause*>& cls, bool learnt, uint32_t& subsumed, uint32_t& lit_rem);
+    bool subsumeWithBinTri();
+    bool subsumeWithBinTri(
+        vec<Clause*>& cls
+        , bool learnt
+        , uint32_t& subsumed_bin_num
+        , uint32_t& subsumed_tri_num
+        , uint32_t& lit_rem_bin
+        , uint32_t& lit_rem_tri
+    );
 
     friend class ClauseCleaner;
     friend class ClauseAllocator;
