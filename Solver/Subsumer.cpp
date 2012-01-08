@@ -1240,11 +1240,11 @@ from the beginning.
 */
 void Subsumer::setLimits()
 {
-    numMaxSubsume0 = 430*1000*1000;
+    numMaxSubsume0 = 330*1000*1000;
     numMaxSubsume1 = 80*1000*1000;
     numMaxSubsume0 *= 6;
 
-    numMaxElim = 900*1000*1000;
+    numMaxElim = 500*1000*1000;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1275,7 +1275,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 4;
     }
 
-    numMaxElimVars = (uint64_t) (((double)solver.order_heap.size()*0.3) * (double)numCalls);
+    numMaxElimVars = (uint64_t) (((double)solver.order_heap.size()*0.3) * sqrt((double)numCalls));
 
     if (solver.order_heap.size() > 200000)
         numMaxBlockVars = (uint32_t)((double)solver.order_heap.size() / 3.5 * (0.8+(double)(numCalls)/4.0));
@@ -1284,6 +1284,11 @@ void Subsumer::setLimits()
 
     if (!solver.conf.doSubsume1)
         numMaxSubsume1 = 0;
+
+    if (numCalls == 1) {
+        numMaxSubsume1 = 10*1000*1000;
+    }
+
 
     numCalls++;
 
