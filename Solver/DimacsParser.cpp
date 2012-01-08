@@ -385,6 +385,10 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             parseString(in, str);
             parseComments(in, str);
             break;
+        case '\n':
+            //Skipping empty line, even though empty lines are kind of out-of-spec
+            ++in;
+            break;
         default:
             readFullClause(in);
             break;
