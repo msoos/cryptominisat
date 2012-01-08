@@ -39,7 +39,7 @@ DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _de
 */
 void DimacsParser::skipWhitespace(StreamBuffer& in)
 {
-    while ((*in >= 9 && *in <= 13) || *in == 32)
+    while ((*in >= 9 && *in <= 13 && *in != 10) || *in == 32)
         ++in;
 }
 
@@ -434,6 +434,7 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             return;
         case 'p':
             printHeader(in);
+            skipLine(in);
             break;
         case 'c':
             ++in;
