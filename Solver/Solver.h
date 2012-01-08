@@ -837,11 +837,13 @@ inline void Solver::uncheckedEnqueue(const Lit p, const PropBy& from)
     #ifndef VERBOSE_DEBUG
     if (decisionLevel() == 0)
     #endif //VERBOSE_DEBUG
+
     std::cout << "uncheckedEnqueue var " << p.var()+1
     << " to val " << !p.sign()
     << " level: " << decisionLevel()
     << " sublevel: " << trail.size()
     << " by: " << from << std::endl;
+
     if (from.isClause() && !from.isNULL()) {
         std::cout << "by clause: " << *clauseAllocator.getPointer(from.getClause()) << std::endl;
     }
