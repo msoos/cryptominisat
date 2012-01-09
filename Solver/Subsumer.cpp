@@ -1245,6 +1245,7 @@ void Subsumer::setLimits()
     numMaxSubsume0 *= 6;
 
     numMaxElim = 500*1000*1000;
+    numMaxElim *= 2;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1581,10 +1582,10 @@ bool Subsumer::maybeEliminate(const Var var)
     if (posSize >= 10 && negSize >= 10) return false;
 
     // Heuristic CUT OFF2:
-    if ((posSize >= 4 && negSize >= 4 && before_literals > 300)
+    if ((posSize >= 3 && negSize >= 3 && before_literals > 300)
         && clauses.size() > 700000)
         return false;
-    if ((posSize >= 6 && negSize >= 6 && before_literals > 400)
+    if ((posSize >= 5 && negSize >= 5 && before_literals > 400)
         && clauses.size() <= 700000 && clauses.size() > 100000)
         return false;
     if ((posSize >= 8 && negSize >= 8 && before_literals > 700)
@@ -1606,7 +1607,7 @@ bool Subsumer::maybeEliminate(const Var var)
         const bool ok = merge(posAll[i], negAll[j], lit, ~lit, dummy);
         if (ok){
             after_clauses++;
-            if (after_clauses > (before_clauses+ ((bool)(solver.order_heap.size() < 25000)) ))
+            if (after_clauses > before_clauses)
                 return false;
         }
     }
