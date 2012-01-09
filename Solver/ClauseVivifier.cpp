@@ -341,8 +341,11 @@ const bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
             Clause* c2 = control->addClauseInt(lits, cl.learnt(), cl.getGlue());
             control->clAllocator->clauseFree(&cl);
 
-            if (c2 != NULL) *j++ = c2;
-            if (!control->ok) needToFinish = true;
+            if (c2 != NULL)
+                *j++ = c2;
+
+            if (!control->ok)
+                needToFinish = true;
         }
     }
 
