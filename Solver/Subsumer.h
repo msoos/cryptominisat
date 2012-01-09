@@ -260,6 +260,14 @@ private:
     bool cleanClause(vec<Lit>& ps) const;
     void handleSize1Clause(const Lit lit);
 
+    bool subsWNonExitsBinsFullFull();
+    bool subsWNonExistBinsFull();
+    bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
+    uint64_t extraTimeNonExist;
+    bool subsNonExistentFinish;
+    vec<Lit> toVisit;
+    vec<char> toVisitAll;
+
     //Variable elimination
     /**
     @brief Struct used to compare variable elimination difficulties

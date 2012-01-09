@@ -1167,6 +1167,7 @@ bool Subsumer::simplifyBySubsumption()
     }
 
     numMaxSubsume1 = 2*1000*1000*1000;
+    //if (solver.conf.doSubsWNonExistBins && !subsWNonExitsBinsFullFull()) return false;
     if (!handleClBinTouched()) return false;
 
     if (solver.conf.doReplace && solver.conf.doRemUselessBins) {
@@ -1305,6 +1306,173 @@ void Subsumer::setLimits()
     //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
     //numMaxBlockVars = std::numeric_limits<uint32_t>::max();
 }
+
+/*bool Subsumer::subsWNonExitsBinsFullFull()
+{
+    double myTime = cpuTime();
+    clauses_subsumed = 0;
+    literals_removed = 0;
+    for (vec<Watched> *it = solver.watches.getData(), *end = solver.watches.getDataEnd(); it != end; it++) {
+        if (it->size() < 2) continue;
+        std::sort(it->getData(), it->getDataEnd(), BinSorter2());
+    }
+    uint32_t oldTrailSize = solver.trail.size();
+    if (!subsWNonExistBinsFull()) return false;
+    if (solver.conf.verbosity  >= 1) {
+        std::cout << "c Subs w/ non-existent bins: " << std::setw(6) << clauses_subsumed
+        << " l-rem: " << std::setw(6) << literals_removed
+        << " v-fix: " << std::setw(5) << solver.trail.size() - oldTrailSize
+        << " done: " << std::setw(6) << doneNum
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        << std::endl;
+    }
+    totalTime += cpuTime() - myTime;
+    return true;
+}
+
+#define MAX_BINARY_PROP 60000000
+
+bool Subsumer::subsWNonExistBinsFull()
+{
+    uint64_t oldProps = solver.propagations;
+    uint64_t maxProp = MAX_BINARY_PROP*7;
+    toVisitAll.clear();
+    toVisitAll.growTo(solver.nVars()*2, false);
+    extraTimeNonExist = 0;
+    OnlyNonLearntBins* onlyNonLearntBins = NULL;
+    if (solver.clauses_literals < 10*1000*1000) {
+        onlyNonLearntBins = new OnlyNonLearntBins(solver);
+        onlyNonLearntBins->fill();
+        solver.multiLevelProp = true;
+    }
+
+    doneNum = 0;
+    uint32_t startFrom = solver.mtrand.randInt(solver.order_heap.size());
+    for (uint32_t i = 0; i < solver.order_heap.size(); i++) {
+        Var var = solver.order_heap[(startFrom + i) % solver.order_heap.size()];
+        if (solver.propagations + extraTimeNonExist*150 > oldProps + maxProp) break;
+        if (solver.assigns[var] != l_Undef || !solver.decision_var[var]) continue;
+        doneNum++;
+        extraTimeNonExist += 5;
+
+        Lit lit(var, true);
+        if (onlyNonLearntBins != NULL && onlyNonLearntBins->getWatchSize(lit) == 0) goto next;
+        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
+            if (!solver.ok) return false;
+            solver.cancelUntilLight();
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = solver.propagate<false>().isNULL();
+            if (!solver.ok) return false;
+            continue;
+        }
+        extraTimeNonExist += 10;
+        next:
+
+        //in the meantime it could have got assigned
+        if (solver.assigns[var] != l_Undef) continue;
+        lit = ~lit;
+        if (onlyNonLearntBins != NULL && onlyNonLearntBins->getWatchSize(lit) == 0) continue;
+        if (!subsWNonExistBins(lit, onlyNonLearntBins)) {
+            if (!solver.ok) return false;
+            solver.cancelUntilLight();
+            solver.uncheckedEnqueue(~lit);
+            solver.ok = solver.propagate<false>().isNULL();
+            if (!solver.ok) return false;
+            continue;
+        }
+        extraTimeNonExist += 10;
+    }
+
+    if (onlyNonLearntBins) delete onlyNonLearntBins;
+
+    return true;
+}
+
+bool Subsumer::subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* onlyNonLearntBins)
+{
+    #ifdef VERBOSE_DEBUG
+    std::cout << "subsWNonExistBins called with lit " << lit << std::endl;
+    #endif //VERBOSE_DEBUG
+    toVisit.clear();
+    solver.newDecisionLevel();
+    solver.uncheckedEnqueueLight(lit);
+    bool failed;
+    if (onlyNonLearntBins == NULL)
+        failed = (!solver.propagateNonLearntBin().isNULL());
+    else
+        failed = !onlyNonLearntBins->propagate();
+    if (failed) return false;
+    uint32_t abst = 0;
+
+    assert(solver.decisionLevel() > 0);
+    for (int sublevel = solver.trail.size()-1; sublevel > (int)solver.trail_lim[0]; sublevel--) {
+        Lit x = solver.trail[sublevel];
+        toVisit.push(x);
+        abst |= 1 << (x.var() & 31);
+        toVisitAll[x.toInt()] = true;
+    }
+    solver.cancelUntilLight();
+    subsume0BIN(~lit, toVisitAll, abst);
+
+    for (uint32_t i = 0; i < toVisit.size(); i++)
+        toVisitAll[toVisit[i].toInt()] = false;
+
+    return solver.ok;
+}
+
+void Subsumer::subsume0BIN(const Lit lit1, const vec<char>& lits, const uint32_t abst)
+{
+    vec<ClauseSimp> subs;
+    vec<ClauseSimp> subs2;
+    vec<Lit> subs2Lit;
+
+    vec<ClauseSimp>& cs = occur[lit1.toInt()];
+    for (ClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
+        if (it+1 != end) __builtin_prefetch((it+1)->clause);
+        if (it->clause == NULL) continue;
+
+        Clause& c = *it->clause;
+        if ((c.getAbst() & abst) == 0) continue;
+        extraTimeNonExist += c.size()*2;
+        bool removed = false;
+        bool removedLit = false;
+        for (uint32_t i = 0; i < c.size(); i++) {
+            if (lits[c[i].toInt()]) {
+                subs.push(*it);
+                removed = true;
+                break;
+            }
+
+            if (!removedLit && lits[(~c[i]).toInt()]) {
+                subs2.push(*it);
+                subs2Lit.push(c[i]);
+                removedLit = true;
+            }
+        }
+
+        if (removed && removedLit) {
+            subs2.pop();
+            subs2Lit.pop();
+        }
+    }
+
+    for (uint32_t i = 0; i < subs.size(); i++){
+        unlinkClause(subs[i]);
+    }
+
+    for (uint32_t i = 0; i < subs2.size(); i++) {
+        strenghten(subs2[i], subs2Lit[i]);
+        if (!solver.ok) break;
+    }
+
+    #ifdef VERBOSE_DEBUG
+    if (!solver.ok) {
+        std::cout << "solver.ok is false when returning from subsume0BIN()" << std::endl;
+    }
+    #endif //VERBOSE_DEBUG
+}*/
+
+
 
 /**
 @brief Remove variables from var_elimed if it has been set
