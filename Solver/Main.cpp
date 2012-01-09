@@ -683,7 +683,7 @@ FILE* Main::openOutputFile()
 
 void Main::setDoublePrecision(const uint32_t verbosity)
 {
-    #if defined(__linux__)
+#if defined(_FPU_EXTENDED) && defined(_FPU_DOUBLE)
     fpu_control_t oldcw, newcw;
     _FPU_GETCW(oldcw);
     newcw = (oldcw & ~_FPU_EXTENDED) | _FPU_DOUBLE;
