@@ -7,14 +7,16 @@ Bugfixes:
   Martin Maurer
 * Cache cleaning is finally fixed
 * Disabling part-finding as it made us loose 3+ points at SAT Comp'11
-* Clauses after empty comments sometimes weren't parsed
+* Clauses after empty comments sometimes weren't parsed. Thanks to Remy Delmas
+  for noticing this
 * Solutions were sometimes incorrect when using --maxsolutions=X
-* Random variable picking was turned off after a short while
+* Random variable picking was turned off after a short while. Thanks to
+  Martin Maurer for noticing this
 * XOR-to-normal clause converting routine was buggy
 * Failed literal probing's hyper-binary resolution engine was taking too
-much time
+  much time
 * Performance regressions relative to branch that went into SatComp'11
-have been worked on
+  have been worked on
 * FPU check problem fixed thanks to Jerry James
 
 Improvements:
@@ -24,8 +26,7 @@ Improvements:
 * Time-limiting in subsumption+strengthening+var-elim was not sufficient
 * "strengthened" qualifier removed from Clause
 * Way better subsumption+strengthening with 2- and 3-long clauses.
-(backported from 3.x)
-* Cache cleaning (backported from 3.x)
+* Cache cleaning
 
 ver 2.9.1 26/05/2011
 * Subsumption is now in one go instead handling learnt&non-learnt in different
