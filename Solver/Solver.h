@@ -28,12 +28,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <stack>
 #include <stdexcept>
 
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
-
 //#define ANIMATE3D
 
 #include "PropBy.h"
@@ -48,15 +42,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "GaussianConfig.h"
 #include "ClauseAllocator.h"
 #include "SolverConf.h"
-
-#define release_assert(a) \
-    do { \
-        if (!(a)) {\
-            fprintf(stderr, "*** ASSERTION FAILURE in %s() [%s:%d]: %s\n", \
-            __FUNCTION__, __FILE__, __LINE__, #a); \
-            abort(); \
-        } \
-    } while (0)
 
 namespace CMSat {
 
