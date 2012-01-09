@@ -266,10 +266,10 @@ const bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
 
             //Setup
             const Lit lit = *l;
-            countTime += control->implCache[l->toInt()].lits.size();
 
             //Go through the watchlist
             const vec<Watched>& thisW = control->watches[(~lit).toInt()];
+            countTime += thisW.size();
             for(vec<Watched>::const_iterator wit = thisW.begin(), wend = thisW.end(); wit != wend; wit++) {
                 //Strengthening
                 if (wit->isBinary())
@@ -307,6 +307,7 @@ const bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
                 break;
 
             //Go through the cache
+            countTime += control->implCache[l->toInt()].lits.size();
             for (vector<LitExtra>::const_iterator it2 = control->implCache[lit.toInt()].lits.begin()
                 , end2 = control->implCache[lit.toInt()].lits.end(); it2 != end2; it2++
             ) {
