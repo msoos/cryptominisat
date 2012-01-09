@@ -226,7 +226,7 @@ const bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
     uint32_t clRemoved = 0;
     uint64_t countTime = 0;
     uint64_t maxCountTime = 500000000;
-    if (control->clausesLits + control->learntsLits < 500000)
+    if (control->clausesLits + control->learntsLits < 300000)
         maxCountTime *= 2;
     uint32_t clTried = 0;
     double myTime = cpuTime();
