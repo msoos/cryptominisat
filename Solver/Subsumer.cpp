@@ -559,9 +559,9 @@ bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
-    uint32_t clTouchedTodo = 10000;
+    uint32_t clTouchedTodo = 4000;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
-    if (addedClauseLits > 10000000) clTouchedTodo /= 2;
+    if (addedClauseLits > 10000000) clTouchedTodo /= 4;
 
     registerIteration(s0);
     registerIteration(s1);
@@ -571,7 +571,7 @@ bool Subsumer::subsume0AndSubsume1()
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c  cl_touched.nElems() = " << cl_touched.nElems() << std::endl;
     #endif
-    do {
+    while ((cl_touched.nElems() > 10) && numMaxSubsume0 > 0) {
         #ifdef VERBOSE_DEBUG
         std::cout << "c  -- subsume0AndSubsume1() round --" << std::endl;
         std::cout << "c  cl_touched.nElems() = " << cl_touched.nElems() << std::endl;
@@ -637,7 +637,8 @@ bool Subsumer::subsume0AndSubsume1()
         }
 
         if (!handleClBinTouched()) goto end;
-    } while ((cl_touched.nElems() > 10) && numMaxSubsume0 > 0);
+    }
+    cl_touched.clear();
     end:
 
     unregisterIteration(s1);
@@ -823,7 +824,7 @@ clauses on non-binary clauses. Then, it generates non-existing binary clauses
 (that could exist, but would be redundant), and performs self-subsuming
 resolution with them on the normal clauses using \function subsume0BIN().
 */
-bool Subsumer::subsumeWithBinTri()
+/*bool Subsumer::subsumeWithBinTri()
 {
     assert(solver.ok);
 
@@ -881,58 +882,7 @@ bool Subsumer::subsumeWithBinTri(
         }
 
         bool subsumed = false;
-        for(size_t i = 0; i < c.size() && !subsumed; i++) {
-            const vec<Watched>& ws = solver.watches[(~c[i]).toInt()];
-            for(vec<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end && !subsumed; it++) {
-                //Handle tri clause
-                if (it->isTriClause() && c.size() > 3)
-                {
-                    if (learnt //we cannot decide if TRI is learnt or not
-                        && seen_tmp[it->getOtherLit().toInt()]
-                        && seen_tmp[it->getOtherLit2().toInt()]
-                    ) {
-                        subsumed_tri_num++;
-                        subsumed = true;
-                    }
 
-                    if (seen_tmp2[c[i].toInt()]) { //we may have removed it already
-                        //one way
-                        if (seen_tmp2[(~it->getOtherLit()).toInt()]
-                            && seen_tmp2[(it->getOtherLit2()).toInt()]
-                        ) {
-                            to_remove_tri++;
-                            seen_tmp2[(~it->getOtherLit()).toInt()] = 0;
-                        }
-
-                        //other way
-                        if (seen_tmp2[(it->getOtherLit()).toInt()]
-                            && seen_tmp2[(~it->getOtherLit2()).toInt()]
-                        ) {
-                            to_remove_tri++;
-                            seen_tmp2[(~it->getOtherLit2()).toInt()] = 0;
-                        }
-                    }
-                }
-
-                //Handle Binary clause
-                if (it->isBinary()) {
-                    if (seen_tmp[it->getOtherLit().toInt()])
-                    {
-                        if (!learnt && it->getLearnt())
-                            makeNonLearntBin(c[i], it->getOtherLit(), it->getLearnt());
-                        subsumed_bin_num++;
-                        subsumed = true;
-                    }
-
-                    if (seen_tmp2[c[i].toInt()] //we may have removed it already
-                        && seen_tmp2[(~it->getOtherLit()).toInt()]
-                    ) {
-                        to_remove_bin++;
-                        seen_tmp2[(~it->getOtherLit()).toInt()] = 0;
-                    }
-                }
-            }
-        }
 
         if (subsumed) {
 #ifdef VERBOSE_DEBUG
@@ -980,16 +930,7 @@ bool Subsumer::subsumeWithBinTri(
     cls.shrink(cit2-cit);
 
     return solver.ok;
-}
-
-void Subsumer::makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt)
-{
-    assert(learnt == true);
-    findWatchedOfBin(solver.watches, lit1 ,lit2, learnt).setLearnt(false);
-    findWatchedOfBin(solver.watches, lit2 ,lit1, learnt).setLearnt(false);
-    solver.learnts_literals -= 2;
-    solver.clauses_literals += 2;
-}
+}*/
 
 /**
 @brief Clears and deletes (almost) everything in this class
@@ -1131,8 +1072,8 @@ bool Subsumer::simplifyBySubsumption()
 
     if (solver.conf.doReplace && !solver.varReplacer->performReplace(true))
         return false;
-    if (solver.conf.doSubsWBins && !subsumeWithBinTri())
-        return false;
+    /*if (solver.conf.doSubsWBins && !subsumeWithBinTri())
+        return false;*/
 
     fillCannotEliminate();
 
@@ -1241,40 +1182,26 @@ from the beginning.
 */
 void Subsumer::setLimits()
 {
-    numMaxSubsume0 = 230*1000*1000;
+    numMaxSubsume0 = 300*1000*1000;
     numMaxSubsume1 = 30*1000*1000;
-    numMaxSubsume0 *= 6;
 
     numMaxElim = 500*1000*1000;
-    numMaxElim *= 2;
-
-    //numMaxElim = 0;
-    //numMaxElim = std::numeric_limits<int64_t>::max();
+    numMaxElim *= 6;
 
     #ifdef BIT_MORE_VERBOSITY
     std::cout << "c addedClauseLits: " << addedClauseLits << std::endl;
     #endif
-    if (addedClauseLits < 10000000) {
-        numMaxElim *= 3;
-        numMaxSubsume0 *= 3;
-    }
 
     if (addedClauseLits < 5000000) {
-        numMaxElim *= 4;
-        numMaxSubsume0 *= 4;
-        numMaxSubsume1 *= 4;
-    }
-
-    if (addedClauseLits < 3000000) {
-        numMaxElim *= 4;
-        numMaxSubsume0 *= 4;
-        numMaxSubsume1 *= 4;
+        numMaxElim *= 2;
+        numMaxSubsume0 *= 2;
+        numMaxSubsume1 *= 2;
     }
 
     if (addedClauseLits < 1000000) {
-        numMaxElim *= 4;
-        numMaxSubsume0 *= 4;
-        numMaxSubsume1 *= 4;
+        numMaxElim *= 2;
+        numMaxSubsume0 *= 2;
+        numMaxSubsume1 *= 2;
     }
 
     numMaxElimVars = (uint64_t) (((double)solver.order_heap.size()*0.3) * sqrt((double)numCalls));
@@ -1286,10 +1213,6 @@ void Subsumer::setLimits()
 
     if (!solver.conf.doSubsume1)
         numMaxSubsume1 = 0;
-
-    if (numCalls == 1) {
-        numMaxSubsume1 = 10*1000*1000;
-    }
 
 
     numCalls++;
@@ -1765,7 +1688,6 @@ bool Subsumer::maybeEliminate(const Var var)
     fillClAndBin(negAll, negs, ~lit);
 
     // Count clauses/literals after elimination:
-    numMaxElim -= posSize * negSize + before_literals;
     uint32_t before_clauses = posSize + negSize;
     uint32_t after_clauses = 0;
     vec<Lit> dummy; //to reduce temporary data allocation
@@ -1780,9 +1702,7 @@ bool Subsumer::maybeEliminate(const Var var)
         }
     }
 
-    //Eliminate:
-    numMaxElim -= posSize * negSize + before_literals;
-
+    //Eliminate
     //removing clauses (both non-learnt and learnt)
     vec<ClauseSimp> tmp1 = poss;
     poss.clear();
@@ -1841,14 +1761,15 @@ bool Subsumer::maybeEliminate(const Var var)
                     solver.attachBinClause(dummy[0], dummy[1], false);
                     solver.numNewBin++;
                 }
-                subsume1(dummy, false);
+                if (numMaxSubsume1 > 0)
+                    subsume1(dummy, false);
                 break;
             }
             default: {
                 Clause* cl = solver.clauseAllocator.Clause_new(dummy);
                 ClauseSimp c = linkInClause(*cl);
                 if (numMaxSubsume1 > 0) subsume1(*c.clause);
-                else subsume0(*c.clause);
+                else if (numMaxSubsume0) subsume0(*c.clause);
             }
         }
         if (!solver.ok) return true;
@@ -1877,6 +1798,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
 {
     bool retval = true;
     if (ps.isBin) {
+        numMaxElim -= 2;
         assert(ps.lit1 == without_p);
         assert(ps.lit2 != without_p);
 
@@ -1884,6 +1806,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
         out_clause.push(ps.lit2);
     } else {
         Clause& c = *ps.clsimp.clause;
+        numMaxElim -= c.size()*5;
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_p){
                 seen_tmp[c[i].toInt()] = 1;
@@ -1893,6 +1816,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
     }
 
     if (qs.isBin) {
+        numMaxElim -= 2;
         assert(qs.lit1 == without_q);
         assert(qs.lit2 != without_q);
 
@@ -1904,6 +1828,7 @@ bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p
             out_clause.push(qs.lit2);
     } else {
         Clause& c = *qs.clsimp.clause;
+        numMaxElim -= c.size()*5;
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_q) {
                 if (seen_tmp[(~c[i]).toInt()]) {

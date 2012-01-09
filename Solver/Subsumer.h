@@ -115,7 +115,7 @@ public:
 
 private:
 
-    bool subsumeWithBinTri();
+    /*bool subsumeWithBinTri();
     bool subsumeWithBinTri(
         vec<Clause*>& cls
         , bool learnt
@@ -123,7 +123,7 @@ private:
         , uint32_t& subsumed_tri_num
         , uint32_t& lit_rem_bin
         , uint32_t& lit_rem_tri
-    );
+    );*/
 
     friend class ClauseCleaner;
     friend class ClauseAllocator;
@@ -236,7 +236,6 @@ private:
     template<class T>
     subsume0Happened subsume0Orig(const T& ps, uint32_t abs);
     void subsume0Touched();
-    void makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt);
 
     //subsume1
     class NewBinaryClause
@@ -260,13 +259,13 @@ private:
     bool cleanClause(vec<Lit>& ps) const;
     void handleSize1Clause(const Lit lit);
 
-    bool subsWNonExitsBinsFullFull();
+    /*bool subsWNonExitsBinsFullFull();
     bool subsWNonExistBinsFull();
     bool subsWNonExistBins(const Lit& lit, OnlyNonLearntBins* OnlyNonLearntBins);
     uint64_t extraTimeNonExist;
     bool subsNonExistentFinish;
     vec<Lit> toVisit;
-    vec<char> toVisitAll;
+    vec<char> toVisitAll;*/
 
     //Variable elimination
     /**
