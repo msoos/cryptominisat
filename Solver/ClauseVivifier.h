@@ -51,7 +51,6 @@ class ClauseVivifier {
         //Misc data
         uint32_t numCalls;
         ThreadControl* control;
-        vector<uint16_t>& seen;
 };
 
 #endif //CLAUSEVIVIFIER_H

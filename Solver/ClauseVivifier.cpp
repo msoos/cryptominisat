@@ -41,7 +41,6 @@ const bool ClauseVivifier::SortBySize::operator()(const Clause* x, const Clause*
 ClauseVivifier::ClauseVivifier(ThreadControl* _control) :
     numCalls(0)
     , control(_control)
-    , seen(_control->seen)
 {}
 
 const bool ClauseVivifier::vivify()
@@ -234,6 +233,7 @@ const bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
 
     //Temps
     vector<Lit> lits;
+    vector<char> seen(control->nVars()*2); //For strengthening
     bool needToFinish = false;
 
     vector<Clause*>::iterator i = clauses.begin();
