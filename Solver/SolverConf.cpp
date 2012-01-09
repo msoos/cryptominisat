@@ -69,7 +69,7 @@ SolverConf::SolverConf() :
         , doPrintAvgBranch (false)
         , doCacheOTFSSR    (true)
         , doCacheOTFSSRSet (true)
-        , doExtendedSCC    (true)
+        , doExtendedSCC    (false)
         , doCalcReach      (true)
         , doBXor           (true)
         , doOTFSubsume     (true)

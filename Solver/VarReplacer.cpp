@@ -137,7 +137,7 @@ bool VarReplacer::performReplaceInternal()
 end:
     assert(solver.qhead == solver.trail.size() || !solver.ok);
 
-    if (solver.conf.verbosity  >= 2) {
+    if (solver.conf.verbosity  >= 1) {
         std::cout << "c Replacing "
         << std::setw(8) << thisTimeReplaced << " vars"
         << " Replaced " <<  std::setw(8) << replacedLits<< " lits"
