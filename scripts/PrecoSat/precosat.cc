@@ -4408,7 +4408,7 @@ void Solver::elim () {
   limit.props.asym = opts.elimasymint;
   if (schedule.elim) {
     for (int idx = 1; idx <= maxvar; idx++) {
-      int lit = 2*idx, pos = orgs[lit], neg = orgs[lit^1];
+      int lit = 2*idx;
       //if (pos <= 2 || neg <= 2 || schedule.elim.contains (elms + idx))
        	touch (lit);
     }
