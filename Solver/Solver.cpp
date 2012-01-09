@@ -1225,49 +1225,27 @@ form to carry out the forward-self-subsuming resolution
 */
 void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
 {
-    //80 million is kind of a hack. It seems that the longer the solving
-    //the slower this operation gets. So, limiting the "time" with total
-    //number of conflict literals is maybe a good way of doing this
-    bool clDoMinLRec = false;
-    if (conf.doCacheOTFSSR && conf.doMinimLMoreRecur) {
-        switch(lastSelectedRestartType) {
-            case dynamic_restart :
-                clDoMinLRec |= glue < 0.6*glueHistory.getAvgAllDouble();
-                //NOTE: No "break;" here on purpose
-            case static_restart :
-                clDoMinLRec |= cl.size() < 0.6*conflSizeHist.getAvgDouble();
-                break;
-            default :
-                assert(false);
-        }
-    }
+    moreRecurMinLDo++;
 
-    if (clDoMinLRec) moreRecurMinLDo++;
-    uint64_t thisUpdateTransOTFSSCache = UPDATE_TRANSOTFSSR_CACHE;
-    if (tot_literals > 80000000) thisUpdateTransOTFSSCache *= 2;
+    //Fill seen
+    for (uint32_t i = 0; i < cl.size(); i++)
+        seen[cl[i].toInt()] = 1;
 
-    //To count the "amount of time" invested in doing transitive on-the-fly
-    //self-subsuming resolution
-    uint32_t moreRecurProp = 0;
-
-    for (uint32_t i = 0; i < cl.size(); i++) seen[cl[i].toInt()] = 1;
     for (Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
         if (seen[l->toInt()] == 0) continue;
         Lit lit = *l;
 
-        if (clDoMinLRec) {
-            if (moreRecurProp > 450
-                ||  (transOTFCache[l->toInt()].conflictLastUpdated != std::numeric_limits<uint64_t>::max()
-                    && (transOTFCache[l->toInt()].conflictLastUpdated + thisUpdateTransOTFSSCache >= conflicts))
+        if (conf.doCacheOTFSSR) {
+            for (vector<Lit>::const_iterator
+                it = transOTFCache[l->toInt()].lits.begin()
+                , end2 = transOTFCache[l->toInt()].lits.end()
+                ; it != end2
+                ; it++
             ) {
-                for (vector<Lit>::const_iterator it = transOTFCache[l->toInt()].lits.begin(), end2 = transOTFCache[l->toInt()].lits.end(); it != end2; it++) {
-                    seen[(~(*it)).toInt()] = 0;
-                }
-            } else {
-                updateTransCache++;
-                transMinimAndUpdateCache(lit, moreRecurProp);
+                seen[(~(*it)).toInt()] = 0;
             }
         }
+
 
         //watched is messed: lit is in watched[~lit]
         vec<Watched>& ws = watches[(~lit).toInt()];
@@ -1286,10 +1264,6 @@ void Solver::minimiseLeartFurther(vec<Lit>& cl, const uint32_t glue)
                 }
                 continue;
             }
-
-            //watches are mostly sorted, so it's more-or-less OK to break
-            //  if non-bi or non-tri is encountered
-            break;
         }
     }
 
