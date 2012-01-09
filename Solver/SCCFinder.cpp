@@ -58,7 +58,7 @@ bool SCCFinder::find2LongXors()
         }
     }
 
-    if (solver.conf.verbosity >= 2 || (solver.conflicts == 0 && solver.conf.verbosity  >= 1)) {
+    if (solver.conf.verbosity >= 3 || (solver.conflicts == 0 && solver.conf.verbosity  >= 1)) {
         std::cout << "c Finding binary XORs  T: "
         << std::fixed << std::setprecision(2) << std::setw(8) <<  (cpuTime() - myTime) << " s"
         << "  found: " << std::setw(7) << solver.varReplacer->getNewToReplaceVars() - oldNumReplace
