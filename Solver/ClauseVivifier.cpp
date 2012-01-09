@@ -51,7 +51,7 @@ bool ClauseVivifier::vivifyClauses()
     solver.clauseCleaner->cleanClauses(solver.clauses, ClauseCleaner::clauses);
     numCalls++;
 
-    if (solver.ok && solver.conf.doCacheOTFSSR) {
+    if (solver.ok) {
         if (!vivifyClauses2(solver.clauses)) return false;
         if (!vivifyClauses2(solver.learnts)) return false;
     }
@@ -199,17 +199,22 @@ bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
 
     vec<char> seen;
     seen.growTo(solver.nVars()*2, 0);
+    vec<char> seen_subs;
+    seen_subs.growTo(solver.nVars()*2, 0);
+
     uint32_t litsRem = 0;
     uint32_t clShrinked = 0;
     uint64_t countTime = 0;
-    /*uint64_t maxCountTime = 500000000;
+    uint64_t maxCountTime = 800*1000*1000;
+    maxCountTime *= 6;
     if (solver.clauses_literals + solver.learnts_literals < 500000)
         maxCountTime *= 2;
-    if (numCalls >= 5) maxCountTime*= 3;*/
     uint32_t clTried = 0;
     vec<Lit> lits;
     bool needToFinish = false;
     double myTime = cpuTime();
+    uint32_t subsumed_tri_num = 0;
+    uint32_t subsumed_bin_num = 0;
 
     Clause** i = clauses.getData();
     Clause** j = i;
@@ -218,15 +223,69 @@ bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
             *j++ = *i;
             continue;
         }
-        //if (countTime > maxCountTime) needToFinish = true;
+        if (countTime > maxCountTime)
+            needToFinish = true;
 
         Clause& cl = **i;
         countTime += cl.size()*2;
         clTried++;
 
-        for (uint32_t i2 = 0; i2 < cl.size(); i2++) seen[cl[i2].toInt()] = 1;
+        bool subsumed = false;
+        const bool learnt = cl.learnt();
+        for (uint32_t i2 = 0; i2 < cl.size(); i2++) {
+            seen[cl[i2].toInt()] = 1; //for strengthening
+            seen_subs[cl[i2].toInt()] = 1; //for subsumption
+        }
+
         for (const Lit *l = cl.getData(), *end = cl.getDataEnd(); l != end; l++) {
-            if (seen[l->toInt()] == 0) continue;
+            const Lit *l_other = l;
+            l_other++;
+            if (l_other != end)
+                __builtin_prefetch(solver.watches[(~*l_other).toInt()].getData());
+
+            const vec<Watched>& ws = solver.watches[(~*l).toInt()];
+            countTime += ws.size()*2;
+            for(vec<Watched>::const_iterator it = ws.getData(), end = ws.getDataEnd(); it != end; it++) {
+                //Handle tri clause
+                if (it->isTriClause() && cl.size() > 3)
+                {
+                    if (learnt //we cannot decide if TRI is learnt or not
+                        && seen_subs[it->getOtherLit().toInt()]
+                        && seen_subs[it->getOtherLit2().toInt()]
+                    ) {
+                        subsumed_tri_num++;
+                        subsumed = true;
+                    }
+
+                    if (seen[l->toInt()]) { //we may have removed it already
+                        //one way
+                        if (seen[(it->getOtherLit2()).toInt()])
+                            seen[(~it->getOtherLit()).toInt()] = 0;
+
+                        //other way
+                        if (seen[(it->getOtherLit()).toInt()])
+                            seen[(~it->getOtherLit2()).toInt()] = 0;
+                    }
+                }
+
+                //Handle Binary clause
+                if (it->isBinary()) {
+                    if (seen_subs[it->getOtherLit().toInt()])
+                    {
+                        if (!learnt && it->getLearnt())
+                            makeNonLearntBin(*l, it->getOtherLit(), it->getLearnt());
+                        subsumed_bin_num++;
+                        subsumed = true;
+                    }
+
+                    if (seen[l->toInt()]) //we may have removed it already
+                        seen[(~it->getOtherLit()).toInt()] = 0;
+
+                }
+            }
+
+            if (seen[l->toInt()] == 0)
+                continue;
 
             countTime += solver.transOTFCache[l->toInt()].lits.size();
             for (vector<Lit>::const_iterator it2 = solver.transOTFCache[l->toInt()].lits.begin()
@@ -240,9 +299,12 @@ bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
             if (seen[it2->toInt()]) lits.push(*it2);
             else litsRem++;
             seen[it2->toInt()] = 0;
+            seen_subs[it2->toInt()] = 0;
         }
-        if (lits.size() < cl.size()) {
-            countTime += cl.size()*10;
+
+        if (subsumed) {
+            solver.removeClause(cl);
+        } else if (lits.size() < cl.size()) {
             solver.detachClause(cl);
             clShrinked++;
             Clause* c2 = solver.addClauseInt(lits, cl.learnt(), cl.getGlue(), cl.getMiniSatAct());
@@ -260,6 +322,7 @@ bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
     if (solver.conf.verbosity >= 1) {
         std::cout << "c vivif2 -- "
         << " cl tried " << std::setw(8) << clTried
+        << " cl rem " << std::setw(8) << (subsumed_bin_num + subsumed_tri_num)
         << " cl shrink " << std::setw(8) << clShrinked
         << " lits rem " << std::setw(10) << litsRem
         << " time: " << cpuTime() - myTime
@@ -267,4 +330,13 @@ bool ClauseVivifier::vivifyClauses2(vec<Clause*>& clauses)
     }
 
     return solver.ok;
+}
+
+void ClauseVivifier::makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt)
+{
+    assert(learnt == true);
+    findWatchedOfBin(solver.watches, lit1 ,lit2, learnt).setLearnt(false);
+    findWatchedOfBin(solver.watches, lit2 ,lit1, learnt).setLearnt(false);
+    solver.learnts_literals -= 2;
+    solver.clauses_literals += 2;
 }

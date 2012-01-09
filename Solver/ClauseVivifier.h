@@ -50,6 +50,8 @@ class ClauseVivifier {
             }
         };
 
+        void makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt);
+
         uint32_t numCalls;
         Solver& solver;
 };
