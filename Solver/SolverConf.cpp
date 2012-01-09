@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace CMSat;
 
 SolverConf::SolverConf() :
-        random_var_freq(0.02)
+        random_var_freq(0.001)
         , clause_decay (1 / 0.999)
         , restart_first(100)
         , restart_inc(1.5)
