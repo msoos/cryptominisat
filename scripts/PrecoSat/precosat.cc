@@ -134,8 +134,8 @@ class Progress {
     int countdown, interval;
     char type;
   public:
-    Progress (Solver * s, char t, int c = 111) : 
-      solver (s), countdown (c), interval (c), type (t) 
+    Progress (Solver * s, char t, int c = 111) :
+      solver (s), countdown (c), interval (c), type (t)
     { assert (countdown > 0); }
     void tick () {
       if (!solver->hasterm ()) return;
@@ -165,7 +165,7 @@ template<class T, class L> class Sorter {
   Stack<long> stack;
   const static long limit = 10;
   static void swap (T & a, T & b) { T tmp = a; a = b; b = tmp; }
-  static void cwap (T & a, T & b) { 
+  static void cwap (T & a, T & b) {
     if (L (b, a)) swap (a, b);
     assert (!L (b, a)); // otherwise 'L' inconsistent
   }
@@ -211,7 +211,7 @@ template<class T, class L> class Sorter {
     for (long i = 2; i < n; i++) {
       long j = i;
       T pivot = a[i];
-      while (L (pivot, a[j-1])) 
+      while (L (pivot, a[j-1]))
 	a[j] = a[j-1], j--, assert (j > 0);
       a[j] = pivot;
     }
@@ -226,11 +226,11 @@ template<class T, class L> class Sorter {
 public:
   Sorter (Mem & m) : mem (m) { }
   ~Sorter () { stack.release (mem); }
-  void sort (T * a, long n) { 
+  void sort (T * a, long n) {
     if (!n) return;
     qsort (a, n);
     isort (a, n);
-    check (a, n); 
+    check (a, n);
   }
 };
 
@@ -752,7 +752,7 @@ void Solver::init (int initialmaxvar) {
   OPT (dominate,1,0,1);
   OPT (maxdoms,5*1000*1000,0,M);
   OPT (otfs,1,0,1);
-  OPT (block,1,0,1); 
+  OPT (block,1,0,1);
     OPT (blockrtc,1,0,2); OPT (blockimpl,1,0,1);
     OPT (blockprd,10,1,M); OPT (blockint,300*1000,0,M);
     OPT (blockotfs,1,0,1);
@@ -760,7 +760,7 @@ void Solver::init (int initialmaxvar) {
     OPT (blockboost,3,0,100);
   OPT (heatinc,10,0,100);
   OPT (luby,1,0,1);
-  OPT (restart,1,0,1); OPT (restartint,10,1,M); 
+  OPT (restart,1,0,1); OPT (restartint,10,1,M);
   OPT (restartinner,10,0,1000); OPT (restartouter,10,0,1000);
   OPT (restartminlevel,10,0,1000);
   OPT (rebias,1,0,1); OPT (rebiasint,1000,1,M); OPT (rebiasorgonly,0,0,1);
@@ -771,9 +771,9 @@ void Solver::init (int initialmaxvar) {
   OPT (decompose,1,0,1);
   OPT (autark,0,0,1); OPT (autarkdhs,16,0,63);
   OPT (phase,2,0,3);
-  OPT (inverse,0,0,1); OPT (inveager,0,0,1); 
+  OPT (inverse,0,0,1); OPT (inveager,0,0,1);
   OPT (mtfall,0,0,1); OPT (mtfrev,1,0,1);
-  OPT (bumpuip,1,0,1); 
+  OPT (bumpuip,1,0,1);
     OPT (bumpsort,1,0,1); OPT (bumprev,1,0,1);
     OPT (bumpturbo,0,0,1); OPT (bumpbulk,0,0,1);
   OPT (fresh,50,0,100);
@@ -781,7 +781,7 @@ void Solver::init (int initialmaxvar) {
     OPT (slim,1,0,1); OPT (sticky,2,0,Cls::MAXGLUE);
   OPT (redsub,0,0,M);
   OPT (minimize,2,0,4); OPT (maxdepth,1000,2,10000); OPT (strength,100,0,M);
-  OPT (elim,1,0,1); 
+  OPT (elim,1,0,1);
     OPT (elimgain,0,m/2,M/2);
     OPT (elimint,300*1000,0,M); OPT (elimprd,20,1,M);
     OPT (elimrtc,0,0,2);
@@ -794,7 +794,7 @@ void Solver::init (int initialmaxvar) {
     OPT (elimasymreward,1000,0,M);
   OPT (dynbw,0,0,1); OPT (fw,1,0,1);
   OPT (fwmaxlen,100,0,M); OPT (bwmaxlen,1000,0,M); OPT (reslim,20,0,M);
-  OPT (blkmaxlen,1000,0,M); 
+  OPT (blkmaxlen,1000,0,M);
   OPT (subst,1,0,1); OPT (ands,1,0,1); OPT (xors,1,0,1); OPT (ites,1,0,1);
   OPT (minlimit,500,10,10000); OPT (maxlimit,3*1000*1000,100,M);
   OPT (dynred,-1,-1,100000);
@@ -949,8 +949,8 @@ void Solver::prstats () {
            average (stats.subst.ands.len, stats.subst.ands.count),
            average (stats.subst.xors.len, stats.subst.xors.count));
   fprintf (out, "%sautk: %d autarkies of %.1f avg size\n",
-           prfx, 
-	   stats.autarks.count, 
+           prfx,
+	   stats.autarks.count,
 	   average (stats.autarks.size, stats.autarks.count));
   fprintf (out, "%sautk: dhs %d %d %d %d %d %d\n",
            prfx,
@@ -965,13 +965,13 @@ void Solver::prstats () {
 	   prfx,
 	   stats.back.track, average (stats.back.cuts, stats.back.track),
 	   stats.back.jump, average (stats.back.dist, stats.back.jump));
-  fprintf (out, 
+  fprintf (out,
            "%sblkd: %lld resolutions, %d phases, %d rounds\n",
 	   prfx,
 	   stats.blkd.res,
 	   stats.blkd.phases, stats.blkd.rounds);
   assert (stats.blkd.all == stats.blkd.impl + stats.blkd.expl);
-  fprintf (out, 
+  fprintf (out,
            "%sblkd: %d = %d implicit + %d explicit\n",
 	   prfx,
 	   stats.blkd.impl + stats.blkd.expl,
@@ -989,7 +989,7 @@ void Solver::prstats () {
   fprintf (out, "%sextd: %d forced, %d assumed, %d flipped\n", prfx,
            stats.extend.forced, stats.extend.assumed, stats.extend.flipped);
   fprintf (out, "%sglue: %.2f original glue, %.3f slimmed on average\n",
-	   prfx, 
+	   prfx,
 	   average (stats.glue.orig.sum, stats.glue.orig.count),
 	   average (stats.glue.slimmed.sum, stats.glue.slimmed.count));
   long long alllits = stats.lits.added + stats.mins.deleted;
@@ -1011,19 +1011,19 @@ void Solver::prstats () {
 	   stats.probe.variables, stats.probe.phases, stats.probe.rounds);
   fprintf (out, "%sprbe: %d failed, %d lifted, %d merged\n", prfx,
            stats.probe.failed, stats.probe.lifted, stats.probe.merged);
-  assert (stats.vars.pure == 
-          stats.pure.elim + stats.pure.blkd + 
+  assert (stats.vars.pure ==
+          stats.pure.elim + stats.pure.blkd +
 	  stats.pure.expl + stats.pure.autark);
   fprintf (out, "%sprps: %lld srch props, %.2f megaprops per second\n",
-           prfx, stats.props.srch, 
+           prfx, stats.props.srch,
 	  (stats.srchtime>0) ? stats.props.srch/1e6/stats.srchtime : 0);
-  fprintf (out, "%spure: %d = %d explicit + %d elim + %d blkd + %d autark\n", 
-           prfx, 
+  fprintf (out, "%spure: %d = %d explicit + %d elim + %d blkd + %d autark\n",
+           prfx,
 	   stats.vars.pure,
-	   stats.pure.expl, stats.pure.elim, 
+	   stats.pure.expl, stats.pure.elim,
 	   stats.pure.blkd, stats.pure.autark);
   assert (stats.vars.zombies ==
- 	  stats.zombies.elim + stats.zombies.blkd + 
+ 	  stats.zombies.elim + stats.zombies.blkd +
 	  stats.zombies.expl + stats.zombies.autark);
   fprintf (out, "%ssbst: %.0f%% subst, "
            "%.1f%% nots, %.1f%% ands, %.1f%% xors, %.1f%% ites\n", prfx,
@@ -1066,7 +1066,7 @@ void Solver::prstats () {
 	     prfx,
 	     srch, percent (hits,srch), percent (l1h,l1s), percent(l2h,l2s));
 #endif
-  fprintf (out, 
+  fprintf (out,
            "%sstrs: %d forward, %d backward, %d dynamic, %d org, %d asym\n",
 	   prfx,
 	   stats.str.fw, stats.str.bw, stats.str.dyn,
@@ -1075,7 +1075,7 @@ void Solver::prstats () {
            "%ssubs: %d fw, %d bw, %d dynamic, %d org, %d doms, %d gc\n",
 	   prfx,
 	   stats.subs.fw, stats.subs.bw,
-	   stats.subs.dyn, stats.subs.org, 
+	   stats.subs.dyn, stats.subs.org,
 	   stats.subs.doms, stats.subs.red);
   double othrtime = overalltime - stats.simptime - stats.srchtime;
   fprintf (out, "%stime: "
@@ -1088,7 +1088,7 @@ void Solver::prstats () {
            stats.srchtime, percent (stats.srchtime, overalltime),
 	   stats.simptime, percent (stats.simptime, overalltime),
 	   othrtime, percent (othrtime, overalltime));
-  fprintf (out, "%svars: %d fxd, %d eq, %d elim, %d pure, %d zmbs, %d autk\n", 
+  fprintf (out, "%svars: %d fxd, %d eq, %d elim, %d pure, %d zmbs, %d autk\n",
            prfx,
            stats.vars.fixed, stats.vars.equiv,
 	   stats.vars.elim, stats.vars.pure, stats.vars.zombies,
@@ -1096,13 +1096,13 @@ void Solver::prstats () {
 #ifndef NSTATSPRECO
   long long props = stats.props.srch + stats.props.simp;
   fprintf (out,
-           "%svsts: %lld visits, %.2f per prop, %.0f%% blkd, %.0f%% trn\n", 
+           "%svsts: %lld visits, %.2f per prop, %.0f%% blkd, %.0f%% trn\n",
            prfx,
            stats.visits, average (stats.visits, props),
 	   percent (stats.blocked, stats.visits),
 	   percent (stats.ternaryvisits, stats.visits));
 #endif
-  fprintf (out, "%szmbs: %d = %d explicit + %d elim + %d blkd + %d autark\n", 
+  fprintf (out, "%szmbs: %d = %d explicit + %d elim + %d blkd + %d autark\n",
            prfx,
 	   stats.vars.zombies,
 	   stats.zombies.expl, stats.zombies.elim,
@@ -1856,31 +1856,31 @@ void Solver::resize (int newmaxvar) {
 
     o = 2 * size * sizeof *jwhs;
     n = 2 * newsize * sizeof *jwhs;
-    jwhs = (int*) mem.recallocate (jwhs, o, n); 
+    jwhs = (int*) mem.recallocate (jwhs, o, n);
 
     o = 2 * size * sizeof *occs;
     n = 2 * newsize * sizeof *occs;
-    occs = (Occs*) mem.recallocate (occs, o, n); 
+    occs = (Occs*) mem.recallocate (occs, o, n);
 
     o = 2 * size * sizeof *repr;
     n = 2 * newsize * sizeof *repr;
-    repr = (int*) mem.recallocate (repr, o, n); 
+    repr = (int*) mem.recallocate (repr, o, n);
 
     o = 2 * size * sizeof *vals;
     n = 2 * newsize * sizeof *vals;
-    vals = (Val*) mem.recallocate (vals, o, n); 
+    vals = (Val*) mem.recallocate (vals, o, n);
 
     o = size * sizeof *elms;
     n = newsize * sizeof *elms;
     c = (char *) elms;
-    elms = (Rnk*) mem.reallocate (elms, o, n); 
+    elms = (Rnk*) mem.reallocate (elms, o, n);
     diff = c - (char *) elms;
     schedule.elim.fix (diff);
 
     o = size * sizeof *rnks;
     n = newsize * sizeof *rnks;
     c = (char *) rnks;
-    rnks = (Rnk*) mem.reallocate (rnks, o, n); 
+    rnks = (Rnk*) mem.reallocate (rnks, o, n);
     diff = c - (char *) rnks;
     schedule.decide.fix (diff);
 
@@ -2171,8 +2171,8 @@ bool Solver::decide () {
   assert (r);
   stats.decisions++;
   stats.sumheight += level;
-  if (opts.random && 
-      //agility <= 10 * 100000 && 
+  if (opts.random &&
+      //agility <= 10 * 100000 &&
       rng.oneoutof (opts.spread)) {
     stats.random++;
     unsigned n = (unsigned) maxvar; assert (n);
@@ -2340,13 +2340,13 @@ void Solver::unassign (int lit, bool save) {
   vals[lit] = vals[lit^1] = 0;
   int idx = lit/2;
   Var & v = vars[idx];
-  LOG("unassign " << lit << 
+  LOG("unassign " << lit <<
       " dlevel " << v.dlevel << " tlevel " << v.tlevel);
   assert (v.dlevel > 0);
   if (save) { LOG ("saving " << lit); saved.push (mem, lit); }
   if (!repr[lit]) {
     Rnk & r = rnks[lit/2];
-    if (!schedule.decide.contains (&r)) 
+    if (!schedule.decide.contains (&r))
       schedule.decide.push (mem, &r);
   }
   v.dlevel = -1;
@@ -2376,7 +2376,7 @@ void Solver::undo (int newlevel, bool save) {
   level = newlevel;
   queue = queue2 = trail;
   conflict = 0;
-  LOG ("backtracked to new level " << newlevel << 
+  LOG ("backtracked to new level " << newlevel <<
        " after unassigning " << cnt << " literals");
 }
 
@@ -2576,7 +2576,7 @@ RESTART:
 	Var * v = vars + (lit/2);
 	if (!v->dlevel) continue;
 	if (!v->mark) { pull (lit); otf = INT_MAX; }
-	else if (v->tlevel <= i) otf--; 
+	else if (v->tlevel <= i) otf--;
 	else otf = INT_MAX;
       }
       if (level > 0 && opts.otfs && otf <= 0 && r != &dummy) {
@@ -2708,7 +2708,7 @@ RESTART:
     LOG ("literal " << lit << " on jump level " << jlevel);
     cjlevel++;
   }
-  LOG (cjlevel << 
+  LOG (cjlevel <<
        " variables in minimized 1st UIP clause on jump level " << jlevel);
 
   if (opts.inverse && cjlevel == 1) {
@@ -2773,7 +2773,7 @@ RESTART:
       assert (tmp >= 0);
       if (tlevel < tmp) tlevel = tmp;
     }
-    if (tlevel >= 0) 
+    if (tlevel >= 0)
       LOG ("trail can be cut by for minimized FUIP reason " << trail - tlevel);
   }
 #endif
@@ -2875,8 +2875,8 @@ RESTART:
       }
       int count = opts.dynred;
       Cls * ctc;
-      for (int glue = opts.glue; 
-	   glue >= opts.sticky && count >= 0 && recycling (); 
+      for (int glue = opts.glue;
+	   glue >= opts.sticky && count >= 0 && recycling ();
 	   glue--) {
 	ctc = learned[glue].tail;
 	while (ctc && count-- >= 0 && recycling ()) {
@@ -3096,9 +3096,9 @@ inline int Solver::redundant (Cls * c) {
 
   int newsize = q - c->lits;
 
-  if (!res && 
-      newsize > 1 && 
-      newsize <= opts.redsub && 
+  if (!res &&
+      newsize > 1 &&
+      newsize <= opts.redsub &&
       (!c->lnd || c->binary)) {
     limit.budget.red += 10;
     setsig (c);
@@ -3140,7 +3140,7 @@ inline int Solver::redundant (Cls * c) {
 
   if (res) return res;
 
-  if (newsize > 1 && newsize <= opts.redsub && (!c->lnd || c->binary)) 
+  if (newsize > 1 && newsize <= opts.redsub && (!c->lnd || c->binary))
     fwds[c->minlit ()].push (mem, c);
 
   res = newsize <= 1;
@@ -3240,7 +3240,7 @@ void Solver::autark () {
 	      case 2: score = -idx; break;
 	      case 4: lit ^= 1; score = idx; break;
 	      case 8: lit ^= 1; score = -idx; break;
-	      case 16: 
+	      case 16:
 		{
 		  int pjwh = jwhs[lit], njwh = jwhs[lit+1];
 		  if (njwh >= pjwh) lit++;
@@ -3322,7 +3322,7 @@ void Solver::autark () {
       }
     }
 #ifndef NDEBUG
-    for (const int * p = saved.begin (); p < saved.end (); p++) 
+    for (const int * p = saved.begin (); p < saved.end (); p++)
       assert (vals[*p]);
 #endif
     saved.shrink ();
@@ -3364,8 +3364,8 @@ void Solver::decompose () {
 	  LOG ("conflict while learning unit in scc");
 	  conflict = &empty;
 	} else if (!val) {
-	  LOG ("learned clause " << lit); 
-	  unit (lit); 
+	  LOG ("learned clause " << lit);
+	  unit (lit);
 	  stats.sccs.fixed++;
 	  bcp ();
 	}
@@ -3624,7 +3624,7 @@ FILL:
   pos = rng.next  () % maxvar;
   delta = rng.next () % maxvar;
   if (!delta) delta++;
-  while (gcd (delta, maxvar) != 1) 
+  while (gcd (delta, maxvar) != 1)
     if (++delta == maxvar) delta = 1;
   LOG ("probing starting position " << pos << " and delta " << delta);
   report (2, 'p');
@@ -4124,7 +4124,7 @@ RESTART:
   if (gate) LOG ("actually trelim gate for " << gatepivot);
   for (int sign = 0; sign <= 1; sign++)
     for (int i = 0; i < orgs[lit^sign]; i++)
-      if (orgs[lit^sign][i]->size > (unsigned)opts.elimclim) 
+      if (orgs[lit^sign][i]->size > (unsigned)opts.elimclim)
 	return false;
   int gain = pos + neg, l = opts.elimgain, found, i, j;
   Cls * c, * d;
@@ -4211,7 +4211,7 @@ ASYMMAGAIN:
 	    if (val (other)) continue;
 	    assert (other != lit);
 	    assume (other^1);
-	    ok = bcp (); 
+	    ok = bcp ();
 	    fl = false;
 	  }
 	  undo (0);
@@ -4224,8 +4224,8 @@ ASYMMAGAIN:
 	  if (fl) assign (lit^1); else remove (lit, c);
 	  limit.props.asym += opts.elimasymreward;
 	  if (val (lit)) goto DONE;
-	  if (needtoflush ()) { 
-	    if (!bcp ()) goto DONE; 
+	  if (needtoflush ()) {
+	    if (!bcp ()) goto DONE;
 	    if (val (lit)) goto DONE;
 	    goto ASYMMAGAIN;
 	  }
@@ -4241,7 +4241,7 @@ DONE:
     if (vals[lit]) return false;
     if (opts.elimgain <= 1 && (orgs[lit] <= 1 || orgs[1^lit] <= 1))
       return true;
-    if (opts.elimgain <= 0 && orgs[lit] <= 2 && orgs[1^lit] <= 2) 
+    if (opts.elimgain <= 0 && orgs[lit] <= 2 && orgs[1^lit] <= 2)
       return true;
   }
   return gain >= l;
@@ -4553,7 +4553,7 @@ void Solver::picosatcheck_assume (const char * type, int lit) {
   picosat_assume (ilit);
   int res = picosat_sat (-1);
   picosatcheck.calls++;
-  if (res != 10) 
+  if (res != 10)
     die ("picosat checking of %s literal %d (%d) failed", type, lit, ilit);
   picosat_add (ilit), picosat_add (0);
   assert (!picosat_inconsistent ());
@@ -4720,9 +4720,9 @@ void Solver::pure () {
     v->onplits = true;
   }
   while (plits) {
-    int idx = plits.pop (), lit = 2*idx; 
-    Var * v = vars + idx; 
-    assert (v->type == FREE); 
+    int idx = plits.pop (), lit = 2*idx;
+    Var * v = vars + idx;
+    assert (v->type == FREE);
     assert (v->onplits);
     if (!orgs[lit] && !orgs[lit^1]) zombie (v);
     else if (!orgs[lit]) pure (1^lit);
@@ -4764,7 +4764,7 @@ void Solver::initreduce () {
 void Solver::enlarge () {
   stats.enlarged++;
   if (opts.limincmode == 1) {
-    limit.reduce.learned = 
+    limit.reduce.learned =
       ((100 + opts.limincpercent) * limit.reduce.learned + 99) / 100;
     limit.enlarge.inc = ((100 + opts.enlinc) * limit.enlarge.inc + 99) / 100;
     limit.enlarge.conflicts = stats.conflicts + limit.enlarge.inc;
@@ -4830,7 +4830,7 @@ RESTART:
   if (conflict) goto DONE;
   elim ();
   if (conflict) goto DONE;
-  if (simplified && 
+  if (simplified &&
       ((opts.rtc == 2 || opts.simprtc == 2) ||
        ((opts.rtc == 1 || opts.simprtc == 1) && !stats.simps)))
      goto RESTART;
@@ -4838,7 +4838,7 @@ RESTART:
   limit.simp = stats.vars.fixed + stats.vars.merged;
   limit.fixed.simp = stats.vars.fixed;
   rv = remvars ();
-  inc = opts.simpinc; 
+  inc = opts.simpinc;
   if (rv) while (rv < 1000000) rv *= 10, inc /= 2;
   simprd *= 100 + inc; simprd += 99; simprd /= 100;
   jwh (opts.rebiasorgonly);
