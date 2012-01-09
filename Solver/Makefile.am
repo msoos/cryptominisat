@@ -1,7 +1,7 @@
 #noinst_LTLIBRARIES = libcryptominisat.la
 lib_LTLIBRARIES = libcryptominisat.la
 
-libcryptominisat_la_LDFLAGS = -release 2.9.1 -no-undefined
+libcryptominisat_la_LDFLAGS = -release 2.9.2 -no-undefined
 
 AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir) -I$(srcdir)/../MTRand -I$(srcdir)/../mtl $(OPENMP_CXXFLAGS)
 
