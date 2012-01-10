@@ -268,11 +268,6 @@ parameter is different from var_Undef.
 void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
 {
     Clause& cl = *clauses[c.index];
-    if (cl.learnt())
-        control->learntsLits -= cl.size();
-    else
-        control->clausesLits -= cl.size();
-
     for (uint32_t i = 0; i < cl.size(); i++) {
         *toDecrease -= occur[cl[i].toInt()].size()/2;
 
