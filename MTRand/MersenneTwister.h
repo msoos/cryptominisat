@@ -17,7 +17,7 @@
 
 // Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
 // Copyright (C) 2000 - 2003, Richard J. Wagner
-// All rights reserved.                          
+// All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
 //
-//   3. The names of its contributors may not be used to endorse or promote 
-//      products derived from this software without specific prior written 
+//   3. The names of its contributors may not be used to endorse or promote
+//      products derived from this software without specific prior written
 //      permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -76,7 +76,7 @@ public:
 
 protected:
 	enum { M = 397 };  // period parameter
-	
+
 	uint32 state[N];   // internal state
 	uint32 *pNext;     // next value to get from state
 	int left;          // number of values left before reload needed
@@ -87,11 +87,11 @@ public:
 	MTRand( const uint32& oneSeed );  // initialize with a simple uint32
 	MTRand( uint32 *const bigSeed, uint32 const seedLength = N );  // or an array
 	MTRand();  // auto-initialize with /dev/urandom or time() and clock()
-	
+
 	// Do NOT use for CRYPTOGRAPHY without securely hashing several returned
 	// values together, otherwise the generator state can be learned after
 	// reading 624 consecutive values.
-	
+
 	// Access to 32-bit random numbers
 	double rand();                          // real number in [0,1]
 	double rand( const double& n );         // real number in [0,n]
@@ -102,18 +102,18 @@ public:
 	uint32 randInt();                       // integer in [0,2^32-1]
 	uint32 randInt( const uint32& n );      // integer in [0,n] for n < 2^32
 	double operator()() { return rand(); }  // same as rand()
-	
+
 	// Access to 53-bit random numbers (capacity of IEEE double precision)
 	double rand53();  // real number in [0,1)
-	
+
 	// Access to nonuniform random number distributions
 	double randNorm( const double& mean = 0.0, const double& variance = 0.0 );
-	
+
 	// Re-seeding functions with same behavior as initializers
 	void seed( const uint32 oneSeed );
 	void seed( uint32 *const bigSeed, const uint32 seedLength = N );
 	void seed();
-	
+
 	// Saving and loading generator state
 	void save( uint32* saveArray ) const;  // to array of size SAVE
 	void load( uint32 *const loadArray );  // from such array
@@ -180,10 +180,10 @@ inline MTRand::uint32 MTRand::randInt()
 {
 	// Pull a 32-bit integer from the generator state
 	// Every other access function simply transforms the numbers extracted here
-	
+
 	if( left == 0 ) reload();
 	--left;
-		
+
 	register uint32 s1;
 	s1 = *pNext++;
 	s1 ^= (s1 >> 11);
@@ -202,7 +202,7 @@ inline MTRand::uint32 MTRand::randInt( const uint32& n )
 	used |= used >> 4;
 	used |= used >> 8;
 	used |= used >> 16;
-	
+
 	// Draw numbers until one is found in [0,n]
 	uint32 i;
 	do
@@ -260,7 +260,7 @@ inline void MTRand::seed()
 {
 	// Seed the generator with an array from /dev/urandom if available
 	// Otherwise use a hash of time() and clock() values
-	
+
 	// First try getting an array from /dev/urandom
 	FILE* urandom = fopen( "/dev/urandom", "rb" );
 	if( urandom )
@@ -274,7 +274,7 @@ inline void MTRand::seed()
 		fclose(urandom);
 		if( success ) { seed( bigSeed, N );  return; }
 	}
-	
+
 	// Was not successful, so use time() and clock() instead
 	seed( hash( time(NULL), clock() ) );
 }
