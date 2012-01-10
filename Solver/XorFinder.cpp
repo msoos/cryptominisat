@@ -44,7 +44,12 @@ bool XorFinder::findXors()
     triedAlready.resize(subsumer->clauses.size());
 
     size_t i = 0;
-    for (vector<Clause*>::iterator it = subsumer->clauses.begin(), end = subsumer->clauses.end(); it != end; it++, i++) {
+    for (vector<Clause*>::iterator
+        it = subsumer->clauses.begin()
+        , end = subsumer->clauses.end()
+        ; it != end
+        ; it++, i++
+    ) {
         if (*it == NULL)
             continue;
 

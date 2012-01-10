@@ -856,7 +856,8 @@ bool Subsumer::simplifyBySubsumption()
 
     //XOR-finding
     if (control->conf.doFindXors
-        && !xorFinder->findXors()) return false;
+        && !xorFinder->findXors()
+    ) return false;
 
     //Gate-finding
     if (control->conf.doCache && control->conf.doGateFind) {
