@@ -95,7 +95,7 @@ bool FailedLitSearcher::search()
             continue;
         if (control->bogoProps >= origBogoProps + numProps)
             break;
-        if (!tryBoth(Lit(var, false), Lit(var, true)))
+        if (!tryBoth(Lit(var, false)))
             goto end;
     }
 
@@ -141,47 +141,35 @@ void FailedLitSearcher::printResults(const double myTime) const
     << std::endl;
 }
 
-/**
-@brief The main function of search() doing almost everything in this class
-
-Tries to branch on both lit1 and lit2 and then both-propagates them, fail-lits
-them, and hyper-bin resolves them, etc. It is imperative that from the
-SAT point of view, EITHER lit1 or lit2 MUST hold. So, if lit1 = ~lit2, it's OK.
-Also, if there is a binary clause 'lit1 or lit2' it's also OK.
-*/
-bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
+bool FailedLitSearcher::tryBoth(const Lit lit)
 {
-    assert(lit1 == ~lit2);
-
+    //Start-up cleaning
     propagated.removeThese(propagatedBitSet);
     assert(propagated.isZero());
     propagatedBitSet.clear();
     bothSame.clear();
-
-
-    //hyper-bin
     assert(uselessBin.empty());
 
     //Test removal of non-learnt binary clauses
     #ifdef DEBUG_REMOVE_USELESS_BIN
-    fillTestUselessBinRemoval(lit1);
+    fillTestUselessBinRemoval(lit);
     #endif
 
     control->newDecisionLevel();
-    control->enqueue(lit1);
+    control->enqueue(lit);
     failed = (!control->propagateFull(uselessBin).isNULL());
     if (failed) {
         control->cancelZeroLight();
         numFailed++;
         vector<Lit> lits;
-        lits.push_back(~lit1);
+        lits.push_back(~lit);
         control->addClauseInt(lits, true);
         removeUselessBins();
         if (!control->ok) return false;
         return true;
     }
 
-    //Do failed-lit for "lit1"
+    //Fill bothprop, cache
     assert(control->decisionLevel() > 0);
     litOTFCache.clear();
     litOTFCacheNL.clear();
@@ -196,7 +184,6 @@ bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         else
             propValue.clearBit(x);
 
-        //if (binXorFind) removeVarFromXors(x);
         if (control->conf.doCache
             && c != control->trail_lim[0]
         ) {
@@ -208,37 +195,38 @@ bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         }
     }
     if (control->conf.doCache) {
-        control->implCache[(~lit1).toInt()].merge(litOTFCache, false, control->seen);
-        control->implCache[(~lit1).toInt()].merge(litOTFCacheNL, true, control->seen);
+        control->implCache[(~lit).toInt()].merge(litOTFCache, false, control->seen);
+        control->implCache[(~lit).toInt()].merge(litOTFCacheNL, true, control->seen);
     }
 
     control->cancelZeroLight();
     hyperBinResAll();
     removeUselessBins();
     #ifdef DEBUG_REMOVE_USELESS_BIN
-    testBinRemoval(lit1);
+    testBinRemoval(lit);
     #endif
 
     //Test removal of non-learnt binary clauses
     #ifdef DEBUG_REMOVE_USELESS_BIN
-    fillTestUselessBinRemoval(lit2);
+    fillTestUselessBinRemoval(~lit);
     #endif
 
     //Doing inverse
     control->newDecisionLevel();
-    control->enqueue(lit2);
+    control->enqueue(~lit);
     failed = (!control->propagateFull(uselessBin).isNULL());
     if (failed) {
         control->cancelZeroLight();
         numFailed++;
         vector<Lit> lits;
-        lits.push_back(~lit2);
+        lits.push_back(lit);
         control->addClauseInt(lits, true);
         removeUselessBins();
         if (!control->ok) return false;
         return true;
     }
 
+    //Fill cache, check bothprop
     assert(control->decisionLevel() > 0);
     litOTFCache.clear();
     litOTFCacheNL.clear();
@@ -252,9 +240,6 @@ bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
             }
         }
 
-        if (control->value(x).getBool()) propValue.setBit(x);
-        else propValue.clearBit(x);
-
         if (control->conf.doCache
             && c != control->trail_lim[0]
         ) {
@@ -266,27 +251,24 @@ bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         }
     }
     if (control->conf.doCache) {
-        control->implCache[(~lit2).toInt()].merge(litOTFCache, false, control->seen);
-        control->implCache[(~lit2).toInt()].merge(litOTFCacheNL, true, control->seen);
+        control->implCache[lit.toInt()].merge(litOTFCache, false, control->seen);
+        control->implCache[lit.toInt()].merge(litOTFCacheNL, true, control->seen);
     }
 
     control->cancelZeroLight();
     removeUselessBins();
     hyperBinResAll();
     #ifdef DEBUG_REMOVE_USELESS_BIN
-    testBinRemoval(lit2);
+    testBinRemoval(~lit);
     #endif
 
-    for(uint32_t i = 0; i != bothSame.size(); i++) {
+    for(uint32_t i = 0; i != bothSame.size() && control->ok; i++) {
         vector<Lit> lits;
         lits.push_back(bothSame[i]);
         control->addClauseInt(lits, true);
     }
     goodBothSame += bothSame.size();
-    control->ok = (control->propagate().isNULL());
-    if (!control->ok) return false;
-
-    return true;
+    return control->ok;
 }
 
 void FailedLitSearcher::hyperBinResAll()
@@ -308,13 +290,17 @@ void FailedLitSearcher::removeUselessBins()
         //std::cout << "Removing binary clause: " << *it << std::endl;
         removeWBin(control->watches, it->getLit1(), it->getLit2(), it->getLearnt());
         removeWBin(control->watches, it->getLit2(), it->getLit1(), it->getLearnt());
+
+        //Update stats
         control->numBins--;
-        if (it->getLearnt()) control->learntsLits -= 2;
-        else                 control->clausesLits -= 2;
+        if (it->getLearnt())
+            control->learntsLits -= 2;
+        else
+            control->clausesLits -= 2;
         removedBins++;
 
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Really removed bin: "
+        std::cout << "Removed bin: "
         << it->getLit1() << " , " << it->getLit2()
         << " , learnt: " << it->getLearnt() << std::endl;
         #endif

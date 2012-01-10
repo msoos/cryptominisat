@@ -64,7 +64,7 @@ class FailedLitSearcher {
 
     private:
         //Main
-        bool tryBoth(const Lit lit1, const Lit lit2);
+        bool tryBoth(const Lit lit);
         void printResults(const double myTime) const;
 
         ThreadControl* control; ///<The solver we are updating&working with
