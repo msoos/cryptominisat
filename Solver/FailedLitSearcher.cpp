@@ -58,7 +58,7 @@ bool FailedLitSearcher::search()
         if (!control->implCache.tryBoth(control)) return false;
     }
 
-    uint64_t numProps = 90L*1000L*1000L;
+    uint64_t numProps = 40L*1000L*1000L;
 
     control->testAllClauseAttach();
     double myTime = cpuTime();

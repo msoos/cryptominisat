@@ -332,11 +332,11 @@ PropBy Solver::propagate()
         #endif
 
         vec<Watched>::iterator i = ws.begin();
-        bogoProps += ws.size()/2 + 1;
         vec<Watched>::iterator i2 = ws.begin();
         i2 += 3;
         vec<Watched>::iterator j = ws.begin();
         const vec<Watched>::iterator end = ws.end();
+        bogoProps += 1;
         for (; i != end; i++, i2++) {
             if (i2 < end && i2->isClause()) {
                 if (!value(i2->getBlockedLit()).getBool()) {
@@ -432,7 +432,7 @@ PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
     while (nlBinQHead < trail.size()) {
         Lit p = trail[nlBinQHead++];
         vec<Watched> & ws = watches[p.toInt()];
-        bogoProps += ws.size()/2;
+        bogoProps += 1;
         for(vec<Watched>::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
             if (!k->isBinary() || k->getLearnt()) continue;
 
@@ -445,7 +445,7 @@ PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
     while (lBinQHead < trail.size()) {
         Lit p = trail[lBinQHead];
         vec<Watched> & ws = watches[p.toInt()];
-        bogoProps += ws.size()/2;
+        bogoProps += 1;
         enqeuedSomething = false;
 
         for(vec<Watched>::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
@@ -462,7 +462,7 @@ PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
         PropBy confl;
         Lit p = trail[qhead];
         vec<Watched> & ws = watches[p.toInt()];
-        bogoProps += ws.size()/2;
+        bogoProps += 1;
         enqeuedSomething = false;
 
         vec<Watched>::iterator i = ws.begin();
