@@ -167,13 +167,13 @@ protected:
     /////////////////
     // Enqueue
     ////////////////
-    void       enqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
-    void       enqueueComplex(const Lit p, const Lit ancestor, const bool learntStep);
+    void  enqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
+    void  enqueueComplex(const Lit p, const Lit ancestor, const bool learntStep);
     Lit   removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepLearnt);
     bool  isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor);
-    void       addHyperBin(vector<Lit>& currAncestors, const Lit p); ///<Add hyper-binary clause given these ancestors
-    void       addHyperBin(const Lit lit1, const Lit lit2, const Lit p); ///<Add hyper-binary clause given this tri-clause
-    void       addHyperBin(const Clause& cl, const Lit p); ///<Add hyper-binary clause given this large clause
+    void  addHyperBin(vector<Lit>& currAncestors, const Lit p); ///<Add hyper-binary clause given these ancestors
+    void  addHyperBin(const Lit lit1, const Lit lit2, const Lit p); ///<Add hyper-binary clause given this tri-clause
+    void  addHyperBin(const Clause& cl, const Lit p); ///<Add hyper-binary clause given this large clause
 
     /////////////////
     // Propagating
@@ -270,7 +270,7 @@ and does some logging if logging is enabled
 @p p the fact to enqueue
 @p from Why was it propagated (binary clause, tertiary clause, normal clause)
 */
-inline void  Solver::enqueue(const Lit p, const PropBy from)
+inline void Solver::enqueue(const Lit p, const PropBy from)
 {
     #ifdef DEBUG_ENQUEUE_LEVEL0
     #ifndef VERBOSE_DEBUG
