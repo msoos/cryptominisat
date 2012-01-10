@@ -67,15 +67,6 @@ bool XorFinder::findXors()
     if (xors.size() > 0)
         extractInfo();
 
-    /*uint32_t index = 0;
-    uint32_t doneSomething = 0;
-    for (vector<Xor>::iterator it = xors.begin(), end = xors.end(); it != end; it++, index++) {
-        doneSomething += tryToXor(*it, index);
-
-        if (!control->okay())
-            goto end;
-    }*/
-
     return control->okay();
 }
 
@@ -356,77 +347,6 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
     }
     //std::cout << "Sum vars in blocks: " << numVarsInBlocks << std::endl;
 }
-
-/*const uint32_t XorFinder::tryToXor(const Xor& thisXor, const uint32_t thisIndex)
-{
-    uint32_t doneSomething = 0;
-    for (vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
-        seen[*it] = 1;
-    }
-
-    vector<Lit> XORofTwo;
-    for (vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
-        const vector<uint32_t>& indexes = xorOcc[*it];
-        for (vector<uint32_t>::const_iterator it2 = indexes.begin(), end2 = indexes.end(); it2 != end2; it2++) {
-            if (*it2 == thisIndex) continue;
-            if (xors[*it2].vars.size() <= thisXor.vars.size()) {
-                const Xor& otherXor = xors[*it2];
-                uint32_t wrong = 0;
-                for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
-                    if (!seen[*it3]) {
-                        wrong++;
-                        if (wrong > 1 || (wrong>0 && otherXor.vars.size() < thisXor.vars.size())) break;
-                    }
-                }
-                if ((wrong == 0 && thisXor.vars.size()-otherXor.vars.size() <= 2)
-                    || (wrong == 1 && otherXor.vars.size()-thisXor.vars.size() <= 1)) {
-                    //std::cout << "Two xors to do something about: " << std::endl;
-                    //std::cout << thisXor << std::endl;
-                    //std::cout << otherXor << std::endl;
-                    XORofTwo.clear();
-
-                    //If there is something missing from otherXOR
-                    if (wrong > 0) {
-                        for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
-                            if (!seen[*it3]) {
-                                XORofTwo.push_back(Lit(*it3, false));
-                            }
-                        }
-                    }
-
-                    //If there is something extra in thisXOR
-                    assert(otherXor.vars.size() <= thisXor.vars.size());
-                    for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
-                        seen2[*it3] = 1;
-                    }
-
-                    for (vector<Var>::const_iterator it3 = thisXor.vars.begin(), end3 = thisXor.vars.end(); it3 != end3; it3++) {
-                        if (!seen2[*it3]) {
-                            XORofTwo.push_back(Lit(*it3, false));
-                        }
-                    }
-
-                    for (vector<Var>::const_iterator it3 = otherXor.vars.begin(), end3 = otherXor.vars.end(); it3 != end3; it3++) {
-                        seen2[*it3] = 0;
-                    }
-
-                    assert(XORofTwo.size() <=2);
-                    //std::cout << "final XOR: " << XORofTwo << " rhs: " << finalRHS << std::endl;
-                    if (!control->addXorClauseInt(XORofTwo, thisXor.rhs ^ otherXor.rhs))
-                        goto end;
-                    doneSomething++;
-                }
-            }
-        }
-    }
-
-    end:
-    for (vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; it++) {
-        seen[*it] = 0;
-    }
-
-    return doneSomething;
-}*/
 
 void XorFinder::findXor(ClauseIndex c)
 {
