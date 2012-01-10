@@ -149,7 +149,7 @@ bool XorFinder::extractInfoFromBlock(const vector<Var>& block, const size_t bloc
     }
 
     //Get corresponding XORs
-    vector<size_t> thisXors = getXorsForBlock(blockNum);
+    const vector<size_t> thisXors = getXorsForBlock(blockNum);
     assert(thisXors.size() > 1 && "We pre-filter the set such that *every* block contains at least 2 xors");
 
     //Set up matrix
