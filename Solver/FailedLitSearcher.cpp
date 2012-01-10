@@ -286,24 +286,31 @@ void FailedLitSearcher::hyperBinResAll()
 
 void FailedLitSearcher::removeUselessBins()
 {
-    for(std::set<BinaryClause>::iterator it = uselessBin.begin(), end = uselessBin.end(); it != end; it++) {
-        //std::cout << "Removing binary clause: " << *it << std::endl;
-        removeWBin(control->watches, it->getLit1(), it->getLit2(), it->getLearnt());
-        removeWBin(control->watches, it->getLit2(), it->getLit1(), it->getLearnt());
+    if (control->conf.doRemUselessBins) {
+        for(std::set<BinaryClause>::iterator
+            it = uselessBin.begin()
+            , end = uselessBin.end()
+            ; it != end
+            ; it++
+        ) {
+            //std::cout << "Removing binary clause: " << *it << std::endl;
+            removeWBin(control->watches, it->getLit1(), it->getLit2(), it->getLearnt());
+            removeWBin(control->watches, it->getLit2(), it->getLit1(), it->getLearnt());
 
-        //Update stats
-        control->numBins--;
-        if (it->getLearnt())
-            control->learntsLits -= 2;
-        else
-            control->clausesLits -= 2;
-        removedBins++;
+            //Update stats
+            control->numBins--;
+            if (it->getLearnt())
+                control->learntsLits -= 2;
+            else
+                control->clausesLits -= 2;
+            removedBins++;
 
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Removed bin: "
-        << it->getLit1() << " , " << it->getLit2()
-        << " , learnt: " << it->getLearnt() << std::endl;
-        #endif
+            #ifdef VERBOSE_DEBUG_FULLPROP
+            std::cout << "Removed bin: "
+            << it->getLit1() << " , " << it->getLit2()
+            << " , learnt: " << it->getLearnt() << std::endl;
+            #endif
+        }
     }
     uselessBin.clear();
 }

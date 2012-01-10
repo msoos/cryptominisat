@@ -243,7 +243,6 @@ void Main::parseCommandLine()
     ("nofailedlit", "Don't do failed literals at ALL (none below)")
     ("nohyperbinres", "Don't add binary clauses when doing failed lit probing.")
     ("noremovebins", "Don't remove useless binary clauses")
-    ("noremlbins", "Don't remove useless learnt binary clauses")
     ;
 
     po::options_description sateliteOptions("Normal satelite-type options");
@@ -251,8 +250,6 @@ void Main::parseCommandLine()
     ("nosatelite", "Don't play with norm clauses at ALL (none below)")
     ("novarelim", "Don't perform variable elimination as per Een and Biere")
     ("nosubsume1", "Don't perform clause contraction through resolution")
-    ("nosubswithbins", "Don't subsume with binary clauses")
-    ("nosubswithnbins", "Don't subsume with non-existent binary clauses")
     ("noblocked", "No blocked-clause removal")
     ;
 
@@ -540,14 +537,6 @@ void Main::parseCommandLine()
         conf.doRemUselessBins = false;
     }
 
-    if (vm.count("nosubswithnbins")) {
-        conf.doSubsWNonExistBins = false;
-    }
-
-    if (vm.count("nosubswithbins")) {
-        conf.doSubsWBins = false;
-    }
-
     if (vm.count("noclausevivif")) {
         conf.doClausVivif = false;
     }
@@ -570,10 +559,6 @@ void Main::parseCommandLine()
 
     if (vm.count("noblocked")) {
         conf.doBlockedClause = false;
-    }
-
-    if (vm.count("noremlbins")) {
-        conf.doRemUselessLBins = false;
     }
 
     if (vm.count("nogates")) {
