@@ -680,10 +680,11 @@ bool CInstanceGraph::createfromFile(const char* lpstrFileName)
 		while (buf[i] != 0x0)
 		{
 
-			while (buf[i] != 0x0 && buf[i] != '-' && (buf[i] < '0' || buf[i]
-					> '9'))
+			while (buf[i] != 0x0
+                && buf[i] != '-'
+            && (buf[i] < '0' || buf[i] > '9'))
 				i++;
-			while (buf[i] == '-' || buf[i] >= '0' && buf[i] <= '9')
+			while ((buf[i] == '-' || buf[i] >= '0') && buf[i] <= '9')
 			{
 				token[j] = buf[i];
 				i++;
