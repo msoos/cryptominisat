@@ -368,7 +368,7 @@ bool Subsumer::subsume0AndSubsume1()
     s1.clear();
     //uint32_t clTouchedTodo = cl_touched.nElems();
 
-    uint32_t clTouchedTodo = 10000;
+    uint32_t clTouchedTodo = 4000;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
     if (addedClauseLits > 10000000) clTouchedTodo /= 2;
 
