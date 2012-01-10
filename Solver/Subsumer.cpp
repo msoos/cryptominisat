@@ -1607,12 +1607,6 @@ bool Subsumer::maybeEliminate(const Var var)
             if (newCl != NULL) {
                 ClauseIndex newClSimp = linkInClause(*newCl);
                 subsume0(newClSimp, *newCl);
-            } else {
-                const bool needToMakeNonLearnt = subsume1(dummy, learnt);
-                //If clauses was added as learnt, but it subsumed a non-learnt clause
-                //we have to add it again, but this time, in non-learnt form
-                if (needToMakeNonLearnt && learnt)
-                    control->addClauseInt(dummy, false, 2, false);
             }
 
             if (!control->ok)
