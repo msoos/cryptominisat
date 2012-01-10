@@ -263,27 +263,35 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
 
         //Go through each literal and subsume/strengthen with it
         for (const Lit *l = cl.begin(), *end = cl.end(); l != end && !isSubsumed; l++) {
-            //Setup
             const Lit lit = *l;
 
             //Go through the watchlist
             const vec<Watched>& thisW = control->watches[(~lit).toInt()];
             countTime += thisW.size();
-            for(vec<Watched>::const_iterator wit = thisW.begin(), wend = thisW.end(); wit != wend; wit++) {
+            for(vec<Watched>::const_iterator
+                wit = thisW.begin(), wend = thisW.end()
+                ; wit != wend
+                ; wit++
+            ) {
 
                 //Strengthening w/ bin
-                if (wit->isBinary() && seen[l->toInt()] == 0)
+                if (wit->isBinary()
+                    && seen[lit.toInt()] //We haven't yet removed it
+                ) {
                     seen[(~wit->getOtherLit()).toInt()] = 0;
+                }
 
                 //Strengthening w/ tri
-                if (wit->isTriClause() && seen[l->toInt()] == 0) {
+                if (wit->isTriClause()
+                    && seen[lit.toInt()] //We haven't yet removed it
+                ) {
                     if (seen[(wit->getOtherLit()).toInt()])
                         seen[(~wit->getOtherLit2()).toInt()] = 0;
                     else if (seen[wit->getOtherLit2().toInt()])
                         seen[(~wit->getOtherLit()).toInt()] = 0;
                 }
 
-                //Subsumption
+                //Subsumption w/ bin
                 if (wit->isBinary() &&
                     seen_subs[wit->getOtherLit().toInt()]
                 ) {
@@ -294,6 +302,7 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
                     break;
                 }
 
+                //Subsumption w/ tri
                 if (wit->isTriClause()
                     && cl.size() > 3 //Don't subsume clause with itself
                     && cl.learnt() //We cannot distinguish between learnt and non-learnt, so we have to do with only learnt here
@@ -301,17 +310,18 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
                     && seen_subs[wit->getOtherLit2().toInt()]
                 ) {
                     isSubsumed = true;
-                    //If subsuming non-learnt with learnt, make the learnt into non-learnt
                     break;
                 }
             }
 
             //Go through the cache
-            countTime += control->implCache[l->toInt()].lits.size();
-            for (vector<LitExtra>::const_iterator it2 = control->implCache[lit.toInt()].lits.begin()
-                , end2 = control->implCache[lit.toInt()].lits.end(); it2 != end2; it2++
-            ) {
-                seen[(~(it2->getLit())).toInt()] = 0;
+            if (seen[lit.toInt()]) { //We haven't yet removed it
+                countTime += control->implCache[lit.toInt()].lits.size();
+                for (vector<LitExtra>::const_iterator it2 = control->implCache[lit.toInt()].lits.begin()
+                    , end2 = control->implCache[lit.toInt()].lits.end(); it2 != end2; it2++
+                ) {
+                    seen[(~(it2->getLit())).toInt()] = 0;
+                }
             }
         }
 
