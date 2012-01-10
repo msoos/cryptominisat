@@ -278,8 +278,10 @@ template<bool simple> inline bool Solver::propNormalClause(
         qhead = trail.size();
         return false;
     } else {
-        if (simple) enqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
-        else        addHyperBin(c, c[data[!watchNum]]);
+        if (simple)
+            enqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
+        else
+            addHyperBin(c, c[data[!watchNum]]);
     }
 
     return true;

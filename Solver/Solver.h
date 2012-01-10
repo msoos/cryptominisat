@@ -295,7 +295,8 @@ inline void Solver::enqueue(const Lit p, const PropBy from)
 
     const Var v = p.var();
     assert(value(v).isUndef());
-    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].begin());
+    if (watches[p.toInt()].size() > 0)
+        __builtin_prefetch(watches[p.toInt()].begin());
 
     assigns[v] = boolToLBool(!p.sign());
     #ifdef ANIMATE3D
