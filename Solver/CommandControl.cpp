@@ -305,9 +305,6 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
         seen[it->var()] = 0;
     toClear.clear();
 
-    //Calc stats
-    glue = calcNBLevels(out_learnt);
-
     //Cache-based minimisation
     if (conf.doCache
         && conf.doMinimLearntMore
