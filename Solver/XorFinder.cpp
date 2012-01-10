@@ -180,27 +180,26 @@ bool XorFinder::extractInfoFromBlock(const vector<Var>& block, const size_t bloc
     mzd_echelonize(mat, true);
 
     //Examine every row if it gives some new short truth
-    vector<Var> vars;
+    vector<Lit> lits;
     for(size_t i = 0; i < row; i++) {
         //Extract places where it's '1'
-        vars.clear();
+        lits.clear();
         for(size_t c = 0; c < numCols-1; c++) {
             if (mzd_read_bit(mat, i, c))
-                vars.push_back(interToOUterVarMap[c]);
+                lits.push_back(Lit(interToOUterVarMap[c], false));
 
             //No point in going on, we cannot do anything with >2-long XORs
-            if (vars.size() > 2)
+            if (lits.size() > 2)
                 break;
         }
 
         //Extract RHS
         const bool rhs = mzd_read_bit(mat, i, numCols-1);
 
-        switch(vars.size()) {
+        switch(lits.size()) {
             case 0:
                 //0-long XOR clause is equal to 1? If so, it's UNSAT
                 if (rhs) {
-                    vector<Lit> lits;
                     control->addXorClauseInt(lits, 1);
                     assert(!control->okay());
                     goto end;
@@ -209,7 +208,6 @@ bool XorFinder::extractInfoFromBlock(const vector<Var>& block, const size_t bloc
 
             case 1: {
                 newUnits++;
-                vector<Lit> lits;
                 control->addXorClauseInt(lits, rhs);
                 if (!control->okay())
                     goto end;
@@ -218,9 +216,6 @@ bool XorFinder::extractInfoFromBlock(const vector<Var>& block, const size_t bloc
 
             case 2: {
                 newBins++;
-                vector<Lit> lits;
-                lits.push_back(Lit(vars[0], false));
-                lits.push_back(Lit(vars[1], false));
                 control->addXorClauseInt(lits, rhs);
                 if (!control->okay())
                     goto end;
