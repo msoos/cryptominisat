@@ -133,7 +133,8 @@ it will become non-learnt.
 Handles it well if the subsumed clause has a higher activity than the subsuming
 clause (will take the max() of the two)
 
-@p ps The clause to use
+@p c The clause to use
+@p cl The clause to use
 
 */
 void Subsumer::subsume0(ClauseIndex c, Clause& cl)
