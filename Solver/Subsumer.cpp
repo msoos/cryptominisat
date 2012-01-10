@@ -1223,8 +1223,8 @@ from the beginning.
 void Subsumer::setLimits()
 {
     numMaxSubsume0 = 170L*1000L*1000L;
-    numMaxSubsume1 = 100L*1000L*1000L;
-    numMaxElim     = 100L*1000L*1000L;
+    numMaxSubsume1 = 80L*1000L*1000L;
+    numMaxElim     = 50L*1000L*1000L;
     numMaxAsymm    = 10L *1000L*1000L;
 
     //numMaxElim = 0;
