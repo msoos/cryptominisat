@@ -330,7 +330,7 @@ public:
 	}
 
 	unsigned int countActiveBinLinks(VarIdT theVar) const;
-	
+
 	unsigned int originalVarCount;
 
 	// END count something

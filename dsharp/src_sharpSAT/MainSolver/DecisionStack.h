@@ -38,12 +38,12 @@ class CDecision
 
     //  Solutioncount
     CRealNum  rnNumSols[2];
-    
+
     ////////////////////
     /// decision tree node
     ////////////////////
     DTNode * flipNode;
-    
+
 
     ////////////////////
     /// remaining Components
@@ -83,12 +83,12 @@ public:
         iImpLitOfs = (unsigned int) -1;
         iRemCompOfs = (unsigned int) -1;
         iEndRemComps = (unsigned int) -1;
-        
+
         flipNode = other;
     }
 
     ~CDecision() {}
-    
+
     DTNode * getDTNode() { return flipNode; }
     DTNode * getOrDTNode() { return flipNode; }
     DTNode * getCurrentDTNode()
@@ -134,7 +134,7 @@ class CDecisionStack : vector<CDecision>
     vector<LiteralIdT> allImpliedLits;
 
     vector<CComponentId *> allComponentsStack;
-    
+
     void reactivateTOS();
 
     // store each cacheEntry where the children of top().refComp are stored
@@ -144,7 +144,7 @@ class CDecisionStack : vector<CDecision>
 public:
 
 	DTNode * dtMain;
-	
+
     ///
     const vector<CComponentId *> & getAllCompStack()
     {
