@@ -19,11 +19,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some li
 # Set build flags if compiler if gcc
 # -----------------------------------------------------------------------------
 if (CMAKE_COMPILER_IS_GNUCC)
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO " \
-        -Wall -Wextra \
-        -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated \
-        -g -fno-omit-frame-pointer \
-        -O2 -mtune=native")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "  -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O2 -mtune=native")
     SET(CMAKE_CXX_FLAGS_DEBUG "-Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
     SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-deprecated -O2 -g -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
