@@ -70,9 +70,9 @@ class MTRand {
 // Data
 public:
 	typedef unsigned long uint32;  // unsigned integer type, at least 32 bits
-	
-	enum { N = 624 };       // length of state vector
-	enum { SAVE = N + 1 };  // length of array for save()
+
+	static const int N = 624;       // length of state vector
+	static const int SAVE = N + 1;  // length of array for save()
 
 protected:
 	enum { M = 397 };  // period parameter
@@ -231,7 +231,7 @@ inline void MTRand::seed( uint32 *const bigSeed, const uint32 seedLength )
 	initialize(19650218UL);
 	register int i = 1;
 	register uint32 j = 0;
-	register int k = ( N > seedLength ? N : seedLength );
+	register int k = ( N > (int)seedLength ? N : (int)seedLength );
 	for( ; k; --k )
 	{
 		state[i] =
