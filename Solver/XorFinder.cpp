@@ -386,6 +386,7 @@ void XorFinder::findXor(ClauseIndex c)
         std::cout << "XOR found: " << cl << std::endl;
         #endif
 
+        //Have we found this XOR clause already?
         const vector<uint32_t>& whereToFind = xorOcc[cl[0].var()];
         bool found = false;
         for (vector<uint32_t>::const_iterator it = whereToFind.begin(), end = whereToFind.end(); it != end; it++) {
@@ -394,6 +395,8 @@ void XorFinder::findXor(ClauseIndex c)
                 break;
             }
         }
+
+        //If XOR clause is new, add it
         if (!found) {
             xors.push_back(thisXor);
             uint32_t thisXorIndex = xors.size()-1;
@@ -509,7 +512,8 @@ void XorFinder::findXorMatch(const Occur& occ, FoundXors& foundCls)
             bool rhs = true;
             uint32_t i = 0;
             for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++, i++) {
-                if (!seen[l->var()]) goto end;
+                if (!seen[l->var()])
+                    goto end;
                 rhs ^= l->sign();
             }
             //either the invertedness has to match, or the size must be smaller
