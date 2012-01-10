@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <utility>
 #include <set>
+#include <utility>
 using std::make_pair;
 using std::set;
 
@@ -49,15 +50,6 @@ FailedLitSearcher::FailedLitSearcher(ThreadControl* _control):
 {
 }
 
-/**
-@brief The main function. Initialises data and calls tryBoth() for heavy-lifting
-
-It sets up the ground for tryBoth() and calls it as many times as it sees fit.
-One afther the other, the different optimisations' data structures are
-initialised, and their limits are set. Then tryBoth is called in two different
-forms: somewhat sequentially on varaibles x...z and then on randomly picked
-variables.
-*/
 bool FailedLitSearcher::search()
 {
     assert(control->decisionLevel() == 0);
@@ -95,7 +87,6 @@ bool FailedLitSearcher::search()
     addedBin = 0;
     removedBins = 0;
 
-    //uint32_t fromBin;
     origBogoProps = control->bogoProps;
     uint32_t i;
     for (i = 0; i < control->nVars(); i++) {
@@ -139,21 +130,6 @@ end:
     return control->ok;
 }
 
-
-/**
-@brief Prints results of failed litaral probing
-
-Printed:
-1) Num failed lits
-2) Num lits that have been propagated by both "var" and "~var"
-3) 2-long Xor clauses that have been found because when propagating "var" and
-   "~var", they have been produced by normal xor-clauses shortening to this xor
-   clause
-4) If var1 propagates var2 and ~var1 propagates ~var2, then var=var2, and this
-   is a 2-long XOR clause
-5) Number of propagations
-6) Time in seconds
-*/
 void FailedLitSearcher::printResults(const double myTime) const
 {
     std::cout << "c Flit: "<< std::setw(5) << numFailed <<

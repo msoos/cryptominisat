@@ -1162,6 +1162,10 @@ lbool ThreadControl::modelValue (const Lit p) const
 
 void ThreadControl::testAllClauseAttach() const
 {
+#ifndef DEBUG_ATTACH_MORE
+    return;
+#endif
+
     for (vector<Clause*>::const_iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
         assert(normClauseIsAttached(**it));
     }
@@ -1169,10 +1173,6 @@ void ThreadControl::testAllClauseAttach() const
 
 bool ThreadControl::normClauseIsAttached(const Clause& c) const
 {
-    #ifndef VERBOSE_DEBUG
-    return true;
-    #endif //VERBOSE_DEBUG
-
     bool attached = true;
     assert(c.size() > 2);
 
