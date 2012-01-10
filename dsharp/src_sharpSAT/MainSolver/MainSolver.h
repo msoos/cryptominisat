@@ -412,7 +412,7 @@ public:
 		out << "nnf " << nodeList->size() << " " << bdg_edge_count << " "
 				<< bdg_var_count << endl;
 
-		for (int i = 0; i < nodeList->size(); i++)
+		for (size_t i = 0; i < nodeList->size(); i++)
 		{
 			nodeList->at(i)->genNNF(out);
 		}
@@ -421,7 +421,7 @@ public:
 	void print_translation(const vector<int> trans)
 	{
 		toSTDOUT("Translation:" << endl);
-		for (int i = 0; i < trans.size(); ++i)
+		for (size_t i = 0; i < trans.size(); ++i)
 		{
 			toSTDOUT(i << " -> " << trans[i] << endl);
 		}

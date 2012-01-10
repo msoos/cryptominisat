@@ -46,14 +46,14 @@ static unsigned int randNorm(double mean, double variance)
 static std::vector<clause> clauses;
 bool need_regular_clauses = true;
 
-int main(int argc, char *argv[])
+int main(int, char **)
 {
     unsigned int nr_variables = randNorm(120, 50);
 
     unsigned int nr_constraint_types = 2 + rnd.randInt(15);
     for (unsigned int i = 0; i < nr_constraint_types; ++i) {
         bool is_xor = (rnd.randInt(15) == 1);
-        int nr_literals = 3 + ((rnd.randInt(4) == 1) ? rnd.randInt(40) : rnd.randInt(3));
+        unsigned nr_literals = 3 + ((rnd.randInt(4) == 1) ? rnd.randInt(40) : rnd.randInt(3));
         //printf("c literal num: %u\n", nr_literals);
         unsigned int offsets[nr_literals];
         bool polarities[nr_literals];
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
                 nr_literals -= (int)rnd.randInt(2) - 1;
                 if (nr_literals < 1) nr_literals = 3;
             }
-            if (c.is_xor) nr_literals = std::min(nr_literals, 6);
+            if (c.is_xor) nr_literals = std::min<unsigned>(nr_literals, 6);
 
             for (unsigned int k = 0; k < nr_literals; ++k) {
                 int lit = (polarities[k] ? -1 : 1) * (1 + ((j + offsets[k]) % nr_variables));

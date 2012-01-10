@@ -34,7 +34,7 @@ XorFinder::XorFinder(Subsumer* _subsumer, ThreadControl* _control) :
     , seen2(_subsumer->seen2)
 {}
 
-const bool XorFinder::findXors()
+bool XorFinder::findXors()
 {
     double myTime = cpuTime();
     xors.clear();
@@ -440,7 +440,7 @@ void XorFinder::findXor(ClauseIndex c)
     }
 
     //Set this clause as the base for the FoundXors
-    FoundXors foundCls(c, cl, subsumer->clauseData[c.index], rhs, whichOne);
+    FoundXors foundCls(cl, subsumer->clauseData[c.index], rhs, whichOne);
 
     const Lit *l = cl.begin();
     for (const Lit *end = cl.end(); l != end; l++) {
@@ -496,7 +496,7 @@ void XorFinder::findXorMatch(const vec<Watched>& ws, const Lit lit, FoundXors& f
             && seen[it->getOtherLit().var()]
             )
         {
-            foundCls.add(lit, it->getOtherLit(), it->getLearnt());
+            foundCls.add(lit, it->getOtherLit());
         }
     }
 }
@@ -505,7 +505,7 @@ void XorFinder::findXorMatch(const vector<LitExtra>& lits, const Lit lit, FoundX
 {
     for (vector<LitExtra>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++)  {
         if (seen[it->getLit().var()]) {
-            foundCls.add(lit, it->getLit(), !it->getOnlyNLBin());
+            foundCls.add(lit, it->getLit());
         }
     }
 }
@@ -565,7 +565,7 @@ void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
 
             std::sort(tmpClause.begin(), tmpClause.end());
             //std::cout << "OK!" << std::endl;
-            foundCls.add(it->index, tmpClause);
+            foundCls.add(tmpClause);
 
             end:;
             //std::cout << "Not OK" << std::endl;
@@ -602,7 +602,7 @@ void XorFinder::findXorMatch(const Occur& occ, FoundXors& foundCls)
             if (cl.size() == foundCls.getSize())
                 triedAlready[index] = 1;
 
-            foundCls.add(it->index, cl);
+            foundCls.add(cl);
             end:;
         }
     }

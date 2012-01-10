@@ -115,7 +115,7 @@ added back again.
 
 @p var The variable to be added back again
 */
-const bool Subsumer::unEliminate(const Var var, ThreadControl* tcontrol)
+bool Subsumer::unEliminate(const Var, ThreadControl*)
 {
     //TODO
     assert(false);
@@ -792,7 +792,7 @@ Performs, recursively:
 * variable elimination
 
 */
-const bool Subsumer::simplifyBySubsumption()
+bool Subsumer::simplifyBySubsumption()
 {
     //Test & debug
     control->testAllClauseAttach();
@@ -801,7 +801,7 @@ const bool Subsumer::simplifyBySubsumption()
             && "Cannot work in an environment when elimnated vars could be replaced by other vars");
 
     //Clean the clauses before playing with them
-    control->clauseCleaner->removeAndCleanAll(true);
+    control->clauseCleaner->removeAndCleanAll();
 
     //If too many clauses, don't do it
     if (control->getNumClauses() > 10000000UL
@@ -1383,7 +1383,7 @@ void inline Subsumer::fillSubs(const T& ps, const uint32_t index, const CL_ABST_
 }
 
 
-void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit, std::pair<uint32_t, uint32_t>& removed)
+void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
 {
     clauses_elimed += todo.size();
 
@@ -1452,12 +1452,8 @@ void Subsumer::removeClauses(vector<ClAndBin>& posAll, vector<ClAndBin>& negAll,
     removed.first = 0;
     removed.second = 0;
 
-    removeClausesHelper(posAll, Lit(var, false), removed);
-    removeClausesHelper(negAll, Lit(var, true), removed);
-
-    control->learntsLits -= removed.first;
-    control->clausesLits -= removed.second;
-    control->numBins -= (removed.first + removed.second)/2;
+    removeClausesHelper(posAll, Lit(var, false));
+    removeClausesHelper(negAll, Lit(var, true));
 }
 
 uint32_t Subsumer::numNonLearntBins(const Lit lit) const
@@ -1883,7 +1879,7 @@ bool Subsumer::verifyIntegrity()
     return true;
 }
 
-inline const bool Subsumer::allTautologySlim(const Lit lit)
+inline bool Subsumer::allTautologySlim(const Lit lit)
 {
     const Occur& cs = occur[lit.toInt()];
     const vec<Watched>& ws = control->watches[(~lit).toInt()];
@@ -1923,7 +1919,7 @@ the running of this class.
 
 @return TRUE if they are all unassigned
 */
-const bool Subsumer::checkElimedUnassigned() const
+bool Subsumer::checkElimedUnassigned() const
 {
     uint32_t checkNumElimed = 0;
     for (uint32_t i = 0; i < var_elimed.size(); i++) {

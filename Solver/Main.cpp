@@ -73,7 +73,7 @@ the program must wait until it gets to a state where the learnt clauses are in
 a correct state, then dump these and quit normally. This interrupt hander
 is used to achieve this
 */
-void SIGINT_handler(int signum)
+void SIGINT_handler(int)
 {
     ThreadControl* control = solverToInterrupt;
     std::cout << "c " << std::endl;
@@ -642,7 +642,7 @@ void Main::printVersionInfo(const uint32_t verbosity)
     }
 }
 
-const int Main::solve()
+int Main::solve()
 {
     control = new ThreadControl(conf);
     solverToInterrupt = control;

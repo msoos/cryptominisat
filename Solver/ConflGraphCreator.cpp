@@ -39,7 +39,6 @@ class PropByFull
                     , Lit otherLit
                     , const ClauseAllocator& alloc
                     , const vector<ClauseData>& clauseData
-                    , const vector<lbool>& assigns
         ) :
             type(10)
             , isize(0)
@@ -97,27 +96,27 @@ class PropByFull
             return *this;
         }
 
-        const uint32_t size() const
+        uint32_t size() const
         {
             return isize;
         }
 
-        const bool isNULL() const
+        bool isNULL() const
         {
             return type == 0 && clause == NULL;
         }
 
-        const bool isClause() const
+        bool isClause() const
         {
             return type == 0;
         }
 
-        const bool isBinary() const
+        bool isBinary() const
         {
             return type == 1;
         }
 
-        const bool isTri() const
+        bool isTri() const
         {
             return type == 2;
         }
@@ -132,7 +131,7 @@ class PropByFull
             return clause;
         }
 
-        const Lit operator[](const uint32_t i) const
+        Lit operator[](const uint32_t i) const
         {
             switch (type) {
                 case 0:
@@ -163,7 +162,7 @@ inline std::ostream& operator<<(std::ostream& os, const PropByFull& propByFull)
     return os;
 }
 
-const string CommandControl::simplAnalyseGraph(PropBy conflHalf, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue)
+string CommandControl::simplAnalyseGraph(PropBy conflHalf, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue)
 {
     int pathC = 0;
     Lit p = lit_Undef;
@@ -173,7 +172,7 @@ const string CommandControl::simplAnalyseGraph(PropBy conflHalf, vector<Lit>& ou
     out_btlevel = 0;
     std::stringstream resolutions;
 
-    PropByFull confl(conflHalf, failBinLit, *clAllocator, clauseData, assigns);
+    PropByFull confl(conflHalf, failBinLit, *clAllocator, clauseData);
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
 
@@ -210,7 +209,7 @@ const string CommandControl::simplAnalyseGraph(PropBy conflHalf, vector<Lit>& ou
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
-        confl = PropByFull(varData[p.var()].reason, p, *clAllocator, clauseData, assigns);
+        confl = PropByFull(varData[p.var()].reason, p, *clAllocator, clauseData);
         seen[p.var()] = 0; // this one is resolved
         pathC--;
     } while (pathC > 0); //UIP when eveything goes through this one
@@ -264,7 +263,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
     << " , fontsize=8"
     << " ];" << std::endl;
 
-    PropByFull confl(conflPart, failBinLit, *clAllocator, clauseData, assigns);
+    PropByFull confl(conflPart, failBinLit, *clAllocator, clauseData);
     #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
     std::cout << "conflict: "<< confl << std::endl;
     #endif
@@ -310,7 +309,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
             std::cout << "Reason for lit " << lits[i] << " : " << reason << std::endl;
             #endif
 
-            PropByFull prop(reason, lits[i], *clAllocator, clauseData, assigns);
+            PropByFull prop(reason, lits[i], *clAllocator, clauseData);
             for (uint32_t i2 = 0; i2 < prop.size(); i2++) {
                 const Lit lit = prop[i2];
                 assert(value(lit) != l_Undef);
@@ -344,7 +343,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
         //A decision variable, it is not propagated by any clause
         if (reason.isNULL()) continue;
 
-        PropByFull prop(reason, lit, *clAllocator, clauseData, assigns);
+        PropByFull prop(reason, lit, *clAllocator, clauseData);
         for (uint32_t i = 0; i < prop.size(); i++) {
             if (prop[i] == lit //This is being propagated, don't make a circular line
                 || varData[prop[i].var()].level == 0 //'clean' clauses of 0-level lits

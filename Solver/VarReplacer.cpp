@@ -64,7 +64,7 @@ which have been removed by other methods:
 NOTE: If any new such algoirhtms are added, this part MUST be updated such
 that problems don't creep up
 */
-const bool VarReplacer::performReplace()
+bool VarReplacer::performReplace()
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "PerformReplacInternal started." << std::endl;
@@ -82,7 +82,7 @@ const bool VarReplacer::performReplace()
     std::cout << "c Number of redirected nodes:" << numRedir << std::endl;
     #endif //REPLACE_STATISTICS
 
-    control->clauseCleaner->removeAndCleanAll(true);
+    control->clauseCleaner->removeAndCleanAll();
     if (!control->ok) return false;
     control->testAllClauseAttach();
 
@@ -158,7 +158,7 @@ end:
     return control->ok;
 }
 
-const bool VarReplacer::replaceBins()
+bool VarReplacer::replaceBins()
 {
     #ifdef DEBUG_BIN_REPLACER
     vector<uint32_t> removed(control->nVars()*2, 0);
@@ -256,7 +256,7 @@ const bool VarReplacer::replaceBins()
 /**
 @brief Replaces variables in normal clauses
 */
-const bool VarReplacer::replace_set(vector<Clause*>& cs)
+bool VarReplacer::replace_set(vector<Clause*>& cs)
 {
     vector<Clause*>::iterator a = cs.begin();
     vector<Clause*>::iterator r = a;
@@ -309,7 +309,7 @@ const bool VarReplacer::replace_set(vector<Clause*>& cs)
 /**
 @brief Helper function for replace_set()
 */
-const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3)
+bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3)
 {
     bool satisfied = false;
     std::sort(c.begin(), c.begin() + c.size());
@@ -363,7 +363,7 @@ const bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const
 /**
 @brief Returns variables that have been replaced
 */
-const vector<Var> VarReplacer::getReplacingVars() const
+vector<Var> VarReplacer::getReplacingVars() const
 {
     vector<Var> replacingVars;
 
@@ -420,7 +420,7 @@ know that c=h, in which case we don't do anything
 @p ps must contain 2 variables(!), i.e literals with no sign
 @p xorEqualFalse if True, the two variables are equivalent. Otherwise, they are antivalent
 */
-const bool VarReplacer::replace(Lit lit1, Lit lit2, const bool xorEqualFalse)
+bool VarReplacer::replace(Lit lit1, Lit lit2, const bool xorEqualFalse)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "replace() called with var " << lit1 << " and var " << lit2 << " with xorEqualFalse " << xorEqualFalse << std::endl;
@@ -556,7 +556,7 @@ void VarReplacer::newVar()
     table.push_back(Lit(table.size(), false));
 }
 
-const bool VarReplacer::addLaterAddBinXor()
+bool VarReplacer::addLaterAddBinXor()
 {
     assert(control->ok);
 

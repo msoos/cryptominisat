@@ -74,7 +74,7 @@ CommandControl::~CommandControl()
 {
 }
 
-const Var CommandControl::newVar(const bool dvar)
+Var CommandControl::newVar(const bool dvar)
 {
     const Var var = Solver::newVar(dvar);
     if (dvar)
@@ -317,7 +317,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
             || out_learnt.size() < 0.65*conflSizeHist.getAvgDouble()
             )
     ) {
-        minimiseLearntFurther(out_learnt, calcNBLevels(out_learnt));
+        minimiseLearntFurther(out_learnt);
     }
 
     //Calc stats
@@ -706,7 +706,7 @@ lbool CommandControl::search(SearchFuncParams _params)
     while (true) {
         assert(ok);
         size_t oldTrailSize = trail.size();
-        const PropBy confl= propagate(params.update);
+        const PropBy confl= propagate();
         if (decisionLevel() == 0 && trail.size() > oldTrailSize)
             addToThreads(oldTrailSize);
 
@@ -740,7 +740,7 @@ lbool CommandControl::search(SearchFuncParams _params)
                 return l_Undef;
             }
 
-            const lbool ret = new_decision(params);
+            const lbool ret = new_decision();
             if (ret != l_Undef)
                 return ret;
         }
@@ -753,7 +753,7 @@ lbool CommandControl::search(SearchFuncParams _params)
 @returns l_Undef if it should restart instead. l_False if it reached UNSAT
          (through simplification)
 */
-const lbool CommandControl::new_decision(const SearchFuncParams& params)
+lbool CommandControl::new_decision()
 {
     Lit next = lit_Undef;
     while (decisionLevel() < assumptions.size()) {
@@ -833,7 +833,7 @@ conflict analysis, but this is the code that actually replaces the original
 clause with that of the shorter one
 @returns l_False if UNSAT
 */
-const bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
+bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Handling conflict" << std::endl;
@@ -1238,7 +1238,7 @@ polarities, and start the loop. Finally, we either report UNSAT or extend the
 found solution with all the intermediary simplifications (e.g. variable
 elimination, etc.) and output the solution.
 */
-const lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
+lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 {
     assert(ok);
     assert(qhead == trail.size());
@@ -1358,14 +1358,14 @@ Then, we pick a sign (True/False):
 totally randomly
 \li Otherwise, we simply take the saved polarity
 */
-const Lit CommandControl::pickBranchLit()
+Lit CommandControl::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "decision level: " << decisionLevel() << " ";
     #endif
 
     Var next = var_Undef;
-    bool sign;
+    bool sign = true;
 
     // Random decision:
     if (next == var_Undef
@@ -1439,7 +1439,7 @@ const Lit CommandControl::pickBranchLit()
 Only uses binary and tertiary clauses already in the watchlists in native
 form to carry out the forward-self-subsuming resolution
 */
-void CommandControl::minimiseLearntFurther(vector<Lit>& cl, const uint32_t glue)
+void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
 {
     assert(conf.doCache);
     furtherClMinim++;
@@ -1537,7 +1537,7 @@ bool CommandControl::VarFilter::operator()(Var v) const
     return (cc->value(v) == l_Undef && control->decision_var[v]);
 }
 
-const uint64_t CommandControl::getNumConflicts() const
+uint64_t CommandControl::getNumConflicts() const
 {
     return numConflicts;
 }

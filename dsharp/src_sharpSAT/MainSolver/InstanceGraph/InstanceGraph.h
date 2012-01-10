@@ -293,7 +293,7 @@ public:
 	// END access to variables and clauses
 	/////////////////////////////////////////////////////////
 
-	inline const ClauseIdT getLastClauseId()
+	ClauseIdT getLastClauseId()
 	{
 		return ClauseIdT(theClauses.size() - 1);
 	}

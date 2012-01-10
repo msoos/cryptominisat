@@ -59,12 +59,12 @@ class FailedLitSearcher {
     public:
         FailedLitSearcher(ThreadControl* _control);
 
-        const bool search();
-        const double getTotalTime() const;
+        bool search();
+        double getTotalTime() const;
 
     private:
         //Main
-        const bool tryBoth(const Lit lit1, const Lit lit2);
+        bool tryBoth(const Lit lit1, const Lit lit2);
         void printResults(const double myTime) const;
 
         ThreadControl* control; ///<The solver we are updating&working with
@@ -98,7 +98,7 @@ class FailedLitSearcher {
         class TwoLongXor
         {
         public:
-            const bool operator==(const TwoLongXor& other) const
+            bool operator==(const TwoLongXor& other) const
             {
                 if (var[0] == other.var[0]
                     && var[1] == other.var[1]
@@ -106,7 +106,7 @@ class FailedLitSearcher {
                     return true;
                 return false;
             }
-            const bool operator<(const TwoLongXor& other) const
+            bool operator<(const TwoLongXor& other) const
             {
                 if (var[0] < other.var[0]) return true;
                 if (var[0] > other.var[0]) return false;
@@ -143,8 +143,8 @@ class FailedLitSearcher {
 
         //Multi-level
         void calcNegPosDist();
-        const bool tryMultiLevel(const vector<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed);
-        const bool tryMultiLevelAll();
+        bool tryMultiLevel(const vector<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed);
+        bool tryMultiLevelAll();
         void fillToTry(vector<Var>& toTry);
 
         //Temporaries
@@ -174,7 +174,7 @@ class FailedLitSearcher {
         uint32_t numCalls; ///<Number of times search() has been called
 };
 
-inline const double FailedLitSearcher::getTotalTime() const
+inline double FailedLitSearcher::getTotalTime() const
 {
     return totalTime;
 }

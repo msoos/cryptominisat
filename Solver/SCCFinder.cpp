@@ -35,7 +35,7 @@ SCCFinder::SCCFinder(ThreadControl* _control) :
     , totalTime(0.0)
 {}
 
-const bool SCCFinder::find2LongXors()
+bool SCCFinder::find2LongXors()
 {
     double myTime = cpuTime();
     uint32_t oldNumReplace = control->varReplacer->getNewToReplaceVars();

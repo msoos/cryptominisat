@@ -55,7 +55,7 @@ class LitExtra {
             return Lit::toLit(x>>1);
         }
 
-        const bool getOnlyNLBin() const
+        bool getOnlyNLBin() const
         {
             return x&1;
         }
@@ -65,19 +65,19 @@ class LitExtra {
             x  |= 0x1;
         }
 
-        const bool operator<(const LitExtra other) const
+        bool operator<(const LitExtra other) const
         {
             if (getOnlyNLBin() && !other.getOnlyNLBin()) return false;
             if (!getOnlyNLBin() && other.getOnlyNLBin()) return true;
             return (getLit() < other.getLit());
         }
 
-        const bool operator==(const LitExtra other) const
+        bool operator==(const LitExtra other) const
         {
             return x == other.x;
         }
 
-        const bool operator!=(const LitExtra other) const
+        bool operator!=(const LitExtra other) const
         {
             return x != other.x;
         }
@@ -160,13 +160,13 @@ class ImplCache  {
             implCache.push_back(TransCache());
         }
 
-        const size_t size() const
+        size_t size() const
         {
             return implCache.size();
         }
 
         void clean(ThreadControl* control);
-        const bool tryBoth(ThreadControl* control);
+        bool tryBoth(ThreadControl* control);
 };
 
 #endif //TRANSCACHE_H

@@ -45,7 +45,7 @@ static inline void remove(V& ts, const T& t)
 }
 
 template<class V>
-static inline const uint32_t removeAll(V& ts, const Var t)
+static inline uint32_t removeAll(V& ts, const Var t)
 {
     typedef typename V::iterator myiter;
     myiter i = ts.begin();
@@ -111,7 +111,7 @@ static inline void removeWCl(vec<Watched> &ws, const ClauseOffset c)
 // TRI Clause
 //////////////////
 
-static inline const bool findWTri(const vec<Watched> &ws, const Lit lit1, const Lit lit2)
+static inline bool findWTri(const vec<Watched> &ws, const Lit lit1, const Lit lit2)
 {
     vec<Watched>::const_iterator i = ws.begin(), end = ws.end();
     for (; i != end && (!i->isTriClause() || i->getOtherLit() != lit1 || i->getOtherLit2() != lit2); i++);

@@ -88,22 +88,22 @@ class Watched {
             data1 = lit.toInt();
         }
 
-        const bool isBinary() const
+        bool isBinary() const
         {
             return ((data2&3) == 0);
         }
 
-        const bool isNonLearntBinary() const
+        bool isNonLearntBinary() const
         {
             return (data2 == 0);
         }
 
-        const bool isClause() const
+        bool isClause() const
         {
             return ((data2&3) == 1);
         }
 
-        const bool isTriClause() const
+        bool isTriClause() const
         {
             return ((data2&3) == 3);
         }
@@ -111,7 +111,7 @@ class Watched {
         /**
         @brief Get the sole other lit of the binary clause, or get lit2 of the tertiary clause
         */
-        const Lit getOtherLit() const
+        Lit getOtherLit() const
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTriClause());
@@ -130,7 +130,7 @@ class Watched {
             data1 = lit.toInt();
         }
 
-        const bool getLearnt() const
+        bool getLearnt() const
         {
             #ifdef DEBUG_WATCHED
             assert(isBinary());
@@ -150,7 +150,7 @@ class Watched {
         /**
         @brief Get the 3rd literal of a 3-long clause
         */
-        const Lit getOtherLit2() const
+        Lit getOtherLit2() const
         {
             #ifdef DEBUG_WATCHED
             assert(isTriClause());
@@ -161,7 +161,7 @@ class Watched {
         /**
         @brief Get example literal (blocked lit) of a normal >3-long clause
         */
-        const Lit getBlockedLit() const
+        Lit getBlockedLit() const
         {
             #ifdef DEBUG_WATCHED
             assert(isClause());
@@ -169,7 +169,7 @@ class Watched {
             return Lit::toLit(data1>>1);
         }
 
-        const bool getWatchNum() const
+        bool getWatchNum() const
         {
             #ifdef DEBUG_WATCHED
             assert(isClause());
@@ -180,7 +180,7 @@ class Watched {
         /**
         @brief Get offset of a >3-long normal clause or of an xor clause (which may be 3-long)
         */
-        const ClauseOffset getNormOffset() const
+        ClauseOffset getNormOffset() const
         {
             #ifdef DEBUG_WATCHED
             assert(isClause());
@@ -189,12 +189,12 @@ class Watched {
         }
 
     private:
-        const Lit data1AsLit() const
+        Lit data1AsLit() const
         {
             return (Lit::toLit(data1));
         }
 
-        const Lit data2AsLit() const
+        Lit data2AsLit() const
         {
             return (Lit::toLit(data2>>2));
         }

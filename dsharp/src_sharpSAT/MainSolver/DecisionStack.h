@@ -118,7 +118,7 @@ public:
         return rnNumSols[flipped];
     }
 
-    const CRealNum getOverallSols() const
+    CRealNum getOverallSols() const
     {
         return rnNumSols[0] + rnNumSols[1];
     }

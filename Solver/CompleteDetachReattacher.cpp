@@ -50,7 +50,7 @@ void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
 /**
 @brief Helper function for detachPointerUsingClauses()
 */
-const CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri)
+CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri)
 {
     ClausesStay stay;
 
@@ -74,7 +74,7 @@ const CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNo
 /**
 @brief Completely attach all clauses
 */
-const bool CompleteDetachReatacher::reattachNonBins()
+bool CompleteDetachReatacher::reattachNonBins()
 {
     assert(control->ok);
 
@@ -112,7 +112,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(vector<Clause*>& cs)
 /**
 @brief Not only cleans a clause from false literals, but if clause is satisfied, it reports it
 */
-const bool CompleteDetachReatacher::cleanClause(Clause*& cl)
+bool CompleteDetachReatacher::cleanClause(Clause*& cl)
 {
     Clause& ps = *cl;
     assert(ps.size() > 2);

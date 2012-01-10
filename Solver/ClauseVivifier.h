@@ -33,19 +33,19 @@ class Clause;
 class ClauseVivifier {
     public:
         ClauseVivifier(ThreadControl* control);
-        const bool vivify();
+        bool vivify();
 
     private:
 
         //Actual algorithms used
-        const bool vivifyClausesNormal();
-        const bool vivifyClausesCache(vector<Clause*>& clauses);
+        bool vivifyClausesNormal();
+        bool vivifyClausesCache(vector<Clause*>& clauses);
         void       makeNonLearntBin(const Lit lit1, const Lit lit2);
 
         ///Sort clauses according to size
         struct SortBySize
         {
-            const bool operator () (const Clause* x, const Clause* y);
+            bool operator () (const Clause* x, const Clause* y);
         };
 
         //Misc data

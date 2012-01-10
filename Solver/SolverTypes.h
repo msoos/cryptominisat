@@ -49,7 +49,9 @@ class Lit
     explicit Lit(uint32_t i) : x(i) { };
 public:
     Lit() : x(2*var_Undef) {}   // (lit_Undef)
-    explicit Lit(Var var, bool sign) : x((2*var) | (uint32_t)sign) { }
+    explicit Lit(Var var, bool sign) :
+        x((2*var) | (uint32_t)sign)
+    {}
 
     const uint32_t& toInt() const { // Guarantees small, positive integers suitable for array indexing.
         return x;
@@ -123,27 +125,43 @@ class lbool
     explicit lbool(char v) : value(v) { }
 
 public:
-    lbool()       : value(0) { };
-    inline char getchar() const {
+    lbool() :
+        value(0)
+    {
+    };
+
+    char getchar() const
+    {
         return value;
     }
 
-    inline const bool isUndef() const {
+    bool isUndef() const
+    {
         return !value;
     }
-    inline const bool isDef() const {
+
+    bool isDef() const
+    {
         return value;
     }
-    inline const bool getBool() const {
+
+    bool getBool() const
+    {
         return value == 1;
     }
-    inline const bool operator==(lbool b) const {
+
+    bool operator==(lbool b) const
+    {
         return value == b.value;
     }
-    inline const bool operator!=(lbool b) const {
+
+    bool operator!=(lbool b) const
+    {
         return value != b.value;
     }
-    lbool operator^(const char b) const {
+
+    lbool operator^(const char b) const
+    {
         return b ? lbool(-value) : lbool(value);
     }
     //lbool operator ^ (const bool b) const { return b ? lbool(-value) : lbool(value); }
@@ -210,7 +228,7 @@ class BinaryClause {
             if (lit1 > lit2) std::swap(lit1, lit2);
         }
 
-        const bool operator<(const BinaryClause& other) const
+        bool operator<(const BinaryClause& other) const
         {
             if (lit1 < other.lit1) return true;
             if (lit1 > other.lit1) return false;
@@ -220,7 +238,7 @@ class BinaryClause {
             return (learnt && !other.learnt);
         }
 
-        const bool operator==(const BinaryClause& other) const
+        bool operator==(const BinaryClause& other) const
         {
             return (lit1 == other.lit1
                     && lit2 == other.lit2
@@ -237,7 +255,7 @@ class BinaryClause {
             return lit2;
         }
 
-        const bool getLearnt() const
+        bool getLearnt() const
         {
             return learnt;
         }
@@ -276,7 +294,7 @@ class AgilityData
             if (flipped) agility += 1.0 - agilityG;
         }
 
-        const double getAgility() const
+        double getAgility() const
         {
             return agility;
         }
@@ -294,7 +312,7 @@ class AgilityData
             lastConflTooLow = confl;
         }
 
-        const uint32_t getNumTooLow() const
+        uint32_t getNumTooLow() const
         {
             return numTooLow;
         }
@@ -329,6 +347,7 @@ struct SearchFuncParams
         needToStopSearch(false)
         , conflictsDoneThisRestart(0)
         , conflictsToDo(_conflictsToDo)
+        , maxNumConfl(_maxNumConfl)
         , update(_update)
     {}
 
@@ -336,6 +355,7 @@ struct SearchFuncParams
     uint64_t conflictsDoneThisRestart;
 
     const uint64_t conflictsToDo;
+    const uint64_t maxNumConfl;
     const bool update;
 };
 

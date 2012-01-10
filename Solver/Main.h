@@ -30,7 +30,7 @@ class Main
         Main(int argc, char** argv);
 
         void parseCommandLine();
-        const int solve();
+        int solve();
 
     private:
 

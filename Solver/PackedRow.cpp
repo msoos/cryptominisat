@@ -84,7 +84,7 @@ uint32_t PackedRow::popcnt(const uint32_t from) const
     return popcnt;
 }
 
-const bool PackedRow::fill(vector<Lit>& tmp_clause, const vector<lbool>& assigns, const vector<Var>& col_to_var_original) const
+bool PackedRow::fill(vector<Lit>& tmp_clause, const vector<lbool>& assigns, const vector<Var>& col_to_var_original) const
 {
     bool final = !is_true_internal;
 

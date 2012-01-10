@@ -137,7 +137,7 @@ public:
         return is_true_internal;
     }
 
-    inline const bool isZero() const
+    bool isZero() const
     {
         for (uint32_t i = 0; i != size; i++) {
             if (mp[i]) return false;
@@ -145,22 +145,22 @@ public:
         return true;
     }
 
-    inline void setZero()
+    void setZero()
     {
         memset(mp, 0, sizeof(uint64_t)*size);
     }
 
-    inline void clearBit(const uint32_t i)
+    void clearBit(const uint32_t i)
     {
         mp[i/64] &= ~((uint64_t)1 << (i%64));
     }
 
-    inline void invert_is_true(const bool b = true)
+    void invert_is_true(const bool b = true)
     {
         is_true_internal ^= (uint64_t)b;
     }
 
-    inline void setBit(const uint32_t i)
+    void setBit(const uint32_t i)
     {
         mp[i/64] |= ((uint64_t)1 << (i%64));
     }
@@ -186,7 +186,7 @@ public:
         }
     }
 
-    inline const bool operator[](const uint32_t& i) const
+    bool operator[](const uint32_t& i) const
     {
         #ifdef DEBUG_ROW
         assert(size*64 > i);
@@ -211,9 +211,9 @@ public:
         is_true_internal = !v.xorEqualFalse();
     }
 
-    const bool fill(vector<Lit>& tmp_clause, const vector<lbool>& assigns, const vector<Var>& col_to_var_original) const;
+    bool fill(vector<Lit>& tmp_clause, const vector<lbool>& assigns, const vector<Var>& col_to_var_original) const;
 
-    inline unsigned long int scan(const unsigned long int var) const
+    unsigned long int scan(const unsigned long int var) const
     {
         #ifdef DEBUG_ROW
         assert(size > 0);

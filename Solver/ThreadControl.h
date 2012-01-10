@@ -55,35 +55,35 @@ class ThreadControl : public Solver
 
         //////////////////////////////
         //Solving
-        const lbool solve(const int threads);
+        lbool solve(const int threads);
         void        setNeedToInterrupt();
         vector<lbool>  model;
-        const lbool   modelValue (const Lit p) const;  ///<Found model value for lit
+        lbool   modelValue (const Lit p) const;  ///<Found model value for lit
 
         //////////////////////////////
         // Problem specification:
-        const Var  newVar(const bool dvar = true); ///< Add new variable
-        const bool addClause (const vector<Lit>& ps);  ///< Add clause to the solver
-        const bool addLearntClause(const vector<Lit>& ps, const uint32_t glue = 10);
+        Var  newVar(const bool dvar = true); ///< Add new variable
+        bool addClause (const vector<Lit>& ps);  ///< Add clause to the solver
+        bool addLearntClause(const vector<Lit>& ps, const uint32_t glue = 10);
 
         //////////////////////////
         //Stats
-        const uint64_t getNumClauses() const;                 ///<Return number of ALL clauses: non-learnt, learnt, bin
-        const uint32_t getNumUnsetVars() const;               ///<Return number of unset vars
-        const uint32_t getNumElimSubsume() const;             ///<Get number of variables eliminated
-        const uint32_t getNumXorTrees() const;                ///<Get the number of SCC trees
-        const uint32_t getNumXorTreesCrownSize() const;       ///<Get the number of variables being replaced by other variables
-        const double   getTotalTimeSubsumer() const;          ///<Get total time spent in norm-clause massaging
-        const double   getTotalTimeFailedLitSearcher() const; ///<Get total time spend in failed-lit probing and related algos
-        const double   getTotalTimeSCC() const;               ///<Get total time spent finding binary equi/antivalences
-        const bool     getNeedToDumpLearnts() const;
-        const bool     getNeedToDumpOrig() const;
-        const uint64_t getNumTotalConflicts() const;
-        const uint32_t getVerbosity() const;                  ///<Return verbosity level
+        uint64_t getNumClauses() const;                 ///<Return number of ALL clauses: non-learnt, learnt, bin
+        uint32_t getNumUnsetVars() const;               ///<Return number of unset vars
+        uint32_t getNumElimSubsume() const;             ///<Get number of variables eliminated
+        uint32_t getNumXorTrees() const;                ///<Get the number of SCC trees
+        uint32_t getNumXorTreesCrownSize() const;       ///<Get the number of variables being replaced by other variables
+        double   getTotalTimeSubsumer() const;          ///<Get total time spent in norm-clause massaging
+        double   getTotalTimeFailedLitSearcher() const; ///<Get total time spend in failed-lit probing and related algos
+        double   getTotalTimeSCC() const;               ///<Get total time spent finding binary equi/antivalences
+        bool     getNeedToDumpLearnts() const;
+        bool     getNeedToDumpOrig() const;
+        uint64_t getNumTotalConflicts() const;
+        uint32_t getVerbosity() const;                  ///<Return verbosity level
         void           printStats();
-        const uint32_t getNumDecisionVars() const;            ///<Get number of decision vars. May not be accurate TODO fix this
-        const uint32_t getNumFreeVars() const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars. These are truly free
-        const uint32_t getNewToReplaceVars() const;           ///<Return number of variables waiting to be replaced
+        uint32_t getNumDecisionVars() const;            ///<Get number of decision vars. May not be accurate TODO fix this
+        uint32_t getNumFreeVars() const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars. These are truly free
+        uint32_t getNewToReplaceVars() const;           ///<Return number of variables waiting to be replaced
         uint64_t getSumConflicts() const;
         uint64_t getNextCleanLimit() const;
 
@@ -114,8 +114,8 @@ class ThreadControl : public Solver
         virtual void  attachBinClause     (const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst = true);
         virtual void  detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
         template<class T> Clause* addClauseInt(const T& ps, const bool learnt = false, const uint32_t glue = 10, const bool attach = true);
-        const bool addXorClauseInt(const vector<Lit>& lits, bool rhs);
-        const lbool simplifyProblem(const uint64_t numConfls);
+        bool addXorClauseInt(const vector<Lit>& lits, bool rhs);
+        lbool simplifyProblem(const uint64_t numConfls);
 
         /////////////////////
         //Stats
@@ -150,9 +150,9 @@ class ThreadControl : public Solver
 
         /////////////////////////////
         // SAT solution verification
-        const bool verifyModel() const;                            ///<Verify model[]
-        const bool verifyBinClauses() const;                       ///<Verify model[] for binary clauses
-        const bool verifyClauses(const vector<Clause*>& cs) const; ///<Verify model[] for normal clauses
+        bool verifyModel() const;                            ///<Verify model[]
+        bool verifyBinClauses() const;                       ///<Verify model[] for binary clauses
+        bool verifyClauses(const vector<Clause*>& cs) const; ///<Verify model[] for normal clauses
 
         ///////////////////////////
         // Clause cleaning
@@ -169,7 +169,7 @@ class ThreadControl : public Solver
         // Data
         SolverConf           conf;
         ImplCache            implCache;
-        const bool           cleanCache();
+        bool           cleanCache();
         vector<LitReachData> litReachable;
         void                 calcReachability();
         bool                 needToInterrupt;
@@ -182,7 +182,7 @@ class ThreadControl : public Solver
 
         /////////////////////
         // Clauses
-        const bool          addClauseHelper(vector<Lit>& ps);
+        bool          addClauseHelper(vector<Lit>& ps);
         friend class        ClauseAllocator;
         vector<char>        decision_var;
         vector<Clause*>     clauses;          ///< List of problem clauses that are larger than 2
@@ -200,9 +200,9 @@ class ThreadControl : public Solver
         /////////////////
         // Debug
         void testAllClauseAttach() const;
-        const bool normClauseIsAttached(const Clause& c) const;
+        bool normClauseIsAttached(const Clause& c) const;
         void findAllAttach() const;
-        const bool findClause(const Clause* c) const;
+        bool findClause(const Clause* c) const;
         void checkNoWrongAttach() const;
         void calcClauseDistrib();
 };
@@ -234,22 +234,22 @@ inline const vector<Clause*>& ThreadControl::getSortedLongLearnts()
     return learnts;
 }
 
-inline const bool ThreadControl::getNeedToDumpLearnts() const
+inline bool ThreadControl::getNeedToDumpLearnts() const
 {
     return conf.needToDumpLearnts;
 }
 
-inline const bool ThreadControl::getNeedToDumpOrig() const
+inline bool ThreadControl::getNeedToDumpOrig() const
 {
     return conf.needToDumpOrig;
 }
 
-inline const uint64_t ThreadControl::getNumClauses() const
+inline uint64_t ThreadControl::getNumClauses() const
 {
     return numBins + clauses.size() + learnts.size();
 }
 
-inline const uint32_t ThreadControl::getVerbosity() const
+inline uint32_t ThreadControl::getVerbosity() const
 {
     return conf.verbosity;
 }

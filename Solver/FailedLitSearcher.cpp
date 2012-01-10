@@ -58,7 +58,7 @@ initialised, and their limits are set. Then tryBoth is called in two different
 forms: somewhat sequentially on varaibles x...z and then on randomly picked
 variables.
 */
-const bool FailedLitSearcher::search()
+bool FailedLitSearcher::search()
 {
     assert(control->decisionLevel() == 0);
     if (control->nVars() == 0) return control->ok;
@@ -173,7 +173,7 @@ them, and hyper-bin resolves them, etc. It is imperative that from the
 SAT point of view, EITHER lit1 or lit2 MUST hold. So, if lit1 = ~lit2, it's OK.
 Also, if there is a binary clause 'lit1 or lit2' it's also OK.
 */
-const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
+bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
 {
     assert(lit1 == ~lit2);
 
@@ -307,7 +307,7 @@ const bool FailedLitSearcher::tryBoth(const Lit lit1, const Lit lit2)
         control->addClauseInt(lits, true);
     }
     goodBothSame += bothSame.size();
-    control->ok = (control->propagate(false).isNULL());
+    control->ok = (control->propagate().isNULL());
     if (!control->ok) return false;
 
     return true;

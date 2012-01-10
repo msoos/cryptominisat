@@ -925,7 +925,7 @@ bool CInstanceGraph::createfromFile(const char* lpstrFileName)
 	// Store the original translation
 	origTranslation.clear();
 	origTranslation.resize(varPosMap.size(), -1);
-	for (int i = 0; i < varPosMap.size(); i++)
+	for (size_t i = 0; i < varPosMap.size(); i++)
 	{
 		if (-1 != varPosMap[i])
 			origTranslation[varPosMap[i]] = i;

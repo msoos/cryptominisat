@@ -62,7 +62,7 @@ void CMainSolver::solve(const char *lpstrFileName)
 	bdg_var_count = originalVarCount;
 
 	// Create the initial LIT nodes for quick caching
-	for (int i = 0; i <= originalVarCount; ++i)
+	for (unsigned i = 0; i <= originalVarCount; ++i)
 	{
 		litNodes.push_back(new DTNode(i, true, num_Nodes++));
 		litNodes.push_back(new DTNode(-1 * i, true, num_Nodes++));
@@ -998,7 +998,7 @@ bool CMainSolver::implicitBCP()
 				 * keeping anything around anyways, and if it failed, we'll only want
 				 * to keep what happens with the opposite setting.
 				 */
-				for (int i = 0; i < dirtyLitNodes.size(); ++i)
+				for (size_t i = 0; i < dirtyLitNodes.size(); ++i)
 				{
 					dirtyLitNodes[i].first->childDeleted(
 							dirtyLitNodes[i].second);
@@ -1045,7 +1045,7 @@ bool CMainSolver::implicitBCP()
 						 * they will be located in the dirtyLitNodes vector, and we turn
 						 * them true to invalidate them (since they're under an AND node).
 						 */
-						for (int i = 0; i < dirtyLitNodes.size(); ++i)
+						for (size_t i = 0; i < dirtyLitNodes.size(); ++i)
 						{
 							dirtyLitNodes[i].first->childDeleted(
 									dirtyLitNodes[i].second);

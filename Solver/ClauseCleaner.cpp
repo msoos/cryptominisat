@@ -33,7 +33,7 @@ ClauseCleaner::ClauseCleaner(ThreadControl* _control) :
     }
 }
 
-const bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
+bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
     assert(watched.isBinary());
     if (control->value(lit) == l_True) return true;
@@ -115,7 +115,7 @@ void ClauseCleaner::cleanClauses(vector<Clause*>& cs, ClauseSetType type, const 
     #endif
 }
 
-inline const bool ClauseCleaner::cleanClause(Clause*& cc)
+inline bool ClauseCleaner::cleanClause(Clause*& cc)
 {
     Clause& c = *cc;
     assert(c.size() > 2);

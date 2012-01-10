@@ -410,12 +410,12 @@ public:
 		return scoreVSIDS[0] + scoreVSIDS[1];
 	}
 
-	inline const unsigned int getVarNum() const
+	unsigned int getVarNum() const
 	{
 		return iVarNum;
 	}
 
-	inline const unsigned int getVarIdT() const
+	unsigned int getVarIdT() const
 	{
 		return itecIndex;
 	}

@@ -23,8 +23,8 @@
 #include <limits>
 
 SolverConf::SolverConf() :
-        ratioRemoveClauses(1.0/3.0)
-        , var_inc(128)
+        var_inc(128)
+        , ratioRemoveClauses(1.0/3.0)
         , random_var_freq(0)
         , restart_first(100)
         , restart_inc(1.5)

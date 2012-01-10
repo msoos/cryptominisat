@@ -57,7 +57,7 @@ class ClauseAllocator {
         template<class T> Clause* Clause_new(const T& ps);
         Clause* Clause_new(Clause& c);
 
-        const ClauseOffset getOffset(const Clause* ptr) const;
+        ClauseOffset getOffset(const Clause* ptr) const;
 
         /**
         @brief Returns the pointer of a clause given its offset
@@ -80,7 +80,7 @@ class ClauseAllocator {
     private:
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
-        const ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
+        ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
 
         void updateAllOffsetsAndPointers(ThreadControl* control);
         template<class T>
@@ -130,7 +130,7 @@ class ClauseAllocator {
         Clause* getClause();
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 
-        const uint32_t getNewClauseNum(const uint32_t size);
+        uint32_t getNewClauseNum(const uint32_t size);
         void renumberClauses(vector<Clause*>& clauses, ThreadControl* solver);
         vector<uint32_t> freedNums;  //Free clause nums that can be used now
         uint32_t maxClauseNum;

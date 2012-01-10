@@ -91,12 +91,12 @@ public:
 
     friend class ClauseAllocator;
 
-    const uint16_t size() const
+    uint16_t size() const
     {
         return mySize;
     }
 
-    const bool getChanged() const
+    bool getChanged() const
     {
         return changed;
     }
@@ -132,12 +132,12 @@ public:
         shrink(1);
     }
 
-    const bool learnt() const
+    bool learnt() const
     {
         return isLearnt;
     }
 
-    const bool getStrenghtened() const
+    bool getStrenghtened() const
     {
         return strenghtened;
     }
@@ -168,7 +168,7 @@ public:
         glue = newGlue;
     }
 
-    const uint32_t getGlue() const
+    uint32_t getGlue() const
     {
         return glue;
     }
@@ -185,13 +185,13 @@ public:
         isLearnt = true;
     }
 
-    inline void strengthen(const Lit p)
+    void strengthen(const Lit p)
     {
         remove(*this, p);
         setStrenghtened();
     }
 
-    inline void add(const Lit p)
+    void add(const Lit p)
     {
         mySize++;
         getData()[mySize-1] = p;
@@ -223,7 +223,7 @@ public:
         isRemoved = true;
     }
 
-    const bool getRemoved() const
+    bool getRemoved() const
     {
         return isRemoved;
     }
@@ -233,7 +233,7 @@ public:
         isFreed = true;
     }
 
-    const bool getFreed() const
+    bool getFreed() const
     {
         return isFreed;
     }
@@ -244,7 +244,7 @@ public:
             setGlue(other.getGlue());
     }
 
-    const uint32_t getNum() const
+    uint32_t getNum() const
     {
         return num;
     }
@@ -276,7 +276,7 @@ struct ClauseData
         litPos[1] = lit2Pos;
     };
 
-    const uint16_t operator[](const bool which) const
+    uint16_t operator[](const bool which) const
     {
         return litPos[which];
     }

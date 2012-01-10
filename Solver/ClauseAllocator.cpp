@@ -185,7 +185,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
 Calculates the stack frame and the position of the pointer in the stack, and
 rerturns a 32-bit value that is a concatenation of these two
 */
-const ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
+ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
 {
     uint32_t outerOffset = getOuterOffset(ptr);
     uint32_t interOffset = getInterOffset(ptr, outerOffset);
@@ -195,7 +195,7 @@ const ClauseOffset ClauseAllocator::getOffset(const Clause* ptr) const
 /**
 @brief Combines the stack number and the internal offset into one 32-bit number
 */
-inline const ClauseOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
+inline ClauseOffset ClauseAllocator::combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const
 {
     return (outerOffset | (interOffset << NUM_BITS_OUTER_OFFSET));
 }
@@ -254,7 +254,7 @@ void ClauseAllocator::clauseFree(Clause* c)
 
 struct ClauseSorter
 {
-    const bool operator()(const Clause* a, const Clause* b) {
+    bool operator()(const Clause* a, const Clause* b) {
         if (a->size() <= 3 && b->size() > 3) return true;
         if (a->size() > 3 && b->size() <= 3) return false;
         return ( a->size() < b->size());
@@ -556,7 +556,7 @@ void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
     }
 }
 
-const uint32_t ClauseAllocator::getNewClauseNum(const uint32_t size)
+uint32_t ClauseAllocator::getNewClauseNum(const uint32_t size)
 {
     //If size is 3, it's special, nothing to do really
     if (size == 3)

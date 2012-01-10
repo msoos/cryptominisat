@@ -42,12 +42,12 @@ class CompleteDetachReatacher
 {
     public:
         CompleteDetachReatacher(ThreadControl* control);
-        const bool reattachNonBins();
+        bool reattachNonBins();
         void detachNonBinsNonTris(const bool removeTri);
 
     private:
         void cleanAndAttachClauses(vector<Clause*>& cs);
-        const bool cleanClause(Clause*& cl);
+        bool cleanClause(Clause*& cl);
 
         class ClausesStay {
             public:
@@ -68,7 +68,7 @@ class CompleteDetachReatacher
                 uint32_t nonLearntBins;
                 uint32_t tris;
         };
-        const ClausesStay clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri = false);
+        ClausesStay clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri = false);
 
         ThreadControl* control;
 };

@@ -77,7 +77,7 @@ void finalcSATEvaluation()
 
 int main(int argc, char *argv[])
 {
-	char *s;
+	char *s = NULL;
 	char dataFile[1024];
 	memset(dataFile, 0, 1024);
 	strcpy(dataFile, "data.txt");

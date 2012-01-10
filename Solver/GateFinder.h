@@ -37,7 +37,7 @@ class NewGateData
             , numLitRem(_numLitRem)
             , numClRem(_numClRem)
         {}
-        const bool operator<(const NewGateData& n2) const
+        bool operator<(const NewGateData& n2) const
         {
             uint32_t value1 = numClRem*ANDGATEUSEFUL + numLitRem;
             uint32_t value2 = n2.numClRem*ANDGATEUSEFUL + n2.numLitRem;
@@ -46,7 +46,7 @@ class NewGateData
             if (lit2 != n2.lit2) return(lit2 > n2.lit2);
             return false;
         }
-        const bool operator==(const NewGateData& n2) const
+        bool operator==(const NewGateData& n2) const
         {
             return(lit1 == n2.lit1
                 && lit2 == n2.lit2
@@ -61,7 +61,7 @@ class NewGateData
 
 struct SecondSorter
 {
-    const bool operator() (const std::pair<Var, uint32_t> p1, const std::pair<Var, uint32_t> p2)
+    bool operator() (const std::pair<Var, uint32_t> p1, const std::pair<Var, uint32_t> p2)
     {
         return p1.second > p2.second;
     }
@@ -78,7 +78,7 @@ class OrGate {
             std::sort(lits.begin(), lits.end());
         }
 
-        const bool operator==(const OrGate& other) const
+        bool operator==(const OrGate& other) const
         {
             return (eqLit == other.eqLit && lits == other.lits);
         }
@@ -103,7 +103,7 @@ inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
 }
 
 struct OrGateSorter2 {
-    const bool operator() (const OrGate& gate1, const OrGate& gate2) {
+    bool operator() (const OrGate& gate1, const OrGate& gate2) {
         if (gate1.lits.size() > gate2.lits.size()) return true;
         if (gate1.lits.size() < gate2.lits.size()) return false;
 
@@ -125,9 +125,9 @@ public:
     //Setup
     void newVar();
 
-    const bool     treatOrGates();
+    bool     treatOrGates();
     void           findOrGates();
-    const uint32_t createNewVars();
+    uint32_t createNewVars();
 
     //Getter functions
     bool canElim(const Var var) const;
@@ -141,15 +141,15 @@ private:
     void findOrGates(const bool learntGatesToo);
     void findOrGate(const Lit eqLit, const ClauseIndex& c, const bool learntGatesToo, bool wasLearnt);
 
-    const bool doAllOptimisationWithGates();
-    const bool shortenWithOrGate(const OrGate& gate);
-    const bool findEqOrGates();
+    bool doAllOptimisationWithGates();
+    bool shortenWithOrGate(const OrGate& gate);
+    bool findEqOrGates();
 
     //And gate treatment
-    const bool    treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp);
+    bool    treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp);
     CL_ABST_TYPE  calculateSortedOcc(const OrGate& gate, uint16_t& maxSize, vector<size_t>& seen2Set, uint64_t& numOp);
-    const bool    treatAndGateClause(const ClauseIndex& other, const OrGate& gate, const Clause& cl);
-    const bool    findAndGateOtherCl(const vector<ClauseIndex>& sizeSortedOcc, const Lit lit, const CL_ABST_TYPE abst2, ClauseIndex& other);
+    bool    treatAndGateClause(const ClauseIndex& other, const OrGate& gate, const Clause& cl);
+    bool    findAndGateOtherCl(const vector<ClauseIndex>& sizeSortedOcc, const Lit lit, const CL_ABST_TYPE abst2, ClauseIndex& other);
     vector<vector<ClauseIndex> > sizeSortedOcc; ///<temporary for and-gate treatment. Cleared at every treatAndGate() call
 
     //Indexes, gate data
@@ -158,7 +158,7 @@ private:
     vector<vector<uint32_t> > gateOccEq; //RHS of every gate is in this occur list
 
     //Extended resolution
-    const bool     extendedResolution();
+    bool     extendedResolution();
     vector<char>   dontElim; ///<These vars should not be eliminated, because they have been added through ER
 
     //Stats

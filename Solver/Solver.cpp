@@ -51,7 +51,7 @@ classes used inside Solver
 @p dvar The new variable should be used as a decision variable?
    NOTE: this has effects on the meaning of a SATISFIABLE result
 */
-const Var Solver::newVar(const bool dvar)
+Var Solver::newVar(const bool)
 {
     const Var v = nVars();
     if (v >= 1<<30) {
@@ -195,7 +195,7 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-inline const bool Solver::propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl)
+inline bool Solver::propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl)
 {
     const lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
@@ -217,7 +217,7 @@ inline const bool Solver::propBinaryClause(const vec<Watched>::const_iterator i,
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
-template<bool simple> inline const bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl)
+template<bool simple> inline bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl)
 {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
@@ -291,7 +291,7 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
-template<bool simple> inline const bool Solver::propTriClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl)
+template<bool simple> inline bool Solver::propTriClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl)
 {
     lbool val = value(i->getOtherLit());
     if (val == l_True) return true;
@@ -313,7 +313,7 @@ template<bool simple> inline const bool Solver::propTriClause(const vec<Watched>
     return true;
 }
 
-const PropBy Solver::propagate(const bool update)
+PropBy Solver::propagate()
 {
     PropBy confl;
 
@@ -359,7 +359,7 @@ const PropBy Solver::propagate(const bool update)
     return confl;
 }
 
-const PropBy Solver::propagateNonLearntBin()
+PropBy Solver::propagateNonLearntBin()
 {
     PropBy confl;
     while (qhead < trail.size()) {
@@ -375,7 +375,7 @@ const PropBy Solver::propagateNonLearntBin()
     return PropBy();
 }
 
-const PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
+PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
 {
     #ifdef VERBOSE_DEBUG_FULLPROP
     std::cout << "Prop full started" << std::endl;
@@ -464,7 +464,7 @@ const PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
     return PropBy();
 }
 
-const PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryClause>& uselessBin)
+PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryClause>& uselessBin)
 {
     const Lit lit = k->getOtherLit();
     const lbool val = value(lit);
@@ -578,7 +578,7 @@ void Solver::printWatchList(const Lit lit) const
     }
 }
 
-const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit) const
+uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit) const
 {
     uint32_t num = 0;
     const vec<Watched>& ws = watches[lit.toInt()];
@@ -591,7 +591,7 @@ const uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit) con
     return num;
 }
 
-const vector<Lit> Solver::getUnitaries() const
+vector<Lit> Solver::getUnitaries() const
 {
     vector<Lit> unitaries;
     if (decisionLevel() > 0) {
@@ -603,7 +603,7 @@ const vector<Lit> Solver::getUnitaries() const
     return unitaries;
 }
 
-const uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
+uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
 {
     uint32_t num = 0;
 

@@ -68,7 +68,7 @@ ThreadControl::~ThreadControl()
     delete varReplacer;
 }
 
-const bool ThreadControl::addXorClauseInt(const vector< Lit >& lits, bool rhs)
+bool ThreadControl::addXorClauseInt(const vector< Lit >& lits, bool rhs)
 {
     assert(ok);
     assert(qhead == trail.size());
@@ -214,7 +214,7 @@ void ThreadControl::detachModifiedClause(const Lit lit1, const Lit lit2, const L
     Solver::detachModifiedClause(lit1, lit2, lit3, origSize, address);
 }
 
-const bool ThreadControl::addClauseHelper(vector<Lit>& ps)
+bool ThreadControl::addClauseHelper(vector<Lit>& ps)
 {
     //Sanity checks
     assert(decisionLevel() == 0);
@@ -256,7 +256,7 @@ variables of the literals in "ps" have been eliminated/replaced etc. If so,
 it acts on them such that they are correct, and calls addClauseInt() to do
 the heavy-lifting
 */
-const bool ThreadControl::addClause(const vector<Lit>& lits)
+bool ThreadControl::addClause(const vector<Lit>& lits)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Adding clause " << lits << std::endl;
@@ -273,7 +273,7 @@ const bool ThreadControl::addClause(const vector<Lit>& lits)
     return ok;
 }
 
-const bool ThreadControl::addLearntClause(const vector<Lit>& lits, const uint32_t glue)
+bool ThreadControl::addLearntClause(const vector<Lit>& lits, const uint32_t glue)
 {
     vector<Lit> ps(lits.size());
     std::copy(lits.begin(), lits.end(), ps.begin());
@@ -338,7 +338,7 @@ void ThreadControl::reArrangeClauses()
     }
 }
 
-const Var ThreadControl::newVar(const bool dvar)
+Var ThreadControl::newVar(const bool dvar)
 {
     Solver::newVar();
 
@@ -514,7 +514,7 @@ void ThreadControl::toDetachFree()
     //findAllAttach();
 }
 
-const lbool ThreadControl::solve(const int numThreads)
+lbool ThreadControl::solve(const int numThreads)
 {
     restPrinter->printStatHeader();
     restPrinter->printRestartStat("B");
@@ -537,7 +537,7 @@ const lbool ThreadControl::solve(const int numThreads)
         calcClauseDistrib();
 
         //This is crucial, since we need to attach() clauses to threads
-        clauseCleaner->removeAndCleanAll(true);
+        clauseCleaner->removeAndCleanAll();
 
         //Solve using threads
         vector<lbool> statuses;
@@ -616,7 +616,7 @@ It burst-searches for given number of conflicts, then it tries all sorts of
 things like variable elimination, subsumption, failed literal probing, etc.
 to try to simplifcy the problem at hand.
 */
-const lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
+lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
 {
     assert(ok);
     testAllClauseAttach();
@@ -1025,7 +1025,7 @@ void ThreadControl::printAllClauses() const
     }
 }
 
-const bool ThreadControl::verifyBinClauses() const
+bool ThreadControl::verifyBinClauses() const
 {
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
@@ -1047,7 +1047,7 @@ const bool ThreadControl::verifyBinClauses() const
     return true;
 }
 
-const bool ThreadControl::verifyClauses(const vector<Clause*>& cs) const
+bool ThreadControl::verifyClauses(const vector<Clause*>& cs) const
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "Checking clauses whether they have been properly satisfied." << std::endl;;
@@ -1070,7 +1070,7 @@ const bool ThreadControl::verifyClauses(const vector<Clause*>& cs) const
     return verificationOK;
 }
 
-const bool ThreadControl::verifyModel() const
+bool ThreadControl::verifyModel() const
 {
     bool verificationOK = true;
     verificationOK &= verifyClauses(clauses);
@@ -1100,48 +1100,48 @@ void ThreadControl::checkLiteralCount() const
     }
 }
 
-const uint32_t ThreadControl::getNumElimSubsume() const
+uint32_t ThreadControl::getNumElimSubsume() const
 {
     return subsumer->getNumElimed();
 }
 
-const uint32_t ThreadControl::getNumXorTrees() const
+uint32_t ThreadControl::getNumXorTrees() const
 {
     return varReplacer->getNumTrees();
 }
 
-const uint32_t ThreadControl::getNumXorTreesCrownSize() const
+uint32_t ThreadControl::getNumXorTreesCrownSize() const
 {
     return varReplacer->getNumReplacedVars();
 }
 
-const double ThreadControl::getTotalTimeSubsumer() const
+double ThreadControl::getTotalTimeSubsumer() const
 {
     return subsumer->getTotalTime();
 }
 
-const double ThreadControl::getTotalTimeFailedLitSearcher() const
+double ThreadControl::getTotalTimeFailedLitSearcher() const
 {
     return failedLitSearcher->getTotalTime();
 }
 
-const double ThreadControl::getTotalTimeSCC() const
+double ThreadControl::getTotalTimeSCC() const
 {
     return  sCCFinder->getTotalTime();
 }
 
-const uint32_t ThreadControl::getNumUnsetVars() const
+uint32_t ThreadControl::getNumUnsetVars() const
 {
     assert(decisionLevel() == 0);
     return (decision_var.size() - trail.size());
 }
 
-const uint32_t ThreadControl::getNumDecisionVars() const
+uint32_t ThreadControl::getNumDecisionVars() const
 {
     return numDecisionVars;
 }
 
-const uint64_t ThreadControl::getNumTotalConflicts() const
+uint64_t ThreadControl::getNumTotalConflicts() const
 {
     return sumConflicts;
 }
@@ -1155,7 +1155,7 @@ void ThreadControl::setNeedToInterrupt()
     needToInterrupt = true;
 }
 
-const lbool ThreadControl::modelValue (const Lit p) const
+lbool ThreadControl::modelValue (const Lit p) const
 {
     return model[p.var()] ^ p.sign();
 }
@@ -1167,7 +1167,7 @@ void ThreadControl::testAllClauseAttach() const
     }
 }
 
-const bool ThreadControl::normClauseIsAttached(const Clause& c) const
+bool ThreadControl::normClauseIsAttached(const Clause& c) const
 {
     #ifndef VERBOSE_DEBUG
     return true;
@@ -1229,7 +1229,7 @@ void ThreadControl::findAllAttach() const
 }
 
 
-const bool ThreadControl::findClause(const Clause* c) const
+bool ThreadControl::findClause(const Clause* c) const
 {
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i] == c) return true;
@@ -1256,7 +1256,7 @@ void ThreadControl::checkNoWrongAttach() const
     }
 }
 
-const uint32_t ThreadControl::getNumFreeVars() const
+uint32_t ThreadControl::getNumFreeVars() const
 {
     uint32_t freeVars = nVars();
 
@@ -1276,7 +1276,7 @@ const uint32_t ThreadControl::getNumFreeVars() const
     return freeVars;
 }
 
-const uint32_t ThreadControl::getNewToReplaceVars() const
+uint32_t ThreadControl::getNewToReplaceVars() const
 {
     return varReplacer->getNewToReplaceVars();
 }

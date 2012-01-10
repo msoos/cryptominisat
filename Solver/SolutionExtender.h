@@ -34,33 +34,25 @@ class SolutionExtender
     class MyClause
     {
         public:
-            MyClause(const vector<Lit>& _lits, const bool _isXor, const bool _rhs = true) :
+            MyClause(const vector<Lit>& _lits) :
                 lits(_lits)
-                , rhs(_rhs)
             {
             }
 
-            MyClause(const Clause& cl) :
-                rhs(true)
+            MyClause(const Clause& cl)
             {
                 for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
                     lits.push_back(*l);
                 }
             }
 
-            MyClause(const Lit lit1, const Lit lit2) :
-                rhs(true)
+            MyClause(const Lit lit1, const Lit lit2)
             {
                 lits.push_back(lit1);
                 lits.push_back(lit2);
             }
 
-            const bool getRhs() const
-            {
-                return rhs;
-            }
-
-            const size_t size() const
+            size_t size() const
             {
                 return lits.size();
             }
@@ -82,33 +74,32 @@ class SolutionExtender
 
         private:
             vector<Lit> lits;
-            const bool rhs;
     };
     public:
         SolutionExtender(ThreadControl* _control, const vector<lbool>& _assigns);
         void extend();
-        const bool addClause(const vector<Lit>& lits);
+        bool addClause(const vector<Lit>& lits);
         void addBlockedClause(const BlockedClause& cl);
         void enqueue(const Lit lit);
 
-        const lbool value(const Lit lit) const
+        lbool value(const Lit lit) const
         {
             return assigns[lit.var()] ^ lit.sign();
         }
 
-        const lbool value(const Var var) const
+        lbool value(const Var var) const
         {
             return assigns[var];
         }
 
     private:
-        const bool propagateCl(MyClause& cl);
-        const bool propagate();
-        const bool satisfiedNorm(const vector<Lit>& lits) const;
-        const bool satisfiedXor(const vector<Lit>& lits, const bool rhs) const;
-        const Lit pickBranchLit();
+        bool propagateCl(MyClause& cl);
+        bool propagate();
+        bool satisfiedNorm(const vector<Lit>& lits) const;
+        bool satisfiedXor(const vector<Lit>& lits, const bool rhs) const;
+        Lit pickBranchLit();
 
-        const uint32_t nVars()
+        uint32_t nVars()
         {
             return assigns.size();
         }

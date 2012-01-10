@@ -35,19 +35,19 @@ class CommandControl : public Solver
 
         //////////////////////////////
         // Problem specification:
-        const Var newVar(bool dvar = true); // Add a new variable that can be decided on or not
+        Var newVar(bool dvar = true); // Add a new variable that can be decided on or not
 
         ///////////////////////////////
         // Solving:
-        const lbool solve(const vector<Lit>& assumps, const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()); ///<Search for a model that respects a given set of assumptions.
-        const lbool solve(const uint64_t maxConfls = std::numeric_limits<uint64_t>::max());      ///<Search without assumptions.
+        lbool solve(const vector<Lit>& assumps, const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()); ///<Search for a model that respects a given set of assumptions.
+        lbool solve(const uint64_t maxConfls = std::numeric_limits<uint64_t>::max());      ///<Search without assumptions.
         vector<lbool> solution;     ///<Filled only if solve() returned l_True
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
 
         ///////////////////////////////
         // Stats
         void           printStats();
-        const uint64_t getNumConflicts() const;
+        uint64_t getNumConflicts() const;
         void           setNeedToInterrupt();
         bool           getSavedPolarity(Var var) const;
 
@@ -101,17 +101,17 @@ class CommandControl : public Solver
         /////////////////
         // Searching
         lbool       search(const SearchFuncParams _params);      // Search for a given number of conflicts.
-        const bool  handle_conflict(SearchFuncParams& params, PropBy confl);// Handles the conflict clause
-        const lbool new_decision(const SearchFuncParams& params);  // Handles the case when decision must be made
+        bool  handle_conflict(SearchFuncParams& params, PropBy confl);// Handles the conflict clause
+        lbool new_decision();  // Handles the case when decision must be made
         void        checkNeedRestart(SearchFuncParams& params);     // Helper function to decide if we need to restart during search
-        const Lit   pickBranchLit();                             // Return the next decision variable.
+        Lit   pickBranchLit();                             // Return the next decision variable.
 
         ///////////////
         // Conflicting
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
         void     analyze          (PropBy confl, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &nblevels);
         void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
-        template<class T> const uint32_t calcNBLevels(const T& ps); ///<Calculates the glue of a clause
+        template<class T> uint32_t calcNBLevels(const T& ps); ///<Calculates the glue of a clause
 
         //////////////
         // Conflict minimisation
@@ -129,7 +129,7 @@ class CommandControl : public Solver
         /////////////////
         //Graphical conflict generation
         void         genConfGraph     (PropBy conflPart);
-        const string simplAnalyseGraph (PropBy conflHalf, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue);
+        string simplAnalyseGraph (PropBy conflHalf, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue);
 
         /////////////////
         // Variable activity
@@ -139,7 +139,7 @@ class CommandControl : public Solver
         bool     getPolarity(const Var var);
         struct VarOrderLt { ///Order variables according to their activities
             const vector<VarData>&  varData;
-            const bool operator () (const Var x, const Var y) const {
+            bool operator () (const Var x, const Var y) const {
                 return varData[x].activity > varData[y].activity;
             }
 
@@ -163,7 +163,7 @@ class CommandControl : public Solver
 
         ////////////
         // Transitive on-the-fly self-subsuming resolution
-        void   minimiseLearntFurther(vector<Lit>& cl, const uint32_t glue);
+        void   minimiseLearntFurther(vector<Lit>& cl);
         void   saveOTFData();
 };
 
@@ -175,7 +175,7 @@ existing clause. Only used if the glue-based activity heuristic is enabled,
 i.e. if we are in GLUCOSE mode (not MiniSat mode)
 */
 template<class T>
-inline const uint32_t CommandControl::calcNBLevels(const T& ps)
+inline uint32_t CommandControl::calcNBLevels(const T& ps)
 {
     uint32_t nbLevels = 0;
     typename T::const_iterator l, end;
@@ -266,7 +266,7 @@ inline bool CommandControl::getPolarity(const Var var)
     return true;
 }
 
-inline const lbool CommandControl::solve(const uint64_t maxConfls)
+inline lbool CommandControl::solve(const uint64_t maxConfls)
 {
     vector<Lit> tmp;
     return solve(tmp, maxConfls);

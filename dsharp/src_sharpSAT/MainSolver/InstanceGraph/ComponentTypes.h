@@ -272,9 +272,8 @@ void CPackedCompId<_T,_bitsPerBlock>::createFrom(const CComponentId &rComp)
 
     unsigned int bitpos = 0;
     unsigned int h = 0;
-    _T * pBack;
-
-    pBack = &theVars.front();
+    /*_T * pBack;
+    pBack = &theVars.front();*/
 
     for (it = rComp.varsBegin(); *it != varsSENTINEL;it++)
     {
@@ -295,7 +294,7 @@ void CPackedCompId<_T,_bitsPerBlock>::createFrom(const CComponentId &rComp)
 
     bitpos = 0;
     h = 0;
-    pBack = &theClauses.front();
+    //pBack = &theClauses.front();
     for (jt = rComp.clsBegin(); *jt != clsSENTINEL;jt++)
     {
         h |= ((*jt)<< (bitpos));

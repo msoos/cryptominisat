@@ -80,7 +80,7 @@ class TouchList
             std::fill(touched.begin(), touched.end(), 0);
         }
 
-        const uint32_t size() const
+        uint32_t size() const
         {
             return touchedList.size();
         }
@@ -118,25 +118,25 @@ public:
     ~Subsumer();
 
     //Called from main
-    const bool simplifyBySubsumption();
+    bool simplifyBySubsumption();
     void newVar();
 
     //UnElimination
     void extendModel(SolutionExtender* extender) const;
-    const bool unEliminate(const Var var, ThreadControl* tcontrol);
+    bool unEliminate(const Var var, ThreadControl* tcontrol);
 
     //Get-functions
     const vector<char>& getVarElimed() const;
     const vector<char>& getVarBlocked() const;
-    const uint32_t getNumElimed() const;
-    const bool checkElimedUnassigned() const;
+    uint32_t getNumElimed() const;
+    bool checkElimedUnassigned() const;
     double getTotalTime() const;
-    const uint32_t getNumERVars() const;
+    uint32_t getNumERVars() const;
     const vector<BlockedClause>& getBlockedClauses() const;
 
 private:
 
-    const bool subsumeWithBinaries();
+    bool subsumeWithBinaries();
 
     //Indexes
     vector<Clause*>    clauses;  ///<ClauseSimp::index refers to the index of the clause here
@@ -202,12 +202,12 @@ private:
     template<class T> void fillSubs(const T& ps, const uint32_t index, CL_ABST_TYPE abs, vector<ClauseIndex>& out_subsumed, vector<Lit>& out_lits, const Lit lit);
     template<class T1, class T2> bool subset(const T1& A, const T2& B);
     bool subsetReverse(const Clause& B) const;
-    template<class T1, class T2> const Lit subset1(const T1& A, const T2& B);
+    template<class T1, class T2> Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B);
 
     //binary clause-subsumption
     struct BinSorter {
-        const bool operator()(const Watched& first, const Watched& second)
+        bool operator()(const Watched& first, const Watched& second)
         {
             assert(first.isBinary() || first.isTriClause());
             assert(second.isBinary() || second.isTriClause());
@@ -231,7 +231,7 @@ private:
     */
     struct sortBySize
     {
-        const bool operator () (const Clause* x, const Clause* y)
+        bool operator () (const Clause* x, const Clause* y)
         {
             return (x->size() < y->size());
         }
@@ -271,7 +271,7 @@ private:
     void        freeAfterVarelim(const vector<ClAndBin>& myset);
     void        addLearntBinaries(const Var var);
     void        removeClauses(vector<ClAndBin>& posAll, vector<ClAndBin>& negAll, const Var var);
-    void        removeClausesHelper(vector<ClAndBin>& todo, const Lit lit, std::pair<uint32_t, uint32_t>& removed);
+    void        removeClausesHelper(vector<ClAndBin>& todo, const Lit lit);
     bool        merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, const bool really);
     bool        eliminateVars();
     void        fillClAndBin(vector<ClAndBin>& all, const Occur& cs, const Lit lit);
@@ -286,7 +286,7 @@ private:
     /////////////////////
     //Blocked clause elimination
     void asymmTE();
-    const bool allTautologySlim(const Lit lit);
+    bool allTautologySlim(const Lit lit);
     vector<BlockedClause> blockedClauses;
 
     /////////////////////
@@ -373,7 +373,7 @@ clause B
 and returns the literal to remove if (2) is true
 */
 template<class T1, class T2>
-const Lit Subsumer::subset1(const T1& A, const T2& B)
+Lit Subsumer::subset1(const T1& A, const T2& B)
 {
     Lit retLit = lit_Undef;
 
@@ -419,7 +419,7 @@ inline const vector<char>& Subsumer::getVarElimed() const
     return var_elimed;
 }
 
-inline const uint32_t Subsumer::getNumElimed() const
+inline uint32_t Subsumer::getNumElimed() const
 {
     return numElimed;
 }

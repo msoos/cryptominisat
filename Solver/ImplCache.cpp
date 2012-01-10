@@ -134,7 +134,7 @@ void ImplCache::clean(ThreadControl* control)
     }
 }
 
-const bool ImplCache::tryBoth(ThreadControl* control)
+bool ImplCache::tryBoth(ThreadControl* control)
 {
     assert(control->ok);
     assert(control->decisionLevel() == 0);

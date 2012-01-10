@@ -116,14 +116,14 @@ void SolutionExtender::extend()
     }
 }
 
-const bool SolutionExtender::satisfiedNorm(const vector<Lit>& lits) const
+bool SolutionExtender::satisfiedNorm(const vector<Lit>& lits) const
 {
     for (vector<Lit>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++)
         if (value(*it) == l_True) return true;
     return false;
 }
 
-const bool SolutionExtender::satisfiedXor(const vector<Lit>& lits, const bool rhs) const
+bool SolutionExtender::satisfiedXor(const vector<Lit>& lits, const bool rhs) const
 {
     bool val = false;
     uint32_t undef = 0;
@@ -186,7 +186,7 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
     }
 }
 
-const bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
+bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
 {
     vector<Lit> lits = givenLits;
     vector<Lit>::iterator i = lits.begin();
@@ -210,7 +210,7 @@ const bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
 
     if (lits.size() == 0) return false;
 
-    MyClause* cl = new MyClause(lits, false);
+    MyClause* cl = new MyClause(lits);
     clauses.push_back(cl);
     for (vector<Lit>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++)
     {
@@ -222,7 +222,7 @@ const bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
     return true;
 }
 
-const bool SolutionExtender::propagate()
+bool SolutionExtender::propagate()
 {
     bool ret = true;
     while(qhead < trail.size()) {
@@ -240,7 +240,7 @@ const bool SolutionExtender::propagate()
     return ret;
 }
 
-const bool SolutionExtender::propagateCl(MyClause& cl)
+bool SolutionExtender::propagateCl(MyClause& cl)
 {
     size_t numUndef = 0;
     Lit lastUndef = lit_Undef;
@@ -266,7 +266,7 @@ const bool SolutionExtender::propagateCl(MyClause& cl)
     return false;
 }
 
-const Lit SolutionExtender::pickBranchLit()
+Lit SolutionExtender::pickBranchLit()
 {
     for (Var var = 0; var < nVars(); var++) {
         if (value(var) == l_Undef) {

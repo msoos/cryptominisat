@@ -32,12 +32,12 @@ public:
 
     uint32_t index; ///<The index of the clause in Subsumer::clauses
 
-    const bool operator<(const ClauseIndex& other) const
+    bool operator<(const ClauseIndex& other) const
     {
         return index<other.index;
     }
 
-    const bool operator!=(const ClauseIndex& other) const
+    bool operator!=(const ClauseIndex& other) const
     {
         return index != other.index;
     }
@@ -211,7 +211,7 @@ class CSet {
         /**
         @brief Add a clause to the set
         */
-        const bool add(const ClauseIndex& c) {
+        bool add(const ClauseIndex& c) {
             assert(c.index != std::numeric_limits< uint32_t >::max());
             if (where.size() < c.index+1)
                 where.resize(c.index+1, std::numeric_limits<uint32_t>::max());
@@ -230,7 +230,7 @@ class CSet {
             return true;
         }
 
-        const bool alreadyIn(const ClauseIndex& c) const {
+        bool alreadyIn(const ClauseIndex& c) const {
             assert(c.index != std::numeric_limits< uint32_t >::max());
             if (where.size() < c.index+1) return false;
             if (where[c.index] != std::numeric_limits<uint32_t>::max())
@@ -285,7 +285,7 @@ class CSet {
                     it++;
                 }
 
-                const bool operator!=(const iterator& iter) const
+                bool operator!=(const iterator& iter) const
                 {
                     return (it != iter.it);;
                 }
@@ -318,7 +318,7 @@ class CSet {
                     it++;
                 }
 
-                const bool operator!=(const const_iterator& iter) const
+                bool operator!=(const const_iterator& iter) const
                 {
                     return (it != iter.it);;
                 }
@@ -384,7 +384,7 @@ class ClAndBin {
         bool isBin;
         bool learnt;
 
-        const std::string print(const vector<Clause*>&clauses) const
+        std::string print(const vector<Clause*>&clauses) const
         {
             std::stringstream ss;
             if (isBin) {
@@ -398,7 +398,7 @@ class ClAndBin {
             return ss.str();
         }
 
-        const bool operator==(const ClAndBin& other) const
+        bool operator==(const ClAndBin& other) const
         {
             if (isBin) {
                 if (clsimp != other.clsimp

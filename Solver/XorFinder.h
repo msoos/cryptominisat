@@ -46,7 +46,7 @@ class Xor
             std::sort(vars.begin(), vars.end());
         }
 
-        const bool operator==(const Xor& other) const
+        bool operator==(const Xor& other) const
         {
             return (rhs == other.rhs && vars == other.vars);
         }
@@ -118,7 +118,7 @@ class FoundXors
     };
 
     public:
-        FoundXors(const ClauseIndex c, const Clause& cl, const AbstData& clData, const bool _rhs, const uint32_t whichOne) :
+        FoundXors(const Clause& cl, const AbstData& clData, const bool _rhs, const uint32_t whichOne) :
             origCl(cl)
             , abst(clData.abst)
             , size(clData.size)
@@ -135,11 +135,11 @@ class FoundXors
         uint32_t          getSize() const;
         bool              getRHS() const;
         const Clause&           getOrigCl() const;
-        const bool              foundAll() const;
+        bool              foundAll() const;
 
         //Add
-        template<class T> void add(const ClauseIndex c, const T& cl);
-        void  add(Lit lit1, Lit lit2, const bool learnt);
+        template<class T> void add(const T& cl);
+        void  add(Lit lit1, Lit lit2);
 
     private:
         uint32_t NumberOfSetBits(uint32_t i) const;
@@ -167,7 +167,7 @@ class XorFinder
 {
 public:
     XorFinder(Subsumer* subsumer, ThreadControl* control);
-    const bool findXors();
+    bool findXors();
 
 private:
     //Find XORs
@@ -178,7 +178,7 @@ private:
     void findXorMatch(const vector<LitExtra>& lits, const Lit lit, FoundXors& foundCls) const;
 
     //const uint32_t tryToXor(const Xor& thisXor, const uint32_t thisIndex);
-    const bool mixXorAndGates();
+    bool mixXorAndGates();
 
     //Information extraction
     bool extractInfo();
@@ -232,7 +232,7 @@ inline const Clause& FoundXors::getOrigCl() const
     return origCl;
 }
 
-template<class T> void FoundXors::add(const ClauseIndex c, const T& cl)
+template<class T> void FoundXors::add(const T& cl)
 {
     assert(cl.size() <= size);
 
@@ -261,7 +261,7 @@ template<class T> void FoundXors::add(const ClauseIndex c, const T& cl)
     }
 }
 
-inline const bool FoundXors::foundAll() const
+inline bool FoundXors::foundAll() const
 {
     bool OK = true;
     for (uint32_t i = 0; i < foundComb.size(); i++) {
@@ -279,7 +279,7 @@ inline const bool FoundXors::foundAll() const
     return OK;
 }
 
-inline void FoundXors::add(Lit lit1, Lit lit2, const bool learnt)
+inline void FoundXors::add(Lit lit1, Lit lit2)
 {
     //Make sure that order is correct
     if (lit1 > lit2)

@@ -57,33 +57,33 @@ class VarReplacer
     public:
         VarReplacer(ThreadControl* control);
         ~VarReplacer();
-        const bool performReplace();
-        const bool needsReplace();
-        const bool replace(Lit lit1, Lit lit2, const bool xorEqualFalse);
+        bool performReplace();
+        bool needsReplace();
+        bool replace(Lit lit1, Lit lit2, const bool xorEqualFalse);
 
         void extendModel(SolutionExtender* extender) const;
 
-        const uint32_t getNumReplacedLits() const;
-        const uint32_t getNumReplacedVars() const;
-        const uint32_t getNumLastReplacedVars() const;
-        const uint32_t getNewToReplaceVars() const;
-        const uint32_t getNumTrees() const;
-        const vector<Var> getReplacingVars() const;
+        uint32_t getNumReplacedLits() const;
+        uint32_t getNumReplacedVars() const;
+        uint32_t getNumLastReplacedVars() const;
+        uint32_t getNewToReplaceVars() const;
+        uint32_t getNumTrees() const;
+        vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
         const map<Var, vector<Var> >&getReverseTable() const;
-        const bool varHasBeenReplaced(const Var var) const;
-        const bool replacingVar(const Var var) const;
+        bool varHasBeenReplaced(const Var var) const;
+        bool replacingVar(const Var var) const;
         void newVar();
-        const bool addLaterAddBinXor();
+        bool addLaterAddBinXor();
 
         //No need to update, only stores binary clauses, that
         //have been allocated within pool
         //friend class ClauseAllocator;
 
     private:
-        const bool replace_set(vector<Clause*>& cs);
-        const bool replaceBins();
-        const bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
+        bool replace_set(vector<Clause*>& cs);
+        bool replaceBins();
+        bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
         void addBinaryXorClause(Lit lit1, Lit lit2);
 
         void setAllThatPointsHereTo(const Var var, const Lit lit);
@@ -99,22 +99,22 @@ class VarReplacer
         ThreadControl* control; ///<The solver we are working with
 };
 
-inline const uint32_t VarReplacer::getNumReplacedLits() const
+inline uint32_t VarReplacer::getNumReplacedLits() const
 {
     return replacedLits;
 }
 
-inline const uint32_t VarReplacer::getNumReplacedVars() const
+inline uint32_t VarReplacer::getNumReplacedVars() const
 {
     return replacedVars;
 }
 
-inline const uint32_t VarReplacer::getNumLastReplacedVars() const
+inline uint32_t VarReplacer::getNumLastReplacedVars() const
 {
     return lastReplacedVars;
 }
 
-inline const uint32_t VarReplacer::getNewToReplaceVars() const
+inline uint32_t VarReplacer::getNewToReplaceVars() const
 {
     return replacedVars-lastReplacedVars;
 }
@@ -124,17 +124,17 @@ inline const vector<Lit>& VarReplacer::getReplaceTable() const
     return table;
 }
 
-inline const bool VarReplacer::varHasBeenReplaced(const Var var) const
+inline bool VarReplacer::varHasBeenReplaced(const Var var) const
 {
     return table[var].var() != var;
 }
 
-inline const bool VarReplacer::replacingVar(const Var var) const
+inline bool VarReplacer::replacingVar(const Var var) const
 {
     return (reverseTable.find(var) != reverseTable.end());
 }
 
-inline const uint32_t VarReplacer::getNumTrees() const
+inline uint32_t VarReplacer::getNumTrees() const
 {
     return reverseTable.size();
 }

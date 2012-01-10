@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include <boost/foreach.hpp>
+#include "assert.h"
 
 #include "dnnf2cnf.hpp"
 
@@ -91,6 +92,7 @@ bool is_smooth2(node *n, set<int> &v)
     v.insert(abs(n->var));
     return true;
   }
+
   if( n->t == node::AND ) {
     foreach( node *c, n->children ) {
       if( !is_smooth2(c, v) )
@@ -98,6 +100,7 @@ bool is_smooth2(node *n, set<int> &v)
     }
     return true;
   }
+
   if( n->t == node::OR ) {
     if( n->children.empty() ) return true;
 
@@ -114,6 +117,9 @@ bool is_smooth2(node *n, set<int> &v)
     }
     return true;
   }
+
+  assert(false);
+  return true;
 }
 
 bool is_smooth(nnf &f)

@@ -33,7 +33,7 @@
 
 //#define VERBOSE_SUBSUME_NONEXIST
 
-const bool ClauseVivifier::SortBySize::operator()(const Clause* x, const Clause* y)
+bool ClauseVivifier::SortBySize::operator()(const Clause* x, const Clause* y)
 {
     return (x->size() > y->size());
 }
@@ -43,7 +43,7 @@ ClauseVivifier::ClauseVivifier(ThreadControl* _control) :
     , control(_control)
 {}
 
-const bool ClauseVivifier::vivify()
+bool ClauseVivifier::vivify()
 {
     assert(control->ok);
     #ifdef VERBOSE_DEBUG
@@ -65,7 +65,7 @@ const bool ClauseVivifier::vivify()
 }
 
 struct BinSorter2 {
-    const bool operator()(const Watched& first, const Watched& second)
+    bool operator()(const Watched& first, const Watched& second)
     {
         if (!first.isBinary() && !second.isBinary()) return false;
         if (first.isBinary() && !second.isBinary()) return true;
@@ -93,7 +93,7 @@ it is not part of failed literal probing, really. However, it is here because
 it seems to be a function that fits into the idology of failed literal probing.
 Maybe I am off-course and it should be in another class, or a class of its own.
 */
-const bool ClauseVivifier::vivifyClausesNormal()
+bool ClauseVivifier::vivifyClausesNormal()
 {
     assert(control->ok);
 
@@ -162,7 +162,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
                 }
             }
             done += i2;
-            failed = (!control->propagate(false).isNULL());
+            failed = (!control->propagate().isNULL());
             if (failed) break;
         }
         control->cancelZeroLight();
@@ -216,7 +216,7 @@ const bool ClauseVivifier::vivifyClausesNormal()
     return control->ok;
 }
 
-const bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
+bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
 {
     assert(control->ok);
 

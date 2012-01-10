@@ -54,7 +54,7 @@ public:
 	DTNode * secondNode;//  in the case of OR nodes (decision points).
 
 	// Constructor mainly for leaf nodes
-	DTNode(int literal, bool lit_constructor, int CURRENT_ID) :
+	DTNode(int literal, bool , int CURRENT_ID) :
 		type(DT_LIT), val(literal), firstNode(NULL), secondNode(NULL)
 	{
 		id = CURRENT_ID;

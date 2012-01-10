@@ -34,7 +34,7 @@ GateFinder::GateFinder(Subsumer *_subsumer, ThreadControl *_control) :
     , seen2(_subsumer->seen2)
 {}
 
-const uint32_t GateFinder::createNewVars()
+uint32_t GateFinder::createNewVars()
 {
     double myTime = cpuTime();
     vector<NewGateData> newGates;
@@ -224,7 +224,7 @@ void GateFinder::printGateStats() const
     << " gates size: " << gateNum << std::endl;
 }
 
-const bool GateFinder::treatOrGates()
+bool GateFinder::treatOrGates()
 {
     assert(control->ok);
     double myTime = cpuTime();
@@ -268,7 +268,7 @@ void GateFinder::clearIndexes()
         gateOccEq[i].clear();
 }
 
-const bool GateFinder::extendedResolution()
+bool GateFinder::extendedResolution()
 {
     assert(control->ok);
 
@@ -297,7 +297,7 @@ const bool GateFinder::extendedResolution()
     return control->ok;
 }
 
-const bool GateFinder::doAllOptimisationWithGates()
+bool GateFinder::doAllOptimisationWithGates()
 {
     assert(control->ok);
 
@@ -337,7 +337,7 @@ const bool GateFinder::doAllOptimisationWithGates()
     return true;
 }
 
-const bool GateFinder::findEqOrGates()
+bool GateFinder::findEqOrGates()
 {
     assert(control->ok);
     vector<OrGate> gates = orGates;
@@ -464,7 +464,7 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
     #endif
 }
 
-const bool GateFinder::shortenWithOrGate(const OrGate& gate)
+bool GateFinder::shortenWithOrGate(const OrGate& gate)
 {
     assert(control->ok);
 
@@ -604,7 +604,7 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(const OrGate& gate, uint16_t& maxSiz
     return abstraction;
 }
 
-const bool GateFinder::treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp)
+bool GateFinder::treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp)
 {
     assert(gate.lits.size() == 2);
 
@@ -700,7 +700,7 @@ const bool GateFinder::treatAndGate(const OrGate& gate, const bool reallyRemove,
     return true;
 }
 
-const bool GateFinder::treatAndGateClause(const ClauseIndex& other, const OrGate& gate, const Clause& cl)
+bool GateFinder::treatAndGateClause(const ClauseIndex& other, const OrGate& gate, const Clause& cl)
 {
     #ifdef VERBOSE_ORGATE_REPLACE
     std::cout << "AND gate-based cl rem" << std::endl;
@@ -747,7 +747,7 @@ const bool GateFinder::treatAndGateClause(const ClauseIndex& other, const OrGate
     return true;
 }
 
-inline const bool GateFinder::findAndGateOtherCl(const vector<ClauseIndex>& sizeSortedOcc, const Lit lit, const CL_ABST_TYPE abst2, ClauseIndex& other)
+inline bool GateFinder::findAndGateOtherCl(const vector<ClauseIndex>& sizeSortedOcc, const Lit lit, const CL_ABST_TYPE abst2, ClauseIndex& other)
 {
     *subsumer->toDecrease -= sizeSortedOcc.size();
     for (vector<ClauseIndex>::const_iterator it = sizeSortedOcc.begin(), end = sizeSortedOcc.end(); it != end; it++) {

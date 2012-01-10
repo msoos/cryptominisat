@@ -41,12 +41,12 @@ class ClauseCleaner
 
 
         void removeSatisfiedBins(const uint32_t limit = 0);
-        void removeAndCleanAll(const bool nolimit = false);
+        void removeAndCleanAll();
         bool satisfied(const Clause& c) const;
 
     private:
-        const bool satisfied(const Watched& watched, Lit lit);
-        const bool cleanClause(Clause*& c);
+        bool satisfied(const Watched& watched, Lit lit);
+        bool cleanClause(Clause*& c);
 
         uint32_t lastNumUnitarySat[6]; ///<Last time we cleaned from satisfied clauses, this many unitary clauses were known
         uint32_t lastNumUnitaryClean[6]; ///<Last time we cleaned from satisfied clauses&false literals, this many unitary clauses were known
@@ -62,7 +62,7 @@ this limit can be overridden with "nolimit"
 @p nolimit set this to force cleaning&removing. Useful if a really clean
 state is needed, which is important for certain algorithms
 */
-inline void ClauseCleaner::removeAndCleanAll(const bool nolimit)
+inline void ClauseCleaner::removeAndCleanAll()
 {
     removeSatisfiedBins(0);
     cleanClauses(control->clauses, ClauseCleaner::clauses, 0);

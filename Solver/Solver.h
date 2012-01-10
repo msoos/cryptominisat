@@ -79,7 +79,7 @@ struct PolaritySorter
         varData(_varData)
     {};
 
-    const bool operator()(const Lit lit1, const Lit lit2) {
+    bool operator()(const Lit lit1, const Lit lit2) {
         const bool pol1 = !varData[lit1.var()].polarity ^ lit1.sign();
         const bool pol2 = !varData[lit2.var()].polarity ^ lit2.sign();
 
@@ -112,24 +112,24 @@ public:
 
     // Variable mode:
     //
-    virtual const Var newVar(const bool dvar = true);
+    virtual Var newVar(const bool dvar = true);
 
     // Read state:
     //
-    const lbool   value      (const Var x) const;       ///<The current value of a variable.
-    const lbool   value      (const Lit p) const;       ///<The current value of a literal.
-    const uint32_t nAssigns   () const;         ///<The current number of assigned literals.
-    const uint32_t nVars      () const;         ///<The current number of variables.
+    lbool   value      (const Var x) const;       ///<The current value of a variable.
+    lbool   value      (const Lit p) const;       ///<The current value of a literal.
+    uint32_t nAssigns   () const;         ///<The current number of assigned literals.
+    uint32_t nVars      () const;         ///<The current number of variables.
 
     //Get state
-    const bool        okay() const; ///<FALSE means solver is in a conflicting state
-    const uint32_t    getVerbosity() const;
-    const uint32_t    getBinWatchSize(const bool alsoLearnt, const Lit lit) const;
-    const uint32_t    decisionLevel() const;      ///<Returns current decision level
-    const vector<Lit> getUnitaries() const;       ///<Return the set of unitary clauses
-    const uint32_t    getNumUnitaries() const;    ///<Return the set of unitary clauses
-    const uint32_t    countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
-    const size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
+    bool        okay() const; ///<FALSE means solver is in a conflicting state
+    uint32_t    getVerbosity() const;
+    uint32_t    getBinWatchSize(const bool alsoLearnt, const Lit lit) const;
+    uint32_t    decisionLevel() const;      ///<Returns current decision level
+    vector<Lit> getUnitaries() const;       ///<Return the set of unitary clauses
+    uint32_t    getNumUnitaries() const;    ///<Return the set of unitary clauses
+    uint32_t    countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
+    size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
 
 protected:
 
@@ -169,8 +169,8 @@ protected:
     ////////////////
     void       enqueue (const Lit p, const PropBy from = PropBy()); // Enqueue a literal. Assumes value of literal is undefined.
     void       enqueueComplex(const Lit p, const Lit ancestor, const bool learntStep);
-    const Lit  removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepLearnt);
-    const bool isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor);
+    Lit   removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepLearnt);
+    bool  isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor);
     void       addHyperBin(vector<Lit>& currAncestors, const Lit p); ///<Add hyper-binary clause given these ancestors
     void       addHyperBin(const Lit lit1, const Lit lit2, const Lit p); ///<Add hyper-binary clause given this tri-clause
     void       addHyperBin(const Clause& cl, const Lit p); ///<Add hyper-binary clause given this large clause
@@ -179,17 +179,17 @@ protected:
     // Propagating
     ////////////////
     void         newDecisionLevel();                       ///<Begins a new decision level.
-    const PropBy propagate(const bool update = true); ///<Perform unit propagation. Returns possibly conflicting clause.
-    const bool   propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
-    template<bool simple> const bool propTriClause   (const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 3-long clause
-    template<bool simple> const bool propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl); ///<Propagate >3-long clause
+    PropBy       propagate(); ///<Perform unit propagation. Returns possibly conflicting clause.
+    bool         propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
+    template<bool simple> bool propTriClause   (const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 3-long clause
+    template<bool simple> bool propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl); ///<Propagate >3-long clause
 
     //For hyper-bin, binary clause removal, etc.
-    const PropBy      propBin(const Lit p, vec<Watched>::iterator k, set<BinaryClause>& uselessBin);
-    const PropBy      propagateFull(set<BinaryClause>& uselessBin);
+    PropBy      propBin(const Lit p, vec<Watched>::iterator k, set<BinaryClause>& uselessBin);
+    PropBy      propagateFull(set<BinaryClause>& uselessBin);
     bool              enqeuedSomething;         ///<Set if enqueueComplex has been called
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
-    const PropBy      propagateNonLearntBin();  ///<For debug purposes, to test binary clause removal
+    PropBy      propagateNonLearntBin();  ///<For debug purposes, to test binary clause removal
 
     /////////////////
     // Operations on clauses:
@@ -222,7 +222,7 @@ protected:
 ///////////////////////////////////////
 // Implementation of inline methods:
 
-inline void     Solver::newDecisionLevel()
+inline void Solver::newDecisionLevel()
 {
     trail_lim.push_back(trail.size());
     #ifdef VERBOSE_DEBUG
@@ -230,32 +230,32 @@ inline void     Solver::newDecisionLevel()
     #endif
 }
 
-inline const uint32_t      Solver::decisionLevel()      const
+inline uint32_t Solver::decisionLevel() const
 {
     return trail_lim.size();
 }
 
-inline const lbool    Solver::value         (const Var x) const
+inline lbool Solver::value (const Var x) const
 {
     return assigns[x];
 }
 
-inline const lbool    Solver::value         (const Lit p) const
+inline lbool Solver::value (const Lit p) const
 {
     return assigns[p.var()] ^ p.sign();
 }
 
-inline const uint32_t      Solver::nAssigns      ()      const
+inline uint32_t Solver::nAssigns() const
 {
     return trail.size();
 }
 
-inline const uint32_t Solver::nVars         ()      const
+inline uint32_t Solver::nVars() const
 {
     return assigns.size();
 }
 
-inline const bool     Solver::okay          ()      const
+inline bool Solver::okay() const
 {
     return ok;
 }
@@ -331,7 +331,7 @@ inline void Solver::enqueueComplex(const Lit p, const Lit ancestor, const bool l
 We can try both ways: either binary clause can be removed. Try to remove one, then the other
 Return which one is to be removed
 */
-inline const Lit Solver::removeWhich(Lit conflict, Lit thisAncestor, bool thisStepLearnt)
+inline Lit Solver::removeWhich(Lit conflict, Lit thisAncestor, bool thisStepLearnt)
 {
     const PropData& data = propData[conflict.var()];
 
@@ -354,7 +354,7 @@ hop backwards from thisAncestor until:
 1) we reach ancestor of 'conflict' -- at this point, we return TRUE
 2) we reach an invalid point. Either root, or an invalid hop. We return FALSE.
 */
-inline const bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor)
+inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor)
 {
     #ifdef VERBOSE_DEBUG_FULLPROP
     std::cout << "isAncestorOf."
@@ -536,7 +536,7 @@ inline void Solver::cancelZeroLight()
     trail_lim.clear();
 }
 
-inline const uint32_t Solver::getNumUnitaries() const
+inline uint32_t Solver::getNumUnitaries() const
 {
     if (decisionLevel() > 0)
         return trail_lim[0];
@@ -544,7 +544,7 @@ inline const uint32_t Solver::getNumUnitaries() const
         return trail.size();
 }
 
-inline const size_t Solver::getTrailSize() const
+inline size_t Solver::getTrailSize() const
 {
     assert(decisionLevel() == 0);
 
