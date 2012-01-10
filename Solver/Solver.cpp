@@ -217,10 +217,15 @@ inline bool Solver::propBinaryClause(const vec<Watched>::const_iterator i, const
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
-template<bool simple> inline bool Solver::propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl)
-{
+template<bool simple> inline bool Solver::propNormalClause(
+    const vec<Watched>::iterator i
+    , vec<Watched>::iterator &j
+    , const Lit p
+    , PropBy& confl
+) {
     if (value(i->getBlockedLit()).getBool()) {
         // Clause is sat
+        *j++ = *i;
         return true;
     }
     bogoProps += 4;
@@ -233,6 +238,7 @@ template<bool simple> inline bool Solver::propNormalClause(vec<Watched>::iterato
 
     // If other watch is true, then clause is already satisfied.
     if (value(c[data[!watchNum]]) == l_True) {
+        *j++ = *i;
         return true;
     }
     // Look for new watch:
@@ -250,9 +256,6 @@ template<bool simple> inline bool Solver::propNormalClause(vec<Watched>::iterato
             data[watchNum] = numLit;
             watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
             bogoProps += 2;
-            j--;
-            *i = *j;
-            i--;
             return true;
         }
 #ifdef DELAYED_NORM_WATCH_UPDATE
@@ -264,14 +267,12 @@ template<bool simple> inline bool Solver::propNormalClause(vec<Watched>::iterato
         data[watchNum] = other;
         watches[(~c[other]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
         bogoProps += 2;
-        j--;
-        *i = *j;
-        i--;
         return true;
     }
 #endif
 
     // Did not find watch -- clause is unit under assignment:
+    *j++ = *i;
     if (value(c[data[!watchNum]]) == l_False) {
         confl = PropBy(offset, !watchNum);
         qhead = trail.size();
@@ -331,25 +332,51 @@ PropBy Solver::propagate()
         #endif
 
         vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = ws.end();
         bogoProps += ws.size()/2 + 1;
-        for (; i != j; i++) {
+        vec<Watched>::iterator i2 = ws.begin();
+        i2 += 3;
+        vec<Watched>::iterator j = ws.begin();
+        const vec<Watched>::iterator end = ws.end();
+        for (; i != end; i++, i2++) {
+            if (i2 < end && i2->isClause()) {
+                if (!value(i2->getBlockedLit()).getBool()) {
+                    const uint32_t offset = i2->getNormOffset();
+                    __builtin_prefetch(clAllocator->getPointer(offset));
+                }
+            }
             if (i->isBinary()) {
-                if (!propBinaryClause(i, p, confl)) break;
-                else continue;
+                *j++ = *i;
+                if (!propBinaryClause(i, p, confl)) {
+                    i++;
+                    break;
+                }
+
+                continue;
             } //end BINARY
 
             if (i->isTriClause()) {
-                if (!propTriClause<true>(i, p, confl)) break;
-                else continue;
+                *j++ = *i;
+                if (!propTriClause<true>(i, p, confl)) {
+                    i++;
+                    break;
+                }
+
+                continue;
             } //end TRICLAUSE
 
             if (i->isClause()) {
-                if (!propNormalClause<true>(i, j, p, confl)) break;
-                else continue;
+                if (!propNormalClause<true>(i, j, p, confl)) {
+                    i++;
+                    break;
+                }
+
+                continue;
             } //end CLAUSE
         }
-        ws.shrink_(ws.end()-j);
+        while (i != end) {
+            *j++ = *i++;
+        }
+        ws.shrink_(end-j);
     }
 
     #ifdef VERBOSE_DEBUG
@@ -439,25 +466,45 @@ PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
         enqeuedSomething = false;
 
         vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = ws.end();
-        for(; i != j; i++) {
-            if (i->isBinary()) continue;
+        vec<Watched>::iterator j = ws.begin();
+        const vec<Watched>::iterator end = ws.end();
+        for(; i != end; i++) {
+            if (i->isBinary()) {
+                *j++ = *i;
+                continue;
+            }
 
             if (i->isTriClause()) {
-                if (!propTriClause<false>(i, p, confl)) break;
-                if (enqeuedSomething) break;
-                else continue;
+                *j++ = *i;
+                if (!propTriClause<false>(i, p, confl)
+                    || enqeuedSomething
+                ) {
+                    i++;
+                    break;
+                }
+
+                continue;
             }
 
             if (i->isClause()) {
-                if (!propNormalClause<false>(i, j, p, confl)) break;
-                if (enqeuedSomething) break;
-                else continue;
+                if ((!propNormalClause<false>(i, j, p, confl))
+                    || enqeuedSomething
+                ) {
+                    i++;
+                    break;
+                }
+
+                continue;
             }
         }
-        ws.shrink_(ws.end()-j);
-        if (confl != PropBy()) return confl;
-        if (enqeuedSomething) goto start;
+        while(i != end)
+            *j++ = *i++;
+        ws.shrink_(end-j);
+
+        if (confl != PropBy())
+            return confl;
+        if (enqeuedSomething)
+            goto start;
         qhead++;
     }
 

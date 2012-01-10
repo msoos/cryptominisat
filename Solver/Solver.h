@@ -182,7 +182,13 @@ protected:
     PropBy       propagate(); ///<Perform unit propagation. Returns possibly conflicting clause.
     bool         propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
     template<bool simple> bool propTriClause   (const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 3-long clause
-    template<bool simple> bool propNormalClause(vec<Watched>::iterator &i, vec<Watched>::iterator &j, const Lit p, PropBy& confl); ///<Propagate >3-long clause
+    template<bool simple>
+    bool propNormalClause(
+        const vec<Watched>::iterator i
+        , vec<Watched>::iterator &j
+        , const Lit p
+        , PropBy& confl
+    ); ///<Propagate >3-long clause
 
     //For hyper-bin, binary clause removal, etc.
     PropBy      propBin(const Lit p, vec<Watched>::iterator k, set<BinaryClause>& uselessBin);
