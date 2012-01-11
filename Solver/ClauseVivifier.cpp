@@ -101,9 +101,12 @@ bool ClauseVivifier::vivifyClausesNormal()
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
-    uint64_t maxNumProps = 35*1000*1000;
+
+    //Time-limiting
+    uint64_t maxNumProps = 5L*1000L*1000L;
     if (control->clausesLits + control->learntsLits < 500000)
         maxNumProps *=2;
+
     uint64_t extraDiff = 0;
     uint64_t oldBogoProps = control->bogoProps;
     bool needToFinish = false;
