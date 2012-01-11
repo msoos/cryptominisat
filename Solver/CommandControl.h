@@ -71,6 +71,7 @@ class CommandControl : public Solver
 
         // Statistics
         //
+        double           startTime;        ///<When solve() was started
         uint64_t         numConflicts;     ///<Number of conflicts
         uint64_t         numRestarts;      ///<Num restarts
         uint64_t         decisions;        ///<Number of decisions made

@@ -103,7 +103,7 @@ SatELite-type simplification, number of unit claues found, etc.
 */
 void CommandControl::printStats()
 {
-    double   cpu_time = cpuTime();
+    double   cpu_time = cpuTime() - startTime;
     uint64_t mem_used = memUsed();
 
     //Restarts stats
@@ -1241,6 +1241,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     assert(qhead == trail.size());
 
     assumptions = assumps;
+    startTime = cpuTime();
     initialiseSolver();
     lbool status = l_Undef; //Current status
 
