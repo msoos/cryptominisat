@@ -75,7 +75,7 @@ class CommandControl : public Solver
         uint64_t         numConflicts;     ///<Number of conflicts
         uint64_t         numRestarts;      ///<Num restarts
         uint64_t         decisions;        ///<Number of decisions made
-        uint64_t         rnd_decisions;    ///<Numer of random decisions made
+        uint64_t         decisions_rnd;    ///<Numer of random decisions made
         bqueue<uint32_t> avgBranchDepth;   ///< Avg branch depth in current restart
         bqueue<uint32_t> glueHistory;      ///< Set of last decision levels in (glue of) conflict clauses
         bqueue<uint32_t> conflSizeHist;    ///< Conflict size history

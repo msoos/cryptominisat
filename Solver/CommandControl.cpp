@@ -49,7 +49,7 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         , numConflicts(0)
         , numRestarts(0)
         , decisions(0)
-        , rnd_decisions(0)
+        , decisions_rnd(0)
 
         //Conflict generation
         , max_literals(0)
@@ -133,7 +133,7 @@ void CommandControl::printStats()
 
     //Search stats
     printStatsLine("c conflicts", numConflicts, (double)numConflicts/cpu_time, "/ sec");
-    printStatsLine("c decisions", decisions, (double)rnd_decisions*100.0/(double)decisions, "% random");
+    printStatsLine("c decisions", decisions, (double)decisions_rnd*100.0/(double)decisions, "% random");
     printStatsLine("c bogo-props", bogoProps, (double)bogoProps/cpu_time, "/ sec");
     printStatsLine("c props", propagations, (double)propagations/cpu_time, "/ sec");
     printStatsLine("c conflict literals", tot_literals, (double)(max_literals - tot_literals)*100.0/ (double)max_literals, "% deleted");
@@ -1361,14 +1361,15 @@ Lit CommandControl::pickBranchLit()
     bool sign = true;
 
     // Random decision:
+    double rand = mtrand.randDblExc();
     if (next == var_Undef
-        && (mtrand.randDblExc() < conf.random_var_freq)
+        && rand < conf.random_var_freq
         && !order_heap.empty()
     ) {
         next = order_heap[mtrand.randInt(order_heap.size()-1)];
 
         if (value(next) == l_Undef && control->decision_var[next]) {
-            rnd_decisions++;
+            decisions_rnd++;
             sign = !getPolarity(next);
         }
     }
