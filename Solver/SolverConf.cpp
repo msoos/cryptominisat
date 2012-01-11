@@ -35,7 +35,7 @@ SolverConf::SolverConf() :
 
         //Agilities
         , agilityG                  (0.9999)
-        , agilityLimit              (0.2)
+        , agilityLimit              (0.25)
         , numTooLowAgilitiesLimit   (50)
         , forgetLowAgilityAfter     (1000)
         , countAgilityFromThisConfl (50)
