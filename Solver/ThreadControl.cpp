@@ -627,11 +627,12 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
         std::cout << "c Simplifying problem for "
         << std::setw(8) << numConfls << " confls"
         << std::endl;
-    conf.random_var_freq = 1;
 
     lbool status = l_Undef;
 
-    /*simplifying = true;
+    /*
+    conf.random_var_freq = 1;
+    simplifying = true;
     uint64_t origConflicts = conflicts;
     restPrinter->printRestartStat("S");
     while(status == l_Undef && conflicts-origConflicts < numConfls && needToInterrupt == false) {
