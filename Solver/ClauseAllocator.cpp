@@ -443,6 +443,8 @@ void ClauseAllocator::consolidate(ThreadControl* control, const bool force)
 
 void ClauseAllocator::putClausesIntoDatastruct(std::vector<Clause*>& clauses)
 {
+    otherClauses.clear();
+    threeLongClauses.clear();
     for (uint32_t i = 0; i < clauses.size(); i++) {
         Clause* c = clauses[i];
         if (c->size() <= 3) {
