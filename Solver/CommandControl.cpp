@@ -310,8 +310,8 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
         && conf.doMinimLearntMore
         && out_learnt.size() > 1
         && (conf.doAlwaysFMinim
-            || glue < 0.65*glueHistory.getAvgAllDouble()
-            || out_learnt.size() < 0.65*conflSizeHist.getAvgDouble()
+            || calcNBLevels(out_learnt) < 0.65*glueHistory.getAvgAllDouble()
+            || out_learnt.size() < 0.65*conflSizeHist.getAvgAllDouble()
             )
     ) {
         minimiseLearntFurther(out_learnt);
