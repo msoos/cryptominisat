@@ -1423,7 +1423,10 @@ Lit CommandControl::pickBranchLit()
 
                 //Save this literal & sign
                 next = control->litReachable[nextLit.toInt()].lit.var();
-                sign = control->litReachable[nextLit.toInt()].lit.sign();
+
+                //if '-a V b' then litReachable[a] = b, so we must pick '-b'
+                //therefore, must invert here
+                sign = !control->litReachable[nextLit.toInt()].lit.sign();
             }
         }
     }
