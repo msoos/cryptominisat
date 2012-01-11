@@ -1328,12 +1328,26 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     cancelUntil(0);
 
     //#ifdef VERBOSE_DEBUG
-    std::cout << "th " << omp_get_thread_num() << "CommandControl::solve() finished, status: " << status
-    << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
-    << " numConflicts : " << numConflicts
-    << " lastSumConfl: " << lastSumConfl
-    << " maxConfls:" << maxConfls << std::endl;
+#pragma omp critical
+    {
+        std::cout << "c th " << omp_get_thread_num()
+        << " ---------" << std::endl;
+
+        std::cout << "c CommandControl::solve() finished"
+        << " status: " << status
+        << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
+        << " numConflicts : " << numConflicts
+        << " lastSumConfl: " << lastSumConfl
+        << " maxConfls:" << maxConfls
+        << std::endl;
+        printStats();
+
+        std::cout << "c th " << omp_get_thread_num()
+        << " ---------" << std::endl;
+
+    }
     //#endif
+
     return status;
 }
 
