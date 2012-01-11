@@ -460,11 +460,6 @@ template<class T> void Subsumer::findSubsumed0(const uint32_t index, const T& ps
     Occur& cs = occur[ps[min_i].toInt()];
     *toDecrease -= cs.size()*15 + 40;
     for (Occur::const_iterator it = cs.begin(), end = cs.end(); it != end; it++){
-
-        //Occur is size-sorted (largest first)
-        if (ps.size() > clauseData[it->index].size)
-            break;
-
         //Check if this clause is subsumed by the clause given
         if (it->index != index
             && subsetAbst(abs, clauseData[it->index].abst)

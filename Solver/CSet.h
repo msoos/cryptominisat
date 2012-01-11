@@ -76,8 +76,7 @@ public:
     typedef vector<ClauseIndex>::iterator iterator;
     typedef vector<ClauseIndex>::const_iterator const_iterator;
 
-    /*
-    //Normal
+    //Normal iterator
     iterator begin()
     {
         return occ.begin();
@@ -86,8 +85,7 @@ public:
     iterator end()
     {
         return occ.end();
-    }*/
-
+    }
 
     //Constant iterator
     const_iterator begin() const
@@ -110,56 +108,9 @@ public:
         return occ.size();
     }
 
-    //Sanity check
-    bool isSorted(const vector<AbstData>& clauseData)
+    void add(ClauseIndex c)
     {
-        //If empty or contains only one element, it's sorted
-        if (occ.size() < 2)
-            return true;
-
-        //Next clause's size cannot be smaller than the previous' size
-        vector<ClauseIndex>::const_iterator it = occ.begin();
-        vector<ClauseIndex>::const_iterator it2 = it;
-        it2++;
-        for(vector<ClauseIndex>::const_iterator end = occ.end(); it2 != end; it++, it2++) {
-            assert(it->index != std::numeric_limits<uint32_t>::max());
-            assert(it2->index != std::numeric_limits<uint32_t>::max());
-
-            //Sorted in descending order. If occ[0] is smaller than occ[1], it's an error
-            if (clauseData[it->index].size < clauseData[it2->index].size)
-                return false;
-        }
-
-        return true;
-    }
-
-    void add(ClauseIndex c, const vector<AbstData>& clauseData, size_t size)
-    {
-        //Make room
-        occ.push_back(ClauseIndex());
-
-        size_t i = 0;
-        ClauseIndex last;
-        bool lastSet = false;
-        for(; i < occ.size(); i++) {
-            if (lastSet) {
-                ClauseIndex backupLast = occ[i];
-                occ[i] = last;
-                last = backupLast;
-                continue;
-            }
-
-            //It exists, and is larger, then skip over
-            if (occ[i].index != std::numeric_limits<uint32_t>::max()
-                && clauseData[occ[i].index].size > size)
-                continue;
-
-            //Last is not set, and it's time to swap
-            lastSet = true;
-            last = occ[i];
-            occ[i] = c;
-        }
-        assert(lastSet);
+        occ.push_back(c);
     }
 
     void freeMem()
@@ -176,15 +127,6 @@ public:
     void remove(const ClauseIndex c)
     {
         removeW(occ, c);
-    }
-
-    void update(const ClauseIndex c, vector<AbstData>& clauseData)
-    {
-        //First remove
-        remove(c);
-
-        //Then add
-        add(c, clauseData, clauseData[c.index].size);
     }
 
 private:

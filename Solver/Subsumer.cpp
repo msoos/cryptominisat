@@ -471,7 +471,7 @@ ClauseIndex Subsumer::linkInClause(Clause& cl)
     std::sort(cl.begin(), cl.end());
     for (uint32_t i = 0; i < cl.size(); i++) {
         *toDecrease -= occur[cl[i].toInt()].size();
-        occur[cl[i].toInt()].add(c, clauseData, cl.size());
+        occur[cl[i].toInt()].add(c);
         touchedVars.touch(cl[i], cl.learnt());
 
         if (cl.getChanged())
@@ -844,6 +844,8 @@ bool Subsumer::simplifyBySubsumption()
         std::sort(control->learnts.begin(), control->learnts.end(), sortBySize());
     addedClauseLits += addFromSolver(control->learnts);
     setLimits();
+    double linkInTime = cpuTime() - myTime;
+    std::cout << "c Time to Link in : " << linkInTime << std::endl;
     totalTime += cpuTime() - myTime; //setup time
 
     //Do stuff with binaries
@@ -1355,11 +1357,6 @@ void inline Subsumer::fillSubs(const T& ps, const uint32_t index, const CL_ABST_
     const Occur& cs = occur[lit.toInt()];
     *toDecrease -= cs.size()*15 + 40;
     for (Occur::const_iterator it = cs.begin(), end = cs.end(); it != end; it++) {
-
-        //Occur is size-sorted (largest first)
-        if (ps.size() > clauseData[it->index].size)
-            break;
-
         if (it->index != index
             && subsetAbst(abs, clauseData[it->index].abst)
             && ps.size() <= clauseData[it->index].size
