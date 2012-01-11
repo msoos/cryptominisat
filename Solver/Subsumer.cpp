@@ -1699,11 +1699,18 @@ And without_p = ~without_q
 @param useCache Use the cache to try to find that the resulting clause is a tautology
 @return FALSE if clause is always satisfied ('out_clause' should not be used)
 */
-bool Subsumer::merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, const bool useCache)
-{
+bool Subsumer::merge(
+    const ClAndBin& ps
+    , const ClAndBin& qs
+    , const Lit without_p
+    , const Lit without_q
+    , const bool useCache
+) {
     //If clause has already been freed, skip
-    if (!ps.isBin && clauses[ps.clsimp.index] == NULL) return false;
-    if (!qs.isBin && clauses[qs.clsimp.index] == NULL) return false;
+    if (!ps.isBin && clauses[ps.clsimp.index] == NULL)
+        return false;
+    if (!qs.isBin && clauses[qs.clsimp.index] == NULL)
+        return false;
 
     dummy.clear(); //The final clause
     dummy2.clear(); //Used to clear 'seen'
