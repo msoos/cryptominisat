@@ -277,7 +277,11 @@ inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
 class AgilityData
 {
     public:
-        AgilityData(const double _agilityG, const uint32_t _forgetLowAgilityAfter, const uint32_t _countAgilityFromThisConfl) :
+        AgilityData(
+            const double _agilityG
+            , const uint32_t _forgetLowAgilityAfter
+            , const uint32_t _countAgilityFromThisConfl
+        ) :
             agilityG(_agilityG)
             , agility(0)
             , numTooLow(0)
@@ -291,7 +295,8 @@ class AgilityData
         void update(const bool flipped)
         {
             agility *= agilityG;
-            if (flipped) agility += 1.0 - agilityG;
+            if (flipped)
+                agility += 1.0 - agilityG;
         }
 
         double getAgility() const
@@ -301,7 +306,9 @@ class AgilityData
 
         void tooLow(const uint64_t confl)
         {
-            if (confl < countAgilityFromThisConfl) return;
+            if (confl < countAgilityFromThisConfl)
+                return;
+
             assert(lastConflTooLow != confl);
 
             //If it was a long time ago, don't penalise
