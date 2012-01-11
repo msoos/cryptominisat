@@ -1251,7 +1251,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 2;
     }
 
-    numMaxElimVars = (control->getNumFreeVars()/3);
+    numMaxElimVars = ((double)control->getNumFreeVars() * 0.3);
 
     numMaxBlockVars = (uint32_t)((double)control->getNumUnsetVars() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
