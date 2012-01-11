@@ -63,22 +63,61 @@ public:
     const T peek() const { assert(queuesize>0); return elems[last]; }
     void pop() {sumofqueue-=elems[last]; queuesize--; if ((++last) == maxsize) last = 0;}
 
-    int64_t getsum() const {return sumofqueue;}
-    uint32_t getAvgUInt() const {return (uint64_t)sumofqueue/(uint64_t)queuesize;}
-    double getAvgDouble() const {return (double)sumofqueue/(double)queuesize;}
-    double getAvgAllDouble() const {return (double)sumOfAllElems/(double)totalNumElems;}
-    uint64_t getTotalNumeElems() const {return totalNumElems;}
-    int isvalid() const {return (queuesize==maxsize);}
+    int64_t getsum() const
+    {
+        return sumofqueue;
+    }
 
-    void resize(const uint32_t size) {
+    uint32_t getAvgUInt() const
+    {
+        assert(isvalid());
+        return (uint64_t)sumofqueue/(uint64_t)queuesize;
+    }
+
+    double getAvgDouble() const
+    {
+        assert(isvalid());
+        return (double)sumofqueue/(double)queuesize;
+    }
+
+    double getAvgAllDouble() const
+    {
+        if (totalNumElems == 0)
+            return 0;
+
+        return (double)sumOfAllElems/(double)totalNumElems;
+    }
+
+    uint64_t getTotalNumeElems() const
+    {
+        return totalNumElems;
+    }
+
+    bool isvalid() const
+    {
+        return (queuesize==maxsize);
+    }
+
+    void resize(const uint32_t size)
+    {
         elems.resize(size);
         first=0; maxsize=size; queuesize = 0;
         for(uint32_t i=0;i<size;i++) elems[i]=0;
     }
 
-    void fastclear() {first = 0; last = 0; queuesize=0; sumofqueue=0;} // to be called after restarts... Discard the queue
+    void fastclear() {
+        //Discard the queue, but not the SUMs
+        first = 0;
+        last = 0;
+        queuesize=0;
+        sumofqueue=0;
+    }
 
-    int  size(void)    { return queuesize; }
+    int  size(void)
+    {
+        return queuesize;
+
+    }
 
     void clear()   {
         elems.clear();
