@@ -693,7 +693,7 @@ void ThreadControl::calcReachability()
         ) continue;
 
         for (uint32_t sig1 = 0; sig1 < 2; sig1++)  {
-            Lit lit = Lit(var, sig1);
+            const Lit lit = Lit(var, sig1);
 
             vector<LitExtra>& cache = implCache[(~lit).toInt()].lits;
             uint32_t cacheSize = cache.size();
