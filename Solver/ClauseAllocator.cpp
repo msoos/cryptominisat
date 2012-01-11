@@ -29,6 +29,7 @@
 #include "ThreadControl.h"
 #include "time_mem.h"
 #include "Subsumer.h"
+#define BASE_DATA_TYPE char
 
 using std::pair;
 
@@ -91,9 +92,8 @@ Clause* ClauseAllocator::Clause_new(Clause& c)
     assert(c.size() > 2);
     void* mem = allocEnough(c.size());
     memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
-    Clause& c2 = *(Clause*)mem;
 
-    return &c2;
+    return (Clause*)mem;
 }
 
 /**
@@ -112,7 +112,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         std::cerr << "Memory manager cannot handle the load. Sorry. Exiting." << std::endl;
         exit(-1);
     }
-    assert(size > 2);
+    assert(size > 2 && "Clause size cannot be 2 or less, those are stored natively");
 
     //Try to quickly find a place at the end of a dataStart
     uint32_t needed = sizeof(Clause)+sizeof(Lit)*size;
@@ -128,6 +128,11 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
 
     //OOps, no luck, try the hard way, allocating space, etc.
     if (!found) {
+        //Checking whether we are out of memory, because the offset that we can
+        //store is too little
+        if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET))
+            throw std::bad_alloc();
+
         uint32_t nextSize; //number of BYTES to allocate
         if (maxSizes.size() != 0) {
             nextSize = std::min((uint32_t)(maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT), (uint32_t)MAXSIZE);
@@ -276,7 +281,6 @@ void ClauseAllocator::consolidate(ThreadControl* control, const bool force)
     checkGoodPropBy(control);
     #endif
 
-    //if (dataStarts.size() > 2) {
     uint32_t sum = 0;
     for (uint32_t i = 0; i < sizes.size(); i++) {
         sum += currentlyUsedSizes[i];
@@ -308,7 +312,7 @@ void ClauseAllocator::consolidate(ThreadControl* control, const bool force)
     std::cout << "c ------ Consolidating Memory ------------" << std::endl;
     #endif //DEBUG_CLAUSEALLOCATOR
 
-    int64_t newMaxSizeNeed = (double)sum*1.2 + MIN_LIST_SIZE*15;
+    int64_t newMaxSizeNeed = (double)sum*1.2 + MIN_LIST_SIZE;
     #ifdef DEBUG_CLAUSEALLOCATOR
     std::cout << "c newMaxSizeNeed = " << newMaxSizeNeed << std::endl;
     #endif //DEBUG_CLAUSEALLOCATOR
@@ -344,10 +348,8 @@ void ClauseAllocator::consolidate(ThreadControl* control, const bool force)
     std::cout << "c ------------------" << std::endl;
     #endif //DEBUG_CLAUSEALLOCATOR
 
-    if (newMaxSizeNeed > 0) {
-        std::cerr << "We cannot handle the memory need load. Exiting." << std::endl;
-        exit(-1);
-    }
+    if (newMaxSizeNeed > 0)
+        throw std::bad_alloc();
 
     vector<uint32_t> newSizes;
     vector<vector<uint32_t> > newOrigClauseSizes;
@@ -393,12 +395,12 @@ void ClauseAllocator::consolidate(ThreadControl* control, const bool force)
     for (uint32_t i = 0; i < clauses.size(); i++) {
         Clause* clause = getClause();
 
-        uint32_t sizeNeeded = sizeof(Clause) + clause->size()*sizeof(Lit);
+        uint32_t sizeNeeded = (sizeof(Clause) + clause->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
 
         //Next line is needed, because in case of isRemoved()
         //, the size of the clause could become 0, thus having less
         // than enough space to carry the NewPointerAndOffset info
-        sizeNeeded = std::max(sizeNeeded, (uint32_t)sizeof(NewPointerAndOffset));
+        sizeNeeded = std::max<uint32_t>(sizeNeeded, (uint32_t)sizeof(NewPointerAndOffset)/sizeof(BASE_DATA_TYPE));
 
         if (newSizes[outerPart] + sizeNeeded > newMaxSizes[outerPart]) {
             outerPart++;
