@@ -317,10 +317,10 @@ class AgilityData
             return numTooLow;
         }
 
-        void reset()
+        void reset(const double agilityLimit)
         {
             agility = 0;
-            numTooLow = 0;
+            numTooLow = std::min<double>(agilityLimit*2, 0.9);
             lastConflTooLow = 0;
         }
 

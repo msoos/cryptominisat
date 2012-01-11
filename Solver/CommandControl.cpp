@@ -692,7 +692,7 @@ lbool CommandControl::search(SearchFuncParams _params)
     if (params.update)
         numRestarts ++;
     glueHistory.fastclear();
-    agility.reset();
+    agility.reset(control->conf.agilityLimit);
 
     //Debug
     #ifdef VERBOSE_DEBUG
