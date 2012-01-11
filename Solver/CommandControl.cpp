@@ -1247,6 +1247,10 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
     uint64_t lastRestartPrint = numConflicts;
 
+    for(size_t i = 0; i < control->nVars(); i++) {
+        varData[i].polarity = control->getSavedPolarity(i);
+    }
+
     // Search:
     while (status == l_Undef
         && !needToInterrupt

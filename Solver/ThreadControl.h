@@ -86,6 +86,7 @@ class ThreadControl : public Solver
         uint32_t getNewToReplaceVars() const;           ///<Return number of variables waiting to be replaced
         uint64_t getSumConflicts() const;
         uint64_t getNextCleanLimit() const;
+        bool     getSavedPolarity(Var var) const;
 
         ///////////////////////////////////
         // State Dumping
@@ -262,6 +263,11 @@ inline uint64_t ThreadControl::getSumConflicts() const
 inline uint64_t ThreadControl::getNextCleanLimit() const
 {
     return nextCleanLimit;
+}
+
+inline bool ThreadControl::getSavedPolarity(const Var var) const
+{
+    return varData[var].polarity;
 }
 
 #endif //THREADCONTROL_H
