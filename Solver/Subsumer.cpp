@@ -1239,12 +1239,6 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 2;
     }
 
-    if (addedClauseLits < 5000000) {
-        numMaxElim *= 2;
-        numMaxSubsume0 *= 2;
-        numMaxSubsume1 *= 2;
-    }
-
     if (addedClauseLits < 3000000) {
         numMaxElim *= 2;
         numMaxSubsume0 *= 2;
