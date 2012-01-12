@@ -170,7 +170,6 @@ class ThreadControl : public Solver
         // Data
         SolverConf           conf;
         ImplCache            implCache;
-        bool           cleanCache();
         vector<LitReachData> litReachable;
         void                 calcReachability();
         bool                 needToInterrupt;
