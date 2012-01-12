@@ -90,7 +90,7 @@ bool FailedLitSearcher::search()
     origBogoProps = control->bogoProps;
     uint32_t i;
     for (i = 0; i < control->nVars(); i++) {
-        Var var = (control->mtrand.randInt() + i) % control->nVars();
+        const Var var = (control->mtrand.randInt() + i) % control->nVars();
         if (control->value(var) != l_Undef || !control->decision_var[var])
             continue;
         if (control->bogoProps >= origBogoProps + numProps)
