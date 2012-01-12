@@ -643,27 +643,40 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
     //restPrinter->printRestartStat("S");
     if (status != l_Undef) goto end;
 
-    clAllocator->consolidate(this, true);
-    if (conf.doFailedLit) {
-        if (!failedLitSearcher->search()) goto end;
-    }
+    clAllocator->consolidate(this, threads, true);
+    if (conf.doFindEqLits && !sCCFinder->find2LongXors())
+        goto end;
+
+    if (conf.doReplace && !varReplacer->performReplace())
+        goto end;
+
+    if (conf.doFailedLit && !failedLitSearcher->search())
+        goto end;
 
     if (needToInterrupt) return l_Undef;
 
     //Vivify clauses
-    if (conf.doClausVivif && !clauseVivifier->vivify()) goto end;
+    if (conf.doClausVivif && !clauseVivifier->vivify())
+        goto end;
 
     //Var-elim, gates, subsumption, strengthening
-    if (conf.doSatELite && !subsumer->simplifyBySubsumption()) goto end;
+    if (conf.doSatELite && !subsumer->simplifyBySubsumption())
+        goto end;
 
-    //Find & replace -- cache cleaning is needed before AND after
-    if (conf.doFindEqLits && !sCCFinder->find2LongXors()) goto end;
-    if (conf.doReplace && !varReplacer->performReplace()) goto end;
+    //Search & replace 2-long XORs
+    if (conf.doFindEqLits && !sCCFinder->find2LongXors())
+        goto end;
+
+    if (conf.doReplace && !varReplacer->performReplace())
+        goto end;
 
     //Cleaning, stat counting, etc.
-    if (conf.doCache && conf.doCalcReach) calcReachability();
-    if (conf.doCache) implCache.clean(this);
-    if (conf.doSortWatched) sortWatched();
+    if (conf.doCache && conf.doCalcReach)
+        calcReachability();
+    if (conf.doCache)
+        implCache.clean(this);
+    if (conf.doSortWatched)
+        sortWatched();
 
     //addSymmBreakClauses();
 
