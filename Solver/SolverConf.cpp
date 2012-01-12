@@ -69,7 +69,7 @@ SolverConf::SolverConf() :
         , doRemUselessBins (true)
         , doPrintAvgBranch (false)
         , doCache          (true)
-        , doExtendedSCC    (true)
+        , doExtendedSCC    (false)
         , doGateFind       (true)
         , doAlwaysFMinim   (false)
         , doER             (false)
