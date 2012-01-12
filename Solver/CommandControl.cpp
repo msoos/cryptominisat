@@ -67,9 +67,6 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
     mtrand.seed(conf.origSeed);
 }
 
-/**
-@brief Frees clauses and frees all allocated hander classes
-*/
 CommandControl::~CommandControl()
 {
 }
@@ -95,12 +92,6 @@ void CommandControl::printStatsLine(std::string left, T value, std::string extra
     std::cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
 }
 
-/**
-@brief prints the statistics line at the end of solving
-
-Prints all sorts of statistics, like number of restarts, time spent in
-SatELite-type simplification, number of unit claues found, etc.
-*/
 void CommandControl::printStats()
 {
     double   cpu_time = cpuTime() - startTime;
@@ -149,8 +140,6 @@ void CommandControl::printStats()
 
 /**
 @brief Revert to the state at given level
-
-Also reverts all stuff in Gass-elimination
 */
 void CommandControl::cancelUntil(uint32_t level)
 {
