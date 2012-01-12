@@ -39,8 +39,16 @@ class CommandControl : public Solver
 
         ///////////////////////////////
         // Solving:
-        lbool solve(const vector<Lit>& assumps, const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()); ///<Search for a model that respects a given set of assumptions.
-        lbool solve(const uint64_t maxConfls = std::numeric_limits<uint64_t>::max());      ///<Search without assumptions.
+        ///Search for a model that respects a given set of assumptions.
+        lbool solve(
+            const vector<Lit>& assumps
+            , const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
+        );
+
+        ///Search without assumptions.
+        lbool solve(
+            const uint64_t maxConfls = std::numeric_limits<uint64_t>::max()
+        );
         vector<lbool> solution;     ///<Filled only if solve() returned l_True
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
 
@@ -101,10 +109,14 @@ class CommandControl : public Solver
 
         /////////////////
         // Searching
-        lbool       search(const SearchFuncParams _params);      // Search for a given number of conflicts.
+        /// Search for a given number of conflicts.
+        lbool search(
+            const SearchFuncParams _params
+            , uint64_t& rest
+        );
         bool  handle_conflict(SearchFuncParams& params, PropBy confl);// Handles the conflict clause
         lbool new_decision();  // Handles the case when decision must be made
-        void        checkNeedRestart(SearchFuncParams& params);     // Helper function to decide if we need to restart during search
+        void  checkNeedRestart(SearchFuncParams& params, uint64_t& rest);     // Helper function to decide if we need to restart during search
         Lit   pickBranchLit();                             // Return the next decision variable.
 
         ///////////////

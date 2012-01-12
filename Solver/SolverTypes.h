@@ -37,7 +37,7 @@ using std::vector;
 //Typedefs
 typedef uint32_t Var;
 static const Var var_Undef(0xffffffffU >>1);
-enum RestartType {dynamic_restart, static_restart, auto_restart};
+enum RestType {glue_restart, geom_restart};
 enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
 /**

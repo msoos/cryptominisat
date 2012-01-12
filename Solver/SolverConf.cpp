@@ -27,7 +27,8 @@ SolverConf::SolverConf() :
         , ratioRemoveClauses(1.0/3.0)
         , random_var_freq(0)
         , restart_first(100)
-        , restart_inc(1.5)
+        , restart_inc(1.2)
+        , restartType(glue_restart)
 
         , expensive_ccmin  (true)
         , polarity_mode    (polarity_auto)
@@ -90,7 +91,6 @@ SolverConf::SolverConf() :
         , maxDumpLearntsSize(std::numeric_limits<uint32_t>::max())
         , libraryUsage     (true)
         , greedyUnbound    (false)
-        , fixRestartType   (auto_restart)
         , origSeed(0)
 {
 }

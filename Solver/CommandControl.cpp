@@ -672,7 +672,7 @@ clauseset is found. If all variables are decision variables, this means
 that the clause set is satisfiable. 'l_False' if the clause set is
 unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 */
-lbool CommandControl::search(SearchFuncParams _params)
+lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
 {
     assert(ok);
 
@@ -704,7 +704,7 @@ lbool CommandControl::search(SearchFuncParams _params)
             printAgilityStats();
 
             //If restart is needed, set it as so
-            checkNeedRestart(params);
+            checkNeedRestart(params, rest);
 
             if (!handle_conflict(params, confl))
                 return l_False;
@@ -774,7 +774,7 @@ lbool CommandControl::new_decision()
     return l_Undef;
 }
 
-void CommandControl::checkNeedRestart(SearchFuncParams& params)
+void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
 {
     if (needToInterrupt)  {
         if (conf.verbosity >= 3)
@@ -786,22 +786,31 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params)
     if (agility.getAgility() < conf.agilityLimit)
         agility.tooLow(params.conflictsDoneThisRestart);
 
-    if ((agility.getNumTooLow() > conf.numTooLowAgilitiesLimit)
-        /*|| (glueHistory.isvalid() && 0.95*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble())*/) {
+    if ((conf.restartType == geom_restart
+            && params.conflictsDoneThisRestart > rest
+        ) || (conf.restartType == glue_restart
+            && glueHistory.isvalid()
+            && 0.95*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()
+        )
+    ) {
+        //Now check agility
+        if (agility.getNumTooLow() > conf.numTooLowAgilitiesLimit) {
+            #ifdef DEBUG_DYNAMIC_RESTART
+            if (glueHistory.isvalid()) {
+                std::cout << "glueHistory.getavg():" << glueHistory.getavg() <<std::endl;
+                std::cout << "totalSumOfGlue:" << totalSumOfGlue << std::endl;
+                std::cout << "conflicts:" << conflicts<< std::endl;
+                std::cout << "compTotSumGlue:" << compTotSumGlue << std::endl;
+                std::cout << "conflicts-compTotSumGlue:" << conflicts-compTotSumGlue<< std::endl;
+            }
+            #endif
 
-        #ifdef DEBUG_DYNAMIC_RESTART
-        if (glueHistory.isvalid()) {
-            std::cout << "glueHistory.getavg():" << glueHistory.getavg() <<std::endl;
-            std::cout << "totalSumOfGlue:" << totalSumOfGlue << std::endl;
-            std::cout << "conflicts:" << conflicts<< std::endl;
-            std::cout << "compTotSumGlue:" << compTotSumGlue << std::endl;
-            std::cout << "conflicts-compTotSumGlue:" << conflicts-compTotSumGlue<< std::endl;
+            if (conf.verbosity >= 3)
+                std::cout << "c Agility was too low, restarting as soon as possible!" << std::endl;
+            params.needToStopSearch = true;
+        } else {
+            rest *= conf.restart_inc;
         }
-        #endif
-
-        if (conf.verbosity >= 3)
-            std::cout << "c Agility was too low, restarting as soon as possible!" << std::endl;
-        params.needToStopSearch = true;
     }
 
     if (params.conflictsDoneThisRestart > params.conflictsToDo) {
@@ -1241,12 +1250,14 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     }
 
     // Search:
+    uint64_t rest = conf.restart_first;
     while (status == l_Undef
         && !needToInterrupt
         && lastSumConfl < maxConfls
     ) {
         assert(numConflicts < maxConfls);
-        status = search(SearchFuncParams(maxConfls-numConflicts));
+        status = search(SearchFuncParams(maxConfls-numConflicts), rest);
+        rest *= conf.restart_inc;
 
         if (lastSumConfl >= maxConfls)
             break;

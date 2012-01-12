@@ -219,7 +219,7 @@ void Main::parseCommandLine()
     ("freq", po::value<double>()->default_value(conf.random_var_freq), "[0 - 1] freq. of picking var at random")
     ("verbosity", po::value<int>()->default_value(conf.verbosity), "[0-4] Verbosity of solver")
     ("randomize", po::value<uint32_t>()->default_value(conf.origSeed), "[0..] Sets random seed")
-    ("restart", po::value<std::string>()->default_value("auto"), "{auto,static,dynamic}  Restart strategy to follow.")
+    ("restart", po::value<std::string>()->default_value("glue"), "{auto,static,dynamic}  Restart strategy to follow.")
     ("threads,t", po::value<uint32_t>()->default_value(numThreads), "Threads to use")
     ("nosolprint", "Don't print assignment if solution is SAT")
     ("nosimplify", "Don't do regular simplification rounds")
@@ -516,12 +516,10 @@ void Main::parseCommandLine()
 
     if (vm.count("restart")) {
         std::string type = vm["restart"].as<std::string>();
-        if (type == "auto")
-            conf.fixRestartType = auto_restart;
-        else if (type == "static")
-            conf.fixRestartType = static_restart;
-        else if (type == "dynamic")
-            conf.fixRestartType = dynamic_restart;
+        if (type == "geom")
+            conf.restartType = geom_restart;
+        else if (type == "glue")
+            conf.restartType = glue_restart;
         else throw WrongParam("restart", "unknown restart type");
     }
 
