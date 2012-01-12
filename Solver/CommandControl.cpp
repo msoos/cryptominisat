@@ -1263,8 +1263,8 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             break;
 
         if (lastSumConfl > control->getNextCleanLimit()) {
-            std::cout << "th " << omp_get_thread_num() << "cleaning"
-            << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
+            std::cout << "c th " << omp_get_thread_num() << " cleaning"
+            << " getNextCleanLimit(): " << control->getNextCleanLimit()
             << " numConflicts : " << numConflicts
             << " lastSumConfl: " << lastSumConfl
             << " maxConfls:" << maxConfls << std::endl;
