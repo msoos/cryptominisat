@@ -604,48 +604,6 @@ void CommandControl::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
     seen[p.var()] = 0;
 }
 
-/**
-@brief Check if 'p' can be removed from a learnt clause
-
-'abstract_levels' is used to abort early if the algorithm is
-visiting literals at levels that cannot be removed later.
-*/
-/*bool CommandControl::litRedundant(Lit p, uint32_t abstract_levels)
-{
-    analyze_stack.clear();
-    analyze_stack.push_back(p);
-    int top = toClear.size();
-    while (analyze_stack.size() > 0) {
-        assert(!varData[analyze_stack.back().var()].reason.isNULL());
-        PropByFull c(varData[analyze_stack.back().var()].reason
-                    , failBinLit
-                    , *clAllocator
-                    , clauseData
-                    , assigns
-                    );
-
-        analyze_stack.pop_back();
-
-        for (uint32_t i = 1, size = c.size(); i < size; i++) {
-            Lit p  = c[i];
-            if (!seen[p.var()] && varData[p.var()].level > 0) {
-                if (!varData[p.var()].reason.isNULL() && (abstractLevel(p.var()) & abstract_levels) != 0) {
-                    seen[p.var()] = 1;
-                    analyze_stack.push_back(p);
-                    toClear.push_back(p);
-                } else {
-                    for (uint32_t j = top; j != toClear.size(); j++)
-                        seen[toClear[j].var()] = 0;
-                    toClear.resize(top);
-                    return false;
-                }
-            }
-        }
-    }
-
-    return true;
-}*/
-
 void CommandControl::addToThreads(const size_t oldTrailSize)
 {
     vector<Lit> lits(1);
