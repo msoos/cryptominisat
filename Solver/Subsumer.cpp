@@ -1226,7 +1226,7 @@ void Subsumer::setLimits()
 {
     numMaxSubsume0 = 170L*1000L*1000L;
     numMaxSubsume1 = 80L*1000L*1000L;
-    numMaxElim     = 50L*1000L*1000L;
+    numMaxElim     = 90L*1000L*1000L;
     numMaxAsymm    = 10L *1000L*1000L;
 
     //numMaxElim = 0;
@@ -1253,7 +1253,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 2;
     }
 
-    numMaxElimVars = ((double)control->getNumFreeVars() * 0.3);
+    numMaxElimVars = ((double)control->getNumFreeVars() * 0.5 * std::sqrt(numCalls));
 
     numMaxBlockVars = (uint32_t)((double)control->getNumUnsetVars() / 1.5 * (0.8+(double)(numCalls)/4.0));
 
