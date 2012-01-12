@@ -144,7 +144,7 @@ bool VarReplacer::performReplace()
 end:
     assert(control->qhead == control->trail.size() || !control->ok);
 
-    if (control->conf.verbosity  >= 2) {
+    if (control->conf.verbosity  >= 1) {
         std::cout << "c Replacing "
         << std::setw(8) << thisTimeReplaced << " vars"
         << " Replaced " <<  std::setw(8) << replacedLits<< " lits"
