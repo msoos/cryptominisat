@@ -36,10 +36,10 @@ SolverConf::SolverConf() :
 
         //Agilities
         , agilityG                  (0.9999)
-        , agilityLimit              (0.25)
-        , numTooLowAgilitiesLimit   (50)
+        , agilityLimit              (0.20)
+        , numTooLowAgilitiesLimit   (100)
         , forgetLowAgilityAfter     (1000)
-        , countAgilityFromThisConfl (50)
+        , countAgilityFromThisConfl (100)
 
         //Simplification
         , simpBurstSConf   (500)
