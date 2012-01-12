@@ -738,13 +738,18 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
     return cl;
 }
 
-void ThreadControl::waitAllThreads()
+void ThreadControl::moveReduce()
 {
     assert(toDetach.empty());
     moveClausesHere();
     reduceDB();
     nextCleanLimit += nextCleanLimitInc;
     nextCleanLimitInc *= 1.2;
+}
+
+void ThreadControl::consolidateMem()
+{
+    clAllocator->consolidate(this, threads, true);
 }
 
 void ThreadControl::printStats()

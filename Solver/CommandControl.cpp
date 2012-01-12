@@ -1235,7 +1235,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
             #pragma omp barrier
             #pragma omp single
-            control->waitAllThreads();
+            control->moveReduce();
 
             //Detach clauses that have been scheduled
             for(vector<Clause*>::const_iterator it = control->toDetach.begin(), end = control->toDetach.end(); it != end; it++) {
@@ -1252,6 +1252,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             #pragma omp single
             {
                 control->toDetachFree();
+                control->consolidateMem();
             }
             #pragma omp barrier
 

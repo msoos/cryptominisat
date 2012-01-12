@@ -36,6 +36,8 @@
 
 class Clause;
 class ThreadControl;
+class Solver;
+class CommandControl;
 
 using std::map;
 using std::vector;
@@ -75,14 +77,19 @@ class ClauseAllocator {
         void clauseFree(Clause* c); ///Frees memory and associated clause number
         void releaseClauseNum(Clause* cl); ///<used when long clause becomes 3-long
 
-        void consolidate(ThreadControl* control, const bool force = false);
+        void consolidate(
+            ThreadControl* control
+            , vector<CommandControl*> solvers
+            , const bool force = false
+        );
 
     private:
         uint32_t getOuterOffset(const Clause* c) const;
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
         ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
 
-        void updateAllOffsetsAndPointers(ThreadControl* control);
+        template<class T>
+        void updateAllOffsetsAndPointers(T* control);
         template<class T>
         void updatePointers(vector<T*>& toUpdate);
         void updatePointers(vector<Clause*>& toUpdate);
@@ -131,7 +138,7 @@ class ClauseAllocator {
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 
         uint32_t getNewClauseNum(const uint32_t size);
-        void renumberClauses(vector<Clause*>& clauses, ThreadControl* solver);
+        void renumberClauses(vector<Clause*>& clauses, Solver* solver, vector<CommandControl*> solvers);
         vector<uint32_t> freedNums;  //Free clause nums that can be used now
         uint32_t maxClauseNum;
 };

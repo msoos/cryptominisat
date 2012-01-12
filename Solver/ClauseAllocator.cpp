@@ -27,6 +27,7 @@
 #include "SolverTypes.h"
 #include "Clause.h"
 #include "ThreadControl.h"
+#include "CommandControl.h"
 #include "time_mem.h"
 #include "Subsumer.h"
 #define BASE_DATA_TYPE char
@@ -274,8 +275,11 @@ small compared to the problem size. If it is small, it does nothing. If it is
 large, then it allocates new stacks, copies the non-freed clauses to these new
 stacks, updates all pointers and offsets, and frees the original stacks.
 */
-void ClauseAllocator::consolidate(ThreadControl* control, const bool force)
-{
+void ClauseAllocator::consolidate(
+    ThreadControl* control
+    , vector<CommandControl*> solvers
+    , const bool force
+) {
     double myTime = cpuTime();
     #ifdef DEBUG_PROPAGATEFROM
     checkGoodPropBy(control);
@@ -387,7 +391,7 @@ void ClauseAllocator::consolidate(ThreadControl* control, const bool force)
         }
     }
 
-    renumberClauses(clauses, control);
+    renumberClauses(clauses, control, solvers);
     putClausesIntoDatastruct(clauses);
 
     uint32_t outerPart = 0;
@@ -417,6 +421,11 @@ void ClauseAllocator::consolidate(ThreadControl* control, const bool force)
         newDataStartsPointers[outerPart] += sizeNeeded;
     }
 
+    updatePointers(control->clauses);
+    updatePointers(control->learnts);
+    for(vector<CommandControl*>::iterator it = solvers.begin(), end = solvers.end(); it != end; it++) {
+        updateAllOffsetsAndPointers(*it);
+    }
     updateAllOffsetsAndPointers(control);
 
     for (uint32_t i = 0; i < dataStarts.size(); i++)
@@ -490,18 +499,17 @@ void ClauseAllocator::checkGoodPropBy(const ThreadControl* control)
 }
 
 
-void ClauseAllocator::updateAllOffsetsAndPointers(ThreadControl* control)
+template<class T>
+void ClauseAllocator::updateAllOffsetsAndPointers(T* solver)
 {
-    updateOffsets(control->watches);
-
-    updatePointers(control->clauses);
-    updatePointers(control->learnts);
+    updateOffsets(solver->watches);
 
     Var var = 0;
-    for (vector<VarData>::iterator it = control->varData.begin(), end = control->varData.end(); it != end; it++, var++) {
-        if ((uint32_t)it->level > control->decisionLevel()
+    for (vector<VarData>::iterator it = solver->varData.begin(), end = solver->varData.end(); it != end; it++, var++) {
+        if ((uint32_t)it->level > solver->decisionLevel()
             || it->level == 0
-            || control->value(var) == l_Undef) {
+            || solver->value(var) == l_Undef
+        ) {
             it->reason = PropBy();
             continue;
         }
@@ -512,6 +520,8 @@ void ClauseAllocator::updateAllOffsetsAndPointers(ThreadControl* control)
         }
     }
 }
+template void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver);
+template void ClauseAllocator::updateAllOffsetsAndPointers(CommandControl* solver);
 
 /**
 @brief A dumb helper function to update offsets
@@ -577,20 +587,26 @@ uint32_t ClauseAllocator::getNewClauseNum(const uint32_t size)
     return toret;
 }
 
-void ClauseAllocator::renumberClauses(vector<Clause*>& clauses, ThreadControl* control)
+void ClauseAllocator::renumberClauses(vector<Clause*>& clauses, Solver* control, vector<CommandControl*> solvers)
 {
-    vector<ClauseData> newData;
+    vector<vector<ClauseData> > newDatas(1+solvers.size());
     freedNums.clear();
     maxClauseNum = 0;
     for (vector<Clause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
         assert((**it).size() > 2);
         if ((**it).size() > 3) {
-            newData.push_back(control->clauseData[(*it)->getNum()]);
+            newDatas[0].push_back(control->clauseData[(*it)->getNum()]);
+            for(size_t i = 0; i < solvers.size(); i++) {
+                newDatas[i+1].push_back(solvers[i]->clauseData[(*it)->getNum()]);
+            }
             (*it)->setNum(maxClauseNum);
             maxClauseNum++;
         }
     }
-    control->clauseData.swap(newData);
+    control->clauseData.swap(newDatas[0]);
+    for(size_t i = 0; i < solvers.size(); i++) {
+        solvers[i]->clauseData.swap(newDatas[i+1]);
+    }
 }
 
 void ClauseAllocator::releaseClauseNum(Clause* cl)

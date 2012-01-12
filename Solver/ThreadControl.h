@@ -195,7 +195,8 @@ class ThreadControl : public Solver
         void                reArrangeClause(Clause* clause);
         void                checkLiteralCount() const;
         void                printAllClauses() const;
-        void                waitAllThreads();
+        void                moveReduce();
+        void                consolidateMem();
 
         /////////////////
         // Debug
