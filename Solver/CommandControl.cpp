@@ -1262,7 +1262,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             }
         }
 
-        if ((lastRestartPrint + 100) < numConflicts) {
+        if ((lastRestartPrint + 500) < numConflicts) {
             #pragma omp critical
             std::cout << "c " << omp_get_thread_num() << " " << numRestarts << " " << numConflicts << " " << order_heap.size() << std::endl;
             lastRestartPrint = numConflicts;
