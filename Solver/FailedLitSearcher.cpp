@@ -68,6 +68,8 @@ bool FailedLitSearcher::search()
     numFailed = 0;
     goodBothSame = 0;
     numCalls++;
+    visitedAlready.clear();
+    visitedAlready.resize(control->nVars()*2);
 
     //If failed var searching is going good, do successively more and more of it
     if ((double)lastTimeFoundTruths > (double)control->getNumUnsetVars() * 0.10)
@@ -150,121 +152,131 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
     bothSame.clear();
     assert(uselessBin.empty());
 
-    //Test removal of non-learnt binary clauses
-    #ifdef DEBUG_REMOVE_USELESS_BIN
-    fillTestUselessBinRemoval(lit);
-    #endif
+    if (!visitedAlready[lit.toInt()]) {
+        //Test removal of non-learnt binary clauses
+        #ifdef DEBUG_REMOVE_USELESS_BIN
+        fillTestUselessBinRemoval(lit);
+        #endif
 
-    control->newDecisionLevel();
-    control->enqueue(lit);
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "Trying " << lit << std::endl;
-    #endif
-    failed = control->propagateFull(uselessBin);
-    if (failed != lit_Undef) {
-        control->cancelZeroLight();
-        numFailed++;
-        vector<Lit> lits;
-        lits.push_back(~failed);
-        control->addClauseInt(lits, true);
-        removeUselessBins();
-        return control->ok;
-    }
-
-    //Fill bothprop, cache
-    assert(control->decisionLevel() > 0);
-    litOTFCache.clear();
-    litOTFCacheNL.clear();
-    bool onlyNonLearntUntilNow = true;
-    for (size_t c = control->trail_lim[0]; c < control->trail.size(); c++) {
-        Var x = control->trail[c].var();
-        propagated.setBit(x);
-        propagatedBitSet.push_back(x);
-
-        if (control->value(x).getBool())
-            propValue.setBit(x);
-        else
-            propValue.clearBit(x);
-
-        if (control->conf.doCache
-            && c != control->trail_lim[0]
-        ) {
-            onlyNonLearntUntilNow &= !control->propData[x].learntStep;
-            if (onlyNonLearntUntilNow)
-                litOTFCacheNL.push_back(control->trail[c]);
-            else
-                litOTFCache.push_back(control->trail[c]);
+        control->newDecisionLevel();
+        control->enqueue(lit);
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        std::cout << "Trying " << lit << std::endl;
+        #endif
+        failed = control->propagateFull(uselessBin);
+        if (failed != lit_Undef) {
+            control->cancelZeroLight();
+            numFailed++;
+            vector<Lit> lits;
+            lits.push_back(~failed);
+            control->addClauseInt(lits, true);
+            removeUselessBins();
+            return control->ok;
         }
-    }
-    if (control->conf.doCache) {
-        control->implCache[(~lit).toInt()].merge(litOTFCache, false, control->seen);
-        control->implCache[(~lit).toInt()].merge(litOTFCacheNL, true, control->seen);
-    }
 
-    control->cancelZeroLight();
-    hyperBinResAll();
-    removeUselessBins();
-    #ifdef DEBUG_REMOVE_USELESS_BIN
-    testBinRemoval(lit);
-    #endif
+        //Fill bothprop, cache
+        assert(control->decisionLevel() > 0);
+        litOTFCache.clear();
+        litOTFCacheNL.clear();
+        bool onlyNonLearntUntilNow = true;
+        for (size_t c = control->trail_lim[0]; c < control->trail.size(); c++) {
+            const Lit thisLit = control->trail[c];
+            const Var x = thisLit.var();
+            visitedAlready[thisLit.toInt()] = 1;
 
-    //Test removal of non-learnt binary clauses
-    #ifdef DEBUG_REMOVE_USELESS_BIN
-    fillTestUselessBinRemoval(~lit);
-    #endif
+            propagated.setBit(x);
+            propagatedBitSet.push_back(x);
 
-    //Doing inverse
-    control->newDecisionLevel();
-    control->enqueue(~lit);
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "Trying (opp) " << (~lit) << std::endl;
-    #endif
-    failed = control->propagateFull(uselessBin);
-    if (failed != lit_Undef) {
-        control->cancelZeroLight();
-        numFailed++;
-        vector<Lit> lits;
-        lits.push_back(~failed);
-        control->addClauseInt(lits, true);
-        removeUselessBins();
-        return control->ok;
-    }
+            if (control->value(x).getBool())
+                propValue.setBit(x);
+            else
+                propValue.clearBit(x);
 
-    //Fill cache, check bothprop
-    assert(control->decisionLevel() > 0);
-    litOTFCache.clear();
-    litOTFCacheNL.clear();
-    onlyNonLearntUntilNow = true;
-    for (size_t c = control->trail_lim[0]; c < control->trail.size() ; c++) {
-        Var x  = control->trail[c].var();
-        if (propagated[x]) {
-            if (propValue[x] == control->value(x).getBool()) {
-                //they both imply the same
-                bothSame.push_back(Lit(x, !propValue[x]));
+            if (control->conf.doCache
+                && c != control->trail_lim[0]
+            ) {
+                onlyNonLearntUntilNow &= !control->propData[x].learntStep;
+                if (onlyNonLearntUntilNow)
+                    litOTFCacheNL.push_back(control->trail[c]);
+                else
+                    litOTFCache.push_back(control->trail[c]);
             }
         }
-
-        if (control->conf.doCache
-            && c != control->trail_lim[0]
-        ) {
-            onlyNonLearntUntilNow &= !control->propData[x].learntStep;
-            if (onlyNonLearntUntilNow)
-                litOTFCacheNL.push_back(control->trail[c]);
-            else
-                litOTFCache.push_back(control->trail[c]);
+        if (control->conf.doCache) {
+            control->implCache[(~lit).toInt()].merge(litOTFCache, false, control->seen);
+            control->implCache[(~lit).toInt()].merge(litOTFCacheNL, true, control->seen);
         }
-    }
-    if (control->conf.doCache) {
-        control->implCache[lit.toInt()].merge(litOTFCache, false, control->seen);
-        control->implCache[lit.toInt()].merge(litOTFCacheNL, true, control->seen);
+
+        control->cancelZeroLight();
+        hyperBinResAll();
+        removeUselessBins();
+        #ifdef DEBUG_REMOVE_USELESS_BIN
+        testBinRemoval(lit);
+        #endif
     }
 
-    control->cancelZeroLight();
-    removeUselessBins();
-    hyperBinResAll();
-    #ifdef DEBUG_REMOVE_USELESS_BIN
-    testBinRemoval(~lit);
-    #endif
+    if (!visitedAlready[(~lit).toInt()]) {
+        //Test removal of non-learnt binary clauses
+        #ifdef DEBUG_REMOVE_USELESS_BIN
+        fillTestUselessBinRemoval(~lit);
+        #endif
+
+        //Doing inverse
+        control->newDecisionLevel();
+        control->enqueue(~lit);
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        std::cout << "Trying (opp) " << (~lit) << std::endl;
+        #endif
+        failed = control->propagateFull(uselessBin);
+        if (failed != lit_Undef) {
+            control->cancelZeroLight();
+            numFailed++;
+            vector<Lit> lits;
+            lits.push_back(~failed);
+            control->addClauseInt(lits, true);
+            removeUselessBins();
+            return control->ok;
+        }
+
+        //Fill cache, check bothprop
+        assert(control->decisionLevel() > 0);
+        litOTFCache.clear();
+        litOTFCacheNL.clear();
+        bool onlyNonLearntUntilNow = true;
+        for (size_t c = control->trail_lim[0]; c < control->trail.size() ; c++) {
+            const Lit thisLit = control->trail[c];
+            const Var x = thisLit.var();
+            visitedAlready[thisLit.toInt()] = 1;
+
+            if (propagated[x]) {
+                if (propValue[x] == control->value(x).getBool()) {
+                    //they both imply the same
+                    bothSame.push_back(Lit(x, !propValue[x]));
+                }
+            }
+
+            if (control->conf.doCache
+                && c != control->trail_lim[0]
+            ) {
+                onlyNonLearntUntilNow &= !control->propData[x].learntStep;
+                if (onlyNonLearntUntilNow)
+                    litOTFCacheNL.push_back(control->trail[c]);
+                else
+                    litOTFCache.push_back(control->trail[c]);
+            }
+        }
+        if (control->conf.doCache) {
+            control->implCache[lit.toInt()].merge(litOTFCache, false, control->seen);
+            control->implCache[lit.toInt()].merge(litOTFCacheNL, true, control->seen);
+        }
+
+        control->cancelZeroLight();
+        removeUselessBins();
+        hyperBinResAll();
+        #ifdef DEBUG_REMOVE_USELESS_BIN
+        testBinRemoval(~lit);
+        #endif
+    }
 
     for(uint32_t i = 0; i != bothSame.size() && control->ok; i++) {
         vector<Lit> lits;

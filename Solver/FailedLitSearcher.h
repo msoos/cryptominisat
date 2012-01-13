@@ -66,6 +66,7 @@ class FailedLitSearcher {
         //Main
         bool tryBoth(const Lit lit);
         void printResults(const double myTime) const;
+        vector<char> visitedAlready;
 
         ThreadControl* control; ///<The solver we are updating&working with
 
