@@ -1483,7 +1483,7 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
     #endif
 }
 
-void CommandControl::saveOTFData()
+/*void CommandControl::saveOTFData()
 {
     assert(false && "in multi-threaded this will fail badly");
     assert(decisionLevel() == 1);
@@ -1497,7 +1497,7 @@ void CommandControl::saveOTFData()
         lits.push_back(lit);
     }
     oTFCache.merge(lits, false, seen);
-}
+}*/
 
 void CommandControl::insertVarOrder(const Var x)
 {

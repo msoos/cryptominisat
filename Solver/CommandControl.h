@@ -177,7 +177,6 @@ class CommandControl : public Solver
         ////////////
         // Transitive on-the-fly self-subsuming resolution
         void   minimiseLearntFurther(vector<Lit>& cl);
-        void   saveOTFData();
 };
 
 /**
