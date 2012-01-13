@@ -202,13 +202,13 @@ struct BlockedClause {
     BlockedClause()
     {}
 
-    BlockedClause(const Lit _blockedOn, const std::vector<Lit>& _lits) :
+    BlockedClause(const Lit _blockedOn, const vector<Lit>& _lits) :
         blockedOn(_blockedOn)
         , lits(_lits)
     {}
 
     Lit blockedOn;
-    std::vector<Lit> lits;
+    vector<Lit> lits;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const BlockedClause& bl)
