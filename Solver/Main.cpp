@@ -305,7 +305,7 @@ void Main::parseCommandLine()
     miscOptions.add_options()
     ("nopresimp", "Don't perform simplification at the beginning")
     //("noparts", "Don't find&solve subproblems with subsolvers")
-    ("noclausevivif", "Don't do regular clause vivification")
+    ("novivif", "Don't do regular clause vivification")
     ("nosortwatched", "Don't sort watches according to size")
     ("nocalcreach", "Don't calculate literal reachability")
     ("nocache", "No implication cache. Less memory used, disables LOTS")
@@ -535,7 +535,7 @@ void Main::parseCommandLine()
         conf.doRemUselessBins = false;
     }
 
-    if (vm.count("noclausevivif")) {
+    if (vm.count("novivif")) {
         conf.doClausVivif = false;
     }
 
