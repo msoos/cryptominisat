@@ -69,7 +69,7 @@ class FailedLitSearcher {
 
         ThreadControl* control; ///<The solver we are updating&working with
 
-        bool failed; ///<For checking that a specific propagation failed (=conflict). It is used in many places
+        Lit failed;
 
         //bothprop finding
         vector<uint32_t> propagatedBitSet;

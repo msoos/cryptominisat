@@ -256,13 +256,21 @@ template<bool simple> inline bool Solver::propNormalClause(
     *j++ = *i;
     if (value(c[data[!watchNum]]) == l_False) {
         confl = PropBy(offset, !watchNum);
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        std::cout << "Conflict from ";
+        for(size_t i = 0; i < c.size(); i++) {
+            std::cout  << c[i] << " , ";
+        }
+        std::cout << std::endl;
+        #endif //VERBOSE_DEBUG_FULLPROP
+
         qhead = trail.size();
         return false;
     } else {
         if (simple)
             enqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
         else
-            addHyperBin(c, c[data[!watchNum]]);
+            addHyperBin(c[data[!watchNum]], c);
     }
 
     return true;
@@ -283,12 +291,22 @@ template<bool simple> inline bool Solver::propTriClause(const vec<Watched>::cons
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
         if (simple) enqueue(i->getOtherLit(), PropBy(~p, i->getOtherLit2()));
-        else        addHyperBin(~p, i->getOtherLit2(), i->getOtherLit());
+        else        addHyperBin(i->getOtherLit(), ~p, i->getOtherLit2());
     } else if (val == l_False && val2.isUndef()) {
         if (simple) enqueue(i->getOtherLit2(), PropBy(~p, i->getOtherLit()));
-        else        addHyperBin(~p, i->getOtherLit(), i->getOtherLit2());
+        else        addHyperBin(i->getOtherLit2(), ~p, i->getOtherLit());
     } else if (val == l_False && val2 == l_False) {
-        confl = PropBy(~p, i->getOtherLit2());
+        if (simple) {
+            confl = PropBy(~p, i->getOtherLit2());
+        } else {
+            #ifdef VERBOSE_DEBUG_FULLPROP
+            std::cout << "Conflict from "
+                << p << " , "
+                << i->getOtherLit() << " , "
+                << i->getOtherLit2() << std::endl;
+            #endif //VERBOSE_DEBUG_FULLPROP
+            confl = PropBy(~p, i->getOtherLit2());
+        }
         failBinLit = i->getOtherLit();
         qhead = trail.size();
         return false;
@@ -306,7 +324,7 @@ PropBy Solver::propagate()
     #endif
 
     while (qhead < trail.size() && confl.isNULL()) {
-        Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
+        const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watched>& ws = watches[p.toInt()];
 
         #ifdef VERBOSE_DEBUG_PROP
@@ -385,7 +403,7 @@ PropBy Solver::propagateNonLearntBin()
     return PropBy();
 }
 
-PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
+Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
 {
     #ifdef VERBOSE_DEBUG_FULLPROP
     std::cout << "Prop full started" << std::endl;
@@ -420,7 +438,8 @@ PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
             if (!k->isBinary() || k->getLearnt()) continue;
 
             ret = propBin(p, k, uselessBin);
-            if (ret != PropBy()) return ret;
+            if (ret != PropBy())
+                return analyzeFail(ret);
         }
     }
 
@@ -435,8 +454,11 @@ PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
             if (!k->isBinary() || !k->getLearnt()) continue;
 
             ret = propBin(p, k, uselessBin);
-            if (ret != PropBy()) return ret;
-            if (enqeuedSomething) goto start;
+            if (ret != PropBy())
+                return analyzeFail(ret);
+
+            if (enqeuedSomething)
+                goto start;
         }
         lBinQHead++;
     }
@@ -484,14 +506,16 @@ PropBy Solver::propagateFull(std::set<BinaryClause>& uselessBin)
             *j++ = *i++;
         ws.shrink_(end-j);
 
-        if (confl != PropBy())
-            return confl;
+        if (confl != PropBy()) {
+            return analyzeFail(confl);
+        }
+
         if (enqeuedSomething)
             goto start;
         qhead++;
     }
 
-    return PropBy();
+    return lit_Undef;
 }
 
 PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryClause>& uselessBin)
@@ -499,11 +523,20 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
     const Lit lit = k->getOtherLit();
     const lbool val = value(lit);
     if (val.isUndef()) {
+        //Never propagated before
         enqueueComplex(lit, p, k->getLearnt());
         return PropBy();
+
     } else if (val == l_False) {
-        return PropBy(p);
+        //Conflict
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        std::cout << "Conflict from " << p << " , " << lit << std::endl;
+        #endif //VERBOSE_DEBUG_FULLPROP
+        failBinLit = lit;
+        return PropBy(~p);
+
     } else if (varData[lit.var()].level != 0) {
+        //Propaged already
         assert(val == l_True);
 
         #ifdef VERBOSE_DEBUG_FULLPROP
@@ -514,7 +547,7 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
             Lit origAnc = propData[lit.var()].ancestor;
             assert(origAnc != lit_Undef);
 
-            const BinaryClause clauseToRemove(~propData[lit.var()].ancestor,lit, propData[lit.var()].learntStep);
+            const BinaryClause clauseToRemove(~propData[lit.var()].ancestor, lit, propData[lit.var()].learntStep);
             //We now remove the clause
             //If it's hyper-bin, then we remove the to-be-added hyper-binary clause
             //However, if the hyper-bin was never added because only 1 literal was unbound at level 0 (i.e. through
@@ -526,11 +559,12 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
                 uselessBin.insert(clauseToRemove);
             } else if (!propData[lit.var()].hyperBinNotAdded) {
                 #ifdef VERBOSE_DEBUG_FULLPROP
-                std::cout << "Hyper-bin removing clause " << clauseToRemove << std::endl;
+                std::cout << "Removing hyper-bin clause " << clauseToRemove << std::endl;
                 #endif
-                std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
+                /*std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
                 assert(it != needToAddBinClause.end());
-                needToAddBinClause.erase(it);
+                needToAddBinClause.erase(it);*/
+                //This will subsume the clause later, so don't remove it
             }
 
             //Update data indicating what lead to lit
@@ -543,7 +577,7 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
             //if (!onlyNonLearnt) return PropBy();
         } else if (remove != lit_Undef) {
             #ifdef VERBOSE_DEBUG_FULLPROP
-            std::cout << "Removing reverse real bin clause" << std::endl;
+            std::cout << "Removing this bin clause" << std::endl;
             #endif
             uselessBin.insert(BinaryClause(~p, lit, k->getLearnt()));
         }

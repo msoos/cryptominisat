@@ -32,13 +32,11 @@ using std::set;
 #include "ImplCache.h"
 
 //#define VERBOSE_DEBUG_FULLPROP
-//#define VERBOSE_DEBUG_OTF_GATE_SHORTEN
 
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_DEBUG_FULLPROP
 #define ENQUEUE_DEBUG
 #define DEBUG_ENQUEUE_LEVEL0
-#define VERBOSE_DEBUG_OTF_GATE_SHORTEN
 #endif
 
 class ThreadControl;
@@ -171,9 +169,26 @@ protected:
     void  enqueueComplex(const Lit p, const Lit ancestor, const bool learntStep);
     Lit   removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepLearnt);
     bool  isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor);
-    void  addHyperBin(vector<Lit>& currAncestors, const Lit p); ///<Add hyper-binary clause given these ancestors
-    void  addHyperBin(const Lit lit1, const Lit lit2, const Lit p); ///<Add hyper-binary clause given this tri-clause
-    void  addHyperBin(const Clause& cl, const Lit p); ///<Add hyper-binary clause given this large clause
+
+    ///Add hyper-binary clause given these ancestors
+    vector<Lit> currAncestors;
+    void  addHyperBin(
+        const Lit p
+    );
+
+    ///Add hyper-binary clause given this tri-clause
+    void  addHyperBin(
+        const Lit p
+        , const Lit lit1
+        , const Lit lit2
+    );
+
+    ///Add hyper-binary clause given this large clause
+    void  addHyperBin(
+        const Lit p
+        , const Clause& cl
+    );
+    Lit analyzeFail(PropBy propBy);
 
     /////////////////
     // Propagating
@@ -192,7 +207,7 @@ protected:
 
     //For hyper-bin, binary clause removal, etc.
     PropBy      propBin(const Lit p, vec<Watched>::iterator k, set<BinaryClause>& uselessBin);
-    PropBy      propagateFull(set<BinaryClause>& uselessBin);
+    Lit         propagateFull(set<BinaryClause>& uselessBin);
     bool              enqeuedSomething;         ///<Set if enqueueComplex has been called
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     PropBy      propagateNonLearntBin();  ///<For debug purposes, to test binary clause removal
@@ -440,46 +455,52 @@ inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const boo
     return false;
 }
 
-inline void Solver::addHyperBin(const Lit lit1, const Lit lit2, const Lit p)
+inline void Solver::addHyperBin(const Lit p, const Lit lit1, const Lit lit2)
 {
     assert(value(p.var()) == l_Undef);
+
     #ifdef VERBOSE_DEBUG_FULLPROP
     std::cout << "Enqueing " << p
-    << " with ancestor 3-long clause: " << lit1 << " , " << lit2 << " , " << p
+    << " with ancestor 3-long clause: " << p << " , " << lit1 << " , " << lit2
     << std::endl;
     #endif
 
     assert(value(lit1) == l_False);
     assert(value(lit2) == l_False);
 
-    vector<Lit> currAncestors;
-    if (varData[lit1.var()].level != 0) currAncestors.push_back(~lit1);
-    if (varData[lit2.var()].level != 0) currAncestors.push_back(~lit2);
+    currAncestors.clear();;
+    if (varData[lit1.var()].level != 0)
+        currAncestors.push_back(~lit1);
 
-    addHyperBin(currAncestors, p);
+    if (varData[lit2.var()].level != 0)
+        currAncestors.push_back(~lit2);
+
+    addHyperBin(p);
 }
 
-inline void Solver::addHyperBin(const Clause& cl, const Lit p)
+inline void Solver::addHyperBin(const Lit p, const Clause& cl)
 {
     assert(value(p.var()) == l_Undef);
+
     #ifdef VERBOSE_DEBUG_FULLPROP
     std::cout << "Enqueing " << p
     << " with ancestor clause: " << cl
     << std::endl;
      #endif
 
-    vector<Lit> currAncestors;
+    currAncestors.clear();
     size_t i = 0;
     for (Clause::const_iterator it = cl.begin(), end = cl.end(); it != end; it++, i++) {
         if (*it != p) {
             assert(value(*it) == l_False);
-            if (varData[it->var()].level != 0) currAncestors.push_back(~*it);
+            if (varData[it->var()].level != 0)
+                currAncestors.push_back(~*it);
         }
     }
-    addHyperBin(currAncestors, p);
+    addHyperBin(p);
 }
 
-inline void Solver::addHyperBin(vector<Lit>& currAncestors, const Lit p)
+inline void Solver::addHyperBin(const Lit p)
 {
     bogoProps += 1;
     Lit foundLit = lit_Undef;
@@ -488,8 +509,17 @@ inline void Solver::addHyperBin(vector<Lit>& currAncestors, const Lit p)
         //The one that attains cl->size() the first is the lowest common ancestor
         toClear.clear();
         while(foundLit == lit_Undef) {
+            #ifdef VERBOSE_DEBUG_FULLPROP
+            std::cout << "LEVEL addHyperBin" << std::endl;
+            #endif
             for (vector<Lit>::iterator it = currAncestors.begin(), end = currAncestors.end(); it != end; it++) {
-                if (*it == lit_Undef) continue;
+                if (*it == lit_Undef)  {
+                    #ifdef VERBOSE_DEBUG_FULLPROP
+                    std::cout << "seen lit_Undef" << std::endl;
+                    #endif
+                    continue;
+                }
+
                 seen[it->toInt()]++;
                 if (seen[it->toInt()] == 1)
                     toClear.push_back(*it);
@@ -513,7 +543,7 @@ inline void Solver::addHyperBin(vector<Lit>& currAncestors, const Lit p)
         }
 
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Adding hyper-bin clause: " << p << " , " << foundLit << std::endl;
+        std::cout << "Adding hyper-bin clause: " << p << " , " << ~foundLit << std::endl;
         #endif
         needToAddBinClause.insert(BinaryClause(p, ~foundLit, true));
     } else {
@@ -525,9 +555,94 @@ inline void Solver::addHyperBin(vector<Lit>& currAncestors, const Lit p)
         #endif
         foundLit = currAncestors[0];
     }
+
     enqueueComplex(p, foundLit, true);
     propData[p.var()].hyperBin = true;
     propData[p.var()].hyperBinNotAdded = (currAncestors.size() == 1);
+}
+
+inline Lit Solver::analyzeFail(const PropBy propBy)
+{
+    toClear.clear();
+    currAncestors.clear();
+
+    switch(propBy.getType()) {
+        case tertiary_t : {
+            const Lit lit = ~propBy.getOtherLit2();
+            if (varData[lit.var()].level != 0)
+                currAncestors.push_back(lit);
+            //intentionally falling through here
+            //i.e. there is no 'break' here for a reason
+        }
+        case binary_t: {
+            const Lit lit = ~propBy.getOtherLit();
+            if (varData[lit.var()].level != 0)
+                currAncestors.push_back(lit);
+
+            if (varData[failBinLit.var()].level != 0)
+                currAncestors.push_back(~failBinLit);
+
+            break;
+        }
+
+        case clause_t: {
+            const uint32_t offset = propBy.getClause();
+            const Clause& cl = *clAllocator->getPointer(offset);
+            for(size_t i = 0; i < cl.size(); i++) {
+                if (varData[cl[i].var()].level != 0)
+                    currAncestors.push_back(~cl[i]);
+            }
+            break;
+        }
+
+        case null_clause_t:
+            assert(false);
+            break;
+    }
+
+    Lit foundLit = lit_Undef;
+    while(foundLit == lit_Undef) {
+        #ifdef VERBOSE_DEBUG_FULLPROP
+        std::cout << "LEVEL analyzeFail" << std::endl;
+        #endif
+        size_t num_lit_undef = 0;
+        for (vector<Lit>::iterator it = currAncestors.begin(), end = currAncestors.end(); it != end; it++) {
+
+            if (*it == lit_Undef) {
+                #ifdef VERBOSE_DEBUG_FULLPROP
+                std::cout << "seen lit_Undef" << std::endl;
+                #endif
+                num_lit_undef++;
+                assert(num_lit_undef != currAncestors.size());
+                continue;
+            }
+
+            seen[it->toInt()]++;
+            if (seen[it->toInt()] == 1)
+                toClear.push_back(*it);
+
+            #ifdef VERBOSE_DEBUG_FULLPROP
+            std::cout << "seen " << *it << " : " << seen[it->toInt()] << std::endl;
+            #endif
+
+            if (seen[it->toInt()] == currAncestors.size()) {
+                foundLit = *it;
+                break;
+            }
+            *it = propData[it->var()].ancestor;
+        }
+    }
+    #ifdef VERBOSE_DEBUG_FULLPROP
+    std::cout << "END" << std::endl;
+    #endif
+    assert(foundLit != lit_Undef);
+
+    //Clear node numbers we have assigned
+    for(std::vector<Lit>::const_iterator it = toClear.begin(), end = toClear.end(); it != end; it++) {
+        seen[it->toInt()] = 0;
+    }
+
+    return foundLit;
 }
 
 inline void Solver::cancelZeroLight()

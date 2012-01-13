@@ -157,16 +157,18 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
 
     control->newDecisionLevel();
     control->enqueue(lit);
-    failed = (!control->propagateFull(uselessBin).isNULL());
-    if (failed) {
+    #ifdef VERBOSE_DEBUG_FULLPROP
+    std::cout << "Trying " << lit << std::endl;
+    #endif
+    failed = control->propagateFull(uselessBin);
+    if (failed != lit_Undef) {
         control->cancelZeroLight();
         numFailed++;
         vector<Lit> lits;
-        lits.push_back(~lit);
+        lits.push_back(~failed);
         control->addClauseInt(lits, true);
         removeUselessBins();
-        if (!control->ok) return false;
-        return true;
+        return control->ok;
     }
 
     //Fill bothprop, cache
@@ -214,16 +216,18 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
     //Doing inverse
     control->newDecisionLevel();
     control->enqueue(~lit);
-    failed = (!control->propagateFull(uselessBin).isNULL());
-    if (failed) {
+    #ifdef VERBOSE_DEBUG_FULLPROP
+    std::cout << "Trying (opp) " << (~lit) << std::endl;
+    #endif
+    failed = control->propagateFull(uselessBin);
+    if (failed != lit_Undef) {
         control->cancelZeroLight();
         numFailed++;
         vector<Lit> lits;
-        lits.push_back(lit);
+        lits.push_back(~failed);
         control->addClauseInt(lits, true);
         removeUselessBins();
-        if (!control->ok) return false;
-        return true;
+        return control->ok;
     }
 
     //Fill cache, check bothprop
