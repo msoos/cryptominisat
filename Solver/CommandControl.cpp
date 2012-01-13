@@ -649,10 +649,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
     //Loop until restart or finish (SAT/UNSAT)
     while (true) {
         assert(ok);
-        size_t oldTrailSize = trail.size();
-        const PropBy confl= propagate();
-        if (decisionLevel() == 0 && trail.size() > oldTrailSize)
-            addToThreads(oldTrailSize);
+        const PropBy confl = propagate();
 
         #ifdef VERBOSE_DEBUG
         std::cout << "c CommandControl::search() has finished propagation" << std::endl;
