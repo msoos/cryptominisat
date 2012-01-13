@@ -802,7 +802,7 @@ bool Subsumer::simplifyBySubsumption()
     //Test & debug
     control->testAllClauseAttach();
     control->checkNoWrongAttach();
-    assert(!control->varReplacer->getNewToReplaceVars()
+    assert(control->varReplacer->getNewToReplaceVars() == 0
             && "Cannot work in an environment when elimnated vars could be replaced by other vars");
 
     //Clean the clauses before playing with them
