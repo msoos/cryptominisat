@@ -458,12 +458,12 @@ void ThreadControl::moveClausesHere()
 {
     assert(ok);
     assert(decisionLevel() == 0);
-    vector<Lit> lits(2);
+    vector<Lit> lits;
 
     lits.resize(1);
     for(vector<Lit>::const_iterator it = unitLearntsToAdd.begin(), end = unitLearntsToAdd.end(); it != end; it++) {
         lits[0] = *it;;
-        addClauseInt(lits, true, 1);
+        addClauseInt(lits, true);
         assert(ok);
     }
     unitLearntsToAdd.clear();
@@ -472,7 +472,7 @@ void ThreadControl::moveClausesHere()
     for(vector<BinaryClause>::const_iterator it = binLearntsToAdd.begin(), end = binLearntsToAdd.end(); it != end; it++) {
         lits[0] = it->getLit1();
         lits[1] = it->getLit2();
-        addClauseInt(lits, true, 2);
+        addClauseInt(lits, true);
         assert(ok);
     }
     binLearntsToAdd.clear();
