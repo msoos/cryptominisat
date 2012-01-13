@@ -1107,8 +1107,13 @@ void Subsumer::asymmTE()
 
     uint32_t index = clauses.size()-1;
     for (vector<Clause*>::reverse_iterator it = clauses.rbegin(), end = clauses.rend(); it != end; it++, index--) {
-        if (*it == NULL) continue;
-        if (numMaxAsymm < 0) break;
+        //Already removed
+        if (*it == NULL)
+            continue;
+
+        //Ran out of time
+        if (numMaxAsymm < 0)
+            break;
 
         Clause& cl = **it;
         *toDecrease -= cl.size()*2;
@@ -1129,7 +1134,7 @@ void Subsumer::asymmTE()
                 if (cacheLit->getOnlyNLBin()
                     && !seen[(~cacheLit->getLit()).toInt()]
                 ) {
-                    Lit toAdd = ~(cacheLit->getLit());
+                    const Lit toAdd = ~(cacheLit->getLit());
                     tmpCl.push_back(toAdd);
                     seen[toAdd.toInt()] = true;
                 }
