@@ -120,6 +120,15 @@ class TransCache {
         //uint64_t conflictLastUpdated;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const TransCache& tc)
+{
+    for (size_t i = 0; i < tc.lits.size(); i++) {
+        os << tc.lits[i].getLit()
+        << "(" << (tc.lits[i].getOnlyNLBin() ? "NL" : "L") << ") ";
+    }
+    return os;
+}
+
 class ImplCache  {
     public:
         std::vector<TransCache> implCache;
