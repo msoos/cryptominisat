@@ -1213,7 +1213,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         assert(numConflicts < maxConfls);
         status = search(SearchFuncParams(maxConfls-numConflicts), rest);
         rest *= conf.restart_inc;
-        if (status == l_False)
+        if (status != l_Undef)
             break;
 
         if (lastSumConfl >= maxConfls)
