@@ -1162,12 +1162,16 @@ void Subsumer::asymmTE()
             }
         }
 
-        if (control->conf.doBlockedClause && !(**it).learnt()) {
+        if ((**it).learnt())
+            goto next;
+
+        //Blocked clause elimination
+        if (control->conf.doBlockedClause) {
             for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
                 if (control->varData[l->var()].elimed != ELIMED_NONE)
                     continue;
 
-                if (allTautologySlim(~*l)) {
+                if (allTautologySlim(*l)) {
                     vector<Lit> remCl(cl.size());
                     std::copy(cl.begin(), cl.end(), remCl.begin());
                     blockedClauses.push_back(BlockedClause(*l, remCl));
@@ -1180,9 +1184,7 @@ void Subsumer::asymmTE()
             }
         }
 
-        if ((**it).learnt())
-            goto next;
-
+        /*
         //subsumption with non-learnt larger clauses
         abst = calcAbstraction(tmpCl);
         *toDecrease -= tmpCl.size()*2;
@@ -1203,7 +1205,7 @@ void Subsumer::asymmTE()
                     goto next;
                 }
             }
-        }
+        }*/
 
         next:
         if (toRemove) {
@@ -1888,22 +1890,31 @@ bool Subsumer::verifyIntegrity()
 
 inline bool Subsumer::allTautologySlim(const Lit lit)
 {
-    const Occur& cs = occur[lit.toInt()];
-    const vec<Watched>& ws = control->watches[(~lit).toInt()];
-
-    *toDecrease -= 1;
+    //Binary clauses which contain '~lit'
+    const vec<Watched>& ws = control->watches[lit.toInt()];
+    *toDecrease -= ws.size();
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
-        if (!it->isNonLearntBinary()) continue;
-        if (seen[(~it->getOtherLit()).toInt()] && it->getOtherLit() != lit) continue;
+        if (!it->isNonLearntBinary())
+            continue;
+
+        if (seen[(~it->getOtherLit()).toInt()]) {
+            assert(it->getOtherLit() != ~lit);
+            continue;
+        }
+
         return false;
     }
 
-    for (Occur::const_iterator it = cs.begin(), end = cs.end(); it != end; it++){
+    //Long clauses that contain '~lit'
+    const Occur& cs = occur[(~lit).toInt()];
+    *toDecrease -= cs.size();
+    for (Occur::const_iterator it = cs.begin(), end = cs.end(); it != end; it++) {
         const Clause& c = *clauses[it->index];
-        *toDecrease -= 1;
-        if (c.learnt()) continue;
+        if (c.learnt())
+            continue;
+
         for (const Lit *l = c.begin(), *end2 = c.end(); l != end2; l++) {
-            if (seen[(~(*l)).toInt()] && *l != lit) {
+            if (seen[(~(*l)).toInt()] && *l != ~lit) {
                 goto next;
             }
         }
