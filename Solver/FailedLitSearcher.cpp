@@ -31,7 +31,6 @@ using std::set;
 #include "ThreadControl.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
-#include "VarReplacer.h"
 #include "ClauseCleaner.h"
 #include "CompleteDetachReattacher.h"
 
