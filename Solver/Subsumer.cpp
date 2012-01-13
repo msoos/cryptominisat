@@ -1138,19 +1138,21 @@ void Subsumer::asymmTE()
 
         //subsumption with binary clauses
         bool toRemove = false;
-        //for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
-        for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-            const vector<LitExtra>& cache = control->implCache[l->toInt()].lits;
-            *toDecrease -= cache.size();
-            for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-                if ((cacheLit->getOnlyNLBin() || (**it).learnt()) //subsume non-learnt with non-learnt
-                    && seen[cacheLit->getLit().toInt()]
-                ) {
-                    toRemove = true;
-                    #ifdef VERBOSE_DEBUG_ASYMTE
-                    std::cout << "c AsymLitAdd removing: " << cl << std::endl;
-                    #endif
-                    goto next;
+        if (control->conf.doExtBinSubs) {
+            //for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
+            for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
+                const vector<LitExtra>& cache = control->implCache[l->toInt()].lits;
+                *toDecrease -= cache.size();
+                for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
+                    if ((cacheLit->getOnlyNLBin() || (**it).learnt()) //subsume non-learnt with non-learnt
+                        && seen[cacheLit->getLit().toInt()]
+                    ) {
+                        toRemove = true;
+                        #ifdef VERBOSE_DEBUG_ASYMTE
+                        std::cout << "c AsymLitAdd removing: " << cl << std::endl;
+                        #endif
+                        goto next;
+                    }
                 }
             }
         }

@@ -251,6 +251,7 @@ void Main::parseCommandLine()
     ("novarelim", "Don't perform variable elimination as per Een and Biere")
     ("nosubsume1", "Don't perform clause contraction through resolution")
     ("noblocked", "No blocked-clause removal")
+    ("noextbinsubs", "No extended subsumption with binary clauses")
     ;
 
     po::options_description xorSateliteOptions("XOR satelite-type options");
@@ -557,6 +558,10 @@ void Main::parseCommandLine()
 
     if (vm.count("noblocked")) {
         conf.doBlockedClause = false;
+    }
+
+    if (vm.count("noextbinsubs")) {
+        conf.doExtBinSubs = false;
     }
 
     if (vm.count("nogates")) {

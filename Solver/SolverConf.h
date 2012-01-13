@@ -69,6 +69,7 @@ class SolverConf
         bool      doXorSatelite;      ///<Should try to subsume & local-substitute xor clauses
         bool      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
         bool      doBlockedClause;    ///<Should try to remove blocked clauses
+        bool      doExtBinSubs;
         bool      doVarElim;          ///<Perform variable elimination
         bool      doSubsume1;         ///<Perform self-subsuming resolution
         bool      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving

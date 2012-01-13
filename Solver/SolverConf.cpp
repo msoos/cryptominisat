@@ -60,6 +60,7 @@ SolverConf::SolverConf() :
         , doSatELite       (true)
         , doHyperBinRes    (true)
         , doBlockedClause  (true)
+        , doExtBinSubs     (true)
         , doVarElim        (true)
         , doSubsume1       (true)
         , doClausVivif     (true)
