@@ -175,10 +175,7 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
 
         //Fill bothprop, cache
         assert(control->decisionLevel() > 0);
-        litOTFCache.clear();
-        litOTFCacheNL.clear();
-        bool onlyNonLearntUntilNow = true;
-        for (size_t c = control->trail_lim[0]; c < control->trail.size(); c++) {
+        for (int64_t c = control->trail.size()-1; c != (int64_t)control->trail_lim[0] - 1; c--) {
             const Lit thisLit = control->trail[c];
             const Var x = thisLit.var();
             visitedAlready[thisLit.toInt()] = 1;
@@ -192,18 +189,22 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
                 propValue.clearBit(x);
 
             if (control->conf.doCache
-                && c != control->trail_lim[0]
+                && thisLit != lit
             ) {
-                onlyNonLearntUntilNow &= !control->propData[x].learntStep;
-                if (onlyNonLearntUntilNow)
-                    litOTFCacheNL.push_back(control->trail[c]);
-                else
-                    litOTFCache.push_back(control->trail[c]);
+                vector<LitExtra> path;
+                path = control->implCache[(~thisLit).toInt()].lits;
+                const bool learntStep = control->propData[thisLit.var()].learntStep;
+                path.push_back(LitExtra(thisLit, !learntStep));
+
+                const Lit ancestor = control->propData[thisLit.var()].ancestor;
+                assert(ancestor != lit_Undef);
+                control->implCache[(~ancestor).toInt()].merge(path, learntStep, ancestor, control->seen);
+
+                #ifdef VERBOSE_DEBUG_FULLPROP
+                std::cout << "The impl cache of " << (~ancestor) << " is now: ";
+                std::cout << control->implCache[(~ancestor).toInt()] << std::endl;
+                #endif
             }
-        }
-        if (control->conf.doCache) {
-            control->implCache[(~lit).toInt()].merge(litOTFCache, false, control->seen);
-            control->implCache[(~lit).toInt()].merge(litOTFCacheNL, true, control->seen);
         }
 
         control->cancelZeroLight();
@@ -239,10 +240,8 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
 
         //Fill cache, check bothprop
         assert(control->decisionLevel() > 0);
-        litOTFCache.clear();
-        litOTFCacheNL.clear();
-        bool onlyNonLearntUntilNow = true;
-        for (size_t c = control->trail_lim[0]; c < control->trail.size() ; c++) {
+        //bool onlyNonLearntUntilNow = true;
+        for (int64_t c = control->trail.size()-1; c != (int64_t)control->trail_lim[0] - 1; c--) {
             const Lit thisLit = control->trail[c];
             const Var x = thisLit.var();
             visitedAlready[thisLit.toInt()] = 1;
@@ -255,18 +254,23 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
             }
 
             if (control->conf.doCache
-                && c != control->trail_lim[0]
+                && thisLit != ~lit
             ) {
-                onlyNonLearntUntilNow &= !control->propData[x].learntStep;
-                if (onlyNonLearntUntilNow)
-                    litOTFCacheNL.push_back(control->trail[c]);
-                else
-                    litOTFCache.push_back(control->trail[c]);
+                vector<LitExtra> path;
+                path = control->implCache[(~thisLit).toInt()].lits;
+                const bool learntStep = control->propData[thisLit.var()].learntStep;
+                path.push_back(LitExtra(thisLit, !learntStep));
+
+                const Lit ancestor = control->propData[thisLit.var()].ancestor;
+                assert(ancestor != lit_Undef);
+                control->implCache[(~ancestor).toInt()].merge(path, learntStep, ancestor, control->seen);
+
+                #ifdef VERBOSE_DEBUG_FULLPROP
+                std::cout << "The impl cache of " << (~ancestor) << " is now: ";
+                std::cout << control->implCache[(~ancestor).toInt()] << std::endl;
+                #endif
+
             }
-        }
-        if (control->conf.doCache) {
-            control->implCache[lit.toInt()].merge(litOTFCache, false, control->seen);
-            control->implCache[lit.toInt()].merge(litOTFCacheNL, true, control->seen);
         }
 
         control->cancelZeroLight();

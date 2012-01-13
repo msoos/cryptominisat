@@ -92,26 +92,36 @@ class TransCache {
             //conflictLastUpdated(std::numeric_limits<uint64_t>::max())
         {};
 
-        void merge(std::vector<Lit>& otherLits, bool onlynonlearnt, std::vector<uint16_t>& seen)
-        {
+        void merge(
+            std::vector<LitExtra>& otherLits
+            , const bool learnt
+            , const Lit leaveOut
+            , std::vector<uint16_t>& seen
+        ) {
             for (size_t i = 0, size = otherLits.size(); i < size; i++) {
-                seen[otherLits[i].toInt()] = true;
+                const Lit lit = otherLits[i].getLit();
+                const bool onlyNonLearnt = otherLits[i].getOnlyNLBin();
+
+                seen[lit.toInt()] = 1 + (int)onlyNonLearnt;
             }
 
             for (size_t i = 0, size = lits.size(); i < size; i++) {
-                if (onlynonlearnt
+                if (!learnt
                     && !lits[i].getOnlyNLBin()
-                    && seen[lits[i].getLit().toInt()])
-                        lits[i].setOnlyNLBin();
+                    && seen[lits[i].getLit().toInt()] == 2
+                ) {
+                    lits[i].setOnlyNLBin();
+                }
 
                 seen[lits[i].getLit().toInt()] = 0;
             }
 
             for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
-                Lit lit = otherLits[i];
+                const Lit lit = otherLits[i].getLit();
                 if (seen[lit.toInt()]) {
-                    lits.push_back(LitExtra(lit, onlynonlearnt));
-                    seen[lit.toInt()] = false;
+                    if (lit.var() != leaveOut.var())
+                        lits.push_back(LitExtra(lit, !learnt && otherLits[i].getOnlyNLBin()));
+                    seen[lit.toInt()] = 0;
                 }
             }
         }

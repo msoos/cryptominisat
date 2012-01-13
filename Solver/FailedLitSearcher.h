@@ -125,10 +125,6 @@ class FailedLitSearcher {
             bool inverted;
         };
 
-        //Cache update
-        vector<Lit> litOTFCache;
-        vector<Lit> litOTFCacheNL;
-
         //For hyper-bin resolution
         std::set<BinaryClause> uselessBin;
         uint32_t addedBin;
