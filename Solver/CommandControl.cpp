@@ -1226,6 +1226,8 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             << " lastSumConfl: " << lastSumConfl
             << " maxConfls:" << maxConfls << std::endl;
 
+            //Have to wait for everyone to be here, i.e. shared their data
+            //with threadcontrol, so we can all be up to sync
             #pragma omp barrier
             syncFromThreadControl();
             #pragma omp barrier
@@ -1234,7 +1236,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
             #pragma omp barrier
             #pragma omp single
-            control->moveReduce();
+            control->moveReduce(); //This also clears unit, bin, and long
 
             //Detach clauses that have been scheduled
             for(vector<Clause*>::const_iterator it = control->toDetach.begin(), end = control->toDetach.end(); it != end; it++) {
@@ -1242,10 +1244,11 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
                 detachClause(**it);
             }
 
-            //Clauses have been moved, and these structures emptied (clear()-ed)
-            lastLong = 0;
-            lastBin = 0;
+            //moveReduce() clear()-ed these, so we have to zero them now
             lastUnit = 0;
+            lastBin = 0;
+            lastLong = 0;
+
 
             #pragma omp barrier
             #pragma omp single
