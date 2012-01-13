@@ -1144,7 +1144,7 @@ void Subsumer::asymmTE()
             *toDecrease -= cache.size();
             for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
                 if ((cacheLit->getOnlyNLBin() || (**it).learnt()) //subsume non-learnt with non-learnt
-                    && control->seen[cacheLit->getLit().toInt()]
+                    && seen[cacheLit->getLit().toInt()]
                 ) {
                     toRemove = true;
                     #ifdef VERBOSE_DEBUG_ASYMTE
