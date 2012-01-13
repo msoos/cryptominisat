@@ -1109,14 +1109,15 @@ void Subsumer::asymmTE()
         Clause& cl = **it;
         *toDecrease -= cl.size()*2;
 
-        //Fill tmpCl
+        //Fill tmpCl, seen
         tmpCl.clear();
         for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
             seen[l->toInt()] = true;
             tmpCl.push_back(*l);
         }
 
-        //add to tmpCl literals that could be added from cache
+        //add to tmpCl literals that could be added through reverse strengthening
+        //ONLY non-learnt
         for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
             const vector<LitExtra>& cache = control->implCache[l->toInt()].lits;
             *toDecrease -= cache.size();
@@ -1199,6 +1200,7 @@ void Subsumer::asymmTE()
             removed++;
         }
 
+        //Clear seen
         for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
             seen[l->toInt()] = false;
         }
