@@ -102,7 +102,11 @@ void Subsumer::newVar()
 void Subsumer::extendModel(SolutionExtender* extender) const
 {
     //go through in reverse order
-    for (vector<BlockedClause>::const_reverse_iterator it = blockedClauses.rbegin(), end = blockedClauses.rend(); it != end; it++) {
+    for (vector<BlockedClause>::const_reverse_iterator it = blockedClauses.rbegin()
+        , end = blockedClauses.rend()
+        ; it != end
+        ; it++
+    ) {
         extender->addBlockedClause(*it);
     }
 }
