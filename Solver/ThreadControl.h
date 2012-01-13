@@ -114,7 +114,13 @@ class ThreadControl : public Solver
         virtual void  attachClause        (const Clause& c, const uint16_t point1 = 0, const uint16_t point2 = 1);
         virtual void  attachBinClause     (const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst = true);
         virtual void  detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
-        template<class T> Clause* addClauseInt(const T& ps, const bool learnt = false, const uint32_t glue = 10, const bool attach = true);
+        template<class T> Clause* addClauseInt(
+            const T& ps
+            , const bool learnt = false
+            , const uint32_t glue = 10
+            , const bool attach = true
+        );
+
         bool addXorClauseInt(const vector<Lit>& lits, bool rhs);
         lbool simplifyProblem(const uint64_t numConfls);
 
