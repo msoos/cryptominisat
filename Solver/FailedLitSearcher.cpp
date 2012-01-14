@@ -306,7 +306,6 @@ void FailedLitSearcher::hyperBinResAll()
         assert(control->ok);
         addedBin++;
     }
-    return;
 }
 
 void FailedLitSearcher::removeUselessBins()
