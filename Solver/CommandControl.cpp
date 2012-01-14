@@ -1475,8 +1475,13 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
         }
 
         //Watchlist-based minimisation
-        vec<Watched>& ws = watches[(~lit).toInt()];
-        for (vec<Watched>::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
+        const vec<Watched>& ws = watches[(~lit).toInt()];
+        for (vec<Watched>::const_iterator
+            i = ws.begin()
+            , end = ws.end()
+            ; i != end
+            ; i++
+        ) {
             if (i->isBinary()) {
                 seen[(~i->getOtherLit()).toInt()] = 0;
                 continue;
