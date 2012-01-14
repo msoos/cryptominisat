@@ -68,7 +68,7 @@ bool FailedLitSearcher::search()
     goodBothSame = 0;
     numCalls++;
     visitedAlready.clear();
-    visitedAlready.resize(control->nVars()*2);
+    visitedAlready.resize(control->nVars()*2, 0);
 
     //If failed var searching is going good, do successively more and more of it
     if ((double)lastTimeFoundTruths > (double)control->getNumUnsetVars() * 0.10)
