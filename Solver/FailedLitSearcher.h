@@ -126,7 +126,8 @@ class FailedLitSearcher {
         };
 
         //For hyper-bin resolution
-        std::set<BinaryClause> uselessBin;
+        vector<char> cacheUpdated;
+        set<BinaryClause> uselessBin;
         uint32_t addedBin;
         uint32_t removedBins;
         void hyperBinResAll();

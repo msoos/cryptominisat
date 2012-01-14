@@ -69,6 +69,8 @@ bool FailedLitSearcher::search()
     numCalls++;
     visitedAlready.clear();
     visitedAlready.resize(control->nVars()*2, 0);
+    cacheUpdated.clear();
+    cacheUpdated.resize(control->nVars()*2, 0);
 
     //If failed var searching is going good, do successively more and more of it
     if ((double)lastTimeFoundTruths > (double)control->getNumUnsetVars() * 0.10)
@@ -188,15 +190,17 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
             else
                 propValue.clearBit(x);
 
+            const Lit ancestor = control->propData[thisLit.var()].ancestor;
             if (control->conf.doCache
                 && thisLit != lit
+                && cacheUpdated[ancestor.toInt()] == 0
             ) {
+                cacheUpdated[ancestor.toInt()] = 1;
                 vector<LitExtra> path;
                 path = control->implCache[(~thisLit).toInt()].lits;
                 const bool learntStep = control->propData[thisLit.var()].learntStep;
                 path.push_back(LitExtra(thisLit, !learntStep));
 
-                const Lit ancestor = control->propData[thisLit.var()].ancestor;
                 assert(ancestor != lit_Undef);
                 control->implCache[(~ancestor).toInt()].merge(path, learntStep, ancestor, control->seen);
 
@@ -253,15 +257,17 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
                 }
             }
 
+            const Lit ancestor = control->propData[thisLit.var()].ancestor;
             if (control->conf.doCache
                 && thisLit != ~lit
+                && cacheUpdated[ancestor.toInt()] == 0
             ) {
+                cacheUpdated[ancestor.toInt()] = 1;
                 vector<LitExtra> path;
                 path = control->implCache[(~thisLit).toInt()].lits;
                 const bool learntStep = control->propData[thisLit.var()].learntStep;
                 path.push_back(LitExtra(thisLit, !learntStep));
 
-                const Lit ancestor = control->propData[thisLit.var()].ancestor;
                 assert(ancestor != lit_Undef);
                 control->implCache[(~ancestor).toInt()].merge(path, learntStep, ancestor, control->seen);
 
