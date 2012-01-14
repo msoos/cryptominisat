@@ -1299,11 +1299,18 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         if ((lastRestartPrint + 5000) < numConflicts) {
             #pragma omp critical
             std::cout << "c " << omp_get_thread_num()
-            << " " << numRestarts
-            << " " << numConflicts
-            << " " << order_heap.size()
-            << " " << std::fixed << std::setprecision(2) << glueHistory.getAvgDouble()
-            << " " << std::fixed << std::setprecision(2) << glueHistory.getAvgAllDouble()
+            << " " << std::setw(6) << numRestarts
+            << " " << std::setw(7) << numConflicts
+            << " " << std::setw(7) << order_heap.size()
+            << " glue hist"
+            << " " << std::fixed << std::setprecision(1) << std::setw(5) << std::right << glueHistory.getAvgDouble()
+            << "/" << std::fixed << std::setprecision(1) << std::setw(5) << std::left << glueHistory.getAvgAllDouble()
+            << " confl len hist"
+            << " " << std::fixed << std::setprecision(1) << std::setw(5) << std::right << conflSizeHist.getAvgDouble()
+            << "/" << std::fixed << std::setprecision(1) << std::setw(5) << std::left << conflSizeHist.getAvgAllDouble()
+            << " branch hist"
+            << " " << std::fixed << std::setprecision(1) << std::setw(5) << std::right << avgBranchDepth.getAvgDouble()
+            << "/" << std::fixed << std::setprecision(1) << std::setw(5) << std::left << avgBranchDepth.getAvgAllDouble()
             << std::endl;
             lastRestartPrint = numConflicts;
         }
