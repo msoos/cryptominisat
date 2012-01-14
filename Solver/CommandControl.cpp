@@ -1179,6 +1179,32 @@ bool CommandControl::handleNewBin(const BinaryClause& binCl)
     return true;
 }
 
+lbool CommandControl::burstSearch()
+{
+    lbool status;
+
+    const double backup_rand = conf.random_var_freq;
+    const RestType backup_restType = conf.restartType;
+    const int backup_polar_mode = conf.polarity_mode;
+
+    conf.random_var_freq = 1;
+    conf.polarity_mode = polarity_rnd;
+    uint64_t rest_burst = conf.burstSearchLen;
+    status = search(SearchFuncParams(rest_burst), rest_burst);
+
+    conf.random_var_freq = backup_rand;
+    conf.restartType = backup_restType;
+    conf.polarity_mode = backup_polar_mode;
+
+    #pragma omp critical
+    std::cout << "c after burst" << omp_get_thread_num()
+    << " " << numRestarts
+    << " " << numConflicts
+    << " " << order_heap.size()
+    << std::endl;
+
+    return status;
+}
 
 /**
 @brief The main solve loop that glues everything together
@@ -1200,24 +1226,11 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
     uint64_t lastRestartPrint = numConflicts;
 
+    //Burst seach
+    status = burstSearch();
     for(size_t i = 0; i < control->nVars(); i++) {
         varData[i].polarity = control->getSavedPolarity(i);
     }
-
-    //Burst seach
-    double backup_rand = conf.random_var_freq;
-    RestType restType = conf.restartType;
-    conf.random_var_freq = 1;
-    uint64_t rest_burst = 400;
-    status = search(SearchFuncParams(rest_burst), rest_burst);
-    conf.random_var_freq = backup_rand;
-    conf.restartType = restType;
-    #pragma omp critical
-    std::cout << "c after burst" << omp_get_thread_num()
-    << " " << numRestarts
-    << " " << numConflicts
-    << " " << order_heap.size()
-    << std::endl;
 
     // Search:
     uint64_t rest = conf.restart_first;

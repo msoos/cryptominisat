@@ -114,6 +114,7 @@ class CommandControl : public Solver
             const SearchFuncParams _params
             , uint64_t& rest
         );
+        lbool burstSearch();
         bool  handle_conflict(SearchFuncParams& params, PropBy confl);// Handles the conflict clause
         lbool new_decision();  // Handles the case when decision must be made
         void  checkNeedRestart(SearchFuncParams& params, uint64_t& rest);     // Helper function to decide if we need to restart during search
