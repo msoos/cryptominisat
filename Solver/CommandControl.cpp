@@ -1509,8 +1509,11 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
     //reorder the clause then
     seen[cl[0].toInt()] = 1;
     for (vector<Lit>::iterator end = cl.end(); i != end; i++) {
-        if (seen[i->toInt()]) *j++ = *i;
-        else removedLits++;
+        if (seen[i->toInt()])
+            *j++ = *i;
+        else
+            removedLits++;
+
         seen[i->toInt()] = 0;
     }
     numShrinkedClause += (removedLits > 0);
