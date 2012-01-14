@@ -477,13 +477,18 @@ void ThreadControl::moveClausesHere()
     }
     binLearntsToAdd.clear();
 
-    for(vector<Clause*>::const_iterator it = longLearntsToAdd.begin(), end = longLearntsToAdd.end(); it != end; it++) {
+    //We might attach it, then need to detach it, because it becomes satisfied
+    vector<char> attached(longLearntsToAdd.size(), 0);
+    size_t at = 0;
+    for(vector<Clause*>::const_iterator
+        it = longLearntsToAdd.begin()
+        , end = longLearntsToAdd.end()
+        ; it != end
+        ; it++, at++
+    ) {
         if (clauseCleaner->satisfied(**it)) {
-            toDetach.push_back(*it);
+            continue;
         } else {
-            //Attach 2 l_Undef literals.
-            //No l_True literals can be in the clause at this point (it's not satisfied)
-            //And if ONLY 1 l_Undef is in the clause, then the clause has not bee propagated by one of the threads, a bug
             uint32_t points[2];
             uint32_t numPoints = 0;
             Clause& cl = **it;
@@ -496,10 +501,40 @@ void ThreadControl::moveClausesHere()
                 if (numPoints == 2)
                     break;
             }
-            assert(numPoints == 2);
-            attachClause(cl, points[0], points[1]);
-            //std::cout << "Attaching " << cl << " at points " << points[0] << " , "  << points[1] << std::endl;
-            learnts.push_back(&cl);
+            switch(numPoints) {
+                case 0:
+                    assert(false && "Not satisfied, but no l_Undef --> UNSAT, but that should have been reported!");
+                    break;
+                case 1:
+                    lits.resize(1);
+                    lits[0] = cl[points[0]];
+                    addClauseInt(lits, true);
+                    assert(ok);
+                    break;
+                default:
+                    attached[at] = 1;
+                    attachClause(cl, points[0], points[1]);
+                    break;
+            };
+        }
+    }
+
+    at = 0;
+    for(vector<Clause*>::const_iterator
+        it = longLearntsToAdd.begin()
+        , end = longLearntsToAdd.end()
+        ; it != end
+        ; it++, at++
+    ) {
+        if (clauseCleaner->satisfied(**it)) {
+            toDetach.push_back(*it);
+            if (attached[at]) {
+                //We had to attach it so we would get the right 'trail' size
+                //But it is no longer needed, so detach
+                detachClause(**it);
+            }
+        } else {
+            learnts.push_back(*it);
         }
     }
     longLearntsToAdd.clear();
