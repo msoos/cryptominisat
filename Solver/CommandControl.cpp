@@ -1244,8 +1244,10 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         if (status != l_Undef)
             break;
 
-        if (lastSumConfl >= maxConfls)
+        if (lastSumConfl >= maxConfls) {
+            std::cout << "c thread(maxconfl) Trail size: " << trail.size() << std::endl;
             break;
+        }
 
         if (lastSumConfl > control->getNextCleanLimit()) {
             std::cout << "c th " << omp_get_thread_num() << " cleaning"
@@ -1253,6 +1255,8 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             << " numConflicts : " << numConflicts
             << " lastSumConfl: " << lastSumConfl
             << " maxConfls:" << maxConfls << std::endl;
+            std::cout << "c thread " << omp_get_thread_num()
+            << " Trail size: " << trail.size() << std::endl;
 
             //Have to wait for everyone to be here, i.e. shared their data
             //with threadcontrol, so we can all be up to sync

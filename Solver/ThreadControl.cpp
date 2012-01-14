@@ -537,6 +537,7 @@ void ThreadControl::moveClausesHere()
             learnts.push_back(*it);
         }
     }
+    std::cout << "c CommandContr trail size: " << trail.size() << std::endl;
     longLearntsToAdd.clear();
 }
 
