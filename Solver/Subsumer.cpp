@@ -1242,7 +1242,7 @@ void Subsumer::setLimits()
     numMaxSubsume0 = 170L*1000L*1000L;
     numMaxSubsume1 = 80L*1000L*1000L;
     numMaxElim     = 90L*1000L*1000L;
-    numMaxAsymm    = 10L *1000L*1000L;
+    numMaxAsymm    = 80L *1000L*1000L;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
