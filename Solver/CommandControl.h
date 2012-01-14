@@ -268,7 +268,7 @@ inline bool CommandControl::getPolarity(const Var var)
             return mtrand.randInt(1);
         case polarity_auto:
             if (avgBranchDepth.isvalid()) {
-                return varData[var].polarity ^ (mtrand.randInt(avgBranchDepth.getAvgUInt()) == 1);
+                return varData[var].polarity ^ (mtrand.randInt(3*avgBranchDepth.getAvgUInt()) == 1);
             } else {
                 return varData[var].polarity;
             }
