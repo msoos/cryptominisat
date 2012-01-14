@@ -1535,18 +1535,7 @@ bool Subsumer::maybeEliminate(const Var var)
     *toDecrease -= posSize + negSize;
 
     // Heuristic CUT OFF:
-    if (posSize >= 10 && negSize >= 10) return false;
-
-    // Heuristic CUT OFF2:
-    if ((posSize >= 4 && negSize >= 4 && before_literals > 300)
-        && clauses.size() > 700000)
-        return false;
-    if ((posSize >= 6 && negSize >= 6 && before_literals > 400)
-        && clauses.size() <= 700000 && clauses.size() > 100000)
-        return false;
-    if ((posSize >= 8 && negSize >= 8 && before_literals > 700)
-        && clauses.size() <= 100000)
-        return false;
+    if (posSize >= 15 && negSize >= 15) return false;
 
     //Fill datastructs that will store data from occur & watchlists
     vector<ClAndBin> posAll, negAll;
