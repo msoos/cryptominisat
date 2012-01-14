@@ -1417,11 +1417,11 @@ Lit CommandControl::pickBranchLit()
                 insertVarOrder(next);
 
                 //Save this literal & sign
-                next = control->litReachable[nextLit.toInt()].lit.var();
+                next = lit2.var();
 
                 //if '-a V b' then litReachable[a] = b, so we must pick '-b'
                 //therefore, must invert here
-                sign = !control->litReachable[nextLit.toInt()].lit.sign();
+                sign = !lit2.sign();
             }
         }
     }
