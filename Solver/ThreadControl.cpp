@@ -688,6 +688,12 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
     if (conf.doFailedLit && !failedLitSearcher->search())
         goto end;
 
+    if (conf.doFindEqLits && !sCCFinder->find2LongXors())
+        goto end;
+
+    if (conf.doReplace && !varReplacer->performReplace())
+        goto end;
+
     if (needToInterrupt) return l_Undef;
 
     //Vivify clauses
