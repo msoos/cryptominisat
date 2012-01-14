@@ -40,12 +40,6 @@ public:
         , queuesize(0)
     {}
 
-    // Init size of bounded size queue
-    void initSize(const uint32_t size)
-    {
-        resize(size);
-    }
-
     void push(const T x) {
         if (queuesize==maxsize) {
             assert(last==first); // The queue is full, next value to enter will replace oldest one

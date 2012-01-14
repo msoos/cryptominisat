@@ -874,11 +874,11 @@ void CommandControl::initialiseSolver()
 
     //Initialise stats
     avgBranchDepth.clear();
-    avgBranchDepth.initSize(500);
+    avgBranchDepth.resize(100);
     glueHistory.clear();
-    glueHistory.initSize(conf.shortTermGlueHistorySize);
+    glueHistory.resize(conf.shortTermGlueHistorySize);
     conflSizeHist.clear();
-    conflSizeHist.initSize(1000);
+    conflSizeHist.resize(100);
     numRestarts = 0;
 
     //Set up sync
@@ -1203,6 +1203,21 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     for(size_t i = 0; i < control->nVars(); i++) {
         varData[i].polarity = control->getSavedPolarity(i);
     }
+
+    //Burst seach
+    double backup_rand = conf.random_var_freq;
+    RestType restType = conf.restartType;
+    conf.random_var_freq = 1;
+    uint64_t rest_burst = 400;
+    status = search(SearchFuncParams(rest_burst), rest_burst);
+    conf.random_var_freq = backup_rand;
+    conf.restartType = restType;
+    #pragma omp critical
+    std::cout << "c after burst" << omp_get_thread_num()
+    << " " << numRestarts
+    << " " << numConflicts
+    << " " << order_heap.size()
+    << std::endl;
 
     // Search:
     uint64_t rest = conf.restart_first;
