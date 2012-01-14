@@ -1406,8 +1406,8 @@ Lit CommandControl::pickBranchLit()
         ) {
             sign = !getPolarity(next);
 
-            Lit nextLit = Lit(next, sign);
-            Lit lit2 = control->litReachable[nextLit.toInt()].lit;
+            const Lit nextLit = Lit(next, sign);
+            const Lit lit2 = control->litReachable[nextLit.toInt()].lit;
             if (lit2 != lit_Undef
                 && value(lit2.var()) == l_Undef
                 && control->decision_var[lit2.var()]
