@@ -10,34 +10,35 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #ifndef BOUNDEDQUEUE_H
 #define BOUNDEDQUEUE_H
 
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
+#include "constants.h"
+#include "assert.h"
+#include <vector>
+#include <cstring>
+#include <sstream>
+#include <iomanip>
+using std::vector;
 
-#include "Vec.h"
-
-template <class T>
+template <class T, class T2 = uint64_t>
 class bqueue {
-    std::vector<T>  elems;
-    uint32_t first;
-    uint32_t last;
-    int64_t  sumofqueue;
-    int64_t  sumOfAllElems;
-    uint64_t totalNumElems;
-    uint32_t maxsize;
-    uint32_t queuesize; // Number of current elements (must be < maxsize !)
+    vector<T>  elems;
+    size_t first;
+    size_t last;
+    size_t maxsize; //max number of history elements
+    size_t queuesize; // Number of current elements (must be < maxsize !)
+
+    T2  sumofqueue;
+    T2  sumOfAllElems;
+    size_t totalNumElems;
 
 public:
     bqueue(void) :
         first(0)
         , last(0)
+        , maxsize(0)
+        , queuesize(0)
         , sumofqueue(0)
         , sumOfAllElems(0)
         , totalNumElems(0)
-        , maxsize(0)
-        , queuesize(0)
     {}
 
     void push(const T x) {
@@ -54,27 +55,45 @@ public:
         if ((++first) == maxsize) first = 0;
     }
 
-    const T peek() const { assert(queuesize>0); return elems[last]; }
-    void pop() {sumofqueue-=elems[last]; queuesize--; if ((++last) == maxsize) last = 0;}
+    /*const T peek() const { assert(queuesize>0); return elems[last]; }
+    void pop() {sumofqueue-=elems[last]; queuesize--; if ((++last) == maxsize) last = 0;}*/
 
-    int64_t getsum() const
+    T2 getsum() const
     {
         return sumofqueue;
     }
 
-    uint32_t getAvgUInt() const
-    {
-        assert(isvalid());
-        return (uint64_t)sumofqueue/(uint64_t)queuesize;
-    }
-
-    double getAvgDouble() const
+    double getAvg() const
     {
         assert(isvalid());
         return (double)sumofqueue/(double)queuesize;
     }
 
-    double getAvgAllDouble() const
+    std::string getAvgPrint(size_t prec, size_t w) const
+    {
+        std::stringstream ss;
+        if (isvalid()) {
+            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left << getAvg();
+        } else {
+            ss << std::setw(5) << std::left << "?";
+        }
+
+        return ss.str();
+    }
+
+    std::string getAvgAllPrint(size_t prec, size_t w) const
+    {
+        std::stringstream ss;
+        if (isvalid()) {
+            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left << getAvgAll();
+        } else {
+            ss << std::setw(5) << std::left << "?";
+        }
+
+        return ss.str();
+    }
+
+    double getAvgAll() const
     {
         if (totalNumElems == 0)
             return 0;

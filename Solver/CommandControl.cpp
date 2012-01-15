@@ -37,7 +37,7 @@
 @brief Sets a sane default config and allocates handler classes
 */
 CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control) :
-        Solver(_control->clAllocator, AgilityData(_conf.agilityG, _conf.forgetLowAgilityAfter, _conf.countAgilityFromThisConfl))
+        Solver(_control->clAllocator, AgilityData(_conf.agilityG, _conf.agilityLimit))
 
         //Sync
         , lastSumConfl(0)
@@ -199,7 +199,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
         switch (confl.getType()) {
             case tertiary_t : {
                 const Var var = confl.getOtherLit2().var();
-                if (varData[var].level > 0 && !seen[var]) {
+                if (!seen[var] && varData[var].level > 0) {
                     varBumpActivity(var);
                     seen[var] = 1;
                     if (varData[var].level == decisionLevel())
@@ -213,7 +213,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
             case binary_t : {
                 if (p == lit_Undef) {
                     const Var var = failBinLit.var();
-                    if (varData[var].level > 0 && !seen[var]) {
+                    if (!seen[var] && varData[var].level > 0) {
                         varBumpActivity(var);
                         seen[var] = 1;
                         if (varData[var].level == decisionLevel())
