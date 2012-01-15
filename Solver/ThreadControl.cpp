@@ -605,6 +605,7 @@ lbool ThreadControl::solve(const int numThreads)
 
         for (size_t i = 0; i < varData.size(); i++) {
             varData[i].polarity = threads[0]->getSavedPolarity(i);
+            varData[i].activity = threads[0]->getSavedActivity(i);
         }
 
         #pragma omp parallel for
