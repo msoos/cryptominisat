@@ -84,9 +84,6 @@ class CommandControl : public Solver
         uint64_t         numRestarts;      ///<Num restarts
         uint64_t         decisions;        ///<Number of decisions made
         uint64_t         decisions_rnd;    ///<Numer of random decisions made
-        bqueue<uint32_t> avgBranchDepth;   ///< Avg branch depth in current restart
-        bqueue<uint32_t> glueHistory;      ///< Set of last decision levels in (glue of) conflict clauses
-        bqueue<uint32_t> conflSizeHist;    ///< Conflict size history
         uint64_t         max_literals;     ///<Number of learnt literals without minimisation
         uint64_t         tot_literals;     ///<Number of learnt literals with minimisation
         uint64_t         nShrinkedCl;      ///<Num clauses improved using on-the-fly self-subsuming resolution
@@ -94,6 +91,15 @@ class CommandControl : public Solver
         uint64_t         furtherClMinim;  ///<Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
         uint64_t         numShrinkedClause; ///<Number of times we tried to further shrink clauses with cache
         uint64_t         numShrinkedClauseLits; ///<Number or literals removed while shinking clauses with cache
+
+        //History statistics
+        bqueue<uint32_t> branchDepthHist;   ///< Avg branch depth in current restart
+        bqueue<uint32_t> branchDepthDeltaHist;
+        bqueue<uint32_t> trailDepthHist;
+        bqueue<uint32_t> trailDepthDeltaHist;
+        bqueue<uint32_t> glueHist;      ///< Set of last decision levels in (glue of) conflict clauses
+        bqueue<uint32_t> conflSizeHist;    ///< Conflict size history
+        bqueue<double, double>  agilityHist;
 
         /////////////////
         //Settings

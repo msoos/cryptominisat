@@ -638,8 +638,14 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
     SearchFuncParams params(_params);
     if (params.update)
         numRestarts ++;
-    glueHistory.fastclear();
-    agility.reset(control->conf.agilityLimit);
+    agility.reset(conf.agilityLimit);
+    agilityHist.fastclear();
+    glueHist.fastclear();
+    conflSizeHist.fastclear();
+    branchDepthHist.fastclear();
+    branchDepthDeltaHist.fastclear();
+    trailDepthHist.fastclear();
+    trailDepthDeltaHist.fastclear();
 
     //Debug
     #ifdef VERBOSE_DEBUG
@@ -802,12 +808,19 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
         return false;
 
     analyze(confl, learnt_clause, backtrack_level, glue);
+    size_t orig_trail_size = trail.size();
     if (params.update) {
-        avgBranchDepth.push(decisionLevel());
-        glueHistory.push(glue);
+        trailDepthHist.push(trail.size() - trail_lim[0]);
+        branchDepthHist.push(decisionLevel());
+        branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
+        glueHist.push(glue);
         conflSizeHist.push(learnt_clause.size());
+        agilityHist.push(agility.getAgility());
     }
     cancelUntil(backtrack_level);
+    if (params.update) {
+        trailDepthDeltaHist.push(orig_trail_size - trail.size());
+    }
 
     //Debug
     #ifdef VERBOSE_DEBUG
@@ -873,12 +886,20 @@ void CommandControl::initialiseSolver()
     conflict.clear();
 
     //Initialise stats
-    avgBranchDepth.clear();
-    avgBranchDepth.resize(100);
-    glueHistory.clear();
-    glueHistory.resize(conf.shortTermGlueHistorySize);
+    branchDepthHist.clear();
+    branchDepthHist.resize(100);
+    branchDepthDeltaHist.clear();
+    branchDepthDeltaHist.resize(100);
+    trailDepthHist.clear();
+    trailDepthHist.resize(100);
+    trailDepthDeltaHist.clear();
+    trailDepthDeltaHist.resize(100);
+    glueHist.clear();
+    glueHist.resize(conf.shortTermGlueHistorySize);
     conflSizeHist.clear();
     conflSizeHist.resize(100);
+    agilityHist.clear();
+    agilityHist.resize(100);
     numRestarts = 0;
 
     //Set up sync
@@ -1296,24 +1317,38 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             }
         }
 
-        if ((lastRestartPrint + 5000) < numConflicts) {
+        //if ((lastRestartPrint + 5000) < numConflicts) {
             #pragma omp critical
             std::cout << "c " << omp_get_thread_num()
             << " " << std::setw(6) << numRestarts
             << " " << std::setw(7) << numConflicts
             << " " << std::setw(7) << order_heap.size()
-            << " glue hist"
-            << " " << std::fixed << std::setprecision(1) << std::setw(5) << std::right << glueHistory.getAvgDouble()
-            << "/" << std::fixed << std::setprecision(1) << std::setw(5) << std::left << glueHistory.getAvgAllDouble()
-            << " confl len hist"
-            << " " << std::fixed << std::setprecision(1) << std::setw(5) << std::right << conflSizeHist.getAvgDouble()
-            << "/" << std::fixed << std::setprecision(1) << std::setw(5) << std::left << conflSizeHist.getAvgAllDouble()
-            << " branch hist"
-            << " " << std::fixed << std::setprecision(1) << std::setw(5) << std::right << avgBranchDepth.getAvgDouble()
-            << "/" << std::fixed << std::setprecision(1) << std::setw(5) << std::left << avgBranchDepth.getAvgAllDouble()
+            << " glue"
+            << " " << std::right << glueHist.getAvgPrint(1, 5)
+            << "/" << std::left << glueHist.getAvgAllPrint(1, 5)
+            << " agil"
+            << " " << std::right << agilityHist.getAvgPrint(3, 5)
+            << "/" << std::left<< agilityHist.getAvgAllPrint(3, 5)
+            << " confllen"
+            << " " << std::right << conflSizeHist.getAvgPrint(1, 5)
+            << "/" << std::left << conflSizeHist.getAvgAllPrint(1, 5)
+            << " branch"
+            << " " << std::right << branchDepthHist.getAvgPrint(1, 5)
+            << "/" << std::left  << branchDepthHist.getAvgAllPrint(1, 5)
+            << " branchd"
+            << " " << std::right << branchDepthDeltaHist.getAvgPrint(1, 4)
+            << "/" << std::left << branchDepthDeltaHist.getAvgAllPrint(1, 4)
+
+            << " trail"
+            << " " << std::right << trailDepthHist.getAvgPrint(0, 7)
+            << "/" << std::left << trailDepthHist.getAvgAllPrint(0, 7)
+
+            << " traild"
+            << " " << std::right << trailDepthDeltaHist.getAvgPrint(0, 5)
+            << "/" << std::left << trailDepthDeltaHist.getAvgAllPrint(0, 5)
             << std::endl;
             lastRestartPrint = numConflicts;
-        }
+        //}
     }
 
     #ifdef VERBOSE_DEBUG
