@@ -103,7 +103,7 @@ bool ClauseVivifier::vivifyClausesNormal()
     double myTime = cpuTime();
 
     //Time-limiting
-    uint64_t maxNumProps = 5L*1000L*1000L;
+    uint64_t maxNumProps = 20L*1000L*1000L;
     if (control->clausesLits + control->learntsLits < 500000)
         maxNumProps *=2;
 
