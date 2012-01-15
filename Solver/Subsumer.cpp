@@ -559,7 +559,7 @@ bool Subsumer::subsume0AndSubsume1()
 {
     CSet s0, s1;
 
-    uint32_t clTouchedTodo = 4000;
+    uint32_t clTouchedTodo = 2000;
     if (addedClauseLits > 3000000) clTouchedTodo /= 2;
     if (addedClauseLits > 10000000) clTouchedTodo /= 4;
 
@@ -587,30 +587,53 @@ bool Subsumer::subsume0AndSubsume1()
             if (it->clause == NULL) continue;
             Clause& cl = *it->clause;
 
-            if (s1Added >= clTouchedTodo) break;
+            if (s1Added >= clTouchedTodo) {
+                break;
+            }
+
             s0.add(*it);
             s1Added += s1.add(*it);
+            bool unset = true;
 
             for (uint32_t j = 0; j < cl.size(); j++) {
                 if (!ol_seenPos[cl[j].toInt()]) {
                     vec<ClauseSimp>& occs = occur[(cl[j]).toInt()];
                     for (uint32_t k = 0; k < occs.size(); k++) {
+                        if (s1Added >= clTouchedTodo) {
+                            unset = false;
+                            break;
+                        }
                         s0.add(occs[k]);
                     }
                 }
                 ol_seenPos[cl[j].toInt()] = 1;
 
+                if (s1Added >= clTouchedTodo) {
+                    unset = false;
+                    break;
+                }
+
                 if (!ol_seenNeg[(~cl[j]).toInt()]) {
                     vec<ClauseSimp>& occs = occur[(~cl[j]).toInt()];
                     for (uint32_t k = 0; k < occs.size(); k++) {
+                        if (s1Added >= clTouchedTodo) {
+                            unset = false;
+                            break;
+                        }
+
                         s1Added += s1.add(occs[k]);
                     }
                 }
                 ol_seenNeg[(~cl[j]).toInt()] = 1;
+
+                if (s1Added >= clTouchedTodo) {
+                    unset = false;
+                    break;
+                }
             }
 
             remClTouched.push(*it);
-            if (doSubs1Next)
+            if (doSubs1Next && unset)
                 it->clause->unsetChanged();
         }
         //std::cout << "s0.nElems(): " << s0.nElems() << std::endl;
