@@ -1622,7 +1622,9 @@ void CommandControl::printAgilityStats()
         << ", confl: " << std::setw(6) << numConflicts
         << ", rest: " << std::setw(6) << numRestarts
         << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2) << agility.getAgility()
-        << ", agilityTooLow: " << std::setw(4) << agility.getNumTooLow()
-        << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(3) << conf.agilityLimit << std::endl;
+        << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2) << conf.agilityLimit
+        << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvg()
+        << ", agilityHistAll: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvgAll()
+        << std::endl;
     }
 }
