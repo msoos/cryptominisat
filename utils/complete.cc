@@ -1,3 +1,6 @@
+/** Complete all-combination generator by Vegard Nossum
+ * All bugs are due to fiddling around by Mate Soos
+ */
 #include <cstdio>
 #include <stdint.h>
 #include "assert.h"
