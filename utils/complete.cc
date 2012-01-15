@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
     }
     if (nr_vars > 62) {
         fprintf(stderr, "Too large value given: %d\n", (int)nr_vars);
+        exit(EXIT_FAILURE);
     }
 
     unsigned long x = 0;
