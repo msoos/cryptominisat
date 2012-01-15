@@ -177,7 +177,7 @@ template<class T> Subsumer::Sub0Ret Subsumer::subsume0(const uint32_t index, con
     findSubsumed0(index, ps, abs, subs);
     for (vector<ClauseIndex>::const_iterator it = subs.begin(), end = subs.end(); it != end; it++) {
         #ifdef VERBOSE_DEBUG
-        std::cout << "-> subsume0 removing:" << clauses[subs[i].index] << std::endl;
+        std::cout << "-> subsume0 removing:" << *clauses[it->index] << std::endl;
         #endif
 
         Clause *tmp = clauses[it->index];
