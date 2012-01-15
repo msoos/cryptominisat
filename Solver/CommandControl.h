@@ -220,7 +220,7 @@ inline void CommandControl::varBumpActivity(Var v)
         for (Var var = 0; var != nVars(); var++) {
             varData[var].activity >>= 14;
         }
-        conf.var_inc >>= 14;
+        conf.var_inc = 128;;
     }
 
     // Update order_heap with respect to new activity:
