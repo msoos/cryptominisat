@@ -46,9 +46,6 @@ class SolverConf
         //Agility
         double    agilityG; ///See paper by Armin Biere on agilities
         double    agilityLimit; ///The agility below which the agility is considered too low
-        uint32_t  numTooLowAgilitiesLimit; ///<If this many low agilities are recorded within the limit of 'forgetLowAgilityAfter', then restart
-        uint32_t  forgetLowAgilityAfter; ///<Forget that agilities were too low after this many 'good' (high agility) conflicts
-        uint32_t  countAgilityFromThisConfl; ///<Take into account agility from this number of conflicts (no calculation before). This is a sort of bootstrap for the search
 
         //Burst?
         uint32_t  simpBurstSConf;

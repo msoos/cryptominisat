@@ -279,15 +279,10 @@ class AgilityData
     public:
         AgilityData(
             const double _agilityG
-            , const uint32_t _forgetLowAgilityAfter
-            , const uint32_t _countAgilityFromThisConfl
+            , const double agilityLimit
         ) :
             agilityG(_agilityG)
-            , agility(0)
-            , numTooLow(0)
-            , lastConflTooLow(0)
-            , forgetLowAgilityAfter(_forgetLowAgilityAfter)
-            , countAgilityFromThisConfl(_countAgilityFromThisConfl)
+            , agility(agilityLimit)
         {
             assert(agilityG < 1 && agilityG > 0);
         }
@@ -304,48 +299,14 @@ class AgilityData
             return agility;
         }
 
-        void tooLow(const uint64_t confl)
-        {
-            if (confl < countAgilityFromThisConfl)
-                return;
-
-            assert(lastConflTooLow != confl);
-
-            //If it was a long time ago, don't penalise
-            if (lastConflTooLow + forgetLowAgilityAfter < confl)
-                numTooLow = 0;
-
-            numTooLow++;
-            lastConflTooLow = confl;
-        }
-
-        uint32_t getNumTooLow() const
-        {
-            return numTooLow;
-        }
-
         void reset(const double agilityLimit)
         {
-            agility = 0;
-            numTooLow = std::min<double>(agilityLimit*2, 0.9);
-            lastConflTooLow = 0;
+            agility = agilityLimit;
         }
 
     private:
         const double agilityG;
         double agility;
-
-        //Number of 'recent' conflicts too low (recent = before forgetLowAgilityAfter)
-        uint32_t numTooLow;
-
-        //The last conflict number where we observed the agility to be too low
-        uint64_t lastConflTooLow;
-
-        //Forget that agilities were too low after this many 'good' (high agility) conflicts
-        uint32_t forgetLowAgilityAfter;
-
-        //Take into account agility from this number of conflicts (no calculation before)
-        uint32_t countAgilityFromThisConfl;
 };
 
 struct SearchFuncParams

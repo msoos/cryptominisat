@@ -33,7 +33,7 @@
 #include <omp.h>
 
 ThreadControl::ThreadControl(const SolverConf& _conf) :
-    Solver(NULL, AgilityData(_conf.agilityG, _conf.forgetLowAgilityAfter, _conf.countAgilityFromThisConfl))
+    Solver(NULL, AgilityData(_conf.agilityG, _conf.agilityLimit))
     , mtrand(_conf.origSeed)
     , nbReduceDB(0)
     , conf(_conf)
