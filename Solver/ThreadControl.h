@@ -87,7 +87,6 @@ class ThreadControl : public Solver
         uint64_t getSumConflicts() const;
         uint64_t getNextCleanLimit() const;
         bool     getSavedPolarity(Var var) const;
-        uint32_t getSavedActivity(Var var) const;
 
         ///////////////////////////////////
         // State Dumping
@@ -277,9 +276,5 @@ inline bool ThreadControl::getSavedPolarity(const Var var) const
     return varData[var].polarity;
 }
 
-inline uint32_t ThreadControl::getSavedActivity(const Var var) const
-{
-    return varData[var].activity;
-}
 
 #endif //THREADCONTROL_H

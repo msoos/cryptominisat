@@ -48,7 +48,6 @@ struct VarData
 {
     VarData() :
         level(std::numeric_limits< uint32_t >::max())
-        , activity(0)
         , elimed(ELIMED_NONE)
         , polarity(false)
         , reason(PropBy())
@@ -56,9 +55,6 @@ struct VarData
 
     ///contains the decision level at which the assignment was made.
     uint32_t level;
-
-    ///A heuristic measurement of the activity of a variable.
-    uint32_t activity;
 
     ///Whether var has been eliminated (var-elim, different component, etc.)
     char elimed;

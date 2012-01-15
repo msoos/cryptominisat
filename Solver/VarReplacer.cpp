@@ -116,13 +116,13 @@ bool VarReplacer::performReplace()
         control->decision_var[var] =  false;
         control->decision_var[it->var()] = true;
 
-        uint32_t& activity1 = control->varData[var].activity;
+        /*uint32_t& activity1 = control->varData[var].activity;
         uint32_t& activity2 = control->varData[it->var()].activity;
         if (wasDecisionVar && activity1 > activity2) {
             activity2 = activity1;
         }
 
-        activity1 = 0.0;
+        activity1 = 0.0;*/
     }
 
     uint32_t thisTimeReplaced = replacedVars -lastReplacedVars;

@@ -62,7 +62,7 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         , control(_control)
         , conf(_conf)
         , needToInterrupt(false)
-        , order_heap(VarOrderLt(varData))
+        , order_heap(LitOrderLt(activities))
 {
     mtrand.seed(conf.origSeed);
 }
@@ -74,8 +74,13 @@ CommandControl::~CommandControl()
 Var CommandControl::newVar(const bool dvar)
 {
     const Var var = Solver::newVar(dvar);
-    if (dvar)
-        insertVarOrder(var);
+    assert(var == activities.size()/2);
+    activities.push_back(0);
+    activities.push_back(0);
+    if (dvar) {
+        insertLitOrder(Lit(var, true));
+        insertLitOrder(Lit(var, false));
+    }
 
     return var;
 }
@@ -161,7 +166,8 @@ void CommandControl::cancelUntil(uint32_t level)
             #ifdef ANIMATE3D
             std:cerr << "u " << var << std::endl;
             #endif
-            insertVarOrder(var);
+            insertLitOrder(trail[sublevel]);
+            insertLitOrder(~trail[sublevel]);
         }
         qhead = trail_lim[level];
         trail.resize(trail_lim[level]);
@@ -171,6 +177,19 @@ void CommandControl::cancelUntil(uint32_t level)
     #ifdef VERBOSE_DEBUG
     std::cout << "Canceling finished. (now at level: " << decisionLevel() << " sublevel: " << trail.size()-1 << ")" << std::endl;
     #endif
+}
+
+void CommandControl::analyzeHelper(const Lit lit, int& pathC, vector<Lit>& out_learnt)
+{
+    const Var var = lit.var();
+    if (!seen[var] && varData[var].level > 0) {
+        litBumpActivity(lit);
+        seen[var] = 1;
+        if (varData[var].level == decisionLevel())
+            pathC++;
+        else
+            out_learnt.push_back(lit);
+    }
 }
 
 /**
@@ -198,62 +217,26 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
             case tertiary_t : {
-                const Var var = confl.getOtherLit2().var();
-                if (!seen[var] && varData[var].level > 0) {
-                    varBumpActivity(var);
-                    seen[var] = 1;
-                    if (varData[var].level == decisionLevel())
-                        pathC++;
-                    else
-                        out_learnt.push_back(confl.getOtherLit2());
-                }
+                analyzeHelper(confl.getOtherLit2(), pathC, out_learnt);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
             case binary_t : {
-                if (p == lit_Undef) {
-                    const Var var = failBinLit.var();
-                    if (!seen[var] && varData[var].level > 0) {
-                        varBumpActivity(var);
-                        seen[var] = 1;
-                        if (varData[var].level == decisionLevel())
-                            pathC++;
-                        else
-                            out_learnt.push_back(failBinLit);
-                    }
-                }
+                if (p == lit_Undef)
+                    analyzeHelper(failBinLit, pathC, out_learnt);
 
-                const Var var = confl.getOtherLit().var();
-                if (!seen[var] && varData[var].level > 0) {
-                    varBumpActivity(var);
-                    seen[var] = 1;
-                    if (varData[var].level == decisionLevel())
-                        pathC++;
-                    else
-                        out_learnt.push_back(confl.getOtherLit());
-                }
+                analyzeHelper(confl.getOtherLit(), pathC, out_learnt);
                 break;
             }
 
             case clause_t : {
-                Clause& cl = *clAllocator->getPointer(confl.getClause());
-                for (uint32_t j = 0, size = cl.size(); j != size; j++) {
+                const Clause& cl = *clAllocator->getPointer(confl.getClause());
+                for (size_t j = 0, size = cl.size(); j != size; j++) {
                     if (p != lit_Undef
                         && j == clauseData[cl.getNum()].litPos[confl.getWatchNum()])
                     continue;
 
-                    const Lit q = cl[j];
-                    const Var var = q.var();
-                    assert(varData[var].level <= decisionLevel());
-
-                    if (!seen[var] && varData[var].level > 0) {
-                        varBumpActivity(var);
-                        seen[var] = 1;
-                        if (varData[var].level == decisionLevel())
-                            pathC++;
-                        else
-                            out_learnt.push_back(q);
-                    }
+                    analyzeHelper(cl[j], pathC, out_learnt);
                 }
                 break;
             }
@@ -874,7 +857,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             break;
     }
 
-    varDecayActivity();
+    litDecayActivity();
 
     return true;
 }
@@ -928,7 +911,7 @@ void CommandControl::initialiseSolver()
     ok = propagate().isNULL();
     assert(ok);
 
-    order_heap.filter(VarFilter(this, control));
+    order_heap.filter(LitFilter(this, control));
 
     //Attach every binary clause
     uint32_t wsLit = 0;
@@ -1418,36 +1401,37 @@ Lit CommandControl::pickBranchLit()
     std::cout << "decision level: " << decisionLevel() << " ";
     #endif
 
-    Var next = var_Undef;
-    bool sign = true;
+    Lit next = lit_Undef;
 
     // Random decision:
     double rand = mtrand.randDblExc();
-    if (next == var_Undef
+    if (next == lit_Undef
         && rand < conf.random_var_freq
         && !order_heap.empty()
     ) {
-        next = order_heap[mtrand.randInt(order_heap.size()-1)];
-
-        if (value(next) == l_Undef && control->decision_var[next]) {
+        next = Lit::toLit(order_heap[mtrand.randInt(order_heap.size()-1)]);
+        if (value(next.var()) == l_Undef
+            && control->decision_var[next.var()]
+        ) {
             decisions_rnd++;
-            sign = !getPolarity(next);
         }
     }
 
     // Activity based decision:
-    while (next == var_Undef
-      || value(next) != l_Undef
-      || !control->decision_var[next]
+    while (next == lit_Undef
+      || value(next.var()) != l_Undef
+      || !control->decision_var[next.var()]
     ) {
         //There is no more to branch on. Satisfying assignment found.
         if (order_heap.empty()) {
-            next = var_Undef;
+            next = lit_Undef;
             break;
         }
 
-        next = order_heap.removeMin();
+        next = Lit::toLit(order_heap.removeMin());
+        //std::cout << "Trying next: " << next << std::endl;
 
+        /*
         //Try to use reachability to pick a literal that dominates this one
         if (value(next) == l_Undef
             && control->decision_var[next]
@@ -1462,7 +1446,7 @@ Lit CommandControl::pickBranchLit()
                 && mtrand.randInt(1) == 1  //only pick dominating literal 50% of the time
             ) {
                 //insert this one back, just in case the litReachable isn't entirely correct
-                insertVarOrder(next);
+                insertLitOrder(next);
 
                 //Save this literal & sign
                 next = lit2.var();
@@ -1471,24 +1455,23 @@ Lit CommandControl::pickBranchLit()
                 //therefore, must invert here
                 sign = !lit2.sign();
             }
-        }
+        }*/
     }
 
     //No vars in heap: solution found
-    if (next == var_Undef) {
+    if (next == lit_Undef) {
         #ifdef VERBOSE_DEBUG
         std::cout << "SAT!" << std::endl;
         #endif
         return lit_Undef;
     }
 
-    const Lit toPick(next, sign);
     #ifdef VERBOSE_DEBUG
-    std::cout << "decided on: " << toPick << std::endl;
+    std::cout << "decided on: " << next << std::endl;
     #endif
 
-    assert(control->decision_var[toPick.var()]);
-    return toPick;
+    assert(control->decision_var[next.var()]);
+    return next;
 }
 
 /**
@@ -1589,18 +1572,19 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
     oTFCache.merge(lits, false, seen);
 }*/
 
-void CommandControl::insertVarOrder(const Var x)
+void CommandControl::insertLitOrder(const Lit x)
 {
-    if (!order_heap.inHeap(x)
-        && control->decision_var[x]
+    if (!order_heap.inHeap(x.toInt())
+        && control->decision_var[x.var()]
     ) {
-        order_heap.insert(x);
+        order_heap.insert(x.toInt());
     }
 }
 
-bool CommandControl::VarFilter::operator()(Var v) const
+bool CommandControl::LitFilter::operator()(uint32_t lit_pre) const
 {
-    return (cc->value(v) == l_Undef && control->decision_var[v]);
+    const Lit lit = Lit::toLit(lit_pre);
+    return (cc->value(lit.var()) == l_Undef && control->decision_var[lit.var()]);
 }
 
 uint64_t CommandControl::getNumConflicts() const
