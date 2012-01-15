@@ -521,6 +521,10 @@ void Main::parseCommandLine()
             conf.restartType = geom_restart;
         else if (type == "glue")
             conf.restartType = glue_restart;
+        else if (type == "agility")
+            conf.restartType = agility_restart;
+        else if (type == "branchd")
+            conf.restartType = branch_depth_delta_restart;
         else throw WrongParam("restart", "unknown restart type");
     }
 
