@@ -743,19 +743,21 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
         params.needToStopSearch = true;
     }
 
-    // Reached bound on number of conflicts?
-    if (agility.getAgility() < conf.agilityLimit)
-        agility.tooLow(params.conflictsDoneThisRestart);
-
-    if ((conf.restartType == geom_restart
+    if (     (conf.restartType == geom_restart
             && params.conflictsDoneThisRestart > rest
         ) || (conf.restartType == glue_restart
-            && glueHistory.isvalid()
-            && 0.95*glueHistory.getAvgDouble() > glueHistory.getAvgAllDouble()
+            && glueHist.isvalid()
+            && 0.95*glueHist.getAvg() > glueHist.getAvgAll()
+        ) || (conf.restartType == agility_restart
+            && agilityHist.isvalid()
+            && agilityHist.getAvg() > conf.agilityLimit
+        ) || (conf.restartType == branch_depth_delta_restart
+            && branchDepthDeltaHist.isvalid()
+            && 0.95*branchDepthDeltaHist.getAvg() > branchDepthDeltaHist.getAvgAll()
         )
     ) {
         //Now check agility
-        if (agility.getNumTooLow() > conf.numTooLowAgilitiesLimit) {
+        if (agility.getAgility() < conf.agilityLimit) {
             #ifdef DEBUG_DYNAMIC_RESTART
             if (glueHistory.isvalid()) {
                 std::cout << "glueHistory.getavg():" << glueHistory.getavg() <<std::endl;
