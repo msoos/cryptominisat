@@ -42,6 +42,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy Solver/cryptominisat .
     COMMAND ${CMAKE_COMMAND} -E copy utils/outofcr .
     COMMAND ${CMAKE_COMMAND} -E copy utils/intocr .
+    COMMAND ${CMAKE_COMMAND} -E copy utils/complete .
 )
 
-add_dependencies(copy cryptominisat outofcr intocr)
+add_dependencies(copy cryptominisat outofcr intocr complete)

@@ -6,3 +6,6 @@ add_executable(intocr
     intocr.c
 )
 
+add_executable(complete
+    complete.cc
+)
