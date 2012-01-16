@@ -1400,7 +1400,13 @@ Only takes into consideration clauses that are in the occurrence lists.
 literal, or by subsumption (in this case, there is lit_Undef here)
 */
 template<class T>
-void Subsumer::findSubsumed1(uint32_t index, const T& ps, const CL_ABST_TYPE abs, vector<ClauseIndex>& out_subsumed, vector<Lit>& out_lits)
+void Subsumer::findSubsumed1(
+    uint32_t index
+    , const T& ps
+    , const CL_ABST_TYPE abs
+    , vector<ClauseIndex>& out_subsumed
+    , vector<Lit>& out_lits
+)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "findSubsumed1: " << ps << std::endl;
