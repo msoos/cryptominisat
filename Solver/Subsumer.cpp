@@ -529,6 +529,10 @@ bool Subsumer::subsume0AndSubsume1()
                     if (s1.size() >= clTouchedTodo)
                         break;
 
+                    /*//Cannot subsume/strenghten with larger clause
+                    if (clauses[it->index].size > cl.size())
+                        continue;*/
+
                     //Already added
                     if (!alreadyAdded[it->index]) {
                         s1.push_back(*it);
@@ -542,6 +546,10 @@ bool Subsumer::subsume0AndSubsume1()
                     //Too many
                     if (s1.size() >= clTouchedTodo)
                         break;
+
+                    /*//Cannot subsume/strenghten with larger clause
+                    if (clauses[it->index].size > cl.size())
+                        continue;*/
 
                     if (!alreadyAdded[it->index]) {
                         s1.push_back(*it);
