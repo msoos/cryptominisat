@@ -274,7 +274,7 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
 {
     Clause& cl = *clauses[c.index];
     for (uint32_t i = 0; i < cl.size(); i++) {
-        *toDecrease -= occur[cl[i].toInt()].size()/2;
+        *toDecrease -= occur[cl[i].toInt()].size();
 
         occur[cl[i].toInt()].remove(c);
         touchedVars.touch(cl[i], cl.learnt());
@@ -1433,7 +1433,7 @@ void inline Subsumer::fillSubs(const T& ps, const uint32_t index, const CL_ABST_
             && subsetAbst(abs, clauseData[it->index].abst)
             && ps.size() <= clauseData[it->index].size
         ) {
-            *toDecrease -= 50;
+            *toDecrease -= ps.size() + clauseData[it->index].size;
             litSub = subset1(ps, *clauses[it->index]);
             if (litSub != lit_Error) {
                 out_subsumed.push_back(*it);
