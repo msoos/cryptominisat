@@ -281,7 +281,6 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
     }
 
     // Remove from sets:
-    s1.exclude(c);
     cl_touched.exclude(c);
 
     //If elimed and non-learnt, we need to save it to stack
@@ -302,6 +301,66 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
     }
 }
 
+lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
+{
+    assert(control->ok);
+
+    bool satisfied = false;
+    Lit* i = cl.begin();
+    Lit* j = cl.begin();
+    const Lit* end = cl.begin();
+    *toDecrease = cl.size();
+    for(; i != end; i++) {
+        if (control->value(*i) == l_Undef) {
+            *j++ = *i;
+            continue;
+        }
+
+        if (control->value(*i) == l_True) {
+            occur[i->toInt()].remove(c);
+            satisfied = true;
+            continue;
+        }
+
+        if (control->value(*i) == l_False) {
+            occur[i->toInt()].remove(c);
+            continue;
+        }
+    }
+    cl.shrink(i-j);
+
+    if (satisfied) {
+        #ifdef VERBOSE_DEBUG
+        std::cout << "Clause cleaning -- satisfied, removing" << std::endl;
+        #endif
+        unlinkClause(c);
+        return l_True;
+    }
+
+    #ifdef VERBOSE_DEBUG
+    std::cout << "-> Clause became after cleaning:" << *clauses[c.index] << std::endl;
+    #endif
+
+    switch(cl.size()) {
+        case 0:
+            control->ok = false;
+            return l_False;
+        case 1:
+            control->enqueue(cl[0]);
+            unlinkClause(c);
+            control->ok = control->propagate().isNULL();
+            return (control->ok ? l_True : l_False);
+
+        case 2:
+            control->attachBinClause(cl[0], cl[1], cl.learnt());
+            unlinkClause(c);
+            return l_True;
+
+        default:
+            return l_Undef;
+    }
+}
+
 /**
 @brief Removes a literal from a clause
 
@@ -310,39 +369,18 @@ May return with control->ok being FALSE, and may set&propagate variable values.
 @param c Clause to be cleaned of the literal
 @param[in] toRemoveLit The literal to be removed from the clause
 */
-bool Subsumer::strengthen(ClauseIndex& c, const Lit toRemoveLit)
+void Subsumer::strengthen(ClauseIndex& c, const Lit toRemoveLit)
 {
     #ifdef VERBOSE_DEBUG
     std::cout << "-> Strenghtening clause :" << *clauses[c.index];
     std::cout << " with lit: " << toRemoveLit << std::endl;
     #endif
 
-    //Save clause data
-    vector<Lit> lits;
-    Clause *cl = clauses[c.index];
-    for(size_t i = 0; i < cl->size(); i++) {
-        if ((*cl)[i] != toRemoveLit)
-            lits.push_back((*cl)[i]);
-    }
-    bool learnt = cl->learnt();
-    uint32_t glue = 0;
-    bool changed = cl->getChanged();
-    if (learnt)
-        glue = cl->getGlue();
+    Clause& cl = *clauses[c.index];
+    cl.strengthen(toRemoveLit);
+    occur[toRemoveLit.toInt()].remove(c);
 
-    //Unlink old clause
-    unlinkClause(c);
-
-    //Create & propagate new clause
-    *toDecrease -= lits.size();
-    cl = control->addClauseInt(lits, learnt, glue, false);
-    if (cl) {
-        if (!changed) cl->unsetChanged();
-        c = linkInClause(*cl);
-    } else
-        c = ClauseIndex();
-
-    return control->ok;
+    cleanClause(c, cl);
 }
 
 void Subsumer::printLimits()
@@ -367,7 +405,6 @@ when there is enough numMaxSubume1 and numMaxSubume0 is available.
 */
 bool Subsumer::subsume0AndSubsume1()
 {
-    s1.clear();
     //uint32_t clTouchedTodo = cl_touched.nElems();
 
     uint32_t clTouchedTodo = 4000;
@@ -394,38 +431,53 @@ bool Subsumer::subsume0AndSubsume1()
     //std::cout << "subsume0 done: " << numDone << std::endl;
 
     vector<ClauseIndex> remClTouched; //These clauses will be untouched
-    vector<char> alreadyAdded(clauses.size(), 0);
+    vector<char> alreadyAdded;
     toDecrease = &numMaxSubsume1;
     do {
-        uint32_t s1Added = 0;
-        for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
-            if (it->index == std::numeric_limits< uint32_t >::max()) continue;
+        alreadyAdded.resize(clauses.size(), 0);
+        s1.clear();
 
-            if (s1Added >= clTouchedTodo) break;
-            s1Added += s1.add(*it);
+        for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
+            //Clause already removed
+            if (it->index == std::numeric_limits< uint32_t >::max())
+                continue;
+
+            //Too many
+            if (s1.size() >= clTouchedTodo)
+                break;
+
+            s1.push_back(*it);
 
             Clause& cl = *clauses[it->index];
             for (uint32_t j = 0; j < cl.size(); j++) {
-                if (!ol_seenNeg[cl[j].var()]) {
-                    Occur& occs1 = occur[(~cl[j]).toInt()];
-                    *toDecrease -= occs1.size();
-                    for (Occur::const_iterator it = occs1.begin(), end = occs1.end(); it != end; it++) {
-                        if (alreadyAdded.size() <= it->index)
-                            alreadyAdded.resize(it->index+1, 0);
-                        if (!alreadyAdded[it->index]) {
-                            s1Added += s1.add(*it);
-                            alreadyAdded[it->index] = 1;
-                        }
+                //All clauses related to this have already been added
+                if (ol_seenNeg[cl[j].var()])
+                    continue;
+
+                //Too many
+                if (s1.size() >= clTouchedTodo)
+                    break;
+
+                //Look at POS occurs
+                Occur& occs2 = occur[cl[j].toInt()];
+                *toDecrease -= occs2.size();
+                for (Occur::const_iterator it = occs2.begin(), end = occs2.end(); it != end; it++) {
+                    if (!alreadyAdded[it->index]) {
+                        s1.push_back(*it);
+                        alreadyAdded[it->index] = 1;
                     }
-                    Occur& occs2 = occur[cl[j].toInt()];
-                    *toDecrease -= occs1.size();
-                    for (Occur::const_iterator it = occs2.begin(), end = occs2.end(); it != end; it++) {
-                        if (alreadyAdded.size() <= it->index)
-                            alreadyAdded.resize(it->index+1, 0);
-                        if (!alreadyAdded[it->index]) {
-                            s1Added += s1.add(*it);
-                            alreadyAdded[it->index] = 1;
-                        }
+                }
+
+                //Too many
+                if (s1.size() >= clTouchedTodo)
+                    break;
+
+                Occur& occs1 = occur[(~cl[j]).toInt()];
+                *toDecrease -= occs1.size();
+                for (Occur::const_iterator it = occs1.begin(), end = occs1.end(); it != end; it++) {
+                    if (!alreadyAdded[it->index]) {
+                        s1.push_back(*it);
+                        alreadyAdded[it->index] = 1;
                     }
                 }
                 ol_seenNeg[cl[j].var()] = 1;
@@ -435,7 +487,6 @@ bool Subsumer::subsume0AndSubsume1()
             cl.unsetStrenghtened();
             cl.unsetChanged();
         }
-        //std::cout << "s1.nElems(): " << s1.nElems() << std::endl;
 
         //Remove clauses to be used from touched
         for (uint32_t i = 0; i < remClTouched.size(); i++) {
@@ -444,14 +495,19 @@ bool Subsumer::subsume0AndSubsume1()
         remClTouched.clear();
 
         //Subsume 1
-        for (CSet::iterator it = s1.begin(), end = s1.end(); it != end; ++it) {
-            if (it->index == std::numeric_limits< uint32_t >::max()) continue;
+        for (vector<ClauseIndex>::const_iterator
+            it = s1.begin(), end = s1.end()
+            ; it != end
+            ; ++it
+        ) {
+            //Has already been removed
+            if (clauses[it->index] == NULL)
+                continue;
 
             subsume1(*it, *clauses[it->index]);
             if (!control->ok)
                 return false;
         }
-        s1.clear();
 
     } while ((cl_touched.nElems() > 100) && numMaxSubsume1 > 0);
 

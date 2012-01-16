@@ -191,7 +191,8 @@ private:
     void removeAssignedVarsFromEliminated();
 
     //Clause update
-    bool        strengthen(ClauseIndex& c, const Lit toRemoveLit);
+    void        strengthen(ClauseIndex& c, const Lit toRemoveLit);
+    lbool       cleanClause(ClauseIndex c, Clause& cl);
     void        unlinkClause(ClauseIndex cc, const Lit elim = lit_Undef);
     ClauseIndex linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClauseIndex& c, Clause& cl);
