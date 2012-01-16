@@ -417,24 +417,83 @@ bool Subsumer::subsume0AndSubsume1()
     // Fixed-point for 1-subsumption:
     printLimits();
 
-    //Subsume 0 first. This makes things easier later on: less clause to worry about
-    //for (CSet::iterator it = cl_touched.begin(), end =  cl_touched.end(); it != end; ++it) {
-    uint32_t numDone = 0;
+    vector<char> ol_seenPos;
+    ol_seenPos.resize(control->nVars(), 0);
+
     toDecrease = &numMaxSubsume0;
-    for (size_t i = 0; i < clauses.size(); i++) {
-        if (clauses[i] == NULL)
-            continue;
+    vector<ClauseIndex> s0;
+    vector<char> alreadyAdded;
+    uint64_t lastDone = 1;
+    while (numMaxSubsume0 >0 && lastDone != 0)  {
+        alreadyAdded.resize(clauses.size(), 0);
+        s0.clear();
 
-        if (numMaxSubsume0 < 0)
-            break;
+        for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
+            //Clause already removed
+            if (it->index == std::numeric_limits< uint32_t >::max())
+                continue;
 
-        subsume0(i, *clauses[i]);
-        numDone++;
+            //Too many
+            if (s0.size() >= clTouchedTodo)
+                break;
+
+            //Only changed clauses can be subsume0-d
+            if (!clauses[it->index]->getChanged())
+                continue;
+
+            //Add this clause to s0
+            if (!alreadyAdded[it->index]) {
+                s0.push_back(*it);
+                alreadyAdded[it->index] = 1;
+            }
+
+            //Look at POS occurs
+            Clause& cl = *clauses[it->index];
+            for (uint32_t j = 0; j < cl.size(); j++) {
+                if (ol_seenPos[cl[j].var()])
+                    continue;
+
+                const Occur& occs = occur[cl[j].toInt()];
+                *toDecrease -= occs.size();
+                for (Occur::const_iterator it = occs.begin(), end = occs.end(); it != end; it++) {
+                    //Too many
+                    if (s0.size() >= clTouchedTodo)
+                        break;
+
+                    /*//Cannot subsume/strenghten with larger clause
+                    if (clauses[it->index].size > cl.size())
+                        continue;*/
+
+                    //Already added
+                    if (!alreadyAdded[it->index]) {
+                        s0.push_back(*it);
+                        alreadyAdded[it->index] = 1;
+                    }
+                }
+                ol_seenPos[cl[j].var()] = 1;
+            }
+            cl.unsetChanged();
+        }
+
+        //Subsume 0
+        lastDone = s0.size();
+        for (vector<ClauseIndex>::const_iterator
+            it = s0.begin(), end = s0.end()
+            ; it != end
+            ; ++it
+        ) {
+            //Has already been removed
+            if (clauses[it->index] == NULL)
+                continue;
+
+            subsume0(*it, *clauses[it->index]);
+        }
     }
+
+
     //std::cout << "subsume0 done: " << numDone << std::endl;
 
     vector<ClauseIndex> remClTouched; //These clauses will be untouched
-    vector<char> alreadyAdded;
     toDecrease = &numMaxSubsume1;
     do {
         alreadyAdded.resize(clauses.size(), 0);
