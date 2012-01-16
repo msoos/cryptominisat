@@ -522,7 +522,7 @@ bool Subsumer::subsume0AndSubsume1()
                     break;
 
                 //Look at POS occurs
-                Occur& occs2 = occur[cl[j].toInt()];
+                const Occur& occs2 = occur[cl[j].toInt()];
                 *toDecrease -= occs2.size();
                 for (Occur::const_iterator it = occs2.begin(), end = occs2.end(); it != end; it++) {
                     //Too many
@@ -536,7 +536,7 @@ bool Subsumer::subsume0AndSubsume1()
                     }
                 }
 
-                Occur& occs1 = occur[(~cl[j]).toInt()];
+                const Occur& occs1 = occur[(~cl[j]).toInt()];
                 *toDecrease -= occs1.size();
                 for (Occur::const_iterator it = occs1.begin(), end = occs1.end(); it != end; it++) {
                     //Too many
