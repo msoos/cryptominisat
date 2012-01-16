@@ -319,7 +319,7 @@ A may be a subset of B only if (A & ~B) == 0
 */
 inline bool Subsumer::subsetAbst(const CL_ABST_TYPE A, const CL_ABST_TYPE B)
 {
-    return !(A & ~B);
+    return ((A & ~B) == 0);
 }
 
 //A subsumes B (A <= B)
