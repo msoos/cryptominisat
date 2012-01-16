@@ -506,7 +506,10 @@ bool Subsumer::subsume0AndSubsume1()
             if (s1.size() >= clTouchedTodo)
                 break;
 
-            s1.push_back(*it);
+            if (!alreadyAdded[it->index]) {
+                s1.push_back(*it);
+                alreadyAdded[it->index] = 1;
+            }
 
             Clause& cl = *clauses[it->index];
             for (uint32_t j = 0; j < cl.size(); j++) {
