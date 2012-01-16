@@ -146,7 +146,7 @@ private:
     //Touched, elimed, etc.
     TouchList    touchedVars; ///<A list of the true elements in 'touched'.
     CSet         cl_touched;  ///<Clauses strengthened/added
-    CSet         s1;          ///<Current set of clauses that are examined for subsume0&1
+    vector<ClauseIndex> s1;          ///<Current set of clauses that are examined for subsume0&1
     vector<char> ol_seenNeg;
 
     //Persistent data

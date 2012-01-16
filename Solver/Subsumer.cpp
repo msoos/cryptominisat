@@ -276,9 +276,7 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
     for (uint32_t i = 0; i < cl.size(); i++) {
         *toDecrease -= occur[cl[i].toInt()].size()/2;
 
-        if (occur[cl[i].toInt()].size() > 0)
-            occur[cl[i].toInt()].remove(c);
-
+        occur[cl[i].toInt()].remove(c);
         touchedVars.touch(cl[i], cl.learnt());
     }
 

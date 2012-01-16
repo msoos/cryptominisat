@@ -126,7 +126,8 @@ public:
 
     void remove(const ClauseIndex c)
     {
-        removeW(occ, c);
+        if (occ.size() > 0)
+            removeW(occ, c);
     }
 
 private:
