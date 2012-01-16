@@ -357,6 +357,9 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
             return l_True;
 
         default:
+            clauseData[c.index].abst = calcAbstraction(cl);
+            clauseData[c.index].size = cl.size();
+            cl_touched.add(c);
             return l_Undef;
     }
 }
