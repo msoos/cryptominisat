@@ -309,7 +309,7 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
     Lit* i = cl.begin();
     Lit* j = cl.begin();
     const Lit* end = cl.begin();
-    *toDecrease = cl.size();
+    *toDecrease -= cl.size();
     for(; i != end; i++) {
         if (control->value(*i) == l_Undef) {
             *j++ = *i;
