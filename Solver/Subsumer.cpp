@@ -1043,7 +1043,7 @@ bool Subsumer::simplifyBySubsumption()
 
         //Clean clauses as much as possible
         control->clauseCleaner->removeSatisfiedBins();
-    } while (cl_touched.nElems() > 100 && numMaxSubsume1 > 0);
+    } while (cl_touched.nElems() > 10 && numMaxSubsume0 > 0);
     printLimits();
 
     assert(control->ok);
