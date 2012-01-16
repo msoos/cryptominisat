@@ -465,19 +465,24 @@ bool Subsumer::subsume0AndSubsume1()
                 Occur& occs2 = occur[cl[j].toInt()];
                 *toDecrease -= occs2.size();
                 for (Occur::const_iterator it = occs2.begin(), end = occs2.end(); it != end; it++) {
+                    //Too many
+                    if (s1.size() >= clTouchedTodo)
+                        break;
+
+                    //Already added
                     if (!alreadyAdded[it->index]) {
                         s1.push_back(*it);
                         alreadyAdded[it->index] = 1;
                     }
                 }
 
-                //Too many
-                if (s1.size() >= clTouchedTodo)
-                    break;
-
                 Occur& occs1 = occur[(~cl[j]).toInt()];
                 *toDecrease -= occs1.size();
                 for (Occur::const_iterator it = occs1.begin(), end = occs1.end(); it != end; it++) {
+                    //Too many
+                    if (s1.size() >= clTouchedTodo)
+                        break;
+
                     if (!alreadyAdded[it->index]) {
                         s1.push_back(*it);
                         alreadyAdded[it->index] = 1;
