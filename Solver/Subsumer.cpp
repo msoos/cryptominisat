@@ -761,17 +761,14 @@ void Subsumer::clearAll()
 {
     touchedVars.clear();
     clauses.clear();
-    cl_touched.clear();
     addedClauseLits = 0;
     for (Var var = 0; var < control->nVars(); var++) {
         occur[2*var].clear();
         occur[2*var+1].clear();
         ol_seenNeg[var] = 1;
     }
-    clauses.clear();
     clauseData.clear();
     cl_touched.clear();
-    addedClauseLits = 0;
     numLearntBinVarRemAdded = 0;
 }
 
