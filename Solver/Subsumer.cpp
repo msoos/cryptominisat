@@ -493,7 +493,7 @@ bool Subsumer::subsume0AndSubsume1()
 
     vector<ClauseIndex> remClTouched; //These clauses will be untouched
     toDecrease = &numMaxSubsume1;
-    do {
+    while((cl_touched.nElems() > 10) && numMaxSubsume1 > 0) {
         alreadyAdded.resize(clauses.size(), 0);
         s1.clear();
 
@@ -574,7 +574,11 @@ bool Subsumer::subsume0AndSubsume1()
                 return false;
         }
 
-    } while ((cl_touched.nElems() > 100) && numMaxSubsume1 > 0);
+        /*std::cout
+        << " cl_touched: " << cl_touched.nElems()
+        << " numMaxSubume1: " << numMaxSubsume1 << std::endl;*/
+
+    };
 
     return control->ok;
 }
