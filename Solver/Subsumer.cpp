@@ -419,34 +419,45 @@ bool Subsumer::subsume0AndSubsume1()
     ol_seenPos.resize(control->nVars(), 0);
 
     toDecrease = &numMaxSubsume0;
+    vector<ClauseIndex> remClTouched; //These clauses will be untouched
     vector<ClauseIndex> s0;
     vector<char> alreadyAdded;
     uint64_t lastDone = 1;
+    CSet cl_touched_backup = cl_touched;
     while (numMaxSubsume0 >0 && lastDone != 0)  {
+        remClTouched.clear();
         alreadyAdded.resize(clauses.size(), 0);
         s0.clear();
 
-        for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
+        for (CSet::iterator it = cl_touched_backup.begin(), end = cl_touched_backup.end(); it != end; ++it) {
             //Clause already removed
             if (it->index == std::numeric_limits< uint32_t >::max())
                 continue;
+            if (clauses[it->index] == NULL) {
+                remClTouched.push_back(*it);
+                continue;
+            }
 
             //Too many
             if (s0.size() >= clTouchedTodo)
                 break;
 
-            //Only changed clauses can be subsume0-d
-            if (!clauses[it->index]->getChanged())
+            Clause& cl = *clauses[it->index];
+            //Nothing to do
+            if (!cl.getStrenghtened() && !cl.getChanged())
                 continue;
 
-            //Add this clause to s0
+            //Strengthened or changed, so it can subsume0 others
             if (!alreadyAdded[it->index]) {
                 s0.push_back(*it);
                 alreadyAdded[it->index] = 1;
             }
 
+            //If not changed, then it cannot be subsumed
+            if (!cl.getChanged())
+                continue;
+
             //Look at POS occurs
-            Clause& cl = *clauses[it->index];
             for (uint32_t j = 0; j < cl.size(); j++) {
                 if (ol_seenPos[cl[j].var()])
                     continue;
@@ -470,7 +481,10 @@ bool Subsumer::subsume0AndSubsume1()
                 }
                 ol_seenPos[cl[j].var()] = 1;
             }
-            cl.unsetChanged();
+        }
+        //Remove clauses to be used from touched
+        for (uint32_t i = 0; i < remClTouched.size(); i++) {
+            cl_touched_backup.exclude(remClTouched[i]);
         }
 
         //Subsume 0
@@ -491,27 +505,45 @@ bool Subsumer::subsume0AndSubsume1()
 
     //std::cout << "subsume0 done: " << numDone << std::endl;
 
-    vector<ClauseIndex> remClTouched; //These clauses will be untouched
+    cl_touched = cl_touched_backup;
     toDecrease = &numMaxSubsume1;
+    alreadyAdded.clear();
     while((cl_touched.nElems() > 10) && numMaxSubsume1 > 0) {
         alreadyAdded.resize(clauses.size(), 0);
         s1.clear();
+        remClTouched.clear();
 
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
             //Clause already removed
             if (it->index == std::numeric_limits< uint32_t >::max())
                 continue;
+            if (clauses[it->index] == NULL) {
+                remClTouched.push_back(*it);
+                continue;
+            }
 
             //Too many
             if (s1.size() >= clTouchedTodo)
                 break;
+            remClTouched.push_back(*it);
 
+            Clause& cl = *clauses[it->index];
+            //Nothing to do
+            if (!cl.getStrenghtened() && !cl.getChanged())
+                continue;
+
+            //Strengthened or changed, so it can subsume0&1 others
             if (!alreadyAdded[it->index]) {
                 s1.push_back(*it);
                 alreadyAdded[it->index] = 1;
             }
+            cl.unsetStrenghtened();
 
-            Clause& cl = *clauses[it->index];
+            //If not changed, then it cannot be subsume1-ed
+            if (!cl.getChanged())
+                continue;
+            cl.unsetChanged();
+
             for (uint32_t j = 0; j < cl.size(); j++) {
                 //All clauses related to this have already been added
                 if (ol_seenNeg[cl[j].var()])
@@ -558,17 +590,12 @@ bool Subsumer::subsume0AndSubsume1()
                 }
                 ol_seenNeg[cl[j].var()] = 1;
             }
-
-            remClTouched.push_back(*it);
-            cl.unsetStrenghtened();
-            cl.unsetChanged();
         }
 
         //Remove clauses to be used from touched
         for (uint32_t i = 0; i < remClTouched.size(); i++) {
             cl_touched.exclude(remClTouched[i]);
         }
-        remClTouched.clear();
 
         //Subsume 1
         for (vector<ClauseIndex>::const_iterator
