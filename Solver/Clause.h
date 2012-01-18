@@ -127,11 +127,6 @@ public:
         setStrenghtened();
     }
 
-    void pop()
-    {
-        shrink(1);
-    }
-
     bool learnt() const
     {
         return isLearnt;

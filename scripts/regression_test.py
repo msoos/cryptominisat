@@ -344,7 +344,7 @@ class Tester:
         (unsat, value) = self.read_found_output(consoleOutput)
         otherSolverUNSAT = True
         if self.arminFuzzer and unsat:
-            toexec = "./precosat %s" % fname
+            toexec = "../../lingeling-587f/lingeling %s" % fname
             None
             print "Solving with other solver.."
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
@@ -482,8 +482,8 @@ class Tester:
                 #fuzzTest
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
-                out = commands.getstatusoutput("./fuzzSat > %s" %(file_name))
-                print "fuzzSat :", out
+                out = commands.getstatusoutput("../../fuzzsat-0.1/fuzzsat > %s" %(file_name))
+                print "fuzzsat-0.1 :", out
 
                 for i3 in range(num):
                     self.check(fname=file_name, fnameCheck=file_name,
@@ -494,8 +494,8 @@ class Tester:
                 #cnfFuzz
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
-                out = commands.getstatusoutput("./cnfFuzz > %s" % (file_name))
-                print "cnfFuzzSat: ", out
+                out = commands.getstatusoutput("../../cnf-utils/build/cnf-fuzz-biere > %s" % (file_name))
+                print "cnf-fuzz-biere: ", out
 
                 for i3 in range(num):
                     self.check(fname=file_name, fnameCheck=file_name,
@@ -507,8 +507,8 @@ class Tester:
                 #vegardFuzz
                 fileopened, file_name = unique_fuzz_file("fuzzTest");
                 fileopened.close()
-                out = commands.getstatusoutput("./vegardFuzz > %s" % (file_name))
-                print "vegardFuzz: ", out
+                out = commands.getstatusoutput("../../cnf-utils/build/cnf-fuzz-nossum > %s" % (file_name))
+                print "cnf-fuzz-nossum: ", out
 
                 for i3 in range(num):
                     self.check(fname=file_name, fnameCheck=file_name,
