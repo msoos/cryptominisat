@@ -75,7 +75,6 @@ SET(DGtalLibDependencies ${DGtalLibDependencies} ${GMP_LIBRARIES})
 # -----------------------------------------------------------------------------
 add_subdirectory(m4ri)
 add_subdirectory(Solver)
-add_subdirectory(scripts)
 add_subdirectory(dsharp)
 
 # -----------------------------------------------------------------------------
