@@ -304,6 +304,13 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
 lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
 {
     assert(control->ok);
+    #ifdef VERBOSE_DEBUG
+    std::cout << "Clause to clean: " << cl << std::endl;
+    for(size_t i = 0; i < cl.size(); i++) {
+        std::cout << cl[i] << " : "  << control->value(cl[i]) << " , ";
+    }
+    std::cout << std::endl;
+    #endif
 
     bool satisfied = false;
     Lit* i = cl.begin();
