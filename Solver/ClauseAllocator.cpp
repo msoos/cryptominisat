@@ -116,7 +116,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     assert(size > 2 && "Clause size cannot be 2 or less, those are stored natively");
 
     //Try to quickly find a place at the end of a dataStart
-    uint32_t needed = sizeof(Clause)+sizeof(Lit)*size;
+    uint32_t needed = (sizeof(Clause)+sizeof(Lit)*size)/sizeof(BASE_DATA_TYPE);
     bool found = false;
     uint32_t which = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < sizes.size(); i++) {
@@ -135,9 +135,9 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
             throw std::bad_alloc();
 
         uint32_t nextSize; //number of BYTES to allocate
-        if (maxSizes.size() != 0) {
-            nextSize = std::min((uint32_t)(maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT), (uint32_t)MAXSIZE);
-            nextSize = std::max(nextSize, (uint32_t)MIN_LIST_SIZE*2);
+        if (!maxSizes.empty()) {
+            nextSize = std::min<uint32_t>(maxSizes[maxSizes.size()-1]*ALLOC_GROW_MULT, MAXSIZE);
+            nextSize = std::max<uint32_t>(nextSize, (uint32_t)MIN_LIST_SIZE*2);
         } else {
             nextSize = (uint32_t)MIN_LIST_SIZE;
         }
@@ -151,15 +151,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         #endif //DEBUG_CLAUSEALLOCATOR
 
         char *dataStart;
-        #if 1
         dataStart = (char *)malloc(nextSize);
-        #else
-        int ret = posix_memalign((void**)&dataStart, getpagesize(), nextSize);
-        if (ret != 0) exit(-1);
-        assert(dataStart != NULL);
-        int err = madvise(dataStart, nextSize, MADV_RANDOM);
-        assert(err == 0);
-        #endif // _MSC_VER
 
         dataStarts.push_back(dataStart);
         sizes.push_back(0);
@@ -252,7 +244,7 @@ void ClauseAllocator::clauseFree(Clause* c)
     c->setFreed();
     uint32_t outerOffset = getOuterOffset(c);
     //uint32_t interOffset = getInterOffset(c, outerOffset);
-    currentlyUsedSizes[outerOffset] -= sizeof(Clause) + c->size()*sizeof(Lit);
+    currentlyUsedSizes[outerOffset] -= (sizeof(Clause) + c->size()*sizeof(Lit))/sizeof(BASE_DATA_TYPE);
     //above should be
     //origClauseSizes[outerOffset][interOffset]
     //but it cannot be :(
@@ -326,11 +318,10 @@ void ClauseAllocator::consolidate(
 
         uint32_t thisMaxSize = std::min(newMaxSizeNeed, (int64_t)MAXSIZE);
         if (i == 0) {
-            thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE);
+            thisMaxSize = std::max<uint32_t>(thisMaxSize, MIN_LIST_SIZE);
         } else {
             assert(i > 0);
-            thisMaxSize = std::max(thisMaxSize, newMaxSizes[i-1]/2);
-            thisMaxSize = std::max(thisMaxSize, (uint32_t)MIN_LIST_SIZE*2);
+            thisMaxSize = MAXSIZE;
         }
         newMaxSizeNeed -= thisMaxSize;
         assert(thisMaxSize <= MAXSIZE);
@@ -363,15 +354,7 @@ void ClauseAllocator::consolidate(
         newSizes.push_back(0);
         newOrigClauseSizes.push_back(vector<uint32_t>());
         char* pointer;
-        #if 1
         pointer = (char*)malloc(newMaxSizes[i]);
-        #else
-        int ret = posix_memalign((void**)&pointer, getpagesize(), newMaxSizes[i]);
-        if (ret != 0) exit(-1);
-        assert(pointer != NULL);
-        int err = madvise(pointer, newMaxSizes[i], MADV_RANDOM);
-        assert(err == 0);
-        #endif
 
         newDataStartsPointers.push_back(pointer);
         newDataStarts.push_back(pointer);
