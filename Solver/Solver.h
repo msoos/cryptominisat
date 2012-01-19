@@ -48,21 +48,22 @@ struct VarData
 {
     VarData() :
         level(std::numeric_limits< uint32_t >::max())
+        , reason(PropBy())
         , elimed(ELIMED_NONE)
         , polarity(false)
-        , reason(PropBy())
     {}
 
     ///contains the decision level at which the assignment was made.
     uint32_t level;
+
+    //Reason this got propagated. NULL means decision/toplevel
+    PropBy reason;
 
     ///Whether var has been eliminated (var-elim, different component, etc.)
     char elimed;
 
     ///The preferred polarity of each variable.
     bool polarity;
-
-    PropBy reason;
 };
 
 
