@@ -135,6 +135,10 @@ protected:
 
     uint64_t propagations; ///<Number of propagations made
     uint64_t bogoProps;    ///<An approximation of time
+    uint64_t propsBin;
+    uint64_t propsTri;
+    uint64_t propsLongIrred;
+    uint64_t propsLongRed;
 
     // Solver state:
     //
@@ -494,6 +498,7 @@ inline void Solver::addHyperBin(const Lit p, const Clause& cl)
                 currAncestors.push_back(~*it);
         }
     }
+
     addHyperBin(p);
 }
 

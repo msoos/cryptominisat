@@ -44,11 +44,13 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         , lastLong(0)
         , lastBin(0)
         , lastUnit(0)
+        , units_from_other_threads(0)
 
         // Stats
         , numConflicts(0)
         , numRestarts(0)
         , decisions(0)
+        , assumption_decisions(0)
         , decisions_rnd(0)
 
         //Conflict generation
@@ -57,6 +59,11 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         , furtherClMinim(0)
         , numShrinkedClause(0)
         , numShrinkedClauseLits(0)
+
+        , learntUnits(0)
+        , learntBins(0)
+        , learntTris(0)
+        , learntLongs(0)
 
         //variables
         , control(_control)
@@ -106,10 +113,30 @@ void CommandControl::printStats()
     printStatsLine("c restarts", numRestarts);
 
     //Learnts stats
-    printStatsLine("c unitaries"
-                    , getNumUnitaries()
-                    , (double)getNumUnitaries()/(double)nVars()*100.0
-                    , "% of vars");
+    printStatsLine("c units from other threads"
+                    , units_from_other_threads);
+
+    //Search stats
+    printStatsLine("c conflicts", numConflicts, (double)numConflicts/cpu_time, "/ sec");
+    printStatsLine("c units learnt"
+                    , learntUnits
+                    , (double)learntUnits/(double)numConflicts*100.0
+                    , "% of conflicts");
+
+    printStatsLine("c bins learnt"
+                    , learntBins
+                    , (double)learntBins/(double)numConflicts*100.0
+                    , "% of conflicts");
+
+    printStatsLine("c tris learnt"
+                    , learntTris
+                    , (double)learntTris/(double)numConflicts*100.0
+                    , "% of conflicts");
+
+    printStatsLine("c long learnt"
+                    , learntLongs
+                    , (double)learntLongs/(double)numConflicts*100.0
+                    , "% of conflicts");
 
     //Clause-shrinking through watchlists
     printStatsLine("c OTF cl watch-shrink"
@@ -127,11 +154,22 @@ void CommandControl::printStats()
                     , (double)furtherClMinim/(double)numConflicts*100.0
                     , " % of conflicts");
 
-    //Search stats
-    printStatsLine("c conflicts", numConflicts, (double)numConflicts/cpu_time, "/ sec");
-    printStatsLine("c decisions", decisions, (double)decisions_rnd*100.0/(double)decisions, "% random");
+    //Props
     printStatsLine("c bogo-props", bogoProps, (double)bogoProps/cpu_time, "/ sec");
     printStatsLine("c props", propagations, (double)propagations/cpu_time, "/ sec");
+    printStatsLine("c decisions", decisions, (double)decisions_rnd*100.0/(double)decisions, "% random");
+    printStatsLine("c propsBin", propsBin, 100.0*(double)propsBin/(double)propagations, "%");
+    printStatsLine("c propsTri", propsTri, 100.0*(double)propsTri/(double)propagations, "%");
+    printStatsLine("c propsLongIrred", propsLongIrred, 100.0*(double)propsLongIrred/(double)propagations, "%");
+    printStatsLine("c propsLongRed", propsLongRed, 100.0*(double)propsLongRed/(double)propagations, "%");
+    uint64_t totalProps =
+    propsBin + propsTri + propsLongIrred + propsLongRed
+     + decisions + assumption_decisions + units_from_other_threads
+     + numConflicts;
+
+    //std::cout << "tot: " << totalProps << " missing: " << ((int64_t)propagations-(int64_t)totalProps) << std::endl;
+    assert(propagations == totalProps);
+
     printStatsLine("c conflict literals", tot_literals, (double)(max_literals - tot_literals)*100.0/ (double)max_literals, "% deleted");
 
     //General stats
@@ -696,6 +734,7 @@ lbool CommandControl::new_decision()
             analyzeFinal(~p, conflict);
             return l_False;
         } else {
+            assumption_decisions++;
             next = p;
             break;
         }
@@ -831,6 +870,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
         case 1:
             //Unitary learnt
             lastUnit++;
+            learntUnits++;
             enqueue(learnt_clause[0]);
             assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
 
@@ -838,6 +878,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
         case 2:
             //Binary learnt
             lastBin++;
+            learntBins++;
             attachBinClause(learnt_clause[0], learnt_clause[1], true);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             break;
@@ -845,6 +886,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
         case 3:
             //3-long almost-normal learnt
             lastLong++;
+            learntTris++;
             attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
             break;
@@ -852,6 +894,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
         default:
             //Normal learnt
             lastLong++;
+            learntLongs++;
             attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl), 0));
             break;
@@ -906,6 +949,7 @@ void CommandControl::initialiseSolver()
 
     //Set already set vars
     for(vector<Lit>::const_iterator it = control->trail.begin(), end = control->trail.end(); it != end; it++) {
+        units_from_other_threads++;
         enqueue(*it);
     }
     ok = propagate().isNULL();

@@ -72,6 +72,7 @@ class CommandControl : public Solver
         size_t    lastLong;
         size_t    lastBin;
         size_t    lastUnit;
+        uint64_t  units_from_other_threads;
         bool      handleNewBin(const BinaryClause& binCl);
         bool      handleNewLong(const Clause& cl);
         void      syncFromThreadControl();
@@ -83,6 +84,7 @@ class CommandControl : public Solver
         uint64_t         numConflicts;     ///<Number of conflicts
         uint64_t         numRestarts;      ///<Num restarts
         uint64_t         decisions;        ///<Number of decisions made
+        uint64_t         assumption_decisions;
         uint64_t         decisions_rnd;    ///<Numer of random decisions made
         uint64_t         max_literals;     ///<Number of learnt literals without minimisation
         uint64_t         tot_literals;     ///<Number of learnt literals with minimisation
@@ -91,6 +93,12 @@ class CommandControl : public Solver
         uint64_t         furtherClMinim;  ///<Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
         uint64_t         numShrinkedClause; ///<Number of times we tried to further shrink clauses with cache
         uint64_t         numShrinkedClauseLits; ///<Number or literals removed while shinking clauses with cache
+
+        //Learnt stats
+        uint64_t learntUnits;
+        uint64_t learntBins;
+        uint64_t learntTris;
+        uint64_t learntLongs;
 
         //History statistics
         bqueue<uint32_t> branchDepthHist;   ///< Avg branch depth in current restart

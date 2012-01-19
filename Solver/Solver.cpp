@@ -32,6 +32,10 @@ Solver::Solver(ClauseAllocator *_clAllocator, const AgilityData& agilityData) :
         // Stats
         propagations(0)
         , bogoProps(0)
+        , propsBin(0)
+        , propsTri(0)
+        , propsLongIrred(0)
+        , propsLongRed(0)
 
         , clAllocator(_clAllocator)
         , ok(true)
@@ -198,6 +202,7 @@ inline bool Solver::propBinaryClause(const vec<Watched>::const_iterator i, const
 {
     const lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
+        propsBin++;
         enqueue(i->getOtherLit(), PropBy(~p));
     } else if (val == l_False) {
         confl = PropBy(~p);
@@ -267,6 +272,11 @@ template<bool simple> inline bool Solver::propNormalClause(
         qhead = trail.size();
         return false;
     } else {
+        if (c.learnt())
+            propsLongRed++;
+        else
+            propsLongIrred++;
+
         if (simple)
             enqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
         else
@@ -290,9 +300,11 @@ template<bool simple> inline bool Solver::propTriClause(const vec<Watched>::cons
 
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
+        propsTri++;
         if (simple) enqueue(i->getOtherLit(), PropBy(~p, i->getOtherLit2()));
         else        addHyperBin(i->getOtherLit(), ~p, i->getOtherLit2());
     } else if (val == l_False && val2.isUndef()) {
+        propsTri++;
         if (simple) enqueue(i->getOtherLit2(), PropBy(~p, i->getOtherLit()));
         else        addHyperBin(i->getOtherLit2(), ~p, i->getOtherLit());
     } else if (val == l_False && val2 == l_False) {
@@ -523,6 +535,7 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
     const Lit lit = k->getOtherLit();
     const lbool val = value(lit);
     if (val.isUndef()) {
+        propsBin++;
         //Never propagated before
         enqueueComplex(lit, p, k->getLearnt());
         return PropBy();
