@@ -595,14 +595,19 @@ void ClauseAllocator::renumberClauses(vector<Clause*>& clauses, Solver* control,
     for (vector<Clause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
         assert((**it).size() > 2);
         if ((**it).size() > 3) {
+            //Update the newDatas
             newDatas[0].push_back(control->clauseData[(*it)->getNum()]);
             for(size_t i = 0; i < solvers.size(); i++) {
                 newDatas[i+1].push_back(solvers[i]->clauseData[(*it)->getNum()]);
             }
+
+            //Update the clause
             (*it)->setNum(maxClauseNum);
             maxClauseNum++;
         }
     }
+
+    //Swap clauseData-s to newDatas
     control->clauseData.swap(newDatas[0]);
     for(size_t i = 0; i < solvers.size(); i++) {
         solvers[i]->clauseData.swap(newDatas[i+1]);

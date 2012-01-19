@@ -1308,27 +1308,32 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             << " " << std::setw(6) << numRestarts
             << " " << std::setw(7) << numConflicts
             << " " << std::setw(7) << order_heap.size()
+
             << " glue"
             << " " << std::right << glueHist.getAvgPrint(1, 5)
             << "/" << std::left << glueHist.getAvgAllPrint(1, 5)
+
             << " agil"
             << " " << std::right << agilityHist.getAvgPrint(3, 5)
             << "/" << std::left<< agilityHist.getAvgAllPrint(3, 5)
+
             << " confllen"
             << " " << std::right << conflSizeHist.getAvgPrint(1, 5)
             << "/" << std::left << conflSizeHist.getAvgAllPrint(1, 5)
-            << " branch"
+
+            << " branchd"
             << " " << std::right << branchDepthHist.getAvgPrint(1, 5)
             << "/" << std::left  << branchDepthHist.getAvgAllPrint(1, 5)
-            << " branchd"
+            << " branchdd"
+
             << " " << std::right << branchDepthDeltaHist.getAvgPrint(1, 4)
             << "/" << std::left << branchDepthDeltaHist.getAvgAllPrint(1, 4)
 
-            << " trail"
+            << " traild"
             << " " << std::right << trailDepthHist.getAvgPrint(0, 7)
             << "/" << std::left << trailDepthHist.getAvgAllPrint(0, 7)
 
-            << " traild"
+            << " traildd"
             << " " << std::right << trailDepthDeltaHist.getAvgPrint(0, 5)
             << "/" << std::left << trailDepthDeltaHist.getAvgAllPrint(0, 5)
             << std::endl;
