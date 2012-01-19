@@ -112,7 +112,6 @@ bool VarReplacer::performReplace()
         #ifdef VERBOSE_DEBUG
         std::cout << "Setting var " << var+1 << " to a non-decision var" << std::endl;
         #endif
-        bool wasDecisionVar = control->decision_var[var];
         control->decision_var[var] =  false;
         control->decision_var[it->var()] = true;
 
