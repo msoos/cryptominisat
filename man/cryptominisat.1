@@ -1,25 +1,42 @@
 .TH "CRYPTOMINISAT" "1" "@VERSION@" "Mate Soos" "User Commands"
 .SH "NAME"
-cryptominisat \- SAT solver
+cryptominisat \- conflict-driven SAT solver
 .SH "SYNOPSIS"
 .B cryptominisat
 [\fIOPTIONS\fP] <\fIinput\-file\fP> <\fIoutput\-file\fP>
 .SH "DESCRIPTION"
 .PP
-CryptoMiniSat is a SAT solver that aims to become a premiere SAT solver with
-all the features and speed of successful SAT solvers, such as MiniSat and
-PrecoSat.  The long-term goals of CryptoMiniSat are to be an efficient
-sequential, parallel and distributed solver.  There are solvers that are good
-at one or the other, e.g. ManySat (parallel) or PSolver (distributed), but we
-wish to excel at all.
+CryptoMiniSat is a SAT solver, solving problems given in CNF, or conjunctive
+normal form. CryptoMiniSat retains much of the API of MiniSat, but
+offers more versatility and better speed on many problems.
+
+The program is a classical conflict-driven solver, with variable activities,
+clause learning and clause deletion. It however incorporates a number of
+advanced CNF simplification functionalities which should help the speed of
+solving. Further, it incorporates some advanced memory-management features
+that should help in getting the most out of modern CPU caches.
+
+The input format is that of DIMACS CNF, i.e. a header of the form
+
+p cnf VARS CLAUSES
+
+where VARS is the number of variables, and CLAUSES is the number of clauses in
+the problem. It then lists the set of clauses such as:
+
+1 -2 0
+
+which is equivalent to the 2-long clause "v1 OR NOT v2 = TRUE"
+
 .SH "OPTIONS"
 .TP
 \fB\-\-polarity\-mode\fP = \fI{true,false,rnd,auto}\fP [default: auto]
 Selects the polarity mode.  Auto is the Jeroslow&Wang method.
 .TP
-\fB\-\-rnd\-freq\fP = <\fInum\fP> [0-1]
+\fB\-\-rnd\-freq\fP = <\fInum\fP> [0-1] How often should decision variables
+be picked randomly.
 .TP
-\fB\-\-verbosity\fP = <\fInum\fP> [0-2]
+\fB\-\-verbosity\fP = <\fInum\fP> [0-2] Verbosity 1 is default. Verbosity 0
+only prints the results, and verbosity 2 prints many useful debug info.
 .TP
 \fB\-\-randomize\fP = <\fIseed\fP> [0 - 2^32-1]
 Sets the random seed, used for picking decision variables (default = 0).
@@ -45,17 +62,24 @@ Don't find and collect 2-long xor-clauses from regular clauses.
 \fB\-\-noregbxorfind\fP
 Don't regularly find and collect 2-long xor-clauses from regular clauses.
 .TP
-\fB\-\-noextendedscc\fP
-Don't do strongly connected component finding using non-existent bins.
+\fB\-\-doextendedscc\fP
+Do strongly connected component finding using non-existent binary clauses.
+Makes binary XOR findig slower, but somewhat more accurate.
 .TP
 \fB\-\-noconglomerate\fP
-Don't conglomerate 2 xor clauses when one var is dependent.
+Don't conglomerate 2 xor clauses when one var is dependent. This allows for
+elimination of variable y if it is only in the two XOR clauses "y XOR a XOR b" and
+"y XOR c XOR d"
 .TP
 \fB\-\-nosimplify\fP
-Don't do regular simplification rounds.
+Don't do regular simplification rounds. These simplification rounds greatly
+simplify the CNF, but cost time. If your problem is very small, it may be
+only a waste of time to execute these simplification rounds. Typically, however,
+these simplification methods save significant amount of time (>60%)
 .TP
 \fB\-\-greedyunbound\fP
-Greedily unbound variables that are not needed for SAT.
+Greedily unbound variables that are not needed for the final satisfying
+assignement.
 .TP
 \fB\-\-debuglib\fP
 Solve at specific \fBc Solver::solve()\fP points in the CNF file.  Used to
@@ -196,3 +220,9 @@ The problem is satisfiable.
 The problem's satisfiability was not determined.
 .IP 20
 The problem is unsatisfiable.
+.SH AUTHOR
+Mate Soos (soos@srlabs.de)
+.SH "SEE ALSO"
+The DIMACS input format can be looked up here:
+
+http://www.satcompetition.org/2009/format-benchmarks2009.html
