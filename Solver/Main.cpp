@@ -38,13 +38,9 @@ Here is a picture of of the above process in more detail:
 #include <iostream>
 #include <iomanip>
 #include <omp.h>
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
 #include <map>
 #include <set>
+#include "constants.h"
 
 #include <signal.h>
 
