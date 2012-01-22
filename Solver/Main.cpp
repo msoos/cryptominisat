@@ -75,6 +75,7 @@ std::set<uint32_t> finished;
 
 void Main::readInAFile(const std::string& filename, Solver& solver)
 {
+    #pragma omp single
     if (solver.conf.verbosity >= 1) {
         std::cout << "c Reading file '" << filename << "'" << std::endl;
     }
@@ -84,6 +85,7 @@ void Main::readInAFile(const std::string& filename, Solver& solver)
         gzFile in = gzopen(filename.c_str(), "rb");
     #endif // DISABLE_ZLIB
 
+    #pragma omp single
     if (in == NULL) {
         std::cout << "ERROR! Could not open file '" << filename << "' for reading" << std::endl;
         exit(1);
@@ -684,12 +686,16 @@ void Main::setDoublePrecision(const uint32_t verbosity)
     _FPU_GETCW(oldcw);
     newcw = (oldcw & ~_FPU_EXTENDED) | _FPU_DOUBLE;
     _FPU_SETCW(newcw);
-    if (verbosity >= 1) printf("c WARNING: for repeatability, setting FPU to use double precision\n");
+    #pragma omp single
+    if (verbosity >= 1) {
+        printf("c WARNING: for repeatability, setting FPU to use double precision\n");
+    }
 #endif
 }
 
 void Main::printVersionInfo(const uint32_t verbosity)
 {
+#pragma omp single
     if (verbosity >= 1) {
         printf("c This is CryptoMiniSat %s\n", VERSION);
         #ifdef __GNUC__
