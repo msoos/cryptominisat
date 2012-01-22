@@ -185,7 +185,7 @@ void Main::printUsage(char** argv)
     printf("                     regular clauses\n");
     printf("  --noregbxorfind    Don't regularly find and collect 2-long xor-clauses\n");
     printf("                     from regular clauses\n");
-    printf("  --noextendedscc    Don't do strongly conn. comp. finding using non-exist. bins\n");
+    printf("  --doextendedscc    Do strongly conn. comp. finding using non-exist. bins\n");
     printf("  --noconglomerate   Don't conglomerate 2 xor clauses when one var is dependent\n");
     printf("  --nosimplify       Don't do regular simplification rounds\n");
     printf("  --greedyunbound    Greedily unbound variables that are not needed for SAT\n");
@@ -448,8 +448,8 @@ void Main::parseCommandLine()
             conf.doFindEqLits = false;
         } else if ((value = hasPrefix(argv[i], "--noregbxorfind"))) {
             conf.doRegFindEqLits = false;
-        } else if ((value = hasPrefix(argv[i], "--noextendedscc"))) {
-            conf.doExtendedSCC = false;
+        } else if ((value = hasPrefix(argv[i], "--doextendedscc"))) {
+            conf.doExtendedSCC = true;
         } else if ((value = hasPrefix(argv[i], "--noconglomerate"))) {
             conf.doConglXors = false;
         } else if ((value = hasPrefix(argv[i], "--nosimplify"))) {
