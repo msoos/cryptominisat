@@ -1,4 +1,4 @@
-ver 2.9.2 9/01/2011
+ver 2.9.2 22/01/2011
 Bugfixes:
 * Bug in --maxsolutions fixed thanks to Martin Maurer
 * CalcDefPolars was taking >10% time for certain problems. Fixed thanks to
