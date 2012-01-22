@@ -31,6 +31,8 @@
 #include "ClauseCleaner.h"
 #include "SolutionExtender.h"
 #include <omp.h>
+using std::cout;
+using std::endl;
 
 ThreadControl::ThreadControl(const SolverConf& _conf) :
     Solver(NULL, AgilityData(_conf.agilityG, _conf.agilityLimit))
@@ -75,7 +77,7 @@ bool ThreadControl::addXorClauseInt(const vector< Lit >& lits, bool rhs)
     assert(decisionLevel() == 0);
 
     if (lits.size() > (0x01UL << 18)) {
-        std::cout << "Too long clause!" << std::endl;
+        cout << "Too long clause!" << endl;
         exit(-1);
     }
 
@@ -148,7 +150,7 @@ Clause* ThreadControl::addClauseInt(const T& lits
     assert(decisionLevel() == 0);
     assert(qhead == trail.size());
     #ifdef VERBOSE_DEBUG
-    std::cout << "addClauseInt clause " << lits << std::endl;
+    cout << "addClauseInt clause " << lits << endl;
     #endif //VERBOSE_DEBUG
 
     vector<Lit> ps(lits.size());
@@ -220,7 +222,7 @@ bool ThreadControl::addClauseHelper(vector<Lit>& ps)
     assert(decisionLevel() == 0);
     assert(qhead == trail.size());
     if (ps.size() > (0x01UL << 18)) {
-        std::cout << "Too long clause!" << std::endl;
+        cout << "Too long clause!" << endl;
         exit(-1);
     }
     for (vector<Lit>::const_iterator it = ps.begin(), end = ps.end(); it != end; it++) {
@@ -259,7 +261,7 @@ the heavy-lifting
 bool ThreadControl::addClause(const vector<Lit>& lits)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "Adding clause " << lits << std::endl;
+    cout << "Adding clause " << lits << endl;
     #endif //VERBOSE_DEBUG
     vector<Lit> ps = lits;
 
@@ -332,9 +334,9 @@ void ThreadControl::reArrangeClauses()
     }
 
     if (conf.verbosity >= 3) {
-        std::cout << "c Rearrange lits in clauses "
+        cout << "c Rearrange lits in clauses "
         << std::setw(4) << std::setprecision(2) << (cpuTime() - myTime)  << " s"
-        << std::endl;
+        << endl;
     }
 }
 
@@ -383,10 +385,10 @@ void ThreadControl::reduceDB()
     std::sort(learnts.begin(), learnts.end(), reduceDBStruct());
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "Cleaning learnt clauses. Learnt clauses after sort: " << std::endl;
+    cout << "Cleaning learnt clauses. Learnt clauses after sort: " << endl;
     for (uint32_t i = 0; i != learnts.size(); i++) {
-        std::cout << "activity:" << learnts[i]->getGlue()
-        << " \tsize:" << learnts[i]->size() << std::endl;
+        cout << "activity:" << learnts[i]->getGlue()
+        << " \tsize:" << learnts[i]->size() << endl;
     }
     #endif
 
@@ -438,7 +440,7 @@ void ThreadControl::reduceDB()
     learnts.resize(learnts.size() - (i - j));
 
     if (conf.verbosity >= 1) {
-        std::cout << "c rem " << std::setw(6) << totalNumRemoved
+        cout << "c rem " << std::setw(6) << totalNumRemoved
         << "  avgGlue "
         << std::fixed << std::setw(5) << std::setprecision(2)  << ((double)totalGlueOfRemoved/(double)totalNumRemoved)
         << "  avgSize "
@@ -450,7 +452,7 @@ void ThreadControl::reduceDB()
         << std::fixed << std::setw(6) << std::setprecision(2) << ((double)totalSizeOfNonRemoved/(double)totalNumNonRemoved)
         //<< "  3-long: " << std::setw(6) << numThreeLongLearnt
         << "  sumConflicts:" << sumConflicts
-        << std::endl;
+        << endl;
     }
 }
 
@@ -537,7 +539,7 @@ void ThreadControl::moveClausesHere()
             learnts.push_back(*it);
         }
     }
-    std::cout << "c CommandContr trail size: " << trail.size() << std::endl;
+    cout << "c CommandContr trail size: " << trail.size() << endl;
     longLearntsToAdd.clear();
 }
 
@@ -661,9 +663,9 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
     reArrangeClauses();
 
     if (conf.verbosity >= 3)
-        std::cout << "c Simplifying problem for "
+        cout << "c Simplifying problem for "
         << std::setw(8) << numConfls << " confls"
-        << std::endl;
+        << endl;
 
     lbool status = l_Undef;
 
@@ -725,7 +727,7 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
 
 end:
     if (conf.verbosity >= 3)
-        std::cout << "c Simplifying finished" << std::endl;
+        cout << "c Simplifying finished" << endl;
 
     testAllClauseAttach();
     checkNoWrongAttach();
@@ -768,7 +770,7 @@ void ThreadControl::calcReachability()
     }
 
     if (conf.verbosity >= 1) {
-        std::cout << "c calculated reachability. Time: " << (cpuTime() - myTime) << std::endl;
+        cout << "c calculated reachability. Time: " << (cpuTime() - myTime) << endl;
     }
 }
 
@@ -842,13 +844,13 @@ void ThreadControl::printStats()
 template<class T, class T2>
 void ThreadControl::printStatsLine(std::string left, T value, T2 value2, std::string extra)
 {
-    std::cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
+    cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << endl;
 }
 
 template<class T>
 void ThreadControl::printStatsLine(std::string left, T value, std::string extra)
 {
-    std::cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
+    cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << endl;
 }
 
 void ThreadControl::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const
@@ -864,7 +866,7 @@ void ThreadControl::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLear
                 if (!it2->getLearnt() && alsoNonLearnt) toDump = true;
 
                 if (toDump)
-                    outfile << it2->getOtherLit() << " " << lit << " 0" << std::endl;
+                    outfile << it2->getOtherLit() << " " << lit << " 0" << endl;
             }
         }
     }
@@ -920,35 +922,35 @@ void ThreadControl::calcClauseDistrib()
         }
     }
 
-    std::cout << "c size3: " << size3
+    cout << "c size3: " << size3
     << " size4: " << size4
     << " size5: " << size5
-    << " larger: " << sizeLarge << std::endl;
+    << " larger: " << sizeLarge << endl;
 }
 
 void ThreadControl::dumpSortedLearnts(std::ostream& os, const uint32_t maxSize)
 {
     os
-    << "c " << std::endl
-    << "c ---------" << std::endl
-    << "c unitaries" << std::endl
-    << "c ---------" << std::endl;
+    << "c " << endl
+    << "c ---------" << endl
+    << "c unitaries" << endl
+    << "c ---------" << endl;
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
-        os << trail[i] << " 0" << std::endl;    }
+        os << trail[i] << " 0" << endl;    }
 
 
     os
-    << "c " << std::endl
-    << "c ---------------------------------" << std::endl
-    << "c learnt binary clauses (extracted from watchlists)" << std::endl
-    << "c ---------------------------------" << std::endl;
+    << "c " << endl
+    << "c ---------------------------------" << endl
+    << "c learnt binary clauses (extracted from watchlists)" << endl
+    << "c ---------------------------------" << endl;
     if (maxSize >= 2) dumpBinClauses(true, false, os);
 
     os
-    << "c " << std::endl
-    << "c ---------------------------------------" << std::endl
-    << "c clauses representing 2-long XOR clauses" << std::endl
-    << "c ---------------------------------------" << std::endl;
+    << "c " << endl
+    << "c ---------------------------------------" << endl
+    << "c clauses representing 2-long XOR clauses" << endl
+    << "c ---------------------------------------" << endl;
     if (maxSize >= 2) {
         const vector<Lit>& table = varReplacer->getReplaceTable();
         for (Var var = 0; var != table.size(); var++) {
@@ -956,22 +958,22 @@ void ThreadControl::dumpSortedLearnts(std::ostream& os, const uint32_t maxSize)
             if (lit.var() == var)
                 continue;
 
-            os << (~lit) << " " << Lit(var, false) << " 0" << std::endl;
-            os << lit << " " << Lit(var, true) << " 0" << std::endl;
+            os << (~lit) << " " << Lit(var, false) << " 0" << endl;
+            os << lit << " " << Lit(var, true) << " 0" << endl;
         }
     }
 
     os
-    << "c " << std::endl
-    << "c --------------------" << std::endl
-    << "c clauses from learnts" << std::endl
-    << "c --------------------" << std::endl;
+    << "c " << endl
+    << "c --------------------" << endl
+    << "c clauses from learnts" << endl
+    << "c --------------------" << endl;
     std::sort(learnts.begin(), learnts.begin()+learnts.size(), reduceDBStruct());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
         Clause& cl = *learnts[i];
         if (cl.size() <= maxSize) {
-            os << cl << " 0" << std::endl;
-            os << "c clause learnt " << (cl.learnt() ? "yes" : "no") << " glue "  << cl.getGlue() << std::endl;
+            os << cl << " 0" << endl;
+            os << "c clause learnt " << (cl.learnt() ? "yes" : "no") << " glue "  << cl.getGlue() << endl;
         }
     }
 }
@@ -1002,24 +1004,24 @@ void ThreadControl::dumpOrigClauses(std::ostream& os) const
     const vector<BlockedClause>& blockedClauses = subsumer->getBlockedClauses();
     numClauses += blockedClauses.size();
 
-    os << "p cnf " << nVars() << " " << numClauses << std::endl;
+    os << "p cnf " << nVars() << " " << numClauses << endl;
 
     ////////////////////////////////////////////////////////////////////
 
     os
-    << "c " << std::endl
-    << "c ---------" << std::endl
-    << "c unitaries" << std::endl
-    << "c ---------" << std::endl;
+    << "c " << endl
+    << "c ---------" << endl
+    << "c unitaries" << endl
+    << "c ---------" << endl;
     for (uint32_t i = 0, end = (trail_lim.size() > 0) ? trail_lim[0] : trail.size() ; i < end; i++) {
-        os << trail[i] << " 0" << std::endl;
+        os << trail[i] << " 0" << endl;
     }
 
     os
-    << "c " << std::endl
-    << "c ---------------------------------------" << std::endl
-    << "c clauses representing 2-long XOR clauses" << std::endl
-    << "c ---------------------------------------" << std::endl;
+    << "c " << endl
+    << "c ---------------------------------------" << endl
+    << "c clauses representing 2-long XOR clauses" << endl
+    << "c ---------------------------------------" << endl;
     for (Var var = 0; var != table.size(); var++) {
         Lit lit = table[var];
         if (lit.var() == var)
@@ -1027,61 +1029,61 @@ void ThreadControl::dumpOrigClauses(std::ostream& os) const
 
         Lit litP1 = ~lit;
         Lit litP2 = Lit(var, false);
-        os << litP1 << " " << litP2 << std::endl;
-        os << ~litP1 << " " << ~litP2 << std::endl;
+        os << litP1 << " " << litP2 << endl;
+        os << ~litP1 << " " << ~litP2 << endl;
     }
 
     os
-    << "c " << std::endl
-    << "c ---------------" << std::endl
-    << "c binary clauses" << std::endl
-    << "c ---------------" << std::endl;
+    << "c " << endl
+    << "c ---------------" << endl
+    << "c binary clauses" << endl
+    << "c ---------------" << endl;
     dumpBinClauses(false, true, os);
 
     os
-    << "c " << std::endl
-    << "c ---------------" << std::endl
-    << "c normal clauses" << std::endl
-    << "c ---------------" << std::endl;
+    << "c " << endl
+    << "c ---------------" << endl
+    << "c normal clauses" << endl
+    << "c ---------------" << endl;
     for (vector<Clause*>::const_iterator i = clauses.begin(); i != clauses.end(); i++) {
         assert(!(*i)->learnt());
-        os << (**i) << " 0" << std::endl;
+        os << (**i) << " 0" << endl;
     }
 
     os
-    << "c " << std::endl
-    << "c -------------------------------" << std::endl
-    << "c previously eliminated variables" << std::endl
-    << "c -------------------------------" << std::endl;
+    << "c " << endl
+    << "c -------------------------------" << endl
+    << "c previously eliminated variables" << endl
+    << "c -------------------------------" << endl;
     for (vector<BlockedClause>::const_iterator it = blockedClauses.begin(); it != blockedClauses.end(); it++) {
-        os << "c next clause is eliminated/blocked on lit " << it->blockedOn << std::endl;
-        os << it->lits << " 0" << std::endl;
+        os << "c next clause is eliminated/blocked on lit " << it->blockedOn << endl;
+        os << it->lits << " 0" << endl;
     }
 }
 
 void ThreadControl::printAllClauses() const
 {
     for (uint32_t i = 0; i < clauses.size(); i++) {
-        std::cout
+        cout
                 << "Normal clause num " << clAllocator->getOffset(clauses[i])
-                << " cl: " << *clauses[i] << std::endl;
+                << " cl: " << *clauses[i] << endl;
     }
 
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
-        std::cout << "watches[" << lit << "]" << std::endl;
+        cout << "watches[" << lit << "]" << endl;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
-                std::cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << std::endl;
+                cout << "Binary clause part: " << lit << " , " << it2->getOtherLit() << endl;
             } else if (it2->isClause()) {
-                std::cout << "Normal clause num " << it2->getNormOffset() << std::endl;
+                cout << "Normal clause num " << it2->getNormOffset() << endl;
             } else if (it2->isTriClause()) {
-                std::cout << "Tri clause:"
+                cout << "Tri clause:"
                 << lit << " , "
                 << it2->getOtherLit() << " , "
-                << it2->getOtherLit2() << std::endl;
+                << it2->getOtherLit2() << endl;
             }
         }
     }
@@ -1099,8 +1101,8 @@ bool ThreadControl::verifyBinClauses() const
                 && modelValue(lit) != l_True
                 && modelValue(i->getOtherLit()) != l_True
             ) {
-                std::cout << "bin clause: " << lit << " , " << i->getOtherLit() << " not satisfied!" << std::endl;
-                std::cout << "value of unsat bin clause: " << value(lit) << " , " << value(i->getOtherLit()) << std::endl;
+                cout << "bin clause: " << lit << " , " << i->getOtherLit() << " not satisfied!" << endl;
+                cout << "value of unsat bin clause: " << value(lit) << " , " << value(i->getOtherLit()) << endl;
                 return false;
             }
         }
@@ -1112,7 +1114,7 @@ bool ThreadControl::verifyBinClauses() const
 bool ThreadControl::verifyClauses(const vector<Clause*>& cs) const
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "Checking clauses whether they have been properly satisfied." << std::endl;;
+    cout << "Checking clauses whether they have been properly satisfied." << endl;;
     #endif
 
     bool verificationOK = true;
@@ -1123,7 +1125,7 @@ bool ThreadControl::verifyClauses(const vector<Clause*>& cs) const
             if (modelValue(c[j]) == l_True)
                 goto next;
 
-            std::cout << "unsatisfied clause: " << *cs[i] << std::endl;
+            cout << "unsatisfied clause: " << *cs[i] << endl;
         verificationOK = false;
         next:
                 ;
@@ -1140,9 +1142,9 @@ bool ThreadControl::verifyModel() const
     verificationOK &= verifyBinClauses();
 
     if (conf.verbosity >= 1 && verificationOK) {
-        std::cout
+        cout
         << "c Verified " <<  clauses.size() << " clauses."
-        << std::endl;
+        << endl;
     }
 
     return verificationOK;
@@ -1157,7 +1159,7 @@ void ThreadControl::checkLiteralCount() const
         cnt += clauses[i]->size();
 
     if (clausesLits != cnt) {
-        std::cout << "c ERROR! literal count: " << clausesLits << " , real value = " <<  cnt << std::endl;
+        cout << "c ERROR! literal count: " << clausesLits << " , real value = " <<  cnt << endl;
         assert(clausesLits == cnt);
     }
 }
@@ -1272,19 +1274,19 @@ void ThreadControl::findAllAttach() const
             //Get clause
             Clause* cl = clAllocator->getPointer(w.getNormOffset());
             assert(!cl->getFreed());
-            std::cout << (*cl) << std::endl;
+            cout << (*cl) << endl;
 
             //Assert clauseData correctness
             const ClauseData& clData = clauseData[cl->getNum()];
             const bool watchNum = w.getWatchNum();
-            std::cout << "Watchnum: " << watchNum << " clData watchnum: " << (clData[watchNum]) << " value: " << ((*cl)[clData[watchNum]]) << std::endl;
+            cout << "Watchnum: " << watchNum << " clData watchnum: " << (clData[watchNum]) << " value: " << ((*cl)[clData[watchNum]]) << endl;
             if (((*cl)[clData[watchNum]]) != lit) {
-                std::cout << "ERROR! ((*cl)[clData[watchNum]]) != lit !!" << std::endl;
+                cout << "ERROR! ((*cl)[clData[watchNum]]) != lit !!" << endl;
             }
 
             //Clause in one of the lists
             if (!findClause(cl)) {
-                std::cout << "ERROR! did not find clause!" << std::endl;
+                cout << "ERROR! did not find clause!" << endl;
             }
         }
     }

@@ -14,11 +14,13 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <fstream>
 #include "ThreadControl.h"
 
-using std::vector;
-
 #ifdef VERBOSE_DEBUG
 #define DEBUG_COMMENT_PARSING
 #endif //VERBOSE_DEBUG
+
+using std::vector;
+using std::cout;
+using std::endl;
 
 //#define DEBUG_COMMENT_PARSING
 
@@ -82,7 +84,7 @@ int32_t DimacsParser::parseInt(StreamBuffer& in, uint32_t& lenParsed)
         ++in;
 
     if (*in < '0' || *in > '9') {
-        std::cout << "PARSE ERROR! Unexpected char: " << *in << std::endl;
+        cout << "PARSE ERROR! Unexpected char: " << *in << endl;
         exit(3);
     }
     while (*in >= '0' && *in <= '9') {
@@ -98,7 +100,7 @@ float DimacsParser::parseFloat(StreamBuffer& in)
     uint32_t len;
     uint32_t main = parseInt(in, len);
     if (*in != '.') {
-        std::cout << "PARSE ERROR! Float does not contain a dot! Instead it contains: " << *in << std::endl;
+        cout << "PARSE ERROR! Float does not contain a dot! Instead it contains: " << *in << endl;
         exit(3);
     }
     ++in;
@@ -148,7 +150,7 @@ void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
         var = abs(parsed_lit)-1;
         if (!debugNewVar) {
             if (var >= ((uint32_t)1)<<25) {
-                std::cout << "ERROR! Variable requested is far too large: " << var << std::endl;
+                cout << "ERROR! Variable requested is far too large: " << var << endl;
                 exit(-1);
             }
             while (var >= control->nVars())
@@ -187,11 +189,11 @@ void DimacsParser::printHeader(StreamBuffer& in)
         int vars    = parseInt(in, len);
         int clauses = parseInt(in, len);
         if (control->getVerbosity() >= 1) {
-            std::cout << "c -- header says num vars:   " << std::setw(12) << vars << std::endl;
-            std::cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << std::endl;
+            cout << "c -- header says num vars:   " << std::setw(12) << vars << endl;
+            cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
         }
     } else {
-        std::cout << "PARSE ERROR! Unexpected char: " << *in << std::endl;
+        cout << "PARSE ERROR! Unexpected char: " << *in << endl;
         exit(3);
     }
 }
@@ -212,18 +214,18 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 {
     uint32_t len;
     #ifdef DEBUG_COMMENT_PARSING
-    std::cout << "Parsing comments" << std::endl;
+    cout << "Parsing comments" << endl;
     #endif //DEBUG_COMMENT_PARSING
 
     if (str == "v" || str == "var") {
         int var = parseInt(in, len);
         skipWhitespace(in);
-        if (var <= 0) std::cout << "PARSE ERROR! Var number must be a positive integer" << std::endl, exit(3);
+        if (var <= 0) cout << "PARSE ERROR! Var number must be a positive integer" << endl, exit(3);
         std::string name = untilEnd(in);
         //control->setVariableName(var-1, name.c_str());
 
         #ifdef DEBUG_COMMENT_PARSING
-        std::cout << "Parsed 'c var'" << std::endl;
+        cout << "Parsed 'c var'" << endl;
         #endif //DEBUG_COMMENT_PARSING
     } else if (debugLib && str == "Solver::solve()") {
         lbool ret = control->solve(1);
@@ -231,16 +233,16 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         std::ofstream partFile;
         partFile.open(s.c_str());
         if (ret == l_True) {
-            partFile << "SAT" << std::endl;
+            partFile << "SAT" << endl;
             for (Var i = 0; i != control->nVars(); i++) {
                 if (control->model[i] != l_Undef)
                     partFile
                     << ((control->model[i]==l_True) ? "" : "-")
                     << (i+1) <<  " ";
             }
-            partFile << "0" << std::endl;;
+            partFile << "0" << endl;;
         } else if (ret == l_False) {
-            partFile << "UNSAT" << std::endl;
+            partFile << "UNSAT" << endl;
         } else if (ret == l_Undef) {
             assert(false);
         } else {
@@ -250,17 +252,17 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         debugLibPart++;
 
         #ifdef DEBUG_COMMENT_PARSING
-        std::cout << "Parsed Solver::solve()" << std::endl;
+        cout << "Parsed Solver::solve()" << endl;
         #endif //DEBUG_COMMENT_PARSING
     } else if (debugNewVar && str == "Solver::newVar()") {
         control->newVar();
 
         #ifdef DEBUG_COMMENT_PARSING
-        std::cout << "Parsed Solver::newVar()" << std::endl;
+        cout << "Parsed Solver::newVar()" << endl;
         #endif //DEBUG_COMMENT_PARSING
     } else {
         #ifdef DEBUG_COMMENT_PARSING
-        std::cout << "didn't understand in CNF file: 'c " << str << std::endl;
+        cout << "didn't understand in CNF file: 'c " << str << endl;
         #endif //DEBUG_COMMENT_PARSING
     }
     skipLine(in);
@@ -287,7 +289,7 @@ void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_
         goto addTheClause;
     }
     else {
-        std::cout << "parsed in instead of yes/no: '" << str << "'" << std::endl;
+        cout << "parsed in instead of yes/no: '" << str << "'" << endl;
         goto addTheClause;
     }
 
@@ -351,7 +353,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
 
     if (needToParseComments) {
         #ifdef DEBUG_COMMENT_PARSING
-        std::cout << "Need to parse comments:" << str << std::endl;
+        cout << "Need to parse comments:" << str << endl;
         #endif //DEBUG_COMMENT_PARSING
         parseComments(in, str);
     }
@@ -400,15 +402,15 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
     parse_DIMACS_main(in);
 
     if (control->getVerbosity() >= 1) {
-        std::cout << "c -- clauses added: "
+        cout << "c -- clauses added: "
         << std::setw(12) << numLearntClauses
         << " learnts, "
         << std::setw(12) << numNormClauses
         << " normals "
-        << std::endl;
+        << endl;
 
-        std::cout << "c -- vars added " << std::setw(10) << (control->nVars() - origNumVars)
-        << std::endl;
+        cout << "c -- vars added " << std::setw(10) << (control->nVars() - origNumVars)
+        << endl;
     }
 }
 

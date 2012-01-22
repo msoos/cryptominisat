@@ -24,6 +24,8 @@
 #include <fstream>
 using std::string;
 using std::vector;
+using std::cout;
+using std::endl;
 
 class PropByFull
 {
@@ -240,11 +242,11 @@ void CommandControl::genConfGraph(const PropBy conflPart)
     std::ofstream file;
     file.open(filename.c_str());
     if (!file) {
-        std::cout << "Couldn't open filename " << filename << std::endl;
-        std::cout << "Maybe you forgot to create subdirectory 'confls'" << std::endl;
+        cout << "Couldn't open filename " << filename << endl;
+        cout << "Maybe you forgot to create subdirectory 'confls'" << endl;
         exit(-1);
     }
-    file << "digraph G {" << std::endl;
+    file << "digraph G {" << endl;
 
     //Special vertex indicating final conflict clause (to help us)
     vector<Lit> out_learnt;
@@ -261,11 +263,11 @@ void CommandControl::genConfGraph(const PropBy conflPart)
     << " | {resol: | " << res << " }"
     << "}\""
     << " , fontsize=8"
-    << " ];" << std::endl;
+    << " ];" << endl;
 
     PropByFull confl(conflPart, failBinLit, *clAllocator, clauseData);
     #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
-    std::cout << "conflict: "<< confl << std::endl;
+    cout << "conflict: "<< confl << endl;
     #endif
 
     vector<Lit> lits;
@@ -283,7 +285,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
         << "[ "
         << " label=\"" << lits << "\""
         << " , fontsize=8"
-        << " ];" << std::endl;
+        << " ];" << endl;
     }
 
     //Special conflict vertex
@@ -293,7 +295,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
     << ", style=\"filled\""
     << ", color=\"darkseagreen\""
     << ", label=\"K : " << lits << "\""
-    << "];" << std::endl;
+    << "];" << endl;
 
     //Calculate which literals are directly connected with the conflict
     vector<Lit> insideImplGraph;
@@ -306,7 +308,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
             if (reason.isNULL()) continue;
 
             #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
-            std::cout << "Reason for lit " << lits[i] << " : " << reason << std::endl;
+            cout << "Reason for lit " << lits[i] << " : " << reason << endl;
             #endif
 
             PropByFull prop(reason, lits[i], *clAllocator, clauseData);
@@ -365,7 +367,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
             }
             file << "\""
             << " , fontsize=8"
-            << " ];" << std::endl;
+            << " ];" << endl;
         }
     }
 
@@ -388,12 +390,12 @@ void CommandControl::genConfGraph(const PropBy conflPart)
             file << ", color=\"darkseagreen4\""; //propagated var
 
         file << ", label=\"" << (lit.sign() ? "-" : "") << "x" << lit.unsign() << " @ " << varData[lit.var()].level << "\""
-        << " ];" << std::endl;
+        << " ];" << endl;
     }
 
-    file  << "}" << std::endl;
+    file  << "}" << endl;
     file.close();
 
-    std::cout << "c Printed implication graph (with conflict clauses) to file "
-    << filename << std::endl;
+    cout << "c Printed implication graph (with conflict clauses) to file "
+    << filename << endl;
 }

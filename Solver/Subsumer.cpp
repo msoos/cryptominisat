@@ -33,6 +33,8 @@
 #include <algorithm>
 #include <fstream>
 #include <set>
+using std::cout;
+using std::endl;
 
 #include "constants.h"
 #include "SolutionExtender.h"
@@ -144,7 +146,7 @@ clause (will take the max() of the two)
 void Subsumer::subsume0(ClauseIndex c, Clause& cl)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "subsume0-ing with clause: " << cl << std::endl;
+    cout << "subsume0-ing with clause: " << cl << endl;
     #endif
     Sub0Ret ret = subsume0(c.index, cl, clauseData[c.index].abst);
 
@@ -177,7 +179,7 @@ template<class T> Subsumer::Sub0Ret Subsumer::subsume0(const uint32_t index, con
     findSubsumed0(index, ps, abs, subs);
     for (vector<ClauseIndex>::const_iterator it = subs.begin(), end = subs.end(); it != end; it++) {
         #ifdef VERBOSE_DEBUG
-        std::cout << "-> subsume0 removing:" << *clauses[it->index] << std::endl;
+        cout << "-> subsume0 removing:" << *clauses[it->index] << endl;
         #endif
 
         Clause *tmp = clauses[it->index];
@@ -206,7 +208,7 @@ void Subsumer::subsume1(ClauseIndex c, Clause& ps)
     vector<ClauseIndex>    subs;
     vector<Lit>           subsLits;
     #ifdef VERBOSE_DEBUG
-    std::cout << "subsume1-ing with clause:" << ps << std::endl;
+    cout << "subsume1-ing with clause:" << ps << endl;
     #endif
 
     findSubsumed1(c.index, ps, clauseData[c.index].abst, subs, subsLits);
@@ -288,8 +290,8 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
         && !cl.learnt()
     ) {
         #ifdef VERBOSE_DEBUG
-        std::cout << "Eliminating non-bin clause: " << *clauses[c.index] << std::endl;
-        std::cout << "On variable: " << elim.unsign() << std::endl;
+        cout << "Eliminating non-bin clause: " << *clauses[c.index] << endl;
+        cout << "On variable: " << elim.unsign() << endl;
         #endif //VERBOSE_DEBUG
 
         vector<Lit> lits(cl.size());
@@ -305,11 +307,11 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
 {
     assert(control->ok);
     #ifdef VERBOSE_DEBUG
-    std::cout << "Clause to clean: " << cl << std::endl;
+    cout << "Clause to clean: " << cl << endl;
     for(size_t i = 0; i < cl.size(); i++) {
-        std::cout << cl[i] << " : "  << control->value(cl[i]) << " , ";
+        cout << cl[i] << " : "  << control->value(cl[i]) << " , ";
     }
-    std::cout << std::endl;
+    cout << endl;
     #endif
 
     bool satisfied = false;
@@ -338,14 +340,14 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
 
     if (satisfied) {
         #ifdef VERBOSE_DEBUG
-        std::cout << "Clause cleaning -- satisfied, removing" << std::endl;
+        cout << "Clause cleaning -- satisfied, removing" << endl;
         #endif
         unlinkClause(c);
         return l_True;
     }
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "-> Clause became after cleaning:" << *clauses[c.index] << std::endl;
+    cout << "-> Clause became after cleaning:" << *clauses[c.index] << endl;
     #endif
 
     switch(cl.size()) {
@@ -382,8 +384,8 @@ May return with control->ok being FALSE, and may set&propagate variable values.
 void Subsumer::strengthen(ClauseIndex& c, const Lit toRemoveLit)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "-> Strenghtening clause :" << *clauses[c.index];
-    std::cout << " with lit: " << toRemoveLit << std::endl;
+    cout << "-> Strenghtening clause :" << *clauses[c.index];
+    cout << " with lit: " << toRemoveLit << endl;
     #endif
 
     Clause& cl = *clauses[c.index];
@@ -396,13 +398,13 @@ void Subsumer::strengthen(ClauseIndex& c, const Lit toRemoveLit)
 void Subsumer::printLimits()
 {
 #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c  subsumed:" << clauses_subsumed << std::endl;
-    std::cout << "c  cl_touched.nElems():" << cl_touched.nElems() << std::endl;
-    std::cout << "c  clauses.size():" << clauses.size() << std::endl;
-    std::cout << "c  numMaxSubsume0:" << numMaxSubsume0 << std::endl;
-    std::cout << "c  numMaxSubsume1:" << numMaxSubsume1 << std::endl;
-    std::cout << "c  numMaxElim:" << numMaxElim << std::endl;
-    std::cout << "c  cl_touched.nElems() = " << cl_touched.nElems() << std::endl;
+    cout << "c  subsumed:" << clauses_subsumed << endl;
+    cout << "c  cl_touched.nElems():" << cl_touched.nElems() << endl;
+    cout << "c  clauses.size():" << clauses.size() << endl;
+    cout << "c  numMaxSubsume0:" << numMaxSubsume0 << endl;
+    cout << "c  numMaxSubsume1:" << numMaxSubsume1 << endl;
+    cout << "c  numMaxElim:" << numMaxElim << endl;
+    cout << "c  cl_touched.nElems() = " << cl_touched.nElems() << endl;
 #endif //BIT_MORE_VERBOSITY
 }
 
@@ -510,7 +512,7 @@ bool Subsumer::subsume0AndSubsume1()
     }
 
 
-    //std::cout << "subsume0 done: " << numDone << std::endl;
+    //cout << "subsume0 done: " << numDone << endl;
 
     cl_touched = cl_touched_backup;
     toDecrease = &numMaxSubsume1;
@@ -619,9 +621,9 @@ bool Subsumer::subsume0AndSubsume1()
                 return false;
         }
 
-        /*std::cout
+        /*cout
         << " cl_touched: " << cl_touched.nElems()
-        << " numMaxSubume1: " << numMaxSubsume1 << std::endl;*/
+        << " numMaxSubume1: " << numMaxSubsume1 << endl;*/
 
     };
 
@@ -768,7 +770,7 @@ void Subsumer::removeWrongBinsAndAllTris()
                 ) {
                 #ifdef VERBOSE_DEBUG_VARELIM
                 if (i->getLearnt()) {
-                    std::cout << "c ERROR! Binary " << lit << " , " << i->getOtherLit() << " is still in, but one of its vars has been eliminated" << std::endl;
+                    cout << "c ERROR! Binary " << lit << " , " << i->getOtherLit() << " is still in, but one of its vars has been eliminated" << endl;
                 }
                 #endif
                 assert(i->getLearnt());
@@ -814,7 +816,7 @@ bool Subsumer::eliminateVars()
     vector<Var> order = orderVarsForElim();
 
     #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c #order size:" << order.size() << std::endl;
+    cout << "c #order size:" << order.size() << endl;
     #endif
 
     for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
@@ -835,8 +837,8 @@ bool Subsumer::eliminateVars()
     numVarsElimed += vars_elimed;
 
     #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c  #try to eliminate: " << numtry << std::endl;
-    std::cout << "c  #var-elim: " << vars_elimed << std::endl;
+    cout << "c  #try to eliminate: " << numtry << endl;
+    cout << "c  #var-elim: " << vars_elimed << endl;
     #endif
 
     return true;
@@ -892,10 +894,10 @@ void Subsumer::subsumeBinsWithBins()
     }
 
     if (control->conf.verbosity  >= 1) {
-        std::cout << "c bin-w-bin subsume "
+        cout << "c bin-w-bin subsume "
         << "rem " << std::setw(10) << (numBinsBefore - control->numBins)
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime)
-        << " s" << std::endl;
+        << " s" << endl;
     }
 
     totalTime += cpuTime() - myTime;
@@ -1014,7 +1016,7 @@ bool Subsumer::simplifyBySubsumption()
     addedClauseLits += addFromSolver(control->learnts);
     setLimits();
     double linkInTime = cpuTime() - myTime;
-    std::cout << "c Time to Link in : " << linkInTime << std::endl;
+    cout << "c Time to Link in : " << linkInTime << endl;
     totalTime += cpuTime() - myTime; //setup time
 
     //Do stuff with binaries
@@ -1093,7 +1095,7 @@ bool Subsumer::simplifyBySubsumption()
 
     //Print stats
     if (control->conf.verbosity  >= 1) {
-        std::cout << "c lits-rem: " << std::setw(9) << clauses_strengthened
+        cout << "c lits-rem: " << std::setw(9) << clauses_strengthened
         << "  cl-subs: " << std::setw(8) << clauses_subsumed
         << "  cl-elim: " << std::setw(4) << clauses_elimed
         << "  lcl-rem: " << std::setw(5) << learntClausesRemovedThroughElim
@@ -1101,9 +1103,9 @@ bool Subsumer::simplifyBySubsumption()
         << "  v-fix: " << std::setw(4) <<control->trail.size() - origTrailSize
         << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
-        << std::endl;
+        << endl;
 
-        std::cout << "c learnt bin added due to v-elim: " << numLearntBinVarRemAdded << std::endl;
+        cout << "c learnt bin added due to v-elim: " << numLearntBinVarRemAdded << endl;
 
         if (control->conf.verboseSubsumer)
             gateFinder->printGateStats();
@@ -1123,8 +1125,8 @@ void Subsumer::checkForElimedVars()
         const Clause& cl = *clauses[i];
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (var_elimed[cl[i].var()]) {
-                std::cout << "Elmied var -- Lit " << cl[i] << " in clause?" << std::endl;
-                std::cout << "wrongly left in clause: " << cl << std::endl;
+                cout << "Elmied var -- Lit " << cl[i] << " in clause?" << endl;
+                cout << "wrongly left in clause: " << cl << endl;
                 exit(-1);
             }
         }
@@ -1137,7 +1139,7 @@ void Subsumer::checkForElimedVars()
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
                 if (var_elimed[lit.var()] || var_elimed[it2->getOtherLit().var()]) {
-                    std::cout << "One var elimed: " << lit << " , " << it2->getOtherLit() << std::endl;
+                    cout << "One var elimed: " << lit << " , " << it2->getOtherLit() << endl;
                     exit(-1);
                 }
             }
@@ -1175,9 +1177,9 @@ void Subsumer::checkForElimedVars()
 //                         seen[orGate.lits[i2].var()]) OK++;
 //                 }
 //                 if (OK>1) {
-//                     std::cout << "XOR to look at:" << thisXor << std::endl;
-//                     std::cout << "gate to look at : " << orGate << std::endl;
-//                     std::cout << "---------------" << std::endl;
+//                     cout << "XOR to look at:" << thisXor << endl;
+//                     cout << "gate to look at : " << orGate << endl;
+//                     cout << "---------------" << endl;
 //                 }
 //             }
 //         }
@@ -1201,8 +1203,8 @@ void Subsumer::checkForElimedVars()
                 }
                 if (OK == 2) {
                     #ifdef VERBOSE_XORGATE_MIX
-                    std::cout << "XOR to look at:" << thisXor << std::endl;
-                    std::cout << "gate to look at : " << orGate << std::endl;
+                    cout << "XOR to look at:" << thisXor << endl;
+                    cout << "gate to look at : " << orGate << endl;
                     #endif
 
                     if (!thisXor.rhs^sign) {
@@ -1210,7 +1212,7 @@ void Subsumer::checkForElimedVars()
                         tmp.clear();
                         tmp.push_back(~lits[0]);
                         #ifdef VERBOSE_XORGATE_MIX
-                        std::cout << "setting: " << tmp[0] << std::endl;
+                        cout << "setting: " << tmp[0] << endl;
                         #endif
                         control->addClauseInt(tmp);
                         if (!control->ok) goto end;
@@ -1218,7 +1220,7 @@ void Subsumer::checkForElimedVars()
                         tmp.clear();
                         tmp.push_back(~lits[1]);
                         #ifdef VERBOSE_XORGATE_MIX
-                        std::cout << "setting: " << tmp[0] << std::endl;
+                        cout << "setting: " << tmp[0] << endl;
                         #endif
                         control->addClauseInt(tmp);
                         if (!control->ok) goto end;
@@ -1228,7 +1230,7 @@ void Subsumer::checkForElimedVars()
                         tmp.push_back(lits[0]);
                         tmp.push_back(lits[1]);
                         #ifdef VERBOSE_XORGATE_MIX
-                        std::cout << "orIng: " << tmp << std::endl;
+                        cout << "orIng: " << tmp << endl;
                         #endif
                         Clause* c = control->addClauseInt(tmp, true);
                         assert(c == NULL);
@@ -1236,7 +1238,7 @@ void Subsumer::checkForElimedVars()
                     }
 
                     #ifdef VERBOSE_XORGATE_MIX
-                    std::cout << "---------------" << std::endl;
+                    cout << "---------------" << endl;
                     #endif
                 }
             }
@@ -1250,12 +1252,12 @@ void Subsumer::checkForElimedVars()
     }
 
     if (control->conf.verbosity >= 1) {
-        std::cout << "c OrXorMix"
+        cout << "c OrXorMix"
         << " Or: " << std::setw(6) << ored
         << " Fix: " << std::setw(6) << fixed
         << " Fixed: " << std::setw(4) << (control->trail.size() - oldTrailSize)
         << " T: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
-        << std::endl;
+        << endl;
     }
 
     return control->ok;
@@ -1319,7 +1321,7 @@ void Subsumer::asymmTE()
                     ) {
                         toRemove = true;
                         #ifdef VERBOSE_DEBUG_ASYMTE
-                        std::cout << "c AsymLitAdd removing: " << cl << std::endl;
+                        cout << "c AsymLitAdd removing: " << cl << endl;
                         #endif
                         goto next;
                     }
@@ -1364,7 +1366,7 @@ void Subsumer::asymmTE()
                     && subsetReverse(*clauses[it2->index])
                 )  {
                     #ifdef VERBOSE_DEBUG_ASYMTE
-                    std::cout << "c AsymTE removing: " << cl << " -- subsumed by cl: " << *clauses[it2->index] << std::endl;
+                    cout << "c AsymTE removing: " << cl << " -- subsumed by cl: " << *clauses[it2->index] << endl;
                     #endif
                     toRemove = true;
                     goto next;
@@ -1385,11 +1387,11 @@ void Subsumer::asymmTE()
     }
 
     if (control->conf.verbosity >= 1) {
-        std::cout << "c AsymmTElim"
+        cout << "c AsymmTElim"
         << " cl-rem: " << removed
         << " blocked: " << blocked
         << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
-        << std::endl;
+        << endl;
     }
     totalTime += cpuTime() - myTime;
 }
@@ -1413,7 +1415,7 @@ void Subsumer::setLimits()
     //numMaxElim = std::numeric_limits<int64_t>::max();
 
     #ifdef BIT_MORE_VERBOSITY
-    std::cout << "c addedClauseLits: " << addedClauseLits << std::endl;
+    cout << "c addedClauseLits: " << addedClauseLits << endl;
     #endif
     if (addedClauseLits < 10000000) {
         numMaxElim *= 2;
@@ -1512,7 +1514,7 @@ void Subsumer::findSubsumed1(
 )
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "findSubsumed1: " << ps << std::endl;
+    cout << "findSubsumed1: " << ps << endl;
     #endif
 
     Var minVar = var_Undef;
@@ -1553,8 +1555,8 @@ void inline Subsumer::fillSubs(const T& ps, const uint32_t index, const CL_ABST_
                 out_subsumed.push_back(*it);
                 out_lits.push_back(litSub);
                 #ifdef VERBOSE_DEBUG
-                if (litSub == lit_Undef) std::cout << "subsume0-d: ";
-                else std::cout << "subsume1-ed (lit: " << litSub << "): " << *clauses[it->index] << std::endl;
+                if (litSub == lit_Undef) cout << "subsume0-d: ";
+                else cout << "subsume1-ed (lit: " << litSub << "): " << *clauses[it->index] << endl;
                 #endif
             }
         }
@@ -1570,19 +1572,19 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
         ClAndBin& c = todo[i];
 
         #ifdef VERBOSE_DEBUG_VARELIM
-        std::cout << "Removing clause due to var-elim on " << lit << " : ";
+        cout << "Removing clause due to var-elim on " << lit << " : ";
         #endif
         if (!c.isBin) {
             assert(clauses[c.clsimp.index] != NULL);
             #ifdef VERBOSE_DEBUG_VARELIM
-            std::cout << *clauses[c.clsimp.index] << std::endl;
+            cout << *clauses[c.clsimp.index] << endl;
             #endif
             unlinkClause(c.clsimp, lit);
 
             clauses_elimed++;
         } else {
             #ifdef VERBOSE_DEBUG_VARELIM
-            std::cout << c.lit1 << " , " << c.lit2 << std::endl;
+            cout << c.lit1 << " , " << c.lit2 << endl;
             #endif
 
             //Remove binary clause
@@ -1732,7 +1734,7 @@ bool Subsumer::maybeEliminate(const Var var)
 
     //Eliminate:
     #ifdef VERBOSE_DEBUG_VARELIM
-    std::cout << "Eliminating var " << var+1 << std::endl;
+    cout << "Eliminating var " << var+1 << endl;
     #endif
 
     //put clauses into blocked status, remove from occur[], but DON'T free&set to NULL
@@ -1755,7 +1757,7 @@ bool Subsumer::maybeEliminate(const Var var)
             if (!ok) continue;
 
             #ifdef VERBOSE_DEBUG_VARELIM
-            std::cout << "Adding new clause due to varelim: " << dummy << std::endl;
+            cout << "Adding new clause due to varelim: " << dummy << endl;
             #endif
 
             //Calculate learnt & data for learnt
@@ -1815,7 +1817,7 @@ void Subsumer::freeAfterVarelim(const vector<ClAndBin>& myset)
 
         uint32_t index = myset[i].clsimp.index;
         #ifdef VERBOSE_DEBUG_VARELIM
-        std::cout << "Freeing clause due to varelim: " << *clauses[index] << std::endl;
+        cout << "Freeing clause due to varelim: " << *clauses[index] << endl;
         #endif
 
         control->clAllocator->clauseFree(clauses[index]);
@@ -2037,9 +2039,9 @@ bool Subsumer::verifyIntegrity()
 
     for (uint32_t i = 0; i < occurNum.size(); i++) {
         #ifdef VERBOSE_DEBUG
-        std::cout << "occurNum[i]:" << occurNum[i]
+        cout << "occurNum[i]:" << occurNum[i]
         << " occur[i]:" << occur[i].size()
-        << "  --- i:" << i << std::endl;
+        << "  --- i:" << i << endl;
         #endif //VERBOSE_DEBUG
 
         if (occurNum[i] != occur[i].size()) return false;

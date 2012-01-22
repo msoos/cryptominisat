@@ -27,6 +27,8 @@
 #include <utility>
 using std::make_pair;
 using std::set;
+using std::cout;
+using std::endl;
 
 #include "ThreadControl.h"
 #include "ClauseCleaner.h"
@@ -121,8 +123,8 @@ end:
             control->clauseCleaner->removeAndCleanAll();
         }
         if (control->conf.verbosity  >= 1 && numFailed + goodBothSame > 100) {
-            std::cout << "c Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
-            << std::endl;
+            cout << "c Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
+            << endl;
         }
     }
 
@@ -135,13 +137,13 @@ end:
 
 void FailedLitSearcher::printResults(const double myTime) const
 {
-    std::cout << "c Flit: "<< std::setw(5) << numFailed <<
+    cout << "c Flit: "<< std::setw(5) << numFailed <<
     " Blit: " << std::setw(6) << goodBothSame <<
     " Bin:"   << std::setw(7) << addedBin <<
     " RemBin:" << std::setw(7) << removedBins <<
     " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(control->bogoProps - origBogoProps)/1000000.0  << "M"
     " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
-    << std::endl;
+    << endl;
 }
 
 bool FailedLitSearcher::tryBoth(const Lit lit)
@@ -162,7 +164,7 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
         control->newDecisionLevel();
         control->enqueue(lit);
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Trying " << lit << std::endl;
+        cout << "Trying " << lit << endl;
         #endif
         failed = control->propagateFull(uselessBin);
         if (failed != lit_Undef) {
@@ -205,8 +207,8 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
                 control->implCache[(~ancestor).toInt()].merge(path, learntStep, ancestor, control->seen);
 
                 #ifdef VERBOSE_DEBUG_FULLPROP
-                std::cout << "The impl cache of " << (~ancestor) << " is now: ";
-                std::cout << control->implCache[(~ancestor).toInt()] << std::endl;
+                cout << "The impl cache of " << (~ancestor) << " is now: ";
+                cout << control->implCache[(~ancestor).toInt()] << endl;
                 #endif
             }
         }
@@ -229,7 +231,7 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
         control->newDecisionLevel();
         control->enqueue(~lit);
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Trying (opp) " << (~lit) << std::endl;
+        cout << "Trying (opp) " << (~lit) << endl;
         #endif
         failed = control->propagateFull(uselessBin);
         if (failed != lit_Undef) {
@@ -272,8 +274,8 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
                 control->implCache[(~ancestor).toInt()].merge(path, learntStep, ancestor, control->seen);
 
                 #ifdef VERBOSE_DEBUG_FULLPROP
-                std::cout << "The impl cache of " << (~ancestor) << " is now: ";
-                std::cout << control->implCache[(~ancestor).toInt()] << std::endl;
+                cout << "The impl cache of " << (~ancestor) << " is now: ";
+                cout << control->implCache[(~ancestor).toInt()] << endl;
                 #endif
 
             }
@@ -317,7 +319,7 @@ void FailedLitSearcher::removeUselessBins()
             ; it != end
             ; it++
         ) {
-            //std::cout << "Removing binary clause: " << *it << std::endl;
+            //cout << "Removing binary clause: " << *it << endl;
             removeWBin(control->watches, it->getLit1(), it->getLit2(), it->getLearnt());
             removeWBin(control->watches, it->getLit2(), it->getLit1(), it->getLearnt());
 
@@ -330,9 +332,9 @@ void FailedLitSearcher::removeUselessBins()
             removedBins++;
 
             #ifdef VERBOSE_DEBUG_FULLPROP
-            std::cout << "Removed bin: "
+            cout << "Removed bin: "
             << it->getLit1() << " , " << it->getLit2()
-            << " , learnt: " << it->getLearnt() << std::endl;
+            << " , learnt: " << it->getLearnt() << endl;
             #endif
         }
     }
@@ -372,7 +374,7 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
     bool wrong = false;
     for (vector<Var>::const_iterator it = origEnqueuedVars.begin(), end = origEnqueuedVars.end(); it != end; it++) {
         if (control->value(*it) == l_Undef) {
-            std::cout << "Value of var " << Lit(*it, false) << " is unset, but was set before!" << std::endl;
+            cout << "Value of var " << Lit(*it, false) << " is unset, but was set before!" << endl;
             wrong = true;
         }
     }
@@ -385,7 +387,7 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
     assert(ok && "Prop failed after hyper-bin adding&bin removal. We never reach this point in that case.");
     for (vector<Var>::const_iterator it = origNLBEnqueuedVars.begin(), end = origNLBEnqueuedVars.end(); it != end; it++) {
         if (control->value(*it) == l_Undef) {
-            std::cout << "Value of var " << Lit(*it, false) << " is unset, but was set before when propagating non-learnt!" << std::endl;
+            cout << "Value of var " << Lit(*it, false) << " is unset, but was set before when propagating non-learnt!" << endl;
             wrong = true;
         }
     }
@@ -451,14 +453,14 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
 //     assert(propagated.isZero());
 //     assert(propagated2.isZero());
 //
-//     std::cout
+//     cout
 //     << "c multiLevelBoth tried " <<  numTries
 //     << " finished: " << finished
 //     << " units: " << (control->trail.size() - backupNumUnits)
 //     << " enqueued: " << enqueued
 //     << " numFailed: " << numFailed
 //     << " time: " << (cpuTime() - myTime)
-//     << std::endl;
+//     << endl;
 //
 //     return control->ok;
 // }
@@ -470,15 +472,15 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
 //     vector<Lit> toEnqueue;
 //     bool first = true;
 //     bool last = false;
-//     //std::cout << "//////////////////" << std::endl;
+//     //cout << "//////////////////" << endl;
 //     for (uint32_t comb = 0; comb < (1U << vars.size()); comb++) {
 //         last = (comb == (1U << vars.size())-1);
 //         control->newDecisionLevel();
 //         for (uint32_t i = 0; i < vars.size(); i++) {
 //             control->enqueue(Lit(vars[i], comb&(0x1 << i)));
-//             //std::cout << "lit: " << Lit(vars[i], comb&(1U << i)) << std::endl;
+//             //cout << "lit: " << Lit(vars[i], comb&(1U << i)) << endl;
 //         }
-//         //std::cout << "---" << std::endl;
+//         //cout << "---" << endl;
 //         bool failed = !(control->propagate().isNULL());
 //         if (failed) {
 //             control->cancelZeroLight();

@@ -26,6 +26,8 @@
 #include "ThreadControl.h"
 #include "RestartPrinter.h"
 #include <omp.h>
+using std::cout;
+using std::endl;
 
 //#define VERBOSE_DEBUG_GEN_CONFL_DOT
 
@@ -95,13 +97,13 @@ Var CommandControl::newVar(const bool dvar)
 template<class T, class T2>
 void CommandControl::printStatsLine(std::string left, T value, T2 value2, std::string extra)
 {
-    std::cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << std::endl;
+    cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " " << extra << ")" << endl;
 }
 
 template<class T>
 void CommandControl::printStatsLine(std::string left, T value, std::string extra)
 {
-    std::cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << std::endl;
+    cout << std::fixed << std::left << std::setw(27) << left << ": " << std::setw(11) << std::setprecision(2) << value << extra << endl;
 }
 
 void CommandControl::printStats()
@@ -167,7 +169,7 @@ void CommandControl::printStats()
      + decisions + assumption_decisions + units_from_other_threads
      + numConflicts;
 
-    //std::cout << "tot: " << totalProps << " missing: " << ((int64_t)propagations-(int64_t)totalProps) << std::endl;
+    //cout << "tot: " << totalProps << " missing: " << ((int64_t)propagations-(int64_t)totalProps) << endl;
     assert(propagations == totalProps);
 
     printStatsLine("c conflict literals", tot_literals, (double)(max_literals - tot_literals)*100.0/ (double)max_literals, "% deleted");
@@ -187,9 +189,9 @@ void CommandControl::printStats()
 void CommandControl::cancelUntil(uint32_t level)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "Canceling until level " << level;
-    if (level > 0) std::cout << " sublevel: " << trail_lim[level];
-    std::cout << std::endl;
+    cout << "Canceling until level " << level;
+    if (level > 0) cout << " sublevel: " << trail_lim[level];
+    cout << endl;
     #endif
 
     if (decisionLevel() > level) {
@@ -197,12 +199,12 @@ void CommandControl::cancelUntil(uint32_t level)
         for (int sublevel = trail.size()-1; sublevel >= (int)trail_lim[level]; sublevel--) {
             Var var = trail[sublevel].var();
             #ifdef VERBOSE_DEBUG
-            std::cout << "Canceling var " << var+1 << " sublevel: " << sublevel << std::endl;
+            cout << "Canceling var " << var+1 << " sublevel: " << sublevel << endl;
             #endif
             assert(value(var) != l_Undef);
             assigns[var] = l_Undef;
             #ifdef ANIMATE3D
-            std:cerr << "u " << var << std::endl;
+            std:cerr << "u " << var << endl;
             #endif
             insertLitOrder(trail[sublevel]);
             insertLitOrder(~trail[sublevel]);
@@ -213,7 +215,7 @@ void CommandControl::cancelUntil(uint32_t level)
     }
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "Canceling finished. (now at level: " << decisionLevel() << " sublevel: " << trail.size()-1 << ")" << std::endl;
+    cout << "Canceling finished. (now at level: " << decisionLevel() << " sublevel: " << trail.size()-1 << ")" << endl;
     #endif
 }
 
@@ -247,7 +249,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
 
     uint32_t numIterations = 0;
 
-    //std::cout << "---- Start analysis -----" << std::endl;
+    //cout << "---- Start analysis -----" << endl;
     out_learnt.push_back(lit_Undef); //make space for ~p
     do {
         numIterations++;
@@ -293,7 +295,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
         confl = varData[p.var()].reason;
         seen[p.var()] = 0; //This clears out vars that haven't been added to out_learnt, but their 'seen' has been set
         pathC--;
-        //std::cout << "Next 'p' to look at: " << p << std::endl;
+        //cout << "Next 'p' to look at: " << p << endl;
     } while (pathC > 0);
     out_learnt[0] = ~p;
 
@@ -333,9 +335,9 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
 
     //Print fully minimised clause
     #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
-    std::cout << "Final clause: " << out_learnt << std::endl;
+    cout << "Final clause: " << out_learnt << endl;
     for (uint32_t i = 0; i < out_learnt.size(); i++) {
-        std::cout << "lev out_learnt[" << i << "]:" << varData[out_learnt[i].var()].level << std::endl;
+        cout << "lev out_learnt[" << i << "]:" << varData[out_learnt[i].var()].level << endl;
     }
     #endif
 
@@ -351,7 +353,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
         out_btlevel = varData[out_learnt[1].var()].level;
     }
     #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
-    std::cout << "out_btlevel: " << out_btlevel << std::endl;
+    cout << "out_btlevel: " << out_btlevel << endl;
     #endif
 }
 
@@ -670,7 +672,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
 
     //Debug
     #ifdef VERBOSE_DEBUG
-    std::cout << "c started CommandControl::search()" << std::endl;
+    cout << "c started CommandControl::search()" << endl;
     #endif //VERBOSE_DEBUG
 
     //Loop until restart or finish (SAT/UNSAT)
@@ -679,7 +681,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
         const PropBy confl = propagate();
 
         #ifdef VERBOSE_DEBUG
-        std::cout << "c CommandControl::search() has finished propagation" << std::endl;
+        cout << "c CommandControl::search() has finished propagation" << endl;
         #endif //VERBOSE_DEBUG
 
         if (!confl.isNULL()) {
@@ -761,7 +763,7 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
 {
     if (needToInterrupt)  {
         if (conf.verbosity >= 3)
-            std::cout << "c needToInterrupt is set, restartig as soon as possible!" << std::endl;
+            cout << "c needToInterrupt is set, restartig as soon as possible!" << endl;
         params.needToStopSearch = true;
     }
 
@@ -782,16 +784,16 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
         if (agility.getAgility() < conf.agilityLimit) {
             #ifdef DEBUG_DYNAMIC_RESTART
             if (glueHistory.isvalid()) {
-                std::cout << "glueHistory.getavg():" << glueHistory.getavg() <<std::endl;
-                std::cout << "totalSumOfGlue:" << totalSumOfGlue << std::endl;
-                std::cout << "conflicts:" << conflicts<< std::endl;
-                std::cout << "compTotSumGlue:" << compTotSumGlue << std::endl;
-                std::cout << "conflicts-compTotSumGlue:" << conflicts-compTotSumGlue<< std::endl;
+                cout << "glueHistory.getavg():" << glueHistory.getavg() <<endl;
+                cout << "totalSumOfGlue:" << totalSumOfGlue << endl;
+                cout << "conflicts:" << conflicts<< endl;
+                cout << "compTotSumGlue:" << compTotSumGlue << endl;
+                cout << "conflicts-compTotSumGlue:" << conflicts-compTotSumGlue<< endl;
             }
             #endif
 
             if (conf.verbosity >= 3)
-                std::cout << "c Agility was too low, restarting as soon as possible!" << std::endl;
+                cout << "c Agility was too low, restarting as soon as possible!" << endl;
             params.needToStopSearch = true;
         } else {
             rest *= conf.restart_inc;
@@ -800,7 +802,7 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
 
     if (params.conflictsDoneThisRestart > params.conflictsToDo) {
         if (conf.verbosity >= 3)
-            std::cout << "c Over limit of conflicts for this restart, restarting as soon as possible!" << std::endl;
+            cout << "c Over limit of conflicts for this restart, restarting as soon as possible!" << endl;
         params.needToStopSearch = true;
     }
 }
@@ -816,7 +818,7 @@ clause with that of the shorter one
 bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "Handling conflict" << std::endl;
+    cout << "Handling conflict" << endl;
     #endif
 
     //Stats
@@ -848,8 +850,8 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
 
     //Debug
     #ifdef VERBOSE_DEBUG
-    std::cout << "Learning:" << learnt_clause << std::endl;
-    std::cout << "reverting var " << learnt_clause[0].var()+1 << " to " << !learnt_clause[0].sign() << std::endl;
+    cout << "Learning:" << learnt_clause << endl;
+    cout << "reverting var " << learnt_clause[0].var()+1 << " to " << !learnt_clause[0].sign() << endl;
     #endif
     assert(value(learnt_clause[0]) == l_Undef);
 
@@ -1003,11 +1005,11 @@ void CommandControl::syncFromThreadControl()
     lastUnit = control->unitLearntsToAdd.size();
 
     /*if (!longToAdd.empty() || !binToAdd.empty() || !unitToAdd.empty()) {
-        std::cout << "thread num: " << omp_get_thread_num() << std::endl;
-        std::cout << "longToAdd size: " << longToAdd.size() << std::endl;
-        std::cout << "binToAdd size: " << binToAdd.size() << std::endl;
-        std::cout << "unitToAdd size: " << unitToAdd.size() << std::endl;
-        std::cout << "----------------" << std::endl;
+        cout << "thread num: " << omp_get_thread_num() << endl;
+        cout << "longToAdd size: " << longToAdd.size() << endl;
+        cout << "binToAdd size: " << binToAdd.size() << endl;
+        cout << "unitToAdd size: " << unitToAdd.size() << endl;
+        cout << "----------------" << endl;
     }*/
 }
 
@@ -1105,7 +1107,7 @@ bool CommandControl::handleNewLong(const Clause& cl)
     std::sort(lits.begin(), lits.end(), MyAttachSorter(varData, assigns, cl));
 
     attachClause(cl, lits[0], lits[1], false);
-    //std::cout << "Attaching clause " << cl << " to thread: " << omp_get_thread_num() << std::endl;
+    //cout << "Attaching clause " << cl << " to thread: " << omp_get_thread_num() << endl;
 
     //If both l_Undef or one is l_True, then 'simple' attach
     if ((value(cl[lits[0]]) == l_Undef && value(cl[lits[1]]) == l_Undef)
@@ -1129,7 +1131,7 @@ bool CommandControl::handleNewLong(const Clause& cl)
             enqueue(cl[lits[0]], PropBy(offset, 0)); //0 because 'handle_conflict'-s enqeue() is also with 0
         }
 
-        //std::cout << "Attached fun 1, thread: " << omp_get_thread_num() << std::endl;
+        //cout << "Attached fun 1, thread: " << omp_get_thread_num() << endl;
         return true;
     }
 
@@ -1157,7 +1159,7 @@ bool CommandControl::handleNewLong(const Clause& cl)
             enqueue(cl[lits[0]], PropBy(offset, 0)); //0 because 'handle_conflict'-s enqeue() is also with 0
         }
 
-        //std::cout << "Attached fun 2, thread: " << omp_get_thread_num() << std::endl;
+        //cout << "Attached fun 2, thread: " << omp_get_thread_num() << endl;
         return true;
     } else {
         assert(varData[cl[lits[0]].var()].level == varData[cl[lits[1]].var()].level);
@@ -1247,11 +1249,11 @@ lbool CommandControl::burstSearch()
     conf.polarity_mode = backup_polar_mode;
 
     #pragma omp critical
-    std::cout << "c after burst" << omp_get_thread_num()
+    cout << "c after burst" << omp_get_thread_num()
     << " " << numRestarts
     << " " << numConflicts
     << " " << order_heap.size()
-    << std::endl;
+    << endl;
 
     return status;
 }
@@ -1295,18 +1297,18 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             break;
 
         if (lastSumConfl >= maxConfls) {
-            std::cout << "c thread(maxconfl) Trail size: " << trail.size() << std::endl;
+            cout << "c thread(maxconfl) Trail size: " << trail.size() << endl;
             break;
         }
 
         if (lastSumConfl > control->getNextCleanLimit()) {
-            std::cout << "c th " << omp_get_thread_num() << " cleaning"
+            cout << "c th " << omp_get_thread_num() << " cleaning"
             << " getNextCleanLimit(): " << control->getNextCleanLimit()
             << " numConflicts : " << numConflicts
             << " lastSumConfl: " << lastSumConfl
-            << " maxConfls:" << maxConfls << std::endl;
-            std::cout << "c thread " << omp_get_thread_num()
-            << " Trail size: " << trail.size() << std::endl;
+            << " maxConfls:" << maxConfls << endl;
+            cout << "c thread " << omp_get_thread_num()
+            << " Trail size: " << trail.size() << endl;
 
             //Have to wait for everyone to be here, i.e. shared their data
             //with threadcontrol, so we can all be up to sync
@@ -1322,7 +1324,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
             //Detach clauses that have been scheduled
             for(vector<Clause*>::const_iterator it = control->toDetach.begin(), end = control->toDetach.end(); it != end; it++) {
-                //std::cout << "Detaching clause " << **it << " from thread: " << omp_get_thread_num() << std::endl;
+                //cout << "Detaching clause " << **it << " from thread: " << omp_get_thread_num() << endl;
                 detachClause(**it);
             }
 
@@ -1348,7 +1350,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
         //if ((lastRestartPrint + 5000) < numConflicts) {
             #pragma omp critical
-            std::cout << "c " << omp_get_thread_num()
+            cout << "c " << omp_get_thread_num()
             << " " << std::setw(6) << numRestarts
             << " " << std::setw(7) << numConflicts
             << " " << std::setw(7) << order_heap.size()
@@ -1380,18 +1382,18 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             << " traildd"
             << " " << std::right << trailDepthDeltaHist.getAvgPrint(0, 5)
             << "/" << std::left << trailDepthDeltaHist.getAvgAllPrint(0, 5)
-            << std::endl;
+            << endl;
             lastRestartPrint = numConflicts;
         //}
     }
 
     #ifdef VERBOSE_DEBUG
     if (status == l_True)
-        std::cout << "Solution  is SAT" << std::endl;
+        cout << "Solution  is SAT" << endl;
     else if (status == l_False)
-        std::cout << "Solution is UNSAT" << std::endl;
+        cout << "Solution is UNSAT" << endl;
     else
-        std::cout << "Solutions is UNKNOWN" << std::endl;
+        cout << "Solutions is UNKNOWN" << endl;
     #endif //VERBOSE_DEBUG
 
     if (status == l_True) {
@@ -1405,20 +1407,20 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     //#ifdef VERBOSE_DEBUG
 #pragma omp critical
     {
-        std::cout << "c th " << omp_get_thread_num()
-        << " ---------" << std::endl;
+        cout << "c th " << omp_get_thread_num()
+        << " ---------" << endl;
 
-        std::cout << "c CommandControl::solve() finished"
+        cout << "c CommandControl::solve() finished"
         << " status: " << status
         << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
         << " numConflicts : " << numConflicts
         << " lastSumConfl: " << lastSumConfl
         << " maxConfls:" << maxConfls
-        << std::endl;
+        << endl;
         printStats();
 
-        std::cout << "c th " << omp_get_thread_num()
-        << " ---------" << std::endl;
+        cout << "c th " << omp_get_thread_num()
+        << " ---------" << endl;
 
     }
     //#endif
@@ -1447,7 +1449,7 @@ totally randomly
 Lit CommandControl::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "decision level: " << decisionLevel() << " ";
+    cout << "decision level: " << decisionLevel() << " ";
     #endif
 
     Lit next = lit_Undef;
@@ -1478,7 +1480,7 @@ Lit CommandControl::pickBranchLit()
         }
 
         next = Lit::toLit(order_heap.removeMin());
-        //std::cout << "Trying next: " << next << std::endl;
+        //cout << "Trying next: " << next << endl;
 
         /*
         //Try to use reachability to pick a literal that dominates this one
@@ -1510,13 +1512,13 @@ Lit CommandControl::pickBranchLit()
     //No vars in heap: solution found
     if (next == lit_Undef) {
         #ifdef VERBOSE_DEBUG
-        std::cout << "SAT!" << std::endl;
+        cout << "SAT!" << endl;
         #endif
         return lit_Undef;
     }
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "decided on: " << next << std::endl;
+    cout << "decided on: " << next << endl;
     #endif
 
     assert(control->decision_var[next.var()]);
@@ -1601,7 +1603,7 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
     cl.resize(cl.size() - (i-j));
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "c Removed further " << removedLits << " lits" << std::endl;
+    cout << "c Removed further " << removedLits << " lits" << endl;
     #endif
 }
 
@@ -1651,13 +1653,13 @@ void CommandControl::printAgilityStats()
     if (conf.verbosity >= 3
         && numConflicts % 100 == 99
     ) {
-        std::cout
+        cout
         << ", confl: " << std::setw(6) << numConflicts
         << ", rest: " << std::setw(6) << numRestarts
         << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2) << agility.getAgility()
         << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2) << conf.agilityLimit
         << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvg()
         << ", agilityHistAll: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvgAll()
-        << std::endl;
+        << endl;
     }
 }

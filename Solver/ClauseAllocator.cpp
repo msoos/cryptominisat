@@ -33,6 +33,8 @@
 #define BASE_DATA_TYPE char
 
 using std::pair;
+using std::cout;
+using std::endl;
 
 
 //For mild debug info:
@@ -110,7 +112,7 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
     assert(maxSizes.size() == dataStarts.size());
     assert(origClauseSizes.size() == dataStarts.size());
     if (dataStarts.size() == (1<<NUM_BITS_OUTER_OFFSET)) {
-        std::cerr << "Memory manager cannot handle the load. Sorry. Exiting." << std::endl;
+        std::cerr << "Memory manager cannot handle the load. Sorry. Exiting." << endl;
         exit(-1);
     }
     assert(size > 2 && "Clause size cannot be 2 or less, those are stored natively");
@@ -145,9 +147,9 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         assert(nextSize <= MAXSIZE);
 
         #ifdef DEBUG_CLAUSEALLOCATOR
-        std::cout << "c New list in ClauseAllocator. Size: " << nextSize
+        cout << "c New list in ClauseAllocator. Size: " << nextSize
         << " (maxSize: " << MAXSIZE
-        << ")" << std::endl;
+        << ")" << endl;
         #endif //DEBUG_CLAUSEALLOCATOR
 
         char *dataStart;
@@ -161,11 +163,11 @@ void* ClauseAllocator::allocEnough(const uint32_t size)
         which = dataStarts.size()-1;
     }
     #ifdef DEBUG_CLAUSEALLOCATOR2
-    std::cout
+    cout
     << "selected list = " << which
     << " size = " << sizes[which]
     << " maxsize = " << maxSizes[which]
-    << " diff = " << maxSizes[which] - sizes[which] << std::endl;
+    << " diff = " << maxSizes[which] - sizes[which] << endl;
     #endif //DEBUG_CLAUSEALLOCATOR
 
     assert(which != std::numeric_limits<uint32_t>::max());
@@ -287,7 +289,7 @@ void ClauseAllocator::consolidate(
     }
 
     #ifdef DEBUG_CLAUSEALLOCATOR
-    std::cout << "c ratio:" << (double)sum/(double)sumAlloc << std::endl;
+    cout << "c ratio:" << (double)sum/(double)sumAlloc << endl;
     #endif //DEBUG_CLAUSEALLOCATOR
 
     //If re-allocation is not really neccessary, don't do it
@@ -299,18 +301,18 @@ void ClauseAllocator::consolidate(
         && ((double)sum/(double)sumAlloc > 0.7 && sizes.size() < 10)
        ) {
         if (control->conf.verbosity >= 3) {
-            std::cout << "c Not consolidating memory." << std::endl;
+            cout << "c Not consolidating memory." << endl;
         }
         return;
     }
 
     #ifdef DEBUG_CLAUSEALLOCATOR
-    std::cout << "c ------ Consolidating Memory ------------" << std::endl;
+    cout << "c ------ Consolidating Memory ------------" << endl;
     #endif //DEBUG_CLAUSEALLOCATOR
 
     int64_t newMaxSizeNeed = (double)sum*1.2 + MIN_LIST_SIZE;
     #ifdef DEBUG_CLAUSEALLOCATOR
-    std::cout << "c newMaxSizeNeed = " << newMaxSizeNeed << std::endl;
+    cout << "c newMaxSizeNeed = " << newMaxSizeNeed << endl;
     #endif //DEBUG_CLAUSEALLOCATOR
     vector<uint32_t> newMaxSizes;
     for (uint32_t i = 0; i < (1 << NUM_BITS_OUTER_OFFSET); i++) {
@@ -336,11 +338,11 @@ void ClauseAllocator::consolidate(
         //NOTE: the + MIN_LIST_SIZE should take care of this above at
         // newMaxSizeNeed = sum + MIN_LIST_SIZE;
         #ifdef DEBUG_CLAUSEALLOCATOR
-        std::cout << "c NEW MaxSizes:" << newMaxSizes[i] << std::endl;
+        cout << "c NEW MaxSizes:" << newMaxSizes[i] << endl;
         #endif //DEBUG_CLAUSEALLOCATOR
     }
     #ifdef DEBUG_CLAUSEALLOCATOR
-    std::cout << "c ------------------" << std::endl;
+    cout << "c ------------------" << endl;
     #endif //DEBUG_CLAUSEALLOCATOR
 
     if (newMaxSizeNeed > 0)
@@ -430,8 +432,8 @@ void ClauseAllocator::consolidate(
     newOrigClauseSizes.swap(origClauseSizes);
 
     if (control->conf.verbosity >= 3) {
-        std::cout << "c Consolidated memory. Time: "
-        << cpuTime() - myTime << std::endl;
+        cout << "c Consolidated memory. Time: "
+        << cpuTime() - myTime << endl;
     }
 }
 

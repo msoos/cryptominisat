@@ -23,6 +23,8 @@
 #include "time_mem.h"
 #include "ThreadControl.h"
 #include "Subsumer.h"
+using std::cout;
+using std::endl;
 
 GateFinder::GateFinder(Subsumer *_subsumer, ThreadControl *_control) :
     numERVars(0)
@@ -154,12 +156,12 @@ uint32_t GateFinder::createNewVars()
     }
 
     if (control->conf.verbosity >= 1) {
-        std::cout << "c Added " << addedNum << " vars "
+        cout << "c Added " << addedNum << " vars "
         << " tried: " << tries
-        << " time: " << (cpuTime() - myTime) << std::endl;
+        << " time: " << (cpuTime() - myTime) << endl;
     }
-    //std::cout << "c Added " << addedNum << " vars "
-    //<< " time: " << (cpuTime() - myTime) << " numThread: " << control->threadNum << std::endl;
+    //cout << "c Added " << addedNum << " vars "
+    //<< " time: " << (cpuTime() - myTime) << " numThread: " << control->threadNum << endl;
 
     return addedNum;
 }
@@ -190,7 +192,7 @@ void GateFinder::findOrGates()
     }
 
     if (control->conf.verbosity >= 1) {
-        std::cout << "c ORs "
+        cout << "c ORs "
         << " nlearnt:" << std::setw(6) << numNonLearnt
         << " avg-s: " << std::fixed << std::setw(4) << std::setprecision(1)
         << ((double)nonLearntGatesSize/(double)numNonLearnt)
@@ -198,7 +200,7 @@ void GateFinder::findOrGates()
         << " avg-s: " << std::fixed << std::setw(4) << std::setprecision(1)
         << ((double)learntGatesSize/(double)numLearnt)
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
-        << std::endl;
+        << endl;
     }
 }
 
@@ -219,9 +221,9 @@ void GateFinder::printGateStats() const
         gateNum += !it->removed;
     }
 
-    std::cout << "c gateOcc num: " << gateOccNum
+    cout << "c gateOcc num: " << gateOccNum
     << " gateOccEq num: " << gateOccEqNum
-    << " gates size: " << gateNum << std::endl;
+    << " gates size: " << gateNum << endl;
 }
 
 bool GateFinder::treatOrGates()
@@ -236,14 +238,14 @@ bool GateFinder::treatOrGates()
     doAllOptimisationWithGates();
 
     if (control->conf.verbosity >= 1) {
-        std::cout << "c OR-based"
+        cout << "c OR-based"
         << " cl-sh: " << std::setw(5) << numOrGateReplaced
         << " l-rem: " << std::setw(6) << gateLitsRemoved
         << " v-rep: " << std::setw(3) << (control->getNewToReplaceVars() - oldNumVarToReplace)
         << " cl-rem: " << andGateNumFound
         << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)
         << " set: " << std::setw(3) << (control->trail.size() - oldTrailSize)
-        << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
+        << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << endl;
 
         if (control->conf.verboseSubsumer)
             printGateStats();
@@ -284,14 +286,14 @@ bool GateFinder::extendedResolution()
     createNewVars();
 
     if (control->conf.verbosity >= 1) {
-        std::cout << "c ORs : " << std::setw(6) << orGates.size()
+        cout << "c ORs : " << std::setw(6) << orGates.size()
         << " cl-sh: " << std::setw(5) << numOrGateReplaced
         << " l-rem: " << std::setw(6) << gateLitsRemoved
         << " b-add: " << std::setw(6) << (control->numBins - oldNumBins)
         << " v-rep: " << std::setw(3) << (control->getNewToReplaceVars() - oldNumVarToReplace)
         << " cl-rem: " << andGateNumFound
         << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)
-        << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << std::endl;
+        << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << endl;
     }
 
     return control->ok;
@@ -460,7 +462,7 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
     }
 
     #ifdef VERBOSE_ORGATE_REPLACE
-    std::cout << "Found gate : " << gate << std::endl;
+    cout << "Found gate : " << gate << endl;
     #endif
 }
 
@@ -481,9 +483,9 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
             continue;
 
         #ifdef VERBOSE_ORGATE_REPLACE
-        std::cout << "OR gate-based cl-shortening" << std::endl;
-        std::cout << "Gate used: " << gate << std::endl;
-        std::cout << "orig Clause: " << *clauses[c.index]<< std::endl;
+        cout << "OR gate-based cl-shortening" << endl;
+        cout << "Gate used: " << gate << endl;
+        cout << "orig Clause: " << *clauses[c.index]<< endl;
         #endif
 
         numOrGateReplaced++;
@@ -555,8 +557,8 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         subsumer->linkInClause(*cl);
 
         #ifdef VERBOSE_ORGATE_REPLACE
-        std::cout << "new  Clause : " << cl << std::endl;
-        std::cout << "-----------" << std::endl;
+        cout << "new  Clause : " << cl << endl;
+        cout << "-----------" << endl;
         #endif
     }
 
@@ -572,7 +574,7 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(const OrGate& gate, uint16_t& maxSiz
         sizeSortedOcc[i].clear();
 
     const Occur& csOther = subsumer->occur[(~(gate.lits[1])).toInt()];
-    //std::cout << "csother: " << csOther.size() << std::endl;
+    //cout << "csother: " << csOther.size() << endl;
     *subsumer->toDecrease -= csOther.size()*3;
     for (Occur::const_iterator it = csOther.begin(), end = csOther.end(); it != end; it++) {
         const Clause& cl = *subsumer->clauses[it->index];
@@ -703,10 +705,10 @@ bool GateFinder::treatAndGate(const OrGate& gate, const bool reallyRemove, uint3
 bool GateFinder::treatAndGateClause(const ClauseIndex& other, const OrGate& gate, const Clause& cl)
 {
     #ifdef VERBOSE_ORGATE_REPLACE
-    std::cout << "AND gate-based cl rem" << std::endl;
-    std::cout << "clause 1: " << cl << std::endl;
-    std::cout << "clause 2: " << *clauses[other.index] << std::endl;
-    std::cout << "gate : " << gate << std::endl;
+    cout << "AND gate-based cl rem" << endl;
+    cout << "clause 1: " << cl << endl;
+    cout << "clause 2: " << *clauses[other.index] << endl;
+    cout << "gate : " << gate << endl;
     #endif
 
     //Update stats
@@ -733,8 +735,8 @@ bool GateFinder::treatAndGateClause(const ClauseIndex& other, const OrGate& gate
     else glue = std::min(otherCl.getGlue(), cl.getGlue());
 
     #ifdef VERBOSE_ORGATE_REPLACE
-    std::cout << "new clause:" << lits << std::endl;
-    std::cout << "-----------" << std::endl;
+    cout << "new clause:" << lits << endl;
+    cout << "-----------" << endl;
     #endif
 
     //Create and link in new clause
@@ -781,7 +783,7 @@ void GateFinder::printDot()
     ss << "Gates" << (numDotPrinted++) << ".dot";
     std::string filenename = ss.str();
     std::ofstream file(filenename.c_str(), std::ios::out);
-    file << "digraph G {" << std::endl;
+    file << "digraph G {" << endl;
     uint32_t index = 0;
     vector<bool> gateUsed;
     gateUsed.resize(orGates.size(), false);
@@ -799,7 +801,7 @@ void GateFinder::printDot()
                 file << "Gate" << index;
                 gateUsed[index] = true;
 
-                file << "[arrowsize=\"0.4\"];" << std::endl;
+                file << "[arrowsize=\"0.4\"];" << endl;
             }
 
             vector<uint32_t>& occ2 = gateOccEq[(~*it2).toInt()];
@@ -813,7 +815,7 @@ void GateFinder::printDot()
                 file << "Gate" << index;
                 gateUsed[index] = true;
 
-                file << "[style = \"dotted\", arrowsize=\"0.4\"];" << std::endl;
+                file << "[style = \"dotted\", arrowsize=\"0.4\"];" << endl;
             }
         }
     }
@@ -827,13 +829,13 @@ void GateFinder::printDot()
             file << ", style=\"filled\"";
             if (it->learnt) file << ", color=\"darkseagreen4\"";
             else file << ", color=\"darkseagreen\"";
-            file << "];" << std::endl;
+            file << "];" << endl;
         }
     }
 
-    file  << "}" << std::endl;
+    file  << "}" << endl;
     file.close();
-    std::cout << "c Printed gate structure to file " << filenename << std::endl;
+    cout << "c Printed gate structure to file " << filenename << endl;
 }
 
 void GateFinder::newVar()

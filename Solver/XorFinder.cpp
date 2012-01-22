@@ -26,6 +26,8 @@
 #include "Subsumer.h"
 #include <limits>
 #include "m4ri.h"
+using std::cout;
+using std::endl;
 
 XorFinder::XorFinder(Subsumer* _subsumer, ThreadControl* _control) :
     subsumer(_subsumer)
@@ -60,8 +62,8 @@ bool XorFinder::findXors()
     }
 
     if (control->getVerbosity() >= 1) {
-        std::cout << "c XOR finding finished. Num XORs: " << std::setw(6) << xors.size()
-        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime) << std::setw(6) << std::endl;
+        cout << "c XOR finding finished. Num XORs: " << std::setw(6) << xors.size()
+        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime) << std::setw(6) << endl;
     }
 
     if (xors.size() > 0)
@@ -102,8 +104,8 @@ bool XorFinder::extractInfo()
 
     //Cut above-filtered XORs into blocks
     cutIntoBlocks(xorsToUse);
-    std::cout << "c Cut XORs into " << numBlocks << " block(s), sum vars: " << numVarsInBlocks
-    << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time) << std::endl;
+    cout << "c Cut XORs into " << numBlocks << " block(s), sum vars: " << numVarsInBlocks
+    << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time) << endl;
 
     //These mappings will be needed for the matrixes, which will have far less
     //variables than control->nVars()
@@ -127,12 +129,12 @@ bool XorFinder::extractInfo()
         if (!extractInfoFromBlock(*it, i))
             return false;
 
-        //std::cout << "New units this round: " << (newUnits - oldNewUnits) << std::endl;
-        //std::cout << "New bins this round: " << (newBins - oldNewBins) << std::endl;
+        //cout << "New units this round: " << (newUnits - oldNewUnits) << endl;
+        //cout << "New bins this round: " << (newBins - oldNewBins) << endl;
     }
-    std::cout << "c Extracted XOR info. Units: " << newUnits << " Bins: " << newBins
+    cout << "c Extracted XOR info. Units: " << newUnits << " Bins: " << newBins
     << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time)
-    << std::endl;
+    << endl;
 
     return true;
 }
@@ -337,10 +339,10 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
         if (it->empty())
             continue;
 
-        //std::cout << "Block vars: " << it->size() << std::endl;
+        //cout << "Block vars: " << it->size() << endl;
         numVarsInBlocks += it->size();
     }
-    //std::cout << "Sum vars in blocks: " << numVarsInBlocks << std::endl;
+    //cout << "Sum vars in blocks: " << numVarsInBlocks << endl;
 }
 
 void XorFinder::findXor(ClauseIndex c)
@@ -383,7 +385,7 @@ void XorFinder::findXor(ClauseIndex c)
         Xor thisXor(cl, rhs);
         assert(xorOcc.size() > cl[0].var());
         #ifdef VERBOSE_DEBUG_XOR_FINDER
-        std::cout << "XOR found: " << cl << std::endl;
+        cout << "XOR found: " << cl << endl;
         #endif
 
         //Have we found this XOR clause already?
@@ -443,7 +445,7 @@ void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
         if (subsumer->clauseData[index].size <= foundCls.getSize()) { //Must not be larger than the original clauses
             Clause& cl = *subsumer->clauses[index];
             tmpClause.clear();
-            //std::cout << "Orig clause: " << foundCls.getOrigCl() << std::endl;
+            //cout << "Orig clause: " << foundCls.getOrigCl() << endl;
 
             bool rhs = true;
             uint32_t i = 0;
@@ -458,7 +460,7 @@ void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
                             seen2[l->var()] = true;
                             rhs ^= it2->getLit().sign();
                             tmpClause.push_back(it2->getLit());
-                            //std::cout << "Added trans lit: " << tmpClause.back() << std::endl;
+                            //cout << "Added trans lit: " << tmpClause.back() << endl;
                         }
                     }
 
@@ -470,7 +472,7 @@ void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
                         seen2[l->var()] = true;
                         rhs ^= l->sign();
                         tmpClause.push_back(*l);
-                        //std::cout << "Added lit: " << tmpClause.back() << std::endl;
+                        //cout << "Added lit: " << tmpClause.back() << endl;
                     } else {
                         goto end; //HACK: we don't want both 'lit' and '~lit' end up in the clause
                     }
@@ -487,11 +489,11 @@ void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
                 triedAlready[index] = 1;
 
             std::sort(tmpClause.begin(), tmpClause.end());
-            //std::cout << "OK!" << std::endl;
+            //cout << "OK!" << endl;
             foundCls.add(tmpClause);
 
             end:;
-            //std::cout << "Not OK" << std::endl;
+            //cout << "Not OK" << endl;
             //Clear 'seen2'
             for(vector<Lit>::const_iterator it = tmpClause.begin(), end = tmpClause.end(); it != end; it++) {
                 seen2[it->var()] = false;

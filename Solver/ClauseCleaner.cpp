@@ -72,8 +72,8 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
         ws.shrink_(i - j);
     }
 
-    //std::cout << "removedHalfLeart: " << numRemovedHalfLearnt << std::endl;
-    //std::cout << "removedHalfNonLeart: " << numRemovedHalfNonLearnt << std::endl;
+    //cout << "removedHalfLeart: " << numRemovedHalfLearnt << endl;
+    //cout << "removedHalfNonLeart: " << numRemovedHalfNonLearnt << endl;
     assert(numRemovedHalfLearnt % 2 == 0);
     assert(numRemovedHalfNonLearnt % 2 == 0);
     control->clausesLits -= numRemovedHalfNonLearnt;
@@ -92,7 +92,7 @@ void ClauseCleaner::cleanClauses(vector<Clause*>& cs, ClauseSetType type, const 
         return;
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "Cleaning " << (type==binaryClauses ? "binaryClauses" : "normal clauses" ) << std::endl;
+    cout << "Cleaning " << (type==binaryClauses ? "binaryClauses" : "normal clauses" ) << endl;
     #endif //VERBOSE_DEBUG
 
     vector<Clause*>::iterator s, ss, end;
@@ -111,7 +111,7 @@ void ClauseCleaner::cleanClauses(vector<Clause*>& cs, ClauseSetType type, const 
     lastNumUnitaryClean[type] = control->getNumUnitaries();
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << std::endl;
+    cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << endl;
     #endif
 }
 

@@ -23,6 +23,8 @@
 #include "VarReplacer.h"
 #include "Subsumer.h"
 #include "ThreadControl.h"
+using std::cout;
+using std::endl;
 
 SolutionExtender::SolutionExtender(ThreadControl* _control, const vector<lbool>& _assigns) :
     control(_control)
@@ -44,7 +46,7 @@ void SolutionExtender::extend()
 {
 
     if (control->conf.verbosity >= 3) {
-        std::cout << "c Extending solution" << std::endl;
+        cout << "c Extending solution" << endl;
     }
 
     /*if (greedyUnbound) {
@@ -52,7 +54,7 @@ void SolutionExtender::extend()
         FindUndef finder(*this);
         const uint32_t unbounded = finder.unRoll();
         if (conf.verbosity >= 1)
-            std::cout << "c Greedy unbounding     : " << (cpuTime()-time) << ", unbounded: " << unbounded << " vars" << std::endl;
+            cout << "c Greedy unbounding     : " << (cpuTime()-time) << ", unbounded: " << unbounded << " vars" << endl;
     }*/
 
     assert(control->subsumer->checkElimedUnassigned());
@@ -82,23 +84,23 @@ void SolutionExtender::extend()
     }
 
     if (control->conf.verbosity >= 3) {
-        std::cout << "c Adding equivalent literals" << std::endl;
+        cout << "c Adding equivalent literals" << endl;
     }
     control->varReplacer->extendModel(this);
 
     if (control->conf.verbosity >= 3) {
-        std::cout << "c Picking braches and propagating" << std::endl;
+        cout << "c Picking braches and propagating" << endl;
     }
     while(pickBranchLit() != lit_Undef) {
         const bool OK = propagate();
         if (!OK) {
-            std::cout << "Error! While picking lit and propagating after solution reconstruction" << std::endl;
+            cout << "Error! While picking lit and propagating after solution reconstruction" << endl;
             exit(-1);
         }
     }
 
     if (control->conf.verbosity >= 3) {
-        std::cout << "c Adding blocked clauses" << std::endl;
+        cout << "c Adding blocked clauses" << endl;
     }
     control->subsumer->extendModel(this);
 
@@ -139,7 +141,7 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
 {
     assert(qhead == trail.size());
     if (control->conf.verbosity >= 3) {
-        std::cout << "c Adding blocked clause: " << cl << std::endl;
+        cout << "c Adding blocked clause: " << cl << endl;
     }
 
     vector<Lit> lits = cl.lits;
@@ -157,7 +159,7 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
     //Nothing is UNDEF and it's not satisfied!
     assert(value(blockedOn) == l_False);
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    std::cout << "c recursively flipping to " << blockedOn << std::endl;
+    cout << "c recursively flipping to " << blockedOn << endl;
     #endif
     assert(control->varData[blockedOn.var()].level != 0); // we cannot flip forced vars!!
     enqueue(blockedOn);
@@ -175,13 +177,13 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
         }
     }
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    std::cout << "c recursive flip(s) done." << std::endl;
+    cout << "c recursive flip(s) done." << endl;
     #endif
 
     //Propagate&check, see what happens
     bool OK = propagate();
     if (!OK) {
-        std::cout << "Error! Propagation leads to failure after flipping of value" << std::endl;
+        cout << "Error! Propagation leads to failure after flipping of value" << endl;
         exit(-1);
     }
 }
@@ -205,7 +207,7 @@ bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
     lits.resize(lits.size()-(i-j));
 
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    std::cout << "c Adding extend clause: " << lits << std::endl;
+    cout << "c Adding extend clause: " << lits << endl;
     #endif
 
     if (lits.size() == 0) return false;
@@ -231,7 +233,7 @@ bool SolutionExtender::propagate()
         for(vector<MyClause*>::const_iterator it = occ.begin(), end = occ.end(); it != end; it++) {
             const bool thisRet = propagateCl(**it);
             if (!thisRet) {
-                std::cout << "Problem with clause: " << (*it)->getLits() << std::endl;
+                cout << "Problem with clause: " << (*it)->getLits() << endl;
             }
             ret &= thisRet;
         }
@@ -256,7 +258,7 @@ bool SolutionExtender::propagateCl(MyClause& cl)
     }
     if (numUndef == 1) {
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
-        std::cout << "c Due to cl " << cl.getLits() << " propagate enqueueing " << lastUndef << std::endl;
+        cout << "c Due to cl " << cl.getLits() << " propagate enqueueing " << lastUndef << endl;
         #endif
         enqueue(lastUndef);
     }
@@ -272,7 +274,7 @@ Lit SolutionExtender::pickBranchLit()
         if (value(var) == l_Undef) {
             Lit toEnqueue = Lit(var, false);
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
-            std::cout << "c Picking lit for reconstruction: " << toEnqueue << std::endl;
+            cout << "c Picking lit for reconstruction: " << toEnqueue << endl;
             #endif
             enqueue(toEnqueue);
             return toEnqueue;
@@ -286,7 +288,7 @@ void SolutionExtender::enqueue(const Lit lit)
     assigns[lit.var()] = boolToLBool(!lit.sign());
     trail.push_back(lit);
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    std::cout << "c Enqueueing lit " << lit << " during solution reconstruction" << std::endl;
+    cout << "c Enqueueing lit " << lit << " during solution reconstruction" << endl;
     #endif
     control->varData[lit.var()].level = std::numeric_limits< uint32_t >::max();
 }

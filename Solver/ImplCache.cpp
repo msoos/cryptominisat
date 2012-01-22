@@ -28,6 +28,8 @@
 #include "CommandControl.h"
 #include "VarReplacer.h"
 #include "time_mem.h"
+using std::cout;
+using std::endl;
 
 void ImplCache::clean(ThreadControl* control)
 {
@@ -126,11 +128,11 @@ void ImplCache::clean(ThreadControl* control)
     }
 
     if (control->conf.verbosity >= 1) {
-        std::cout << "c Cache cleaned."
+        cout << "c Cache cleaned."
         << " Updated: " << std::setw(7) << numUpdated/1000 << " K"
         << " Cleaned: " << std::setw(7) << numCleaned/1000 << " K"
         << " Freed: " << std::setw(7) << numFreed/1000 << " K"
-        << " T: " << std::setprecision(2) << std::fixed  << (cpuTime()-myTime) << std::endl;
+        << " T: " << std::setprecision(2) << std::fixed  << (cpuTime()-myTime) << endl;
     }
 }
 
@@ -221,12 +223,12 @@ bool ImplCache::tryBoth(ThreadControl* control)
 
     end:
     if (control->conf.verbosity >= 1) {
-        std::cout << "c Cache " <<
+        cout << "c Cache " <<
         " BProp: " << bProp <<
         " Set: " << (control->trail.size() - backupTrailSize) <<
         " BXProp: " << bXProp <<
         " T: " << (cpuTime() - myTime) <<
-        std::endl;
+        endl;
     }
 
     return control->ok;

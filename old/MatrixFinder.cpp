@@ -91,7 +91,7 @@ const bool MatrixFinder::findMatrixes()
 
     if (!ccsolver.gaussconfig.doSeparateMatrixFind) {
         if (ccsolver.conf.verbosity >=1)
-            std::cout << "c Matrix finding disabled. Putting all xors into one matrix." << std::endl;
+            cout << "c Matrix finding disabled. Putting all xors into one matrix." << endl;
         vector<XorClause*> xorclauses;
         xorclauses.reserve(ccsolver.xorclauses.size());
         for (uint32_t i = 0; i < ccsolver.xorclauses.size(); i++)
@@ -131,20 +131,20 @@ const bool MatrixFinder::findMatrixes()
 
     #ifdef VERBOSE_DEBUG
     for (map<uint32_t, vector<Var> >::iterator it = reverseTable.begin(), end = reverseTable.end(); it != end; it++) {
-        std::cout << "-- set begin --" << std::endl;
+        cout << "-- set begin --" << endl;
         for (vector<Var>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
-            std::cout << *it2 << ", ";
+            cout << *it2 << ", ";
         }
-        std::cout << "-------" << std::endl;
+        cout << "-------" << endl;
     }
     #endif
 
     uint32_t numMatrixes = setMatrixes();
 
     if (ccsolver.conf.verbosity >=1)
-        std::cout << "c Finding matrixes :    " << cpuTime() - myTime
+        cout << "c Finding matrixes :    " << cpuTime() - myTime
         << " s (found  " << numMatrixes << ")"
-        << std::endl;
+        << endl;
 
     for (vector<Gaussian*>::iterator gauss = ccsolver.gauss_matrixes.begin(), end = ccsolver.gauss_matrixes.end(); gauss != end; gauss++) {
         if (!(*gauss)->full_init()) return false;
@@ -211,19 +211,19 @@ const uint32_t MatrixFinder::setMatrixes()
             && realMatrixNum <= ccsolver.gaussconfig.maxNumMatrixes)
         {
             if (ccsolver.conf.verbosity >=1)
-                std::cout << "c Matrix no " << std::setw(2) << realMatrixNum;
+                cout << "c Matrix no " << std::setw(2) << realMatrixNum;
             ccsolver.gauss_matrixes.push_back(new Gaussian(ccsolver, ccsolver.gaussconfig, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
 
         } else {
             if (ccsolver.conf.verbosity >=1  /*&& numXorInMatrix[a].second >= 20*/)
-                std::cout << "c Unused Matrix ";
+                cout << "c Unused Matrix ";
         }
         if (ccsolver.conf.verbosity >=1 /*&& numXorInMatrix[a].second >= 20*/) {
-            std::cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
-            std::cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
-            std::cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
-            std::cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << std::endl;
+            cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
+            cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
+            cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
+            cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << endl;
         }
     }
 
@@ -240,7 +240,7 @@ void MatrixFinder::findParts(vector<Var>& xorFingerprintInMatrix, vector<XorClau
             if (ai == ai2) continue;
             const Var fingerprint2 = xorFingerprintInMatrix[ai2];
             if (((fingerprint & fingerprint2) == fingerprint) && firstPartOfSecond(**a, **a2)) {
-                std::cout << "First part of second:" << **a << " " << **a2 << "END" << std::endl;
+                cout << "First part of second:" << **a << " " << **a2 << "END" << endl;
             }
         }
     }

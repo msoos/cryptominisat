@@ -23,6 +23,8 @@
 #include "assert.h"
 #include "time_mem.h"
 #include "ThreadControl.h"
+using std::cout;
+using std::endl;
 
 CalcDefPolars::CalcDefPolars(ThreadControl* _control) :
     control(_control)
@@ -105,7 +107,7 @@ const vector<char> CalcDefPolars::calculate()
     //Print results
     if (control->conf.verbosity >= 3) {
         #pragma omp critical
-        std::cout << "c Calc default polars - "
+        cout << "c Calc default polars - "
         << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime) << " s"
         << " pos: " << std::setw(7) << posPolars
         << " undec: " << std::setw(7) << undecidedPolars

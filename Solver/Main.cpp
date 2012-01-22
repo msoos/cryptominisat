@@ -49,6 +49,8 @@ number of benefits relative to MiniSat.
 #include <boost/program_options.hpp>
 using boost::lexical_cast;
 namespace po = boost::program_options;
+using std::cout;
+using std::endl;
 
 Main::Main(int _argc, char** _argv) :
         numThreads(1)
@@ -76,12 +78,12 @@ is used to achieve this
 void SIGINT_handler(int)
 {
     ThreadControl* control = solverToInterrupt;
-    std::cout << "c " << std::endl;
-    std::cerr << "*** INTERRUPTED ***" << std::endl;
+    cout << "c " << endl;
+    std::cerr << "*** INTERRUPTED ***" << endl;
     if (control->getNeedToDumpLearnts() || control->getNeedToDumpOrig()) {
         control->setNeedToInterrupt();
-        std::cerr << "*** Please wait. We need to interrupt cleanly" << std::endl;
-        std::cerr << "*** This means we might need to finish some calculations" << std::endl;
+        std::cerr << "*** Please wait. We need to interrupt cleanly" << endl;
+        std::cerr << "*** This means we might need to finish some calculations" << endl;
     } else {
         if (control->getVerbosity() >= 1)
             control->printStats();
@@ -92,7 +94,7 @@ void SIGINT_handler(int)
 void Main::readInAFile(const std::string& filename)
 {
     if (conf.verbosity >= 1) {
-        std::cout << "c Reading file '" << filename << "'" << std::endl;
+        cout << "c Reading file '" << filename << "'" << endl;
     }
     #ifdef DISABLE_ZLIB
         FILE * in = fopen(filename.c_str(), "rb");
@@ -101,7 +103,7 @@ void Main::readInAFile(const std::string& filename)
     #endif // DISABLE_ZLIB
 
     if (in == NULL) {
-        std::cout << "ERROR! Could not open file '" << filename << "' for reading" << std::endl;
+        cout << "ERROR! Could not open file '" << filename << "' for reading" << endl;
         exit(1);
     }
 
@@ -118,7 +120,7 @@ void Main::readInAFile(const std::string& filename)
 void Main::readInStandardInput()
 {
     if (control->getVerbosity()) {
-        std::cout << "c Reading from standard input... Use '-h' or '--help' for help." << std::endl;
+        cout << "c Reading from standard input... Use '-h' or '--help' for help." << endl;
     }
     #ifdef DISABLE_ZLIB
         FILE * in = stdin;
@@ -127,7 +129,7 @@ void Main::readInStandardInput()
     #endif // DISABLE_ZLIB
 
     if (in == NULL) {
-        std::cout << "ERROR! Could not open standard input for reading" << std::endl;
+        cout << "ERROR! Could not open standard input for reading" << endl;
         exit(1);
     }
 
@@ -145,7 +147,7 @@ void Main::parseInAllFiles()
 
     //First read normal extra files
     if ((debugLib || debugNewVar) && filesToRead.size() > 0) {
-        std::cout << "debugNewVar and debugLib must both be OFF to parse in extra files" << std::endl;
+        cout << "debugNewVar and debugLib must both be OFF to parse in extra files" << endl;
         exit(-1);
     }
 
@@ -157,20 +159,20 @@ void Main::parseInAllFiles()
         readInStandardInput();
 
     if (conf.verbosity >= 1) {
-        std::cout << "c Parsing time: "
+        cout << "c Parsing time: "
         << std::fixed << std::setw(5) << std::setprecision(2) << (cpuTime() - myTime)
-        << " s" << std::endl;
+        << " s" << endl;
     }
 }
 
 void Main::printResultFunc(const lbool ret)
 {
     if (ret == l_True) {
-        if (!printResult) std::cout << "c SATISFIABLE" << std::endl;
-        else              std::cout << "s SATISFIABLE" << std::endl;
+        if (!printResult) cout << "c SATISFIABLE" << endl;
+        else              cout << "s SATISFIABLE" << endl;
     } else if (ret == l_False) {
-        if (!printResult) std::cout << "c UNSATISFIABLE" << std::endl;
-        else              std::cout << "s UNSATISFIABLE" << std::endl;
+        if (!printResult) cout << "c UNSATISFIABLE" << endl;
+        else              cout << "s UNSATISFIABLE" << endl;
     }
 
     if(ret == l_True && printResult) {
@@ -179,8 +181,8 @@ void Main::printResultFunc(const lbool ret)
         for (Var var = 0; var != control->nVars(); var++)
             if (control->model[var] != l_Undef)
                 toPrint << ((control->model[var] == l_True)? "" : "-") << var+1 << " ";
-            toPrint << "0" << std::endl;
-        std::cout << toPrint.str();
+            toPrint << "0" << endl;
+        cout << toPrint.str();
     }
 }
 
@@ -336,17 +338,17 @@ void Main::parseCommandLine()
     po::notify(vm);
 
     if (vm.count("help")) {
-        std::cout
-        << "USAGE: " << argv[0] << " [options] <input-files>" << std::endl
+        cout
+        << "USAGE: " << argv[0] << " [options] <input-files>" << endl
         << " where input is "
         #ifdef DISABLE_ZLIB
         << "plain"
         #else
         << "plain or gzipped"
         #endif // DISABLE_ZLIB
-        << " DIMACS." << std::endl;
+        << " DIMACS." << endl;
 
-        std::cout << cmdline_options << std::endl;
+        cout << cmdline_options << endl;
         exit(0);
     }
 
@@ -363,7 +365,7 @@ void Main::parseCommandLine()
     if (vm.count("rnd-freq")) {
         conf.random_var_freq = vm["rnd-freq"].as<double>();
         if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
-            std::cout << "ERROR! illegal rnRSE ERROR!d-freq constant " << conf.random_var_freq << std::endl;
+            cout << "ERROR! illegal rnRSE ERROR!d-freq constant " << conf.random_var_freq << endl;
             exit(-1);
         }
     }
@@ -616,7 +618,7 @@ void Main::parseCommandLine()
     }
 
     if (conf.verbosity >= 1) {
-        std::cout << "c Outputting solution to console" << std::endl;
+        cout << "c Outputting solution to console" << endl;
     }
 
     if (!debugLib) conf.libraryUsage = false;
@@ -625,11 +627,11 @@ void Main::parseCommandLine()
 void Main::printVersionInfo(const uint32_t verbosity)
 {
     if (verbosity >= 1) {
-        std::cout << "c This is CryptoMiniSat " << VERSION << std::endl;
+        cout << "c This is CryptoMiniSat " << VERSION << endl;
         #ifdef __GNUC__
-        std::cout << "c compiled with gcc version " << __VERSION__ << std::endl;
+        cout << "c compiled with gcc version " << __VERSION__ << endl;
         #else
-        std::cout << "c compiled with non-gcc compiler" << std::endl;
+        cout << "c compiled with non-gcc compiler" << endl;
         #endif
     }
 }
@@ -649,7 +651,7 @@ int Main::solve()
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
-            if (conf.verbosity >= 1) std::cout << "c Prepare for next run..." << std::endl;
+            if (conf.verbosity >= 1) cout << "c Prepare for next run..." << endl;
             printResultFunc(ret);
 
             if (doBanFoundSolution) {
@@ -667,27 +669,27 @@ int Main::solve()
     /*
     if (conf.needToDumpLearnts) {
         control->dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
-        std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
+        cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << endl;
     }
     if (conf.needToDumpOrig) {
         if (ret == l_False && conf.origFilename == "stdout") {
-            std::cout << "p cnf 0 1" << std::endl;
-            std::cout << "0";
+            cout << "p cnf 0 1" << endl;
+            cout << "0";
         } else if (ret == l_True && conf.origFilename == "stdout") {
-            std::cout << "p cnf " << control->model.size() << " " << control->model.size() << std::endl;
+            cout << "p cnf " << control->model.size() << " " << control->model.size() << endl;
             for (uint32_t i = 0; i < control->model.size(); i++) {
-                std::cout << (control->model[i] == l_True ? "" : "-") << i+1 << " 0" << std::endl;
+                cout << (control->model[i] == l_True ? "" : "-") << i+1 << " 0" << endl;
             }
         } else {
             control->dumpOrigClauses(conf.origFilename);
             if (conf.verbosity >= 1)
-                std::cout << "c Simplified original clauses dumped to file '"
-                << conf.origFilename << "'" << std::endl;
+                cout << "c Simplified original clauses dumped to file '"
+                << conf.origFilename << "'" << endl;
         }
     }*/
 
     if (ret == l_Undef && conf.verbosity >= 1) {
-        std::cout << "c Not finished running -- signal caught or maximum restart reached" << std::endl;
+        cout << "c Not finished running -- signal caught or maximum restart reached" << endl;
     }
     if (conf.verbosity >= 1) control->printStats();
 
@@ -703,7 +705,7 @@ int Main::correctReturnValue(const lbool ret) const
     else if (ret == l_False) retval = 20;
     else if (ret == l_Undef) retval = 15;
     else {
-        std::cerr << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True" << std::endl;
+        std::cerr << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True" << endl;
         exit(-1);
     }
 
@@ -721,21 +723,21 @@ int main(int argc, char** argv)
     try {
         main.parseCommandLine();
     } catch (boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::program_options::unknown_option> >& c) {
-        std::cout << "ERROR! Some option you gave was wrong. Please give '--help' to get help" << std::endl;
-        std::cout << "Unparsed option: '" << c.get_option_name() << "'" << std::endl;
+        cout << "ERROR! Some option you gave was wrong. Please give '--help' to get help" << endl;
+        cout << "Unparsed option: '" << c.get_option_name() << "'" << endl;
         exit(-1);
     } catch (boost::bad_any_cast &e) {
-        std::cerr << "ERROR! You probably gave a wrong argument type (Bad cast). " << e.what() << std::endl;
+        std::cerr << "ERROR! You probably gave a wrong argument type (Bad cast). " << e.what() << endl;
         exit(-1);
     } catch (boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::program_options::invalid_option_value> > what) {
-        std::cerr << "ERROR! " << what.what() << std::endl;
+        std::cerr << "ERROR! " << what.what() << endl;
         exit(-1);
     } catch (boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::program_options::multiple_occurrences> >& c) {
-        std::cerr << "ERROR! Multiple occurrences of option: " << c.get_option_name() << std::endl;
+        std::cerr << "ERROR! Multiple occurrences of option: " << c.get_option_name() << endl;
         exit(-1);
     } catch (WrongParam& w) {
-        std::cerr << "ERROR! Option parameter '" << w.getParam() << "' is wrong" << std::endl;
-        std::cerr << "Specific error message: " << w.getMsg() << std::endl;
+        std::cerr << "ERROR! Option parameter '" << w.getParam() << "' is wrong" << endl;
+        std::cerr << "Specific error message: " << w.getMsg() << endl;
         exit(-1);
     }
 

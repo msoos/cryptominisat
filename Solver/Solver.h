@@ -248,7 +248,7 @@ inline void Solver::newDecisionLevel()
 {
     trail_lim.push_back(trail.size());
     #ifdef VERBOSE_DEBUG
-    std::cout << "New decision level: " << trail_lim.size() << std::endl;
+    cout << "New decision level: " << trail_lim.size() << endl;
     #endif
 }
 
@@ -298,11 +298,11 @@ inline void Solver::enqueue(const Lit p, const PropBy from)
     #ifndef VERBOSE_DEBUG
     if (decisionLevel() == 0)
     #endif //VERBOSE_DEBUG
-    std::cout << "enqueue var " << p.var()+1
+    cout << "enqueue var " << p.var()+1
     << " to val " << !p.sign()
     << " level: " << decisionLevel()
     << " sublevel: " << trail.size()
-    << " by: " << from << std::endl;
+    << " by: " << from << endl;
     #endif //DEBUG_ENQUEUE_LEVEL0
 
     #ifdef ENQUEUE_DEBUG
@@ -316,7 +316,7 @@ inline void Solver::enqueue(const Lit p, const PropBy from)
 
     assigns[v] = boolToLBool(!p.sign());
     #ifdef ANIMATE3D
-    std::cerr << "s " << v << " " << p.sign() << std::endl;
+    std::cerr << "s " << v << " " << p.sign() << endl;
     #endif
     varData[v].reason = from;
     trail.push_back(p);
@@ -333,9 +333,9 @@ inline void Solver::enqueueComplex(const Lit p, const Lit ancestor, const bool l
     if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].begin());
 
     #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "Enqueing " << p
+    cout << "Enqueing " << p
     << " with ancestor: " << ancestor
-    << " learntStep: " << learntStep << std::endl;
+    << " learntStep: " << learntStep << endl;
      #endif
 
     const Var var = p.var();
@@ -380,12 +380,12 @@ hop backwards from thisAncestor until:
 inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor)
 {
     #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "isAncestorOf."
+    cout << "isAncestorOf."
     << "conflict: " << conflict
     << " thisAncestor: " << thisAncestor
     << " thisStepLearnt: " << thisStepLearnt
     << " onlyNonLearnt: " << onlyNonLearnt
-    << " lookingForAncestor: " << lookingForAncestor << std::endl;
+    << " lookingForAncestor: " << lookingForAncestor << endl;
     #endif
 
     //Was propagated at level 0 -- clauseCleaner will remove the clause
@@ -393,22 +393,22 @@ inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const boo
 
     if (lookingForAncestor == thisAncestor) {
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Last position inside prop queue is not saved during propFull" << std::endl
-        << "This may be the same exact binary clause -- not removing" << std::endl;
+        cout << "Last position inside prop queue is not saved during propFull" << endl
+        << "This may be the same exact binary clause -- not removing" << endl;
         #endif
         return false;
     }
 
     #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "Looking for ancestor of " << conflict << " : " << lookingForAncestor << std::endl;
-    std::cout << "This step is learnt? " << (thisStepLearnt ? "yes" : "false") << std::endl;
-    std::cout << "Only non-learnt is acceptable?" << (onlyNonLearnt ? "yes" : "no") << std::endl;
-    std::cout << "This step would be learnt?" << (thisStepLearnt ? "yes" : "no") << std::endl;
+    cout << "Looking for ancestor of " << conflict << " : " << lookingForAncestor << endl;
+    cout << "This step is learnt? " << (thisStepLearnt ? "yes" : "false") << endl;
+    cout << "Only non-learnt is acceptable?" << (onlyNonLearnt ? "yes" : "no") << endl;
+    cout << "This step would be learnt?" << (thisStepLearnt ? "yes" : "no") << endl;
     #endif
 
     if (onlyNonLearnt && thisStepLearnt) {
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "This step doesn't work -- is learnt but needs non-learnt" << std::endl;
+        cout << "This step doesn't work -- is learnt but needs non-learnt" << endl;
         #endif
         return false;
     }
@@ -416,22 +416,22 @@ inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const boo
     bogoProps += 1;
     while(thisAncestor != lit_Undef) {
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Current acestor: " << thisAncestor
+        cout << "Current acestor: " << thisAncestor
         << " its learnt-ness: " << propData[thisAncestor.var()].learntStep
-        << std::endl;
+        << endl;
         #endif
 
         if (thisAncestor == conflict) {
             #ifdef VERBOSE_DEBUG_FULLPROP
-            std::cout << "We are trying to step over the conflict."
-            << " That would create a loop." << std::endl;
+            cout << "We are trying to step over the conflict."
+            << " That would create a loop." << endl;
             #endif
             return false;
         }
 
         if (thisAncestor == lookingForAncestor) {
             #ifdef VERBOSE_DEBUG_FULLPROP
-            std::cout << "Ancestor found" << std::endl;
+            cout << "Ancestor found" << endl;
             #endif
             return true;
         }
@@ -441,7 +441,7 @@ inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const boo
             || data.hyperBinNotAdded
         ) {
             #ifdef VERBOSE_DEBUG_FULLPROP
-            std::cout << "Wrong kind of hop would be needed" << std::endl;
+            cout << "Wrong kind of hop would be needed" << endl;
             #endif
             return false;  //reached learnt hop (but this is non-learnt)
         }
@@ -450,7 +450,7 @@ inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const boo
     }
 
     #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "Exit, reached root" << std::endl;
+    cout << "Exit, reached root" << endl;
     #endif
 
     return false;
@@ -461,9 +461,9 @@ inline void Solver::addHyperBin(const Lit p, const Lit lit1, const Lit lit2)
     assert(value(p.var()) == l_Undef);
 
     #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "Enqueing " << p
+    cout << "Enqueing " << p
     << " with ancestor 3-long clause: " << p << " , " << lit1 << " , " << lit2
-    << std::endl;
+    << endl;
     #endif
 
     assert(value(lit1) == l_False);
@@ -484,9 +484,9 @@ inline void Solver::addHyperBin(const Lit p, const Clause& cl)
     assert(value(p.var()) == l_Undef);
 
     #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "Enqueing " << p
+    cout << "Enqueing " << p
     << " with ancestor clause: " << cl
-    << std::endl;
+    << endl;
      #endif
 
     currAncestors.clear();
@@ -512,12 +512,12 @@ inline void Solver::addHyperBin(const Lit p)
         toClear.clear();
         while(foundLit == lit_Undef) {
             #ifdef VERBOSE_DEBUG_FULLPROP
-            std::cout << "LEVEL addHyperBin" << std::endl;
+            cout << "LEVEL addHyperBin" << endl;
             #endif
             for (vector<Lit>::iterator it = currAncestors.begin(), end = currAncestors.end(); it != end; it++) {
                 if (*it == lit_Undef)  {
                     #ifdef VERBOSE_DEBUG_FULLPROP
-                    std::cout << "seen lit_Undef" << std::endl;
+                    cout << "seen lit_Undef" << endl;
                     #endif
                     continue;
                 }
@@ -527,7 +527,7 @@ inline void Solver::addHyperBin(const Lit p)
                     toClear.push_back(*it);
 
                 #ifdef VERBOSE_DEBUG_FULLPROP
-                std::cout << "seen " << *it << " : " << seen[it->toInt()] << std::endl;
+                cout << "seen " << *it << " : " << seen[it->toInt()] << endl;
                 #endif
 
                 if (seen[it->toInt()] == currAncestors.size()) {
@@ -545,7 +545,7 @@ inline void Solver::addHyperBin(const Lit p)
         }
 
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Adding hyper-bin clause: " << p << " , " << ~foundLit << std::endl;
+        cout << "Adding hyper-bin clause: " << p << " , " << ~foundLit << endl;
         #endif
         needToAddBinClause.insert(BinaryClause(p, ~foundLit, true));
     } else {
@@ -553,7 +553,7 @@ inline void Solver::addHyperBin(const Lit p)
         assert(currAncestors.size() > 0);
 
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Not adding hyper-bin because only ONE lit is not set at level 0 in long clause" << std::endl;
+        cout << "Not adding hyper-bin because only ONE lit is not set at level 0 in long clause" << endl;
         #endif
         foundLit = currAncestors[0];
     }
@@ -605,14 +605,14 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
     Lit foundLit = lit_Undef;
     while(foundLit == lit_Undef) {
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "LEVEL analyzeFail" << std::endl;
+        cout << "LEVEL analyzeFail" << endl;
         #endif
         size_t num_lit_undef = 0;
         for (vector<Lit>::iterator it = currAncestors.begin(), end = currAncestors.end(); it != end; it++) {
 
             if (*it == lit_Undef) {
                 #ifdef VERBOSE_DEBUG_FULLPROP
-                std::cout << "seen lit_Undef" << std::endl;
+                cout << "seen lit_Undef" << endl;
                 #endif
                 num_lit_undef++;
                 assert(num_lit_undef != currAncestors.size());
@@ -624,7 +624,7 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
                 toClear.push_back(*it);
 
             #ifdef VERBOSE_DEBUG_FULLPROP
-            std::cout << "seen " << *it << " : " << seen[it->toInt()] << std::endl;
+            cout << "seen " << *it << " : " << seen[it->toInt()] << endl;
             #endif
 
             if (seen[it->toInt()] == currAncestors.size()) {
@@ -635,7 +635,7 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
         }
     }
     #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "END" << std::endl;
+    cout << "END" << endl;
     #endif
     assert(foundLit != lit_Undef);
 

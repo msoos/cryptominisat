@@ -23,6 +23,8 @@
 #include <iostream>
 #include <iomanip>
 #include <set>
+using std::cout;
+using std::endl;
 
 #include "ThreadControl.h"
 #include "ClauseCleaner.h"
@@ -67,7 +69,7 @@ that problems don't creep up
 bool VarReplacer::performReplace()
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "PerformReplacInternal started." << std::endl;
+    cout << "PerformReplacInternal started." << endl;
     //control->printAllClauses();
     #endif
     double time = cpuTime();
@@ -78,8 +80,8 @@ bool VarReplacer::performReplace()
         if (table[i].var() != i)
             numRedir++;
     }
-    std::cout << "c Number of trees:" << reverseTable.size() << std::endl;
-    std::cout << "c Number of redirected nodes:" << numRedir << std::endl;
+    cout << "c Number of trees:" << reverseTable.size() << endl;
+    cout << "c Number of redirected nodes:" << numRedir << endl;
     #endif //REPLACE_STATISTICS
 
     control->clauseCleaner->removeAndCleanAll();
@@ -91,7 +93,7 @@ bool VarReplacer::performReplace()
         uint32_t i = 0;
         for (vector<Lit>::const_iterator it = table.begin(); it != table.end(); it++, i++) {
             if (it->var() == i) continue;
-            std::cout << "Replacing var " << i+1 << " with Lit " << *it << std::endl;
+            cout << "Replacing var " << i+1 << " with Lit " << *it << endl;
         }
     }
     #endif
@@ -110,7 +112,7 @@ bool VarReplacer::performReplace()
         control->varData[var].elimed = ELIMED_VARREPLACER;
 
         #ifdef VERBOSE_DEBUG
-        std::cout << "Setting var " << var+1 << " to a non-decision var" << std::endl;
+        cout << "Setting var " << var+1 << " to a non-decision var" << endl;
         #endif
         control->decision_var[var] =  false;
         control->decision_var[it->var()] = true;
@@ -144,12 +146,12 @@ end:
     assert(control->qhead == control->trail.size() || !control->ok);
 
     if (control->conf.verbosity  >= 1) {
-        std::cout << "c Replacing "
+        cout << "c Replacing "
         << std::setw(8) << thisTimeReplaced << " vars"
         << " Replaced " <<  std::setw(8) << replacedLits<< " lits"
         << " Time: " << std::setw(8) << std::fixed << std::setprecision(2)
         << cpuTime()-time << " s "
-        << std::endl;
+        << endl;
     }
 
     replacedLits = 0;
@@ -178,7 +180,7 @@ bool VarReplacer::replaceBins()
                 *j++ = *i;
                 continue;
             }
-            //std::cout << "bin: " << lit1 << " , " << i->getOtherLit() << " learnt : " <<  (i->isLearnt()) << std::endl;
+            //cout << "bin: " << lit1 << " , " << i->getOtherLit() << " learnt : " <<  (i->isLearnt()) << endl;
             Lit thisLit1 = lit1;
             Lit lit2 = i->getOtherLit();
             assert(thisLit1.var() != lit2.var());
@@ -201,7 +203,7 @@ bool VarReplacer::replaceBins()
                     control->enqueue(lit2);
                 } else if (control->value(lit2) == l_False) {
                     #ifdef VERBOSE_DEBUG
-                    std::cout << "Contradiction during replacement of lits in binary clause" << std::endl;
+                    cout << "Contradiction during replacement of lits in binary clause" << endl;
                     #endif
                     control->ok = false;
                 }
@@ -236,10 +238,10 @@ bool VarReplacer::replaceBins()
     }
 
     #ifdef VERBOSE_DEBUG_BIN_REPLACER
-    std::cout << "c debug bin replacer start" << std::endl;
-    std::cout << "c removedLearnt: " << removedLearnt << std::endl;
-    std::cout << "c removedNonLearnt: " << removedNonLearnt << std::endl;
-    std::cout << "c debug bin replacer end" << std::endl;
+    cout << "c debug bin replacer start" << endl;
+    cout << "c removedLearnt: " << removedLearnt << endl;
+    cout << "c removedNonLearnt: " << removedNonLearnt << endl;
+    cout << "c debug bin replacer end" << endl;
     #endif
 
     assert(removedLearnt % 2 == 0);
@@ -290,7 +292,7 @@ bool VarReplacer::replace_set(vector<Clause*>& cs)
             if (!control->ok) {
                 r++;
                 #ifdef VERBOSE_DEBUG
-                std::cout << "contradiction while replacing lits in normal clause" << std::endl;
+                cout << "contradiction while replacing lits in normal clause" << endl;
                 #endif
                 for(;r != end; r++) control->clAllocator->clauseFree(*r);
                 cs.resize(cs.size() - (r-a));
@@ -330,7 +332,7 @@ bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit o
     control->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "clause after replacing: " << c << std::endl;
+    cout << "clause after replacing: " << c << endl;
     #endif
 
     if (satisfied) return true;
@@ -384,7 +386,7 @@ void VarReplacer::extendModel(SolutionExtender* extender) const
 {
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "c VarReplacer::extendModel() called" << std::endl;
+    cout << "c VarReplacer::extendModel() called" << endl;
     #endif //VERBOSE_DEBUG
 
     vector<Lit> tmpClause;
@@ -422,7 +424,7 @@ know that c=h, in which case we don't do anything
 bool VarReplacer::replace(Lit lit1, Lit lit2, const bool xorEqualFalse)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "replace() called with var " << lit1 << " and var " << lit2 << " with xorEqualFalse " << xorEqualFalse << std::endl;
+    cout << "replace() called with var " << lit1 << " and var " << lit2 << " with xorEqualFalse " << xorEqualFalse << endl;
     #endif
 
     assert(control->ok);
@@ -509,7 +511,7 @@ bool VarReplacer::alreadyIn(const Var var, const Lit lit)
     if (lit2.var() == lit.var()) {
         if (lit2.sign() != lit.sign()) {
             #ifdef VERBOSE_DEBUG
-            std::cout << "Inverted cycle in var-replacement -> UNSAT" << std::endl;
+            cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
             #endif
             control->ok = false;
         }
@@ -520,7 +522,7 @@ bool VarReplacer::alreadyIn(const Var var, const Lit lit)
     if (lit2.var() == var) {
         if (lit2.sign() != lit.sign()) {
             #ifdef VERBOSE_DEBUG
-            std::cout << "Inverted cycle in var-replacement -> UNSAT" << std::endl;
+            cout << "Inverted cycle in var-replacement -> UNSAT" << endl;
             #endif
             control->ok = false;
         }

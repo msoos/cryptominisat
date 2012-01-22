@@ -442,11 +442,11 @@ Only handles backward-subsumption. Uses occurrence lists
 template<class T> void Subsumer::findSubsumed0(const uint32_t index, const T& ps, const CL_ABST_TYPE abs, vector<ClauseIndex>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "findSubsumed: ";
+    cout << "findSubsumed: ";
     for (uint32_t i = 0; i < ps.size(); i++) {
-        std::cout << ps[i] << " , ";
+        cout << ps[i] << " , ";
     }
-    std::cout << std::endl;
+    cout << endl;
     #endif
 
     //Which literal in the clause has the smallest occur list? -- that will be picked to go through
@@ -470,7 +470,7 @@ template<class T> void Subsumer::findSubsumed0(const uint32_t index, const T& ps
             if (subset(ps, *clauses[it->index])) {
                 out_subsumed.push_back(*it);
                 #ifdef VERBOSE_DEBUG
-                std::cout << "subsumed: " << *clauses[it->index] << std::endl;
+                cout << "subsumed: " << *clauses[it->index] << endl;
                 #endif
             }
         }

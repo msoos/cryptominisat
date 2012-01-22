@@ -24,21 +24,23 @@
 
 #include <iostream>
 #include <iomanip>
+using std::cout;
+using std::endl;
 
 void RestartPrinter::printStatHeader() const
 {
     if (control->conf.verbosity >= 2) {
-        std::cout << "c "
+        cout << "c "
         << "========================================================================================="
-        << std::endl;
-        std::cout << "c"
-        << " types(t): F = full restart, N = normal restart" << std::endl;
-        std::cout << "c"
-        << " types(t): S = simplification begin/end, E = solution found" << std::endl;
-        std::cout << "c"
-        << " restart types(rt): st = static, dy = dynamic" << std::endl;
+        << endl;
+        cout << "c"
+        << " types(t): F = full restart, N = normal restart" << endl;
+        cout << "c"
+        << " types(t): S = simplification begin/end, E = solution found" << endl;
+        cout << "c"
+        << " restart types(rt): st = static, dy = dynamic" << endl;
 
-        std::cout << "c "
+        cout << "c "
         << std::setw(2) << "t"
         //<< std::setw(3) << "rt"
         //<< std::setw(6) << "Rest"
@@ -52,7 +54,7 @@ void RestartPrinter::printStatHeader() const
         << std::setw(space) << "MTavgCS"
         << std::setw(space) << "LTAvgG"
         //<< std::setw(space) << "STAvgG"
-        << std::endl;
+        << endl;
     }
 }
 
@@ -62,7 +64,7 @@ void RestartPrinter::printRestartStat(const char* type)
     lastConflPrint = control->sumConflicts;
 
     if (control->conf.verbosity >= 2) {
-        std::cout << "c "
+        cout << "c "
         << std::setw(2) << type
         //<< std::setw(6) << control->starts
         << std::setw(space) << control->sumConflicts
@@ -74,36 +76,36 @@ void RestartPrinter::printRestartStat(const char* type)
         << std::setw(space) << control->learntsLits<< " ";
 
 //         if (control->conflSizeHist.isvalid()) {
-//             std::cout << std::setw(space) << std::fixed << std::setprecision(2)
+//             cout << std::setw(space) << std::fixed << std::setprecision(2)
 //             << control->conflSizeHist.getAvgDouble();
 //         } else {
-//             std::cout << std::setw(space) << "no data";
+//             cout << std::setw(space) << "no data";
 //         }
 //
 //         if (control->glueHistory.getTotalNumeElems() > 0) {
-//             std::cout << std::setw(space) << std::fixed << std::setprecision(2)
+//             cout << std::setw(space) << std::fixed << std::setprecision(2)
 //             << control->glueHistory.getAvgAllDouble();
 //         } else {
-//             std::cout << std::setw(space) << "no data";
+//             cout << std::setw(space) << "no data";
 //         }
 //         if (glueHistory.isvalid()) {
-//             std::cout << std::setw(space) << std::fixed << std::setprecision(2) << glueHistory.getAvgDouble();
+//             cout << std::setw(space) << std::fixed << std::setprecision(2) << glueHistory.getAvgDouble();
 //         } else {
-//             std::cout << std::setw(space) << "no data";
+//             cout << std::setw(space) << "no data";
 //         }
 //
 //         if (control->conf.doPrintAvgBranch) {
 //             if (control->avgBranchDepth.isvalid())
-//                 std::cout << std::setw(space) << control->avgBranchDepth.getAvgUInt();
+//                 cout << std::setw(space) << control->avgBranchDepth.getAvgUInt();
 //             else
-//                 std::cout << std::setw(space) << "no data";
+//                 cout << std::setw(space) << "no data";
 //         }
 
         #ifdef USE_GAUSS
         print_gauss_sum_stats();
         #endif //USE_GAUSS
 
-        std::cout << std::endl;
+        cout << endl;
     }
 }
 

@@ -47,7 +47,7 @@ XorSubsumer::XorSubsumer(Solver& s):
 void XorSubsumer::subsume0(ClauseSimp ps, XorClause& cl)
 {
     #ifdef VERBOSE_DEBUGSUBSUME0
-    std::cout << "subsume0 orig clause:" << *clauses[ps.index] << std::endl;
+    cout << "subsume0 orig clause:" << *clauses[ps.index] << endl;
     #endif
 
     vector<Lit> unmatchedPart;
@@ -62,7 +62,7 @@ void XorSubsumer::subsume0(ClauseSimp ps, XorClause& cl)
 
         if (unmatchedPart.size() == 0) {
             #ifdef VERBOSE_DEBUGSUBSUME0
-            std::cout << "subsume0 removing:" << *clauses[subs[i].index] << std::endl;
+            cout << "subsume0 removing:" << *clauses[subs[i].index] << endl;
             #endif
             clauses_subsumed++;
             assert(tmp->size() == cl.size());
@@ -76,7 +76,7 @@ void XorSubsumer::subsume0(ClauseSimp ps, XorClause& cl)
             assert(unmatchedPart.size() > 0);
             clauses_cut++;
             #ifdef VERBOSE_DEBUG
-            std::cout << "Cutting xor-clause:" << *clauses[subs[i].index] << std::endl;
+            cout << "Cutting xor-clause:" << *clauses[subs[i].index] << endl;
             #endif //VERBOSE_DEBUG
             XorClause *c = solver.addXorClauseInt(unmatchedPart, tmp->xorEqualFalse() ^ !cl.xorEqualFalse());
             if (c != NULL)
@@ -193,14 +193,14 @@ void XorSubsumer::fillCannotEliminate()
     for (uint32_t i = 0; i < cannot_eliminate.size(); i++)
         if (cannot_eliminate[i])
             tmpNum++;
-        std::cout << "Cannot eliminate num:" << tmpNum << std::endl;
+        cout << "Cannot eliminate num:" << tmpNum << endl;
     #endif
 }
 
 void XorSubsumer::extendModel(SolutionExtender* extender)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "XorSubsumer::extendModel(Solver& solver2) called" << std::endl;
+    cout << "XorSubsumer::extendModel(Solver& solver2) called" << endl;
     #endif
 
     assert(checkElimedUnassigned());
@@ -209,17 +209,17 @@ void XorSubsumer::extendModel(SolutionExtender* extender)
     for (elimType::iterator it = elimedOutVar.begin(), end = elimedOutVar.end(); it != end; it++) {
         #ifdef VERBOSE_DEBUG
         Var var = it->first;
-        std::cout << "Reinserting elimed var: " << var+1 << std::endl;
+        cout << "Reinserting elimed var: " << var+1 << endl;
         #endif
 
         for (vector<XorElimedClause>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
             XorElimedClause& c = *it2;
             #ifdef VERBOSE_DEBUG
-            std::cout << "Reinserting Clause: " << c << std::endl;
+            cout << "Reinserting Clause: " << c << endl;
             #endif
             tmpClause = c.lits;
             if (!extender->addXorClause(tmpClause, c.xorEqualFalse)) {
-                std::cout << "Error adding eliminated xor-clause while extending" << std::endl;
+                cout << "Error adding eliminated xor-clause while extending" << endl;
                 exit(-1);
             }
         }
@@ -241,15 +241,15 @@ const bool XorSubsumer::localSubstitute()
                 xorTwoClauses(c1, c2, tmp);
                 if (tmp.size() <= 2) {
                     #ifdef VERBOSE_DEBUG
-                    std::cout << "Local substiuting. Clause1:" << c1 << std::endl;
-                    std::cout << "Clause 2:" << c2 << std::endl;
+                    cout << "Local substiuting. Clause1:" << c1 << endl;
+                    cout << "Clause 2:" << c2 << endl;
                     #endif //VERBOSE_DEBUG
                     localSubstituteUseful++;
                     XorClause* ret = solver.addXorClauseInt(tmp, c1.xorEqualFalse() ^ !c2.xorEqualFalse());
                     release_assert(ret == NULL);
                     if (!solver.ok) {
                         #ifdef VERBOSE_DEBUG
-                        std::cout << "solver.ok is false after local substitution" << std::endl;
+                        cout << "solver.ok is false after local substitution" << endl;
                         #endif //VERBOSE_DEBUG
                         return false;
                     }
@@ -349,8 +349,8 @@ const bool XorSubsumer::removeDependent()
 
         if (occ.size() == 1) {
             #ifdef VERBOSE_DEBUG
-            std::cout << "Eliminating dependent var " << var + 1 << std::endl;
-            std::cout << "-> Removing dependent clause " << *clauses[occ[0].index] << std::endl;;
+            cout << "Eliminating dependent var " << var + 1 << endl;
+            cout << "-> Removing dependent clause " << *clauses[occ[0].index] << endl;;
             #endif //VERBOSE_DEBUG
             unlinkClause(occ[0], var);
             solver.setDecisionVar(var, false);
@@ -372,9 +372,9 @@ const bool XorSubsumer::removeDependent()
             release_assert(ret == 2);
 
             #ifdef VERBOSE_DEBUG
-            std::cout << "Eliminating var " << var + 1 << " present in 2 xor-clauses" << std::endl;
-            std::cout << "-> Removing xor clause " << *clauses[occ[0].index] << std::endl;
-            std::cout << "-> Removing xor clause " << *clauses[occ[1].index] << std::endl;
+            cout << "Eliminating var " << var + 1 << " present in 2 xor-clauses" << endl;
+            cout << "-> Removing xor clause " << *clauses[occ[0].index] << endl;
+            cout << "-> Removing xor clause " << *clauses[occ[1].index] << endl;
             #endif //VERBOSE_DEBUG
             ClauseSimp toUnlink0 = occ[0];
             ClauseSimp toUnlink1 = occ[1];
@@ -390,14 +390,14 @@ const bool XorSubsumer::removeDependent()
             XorClause* c = solver.addXorClauseInt(lits, inverted);
             #ifdef VERBOSE_DEBUG
             if (c != NULL) {
-                std::cout << "-> Added combined xor clause:" << c << std::endl;;
+                cout << "-> Added combined xor clause:" << c << endl;;
             } else
-                std::cout << "-> Combined xor clause is NULL" << std::endl;
+                cout << "-> Combined xor clause is NULL" << endl;
             #endif
             if (c != NULL) linkInClause(*c);
             if (!solver.ok) {
                 #ifdef VERBOSE_DEBUG
-                std::cout << "solver.ok is false after var-elim through xor" << std::endl;
+                cout << "solver.ok is false after var-elim through xor" << endl;
                 #endif //VERBOSE_DEBUG
                 return false;
             }
@@ -430,13 +430,13 @@ const bool XorSubsumer::unEliminate(const Var var, CommandControl* ccsolver)
     numElimed--;
     assert(it != elimedOutVar.end());
     #ifdef VERBOSE_DEBUG
-    std::cout << "Reinserting xor elimed var: " << var+1 << std::endl;
+    cout << "Reinserting xor elimed var: " << var+1 << endl;
     #endif
 
     for (vector<XorElimedClause>::iterator it2 = it->second.begin(), end2 = it->second.end(); it2 != end2; it2++) {
         XorElimedClause& c = *it2;
         #ifdef VERBOSE_DEBUG
-        std::cout << "Reinserting elimed XOR clause: " << c.lits << " xorIsFalse:" << c.xorEqualFalse << std::endl;
+        cout << "Reinserting elimed XOR clause: " << c.lits << " xorIsFalse:" << c.xorEqualFalse << endl;
         #endif
         ccsolver->addXorClause(c.lits, c.xorEqualFalse);
     }
@@ -468,7 +468,7 @@ const bool XorSubsumer::simplifyBySubsumption()
     origNClauses = clauses.size();
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "c   clauses:" << clauses.size() << std::endl;
+    cout << "c   clauses:" << clauses.size() << endl;
     #endif
 
     bool propagated = true;
@@ -511,13 +511,13 @@ const bool XorSubsumer::simplifyBySubsumption()
     removeAssignedVarsFromEliminated();
 
     if (solver.conf.verbosity >= 1) {
-        std::cout << "c x-sub: " << std::setw(5) << clauses_subsumed
+        cout << "c x-sub: " << std::setw(5) << clauses_subsumed
         << " x-cut: " << std::setw(6) << clauses_cut
         << " vfix: " << std::setw(6) <<solver.trail.size() - origTrailSize
         << " v-elim: " <<std::setw(6) << numElimed - lastNumElimed
         << " locsubst:" << std::setw(6) << localSubstituteUseful
         << " time: " << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime)
-        << std::endl;
+        << endl;
     }
     totalTime += cpuTime() - myTime;
 
@@ -528,7 +528,7 @@ const bool XorSubsumer::simplifyBySubsumption()
 void XorSubsumer::findSubsumed(XorClause& ps, uint32_t index, vector<ClauseSimp>& out_subsumed)
 {
     #ifdef VERBOSE_DEBUGSUBSUME0
-    std::cout << "findSubsumed: ";
+    cout << "findSubsumed: ";
     for (uint32_t i = 0; i < ps.size(); i++) {
         if (ps[i].sign()) printf("-");
         printf("%d ", ps[i].var() + 1);
@@ -551,7 +551,7 @@ void XorSubsumer::findSubsumed(XorClause& ps, uint32_t index, vector<ClauseSimp>
            ) {
             out_subsumed.push_back(*it);
             #ifdef VERBOSE_DEBUGSUBSUME0
-            std::cout << "subsumed: " << *clauses[it->index] << std::endl;
+            cout << "subsumed: " << *clauses[it->index] << endl;
             #endif
         }
     }

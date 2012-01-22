@@ -22,6 +22,8 @@
 #include <iostream>
 #include <vector>
 #include <iomanip>
+using std::cout;
+using std::endl;
 
 #include "SolverTypes.h"
 #include "SCCFinder.h"
@@ -61,10 +63,10 @@ bool SCCFinder::find2LongXors()
         control->varReplacer->addLaterAddBinXor();
 
     if (control->conf.verbosity >= 1) {
-        std::cout << "c Finding binary XORs  T: "
+        cout << "c Finding binary XORs  T: "
         << std::fixed << std::setprecision(2) << std::setw(8) <<  (cpuTime() - myTime) << " s"
         << "  found: " << std::setw(7) << control->varReplacer->getNewToReplaceVars() - oldNumReplace
-        << std::endl;
+        << endl;
     }
     totalTime += (cpuTime() - myTime);
 

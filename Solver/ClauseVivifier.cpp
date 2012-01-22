@@ -24,6 +24,8 @@
 #include "time_mem.h"
 #include "ThreadControl.h"
 #include <iomanip>
+using std::cout;
+using std::endl;
 
 //#define ASSYM_DEBUG
 
@@ -47,7 +49,7 @@ bool ClauseVivifier::vivify()
 {
     assert(control->ok);
     #ifdef VERBOSE_DEBUG
-    std::cout << "c clauseVivifier started" << std::endl;
+    cout << "c clauseVivifier started" << endl;
     //control->printAllClauses();
     #endif //VERBOSE_DEBUG
 
@@ -136,7 +138,7 @@ bool ClauseVivifier::vivifyClausesNormal()
 
         //if done enough, stop doing it
         if (control->bogoProps-oldBogoProps + extraDiff > maxNumProps) {
-            //std::cout << "Need to finish -- ran out of prop" << std::endl;
+            //cout << "Need to finish -- ran out of prop" << endl;
             needToFinish = true;
         }
 
@@ -175,8 +177,8 @@ bool ClauseVivifier::vivifyClausesNormal()
             effective++;
             uint32_t origSize = lits.size();
             #ifdef ASSYM_DEBUG
-            std::cout << "Assym branch effective." << std::endl;
-            std::cout << "-- Orig clause:"; c.plainPrint();
+            cout << "Assym branch effective." << endl;
+            cout << "-- Orig clause:"; c.plainPrint();
             #endif
             control->detachClause(c);
 
@@ -187,7 +189,7 @@ bool ClauseVivifier::vivifyClausesNormal()
 
             Clause *c2 = control->addClauseInt(lits);
             #ifdef ASSYM_DEBUG
-            std::cout << "-- Origsize:" << origSize << " newSize:" << (c2 == NULL ? 0 : c2->size()) << " toRemove:" << c.size() - done << " unused.size():" << unused.size() << std::endl;
+            cout << "-- Origsize:" << origSize << " newSize:" << (c2 == NULL ? 0 : c2->size()) << " toRemove:" << c.size() - done << " unused.size():" << unused.size() << endl;
             #endif
             extraDiff += 20;
             //TODO cheating here: we don't detect a NULL return that is in fact a 2-long clause
@@ -196,7 +198,7 @@ bool ClauseVivifier::vivifyClausesNormal()
 
             if (c2 != NULL) {
                 #ifdef ASSYM_DEBUG
-                std::cout << "-- New clause:"; c2->plainPrint();
+                cout << "-- New clause:"; c2->plainPrint();
                 #endif
                 *j++ = c2;
             }
@@ -209,11 +211,11 @@ bool ClauseVivifier::vivifyClausesNormal()
     control->clauses.resize(control->clauses.size()- (i-j));
 
     if (control->conf.verbosity  >= 1) {
-        std::cout << "c asymm "
+        cout << "c asymm "
         << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
         << " lits-rem:" << effectiveLit
         << " time: " << cpuTime() - myTime
-        << std::endl;
+        << endl;
     }
 
     return control->ok;
@@ -365,13 +367,13 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
     clauses.resize(clauses.size() - (i-j));
 
     if (control->conf.verbosity >= 1) {
-        std::cout << "c vivif2 -- "
+        cout << "c vivif2 -- "
         << " cl tried " << std::setw(8) << clTried
         << " cl-sh " << std::setw(7) << clShrinked
         << " cl-rem " << std::setw(7) << clRemoved
         << " lit-rem " << std::setw(7) << litsRem
         << " time: " << (cpuTime() - myTime)
-        << std::endl;
+        << endl;
     }
 
     return control->ok;

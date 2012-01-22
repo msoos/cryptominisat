@@ -21,6 +21,9 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "Clause.h"
 #include "time_mem.h"
 
+using std::cout;
+using std::endl;
+
 //#define DEBUG_ENQUEUE_LEVEL0
 //#define VERBOSE_DEBUG_POLARITIES
 //#define DEBUG_DYNAMIC_RESTART
@@ -58,7 +61,7 @@ Var Solver::newVar(const bool)
 {
     const Var v = nVars();
     if (v >= 1<<30) {
-        std::cout << "ERROR! Variable requested is far too large" << std::endl;
+        cout << "ERROR! Variable requested is far too large" << endl;
         exit(-1);
     }
 
@@ -248,7 +251,9 @@ template<bool simple> inline bool Solver::propNormalClause(
     // Look for new watch:
 
     for (uint16_t numLit = 0, size = c.size(); numLit < size; numLit++) {
-        if (numLit == data[0] || numLit == data[1]) continue;
+        data.numLitSeen++;
+        if (numLit == data[0] || numLit == data[1])
+            continue;
         if (value(c[numLit]) != l_False) {
             data[watchNum] = numLit;
             watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
@@ -259,14 +264,15 @@ template<bool simple> inline bool Solver::propNormalClause(
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
+    data.numPropAndConfl++;
     if (value(c[data[!watchNum]]) == l_False) {
         confl = PropBy(offset, !watchNum);
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Conflict from ";
+        cout << "Conflict from ";
         for(size_t i = 0; i < c.size(); i++) {
-            std::cout  << c[i] << " , ";
+            cout  << c[i] << " , ";
         }
-        std::cout << std::endl;
+        cout << endl;
         #endif //VERBOSE_DEBUG_FULLPROP
 
         qhead = trail.size();
@@ -312,10 +318,10 @@ template<bool simple> inline bool Solver::propTriClause(const vec<Watched>::cons
             confl = PropBy(~p, i->getOtherLit2());
         } else {
             #ifdef VERBOSE_DEBUG_FULLPROP
-            std::cout << "Conflict from "
+            cout << "Conflict from "
                 << p << " , "
                 << i->getOtherLit() << " , "
-                << i->getOtherLit2() << std::endl;
+                << i->getOtherLit2() << endl;
             #endif //VERBOSE_DEBUG_FULLPROP
             confl = PropBy(~p, i->getOtherLit2());
         }
@@ -332,7 +338,7 @@ PropBy Solver::propagate()
     PropBy confl;
 
     #ifdef VERBOSE_DEBUG_PROP
-    std::cout << "Propagation started" << std::endl;
+    cout << "Propagation started" << endl;
     #endif
 
     while (qhead < trail.size() && confl.isNULL()) {
@@ -340,8 +346,8 @@ PropBy Solver::propagate()
         vec<Watched>& ws = watches[p.toInt()];
 
         #ifdef VERBOSE_DEBUG_PROP
-        std::cout << "Propagating lit " << p << std::endl;
-        std::cout << "ws origSize: "<< ws.size() << std::endl;
+        cout << "Propagating lit " << p << endl;
+        cout << "ws origSize: "<< ws.size() << endl;
         #endif
 
         vec<Watched>::iterator i = ws.begin();
@@ -393,7 +399,7 @@ PropBy Solver::propagate()
     }
 
     #ifdef VERBOSE_DEBUG
-    std::cout << "Propagation ended." << std::endl;
+    cout << "Propagation ended." << endl;
     #endif
 
     return confl;
@@ -418,7 +424,7 @@ PropBy Solver::propagateNonLearntBin()
 Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
 {
     #ifdef VERBOSE_DEBUG_FULLPROP
-    std::cout << "Prop full started" << std::endl;
+    cout << "Prop full started" << endl;
     #endif
 
     PropBy ret;
@@ -543,7 +549,7 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
     } else if (val == l_False) {
         //Conflict
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Conflict from " << p << " , " << lit << std::endl;
+        cout << "Conflict from " << p << " , " << lit << endl;
         #endif //VERBOSE_DEBUG_FULLPROP
         failBinLit = lit;
         return PropBy(~p);
@@ -553,7 +559,7 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
         assert(val == l_True);
 
         #ifdef VERBOSE_DEBUG_FULLPROP
-        std::cout << "Lit " << p << " also wants to propagate " << lit << std::endl;
+        cout << "Lit " << p << " also wants to propagate " << lit << endl;
         #endif
         Lit remove = removeWhich(lit, p, k->getLearnt());
         if (remove == p) {
@@ -567,12 +573,12 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
             //clause cleaning, the clause would have been 2-long), then we don't do anything.
             if (!propData[lit.var()].hyperBin) {
                 #ifdef VERBOSE_DEBUG_FULLPROP
-                std::cout << "Normal removing clause " << clauseToRemove << std::endl;
+                cout << "Normal removing clause " << clauseToRemove << endl;
                 #endif
                 uselessBin.insert(clauseToRemove);
             } else if (!propData[lit.var()].hyperBinNotAdded) {
                 #ifdef VERBOSE_DEBUG_FULLPROP
-                std::cout << "Removing hyper-bin clause " << clauseToRemove << std::endl;
+                cout << "Removing hyper-bin clause " << clauseToRemove << endl;
                 #endif
                 /*std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
                 assert(it != needToAddBinClause.end());
@@ -590,7 +596,7 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
             //if (!onlyNonLearnt) return PropBy();
         } else if (remove != lit_Undef) {
             #ifdef VERBOSE_DEBUG_FULLPROP
-            std::cout << "Removing this bin clause" << std::endl;
+            cout << "Removing this bin clause" << endl;
             #endif
             uselessBin.insert(BinaryClause(~p, lit, k->getLearnt()));
         }
@@ -602,7 +608,7 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::iterator k, std::set<BinaryCla
 void Solver::sortWatched()
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "Sorting watchlists:" << std::endl;
+    cout << "Sorting watchlists:" << endl;
     #endif
 
     //double myTime = cpuTime();
@@ -610,32 +616,32 @@ void Solver::sortWatched()
         if (i->size() == 0) continue;
         #ifdef VERBOSE_DEBUG
         vec<Watched>& ws = *i;
-        std::cout << "Before sorting:" << std::endl;
+        cout << "Before sorting:" << endl;
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
-            if (ws[i2].isBinary()) std::cout << "Binary,";
-            if (ws[i2].isTriClause()) std::cout << "Tri,";
-            if (ws[i2].isClause()) std::cout << "Normal,";
+            if (ws[i2].isBinary()) cout << "Binary,";
+            if (ws[i2].isTriClause()) cout << "Tri,";
+            if (ws[i2].isClause()) cout << "Normal,";
         }
-        std::cout << std::endl;
+        cout << endl;
         #endif //VERBOSE_DEBUG
 
         std::sort(i->begin(), i->end(), WatchedSorter());
 
         #ifdef VERBOSE_DEBUG
-        std::cout << "After sorting:" << std::endl;
+        cout << "After sorting:" << endl;
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
-            if (ws[i2].isBinary()) std::cout << "Binary,";
-            if (ws[i2].isTriClause()) std::cout << "Tri,";
-            if (ws[i2].isClause()) std::cout << "Normal,";
+            if (ws[i2].isBinary()) cout << "Binary,";
+            if (ws[i2].isTriClause()) cout << "Tri,";
+            if (ws[i2].isClause()) cout << "Normal,";
         }
-        std::cout << std::endl;
+        cout << endl;
         #endif //VERBOSE_DEBUG
     }
 
     /*if (conf.verbosity >= 3) {
-        std::cout << "c watched "
+        cout << "c watched "
         << "sorting time: " << cpuTime() - myTime
-        << std::endl;
+        << endl;
     }*/
 }
 
@@ -644,11 +650,11 @@ void Solver::printWatchList(const Lit lit) const
     const vec<Watched>& ws = watches[(~lit).toInt()];
     for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
         if (it2->isBinary()) {
-            std::cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << std::endl;
+            cout << "bin: " << lit << " , " << it2->getOtherLit() << " learnt : " <<  (it2->getLearnt()) << endl;
         } else if (it2->isTriClause()) {
-            std::cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << std::endl;
+            cout << "tri: " << lit << " , " << it2->getOtherLit() << " , " <<  (it2->getOtherLit2()) << endl;
         } else if (it2->isClause()) {
-            std::cout << "cla:" << it2->getNormOffset() << std::endl;
+            cout << "cla:" << it2->getNormOffset() << endl;
         } else {
             assert(false);
         }

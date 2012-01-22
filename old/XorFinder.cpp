@@ -89,11 +89,11 @@ const bool XorFinder::fullFindXors(const uint32_t minSize, const uint32_t maxSiz
 end:
 
     if (solver.conf.verbosity >= 1 || (solver.conf.verbosity >= 1 && foundXors > 0)) {
-        std::cout << "c Finding non-binary XORs:"
+        cout << "c Finding non-binary XORs:"
          << " found: " << std::setw(7) << foundXors
          << " avg size: " << std::setw(5) << std::fixed << std::setprecision(2) << (double)sumLengths/(double)foundXors
          << " time: " << std::setw(5) << std::fixed << std::setprecision(2) << (cpuTime()-myTime)
-         << std::endl;
+         << endl;
     }
 
     i = 0;
@@ -126,7 +126,7 @@ tries to merge them into an XOR.
 const bool XorFinder::findXors(uint32_t& sumLengths)
 {
     #ifdef VERBOSE_DEBUG
-    std::cout << "Finding Xors started" << std::endl;
+    cout << "Finding Xors started" << endl;
     #endif
 
     sumLengths = 0;
@@ -143,7 +143,7 @@ const bool XorFinder::findXors(uint32_t& sumLengths)
         }
 
         #ifdef VERBOSE_DEBUG
-        std::cout << "- Found clauses:" << std::endl;
+        cout << "- Found clauses:" << endl;
         #endif
 
         for (ClauseTable::iterator it = begin; it != end; it++) {
@@ -151,7 +151,7 @@ const bool XorFinder::findXors(uint32_t& sumLengths)
             //(i.e. does it have the correct number of inverted literals?)
             if (impairSigns(*it->first) == impair){
                 #ifdef VERBOSE_DEBUG
-                std::cout << *it->first << std::endl;
+                cout << *it->first << endl;
                 #endif
                 toRemove[it->second] = true;
                 solver.removeClause(*it->first);
@@ -164,7 +164,7 @@ const bool XorFinder::findXors(uint32_t& sumLengths)
         if (!solver.ok) return false;
 
         #ifdef VERBOSE_DEBUG
-        std::cout << "- Final xor-clause: " << x << std::endl;;
+        cout << "- Final xor-clause: " << x << endl;;
         #endif
 
         foundXors++;
@@ -347,7 +347,7 @@ void XorFinder::addAllXorAsNorm()
     solver.xorclauses.resize(solver.xorclauses.size() - (i-j));
 
     if (solver.conf.verbosity >= 1) {
-        std::cout << "c Added XOR as norm:" << added << std::endl;
+        cout << "c Added XOR as norm:" << added << endl;
     }
 }
 
