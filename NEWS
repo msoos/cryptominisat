@@ -18,6 +18,8 @@ Bugfixes:
 * Performance regressions relative to branch that went into SatComp'11
   have been worked on
 * FPU check problem fixed thanks to Jerry James
+* Printing problems related to multi-threading and startup in Main.cpp
+  fixed. Thanks to Martin Maurer for reporting this.
 
 Improvements:
 * Manpage thanks to Jerry James
