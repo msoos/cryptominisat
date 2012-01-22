@@ -164,4 +164,4 @@ if test "$use_static" = "yes"; then
   LDFLAGS="$LDFLAGS -all-static"
 fi
 
-AC_OUTPUT(Makefile Solver/Makefile mtl/Makefile MTRand/Makefile)
+AC_OUTPUT(Makefile Solver/Makefile mtl/Makefile MTRand/Makefile man/Makefile)
