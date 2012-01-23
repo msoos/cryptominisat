@@ -223,7 +223,12 @@ void CommandControl::analyzeHelper(const Lit lit, int& pathC, vector<Lit>& out_l
 {
     const Var var = lit.var();
     if (!seen[var] && varData[var].level > 0) {
-        litBumpActivity(lit);
+        if (value(lit) == l_True)
+            litBumpActivity(~lit);
+        else
+            litBumpActivity(lit);
+
+
         seen[var] = 1;
         if (varData[var].level == decisionLevel())
             pathC++;
