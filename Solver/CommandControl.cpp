@@ -1323,8 +1323,12 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             control->moveReduce(); //This also clears unit, bin, and long
 
             //Detach clauses that have been scheduled
-            for(vector<Clause*>::const_iterator it = control->toDetach.begin(), end = control->toDetach.end(); it != end; it++) {
-                //cout << "Detaching clause " << **it << " from thread: " << omp_get_thread_num() << endl;
+            for(vector<Clause*>::const_iterator
+                it = control->toDetach.begin()
+                , end = control->toDetach.end()
+                ; it != end
+                ; it++
+            ) {
                 detachClause(**it);
             }
 
