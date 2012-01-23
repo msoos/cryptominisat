@@ -169,9 +169,8 @@ private:
     int64_t  numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
     int64_t  numMaxElim;                  ///<Max. number of variable elimination tries to do this run
     int64_t  numMaxElimVars;
-    int64_t  numMaxBlockToVisit;           ///<Max. number variable-blocking clauses to visit to do this run
-    int64_t  numMaxBlockVars;             ///<Max. number variable-blocking tries to do this run
     int64_t  numMaxAsymm;
+    int64_t  numMaxBlocked;
     int64_t* toDecrease;
     void     printLimits();
 
@@ -287,6 +286,7 @@ private:
     /////////////////////
     //Blocked clause elimination
     void asymmTE();
+    void blockClauses();
     bool allTautologySlim(const Lit lit);
     vector<BlockedClause> blockedClauses;
 

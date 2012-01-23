@@ -1056,6 +1056,8 @@ bool Subsumer::simplifyBySubsumption()
     }
 
     //Do asymtotic tautology elimination
+    if (control->conf.doBlockedClause)
+        blockClauses();
     if (control->conf.doAsymmTE)
         asymmTE();
 
@@ -1263,15 +1265,86 @@ void Subsumer::checkForElimedVars()
     return control->ok;
 }*/
 
+void Subsumer::blockClauses()
+{
+    const double myTime = cpuTime();
+    uint32_t blocked = 0;
+    size_t wenThrough = 0;
+    uint32_t index = clauses.size()-1;
+    toDecrease = &numMaxBlocked;
+    for (vector<Clause*>::reverse_iterator
+        it = clauses.rbegin()
+        , end = clauses.rend()
+        ; it != end
+        ; it++, index--
+    ) {
+        //Already removed
+        if (*it == NULL)
+            continue;
+
+        //Ran out of time
+        if (*toDecrease < 0) {
+            break;
+        }
+
+        Clause& cl = **it;
+        if ((**it).learnt())
+            continue;
+
+        wenThrough++;
+
+        //Fill up temps
+        bool toRemove = false;
+        *toDecrease -= cl.size();
+        for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
+            seen[l->toInt()] = 1;
+        }
+
+        //Blocked clause elimination
+        for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
+            if (control->varData[l->var()].elimed != ELIMED_NONE)
+                continue;
+
+            if (allTautologySlim(*l)) {
+                vector<Lit> remCl(cl.size());
+                std::copy(cl.begin(), cl.end(), remCl.begin());
+                blockedClauses.push_back(BlockedClause(*l, remCl));
+
+                var_blocked[l->var()] = true;
+                blocked++;
+                toRemove = true;
+                break;
+            }
+        }
+
+        //Clear seen
+        for (Clause::const_iterator l = cl.begin(), end = cl.end(); l != end; l++) {
+            seen[l->toInt()] = 0;
+        }
+
+        if (toRemove) {
+            unlinkClause(index);
+        }
+    }
+
+    if (control->conf.verbosity >= 1) {
+        cout << "c"
+        << " through: " << wenThrough
+        << " blocked: " << blocked
+        << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
+        << endl;
+    }
+    totalTime += cpuTime() - myTime;
+}
+
 void Subsumer::asymmTE()
 {
-    CL_ABST_TYPE abst;
-    vector<Lit> tmpCl;
     const double myTime = cpuTime();
     uint32_t blocked = 0;
     uint32_t removed = 0;
-    toDecrease = &numMaxAsymm;
 
+    CL_ABST_TYPE abst;
+    vector<Lit> tmpCl;
     uint32_t index = clauses.size()-1;
     for (vector<Clause*>::reverse_iterator it = clauses.rbegin(), end = clauses.rend(); it != end; it++, index--) {
         //Already removed
@@ -1279,10 +1352,12 @@ void Subsumer::asymmTE()
             continue;
 
         //Ran out of time
-        if (numMaxAsymm < 0)
+        if (*toDecrease < 0) {
             break;
+        }
 
         Clause& cl = **it;
+        toDecrease = &numMaxAsymm;
         *toDecrease -= cl.size()*2;
 
         //Fill tmpCl, seen
@@ -1333,7 +1408,8 @@ void Subsumer::asymmTE()
             goto next;
 
         //Blocked clause elimination
-        if (control->conf.doBlockedClause) {
+        if (control->conf.doBlockedClause && numMaxBlocked > 0) {
+            toDecrease = &numMaxBlocked;
             for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
                 if (control->varData[l->var()].elimed != ELIMED_NONE)
                     continue;
@@ -1346,10 +1422,12 @@ void Subsumer::asymmTE()
                     var_blocked[l->var()] = true;
                     blocked++;
                     toRemove = true;
+                    toDecrease = &numMaxAsymm;
                     goto next;
                 }
             }
         }
+        toDecrease = &numMaxAsymm;
 
         /*
         //subsumption with non-learnt larger clauses
@@ -1410,6 +1488,7 @@ void Subsumer::setLimits()
     numMaxSubsume1 = 80L*1000L*1000L;
     numMaxElim     = 90L*1000L*1000L;
     numMaxAsymm    = 80L *1000L*1000L;
+    numMaxBlocked  = 400L *1000L*1000L;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1437,8 +1516,6 @@ void Subsumer::setLimits()
 
     numMaxElimVars = ((double)control->getNumFreeVars() * 0.5 * std::sqrt(numCalls));
 
-    numMaxBlockVars = (uint32_t)((double)control->getNumUnsetVars() / 1.5 * (0.8+(double)(numCalls)/4.0));
-
     if (!control->conf.doSubsume1) {
         numMaxSubsume1 = 0;
     }
@@ -1453,9 +1530,6 @@ void Subsumer::setLimits()
     //numMaxSubsume1 = std::numeric_limits<int64_t>::max();
     //numMaxElimVars = std::numeric_limits<int32_t>::max();
     //numMaxElim     = std::numeric_limits<int64_t>::max();
-
-    //numMaxBlockToVisit = std::numeric_limits<int64_t>::max();
-    //numMaxBlockVars = std::numeric_limits<uint32_t>::max();
 }
 
 /**
@@ -2054,8 +2128,8 @@ inline bool Subsumer::allTautologySlim(const Lit lit)
 {
     //Binary clauses which contain '~lit'
     const vec<Watched>& ws = control->watches[lit.toInt()];
-    *toDecrease -= ws.size();
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
+        *toDecrease -= 1;
         if (!it->isNonLearntBinary())
             continue;
 
@@ -2069,8 +2143,8 @@ inline bool Subsumer::allTautologySlim(const Lit lit)
 
     //Long clauses that contain '~lit'
     const Occur& cs = occur[(~lit).toInt()];
-    *toDecrease -= cs.size();
     for (Occur::const_iterator it = cs.begin(), end = cs.end(); it != end; it++) {
+        *toDecrease -= 1;
         const Clause& c = *clauses[it->index];
         if (c.learnt())
             continue;
