@@ -104,8 +104,10 @@ bool XorFinder::extractInfo()
 
     //Cut above-filtered XORs into blocks
     cutIntoBlocks(xorsToUse);
-    cout << "c Cut XORs into " << numBlocks << " block(s), sum vars: " << numVarsInBlocks
-    << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time) << endl;
+    if (control->conf.verbosity >= 1) {
+        cout << "c Cut XORs into " << numBlocks << " block(s), sum vars: " << numVarsInBlocks
+        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time) << endl;
+    }
 
     //These mappings will be needed for the matrixes, which will have far less
     //variables than control->nVars()
@@ -132,9 +134,12 @@ bool XorFinder::extractInfo()
         //cout << "New units this round: " << (newUnits - oldNewUnits) << endl;
         //cout << "New bins this round: " << (newBins - oldNewBins) << endl;
     }
-    cout << "c Extracted XOR info. Units: " << newUnits << " Bins: " << newBins
-    << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time)
-    << endl;
+    if (control->conf.verbosity >= 1) {
+        cout
+        << "c Extracted XOR info. Units: " << newUnits << " Bins: " << newBins
+        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time)
+        << endl;
+    }
 
     return true;
 }

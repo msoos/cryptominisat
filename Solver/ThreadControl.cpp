@@ -539,7 +539,9 @@ void ThreadControl::moveClausesHere()
             learnts.push_back(*it);
         }
     }
-    cout << "c CommandContr trail size: " << trail.size() << endl;
+    if (conf.verbosity >= 1)
+        cout << "c CommandContr trail size: " << trail.size() << endl;
+
     longLearntsToAdd.clear();
 }
 

@@ -1296,19 +1296,24 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         if (status != l_Undef)
             break;
 
-        if (lastSumConfl >= maxConfls) {
-            cout << "c thread(maxconfl) Trail size: " << trail.size() << endl;
+        if (lastSumConfl >= maxConfls && conf.verbosity >= 1) {
+            cout
+            << "c thread(maxconfl) Trail size: " << trail.size()
+            << " over maxConfls"
+            << endl;
             break;
         }
 
         if (lastSumConfl > control->getNextCleanLimit()) {
-            cout << "c th " << omp_get_thread_num() << " cleaning"
-            << " getNextCleanLimit(): " << control->getNextCleanLimit()
-            << " numConflicts : " << numConflicts
-            << " lastSumConfl: " << lastSumConfl
-            << " maxConfls:" << maxConfls << endl;
-            cout << "c thread " << omp_get_thread_num()
-            << " Trail size: " << trail.size() << endl;
+            if (conf.verbosity >= 1) {
+                cout
+                << "c th " << omp_get_thread_num() << " cleaning"
+                << " getNextCleanLimit(): " << control->getNextCleanLimit()
+                << " numConflicts : " << numConflicts
+                << " lastSumConfl: " << lastSumConfl
+                << " maxConfls:" << maxConfls
+                << " Trail size: " << trail.size() << endl;
+            }
 
             //Have to wait for everyone to be here, i.e. shared their data
             //with threadcontrol, so we can all be up to sync
@@ -1352,8 +1357,9 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             }
         }
 
-        //if ((lastRestartPrint + 5000) < numConflicts) {
-            #pragma omp critical
+        #pragma omp critical
+        if (conf.verbosity >= 1) {
+            //(lastRestartPrint + 5000) < numConflicts) {
             cout << "c " << omp_get_thread_num()
             << " " << std::setw(6) << numRestarts
             << " " << std::setw(7) << numConflicts
@@ -1388,7 +1394,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             << "/" << std::left << trailDepthDeltaHist.getAvgAllPrint(0, 5)
             << endl;
             lastRestartPrint = numConflicts;
-        //}
+        }
     }
 
     #ifdef VERBOSE_DEBUG
@@ -1410,7 +1416,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
     //#ifdef VERBOSE_DEBUG
 #pragma omp critical
-    {
+    if (conf.verbosity >= 1) {
         cout << "c th " << omp_get_thread_num()
         << " ---------" << endl;
 
@@ -1425,7 +1431,6 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
         cout << "c th " << omp_get_thread_num()
         << " ---------" << endl;
-
     }
     //#endif
 

@@ -1016,7 +1016,9 @@ bool Subsumer::simplifyBySubsumption()
     addedClauseLits += addFromSolver(control->learnts);
     setLimits();
     double linkInTime = cpuTime() - myTime;
-    cout << "c Time to Link in : " << linkInTime << endl;
+    if (control->conf.verbosity >= 1) {
+        cout << "c Time to Link in : " << linkInTime << endl;
+    }
     totalTime += cpuTime() - myTime; //setup time
 
     //Do stuff with binaries
