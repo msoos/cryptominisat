@@ -146,7 +146,10 @@ class CSet {
 
     public:
         //ClauseSimp& operator [] (uint32_t index) { return which[index]; }
-        void reserve(uint32_t size) { where.reserve(size);}
+        void reserve(uint32_t size) {
+            where.reserve(size);
+            which.reserve(size);
+        }
         //uint32_t size(void) const { return which.size(); }
         ///@brief Number of elements in the set
         uint32_t nElems(void) const { return which.size() - free.size(); }
@@ -165,7 +168,7 @@ class CSet {
             if (free.size() > 0){
                 where[c.index] = free.back();
                 which[free.back()] = c;
-                free.pop_back();;
+                free.pop_back();
             }else{
                 where[c.index] = which.size();
                 which.push_back(c);
@@ -202,11 +205,7 @@ class CSet {
         @brief Fully clear the set
         */
         void clear(void) {
-            for (uint32_t i = 0; i < which.size(); i++)  {
-                if (which[i].index != std::numeric_limits< uint32_t >::max()) {
-                    where[which[i].index] = std::numeric_limits<uint32_t>::max();
-                }
-            }
+            where.clear();
             which.clear();
             free.clear();
         }
