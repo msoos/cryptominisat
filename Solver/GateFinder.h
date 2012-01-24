@@ -82,8 +82,8 @@ class OrGate {
         {
             return (eqLit == other.eqLit && lits == other.lits);
         }
-        std::vector<Lit> lits;
-        Lit eqLit;
+        std::vector<Lit> lits; //LHS
+        Lit eqLit; //RHS
         bool learnt;
         bool removed;
 };

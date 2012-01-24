@@ -469,8 +469,13 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
     const Clause& cl = *subsumer->clauses[c.index];
     bool isEqual = true;
     for (const Lit *l2 = cl.begin(), *end3 = cl.end(); l2 != end3; l2++) {
-        if (*l2 == ~eqLit) continue;
-        Lit otherLit = *l2;
+        //We are NOT looking for the literal that is on the RHS
+        if (*l2 == ~eqLit)
+            continue;
+
+        //This is the other lineral in the binary clause
+        //We are looking for a binary clause '~otherlit V eqLit'
+        const Lit otherLit = *l2;
         bool OK = false;
 
         //Try to find corresponding binary clause in cache
@@ -509,7 +514,7 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
             }
         }
 
-
+        //We have to find the binary clause. If not, this is not a gate
         if (!OK) {
             isEqual = false;
             break;
