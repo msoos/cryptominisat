@@ -161,6 +161,9 @@ private:
     bool     extendedResolution();
     vector<char>   dontElim; ///<These vars should not be eliminated, because they have been added through ER
 
+    //Graph
+    void printDot2(); ///<Print Graphviz DOT file describing the gates
+
     //Stats
     int64_t  gateLitsRemoved;
     uint32_t numERVars;
