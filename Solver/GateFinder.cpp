@@ -236,14 +236,12 @@ bool GateFinder::treatOrGates()
 {
     assert(control->ok);
     double myTime = cpuTime();
-    uint32_t oldNumVarToReplace = control->getNewToReplaceVars();
-    uint32_t oldTrailSize = control->trail.size();
     gateLitsRemoved = 0;
     numOrGateReplaced = 0;
 
     doAllOptimisationWithGates();
 
-    if (control->conf.verbosity >= 1) {
+    /*if (control->conf.verbosity >= 1) {
         cout << "c OR-based"
         << " cl-sh: " << std::setw(5) << numOrGateReplaced
         << " l-rem: " << std::setw(6) << gateLitsRemoved
@@ -255,7 +253,7 @@ bool GateFinder::treatOrGates()
 
         if (control->conf.verboseSubsumer)
             printGateStats();
-    }
+    }*/
 
     return control->ok;
 }
@@ -311,40 +309,82 @@ bool GateFinder::doAllOptimisationWithGates()
 
     //OR gate treatment
     if (control->conf.doShortenWithOrGates) {
+        double myTime = cpuTime();
+        numMaxShortenWithGates = 100L*1000L*1000L;
+        subsumer->toDecrease = &numMaxShortenWithGates;
         for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
             if (it->removed)
                 continue;
 
-            if (*subsumer->toDecrease < 0)
+            if (*subsumer->toDecrease < 0) {
+                cout << "c No more time left for shortening with gates" << endl;
                 break;
+            }
 
             if (!shortenWithOrGate(*it))
                 return false;
+        }
+
+        //Print results
+        if (control->conf.verbosity >= 1) {
+            cout << "c OR-based"
+            << " cl-sh: " << std::setw(5) << numOrGateReplaced
+            << " l-rem: " << std::setw(6) << gateLitsRemoved
+            << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
+            << endl;
         }
     }
 
     //AND gate treatment
     if (control->conf.doRemClWithAndGates) {
+        numMaxClRemWithGates = 100L*1000L*1000L;
+        subsumer->toDecrease = &numMaxClRemWithGates;
+        double myTime = cpuTime();
+
         andGateNumFound = 0;
-        vector<Lit> lits;
         andGateTotalSize = 0;
         uint32_t foundPotential;
-        //double myTime = cpuTime();
         uint64_t numOp = 0;
         for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
             const OrGate& gate = *it;
-            if (gate.removed) continue;
-            if (gate.lits.size() > 2) continue;
-            if (*subsumer->toDecrease < 0) break;
-            if (!treatAndGate(gate, true, foundPotential, numOp)) return false;
+            if (gate.removed || gate.lits.size() >2)
+                continue;
+
+            if (*subsumer->toDecrease < 0) {
+                cout << "c No more time left for cl-removal with gates" << endl;
+                break;
+            }
+
+            if (!treatAndGate(gate, true, foundPotential, numOp))
+                return false;
+        }
+
+
+        //Print results
+        if (control->conf.verbosity >= 1) {
+            cout << "c OR-based"
+            << " cl-rem: " << andGateNumFound
+            << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)
+            << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
+            << endl;
         }
     }
 
     //EQ gate treatment
-    if (control->conf.doFindEqLitsWithGates
-        && *subsumer->toDecrease > 0
-        && !findEqOrGates()
-    ) return false;
+    if (control->conf.doFindEqLitsWithGates) {
+        double myTime = cpuTime();
+        uint32_t oldNumVarToReplace = control->getNewToReplaceVars();
+
+        if (!findEqOrGates())
+            return false;
+
+        if (control->conf.verbosity >= 1) {
+            cout << "c OR-based"
+            << " v-rep: " << std::setw(3) << (control->getNewToReplaceVars() - oldNumVarToReplace)
+            << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
+            << endl;
+        }
+    }
 
     return true;
 }
