@@ -31,6 +31,7 @@
 #include "ClauseCleaner.h"
 #include "SolutionExtender.h"
 #include <omp.h>
+#include <fstream>
 using std::cout;
 using std::endl;
 
@@ -798,10 +799,167 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
     return cl;
 }
 
+void ThreadControl::printClauseData(
+    const vector<Clause*>& toprint
+    , const bool learnt
+) const
+{
+    vector<UsageStats> usageStats;
+    vector<UsageStats> usageStatsGlue;
+
+    for(vector<Clause*>::const_iterator
+        it = toprint.begin()
+        , end = toprint.end()
+        ; it != end
+        ; it++
+    ) {
+        //Clause data
+        const Clause& cl = **it;
+        const uint32_t clause_num = cl.getNum();
+        const uint32_t clause_size = cl.size();
+
+        //We have stats on this clause
+        if (cl.size() == 3)
+            continue;
+        assert(clause_num != std::numeric_limits<uint32_t>::max());
+
+        //Summarize for all threads
+        size_t sumPropConfl = 0;
+        size_t sumLitVisited = 0;
+        for(size_t i = 0; i < threads.size(); i++) {
+            sumPropConfl += threads[i]->getClauseData(clause_num).numPropAndConfl;
+            sumLitVisited += threads[i]->getClauseData(clause_num).numLitVisited;
+            threads[i]->resetClauseDataStats(clause_num);
+        }
+
+        //Update statistics
+        if (usageStats.size() < cl.size() + 1)
+            usageStats.resize(cl.size()+1);
+
+        usageStats[clause_size].num++;
+        usageStats[clause_size].sumPropConfl+=sumPropConfl;
+        usageStats[clause_size].sumLitVisited+=sumLitVisited;
+
+        if (learnt) {
+            const size_t glue = cl.getGlue();
+            assert(glue != std::numeric_limits<uint32_t>::max());
+            if (usageStatsGlue.size() < glue + 1) {
+                usageStatsGlue.resize(glue + 1);
+            }
+
+            usageStatsGlue[glue].num++;
+            usageStatsGlue[glue].sumPropConfl+=sumPropConfl;
+            usageStatsGlue[glue].sumLitVisited+=sumLitVisited;
+        }
+
+/*
+        //Print clause data
+        cout
+        << "Clause size " << std::setw(4) << cl.size();
+        if (cl.learnt()) {
+            cout << " glue : " << std::setw(4) << cl.getGlue();
+        }
+        cout
+        << " Props&confls: " << std::setw(10) << sumPropConfl
+        << " Lit visited: " << std::setw(10)<< sumLitVisited
+        << " Props&confls/Litsvisited*10: ";
+        if (sumLitVisited > 0) {
+            cout
+            << std::setw(6) << std::fixed << std::setprecision(4)
+            << (10.0*(double)sumPropConfl/(double)sumLitVisited);
+        }
+        cout << endl;*/
+    }
+
+    //Print Statistics
+    //cout << "STATS LEN" << endl;
+    printStats("clause-len", usageStats, learnt);
+
+    if (learnt) {
+        //cout << "STATS GLUE" << endl;
+        printStats("clause-glue", usageStatsGlue, learnt);
+    }
+}
+
+void ThreadControl::printStats(
+    std::string name
+    , const vector<UsageStats>& stats
+    , const bool learnt
+) const
+{
+    /*
+    for(size_t i = 0; i < stats.size(); i++) {
+        if (stats[i].num == 0)
+            continue;
+
+        cout
+        << name << " : " << std::setw(4) << i
+        << " Avg. props&confls: " << std::setw(6) << std::fixed << std::setprecision(2)
+        << ((double)stats[i].sumPropConfl/(double)stats[i].num)
+        << " Avg. lits visited: " << std::setw(6) << std::fixed << std::setprecision(2)
+        << ((double)stats[i].sumLitVisited/(double)stats[i].num);
+        if (stats[i].sumLitVisited > 0) {
+            cout
+            << " Props&confls/Litsvisited*10: "
+            << std::setw(6) << std::fixed << std::setprecision(4)
+            << (10.0*(double)stats[i].sumPropConfl/(double)stats[i].sumLitVisited);
+        }
+        cout << endl;
+    }*/
+
+    //File name
+    std::stringstream ss;
+    ss << "stats/propconflPERlitsvisited-stat-" << nbReduceDB << "-"
+    << name << "-learnt-" << (int)learnt << ".txt";
+
+    std::ofstream file(ss.str().c_str());
+    if (!file) {
+        cout << "Couldn't open file " << ss.str() << " for writing!" << endl;
+        exit(-1);
+    }
+    for(size_t i = 0; i < stats.size(); i++) {
+        if (stats[i].sumLitVisited == 0)
+            continue;
+
+        file
+        << i << "  "
+        << (double)stats[i].sumPropConfl/(double)stats[i].sumLitVisited
+        << endl;
+    }
+
+    //File name
+    std::stringstream ss2;
+    ss2 << "stats/AVGpropconfl-stat-" << nbReduceDB << "-"
+    << name << "-learnt-" << (int)learnt << ".txt";
+
+    std::ofstream file2(ss2.str().c_str());
+    if (!file2) {
+        cout << "Couldn't open file " << ss2.str() << " for writing!" << endl;
+        exit(-1);
+    }
+    for(size_t i = 0; i < stats.size(); i++) {
+        if (stats[i].num == 0)
+            continue;
+
+        file2
+        << i << "  "
+        << (double)stats[i].sumPropConfl/(double)stats[i].num
+        << endl;
+    }
+}
+
 void ThreadControl::moveReduce()
 {
     assert(toDetach.empty());
     moveClausesHere();
+
+    if (false) {
+        cout << "NORMAL clauses: " << endl;
+        printClauseData(clauses, false);
+        cout << "LEARNT clauses: " << endl;
+        printClauseData(learnts, true);
+    }
+
     reduceDB();
     nextCleanLimit += nextCleanLimitInc;
     nextCleanLimitInc *= 1.2;

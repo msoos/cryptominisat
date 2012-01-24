@@ -260,7 +260,9 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
 
 struct ClauseData
 {
-    ClauseData()
+    ClauseData() :
+        numPropAndConfl(0)
+        , numLitVisited(0)
     {
         litPos[0] = std::numeric_limits<uint16_t>::max();
         litPos[1] = std::numeric_limits<uint16_t>::max();
@@ -288,6 +290,8 @@ struct ClauseData
     }
 
     uint16_t litPos[2];
+    uint32_t numPropAndConfl;
+    uint32_t numLitVisited;
 };
 
 #endif //CLAUSE_H

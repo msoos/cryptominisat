@@ -250,17 +250,19 @@ template<bool simple> inline bool Solver::propNormalClause(
     }
     // Look for new watch:
 
-    for (uint16_t numLit = 0, size = c.size(); numLit < size; numLit++) {
-        data.numLitSeen++;
+    uint16_t numLit = 0;
+    for (uint16_t size = c.size(); numLit < size; numLit++) {
         if (numLit == data[0] || numLit == data[1])
             continue;
         if (value(c[numLit]) != l_False) {
             data[watchNum] = numLit;
             watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
             bogoProps += 2;
+            data.numLitVisited+= numLit;
             return true;
         }
     }
+    data.numLitVisited+= numLit;
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;

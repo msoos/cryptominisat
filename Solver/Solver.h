@@ -125,6 +125,8 @@ public:
     uint32_t    getNumUnitaries() const;    ///<Return the set of unitary clauses
     uint32_t    countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
+    ClauseData  getClauseData(size_t clause_num) const;
+    void        resetClauseDataStats(size_t clause_num);
 
 protected:
 
@@ -678,6 +680,17 @@ inline size_t Solver::getTrailSize() const
 inline bool Solver::satisfied(const BinaryClause& bin)
 {
     return ((value(bin.getLit1()) == l_True) || (value(bin.getLit2()) == l_True));
+}
+
+inline ClauseData Solver::getClauseData(const size_t clause_num) const
+{
+    return clauseData[clause_num];
+}
+
+inline void Solver::resetClauseDataStats(const size_t clause_num)
+{
+    clauseData[clause_num].numPropAndConfl = 0;
+    clauseData[clause_num].numLitVisited = 0;
 }
 
 #endif //SOLVER_H

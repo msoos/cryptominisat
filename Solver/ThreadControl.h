@@ -206,12 +206,26 @@ class ThreadControl : public Solver
 
         /////////////////
         // Debug
+        struct UsageStats
+        {
+            UsageStats() :
+                num(0)
+                , sumPropConfl(0)
+                , sumLitVisited(0)
+            {}
+
+            size_t num;
+            size_t sumPropConfl;
+            size_t sumLitVisited;
+        };
         void testAllClauseAttach() const;
         bool normClauseIsAttached(const Clause& c) const;
         void findAllAttach() const;
         bool findClause(const Clause* c) const;
         void checkNoWrongAttach() const;
         void calcClauseDistrib();
+        void printClauseData(const vector<Clause*>& toprint, bool learnt) const;
+        void printStats(std::string name, const vector<UsageStats>& stats, bool learnt) const;
 };
 
 inline void ThreadControl::setDecisionVar(const uint32_t var)

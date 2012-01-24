@@ -29,7 +29,7 @@ using std::endl;
 GateFinder::GateFinder(Subsumer *_subsumer, ThreadControl *_control) :
     numERVars(0)
     , numDotPrinted(0)
-    , maxGateSize(5) //only for speed reasons. Should be changeable
+    , maxGateSize(7) //only for speed reasons. Should be changeable
     , subsumer(_subsumer)
     , control(_control)
     , seen(_subsumer->seen)
@@ -306,8 +306,12 @@ bool GateFinder::doAllOptimisationWithGates()
     //OR gate treatment
     if (control->conf.doShortenWithOrGates) {
         for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
-            if (it->removed) continue;
-            if (*subsumer->toDecrease < 0) break;
+            if (it->removed)
+                continue;
+
+            if (*subsumer->toDecrease < 0)
+                break;
+
             if (!shortenWithOrGate(*it))
                 return false;
         }
@@ -370,62 +374,96 @@ void GateFinder::findOrGates(const bool learntGatesToo)
 {
     uint32_t num = 0;
     for (vector<Clause*>::iterator it = subsumer->clauses.begin(), end = subsumer->clauses.end(); it != end; it++, num++) {
-        if (*it == NULL) continue;
+        //Clause removed
+        if (*it == NULL)
+            continue;
+
+        //Ran out of time
+        if (*subsumer->toDecrease < 0) {
+            cout << "Finishing gate-finding" << endl;
+            break;
+        }
+
         const Clause& cl = **it;
+        //If clause is larger than the cap on gate size, skip. Only for speed reasons.
+        if (cl.size() > maxGateSize)
+            continue;
 
         //if no learnt gates are allowed and this is learnt, skip
         if (!learntGatesToo && cl.learnt())
             continue;
 
-        //If clause is larger than the cap on gate size, skip. Only for speed reasons.
-        if (cl.size() > maxGateSize)
-            continue;
-
         const bool wasLearnt = cl.learnt();
 
-        uint8_t numSizeZeroCache = 0;
-        Lit which = lit_Undef;
+        //Check how many literals have zero cache&binary clause
+        //If too many, it cannot possibly be an OR gate
+        uint8_t numSizeZero = 0;
         for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++) {
             Lit lit = *l;
             const vector<LitExtra>& cache = control->implCache[(~lit).toInt()].lits;
+            const vec<Watched>& ws = control->watches[lit.toInt()];
 
-            if (cache.size() == 0) {
-                numSizeZeroCache++;
-                if (numSizeZeroCache > 1) break;
-                which = lit;
+            if (cache.size() == 0 && ws.size() == 0) {
+                numSizeZero++;
+                if (numSizeZero > 1)
+                    break;
             }
         }
-        if (numSizeZeroCache > 1)
+        if (numSizeZero > 1)
             continue;
 
-        if (numSizeZeroCache == 1) {
-            findOrGate(~which, ClauseIndex(num), learntGatesToo, wasLearnt);
-        } else {
-            for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++)
-                findOrGate(~*l, ClauseIndex(num), learntGatesToo, wasLearnt);
-        }
+        //Try to find a gate with eqlit (~*l)
+        for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++)
+            findOrGate(~*l, ClauseIndex(num), learntGatesToo, wasLearnt);
     }
 }
 
 void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool learntGatesToo, bool wasLearnt)
 {
-    Clause& cl = *subsumer->clauses[c.index];
+    const Clause& cl = *subsumer->clauses[c.index];
     bool isEqual = true;
     for (const Lit *l2 = cl.begin(), *end3 = cl.end(); l2 != end3; l2++) {
         if (*l2 == ~eqLit) continue;
         Lit otherLit = *l2;
+        bool OK = false;
+
+        //Try to find corresponding binary clause in cache
         const vector<LitExtra>& cache = control->implCache[(~otherLit).toInt()].lits;
         *subsumer->toDecrease -= cache.size();
-
-        bool OK = false;
-        for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
-            if ((learntGatesToo || cacheLit->getOnlyNLBin()) &&
-                cacheLit->getLit() == eqLit) {
+        for (vector<LitExtra>::const_iterator
+            cacheLit = cache.begin(), endCache = cache.end()
+            ; cacheLit != endCache && !OK
+            ; cacheLit++
+        ) {
+            if ((learntGatesToo || cacheLit->getOnlyNLBin())
+                 && cacheLit->getLit() == eqLit
+            ) {
                 wasLearnt |= !cacheLit->getOnlyNLBin();
                 OK = true;
-                break;
             }
         }
+
+        //Try to find corresponding binary clause in watchlist
+        const vec<Watched>& ws = control->watches[otherLit.toInt()];
+        *subsumer->toDecrease -= ws.size();
+        for (vec<Watched>::const_iterator
+            wsIt = ws.begin(), endWS = ws.end()
+            ; wsIt != endWS && !OK
+            ; wsIt++
+        ) {
+            //Only binary clauses are of importance
+            if (!wsIt->isBinary())
+                continue;
+
+            if ((learntGatesToo || !wsIt->getLearnt())
+                 && wsIt->getOtherLit() == eqLit
+            ) {
+                wasLearnt |= wsIt->getLearnt();
+                OK = true;
+            }
+        }
+
+
         if (!OK) {
             isEqual = false;
             break;
@@ -433,7 +471,8 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
     }
 
     //Does not make a gate, return
-    if (!isEqual) return;
+    if (!isEqual)
+        return;
 
     //Create gate
     vector<Lit> lits;
@@ -446,7 +485,9 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
     //Find if there are any gates that are the same
     const vector<uint32_t>& similar = gateOccEq[gate.eqLit.toInt()];
     for (vector<uint32_t>::const_iterator it = similar.begin(), end = similar.end(); it != end; it++) {
-        if (orGates[*it] == gate) return;
+        //The same gate? Then froget about this
+        if (orGates[*it] == gate)
+            return;
     }
 
     //Add gate
