@@ -257,11 +257,12 @@ template<bool simple> inline bool Solver::propNormalClause(
         if (value(c[numLit]) != l_False) {
             data[watchNum] = numLit;
             watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
-            bogoProps += 2;
+            bogoProps += numLit/10;
             data.numLitVisited+= numLit;
             return true;
         }
     }
+    bogoProps += numLit/10;
     data.numLitVisited+= numLit;
 
     // Did not find watch -- clause is unit under assignment:
@@ -357,7 +358,7 @@ PropBy Solver::propagate()
         i2 += 3;
         vec<Watched>::iterator j = ws.begin();
         const vec<Watched>::iterator end = ws.end();
-        bogoProps += 1;
+        bogoProps += ws.size()/4 + 1;
         for (; i != end; i++, i2++) {
             if (i2 < end && i2->isClause()) {
                 if (!value(i2->getBlockedLit()).getBool()) {

@@ -137,8 +137,9 @@ bool ClauseVivifier::vivifyClausesNormal()
         }
 
         //if done enough, stop doing it
+        //cout << "Time now: " << (cpuTime() - myTime) << " todo: " << (control->bogoProps-oldBogoProps + extraDiff)/1000000 << endl;
         if (control->bogoProps-oldBogoProps + extraDiff > maxNumProps) {
-            //cout << "Need to finish -- ran out of prop" << endl;
+            cout << "c Need to finish asymm -- ran out of prop" << endl;
             needToFinish = true;
         }
 
@@ -167,6 +168,7 @@ bool ClauseVivifier::vivifyClausesNormal()
                 }
             }
             done += i2;
+            extraDiff += 5;
             failed = (!control->propagate().isNULL());
             if (failed) break;
         }
