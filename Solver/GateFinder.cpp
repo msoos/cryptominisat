@@ -35,7 +35,7 @@ using std::endl;
 GateFinder::GateFinder(Subsumer *_subsumer, ThreadControl *_control) :
     numERVars(0)
     , numDotPrinted(0)
-    , maxGateSize(7) //only for speed reasons. Should be changeable
+    , maxGateSize(20) //only for speed reasons. Should be changeable
     , subsumer(_subsumer)
     , control(_control)
     , seen(_subsumer->seen)
