@@ -23,6 +23,12 @@
 #include "time_mem.h"
 #include "ThreadControl.h"
 #include "Subsumer.h"
+#include "vtkGraphLayoutView.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
+#include "vtkMutableDirectedGraph.h"
+#include "vtkMutableUndirectedGraph.h"
+#include "vtkMutableGraphHelper.h"
 using std::cout;
 using std::endl;
 
@@ -818,7 +824,7 @@ inline bool GateFinder::findAndGateOtherCl(const vector<ClauseIndex>& sizeSorted
     return false;
 }
 
-void GateFinder::printDot()
+void GateFinder::printDot2()
 {
     std::stringstream ss;
     ss << "Gates" << (numDotPrinted++) << ".dot";
@@ -845,7 +851,7 @@ void GateFinder::printDot()
                 file << "[arrowsize=\"0.4\"];" << endl;
             }
 
-            vector<uint32_t>& occ2 = gateOccEq[(~*it2).toInt()];
+            /*vector<uint32_t>& occ2 = gateOccEq[(~*it2).toInt()];
             for (vector<uint32_t>::const_iterator it3 = occ2.begin(), end3 = occ2.end(); it3 != end3; it3++) {
                 if (*it3 == index) continue;
 
@@ -857,7 +863,7 @@ void GateFinder::printDot()
                 gateUsed[index] = true;
 
                 file << "[style = \"dotted\", arrowsize=\"0.4\"];" << endl;
-            }
+            }*/
         }
     }
 
@@ -877,6 +883,114 @@ void GateFinder::printDot()
     file  << "}" << endl;
     file.close();
     cout << "c Printed gate structure to file " << filenename << endl;
+}
+
+void GateFinder::printDot()
+{
+    printDot2();
+    vtkSmartPointer<vtkMutableDirectedGraph> g =
+    vtkSmartPointer<vtkMutableDirectedGraph>::New();
+
+    vtkSmartPointer<vtkMutableGraphHelper> graphHelper =
+    vtkSmartPointer<vtkMutableGraphHelper>::New();
+    graphHelper->SetGraph(g);
+    /*vtkIdType v0 = graphHelper->AddVertex();
+    vtkIdType v1 = graphHelper->AddVertex();
+    vtkIdType v2 = graphHelper->AddVertex();
+
+    vtkIdType v3 = graphHelper->AddVertex();
+    vtkIdType v5 = graphHelper->AddVertex();
+
+    graphHelper->AddEdge(v0, v1);
+    graphHelper->AddEdge(v1, v2);
+    graphHelper->AddEdge(v0, v2);
+
+    graphHelper->AddEdge(v3, v5);*/
+
+
+
+    vector<size_t> gateUsed;
+    gateUsed.resize(orGates.size(), 0);
+    vector<vtkIdType> vertexes(orGates.size());
+    uint64_t edgesAdded = 0;
+
+    //Go through each gate
+    uint32_t index = 0;
+    for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++, index++) {
+        //Each literal in the LHS
+        for (vector<Lit>::const_iterator it2 = it->lits.begin(), end2 = it->lits.end(); it2 != end2; it2++) {
+            //See if it is connected as an output(RHS) to another gate
+            const vector<uint32_t>& occ = gateOccEq[it2->toInt()];
+            for (vector<uint32_t>::const_iterator it3 = occ.begin(), end3 = occ.end(); it3 != end3; it3++) {
+                //It's this gate, ignore
+                if (*it3 == index)
+                    continue;
+
+                //Add vertexes if not present
+                if (!gateUsed[*it3])
+                    vertexes[*it3] = graphHelper->AddVertex();
+                gateUsed[*it3]++;;
+
+                if (!gateUsed[index])
+                    vertexes[index] = graphHelper->AddVertex();
+                gateUsed[index]++;
+
+                //Add edge
+                graphHelper->AddEdge(vertexes[*it3], vertexes[index]);
+                edgesAdded++;
+            }
+
+            /*
+            //See if it is connected as an ~output(~RHS) to another gate
+            const vector<uint32_t>& occ2 = gateOccEq[(~*it2).toInt()];
+            for (vector<uint32_t>::const_iterator it3 = occ2.begin(), end3 = occ2.end(); it3 != end3; it3++) {
+                //It's this gate, ignore
+                if (*it3 == index)
+                    continue;
+
+                //Add vertexes if not present
+                if (!gateUsed[*it3])
+                    vertexes[*it3] = graphHelper->AddVertex();
+                gateUsed[*it3]++;;
+
+                if (!gateUsed[index])
+                    vertexes[index] = graphHelper->AddVertex();
+                gateUsed[index]++;
+
+                //Add edge
+                graphHelper->AddEdge(vertexes[*it3], vertexes[index]);
+                edgesAdded++;
+            }*/
+        }
+    }
+
+    /*index = 0;
+    for (vector<OrGate>::iterator it = orGates.begin(), end = orGates.end(); it != end; it++, index++) {
+
+        if (gateUsed[index]) {
+            file << "Gate" << index << " [ shape=\"point\"";
+            file << ", size = 0.8";
+            file << ", style=\"filled\"";
+            if (it->learnt) file << ", color=\"darkseagreen4\"";
+            else file << ", color=\"darkseagreen\"";
+            file << "];" << endl;
+        }
+    }*/
+
+
+  // Can also do this:
+  //graphHelper->RemoveEdge(0);
+
+    cout << "c Edges added: " << edgesAdded << endl;
+    vtkSmartPointer<vtkGraphLayoutView> graphLayoutView =
+    vtkSmartPointer<vtkGraphLayoutView>::New();
+    graphLayoutView->AddRepresentationFromInput(graphHelper->GetGraph());
+    //graphLayoutView->SetLayoutStrategyToForceDirected();
+    //graphLayoutView->SetLayoutStrategyToClustering2D();
+    graphLayoutView->SetLayoutStrategyToFast2D();
+    graphLayoutView->ResetCamera();
+    graphLayoutView->Render();
+    graphLayoutView->GetInteractor()->Start();
 }
 
 void GateFinder::newVar()

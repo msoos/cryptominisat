@@ -41,6 +41,11 @@ target_link_libraries(cryptominisat
     ${Perftools_LIBRARIES}
     ${Boost_LIBRARIES}
     cryptoms
+    vtkViews
+    vtkInfovis
+    vtkRendering
+    vtkImaging
+    vtkIO
 #    ${CMAKE_THREAD_LIBS_INIT}
 )
 

@@ -70,6 +70,22 @@ INCLUDE_DIRECTORIES(${GMP_INCLUDE_DIR})
 #SET(DGtalLibDependencies ${DGtalLibDependencies} ${GMPXX_LIBRARIES} ${GMP_LIBRARIES})
 SET(DGtalLibDependencies ${DGtalLibDependencies} ${GMP_LIBRARIES})
 
+
+# ---------------
+# Look for VTK
+#---------------
+IF(NOT VTK_BINARY_DIR)
+  FIND_PACKAGE(VTK REQUIRED)
+  IF(NOT VTK_USE_RENDERING)
+    MESSAGE(FATAL_ERROR "Example ${PROJECT_NAME} requires VTK_USE_RENDERING.")
+  ENDIF(NOT VTK_USE_RENDERING)
+  IF(NOT VTK_USE_INFOVIS)
+    MESSAGE(FATAL_ERROR "Example ${PROJECT_NAME} requires VTK_USE_INFOVIS.")
+  ENDIF(NOT VTK_USE_INFOVIS)
+  INCLUDE(${VTK_USE_FILE})
+ENDIF(NOT VTK_BINARY_DIR)
+
+
 # -----------------------------------------------------------------------------
 # Compile all subdirs: solver, utilities, fuzzers, etc.
 # -----------------------------------------------------------------------------
