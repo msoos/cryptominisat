@@ -94,6 +94,7 @@ void Subsumer::newVar()
     seen2   .push_back(0);
     touchedVars .addOne(control->nVars()-1);
     ol_seenNeg.push_back(1);
+    ol_seenPos.push_back(1);
     gateFinder->newVar();
 
     //variable status
@@ -284,6 +285,7 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
 
     // Remove from sets:
     cl_touched.exclude(c);
+    cl_touched2.exclude(c);
 
     //If elimed and non-learnt, we need to save it to stack
     if (elim != lit_Undef
@@ -346,6 +348,31 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
         return l_True;
     }
 
+    //Update alreadyAdded and ol_seenNeg & ol_seenPos
+    alreadyAdded[c.index] = 0;
+    for(size_t i = 0; i < cl.size(); i++) {
+        ol_seenNeg[cl[i].var()] = 0;
+        ol_seenPos[cl[i].var()] = 0;
+
+        //Pos
+        const Occur& occ = occur[cl[i].toInt()];
+        for(Occur::const_iterator
+            it = occ.begin(), end = occ.end()
+            ; it != end; it++
+        ) {
+            alreadyAdded[it->index] = 0;
+        }
+
+        //Neg
+        const Occur& occ2 = occur[(~cl[i]).toInt()];
+        for(Occur::const_iterator
+            it = occ2.begin(), end = occ2.end()
+            ; it != end; it++
+        ) {
+            alreadyAdded[it->index] = 0;
+        }
+    }
+
     #ifdef VERBOSE_DEBUG
     cout << "-> Clause became after cleaning:" << *clauses[c.index] << endl;
     #endif
@@ -369,6 +396,7 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
             clauseData[c.index].abst = calcAbstraction(cl);
             clauseData[c.index].size = cl.size();
             cl_touched.add(c);
+            cl_touched2.add(c);
             return l_Undef;
     }
 }
@@ -400,11 +428,11 @@ void Subsumer::printLimits()
 #ifdef BIT_MORE_VERBOSITY
     cout << "c  subsumed:" << clauses_subsumed << endl;
     cout << "c  cl_touched.nElems():" << cl_touched.nElems() << endl;
+    cout << "c  cl_touched2.nElems():" << cl_touched2.nElems() << endl;
     cout << "c  clauses.size():" << clauses.size() << endl;
     cout << "c  numMaxSubsume0:" << numMaxSubsume0 << endl;
     cout << "c  numMaxSubsume1:" << numMaxSubsume1 << endl;
     cout << "c  numMaxElim:" << numMaxElim << endl;
-    cout << "c  cl_touched.nElems() = " << cl_touched.nElems() << endl;
 #endif //BIT_MORE_VERBOSITY
 }
 
@@ -424,21 +452,17 @@ bool Subsumer::subsume0AndSubsume1()
     // Fixed-point for 1-subsumption:
     printLimits();
 
-    vector<char> ol_seenPos;
-    ol_seenPos.resize(control->nVars(), 0);
-
     toDecrease = &numMaxSubsume0;
     vector<ClauseIndex> remClTouched; //These clauses will be untouched
     vector<ClauseIndex> s0;
-    vector<char> alreadyAdded;
-    uint64_t lastDone = 1;
-    CSet cl_touched_backup = cl_touched;
-    while (numMaxSubsume0 >0 && lastDone != 0)  {
+    alreadyAdded.clear();
+    alreadyAdded.resize(clauses.size(), 0);
+    while (numMaxSubsume0 > 0 && cl_touched2.nElems() > 0)  {
         remClTouched.clear();
-        alreadyAdded.resize(clauses.size(), 0);
         s0.clear();
+        printLimits();
 
-        for (CSet::iterator it = cl_touched_backup.begin(), end = cl_touched_backup.end(); it != end; ++it) {
+        for (CSet::iterator it = cl_touched2.begin(), end = cl_touched2.end(); it != end; ++it) {
             //Clause already removed
             if (it->index == std::numeric_limits< uint32_t >::max())
                 continue;
@@ -450,11 +474,13 @@ bool Subsumer::subsume0AndSubsume1()
             //Too many
             if (s0.size() >= clTouchedTodo)
                 break;
+            remClTouched.push_back(it->index);
 
             Clause& cl = *clauses[it->index];
             //Nothing to do
-            if (!cl.getStrenghtened() && !cl.getChanged())
+            if (!cl.getStrenghtened() && !cl.getChanged()) {
                 continue;
+            }
 
             //Strengthened or changed, so it can subsume0 others
             if (!alreadyAdded[it->index]) {
@@ -478,10 +504,6 @@ bool Subsumer::subsume0AndSubsume1()
                     if (s0.size() >= clTouchedTodo)
                         break;
 
-                    /*//Cannot subsume/strenghten with larger clause
-                    if (clauses[it->index].size > cl.size())
-                        continue;*/
-
                     //Already added
                     if (!alreadyAdded[it->index]) {
                         s0.push_back(*it);
@@ -493,11 +515,10 @@ bool Subsumer::subsume0AndSubsume1()
         }
         //Remove clauses to be used from touched
         for (uint32_t i = 0; i < remClTouched.size(); i++) {
-            cl_touched_backup.exclude(remClTouched[i]);
+            cl_touched2.exclude(remClTouched[i]);
         }
 
         //Subsume 0
-        lastDone = s0.size();
         for (vector<ClauseIndex>::const_iterator
             it = s0.begin(), end = s0.end()
             ; it != end
@@ -514,13 +535,13 @@ bool Subsumer::subsume0AndSubsume1()
 
     //cout << "subsume0 done: " << numDone << endl;
 
-    cl_touched = cl_touched_backup;
     toDecrease = &numMaxSubsume1;
     alreadyAdded.clear();
-    while((cl_touched.nElems() > 10) && numMaxSubsume1 > 0) {
-        alreadyAdded.resize(clauses.size(), 0);
+    alreadyAdded.resize(clauses.size(), 0);
+    while(cl_touched.nElems() > 0 && numMaxSubsume1 > 0) {
         s1.clear();
         remClTouched.clear();
+        printLimits();
 
         for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
             //Clause already removed
@@ -648,11 +669,15 @@ ClauseIndex Subsumer::linkInClause(Clause& cl)
         occur[cl[i].toInt()].add(c);
         touchedVars.touch(cl[i], cl.learnt());
 
-        if (cl.getChanged())
+        if (cl.getChanged() || cl.getStrenghtened()) {
             ol_seenNeg[cl[i].var()] = 0;
+            ol_seenPos[cl[i].var()] = 0;
+        }
     }
-    if (cl.getStrenghtened() || cl.getChanged())
+    if (cl.getStrenghtened() || cl.getChanged()) {
         cl_touched.add(c);
+        cl_touched2.add(c);
+    }
 
     return c;
 }
@@ -805,6 +830,7 @@ void Subsumer::clearAll()
     }
     clauseData.clear();
     cl_touched.clear();
+    cl_touched2.clear();
     numLearntBinVarRemAdded = 0;
 }
 
@@ -1001,6 +1027,7 @@ bool Subsumer::simplifyBySubsumption()
     const uint32_t expected_size = control->clauses.size() + control->learnts.size();
     clauses.reserve(expected_size);
     cl_touched.reserve(expected_size);
+    cl_touched2.reserve(expected_size);
 
     //Detach all non-bins and non-tris, i.e. every long clause
     CompleteDetachReatacher reattacher(control);
@@ -1080,7 +1107,7 @@ bool Subsumer::simplifyBySubsumption()
 
         //Clean clauses as much as possible
         control->clauseCleaner->removeSatisfiedBins();
-    } while (cl_touched.nElems() > 10 && numMaxSubsume0 > 0);
+    } while (cl_touched2.nElems() > 0 && numMaxSubsume0 > 0);
     printLimits();
 
     assert(control->ok);

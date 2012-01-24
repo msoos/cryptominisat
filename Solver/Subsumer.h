@@ -146,8 +146,11 @@ private:
     //Touched, elimed, etc.
     TouchList    touchedVars; ///<A list of the true elements in 'touched'.
     CSet         cl_touched;  ///<Clauses strengthened/added
+    CSet         cl_touched2;
     vector<ClauseIndex> s1;          ///<Current set of clauses that are examined for subsume0&1
     vector<char> ol_seenNeg;
+    vector<char> ol_seenPos;
+    vector<char> alreadyAdded;
 
     //Persistent data
     ThreadControl*  control;              ///<The solver this simplifier is connected to
