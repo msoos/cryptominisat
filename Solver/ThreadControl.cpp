@@ -390,7 +390,7 @@ void ThreadControl::reduceDB()
     for (i = j = 0; i < learnts.size(); i++) {
         Clause* cl = learnts[i];
         if (learnts[i]->size() > 3
-            && clauseData[cl->getNum()].numPropAndConfl < 3
+            && clauseData[cl->getNum()].numPropAndConfl < 2
             && cl->getConflictIntroduced() + 5000 < sumConflicts
         ) {
             detachClause(*cl);
@@ -438,6 +438,7 @@ void ThreadControl::reduceDB()
         assert(learnts[i]->size() > 2);
         if (learnts[i]->getGlue() > 2
             && learnts[i]->size() > 3 //we cannot update activity of 3-longs because of watchlists
+            && clauseData[learnts[i]->getNum()].numPropAndConfl < 10
         ) {
             totalGlueOfRemoved += learnts[i]->getGlue();
             totalSizeOfRemoved += learnts[i]->size();
