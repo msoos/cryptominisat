@@ -779,7 +779,7 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
             && 0.95*glueHist.getAvg() > glueHist.getAvgAll()
         ) || (conf.restartType == agility_restart
             && agilityHist.isvalid()
-            && agilityHist.getAvg() > conf.agilityLimit
+            && agilityHist.getAvg() < conf.agilityLimit
         ) || (conf.restartType == branch_depth_delta_restart
             && branchDepthDeltaHist.isvalid()
             && 0.95*branchDepthDeltaHist.getAvg() > branchDepthDeltaHist.getAvgAll()
