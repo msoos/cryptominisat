@@ -59,7 +59,7 @@ bool FailedLitSearcher::search()
         if (!control->implCache.tryBoth(control)) return false;
     }
 
-    uint64_t numProps = 40L*1000L*1000L;
+    uint64_t numProps = 50L*1000L*1000L;
 
     control->testAllClauseAttach();
     double myTime = cpuTime();
@@ -76,7 +76,7 @@ bool FailedLitSearcher::search()
 
     //If failed var searching is going good, do successively more and more of it
     if ((double)lastTimeFoundTruths > (double)control->getNumUnsetVars() * 0.10)
-        numPropsMultiplier = std::max(numPropsMultiplier*1.3, 2.0);
+        numPropsMultiplier = std::max(numPropsMultiplier*1.3, 1.6);
     else
         numPropsMultiplier = 1.0;
     numProps = (uint64_t) ((double)numProps * numPropsMultiplier * control->conf.failedLitMultiplier);
