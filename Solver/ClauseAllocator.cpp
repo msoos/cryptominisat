@@ -75,17 +75,17 @@ ClauseAllocator::~ClauseAllocator()
 @brief Allocates space&initializes a clause
 */
 template<class T>
-Clause* ClauseAllocator::Clause_new(const T& ps)
+Clause* ClauseAllocator::Clause_new(const T& ps, const uint32_t conflictNum)
 {
     assert(ps.size() > 2);
     void* mem = allocEnough(ps.size());
-    Clause* real= new (mem) Clause(ps, getNewClauseNum(ps.size()));
+    Clause* real= new (mem) Clause(ps, getNewClauseNum(ps.size()), conflictNum);
 
     return real;
 }
 
-template Clause* ClauseAllocator::Clause_new(const vector<Lit>& ps);
-template Clause* ClauseAllocator::Clause_new(const Clause& ps);
+template Clause* ClauseAllocator::Clause_new(const vector<Lit>& ps, uint32_t conflictNum);
+template Clause* ClauseAllocator::Clause_new(const Clause& ps, uint32_t conflictNum);
 
 /**
 @brief Allocates space for a new clause & copies a give clause to it

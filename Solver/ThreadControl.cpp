@@ -184,7 +184,7 @@ Clause* ThreadControl::addClauseInt(const T& lits
             attachBinClause(ps[0], ps[1], learnt);
             return NULL;
         default:
-            Clause* c = clAllocator->Clause_new(ps);
+            Clause* c = clAllocator->Clause_new(ps, sumConflicts);
             if (learnt) c->makeLearnt(glue);
 
             if (attach) attachClause(*c);
@@ -383,6 +383,27 @@ sorted and then removed
 void ThreadControl::reduceDB()
 {
     nbReduceDB++;
+    size_t i, j;
+
+    //Reduce based on props&confls
+    size_t alreadyRemoved = 0;
+    for (i = j = 0; i < learnts.size(); i++) {
+        Clause* cl = learnts[i];
+        if (learnts[i]->size() > 3
+            && clauseData[cl->getNum()].numPropAndConfl < 3
+            && cl->getConflictIntroduced() + 5000 < sumConflicts
+        ) {
+            detachClause(*cl);
+            toDetach.push_back(cl);
+            alreadyRemoved++;
+        } else {
+            learnts[j++] = learnts[i];
+        }
+    }
+    learnts.resize(learnts.size() -(i-j));
+    cout << "Already removed: " << alreadyRemoved << endl;
+
+    //Sort for glue-based removal
     std::sort(learnts.begin(), learnts.end(), reduceDBStruct());
 
     #ifdef VERBOSE_DEBUG
@@ -394,6 +415,11 @@ void ThreadControl::reduceDB()
     #endif
 
     uint32_t removeNum = (double)learnts.size() * conf.ratioRemoveClauses;
+    cout << "Removenum: " << removeNum << endl;
+    if (removeNum <= alreadyRemoved)
+        removeNum = 0;
+    else
+        removeNum -= alreadyRemoved;
 
     //Statistics about clauses removed
     uint32_t totalNumRemoved = 0;
@@ -404,15 +430,13 @@ void ThreadControl::reduceDB()
     uint64_t totalSizeOfNonRemoved = 0;
     uint32_t numThreeLongLearnt = 0;
 
-    uint32_t i, j;
     for (i = j = 0; i < std::min(removeNum, (uint32_t)learnts.size()); i++) {
         if (i+1 < learnts.size())
             __builtin_prefetch(learnts[i+1], 0);
 
         //const uint32_t clNum = learnts[i]->getNum();
         assert(learnts[i]->size() > 2);
-        if (//locked[clNum] &&
-            learnts[i]->getGlue() > 2
+        if (learnts[i]->getGlue() > 2
             && learnts[i]->size() > 3 //we cannot update activity of 3-longs because of watchlists
         ) {
             totalGlueOfRemoved += learnts[i]->getGlue();
@@ -562,9 +586,8 @@ lbool ThreadControl::solve(const int numThreads)
 
     //Initialise stuff
     vector<lbool> solution;
-    uint32_t numConfls = 40000;
-    nextCleanLimit = 20000;
-    nextCleanLimitInc = 20000;
+    nextCleanLimit = 10000;
+    nextCleanLimitInc = 12000;
 
     //Solve in infinite loop
     lbool status = ok ? l_Undef : l_False;
@@ -582,6 +605,8 @@ lbool ThreadControl::solve(const int numThreads)
 
         //Solve using threads
         vector<lbool> statuses;
+        uint32_t numConfls = nextCleanLimit;
+        numConfls+= nextCleanLimitInc;
         #pragma omp parallel
         {
             CommandControl *cc = new CommandControl(conf, this);
@@ -612,6 +637,7 @@ lbool ThreadControl::solve(const int numThreads)
             varData[i].polarity = threads[0]->getSavedPolarity(i);
             //varData[i].activity = threads[0]->getSavedActivity(i);
         }
+        moveReduce();
 
         #pragma omp parallel for
         for(size_t i = 0; i < threads.size(); i++) {
@@ -623,13 +649,11 @@ lbool ThreadControl::solve(const int numThreads)
             break;
 
         //Move data, print data
-        moveClausesHere();
         toDetachFree();
         restPrinter->printRestartStat("N");
 
         //Simplify
         status = simplifyProblem(conf.simpBurstSConf);
-        numConfls *= 2;
     }
 
     //Handle found solution
@@ -788,7 +812,7 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
             binLearntsToAdd.push_back(BinaryClause(lits[0], lits[1], false));
             break;
         default:
-            cl = clAllocator->Clause_new(lits);
+            cl = clAllocator->Clause_new(lits, sumConflicts);
             cl->makeLearnt(glue);
             longLearntsToAdd.push_back(cl);
             break;
@@ -802,7 +826,7 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
 void ThreadControl::printClauseData(
     const vector<Clause*>& toprint
     , const bool learnt
-) const
+)
 {
     vector<UsageStats> usageStats;
     vector<UsageStats> usageStatsGlue;
@@ -831,6 +855,9 @@ void ThreadControl::printClauseData(
             sumLitVisited += threads[i]->getClauseData(clause_num).numLitVisited;
             threads[i]->resetClauseDataStats(clause_num);
         }
+        //Move stats here
+        clauseData[clause_num].numPropAndConfl = sumPropConfl;
+        clauseData[clause_num].numLitVisited = sumLitVisited;
 
         //Update statistics
         if (usageStats.size() < cl.size() + 1)
@@ -953,16 +980,14 @@ void ThreadControl::moveReduce()
     assert(toDetach.empty());
     moveClausesHere();
 
-    if (false) {
-        cout << "NORMAL clauses: " << endl;
-        printClauseData(clauses, false);
-        cout << "LEARNT clauses: " << endl;
-        printClauseData(learnts, true);
-    }
+    cout << "NORMAL clauses: " << endl;
+    printClauseData(clauses, false);
+    cout << "LEARNT clauses: " << endl;
+    printClauseData(learnts, true);
 
     reduceDB();
     nextCleanLimit += nextCleanLimitInc;
-    nextCleanLimitInc *= 1.2;
+    nextCleanLimitInc *= 1.1;
 }
 
 void ThreadControl::consolidateMem()

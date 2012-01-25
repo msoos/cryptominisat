@@ -57,6 +57,7 @@ protected:
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
     uint16_t mySize; ///<The current size of the clause
+    uint32_t conflictNumIntroduced;
 
     uint32_t num;
 
@@ -72,9 +73,10 @@ protected:
 
 public:
     template<class V>
-    Clause(const V& ps, const uint32_t clauseNum)
+    Clause(const V& ps, const uint32_t clauseNum, const uint32_t _conflictNumIntroduced) :
+        conflictNumIntroduced(_conflictNumIntroduced)
+        , num(clauseNum)
     {
-        num = clauseNum;
         isFreed = false;
         assert(ps.size() > 2);
         mySize = ps.size();
@@ -247,6 +249,11 @@ public:
     void setNum(const uint32_t newNum)
     {
         num = newNum;
+    }
+
+    uint32_t getConflictIntroduced() const
+    {
+        return conflictNumIntroduced;
     }
 };
 

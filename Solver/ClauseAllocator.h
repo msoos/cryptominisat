@@ -56,7 +56,7 @@ class ClauseAllocator {
         ClauseAllocator();
         ~ClauseAllocator();
 
-        template<class T> Clause* Clause_new(const T& ps);
+        template<class T> Clause* Clause_new(const T& ps, uint32_t conflictNum);
         Clause* Clause_new(Clause& c);
 
         ClauseOffset getOffset(const Clause* ptr) const;
