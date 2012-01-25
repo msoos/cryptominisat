@@ -830,6 +830,7 @@ void Subsumer::clearAll()
         occur[2*var].clear();
         occur[2*var+1].clear();
         ol_seenNeg[var] = 1;
+        ol_seenPos[var] = 1;
     }
     clauseData.clear();
     cl_touched.clear();
