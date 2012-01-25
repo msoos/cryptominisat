@@ -329,12 +329,14 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
 
         if (control->value(*i) == l_True) {
             occur[i->toInt()].remove(c);
+            touchedVars.touch(*i, cl.learnt());
             satisfied = true;
             continue;
         }
 
         if (control->value(*i) == l_False) {
             occur[i->toInt()].remove(c);
+            touchedVars.touch(*i, cl.learnt());
             continue;
         }
     }
@@ -418,6 +420,7 @@ void Subsumer::strengthen(ClauseIndex& c, const Lit toRemoveLit)
 
     Clause& cl = *clauses[c.index];
     cl.strengthen(toRemoveLit);
+    touchedVars.touch(toRemoveLit, cl.learnt());
     occur[toRemoveLit.toInt()].remove(c);
 
     cleanClause(c, cl);
