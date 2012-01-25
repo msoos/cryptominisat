@@ -94,19 +94,22 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt, 
             || varData[lit2.var()].elimed == ELIMED_QUEUED_VARREPLACER);
     #endif //DEBUG_ATTACH
 
+    Watched last;
+    //Pust to the begining
     vec<Watched>& ws1 = watches[(~lit1).toInt()];
-    ws1.push(Watched(lit2, learnt));
-    vec<Watched>::iterator it = ws1.begin();
-    for (vec<Watched>::iterator end = ws1.end(); it != end; it++)
-        if (!it->isBinary()) break;
-    if (it != ws1.end()) std::swap(ws1.back(), *it);
+    last = Watched(lit2, learnt);
+    for (vec<Watched>::iterator i = ws1.begin(), end = ws1.end(); i != end; i++) {
+        std::swap(*i, last);
+    }
+    ws1.push(last);
 
+    //Push to the beginning
     vec<Watched>& ws2 = watches[(~lit2).toInt()];
-    ws2.push(Watched(lit1, learnt));
-    it = ws2.begin();
-    for (vec<Watched>::iterator end = ws2.end(); it != end; it++)
-        if (!it->isBinary()) break;
-    if (it != ws2.end()) std::swap(ws2.back(), *it);
+    last = Watched(lit1, learnt);
+    for (vec<Watched>::iterator i = ws2.begin(), end = ws2.end(); i != end; i++) {
+        std::swap(*i, last);
+    }
+    ws2.push(last);
 }
 
 /**
@@ -343,29 +346,26 @@ PropBy Solver::propagate()
     #ifdef VERBOSE_DEBUG_PROP
     cout << "Propagation started" << endl;
     #endif
+    /*
+     *
+    if (i2 < end && i2->isClause()) {
+        if (!value(i2->getBlockedLit()).getBool()) {
+            const uint32_t offset = i2->getNormOffset();
+            __builtin_prefetch(clAllocator->getPointer(offset));
+        }
+    }
+    */
 
-    while (qhead < trail.size() && confl.isNULL()) {
-        const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
+    startAgain:
+    size_t qheadtmp = qhead;
+    while (qheadtmp < trail.size() && confl.isNULL()) {
+        const Lit p = trail[qheadtmp++];     // 'p' is enqueued fact to propagate.
         vec<Watched>& ws = watches[p.toInt()];
-
-        #ifdef VERBOSE_DEBUG_PROP
-        cout << "Propagating lit " << p << endl;
-        cout << "ws origSize: "<< ws.size() << endl;
-        #endif
-
         vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator i2 = ws.begin();
-        i2 += 3;
         vec<Watched>::iterator j = ws.begin();
         const vec<Watched>::iterator end = ws.end();
-        bogoProps += ws.size()/4 + 1;
-        for (; i != end; i++, i2++) {
-            if (i2 < end && i2->isClause()) {
-                if (!value(i2->getBlockedLit()).getBool()) {
-                    const uint32_t offset = i2->getNormOffset();
-                    __builtin_prefetch(clAllocator->getPointer(offset));
-                }
-            }
+        bogoProps += ws.size()/10 + 1;
+        for (; i != end; i++) {
             if (i->isBinary()) {
                 *j++ = *i;
                 if (!propBinaryClause(i, p, confl)) {
@@ -374,7 +374,25 @@ PropBy Solver::propagate()
                 }
 
                 continue;
-            } //end BINARY
+            } else {
+                break;
+            }
+        }
+    }
+
+    while (qhead < trail.size() && confl.isNULL()) {
+        const size_t oldTrailSize = trail.size();
+        const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
+        vec<Watched>& ws = watches[p.toInt()];
+        vec<Watched>::iterator i = ws.begin();
+        vec<Watched>::iterator j = ws.begin();
+        const vec<Watched>::iterator end = ws.end();
+        bogoProps += ws.size()/4 + 1;
+        for (; i != end; i++) {
+            if (i->isBinary()) {
+                *j++ = *i;
+                continue;
+            }
 
             if (i->isTriClause()) {
                 *j++ = *i;
@@ -399,6 +417,10 @@ PropBy Solver::propagate()
             *j++ = *i++;
         }
         ws.shrink_(end-j);
+
+        //If propagated something, goto start
+        if (oldTrailSize > trail.size())
+            goto startAgain;
     }
 
     #ifdef VERBOSE_DEBUG
