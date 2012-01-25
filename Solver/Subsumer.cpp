@@ -1111,7 +1111,11 @@ bool Subsumer::simplifyBySubsumption()
 
         //Clean clauses as much as possible
         control->clauseCleaner->removeSatisfiedBins();
-    } while (cl_touched2.nElems() > 0 && numMaxSubsume0 > 0);
+    } while (
+        (cl_touched2.nElems() > 0 && numMaxSubsume0 > 0)
+        || (cl_touched.nElems() > 0 && numMaxSubsume1 > 0)
+        || (touchedVars.size() > 0 && numMaxElim > 0)
+    );
     printLimits();
 
     assert(control->ok);
