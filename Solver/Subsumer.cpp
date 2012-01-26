@@ -235,32 +235,6 @@ void Subsumer::subsume1(ClauseIndex c, Clause& ps)
     }
 }
 
-bool Subsumer::subsume1(vector<Lit>& ps, const bool wasLearnt)
-{
-    vector<ClauseIndex>    subs;
-    vector<Lit>           subsLits;
-    bool needToMakeNonLearnt = false;
-
-    findSubsumed1(std::numeric_limits< uint32_t >::max(), ps, calcAbstraction(ps), subs, subsLits);
-    for (uint32_t j = 0; j < subs.size(); j++) {
-        ClauseIndex c = subs[j];
-        if (subsLits[j] == lit_Undef) {
-            if (wasLearnt && !clauses[c.index]->learnt())
-                needToMakeNonLearnt = true;
-
-            clauses_subsumed++;
-            unlinkClause(c);
-        } else {
-            clauses_strengthened++;
-            strengthen(c, subsLits[j]);
-            if (!control->ok)
-                break;
-        }
-    }
-
-    return needToMakeNonLearnt;
-}
-
 /**
 @brief Removes&free-s a clause from everywhere
 

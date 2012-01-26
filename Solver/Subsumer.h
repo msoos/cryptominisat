@@ -253,7 +253,6 @@ private:
     /////////////////////
     //subsume1
     void subsume1(ClauseIndex c, Clause& ps);
-    bool subsume1(vector<Lit>& ps, const bool wasLearnt);
 
     /////////////////////
     //Variable elimination
