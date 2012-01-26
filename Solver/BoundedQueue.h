@@ -73,10 +73,11 @@ public:
     {
         std::stringstream ss;
         if (isvalid()) {
-            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left << getAvg();
+            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::right << getAvg();
         } else {
-            ss << std::setw(5) << std::left << "?";
+            ss << std::setw(5) << "?";
         }
+        ss << std::left;
 
         return ss.str();
     }
@@ -87,8 +88,9 @@ public:
         if (isvalid()) {
             ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left << getAvgAll();
         } else {
-            ss << std::setw(5) << std::left << "?";
+            ss << std::setw(5) << "?";
         }
+        ss << std::left;
 
         return ss.str();
     }
