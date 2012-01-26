@@ -197,7 +197,7 @@ void CommandControl::cancelUntil(uint32_t level)
     if (decisionLevel() > level) {
 
         for (int sublevel = trail.size()-1; sublevel >= (int)trail_lim[level]; sublevel--) {
-            Var var = trail[sublevel].var();
+            const Var var = trail[sublevel].var();
             #ifdef VERBOSE_DEBUG
             cout << "Canceling var " << var+1 << " sublevel: " << sublevel << endl;
             #endif
