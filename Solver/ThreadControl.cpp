@@ -609,6 +609,7 @@ lbool ThreadControl::solve(const int numThreads)
         vector<lbool> statuses;
         uint32_t numConfls = nextCleanLimit;
         numConfls+= nextCleanLimitInc;
+
         #pragma omp parallel
         {
             CommandControl *cc = new CommandControl(conf, this);
