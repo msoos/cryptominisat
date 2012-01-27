@@ -622,8 +622,6 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
             if (!inGate)
                 lits.push_back(lit);
-
-            subsumer->ol_seenNeg[lit.var()] = 0;
         }
         if (!eqLitInside) {
             lits.push_back(gate.eqLit);
