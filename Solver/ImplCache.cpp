@@ -136,6 +136,34 @@ void ImplCache::clean(ThreadControl* control)
     }
 }
 
+bool ImplCache::handleNewData(
+    vector<uint16_t>& val
+    , Var var
+    , Lit lit
+    , ThreadControl* control
+    , uint32_t& bProp
+    , uint32_t& bXProp
+    , bool addXor
+) {
+    vector<Lit> tmp;
+    if  (val[lit.var()] == lit.sign()) {
+        tmp.push_back(lit);
+        control->addClauseInt(tmp, true);
+        if  (!control->ok)
+            return false;
+        bProp++;
+    } else if (addXor) {
+        tmp.push_back(Lit(var, false));
+        tmp.push_back(Lit(lit.var(), false));
+        bool sign = lit.sign();
+        control->addXorClauseInt(tmp, sign);
+        if  (!control->ok) return false;
+        bXProp++;
+    }
+
+    return true;
+}
+
 bool ImplCache::tryBoth(ThreadControl* control)
 {
     assert(control->ok);
@@ -161,34 +189,47 @@ bool ImplCache::tryBoth(ThreadControl* control)
         Lit lit = Lit(var, false);
 
         //To have the least effort, chache1 and cache2 can be interchanged
-        vector<LitExtra> const* cache1;
-        vector<LitExtra> const* cache2;
-        bool startWithTrue;
-        if (implCache[lit.toInt()].lits.size() < implCache[(~lit).toInt()].lits.size()) {
-            cache1 = &implCache[lit.toInt()].lits;
-            cache2 = &implCache[(~lit).toInt()].lits;
-            startWithTrue = false;
-        } else {
-            cache1 = &implCache[(~lit).toInt()].lits;
-            cache2 = &implCache[lit.toInt()].lits;
-            startWithTrue = true;
-        }
-
-        //If the smaller one is empty, there is nothing to do
-        if (cache1->empty())
-            continue;
+        const vector<LitExtra>& cache1 = implCache[lit.toInt()].lits;
+        const vec<Watched>& ws1 = control->watches[(~lit).toInt()];
+        const vector<LitExtra>& cache2 = implCache[(~lit).toInt()].lits;
+        const vec<Watched>& ws2 = control->watches[(lit).toInt()];
 
         //Fill 'seen' and 'val' with smaller one
-        for (vector<LitExtra>::const_iterator it = cache1->begin(), end = cache1->end(); it != end; it++) {
-            seen[it->getLit().var()] = true;
+        for (vector<LitExtra>::const_iterator it = cache1.begin(), end = cache1.end(); it != end; it++) {
+            const Var var2 = it->getLit().var();
+            if (control->varData[var2].elimed != ELIMED_NONE
+                && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
+            ) continue;
+
+            seen[it->getLit().var()] = 1;
             val[it->getLit().var()] = it->getLit().sign();
         }
 
-        for (vector<LitExtra>::const_iterator it = cache2->begin(), end = cache2->end(); it != end; it++) {
+        for (vec<Watched>::const_iterator it = ws1.begin(), end = ws1.end(); it != end; it++) {
+            if (!it->isBinary())
+                continue;
+
+            const Lit otherLit = it->getOtherLit();
+
+            if (!seen[otherLit.var()]) {
+                seen[otherLit.var()] = 1;
+                val[otherLit.var()] = otherLit.sign();
+            } else if (val[otherLit.var()] != otherLit.sign()) {
+                //(a->b, a->-b) -> so 'a'
+                vector<Lit> lits;
+                lits.push_back(lit);
+                control->addClauseInt(lits);
+                if (!control->ok)
+                    goto end;
+            }
+        }
+
+        //Okay, filled, now try to see if we propagate the same or opposite from the other end
+        for (vector<LitExtra>::const_iterator it = cache2.begin(), end = cache2.end(); it != end; it++) {
             assert(it->getLit().var() != var);
             const Var var2 = it->getLit().var();
 
-            //Only if the other one (cache1) also contained it
+            //Only if the other one also contained it
             if (!seen[var2])
                 continue;
 
@@ -197,28 +238,39 @@ bool ImplCache::tryBoth(ThreadControl* control)
                 && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
             ) continue;
 
-            if  (val[var2] == it->getLit().sign()) {
-                tmp.clear();
-                tmp.push_back(it->getLit());
-                control->addClauseInt(tmp, true);
-                if  (!control->ok) goto end;
-                bProp++;
-            } else {
-                tmp.clear();
-                tmp.push_back(Lit(var, false));
-                tmp.push_back(Lit(var2, false));
-                bool sign = startWithTrue ^ it->getLit().sign();
-                control->addXorClauseInt(tmp, sign);
-                if  (!control->ok) goto end;
-                bXProp++;
-            }
+            if (!handleNewData(val, var, it->getLit(), control, bProp, bXProp, true))
+                goto end;
         }
 
-        //Clear 'seen' and 'val' from smaller one
-        for (vector<LitExtra>::const_iterator it = cache1->begin(), end = cache1->end(); it != end; it++) {
+        for (vec<Watched>::const_iterator it = ws2.begin(), end = ws2.end(); it != end; it++) {
+            if (!it->isBinary())
+                continue;
+
+            assert(it->getOtherLit().var() != var);
+            const Var var2 = it->getOtherLit().var();
+
+            //Only if the other one also contained it
+            if (!seen[var2])
+                continue;
+
+            if (!handleNewData(val, var, it->getOtherLit(), control, bProp, bXProp, false))
+                goto end;
+        }
+
+        //Clear 'seen' and 'val'
+        for (vector<LitExtra>::const_iterator it = cache1.begin(), end = cache1.end(); it != end; it++) {
             seen[it->getLit().var()] = false;
             val[it->getLit().var()] = false;
         }
+
+        for (vec<Watched>::const_iterator it = ws1.begin(), end = ws1.end(); it != end; it++) {
+            if (!it->isBinary())
+                continue;
+
+            seen[it->getOtherLit().var()] = false;
+            val[it->getOtherLit().var()] = false;
+        }
+
     }
 
     end:
