@@ -331,7 +331,11 @@ bool Subsumer::subset(const T1& A, const T2& B)
     bool ret;
     uint16_t i = 0;
     uint16_t i2;
+    Lit lastB = lit_Undef;
     for (i2 = 0; i2 != B.size(); i2++) {
+        if (lastB != lit_Undef)
+            assert(lastB < B[i2]);
+        lastB = B[i2];
         //Literals are ordered
         if (A[i] < B[i2]) {
             ret = false;
