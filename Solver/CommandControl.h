@@ -196,6 +196,7 @@ class CommandControl : public Solver
             bool operator()(uint32_t var) const;
         };
         Heap<VarOrderLt>  order_heap;                   ///< activity-ordered heap of decision variables
+        uint32_t var_inc;
         void              insertVarOrder(const Var x);  ///< Insert a variable in heap
 
         ///////////
@@ -237,12 +238,12 @@ inline uint32_t CommandControl::calcNBLevels(const T& ps)
 
 inline void CommandControl::varDecayActivity()
 {
-    conf.var_inc *= 11;
-    conf.var_inc /= 10;
+    var_inc *= conf.var_inc_multiplier;
+    var_inc /= conf.var_inc_divider;
 }
 inline void CommandControl::varBumpActivity(Var var)
 {
-    if ( (activities[var] += conf.var_inc) > (0x1U) << 24 ) {
+    if ( (activities[var] += var_inc) > (0x1U) << 24 ) {
         // Rescale:
         for (vector<uint32_t>::iterator
             it = activities.begin()
@@ -252,7 +253,7 @@ inline void CommandControl::varBumpActivity(Var var)
         ) {
             *it >>= 14;
         }
-        conf.var_inc = 128;;
+        var_inc = conf.var_inc_start;
     }
 
     // Update order_heap with respect to new activity:
@@ -332,7 +333,7 @@ inline uint32_t CommandControl::getSavedActivity(Var var) const
 
 inline uint32_t CommandControl::getVarInc() const
 {
-    return conf.var_inc;
+    return var_inc;
 }
 
 

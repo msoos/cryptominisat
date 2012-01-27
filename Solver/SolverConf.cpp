@@ -23,7 +23,9 @@
 #include <limits>
 
 SolverConf::SolverConf() :
-        var_inc(128)
+        var_inc_start(128)
+        , var_inc_multiplier(31)
+        , var_inc_divider(30)
         , ratioRemoveClauses(1.0/3.0)
         , random_var_freq(0)
         , restart_first(100)

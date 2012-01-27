@@ -72,6 +72,7 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         , conf(_conf)
         , needToInterrupt(false)
         , order_heap(VarOrderLt(activities))
+        , var_inc(_conf.var_inc_start)
 {
     mtrand.seed(conf.origSeed);
 }
@@ -1302,7 +1303,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         varData[i].polarity = control->getSavedPolarity(i);
         activities[i] = control->getSavedActivity(i);
     }
-    conf.var_inc = control->getSavedActivityInc();
+    var_inc = control->getSavedActivityInc();
 
     // Search:
     uint64_t rest = conf.restart_first;
