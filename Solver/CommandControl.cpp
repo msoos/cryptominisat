@@ -702,7 +702,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
         #endif //VERBOSE_DEBUG
 
         if (!confl.isNULL()) {
-            printAgilityStats();
+            //printAgilityStats();
 
             //If restart is needed, set it as so
             checkNeedRestart(params, rest);
@@ -808,6 +808,7 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
                 cout << "conflicts-compTotSumGlue:" << conflicts-compTotSumGlue<< endl;
             }
             #endif
+            printAgilityStats();
 
             if (conf.verbosity >= 3)
                 cout << "c Agility was too low, restarting as soon as possible!" << endl;
@@ -1677,7 +1678,7 @@ void CommandControl::setNeedToInterrupt()
 void CommandControl::printAgilityStats()
 {
     if (conf.verbosity >= 3
-        && numConflicts % 100 == 99
+        //&& numConflicts % 100 == 99
     ) {
         cout
         << ", confl: " << std::setw(6) << numConflicts
