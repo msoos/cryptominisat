@@ -97,19 +97,11 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt, 
     Watched last;
     //Pust to the begining
     vec<Watched>& ws1 = watches[(~lit1).toInt()];
-    last = Watched(lit2, learnt);
-    for (vec<Watched>::iterator i = ws1.begin(), end = ws1.end(); i != end; i++) {
-        std::swap(*i, last);
-    }
-    ws1.push(last);
+    ws1.push_front(Watched(lit2, learnt));
 
     //Push to the beginning
     vec<Watched>& ws2 = watches[(~lit2).toInt()];
-    last = Watched(lit1, learnt);
-    for (vec<Watched>::iterator i = ws2.begin(), end = ws2.end(); i != end; i++) {
-        std::swap(*i, last);
-    }
-    ws2.push(last);
+    ws2.push_front(Watched(lit1, learnt));
 }
 
 /**
@@ -346,43 +338,45 @@ PropBy Solver::propagate()
     #ifdef VERBOSE_DEBUG_PROP
     cout << "Propagation started" << endl;
     #endif
-    /*
-     *
-    if (i2 < end && i2->isClause()) {
-        if (!value(i2->getBlockedLit()).getBool()) {
-            const uint32_t offset = i2->getNormOffset();
-            __builtin_prefetch(clAllocator->getPointer(offset));
-        }
-    }
-    */
+
+    size_t qheadbin = qhead;
+    size_t qheadlong = qhead;
 
     startAgain:
-    size_t qheadtmp = qhead;
-    while (qheadtmp < trail.size() && confl.isNULL()) {
-        const Lit p = trail[qheadtmp++];     // 'p' is enqueued fact to propagate.
-        vec<Watched>& ws = watches[p.toInt()];
-        vec<Watched>::iterator i = ws.begin();
-        vec<Watched>::iterator j = ws.begin();
-        const vec<Watched>::iterator end = ws.end();
+    while (qheadbin < trail.size() && confl.isNULL()) {
+        const Lit p = trail[qheadbin++];     // 'p' is enqueued fact to propagate.
+        const vec<Watched>& ws = watches[p.toInt()];
+        vec<Watched>::const_iterator i = ws.begin();
+        const vec<Watched>::const_iterator end = ws.end();
         bogoProps += ws.size()/10 + 1;
         for (; i != end; i++) {
             if (i->isBinary()) {
-                *j++ = *i;
                 if (!propBinaryClause(i, p, confl)) {
-                    i++;
                     break;
                 }
 
                 continue;
             } else {
-                break;
+                if (i->isTriClause()) {
+                    if (!propTriClause<true>(i, p, confl)) {
+                        break;
+                    }
+
+                    continue;
+                } //end TRICLAUSE
+
+                if (i->isClause()) {
+                    if (value(i->getBlockedLit()) != l_True) {
+                        const uint32_t offset = i->getNormOffset();
+                        __builtin_prefetch(clAllocator->getPointer(offset));
+                    }
+                }
             }
         }
     }
 
-    while (qhead < trail.size() && confl.isNULL()) {
-        const size_t oldTrailSize = trail.size();
-        const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
+    while (qheadlong < qheadbin && confl.isNULL()) {
+        const Lit p = trail[qheadlong++];     // 'p' is enqueued fact to propagate.
         vec<Watched>& ws = watches[p.toInt()];
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = ws.begin();
@@ -417,9 +411,10 @@ PropBy Solver::propagate()
             *j++ = *i++;
         }
         ws.shrink_(end-j);
+        qhead = qheadbin;
 
         //If propagated something, goto start
-        if (oldTrailSize > trail.size())
+        if (qheadlong < trail.size())
             goto startAgain;
     }
 

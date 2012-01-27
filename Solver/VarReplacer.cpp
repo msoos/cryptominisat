@@ -229,7 +229,7 @@ bool VarReplacer::replaceBins()
             }
 
             if (changedMain) {
-                control->watches[(~thisLit1).toInt()].push(*i);
+                control->watches[(~thisLit1).toInt()].push_front(*i);
             } else {
                 *j++ = *i;
             }
