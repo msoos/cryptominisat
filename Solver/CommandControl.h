@@ -138,7 +138,11 @@ class CommandControl : public Solver
         // Conflicting
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
         void     analyze          (PropBy confl, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &nblevels);
-        void     analyzeHelper    (Lit lit, int& pathC, vector<Lit>& out_learnt);
+        void     analyzeHelper    (
+            Lit lit
+            , int& pathC
+            , vector<Lit>& out_learnt
+        );
         void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
         template<class T> uint32_t calcNBLevels(const T& ps); ///<Calculates the glue of a clause
 
@@ -163,33 +167,33 @@ class CommandControl : public Solver
         /////////////////
         // Variable activity
         vector<uint32_t> activities;
-        void     litDecayActivity ();      ///<Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
-        void     litBumpActivity  (Lit v); ///<Increase a variable with the current 'bump' value.
+        void     varDecayActivity ();      ///<Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
+        void     varBumpActivity  (Var v); ///<Increase a variable with the current 'bump' value.
         void     setDecisionVar(const Var v, const bool b);
         bool     getPolarity(const Var var);
-        struct LitOrderLt { ///Order variables according to their activities
+        struct VarOrderLt { ///Order variables according to their activities
             const vector<uint32_t>&  activities;
             bool operator () (const uint32_t x, const uint32_t y) const
             {
                 return activities[x] > activities[y];
             }
 
-            LitOrderLt(const vector<uint32_t>& _activities) :
+            VarOrderLt(const vector<uint32_t>& _activities) :
                 activities(_activities)
             {}
         };
 
-        struct LitFilter { ///Filter out vars that have been set or is not decision from heap
+        struct VarFilter { ///Filter out vars that have been set or is not decision from heap
             const CommandControl* cc;
             const ThreadControl* control;
-            LitFilter(const CommandControl* _cc, ThreadControl* _control) :
+            VarFilter(const CommandControl* _cc, ThreadControl* _control) :
                 cc(_cc)
                 ,control(_control)
             {}
-            bool operator()(uint32_t lit) const;
+            bool operator()(uint32_t var) const;
         };
-        Heap<LitOrderLt>  order_heap;                   ///< activity-ordered heap of decision variables
-        void              insertLitOrder(const Lit x);  ///< Insert a variable in heap
+        Heap<VarOrderLt>  order_heap;                   ///< activity-ordered heap of decision variables
+        void              insertVarOrder(const Var x);  ///< Insert a variable in heap
 
         ///////////
         // Learnt clause removal
@@ -228,14 +232,14 @@ inline uint32_t CommandControl::calcNBLevels(const T& ps)
     return nbLevels;
 }
 
-inline void CommandControl::litDecayActivity()
+inline void CommandControl::varDecayActivity()
 {
     conf.var_inc *= 11;
     conf.var_inc /= 10;
 }
-inline void CommandControl::litBumpActivity(Lit lit)
+inline void CommandControl::varBumpActivity(Var var)
 {
-    if ( (activities[lit.toInt()] += conf.var_inc) > (0x1U) << 24 ) {
+    if ( (activities[var] += conf.var_inc) > (0x1U) << 24 ) {
         // Rescale:
         for (vector<uint32_t>::iterator
             it = activities.begin()
@@ -249,8 +253,8 @@ inline void CommandControl::litBumpActivity(Lit lit)
     }
 
     // Update order_heap with respect to new activity:
-    if (order_heap.inHeap(lit.toInt()))
-        order_heap.decrease(lit.toInt());
+    if (order_heap.inHeap(var))
+        order_heap.decrease(var);
 }
 
 inline bool CommandControl::locked(const Clause& c) const
@@ -287,16 +291,19 @@ inline bool CommandControl::getPolarity(const Var var)
     switch(conf.polarity_mode) {
         case polarity_false:
             return false;
+
         case polarity_true:
             return true;
+
         case polarity_rnd:
             return mtrand.randInt(1);
+
         case polarity_auto:
-            if (branchDepthHist.isvalid()) {
-                return varData[var].polarity ^ (mtrand.randInt(3*branchDepthHist.getAvg()) == 1);
-            } else {
-                return varData[var].polarity;
-            }
+            //if (branchDepthHist.isvalid()) {
+                return varData[var].polarity ^ (mtrand.randInt(10*branchDepthDeltaHist.getAvgAll()) == 1);
+            //} else {
+            //    return varData[var].polarity;
+            //}
         default:
             assert(false);
     }

@@ -71,7 +71,7 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         , control(_control)
         , conf(_conf)
         , needToInterrupt(false)
-        , order_heap(LitOrderLt(activities))
+        , order_heap(VarOrderLt(activities))
 {
     mtrand.seed(conf.origSeed);
 }
@@ -83,12 +83,10 @@ CommandControl::~CommandControl()
 Var CommandControl::newVar(const bool dvar)
 {
     const Var var = Solver::newVar(dvar);
-    assert(var == activities.size()/2);
-    activities.push_back(0);
+    assert(var == activities.size());
     activities.push_back(0);
     if (dvar) {
-        insertLitOrder(Lit(var, true));
-        insertLitOrder(Lit(var, false));
+        insertVarOrder(var);
     }
 
     return var;
@@ -206,8 +204,7 @@ void CommandControl::cancelUntil(uint32_t level)
             #ifdef ANIMATE3D
             std:cerr << "u " << var << endl;
             #endif
-            insertLitOrder(trail[sublevel]);
-            insertLitOrder(~trail[sublevel]);
+            insertVarOrder(var);
         }
         qhead = trail_lim[level];
         trail.resize(trail_lim[level]);
@@ -219,15 +216,15 @@ void CommandControl::cancelUntil(uint32_t level)
     #endif
 }
 
-void CommandControl::analyzeHelper(const Lit lit, int& pathC, vector<Lit>& out_learnt)
-{
+void CommandControl::analyzeHelper(
+    const Lit lit
+    , int& pathC
+    , vector<Lit>& out_learnt
+) {
     const Var var = lit.var();
     if (!seen[var] && varData[var].level > 0) {
-        if (value(lit) == l_True)
-            litBumpActivity(~lit);
-        else
-            litBumpActivity(lit);
 
+        varBumpActivity(var);
 
         seen[var] = 1;
         if (varData[var].level == decisionLevel())
@@ -908,7 +905,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             break;
     }
 
-    litDecayActivity();
+    varDecayActivity();
 
     return true;
 }
@@ -963,7 +960,7 @@ void CommandControl::initialiseSolver()
     ok = propagate().isNULL();
     assert(ok);
 
-    order_heap.filter(LitFilter(this, control));
+    order_heap.filter(VarFilter(this, control));
 
     //Attach every binary clause
     uint32_t wsLit = 0;
@@ -1475,11 +1472,12 @@ Lit CommandControl::pickBranchLit()
         && rand < conf.random_var_freq
         && !order_heap.empty()
     ) {
-        next = Lit::toLit(order_heap[mtrand.randInt(order_heap.size()-1)]);
-        if (value(next.var()) == l_Undef
-            && control->decision_var[next.var()]
+        const Var next_var = order_heap[mtrand.randInt(order_heap.size()-1)];
+        if (value(next_var) == l_Undef
+            && control->decision_var[next_var]
         ) {
             decisions_rnd++;
+            next = Lit(next_var, !getPolarity(next_var));
         }
     }
 
@@ -1494,7 +1492,8 @@ Lit CommandControl::pickBranchLit()
             break;
         }
 
-        next = Lit::toLit(order_heap.removeMin());
+        const Var next_var = order_heap.removeMin();
+        next = Lit(next_var, !getPolarity(next_var));
         //cout << "Trying next: " << next << endl;
 
         /*
@@ -1525,18 +1524,15 @@ Lit CommandControl::pickBranchLit()
     }
 
     //No vars in heap: solution found
-    if (next == lit_Undef) {
-        #ifdef VERBOSE_DEBUG
-        cout << "SAT!" << endl;
-        #endif
-        return lit_Undef;
-    }
-
     #ifdef VERBOSE_DEBUG
-    cout << "decided on: " << next << endl;
+    if (next == lit_Undef) {
+        cout << "SAT!" << endl;
+    } else {
+        cout << "decided on: " << next << endl;
+    }
     #endif
 
-    assert(control->decision_var[next.var()]);
+    assert(next == lit_Undef || control->decision_var[next.var()]);
     return next;
 }
 
@@ -1638,19 +1634,18 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
     oTFCache.merge(lits, false, seen);
 }*/
 
-void CommandControl::insertLitOrder(const Lit x)
+void CommandControl::insertVarOrder(const Var x)
 {
-    if (!order_heap.inHeap(x.toInt())
-        && control->decision_var[x.var()]
+    if (!order_heap.inHeap(x)
+        && control->decision_var[x]
     ) {
-        order_heap.insert(x.toInt());
+        order_heap.insert(x);
     }
 }
 
-bool CommandControl::LitFilter::operator()(uint32_t lit_pre) const
+bool CommandControl::VarFilter::operator()(uint32_t var) const
 {
-    const Lit lit = Lit::toLit(lit_pre);
-    return (cc->value(lit.var()) == l_Undef && control->decision_var[lit.var()]);
+    return (cc->value(var) == l_Undef && control->decision_var[var]);
 }
 
 uint64_t CommandControl::getNumConflicts() const
