@@ -173,7 +173,6 @@ class CommandControl : public Solver
         vector<uint32_t> activities;
         void     varDecayActivity ();      ///<Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varBumpActivity  (Var v); ///<Increase a variable with the current 'bump' value.
-        void     setDecisionVar(const Var v, const bool b);
         bool     getPolarity(const Var var);
         struct VarOrderLt { ///Order variables according to their activities
             const vector<uint32_t>&  activities;
