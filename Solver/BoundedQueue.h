@@ -77,7 +77,6 @@ public:
         } else {
             ss << std::setw(5) << "?";
         }
-        ss << std::right;
 
         return ss.str();
     }
@@ -90,7 +89,6 @@ public:
         } else {
             ss << std::setw(5) << "?";
         }
-        ss << std::right;
 
         return ss.str();
     }

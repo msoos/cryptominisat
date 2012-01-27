@@ -101,6 +101,7 @@ void CommandControl::printStatsLine(std::string left, T value, T2 value2, std::s
     << ": " << std::setw(11) << std::setprecision(2) << value
     << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
     << " " << extra << ")"
+    << std::right
     << endl;
 }
 
@@ -111,6 +112,7 @@ void CommandControl::printStatsLine(std::string left, T value, std::string extra
     << std::fixed << std::left << std::setw(27) << left
     << ": " << std::setw(11) << std::setprecision(2)
     << value << extra
+    << std::right
     << endl;
 }
 
