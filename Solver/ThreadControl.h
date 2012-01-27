@@ -228,7 +228,7 @@ class ThreadControl : public Solver
         bool findClause(const Clause* c) const;
         void checkNoWrongAttach() const;
         void calcClauseDistrib();
-        void printClauseData(const vector<Clause*>& toprint, bool learnt);
+        uint64_t sumClauseData(const vector<Clause*>& toprint, bool learnt);
         void printStats(std::string name, const vector<UsageStats>& stats, bool learnt) const;
 };
 

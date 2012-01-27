@@ -839,7 +839,7 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
     return cl;
 }
 
-void ThreadControl::printClauseData(
+uint64_t ThreadControl::sumClauseData(
     const vector<Clause*>& toprint
     , const bool learnt
 )
@@ -847,6 +847,8 @@ void ThreadControl::printClauseData(
     vector<UsageStats> usageStats;
     vector<UsageStats> usageStatsGlue;
 
+    uint64_t sumAllLitsVisited = 0;
+    uint64_t sumAllPropsAndConfls = 0;
     for(vector<Clause*>::const_iterator
         it = toprint.begin()
         , end = toprint.end()
@@ -874,6 +876,8 @@ void ThreadControl::printClauseData(
         //Move stats here
         clauseData[clause_num].numPropAndConfl = sumPropConfl;
         clauseData[clause_num].numLitVisited = sumLitVisited;
+        sumAllPropsAndConfls += sumPropConfl;
+        sumAllLitsVisited += sumLitVisited;
 
         //Update statistics
         if (usageStats.size() < cl.size() + 1)
@@ -914,14 +918,24 @@ void ThreadControl::printClauseData(
         cout << endl;*/
     }
 
+    //Print SUM stats
+    if (learnt) {
+        cout << "c Learnt    ";
+    } else {
+        cout << "c Non-learnt";
+    }
+    cout << " all lits visited: " << sumAllLitsVisited/1000UL
+    << " K" << endl;
+
+    /*
     //Print Statistics
-    //cout << "STATS LEN" << endl;
     printStats("clause-len", usageStats, learnt);
 
     if (learnt) {
-        //cout << "STATS GLUE" << endl;
         printStats("clause-glue", usageStatsGlue, learnt);
-    }
+    }*/
+
+    return sumAllLitsVisited;
 }
 
 void ThreadControl::printStats(
@@ -996,10 +1010,12 @@ void ThreadControl::moveReduce()
     assert(toDetach.empty());
     moveClausesHere();
 
-    cout << "NORMAL clauses: " << endl;
-    printClauseData(clauses, false);
-    cout << "LEARNT clauses: " << endl;
-    printClauseData(learnts, true);
+    uint64_t sumAllLitsVisited = 0;
+    sumAllLitsVisited += sumClauseData(clauses, false);
+    sumAllLitsVisited += sumClauseData(learnts, true);
+    cout << "c all            lits visited: "
+    << sumAllLitsVisited/1000UL << " K" << endl;
+
 
     reduceDB();
     nextCleanLimit += nextCleanLimitInc;
