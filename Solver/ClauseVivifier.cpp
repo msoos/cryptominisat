@@ -121,6 +121,7 @@ bool ClauseVivifier::vivifyClausesNormal()
         //if too many clauses, random order will do perfectly well
         std::sort(control->clauses.begin(), control->clauses.end(), SortBySize());
     }
+    //cout << "Time now: " << (cpuTime() - myTime) << endl;
 
     uint32_t queueByBy = 2;
     if (numCalls > 8
