@@ -58,6 +58,8 @@ class CommandControl : public Solver
         uint64_t getNumConflicts() const;
         void     setNeedToInterrupt();
         bool     getSavedPolarity(Var var) const;
+        uint32_t getSavedActivity(Var var) const;
+        uint32_t getVarInc() const;
 
     protected:
         friend class CalcDefPolars;
@@ -321,6 +323,16 @@ inline lbool CommandControl::solve(const uint64_t maxConfls)
 inline bool CommandControl::getSavedPolarity(const Var var) const
 {
     return varData[var].polarity;
+}
+
+inline uint32_t CommandControl::getSavedActivity(Var var) const
+{
+    return activities[var];
+}
+
+inline uint32_t CommandControl::getVarInc() const
+{
+    return conf.var_inc;
 }
 
 

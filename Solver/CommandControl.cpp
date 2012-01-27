@@ -1299,7 +1299,9 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     status = burstSearch();
     for(size_t i = 0; i < control->nVars(); i++) {
         varData[i].polarity = control->getSavedPolarity(i);
+        activities[i] = control->getSavedActivity(i);
     }
+    conf.var_inc = control->getSavedActivityInc();
 
     // Search:
     uint64_t rest = conf.restart_first;

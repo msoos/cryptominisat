@@ -351,6 +351,7 @@ Var ThreadControl::newVar(const bool dvar)
     implCache.addNew();
     litReachable.push_back(LitReachData());
     litReachable.push_back(LitReachData());
+    backupActivity.push_back(0);
 
     varReplacer->newVar();
     subsumer->newVar();
@@ -634,10 +635,13 @@ lbool ThreadControl::solve(const int numThreads)
                 status = l_False;
         }
 
+        backupActivity.clear();
+        backupActivity.resize(varData.size());
         for (size_t i = 0; i < varData.size(); i++) {
             varData[i].polarity = threads[0]->getSavedPolarity(i);
-            //varData[i].activity = threads[0]->getSavedActivity(i);
+            backupActivity[i] = threads[0]->getSavedActivity(i);
         }
+        backupActivityInc = threads[0]->getVarInc();
         moveReduce();
 
         #pragma omp parallel for
