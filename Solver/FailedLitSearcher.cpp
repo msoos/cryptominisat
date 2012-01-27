@@ -54,7 +54,6 @@ FailedLitSearcher::FailedLitSearcher(ThreadControl* _control):
 bool FailedLitSearcher::search()
 {
     assert(control->decisionLevel() == 0);
-    if (control->nVars() == 0) return control->ok;
 
     uint64_t numProps = 50L*1000L*1000L;
 
