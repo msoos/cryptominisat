@@ -589,7 +589,7 @@ lbool ThreadControl::solve(const int numThreads)
     //Initialise stuff
     vector<lbool> solution;
     nextCleanLimit = 8000;
-    nextCleanLimitInc = 12000;
+    nextCleanLimitInc = 8000;
 
     //Solve in infinite loop
     lbool status = ok ? l_Undef : l_False;
