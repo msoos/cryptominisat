@@ -1572,9 +1572,15 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
     //Do cache-based minimisation and watchlist-based minimisation
     //one-by-one on the literals. Order could be enforced to get smallest
     //clause, but it doesn't really matter, I think
-    for (vector<Lit>::iterator l = cl.begin(), end = cl.end(); l != end; l++) {
+    size_t done = 0;
+    for (vector<Lit>::iterator
+        l = cl.begin(), end = cl.end()
+        ; l != end && done < 30
+        ; l++
+    ) {
         if (seen[l->toInt()] == 0)
             continue;
+        done++;
 
         Lit lit = *l;
 
