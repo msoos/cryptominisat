@@ -1288,6 +1288,45 @@ lbool CommandControl::burstSearch()
     return status;
 }
 
+void CommandControl::printRestartStat()
+{
+    cout << "c " << omp_get_thread_num()
+    << " " << std::setw(6) << numRestarts
+    << " " << std::setw(7) << control->getSumConflicts()
+    << " " << std::setw(7) << order_heap.size()
+
+    << " glue"
+    << " " << std::right << glueHist.getAvgPrint(1, 5)
+    << "/" << std::left << glueHist.getAvgAllPrint(1, 5)
+
+    << " agil"
+    << " " << std::right << agilityHist.getAvgPrint(3, 5)
+    << "/" << std::left<< agilityHist.getAvgAllPrint(3, 5)
+
+    << " confllen"
+    << " " << std::right << conflSizeHist.getAvgPrint(1, 5)
+    << "/" << std::left << conflSizeHist.getAvgAllPrint(1, 5)
+
+    << " branchd"
+    << " " << std::right << branchDepthHist.getAvgPrint(1, 5)
+    << "/" << std::left  << branchDepthHist.getAvgAllPrint(1, 5)
+    << " branchdd"
+
+    << " " << std::right << branchDepthDeltaHist.getAvgPrint(1, 4)
+    << "/" << std::left << branchDepthDeltaHist.getAvgAllPrint(1, 4)
+
+    << " traild"
+    << " " << std::right << trailDepthHist.getAvgPrint(0, 7)
+    << "/" << std::left << trailDepthHist.getAvgAllPrint(0, 7)
+
+    << " traildd"
+    << " " << std::right << trailDepthDeltaHist.getAvgPrint(0, 5)
+    << "/" << std::left << trailDepthDeltaHist.getAvgAllPrint(0, 5)
+    << endl;
+
+    cout << std::right;
+}
+
 /**
 @brief The main solve loop that glues everything together
 
@@ -1402,43 +1441,10 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
         #pragma omp critical
         if (conf.verbosity >= 1) {
-            //(lastRestartPrint + 5000) < numConflicts) {
-            cout << "c " << omp_get_thread_num()
-            << " " << std::setw(6) << numRestarts
-            << " " << std::setw(7) << control->getSumConflicts()
-            << " " << std::setw(7) << order_heap.size()
-
-            << " glue"
-            << " " << std::right << glueHist.getAvgPrint(1, 5)
-            << "/" << std::left << glueHist.getAvgAllPrint(1, 5)
-
-            << " agil"
-            << " " << std::right << agilityHist.getAvgPrint(3, 5)
-            << "/" << std::left<< agilityHist.getAvgAllPrint(3, 5)
-
-            << " confllen"
-            << " " << std::right << conflSizeHist.getAvgPrint(1, 5)
-            << "/" << std::left << conflSizeHist.getAvgAllPrint(1, 5)
-
-            << " branchd"
-            << " " << std::right << branchDepthHist.getAvgPrint(1, 5)
-            << "/" << std::left  << branchDepthHist.getAvgAllPrint(1, 5)
-            << " branchdd"
-
-            << " " << std::right << branchDepthDeltaHist.getAvgPrint(1, 4)
-            << "/" << std::left << branchDepthDeltaHist.getAvgAllPrint(1, 4)
-
-            << " traild"
-            << " " << std::right << trailDepthHist.getAvgPrint(0, 7)
-            << "/" << std::left << trailDepthHist.getAvgAllPrint(0, 7)
-
-            << " traildd"
-            << " " << std::right << trailDepthDeltaHist.getAvgPrint(0, 5)
-            << "/" << std::left << trailDepthDeltaHist.getAvgAllPrint(0, 5)
-            << endl;
-
-            cout << std::right;
-            lastRestartPrint = numConflicts;
+            if ((lastRestartPrint + 5000) < numConflicts) {
+                printRestartStat();
+                lastRestartPrint = numConflicts;
+            }
         }
     }
 

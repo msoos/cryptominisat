@@ -55,6 +55,7 @@ class CommandControl : public Solver
         ///////////////////////////////
         // Stats
         void     printStats();
+        void     printRestartStat();
         uint64_t getNumConflicts() const;
         void     setNeedToInterrupt();
         bool     getSavedPolarity(Var var) const;
