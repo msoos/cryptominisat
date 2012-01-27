@@ -286,4 +286,53 @@ bool ImplCache::tryBoth(ThreadControl* control)
     return control->ok;
 }
 
+void TransCache::merge(
+    vector<LitExtra>& otherLits
+    , const Lit extraLit
+    , const bool learnt
+    , const Lit leaveOut
+    , vector<uint16_t>& seen
+) {
+    for (size_t i = 0, size = otherLits.size(); i < size; i++) {
+        const Lit lit = otherLits[i].getLit();
+        const bool onlyNonLearnt = otherLits[i].getOnlyNLBin();
+
+        seen[lit.toInt()] = 1 + (int)onlyNonLearnt;
+    }
+    //Handle extra lit
+    seen[extraLit.toInt()] = 1 + (int)!learnt;
+
+    //Everything that's already in the cache, set seen[] to zero
+    //Also, if seen[] is 2, but it's marked learnt in the cache
+    //mark it as non-learnt
+    for (size_t i = 0, size = lits.size(); i < size; i++) {
+        if (!learnt
+            && !lits[i].getOnlyNLBin()
+            && seen[lits[i].getLit().toInt()] == 2
+        ) {
+            lits[i].setOnlyNLBin();
+        }
+
+        seen[lits[i].getLit().toInt()] = 0;
+    }
+
+    //Whatever rests needs to be added
+    for (size_t i = 0 ,size = otherLits.size(); i < size; i++) {
+        const Lit lit = otherLits[i].getLit();
+        if (seen[lit.toInt()]) {
+            if (lit.var() != leaveOut.var())
+                lits.push_back(LitExtra(lit, !learnt && otherLits[i].getOnlyNLBin()));
+            seen[lit.toInt()] = 0;
+        }
+    }
+
+    //Handle extra lit
+    if (seen[extraLit.toInt()]) {
+        if (extraLit.var() != leaveOut.var())
+            lits.push_back(LitExtra(extraLit, !learnt));
+        seen[extraLit.toInt()] = 0;
+    }
+}
+
+
 #endif //__TRANSCACHE_H__

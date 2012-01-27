@@ -190,16 +190,19 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
             const Lit ancestor = control->propData[thisLit.var()].ancestor;
             if (control->conf.doCache
                 && thisLit != lit
-                && cacheUpdated[ancestor.toInt()] == 0
+                && cacheUpdated[(~ancestor).toInt()] == 0
             ) {
-                cacheUpdated[ancestor.toInt()] = 1;
-                vector<LitExtra> path;
-                path = control->implCache[(~thisLit).toInt()].lits;
+                cacheUpdated[(~ancestor).toInt()] = 1;
                 const bool learntStep = control->propData[thisLit.var()].learntStep;
-                path.push_back(LitExtra(thisLit, !learntStep));
 
                 assert(ancestor != lit_Undef);
-                control->implCache[(~ancestor).toInt()].merge(path, learntStep, ancestor, control->seen);
+                control->implCache[(~ancestor).toInt()].merge(
+                    control->implCache[(~thisLit).toInt()].lits
+                    , thisLit
+                    , learntStep
+                    , ancestor
+                    , control->seen
+                );
 
                 #ifdef VERBOSE_DEBUG_FULLPROP
                 cout << "The impl cache of " << (~ancestor) << " is now: ";
@@ -257,16 +260,19 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
             const Lit ancestor = control->propData[thisLit.var()].ancestor;
             if (control->conf.doCache
                 && thisLit != ~lit
-                && cacheUpdated[ancestor.toInt()] == 0
+                && cacheUpdated[(~ancestor).toInt()] == 0
             ) {
-                cacheUpdated[ancestor.toInt()] = 1;
-                vector<LitExtra> path;
-                path = control->implCache[(~thisLit).toInt()].lits;
+                cacheUpdated[(~ancestor).toInt()] = 1;
                 const bool learntStep = control->propData[thisLit.var()].learntStep;
-                path.push_back(LitExtra(thisLit, !learntStep));
 
                 assert(ancestor != lit_Undef);
-                control->implCache[(~ancestor).toInt()].merge(path, learntStep, ancestor, control->seen);
+                control->implCache[(~ancestor).toInt()].merge(
+                    control->implCache[(~thisLit).toInt()].lits
+                    , thisLit
+                    , learntStep
+                    , ancestor
+                    , control->seen
+                );
 
                 #ifdef VERBOSE_DEBUG_FULLPROP
                 cout << "The impl cache of " << (~ancestor) << " is now: ";
