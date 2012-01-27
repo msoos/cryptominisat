@@ -220,13 +220,22 @@ void CommandControl::analyzeHelper(
     const Lit lit
     , int& pathC
     , vector<Lit>& out_learnt
+    , bool learnt_clause
 ) {
     const Var var = lit.var();
-    if (!seen[var] && varData[var].level > 0) {
 
+    if (!learnt_clause
+        && seen2[var] == 0
+        && varData[var].level > 0
+    ) {
         varBumpActivity(var);
+        seen2[var] = 1;
+        toClear.push_back(Lit(var, false));
+    }
 
+    if (!seen[var] && varData[var].level > 0) {
         seen[var] = 1;
+
         if (varData[var].level == decisionLevel())
             pathC++;
         else
@@ -252,6 +261,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
     uint32_t numIterations = 0;
 
     //cout << "---- Start analysis -----" << endl;
+    toClear.clear();
     out_learnt.push_back(lit_Undef); //make space for ~p
     do {
         numIterations++;
@@ -259,15 +269,15 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
             case tertiary_t : {
-                analyzeHelper(confl.getOtherLit2(), pathC, out_learnt);
+                analyzeHelper(confl.getOtherLit2(), pathC, out_learnt, false);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
             case binary_t : {
                 if (p == lit_Undef)
-                    analyzeHelper(failBinLit, pathC, out_learnt);
+                    analyzeHelper(failBinLit, pathC, out_learnt, false);
 
-                analyzeHelper(confl.getOtherLit(), pathC, out_learnt);
+                analyzeHelper(confl.getOtherLit(), pathC, out_learnt, false);
                 break;
             }
 
@@ -278,7 +288,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
                         && j == clauseData[cl.getNum()].litPos[confl.getWatchNum()])
                     continue;
 
-                    analyzeHelper(cl[j], pathC, out_learnt);
+                    analyzeHelper(cl[j], pathC, out_learnt, cl.learnt());
                 }
                 break;
             }
@@ -300,6 +310,10 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
         //cout << "Next 'p' to look at: " << p << endl;
     } while (pathC > 0);
     out_learnt[0] = ~p;
+
+    //Clear seen2, which was used to mark literals that have been bumped
+    for (vector<Lit>::const_iterator it = toClear.begin(), end = toClear.end(); it != end; it++)
+        seen2[it->var()] = 0;
 
     assert(pathC == 0);
     max_literals += out_learnt.size();
