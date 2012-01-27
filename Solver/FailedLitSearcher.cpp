@@ -132,12 +132,15 @@ end:
 
 void FailedLitSearcher::printResults(const double myTime) const
 {
-    cout << "c Flit: "<< std::setw(5) << numFailed <<
-    " Blit: " << std::setw(6) << goodBothSame <<
-    " Bin:"   << std::setw(7) << addedBin <<
-    " RemBin:" << std::setw(7) << removedBins <<
-    " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(control->bogoProps - origBogoProps)/1000000.0  << "M"
-    " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
+    cout
+    << "c"
+    << " 0-depth assigns: " << (control->trail.size() - origTrailSize)
+    << " Flit: "<< std::setw(5) << numFailed
+    << " Blit: " << std::setw(6) << goodBothSame
+    << " Bin:"   << std::setw(7) << addedBin
+    << " RemBin:" << std::setw(7) << removedBins
+    << " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(control->bogoProps - origBogoProps)/1000000.0  << "M"
+    << " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
     << endl;
 }
 
