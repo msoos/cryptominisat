@@ -642,7 +642,9 @@ lbool ThreadControl::solve(const int numThreads)
             backupActivity[i] = threads[0]->getSavedActivity(i);
         }
         backupActivityInc = threads[0]->getVarInc();
-        moveReduce();
+
+        if (status != l_False)
+            moveReduce();
 
         #pragma omp parallel for
         for(size_t i = 0; i < threads.size(); i++) {
