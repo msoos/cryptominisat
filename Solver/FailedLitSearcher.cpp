@@ -70,6 +70,7 @@ bool FailedLitSearcher::search()
     visitedAlready.resize(control->nVars()*2, 0);
     cacheUpdated.clear();
     cacheUpdated.resize(control->nVars()*2, 0);
+    origTrailSize = control->trail.size();
 
     //If failed var searching is going good, do successively more and more of it
     if ((double)lastTimeFoundTruths > (double)control->getNumUnsetVars() * 0.10)
@@ -81,9 +82,6 @@ bool FailedLitSearcher::search()
     //For BothSame
     propagated.resize(control->nVars(), 0);
     propValue.resize(control->nVars(), 0);
-
-    //For calculating how many variables have really been set
-    origTrailSize = control->trail.size();
 
     //For HyperBin
     addedBin = 0;
