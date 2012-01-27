@@ -250,10 +250,12 @@ template<bool simple> inline bool Solver::propNormalClause(
         if (numLit == data[0] || numLit == data[1])
             continue;
         if (value(c[numLit]) != l_False) {
-            data[watchNum] = numLit;
-            watches[(~c[numLit]).toInt()].push(Watched(offset, c[data[!watchNum]], watchNum));
             bogoProps += numLit/10;
             data.numLitVisited+= numLit;
+            data[watchNum] = numLit;
+            watches[(~c[numLit]).toInt()].push(
+                Watched(offset, c[data[!watchNum]], watchNum)
+            );
             return true;
         }
     }
