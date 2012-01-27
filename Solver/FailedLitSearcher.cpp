@@ -55,11 +55,12 @@ bool FailedLitSearcher::search()
 {
     assert(control->decisionLevel() == 0);
 
-    uint64_t numProps = 50L*1000L*1000L;
+    uint64_t numProps = 70L*1000L*1000L;
 
     control->testAllClauseAttach();
     double myTime = cpuTime();
     const uint32_t origNumUnsetVars = control->getNumUnsetVars();
+    control->clauseCleaner->removeAndCleanAll();
 
     //General Stats
     numFailed = 0;
