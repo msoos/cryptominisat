@@ -41,13 +41,30 @@ void ImplCache::clean(ThreadControl* control)
     uint64_t numCleaned = 0;
     uint64_t numFreed = 0;
 
-    vector<uint16_t>& inside = control->seen;
-    vector<uint16_t>& nonLearnt = control->seen2;
-
     //Free memory if possible
     for (Var var = 0; var < control->nVars(); var++) {
+        //If replaced, merge it into the one that replaced it
+        if (control->varData[var].elimed == ELIMED_VARREPLACER) {
+            for(int i = 0; i < 2; i++) {
+                const Lit litOrig = Lit(var, i);
+                if (implCache[litOrig.toInt()].lits.empty())
+                    continue;
+
+                const Lit lit = control->varReplacer->getLitReplacedWith(litOrig);
+                implCache[lit.toInt()].merge(
+                    implCache[litOrig.toInt()].lits
+                    , lit_Undef //nothing to add
+                    , false //replaced, so 'non-learnt'
+                    , lit //exclude this var
+                    , control->seen
+                );
+            }
+        }
+
+        //Free it
         if (control->value(var) != l_Undef
-            || (control->varData[var].elimed != ELIMED_NONE && control->varData[var].elimed != ELIMED_QUEUED_VARREPLACER)
+            || control->varData[var].elimed == ELIMED_VARELIM
+            || control->varData[var].elimed == ELIMED_VARREPLACER
         ) {
             vector<LitExtra> tmp1;
             numFreed += implCache[Lit(var, false).toInt()].lits.capacity();
@@ -59,6 +76,8 @@ void ImplCache::clean(ThreadControl* control)
         }
     }
 
+    vector<uint16_t>& inside = control->seen;
+    vector<uint16_t>& nonLearnt = control->seen2;
     uint32_t wsLit = 0;
     const vector<Lit>& replaceTable = control->varReplacer->getReplaceTable();
     for(vector<TransCache>::iterator trans = implCache.begin(), transEnd = implCache.end(); trans != transEnd; trans++, wsLit++) {
@@ -300,7 +319,8 @@ void TransCache::merge(
         seen[lit.toInt()] = 1 + (int)onlyNonLearnt;
     }
     //Handle extra lit
-    seen[extraLit.toInt()] = 1 + (int)!learnt;
+    if (extraLit != lit_Undef)
+        seen[extraLit.toInt()] = 1 + (int)!learnt;
 
     //Everything that's already in the cache, set seen[] to zero
     //Also, if seen[] is 2, but it's marked learnt in the cache
@@ -327,7 +347,7 @@ void TransCache::merge(
     }
 
     //Handle extra lit
-    if (seen[extraLit.toInt()]) {
+    if (extraLit != lit_Undef && seen[extraLit.toInt()]) {
         if (extraLit.var() != leaveOut.var())
             lits.push_back(LitExtra(extraLit, !learnt));
         seen[extraLit.toInt()] = 0;
