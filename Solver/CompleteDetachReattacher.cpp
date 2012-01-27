@@ -96,9 +96,9 @@ void CompleteDetachReatacher::cleanAndAttachClauses(vector<Clause*>& cs)
 {
     vector<Clause*>::iterator i = cs.begin();
     vector<Clause*>::iterator j = i;
-    //PolaritySorter sorter(control->varData);
+    PolaritySorter sorter(control->varData);
     for (vector<Clause*>::iterator end = cs.end(); i != end; i++) {
-        //std::sort((*i)->begin(), (*i)->end(), sorter);
+        std::sort((*i)->begin(), (*i)->end(), sorter);
         if (cleanClause(*i)) {
             control->attachClause(**i);
             *j++ = *i;

@@ -75,18 +75,22 @@ struct PolaritySorter
     {};
 
     bool operator()(const Lit lit1, const Lit lit2) {
-        const bool pol1 = !varData[lit1.var()].polarity ^ lit1.sign();
-        const bool pol2 = !varData[lit2.var()].polarity ^ lit2.sign();
+        const bool value1 = varData[lit1.var()].polarity ^ lit1.sign();
+        const bool value2 = varData[lit2.var()].polarity ^ lit2.sign();
 
-        //Tie 1: polarity
-        if (pol1 == true && pol2 == false) return true;
-        if (pol1 == false && pol2 == true) return false;
-        return false;
+        //Strongly prefer TRUE value at the beginning
+        if (value1 == true && value2 == false)
+            return true;
+
+        if (value1 == false && value2 == true)
+            return false;
 
         //Tie 2: last level
         /*assert(pol1 == pol2);
         if (pol1 == true) return varData[lit1.var()].level < varData[lit2.var()].level;
         else return varData[lit1.var()].level > varData[lit2.var()].level;*/
+
+        return false;
     }
 
     const vector<VarData>& varData;
