@@ -1525,7 +1525,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 2;
     }
 
-    numMaxElimVars = ((double)control->getNumFreeVars() * 0.3 * std::sqrt(numCalls));
+    numMaxElimVars = ((double)control->getNumFreeVars() * 0.32);
 
     if (!control->conf.doSubsume1) {
         numMaxSubsume1 = 0;
