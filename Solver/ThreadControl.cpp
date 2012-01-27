@@ -1554,9 +1554,6 @@ uint32_t ThreadControl::getNumFreeVars() const
 {
     uint32_t freeVars = nVars();
 
-    //Variables set
-    freeVars -= trail.size();
-
     //Variables elimed
     Var var = 0;
     for(vector<VarData>::const_iterator it = varData.begin(), end = varData.end(); it != end; it++, var++) {
