@@ -334,7 +334,7 @@ void ThreadControl::reArrangeClauses()
         reArrangeClause(learnts[i]);
     }
 
-    if (conf.verbosity >= 3) {
+    if (conf.verbosity >= 1) {
         cout << "c Rearrange lits in clauses "
         << std::setw(4) << std::setprecision(2) << (cpuTime() - myTime)  << " s"
         << endl;
@@ -765,6 +765,8 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
 
     if (conf.doSortWatched)
         sortWatched();
+
+    reArrangeClauses();
 
     //addSymmBreakClauses();
 
