@@ -392,7 +392,7 @@ void ThreadControl::reduceDB()
         Clause* cl = learnts[i];
         if (learnts[i]->size() > 3
             && clauseData[cl->getNum()].numPropAndConfl < 2
-            && cl->getConflictIntroduced() + 5000 < sumConflicts
+            && cl->getConflictIntroduced() + 10000 < sumConflicts
         ) {
             detachClause(*cl);
             toDetach.push_back(cl);
