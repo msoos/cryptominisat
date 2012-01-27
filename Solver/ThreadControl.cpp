@@ -723,6 +723,9 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
     if (conf.doReplace && !varReplacer->performReplace())
         goto end;
 
+    if (!implCache.tryBoth(this))
+        goto end;
+
     if (conf.doFailedLit && !failedLitSearcher->search())
         goto end;
 
@@ -734,12 +737,12 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
 
     if (needToInterrupt) return l_Undef;
 
-    //Vivify clauses
-    if (conf.doClausVivif && !clauseVivifier->vivify())
-        goto end;
-
     //Var-elim, gates, subsumption, strengthening
     if (conf.doSatELite && !subsumer->simplifyBySubsumption())
+        goto end;
+
+    //Vivify clauses
+    if (conf.doClausVivif && !clauseVivifier->vivify())
         goto end;
 
     //Search & replace 2-long XORs
@@ -750,10 +753,15 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
         goto end;
 
     //Cleaning, stat counting, etc.
-    if (conf.doCache && conf.doCalcReach)
-        calcReachability();
     if (conf.doCache)
         implCache.clean(this);
+
+    if (!implCache.tryBoth(this))
+        goto end;
+
+    if (conf.doCache && conf.doCalcReach)
+        calcReachability();
+
     if (conf.doSortWatched)
         sortWatched();
 
