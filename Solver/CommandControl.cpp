@@ -1382,7 +1382,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             //(lastRestartPrint + 5000) < numConflicts) {
             cout << "c " << omp_get_thread_num()
             << " " << std::setw(6) << numRestarts
-            << " " << std::setw(7) << numConflicts
+            << " " << std::setw(7) << control->getSumConflicts()
             << " " << std::setw(7) << order_heap.size()
 
             << " glue"
