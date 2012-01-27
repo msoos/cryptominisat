@@ -1808,7 +1808,7 @@ bool Subsumer::maybeEliminate(const Var var)
         for (vector<ClAndBin>::const_iterator it2 = negAll.begin(), end2 = negAll.end(); it2 != end2; it2++) {
             // Merge clauses. If 'y' and '~y' exist, clause will not be created.
             if (!it->learnt && !it2->learnt) {
-                bool ok = merge(*it, *it2, lit, ~lit, false);
+                bool ok = merge(*it, *it2, lit, ~lit, true);
                 if (ok) {
                     after_clauses++;
                     if (after_clauses > before_clauses) return false;
@@ -1999,12 +1999,26 @@ bool Subsumer::merge(
     //This is essentially the reverse of cache-based vivification
     if (!ps.isBin && useCache && control->conf.doCache) {
         for (uint32_t i= 0; i < dummy.size(); i++) {
+
+            //Use cache
             const vector<LitExtra>& cache = control->implCache[dummy[i].toInt()].lits;
             for(vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
                 if (it->getOnlyNLBin()
                     && !seen[(~(it->getLit())).toInt()]
                 ) {
                     Lit toAdd = ~(it->getLit());
+                    dummy2.push_back(toAdd);
+                    seen[toAdd.toInt()] = 1;
+                }
+            }
+
+            //Use watchlists
+            const vec<Watched>& ws = control->watches[(~dummy[i]).toInt()];
+            for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
+                if (it->isNonLearntBinary()
+                    && !seen[(~(it->getOtherLit())).toInt()]
+                ) {
+                    Lit toAdd = ~(it->getOtherLit());
                     dummy2.push_back(toAdd);
                     seen[toAdd.toInt()] = 1;
                 }
@@ -2042,6 +2056,19 @@ bool Subsumer::merge(
                 for(vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
                     if (it->getOnlyNLBin()
                         && seen[((it->getLit())).toInt()]
+                    ) {
+                        retval = false;
+                        goto end;
+                    }
+                }
+            }
+
+            //See if using wathclists we can prove that the clause is a tautology
+            if (useCache) {
+                const vec<Watched>& ws = control->watches[(~c[i]).toInt()];
+                for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
+                    if (it->isNonLearntBinary()
+                        && seen[((it->getOtherLit())).toInt()]
                     ) {
                         retval = false;
                         goto end;
