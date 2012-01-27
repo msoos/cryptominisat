@@ -55,9 +55,6 @@ bool FailedLitSearcher::search()
 {
     assert(control->decisionLevel() == 0);
     if (control->nVars() == 0) return control->ok;
-    if (control->conf.doCache && numCalls > 0) {
-        if (!control->implCache.tryBoth(control)) return false;
-    }
 
     uint64_t numProps = 50L*1000L*1000L;
 
