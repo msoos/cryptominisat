@@ -51,11 +51,26 @@ FailedLitSearcher::FailedLitSearcher(ThreadControl* _control):
 {
 }
 
+struct ActSorter
+{
+    ActSorter(const vector<uint32_t>& _activities) :
+        activities(_activities)
+    {};
+
+    const vector<uint32_t>& activities;
+
+    bool operator()(uint32_t var1, uint32_t var2) const
+    {
+        //Least active vars first
+        return (activities[var1] < activities[var2]);
+    }
+};
+
 bool FailedLitSearcher::search()
 {
     assert(control->decisionLevel() == 0);
 
-    uint64_t numProps = 70L*1000L*1000L;
+    uint64_t numPropsTodo = 70L*1000L*1000L;
 
     control->testAllClauseAttach();
     double myTime = cpuTime();
@@ -77,23 +92,41 @@ bool FailedLitSearcher::search()
         numPropsMultiplier = std::max(numPropsMultiplier*1.3, 1.6);
     else
         numPropsMultiplier = 1.0;
-    numProps = (uint64_t) ((double)numProps * numPropsMultiplier * control->conf.failedLitMultiplier);
-
-    //For BothSame
-    propagated.resize(control->nVars(), 0);
-    propValue.resize(control->nVars(), 0);
+    numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * control->conf.failedLitMultiplier);
 
     //For HyperBin
     addedBin = 0;
     removedBins = 0;
 
+    //For var-based failed literal probing
+    vector<uint32_t> actSortedVars(control->nVars());
+    for(size_t i = 0; i < actSortedVars.size(); i++) {
+        actSortedVars[i] = i;
+    }
+    std::sort(actSortedVars.begin(), actSortedVars.end(), ActSorter(control->backupActivity));
+
+
     origBogoProps = control->bogoProps;
-    uint32_t i;
-    for (i = 0; i < control->nVars(); i++) {
+    for (uint32_t i = 0; i < control->nVars(); i++) {
         const Var var = (control->mtrand.randInt() + i) % control->nVars();
         if (control->value(var) != l_Undef || !control->decision_var[var])
             continue;
-        if (control->bogoProps >= origBogoProps + numProps)
+        if (control->bogoProps >= origBogoProps + numPropsTodo/2)
+            break;
+        if (!tryBoth(Lit(var, false)))
+            goto end;
+    }
+
+    for (vector<uint32_t>::const_iterator
+            it = actSortedVars.begin(), end = actSortedVars.end()
+            ; it != end
+            ; it++
+    ) {
+        const Var var = *it;
+        if (control->value(var) != l_Undef || !control->decision_var[var])
+            continue;
+
+        if (control->bogoProps >= origBogoProps + numPropsTodo)
             break;
         if (!tryBoth(Lit(var, false)))
             goto end;
@@ -147,10 +180,6 @@ void FailedLitSearcher::printResults(const double myTime) const
 bool FailedLitSearcher::tryBoth(const Lit lit)
 {
     //Start-up cleaning
-    propagated.removeThese(propagatedBitSet);
-    assert(propagated.isZero());
-    propagatedBitSet.clear();
-    bothSame.clear();
     assert(uselessBin.empty());
 
     if (!visitedAlready[lit.toInt()]) {
@@ -164,7 +193,7 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Trying " << lit << endl;
         #endif
-        failed = control->propagateFull(uselessBin);
+        const Lit failed = control->propagateFull(uselessBin);
         if (failed != lit_Undef) {
             control->cancelZeroLight();
             numFailed++;
@@ -179,16 +208,7 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
         assert(control->decisionLevel() > 0);
         for (int64_t c = control->trail.size()-1; c != (int64_t)control->trail_lim[0] - 1; c--) {
             const Lit thisLit = control->trail[c];
-            const Var x = thisLit.var();
             visitedAlready[thisLit.toInt()] = 1;
-
-            propagated.setBit(x);
-            propagatedBitSet.push_back(x);
-
-            if (control->value(x).getBool())
-                propValue.setBit(x);
-            else
-                propValue.clearBit(x);
 
             const Lit ancestor = control->propData[thisLit.var()].ancestor;
             if (control->conf.doCache
@@ -234,7 +254,7 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Trying (opp) " << (~lit) << endl;
         #endif
-        failed = control->propagateFull(uselessBin);
+        const Lit failed = control->propagateFull(uselessBin);
         if (failed != lit_Undef) {
             control->cancelZeroLight();
             numFailed++;
@@ -250,15 +270,7 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
         //bool onlyNonLearntUntilNow = true;
         for (int64_t c = control->trail.size()-1; c != (int64_t)control->trail_lim[0] - 1; c--) {
             const Lit thisLit = control->trail[c];
-            const Var x = thisLit.var();
             visitedAlready[thisLit.toInt()] = 1;
-
-            if (propagated[x]) {
-                if (propValue[x] == control->value(x).getBool()) {
-                    //they both imply the same
-                    bothSame.push_back(Lit(x, !propValue[x]));
-                }
-            }
 
             const Lit ancestor = control->propData[thisLit.var()].ancestor;
             if (control->conf.doCache
@@ -293,12 +305,6 @@ bool FailedLitSearcher::tryBoth(const Lit lit)
         #endif
     }
 
-    for(uint32_t i = 0; i != bothSame.size() && control->ok; i++) {
-        vector<Lit> lits;
-        lits.push_back(bothSame[i]);
-        control->addClauseInt(lits, true);
-    }
-    goodBothSame += bothSame.size();
     return control->ok;
 }
 

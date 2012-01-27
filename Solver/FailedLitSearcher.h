@@ -70,13 +70,6 @@ class FailedLitSearcher {
 
         ThreadControl* control; ///<The solver we are updating&working with
 
-        Lit failed;
-
-        //bothprop finding
-        vector<uint32_t> propagatedBitSet;
-        BitArray propagated; ///<These lits have been propagated by propagating the lit picked
-        BitArray propagated2; ///<These lits have been propagated by propagating the lit picked
-        BitArray propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
         /**
         @brief Lits that have been propagated to the same value both by "var" and "~var"
 
