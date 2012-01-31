@@ -414,12 +414,12 @@ PropBy Solver::propagate()
             *j++ = *i++;
         }
         ws.shrink_(end-j);
-        qhead = qheadbin;
 
         //If propagated something, goto start
         if (qheadlong < trail.size())
             goto startAgain;
     }
+    qhead = qheadbin;
 
     #ifdef VERBOSE_DEBUG
     cout << "Propagation ended." << endl;
