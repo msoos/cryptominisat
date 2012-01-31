@@ -100,7 +100,6 @@ void Subsumer::newVar()
 
     //variable status
     var_elimed .push_back(0);
-    var_blocked.push_back(0);
 }
 
 void Subsumer::updateVars(
@@ -1340,7 +1339,6 @@ void Subsumer::blockClauses()
                 std::copy(cl.begin(), cl.end(), remCl.begin());
                 blockedClauses.push_back(BlockedClause(*l, remCl));
 
-                var_blocked[l->var()] = true;
                 blocked++;
                 toRemove = true;
                 break;
@@ -1449,7 +1447,6 @@ void Subsumer::asymmTE()
                     std::copy(cl.begin(), cl.end(), remCl.begin());
                     blockedClauses.push_back(BlockedClause(*l, remCl));
 
-                    var_blocked[l->var()] = true;
                     blocked++;
                     toRemove = true;
                     toDecrease = &numMaxAsymm;
