@@ -120,6 +120,10 @@ public:
     //Called from main
     bool simplifyBySubsumption();
     void newVar();
+    void updateVars(
+        const vector<uint32_t>& outerToInter
+        , const vector<uint32_t>& interToOuter
+    );
 
     //UnElimination
     void extendModel(SolutionExtender* extender) const;

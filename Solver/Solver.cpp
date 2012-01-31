@@ -20,6 +20,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "ClauseAllocator.h"
 #include "Clause.h"
 #include "time_mem.h"
+#include "VarUpdateHelper.h"
 
 using std::cout;
 using std::endl;
@@ -725,4 +726,54 @@ uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLea
 
     assert(num % 2 == 0);
     return num/2;
+}
+
+void Solver::updateVars(
+    const vector<uint32_t>& outerToInter
+    , const vector<uint32_t>& interToOuter
+    , const vector<uint32_t>& interToOuter2
+) {
+    updateArray(varData, interToOuter);
+    updateArray(assigns, interToOuter);
+    updateLitsMap(trail, outerToInter);
+    updateLitsMap(assumptions, outerToInter);
+    updateBySwap(watches, seen, interToOuter2);
+
+    for(size_t i = 0; i < watches.size(); i++) {
+        if (i+10 < watches.size())
+            __builtin_prefetch(watches[i+10].begin());
+
+        if (!watches[i].empty())
+            updateWatch(watches[i], outerToInter);
+    }
+}
+
+inline void Solver::updateWatch(vec<Watched>& ws, const vector<uint32_t>& outerToInter)
+{
+    for(vec<Watched>::iterator
+        it = ws.begin(), end = ws.end()
+        ; it != end
+        ; it++
+    ) {
+        if (it->isBinary() || it->isTriClause()) {
+            it->setOtherLit(
+                getUpdatedLit(it->getOtherLit(), outerToInter)
+            );
+            if (it->isBinary())
+                continue;
+        }
+
+        if (it->isTriClause()) {
+            it->setOtherLit2(
+                getUpdatedLit(it->getOtherLit2(), outerToInter)
+            );
+            continue;
+        }
+
+        if (it->isClause()) {
+            it->setBlockedLit(
+                getUpdatedLit(it->getBlockedLit(), outerToInter)
+            );
+        }
+    }
 }

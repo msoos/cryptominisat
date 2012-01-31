@@ -77,6 +77,10 @@ class VarReplacer
         bool replacingVar(const Var var) const;
         void newVar();
         bool addLaterAddBinXor();
+        void updateVars(
+            const vector<uint32_t>& outerToInter
+            , const vector<uint32_t>& interToOuter
+        );
 
         //No need to update, only stores binary clauses, that
         //have been allocated within pool

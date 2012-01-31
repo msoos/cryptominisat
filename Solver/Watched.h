@@ -80,12 +80,12 @@ class Watched {
         /**
         @brief To update the example literal (blocked literal) of a >3-long normal clause
         */
-        void setBlockedLit(const Lit lit)
+        void setBlockedLit(const Lit blockedLit)
         {
             #ifdef DEBUG_WATCHED
             assert(isClause());
             #endif
-            data1 = lit.toInt();
+            data1 = (uint32_t)getWatchNum() | (blockedLit.toInt() << 1);
         }
 
         bool isBinary() const
@@ -156,6 +156,15 @@ class Watched {
             assert(isTriClause());
             #endif
             return data2AsLit();
+        }
+
+        void setOtherLit2(const Lit lit2)
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isTriClause());
+            #endif
+            data2 = (uint32_t)3 | (lit2.toInt()<< 2);
+
         }
 
         /**

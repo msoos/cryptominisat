@@ -30,6 +30,7 @@
 #include "ClauseVivifier.h"
 #include "ClauseCleaner.h"
 #include "SolutionExtender.h"
+#include "VarUpdateHelper.h"
 #include <omp.h>
 #include <fstream>
 using std::cout;
@@ -341,10 +342,146 @@ void ThreadControl::reArrangeClauses()
     }
 }
 
+void ThreadControl::renumberVariables()
+{
+    double myTime = cpuTime();
+    double myTotalTime = 0;
+    clauseCleaner->removeAndCleanAll();
+
+    /*vector<uint32_t> myOuterToInter;
+    myOuterToInter.push_back(2);
+    myOuterToInter.push_back(3);
+    myOuterToInter.push_back(1);
+    myOuterToInter.push_back(0);
+    myOuterToInter.push_back(4);
+    myOuterToInter.push_back(5);
+
+    vector<uint32_t> myInterToOUter;
+    myInterToOUter.push_back(3);
+    myInterToOUter.push_back(2);
+    myInterToOUter.push_back(0);
+    myInterToOUter.push_back(1);
+    myInterToOUter.push_back(4);
+    myInterToOUter.push_back(5);
+
+    vector<uint32_t> toreorder;
+    for(size_t i = 0; i < 6; i++)
+        toreorder.push_back(i);
+
+    //updateBySwap(toreorder, seen, myOuterToInter);
+    updateVarsArray(toreorder, myInterToOUter);
+    for(size_t i = 0; i < 6; i++) {
+        cout << toreorder[i] << " , ";
+    }
+
+    cout << endl;
+    exit(-1);*/
+
+    //outerToInter[10] = 0 ---> what was 10 is now 0.
+
+    //Fill the first part of interToOuter with vars that are used
+    outerToInter.clear();
+    outerToInter.resize(nVars());
+    interToOuter.clear();
+    interToOuter.resize(nVars());
+    size_t at = 0;
+    vector<Var> useless;
+    for(size_t i = 0; i < nVars(); i++) {
+        if (value(i) != l_Undef
+            || varData[i].elimed == ELIMED_VARELIM
+            || varData[i].elimed == ELIMED_VARREPLACER
+        ) {
+            useless.push_back(i);
+            continue;
+        }
+
+        outerToInter[i] = at;
+        interToOuter[at] = i;
+        at++;
+    }
+
+    //Fill the rest with variables that have been removed/eliminated/set
+    for(vector<Var>::const_iterator
+        it = useless.begin(), end = useless.end()
+        ; it != end
+        ; it++
+    ) {
+        outerToInter[*it] = at;
+        interToOuter[at] = *it;
+        at++;
+    }
+    assert(at == nVars());
+
+    //Create temporary outerToInter2
+    vector<uint32_t> interToOuter2(interToOuter.size()*2);
+    for(size_t i = 0; i < interToOuter.size(); i++) {
+        interToOuter2[i*2] = interToOuter[i]*2;
+        interToOuter2[i*2+1] = interToOuter[i]*2+1;
+    }
+    if (conf.verbosity >= 3) {
+        cout
+        << "c Time to calculate rearrangement: " << (cpuTime() - myTime)
+        << endl;
+    }
+    myTotalTime += (cpuTime() - myTime);
+
+
+    //Update local data
+    myTime = cpuTime();
+    updateArray(backupActivity, interToOuter);
+    updateArray(decision_var, interToOuter);
+    Solver::updateVars(outerToInter, interToOuter, interToOuter2);
+    if (conf.verbosity >= 3) {
+        cout
+        << "c Time to var-update local data: " << (cpuTime() - myTime)
+        << endl;
+    }
+    myTotalTime += (cpuTime() - myTime);
+
+    //Update clauses
+    myTime = cpuTime();
+    for(size_t i = 0; i < clauses.size(); i++) {
+        updateLitsMap(*clauses[i], outerToInter);
+    }
+
+    for(size_t i = 0; i < learnts.size(); i++) {
+        updateLitsMap(*learnts[i], outerToInter);
+    }
+    if (conf.verbosity >= 3) {
+        cout
+        << "c Time to var-update clauses: " << (cpuTime() - myTime)
+        << endl;
+    }
+    myTotalTime += (cpuTime() - myTime);
+
+    //Update sub-elements
+    myTime = cpuTime();
+    subsumer->updateVars(outerToInter, interToOuter);
+    varReplacer->updateVars(outerToInter, interToOuter);
+    implCache.updateVars(seen, outerToInter, interToOuter, interToOuter2);
+    if (conf.verbosity >= 2) {
+        cout
+        << "c Time to var-update varreplacer&subsumer&cache: " << (cpuTime() - myTime)
+        << endl;
+    }
+    myTotalTime += (cpuTime() - myTime);
+
+    //Print results
+    if (conf.verbosity >= 1) {
+        cout
+        << "c Reordered variables T: "
+        << std::fixed << std::setw(5) << std::setprecision(2)
+        << myTotalTime
+        << endl;
+    }
+}
+
 Var ThreadControl::newVar(const bool dvar)
 {
-    Solver::newVar();
+    Var var = Solver::newVar();
 
+    outerToInter.push_back(var);
+    interToOuter.push_back(var);
     decision_var.push_back(dvar);
     numDecisionVars += dvar;
 
@@ -765,6 +902,8 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
 
     if (conf.doSortWatched)
         sortWatched();
+
+    renumberVariables();
 
     reArrangeClauses();
 

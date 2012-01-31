@@ -100,9 +100,20 @@ class TransCache {
             , vector<uint16_t>& seen
         );
 
+        void updateVars(const std::vector< uint32_t >& outerToInter);
+
         std::vector<LitExtra> lits;
         //uint64_t conflictLastUpdated;
 };
+
+namespace std
+{
+    template <>
+    inline void swap (TransCache& m1, TransCache& m2)
+    {
+         m1.lits.swap(m2.lits);
+    }
+}
 
 inline std::ostream& operator<<(std::ostream& os, const TransCache& tc)
 {
@@ -157,6 +168,13 @@ class ImplCache  {
         {
             return implCache.size();
         }
+
+        void updateVars(
+            vector<uint16_t>& seen
+            , const std::vector< uint32_t >& outerToInter
+            , const std::vector< uint32_t >& interToOuter
+            , const std::vector< uint32_t >& interToOuter2
+        );
 
         void clean(ThreadControl* control);
         bool tryBoth(ThreadControl* control);

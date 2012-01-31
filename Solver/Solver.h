@@ -244,6 +244,12 @@ protected:
     //Var selection, activity, etc.
     AgilityData agility;
     void sortWatched();
+    void updateVars(
+        const vector<uint32_t>& outerToInter
+        , const vector<uint32_t>& interToOuter
+        , const vector<uint32_t>& interToOuter2
+    );
+    void updateWatch(vec<Watched>& ws, const vector<uint32_t>& outerToInter);
 };
 
 

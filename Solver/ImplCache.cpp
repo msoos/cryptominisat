@@ -27,6 +27,7 @@
 #include "ThreadControl.h"
 #include "CommandControl.h"
 #include "VarReplacer.h"
+#include "VarUpdateHelper.h"
 #include "time_mem.h"
 using std::cout;
 using std::endl;
@@ -351,6 +352,26 @@ void TransCache::merge(
         if (extraLit.var() != leaveOut.var())
             lits.push_back(LitExtra(extraLit, !learnt));
         seen[extraLit.toInt()] = 0;
+    }
+}
+
+void TransCache::updateVars(const std::vector< uint32_t >& outerToInter)
+{
+    for(size_t i = 0; i < lits.size(); i++) {
+        lits[i] = LitExtra(getUpdatedLit(lits[i].getLit(), outerToInter), lits[i].getOnlyNLBin());
+    }
+
+}
+
+void ImplCache::updateVars(
+    vector<uint16_t>& seen
+    , const std::vector< uint32_t >& outerToInter
+    , const std::vector< uint32_t >& interToOuter
+    , const std::vector< uint32_t >& interToOuter2
+) {
+    updateBySwap(implCache, seen, interToOuter2);
+    for(size_t i = 0; i < implCache.size(); i++) {
+        implCache[i].updateVars(outerToInter);
     }
 }
 

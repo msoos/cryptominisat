@@ -29,6 +29,7 @@
 #include <algorithm>
 #include "VarReplacer.h"
 #include "CompleteDetachReattacher.h"
+#include "VarUpdateHelper.h"
 #include <set>
 #include <algorithm>
 #include <fstream>
@@ -100,6 +101,24 @@ void Subsumer::newVar()
     //variable status
     var_elimed .push_back(0);
     var_blocked.push_back(0);
+}
+
+void Subsumer::updateVars(
+    const vector<uint32_t>& outerToInter
+    , const vector<uint32_t>& interToOuter
+) {
+    updateArray(var_elimed, interToOuter);
+
+    for(vector<BlockedClause>::iterator
+        it = blockedClauses.begin(), end = blockedClauses.end()
+        ; it != end
+        ; it++
+    ) {
+        it->blockedOn = getUpdatedLit(it->blockedOn, outerToInter);
+        for(size_t i = 0; i < it->lits.size(); i++) {
+            it->lits[i] = getUpdatedLit(it->lits[i], outerToInter);
+        }
+    }
 }
 
 void Subsumer::extendModel(SolutionExtender* extender) const

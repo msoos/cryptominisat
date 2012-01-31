@@ -159,6 +159,13 @@ class ThreadControl : public Solver
         VarReplacer         *varReplacer;
         MTRand              mtrand;           ///< random number generator
 
+
+        /////////////////////////////
+        //Renumberer
+        vector<Var> outerToInter;
+        vector<Var> interToOuter;
+        void renumberVariables();
+
         /////////////////////////////
         // SAT solution verification
         bool verifyModel() const;                            ///<Verify model[]

@@ -20,6 +20,7 @@
 */
 
 #include "VarReplacer.h"
+#include "VarUpdateHelper.h"
 #include <iostream>
 #include <iomanip>
 #include <set>
@@ -556,6 +557,27 @@ void VarReplacer::newVar()
 {
     table.push_back(Lit(table.size(), false));
 }
+
+void VarReplacer::updateVars(
+    const std::vector< uint32_t >& outerToInter
+    , const std::vector< uint32_t >& interToOuter
+) {
+    assert(laterAddBinXor.empty());
+
+    updateArray(table, interToOuter);
+    updateLitsMap(table, outerToInter);
+    map<Var, vector<Var> > newReverseTable;
+    for(map<Var, vector<Var> >::iterator
+        it = reverseTable.begin(), end = reverseTable.end()
+        ; it != end
+        ; it++
+    ) {
+        updateVarsMap(it->second, outerToInter);
+        newReverseTable[outerToInter[it->first]] = it->second;
+    }
+    reverseTable.swap(newReverseTable);
+}
+
 
 bool VarReplacer::addLaterAddBinXor()
 {

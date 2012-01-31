@@ -62,6 +62,14 @@ public:
     vec(const vec<T>& other)         : data(NULL) , sz(0)   , cap(0)    { myCopy(other); }
    ~vec(void)                                                      { clear(true); }
 
+    //swap
+    void swap(vec<T>& other)
+    {
+        std::swap(data, other.data);
+        std::swap(sz, other.sz);
+        std::swap(cap, other.cap);
+    }
+
     // Ownership of underlying array:
     T*       release  (void)           { T* ret = data; data = NULL; sz = 0; cap = 0; return ret; }
     const T* begin() const {return data; }
@@ -173,6 +181,15 @@ void vec<T>::clear(bool dealloc) {
             data = NULL;
             cap = 0;
         }
+    }
+}
+
+namespace std
+{
+    template <typename T2>
+    void swap (vec<T2>& m1, vec<T2>& m2)
+    {
+         m1.swap(m2);
     }
 }
 
