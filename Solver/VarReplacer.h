@@ -58,7 +58,6 @@ class VarReplacer
         VarReplacer(ThreadControl* control);
         ~VarReplacer();
         bool performReplace();
-        bool needsReplace();
         bool replace(Lit lit1, Lit lit2, const bool xorEqualFalse);
 
         void extendModel(SolutionExtender* extender) const;
@@ -90,7 +89,6 @@ class VarReplacer
         bool replace_set(vector<Clause*>& cs);
         bool replaceBins();
         bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
-        void addBinaryXorClause(Lit lit1, Lit lit2);
 
         void setAllThatPointsHereTo(const Var var, const Lit lit);
         bool alreadyIn(const Var var, const Lit lit);
