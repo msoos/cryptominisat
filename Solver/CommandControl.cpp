@@ -1441,7 +1441,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
         #pragma omp critical
         if (conf.verbosity >= 1) {
-            if ((lastRestartPrint + 5000) < numConflicts) {
+            if ((lastRestartPrint + 800) < numConflicts) {
                 printRestartStat();
                 lastRestartPrint = numConflicts;
             }
