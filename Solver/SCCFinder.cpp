@@ -87,11 +87,19 @@ void SCCFinder::tarjan(const uint32_t vertex)
     ) {
         Lit vertLit = Lit::toLit(vertex);
         vector<LitExtra>& transCache = control->implCache[(~vertLit).toInt()].lits;
-        if (transCache.size() > 0) __builtin_prefetch(&transCache[0]);
 
+        //Prefetch cache in case we are doing extended SCC
+        if (control->conf.doExtendedSCC
+            && transCache.size() > 0
+        ) __builtin_prefetch(&transCache[0]);
+
+        //Go through the watch
         const vec<Watched>& ws = control->watches[vertex];
         for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
-            if (!it->isBinary()) continue;
+            //Only binary clauses matter
+            if (!it->isBinary())
+                continue;
+
             const Lit lit = it->getOtherLit();
 
             doit(lit, vertex);
