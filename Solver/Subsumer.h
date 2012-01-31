@@ -175,6 +175,7 @@ private:
     int64_t  numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
     int64_t  numMaxElim;                  ///<Max. number of variable elimination tries to do this run
     int64_t  numMaxElimVars;
+    int64_t  origNumMaxElimVars;
     int64_t  numMaxAsymm;
     int64_t  numMaxBlocked;
     int64_t* toDecrease;

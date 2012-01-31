@@ -1130,7 +1130,8 @@ bool Subsumer::simplifyBySubsumption()
         << "  cl-subs: " << std::setw(8) << clauses_subsumed
         << "  cl-elim: " << std::setw(4) << clauses_elimed
         << "  lcl-rem: " << std::setw(5) << learntClausesRemovedThroughElim
-        << "  v-elim: " << std::setw(6) << numVarsElimed
+        << "  v-elim: " << numVarsElimed
+        << " / " << origNumMaxElimVars
         << "  v-fix: " << std::setw(4) <<control->trail.size() - origTrailSize
         << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
@@ -1541,7 +1542,8 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 2;
     }
 
-    numMaxElimVars = ((double)control->getNumFreeVars() * 0.32);
+    numMaxElimVars = ((double)control->getNumFreeVars() * 0.16);
+    origNumMaxElimVars = numMaxElimVars;
 
     if (!control->conf.doSubsume1) {
         numMaxSubsume1 = 0;
@@ -1902,7 +1904,6 @@ bool Subsumer::maybeEliminate(const Var var)
     var_elimed[var] = true;
     control->varData[var].elimed = ELIMED_VARELIM;
     numElimed++;
-    numMaxElimVars--;
     control->unsetDecisionVar(var);
     return true;
 }
