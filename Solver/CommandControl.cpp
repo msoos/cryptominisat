@@ -167,8 +167,8 @@ void CommandControl::printStats()
                     , " % of conflicts");
 
     //Props
-    printStatsLine("c bogo-props", bogoProps, (double)bogoProps/cpu_time, "/ sec");
-    printStatsLine("c props", propagations, (double)propagations/cpu_time, "/ sec");
+    printStatsLine("c Mbogo-props", bogoProps/(1000*1000), (double)bogoProps/(cpu_time*1000*1000), "/ sec");
+    printStatsLine("c Mprops", propagations/(1000*1000), (double)propagations/(cpu_time*1000*1000), "/ sec");
     printStatsLine("c decisions", decisions, (double)decisions_rnd*100.0/(double)decisions, "% random");
     printStatsLine("c propsBin", propsBin, 100.0*(double)propsBin/(double)propagations, "%");
     printStatsLine("c propsTri", propsTri, 100.0*(double)propsTri/(double)propagations, "%");
