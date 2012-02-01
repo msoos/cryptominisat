@@ -65,6 +65,12 @@ using std::endl;
 Subsumer::Subsumer(ThreadControl* _control):
     control(_control)
     , totalTime(0.0)
+    , totalBlocked(0)
+    , totalAsymmSubs(0)
+    , totalSubsumed(0)
+    , totalLitsRem(0)
+    , totalRemLearntThroughElim(0)
+    , totalSubsBinWithBin(0)
     , numElimed(0)
     , numCalls(0)
 {
@@ -207,8 +213,8 @@ template<class T> Subsumer::Sub0Ret Subsumer::subsume0(const uint32_t index, con
         } else {
             ret.subsumedNonLearnt = true;
         }
-        unlinkClause(*it);
         clauses_subsumed++;
+        unlinkClause(*it);
     }
 
     return ret;
@@ -922,7 +928,12 @@ void Subsumer::subsumeBinsWithBins()
         << " s" << endl;
     }
 
+    //Update global stats
     totalTime += cpuTime() - myTime;
+    totalSubsBinWithBin += (numBinsBefore - control->numBins);
+
+
+    //Reset stats
     clauses_subsumed = 0;
     clauses_strengthened = 0;
 }
@@ -1038,11 +1049,13 @@ bool Subsumer::simplifyBySubsumption()
         std::sort(control->learnts.begin(), control->learnts.end(), sortBySize());
     addedClauseLits += addFromSolver(control->learnts);
     setLimits();
+
+    //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
     if (control->conf.verbosity >= 1) {
-        cout << "c Time to Link in : " << linkInTime << endl;
+        cout << "c subsumer startup&link-in time: " << linkInTime << endl;
     }
-    totalTime += cpuTime() - myTime; //setup time
+    totalTime += cpuTime() - myTime;
 
     //Do stuff with binaries
     subsumeBinsWithBins();
@@ -1126,14 +1139,15 @@ bool Subsumer::simplifyBySubsumption()
 
     //Print stats
     if (control->conf.verbosity  >= 1) {
-        cout << "c lits-rem: " << std::setw(9) << clauses_strengthened
-        << "  cl-subs: " << std::setw(8) << clauses_subsumed
-        << "  cl-elim: " << std::setw(4) << clauses_elimed
-        << "  lcl-rem: " << std::setw(5) << learntClausesRemovedThroughElim
-        << "  v-elim: " << numVarsElimed
+        cout << "c"
+        << " lits-rem: " << std::setw(9) << clauses_strengthened
+        << " cl-subs: " << std::setw(8) << clauses_subsumed
+        << " cl-elim: " << std::setw(4) << clauses_elimed
+        << " lcl-rem: " << std::setw(5) << learntClausesRemovedThroughElim
+        << " v-elim: " << numVarsElimed
         << " / " << origNumMaxElimVars
-        << "  v-fix: " << std::setw(4) <<control->trail.size() - origTrailSize
-        << "  time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
+        << " v-fix: " << std::setw(4) <<control->trail.size() - origTrailSize
+        << " time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
         << endl;
 
@@ -1143,7 +1157,11 @@ bool Subsumer::simplifyBySubsumption()
             gateFinder->printGateStats();
     }
 
+    //Update global stats
     totalTime += cpuTime() - myTime;
+    totalLitsRem += clauses_strengthened;
+    totalSubsumed += clauses_subsumed;
+    totalRemLearntThroughElim += learntClausesRemovedThroughElim;
 
     control->testAllClauseAttach();
     control->checkNoWrongAttach();
@@ -1363,6 +1381,7 @@ void Subsumer::blockClauses()
         << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
         << endl;
     }
+    totalBlocked += blocked;
     totalTime += cpuTime() - myTime;
 }
 
@@ -1370,6 +1389,7 @@ void Subsumer::asymmTE()
 {
     const double myTime = cpuTime();
     uint32_t blocked = 0;
+    uint32_t asymmSubsumed = 0;
     uint32_t removed = 0;
 
     CL_ABST_TYPE abst;
@@ -1424,6 +1444,7 @@ void Subsumer::asymmTE()
                         && seen[cacheLit->getLit().toInt()]
                     ) {
                         toRemove = true;
+                        asymmSubsumed++;
                         #ifdef VERBOSE_DEBUG_ASYMTE
                         cout << "c AsymLitAdd removing: " << cl << endl;
                         #endif
@@ -1494,11 +1515,13 @@ void Subsumer::asymmTE()
 
     if (control->conf.verbosity >= 1) {
         cout << "c AsymmTElim"
-        << " cl-rem: " << removed
+        << " asymm subsumed: " << asymmSubsumed
         << " blocked: " << blocked
         << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
         << endl;
     }
+    totalAsymmSubs += asymmSubsumed;
+    totalBlocked += blocked;
     totalTime += cpuTime() - myTime;
 }
 

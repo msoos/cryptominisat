@@ -45,8 +45,12 @@ FailedLitSearcher::FailedLitSearcher(ThreadControl* _control):
     control(_control)
     , tmpPs(2)
     , totalTime(0)
+    , totalZeroDepthAssigns(0)
+    , totalNumFailed(0)
+    , totalAddedBin(0)
+    , totalRemovedBin(0)
     , numPropsMultiplier(1.0)
-    , lastTimeFoundTruths(0)
+    , lastTimeZeroDepthAssings(0)
     , numCalls(0)
 {
 }
@@ -73,22 +77,21 @@ bool FailedLitSearcher::search()
     uint64_t numPropsTodo = 110L*1000L*1000L;
 
     control->testAllClauseAttach();
-    double myTime = cpuTime();
+    const double myTime = cpuTime();
     const uint32_t origNumUnsetVars = control->getNumUnsetVars();
+    origTrailSize = control->trail.size();
     control->clauseCleaner->removeAndCleanAll();
 
     //General Stats
     numFailed = 0;
-    goodBothSame = 0;
     numCalls++;
     visitedAlready.clear();
     visitedAlready.resize(control->nVars()*2, 0);
     cacheUpdated.clear();
     cacheUpdated.resize(control->nVars()*2, 0);
-    origTrailSize = control->trail.size();
 
     //If failed var searching is going good, do successively more and more of it
-    if ((double)lastTimeFoundTruths > (double)control->getNumUnsetVars() * 0.10)
+    if ((double)lastTimeZeroDepthAssings > (double)control->getNumUnsetVars() * 0.10)
         numPropsMultiplier = std::max(numPropsMultiplier*1.3, 1.6);
     else
         numPropsMultiplier = 1.0;
@@ -133,12 +136,11 @@ bool FailedLitSearcher::search()
     }
 
 end:
+    //Print & update stats
     if (control->conf.verbosity  >= 1)
         printResults(myTime);
 
-    if (control->ok
-        && (numFailed || goodBothSame)
-    ) {
+    if (control->ok && numFailed) {
         double time = cpuTime();
         if ((int)origNumUnsetVars - (int)control->getNumUnsetVars() >  (int)origNumUnsetVars/15
             && control->getNumClauses() > 500000
@@ -150,14 +152,21 @@ end:
         } else {
             control->clauseCleaner->removeAndCleanAll();
         }
-        if (control->conf.verbosity  >= 1 && numFailed + goodBothSame > 100) {
-            cout << "c Cleaning up after failed var search: " << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
+        if (control->conf.verbosity  >= 1 && numFailed > 100) {
+            cout
+            << "c Cleaning up after failed var search: "
+            << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
             << endl;
         }
     }
 
-    lastTimeFoundTruths = control->trail.size() - origTrailSize;
+    //Update stats
+    lastTimeZeroDepthAssings = control->trail.size() - origTrailSize;
+    totalZeroDepthAssigns += lastTimeZeroDepthAssings;
+    totalNumFailed += numFailed;
     totalTime += cpuTime() - myTime;
+    totalAddedBin += addedBin;
+    totalRemovedBin += removedBins;
 
     control->testAllClauseAttach();
     return control->ok;
@@ -169,7 +178,6 @@ void FailedLitSearcher::printResults(const double myTime) const
     << "c"
     << " 0-depth assigns: " << (control->trail.size() - origTrailSize)
     << " Flit: "<< std::setw(5) << numFailed
-    << " Blit: " << std::setw(6) << goodBothSame
     << " Bin:"   << std::setw(7) << addedBin
     << " RemBin:" << std::setw(7) << removedBins
     << " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(control->bogoProps - origBogoProps)/1000000.0  << "M"

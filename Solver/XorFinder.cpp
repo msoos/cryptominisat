@@ -32,6 +32,9 @@ using std::endl;
 XorFinder::XorFinder(Subsumer* _subsumer, ThreadControl* _control) :
     subsumer(_subsumer)
     , control(_control)
+    , totalTime(0)
+    , totalFixed(0)
+    , totalReplaced(0)
     , seen(_subsumer->seen)
     , seen2(_subsumer->seen2)
 {}
@@ -62,9 +65,14 @@ bool XorFinder::findXors()
     }
 
     if (control->getVerbosity() >= 1) {
-        cout << "c XOR finding finished. Num XORs: " << std::setw(6) << xors.size()
-        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime) << std::setw(6) << endl;
+        cout
+        << "c XOR finding "
+        << " Num XORs: " << std::setw(6) << xors.size()
+        << " T: "
+        << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
+        << endl;
     }
+    totalTime += cpuTime() - myTime;
 
     if (xors.size() > 0)
         extractInfo();
@@ -74,7 +82,7 @@ bool XorFinder::findXors()
 
 bool XorFinder::extractInfo()
 {
-    double time = cpuTime();
+    double myTime = cpuTime();
     vector<uint32_t> varsIn(control->nVars(), 0);
     for(vector<Xor>::const_iterator it = xors.begin(), end = xors.end(); it != end; it++) {
         for(vector<Var>::const_iterator it2 = it->vars.begin(), end2 = it->vars.end(); it2 != end2; it2++) {
@@ -105,9 +113,15 @@ bool XorFinder::extractInfo()
     //Cut above-filtered XORs into blocks
     cutIntoBlocks(xorsToUse);
     if (control->conf.verbosity >= 1) {
-        cout << "c Cut XORs into " << numBlocks << " block(s), sum vars: " << numVarsInBlocks
-        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time) << endl;
+        cout << "c Cut XORs into " << numBlocks << " block(s)"
+        << " sum vars: " << numVarsInBlocks
+        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
+        << endl;
     }
+
+    //Update global stats
+    totalTime += cpuTime() - myTime;
+    myTime = cpuTime();
 
     //These mappings will be needed for the matrixes, which will have far less
     //variables than control->nVars()
@@ -117,7 +131,6 @@ bool XorFinder::extractInfo()
     interToOUterVarMap.resize(control->nVars(), std::numeric_limits<size_t>::max());
 
     //Go through each block, and extract info
-    time = cpuTime();
     newUnits = 0;
     newBins = 0;
     i = 0;
@@ -136,10 +149,17 @@ bool XorFinder::extractInfo()
     }
     if (control->conf.verbosity >= 1) {
         cout
-        << "c Extracted XOR info. Units: " << newUnits << " Bins: " << newBins
-        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - time)
+        << "c Extracted XOR info."
+        << " Units: " << newUnits << " Bins: " << newBins
+        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
         << endl;
     }
+
+    //update global stats
+    totalTime += cpuTime() - myTime;
+    totalFixed += newUnits;
+    totalReplaced += newBins;
+
 
     return true;
 }

@@ -160,6 +160,12 @@ private:
     ThreadControl*  control;              ///<The solver this simplifier is connected to
     vector<char>    var_elimed;           ///<Contains TRUE if var has been eliminated
     double          totalTime;            ///<Total time spent in this class
+    size_t          totalBlocked;
+    size_t          totalAsymmSubs;
+    size_t          totalSubsumed;
+    size_t          totalLitsRem;
+    size_t          totalRemLearntThroughElim;
+    size_t          totalSubsBinWithBin;
     uint32_t        numElimed;            ///<Total number of variables eliminated
 
     //Temporaries

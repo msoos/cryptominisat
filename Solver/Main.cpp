@@ -269,6 +269,7 @@ void Main::parseCommandLine()
     ("nogorshort", "Don't shorten clauses with OR gates")
     ("nogandrem", "Don't remove clauses with AND gates ")
     ("nogeqlit", "Don't find equivalent literals using gates")
+    ("maxgatesz", po::value<size_t>(&conf.maxGateSize)->default_value(conf.maxGateSize), "Maximum gate size to discover")
     ("noer", "Don't find gates to add to do ER")
     ("printgatedot", "Print gate structure regularly to file 'gatesX.dot'")
     ;

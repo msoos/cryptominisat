@@ -202,6 +202,11 @@ private:
     size_t numBlocks;
     size_t numVarsInBlocks;
 
+    //long-term stats
+    double totalTime;
+    size_t totalFixed;
+    size_t totalReplaced;
+
     //Temporaries for putting xors into matrix, and extracting info from matrix
     vector<size_t> outerToInterVarMap;
     vector<size_t> interToOUterVarMap;

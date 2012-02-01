@@ -81,6 +81,7 @@ class SolverConf
         bool      doCache; ///< Allow storing the cache
         bool      doExtendedSCC; ///< Allow extending SCC with the cache
         bool      doGateFind; ///< Find OR gates
+        size_t    maxGateSize;
         bool      doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
         bool      doER; ///< Perform Extended Resolution (ER)
         bool      doCalcReach; ///<Calculate reachability, and influence variable decisions with that

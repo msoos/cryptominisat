@@ -72,6 +72,7 @@ SolverConf::SolverConf() :
         , doCache          (true)
         , doExtendedSCC    (false)
         , doGateFind       (true)
+        , maxGateSize      (20)
         , doAlwaysFMinim   (false)
         , doER             (false)
         , doCalcReach      (true)

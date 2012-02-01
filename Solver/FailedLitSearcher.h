@@ -156,12 +156,15 @@ class FailedLitSearcher {
         size_t origTrailSize;
         uint64_t origBogoProps; ///<Records num. of bogoprops at the start-up of search()
         uint32_t numFailed;     ///<Records num. of failed literals during search()
-        uint32_t goodBothSame;  ///<Records num. of literals that have been propagated to the same value by both "var" and "~var"
 
         //State between runs
         double totalTime;
+        size_t totalZeroDepthAssigns;
+        size_t totalNumFailed;
+        size_t totalAddedBin;
+        size_t totalRemovedBin;
         double numPropsMultiplier; ///<If last time we called search() all went fine, then this is incremented, so we do more searching this time
-        uint32_t lastTimeFoundTruths; ///<Records how many unit clauses we found last time we called search()
+        uint32_t lastTimeZeroDepthAssings;
         uint32_t numCalls; ///<Number of times search() has been called
 };
 

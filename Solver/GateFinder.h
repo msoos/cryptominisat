@@ -172,13 +172,19 @@ private:
     uint32_t andGateNumFound;
     uint32_t andGateTotalSize;
     uint32_t numDotPrinted;
-    uint16_t maxGateSize;
 
     //Limits
     int64_t  numMaxGateFinder;
     int64_t  numMaxCreateNewVars;
     int64_t  numMaxShortenWithGates;
     int64_t  numMaxClRemWithGates;
+
+    //long-term stats
+    double totalTime;
+    size_t totalClausesShortened;
+    size_t totalClausesRemoved;
+    size_t totalVarsAdded;
+    size_t totalVarsReplaced;
 
     //Main data
     Subsumer *subsumer;

@@ -35,7 +35,11 @@ using std::endl;
 GateFinder::GateFinder(Subsumer *_subsumer, ThreadControl *_control) :
     numERVars(0)
     , numDotPrinted(0)
-    , maxGateSize(20) //only for speed reasons. Should be changeable
+    , totalTime(0)
+    , totalClausesShortened(0)
+    , totalClausesRemoved(0)
+    , totalVarsAdded(0)
+    , totalVarsReplaced(0)
     , subsumer(_subsumer)
     , control(_control)
     , seen(_subsumer->seen)
@@ -166,6 +170,9 @@ uint32_t GateFinder::createNewVars()
         << " tried: " << tries
         << " time: " << (cpuTime() - myTime) << endl;
     }
+    totalTime += cpuTime() - myTime;
+    totalVarsAdded += addedNum;
+
     //cout << "c Added " << addedNum << " vars "
     //<< " time: " << (cpuTime() - myTime) << " numThread: " << control->threadNum << endl;
 
@@ -208,6 +215,7 @@ void GateFinder::findOrGates()
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
         << endl;
     }
+    totalTime += cpuTime() - myTime;
 }
 
 void GateFinder::printGateStats() const
@@ -235,25 +243,10 @@ void GateFinder::printGateStats() const
 bool GateFinder::treatOrGates()
 {
     assert(control->ok);
-    double myTime = cpuTime();
     gateLitsRemoved = 0;
     numOrGateReplaced = 0;
 
     doAllOptimisationWithGates();
-
-    /*if (control->conf.verbosity >= 1) {
-        cout << "c OR-based"
-        << " cl-sh: " << std::setw(5) << numOrGateReplaced
-        << " l-rem: " << std::setw(6) << gateLitsRemoved
-        << " v-rep: " << std::setw(3) << (control->getNewToReplaceVars() - oldNumVarToReplace)
-        << " cl-rem: " << andGateNumFound
-        << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)
-        << " set: " << std::setw(3) << (control->trail.size() - oldTrailSize)
-        << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << endl;
-
-        if (control->conf.verboseSubsumer)
-            printGateStats();
-    }*/
 
     return control->ok;
 }
@@ -333,6 +326,8 @@ bool GateFinder::doAllOptimisationWithGates()
             << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
             << endl;
         }
+        totalTime += cpuTime() - myTime;
+        totalClausesShortened += numOrGateReplaced;
     }
 
     //AND gate treatment
@@ -368,6 +363,8 @@ bool GateFinder::doAllOptimisationWithGates()
             << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
             << endl;
         }
+        totalTime += cpuTime() - myTime;
+        totalClausesRemoved += andGateNumFound;
     }
 
     //EQ gate treatment
@@ -384,6 +381,8 @@ bool GateFinder::doAllOptimisationWithGates()
             << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
             << endl;
         }
+        totalTime += cpuTime() - myTime;
+        totalVarsReplaced += control->getNewToReplaceVars() - oldNumVarToReplace;
     }
 
     return true;
@@ -432,7 +431,7 @@ void GateFinder::findOrGates(const bool learntGatesToo)
 
         const Clause& cl = **it;
         //If clause is larger than the cap on gate size, skip. Only for speed reasons.
-        if (cl.size() > maxGateSize)
+        if (cl.size() > control->conf.maxGateSize)
             continue;
 
         //if no learnt gates are allowed and this is learnt, skip
