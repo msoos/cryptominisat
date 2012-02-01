@@ -726,7 +726,7 @@ lbool ThreadControl::solve(const int numThreads)
     //Initialise stuff
     vector<lbool> solution;
     nextCleanLimit = 8000;
-    nextCleanLimitInc = 8000;
+    nextCleanLimitInc = 4000;
 
     //Solve in infinite loop
     lbool status = ok ? l_Undef : l_False;
@@ -746,6 +746,7 @@ lbool ThreadControl::solve(const int numThreads)
         vector<lbool> statuses;
         uint32_t numConfls = nextCleanLimit;
         numConfls+= nextCleanLimitInc;
+        numConfls+= nextCleanLimitInc*1.1;
 
         #pragma omp parallel
         {
