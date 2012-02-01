@@ -77,7 +77,6 @@ class SolverConf
         bool      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         bool      doFailedLit;        ///<Carry out Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
         bool      doRemUselessBins;   ///<Should try to remove useless binary clauses at the beginning of solving?
-        bool      doPrintAvgBranch; ///< Print average branch depth at every statistics line
         bool      doCache; ///< Allow storing the cache
         bool      doExtendedSCC; ///< Allow extending SCC with the cache
         bool      doGateFind; ///< Find OR gates

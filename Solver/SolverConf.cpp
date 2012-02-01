@@ -68,7 +68,6 @@ SolverConf::SolverConf() :
         , doMinimLearntMore(true)
         , doFailedLit      (true)
         , doRemUselessBins (true)
-        , doPrintAvgBranch (false)
         , doCache          (true)
         , doExtendedSCC    (false)
         , doGateFind       (true)

@@ -53,8 +53,7 @@ using std::cout;
 using std::endl;
 
 Main::Main(int _argc, char** _argv) :
-        numThreads(1)
-        , debugLib (false)
+        debugLib (false)
         , debugNewVar (false)
         , printResult (true)
         , max_nr_of_solutions (1)
@@ -218,16 +217,15 @@ void Main::parseCommandLine()
     ("input", po::value< std::vector<std::string> >(), "file(s) to read")
     ("polar", po::value<std::string>()->default_value("auto"), "{true,false,rnd,auto} Selects polarity mode")
     //("  -decay", " <num> [ 0 - 1 ]")
-    ("freq", po::value<double>()->default_value(conf.random_var_freq), "[0 - 1] freq. of picking var at random")
-    ("verbosity", po::value<int>()->default_value(conf.verbosity), "[0-4] Verbosity of solver")
-    ("randomize", po::value<uint32_t>()->default_value(conf.origSeed), "[0..] Sets random seed")
+    ("freq", po::value<double>(&conf.random_var_freq)->default_value(conf.random_var_freq), "[0 - 1] freq. of picking var at random")
+    ("verbosity", po::value<int>(&conf.verbosity)->default_value(conf.verbosity), "[0-4] Verbosity of solver")
+    ("randomize", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed), "[0..] Sets random seed")
     ("restart", po::value<std::string>()->default_value("glue"), "{auto,static,dynamic}  Restart strategy to follow.")
-    ("threads,t", po::value<uint32_t>()->default_value(numThreads), "Threads to use")
+    ("threads,t", po::value<uint32_t>(&numThreads)->default_value(1), "Threads to use")
     ("nosolprint", "Don't print assignment if solution is SAT")
     ("nosimplify", "Don't do regular simplification rounds")
     //("greedyunbound", "Greedily unbound variables that are not needed for SAT")
     ;
-    //("pavgbranch", "Print average branch depth")
 
     po::options_description iterativeOptions("Iterative solve options");
     iterativeOptions.add_options()
@@ -271,7 +269,7 @@ void Main::parseCommandLine()
     ("nogeqlit", "Don't find equivalent literals using gates")
     ("maxgatesz", po::value<size_t>(&conf.maxGateSize)->default_value(conf.maxGateSize), "Maximum gate size to discover")
     ("noer", "Don't find gates to add to do ER")
-    ("printgatedot", "Print gate structure regularly to file 'gatesX.dot'")
+    ("printgatedot", po::bool_switch(&conf.doPrintGateDot), "Print gate structure regularly to file 'gatesX.dot'")
     ;
 
     #ifdef USE_GAUSS
@@ -293,7 +291,7 @@ void Main::parseCommandLine()
     ("norecminim", "Don't do MiniSat-type conflict-clause minim.")
     ("nolfminim", "Don't do strong minimisation at conflict gen.")
     ("noalwaysfmin", "Don't always strong-minimise clause")
-    ("printimpldot", "Print implication graph DOT files")
+    ("printimpldot", po::bool_switch(&conf.doPrintConflDot), "Print implication graph DOT files")
     ;
 
     po::options_description xorOptions("XOR-related options");
@@ -363,12 +361,8 @@ void Main::parseCommandLine()
         else throw WrongParam(mode, "unknown polarity-mode");
     }
 
-    if (vm.count("rnd-freq")) {
-        conf.random_var_freq = vm["rnd-freq"].as<double>();
-        if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
-            cout << "ERROR! illegal rnRSE ERROR!d-freq constant " << conf.random_var_freq << endl;
-            exit(-1);
-        }
+    if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
+        WrongParam(conf.random_var_freq, "Illegal random var frequency ");
     }
 
     //Conflict
@@ -380,17 +374,6 @@ void Main::parseCommandLine()
     }
     if (vm.count("norecminim")) {
         conf.expensive_ccmin = false;
-    }
-    if (vm.count("printimpldot")) {
-        conf.doPrintConflDot = true;
-    }
-
-    if (vm.count("verbosity")) {
-        conf.verbosity = vm["verbosity"].as<int>();
-    }
-
-    if (vm.count("randomize")) {
-        conf.origSeed = vm["randomize"].as<uint32_t>();
     }
 
     if (vm.count("dumplearnts")) {
@@ -415,10 +398,6 @@ void Main::parseCommandLine()
 
     if (vm.count("nobanfoundsol")) {
         doBanFoundSolution = false;
-    }
-
-    if (vm.count("pavgbranch")) {
-        conf.doPrintAvgBranch = true;
     }
 
     if (vm.count("greedyunbound")) {
@@ -589,23 +568,13 @@ void Main::parseCommandLine()
 
     if (vm.count("nogeqlit")) {
         conf.doFindEqLitsWithGates = false;
-
-    }
-
-    if (vm.count("printgatedot")) {
-        conf.doPrintGateDot = true;
-
     }
 
     if (vm.count("nopresimp")) {
         conf.doPerformPreSimp = false;
-
     }
 
-    if (vm.count("threads")) {
-        numThreads = vm["threads"].as<uint32_t>();
-        if (numThreads < 1) throw WrongParam("threads", "Num threads must be at least 1");
-    }
+    if (numThreads < 1) throw WrongParam("threads", "Num threads must be at least 1");
 
     if (vm.count("input")) {
         filesToRead = vm["input"].as<std::vector<std::string> >();
