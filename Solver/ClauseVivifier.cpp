@@ -41,8 +41,14 @@ bool ClauseVivifier::SortBySize::operator()(const Clause* x, const Clause* y)
 }
 
 ClauseVivifier::ClauseVivifier(ThreadControl* _control) :
-    numCalls(0)
-    , control(_control)
+    control(_control)
+    , numCalls(0)
+    , totalTimeCacheLearnt(0)
+    , totalTimeCacheNonLearnt(0)
+    , totalNumClShortenAsymm(0)
+    , totalNumLitsRemAsymm(0)
+    , totalNumLitsRemCacheLearnt(0)
+    , totalNumLitsRemCacheNonLearnt(0)
 {}
 
 bool ClauseVivifier::vivify()
@@ -56,12 +62,14 @@ bool ClauseVivifier::vivify()
     control->clauseCleaner->cleanClauses(control->clauses, ClauseCleaner::clauses);
     numCalls++;
 
-    if (control->conf.doCache) {
-        if (!vivifyClausesCache(control->clauses)) return false;
-        if (!vivifyClausesCache(control->learnts)) return false;
-    }
+    if (!vivifyClausesCache(control->clauses, false))
+        return false;
 
-    if (!vivifyClausesNormal()) return false;
+    if (!vivifyClausesCache(control->learnts, true))
+        return false;
+
+    if (!vivifyClausesNormal())
+        return false;
 
     return true;
 }
@@ -213,18 +221,23 @@ bool ClauseVivifier::vivifyClausesNormal()
     }
     control->clauses.resize(control->clauses.size()- (i-j));
 
+    //Handle results
     if (control->conf.verbosity  >= 1) {
-        cout << "c asymm "
+        cout
+        << "c asymm "
         << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
         << " lits-rem:" << effectiveLit
-        << " time: " << cpuTime() - myTime
+        << " time: " << (cpuTime() - myTime)
         << endl;
     }
+    totalTimeAsymm += cpuTime() - myTime;
+    totalNumLitsRemAsymm += effectiveLit;
+    totalNumClShortenAsymm += effective;
 
     return control->ok;
 }
 
-bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
+bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
 {
     assert(control->ok);
 
@@ -369,6 +382,7 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
 
     clauses.resize(clauses.size() - (i-j));
 
+    //Handle results
     if (control->conf.verbosity >= 1) {
         cout << "c vivif2 -- "
         << " cl tried " << std::setw(8) << clTried
@@ -377,6 +391,13 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses)
         << " lit-rem " << std::setw(7) << litsRem
         << " time: " << (cpuTime() - myTime)
         << endl;
+    }
+    if (learnt) {
+        totalTimeCacheLearnt += cpuTime() - myTime;
+        totalNumLitsRemCacheLearnt += litsRem;
+    } else {
+        totalTimeCacheNonLearnt += cpuTime() - myTime;
+        totalNumLitsRemCacheNonLearnt += litsRem;
     }
 
     return control->ok;

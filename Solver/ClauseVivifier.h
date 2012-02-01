@@ -39,7 +39,7 @@ class ClauseVivifier {
 
         //Actual algorithms used
         bool vivifyClausesNormal();
-        bool vivifyClausesCache(vector<Clause*>& clauses);
+        bool vivifyClausesCache(vector<Clause*>& clauses, bool learnt);
         void       makeNonLearntBin(const Lit lit1, const Lit lit2);
 
         ///Sort clauses according to size
@@ -48,9 +48,18 @@ class ClauseVivifier {
             bool operator () (const Clause* x, const Clause* y);
         };
 
-        //Misc data
-        uint32_t numCalls;
+        //Working set
         ThreadControl* control;
+
+        //Global status
+        uint32_t numCalls;
+        double totalTimeAsymm;
+        double totalTimeCacheLearnt;
+        double totalTimeCacheNonLearnt;
+        uint32_t totalNumClShortenAsymm;
+        uint32_t totalNumLitsRemAsymm;
+        uint32_t totalNumLitsRemCacheLearnt;
+        uint32_t totalNumLitsRemCacheNonLearnt;
 };
 
 #endif //CLAUSEVIVIFIER_H
