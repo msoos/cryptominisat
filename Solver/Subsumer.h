@@ -184,6 +184,7 @@ private:
     int64_t  origNumMaxElimVars;
     int64_t  numMaxAsymm;
     int64_t  numMaxBlocked;
+    int64_t  numMaxVarElimAgressiveCheck;
     int64_t* toDecrease;
     void     printLimits();
 

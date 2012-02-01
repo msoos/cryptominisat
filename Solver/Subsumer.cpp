@@ -1540,6 +1540,7 @@ void Subsumer::setLimits()
     numMaxElim     = 90L*1000L*1000L;
     numMaxAsymm    = 80L *1000L*1000L;
     numMaxBlocked  = 400L *1000L*1000L;
+    numMaxVarElimAgressiveCheck  = 400L *1000L*1000L;
 
     //numMaxElim = 0;
     //numMaxElim = std::numeric_limits<int64_t>::max();
@@ -1804,6 +1805,7 @@ bool Subsumer::maybeEliminate(const Var var)
     assert(control->varData[var].elimed == ELIMED_NONE);
     assert(control->decision_var[var]);
     assert(control->value(var) == l_Undef);
+    const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
 
     //set-up
     const Lit lit = Lit(var, false);
@@ -1849,7 +1851,7 @@ bool Subsumer::maybeEliminate(const Var var)
         for (vector<ClAndBin>::const_iterator it2 = negAll.begin(), end2 = negAll.end(); it2 != end2; it2++) {
             // Merge clauses. If 'y' and '~y' exist, clause will not be created.
             if (!it->learnt && !it2->learnt) {
-                bool ok = merge(*it, *it2, lit, ~lit, true);
+                bool ok = merge(*it, *it2, lit, ~lit, agressiveCheck);
                 if (ok) {
                     after_clauses++;
                     if (after_clauses > before_clauses) return false;
@@ -2037,11 +2039,12 @@ bool Subsumer::merge(
 
     //We add to 'seen' what COULD be added to the clause
     //This is essentially the reverse of cache-based vivification
-    if (!ps.isBin && useCache && control->conf.doCache) {
+    if (!ps.isBin && useCache) {
         for (uint32_t i= 0; i < dummy.size(); i++) {
 
             //Use cache
             const vector<LitExtra>& cache = control->implCache[dummy[i].toInt()].lits;
+            numMaxVarElimAgressiveCheck -= cache.size();
             for(vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
                 if (it->getOnlyNLBin()
                     && !seen[(~(it->getLit())).toInt()]
@@ -2054,6 +2057,7 @@ bool Subsumer::merge(
 
             //Use watchlists
             const vec<Watched>& ws = control->watches[(~dummy[i]).toInt()];
+            numMaxVarElimAgressiveCheck -= ws.size();
             for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
                 if (it->isNonLearntBinary()
                     && !seen[(~(it->getOtherLit())).toInt()]
@@ -2093,6 +2097,7 @@ bool Subsumer::merge(
             //See if using the cache we can prove that the clause is a tautology
             if (useCache && control->conf.doCache) {
                 const vector<LitExtra>& cache = control->implCache[c[i].toInt()].lits;
+                numMaxVarElimAgressiveCheck -= cache.size();
                 for(vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
                     if (it->getOnlyNLBin()
                         && seen[((it->getLit())).toInt()]
@@ -2106,6 +2111,7 @@ bool Subsumer::merge(
             //See if using wathclists we can prove that the clause is a tautology
             if (useCache) {
                 const vec<Watched>& ws = control->watches[(~c[i]).toInt()];
+                numMaxVarElimAgressiveCheck -= ws.size();
                 for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
                     if (it->isNonLearntBinary()
                         && seen[((it->getOtherLit())).toInt()]
