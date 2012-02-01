@@ -43,7 +43,6 @@ class SolverConf
 
         size_t    burstSearchLen;
         RestType  restartType;   ///<If set, the solver will always choose the given restart strategy
-        double    learntsize_factor;  ///<The intitial limit for learnt clauses is a factor of the original clauses.                (default 1 / 3)
         bool      expensive_ccmin;    ///<Should clause minimisation by Sorensson&Biere be used?                                    (default TRUE)
         int       polarity_mode;      ///<Controls which polarity the decision heuristic chooses. Auto means Jeroslow-Wang          (default: polarity_auto)
         int       verbosity;          ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
