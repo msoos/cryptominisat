@@ -36,6 +36,7 @@ GateFinder::GateFinder(Subsumer *_subsumer, ThreadControl *_control) :
     numERVars(0)
     , numDotPrinted(0)
     , totalTime(0)
+    , totalLitsRemoved(0)
     , totalClausesShortened(0)
     , totalClausesRemoved(0)
     , totalVarsAdded(0)
@@ -276,8 +277,6 @@ bool GateFinder::extendedResolution()
     uint32_t oldNumBins = control->numBins;
 
     //Clear stuff
-    gateLitsRemoved = 0;
-    numOrGateReplaced = 0;
     clearIndexes();
 
     createNewVars();
@@ -302,9 +301,14 @@ bool GateFinder::doAllOptimisationWithGates()
 
     //OR gate treatment
     if (control->conf.doShortenWithOrGates) {
+        //Setup
         double myTime = cpuTime();
+        gateLitsRemoved = 0;
+        numOrGateReplaced = 0;
         numMaxShortenWithGates = 100L*1000L*1000L;
         subsumer->toDecrease = &numMaxShortenWithGates;
+
+        //Do shortening
         for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
             if (it->removed)
                 continue;
@@ -318,7 +322,7 @@ bool GateFinder::doAllOptimisationWithGates()
                 return false;
         }
 
-        //Print results
+        //Handle results
         if (control->conf.verbosity >= 1) {
             cout << "c OR-based"
             << " cl-sh: " << std::setw(5) << numOrGateReplaced
@@ -328,16 +332,19 @@ bool GateFinder::doAllOptimisationWithGates()
         }
         totalTime += cpuTime() - myTime;
         totalClausesShortened += numOrGateReplaced;
+        totalLitsRemoved += gateLitsRemoved;
     }
 
     //AND gate treatment
     if (control->conf.doRemClWithAndGates) {
+        //Setup
         numMaxClRemWithGates = 100L*1000L*1000L;
         subsumer->toDecrease = &numMaxClRemWithGates;
         double myTime = cpuTime();
-
         andGateNumFound = 0;
         andGateTotalSize = 0;
+
+        //Do clause removal
         uint32_t foundPotential;
         uint64_t numOp = 0;
         for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
@@ -355,7 +362,7 @@ bool GateFinder::doAllOptimisationWithGates()
         }
 
 
-        //Print results
+        //Handle results
         if (control->conf.verbosity >= 1) {
             cout << "c OR-based"
             << " cl-rem: " << andGateNumFound
@@ -369,12 +376,15 @@ bool GateFinder::doAllOptimisationWithGates()
 
     //EQ gate treatment
     if (control->conf.doFindEqLitsWithGates) {
+        //Setup
         double myTime = cpuTime();
         uint32_t oldNumVarToReplace = control->getNewToReplaceVars();
 
+        //Do equivalence checking
         if (!findEqOrGates())
             return false;
 
+        //Handle results
         if (control->conf.verbosity >= 1) {
             cout << "c OR-based"
             << " v-rep: " << std::setw(3) << (control->getNewToReplaceVars() - oldNumVarToReplace)

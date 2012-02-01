@@ -181,6 +181,7 @@ private:
 
     //long-term stats
     double totalTime;
+    size_t totalLitsRemoved;
     size_t totalClausesShortened;
     size_t totalClausesRemoved;
     size_t totalVarsAdded;
