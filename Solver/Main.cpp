@@ -51,6 +51,7 @@ using boost::lexical_cast;
 namespace po = boost::program_options;
 using std::cout;
 using std::endl;
+using boost::lexical_cast;
 
 Main::Main(int _argc, char** _argv) :
         debugLib (false)
@@ -221,7 +222,7 @@ void Main::parseCommandLine()
     ("verbosity", po::value<int>(&conf.verbosity)->default_value(conf.verbosity), "[0-4] Verbosity of solver")
     ("randomize", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed), "[0..] Sets random seed")
     ("restart", po::value<std::string>()->default_value("glue"), "{auto,static,dynamic}  Restart strategy to follow.")
-    ("threads,t", po::value<uint32_t>(&numThreads)->default_value(1), "Threads to use")
+    ("threads,t", po::value<int>(&numThreads)->default_value(1), "Threads to use")
     ("nosolprint", "Don't print assignment if solution is SAT")
     ("nosimplify", "Don't do regular simplification rounds")
     //("greedyunbound", "Greedily unbound variables that are not needed for SAT")
@@ -362,7 +363,7 @@ void Main::parseCommandLine()
     }
 
     if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
-        WrongParam(conf.random_var_freq, "Illegal random var frequency ");
+        WrongParam(lexical_cast<std::string>(conf.random_var_freq), "Illegal random var frequency ");
     }
 
     //Conflict
