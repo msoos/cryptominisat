@@ -223,8 +223,19 @@ void Main::parseCommandLine()
     ("threads,t", po::value<int>(&numThreads)->default_value(1), "Threads to use")
     ("nosolprint", "Don't print assignment if solution is SAT")
     ("nosimplify", "Don't do regular simplification rounds")
-    ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses), "Remove at least this ratio of learnt clauses when doing learnt clause-cleaning")
+    ("nclbtwsimp", po::value<size_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
+        , "Do this many cleaning iterations between simplification rounds")
     //("greedyunbound", "Greedily unbound variables that are not needed for SAT")
+    ;
+
+    po::options_description reduceDBOptions("Learnt clause removal options");
+    reduceDBOptions.add_options()
+    ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
+        , "Remove at least this ratio of learnt clauses when doing learnt clause-cleaning")
+    ("startClean", po::value<size_t>(&conf.startClean)->default_value(conf.startClean)
+        , "Clean first time after this many conflicts")
+    ("increaseClean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean)
+        , "Clean increment cleaning by this factor for next cleaning")
     ;
 
     po::options_description varPickOptions("Variable branching options");
@@ -339,6 +350,7 @@ void Main::parseCommandLine()
     po::options_description cmdline_options;
     cmdline_options
     .add(generalOptions)
+    .add(reduceDBOptions)
     .add(varPickOptions)
     .add(conflOptions)
     .add(iterativeOptions)

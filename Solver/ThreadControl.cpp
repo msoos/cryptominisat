@@ -34,6 +34,7 @@
 #include "GateFinder.h"
 #include <omp.h>
 #include <fstream>
+#include <cmath>
 using std::cout;
 using std::endl;
 
@@ -726,8 +727,8 @@ lbool ThreadControl::solve(const int numThreads)
 
     //Initialise stuff
     vector<lbool> solution;
-    nextCleanLimit = 8000;
-    nextCleanLimitInc = 4000;
+    nextCleanLimit = conf.startClean*2;
+    nextCleanLimitInc = conf.startClean;
 
     //Solve in infinite loop
     lbool status = ok ? l_Undef : l_False;
@@ -746,9 +747,9 @@ lbool ThreadControl::solve(const int numThreads)
         //Solve using threads
         vector<lbool> statuses;
         uint32_t numConfls = nextCleanLimit;
-        numConfls+= nextCleanLimitInc;
-        numConfls+= (double)nextCleanLimitInc*1.1;
-        numConfls+= (double)nextCleanLimitInc*1.1*1.1;
+        for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
+            numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
+        }
 
         #pragma omp parallel
         {
