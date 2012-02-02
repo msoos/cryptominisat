@@ -47,6 +47,8 @@ FailedLitSearcher::FailedLitSearcher(ThreadControl* _control):
     , totalTime(0)
     , totalZeroDepthAssigns(0)
     , totalNumFailed(0)
+    , totalNumTried(0)
+    , totalNumVisited(0)
     , totalAddedBin(0)
     , totalRemovedBin(0)
     , numPropsMultiplier(1.0)
@@ -80,9 +82,12 @@ bool FailedLitSearcher::search()
     const double myTime = cpuTime();
     const uint32_t origNumUnsetVars = control->getNumUnsetVars();
     origTrailSize = control->trail.size();
+    origNumFreeVars = control->getNumFreeVars();
     control->clauseCleaner->removeAndCleanAll();
 
     //General Stats
+    numTried = 0;
+    numVisited = 0;
     numFailed = 0;
     numCalls++;
     visitedAlready.clear();
@@ -156,6 +161,13 @@ bool FailedLitSearcher::search()
     }*/
 
 end:
+
+    //Count how many have been visited
+    for(size_t i = 0; i < visitedAlready.size(); i++) {
+        if (visitedAlready[i])
+            numVisited++;
+    }
+
     //Print & update stats
     if (control->conf.verbosity  >= 1)
         printResults(myTime);
@@ -184,6 +196,8 @@ end:
     lastTimeZeroDepthAssings = control->trail.size() - origTrailSize;
     totalZeroDepthAssigns += lastTimeZeroDepthAssings;
     totalNumFailed += numFailed;
+    totalNumTried += numTried;
+    totalNumVisited += numVisited;
     totalTime += cpuTime() - myTime;
     totalAddedBin += addedBin;
     totalRemovedBin += removedBins;
@@ -197,17 +211,20 @@ void FailedLitSearcher::printResults(const double myTime) const
     cout
     << "c"
     << " 0-depth assigns: " << (control->trail.size() - origTrailSize)
-    << " Flit: "<< std::setw(5) << numFailed
-    << " Bin:"   << std::setw(7) << addedBin
-    << " RemBin:" << std::setw(7) << removedBins
-    << " P: " << std::setw(4) << std::fixed << std::setprecision(1) << (double)(control->bogoProps - origBogoProps)/1000000.0  << "M"
-    << " T: " << std::setw(5) << std::fixed << std::setprecision(2) << cpuTime() - myTime
+    << " Flit: " << numFailed
+    << " Visited: " << numVisited << " / " << (origNumFreeVars*2) // x2 because it's LITERAL visit
+    << " tried: " << numTried
+    << " Bin:" << addedBin
+    << " RemBin:" << removedBins
+    << " P: " << std::fixed << std::setprecision(1) << (double)(control->bogoProps - origBogoProps)/1000000.0  << "M"
+    << " T: " << std::fixed << std::setprecision(2) << cpuTime() - myTime
     << endl;
 }
 
 bool FailedLitSearcher::tryThis(const Lit lit)
 {
     //Start-up cleaning
+    numTried++;
     assert(uselessBin.empty());
 
     //Test removal of non-learnt binary clauses
@@ -235,6 +252,7 @@ bool FailedLitSearcher::tryThis(const Lit lit)
     assert(control->decisionLevel() > 0);
     for (int64_t c = control->trail.size()-1; c != (int64_t)control->trail_lim[0] - 1; c--) {
         const Lit thisLit = control->trail[c];
+
         visitedAlready[thisLit.toInt()] = 1;
 
         const Lit ancestor = control->propData[thisLit.var()].ancestor;
