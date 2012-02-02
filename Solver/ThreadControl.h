@@ -82,7 +82,8 @@ class ThreadControl : public Solver
         uint32_t getVerbosity() const;                  ///<Return verbosity level
         void           printStats();
         uint32_t getNumDecisionVars() const;            ///<Get number of decision vars. May not be accurate TODO fix this
-        uint32_t getNumFreeVars() const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars. These are truly free
+        uint32_t getNumFreeVars() const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
+        uint32_t getNumFreeVarsAdv(size_t tail_size_thread) const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
         uint32_t getNewToReplaceVars() const;           ///<Return number of variables waiting to be replaced
         uint64_t getSumConflicts() const;
         uint64_t getNextCleanLimit() const;

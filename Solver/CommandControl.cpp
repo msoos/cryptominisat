@@ -1293,7 +1293,7 @@ void CommandControl::printRestartStat()
     cout << "c " << omp_get_thread_num()
     << " " << std::setw(6) << numRestarts
     << " " << std::setw(7) << control->getSumConflicts()
-    << " " << std::setw(7) << order_heap.size()
+    << " " << std::setw(7) << control->getNumFreeVarsAdv(trail.size())
 
     << " glue"
     << " " << std::right << glueHist.getAvgPrint(1, 5)

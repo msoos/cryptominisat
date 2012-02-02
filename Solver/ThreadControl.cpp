@@ -1174,6 +1174,8 @@ void ThreadControl::printStats()
 {
     double cpu_time = cpuTime();
 
+    printStatsLine("c 0-depth assigns", trail.size());
+
     //Failed lit stats
     printStatsLine("c probing time"
                     , getTotalTimeFailedLitSearcher()
@@ -1750,6 +1752,17 @@ uint32_t ThreadControl::getNumFreeVars() const
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
     freeVars -= trail.size();
+    freeVars -= subsumer->getNumElimed();
+    freeVars -= varReplacer->getNumReplacedVars();
+
+    return freeVars;
+}
+
+uint32_t ThreadControl::getNumFreeVarsAdv(size_t trail_size_of_thread) const
+{
+    assert(decisionLevel() == 0);
+    uint32_t freeVars = nVars();
+    freeVars -= trail_size_of_thread;
     freeVars -= subsumer->getNumElimed();
     freeVars -= varReplacer->getNumReplacedVars();
 
