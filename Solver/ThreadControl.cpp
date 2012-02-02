@@ -747,7 +747,8 @@ lbool ThreadControl::solve(const int numThreads)
         vector<lbool> statuses;
         uint32_t numConfls = nextCleanLimit;
         numConfls+= nextCleanLimitInc;
-        numConfls+= nextCleanLimitInc*1.1;
+        numConfls+= (double)nextCleanLimitInc*1.1;
+        numConfls+= (double)nextCleanLimitInc*1.1*1.1;
 
         #pragma omp parallel
         {
