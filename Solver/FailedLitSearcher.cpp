@@ -262,8 +262,8 @@ bool FailedLitSearcher::tryThis(const Lit lit)
         ) {
             //Update stats/markings
             cacheUpdated[(~ancestor).toInt()] = 1;
-            extraTime += control->implCache[(~ancestor).toInt()].lits.size()/4;
-            extraTime += control->implCache[(~thisLit).toInt()].lits.size()/4;
+            extraTime += 3 + control->implCache[(~ancestor).toInt()].lits.size()/10;
+            extraTime += 3 + control->implCache[(~thisLit).toInt()].lits.size()/10;
 
             const bool learntStep = control->propData[thisLit.var()].learntStep;
 
