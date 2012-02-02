@@ -522,10 +522,11 @@ sorted and then removed
 void ThreadControl::reduceDB()
 {
     nbReduceDB++;
-    size_t i, j;
+    uint32_t removeNum = (double)learnts.size() * conf.ratioRemoveClauses;
 
     //Reduce based on props&confls
     size_t alreadyRemoved = 0;
+    size_t i, j;
     for (i = j = 0; i < learnts.size(); i++) {
         Clause* cl = learnts[i];
         if (learnts[i]->size() > 3
@@ -553,7 +554,6 @@ void ThreadControl::reduceDB()
     }
     #endif
 
-    uint32_t removeNum = (double)learnts.size() * conf.ratioRemoveClauses;
     cout << "Removenum: " << removeNum << endl;
     if (removeNum <= alreadyRemoved)
         removeNum = 0;
