@@ -114,13 +114,33 @@ bool FailedLitSearcher::search()
         const Var var = (control->mtrand.randInt() + i) % control->nVars();
         if (control->value(var) != l_Undef || !control->decision_var[var])
             continue;
-        if (control->bogoProps >= origBogoProps + numPropsTodo/2)
+        if (control->bogoProps + extraTime >= origBogoProps + numPropsTodo)
             break;
-        if (!tryBoth(Lit(var, false)))
+
+        const Lit lit = Lit(var, false);
+
+        //Try one way
+        if (!visitedAlready[lit.toInt()]
+            && !tryThis(lit)
+        ) {
             goto end;
+        }
+
+        //We have set it, continue
+        if (control->value(var) != l_Undef)
+            continue;
+
+        //Try the other way
+        if (!visitedAlready[(~lit).toInt()]
+            && !tryThis(~lit)
+        ) {
+            goto end;
+        }
+
+
     }
 
-    for (vector<uint32_t>::const_iterator
+    /*for (vector<uint32_t>::const_iterator
             it = actSortedVars.begin(), end = actSortedVars.end()
             ; it != end
             ; it++
@@ -133,7 +153,7 @@ bool FailedLitSearcher::search()
             break;
         if (!tryBoth(Lit(var, false)))
             goto end;
-    }
+    }*/
 
 end:
     //Print & update stats
@@ -185,133 +205,72 @@ void FailedLitSearcher::printResults(const double myTime) const
     << endl;
 }
 
-bool FailedLitSearcher::tryBoth(const Lit lit)
+bool FailedLitSearcher::tryThis(const Lit lit)
 {
     //Start-up cleaning
     assert(uselessBin.empty());
 
-    if (!visitedAlready[lit.toInt()]) {
-        //Test removal of non-learnt binary clauses
-        #ifdef DEBUG_REMOVE_USELESS_BIN
-        fillTestUselessBinRemoval(lit);
-        #endif
+    //Test removal of non-learnt binary clauses
+    #ifdef DEBUG_REMOVE_USELESS_BIN
+    fillTestUselessBinRemoval(lit);
+    #endif
 
-        control->newDecisionLevel();
-        control->enqueue(lit);
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Trying " << lit << endl;
-        #endif
-        const Lit failed = control->propagateFull(uselessBin);
-        if (failed != lit_Undef) {
-            control->cancelZeroLight();
-            numFailed++;
-            vector<Lit> lits;
-            lits.push_back(~failed);
-            control->addClauseInt(lits, true);
-            removeUselessBins();
-            return control->ok;
-        }
-
-        //Fill bothprop, cache
-        assert(control->decisionLevel() > 0);
-        for (int64_t c = control->trail.size()-1; c != (int64_t)control->trail_lim[0] - 1; c--) {
-            const Lit thisLit = control->trail[c];
-            visitedAlready[thisLit.toInt()] = 1;
-
-            const Lit ancestor = control->propData[thisLit.var()].ancestor;
-            if (control->conf.doCache
-                && thisLit != lit
-                && cacheUpdated[(~ancestor).toInt()] == 0
-            ) {
-                cacheUpdated[(~ancestor).toInt()] = 1;
-                const bool learntStep = control->propData[thisLit.var()].learntStep;
-
-                assert(ancestor != lit_Undef);
-                control->implCache[(~ancestor).toInt()].merge(
-                    control->implCache[(~thisLit).toInt()].lits
-                    , thisLit
-                    , learntStep
-                    , ancestor
-                    , control->seen
-                );
-
-                #ifdef VERBOSE_DEBUG_FULLPROP
-                cout << "The impl cache of " << (~ancestor) << " is now: ";
-                cout << control->implCache[(~ancestor).toInt()] << endl;
-                #endif
-            }
-        }
-
+    control->newDecisionLevel();
+    control->enqueue(lit);
+    #ifdef VERBOSE_DEBUG_FULLPROP
+    cout << "Trying " << lit << endl;
+    #endif
+    const Lit failed = control->propagateFull(uselessBin);
+    if (failed != lit_Undef) {
         control->cancelZeroLight();
-        hyperBinResAll();
+        numFailed++;
+        vector<Lit> lits;
+        lits.push_back(~failed);
+        control->addClauseInt(lits, true);
         removeUselessBins();
-        #ifdef DEBUG_REMOVE_USELESS_BIN
-        testBinRemoval(lit);
-        #endif
+        return control->ok;
     }
 
-    if (!visitedAlready[(~lit).toInt()]) {
-        //Test removal of non-learnt binary clauses
-        #ifdef DEBUG_REMOVE_USELESS_BIN
-        fillTestUselessBinRemoval(~lit);
-        #endif
+    //Fill bothprop, cache
+    assert(control->decisionLevel() > 0);
+    for (int64_t c = control->trail.size()-1; c != (int64_t)control->trail_lim[0] - 1; c--) {
+        const Lit thisLit = control->trail[c];
+        visitedAlready[thisLit.toInt()] = 1;
 
-        //Doing inverse
-        control->newDecisionLevel();
-        control->enqueue(~lit);
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Trying (opp) " << (~lit) << endl;
-        #endif
-        const Lit failed = control->propagateFull(uselessBin);
-        if (failed != lit_Undef) {
-            control->cancelZeroLight();
-            numFailed++;
-            vector<Lit> lits;
-            lits.push_back(~failed);
-            control->addClauseInt(lits, true);
-            removeUselessBins();
-            return control->ok;
+        const Lit ancestor = control->propData[thisLit.var()].ancestor;
+        if (control->conf.doCache
+            && thisLit != lit
+            && cacheUpdated[(~ancestor).toInt()] == 0
+        ) {
+            //Update stats/markings
+            cacheUpdated[(~ancestor).toInt()] = 1;
+            extraTime += control->implCache[(~ancestor).toInt()].lits.size()/4;
+            extraTime += control->implCache[(~thisLit).toInt()].lits.size()/4;
+
+            const bool learntStep = control->propData[thisLit.var()].learntStep;
+
+            assert(ancestor != lit_Undef);
+            control->implCache[(~ancestor).toInt()].merge(
+                control->implCache[(~thisLit).toInt()].lits
+                , thisLit
+                , learntStep
+                , ancestor
+                , control->seen
+            );
+
+            #ifdef VERBOSE_DEBUG_FULLPROP
+            cout << "The impl cache of " << (~ancestor) << " is now: ";
+            cout << control->implCache[(~ancestor).toInt()] << endl;
+            #endif
         }
-
-        //Fill cache, check bothprop
-        assert(control->decisionLevel() > 0);
-        //bool onlyNonLearntUntilNow = true;
-        for (int64_t c = control->trail.size()-1; c != (int64_t)control->trail_lim[0] - 1; c--) {
-            const Lit thisLit = control->trail[c];
-            visitedAlready[thisLit.toInt()] = 1;
-
-            const Lit ancestor = control->propData[thisLit.var()].ancestor;
-            if (control->conf.doCache
-                && thisLit != ~lit
-                && cacheUpdated[(~ancestor).toInt()] == 0
-            ) {
-                cacheUpdated[(~ancestor).toInt()] = 1;
-                const bool learntStep = control->propData[thisLit.var()].learntStep;
-
-                assert(ancestor != lit_Undef);
-                control->implCache[(~ancestor).toInt()].merge(
-                    control->implCache[(~thisLit).toInt()].lits
-                    , thisLit
-                    , learntStep
-                    , ancestor
-                    , control->seen
-                );
-
-                #ifdef VERBOSE_DEBUG_FULLPROP
-                cout << "The impl cache of " << (~ancestor) << " is now: ";
-                cout << control->implCache[(~ancestor).toInt()] << endl;
-                #endif
-
-            }
-        }
-
-        control->cancelZeroLight();
-        removeUselessBins();
-        hyperBinResAll();
-        #ifdef DEBUG_REMOVE_USELESS_BIN
-        testBinRemoval(~lit);
-        #endif
     }
+
+    control->cancelZeroLight();
+    hyperBinResAll();
+    removeUselessBins();
+    #ifdef DEBUG_REMOVE_USELESS_BIN
+    testBinRemoval(lit);
+    #endif
 
     return control->ok;
 }

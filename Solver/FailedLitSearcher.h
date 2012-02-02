@@ -68,7 +68,7 @@ class FailedLitSearcher {
 
     private:
         //Main
-        bool tryBoth(const Lit lit);
+        bool tryThis(const Lit lit);
         void printResults(const double myTime) const;
         vector<char> visitedAlready;
 
@@ -160,6 +160,7 @@ class FailedLitSearcher {
         size_t origTrailSize;
         uint64_t origBogoProps; ///<Records num. of bogoprops at the start-up of search()
         uint32_t numFailed;     ///<Records num. of failed literals during search()
+        size_t extraTime;
 
         //State between runs
         double totalTime;
