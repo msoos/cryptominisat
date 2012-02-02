@@ -1697,8 +1697,6 @@ void inline Subsumer::fillSubs(const T& ps, const uint32_t index, const CL_ABST_
 
 void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
 {
-    clauses_elimed += todo.size();
-
     for (uint32_t i = 0; i < todo.size(); i++) {
         ClAndBin& c = todo[i];
 
