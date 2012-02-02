@@ -25,6 +25,8 @@
 #include <utility>
 #include <set>
 #include <utility>
+#include <cmath>
+
 using std::make_pair;
 using std::set;
 using std::cout;
@@ -76,7 +78,7 @@ bool FailedLitSearcher::search()
 {
     assert(control->decisionLevel() == 0);
 
-    uint64_t numPropsTodo = 110L*1000L*1000L;
+    uint64_t numPropsTodo = 120L*1000L*1000L;
 
     control->testAllClauseAttach();
     const double myTime = cpuTime();
@@ -101,6 +103,7 @@ bool FailedLitSearcher::search()
     else
         numPropsMultiplier = 1.0;
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * control->conf.failedLitMultiplier);
+    numPropsTodo = (double)numPropsTodo * std::pow(numCalls, 0.4);
 
     //For HyperBin
     addedBin = 0;
