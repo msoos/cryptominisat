@@ -1863,6 +1863,12 @@ bool Subsumer::maybeEliminate(const Var var)
     uint32_t after_clauses = 0;
     for (vector<ClAndBin>::const_iterator it = posAll.begin(), end = posAll.end(); it != end; it++) {
         for (vector<ClAndBin>::const_iterator it2 = negAll.begin(), end2 = negAll.end(); it2 != end2; it2++) {
+            //If any of the two is learnt and long, and we don't keep it, skip
+            if ((it->learnt || it2->learnt)) {
+                before_clauses--;
+                continue;
+            }
+
             // Merge clauses. If 'y' and '~y' exist, clause will not be created.
             if (!it->learnt && !it2->learnt) {
                 bool ok = merge(*it, *it2, lit, ~lit, agressiveCheck);
