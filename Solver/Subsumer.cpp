@@ -1574,7 +1574,7 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 2;
     }
 
-    numMaxElimVars = ((double)control->getNumFreeVars() * 0.12);
+    numMaxElimVars = ((double)control->getNumFreeVars() * control->conf.varElimRatioPerIter);
     origNumMaxElimVars = numMaxElimVars;
 
     if (!control->conf.doSubsume1) {

@@ -63,6 +63,7 @@ SolverConf::SolverConf() :
         , doBlockedClause  (true)
         , doExtBinSubs     (true)
         , doVarElim        (true)
+        , varElimRatioPerIter(0.25)
         , doSubsume1       (true)
         , doClausVivif     (true)
         , doSortWatched    (true)

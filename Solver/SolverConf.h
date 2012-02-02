@@ -74,6 +74,7 @@ class SolverConf
         bool      doBlockedClause;    ///<Should try to remove blocked clauses
         bool      doExtBinSubs;
         bool      doVarElim;          ///<Perform variable elimination
+        double    varElimRatioPerIter;
         bool      doSubsume1;         ///<Perform self-subsuming resolution
         bool      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         bool      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses

@@ -262,13 +262,15 @@ void Main::parseCommandLine()
     ("noremovebins", "Don't remove useless binary clauses")
     ;
 
-    po::options_description sateliteOptions("Normal satelite-type options");
+    po::options_description sateliteOptions("SatELite-type options");
     sateliteOptions.add_options()
     ("nosatelite", "Don't play with norm clauses at ALL (none below)")
     ("novarelim", "Don't perform variable elimination as per Een and Biere")
     ("nosubsume1", "Don't perform clause contraction through resolution")
     ("noblocked", "No blocked-clause removal")
     ("noextbinsubs", "No extended subsumption with binary clauses")
+    ("eratio", po::value<double>(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter)
+        , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ;
 
     po::options_description xorSateliteOptions("XOR satelite-type options");
