@@ -213,6 +213,7 @@ void FailedLitSearcher::printResults(const double myTime) const
     << " 0-depth assigns: " << (control->trail.size() - origTrailSize)
     << " Flit: " << numFailed
     << " Visited: " << numVisited << " / " << (origNumFreeVars*2) // x2 because it's LITERAL visit
+    << "(" << std::setprecision(1) << (100.0*(double)numVisited/(double)(origNumFreeVars*2)) << "%)"
     << " tried: " << numTried
     << " Bin:" << addedBin
     << " RemBin:" << removedBins
