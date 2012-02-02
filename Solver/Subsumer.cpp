@@ -1024,7 +1024,8 @@ bool Subsumer::simplifyBySubsumption()
     clauses_elimed = 0;
     binLearntClausesRemovedThroughElim = 0;
     longLearntClausesRemovedThroughElim = 0;
-    const uint32_t origTrailSize = control->trail.size();
+    const size_t origTrailSize = control->trail.size();
+    const size_t origNumFreeVars = control->getNumFreeVars();
 
     //touch all variables
     for (Var var = 0; var < control->nVars(); var++) {
@@ -1142,15 +1143,18 @@ bool Subsumer::simplifyBySubsumption()
     //Print stats
     if (control->conf.verbosity  >= 1) {
         cout << "c"
-        << " lits-rem: " << std::setw(9) << clauses_strengthened
-        << " cl-subs: " << std::setw(8) << clauses_subsumed
-        << " cl-elim: " << std::setw(4) << clauses_elimed
-        << " learnt long-cl-rem-th-elim: " << std::setw(5) << longLearntClausesRemovedThroughElim
-        << " learnt bin-cl-rem-th-elim: " << std::setw(5) << binLearntClausesRemovedThroughElim
+        << " lits-rem: " << clauses_strengthened
+        << " cl-subs: " << clauses_subsumed
         << " v-elim: " << numVarsElimed
         << " / " << origNumMaxElimVars
+        << " / " << origNumFreeVars
+        << " time: " << std::setprecision(2) << (cpuTime() - myTime) << " s"
+        << endl
+        << "c"
+        << " cl-elim: " << clauses_elimed
+        << " learnt long-cl-rem-th-elim: " << longLearntClausesRemovedThroughElim
+        << " learnt bin-cl-rem-th-elim: " << binLearntClausesRemovedThroughElim
         << " v-fix: " << std::setw(4) <<control->trail.size() - origTrailSize
-        << " time: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
         << endl;
 
