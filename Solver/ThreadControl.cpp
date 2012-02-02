@@ -1747,17 +1747,11 @@ void ThreadControl::checkNoWrongAttach() const
 
 uint32_t ThreadControl::getNumFreeVars() const
 {
+    assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
-
-    //Variables elimed
-    Var var = 0;
-    for(vector<VarData>::const_iterator it = varData.begin(), end = varData.end(); it != end; it++, var++) {
-        if (value(var) == l_Undef
-            && it->elimed != ELIMED_NONE)
-        {
-            freeVars--;
-        }
-    }
+    freeVars -= trail.size();
+    freeVars -= subsumer->getNumElimed();
+    freeVars -= varReplacer->getNumReplacedVars();
 
     return freeVars;
 }
