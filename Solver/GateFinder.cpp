@@ -1053,3 +1053,33 @@ void GateFinder::newVar()
     gateOccEq.push_back(vector<uint32_t>());
     gateOccEq.push_back(vector<uint32_t>());
 }
+
+double GateFinder::getTotalTime() const
+{
+    return totalTime;
+}
+
+size_t GateFinder::getTotalLitsRemoved() const
+{
+    return totalLitsRemoved;
+}
+
+size_t GateFinder::getTotalClausesShortened() const
+{
+    return totalClausesShortened;
+}
+
+size_t GateFinder::getTotalClausesRemoved() const
+{
+    return totalClausesRemoved;
+}
+
+size_t GateFinder::getTotalVarsAdded() const
+{
+    return totalVarsAdded;
+}
+
+size_t GateFinder::getTotalVarsReplaced() const
+{
+    return totalVarsReplaced;
+}

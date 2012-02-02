@@ -61,6 +61,10 @@ class FailedLitSearcher {
 
         bool search();
         double getTotalTime() const;
+        size_t getTotalZeroDepthAssigns() const;
+        size_t getTotalNumFailed() const;
+        size_t getTotalAddedBin() const;
+        size_t getTotalRemovedBin() const;
 
     private:
         //Main

@@ -402,3 +402,33 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
 
     return control->ok;
 }
+
+double ClauseVivifier::getTotalTimeAsymm() const
+{
+    return totalTimeAsymm;
+}
+
+double ClauseVivifier::getTotalTimeCacheLearnt() const
+{
+    return totalTimeCacheLearnt;
+}
+
+double ClauseVivifier::getTotalTimeCacheNonLearnt() const
+{
+    return totalTimeCacheNonLearnt;
+}
+
+uint32_t ClauseVivifier::getTotalNumLitsRemCacheLearnt() const
+{
+    return totalNumLitsRemCacheLearnt;
+}
+
+uint32_t ClauseVivifier::getTotalNumLitsRemCacheNonLearnt() const
+{
+    return totalNumLitsRemCacheNonLearnt;
+}
+
+uint32_t ClauseVivifier::getTotalNumLitsRemAsymm() const
+{
+    return totalNumLitsRemAsymm;
+}

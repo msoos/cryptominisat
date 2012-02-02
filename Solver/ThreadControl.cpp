@@ -31,6 +31,7 @@
 #include "ClauseCleaner.h"
 #include "SolutionExtender.h"
 #include "VarUpdateHelper.h"
+#include "GateFinder.h"
 #include <omp.h>
 #include <fstream>
 using std::cout;
@@ -1172,30 +1173,84 @@ void ThreadControl::consolidateMem()
 void ThreadControl::printStats()
 {
     double cpu_time = cpuTime();
-    printStatsLine("c filedLit time"
+
+    //Failed lit stats
+    printStatsLine("c probing time"
                     , getTotalTimeFailedLitSearcher()
                     , getTotalTimeFailedLitSearcher()/cpu_time*100.0
                     , "% time");
+    printStatsLine("c probing 0-depth-assigns"
+                    , failedLitSearcher->getTotalZeroDepthAssigns()
+                    , (double)failedLitSearcher->getTotalZeroDepthAssigns()/(double)nVars()*100.0
+                    , "% vars");
+    printStatsLine("c probing failed"
+                    , failedLitSearcher->getTotalNumFailed()
+                    , (double)failedLitSearcher->getTotalNumFailed()/(double)nVars()*100.0
+                    , "% vars");
+    printStatsLine("c probing bin added", failedLitSearcher->getTotalAddedBin());
+    printStatsLine("c probing bin rem", failedLitSearcher->getTotalRemovedBin());
+
 
     //Subsumer stats
-    printStatsLine("c v-elimed"
-                    , getNumElimSubsume()
-                    , (double)getNumElimSubsume()/(double)nVars()*100.0
-                    , "% vars");
-
     printStatsLine("c SatELite time"
                     , getTotalTimeSubsumer()
                     , getTotalTimeSubsumer()/cpu_time*100.0
                     , "% time");
+    printStatsLine("c SatELite v-elimed"
+                    , getNumElimSubsume()
+                    , (double)getNumElimSubsume()/(double)nVars()*100.0
+                    , "% vars");
+    printStatsLine("c SatELite lit-rem", subsumer->getTotalLitsRem());
+    printStatsLine("c SatELite cl-subs", subsumer->getTotalSubsumed());
+    printStatsLine("c SatELite blocked", subsumer->getTotalBlocked());
+    printStatsLine("c SatELite asymmSub", subsumer->getTotalAsymmSubs());
+    printStatsLine("c SatELite elim-bin-lt-cl", subsumer->getTotalBinLearntClausesRemovedThroughElim());
+    printStatsLine("c SatELite elim-long-lt-cl", subsumer->getTotalLongLearntClausesRemovedThroughElim());
+
+    //GateFinder stats
+    printStatsLine("c gatefinder time"
+                    , subsumer->getGateFinder()->getTotalTime()
+                    , subsumer->getGateFinder()->getTotalTime()/cpu_time*100.0
+                    , "% time");
+    printStatsLine("c gatefinder cl-short", subsumer->getGateFinder()->getTotalClausesShortened());
+    printStatsLine("c gatefinder litsrem", subsumer->getGateFinder()->getTotalLitsRemoved());
+    printStatsLine("c gatefinder cl-rem", subsumer->getGateFinder()->getTotalClausesRemoved());
+
 
     //VarReplacer stats
+    printStatsLine("c SCC time"
+                    , getTotalTimeSCC()
+                    , getTotalTimeSCC()/cpu_time*100.0
+                    , "% time");
+
     printStatsLine("c binxor tree roots", getNumXorTrees());
     printStatsLine("c binxor trees' crown"
                     , getNumXorTreesCrownSize()
                     , (double)getNumXorTreesCrownSize()/(double)getNumXorTrees()
                     , "leafs/tree");
 
-    printStatsLine("c SCC time", getTotalTimeSCC());
+    //Vivifier-ASYMM stats
+    printStatsLine("c Asymm time"
+                    , clauseVivifier->getTotalTimeAsymm()
+                    , clauseVivifier->getTotalTimeAsymm()/cpu_time*100.0
+                    , "% time");
+    printStatsLine("c Asymm lits rem", clauseVivifier->getTotalNumLitsRemAsymm());
+
+    //Vivifier-cache-based non-learnt stats
+    printStatsLine("c cache-vivify-NL time"
+                    , clauseVivifier->getTotalTimeCacheNonLearnt()
+                    , clauseVivifier->getTotalTimeCacheNonLearnt()/cpu_time*100.0
+                    , "% time");
+    printStatsLine("c cache-vivify-NL lits rem", clauseVivifier->getTotalNumLitsRemCacheNonLearnt());
+
+    //Vivifier-cache-based learnt stats
+    printStatsLine("c cache-vivify-L time"
+                    , clauseVivifier->getTotalTimeCacheLearnt()
+                    , clauseVivifier->getTotalTimeCacheLearnt()/cpu_time*100.0
+                    , "% time");
+    printStatsLine("c cache-vivify-L lits rem", clauseVivifier->getTotalNumLitsRemCacheLearnt());
+
+    //Other stats
     printStatsLine("c Conflicts", sumConflicts, (double)sumConflicts/cpu_time, "conf/sec");
     printStatsLine("c Total time", cpu_time);
 }

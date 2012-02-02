@@ -133,6 +133,12 @@ public:
     bool canElim(const Var var) const;
     void printGateStats() const;
     void printDot(); ///<Print Graphviz DOT file describing the gates
+    double getTotalTime() const;
+    size_t getTotalLitsRemoved() const;
+    size_t getTotalClausesShortened() const;
+    size_t getTotalClausesRemoved() const;
+    size_t getTotalVarsAdded() const;
+    size_t getTotalVarsReplaced() const;
 
 private:
     void clearIndexes();

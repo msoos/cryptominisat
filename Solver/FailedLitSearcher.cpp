@@ -359,6 +359,26 @@ void FailedLitSearcher::removeUselessBins()
     uselessBin.clear();
 }
 
+size_t FailedLitSearcher::getTotalZeroDepthAssigns() const
+{
+    return totalZeroDepthAssigns;
+}
+
+size_t FailedLitSearcher::getTotalNumFailed() const
+{
+    return totalNumFailed;
+}
+
+size_t FailedLitSearcher::getTotalAddedBin() const
+{
+    return totalAddedBin;
+}
+
+size_t FailedLitSearcher::getTotalRemovedBin() const
+{
+    return totalRemovedBin;
+}
+
 #ifdef DEBUG_REMOVE_USELESS_BIN
 void FailedLitSearcher::fillTestUselessBinRemoval(const Lit lit)
 {

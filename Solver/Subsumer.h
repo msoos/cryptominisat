@@ -131,12 +131,19 @@ public:
 
     //Get-functions
     const vector<char>& getVarElimed() const;
-    const vector<char>& getVarBlocked() const;
     uint32_t getNumElimed() const;
     bool checkElimedUnassigned() const;
     double getTotalTime() const;
     uint32_t getNumERVars() const;
     const vector<BlockedClause>& getBlockedClauses() const;
+    size_t getTotalBlocked() const;
+    size_t getTotalAsymmSubs() const;
+    size_t getTotalSubsumed() const;
+    size_t getTotalLitsRem() const;
+    size_t getTotalSubsBinWithBin() const;
+    size_t getTotalLongLearntClausesRemovedThroughElim() const;
+    size_t getTotalBinLearntClausesRemovedThroughElim() const;
+    const GateFinder* getGateFinder() const;
 
 private:
 
@@ -164,8 +171,9 @@ private:
     size_t          totalAsymmSubs;
     size_t          totalSubsumed;
     size_t          totalLitsRem;
-    size_t          totalRemLearntThroughElim;
     size_t          totalSubsBinWithBin;
+    size_t          totalLongLearntClausesRemovedThroughElim;
+    size_t          totalBinLearntClausesRemovedThroughElim;
     uint32_t        numElimed;            ///<Total number of variables eliminated
 
     //Temporaries
@@ -317,7 +325,8 @@ private:
     uint32_t clauses_subsumed; ///<Number of clauses subsumed in this run
     uint32_t clauses_strengthened; ///<Number of literals removed by strengthening
     uint32_t clauses_elimed;
-    uint32_t learntClausesRemovedThroughElim;
+    uint32_t longLearntClausesRemovedThroughElim;
+    uint32_t binLearntClausesRemovedThroughElim;
     uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
 };
 

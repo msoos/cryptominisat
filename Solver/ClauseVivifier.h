@@ -34,6 +34,12 @@ class ClauseVivifier {
     public:
         ClauseVivifier(ThreadControl* control);
         bool vivify();
+        double getTotalTimeAsymm() const;
+        double getTotalTimeCacheLearnt() const;
+        double getTotalTimeCacheNonLearnt() const;
+        uint32_t getTotalNumLitsRemCacheLearnt() const;
+        uint32_t getTotalNumLitsRemCacheNonLearnt() const;
+        uint32_t getTotalNumLitsRemAsymm() const;
 
     private:
 

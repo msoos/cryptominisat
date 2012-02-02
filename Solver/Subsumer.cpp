@@ -69,8 +69,9 @@ Subsumer::Subsumer(ThreadControl* _control):
     , totalAsymmSubs(0)
     , totalSubsumed(0)
     , totalLitsRem(0)
-    , totalRemLearntThroughElim(0)
     , totalSubsBinWithBin(0)
+    , totalLongLearntClausesRemovedThroughElim(0)
+    , totalBinLearntClausesRemovedThroughElim(0)
     , numElimed(0)
     , numCalls(0)
 {
@@ -811,7 +812,7 @@ void Subsumer::removeWrongBinsAndAllTris()
     assert(numRemovedHalfLearnt % 2 == 0);
     control->learntsLits -= numRemovedHalfLearnt;
     control->numBins -= numRemovedHalfLearnt/2;
-    learntClausesRemovedThroughElim += numRemovedHalfLearnt/2;
+    binLearntClausesRemovedThroughElim += numRemovedHalfLearnt/2;
 }
 
 /**
@@ -1021,7 +1022,8 @@ bool Subsumer::simplifyBySubsumption()
     clauses_strengthened = 0;
     numVarsElimed = 0;
     clauses_elimed = 0;
-    learntClausesRemovedThroughElim = 0;
+    binLearntClausesRemovedThroughElim = 0;
+    longLearntClausesRemovedThroughElim = 0;
     const uint32_t origTrailSize = control->trail.size();
 
     //touch all variables
@@ -1143,7 +1145,8 @@ bool Subsumer::simplifyBySubsumption()
         << " lits-rem: " << std::setw(9) << clauses_strengthened
         << " cl-subs: " << std::setw(8) << clauses_subsumed
         << " cl-elim: " << std::setw(4) << clauses_elimed
-        << " lcl-rem: " << std::setw(5) << learntClausesRemovedThroughElim
+        << " learnt long-cl-rem-th-elim: " << std::setw(5) << longLearntClausesRemovedThroughElim
+        << " learnt bin-cl-rem-th-elim: " << std::setw(5) << binLearntClausesRemovedThroughElim
         << " v-elim: " << numVarsElimed
         << " / " << origNumMaxElimVars
         << " v-fix: " << std::setw(4) <<control->trail.size() - origTrailSize
@@ -1161,7 +1164,8 @@ bool Subsumer::simplifyBySubsumption()
     totalTime += cpuTime() - myTime;
     totalLitsRem += clauses_strengthened;
     totalSubsumed += clauses_subsumed;
-    totalRemLearntThroughElim += learntClausesRemovedThroughElim;
+    totalBinLearntClausesRemovedThroughElim += binLearntClausesRemovedThroughElim;
+    totalLongLearntClausesRemovedThroughElim += longLearntClausesRemovedThroughElim;
 
     control->testAllClauseAttach();
     control->checkNoWrongAttach();
@@ -1706,9 +1710,16 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << *clauses[c.clsimp.index] << endl;
             #endif
+
+            //Update stats
+            if (clauses[c.clsimp.index]->learnt()) {
+                longLearntClausesRemovedThroughElim++;
+            } else {
+                clauses_elimed++;
+            }
+
             unlinkClause(c.clsimp, lit);
 
-            clauses_elimed++;
         } else {
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << c.lit1 << " , " << c.lit2 << endl;
@@ -1718,10 +1729,15 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
             assert(lit == c.lit1 || lit == c.lit2);
             removeWBin(control->watches, c.lit1, c.lit2, c.learnt);
             removeWBin(control->watches, c.lit2, c.lit1, c.learnt);
-            if (!c.learnt)
+
+            //Update stats
+            if (!c.learnt) {
                 control->clausesLits -= 2;
-            else
+                clauses_elimed++;
+            } else {
                 control->learntsLits -= 2;
+                binLearntClausesRemovedThroughElim++;
+            }
             control->numBins--;
 
             //Put clause into blocked status
@@ -2270,4 +2286,44 @@ bool Subsumer::checkElimedUnassigned() const
     assert(numElimed == checkNumElimed);
 
     return true;
+}
+
+size_t Subsumer::getTotalBlocked() const
+{
+    return totalBlocked;
+}
+
+size_t Subsumer::getTotalAsymmSubs() const
+{
+    return totalAsymmSubs;
+}
+
+size_t Subsumer::getTotalSubsumed() const
+{
+    return totalSubsumed;
+}
+
+size_t Subsumer::getTotalLitsRem() const
+{
+    return totalLitsRem;
+}
+
+size_t Subsumer::getTotalSubsBinWithBin() const
+{
+    return totalSubsBinWithBin;
+}
+
+size_t Subsumer::getTotalLongLearntClausesRemovedThroughElim() const
+{
+    return totalLongLearntClausesRemovedThroughElim;
+}
+
+size_t Subsumer::getTotalBinLearntClausesRemovedThroughElim() const
+{
+    return totalBinLearntClausesRemovedThroughElim;
+}
+
+const GateFinder* Subsumer::getGateFinder() const
+{
+    return gateFinder;
 }
