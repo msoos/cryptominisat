@@ -1354,7 +1354,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         activities[i] = control->getSavedActivity(i);
     }
     var_inc = control->getSavedActivityInc();
-    uint32_t tosubstract = 10-mtrand.randInt(20);
+    uint32_t tosubstract = conf.var_inc_variability-mtrand.randInt(2*conf.var_inc_variability);
     conf.var_inc_multiplier -= tosubstract;
     conf.var_inc_divider -= tosubstract;
     if (conf.verbosity >= 1) {

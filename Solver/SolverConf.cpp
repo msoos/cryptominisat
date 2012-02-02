@@ -26,6 +26,7 @@ SolverConf::SolverConf() :
         var_inc_start(128)
         , var_inc_multiplier(31)
         , var_inc_divider(30)
+        , var_inc_variability(10)
         , ratioRemoveClauses(1.0/2.0)
         , random_var_freq(0)
         , restart_first(100)

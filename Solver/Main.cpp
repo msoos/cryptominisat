@@ -216,17 +216,33 @@ void Main::parseCommandLine()
     generalOptions.add_options()
     ("help,h", "Prints this help")
     ("input", po::value< std::vector<std::string> >(), "file(s) to read")
-    ("polar", po::value<std::string>()->default_value("auto"), "{true,false,rnd,auto} Selects polarity mode")
     //("  -decay", " <num> [ 0 - 1 ]")
-    ("freq", po::value<double>(&conf.random_var_freq)->default_value(conf.random_var_freq), "[0 - 1] freq. of picking var at random")
     ("verbosity", po::value<int>(&conf.verbosity)->default_value(conf.verbosity), "[0-4] Verbosity of solver")
     ("randomize", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed), "[0..] Sets random seed")
-    ("restart", po::value<std::string>()->default_value("glue"), "{auto,static,dynamic}  Restart strategy to follow.")
+    ("restart", po::value<std::string>()->default_value("glue"), "{geom, glue, agility}  Restart strategy to follow.")
     ("threads,t", po::value<int>(&numThreads)->default_value(1), "Threads to use")
     ("nosolprint", "Don't print assignment if solution is SAT")
     ("nosimplify", "Don't do regular simplification rounds")
+    ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses), "Remove at least this ratio of learnt clauses when doing learnt clause-cleaning")
     //("greedyunbound", "Greedily unbound variables that are not needed for SAT")
     ;
+
+    po::options_description varPickOptions("Variable branching options");
+    varPickOptions.add_options()
+    ("vincmult", po::value<uint32_t>(&conf.var_inc_multiplier)->default_value(conf.var_inc_multiplier)
+        , "variable activity increase multiplier")
+    ("vincdiv", po::value<uint32_t>(&conf.var_inc_divider)->default_value(conf.var_inc_divider)
+        , "variable activity increase divider (MUST be smaller than multiplier)")
+    ("vincstart", po::value<uint32_t>(&conf.var_inc_start)->default_value(conf.var_inc_start)
+        , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")
+    ("vincvary", po::value<uint32_t>(&conf.var_inc_variability)->default_value(conf.var_inc_variability)
+        , "variable activity divider and multiplier are both changed +/- with this amount, randomly, in sync")
+    ("freq", po::value<double>(&conf.random_var_freq)->default_value(conf.random_var_freq)
+        , "[0 - 1] freq. of picking var at random")
+    ("polar", po::value<std::string>()->default_value("auto")
+        , "{true,false,rnd,auto} Selects polarity mode")
+    ;
+
 
     po::options_description iterativeOptions("Iterative solve options");
     iterativeOptions.add_options()
@@ -292,7 +308,7 @@ void Main::parseCommandLine()
     ("norecminim", "Don't do MiniSat-type conflict-clause minim.")
     ("nolfminim", "Don't do strong minimisation at conflict gen.")
     ("noalwaysfmin", "Don't always strong-minimise clause")
-    ("printimpldot", po::bool_switch(&conf.doPrintConflDot), "Print implication graph DOT files")
+    ("printimpldot", po::bool_switch(&conf.doPrintConflDot), "Print implication graph DOT files (for input into graphviz package)")
     ;
 
     po::options_description xorOptions("XOR-related options");
@@ -321,6 +337,7 @@ void Main::parseCommandLine()
     po::options_description cmdline_options;
     cmdline_options
     .add(generalOptions)
+    .add(varPickOptions)
     .add(conflOptions)
     .add(iterativeOptions)
     .add(failedLitOptions)
