@@ -58,6 +58,8 @@ SolverConf::SolverConf() :
 
         //optimisations to do
         , doFindXors       (true)
+        , doEchelonizeXOR  (true)
+        , maxXORMatrix     (10L*1000L*1000L)
         , doFindEqLits     (true)
         , doReplace        (true)
         , doSchedSimp      (true)

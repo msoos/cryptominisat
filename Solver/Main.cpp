@@ -283,11 +283,16 @@ void Main::parseCommandLine()
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ;
 
-    po::options_description xorSateliteOptions("XOR satelite-type options");
+    po::options_description xorSateliteOptions("XOR SatELite-type options");
     xorSateliteOptions.add_options()
-    ("noxorsatelite", "Don't play with xor-clauses at ALL (none below)")
-    ("noconglomerate", "Don't eliminate var by xoring 2 xors")
-    ("noheuleprocess", "Don't try to do global/local substitution per Heule")
+    ("noxor", "Don't discover long XORs")
+    ("noehelonxor", "Don't extract data from XORs through echelonization (TOP LEVEL ONLY)")
+    ("maxxormat", po::value<uint64_t>(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
+        , "Maximum matrix size (=num elements) that we should try to echelonize")
+    ("nomix", "Don't mix XORs and OrGates for new truths")
+    ("nobinxorfind", "Don't find equivalent literals through SCC")
+    ("extendedscc", po::bool_switch(&conf.doExtendedSCC), "Perform SCC using cache")
+    ("novarreplace", "Don't perform variable replacement")
     ;
 
     po::options_description gatesOptions("Gates' options");
@@ -323,15 +328,6 @@ void Main::parseCommandLine()
     ("printimpldot", po::bool_switch(&conf.doPrintConflDot), "Print implication graph DOT files (for input into graphviz package)")
     ;
 
-    po::options_description xorOptions("XOR-related options");
-    xorOptions.add_options()
-    ("nolxorfind", "Don't find long(2+) XORs during subsumption")
-    ("nobinxorfind", "Don't find equivalent literals through SCC")
-    ("noextendedscc", "Don't do SCC using non-exist. bins")
-    ("novarreplace", "Don't perform variable replacement")
-    ("nomix", "Don't mix XORs and OrGates for new truths")
-    ;
-
     po::options_description miscOptions("Misc options");
     miscOptions.add_options()
     ("nopresimp", "Don't perform simplification at the beginning")
@@ -355,7 +351,7 @@ void Main::parseCommandLine()
     .add(iterativeOptions)
     .add(failedLitOptions)
     .add(sateliteOptions)
-    .add(xorOptions)
+    .add(xorSateliteOptions)
     //.add(xorSateliteOptions)
     .add(gatesOptions)
     #ifdef USE_GAUSS
@@ -440,16 +436,16 @@ void Main::parseCommandLine()
         conf.doFindEqLits = false;
     }
 
-    if (vm.count("noextendedscc")) {
-        conf.doExtendedSCC = false;
+    if (vm.count("nosimplify")) {
+        conf.doSchedSimp = false;
     }
 
-    if (vm.count("nolxorfind")) {
+    if (vm.count("noxor")) {
         conf.doFindXors = false;
     }
 
-    if (vm.count("nosimplify")) {
-        conf.doSchedSimp = false;
+    if (vm.count("noehelonxor")) {
+        conf.doEchelonizeXOR = false;
     }
 
     if (vm.count("debuglib")) {

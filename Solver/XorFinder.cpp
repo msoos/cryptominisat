@@ -74,7 +74,7 @@ bool XorFinder::findXors()
     }
     totalTime += cpuTime() - myTime;
 
-    if (xors.size() > 0)
+    if (control->conf.doEchelonizeXOR && xors.size() > 0)
         extractInfo();
 
     return control->okay();
@@ -182,7 +182,7 @@ bool XorFinder::extractInfoFromBlock(const vector<Var>& block, const size_t bloc
     //Set up matrix
     size_t numCols = block.size()+1; //we need augmented column
     size_t matSize = numCols*thisXors.size();
-    if (matSize > 1000L*1000L*100L) {
+    if (matSize > control->conf.maxXORMatrix) {
         //this matrix is way too large, skip :(
         return control->okay();
     }
