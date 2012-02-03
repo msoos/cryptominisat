@@ -2184,9 +2184,10 @@ vector<Var> Subsumer::orderVarsForElim()
         for (Occur::const_iterator it = negs.begin(), end = negs.end(); it != end; it++)
             if (!clauses[it->index]->learnt()) neg++;
 
-        uint32_t nNonLPos = numNonLearntBins(x);
-        uint32_t nNonLNeg = numNonLearntBins(~x);
-        uint32_t cost = pos*neg/4 +  nNonLPos*neg*2 + nNonLNeg*pos*2 + nNonLNeg*nNonLPos*6;
+        //uint32_t nNonLPos = numNonLearntBins(x);
+        //uint32_t nNonLNeg = numNonLearntBins(~x);
+        //uint32_t cost = pos*neg/4 +  nNonLPos*neg*2 + nNonLNeg*pos*2 + nNonLNeg*nNonLPos*6;
+        uint32_t cost = pos * neg * 2 + numNonLearntBins(x) * neg + numNonLearntBins(~x) * pos;
         cost_var.push_back(std::make_pair(cost, x.var()));
     }
     touchedVars.clear();
