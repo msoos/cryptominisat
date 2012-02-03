@@ -34,7 +34,7 @@ SolverConf::SolverConf() :
         , random_var_freq(0)
         , restart_first(100)
         , restart_inc(1.2)
-        , burstSearchLen(500)
+        , burstSearchLen(0)
         , restartType(glue_restart)
 
         , expensive_ccmin  (true)
