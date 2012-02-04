@@ -962,6 +962,20 @@ void CommandControl::initialiseSolver()
     agilityHist.resize(100);
     numRestarts = 0;
 
+    //Set up var_inc multi/div
+    uint32_t tosubstract = conf.var_inc_variability-mtrand.randInt(2*conf.var_inc_variability);
+    conf.var_inc_multiplier -= tosubstract;
+    conf.var_inc_divider -= tosubstract;
+
+    if (conf.verbosity >= 1) {
+        cout
+        << "c Using var act-multip " << conf.var_inc_multiplier
+        << " instead of standard " << (conf.var_inc_multiplier+tosubstract)
+        << " and act-divider " << conf.var_inc_divider
+        << " instead of standard " << (conf.var_inc_divider+tosubstract)
+        << endl;
+    }
+
     //Set up sync
     #pragma omp critical //sync can only be done in critical section
     syncFromThreadControl();
@@ -1354,17 +1368,6 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         activities[i] = control->getSavedActivity(i);
     }
     var_inc = control->getSavedActivityInc();
-    uint32_t tosubstract = conf.var_inc_variability-mtrand.randInt(2*conf.var_inc_variability);
-    conf.var_inc_multiplier -= tosubstract;
-    conf.var_inc_divider -= tosubstract;
-    if (conf.verbosity >= 1) {
-        cout
-        << "c Using var act-multip " << conf.var_inc_multiplier
-        << " instead of standard " << (conf.var_inc_multiplier+tosubstract)
-        << " and act-divider " << conf.var_inc_divider
-        << " instead of standard " << (conf.var_inc_divider+tosubstract)
-        << endl;
-    }
 
     // Search:
     uint64_t rest = conf.restart_first;
