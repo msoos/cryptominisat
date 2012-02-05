@@ -36,10 +36,16 @@ Solver::Solver(ClauseAllocator *_clAllocator, const AgilityData& agilityData) :
         // Stats
         propagations(0)
         , bogoProps(0)
+        //Prop stats
         , propsBin(0)
         , propsTri(0)
         , propsLongIrred(0)
         , propsLongRed(0)
+        //Conflict stats
+        , conflsBin(0)
+        , conflsTri(0)
+        , conflsLongIrred(0)
+        , conflsLongRed(0)
 
         , clAllocator(_clAllocator)
         , ok(true)
@@ -204,6 +210,9 @@ inline bool Solver::propBinaryClause(const vec<Watched>::const_iterator i, const
         propsBin++;
         enqueue(i->getOtherLit(), PropBy(~p));
     } else if (val == l_False) {
+        //Update stats
+        conflsBin++;
+
         confl = PropBy(~p);
         failBinLit = i->getOtherLit();
         qhead = trail.size();
@@ -276,9 +285,17 @@ template<bool simple> inline bool Solver::propNormalClause(
         cout << endl;
         #endif //VERBOSE_DEBUG_FULLPROP
 
+        //Update stats
+        if (c.learnt())
+            conflsLongRed++;
+        else
+            conflsLongIrred++;
+
         qhead = trail.size();
         return false;
     } else {
+
+        //Update stats
         if (c.learnt())
             propsLongRed++;
         else
@@ -326,6 +343,9 @@ template<bool simple> inline bool Solver::propTriClause(const vec<Watched>::cons
             #endif //VERBOSE_DEBUG_FULLPROP
             confl = PropBy(~p, i->getOtherLit2());
         }
+        //Update stats
+        conflsTri++;
+
         failBinLit = i->getOtherLit();
         qhead = trail.size();
         return false;

@@ -146,6 +146,12 @@ protected:
     uint64_t propsLongIrred;
     uint64_t propsLongRed;
 
+    //Stats for conflicts
+    uint64_t conflsBin;
+    uint64_t conflsTri;
+    uint64_t conflsLongIrred;
+    uint64_t conflsLongRed;
+
     // Solver state:
     //
     ClauseAllocator*    clAllocator;

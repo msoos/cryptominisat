@@ -129,7 +129,14 @@ void CommandControl::printStats()
                     , units_from_other_threads);
 
     //Search stats
+    cout << "c CONFLS stats" << endl;
     printStatsLine("c conflicts", numConflicts, (double)numConflicts/cpu_time, "/ sec");
+    printStatsLine("c conflsBin", conflsBin, 100.0*(double)conflsBin/(double)numConflicts, "%");
+    printStatsLine("c conflsTri", conflsTri, 100.0*(double)conflsTri/(double)numConflicts, "%");
+    printStatsLine("c conflsLongIrred", conflsLongIrred, 100.0*(double)conflsLongIrred/(double)numConflicts, "%");
+    printStatsLine("c conflsLongRed", conflsLongRed, 100.0*(double)conflsLongRed/(double)numConflicts, "%");
+    assert(numConflicts == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);
+
     printStatsLine("c units learnt"
                     , learntUnits
                     , (double)learntUnits/(double)numConflicts*100.0
