@@ -938,27 +938,32 @@ void ThreadControl::calcReachability()
         litReachable[i] = LitReachData();
     }
 
-    for (size_t var = 0; var < decision_var.size(); var++) {
+    for (size_t litnum = 0; litnum < nVars()*2; litnum++) {
+        const Lit lit = Lit::toLit(litnum);
+        const Var var = lit.var();
         if (value(var) != l_Undef
             || varData[var].elimed != ELIMED_NONE
             || !decision_var[var]
         ) continue;
 
-        for (uint32_t sig1 = 0; sig1 < 2; sig1++)  {
-            const Lit lit = Lit(var, sig1);
+        //See where setting this lit leads to
+        const vector<LitExtra>& cache = implCache[(~lit).toInt()].lits;
+        const size_t cacheSize = cache.size();
+        for (vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
+            //Cannot lead to itself
+            assert(it->getLit().var() != lit.var());
 
-            vector<LitExtra>& cache = implCache[(~lit).toInt()].lits;
-            uint32_t cacheSize = cache.size();
-            for (vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
-                if (it->getLit() == lit || it->getLit() == ~lit) continue;
+            //If learnt, skip
+            if (!it->getOnlyNLBin())
+                continue;
 
-                if (litReachable[it->getLit().toInt()].lit == lit_Undef
-                    || litReachable[it->getLit().toInt()].numInCache </*=*/ cacheSize
-                ) {
-                    //if (litReachable[it->toInt()].numInCache == cacheSize && mtrand.randInt(1) == 0) continue;
-                    litReachable[it->getLit().toInt()].lit = lit;
-                    litReachable[it->getLit().toInt()].numInCache = cacheSize;
-                }
+            //If reachability is nonexistent or low, set it
+            if (litReachable[it->getLit().toInt()].lit == lit_Undef
+                || litReachable[it->getLit().toInt()].numInCache < cacheSize
+            ) {
+                litReachable[it->getLit().toInt()].lit = lit;
+                //NOTE: we actually MISREPRESENT this, as only non-learnt should be presented here
+                litReachable[it->getLit().toInt()].numInCache = cacheSize;
             }
         }
     }
