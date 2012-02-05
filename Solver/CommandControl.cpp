@@ -1371,6 +1371,16 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     }
     var_inc = control->getSavedActivityInc();
 
+
+    order_heap.clear();
+    for(size_t var = 0; var < nVars(); var++) {
+        if (control->decision_var[var]
+            && value(var) == l_Undef
+        ) {
+            insertVarOrder(var);
+        }
+    }
+
     // Search:
     uint64_t rest = conf.restart_first;
     while (status == l_Undef
