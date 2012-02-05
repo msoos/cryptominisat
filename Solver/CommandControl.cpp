@@ -971,7 +971,6 @@ void CommandControl::initialiseSolver()
     conflSizeHist.resize(100);
     agilityHist.clear();
     agilityHist.resize(100);
-    numRestarts = 0;
 
     //Set up var_inc multi/div
     uint32_t tosubstract = conf.var_inc_variability-mtrand.randInt(2*conf.var_inc_variability);
