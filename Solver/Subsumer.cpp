@@ -2064,7 +2064,7 @@ bool Subsumer::merge(
 
     //We add to 'seen' what COULD be added to the clause
     //This is essentially the reverse of cache-based vivification
-    if (!ps.isBin && useCache) {
+    if (!ps.isBin && useCache && control->conf.doAsymmTE) {
         for (uint32_t i= 0; i < dummy.size(); i++) {
 
             //Use cache
@@ -2120,7 +2120,7 @@ bool Subsumer::merge(
             }
 
             //See if using the cache we can prove that the clause is a tautology
-            if (useCache && control->conf.doCache) {
+            if (useCache && control->conf.doAsymmTE && control->conf.doCache) {
                 const vector<LitExtra>& cache = control->implCache[c[i].toInt()].lits;
                 numMaxVarElimAgressiveCheck -= cache.size();
                 for(vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
@@ -2134,7 +2134,7 @@ bool Subsumer::merge(
             }
 
             //See if using wathclists we can prove that the clause is a tautology
-            if (useCache) {
+            if (useCache && control->conf.doAsymmTE) {
                 const vec<Watched>& ws = control->watches[(~c[i]).toInt()];
                 numMaxVarElimAgressiveCheck -= ws.size();
                 for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
