@@ -1222,16 +1222,20 @@ void ThreadControl::printStats()
 
 
     //VarReplacer stats
-    printStatsLine("c SCC time"
+    printStatsLine("c EqLit time"
                     , getTotalTimeSCC()
                     , getTotalTimeSCC()/cpu_time*100.0
                     , "% time");
 
-    printStatsLine("c binxor tree roots", getNumXorTrees());
-    printStatsLine("c binxor trees' crown"
+    printStatsLine("c EqLit tree roots", getNumXorTrees());
+    printStatsLine("c EqLit trees' crown"
                     , getNumXorTreesCrownSize()
                     , (double)getNumXorTreesCrownSize()/(double)getNumXorTrees()
                     , "leafs/tree");
+    printStatsLine("c EqLit trees' crown"
+                    , getNumXorTreesCrownSize()
+                    , 100.0*(double)getNumXorTreesCrownSize()/(double)nVars()
+                    , "% of vars");
 
     //Vivifier-ASYMM stats
     printStatsLine("c Asymm time"
