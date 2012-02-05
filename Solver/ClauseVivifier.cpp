@@ -108,7 +108,6 @@ bool ClauseVivifier::vivifyClausesNormal()
 {
     assert(control->ok);
 
-    bool failed;
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
@@ -165,7 +164,7 @@ bool ClauseVivifier::vivifyClausesNormal()
         lits.resize(c.size());
         std::copy(c.begin(), c.end(), lits.begin());
 
-        failed = false;
+        bool failed = false;
         uint32_t done = 0;
         control->newDecisionLevel();
         for (; done < lits.size();) {
@@ -195,6 +194,7 @@ bool ClauseVivifier::vivifyClausesNormal()
             #endif
             control->detachClause(c);
 
+            //Make 'lits' the size it should be
             lits.resize(done);
             for (uint32_t i2 = 0; i2 < unused.size(); i2++) {
                 remove(lits, unused[i2]);
