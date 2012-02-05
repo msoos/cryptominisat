@@ -1184,7 +1184,6 @@ bool CommandControl::handleNewLong(const Clause& cl)
             enqueue(cl[lits[0]], PropBy(offset, 0)); //0 because 'handle_conflict'-s enqeue() is also with 0
         }
 
-        //cout << "Attached fun 1, thread: " << omp_get_thread_num() << endl;
         return true;
     }
 
@@ -1212,7 +1211,6 @@ bool CommandControl::handleNewLong(const Clause& cl)
             enqueue(cl[lits[0]], PropBy(offset, 0)); //0 because 'handle_conflict'-s enqeue() is also with 0
         }
 
-        //cout << "Attached fun 2, thread: " << omp_get_thread_num() << endl;
         return true;
     } else {
         assert(varData[cl[lits[0]].var()].level == varData[cl[lits[1]].var()].level);
