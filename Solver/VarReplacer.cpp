@@ -44,10 +44,13 @@ using std::endl;
 //#define VERBOSE_DEBUG_BIN_REPLACER
 
 VarReplacer::VarReplacer(ThreadControl* _control) :
-    replacedLits(0)
+    control(_control)
+    , replacedLits(0)
     , replacedVars(0)
     , lastReplacedVars(0)
-    , control(_control)
+    , totalZeroDepthAssigns(0)
+    , totalReplacedLits(0)
+    , totalTime(0)
 {
 }
 
@@ -69,11 +72,14 @@ that problems don't creep up
 */
 bool VarReplacer::performReplace()
 {
+    assert(control->ok);
     #ifdef VERBOSE_DEBUG
     cout << "PerformReplacInternal started." << endl;
     //control->printAllClauses();
     #endif
-    double time = cpuTime();
+    replacedLits = 0;
+    const double myTime = cpuTime();
+    const size_t origTrailSize = control->trail.size();
 
     #ifdef REPLACE_STATISTICS
     uint32_t numRedir = 0;
@@ -86,9 +92,9 @@ bool VarReplacer::performReplace()
     #endif //REPLACE_STATISTICS
 
     control->clauseCleaner->removeAndCleanAll();
-    if (!control->ok) return false;
     control->testAllClauseAttach();
 
+    //Printing stats
     #ifdef VERBOSE_DEBUG
     {
         uint32_t i = 0;
@@ -127,7 +133,7 @@ bool VarReplacer::performReplace()
         activity1 = 0.0;*/
     }
 
-    uint32_t thisTimeReplaced = replacedVars -lastReplacedVars;
+    const size_t thisTimeReplacedVars = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;
 
     control->testAllClauseAttach();
@@ -148,14 +154,17 @@ end:
 
     if (control->conf.verbosity  >= 1) {
         cout << "c Replacing "
-        << std::setw(8) << thisTimeReplaced << " vars"
+        << std::setw(8) << thisTimeReplacedVars << " vars"
         << " Replaced " <<  std::setw(8) << replacedLits<< " lits"
         << " Time: " << std::setw(8) << std::fixed << std::setprecision(2)
-        << cpuTime()-time << " s "
+        << (cpuTime()-myTime) << " s "
         << endl;
     }
 
-    replacedLits = 0;
+    //Update stats
+    totalReplacedLits += replacedLits;
+    totalTime += cpuTime()-myTime;
+    totalZeroDepthAssigns += (control->trail.size() - origTrailSize);
 
     return control->ok;
 }
@@ -600,4 +609,19 @@ bool VarReplacer::addLaterAddBinXor()
     laterAddBinXor.clear();
 
     return true;
+}
+
+size_t VarReplacer::getTotalZeroDepthAssigns() const
+{
+    return totalZeroDepthAssigns;
+}
+
+size_t VarReplacer::getTotalReplacedLits() const
+{
+    return totalReplacedLits;
+}
+
+double VarReplacer::getTotalTime() const
+{
+    return totalTime;
 }

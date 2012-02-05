@@ -197,6 +197,8 @@ class ThreadControl : public Solver
         uint32_t             numDecisionVars;
         void setDecisionVar(const uint32_t var);
         void unsetDecisionVar(const uint32_t var);
+        size_t               zeroLevAssignsByCNF;
+        size_t               zeroLevAssignsByThreads;
 
         /////////////////////
         // Clauses

@@ -72,6 +72,7 @@ Subsumer::Subsumer(ThreadControl* _control):
     , totalSubsBinWithBin(0)
     , totalLongLearntClausesRemovedThroughElim(0)
     , totalBinLearntClausesRemovedThroughElim(0)
+    , totalZeroDepthAssings(0)
     , numElimed(0)
     , numCalls(0)
 {
@@ -1170,6 +1171,7 @@ bool Subsumer::simplifyBySubsumption()
     totalSubsumed += clauses_subsumed;
     totalBinLearntClausesRemovedThroughElim += binLearntClausesRemovedThroughElim;
     totalLongLearntClausesRemovedThroughElim += longLearntClausesRemovedThroughElim;
+    totalZeroDepthAssings += (control->trail.size() - origTrailSize);
 
     control->testAllClauseAttach();
     control->checkNoWrongAttach();
@@ -2331,7 +2333,13 @@ size_t Subsumer::getTotalBinLearntClausesRemovedThroughElim() const
     return totalBinLearntClausesRemovedThroughElim;
 }
 
+size_t Subsumer::getTotalZeroDepthAssigns() const
+{
+    return totalZeroDepthAssings;
+}
+
 const GateFinder* Subsumer::getGateFinder() const
 {
     return gateFinder;
 }
+

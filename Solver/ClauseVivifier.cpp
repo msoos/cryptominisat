@@ -45,6 +45,7 @@ ClauseVivifier::ClauseVivifier(ThreadControl* _control) :
     , numCalls(0)
     , totalTimeCacheLearnt(0)
     , totalTimeCacheNonLearnt(0)
+    , totalZeroDepthAssignsAsymm(0)
     , totalNumClShortenAsymm(0)
     , totalNumLitsRemAsymm(0)
     , totalNumLitsRemCacheLearnt(0)
@@ -111,6 +112,7 @@ bool ClauseVivifier::vivifyClausesNormal()
     uint32_t effective = 0;
     uint32_t effectiveLit = 0;
     double myTime = cpuTime();
+    const size_t origTrailSize = control->trail.size();
 
     //Time-limiting
     uint64_t maxNumProps = 5L*1000L*1000L;
@@ -227,12 +229,14 @@ bool ClauseVivifier::vivifyClausesNormal()
         << "c asymm "
         << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
         << " lits-rem:" << effectiveLit
+        << " 0-depth-assigns:" << (control->trail.size() - origTrailSize)
         << " time: " << (cpuTime() - myTime)
         << endl;
     }
     totalTimeAsymm += cpuTime() - myTime;
     totalNumLitsRemAsymm += effectiveLit;
     totalNumClShortenAsymm += effective;
+    totalZeroDepthAssignsAsymm += control->trail.size() - origTrailSize;
 
     return control->ok;
 }
@@ -418,17 +422,22 @@ double ClauseVivifier::getTotalTimeCacheNonLearnt() const
     return totalTimeCacheNonLearnt;
 }
 
-uint32_t ClauseVivifier::getTotalNumLitsRemCacheLearnt() const
+size_t ClauseVivifier::getTotalNumLitsRemCacheLearnt() const
 {
     return totalNumLitsRemCacheLearnt;
 }
 
-uint32_t ClauseVivifier::getTotalNumLitsRemCacheNonLearnt() const
+size_t ClauseVivifier::getTotalNumLitsRemCacheNonLearnt() const
 {
     return totalNumLitsRemCacheNonLearnt;
 }
 
-uint32_t ClauseVivifier::getTotalNumLitsRemAsymm() const
+size_t ClauseVivifier::getTotalNumLitsRemAsymm() const
 {
     return totalNumLitsRemAsymm;
+}
+
+size_t ClauseVivifier::getTotalZeroDepthAssignsAsymm() const
+{
+    return totalZeroDepthAssignsAsymm;
 }

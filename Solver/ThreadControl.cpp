@@ -46,6 +46,8 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
     , needToInterrupt(false)
     , sumConflicts(0)
     , numDecisionVars(0)
+    , zeroLevAssignsByCNF(0)
+    , zeroLevAssignsByThreads(0)
     , clausesLits(0)
     , learntsLits(0)
     , numBins(0)
@@ -267,8 +269,9 @@ bool ThreadControl::addClause(const vector<Lit>& lits)
     #ifdef VERBOSE_DEBUG
     cout << "Adding clause " << lits << endl;
     #endif //VERBOSE_DEBUG
-    vector<Lit> ps = lits;
+    const size_t origTrailSize = trail.size();
 
+    vector<Lit> ps = lits;
     if (!addClauseHelper(ps))
         return false;
 
@@ -276,6 +279,7 @@ bool ThreadControl::addClause(const vector<Lit>& lits)
     if (c != NULL)
         clauses.push_back(c);
 
+    zeroLevAssignsByCNF += trail.size() - origTrailSize;
     return ok;
 }
 
@@ -745,6 +749,7 @@ lbool ThreadControl::solve(const int numThreads)
         clauseCleaner->removeAndCleanAll();
 
         //Solve using threads
+        const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
         uint32_t numConfls = nextCleanLimit;
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
@@ -794,6 +799,7 @@ lbool ThreadControl::solve(const int numThreads)
         }
         threads.clear();
 
+        zeroLevAssignsByThreads += trail.size() - origTrailSize;
         if (status != l_Undef)
             break;
 
@@ -1176,7 +1182,20 @@ void ThreadControl::printStats()
 {
     double cpu_time = cpuTime();
 
-    printStatsLine("c 0-depth assigns", trail.size());
+    printStatsLine("c 0-depth assigns", trail.size()
+        , (double)trail.size()/(double)nVars()*100.0
+        , "% vars"
+    );
+    printStatsLine("c 0-depth assigns by thrds"
+        , zeroLevAssignsByThreads
+        , (double)zeroLevAssignsByThreads/(double)nVars()*100.0
+        , "% vars"
+    );
+    printStatsLine("c 0-depth assigns by CNF"
+        , zeroLevAssignsByCNF
+        , (double)zeroLevAssignsByCNF/(double)nVars()*100.0
+        , "% vars"
+    );
 
     //Failed lit stats
     printStatsLine("c probing time"
@@ -1204,6 +1223,10 @@ void ThreadControl::printStats()
                     , getNumElimSubsume()
                     , (double)getNumElimSubsume()/(double)nVars()*100.0
                     , "% vars");
+    printStatsLine("c SatELite 0-detph assigns"
+                    , subsumer->getTotalZeroDepthAssigns()
+                    , (double)subsumer->getTotalZeroDepthAssigns()/(double)nVars()*100.0
+                    , "% vars");
     printStatsLine("c SatELite lit-rem", subsumer->getTotalLitsRem());
     printStatsLine("c SatELite cl-subs", subsumer->getTotalSubsumed());
     printStatsLine("c SatELite blocked", subsumer->getTotalBlocked());
@@ -1222,10 +1245,16 @@ void ThreadControl::printStats()
 
 
     //VarReplacer stats
-    printStatsLine("c EqLit time"
-                    , getTotalTimeSCC()
-                    , getTotalTimeSCC()/cpu_time*100.0
-                    , "% time");
+    printStatsLine("c EqLit find time"
+        , getTotalTimeSCC()
+        , getTotalTimeSCC()/cpu_time*100.0
+        , "% time"
+    );
+    printStatsLine("c EqLit replace time"
+        , varReplacer->getTotalTime()
+        , varReplacer->getTotalTime()/cpu_time*100.0
+        , "% time"
+    );
 
     printStatsLine("c EqLit tree roots", getNumXorTrees());
     printStatsLine("c EqLit trees' crown"
@@ -1236,12 +1265,19 @@ void ThreadControl::printStats()
                     , getNumXorTreesCrownSize()
                     , 100.0*(double)getNumXorTreesCrownSize()/(double)nVars()
                     , "% of vars");
+    printStatsLine("c EqLit 0-depth assigns"
+        , varReplacer->getTotalZeroDepthAssigns()
+        , (double)varReplacer->getTotalZeroDepthAssigns()/(double)nVars()*100.0
+        , "% vars"
+    );
+    printStatsLine("c EqLit lits replaced", varReplacer->getTotalReplacedLits());
 
     //Vivifier-ASYMM stats
     printStatsLine("c Asymm time"
                     , clauseVivifier->getTotalTimeAsymm()
                     , clauseVivifier->getTotalTimeAsymm()/cpu_time*100.0
                     , "% time");
+    printStatsLine("c Asymm 0-depth assings", clauseVivifier->getTotalZeroDepthAssignsAsymm());
     printStatsLine("c Asymm lits rem", clauseVivifier->getTotalNumLitsRemAsymm());
 
     //Vivifier-cache-based non-learnt stats

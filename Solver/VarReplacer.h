@@ -62,11 +62,6 @@ class VarReplacer
 
         void extendModel(SolutionExtender* extender) const;
 
-        uint32_t getNumReplacedLits() const;
-        uint32_t getNumReplacedVars() const;
-        uint32_t getNumLastReplacedVars() const;
-        uint32_t getNewToReplaceVars() const;
-        uint32_t getNumTrees() const;
         vector<Var> getReplacingVars() const;
         const vector<Lit>& getReplaceTable() const;
         const Lit getVarReplacedWith(Var var) const;
@@ -81,11 +76,18 @@ class VarReplacer
             , const vector<uint32_t>& interToOuter
         );
 
-        //No need to update, only stores binary clauses, that
-        //have been allocated within pool
-        //friend class ClauseAllocator;
+        //stats
+        size_t getTotalZeroDepthAssigns() const;
+        size_t getTotalReplacedLits() const;
+        double getTotalTime() const;
+        size_t getNumLastReplacedVars() const;
+        size_t getNewToReplaceVars() const;
+        size_t getNumTrees() const;
+        size_t getNumReplacedVars() const;
 
     private:
+        ThreadControl* control; ///<The solver we are working with
+
         bool replace_set(vector<Clause*>& cs);
         bool replaceBins();
         bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2, const Lit origLit3);
@@ -94,31 +96,30 @@ class VarReplacer
         bool alreadyIn(const Var var, const Lit lit);
         vector<LaterAddBinXor> laterAddBinXor;
 
+        //Mapping tables
         vector<Lit> table; ///<Stores which variables have been replaced by which literals. Index by: table[VAR]
         map<Var, vector<Var> > reverseTable; ///<mapping of variable to set of variables it replaces
 
-        uint32_t replacedLits; ///<Num literals replaced during var-replacement
-        uint32_t replacedVars; ///<Num vars replaced during var-replacement
-        uint32_t lastReplacedVars; ///<Last time performReplace() was called, "replacedVars" contained this
-        ThreadControl* control; ///<The solver we are working with
+        //Stats
+        size_t replacedLits; ///<Num literals replaced during var-replacement
+        size_t replacedVars; ///<Num vars replaced during var-replacement
+        size_t lastReplacedVars; ///<Last time performReplace() was called, "replacedVars" contained this
+        size_t totalZeroDepthAssigns;
+        size_t totalReplacedLits;
+        double totalTime;
 };
 
-inline uint32_t VarReplacer::getNumReplacedLits() const
-{
-    return replacedLits;
-}
-
-inline uint32_t VarReplacer::getNumReplacedVars() const
+inline size_t VarReplacer::getNumReplacedVars() const
 {
     return replacedVars;
 }
 
-inline uint32_t VarReplacer::getNumLastReplacedVars() const
+inline size_t VarReplacer::getNumLastReplacedVars() const
 {
     return lastReplacedVars;
 }
 
-inline uint32_t VarReplacer::getNewToReplaceVars() const
+inline size_t VarReplacer::getNewToReplaceVars() const
 {
     return replacedVars-lastReplacedVars;
 }
@@ -148,7 +149,7 @@ inline bool VarReplacer::replacingVar(const Var var) const
     return (reverseTable.find(var) != reverseTable.end());
 }
 
-inline uint32_t VarReplacer::getNumTrees() const
+inline size_t VarReplacer::getNumTrees() const
 {
     return reverseTable.size();
 }

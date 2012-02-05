@@ -143,6 +143,7 @@ public:
     size_t getTotalSubsBinWithBin() const;
     size_t getTotalLongLearntClausesRemovedThroughElim() const;
     size_t getTotalBinLearntClausesRemovedThroughElim() const;
+    size_t getTotalZeroDepthAssigns() const;
     const GateFinder* getGateFinder() const;
 
 private:
@@ -174,6 +175,7 @@ private:
     size_t          totalSubsBinWithBin;
     size_t          totalLongLearntClausesRemovedThroughElim;
     size_t          totalBinLearntClausesRemovedThroughElim;
+    size_t          totalZeroDepthAssings;
     uint32_t        numElimed;            ///<Total number of variables eliminated
 
     //Temporaries
