@@ -137,6 +137,7 @@ void CommandControl::printStats()
     printStatsLine("c conflsLongRed", conflsLongRed, 100.0*(double)conflsLongRed/(double)numConflicts, "%");
     assert(numConflicts == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);
 
+    cout << "c LEARNT stats" << endl;
     printStatsLine("c units learnt"
                     , learntUnits
                     , (double)learntUnits/(double)numConflicts*100.0
@@ -158,6 +159,7 @@ void CommandControl::printStats()
                     , "% of conflicts");
 
     //Clause-shrinking through watchlists
+    cout << "c SHRINKING stats" << endl;
     printStatsLine("c OTF cl watch-shrink"
                     , numShrinkedClause
                     , (double)numShrinkedClause/(double)numConflicts
@@ -174,13 +176,14 @@ void CommandControl::printStats()
                     , " % of conflicts");
 
     //Props
+    cout << "c PROPS stats" << endl;
     printStatsLine("c Mbogo-props", bogoProps/(1000*1000), (double)bogoProps/(cpu_time*1000*1000), "/ sec");
     printStatsLine("c Mprops", propagations/(1000*1000), (double)propagations/(cpu_time*1000*1000), "/ sec");
     printStatsLine("c decisions", decisions, (double)decisions_rnd*100.0/(double)decisions, "% random");
-    printStatsLine("c propsBin", propsBin, 100.0*(double)propsBin/(double)propagations, "%");
-    printStatsLine("c propsTri", propsTri, 100.0*(double)propsTri/(double)propagations, "%");
-    printStatsLine("c propsLongIrred", propsLongIrred, 100.0*(double)propsLongIrred/(double)propagations, "%");
-    printStatsLine("c propsLongRed", propsLongRed, 100.0*(double)propsLongRed/(double)propagations, "%");
+    printStatsLine("c propsBin", propsBin, 100.0*(double)propsBin/(double)propagations, "% of propagations");
+    printStatsLine("c propsTri", propsTri, 100.0*(double)propsTri/(double)propagations, "% of propagations");
+    printStatsLine("c propsLongIrred", propsLongIrred, 100.0*(double)propsLongIrred/(double)propagations, "% of propagations");
+    printStatsLine("c propsLongRed", propsLongRed, 100.0*(double)propsLongRed/(double)propagations, "% of propagations");
     uint64_t totalProps =
     propsBin + propsTri + propsLongIrred + propsLongRed
      + decisions + assumption_decisions + units_from_other_threads

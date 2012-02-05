@@ -141,6 +141,8 @@ protected:
 
     uint64_t propagations; ///<Number of propagations made
     uint64_t bogoProps;    ///<An approximation of time
+
+    //Stats for propagations
     uint64_t propsBin;
     uint64_t propsTri;
     uint64_t propsLongIrred;
