@@ -62,6 +62,7 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         , numShrinkedClause(0)
         , numShrinkedClauseLits(0)
 
+        //Learnt stats
         , learntUnits(0)
         , learntBins(0)
         , learntTris(0)
@@ -1110,8 +1111,7 @@ bool CommandControl::addOtherClauses()
     PropBy ret;
     PropBy backupRet;
 
-    size_t i;
-    for(i = 0; i < unitToAdd.size(); i++) {
+    for(size_t i = 0; i < unitToAdd.size(); i++) {
         const Lit lit = unitToAdd[i];
 
         //set at level 0, all is fine and dandy! Skip.
@@ -1133,14 +1133,14 @@ bool CommandControl::addOtherClauses()
     }
     unitToAdd.clear();
 
-    for(i = 0; i < binToAdd.size(); i++) {
+    for(size_t i = 0; i < binToAdd.size(); i++) {
         const BinaryClause binCl = binToAdd[i];
         if (!handleNewBin(binCl))
             return false;
     }
     binToAdd.clear();
 
-    for(i = 0; i < longToAdd.size(); i++) {
+    for(size_t i = 0; i < longToAdd.size(); i++) {
         const Clause& cl = *longToAdd[i];
         if (!handleNewLong(cl))
             return false;
