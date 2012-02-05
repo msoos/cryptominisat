@@ -118,34 +118,37 @@ bool FailedLitSearcher::search()
 
 
     origBogoProps = control->bogoProps;
-    for (uint32_t i = 0; i < control->nVars(); i++) {
-        const Var var = (control->mtrand.randInt() + i) % control->nVars();
-        if (control->value(var) != l_Undef || !control->decision_var[var])
-            continue;
+    const size_t rnd_offset = control->mtrand.randInt();
+    for (uint32_t i = 0; i < control->nVars()*2; i++) {
+        const uint32_t litnum = (rnd_offset + i) % (control->nVars()*2);
+        Lit lit = Lit::toLit(litnum);
+
+        //Check if we still have time
         if (control->bogoProps + extraTime >= origBogoProps + numPropsTodo)
             break;
 
-        const Lit lit = Lit(var, false);
-
-        //Try one way
-        if (!visitedAlready[lit.toInt()]
-            && !tryThis(lit)
+        //Check if var is set already
+        if (control->value(lit.var()) != l_Undef
+            || !control->decision_var[lit.var()]
+            || visitedAlready[lit.toInt()]
         ) {
-            goto end;
-        }
-
-        //We have set it, continue
-        if (control->value(var) != l_Undef)
             continue;
-
-        //Try the other way
-        if (!visitedAlready[(~lit).toInt()]
-            && !tryThis(~lit)
-        ) {
-            goto end;
         }
 
+        //If this lit is reachable from somewhere else, then reach it from there
+        if (control->litReachable[lit.toInt()].lit != lit_Undef) {
+            const Lit betterlit = control->litReachable[lit.toInt()].lit;
+            if (control->value(betterlit.var()) == l_Undef
+                && control->decision_var[betterlit.var()]
+            ) {
+                lit = betterlit;
+                //assert(!visitedAlready[lit.toInt()]);
+            }
+        }
 
+        //Try it
+        if (!tryThis(lit))
+            goto end;
     }
 
     /*for (vector<uint32_t>::const_iterator
