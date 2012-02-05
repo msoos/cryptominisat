@@ -1393,11 +1393,13 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         if (status != l_Undef)
             break;
 
-        if (lastSumConfl >= maxConfls && conf.verbosity >= 1) {
-            cout
-            << "c thread(maxconfl) Trail size: " << trail.size()
-            << " over maxConfls"
-            << endl;
+        if (lastSumConfl >= maxConfls) {
+            if (conf.verbosity >= 1) {
+                cout
+                << "c thread(maxconfl) Trail size: " << trail.size()
+                << " over maxConfls"
+                << endl;
+            }
             break;
         }
 
