@@ -71,7 +71,6 @@ class SolverConf
         uint64_t  maxXORMatrix;
         bool      doFindEqLits;       ///<Automatically find binary xor clauses (i.e. variable equi- and antivalences)
         bool      doReplace;          ///<Should var-replacing be performed? If set to FALSE, equi- and antivalent variables will not be replaced with one another. NOTE: This precludes using a lot of the algorithms!
-        bool      doConglXors;        ///<Do variable elimination at the XOR-level (xor-ing 2 xor clauses thereby removing a variable)
         bool      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
         bool      doSatELite;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
         bool      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
