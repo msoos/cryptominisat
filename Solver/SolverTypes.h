@@ -192,8 +192,8 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 }
 
 struct PropData {
-    bool learntStep; //Step that lead here from ancestor is learnt
     Lit ancestor;
+    bool learntStep; //Step that lead here from ancestor is learnt
     bool hyperBin; //It's a hyper-binary clause
     bool hyperBinNotAdded; //It's a hyper-binary clause, but was never added because all the rest was zero-level
 };

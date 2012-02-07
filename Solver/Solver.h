@@ -221,7 +221,7 @@ protected:
     ); ///<Propagate >3-long clause
 
     //For hyper-bin, binary clause removal, etc.
-    PropBy      propBin(const Lit p, vec<Watched>::iterator k, set<BinaryClause>& uselessBin);
+    PropBy      propBin(const Lit p, vec<Watched>::const_iterator k, set<BinaryClause>& uselessBin);
     Lit         propagateFull(set<BinaryClause>& uselessBin);
     bool              enqeuedSomething;         ///<Set if enqueueComplex has been called
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
@@ -525,16 +525,18 @@ inline void Solver::addHyperBin(const Lit p, const Clause& cl)
 inline void Solver::addHyperBin(const Lit p)
 {
     bogoProps += 1;
-    Lit foundLit = lit_Undef;
+    Lit deepestCommonAncestor = lit_Undef;
     if (currAncestors.size() > 1) {
         //Number each node with the number of paths going through it.
         //The one that attains cl->size() the first is the lowest common ancestor
         toClear.clear();
-        while(foundLit == lit_Undef) {
+        while(deepestCommonAncestor == lit_Undef) {
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "LEVEL addHyperBin" << endl;
             #endif
             for (vector<Lit>::iterator it = currAncestors.begin(), end = currAncestors.end(); it != end; it++) {
+
+                //Reached toplevel, ignore
                 if (*it == lit_Undef)  {
                     #ifdef VERBOSE_DEBUG_FULLPROP
                     cout << "seen lit_Undef" << endl;
@@ -542,6 +544,7 @@ inline void Solver::addHyperBin(const Lit p)
                     continue;
                 }
 
+                //Increase path count
                 seen[it->toInt()]++;
                 if (seen[it->toInt()] == 1)
                     toClear.push_back(*it);
@@ -550,14 +553,17 @@ inline void Solver::addHyperBin(const Lit p)
                 cout << "seen " << *it << " : " << seen[it->toInt()] << endl;
                 #endif
 
+                //Deepest common ancestor found
                 if (seen[it->toInt()] == currAncestors.size()) {
-                    foundLit = *it;
+                    deepestCommonAncestor = *it;
                     break;
                 }
+
+                //Update ancestor
                 *it = propData[it->var()].ancestor;
             }
         }
-        assert(foundLit != lit_Undef);
+        assert(deepestCommonAncestor != lit_Undef);
 
         //Clear node numbers we have assigned
         for(std::vector<Lit>::const_iterator it = toClear.begin(), end = toClear.end(); it != end; it++) {
@@ -565,9 +571,9 @@ inline void Solver::addHyperBin(const Lit p)
         }
 
         #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Adding hyper-bin clause: " << p << " , " << ~foundLit << endl;
+        cout << "Adding hyper-bin clause: " << p << " , " << ~deepestCommonAncestor << endl;
         #endif
-        needToAddBinClause.insert(BinaryClause(p, ~foundLit, true));
+        needToAddBinClause.insert(BinaryClause(p, ~deepestCommonAncestor, true));
     } else {
         //0-level propagation is NEVER made by propFull
         assert(currAncestors.size() > 0);
@@ -575,10 +581,10 @@ inline void Solver::addHyperBin(const Lit p)
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Not adding hyper-bin because only ONE lit is not set at level 0 in long clause" << endl;
         #endif
-        foundLit = currAncestors[0];
+        deepestCommonAncestor = currAncestors[0];
     }
 
-    enqueueComplex(p, foundLit, true);
+    enqueueComplex(p, deepestCommonAncestor, true);
     propData[p.var()].hyperBin = true;
     propData[p.var()].hyperBinNotAdded = (currAncestors.size() == 1);
 }
