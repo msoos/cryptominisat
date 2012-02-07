@@ -1459,6 +1459,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             {
                 control->toDetachFree();
                 control->consolidateMem();
+                control->restPrinter->printRestartStat("N");
             }
             #pragma omp barrier
 
