@@ -142,7 +142,7 @@ bool FailedLitSearcher::search()
                 && control->decision_var[betterlit.var()]
             ) {
                 lit = betterlit;
-                //assert(!visitedAlready[lit.toInt()]);
+                assert(!visitedAlready[lit.toInt()]);
             }
         }
 

@@ -435,6 +435,14 @@ void ThreadControl::renumberVariables()
     //Update local data
     myTime = cpuTime();
     updateArray(backupActivity, interToOuter);
+
+    //Update reachability
+    updateArray(litReachable, interToOuter2);
+    for(size_t i = 0; i < litReachable.size(); i++) {
+        if (litReachable[i].lit != lit_Undef)
+            litReachable[i].lit = getUpdatedLit(litReachable[i].lit, outerToInter);
+    }
+
     updateArray(decision_var, interToOuter);
     Solver::updateVars(outerToInter, interToOuter, interToOuter2);
     if (conf.verbosity >= 3) {
