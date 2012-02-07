@@ -1835,21 +1835,41 @@ bool Subsumer::maybeEliminate(const Var var)
     //Count statistic to help in doing heuristic cut-offs
     const uint32_t numNonLearntPos = numNonLearntBins(lit);
     const uint32_t numNonLearntNeg = numNonLearntBins(~lit);
+    uint32_t before_3long = 0;
+    uint32_t before_long = 0;
     uint32_t before_literals = numNonLearntNeg*2 + numNonLearntPos*2;
 
+    //stats on positive
     uint32_t posSize = 0;
     for (Occur::const_iterator it = poss.begin(), end = poss.end(); it != end; it++)
         if (!clauses[it->index]->learnt()) {
             posSize++;
             before_literals += clauses[it->index]->size();
+            switch(clauses[it->index]->size())
+            {
+                case 3:
+                    before_3long++;
+                    break;
+                default:
+                    before_long++;
+            }
         }
     posSize += numNonLearntPos;
 
+    //Stats on negative
     uint32_t negSize = 0;
     for (Occur::const_iterator it = negs.begin(), end = negs.end(); it != end; it++)
         if (!clauses[it->index]->learnt()) {
             negSize++;
             before_literals += clauses[it->index]->size();
+            switch(clauses[it->index]->size())
+            {
+                case 3:
+                    before_3long++;
+                    break;
+                default:
+                    before_long++;
+            }
         }
     negSize += numNonLearntNeg;
 
@@ -1867,6 +1887,8 @@ bool Subsumer::maybeEliminate(const Var var)
     *toDecrease -= posSize * negSize + before_literals;
     uint32_t before_clauses = posSize + negSize;
     uint32_t after_clauses = 0;
+    uint32_t after_3long = 0;
+    uint32_t after_long = 0;
     for (vector<ClAndBin>::const_iterator it = posAll.begin(), end = posAll.end(); it != end; it++) {
         for (vector<ClAndBin>::const_iterator it2 = negAll.begin(), end2 = negAll.end(); it2 != end2; it2++) {
             //If any of the two is learnt and long, and we don't keep it, skip
@@ -1878,8 +1900,21 @@ bool Subsumer::maybeEliminate(const Var var)
             if (!it->learnt && !it2->learnt) {
                 bool ok = merge(*it, *it2, lit, ~lit, agressiveCheck);
                 if (ok) {
+                    //Update after-stats
+                    if (dummy.size() > 3)
+                        after_long++;
+                    else
+                        after_3long++;
+
                     after_clauses++;
-                    if (after_clauses > before_clauses) return false;
+
+                    //Early-abort
+                    if (after_clauses > before_clauses)
+                        return false;
+
+                    //Allow slight increase in large clauses
+                    if (after_long > (before_long+3))
+                        return false;
                 }
             }
         }
