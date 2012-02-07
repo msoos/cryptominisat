@@ -88,6 +88,7 @@ bool FailedLitSearcher::search()
     control->clauseCleaner->removeAndCleanAll();
 
     //General Stats
+    extraTime = 0;
     numTried = 0;
     numVisited = 0;
     numFailed = 0;
