@@ -622,9 +622,9 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::const_iterator k, std::set<Bin
                 #ifdef VERBOSE_DEBUG_FULLPROP
                 cout << "Removing hyper-bin clause " << clauseToRemove << endl;
                 #endif
-                /*std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
+                std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
                 assert(it != needToAddBinClause.end());
-                needToAddBinClause.erase(it);*/
+                needToAddBinClause.erase(it);
                 //This will subsume the clause later, so don't remove it
             }
 
