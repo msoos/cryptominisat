@@ -193,9 +193,9 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 
 struct PropData {
     Lit ancestor;
-    bool learntStep; //Step that lead here from ancestor is learnt
-    bool hyperBin; //It's a hyper-binary clause
-    bool hyperBinNotAdded; //It's a hyper-binary clause, but was never added because all the rest was zero-level
+    uint32_t learntStep:1; //Step that lead here from ancestor is learnt
+    uint32_t hyperBin:1; //It's a hyper-binary clause
+    uint32_t hyperBinNotAdded:1; //It's a hyper-binary clause, but was never added because all the rest was zero-level
 };
 
 struct BlockedClause {
