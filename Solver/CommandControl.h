@@ -198,6 +198,9 @@ class CommandControl : public Solver
         Heap<VarOrderLt>  order_heap;                   ///< activity-ordered heap of decision variables
         uint32_t var_inc;
         void              insertVarOrder(const Var x);  ///< Insert a variable in heap
+        void  genRandomVarActMultDiv();
+        uint32_t var_inc_multiplier;
+        uint32_t var_inc_divider;
 
         ///////////
         // Learnt clause removal
@@ -238,8 +241,8 @@ inline uint32_t CommandControl::calcNBLevels(const T& ps)
 
 inline void CommandControl::varDecayActivity()
 {
-    var_inc *= conf.var_inc_multiplier;
-    var_inc /= conf.var_inc_divider;
+    var_inc *= var_inc_multiplier;
+    var_inc /= var_inc_divider;
 }
 inline void CommandControl::varBumpActivity(Var var)
 {

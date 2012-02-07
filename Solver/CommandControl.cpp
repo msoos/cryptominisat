@@ -948,6 +948,22 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
     return true;
 }
 
+void CommandControl::genRandomVarActMultDiv()
+{
+    uint32_t tosubstract = conf.var_inc_variability-mtrand.randInt(2*conf.var_inc_variability);
+    var_inc_multiplier = conf.var_inc_multiplier - tosubstract;
+    var_inc_divider = conf.var_inc_divider - tosubstract;
+
+    if (conf.verbosity >= 1) {
+        cout
+        << "c Using var act-multip " << var_inc_multiplier
+        << " instead of standard " << (conf.var_inc_multiplier)
+        << " and act-divider " << var_inc_divider
+        << " instead of standard " << (conf.var_inc_divider)
+        << endl;
+    }
+}
+
 /**
 @brief Initialises model, restarts, learnt cluause cleaning, burst-search, etc.
 */
@@ -971,20 +987,6 @@ void CommandControl::initialiseSolver()
     conflSizeHist.resize(100);
     agilityHist.clear();
     agilityHist.resize(100);
-
-    //Set up var_inc multi/div
-    uint32_t tosubstract = conf.var_inc_variability-mtrand.randInt(2*conf.var_inc_variability);
-    conf.var_inc_multiplier -= tosubstract;
-    conf.var_inc_divider -= tosubstract;
-
-    if (conf.verbosity >= 1) {
-        cout
-        << "c Using var act-multip " << conf.var_inc_multiplier
-        << " instead of standard " << (conf.var_inc_multiplier+tosubstract)
-        << " and act-divider " << conf.var_inc_divider
-        << " instead of standard " << (conf.var_inc_divider+tosubstract)
-        << endl;
-    }
 
     //Set up sync
     #pragma omp critical //sync can only be done in critical section
@@ -1293,6 +1295,8 @@ lbool CommandControl::burstSearch()
     conf.random_var_freq = 1;
     conf.polarity_mode = polarity_rnd;
     uint64_t rest_burst = conf.burstSearchLen;
+    var_inc_divider = 1;
+    var_inc_multiplier = 1;
     status = search(SearchFuncParams(rest_burst), rest_burst);
 
     conf.random_var_freq = backup_rand;
@@ -1378,7 +1382,6 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     }
     var_inc = control->getSavedActivityInc();
 
-
     order_heap.clear();
     for(size_t var = 0; var < nVars(); var++) {
         if (control->decision_var[var]
@@ -1389,12 +1392,14 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     }
 
     // Search:
+    genRandomVarActMultDiv();
     uint64_t rest = conf.restart_first;
     while (status == l_Undef
         && !needToInterrupt
         && lastSumConfl < maxConfls
     ) {
         assert(numConflicts < maxConfls);
+
         status = search(SearchFuncParams(maxConfls-numConflicts), rest);
         rest *= conf.restart_inc;
         if (status != l_Undef)
@@ -1461,6 +1466,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
                 status = l_False;
                 break;
             }
+            genRandomVarActMultDiv();
         }
 
         #pragma omp critical
