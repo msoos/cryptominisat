@@ -313,6 +313,7 @@ void TransCache::merge(
     , const Lit leaveOut
     , vector<uint16_t>& seen
 ) {
+    //Mark every literal that is to be added in 'seen'
     for (size_t i = 0, size = otherLits.size(); i < size; i++) {
         const Lit lit = otherLits[i].getLit();
         const bool onlyNonLearnt = otherLits[i].getOnlyNLBin();

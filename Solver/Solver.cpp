@@ -602,6 +602,8 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::const_iterator k, std::set<Bin
         cout << "Lit " << p << " also wants to propagate " << lit << endl;
         #endif
         Lit remove = removeWhich(lit, p, k->getLearnt());
+
+        //Remove this one
         if (remove == p) {
             Lit origAnc = propData[lit.var()].ancestor;
             assert(origAnc != lit_Undef);
