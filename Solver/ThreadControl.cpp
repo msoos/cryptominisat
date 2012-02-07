@@ -1299,6 +1299,7 @@ void ThreadControl::printStats()
                     , clauseVivifier->getTotalTimeCacheNonLearnt()/cpu_time*100.0
                     , "% time");
     printStatsLine("c cache-vivify-NL lits rem", clauseVivifier->getTotalNumLitsRemCacheNonLearnt());
+    printStatsLine("c cache-vivify-NL cl subs", clauseVivifier->getTotalNumClSubsumedCacheNonLearnt());
 
     //Vivifier-cache-based learnt stats
     printStatsLine("c cache-vivify-L time"
@@ -1306,6 +1307,8 @@ void ThreadControl::printStats()
                     , clauseVivifier->getTotalTimeCacheLearnt()/cpu_time*100.0
                     , "% time");
     printStatsLine("c cache-vivify-L lits rem", clauseVivifier->getTotalNumLitsRemCacheLearnt());
+    printStatsLine("c cache-vivify-L cl subs", clauseVivifier->getTotalNumClSubsumedCacheLearnt());
+
 
     //Other stats
     printStatsLine("c Conflicts", sumConflicts, (double)sumConflicts/cpu_time, "conf/sec");

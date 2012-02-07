@@ -43,13 +43,15 @@ bool ClauseVivifier::SortBySize::operator()(const Clause* x, const Clause* y)
 ClauseVivifier::ClauseVivifier(ThreadControl* _control) :
     control(_control)
     , numCalls(0)
-    , totalTimeCacheLearnt(0)
-    , totalTimeCacheNonLearnt(0)
     , totalZeroDepthAssignsAsymm(0)
     , totalNumClShortenAsymm(0)
     , totalNumLitsRemAsymm(0)
+    , totalTimeCacheLearnt(0)
     , totalNumLitsRemCacheLearnt(0)
+    , totalNumClSubsumedCacheLearnt(0)
+    , totalTimeCacheNonLearnt(0)
     , totalNumLitsRemCacheNonLearnt(0)
+    , totalNumClSubsumedCacheNonLearnt(0)
 {}
 
 bool ClauseVivifier::vivify()
@@ -399,9 +401,11 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
     if (learnt) {
         totalTimeCacheLearnt += cpuTime() - myTime;
         totalNumLitsRemCacheLearnt += litsRem;
+        totalNumClSubsumedCacheLearnt += clRemoved;
     } else {
         totalTimeCacheNonLearnt += cpuTime() - myTime;
         totalNumLitsRemCacheNonLearnt += litsRem;
+        totalNumClSubsumedCacheNonLearnt += clRemoved;
     }
 
     return control->ok;
@@ -425,6 +429,16 @@ double ClauseVivifier::getTotalTimeCacheNonLearnt() const
 size_t ClauseVivifier::getTotalNumLitsRemCacheLearnt() const
 {
     return totalNumLitsRemCacheLearnt;
+}
+
+size_t ClauseVivifier::getTotalNumClSubsumedCacheLearnt() const
+{
+    return totalNumClSubsumedCacheLearnt;
+}
+
+size_t ClauseVivifier::getTotalNumClSubsumedCacheNonLearnt() const
+{
+    return totalNumClSubsumedCacheNonLearnt;
 }
 
 size_t ClauseVivifier::getTotalNumLitsRemCacheNonLearnt() const

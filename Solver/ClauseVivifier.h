@@ -41,6 +41,8 @@ class ClauseVivifier {
         size_t getTotalNumLitsRemCacheNonLearnt() const;
         size_t getTotalNumLitsRemAsymm() const;
         size_t getTotalZeroDepthAssignsAsymm() const;
+        size_t getTotalNumClSubsumedCacheLearnt() const;
+        size_t getTotalNumClSubsumedCacheNonLearnt() const;
 
     private:
 
@@ -61,13 +63,17 @@ class ClauseVivifier {
         //Global status
         uint32_t numCalls;
         double totalTimeAsymm;
-        double totalTimeCacheLearnt;
-        double totalTimeCacheNonLearnt;
         size_t totalZeroDepthAssignsAsymm;
         size_t totalNumClShortenAsymm;
         size_t totalNumLitsRemAsymm;
+
+        double totalTimeCacheLearnt;
         size_t totalNumLitsRemCacheLearnt;
+        size_t totalNumClSubsumedCacheLearnt;
+
+        double totalTimeCacheNonLearnt;
         size_t totalNumLitsRemCacheNonLearnt;
+        size_t totalNumClSubsumedCacheNonLearnt;
 };
 
 #endif //CLAUSEVIVIFIER_H
