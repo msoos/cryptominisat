@@ -24,9 +24,9 @@
 
 SolverConf::SolverConf() :
         var_inc_start(128)
-        , var_inc_multiplier(31)
-        , var_inc_divider(30)
-        , var_inc_variability(10)
+        , var_inc_multiplier(18)
+        , var_inc_divider(17)
+        , var_inc_variability(8)
         , ratioRemoveClauses(1.0/2.0)
         , numCleanBetweenSimplify(3)
         , startClean(4000)
