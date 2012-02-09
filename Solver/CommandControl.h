@@ -306,11 +306,7 @@ inline bool CommandControl::getPolarity(const Var var)
             return mtrand.randInt(1);
 
         case polarity_auto:
-            //if (branchDepthHist.isvalid()) {
-                return varData[var].polarity ^ (mtrand.randInt(10*branchDepthDeltaHist.getAvgAll()) == 1);
-            //} else {
-            //    return varData[var].polarity;
-            //}
+            return varData[var].polarity ^ (mtrand.randInt(10*branchDepthDeltaHist.getAvgAll()) == 1);
         default:
             assert(false);
     }
