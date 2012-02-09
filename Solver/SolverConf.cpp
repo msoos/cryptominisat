@@ -57,6 +57,7 @@ SolverConf::SolverConf() :
         , shortTermGlueHistorySize (100)
 
         //optimisations to do
+        , useReachabilityForLitPick(false)
         , doFindXors       (true)
         , doEchelonizeXOR  (true)
         , maxXORMatrix     (10L*1000L*1000L)

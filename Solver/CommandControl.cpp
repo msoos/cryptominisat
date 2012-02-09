@@ -1573,33 +1573,25 @@ Lit CommandControl::pickBranchLit()
 
         const Var next_var = order_heap.removeMin();
         next = Lit(next_var, !getPolarity(next_var));
-        //cout << "Trying next: " << next << endl;
 
-        /*
         //Try to use reachability to pick a literal that dominates this one
-        if (value(next) == l_Undef
-            && control->decision_var[next]
+        if (conf.useReachabilityForLitPick
+            && value(next_var) == l_Undef
+            && control->decision_var[next_var]
         ) {
-            sign = !getPolarity(next);
-
-            const Lit nextLit = Lit(next, sign);
-            const Lit lit2 = control->litReachable[nextLit.toInt()].lit;
+            const Lit lit2 = control->litReachable[next.toInt()].lit;
             if (lit2 != lit_Undef
                 && value(lit2.var()) == l_Undef
                 && control->decision_var[lit2.var()]
                 && mtrand.randInt(1) == 1  //only pick dominating literal 50% of the time
             ) {
                 //insert this one back, just in case the litReachable isn't entirely correct
-                insertLitOrder(next);
+                insertVarOrder(next_var);
 
                 //Save this literal & sign
-                next = lit2.var();
-
-                //if '-a V b' then litReachable[a] = b, so we must pick '-b'
-                //therefore, must invert here
-                sign = !lit2.sign();
+                next = lit2;
             }
-        }*/
+        }
     }
 
     //No vars in heap: solution found

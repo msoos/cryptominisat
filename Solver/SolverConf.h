@@ -66,6 +66,7 @@ class SolverConf
         uint32_t  shortTermGlueHistorySize; ///< Rolling avg. glue window size
 
         //Optimisations to do
+        bool      useReachabilityForLitPick;
         bool      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses
         bool      doEchelonizeXOR;
         uint64_t  maxXORMatrix;
