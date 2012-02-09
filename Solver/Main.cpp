@@ -252,6 +252,8 @@ void Main::parseCommandLine()
     ("polar", po::value<std::string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode")
     ("dompick", po::bool_switch(&conf.useReachabilityForLitPick), "Use dominating literal 50% of time for piciking branching literal")
+    ("flippolf", po::value<uint32_t>(&conf.flipPolarFreq)->default_value(conf.flipPolarFreq)
+        , "Flip polarity frequency once every N, multilplied by avg. branch depth delta")
     ;
 
 

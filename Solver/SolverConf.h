@@ -67,6 +67,7 @@ class SolverConf
 
         //Optimisations to do
         bool      useReachabilityForLitPick;
+        uint32_t  flipPolarFreq;
         bool      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses
         bool      doEchelonizeXOR;
         uint64_t  maxXORMatrix;

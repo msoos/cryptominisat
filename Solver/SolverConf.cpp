@@ -57,6 +57,7 @@ SolverConf::SolverConf() :
         , shortTermGlueHistorySize (100)
 
         //optimisations to do
+        , flipPolarFreq(10)
         , useReachabilityForLitPick(false)
         , doFindXors       (true)
         , doEchelonizeXOR  (true)
