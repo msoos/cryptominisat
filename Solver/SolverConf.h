@@ -66,7 +66,7 @@ class SolverConf
         uint32_t  shortTermGlueHistorySize; ///< Rolling avg. glue window size
 
         //Optimisations to do
-        bool      useReachabilityForLitPick;
+        uint32_t  dominPickFreq;
         uint32_t  flipPolarFreq;
         bool      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses
         bool      doEchelonizeXOR;

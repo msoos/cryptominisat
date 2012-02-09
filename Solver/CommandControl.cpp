@@ -1573,24 +1573,23 @@ Lit CommandControl::pickBranchLit()
 
         const Var next_var = order_heap.removeMin();
         next = Lit(next_var, !getPolarity(next_var));
+    }
 
-        //Try to use reachability to pick a literal that dominates this one
-        if (conf.useReachabilityForLitPick
-            && value(next_var) == l_Undef
-            && control->decision_var[next_var]
+    //Try to use reachability to pick a literal that dominates this one
+    if (next != lit_Undef
+        && (mtrand.randInt(conf.dominPickFreq) == 1)
+    ) {
+        const Lit lit2 = control->litReachable[next.toInt()].lit;
+        if (lit2 != lit_Undef
+            && value(lit2.var()) == l_Undef
+            && control->decision_var[lit2.var()]
         ) {
-            const Lit lit2 = control->litReachable[next.toInt()].lit;
-            if (lit2 != lit_Undef
-                && value(lit2.var()) == l_Undef
-                && control->decision_var[lit2.var()]
-                && mtrand.randInt(1) == 1  //only pick dominating literal 50% of the time
-            ) {
-                //insert this one back, just in case the litReachable isn't entirely correct
-                insertVarOrder(next_var);
+            //insert this one back, just in case the litReachable isn't entirely correct
+            //which would be a MAJOR bug, btw
+            insertVarOrder(next.var());
 
-                //Save this literal & sign
-                next = lit2;
-            }
+            //Save this literal & sign
+            next = lit2;
         }
     }
 
