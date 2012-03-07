@@ -342,14 +342,20 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
     out_learnt[0] = ~p;
 
     //Clear seen2, which was used to mark literals that have been bumped
-    for (vector<Lit>::const_iterator it = toClear.begin(), end = toClear.end(); it != end; it++)
+    for (vector<Lit>::const_iterator
+        it = toClear.begin(), end = toClear.end()
+        ; it != end
+        ; it++
+    ) {
         seen2[it->var()] = 0;
+    }
+    toClear.clear();
 
     assert(pathC == 0);
     max_literals += out_learnt.size();
-    toClear = out_learnt;
 
     //Recursive-simplify conflict clause:
+    toClear = out_learnt;
     trace_reasons.clear();
     uint32_t abstract_level = 0;
     for (size_t i = 1; i < out_learnt.size(); i++)
@@ -358,9 +364,14 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
     find_removable(out_learnt, abstract_level);
     prune_removable(out_learnt);
 
-    //Clear seen
-    for (vector<Lit>::const_iterator it = toClear.begin(), end = toClear.end(); it != end; it++)
+    //Clear 'seen'
+    for (vector<Lit>::const_iterator
+        it = toClear.begin(), end = toClear.end()
+        ; it != end
+        ; it++
+    ) {
         seen[it->var()] = 0;
+    }
     toClear.clear();
 
     //Cache-based minimisation
