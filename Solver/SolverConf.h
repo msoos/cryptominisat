@@ -35,6 +35,9 @@ class SolverConf
         uint32_t  var_inc_multiplier;
         uint32_t  var_inc_divider;
         uint32_t  var_inc_variability;
+        bool      rarely_bump_var_act;
+	
+	//Clause cleaning
         double    ratioRemoveClauses; ///< Remove this percentage of clauses at every database reduction round
         size_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         size_t    startClean;

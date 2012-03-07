@@ -145,7 +145,7 @@ class CommandControl : public Solver
             Lit lit
             , int& pathC
             , vector<Lit>& out_learnt
-            , bool learnt_clause
+            , bool var_bump_necessary
         );
         void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
         template<class T> uint32_t calcNBLevels(const T& ps); ///<Calculates the glue of a clause

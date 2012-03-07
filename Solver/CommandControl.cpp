@@ -243,20 +243,27 @@ void CommandControl::analyzeHelper(
     const Lit lit
     , int& pathC
     , vector<Lit>& out_learnt
-    , bool learnt_clause
+    , bool var_bump_necessary
 ) {
     const Var var = lit.var();
 
-    if (!learnt_clause
-        && seen2[var] == 0
-        && varData[var].level > 0
+    //If var is at level 0, don't do anything with it, just skip
+    if (varData[var].level == 0)
+        return;
+
+    if (seen2[var] == 0 && //hasn't been bumped yet
+        ((var_bump_necessary
+            && conf.rarely_bump_var_act) //rarely bump, but bump this time
+          || !conf.rarely_bump_var_act //always bump
+        )
     ) {
         varBumpActivity(var);
         seen2[var] = 1;
         toClear.push_back(Lit(var, false));
     }
 
-    if (!seen[var] && varData[var].level > 0) {
+    //Update our state of going through the conflict
+    if (!seen[var]) {
         seen[var] = 1;
 
         if (varData[var].level == decisionLevel())
@@ -292,15 +299,15 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
             case tertiary_t : {
-                analyzeHelper(confl.getOtherLit2(), pathC, out_learnt, false);
+                analyzeHelper(confl.getOtherLit2(), pathC, out_learnt, true);
             }
             //NO BREAK, since tertiary is like binary, just one more lit
 
             case binary_t : {
                 if (p == lit_Undef)
-                    analyzeHelper(failBinLit, pathC, out_learnt, false);
+                    analyzeHelper(failBinLit, pathC, out_learnt, true);
 
-                analyzeHelper(confl.getOtherLit(), pathC, out_learnt, false);
+                analyzeHelper(confl.getOtherLit(), pathC, out_learnt, true);
                 break;
             }
 
@@ -311,7 +318,7 @@ void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& ou
                         && j == clauseData[cl.getNum()].litPos[confl.getWatchNum()])
                     continue;
 
-                    analyzeHelper(cl[j], pathC, out_learnt, cl.learnt());
+                    analyzeHelper(cl[j], pathC, out_learnt, !cl.learnt());
                 }
                 break;
             }
