@@ -274,6 +274,8 @@ void Main::parseCommandLine()
     po::options_description failedLitOptions("Failed lit options");
     failedLitOptions.add_options()
     ("nofailedlit", "Don't do failed literals at ALL (none below)")
+    ("failmultip", po::value<double>(&conf.failedLitMultiplier)->default_value(conf.failedLitMultiplier)
+      , "Do this times more/less failed lit than default")
     ("nohyperbinres", "Don't add binary clauses when doing failed lit probing.")
     ("noremovebins", "Don't remove useless binary clauses")
     ;
