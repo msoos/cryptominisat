@@ -61,10 +61,9 @@ class SolverConf
         double    agilityLimit; ///The agility below which the agility is considered too low
 
         //Burst?
-        uint32_t  simpBurstSConf;
-        uint64_t  maxConflBtwSimp;
-        bool      doPerformPreSimp;
-        double    failedLitMultiplier;
+        uint32_t  simpBurstSConf; //How many conflicts for burst
+        bool      doPerformPreSimp; //Perform simplification at startup
+        double    failedLitMultiplier; //Increase failed lit time by this multiplier
         uint32_t  nbClBeforeRedStart; ///< Start number of learnt clauses before learnt-clause cleaning
 
         //Glues

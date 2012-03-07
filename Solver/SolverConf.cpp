@@ -48,7 +48,6 @@ SolverConf::SolverConf() :
 
         //Simplification
         , simpBurstSConf   (500)
-        , maxConflBtwSimp  (500000)
 
         , doPerformPreSimp (true)
         , failedLitMultiplier(1.0)
