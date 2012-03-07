@@ -123,7 +123,7 @@ class FailedLitSearcher {
         };
 
         //For hyper-bin resolution
-        vector<char> cacheUpdated;
+        vector<uint32_t> cacheUpdated;
         set<BinaryClause> uselessBin;
         uint32_t addedBin;
         uint32_t removedBins;

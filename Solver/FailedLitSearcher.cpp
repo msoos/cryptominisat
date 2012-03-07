@@ -78,7 +78,7 @@ bool FailedLitSearcher::search()
 {
     assert(control->decisionLevel() == 0);
 
-    uint64_t numPropsTodo = 120L*1000L*1000L;
+    uint64_t numPropsTodo = 140L*1000L*1000L;
 
     control->testAllClauseAttach();
     const double myTime = cpuTime();
@@ -262,12 +262,13 @@ bool FailedLitSearcher::tryThis(const Lit lit)
         const Lit ancestor = control->propData[thisLit.var()].ancestor;
         if (control->conf.doCache
             && thisLit != lit
-            && cacheUpdated[(~ancestor).toInt()] == 0
+            //&& cacheUpdated[(~ancestor).toInt()] == 0
         ) {
             //Update stats/markings
-            cacheUpdated[(~ancestor).toInt()] = 1;
-            extraTime += 3 + control->implCache[(~ancestor).toInt()].lits.size()/10;
-            extraTime += 3 + control->implCache[(~thisLit).toInt()].lits.size()/10;
+            cacheUpdated[(~ancestor).toInt()]++;
+            extraTime += 1;
+            extraTime += control->implCache[(~ancestor).toInt()].lits.size()/30;
+            extraTime += control->implCache[(~thisLit).toInt()].lits.size()/30;
 
             const bool learntStep = control->propData[thisLit.var()].learntStep;
 
