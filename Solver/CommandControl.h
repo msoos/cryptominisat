@@ -67,19 +67,7 @@ class CommandControl : public Solver
 
         //For connection with ThreadControl
         void      initialiseSolver();
-        void      addToThreads(const size_t oldTrailSize);
-        uint64_t  lastSumConfl;     ///<Sum conflicts last time told by ThreadControl
-        vector<Clause*> longToAdd;
-        vector<BinaryClause> binToAdd;
-        vector<Lit> unitToAdd;
-        size_t    lastLong;
-        size_t    lastBin;
-        size_t    lastUnit;
         uint64_t  units_from_other_threads;
-        bool      handleNewBin(const BinaryClause& binCl);
-        bool      handleNewLong(const Clause& cl);
-        void      syncFromThreadControl();
-        bool      addOtherClauses();
 
         // Statistics
         //

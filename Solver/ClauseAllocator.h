@@ -79,7 +79,6 @@ class ClauseAllocator {
 
         void consolidate(
             ThreadControl* control
-            , vector<CommandControl*> solvers
             , const bool force = false
         );
 
@@ -138,7 +137,7 @@ class ClauseAllocator {
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
 
         uint32_t getNewClauseNum(const uint32_t size);
-        void renumberClauses(vector<Clause*>& clauses, Solver* solver, vector<CommandControl*> solvers);
+        void renumberClauses(vector<Clause*>& clauses, Solver* solver);
         vector<uint32_t> freedNums;  //Free clause nums that can be used now
         uint32_t maxClauseNum;
 };

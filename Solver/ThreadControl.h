@@ -30,6 +30,7 @@
 #include "ImplCache.h"
 #include "SolverConf.h"
 #include "Solver.h"
+#include "CommandControl.h"
 
 using std::vector;
 using std::pair;
@@ -44,10 +45,9 @@ class ClauseVivifier;
 class CalcDefPolars;
 class SolutionExtender;
 class ImplCache;
-class CommandControl;
 class RestartPrinter;
 
-class ThreadControl : public Solver
+class ThreadControl : public CommandControl
 {
     public:
         ThreadControl(const SolverConf& _conf);
@@ -55,7 +55,7 @@ class ThreadControl : public Solver
 
         //////////////////////////////
         //Solving
-        lbool solve(const int threads);
+        lbool solve();
         void        setNeedToInterrupt();
         vector<lbool>  model;
         lbool   modelValue (const Lit p) const;  ///<Found model value for lit
@@ -101,19 +101,13 @@ class ThreadControl : public Solver
 
     private:
 
-        /////////////////////
-        //Solvers
-        vector<CommandControl*> threads;
-        vector<Clause*> longLearntsToAdd;
-        vector<Lit> unitLearntsToAdd;
-        vector<BinaryClause> binLearntsToAdd;
+        //Control
+        Clause*  newClauseByThread(
+            const vector<Lit>& lits
+            , const uint32_t glue
+        );
 
-        //Control of other threads
-        void            moveClausesHere();
-        void            toDetachFree();
-        vector<Clause*> toDetach;
-        Clause*         newClauseByThread(const vector<Lit>& lits, const uint32_t glue, uint64_t& thisSumConflicts);
-
+        //Attaching-detaching clauses
         virtual void  attachClause        (const Clause& c, const uint16_t point1 = 0, const uint16_t point2 = 1);
         virtual void  attachBinClause     (const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst = true);
         virtual void  detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
@@ -313,6 +307,5 @@ inline uint32_t ThreadControl::getSavedActivityInc() const
 {
     return backupActivityInc;
 }
-
 
 #endif //THREADCONTROL_H

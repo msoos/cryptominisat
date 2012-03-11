@@ -228,7 +228,7 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         cout << "Parsed 'c var'" << endl;
         #endif //DEBUG_COMMENT_PARSING
     } else if (debugLib && str == "Solver::solve()") {
-        lbool ret = control->solve(1);
+        lbool ret = control->solve();
         std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
         std::ofstream partFile;
         partFile.open(s.c_str());

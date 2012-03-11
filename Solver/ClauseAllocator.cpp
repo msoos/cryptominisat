@@ -271,7 +271,6 @@ stacks, updates all pointers and offsets, and frees the original stacks.
 */
 void ClauseAllocator::consolidate(
     ThreadControl* control
-    , vector<CommandControl*> solvers
     , const bool force
 ) {
     double myTime = cpuTime();
@@ -376,7 +375,7 @@ void ClauseAllocator::consolidate(
         }
     }
 
-    renumberClauses(clauses, control, solvers);
+    renumberClauses(clauses, control);
     putClausesIntoDatastruct(clauses);
 
     uint32_t outerPart = 0;
@@ -408,9 +407,6 @@ void ClauseAllocator::consolidate(
 
     updatePointers(control->clauses);
     updatePointers(control->learnts);
-    for(vector<CommandControl*>::iterator it = solvers.begin(), end = solvers.end(); it != end; it++) {
-        updateAllOffsetsAndPointers(*it);
-    }
     updateAllOffsetsAndPointers(control);
 
     for (uint32_t i = 0; i < dataStarts.size(); i++)
@@ -572,19 +568,18 @@ uint32_t ClauseAllocator::getNewClauseNum(const uint32_t size)
     return toret;
 }
 
-void ClauseAllocator::renumberClauses(vector<Clause*>& clauses, Solver* control, vector<CommandControl*> solvers)
-{
-    vector<vector<ClauseData> > newDatas(1+solvers.size());
+void ClauseAllocator::renumberClauses(
+    vector<Clause*>& clauses
+    , Solver* control
+) {
+    vector<ClauseData> newData;
     freedNums.clear();
     maxClauseNum = 0;
     for (vector<Clause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
         assert((**it).size() > 2);
         if ((**it).size() > 3) {
             //Update the newDatas
-            newDatas[0].push_back(control->clauseData[(*it)->getNum()]);
-            for(size_t i = 0; i < solvers.size(); i++) {
-                newDatas[i+1].push_back(solvers[i]->clauseData[(*it)->getNum()]);
-            }
+            newData.push_back(control->clauseData[(*it)->getNum()]);
 
             //Update the clause
             (*it)->setNum(maxClauseNum);
@@ -593,10 +588,7 @@ void ClauseAllocator::renumberClauses(vector<Clause*>& clauses, Solver* control,
     }
 
     //Swap clauseData-s to newDatas
-    control->clauseData.swap(newDatas[0]);
-    for(size_t i = 0; i < solvers.size(); i++) {
-        solvers[i]->clauseData.swap(newDatas[i+1]);
-    }
+    control->clauseData.swap(newData);
 }
 
 void ClauseAllocator::releaseClauseNum(Clause* cl)

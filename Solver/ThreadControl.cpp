@@ -39,7 +39,7 @@ using std::cout;
 using std::endl;
 
 ThreadControl::ThreadControl(const SolverConf& _conf) :
-    Solver(NULL, AgilityData(_conf.agilityG, _conf.agilityLimit))
+    CommandControl(_conf, this)
     , mtrand(_conf.origSeed)
     , nbReduceDB(0)
     , conf(_conf)
@@ -492,7 +492,7 @@ void ThreadControl::renumberVariables()
 
 Var ThreadControl::newVar(const bool dvar)
 {
-    Var var = Solver::newVar();
+    Var var = CommandControl::newVar();
 
     outerToInter.push_back(var);
     interToOuter.push_back(var);
@@ -547,7 +547,6 @@ void ThreadControl::reduceDB()
             && cl->getConflictIntroduced() + 10000 < sumConflicts
         ) {
             detachClause(*cl);
-            toDetach.push_back(cl);
             alreadyRemoved++;
         } else {
             learnts[j++] = learnts[i];
@@ -596,7 +595,6 @@ void ThreadControl::reduceDB()
             totalSizeOfRemoved += learnts[i]->size();
             totalNumRemoved++;
             detachClause(*learnts[i]);
-            toDetach.push_back(learnts[i]);
         } else {
             totalGlueOfNonRemoved += learnts[i]->getGlue();
             totalSizeOfNonRemoved += learnts[i]->size();
@@ -634,105 +632,7 @@ void ThreadControl::reduceDB()
     }
 }
 
-void ThreadControl::moveClausesHere()
-{
-    assert(ok);
-    assert(decisionLevel() == 0);
-    vector<Lit> lits;
-
-    lits.resize(1);
-    for(vector<Lit>::const_iterator it = unitLearntsToAdd.begin(), end = unitLearntsToAdd.end(); it != end; it++) {
-        lits[0] = *it;;
-        addClauseInt(lits, true);
-        assert(ok);
-    }
-    unitLearntsToAdd.clear();
-
-    lits.resize(2);
-    for(vector<BinaryClause>::const_iterator it = binLearntsToAdd.begin(), end = binLearntsToAdd.end(); it != end; it++) {
-        lits[0] = it->getLit1();
-        lits[1] = it->getLit2();
-        addClauseInt(lits, true);
-        assert(ok);
-    }
-    binLearntsToAdd.clear();
-
-    //We might attach it, then need to detach it, because it becomes satisfied
-    vector<char> attached(longLearntsToAdd.size(), 0);
-    size_t at = 0;
-    for(vector<Clause*>::const_iterator
-        it = longLearntsToAdd.begin()
-        , end = longLearntsToAdd.end()
-        ; it != end
-        ; it++, at++
-    ) {
-        if (clauseCleaner->satisfied(**it)) {
-            continue;
-        } else {
-            uint32_t points[2];
-            uint32_t numPoints = 0;
-            Clause& cl = **it;
-            for(uint32_t i = 0; i < cl.size(); i++) {
-                if (value(cl[i]) == l_Undef) {
-                    points[numPoints] = i;
-                    numPoints++;
-                }
-                //Moving 2 lits to front is enough
-                if (numPoints == 2)
-                    break;
-            }
-            switch(numPoints) {
-                case 0:
-                    assert(false && "Not satisfied, but no l_Undef --> UNSAT, but that should have been reported!");
-                    break;
-                case 1:
-                    lits.resize(1);
-                    lits[0] = cl[points[0]];
-                    addClauseInt(lits, true);
-                    assert(ok);
-                    break;
-                default:
-                    attached[at] = 1;
-                    attachClause(cl, points[0], points[1]);
-                    break;
-            };
-        }
-    }
-
-    at = 0;
-    for(vector<Clause*>::const_iterator
-        it = longLearntsToAdd.begin()
-        , end = longLearntsToAdd.end()
-        ; it != end
-        ; it++, at++
-    ) {
-        if (clauseCleaner->satisfied(**it)) {
-            toDetach.push_back(*it);
-            if (attached[at]) {
-                //We had to attach it so we would get the right 'trail' size
-                //But it is no longer needed, so detach
-                detachClause(**it);
-            }
-        } else {
-            learnts.push_back(*it);
-        }
-    }
-    if (conf.verbosity >= 1)
-        cout << "c CommandContr trail size: " << trail.size() << endl;
-
-    longLearntsToAdd.clear();
-}
-
-void ThreadControl::toDetachFree()
-{
-    for(vector<Clause*>::const_iterator it = toDetach.begin(), end = toDetach.end(); it != end; it++) {
-        clAllocator->clauseFree(*it);
-    }
-    toDetach.clear();
-    //findAllAttach();
-}
-
-lbool ThreadControl::solve(const int numThreads)
+lbool ThreadControl::solve()
 {
     restPrinter->printStatHeader();
     restPrinter->printRestartStat("B");
@@ -742,13 +642,14 @@ lbool ThreadControl::solve(const int numThreads)
     nextCleanLimit = conf.startClean*2;
     nextCleanLimitInc = conf.startClean;
 
-    //Solve in infinite loop
+    //Check if adding the clauses caused UNSAT
     lbool status = ok ? l_Undef : l_False;
+
+    //If still unknown, simplify
     if (status == l_Undef)
         status = simplifyProblem(conf.simpBurstSConf);
 
-    omp_set_num_threads(numThreads);
-
+    //Iterate until solved
     while (status == l_Undef) {
         restPrinter->printRestartStat("N");
         calcClauseDistrib();
@@ -764,55 +665,24 @@ lbool ThreadControl::solve(const int numThreads)
             numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
         }
 
-        #pragma omp parallel
-        {
-            CommandControl *cc = new CommandControl(conf, this);
-            size_t at;
-            #pragma omp critical (threadadd)
-            {
-                at = threads.size();
-                threads.push_back(cc);
-                statuses.push_back(l_Undef);
-            }
-            #pragma omp barrier
-
-            statuses[at] = threads[at]->solve(numConfls);
-        }
-
-        for (size_t i = 0; i < statuses.size(); i++) {
-            if (statuses[i] == l_True) {
-                solution = threads[0]->solution;
-                status = l_True;
-                continue;
-            }
-
-            if (statuses[i] == l_False)
-                status = l_False;
-        }
+        status = CommandControl::solve(numConfls);
 
         backupActivity.clear();
         backupActivity.resize(varData.size());
         for (size_t i = 0; i < varData.size(); i++) {
-            varData[i].polarity = threads[0]->getSavedPolarity(i);
-            backupActivity[i] = threads[0]->getSavedActivity(i);
+            varData[i].polarity = CommandControl::getSavedPolarity(i);
+            backupActivity[i] = CommandControl::getSavedActivity(i);
         }
-        backupActivityInc = threads[0]->getVarInc();
+        backupActivityInc = CommandControl::getVarInc();
 
         if (status != l_False)
             moveReduce();
-
-        #pragma omp parallel for
-        for(size_t i = 0; i < threads.size(); i++) {
-            delete threads[i];
-        }
-        threads.clear();
 
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
         if (status != l_Undef)
             break;
 
         //Move data, print data
-        toDetachFree();
         restPrinter->printRestartStat("N");
 
         //Simplify
@@ -826,12 +696,6 @@ lbool ThreadControl::solve(const int numThreads)
         SolutionExtender extender(this, solution);
         extender.extend();
     }
-
-    //Free threads
-    for(vector<CommandControl*>::iterator it = threads.begin(), end = threads.end(); it != end; it++) {
-        delete *it;
-    }
-    threads.clear();
 
     restPrinter->printEndSearchStat();
 
@@ -872,7 +736,7 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
     //restPrinter->printRestartStat("S");
     if (status != l_Undef) goto end;
 
-    clAllocator->consolidate(this, threads, true);
+    clAllocator->consolidate(this, true);
     if (conf.doFindEqLits && !sCCFinder->find2LongXors())
         goto end;
 
@@ -981,24 +845,20 @@ void ThreadControl::calcReachability()
     }
 }
 
-Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t glue, uint64_t& thisSumConflicts)
+Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
 {
     Clause* cl = NULL;
     switch (lits.size()) {
         case 1:
-            unitLearntsToAdd.push_back(lits[0]);
             break;
         case 2:
-            binLearntsToAdd.push_back(BinaryClause(lits[0], lits[1], false));
             break;
         default:
             cl = clAllocator->Clause_new(lits, sumConflicts);
             cl->makeLearnt(glue);
-            longLearntsToAdd.push_back(cl);
             break;
     }
     sumConflicts++;
-    thisSumConflicts = sumConflicts;
 
     return cl;
 }
@@ -1030,16 +890,9 @@ uint64_t ThreadControl::sumClauseData(
         assert(clause_num != std::numeric_limits<uint32_t>::max());
 
         //Summarize for all threads
-        size_t sumPropConfl = 0;
-        size_t sumLitVisited = 0;
-        for(size_t i = 0; i < threads.size(); i++) {
-            sumPropConfl += threads[i]->getClauseData(clause_num).numPropAndConfl;
-            sumLitVisited += threads[i]->getClauseData(clause_num).numLitVisited;
-            threads[i]->resetClauseDataStats(clause_num);
-        }
+        size_t sumPropConfl = getClauseData(clause_num).numPropAndConfl;
+        size_t sumLitVisited = getClauseData(clause_num).numLitVisited;
         //Move stats here
-        clauseData[clause_num].numPropAndConfl = sumPropConfl;
-        clauseData[clause_num].numLitVisited = sumLitVisited;
         sumAllPropsAndConfls += sumPropConfl;
         sumAllLitsVisited += sumLitVisited;
 
@@ -1048,8 +901,8 @@ uint64_t ThreadControl::sumClauseData(
             usageStats.resize(cl.size()+1);
 
         usageStats[clause_size].num++;
-        usageStats[clause_size].sumPropConfl+=sumPropConfl;
-        usageStats[clause_size].sumLitVisited+=sumLitVisited;
+        usageStats[clause_size].sumPropConfl += sumPropConfl;
+        usageStats[clause_size].sumLitVisited += sumLitVisited;
 
         if (learnt) {
             const size_t glue = cl.getGlue();
@@ -1171,9 +1024,6 @@ void ThreadControl::printStats(
 
 void ThreadControl::moveReduce()
 {
-    assert(toDetach.empty());
-    moveClausesHere();
-
     uint64_t sumAllLitsVisited = 0;
     sumAllLitsVisited += sumClauseData(clauses, false);
     sumAllLitsVisited += sumClauseData(learnts, true);
@@ -1188,7 +1038,7 @@ void ThreadControl::moveReduce()
 
 void ThreadControl::consolidateMem()
 {
-    clAllocator->consolidate(this, threads, true);
+    clAllocator->consolidate(this, true);
 }
 
 void ThreadControl::printStats()
@@ -1697,9 +1547,7 @@ uint64_t ThreadControl::getNumTotalConflicts() const
 
 void ThreadControl::setNeedToInterrupt()
 {
-    for(vector<CommandControl*>::iterator it = threads.begin(), end = threads.end(); it != end; it++) {
-        (*it)->setNeedToInterrupt();
-    }
+    CommandControl::setNeedToInterrupt();
 
     needToInterrupt = true;
 }

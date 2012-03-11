@@ -25,6 +25,7 @@
 #include "time_mem.h"
 #include "ThreadControl.h"
 #include "RestartPrinter.h"
+#include <iomanip>
 #include <omp.h>
 using std::cout;
 using std::endl;
@@ -42,10 +43,6 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         Solver(_control->clAllocator, AgilityData(_conf.agilityG, _conf.agilityLimit))
 
         //Sync
-        , lastSumConfl(0)
-        , lastLong(0)
-        , lastBin(0)
-        , lastUnit(0)
         , units_from_other_threads(0)
 
         // Stats
@@ -685,19 +682,6 @@ void CommandControl::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
     seen[p.var()] = 0;
 }
 
-void CommandControl::addToThreads(const size_t oldTrailSize)
-{
-    vector<Lit> lits(1);
-    #pragma omp critical
-    {
-        for(size_t i = oldTrailSize; i < trail.size(); i++) {
-            lits[0] = trail[i];
-            control->newClauseByThread(lits, 1, lastSumConfl);
-            lastUnit++;
-        }
-    }
-}
-
 /**
 @brief Search for a model
 
@@ -751,9 +735,6 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
             if (!handle_conflict(params, confl))
                 return l_False;
 
-            if (!addOtherClauses())
-                return l_False;
-
         } else {
             assert(ok);
             //TODO Enable this through some ingenious locking
@@ -762,7 +743,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
 
             //If restart is needed, restart here
             if (params.needToStopSearch
-                || lastSumConfl > control->getNextCleanLimit()
+                || control->getSumConflicts() > control->getNextCleanLimit()
             ) {
                 cancelUntil(0);
                 return l_Undef;
@@ -920,17 +901,12 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
     Clause *cl;
 
     //Get new clause
-    #pragma omp critical
-    {
-        syncFromThreadControl();
-        cl = control->newClauseByThread(learnt_clause, glue, lastSumConfl);
-    }
+    cl = control->newClauseByThread(learnt_clause, glue);
 
     //Attach new clause
     switch (learnt_clause.size()) {
         case 1:
             //Unitary learnt
-            lastUnit++;
             learntUnits++;
             enqueue(learnt_clause[0]);
             assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
@@ -938,7 +914,6 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             break;
         case 2:
             //Binary learnt
-            lastBin++;
             learntBins++;
             attachBinClause(learnt_clause[0], learnt_clause[1], true);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
@@ -946,7 +921,6 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
 
         case 3:
             //3-long almost-normal learnt
-            lastLong++;
             learntTris++;
             attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
@@ -954,7 +928,6 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
 
         default:
             //Normal learnt
-            lastLong++;
             learntLongs++;
             attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl), 0));
@@ -987,6 +960,8 @@ void CommandControl::genRandomVarActMultDiv()
 */
 void CommandControl::initialiseSolver()
 {
+    assert(ok);
+
     //Clear up previous stuff like model, final conflict
     conflict.clear();
 
@@ -1006,300 +981,12 @@ void CommandControl::initialiseSolver()
     agilityHist.clear();
     agilityHist.resize(100);
 
-    //Set up sync
-    #pragma omp critical //sync can only be done in critical section
-    syncFromThreadControl();
-    const bool ret = addOtherClauses();
-    assert(ret);
-
-    //Set up vars
-    for(Var i = 0; i < control->nVars(); i++) {
-        newVar(control->decision_var[i]);
-    }
-
-    //Set elimed/replaced
-    size_t i = 0;
-    for(vector<VarData>::iterator it = varData.begin(), end = varData.end(); it != end; it++, i++) {
-        it->elimed = control->varData[i].elimed;
-    }
-
     //Set already set vars
-    for(vector<Lit>::const_iterator it = control->trail.begin(), end = control->trail.end(); it != end; it++) {
+    for(vector<Lit>::const_iterator it = trail.begin(), end = trail.end(); it != end; it++) {
         units_from_other_threads++;
-        enqueue(*it);
     }
-    ok = propagate().isNULL();
-    assert(ok);
 
     order_heap.filter(VarFilter(this, control));
-
-    //Attach every binary clause
-    uint32_t wsLit = 0;
-    for(vector<vec<Watched> >::const_iterator it = control->watches.begin(), end = control->watches.end(); it != end; it++, wsLit++) {
-        Lit lit = ~Lit::toLit(wsLit);
-        for(vec<Watched>::const_iterator it2 = it->begin(), end2 = it->end(); it2 != end2; it2++) {
-            //Only binary clause
-            if (!it2->isBinary())
-                continue;
-
-            //Only attach the clause once
-            if (it2->getOtherLit() < lit)
-                attachBinClause(lit, it2->getOtherLit(), it2->getLearnt());
-        }
-    }
-
-    //Set up clauses & prop data
-    for(vector<Clause*>::const_iterator it = control->clauses.begin(), end = control->clauses.end(); it != end; it++) {
-        attachClause(**it);
-    }
-
-    for(vector<Clause*>::const_iterator it = control->learnts.begin(), end = control->learnts.end(); it != end; it++) {
-        attachClause(**it);
-    }
-}
-
-void CommandControl::syncFromThreadControl()
-{
-    for(size_t i = lastLong; i < control->longLearntsToAdd.size(); i++)
-    {
-        longToAdd.push_back(control->longLearntsToAdd[i]);
-    }
-    lastLong = control->longLearntsToAdd.size();
-
-    for(size_t i = lastBin; i < control->binLearntsToAdd.size(); i++)
-    {
-        binToAdd.push_back(control->binLearntsToAdd[i]);
-    }
-    lastBin = control->binLearntsToAdd.size();
-
-    for(size_t i = lastUnit; i < control->unitLearntsToAdd.size(); i++)
-    {
-        unitToAdd.push_back(control->unitLearntsToAdd[i]);
-    }
-    lastUnit = control->unitLearntsToAdd.size();
-
-    /*if (!longToAdd.empty() || !binToAdd.empty() || !unitToAdd.empty()) {
-        cout << "thread num: " << omp_get_thread_num() << endl;
-        cout << "longToAdd size: " << longToAdd.size() << endl;
-        cout << "binToAdd size: " << binToAdd.size() << endl;
-        cout << "unitToAdd size: " << unitToAdd.size() << endl;
-        cout << "----------------" << endl;
-    }*/
-}
-
-struct MyAttachSorter
-{
-    MyAttachSorter(const vector<VarData>& _varData, const vector<lbool>& _assigns, const Clause& _cl) :
-        varData(_varData)
-        , assigns(_assigns)
-        , cl(_cl)
-    {
-    }
-
-    bool operator()(const uint16_t& a, const uint16_t& b) const
-    {
-        const Lit first = cl[a];
-        const Lit second = cl[b];
-
-        const lbool val1 = assigns[first.var()] ^ first.sign();
-        const lbool val2 = assigns[second.var()] ^ second.sign();
-
-        //True is better than anything else
-        if (val1 == l_True && val2 != l_True) return true;
-        if (val2 == l_True && val1 != l_True) return false;
-
-        //After True, Undef is better
-        if (val1 == l_Undef && val2 != l_Undef) return true;
-        if (val2 == l_Undef && val1 != l_Undef) return false;
-        //Note: l_False is last
-
-        assert(val1 == val2);
-
-        //Highest level at the beginning
-        return (varData[first.var()].level > varData[second.var()].level);
-    }
-
-    const vector<VarData>& varData;
-    const vector<lbool>& assigns;
-    const Clause& cl;
-};
-
-bool CommandControl::addOtherClauses()
-{
-    assert(ok);
-    PropBy ret;
-    PropBy backupRet;
-
-    for(size_t i = 0; i < unitToAdd.size(); i++) {
-        const Lit lit = unitToAdd[i];
-
-        //set at level 0, all is fine and dandy! Skip.
-        if (value(lit) == l_True && varData[lit.var()].level == 0)
-            continue;
-
-        //Either not set, not at level 0, etc.
-        cancelUntil(0);
-
-        //Undef, enqueue it
-        if (value(lit) == l_Undef) {
-            enqueue(lit);
-            continue;
-        }
-
-        //Only option remaining: it's false
-        assert(value(lit) == l_False);
-        return false;
-    }
-    unitToAdd.clear();
-
-    for(size_t i = 0; i < binToAdd.size(); i++) {
-        const BinaryClause binCl = binToAdd[i];
-        if (!handleNewBin(binCl))
-            return false;
-    }
-    binToAdd.clear();
-
-    for(size_t i = 0; i < longToAdd.size(); i++) {
-        const Clause& cl = *longToAdd[i];
-        if (!handleNewLong(cl))
-            return false;
-    }
-    longToAdd.clear();
-
-    return true;
-}
-
-bool CommandControl::handleNewLong(const Clause& cl)
-{
-    //A bit of indirection. We will sort the indexes of the literals
-    vector<uint16_t> lits(cl.size());
-    for(uint16_t i = 0; i < cl.size(); i++) {
-        lits[i] = i;
-    }
-    //Special sort
-    std::sort(lits.begin(), lits.end(), MyAttachSorter(varData, assigns, cl));
-
-    attachClause(cl, lits[0], lits[1], false);
-    //cout << "Attaching clause " << cl << " to thread: " << omp_get_thread_num() << endl;
-
-    //If both l_Undef or one is l_True, then 'simple' attach
-    if ((value(cl[lits[0]]) == l_Undef && value(cl[lits[1]]) == l_Undef)
-        || (value(cl[lits[0]]) == l_True)
-    ) {
-        return true;
-    }
-
-    //At this point, it is for sure that everything above 0 position is l_False
-    for(uint16_t i = 1; i < cl.size(); i++) {
-        assert(value(cl[lits[i]]) == l_False);
-    }
-
-    const ClauseOffset offset = clAllocator->getOffset(&cl);
-
-    //Exactly one l_Undef, rest is l_False
-    if (value(cl[lits[0]]) == l_Undef) {
-        if (cl.size() == 3) {
-            enqueue(cl[lits[0]], PropBy(cl[lits[1]], cl[lits[2]]));
-        } else {
-            enqueue(cl[lits[0]], PropBy(offset, 0)); //0 because 'handle_conflict'-s enqeue() is also with 0
-        }
-
-        return true;
-    }
-
-    const size_t lastLevel = varData[cl[lits[0]].var()].level;
-
-    //All are level 0
-    if (lastLevel == 0) {
-        ok = false;
-        return false;
-    }
-
-    //Cancel at least the first literal
-    assert(value(cl[lits[0]]) == l_False);
-    cancelUntil(lastLevel-1);
-    assert(value(cl[lits[0]]) == l_Undef);
-
-    //If only first got unassigned at this level
-    if (value(cl[lits[1]]) == l_False) {
-        for(uint16_t i = 1; i < cl.size(); i++) {
-            assert(value(cl[lits[i]]) == l_False);
-        }
-        if (cl.size() == 3) {
-            enqueue(cl[lits[0]], PropBy(cl[lits[1]], cl[lits[2]]));
-        } else {
-            enqueue(cl[lits[0]], PropBy(offset, 0)); //0 because 'handle_conflict'-s enqeue() is also with 0
-        }
-
-        return true;
-    } else {
-        assert(varData[cl[lits[0]].var()].level == varData[cl[lits[1]].var()].level);
-        //Nothing to do, it's all l_Undef now, which is fine
-    }
-
-    return true;
-}
-
-bool CommandControl::handleNewBin(const BinaryClause& binCl)
-{
-    Lit lits[2];
-    lits[0] = binCl.getLit1();
-    lits[1] = binCl.getLit2();
-
-    //We need to attach, no matter what
-    attachBinClause(lits[0], lits[1], binCl.getLearnt(), false);
-
-    //If satisfied, simple attach
-    if (value(lits[0]) == l_True || value(lits[1]) == l_True)
-        return true;
-
-    //If one is unassigned, it should be the first
-    if (value(lits[1]) == l_Undef) {
-        std::swap(lits[0], lits[1]);
-    }
-
-    //Both l_Undef
-    if (value(lits[1]) == l_Undef) {
-        assert(value(lits[0]) == l_Undef);
-        return true;
-    }
-
-    //One Undef, one False, so enqueue
-    if (value(lits[0]) == l_Undef) {
-        assert(value(lits[1]) == l_False);
-        enqueue(lits[0], PropBy(lits[1]));
-        return true;
-    }
-
-    //Both false, oops, cancel, then enqueue
-    assert(value(lits[0]) == l_False);
-    assert(value(lits[1]) == l_False);
-
-    //lit[0] is assigned at the highest level
-    if (varData[lits[0].var()].level < varData[lits[1].var()].level)
-        std::swap(lits[0], lits[1]);
-
-    //Both are assigned at level 0
-    if (varData[lits[0].var()].level == 0) {
-        cancelUntil(0);
-        ok = false;
-        return false;
-    }
-
-    //Cancel until the point
-    cancelUntil(varData[lits[0].var()].level - 1);
-
-    //If the other lit didn't get unassigned, then enqueue
-    if (value(lits[1]) == l_False) {
-        enqueue(lits[0], PropBy(lits[1]));
-        return true;
-    } else {
-        //If both got unassigned, that's only possible, because they were on the same level
-        assert(varData[lits[0].var()].level == varData[lits[1].var()].level);
-        //Nothing to do, it's all l_Undef now, which is fine
-    }
-
-    return true;
 }
 
 lbool CommandControl::burstSearch()
@@ -1321,7 +1008,6 @@ lbool CommandControl::burstSearch()
     conf.restartType = backup_restType;
     conf.polarity_mode = backup_polar_mode;
 
-    #pragma omp critical
     cout << "c after burst" << omp_get_thread_num()
     << " " << numRestarts
     << " " << numConflicts
@@ -1414,7 +1100,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     uint64_t rest = conf.restart_first;
     while (status == l_Undef
         && !needToInterrupt
-        && lastSumConfl < maxConfls
+        && control->getSumConflicts() < maxConfls
     ) {
         assert(numConflicts < maxConfls);
 
@@ -1423,7 +1109,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         if (status != l_Undef)
             break;
 
-        if (lastSumConfl >= maxConfls) {
+        if (control->getSumConflicts() >= maxConfls) {
             if (conf.verbosity >= 1) {
                 cout
                 << "c thread(maxconfl) Trail size: " << trail.size()
@@ -1433,62 +1119,23 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             break;
         }
 
-        if (lastSumConfl > control->getNextCleanLimit()) {
+        if (control->getSumConflicts() > control->getNextCleanLimit()) {
             if (conf.verbosity >= 1) {
                 cout
                 << "c th " << omp_get_thread_num() << " cleaning"
                 << " getNextCleanLimit(): " << control->getNextCleanLimit()
                 << " numConflicts : " << numConflicts
-                << " lastSumConfl: " << lastSumConfl
+                << " SumConfl: " << control->getSumConflicts()
                 << " maxConfls:" << maxConfls
                 << " Trail size: " << trail.size() << endl;
             }
+            control->moveReduce();
+            control->consolidateMem();
 
-            //Have to wait for everyone to be here, i.e. shared their data
-            //with threadcontrol, so we can all be up to sync
-            #pragma omp barrier
-            syncFromThreadControl();
-            #pragma omp barrier
-            bool ret = addOtherClauses();
-            assert(ret && "TODO: must handle this correctly!");
-
-            #pragma omp barrier
-            #pragma omp single
-            control->moveReduce(); //This also clears unit, bin, and long
-
-            //Detach clauses that have been scheduled
-            for(vector<Clause*>::const_iterator
-                it = control->toDetach.begin()
-                , end = control->toDetach.end()
-                ; it != end
-                ; it++
-            ) {
-                detachClause(**it);
-            }
-
-            //moveReduce() clear()-ed these, so we have to zero them now
-            lastUnit = 0;
-            lastBin = 0;
-            lastLong = 0;
-
-
-            #pragma omp barrier
-            #pragma omp single
-            {
-                control->toDetachFree();
-                control->consolidateMem();
-                control->restPrinter->printRestartStat("N");
-            }
-            #pragma omp barrier
-
-            if (!ret) {
-                status = l_False;
-                break;
-            }
+            control->restPrinter->printRestartStat("N");
             genRandomVarActMultDiv();
         }
 
-        #pragma omp critical
         if (conf.verbosity >= 1) {
             if ((lastRestartPrint + 800) < numConflicts) {
                 printRestartStat();
@@ -1515,7 +1162,6 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     cancelUntil(0);
 
     //#ifdef VERBOSE_DEBUG
-#pragma omp critical
     if (conf.verbosity >= 1) {
         cout << "c th " << omp_get_thread_num()
         << " ---------" << endl;
@@ -1524,7 +1170,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         << " status: " << status
         << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
         << " numConflicts : " << numConflicts
-        << " lastSumConfl: " << lastSumConfl
+        << " SumConfl: " << control->getSumConflicts()
         << " maxConfls:" << maxConfls
         << endl;
         printStats();
