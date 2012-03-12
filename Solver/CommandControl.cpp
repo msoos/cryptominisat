@@ -437,24 +437,28 @@ void CommandControl::analyze(
     numLitsLearntNonMinimised += out_learnt.size();
 
     //Recursive-simplify conflict clause:
-    toClear = out_learnt;
-    trace_reasons.clear();
-    uint32_t abstract_level = 0;
-    for (size_t i = 1; i < out_learnt.size(); i++)
-        abstract_level |= abstractLevel(out_learnt[i].var()); // (maintain an abstraction of levels involved in conflict)
+    if (conf.doRecursiveCCMin) {
+        toClear = out_learnt;
+        trace_reasons.clear();
 
-    find_removable(out_learnt, abstract_level);
-    prune_removable(out_learnt);
 
-    //Clear 'seen'
-    for (vector<Lit>::const_iterator
-        it = toClear.begin(), end = toClear.end()
-        ; it != end
-        ; it++
-    ) {
-        seen[it->var()] = 0;
+        uint32_t abstract_level = 0;
+        for (size_t i = 1; i < out_learnt.size(); i++)
+            abstract_level |= abstractLevel(out_learnt[i].var()); // (maintain an abstraction of levels involved in conflict)
+
+        find_removable(out_learnt, abstract_level);
+        prune_removable(out_learnt);
+
+        //Clear 'seen'
+        for (vector<Lit>::const_iterator
+            it = toClear.begin(), end = toClear.end()
+            ; it != end
+            ; it++
+        ) {
+            seen[it->var()] = 0;
+        }
+        toClear.clear();
     }
-    toClear.clear();
 
     //Cache-based minimisation
     if (conf.doCache

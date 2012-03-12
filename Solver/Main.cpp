@@ -216,14 +216,20 @@ void Main::parseCommandLine()
     generalOptions.add_options()
     ("help,h", "Prints this help")
     ("input", po::value< std::vector<std::string> >(), "file(s) to read")
-    ("verbosity", po::value<int>(&conf.verbosity)->default_value(conf.verbosity), "[0-4] Verbosity of solver")
-    ("randomize", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed), "[0..] Sets random seed")
-    ("restart", po::value<std::string>()->default_value("glue"), "{geom, glue, agility}  Restart strategy to follow.")
-    ("threads,t", po::value<int>(&numThreads)->default_value(1), "Threads to use")
-    ("nosolprint", "Don't print assignment if solution is SAT")
-    ("nosimplify", "Don't do regular simplification rounds")
+    ("verbosity", po::value<int>(&conf.verbosity)->default_value(conf.verbosity)
+        , "[0-4] Verbosity of solver")
+    ("randomize", po::value<uint32_t>(&conf.origSeed)->default_value(conf.origSeed)
+        , "[0..] Sets random seed")
+    ("restart", po::value<std::string>()->default_value("glue")
+        , "{geom, glue, agility}  Restart strategy to follow.")
+    ("threads,t", po::value<int>(&numThreads)->default_value(1)
+        , "Number of threads to use")
+    ("solprint", po::value<int>(&printResult)->default_value(printResult)
+        , "Print assignment if solution is SAT")
+    ("simplify", po::value<int>(&conf.doSchedSimp)->default_value(conf.doSchedSimp)
+        , "Perform regular simplification rounds")
     ("nclbtwsimp", po::value<size_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
-        , "Do this many cleaning iterations between simplification rounds")
+        , "Perform this many cleaning iterations between simplification rounds")
     //("greedyunbound", "Greedily unbound variables that are not needed for SAT")
     ;
 
@@ -262,57 +268,86 @@ void Main::parseCommandLine()
 
     po::options_description iterativeOptions("Iterative solve options");
     iterativeOptions.add_options()
-    ("maxsolutions", "Search for given amount of solutions")
-    ("dumplearnts", po::value<std::string>(), "If stopped dump learnt clauses here")
-    ("maxdump", po::value<uint32_t>(), "Maximum length of learnt clause dumped")
-    ("dumporig", po::value<std::string>(), "If stopped, dump simplified original problem here")
-    ("nobanfoundsol", "Don't ban solutions found")
-    ("debuglib", "Solve at specific 'solve()' points in CNF file")
-    ("debugnewvar", "Add new vars at specific 'newVar()' points in 6CNF file")
+    ("maxsolutions", po::value<uint32_t>(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
+        , "Search for given amount of solutions")
+    ("dumplearnts", po::value<std::string>(&conf.learntsFilename)
+        , "If stopped dump learnt clauses here")
+    ("maxdump", po::value<uint32_t>(&conf.maxDumpLearntsSize)->default_value(conf.maxDumpLearntsSize)
+        , "Maximum length of learnt clause dumped")
+    ("dumporig", po::value<std::string>()
+        , "If stopped, dump simplified original problem here")
+    ("banfoundsol", po::value<int>(&doBanFoundSolution)->default_value(doBanFoundSolution)
+     , "Ban solutions found")
+    ("debuglib", po::bool_switch(&debugLib)
+        , "Solve at specific 'solve()' points in CNF file")
+    ("debugnewvar", po::bool_switch(&debugNewVar)
+        , "Add new vars at specific 'newVar()' points in 6CNF file")
     ;
 
     po::options_description failedLitOptions("Failed lit options");
     failedLitOptions.add_options()
-    ("nofailedlit", "Don't do failed literals at ALL (none below)")
+    ("failedlit", po::value<int>(&conf.doFailedLit)->default_value(conf.doFailedLit)
+        , "Failed literal probing")
     ("failmultip", po::value<double>(&conf.failedLitMultiplier)->default_value(conf.failedLitMultiplier)
       , "Do this times more/less failed lit than default")
-    ("nohyperbinres", "Don't add binary clauses when doing failed lit probing.")
-    ("noremovebins", "Don't remove useless binary clauses")
+    ("hyperbinres", po::value<int>(&conf.doHyperBinRes)->default_value(conf.doHyperBinRes)
+        , "Add binary clauses when doing failed lit probing.")
+    ("removebins", po::value<int>(&conf.doRemUselessBins)->default_value(conf.doRemUselessBins)
+        , "Remove useless binary clauses (transitive reduction)")
     ;
 
     po::options_description sateliteOptions("SatELite-type options");
     sateliteOptions.add_options()
-    ("nosatelite", "Don't play with norm clauses at ALL (none below)")
-    ("novarelim", "Don't perform variable elimination as per Een and Biere")
-    ("nosubsume1", "Don't perform clause contraction through resolution")
-    ("block", po::bool_switch(&conf.doBlockedClause), "Do blocked-clause removal")
-    ("asymmte", po::bool_switch(&conf.doAsymmTE), "Do asymmetric tautology elimination. See Armin Biere & collaborators' papers")
-    ("noextbinsubs", "No extended subsumption with binary clauses")
+    ("satelite", po::value<int>(&conf.doSatELite)->default_value(conf.doSatELite)
+        , "Perform play with norm clauses at ALL (none below)")
+    ("varelim", po::value<int>(&conf.doVarElim)->default_value(conf.doVarElim)
+        , "Perform variable elimination as per Een and Biere")
+    ("subsume1", po::value<int>(&conf.doSubsume1)->default_value(conf.doSubsume1)
+        , "Don't perform clause contraction through resolution")
+    ("block", po::value<int>(&conf.doBlockedClause)->default_value(conf.doBlockedClause)
+        , "Do blocked-clause removal")
+    ("asymmte", po::value<int>(&conf.doAsymmTE)->default_value(conf.doAsymmTE)
+        , "Do asymmetric tautology elimination. See Armin Biere & collaborators' papers")
+    ("noextbinsubs", po::value<int>(&conf.doExtBinSubs)->default_value(conf.doExtBinSubs)
+        , "No extended subsumption with binary clauses")
     ("eratio", po::value<double>(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter)
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ;
 
     po::options_description xorSateliteOptions("XOR SatELite-type options");
     xorSateliteOptions.add_options()
-    ("noxor", "Don't discover long XORs")
-    ("noehelonxor", "Don't extract data from XORs through echelonization (TOP LEVEL ONLY)")
+    ("xor", po::value<int>(&conf.doFindXors)->default_value(conf.doFindXors)
+        , "Discover long XORs")
+    ("ehelonxor", po::value<int>(&conf.doEchelonizeXOR)->default_value(conf.doEchelonizeXOR)
+        , "Extract data from XORs through echelonization (TOP LEVEL ONLY)")
     ("maxxormat", po::value<uint64_t>(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
         , "Maximum matrix size (=num elements) that we should try to echelonize")
-    ("nomix", "Don't mix XORs and OrGates for new truths")
-    ("nobinxorfind", "Don't find equivalent literals through SCC")
-    ("extendedscc", po::bool_switch(&conf.doExtendedSCC), "Perform SCC using cache")
-    ("novarreplace", "Don't perform variable replacement")
+    ("mix", po::value<int>(&conf.doMixXorAndGates)->default_value(conf.doMixXorAndGates)
+        , "Mix XORs and OrGates for new truths")
+    ("binxorfind", po::value<int>(&conf.doFindEqLits)->default_value(conf.doFindEqLits)
+        , "Find equivalent literals through SCC")
+    ("extendedscc", po::value<int>(&conf.doExtendedSCC)->default_value(conf.doExtendedSCC)
+        , "Perform SCC using cache")
+    ("varreplace", po::value<int>(&conf.doReplace)->default_value(conf.doReplace)
+        , "Perform variable replacement")
     ;
 
     po::options_description gatesOptions("Gates' options");
     gatesOptions.add_options()
-    ("nogates", "Don't find gates. Disable ALL below")
-    ("nogorshort", "Don't shorten clauses with OR gates")
-    ("nogandrem", "Don't remove clauses with AND gates ")
-    ("nogeqlit", "Don't find equivalent literals using gates")
-    ("maxgatesz", po::value<size_t>(&conf.maxGateSize)->default_value(conf.maxGateSize), "Maximum gate size to discover")
-    ("noer", "Don't find gates to add to do ER")
-    ("printgatedot", po::bool_switch(&conf.doPrintGateDot), "Print gate structure regularly to file 'gatesX.dot'")
+    ("gates", po::value<int>(&conf.doGateFind)->default_value(conf.doGateFind)
+        , "Don't find gates. Disable ALL below")
+    ("gorshort", po::value<int>(&conf.doShortenWithOrGates)->default_value(conf.doShortenWithOrGates)
+        , "Shorten clauses with OR gates")
+    ("gandrem", po::value<int>(&conf.doRemClWithAndGates)->default_value(conf.doRemClWithAndGates)
+        , "Remove clauses with AND gates")
+    ("nogeqlit", po::value<int>(&conf.doFindEqLitsWithGates)->default_value(conf.doFindEqLitsWithGates)
+        , "Don't find equivalent literals using gates")
+    ("maxgatesz", po::value<size_t>(&conf.maxGateSize)->default_value(conf.maxGateSize)
+        , "Maximum gate size to discover")
+    ("er", po::value<int>(&conf.doER)->default_value(conf.doER)
+        , "Don't find gates to add to do ER")
+    ("printgatedot", po::value<int>(&conf.doPrintGateDot)->default_value(conf.doPrintGateDot)
+        , "Print gate structure regularly to file 'gatesX.dot'")
     ;
 
     #ifdef USE_GAUSS
@@ -331,20 +366,29 @@ void Main::parseCommandLine()
 
     po::options_description conflOptions("Conflict options");
     conflOptions.add_options()
-    ("norecminim", "Don't do MiniSat-type conflict-clause minim.")
-    ("nolfminim", "Don't do strong minimisation at conflict gen.")
-    ("noalwaysfmin", "Don't always strong-minimise clause")
-    ("printimpldot", po::bool_switch(&conf.doPrintConflDot), "Print implication graph DOT files (for input into graphviz package)")
+    ("recminim", po::value<int>(&conf.doRecursiveCCMin)->default_value(conf.doRecursiveCCMin)
+        , "Perform MiniSat-type conflict-clause minim.")
+    ("nolfminim", po::value<int>(&conf.doMinimLearntMore)->default_value(conf.doMinimLearntMore)
+        , "Perform strong minimisation at conflict gen.")
+    ("alwaysfmin", po::value<int>(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
+        , "Always strong-minimise clause")
+    ("printimpldot", po::value<int>(&conf.doPrintConflDot)->default_value(conf.doPrintConflDot)
+        , "Print implication graph DOT files (for input into graphviz package)")
     ;
 
     po::options_description miscOptions("Misc options");
     miscOptions.add_options()
-    ("nopresimp", "Don't perform simplification at the beginning")
+    ("presimp", po::value<int>(&conf.doPerformPreSimp)->default_value(conf.doPerformPreSimp)
+        , "Perform simplification at startup (turning this OFF can save you time for small instances)")
     //("noparts", "Don't find&solve subproblems with subsolvers")
-    ("novivif", "Don't do regular clause vivification")
-    ("nosortwatched", "Don't sort watches according to size")
-    ("nocalcreach", "Don't calculate literal reachability")
-    ("nocache", "No implication cache. Less memory used, disables LOTS")
+    ("vivif", po::value<int>(&conf.doClausVivif)->default_value(conf.doClausVivif)
+        , "Regularly execute clause vivification")
+    ("sortwatched", po::value<int>(&conf.doSortWatched)->default_value(conf.doSortWatched)
+        , "Don't sort watches according to size")
+    ("calcreach", po::value<int>(&conf.doCalcReach)->default_value(conf.doCalcReach)
+        , "Calculate literal reachability")
+    ("cache", po::value<int>(&conf.doCache)->default_value(conf.doCache)
+        , "Use implication cache. Less memory used, disables LOTS")
     ;
 
     po::positional_options_description p;
@@ -402,18 +446,7 @@ void Main::parseCommandLine()
     }
 
     //Conflict
-    if (vm.count("noalwaysfmin")) {
-        conf.doAlwaysFMinim = false;
-    }
-    if (vm.count("nolfminim")) {
-        conf.doMinimLearntMore = false;
-    }
-    if (vm.count("norecminim")) {
-        conf.expensive_ccmin = false;
-    }
-
     if (vm.count("dumplearnts")) {
-        conf.learntsFilename = vm["dumplearnts"].as<std::string>();
         conf.needToDumpLearnts = true;
     }
 
@@ -424,16 +457,6 @@ void Main::parseCommandLine()
 
     if (vm.count("maxdump")) {
         if (!conf.needToDumpLearnts) throw WrongParam("maxdumplearnts", "--dumplearnts=<filename> must be first activated before issuing -maxdumplearnts=<size>");
-
-        conf.maxDumpLearntsSize = vm["maxdumplearnts"].as<uint32_t>();
-    }
-
-    if (vm.count("maxsolutions")) {
-        max_nr_of_solutions = vm["maxsolutions"].as<uint32_t>();
-    }
-
-    if (vm.count("nobanfoundsol")) {
-        doBanFoundSolution = false;
     }
 
     if (vm.count("greedyunbound")) {
@@ -441,37 +464,6 @@ void Main::parseCommandLine()
     }
 
     //XOR finding
-    if (vm.count("nobinxorfind")) {
-        conf.doFindEqLits = false;
-    }
-
-    if (vm.count("nosimplify")) {
-        conf.doSchedSimp = false;
-    }
-
-    if (vm.count("noxor")) {
-        conf.doFindXors = false;
-    }
-
-    if (vm.count("noehelonxor")) {
-        conf.doEchelonizeXOR = false;
-    }
-
-    if (vm.count("debuglib")) {
-        debugLib = true;
-    }
-
-    if (vm.count("debugnewvar")) {
-        debugNewVar = true;
-    }
-
-    if (vm.count("novarreplace")) {
-        conf.doReplace = false;
-    }
-
-    if (vm.count("nofailedlit")) {
-        conf.doFailedLit = false;
-    }
 
     #ifdef USE_GAUSS
     if (vm.count("gaussuntil")) {
@@ -517,22 +509,6 @@ void Main::parseCommandLine()
     }
     #endif //USE_GAUSS
 
-    if (vm.count("nosatelite")) {
-        conf.doSatELite = false;
-    }
-
-    if (vm.count("nohyperbinres")) {
-        conf.doHyperBinRes = false;
-    }
-
-    if (vm.count("novarelim")) {
-        conf.doVarElim = false;
-    }
-
-    if (vm.count("nosubsume1")) {
-        conf.doSubsume1 = false;
-    }
-
     if (vm.count("restart")) {
         std::string type = vm["restart"].as<std::string>();
         if (type == "geom")
@@ -544,26 +520,6 @@ void Main::parseCommandLine()
         else if (type == "branchd")
             conf.restartType = branch_depth_delta_restart;
         else throw WrongParam("restart", "unknown restart type");
-    }
-
-    if (vm.count("nosolprint")) {
-        printResult = false;
-    }
-
-    if (vm.count("nohyperbinres")) {
-        conf.doHyperBinRes= false;
-    }
-
-    if (vm.count("noremovebins")) {
-        conf.doRemUselessBins = false;
-    }
-
-    if (vm.count("novivif")) {
-        conf.doClausVivif = false;
-    }
-
-    if (vm.count("nosortwatched")) {
-        conf.doSortWatched = false;
     }
 
     if (vm.count("printImplDot")) {
@@ -578,36 +534,8 @@ void Main::parseCommandLine()
         conf.doCache = false;
     }
 
-    if (vm.count("noblocked")) {
-        conf.doBlockedClause = false;
-    }
-
-    if (vm.count("noextbinsubs")) {
-        conf.doExtBinSubs = false;
-    }
-
     if (vm.count("nogates")) {
         conf.doGateFind = false;
-    }
-
-    if (vm.count("noer")) {
-        conf.doER = false;
-    }
-
-    if (vm.count("nogorshort")) {
-        conf.doShortenWithOrGates = false;
-    }
-
-    if (vm.count("nogandrem")) {
-        conf.doRemClWithAndGates = false;
-    }
-
-    if (vm.count("nogeqlit")) {
-        conf.doFindEqLitsWithGates = false;
-    }
-
-    if (vm.count("nopresimp")) {
-        conf.doPerformPreSimp = false;
     }
 
     if (numThreads < 1) throw WrongParam("threads", "Num threads must be at least 1");

@@ -24,8 +24,8 @@
 
 SolverConf::SolverConf() :
         var_inc_start(128)
-        , var_inc_multiplier(12)
-        , var_inc_divider(11)
+        , var_inc_multiplier(11)
+        , var_inc_divider(10)
         , var_inc_variability(1)
         , rarely_bump_var_act(false)
         , ratioRemoveClauses(1.0/2.0)
@@ -38,7 +38,7 @@ SolverConf::SolverConf() :
         , burstSearchLen(0)
         , restartType(glue_restart)
 
-        , expensive_ccmin  (true)
+        , doRecursiveCCMin  (true)
         , polarity_mode    (polarity_auto)
         , verbosity        (0)
 
@@ -67,7 +67,7 @@ SolverConf::SolverConf() :
         , doSchedSimp      (true)
         , doSatELite       (true)
         , doHyperBinRes    (true)
-        , doBlockedClause  (false)
+        , doBlockedClause  (true)
         , doExtBinSubs     (true)
         , doVarElim        (true)
         , varElimRatioPerIter(0.25)

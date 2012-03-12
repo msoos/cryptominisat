@@ -51,11 +51,11 @@ class Main
         int numThreads;
         bool debugLib;
         bool debugNewVar;
-        bool printResult;
+        int printResult;
 
         //Multi-start solving
         uint32_t max_nr_of_solutions;
-        bool doBanFoundSolution;
+        int doBanFoundSolution;
 
         //Files to read & write
         bool fileNamePresent;

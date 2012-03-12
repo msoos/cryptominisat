@@ -36,13 +36,13 @@ class SolverConf
         uint32_t  var_inc_divider;
         uint32_t  var_inc_variability;
         bool      rarely_bump_var_act;
-	
+
 	//Clause cleaning
         double    ratioRemoveClauses; ///< Remove this percentage of clauses at every database reduction round
         size_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         size_t    startClean;
         double    increaseClean;
-	
+
 	//Branching
         double    random_var_freq;    ///<The frequency with which the decision heuristic tries to choose a random variable.        (default 0.02) NOTE: This is really strange. If the number of variables set is large, then the random chance is in fact _far_ lower than this value. This is because the algorithm tries to set one variable randomly, but if that variable is already set, then it _silently_ fails, and moves on (doing non-random flip)!
 
@@ -52,7 +52,7 @@ class SolverConf
 
         size_t    burstSearchLen;
         RestType  restartType;   ///<If set, the solver will always choose the given restart strategy
-        bool      expensive_ccmin;    ///<Should clause minimisation by Sorensson&Biere be used?                                    (default TRUE)
+        int       doRecursiveCCMin;    ///<Should clause minimisation by Sorensson&Biere be used?                                    (default TRUE)
         int       polarity_mode;      ///<Controls which polarity the decision heuristic chooses. Auto means Jeroslow-Wang          (default: polarity_auto)
         int       verbosity;          ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
 
@@ -62,7 +62,7 @@ class SolverConf
 
         //Burst?
         uint32_t  simpBurstSConf; //How many conflicts for burst
-        bool      doPerformPreSimp; //Perform simplification at startup
+        int      doPerformPreSimp; //Perform simplification at startup
         double    failedLitMultiplier; //Increase failed lit time by this multiplier
         uint32_t  nbClBeforeRedStart; ///< Start number of learnt clauses before learnt-clause cleaning
 
@@ -72,42 +72,42 @@ class SolverConf
         //Optimisations to do
         uint32_t  dominPickFreq;
         uint32_t  flipPolarFreq;
-        bool      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses
-        bool      doEchelonizeXOR;
+        int      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses
+        int      doEchelonizeXOR;
         uint64_t  maxXORMatrix;
-        bool      doFindEqLits;       ///<Automatically find binary xor clauses (i.e. variable equi- and antivalences)
-        bool      doReplace;          ///<Should var-replacing be performed? If set to FALSE, equi- and antivalent variables will not be replaced with one another. NOTE: This precludes using a lot of the algorithms!
-        bool      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
-        bool      doSatELite;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
-        bool      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
-        bool      doBlockedClause;    ///<Should try to remove blocked clauses
-        bool      doExtBinSubs;
-        bool      doVarElim;          ///<Perform variable elimination
+        int      doFindEqLits;       ///<Automatically find binary xor clauses (i.e. variable equi- and antivalences)
+        int      doReplace;          ///<Should var-replacing be performed? If set to FALSE, equi- and antivalent variables will not be replaced with one another. NOTE: This precludes using a lot of the algorithms!
+        int      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
+        int      doSatELite;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
+        int      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
+        int       doBlockedClause;    ///<Should try to remove blocked clauses
+        int      doExtBinSubs;
+        int      doVarElim;          ///<Perform variable elimination
         double    varElimRatioPerIter;
-        bool      doSubsume1;         ///<Perform self-subsuming resolution
-        bool      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
-        bool      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
-        bool      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
-        bool      doFailedLit;        ///<Carry out Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
-        bool      doRemUselessBins;   ///<Should try to remove useless binary clauses at the beginning of solving?
-        bool      doCache; ///< Allow storing the cache
-        bool      doExtendedSCC; ///< Allow extending SCC with the cache
-        bool      doGateFind; ///< Find OR gates
+        int      doSubsume1;         ///<Perform self-subsuming resolution
+        int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
+        int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
+        int      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
+        int      doFailedLit;        ///<Carry out Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
+        int      doRemUselessBins;   ///<Should try to remove useless binary clauses at the beginning of solving?
+        int      doCache; ///< Allow storing the cache
+        int      doExtendedSCC; ///< Allow extending SCC with the cache
+        int      doGateFind; ///< Find OR gates
         size_t    maxGateSize;
-        bool      doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
-        bool      doER; ///< Perform Extended Resolution (ER)
-        bool      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
-        bool      doAsymmTE; ///< Do Asymtotic blocked clause elimination
-        bool      doOTFGateShorten; ///<Shorten learnt clauses on the fly with gates
-        bool      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
-        bool      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
-        bool      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
-        bool      doMixXorAndGates; ///<Try to gain knowledge by mixing XORs and gates
+        int      doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
+        int      doER; ///< Perform Extended Resolution (ER)
+        int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
+        int      doAsymmTE; ///< Do Asymtotic blocked clause elimination
+        int      doOTFGateShorten; ///<Shorten learnt clauses on the fly with gates
+        int      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
+        int      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
+        int      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
+        int      doMixXorAndGates; ///<Try to gain knowledge by mixing XORs and gates
 
         //Verbosity
         bool      verboseSubsumer; ///< Make subsumer verbose?
-        bool      doPrintGateDot; ///< Print DOT file of gates
-        bool      doPrintConflDot; ///< Print DOT file for each conflict
+        int      doPrintGateDot; ///< Print DOT file of gates
+        int      doPrintConflDot; ///< Print DOT file for each conflict
 
         //interrupting & dumping
         bool      needToDumpLearnts;  ///<If set to TRUE, learnt clauses will be dumped to the file speified by "learntsFilename"
