@@ -42,7 +42,23 @@ using std::set;
 class ThreadControl;
 class ClauseAllocator;
 
-enum ElimedBy {ELIMED_NONE = 0, ELIMED_VARELIM = 1, ELIMED_VARREPLACER = 3, ELIMED_QUEUED_VARREPLACER = 4, ELIMED_DECOMPOSE = 5};
+//Elimed by which algorithm. NONE = not eliminated
+enum ElimedBy {
+    ELIMED_NONE = 0
+    , ELIMED_VARELIM = 1
+    , ELIMED_VARREPLACER = 3
+    , ELIMED_QUEUED_VARREPLACER = 4 //Only queued for removal. NOT actually removed
+    , ELIMED_DECOMPOSE = 5
+};
+
+
+enum ConflCausedBy {
+    CONFL_BY_LONG_IRRED_CLAUSE
+    , CONFL_BY_LONG_RED_CLAUSE
+    , CONFL_BY_BIN_RED_CLAUSE
+    , CONFL_BY_BIN_IRRED_CLAUSE
+    , CONFL_BY_TRI_CLAUSE
+};
 
 struct VarData
 {
@@ -149,10 +165,7 @@ protected:
     uint64_t propsLongRed;
 
     //Stats for conflicts
-    uint64_t conflsBin;
-    uint64_t conflsTri;
-    uint64_t conflsLongIrred;
-    uint64_t conflsLongRed;
+    ConflCausedBy lastConflictCausedBy;
 
     // Solver state:
     //

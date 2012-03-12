@@ -91,6 +91,14 @@ class CommandControl : public Solver
         uint64_t learntTris;
         uint64_t learntLongs;
 
+        //Stats for conflicts
+        uint64_t conflsBinIrred;
+        uint64_t conflsBinRed;
+        uint64_t conflsTri;
+        uint64_t conflsLongIrred;
+        uint64_t conflsLongRed;
+        void updateConflStats(); //Based on lastConflictCausedBy, update confl stats
+
         //History statistics
         bqueue<uint32_t> branchDepthHist;   ///< Avg branch depth in current restart
         bqueue<uint32_t> branchDepthDeltaHist;

@@ -65,6 +65,13 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         , learntTris(0)
         , learntLongs(0)
 
+        //Conlf stats
+        , conflsBinIrred(0)
+        , conflsBinRed(0)
+        , conflsTri(0)
+        , conflsLongIrred(0)
+        , conflsLongRed(0)
+
         //variables
         , control(_control)
         , conf(_conf)
@@ -128,12 +135,48 @@ void CommandControl::printStats()
 
     //Search stats
     cout << "c CONFLS stats" << endl;
-    printStatsLine("c conflicts", numConflicts, (double)numConflicts/cpu_time, "/ sec");
-    printStatsLine("c conflsBin", conflsBin, 100.0*(double)conflsBin/(double)numConflicts, "%");
-    printStatsLine("c conflsTri", conflsTri, 100.0*(double)conflsTri/(double)numConflicts, "%");
-    printStatsLine("c conflsLongIrred", conflsLongIrred, 100.0*(double)conflsLongIrred/(double)numConflicts, "%");
-    printStatsLine("c conflsLongRed", conflsLongRed, 100.0*(double)conflsLongRed/(double)numConflicts, "%");
-    assert(numConflicts == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);
+    printStatsLine("c conflicts", numConflicts
+        , (double)numConflicts/cpu_time
+        , "/ sec"
+    );
+
+    printStatsLine("c conflsBinIrred", conflsBinIrred
+        , 100.0*(double)conflsBinIrred/(double)numConflicts
+        , "%"
+    );
+
+    printStatsLine("c conflsBinRed", conflsBinRed
+        , 100.0*(double)conflsBinRed/(double)numConflicts
+        , "%"
+    );
+
+    printStatsLine("c conflsTri", conflsTri
+        , 100.0*(double)conflsTri/(double)numConflicts
+        , "%"
+    );
+
+    printStatsLine("c conflsLongIrred" , conflsLongIrred
+        , 100.0*(double)conflsLongIrred/(double)numConflicts
+        , "%"
+    );
+
+    printStatsLine("c conflsLongRed", conflsLongRed
+        , 100.0*(double)conflsLongRed/(double)numConflicts
+        , "%"
+    );
+
+    cout << "c numConflicts: " << numConflicts << endl;
+    cout
+    << "c conflsBin + conflsTri + conflsLongIrred + conflsLongRed : "
+    << (conflsBinIrred + conflsBinRed +  conflsTri + conflsLongIrred + conflsLongRed)
+    << endl;
+    cout
+    << "c DIFF: "
+    << ((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTri + conflsLongIrred + conflsLongRed))
+    << endl;
+
+    /*assert(numConflicts
+        == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
 
     cout << "c LEARNT stats" << endl;
     printStatsLine("c units learnt"
@@ -275,8 +318,12 @@ void CommandControl::analyzeHelper(
 
 Post-condition: 'out_learnt[0]' is the asserting literal at level 'out_btlevel'
 */
-void CommandControl::analyze(PropBy confl, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue)
-{
+void CommandControl::analyze(
+    PropBy confl
+    , vector<Lit>& out_learnt
+    , uint32_t& out_btlevel
+    , uint32_t &glue
+) {
     assert(out_learnt.empty());
     assert(decisionLevel() > 0);
 
@@ -682,6 +729,29 @@ void CommandControl::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
     seen[p.var()] = 0;
 }
 
+void CommandControl::updateConflStats()
+{
+    switch(lastConflictCausedBy) {
+        case CONFL_BY_BIN_IRRED_CLAUSE :
+            conflsBinIrred++;
+            break;
+        case CONFL_BY_BIN_RED_CLAUSE :
+            conflsBinRed++;
+            break;
+        case CONFL_BY_TRI_CLAUSE :
+            conflsTri++;
+            break;
+        case CONFL_BY_LONG_IRRED_CLAUSE :
+            conflsLongIrred++;
+            break;
+        case CONFL_BY_LONG_RED_CLAUSE :
+            conflsLongRed++;
+            break;
+        default:
+            assert(false);
+    }
+}
+
 /**
 @brief Search for a model
 
@@ -727,7 +797,8 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
         #endif //VERBOSE_DEBUG
 
         if (!confl.isNULL()) {
-            //printAgilityStats();
+            //Update conflict stats based on lastConflictCausedBy
+            updateConflStats();
 
             //If restart is needed, set it as so
             checkNeedRestart(params, rest);
@@ -980,6 +1051,13 @@ void CommandControl::initialiseSolver()
     conflSizeHist.resize(100);
     agilityHist.clear();
     agilityHist.resize(100);
+
+    //Confl stats
+    conflsLongRed = 0;
+    conflsBinIrred = 0;
+    conflsBinRed = 0;
+    conflsTri = 0;
+    conflsLongIrred = 0;
 
     //Set already set vars
     for(vector<Lit>::const_iterator it = trail.begin(), end = trail.end(); it != end; it++) {
