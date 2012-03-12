@@ -361,6 +361,16 @@ size_t FailedLitSearcher::getTotalRemovedBin() const
     return totalRemovedBin;
 }
 
+size_t FailedLitSearcher::getTotalNumTried() const
+{
+    return totalNumTried;
+}
+
+size_t FailedLitSearcher::getTotalNumVisited() const
+{
+    return totalNumVisited;
+}
+
 #ifdef DEBUG_REMOVE_USELESS_BIN
 void FailedLitSearcher::fillTestUselessBinRemoval(const Lit lit)
 {

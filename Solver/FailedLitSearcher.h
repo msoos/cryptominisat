@@ -65,6 +65,8 @@ class FailedLitSearcher {
         size_t getTotalNumFailed() const;
         size_t getTotalAddedBin() const;
         size_t getTotalRemovedBin() const;
+        size_t getTotalNumTried() const;
+        size_t getTotalNumVisited() const;
 
     private:
         //Main

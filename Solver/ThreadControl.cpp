@@ -1108,14 +1108,25 @@ void ThreadControl::printStats()
                     , getTotalTimeFailedLitSearcher()
                     , getTotalTimeFailedLitSearcher()/cpu_time*100.0
                     , "% time");
+
     printStatsLine("c probing 0-depth-assigns"
                     , failedLitSearcher->getTotalZeroDepthAssigns()
                     , (double)failedLitSearcher->getTotalZeroDepthAssigns()/(double)nVars()*100.0
                     , "% vars");
+
+    printStatsLine("c probing success rate"
+                    , 100.0*(double)failedLitSearcher->getTotalNumFailed()/(double)failedLitSearcher->getTotalNumTried()
+                    , "% of probes");
+
+    printStatsLine("c probing visited"
+                    , (double)failedLitSearcher->getTotalNumVisited()/(1000.0*1000.0)
+                    , " M lits");
+
     printStatsLine("c probing failed"
                     , failedLitSearcher->getTotalNumFailed()
                     , (double)failedLitSearcher->getTotalNumFailed()/(double)nVars()*100.0
                     , "% vars");
+
     printStatsLine("c probing bin added", failedLitSearcher->getTotalAddedBin());
     printStatsLine("c probing bin rem", failedLitSearcher->getTotalRemovedBin());
 
