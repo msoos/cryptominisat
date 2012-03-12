@@ -1066,7 +1066,7 @@ void CommandControl::genRandomVarActMultDiv()
 /**
 @brief Initialises model, restarts, learnt cluause cleaning, burst-search, etc.
 */
-void CommandControl::initialiseSolver()
+void CommandControl::resetStats()
 {
     assert(ok);
 
@@ -1213,7 +1213,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
     assumptions = assumps;
     startTime = cpuTime();
-    initialiseSolver();
+    resetStats();
     lbool status = l_Undef; //Current status
 
     uint64_t lastRestartPrint = numConflicts;

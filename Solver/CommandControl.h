@@ -66,7 +66,7 @@ class CommandControl : public Solver
         friend class CalcDefPolars;
 
         //For connection with ThreadControl
-        void      initialiseSolver();
+        void  resetStats();
 
         // Statistics
         //
