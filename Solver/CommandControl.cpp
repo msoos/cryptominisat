@@ -50,8 +50,8 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
         , decisions_rnd(0)
 
         //Conflict generation
-        , max_literals(0)
-        , tot_literals(0)
+        , numLitsLearntNonMinimised(0)
+        , numLitsLearntMinimised(0)
         , furtherClMinim(0)
         , numShrinkedClause(0)
         , numShrinkedClauseLits(0)
@@ -265,7 +265,10 @@ void CommandControl::printStats()
     << endl;
     //assert(propagations == totalProps);
 
-    printStatsLine("c conflict literals", tot_literals, (double)(max_literals - tot_literals)*100.0/ (double)max_literals, "% deleted");
+    printStatsLine("c conflict literals", numLitsLearntNonMinimised
+        , (double)(numLitsLearntNonMinimised - numLitsLearntMinimised)*100.0/ (double)numLitsLearntNonMinimised
+        , "% deleted"
+    );
 
     //General stats
     printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
@@ -430,7 +433,7 @@ void CommandControl::analyze(
     toClear.clear();
 
     assert(pathC == 0);
-    max_literals += out_learnt.size();
+    numLitsLearntNonMinimised += out_learnt.size();
 
     //Recursive-simplify conflict clause:
     toClear = out_learnt;
@@ -467,7 +470,7 @@ void CommandControl::analyze(
 
     //Calc stats
     glue = calcNBLevels(out_learnt);
-    tot_literals += out_learnt.size();
+    numLitsLearntMinimised += out_learnt.size();
 
     //Print fully minimised clause
     #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
@@ -1087,13 +1090,35 @@ void CommandControl::initialiseSolver()
     agilityHist.resize(100);
 
     //Confl stats
+    numConflicts = 0;
     conflsLongRed = 0;
     conflsBinIrred = 0;
     conflsBinRed = 0;
     conflsTri = 0;
     conflsLongIrred = 0;
 
-    //Props state
+    //Restarts
+    numRestarts = 0;
+
+    //Decisions
+    decisions = 0;
+    assumption_decisions = 0;
+    decisions_rnd = 0;
+
+    //Conflict minimisation stats
+    numLitsLearntNonMinimised = 0;
+    numLitsLearntMinimised = 0;
+    furtherClMinim = 0;
+    numShrinkedClause = 0;
+    numShrinkedClauseLits = 0;
+
+    //Learnt stats
+    learntUnits = 0;
+    learntBins = 0;
+    learntTris = 0;
+    learntLongs = 0;
+
+    //Props stats
     propsOrig = propagations;
     propsBinOrig = propsBin;
     propsTriOrig = propsTri;

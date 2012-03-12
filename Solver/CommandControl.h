@@ -76,8 +76,8 @@ class CommandControl : public Solver
         uint64_t         decisions;        ///<Number of decisions made
         uint64_t         assumption_decisions;
         uint64_t         decisions_rnd;    ///<Numer of random decisions made
-        uint64_t         max_literals;     ///<Number of learnt literals without minimisation
-        uint64_t         tot_literals;     ///<Number of learnt literals with minimisation
+        uint64_t         numLitsLearntNonMinimised;     ///<Number of learnt literals without minimisation
+        uint64_t         numLitsLearntMinimised;     ///<Number of learnt literals with minimisation
         uint64_t         nShrinkedCl;      ///<Num clauses improved using on-the-fly self-subsuming resolution
         uint64_t         nShrinkedClLits;  ///<Num literals removed by on-the-fly self-subsuming resolution
         uint64_t         furtherClMinim;  ///<Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
