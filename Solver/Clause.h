@@ -59,8 +59,6 @@ protected:
     uint16_t mySize; ///<The current size of the clause
     uint32_t conflictNumIntroduced;
 
-    uint32_t num;
-
     Lit* getData()
     {
         return (Lit*)((char*)this + sizeof(Clause));
@@ -72,10 +70,14 @@ protected:
     }
 
 public:
+    uint32_t numPropAndConfl;
+    uint32_t numLitVisited;
+
     template<class V>
-    Clause(const V& ps, const uint32_t clauseNum, const uint32_t _conflictNumIntroduced) :
+    Clause(const V& ps, const uint32_t _conflictNumIntroduced) :
         conflictNumIntroduced(_conflictNumIntroduced)
-        , num(clauseNum)
+        , numPropAndConfl(0)
+        , numLitVisited(0)
     {
         isFreed = false;
         assert(ps.size() > 2);
@@ -241,16 +243,6 @@ public:
             setGlue(other.getGlue());
     }
 
-    uint32_t getNum() const
-    {
-        return num;
-    }
-
-    void setNum(const uint32_t newNum)
-    {
-        num = newNum;
-    }
-
     uint32_t getConflictIntroduced() const
     {
         return conflictNumIntroduced;
@@ -264,41 +256,5 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
     }
     return os;
 }
-
-struct ClauseData
-{
-    ClauseData() :
-        numPropAndConfl(0)
-        , numLitVisited(0)
-    {
-        litPos[0] = std::numeric_limits<uint16_t>::max();
-        litPos[1] = std::numeric_limits<uint16_t>::max();
-    };
-    ClauseData(const uint16_t lit1Pos, const uint16_t lit2Pos)
-    {
-        litPos[0] = lit1Pos;
-        litPos[1] = lit2Pos;
-    };
-
-    uint16_t operator[](const bool which) const
-    {
-        return litPos[which];
-    }
-
-    uint16_t& operator[](const bool which)
-    {
-        return litPos[which];
-    }
-
-    void operator=(const ClauseData& other)
-    {
-        litPos[0] = other.litPos[0];
-        litPos[1] = other.litPos[1];
-    }
-
-    uint16_t litPos[2];
-    uint32_t numPropAndConfl;
-    uint32_t numLitVisited;
-};
 
 #endif //CLAUSE_H

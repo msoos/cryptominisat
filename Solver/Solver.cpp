@@ -112,13 +112,14 @@ void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt, 
  Handles 2, 3 and >3 clause sizes differently and specially
  */
 
-void Solver::attachClause(const Clause& c, const uint16_t point1, const uint16_t point2, const bool checkAttach)
-{
+void Solver::attachClause(
+    const Clause& c
+    , const bool checkAttach
+) {
     assert(c.size() > 2);
-    assert(c[point1].var() != c[point2].var());
     if (checkAttach) {
-        assert(value(c[point1].var()) == l_Undef);
-        assert(value(c[point2]) == l_Undef || value(c[point2]) == l_False);
+        assert(value(c[0].var()) == l_Undef);
+        assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
     }
 
     #ifdef DEBUG_ATTACH
@@ -137,18 +138,8 @@ void Solver::attachClause(const Clause& c, const uint16_t point1, const uint16_t
         const ClauseOffset offset = clAllocator->getOffset(&c);
 
         //blocked literal is the lit in the middle (c.size()/2). For no reason.
-        watches[(~c[point1]).toInt()].push(Watched(offset, c[c.size()/2], 0));
-        watches[(~c[point2]).toInt()].push(Watched(offset, c[c.size()/2], 1));
-    }
-
-    //For compatibility reasons, even TRI-clauses have a clauseData entry
-    //TODO: get rid of this uselessness. TRI-clauses don't need an  entry in clauseData!
-    if (c.size() != 3) {
-        const uint32_t num = c.getNum();
-        if (clauseData.size() <= num)
-            clauseData.resize(num + 1);
-
-        clauseData[num] = ClauseData(point1, point2);
+        watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2]));
+        watches[(~c[1]).toInt()].push(Watched(offset, c[c.size()/2]));
     }
 }
 
@@ -158,8 +149,13 @@ void Solver::attachClause(const Clause& c, const uint16_t point1, const uint16_t
 void Solver::detachClause(const Clause& c)
 {
     if (c.size() > 3) {
-        const ClauseData& data =clauseData[c.getNum()];
-        detachModifiedClause(c[data[0]], c[data[1]], (c.size() == 3) ? c[2] : lit_Undef,  c.size(), &c);
+        detachModifiedClause(
+            c[0], c[1]
+            , (c.size() == 3) ? c[2] : lit_Undef
+            ,  c.size()
+            , &c
+        );
+
     } else {
         detachModifiedClause(c[0], c[1], c[2], c.size(), &c);
     }
@@ -172,8 +168,13 @@ The first two literals might have chaned through modification, so they are
 passed along as arguments -- they are needed to find the correct place where
 the clause is
 */
-void Solver::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address)
-{
+void Solver::detachModifiedClause(
+    const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+    , const uint32_t origSize
+    , const Clause* address
+) {
     assert(origSize > 2);
 
     ClauseOffset offset = clAllocator->getOffset(address);
@@ -241,40 +242,44 @@ template<bool simple> inline bool Solver::propNormalClause(
     bogoProps += 4;
     const uint32_t offset = i->getNormOffset();
     Clause& c = *clAllocator->getPointer(offset);
-    const uint32_t clauseNum = c.getNum();
-    ClauseData& data = clauseData[clauseNum];
-    const bool watchNum = i->getWatchNum();
-    assert(c[data[watchNum]] == ~p);
 
-    // If other watch is true, then clause is already satisfied.
-    if (value(c[data[!watchNum]]) == l_True) {
-        *j++ = *i;
+    // Make sure the false literal is data[1]:
+    if (c[0] == ~p) {
+        std::swap(c[0], c[1]);
+    }
+
+    assert(c[1] == ~p);
+
+    // If 0th watch is true, then clause is already satisfied.
+    if (value(c[0]).getBool()) {
+        *j = Watched(offset, c[0]);
+        j++;
         return true;
     }
-    // Look for new watch:
 
-    uint16_t numLit = 0;
-    for (uint16_t size = c.size(); numLit < size; numLit++) {
-        if (numLit == data[0] || numLit == data[1])
-            continue;
-        if (value(c[numLit]) != l_False) {
-            bogoProps += numLit/10;
-            data.numLitVisited+= numLit;
-            data[watchNum] = numLit;
-            watches[(~c[numLit]).toInt()].push(
-                Watched(offset, c[data[!watchNum]], watchNum)
-            );
+    // Look for new watch:
+    uint16_t numLitVisited = 0;
+    for (Lit *k = c.begin() + 2, *end2 = c.end()
+        ; k != end2
+        ; k++, numLitVisited++
+    ) {
+        if (value(*k) != l_False) {
+            c[1] = *k;
+            bogoProps += numLitVisited/10;
+            c.numLitVisited+= numLitVisited;
+            *k = ~p;
+            watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
             return true;
         }
     }
-    bogoProps += numLit/10;
-    data.numLitVisited+= numLit;
+    bogoProps += numLitVisited/10;
+    c.numLitVisited+= numLitVisited;
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
-    data.numPropAndConfl++;
-    if (value(c[data[!watchNum]]) == l_False) {
-        confl = PropBy(offset, !watchNum);
+    c.numPropAndConfl++;
+    if (value(c[0]) == l_False) {
+        confl = PropBy(offset);
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Conflict from ";
         for(size_t i = 0; i < c.size(); i++) {
@@ -300,9 +305,9 @@ template<bool simple> inline bool Solver::propNormalClause(
             propsLongIrred++;
 
         if (simple)
-            enqueue(c[data[!watchNum]], PropBy(offset, !watchNum));
+            enqueue(c[0], PropBy(offset));
         else
-            addHyperBin(c[data[!watchNum]], c);
+            addHyperBin(c[0], c);
     }
 
     return true;

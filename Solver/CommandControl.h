@@ -205,10 +205,6 @@ class CommandControl : public Solver
         uint32_t var_inc_multiplier;
         uint32_t var_inc_divider;
 
-        ///////////
-        // Learnt clause removal
-        bool    locked(const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
-
         ////////////
         // Transitive on-the-fly self-subsuming resolution
         void   minimiseLearntFurther(vector<Lit>& cl);
@@ -265,30 +261,6 @@ inline void CommandControl::varBumpActivity(Var var)
     // Update order_heap with respect to new activity:
     if (order_heap.inHeap(var))
         order_heap.decrease(var);
-}
-
-inline bool CommandControl::locked(const Clause& c) const
-{
-    if (c.size() <= 3) return true; //we don't know in this case :I
-    const ClauseData& data = clauseData[c.getNum()];
-    const PropBy from1(varData[c[data[0]].var()].reason);
-    const PropBy from2(varData[c[data[1]].var()].reason);
-
-    if (from1.isClause()
-        && !from1.isNULL()
-        && from1.getWatchNum() == 0
-        && from1.getClause() == clAllocator->getOffset(&c)
-        && value(c[data[0]]) == l_True
-    ) return true;
-
-    if (from2.isClause()
-        && !from2.isNULL()
-        && from2.getWatchNum() == 1
-        && from2.getClause() == clAllocator->getOffset(&c)
-        && value(c[data[1]]) == l_True
-        ) return true;
-
-    return false;
 }
 
 inline uint32_t CommandControl::abstractLevel(const Var x) const

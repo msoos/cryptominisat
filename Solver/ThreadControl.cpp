@@ -213,25 +213,48 @@ Clause* ThreadControl::addClauseInt(const T& lits
 template Clause* ThreadControl::addClauseInt(const Clause& ps, const bool learnt, const uint32_t glue, const bool attach);
 template Clause* ThreadControl::addClauseInt(const vector<Lit>& ps, const bool learnt, const uint32_t glue, const bool attach);
 
-void ThreadControl::attachClause(const Clause& c, const uint16_t point1, const uint16_t point2)
+void ThreadControl::attachClause(const Clause& c)
 {
-    if (c.learnt()) learntsLits += c.size();
-    else            clausesLits += c.size();
-    Solver::attachClause(c, point1, point2);
+    //Update stats
+    if (c.learnt())
+        learntsLits += c.size();
+    else
+        clausesLits += c.size();
+
+    //Call Solver's function for heavy-lifting
+    Solver::attachClause(c);
 }
 
-void ThreadControl::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst)
-{
-    if (learnt) learntsLits += 2;
-    else        clausesLits += 2;
+void ThreadControl::attachBinClause(
+    const Lit lit1
+    , const Lit lit2
+    , const bool learnt
+    , const bool checkUnassignedFirst
+) {
+    //Update stats
+    if (learnt)
+        learntsLits += 2;
+    else
+        clausesLits += 2;
     numBins++;
+
+    //Call Solver's function for heavy-lifting
     Solver::attachBinClause(lit1, lit2, learnt, checkUnassignedFirst);
 }
 
-void ThreadControl::detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address)
+void ThreadControl::detachModifiedClause(
+    const Lit lit1
+    , const Lit lit2
+    , const Lit lit3
+    , const uint32_t origSize, const Clause* address)
 {
-    if (address->learnt()) learntsLits -= origSize;
-    else                   clausesLits -= origSize;
+    //Update stats
+    if (address->learnt())
+        learntsLits -= origSize;
+    else
+        clausesLits -= origSize;
+
+    //Call heavy-lifter
     Solver::detachModifiedClause(lit1, lit2, lit3, origSize, address);
 }
 
@@ -319,9 +342,8 @@ void ThreadControl::reArrangeClause(Clause* clause)
 
     //Change anything, but find the first two and assign them
     //accordingly at the ClauseData
-    ClauseData& data = clauseData[c.getNum()];
-    const Lit lit1 = c[data[0]];
-    const Lit lit2 = c[data[1]];
+    const Lit lit1 = c[0];
+    const Lit lit2 = c[1];
     assert(lit1 != lit2);
 
     std::sort(c.begin(), c.end(), PolaritySorter(varData));
@@ -329,11 +351,14 @@ void ThreadControl::reArrangeClause(Clause* clause)
     uint8_t foundDatas = 0;
     for (uint16_t i = 0; i < c.size(); i++) {
         if (c[i] == lit1) {
-            data[0] = i;
+            std::swap(c[i], c[0]);
             foundDatas++;
         }
+    }
+
+    for (uint16_t i = 0; i < c.size(); i++) {
         if (c[i] == lit2) {
-            data[1] = i;
+            std::swap(c[i], c[1]);
             foundDatas++;
         }
     }
@@ -559,7 +584,7 @@ void ThreadControl::reduceDB()
     for (i = j = 0; i < learnts.size(); i++) {
         Clause* cl = learnts[i];
         if (learnts[i]->size() > 3
-            && clauseData[cl->getNum()].numPropAndConfl < 2
+            && cl->numPropAndConfl < 2
             && cl->getConflictIntroduced() + 10000 < sumConflicts
         ) {
             detachClause(*cl);
@@ -602,22 +627,23 @@ void ThreadControl::reduceDB()
             __builtin_prefetch(learnts[i+1], 0);
 
         //const uint32_t clNum = learnts[i]->getNum();
-        assert(learnts[i]->size() > 2);
+        Clause *cl = learnts[i];
+        assert(cl->size() > 2);
         if (learnts[i]->getGlue() > 2
-            && learnts[i]->size() > 3 //we cannot update activity of 3-longs because of watchlists
-            && clauseData[learnts[i]->getNum()].numPropAndConfl < 10
+            && cl->size() > 3 //we cannot update activity of 3-longs because of watchlists
+            && cl->numPropAndConfl < 10
         ) {
-            totalGlueOfRemoved += learnts[i]->getGlue();
-            totalSizeOfRemoved += learnts[i]->size();
+            totalGlueOfRemoved += cl->getGlue();
+            totalSizeOfRemoved += cl->size();
             totalNumRemoved++;
-            detachClause(*learnts[i]);
+            detachClause(*cl);
         } else {
-            totalGlueOfNonRemoved += learnts[i]->getGlue();
-            totalSizeOfNonRemoved += learnts[i]->size();
+            totalGlueOfNonRemoved += cl->getGlue();
+            totalSizeOfNonRemoved += cl->size();
             totalNumNonRemoved++;
-            numThreeLongLearnt += (learnts[i]->size()==3);
+            numThreeLongLearnt += (cl->size()==3);
             removeNum++;
-            learnts[j++] = learnts[i];
+            learnts[j++] = cl;
         }
     }
 
@@ -900,17 +926,15 @@ uint64_t ThreadControl::sumClauseData(
     ) {
         //Clause data
         const Clause& cl = **it;
-        const uint32_t clause_num = cl.getNum();
         const uint32_t clause_size = cl.size();
 
         //We have stats on this clause
         if (cl.size() == 3)
             continue;
-        assert(clause_num != std::numeric_limits<uint32_t>::max());
 
         //Summarize for all threads
-        size_t sumPropConfl = getClauseData(clause_num).numPropAndConfl;
-        size_t sumLitVisited = getClauseData(clause_num).numLitVisited;
+        size_t sumPropConfl = cl.numPropAndConfl;
+        size_t sumLitVisited = cl.numLitVisited;
         //Move stats here
         sumAllPropsAndConfls += sumPropConfl;
         sumAllLitsVisited += sumLitVisited;
@@ -1606,9 +1630,8 @@ bool ThreadControl::normClauseIsAttached(const Clause& c) const
         attached &= findWTri(watches[(~lit3).toInt()], lit1, lit2);
     } else {
         fullClause:
-        const ClauseData& data = clauseData[c.getNum()];
-        attached &= findWCl(watches[(~c[data[0]]).toInt()], offset);
-        attached &= findWCl(watches[(~c[data[1]]).toInt()], offset);
+        attached &= findWCl(watches[(~c[0]).toInt()], offset);
+        attached &= findWCl(watches[(~c[1]).toInt()], offset);
     }
 
     return attached;
@@ -1629,11 +1652,13 @@ void ThreadControl::findAllAttach() const
             cout << (*cl) << endl;
 
             //Assert clauseData correctness
-            const ClauseData& clData = clauseData[cl->getNum()];
-            const bool watchNum = w.getWatchNum();
-            cout << "Watchnum: " << watchNum << " clData watchnum: " << (clData[watchNum]) << " value: " << ((*cl)[clData[watchNum]]) << endl;
-            if (((*cl)[clData[watchNum]]) != lit) {
-                cout << "ERROR! ((*cl)[clData[watchNum]]) != lit !!" << endl;
+            if ((*cl)[0] != lit
+                && (*cl)[1] != lit
+            ) {
+                cout
+                << "ERROR! Clause " << (*cl)
+                << " not attached?"
+                << endl;
             }
 
             //Clause in one of the lists

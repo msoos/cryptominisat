@@ -34,13 +34,11 @@ class PropByFull
         uint16_t isize;
         Clause* clause;
         Lit lits[3];
-        ClauseData data;
 
     public:
         PropByFull(PropBy orig
                     , Lit otherLit
                     , const ClauseAllocator& alloc
-                    , const vector<ClauseData>& clauseData
         ) :
             type(10)
             , isize(0)
@@ -66,8 +64,6 @@ class PropByFull
                     return;
                 }
                 clause = alloc.getPointer(orig.getClause());
-                data = clauseData[clause->getNum()];
-                if (orig.getWatchNum()) std::swap(data[0], data[1]);
                 isize = clause->size();
                 type = 0;
             }
@@ -82,7 +78,6 @@ class PropByFull
             type(other.type)
             , isize(other.isize)
             , clause(other.clause)
-            , data(other.data)
         {
             memcpy(lits, other.lits, sizeof(Lit)*3);
         }
@@ -92,7 +87,6 @@ class PropByFull
             type = other.type,
             isize = other.isize;
             clause = other.clause;
-            data = other.data;
             //delete xorLits;
             memcpy(lits, other.lits, sizeof(Lit)*3);
             return *this;
@@ -138,10 +132,6 @@ class PropByFull
             switch (type) {
                 case 0:
                     assert(clause != NULL);
-
-                    if (i <= 1) return (*clause)[data[i]];
-                    if (i == data[0]) return (*clause)[(data[1] == 0 ? 1 : 0)];
-                    if (i == data[1]) return (*clause)[(data[0] == 1 ? 0 : 1)];
                     return (*clause)[i];
 
                 default :
@@ -164,8 +154,11 @@ inline std::ostream& operator<<(std::ostream& os, const PropByFull& propByFull)
     return os;
 }
 
-string CommandControl::simplAnalyseGraph(PropBy conflHalf, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &glue)
-{
+string CommandControl::simplAnalyseGraph(
+    PropBy conflHalf
+    , vector<Lit>& out_learnt
+    , uint32_t& out_btlevel, uint32_t &glue
+) {
     int pathC = 0;
     Lit p = lit_Undef;
 
@@ -174,7 +167,7 @@ string CommandControl::simplAnalyseGraph(PropBy conflHalf, vector<Lit>& out_lear
     out_btlevel = 0;
     std::stringstream resolutions;
 
-    PropByFull confl(conflHalf, failBinLit, *clAllocator, clauseData);
+    PropByFull confl(conflHalf, failBinLit, *clAllocator);
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
 
@@ -211,7 +204,7 @@ string CommandControl::simplAnalyseGraph(PropBy conflHalf, vector<Lit>& out_lear
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
-        confl = PropByFull(varData[p.var()].reason, p, *clAllocator, clauseData);
+        confl = PropByFull(varData[p.var()].reason, p, *clAllocator);
         seen[p.var()] = 0; // this one is resolved
         pathC--;
     } while (pathC > 0); //UIP when eveything goes through this one
@@ -265,7 +258,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
     << " , fontsize=8"
     << " ];" << endl;
 
-    PropByFull confl(conflPart, failBinLit, *clAllocator, clauseData);
+    PropByFull confl(conflPart, failBinLit, *clAllocator);
     #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
     cout << "conflict: "<< confl << endl;
     #endif
@@ -311,7 +304,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
             cout << "Reason for lit " << lits[i] << " : " << reason << endl;
             #endif
 
-            PropByFull prop(reason, lits[i], *clAllocator, clauseData);
+            PropByFull prop(reason, lits[i], *clAllocator);
             for (uint32_t i2 = 0; i2 < prop.size(); i2++) {
                 const Lit lit = prop[i2];
                 assert(value(lit) != l_Undef);
@@ -345,7 +338,7 @@ void CommandControl::genConfGraph(const PropBy conflPart)
         //A decision variable, it is not propagated by any clause
         if (reason.isNULL()) continue;
 
-        PropByFull prop(reason, lit, *clAllocator, clauseData);
+        PropByFull prop(reason, lit, *clAllocator);
         for (uint32_t i = 0; i < prop.size(); i++) {
             if (prop[i] == lit //This is being propagated, don't make a circular line
                 || varData[prop[i].var()].level == 0 //'clean' clauses of 0-level lits

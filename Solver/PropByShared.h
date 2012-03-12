@@ -50,9 +50,8 @@ class PropBy
             , data2(0)
         {}
 
-        PropBy(ClauseOffset offset, const bool watchNum) :
+        PropBy(ClauseOffset offset) :
             type(clause_t)
-            , data1(watchNum)
             , data2(offset)
         {
         }
@@ -108,14 +107,6 @@ class PropBy
         {
             if (!isClause()) return false;
             return type == null_clause_t;
-        }
-
-        bool getWatchNum() const
-        {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(isClause());
-            #endif
-            return data1;
         }
 
         bool operator==(const PropBy other) const

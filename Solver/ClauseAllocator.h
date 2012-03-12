@@ -75,7 +75,6 @@ class ClauseAllocator {
         }
 
         void clauseFree(Clause* c); ///Frees memory and associated clause number
-        void releaseClauseNum(Clause* cl); ///<used when long clause becomes 3-long
 
         void consolidate(
             ThreadControl* control
@@ -135,11 +134,6 @@ class ClauseAllocator {
         vector<Clause*> threeLongClauses;
         Clause* getClause();
         void putClausesIntoDatastruct(std::vector<Clause*>& clauses);
-
-        uint32_t getNewClauseNum(const uint32_t size);
-        void renumberClauses(vector<Clause*>& clauses, Solver* solver);
-        vector<uint32_t> freedNums;  //Free clause nums that can be used now
-        uint32_t maxClauseNum;
 };
 
 #endif //CLAUSEALLOCATOR_H

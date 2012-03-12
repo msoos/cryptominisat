@@ -40,9 +40,9 @@ class Watched {
         /**
         @brief Constructor for a long normal clause
         */
-        Watched(const ClauseOffset offset, Lit blockedLit, const bool watchNum)
+        Watched(const ClauseOffset offset, Lit blockedLit)
         {
-            data1 = (uint32_t)watchNum | (blockedLit.toInt() << 1);
+            data1 = blockedLit.toInt();
             data2 = (uint32_t)1 | ((uint32_t)offset << 2);
         }
 
@@ -85,7 +85,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isClause());
             #endif
-            data1 = (uint32_t)getWatchNum() | (blockedLit.toInt() << 1);
+            data1 = blockedLit.toInt() << 1;
         }
 
         bool isBinary() const
@@ -175,15 +175,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isClause());
             #endif
-            return Lit::toLit(data1>>1);
-        }
-
-        bool getWatchNum() const
-        {
-            #ifdef DEBUG_WATCHED
-            assert(isClause());
-            #endif
-            return data1&1;
+            return Lit::toLit(data1);
         }
 
         /**

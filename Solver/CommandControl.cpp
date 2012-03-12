@@ -395,9 +395,10 @@ void CommandControl::analyze(
             case clause_t : {
                 const Clause& cl = *clAllocator->getPointer(confl.getClause());
                 for (size_t j = 0, size = cl.size(); j != size; j++) {
-                    if (p != lit_Undef
-                        && j == clauseData[cl.getNum()].litPos[confl.getWatchNum()])
-                    continue;
+
+                    //This is the one that will be resolved out anyway, so just skip
+                    if (p != lit_Undef && j == 0)
+                        continue;
 
                     analyzeHelper(cl[j], pathC, out_learnt, !cl.learnt());
                 }
@@ -596,8 +597,9 @@ int CommandControl::dfs_removable(Lit p, uint32_t abstract_level)
         case clause_t : {
             const Clause& cl = *clAllocator->getPointer(rp.getClause());
             for (int i = 0, sz = cl.size(); i < sz; i++) {
-                if (i == clauseData[cl.getNum()].litPos[rp.getWatchNum()])
+                if (i == 0)
                     continue;
+
                 const Lit q = cl[i];
                 if (varData[q.var()].level > 0) {
                     if ((seen[q.var()] & (2|4|8)) == 0) {
@@ -662,7 +664,7 @@ void CommandControl::mark_needed_removable(const Lit p)
         case clause_t : {
             const Clause& cl = *clAllocator->getPointer(rp.getClause());
             for (int i = 0; i < cl.size(); i++){
-                if (i == clauseData[cl.getNum()].litPos[rp.getWatchNum()])
+                if (i == 0)
                     continue;
 
                 const Lit q  = cl[i];
@@ -1038,7 +1040,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             //Normal learnt
             learntLongs++;
             attachClause(*cl);
-            enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl), 0));
+            enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));
             break;
     }
 
@@ -1214,7 +1216,9 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     assumptions = assumps;
     startTime = cpuTime();
     resetStats();
-    lbool status = l_Undef; //Current status
+
+    //Current solving status
+    lbool status = l_Undef;
 
     uint64_t lastRestartPrint = numConflicts;
 

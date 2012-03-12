@@ -51,7 +51,6 @@ using std::endl;
 #define MAXSIZE ((1 << (EFFECTIVELY_USEABLE_BITS-NUM_BITS_OUTER_OFFSET))-1)
 
 ClauseAllocator::ClauseAllocator()
-    : maxClauseNum(0)
 {
     assert(MIN_LIST_SIZE < MAXSIZE);
 
@@ -79,7 +78,7 @@ Clause* ClauseAllocator::Clause_new(const T& ps, const uint32_t conflictNum)
 {
     assert(ps.size() > 2);
     void* mem = allocEnough(ps.size());
-    Clause* real= new (mem) Clause(ps, getNewClauseNum(ps.size()), conflictNum);
+    Clause* real= new (mem) Clause(ps, conflictNum);
 
     return real;
 }
@@ -241,7 +240,6 @@ of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
 void ClauseAllocator::clauseFree(Clause* c)
 {
     assert(!c->getFreed());
-    releaseClauseNum(c);
 
     c->setFreed();
     uint32_t outerOffset = getOuterOffset(c);
@@ -375,7 +373,6 @@ void ClauseAllocator::consolidate(
         }
     }
 
-    renumberClauses(clauses, control);
     putClausesIntoDatastruct(clauses);
 
     uint32_t outerPart = 0;
@@ -496,8 +493,20 @@ void ClauseAllocator::updateAllOffsetsAndPointers(T* solver)
         }
 
         if (it->reason.isClause() && !it->reason.isNULL()) {
-            assert(((NewPointerAndOffset*)(getPointer(it->reason.getClause())))->newOffset != std::numeric_limits<uint32_t>::max());
-            it->reason = PropBy(((NewPointerAndOffset*)(getPointer(it->reason.getClause())))->newOffset, it->reason.getWatchNum());
+
+            //Has not been marked as invalid
+            assert(
+                ((NewPointerAndOffset*)(getPointer(it->reason.getClause())))
+                ->newOffset !=
+                std::numeric_limits<uint32_t>::max()
+            );
+
+            //Update reason
+            it->reason = PropBy(
+                ((NewPointerAndOffset*)(getPointer(it->reason.getClause())))
+                ->newOffset
+            );
+
         }
     }
 }
@@ -548,53 +557,5 @@ void ClauseAllocator::updatePointers(vector<pair<Clause*, uint32_t> >& toUpdate)
 {
     for (vector<pair<Clause*, uint32_t> >::iterator it = toUpdate.begin(), end = toUpdate.end(); it != end; it++) {
         it->first = (((NewPointerAndOffset*)(it->first))->newPointer);
-    }
-}
-
-uint32_t ClauseAllocator::getNewClauseNum(const uint32_t size)
-{
-    //If size is 3, it's special, nothing to do really
-    if (size == 3)
-        return std::numeric_limits<uint32_t>::max();
-
-    uint32_t toret;
-    if (freedNums.empty()) {
-        toret = maxClauseNum;
-        maxClauseNum++;
-    } else {
-        toret = freedNums.back();
-        freedNums.pop_back();
-    }
-    return toret;
-}
-
-void ClauseAllocator::renumberClauses(
-    vector<Clause*>& clauses
-    , Solver* control
-) {
-    vector<ClauseData> newData;
-    freedNums.clear();
-    maxClauseNum = 0;
-    for (vector<Clause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
-        assert((**it).size() > 2);
-        if ((**it).size() > 3) {
-            //Update the newDatas
-            newData.push_back(control->clauseData[(*it)->getNum()]);
-
-            //Update the clause
-            (*it)->setNum(maxClauseNum);
-            maxClauseNum++;
-        }
-    }
-
-    //Swap clauseData-s to newDatas
-    control->clauseData.swap(newData);
-}
-
-void ClauseAllocator::releaseClauseNum(Clause* cl)
-{
-    if (cl->getNum() != std::numeric_limits<uint32_t>::max()) {
-        freedNums.push_back(cl->getNum());
-        cl->setNum(std::numeric_limits<uint32_t>::max());
     }
 }

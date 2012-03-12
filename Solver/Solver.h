@@ -145,7 +145,6 @@ public:
     uint32_t    getNumUnitaries() const;    ///<Return the set of unitary clauses
     uint32_t    countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
-    ClauseData  getClauseData(size_t clause_num) const;
     void        resetClauseDataStats(size_t clause_num);
 
 protected:
@@ -172,7 +171,6 @@ protected:
     ClauseAllocator*    clAllocator;
     bool                ok;               ///< If FALSE, the constraints are already unsatisfiable. No part of the solver state may be used!
     vector<vec<Watched> > watches;        ///< 'watches[lit]' is a list of constraints watching 'lit'
-    vector<ClauseData>  clauseData;       ///< Which lit is watched in clause
     vector<lbool>       assigns;          ///< The current assignments
     vector<Lit>         trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
@@ -243,7 +241,7 @@ protected:
     /////////////////
     // Operations on clauses:
     /////////////////
-    virtual void       attachClause        (const Clause& c, const uint16_t point1 = 0, const uint16_t point2 = 1, const bool checkAttach = true);
+    virtual void       attachClause        (const Clause& c, const bool checkAttach = true);
     virtual void       attachBinClause     (const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst = true);
     void       detachClause        (const Clause& c);       ///<Detach clause from watch lists
     virtual void       detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
@@ -717,17 +715,6 @@ inline size_t Solver::getTrailSize() const
 inline bool Solver::satisfied(const BinaryClause& bin)
 {
     return ((value(bin.getLit1()) == l_True) || (value(bin.getLit2()) == l_True));
-}
-
-inline ClauseData Solver::getClauseData(const size_t clause_num) const
-{
-    return clauseData[clause_num];
-}
-
-inline void Solver::resetClauseDataStats(const size_t clause_num)
-{
-    clauseData[clause_num].numPropAndConfl = 0;
-    clauseData[clause_num].numLitVisited = 0;
 }
 
 #endif //SOLVER_H
