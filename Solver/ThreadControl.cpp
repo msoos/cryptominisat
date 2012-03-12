@@ -681,7 +681,6 @@ lbool ThreadControl::solve()
     restPrinter->printRestartStat("B");
 
     //Initialise stuff
-    vector<lbool> solution;
     nextCleanLimit = conf.startClean*2;
     nextCleanLimitInc = conf.startClean;
 
