@@ -1240,6 +1240,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             insertVarOrder(var);
         }
     }
+    assert(order_heap.heapProperty());
 
     // Search:
     genRandomVarActMultDiv();
