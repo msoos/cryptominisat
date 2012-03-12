@@ -291,6 +291,8 @@ void CommandControl::analyzeHelper(
     , bool var_bump_necessary
 ) {
     const Var var = lit.var();
+    assert(varData[var].elimed == ELIMED_NONE
+        || varData[var].elimed == ELIMED_QUEUED_VARREPLACER);
 
     //If var is at level 0, don't do anything with it, just skip
     if (varData[var].level == 0)
