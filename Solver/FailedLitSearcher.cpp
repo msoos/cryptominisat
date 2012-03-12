@@ -122,7 +122,7 @@ bool FailedLitSearcher::search()
     while (control->bogoProps + extraTime < origBogoProps + numPropsTodo) {
         const uint32_t litnum = control->mtrand.randInt() % (control->nVars()*2);
         Lit lit = Lit::toLit(litnum);
-        extraTime += 1;
+        extraTime += 20;
 
         //Check if var is set already
         if (control->value(lit.var()) != l_Undef
