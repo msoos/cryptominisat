@@ -1651,7 +1651,7 @@ void ThreadControl::findAllAttach() const
             assert(!cl->getFreed());
             cout << (*cl) << endl;
 
-            //Assert clauseData correctness
+            //Assert watch correctness
             if ((*cl)[0] != lit
                 && (*cl)[1] != lit
             ) {
