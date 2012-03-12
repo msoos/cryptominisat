@@ -272,7 +272,7 @@ void Main::parseCommandLine()
         , "Search for given amount of solutions")
     ("dumplearnts", po::value<std::string>(&conf.learntsFilename)
         , "If stopped dump learnt clauses here")
-    ("maxdump", po::value<uint32_t>(&conf.maxDumpLearntsSize)->default_value(conf.maxDumpLearntsSize)
+    ("maxdump", po::value<uint32_t>(&conf.maxDumpLearntsSize)
         , "Maximum length of learnt clause dumped")
     ("dumporig", po::value<std::string>()
         , "If stopped, dump simplified original problem here")
@@ -456,7 +456,8 @@ void Main::parseCommandLine()
     }
 
     if (vm.count("maxdump")) {
-        if (!conf.needToDumpLearnts) throw WrongParam("maxdumplearnts", "--dumplearnts=<filename> must be first activated before issuing -maxdumplearnts=<size>");
+        if (!conf.needToDumpLearnts)
+            throw WrongParam("maxdumplearnts", "--dumplearnts=<filename> must be first activated before issuing --maxdumplearnts=<size>");
     }
 
     if (vm.count("greedyunbound")) {
