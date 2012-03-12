@@ -688,7 +688,7 @@ lbool ThreadControl::solve()
     lbool status = ok ? l_Undef : l_False;
 
     //If still unknown, simplify
-    if (status == l_Undef)
+    if (status == l_Undef && nVars() > 0)
         status = simplifyProblem(conf.simpBurstSConf);
 
     //Iterate until solved
