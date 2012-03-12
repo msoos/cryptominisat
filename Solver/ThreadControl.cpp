@@ -170,6 +170,18 @@ Clause* ThreadControl::addClauseInt(const T& lits
             return NULL;
         else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
+
+            if (varData[p.var()].elimed != ELIMED_NONE
+                && varData[p.var()].elimed != ELIMED_QUEUED_VARREPLACER
+            ) {
+                cout << "ERROR: clause " << lits << " contains literal "
+                << p << " whose variable has been eliminated (elim number "
+                << (int) (varData[p.var()].elimed) << " )"
+                << endl;
+            }
+
+            //Variables that have been eliminated cannot be added internally
+            //as part of a clause. That's a bug
             assert(varData[p.var()].elimed == ELIMED_NONE
                     || varData[p.var()].elimed == ELIMED_QUEUED_VARREPLACER);
         }
