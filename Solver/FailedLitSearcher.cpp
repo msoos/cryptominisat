@@ -77,6 +77,7 @@ struct ActSorter
 bool FailedLitSearcher::search()
 {
     assert(control->decisionLevel() == 0);
+    assert(control->nVars() > 0);
 
     uint64_t numPropsTodo = 140L*1000L*1000L;
 
