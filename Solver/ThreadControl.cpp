@@ -41,6 +41,7 @@ using std::endl;
 ThreadControl::ThreadControl(const SolverConf& _conf) :
     CommandControl(_conf, this)
     , mtrand(_conf.origSeed)
+    , backupActivityInc(_conf.var_inc_start)
     , nbReduceDB(0)
     , conf(_conf)
     , needToInterrupt(false)
@@ -515,6 +516,7 @@ Var ThreadControl::newVar(const bool dvar)
     litReachable.push_back(LitReachData());
     litReachable.push_back(LitReachData());
     backupActivity.push_back(0);
+    backupPolarity.push_back(false);
 
     CommandControl::newVar();
 
@@ -682,9 +684,11 @@ lbool ThreadControl::solve()
         status = CommandControl::solve(numConfls);
 
         backupActivity.clear();
+        backupPolarity.clear();
         backupActivity.resize(varData.size());
+        backupPolarity.resize(varData.size());
         for (size_t i = 0; i < varData.size(); i++) {
-            varData[i].polarity = CommandControl::getSavedPolarity(i);
+            backupPolarity[i] = CommandControl::getSavedPolarity(i);
             backupActivity[i] = CommandControl::getSavedActivity(i);
         }
         backupActivityInc = CommandControl::getVarInc();
@@ -870,6 +874,7 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
         default:
             cl = clAllocator->Clause_new(lits, sumConflicts);
             cl->makeLearnt(glue);
+            learnts.push_back(cl);
             break;
     }
     sumConflicts++;

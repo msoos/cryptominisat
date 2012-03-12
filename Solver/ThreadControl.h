@@ -128,6 +128,7 @@ class ThreadControl : public CommandControl
         friend class RestartPrinter;
         RestartPrinter* restPrinter;
         vector<uint32_t> backupActivity;
+        vector<bool>     backupPolarity;
         uint32_t         backupActivityInc;
 
         /////////////////////
@@ -295,7 +296,7 @@ inline uint64_t ThreadControl::getNextCleanLimit() const
 
 inline bool ThreadControl::getSavedPolarity(const Var var) const
 {
-    return varData[var].polarity;
+    return backupPolarity[var];
 }
 
 inline uint32_t ThreadControl::getSavedActivity(const Var var) const
