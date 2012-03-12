@@ -67,7 +67,6 @@ class CommandControl : public Solver
 
         //For connection with ThreadControl
         void      initialiseSolver();
-        uint64_t  units_from_other_threads;
 
         // Statistics
         //
@@ -90,6 +89,7 @@ class CommandControl : public Solver
         uint64_t learntBins;
         uint64_t learntTris;
         uint64_t learntLongs;
+        size_t origTrailSize;
 
         //Stats for conflicts
         uint64_t conflsBinIrred;
@@ -98,6 +98,13 @@ class CommandControl : public Solver
         uint64_t conflsLongIrred;
         uint64_t conflsLongRed;
         void updateConflStats(); //Based on lastConflictCausedBy, update confl stats
+
+        //Props stats
+        uint64_t propsOrig;
+        uint64_t propsBinOrig;
+        uint64_t propsTriOrig;
+        uint64_t propsLongIrredOrig;
+        uint64_t propsLongRedOrig;
 
         //History statistics
         bqueue<uint32_t> branchDepthHist;   ///< Avg branch depth in current restart

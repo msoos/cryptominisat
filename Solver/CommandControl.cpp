@@ -42,9 +42,6 @@ using std::endl;
 CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control) :
         Solver(_control->clAllocator, AgilityData(_conf.agilityG, _conf.agilityLimit))
 
-        //Sync
-        , units_from_other_threads(0)
-
         // Stats
         , numConflicts(0)
         , numRestarts(0)
@@ -128,10 +125,6 @@ void CommandControl::printStats()
 
     //Restarts stats
     printStatsLine("c restarts", numRestarts);
-
-    //Learnts stats
-    printStatsLine("c units from other threads"
-                    , units_from_other_threads);
 
     //Search stats
     cout << "c CONFLS stats" << endl;
@@ -218,23 +211,57 @@ void CommandControl::printStats()
 
     //Props
     cout << "c PROPS stats" << endl;
-    printStatsLine("c Mbogo-props", bogoProps/(1000*1000), (double)bogoProps/(cpu_time*1000*1000), "/ sec");
-    printStatsLine("c Mprops", propagations/(1000*1000), (double)propagations/(cpu_time*1000*1000), "/ sec");
-    printStatsLine("c decisions", decisions, (double)decisions_rnd*100.0/(double)decisions, "% random");
-    printStatsLine("c propsBin", propsBin, 100.0*(double)propsBin/(double)propagations, "% of propagations");
-    printStatsLine("c propsTri", propsTri, 100.0*(double)propsTri/(double)propagations, "% of propagations");
-    printStatsLine("c propsLongIrred", propsLongIrred, 100.0*(double)propsLongIrred/(double)propagations, "% of propagations");
-    printStatsLine("c propsLongRed", propsLongRed, 100.0*(double)propsLongRed/(double)propagations, "% of propagations");
+    printStatsLine("c Mbogo-props", bogoProps/(1000*1000)
+        , (double)bogoProps/(cpu_time*1000*1000)
+        , "/ sec"
+    );
+
+    const uint64_t thisProps = propagations - propsOrig;
+    printStatsLine("c Mprops", thisProps/(1000*1000)
+        , (double)thisProps/(cpu_time*1000*1000)
+        , "/ sec"
+    );
+
+    printStatsLine("c decisions", decisions
+        , (double)decisions_rnd*100.0/(double)decisions
+        , "% random"
+    );
+
+    const uint64_t thisPropsBin = propsBin - propsBinOrig;
+    const uint64_t thisPropsTri = propsTri - propsTriOrig;
+    const uint64_t thisPropsLongIrred = propsLongIrred - propsLongIrredOrig;
+    const uint64_t thisPropsLongRed = propsLongRed - propsLongRedOrig;
+
+    printStatsLine("c propsBin", thisPropsBin
+        , 100.0*(double)thisPropsBin/(double)thisProps
+        , "% of propagations"
+    );
+
+    printStatsLine("c propsTri", thisPropsTri
+        , 100.0*(double)thisPropsTri/(double)thisProps
+        , "% of propagations"
+    );
+
+    printStatsLine("c propsLongIrred", thisPropsLongIrred
+        , 100.0*(double)thisPropsLongIrred/(double)thisProps
+        , "% of propagations"
+    );
+
+    printStatsLine("c propsLongRed", thisPropsLongRed
+        , 100.0*(double)thisPropsLongRed/(double)thisProps
+        , "% of propagations"
+    );
+
     uint64_t totalProps =
-    propsBin + propsTri + propsLongIrred + propsLongRed
-     + decisions + assumption_decisions + units_from_other_threads
+    thisPropsBin + thisPropsTri + thisPropsLongIrred + thisPropsLongRed
+     + decisions + assumption_decisions
      + numConflicts;
 
     cout
     << "c totprops: "
     << totalProps
     << " missing: "
-    << ((int64_t)propagations-(int64_t)totalProps)
+    << ((int64_t)thisProps-(int64_t)totalProps)
     << endl;
     //assert(propagations == totalProps);
 
@@ -1066,10 +1093,15 @@ void CommandControl::initialiseSolver()
     conflsTri = 0;
     conflsLongIrred = 0;
 
+    //Props state
+    propsOrig = propagations;
+    propsBinOrig = propsBin;
+    propsTriOrig = propsTri;
+    propsLongIrredOrig = propsLongIrred;
+    propsLongRedOrig = propsLongRed;
+
     //Set already set vars
-    for(vector<Lit>::const_iterator it = trail.begin(), end = trail.end(); it != end; it++) {
-        units_from_other_threads++;
-    }
+    origTrailSize = trail.size();
 
     order_heap.filter(VarFilter(this, control));
 }
