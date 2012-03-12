@@ -714,7 +714,7 @@ lbool ThreadControl::solve()
         backupActivity.resize(varData.size());
         backupPolarity.resize(varData.size());
         for (size_t i = 0; i < varData.size(); i++) {
-            backupPolarity[i] = CommandControl::getSavedPolarity(i);
+            backupPolarity[i] = varData[i].polarity;
             backupActivity[i] = CommandControl::getSavedActivity(i);
         }
         backupActivityInc = CommandControl::getVarInc();

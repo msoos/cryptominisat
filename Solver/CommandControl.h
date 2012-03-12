@@ -58,7 +58,6 @@ class CommandControl : public Solver
         void     printRestartStat();
         uint64_t getNumConflicts() const;
         void     setNeedToInterrupt();
-        bool     getSavedPolarity(Var var) const;
         uint32_t getSavedActivity(Var var) const;
         uint32_t getVarInc() const;
 
@@ -294,11 +293,6 @@ inline lbool CommandControl::solve(const uint64_t maxConfls)
 {
     vector<Lit> tmp;
     return solve(tmp, maxConfls);
-}
-
-inline bool CommandControl::getSavedPolarity(const Var var) const
-{
-    return varData[var].polarity;
 }
 
 inline uint32_t CommandControl::getSavedActivity(Var var) const
