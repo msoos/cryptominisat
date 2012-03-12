@@ -85,7 +85,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isClause());
             #endif
-            data1 = blockedLit.toInt() << 1;
+            data1 = blockedLit.toInt();
         }
 
         bool isBinary() const
