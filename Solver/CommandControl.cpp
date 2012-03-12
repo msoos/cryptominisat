@@ -230,7 +230,12 @@ void CommandControl::printStats()
      + decisions + assumption_decisions + units_from_other_threads
      + numConflicts;
 
-    cout << "c totprops: " << totalProps << " missing: " << ((int64_t)propagations-(int64_t)totalProps) << endl;
+    cout
+    << "c totprops: "
+    << totalProps
+    << " missing: "
+    << ((int64_t)propagations-(int64_t)totalProps)
+    << endl;
     //assert(propagations == totalProps);
 
     printStatsLine("c conflict literals", tot_literals, (double)(max_literals - tot_literals)*100.0/ (double)max_literals, "% deleted");
