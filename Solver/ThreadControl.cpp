@@ -473,6 +473,7 @@ void ThreadControl::renumberVariables()
     //Update local data
     myTime = cpuTime();
     updateArray(backupActivity, interToOuter);
+    updateArray(backupPolarity, interToOuter);
 
     //Update reachability
     updateArray(litReachable, interToOuter2);
