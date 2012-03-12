@@ -435,7 +435,9 @@ void GateFinder::findOrGates(const bool learntGatesToo)
 
         //Ran out of time
         if (*subsumer->toDecrease < 0) {
-            cout << "Finishing gate-finding" << endl;
+            if (control->conf.verbosity >= 1) {
+                cout << "c Finishing gate-finding: ran out of time" << endl;
+            }
             break;
         }
 
