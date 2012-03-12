@@ -492,7 +492,7 @@ void ThreadControl::renumberVariables()
 
 Var ThreadControl::newVar(const bool dvar)
 {
-    Var var = CommandControl::newVar();
+    const Var var = decision_var.size();
 
     outerToInter.push_back(var);
     interToOuter.push_back(var);
@@ -503,6 +503,8 @@ Var ThreadControl::newVar(const bool dvar)
     litReachable.push_back(LitReachData());
     litReachable.push_back(LitReachData());
     backupActivity.push_back(0);
+
+    CommandControl::newVar();
 
     varReplacer->newVar();
     subsumer->newVar();
