@@ -101,9 +101,6 @@ add_custom_command(
     TARGET copy
     COMMAND ${CMAKE_COMMAND} -E copy Solver/cryptominisat .
     #COMMAND ${CMAKE_COMMAND} -E copy scripts/fuzzers/fuzzSat/fuzzSat ../scripts/
-    COMMAND ${CMAKE_COMMAND} -E copy scripts/fuzzers/cnfFuzz/cnfFuzz ../scripts/
-    COMMAND ${CMAKE_COMMAND} -E copy scripts/fuzzers/vegardFuzz/vegardFuzz ../scripts/
-    COMMAND ${CMAKE_COMMAND} -E copy scripts/PrecoSat/precosat ../scripts/
     COMMAND ${CMAKE_COMMAND} -E copy dsharp/dsharp_exec .
     COMMAND ${CMAKE_COMMAND} -E copy dsharp/dnnf2cnf/dnnf2cnf .
 )
