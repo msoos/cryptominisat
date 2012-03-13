@@ -789,7 +789,7 @@ lbool ThreadControl::solve()
         backupActivityInc = CommandControl::getVarInc();
 
         if (status != l_False)
-            moveReduce();
+            fullReduce();
 
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
         if (status != l_Undef)

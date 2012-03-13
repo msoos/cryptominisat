@@ -1280,7 +1280,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
                 << " maxConfls:" << maxConfls
                 << " Trail size: " << trail.size() << endl;
             }
-            control->moveReduce();
+            control->fullReduce();
             control->consolidateMem();
 
             control->restPrinter->printRestartStat("N");

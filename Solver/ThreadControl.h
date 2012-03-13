@@ -169,6 +169,7 @@ class ThreadControl : public CommandControl
 
         ///////////////////////////
         // Clause cleaning
+        void        fullReduce();
         void        clearPropConfl(vector<Clause*>& clauseset);
         void        reduceDB();           ///<Reduce the set of learnt clauses.
         uint64_t    nbReduceDB;           ///<Number of times learnt clause have been cleaned
@@ -218,7 +219,6 @@ class ThreadControl : public CommandControl
         void                reArrangeClause(Clause* clause);
         void                checkLiteralCount() const;
         void                printAllClauses() const;
-        void                moveReduce();
         void                consolidateMem();
 
         /////////////////
