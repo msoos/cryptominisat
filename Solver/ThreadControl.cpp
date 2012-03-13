@@ -678,7 +678,7 @@ void ThreadControl::reduceDB()
     #endif
 
     if (conf.verbosity >= 2) {
-        cout << "Removenum: " << removeNum;
+        cout << "c To remove (according to remove ratio): " << removeNum;
         if (removeNum <= alreadyRemoved)
             removeNum = 0;
         else
