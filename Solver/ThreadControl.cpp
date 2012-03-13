@@ -1212,7 +1212,7 @@ void ThreadControl::fullReduce()
 
     reduceDB();
     nextCleanLimit += nextCleanLimitInc;
-    nextCleanLimitInc *= 1.1;
+    nextCleanLimitInc *= conf.increaseClean;
 }
 
 void ThreadControl::consolidateMem()

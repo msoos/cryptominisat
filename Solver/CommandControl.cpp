@@ -1251,7 +1251,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     uint64_t rest = conf.restart_first;
     while (status == l_Undef
         && !needToInterrupt
-        && control->getSumConflicts() < maxConfls
+        && numConflicts < maxConfls
     ) {
         assert(numConflicts < maxConfls);
 
@@ -1260,7 +1260,15 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         if (status != l_Undef)
             break;
 
-        if (control->getSumConflicts() >= maxConfls) {
+        //Print restart stat
+        if (conf.verbosity >= 1
+            && (lastRestartPrint + 800) < numConflicts
+        ) {
+            printRestartStat();
+            lastRestartPrint = numConflicts;
+        }
+
+        if (numConflicts >= maxConfls) {
             if (conf.verbosity >= 1) {
                 cout
                 << "c thread(maxconfl) Trail size: " << trail.size()
@@ -1285,13 +1293,6 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
             control->restPrinter->printRestartStat("N");
             genRandomVarActMultDiv();
-        }
-
-        if (conf.verbosity >= 1) {
-            if ((lastRestartPrint + 800) < numConflicts) {
-                printRestartStat();
-                lastRestartPrint = numConflicts;
-            }
         }
     }
 
