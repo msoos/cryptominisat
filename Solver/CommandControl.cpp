@@ -1308,7 +1308,6 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
                 << " Trail size: " << trail.size() << endl;
             }
             control->fullReduce();
-            control->consolidateMem();
 
             control->restPrinter->printRestartStat("N");
             genRandomVarActMultDiv();

@@ -1229,6 +1229,7 @@ void ThreadControl::fullReduce()
     }
 
     reduceDB();
+    control->consolidateMem();
 
     if (conf.doClearPropConfEveryClauseCleaning) {
         clearPropConfl(clauses);
