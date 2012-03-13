@@ -303,17 +303,25 @@ void ClauseAllocator::consolidate(
         return;
     }
 
-    #ifdef DEBUG_CLAUSEALLOCATOR
-    cout << "c ------ Consolidating Memory ------------" << endl;
-    #endif //DEBUG_CLAUSEALLOCATOR
-
+    //Calculate the new size needed
     int64_t newMaxSizeNeed = (double)sum*1.2 + MIN_LIST_SIZE;
     #ifdef DEBUG_CLAUSEALLOCATOR
+    cout << "c ------ Consolidating Memory ------------" << endl;
     cout << "c newMaxSizeNeed = " << newMaxSizeNeed << endl;
     #endif //DEBUG_CLAUSEALLOCATOR
+
+    //Stats
+    size_t oldSumMaxSize = 0;
+    size_t oldSumSize = 0;
+    size_t newSumMaxSize = 0;
+    size_t newSumSize = 0;
+    size_t oldNumPieces = sizes.size();
+    size_t newNumPieces = 0;
+
     vector<uint32_t> newMaxSizes;
     for (uint32_t i = 0; i < (1 << NUM_BITS_OUTER_OFFSET); i++) {
-        if (newMaxSizeNeed <= 0) break;
+        if (newMaxSizeNeed <= 0)
+            break;
 
         uint32_t thisMaxSize = std::min(newMaxSizeNeed, (int64_t)MAXSIZE);
         if (i == 0) {
@@ -325,6 +333,9 @@ void ClauseAllocator::consolidate(
         newMaxSizeNeed -= thisMaxSize;
         assert(thisMaxSize <= MAXSIZE);
         newMaxSizes.push_back(thisMaxSize);
+        newSumMaxSize += thisMaxSize;
+        newNumPieces++;
+
         //because the clauses don't always fit
         //it might occur that there is enough place in total
         //but the very last clause would need to be fragmented
@@ -398,6 +409,7 @@ void ClauseAllocator::consolidate(
         ptr.newPointer = (Clause*)newDataStartsPointers[outerPart];
 
         newSizes[outerPart] += sizeNeeded;
+        newSumSize += sizeNeeded;
         newOrigClauseSizes[outerPart].push_back(sizeNeeded);
         newDataStartsPointers[outerPart] += sizeNeeded;
     }
@@ -406,8 +418,11 @@ void ClauseAllocator::consolidate(
     updatePointers(control->learnts);
     updateAllOffsetsAndPointers(control);
 
-    for (uint32_t i = 0; i < dataStarts.size(); i++)
+    for (uint32_t i = 0; i < dataStarts.size(); i++) {
         free(dataStarts[i]);
+        oldSumMaxSize += maxSizes[i];
+        oldSumSize += sizes[i];
+    }
 
     dataStarts.clear();
     maxSizes.clear();
@@ -424,9 +439,23 @@ void ClauseAllocator::consolidate(
     }
     newOrigClauseSizes.swap(origClauseSizes);
 
-    if (control->conf.verbosity >= 3) {
-        cout << "c Consolidated memory. Time: "
-        << cpuTime() - myTime << endl;
+    if (control->conf.verbosity >= 1) {
+        cout
+        << "c Consolidated memory."
+        << " old sum max size: "
+        << ((double)oldSumMaxSize/(1000.0*1000.0)) << "M"
+        << " old used size: "
+        << ((double)oldSumSize/(1000.0*1000.0)) << "M"
+        << " (" << oldNumPieces << " piece(s) )"
+
+        << " || new sum max size: "
+        << ((double)newSumMaxSize/(1000.0*1000.0)) << "M"
+        << " new used size: "
+        << ((double)newSumSize/(1000.0*1000.0)) << "M"
+        << " (" << oldNumPieces << " piece(s) )"
+
+        << " Time: " << cpuTime() - myTime
+        << endl;
     }
 }
 
