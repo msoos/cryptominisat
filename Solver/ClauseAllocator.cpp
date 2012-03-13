@@ -461,8 +461,14 @@ void ClauseAllocator::consolidate(
 
 void ClauseAllocator::putClausesIntoDatastruct(std::vector<Clause*>& clauses)
 {
+    //Setup otherclauses and threelongclauses
     otherClauses.clear();
     threeLongClauses.clear();
+
+    //Observe that 3-long clauses are never resolved during propagation
+    //and conflict generation. So we put them at the beginning
+    //and then they don't bother anyone.
+
     for (uint32_t i = 0; i < clauses.size(); i++) {
         Clause* c = clauses[i];
         if (c->size() <= 3) {
