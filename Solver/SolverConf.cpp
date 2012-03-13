@@ -33,6 +33,7 @@ SolverConf::SolverConf() :
         , clauseCleaningType(CLEAN_CLAUSES_PROPCONFL_BASED)
         , preClauseCleanPropAndConfl(true)
         , preClauseCleanLimit(2)
+        , doClearPropConfEveryClauseCleaning(true)
         , ratioRemoveClauses(1.0/2.0)
         , numCleanBetweenSimplify(3)
         , startClean(4000)

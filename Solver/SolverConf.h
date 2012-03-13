@@ -47,6 +47,7 @@ class SolverConf
         clauseCleaningTypes clauseCleaningType;
         int       preClauseCleanPropAndConfl;
         uint32_t  preClauseCleanLimit;
+        int       doClearPropConfEveryClauseCleaning;
         double    ratioRemoveClauses; ///< Remove this percentage of clauses at every database reduction round
         size_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         size_t    startClean;

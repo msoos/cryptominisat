@@ -169,6 +169,7 @@ class ThreadControl : public CommandControl
 
         ///////////////////////////
         // Clause cleaning
+        void        clearPropConfl(vector<Clause*>& clauseset);
         void        reduceDB();           ///<Reduce the set of learnt clauses.
         uint64_t    nbReduceDB;           ///<Number of times learnt clause have been cleaned
         uint64_t    numCleanedLearnts;    ///< Number of times learnt clauses have been removed through simplify() up until now
@@ -240,8 +241,21 @@ class ThreadControl : public CommandControl
         bool findClause(const Clause* c) const;
         void checkNoWrongAttach() const;
         void calcClauseDistrib();
-        uint64_t sumClauseData(const vector<Clause*>& toprint, bool learnt);
-        void printStats(std::string name, const vector<UsageStats>& stats, bool learnt) const;
+        uint64_t sumClauseData(
+            const vector<Clause*>& toprint
+            , bool learnt
+        ) const;
+        void printPropConflStats(
+            std::string name
+            , const vector<UsageStats>& stats
+            , bool learnt
+        ) const;
+
+        void dumpIndividualPropConflStats(
+            std::string name
+            , const vector<UsageStats>& stats
+            , const bool learnt
+        ) const;
 };
 
 inline void ThreadControl::setDecisionVar(const uint32_t var)

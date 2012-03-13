@@ -980,8 +980,7 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
 uint64_t ThreadControl::sumClauseData(
     const vector<Clause*>& toprint
     , const bool learnt
-)
-{
+) const {
     vector<UsageStats> usageStats;
     vector<UsageStats> usageStatsGlue;
 
@@ -1001,20 +1000,17 @@ uint64_t ThreadControl::sumClauseData(
         if (cl.size() == 3)
             continue;
 
-        //Summarize for all threads
-        size_t sumPropConfl = cl.numPropAndConfl;
-        size_t sumLitVisited = cl.numLitVisited;
-        //Move stats here
-        sumAllPropsAndConfls += sumPropConfl;
-        sumAllLitsVisited += sumLitVisited;
+        //Sum up stats
+        sumAllPropsAndConfls += cl.numPropAndConfl;
+        sumAllLitsVisited += cl.numLitVisited;
 
         //Update statistics
         if (usageStats.size() < cl.size() + 1)
             usageStats.resize(cl.size()+1);
 
         usageStats[clause_size].num++;
-        usageStats[clause_size].sumPropConfl += sumPropConfl;
-        usageStats[clause_size].sumLitVisited += sumLitVisited;
+        usageStats[clause_size].sumPropConfl += cl.numPropAndConfl;
+        usageStats[clause_size].sumLitVisited += cl.numLitVisited;
 
         if (learnt) {
             const size_t glue = cl.getGlue();
@@ -1024,56 +1020,58 @@ uint64_t ThreadControl::sumClauseData(
             }
 
             usageStatsGlue[glue].num++;
-            usageStatsGlue[glue].sumPropConfl+=sumPropConfl;
-            usageStatsGlue[glue].sumLitVisited+=sumLitVisited;
+            usageStatsGlue[glue].sumPropConfl += cl.numPropAndConfl;
+            usageStatsGlue[glue].sumLitVisited += cl.numLitVisited;
         }
 
-/*
-        //Print clause data
-        cout
-        << "Clause size " << std::setw(4) << cl.size();
-        if (cl.learnt()) {
-            cout << " glue : " << std::setw(4) << cl.getGlue();
-        }
-        cout
-        << " Props&confls: " << std::setw(10) << sumPropConfl
-        << " Lit visited: " << std::setw(10)<< sumLitVisited
-        << " Props&confls/Litsvisited*10: ";
-        if (sumLitVisited > 0) {
+        if (conf.verbosity >= 3) {
+            //Print clause data
             cout
-            << std::setw(6) << std::fixed << std::setprecision(4)
-            << (10.0*(double)sumPropConfl/(double)sumLitVisited);
+            << "Clause size " << std::setw(4) << cl.size();
+            if (cl.learnt()) {
+                cout << " glue : " << std::setw(4) << cl.getGlue();
+            }
+            cout
+            << " Props&confls: " << std::setw(10) << cl.numPropAndConfl
+            << " Lit visited: " << std::setw(10)<< cl.numLitVisited
+            << " Props&confls/Litsvisited*10: ";
+            if (cl.numLitVisited > 0) {
+                cout
+                << std::setw(6) << std::fixed << std::setprecision(4)
+                << (10.0*(double)cl.numPropAndConfl/(double)cl.numLitVisited);
+            }
+            cout << endl;
         }
-        cout << endl;*/
     }
 
-    //Print SUM stats
-    if (learnt) {
-        cout << "c Learnt    ";
-    } else {
-        cout << "c Non-learnt";
+    if (conf.verbosity >= 1) {
+        //Print SUM stats
+        if (learnt) {
+            cout << "c Learnt    ";
+        } else {
+            cout << "c Non-learnt";
+        }
+        cout << " all lits visited: " << sumAllLitsVisited/1000UL
+        << " K" << endl;
     }
-    cout << " all lits visited: " << sumAllLitsVisited/1000UL
-    << " K" << endl;
 
-    /*
-    //Print Statistics
-    printStats("clause-len", usageStats, learnt);
+    //Print more stats
+    if (conf.verbosity >= 3) {
+        printPropConflStats("clause-len", usageStats, learnt);
 
-    if (learnt) {
-        printStats("clause-glue", usageStatsGlue, learnt);
-    }*/
+        if (learnt) {
+            printPropConflStats("clause-glue", usageStatsGlue, learnt);
+        }
+    }
 
     return sumAllLitsVisited;
 }
 
-void ThreadControl::printStats(
+void ThreadControl::printPropConflStats(
     std::string name
     , const vector<UsageStats>& stats
     , const bool learnt
-) const
-{
-    /*
+) const {
     for(size_t i = 0; i < stats.size(); i++) {
         if (stats[i].num == 0)
             continue;
@@ -1082,27 +1080,39 @@ void ThreadControl::printStats(
         << name << " : " << std::setw(4) << i
         << " Avg. props&confls: " << std::setw(6) << std::fixed << std::setprecision(2)
         << ((double)stats[i].sumPropConfl/(double)stats[i].num)
+
         << " Avg. lits visited: " << std::setw(6) << std::fixed << std::setprecision(2)
         << ((double)stats[i].sumLitVisited/(double)stats[i].num);
+
         if (stats[i].sumLitVisited > 0) {
             cout
             << " Props&confls/Litsvisited*10: "
             << std::setw(6) << std::fixed << std::setprecision(4)
             << (10.0*(double)stats[i].sumPropConfl/(double)stats[i].sumLitVisited);
         }
-        cout << endl;
-    }*/
 
-    //File name
+        cout << endl;
+    }
+}
+
+void ThreadControl::dumpIndividualPropConflStats(
+    std::string name
+    , const vector<UsageStats>& stats
+    , const bool learnt
+) const {
+    //Generate file name
     std::stringstream ss;
     ss << "stats/propconflPERlitsvisited-stat-" << nbReduceDB << "-"
     << name << "-learnt-" << (int)learnt << ".txt";
 
+    //Open file
     std::ofstream file(ss.str().c_str());
     if (!file) {
         cout << "Couldn't open file " << ss.str() << " for writing!" << endl;
         exit(-1);
     }
+
+    //Dump stats per-glue/size line-by-line
     for(size_t i = 0; i < stats.size(); i++) {
         if (stats[i].sumLitVisited == 0)
             continue;
@@ -1113,16 +1123,19 @@ void ThreadControl::printStats(
         << endl;
     }
 
-    //File name
+    //Generate file name
     std::stringstream ss2;
     ss2 << "stats/AVGpropconfl-stat-" << nbReduceDB << "-"
     << name << "-learnt-" << (int)learnt << ".txt";
 
+    //Open file
     std::ofstream file2(ss2.str().c_str());
     if (!file2) {
         cout << "Couldn't open file " << ss2.str() << " for writing!" << endl;
         exit(-1);
     }
+
+    //Dump stats per glue/size line-by-line
     for(size_t i = 0; i < stats.size(); i++) {
         if (stats[i].num == 0)
             continue;
@@ -1134,13 +1147,36 @@ void ThreadControl::printStats(
     }
 }
 
-void ThreadControl::moveReduce()
+void ThreadControl::clearPropConfl(vector<Clause*>& clauseset)
 {
-    uint64_t sumAllLitsVisited = 0;
-    sumAllLitsVisited += sumClauseData(clauses, false);
-    sumAllLitsVisited += sumClauseData(learnts, true);
-    cout << "c all            lits visited: "
-    << sumAllLitsVisited/1000UL << " K" << endl;
+    //Clear prop&confl for normal clauses
+    for(vector<Clause*>::iterator
+        it = clauseset.begin(), end = clauseset.end()
+        ; it != end
+        ; it++
+    ) {
+        (*it)->numLitVisited = 0;
+        (*it)->numPropAndConfl = 0;
+    }
+}
+
+void ThreadControl::fullReduce()
+{
+    if (conf.verbosity >= 1) {
+        uint64_t sumAllLitsVisited = 0;
+        sumAllLitsVisited += sumClauseData(clauses, false);
+        sumAllLitsVisited += sumClauseData(learnts, true);
+
+        cout
+        << "c all            lits visited: "
+        << sumAllLitsVisited/1000UL << " K"
+        << endl;
+    }
+
+    if (conf.doClearPropConfEveryClauseCleaning) {
+        clearPropConfl(clauses);
+        clearPropConfl(learnts);
+    }
 
 
     reduceDB();
