@@ -240,14 +240,11 @@ void Main::parseCommandLine()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
         , "Remove at least this ratio of learnt clauses when doing learnt clause-cleaning")
     ("typeclean", po::value<string>(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
-        , "According to what metric clauses should be cleaned: 'size', 'glue' or 'propconfl' for sum of propagations and conflicts caused in last iteration")
+        , "Metric to use to clean clauses: 'size', 'glue' or 'propconfl' for sum of propagations and conflicts caused in last iteration")
     ("preclean", po::value<int>(&conf.preClauseCleanPropAndConfl)->default_value(conf.preClauseCleanPropAndConfl)
-        , "Before cleaning clauses with whatever sorting strategy \
-        remove learnt clauses whose sum of props&conflicts it caused \
-        during last iteration is less than 'precleanlimit' (see blow)")
+        , "Before cleaning clauses with whatever sorting strategy, remove learnt clauses whose sum of props&conflicts during last iteration is less than 'precleanlimit'")
     ("precleanlimit", po::value<uint32_t>(&conf.preClauseCleanLimit)->default_value(conf.preClauseCleanLimit)
-        , "Limit of sum of propagation&conflicts for pre-cleaning of clauses.\
-         See previous option")
+        , "Limit of sum of propagation&conflicts for pre-cleaning of clauses. See previous option")
     ("startClean", po::value<size_t>(&conf.startClean)->default_value(conf.startClean)
         , "Clean first time after this many conflicts")
     ("increaseClean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean)
