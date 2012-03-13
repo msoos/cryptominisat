@@ -34,9 +34,9 @@ SolverConf::SolverConf() :
         , doPreClauseCleanPropAndConfl(true)
         , preClauseCleanLimit(2)
         , doClearPropConfEveryClauseCleaning(true)
-        , ratioRemoveClauses(1.0/2.0)
+        , ratioRemoveClauses(1.0/3.0)
         , numCleanBetweenSimplify(3)
-        , startClean(4000)
+        , startClean(8000)
         , increaseClean(1.101)
 
         //var picking
