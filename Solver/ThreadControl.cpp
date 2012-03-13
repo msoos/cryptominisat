@@ -641,7 +641,14 @@ void ThreadControl::reduceDB()
             }
         }
         learnts.resize(learnts.size() -(i-j));
-        cout << "Already removed: " << alreadyRemoved << endl;
+
+        //Print how many have been removed thanks to pre-clean
+        if (conf.verbosity >= 2) {
+            cout
+            << "c cleaning learnts. Pre-clean removed: "
+            << alreadyRemoved
+            << endl;
+        }
     }
 
     switch (conf.clauseCleaningType) {
@@ -763,7 +770,8 @@ lbool ThreadControl::solve()
     //Iterate until solved
     while (status == l_Undef) {
         restPrinter->printRestartStat("N");
-        calcClauseDistrib();
+        if (conf.verbosity >= 2)
+            printClauseSizeDistrib();
 
         //This is crucial, since we need to attach() clauses to threads
         clauseCleaner->removeAndCleanAll();
@@ -1397,7 +1405,7 @@ void ThreadControl::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLear
     }
 }
 
-void ThreadControl::calcClauseDistrib()
+void ThreadControl::printClauseSizeDistrib()
 {
     size_t size3 = 0;
     size_t size4 = 0;

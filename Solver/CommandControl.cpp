@@ -1139,28 +1139,45 @@ void CommandControl::resetStats()
 
 lbool CommandControl::burstSearch()
 {
-    lbool status;
+    //Print what we will be doing
+    if (conf.verbosity >= 2) {
+        cout
+        << "Doing bust search for " << conf.burstSearchLen << " conflicts"
+        << endl;
+    }
 
+    //Save old config
     const double backup_rand = conf.random_var_freq;
     const RestType backup_restType = conf.restartType;
     const int backup_polar_mode = conf.polarity_mode;
+    uint32_t backup_var_inc_divider = var_inc_divider;
+    uint32_t backup_var_inc_multiplier = var_inc_multiplier;
 
+    //Set burst config
     conf.random_var_freq = 1;
     conf.polarity_mode = polarity_rnd;
     uint64_t rest_burst = conf.burstSearchLen;
     var_inc_divider = 1;
     var_inc_multiplier = 1;
-    status = search(SearchFuncParams(rest_burst), rest_burst);
 
+    //Do burst
+    lbool status = search(SearchFuncParams(rest_burst), rest_burst);
+
+    //Restore config
     conf.random_var_freq = backup_rand;
     conf.restartType = backup_restType;
     conf.polarity_mode = backup_polar_mode;
+    var_inc_divider = backup_var_inc_divider;
+    var_inc_multiplier = backup_var_inc_multiplier;
 
-    cout << "c after burst" << omp_get_thread_num()
-    << " " << numRestarts
-    << " " << numConflicts
-    << " " << order_heap.size()
-    << endl;
+    //Print what has happened
+    if (conf.verbosity >= 2) {
+        printRestartStat();
+
+        cout
+        << "c Burst finished"
+        << endl;
+    }
 
     return status;
 }

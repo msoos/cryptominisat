@@ -252,7 +252,7 @@ class ThreadControl : public CommandControl
         void findAllAttach() const;
         bool findClause(const Clause* c) const;
         void checkNoWrongAttach() const;
-        void calcClauseDistrib();
+        void printClauseSizeDistrib();
         UsageStats sumClauseData(
             const vector<Clause*>& toprint
             , bool learnt
