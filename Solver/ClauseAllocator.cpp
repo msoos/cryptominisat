@@ -459,6 +459,18 @@ void ClauseAllocator::consolidate(
     }
 }
 
+struct sortByClauseNumLookedAtDescending
+{
+    bool operator () (const Clause* x, const Clause* y)
+    {
+        if (x->numLookedAt > y->numLookedAt) return 1;
+        if (x->numLookedAt < y->numLookedAt) return 0;
+
+        //Second tie: size. If size is smaller, go first
+        return x->size() < y->size();
+    }
+};
+
 void ClauseAllocator::putClausesIntoDatastruct(std::vector<Clause*>& clauses)
 {
     //Setup otherclauses and threelongclauses
@@ -468,6 +480,9 @@ void ClauseAllocator::putClausesIntoDatastruct(std::vector<Clause*>& clauses)
     //Observe that 3-long clauses are never resolved during propagation
     //and conflict generation. So we put them at the beginning
     //and then they don't bother anyone.
+    //
+    //The rest of the clauses are then sorted according to how many times
+    //they were visited
 
     for (uint32_t i = 0; i < clauses.size(); i++) {
         Clause* c = clauses[i];
@@ -477,6 +492,8 @@ void ClauseAllocator::putClausesIntoDatastruct(std::vector<Clause*>& clauses)
         }
         otherClauses.push_back(c);
     }
+
+    std::sort(otherClauses.begin(), otherClauses.end(), sortByClauseNumLookedAtDescending());
 }
 
 Clause* ClauseAllocator::getClause()
