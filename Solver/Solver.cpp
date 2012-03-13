@@ -243,6 +243,7 @@ template<bool simple> inline bool Solver::propNormalClause(
     const uint32_t offset = i->getNormOffset();
     Clause& c = *clAllocator->getPointer(offset);
     c.numLookedAt++;
+    c.numLitVisited++;
 
     // Make sure the false literal is data[1]:
     if (c[0] == ~p) {
