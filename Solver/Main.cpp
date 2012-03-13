@@ -247,7 +247,7 @@ void Main::parseCommandLine()
         , "Limit of sum of propagation&conflicts for pre-cleaning of clauses. See previous option")
     ("startClean", po::value<size_t>(&conf.startClean)->default_value(conf.startClean)
         , "Clean first time after this many conflicts")
-    ("increaseClean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean)
+    ("incClean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean)
         , "Clean increment cleaning by this factor for next cleaning")
     ;
 
