@@ -1145,6 +1145,8 @@ lbool CommandControl::burstSearch()
         << "Doing bust search for " << conf.burstSearchLen << " conflicts"
         << endl;
     }
+    const size_t numUnitsUntilNow = learntUnits;
+    const size_t numBinsUntilNow = learntBins;
 
     //Save old config
     const double backup_rand = conf.random_var_freq;
@@ -1172,10 +1174,10 @@ lbool CommandControl::burstSearch()
 
     //Print what has happened
     if (conf.verbosity >= 2) {
-        printRestartStat();
-
         cout
         << "c Burst finished"
+        << " learnt units:" << (learntUnits - numUnitsUntilNow)
+        << " learnt bins: " << (learntBins - numBinsUntilNow)
         << endl;
     }
 
