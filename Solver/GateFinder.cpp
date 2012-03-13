@@ -23,12 +23,15 @@
 #include "time_mem.h"
 #include "ThreadControl.h"
 #include "Subsumer.h"
+
+#ifdef USE_VTK
 #include "vtkGraphLayoutView.h"
 #include "vtkRenderWindow.h"
 #include "vtkRenderWindowInteractor.h"
 #include "vtkMutableDirectedGraph.h"
 #include "vtkMutableUndirectedGraph.h"
 #include "vtkMutableGraphHelper.h"
+#endif //USE_VTK
 using std::cout;
 using std::endl;
 
@@ -942,6 +945,8 @@ void GateFinder::printDot2()
 void GateFinder::printDot()
 {
     printDot2();
+
+    #ifdef USE_VTK
     vtkSmartPointer<vtkMutableDirectedGraph> g =
     vtkSmartPointer<vtkMutableDirectedGraph>::New();
 
@@ -1045,6 +1050,8 @@ void GateFinder::printDot()
     graphLayoutView->ResetCamera();
     graphLayoutView->Render();
     graphLayoutView->GetInteractor()->Start();
+
+    #endif //USE_VTK
 }
 
 void GateFinder::newVar()
