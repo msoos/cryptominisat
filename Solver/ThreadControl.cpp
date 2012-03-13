@@ -46,6 +46,7 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
     , conf(_conf)
     , needToInterrupt(false)
     , sumConflicts(0)
+    , nextCleanLimit(0)
     , numDecisionVars(0)
     , zeroLevAssignsByCNF(0)
     , zeroLevAssignsByThreads(0)
@@ -757,8 +758,8 @@ lbool ThreadControl::solve()
     restPrinter->printRestartStat("B");
 
     //Initialise stuff
-    nextCleanLimit = conf.startClean*2;
     nextCleanLimitInc = conf.startClean;
+    nextCleanLimit += nextCleanLimitInc;
 
     //Check if adding the clauses caused UNSAT
     lbool status = ok ? l_Undef : l_False;
@@ -779,7 +780,7 @@ lbool ThreadControl::solve()
         //Solve using threads
         const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
-        uint32_t numConfls = nextCleanLimit;
+        uint32_t numConfls = nextCleanLimit - sumConflicts;
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
             numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
         }
