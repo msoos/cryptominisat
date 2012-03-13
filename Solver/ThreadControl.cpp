@@ -634,6 +634,7 @@ void ThreadControl::reduceDB()
                 && cl->getConflictIntroduced() + 10000 < sumConflicts
             ) {
                 detachClause(*cl);
+                clAllocator->clauseFree(cl);
                 alreadyRemoved++;
             } else {
                 learnts[j++] = learnts[i];
@@ -701,6 +702,7 @@ void ThreadControl::reduceDB()
             totalSizeOfRemoved += cl->size();
             totalNumRemoved++;
             detachClause(*cl);
+            clAllocator->clauseFree(cl);
         } else {
             totalGlueOfNonRemoved += cl->getGlue();
             totalSizeOfNonRemoved += cl->size();
