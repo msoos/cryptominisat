@@ -43,7 +43,7 @@ SolverConf::SolverConf() :
         , random_var_freq(0)
         , restart_first(100)
         , restart_inc(1.2)
-        , burstSearchLen(0)
+        , burstSearchLen(300)
         , restartType(glue_restart)
 
         , doRecursiveCCMin  (true)

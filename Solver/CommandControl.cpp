@@ -1142,7 +1142,7 @@ lbool CommandControl::burstSearch()
     //Print what we will be doing
     if (conf.verbosity >= 2) {
         cout
-        << "Doing bust search for " << conf.burstSearchLen << " conflicts"
+        << "c Doing bust search for " << conf.burstSearchLen << " conflicts"
         << endl;
     }
     const size_t numUnitsUntilNow = learntUnits;
@@ -1158,11 +1158,11 @@ lbool CommandControl::burstSearch()
     //Set burst config
     conf.random_var_freq = 1;
     conf.polarity_mode = polarity_rnd;
-    uint64_t rest_burst = conf.burstSearchLen;
     var_inc_divider = 1;
     var_inc_multiplier = 1;
 
     //Do burst
+    uint64_t rest_burst = conf.burstSearchLen;
     lbool status = search(SearchFuncParams(rest_burst), rest_burst);
 
     //Restore config
