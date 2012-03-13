@@ -50,6 +50,7 @@ number of benefits relative to MiniSat.
 using boost::lexical_cast;
 namespace po = boost::program_options;
 using std::cout;
+using std::cerr;
 using std::endl;
 using boost::lexical_cast;
 
@@ -474,6 +475,11 @@ void Main::parseCommandLine()
 
     if (vm.count("greedyunbound")) {
         conf.greedyUnbound = true;
+    }
+
+    if (conf.numCleanBetweenSimplify == 0) {
+        cerr << "ERROR: Option '--nclbtwsimp' must not be 0'" << endl;
+        exit(-1);
     }
 
     if (typeclean == "glue") {
