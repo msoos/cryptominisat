@@ -489,8 +489,17 @@ Clause* ClauseAllocator::getClause()
 
 void ClauseAllocator::checkGoodPropBy(const ThreadControl* control)
 {
+    //Go through each variable's varData and check if 'propBy' is correct
     Var var = 0;
-    for (vector<VarData>::const_iterator it = control->varData.begin(), end = control->varData.end(); it != end; it++, var++) {
+    for (vector<VarData>::const_iterator
+        it = control->varData.begin(), end = control->varData.end()
+        ; it != end
+        ; it++, var++
+    ) {
+        //If level is larger than current level, it's something that remained from old days
+        //If level is 0, it's assigned at decision level 0, and can be ignored
+        //If value is UNDEF then it's something that remained form old days
+        //Remember: stuff remains from 'old days' because this is lazily updated
         if ((uint32_t)it->level > control->decisionLevel()
             || it->level == 0
             || control->value(var) == l_Undef
@@ -498,6 +507,8 @@ void ClauseAllocator::checkGoodPropBy(const ThreadControl* control)
             continue;
         }
 
+        //If it's none of the above, then it's supposed to be actually correct
+        //So check it
         if (it->reason.isClause() && !it->reason.isNULL()) {
             assert(!getPointer(it->reason.getClause())->getFreed());
             assert(!getPointer(it->reason.getClause())->getRemoved());
