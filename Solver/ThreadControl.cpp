@@ -1069,12 +1069,20 @@ ThreadControl::UsageStats ThreadControl::sumClauseData(
             cout << "c Non-learnt";
         }
         cout
-        << " sum lits visited: " << std::setw(10) << stats.sumLitVisited/1000UL
+        << " sum lits visited: "
+        << std::setw(8) << stats.sumLitVisited/1000UL
         << " K";
 
         cout
-        << " sum cls visited: " << stats.sumLookedAt/1000UL
-        << " K" << endl;
+        << " sum cls visited: "
+        << std::setw(7) << stats.sumLookedAt/1000UL
+        << " K";
+
+        cout
+        << " sum prop&conf: "
+        << std::setw(6) << stats.sumPropConfl/1000UL
+        << " K"
+        << endl;
     }
 
     //Print more stats
@@ -1205,11 +1213,18 @@ void ThreadControl::fullReduce()
 
         cout
         << "c sum            lits visited: "
-        << std::setw(10) << stats.sumLitVisited/1000UL << " K";
+        << std::setw(8) << stats.sumLitVisited/1000UL
+        << " K";
 
         cout
         << " sum cls visited: "
-        << stats.sumLookedAt/1000UL << " K"
+        << std::setw(7) << stats.sumLookedAt/1000UL
+        << " K";
+
+        cout
+        << " sum prop&conf: "
+        << std::setw(6) << stats.sumPropConfl/1000UL
+        << " K"
         << endl;
     }
 
