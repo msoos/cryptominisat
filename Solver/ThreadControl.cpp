@@ -624,7 +624,7 @@ void ThreadControl::reduceDB()
     uint32_t removeNum = (double)learnts.size() * conf.ratioRemoveClauses;
 
     size_t alreadyRemoved = 0;
-    if (conf.preClauseCleanPropAndConfl) {
+    if (conf.doPreClauseCleanPropAndConfl) {
         //Reduce based on props&confls
         size_t i, j;
         for (i = j = 0; i < learnts.size(); i++) {
