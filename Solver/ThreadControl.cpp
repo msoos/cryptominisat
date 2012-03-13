@@ -1213,13 +1213,13 @@ void ThreadControl::fullReduce()
         << endl;
     }
 
+    reduceDB();
+
     if (conf.doClearPropConfEveryClauseCleaning) {
         clearPropConfl(clauses);
         clearPropConfl(learnts);
     }
 
-
-    reduceDB();
     nextCleanLimit += nextCleanLimitInc;
     nextCleanLimitInc *= conf.increaseClean;
 }
