@@ -242,6 +242,7 @@ template<bool simple> inline bool Solver::propNormalClause(
     bogoProps += 4;
     const uint32_t offset = i->getNormOffset();
     Clause& c = *clAllocator->getPointer(offset);
+    c.numLookedAt++;
 
     // Make sure the false literal is data[1]:
     if (c[0] == ~p) {

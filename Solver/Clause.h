@@ -72,12 +72,14 @@ protected:
 public:
     uint32_t numPropAndConfl;
     uint32_t numLitVisited;
+    uint32_t numLookedAt;
 
     template<class V>
     Clause(const V& ps, const uint32_t _conflictNumIntroduced) :
         conflictNumIntroduced(_conflictNumIntroduced)
         , numPropAndConfl(0)
         , numLitVisited(0)
+        , numLookedAt(0)
     {
         isFreed = false;
         assert(ps.size() > 2);

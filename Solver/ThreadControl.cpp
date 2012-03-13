@@ -977,15 +977,16 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
     return cl;
 }
 
-uint64_t ThreadControl::sumClauseData(
+ThreadControl::UsageStats ThreadControl::sumClauseData(
     const vector<Clause*>& toprint
     , const bool learnt
 ) const {
     vector<UsageStats> usageStats;
     vector<UsageStats> usageStatsGlue;
 
-    uint64_t sumAllLitsVisited = 0;
-    uint64_t sumAllPropsAndConfls = 0;
+    //Reset stats
+    UsageStats stats;
+
     for(vector<Clause*>::const_iterator
         it = toprint.begin()
         , end = toprint.end()
@@ -1000,18 +1001,22 @@ uint64_t ThreadControl::sumClauseData(
         if (cl.size() == 3)
             continue;
 
-        //Sum up stats
-        sumAllPropsAndConfls += cl.numPropAndConfl;
-        sumAllLitsVisited += cl.numLitVisited;
+        //Sum stats
+        stats.num++;
+        stats.sumPropConfl += cl.numPropAndConfl;
+        stats.sumLitVisited += cl.numLitVisited;
+        stats.sumLookedAt += cl.numLookedAt;
 
-        //Update statistics
+        //Update size statistics
         if (usageStats.size() < cl.size() + 1)
             usageStats.resize(cl.size()+1);
 
         usageStats[clause_size].num++;
         usageStats[clause_size].sumPropConfl += cl.numPropAndConfl;
         usageStats[clause_size].sumLitVisited += cl.numLitVisited;
+        usageStats[clause_size].sumLookedAt += cl.numLookedAt;
 
+        //If learnt, sum up GLUE-based stats
         if (learnt) {
             const size_t glue = cl.getGlue();
             assert(glue != std::numeric_limits<uint32_t>::max());
@@ -1022,8 +1027,10 @@ uint64_t ThreadControl::sumClauseData(
             usageStatsGlue[glue].num++;
             usageStatsGlue[glue].sumPropConfl += cl.numPropAndConfl;
             usageStatsGlue[glue].sumLitVisited += cl.numLitVisited;
+            usageStatsGlue[glue].sumLookedAt += cl.numLookedAt;
         }
 
+        //If lots of verbosity, print clause's individual stat
         if (conf.verbosity >= 3) {
             //Print clause data
             cout
@@ -1034,6 +1041,7 @@ uint64_t ThreadControl::sumClauseData(
             cout
             << " Props&confls: " << std::setw(10) << cl.numPropAndConfl
             << " Lit visited: " << std::setw(10)<< cl.numLitVisited
+            << " Looked at: " << std::setw(10)<< cl.numLookedAt
             << " Props&confls/Litsvisited*10: ";
             if (cl.numLitVisited > 0) {
                 cout
@@ -1051,38 +1059,56 @@ uint64_t ThreadControl::sumClauseData(
         } else {
             cout << "c Non-learnt";
         }
-        cout << " all lits visited: " << sumAllLitsVisited/1000UL
+        cout
+        << " sum lits visited: " << std::setw(10) << stats.sumLitVisited/1000UL
+        << " K";
+
+        cout
+        << " sum cls visited: " << stats.sumLookedAt/1000UL
         << " K" << endl;
     }
 
     //Print more stats
     if (conf.verbosity >= 3) {
-        printPropConflStats("clause-len", usageStats, learnt);
+        printPropConflStats("clause-len", usageStats);
 
         if (learnt) {
-            printPropConflStats("clause-glue", usageStatsGlue, learnt);
+            printPropConflStats("clause-glue", usageStatsGlue);
         }
     }
 
-    return sumAllLitsVisited;
+    return stats;
 }
 
 void ThreadControl::printPropConflStats(
     std::string name
     , const vector<UsageStats>& stats
-    , const bool learnt
 ) const {
     for(size_t i = 0; i < stats.size(); i++) {
+        //Nothing to do here, no stats really
         if (stats[i].num == 0)
             continue;
 
         cout
         << name << " : " << std::setw(4) << i
         << " Avg. props&confls: " << std::setw(6) << std::fixed << std::setprecision(2)
-        << ((double)stats[i].sumPropConfl/(double)stats[i].num)
+        << ((double)stats[i].sumPropConfl/(double)stats[i].num);
 
+        if (stats[i].sumLookedAt > 0) {
+            cout
+            << " Props&confls/looked at: " << std::setw(6) << std::fixed << std::setprecision(2)
+            << ((double)stats[i].sumPropConfl/(double)stats[i].sumLookedAt);
+        }
+
+        cout
         << " Avg. lits visited: " << std::setw(6) << std::fixed << std::setprecision(2)
         << ((double)stats[i].sumLitVisited/(double)stats[i].num);
+
+        if (stats[i].sumLookedAt > 0) {
+            cout
+            << " Lits visited/looked at: " << std::setw(6) << std::fixed << std::setprecision(2)
+            << ((double)stats[i].sumLitVisited/(double)stats[i].sumLookedAt);
+        }
 
         if (stats[i].sumLitVisited > 0) {
             cout
@@ -1157,19 +1183,24 @@ void ThreadControl::clearPropConfl(vector<Clause*>& clauseset)
     ) {
         (*it)->numLitVisited = 0;
         (*it)->numPropAndConfl = 0;
+        (*it)->numLookedAt = 0;
     }
 }
 
 void ThreadControl::fullReduce()
 {
     if (conf.verbosity >= 1) {
-        uint64_t sumAllLitsVisited = 0;
-        sumAllLitsVisited += sumClauseData(clauses, false);
-        sumAllLitsVisited += sumClauseData(learnts, true);
+        UsageStats stats;
+        stats += sumClauseData(clauses, false);
+        stats += sumClauseData(learnts, true);
 
         cout
-        << "c all            lits visited: "
-        << sumAllLitsVisited/1000UL << " K"
+        << "c sum            lits visited: "
+        << std::setw(10) << stats.sumLitVisited/1000UL << " K";
+
+        cout
+        << " sum cls visited: "
+        << stats.sumLookedAt/1000UL << " K"
         << endl;
     }
 

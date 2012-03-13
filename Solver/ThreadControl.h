@@ -229,11 +229,23 @@ class ThreadControl : public CommandControl
                 num(0)
                 , sumPropConfl(0)
                 , sumLitVisited(0)
+                , sumLookedAt(0)
             {}
 
             size_t num;
             size_t sumPropConfl;
             size_t sumLitVisited;
+            size_t sumLookedAt;
+
+            UsageStats& operator+=(const UsageStats& other)
+            {
+                num += other.num;
+                sumPropConfl += other.sumPropConfl;
+                sumLitVisited += other.sumLitVisited;
+                sumLookedAt += other.sumLookedAt;
+
+                return *this;
+            }
         };
         void testAllClauseAttach() const;
         bool normClauseIsAttached(const Clause& c) const;
@@ -241,14 +253,13 @@ class ThreadControl : public CommandControl
         bool findClause(const Clause* c) const;
         void checkNoWrongAttach() const;
         void calcClauseDistrib();
-        uint64_t sumClauseData(
+        UsageStats sumClauseData(
             const vector<Clause*>& toprint
             , bool learnt
         ) const;
         void printPropConflStats(
             std::string name
             , const vector<UsageStats>& stats
-            , bool learnt
         ) const;
 
         void dumpIndividualPropConflStats(
