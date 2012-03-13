@@ -552,19 +552,61 @@ Var ThreadControl::newVar(const bool dvar)
     return decision_var.size()-1;
 }
 
-/**
-@brief Clean leart clause database
-
-Locked clauses are clauses that are reason to some assignment.
-Binary&Tertiary clauses are never removed.
-*/
-bool ThreadControl::reduceDBStruct::operator () (const Clause* x, const Clause* y) {
+/// @brief Sort clauses according to glues: large glues first
+bool ThreadControl::reduceDBStructGlue::operator () (
+    const Clause* x
+    , const Clause* y
+) {
     const uint32_t xsize = x->size();
     const uint32_t ysize = y->size();
 
+    //No clause should be less than 3-long: 2&3-long are not removed
     assert(xsize > 2 && ysize > 2);
+
+    //First tie: glue
     if (x->getGlue() > y->getGlue()) return 1;
     if (x->getGlue() < y->getGlue()) return 0;
+
+    //Second tie: size
+    return xsize > ysize;
+}
+
+/// @brief Sort clauses according to size: large sizes first
+bool ThreadControl::reduceDBStructSize::operator () (
+    const Clause* x
+    , const Clause* y
+) {
+    const uint32_t xsize = x->size();
+    const uint32_t ysize = y->size();
+
+    //No clause should be less than 3-long: 2&3-long are not removed
+    assert(xsize > 2 && ysize > 2);
+
+    //First tie: size
+    if (xsize > ysize) return 1;
+    if (xsize < ysize) return 0;
+
+    //Second tie: glue
+    return x->getGlue() > y->getGlue();
+}
+
+/// @brief Sort clauses according to size: small prop+confl first
+bool ThreadControl::reduceDBStructPropConfl::operator() (
+    const Clause* x
+    , const Clause* y
+) {
+    const uint32_t xsize = x->size();
+    const uint32_t ysize = y->size();
+
+    //No clause should be less than 3-long: 2&3-long are not removed
+    assert(xsize > 2 && ysize > 2);
+
+    //First tie: numPropConfl -- notice the reversal of 1/0
+    //Larger is better --> should be last in the sorted list
+    if (x->numPropAndConfl > y->numPropAndConfl) return 0;
+    if (x->numPropAndConfl < y->numPropAndConfl) return 1;
+
+    //Second tie: size
     return xsize > ysize;
 }
 
@@ -577,28 +619,46 @@ sorted and then removed
 void ThreadControl::reduceDB()
 {
     nbReduceDB++;
+
+    //Calculate how much to remove
     uint32_t removeNum = (double)learnts.size() * conf.ratioRemoveClauses;
 
-    //Reduce based on props&confls
     size_t alreadyRemoved = 0;
-    size_t i, j;
-    for (i = j = 0; i < learnts.size(); i++) {
-        Clause* cl = learnts[i];
-        if (learnts[i]->size() > 3
-            && cl->numPropAndConfl < 2
-            && cl->getConflictIntroduced() + 10000 < sumConflicts
-        ) {
-            detachClause(*cl);
-            alreadyRemoved++;
-        } else {
-            learnts[j++] = learnts[i];
+    if (conf.preClauseCleanPropAndConfl) {
+        //Reduce based on props&confls
+        size_t i, j;
+        for (i = j = 0; i < learnts.size(); i++) {
+            Clause* cl = learnts[i];
+            if (learnts[i]->size() > 3
+                && cl->numPropAndConfl < conf.preClauseCleanLimit
+                && cl->getConflictIntroduced() + 10000 < sumConflicts
+            ) {
+                detachClause(*cl);
+                alreadyRemoved++;
+            } else {
+                learnts[j++] = learnts[i];
+            }
         }
+        learnts.resize(learnts.size() -(i-j));
+        cout << "Already removed: " << alreadyRemoved << endl;
     }
-    learnts.resize(learnts.size() -(i-j));
-    cout << "Already removed: " << alreadyRemoved << endl;
 
-    //Sort for glue-based removal
-    std::sort(learnts.begin(), learnts.end(), reduceDBStruct());
+    switch (conf.clauseCleaningType) {
+        case CLEAN_CLAUSES_GLUE_BASED :
+            //Sort for glue-based removal
+            std::sort(learnts.begin(), learnts.end(), reduceDBStructGlue());
+            break;
+
+        case CLEAN_CLAUSES_SIZE_BASED :
+            //Sort for glue-based removal
+            std::sort(learnts.begin(), learnts.end(), reduceDBStructSize());
+            break;
+
+        case CLEAN_CLAUSES_PROPCONFL_BASED :
+            //Sort for glue-based removal
+            std::sort(learnts.begin(), learnts.end(), reduceDBStructPropConfl());
+            break;
+    }
 
     #ifdef VERBOSE_DEBUG
     cout << "Cleaning learnt clauses. Learnt clauses after sort: " << endl;
@@ -608,11 +668,14 @@ void ThreadControl::reduceDB()
     }
     #endif
 
-    cout << "Removenum: " << removeNum << endl;
-    if (removeNum <= alreadyRemoved)
-        removeNum = 0;
-    else
-        removeNum -= alreadyRemoved;
+    if (conf.verbosity >= 2) {
+        cout << "Removenum: " << removeNum;
+        if (removeNum <= alreadyRemoved)
+            removeNum = 0;
+        else
+            removeNum -= alreadyRemoved;
+        cout << " -- still to be removed: " << removeNum << endl;
+    }
 
     //Statistics about clauses removed
     uint32_t totalNumRemoved = 0;
@@ -623,11 +686,11 @@ void ThreadControl::reduceDB()
     uint64_t totalSizeOfNonRemoved = 0;
     uint32_t numThreeLongLearnt = 0;
 
+    size_t i, j;
     for (i = j = 0; i < std::min(removeNum, (uint32_t)learnts.size()); i++) {
         if (i+1 < learnts.size())
             __builtin_prefetch(learnts[i+1], 0);
 
-        //const uint32_t clNum = learnts[i]->getNum();
         Clause *cl = learnts[i];
         assert(cl->size() > 2);
         if (learnts[i]->getGlue() > 2
@@ -656,10 +719,14 @@ void ThreadControl::reduceDB()
         numThreeLongLearnt += (learnts[i]->size()==3);
         learnts[j++] = learnts[i];
     }
+
+    //Resize learnt datastruct
     learnts.resize(learnts.size() - (i - j));
 
+    //Print results
     if (conf.verbosity >= 1) {
-        cout << "c rem " << std::setw(6) << totalNumRemoved
+        cout << "c cleaning by " << getNameOfCleanType(conf.clauseCleaningType)
+        << " rem " << std::setw(6) << totalNumRemoved
         << "  avgGlue "
         << std::fixed << std::setw(5) << std::setprecision(2)  << ((double)totalGlueOfRemoved/(double)totalNumRemoved)
         << "  avgSize "
@@ -1317,7 +1384,7 @@ void ThreadControl::calcClauseDistrib()
     << " larger: " << sizeLarge << endl;
 }
 
-void ThreadControl::dumpSortedLearnts(std::ostream& os, const uint32_t maxSize)
+void ThreadControl::dumpLearnts(std::ostream& os, const uint32_t maxSize)
 {
     os
     << "c " << endl
@@ -1333,7 +1400,8 @@ void ThreadControl::dumpSortedLearnts(std::ostream& os, const uint32_t maxSize)
     << "c ---------------------------------" << endl
     << "c learnt binary clauses (extracted from watchlists)" << endl
     << "c ---------------------------------" << endl;
-    if (maxSize >= 2) dumpBinClauses(true, false, os);
+    if (maxSize >= 2)
+        dumpBinClauses(true, false, os);
 
     os
     << "c " << endl
@@ -1357,7 +1425,6 @@ void ThreadControl::dumpSortedLearnts(std::ostream& os, const uint32_t maxSize)
     << "c --------------------" << endl
     << "c clauses from learnts" << endl
     << "c --------------------" << endl;
-    std::sort(learnts.begin(), learnts.begin()+learnts.size(), reduceDBStruct());
     for (int i = learnts.size()-1; i >= 0 ; i--) {
         Clause& cl = *learnts[i];
         if (cl.size() <= maxSize) {

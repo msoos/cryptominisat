@@ -94,9 +94,8 @@ class ThreadControl : public CommandControl
         ///////////////////////////////////
         // State Dumping
         const vector<Clause*>& getLongLearnts() const;  ///<Get all learnt clauses that are >2 long
-        const vector<Clause*>& getSortedLongLearnts();  ///<Return the set of learned clauses, sorted according to glue/activity
         void  dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const;
-        void  dumpSortedLearnts(std::ostream& os, const uint32_t maxSize); ///<Dump all learnt clauses into file
+        void  dumpLearnts(std::ostream& os, const uint32_t maxSize); ///<Dump all learnt clauses into file
         void  dumpOrigClauses(std::ostream& os) const; ///<Dump "original" (simplified) problem to file
 
     private:
@@ -174,7 +173,15 @@ class ThreadControl : public CommandControl
         uint64_t    nbReduceDB;           ///<Number of times learnt clause have been cleaned
         uint64_t    numCleanedLearnts;    ///< Number of times learnt clauses have been removed through simplify() up until now
         uint32_t    nbClBeforeRed;        ///< Number of learnt clauses before learnt-clause cleaning
-        struct reduceDBStruct
+        struct reduceDBStructGlue
+        {
+            bool operator () (const Clause* x, const Clause* y);
+        };
+        struct reduceDBStructSize
+        {
+            bool operator () (const Clause* x, const Clause* y);
+        };
+        struct reduceDBStructPropConfl
         {
             bool operator () (const Clause* x, const Clause* y);
         };
@@ -255,12 +262,6 @@ inline void ThreadControl::unsetDecisionVar(const uint32_t var)
 
 inline const vector<Clause*>& ThreadControl::getLongLearnts() const
 {
-    return learnts;
-}
-
-inline const vector<Clause*>& ThreadControl::getSortedLongLearnts()
-{
-    std::sort(learnts.begin(), learnts.begin()+learnts.size(), reduceDBStruct());
     return learnts;
 }
 

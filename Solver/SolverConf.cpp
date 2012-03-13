@@ -28,10 +28,17 @@ SolverConf::SolverConf() :
         , var_inc_divider(10)
         , var_inc_variability(1)
         , rarely_bump_var_act(false)
+
+        //Clause cleaning
+        , clauseCleaningType(CLEAN_CLAUSES_PROPCONFL_BASED)
+        , preClauseCleanPropAndConfl(true)
+        , preClauseCleanLimit(2)
         , ratioRemoveClauses(1.0/2.0)
         , numCleanBetweenSimplify(3)
         , startClean(4000)
-        , increaseClean(1.1)
+        , increaseClean(1.101)
+
+        //var picking
         , random_var_freq(0)
         , restart_first(100)
         , restart_inc(1.2)

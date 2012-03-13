@@ -211,6 +211,8 @@ void Main::parseCommandLine()
 {
     conf.verbosity = 2;
 
+    std::string typeclean;
+
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
     generalOptions.add_options()
@@ -237,6 +239,15 @@ void Main::parseCommandLine()
     reduceDBOptions.add_options()
     ("ltclean", po::value<double>(&conf.ratioRemoveClauses)->default_value(conf.ratioRemoveClauses)
         , "Remove at least this ratio of learnt clauses when doing learnt clause-cleaning")
+    ("typeclean", po::value<string>(&typeclean)->default_value(getNameOfCleanType(conf.clauseCleaningType))
+        , "According to what metric clauses should be cleaned: 'size', 'glue' or 'propconfl' for sum of propagations and conflicts caused in last iteration")
+    ("preclean", po::value<int>(&conf.preClauseCleanPropAndConfl)->default_value(conf.preClauseCleanPropAndConfl)
+        , "Before cleaning clauses with whatever sorting strategy \
+        remove learnt clauses whose sum of props&conflicts it caused \
+        during last iteration is less than 'precleanlimit' (see blow)")
+    ("precleanlimit", po::value<uint32_t>(&conf.preClauseCleanLimit)->default_value(conf.preClauseCleanLimit)
+        , "Limit of sum of propagation&conflicts for pre-cleaning of clauses.\
+         See previous option")
     ("startClean", po::value<size_t>(&conf.startClean)->default_value(conf.startClean)
         , "Clean first time after this many conflicts")
     ("increaseClean", po::value<double>(&conf.increaseClean)->default_value(conf.increaseClean)
@@ -464,6 +475,21 @@ void Main::parseCommandLine()
 
     if (vm.count("greedyunbound")) {
         conf.greedyUnbound = true;
+    }
+
+    if (typeclean == "glue") {
+        conf.clauseCleaningType = CLEAN_CLAUSES_GLUE_BASED;
+    } else if (typeclean == "size") {
+        conf.clauseCleaningType = CLEAN_CLAUSES_SIZE_BASED;
+    } else if (typeclean == "propconfl") {
+        conf.clauseCleaningType = CLEAN_CLAUSES_PROPCONFL_BASED;
+    } else {
+        std::cerr
+        << "ERROR: Cannot parse option given to '--cleantype'. It's '"
+        << typeclean << "'" << " but that none of the possiblities listed."
+        << endl;
+
+        exit(-1);
     }
 
     //XOR finding

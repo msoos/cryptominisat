@@ -25,6 +25,12 @@
 #include "SolverTypes.h"
 #include "constants.h"
 
+enum clauseCleaningTypes {
+    CLEAN_CLAUSES_GLUE_BASED
+    , CLEAN_CLAUSES_SIZE_BASED
+    , CLEAN_CLAUSES_PROPCONFL_BASED
+};
+
 class SolverConf
 {
     public:
@@ -38,6 +44,9 @@ class SolverConf
         bool      rarely_bump_var_act;
 
 	//Clause cleaning
+        clauseCleaningTypes clauseCleaningType;
+        int       preClauseCleanPropAndConfl;
+        uint32_t  preClauseCleanLimit;
         double    ratioRemoveClauses; ///< Remove this percentage of clauses at every database reduction round
         size_t    numCleanBetweenSimplify; ///<Number of cleaning operations between simplify operations
         size_t    startClean;
@@ -120,5 +129,24 @@ class SolverConf
 
         uint32_t origSeed;
 };
+
+inline std::string getNameOfCleanType(clauseCleaningTypes clauseCleaningType)
+{
+    switch(clauseCleaningType) {
+        case CLEAN_CLAUSES_GLUE_BASED :
+            return "glue";
+
+        case CLEAN_CLAUSES_SIZE_BASED:
+            return "size";
+
+        case CLEAN_CLAUSES_PROPCONFL_BASED:
+            return "propconfl";
+
+        default:
+            assert(false && "Unknown clause cleaning type?");
+    };
+
+    return "";
+}
 
 #endif //SOLVERCONF_H
