@@ -650,7 +650,7 @@ void ThreadControl::reduceDB()
             Clause* cl = learnts[i];
             if (learnts[i]->size() > 3
                 && cl->stats.numPropAndConfl < conf.preClauseCleanLimit
-                && cl->stats.conflictNumIntroduced + 10000 < sumConflicts
+                && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime < sumConflicts
             ) {
                 detachClause(*cl);
                 clAllocator->clauseFree(cl);
