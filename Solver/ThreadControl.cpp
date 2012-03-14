@@ -866,7 +866,6 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
     //restPrinter->printRestartStat("S");
     if (status != l_Undef) goto end;
 
-    clAllocator->consolidate(this, true);
     if (conf.doFindEqLits && !sCCFinder->find2LongXors())
         goto end;
 
