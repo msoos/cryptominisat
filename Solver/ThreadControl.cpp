@@ -965,7 +965,10 @@ void ThreadControl::calcReachability()
     }
 
     if (conf.verbosity >= 1) {
-        cout << "c calculated reachability. Time: " << (cpuTime() - myTime) << endl;
+        cout
+        << "c calculated reachability."
+        << " Time: " << (cpuTime() - myTime)
+        << endl;
     }
 }
 
