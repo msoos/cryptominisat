@@ -1378,7 +1378,10 @@ void ThreadControl::printStats()
 
 
     //Other stats
-    printStatsLine("c Conflicts", sumConflicts, (double)sumConflicts/cpu_time, "conf/sec");
+    printStatsLine("c Conflicts"
+        , sumConflicts, (double)sumConflicts/cpu_time
+        , "confl/sec"
+    );
     printStatsLine("c Total time", cpu_time);
 }
 
