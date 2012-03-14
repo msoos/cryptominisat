@@ -40,8 +40,8 @@ using std::endl;
 
 ThreadControl::ThreadControl(const SolverConf& _conf) :
     CommandControl(_conf, this)
-    , mtrand(_conf.origSeed)
     , backupActivityInc(_conf.var_inc_start)
+    , mtrand(_conf.origSeed)
     , nbReduceDB(0)
     , conf(_conf)
     , needToInterrupt(false)
@@ -530,7 +530,7 @@ void ThreadControl::renumberVariables()
     myTime = cpuTime();
     subsumer->updateVars(outerToInter, interToOuter);
     varReplacer->updateVars(outerToInter, interToOuter);
-    implCache.updateVars(seen, outerToInter, interToOuter, interToOuter2);
+    implCache.updateVars(seen, outerToInter, interToOuter2);
     if (conf.verbosity >= 2) {
         cout
         << "c Time to var-update varreplacer&subsumer&cache: " << (cpuTime() - myTime)

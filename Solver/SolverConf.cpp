@@ -68,8 +68,8 @@ SolverConf::SolverConf() :
         , shortTermGlueHistorySize (100)
 
         //optimisations to do
-        , flipPolarFreq    (10)
         , dominPickFreq    (5)
+        , flipPolarFreq    (10)
         , doFindXors       (true)
         , doEchelonizeXOR  (true)
         , maxXORMatrix     (10L*1000L*1000L)

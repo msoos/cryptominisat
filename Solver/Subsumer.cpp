@@ -1409,7 +1409,6 @@ void Subsumer::asymmTE()
     uint32_t asymmSubsumed = 0;
     uint32_t removed = 0;
 
-    CL_ABST_TYPE abst;
     vector<Lit> tmpCl;
     uint32_t index = clauses.size()-1;
     for (vector<Clause*>::reverse_iterator it = clauses.rbegin(), end = clauses.rend(); it != end; it++, index--) {
@@ -1497,6 +1496,7 @@ void Subsumer::asymmTE()
 
         /*
         //subsumption with non-learnt larger clauses
+        CL_ABST_TYPE abst;
         abst = calcAbstraction(tmpCl);
         *toDecrease -= tmpCl.size()*2;
         for (vector<Lit>::const_iterator it = tmpCl.begin(), end = tmpCl.end(); it != end; it++) {

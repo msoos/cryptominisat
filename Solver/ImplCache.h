@@ -172,7 +172,6 @@ class ImplCache  {
         void updateVars(
             vector<uint16_t>& seen
             , const std::vector< uint32_t >& outerToInter
-            , const std::vector< uint32_t >& interToOuter
             , const std::vector< uint32_t >& interToOuter2
         );
 
