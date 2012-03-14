@@ -1019,7 +1019,7 @@ ThreadControl::UsageStats ThreadControl::sumClauseData(
         stats.sumLookedAt += cl.stats.numLookedAt;
 
         //Update size statistics
-        if (usageStats.size() < cl.size() + 1)
+        if (usageStats.size() < cl.size() + 1U)
             usageStats.resize(cl.size()+1);
 
         usageStats[clause_size].num++;
