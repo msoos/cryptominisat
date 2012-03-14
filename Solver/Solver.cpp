@@ -39,13 +39,6 @@ Solver::Solver(
 ) :
         // Stats
         updateGlues(_updateGlues)
-        , propagations(0)
-        , bogoProps(0)
-        //Prop stats
-        , propsBin(0)
-        , propsTri(0)
-        , propsLongIrred(0)
-        , propsLongRed(0)
 
         , clAllocator(_clAllocator)
         , ok(true)
@@ -208,7 +201,7 @@ inline bool Solver::propBinaryClause(const vec<Watched>::const_iterator i, const
 {
     const lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
-        propsBin++;
+        propStats.propsBin++;
         enqueue(i->getOtherLit(), PropBy(~p));
     } else if (val == l_False) {
         //Update stats
@@ -244,7 +237,7 @@ template<bool simple> inline bool Solver::propNormalClause(
         *j++ = *i;
         return true;
     }
-    bogoProps += 4;
+    propStats.bogoProps += 4;
     const uint32_t offset = i->getNormOffset();
     Clause& c = *clAllocator->getPointer(offset);
     c.stats.numLookedAt++;
@@ -272,14 +265,14 @@ template<bool simple> inline bool Solver::propNormalClause(
     ) {
         if (value(*k) != l_False) {
             c[1] = *k;
-            bogoProps += numLitVisited/10;
+            propStats.bogoProps += numLitVisited/10;
             c.stats.numLitVisited+= numLitVisited;
             *k = ~p;
             watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
             return true;
         }
     }
-    bogoProps += numLitVisited/10;
+    propStats.bogoProps += numLitVisited/10;
     c.stats.numLitVisited+= numLitVisited;
 
     // Did not find watch -- clause is unit under assignment:
@@ -307,9 +300,9 @@ template<bool simple> inline bool Solver::propNormalClause(
 
         //Update stats
         if (c.learnt())
-            propsLongRed++;
+            propStats.propsLongRed++;
         else
-            propsLongIrred++;
+            propStats.propsLongIrred++;
 
         if (simple) {
             enqueue(c[0], PropBy(offset));
@@ -344,11 +337,11 @@ template<bool simple> inline bool Solver::propTriClause(const vec<Watched>::cons
 
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
-        propsTri++;
+        propStats.propsTri++;
         if (simple) enqueue(i->getOtherLit(), PropBy(~p, i->getOtherLit2()));
         else        addHyperBin(i->getOtherLit(), ~p, i->getOtherLit2());
     } else if (val == l_False && val2.isUndef()) {
-        propsTri++;
+        propStats.propsTri++;
         if (simple) enqueue(i->getOtherLit2(), PropBy(~p, i->getOtherLit()));
         else        addHyperBin(i->getOtherLit2(), ~p, i->getOtherLit());
     } else if (val == l_False && val2 == l_False) {
@@ -388,7 +381,7 @@ PropBy Solver::propagate()
         const vec<Watched>& ws = watches[p.toInt()];
         vec<Watched>::const_iterator i = ws.begin();
         const vec<Watched>::const_iterator end = ws.end();
-        bogoProps += ws.size()/10 + 1;
+        propStats.bogoProps += ws.size()/10 + 1;
         for (; i != end; i++) {
             if (i->isBinary()) {
                 if (!propBinaryClause(i, p, confl)) {
@@ -421,7 +414,7 @@ PropBy Solver::propagate()
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = ws.begin();
         const vec<Watched>::iterator end = ws.end();
-        bogoProps += ws.size()/4 + 1;
+        propStats.bogoProps += ws.size()/4 + 1;
         for (; i != end; i++) {
             if (i->isBinary()) {
                 *j++ = *i;
@@ -511,7 +504,7 @@ Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
     while (nlBinQHead < trail.size()) {
         const Lit p = trail[nlBinQHead++];
         const vec<Watched>& ws = watches[p.toInt()];
-        bogoProps += 1;
+        propStats.bogoProps += 1;
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
             if (!k->isBinary() || k->getLearnt()) continue;
 
@@ -525,7 +518,7 @@ Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
     while (lBinQHead < trail.size()) {
         const Lit p = trail[lBinQHead];
         const vec<Watched>& ws = watches[p.toInt()];
-        bogoProps += 1;
+        propStats.bogoProps += 1;
         enqeuedSomething = false;
 
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
@@ -545,7 +538,7 @@ Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
         PropBy confl;
         const Lit p = trail[qhead];
         vec<Watched> & ws = watches[p.toInt()];
-        bogoProps += 1;
+        propStats.bogoProps += 1;
         enqeuedSomething = false;
 
         vec<Watched>::iterator i = ws.begin();
@@ -601,7 +594,7 @@ PropBy Solver::propBin(const Lit p, vec<Watched>::const_iterator k, std::set<Bin
     const Lit lit = k->getOtherLit();
     const lbool val = value(lit);
     if (val.isUndef()) {
-        propsBin++;
+        propStats.propsBin++;
         //Never propagated before
         enqueueComplex(lit, p, k->getLearnt());
         return PropBy();

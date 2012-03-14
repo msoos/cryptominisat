@@ -86,8 +86,10 @@ void SIGINT_handler(int)
         std::cerr << "*** Please wait. We need to interrupt cleanly" << endl;
         std::cerr << "*** This means we might need to finish some calculations" << endl;
     } else {
-        if (control->getVerbosity() >= 1)
+        if (control->getVerbosity() >= 1) {
+            control->addInPartialSolvingStat();
             control->printStats();
+        }
         _exit(1);
     }
 }

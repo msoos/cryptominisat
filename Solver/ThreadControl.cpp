@@ -45,7 +45,8 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
     , nbReduceDB(0)
     , conf(_conf)
     , needToInterrupt(false)
-    , sumConflicts(0)
+
+    //Stuff
     , nextCleanLimit(0)
     , numDecisionVars(0)
     , zeroLevAssignsByCNF(0)
@@ -203,7 +204,7 @@ Clause* ThreadControl::addClauseInt(const T& lits
             attachBinClause(ps[0], ps[1], learnt);
             return NULL;
         default:
-            Clause* c = clAllocator->Clause_new(ps, sumConflicts);
+            Clause* c = clAllocator->Clause_new(ps, sumSolvingStats.numConflicts);
             if (learnt)
                 c->makeLearnt(stats.glue);
             c->stats = stats;
@@ -650,7 +651,7 @@ void ThreadControl::reduceDB()
             Clause* cl = learnts[i];
             if (learnts[i]->size() > 3
                 && cl->stats.numPropAndConfl < conf.preClauseCleanLimit
-                && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime < sumConflicts
+                && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime < sumSolvingStats.numConflicts
             ) {
                 detachClause(*cl);
                 clAllocator->clauseFree(cl);
@@ -765,7 +766,7 @@ void ThreadControl::reduceDB()
         << "  avgSize "
         << std::fixed << std::setw(6) << std::setprecision(2) << ((double)totalSizeOfNonRemoved/(double)totalNumNonRemoved)
         //<< "  3-long: " << std::setw(6) << numThreeLongLearnt
-        << "  sumConflicts:" << sumConflicts
+        << "  sumConflicts:" << sumSolvingStats.numConflicts
         << endl;
     }
 }
@@ -798,12 +799,14 @@ lbool ThreadControl::solve()
         //Solve using threads
         const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
-        uint32_t numConfls = nextCleanLimit - sumConflicts;
+        uint32_t numConfls = nextCleanLimit - sumSolvingStats.numConflicts;
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
             numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
         }
 
         status = CommandControl::solve(numConfls);
+        sumSolvingStats += CommandControl::getStats();
+        CommandControl::resetStats();
 
         backupActivity.clear();
         backupPolarity.clear();
@@ -981,12 +984,11 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
         case 2:
             break;
         default:
-            cl = clAllocator->Clause_new(lits, sumConflicts);
+            cl = clAllocator->Clause_new(lits, sumSolvingStats.numConflicts);
             cl->makeLearnt(glue);
             learnts.push_back(cl);
             break;
     }
-    sumConflicts++;
 
     return cl;
 }
@@ -1252,6 +1254,10 @@ void ThreadControl::consolidateMem()
 
 void ThreadControl::printStats()
 {
+    std::cout << "----------------" << endl;
+    sumSolvingStats.printStats(cpuTime(), propStats);
+    std::cout << "----------------" << endl;
+
     double cpu_time = cpuTime();
 
     printStatsLine("c 0-depth assigns", trail.size()
@@ -1382,7 +1388,7 @@ void ThreadControl::printStats()
 
     //Other stats
     printStatsLine("c Conflicts"
-        , sumConflicts, (double)sumConflicts/cpu_time
+        , sumSolvingStats.numConflicts, (double)sumSolvingStats.numConflicts/cpu_time
         , "confl/sec"
     );
     printStatsLine("c Total time", cpu_time);
@@ -1764,11 +1770,6 @@ uint32_t ThreadControl::getNumUnsetVars() const
 uint32_t ThreadControl::getNumDecisionVars() const
 {
     return numDecisionVars;
-}
-
-uint64_t ThreadControl::getNumTotalConflicts() const
-{
-    return sumConflicts;
 }
 
 void ThreadControl::setNeedToInterrupt()

@@ -61,6 +61,47 @@ enum ConflCausedBy {
     , CONFL_BY_TRI_CLAUSE
 };
 
+struct PropStats
+{
+    PropStats() :
+        propagations(0)
+        , bogoProps(0)
+        , propsBin(0)
+        , propsTri(0)
+        , propsLongIrred(0)
+        , propsLongRed(0)
+    {
+    }
+
+    PropStats& operator-=(const PropStats& other)
+    {
+        propagations -= other.propagations;
+        bogoProps -= other.bogoProps;
+        propsBin -= other.propsBin;
+        propsTri -= other.propsTri;
+        propsLongIrred -= other.propsLongIrred;
+        propsLongRed -= other.propsLongRed;
+
+        return *this;
+    }
+
+    PropStats operator-(const PropStats& other) const
+    {
+        PropStats result = *this;     // Make a copy of myself
+        result -= other;            // Use -= to subtrac other from the copy
+        return result;
+    }
+
+    uint64_t propagations; ///<Number of propagations made
+    uint64_t bogoProps;    ///<An approximation of time
+
+    //Stats for propagations
+    uint64_t propsBin;
+    uint64_t propsTri;
+    uint64_t propsLongIrred;
+    uint64_t propsLongRed;
+};
+
 struct VarData
 {
     VarData() :
@@ -158,15 +199,8 @@ protected:
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.
     template<class T> uint16_t calcGlue(const T& ps); ///<Calculates the glue of a clause
     bool updateGlues;
+    PropStats propStats;
 
-    uint64_t propagations; ///<Number of propagations made
-    uint64_t bogoProps;    ///<An approximation of time
-
-    //Stats for propagations
-    uint64_t propsBin;
-    uint64_t propsTri;
-    uint64_t propsLongIrred;
-    uint64_t propsLongRed;
 
     //Stats for conflicts
     ConflCausedBy lastConflictCausedBy;
@@ -356,7 +390,7 @@ inline void Solver::enqueue(const Lit p, const PropBy from)
     #endif
     varData[v].reason = from;
     trail.push_back(p);
-    propagations++;
+    propStats.propagations++;
 
     varData[v].level = decisionLevel();
     agility.update(varData[v].polarity != !p.sign());
@@ -377,7 +411,7 @@ inline void Solver::enqueueComplex(const Lit p, const Lit ancestor, const bool l
     const Var var = p.var();
     assigns [var] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
     trail.push_back(p);
-    propagations++;
+    propStats.propagations++;
 
     propData[var].ancestor = ancestor;
     propData[var].learntStep = learntStep;
@@ -449,7 +483,7 @@ inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const boo
         return false;
     }
 
-    bogoProps += 1;
+    propStats.bogoProps += 1;
     while(thisAncestor != lit_Undef) {
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Current acestor: " << thisAncestor
@@ -540,7 +574,7 @@ inline void Solver::addHyperBin(const Lit p, const Clause& cl)
 
 inline void Solver::addHyperBin(const Lit p)
 {
-    bogoProps += 1;
+    propStats.bogoProps += 1;
     Lit deepestCommonAncestor = lit_Undef;
     if (currAncestors.size() > 1) {
         //Number each node with the number of paths going through it.

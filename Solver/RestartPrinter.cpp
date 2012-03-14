@@ -61,13 +61,13 @@ void RestartPrinter::printStatHeader() const
 void RestartPrinter::printRestartStat(const char* type)
 {
 
-    lastConflPrint = control->sumConflicts;
+    lastConflPrint = control->sumSolvingStats.numConflicts;
 
     if (control->conf.verbosity >= 2) {
         cout << "c "
         << std::setw(2) << type
         //<< std::setw(6) << control->starts
-        << std::setw(space) << control->sumConflicts
+        << std::setw(space) << control->sumSolvingStats.numConflicts
         << std::setw(space) << control->getNumFreeVars()
         << std::setw(space) << control->clauses.size()
         << std::setw(space) << control->numBins

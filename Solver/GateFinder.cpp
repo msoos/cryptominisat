@@ -162,7 +162,7 @@ uint32_t GateFinder::createNewVars()
         cl = control->addClauseInt(tmp, false, ClauseStats(), false);
         assert(cl != NULL);
         assert(control->ok);
-        cl->stats.conflictNumIntroduced = control->sumConflicts;
+        cl->stats.conflictNumIntroduced = control->sumSolvingStats.numConflicts;
         ClauseIndex c = subsumer->linkInClause(*cl);
         subsumer->clauseData[c.index].defOfOrGate = true;
 

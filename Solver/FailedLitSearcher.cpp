@@ -119,8 +119,8 @@ bool FailedLitSearcher::search()
     std::sort(actSortedVars.begin(), actSortedVars.end(), ActSorter(control->backupActivity));
 
 
-    origBogoProps = control->bogoProps;
-    while (control->bogoProps + extraTime < origBogoProps + numPropsTodo) {
+    origBogoProps = control->propStats.bogoProps;
+    while (control->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo) {
         const uint32_t litnum = control->mtrand.randInt() % (control->nVars()*2);
         Lit lit = Lit::toLit(litnum);
         extraTime += 20;
@@ -221,7 +221,7 @@ void FailedLitSearcher::printResults(const double myTime) const
     << " tried: " << numTried
     << " Bin:" << addedBin
     << " RemBin:" << removedBins
-    << " P: " << std::fixed << std::setprecision(1) << (double)(control->bogoProps - origBogoProps)/1000000.0  << "M"
+    << " P: " << std::fixed << std::setprecision(1) << (double)(control->propStats.bogoProps - origBogoProps)/1000000.0  << "M"
     << " T: " << std::fixed << std::setprecision(2) << cpuTime() - myTime
     << endl;
 }

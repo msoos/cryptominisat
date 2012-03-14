@@ -121,7 +121,7 @@ bool ClauseVivifier::vivifyClausesNormal()
         maxNumProps *=2;
 
     uint64_t extraDiff = 0;
-    uint64_t oldBogoProps = control->bogoProps;
+    uint64_t oldBogoProps = control->propStats.bogoProps;
     bool needToFinish = false;
     uint32_t checkedClauses = 0;
     uint32_t potentialClauses = control->clauses.size();
@@ -150,7 +150,7 @@ bool ClauseVivifier::vivifyClausesNormal()
 
         //if done enough, stop doing it
         //cout << "Time now: " << (cpuTime() - myTime) << " todo: " << (control->bogoProps-oldBogoProps + extraDiff)/1000000 << endl;
-        if (control->bogoProps-oldBogoProps + extraDiff > maxNumProps) {
+        if (control->propStats.bogoProps-oldBogoProps + extraDiff > maxNumProps) {
             if (control->conf.verbosity >= 2) {
                 cout
                 << "c Need to finish asymm -- ran out of prop (=allocated time)"

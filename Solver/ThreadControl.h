@@ -81,14 +81,14 @@ class ThreadControl : public CommandControl
         double   getTotalTimeSCC() const;               ///<Get total time spent finding binary equi/antivalences
         bool     getNeedToDumpLearnts() const;
         bool     getNeedToDumpOrig() const;
-        uint64_t getNumTotalConflicts() const;
         uint32_t getVerbosity() const;                  ///<Return verbosity level
-        void           printStats();
+        void     printStats();
+        void     addInPartialSolvingStat();
         uint32_t getNumDecisionVars() const;            ///<Get number of decision vars. May not be accurate TODO fix this
         uint32_t getNumFreeVars() const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
         uint32_t getNumFreeVarsAdv(size_t tail_size_thread) const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
         uint32_t getNewToReplaceVars() const;           ///<Return number of variables waiting to be replaced
-        uint64_t getSumConflicts() const;
+        const SolvingStats& getSumStats() const;
         uint64_t getNextCleanLimit() const;
         bool     getSavedPolarity(Var var) const;
         uint32_t getSavedActivity(const Var var) const;
@@ -198,7 +198,6 @@ class ThreadControl : public CommandControl
         vector<LitReachData> litReachable;
         void                 calcReachability();
         bool                 needToInterrupt;
-        uint64_t             sumConflicts;
         uint64_t             nextCleanLimit;
         uint64_t             nextCleanLimitInc;
         uint32_t             numDecisionVars;
@@ -206,6 +205,9 @@ class ThreadControl : public CommandControl
         void unsetDecisionVar(const uint32_t var);
         size_t               zeroLevAssignsByCNF;
         size_t               zeroLevAssignsByThreads;
+
+        //Main up stats
+        SolvingStats sumSolvingStats;
 
         /////////////////////
         // Clauses
@@ -313,9 +315,9 @@ inline uint32_t ThreadControl::getVerbosity() const
     return conf.verbosity;
 }
 
-inline uint64_t ThreadControl::getSumConflicts() const
+inline const SolvingStats& ThreadControl::getSumStats() const
 {
-    return sumConflicts;
+    return sumSolvingStats;
 }
 
 inline uint64_t ThreadControl::getNextCleanLimit() const
@@ -337,5 +339,11 @@ inline uint32_t ThreadControl::getSavedActivityInc() const
 {
     return backupActivityInc;
 }
+
+inline void ThreadControl::addInPartialSolvingStat()
+{
+    sumSolvingStats += CommandControl::getStats();
+}
+
 
 #endif //THREADCONTROL_H

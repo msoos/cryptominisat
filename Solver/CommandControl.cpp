@@ -46,33 +46,6 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
             , _conf.updateGlues
         )
 
-        // Stats
-        , numConflicts(0)
-        , numRestarts(0)
-        , decisions(0)
-        , assumption_decisions(0)
-        , decisions_rnd(0)
-
-        //Conflict generation
-        , numLitsLearntNonMinimised(0)
-        , numLitsLearntMinimised(0)
-        , furtherClMinim(0)
-        , numShrinkedClause(0)
-        , numShrinkedClauseLits(0)
-
-        //Learnt stats
-        , learntUnits(0)
-        , learntBins(0)
-        , learntTris(0)
-        , learntLongs(0)
-
-        //Conlf stats
-        , conflsBinIrred(0)
-        , conflsBinRed(0)
-        , conflsTri(0)
-        , conflsLongIrred(0)
-        , conflsLongRed(0)
-
         //variables
         , control(_control)
         , conf(_conf)
@@ -97,190 +70,6 @@ Var CommandControl::newVar(const bool dvar)
     }
 
     return var;
-}
-
-template<class T, class T2>
-void CommandControl::printStatsLine(std::string left, T value, T2 value2, std::string extra)
-{
-    cout
-    << std::fixed << std::left << std::setw(27) << left
-    << ": " << std::setw(11) << std::setprecision(2) << value
-    << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
-    << " " << extra << ")"
-    << std::right
-    << endl;
-}
-
-template<class T>
-void CommandControl::printStatsLine(std::string left, T value, std::string extra)
-{
-    cout
-    << std::fixed << std::left << std::setw(27) << left
-    << ": " << std::setw(11) << std::setprecision(2)
-    << value << extra
-    << std::right
-    << endl;
-}
-
-void CommandControl::printStats()
-{
-    double   cpu_time = cpuTime() - startTime;
-    uint64_t mem_used = memUsed();
-
-    //Restarts stats
-    printStatsLine("c restarts", numRestarts);
-
-    //Search stats
-    cout << "c CONFLS stats" << endl;
-    printStatsLine("c conflicts", numConflicts
-        , (double)numConflicts/cpu_time
-        , "/ sec"
-    );
-
-    printStatsLine("c conflsBinIrred", conflsBinIrred
-        , 100.0*(double)conflsBinIrred/(double)numConflicts
-        , "%"
-    );
-
-    printStatsLine("c conflsBinRed", conflsBinRed
-        , 100.0*(double)conflsBinRed/(double)numConflicts
-        , "%"
-    );
-
-    printStatsLine("c conflsTri", conflsTri
-        , 100.0*(double)conflsTri/(double)numConflicts
-        , "%"
-    );
-
-    printStatsLine("c conflsLongIrred" , conflsLongIrred
-        , 100.0*(double)conflsLongIrred/(double)numConflicts
-        , "%"
-    );
-
-    printStatsLine("c conflsLongRed", conflsLongRed
-        , 100.0*(double)conflsLongRed/(double)numConflicts
-        , "%"
-    );
-
-    cout << "c numConflicts: " << numConflicts << endl;
-    cout
-    << "c conflsBin + conflsTri + conflsLongIrred + conflsLongRed : "
-    << (conflsBinIrred + conflsBinRed +  conflsTri + conflsLongIrred + conflsLongRed)
-    << endl;
-    cout
-    << "c DIFF: "
-    << ((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTri + conflsLongIrred + conflsLongRed))
-    << endl;
-
-    /*assert(numConflicts
-        == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
-
-    cout << "c LEARNT stats" << endl;
-    printStatsLine("c units learnt"
-                    , learntUnits
-                    , (double)learntUnits/(double)numConflicts*100.0
-                    , "% of conflicts");
-
-    printStatsLine("c bins learnt"
-                    , learntBins
-                    , (double)learntBins/(double)numConflicts*100.0
-                    , "% of conflicts");
-
-    printStatsLine("c tris learnt"
-                    , learntTris
-                    , (double)learntTris/(double)numConflicts*100.0
-                    , "% of conflicts");
-
-    printStatsLine("c long learnt"
-                    , learntLongs
-                    , (double)learntLongs/(double)numConflicts*100.0
-                    , "% of conflicts");
-
-    //Clause-shrinking through watchlists
-    cout << "c SHRINKING stats" << endl;
-    printStatsLine("c OTF cl watch-shrink"
-                    , numShrinkedClause
-                    , (double)numShrinkedClause/(double)numConflicts
-                    , "clauses/conflict");
-
-    printStatsLine("c OTF cl watch-sh-lit"
-                    , numShrinkedClauseLits
-                    , (double)numShrinkedClauseLits/(double)numShrinkedClause
-                    , " lits/clause");
-
-    printStatsLine("c tried to recurMin cls"
-                    , furtherClMinim
-                    , (double)furtherClMinim/(double)numConflicts*100.0
-                    , " % of conflicts");
-
-    //Props
-    cout << "c PROPS stats" << endl;
-    printStatsLine("c Mbogo-props", bogoProps/(1000*1000)
-        , (double)bogoProps/(cpu_time*1000*1000)
-        , "/ sec"
-    );
-
-    const uint64_t thisProps = propagations - propsOrig;
-    printStatsLine("c Mprops", thisProps/(1000*1000)
-        , (double)thisProps/(cpu_time*1000*1000)
-        , "/ sec"
-    );
-
-    printStatsLine("c decisions", decisions
-        , (double)decisions_rnd*100.0/(double)decisions
-        , "% random"
-    );
-
-    const uint64_t thisPropsBin = propsBin - propsBinOrig;
-    const uint64_t thisPropsTri = propsTri - propsTriOrig;
-    const uint64_t thisPropsLongIrred = propsLongIrred - propsLongIrredOrig;
-    const uint64_t thisPropsLongRed = propsLongRed - propsLongRedOrig;
-
-    printStatsLine("c propsBin", thisPropsBin
-        , 100.0*(double)thisPropsBin/(double)thisProps
-        , "% of propagations"
-    );
-
-    printStatsLine("c propsTri", thisPropsTri
-        , 100.0*(double)thisPropsTri/(double)thisProps
-        , "% of propagations"
-    );
-
-    printStatsLine("c propsLongIrred", thisPropsLongIrred
-        , 100.0*(double)thisPropsLongIrred/(double)thisProps
-        , "% of propagations"
-    );
-
-    printStatsLine("c propsLongRed", thisPropsLongRed
-        , 100.0*(double)thisPropsLongRed/(double)thisProps
-        , "% of propagations"
-    );
-
-    uint64_t totalProps =
-    thisPropsBin + thisPropsTri + thisPropsLongIrred + thisPropsLongRed
-     + decisions + assumption_decisions
-     + numConflicts;
-
-    cout
-    << "c totprops: "
-    << totalProps
-    << " missing: "
-    << ((int64_t)thisProps-(int64_t)totalProps)
-    << endl;
-    //assert(propagations == totalProps);
-
-    printStatsLine("c conflict literals", numLitsLearntNonMinimised
-        , (double)(numLitsLearntNonMinimised - numLitsLearntMinimised)*100.0/ (double)numLitsLearntNonMinimised
-        , "% deleted"
-    );
-
-    //General stats
-    printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
-    #if !defined(_MSC_VER) && defined(RUSAGE_THREAD)
-    printStatsLine("c single-thread CPU time", cpu_time, " s");
-    #else
-    printStatsLine("c all-threads sum CPU time", cpu_time, " s");
-    #endif
 }
 
 /**
@@ -438,7 +227,7 @@ void CommandControl::analyze(
     toClear.clear();
 
     assert(pathC == 0);
-    numLitsLearntNonMinimised += out_learnt.size();
+    stats.numLitsLearntNonMinimised += out_learnt.size();
 
     //Recursive-simplify conflict clause:
     if (conf.doRecursiveCCMin) {
@@ -479,7 +268,7 @@ void CommandControl::analyze(
 
     //Calc stats
     glue = calcGlue(out_learnt);
-    numLitsLearntMinimised += out_learnt.size();
+    stats.numLitsLearntMinimised += out_learnt.size();
 
     //Print fully minimised clause
     #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
@@ -780,19 +569,19 @@ void CommandControl::updateConflStats()
 {
     switch(lastConflictCausedBy) {
         case CONFL_BY_BIN_IRRED_CLAUSE :
-            conflsBinIrred++;
+            stats.conflsBinIrred++;
             break;
         case CONFL_BY_BIN_RED_CLAUSE :
-            conflsBinRed++;
+            stats.conflsBinRed++;
             break;
         case CONFL_BY_TRI_CLAUSE :
-            conflsTri++;
+            stats.conflsTri++;
             break;
         case CONFL_BY_LONG_IRRED_CLAUSE :
-            conflsLongIrred++;
+            stats.conflsLongIrred++;
             break;
         case CONFL_BY_LONG_RED_CLAUSE :
-            conflsLongRed++;
+            stats.conflsLongRed++;
             break;
         default:
             assert(false);
@@ -819,7 +608,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
     //Stats reset & update
     SearchFuncParams params(_params);
     if (params.update)
-        numRestarts ++;
+        stats.numRestarts ++;
     agility.reset(conf.agilityLimit);
     agilityHist.fastclear();
     glueHist.fastclear();
@@ -861,7 +650,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
 
             //If restart is needed, restart here
             if (params.needToStopSearch
-                || control->getSumConflicts() > control->getNextCleanLimit()
+                || sumConflicts() > control->getNextCleanLimit()
             ) {
                 cancelUntil(0);
                 return l_Undef;
@@ -893,7 +682,7 @@ lbool CommandControl::new_decision()
             analyzeFinal(~p, conflict);
             return l_False;
         } else {
-            assumption_decisions++;
+            stats.decisionsAssump++;
             next = p;
             break;
         }
@@ -901,7 +690,7 @@ lbool CommandControl::new_decision()
 
     if (next == lit_Undef) {
         // New variable decision:
-        decisions++;
+        stats.decisions++;
         next = pickBranchLit();
 
         if (next == lit_Undef)
@@ -983,7 +772,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
     uint32_t backtrack_level;
     uint32_t glue;
     vector<Lit> learnt_clause;
-    numConflicts++;
+    stats.numConflicts++;
     params.conflictsDoneThisRestart++;
     if (conf.doPrintConflDot)
         genConfGraph(confl);
@@ -1025,28 +814,28 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
     switch (learnt_clause.size()) {
         case 1:
             //Unitary learnt
-            learntUnits++;
+            stats.learntUnits++;
             enqueue(learnt_clause[0]);
             assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
 
             break;
         case 2:
             //Binary learnt
-            learntBins++;
+            stats.learntBins++;
             attachBinClause(learnt_clause[0], learnt_clause[1], true);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             break;
 
         case 3:
             //3-long almost-normal learnt
-            learntTris++;
+            stats.learntTris++;
             attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
             break;
 
         default:
             //Normal learnt
-            learntLongs++;
+            stats.learntLongs++;
             attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));
             break;
@@ -1080,6 +869,9 @@ void CommandControl::resetStats()
 {
     assert(ok);
 
+    //Set up time
+    startTime = cpuTime();
+
     //Clear up previous stuff like model, final conflict
     conflict.clear();
 
@@ -1099,41 +891,9 @@ void CommandControl::resetStats()
     agilityHist.clear();
     agilityHist.resize(100);
 
-    //Confl stats
-    numConflicts = 0;
-    conflsLongRed = 0;
-    conflsBinIrred = 0;
-    conflsBinRed = 0;
-    conflsTri = 0;
-    conflsLongIrred = 0;
-
-    //Restarts
-    numRestarts = 0;
-
-    //Decisions
-    decisions = 0;
-    assumption_decisions = 0;
-    decisions_rnd = 0;
-
-    //Conflict minimisation stats
-    numLitsLearntNonMinimised = 0;
-    numLitsLearntMinimised = 0;
-    furtherClMinim = 0;
-    numShrinkedClause = 0;
-    numShrinkedClauseLits = 0;
-
-    //Learnt stats
-    learntUnits = 0;
-    learntBins = 0;
-    learntTris = 0;
-    learntLongs = 0;
-
-    //Props stats
-    propsOrig = propagations;
-    propsBinOrig = propsBin;
-    propsTriOrig = propsTri;
-    propsLongIrredOrig = propsLongIrred;
-    propsLongRedOrig = propsLongRed;
+    //Rest solving stats
+    stats = SolvingStats();
+    oldPropStats = propStats;
 
     //Set already set vars
     origTrailSize = trail.size();
@@ -1149,8 +909,8 @@ lbool CommandControl::burstSearch()
         << "c Doing bust search for " << conf.burstSearchLen << " conflicts"
         << endl;
     }
-    const size_t numUnitsUntilNow = learntUnits;
-    const size_t numBinsUntilNow = learntBins;
+    const size_t numUnitsUntilNow = stats.learntUnits;
+    const size_t numBinsUntilNow = stats.learntBins;
 
     //Save old config
     const double backup_rand = conf.random_var_freq;
@@ -1180,8 +940,8 @@ lbool CommandControl::burstSearch()
     if (conf.verbosity >= 2) {
         cout
         << "c Burst finished"
-        << " learnt units:" << (learntUnits - numUnitsUntilNow)
-        << " learnt bins: " << (learntBins - numBinsUntilNow)
+        << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
+        << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
         << endl;
     }
 
@@ -1191,8 +951,8 @@ lbool CommandControl::burstSearch()
 void CommandControl::printRestartStat()
 {
     cout << "c " << omp_get_thread_num()
-    << " " << std::setw(6) << numRestarts
-    << " " << std::setw(7) << control->getSumConflicts()
+    << " " << std::setw(6) << stats.numRestarts
+    << " " << std::setw(7) << sumConflicts()
     << " " << std::setw(7) << control->getNumFreeVarsAdv(trail.size())
 
     << " glue"
@@ -1241,13 +1001,12 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     assert(qhead == trail.size());
 
     assumptions = assumps;
-    startTime = cpuTime();
     resetStats();
 
     //Current solving status
     lbool status = l_Undef;
 
-    uint64_t lastRestartPrint = numConflicts;
+    uint64_t lastRestartPrint = stats.numConflicts;
 
     //Burst seach
     status = burstSearch();
@@ -1274,24 +1033,24 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     uint64_t rest = conf.restart_first;
     while (status == l_Undef
         && !needToInterrupt
-        && numConflicts < maxConfls
+        && stats.numConflicts < maxConfls
     ) {
-        assert(numConflicts < maxConfls);
+        assert(stats.numConflicts < maxConfls);
 
-        status = search(SearchFuncParams(maxConfls-numConflicts), rest);
+        status = search(SearchFuncParams(maxConfls-stats.numConflicts), rest);
         rest *= conf.restart_inc;
         if (status != l_Undef)
             break;
 
         //Print restart stat
         if (conf.verbosity >= 1
-            && (lastRestartPrint + 800) < numConflicts
+            && (lastRestartPrint + 800) < stats.numConflicts
         ) {
             printRestartStat();
-            lastRestartPrint = numConflicts;
+            lastRestartPrint = stats.numConflicts;
         }
 
-        if (numConflicts >= maxConfls) {
+        if (stats.numConflicts >= maxConfls) {
             if (conf.verbosity >= 1) {
                 cout
                 << "c thread(maxconfl) Trail size: " << trail.size()
@@ -1301,13 +1060,13 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             break;
         }
 
-        if (control->getSumConflicts() > control->getNextCleanLimit()) {
+        if (sumConflicts() > control->getNextCleanLimit()) {
             if (conf.verbosity >= 1) {
                 cout
                 << "c th " << omp_get_thread_num() << " cleaning"
                 << " getNextCleanLimit(): " << control->getNextCleanLimit()
-                << " numConflicts : " << numConflicts
-                << " SumConfl: " << control->getSumConflicts()
+                << " numConflicts : " << stats.numConflicts
+                << " SumConfl: " << sumConflicts()
                 << " maxConfls:" << maxConfls
                 << " Trail size: " << trail.size() << endl;
             }
@@ -1343,11 +1102,11 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         cout << "c CommandControl::solve() finished"
         << " status: " << status
         << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
-        << " numConflicts : " << numConflicts
-        << " SumConfl: " << control->getSumConflicts()
+        << " numConflicts : " << stats.numConflicts
+        << " SumConfl: " << sumConflicts()
         << " maxConfls:" << maxConfls
         << endl;
-        printStats();
+        stats.printStats(cpuTime() - startTime, (propStats - oldPropStats));
 
         cout << "c th " << omp_get_thread_num()
         << " ---------" << endl;
@@ -1393,7 +1152,7 @@ Lit CommandControl::pickBranchLit()
         if (value(next_var) == l_Undef
             && control->decision_var[next_var]
         ) {
-            decisions_rnd++;
+            stats.decisionsRand++;
             next = Lit(next_var, !getPolarity(next_var));
         }
     }
@@ -1453,7 +1212,7 @@ form to carry out the forward-self-subsuming resolution
 void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
 {
     assert(conf.doCache);
-    furtherClMinim++;
+    stats.furtherClMinim++;
 
     //Set all literals' seen[lit] = 1 in learnt clause
     //We will 'clean' the learnt clause by setting these to 0
@@ -1523,8 +1282,8 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
 
         seen[i->toInt()] = 0;
     }
-    numShrinkedClause += (removedLits > 0);
-    numShrinkedClauseLits += removedLits;
+    stats.numShrinkedClause += (removedLits > 0);
+    stats.numShrinkedClauseLits += removedLits;
     cl.resize(cl.size() - (i-j));
 
     #ifdef VERBOSE_DEBUG
@@ -1562,11 +1321,6 @@ bool CommandControl::VarFilter::operator()(uint32_t var) const
     return (cc->value(var) == l_Undef && control->decision_var[var]);
 }
 
-uint64_t CommandControl::getNumConflicts() const
-{
-    return numConflicts;
-}
-
 void CommandControl::setNeedToInterrupt()
 {
     needToInterrupt = true;
@@ -1578,12 +1332,17 @@ void CommandControl::printAgilityStats()
         //&& numConflicts % 100 == 99
     ) {
         cout
-        << ", confl: " << std::setw(6) << numConflicts
-        << ", rest: " << std::setw(6) << numRestarts
+        << ", confl: " << std::setw(6) << stats.numConflicts
+        << ", rest: " << std::setw(6) << stats.numRestarts
         << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2) << agility.getAgility()
         << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2) << conf.agilityLimit
         << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvg()
         << ", agilityHistAll: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvgAll()
         << endl;
     }
+}
+
+inline uint64_t CommandControl::sumConflicts() const
+{
+    return control->sumSolvingStats.numConflicts + stats.numConflicts;
 }
