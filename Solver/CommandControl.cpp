@@ -1011,7 +1011,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
 
     //Set up everything to get the clause
     std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
-    glue = std::min(glue, MAX_THEORETICAL_GLUE);
+    glue = std::max<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
     Clause *cl;
 
     //Get new clause

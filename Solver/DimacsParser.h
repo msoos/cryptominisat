@@ -14,12 +14,8 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "constants.h"
 #include "StreamBuffer.h"
 #include "Vec.h"
-
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
+#include "constants.h"
+#include "Clause.h"
 
 #ifndef DISABLE_ZLIB
 #include <zlib.h>
@@ -46,7 +42,11 @@ class DimacsParser
         float parseFloat(StreamBuffer& in);
         void parseString(StreamBuffer& in, std::string& str);
         void readClause(StreamBuffer& in, std::vector<Lit>& lits);
-        void parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_t& glue);
+        void parseClauseParameters(
+            StreamBuffer& in
+            , bool& learnt
+            , ClauseStats& stats
+        );
         void readFullClause(StreamBuffer& in);
         bool match(StreamBuffer& in, const char* str);
         void printHeader(StreamBuffer& in);

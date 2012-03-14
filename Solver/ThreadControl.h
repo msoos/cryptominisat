@@ -64,7 +64,10 @@ class ThreadControl : public CommandControl
         // Problem specification:
         Var  newVar(const bool dvar = true); ///< Add new variable
         bool addClause (const vector<Lit>& ps);  ///< Add clause to the solver
-        bool addLearntClause(const vector<Lit>& ps, const uint32_t glue = 10);
+        bool addLearntClause(
+            const vector<Lit>& ps
+            , const ClauseStats& stats = ClauseStats()
+        );
 
         //////////////////////////
         //Stats
@@ -113,7 +116,7 @@ class ThreadControl : public CommandControl
         template<class T> Clause* addClauseInt(
             const T& ps
             , const bool learnt = false
-            , const uint32_t glue = 10
+            , const ClauseStats& stats = ClauseStats()
             , const bool attach = true
         );
 

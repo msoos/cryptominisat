@@ -271,8 +271,11 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 /**
 @brief Parses clause parameters given as e.g. "c clause learnt yes glue 4 miniSatAct 5.2"
 */
-void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_t& glue)
-{
+void DimacsParser::parseClauseParameters(
+    StreamBuffer& in
+    , bool& learnt
+    , ClauseStats& stats
+) {
     std::string str;
     uint32_t len;
 
@@ -298,7 +301,7 @@ void DimacsParser::parseClauseParameters(StreamBuffer& in, bool& learnt, uint32_
     parseString(in, str);
     if (str != "glue") goto addTheClause;
     ++in;
-    glue = parseInt(in, len);
+    stats.glue = parseInt(in, len);
 
     addTheClause:
     skipLine(in);
@@ -319,7 +322,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
 {
     bool xor_clause = false;
     bool learnt = false;
-    uint32_t glue = 100;
+    ClauseStats stats;
     std::string str;
     bool needToParseComments = false;
 
@@ -333,7 +336,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         ++in;
         parseString(in, str);
         if (str == "clause") {
-            parseClauseParameters(in, learnt, glue);
+            parseClauseParameters(in, learnt, stats);
         } else {
             needToParseComments = true;
         }
@@ -343,7 +346,7 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         assert(false && "Cannot read XOR clause!");
     } else {
         if (learnt) {
-            control->addLearntClause(lits, glue);
+            control->addLearntClause(lits, stats);
             numLearntClauses++;
         } else {
             control->addClause(lits);

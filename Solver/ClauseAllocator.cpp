@@ -463,8 +463,8 @@ struct sortByClauseNumLookedAtDescending
 {
     bool operator () (const Clause* x, const Clause* y)
     {
-        if (x->numLookedAt > y->numLookedAt) return 1;
-        if (x->numLookedAt < y->numLookedAt) return 0;
+        if (x->stats.numLookedAt > y->stats.numLookedAt) return 1;
+        if (x->stats.numLookedAt < y->stats.numLookedAt) return 0;
 
         //Second tie: size. If size is smaller, go first
         return x->size() < y->size();

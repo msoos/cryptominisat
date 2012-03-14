@@ -36,6 +36,51 @@
 
 class ClauseAllocator;
 
+struct ClauseStats
+{
+    ClauseStats() :
+        glue(std::numeric_limits<uint16_t>::max())
+        , conflictNumIntroduced(std::numeric_limits<uint32_t>::max())
+        , numPropAndConfl(0)
+        , numLitVisited(0)
+        , numLookedAt(0)
+    {}
+
+    //Stored data
+    uint16_t glue;    ///<Clause glue
+    uint32_t conflictNumIntroduced; ///<At what conflict number the clause  was introduced
+    uint32_t numPropAndConfl; ///<Number of times caused propagation or conflict
+    uint32_t numLitVisited; ///<Number of literals visited
+    uint32_t numLookedAt; ///<Number of times the clause has been deferenced during propagation
+
+    static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
+    {
+        //Create to-be-returned data
+        ClauseStats ret;
+
+        //Combine stats
+        ret.glue = std::min(first.glue, second.glue);
+        ret.conflictNumIntroduced = std::min(first.conflictNumIntroduced, second.conflictNumIntroduced);
+        ret.numPropAndConfl = first.numPropAndConfl + second.numPropAndConfl;
+        ret.numLitVisited = first.numLitVisited + second.numLitVisited;
+        ret.numLookedAt = first.numLookedAt + second.numLookedAt;
+
+        return ret;
+    };
+};
+
+inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
+{
+
+    os << "glue " << stats.glue << " ";
+    os << "conflIntro " << stats.conflictNumIntroduced<< " ";
+    os << "numPropConfl " << stats.numPropAndConfl<< " ";
+    os << "numLitVisit " << stats.numLitVisited<< " ";
+    os << "numLook " << stats.numLookedAt<< " ";
+
+    return os;
+}
+
 /**
 @brief Holds a clause. Does not allocate space for literals
 
@@ -52,11 +97,9 @@ protected:
     uint32_t strenghtened:1; ///<Has the clause been strenghtened since last SatELite-like work?
     uint32_t changed:1; ///<Var inside clause has been changed
 
-    uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
-    uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
-    uint16_t glue:MAX_GLUE_BITS;    ///<Clause glue -- clause activity according to GLUCOSE
+    uint32_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
+    uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t mySize; ///<The current size of the clause
-    uint32_t conflictNumIntroduced;
 
     Lit* getData()
     {
@@ -69,25 +112,23 @@ protected:
     }
 
 public:
-    uint32_t numPropAndConfl;
-    uint32_t numLitVisited;
-    uint32_t numLookedAt;
+    ClauseStats stats;
 
     template<class V>
-    Clause(const V& ps, const uint32_t _conflictNumIntroduced) :
-        conflictNumIntroduced(_conflictNumIntroduced)
-        , numPropAndConfl(0)
-        , numLitVisited(0)
-        , numLookedAt(0)
+    Clause(const V& ps, const uint32_t _conflictNumIntroduced)
     {
-        isFreed = false;
         assert(ps.size() > 2);
+
+        stats.conflictNumIntroduced = _conflictNumIntroduced;
+        stats.glue = std::min<uint16_t>(stats.glue, ps.size());
+        isFreed = false;
         mySize = ps.size();
         isLearnt = false;
         isRemoved = false;
 
-        for (uint32_t i = 0; i < ps.size(); i++) getData()[i] = ps[i];
-        glue = MAX_THEORETICAL_GLUE;
+        for (uint32_t i = 0; i < ps.size(); i++)
+            getData()[i] = ps[i];
+
         setChanged();
     }
 
@@ -162,17 +203,6 @@ public:
         return *(getData() + i);
     }
 
-    void setGlue(const uint32_t newGlue)
-    {
-        assert(newGlue <= MAX_THEORETICAL_GLUE);
-        glue = newGlue;
-    }
-
-    uint32_t getGlue() const
-    {
-        return glue;
-    }
-
     void makeNonLearnt()
     {
         assert(isLearnt);
@@ -181,7 +211,7 @@ public:
 
     void makeLearnt(const uint32_t newGlue)
     {
-        glue = newGlue;
+        stats.glue = newGlue;
         isLearnt = true;
     }
 
@@ -238,15 +268,9 @@ public:
         return isFreed;
     }
 
-    void takeMaxOfStats(Clause& other)
+    void combineStats(const ClauseStats& other)
     {
-        if (other.getGlue() < getGlue())
-            setGlue(other.getGlue());
-    }
-
-    uint32_t getConflictIntroduced() const
-    {
-        return conflictNumIntroduced;
+        stats = ClauseStats::combineStats(stats, other);
     }
 };
 

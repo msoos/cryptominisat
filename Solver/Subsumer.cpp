@@ -177,14 +177,15 @@ void Subsumer::subsume0(ClauseIndex c, Clause& cl)
     #endif
     Sub0Ret ret = subsume0(c.index, cl, clauseData[c.index].abst);
 
-    if (cl.learnt()) {
-        if (!ret.subsumedNonLearnt) {
-            if (cl.getGlue() > ret.glue)
-                cl.setGlue(ret.glue);
-        } else {
-            cl.makeNonLearnt();
-        }
+    //If non-learnt is subsumed by learnt, make the learnt into non-learnt
+    if (cl.learnt()
+        && ret.subsumedNonLearnt
+    ) {
+        cl.makeNonLearnt();
     }
+
+    //Combine stats
+    cl.combineStats(ret.stats);
 }
 
 /**
@@ -200,7 +201,6 @@ template<class T> Subsumer::Sub0Ret Subsumer::subsume0(const uint32_t index, con
 {
     Sub0Ret ret;
     ret.subsumedNonLearnt = false;
-    ret.glue = std::numeric_limits<uint32_t>::max();
 
     vector<ClauseIndex> subs;
     findSubsumed0(index, ps, abs, subs);
@@ -210,11 +210,14 @@ template<class T> Subsumer::Sub0Ret Subsumer::subsume0(const uint32_t index, con
         #endif
 
         Clause *tmp = clauses[it->index];
-        if (tmp->learnt()) {
-            ret.glue = std::min(ret.glue, tmp->getGlue());
-        } else {
+
+        //Combine stats
+        ret.stats = ClauseStats::combineStats(tmp->stats, ret.stats);
+
+        //At least one is non-learnt. Indicate this to caller.
+        if (!tmp->learnt())
             ret.subsumedNonLearnt = true;
-        }
+
         clauses_subsumed++;
         unlinkClause(*it);
     }
@@ -244,13 +247,17 @@ void Subsumer::subsume1(ClauseIndex c, Clause& ps)
         Clause& cl = *clauses[c.index];
         if (subsLits[j] == lit_Undef) {
             clauses_subsumed++;
-            if (ps.learnt()) {
-                if (cl.learnt())
-                    ps.takeMaxOfStats(cl);
-                else {
-                    ps.makeNonLearnt();
-                }
+
+            //If subsumes a non-learnt, and is learnt, make it non-learnt
+            if (ps.learnt()
+                && !cl.learnt()
+            ) {
+                ps.makeNonLearnt();
             }
+
+            //Update stats
+            ps.combineStats(cl.stats);
+
             unlinkClause(c);
         } else {
             clauses_strengthened++;
@@ -1947,15 +1954,22 @@ bool Subsumer::maybeEliminate(const Var var)
             cout << "Adding new clause due to varelim: " << dummy << endl;
             #endif
 
-            //Calculate learnt & data for learnt
+            //Calculate stats
             const bool learnt = it->learnt || it2->learnt;
-            uint32_t glue = 0;
-            if (learnt)
-                glue = 2;
+            ClauseStats stats;
+            if (it->isBin && !it2->isBin)
+                stats = clauses[it2->clsimp.index]->stats;
+            else if (!it->isBin && it2->isBin)
+                stats = clauses[it->clsimp.index]->stats;
+            else if (!it->isBin && !it2->isBin)
+                stats = ClauseStats::combineStats(
+                    clauses[it->clsimp.index]->stats
+                    , clauses[it2->clsimp.index]->stats
+                );
 
             //Add clause and do subsumption
             *toDecrease -= dummy.size()*2;
-            Clause* newCl = control->addClauseInt(dummy, learnt, glue, false);
+            Clause* newCl = control->addClauseInt(dummy, learnt, stats, false);
             if (newCl != NULL) {
                 ClauseIndex newClSimp = linkInClause(*newCl);
                 subsume0(newClSimp, *newCl);
@@ -2037,7 +2051,7 @@ void Subsumer::addLearntBinaries(const Var var)
 
             tmp[0] = lit1;
             tmp[1] = lit2;
-            Clause* tmpOK = control->addClauseInt(tmp, true, 2, true);
+            Clause* tmpOK = control->addClauseInt(tmp, true);
             numLearntBinVarRemAdded++;
             release_assert(tmpOK == NULL);
             release_assert(control->ok);

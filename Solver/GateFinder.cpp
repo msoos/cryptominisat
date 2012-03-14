@@ -159,9 +159,10 @@ uint32_t GateFinder::createNewVars()
         tmp.push_back(~newLit);
         tmp.push_back(n.lit1);
         tmp.push_back(n.lit2);
-        cl = control->addClauseInt(tmp, false, 0, false);
+        cl = control->addClauseInt(tmp, false, ClauseStats(), false);
         assert(cl != NULL);
         assert(control->ok);
+        cl->stats.conflictNumIntroduced = control->sumConflicts;
         ClauseIndex c = subsumer->linkInClause(*cl);
         subsumer->clauseData[c.index].defOfOrGate = true;
 
@@ -644,13 +645,11 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
         //Future clause's stat
         const bool learnt = cl->learnt();
-        uint32_t glue = 0;
-        if (learnt)
-            glue = cl->getGlue();
+        ClauseStats stats = cl->stats;
 
         //Free the old clause and allocate new one
         subsumer->unlinkClause(c.index);
-        cl = control->addClauseInt(lits, learnt, glue, false);
+        cl = control->addClauseInt(lits, learnt, stats, false);
         if (!control->ok)
             return false;
 
@@ -834,9 +833,7 @@ bool GateFinder::treatAndGateClause(const ClauseIndex& other, const OrGate& gate
     Clause& otherCl = *subsumer->clauses[other.index];
     *subsumer->toDecrease -= otherCl.size()*2;
     bool learnt = otherCl.learnt() && cl.learnt();
-    uint32_t glue;
-    if (!learnt) glue = 0;
-    else glue = std::min(otherCl.getGlue(), cl.getGlue());
+    ClauseStats stats = ClauseStats::combineStats(cl.stats, otherCl.stats);
 
     #ifdef VERBOSE_ORGATE_REPLACE
     cout << "new clause:" << lits << endl;
@@ -844,7 +841,7 @@ bool GateFinder::treatAndGateClause(const ClauseIndex& other, const OrGate& gate
     #endif
 
     //Create and link in new clause
-    Clause* c = control->addClauseInt(lits, learnt, glue, false);
+    Clause* c = control->addClauseInt(lits, learnt, stats, false);
     if (c != NULL)
         subsumer->linkInClause(*c);
     if (!control->ok)

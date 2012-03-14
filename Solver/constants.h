@@ -49,10 +49,6 @@
 #define RESTART_TYPE_DECIDER_FROM 2
 #define RESTART_TYPE_DECIDER_UNTIL 7
 
-//Parameters regarding glues
-#define MAX_GLUE_BITS 7
-#define MAX_THEORETICAL_GLUE ((uint32_t)((1 << MAX_GLUE_BITS)-1))
-
 ///////////////////
 // Verbose Debug
 ///////////////////

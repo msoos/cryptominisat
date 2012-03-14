@@ -242,8 +242,8 @@ template<bool simple> inline bool Solver::propNormalClause(
     bogoProps += 4;
     const uint32_t offset = i->getNormOffset();
     Clause& c = *clAllocator->getPointer(offset);
-    c.numLookedAt++;
-    c.numLitVisited++;
+    c.stats.numLookedAt++;
+    c.stats.numLitVisited++;
 
     // Make sure the false literal is data[1]:
     if (c[0] == ~p) {
@@ -268,18 +268,18 @@ template<bool simple> inline bool Solver::propNormalClause(
         if (value(*k) != l_False) {
             c[1] = *k;
             bogoProps += numLitVisited/10;
-            c.numLitVisited+= numLitVisited;
+            c.stats.numLitVisited+= numLitVisited;
             *k = ~p;
             watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
             return true;
         }
     }
     bogoProps += numLitVisited/10;
-    c.numLitVisited+= numLitVisited;
+    c.stats.numLitVisited+= numLitVisited;
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
-    c.numPropAndConfl++;
+    c.stats.numPropAndConfl++;
     if (value(c[0]) == l_False) {
         confl = PropBy(offset);
         #ifdef VERBOSE_DEBUG_FULLPROP

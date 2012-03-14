@@ -379,7 +379,7 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
             control->clAllocator->clauseFree(&cl);
         } else {
             clShrinked++;
-            Clause* c2 = control->addClauseInt(lits, cl.learnt(), cl.getGlue());
+            Clause* c2 = control->addClauseInt(lits, cl.learnt(), cl.stats);
             control->clAllocator->clauseFree(&cl);
 
             if (c2 != NULL)

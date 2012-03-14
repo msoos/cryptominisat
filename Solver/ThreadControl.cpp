@@ -151,7 +151,7 @@ and only internally
 template <class T>
 Clause* ThreadControl::addClauseInt(const T& lits
                             , const bool learnt
-                            , const uint32_t glue
+                            , const ClauseStats& stats
                             , const bool attach)
 {
     assert(ok);
@@ -204,15 +204,31 @@ Clause* ThreadControl::addClauseInt(const T& lits
             return NULL;
         default:
             Clause* c = clAllocator->Clause_new(ps, sumConflicts);
-            if (learnt) c->makeLearnt(glue);
+            if (learnt)
+                c->makeLearnt(stats.glue);
+            c->stats = stats;
 
-            if (attach) attachClause(*c);
+            //In class 'Subsumer' we don't need to attach normall
+            if (attach)
+                attachClause(*c);
+
             return c;
     }
 }
 
-template Clause* ThreadControl::addClauseInt(const Clause& ps, const bool learnt, const uint32_t glue, const bool attach);
-template Clause* ThreadControl::addClauseInt(const vector<Lit>& ps, const bool learnt, const uint32_t glue, const bool attach);
+template Clause* ThreadControl::addClauseInt(
+    const Clause& ps
+    , const bool learnt
+    , const ClauseStats& stats
+    , const bool attach
+);
+
+template Clause* ThreadControl::addClauseInt(
+    const vector<Lit>& ps
+    , const bool learnt
+    , const ClauseStats& stats
+    , const bool attach
+);
 
 void ThreadControl::attachClause(const Clause& c)
 {
@@ -320,15 +336,17 @@ bool ThreadControl::addClause(const vector<Lit>& lits)
     return ok;
 }
 
-bool ThreadControl::addLearntClause(const vector<Lit>& lits, const uint32_t glue)
-{
+bool ThreadControl::addLearntClause(
+    const vector<Lit>& lits
+    , const ClauseStats& stats
+) {
     vector<Lit> ps(lits.size());
     std::copy(lits.begin(), lits.end(), ps.begin());
 
     if (!addClauseHelper(ps))
         return false;
 
-    Clause* c = addClauseInt(ps, true, glue);
+    Clause* c = addClauseInt(ps, true, stats);
     if (c != NULL)
         learnts.push_back(c);
 
@@ -565,8 +583,8 @@ bool ThreadControl::reduceDBStructGlue::operator () (
     assert(xsize > 2 && ysize > 2);
 
     //First tie: glue
-    if (x->getGlue() > y->getGlue()) return 1;
-    if (x->getGlue() < y->getGlue()) return 0;
+    if (x->stats.glue > y->stats.glue) return 1;
+    if (x->stats.glue < y->stats.glue) return 0;
 
     //Second tie: size
     return xsize > ysize;
@@ -588,7 +606,7 @@ bool ThreadControl::reduceDBStructSize::operator () (
     if (xsize < ysize) return 0;
 
     //Second tie: glue
-    return x->getGlue() > y->getGlue();
+    return x->stats.glue > y->stats.glue;
 }
 
 /// @brief Sort clauses according to size: small prop+confl first
@@ -604,8 +622,8 @@ bool ThreadControl::reduceDBStructPropConfl::operator() (
 
     //First tie: numPropConfl -- notice the reversal of 1/0
     //Larger is better --> should be last in the sorted list
-    if (x->numPropAndConfl > y->numPropAndConfl) return 0;
-    if (x->numPropAndConfl < y->numPropAndConfl) return 1;
+    if (x->stats.numPropAndConfl > y->stats.numPropAndConfl) return 0;
+    if (x->stats.numPropAndConfl < y->stats.numPropAndConfl) return 1;
 
     //Second tie: size
     return xsize > ysize;
@@ -631,8 +649,8 @@ void ThreadControl::reduceDB()
         for (i = j = 0; i < learnts.size(); i++) {
             Clause* cl = learnts[i];
             if (learnts[i]->size() > 3
-                && cl->numPropAndConfl < conf.preClauseCleanLimit
-                && cl->getConflictIntroduced() + 10000 < sumConflicts
+                && cl->stats.numPropAndConfl < conf.preClauseCleanLimit
+                && cl->stats.conflictNumIntroduced + 10000 < sumConflicts
             ) {
                 detachClause(*cl);
                 clAllocator->clauseFree(cl);
@@ -702,17 +720,17 @@ void ThreadControl::reduceDB()
 
         Clause *cl = learnts[i];
         assert(cl->size() > 2);
-        if (learnts[i]->getGlue() > 2
+        if (learnts[i]->stats.glue > 2
             && cl->size() > 3 //we cannot update activity of 3-longs because of watchlists
-            && cl->numPropAndConfl < 10
+            && cl->stats.numPropAndConfl < 10
         ) {
-            totalGlueOfRemoved += cl->getGlue();
+            totalGlueOfRemoved += cl->stats.glue;
             totalSizeOfRemoved += cl->size();
             totalNumRemoved++;
             detachClause(*cl);
             clAllocator->clauseFree(cl);
         } else {
-            totalGlueOfNonRemoved += cl->getGlue();
+            totalGlueOfNonRemoved += cl->stats.glue;
             totalSizeOfNonRemoved += cl->size();
             totalNumNonRemoved++;
             numThreeLongLearnt += (cl->size()==3);
@@ -723,7 +741,7 @@ void ThreadControl::reduceDB()
 
     //Count what is left
     for (; i < learnts.size(); i++) {
-        totalGlueOfNonRemoved += learnts[i]->getGlue();
+        totalGlueOfNonRemoved += learnts[i]->stats.glue;
         totalSizeOfNonRemoved += learnts[i]->size();
         totalNumNonRemoved++;
         numThreeLongLearnt += (learnts[i]->size()==3);
@@ -1012,31 +1030,31 @@ ThreadControl::UsageStats ThreadControl::sumClauseData(
 
         //Sum stats
         stats.num++;
-        stats.sumPropConfl += cl.numPropAndConfl;
-        stats.sumLitVisited += cl.numLitVisited;
-        stats.sumLookedAt += cl.numLookedAt;
+        stats.sumPropConfl += cl.stats.numPropAndConfl;
+        stats.sumLitVisited += cl.stats.numLitVisited;
+        stats.sumLookedAt += cl.stats.numLookedAt;
 
         //Update size statistics
         if (usageStats.size() < cl.size() + 1)
             usageStats.resize(cl.size()+1);
 
         usageStats[clause_size].num++;
-        usageStats[clause_size].sumPropConfl += cl.numPropAndConfl;
-        usageStats[clause_size].sumLitVisited += cl.numLitVisited;
-        usageStats[clause_size].sumLookedAt += cl.numLookedAt;
+        usageStats[clause_size].sumPropConfl += cl.stats.numPropAndConfl;
+        usageStats[clause_size].sumLitVisited += cl.stats.numLitVisited;
+        usageStats[clause_size].sumLookedAt += cl.stats.numLookedAt;
 
         //If learnt, sum up GLUE-based stats
         if (learnt) {
-            const size_t glue = cl.getGlue();
+            const size_t glue = cl.stats.glue;
             assert(glue != std::numeric_limits<uint32_t>::max());
             if (usageStatsGlue.size() < glue + 1) {
                 usageStatsGlue.resize(glue + 1);
             }
 
             usageStatsGlue[glue].num++;
-            usageStatsGlue[glue].sumPropConfl += cl.numPropAndConfl;
-            usageStatsGlue[glue].sumLitVisited += cl.numLitVisited;
-            usageStatsGlue[glue].sumLookedAt += cl.numLookedAt;
+            usageStatsGlue[glue].sumPropConfl += cl.stats.numPropAndConfl;
+            usageStatsGlue[glue].sumLitVisited += cl.stats.numLitVisited;
+            usageStatsGlue[glue].sumLookedAt += cl.stats.numLookedAt;
         }
 
         //If lots of verbosity, print clause's individual stat
@@ -1045,17 +1063,17 @@ ThreadControl::UsageStats ThreadControl::sumClauseData(
             cout
             << "Clause size " << std::setw(4) << cl.size();
             if (cl.learnt()) {
-                cout << " glue : " << std::setw(4) << cl.getGlue();
+                cout << " glue : " << std::setw(4) << cl.stats.glue;
             }
             cout
-            << " Props&confls: " << std::setw(10) << cl.numPropAndConfl
-            << " Lit visited: " << std::setw(10)<< cl.numLitVisited
-            << " Looked at: " << std::setw(10)<< cl.numLookedAt
+            << " Props&confls: " << std::setw(10) << cl.stats.numPropAndConfl
+            << " Lit visited: " << std::setw(10)<< cl.stats.numLitVisited
+            << " Looked at: " << std::setw(10)<< cl.stats.numLookedAt
             << " Props&confls/Litsvisited*10: ";
-            if (cl.numLitVisited > 0) {
+            if (cl.stats.numLitVisited > 0) {
                 cout
                 << std::setw(6) << std::fixed << std::setprecision(4)
-                << (10.0*(double)cl.numPropAndConfl/(double)cl.numLitVisited);
+                << (10.0*(double)cl.stats.numPropAndConfl/(double)cl.stats.numLitVisited);
             }
             cout << endl;
         }
@@ -1198,9 +1216,9 @@ void ThreadControl::clearPropConfl(vector<Clause*>& clauseset)
         ; it != end
         ; it++
     ) {
-        (*it)->numLitVisited = 0;
-        (*it)->numPropAndConfl = 0;
-        (*it)->numLookedAt = 0;
+        (*it)->stats.numLitVisited = 0;
+        (*it)->stats.numPropAndConfl = 0;
+        (*it)->stats.numLookedAt = 0;
     }
 }
 
@@ -1523,7 +1541,10 @@ void ThreadControl::dumpLearnts(std::ostream& os, const uint32_t maxSize)
         Clause& cl = *learnts[i];
         if (cl.size() <= maxSize) {
             os << cl << " 0" << endl;
-            os << "c clause learnt " << (cl.learnt() ? "yes" : "no") << " glue "  << cl.getGlue() << endl;
+            os
+            << "c clause learnt "
+            << (cl.learnt() ? "yes" : "no")
+            << " stats "  << cl.stats << endl;
         }
     }
 }

@@ -265,7 +265,7 @@ private:
     //subsume0
     struct Sub0Ret {
         bool subsumedNonLearnt;
-        uint32_t glue;
+        ClauseStats stats;
     };
     void subsume0(ClauseIndex c, Clause& ps);
     template<class T> Sub0Ret subsume0(const uint32_t index, const T& ps, const CL_ABST_TYPE abs);
