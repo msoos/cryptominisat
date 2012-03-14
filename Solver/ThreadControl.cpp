@@ -861,11 +861,6 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
         << std::setw(8) << numConfls << " confls"
         << endl;
 
-    lbool status = l_Undef;
-
-    //restPrinter->printRestartStat("S");
-    if (status != l_Undef) goto end;
-
     if (conf.doFindEqLits && !sCCFinder->find2LongXors())
         goto end;
 
