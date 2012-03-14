@@ -25,12 +25,7 @@
 //#define DEBUG_ROW
 
 #include <vector>
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
-
+#include "constants.h"
 #include "SolverTypes.h"
 #include "Vec.h"
 #include <string.h>

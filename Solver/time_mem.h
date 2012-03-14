@@ -20,12 +20,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #ifndef TIME_MEM_H
 #define TIME_MEM_H
-
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
+#include "constants.h"
 
 #if defined (_MSC_VER) || defined(CROSS_COMPILE)
 #include <ctime>

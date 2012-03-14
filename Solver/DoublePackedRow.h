@@ -18,14 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DOUBLEPACKEDROW_H
 #define DOUBLEPACKEDROW_H
 
-#ifdef _MSC_VER
-#include <msvc/stdint.h>
-#else
-#include <stdint.h>
-#endif //_MSC_VER
-
+#include "constants.h"
 #include <stdlib.h>
-
 #include "SolverTypes.h"
 
 class DoublePackedRow
