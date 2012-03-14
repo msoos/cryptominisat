@@ -32,9 +32,14 @@ using std::endl;
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Solver::Solver(ClauseAllocator *_clAllocator, const AgilityData& agilityData) :
+Solver::Solver(
+    ClauseAllocator *_clAllocator
+    , const AgilityData& agilityData
+    , const bool _updateGlues
+) :
         // Stats
-        propagations(0)
+        updateGlues(_updateGlues)
+        , propagations(0)
         , bogoProps(0)
         //Prop stats
         , propsBin(0)
@@ -306,10 +311,20 @@ template<bool simple> inline bool Solver::propNormalClause(
         else
             propsLongIrred++;
 
-        if (simple)
+        if (simple) {
             enqueue(c[0], PropBy(offset));
-        else
+
+            //Update glues?
+            if (c.learnt()
+                && c.stats.glue > 2
+                && updateGlues
+            ) {
+                uint16_t newGlue = calcGlue(c);
+                c.stats.glue = std::min(c.stats.glue, newGlue);
+            }
+        } else {
             addHyperBin(c[0], c);
+        }
     }
 
     return true;

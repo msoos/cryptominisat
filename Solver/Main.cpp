@@ -404,6 +404,8 @@ void Main::parseCommandLine()
         , "Don't sort watches according to size")
     ("calcreach", po::value<int>(&conf.doCalcReach)->default_value(conf.doCalcReach)
         , "Calculate literal reachability")
+    ("updateGlues", po::value<int>(&conf.updateGlues)->default_value(conf.updateGlues)
+        , "Update glues while propagating")
     ("cache", po::value<int>(&conf.doCache)->default_value(conf.doCache)
         , "Use implication cache. Less memory used, disables LOTS")
     ;

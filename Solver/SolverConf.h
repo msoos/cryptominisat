@@ -79,6 +79,7 @@ class SolverConf
         uint32_t  nbClBeforeRedStart; ///< Start number of learnt clauses before learnt-clause cleaning
 
         //Glues
+        int       updateGlues;
         uint32_t  shortTermGlueHistorySize; ///< Rolling avg. glue window size
 
         //Optimisations to do

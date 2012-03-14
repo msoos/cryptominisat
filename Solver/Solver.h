@@ -124,7 +124,11 @@ public:
 
     // Constructor/Destructor:
     //
-    Solver(ClauseAllocator* clAllocator, const AgilityData& agilityData);
+    Solver(
+        ClauseAllocator* clAllocator
+        , const AgilityData& agilityData
+        , const bool _updateGlues
+    );
 
     // Variable mode:
     //
@@ -150,10 +154,10 @@ public:
 
 protected:
 
-    // Mode of operation:
-    //
-
+    //Non-categorised functions
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.
+    template<class T> uint16_t calcGlue(const T& ps); ///<Calculates the glue of a clause
+    bool updateGlues;
 
     uint64_t propagations; ///<Number of propagations made
     uint64_t bogoProps;    ///<An approximation of time
@@ -716,6 +720,34 @@ inline size_t Solver::getTrailSize() const
 inline bool Solver::satisfied(const BinaryClause& bin)
 {
     return ((value(bin.getLit1()) == l_True) || (value(bin.getLit2()) == l_True));
+}
+
+/**
+@brief Calculates the glue of a clause
+
+Used to calculate the Glue of a new clause, or to update the glue of an
+existing clause. Only used if the glue-based activity heuristic is enabled,
+i.e. if we are in GLUCOSE mode (not MiniSat mode)
+*/
+template<class T>
+uint16_t Solver::calcGlue(const T& ps)
+{
+    uint32_t nbLevels = 0;
+    typename T::const_iterator l, end;
+
+    for(l = ps.begin(), end = ps.end(); l != end; l++) {
+        int32_t lev = varData[l->var()].level;
+        if (!seen2[lev]) {
+            nbLevels++;
+            seen2[lev] = 1;
+        }
+    }
+
+    for(l = ps.begin(), end = ps.end(); l != end; l++) {
+        int32_t lev = varData[l->var()].level;
+        seen2[lev] = 0;
+    }
+    return nbLevels;
 }
 
 #endif //SOLVER_H

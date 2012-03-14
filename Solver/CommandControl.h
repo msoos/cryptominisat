@@ -150,7 +150,6 @@ class CommandControl : public Solver
             , bool var_bump_necessary
         );
         void     analyzeFinal     (const Lit p, vector<Lit>& out_conflict);
-        template<class T> uint32_t calcNBLevels(const T& ps); ///<Calculates the glue of a clause
 
         //////////////
         // Conflict minimisation
@@ -208,34 +207,6 @@ class CommandControl : public Solver
         // Transitive on-the-fly self-subsuming resolution
         void   minimiseLearntFurther(vector<Lit>& cl);
 };
-
-/**
-@brief Calculates the glue of a clause
-
-Used to calculate the Glue of a new clause, or to update the glue of an
-existing clause. Only used if the glue-based activity heuristic is enabled,
-i.e. if we are in GLUCOSE mode (not MiniSat mode)
-*/
-template<class T>
-inline uint32_t CommandControl::calcNBLevels(const T& ps)
-{
-    uint32_t nbLevels = 0;
-    typename T::const_iterator l, end;
-
-    for(l = ps.begin(), end = ps.end(); l != end; l++) {
-        int32_t lev = varData[l->var()].level;
-        if (!seen2[lev]) {
-            nbLevels++;
-            seen2[lev] = 1;
-        }
-    }
-
-    for(l = ps.begin(), end = ps.end(); l != end; l++) {
-        int32_t lev = varData[l->var()].level;
-        seen2[lev] = 0;
-    }
-    return nbLevels;
-}
 
 inline void CommandControl::varDecayActivity()
 {

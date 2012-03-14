@@ -64,6 +64,7 @@ SolverConf::SolverConf() :
         , nbClBeforeRedStart(20000)
 
         //Glues
+        , updateGlues(true)
         , shortTermGlueHistorySize (100)
 
         //optimisations to do

@@ -40,7 +40,11 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control) :
-        Solver(_control->clAllocator, AgilityData(_conf.agilityG, _conf.agilityLimit))
+        Solver(
+            _control->clAllocator
+            , AgilityData(_conf.agilityG, _conf.agilityLimit)
+            , _conf.updateGlues
+        )
 
         // Stats
         , numConflicts(0)
@@ -465,7 +469,7 @@ void CommandControl::analyze(
         && conf.doMinimLearntMore
         && out_learnt.size() > 1
         && (conf.doAlwaysFMinim
-            || calcNBLevels(out_learnt) < 0.65*glueHist.getAvgAll()
+            || calcGlue(out_learnt) < 0.65*glueHist.getAvgAll()
             || out_learnt.size() < 0.65*conflSizeHist.getAvgAll()
             || out_learnt.size() < 10
             )
@@ -474,7 +478,7 @@ void CommandControl::analyze(
     }
 
     //Calc stats
-    glue = calcNBLevels(out_learnt);
+    glue = calcGlue(out_learnt);
     numLitsLearntMinimised += out_learnt.size();
 
     //Print fully minimised clause

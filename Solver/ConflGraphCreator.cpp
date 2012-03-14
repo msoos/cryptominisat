@@ -216,7 +216,7 @@ string CommandControl::simplAnalyseGraph(
         seen[out_learnt[j].var()] = 0;    // ('seen[]' is now cleared)
 
     //Calculate glue
-    glue = calcNBLevels(out_learnt);
+    glue = calcGlue(out_learnt);
 
     return resolutions.str();
 }
