@@ -923,7 +923,7 @@ end:
     checkNoWrongAttach();
 
     if (!ok) return l_False;
-    return status;
+    return l_True;
 }
 
 void ThreadControl::calcReachability()
