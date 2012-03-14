@@ -863,16 +863,6 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
 
     lbool status = l_Undef;
 
-    /*
-    conf.random_var_freq = 1;
-    simplifying = true;
-    uint64_t origConflicts = conflicts;
-    restPrinter->printRestartStat("S");
-    while(status == l_Undef && conflicts-origConflicts < numConfls && needToInterrupt == false) {
-        status = search(SearchFuncParams(100, std::numeric_limits<uint64_t>::max(), false));
-    }
-    if (needToInterrupt) return l_Undef;*/
-
     //restPrinter->printRestartStat("S");
     if (status != l_Undef) goto end;
 
