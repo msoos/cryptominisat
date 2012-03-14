@@ -722,7 +722,7 @@ void ThreadControl::reduceDB()
         assert(cl->size() > 2);
         if (learnts[i]->stats.glue > 2
             && cl->size() > 3 //we cannot update activity of 3-longs because of watchlists
-            && cl->stats.numPropAndConfl < 10
+            && cl->stats.numPropAndConfl < conf.clauseCleanNeverCleanAtOrAboveThisPropConfl
         ) {
             totalGlueOfRemoved += cl->stats.glue;
             totalSizeOfRemoved += cl->size();
