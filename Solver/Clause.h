@@ -33,7 +33,6 @@
 #include "Watched.h"
 #include "Alg.h"
 #include "constants.h"
-#include "ClauseAllocator.h"
 
 class ClauseAllocator;
 

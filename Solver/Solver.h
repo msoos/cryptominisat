@@ -30,6 +30,7 @@ using std::set;
 #include "BoundedQueue.h"
 #include "SolverConf.h"
 #include "ImplCache.h"
+#include "ClauseAllocator.h"
 
 //#define VERBOSE_DEBUG_FULLPROP
 
