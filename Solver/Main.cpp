@@ -149,8 +149,8 @@ void Main::parseInAllFiles()
     const double myTime = cpuTime();
 
     //First read normal extra files
-    if ((debugLib || debugNewVar) && filesToRead.size() > 0) {
-        cout << "debugNewVar and debugLib must both be OFF to parse in extra files" << endl;
+    if ((debugLib || debugNewVar) && filesToRead.size() > 1) {
+        cout << "debugNewVar and debugLib must both be OFF to parse in more than one file" << endl;
         exit(-1);
     }
 
