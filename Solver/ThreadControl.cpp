@@ -805,7 +805,6 @@ lbool ThreadControl::solve()
 
         status = CommandControl::solve(numConfls);
         sumSolvingStats += CommandControl::getStats();
-        CommandControl::resetStats();
 
         backupActivity.clear();
         backupPolarity.clear();
@@ -817,8 +816,10 @@ lbool ThreadControl::solve()
         }
         backupActivityInc = CommandControl::getVarInc();
 
-        if (status != l_False)
+        if (status != l_False) {
+            CommandControl::resetStats();
             fullReduce();
+        }
 
         zeroLevAssignsByThreads += trail.size() - origTrailSize;
         if (status != l_Undef)
