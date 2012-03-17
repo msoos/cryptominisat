@@ -407,6 +407,15 @@ void ThreadControl::reArrangeClauses()
     }
 }
 
+static void printArray(const vector<Var>& array, const std::string& str)
+{
+    cout << str << " : " << endl;
+    for(size_t i = 0; i < array.size(); i++) {
+        cout << str << "[" << i << "] : " << array[i] << endl;
+    }
+    cout << endl;
+}
+
 void ThreadControl::renumberVariables()
 {
     double myTime = cpuTime();
@@ -487,6 +496,17 @@ void ThreadControl::renumberVariables()
         << endl;
     }
     myTotalTime += (cpuTime() - myTime);
+
+    //Update updater data
+    updateArray(interToOuterMain, interToOuter);
+    cout << "Updated vars" << endl;
+    updateArray(outerToInterMain, outerToInter);
+
+    //For debug
+    /*printArray(outerToInter, "outerToInter");
+    printArray(outerToInterMain, "outerToInterMain");
+    printArray(interToOuter, "interToOuter");
+    printArray(interToOuterMain, "interToOuterMain");*/
 
 
     //Update local data
@@ -834,10 +854,15 @@ lbool ThreadControl::solve()
 
     //Handle found solution
     if (status == l_False) {
+        //Not much to do, just return l_False
         return l_False;
     } else if (status == l_True) {
+        //Extend solution
         SolutionExtender extender(this, solution);
         extender.extend();
+
+        //Renumber model back to original variable numbering
+        updateArray(model, outerToInterMain);
     }
 
     restPrinter->printEndSearchStat();
