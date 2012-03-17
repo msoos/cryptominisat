@@ -278,6 +278,10 @@ void ThreadControl::detachModifiedClause(
 
 bool ThreadControl::addClauseHelper(vector<Lit>& ps)
 {
+    //If already UNSAT, just return
+    if (!ok)
+        return false;
+
     //Sanity checks
     assert(decisionLevel() == 0);
     assert(qhead == trail.size());
@@ -288,9 +292,6 @@ bool ThreadControl::addClauseHelper(vector<Lit>& ps)
     for (vector<Lit>::const_iterator it = ps.begin(), end = ps.end(); it != end; it++) {
         assert(it->var() < nVars() && "Clause inserted, but variable inside has not been declared with Solver::newVar() !");
     }
-
-    if (!ok)
-        return false;
 
     for (uint32_t i = 0; i != ps.size(); i++) {
         //Update to correct var
