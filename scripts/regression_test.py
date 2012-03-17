@@ -47,7 +47,7 @@ class Tester:
         self.differentDirForCheck = \
             "/home/soos/Development/sat_solvers/satcomp09/"
         self.ignoreNoSolution = False
-        self.arminFuzzer = False
+        self.fuzzer = False
         self.extraOptions = ""
         self.needDebugLib = True
         self.numThreads = 1
@@ -343,7 +343,7 @@ class Tester:
         print "Checking console output..."
         (unsat, value) = self.read_found_output(consoleOutput)
         otherSolverUNSAT = True
-        if self.arminFuzzer and unsat:
+        if self.fuzzer and unsat:
             toexec = "../../lingeling-587f/lingeling %s" % fname
             None
             print "Solving with other solver.."
@@ -357,9 +357,9 @@ class Tester:
             print "Checking other solver output..."
             (otherSolverUNSAT, otherSolverValue) = self.read_found_output(consoleOutput2)
         if unsat == True:
-            if self.arminFuzzer == False:
+            if self.fuzzer == False:
                 print "Cannot check -- output is UNSAT"
-            elif self.arminFuzzer == True:
+            elif self.fuzzer == True:
                 if otherSolverUNSAT == False:
                     print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
                     print "Console output: " , consoleOutput
@@ -460,7 +460,7 @@ class Tester:
             elif opt in ("-i", "--ignore"):
                 self.ignoreNoSolution = True
             elif opt in ("-a", "--armin"):
-                self.arminFuzzer = True
+                self.fuzzer = True
                 self.needDebugLib = False
 	    elif opt in ("--nodebuglib"):
 		self.needDebugLib = False
@@ -475,47 +475,24 @@ class Tester:
                 os.unlink(fname_unlink)
                 None
 
-        if self.arminFuzzer:
+        if self.fuzzer:
             i = 0
 
+            fuzzers = ["build/cnf-fuzz-biere", "build/cnf-fuzz-nossum", "cnf-fuzz-brummayer.py"]
+            directory = "../../cnf-utils/"
             while i < 100000000:
-                #fuzzTest
-                fileopened, file_name = unique_fuzz_file("fuzzTest");
-                fileopened.close()
-                out = commands.getstatusoutput("../../fuzzsat-0.1/fuzzsat > %s" %(file_name))
-                print "fuzzsat-0.1 :", out
+                for fuzzer in fuzzers :
+                    fileopened, file_name = unique_fuzz_file("fuzzTest");
+                    fileopened.close()
+                    call = "{0}{1} > {2}".format(directory, fuzzer, file_name)
+                    out = commands.getstatusoutput(call)
+                    print "fuzzer ", fuzzer, " : ", out
 
-                for i3 in range(num):
-                    self.check(fname=file_name, fnameCheck=file_name,
-                            randomizeNum=i3, needToLimitTime=True)
+                    for i3 in range(num):
+                        self.check(fname=file_name, fnameCheck=file_name,
+                                randomizeNum=i3, needToLimitTime=True)
 
-                os.unlink(file_name)
-
-                #cnfFuzz
-                fileopened, file_name = unique_fuzz_file("fuzzTest");
-                fileopened.close()
-                out = commands.getstatusoutput("../../cnf-utils/build/cnf-fuzz-biere > %s" % (file_name))
-                print "cnf-fuzz-biere: ", out
-
-                for i3 in range(num):
-                    self.check(fname=file_name, fnameCheck=file_name,
-                            randomizeNum=i3, needToLimitTime=True)
-
-                    i = i + 1
-                os.unlink(file_name)
-
-                #vegardFuzz
-                fileopened, file_name = unique_fuzz_file("fuzzTest");
-                fileopened.close()
-                out = commands.getstatusoutput("../../cnf-utils/build/cnf-fuzz-nossum > %s" % (file_name))
-                print "cnf-fuzz-nossum: ", out
-
-                for i3 in range(num):
-                    self.check(fname=file_name, fnameCheck=file_name,
-                               randomizeNum=i3, needToLimitTime=True)
-
-                    i = i + 1
-                os.unlink(file_name)
+                    os.unlink(file_name)
 
             exit()
 
