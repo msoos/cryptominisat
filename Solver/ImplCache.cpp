@@ -156,30 +156,47 @@ void ImplCache::clean(ThreadControl* control)
     }
 }
 
-bool ImplCache::handleNewData(
+void ImplCache::handleNewData(
     vector<uint16_t>& val
     , Var var
     , Lit lit
-    , ThreadControl* control
     , uint32_t& bProp
     , uint32_t& bXProp
-    , bool addXor
 ) {
+    //Unfortunately, we cannot add the clauses, because that could mess up
+    //the watchlists, which are being traversed by the callers, so we add these
+    //new truths as delayed clauses, and add them at the end
+
     vector<Lit> tmp;
     if  (val[lit.var()] == lit.sign()) {
         tmp.push_back(lit);
-        control->addClauseInt(tmp, true);
-        if  (!control->ok)
-            return false;
+        delayedClausesToAdd.push_back(std::make_pair(tmp, true));
         bProp++;
-    } else if (addXor) {
+    } else {
         tmp.push_back(Lit(var, false));
         tmp.push_back(Lit(lit.var(), false));
         bool sign = lit.sign();
-        control->addXorClauseInt(tmp, sign);
-        if  (!control->ok) return false;
+        delayedClausesToAdd.push_back(std::make_pair(tmp, sign));
         bXProp++;
     }
+}
+
+bool ImplCache::addDelayedClauses(ThreadControl* control)
+{
+    assert(control->ok);
+
+    //Add all delayed clauses
+    for(vector<std::pair<vector<Lit>, bool> > ::const_iterator
+        it = delayedClausesToAdd.begin(), end = delayedClausesToAdd.end()
+        ; it != end
+        ; it++
+    ) {
+        control->addClauseInt(it->first, it->second);
+        if  (!control->ok)
+            return false;
+    }
+
+    //Clear delayed clauses list
 
     return true;
 }
@@ -214,7 +231,7 @@ bool ImplCache::tryBoth(ThreadControl* control)
         const vector<LitExtra>& cache2 = implCache[(~lit).toInt()].lits;
         const vec<Watched>& ws2 = control->watches[(lit).toInt()];
 
-        //Fill 'seen' and 'val' with smaller one
+        //Fill 'seen' and 'val' from cache
         for (vector<LitExtra>::const_iterator it = cache1.begin(), end = cache1.end(); it != end; it++) {
             const Var var2 = it->getLit().var();
             if (control->varData[var2].elimed != ELIMED_NONE
@@ -225,6 +242,7 @@ bool ImplCache::tryBoth(ThreadControl* control)
             val[it->getLit().var()] = it->getLit().sign();
         }
 
+        //Fill 'seen' and 'val' from watch
         for (vec<Watched>::const_iterator it = ws1.begin(), end = ws1.end(); it != end; it++) {
             if (!it->isBinary())
                 continue;
@@ -243,8 +261,10 @@ bool ImplCache::tryBoth(ThreadControl* control)
                     goto end;
             }
         }
+        //Okay, filled
 
-        //Okay, filled, now try to see if we propagate the same or opposite from the other end
+        //Try to see if we propagate the same or opposite from the other end
+        //Using cache
         for (vector<LitExtra>::const_iterator it = cache2.begin(), end = cache2.end(); it != end; it++) {
             assert(it->getLit().var() != var);
             const Var var2 = it->getLit().var();
@@ -258,23 +278,24 @@ bool ImplCache::tryBoth(ThreadControl* control)
                 && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
             ) continue;
 
-            if (!handleNewData(val, var, it->getLit(), control, bProp, bXProp, true))
-                goto end;
+            handleNewData(val, var, it->getLit(), bProp, bXProp);
         }
 
+        //Try to see if we propagate the same or opposite from the other end
+        //Using binary clauses
         for (vec<Watched>::const_iterator it = ws2.begin(), end = ws2.end(); it != end; it++) {
             if (!it->isBinary())
                 continue;
 
             assert(it->getOtherLit().var() != var);
             const Var var2 = it->getOtherLit().var();
+            assert(var2 < control->nVars());
 
             //Only if the other one also contained it
             if (!seen[var2])
                 continue;
 
-            if (!handleNewData(val, var, it->getOtherLit(), control, bProp, bXProp, false))
-                goto end;
+            handleNewData(val, var, it->getOtherLit(), bProp, bXProp);
         }
 
         //Clear 'seen' and 'val'
@@ -292,6 +313,9 @@ bool ImplCache::tryBoth(ThreadControl* control)
         }
 
     }
+
+    //Add all clauses that have been delayed
+    addDelayedClauses(control);
 
     end:
     if (control->conf.verbosity >= 1) {
