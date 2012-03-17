@@ -45,10 +45,6 @@
 ///////////////////
 #define ANDGATEUSEFUL 20
 
-//Parameters controlling full restarts
-#define RESTART_TYPE_DECIDER_FROM 2
-#define RESTART_TYPE_DECIDER_UNTIL 7
-
 ///////////////////
 // Verbose Debug
 ///////////////////
