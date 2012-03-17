@@ -68,6 +68,7 @@ SolverConf::SolverConf() :
         , shortTermGlueHistorySize (100)
 
         //optimisations to do
+        , doRenumberVars   (true)
         , dominPickFreq    (5)
         , flipPolarFreq    (10)
         , doFindXors       (true)

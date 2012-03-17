@@ -410,6 +410,8 @@ void Main::parseCommandLine()
         , "Update glues while propagating")
     ("cache", po::value<int>(&conf.doCache)->default_value(conf.doCache)
         , "Use implication cache. Less memory used, disables LOTS")
+    ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
+        , "Renumber variables to increase cache efficiency")
     ;
 
     po::positional_options_description p;

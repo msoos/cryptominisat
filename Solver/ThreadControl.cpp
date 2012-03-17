@@ -444,10 +444,8 @@ void ThreadControl::renumberVariables()
     //outerToInter[10] = 0 ---> what was 10 is now 0.
 
     //Fill the first part of interToOuter with vars that are used
-    outerToInter.clear();
-    outerToInter.resize(nVars());
-    interToOuter.clear();
-    interToOuter.resize(nVars());
+    vector<Var> outerToInter(nVars());
+    vector<Var> interToOuter(nVars());
     size_t at = 0;
     vector<Var> useless;
     for(size_t i = 0; i < nVars(); i++) {
@@ -553,8 +551,8 @@ Var ThreadControl::newVar(const bool dvar)
 {
     const Var var = decision_var.size();
 
-    outerToInter.push_back(var);
-    interToOuter.push_back(var);
+    outerToInterMain.push_back(var);
+    interToOuterMain.push_back(var);
     decision_var.push_back(dvar);
     numDecisionVars += dvar;
 
@@ -912,7 +910,8 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
     if (conf.doSortWatched)
         sortWatched();
 
-    renumberVariables();
+    if (conf.doRenumberVars)
+        renumberVariables();
 
     reArrangeClauses();
 

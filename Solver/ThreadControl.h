@@ -160,8 +160,8 @@ class ThreadControl : public CommandControl
 
         /////////////////////////////
         //Renumberer
-        vector<Var> outerToInter;
-        vector<Var> interToOuter;
+        vector<Var> outerToInterMain;
+        vector<Var> interToOuterMain;
         void renumberVariables();
 
         /////////////////////////////
