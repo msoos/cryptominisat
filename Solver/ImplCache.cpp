@@ -191,7 +191,29 @@ bool ImplCache::addDelayedClauses(ThreadControl* control)
         ; it != end
         ; it++
     ) {
+        bool OK = true;
+        for(vector<Lit>::const_iterator
+            it2 = it->first.begin(), end2 = it->first.end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            if (control->varData[it2->var()].elimed != ELIMED_NONE
+                && control->varData[it2->var()].elimed != ELIMED_QUEUED_VARREPLACER
+            ) {
+                //Var has been eliminated one way or another. Don't add this clause
+                OK = false;
+                break;
+            }
+        }
+
+        //If any of the variables have been eliminated (possible, if cache is used)
+        //then don't add this clause
+        if (!OK)
+            continue;
+
+        //Add the clause
         control->addClauseInt(it->first, it->second);
+
         if  (!control->ok)
             return false;
     }
