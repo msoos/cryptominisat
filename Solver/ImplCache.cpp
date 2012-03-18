@@ -156,10 +156,11 @@ void ImplCache::clean(ThreadControl* control)
     }
 }
 
-void ImplCache::handleNewData(
+bool ImplCache::handleNewData(
     vector<uint16_t>& val
     , Var var
     , Lit lit
+    , ThreadControl* control
     , uint32_t& bProp
     , uint32_t& bXProp
 ) {
@@ -168,17 +169,25 @@ void ImplCache::handleNewData(
     //new truths as delayed clauses, and add them at the end
 
     vector<Lit> tmp;
+
+    //a->b and (-a)->b, so 'b'
     if  (val[lit.var()] == lit.sign()) {
         tmp.push_back(lit);
-        delayedClausesToAdd.push_back(std::make_pair(tmp, true));
+        control->addClauseInt(tmp, true);
+        if  (!control->ok)
+            return false;
+
         bProp++;
     } else {
+        //a->b, and (-a)->(-b), so equivalent literal
         tmp.push_back(Lit(var, false));
         tmp.push_back(Lit(lit.var(), false));
         bool sign = lit.sign();
         delayedClausesToAdd.push_back(std::make_pair(tmp, sign));
         bXProp++;
     }
+
+    return true;
 }
 
 bool ImplCache::addDelayedClauses(ThreadControl* control)
@@ -212,13 +221,11 @@ bool ImplCache::addDelayedClauses(ThreadControl* control)
             continue;
 
         //Add the clause
-        control->addClauseInt(it->first, it->second);
+        control->addXorClauseInt(it->first, it->second);
 
         if  (!control->ok)
             return false;
     }
-
-    //Clear delayed clauses list
 
     return true;
 }
@@ -300,7 +307,8 @@ bool ImplCache::tryBoth(ThreadControl* control)
                 && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
             ) continue;
 
-            handleNewData(val, var, it->getLit(), bProp, bXProp);
+            if (!handleNewData(val, var, it->getLit(), control, bProp, bXProp))
+                goto end;
         }
 
         //Try to see if we propagate the same or opposite from the other end
@@ -317,7 +325,8 @@ bool ImplCache::tryBoth(ThreadControl* control)
             if (!seen[var2])
                 continue;
 
-            handleNewData(val, var, it->getOtherLit(), bProp, bXProp);
+            if (!handleNewData(val, var, it->getOtherLit(), control, bProp, bXProp))
+                goto end;
         }
 
         //Clear 'seen' and 'val'
@@ -338,6 +347,9 @@ bool ImplCache::tryBoth(ThreadControl* control)
 
     //Add all clauses that have been delayed
     addDelayedClauses(control);
+
+    //Clear delayed clauses list
+    delayedClausesToAdd.clear();
 
     end:
     if (control->conf.verbosity >= 1) {

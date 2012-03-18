@@ -177,10 +177,11 @@ class ImplCache  {
 
         void clean(ThreadControl* control);
         bool tryBoth(ThreadControl* control);
-        void handleNewData(
+        bool handleNewData(
             vector<uint16_t>& val
             , Var var
             , Lit lit
+            , ThreadControl* control
             , uint32_t& bProp
             , uint32_t& bXProp
         );
