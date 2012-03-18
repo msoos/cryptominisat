@@ -43,6 +43,7 @@ bool ClauseVivifier::SortBySize::operator()(const Clause* x, const Clause* y)
 ClauseVivifier::ClauseVivifier(ThreadControl* _control) :
     control(_control)
     , numCalls(0)
+    , totalTimeAsymm(0)
     , totalZeroDepthAssignsAsymm(0)
     , totalNumClShortenAsymm(0)
     , totalNumLitsRemAsymm(0)
