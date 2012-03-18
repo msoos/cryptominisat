@@ -566,6 +566,35 @@ void ThreadControl::renumberVariables()
         << myTotalTime
         << endl;
     }
+
+    //Check if we renumbered the varibles in the order such as to make
+    //the unknown ones first and the known/eliminated ones second
+    bool uninteresting = false;
+    bool problem = false;
+    for(size_t i = 0; i < nVars(); i++) {
+        //cout << "val[" << i << "]: " << value(i);
+
+        if (value(i)  != l_Undef)
+            uninteresting = true;
+
+        if (varData[i].elimed == ELIMED_VARELIM
+            || varData[i].elimed == ELIMED_VARREPLACER
+        ) {
+            uninteresting = true;
+            //cout << " elimed" << endl;
+        } else {
+            //cout << " non-elimed" << endl;
+        }
+
+        if (value(i) == l_Undef
+            && varData[i].elimed != ELIMED_VARELIM
+            && varData[i].elimed != ELIMED_VARREPLACER
+            && uninteresting
+        ) {
+            problem = true;
+        }
+    }
+    assert(!problem && "We renumbered the variables in the wrong order!");
 }
 
 Var ThreadControl::newVar(const bool dvar)
