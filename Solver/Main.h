@@ -43,7 +43,7 @@ class Main
 
         //Helper functions
         void printResultFunc(const lbool ret);
-        void printVersionInfo(const uint32_t verbosity);
+        void printVersionInfo();
         int correctReturnValue(const lbool ret) const;
 
         //Config

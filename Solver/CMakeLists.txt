@@ -4,6 +4,9 @@ include_directories(${PROJECT_SOURCE_DIR}/MTRand)
 include_directories ( ${Boost_INCLUDE_DIRS} )
 include_directories (${PROJECT_SOURCE_DIR}/m4ri/src )
 
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
+#list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
+
 add_library(cryptoms
     Solver.cpp
     PackedRow.cpp
@@ -26,6 +29,8 @@ add_library(cryptoms
     XorFinder.cpp
     GateFinder.cpp
     ConflGraphCreator.cpp
+    GitSHA1.h
+    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
 target_link_libraries(cryptoms
@@ -48,5 +53,6 @@ target_link_libraries(cryptominisat
 #    vtkIO
 #    ${CMAKE_THREAD_LIBS_INIT}
 )
+
 
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")

@@ -31,6 +31,7 @@
 #include "SolverConf.h"
 #include "Solver.h"
 #include "CommandControl.h"
+#include "GitSHA1.h"
 
 using std::vector;
 using std::pair;
@@ -71,6 +72,7 @@ class ThreadControl : public CommandControl
 
         //////////////////////////
         //Stats
+        static const char* getVersion();
         uint64_t getNumClauses() const;                 ///<Return number of ALL clauses: non-learnt, learnt, bin
         uint32_t getNumUnsetVars() const;               ///<Return number of unset vars
         uint32_t getNumElimSubsume() const;             ///<Get number of variables eliminated
@@ -344,6 +346,5 @@ inline void ThreadControl::addInPartialSolvingStat()
 {
     sumSolvingStats += CommandControl::getStats();
 }
-
 
 #endif //THREADCONTROL_H

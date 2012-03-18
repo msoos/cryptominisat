@@ -45,6 +45,12 @@ FIND_PACKAGE(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 # -----------------------------------------------------------------------------
+# Add GIT version
+# -----------------------------------------------------------------------------
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+
+# -----------------------------------------------------------------------------
 # Look for Google Perftools
 # -----------------------------------------------------------------------------
 #find_package(Perftools)

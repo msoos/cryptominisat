@@ -1963,3 +1963,8 @@ uint32_t ThreadControl::getNewToReplaceVars() const
 {
     return varReplacer->getNewToReplaceVars();
 }
+
+const char* ThreadControl::getVersion()
+{
+    return get_git_version();
+}

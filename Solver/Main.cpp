@@ -45,6 +45,7 @@ number of benefits relative to MiniSat.
 #include "DimacsParser.h"
 #include "ThreadControl.h"
 
+
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 using boost::lexical_cast;
@@ -220,6 +221,7 @@ void Main::parseCommandLine()
     po::options_description generalOptions("Most important options");
     generalOptions.add_options()
     ("help,h", "Prints this help")
+    ("version", "Print version number")
     ("input", po::value< std::vector<std::string> >(), "file(s) to read")
     ("verbosity", po::value<int>(&conf.verbosity)->default_value(conf.verbosity)
         , "[0-4] Verbosity of solver")
@@ -454,6 +456,12 @@ void Main::parseCommandLine()
         exit(0);
     }
 
+    if (vm.count("version")) {
+        printVersionInfo();
+        exit(0);
+    }
+
+
     if (vm.count("polarity")) {
         std::string mode = vm["polarity"].as<std::string>();
 
@@ -602,16 +610,14 @@ void Main::parseCommandLine()
     if (!debugLib) conf.libraryUsage = false;
 }
 
-void Main::printVersionInfo(const uint32_t verbosity)
+void Main::printVersionInfo()
 {
-    if (verbosity >= 1) {
-        cout << "c This is CryptoMiniSat " << VERSION << endl;
-        #ifdef __GNUC__
-        cout << "c compiled with gcc version " << __VERSION__ << endl;
-        #else
-        cout << "c compiled with non-gcc compiler" << endl;
-        #endif
-    }
+    cout << "c CryptoMiniSat version " << ThreadControl::getVersion() << endl;
+    #ifdef __GNUC__
+    cout << "c compiled with gcc version " << __VERSION__ << endl;
+    #else
+    cout << "c compiled with non-gcc compiler" << endl;
+    #endif
 }
 
 int Main::solve()
@@ -619,7 +625,8 @@ int Main::solve()
     control = new ThreadControl(conf);
     solverToInterrupt = control;
 
-    printVersionInfo(conf.verbosity);
+    if (conf.verbosity >= 1)
+        printVersionInfo();
     parseInAllFiles();
 
     unsigned long current_nr_of_solutions = 0;
