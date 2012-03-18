@@ -826,6 +826,7 @@ lbool ThreadControl::solve()
         status = CommandControl::solve(numConfls);
         sumSolvingStats += CommandControl::getStats();
 
+        //Back up activities, polairties and var_inc
         backupActivity.clear();
         backupPolarity.clear();
         backupActivity.resize(varData.size());
