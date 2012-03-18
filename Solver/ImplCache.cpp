@@ -156,11 +156,10 @@ void ImplCache::clean(ThreadControl* control)
     }
 }
 
-bool ImplCache::handleNewData(
+void ImplCache::handleNewData(
     vector<uint16_t>& val
     , Var var
     , Lit lit
-    , ThreadControl* control
     , uint32_t& bProp
     , uint32_t& bXProp
 ) {
@@ -172,22 +171,16 @@ bool ImplCache::handleNewData(
 
     //a->b and (-a)->b, so 'b'
     if  (val[lit.var()] == lit.sign()) {
-        tmp.push_back(lit);
-        control->addClauseInt(tmp, true);
-        if  (!control->ok)
-            return false;
-
+        delayedClausesToAddNorm.push_back(lit);
         bProp++;
     } else {
         //a->b, and (-a)->(-b), so equivalent literal
         tmp.push_back(Lit(var, false));
         tmp.push_back(Lit(lit.var(), false));
         bool sign = lit.sign();
-        delayedClausesToAdd.push_back(std::make_pair(tmp, sign));
+        delayedClausesToAddXor.push_back(std::make_pair(tmp, sign));
         bXProp++;
     }
-
-    return true;
 }
 
 bool ImplCache::addDelayedClauses(ThreadControl* control)
@@ -196,7 +189,7 @@ bool ImplCache::addDelayedClauses(ThreadControl* control)
 
     //Add all delayed clauses
     for(vector<std::pair<vector<Lit>, bool> > ::const_iterator
-        it = delayedClausesToAdd.begin(), end = delayedClausesToAdd.end()
+        it = delayedClausesToAddXor.begin(), end = delayedClausesToAddXor.end()
         ; it != end
         ; it++
     ) {
@@ -223,9 +216,31 @@ bool ImplCache::addDelayedClauses(ThreadControl* control)
         //Add the clause
         control->addXorClauseInt(it->first, it->second);
 
+        //Check if this caused UNSAT
         if  (!control->ok)
             return false;
     }
+
+    for(vector<Lit>::const_iterator
+        it = delayedClausesToAddNorm.begin(), end = delayedClausesToAddNorm.end()
+        ; it != end
+        ; it++
+    ) {
+        //Build unit clause
+        vector<Lit> tmp(1);
+        tmp[0] = *it;
+
+        //Add unit clause
+        control->addClauseInt(tmp);
+
+        //Check if this caused UNSAT
+        if  (!control->ok)
+            return false;
+    }
+
+    //Clear all
+    delayedClausesToAddXor.clear();
+    delayedClausesToAddNorm.clear();
 
     return true;
 }
@@ -307,8 +322,7 @@ bool ImplCache::tryBoth(ThreadControl* control)
                 && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
             ) continue;
 
-            if (!handleNewData(val, var, it->getLit(), control, bProp, bXProp))
-                goto end;
+            handleNewData(val, var, it->getLit(), bProp, bXProp);
         }
 
         //Try to see if we propagate the same or opposite from the other end
@@ -325,8 +339,7 @@ bool ImplCache::tryBoth(ThreadControl* control)
             if (!seen[var2])
                 continue;
 
-            if (!handleNewData(val, var, it->getOtherLit(), control, bProp, bXProp))
-                goto end;
+            handleNewData(val, var, it->getOtherLit(), bProp, bXProp);
         }
 
         //Clear 'seen' and 'val'
@@ -343,13 +356,10 @@ bool ImplCache::tryBoth(ThreadControl* control)
             val[it->getOtherLit().var()] = false;
         }
 
+        //Add all clauses that have been delayed
+        if (!addDelayedClauses(control))
+            goto end;
     }
-
-    //Add all clauses that have been delayed
-    addDelayedClauses(control);
-
-    //Clear delayed clauses list
-    delayedClausesToAdd.clear();
 
     end:
     if (control->conf.verbosity >= 1) {

@@ -177,16 +177,16 @@ class ImplCache  {
 
         void clean(ThreadControl* control);
         bool tryBoth(ThreadControl* control);
-        bool handleNewData(
+        void handleNewData(
             vector<uint16_t>& val
             , Var var
             , Lit lit
-            , ThreadControl* control
             , uint32_t& bProp
             , uint32_t& bXProp
         );
 
-        vector<std::pair<vector<Lit>, bool> > delayedClausesToAdd;
+        vector<std::pair<vector<Lit>, bool> > delayedClausesToAddXor;
+        vector<Lit> delayedClausesToAddNorm;
         bool addDelayedClauses(ThreadControl* control);
 };
 
