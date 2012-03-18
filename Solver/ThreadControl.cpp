@@ -892,7 +892,7 @@ lbool ThreadControl::solve()
         extender.extend();
 
         //Renumber model back to original variable numbering
-        updateArray(model, outerToInterMain);
+        updateArrayRev(model, interToOuterMain);
     }
 
     restPrinter->printEndSearchStat();

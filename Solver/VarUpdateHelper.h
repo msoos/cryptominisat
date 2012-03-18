@@ -15,6 +15,16 @@ void updateArray(T& toUpdate, const vector< uint32_t >& mapper)
 }
 
 template<typename T>
+void updateArrayRev(T& toUpdate, const vector< uint32_t >& mapper)
+{
+    assert(toUpdate.size() == mapper.size());
+    T backup = toUpdate;
+    for(size_t i = 0; i < toUpdate.size(); i++) {
+        toUpdate[mapper[i]] = backup[i];
+    }
+}
+
+template<typename T>
 void updateVarsMap(T& toUpdate, const vector< uint32_t >& mapper)
 {
     for(size_t i = 0; i < toUpdate.size(); i++) {
