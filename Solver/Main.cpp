@@ -237,7 +237,8 @@ void Main::parseCommandLine()
         , "Perform regular simplification rounds")
     ("nclbtwsimp", po::value<size_t>(&conf.numCleanBetweenSimplify)->default_value(conf.numCleanBetweenSimplify)
         , "Perform this many cleaning iterations between simplification rounds")
-    //("greedyunbound", "Greedily unbound variables that are not needed for SAT")
+    //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
+    //    , "Greedily unbound variables that are not needed for SAT")
     ;
 
     po::options_description reduceDBOptions("Learnt clause removal options");
@@ -491,10 +492,6 @@ void Main::parseCommandLine()
             throw WrongParam("maxdumplearnts", "--dumplearnts=<filename> must be first activated before issuing --maxdumplearnts=<size>");
     }
 
-    if (vm.count("greedyunbound")) {
-        conf.greedyUnbound = true;
-    }
-
     if (conf.numCleanBetweenSimplify == 0) {
         cerr << "ERROR: Option '--nclbtwsimp' must not be 0'" << endl;
         exit(-1);
@@ -574,20 +571,8 @@ void Main::parseCommandLine()
         else throw WrongParam("restart", "unknown restart type");
     }
 
-    if (vm.count("printImplDot")) {
-        conf.doPrintConflDot = true;
-    }
-
     if (vm.count("nocalcreach")) {
         conf.doCalcReach = false;
-    }
-
-    if (vm.count("nocache")) {
-        conf.doCache = false;
-    }
-
-    if (vm.count("nogates")) {
-        conf.doGateFind = false;
     }
 
     if (numThreads < 1) throw WrongParam("threads", "Num threads must be at least 1");
@@ -597,10 +582,6 @@ void Main::parseCommandLine()
         fileNamePresent = true;
     } else {
         fileNamePresent = false;
-    }
-
-    if (vm.count("output")) {
-        outputFile = vm["output"].as<std::string>();
     }
 
     if (conf.verbosity >= 1) {

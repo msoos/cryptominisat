@@ -60,7 +60,6 @@ class Main
         //Files to read & write
         bool fileNamePresent;
         std::vector<std::string> filesToRead;
-        std::string outputFile;
 
         //Command line arguments
         int argc;
