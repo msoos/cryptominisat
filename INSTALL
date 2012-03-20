@@ -30,7 +30,7 @@ CMake should work on Windows&Mac OS as well.
 Please read help
 ---------
 For help, build the program, and issue:
-'./cryptominisat -help'
+'./cryptominisat -h'
 
 --------------
 Verbose debug
