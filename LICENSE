@@ -5,4 +5,4 @@ There are multiple software here, with different licences:
 * MiniSat code, which appears in some files (Solver.cpp, etc.)
   is licenced under MIT by Niklas Een and Niklas Sorensson
 * SatELite is licenced under MIT by Niklas Een
-* CryptoMiniSat is lincenced under LGPL by Mate SOOS
+* CryptoMiniSat is lincenced under LGPL by Mate Soos
