@@ -25,10 +25,14 @@ class bqueue {
     size_t last;
     size_t maxsize; //max number of history elements
     size_t queuesize; // Number of current elements (must be < maxsize !)
-
     T2  sumofqueue;
-    T2  sumOfAllElems;
-    size_t totalNumElems;
+
+    //for mid-term history size
+    T2  sumOfElemsMidLong;
+    size_t totalNumElemsMidLong;
+
+    T2  sumOfElemsLong;
+    size_t totalNumElemsLong;
 
 public:
     bqueue(void) :
@@ -37,8 +41,14 @@ public:
         , maxsize(0)
         , queuesize(0)
         , sumofqueue(0)
-        , sumOfAllElems(0)
-        , totalNumElems(0)
+
+        //Mid
+        , sumOfElemsMidLong(0)
+        , totalNumElemsMidLong(0)
+
+        //Full
+        , sumOfElemsLong(0)
+        , totalNumElemsLong(0)
     {}
 
     void push(const T x) {
@@ -49,31 +59,51 @@ public:
         } else
             queuesize++;
         sumofqueue += x;
-        sumOfAllElems += x;
-        totalNumElems++;
+
+        //Update mid
+        sumOfElemsMidLong += x;
+        totalNumElemsMidLong++;
+
+        //Update long
+        sumOfElemsLong += x;
+        totalNumElemsLong++;
+
         elems[first] = x;
         if ((++first) == maxsize) first = 0;
     }
 
-    /*const T peek() const { assert(queuesize>0); return elems[last]; }
-    void pop() {sumofqueue-=elems[last]; queuesize--; if ((++last) == maxsize) last = 0;}*/
-
-    T2 getsum() const
-    {
-        return sumofqueue;
-    }
-
     double getAvg() const
     {
+        if (queuesize == 0)
+            return 0;
+
         assert(isvalid());
         return (double)sumofqueue/(double)queuesize;
+    }
+
+    double getAvgMidLong() const
+    {
+        if (totalNumElemsMidLong == 0)
+            return 0;
+
+        assert(isvalid());
+        return (double)sumOfElemsMidLong/(double)totalNumElemsMidLong;
+    }
+
+    double getAvgLong() const
+    {
+        if (totalNumElemsLong == 0)
+            return 0;
+
+        return (double)sumOfElemsLong/(double)totalNumElemsLong;
     }
 
     std::string getAvgPrint(size_t prec, size_t w) const
     {
         std::stringstream ss;
         if (isvalid()) {
-            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::right << getAvg();
+            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::right
+            << getAvg();
         } else {
             ss << std::setw(5) << "?";
         }
@@ -81,11 +111,12 @@ public:
         return ss.str();
     }
 
-    std::string getAvgAllPrint(size_t prec, size_t w) const
+    std::string getAvgMidPrint(size_t prec, size_t w) const
     {
         std::stringstream ss;
-        if (isvalid()) {
-            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left << getAvgAll();
+        if (totalNumElemsMidLong > 0) {
+            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left
+            << getAvgMidLong();
         } else {
             ss << std::setw(5) << "?";
         }
@@ -93,17 +124,17 @@ public:
         return ss.str();
     }
 
-    double getAvgAll() const
+    std::string getAvgLongPrint(size_t prec, size_t w) const
     {
-        if (totalNumElems == 0)
-            return 0;
+        std::stringstream ss;
+        if (totalNumElemsLong > 0) {
+            ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left
+            << getAvgLong();
+        } else {
+            ss << std::setw(5) << "?";
+        }
 
-        return (double)sumOfAllElems/(double)totalNumElems;
-    }
-
-    uint64_t getTotalNumeElems() const
-    {
-        return totalNumElems;
+        return ss.str();
     }
 
     bool isvalid() const
@@ -124,6 +155,9 @@ public:
         last = 0;
         queuesize=0;
         sumofqueue=0;
+
+        totalNumElemsMidLong = 0;
+        sumOfElemsMidLong = 0;
     }
 
     int  size(void)
@@ -140,8 +174,8 @@ public:
         queuesize=0;
         sumofqueue=0;
 
-        totalNumElems = 0;
-        sumOfAllElems = 0;
+        totalNumElemsLong = 0;
+        sumOfElemsLong = 0;
     }
 };
 

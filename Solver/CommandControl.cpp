@@ -257,8 +257,8 @@ void CommandControl::analyze(
         && conf.doMinimLearntMore
         && out_learnt.size() > 1
         && (conf.doAlwaysFMinim
-            || calcGlue(out_learnt) < 0.65*glueHist.getAvgAll()
-            || out_learnt.size() < 0.65*conflSizeHist.getAvgAll()
+            || calcGlue(out_learnt) < 0.65*glueHist.getAvgLong()
+            || out_learnt.size() < 0.65*conflSizeHist.getAvgLong()
             || out_learnt.size() < 10
             )
     ) {
@@ -716,13 +716,13 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
             && params.conflictsDoneThisRestart > rest
         ) || (conf.restartType == glue_restart
             && glueHist.isvalid()
-            && 0.95*glueHist.getAvg() > glueHist.getAvgAll()
+            && 0.95*glueHist.getAvg() > glueHist.getAvgLong()
         ) || (conf.restartType == agility_restart
             && agilityHist.isvalid()
             && agilityHist.getAvg() < conf.agilityLimit
         ) || (conf.restartType == branch_depth_delta_restart
             && branchDepthDeltaHist.isvalid()
-            && 0.95*branchDepthDeltaHist.getAvg() > branchDepthDeltaHist.getAvgAll()
+            && 0.95*branchDepthDeltaHist.getAvg() > branchDepthDeltaHist.getAvgLong()
         )
     ) {
         //Now check agility
@@ -971,32 +971,32 @@ void CommandControl::printSearchStats()
 {
     cout
     << " glue"
-    << " " << std::right << glueHist.getAvgPrint(1, 5)
-    << "/" << std::left << glueHist.getAvgAllPrint(1, 5)
+    << " " << std::right << glueHist.getAvgMidPrint(1, 5)
+    << "/" << std::left << glueHist.getAvgLongPrint(1, 5)
 
     << " agil"
-    << " " << std::right << agilityHist.getAvgPrint(3, 5)
-    << "/" << std::left<< agilityHist.getAvgAllPrint(3, 5)
+    << " " << std::right << agilityHist.getAvgMidPrint(3, 5)
+    << "/" << std::left<< agilityHist.getAvgLongPrint(3, 5)
 
     << " confllen"
-    << " " << std::right << conflSizeHist.getAvgPrint(1, 5)
-    << "/" << std::left << conflSizeHist.getAvgAllPrint(1, 5)
+    << " " << std::right << conflSizeHist.getAvgMidPrint(1, 5)
+    << "/" << std::left << conflSizeHist.getAvgLongPrint(1, 5)
 
     << " branchd"
-    << " " << std::right << branchDepthHist.getAvgPrint(1, 5)
-    << "/" << std::left  << branchDepthHist.getAvgAllPrint(1, 5)
+    << " " << std::right << branchDepthHist.getAvgMidPrint(1, 5)
+    << "/" << std::left  << branchDepthHist.getAvgLongPrint(1, 5)
     << " branchdd"
 
-    << " " << std::right << branchDepthDeltaHist.getAvgPrint(1, 4)
-    << "/" << std::left << branchDepthDeltaHist.getAvgAllPrint(1, 4)
+    << " " << std::right << branchDepthDeltaHist.getAvgMidPrint(1, 4)
+    << "/" << std::left << branchDepthDeltaHist.getAvgLongPrint(1, 4)
 
     << " traild"
-    << " " << std::right << trailDepthHist.getAvgPrint(0, 7)
-    << "/" << std::left << trailDepthHist.getAvgAllPrint(0, 7)
+    << " " << std::right << trailDepthHist.getAvgMidPrint(0, 7)
+    << "/" << std::left << trailDepthHist.getAvgLongPrint(0, 7)
 
     << " traildd"
-    << " " << std::right << trailDepthDeltaHist.getAvgPrint(0, 5)
-    << "/" << std::left << trailDepthDeltaHist.getAvgAllPrint(0, 5)
+    << " " << std::right << trailDepthDeltaHist.getAvgMidPrint(0, 5)
+    << "/" << std::left << trailDepthDeltaHist.getAvgLongPrint(0, 5)
     ;
 
     cout << std::right;
@@ -1351,7 +1351,7 @@ void CommandControl::printAgilityStats()
         << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2) << agility.getAgility()
         << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2) << conf.agilityLimit
         << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvg()
-        << ", agilityHistAll: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvgAll()
+        << ", agilityHistLong: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvgLong()
         << endl;
     }
 }

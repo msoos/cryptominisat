@@ -510,7 +510,7 @@ inline bool CommandControl::getPolarity(const Var var)
 
         case polarity_auto:
             return varData[var].polarity
-                ^ (mtrand.randInt(conf.flipPolarFreq*branchDepthDeltaHist.getAvgAll()) == 1);
+                ^ (mtrand.randInt(conf.flipPolarFreq*branchDepthDeltaHist.getAvgLong()) == 1);
         default:
             assert(false);
     }
