@@ -1120,7 +1120,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         << " SumConfl: " << sumConflicts()
         << " maxConfls:" << maxConfls
         << endl;
-        stats.printSolvingStats(cpuTime() - startTime, propStats);
+        stats.printSolvingStats(cpuTime() - startTime, (propStats-oldPropStats));
 
         cout << "c th " << omp_get_thread_num()
         << " ---------" << endl;
