@@ -76,7 +76,7 @@ parser.add_option("--cnfdir", dest="dir_for_check"
                     , help="Directory of CNF files checked against"
                     )
 
-parser.add_option("--fuzz", dest="fuzz_test"
+parser.add_option("-f", "--fuzz", dest="fuzz_test"
                     , default=False, action="store_true"
                     , help="Fuzz-test"
                     )
