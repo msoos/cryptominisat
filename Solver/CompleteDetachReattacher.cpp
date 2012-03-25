@@ -34,7 +34,8 @@ CompleteDetachReatacher::CompleteDetachReatacher(ThreadControl* _control) :
 */
 void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
 {
-    uint32_t oldNumBins = control->numBins;
+    uint64_t oldNumBinsLearnt = control->numBinsLearnt;
+    uint64_t oldNumBinsNonLearnt = control->numBinsNonLearnt;
     ClausesStay stay;
 
     for (vector<vec<Watched> >::iterator it = control->watches.begin(), end = control->watches.end(); it != end; it++) {
@@ -43,8 +44,10 @@ void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
 
     control->learntsLits = stay.learntBins;
     control->clausesLits = stay.nonLearntBins;
-    control->numBins = (stay.learntBins + stay.nonLearntBins)/2;
-    release_assert(control->numBins == oldNumBins);
+    control->numBinsLearnt = stay.learntBins/2;
+    control->numBinsNonLearnt = stay.nonLearntBins/2;
+    release_assert(control->numBinsLearnt == oldNumBinsLearnt);
+    release_assert(control->numBinsNonLearnt == oldNumBinsNonLearnt);
 }
 
 /**

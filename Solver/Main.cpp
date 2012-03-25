@@ -89,7 +89,7 @@ void SIGINT_handler(int)
     } else {
         if (control->getVerbosity() >= 1) {
             control->addInPartialSolvingStat();
-            control->printStats();
+            control->printFullStats();
         }
         _exit(1);
     }
@@ -415,6 +415,8 @@ void Main::parseCommandLine()
         , "Use implication cache. Less memory used, disables LOTS")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase cache efficiency")
+    ("printfull", po::value<int>(&conf.printFullStats)->default_value(conf.printFullStats)
+        , "Print more thorough, but different stats")
     ;
 
     po::positional_options_description p;
@@ -657,7 +659,8 @@ int Main::solve()
     if (ret == l_Undef && conf.verbosity >= 1) {
         cout << "c Not finished running -- signal caught or maximum restart reached" << endl;
     }
-    if (conf.verbosity >= 1) control->printStats();
+    if (conf.verbosity >= 1)
+        control->printFullStats();
 
     printResultFunc(ret);
 

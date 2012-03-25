@@ -24,7 +24,6 @@
 #include "CalcDefPolars.h"
 #include "time_mem.h"
 #include "ThreadControl.h"
-#include "RestartPrinter.h"
 #include <iomanip>
 #include <omp.h>
 using std::cout;
@@ -822,21 +821,21 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
         case 2:
             //Binary learnt
             stats.learntBins++;
-            attachBinClause(learnt_clause[0], learnt_clause[1], true);
+            control->attachBinClause(learnt_clause[0], learnt_clause[1], true);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
             break;
 
         case 3:
             //3-long almost-normal learnt
             stats.learntTris++;
-            attachClause(*cl);
+            control->attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
             break;
 
         default:
             //Normal learnt
             stats.learntLongs++;
-            attachClause(*cl);
+            control->attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));
             break;
     }
@@ -948,13 +947,29 @@ lbool CommandControl::burstSearch()
     return status;
 }
 
-void CommandControl::printRestartStat()
+void CommandControl::printRestartStats()
+{
+    printBaseStats();
+    if (conf.printFullStats)
+        printSearchStats();
+    else
+        control->printClauseStats();
+
+    cout << endl;
+}
+
+void CommandControl::printBaseStats()
 {
     cout << "c " << omp_get_thread_num()
-    << " " << std::setw(6) << stats.numRestarts
+    << " " << std::setw(5) << stats.numRestarts
     << " " << std::setw(7) << sumConflicts()
     << " " << std::setw(7) << control->getNumFreeVarsAdv(trail.size())
+    ;
+}
 
+void CommandControl::printSearchStats()
+{
+    cout
     << " glue"
     << " " << std::right << glueHist.getAvgPrint(1, 5)
     << "/" << std::left << glueHist.getAvgAllPrint(1, 5)
@@ -982,7 +997,7 @@ void CommandControl::printRestartStat()
     << " traildd"
     << " " << std::right << trailDepthDeltaHist.getAvgPrint(0, 5)
     << "/" << std::left << trailDepthDeltaHist.getAvgAllPrint(0, 5)
-    << endl;
+    ;
 
     cout << std::right;
 }
@@ -1046,7 +1061,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         if (conf.verbosity >= 1
             && (lastRestartPrint + 800) < stats.numConflicts
         ) {
-            printRestartStat();
+            printRestartStats();
             lastRestartPrint = stats.numConflicts;
         }
 
@@ -1072,7 +1087,6 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             }
             control->fullReduce();
 
-            control->restPrinter->printRestartStat("N");
             genRandomVarActMultDiv();
         }
     }
@@ -1106,7 +1120,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         << " SumConfl: " << sumConflicts()
         << " maxConfls:" << maxConfls
         << endl;
-        stats.printStats(cpuTime() - startTime, (propStats - oldPropStats));
+        stats.printSolvingStats(cpuTime() - startTime, propStats);
 
         cout << "c th " << omp_get_thread_num()
         << " ---------" << endl;

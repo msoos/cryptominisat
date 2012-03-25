@@ -761,7 +761,7 @@ void Subsumer::removeBinsAndTris(const Var var)
     numRemovedLearnt += removeBinAndTrisHelper(~lit, control->watches[lit.toInt()]);
 
     control->learntsLits -= numRemovedLearnt*2;
-    control->numBins -= numRemovedLearnt;
+    control->numBinsLearnt -= numRemovedLearnt;
 }
 
 uint32_t Subsumer::removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws)
@@ -819,7 +819,7 @@ void Subsumer::removeWrongBinsAndAllTris()
 
     assert(numRemovedHalfLearnt % 2 == 0);
     control->learntsLits -= numRemovedHalfLearnt;
-    control->numBins -= numRemovedHalfLearnt/2;
+    control->numBinsLearnt -= numRemovedHalfLearnt/2;
     binLearntClausesRemovedThroughElim += numRemovedHalfLearnt/2;
 }
 
@@ -884,7 +884,7 @@ bool Subsumer::eliminateVars()
 void Subsumer::subsumeBinsWithBins()
 {
     const double myTime = cpuTime();
-    uint32_t numBinsBefore = control->numBins;
+    uint64_t numBinsBefore = control->numBinsLearnt + control->numBinsNonLearnt;
     toDecrease = &numMaxSubsume0;
 
     uint32_t wsLit = 0;
@@ -913,14 +913,15 @@ void Subsumer::subsumeBinsWithBins()
 
                 assert(i->getOtherLit().var() != lit.var());
                 removeWBin(control->watches[(~(i->getOtherLit())).toInt()], lit, i->getLearnt());
-                if (i->getLearnt())
+                if (i->getLearnt()) {
                     control->learntsLits -= 2;
-                else {
+                    control->numBinsLearnt--;
+                } else {
                     control->clausesLits -= 2;
+                    control->numBinsNonLearnt--;
                     touchedVars.touch(lit, i->getLearnt());
                     touchedVars.touch(i->getOtherLit(), i->getLearnt());
                 }
-                control->numBins--;
             } else {
                 lastLit = i->getOtherLit();
                 lastLearnt = i->getLearnt();
@@ -932,14 +933,14 @@ void Subsumer::subsumeBinsWithBins()
 
     if (control->conf.verbosity  >= 1) {
         cout << "c bin-w-bin subsume "
-        << "rem " << std::setw(10) << (numBinsBefore - control->numBins)
+        << "rem " << std::setw(10) << (numBinsBefore - control->numBinsLearnt - control->numBinsNonLearnt)
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime)
         << " s" << endl;
     }
 
     //Update global stats
     totalTime += cpuTime() - myTime;
-    totalSubsBinWithBin += (numBinsBefore - control->numBins);
+    totalSubsBinWithBin += (numBinsBefore - control->numBinsLearnt - control->numBinsNonLearnt);
 
 
     //Reset stats
@@ -1018,7 +1019,7 @@ bool Subsumer::simplifyBySubsumption()
     control->clauseCleaner->removeAndCleanAll();
 
     //If too many clauses, don't do it
-    if (control->getNumClauses() > 10000000UL
+    if (control->getNumLongClauses() > 10000000UL
         || control->clausesLits > 50000000UL
     )  return true;
 
@@ -1745,11 +1746,12 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
             if (!c.learnt) {
                 control->clausesLits -= 2;
                 clauses_elimed++;
+                control->numBinsNonLearnt--;
             } else {
                 control->learntsLits -= 2;
                 binLearntClausesRemovedThroughElim++;
+                control->numBinsLearnt--;
             }
-            control->numBins--;
 
             //Put clause into blocked status
             if (!c.learnt) {

@@ -95,8 +95,6 @@ void ClauseVivifier::makeNonLearntBin(const Lit lit1, const Lit lit2)
 {
     findWatchedOfBin(control->watches, lit1 ,lit2, true).setLearnt(false);
     findWatchedOfBin(control->watches, lit2 ,lit1, true).setLearnt(false);
-    control->learntsLits -= 2;
-    control->clausesLits += 2;
 }
 
 /**
@@ -329,8 +327,13 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
                 ) {
                     isSubsumed = true;
                     //If subsuming non-learnt with learnt, make the learnt into non-learnt
-                    if (wit->getLearnt() && !cl.learnt())
+                    if (wit->getLearnt() && !cl.learnt()) {
                         makeNonLearntBin(lit, wit->getOtherLit());
+                        control->numBinsLearnt--;
+                        control->numBinsNonLearnt++;
+                        control->learntsLits -= 2;
+                        control->clausesLits += 2;
+                    }
                     break;
                 }
 

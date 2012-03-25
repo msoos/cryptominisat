@@ -26,7 +26,6 @@
 #include "SCCFinder.h"
 #include "Subsumer.h"
 #include "FailedLitSearcher.h"
-#include "RestartPrinter.h"
 #include "ClauseVivifier.h"
 #include "ClauseCleaner.h"
 #include "SolutionExtender.h"
@@ -53,7 +52,8 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
     , zeroLevAssignsByThreads(0)
     , clausesLits(0)
     , learntsLits(0)
-    , numBins(0)
+    , numBinsNonLearnt(0)
+    , numBinsLearnt(0)
 {
     failedLitSearcher = new FailedLitSearcher(this);
     subsumer = new Subsumer(this);
@@ -61,7 +61,6 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
     clauseVivifier = new ClauseVivifier(this);
     clauseCleaner = new ClauseCleaner(this);
     clAllocator = new ClauseAllocator;
-    restPrinter = new RestartPrinter(this);
     varReplacer = new VarReplacer(this);
 
     Solver::clAllocator = clAllocator;
@@ -75,7 +74,6 @@ ThreadControl::~ThreadControl()
     delete clauseVivifier;
     delete clauseCleaner;
     delete clAllocator;
-    delete restPrinter;
     delete varReplacer;
 }
 
@@ -250,14 +248,30 @@ void ThreadControl::attachBinClause(
     , const bool checkUnassignedFirst
 ) {
     //Update stats
-    if (learnt)
+    if (learnt) {
         learntsLits += 2;
-    else
+        numBinsLearnt++;
+    } else {
         clausesLits += 2;
-    numBins++;
+        numBinsNonLearnt++;
+    }
 
     //Call Solver's function for heavy-lifting
     Solver::attachBinClause(lit1, lit2, learnt, checkUnassignedFirst);
+}
+
+void ThreadControl::detachClause(const Clause& c)
+{
+   if (c.size() > 3) {
+       detachModifiedClause(
+            c[0], c[1]
+            , (c.size() == 3) ? c[2] : lit_Undef
+            ,  c.size()
+            , &c
+        );
+    } else {
+        detachModifiedClause(c[0], c[1], c[2], c.size(), &c);
+    }
 }
 
 void ThreadControl::detachModifiedClause(
@@ -821,9 +835,6 @@ void ThreadControl::reduceDB()
 
 lbool ThreadControl::solve()
 {
-    restPrinter->printStatHeader();
-    restPrinter->printRestartStat("B");
-
     //Initialise stuff
     nextCleanLimitInc = conf.startClean;
     nextCleanLimit += nextCleanLimitInc;
@@ -837,7 +848,6 @@ lbool ThreadControl::solve()
 
     //Iterate until solved
     while (status == l_Undef) {
-        restPrinter->printRestartStat("N");
         if (conf.verbosity >= 2)
             printClauseSizeDistrib();
 
@@ -875,9 +885,6 @@ lbool ThreadControl::solve()
         if (status != l_Undef)
             break;
 
-        //Move data, print data
-        restPrinter->printRestartStat("N");
-
         //Simplify
         status = simplifyProblem(conf.simpBurstSConf);
     }
@@ -895,8 +902,6 @@ lbool ThreadControl::solve()
         updateArrayRev(model, interToOuterMain);
     }
 
-    restPrinter->printEndSearchStat();
-
     return status;
 }
 
@@ -911,6 +916,7 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
 {
     assert(ok);
     testAllClauseAttach();
+    checkStats();
 
     reArrangeClauses();
 
@@ -981,8 +987,12 @@ end:
     testAllClauseAttach();
     checkNoWrongAttach();
 
-    if (!ok) return l_False;
-    return l_Undef;
+    if (!ok) {
+        return l_False;
+    } else {
+        checkStats();
+        return l_Undef;
+    }
 }
 
 void ThreadControl::calcReachability()
@@ -1308,10 +1318,10 @@ void ThreadControl::consolidateMem()
     clAllocator->consolidate(this, true);
 }
 
-void ThreadControl::printStats()
+void ThreadControl::printFullStats()
 {
     std::cout << "----------------" << endl;
-    sumSolvingStats.printStats(cpuTime(), propStats);
+    sumSolvingStats.printSolvingStats(cpuTime(), propStats);
     std::cout << "----------------" << endl;
 
     double cpu_time = cpuTime();
@@ -1957,6 +1967,79 @@ uint32_t ThreadControl::getNumFreeVarsAdv(size_t trail_size_of_thread) const
     freeVars -= varReplacer->getNumReplacedVars();
 
     return freeVars;
+}
+
+void ThreadControl::printClauseStats()
+{
+    cout
+    << " " << std::setw(7) << clauses.size()
+    << " " << std::setw(4) << std::fixed << std::setprecision(1)
+    << (double)(clausesLits - numBinsNonLearnt*2)/(double)(clauses.size())
+
+    << " " << std::setw(7) << learnts.size()
+    << " " << std::setw(4) << std::fixed << std::setprecision(1)
+    << (double)(learntsLits - numBinsLearnt*2)/(double)(learnts.size())
+
+    << " " << std::setw(6) << numBinsNonLearnt
+    << " " << std::setw(6) << numBinsLearnt
+    ;
+}
+
+void ThreadControl::checkStats() const
+{
+    //If in crazy mode, don't check
+    #ifdef NDEBUG
+    return;
+    #endif
+
+    //Check number of learnt & non-learnt binary clauses
+    uint64_t thisNumLearntBins = 0;
+    uint64_t thisNumNonLearntBins = 0;
+    for(vector<vec<Watched> >::const_iterator
+        it = watches.begin(), end = watches.end()
+        ; it != end
+        ; it++
+    ) {
+        const vec<Watched>& ws = *it;
+        for(vec<Watched>::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            if (it2->isBinary()) {
+                if (it2->getLearnt())
+                    thisNumLearntBins++;
+                else
+                    thisNumNonLearntBins++;
+            }
+        }
+    }
+
+    assert(thisNumLearntBins/2 == numBinsLearnt);
+    assert(thisNumNonLearntBins/2 == numBinsNonLearnt);
+
+    //Check number of non-learnt literals
+    uint64_t numLitsNonLearnt = numBinsNonLearnt*2;
+    for(vector<Clause*>::const_iterator
+        it = clauses.begin(), end = clauses.end()
+        ; it != end
+        ; it++
+    ) {
+        numLitsNonLearnt += (*it)->size();
+    }
+    assert(numLitsNonLearnt == clausesLits);
+
+    //Check number of learnt literals
+    uint64_t numLitsLearnt = numBinsLearnt*2;
+    for(vector<Clause*>::const_iterator
+        it = learnts.begin(), end = learnts.end()
+        ; it != end
+        ; it++
+    ) {
+        numLitsLearnt += (*it)->size();
+    }
+    assert(numLitsLearnt == learntsLits);
+
 }
 
 uint32_t ThreadControl::getNewToReplaceVars() const

@@ -179,7 +179,7 @@ end:
     if (control->ok && numFailed) {
         double time = cpuTime();
         if ((int)origNumUnsetVars - (int)control->getNumUnsetVars() >  (int)origNumUnsetVars/15
-            && control->getNumClauses() > 500000
+            && control->getNumLongClauses() > 200000
         ) {
             CompleteDetachReatacher reattacher(control);
             reattacher.detachNonBinsNonTris(true);
@@ -325,11 +325,13 @@ void FailedLitSearcher::removeUselessBins()
             removeWBin(control->watches, it->getLit2(), it->getLit1(), it->getLearnt());
 
             //Update stats
-            control->numBins--;
-            if (it->getLearnt())
+            if (it->getLearnt()) {
                 control->learntsLits -= 2;
-            else
+                control->numBinsLearnt--;
+            } else {
                 control->clausesLits -= 2;
+                control->numBinsNonLearnt--;
+            }
             removedBins++;
 
             #ifdef VERBOSE_DEBUG_FULLPROP

@@ -258,7 +258,8 @@ bool VarReplacer::replaceBins()
     assert(removedNonLearnt % 2 == 0);
     control->learntsLits -= removedLearnt;
     control->clausesLits -= removedNonLearnt;
-    control->numBins -= (removedLearnt + removedNonLearnt)/2;
+    control->numBinsLearnt -= removedLearnt/2;
+    control->numBinsNonLearnt -= removedNonLearnt/2;
 
     if (control->ok) control->ok = (control->propagate().isNULL());
     return control->ok;

@@ -278,7 +278,7 @@ bool GateFinder::extendedResolution()
 
     double myTime = cpuTime();
     uint32_t oldNumVarToReplace = control->getNewToReplaceVars();
-    uint32_t oldNumBins = control->numBins;
+    uint32_t oldNumBins = control->numBinsNonLearnt + control->numBinsLearnt;
 
     //Clear stuff
     clearIndexes();
@@ -289,7 +289,7 @@ bool GateFinder::extendedResolution()
         cout << "c ORs : " << std::setw(6) << orGates.size()
         << " cl-sh: " << std::setw(5) << numOrGateReplaced
         << " l-rem: " << std::setw(6) << gateLitsRemoved
-        << " b-add: " << std::setw(6) << (control->numBins - oldNumBins)
+        << " b-add: " << std::setw(6) << (control->numBinsNonLearnt + control->numBinsLearnt - oldNumBins)
         << " v-rep: " << std::setw(3) << (control->getNewToReplaceVars() - oldNumVarToReplace)
         << " cl-rem: " << andGateNumFound
         << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)

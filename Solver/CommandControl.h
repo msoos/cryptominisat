@@ -115,7 +115,7 @@ struct SolvingStats
         << endl;
     }
 
-    void printStats(double cpu_time, PropStats propStats)
+    void printSolvingStats(double cpu_time, PropStats propStats)
     {
         uint64_t mem_used = memUsed();
 
@@ -324,8 +324,11 @@ class CommandControl : public Solver
 
         ///////////////////////////////
         // Stats
-        void     printStats();
-        void     printRestartStat();
+        void     printRestartStats();
+        void     printBaseStats();
+        void     printSearchStats();
+        void     printClauseStats();
+
         void     setNeedToInterrupt();
         uint32_t getSavedActivity(Var var) const;
         uint32_t getVarInc() const;

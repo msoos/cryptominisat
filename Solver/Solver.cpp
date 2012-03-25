@@ -142,24 +142,6 @@ void Solver::attachClause(
 }
 
 /**
-@brief Calls detachModifiedClause to do the heavy-lifting
-*/
-void Solver::detachClause(const Clause& c)
-{
-    if (c.size() > 3) {
-        detachModifiedClause(
-            c[0], c[1]
-            , (c.size() == 3) ? c[2] : lit_Undef
-            ,  c.size()
-            , &c
-        );
-
-    } else {
-        detachModifiedClause(c[0], c[1], c[2], c.size(), &c);
-    }
-}
-
-/**
 @brief Detaches a (potentially) modified clause
 
 The first two literals might have chaned through modification, so they are

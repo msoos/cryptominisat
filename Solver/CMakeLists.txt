@@ -24,7 +24,6 @@ add_library(cryptoms
     SolutionExtender.cpp
     ImplCache.cpp
     CommandControl.cpp
-    RestartPrinter.cpp
     ThreadControl.cpp
     XorFinder.cpp
     GateFinder.cpp

@@ -78,7 +78,8 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
     assert(numRemovedHalfNonLearnt % 2 == 0);
     control->clausesLits -= numRemovedHalfNonLearnt;
     control->learntsLits -= numRemovedHalfLearnt;
-    control->numBins -= (numRemovedHalfLearnt + numRemovedHalfNonLearnt)/2;
+    control->numBinsLearnt -= numRemovedHalfLearnt/2;
+    control->numBinsNonLearnt -= numRemovedHalfNonLearnt/2;
 
     lastNumUnitarySat[binaryClauses] = control->getNumUnitaries();
 }

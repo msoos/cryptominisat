@@ -46,7 +46,6 @@ class ClauseVivifier;
 class CalcDefPolars;
 class SolutionExtender;
 class ImplCache;
-class RestartPrinter;
 
 class ThreadControl : public CommandControl
 {
@@ -73,7 +72,7 @@ class ThreadControl : public CommandControl
         //////////////////////////
         //Stats
         static const char* getVersion();
-        uint64_t getNumClauses() const;                 ///<Return number of ALL clauses: non-learnt, learnt, bin
+        uint64_t getNumLongClauses() const;                 ///<Return number of ALL clauses: non-learnt, learnt, bin
         uint32_t getNumUnsetVars() const;               ///<Return number of unset vars
         uint32_t getNumElimSubsume() const;             ///<Get number of variables eliminated
         uint32_t getNumXorTrees() const;                ///<Get the number of SCC trees
@@ -84,7 +83,8 @@ class ThreadControl : public CommandControl
         bool     getNeedToDumpLearnts() const;
         bool     getNeedToDumpOrig() const;
         uint32_t getVerbosity() const;                  ///<Return verbosity level
-        void     printStats();
+        void     printFullStats();
+        void     printClauseStats();
         void     addInPartialSolvingStat();
         uint32_t getNumDecisionVars() const;            ///<Get number of decision vars. May not be accurate TODO fix this
         uint32_t getNumFreeVars() const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
@@ -103,6 +103,9 @@ class ThreadControl : public CommandControl
         void  dumpLearnts(std::ostream& os, const uint32_t maxSize); ///<Dump all learnt clauses into file
         void  dumpOrigClauses(std::ostream& os) const; ///<Dump "original" (simplified) problem to file
 
+        //Checks
+        void checkStats() const;
+
     private:
 
         //Control
@@ -114,6 +117,7 @@ class ThreadControl : public CommandControl
         //Attaching-detaching clauses
         virtual void  attachClause        (const Clause& c);
         virtual void  attachBinClause     (const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst = true);
+        virtual void  detachClause        (const Clause& c);
         virtual void  detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
         template<class T> Clause* addClauseInt(
             const T& ps
@@ -129,8 +133,6 @@ class ThreadControl : public CommandControl
         //Stats
         template<class T, class T2> void printStatsLine(string left, T value, T2 value2, string extra);
         template<class T> void printStatsLine(string left, T value, string extra = "");
-        friend class RestartPrinter;
-        RestartPrinter* restPrinter;
         vector<uint32_t> backupActivity;
         vector<bool>     backupPolarity;
         uint32_t         backupActivityInc;
@@ -220,7 +222,8 @@ class ThreadControl : public CommandControl
         vector<Clause*>     learnts;          ///< List of learnt clauses.
         uint64_t            clausesLits;  ///< Number of literals in non-learnt clauses
         uint64_t            learntsLits;  ///< Number of literals in learnt clauses
-        uint64_t            numBins;
+        uint64_t            numBinsNonLearnt;
+        uint64_t            numBinsLearnt;
         vector<char>        locked; ///<Before reduceDB, threads fill this up (index by clause num)
         void                reArrangeClauses();
         void                reArrangeClause(Clause* clause);
@@ -307,9 +310,9 @@ inline bool ThreadControl::getNeedToDumpOrig() const
     return conf.needToDumpOrig;
 }
 
-inline uint64_t ThreadControl::getNumClauses() const
+inline uint64_t ThreadControl::getNumLongClauses() const
 {
-    return numBins + clauses.size() + learnts.size();
+    return clauses.size() + learnts.size();
 }
 
 inline uint32_t ThreadControl::getVerbosity() const
