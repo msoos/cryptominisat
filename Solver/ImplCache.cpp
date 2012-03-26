@@ -79,9 +79,12 @@ void ImplCache::clean(ThreadControl* control)
 
     vector<uint16_t>& inside = control->seen;
     vector<uint16_t>& nonLearnt = control->seen2;
-    uint32_t wsLit = 0;
-    const vector<Lit>& replaceTable = control->varReplacer->getReplaceTable();
-    for(vector<TransCache>::iterator trans = implCache.begin(), transEnd = implCache.end(); trans != transEnd; trans++, wsLit++) {
+    size_t wsLit = 0;
+    for(vector<TransCache>::iterator
+        trans = implCache.begin(), transEnd = implCache.end()
+        ; trans != transEnd
+        ; trans++, wsLit++
+    ) {
         //Stats
         size_t origSize = trans->lits.size();
         size_t newSize = 0;
@@ -102,7 +105,7 @@ void ImplCache::clean(ThreadControl* control)
             if (control->varData[lit.var()].elimed == ELIMED_VARREPLACER
                 || control->varData[lit.var()].elimed == ELIMED_QUEUED_VARREPLACER
             ) {
-                lit = replaceTable[lit.var()] ^ lit.sign();
+                lit = control->varReplacer->getLitReplacedWith(lit);
 
                 //This would be tautological (and incorrect), so skip
                 if (lit.var() == vertLit.var())
