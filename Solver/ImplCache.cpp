@@ -252,112 +252,24 @@ bool ImplCache::tryBoth(ThreadControl* control)
 {
     assert(control->ok);
     assert(control->decisionLevel() == 0);
-
-    //Setup
-    vector<uint16_t>& seen = control->seen;
-    vector<uint16_t>& val = control->seen2;
-    vector<Lit> tmp;
-    uint32_t bProp = 0;
-    uint32_t bXProp = 0;
+    bProp = 0;
+    bXProp = 0;
 
     //Measuring time & usefulness
     double myTime = cpuTime();
     uint32_t backupTrailSize = control->trail.size();
 
     for (Var var = 0; var < control->nVars(); var++) {
-        //If value is set of eliminated, skip
+
+        //If value is set or eliminated, skip
         if (control->value(var) != l_Undef
-            || (control->varData[var].elimed != ELIMED_NONE && control->varData[var].elimed != ELIMED_QUEUED_VARREPLACER))
+            || (control->varData[var].elimed != ELIMED_NONE
+                && control->varData[var].elimed != ELIMED_QUEUED_VARREPLACER)
+           )
             continue;
 
-        Lit lit = Lit(var, false);
-
-        //To have the least effort, chache1 and cache2 can be interchanged
-        const vector<LitExtra>& cache1 = implCache[lit.toInt()].lits;
-        const vec<Watched>& ws1 = control->watches[(~lit).toInt()];
-        const vector<LitExtra>& cache2 = implCache[(~lit).toInt()].lits;
-        const vec<Watched>& ws2 = control->watches[(lit).toInt()];
-
-        //Fill 'seen' and 'val' from cache
-        for (vector<LitExtra>::const_iterator it = cache1.begin(), end = cache1.end(); it != end; it++) {
-            const Var var2 = it->getLit().var();
-            if (control->varData[var2].elimed != ELIMED_NONE
-                && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
-            ) continue;
-
-            seen[it->getLit().var()] = 1;
-            val[it->getLit().var()] = it->getLit().sign();
-        }
-
-        //Fill 'seen' and 'val' from watch
-        for (vec<Watched>::const_iterator it = ws1.begin(), end = ws1.end(); it != end; it++) {
-            if (!it->isBinary())
-                continue;
-
-            const Lit otherLit = it->getOtherLit();
-
-            if (!seen[otherLit.var()]) {
-                seen[otherLit.var()] = 1;
-                val[otherLit.var()] = otherLit.sign();
-            } else if (val[otherLit.var()] != otherLit.sign()) {
-                //(a->b, a->-b) -> so 'a'
-                vector<Lit> lits;
-                lits.push_back(lit);
-                control->addClauseInt(lits);
-                if (!control->ok)
-                    goto end;
-            }
-        }
-        //Okay, filled
-
-        //Try to see if we propagate the same or opposite from the other end
-        //Using cache
-        for (vector<LitExtra>::const_iterator it = cache2.begin(), end = cache2.end(); it != end; it++) {
-            assert(it->getLit().var() != var);
-            const Var var2 = it->getLit().var();
-
-            //Only if the other one also contained it
-            if (!seen[var2])
-                continue;
-
-            //If var has been elimed, skip
-            if (control->varData[var2].elimed != ELIMED_NONE
-                && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
-            ) continue;
-
-            handleNewData(val, var, it->getLit(), bProp, bXProp);
-        }
-
-        //Try to see if we propagate the same or opposite from the other end
-        //Using binary clauses
-        for (vec<Watched>::const_iterator it = ws2.begin(), end = ws2.end(); it != end; it++) {
-            if (!it->isBinary())
-                continue;
-
-            assert(it->getOtherLit().var() != var);
-            const Var var2 = it->getOtherLit().var();
-            assert(var2 < control->nVars());
-
-            //Only if the other one also contained it
-            if (!seen[var2])
-                continue;
-
-            handleNewData(val, var, it->getOtherLit(), bProp, bXProp);
-        }
-
-        //Clear 'seen' and 'val'
-        for (vector<LitExtra>::const_iterator it = cache1.begin(), end = cache1.end(); it != end; it++) {
-            seen[it->getLit().var()] = false;
-            val[it->getLit().var()] = false;
-        }
-
-        for (vec<Watched>::const_iterator it = ws1.begin(), end = ws1.end(); it != end; it++) {
-            if (!it->isBinary())
-                continue;
-
-            seen[it->getOtherLit().var()] = false;
-            val[it->getOtherLit().var()] = false;
-        }
+        //Try to do it
+        tryVar(control, var);
 
         //Add all clauses that have been delayed
         if (!addDelayedClauses(control))
@@ -375,6 +287,116 @@ bool ImplCache::tryBoth(ThreadControl* control)
     }
 
     return control->ok;
+}
+
+void ImplCache::tryVar(
+    ThreadControl* control
+    , Var var
+) {
+    //Sanity check
+    assert(control->ok);
+    assert(control->decisionLevel() == 0);
+
+    //Convenience
+    vector<uint16_t>& seen = control->seen;
+    vector<uint16_t>& val = control->seen2;
+
+    Lit lit = Lit(var, false);
+
+    const vector<LitExtra>& cache1 = implCache[lit.toInt()].lits;
+    assert(control->watches.size() > ((~lit).toInt()));
+    const vec<Watched>& ws1 = control->watches[(~lit).toInt()];
+    const vector<LitExtra>& cache2 = implCache[(~lit).toInt()].lits;
+    const vec<Watched>& ws2 = control->watches[(lit).toInt()];
+
+    //Fill 'seen' and 'val' from cache
+    for (vector<LitExtra>::const_iterator
+        it = cache1.begin(), end = cache1.end()
+        ; it != end
+        ; it++
+    ) {
+        const Var var2 = it->getLit().var();
+        if (control->varData[var2].elimed != ELIMED_NONE
+            && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
+        ) continue;
+
+        seen[it->getLit().var()] = 1;
+        val[it->getLit().var()] = it->getLit().sign();
+    }
+
+    //Fill 'seen' and 'val' from watch
+    for (vec<Watched>::const_iterator
+        it = ws1.begin(), end = ws1.end()
+        ; it != end
+        ; it++
+    ) {
+        if (!it->isBinary())
+            continue;
+
+        const Lit otherLit = it->getOtherLit();
+
+        if (!seen[otherLit.var()]) {
+            seen[otherLit.var()] = 1;
+            val[otherLit.var()] = otherLit.sign();
+        } else if (val[otherLit.var()] != otherLit.sign()) {
+            //(a->b, a->-b) -> so 'a'
+            delayedClausesToAddNorm.push_back(lit);
+        }
+    }
+    //Okay, filled
+
+    //Try to see if we propagate the same or opposite from the other end
+    //Using cache
+    for (vector<LitExtra>::const_iterator
+        it = cache2.begin(), end = cache2.end()
+        ; it != end
+        ; it++
+    ) {
+        assert(it->getLit().var() != var);
+        const Var var2 = it->getLit().var();
+
+        //Only if the other one also contained it
+        if (!seen[var2])
+            continue;
+
+        //If var has been elimed, skip
+        if (control->varData[var2].elimed != ELIMED_NONE
+            && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
+        ) continue;
+
+        handleNewData(val, var, it->getLit(), bProp, bXProp);
+    }
+
+    //Try to see if we propagate the same or opposite from the other end
+    //Using binary clauses
+    for (vec<Watched>::const_iterator it = ws2.begin(), end = ws2.end(); it != end; it++) {
+        if (!it->isBinary())
+            continue;
+
+        assert(it->getOtherLit().var() != var);
+        const Var var2 = it->getOtherLit().var();
+        assert(var2 < control->nVars());
+
+        //Only if the other one also contained it
+        if (!seen[var2])
+            continue;
+
+        handleNewData(val, var, it->getOtherLit(), bProp, bXProp);
+    }
+
+    //Clear 'seen' and 'val'
+    for (vector<LitExtra>::const_iterator it = cache1.begin(), end = cache1.end(); it != end; it++) {
+        seen[it->getLit().var()] = false;
+        val[it->getLit().var()] = false;
+    }
+
+    for (vec<Watched>::const_iterator it = ws1.begin(), end = ws1.end(); it != end; it++) {
+        if (!it->isBinary())
+            continue;
+
+        seen[it->getOtherLit().var()] = false;
+        val[it->getOtherLit().var()] = false;
+    }
 }
 
 void TransCache::merge(
