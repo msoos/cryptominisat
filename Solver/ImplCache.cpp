@@ -105,7 +105,7 @@ void ImplCache::clean(ThreadControl* control)
                 lit = replaceTable[lit.var()] ^ lit.sign();
 
                 //This would be tautological (and incorrect), so skip
-                if (lit == vertLit)
+                if (lit.var() == vertLit.var())
                     continue;
                 numUpdated++;
             }
