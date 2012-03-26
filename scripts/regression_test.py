@@ -372,7 +372,7 @@ class Tester:
         print "Checking console output..."
         (unsat, value) = self.parse_solution_from_output(consoleOutput)
         otherSolverUNSAT = True
-        if options.fuzz_test and unsat:
+        if self.check_unsat and unsat:
             toexec = "../../lingeling-587f/lingeling %s" % fname
             print "Solving with other solver.."
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
@@ -386,7 +386,7 @@ class Tester:
             (otherSolverUNSAT, otherSolverValue) = self.parse_solution_from_output(consoleOutput2)
 
         if unsat == True:
-            if options.fuzz_test == False:
+            if self.check_unsat == False:
                 print "Cannot check -- output is UNSAT"
             else :
                 if otherSolverUNSAT == False:
@@ -481,8 +481,10 @@ tester = Tester()
 
 if len(args) == 1:
     print "Checking filename", args[0]
+    tester.check_unsat = True
     tester.checkFile(args[0])
 
 
 if (options.fuzz_test):
+    tester.check_unsat = True
     tester.fuzz_test()
