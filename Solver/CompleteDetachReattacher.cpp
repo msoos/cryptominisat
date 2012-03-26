@@ -132,8 +132,10 @@ bool CompleteDetachReatacher::cleanClause(Clause*& cl)
         case 0:
             control->ok = false;
             return false;
+
         case 1:
             control->enqueue(ps[0]);
+            control->propStats.propsUnit++;
             return false;
 
         case 2: {

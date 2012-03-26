@@ -36,9 +36,15 @@ struct SolvingStats
         // Stats
         numConflicts(0)
         , numRestarts(0)
+
+        //Decisions
         , decisions(0)
         , decisionsAssump(0)
         , decisionsRand(0)
+
+        //To correctly count propagations
+        , probe(0)
+        , vivify(0)
 
         //Conflict generation
         , numLitsLearntNonMinimised(0)
@@ -64,19 +70,16 @@ struct SolvingStats
     SolvingStats& operator+=(const SolvingStats& other)
     {
         numConflicts += other.numConflicts;
-        conflsBinIrred += other.conflsBinIrred;
-        conflsBinRed += other.conflsBinRed;
-        conflsTri += other.conflsTri;
-        conflsLongIrred += other.conflsLongIrred;
-        conflsLongRed += other.conflsLongRed;
-
-        //Restarts
         numRestarts += other.numRestarts;
 
         //Decisions
         decisions += other.decisions;
         decisionsAssump += other.decisionsAssump;
         decisionsRand += other.decisionsRand;
+
+        //To correctly count propagations
+        probe += other.probe;
+        vivify += other.vivify;
 
         //Conflict minimisation stats
         numLitsLearntNonMinimised += other.numLitsLearntNonMinimised;
@@ -90,6 +93,12 @@ struct SolvingStats
         learntBins += other.learntBins;
         learntTris += other.learntTris;
         learntLongs += other.learntLongs;
+
+        conflsBinIrred += other.conflsBinIrred;
+        conflsBinRed += other.conflsBinRed;
+        conflsTri += other.conflsTri;
+        conflsLongIrred += other.conflsLongIrred;
+        conflsLongRed += other.conflsLongRed;
 
         return *this;
     }
@@ -154,7 +163,7 @@ struct SolvingStats
             , "%"
         );
 
-        cout << "c numConflicts: " << numConflicts << endl;
+        /*cout << "c numConflicts: " << numConflicts << endl;
         cout
         << "c conflsBin + conflsTri + conflsLongIrred + conflsLongRed : "
         << (conflsBinIrred + conflsBinRed +  conflsTri + conflsLongIrred + conflsLongRed)
@@ -162,7 +171,11 @@ struct SolvingStats
         cout
         << "c DIFF: "
         << ((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTri + conflsLongIrred + conflsLongRed))
-        << endl;
+        << endl;*/
+        assert(((int)numConflicts -
+            (int)(conflsBinIrred + conflsBinRed
+                    + conflsTri + conflsLongIrred + conflsLongRed)
+        ) == 0);
 
         /*assert(numConflicts
             == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
@@ -222,6 +235,11 @@ struct SolvingStats
             , "% random"
         );
 
+        printStatsLine("c propsUnit", propStats.propsUnit
+            , 100.0*(double)propStats.propsUnit/(double)propStats.propagations
+            , "% of propagations"
+        );
+
         printStatsLine("c propsBin", propStats.propsBin
             , 100.0*(double)propStats.propsBin/(double)propStats.propagations
             , "% of propagations"
@@ -242,18 +260,20 @@ struct SolvingStats
             , "% of propagations"
         );
 
-        uint64_t totalProps =
-        propStats.propsBin + propStats.propsTri + propStats.propsLongIrred + propStats.propsLongRed
-         + decisions + decisionsAssump
-         + numConflicts;
+        uint64_t totalProps = propStats.propsUnit
+         + propStats.propsBin
+         + propStats.propsTri + propStats.propsLongIrred
+         + propStats.propsLongRed
+         + probe + vivify
+         + decisions + decisionsAssump;
 
-        cout
+        /*cout
         << "c totprops: "
         << totalProps
         << " missing: "
         << ((int64_t)propStats.propagations-(int64_t)totalProps)
-        << endl;
-        //assert(propagations == totalProps);
+        << endl;*/
+        assert(propStats.propagations == totalProps);
 
         printStatsLine("c confl lits nonmin ", numLitsLearntNonMinimised);
         printStatsLine("c confl lits minim", numLitsLearntMinimised
@@ -272,9 +292,16 @@ struct SolvingStats
 
     uint64_t  numConflicts;     ///<Number of conflicts
     uint64_t  numRestarts;      ///<Num restarts
+
+    //Decisions
     uint64_t  decisions;        ///<Number of decisions made
     uint64_t  decisionsAssump;
     uint64_t  decisionsRand;    ///<Numer of random decisions made
+
+    //To correctly count propagations
+    uint64_t probe; //Proping tries
+    uint64_t vivify; //Vivifying tries
+
     uint64_t  numLitsLearntNonMinimised;     ///<Number of learnt literals without minimisation
     uint64_t  numLitsLearntMinimised;     ///<Number of learnt literals with minimisation
     uint64_t  nShrinkedCl;      ///<Num clauses improved using on-the-fly self-subsuming resolution
@@ -358,6 +385,7 @@ class CommandControl : public Solver
         bqueue<uint32_t> glueHist;      ///< Set of last decision levels in (glue of) conflict clauses
         bqueue<uint32_t> conflSizeHist;    ///< Conflict size history
         bqueue<double, double>  agilityHist;
+        uint64_t sumConflicts() const;
 
         /////////////////
         //Settings
@@ -456,7 +484,6 @@ class CommandControl : public Solver
         size_t origTrailSize;
         uint32_t var_inc_multiplier;
         uint32_t var_inc_divider;
-        uint64_t sumConflicts() const;
 };
 
 inline void CommandControl::varDecayActivity()

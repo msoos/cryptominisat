@@ -390,8 +390,10 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
         case 0:
             control->ok = false;
             return l_False;
+
         case 1:
             control->enqueue(cl[0]);
+            control->propStats.propsUnit++;
             unlinkClause(c);
             control->ok = control->propagate().isNULL();
             return (control->ok ? l_True : l_False);
@@ -973,24 +975,48 @@ bool Subsumer::propagate()
                     lastUndef = cl[i];
                 }
             }
-            if (satisfied) continue;
+
+            //Satisfied
+            if (satisfied)
+                continue;
+
+            //UNSAT
             if (numUndef == 0) {
                 control->ok = false;
                 return false;
             }
+
+            //Propagation
             if (numUndef == 1) {
                 control->enqueue(lastUndef);
+
+                //Update stats
+                if (cl.size() == 3)
+                    control->propStats.propsTri++;
+                else {
+                    if (cl.learnt())
+                        control->propStats.propsLongRed++;
+                    else
+                        control->propStats.propsLongIrred++;
+                }
             }
         }
         vec<Watched>& ws2 = control->watches[p.toInt()];
         for (vec<Watched>::const_iterator it = ws2.begin(), end = ws2.end(); it != end; it++) {
             if (!it->isBinary()) continue;
             const lbool val = control->value(it->getOtherLit());
+
+            //UNSAT
             if (val == l_False) {
                 control->ok = false;
                 return false;
             }
-            if (val == l_Undef) control->enqueue(it->getOtherLit());
+
+            //Propagation
+            if (val == l_Undef) {
+                control->enqueue(it->getOtherLit());
+                control->propStats.propsBin++;
+            }
         }
         //cleanLitOfClauses(p);
     }

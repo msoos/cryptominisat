@@ -117,6 +117,7 @@ bool ThreadControl::addXorClauseInt(const vector< Lit >& lits, bool rhs)
 
         case 1:
             enqueue(Lit(ps[0].var(), !rhs));
+            propStats.propsUnit++;
             ok = propagate().isNULL();
             return ok;
 
@@ -196,6 +197,7 @@ Clause* ThreadControl::addClauseInt(const T& lits
             return NULL;
         case 1:
             enqueue(ps[0]);
+            propStats.propsUnit++;
             ok = (propagate().isNULL());
             return NULL;
         case 2:
@@ -1050,7 +1052,7 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
         case 2:
             break;
         default:
-            cl = clAllocator->Clause_new(lits, sumSolvingStats.numConflicts);
+            cl = clAllocator->Clause_new(lits, CommandControl::sumConflicts());
             cl->makeLearnt(glue);
             learnts.push_back(cl);
             break;

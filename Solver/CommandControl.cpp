@@ -689,11 +689,13 @@ lbool CommandControl::new_decision()
 
     if (next == lit_Undef) {
         // New variable decision:
-        stats.decisions++;
         next = pickBranchLit();
 
+        //No decision taken, because it's SAT
         if (next == lit_Undef)
             return l_True;
+
+        stats.decisions++;
     }
 
     // Increase decision level and enqueue 'next'
@@ -815,6 +817,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             //Unitary learnt
             stats.learntUnits++;
             enqueue(learnt_clause[0]);
+            propStats.propsUnit++;
             assert(backtrack_level == 0 && "Unit clause learnt, so must cancel until level 0, right?");
 
             break;
@@ -823,6 +826,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             stats.learntBins++;
             control->attachBinClause(learnt_clause[0], learnt_clause[1], true);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
+            propStats.propsBin++;
             break;
 
         case 3:
@@ -830,6 +834,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             stats.learntTris++;
             control->attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
+            propStats.propsTri++;
             break;
 
         default:
@@ -837,6 +842,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             stats.learntLongs++;
             control->attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));
+            propStats.propsLongRed++;
             break;
     }
 
@@ -1356,7 +1362,7 @@ void CommandControl::printAgilityStats()
     }
 }
 
-inline uint64_t CommandControl::sumConflicts() const
+uint64_t CommandControl::sumConflicts() const
 {
     return control->sumSolvingStats.numConflicts + stats.numConflicts;
 }

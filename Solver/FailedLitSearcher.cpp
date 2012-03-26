@@ -239,6 +239,7 @@ bool FailedLitSearcher::tryThis(const Lit lit)
 
     control->newDecisionLevel();
     control->enqueue(lit);
+    control->sumSolvingStats.probe++;
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Trying " << lit << endl;
     #endif

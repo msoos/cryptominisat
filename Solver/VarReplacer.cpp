@@ -211,6 +211,7 @@ bool VarReplacer::replaceBins()
             if (thisLit1 == lit2) {
                 if (control->value(lit2) == l_Undef) {
                     control->enqueue(lit2);
+                    control->propStats.propsUnit++;
                 } else if (control->value(lit2) == l_False) {
                     #ifdef VERBOSE_DEBUG
                     cout << "Contradiction during replacement of lits in binary clause" << endl;
@@ -345,6 +346,7 @@ bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit o
         return true;
     case 1 :
         control->enqueue(c[0]);
+        control->propStats.propsUnit++;
         control->ok = (control->propagate().isNULL());
         return true;
     case 2:
@@ -463,10 +465,14 @@ bool VarReplacer::replace(Lit lit1, Lit lit2, const bool xorEqualFalse)
         return control->ok;
     }
 
+    //exactly one l_Undef, exectly one l_True/l_False
     if ((val1 != l_Undef && val2 == l_Undef) || (val2 != l_Undef && val1 == l_Undef)) {
-        //exactly one l_Undef, exectly one l_True/l_False
-        if (val1 != l_Undef) control->enqueue(lit2 ^ (val1 == l_False));
-        else control->enqueue(lit1 ^ (val2 == l_False));
+        if (val1 != l_Undef) {
+            control->enqueue(lit2 ^ (val1 == l_False));
+        } else {
+            control->enqueue(lit1 ^ (val2 == l_False));
+        }
+        control->propStats.propsUnit++;
 
         if (control->ok) control->ok = (control->propagate().isNULL());
         return control->ok;

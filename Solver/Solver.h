@@ -66,6 +66,7 @@ struct PropStats
     PropStats() :
         propagations(0)
         , bogoProps(0)
+        , propsUnit(0)
         , propsBin(0)
         , propsTri(0)
         , propsLongIrred(0)
@@ -77,6 +78,7 @@ struct PropStats
     {
         propagations -= other.propagations;
         bogoProps -= other.bogoProps;
+        propsUnit -= other.propsUnit;
         propsBin -= other.propsBin;
         propsTri -= other.propsTri;
         propsLongIrred -= other.propsLongIrred;
@@ -96,6 +98,7 @@ struct PropStats
     uint64_t bogoProps;    ///<An approximation of time
 
     //Stats for propagations
+    uint64_t propsUnit;
     uint64_t propsBin;
     uint64_t propsTri;
     uint64_t propsLongIrred;
