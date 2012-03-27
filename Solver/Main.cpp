@@ -494,8 +494,8 @@ void Main::parseCommandLine()
             throw WrongParam("maxdumplearnts", "--dumplearnts=<filename> must be first activated before issuing --maxdumplearnts=<size>");
     }
 
-    if (conf.numCleanBetweenSimplify == 0) {
-        cerr << "ERROR: Option '--nclbtwsimp' must not be 0'" << endl;
+    if (conf.numCleanBetweenSimplify < 0) {
+        cerr << "ERROR: Option '--nclbtwsimp' must not be smaller than 0'" << endl;
         exit(-1);
     }
 
