@@ -2662,11 +2662,13 @@ void Solver::initialiseSolver()
     starts = 0;
     fullStarts = 0;
 
-    if (nClauses() * conf.learntsize_factor < nbClBeforeRed) {
-        if (nClauses() * conf.learntsize_factor < nbClBeforeRed/2)
-            nbClBeforeRed /= 4;
-        else
-            nbClBeforeRed = (nClauses() * conf.learntsize_factor)/2;
+    if (conflicts == 0) {
+        if (nClauses() * conf.learntsize_factor < nbClBeforeRed) {
+            if (nClauses() * conf.learntsize_factor < nbClBeforeRed/2)
+                nbClBeforeRed /= 4;
+            else
+                nbClBeforeRed = (nClauses() * conf.learntsize_factor)/2;
+        }
     }
 
     testAllClauseAttach();
