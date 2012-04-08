@@ -2117,14 +2117,30 @@ clauseset is found. If all variables are decision variables, this means
 that the clause set is satisfiable. 'l_False' if the clause set is
 unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 */
-lbool Solver::search(const uint64_t nof_conflicts, const uint64_t nof_conflicts_fullrestart, const bool update)
-{
+lbool Solver::search(
+    const uint64_t nof_conflicts
+    , const uint64_t nof_conflicts_fullrestart
+    , const bool update
+) {
     assert(ok);
     uint64_t    conflictC = 0;
     vec<Lit>    learnt_clause;
     llbool      ret;
 
     if (!simplifying && update) {
+        if (conf.verbosity >= 4) {
+            std::cout
+            << "c RESTART"
+            << " starts: " << starts
+            << " dynStarts: " << dynStarts
+            << " staticStarts: " << staticStarts
+            << " nof_conflicts: " << nof_conflicts
+            << " nof_conflicts_fullrestart: " << nof_conflicts_fullrestart
+            << " fullStarts: " << fullStarts
+            << " conflicts: " << conflicts
+            << " starts: " << starts
+            << std::endl;
+        }
         starts++;
         if (restartType == static_restart) staticStarts++;
         else dynStarts++;
@@ -2538,8 +2554,11 @@ end:
 
 If so, we also do the things to be done if the full restart is effected.
 */
-bool Solver::checkFullRestart(uint64_t& nof_conflicts, uint64_t& nof_conflicts_fullrestart, uint32_t& lastFullRestart)
-{
+bool Solver::checkFullRestart(
+    uint64_t& nof_conflicts
+    , uint64_t& nof_conflicts_fullrestart
+    , uint32_t& lastFullRestart
+) {
     if (nof_conflicts_fullrestart > 0 && conflicts >= nof_conflicts_fullrestart) {
         #ifdef USE_GAUSS
         clearGaussMatrixes();
@@ -2747,6 +2766,18 @@ lbool Solver::solve(const vec<Lit>& assumps)
             return l_False;
         if (!chooseRestartType(lastFullRestart))
             return l_False;
+
+        if (conf.verbosity>=4) {
+            std::cout
+            << "c new main loop"
+            << " lastFullRestart: " << lastFullRestart
+            << " nextSimplify: " << nextSimplify
+            << " nof_conflicts_fullrestart: " << nof_conflicts_fullrestart
+            << " nof_conflicts: " << nof_conflicts
+            << " conflicts: " << conflicts
+            << " starts: " << starts
+            << std::endl;
+        }
     }
     printEndSearchStat();
 
