@@ -571,8 +571,10 @@ Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
     return lit_Undef;
 }
 
-PropBy Solver::propBin(const Lit p, vec<Watched>::const_iterator k, std::set<BinaryClause>& uselessBin)
-{
+PropBy Solver::propBin(
+    const Lit p, vec<Watched>::const_iterator k
+    , std::set<BinaryClause>& uselessBin
+) {
     const Lit lit = k->getOtherLit();
     const lbool val = value(lit);
     if (val.isUndef()) {
