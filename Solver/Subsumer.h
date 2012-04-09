@@ -195,11 +195,11 @@ public:
     };
 
     const vector<char>& getVarElimed() const;
-    bool checkElimedUnassigned() const;
     uint32_t getNumERVars() const;
     const vector<BlockedClause>& getBlockedClauses() const;
     const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
+    void checkElimedUnassignedAndStats() const;
 
 private:
 

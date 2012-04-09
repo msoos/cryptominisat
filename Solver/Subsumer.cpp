@@ -1167,6 +1167,9 @@ bool Subsumer::simplifyBySubsumption()
     runStats.totalTime += cpuTime() - myTime;
     globalStats += runStats;
 
+    //Sanity check
+    checkElimedUnassignedAndStats();
+
     //Print stats
     if (control->conf.verbosity  >= 1) {
         cout << "c"
@@ -2334,30 +2337,16 @@ inline bool Subsumer::allTautologySlim(const Lit lit)
     return true;
 }
 
-/**
-@brief Checks if eliminated variables are unassigned
-
-If there is a variable that has been assigned even though it's been eliminated
-that means that there were clauses that contained that variable, and where some-
-how inserted into the watchlists. That would be a grave bug, since that would
-mean that not all clauses containing the eliminated variable were removed during
-the running of this class.
-
-@return TRUE if they are all unassigned
-*/
-bool Subsumer::checkElimedUnassigned() const
+void Subsumer::checkElimedUnassignedAndStats() const
 {
     uint32_t checkNumElimed = 0;
     for (uint32_t i = 0; i < var_elimed.size(); i++) {
         if (var_elimed[i]) {
             checkNumElimed++;
             assert(control->assigns[i] == l_Undef);
-            if (control->assigns[i] != l_Undef) return false;
         }
     }
     assert(globalStats.numVarsElimed == checkNumElimed);
-
-    return true;
 }
 
 const GateFinder* Subsumer::getGateFinder() const

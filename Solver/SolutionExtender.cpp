@@ -57,7 +57,8 @@ void SolutionExtender::extend()
             cout << "c Greedy unbounding     : " << (cpuTime()-time) << ", unbounded: " << unbounded << " vars" << endl;
     }*/
 
-    assert(control->subsumer->checkElimedUnassigned());
+    //Sanity check
+    control->subsumer->checkElimedUnassignedAndStats();
 
     for (vector<Clause*>::iterator it = control->clauses.begin(), end = control->clauses.end(); it != end; it++) {
         Clause& cl = **it;
