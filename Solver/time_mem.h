@@ -21,6 +21,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef TIME_MEM_H
 #define TIME_MEM_H
 #include "constants.h"
+#include "assert.h"
 
 #if defined (_MSC_VER) || defined(CROSS_COMPILE)
 #include <ctime>
@@ -38,17 +39,22 @@ static inline double cpuTime(void)
 {
     struct rusage ru;
     #ifdef RUSAGE_THREAD
-    getrusage(RUSAGE_THREAD, &ru);
+    int ret = getrusage(RUSAGE_THREAD, &ru);
     #else
-    getrusage(RUSAGE_SELF, &ru);
+    int ret = getrusage(RUSAGE_SELF, &ru);
     #endif
+
+    assert(ret == 0);
+
     return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000.0;
 }
 
 static inline double cpuTimeTotal(void)
 {
     struct rusage ru;
-    getrusage(RUSAGE_SELF, &ru);
+    int ret = getrusage(RUSAGE_SELF, &ru);
+    assert(ret == 0);
+
     return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000.0;
 }
 #endif //CROSS_COMPILE
