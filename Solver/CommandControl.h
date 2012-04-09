@@ -240,8 +240,13 @@ struct SolvingStats
             , "% of propagations"
         );
 
-        printStatsLine("c propsBin", propStats.propsBin
-            , 100.0*(double)propStats.propsBin/(double)propStats.propagations
+        printStatsLine("c propsBinIrred", propStats.propsBinIrred
+            , 100.0*(double)propStats.propsBinIrred/(double)propStats.propagations
+            , "% of propagations"
+        );
+
+        printStatsLine("c propsBinRed", propStats.propsBinRed
+            , 100.0*(double)propStats.propsBinRed/(double)propStats.propagations
             , "% of propagations"
         );
 
@@ -261,7 +266,8 @@ struct SolvingStats
         );
 
         uint64_t totalProps = propStats.propsUnit
-         + propStats.propsBin
+         + propStats.propsBinRed
+         + propStats.propsBinIrred
          + propStats.propsTri + propStats.propsLongIrred
          + propStats.propsLongRed
          + probe + vivify

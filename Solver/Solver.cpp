@@ -179,11 +179,18 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-inline bool Solver::propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl)
-{
+inline bool Solver::propBinaryClause(
+    const vec<Watched>::const_iterator i
+    , const Lit p
+    , PropBy& confl
+) {
     const lbool val = value(i->getOtherLit());
     if (val.isUndef()) {
-        propStats.propsBin++;
+        if (i->getLearnt())
+            propStats.propsBinRed++;
+        else
+            propStats.propsBinIrred++;
+
         enqueue(i->getOtherLit(), PropBy(~p));
     } else if (val == l_False) {
         //Update stats
@@ -578,7 +585,11 @@ PropBy Solver::propBin(
     const Lit lit = k->getOtherLit();
     const lbool val = value(lit);
     if (val.isUndef()) {
-        propStats.propsBin++;
+        if (k->getLearnt())
+            propStats.propsBinRed++;
+        else
+            propStats.propsBinIrred++;
+
         //Never propagated before
         enqueueComplex(lit, p, k->getLearnt());
         return PropBy();

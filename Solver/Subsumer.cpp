@@ -974,7 +974,13 @@ bool Subsumer::propagate()
         Lit p = control->trail[control->qhead];
         control->qhead++;
         Occur& ws = occur[(~p).toInt()];
-        for (Occur::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
+
+        //Go through each occurrence list
+        for (Occur::const_iterator
+            it = ws.begin(), end = ws.end()
+            ; it != end
+            ; it++
+        ) {
             const Clause& cl = *clauses[it->index];
             Lit lastUndef = lit_Undef;
             uint32_t numUndef = 0;
@@ -1017,9 +1023,18 @@ bool Subsumer::propagate()
                 }
             }
         }
+
+        //Propagate binary clauses
         vec<Watched>& ws2 = control->watches[p.toInt()];
-        for (vec<Watched>::const_iterator it = ws2.begin(), end = ws2.end(); it != end; it++) {
-            if (!it->isBinary()) continue;
+        for (vec<Watched>::const_iterator
+            it = ws2.begin(), end = ws2.end()
+            ; it != end
+            ; it++
+        ) {
+            //Only binary clauses
+            if (!it->isBinary())
+                continue;
+
             const lbool val = control->value(it->getOtherLit());
 
             //UNSAT
@@ -1031,7 +1046,10 @@ bool Subsumer::propagate()
             //Propagation
             if (val == l_Undef) {
                 control->enqueue(it->getOtherLit());
-                control->propStats.propsBin++;
+                if (it->getLearnt())
+                    control->propStats.propsBinRed++;
+                else
+                    control->propStats.propsBinIrred++;
             }
         }
         //cleanLitOfClauses(p);

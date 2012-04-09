@@ -826,7 +826,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             stats.learntBins++;
             control->attachBinClause(learnt_clause[0], learnt_clause[1], true);
             enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
-            propStats.propsBin++;
+            propStats.propsBinRed++;
             break;
 
         case 3:

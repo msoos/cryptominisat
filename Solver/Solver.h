@@ -67,7 +67,8 @@ struct PropStats
         propagations(0)
         , bogoProps(0)
         , propsUnit(0)
-        , propsBin(0)
+        , propsBinIrred(0)
+        , propsBinRed(0)
         , propsTri(0)
         , propsLongIrred(0)
         , propsLongRed(0)
@@ -79,7 +80,8 @@ struct PropStats
         propagations -= other.propagations;
         bogoProps -= other.bogoProps;
         propsUnit -= other.propsUnit;
-        propsBin -= other.propsBin;
+        propsBinIrred -= other.propsBinIrred;
+        propsBinRed -= other.propsBinRed;
         propsTri -= other.propsTri;
         propsLongIrred -= other.propsLongIrred;
         propsLongRed -= other.propsLongRed;
@@ -99,7 +101,8 @@ struct PropStats
 
     //Stats for propagations
     uint64_t propsUnit;
-    uint64_t propsBin;
+    uint64_t propsBinIrred;
+    uint64_t propsBinRed;
     uint64_t propsTri;
     uint64_t propsLongIrred;
     uint64_t propsLongRed;
