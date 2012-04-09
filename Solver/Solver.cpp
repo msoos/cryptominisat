@@ -319,8 +319,11 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
-template<bool simple> inline bool Solver::propTriClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl)
-{
+template<bool simple> inline bool Solver::propTriClause(
+    const vec<Watched>::const_iterator i
+    , const Lit p
+    , PropBy& confl
+) {
     lbool val = value(i->getOtherLit());
     if (val == l_True) return true;
 
