@@ -515,7 +515,6 @@ void ThreadControl::renumberVariables()
 
     //Update updater data
     updateArray(interToOuterMain, interToOuter);
-    cout << "Updated vars" << endl;
     updateArray(outerToInterMain, outerToInter);
 
     //For debug
