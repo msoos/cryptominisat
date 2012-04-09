@@ -783,7 +783,11 @@ void Subsumer::removeWrongBinsAndAllTris()
 {
     uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator it = control->watches.begin(), end = control->watches.end(); it != end; it++, wsLit++) {
+    for (vector<vec<Watched> >::iterator
+        it = control->watches.begin(), end = control->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
         Lit lit = ~Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
@@ -794,10 +798,13 @@ void Subsumer::removeWrongBinsAndAllTris()
 
             if (i->isBinary()
                 && (var_elimed[lit.var()] || var_elimed[i->getOtherLit().var()])
-                ) {
+            ) {
                 #ifdef VERBOSE_DEBUG_VARELIM
                 if (i->getLearnt()) {
-                    cout << "c ERROR! Binary " << lit << " , " << i->getOtherLit() << " is still in, but one of its vars has been eliminated" << endl;
+                    cout
+                    << "c ERROR! Binary " << lit << " , " << i->getOtherLit()
+                    << " is still in, but one of its vars has been eliminated"
+                    << endl;
                 }
                 #endif
                 assert(i->getLearnt());
