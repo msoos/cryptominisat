@@ -49,13 +49,6 @@ Solver::Solver(
 
 /**
 @brief Creates a new SAT variable in the solver
-
-This entails making the datastructures large enough to fit the new variable
-in all internal datastructures as well as all datastructures used in
-classes used inside Solver
-
-@p dvar The new variable should be used as a decision variable?
-   NOTE: this has effects on the meaning of a SATISFIABLE result
 */
 Var Solver::newVar(const bool)
 {
