@@ -753,7 +753,9 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
 
     if (params.conflictsDoneThisRestart > params.conflictsToDo) {
         if (conf.verbosity >= 3)
-            cout << "c Over limit of conflicts for this restart, restarting as soon as possible!" << endl;
+            cout
+            << "c Over limit of conflicts for this restart"
+            << " -- restarting as soon as possible!" << endl;
         params.needToStopSearch = true;
     }
 }
@@ -801,8 +803,12 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
 
     //Debug
     #ifdef VERBOSE_DEBUG
-    cout << "Learning:" << learnt_clause << endl;
-    cout << "reverting var " << learnt_clause[0].var()+1 << " to " << !learnt_clause[0].sign() << endl;
+    cout
+    << "Learning:" << learnt_clause
+    << endl
+    << "reverting var " << learnt_clause[0].var()+1
+    << " to " << !learnt_clause[0].sign()
+    << endl;
     #endif
     assert(value(learnt_clause[0]) == l_Undef);
 
