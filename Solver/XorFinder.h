@@ -169,6 +169,70 @@ public:
     XorFinder(Subsumer* subsumer, ThreadControl* control);
     bool findXors();
 
+    struct Stats
+    {
+        Stats() :
+            //Time
+            findTime(0)
+            , extractTime(0)
+
+            //XOR
+            , foundXors(0)
+            , sumSizeXors(0)
+
+            //Usefulness
+            , newUnits(0)
+            , newBins(0)
+            , zeroDepthAssigns(0)
+        {}
+
+        void clear()
+        {
+            Stats tmp;
+            *this = tmp;
+        }
+
+        double totalTime() const
+        {
+            return findTime + extractTime;
+        }
+
+        Stats& operator+=(const Stats& other)
+        {
+            //Time
+            findTime += other.findTime;
+            extractTime += other.extractTime;
+
+            //XOR
+            foundXors += other.foundXors;
+            sumSizeXors += other.sumSizeXors;
+
+            //Usefulness
+            newUnits += other.newUnits;
+            newBins += other.newBins;
+            zeroDepthAssigns += other.zeroDepthAssigns;
+
+            return *this;
+        }
+
+        //Time
+        double findTime;
+        double extractTime;
+
+        //XOR stats
+        size_t foundXors;
+        size_t sumSizeXors;
+
+        //Usefulness stats
+        uint64_t newUnits;
+        uint64_t newBins;
+
+        size_t zeroDepthAssigns;
+    };
+
+    const Stats& getStats() const;
+    size_t getNumCalls() const;
+
 private:
     //Find XORs
     void findXor(ClauseIndex c);
@@ -197,15 +261,12 @@ private:
     ThreadControl *control;
 
     //Stats
-    uint64_t newUnits;
-    uint64_t newBins;
     size_t numBlocks;
     size_t numVarsInBlocks;
 
-    //long-term stats
-    double totalTime;
-    size_t totalFixed;
-    size_t totalReplaced;
+    Stats runStats;
+    Stats globalStats;
+    size_t numCalls;
 
     //Temporaries for putting xors into matrix, and extracting info from matrix
     vector<size_t> outerToInterVarMap;
@@ -323,5 +384,16 @@ inline bool FoundXors::bit(const uint32_t a, const uint32_t b) const
 {
     return (((a)>>(b))&1);
 }
+
+inline const XorFinder::Stats& XorFinder::getStats() const
+{
+    return globalStats;
+}
+
+inline size_t XorFinder::getNumCalls() const
+{
+    return numCalls;
+}
+
 
 #endif //_XORFINDER_H_

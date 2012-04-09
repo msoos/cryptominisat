@@ -32,9 +32,7 @@ using std::endl;
 XorFinder::XorFinder(Subsumer* _subsumer, ThreadControl* _control) :
     subsumer(_subsumer)
     , control(_control)
-    , totalTime(0)
-    , totalFixed(0)
-    , totalReplaced(0)
+    , numCalls(0)
     , seen(_subsumer->seen)
     , seen2(_subsumer->seen2)
 {}
@@ -42,6 +40,8 @@ XorFinder::XorFinder(Subsumer* _subsumer, ThreadControl* _control) :
 bool XorFinder::findXors()
 {
     double myTime = cpuTime();
+    numCalls++;
+    runStats.clear();
     xors.clear();
     xorOcc.clear();
     xorOcc.resize(control->nVars());
@@ -64,18 +64,25 @@ bool XorFinder::findXors()
         }
     }
 
+    //Calculate & display stats
+    runStats.extractTime = cpuTime() - myTime;
+    assert(runStats.foundXors == xors.size());
     if (control->getVerbosity() >= 1) {
         cout
         << "c XOR finding "
-        << " Num XORs: " << std::setw(6) << xors.size()
+        << " Num XORs: " << std::setw(6) << runStats.foundXors
+        << " avg size: " << std::setw(4) << std::fixed << std::setprecision(1)
+        << ((double)runStats.sumSizeXors/(double)runStats.foundXors)
+
         << " T: "
-        << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
+        << std::fixed << std::setprecision(2) << runStats.extractTime
         << endl;
     }
-    totalTime += cpuTime() - myTime;
 
     if (control->conf.doEchelonizeXOR && xors.size() > 0)
         extractInfo();
+
+    globalStats += runStats;
 
     return control->okay();
 }
@@ -83,6 +90,8 @@ bool XorFinder::findXors()
 bool XorFinder::extractInfo()
 {
     double myTime = cpuTime();
+    size_t origTrailSize = control->trail.size();
+
     vector<uint32_t> varsIn(control->nVars(), 0);
     for(vector<Xor>::const_iterator it = xors.begin(), end = xors.end(); it != end; it++) {
         for(vector<Var>::const_iterator it2 = it->vars.begin(), end2 = it->vars.end(); it2 != end2; it2++) {
@@ -120,7 +129,7 @@ bool XorFinder::extractInfo()
     }
 
     //Update global stats
-    totalTime += cpuTime() - myTime;
+    runStats.extractTime += cpuTime() - myTime;
     myTime = cpuTime();
 
     //These mappings will be needed for the matrixes, which will have far less
@@ -130,11 +139,13 @@ bool XorFinder::extractInfo()
     interToOUterVarMap.clear();
     interToOUterVarMap.resize(control->nVars(), std::numeric_limits<size_t>::max());
 
-    //Go through each block, and extract info
-    newUnits = 0;
-    newBins = 0;
+    //Go through all blocks, and extract info
     i = 0;
-    for(vector<vector<Var> >::const_iterator it = blocks.begin(), end = blocks.end(); it != end; it++, i++) {
+    for(vector<vector<Var> >::const_iterator
+        it = blocks.begin(), end = blocks.end()
+        ; it != end
+        ; it++, i++
+    ) {
         //If block is already merged, skip
         if (it->empty())
             continue;
@@ -142,30 +153,36 @@ bool XorFinder::extractInfo()
         //const uint64_t oldNewUnits = newUnits;
         //const uint64_t oldNewBins = newBins;
         if (!extractInfoFromBlock(*it, i))
-            return false;
+            goto end;
 
         //cout << "New units this round: " << (newUnits - oldNewUnits) << endl;
         //cout << "New bins this round: " << (newBins - oldNewBins) << endl;
     }
+
+end:
+
+    //Update stats
+    runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
+    runStats.extractTime += cpuTime() - myTime;
+
+    //Display stats
     if (control->conf.verbosity >= 1) {
         cout
         << "c Extracted XOR info."
-        << " Units: " << newUnits << " Bins: " << newBins
+        << " Units: " << runStats.newUnits
+        << " Bins: " << runStats.newBins
+        << " 0-depth-assigns: " << runStats.zeroDepthAssigns
         << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
         << endl;
     }
 
-    //update global stats
-    totalTime += cpuTime() - myTime;
-    totalFixed += newUnits;
-    totalReplaced += newBins;
-
-
-    return true;
+    return control->ok;
 }
 
-bool XorFinder::extractInfoFromBlock(const vector<Var>& block, const size_t blockNum)
-{
+bool XorFinder::extractInfoFromBlock(
+    const vector<Var>& block
+    , const size_t blockNum
+) {
     assert(control->okay());
 
     //Outer-inner var mapping is needed because not all vars are in the matrix
@@ -234,7 +251,7 @@ bool XorFinder::extractInfoFromBlock(const vector<Var>& block, const size_t bloc
                 break;
 
             case 1: {
-                newUnits++;
+                runStats.newUnits++;
                 control->addXorClauseInt(lits, rhs);
                 if (!control->okay())
                     goto end;
@@ -242,7 +259,7 @@ bool XorFinder::extractInfoFromBlock(const vector<Var>& block, const size_t bloc
             }
 
             case 2: {
-                newBins++;
+                runStats.newBins++;
                 control->addXorClauseInt(lits, rhs);
                 if (!control->okay())
                     goto end;
@@ -426,6 +443,8 @@ void XorFinder::findXor(ClauseIndex c)
         //If XOR clause is new, add it
         if (!found) {
             xors.push_back(thisXor);
+            runStats.foundXors++;
+            runStats.sumSizeXors += cl.size();
             uint32_t thisXorIndex = xors.size()-1;
             for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
                 xorOcc[l->var()].push_back(thisXorIndex);

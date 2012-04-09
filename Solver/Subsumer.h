@@ -247,6 +247,7 @@ public:
     const vector<BlockedClause>& getBlockedClauses() const;
     const GateFinder* getGateFinder() const;
     const Stats& getStats() const;
+    const XorFinder* getXorFinder() const;
     void checkElimedUnassignedAndStats() const;
 
 private:
@@ -590,6 +591,11 @@ template<class T> void Subsumer::findSubsumed0(const uint32_t index, const T& ps
 inline const Subsumer::Stats& Subsumer::getStats() const
 {
     return globalStats;
+}
+
+inline const XorFinder* Subsumer::getXorFinder() const
+{
+    return xorFinder;
 }
 
 #endif //SIMPLIFIER_H

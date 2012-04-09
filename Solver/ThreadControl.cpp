@@ -34,6 +34,7 @@
 #include <omp.h>
 #include <fstream>
 #include <cmath>
+#include "XorFinder.h"
 using std::cout;
 using std::endl;
 
@@ -1402,6 +1403,19 @@ void ThreadControl::printFullStats()
     printStatsLine("c gatefinder cl-rem"
         , subsumer->getGateFinder()->getStats().andGateUseful);
 
+    //XOR stats
+    printStatsLine("c XOR time"
+        , subsumer->getXorFinder()->getStats().totalTime());
+    printStatsLine("c XOR avg num"
+        , (double)subsumer->getXorFinder()->getStats().foundXors/(double)subsumer->getXorFinder()->getNumCalls()
+        , (double)subsumer->getXorFinder()->getStats().sumSizeXors/(double)subsumer->getXorFinder()->getStats().foundXors
+        , "avg size");
+    printStatsLine("c XOR unit found"
+        , subsumer->getXorFinder()->getStats().newUnits);
+    printStatsLine("c XOR 0-depth assings"
+        , subsumer->getXorFinder()->getStats().zeroDepthAssigns);
+    printStatsLine("c XOR bin found"
+        , subsumer->getXorFinder()->getStats().newBins);
 
     //VarReplacer stats
     printStatsLine("c EqLit find time"
