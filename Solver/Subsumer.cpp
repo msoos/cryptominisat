@@ -64,16 +64,6 @@ using std::endl;
 
 Subsumer::Subsumer(ThreadControl* _control):
     control(_control)
-    , totalTime(0.0)
-    , totalBlocked(0)
-    , totalAsymmSubs(0)
-    , totalSubsumed(0)
-    , totalLitsRem(0)
-    , totalSubsBinWithBin(0)
-    , totalLongLearntClausesRemovedThroughElim(0)
-    , totalBinLearntClausesRemovedThroughElim(0)
-    , totalZeroDepthAssings(0)
-    , numElimed(0)
     , numCalls(0)
 {
     xorFinder = new XorFinder(this, control);
@@ -218,7 +208,7 @@ template<class T> Subsumer::Sub0Ret Subsumer::subsume0(const uint32_t index, con
         if (!tmp->learnt())
             ret.subsumedNonLearnt = true;
 
-        clauses_subsumed++;
+        runStats.clauses_subsumed++;
         unlinkClause(*it);
     }
 
@@ -246,7 +236,7 @@ void Subsumer::subsume1(ClauseIndex c, Clause& ps)
         ClauseIndex c = subs[j];
         Clause& cl = *clauses[c.index];
         if (subsLits[j] == lit_Undef) {
-            clauses_subsumed++;
+            runStats.clauses_subsumed++;
 
             //If subsumes a non-learnt, and is learnt, make it non-learnt
             if (ps.learnt()
@@ -260,7 +250,6 @@ void Subsumer::subsume1(ClauseIndex c, Clause& ps)
 
             unlinkClause(c);
         } else {
-            clauses_strengthened++;
             strengthen(c, subsLits[j]);
             if (!control->ok)
                 return;
@@ -429,6 +418,7 @@ void Subsumer::strengthen(ClauseIndex& c, const Lit toRemoveLit)
 
     Clause& cl = *clauses[c.index];
     cl.strengthen(toRemoveLit);
+    runStats.litsRemStrengthen++;
     touchedVars.touch(toRemoveLit, cl.learnt());
     occur[toRemoveLit.toInt()].remove(c);
 
@@ -822,7 +812,7 @@ void Subsumer::removeWrongBinsAndAllTris()
     assert(numRemovedHalfLearnt % 2 == 0);
     control->learntsLits -= numRemovedHalfLearnt;
     control->numBinsLearnt -= numRemovedHalfLearnt/2;
-    binLearntClausesRemovedThroughElim += numRemovedHalfLearnt/2;
+    runStats.binLearntClRemThroughElim += numRemovedHalfLearnt/2;
 }
 
 /**
@@ -844,7 +834,7 @@ void Subsumer::clearAll()
     clauseData.clear();
     cl_touched.clear();
     cl_touched2.clear();
-    numLearntBinVarRemAdded = 0;
+    runStats.clear();
 }
 
 bool Subsumer::eliminateVars()
@@ -873,7 +863,6 @@ bool Subsumer::eliminateVars()
             numMaxElimVars--;
         }
     }
-    numVarsElimed += vars_elimed;
 
     #ifdef BIT_MORE_VERBOSITY
     cout << "c  #try to eliminate: " << numtry << endl;
@@ -890,7 +879,11 @@ void Subsumer::subsumeBinsWithBins()
     toDecrease = &numMaxSubsume0;
 
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator it = control->watches.begin(), end = control->watches.end(); it != end; it++, wsLit++) {
+    for (vector<vec<Watched> >::iterator
+        it = control->watches.begin(), end = control->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
         vec<Watched>& ws = *it;
         Lit lit = ~Lit::toLit(wsLit);
         if (ws.size() < 2) continue;
@@ -934,20 +927,19 @@ void Subsumer::subsumeBinsWithBins()
     }
 
     if (control->conf.verbosity  >= 1) {
-        cout << "c bin-w-bin subsume "
-        << "rem " << std::setw(10) << (numBinsBefore - control->numBinsLearnt - control->numBinsNonLearnt)
-        << " time: " << std::fixed << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime)
+        cout
+        << "c bin-w-bin subsume "
+        << "rem " << std::setw(10)
+        << (numBinsBefore - control->numBinsLearnt - control->numBinsNonLearnt)
+
+        << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
+        << (cpuTime() - myTime)
         << " s" << endl;
     }
 
     //Update global stats
-    totalTime += cpuTime() - myTime;
-    totalSubsBinWithBin += (numBinsBefore - control->numBinsLearnt - control->numBinsNonLearnt);
-
-
-    //Reset stats
-    clauses_subsumed = 0;
-    clauses_strengthened = 0;
+    runStats.totalTime += cpuTime() - myTime;
+    runStats.subsBinWithBin += (numBinsBefore - control->numBinsLearnt - control->numBinsNonLearnt);
 }
 
 bool Subsumer::propagate()
@@ -1053,12 +1045,6 @@ bool Subsumer::simplifyBySubsumption()
     double myTime = cpuTime();
     clearAll();
     numCalls++;
-    clauses_subsumed = 0;
-    clauses_strengthened = 0;
-    numVarsElimed = 0;
-    clauses_elimed = 0;
-    binLearntClausesRemovedThroughElim = 0;
-    longLearntClausesRemovedThroughElim = 0;
     const size_t origTrailSize = control->trail.size();
     const size_t origNumFreeVars = control->getNumFreeVars();
 
@@ -1093,7 +1079,7 @@ bool Subsumer::simplifyBySubsumption()
     if (control->conf.verbosity >= 1) {
         cout << "c subsumer startup&link-in time: " << linkInTime << endl;
     }
-    totalTime += cpuTime() - myTime;
+    runStats.totalTime += cpuTime() - myTime;
 
     //Do stuff with binaries
     subsumeBinsWithBins();
@@ -1175,37 +1161,37 @@ bool Subsumer::simplifyBySubsumption()
     if (!reattacher.reattachNonBins())
         return false;
 
+
+    //Update global stats
+    runStats.zeroDepthAssings = control->trail.size() - origTrailSize;
+    runStats.totalTime += cpuTime() - myTime;
+    globalStats += runStats;
+
     //Print stats
     if (control->conf.verbosity  >= 1) {
         cout << "c"
-        << " lits-rem: " << clauses_strengthened
-        << " cl-subs: " << clauses_subsumed
-        << " v-elim: " << numVarsElimed
+        << " lits-rem-str: " << runStats.litsRemStrengthen
+        << " cl-subs: " << runStats.clauses_subsumed
+        << " v-elim: " << runStats.numVarsElimed
         << " / " << origNumMaxElimVars
         << " / " << origNumFreeVars
         << " time: " << std::setprecision(2) << (cpuTime() - myTime) << " s"
         << endl
         << "c"
-        << " cl-elim: " << clauses_elimed
-        << " learnt long-cl-rem-th-elim: " << longLearntClausesRemovedThroughElim
-        << " learnt bin-cl-rem-th-elim: " << binLearntClausesRemovedThroughElim
-        << " v-fix: " << std::setw(4) <<control->trail.size() - origTrailSize
+        << " cl-elim: " << runStats.clauses_elimed
+        << " learnt long-cl-rem-th-elim: " << runStats.longLearntClRemThroughElim
+        << " learnt bin-cl-rem-th-elim: " << runStats.binLearntClRemThroughElim
+        << " v-fix: " << std::setw(4) << runStats.zeroDepthAssings
         //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
         << endl;
 
-        cout << "c learnt bin added due to v-elim: " << numLearntBinVarRemAdded << endl;
+        cout
+        << "c learnt bin added due to v-elim: " << runStats.numLearntBinVarRemAdded
+        << endl;
 
         if (control->conf.verboseSubsumer)
             gateFinder->printGateStats();
     }
-
-    //Update global stats
-    totalTime += cpuTime() - myTime;
-    totalLitsRem += clauses_strengthened;
-    totalSubsumed += clauses_subsumed;
-    totalBinLearntClausesRemovedThroughElim += binLearntClausesRemovedThroughElim;
-    totalLongLearntClausesRemovedThroughElim += longLearntClausesRemovedThroughElim;
-    totalZeroDepthAssings += (control->trail.size() - origTrailSize);
 
     control->testAllClauseAttach();
     control->checkNoWrongAttach();
@@ -1362,7 +1348,7 @@ void Subsumer::blockClauses()
     const double myTime = cpuTime();
     uint32_t blocked = 0;
     size_t wenThrough = 0;
-    uint32_t index = clauses.size()-1;
+    size_t index = clauses.size()-1;
     toDecrease = &numMaxBlocked;
     for (vector<Clause*>::reverse_iterator
         it = clauses.rbegin()
@@ -1425,8 +1411,8 @@ void Subsumer::blockClauses()
         << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
         << endl;
     }
-    totalBlocked += blocked;
-    totalTime += cpuTime() - myTime;
+    runStats.blocked += blocked;
+    runStats.totalTime += cpuTime() - myTime;
 }
 
 void Subsumer::asymmTE()
@@ -1564,9 +1550,9 @@ void Subsumer::asymmTE()
         << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
         << endl;
     }
-    totalAsymmSubs += asymmSubsumed;
-    totalBlocked += blocked;
-    totalTime += cpuTime() - myTime;
+    runStats.asymmSubs += asymmSubsumed;
+    runStats.blocked += blocked;
+    runStats.totalTime += cpuTime() - myTime;
 }
 
 /**
@@ -1651,7 +1637,7 @@ void Subsumer::removeAssignedVarsFromEliminated()
                 var_elimed[var] = false;
                 control->varData[var].elimed = ELIMED_NONE;
                 control->setDecisionVar(var);
-                numElimed--;
+                runStats.numVarsElimed--;
             }
         } else {
             *j++ = *i;
@@ -1751,9 +1737,9 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
 
             //Update stats
             if (clauses[c.clsimp.index]->learnt()) {
-                longLearntClausesRemovedThroughElim++;
+                runStats.longLearntClRemThroughElim++;
             } else {
-                clauses_elimed++;
+                runStats.clauses_elimed++;
             }
 
             unlinkClause(c.clsimp, lit);
@@ -1771,11 +1757,11 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
             //Update stats
             if (!c.learnt) {
                 control->clausesLits -= 2;
-                clauses_elimed++;
+                runStats.clauses_elimed++;
                 control->numBinsNonLearnt--;
             } else {
                 control->learntsLits -= 2;
-                binLearntClausesRemovedThroughElim++;
+                runStats.binLearntClRemThroughElim++;
                 control->numBinsLearnt--;
             }
 
@@ -1785,7 +1771,7 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
                 lits.push_back(c.lit1);
                 lits.push_back(c.lit2);
                 blockedClauses.push_back(BlockedClause(lit, lits));
-                clauses_elimed++;
+                runStats.clauses_elimed++;
             }
 
             //Touch literals
@@ -2029,7 +2015,7 @@ bool Subsumer::maybeEliminate(const Var var)
     assert(occur[lit.toInt()].size() == 0 &&  occur[(~lit).toInt()].size() == 0);
     var_elimed[var] = true;
     control->varData[var].elimed = ELIMED_VARELIM;
-    numElimed++;
+    runStats.numVarsElimed++;
     control->unsetDecisionVar(var);
     return true;
 }
@@ -2080,7 +2066,7 @@ void Subsumer::addLearntBinaries(const Var var)
             tmp[0] = lit1;
             tmp[1] = lit2;
             Clause* tmpOK = control->addClauseInt(tmp, true);
-            numLearntBinVarRemAdded++;
+            runStats.numLearntBinVarRemAdded++;
             release_assert(tmpOK == NULL);
             release_assert(control->ok);
         }
@@ -2369,49 +2355,9 @@ bool Subsumer::checkElimedUnassigned() const
             if (control->assigns[i] != l_Undef) return false;
         }
     }
-    assert(numElimed == checkNumElimed);
+    assert(globalStats.numVarsElimed == checkNumElimed);
 
     return true;
-}
-
-size_t Subsumer::getTotalBlocked() const
-{
-    return totalBlocked;
-}
-
-size_t Subsumer::getTotalAsymmSubs() const
-{
-    return totalAsymmSubs;
-}
-
-size_t Subsumer::getTotalSubsumed() const
-{
-    return totalSubsumed;
-}
-
-size_t Subsumer::getTotalLitsRem() const
-{
-    return totalLitsRem;
-}
-
-size_t Subsumer::getTotalSubsBinWithBin() const
-{
-    return totalSubsBinWithBin;
-}
-
-size_t Subsumer::getTotalLongLearntClausesRemovedThroughElim() const
-{
-    return totalLongLearntClausesRemovedThroughElim;
-}
-
-size_t Subsumer::getTotalBinLearntClausesRemovedThroughElim() const
-{
-    return totalBinLearntClausesRemovedThroughElim;
-}
-
-size_t Subsumer::getTotalZeroDepthAssigns() const
-{
-    return totalZeroDepthAssings;
 }
 
 const GateFinder* Subsumer::getGateFinder() const

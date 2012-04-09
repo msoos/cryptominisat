@@ -1373,23 +1373,23 @@ void ThreadControl::printFullStats()
 
     //Subsumer stats
     printStatsLine("c SatELite time"
-                    , getTotalTimeSubsumer()
-                    , getTotalTimeSubsumer()/cpu_time*100.0
+                    , subsumer->getStats().totalTime
+                    , subsumer->getStats().totalTime/cpu_time*100.0
                     , "% time");
     printStatsLine("c SatELite v-elimed"
-                    , getNumElimSubsume()
-                    , (double)getNumElimSubsume()/(double)nVars()*100.0
+                    , subsumer->getStats().numVarsElimed
+                    , (double)subsumer->getStats().numVarsElimed/(double)nVars()*100.0
                     , "% vars");
     printStatsLine("c SatELite 0-detph assigns"
-                    , subsumer->getTotalZeroDepthAssigns()
-                    , (double)subsumer->getTotalZeroDepthAssigns()/(double)nVars()*100.0
+                    , subsumer->getStats().zeroDepthAssings
+                    , (double)subsumer->getStats().zeroDepthAssings/(double)nVars()*100.0
                     , "% vars");
-    printStatsLine("c SatELite lit-rem", subsumer->getTotalLitsRem());
-    printStatsLine("c SatELite cl-subs", subsumer->getTotalSubsumed());
-    printStatsLine("c SatELite blocked", subsumer->getTotalBlocked());
-    printStatsLine("c SatELite asymmSub", subsumer->getTotalAsymmSubs());
-    printStatsLine("c SatELite elim-bin-lt-cl", subsumer->getTotalBinLearntClausesRemovedThroughElim());
-    printStatsLine("c SatELite elim-long-lt-cl", subsumer->getTotalLongLearntClausesRemovedThroughElim());
+    printStatsLine("c SatELite lit-rem", subsumer->getStats().litsRemStrengthen);
+    printStatsLine("c SatELite cl-subs", subsumer->getStats().clauses_subsumed);
+    printStatsLine("c SatELite blocked", subsumer->getStats().blocked);
+    printStatsLine("c SatELite asymmSub", subsumer->getStats().asymmSubs);
+    printStatsLine("c SatELite elim-bin-lt-cl", subsumer->getStats().binLearntClRemThroughElim);
+    printStatsLine("c SatELite elim-long-lt-cl", subsumer->getStats().longLearntClRemThroughElim);
 
     //GateFinder stats
     printStatsLine("c gatefinder time"
@@ -1799,11 +1799,6 @@ void ThreadControl::checkLiteralCount() const
     }
 }
 
-uint32_t ThreadControl::getNumElimSubsume() const
-{
-    return subsumer->getNumElimed();
-}
-
 uint32_t ThreadControl::getNumXorTrees() const
 {
     return varReplacer->getNumTrees();
@@ -1812,11 +1807,6 @@ uint32_t ThreadControl::getNumXorTrees() const
 uint32_t ThreadControl::getNumXorTreesCrownSize() const
 {
     return varReplacer->getNumReplacedVars();
-}
-
-double ThreadControl::getTotalTimeSubsumer() const
-{
-    return subsumer->getTotalTime();
 }
 
 double ThreadControl::getTotalTimeFailedLitSearcher() const
@@ -1954,7 +1944,7 @@ uint32_t ThreadControl::getNumFreeVars() const
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
     freeVars -= trail.size();
-    freeVars -= subsumer->getNumElimed();
+    freeVars -= subsumer->getStats().numVarsElimed;
     freeVars -= varReplacer->getNumReplacedVars();
 
     return freeVars;
@@ -1965,7 +1955,7 @@ uint32_t ThreadControl::getNumFreeVarsAdv(size_t trail_size_of_thread) const
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
     freeVars -= trail_size_of_thread;
-    freeVars -= subsumer->getNumElimed();
+    freeVars -= subsumer->getStats().numVarsElimed;
     freeVars -= varReplacer->getNumReplacedVars();
 
     return freeVars;

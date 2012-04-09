@@ -130,21 +130,76 @@ public:
     bool unEliminate(const Var var, ThreadControl* tcontrol);
 
     //Get-functions
+    struct Stats
+    {
+        Stats() :
+            totalTime(0)
+            , blocked(0)
+            , asymmSubs(0)
+            , subsumed(0)
+            , litsRemStrengthen(0)
+            , subsBinWithBin(0)
+            , longLearntClRemThroughElim(0)
+            , binLearntClRemThroughElim(0)
+            , numLearntBinVarRemAdded(0)
+            , clauses_subsumed(0)
+            , clauses_elimed(0)
+            , numVarsElimed(0)
+            , zeroDepthAssings(0)
+        {
+        }
+
+        void clear()
+        {
+            Stats stats;
+            *this = stats;
+        }
+
+        Stats& operator+=(const Stats& other)
+        {
+            totalTime += other.totalTime;
+
+            blocked += other.blocked;
+            asymmSubs += other.asymmSubs;
+            subsumed += other.subsumed;
+            litsRemStrengthen += other.litsRemStrengthen;
+            subsBinWithBin += other.subsBinWithBin;
+            longLearntClRemThroughElim += other.longLearntClRemThroughElim;
+            binLearntClRemThroughElim += other.binLearntClRemThroughElim;
+
+            numLearntBinVarRemAdded += other.numLearntBinVarRemAdded;
+            clauses_subsumed += other.clauses_subsumed;
+            clauses_elimed += other.clauses_elimed;
+            numVarsElimed += other.numVarsElimed;
+            zeroDepthAssings += other.zeroDepthAssings;
+
+            return *this;
+        }
+
+        double totalTime;
+
+        uint64_t blocked;
+        uint64_t asymmSubs;
+        uint64_t subsumed;
+        uint64_t litsRemStrengthen;
+        uint64_t subsBinWithBin;
+        uint64_t longLearntClRemThroughElim;
+        uint64_t binLearntClRemThroughElim;
+
+
+        uint64_t numLearntBinVarRemAdded;
+        uint64_t clauses_subsumed;     ///<Number of clauses subsumed in this run
+        uint64_t clauses_elimed;
+        uint64_t numVarsElimed;        ///<Number of variables elimed in this run
+        uint64_t zeroDepthAssings;
+    };
+
     const vector<char>& getVarElimed() const;
-    uint32_t getNumElimed() const;
     bool checkElimedUnassigned() const;
-    double getTotalTime() const;
     uint32_t getNumERVars() const;
     const vector<BlockedClause>& getBlockedClauses() const;
-    size_t getTotalBlocked() const;
-    size_t getTotalAsymmSubs() const;
-    size_t getTotalSubsumed() const;
-    size_t getTotalLitsRem() const;
-    size_t getTotalSubsBinWithBin() const;
-    size_t getTotalLongLearntClausesRemovedThroughElim() const;
-    size_t getTotalBinLearntClausesRemovedThroughElim() const;
-    size_t getTotalZeroDepthAssigns() const;
     const GateFinder* getGateFinder() const;
+    const Stats& getStats() const;
 
 private:
 
@@ -167,16 +222,6 @@ private:
     //Persistent data
     ThreadControl*  control;              ///<The solver this simplifier is connected to
     vector<char>    var_elimed;           ///<Contains TRUE if var has been eliminated
-    double          totalTime;            ///<Total time spent in this class
-    size_t          totalBlocked;
-    size_t          totalAsymmSubs;
-    size_t          totalSubsumed;
-    size_t          totalLitsRem;
-    size_t          totalSubsBinWithBin;
-    size_t          totalLongLearntClausesRemovedThroughElim;
-    size_t          totalBinLearntClausesRemovedThroughElim;
-    size_t          totalZeroDepthAssings;
-    uint32_t        numElimed;            ///<Total number of variables eliminated
 
     //Temporaries
     vector<char>    seen;        ///<Used in various places to help perform algorithms
@@ -186,7 +231,6 @@ private:
 
     //Limits
     int64_t  addedClauseLits;
-    int32_t  numVarsElimed;               ///<Number of variables elimed in this run
     int64_t  numMaxSubsume1;              ///<Max. number self-subsuming resolution tries to do this run
     int64_t  numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
     int64_t  numMaxElim;                  ///<Max. number of variable elimination tries to do this run
@@ -322,14 +366,14 @@ private:
     bool verifyIntegrity();
     void checkForElimedVars();
 
-    //Stats
-    uint32_t numLearntBinVarRemAdded;
-    uint32_t clauses_subsumed; ///<Number of clauses subsumed in this run
-    uint32_t clauses_strengthened; ///<Number of literals removed by strengthening
-    uint32_t clauses_elimed;
-    uint32_t longLearntClausesRemovedThroughElim;
-    uint32_t binLearntClausesRemovedThroughElim;
-    uint32_t numCalls;         ///<Number of times simplifyBySubsumption() has been called
+    ///Number of times simplifyBySubsumption() has been called
+    size_t numCalls;
+
+    ///Stats from this run
+    Stats runStats;
+
+    ///Stats globally
+    Stats globalStats;
 };
 
 /**
@@ -448,16 +492,6 @@ inline const vector<char>& Subsumer::getVarElimed() const
     return var_elimed;
 }
 
-inline uint32_t Subsumer::getNumElimed() const
-{
-    return numElimed;
-}
-
-inline double Subsumer::getTotalTime() const
-{
-    return totalTime;
-}
-
 /**
 @brief Finds clauses that are backward-subsumed by given clause
 
@@ -503,6 +537,11 @@ template<class T> void Subsumer::findSubsumed0(const uint32_t index, const T& ps
             }
         }
     }
+}
+
+inline const Subsumer::Stats& Subsumer::getStats() const
+{
+    return globalStats;
 }
 
 #endif //SIMPLIFIER_H
