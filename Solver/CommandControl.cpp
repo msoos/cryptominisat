@@ -1363,10 +1363,17 @@ void CommandControl::printAgilityStats()
         cout
         << ", confl: " << std::setw(6) << stats.numConflicts
         << ", rest: " << std::setw(6) << stats.numRestarts
-        << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2) << agility.getAgility()
-        << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2) << conf.agilityLimit
-        << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvg()
-        << ", agilityHistLong: " << std::setw(6) << std::fixed << std::setprecision(3) << agilityHist.getAvgLong()
+        << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2)
+        << agility.getAgility()
+
+        << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2)
+        << conf.agilityLimit
+
+        << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3)
+        << agilityHist.getAvg()
+
+        << ", agilityHistLong: " << std::setw(6) << std::fixed << std::setprecision(3)
+        << agilityHist.getAvgLong()
         << endl;
     }
 }
