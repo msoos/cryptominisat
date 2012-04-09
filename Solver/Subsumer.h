@@ -146,13 +146,16 @@ public:
             //Each algo
             , subsBinWithBin(0)
             , blocked(0)
+            , blockedSumLits(0)
             , asymmSubs(0)
             , clauses_subsumed(0)
             , litsRemStrengthen(0)
 
             //Elimination
             , numVarsElimed(0)
-            , clauses_elimed(0)
+            , clauses_elimed_long(0)
+            , clauses_elimed_bin(0)
+            , clauses_elimed_sumsize(0)
             , longLearntClRemThroughElim(0)
             , binLearntClRemThroughElim(0)
             , numLearntBinVarRemAdded(0)
@@ -189,13 +192,16 @@ public:
             //Each algo
             subsBinWithBin += other.subsBinWithBin;
             blocked += other.blocked;
+            blockedSumLits += other.blockedSumLits;
             asymmSubs += other.asymmSubs;
             clauses_subsumed += other.clauses_subsumed;
             litsRemStrengthen += other.litsRemStrengthen;
 
             //Elim
             numVarsElimed += other.numVarsElimed;
-            clauses_elimed += other.clauses_elimed;
+            clauses_elimed_long += other.clauses_elimed_bin;
+            clauses_elimed_bin += other.clauses_elimed_long;
+            clauses_elimed_sumsize += other.clauses_elimed_sumsize;
             longLearntClRemThroughElim += other.longLearntClRemThroughElim;
             binLearntClRemThroughElim += other.binLearntClRemThroughElim;
             numLearntBinVarRemAdded += other.numLearntBinVarRemAdded;
@@ -218,13 +224,16 @@ public:
         //Each algorithm
         uint64_t subsBinWithBin;
         uint64_t blocked;
+        uint64_t blockedSumLits;
         uint64_t asymmSubs;
         uint64_t clauses_subsumed;     ///<Number of clauses subsumed in this run
         uint64_t litsRemStrengthen;
 
         //Stats for var-elim
         uint64_t numVarsElimed;
-        uint64_t clauses_elimed;
+        uint64_t clauses_elimed_long;
+        uint64_t clauses_elimed_bin;
+        uint64_t clauses_elimed_sumsize;
         uint64_t longLearntClRemThroughElim;
         uint64_t binLearntClRemThroughElim;
         uint64_t numLearntBinVarRemAdded;

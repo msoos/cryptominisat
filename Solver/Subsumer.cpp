@@ -1187,7 +1187,14 @@ end:
         << " time: " << std::setprecision(2) << (cpuTime() - myTime) << " s"
         << endl
         << "c"
-        << " cl-elim: " << runStats.clauses_elimed
+        << " cl-elim-bin: " << runStats.clauses_elimed_bin
+        << " cl-elim-long: " << runStats.clauses_elimed_long
+        << " cl-elim-avg-s: "
+            << ((double)runStats.clauses_elimed_sumsize
+                /(double)(runStats.clauses_elimed_bin + runStats.clauses_elimed_long))
+        << endl;
+
+        cout << "c"
         << " learnt long-cl-rem-th-elim: " << runStats.longLearntClRemThroughElim
         << " learnt bin-cl-rem-th-elim: " << runStats.binLearntClRemThroughElim
         << " v-fix: " << std::setw(4) << runStats.zeroDepthAssings
@@ -1358,6 +1365,7 @@ void Subsumer::blockClauses()
 {
     const double myTime = cpuTime();
     uint32_t blocked = 0;
+    size_t blockedLits = 0;
     size_t wenThrough = 0;
     size_t index = clauses.size()-1;
     toDecrease = &numMaxBlocked;
@@ -1400,6 +1408,7 @@ void Subsumer::blockClauses()
                 blockedClauses.push_back(BlockedClause(*l, remCl));
 
                 blocked++;
+                blockedLits += cl.size();
                 toRemove = true;
                 break;
             }
@@ -1423,6 +1432,7 @@ void Subsumer::blockClauses()
         << endl;
     }
     runStats.blocked += blocked;
+    runStats.blockedSumLits += blockedLits;
     runStats.blockTime += cpuTime() - myTime;
 }
 
@@ -1430,6 +1440,7 @@ void Subsumer::asymmTE()
 {
     const double myTime = cpuTime();
     uint32_t blocked = 0;
+    size_t blockedLits = 0;
     uint32_t asymmSubsumed = 0;
     uint32_t removed = 0;
 
@@ -1510,6 +1521,7 @@ void Subsumer::asymmTE()
                     blockedClauses.push_back(BlockedClause(*l, remCl));
 
                     blocked++;
+                    blockedLits += cl.size();
                     toRemove = true;
                     toDecrease = &numMaxAsymm;
                     goto next;
@@ -1563,6 +1575,7 @@ void Subsumer::asymmTE()
     }
     runStats.asymmSubs += asymmSubsumed;
     runStats.blocked += blocked;
+    runStats.blockedSumLits += blockedLits;
     runStats.asymmTime += cpuTime() - myTime;
 }
 
@@ -1750,7 +1763,8 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
             if (clauses[c.clsimp.index]->learnt()) {
                 runStats.longLearntClRemThroughElim++;
             } else {
-                runStats.clauses_elimed++;
+                runStats.clauses_elimed_long++;
+                runStats.clauses_elimed_sumsize += clauses[c.clsimp.index]->size();
             }
 
             unlinkClause(c.clsimp, lit);
@@ -1768,7 +1782,8 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
             //Update stats
             if (!c.learnt) {
                 control->clausesLits -= 2;
-                runStats.clauses_elimed++;
+                runStats.clauses_elimed_bin++;
+                runStats.clauses_elimed_sumsize += 2;
                 control->numBinsNonLearnt--;
             } else {
                 control->learntsLits -= 2;
@@ -1782,7 +1797,6 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
                 lits.push_back(c.lit1);
                 lits.push_back(c.lit2);
                 blockedClauses.push_back(BlockedClause(lit, lits));
-                runStats.clauses_elimed++;
             }
 
             //Touch literals
