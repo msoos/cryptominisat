@@ -45,6 +45,7 @@ GateFinder::GateFinder(Subsumer *_subsumer, ThreadControl *_control) :
 
 bool GateFinder::doAll()
 {
+    runStats.clear();
     findOrGates();
     if (!doAllOptimisationWithGates())
         goto end;
