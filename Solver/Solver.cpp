@@ -79,8 +79,12 @@ Var Solver::newVar(const bool)
     return v;
 }
 
-void Solver::attachBinClause(const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst)
-{
+void Solver::attachBinClause(
+    const Lit lit1
+    , const Lit lit2
+    , const bool learnt
+    , const bool checkUnassignedFirst
+) {
     #ifdef DEBUG_ATTACH
     assert(lit1.var() != lit2.var());
     if (checkUnassignedFirst) {
