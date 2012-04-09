@@ -134,7 +134,11 @@ void SCCFinder::tarjan(const uint32_t vertex)
                 const bool xorEqualsFalse = Lit::toLit(tmp[0]).sign()
                                             ^ Lit::toLit(tmp[i]).sign()
                                             ^ true;
-                if (control->value(lits[0]) == l_Undef && control->value(lits[1]) == l_Undef) {
+
+                //Both are UNDEF, so this is a proper binary XOR
+                if (control->value(lits[0]) == l_Undef
+                    && control->value(lits[1]) == l_Undef
+                ) {
                     control->varReplacer->replace(lits[0], lits[1], xorEqualsFalse);
                 }
             }

@@ -102,7 +102,10 @@ void CommandControl::cancelUntil(uint32_t level)
     }
 
     #ifdef VERBOSE_DEBUG
-    cout << "Canceling finished. (now at level: " << decisionLevel() << " sublevel: " << trail.size()-1 << ")" << endl;
+    cout
+    << "Canceling finished. Now at level: " << decisionLevel()
+    << " sublevel: " << trail.size()-1
+    << endl;
     #endif
 }
 
