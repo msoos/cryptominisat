@@ -133,20 +133,39 @@ public:
     struct Stats
     {
         Stats() :
-            totalTime(0)
+            //Time
+            linkInTime(0)
+            , blockTime(0)
+            , asymmTime(0)
+            , subsBinWithBinTime(0)
+            , subsumeTime(0)
+            , strengthenTime(0)
+            , varElimTime(0)
+            , finalCleanupTime(0)
+
+            //Each algo
+            , subsBinWithBin(0)
             , blocked(0)
             , asymmSubs(0)
-            , subsumed(0)
+            , clauses_subsumed(0)
             , litsRemStrengthen(0)
-            , subsBinWithBin(0)
+
+            //Elimination
+            , numVarsElimed(0)
+            , clauses_elimed(0)
             , longLearntClRemThroughElim(0)
             , binLearntClRemThroughElim(0)
             , numLearntBinVarRemAdded(0)
-            , clauses_subsumed(0)
-            , clauses_elimed(0)
-            , numVarsElimed(0)
+
             , zeroDepthAssings(0)
         {
+        }
+
+        double totalTime() const
+        {
+            return linkInTime + blockTime + asymmTime
+                + subsBinWithBinTime + subsumeTime + strengthenTime
+                + varElimTime + finalCleanupTime;
         }
 
         void clear()
@@ -157,40 +176,60 @@ public:
 
         Stats& operator+=(const Stats& other)
         {
-            totalTime += other.totalTime;
+            //Time
+            linkInTime += other.linkInTime;
+            blockTime += other.blockTime;
+            asymmTime += other.asymmTime;
+            subsBinWithBinTime += other.subsBinWithBinTime;
+            subsumeTime += other.subsumeTime;
+            strengthenTime += other.strengthenTime;
+            varElimTime += other.varElimTime;
+            finalCleanupTime += other.finalCleanupTime;
 
+            //Each algo
+            subsBinWithBin += other.subsBinWithBin;
             blocked += other.blocked;
             asymmSubs += other.asymmSubs;
-            subsumed += other.subsumed;
+            clauses_subsumed += other.clauses_subsumed;
             litsRemStrengthen += other.litsRemStrengthen;
-            subsBinWithBin += other.subsBinWithBin;
+
+            //Elim
+            numVarsElimed += other.numVarsElimed;
+            clauses_elimed += other.clauses_elimed;
             longLearntClRemThroughElim += other.longLearntClRemThroughElim;
             binLearntClRemThroughElim += other.binLearntClRemThroughElim;
-
             numLearntBinVarRemAdded += other.numLearntBinVarRemAdded;
-            clauses_subsumed += other.clauses_subsumed;
-            clauses_elimed += other.clauses_elimed;
-            numVarsElimed += other.numVarsElimed;
+
             zeroDepthAssings += other.zeroDepthAssings;
 
             return *this;
         }
 
-        double totalTime;
+        //Time stats
+        double linkInTime;
+        double blockTime;
+        double asymmTime;
+        double subsBinWithBinTime;
+        double subsumeTime;
+        double strengthenTime;
+        double varElimTime;
+        double finalCleanupTime;
 
+        //Each algorithm
+        uint64_t subsBinWithBin;
         uint64_t blocked;
         uint64_t asymmSubs;
-        uint64_t subsumed;
+        uint64_t clauses_subsumed;     ///<Number of clauses subsumed in this run
         uint64_t litsRemStrengthen;
-        uint64_t subsBinWithBin;
+
+        //Stats for var-elim
+        uint64_t numVarsElimed;
+        uint64_t clauses_elimed;
         uint64_t longLearntClRemThroughElim;
         uint64_t binLearntClRemThroughElim;
-
-
         uint64_t numLearntBinVarRemAdded;
-        uint64_t clauses_subsumed;     ///<Number of clauses subsumed in this run
-        uint64_t clauses_elimed;
-        uint64_t numVarsElimed;        ///<Number of variables elimed in this run
+
+        //General stat
         uint64_t zeroDepthAssings;
     };
 

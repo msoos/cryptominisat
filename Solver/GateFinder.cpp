@@ -36,19 +36,42 @@ using std::cout;
 using std::endl;
 
 GateFinder::GateFinder(Subsumer *_subsumer, ThreadControl *_control) :
-    numERVars(0)
-    , numDotPrinted(0)
-    , totalTime(0)
-    , totalLitsRemoved(0)
-    , totalClausesShortened(0)
-    , totalClausesRemoved(0)
-    , totalVarsAdded(0)
-    , totalVarsReplaced(0)
+    numDotPrinted(0)
     , subsumer(_subsumer)
     , control(_control)
     , seen(_subsumer->seen)
     , seen2(_subsumer->seen2)
 {}
+
+bool GateFinder::doAll()
+{
+    findOrGates();
+    if (!doAllOptimisationWithGates())
+        goto end;
+
+    if (control->conf.doPrintGateDot)
+        printDot();
+
+    //Do ER with randomly piced variables as gates
+    if (control->conf.doER) {
+        const uint32_t addedVars = createNewVars();
+        //Play with the newly found gates
+        if (addedVars > 0 && !doAllOptimisationWithGates())
+            goto end;
+    }
+
+    //TODO enable below
+    /*if (control->conf.doFindXors && control->conf.doMixXorAndGates) {
+        if (!mixXorAndGates())
+            goto end;
+    }*/
+
+
+end:
+    globalStats += runStats;
+
+    return control->ok;
+}
 
 uint32_t GateFinder::createNewVars()
 {
@@ -121,7 +144,7 @@ uint32_t GateFinder::createNewVars()
     newGates.erase(std::unique(newGates.begin(), newGates.end() ), newGates.end() );
 
     //Add the new gates
-    uint32_t addedNum = 0;
+    uint64_t addedVars = 0;
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
         if ((i > 50 && n.numLitRem < 1000 && n.numClRem < 25)
@@ -166,22 +189,22 @@ uint32_t GateFinder::createNewVars()
         ClauseIndex c = subsumer->linkInClause(*cl);
         subsumer->clauseData[c.index].defOfOrGate = true;
 
-        addedNum++;
-        numERVars++;
+        addedVars++;
     }
 
     if (control->conf.verbosity >= 1) {
-        cout << "c Added " << addedNum << " vars "
+        cout
+        << "c Added vars :" << addedVars
         << " tried: " << tries
         << " time: " << (cpuTime() - myTime) << endl;
     }
-    totalTime += cpuTime() - myTime;
-    totalVarsAdded += addedNum;
+    runStats.numERVars += addedVars;
+    runStats.erTime += cpuTime() - myTime;
 
     //cout << "c Added " << addedNum << " vars "
     //<< " time: " << (cpuTime() - myTime) << " numThread: " << control->threadNum << endl;
 
-    return addedNum;
+    return addedVars;
 }
 
 void GateFinder::findOrGates()
@@ -195,32 +218,32 @@ void GateFinder::findOrGates()
 
     findOrGates(true);
 
-    uint32_t learntGatesSize = 0;
-    uint32_t numLearnt = 0;
-    uint32_t nonLearntGatesSize = 0;
-    uint32_t numNonLearnt = 0;
-    for(vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+    for(vector<OrGate>::const_iterator
+        it = orGates.begin(), end = orGates.end()
+        ; it != end
+        ; it++
+    ) {
         if (it->learnt) {
-            learntGatesSize += it->lits.size();
-            numLearnt++;
+            runStats.learntGatesSize += it->lits.size();
+            runStats.numLearnt++;
         } else  {
-            nonLearntGatesSize += it->lits.size();
-            numNonLearnt++;
+            runStats.nonLearntGatesSize += it->lits.size();
+            runStats.numNonLearnt++;
         }
     }
 
     if (control->conf.verbosity >= 1) {
         cout << "c ORs "
-        << " nlearnt:" << std::setw(6) << numNonLearnt
+        << " nlearnt:" << std::setw(6) << runStats.numNonLearnt
         << " avg-s: " << std::fixed << std::setw(4) << std::setprecision(1)
-        << ((double)nonLearntGatesSize/(double)numNonLearnt)
-        << " learnt: " <<std::setw(6) << numLearnt
+        << ((double)runStats.nonLearntGatesSize/(double)runStats.numNonLearnt)
+        << " learnt: " <<std::setw(6) << runStats.numLearnt
         << " avg-s: " << std::fixed << std::setw(4) << std::setprecision(1)
-        << ((double)learntGatesSize/(double)numLearnt)
+        << ((double)runStats.learntGatesSize/(double)runStats.numLearnt)
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
         << endl;
     }
-    totalTime += cpuTime() - myTime;
+    runStats.findGateTime += cpuTime() - myTime;
 }
 
 void GateFinder::printGateStats() const
@@ -243,17 +266,6 @@ void GateFinder::printGateStats() const
     cout << "c gateOcc num: " << gateOccNum
     << " gateOccEq num: " << gateOccEqNum
     << " gates size: " << gateNum << endl;
-}
-
-bool GateFinder::treatOrGates()
-{
-    assert(control->ok);
-    gateLitsRemoved = 0;
-    numOrGateReplaced = 0;
-
-    doAllOptimisationWithGates();
-
-    return control->ok;
 }
 
 void GateFinder::clearIndexes()
@@ -287,12 +299,12 @@ bool GateFinder::extendedResolution()
 
     if (control->conf.verbosity >= 1) {
         cout << "c ORs : " << std::setw(6) << orGates.size()
-        << " cl-sh: " << std::setw(5) << numOrGateReplaced
-        << " l-rem: " << std::setw(6) << gateLitsRemoved
+        << " cl-sh: " << std::setw(5) << runStats.orGateUseful
+        << " l-rem: " << std::setw(6) << runStats.litsRem
         << " b-add: " << std::setw(6) << (control->numBinsNonLearnt + control->numBinsLearnt - oldNumBins)
         << " v-rep: " << std::setw(3) << (control->getNewToReplaceVars() - oldNumVarToReplace)
-        << " cl-rem: " << andGateNumFound
-        << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)
+        << " cl-rem: " << runStats.andGateUseful
+        << " avg s: " << ((double)runStats.clauseSizeRem/(double)runStats.andGateUseful)
         << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime) << endl;
     }
 
@@ -307,36 +319,41 @@ bool GateFinder::doAllOptimisationWithGates()
     if (control->conf.doShortenWithOrGates) {
         //Setup
         double myTime = cpuTime();
-        gateLitsRemoved = 0;
-        numOrGateReplaced = 0;
         numMaxShortenWithGates = 100L*1000L*1000L;
         subsumer->toDecrease = &numMaxShortenWithGates;
 
-        //Do shortening
-        for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+        //Go through each gate, see if we can do something with it
+        for (vector<OrGate>::const_iterator
+            it = orGates.begin(), end = orGates.end()
+            ; it != end
+            ; it++
+        ) {
+            //Gate removed, skip
             if (it->removed)
                 continue;
 
+            //Time is up!
             if (*subsumer->toDecrease < 0) {
                 cout << "c No more time left for shortening with gates" << endl;
                 break;
             }
 
             if (!shortenWithOrGate(*it))
-                return false;
+                break;
         }
 
         //Handle results
         if (control->conf.verbosity >= 1) {
             cout << "c OR-based"
-            << " cl-sh: " << std::setw(5) << numOrGateReplaced
-            << " l-rem: " << std::setw(6) << gateLitsRemoved
+            << " cl-sh: " << std::setw(5) << runStats.orGateUseful
+            << " l-rem: " << std::setw(6) << runStats.litsRem
             << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
             << endl;
         }
-        totalTime += cpuTime() - myTime;
-        totalClausesShortened += numOrGateReplaced;
-        totalLitsRemoved += gateLitsRemoved;
+        runStats.orBasedTime += cpuTime() - myTime;
+
+        if (!control->ok)
+            return false;
     }
 
     //AND gate treatment
@@ -345,37 +362,46 @@ bool GateFinder::doAllOptimisationWithGates()
         numMaxClRemWithGates = 100L*1000L*1000L;
         subsumer->toDecrease = &numMaxClRemWithGates;
         double myTime = cpuTime();
-        andGateNumFound = 0;
-        andGateTotalSize = 0;
 
         //Do clause removal
         uint32_t foundPotential;
         uint64_t numOp = 0;
-        for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++) {
+
+        //Go through each gate, see if we can do something with it
+        for (vector<OrGate>::const_iterator
+            it = orGates.begin(), end = orGates.end()
+            ; it != end
+            ; it++
+        ) {
             const OrGate& gate = *it;
+
+            //Gate has been removed, or is too large
             if (gate.removed || gate.lits.size() >2)
                 continue;
 
+            //Time's up?
             if (*subsumer->toDecrease < 0) {
                 cout << "c No more time left for cl-removal with gates" << endl;
                 break;
             }
 
             if (!treatAndGate(gate, true, foundPotential, numOp))
-                return false;
+                break;
         }
 
 
         //Handle results
         if (control->conf.verbosity >= 1) {
             cout << "c OR-based"
-            << " cl-rem: " << andGateNumFound
-            << " avg s: " << ((double)andGateTotalSize/(double)andGateNumFound)
+            << " cl-rem: " << runStats.andGateUseful
+            << " avg s: " << ((double)runStats.clauseSizeRem/(double)runStats.andGateUseful)
             << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
             << endl;
         }
-        totalTime += cpuTime() - myTime;
-        totalClausesRemoved += andGateNumFound;
+        runStats.andBasedTime += cpuTime() - myTime;
+
+        if (!control->ok)
+            return false;
     }
 
     //EQ gate treatment
@@ -385,8 +411,7 @@ bool GateFinder::doAllOptimisationWithGates()
         uint32_t oldNumVarToReplace = control->getNewToReplaceVars();
 
         //Do equivalence checking
-        if (!findEqOrGates())
-            return false;
+        findEqOrGates();
 
         //Handle results
         if (control->conf.verbosity >= 1) {
@@ -395,11 +420,14 @@ bool GateFinder::doAllOptimisationWithGates()
             << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<  (cpuTime() - myTime)
             << endl;
         }
-        totalTime += cpuTime() - myTime;
-        totalVarsReplaced += control->getNewToReplaceVars() - oldNumVarToReplace;
+        runStats.varReplaceTime += cpuTime() - myTime;
+        runStats.varReplaced += control->getNewToReplaceVars() - oldNumVarToReplace;
+
+        if (!control->ok)
+            return false;
     }
 
-    return true;
+    return control->ok;
 }
 
 bool GateFinder::findEqOrGates()
@@ -431,8 +459,13 @@ bool GateFinder::findEqOrGates()
 
 void GateFinder::findOrGates(const bool learntGatesToo)
 {
-    uint32_t num = 0;
-    for (vector<Clause*>::iterator it = subsumer->clauses.begin(), end = subsumer->clauses.end(); it != end; it++, num++) {
+    //Goi through each clause
+    size_t index = 0;
+    for (vector<Clause*>::iterator
+        it = subsumer->clauses.begin(), end = subsumer->clauses.end()
+        ; it != end
+        ; it++, index++
+    ) {
         //Clause removed
         if (*it == NULL)
             continue;
@@ -475,7 +508,7 @@ void GateFinder::findOrGates(const bool learntGatesToo)
 
         //Try to find a gate with eqlit (~*l)
         for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++)
-            findOrGate(~*l, ClauseIndex(num), learntGatesToo, wasLearnt);
+            findOrGate(~*l, ClauseIndex(index), learntGatesToo, wasLearnt);
     }
 }
 
@@ -581,10 +614,12 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
     vector<ClauseIndex> subs;
     subsumer->findSubsumed0(std::numeric_limits< uint32_t >::max(), gate.lits, calcAbstraction(gate.lits), subs);
 
-    for (uint32_t i = 0; i < subs.size(); i++) {
+    for (size_t i = 0; i < subs.size(); i++) {
         ClauseIndex c = subs[i];
-        //Don't shorten definitions of OR gates -- we could be manipulating the definition of the gate itself
-        //Don't shorten non-learnt clauses with learnt gates --- potential loss if e.g. learnt clause is removed later
+        //Don't shorten definitions of OR gates
+        // -- we could be manipulating the definition of the gate itself
+        //Don't shorten non-learnt clauses with learnt gates
+        // -- potential loss if e.g. learnt clause is removed later
         if (subsumer->clauseData[c.index].defOfOrGate
             || (!subsumer->clauses[c.index]->learnt() && gate.learnt))
             continue;
@@ -595,7 +630,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         cout << "orig Clause: " << *clauses[c.index]<< endl;
         #endif
 
-        numOrGateReplaced++;
+        runStats.orGateUseful++;
 
         //Go through clause, check if RHS (eqLit) is inside the clause
         //If it is, we have two possibilities:
@@ -618,7 +653,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
             }
         }
 
-        //This clause got removed. Moving on to next clause containing all the gates' LHS literals
+        //This clause got removed. Moving on to next clause
         if (removedClause)
             continue;
 
@@ -627,10 +662,14 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         for (uint32_t i = 0; i < cl->size(); i++) {
             const Lit lit = (*cl)[i];
             bool inGate = false;
-            for (vector<Lit>::const_iterator it = gate.lits.begin(), end = gate.lits.end(); it != end; it++) {
+            for (vector<Lit>::const_iterator
+                it = gate.lits.begin(), end = gate.lits.end()
+                ; it != end
+                ; it++
+            ) {
                 if (*it == lit) {
                     inGate = true;
-                    gateLitsRemoved++;
+                    runStats.litsRem++;
                     break;
                 }
             }
@@ -640,7 +679,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         }
         if (!eqLitInside) {
             lits.push_back(gate.eqLit);
-            gateLitsRemoved--;
+            runStats.litsRem--;
         }
 
         //Future clause's stat
@@ -709,8 +748,12 @@ CL_ABST_TYPE GateFinder::calculateSortedOcc(const OrGate& gate, uint16_t& maxSiz
     return abstraction;
 }
 
-bool GateFinder::treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp)
-{
+bool GateFinder::treatAndGate(
+    const OrGate& gate
+    , const bool reallyRemove
+    , uint32_t& foundPotential
+    , uint64_t& numOp
+) {
     assert(gate.lits.size() == 2);
 
     //If there are no clauses that contain the opposite of the literals on the LHS, there is nothing we can do
@@ -805,8 +848,11 @@ bool GateFinder::treatAndGate(const OrGate& gate, const bool reallyRemove, uint3
     return true;
 }
 
-bool GateFinder::treatAndGateClause(const ClauseIndex& other, const OrGate& gate, const Clause& cl)
-{
+bool GateFinder::treatAndGateClause(
+    const ClauseIndex& other
+    , const OrGate& gate
+    , const Clause& cl
+) {
     #ifdef VERBOSE_ORGATE_REPLACE
     cout << "AND gate-based cl rem" << endl;
     cout << "clause 1: " << cl << endl;
@@ -815,8 +861,8 @@ bool GateFinder::treatAndGateClause(const ClauseIndex& other, const OrGate& gate
     #endif
 
     //Update stats
-    andGateNumFound++;
-    andGateTotalSize += cl.size();
+    runStats.andGateUseful++;
+    runStats.clauseSizeRem += cl.size();
 
     //Put into 'lits' the literals of the clause
     vector<Lit> lits;
@@ -950,20 +996,6 @@ void GateFinder::printDot()
     vtkSmartPointer<vtkMutableGraphHelper> graphHelper =
     vtkSmartPointer<vtkMutableGraphHelper>::New();
     graphHelper->SetGraph(g);
-    /*vtkIdType v0 = graphHelper->AddVertex();
-    vtkIdType v1 = graphHelper->AddVertex();
-    vtkIdType v2 = graphHelper->AddVertex();
-
-    vtkIdType v3 = graphHelper->AddVertex();
-    vtkIdType v5 = graphHelper->AddVertex();
-
-    graphHelper->AddEdge(v0, v1);
-    graphHelper->AddEdge(v1, v2);
-    graphHelper->AddEdge(v0, v2);
-
-    graphHelper->AddEdge(v3, v5);*/
-
-
 
     vector<size_t> gateUsed;
     gateUsed.resize(orGates.size(), 0);
@@ -972,12 +1004,24 @@ void GateFinder::printDot()
 
     //Go through each gate
     uint32_t index = 0;
-    for (vector<OrGate>::const_iterator it = orGates.begin(), end = orGates.end(); it != end; it++, index++) {
+    for (vector<OrGate>::const_iterator
+        it = orGates.begin(), end = orGates.end()
+        ; it != end
+        ; it++, index++
+    ) {
         //Each literal in the LHS
-        for (vector<Lit>::const_iterator it2 = it->lits.begin(), end2 = it->lits.end(); it2 != end2; it2++) {
+        for (vector<Lit>::const_iterator
+            it2 = it->lits.begin(), end2 = it->lits.end()
+            ; it2 != end2
+            ; it2++
+        ) {
             //See if it is connected as an output(RHS) to another gate
             const vector<uint32_t>& occ = gateOccEq[it2->toInt()];
-            for (vector<uint32_t>::const_iterator it3 = occ.begin(), end3 = occ.end(); it3 != end3; it3++) {
+            for (vector<uint32_t>::const_iterator
+                it3 = occ.begin(), end3 = occ.end()
+                ; it3 != end3
+                ; it3++
+            ) {
                 //It's this gate, ignore
                 if (*it3 == index)
                     continue;
@@ -995,47 +1039,12 @@ void GateFinder::printDot()
                 graphHelper->AddEdge(vertexes[*it3], vertexes[index]);
                 edgesAdded++;
             }
-
-            /*
-            //See if it is connected as an ~output(~RHS) to another gate
-            const vector<uint32_t>& occ2 = gateOccEq[(~*it2).toInt()];
-            for (vector<uint32_t>::const_iterator it3 = occ2.begin(), end3 = occ2.end(); it3 != end3; it3++) {
-                //It's this gate, ignore
-                if (*it3 == index)
-                    continue;
-
-                //Add vertexes if not present
-                if (!gateUsed[*it3])
-                    vertexes[*it3] = graphHelper->AddVertex();
-                gateUsed[*it3]++;;
-
-                if (!gateUsed[index])
-                    vertexes[index] = graphHelper->AddVertex();
-                gateUsed[index]++;
-
-                //Add edge
-                graphHelper->AddEdge(vertexes[*it3], vertexes[index]);
-                edgesAdded++;
-            }*/
         }
     }
 
-    /*index = 0;
-    for (vector<OrGate>::iterator it = orGates.begin(), end = orGates.end(); it != end; it++, index++) {
 
-        if (gateUsed[index]) {
-            file << "Gate" << index << " [ shape=\"point\"";
-            file << ", size = 0.8";
-            file << ", style=\"filled\"";
-            if (it->learnt) file << ", color=\"darkseagreen4\"";
-            else file << ", color=\"darkseagreen\"";
-            file << "];" << endl;
-        }
-    }*/
-
-
-  // Can also do this:
-  //graphHelper->RemoveEdge(0);
+    // Can also do this:
+    //graphHelper->RemoveEdge(0);
 
     cout << "c Edges added: " << edgesAdded << endl;
     vtkSmartPointer<vtkGraphLayoutView> graphLayoutView =
@@ -1058,34 +1067,4 @@ void GateFinder::newVar()
     gateOcc.push_back(vector<uint32_t>());
     gateOccEq.push_back(vector<uint32_t>());
     gateOccEq.push_back(vector<uint32_t>());
-}
-
-double GateFinder::getTotalTime() const
-{
-    return totalTime;
-}
-
-size_t GateFinder::getTotalLitsRemoved() const
-{
-    return totalLitsRemoved;
-}
-
-size_t GateFinder::getTotalClausesShortened() const
-{
-    return totalClausesShortened;
-}
-
-size_t GateFinder::getTotalClausesRemoved() const
-{
-    return totalClausesRemoved;
-}
-
-size_t GateFinder::getTotalVarsAdded() const
-{
-    return totalVarsAdded;
-}
-
-size_t GateFinder::getTotalVarsReplaced() const
-{
-    return totalVarsReplaced;
 }

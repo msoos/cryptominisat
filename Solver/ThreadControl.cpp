@@ -1373,8 +1373,8 @@ void ThreadControl::printFullStats()
 
     //Subsumer stats
     printStatsLine("c SatELite time"
-                    , subsumer->getStats().totalTime
-                    , subsumer->getStats().totalTime/cpu_time*100.0
+                    , subsumer->getStats().totalTime()
+                    , subsumer->getStats().totalTime()/cpu_time*100.0
                     , "% time");
     printStatsLine("c SatELite v-elimed"
                     , subsumer->getStats().numVarsElimed
@@ -1393,12 +1393,15 @@ void ThreadControl::printFullStats()
 
     //GateFinder stats
     printStatsLine("c gatefinder time"
-                    , subsumer->getGateFinder()->getTotalTime()
-                    , subsumer->getGateFinder()->getTotalTime()/cpu_time*100.0
+                    , subsumer->getGateFinder()->getStats().totalTime()
+                    , subsumer->getGateFinder()->getStats().totalTime()/cpu_time*100.0
                     , "% time");
-    printStatsLine("c gatefinder cl-short", subsumer->getGateFinder()->getTotalClausesShortened());
-    printStatsLine("c gatefinder litsrem", subsumer->getGateFinder()->getTotalLitsRemoved());
-    printStatsLine("c gatefinder cl-rem", subsumer->getGateFinder()->getTotalClausesRemoved());
+    printStatsLine("c gatefinder cl-short"
+        , subsumer->getGateFinder()->getStats().orGateUseful);
+    printStatsLine("c gatefinder litsrem"
+        , subsumer->getGateFinder()->getStats().litsRem);
+    printStatsLine("c gatefinder cl-rem"
+        , subsumer->getGateFinder()->getStats().andGateUseful);
 
 
     //VarReplacer stats

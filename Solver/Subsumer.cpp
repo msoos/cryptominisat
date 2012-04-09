@@ -454,6 +454,7 @@ bool Subsumer::subsume0AndSubsume1()
     // Fixed-point for 1-subsumption:
     printLimits();
 
+    double myTime = cpuTime();
     toDecrease = &numMaxSubsume0;
     vector<ClauseIndex> remClTouched; //These clauses will be untouched
     vector<ClauseIndex> s0;
@@ -533,10 +534,11 @@ bool Subsumer::subsume0AndSubsume1()
             subsume0(*it, *clauses[it->index]);
         }
     }
-
-
     //cout << "subsume0 done: " << numDone << endl;
+    runStats.subsumeTime += cpuTime() - myTime;
 
+
+    myTime = cpuTime();
     toDecrease = &numMaxSubsume1;
     alreadyAdded.clear();
     alreadyAdded.resize(clauses.size(), 0);
@@ -649,6 +651,7 @@ bool Subsumer::subsume0AndSubsume1()
         << " numMaxSubume1: " << numMaxSubsume1 << endl;*/
 
     };
+    runStats.strengthenTime += cpuTime() - myTime;
 
     return control->ok;
 }
@@ -729,13 +732,24 @@ void Subsumer::addBackToSolver()
     assert(control->clauses.size() == 0);
     assert(control->learnts.size() == 0);
     for (uint32_t i = 0; i < clauses.size(); i++) {
-        if (clauses[i] == NULL) continue;
+        //Clause has been removed
+        if (clauses[i] == NULL)
+            continue;
+
+        //All clauses are larger than 2-long
         assert(clauses[i]->size() > 2);
-        for (Clause::const_iterator it = clauses[i]->begin(), end = clauses[i]->end(); it != end; it++) {
+
+        //Go through each literal
+        for (Clause::const_iterator
+            it = clauses[i]->begin(), end = clauses[i]->end()
+            ; it != end
+            ; it++
+        ) {
             assert(control->varData[it->var()].elimed == ELIMED_NONE
                     || control->varData[it->var()].elimed == ELIMED_QUEUED_VARREPLACER);
         }
 
+        //Add clause according to whether it's learnt or not
         if (clauses[i]->learnt())
             control->learnts.push_back(clauses[i]);
         else
@@ -846,6 +860,7 @@ void Subsumer::clearAll()
 
 bool Subsumer::eliminateVars()
 {
+    double myTime = cpuTime();
     uint32_t vars_elimed = 0;
     uint32_t numtry = 0;
     toDecrease = &numMaxElim;
@@ -864,7 +879,7 @@ bool Subsumer::eliminateVars()
         numtry++;
         if (maybeEliminate(order[i])) {
             if (!control->ok)
-                return false;
+                goto end;
 
             vars_elimed++;
             numMaxElimVars--;
@@ -875,8 +890,10 @@ bool Subsumer::eliminateVars()
     cout << "c  #try to eliminate: " << numtry << endl;
     cout << "c  #var-elim: " << vars_elimed << endl;
     #endif
+end:
+    runStats.varElimTime += cpuTime() - myTime;
 
-    return true;
+    return control->ok;
 }
 
 void Subsumer::subsumeBinsWithBins()
@@ -945,7 +962,7 @@ void Subsumer::subsumeBinsWithBins()
     }
 
     //Update global stats
-    runStats.totalTime += cpuTime() - myTime;
+    runStats.subsBinWithBinTime += cpuTime() - myTime;
     runStats.subsBinWithBin += (numBinsBefore - control->numBinsLearnt - control->numBinsNonLearnt);
 }
 
@@ -1086,7 +1103,7 @@ bool Subsumer::simplifyBySubsumption()
     if (control->conf.verbosity >= 1) {
         cout << "c subsumer startup&link-in time: " << linkInTime << endl;
     }
-    runStats.totalTime += cpuTime() - myTime;
+    runStats.linkInTime += linkInTime;
 
     //Do stuff with binaries
     subsumeBinsWithBins();
@@ -1105,25 +1122,8 @@ bool Subsumer::simplifyBySubsumption()
 
     //Gate-finding
     if (control->conf.doCache && control->conf.doGateFind) {
-        gateFinder->findOrGates();
-        if (!gateFinder->treatOrGates())
+        if (!gateFinder->doAll())
             goto end;
-
-        if (control->conf.doPrintGateDot)
-            gateFinder->printDot();
-
-        //Do ER with randomly piced variables as gates
-        if (control->conf.doER) {
-            const uint32_t addedVars = gateFinder->createNewVars();
-            //Play with the newly found gates
-            if (addedVars > 0 && !gateFinder->treatOrGates())
-                goto end;
-        }
-
-        //TODO enable below
-        /*if (control->conf.doFindXors && control->conf.doMixXorAndGates) {
-            if (!mixXorAndGates()) return false;
-        }*/
     }
 
     //Do asymtotic tautology elimination
@@ -1133,7 +1133,6 @@ bool Subsumer::simplifyBySubsumption()
         asymmTE();
 
     //Do subsume0&1 with var-elim until 'fixedpoint' (it's not really fixed, but low)
-    myTime = cpuTime();
     do {
         //Carry out subsume0 and subsume1 -- i.e. subsumption and strengthening
         if (!subsume0AndSubsume1())
@@ -1167,13 +1166,14 @@ bool Subsumer::simplifyBySubsumption()
 
 end:
     //Add back clauses to solver
+    myTime = cpuTime();
     addBackToSolver();
     reattacher.reattachNonBins();
     //ATTENTION: We could be OK=FALSE at this point.
 
     //Update global stats
     runStats.zeroDepthAssings = control->trail.size() - origTrailSize;
-    runStats.totalTime += cpuTime() - myTime;
+    runStats.finalCleanupTime += cpuTime() - myTime;
     globalStats += runStats;
 
     //Print stats
@@ -1423,7 +1423,7 @@ void Subsumer::blockClauses()
         << endl;
     }
     runStats.blocked += blocked;
-    runStats.totalTime += cpuTime() - myTime;
+    runStats.blockTime += cpuTime() - myTime;
 }
 
 void Subsumer::asymmTE()
@@ -1563,7 +1563,7 @@ void Subsumer::asymmTE()
     }
     runStats.asymmSubs += asymmSubsumed;
     runStats.blocked += blocked;
-    runStats.totalTime += cpuTime() - myTime;
+    runStats.asymmTime += cpuTime() - myTime;
 }
 
 /**

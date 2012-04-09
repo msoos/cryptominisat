@@ -122,26 +122,124 @@ class GateFinder
 public:
     GateFinder(Subsumer *subsumer, ThreadControl *control);
 
-    //Setup
     void newVar();
-
-    bool     treatOrGates();
-    void           findOrGates();
-    uint32_t createNewVars();
+    bool doAll();
 
     //Getter functions
     bool canElim(const Var var) const;
     void printGateStats() const;
     void printDot(); ///<Print Graphviz DOT file describing the gates
-    double getTotalTime() const;
-    size_t getTotalLitsRemoved() const;
-    size_t getTotalClausesShortened() const;
-    size_t getTotalClausesRemoved() const;
-    size_t getTotalVarsAdded() const;
-    size_t getTotalVarsReplaced() const;
+
+    //Stats
+    struct Stats
+    {
+        Stats() :
+            //Time
+            findGateTime(0)
+            , orBasedTime(0)
+            , varReplaceTime(0)
+            , andBasedTime(0)
+            , erTime(0)
+
+            //OR-gate
+            , orGateUseful(0)
+            , litsRem(0)
+
+            //Var-replace
+            , varReplaced(0)
+
+            //And-gate
+            , andGateUseful(0)
+            , clauseSizeRem(0)
+
+            //ER
+            , numERVars(0)
+
+            //Gate
+            , learntGatesSize(0)
+            , numLearnt(0)
+            , nonLearntGatesSize(0)
+            , numNonLearnt(0)
+        {}
+
+        void clear()
+        {
+            Stats tmp;
+            *this = tmp;
+        }
+
+        double totalTime() const
+        {
+            return findGateTime + orBasedTime + varReplaceTime
+                + andBasedTime + erTime;
+        }
+
+        Stats& operator+=(const Stats& other)
+        {
+            findGateTime += other.findGateTime;
+            orBasedTime += other.orBasedTime;
+            varReplaceTime += other.varReplaceTime;
+            andBasedTime += other.andBasedTime;
+            erTime += other.erTime;
+
+            //OR-gate
+            orGateUseful += other.orGateUseful;
+            litsRem += other.litsRem;
+            varReplaced += other.varReplaced;
+
+            //And-gate
+            andGateUseful += other.andGateUseful;
+            clauseSizeRem += other.clauseSizeRem;
+
+            //ER
+            numERVars += other.numERVars;
+
+            //Gates
+            learntGatesSize += other.learntGatesSize;
+            numLearnt += other.numLearnt;
+            nonLearntGatesSize += other.nonLearntGatesSize;
+            numNonLearnt += other.numNonLearnt;
+
+            return *this;
+        }
+
+        //Time
+        double findGateTime;
+        double orBasedTime;
+        double varReplaceTime;
+        double andBasedTime;
+        double erTime;
+
+        //OR-gate
+        uint64_t orGateUseful;
+        int64_t  litsRem;
+
+        //Var-replace
+        uint64_t varReplaced;
+
+        //And-gate
+        uint64_t andGateUseful;
+        uint64_t clauseSizeRem;
+
+        //ER
+        uint64_t numERVars;
+
+        //Gates
+        uint64_t learntGatesSize;
+        uint64_t numLearnt;
+        uint64_t nonLearntGatesSize;
+        uint64_t numNonLearnt;
+    };
+
+    const Stats& getStats() const;
 
 private:
+    //Setup
     void clearIndexes();
+
+    //Each algo
+    void     findOrGates();
+    uint32_t createNewVars();
 
     //Helpers to find
     void findOrGates(const bool learntGatesToo);
@@ -171,13 +269,8 @@ private:
     void printDot2(); ///<Print Graphviz DOT file describing the gates
 
     //Stats
-    int64_t  gateLitsRemoved;
-    uint32_t numERVars;
-    bool     finishedAddingVars;
-    uint32_t numOrGateReplaced;
-    uint32_t andGateNumFound;
-    uint32_t andGateTotalSize;
-    uint32_t numDotPrinted;
+    Stats runStats;
+    Stats globalStats;
 
     //Limits
     int64_t  numMaxGateFinder;
@@ -186,12 +279,7 @@ private:
     int64_t  numMaxClRemWithGates;
 
     //long-term stats
-    double totalTime;
-    size_t totalLitsRemoved;
-    size_t totalClausesShortened;
-    size_t totalClausesRemoved;
-    size_t totalVarsAdded;
-    size_t totalVarsReplaced;
+    uint64_t numDotPrinted;
 
     //Main data
     Subsumer *subsumer;
@@ -203,6 +291,11 @@ private:
 inline bool GateFinder::canElim(const Var var) const
 {
     return !dontElim[var];
+}
+
+inline const GateFinder::Stats& GateFinder::getStats() const
+{
+    return globalStats;
 }
 
 #endif //_GATEFINDER_H_
