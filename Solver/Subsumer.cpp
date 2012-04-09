@@ -793,7 +793,7 @@ uint32_t Subsumer::removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws)
     return numRemovedLearnt;
 }
 
-void Subsumer::removeWrongBinsAndAllTris()
+void Subsumer::removeWrongBins()
 {
     uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
@@ -808,8 +808,6 @@ void Subsumer::removeWrongBinsAndAllTris()
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = i;
         for (vec<Watched>::iterator end2 = ws.end(); i != end2; i++) {
-            if (i->isTriClause()) continue;
-
             if (i->isBinary()
                 && (var_elimed[lit.var()] || var_elimed[i->getOtherLit().var()])
             ) {
@@ -834,6 +832,28 @@ void Subsumer::removeWrongBinsAndAllTris()
     control->learntsLits -= numRemovedHalfLearnt;
     control->numBinsLearnt -= numRemovedHalfLearnt/2;
     runStats.binLearntClRemThroughElim += numRemovedHalfLearnt/2;
+}
+
+void Subsumer::removeAllTris()
+{
+    for (vector<vec<Watched> >::iterator
+        it = control->watches.begin(), end = control->watches.end()
+        ; it != end
+        ; it++
+    ) {
+        vec<Watched>& ws = *it;
+
+        vec<Watched>::iterator i = ws.begin();
+        vec<Watched>::iterator j = i;
+        for (vec<Watched>::iterator end2 = ws.end(); i != end2; i++) {
+            if (i->isTriClause()) {
+                continue;
+            } else {
+                *j++ = *i;
+            }
+        }
+        ws.shrink_(i - j);
+    }
 }
 
 /**
@@ -1058,6 +1078,50 @@ bool Subsumer::propagate()
     return true;
 }
 
+bool Subsumer::loopSubsumeVarelim()
+{
+    assert(control->ok);
+
+    //Do subsume0&1 with var-elim until 'fixedpoint' (it's not really fixed, but low)
+    const size_t origTrailSize = control->trail.size();
+    do {
+        //Carry out subsume0 and subsume1 -- i.e. subsumption and strengthening
+        if (!subsume0AndSubsume1())
+            goto end;
+
+        //If no var elimination is needed, this IS fixedpoint
+        if (!control->conf.doVarElim)
+            break;
+
+        //Eliminate variables
+        if (!eliminateVars())
+            goto end;
+
+        //Clean clauses as much as possible
+        control->clauseCleaner->removeSatisfiedBins();
+    } while (
+        (cl_touched2.nElems() > 0 && numMaxSubsume0 > 0)
+        || (cl_touched.nElems() > 0 && numMaxSubsume1 > 0)
+        || (touchedVars.size() > 0 && numMaxElim > 0)
+    );
+    printLimits();
+
+    assert(control->ok);
+    assert(verifyIntegrity());
+
+    //remove 2-longs that contain eliminated variables
+    removeWrongBins();
+
+    //if variable got assigned in the meantime, uneliminate/unblock corresponding clauses
+    removeAssignedVarsFromEliminated();
+
+end:
+    //Update global stats
+    runStats.zeroDepthAssings = control->trail.size() - origTrailSize;
+
+    return control->ok;
+}
+
 /**
 @brief Main function in this class
 
@@ -1087,8 +1151,6 @@ bool Subsumer::simplifyBySubsumption()
     double myTime = cpuTime();
     clearAll();
     numCalls++;
-    const size_t origTrailSize = control->trail.size();
-    const size_t origNumFreeVars = control->getNumFreeVars();
 
     //touch all variables
     for (Var var = 0; var < control->nVars(); var++) {
@@ -1114,6 +1176,7 @@ bool Subsumer::simplifyBySubsumption()
     if (control->learnts.size() < 300000)
         std::sort(control->learnts.begin(), control->learnts.end(), sortBySize());
     addedClauseLits += addFromSolver(control->learnts);
+    const size_t origNumFreeVars = control->getNumFreeVars();
     setLimits();
 
     //Print link-in and startup time
@@ -1150,47 +1213,24 @@ bool Subsumer::simplifyBySubsumption()
     if (control->conf.doAsymmTE)
         asymmTE();
 
-    //Do subsume0&1 with var-elim until 'fixedpoint' (it's not really fixed, but low)
-    do {
-        //Carry out subsume0 and subsume1 -- i.e. subsumption and strengthening
-        if (!subsume0AndSubsume1())
-            goto end;
-
-        //If no var elimination is needed, this IS fixedpoint
-        if (!control->conf.doVarElim)
-            break;
-
-        //Eliminate variables
-        if (!eliminateVars())
-            goto end;
-
-        //Clean clauses as much as possible
-        control->clauseCleaner->removeSatisfiedBins();
-    } while (
-        (cl_touched2.nElems() > 0 && numMaxSubsume0 > 0)
-        || (cl_touched.nElems() > 0 && numMaxSubsume1 > 0)
-        || (touchedVars.size() > 0 && numMaxElim > 0)
-    );
-    printLimits();
-
-    assert(control->ok);
-    assert(verifyIntegrity());
-
-    //Now remove stuff that accidentially is still in:
-    //1) remove 2- and 3-longs that contain eliminated variables
-    //2) if variable got assigned in the meantime, uneliminate/unblock corresponding clauses
-    removeWrongBinsAndAllTris();
-    removeAssignedVarsFromEliminated();
+    //Do subsumption & var-elim in loop
+    if (!loopSubsumeVarelim())
+        goto end;
 
 end:
-    //Add back clauses to solver
     myTime = cpuTime();
+
+    //Remove tri-clauses
+    removeAllTris();
+
+    //Add back clauses to solver
     addBackToSolver();
+
+    //Reattach and clean
     reattacher.reattachNonBins();
     //ATTENTION: We could be OK=FALSE at this point.
 
     //Update global stats
-    runStats.zeroDepthAssings = control->trail.size() - origTrailSize;
     runStats.finalCleanupTime += cpuTime() - myTime;
     globalStats += runStats;
 

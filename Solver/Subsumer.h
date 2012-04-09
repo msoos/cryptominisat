@@ -303,7 +303,8 @@ private:
     //Finish-up
     void freeMemory();
     void addBackToSolver();
-    void removeWrongBinsAndAllTris();
+    void removeWrongBins();
+    void removeAllTris();
     void removeAssignedVarsFromEliminated();
 
     //Clause update
@@ -390,6 +391,7 @@ private:
     void        removeClausesHelper(vector<ClAndBin>& todo, const Lit lit);
     bool        merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, const bool really);
     bool        eliminateVars();
+    bool        loopSubsumeVarelim();
     void        fillClAndBin(vector<ClAndBin>& all, const Occur& cs, const Lit lit);
     void        removeBinsAndTris(const Var var);
     uint32_t    removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws);
