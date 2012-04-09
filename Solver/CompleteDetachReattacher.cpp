@@ -79,13 +79,12 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
 */
 bool CompleteDetachReatacher::reattachNonBins()
 {
-    assert(control->ok);
-
     cleanAndAttachClauses(control->clauses);
     cleanAndAttachClauses(control->learnts);
     control->clauseCleaner->removeSatisfiedBins();
 
-    if (control->ok) control->ok = (control->propagate().isNULL());
+    if (control->ok)
+        control->ok = (control->propagate().isNULL());
 
     return control->ok;
 }

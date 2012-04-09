@@ -1092,13 +1092,15 @@ bool Subsumer::simplifyBySubsumption()
     //XOR-finding
     if (control->conf.doFindXors
         && !xorFinder->findXors()
-    ) return false;
+    ) {
+        goto end;
+    }
 
     //Gate-finding
     if (control->conf.doCache && control->conf.doGateFind) {
         gateFinder->findOrGates();
         if (!gateFinder->treatOrGates())
-            return false;
+            goto end;
 
         if (control->conf.doPrintGateDot)
             gateFinder->printDot();
@@ -1108,7 +1110,7 @@ bool Subsumer::simplifyBySubsumption()
             const uint32_t addedVars = gateFinder->createNewVars();
             //Play with the newly found gates
             if (addedVars > 0 && !gateFinder->treatOrGates())
-                return false;
+                goto end;
         }
 
         //TODO enable below
@@ -1128,7 +1130,7 @@ bool Subsumer::simplifyBySubsumption()
     do {
         //Carry out subsume0 and subsume1 -- i.e. subsumption and strengthening
         if (!subsume0AndSubsume1())
-            return false;
+            goto end;
 
         //If no var elimination is needed, this IS fixedpoint
         if (!control->conf.doVarElim)
@@ -1136,7 +1138,7 @@ bool Subsumer::simplifyBySubsumption()
 
         //Eliminate variables
         if (!eliminateVars())
-            return false;
+            goto end;
 
         //Clean clauses as much as possible
         control->clauseCleaner->removeSatisfiedBins();
@@ -1156,19 +1158,16 @@ bool Subsumer::simplifyBySubsumption()
     removeWrongBinsAndAllTris();
     removeAssignedVarsFromEliminated();
 
+end:
     //Add back clauses to solver
     addBackToSolver();
-    if (!reattacher.reattachNonBins())
-        return false;
-
+    reattacher.reattachNonBins();
+    //ATTENTION: We could be OK=FALSE at this point.
 
     //Update global stats
     runStats.zeroDepthAssings = control->trail.size() - origTrailSize;
     runStats.totalTime += cpuTime() - myTime;
     globalStats += runStats;
-
-    //Sanity check
-    checkElimedUnassignedAndStats();
 
     //Print stats
     if (control->conf.verbosity  >= 1) {
@@ -1196,6 +1195,8 @@ bool Subsumer::simplifyBySubsumption()
             gateFinder->printGateStats();
     }
 
+    //Sanity checks
+    checkElimedUnassignedAndStats();
     control->testAllClauseAttach();
     control->checkNoWrongAttach();
     return true;
@@ -1993,7 +1994,7 @@ bool Subsumer::maybeEliminate(const Var var)
             }
 
             if (!control->ok)
-                return true;
+                goto end;
         }
     }
 
@@ -2014,13 +2015,14 @@ bool Subsumer::maybeEliminate(const Var var)
     #endif
 
     //removeBinsAndTris(var);
-
     assert(occur[lit.toInt()].size() == 0 &&  occur[(~lit).toInt()].size() == 0);
+
+end:
     var_elimed[var] = true;
     control->varData[var].elimed = ELIMED_VARELIM;
     runStats.numVarsElimed++;
     control->unsetDecisionVar(var);
-    return true;
+    return control->ok;
 }
 
 void Subsumer::freeAfterVarelim(const vector<ClAndBin>& myset)
