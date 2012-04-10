@@ -60,18 +60,69 @@ class FailedLitSearcher {
         FailedLitSearcher(ThreadControl* _control);
 
         bool search();
-        double getTotalTime() const;
-        size_t getTotalZeroDepthAssigns() const;
-        size_t getTotalNumFailed() const;
-        size_t getTotalAddedBin() const;
-        size_t getTotalRemovedBin() const;
-        size_t getTotalNumTried() const;
-        size_t getTotalNumVisited() const;
+
+        struct Stats
+        {
+            Stats() :
+                myTime(0)
+                , numFailed(0)
+                , numTried(0)
+                , numVisited(0)
+                , zeroDepthAssigns(0)
+                , addedBin(0)
+                , removedBin(0)
+            {}
+
+            void clear()
+            {
+                Stats tmp;
+                *this = tmp;
+            }
+
+            Stats& operator +=(const Stats& other)
+            {
+                //Time
+                myTime += other.myTime;
+
+                //Fail stats
+                numFailed += other.numFailed;
+                numTried += other.numTried;
+                numVisited += other.numVisited;
+                zeroDepthAssigns += other.zeroDepthAssigns;
+
+                //Propagation stats
+                propData += other.propData;
+
+                //Binary clause
+                addedBin += other.addedBin;
+                removedBin += other.removedBin;
+
+                return *this;
+            }
+
+            //Time
+            double myTime;
+
+            //Fail stats
+            uint64_t numFailed;
+            uint64_t numTried;
+            uint64_t numVisited;
+            uint64_t zeroDepthAssigns;
+
+            //Propagation stats
+            PropStats propData;
+
+            //Binary clause
+            uint64_t addedBin;
+            uint64_t removedBin;
+        };
+
+        const Stats& getStats() const;
 
     private:
         //Main
         bool tryThis(const Lit lit);
-        void printResults(const double myTime) const;
+        void printStats() const;
         vector<char> visitedAlready;
 
         ThreadControl* control; ///<The solver we are updating&working with
@@ -127,8 +178,6 @@ class FailedLitSearcher {
         //For hyper-bin resolution
         vector<uint32_t> cacheUpdated;
         set<BinaryClause> uselessBin;
-        uint32_t addedBin;
-        uint32_t removedBins;
         void hyperBinResAll();
         void removeUselessBins();
         #ifdef DEBUG_REMOVE_USELESS_BIN
@@ -147,42 +196,26 @@ class FailedLitSearcher {
         //Temporaries
         vector<Lit> tmpPs;
 
-        //State for this run
-        /**
-        @brief Records num. var-replacement istructions between 2-long xor findings through longer xor shortening
-
-        Finding 2-long xor claues by shortening is fine, but sometimes we find
-        the same thing, or find something that is trivially a consequence of
-        other 2-long xors that we already know. To filter out these bogus
-        "findigs" from the statistics reported, we save in this value the
-        real var-replacement insturctions before and after the 2-long xor
-        finding through longer xor-shortening, and then compare the changes
-        made
-        */
-        size_t origTrailSize;
-        size_t origNumFreeVars;
-        uint64_t origBogoProps; ///<Records num. of bogoprops at the start-up of search()
-        size_t numFailed;     ///<Records num. of failed literals during search()
-        size_t numTried;
-        size_t numVisited;
+        //Used to count extra time, must be cleared at every startup
         size_t extraTime;
+        size_t origNumFreeVars;
 
-        //State between runs
-        double totalTime;
-        size_t totalZeroDepthAssigns;
-        size_t totalNumFailed;
-        size_t totalNumTried;
-        size_t totalNumVisited;
-        size_t totalAddedBin;
-        size_t totalRemovedBin;
-        double numPropsMultiplier; ///<If last time we called search() all went fine, then this is incremented, so we do more searching this time
+        //Stats
+        Stats runStats;
+        Stats globalStats;
+
+        ///If last time we were successful, do it more
+        double numPropsMultiplier;
+        ///How successful were we last time?
         uint32_t lastTimeZeroDepthAssings;
-        uint32_t numCalls; ///<Number of times search() has been called
+
+        ///How many times we tried to do failed lit probing
+        uint32_t numCalls;
 };
 
-inline double FailedLitSearcher::getTotalTime() const
+inline const FailedLitSearcher::Stats& FailedLitSearcher::getStats() const
 {
-    return totalTime;
+    return globalStats;
 }
 
 

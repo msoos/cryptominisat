@@ -1828,20 +1828,9 @@ uint32_t ThreadControl::getNumXorTreesCrownSize() const
     return varReplacer->getNumReplacedVars();
 }
 
-double ThreadControl::getTotalTimeFailedLitSearcher() const
-{
-    return failedLitSearcher->getTotalTime();
-}
-
 double ThreadControl::getTotalTimeSCC() const
 {
     return  sCCFinder->getTotalTime();
-}
-
-uint32_t ThreadControl::getNumUnsetVars() const
-{
-    assert(decisionLevel() == 0);
-    return (decision_var.size() - trail.size());
 }
 
 uint32_t ThreadControl::getNumDecisionVars() const

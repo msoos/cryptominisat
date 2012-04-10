@@ -46,13 +46,6 @@ using std::endl;
 FailedLitSearcher::FailedLitSearcher(ThreadControl* _control):
     control(_control)
     , tmpPs(2)
-    , totalTime(0)
-    , totalZeroDepthAssigns(0)
-    , totalNumFailed(0)
-    , totalNumTried(0)
-    , totalNumVisited(0)
-    , totalAddedBin(0)
-    , totalRemovedBin(0)
     , numPropsMultiplier(1.0)
     , lastTimeZeroDepthAssings(0)
     , numCalls(0)
@@ -83,33 +76,29 @@ bool FailedLitSearcher::search()
 
     control->testAllClauseAttach();
     const double myTime = cpuTime();
-    const uint32_t origNumUnsetVars = control->getNumUnsetVars();
-    origTrailSize = control->trail.size();
+    const size_t origTrailSize = control->trail.size();
     origNumFreeVars = control->getNumFreeVars();
     control->clauseCleaner->removeAndCleanAll();
 
-    //General Stats
+    //Stats
     extraTime = 0;
-    numTried = 0;
-    numVisited = 0;
-    numFailed = 0;
+    PropStats backupPropStats = control->propStats;
+    runStats.clear();
     numCalls++;
+
+    //State
     visitedAlready.clear();
     visitedAlready.resize(control->nVars()*2, 0);
     cacheUpdated.clear();
     cacheUpdated.resize(control->nVars()*2, 0);
 
     //If failed var searching is going good, do successively more and more of it
-    if ((double)lastTimeZeroDepthAssings > (double)control->getNumUnsetVars() * 0.10)
+    if ((double)lastTimeZeroDepthAssings > (double)control->getNumFreeVars() * 0.10)
         numPropsMultiplier = std::max(numPropsMultiplier*1.3, 1.6);
     else
         numPropsMultiplier = 1.0;
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * control->conf.failedLitMultiplier);
     numPropsTodo = (double)numPropsTodo * std::pow(numCalls, 0.4);
-
-    //For HyperBin
-    addedBin = 0;
-    removedBins = 0;
 
     //For var-based failed literal probing
     vector<uint32_t> actSortedVars(control->nVars());
@@ -119,7 +108,7 @@ bool FailedLitSearcher::search()
     std::sort(actSortedVars.begin(), actSortedVars.end(), ActSorter(control->backupActivity));
 
 
-    origBogoProps = control->propStats.bogoProps;
+    uint64_t origBogoProps = control->propStats.bogoProps;
     while (control->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo) {
         const uint32_t litnum = control->mtrand.randInt() % (control->nVars()*2);
         Lit lit = Lit::toLit(litnum);
@@ -166,70 +155,85 @@ bool FailedLitSearcher::search()
 
 end:
 
-    //Count how many have been visited
-    for(size_t i = 0; i < visitedAlready.size(); i++) {
-        if (visitedAlready[i])
-            numVisited++;
-    }
-
-    //Print & update stats
-    if (control->conf.verbosity  >= 1)
-        printResults(myTime);
-
-    if (control->ok && numFailed) {
+    //Fast cleanup
+    if (control->ok && runStats.zeroDepthAssigns) {
         double time = cpuTime();
-        if ((int)origNumUnsetVars - (int)control->getNumUnsetVars() >  (int)origNumUnsetVars/15
+        bool advancedCleanup = false;
+        //If more than 10% were set, detach&reattach. It's faster
+        if ((double)origNumFreeVars - (double)control->getNumFreeVars()
+                >  (double)origNumFreeVars/10.0
             && control->getNumLongClauses() > 200000
         ) {
+            //Advanced cleanup
+            advancedCleanup = true;
             CompleteDetachReatacher reattacher(control);
             reattacher.detachNonBinsNonTris(true);
             const bool ret = reattacher.reattachNonBins();
             release_assert(ret == true);
         } else {
+            //Standard cleanup
             control->clauseCleaner->removeAndCleanAll();
         }
-        if (control->conf.verbosity  >= 1 && numFailed > 100) {
+
+        //Tell me about the speed of cleanup
+        if (control->conf.verbosity  >= 1 &&
+            (runStats.zeroDepthAssigns > 100 || advancedCleanup)
+        ) {
             cout
             << "c Cleaning up after failed var search: "
-            << std::setw(8) << std::fixed << std::setprecision(2) << cpuTime() - time << " s "
+            << std::setw(8) << std::fixed << std::setprecision(2)
+            << cpuTime() - time << " s "
             << endl;
         }
     }
 
     //Update stats
-    lastTimeZeroDepthAssings = control->trail.size() - origTrailSize;
-    totalZeroDepthAssigns += lastTimeZeroDepthAssings;
-    totalNumFailed += numFailed;
-    totalNumTried += numTried;
-    totalNumVisited += numVisited;
-    totalTime += cpuTime() - myTime;
-    totalAddedBin += addedBin;
-    totalRemovedBin += removedBins;
+    for(size_t i = 0; i < visitedAlready.size(); i++) {
+        if (visitedAlready[i])
+            runStats.numVisited++;
+    }
+    runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
+    lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
+    runStats.myTime = cpuTime() - myTime;
+    runStats.propData = control->propStats - backupPropStats;
+    globalStats += runStats;
+
+    //Print & update stats
+    if (control->conf.verbosity  >= 1)
+        printStats();
 
     control->testAllClauseAttach();
     return control->ok;
 }
 
-void FailedLitSearcher::printResults(const double myTime) const
+void FailedLitSearcher::printStats() const
 {
     cout
     << "c"
-    << " 0-depth assigns: " << (control->trail.size() - origTrailSize)
-    << " Flit: " << numFailed
-    << " Visited: " << numVisited << " / " << (origNumFreeVars*2) // x2 because it's LITERAL visit
-    << "(" << std::setprecision(1) << (100.0*(double)numVisited/(double)(origNumFreeVars*2)) << "%)"
-    << " tried: " << numTried
-    << " Bin:" << addedBin
-    << " RemBin:" << removedBins
-    << " P: " << std::fixed << std::setprecision(1) << (double)(control->propStats.bogoProps - origBogoProps)/1000000.0  << "M"
-    << " T: " << std::fixed << std::setprecision(2) << cpuTime() - myTime
+    << " 0-depth assigns: " << runStats.zeroDepthAssigns
+    << " Flit: " << runStats.numFailed
+    << " Visited: " << runStats.numVisited << " / " << (origNumFreeVars*2) // x2 because it's LITERAL visit
+    << "(" << std::setprecision(1) << (100.0*(double)runStats.numVisited/(double)(origNumFreeVars*2)) << "%)"
+    << " tried: " << runStats.numTried
+    << " Bin:" << runStats.addedBin
+    << " RemBin:" << runStats.removedBin
+
+    << " P: " << std::fixed << std::setprecision(1)
+    << (double)(runStats.propData.bogoProps)/1000000.0  << "M"
+
+    << " T: " << std::fixed << std::setprecision(2)
+    << runStats.myTime
     << endl;
+
+    cout << "c Probing PROP stats" << endl;
+    runStats.propData.print(runStats.myTime);
+    cout << "c Probing PROP stats END" << endl;
 }
 
 bool FailedLitSearcher::tryThis(const Lit lit)
 {
     //Start-up cleaning
-    numTried++;
+    runStats.numTried++;
     assert(uselessBin.empty());
 
     //Test removal of non-learnt binary clauses
@@ -246,7 +250,7 @@ bool FailedLitSearcher::tryThis(const Lit lit)
     const Lit failed = control->propagateFull(uselessBin);
     if (failed != lit_Undef) {
         control->cancelZeroLight();
-        numFailed++;
+        runStats.numFailed++;
         vector<Lit> lits;
         lits.push_back(~failed);
         control->addClauseInt(lits, true);
@@ -308,7 +312,7 @@ void FailedLitSearcher::hyperBinResAll()
         Clause* cl = control->addClauseInt(tmpPs, true);
         assert(cl == NULL);
         assert(control->ok);
-        addedBin++;
+        runStats.addedBin++;
     }
 }
 
@@ -333,7 +337,7 @@ void FailedLitSearcher::removeUselessBins()
                 control->clausesLits -= 2;
                 control->numBinsNonLearnt--;
             }
-            removedBins++;
+            runStats.removedBin++;
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
@@ -343,36 +347,6 @@ void FailedLitSearcher::removeUselessBins()
         }
     }
     uselessBin.clear();
-}
-
-size_t FailedLitSearcher::getTotalZeroDepthAssigns() const
-{
-    return totalZeroDepthAssigns;
-}
-
-size_t FailedLitSearcher::getTotalNumFailed() const
-{
-    return totalNumFailed;
-}
-
-size_t FailedLitSearcher::getTotalAddedBin() const
-{
-    return totalAddedBin;
-}
-
-size_t FailedLitSearcher::getTotalRemovedBin() const
-{
-    return totalRemovedBin;
-}
-
-size_t FailedLitSearcher::getTotalNumTried() const
-{
-    return totalNumTried;
-}
-
-size_t FailedLitSearcher::getTotalNumVisited() const
-{
-    return totalNumVisited;
 }
 
 #ifdef DEBUG_REMOVE_USELESS_BIN
