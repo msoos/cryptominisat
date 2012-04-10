@@ -2763,7 +2763,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
             return l_Undef;
         }
 
-        nof_conflicts = (double)nof_conflicts * conf.restart_inc;
+        //Increment nof_conflicts limit, but only within limits
+        if (nof_conflicts < 1000L* 1000L*1000L)
+            nof_conflicts = (double)nof_conflicts * conf.restart_inc;
+
         if (status != l_Undef) break;
         if (!checkFullRestart(nof_conflicts, nof_conflicts_fullrestart , lastFullRestart))
             return l_False;
