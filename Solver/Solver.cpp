@@ -2750,7 +2750,10 @@ lbool Solver::solve(const vec<Lit>& assumps)
             status = simplifyProblem(conf.simpBurstSConf);
             printRestartStat();
             lastConflPrint = conflicts;
-            nextSimplify = std::min((uint64_t)((double)conflicts * conf.simpStartMMult), conflicts + MAX_CONFL_BETWEEN_SIMPLIFY);
+            nextSimplify = std::min(
+                (uint64_t)((double)conflicts * conf.simpStartMMult)
+                , conflicts + MAX_CONFL_BETWEEN_SIMPLIFY
+            );
             if (status != l_Undef) break;
         }
 
