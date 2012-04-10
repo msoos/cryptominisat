@@ -83,10 +83,10 @@ uint32_t GateFinder::createNewVars()
     uint64_t numOp = 0;
     subsumer->toDecrease = &numMaxCreateNewVars;
 
-    const uint32_t size = (uint32_t)control->getNumUnsetVars()-1;
+    const size_t size = control->getNumFreeVars()-1;
 
-    uint32_t tries = 0;
-    for (; tries < std::min(100000U, size*size/2); tries++) {
+    size_t tries = 0;
+    for (; tries < std::min<size_t>(100000U, size*size/2); tries++) {
         if (*subsumer->toDecrease < 50L*1000L*1000L)
             break;
 
@@ -149,7 +149,7 @@ uint32_t GateFinder::createNewVars()
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
         if ((i > 50 && n.numLitRem < 1000 && n.numClRem < 25)
-            || i > ((double)control->getNumUnsetVars()*0.01)
+            || i > ((double)control->getNumFreeVars()*0.01)
             || i > 100) break;
 
         const Var newVar = control->newVar();
