@@ -32,7 +32,13 @@
 #include <algorithm>
 #include <limits>
 #include <vector>
+#include <iostream>
+#include <iomanip>
+#include <string>
 using std::vector;
+using std::cout;
+using std::endl;
+using std::string;
 
 //Typedefs
 typedef uint32_t Var;
@@ -325,6 +331,138 @@ struct SearchFuncParams
     const uint64_t conflictsToDo;
     const uint64_t maxNumConfl;
     const bool update;
+};
+
+template<class T, class T2> void printStatsLine(string left, T value, T2 value2, string extra)
+{
+    cout
+    << std::fixed << std::left << std::setw(27) << left
+    << ": " << std::setw(11) << std::setprecision(2) << value
+    << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
+    << " " << extra << ")"
+    << std::right
+    << endl;
+}
+
+template<class T> void printStatsLine(string left, T value, string extra = "")
+{
+    cout
+    << std::fixed << std::left << std::setw(27) << left
+    << ": " << std::setw(11) << std::setprecision(2)
+    << value << extra
+    << std::right
+    << endl;
+}
+
+struct PropStats
+{
+    PropStats() :
+        propagations(0)
+        , bogoProps(0)
+        , propsUnit(0)
+        , propsBinIrred(0)
+        , propsBinRed(0)
+        , propsTri(0)
+        , propsLongIrred(0)
+        , propsLongRed(0)
+    {
+    }
+
+    PropStats& operator-=(const PropStats& other)
+    {
+        propagations -= other.propagations;
+        bogoProps -= other.bogoProps;
+        propsUnit -= other.propsUnit;
+        propsBinIrred -= other.propsBinIrred;
+        propsBinRed -= other.propsBinRed;
+        propsTri -= other.propsTri;
+        propsLongIrred -= other.propsLongIrred;
+        propsLongRed -= other.propsLongRed;
+
+        return *this;
+    }
+
+    PropStats& operator+=(const PropStats& other)
+    {
+        propagations += other.propagations;
+        bogoProps += other.bogoProps;
+        propsUnit += other.propsUnit;
+        propsBinIrred += other.propsBinIrred;
+        propsBinRed += other.propsBinRed;
+        propsTri += other.propsTri;
+        propsLongIrred += other.propsLongIrred;
+        propsLongRed += other.propsLongRed;
+
+        return *this;
+    }
+
+    PropStats operator-(const PropStats& other) const
+    {
+        PropStats result = *this;
+        result -= other;
+        return result;
+    }
+
+    PropStats operator+(const PropStats& other) const
+    {
+        PropStats result = *this;
+        result += other;
+        return result;
+    }
+
+    void print(const double cpu_time) const
+    {
+        printStatsLine("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
+            , (double)bogoProps/(cpu_time*1000.0*1000.0)
+            , "/ sec"
+        );
+
+        printStatsLine("c Mprops", (double)propagations/(1000.0*1000.0)
+            , (double)propagations/(cpu_time*1000.0*1000.0)
+            , "/ sec"
+        );
+
+        printStatsLine("c propsUnit", propsUnit
+            , 100.0*(double)propsUnit/(double)propagations
+            , "% of propagations"
+        );
+
+        printStatsLine("c propsBinIrred", propsBinIrred
+            , 100.0*(double)propsBinIrred/(double)propagations
+            , "% of propagations"
+        );
+
+        printStatsLine("c propsBinRed", propsBinRed
+            , 100.0*(double)propsBinRed/(double)propagations
+            , "% of propagations"
+        );
+
+        printStatsLine("c propsTri", propsTri
+            , 100.0*(double)propsTri/(double)propagations
+            , "% of propagations"
+        );
+
+        printStatsLine("c propsLongIrred", propsLongIrred
+            , 100.0*(double)propsLongIrred/(double)propagations
+            , "% of propagations"
+        );
+
+        printStatsLine("c propsLongRed", propsLongRed
+            , 100.0*(double)propsLongRed/(double)propagations
+            , "% of propagations"
+        );
+    }
+
+    uint64_t propagations; ///<Number of propagations made
+    uint64_t bogoProps;    ///<An approximation of time
+
+    //Stats for propagations
+    uint64_t propsUnit;
+    uint64_t propsBinIrred;
+    uint64_t propsBinRed;
+    uint64_t propsTri;
+    uint64_t propsLongIrred;
+    uint64_t propsLongRed;
 };
 
 #endif //SOLVERTYPES_H

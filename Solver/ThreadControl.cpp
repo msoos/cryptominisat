@@ -1345,30 +1345,33 @@ void ThreadControl::printFullStats()
 
     //Failed lit stats
     printStatsLine("c probing time"
-                    , getTotalTimeFailedLitSearcher()
-                    , getTotalTimeFailedLitSearcher()/cpu_time*100.0
+                    , failedLitSearcher->getStats().myTime
+                    , failedLitSearcher->getStats().myTime/cpu_time*100.0
                     , "% time");
 
     printStatsLine("c probing 0-depth-assigns"
-                    , failedLitSearcher->getTotalZeroDepthAssigns()
-                    , (double)failedLitSearcher->getTotalZeroDepthAssigns()/(double)nVars()*100.0
+                    , failedLitSearcher->getStats().zeroDepthAssigns
+                    , (double)failedLitSearcher->getStats().zeroDepthAssigns/(double)nVars()*100.0
                     , "% vars");
 
     printStatsLine("c probing success rate"
-                    , 100.0*(double)failedLitSearcher->getTotalNumFailed()/(double)failedLitSearcher->getTotalNumTried()
+                    , 100.0*(double)failedLitSearcher->getStats().numFailed
+                        /(double)failedLitSearcher->getStats().numTried
                     , "% of probes");
 
     printStatsLine("c probing visited"
-                    , (double)failedLitSearcher->getTotalNumVisited()/(1000.0*1000.0)
+                    , (double)failedLitSearcher->getStats().numVisited/(1000.0*1000.0)
                     , " M lits");
 
     printStatsLine("c probing failed"
-                    , failedLitSearcher->getTotalNumFailed()
-                    , (double)failedLitSearcher->getTotalNumFailed()/(double)nVars()*100.0
+                    , failedLitSearcher->getStats().numFailed
+                    , (double)failedLitSearcher->getStats().numFailed/(double)nVars()*100.0
                     , "% vars");
 
-    printStatsLine("c probing bin added", failedLitSearcher->getTotalAddedBin());
-    printStatsLine("c probing bin rem", failedLitSearcher->getTotalRemovedBin());
+    printStatsLine("c probing bin added"
+        , failedLitSearcher->getStats().addedBin);
+    printStatsLine("c probing bin rem"
+        , failedLitSearcher->getStats().removedBin);
 
 
     //Subsumer stats

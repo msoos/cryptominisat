@@ -23,6 +23,7 @@
 #define __COMMAND_CONTROL_H__
 
 #include "Solver.h"
+#include "SolverTypes.h"
 #include "time_mem.h"
 class ThreadControl;
 
@@ -101,27 +102,6 @@ struct SolvingStats
         conflsLongRed += other.conflsLongRed;
 
         return *this;
-    }
-
-    template<class T, class T2> void printStatsLine(string left, T value, T2 value2, string extra)
-    {
-        cout
-        << std::fixed << std::left << std::setw(27) << left
-        << ": " << std::setw(11) << std::setprecision(2) << value
-        << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
-        << " " << extra << ")"
-        << std::right
-        << endl;
-    }
-
-    template<class T> void printStatsLine(string left, T value, string extra = "")
-    {
-        cout
-        << std::fixed << std::left << std::setw(27) << left
-        << ": " << std::setw(11) << std::setprecision(2)
-        << value << extra
-        << std::right
-        << endl;
     }
 
     void printSolvingStats(double cpu_time, PropStats propStats)
@@ -218,52 +198,14 @@ struct SolvingStats
                         , (double)furtherClMinim/(double)numConflicts*100.0
                         , " % of conflicts");
 
-        //Props
-        cout << "c PROPS stats" << endl;
-        printStatsLine("c Mbogo-props", propStats.bogoProps/(1000*1000)
-            , (double)propStats.bogoProps/(cpu_time*1000*1000)
-            , "/ sec"
-        );
-
-        printStatsLine("c Mprops", propStats.propagations/(1000*1000)
-            , (double)propStats.propagations/(cpu_time*1000*1000)
-            , "/ sec"
-        );
-
         printStatsLine("c decisions", decisions
             , (double)decisionsRand*100.0/(double)decisions
             , "% random"
         );
 
-        printStatsLine("c propsUnit", propStats.propsUnit
-            , 100.0*(double)propStats.propsUnit/(double)propStats.propagations
-            , "% of propagations"
-        );
-
-        printStatsLine("c propsBinIrred", propStats.propsBinIrred
-            , 100.0*(double)propStats.propsBinIrred/(double)propStats.propagations
-            , "% of propagations"
-        );
-
-        printStatsLine("c propsBinRed", propStats.propsBinRed
-            , 100.0*(double)propStats.propsBinRed/(double)propStats.propagations
-            , "% of propagations"
-        );
-
-        printStatsLine("c propsTri", propStats.propsTri
-            , 100.0*(double)propStats.propsTri/(double)propStats.propagations
-            , "% of propagations"
-        );
-
-        printStatsLine("c propsLongIrred", propStats.propsLongIrred
-            , 100.0*(double)propStats.propsLongIrred/(double)propStats.propagations
-            , "% of propagations"
-        );
-
-        printStatsLine("c propsLongRed", propStats.propsLongRed
-            , 100.0*(double)propStats.propsLongRed/(double)propStats.propagations
-            , "% of propagations"
-        );
+        //Props
+        cout << "c PROPS stats" << endl;
+        propStats.print(cpu_time);
 
         uint64_t totalProps = propStats.propsUnit
          + propStats.propsBinRed

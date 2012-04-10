@@ -61,53 +61,6 @@ enum ConflCausedBy {
     , CONFL_BY_TRI_CLAUSE
 };
 
-struct PropStats
-{
-    PropStats() :
-        propagations(0)
-        , bogoProps(0)
-        , propsUnit(0)
-        , propsBinIrred(0)
-        , propsBinRed(0)
-        , propsTri(0)
-        , propsLongIrred(0)
-        , propsLongRed(0)
-    {
-    }
-
-    PropStats& operator-=(const PropStats& other)
-    {
-        propagations -= other.propagations;
-        bogoProps -= other.bogoProps;
-        propsUnit -= other.propsUnit;
-        propsBinIrred -= other.propsBinIrred;
-        propsBinRed -= other.propsBinRed;
-        propsTri -= other.propsTri;
-        propsLongIrred -= other.propsLongIrred;
-        propsLongRed -= other.propsLongRed;
-
-        return *this;
-    }
-
-    PropStats operator-(const PropStats& other) const
-    {
-        PropStats result = *this;     // Make a copy of myself
-        result -= other;            // Use -= to subtrac other from the copy
-        return result;
-    }
-
-    uint64_t propagations; ///<Number of propagations made
-    uint64_t bogoProps;    ///<An approximation of time
-
-    //Stats for propagations
-    uint64_t propsUnit;
-    uint64_t propsBinIrred;
-    uint64_t propsBinRed;
-    uint64_t propsTri;
-    uint64_t propsLongIrred;
-    uint64_t propsLongRed;
-};
-
 struct VarData
 {
     VarData() :
@@ -129,8 +82,6 @@ struct VarData
     ///The preferred polarity of each variable.
     bool polarity;
 };
-
-
 
 struct PolaritySorter
 {
