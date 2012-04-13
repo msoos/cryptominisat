@@ -599,6 +599,13 @@ PropBy Solver::propBin(
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Conflict from " << p << " , " << lit << endl;
         #endif //VERBOSE_DEBUG_FULLPROP
+
+        //Update stats
+        if (k->getLearnt())
+            lastConflictCausedBy = CONFL_BY_BIN_RED_CLAUSE;
+        else
+            lastConflictCausedBy = CONFL_BY_BIN_IRRED_CLAUSE;
+
         failBinLit = lit;
         return PropBy(~p);
 

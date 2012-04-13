@@ -333,24 +333,46 @@ struct SearchFuncParams
     const bool update;
 };
 
-template<class T, class T2> void printStatsLine(string left, T value, T2 value2, string extra)
-{
+template<class T, class T2> void printStatsLine(
+    string left
+    , T value
+    , T2 value2
+    , string extra
+) {
     cout
     << std::fixed << std::left << std::setw(27) << left
     << ": " << std::setw(11) << std::setprecision(2) << value
     << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
     << " " << extra << ")"
-    << std::right
     << endl;
 }
 
-template<class T> void printStatsLine(string left, T value, string extra = "")
-{
+template<class T, class T2> void printStatsLine(
+    string left
+    , T value
+    , string extra1
+    , T2 value2
+    , string extra2
+) {
+    cout
+    << std::fixed << std::left << std::setw(27) << left
+    << ": " << std::setw(11) << std::setprecision(2) << value
+    << " " << extra1
+    << " (" << std::left << std::setw(9) << std::setprecision(2) << value2
+    << " " << extra2 << ")"
+    << endl;
+}
+
+template<class T> void printStatsLine(
+    string left
+    , T value
+    , string extra = ""
+) {
     cout
     << std::fixed << std::left << std::setw(27) << left
     << ": " << std::setw(11) << std::setprecision(2)
-    << value << extra
-    << std::right
+    << value
+    << " " << extra
     << endl;
 }
 
@@ -463,6 +485,126 @@ struct PropStats
     uint64_t propsTri;
     uint64_t propsLongIrred;
     uint64_t propsLongRed;
+};
+
+enum ConflCausedBy {
+    CONFL_BY_LONG_IRRED_CLAUSE
+    , CONFL_BY_LONG_RED_CLAUSE
+    , CONFL_BY_BIN_RED_CLAUSE
+    , CONFL_BY_BIN_IRRED_CLAUSE
+    , CONFL_BY_TRI_CLAUSE
+};
+
+struct ConflStats
+{
+    ConflStats() :
+        conflsBinIrred(0)
+        , conflsBinRed(0)
+        , conflsTri(0)
+        , conflsLongIrred(0)
+        , conflsLongRed(0)
+        , numConflicts(0)
+    {}
+
+    void clear()
+    {
+        ConflStats tmp;
+        *this = tmp;
+    }
+
+    ConflStats& operator+=(const ConflStats& other)
+    {
+        conflsBinIrred += other.conflsBinIrred;
+        conflsBinRed += other.conflsBinRed;
+        conflsTri += other.conflsTri;
+        conflsLongIrred += conflsLongIrred;
+        conflsLongRed += conflsLongRed;
+
+        numConflicts += other.numConflicts;
+
+        return *this;
+    }
+
+    void update(const ConflCausedBy lastConflictCausedBy)
+    {
+        switch(lastConflictCausedBy) {
+            case CONFL_BY_BIN_IRRED_CLAUSE :
+                conflsBinIrred++;
+                break;
+            case CONFL_BY_BIN_RED_CLAUSE :
+                conflsBinRed++;
+                break;
+            case CONFL_BY_TRI_CLAUSE :
+                conflsTri++;
+                break;
+            case CONFL_BY_LONG_IRRED_CLAUSE :
+                conflsLongIrred++;
+                break;
+            case CONFL_BY_LONG_RED_CLAUSE :
+                conflsLongRed++;
+                break;
+            default:
+                assert(false);
+        }
+    }
+
+    void print(double cpu_time) const
+    {
+        //Search stats
+        cout << "c CONFLS stats" << endl;
+        printStatsLine("c conflicts", numConflicts
+            , (double)numConflicts/cpu_time
+            , "/ sec"
+        );
+
+        printStatsLine("c conflsBinIrred", conflsBinIrred
+            , 100.0*(double)conflsBinIrred/(double)numConflicts
+            , "%"
+        );
+
+        printStatsLine("c conflsBinRed", conflsBinRed
+            , 100.0*(double)conflsBinRed/(double)numConflicts
+            , "%"
+        );
+
+        printStatsLine("c conflsTri", conflsTri
+            , 100.0*(double)conflsTri/(double)numConflicts
+            , "%"
+        );
+
+        printStatsLine("c conflsLongIrred" , conflsLongIrred
+            , 100.0*(double)conflsLongIrred/(double)numConflicts
+            , "%"
+        );
+
+        printStatsLine("c conflsLongRed", conflsLongRed
+            , 100.0*(double)conflsLongRed/(double)numConflicts
+            , "%"
+        );
+
+        /*cout << "c numConflicts: " << numConflicts << endl;
+        cout
+        << "c conflsBin + conflsTri + conflsLongIrred + conflsLongRed : "
+        << (conflsBinIrred + conflsBinRed +  conflsTri + conflsLongIrred + conflsLongRed)
+        << endl;
+        cout
+        << "c DIFF: "
+        << ((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTri + conflsLongIrred + conflsLongRed))
+        << endl;*/
+        assert(((int)numConflicts -
+            (int)(conflsBinIrred + conflsBinRed
+                    + conflsTri + conflsLongIrred + conflsLongRed)
+        ) == 0);
+    }
+
+    uint64_t conflsBinIrred;
+    uint64_t conflsBinRed;
+    uint64_t conflsTri;
+    uint64_t conflsLongIrred;
+    uint64_t conflsLongRed;
+
+    ///Number of conflicts
+    uint64_t  numConflicts;
 };
 
 #endif //SOLVERTYPES_H

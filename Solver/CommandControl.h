@@ -35,8 +35,7 @@ struct SolvingStats
 {
     SolvingStats() :
         // Stats
-        numConflicts(0)
-        , numRestarts(0)
+        numRestarts(0)
 
         //Decisions
         , decisions(0)
@@ -60,17 +59,10 @@ struct SolvingStats
         , learntTris(0)
         , learntLongs(0)
 
-        //Conlf stats
-        , conflsBinIrred(0)
-        , conflsBinRed(0)
-        , conflsTri(0)
-        , conflsLongIrred(0)
-        , conflsLongRed(0)
     {};
 
     SolvingStats& operator+=(const SolvingStats& other)
     {
-        numConflicts += other.numConflicts;
         numRestarts += other.numRestarts;
 
         //Decisions
@@ -95,11 +87,7 @@ struct SolvingStats
         learntTris += other.learntTris;
         learntLongs += other.learntLongs;
 
-        conflsBinIrred += other.conflsBinIrred;
-        conflsBinRed += other.conflsBinRed;
-        conflsTri += other.conflsTri;
-        conflsLongIrred += other.conflsLongIrred;
-        conflsLongRed += other.conflsLongRed;
+        conflStats += other.conflStats;
 
         return *this;
     }
@@ -111,51 +99,7 @@ struct SolvingStats
         //Restarts stats
         printStatsLine("c restarts", numRestarts);
 
-        //Search stats
-        cout << "c CONFLS stats" << endl;
-        printStatsLine("c conflicts", numConflicts
-            , (double)numConflicts/cpu_time
-            , "/ sec"
-        );
-
-        printStatsLine("c conflsBinIrred", conflsBinIrred
-            , 100.0*(double)conflsBinIrred/(double)numConflicts
-            , "%"
-        );
-
-        printStatsLine("c conflsBinRed", conflsBinRed
-            , 100.0*(double)conflsBinRed/(double)numConflicts
-            , "%"
-        );
-
-        printStatsLine("c conflsTri", conflsTri
-            , 100.0*(double)conflsTri/(double)numConflicts
-            , "%"
-        );
-
-        printStatsLine("c conflsLongIrred" , conflsLongIrred
-            , 100.0*(double)conflsLongIrred/(double)numConflicts
-            , "%"
-        );
-
-        printStatsLine("c conflsLongRed", conflsLongRed
-            , 100.0*(double)conflsLongRed/(double)numConflicts
-            , "%"
-        );
-
-        /*cout << "c numConflicts: " << numConflicts << endl;
-        cout
-        << "c conflsBin + conflsTri + conflsLongIrred + conflsLongRed : "
-        << (conflsBinIrred + conflsBinRed +  conflsTri + conflsLongIrred + conflsLongRed)
-        << endl;
-        cout
-        << "c DIFF: "
-        << ((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTri + conflsLongIrred + conflsLongRed))
-        << endl;*/
-        assert(((int)numConflicts -
-            (int)(conflsBinIrred + conflsBinRed
-                    + conflsTri + conflsLongIrred + conflsLongRed)
-        ) == 0);
+        conflStats.print(cpu_time);
 
         /*assert(numConflicts
             == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
@@ -163,29 +107,29 @@ struct SolvingStats
         cout << "c LEARNT stats" << endl;
         printStatsLine("c units learnt"
                         , learntUnits
-                        , (double)learntUnits/(double)numConflicts*100.0
+                        , (double)learntUnits/(double)conflStats.numConflicts*100.0
                         , "% of conflicts");
 
         printStatsLine("c bins learnt"
                         , learntBins
-                        , (double)learntBins/(double)numConflicts*100.0
+                        , (double)learntBins/(double)conflStats.numConflicts*100.0
                         , "% of conflicts");
 
         printStatsLine("c tris learnt"
                         , learntTris
-                        , (double)learntTris/(double)numConflicts*100.0
+                        , (double)learntTris/(double)conflStats.numConflicts*100.0
                         , "% of conflicts");
 
         printStatsLine("c long learnt"
                         , learntLongs
-                        , (double)learntLongs/(double)numConflicts*100.0
+                        , (double)learntLongs/(double)conflStats.numConflicts*100.0
                         , "% of conflicts");
 
         //Clause-shrinking through watchlists
         cout << "c SHRINKING stats" << endl;
         printStatsLine("c OTF cl watch-shrink"
                         , numShrinkedClause
-                        , (double)numShrinkedClause/(double)numConflicts
+                        , (double)numShrinkedClause/(double)conflStats.numConflicts
                         , "clauses/conflict");
 
         printStatsLine("c OTF cl watch-sh-lit"
@@ -195,7 +139,7 @@ struct SolvingStats
 
         printStatsLine("c tried to recurMin cls"
                         , furtherClMinim
-                        , (double)furtherClMinim/(double)numConflicts*100.0
+                        , (double)furtherClMinim/(double)conflStats.numConflicts*100.0
                         , " % of conflicts");
 
         printStatsLine("c decisions", decisions
@@ -238,7 +182,6 @@ struct SolvingStats
         #endif
     }
 
-    uint64_t  numConflicts;     ///<Number of conflicts
     uint64_t  numRestarts;      ///<Num restarts
 
     //Decisions
@@ -265,11 +208,8 @@ struct SolvingStats
     uint64_t learntLongs;
 
     //Stats for conflicts
-    uint64_t conflsBinIrred;
-    uint64_t conflsBinRed;
-    uint64_t conflsTri;
-    uint64_t conflsLongIrred;
-    uint64_t conflsLongRed;
+
+    ConflStats conflStats;
 };
 
 class CommandControl : public Solver
@@ -313,10 +253,6 @@ class CommandControl : public Solver
 
         //For connection with ThreadControl
         void  resetStats();
-
-        // Statistics
-        //
-        void updateConflStats(); //Based on lastConflictCausedBy, update confl stats
 
         //Props stats
         uint64_t propsOrig;

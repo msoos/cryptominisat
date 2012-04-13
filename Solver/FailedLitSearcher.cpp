@@ -77,13 +77,13 @@ bool FailedLitSearcher::search()
     control->testAllClauseAttach();
     const double myTime = cpuTime();
     const size_t origTrailSize = control->trail.size();
-    origNumFreeVars = control->getNumFreeVars();
     control->clauseCleaner->removeAndCleanAll();
 
     //Stats
     extraTime = 0;
     PropStats backupPropStats = control->propStats;
     runStats.clear();
+    runStats.origNumFreeVars = control->getNumFreeVars();
     numCalls++;
 
     //State
@@ -160,8 +160,8 @@ end:
         double time = cpuTime();
         bool advancedCleanup = false;
         //If more than 10% were set, detach&reattach. It's faster
-        if ((double)origNumFreeVars - (double)control->getNumFreeVars()
-                >  (double)origNumFreeVars/10.0
+        if ((double)runStats.origNumFreeVars - (double)control->getNumFreeVars()
+                >  (double)runStats.origNumFreeVars/10.0
             && control->getNumLongClauses() > 200000
         ) {
             //Advanced cleanup
@@ -200,40 +200,16 @@ end:
 
     //Print & update stats
     if (control->conf.verbosity  >= 1)
-        printStats();
+        runStats.print(control->nVars());
 
     control->testAllClauseAttach();
     return control->ok;
 }
 
-void FailedLitSearcher::printStats() const
-{
-    cout
-    << "c"
-    << " 0-depth assigns: " << runStats.zeroDepthAssigns
-    << " Flit: " << runStats.numFailed
-    << " Visited: " << runStats.numVisited << " / " << (origNumFreeVars*2) // x2 because it's LITERAL visit
-    << "(" << std::setprecision(1) << (100.0*(double)runStats.numVisited/(double)(origNumFreeVars*2)) << "%)"
-    << " tried: " << runStats.numTried
-    << " Bin:" << runStats.addedBin
-    << " RemBin:" << runStats.removedBin
-
-    << " P: " << std::fixed << std::setprecision(1)
-    << (double)(runStats.propData.bogoProps)/1000000.0  << "M"
-
-    << " T: " << std::fixed << std::setprecision(2)
-    << runStats.myTime
-    << endl;
-
-    cout << "c Probing PROP stats" << endl;
-    runStats.propData.print(runStats.myTime);
-    cout << "c Probing PROP stats END" << endl;
-}
-
 bool FailedLitSearcher::tryThis(const Lit lit)
 {
     //Start-up cleaning
-    runStats.numTried++;
+    runStats.numProbed++;
     assert(uselessBin.empty());
 
     //Test removal of non-learnt binary clauses
@@ -249,6 +225,10 @@ bool FailedLitSearcher::tryThis(const Lit lit)
     #endif
     const Lit failed = control->propagateFull(uselessBin);
     if (failed != lit_Undef) {
+        //Update conflict stats
+        runStats.conflStats.update(control->lastConflictCausedBy);
+        runStats.conflStats.numConflicts++;
+
         control->cancelZeroLight();
         runStats.numFailed++;
         vector<Lit> lits;

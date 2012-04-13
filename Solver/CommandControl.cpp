@@ -567,29 +567,6 @@ void CommandControl::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
     seen[p.var()] = 0;
 }
 
-void CommandControl::updateConflStats()
-{
-    switch(lastConflictCausedBy) {
-        case CONFL_BY_BIN_IRRED_CLAUSE :
-            stats.conflsBinIrred++;
-            break;
-        case CONFL_BY_BIN_RED_CLAUSE :
-            stats.conflsBinRed++;
-            break;
-        case CONFL_BY_TRI_CLAUSE :
-            stats.conflsTri++;
-            break;
-        case CONFL_BY_LONG_IRRED_CLAUSE :
-            stats.conflsLongIrred++;
-            break;
-        case CONFL_BY_LONG_RED_CLAUSE :
-            stats.conflsLongRed++;
-            break;
-        default:
-            assert(false);
-    }
-}
-
 /**
 @brief Search for a model
 
@@ -636,7 +613,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
 
         if (!confl.isNULL()) {
             //Update conflict stats based on lastConflictCausedBy
-            updateConflStats();
+            stats.conflStats.update(lastConflictCausedBy);
 
             //If restart is needed, set it as so
             checkNeedRestart(params, rest);
@@ -778,7 +755,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
     uint32_t backtrack_level;
     uint32_t glue;
     vector<Lit> learnt_clause;
-    stats.numConflicts++;
+    stats.conflStats.numConflicts++;
     params.conflictsDoneThisRestart++;
     if (conf.doPrintConflDot)
         genConfGraph(confl);
@@ -1036,7 +1013,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     //Current solving status
     lbool status = l_Undef;
 
-    uint64_t lastRestartPrint = stats.numConflicts;
+    uint64_t lastRestartPrint = stats.conflStats.numConflicts;
 
     //Burst seach
     status = burstSearch();
@@ -1063,24 +1040,24 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     uint64_t rest = conf.restart_first;
     while (status == l_Undef
         && !needToInterrupt
-        && stats.numConflicts < maxConfls
+        && stats.conflStats.numConflicts < maxConfls
     ) {
-        assert(stats.numConflicts < maxConfls);
+        assert(stats.conflStats.numConflicts < maxConfls);
 
-        status = search(SearchFuncParams(maxConfls-stats.numConflicts), rest);
+        status = search(SearchFuncParams(maxConfls-stats.conflStats.numConflicts), rest);
         rest *= conf.restart_inc;
         if (status != l_Undef)
             break;
 
         //Print restart stat
         if (conf.verbosity >= 1
-            && (lastRestartPrint + 800) < stats.numConflicts
+            && (lastRestartPrint + 800) < stats.conflStats.numConflicts
         ) {
             printRestartStats();
-            lastRestartPrint = stats.numConflicts;
+            lastRestartPrint = stats.conflStats.numConflicts;
         }
 
-        if (stats.numConflicts >= maxConfls) {
+        if (stats.conflStats.numConflicts >= maxConfls) {
             if (conf.verbosity >= 1) {
                 cout
                 << "c thread(maxconfl) Trail size: " << trail.size()
@@ -1095,7 +1072,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
                 cout
                 << "c th " << omp_get_thread_num() << " cleaning"
                 << " getNextCleanLimit(): " << control->getNextCleanLimit()
-                << " numConflicts : " << stats.numConflicts
+                << " numConflicts : " << stats.conflStats.numConflicts
                 << " SumConfl: " << sumConflicts()
                 << " maxConfls:" << maxConfls
                 << " Trail size: " << trail.size() << endl;
@@ -1131,7 +1108,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         cout << "c CommandControl::solve() finished"
         << " status: " << status
         << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
-        << " numConflicts : " << stats.numConflicts
+        << " numConflicts : " << stats.conflStats.numConflicts
         << " SumConfl: " << sumConflicts()
         << " maxConfls:" << maxConfls
         << endl;
@@ -1361,7 +1338,7 @@ void CommandControl::printAgilityStats()
         //&& numConflicts % 100 == 99
     ) {
         cout
-        << ", confl: " << std::setw(6) << stats.numConflicts
+        << ", confl: " << std::setw(6) << stats.conflStats.numConflicts
         << ", rest: " << std::setw(6) << stats.numRestarts
         << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2)
         << agility.getAgility()
@@ -1380,5 +1357,5 @@ void CommandControl::printAgilityStats()
 
 uint64_t CommandControl::sumConflicts() const
 {
-    return control->sumSolvingStats.numConflicts + stats.numConflicts;
+    return control->sumSolvingStats.conflStats.numConflicts + stats.conflStats.numConflicts;
 }

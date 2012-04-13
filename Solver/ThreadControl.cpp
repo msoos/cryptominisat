@@ -205,7 +205,7 @@ Clause* ThreadControl::addClauseInt(const T& lits
             attachBinClause(ps[0], ps[1], learnt);
             return NULL;
         default:
-            Clause* c = clAllocator->Clause_new(ps, sumSolvingStats.numConflicts);
+            Clause* c = clAllocator->Clause_new(ps, sumSolvingStats.conflStats.numConflicts);
             if (learnt)
                 c->makeLearnt(stats.glue);
             c->stats = stats;
@@ -715,7 +715,8 @@ void ThreadControl::reduceDB()
             Clause* cl = learnts[i];
             if (learnts[i]->size() > 3
                 && cl->stats.numPropAndConfl < conf.preClauseCleanLimit
-                && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime < sumSolvingStats.numConflicts
+                && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime
+                    < sumSolvingStats.conflStats.numConflicts
             ) {
                 detachClause(*cl);
                 clAllocator->clauseFree(cl);
@@ -830,7 +831,7 @@ void ThreadControl::reduceDB()
         << "  avgSize "
         << std::fixed << std::setw(6) << std::setprecision(2) << ((double)totalSizeOfNonRemoved/(double)totalNumNonRemoved)
         //<< "  3-long: " << std::setw(6) << numThreeLongLearnt
-        << "  sumConflicts:" << sumSolvingStats.numConflicts
+        << "  sumConflicts:" << sumSolvingStats.conflStats.numConflicts
         << endl;
     }
 }
@@ -859,7 +860,7 @@ lbool ThreadControl::solve()
         //Solve using threads
         const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
-        uint32_t numConfls = nextCleanLimit - sumSolvingStats.numConflicts;
+        uint32_t numConfls = nextCleanLimit - sumSolvingStats.conflStats.numConflicts;
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
             numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
         }
@@ -1349,29 +1350,7 @@ void ThreadControl::printFullStats()
                     , failedLitSearcher->getStats().myTime/cpu_time*100.0
                     , "% time");
 
-    printStatsLine("c probing 0-depth-assigns"
-                    , failedLitSearcher->getStats().zeroDepthAssigns
-                    , (double)failedLitSearcher->getStats().zeroDepthAssigns/(double)nVars()*100.0
-                    , "% vars");
-
-    printStatsLine("c probing success rate"
-                    , 100.0*(double)failedLitSearcher->getStats().numFailed
-                        /(double)failedLitSearcher->getStats().numTried
-                    , "% of probes");
-
-    printStatsLine("c probing visited"
-                    , (double)failedLitSearcher->getStats().numVisited/(1000.0*1000.0)
-                    , " M lits");
-
-    printStatsLine("c probing failed"
-                    , failedLitSearcher->getStats().numFailed
-                    , (double)failedLitSearcher->getStats().numFailed/(double)nVars()*100.0
-                    , "% vars");
-
-    printStatsLine("c probing bin added"
-        , failedLitSearcher->getStats().addedBin);
-    printStatsLine("c probing bin rem"
-        , failedLitSearcher->getStats().removedBin);
+    failedLitSearcher->getStats().print(nVars());
 
 
     //Subsumer stats
@@ -1475,7 +1454,8 @@ void ThreadControl::printFullStats()
 
     //Other stats
     printStatsLine("c Conflicts"
-        , sumSolvingStats.numConflicts, (double)sumSolvingStats.numConflicts/cpu_time
+        , sumSolvingStats.conflStats.numConflicts
+        , (double)sumSolvingStats.conflStats.numConflicts/cpu_time
         , "confl/sec"
     );
     printStatsLine("c Total time", cpu_time);

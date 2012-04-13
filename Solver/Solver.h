@@ -52,15 +52,6 @@ enum ElimedBy {
     , ELIMED_DECOMPOSE = 5
 };
 
-
-enum ConflCausedBy {
-    CONFL_BY_LONG_IRRED_CLAUSE
-    , CONFL_BY_LONG_RED_CLAUSE
-    , CONFL_BY_BIN_RED_CLAUSE
-    , CONFL_BY_BIN_IRRED_CLAUSE
-    , CONFL_BY_TRI_CLAUSE
-};
-
 struct VarData
 {
     VarData() :

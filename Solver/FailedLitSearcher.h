@@ -66,9 +66,10 @@ class FailedLitSearcher {
             Stats() :
                 myTime(0)
                 , numFailed(0)
-                , numTried(0)
+                , numProbed(0)
                 , numVisited(0)
                 , zeroDepthAssigns(0)
+                , origNumFreeVars(0)
                 , addedBin(0)
                 , removedBin(0)
             {}
@@ -86,12 +87,14 @@ class FailedLitSearcher {
 
                 //Fail stats
                 numFailed += other.numFailed;
-                numTried += other.numTried;
+                numProbed += other.numProbed;
                 numVisited += other.numVisited;
                 zeroDepthAssigns += other.zeroDepthAssigns;
+                origNumFreeVars += other.origNumFreeVars;
 
                 //Propagation stats
                 propData += other.propData;
+                conflStats += other.conflStats;
 
                 //Binary clause
                 addedBin += other.addedBin;
@@ -100,17 +103,65 @@ class FailedLitSearcher {
                 return *this;
             }
 
+            void print(const size_t nVars) const
+            {
+
+                printStatsLine("c probing 0-depth-assigns"
+                    , zeroDepthAssigns
+                    , (double)zeroDepthAssigns/(double)nVars*100.0
+                    , "% vars");
+
+                printStatsLine("c probed"
+                    , numProbed
+                    , (double)numProbed/myTime
+                    , "probe/sec");
+
+                printStatsLine("c probe success rate"
+                    , 100.0*(double)numFailed
+                    /(double)numProbed
+                    , "% of probes");
+
+                printStatsLine("c probing visited"
+                    , (double)numVisited/(1000.0*1000.0)
+                    , "M lits"
+                    , (100.0*(double)numVisited/(double)(origNumFreeVars*2))
+                    , "% of available lits");
+
+//                 printStatsLine("c probe failed"
+//                     , numFailed
+//                     , (double)numFailed/(double)nVars*100.0
+//                     , "% vars");
+
+                printStatsLine("c probing bin add"
+                    , addedBin);
+
+                printStatsLine("c probing bin rem"
+                    , removedBin);
+
+                printStatsLine("c probe time"
+                    , myTime
+                    , "s");
+
+                cout << "c Probing PROP stats" << endl;
+                propData.print(myTime);
+
+                cout << "c Probing CONFLS stats" << endl;
+                conflStats.print(myTime);
+            }
+
             //Time
             double myTime;
 
             //Fail stats
             uint64_t numFailed;
-            uint64_t numTried;
+            uint64_t numProbed;
             uint64_t numVisited;
             uint64_t zeroDepthAssigns;
+            uint64_t origNumFreeVars;
 
             //Propagation stats
             PropStats propData;
+            ConflStats conflStats;
 
             //Binary clause
             uint64_t addedBin;
@@ -122,7 +173,6 @@ class FailedLitSearcher {
     private:
         //Main
         bool tryThis(const Lit lit);
-        void printStats() const;
         vector<char> visitedAlready;
 
         ThreadControl* control; ///<The solver we are updating&working with
@@ -198,7 +248,6 @@ class FailedLitSearcher {
 
         //Used to count extra time, must be cleared at every startup
         size_t extraTime;
-        size_t origNumFreeVars;
 
         //Stats
         Stats runStats;
