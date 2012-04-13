@@ -396,20 +396,6 @@ struct PropStats
         *this = tmp;
     }
 
-    PropStats& operator-=(const PropStats& other)
-    {
-        propagations -= other.propagations;
-        bogoProps -= other.bogoProps;
-        propsUnit -= other.propsUnit;
-        propsBinIrred -= other.propsBinIrred;
-        propsBinRed -= other.propsBinRed;
-        propsTri -= other.propsTri;
-        propsLongIrred -= other.propsLongIrred;
-        propsLongRed -= other.propsLongRed;
-
-        return *this;
-    }
-
     PropStats& operator+=(const PropStats& other)
     {
         propagations += other.propagations;
@@ -422,13 +408,6 @@ struct PropStats
         propsLongRed += other.propsLongRed;
 
         return *this;
-    }
-
-    PropStats operator-(const PropStats& other) const
-    {
-        PropStats result = *this;
-        result -= other;
-        return result;
     }
 
     PropStats operator+(const PropStats& other) const
