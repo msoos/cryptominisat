@@ -100,7 +100,7 @@ class FailedLitSearcher {
                 zeroDepthAssigns += other.zeroDepthAssigns;
 
                 //Propagation stats
-                propData += other.propData;
+                propStats += other.propStats;
                 conflStats += other.conflStats;
 
                 //Binary clause
@@ -116,6 +116,9 @@ class FailedLitSearcher {
 
             void print(const size_t nVars) const
             {
+                printStatsLine("c probe time"
+                    , myTime
+                );
 
                 printStatsLine("c 0-depth-assigns"
                     , zeroDepthAssigns
@@ -160,7 +163,7 @@ class FailedLitSearcher {
                     , myTime
                     , "s");
 
-                propData.print(myTime);
+                propStats.print(myTime);
 
                 conflStats.print(myTime);
             }
@@ -175,7 +178,7 @@ class FailedLitSearcher {
             uint64_t zeroDepthAssigns;
 
             //Propagation stats
-            PropStats propData;
+            PropStats propStats;
             ConflStats conflStats;
 
             //Binary clause

@@ -42,10 +42,6 @@ struct SolvingStats
         , decisionsAssump(0)
         , decisionsRand(0)
 
-        //To correctly count propagations
-        , probe(0)
-        , vivify(0)
-
         //Conflict generation
         , numLitsLearntNonMinimised(0)
         , numLitsLearntMinimised(0)
@@ -59,7 +55,16 @@ struct SolvingStats
         , learntTris(0)
         , learntLongs(0)
 
+        //Time
+        , cpu_time(0)
+
     {};
+
+    void clear()
+    {
+        SolvingStats stats;
+        *this = stats;
+    }
 
     SolvingStats& operator+=(const SolvingStats& other)
     {
@@ -69,10 +74,6 @@ struct SolvingStats
         decisions += other.decisions;
         decisionsAssump += other.decisionsAssump;
         decisionsRand += other.decisionsRand;
-
-        //To correctly count propagations
-        probe += other.probe;
-        vivify += other.vivify;
 
         //Conflict minimisation stats
         numLitsLearntNonMinimised += other.numLitsLearntNonMinimised;
@@ -87,17 +88,23 @@ struct SolvingStats
         learntTris += other.learntTris;
         learntLongs += other.learntLongs;
 
+        //Stat structs
         conflStats += other.conflStats;
+        propStats += other.propStats;
+
+        //Time
+        cpu_time += other.cpu_time;
 
         return *this;
     }
 
-    void printSolvingStats(double cpu_time, PropStats propStats)
+    void printSolvingStats()
     {
         uint64_t mem_used = memUsed();
 
         //Restarts stats
         printStatsLine("c restarts", numRestarts);
+        printStatsLine("c time", cpu_time);
 
         conflStats.print(cpu_time);
 
@@ -155,15 +162,13 @@ struct SolvingStats
          + propStats.propsBinIrred
          + propStats.propsTri + propStats.propsLongIrred
          + propStats.propsLongRed
-         + probe + vivify
          + decisions + decisionsAssump;
 
-        /*cout
-        << "c totprops: "
-        << totalProps
-        << " missing: "
+        cout
+        << "c DEBUG"
+        << " ((int64_t)propStats.propagations-(int64_t)totalProps): "
         << ((int64_t)propStats.propagations-(int64_t)totalProps)
-        << endl;*/
+        << endl;
         assert(propStats.propagations == totalProps);
 
         printStatsLine("c confl lits nonmin ", numLitsLearntNonMinimised);
@@ -188,10 +193,6 @@ struct SolvingStats
     uint64_t  decisionsAssump;
     uint64_t  decisionsRand;    ///<Numer of random decisions made
 
-    //To correctly count propagations
-    uint64_t probe; //Proping tries
-    uint64_t vivify; //Vivifying tries
-
     uint64_t  numLitsLearntNonMinimised;     ///<Number of learnt literals without minimisation
     uint64_t  numLitsLearntMinimised;     ///<Number of learnt literals with minimisation
     uint64_t  nShrinkedCl;      ///<Num clauses improved using on-the-fly self-subsuming resolution
@@ -206,9 +207,12 @@ struct SolvingStats
     uint64_t learntTris;
     uint64_t learntLongs;
 
-    //Stats for conflicts
-
+    //Stat structs
     ConflStats conflStats;
+    PropStats propStats;
+
+    //Time
+    double cpu_time;
 };
 
 class CommandControl : public Solver
@@ -252,6 +256,7 @@ class CommandControl : public Solver
 
         //For connection with ThreadControl
         void  resetStats();
+        void  addInPartialSolvingStat();
 
         //Props stats
         uint64_t propsOrig;
@@ -363,7 +368,6 @@ class CommandControl : public Solver
     private:
         double    startTime; ///<When solve() was started
         SolvingStats stats;
-        PropStats oldPropStats;
         size_t origTrailSize;
         uint32_t var_inc_multiplier;
         uint32_t var_inc_divider;
@@ -447,6 +451,12 @@ inline uint32_t CommandControl::getVarInc() const
 inline const SolvingStats& CommandControl::getStats() const
 {
     return stats;
+}
+
+inline void CommandControl::addInPartialSolvingStat()
+{
+    stats.cpu_time = cpuTime() - startTime;
+    stats.propStats = propStats;
 }
 
 #endif //__COMMAND_CONTROL_H__

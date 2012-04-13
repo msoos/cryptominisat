@@ -1323,11 +1323,16 @@ void ThreadControl::consolidateMem()
 
 void ThreadControl::printFullStats()
 {
-    std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
-    sumSolvingStats.printSolvingStats(cpuTime(), propStats);
-    std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
+    const double cpu_time = cpuTime();
+    printStatsLine("c UIP search time"
+        , sumSolvingStats.cpu_time
+        , sumSolvingStats.cpu_time/cpu_time*100.0
+        , "% time"
+    );
 
-    double cpu_time = cpuTime();
+    std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
+    sumSolvingStats.printSolvingStats();
+    std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
 
     printStatsLine("c 0-depth assigns", trail.size()
         , (double)trail.size()/(double)nVars()*100.0
@@ -1347,21 +1352,22 @@ void ThreadControl::printFullStats()
     //Failed lit stats
     cout << "c -------- PROBE STATS ----------" << endl;
     printStatsLine("c probing time"
-                    , failedLitSearcher->getStats().myTime
-                    , failedLitSearcher->getStats().myTime/cpu_time*100.0
-                    , "% time");
+        , failedLitSearcher->getStats().myTime
+        , failedLitSearcher->getStats().myTime/cpu_time*100.0
+        , "% time"
+    );
 
     failedLitSearcher->getStats().print(nVars());
     cout << "c -------- PROBE STATS ----------" << endl;
 
-
     //Subsumer stats
-    cout << "c -------- SatELite STATS ----------" << endl;
     printStatsLine("c SatELite time"
         , subsumer->getStats().totalTime()
         , subsumer->getStats().totalTime()/cpu_time*100.0
-        , "% time");
+        , "% time"
+    );
 
+    cout << "c -------- SatELite STATS ----------" << endl;
     subsumer->getStats().print(cpu_time);
     cout << "c -------- SatELite STATS ----------" << endl;
 
@@ -1445,10 +1451,10 @@ void ThreadControl::printFullStats()
 
 
     //Other stats
-    printStatsLine("c Conflicts"
+    printStatsLine("c Conflicts in UIP"
         , sumSolvingStats.conflStats.numConflicts
         , (double)sumSolvingStats.conflStats.numConflicts/cpu_time
-        , "confl/sec"
+        , "confl/TOTAL_TIME_SEC"
     );
     printStatsLine("c Total time", cpu_time);
 }

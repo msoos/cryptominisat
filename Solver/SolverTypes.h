@@ -390,6 +390,12 @@ struct PropStats
     {
     }
 
+    void clear()
+    {
+        PropStats tmp;
+        *this = tmp;
+    }
+
     PropStats& operator-=(const PropStats& other)
     {
         propagations -= other.propagations;
@@ -518,8 +524,8 @@ struct ConflStats
         conflsBinIrred += other.conflsBinIrred;
         conflsBinRed += other.conflsBinRed;
         conflsTri += other.conflsTri;
-        conflsLongIrred += conflsLongIrred;
-        conflsLongRed += conflsLongRed;
+        conflsLongIrred += other.conflsLongIrred;
+        conflsLongRed += other.conflsLongRed;
 
         numConflicts += other.numConflicts;
 
@@ -583,15 +589,14 @@ struct ConflStats
             , "%"
         );
 
-        /*cout << "c numConflicts: " << numConflicts << endl;
         cout
-        << "c conflsBin + conflsTri + conflsLongIrred + conflsLongRed : "
-        << (conflsBinIrred + conflsBinRed +  conflsTri + conflsLongIrred + conflsLongRed)
+        << "c DEBUG"
+        << "((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTri + conflsLongIrred + conflsLongRed)"
+        << " = " << (((int)numConflicts -
+            (int)(conflsBinIrred + conflsBinRed
+                    + conflsTri + conflsLongIrred + conflsLongRed)))
         << endl;
-        cout
-        << "c DIFF: "
-        << ((int)numConflicts - (int)(conflsBinIrred + conflsBinRed + conflsTri + conflsLongIrred + conflsLongRed))
-        << endl;*/
+
         assert(((int)numConflicts -
             (int)(conflsBinIrred + conflsBinRed
                     + conflsTri + conflsLongIrred + conflsLongRed)

@@ -883,8 +883,8 @@ void CommandControl::resetStats()
     agilityHist.resize(100);
 
     //Rest solving stats
-    stats = SolvingStats();
-    oldPropStats = propStats;
+    stats.clear();
+    propStats.clear();
 
     //Set already set vars
     origTrailSize = trail.size();
@@ -1100,7 +1100,8 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     }
     cancelUntil(0);
 
-    //#ifdef VERBOSE_DEBUG
+    stats.propStats = propStats;
+    stats.cpu_time = cpuTime() - startTime;
     if (conf.verbosity >= 1) {
         cout << "c th " << omp_get_thread_num()
         << " ---------" << endl;
@@ -1114,13 +1115,12 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         << endl;
 
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
-        stats.printSolvingStats(cpuTime() - startTime, (propStats-oldPropStats));
+        stats.printSolvingStats();
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
 
         cout << "c th " << omp_get_thread_num()
         << " ---------" << endl;
     }
-    //#endif
 
     return status;
 }

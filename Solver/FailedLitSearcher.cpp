@@ -81,7 +81,7 @@ bool FailedLitSearcher::search()
 
     //Stats
     extraTime = 0;
-    PropStats backupPropStats = control->propStats;
+    control->propStats.clear();
     runStats.clear();
     runStats.origNumFreeVars = control->getNumFreeVars();
     runStats.origNumBins = control->numBinsLearnt + control->numBinsNonLearnt;
@@ -196,7 +196,7 @@ end:
     runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
     runStats.myTime = cpuTime() - myTime;
-    runStats.propData = control->propStats - backupPropStats;
+    runStats.propStats = control->propStats;
     globalStats += runStats;
 
     //Print & update stats
@@ -223,7 +223,6 @@ bool FailedLitSearcher::tryThis(const Lit lit)
 
     control->newDecisionLevel();
     control->enqueue(lit);
-    control->sumSolvingStats.probe++;
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Trying " << lit << endl;
     #endif

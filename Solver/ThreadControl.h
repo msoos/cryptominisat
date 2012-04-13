@@ -343,6 +343,7 @@ inline uint32_t ThreadControl::getSavedActivityInc() const
 
 inline void ThreadControl::addInPartialSolvingStat()
 {
+    CommandControl::addInPartialSolvingStat();
     sumSolvingStats += CommandControl::getStats();
 }
 

@@ -178,7 +178,6 @@ bool ClauseVivifier::vivifyClausesNormal()
                 lbool val = control->value(lits[done+i2]);
                 if (val == l_Undef) {
                     control->enqueue(~lits[done+i2]);
-                    control->sumSolvingStats.vivify++;
                 } else if (val == l_False) {
                     unused.push_back(lits[done+i2]);
                 }
