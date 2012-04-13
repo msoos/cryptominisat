@@ -135,12 +135,12 @@ struct SolvingStats
         printStatsLine("c OTF cl watch-sh-lit"
                         , numShrinkedClauseLits
                         , (double)numShrinkedClauseLits/(double)numShrinkedClause
-                        , " lits/clause");
+                        , "lits/clause");
 
         printStatsLine("c tried to recurMin cls"
                         , furtherClMinim
                         , (double)furtherClMinim/(double)conflStats.numConflicts*100.0
-                        , " % of conflicts");
+                        , "% of conflicts");
 
         printStatsLine("c decisions", decisions
             , (double)decisionsRand*100.0/(double)decisions
@@ -148,7 +148,6 @@ struct SolvingStats
         );
 
         //Props
-        cout << "c PROPS stats" << endl;
         propStats.print(cpu_time);
 
         uint64_t totalProps = propStats.propsUnit

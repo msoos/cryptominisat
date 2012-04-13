@@ -1176,7 +1176,7 @@ bool Subsumer::simplifyBySubsumption()
     if (control->learnts.size() < 300000)
         std::sort(control->learnts.begin(), control->learnts.end(), sortBySize());
     addedClauseLits += addFromSolver(control->learnts);
-    const size_t origNumFreeVars = control->getNumFreeVars();
+    runStats.origNumFreeVars = control->getNumFreeVars();
     setLimits();
 
     //Print link-in and startup time
@@ -1236,32 +1236,9 @@ end:
 
     //Print stats
     if (control->conf.verbosity  >= 1) {
-        cout << "c"
-        << " lits-rem-str: " << runStats.litsRemStrengthen
-        << " cl-subs: " << runStats.clauses_subsumed
-        << " v-elim: " << runStats.numVarsElimed
-        << " / " << origNumMaxElimVars
-        << " / " << origNumFreeVars
-        << " time: " << std::setprecision(2) << (cpuTime() - myTime) << " s"
-        << endl
-        << "c"
-        << " cl-elim-bin: " << runStats.clauses_elimed_bin
-        << " cl-elim-long: " << runStats.clauses_elimed_long
-        << " cl-elim-avg-s: "
-            << ((double)runStats.clauses_elimed_sumsize
-                /(double)(runStats.clauses_elimed_bin + runStats.clauses_elimed_long))
-        << endl;
-
-        cout << "c"
-        << " learnt long-cl-rem-th-elim: " << runStats.longLearntClRemThroughElim
-        << " learnt bin-cl-rem-th-elim: " << runStats.binLearntClRemThroughElim
-        << " v-fix: " << std::setw(4) << runStats.zeroDepthAssings
-        //<< " blkClRem: " << std::setw(5) << numblockedClauseRemoved
-        << endl;
-
-        cout
-        << "c learnt bin added due to v-elim: " << runStats.numLearntBinVarRemAdded
-        << endl;
+        cout << "c -------- SatELite STATS ----------" << endl;
+        runStats.print(control->nVars());
+        cout << "c -------- SatELite STATS ----------" << endl;
 
         if (control->conf.verboseSubsumer)
             gateFinder->printGateStats();
@@ -1679,7 +1656,7 @@ void Subsumer::setLimits()
     }
 
     numMaxElimVars = ((double)control->getNumFreeVars() * control->conf.varElimRatioPerIter);
-    origNumMaxElimVars = numMaxElimVars;
+    runStats.origNumMaxElimVars = numMaxElimVars;
 
     if (!control->conf.doSubsume1) {
         numMaxSubsume1 = 0;

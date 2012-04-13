@@ -434,6 +434,7 @@ struct PropStats
 
     void print(const double cpu_time) const
     {
+        cout << "c PROP stats" << endl;
         printStatsLine("c Mbogo-props", (double)bogoProps/(1000.0*1000.0)
             , (double)bogoProps/(cpu_time*1000.0*1000.0)
             , "/ sec"

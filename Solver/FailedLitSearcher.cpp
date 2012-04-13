@@ -84,6 +84,7 @@ bool FailedLitSearcher::search()
     PropStats backupPropStats = control->propStats;
     runStats.clear();
     runStats.origNumFreeVars = control->getNumFreeVars();
+    runStats.origNumBins = control->numBinsLearnt + control->numBinsNonLearnt;
     numCalls++;
 
     //State
@@ -199,8 +200,11 @@ end:
     globalStats += runStats;
 
     //Print & update stats
-    if (control->conf.verbosity  >= 1)
+    if (control->conf.verbosity  >= 1) {
+        cout << "c -------- PROBE STATS ----------" << endl;
         runStats.print(control->nVars());
+        cout << "c -------- PROBE STATS ----------" << endl;
+    }
 
     control->testAllClauseAttach();
     return control->ok;

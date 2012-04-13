@@ -143,6 +143,10 @@ public:
             , varElimTime(0)
             , finalCleanupTime(0)
 
+            //Startup stats
+            , origNumFreeVars(0)
+            , origNumMaxElimVars(0)
+
             //Each algo
             , subsBinWithBin(0)
             , blocked(0)
@@ -189,6 +193,10 @@ public:
             varElimTime += other.varElimTime;
             finalCleanupTime += other.finalCleanupTime;
 
+            //Startup stats
+            origNumFreeVars += other.origNumFreeVars;
+            origNumMaxElimVars += other.origNumMaxElimVars;
+
             //Each algo
             subsBinWithBin += other.subsBinWithBin;
             blocked += other.blocked;
@@ -211,6 +219,60 @@ public:
             return *this;
         }
 
+        void print(const size_t nVars) const
+        {
+            printStatsLine("c time"
+                , totalTime());
+
+            printStatsLine("c v-elimed"
+                , numVarsElimed
+                , (double)numVarsElimed/(double)nVars*100.0
+                , "% vars");
+
+            cout << "c"
+            << " v-elimed: " << numVarsElimed
+            << " / " << origNumMaxElimVars
+            << " / " << origNumFreeVars
+            << endl;
+
+            printStatsLine("c 0-detph assigns"
+                , zeroDepthAssings
+                , (double)zeroDepthAssings/(double)nVars*100.0
+                , "% vars");
+
+            printStatsLine("c lit-rem-str"
+                , litsRemStrengthen);
+
+            printStatsLine("c cl-subs"
+                , clauses_subsumed);
+
+            printStatsLine("c blocked"
+                , blocked);
+
+            printStatsLine("c asymmSub"
+                , asymmSubs);
+
+            printStatsLine("c elim-bin-lt-cl"
+                , binLearntClRemThroughElim);
+
+            printStatsLine("c elim-long-lt-cl"
+                , longLearntClRemThroughElim);
+
+            printStatsLine("c lt-bin added due to v-elim"
+                , numLearntBinVarRemAdded);
+
+            printStatsLine("c cl-elim-bin"
+                , clauses_elimed_bin);
+
+            printStatsLine("c cl-elim-long"
+                , clauses_elimed_long);
+
+            printStatsLine("c cl-elim-avg-s",
+                ((double)clauses_elimed_sumsize
+                /(double)(clauses_elimed_bin + clauses_elimed_long))
+            );
+        }
+
         //Time stats
         double linkInTime;
         double blockTime;
@@ -220,6 +282,10 @@ public:
         double strengthenTime;
         double varElimTime;
         double finalCleanupTime;
+
+        //Startup stats
+        uint64_t origNumFreeVars;
+        uint64_t origNumMaxElimVars;
 
         //Each algorithm
         uint64_t subsBinWithBin;
@@ -284,7 +350,6 @@ private:
     int64_t  numMaxSubsume0;              ///<Max. number backward-subsumption tries to do this run
     int64_t  numMaxElim;                  ///<Max. number of variable elimination tries to do this run
     int64_t  numMaxElimVars;
-    int64_t  origNumMaxElimVars;
     int64_t  numMaxAsymm;
     int64_t  numMaxBlocked;
     int64_t  numMaxVarElimAgressiveCheck;

@@ -64,14 +64,22 @@ class FailedLitSearcher {
         struct Stats
         {
             Stats() :
+                //Time
                 myTime(0)
+
+                //Probe stats
                 , numFailed(0)
                 , numProbed(0)
                 , numVisited(0)
                 , zeroDepthAssigns(0)
-                , origNumFreeVars(0)
+
+                //Bins
                 , addedBin(0)
                 , removedBin(0)
+
+                //Compare against
+                , origNumFreeVars(0)
+                , origNumBins(0)
             {}
 
             void clear()
@@ -85,12 +93,11 @@ class FailedLitSearcher {
                 //Time
                 myTime += other.myTime;
 
-                //Fail stats
+                //Probe stats
                 numFailed += other.numFailed;
                 numProbed += other.numProbed;
                 numVisited += other.numVisited;
                 zeroDepthAssigns += other.zeroDepthAssigns;
-                origNumFreeVars += other.origNumFreeVars;
 
                 //Propagation stats
                 propData += other.propData;
@@ -100,13 +107,17 @@ class FailedLitSearcher {
                 addedBin += other.addedBin;
                 removedBin += other.removedBin;
 
+                //Compare against
+                origNumFreeVars += other.origNumFreeVars;
+                origNumBins += other.origNumBins;
+
                 return *this;
             }
 
             void print(const size_t nVars) const
             {
 
-                printStatsLine("c probing 0-depth-assigns"
+                printStatsLine("c 0-depth-assigns"
                     , zeroDepthAssigns
                     , (double)zeroDepthAssigns/(double)nVars*100.0
                     , "% vars");
@@ -116,12 +127,13 @@ class FailedLitSearcher {
                     , (double)numProbed/myTime
                     , "probe/sec");
 
-                printStatsLine("c probe success rate"
+                printStatsLine("c failed"
+                    , numFailed
                     , 100.0*(double)numFailed
                     /(double)numProbed
                     , "% of probes");
 
-                printStatsLine("c probing visited"
+                printStatsLine("c visited"
                     , (double)numVisited/(1000.0*1000.0)
                     , "M lits"
                     , (100.0*(double)numVisited/(double)(origNumFreeVars*2))
@@ -132,32 +144,35 @@ class FailedLitSearcher {
 //                     , (double)numFailed/(double)nVars*100.0
 //                     , "% vars");
 
-                printStatsLine("c probing bin add"
-                    , addedBin);
+                printStatsLine("c bin add"
+                    , addedBin
+                    , (double)addedBin/(double)origNumBins*100.0
+                    , "% of bins"
+                );
 
-                printStatsLine("c probing bin rem"
-                    , removedBin);
+                printStatsLine("c bin rem"
+                    , removedBin
+                    , (double)removedBin/(double)origNumBins*100.0
+                    , "% of bins"
+                );
 
-                printStatsLine("c probe time"
+                printStatsLine("c time"
                     , myTime
                     , "s");
 
-                cout << "c Probing PROP stats" << endl;
                 propData.print(myTime);
 
-                cout << "c Probing CONFLS stats" << endl;
                 conflStats.print(myTime);
             }
 
             //Time
             double myTime;
 
-            //Fail stats
+            //Probe stats
             uint64_t numFailed;
             uint64_t numProbed;
             uint64_t numVisited;
             uint64_t zeroDepthAssigns;
-            uint64_t origNumFreeVars;
 
             //Propagation stats
             PropStats propData;
@@ -166,6 +181,10 @@ class FailedLitSearcher {
             //Binary clause
             uint64_t addedBin;
             uint64_t removedBin;
+
+            //Compare against
+            uint64_t origNumFreeVars;
+            uint64_t origNumBins;
         };
 
         const Stats& getStats() const;

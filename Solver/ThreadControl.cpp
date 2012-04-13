@@ -1323,9 +1323,9 @@ void ThreadControl::consolidateMem()
 
 void ThreadControl::printFullStats()
 {
-    std::cout << "----------------" << endl;
+    std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
     sumSolvingStats.printSolvingStats(cpuTime(), propStats);
-    std::cout << "----------------" << endl;
+    std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
 
     double cpu_time = cpuTime();
 
@@ -1345,33 +1345,25 @@ void ThreadControl::printFullStats()
     );
 
     //Failed lit stats
+    cout << "c -------- PROBE STATS ----------" << endl;
     printStatsLine("c probing time"
                     , failedLitSearcher->getStats().myTime
                     , failedLitSearcher->getStats().myTime/cpu_time*100.0
                     , "% time");
 
     failedLitSearcher->getStats().print(nVars());
+    cout << "c -------- PROBE STATS ----------" << endl;
 
 
     //Subsumer stats
+    cout << "c -------- SatELite STATS ----------" << endl;
     printStatsLine("c SatELite time"
-                    , subsumer->getStats().totalTime()
-                    , subsumer->getStats().totalTime()/cpu_time*100.0
-                    , "% time");
-    printStatsLine("c SatELite v-elimed"
-                    , subsumer->getStats().numVarsElimed
-                    , (double)subsumer->getStats().numVarsElimed/(double)nVars()*100.0
-                    , "% vars");
-    printStatsLine("c SatELite 0-detph assigns"
-                    , subsumer->getStats().zeroDepthAssings
-                    , (double)subsumer->getStats().zeroDepthAssings/(double)nVars()*100.0
-                    , "% vars");
-    printStatsLine("c SatELite lit-rem", subsumer->getStats().litsRemStrengthen);
-    printStatsLine("c SatELite cl-subs", subsumer->getStats().clauses_subsumed);
-    printStatsLine("c SatELite blocked", subsumer->getStats().blocked);
-    printStatsLine("c SatELite asymmSub", subsumer->getStats().asymmSubs);
-    printStatsLine("c SatELite elim-bin-lt-cl", subsumer->getStats().binLearntClRemThroughElim);
-    printStatsLine("c SatELite elim-long-lt-cl", subsumer->getStats().longLearntClRemThroughElim);
+        , subsumer->getStats().totalTime()
+        , subsumer->getStats().totalTime()/cpu_time*100.0
+        , "% time");
+
+    subsumer->getStats().print(cpu_time);
+    cout << "c -------- SatELite STATS ----------" << endl;
 
     //GateFinder stats
     printStatsLine("c gatefinder time"
