@@ -21,21 +21,33 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define STREAMBUFFER_H
 
 #define CHUNK_LIMIT 1048576
+#include "constants.h"
 
 #ifndef DISABLE_ZLIB
 #include <zlib.h>
 #endif // DISABLE_ZLIB
+
 
 namespace CMSat
 {
 
 class StreamBuffer
 {
-    #ifdef DISABLE_ZLIB
+    #ifndef DISABLE_ZLIB
+    gzFile  gzin;
+    void assureLookaheadZip() {
+        if (pos >= size) {
+            pos  = 0;
+            #ifdef VERBOSE_DEBUG
+            printf("buf = %08X\n", buf);
+            printf("sizeof(buf) = %u\n", sizeof(buf));
+            #endif //VERBOSE_DEBUG
+            size = gzread(gzin, buf, sizeof(buf));
+        }
+    }
+    #endif
+
     FILE *  in;
-    #else
-    gzFile  in;
-    #endif // DISABLE_ZLIB
     char    buf[CHUNK_LIMIT];
     int     pos;
     int     size;
@@ -43,24 +55,36 @@ class StreamBuffer
     void assureLookahead() {
         if (pos >= size) {
             pos  = 0;
-            #ifdef DISABLE_ZLIB
             #ifdef VERBOSE_DEBUG
             printf("buf = %08X\n", buf);
             printf("sizeof(buf) = %u\n", sizeof(buf));
             #endif //VERBOSE_DEBUG
             size = fread(buf, 1, sizeof(buf), in);
-            #else
-            size = gzread(in, buf, sizeof(buf));
-            #endif // DISABLE_ZLIB
         }
     }
 
 public:
-    #ifdef DISABLE_ZLIB
-    StreamBuffer(FILE * i) : in(i), pos(0), size(0) {
-    #else
-    StreamBuffer(gzFile i) : in(i), pos(0), size(0) {
-    #endif // DISABLE_ZLIB
+    #ifndef DISABLE_ZLIB
+    StreamBuffer(gzFile i) :
+        gzin(i)
+        , in(NULL)
+        , pos(0)
+        , size(0)
+    {
+        assureLookaheadZip();
+    }
+    #endif
+
+    StreamBuffer(FILE * i) :
+        #ifndef DISABLE_ZLIB
+        gzin(NULL)
+        , in(i)
+        #else
+        in(i)
+        #endif
+        , pos(0)
+        , size(0)
+    {
         assureLookahead();
     }
 
@@ -69,7 +93,14 @@ public:
     }
     void operator ++ () {
         pos++;
+        #ifndef DISABLE_ZLIB
+        if (in == NULL)
+            assureLookaheadZip();
+        else
+            assureLookahead();
+        #else
         assureLookahead();
+        #endif
     }
 };
 
