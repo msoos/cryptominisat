@@ -1,4 +1,9 @@
-ver 2.9.2 22/01/2011
+ver 2.9.3 14/04/2012
+* Fixed bug where execution was nondeterministic if used as a library
+* Fixed bug where we went into an infinite loop after 48 hours when using
+  static restarts
+
+ver 2.9.2 22/01/2012
 Bugfixes:
 * Bug in --maxsolutions fixed thanks to Martin Maurer
 * CalcDefPolars was taking >10% time for certain problems. Fixed thanks to
