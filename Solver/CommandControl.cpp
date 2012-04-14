@@ -1115,7 +1115,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         << endl;
 
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
-        stats.printSolvingStats();
+        stats.print();
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
 
         cout << "c th " << omp_get_thread_num()
@@ -1360,5 +1360,5 @@ void CommandControl::printAgilityStats()
 
 uint64_t CommandControl::sumConflicts() const
 {
-    return control->sumSolvingStats.conflStats.numConflicts + stats.conflStats.numConflicts;
+    return control->sumStats.conflStats.numConflicts + stats.conflStats.numConflicts;
 }

@@ -31,190 +31,6 @@ using std::string;
 using std::cout;
 using std::endl;
 
-struct SolvingStats
-{
-    SolvingStats() :
-        // Stats
-        numRestarts(0)
-
-        //Decisions
-        , decisions(0)
-        , decisionsAssump(0)
-        , decisionsRand(0)
-
-        //Conflict generation
-        , numLitsLearntNonMinimised(0)
-        , numLitsLearntMinimised(0)
-        , furtherClMinim(0)
-        , numShrinkedClause(0)
-        , numShrinkedClauseLits(0)
-
-        //Learnt stats
-        , learntUnits(0)
-        , learntBins(0)
-        , learntTris(0)
-        , learntLongs(0)
-
-        //Time
-        , cpu_time(0)
-
-    {};
-
-    void clear()
-    {
-        SolvingStats stats;
-        *this = stats;
-    }
-
-    SolvingStats& operator+=(const SolvingStats& other)
-    {
-        numRestarts += other.numRestarts;
-
-        //Decisions
-        decisions += other.decisions;
-        decisionsAssump += other.decisionsAssump;
-        decisionsRand += other.decisionsRand;
-
-        //Conflict minimisation stats
-        numLitsLearntNonMinimised += other.numLitsLearntNonMinimised;
-        numLitsLearntMinimised    += other.numLitsLearntMinimised;
-        furtherClMinim            += other.furtherClMinim;
-        numShrinkedClause         += other.numShrinkedClause;
-        numShrinkedClauseLits     += other.numShrinkedClauseLits;
-
-        //Learnt stats
-        learntUnits += other.learntUnits;
-        learntBins += other.learntBins;
-        learntTris += other.learntTris;
-        learntLongs += other.learntLongs;
-
-        //Stat structs
-        conflStats += other.conflStats;
-        propStats += other.propStats;
-
-        //Time
-        cpu_time += other.cpu_time;
-
-        return *this;
-    }
-
-    void printSolvingStats()
-    {
-        uint64_t mem_used = memUsed();
-
-        //Restarts stats
-        printStatsLine("c restarts", numRestarts);
-        printStatsLine("c time", cpu_time);
-
-        conflStats.print(cpu_time);
-
-        /*assert(numConflicts
-            == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
-
-        cout << "c LEARNT stats" << endl;
-        printStatsLine("c units learnt"
-                        , learntUnits
-                        , (double)learntUnits/(double)conflStats.numConflicts*100.0
-                        , "% of conflicts");
-
-        printStatsLine("c bins learnt"
-                        , learntBins
-                        , (double)learntBins/(double)conflStats.numConflicts*100.0
-                        , "% of conflicts");
-
-        printStatsLine("c tris learnt"
-                        , learntTris
-                        , (double)learntTris/(double)conflStats.numConflicts*100.0
-                        , "% of conflicts");
-
-        printStatsLine("c long learnt"
-                        , learntLongs
-                        , (double)learntLongs/(double)conflStats.numConflicts*100.0
-                        , "% of conflicts");
-
-        //Clause-shrinking through watchlists
-        cout << "c SHRINKING stats" << endl;
-        printStatsLine("c OTF cl watch-shrink"
-                        , numShrinkedClause
-                        , (double)numShrinkedClause/(double)conflStats.numConflicts
-                        , "clauses/conflict");
-
-        printStatsLine("c OTF cl watch-sh-lit"
-                        , numShrinkedClauseLits
-                        , (double)numShrinkedClauseLits/(double)numShrinkedClause
-                        , "lits/clause");
-
-        printStatsLine("c tried to recurMin cls"
-                        , furtherClMinim
-                        , (double)furtherClMinim/(double)conflStats.numConflicts*100.0
-                        , "% of conflicts");
-
-        printStatsLine("c decisions", decisions
-            , (double)decisionsRand*100.0/(double)decisions
-            , "% random"
-        );
-
-        //Props
-        propStats.print(cpu_time);
-
-        uint64_t totalProps = propStats.propsUnit
-         + propStats.propsBinRed
-         + propStats.propsBinIrred
-         + propStats.propsTri + propStats.propsLongIrred
-         + propStats.propsLongRed
-         + decisions + decisionsAssump;
-
-        cout
-        << "c DEBUG"
-        << " ((int64_t)propStats.propagations-(int64_t)totalProps): "
-        << ((int64_t)propStats.propagations-(int64_t)totalProps)
-        << endl;
-        assert(propStats.propagations == totalProps);
-
-        printStatsLine("c confl lits nonmin ", numLitsLearntNonMinimised);
-        printStatsLine("c confl lits minim", numLitsLearntMinimised
-            , (double)(numLitsLearntNonMinimised - numLitsLearntMinimised)*100.0/ (double)numLitsLearntNonMinimised
-            , "% smaller"
-        );
-
-        //General stats
-        printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
-        #if !defined(_MSC_VER) && defined(RUSAGE_THREAD)
-        printStatsLine("c single-thread CPU time", cpu_time, " s");
-        #else
-        printStatsLine("c all-threads sum CPU time", cpu_time, " s");
-        #endif
-    }
-
-    uint64_t  numRestarts;      ///<Num restarts
-
-    //Decisions
-    uint64_t  decisions;        ///<Number of decisions made
-    uint64_t  decisionsAssump;
-    uint64_t  decisionsRand;    ///<Numer of random decisions made
-
-    uint64_t  numLitsLearntNonMinimised;     ///<Number of learnt literals without minimisation
-    uint64_t  numLitsLearntMinimised;     ///<Number of learnt literals with minimisation
-    uint64_t  nShrinkedCl;      ///<Num clauses improved using on-the-fly self-subsuming resolution
-    uint64_t  nShrinkedClLits;  ///<Num literals removed by on-the-fly self-subsuming resolution
-    uint64_t  furtherClMinim;  ///<Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
-    uint64_t  numShrinkedClause; ///<Number of times we tried to further shrink clauses with cache
-    uint64_t  numShrinkedClauseLits; ///<Number or literals removed while shinking clauses with cache
-
-    //Learnt stats
-    uint64_t learntUnits;
-    uint64_t learntBins;
-    uint64_t learntTris;
-    uint64_t learntLongs;
-
-    //Stat structs
-    ConflStats conflStats;
-    PropStats propStats;
-
-    //Time
-    double cpu_time;
-};
-
 class CommandControl : public Solver
 {
     public:
@@ -250,6 +66,190 @@ class CommandControl : public Solver
         void     setNeedToInterrupt();
         uint32_t getSavedActivity(Var var) const;
         uint32_t getVarInc() const;
+
+        struct Stats
+        {
+            Stats() :
+                // Stats
+                numRestarts(0)
+
+                //Decisions
+                , decisions(0)
+                , decisionsAssump(0)
+                , decisionsRand(0)
+
+                //Conflict generation
+                , numLitsLearntNonMinimised(0)
+                , numLitsLearntMinimised(0)
+                , furtherClMinim(0)
+                , numShrinkedClause(0)
+                , numShrinkedClauseLits(0)
+
+                //Learnt stats
+                , learntUnits(0)
+                , learntBins(0)
+                , learntTris(0)
+                , learntLongs(0)
+
+                //Time
+                , cpu_time(0)
+
+            {};
+
+            void clear()
+            {
+                Stats stats;
+                *this = stats;
+            }
+
+            Stats& operator+=(const Stats& other)
+            {
+                numRestarts += other.numRestarts;
+
+                //Decisions
+                decisions += other.decisions;
+                decisionsAssump += other.decisionsAssump;
+                decisionsRand += other.decisionsRand;
+
+                //Conflict minimisation stats
+                numLitsLearntNonMinimised += other.numLitsLearntNonMinimised;
+                numLitsLearntMinimised    += other.numLitsLearntMinimised;
+                furtherClMinim            += other.furtherClMinim;
+                numShrinkedClause         += other.numShrinkedClause;
+                numShrinkedClauseLits     += other.numShrinkedClauseLits;
+
+                //Learnt stats
+                learntUnits += other.learntUnits;
+                learntBins += other.learntBins;
+                learntTris += other.learntTris;
+                learntLongs += other.learntLongs;
+
+                //Stat structs
+                conflStats += other.conflStats;
+                propStats += other.propStats;
+
+                //Time
+                cpu_time += other.cpu_time;
+
+                return *this;
+            }
+
+            void print()
+            {
+                uint64_t mem_used = memUsed();
+
+                //Restarts stats
+                printStatsLine("c restarts", numRestarts);
+                printStatsLine("c time", cpu_time);
+
+                conflStats.print(cpu_time);
+
+                /*assert(numConflicts
+                    == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
+
+                cout << "c LEARNT stats" << endl;
+                printStatsLine("c units learnt"
+                                , learntUnits
+                                , (double)learntUnits/(double)conflStats.numConflicts*100.0
+                                , "% of conflicts");
+
+                printStatsLine("c bins learnt"
+                                , learntBins
+                                , (double)learntBins/(double)conflStats.numConflicts*100.0
+                                , "% of conflicts");
+
+                printStatsLine("c tris learnt"
+                                , learntTris
+                                , (double)learntTris/(double)conflStats.numConflicts*100.0
+                                , "% of conflicts");
+
+                printStatsLine("c long learnt"
+                                , learntLongs
+                                , (double)learntLongs/(double)conflStats.numConflicts*100.0
+                                , "% of conflicts");
+
+                //Clause-shrinking through watchlists
+                cout << "c SHRINKING stats" << endl;
+                printStatsLine("c OTF cl watch-shrink"
+                                , numShrinkedClause
+                                , (double)numShrinkedClause/(double)conflStats.numConflicts
+                                , "clauses/conflict");
+
+                printStatsLine("c OTF cl watch-sh-lit"
+                                , numShrinkedClauseLits
+                                , (double)numShrinkedClauseLits/(double)numShrinkedClause
+                                , "lits/clause");
+
+                printStatsLine("c tried to recurMin cls"
+                                , furtherClMinim
+                                , (double)furtherClMinim/(double)conflStats.numConflicts*100.0
+                                , "% of conflicts");
+
+                printStatsLine("c decisions", decisions
+                    , (double)decisionsRand*100.0/(double)decisions
+                    , "% random"
+                );
+
+                //Props
+                propStats.print(cpu_time);
+
+                uint64_t totalProps = propStats.propsUnit
+                 + propStats.propsBinRed
+                 + propStats.propsBinIrred
+                 + propStats.propsTri + propStats.propsLongIrred
+                 + propStats.propsLongRed
+                 + decisions + decisionsAssump;
+
+                cout
+                << "c DEBUG"
+                << " ((int64_t)propStats.propagations-(int64_t)totalProps): "
+                << ((int64_t)propStats.propagations-(int64_t)totalProps)
+                << endl;
+                assert(propStats.propagations == totalProps);
+
+                printStatsLine("c confl lits nonmin ", numLitsLearntNonMinimised);
+                printStatsLine("c confl lits minim", numLitsLearntMinimised
+                    , (double)(numLitsLearntNonMinimised - numLitsLearntMinimised)*100.0/ (double)numLitsLearntNonMinimised
+                    , "% smaller"
+                );
+
+                //General stats
+                printStatsLine("c Memory used", (double)mem_used / 1048576.0, " MB");
+                #if !defined(_MSC_VER) && defined(RUSAGE_THREAD)
+                printStatsLine("c single-thread CPU time", cpu_time, " s");
+                #else
+                printStatsLine("c all-threads sum CPU time", cpu_time, " s");
+                #endif
+            }
+
+            uint64_t  numRestarts;      ///<Num restarts
+
+            //Decisions
+            uint64_t  decisions;        ///<Number of decisions made
+            uint64_t  decisionsAssump;
+            uint64_t  decisionsRand;    ///<Numer of random decisions made
+
+            uint64_t  numLitsLearntNonMinimised;     ///<Number of learnt literals without minimisation
+            uint64_t  numLitsLearntMinimised;     ///<Number of learnt literals with minimisation
+            uint64_t  nShrinkedCl;      ///<Num clauses improved using on-the-fly self-subsuming resolution
+            uint64_t  nShrinkedClLits;  ///<Num literals removed by on-the-fly self-subsuming resolution
+            uint64_t  furtherClMinim;  ///<Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
+            uint64_t  numShrinkedClause; ///<Number of times we tried to further shrink clauses with cache
+            uint64_t  numShrinkedClauseLits; ///<Number or literals removed while shinking clauses with cache
+
+            //Learnt stats
+            uint64_t learntUnits;
+            uint64_t learntBins;
+            uint64_t learntTris;
+            uint64_t learntLongs;
+
+            //Stat structs
+            ConflStats conflStats;
+            PropStats propStats;
+
+            //Time
+            double cpu_time;
+        };
 
     protected:
         friend class CalcDefPolars;
@@ -363,11 +363,11 @@ class CommandControl : public Solver
         ////////////
         // Transitive on-the-fly self-subsuming resolution
         void   minimiseLearntFurther(vector<Lit>& cl);
-        const SolvingStats& getStats() const;
+        const Stats& getStats() const;
 
     private:
         double    startTime; ///<When solve() was started
-        SolvingStats stats;
+        Stats stats;
         size_t origTrailSize;
         uint32_t var_inc_multiplier;
         uint32_t var_inc_divider;
@@ -448,7 +448,7 @@ inline uint32_t CommandControl::getVarInc() const
     return var_inc;
 }
 
-inline const SolvingStats& CommandControl::getStats() const
+inline const CommandControl::Stats& CommandControl::getStats() const
 {
     return stats;
 }

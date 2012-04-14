@@ -205,7 +205,7 @@ Clause* ThreadControl::addClauseInt(const T& lits
             attachBinClause(ps[0], ps[1], learnt);
             return NULL;
         default:
-            Clause* c = clAllocator->Clause_new(ps, sumSolvingStats.conflStats.numConflicts);
+            Clause* c = clAllocator->Clause_new(ps, sumStats.conflStats.numConflicts);
             if (learnt)
                 c->makeLearnt(stats.glue);
             c->stats = stats;
@@ -716,7 +716,7 @@ void ThreadControl::reduceDB()
             if (learnts[i]->size() > 3
                 && cl->stats.numPropAndConfl < conf.preClauseCleanLimit
                 && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime
-                    < sumSolvingStats.conflStats.numConflicts
+                    < sumStats.conflStats.numConflicts
             ) {
                 detachClause(*cl);
                 clAllocator->clauseFree(cl);
@@ -831,7 +831,7 @@ void ThreadControl::reduceDB()
         << "  avgSize "
         << std::fixed << std::setw(6) << std::setprecision(2) << ((double)totalSizeOfNonRemoved/(double)totalNumNonRemoved)
         //<< "  3-long: " << std::setw(6) << numThreeLongLearnt
-        << "  sumConflicts:" << sumSolvingStats.conflStats.numConflicts
+        << "  sumConflicts:" << sumStats.conflStats.numConflicts
         << endl;
     }
 }
@@ -860,13 +860,13 @@ lbool ThreadControl::solve()
         //Solve using threads
         const size_t origTrailSize = trail.size();
         vector<lbool> statuses;
-        uint32_t numConfls = nextCleanLimit - sumSolvingStats.conflStats.numConflicts;
+        uint32_t numConfls = nextCleanLimit - sumStats.conflStats.numConflicts;
         for (size_t i = 0; i < conf.numCleanBetweenSimplify; i++) {
             numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
         }
 
         status = CommandControl::solve(numConfls);
-        sumSolvingStats += CommandControl::getStats();
+        sumStats += CommandControl::getStats();
 
         //Back up activities, polairties and var_inc
         backupActivity.clear();
@@ -1325,13 +1325,13 @@ void ThreadControl::printFullStats()
 {
     const double cpu_time = cpuTime();
     printStatsLine("c UIP search time"
-        , sumSolvingStats.cpu_time
-        , sumSolvingStats.cpu_time/cpu_time*100.0
+        , sumStats.cpu_time
+        , sumStats.cpu_time/cpu_time*100.0
         , "% time"
     );
 
     std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
-    sumSolvingStats.printSolvingStats();
+    sumStats.print();
     std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
 
     printStatsLine("c 0-depth assigns", trail.size()
@@ -1452,8 +1452,8 @@ void ThreadControl::printFullStats()
 
     //Other stats
     printStatsLine("c Conflicts in UIP"
-        , sumSolvingStats.conflStats.numConflicts
-        , (double)sumSolvingStats.conflStats.numConflicts/cpu_time
+        , sumStats.conflStats.numConflicts
+        , (double)sumStats.conflStats.numConflicts/cpu_time
         , "confl/TOTAL_TIME_SEC"
     );
     printStatsLine("c Total time", cpu_time);

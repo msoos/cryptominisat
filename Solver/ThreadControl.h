@@ -86,7 +86,7 @@ class ThreadControl : public CommandControl
         uint32_t getNumFreeVars() const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
         uint32_t getNumFreeVarsAdv(size_t tail_size_thread) const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
         uint32_t getNewToReplaceVars() const;           ///<Return number of variables waiting to be replaced
-        const SolvingStats& getSumStats() const;
+        const Stats& getSumStats() const;
         uint64_t getNextCleanLimit() const;
         bool     getSavedPolarity(Var var) const;
         uint32_t getSavedActivity(const Var var) const;
@@ -207,7 +207,7 @@ class ThreadControl : public CommandControl
         size_t               zeroLevAssignsByThreads;
 
         //Main up stats
-        SolvingStats sumSolvingStats;
+        Stats sumStats;
 
         /////////////////////
         // Clauses
@@ -316,9 +316,9 @@ inline uint32_t ThreadControl::getVerbosity() const
     return conf.verbosity;
 }
 
-inline const SolvingStats& ThreadControl::getSumStats() const
+inline const CommandControl::Stats& ThreadControl::getSumStats() const
 {
-    return sumSolvingStats;
+    return sumStats;
 }
 
 inline uint64_t ThreadControl::getNextCleanLimit() const
@@ -344,7 +344,7 @@ inline uint32_t ThreadControl::getSavedActivityInc() const
 inline void ThreadControl::addInPartialSolvingStat()
 {
     CommandControl::addInPartialSolvingStat();
-    sumSolvingStats += CommandControl::getStats();
+    sumStats += CommandControl::getStats();
 }
 
 #endif //THREADCONTROL_H
