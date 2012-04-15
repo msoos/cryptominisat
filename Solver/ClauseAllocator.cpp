@@ -439,7 +439,7 @@ void ClauseAllocator::consolidate(
     }
     newOrigClauseSizes.swap(origClauseSizes);
 
-    if (control->conf.verbosity >= 1) {
+    if (control->conf.verbosity >= 3) {
         cout
         << "c Consolidated memory."
         << " old sum max size: "
@@ -447,8 +447,11 @@ void ClauseAllocator::consolidate(
         << " old used size: "
         << ((double)oldSumSize/(1000.0*1000.0)) << "M"
         << " (" << oldNumPieces << " piece(s) )"
+        << endl;
 
-        << " || new sum max size: "
+        cout
+        << "c Consolidated memory."
+        << " new sum max size: "
         << ((double)newSumMaxSize/(1000.0*1000.0)) << "M"
         << " new used size: "
         << ((double)newSumSize/(1000.0*1000.0)) << "M"

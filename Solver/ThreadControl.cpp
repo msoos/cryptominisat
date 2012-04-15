@@ -417,9 +417,10 @@ void ThreadControl::reArrangeClauses()
         reArrangeClause(learnts[i]);
     }
 
-    if (conf.verbosity >= 1) {
-        cout << "c Rearrange lits in clauses "
-        << std::setw(4) << std::setprecision(2) << (cpuTime() - myTime)  << " s"
+    if (conf.verbosity >= 3) {
+        cout
+        << "c Rearrange lits in clauses "
+        << std::setprecision(2) << (cpuTime() - myTime)  << " s"
         << endl;
     }
 }
@@ -567,7 +568,7 @@ void ThreadControl::renumberVariables()
     subsumer->updateVars(outerToInter, interToOuter);
     varReplacer->updateVars(outerToInter, interToOuter);
     implCache.updateVars(seen, outerToInter, interToOuter2);
-    if (conf.verbosity >= 2) {
+    if (conf.verbosity >= 3) {
         cout
         << "c Time to var-update varreplacer&subsumer&cache: " << (cpuTime() - myTime)
         << endl;
@@ -575,7 +576,7 @@ void ThreadControl::renumberVariables()
     myTotalTime += (cpuTime() - myTime);
 
     //Print results
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity >= 3) {
         cout
         << "c Reordered variables T: "
         << std::fixed << std::setw(5) << std::setprecision(2)
@@ -819,17 +820,25 @@ void ThreadControl::reduceDB()
 
     //Print results
     if (conf.verbosity >= 1) {
-        cout << "c cleaning by " << getNameOfCleanType(conf.clauseCleaningType)
-        << " rem " << std::setw(6) << totalNumRemoved
-        << "  avgGlue "
-        << std::fixed << std::setw(5) << std::setprecision(2)  << ((double)totalGlueOfRemoved/(double)totalNumRemoved)
+        cout
+        << "c cleaning by " << getNameOfCleanType(conf.clauseCleaningType)
+        << " rem " << totalNumRemoved
+        << "  avgGlue " << std::fixed << std::setw(5) << std::setprecision(2)
+        << ((double)totalGlueOfRemoved/(double)totalNumRemoved)
+
         << "  avgSize "
-        << std::fixed << std::setw(6) << std::setprecision(2) << ((double)totalSizeOfRemoved/(double)totalNumRemoved)
-        << "  || remain " << std::setw(6) << totalNumNonRemoved
-        << "  avgGlue "
-        << std::fixed << std::setw(5) << std::setprecision(2)  << ((double)totalGlueOfNonRemoved/(double)totalNumNonRemoved)
-        << "  avgSize "
-        << std::fixed << std::setw(6) << std::setprecision(2) << ((double)totalSizeOfNonRemoved/(double)totalNumNonRemoved)
+        << std::fixed << std::setprecision(2) << ((double)totalSizeOfRemoved/(double)totalNumRemoved)
+        << endl;
+
+        cout
+        << "c remain " << totalNumNonRemoved
+
+        << "  avgGlue " << std::fixed << std::setprecision(2)
+        << ((double)totalGlueOfNonRemoved/(double)totalNumNonRemoved)
+
+        << "  avgSize " << std::fixed << std::setprecision(2)
+        << ((double)totalSizeOfNonRemoved/(double)totalNumNonRemoved)
+
         //<< "  3-long: " << std::setw(6) << numThreeLongLearnt
         << "  sumConflicts:" << sumStats.conflStats.numConflicts
         << endl;
@@ -1036,7 +1045,7 @@ void ThreadControl::calcReachability()
         }
     }
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity >= 3) {
         cout
         << "c calculated reachability."
         << " Time: " << (cpuTime() - myTime)
@@ -1116,7 +1125,7 @@ ThreadControl::UsageStats ThreadControl::sumClauseData(
         }
 
         //If lots of verbosity, print clause's individual stat
-        if (conf.verbosity >= 3) {
+        if (conf.verbosity >= 4) {
             //Print clause data
             cout
             << "Clause size " << std::setw(4) << cl.size();
@@ -1137,7 +1146,7 @@ ThreadControl::UsageStats ThreadControl::sumClauseData(
         }
     }
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity >= 3) {
         //Print SUM stats
         if (learnt) {
             cout << "c Learnt    ";
@@ -1162,7 +1171,7 @@ ThreadControl::UsageStats ThreadControl::sumClauseData(
     }
 
     //Print more stats
-    if (conf.verbosity >= 3) {
+    if (conf.verbosity >= 4) {
         printPropConflStats("clause-len", usageStats);
 
         if (learnt) {
@@ -1351,8 +1360,8 @@ void ThreadControl::printFullStats()
 
     //Failed lit stats
     printStatsLine("c probing time"
-        , failedLitSearcher->getStats().myTime
-        , failedLitSearcher->getStats().myTime/cpu_time*100.0
+        , failedLitSearcher->getStats().cpu_time
+        , failedLitSearcher->getStats().cpu_time/cpu_time*100.0
         , "% time"
     );
 
@@ -1372,26 +1381,17 @@ void ThreadControl::printFullStats()
                     , subsumer->getGateFinder()->getStats().totalTime()
                     , subsumer->getGateFinder()->getStats().totalTime()/cpu_time*100.0
                     , "% time");
-    printStatsLine("c gatefinder cl-short"
-        , subsumer->getGateFinder()->getStats().orGateUseful);
-    printStatsLine("c gatefinder litsrem"
-        , subsumer->getGateFinder()->getStats().litsRem);
-    printStatsLine("c gatefinder cl-rem"
-        , subsumer->getGateFinder()->getStats().andGateUseful);
+    subsumer->getGateFinder()->getStats().print(control->nVars());
 
     //XOR stats
     printStatsLine("c XOR time"
-        , subsumer->getXorFinder()->getStats().totalTime());
-    printStatsLine("c XOR avg num"
-        , (double)subsumer->getXorFinder()->getStats().foundXors/(double)subsumer->getXorFinder()->getNumCalls()
-        , (double)subsumer->getXorFinder()->getStats().sumSizeXors/(double)subsumer->getXorFinder()->getStats().foundXors
-        , "avg size");
-    printStatsLine("c XOR unit found"
-        , subsumer->getXorFinder()->getStats().newUnits);
-    printStatsLine("c XOR 0-depth assings"
-        , subsumer->getXorFinder()->getStats().zeroDepthAssigns);
-    printStatsLine("c XOR bin found"
-        , subsumer->getXorFinder()->getStats().newBins);
+        , subsumer->getXorFinder()->getStats().totalTime()
+        , subsumer->getXorFinder()->getStats().totalTime()/cpu_time*100.0
+        , "% time"
+    );
+    subsumer->getXorFinder()->getStats().print(
+        subsumer->getXorFinder()->getNumCalls()
+    );
 
     //VarReplacer stats
     printStatsLine("c EqLit find time"
@@ -1426,13 +1426,13 @@ void ThreadControl::printFullStats()
                     , clauseVivifier->getStats().timeNorm
                     , clauseVivifier->getStats().timeNorm/cpu_time*100.0
                     , "% time");
-    printStatsLine("c cache-vivify-NL time"
-                    , clauseVivifier->getStats().nonlearntCacheBased.cpu_time
-                    , clauseVivifier->getStats().nonlearntCacheBased.cpu_time/cpu_time*100.0
+    printStatsLine("c cache-vivify-irred time"
+                    , clauseVivifier->getStats().irredCacheBased.cpu_time
+                    , clauseVivifier->getStats().irredCacheBased.cpu_time/cpu_time*100.0
                     , "% time");
-    printStatsLine("c cache-vivify-L time"
-                    , clauseVivifier->getStats().learntCacheBased.cpu_time
-                    , clauseVivifier->getStats().learntCacheBased.cpu_time/cpu_time*100.0
+    printStatsLine("c cache-vivify-red time"
+                    , clauseVivifier->getStats().redCacheBased.cpu_time
+                    , clauseVivifier->getStats().redCacheBased.cpu_time/cpu_time*100.0
                     , "% time");
     clauseVivifier->getStats().print(control->nVars());
 

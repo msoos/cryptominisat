@@ -119,7 +119,6 @@ class SolverConf
         int      doMixXorAndGates; ///<Try to gain knowledge by mixing XORs and gates
 
         //Verbosity
-        bool      verboseSubsumer; ///< Make subsumer verbose?
         int      doPrintGateDot; ///< Print DOT file of gates
         int      doPrintConflDot; ///< Print DOT file for each conflict
 

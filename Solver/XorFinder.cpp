@@ -67,20 +67,13 @@ bool XorFinder::findXors()
     //Calculate & display stats
     runStats.extractTime = cpuTime() - myTime;
     assert(runStats.foundXors == xors.size());
-    if (control->getVerbosity() >= 1) {
-        cout
-        << "c XOR finding "
-        << " Num XORs: " << std::setw(6) << runStats.foundXors
-        << " avg size: " << std::setw(4) << std::fixed << std::setprecision(1)
-        << ((double)runStats.sumSizeXors/(double)runStats.foundXors)
-
-        << " T: "
-        << std::fixed << std::setprecision(2) << runStats.extractTime
-        << endl;
-    }
 
     if (control->conf.doEchelonizeXOR && xors.size() > 0)
         extractInfo();
+
+    if (control->getVerbosity() >= 1) {
+        runStats.printShort();
+    }
 
     globalStats += runStats;
 
@@ -121,15 +114,7 @@ bool XorFinder::extractInfo()
 
     //Cut above-filtered XORs into blocks
     cutIntoBlocks(xorsToUse);
-    if (control->conf.verbosity >= 1) {
-        cout << "c Cut XORs into " << numBlocks << " block(s)"
-        << " sum vars: " << numVarsInBlocks
-        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
-        << endl;
-    }
-
-    //Update global stats
-    runStats.extractTime += cpuTime() - myTime;
+    runStats.blockCutTime += myTime - cpuTime();
     myTime = cpuTime();
 
     //These mappings will be needed for the matrixes, which will have far less
@@ -164,17 +149,6 @@ end:
     //Update stats
     runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
     runStats.extractTime += cpuTime() - myTime;
-
-    //Display stats
-    if (control->conf.verbosity >= 1) {
-        cout
-        << "c Extracted XOR info."
-        << " Units: " << runStats.newUnits
-        << " Bins: " << runStats.newBins
-        << " 0-depth-assigns: " << runStats.zeroDepthAssigns
-        << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime)
-        << endl;
-    }
 
     return control->ok;
 }
@@ -302,7 +276,6 @@ vector<size_t> XorFinder::getXorsForBlock(const size_t blockNum)
 void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
 {
     //Clearing data we will fill below
-    numBlocks = 0;
     varToBlock.clear();
     varToBlock.resize(control->nVars(), std::numeric_limits<size_t>::max());
     blocks.clear();
@@ -329,7 +302,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
                     block.push_back(*it2);
                 }
                 blocks.push_back(block);
-                numBlocks++;
+                runStats.numBlocks++;
 
                 continue;
             }
@@ -359,7 +332,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
                         varToBlock[*it3] = blockNum;
                     }
                     blocks[*it2].clear();
-                    numBlocks--;
+                    runStats.numBlocks--;
                 }
 
                 //add remaining vars
@@ -374,7 +347,6 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
     }
 
     //caclulate stats
-    numVarsInBlocks = 0;
     for(vector<vector<Var> >::const_iterator it = blocks.begin(), end = blocks.end(); it != end; it++) {
 
         //this set has been merged into another set. Skip
@@ -382,7 +354,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
             continue;
 
         //cout << "Block vars: " << it->size() << endl;
-        numVarsInBlocks += it->size();
+        runStats.numVarsInBlocks += it->size();
     }
     //cout << "Sum vars in blocks: " << numVarsInBlocks << endl;
 }

@@ -143,6 +143,8 @@ public:
 
             //OR-gate
             , orGateUseful(0)
+            , numLongCls(0)
+            , numLongClsLits(0)
             , litsRem(0)
 
             //Var-replace
@@ -184,6 +186,8 @@ public:
 
             //OR-gate
             orGateUseful += other.orGateUseful;
+            numLongCls += other.numLongCls;
+            numLongClsLits += other.numLongClsLits;
             litsRem += other.litsRem;
             varReplaced += other.varReplaced;
 
@@ -203,6 +207,108 @@ public:
             return *this;
         }
 
+        void print(const size_t nVars) const
+        {
+            cout << "c -------- GATE FINDING ----------" << endl;
+            printStatsLine("c time"
+                , totalTime()
+            );
+
+            printStatsLine("c find gate time"
+                , findGateTime
+                , findGateTime/totalTime()*100.0
+                , "% time"
+            );
+
+            printStatsLine("c gate-based cl-sh time"
+                , orBasedTime
+                , orBasedTime/totalTime()*100.0
+                , "% time"
+            );
+
+            printStatsLine("c gate-based cl-rem time"
+                , andBasedTime
+                , andBasedTime/totalTime()*100.0
+                , "% time"
+            );
+
+            printStatsLine("c gate-based varrep time"
+                , varReplaceTime
+                , varReplaceTime/totalTime()*100.0
+                , "% time"
+            );
+
+            printStatsLine("c gatefinder cl-short"
+                , orGateUseful
+                , (double)orGateUseful/(double)numLongCls
+                , "% long cls"
+            );
+
+            printStatsLine("c gatefinder lits-rem"
+                , litsRem
+                , (double)litsRem/(double)numLongClsLits
+                , "% long cls lits"
+            );
+
+            printStatsLine("c gatefinder cl-rem"
+                , andGateUseful
+                , (double)andGateUseful/(double)numLongCls
+                , "% long cls"
+            );
+
+            printStatsLine("c gatefinder cl-rem's lits"
+                , clauseSizeRem
+                , (double)clauseSizeRem/(double)numLongClsLits
+                , "% long cls lits"
+            );
+
+            printStatsLine("c gatefinder var-rep"
+                , varReplaced
+                , (double)varReplaced/(double)nVars
+                , "% vars"
+            );
+
+            cout << "c -------- GATE FINDING END ----------" << endl;
+        }
+
+        void printShort()
+        {
+            //Gate find
+            cout << "c Gate find"
+            << " nlearnt:" << numNonLearnt
+            << " avg-s: " << std::fixed << std::setprecision(1)
+            << ((double)nonLearntGatesSize/(double)numNonLearnt)
+            << " learnt: " << numLearnt
+            << " avg-s: " << std::fixed << std::setprecision(1)
+            << ((double)learntGatesSize/(double)numLearnt)
+            << " T: " << std::fixed << std::setprecision(2)
+            << findGateTime
+            << endl;
+
+            //gate-based shorten
+            cout << "c gate-based shorten"
+            << " cl-sh: " << std::setw(5) << orGateUseful
+            << " l-rem: " << std::setw(6) << litsRem
+            << " T: " << std::fixed << std::setw(7) << std::setprecision(2) <<
+            orBasedTime
+            << endl;
+
+            //gate-based cl-rem
+            cout << "c gate-based cl-rem"
+            << " cl-rem: " << andGateUseful
+            << " avg s: " << ((double)clauseSizeRem/(double)andGateUseful)
+            << " T: " << std::fixed << std::setprecision(2)
+            << andBasedTime
+            << endl;
+
+            //var-replace
+            cout << "c OR-based"
+            << " v-rep: " << std::setw(3) << varReplaced
+            << " T: " << std::fixed << std::setprecision(2)
+            << varReplaceTime
+            << endl;
+        }
+
         //Time
         double findGateTime;
         double orBasedTime;
@@ -212,6 +318,8 @@ public:
 
         //OR-gate
         uint64_t orGateUseful;
+        uint64_t numLongCls;
+        uint64_t numLongClsLits;
         int64_t  litsRem;
 
         //Var-replace
@@ -247,7 +355,7 @@ private:
 
     bool doAllOptimisationWithGates();
     bool shortenWithOrGate(const OrGate& gate);
-    bool findEqOrGates();
+    size_t findEqOrGates();
 
     //And gate treatment
     bool    treatAndGate(const OrGate& gate, const bool reallyRemove, uint32_t& foundPotential, uint64_t& numOp);
@@ -262,7 +370,6 @@ private:
     vector<vector<uint32_t> > gateOccEq; //RHS of every gate is in this occur list
 
     //Extended resolution
-    bool     extendedResolution();
     vector<char>   dontElim; ///<These vars should not be eliminated, because they have been added through ER
 
     //Graph

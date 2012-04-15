@@ -718,10 +718,11 @@ void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
                 cout << "conflicts-compTotSumGlue:" << conflicts-compTotSumGlue<< endl;
             }
             #endif
-            printAgilityStats();
 
-            if (conf.verbosity >= 3)
+            if (conf.verbosity >= 4) {
+                printAgilityStats();
                 cout << "c Agility was too low, restarting as soon as possible!" << endl;
+            }
             params.needToStopSearch = true;
         } else {
             rest *= conf.restart_inc;
@@ -930,7 +931,8 @@ lbool CommandControl::burstSearch()
     //Print what has happened
     if (conf.verbosity >= 2) {
         cout
-        << "c Burst finished"
+        << "c "
+        << conf.burstSearchLen << "-long burst search "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
         << endl;
@@ -1102,10 +1104,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
     stats.propStats = propStats;
     stats.cpu_time = cpuTime() - startTime;
-    if (conf.verbosity >= 1) {
-        cout << "c th " << omp_get_thread_num()
-        << " ---------" << endl;
-
+    if (conf.verbosity >= 4) {
         cout << "c CommandControl::solve() finished"
         << " status: " << status
         << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
@@ -1113,13 +1112,12 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         << " SumConfl: " << sumConflicts()
         << " maxConfls:" << maxConfls
         << endl;
+    }
 
+    if (conf.verbosity >= 3) {
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
         stats.print();
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
-
-        cout << "c th " << omp_get_thread_num()
-        << " ---------" << endl;
     }
 
     return status;
@@ -1337,25 +1335,21 @@ void CommandControl::setNeedToInterrupt()
 
 void CommandControl::printAgilityStats()
 {
-    if (conf.verbosity >= 3
-        //&& numConflicts % 100 == 99
-    ) {
-        cout
-        << ", confl: " << std::setw(6) << stats.conflStats.numConflicts
-        << ", rest: " << std::setw(6) << stats.numRestarts
-        << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2)
-        << agility.getAgility()
+    cout
+    << ", confl: " << std::setw(6) << stats.conflStats.numConflicts
+    << ", rest: " << std::setw(6) << stats.numRestarts
+    << ", agility : " << std::setw(6) << std::fixed << std::setprecision(2)
+    << agility.getAgility()
 
-        << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2)
-        << conf.agilityLimit
+    << ", agilityLimit : " << std::setw(6) << std::fixed << std::setprecision(2)
+    << conf.agilityLimit
 
-        << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3)
-        << agilityHist.getAvg()
+    << ", agilityHist: " << std::setw(6) << std::fixed << std::setprecision(3)
+    << agilityHist.getAvg()
 
-        << ", agilityHistLong: " << std::setw(6) << std::fixed << std::setprecision(3)
-        << agilityHist.getAvgLong()
-        << endl;
-    }
+    << ", agilityHistLong: " << std::setw(6) << std::fixed << std::setprecision(3)
+    << agilityHist.getAvgLong()
+    << endl;
 }
 
 uint64_t CommandControl::sumConflicts() const

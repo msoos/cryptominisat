@@ -51,9 +51,9 @@ bool ClauseVivifier::vivify()
     #ifdef VERBOSE_DEBUG
     cout << "c clauseVivifier started" << endl;
     #endif //VERBOSE_DEBUG
+    numCalls++;
 
     control->clauseCleaner->cleanClauses(control->clauses, ClauseCleaner::clauses);
-    numCalls++;
 
     if (!vivifyClausesCache(control->clauses, false))
         goto end;
@@ -65,8 +65,14 @@ bool ClauseVivifier::vivify()
         goto end;
 
 end:
+    //Stats
     globalStats += runStats;
-    runStats.print(control->nVars());
+    if (control->conf.verbosity >= 1) {
+        if (control->conf.verbosity >= 3)
+            runStats.print(control->nVars());
+        else
+            runStats.printShort();
+    }
 
     return control->ok;
 }
@@ -374,9 +380,9 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
     //Set stats
     tmp.cpu_time = cpuTime() - myTime;
     if (learnt) {
-        runStats.learntCacheBased = tmp;
+        runStats.redCacheBased = tmp;
     } else {
-        runStats.nonlearntCacheBased = tmp;
+        runStats.irredCacheBased = tmp;
     }
 
     return control->ok;

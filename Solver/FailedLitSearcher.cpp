@@ -195,13 +195,16 @@ end:
     }
     runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
-    runStats.myTime = cpuTime() - myTime;
+    runStats.cpu_time = cpuTime() - myTime;
     runStats.propStats = control->propStats;
     globalStats += runStats;
 
     //Print & update stats
-    if (control->conf.verbosity  >= 1) {
-        runStats.print(control->nVars());
+    if (control->conf.verbosity >= 1) {
+        if (control->conf.verbosity >= 3)
+            runStats.print(control->nVars());
+        else
+            runStats.printShort();
     }
 
     control->testAllClauseAttach();

@@ -63,10 +63,30 @@ class ClauseVivifier {
                 potentialClauses += other.potentialClauses;
 
                 //Cache-based learnt
-                learntCacheBased += other.learntCacheBased;
-                nonlearntCacheBased += other.nonlearntCacheBased;
+                irredCacheBased += other.irredCacheBased;
+                redCacheBased += other.redCacheBased;
 
                 return *this;
+            }
+
+            void printShort() const
+            {
+                //Norm Asymm
+                cout
+                << "c asymm "
+                << " cl-useful: "<< numClShorten
+                << "/" << checkedClauses << "/" << potentialClauses
+
+                << " lits-rem:" << numLitsRem
+                << " 0-depth-assigns:" << zeroDepthAssigns
+                << " T: " << timeNorm << " s"
+                << endl;
+
+                //Irred cache-based asymm
+                irredCacheBased.printShort("irred");
+
+                //Irred cache-based asymm
+                redCacheBased.printShort("red");
             }
 
             void print(const size_t nVars) const
@@ -92,11 +112,11 @@ class ClauseVivifier {
                     , "% of vars"
                 );
 
-                cout << "c --> cache-based on non-learnt " << endl;
-                nonlearntCacheBased.print();
+                cout << "c --> cache-based on irred cls" << endl;
+                irredCacheBased.print();
 
-                cout << "c --> cache-based on learnt " << endl;
-                learntCacheBased.print();
+                cout << "c --> cache-based on red cls" << endl;
+                redCacheBased.print();
                 cout << "c -------- ASYMM STATS END --------" << endl;
             }
 
@@ -131,6 +151,19 @@ class ClauseVivifier {
                 {
                     CacheBased tmp;
                     *this = tmp;
+                }
+
+                void printShort(const string type) const
+                {
+                    cout << "c vivif2 "
+                    << std::setw(5) << type
+                    << "-- "
+                    << " cl tried " << std::setw(8) << tried
+                    << " cl-sh " << std::setw(7) << shrinked
+                    << " cl-rem " << std::setw(7) << numClSubsumed
+                    << " lit-rem " << std::setw(7) << numLitsRem
+                    << " time: " << cpu_time
+                    << endl;
                 }
 
                 void print() const
@@ -169,8 +202,8 @@ class ClauseVivifier {
                 }
             };
 
-            CacheBased learntCacheBased;
-            CacheBased nonlearntCacheBased;
+            CacheBased irredCacheBased;
+            CacheBased redCacheBased;
         };
 
         const Stats& getStats() const;
@@ -194,7 +227,7 @@ class ClauseVivifier {
         //Global status
         Stats runStats;
         Stats globalStats;
-        uint32_t numCalls;
+        size_t numCalls;
 
 };
 

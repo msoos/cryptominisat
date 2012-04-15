@@ -146,6 +146,8 @@ public:
             //Startup stats
             , origNumFreeVars(0)
             , origNumMaxElimVars(0)
+            , origNumIrredLongClauses(0)
+            , origNumRedLongClauses(0)
 
             //Each algo
             , subsBinWithBin(0)
@@ -196,6 +198,8 @@ public:
             //Startup stats
             origNumFreeVars += other.origNumFreeVars;
             origNumMaxElimVars += other.origNumMaxElimVars;
+            origNumIrredLongClauses += other.origNumIrredLongClauses;
+            origNumRedLongClauses += other.origNumRedLongClauses;
 
             //Each algo
             subsBinWithBin += other.subsBinWithBin;
@@ -217,6 +221,39 @@ public:
             zeroDepthAssings += other.zeroDepthAssings;
 
             return *this;
+        }
+
+        void printShort() const
+        {
+            //Subs bin-w-bin
+            cout
+            << "c bin-w-bin subsume "
+            << "rem " << subsBinWithBin
+            << " time: " << std::fixed << std::setprecision(2)
+            << subsBinWithBinTime
+            << endl;
+
+            //STRENGTH + SUBSUME
+            cout << "c"
+            << " lits-rem: " << litsRemStrengthen
+            << " cl-subs: " << clauses_subsumed
+            << " / " << origNumMaxElimVars
+            << " / " << origNumFreeVars
+            << " time: " << std::fixed << std::setprecision(2)
+            << (subsumeTime+strengthenTime) << " s"
+            << endl;
+
+            //ELIM
+            cout
+            << "c"
+            << " v-elim: " << numVarsElimed
+            << " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
+            << " learnt long-cl-rem-th-elim: " << longLearntClRemThroughElim
+            << " learnt bin-cl-rem-th-elim: " << binLearntClRemThroughElim
+            << " v-fix: " << std::setw(4) << zeroDepthAssings
+            << " T: " << std::fixed << std::setprecision(2)
+            << varElimTime << " s"
+            << endl;
         }
 
         void print(const size_t nVars) const
@@ -291,6 +328,8 @@ public:
         //Startup stats
         uint64_t origNumFreeVars;
         uint64_t origNumMaxElimVars;
+        uint64_t origNumIrredLongClauses;
+        uint64_t origNumRedLongClauses;
 
         //Each algorithm
         uint64_t subsBinWithBin;

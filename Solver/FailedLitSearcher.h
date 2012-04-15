@@ -65,7 +65,7 @@ class FailedLitSearcher {
         {
             Stats() :
                 //Time
-                myTime(0)
+                cpu_time(0)
 
                 //Probe stats
                 , numFailed(0)
@@ -91,7 +91,7 @@ class FailedLitSearcher {
             Stats& operator +=(const Stats& other)
             {
                 //Time
-                myTime += other.myTime;
+                cpu_time += other.cpu_time;
 
                 //Probe stats
                 numFailed += other.numFailed;
@@ -118,7 +118,7 @@ class FailedLitSearcher {
             {
                 cout << "c -------- PROBE STATS ----------" << endl;
                 printStatsLine("c probe time"
-                    , myTime
+                    , cpu_time
                 );
 
                 printStatsLine("c 0-depth-assigns"
@@ -128,7 +128,7 @@ class FailedLitSearcher {
 
                 printStatsLine("c probed"
                     , numProbed
-                    , (double)numProbed/myTime
+                    , (double)numProbed/cpu_time
                     , "probe/sec");
 
                 printStatsLine("c failed"
@@ -161,17 +161,36 @@ class FailedLitSearcher {
                 );
 
                 printStatsLine("c time"
-                    , myTime
+                    , cpu_time
                     , "s");
 
-                propStats.print(myTime);
-
-                conflStats.print(myTime);
+                conflStats.print(cpu_time);
+                propStats.print(cpu_time);
                 cout << "c -------- PROBE STATS END ----------" << endl;
             }
 
+            void printShort() const
+            {
+                cout
+                << "c"
+                << " 0-depth assigns: " << zeroDepthAssigns
+                << " Flit: " << numFailed
+                << " Visited: " << numVisited << " / " << (origNumFreeVars*2) // x2 because it's LITERAL visit
+                << "(" << std::setprecision(1) << (100.0*(double)numVisited/(double)(origNumFreeVars*2)) << "%)"
+                << " probed: " << numProbed
+                << " Bin:" << addedBin
+                << " RemBin:" << removedBin
+
+                << " P: " << std::fixed << std::setprecision(1)
+                << (double)(propStats.bogoProps)/1000000.0  << "M"
+
+                << " T: " << std::fixed << std::setprecision(2)
+                << cpu_time
+                << endl;
+            }
+
             //Time
-            double myTime;
+            double cpu_time;
 
             //Probe stats
             uint64_t numFailed;

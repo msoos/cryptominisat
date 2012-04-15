@@ -104,7 +104,6 @@ SolverConf::SolverConf() :
         , doMixXorAndGates (false)
 
         //Verbosity
-        , verboseSubsumer  (false)
         , doPrintGateDot   (false)
         , doPrintConflDot  (false)
 

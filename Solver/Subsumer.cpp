@@ -1172,18 +1172,18 @@ bool Subsumer::simplifyBySubsumption()
     toDecrease = &numMaxSubsume1;
     if (control->clauses.size() < 10000000)
         std::sort(control->clauses.begin(), control->clauses.end(), sortBySize());
+    runStats.origNumIrredLongClauses = control->clauses.size();
     addedClauseLits += addFromSolver(control->clauses);
+
     if (control->learnts.size() < 300000)
         std::sort(control->learnts.begin(), control->learnts.end(), sortBySize());
+    runStats.origNumRedLongClauses = control->learnts.size();
     addedClauseLits += addFromSolver(control->learnts);
     runStats.origNumFreeVars = control->getNumFreeVars();
     setLimits();
 
     //Print link-in and startup time
     double linkInTime = cpuTime() - myTime;
-    if (control->conf.verbosity >= 1) {
-        cout << "c subsumer startup&link-in time: " << linkInTime << endl;
-    }
     runStats.linkInTime += linkInTime;
 
     //Do stuff with binaries
@@ -1235,11 +1235,11 @@ end:
     globalStats += runStats;
 
     //Print stats
-    if (control->conf.verbosity  >= 1) {
-        runStats.print(control->nVars());
-
-        if (control->conf.verboseSubsumer)
-            gateFinder->printGateStats();
+    if (control->conf.verbosity >= 1) {
+        if (control->conf.verbosity >= 3)
+            runStats.print(control->nVars());
+        else
+            runStats.printShort();
     }
 
     //Sanity checks
@@ -1458,7 +1458,8 @@ void Subsumer::blockClauses()
     }
 
     if (control->conf.verbosity >= 1) {
-        cout << "c"
+        cout
+        << "c blocking"
         << " through: " << wenThrough
         << " blocked: " << blocked
         << " T : " << std::fixed << std::setprecision(2) << std::setw(6) << (cpuTime() - myTime)
