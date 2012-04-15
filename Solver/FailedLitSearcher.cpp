@@ -201,9 +201,7 @@ end:
 
     //Print & update stats
     if (control->conf.verbosity  >= 1) {
-        cout << "c -------- PROBE STATS ----------" << endl;
         runStats.print(control->nVars());
-        cout << "c -------- PROBE STATS ----------" << endl;
     }
 
     control->testAllClauseAttach();

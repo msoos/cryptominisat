@@ -116,6 +116,7 @@ class FailedLitSearcher {
 
             void print(const size_t nVars) const
             {
+                cout << "c -------- PROBE STATS ----------" << endl;
                 printStatsLine("c probe time"
                     , myTime
                 );
@@ -166,6 +167,7 @@ class FailedLitSearcher {
                 propStats.print(myTime);
 
                 conflStats.print(myTime);
+                cout << "c -------- PROBE STATS END ----------" << endl;
             }
 
             //Time

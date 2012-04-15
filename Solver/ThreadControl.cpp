@@ -1350,7 +1350,6 @@ void ThreadControl::printFullStats()
     );
 
     //Failed lit stats
-    cout << "c -------- PROBE STATS ----------" << endl;
     printStatsLine("c probing time"
         , failedLitSearcher->getStats().myTime
         , failedLitSearcher->getStats().myTime/cpu_time*100.0
@@ -1358,7 +1357,6 @@ void ThreadControl::printFullStats()
     );
 
     failedLitSearcher->getStats().print(nVars());
-    cout << "c -------- PROBE STATS ----------" << endl;
 
     //Subsumer stats
     printStatsLine("c SatELite time"
@@ -1367,9 +1365,7 @@ void ThreadControl::printFullStats()
         , "% time"
     );
 
-    cout << "c -------- SatELite STATS ----------" << endl;
-    subsumer->getStats().print(cpu_time);
-    cout << "c -------- SatELite STATS ----------" << endl;
+    subsumer->getStats().print(control->nVars());
 
     //GateFinder stats
     printStatsLine("c gatefinder time"

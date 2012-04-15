@@ -1236,9 +1236,7 @@ end:
 
     //Print stats
     if (control->conf.verbosity  >= 1) {
-        cout << "c -------- SatELite STATS ----------" << endl;
         runStats.print(control->nVars());
-        cout << "c -------- SatELite STATS ----------" << endl;
 
         if (control->conf.verboseSubsumer)
             gateFinder->printGateStats();
