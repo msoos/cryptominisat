@@ -703,12 +703,15 @@ sorted and then removed
 */
 void ThreadControl::reduceDB()
 {
+    const double myTime = cpuTime();
     nbReduceDB++;
+    CleaningStats tmpStats;
+    tmpStats.origNumClauses = learnts.size();
+    tmpStats.origNumLits = learntsLits - numBinsLearnt*2;
 
     //Calculate how much to remove
     uint32_t removeNum = (double)learnts.size() * conf.ratioRemoveClauses;
 
-    size_t alreadyRemoved = 0;
     if (conf.doPreClauseCleanPropAndConfl) {
         //Reduce based on props&confls
         size_t i, j;
@@ -719,38 +722,48 @@ void ThreadControl::reduceDB()
                 && cl->stats.conflictNumIntroduced + conf.preCleanMinConflTime
                     < sumStats.conflStats.numConflicts
             ) {
+                //Stat update
+                tmpStats.preRemovedClauses++;
+                tmpStats.preRemovedClausesLits += cl->size();
+                tmpStats.preRemovedClausesGlue += cl->stats.glue;
+                if (cl->stats.glue > cl->size()) {
+                    cout
+                    << "c DEBUG strangely large glue: " << *cl
+                    << " glue: " << cl->stats.glue
+                    << " size: " << cl->size()
+                    << endl;
+                }
+
+                //detach&free
                 detachClause(*cl);
                 clAllocator->clauseFree(cl);
-                alreadyRemoved++;
+
             } else {
                 learnts[j++] = learnts[i];
             }
         }
         learnts.resize(learnts.size() -(i-j));
-
-        //Print how many have been removed thanks to pre-clean
-        if (conf.verbosity >= 2) {
-            cout
-            << "c cleaning learnts. Pre-clean removed: "
-            << alreadyRemoved
-            << endl;
-        }
     }
 
+    //Clean according to type
+    tmpStats.clauseCleaningType = conf.clauseCleaningType;
     switch (conf.clauseCleaningType) {
         case CLEAN_CLAUSES_GLUE_BASED :
             //Sort for glue-based removal
             std::sort(learnts.begin(), learnts.end(), reduceDBStructGlue());
+            tmpStats.glueBasedClean = 1;
             break;
 
         case CLEAN_CLAUSES_SIZE_BASED :
             //Sort for glue-based removal
             std::sort(learnts.begin(), learnts.end(), reduceDBStructSize());
+            tmpStats.sizeBasedClean = 1;
             break;
 
         case CLEAN_CLAUSES_PROPCONFL_BASED :
             //Sort for glue-based removal
             std::sort(learnts.begin(), learnts.end(), reduceDBStructPropConfl());
+            tmpStats.propConflBasedClean = 1;
             break;
     }
 
@@ -762,26 +775,22 @@ void ThreadControl::reduceDB()
     }
     #endif
 
-    if (conf.verbosity >= 2) {
+    /*if (conf.verbosity >= 2) {
         cout << "c To remove (according to remove ratio): " << removeNum;
-        if (removeNum <= alreadyRemoved)
+        if (removeNum <= tmpStats.preRemovedClauses)
             removeNum = 0;
         else
-            removeNum -= alreadyRemoved;
+            removeNum -= tmpStats.preRemovedClauses;
         cout << " -- still to be removed: " << removeNum << endl;
-    }
+    }*/
 
-    //Statistics about clauses removed
-    uint32_t totalNumRemoved = 0;
-    uint32_t totalNumNonRemoved = 0;
-    uint64_t totalGlueOfRemoved = 0;
-    uint64_t totalSizeOfRemoved = 0;
-    uint64_t totalGlueOfNonRemoved = 0;
-    uint64_t totalSizeOfNonRemoved = 0;
-    uint32_t numThreeLongLearnt = 0;
-
+    //Remove normally
     size_t i, j;
-    for (i = j = 0; i < std::min(removeNum, (uint32_t)learnts.size()); i++) {
+    for (i = j = 0
+        ; i < learnts.size() && tmpStats.removedClauses < removeNum
+        ; i++
+    ) {
+        //Prefetch next clause
         if (i+1 < learnts.size())
             __builtin_prefetch(learnts[i+1], 0);
 
@@ -791,27 +800,31 @@ void ThreadControl::reduceDB()
             && cl->size() > 3 //we cannot update activity of 3-longs because of watchlists
             && cl->stats.numPropAndConfl < conf.clauseCleanNeverCleanAtOrAboveThisPropConfl
         ) {
-            totalGlueOfRemoved += cl->stats.glue;
-            totalSizeOfRemoved += cl->size();
-            totalNumRemoved++;
+            //Stats
+            tmpStats.removedClauses++;
+            tmpStats.removedClausesLits+= cl->size();
+            tmpStats.removedClausesGlue += cl->stats.glue;
+
+            //detach & free
             detachClause(*cl);
             clAllocator->clauseFree(cl);
         } else {
-            totalGlueOfNonRemoved += cl->stats.glue;
-            totalSizeOfNonRemoved += cl->size();
-            totalNumNonRemoved++;
-            numThreeLongLearnt += (cl->size()==3);
-            removeNum++;
+            //Stats
+            tmpStats.remainClauses++;
+            tmpStats.remainClausesLits+= cl->size();
+            tmpStats.remainClausesGlue += cl->stats.glue;
+
             learnts[j++] = cl;
         }
     }
 
     //Count what is left
     for (; i < learnts.size(); i++) {
-        totalGlueOfNonRemoved += learnts[i]->stats.glue;
-        totalSizeOfNonRemoved += learnts[i]->size();
-        totalNumNonRemoved++;
-        numThreeLongLearnt += (learnts[i]->size()==3);
+        const Clause* cl = learnts[i];
+        tmpStats.remainClauses++;
+        tmpStats.remainClausesLits+= cl->size();
+        tmpStats.remainClausesGlue += cl->stats.glue;
+
         learnts[j++] = learnts[i];
     }
 
@@ -819,30 +832,14 @@ void ThreadControl::reduceDB()
     learnts.resize(learnts.size() - (i - j));
 
     //Print results
+    tmpStats.cpu_time = cpuTime() - myTime;
     if (conf.verbosity >= 1) {
-        cout
-        << "c cleaning by " << getNameOfCleanType(conf.clauseCleaningType)
-        << " rem " << totalNumRemoved
-        << "  avgGlue " << std::fixed << std::setw(5) << std::setprecision(2)
-        << ((double)totalGlueOfRemoved/(double)totalNumRemoved)
-
-        << "  avgSize "
-        << std::fixed << std::setprecision(2) << ((double)totalSizeOfRemoved/(double)totalNumRemoved)
-        << endl;
-
-        cout
-        << "c remain " << totalNumNonRemoved
-
-        << "  avgGlue " << std::fixed << std::setprecision(2)
-        << ((double)totalGlueOfNonRemoved/(double)totalNumNonRemoved)
-
-        << "  avgSize " << std::fixed << std::setprecision(2)
-        << ((double)totalSizeOfNonRemoved/(double)totalNumNonRemoved)
-
-        //<< "  3-long: " << std::setw(6) << numThreeLongLearnt
-        << "  sumConflicts:" << sumStats.conflStats.numConflicts
-        << endl;
+        if (conf.verbosity >= 3)
+            tmpStats.print(1);
+        else
+            tmpStats.printShort();
     }
+    cleaningStats += tmpStats;
 }
 
 lbool ThreadControl::solve()
@@ -1342,6 +1339,13 @@ void ThreadControl::printFullStats()
     std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
     sumStats.print();
     std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
+
+    printStatsLine("c clause clean time"
+        , cleaningStats.cpu_time
+        , (double)cleaningStats.cpu_time/cpu_time*100.0
+        , "% time"
+    );
+    cleaningStats.print(nbReduceDB);
 
     printStatsLine("c 0-depth assigns", trail.size()
         , (double)trail.size()/(double)nVars()*100.0
