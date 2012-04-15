@@ -247,6 +247,9 @@ public:
             printStatsLine("c cl-subs"
                 , clauses_subsumed);
 
+            printStatsLine("c subs bin-w-bin"
+                , subsBinWithBin);
+
             printStatsLine("c blocked"
                 , blocked);
 

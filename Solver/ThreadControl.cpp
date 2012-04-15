@@ -1902,8 +1902,10 @@ void ThreadControl::checkNoWrongAttach() const
     return;
     #endif //VERBOSE_DEBUG
 
-    for (vector<Clause*>::const_iterator i = learnts.begin(), end = learnts.end(); i != end; i++) {
-
+    for (vector<Clause*>::const_iterator
+        i = learnts.begin(), end = learnts.end()
+        ; i != end; i++
+    ) {
         const Clause& cl = **i;
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (i > 0) assert(cl[i-1].var() != cl[i].var());

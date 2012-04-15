@@ -1397,7 +1397,7 @@ void Subsumer::checkForElimedVars()
 void Subsumer::blockClauses()
 {
     const double myTime = cpuTime();
-    uint32_t blocked = 0;
+    size_t blocked = 0;
     size_t blockedLits = 0;
     size_t wenThrough = 0;
     size_t index = clauses.size()-1;
