@@ -43,16 +43,6 @@ bool ClauseVivifier::SortBySize::operator()(const Clause* x, const Clause* y)
 ClauseVivifier::ClauseVivifier(ThreadControl* _control) :
     control(_control)
     , numCalls(0)
-    , totalTimeAsymm(0)
-    , totalZeroDepthAssignsAsymm(0)
-    , totalNumClShortenAsymm(0)
-    , totalNumLitsRemAsymm(0)
-    , totalTimeCacheLearnt(0)
-    , totalNumLitsRemCacheLearnt(0)
-    , totalNumClSubsumedCacheLearnt(0)
-    , totalTimeCacheNonLearnt(0)
-    , totalNumLitsRemCacheNonLearnt(0)
-    , totalNumClSubsumedCacheNonLearnt(0)
 {}
 
 bool ClauseVivifier::vivify()
@@ -60,22 +50,25 @@ bool ClauseVivifier::vivify()
     assert(control->ok);
     #ifdef VERBOSE_DEBUG
     cout << "c clauseVivifier started" << endl;
-    //control->printAllClauses();
     #endif //VERBOSE_DEBUG
 
     control->clauseCleaner->cleanClauses(control->clauses, ClauseCleaner::clauses);
     numCalls++;
 
     if (!vivifyClausesCache(control->clauses, false))
-        return false;
+        goto end;
 
     if (!vivifyClausesCache(control->learnts, true))
-        return false;
+        goto end;
 
     if (!vivifyClausesNormal())
-        return false;
+        goto end;
 
-    return true;
+end:
+    globalStats += runStats;
+    runStats.print(control->nVars());
+
+    return control->ok;
 }
 
 struct BinSorter2 {
@@ -109,8 +102,6 @@ bool ClauseVivifier::vivifyClausesNormal()
 {
     assert(control->ok);
 
-    uint32_t effective = 0;
-    uint32_t effectiveLit = 0;
     double myTime = cpuTime();
     const size_t origTrailSize = control->trail.size();
 
@@ -122,8 +113,7 @@ bool ClauseVivifier::vivifyClausesNormal()
     uint64_t extraDiff = 0;
     uint64_t oldBogoProps = control->propStats.bogoProps;
     bool needToFinish = false;
-    uint32_t checkedClauses = 0;
-    uint32_t potentialClauses = control->clauses.size();
+    runStats.potentialClauses = control->clauses.size();
     vector<Lit> lits;
     vector<Lit> unused;
 
@@ -160,7 +150,7 @@ bool ClauseVivifier::vivifyClausesNormal()
 
         Clause& c = **i;
         extraDiff += c.size();
-        checkedClauses++;
+        runStats.checkedClauses++;
 
         assert(c.size() > 2);
         assert(!c.learnt());
@@ -191,7 +181,7 @@ bool ClauseVivifier::vivifyClausesNormal()
         assert(control->ok);
 
         if (unused.size() > 0 || (failed && done < lits.size())) {
-            effective++;
+            runStats.numClShorten++;
             uint32_t origSize = lits.size();
             #ifdef ASSYM_DEBUG
             cout << "Assym branch effective." << endl;
@@ -211,7 +201,7 @@ bool ClauseVivifier::vivifyClausesNormal()
             #endif
             extraDiff += 20;
             //TODO cheating here: we don't detect a NULL return that is in fact a 2-long clause
-            effectiveLit += origSize - (c2 == NULL ? 0 : c2->size());
+            runStats.numLitsRem += origSize - (c2 == NULL ? 0 : c2->size());
             control->clAllocator->clauseFree(&c);
 
             if (c2 != NULL) {
@@ -227,21 +217,8 @@ bool ClauseVivifier::vivifyClausesNormal()
         }
     }
     control->clauses.resize(control->clauses.size()- (i-j));
-
-    //Handle results
-    if (control->conf.verbosity  >= 1) {
-        cout
-        << "c asymm "
-        << " cl-useful: " << effective << "/" << checkedClauses << "/" << potentialClauses
-        << " lits-rem:" << effectiveLit
-        << " 0-depth-assigns:" << (control->trail.size() - origTrailSize)
-        << " time: " << (cpuTime() - myTime)
-        << endl;
-    }
-    totalTimeAsymm += cpuTime() - myTime;
-    totalNumLitsRemAsymm += effectiveLit;
-    totalNumClShortenAsymm += effective;
-    totalZeroDepthAssignsAsymm += control->trail.size() - origTrailSize;
+    runStats.timeNorm = cpuTime() - myTime;
+    runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
 
     return control->ok;
 }
@@ -251,15 +228,14 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
     assert(control->ok);
 
     //Stats
-    uint32_t litsRem = 0;
-    uint32_t clShrinked = 0;
-    uint32_t clRemoved = 0;
     uint64_t countTime = 0;
     uint64_t maxCountTime = 500000000;
     if (control->clausesLits + control->learntsLits < 300000)
         maxCountTime *= 2;
-    uint32_t clTried = 0;
     double myTime = cpuTime();
+
+    Stats::CacheBased tmp;
+    tmp.totalCls = clauses.size();
 
     //Temps
     vector<Lit> lits;
@@ -282,7 +258,7 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
         Clause& cl = **i;
         assert(cl.size() > 2);
         countTime += cl.size()*2;
-        clTried++;
+        tmp.tried++;
         bool isSubsumed = false;
 
         //Fill 'seen'
@@ -364,7 +340,7 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
         lits.clear();
         for (const Lit *it2 = cl.begin(), *end2 = cl.end(); it2 != end2; it2++) {
             if (seen[it2->toInt()]) lits.push_back(*it2);
-            else litsRem++;
+            else tmp.numLitsRem++;
             seen[it2->toInt()] = 0;
             seen_subs[it2->toInt()] = 0;
         }
@@ -379,10 +355,10 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
         countTime += cl.size()*10;
         control->detachClause(cl);
         if (isSubsumed) {
-            clRemoved++;
+            tmp.numClSubsumed++;
             control->clAllocator->clauseFree(&cl);
         } else {
-            clShrinked++;
+            tmp.shrinked++;
             Clause* c2 = control->addClauseInt(lits, cl.learnt(), cl.stats);
             control->clAllocator->clauseFree(&cl);
 
@@ -393,73 +369,15 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
                 needToFinish = true;
         }
     }
-
     clauses.resize(clauses.size() - (i-j));
 
-    //Handle results
-    if (control->conf.verbosity >= 1) {
-        cout << "c vivif2 -- "
-        << " cl tried " << std::setw(8) << clTried
-        << " cl-sh " << std::setw(7) << clShrinked
-        << " cl-rem " << std::setw(7) << clRemoved
-        << " lit-rem " << std::setw(7) << litsRem
-        << " time: " << (cpuTime() - myTime)
-        << endl;
-    }
+    //Set stats
+    tmp.cpu_time = cpuTime() - myTime;
     if (learnt) {
-        totalTimeCacheLearnt += cpuTime() - myTime;
-        totalNumLitsRemCacheLearnt += litsRem;
-        totalNumClSubsumedCacheLearnt += clRemoved;
+        runStats.learntCacheBased = tmp;
     } else {
-        totalTimeCacheNonLearnt += cpuTime() - myTime;
-        totalNumLitsRemCacheNonLearnt += litsRem;
-        totalNumClSubsumedCacheNonLearnt += clRemoved;
+        runStats.nonlearntCacheBased = tmp;
     }
 
     return control->ok;
-}
-
-double ClauseVivifier::getTotalTimeAsymm() const
-{
-    return totalTimeAsymm;
-}
-
-double ClauseVivifier::getTotalTimeCacheLearnt() const
-{
-    return totalTimeCacheLearnt;
-}
-
-double ClauseVivifier::getTotalTimeCacheNonLearnt() const
-{
-    return totalTimeCacheNonLearnt;
-}
-
-size_t ClauseVivifier::getTotalNumLitsRemCacheLearnt() const
-{
-    return totalNumLitsRemCacheLearnt;
-}
-
-size_t ClauseVivifier::getTotalNumClSubsumedCacheLearnt() const
-{
-    return totalNumClSubsumedCacheLearnt;
-}
-
-size_t ClauseVivifier::getTotalNumClSubsumedCacheNonLearnt() const
-{
-    return totalNumClSubsumedCacheNonLearnt;
-}
-
-size_t ClauseVivifier::getTotalNumLitsRemCacheNonLearnt() const
-{
-    return totalNumLitsRemCacheNonLearnt;
-}
-
-size_t ClauseVivifier::getTotalNumLitsRemAsymm() const
-{
-    return totalNumLitsRemAsymm;
-}
-
-size_t ClauseVivifier::getTotalZeroDepthAssignsAsymm() const
-{
-    return totalZeroDepthAssignsAsymm;
 }

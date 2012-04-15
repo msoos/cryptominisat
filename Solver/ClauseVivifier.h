@@ -34,15 +34,146 @@ class ClauseVivifier {
     public:
         ClauseVivifier(ThreadControl* control);
         bool vivify();
-        double getTotalTimeAsymm() const;
-        double getTotalTimeCacheLearnt() const;
-        double getTotalTimeCacheNonLearnt() const;
-        size_t getTotalNumLitsRemCacheLearnt() const;
-        size_t getTotalNumLitsRemCacheNonLearnt() const;
-        size_t getTotalNumLitsRemAsymm() const;
-        size_t getTotalZeroDepthAssignsAsymm() const;
-        size_t getTotalNumClSubsumedCacheLearnt() const;
-        size_t getTotalNumClSubsumedCacheNonLearnt() const;
+
+        struct Stats
+        {
+            Stats() :
+                //Asymm
+                timeNorm(0)
+                , zeroDepthAssigns(0)
+                , numClShorten(0)
+                , numLitsRem(0)
+                , checkedClauses(0)
+                , potentialClauses(0)
+            {}
+
+            void clear()
+            {
+                Stats tmp;
+                *this = tmp;
+            }
+
+            Stats& operator+=(const Stats& other)
+            {
+                timeNorm += other.timeNorm;
+                zeroDepthAssigns += other.zeroDepthAssigns;
+                numClShorten += other.numClShorten;
+                numLitsRem += other.numLitsRem;
+                checkedClauses += other.checkedClauses;
+                potentialClauses += other.potentialClauses;
+
+                //Cache-based learnt
+                learntCacheBased += other.learntCacheBased;
+                nonlearntCacheBased += other.nonlearntCacheBased;
+
+                return *this;
+            }
+
+            void print(const size_t nVars) const
+            {
+                //Asymm
+                cout << "c -------- ASYMM STATS --------" << endl;
+                printStatsLine("c time",
+                    timeNorm
+                );
+
+                printStatsLine("c asymm/checked/potential"
+                    , numClShorten
+                    , checkedClauses
+                    , potentialClauses
+                );
+
+                printStatsLine("c lits-rem",
+                    numLitsRem
+                );
+                printStatsLine("c 0-depth-assigns",
+                    zeroDepthAssigns
+                    , (double)zeroDepthAssigns/(double)nVars
+                    , "% of vars"
+                );
+
+                cout << "c --> cache-based on non-learnt " << endl;
+                nonlearntCacheBased.print();
+
+                cout << "c --> cache-based on learnt " << endl;
+                learntCacheBased.print();
+                cout << "c -------- ASYMM STATS END --------" << endl;
+            }
+
+            //Asymm
+            double timeNorm;
+            uint64_t zeroDepthAssigns;
+            uint64_t numClShorten;
+            uint64_t numLitsRem;
+            uint64_t checkedClauses;
+            uint64_t potentialClauses;
+
+            //Cache learnt
+            struct CacheBased
+            {
+                double cpu_time;
+                uint64_t numLitsRem;
+                uint64_t numClSubsumed;
+                uint64_t tried;
+                uint64_t shrinked;
+                uint64_t totalCls;
+
+                CacheBased() :
+                    cpu_time(0)
+                    , numLitsRem(0)
+                    , numClSubsumed(0)
+                    , tried(0)
+                    , shrinked(0)
+                    , totalCls(0)
+                {}
+
+                void clear()
+                {
+                    CacheBased tmp;
+                    *this = tmp;
+                }
+
+                void print() const
+                {
+                    printStatsLine("c time"
+                        , cpu_time
+                    );
+
+                    printStatsLine("c shrinked/tried/total"
+                        , shrinked
+                        , tried
+                        , totalCls
+                    );
+
+                    printStatsLine("c subsumed/tried/total"
+                        , numClSubsumed
+                        , tried
+                        , totalCls
+                    );
+
+                    printStatsLine("c lits-rem"
+                        , numLitsRem
+                    );
+                }
+
+                CacheBased& operator+=(const CacheBased& other)
+                {
+                    cpu_time += other.cpu_time;
+                    numLitsRem += other.numLitsRem;
+                    numClSubsumed += other.numClSubsumed;
+                    tried += other.tried;
+                    shrinked += other.shrinked;
+                    totalCls += other.totalCls;
+
+                    return  *this;
+                }
+            };
+
+            CacheBased learntCacheBased;
+            CacheBased nonlearntCacheBased;
+        };
+
+        const Stats& getStats() const;
 
     private:
 
@@ -61,19 +192,15 @@ class ClauseVivifier {
         ThreadControl* control;
 
         //Global status
+        Stats runStats;
+        Stats globalStats;
         uint32_t numCalls;
-        double totalTimeAsymm;
-        size_t totalZeroDepthAssignsAsymm;
-        size_t totalNumClShortenAsymm;
-        size_t totalNumLitsRemAsymm;
 
-        double totalTimeCacheLearnt;
-        size_t totalNumLitsRemCacheLearnt;
-        size_t totalNumClSubsumedCacheLearnt;
-
-        double totalTimeCacheNonLearnt;
-        size_t totalNumLitsRemCacheNonLearnt;
-        size_t totalNumClSubsumedCacheNonLearnt;
 };
+
+inline const ClauseVivifier::Stats& ClauseVivifier::getStats() const
+{
+    return globalStats;
+}
 
 #endif //CLAUSEVIVIFIER_H

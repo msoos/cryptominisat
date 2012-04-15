@@ -347,6 +347,20 @@ template<class T, class T2> void printStatsLine(
     << endl;
 }
 
+inline void printStatsLine(
+    string left
+    , uint64_t value
+    , uint64_t value2
+    , uint64_t value3
+) {
+    cout
+    << std::fixed << std::left << std::setw(27) << left
+    << ": " << std::setw(11) << std::setprecision(2) << value
+    << "/" << value2
+    << "/" << value3
+    << endl;
+}
+
 template<class T, class T2> void printStatsLine(
     string left
     , T value

@@ -1427,28 +1427,18 @@ void ThreadControl::printFullStats()
 
     //Vivifier-ASYMM stats
     printStatsLine("c Asymm time"
-                    , clauseVivifier->getTotalTimeAsymm()
-                    , clauseVivifier->getTotalTimeAsymm()/cpu_time*100.0
+                    , clauseVivifier->getStats().timeNorm
+                    , clauseVivifier->getStats().timeNorm/cpu_time*100.0
                     , "% time");
-    printStatsLine("c Asymm 0-depth assings", clauseVivifier->getTotalZeroDepthAssignsAsymm());
-    printStatsLine("c Asymm lits rem", clauseVivifier->getTotalNumLitsRemAsymm());
-
-    //Vivifier-cache-based non-learnt stats
     printStatsLine("c cache-vivify-NL time"
-                    , clauseVivifier->getTotalTimeCacheNonLearnt()
-                    , clauseVivifier->getTotalTimeCacheNonLearnt()/cpu_time*100.0
+                    , clauseVivifier->getStats().nonlearntCacheBased.cpu_time
+                    , clauseVivifier->getStats().nonlearntCacheBased.cpu_time/cpu_time*100.0
                     , "% time");
-    printStatsLine("c cache-vivify-NL lits rem", clauseVivifier->getTotalNumLitsRemCacheNonLearnt());
-    printStatsLine("c cache-vivify-NL cl subs", clauseVivifier->getTotalNumClSubsumedCacheNonLearnt());
-
-    //Vivifier-cache-based learnt stats
     printStatsLine("c cache-vivify-L time"
-                    , clauseVivifier->getTotalTimeCacheLearnt()
-                    , clauseVivifier->getTotalTimeCacheLearnt()/cpu_time*100.0
+                    , clauseVivifier->getStats().learntCacheBased.cpu_time
+                    , clauseVivifier->getStats().learntCacheBased.cpu_time/cpu_time*100.0
                     , "% time");
-    printStatsLine("c cache-vivify-L lits rem", clauseVivifier->getTotalNumLitsRemCacheLearnt());
-    printStatsLine("c cache-vivify-L cl subs", clauseVivifier->getTotalNumClSubsumedCacheLearnt());
-
+    clauseVivifier->getStats().print(control->nVars());
 
     //Other stats
     printStatsLine("c Conflicts in UIP"
