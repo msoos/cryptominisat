@@ -175,7 +175,6 @@ class ThreadControl : public CommandControl
         void        reduceDB();           ///<Reduce the set of learnt clauses.
         uint64_t    nbReduceDB;           ///<Number of times learnt clause have been cleaned
         uint64_t    numCleanedLearnts;    ///< Number of times learnt clauses have been removed through simplify() up until now
-        uint32_t    nbClBeforeRed;        ///< Number of learnt clauses before learnt-clause cleaning
         struct reduceDBStructGlue
         {
             bool operator () (const Clause* x, const Clause* y);

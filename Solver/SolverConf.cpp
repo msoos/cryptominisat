@@ -61,7 +61,6 @@ SolverConf::SolverConf() :
 
         , doPerformPreSimp (true)
         , failedLitMultiplier(1.0)
-        , nbClBeforeRedStart(20000)
 
         //Glues
         , updateGlues(true)
