@@ -51,6 +51,7 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
     , numDecisionVars(0)
     , zeroLevAssignsByCNF(0)
     , zeroLevAssignsByThreads(0)
+    , numCallReachCalc(0)
     , clausesLits(0)
     , learntsLits(0)
     , numBinsNonLearnt(0)
@@ -1006,7 +1007,9 @@ end:
 
 void ThreadControl::calcReachability()
 {
-    double myTime = cpuTime();
+    numCallReachCalc++;
+    ReachabilityStats tmpStats;
+    const double myTime = cpuTime();
 
     for (uint32_t i = 0; i < nVars()*2; i++) {
         litReachable[i] = LitReachData();
@@ -1042,12 +1045,46 @@ void ThreadControl::calcReachability()
         }
     }
 
-    if (conf.verbosity >= 3) {
-        cout
-        << "c calculated reachability."
-        << " Time: " << (cpuTime() - myTime)
-        << endl;
+    vector<size_t> forEachSize(nVars()*2, 0);
+    for(vector<LitReachData>::const_iterator
+        it = litReachable.begin(), end = litReachable.end()
+        ; it != end
+        ; it++
+    ) {
+        if (it->lit != lit_Undef)
+            forEachSize[it->lit.toInt()]++;
     }
+
+    size_t lit = 0;
+    for(vector<LitReachData>::const_iterator
+        it = litReachable.begin(), end = litReachable.end()
+        ; it != end
+        ; it++, lit++
+    ) {
+        if (forEachSize[lit])
+            tmpStats.dominators++;
+
+        const size_t var = lit/2;
+
+        //Variable is not used
+        if (varData[var].elimed != ELIMED_NONE
+            || value(var) != l_Undef
+            || !decision_var[var]
+        )
+            continue;
+
+        tmpStats.numLits++;
+        tmpStats.numLitsDependent += (it->lit == lit_Undef) ? 0 : 1;
+    }
+
+    tmpStats.cpu_time = cpuTime() - myTime;
+    if (conf.verbosity >= 1) {
+        if (conf.verbosity >= 3)
+            tmpStats.print();
+        else
+            tmpStats.printShort();
+    }
+    reachStats += tmpStats;
 }
 
 Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
@@ -1347,6 +1384,13 @@ void ThreadControl::printFullStats()
         , "% time"
     );
     cleaningStats.print(nbReduceDB);
+
+    printStatsLine("c reachability time"
+        , reachStats.cpu_time
+        , (double)reachStats.cpu_time/cpu_time*100.0
+        , "% time"
+    );
+    reachStats.print();
 
     printStatsLine("c 0-depth assigns", trail.size()
         , (double)trail.size()/(double)nVars()*100.0

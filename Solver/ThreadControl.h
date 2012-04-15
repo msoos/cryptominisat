@@ -86,7 +86,7 @@ class ThreadControl : public CommandControl
         uint32_t getNumFreeVars() const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
         uint32_t getNumFreeVarsAdv(size_t tail_size_thread) const;                ///<Get the number of non-set, non-elimed, non-replaced etc. vars
         uint32_t getNewToReplaceVars() const;           ///<Return number of variables waiting to be replaced
-        const Stats& getSumStats() const;
+        const Stats& getStats() const;
         uint64_t getNextCleanLimit() const;
         bool     getSavedPolarity(Var var) const;
         uint32_t getSavedActivity(const Var var) const;
@@ -298,6 +298,78 @@ class ThreadControl : public CommandControl
             uint64_t remainClausesGlue;
         };
 
+
+        struct ReachabilityStats
+        {
+            ReachabilityStats() :
+                cpu_time(0)
+                , numLits(0)
+                , dominators(0)
+                , numLitsDependent(0)
+            {}
+
+            ReachabilityStats& operator+=(const ReachabilityStats& other)
+            {
+                cpu_time += other.cpu_time;
+
+                numLits += other.numLits;
+                dominators += other.dominators;
+                numLitsDependent += other.numLitsDependent;
+
+                return *this;
+            }
+
+            void print() const
+            {
+                cout << "c ------- REACHABILITY STATS -------" << endl;
+                printStatsLine("c time"
+                    , cpu_time
+                );
+
+                printStatsLine("c dominator lits"
+                    , (double)dominators/(double)numLits*100.0
+                    , "% of unknowns lits"
+                );
+
+                printStatsLine("c dependent lits"
+                    , (double)(numLitsDependent)/(double)numLits*100.0
+                    , "% of unknown lits"
+                );
+
+                printStatsLine("c avg num. dominated lits"
+                    , (double)numLitsDependent/(double)dominators
+                );
+
+                cout << "c ------- REACHABILITY STATS END -------" << endl;
+            }
+
+            void printShort() const
+            {
+                cout
+                << "c calculated reachability."
+                << " dominator lits: " << std::fixed << std::setprecision(2)
+                << (double)dominators/(double)numLits*100.0
+                << " %"
+
+                << " dependent lits: " << std::fixed << std::setprecision(2)
+                << (double)(numLitsDependent)/(double)numLits*100.0
+                << " %"
+
+                << " avg dependent lits/dominators : " << std::fixed << std::setprecision(2)
+                << (double)numLitsDependent/(double)dominators
+
+                << " Time: " << std::fixed << std::setprecision(2)
+                << cpu_time << " s"
+                << endl;
+            }
+
+            double cpu_time;
+
+            size_t numLits;
+            size_t dominators;
+            size_t numLitsDependent;
+        };
+
         //Checks
         void checkStats() const;
 
@@ -405,6 +477,8 @@ class ThreadControl : public CommandControl
         //Main up stats
         Stats sumStats;
         CleaningStats cleaningStats;
+        ReachabilityStats reachStats;
+        size_t numCallReachCalc;
 
         /////////////////////
         // Clauses
