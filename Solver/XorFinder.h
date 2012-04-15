@@ -250,7 +250,7 @@ public:
 
         void print(const size_t numCalls) const
         {
-            cout << "--------- XOR STATS ----------" << endl;
+            cout << "c --------- XOR STATS ----------" << endl;
             printStatsLine("c num XOR found on avg"
                 , (double)foundXors/(double)numCalls
                 , "avg size"
@@ -271,7 +271,7 @@ public:
             printStatsLine("c XOR bin found"
                 , newBins
             );
-            cout << "--------- XOR STATS END ----------" << endl;
+            cout << "c --------- XOR STATS END ----------" << endl;
         }
 
         //Time

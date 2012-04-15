@@ -513,7 +513,7 @@ inline uint32_t ThreadControl::getVerbosity() const
     return conf.verbosity;
 }
 
-inline const CommandControl::Stats& ThreadControl::getSumStats() const
+inline const CommandControl::Stats& ThreadControl::getStats() const
 {
     return sumStats;
 }

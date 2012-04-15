@@ -1052,6 +1052,7 @@ void ThreadControl::calcReachability()
 
 Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
 {
+    assert(glue < 60000);
     Clause* cl = NULL;
     switch (lits.size()) {
         case 1:
