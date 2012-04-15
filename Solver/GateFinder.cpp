@@ -303,7 +303,8 @@ bool GateFinder::doAllOptimisationWithGates()
         subsumer->toDecrease = &numMaxShortenWithGates;
         runStats.numLongCls = subsumer->runStats.origNumIrredLongClauses +
             subsumer->runStats.origNumRedLongClauses;
-        runStats.numLongClsLits = control->clausesLits + control->learntsLits;
+        runStats.numLongClsLits = control->clausesLits + control->learntsLits
+            - control->numBinsLearnt*2 - control->numBinsNonLearnt;
 
         //Go through each gate, see if we can do something with it
         for (vector<OrGate>::const_iterator
