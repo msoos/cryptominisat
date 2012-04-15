@@ -127,8 +127,6 @@ class ThreadControl : public CommandControl
 
         /////////////////////
         //Stats
-        template<class T, class T2> void printStatsLine(string left, T value, T2 value2, string extra);
-        template<class T> void printStatsLine(string left, T value, string extra = "");
         vector<uint32_t> backupActivity;
         vector<bool>     backupPolarity;
         uint32_t         backupActivityInc;

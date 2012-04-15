@@ -1445,29 +1445,6 @@ void ThreadControl::printFullStats()
     printStatsLine("c Total time", cpu_time);
 }
 
-template<class T, class T2>
-void ThreadControl::printStatsLine(std::string left, T value, T2 value2, std::string extra)
-{
-    cout
-    << std::fixed << std::left << std::setw(27) << left
-    << ": " << std::setw(11) << std::setprecision(2) << value
-    << " (" << std::left << std::setw(9) << std::setprecision(2) << value2 << " "
-    << extra << ")"
-    << std::right
-    << endl;
-}
-
-template<class T>
-void ThreadControl::printStatsLine(std::string left, T value, std::string extra)
-{
-    cout
-    << std::fixed << std::left << std::setw(27) << left
-    << ": " << std::setw(11) << std::setprecision(2) << value
-    << extra
-    << std::right
-    << endl;
-}
-
 void ThreadControl::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const
 {
     uint32_t wsLit = 0;
