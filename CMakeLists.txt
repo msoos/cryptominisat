@@ -19,7 +19,8 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/m4-extra) #m4-extra contains some li
 # Set build flags if compiler if gcc
 # -----------------------------------------------------------------------------
 if (CMAKE_COMPILER_IS_GNUCC)
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "  -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O2 -mtune=native")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        "-pedantic -Wall -Wextra -Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wno-deprecated -g -fno-omit-frame-pointer -O2 -mtune=native")
     SET(CMAKE_CXX_FLAGS_DEBUG "-Wunused -Wsign-compare -Wtype-limits -Wuninitialized -Wall -Wno-deprecated -O0 -ggdb")
     SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-deprecated -O2 -g -DNDEBUG -mtune=native") #-fprofile-generate / -fprofile-use
 endif(CMAKE_COMPILER_IS_GNUCC)
@@ -97,7 +98,6 @@ SET(DGtalLibDependencies ${DGtalLibDependencies} ${GMP_LIBRARIES})
 # -----------------------------------------------------------------------------
 add_subdirectory(m4ri)
 add_subdirectory(Solver)
-add_subdirectory(dsharp)
 
 # -----------------------------------------------------------------------------
 # Copy built binaries to root (build) dir
@@ -107,16 +107,9 @@ add_custom_command(
     TARGET copy
     COMMAND ${CMAKE_COMMAND} -E copy Solver/cryptominisat .
     #COMMAND ${CMAKE_COMMAND} -E copy scripts/fuzzers/fuzzSat/fuzzSat ../scripts/
-    COMMAND ${CMAKE_COMMAND} -E copy dsharp/dsharp_exec .
-    COMMAND ${CMAKE_COMMAND} -E copy dsharp/dnnf2cnf/dnnf2cnf .
 )
 add_dependencies(copy
     cryptominisat
-    cnfFuzz
-    vegardFuzz
-    precosat
-    dsharp_exec
-    dnnf2cnf
 )
 
 
