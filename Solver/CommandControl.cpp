@@ -1060,7 +1060,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         }
 
         if (stats.conflStats.numConflicts >= maxConfls) {
-            if (conf.verbosity >= 1) {
+            if (conf.verbosity >= 3) {
                 cout
                 << "c thread(maxconfl) Trail size: " << trail.size()
                 << " over maxConfls"
@@ -1070,7 +1070,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         }
 
         if (sumConflicts() > control->getNextCleanLimit()) {
-            if (conf.verbosity >= 1) {
+            if (conf.verbosity >= 3) {
                 cout
                 << "c th " << omp_get_thread_num() << " cleaning"
                 << " getNextCleanLimit(): " << control->getNextCleanLimit()
