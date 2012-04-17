@@ -1,7 +1,12 @@
+ver 2.9.4 17/04/2012
+* Fixed bug with size()/2 for blocked literal that was nondeterministic
+  Thanks to Philipp Jovanovic for this
+* Fixed bug with uncomputed abstraction for clauses
+
 ver 2.9.3 14/04/2012
 * Fixed bug where execution was nondeterministic if used as a library
 * Fixed bug where we went into an infinite loop after 48 hours when using
-  static restarts
+  static restarts. Thanks to Philipp Jovanovic for this
 * Fixed building issues with DISABLE_ZIP
 
 ver 2.9.2 22/01/2012
