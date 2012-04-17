@@ -92,6 +92,7 @@ public:
         memcpy(getData(), ps.getData(), ps.size()*sizeof(Lit));
         miniSatAct = 0;
         setChanged();
+        calcAbstractionClause();
     }
 
 public:
