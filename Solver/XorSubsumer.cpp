@@ -581,9 +581,14 @@ void XorSubsumer::findSubsumed(XorClause& ps, vec<XorClauseSimp>& out_subsumed)
 
     vec<XorClauseSimp>& cs = occur[ps[min_i].var()];
     for (XorClauseSimp *it = cs.getData(), *end = it + cs.size(); it != end; it++){
-        if (it+1 != end) __builtin_prefetch((it+1)->clause);
+        //Prefetch
+        if (it+1 != end)
+            __builtin_prefetch((it+1)->clause);
 
-        if (it->clause != &ps && subsetAbst(ps.getAbst(), it->clause->getAbst()) && ps.size() <= it->clause->size() && subset(ps, *it->clause)) {
+        if (it->clause != &ps
+            && subsetAbst(ps.getAbst(), it->clause->getAbst()) && ps.size() <= it->clause->size()
+            && subset(ps, *it->clause)
+        ) {
             out_subsumed.push(*it);
             #ifdef VERBOSE_DEBUGSUBSUME0
             cout << "subsumed: ";
