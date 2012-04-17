@@ -550,9 +550,10 @@ void Solver::attachClause(Clause& c)
         #endif
 
     } else {
+        assert(c.size() > 2);
         ClauseOffset offset = clauseAllocator.getOffset(&c);
-        watches[(~c[0]).toInt()].push(Watched(offset, c[c.size()/2]));
-        watches[(~c[1]).toInt()].push(Watched(offset, c[c.size()/2]));
+        watches[(~c[0]).toInt()].push(Watched(offset, c[2]));
+        watches[(~c[1]).toInt()].push(Watched(offset, c[2]));
     }
 
     if (c.learnt())
