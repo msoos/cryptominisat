@@ -2401,8 +2401,9 @@ inline bool Subsumer::allTautologySlim(const Lit lit)
 
 void Subsumer::checkElimedUnassignedAndStats() const
 {
-    uint32_t checkNumElimed = 0;
-    for (uint32_t i = 0; i < var_elimed.size(); i++) {
+    assert(control->ok);
+    uint64_t checkNumElimed = 0;
+    for (size_t i = 0; i < var_elimed.size(); i++) {
         if (var_elimed[i]) {
             checkNumElimed++;
             assert(control->assigns[i] == l_Undef);
