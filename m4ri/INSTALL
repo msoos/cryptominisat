@@ -1,6 +1,0 @@
-To build, get libtools & autoconf & autotools and then :
-
-$ make -f Makefile.cvs
-$ ./configure
-$ make
-

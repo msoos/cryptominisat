@@ -77,6 +77,7 @@ INCLUDE_DIRECTORIES(${GMP_INCLUDE_DIR})
 #SET(DGtalLibDependencies ${DGtalLibDependencies} ${GMPXX_LIBRARIES} ${GMP_LIBRARIES})
 SET(DGtalLibDependencies ${DGtalLibDependencies} ${GMP_LIBRARIES})
 
+find_package(M4RI REQUIRED)
 
 # ---------------
 # Look for VTK
@@ -96,7 +97,7 @@ SET(DGtalLibDependencies ${DGtalLibDependencies} ${GMP_LIBRARIES})
 # -----------------------------------------------------------------------------
 # Compile all subdirs: solver, utilities, fuzzers, etc.
 # -----------------------------------------------------------------------------
-add_subdirectory(m4ri)
+#add_subdirectory(m4ri)
 add_subdirectory(Solver)
 
 # -----------------------------------------------------------------------------
