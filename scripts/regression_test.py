@@ -130,7 +130,7 @@ class Tester:
         if (self.needDebugLib) :
             command += "--debuglib "
         if options.verbose == False:
-            command += "--verbosity=0 "
+            command += "--verb 0 "
         if (newVar) :
             command += "--debugnewvar "
         command += "--threads=%d " % options.num_threads
@@ -486,5 +486,6 @@ if len(args) == 1:
 
 
 if (options.fuzz_test):
+    tester.needDebugLib = False
     tester.check_unsat = True
     tester.fuzz_test()
