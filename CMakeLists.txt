@@ -69,14 +69,6 @@ find_package( Boost 1.34 REQUIRED COMPONENTS program_options)
 link_directories ( ${Boost_LIBRARY_DIRS} )
 include_directories ( ${Boost_INCLUDE_DIRS} )
 
-# -----------------------------------------------------------------------------
-# Look for GMP (The GNU Multiple Precision Arithmetic Library)
-# -----------------------------------------------------------------------------
-FIND_PACKAGE(GMP REQUIRED)
-INCLUDE_DIRECTORIES(${GMP_INCLUDE_DIR})
-#SET(DGtalLibDependencies ${DGtalLibDependencies} ${GMPXX_LIBRARIES} ${GMP_LIBRARIES})
-SET(DGtalLibDependencies ${DGtalLibDependencies} ${GMP_LIBRARIES})
-
 find_package(M4RI REQUIRED)
 
 # ---------------
