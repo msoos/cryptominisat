@@ -739,14 +739,16 @@ void Subsumer::addBackToSolver()
         //All clauses are larger than 2-long
         assert(clauses[i]->size() > 2);
 
-        //Go through each literal
-        for (Clause::const_iterator
-            it = clauses[i]->begin(), end = clauses[i]->end()
-            ; it != end
-            ; it++
-        ) {
-            assert(control->varData[it->var()].elimed == ELIMED_NONE
+        if (control->ok) {
+            //Go through each literal
+            for (Clause::const_iterator
+                it = clauses[i]->begin(), end = clauses[i]->end()
+                ; it != end
+                ; it++
+            ) {
+                assert(control->varData[it->var()].elimed == ELIMED_NONE
                     || control->varData[it->var()].elimed == ELIMED_QUEUED_VARREPLACER);
+            }
         }
 
         //Add clause according to whether it's learnt or not
@@ -898,12 +900,12 @@ bool Subsumer::eliminateVars()
 
         numtry++;
         if (maybeEliminate(order[i])) {
-            if (!control->ok)
-                goto end;
-
             vars_elimed++;
             numMaxElimVars--;
         }
+
+        if (!control->ok)
+            goto end;
     }
 
     #ifdef BIT_MORE_VERBOSITY
@@ -1226,13 +1228,17 @@ end:
     //Add back clauses to solver
     addBackToSolver();
 
-    //Reattach and clean
-    reattacher.reattachNonBins();
-    //ATTENTION: We could be OK=FALSE at this point.
+    if (control->ok) {
+        //Reattach and clean
+        reattacher.reattachNonBins();
+    }
 
     //Update global stats
     runStats.finalCleanupTime += cpuTime() - myTime;
     globalStats += runStats;
+
+    if (control->ok)
+        checkElimedUnassignedAndStats();
 
     //Print stats
     if (control->conf.verbosity >= 1) {
@@ -1243,10 +1249,9 @@ end:
     }
 
     //Sanity checks
-    checkElimedUnassignedAndStats();
     control->testAllClauseAttach();
     control->checkNoWrongAttach();
-    return true;
+    return control->ok;
 }
 
 void Subsumer::checkForElimedVars()
