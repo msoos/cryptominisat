@@ -96,7 +96,7 @@ SolverConf::SolverConf() :
         , doAlwaysFMinim   (false)
         , doER             (false)
         , doCalcReach      (true)
-        , doAsymmTE        (false)
+        , doAsymmTE        (true)
         , doOTFGateShorten (true)
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)

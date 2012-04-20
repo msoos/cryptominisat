@@ -165,6 +165,11 @@ public:
             , longLearntClRemThroughElim(0)
             , binLearntClRemThroughElim(0)
             , numLearntBinVarRemAdded(0)
+            , triedToElimVars(0)
+            , usedAgressiveCheckToELim(0)
+            , newClauses(0)
+            , newClauseNotAdded(0)
+            , newClauseNotAddedFancy(0)
 
             , zeroDepthAssings(0)
         {
@@ -217,6 +222,11 @@ public:
             longLearntClRemThroughElim += other.longLearntClRemThroughElim;
             binLearntClRemThroughElim += other.binLearntClRemThroughElim;
             numLearntBinVarRemAdded += other.numLearntBinVarRemAdded;
+            triedToElimVars += other.triedToElimVars;
+            usedAgressiveCheckToELim += other.usedAgressiveCheckToELim;
+            newClauses += other.newClauses;
+            newClauseNotAdded += other.newClauseNotAdded;
+            newClauseNotAddedFancy += other.newClauseNotAddedFancy;
 
             zeroDepthAssings += other.zeroDepthAssings;
 
@@ -237,22 +247,41 @@ public:
             cout << "c"
             << " lits-rem: " << litsRemStrengthen
             << " cl-subs: " << clauses_subsumed
-            << " / " << origNumMaxElimVars
-            << " / " << origNumFreeVars
             << " time: " << std::fixed << std::setprecision(2)
             << (subsumeTime+strengthenTime) << " s"
             << endl;
 
             //ELIM
             cout
-            << "c"
-            << " v-elim: " << numVarsElimed
-            << " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
-            << " learnt long-cl-rem-th-elim: " << longLearntClRemThroughElim
-            << " learnt bin-cl-rem-th-elim: " << binLearntClRemThroughElim
-            << " v-fix: " << std::setw(4) << zeroDepthAssings
+            << "c [v-elim]"
+            << " elimed: " << numVarsElimed
+            << " / " << origNumMaxElimVars
+            << " / " << origNumFreeVars
+            //<< " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
             << " T: " << std::fixed << std::setprecision(2)
             << varElimTime << " s"
+            << endl;
+
+            cout
+            << "c [v-elim]"
+            << " cl-new: " << newClauses
+            << " ( "
+            << (double)newClauseNotAdded/(double)newClauses*100.0
+            << " % not add, "
+            << " "
+            << (double)newClauseNotAddedFancy/(double)newClauses*100.0
+            << "% complic)"
+            << " tried: " << triedToElimVars
+            << " ("
+            << (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
+            << " % agressive)"
+            << endl;
+
+            cout
+            << "c [v-elim]"
+            << " learnt-bin rem: " << binLearntClRemThroughElim
+            << " learnt-long rem: " << longLearntClRemThroughElim
+            << " v-fix: " << std::setw(4) << zeroDepthAssings
             << endl;
         }
 
@@ -347,6 +376,11 @@ public:
         uint64_t longLearntClRemThroughElim;
         uint64_t binLearntClRemThroughElim;
         uint64_t numLearntBinVarRemAdded;
+        uint64_t triedToElimVars;
+        uint64_t usedAgressiveCheckToELim;
+        uint64_t newClauses;
+        uint64_t newClauseNotAdded;
+        uint64_t newClauseNotAddedFancy;
 
         //General stat
         uint64_t zeroDepthAssings;
@@ -472,7 +506,6 @@ private:
     };
     void subsume0(ClauseIndex c, Clause& ps);
     template<class T> Sub0Ret subsume0(const uint32_t index, const T& ps, const CL_ABST_TYPE abs);
-    void makeNonLearntBin(const Lit lit1, const Lit lit2, const bool learnt);
 
     /////////////////////
     //subsume1
@@ -498,7 +531,14 @@ private:
     void        addLearntBinaries(const Var var);
     void        removeClauses(vector<ClAndBin>& posAll, vector<ClAndBin>& negAll, const Var var);
     void        removeClausesHelper(vector<ClAndBin>& todo, const Lit lit);
-    bool        merge(const ClAndBin& ps, const ClAndBin& qs, const Lit without_p, const Lit without_q, const bool really);
+    bool        merge(
+        const ClAndBin& ps
+        , const ClAndBin& qs
+        , const Lit without_p
+        , const Lit without_q
+        , const bool useCache
+        , const bool final
+    );
     bool        eliminateVars();
     bool        loopSubsumeVarelim();
     void        fillClAndBin(vector<ClAndBin>& all, const Occur& cs, const Lit lit);

@@ -1912,6 +1912,11 @@ bool Subsumer::maybeEliminate(const Var var)
     assert(control->value(var) == l_Undef);
     const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
 
+    //Update stats
+    if (agressiveCheck)
+        runStats.usedAgressiveCheckToELim++;
+    runStats.triedToElimVars++;
+
     //set-up
     const Lit lit = Lit(var, false);
     Occur& poss = occur[lit.toInt()];
@@ -1983,7 +1988,7 @@ bool Subsumer::maybeEliminate(const Var var)
 
             // Merge clauses. If 'y' and '~y' exist, clause will not be created.
             if (!it->learnt && !it2->learnt) {
-                bool ok = merge(*it, *it2, lit, ~lit, agressiveCheck);
+                bool ok = merge(*it, *it2, lit, ~lit, agressiveCheck, false);
                 if (ok) {
                     //Update after-stats
                     if (dummy.size() > 3)
@@ -2025,7 +2030,7 @@ bool Subsumer::maybeEliminate(const Var var)
                 continue;
 
             //Create dot-product
-            bool ok = merge(*it, *it2, lit, ~lit, true);
+            bool ok = merge(*it, *it2, lit, ~lit, true, true);
             if (!ok) continue;
 
             #ifdef VERBOSE_DEBUG_VARELIM
@@ -2158,6 +2163,7 @@ bool Subsumer::merge(
     , const Lit without_p
     , const Lit without_q
     , const bool useCache
+    , const bool final
 ) {
     //If clause has already been freed, skip
     if (!ps.isBin && clauses[ps.clsimp.index] == NULL)
@@ -2169,13 +2175,13 @@ bool Subsumer::merge(
     dummy2.clear(); //Used to clear 'seen'
 
     bool retval = true;
+    bool fancyRemove = false;
     if (ps.isBin) {
         assert(ps.lit1 == without_p);
         assert(ps.lit2 != without_p);
 
         seen[ps.lit2.toInt()] = 1;
         dummy.push_back(ps.lit2);
-        dummy2.push_back(ps.lit2);
     } else {
         Clause& c = *clauses[ps.clsimp.index];
         //assert(!clauseData[ps.clsimp.index].defOfOrGate);
@@ -2184,40 +2190,6 @@ bool Subsumer::merge(
             if (c[i] != without_p){
                 seen[c[i].toInt()] = 1;
                 dummy.push_back(c[i]);
-                dummy2.push_back(c[i]);
-            }
-        }
-    }
-
-    //We add to 'seen' what COULD be added to the clause
-    //This is essentially the reverse of cache-based vivification
-    if (!ps.isBin && useCache && control->conf.doAsymmTE) {
-        for (uint32_t i= 0; i < dummy.size(); i++) {
-
-            //Use cache
-            const vector<LitExtra>& cache = control->implCache[dummy[i].toInt()].lits;
-            numMaxVarElimAgressiveCheck -= cache.size();
-            for(vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
-                if (it->getOnlyNLBin()
-                    && !seen[(~(it->getLit())).toInt()]
-                ) {
-                    Lit toAdd = ~(it->getLit());
-                    dummy2.push_back(toAdd);
-                    seen[toAdd.toInt()] = 1;
-                }
-            }
-
-            //Use watchlists
-            const vec<Watched>& ws = control->watches[(~dummy[i]).toInt()];
-            numMaxVarElimAgressiveCheck -= ws.size();
-            for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
-                if (it->isNonLearntBinary()
-                    && !seen[(~(it->getOtherLit())).toInt()]
-                ) {
-                    Lit toAdd = ~(it->getOtherLit());
-                    dummy2.push_back(toAdd);
-                    seen[toAdd.toInt()] = 1;
-                }
             }
         }
     }
@@ -2228,49 +2200,119 @@ bool Subsumer::merge(
 
         if (seen[(~qs.lit2).toInt()]) {
             retval = false;
+            dummy2 = dummy;
             goto end;
         }
-        if (!seen[qs.lit2.toInt()])
+        if (!seen[qs.lit2.toInt()]) {
             dummy.push_back(qs.lit2);
+            seen[qs.lit2.toInt()] = 1;
+        }
     } else {
         Clause& c = *clauses[qs.clsimp.index];
         //assert(!clauseData[qs.clsimp.index].defOfOrGate);
         numMaxElim -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_q) {
+                //Opposite is inside, nothing to add
                 if (seen[(~c[i]).toInt()]) {
                     retval = false;
+                    dummy2 = dummy;
                     goto end;
                 }
-                if (!seen[c[i].toInt()])
-                    dummy.push_back(c[i]);
-            }
 
-            //See if using the cache we can prove that the clause is a tautology
-            if (useCache && control->conf.doAsymmTE && control->conf.doCache) {
-                const vector<LitExtra>& cache = control->implCache[c[i].toInt()].lits;
+                //Add this
+                if (!seen[c[i].toInt()]) {
+                    dummy.push_back(c[i]);
+                    seen[c[i].toInt()] = 1;
+                }
+            }
+        }
+    }
+    dummy2 = dummy;
+
+    //We add to 'seen' what COULD be added to the clause
+    //This is essentially the reverse of cache-based vivification
+    if (useCache && control->conf.doAsymmTE) {
+        for (size_t i= 0; i < dummy.size(); i++) {
+            const Lit lit = dummy2[i];
+
+            //Use cache -- but only if none of the clauses were binary
+            //Otherwise we cannot tell if the value in the cache is dependent
+            //on the binary clause itself, so that would cause a circular de-
+            //pendency
+            if (!ps.isBin && !qs.isBin) {
+                const vector<LitExtra>& cache = control->implCache[lit.toInt()].lits;
                 numMaxVarElimAgressiveCheck -= cache.size();
-                for(vector<LitExtra>::const_iterator it = cache.begin(), end = cache.end(); it != end; it++) {
-                    if (it->getOnlyNLBin()
-                        && seen[((it->getLit())).toInt()]
-                    ) {
+                for(vector<LitExtra>::const_iterator
+                    it = cache.begin(), end = cache.end()
+                    ; it != end
+                    ; it++
+                ) {
+                    //If learnt, that doesn't help
+                    if (!it->getOnlyNLBin())
+                        continue;
+
+                    const Lit otherLit = it->getLit();
+
+                    //If (a) was in original clause
+                    //then (a V b) means -b can be put inside
+                    if(!seen[(~otherLit).toInt()]) {
+                        dummy2.push_back(~otherLit);
+                        seen[(~otherLit).toInt()] = 1;
+                    }
+
+                    //If (a V b) is non-learnt in the clause, then done
+                    if (seen[otherLit.toInt()]) {
                         retval = false;
+                        fancyRemove = true;
                         goto end;
                     }
                 }
             }
 
-            //See if using wathclists we can prove that the clause is a tautology
-            if (useCache && control->conf.doAsymmTE) {
-                const vec<Watched>& ws = control->watches[(~c[i]).toInt()];
-                numMaxVarElimAgressiveCheck -= ws.size();
-                for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
-                    if (it->isNonLearntBinary()
-                        && seen[((it->getOtherLit())).toInt()]
-                    ) {
+            //Use watchlists
+            //(~lit) because watches are inverted...... this is CONFUSING
+            const vec<Watched>& ws = control->watches[(~lit).toInt()];
+            numMaxVarElimAgressiveCheck -= ws.size();
+            for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
+                if (!it->isNonLearntBinary()) {
+                    if (!it->isBinary())
+                        continue;
+
+                    const Lit otherLit = it->getOtherLit();
+
+                    //If (a V b) is learnt, make it non-learnt and we are done
+                    if (seen[otherLit.toInt()]) {
+                        if (final) {
+                            findWatchedOfBin(control->watches, lit, otherLit, true).setLearnt(false);
+                            findWatchedOfBin(control->watches, otherLit, lit, true).setLearnt(false);
+                            control->numBinsLearnt--;
+                            control->numBinsNonLearnt++;
+                            control->learntsLits -= 2;
+                            control->clausesLits += 2;
+                            //cout << "Removed using new technique!!" << endl;
+                        }
+
                         retval = false;
+                        fancyRemove = true;
                         goto end;
                     }
+                }
+
+                const Lit otherLit = it->getOtherLit();
+
+                //If (a) was in original clause
+                //then (a V b) means -b can be put inside
+                if (!seen[(~otherLit).toInt()]) {
+                    dummy2.push_back(~otherLit);
+                    seen[(~otherLit).toInt()] = 1;
+                }
+
+                //If (a V b) is non-learnt in the clause, then done
+                if (seen[otherLit.toInt()]) {
+                    retval = false;
+                    fancyRemove= true;
+                    goto end;
                 }
             }
         }
@@ -2279,6 +2321,14 @@ bool Subsumer::merge(
     end:
     for (vector<Lit>::const_iterator it = dummy2.begin(), end = dummy2.end(); it != end; it++) {
         seen[it->toInt()] = 0;
+    }
+
+    if (final) {
+        runStats.newClauses++;
+        if (fancyRemove)
+            runStats.newClauseNotAddedFancy++;
+        if (!retval)
+            runStats.newClauseNotAdded++;
     }
 
     return retval;
