@@ -120,6 +120,7 @@ bool ClauseVivifier::vivifyClausesNormal()
     uint64_t oldBogoProps = control->propStats.bogoProps;
     bool needToFinish = false;
     runStats.potentialClauses = control->clauses.size();
+    runStats.numCalled = 1;
     vector<Lit> lits;
     vector<Lit> unused;
 
@@ -240,8 +241,9 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
         maxCountTime *= 2;
     double myTime = cpuTime();
 
-    Stats::CacheBased tmp;
-    tmp.totalCls = clauses.size();
+    Stats::CacheBased tmpStats;
+    tmpStats.totalCls = clauses.size();
+    tmpStats.numCalled = 1;
 
     //Temps
     vector<Lit> lits;
@@ -257,14 +259,16 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
             *j++ = *i;
             continue;
         }
-        if (countTime > maxCountTime)
+        if (countTime > maxCountTime) {
             needToFinish = true;
+            tmpStats.ranOutOfTime++;
+        }
 
         //Setup
         Clause& cl = **i;
         assert(cl.size() > 2);
         countTime += cl.size()*2;
-        tmp.tried++;
+        tmpStats.tried++;
         bool isSubsumed = false;
 
         //Fill 'seen'
@@ -346,7 +350,7 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
         lits.clear();
         for (const Lit *it2 = cl.begin(), *end2 = cl.end(); it2 != end2; it2++) {
             if (seen[it2->toInt()]) lits.push_back(*it2);
-            else tmp.numLitsRem++;
+            else tmpStats.numLitsRem++;
             seen[it2->toInt()] = 0;
             seen_subs[it2->toInt()] = 0;
         }
@@ -361,10 +365,10 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
         countTime += cl.size()*10;
         control->detachClause(cl);
         if (isSubsumed) {
-            tmp.numClSubsumed++;
+            tmpStats.numClSubsumed++;
             control->clAllocator->clauseFree(&cl);
         } else {
-            tmp.shrinked++;
+            tmpStats.shrinked++;
             Clause* c2 = control->addClauseInt(lits, cl.learnt(), cl.stats);
             control->clAllocator->clauseFree(&cl);
 
@@ -378,11 +382,11 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
     clauses.resize(clauses.size() - (i-j));
 
     //Set stats
-    tmp.cpu_time = cpuTime() - myTime;
+    tmpStats.cpu_time = cpuTime() - myTime;
     if (learnt) {
-        runStats.redCacheBased = tmp;
+        runStats.redCacheBased = tmpStats;
     } else {
-        runStats.irredCacheBased = tmp;
+        runStats.irredCacheBased = tmpStats;
     }
 
     return control->ok;

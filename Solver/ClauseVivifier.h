@@ -45,6 +45,7 @@ class ClauseVivifier {
                 , numLitsRem(0)
                 , checkedClauses(0)
                 , potentialClauses(0)
+                , numCalled(0)
             {}
 
             void clear()
@@ -61,6 +62,7 @@ class ClauseVivifier {
                 numLitsRem += other.numLitsRem;
                 checkedClauses += other.checkedClauses;
                 potentialClauses += other.potentialClauses;
+                numCalled += other.numCalled;
 
                 //Cache-based learnt
                 irredCacheBased += other.irredCacheBased;
@@ -73,7 +75,7 @@ class ClauseVivifier {
             {
                 //Norm Asymm
                 cout
-                << "c asymm "
+                << "c [vivif] asymm"
                 << " cl-useful: "<< numClShorten
                 << "/" << checkedClauses << "/" << potentialClauses
 
@@ -93,8 +95,10 @@ class ClauseVivifier {
             {
                 //Asymm
                 cout << "c -------- ASYMM STATS --------" << endl;
-                printStatsLine("c time",
-                    timeNorm
+                printStatsLine("c time"
+                    , timeNorm
+                    , timeNorm/(double)numCalled*100.0
+                    , "per call"
                 );
 
                 printStatsLine("c asymm/checked/potential"
@@ -127,6 +131,7 @@ class ClauseVivifier {
             uint64_t numLitsRem;
             uint64_t checkedClauses;
             uint64_t potentialClauses;
+            uint64_t numCalled;
 
             //Cache learnt
             struct CacheBased
@@ -137,6 +142,8 @@ class ClauseVivifier {
                 uint64_t tried;
                 uint64_t shrinked;
                 uint64_t totalCls;
+                uint64_t ranOutOfTime;
+                uint64_t numCalled;
 
                 CacheBased() :
                     cpu_time(0)
@@ -145,6 +152,8 @@ class ClauseVivifier {
                     , tried(0)
                     , shrinked(0)
                     , totalCls(0)
+                    , ranOutOfTime(0)
+                    , numCalled(0)
                 {}
 
                 void clear()
@@ -155,13 +164,14 @@ class ClauseVivifier {
 
                 void printShort(const string type) const
                 {
-                    cout << "c vivif2 "
+                    cout << "c [vivif] cache-based "
                     << std::setw(5) << type
                     << "-- "
                     << " cl tried " << std::setw(8) << tried
                     << " cl-sh " << std::setw(7) << shrinked
                     << " cl-rem " << std::setw(7) << numClSubsumed
                     << " lit-rem " << std::setw(7) << numLitsRem
+                    << " time-out " << (ranOutOfTime ? "Y" : "N")
                     << " time: " << cpu_time
                     << endl;
                 }
@@ -187,6 +197,12 @@ class ClauseVivifier {
                     printStatsLine("c lits-rem"
                         , numLitsRem
                     );
+
+                    printStatsLine("c called "
+                        , numCalled
+                        , (double)ranOutOfTime/(double)ranOutOfTime*100.0
+                        , "% ran out of time"
+                    );
                 }
 
                 CacheBased& operator+=(const CacheBased& other)
@@ -197,6 +213,8 @@ class ClauseVivifier {
                     tried += other.tried;
                     shrinked += other.shrinked;
                     totalCls += other.totalCls;
+                    ranOutOfTime += other.ranOutOfTime;
+                    numCalled += other.numCalled;
 
                     return  *this;
                 }
