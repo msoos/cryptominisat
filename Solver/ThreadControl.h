@@ -243,29 +243,32 @@ class ThreadControl : public CommandControl
             {
                 //Pre-clean
                 cout
-                << "c cleaning learnts. Pre-clean removed: "
+                << "c [DBclean]"
+                << " Pre-removed: "
                 << preRemovedClauses
+                << " next by " << getNameOfCleanType(clauseCleaningType)
                 << endl;
 
                 cout
-                << "c cleaning by " << getNameOfCleanType(clauseCleaningType)
+                << "c [DBclean]"
                 << " rem " << removedClauses
 
-                << "  avgGlue " << std::fixed << std::setprecision(2)
+                << " avgGlue " << std::fixed << std::setprecision(2)
                 << ((double)removedClausesGlue/(double)removedClauses)
 
-                << "  avgSize "
+                << " avgSize "
                 << std::fixed << std::setprecision(2)
                 << ((double)removedClausesLits/(double)removedClauses)
                 << endl;
 
                 cout
-                << "c remain " << remainClauses
+                << "c [DBclean]"
+                << " remain " << remainClauses
 
-                << "  avgGlue " << std::fixed << std::setprecision(2)
+                << " avgGlue " << std::fixed << std::setprecision(2)
                 << ((double)remainClausesGlue/(double)remainClauses)
 
-                << "  avgSize " << std::fixed << std::setprecision(2)
+                << " avgSize " << std::fixed << std::setprecision(2)
                 << ((double)remainClausesLits/(double)remainClauses)
                 << endl;
             }
