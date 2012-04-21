@@ -73,9 +73,6 @@ class ThreadControl : public CommandControl
         //Stats
         static const char* getVersion();
         uint64_t getNumLongClauses() const;                 ///<Return number of ALL clauses: non-learnt, learnt, bin
-        uint32_t getNumXorTrees() const;                ///<Get the number of SCC trees
-        uint32_t getNumXorTreesCrownSize() const;       ///<Get the number of variables being replaced by other variables
-        double   getTotalTimeSCC() const;               ///<Get total time spent finding binary equi/antivalences
         bool     getNeedToDumpLearnts() const;
         bool     getNeedToDumpOrig() const;
         uint32_t getVerbosity() const;                  ///<Return verbosity level

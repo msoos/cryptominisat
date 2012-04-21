@@ -1451,27 +1451,23 @@ void ThreadControl::printFullStats()
     sCCFinder->getStats().print();
 
 
-    printStatsLine("c EqLit replace time"
-        , varReplacer->getTotalTime()
-        , varReplacer->getTotalTime()/cpu_time*100.0
+    printStatsLine("c vrep replace time"
+        , varReplacer->getStats().cpu_time
+        , varReplacer->getStats().cpu_time/cpu_time*100.0
         , "% time"
     );
 
-    printStatsLine("c EqLit tree roots", getNumXorTrees());
-    printStatsLine("c EqLit trees' crown"
-                    , getNumXorTreesCrownSize()
-                    , (double)getNumXorTreesCrownSize()/(double)getNumXorTrees()
-                    , "leafs/tree");
-    printStatsLine("c EqLit trees' crown"
-                    , getNumXorTreesCrownSize()
-                    , 100.0*(double)getNumXorTreesCrownSize()/(double)nVars()
-                    , "% of vars");
-    printStatsLine("c EqLit 0-depth assigns"
-        , varReplacer->getTotalZeroDepthAssigns()
-        , (double)varReplacer->getTotalZeroDepthAssigns()/(double)nVars()*100.0
-        , "% vars"
+    printStatsLine("c vrep tree roots"
+        , varReplacer->getNumTrees()
     );
-    printStatsLine("c EqLit lits replaced", varReplacer->getTotalReplacedLits());
+
+    printStatsLine("c vrep trees' crown"
+        , varReplacer->getNumReplacedVars()
+        , (double)varReplacer->getNumReplacedVars()/(double)varReplacer->getNumTrees()
+        , "leafs/tree"
+    );
+    varReplacer->getStats().print(nVars());
+
 
     //Vivifier-ASYMM stats
     printStatsLine("c Asymm time"
@@ -1809,21 +1805,6 @@ void ThreadControl::checkLiteralCount() const
         cout << "c ERROR! literal count: " << clausesLits << " , real value = " <<  cnt << endl;
         assert(clausesLits == cnt);
     }
-}
-
-uint32_t ThreadControl::getNumXorTrees() const
-{
-    return varReplacer->getNumTrees();
-}
-
-uint32_t ThreadControl::getNumXorTreesCrownSize() const
-{
-    return varReplacer->getNumReplacedVars();
-}
-
-double ThreadControl::getTotalTimeSCC() const
-{
-    return  sCCFinder->getTotalTime();
 }
 
 uint32_t ThreadControl::getNumDecisionVars() const

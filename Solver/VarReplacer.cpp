@@ -45,12 +45,8 @@ using std::endl;
 
 VarReplacer::VarReplacer(ThreadControl* _control) :
     control(_control)
-    , replacedLits(0)
     , replacedVars(0)
     , lastReplacedVars(0)
-    , totalZeroDepthAssigns(0)
-    , totalReplacedLits(0)
-    , totalTime(0)
 {
 }
 
@@ -73,11 +69,9 @@ that problems don't creep up
 bool VarReplacer::performReplace()
 {
     assert(control->ok);
-    #ifdef VERBOSE_DEBUG
-    cout << "PerformReplacInternal started." << endl;
-    //control->printAllClauses();
-    #endif
-    replacedLits = 0;
+
+    //Set up stats
+    runStats.numCalls = 1;
     const double myTime = cpuTime();
     const size_t origTrailSize = control->trail.size();
 
@@ -133,14 +127,16 @@ bool VarReplacer::performReplace()
         activity1 = 0.0;*/
     }
 
-    const size_t thisTimeReplacedVars = replacedVars -lastReplacedVars;
+    runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;
 
     control->testAllClauseAttach();
     assert(control->qhead == control->trail.size());
 
+#ifdef DEBUG_BIN_CLAUSE_NUM
     control->countNumBinClauses(true, false);
     control->countNumBinClauses(false, true);
+#endif
 
     if (!replaceBins()) goto end;
     if (!replace_set(control->clauses)) goto end;
@@ -152,19 +148,16 @@ bool VarReplacer::performReplace()
 end:
     assert(control->qhead == control->trail.size() || !control->ok);
 
-    if (control->conf.verbosity  >= 1) {
-        cout << "c Replacing "
-        << std::setw(8) << thisTimeReplacedVars << " vars"
-        << " Replaced " <<  std::setw(8) << replacedLits<< " lits"
-        << " Time: " << std::setw(8) << std::fixed << std::setprecision(2)
-        << (cpuTime()-myTime) << " s "
-        << endl;
-    }
-
     //Update stats
-    totalReplacedLits += replacedLits;
-    totalTime += cpuTime()-myTime;
-    totalZeroDepthAssigns += (control->trail.size() - origTrailSize);
+    runStats.zeroDepthAssigns += control->trail.size() - origTrailSize;
+    runStats.cpu_time = cpuTime() - myTime;
+    globalStats += runStats;
+    if (control->conf.verbosity  >= 1) {
+        if (control->conf.verbosity  >= 3)
+            runStats.print(control->nVars());
+        else
+            runStats.printShort();
+    }
 
     return control->ok;
 }
@@ -198,13 +191,13 @@ bool VarReplacer::replaceBins()
             if (table[lit2.var()].var() != lit2.var()) {
                 lit2 = table[lit2.var()] ^ lit2.sign();
                 i->setOtherLit(lit2);
-                replacedLits++;
+                runStats.replacedLits++;
             }
 
             bool changedMain = false;
             if (table[thisLit1.var()].var() != thisLit1.var()) {
                 thisLit1 = table[thisLit1.var()] ^ thisLit1.sign();
-                replacedLits++;
+                runStats.replacedLits++;
                 changedMain = true;
             }
 
@@ -223,8 +216,12 @@ bool VarReplacer::replaceBins()
                 removed[origLit2.toInt()]++;
                 #endif
 
-                if (i->getLearnt()) removedLearnt++;
-                else removedNonLearnt++;
+                //Update function-internal stats
+                if (i->getLearnt())
+                    removedLearnt++;
+                else
+                    removedNonLearnt++;
+
                 continue;
             }
 
@@ -234,8 +231,11 @@ bool VarReplacer::replaceBins()
                 removed[origLit2.toInt()]++;
                 #endif
 
-                if (i->getLearnt()) removedLearnt++;
-                else removedNonLearnt++;
+                if (i->getLearnt())
+                    removedLearnt++;
+                else
+                    removedNonLearnt++;
+
                 continue;
             }
 
@@ -262,6 +262,9 @@ bool VarReplacer::replaceBins()
     control->numBinsLearnt -= removedLearnt/2;
     control->numBinsNonLearnt -= removedNonLearnt/2;
 
+    //Global stats update
+    runStats.removedBinClauses += removedLearnt/2 + removedNonLearnt/2;
+
     if (control->ok) control->ok = (control->propagate().isNULL());
     return control->ok;
 }
@@ -286,12 +289,13 @@ bool VarReplacer::replace_set(vector<Clause*>& cs)
             if (table[l->var()].var() != l->var()) {
                 changed = true;
                 *l = table[l->var()] ^ l->sign();
-                replacedLits++;
+                runStats.replacedLits++;
             }
         }
 
         if (changed && handleUpdatedClause(c, origLit1, origLit2, origLit3)) {
             control->clAllocator->clauseFree(*r);
+            runStats.removedLongClauses++;
             if (!control->ok) {
                 r++;
                 #ifdef VERBOSE_DEBUG
@@ -348,12 +352,15 @@ bool VarReplacer::handleUpdatedClause(Clause& c, const Lit origLit1, const Lit o
         control->enqueue(c[0]);
         control->propStats.propsUnit++;
         control->ok = (control->propagate().isNULL());
+        runStats.removedLongLits += origSize;
         return true;
     case 2:
         control->attachBinClause(c[0], c[1], c.learnt());
+        runStats.removedLongLits += origSize;
         return true;
     default:
         control->attachClause(c);
+        runStats.removedLongLits += origSize - c.size();
         return false;
     }
 
@@ -609,19 +616,4 @@ bool VarReplacer::addLaterAddBinXor()
     laterAddBinXor.clear();
 
     return true;
-}
-
-size_t VarReplacer::getTotalZeroDepthAssigns() const
-{
-    return totalZeroDepthAssigns;
-}
-
-size_t VarReplacer::getTotalReplacedLits() const
-{
-    return totalReplacedLits;
-}
-
-double VarReplacer::getTotalTime() const
-{
-    return totalTime;
 }

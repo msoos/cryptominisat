@@ -81,14 +81,98 @@ class VarReplacer
             , const vector<uint32_t>& interToOuter
         );
 
-        //stats
-        size_t getTotalZeroDepthAssigns() const;
-        size_t getTotalReplacedLits() const;
-        double getTotalTime() const;
+        //Stats
+        size_t getNumReplacedVars() const;
         size_t getNumLastReplacedVars() const;
         size_t getNewToReplaceVars() const;
         size_t getNumTrees() const;
-        size_t getNumReplacedVars() const;
+        struct Stats
+        {
+            Stats() :
+                cpu_time(0)
+                , replacedLits(0)
+                , zeroDepthAssigns(0)
+                , actuallyReplacedVars(0)
+                , removedBinClauses(0)
+                , removedLongClauses(0)
+                , removedLongLits(0)
+            {}
+
+            Stats& operator+=(const Stats& other)
+            {
+                cpu_time += other.cpu_time;
+                replacedLits += other.replacedLits;
+                zeroDepthAssigns += other.zeroDepthAssigns;
+                actuallyReplacedVars += other.actuallyReplacedVars;
+                removedBinClauses += other.removedBinClauses;
+                removedLongClauses += other.removedLongClauses;
+                removedLongLits += other.removedLongLits;
+
+                return *this;
+            }
+
+            void print(const size_t nVars) const
+            {
+                cout << "c --------- VAR REPLACE STATS ----------" << endl;
+                printStatsLine("c time"
+                    , cpu_time
+                    , cpu_time/(double)numCalls
+                    , "per call"
+                );
+
+                printStatsLine("c trees' crown"
+                    , actuallyReplacedVars
+                    , 100.0*(double)actuallyReplacedVars/(double)nVars
+                    , "% of vars"
+                );
+
+                printStatsLine("c 0-depth assigns"
+                    , zeroDepthAssigns
+                    , (double)zeroDepthAssigns/(double)nVars*100.0
+                    , "% vars"
+                );
+
+                printStatsLine("c lits replaced"
+                    , replacedLits
+                );
+
+                printStatsLine("c bin cls removed"
+                    , removedBinClauses
+                );
+
+                printStatsLine("c long cls removed"
+                    , removedLongClauses
+                );
+
+                printStatsLine("c long lits removed"
+                    , removedLongLits
+                );
+                cout << "c --------- VAR REPLACE STATS END ----------" << endl;
+            }
+
+            void printShort() const
+            {
+                cout
+                << "c vrep"
+                << " vars " << actuallyReplacedVars
+                << " lits " << replacedLits
+                << " rem-bin-cls " << removedBinClauses
+                << " rem-long-cls " << removedLongClauses
+                << " T: " << std::fixed << std::setprecision(2)
+                << cpu_time << " s "
+                << endl;
+            }
+
+            uint64_t numCalls;
+            double cpu_time;
+            uint64_t replacedLits; ///<Num literals replaced during var-replacement
+            uint64_t zeroDepthAssigns;
+            uint64_t actuallyReplacedVars;
+            uint64_t removedBinClauses;
+            uint64_t removedLongClauses;
+            uint64_t removedLongLits;
+        };
+        const Stats& getStats() const;
 
     private:
         ThreadControl* control; ///<The solver we are working with
@@ -106,12 +190,10 @@ class VarReplacer
         map<Var, vector<Var> > reverseTable; ///<mapping of variable to set of variables it replaces
 
         //Stats
-        size_t replacedLits; ///<Num literals replaced during var-replacement
-        size_t replacedVars; ///<Num vars replaced during var-replacement
-        size_t lastReplacedVars; ///<Last time performReplace() was called, "replacedVars" contained this
-        size_t totalZeroDepthAssigns;
-        size_t totalReplacedLits;
-        double totalTime;
+        uint64_t replacedVars; ///<Num vars replaced during var-replacement
+        uint64_t lastReplacedVars;
+        Stats runStats;
+        Stats globalStats;
 };
 
 inline size_t VarReplacer::getNumReplacedVars() const
@@ -162,6 +244,11 @@ inline size_t VarReplacer::getNumTrees() const
 inline const map<Var, vector<Var> >& VarReplacer::getReverseTable() const
 {
     return reverseTable;
+}
+
+inline const VarReplacer::Stats& VarReplacer::getStats() const
+{
+    return globalStats;
 }
 
 #endif //VARREPLACER_H
