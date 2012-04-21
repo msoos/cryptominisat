@@ -2031,7 +2031,10 @@ bool Subsumer::maybeEliminate(const Var var)
 
             //Create dot-product
             bool ok = merge(*it, *it2, lit, ~lit, true, true);
-            if (!ok) continue;
+
+            //The merge resulted in a tautological clause
+            if (!ok)
+                continue;
 
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << "Adding new clause due to varelim: " << dummy << endl;
@@ -2048,7 +2051,7 @@ bool Subsumer::maybeEliminate(const Var var)
                 stats = ClauseStats::combineStats(
                     clauses[it->clsimp.index]->stats
                     , clauses[it2->clsimp.index]->stats
-                );
+            );
 
             //Add clause and do subsumption
             *toDecrease -= dummy.size()*2;
