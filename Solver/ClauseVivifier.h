@@ -97,7 +97,7 @@ class ClauseVivifier {
                 cout << "c -------- ASYMM STATS --------" << endl;
                 printStatsLine("c time"
                     , timeNorm
-                    , timeNorm/(double)numCalled*100.0
+                    , timeNorm/(double)numCalled
                     , "per call"
                 );
 
@@ -112,7 +112,7 @@ class ClauseVivifier {
                 );
                 printStatsLine("c 0-depth-assigns",
                     zeroDepthAssigns
-                    , (double)zeroDepthAssigns/(double)nVars
+                    , (double)zeroDepthAssigns/(double)nVars*100.0
                     , "% of vars"
                 );
 
