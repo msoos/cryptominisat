@@ -99,10 +99,7 @@ void ClauseVivifier::makeNonLearntBin(const Lit lit1, const Lit lit2)
 /**
 @brief Performs clause vivification (by Hamadi et al.)
 
-This is the only thing that does not fit under the aegis of tryBoth(), since
-it is not part of failed literal probing, really. However, it is here because
-it seems to be a function that fits into the idology of failed literal probing.
-Maybe I am off-course and it should be in another class, or a class of its own.
+Using normal propagation-based one and new cache-based one
 */
 bool ClauseVivifier::vivifyClausesNormal()
 {

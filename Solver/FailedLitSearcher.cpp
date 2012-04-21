@@ -150,8 +150,6 @@ bool FailedLitSearcher::search()
 
         if (control->bogoProps >= origBogoProps + numPropsTodo)
             break;
-        if (!tryBoth(Lit(var, false)))
-            goto end;
     }*/
 
 end:
