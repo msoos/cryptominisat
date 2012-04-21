@@ -166,7 +166,7 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
     enqueue(blockedOn);
     //flip forward equiv
     if (control->varReplacer->getReplaceTable()[blockedOn.var()].var() != blockedOn.var()) {
-        blockedOn = control->varReplacer->getReplaceTable()[blockedOn.var()] ^ blockedOn.sign();
+        blockedOn = control->varReplacer->getLitReplacedWith(blockedOn);
         enqueue(Lit(blockedOn.var(), value(blockedOn.var()) == l_True));
     }
     //flip backward equiv
