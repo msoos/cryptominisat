@@ -116,7 +116,7 @@ inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
     }
 }
 
-const SCCFinder::Stats& SCCFinder::getStats() const
+inline const SCCFinder::Stats& SCCFinder::getStats() const
 {
     return globalStats;
 }
