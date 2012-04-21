@@ -58,7 +58,12 @@ class VarReplacer
         VarReplacer(ThreadControl* control);
         ~VarReplacer();
         bool performReplace();
-        bool replace(Lit lit1, Lit lit2, const bool xorEqualFalse);
+        bool replace(
+            Lit lit1
+            , Lit lit2
+            , const bool xorEqualFalse
+            , bool addLaterAsTwoBins
+        );
 
         void extendModel(SolutionExtender* extender) const;
 

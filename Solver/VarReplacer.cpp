@@ -421,7 +421,12 @@ know that c=h, in which case we don't do anything
 @p ps must contain 2 variables(!), i.e literals with no sign
 @p xorEqualFalse if True, the two variables are equivalent. Otherwise, they are antivalent
 */
-bool VarReplacer::replace(Lit lit1, Lit lit2, const bool xorEqualFalse)
+bool VarReplacer::replace(
+    Lit lit1
+    , Lit lit2
+    , const bool xorEqualFalse
+    , bool addLaterAsTwoBins
+)
 {
     #ifdef VERBOSE_DEBUG
     cout << "replace() called with var " << lit1 << " and var " << lit2 << " with xorEqualFalse " << xorEqualFalse << endl;
@@ -480,7 +485,8 @@ bool VarReplacer::replace(Lit lit1, Lit lit2, const bool xorEqualFalse)
 
     assert(val1 == l_Undef && val2 == l_Undef);
 
-    laterAddBinXor.push_back(LaterAddBinXor(lit1, lit2^true));
+    if (addLaterAsTwoBins)
+        laterAddBinXor.push_back(LaterAddBinXor(lit1, lit2^true));
 
     control->varData[lit1.var()].elimed = ELIMED_QUEUED_VARREPLACER;
     control->varData[lit2.var()].elimed = ELIMED_QUEUED_VARREPLACER;

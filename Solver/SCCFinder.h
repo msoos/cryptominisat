@@ -32,9 +32,63 @@ class SCCFinder {
     public:
         SCCFinder(ThreadControl* _control);
         bool find2LongXors();
-        double getTotalTime() const;
+
+        struct Stats
+        {
+            uint64_t numCalls;
+            double cpu_time;
+            uint64_t foundXors;
+            uint64_t foundXorsNew;
+
+            Stats& operator+=(const Stats& other)
+            {
+                numCalls += other.numCalls;
+                cpu_time += other.cpu_time;
+                foundXors += other.foundXors;
+                foundXorsNew += other.foundXorsNew;
+
+                return *this;
+            }
+
+            void print() const
+            {
+                cout << "c ----- XOR FINDING STATS --------" << endl;
+                printStatsLine("c time"
+                    , cpu_time
+                    , cpu_time/(double)numCalls
+                    , "per call"
+                );
+
+                printStatsLine("c called"
+                    , numCalls
+                    , (double)foundXorsNew/(double)numCalls
+                    , "new found per call"
+                );
+
+                printStatsLine("c found"
+                    , foundXorsNew
+                    , (double)foundXorsNew/(double)foundXors
+                    , "% of all found"
+                );
+
+                cout << "c ----- XOR FINDING STATS END --------" << endl;
+            }
+
+            void printShort() const
+            {
+                cout << "c Finding binary XORs  T: "
+                << std::fixed << std::setprecision(2) << std::setw(8)
+                <<  cpu_time << " s"
+                << " found: " << foundXors
+                << " new: " << foundXorsNew
+                << endl;
+            }
+        };
+
+        const Stats& getStats() const;
 
     private:
+
         void tarjan(const uint32_t vertex);
         void doit(const Lit lit, const uint32_t vertex);
 
@@ -46,8 +100,10 @@ class SCCFinder {
         vector<uint32_t> tmp;
 
         ThreadControl* control;
-        const vector<Lit>& replaceTable;
-        double totalTime;
+
+        //Stats
+        Stats runStats;
+        Stats globalStats;
 };
 
 inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
@@ -60,9 +116,10 @@ inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
     }
 }
 
-inline double SCCFinder::getTotalTime() const
+const SCCFinder::Stats& SCCFinder::getStats() const
 {
-    return totalTime;
+    return globalStats;
 }
+
 
 #endif //SCCFINDER_H

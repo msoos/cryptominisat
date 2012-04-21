@@ -33,14 +33,13 @@ using std::endl;
 
 SCCFinder::SCCFinder(ThreadControl* _control) :
     control(_control)
-    , replaceTable(_control->varReplacer->getReplaceTable())
-    , totalTime(0.0)
 {}
 
 bool SCCFinder::find2LongXors()
 {
-    double myTime = cpuTime();
-    uint32_t oldNumReplace = control->varReplacer->getNewToReplaceVars();
+    runStats.numCalls = 1;
+    const double myTime = cpuTime();
+    size_t oldNumReplace = control->varReplacer->getNewToReplaceVars();
 
     globalIndex = 0;
     index.clear();
@@ -62,13 +61,16 @@ bool SCCFinder::find2LongXors()
     if (control->ok)
         control->varReplacer->addLaterAddBinXor();
 
+    //Update & print stats
+    runStats.cpu_time = cpuTime() - myTime;
+    runStats.foundXorsNew = control->varReplacer->getNewToReplaceVars() - oldNumReplace;
     if (control->conf.verbosity >= 1) {
-        cout << "c Finding binary XORs  T: "
-        << std::fixed << std::setprecision(2) << std::setw(8) <<  (cpuTime() - myTime) << " s"
-        << "  found: " << std::setw(7) << control->varReplacer->getNewToReplaceVars() - oldNumReplace
-        << endl;
+        if (control->conf.verbosity >= 3)
+            runStats.print();
+        else
+            runStats.printShort();
     }
-    totalTime += (cpuTime() - myTime);
+    globalStats += runStats;
 
     return control->ok;
 }
@@ -139,7 +141,13 @@ void SCCFinder::tarjan(const uint32_t vertex)
                 if (control->value(lits[0]) == l_Undef
                     && control->value(lits[1]) == l_Undef
                 ) {
-                    control->varReplacer->replace(lits[0], lits[1], xorEqualsFalse);
+                    runStats.foundXors++;
+                    control->varReplacer->replace(
+                        lits[0]
+                        , lits[1]
+                        , xorEqualsFalse
+                        , control->conf.doExtendedSCC && control->conf.doCache
+                    );
                 }
             }
         }
