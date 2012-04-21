@@ -2278,10 +2278,10 @@ bool Subsumer::merge(
             const vec<Watched>& ws = control->watches[(~lit).toInt()];
             numMaxVarElimAgressiveCheck -= ws.size();
             for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
-                if (!it->isNonLearntBinary()) {
-                    if (!it->isBinary())
-                        continue;
+                if (!it->isBinary())
+                    continue;
 
+                if (!it->isNonLearntBinary()) {
                     const Lit otherLit = it->getOtherLit();
 
                     //If (a V b) is learnt, make it non-learnt and we are done
@@ -2300,6 +2300,8 @@ bool Subsumer::merge(
                         fancyRemove = true;
                         goto end;
                     }
+
+                    continue;
                 }
 
                 const Lit otherLit = it->getOtherLit();
