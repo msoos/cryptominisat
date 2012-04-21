@@ -178,6 +178,62 @@ class ImplCache  {
         void clean(ThreadControl* control);
         bool tryBoth(ThreadControl* control);
 
+        struct TryBothStats
+        {
+            TryBothStats() :
+                numCalls(0)
+                , cpu_time(0)
+                , zeroDepthAssigns(0)
+                , varReplaced(0)
+                , bProp(0)
+                , bXProp(0)
+            {}
+
+            void clear()
+            {
+                TryBothStats tmp;
+                *this = tmp;
+            }
+
+            TryBothStats& operator+=(const TryBothStats& other)
+            {
+                numCalls += other.numCalls;
+                cpu_time += other.cpu_time;
+                zeroDepthAssigns += other.zeroDepthAssigns;
+                varReplaced += other.varReplaced;
+                bProp += other.bProp;
+                bXProp += other.bXProp;
+
+                return *this;
+            }
+
+            void printShort() const
+            {
+                cout
+                << "c [bcache] "
+                //<< " set: " << bProp
+                << " 0-depth ass: " << zeroDepthAssigns
+                //<< " BXProp: " << bXProp
+                << " BXprop: " << bXProp
+                << " T: " << cpu_time
+                << endl;
+            }
+
+            uint64_t numCalls;
+            double cpu_time;
+            uint64_t zeroDepthAssigns;
+            uint64_t varReplaced;
+            uint64_t bProp;
+            uint64_t bXProp;
+        };
+
+        TryBothStats runStats;
+        TryBothStats globalStats;
+        const TryBothStats& getStats() const
+        {
+            return globalStats;
+        }
+
 private:
     void tryVar(ThreadControl* control, Var var);
 
@@ -185,16 +241,11 @@ private:
         vector<uint16_t>& val
         , Var var
         , Lit lit
-        , uint32_t& bProp
-        , uint32_t& bXProp
     );
 
     vector<std::pair<vector<Lit>, bool> > delayedClausesToAddXor;
     vector<Lit> delayedClausesToAddNorm;
     bool addDelayedClauses(ThreadControl* control);
-
-    uint32_t bProp;
-    uint32_t bXProp;
 };
 
 #endif //TRANSCACHE_H

@@ -1468,17 +1468,33 @@ void ThreadControl::printFullStats()
     );
     varReplacer->getStats().print(nVars());
 
+    printStatsLine("c cache bprop time"
+        , implCache.getStats().cpu_time
+        , implCache.getStats().cpu_time/cpu_time*100.0
+        , "% time"
+    );
+    printStatsLine("c cache bprop calls"
+        , implCache.getStats().numCalls
+        , implCache.getStats().cpu_time/implCache.getStats().numCalls*100.0
+        , "s/call"
+    );
+    printStatsLine("c cache bprop 0-depth assigns"
+        , implCache.getStats().zeroDepthAssigns
+        , implCache.getStats().zeroDepthAssigns/implCache.getStats().numCalls*100.0
+        , "assign/call"
+    );
+
 
     //Vivifier-ASYMM stats
-    printStatsLine("c Asymm time"
+    printStatsLine("c vivif time"
                     , clauseVivifier->getStats().timeNorm
                     , clauseVivifier->getStats().timeNorm/cpu_time*100.0
                     , "% time");
-    printStatsLine("c cache-vivify-irred time"
+    printStatsLine("c vivif cache-irred time"
                     , clauseVivifier->getStats().irredCacheBased.cpu_time
                     , clauseVivifier->getStats().irredCacheBased.cpu_time/cpu_time*100.0
                     , "% time");
-    printStatsLine("c cache-vivify-red time"
+    printStatsLine("c vivif cache-red time"
                     , clauseVivifier->getStats().redCacheBased.cpu_time
                     , clauseVivifier->getStats().redCacheBased.cpu_time/cpu_time*100.0
                     , "% time");

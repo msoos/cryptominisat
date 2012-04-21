@@ -163,8 +163,6 @@ void ImplCache::handleNewData(
     vector<uint16_t>& val
     , Var var
     , Lit lit
-    , uint32_t& bProp
-    , uint32_t& bXProp
 ) {
     //Unfortunately, we cannot add the clauses, because that could mess up
     //the watchlists, which are being traversed by the callers, so we add these
@@ -175,14 +173,14 @@ void ImplCache::handleNewData(
     //a->b and (-a)->b, so 'b'
     if  (val[lit.var()] == lit.sign()) {
         delayedClausesToAddNorm.push_back(lit);
-        bProp++;
+        runStats.bProp++;
     } else {
         //a->b, and (-a)->(-b), so equivalent literal
         tmp.push_back(Lit(var, false));
         tmp.push_back(Lit(lit.var(), false));
         bool sign = lit.sign();
         delayedClausesToAddXor.push_back(std::make_pair(tmp, sign));
-        bXProp++;
+        runStats.bXProp++;
     }
 }
 
@@ -252,12 +250,12 @@ bool ImplCache::tryBoth(ThreadControl* control)
 {
     assert(control->ok);
     assert(control->decisionLevel() == 0);
-    bProp = 0;
-    bXProp = 0;
+    const size_t origTrailSize = control->trail.size();
+    runStats.clear();
+    runStats.numCalls = 1;
 
     //Measuring time & usefulness
     double myTime = cpuTime();
-    uint32_t backupTrailSize = control->trail.size();
 
     for (Var var = 0; var < control->nVars(); var++) {
 
@@ -276,15 +274,13 @@ bool ImplCache::tryBoth(ThreadControl* control)
             goto end;
     }
 
-    end:
+end:
+    runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
+    runStats.cpu_time = cpuTime() - myTime;
     if (control->conf.verbosity >= 1) {
-        cout << "c Cache " <<
-        " BProp: " << bProp <<
-        " Set: " << (control->trail.size() - backupTrailSize) <<
-        " BXProp: " << bXProp <<
-        " T: " << (cpuTime() - myTime) <<
-        endl;
+        runStats.printShort();
     }
+    globalStats += runStats;
 
     return control->ok;
 }
@@ -364,7 +360,7 @@ void ImplCache::tryVar(
             && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
         ) continue;
 
-        handleNewData(val, var, it->getLit(), bProp, bXProp);
+        handleNewData(val, var, it->getLit());
     }
 
     //Try to see if we propagate the same or opposite from the other end
@@ -381,7 +377,7 @@ void ImplCache::tryVar(
         if (!seen[var2])
             continue;
 
-        handleNewData(val, var, it->getOtherLit(), bProp, bXProp);
+        handleNewData(val, var, it->getOtherLit());
     }
 
     //Clear 'seen' and 'val'
