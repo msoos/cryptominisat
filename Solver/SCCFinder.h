@@ -59,7 +59,7 @@ class SCCFinder {
 
             void print() const
             {
-                cout << "c ----- XOR FINDING STATS --------" << endl;
+                cout << "c ----- SCC STATS --------" << endl;
                 printStatsLine("c time"
                     , cpu_time
                     , cpu_time/(double)numCalls
@@ -78,16 +78,17 @@ class SCCFinder {
                     , "% of all found"
                 );
 
-                cout << "c ----- XOR FINDING STATS END --------" << endl;
+                cout << "c ----- SCC STATS END --------" << endl;
             }
 
             void printShort() const
             {
-                cout << "c Finding binary XORs  T: "
-                << std::fixed << std::setprecision(2) << std::setw(8)
-                <<  cpu_time << " s"
-                << " found: " << foundXors
+                cout
+                << "c SCC"
+                //<< " found: " << foundXors
                 << " new: " << foundXorsNew
+                << " T: " << std::fixed << std::setprecision(2)
+                <<  cpu_time << " s"
                 << endl;
             }
         };
