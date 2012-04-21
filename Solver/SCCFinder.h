@@ -35,6 +35,13 @@ class SCCFinder {
 
         struct Stats
         {
+            Stats() :
+                numCalls(0)
+                , cpu_time(0)
+                , foundXors(0)
+                , foundXorsNew(0)
+            {}
+
             uint64_t numCalls;
             double cpu_time;
             uint64_t foundXors;
