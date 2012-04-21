@@ -200,7 +200,7 @@ class ClauseVivifier {
 
                     printStatsLine("c called "
                         , numCalled
-                        , (double)ranOutOfTime/(double)ranOutOfTime*100.0
+                        , (double)ranOutOfTime/(double)numCalled*100.0
                         , "% ran out of time"
                     );
                 }
