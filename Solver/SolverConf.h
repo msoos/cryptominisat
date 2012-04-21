@@ -87,6 +87,7 @@ class SolverConf
         uint32_t  dominPickFreq;
         uint32_t  flipPolarFreq;
         int      doFindXors;         ///<Automatically find non-binary xor clauses and convert them to xor clauses
+        int      useCacheWhenFindingXors;
         int      doEchelonizeXOR;
         uint64_t  maxXORMatrix;
         int      doFindEqLits;       ///<Automatically find binary xor clauses (i.e. variable equi- and antivalences)

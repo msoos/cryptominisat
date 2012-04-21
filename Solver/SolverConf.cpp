@@ -72,6 +72,7 @@ SolverConf::SolverConf() :
         , dominPickFreq    (5)
         , flipPolarFreq    (10)
         , doFindXors       (true)
+        , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
         , maxXORMatrix     (10L*1000L*1000L)
         , doFindEqLits     (true)

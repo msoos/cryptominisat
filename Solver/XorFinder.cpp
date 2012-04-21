@@ -386,8 +386,10 @@ void XorFinder::findXor(ClauseIndex c)
         findXorMatch(control->watches[(~(*l)).toInt()], *l, foundCls);
         findXorMatch(control->watches[(*l).toInt()], ~(*l), foundCls);
 
-        findXorMatch(control->implCache[(*l).toInt()].lits, *l, foundCls);
-        findXorMatch(control->implCache[(~*l).toInt()].lits, ~(*l), foundCls);
+        if (control->conf.useCacheWhenFindingXors) {
+            findXorMatch(control->implCache[(*l).toInt()].lits, *l, foundCls);
+            findXorMatch(control->implCache[(~*l).toInt()].lits, ~(*l), foundCls);
+        }
 
         if (foundCls.foundAll())
             break;
