@@ -87,7 +87,8 @@ class VarReplacer
         struct Stats
         {
             Stats() :
-                cpu_time(0)
+                numCalls(0)
+                , cpu_time(0)
                 , replacedLits(0)
                 , zeroDepthAssigns(0)
                 , actuallyReplacedVars(0)
