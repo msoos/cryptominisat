@@ -1475,12 +1475,12 @@ void ThreadControl::printFullStats()
     );
     printStatsLine("c cache bprop calls"
         , implCache.getStats().numCalls
-        , implCache.getStats().cpu_time/implCache.getStats().numCalls*100.0
+        , implCache.getStats().cpu_time/implCache.getStats().numCalls
         , "s/call"
     );
-    printStatsLine("c cache bprop 0-depth assigns"
+    printStatsLine("c cache bprop 0-depth ass"
         , implCache.getStats().zeroDepthAssigns
-        , implCache.getStats().zeroDepthAssigns/implCache.getStats().numCalls*100.0
+        , implCache.getStats().zeroDepthAssigns/implCache.getStats().numCalls
         , "assign/call"
     );
 
