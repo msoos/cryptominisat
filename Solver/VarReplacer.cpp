@@ -71,8 +71,8 @@ bool VarReplacer::performReplace()
     assert(control->ok);
 
     //Set up stats
-    runStats.numCalls = 1;
     runStats.clear();
+    runStats.numCalls = 1;
     const double myTime = cpuTime();
     const size_t origTrailSize = control->trail.size();
 

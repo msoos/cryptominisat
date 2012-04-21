@@ -37,8 +37,8 @@ SCCFinder::SCCFinder(ThreadControl* _control) :
 
 bool SCCFinder::find2LongXors()
 {
-    runStats.numCalls = 1;
     runStats.clear();
+    runStats.numCalls = 1;
     const double myTime = cpuTime();
     size_t oldNumReplace = control->varReplacer->getNewToReplaceVars();
 
