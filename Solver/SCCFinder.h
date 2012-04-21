@@ -42,6 +42,12 @@ class SCCFinder {
                 , foundXorsNew(0)
             {}
 
+            void clear()
+            {
+                Stats tmp;
+                *this = tmp;
+            }
+
             uint64_t numCalls;
             double cpu_time;
             uint64_t foundXors;

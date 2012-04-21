@@ -98,6 +98,12 @@ class VarReplacer
                 , removedLongLits(0)
             {}
 
+            void clear()
+            {
+                Stats tmp;
+                *this = tmp;
+            }
+
             Stats& operator+=(const Stats& other)
             {
                 cpu_time += other.cpu_time;
