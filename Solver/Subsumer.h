@@ -305,19 +305,46 @@ public:
             printStatsLine("c 0-detph assigns"
                 , zeroDepthAssings
                 , (double)zeroDepthAssings/(double)nVars*100.0
-                , "% vars");
+                , "% vars"
+            );
 
             printStatsLine("c lit-rem-str"
-                , litsRemStrengthen);
+                , litsRemStrengthen
+            );
+
+            printStatsLine("c cl-new"
+                , newClauses
+                , (double)newClauseNotAdded/(double)newClauses*100.0
+                , "% not added"
+            );
+
+            printStatsLine("c cl-new"
+                , newClauses
+                , (double)newClauseNotAddedFancy/(double)newClauses*100.0
+                , "% not added due to asymm algo"
+            );
+
+            printStatsLine("c tried to elim"
+                , triedToElimVars
+                , (double)usedAgressiveCheckToELim/(double)triedToElimVars*100.0
+                , "% agressively"
+            );
 
             printStatsLine("c cl-subs"
-                , clauses_subsumed);
+                , clauses_subsumed
+                , (double)clauses_subsumed/(double)(origNumIrredLongClauses+origNumRedLongClauses)
+                , "% clauses"
+            );
 
             printStatsLine("c subs bin-w-bin"
-                , subsBinWithBin);
+                , subsBinWithBin
+            );
 
             printStatsLine("c blocked"
-                , blocked);
+                , blocked
+                , (double)blocked/(double)origNumIrredLongClauses
+                , "% of irred clauses"
+            );
 
             printStatsLine("c asymmSub"
                 , asymmSubs);
