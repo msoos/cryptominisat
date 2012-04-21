@@ -346,19 +346,19 @@ class ThreadControl : public CommandControl
             void printShort() const
             {
                 cout
-                << "c calculated reachability."
-                << " dominator lits: " << std::fixed << std::setprecision(2)
+                << "c [reach]"
+                << " dom lits: " << std::fixed << std::setprecision(2)
                 << (double)dominators/(double)numLits*100.0
                 << " %"
 
-                << " dependent lits: " << std::fixed << std::setprecision(2)
-                << (double)(numLitsDependent)/(double)numLits*100.0
+                << " dep-lits: " << std::fixed << std::setprecision(2)
+                << (double)numLitsDependent/(double)numLits*100.0
                 << " %"
 
-                << " avg dependent lits/dominators : " << std::fixed << std::setprecision(2)
+                << " dep-lits/dom-lits : " << std::fixed << std::setprecision(2)
                 << (double)numLitsDependent/(double)dominators
 
-                << " Time: " << std::fixed << std::setprecision(2)
+                << " T: " << std::fixed << std::setprecision(2)
                 << cpu_time << " s"
                 << endl;
             }
