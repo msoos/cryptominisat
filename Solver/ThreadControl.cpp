@@ -1443,7 +1443,7 @@ void ThreadControl::printFullStats()
     );
 
     //VarReplacer stats
-    printStatsLine("c EqLit find time"
+    printStatsLine("c SCC time"
         , sCCFinder->getStats().cpu_time
         , sCCFinder->getStats().cpu_time/cpu_time*100.0
         , "% time"
