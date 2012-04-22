@@ -205,7 +205,7 @@ class CommandControl : public Solver
                 << " ((int64_t)propStats.propagations-(int64_t)totalProps): "
                 << ((int64_t)propStats.propagations-(int64_t)totalProps)
                 << endl;
-                assert(propStats.propagations == totalProps);
+                //assert(propStats.propagations == totalProps);
 
                 printStatsLine("c confl lits nonmin ", numLitsLearntNonMinimised);
                 printStatsLine("c confl lits minim", numLitsLearntMinimised
