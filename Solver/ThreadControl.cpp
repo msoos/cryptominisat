@@ -1391,6 +1391,12 @@ void ThreadControl::printFullStats()
     cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
     sumStats.print();
     sumPropStats.print(sumStats.cpu_time);
+    printStatsLine("c props/decision"
+        , (double)propStats.propagations/(double)sumStats.decisions
+    );
+    printStatsLine("c props/conflict"
+        , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
+    );
     cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
 
     printStatsLine("c clause clean time"

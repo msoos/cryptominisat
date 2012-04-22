@@ -79,11 +79,11 @@ class CommandControl : public Solver
                 , decisionsRand(0)
 
                 //Conflict generation
-                , numLitsLearntNonMinimised(0)
-                , numLitsLearntMinimised(0)
-                , furtherClMinim(0)
-                , numShrinkedClause(0)
-                , numShrinkedClauseLits(0)
+                , litsLearntNonMin(0)
+                , litsLearntRecMin(0)
+                , litsLearntFinal(0)
+                , OTFShrinkAttempted(0)
+                , OTFShrinkedClause(0)
 
                 //Learnt stats
                 , learntUnits(0)
@@ -117,11 +117,11 @@ class CommandControl : public Solver
                 decisionsRand += other.decisionsRand;
 
                 //Conflict minimisation stats
-                numLitsLearntNonMinimised += other.numLitsLearntNonMinimised;
-                numLitsLearntMinimised    += other.numLitsLearntMinimised;
-                furtherClMinim            += other.furtherClMinim;
-                numShrinkedClause         += other.numShrinkedClause;
-                numShrinkedClauseLits     += other.numShrinkedClauseLits;
+                litsLearntNonMin += other.litsLearntNonMin;
+                litsLearntRecMin += other.litsLearntRecMin;
+                litsLearntFinal += other.litsLearntFinal;
+                OTFShrinkAttempted  += other.OTFShrinkAttempted;
+                OTFShrinkedClause += other.OTFShrinkedClause;
 
                 //Learnt stats
                 learntUnits += other.learntUnits;
@@ -150,6 +150,13 @@ class CommandControl : public Solver
                 //Restarts stats
                 printStatsLine("c restarts", numRestarts);
                 printStatsLine("c time", cpu_time);
+                printStatsLine("c decisions", decisions
+                    , (double)decisionsRand*100.0/(double)decisions
+                    , "% random"
+                );
+                printStatsLine("c decisions/conflicts"
+                    , (double)decisions/(double)conflStats.numConflicts
+                );
 
                 conflStats.print(cpu_time);
 
@@ -158,45 +165,24 @@ class CommandControl : public Solver
 
                 cout << "c LEARNT stats" << endl;
                 printStatsLine("c units learnt"
-                                , learntUnits
-                                , (double)learntUnits/(double)conflStats.numConflicts*100.0
-                                , "% of conflicts");
+                    , learntUnits
+                    , (double)learntUnits/(double)conflStats.numConflicts*100.0
+                    , "% of conflicts");
 
                 printStatsLine("c bins learnt"
-                                , learntBins
-                                , (double)learntBins/(double)conflStats.numConflicts*100.0
-                                , "% of conflicts");
+                    , learntBins
+                    , (double)learntBins/(double)conflStats.numConflicts*100.0
+                    , "% of conflicts");
 
                 printStatsLine("c tris learnt"
-                                , learntTris
-                                , (double)learntTris/(double)conflStats.numConflicts*100.0
-                                , "% of conflicts");
+                    , learntTris
+                    , (double)learntTris/(double)conflStats.numConflicts*100.0
+                    , "% of conflicts");
 
                 printStatsLine("c long learnt"
-                                , learntLongs
-                                , (double)learntLongs/(double)conflStats.numConflicts*100.0
-                                , "% of conflicts");
-
-                //Clause-shrinking through watchlists
-                cout << "c SHRINKING stats" << endl;
-                printStatsLine("c OTF cl watch-shrink"
-                                , numShrinkedClause
-                                , (double)numShrinkedClause/(double)conflStats.numConflicts
-                                , "clauses/conflict");
-
-                printStatsLine("c OTF cl watch-sh-lit"
-                                , numShrinkedClauseLits
-                                , (double)numShrinkedClauseLits/(double)numShrinkedClause
-                                , "lits/clause");
-
-                printStatsLine("c tried to recurMin cls"
-                                , furtherClMinim
-                                , (double)furtherClMinim/(double)conflStats.numConflicts*100.0
-                                , "% of conflicts");
-
-                printStatsLine("c decisions", decisions
-                    , (double)decisionsRand*100.0/(double)decisions
-                    , "% random"
+                    , learntLongs
+                    , (double)learntLongs/(double)conflStats.numConflicts*100.0
+                    , "% of conflicts"
                 );
 
                 cout << "c ADVANCED PROP stats" << endl;
@@ -214,14 +200,33 @@ class CommandControl : public Solver
                     , "bin/call"
                 );
 
-                cout << "c CONFL MIN stats" << endl;
-                printStatsLine("c confl lits nonmin "
-                    , numLitsLearntNonMinimised);
-                printStatsLine("c confl lits minim"
-                    , numLitsLearntMinimised
-                    , (double)(numLitsLearntNonMinimised - numLitsLearntMinimised)
-                    / (double)numLitsLearntNonMinimised * 100.0
-                    , "% smaller"
+                cout << "c CONFL LITS stats" << endl;
+                printStatsLine("c confl-lits nonmin "
+                    , litsLearntNonMin
+                    , (double)litsLearntNonMin/(double)conflStats.numConflicts
+                    , "lit/confl"
+                );
+
+                printStatsLine("c confl-lits rec min"
+                    , litsLearntRecMin
+                    , (double)litsLearntRecMin/(double)litsLearntNonMin*100.0
+                    , "% less"
+                );
+
+                printStatsLine("c confl-lits OTF min"
+                    , litsLearntFinal
+                    , (double)litsLearntFinal/(double)litsLearntNonMin*100.0
+                    , "% less"
+                );
+
+                printStatsLine("c confl-lits OTF min called %"
+                    , (double)OTFShrinkAttempted/(double)conflStats.numConflicts
+                    , (double)OTFShrinkedClause/(double)OTFShrinkAttempted
+                    , "% attempt successful"
+                );
+
+                printStatsLine("c confl-lits final avg"
+                    , (double)litsLearntFinal/(double)conflStats.numConflicts
                 );
 
                 //General stats
@@ -240,13 +245,11 @@ class CommandControl : public Solver
             uint64_t  decisionsAssump;
             uint64_t  decisionsRand;    ///<Numer of random decisions made
 
-            uint64_t  numLitsLearntNonMinimised;     ///<Number of learnt literals without minimisation
-            uint64_t  numLitsLearntMinimised;     ///<Number of learnt literals with minimisation
-            uint64_t  nShrinkedCl;      ///<Num clauses improved using on-the-fly self-subsuming resolution
-            uint64_t  nShrinkedClLits;  ///<Num literals removed by on-the-fly self-subsuming resolution
-            uint64_t  furtherClMinim;  ///<Decided to carry out transitive on-the-fly self-subsuming resolution on this many clauses
-            uint64_t  numShrinkedClause; ///<Number of times we tried to further shrink clauses with cache
-            uint64_t  numShrinkedClauseLits; ///<Number or literals removed while shinking clauses with cache
+            uint64_t litsLearntNonMin;
+            uint64_t litsLearntRecMin;
+            uint64_t litsLearntFinal;
+            uint64_t OTFShrinkAttempted;
+            uint64_t OTFShrinkedClause;
 
             //Learnt stats
             uint64_t learntUnits;

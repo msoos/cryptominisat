@@ -232,7 +232,7 @@ void CommandControl::analyze(
     toClear.clear();
 
     assert(pathC == 0);
-    stats.numLitsLearntNonMinimised += out_learnt.size();
+    stats.litsLearntNonMin += out_learnt.size();
 
     //Recursive-simplify conflict clause:
     if (conf.doRecursiveCCMin) {
@@ -257,6 +257,7 @@ void CommandControl::analyze(
         }
         toClear.clear();
     }
+    stats.litsLearntRecMin += out_learnt.size();
 
     //Cache-based minimisation
     if (conf.doCache
@@ -273,7 +274,7 @@ void CommandControl::analyze(
 
     //Calc stats
     glue = calcGlue(out_learnt);
-    stats.numLitsLearntMinimised += out_learnt.size();
+    stats.litsLearntFinal += out_learnt.size();
 
     //Print fully minimised clause
     #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
@@ -619,9 +620,12 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
                 //Update conflict stats
                 stats.learntUnits++;
                 stats.conflStats.numConflicts++;
+                stats.conflStats.update(lastConflictCausedBy);
 
                 cancelUntil(0);
                 trail.push_back(~failed);
+                stats.litsLearntNonMin =
+                    stats.litsLearntRecMin = stats.litsLearntFinal = 1;
                 propStats.propsUnit++;
                 stats.hyperBinAdded += hyperBinResAll();
                 stats.transRedRemoved += removeUselessBins();
@@ -1201,6 +1205,12 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
         stats.print();
         propStats.print(stats.cpu_time);
+        printStatsLine("c props/decision"
+            , (double)propStats.propagations/(double)stats.decisions
+        );
+        printStatsLine("c props/conflict"
+            , (double)propStats.propagations/(double)stats.conflStats.numConflicts
+        );
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
     }
 
@@ -1303,7 +1313,7 @@ form to carry out the forward-self-subsuming resolution
 void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
 {
     assert(conf.doCache);
-    stats.furtherClMinim++;
+    stats.OTFShrinkAttempted++;
 
     //Set all literals' seen[lit] = 1 in learnt clause
     //We will 'clean' the learnt clause by setting these to 0
@@ -1373,8 +1383,7 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
 
         seen[i->toInt()] = 0;
     }
-    stats.numShrinkedClause += (removedLits > 0);
-    stats.numShrinkedClauseLits += removedLits;
+    stats.OTFShrinkedClause += (removedLits > 0);
     cl.resize(cl.size() - (i-j));
 
     #ifdef VERBOSE_DEBUG
