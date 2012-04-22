@@ -938,18 +938,25 @@ lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
         << std::setw(8) << numConfls << " confls"
         << endl;
 
+    //SCC&VAR-REPL
     if (conf.doFindEqLits && !sCCFinder->find2LongXors())
         goto end;
 
     if (conf.doReplace && !varReplacer->performReplace())
         goto end;
 
+    //Cache clean before failed lit (for speed)
+    if (conf.doCache)
+        implCache.clean(this);
+
     if (!implCache.tryBoth(this))
         goto end;
 
+    //PROBE
     if (conf.doFailedLit && !failedLitSearcher->search())
         goto end;
 
+    //SCC&VAR-REPL
     if (conf.doFindEqLits && !sCCFinder->find2LongXors())
         goto end;
 
