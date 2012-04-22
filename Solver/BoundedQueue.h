@@ -174,6 +174,9 @@ public:
         queuesize=0;
         sumofqueue=0;
 
+        totalNumElemsMidLong = 0;
+        sumOfElemsMidLong = 0;
+
         totalNumElemsLong = 0;
         sumOfElemsLong = 0;
     }
