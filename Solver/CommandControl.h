@@ -136,7 +136,6 @@ class CommandControl : public Solver
 
                 //Stat structs
                 conflStats += other.conflStats;
-                propStats += other.propStats;
 
                 //Time
                 cpu_time += other.cpu_time;
@@ -200,26 +199,6 @@ class CommandControl : public Solver
                     , "% random"
                 );
 
-                //Props
-                propStats.print(cpu_time);
-
-                uint64_t totalProps = propStats.propsUnit
-                 + propStats.propsBinRed
-                 + propStats.propsBinIrred
-                 + propStats.propsTri + propStats.propsLongIrred
-                 + propStats.propsLongRed
-                 + decisions + decisionsAssump;
-
-                cout
-                << "c DEBUG"
-                << " ((int64_t)propStats.propagations-(int64_t)totalProps): "
-                << ((int64_t)propStats.propagations-(int64_t)totalProps)
-                << endl;
-                //assert(propStats.propagations == totalProps);
-
-                printStatsLine("c confl lits nonmin ", numLitsLearntNonMinimised);
-                printStatsLine("c confl lits minim", numLitsLearntMinimised
-                    , (double)(numLitsLearntNonMinimised - numLitsLearntMinimised)*100.0/ (double)numLitsLearntNonMinimised
                 cout << "c ADVANCED PROP stats" << endl;
                 printStatsLine("c advProp called"
                     , advancedPropCalled
@@ -282,7 +261,6 @@ class CommandControl : public Solver
 
             //Stat structs
             ConflStats conflStats;
-            PropStats propStats;
 
             //Time
             double cpu_time;
@@ -492,7 +470,6 @@ inline const CommandControl::Stats& CommandControl::getStats() const
 inline void CommandControl::addInPartialSolvingStat()
 {
     stats.cpu_time = cpuTime() - startTime;
-    stats.propStats = propStats;
 }
 
 #endif //__COMMAND_CONTROL_H__

@@ -878,6 +878,8 @@ lbool ThreadControl::solve()
 
         status = CommandControl::solve(numConfls);
         sumStats += CommandControl::getStats();
+        sumPropStats += propStats;
+        propStats.clear();
 
         //Back up activities, polairties and var_inc
         backupActivity.clear();
@@ -1385,9 +1387,10 @@ void ThreadControl::printFullStats()
         , "% time"
     );
 
-    std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
+    cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
     sumStats.print();
-    std::cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
+    sumPropStats.print(sumStats.cpu_time);
+    cout << "c ------- FINAL TOTAL SOLVING STATS ---------" << endl;
 
     printStatsLine("c clause clean time"
         , cleaningStats.cpu_time

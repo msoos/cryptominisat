@@ -1186,7 +1186,6 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     }
     cancelUntil(0);
 
-    stats.propStats = propStats;
     stats.cpu_time = cpuTime() - startTime;
     if (conf.verbosity >= 4) {
         cout << "c CommandControl::solve() finished"
@@ -1201,6 +1200,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
     if (conf.verbosity >= 3) {
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
         stats.print();
+        propStats.print(stats.cpu_time);
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
     }
 

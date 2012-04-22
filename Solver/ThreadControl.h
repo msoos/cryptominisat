@@ -476,6 +476,7 @@ class ThreadControl : public CommandControl
 
         //Main up stats
         Stats sumStats;
+        PropStats sumPropStats;
         CleaningStats cleaningStats;
         ReachabilityStats reachStats;
         size_t numCallReachCalc;
@@ -617,6 +618,7 @@ inline void ThreadControl::addInPartialSolvingStat()
 {
     CommandControl::addInPartialSolvingStat();
     sumStats += CommandControl::getStats();
+    sumPropStats += propStats;
 }
 
 #endif //THREADCONTROL_H
