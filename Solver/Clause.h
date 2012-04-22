@@ -162,7 +162,8 @@ public:
     {
         assert(i <= size());
         mySize -= i;
-        if (i > 0) setStrenghtened();
+        if (i > 0)
+            setStrenghtened();
     }
 
     void resize (const uint32_t i)
