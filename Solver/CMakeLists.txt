@@ -1,3 +1,4 @@
+include_directories( ${ZLIB_INCLUDE_DIR} )
 include_directories(${PROJECT_SOURCE_DIR}/mtl)
 include_directories(${PROJECT_SOURCE_DIR}/Solver)
 include_directories(${PROJECT_SOURCE_DIR}/MTRand)

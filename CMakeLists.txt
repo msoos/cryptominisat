@@ -36,8 +36,6 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 # Look for ZLIP (For reading zipped CNFs)
 # -----------------------------------------------------------------------------
 find_package(ZLIB  REQUIRED)
-link_directories( ${ZLIB_LIBRARY} )
-include_directories( ${ZLIB_INCLUDE_DIR} )
 
 # -----------------------------------------------------------------------------
 # Look for OpenMP (Multi-threading extension to C++)
