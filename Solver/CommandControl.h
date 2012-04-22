@@ -258,13 +258,6 @@ class CommandControl : public Solver
         void  resetStats();
         void  addInPartialSolvingStat();
 
-        //Props stats
-        uint64_t propsOrig;
-        uint64_t propsBinOrig;
-        uint64_t propsTriOrig;
-        uint64_t propsLongIrredOrig;
-        uint64_t propsLongRedOrig;
-
         //Stats for clean
         size_t lastCleanZeroDepthAssigns;
 
