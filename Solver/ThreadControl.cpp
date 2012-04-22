@@ -151,11 +151,12 @@ when the solver is in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
 */
 template <class T>
-Clause* ThreadControl::addClauseInt(const T& lits
-                            , const bool learnt
-                            , const ClauseStats& stats
-                            , const bool attach)
-{
+Clause* ThreadControl::addClauseInt(
+    const T& lits
+    , const bool learnt
+    , const ClauseStats& stats
+    , const bool attach
+) {
     assert(ok);
     assert(decisionLevel() == 0);
     assert(qhead == trail.size());
