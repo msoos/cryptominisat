@@ -149,7 +149,8 @@ public:
         for(uint32_t i=0;i<size;i++) elems[i]=0;
     }
 
-    void fastclear() {
+    void fastclear()
+    {
         //Discard the queue, but not the SUMs
         first = 0;
         last = 0;
@@ -163,10 +164,10 @@ public:
     int  size(void)
     {
         return queuesize;
-
     }
 
-    void clear()   {
+    void clear()
+    {
         elems.clear();
         first = 0;
         last = 0;
