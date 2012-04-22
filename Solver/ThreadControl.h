@@ -491,6 +491,7 @@ class ThreadControl : public CommandControl
         uint64_t            learntsLits;  ///< Number of literals in learnt clauses
         uint64_t            numBinsNonLearnt;
         uint64_t            numBinsLearnt;
+        uint64_t            numNewBinsSinceSCC;
         vector<char>        locked; ///<Before reduceDB, threads fill this up (index by clause num)
         void                reArrangeClauses();
         void                reArrangeClause(Clause* clause);

@@ -72,6 +72,7 @@ bool SCCFinder::find2LongXors()
             runStats.printShort();
     }
     globalStats += runStats;
+    control->numNewBinsSinceSCC = 0;
 
     return control->ok;
 }

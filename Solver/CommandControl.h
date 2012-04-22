@@ -265,6 +265,9 @@ class CommandControl : public Solver
         uint64_t propsLongIrredOrig;
         uint64_t propsLongRedOrig;
 
+        //Stats for clean
+        size_t lastCleanZeroDepthAssigns;
+
         //History statistics
         bqueue<uint32_t> branchDepthHist;   ///< Avg branch depth in current restart
         bqueue<uint32_t> branchDepthDeltaHist;

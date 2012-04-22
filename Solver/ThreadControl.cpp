@@ -259,6 +259,7 @@ void ThreadControl::attachBinClause(
         clausesLits += 2;
         numBinsNonLearnt++;
     }
+    numNewBinsSinceSCC++;
 
     //Call Solver's function for heavy-lifting
     Solver::attachBinClause(lit1, lit2, learnt, checkUnassignedFirst);
@@ -730,7 +731,7 @@ void ThreadControl::reduceDB()
                 tmpStats.preRemovedClauses++;
                 tmpStats.preRemovedClausesLits += cl->size();
                 tmpStats.preRemovedClausesGlue += cl->stats.glue;
-                if (cl->stats.glue > cl->size()) {
+                if (cl->stats.glue > cl->size() + 1000) {
                     cout
                     << "c DEBUG strangely large glue: " << *cl
                     << " glue: " << cl->stats.glue

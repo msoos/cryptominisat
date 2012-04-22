@@ -26,6 +26,9 @@
 #include "ThreadControl.h"
 #include <iomanip>
 #include <omp.h>
+#include "SCCFinder.h"
+#include "VarReplacer.h"
+#include "ClauseCleaner.h"
 using std::cout;
 using std::endl;
 
@@ -891,6 +894,7 @@ void CommandControl::resetStats()
     origTrailSize = trail.size();
 
     order_heap.filter(VarFilter(this, control));
+    lastCleanZeroDepthAssigns = trail.size();
 }
 
 lbool CommandControl::burstSearch()
@@ -1059,6 +1063,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             lastRestartPrint = stats.conflStats.numConflicts;
         }
 
+        //Check if we should abort
         if (stats.conflStats.numConflicts >= maxConfls) {
             if (conf.verbosity >= 3) {
                 cout
@@ -1069,6 +1074,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             break;
         }
 
+        //Check if we should do DBcleaning
         if (sumConflicts() > control->getNextCleanLimit()) {
             if (conf.verbosity >= 3) {
                 cout
@@ -1082,6 +1088,29 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             control->fullReduce();
 
             genRandomVarActMultDiv();
+        }
+
+        //Check if we should do SCC
+        //cout << "numNewBinsSinceSCC: " << control->numNewBinsSinceSCC << endl;
+        const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
+        if (newZeroDepthAss > ((double)control->getNumFreeVars()*0.001))  {
+            cout << "newZeroDepthAss : " << newZeroDepthAss  << endl;
+            lastCleanZeroDepthAssigns = trail.size();
+            control->clauseCleaner->removeAndCleanAll();
+        }
+
+        if (control->numNewBinsSinceSCC/2 > ((double)control->getNumFreeVars()*0.003)) {
+            control->clauseCleaner->removeAndCleanAll();
+            if (!control->sCCFinder->find2LongXors()) {
+                status = l_False;
+                break;
+            }
+
+            if (conf.doReplace && !control->varReplacer->performReplace()) {
+                status = l_False;
+                break;
+            }
+            lastCleanZeroDepthAssigns = trail.size();
         }
     }
 
