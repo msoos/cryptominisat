@@ -218,11 +218,12 @@ protected:
         , PropBy& confl
     ); ///<Propagate >3-long clause
 
-    //For hyper-bin, binary clause removal, etc.
-    PropBy      propBin(const Lit p, vec<Watched>::const_iterator k, set<BinaryClause>& uselessBin);
-    Lit         propagateFull(set<BinaryClause>& uselessBin);
+    //For hyper-bin and transitive reduction.
+    PropBy            propBin(const Lit p, vec<Watched>::const_iterator k);
+    Lit               propagateFull();
     bool              enqeuedSomething;         ///<Set if enqueueComplex has been called
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
+    set<BinaryClause> uselessBin;
     PropBy      propagateNonLearntBin();  ///<For debug purposes, to test binary clause removal
 
     /////////////////
@@ -333,22 +334,29 @@ inline void Solver::enqueue(const Lit p, const PropBy from)
         __builtin_prefetch(watches[p.toInt()].begin());
 
     assigns[v] = boolToLBool(!p.sign());
-    #ifdef ANIMATE3D
-    std::cerr << "s " << v << " " << p.sign() << endl;
-    #endif
-    varData[v].reason = from;
     trail.push_back(p);
     propStats.propagations++;
 
+    varData[v].reason = from;
     varData[v].level = decisionLevel();
     agility.update(varData[v].polarity != !p.sign());
     varData[v].polarity = !p.sign();
+
+    #ifdef ANIMATE3D
+    std::cerr << "s " << v << " " << p.sign() << endl;
+    #endif
 }
 
-inline void Solver::enqueueComplex(const Lit p, const Lit ancestor, const bool learntStep)
-{
+inline void Solver::enqueueComplex(
+    const Lit p
+    , const Lit ancestor
+    , const bool learntStep
+) {
     assert(value(p.var()) == l_Undef);
-    if (watches[p.toInt()].size() > 0) __builtin_prefetch(watches[p.toInt()].begin());
+
+    //Prefetch next watchlist
+    if (watches[p.toInt()].size() > 0)
+        __builtin_prefetch(watches[p.toInt()].begin());
 
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Enqueing " << p
@@ -357,9 +365,12 @@ inline void Solver::enqueueComplex(const Lit p, const Lit ancestor, const bool l
      #endif
 
     const Var var = p.var();
-    assigns [var] = boolToLBool(!p.sign());//lbool(!sign(p));  // <<== abstract but not uttermost effecient
+    assigns[var] = boolToLBool(!p.sign());
     trail.push_back(p);
     propStats.propagations++;
+    varData[var].reason = PropBy(~ancestor);
+    varData[var].level = decisionLevel();
+    varData[var].polarity = !p.sign();
 
     propData[var].ancestor = ancestor;
     propData[var].learntStep = learntStep;

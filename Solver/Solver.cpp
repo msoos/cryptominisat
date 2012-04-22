@@ -463,7 +463,7 @@ PropBy Solver::propagateNonLearntBin()
     return PropBy();
 }
 
-Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
+Lit Solver::propagateFull()
 {
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Prop full started" << endl;
@@ -474,14 +474,18 @@ Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
     //Assert startup: only 1 enqueued, uselessBin is empty
     assert(uselessBin.empty());
     assert(decisionLevel() == 1);
-    assert(trail.size() - trail_lim.back() == 1);
 
-    //Set up root node
-    Lit root = trail[qhead];
-    propData[root.var()].ancestor = lit_Undef;
-    propData[root.var()].learntStep = false;
-    propData[root.var()].hyperBin = false;
-    propData[root.var()].hyperBinNotAdded = false;
+    //The toplevel decision has to be set specifically
+    //If we came here as part of a backtrack to decision level 1, then
+    //this is already set, and there is no need to set it
+    if (trail.size() - trail_lim.back() == 1) {
+        //Set up root node
+        Lit root = trail[qhead];
+        propData[root.var()].ancestor = lit_Undef;
+        propData[root.var()].learntStep = false;
+        propData[root.var()].hyperBin = false;
+        propData[root.var()].hyperBinNotAdded = false;
+    }
 
     uint32_t nlBinQHead = qhead;
     uint32_t lBinQHead = qhead;
@@ -497,7 +501,7 @@ Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
             if (!k->isBinary() || k->getLearnt()) continue;
 
-            ret = propBin(p, k, uselessBin);
+            ret = propBin(p, k);
             if (ret != PropBy())
                 return analyzeFail(ret);
         }
@@ -513,7 +517,7 @@ Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
             if (!k->isBinary() || !k->getLearnt()) continue;
 
-            ret = propBin(p, k, uselessBin);
+            ret = propBin(p, k);
             if (ret != PropBy())
                 return analyzeFail(ret);
 
@@ -579,8 +583,8 @@ Lit Solver::propagateFull(std::set<BinaryClause>& uselessBin)
 }
 
 PropBy Solver::propBin(
-    const Lit p, vec<Watched>::const_iterator k
-    , std::set<BinaryClause>& uselessBin
+    const Lit p
+    , vec<Watched>::const_iterator k
 ) {
     const Lit lit = k->getOtherLit();
     const lbool val = value(lit);
@@ -638,8 +642,14 @@ PropBy Solver::propBin(
                 cout << "Removing hyper-bin clause " << clauseToRemove << endl;
                 #endif
                 std::set<BinaryClause>::iterator it = needToAddBinClause.find(clauseToRemove);
-                assert(it != needToAddBinClause.end());
-                needToAddBinClause.erase(it);
+
+                //In case this is called after a backtrack to decisionLevel 1
+                //then in fact we might have already cleaned the
+                //'needToAddBinClause'. When called from probing, the IF below
+                //must ALWAYS be true
+                if (it != needToAddBinClause.end()) {
+                    needToAddBinClause.erase(it);
+                }
                 //This will subsume the clause later, so don't remove it
             }
 

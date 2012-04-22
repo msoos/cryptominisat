@@ -608,7 +608,53 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
     //Loop until restart or finish (SAT/UNSAT)
     while (true) {
         assert(ok);
-        const PropBy confl = propagate();
+        Lit failed;
+        PropBy confl;
+
+        //If decision level==1, then try to do all the good stuff
+        if (decisionLevel() == 1) {
+            stats.advancedPropCalled++;
+            failed = propagateFull();
+            if (failed != lit_Undef) {
+                //Update conflict stats
+                stats.learntUnits++;
+                stats.conflStats.numConflicts++;
+
+                cancelUntil(0);
+                trail.push_back(~failed);
+                propStats.propsUnit++;
+                stats.hyperBinAdded += hyperBinResAll();
+                stats.transRedRemoved += removeUselessBins();
+
+                if (!ok)
+                    return l_False;
+
+                continue;
+            }
+
+            //Update cache
+            for (int64_t c = trail.size()-1; c != (int64_t)trail_lim[0]; c--) {
+                const Lit thisLit = trail[c];
+                const Lit ancestor = propData[thisLit.var()].ancestor;
+                if (control->conf.doCache) {
+                    assert(thisLit != trail[trail_lim[0]]);
+                    const bool learntStep = propData[thisLit.var()].learntStep;
+
+                    assert(ancestor != lit_Undef);
+                    control->implCache[(~ancestor).toInt()].merge(
+                        control->implCache[(~thisLit).toInt()].lits
+                        , thisLit
+                        , learntStep
+                        , ancestor
+                        , control->seen
+                    );
+                }
+            }
+            stats.hyperBinAdded += hyperBinResAll();
+            stats.transRedRemoved += removeUselessBins();
+        } else {
+            confl = propagate();
+        }
 
         #ifdef VERBOSE_DEBUG
         cout << "c CommandControl::search() has finished propagation" << endl;
@@ -626,9 +672,6 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
 
         } else {
             assert(ok);
-            //TODO Enable this through some ingenious locking
-            /*if (conf.doCache && decisionLevel() == 1)
-                saveOTFData();*/
 
             //If restart is needed, restart here
             if (params.needToStopSearch
@@ -815,7 +858,11 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             //Binary learnt
             stats.learntBins++;
             control->attachBinClause(learnt_clause[0], learnt_clause[1], true);
-            enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
+            if (decisionLevel() == 1)
+                enqueueComplex(learnt_clause[0], ~learnt_clause[1], true);
+            else
+                enqueue(learnt_clause[0], PropBy(learnt_clause[1]));
+
             propStats.propsBinRed++;
             break;
 
@@ -823,7 +870,12 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             //3-long almost-normal learnt
             stats.learntTris++;
             control->attachClause(*cl);
-            enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
+
+            if (decisionLevel() == 1)
+                addHyperBin(learnt_clause[0], learnt_clause[1], learnt_clause[2]);
+            else
+                enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2]));
+
             propStats.propsTri++;
             break;
 
@@ -831,7 +883,10 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
             //Normal learnt
             stats.learntLongs++;
             control->attachClause(*cl);
-            enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));
+            if (decisionLevel() == 1)
+                addHyperBin(learnt_clause[0], *cl);
+            else
+                enqueue(learnt_clause[0], PropBy(clAllocator->getOffset(cl)));
             propStats.propsLongRed++;
             break;
     }
@@ -1384,4 +1439,57 @@ void CommandControl::printAgilityStats()
 uint64_t CommandControl::sumConflicts() const
 {
     return control->sumStats.conflStats.numConflicts + stats.conflStats.numConflicts;
+}
+
+size_t CommandControl::hyperBinResAll()
+{
+    size_t added = 0;
+
+    for(std::set<BinaryClause>::const_iterator
+        it = control->needToAddBinClause.begin()
+        , end = control->needToAddBinClause.end()
+        ; it != end
+        ; it++
+    ) {
+        control->attachBinClause(it->getLit1(), it->getLit2(), true, false);
+        added++;
+    }
+
+    return added;
+}
+
+size_t CommandControl::removeUselessBins()
+{
+    size_t removed = 0;
+    if (conf.doRemUselessBins) {
+        for(std::set<BinaryClause>::iterator
+            it = uselessBin.begin()
+            , end = uselessBin.end()
+            ; it != end
+            ; it++
+        ) {
+            //cout << "Removing binary clause: " << *it << endl;
+            removeWBin(control->watches, it->getLit1(), it->getLit2(), it->getLearnt());
+            removeWBin(control->watches, it->getLit2(), it->getLit1(), it->getLearnt());
+
+            //Update stats
+            if (it->getLearnt()) {
+                control->learntsLits -= 2;
+                control->numBinsLearnt--;
+            } else {
+                control->clausesLits -= 2;
+                control->numBinsNonLearnt--;
+            }
+            removed++;
+
+            #ifdef VERBOSE_DEBUG_FULLPROP
+            cout << "Removed bin: "
+            << it->getLit1() << " , " << it->getLit2()
+            << " , learnt: " << it->getLearnt() << endl;
+            #endif
+        }
+    }
+    uselessBin.clear();
+
+    return removed;
 }

@@ -270,9 +270,6 @@ class FailedLitSearcher {
 
         //For hyper-bin resolution
         vector<uint32_t> cacheUpdated;
-        set<BinaryClause> uselessBin;
-        void hyperBinResAll();
-        void removeUselessBins();
         #ifdef DEBUG_REMOVE_USELESS_BIN
         void testBinRemoval(const Lit origLit);
         void fillTestUselessBinRemoval(const Lit lit);

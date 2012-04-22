@@ -91,6 +91,11 @@ class CommandControl : public Solver
                 , learntTris(0)
                 , learntLongs(0)
 
+                //Hyper-bin & transitive reduction
+                , advancedPropCalled(0)
+                , hyperBinAdded(0)
+                , transRedRemoved(0)
+
                 //Time
                 , cpu_time(0)
 
@@ -123,6 +128,11 @@ class CommandControl : public Solver
                 learntBins += other.learntBins;
                 learntTris += other.learntTris;
                 learntLongs += other.learntLongs;
+
+                //Hyper-bin & transitive reduction
+                advancedPropCalled += other.advancedPropCalled;
+                hyperBinAdded += other.hyperBinAdded;
+                transRedRemoved += other.transRedRemoved;
 
                 //Stat structs
                 conflStats += other.conflStats;
@@ -210,6 +220,28 @@ class CommandControl : public Solver
                 printStatsLine("c confl lits nonmin ", numLitsLearntNonMinimised);
                 printStatsLine("c confl lits minim", numLitsLearntMinimised
                     , (double)(numLitsLearntNonMinimised - numLitsLearntMinimised)*100.0/ (double)numLitsLearntNonMinimised
+                cout << "c ADVANCED PROP stats" << endl;
+                printStatsLine("c advProp called"
+                    , advancedPropCalled
+                );
+                printStatsLine("c hyper-bin add bin"
+                    , hyperBinAdded
+                    , (double)hyperBinAdded/(double)advancedPropCalled
+                    , "bin/call"
+                );
+                printStatsLine("c trans-red rem bin"
+                    , transRedRemoved
+                    , (double)transRedRemoved/(double)advancedPropCalled
+                    , "bin/call"
+                );
+
+                cout << "c CONFL MIN stats" << endl;
+                printStatsLine("c confl lits nonmin "
+                    , numLitsLearntNonMinimised);
+                printStatsLine("c confl lits minim"
+                    , numLitsLearntMinimised
+                    , (double)(numLitsLearntNonMinimised - numLitsLearntMinimised)
+                    / (double)numLitsLearntNonMinimised * 100.0
                     , "% smaller"
                 );
 
@@ -243,6 +275,11 @@ class CommandControl : public Solver
             uint64_t learntTris;
             uint64_t learntLongs;
 
+            //Hyper-bin & transitive reduction
+            uint64_t advancedPropCalled;
+            uint64_t hyperBinAdded;
+            uint64_t transRedRemoved;
+
             //Stat structs
             ConflStats conflStats;
             PropStats propStats;
@@ -258,8 +295,9 @@ class CommandControl : public Solver
         void  resetStats();
         void  addInPartialSolvingStat();
 
-        //Stats for clean
-        size_t lastCleanZeroDepthAssigns;
+        //For hyper-bin and transitive reduction
+        size_t hyperBinResAll();
+        size_t removeUselessBins();
 
         //History statistics
         bqueue<uint32_t> branchDepthHist;   ///< Avg branch depth in current restart
@@ -362,9 +400,11 @@ class CommandControl : public Solver
         const Stats& getStats() const;
 
     private:
-        double    startTime; ///<When solve() was started
-        Stats stats;
-        size_t origTrailSize;
+        size_t   lastCleanZeroDepthAssigns;
+
+        double   startTime; ///<When solve() was started
+        Stats    stats;
+        size_t   origTrailSize;
         uint32_t var_inc_multiplier;
         uint32_t var_inc_divider;
 };

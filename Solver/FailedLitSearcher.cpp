@@ -213,7 +213,6 @@ bool FailedLitSearcher::tryThis(const Lit lit)
 {
     //Start-up cleaning
     runStats.numProbed++;
-    assert(uselessBin.empty());
 
     //Test removal of non-learnt binary clauses
     #ifdef DEBUG_REMOVE_USELESS_BIN
@@ -225,7 +224,7 @@ bool FailedLitSearcher::tryThis(const Lit lit)
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Trying " << lit << endl;
     #endif
-    const Lit failed = control->propagateFull(uselessBin);
+    const Lit failed = control->propagateFull();
     if (failed != lit_Undef) {
         //Update conflict stats
         runStats.conflStats.update(control->lastConflictCausedBy);
@@ -236,7 +235,8 @@ bool FailedLitSearcher::tryThis(const Lit lit)
         vector<Lit> lits;
         lits.push_back(~failed);
         control->addClauseInt(lits, true);
-        removeUselessBins();
+        runStats.addedBin += control->hyperBinResAll();
+        runStats.removedBin += control->removeUselessBins();
         return control->ok;
     }
 
@@ -277,58 +277,13 @@ bool FailedLitSearcher::tryThis(const Lit lit)
     }
 
     control->cancelZeroLight();
-    hyperBinResAll();
-    removeUselessBins();
+    runStats.addedBin += control->hyperBinResAll();
+    runStats.removedBin += control->removeUselessBins();
     #ifdef DEBUG_REMOVE_USELESS_BIN
     testBinRemoval(lit);
     #endif
 
     return control->ok;
-}
-
-void FailedLitSearcher::hyperBinResAll()
-{
-    for(std::set<BinaryClause>::const_iterator it = control->needToAddBinClause.begin(), end = control->needToAddBinClause.end(); it != end; it++) {
-        tmpPs[0] = it->getLit1();
-        tmpPs[1] = it->getLit2();
-        Clause* cl = control->addClauseInt(tmpPs, true);
-        assert(cl == NULL);
-        assert(control->ok);
-        runStats.addedBin++;
-    }
-}
-
-void FailedLitSearcher::removeUselessBins()
-{
-    if (control->conf.doRemUselessBins) {
-        for(std::set<BinaryClause>::iterator
-            it = uselessBin.begin()
-            , end = uselessBin.end()
-            ; it != end
-            ; it++
-        ) {
-            //cout << "Removing binary clause: " << *it << endl;
-            removeWBin(control->watches, it->getLit1(), it->getLit2(), it->getLearnt());
-            removeWBin(control->watches, it->getLit2(), it->getLit1(), it->getLearnt());
-
-            //Update stats
-            if (it->getLearnt()) {
-                control->learntsLits -= 2;
-                control->numBinsLearnt--;
-            } else {
-                control->clausesLits -= 2;
-                control->numBinsNonLearnt--;
-            }
-            runStats.removedBin++;
-
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "Removed bin: "
-            << it->getLit1() << " , " << it->getLit2()
-            << " , learnt: " << it->getLearnt() << endl;
-            #endif
-        }
-    }
-    uselessBin.clear();
 }
 
 #ifdef DEBUG_REMOVE_USELESS_BIN
