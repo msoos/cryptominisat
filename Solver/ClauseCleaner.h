@@ -64,9 +64,18 @@ state is needed, which is important for certain algorithms
 */
 inline void ClauseCleaner::removeAndCleanAll()
 {
+    double myTime = cpuTime();
     removeSatisfiedBins(0);
     cleanClauses(control->clauses, ClauseCleaner::clauses, 0);
     cleanClauses(control->learnts, ClauseCleaner::learnts, 0);
+
+    if (control->conf.verbosity >= 1) {
+        cout
+        << "c [clean] T: "
+        << std::fixed << std::setprecision(2)
+        << (cpuTime() - myTime)
+        << " s" << endl;
+    }
 }
 
 #endif //CLAUSECLEANER_H
