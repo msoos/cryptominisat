@@ -590,10 +590,10 @@ struct ConflStats
                     + conflsTri + conflsLongIrred + conflsLongRed)))
         << endl;
 
-        assert(((int)numConflicts -
+        /*assert(((int)numConflicts -
             (int)(conflsBinIrred + conflsBinRed
                     + conflsTri + conflsLongIrred + conflsLongRed)
-        ) == 0);
+        ) == 0);*/
     }
 
     uint64_t conflsBinIrred;
