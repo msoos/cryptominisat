@@ -1017,8 +1017,10 @@ void CommandControl::printRestartStats()
 
 void CommandControl::printBaseStats()
 {
-    cout << "c " << omp_get_thread_num()
-    << " " << std::setw(5) << stats.numRestarts
+    cout
+    << "c"
+    //<< omp_get_thread_num()
+    << " " << std::setw(5) << stats.numRestarts + control->getStats().numRestarts
     << " " << std::setw(7) << sumConflicts()
     << " " << std::setw(7) << control->getNumFreeVarsAdv(trail.size())
     ;
