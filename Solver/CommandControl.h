@@ -207,21 +207,21 @@ class CommandControl : public Solver
                     , "lit/confl"
                 );
 
-                printStatsLine("c confl-lits rec min"
+                printStatsLine("c confl-lits rec-min"
                     , litsLearntRecMin
-                    , (double)litsLearntRecMin/(double)litsLearntNonMin*100.0
+                    , (double)(litsLearntNonMin-litsLearntRecMin)/(double)litsLearntNonMin*100.0
                     , "% less"
                 );
 
-                printStatsLine("c confl-lits OTF min"
+                printStatsLine("c confl-lits OTF-min"
                     , litsLearntFinal
-                    , (double)litsLearntFinal/(double)litsLearntNonMin*100.0
+                    , (double)(litsLearntNonMin-litsLearntFinal)/(double)litsLearntNonMin*100.0
                     , "% less"
                 );
 
-                printStatsLine("c confl-lits OTF min called %"
-                    , (double)OTFShrinkAttempted/(double)conflStats.numConflicts
-                    , (double)OTFShrinkedClause/(double)OTFShrinkAttempted
+                printStatsLine("c confl-lits OTF-min call%"
+                    , (double)OTFShrinkAttempted/(double)conflStats.numConflicts*100.0
+                    , (double)OTFShrinkedClause/(double)OTFShrinkAttempted*100.0
                     , "% attempt successful"
                 );
 

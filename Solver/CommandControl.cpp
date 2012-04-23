@@ -624,8 +624,9 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
 
                 cancelUntil(0);
                 trail.push_back(~failed);
-                stats.litsLearntNonMin =
-                    stats.litsLearntRecMin = stats.litsLearntFinal = 1;
+                stats.litsLearntNonMin += 1;
+                stats.litsLearntRecMin += 1;
+                stats.litsLearntFinal += 1;
                 propStats.propsUnit++;
                 stats.hyperBinAdded += hyperBinResAll();
                 stats.transRedRemoved += removeUselessBins();
