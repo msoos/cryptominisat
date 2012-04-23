@@ -185,7 +185,7 @@ class CommandControl : public Solver
                     , "% of conflicts"
                 );
 
-                cout << "c ADVANCED PROP stats" << endl;
+                cout << "c SEAMLESS HYPERBIN&TRANS-RED stats" << endl;
                 printStatsLine("c advProp called"
                     , advancedPropCalled
                 );
