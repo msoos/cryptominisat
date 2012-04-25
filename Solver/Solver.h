@@ -19,7 +19,7 @@ using std::set;
 //#define ANIMATE3D
 
 #include "constants.h"
-#include "PropByShared.h"
+#include "PropBy.h"
 
 #include "Vec.h"
 #include "Heap.h"

@@ -25,7 +25,6 @@
 #define __TRANSCACHE_H__
 
 #include "ThreadControl.h"
-#include "CommandControl.h"
 #include "VarReplacer.h"
 #include "VarUpdateHelper.h"
 #include "time_mem.h"

@@ -37,7 +37,6 @@
 class Clause;
 class ThreadControl;
 class Solver;
-class CommandControl;
 
 using std::map;
 using std::vector;

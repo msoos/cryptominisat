@@ -29,6 +29,7 @@
 #include "SCCFinder.h"
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
+#include "PropByForGraph.h"
 using std::cout;
 using std::endl;
 
@@ -1504,4 +1505,248 @@ size_t CommandControl::removeUselessBins()
     uselessBin.clear();
 
     return removed;
+}
+
+//Only used to generate nice Graphviz graphs
+string CommandControl::simplAnalyseGraph(
+    PropBy conflHalf
+    , vector<Lit>& out_learnt
+    , uint32_t& out_btlevel, uint32_t &glue
+) {
+    int pathC = 0;
+    Lit p = lit_Undef;
+
+    out_learnt.push_back(lit_Undef);      // (leave room for the asserting literal)
+    int index   = trail.size() - 1;
+    out_btlevel = 0;
+    std::stringstream resolutions;
+
+    PropByForGraph confl(conflHalf, failBinLit, *clAllocator);
+    do {
+        assert(!confl.isNULL());          // (otherwise should be UIP)
+
+        //Update resolutions output
+        if (p != lit_Undef) {
+            resolutions << " | ";
+        }
+        resolutions << "{ " << confl << " | " << pathC << " -- ";
+
+        for (uint32_t j = (p == lit_Undef) ? 0 : 1, size = confl.size(); j != size; j++) {
+            Lit q = confl[j];
+            const Var my_var = q.var();
+
+            if (!seen[my_var] //if already handled, don't care
+                && varData[my_var].level > 0 //if it's assigned at level 0, it's assigned FALSE, so leave it out
+            ) {
+                seen[my_var] = 1;
+                assert(varData[my_var].level <= decisionLevel());
+
+                if (varData[my_var].level == decisionLevel()) {
+                    pathC++;
+                } else {
+                    out_learnt.push_back(q);
+
+                    //Backtracking level is largest of thosee inside the clause
+                    if (varData[my_var].level > out_btlevel)
+                        out_btlevel = varData[my_var].level;
+                }
+            }
+        }
+        resolutions << pathC << " }";
+
+        //Go through the trail backwards, select the one that is to be resolved
+        while (!seen[trail[index--].var()]);
+
+        p = trail[index+1];
+        confl = PropByForGraph(varData[p.var()].reason, p, *clAllocator);
+        seen[p.var()] = 0; // this one is resolved
+        pathC--;
+    } while (pathC > 0); //UIP when eveything goes through this one
+    assert(pathC == 0);
+    out_learnt[0] = ~p;
+
+    // clear out seen
+    for (uint32_t j = 0; j != out_learnt.size(); j++)
+        seen[out_learnt[j].var()] = 0;    // ('seen[]' is now cleared)
+
+    //Calculate glue
+    glue = calcGlue(out_learnt);
+
+    return resolutions.str();
+}
+
+//Only used to generate nice Graphviz graphs
+void CommandControl::genConfGraph(const PropBy conflPart)
+{
+    assert(ok);
+    assert(!conflPart.isNULL());
+
+    static int num = 0;
+    num++;
+    std::stringstream s;
+    s << "confls/" << "confl" << num << ".dot";
+    std::string filename = s.str();
+
+    std::ofstream file;
+    file.open(filename.c_str());
+    if (!file) {
+        cout << "Couldn't open filename " << filename << endl;
+        cout << "Maybe you forgot to create subdirectory 'confls'" << endl;
+        exit(-1);
+    }
+    file << "digraph G {" << endl;
+
+    //Special vertex indicating final conflict clause (to help us)
+    vector<Lit> out_learnt;
+    uint32_t out_btlevel, glue;
+    const std::string res = simplAnalyseGraph(conflPart, out_learnt, out_btlevel, glue);
+    file << "vertK -> dummy;";
+    file << "dummy "
+    << "[ "
+    << " shape=record"
+    << " , label=\"{"
+    << " clause: " << out_learnt
+    << " | btlevel: " << out_btlevel
+    << " | glue: " << glue
+    << " | {resol: | " << res << " }"
+    << "}\""
+    << " , fontsize=8"
+    << " ];" << endl;
+
+    PropByForGraph confl(conflPart, failBinLit, *clAllocator);
+    #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
+    cout << "conflict: "<< confl << endl;
+    #endif
+
+    vector<Lit> lits;
+    for (uint32_t i = 0; i < confl.size(); i++) {
+        const Lit lit = confl[i];
+        assert(value(lit) == l_False);
+        lits.push_back(lit);
+
+        //Put these into the impl. graph for sure
+        seen[lit.var()] = true;
+    }
+
+    for (vector<Lit>::const_iterator it = lits.begin(), end = lits.end(); it != end; it++) {
+        file << "x" << it->unsign() << " -> vertK "
+        << "[ "
+        << " label=\"" << lits << "\""
+        << " , fontsize=8"
+        << " ];" << endl;
+    }
+
+    //Special conflict vertex
+    file << "vertK"
+    << " [ "
+    << "shape=\"box\""
+    << ", style=\"filled\""
+    << ", color=\"darkseagreen\""
+    << ", label=\"K : " << lits << "\""
+    << "];" << endl;
+
+    //Calculate which literals are directly connected with the conflict
+    vector<Lit> insideImplGraph;
+    while(!lits.empty())
+    {
+        vector<Lit> newLits;
+        for (size_t i = 0; i < lits.size(); i++) {
+            PropBy reason = varData[lits[i].var()].reason;
+            //Reason in NULL, so remove: it's got no antedecent
+            if (reason.isNULL()) continue;
+
+            #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
+            cout << "Reason for lit " << lits[i] << " : " << reason << endl;
+            #endif
+
+            PropByForGraph prop(reason, lits[i], *clAllocator);
+            for (uint32_t i2 = 0; i2 < prop.size(); i2++) {
+                const Lit lit = prop[i2];
+                assert(value(lit) != l_Undef);
+
+                //Don't put into the impl. graph lits at 0 decision level
+                if (varData[lit.var()].level == 0) continue;
+
+                //Already added, just drop
+                if (seen[lit.var()]) continue;
+
+                seen[lit.var()] = true;
+                newLits.push_back(lit);
+                insideImplGraph.push_back(lit);
+            }
+        }
+        lits = newLits;
+    }
+
+    //Print edges
+    for (size_t i = 0; i < trail.size(); i++) {
+        const Lit lit = trail[i];
+
+        //0-decision level means it's pretty useless to put into the impl. graph
+        if (varData[lit.var()].level == 0) continue;
+
+        //Not directly connected with the conflict, drop
+        if (!seen[lit.var()]) continue;
+
+        PropBy reason = varData[lit.var()].reason;
+
+        //A decision variable, it is not propagated by any clause
+        if (reason.isNULL()) continue;
+
+        PropByForGraph prop(reason, lit, *clAllocator);
+        for (uint32_t i = 0; i < prop.size(); i++) {
+            if (prop[i] == lit //This is being propagated, don't make a circular line
+                || varData[prop[i].var()].level == 0 //'clean' clauses of 0-level lits
+            ) continue;
+
+            file << "x" << prop[i].unsign() << " -> x" << lit.unsign() << " "
+            << "[ "
+            << " label=\"";
+            for(uint32_t i2 = 0; i2 < prop.size();) {
+                //'clean' clauses of 0-level lits
+                if (varData[prop[i2].var()].level == 0) {
+                    i2++;
+                    continue;
+                }
+
+                file << prop[i2];
+                i2++;
+                if (i2 != prop.size()) file << " ";
+            }
+            file << "\""
+            << " , fontsize=8"
+            << " ];" << endl;
+        }
+    }
+
+    //Print vertex definitions
+    for (size_t i = 0; i < trail.size(); i++) {
+        Lit lit = trail[i];
+
+        //Only vertexes that really have been used
+        if (seen[lit.var()] == 0) continue;
+        seen[lit.var()] = 0;
+
+        file << "x" << lit.unsign()
+        << " [ "
+        << " shape=\"box\""
+        //<< ", size = 0.8"
+        << ", style=\"filled\"";
+        if (varData[lit.var()].reason.isNULL())
+            file << ", color=\"darkorange2\""; //decision var
+        else
+            file << ", color=\"darkseagreen4\""; //propagated var
+
+        //Print label
+        file
+        << ", label=\"" << (lit.sign() ? "-" : "") << "x" << lit.unsign()
+        << " @ " << varData[lit.var()].level << "\""
+        << " ];" << endl;
+    }
+
+    file  << "}" << endl;
+    file.close();
+
+    cout << "c Printed implication graph (with conflict clauses) to file "
+    << filename << endl;
 }
