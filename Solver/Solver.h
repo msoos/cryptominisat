@@ -612,9 +612,13 @@ inline void Solver::addHyperBin(const Lit p)
 
 inline Lit Solver::analyzeFail(const PropBy propBy)
 {
+    //Clear out the datastructs we will be using
     toClear.clear();
     currAncestors.clear();
 
+    //First, we set the ancestors, based on the clause
+    //Each literal in the clause is an ancestor. So just 'push' them inside the
+    //'currAncestors' variable
     switch(propBy.getType()) {
         case tertiary_t : {
             const Lit lit = ~propBy.getOtherLit2();
@@ -649,14 +653,24 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
             break;
     }
 
+    //Then, we go back on each ancestor recursively, and exit on the first one
+    //that unifies ALL the previous ancestors. The hyper-bin is
+    //then added there
     Lit foundLit = lit_Undef;
     while(foundLit == lit_Undef) {
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "LEVEL analyzeFail" << endl;
         #endif
         size_t num_lit_undef = 0;
-        for (vector<Lit>::iterator it = currAncestors.begin(), end = currAncestors.end(); it != end; it++) {
+        for (vector<Lit>::iterator
+            it = currAncestors.begin(), end = currAncestors.end()
+            ; it != end
+            ; it++
+        ) {
 
+            //We have reached the top of the graph, the other 'threads' that
+            //are still stepping back will find where to add the hyper-bin
+            //This 'thread' is over, done its job.
             if (*it == lit_Undef) {
                 #ifdef VERBOSE_DEBUG_FULLPROP
                 cout << "seen lit_Undef" << endl;
@@ -666,7 +680,10 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
                 continue;
             }
 
+            //Increment 'visited' counter
             seen[it->toInt()]++;
+            //Visited counter has to be cleared later, so add it to the
+            //to-be-cleared set
             if (seen[it->toInt()] == 1)
                 toClear.push_back(*it);
 
@@ -674,10 +691,15 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
             cout << "seen " << *it << " : " << seen[it->toInt()] << endl;
             #endif
 
+            //Is this point where all the 'threads' that are stepping backwards
+            //reach each other? If so, we have found what we were looking for!
+            //We can exit, and return 'foundLit'
             if (seen[it->toInt()] == currAncestors.size()) {
                 foundLit = *it;
                 break;
             }
+
+            //Update ancestor to its own ancestor, i.e. go back
             *it = propData[it->var()].ancestor;
         }
     }
@@ -686,8 +708,12 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
     #endif
     assert(foundLit != lit_Undef);
 
-    //Clear node numbers we have assigned
-    for(std::vector<Lit>::const_iterator it = toClear.begin(), end = toClear.end(); it != end; it++) {
+    //Clear nodes we have visited
+    for(std::vector<Lit>::const_iterator
+        it = toClear.begin(), end = toClear.end()
+        ; it != end
+        ; it++
+    ) {
         seen[it->toInt()] = 0;
     }
 
@@ -724,7 +750,8 @@ inline size_t Solver::getTrailSize() const
 
 inline bool Solver::satisfied(const BinaryClause& bin)
 {
-    return ((value(bin.getLit1()) == l_True) || (value(bin.getLit2()) == l_True));
+    return ((value(bin.getLit1()) == l_True)
+            || (value(bin.getLit2()) == l_True));
 }
 
 /**
