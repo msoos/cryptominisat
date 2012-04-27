@@ -173,7 +173,6 @@ protected:
     vector<lbool>       assigns;          ///< The current assignments
     vector<Lit>         trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
-    vector<PropData>    propData;         ///< Used during hyper-bin resolution & useless bin removal
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
     vector<Lit>         assumptions;      ///< Current set of assumptions provided to solve by the user.
@@ -195,8 +194,12 @@ protected:
     Lit   removeWhich(Lit conflict, Lit thisAncestor, const bool thisStepLearnt);
     bool  isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor);
 
-    ///Add hyper-binary clause given these ancestors
     vector<Lit> currAncestors;
+
+    //Find lowest common ancestor, once 'currAncestors' has been filled
+    Lit deepestCommonAcestor();
+
+    ///Add hyper-binary clause given the ancestor filled in 'currAncestors'
     void  addHyperBin(
         const Lit p
     );
@@ -213,6 +216,9 @@ protected:
         const Lit p
         , const Clause& cl
     );
+
+    ///Find which literal should be set when we have failed
+    ///i.e. reached conflict at decision at decision lvl 1
     Lit analyzeFail(PropBy propBy);
 
     /////////////////
@@ -380,14 +386,9 @@ inline void Solver::enqueueComplex(
     assigns[var] = boolToLBool(!p.sign());
     trail.push_back(p);
     propStats.propagations++;
-    varData[var].reason = PropBy(~ancestor);
+    varData[var].reason = PropBy(~ancestor, learntStep, false, false);
     varData[var].level = decisionLevel();
     varData[var].polarity = !p.sign();
-
-    propData[var].ancestor = ancestor;
-    propData[var].learntStep = learntStep;
-    propData[var].hyperBin = false;
-    propData[var].hyperBinNotAdded = false;
     enqeuedSomething = true;
 }
 
@@ -397,15 +398,15 @@ Return which one is to be removed
 */
 inline Lit Solver::removeWhich(Lit conflict, Lit thisAncestor, bool thisStepLearnt)
 {
-    const PropData& data = propData[conflict.var()];
+    const PropBy& data = varData[conflict.var()].reason;
 
-    bool onlyNonLearnt = !data.learntStep;
-    Lit lookingForAncestor = data.ancestor;
+    bool onlyNonLearnt = !data.getLearntStep();
+    Lit lookingForAncestor = data.getAncestor();
     if (isAncestorOf(conflict, thisAncestor, thisStepLearnt, onlyNonLearnt, lookingForAncestor))
         return thisAncestor;
 
     onlyNonLearnt = !thisStepLearnt;
-    thisStepLearnt = data.learntStep;
+    thisStepLearnt = data.getLearntStep();
     std::swap(lookingForAncestor, thisAncestor);
     if (isAncestorOf(conflict, thisAncestor, thisStepLearnt, onlyNonLearnt, lookingForAncestor))
         return thisAncestor;
@@ -418,8 +419,13 @@ hop backwards from thisAncestor until:
 1) we reach ancestor of 'conflict' -- at this point, we return TRUE
 2) we reach an invalid point. Either root, or an invalid hop. We return FALSE.
 */
-inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const bool thisStepLearnt, const bool onlyNonLearnt, const Lit lookingForAncestor)
-{
+inline bool Solver::isAncestorOf(
+    const Lit conflict
+    , Lit thisAncestor
+    , const bool thisStepLearnt
+    , const bool onlyNonLearnt
+    , const Lit lookingForAncestor
+) {
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "isAncestorOf."
     << "conflict: " << conflict
@@ -458,7 +464,7 @@ inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const boo
     while(thisAncestor != lit_Undef) {
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Current acestor: " << thisAncestor
-        << " its learnt-ness: " << propData[thisAncestor.var()].learntStep
+        << " its learnt-ness: " << varData[thisAncestor.var()].reason.getLearntStep()
         << endl;
         #endif
 
@@ -477,9 +483,9 @@ inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const boo
             return true;
         }
 
-        const PropData& data = propData[thisAncestor.var()];
-        if ((onlyNonLearnt && data.learntStep)
-            || data.hyperBinNotAdded
+        const PropBy& data = varData[thisAncestor.var()].reason;
+        if ((onlyNonLearnt && data.getLearntStep())
+            || data.getHyperbinNotAdded()
         ) {
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Wrong kind of hop would be needed" << endl;
@@ -487,7 +493,7 @@ inline bool Solver::isAncestorOf(const Lit conflict, Lit thisAncestor, const boo
             return false;  //reached learnt hop (but this is non-learnt)
         }
 
-        thisAncestor = data.ancestor;
+        thisAncestor = data.getAncestor();
     }
 
     #ifdef VERBOSE_DEBUG_FULLPROP
@@ -543,77 +549,43 @@ inline void Solver::addHyperBin(const Lit p, const Clause& cl)
     addHyperBin(p);
 }
 
+//Add binary clause to deepest common ancestor
 inline void Solver::addHyperBin(const Lit p)
 {
     propStats.bogoProps += 1;
-    Lit deepestCommonAncestor = lit_Undef;
+    Lit deepestAncestor = lit_Undef;
+    bool hyperBinNotAdded = true;
     if (currAncestors.size() > 1) {
-        //Number each node with the number of paths going through it.
-        //The one that attains cl->size() the first is the lowest common ancestor
-        toClear.clear();
-        while(deepestCommonAncestor == lit_Undef) {
-            #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "LEVEL addHyperBin" << endl;
-            #endif
-            for (vector<Lit>::iterator it = currAncestors.begin(), end = currAncestors.end(); it != end; it++) {
-
-                //Reached toplevel, ignore
-                if (*it == lit_Undef)  {
-                    #ifdef VERBOSE_DEBUG_FULLPROP
-                    cout << "seen lit_Undef" << endl;
-                    #endif
-                    continue;
-                }
-
-                //Increase path count
-                seen[it->toInt()]++;
-                if (seen[it->toInt()] == 1)
-                    toClear.push_back(*it);
-
-                #ifdef VERBOSE_DEBUG_FULLPROP
-                cout << "seen " << *it << " : " << seen[it->toInt()] << endl;
-                #endif
-
-                //Deepest common ancestor found
-                if (seen[it->toInt()] == currAncestors.size()) {
-                    deepestCommonAncestor = *it;
-                    break;
-                }
-
-                //Update ancestor
-                *it = propData[it->var()].ancestor;
-            }
-        }
-        assert(deepestCommonAncestor != lit_Undef);
-
-        //Clear node numbers we have assigned
-        for(std::vector<Lit>::const_iterator it = toClear.begin(), end = toClear.end(); it != end; it++) {
-            seen[it->toInt()] = 0;
-        }
+        deepestAncestor = deepestCommonAcestor();
 
         #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Adding hyper-bin clause: " << p << " , " << ~deepestCommonAncestor << endl;
+        cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
         #endif
-        needToAddBinClause.insert(BinaryClause(p, ~deepestCommonAncestor, true));
+        needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true));
+        hyperBinNotAdded = false;
     } else {
         //0-level propagation is NEVER made by propFull
         assert(currAncestors.size() > 0);
 
         #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Not adding hyper-bin because only ONE lit is not set at level 0 in long clause" << endl;
+        cout
+        << "Not adding hyper-bin because only ONE lit is not set at"
+        << "level 0 in long clause, but that long clause needs to be cleaned"
+        << endl;
         #endif
-        deepestCommonAncestor = currAncestors[0];
+        deepestAncestor = currAncestors[0];
+        hyperBinNotAdded = true;
     }
 
-    enqueueComplex(p, deepestCommonAncestor, true);
-    propData[p.var()].hyperBin = true;
-    propData[p.var()].hyperBinNotAdded = (currAncestors.size() == 1);
+    enqueueComplex(p, deepestAncestor, true);
+    varData[p.var()].reason.setHyperbin(true);
+    varData[p.var()].reason.setHyperbinNotAdded(hyperBinNotAdded);
 }
 
+//Analyze why did we fail at decision level 1
 inline Lit Solver::analyzeFail(const PropBy propBy)
 {
-    //Clear out the datastructs we will be using
-    toClear.clear();
+    //Clear out the datastructs we will be usin
     currAncestors.clear();
 
     //First, we set the ancestors, based on the clause
@@ -653,9 +625,16 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
             break;
     }
 
+    Lit foundLit = deepestCommonAcestor();
+
+    return foundLit;
+}
+
+inline Lit Solver::deepestCommonAcestor()
+{
     //Then, we go back on each ancestor recursively, and exit on the first one
-    //that unifies ALL the previous ancestors. The hyper-bin is
-    //then added there
+    //that unifies ALL the previous ancestors. That is the lowest common ancestor
+    toClear.clear();
     Lit foundLit = lit_Undef;
     while(foundLit == lit_Undef) {
         #ifdef VERBOSE_DEBUG_FULLPROP
@@ -669,8 +648,8 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
         ) {
 
             //We have reached the top of the graph, the other 'threads' that
-            //are still stepping back will find where to add the hyper-bin
-            //This 'thread' is over, done its job.
+            //are still stepping back will find which literal is the lowest
+            //common ancestor
             if (*it == lit_Undef) {
                 #ifdef VERBOSE_DEBUG_FULLPROP
                 cout << "seen lit_Undef" << endl;
@@ -680,8 +659,9 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
                 continue;
             }
 
-            //Increment 'visited' counter
+            //Increase path count
             seen[it->toInt()]++;
+
             //Visited counter has to be cleared later, so add it to the
             //to-be-cleared set
             if (seen[it->toInt()] == 1)
@@ -699,8 +679,8 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
                 break;
             }
 
-            //Update ancestor to its own ancestor, i.e. go back
-            *it = propData[it->var()].ancestor;
+            //Update ancestor to its own ancestor, i.e. step up this 'thread'
+            *it = varData[it->var()].reason.getAncestor();
         }
     }
     #ifdef VERBOSE_DEBUG_FULLPROP

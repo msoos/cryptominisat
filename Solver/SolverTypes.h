@@ -42,7 +42,7 @@ using std::string;
 
 //Typedefs
 typedef uint32_t Var;
-static const Var var_Undef(0xffffffffU >>1);
+static const Var var_Undef(~0U);
 enum RestType {glue_restart, geom_restart, agility_restart, branch_depth_delta_restart};
 enum { polarity_true = 0, polarity_false = 1, polarity_rnd = 3, polarity_auto = 4};
 
@@ -196,13 +196,6 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
     if (val == l_Undef) cout << "l_Undef";
     return cout;
 }
-
-struct PropData {
-    Lit ancestor;
-    uint32_t learntStep:1; //Step that lead here from ancestor is learnt
-    uint32_t hyperBin:1; //It's a hyper-binary clause
-    uint32_t hyperBinNotAdded:1; //It's a hyper-binary clause, but was never added because all the rest was zero-level
-};
 
 struct BlockedClause {
     BlockedClause()

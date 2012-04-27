@@ -1,11 +1,23 @@
-/*****************************************************************************
-MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
-glucose -- Gilles Audemard, Laurent Simon (2008)
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-
-Original code by MiniSat and glucose authors are under an MIT licence.
-Modifications for CryptoMiniSat are under GPLv3 licence.
-******************************************************************************/
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2011, Mate Soos and collaborators. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
 
 #include "Solver.h"
 #include <cmath>
@@ -61,7 +73,6 @@ Var Solver::newVar(const bool)
     watches.resize(watches.size() + 2);  // (list for positive&negative literals)
     assigns.push_back(l_Undef);
     varData.push_back(VarData());
-    propData.resize(nVars());
 
     //Temporaries
     seen      .push_back(0);
@@ -481,10 +492,7 @@ Lit Solver::propagateFull()
     if (trail.size() - trail_lim.back() == 1) {
         //Set up root node
         Lit root = trail[qhead];
-        propData[root.var()].ancestor = lit_Undef;
-        propData[root.var()].learntStep = false;
-        propData[root.var()].hyperBin = false;
-        propData[root.var()].hyperBinNotAdded = false;
+        varData[root.var()].reason = PropBy(~lit_Undef, false, false, false);
     }
 
     uint32_t nlBinQHead = qhead;
@@ -502,7 +510,7 @@ Lit Solver::propagateFull()
             if (!k->isBinary() || k->getLearnt()) continue;
 
             ret = propBin(p, k);
-            if (ret != PropBy())
+            if (!ret.isNULL())
                 return analyzeFail(ret);
         }
     }
@@ -518,7 +526,7 @@ Lit Solver::propagateFull()
             if (!k->isBinary() || !k->getLearnt()) continue;
 
             ret = propBin(p, k);
-            if (ret != PropBy())
+            if (!ret.isNULL())
                 return analyzeFail(ret);
 
             if (enqeuedSomething)
@@ -570,7 +578,7 @@ Lit Solver::propagateFull()
             *j++ = *i++;
         ws.shrink_(end-j);
 
-        if (confl != PropBy()) {
+        if (!confl.isNULL()) {
             return analyzeFail(confl);
         }
 
@@ -624,20 +632,26 @@ PropBy Solver::propBin(
 
         //Remove this one
         if (remove == p) {
-            Lit origAnc = propData[lit.var()].ancestor;
+            Lit origAnc = varData[lit.var()].reason.getAncestor();
             assert(origAnc != lit_Undef);
 
-            const BinaryClause clauseToRemove(~propData[lit.var()].ancestor, lit, propData[lit.var()].learntStep);
+            //The binary clause we should remove
+            const BinaryClause clauseToRemove(
+                ~varData[lit.var()].reason.getAncestor()
+                , lit
+                , varData[lit.var()].reason.getLearntStep()
+            );
+
             //We now remove the clause
             //If it's hyper-bin, then we remove the to-be-added hyper-binary clause
             //However, if the hyper-bin was never added because only 1 literal was unbound at level 0 (i.e. through
             //clause cleaning, the clause would have been 2-long), then we don't do anything.
-            if (!propData[lit.var()].hyperBin) {
+            if (!varData[lit.var()].reason.getHyperbin()) {
                 #ifdef VERBOSE_DEBUG_FULLPROP
                 cout << "Normal removing clause " << clauseToRemove << endl;
                 #endif
                 uselessBin.insert(clauseToRemove);
-            } else if (!propData[lit.var()].hyperBinNotAdded) {
+            } else if (!varData[lit.var()].reason.getHyperbinNotAdded()) {
                 #ifdef VERBOSE_DEBUG_FULLPROP
                 cout << "Removing hyper-bin clause " << clauseToRemove << endl;
                 #endif
@@ -654,10 +668,7 @@ PropBy Solver::propBin(
             }
 
             //Update data indicating what lead to lit
-            propData[lit.var()].ancestor = p;
-            propData[lit.var()].learntStep = k->getLearnt();
-            propData[lit.var()].hyperBin = false;
-            propData[lit.var()].hyperBinNotAdded = false;
+            varData[lit.var()].reason = PropBy(~p, k->getLearnt(), false, false);
 
             //for correctness, we would need this, but that would need re-writing of history :S
             //if (!onlyNonLearnt) return PropBy();

@@ -247,7 +247,7 @@ bool FailedLitSearcher::tryThis(const Lit lit)
 
         visitedAlready[thisLit.toInt()] = 1;
 
-        const Lit ancestor = control->propData[thisLit.var()].ancestor;
+        const Lit ancestor = control->varData[thisLit.var()].reason.getAncestor();
         if (control->conf.doCache
             && thisLit != lit
             //&& cacheUpdated[(~ancestor).toInt()] == 0
@@ -258,7 +258,7 @@ bool FailedLitSearcher::tryThis(const Lit lit)
             extraTime += control->implCache[(~ancestor).toInt()].lits.size()/30;
             extraTime += control->implCache[(~thisLit).toInt()].lits.size()/30;
 
-            const bool learntStep = control->propData[thisLit.var()].learntStep;
+            const bool learntStep = control->varData[thisLit.var()].reason.getLearntStep();
 
             assert(ancestor != lit_Undef);
             control->implCache[(~ancestor).toInt()].merge(

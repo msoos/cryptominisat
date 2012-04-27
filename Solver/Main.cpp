@@ -419,6 +419,8 @@ void Main::parseCommandLine()
         , "Renumber variables to increase cache efficiency")
     ("printfull", po::value<int>(&conf.printFullStats)->default_value(conf.printFullStats)
         , "Print more thorough, but different stats")
+    ("printoften", po::bool_switch(&conf.printAllRestarts)
+        , "Print a stat line for every restart");
     ;
 
     po::positional_options_description p;

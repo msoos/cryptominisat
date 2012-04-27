@@ -535,7 +535,7 @@ void ClauseAllocator::checkGoodPropBy(const ThreadControl* control)
 
         //If it's none of the above, then it's supposed to be actually correct
         //So check it
-        if (it->reason.isClause() && !it->reason.isNULL()) {
+        if (it->reason.isClause()) {
             assert(!getPointer(it->reason.getClause())->getFreed());
             assert(!getPointer(it->reason.getClause())->getRemoved());
         }

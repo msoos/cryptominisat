@@ -83,6 +83,7 @@ class SolverConf
 
         //Optimisations to do
         int       printFullStats;
+        bool      printAllRestarts;
         int       doRenumberVars;
         uint32_t  dominPickFreq;
         uint32_t  flipPolarFreq;

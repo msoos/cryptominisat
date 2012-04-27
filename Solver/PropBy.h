@@ -35,43 +35,101 @@ enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, tertiary_t = 3};
 class PropBy
 {
     private:
-        uint64_t type:2;
+        uint32_t data1;
+        uint32_t type:2;
         //0: clause, NULL
         //1: clause, non-null
         //2: binary
         //3: tertiary
-        uint64_t data1:30;
-        uint64_t data2:32;
+        uint32_t data2:30;
 
     public:
         PropBy() :
-            type(null_clause_t)
-            , data1(0)
+            data1(0)
+            , type(null_clause_t)
             , data2(0)
         {}
 
         PropBy(ClauseOffset offset) :
-            type(clause_t)
-            , data2(offset)
+            data1(offset)
+            , type(clause_t)
         {
         }
 
         PropBy(const Lit lit) :
-            type(binary_t)
-            , data1(lit.toInt())
+            data1(lit.toInt())
+            , type(binary_t)
         {
         }
 
+        //For hyper-bin, etc.
+        PropBy(
+            const Lit lit
+            , bool learntStep //Step that lead here from ancestor is learnt
+            , bool hyperBin //It's a hyper-binary clause
+            , bool hyperBinNotAdded //It's a hyper-binary clause, but was never added because all the rest was zero-level
+        ) :
+            data1(lit.toInt())
+            , type(binary_t)
+        {
+            //HACK: if we are doing seamless hyper-bin and transitive reduction
+            //then if we are at toplevel, .getAncestor()
+            //must work, and return lit_Undef, but at the same time, .isNULL()
+            //must also work, for conflict generation. So this is a hack to
+            //achieve that. What an awful hack.
+            if (lit == ~lit_Undef)
+                type = null_clause_t;
+
+            data2 = (uint32_t)learntStep
+                | ((uint32_t)hyperBin) << 1
+                | ((uint32_t)hyperBinNotAdded) << 2;
+        }
+
         PropBy(const Lit lit1, const Lit lit2) :
-            type(tertiary_t)
-            , data1(lit1.toInt())
+            data1(lit1.toInt())
+            , type(tertiary_t)
             , data2(lit2.toInt())
         {
         }
 
+        bool getLearntStep() const
+        {
+            return data2 & 1U;
+        }
+
+        bool getHyperbin() const
+        {
+            return data2 & 2U;
+        }
+
+        void setHyperbin(bool toSet)
+        {
+            data2 &= ~2U;
+            data2 |= (uint32_t)toSet << 1;
+        }
+
+        bool getHyperbinNotAdded() const
+        {
+            return data2 & 4U;
+        }
+
+        void setHyperbinNotAdded(bool toSet)
+        {
+            data2 &= ~4U;
+            data2 |= (uint32_t)toSet << 2;
+        }
+
+        Lit getAncestor() const
+        {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(type == null_clause_t || type == binary_t);
+            #endif
+            return ~Lit::toLit(data1);
+        }
+
         bool isClause() const
         {
-            return ((type&2) == 0);
+            return type == clause_t;
         }
 
         PropByType getType() const
@@ -100,12 +158,11 @@ class PropBy
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());
             #endif
-            return data2;
+            return data1;
         }
 
         bool isNULL() const
         {
-            if (!isClause()) return false;
             return type == null_clause_t;
         }
 

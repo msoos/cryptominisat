@@ -641,10 +641,10 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
             //Update cache
             for (int64_t c = trail.size()-1; c != (int64_t)trail_lim[0]; c--) {
                 const Lit thisLit = trail[c];
-                const Lit ancestor = propData[thisLit.var()].ancestor;
+                const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
                 if (control->conf.doCache) {
                     assert(thisLit != trail[trail_lim[0]]);
-                    const bool learntStep = propData[thisLit.var()].learntStep;
+                    const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
 
                     assert(ancestor != lit_Undef);
                     control->implCache[(~ancestor).toInt()].merge(
@@ -1120,7 +1120,8 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
         //Print restart stat
         if (conf.verbosity >= 1
-            && (lastRestartPrint + 800) < stats.conflStats.numConflicts
+            && ((lastRestartPrint + 800) < stats.conflStats.numConflicts
+                || conf.printAllRestarts)
         ) {
             printRestartStats();
             lastRestartPrint = stats.conflStats.numConflicts;
