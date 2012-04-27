@@ -707,7 +707,7 @@ sorted and then removed
 void ThreadControl::reduceDB()
 {
     //Clean the clause database before doing cleaning
-    clauseCleaner->removeAndCleanAll();;
+    clauseCleaner->removeAndCleanAll();
 
     const double myTime = cpuTime();
     nbReduceDB++;
