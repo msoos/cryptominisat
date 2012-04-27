@@ -1011,6 +1011,13 @@ end:
     testAllClauseAttach();
     checkNoWrongAttach();
 
+    //The algorithms above probably have changed the propagation&usage data
+    //so let's clear it
+    if (conf.doClearPropConfEveryClauseCleaning) {
+        clearPropConfl(clauses);
+        clearPropConfl(learnts);
+    }
+
     if (!ok) {
         return l_False;
     } else {
