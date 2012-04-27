@@ -1988,7 +1988,6 @@ bool Subsumer::maybeEliminate(const Var var)
     *toDecrease -= posSize * negSize + before_literals;
     uint32_t before_clauses = posSize + negSize;
     uint32_t after_clauses = 0;
-    uint32_t after_3long = 0;
     uint32_t after_long = 0;
     for (vector<ClAndBin>::const_iterator it = posAll.begin(), end = posAll.end(); it != end; it++) {
         for (vector<ClAndBin>::const_iterator it2 = negAll.begin(), end2 = negAll.end(); it2 != end2; it2++) {
@@ -1998,25 +1997,17 @@ bool Subsumer::maybeEliminate(const Var var)
             }
 
             // Merge clauses. If 'y' and '~y' exist, clause will not be created.
-            if (!it->learnt && !it2->learnt) {
-                bool ok = merge(*it, *it2, lit, ~lit, agressiveCheck, false);
-                if (ok) {
-                    //Update after-stats
-                    if (dummy.size() > 3)
-                        after_long++;
-                    else
-                        after_3long++;
+            bool ok = merge(*it, *it2, lit, ~lit, agressiveCheck, false);
+            if (ok) {
+                //Update after-stats
+                if (dummy.size() > 3)
+                    after_long++;
 
-                    after_clauses++;
+                after_clauses++;
 
-                    //Early-abort
-                    if (after_clauses > before_clauses)
-                        return false;
-
-                    //Allow slight increase in large clauses
-                    if (after_long > (before_long+3))
-                        return false;
-                }
+                //Early-abort
+                if (after_clauses > before_clauses)
+                    return false;
             }
         }
     }
@@ -2382,7 +2373,10 @@ vector<Var> Subsumer::orderVarsForElim()
         //uint32_t nNonLPos = numNonLearntBins(x);
         //uint32_t nNonLNeg = numNonLearntBins(~x);
         //uint32_t cost = pos*neg/4 +  nNonLPos*neg*2 + nNonLNeg*pos*2 + nNonLNeg*nNonLPos*6;
-        uint32_t cost = pos * neg * 2 + numNonLearntBins(x) * neg + numNonLearntBins(~x) * pos;
+        uint32_t cost = (pos * neg)/2 //long clauses have a good chance of being tautologies
+            + numNonLearntBins(x) * neg * 2 //lower chance of tautology because of binary clause
+            + numNonLearntBins(~x) * pos * 2 //lower chance of tautology because of binary clause
+            + numNonLearntBins(x) * numNonLearntBins(~x) * 5; //Very low chance of tautology
         cost_var.push_back(std::make_pair(cost, x.var()));
     }
     touchedVars.clear();
