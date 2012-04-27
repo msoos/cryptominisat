@@ -249,7 +249,6 @@ protected:
     /////////////////
     virtual void       attachClause        (const Clause& c, const bool checkAttach = true);
     virtual void       attachBinClause     (const Lit lit1, const Lit lit2, const bool learnt, const bool checkUnassignedFirst = true);
-    void       detachClause        (const Clause& c);       ///<Detach clause from watch lists
     virtual void       detachModifiedClause(const Lit lit1, const Lit lit2, const Lit lit3, const uint32_t origSize, const Clause* address);
 
     /////////////////////////
