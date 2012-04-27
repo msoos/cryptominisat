@@ -73,6 +73,12 @@ class ClauseVivifier {
 
             void printShort() const
             {
+                //Irred cache-based asymm
+                irredCacheBased.printShort("irred");
+
+                //Irred cache-based asymm
+                redCacheBased.printShort("red");
+
                 //Norm Asymm
                 cout
                 << "c [vivif] asymm"
@@ -83,12 +89,6 @@ class ClauseVivifier {
                 << " 0-depth-assigns:" << zeroDepthAssigns
                 << " T: " << timeNorm << " s"
                 << endl;
-
-                //Irred cache-based asymm
-                irredCacheBased.printShort("irred");
-
-                //Irred cache-based asymm
-                redCacheBased.printShort("red");
             }
 
             void print(const size_t nVars) const
