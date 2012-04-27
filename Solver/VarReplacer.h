@@ -105,6 +105,7 @@ class VarReplacer
 
             Stats& operator+=(const Stats& other)
             {
+                numCalls += other.numCalls;
                 cpu_time += other.cpu_time;
                 replacedLits += other.replacedLits;
                 zeroDepthAssigns += other.zeroDepthAssigns;
