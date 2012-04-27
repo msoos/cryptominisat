@@ -892,18 +892,29 @@ bool Subsumer::eliminateVars()
     cout << "c #order size:" << order.size() << endl;
     #endif
 
-    for (uint32_t i = 0; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0; i++) {
+    //Go through the ordered list of variables to eliminate
+    for (size_t i = 0
+        ; i < order.size() && numMaxElim > 0 && numMaxElimVars > 0
+        ; i++
+    ) {
         Var var = order[i];
+
+        //Can this variable be eliminated at all?
         if (control->value(var) != l_Undef
             || control->varData[var].elimed != ELIMED_NONE
-            || !gateFinder->canElim(var)) continue;
+            || !gateFinder->canElim(var)
+        ) {
+            continue;
+        }
 
+        //Try to eliminate
         numtry++;
         if (maybeEliminate(order[i])) {
             vars_elimed++;
             numMaxElimVars--;
         }
 
+        //During elimination, we reached UNSAT, finish
         if (!control->ok)
             goto end;
     }
