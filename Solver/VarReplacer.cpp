@@ -119,13 +119,11 @@ bool VarReplacer::performReplace()
         control->decision_var[var] =  false;
         control->decision_var[it->var()] = true;
 
-        /*uint32_t& activity1 = control->varData[var].activity;
-        uint32_t& activity2 = control->varData[it->var()].activity;
-        if (wasDecisionVar && activity1 > activity2) {
-            activity2 = activity1;
-        }
-
-        activity1 = 0.0;*/
+        //Update activities. Top receives activities of the ones below
+        uint32_t& activity1 = control->activities[var];
+        uint32_t& activity2 = control->activities[it->var()];
+        activity2 += activity1;
+        activity1 = 0.0;
     }
 
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
