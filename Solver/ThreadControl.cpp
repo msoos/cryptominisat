@@ -1584,7 +1584,7 @@ void ThreadControl::printClauseSizeDistrib()
         }
     }
 
-    for(vector<Clause*>::const_iterator it = learnts.begin(), end = learnts.end(); it != end; it++) {
+    /*for(vector<Clause*>::const_iterator it = learnts.begin(), end = learnts.end(); it != end; it++) {
         switch((*it)->size()) {
             case 0:
             case 1:
@@ -1604,7 +1604,7 @@ void ThreadControl::printClauseSizeDistrib()
                 sizeLarge++;
                 break;
         }
-    }
+    }*/
 
     cout << "c size3: " << size3
     << " size4: " << size4
