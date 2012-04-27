@@ -154,7 +154,7 @@ void CommandControl::analyzeHelper(
 
 Post-condition: 'out_learnt[0]' is the asserting literal at level 'out_btlevel'
 */
-void CommandControl::analyze(
+Clause* CommandControl::analyze(
     PropBy confl
     , vector<Lit>& out_learnt
     , uint32_t& out_btlevel
@@ -167,6 +167,7 @@ void CommandControl::analyze(
     Lit p = lit_Undef;
     int index = trail.size() - 1;
     out_btlevel = 0;
+    PropBy oldConfl;
 
     uint32_t numIterations = 0;
 
@@ -215,6 +216,7 @@ void CommandControl::analyze(
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
+        oldConfl = confl;
         confl = varData[p.var()].reason;
         seen[p.var()] = 0; //This clears out vars that haven't been added to out_learnt, but their 'seen' has been set
         pathC--;
@@ -299,6 +301,54 @@ void CommandControl::analyze(
     #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
     cout << "out_btlevel: " << out_btlevel << endl;
     #endif
+
+    //We can only on-the-fly subsume with clauses that are not 2- or 3-long
+    //furthermore, we cannot subsume a clause that is marked for deletion
+    //due to its high glue value
+    if (!conf.doOTFSubsume
+        || out_learnt.size() <= 3
+        || !oldConfl.isClause()
+    ) {
+        return NULL;
+    }
+
+    Clause* cl = clAllocator->getPointer(oldConfl.getClause());
+
+    //Larger or equivalent clauses cannot subsume the clause
+    if (out_learnt.size() >= cl->size())
+        return NULL;
+
+    //Does it subsume?
+    if (!subset(out_learnt, *cl))
+        return NULL;
+
+    //on-the-fly subsumed the original clause
+    stats.otfSubsumed++;
+    stats.otfSubsumedLearnt += cl->learnt();
+    stats.otfSubsumedLitsGained += cl->size() - out_learnt.size();
+    return cl;
+
+}
+
+bool CommandControl::subset(const vector<Lit>& A, const Clause& B)
+{
+    //Set seen
+    for (uint32_t i = 0; i != B.size(); i++)
+        seen[B[i].toInt()] = 1;
+
+    bool ret = true;
+    for (uint32_t i = 0; i != A.size(); i++) {
+        if (!seen[A[i].toInt()]) {
+            ret = false;
+            break;
+        }
+    }
+
+    //Clear seen
+    for (uint32_t i = 0; i != B.size(); i++)
+        seen[B[i].toInt()] = 0;
+
+    return ret;
 }
 
 void CommandControl::prune_removable(vector<Lit>& out_learnt)
@@ -816,7 +866,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
     if (decisionLevel() == 0)
         return false;
 
-    analyze(confl, learnt_clause, backtrack_level, glue);
+    Clause* cl = analyze(confl, learnt_clause, backtrack_level, glue);
     size_t orig_trail_size = trail.size();
     if (params.update) {
         trailDepthHist.push(trail.size() - trail_lim[0]);
@@ -845,10 +895,21 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
     //Set up everything to get the clause
     std::sort(learnt_clause.begin()+1, learnt_clause.end(), PolaritySorter(varData));
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint16_t>::max());
-    Clause *cl;
 
-    //Get new clause
-    cl = control->newClauseByThread(learnt_clause, glue);
+    //Is there on-the-fly subsumption?
+    if (cl == NULL) {
+        //Get new clause
+        cl = control->newClauseByThread(learnt_clause, glue);
+    } else {
+        uint32_t origSize = cl->size();
+        control->detachClause(*cl);
+        for (uint32_t i = 0; i != learnt_clause.size(); i++)
+            (*cl)[i] = learnt_clause[i];
+        cl->shrink(origSize - learnt_clause.size());
+        if (cl->learnt() && cl->stats.glue > glue)
+            cl->stats.glue = glue;
+        cl->stats.numPropAndConfl += 10;
+    }
 
     //Attach new clause
     switch (learnt_clause.size()) {

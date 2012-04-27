@@ -67,6 +67,7 @@ SolverConf::SolverConf() :
         , shortTermGlueHistorySize (100)
 
         //optimisations to do
+        , doOTFSubsume     (true)
         , printFullStats   (false)
         , doRenumberVars   (true)
         , dominPickFreq    (5)

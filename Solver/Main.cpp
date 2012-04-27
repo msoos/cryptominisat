@@ -396,6 +396,8 @@ void Main::parseCommandLine()
         , "Perform strong minimisation at conflict gen.")
     ("alwaysmoremin", po::value<int>(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
         , "Always strong-minimise clause")
+    ("otfsubsume", po::value<int>(&conf.doOTFSubsume)->default_value(conf.doOTFSubsume)
+        , "Perform on-the-fly subsumption")
     ("printimpldot", po::value<int>(&conf.doPrintConflDot)->default_value(conf.doPrintConflDot)
         , "Print implication graph DOT files (for input into graphviz package)")
     ;

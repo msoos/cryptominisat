@@ -90,6 +90,9 @@ class CommandControl : public Solver
                 , learntBins(0)
                 , learntTris(0)
                 , learntLongs(0)
+                , otfSubsumed(0)
+                , otfSubsumedLearnt(0)
+                , otfSubsumedLitsGained(0)
 
                 //Hyper-bin & transitive reduction
                 , advancedPropCalled(0)
@@ -128,6 +131,9 @@ class CommandControl : public Solver
                 learntBins += other.learntBins;
                 learntTris += other.learntTris;
                 learntLongs += other.learntLongs;
+                otfSubsumed += other.otfSubsumed;
+                otfSubsumedLearnt += other.otfSubsumedLearnt;
+                otfSubsumedLitsGained += other.otfSubsumedLitsGained;
 
                 //Hyper-bin & transitive reduction
                 advancedPropCalled += other.advancedPropCalled;
@@ -183,6 +189,24 @@ class CommandControl : public Solver
                     , learntLongs
                     , (double)learntLongs/(double)conflStats.numConflicts*100.0
                     , "% of conflicts"
+                );
+
+                printStatsLine("c otf-subs"
+                    , otfSubsumed
+                    , (double)otfSubsumed/(double)conflStats.numConflicts*100.0
+                    , "% of conflicts"
+                );
+
+                printStatsLine("c otf-subs learnt"
+                    , otfSubsumedLearnt
+                    , (double)otfSubsumedLearnt/(double)otfSubsumed*100.0
+                    , "% otf subsumptions"
+                );
+
+                printStatsLine("c otf-subs lits gained"
+                    , otfSubsumedLitsGained
+                    , (double)otfSubsumedLitsGained/(double)otfSubsumed
+                    , "lits/otf subsume"
                 );
 
                 cout << "c SEAMLESS HYPERBIN&TRANS-RED stats" << endl;
@@ -256,6 +280,9 @@ class CommandControl : public Solver
             uint64_t learntBins;
             uint64_t learntTris;
             uint64_t learntLongs;
+            uint64_t otfSubsumed;
+            uint64_t otfSubsumedLearnt;
+            uint64_t otfSubsumedLitsGained;
 
             //Hyper-bin & transitive reduction
             uint64_t advancedPropCalled;
@@ -316,7 +343,13 @@ class CommandControl : public Solver
         ///////////////
         // Conflicting
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
-        void     analyze          (PropBy confl, vector<Lit>& out_learnt, uint32_t& out_btlevel, uint32_t &nblevels);
+        Clause* analyze(
+            PropBy confl //The conflict that we are investigating
+            , vector<Lit>& out_learnt //The learnt clause -- outgoing parameter
+            , uint32_t& out_btlevel //The backtrack level
+            , uint32_t &nblevels //The glue of the learnt clause
+        );
+
         void     analyzeHelper    (
             Lit lit
             , int& pathC
@@ -382,6 +415,10 @@ class CommandControl : public Solver
 
     private:
         size_t   lastCleanZeroDepthAssigns;
+
+        //Used for on-the-fly subsumption. Does A subsume B?
+        //Uses 'seen' to do its work
+        bool subset(const vector<Lit>& A, const Clause& B);
 
         double   startTime; ///<When solve() was started
         Stats    stats;

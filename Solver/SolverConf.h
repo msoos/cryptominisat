@@ -82,6 +82,7 @@ class SolverConf
         uint32_t  shortTermGlueHistorySize; ///< Rolling avg. glue window size
 
         //Optimisations to do
+        int       doOTFSubsume;
         int       printFullStats;
         bool      printAllRestarts;
         int       doRenumberVars;
