@@ -83,6 +83,7 @@ class SolverConf
 
         //Optimisations to do
         int       doOTFSubsume;
+        int       rewardShortenedClauseWithPropConfl; //Shortened through OTF subsumption
         int       printFullStats;
         bool      printAllRestarts;
         int       doRenumberVars;

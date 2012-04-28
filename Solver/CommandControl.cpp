@@ -908,7 +908,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
         cl->shrink(origSize - learnt_clause.size());
         if (cl->learnt() && cl->stats.glue > glue)
             cl->stats.glue = glue;
-        cl->stats.numPropAndConfl += 10;
+        cl->stats.numPropAndConfl += conf.rewardShortenedClauseWithPropConfl;
     }
 
     //Attach new clause
