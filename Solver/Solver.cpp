@@ -376,6 +376,7 @@ PropBy Solver::propagate()
     size_t qheadlong = qhead;
 
     startAgain:
+    //Propagate binary&tertiary clauses first
     while (qheadbin < trail.size() && confl.isNULL()) {
         const Lit p = trail[qheadbin++];     // 'p' is enqueued fact to propagate.
         const vec<Watched>& ws = watches[p.toInt()];
@@ -383,28 +384,34 @@ PropBy Solver::propagate()
         const vec<Watched>::const_iterator end = ws.end();
         propStats.bogoProps += ws.size()/10 + 1;
         for (; i != end; i++) {
+
+            //Propagate binary clause
             if (i->isBinary()) {
                 if (!propBinaryClause(i, p, confl)) {
                     break;
                 }
 
                 continue;
-            } else {
-                if (i->isTriClause()) {
-                    if (!propTriClause<true>(i, p, confl)) {
-                        break;
-                    }
-
-                    continue;
-                } //end TRICLAUSE
-
-                if (i->isClause()) {
-                    if (value(i->getBlockedLit()) != l_True) {
-                        const uint32_t offset = i->getNormOffset();
-                        __builtin_prefetch(clAllocator->getPointer(offset));
-                    }
-                }
             }
+
+            //Propagate tri clause
+            if (i->isTriClause()) {
+                if (!propTriClause<true>(i, p, confl)) {
+                    break;
+                }
+
+                continue;
+            } //end TRICLAUSE
+
+            //Pre-fetch long clause
+            if (i->isClause()) {
+                if (value(i->getBlockedLit()) != l_True) {
+                    const uint32_t offset = i->getNormOffset();
+                    __builtin_prefetch(clAllocator->getPointer(offset));
+                }
+
+                continue;
+            } //end CLAUSE
         }
     }
 
