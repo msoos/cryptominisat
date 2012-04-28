@@ -1457,22 +1457,6 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
     #endif
 }
 
-/*void CommandControl::saveOTFData()
-{
-    assert(false && "in multi-threaded this will fail badly");
-    assert(decisionLevel() == 1);
-
-    Lit lev0Lit = trail[trail_lim[0]];
-    TransCache& oTFCache = control->implCache[(~lev0Lit).toInt()];
-
-    vector<Lit> lits;
-    for (int sublevel = trail.size()-1; sublevel > (int)trail_lim[0]; sublevel--) {
-        Lit lit = trail[sublevel];
-        lits.push_back(lit);
-    }
-    oTFCache.merge(lits, false, seen);
-}*/
-
 void CommandControl::insertVarOrder(const Var x)
 {
     if (!order_heap.inHeap(x)
