@@ -56,9 +56,6 @@ SolverConf::SolverConf() :
         , agilityG                  (0.9999)
         , agilityLimit              (0.20)
 
-        //Simplification
-        , simpBurstSConf   (500)
-
         , doPerformPreSimp (true)
         , failedLitMultiplier(1.0)
 

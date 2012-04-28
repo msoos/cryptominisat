@@ -859,7 +859,7 @@ lbool ThreadControl::solve()
 
     //If still unknown, simplify
     if (status == l_Undef && nVars() > 0)
-        status = simplifyProblem(conf.simpBurstSConf);
+        status = simplifyProblem();
 
     //Iterate until solved
     while (status == l_Undef) {
@@ -903,7 +903,7 @@ lbool ThreadControl::solve()
             break;
 
         //Simplify
-        status = simplifyProblem(conf.simpBurstSConf);
+        status = simplifyProblem();
     }
 
     //Handle found solution
@@ -929,18 +929,13 @@ It burst-searches for given number of conflicts, then it tries all sorts of
 things like variable elimination, subsumption, failed literal probing, etc.
 to try to simplifcy the problem at hand.
 */
-lbool ThreadControl::simplifyProblem(const uint64_t numConfls)
+lbool ThreadControl::simplifyProblem()
 {
     assert(ok);
     testAllClauseAttach();
     checkStats();
 
     reArrangeClauses();
-
-    if (conf.verbosity >= 3)
-        cout << "c Simplifying problem for "
-        << std::setw(8) << numConfls << " confls"
-        << endl;
 
     //SCC&VAR-REPL
     if (conf.doFindEqLits && !sCCFinder->find2LongXors())

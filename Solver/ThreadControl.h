@@ -394,7 +394,7 @@ class ThreadControl : public CommandControl
         );
 
         bool addXorClauseInt(const vector<Lit>& lits, bool rhs);
-        lbool simplifyProblem(const uint64_t numConfls);
+        lbool simplifyProblem();
 
         /////////////////////
         //Stats

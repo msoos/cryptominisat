@@ -73,7 +73,6 @@ class SolverConf
         double    agilityLimit; ///The agility below which the agility is considered too low
 
         //Burst?
-        uint32_t  simpBurstSConf; //How many conflicts for burst
         int      doPerformPreSimp; //Perform simplification at startup
         double    failedLitMultiplier; //Increase failed lit time by this multiplier
 
