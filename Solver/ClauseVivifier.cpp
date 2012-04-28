@@ -233,7 +233,7 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
 
     //Stats
     uint64_t countTime = 0;
-    uint64_t maxCountTime = 500000000;
+    uint64_t maxCountTime = 700000000;
     if (control->clausesLits + control->learntsLits < 300000)
         maxCountTime *= 2;
     double myTime = cpuTime();
