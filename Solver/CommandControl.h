@@ -413,6 +413,7 @@ class CommandControl : public Solver
         const Stats& getStats() const;
 
     private:
+        vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
         bool     pickPolarity(const Var var);
         size_t   lastCleanZeroDepthAssigns;
 

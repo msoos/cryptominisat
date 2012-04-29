@@ -176,7 +176,6 @@ protected:
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[~lit] we were looking through when conflict occured
-    vector<Lit>         assumptions;      ///< Current set of assumptions provided to solve by the user.
     vector<VarData>     varData;          ///< Stores info about variable: polarity, whether it's eliminated, etc.
 
     // Temporaries (to reduce allocation overhead). Each variable is prefixed by the method in which it is

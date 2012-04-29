@@ -550,6 +550,9 @@ void ThreadControl::renumberVariables()
     }
     myTotalTime += (cpuTime() - myTime);
 
+
+    updateLitsMap(assumptions, outerToInter);
+
     //Update clauses
     myTime = cpuTime();
     for(size_t i = 0; i < clauses.size(); i++) {
@@ -848,11 +851,14 @@ void ThreadControl::reduceDB()
     cleaningStats += tmpStats;
 }
 
-lbool ThreadControl::solve()
+lbool ThreadControl::solve(const vector<Lit>* _assumptions)
 {
     //Initialise stuff
     nextCleanLimitInc = conf.startClean;
     nextCleanLimit += nextCleanLimitInc;
+    if (_assumptions != NULL) {
+        assumptions = *_assumptions;
+    }
 
     //Check if adding the clauses caused UNSAT
     lbool status = ok ? l_Undef : l_False;
@@ -877,7 +883,7 @@ lbool ThreadControl::solve()
             numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
         }
 
-        status = CommandControl::solve(numConfls);
+        status = CommandControl::solve(assumptions, numConfls);
         sumStats += CommandControl::getStats();
         sumPropStats += propStats;
         propStats.clear();

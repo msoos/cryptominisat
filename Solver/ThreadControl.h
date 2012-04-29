@@ -55,7 +55,7 @@ class ThreadControl : public CommandControl
 
         //////////////////////////////
         //Solving
-        lbool solve();
+        lbool solve(const vector<Lit>* _assumptions = NULL);
         void        setNeedToInterrupt();
         vector<lbool>  model;
         lbool   modelValue (const Lit p) const;  ///<Found model value for lit
@@ -546,6 +546,8 @@ class ThreadControl : public CommandControl
             , const vector<UsageStats>& stats
             , const bool learnt
         ) const;
+
+        vector<Lit> assumptions;
 };
 
 inline void ThreadControl::setDecisionVar(const uint32_t var)

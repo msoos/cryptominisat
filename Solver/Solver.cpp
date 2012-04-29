@@ -798,7 +798,6 @@ void Solver::updateVars(
     updateArray(varData, interToOuter);
     updateArray(assigns, interToOuter);
     updateLitsMap(trail, outerToInter);
-    updateLitsMap(assumptions, outerToInter);
     updateBySwap(watches, seen, interToOuter2);
 
     for(size_t i = 0; i < watches.size(); i++) {
