@@ -381,7 +381,6 @@ class CommandControl : public Solver
         vector<uint32_t> activities;
         void     varDecayActivity ();      ///<Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varBumpActivity  (Var v); ///<Increase a variable with the current 'bump' value.
-        bool     getPolarity(const Var var);
         struct VarOrderLt { ///Order variables according to their activities
             const vector<uint32_t>&  activities;
             bool operator () (const uint32_t x, const uint32_t y) const
@@ -414,6 +413,7 @@ class CommandControl : public Solver
         const Stats& getStats() const;
 
     private:
+        bool     pickPolarity(const Var var);
         size_t   lastCleanZeroDepthAssigns;
 
         //Used for on-the-fly subsumption. Does A subsume B?
@@ -462,28 +462,6 @@ inline void CommandControl::varBumpActivity(Var var)
 inline uint32_t CommandControl::abstractLevel(const Var x) const
 {
     return ((uint32_t)1) << (varData[x].level % 32);
-}
-
-inline bool CommandControl::getPolarity(const Var var)
-{
-    switch(conf.polarity_mode) {
-        case polarity_false:
-            return false;
-
-        case polarity_true:
-            return true;
-
-        case polarity_rnd:
-            return mtrand.randInt(1);
-
-        case polarity_auto:
-            return varData[var].polarity
-                ^ (mtrand.randInt(conf.flipPolarFreq*branchDepthDeltaHist.getAvgLong()) == 1);
-        default:
-            assert(false);
-    }
-
-    return true;
 }
 
 inline lbool CommandControl::solve(const uint64_t maxConfls)

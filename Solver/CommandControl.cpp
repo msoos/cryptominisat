@@ -1289,6 +1289,28 @@ inline int64_t abs64(int64_t a)
     return a;
 }
 
+bool CommandControl::pickPolarity(const Var var)
+{
+    switch(conf.polarity_mode) {
+        case polarity_false:
+            return false;
+
+        case polarity_true:
+            return true;
+
+        case polarity_rnd:
+            return mtrand.randInt(1);
+
+        case polarity_auto:
+            return getStoredPolarity(var)
+                ^ (mtrand.randInt(conf.flipPolarFreq*branchDepthDeltaHist.getAvgLong()) == 1);
+        default:
+            assert(false);
+    }
+
+    return true;
+}
+
 /**
 @brief Picks a branching variable and its value (True/False)
 
@@ -1320,7 +1342,7 @@ Lit CommandControl::pickBranchLit()
             && control->decision_var[next_var]
         ) {
             stats.decisionsRand++;
-            next = Lit(next_var, !getPolarity(next_var));
+            next = Lit(next_var, !pickPolarity(next_var));
         }
     }
 
@@ -1336,7 +1358,7 @@ Lit CommandControl::pickBranchLit()
         }
 
         const Var next_var = order_heap.removeMin();
-        next = Lit(next_var, !getPolarity(next_var));
+        next = Lit(next_var, !pickPolarity(next_var));
     }
 
     //Try to use reachability to pick a literal that dominates this one

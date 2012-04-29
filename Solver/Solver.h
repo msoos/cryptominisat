@@ -151,6 +151,7 @@ public:
     uint32_t    getNumUnitaries() const;    ///<Return the set of unitary clauses
     uint32_t    countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const;
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
+    bool        getStoredPolarity(const Var var);
     void        resetClauseDataStats(size_t clause_num);
 
 protected:
@@ -761,4 +762,9 @@ uint16_t Solver::calcGlue(const T& ps)
     return nbLevels;
 }
 
+
+inline bool Solver::getStoredPolarity(const Var var)
+{
+    return varData[var].polarity;
+}
 #endif //SOLVER_H
