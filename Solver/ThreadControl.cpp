@@ -437,6 +437,7 @@ static void printArray(const vector<Var>& array, const std::string& str)
     cout << endl;
 }
 
+//Beware. Cannot be called while CommandControl is running.
 void ThreadControl::renumberVariables()
 {
     double myTime = cpuTime();
