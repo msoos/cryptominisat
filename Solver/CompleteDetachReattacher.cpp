@@ -61,8 +61,11 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
     vec<Watched>::iterator j = i;
     for (vec<Watched>::iterator end = ws.end(); i != end; i++) {
         if (i->isBinary()) {
-            if (i->getLearnt()) stay.learntBins++;
-            else stay.nonLearntBins++;
+            if (i->getLearnt())
+                stay.learntBins++;
+            else
+                stay.nonLearntBins++;
+
             *j++ = *i;
         } else if (!removeTri && i->isTriClause()) {
             stay.tris++;

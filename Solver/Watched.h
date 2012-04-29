@@ -29,7 +29,11 @@
 #include "SolverTypes.h"
 #include <limits>
 
-enum WatchType {watch_clause_t = 0, watch_binary_t = 1, watch_tertiary_t = 2};
+enum WatchType {
+    watch_clause_t = 0
+    , watch_binary_t = 1
+    , watch_tertiary_t = 2
+};
 
 /**
 @brief An element in the watchlist. Natively contains 2- and 3-long clauses, others are referenced by pointer

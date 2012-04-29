@@ -61,10 +61,10 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
         vec<Watched>::iterator j = i;
         for (vec<Watched>::iterator end2 = ws.end(); i != end2; i++) {
             if (i->isBinary() && satisfied(*i, lit)) {
-                if (i->getLearnt()) numRemovedHalfLearnt++;
-                else {
+                if (i->getLearnt())
+                    numRemovedHalfLearnt++;
+                else
                     numRemovedHalfNonLearnt++;
-                }
             } else {
                 *j++ = *i;
             }
