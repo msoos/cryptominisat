@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SolverTypes.h"
 #include <limits>
 
+enum WatchType {watch_clause_t = 0, watch_binary_t = 1, watch_tertiary_t = 2};
+
 /**
 @brief An element in the watchlist. Natively contains 2- and 3-long clauses, others are referenced by pointer
 
@@ -33,17 +35,17 @@ This class contains two 32-bit datapieces. They are either used as:
 \li Two literals, in the case of tertiary clauses
 \li One blocking literal (i.e. an example literal from the clause) and a clause
 offset (as per ClauseAllocator ), in the case of normal clauses
-\li A clause offset (as per ClauseAllocator) for xor clauses
 */
 class Watched {
     public:
         /**
-        @brief Constructor for a long normal clause
+        @brief Constructor for a long (>3) clause
         */
-        Watched(const ClauseOffset offset, Lit blockedLit)
+        Watched(const ClauseOffset offset, Lit blockedLit) :
+            data1(blockedLit.toInt())
+            , type(watch_clause_t)
+            , data2(offset)
         {
-            data1 = blockedLit.toInt();
-            data2 = (uint32_t)1 | ((uint32_t)offset << 2);
         }
 
         Watched() :
@@ -54,27 +56,29 @@ class Watched {
         /**
         @brief Constructor for a binary clause
         */
-        Watched(const Lit lit, const bool learnt)
+        Watched(const Lit lit, const bool learnt) :
+            data1(lit.toInt())
+            , type(watch_binary_t)
+            , data2(learnt)
         {
-            data1 = lit.toInt();
-            data2 = (uint32_t)0 | (((uint32_t)learnt) << 2);
         }
 
         /**
-        @brief Constructor for a 3-long, non-xor clause
+        @brief Constructor for a 3-long clause
         */
-        Watched(const Lit lit1, const Lit lit2)
+        Watched(const Lit lit1, const Lit lit2) :
+            data1(lit1.toInt())
+            , type(watch_tertiary_t)
+            , data2(lit2.toInt())
         {
-            data1 = lit1.toInt();
-            data2 = (uint32_t)3 | (lit2.toInt()<< 2);
         }
 
         void setNormOffset(const ClauseOffset offset)
         {
             #ifdef DEBUG_WATCHED
-            assert(isClause());
+            assert(type == watch_clause_t);
             #endif
-            data2 = (uint32_t)1 | ((uint32_t)offset << 2);
+            data2 = offset;
         }
 
         /**
@@ -83,29 +87,29 @@ class Watched {
         void setBlockedLit(const Lit blockedLit)
         {
             #ifdef DEBUG_WATCHED
-            assert(isClause());
+            assert(type == watch_clause_t);
             #endif
             data1 = blockedLit.toInt();
         }
 
         bool isBinary() const
         {
-            return ((data2&3) == 0);
+            return (type == watch_binary_t);
         }
 
         bool isNonLearntBinary() const
         {
-            return (data2 == 0);
+            return (type == watch_binary_t && !data2);
         }
 
         bool isClause() const
         {
-            return ((data2&3) == 1);
+            return (type == watch_clause_t);
         }
 
         bool isTriClause() const
         {
-            return ((data2&3) == 3);
+            return (type == watch_tertiary_t);
         }
 
         /**
@@ -116,7 +120,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isBinary() || isTriClause());
             #endif
-            return data1AsLit();
+            return Lit::toLit(data1);
         }
 
         /**
@@ -135,7 +139,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isBinary());
             #endif
-            return (data2 >> 2)&0x1;
+            return data2;
         }
 
         void setLearnt(const bool learnt)
@@ -144,7 +148,7 @@ class Watched {
             assert(isBinary());
             assert(learnt == false);
             #endif
-            data2 = (uint32_t)0 | (((uint32_t)learnt) << 2);
+            data2 = learnt;
         }
 
         /**
@@ -155,7 +159,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isTriClause());
             #endif
-            return data2AsLit();
+            return Lit::toLit(data2);
         }
 
         void setOtherLit2(const Lit lit2)
@@ -163,8 +167,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isTriClause());
             #endif
-            data2 = (uint32_t)3 | (lit2.toInt()<< 2);
-
+            data2 = lit2.toInt();
         }
 
         /**
@@ -186,22 +189,14 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isClause());
             #endif
-            return (ClauseOffset)(data2 >> 2);
+            return data2;
         }
 
     private:
-        Lit data1AsLit() const
-        {
-            return (Lit::toLit(data1));
-        }
-
-        Lit data2AsLit() const
-        {
-            return (Lit::toLit(data2>>2));
-        }
-
         uint32_t data1;
-        uint32_t data2;
+        //binary, tertiary or long, as per WatchType
+        uint32_t type:2;
+        uint32_t data2:30;
 };
 
 /**
