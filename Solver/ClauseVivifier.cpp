@@ -365,7 +365,7 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
             continue;
         }
 
-        //Else either remove or shrink
+        //Else either remove or shrink clause
         countTime += cl.size()*10;
         control->detachClause(cl);
         if (isSubsumed) {
