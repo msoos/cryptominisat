@@ -346,8 +346,15 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
         //Clear 'seen' and fill new clause data
         lits.clear();
         for (const Lit *it2 = cl.begin(), *end2 = cl.end(); it2 != end2; it2++) {
-            if (seen[it2->toInt()]) lits.push_back(*it2);
-            else tmpStats.numLitsRem++;
+            //Only fill new clause data if clause hasn't been subsumed
+            if (!isSubsumed) {
+                if (seen[it2->toInt()])
+                    lits.push_back(*it2);
+                else
+                    tmpStats.numLitsRem++;
+            }
+
+            //Clear 'seen' and 'seen_subs'
             seen[it2->toInt()] = 0;
             seen_subs[it2->toInt()] = 0;
         }
