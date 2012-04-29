@@ -161,26 +161,12 @@ static inline bool findWBin(
 }
 
 static inline void removeWBin(
-    vec<Watched> &ws
-    , const Lit impliedLit
-    , const bool learnt
-) {
-    vec<Watched>::iterator i = ws.begin(), end = ws.end();
-    for (; i != end && (!i->isBinary() || i->getOtherLit() != impliedLit || i->getLearnt() != learnt); i++);
-    assert(i != end);
-    vec<Watched>::iterator j = i;
-    i++;
-    for (; i != end; j++, i++) *j = *i;
-    ws.shrink_(1);
-}
-
-static inline void removeWBin(
-    std::vector<vec<Watched> > &watches
+    vector<vec<Watched> > &wsFull
     , const Lit lit1
     , const Lit impliedLit
     , const bool learnt
 ) {
-    vec<Watched>& ws = watches[(~lit1).toInt()];
+    vec<Watched>& ws = wsFull[(~lit1).toInt()];
     vec<Watched>::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (!i->isBinary() || i->getOtherLit() != impliedLit || i->getLearnt() != learnt); i++);
     assert(i != end);

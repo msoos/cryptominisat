@@ -783,7 +783,7 @@ uint32_t Subsumer::removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws)
 
         if (i->isBinary()) {
             assert(i->getLearnt());
-            removeWBin(control->watches[(~(i->getOtherLit())).toInt()], lit, i->getLearnt());
+            removeWBin(control->watches, i->getOtherLit(), lit, i->getLearnt());
             numRemovedLearnt++;
             continue;
         }
@@ -964,7 +964,7 @@ void Subsumer::subsumeBinsWithBins()
                 assert(!(i->getLearnt() == false && lastLearnt == true));
 
                 assert(i->getOtherLit().var() != lit.var());
-                removeWBin(control->watches[(~(i->getOtherLit())).toInt()], lit, i->getLearnt());
+                removeWBin(control->watches, i->getOtherLit(), lit, i->getLearnt());
                 if (i->getLearnt()) {
                     control->learntsLits -= 2;
                     control->numBinsLearnt--;
