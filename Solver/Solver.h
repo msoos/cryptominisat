@@ -369,25 +369,7 @@ inline void Solver::enqueueComplex(
     , const Lit ancestor
     , const bool learntStep
 ) {
-    assert(value(p.var()) == l_Undef);
-
-    //Prefetch next watchlist
-    if (watches[p.toInt()].size() > 0)
-        __builtin_prefetch(watches[p.toInt()].begin());
-
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Enqueing " << p
-    << " with ancestor: " << ancestor
-    << " learntStep: " << learntStep << endl;
-     #endif
-
-    const Var var = p.var();
-    assigns[var] = boolToLBool(!p.sign());
-    trail.push_back(p);
-    propStats.propagations++;
-    varData[var].reason = PropBy(~ancestor, learntStep, false, false);
-    varData[var].level = decisionLevel();
-    varData[var].polarity = !p.sign();
+    enqueue(p, PropBy(~ancestor, learntStep, false, false));
     enqeuedSomething = true;
 }
 
