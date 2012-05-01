@@ -689,23 +689,32 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
             }
 
             //Update cache
-            for (int64_t c = trail.size()-1; c != (int64_t)trail_lim[0]; c--) {
-                const Lit thisLit = trail[c];
-                const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
-                if (control->conf.doCache) {
-                    assert(thisLit != trail[trail_lim[0]]);
-                    const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
+            size_t numElems = trail.size() - trail_lim[0];
+            if (numElems < 300) {
+                //cout << "trail size: " << trail.size() - trail_lim[0] << endl;
+                for (int64_t c = trail.size()-1; c > (int64_t)trail_lim[0]; c--) {
+                    const Lit thisLit = trail[c];
+                    const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
+                    if (control->conf.doCache) {
+                        assert(thisLit != trail[trail_lim[0]]);
+                        const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
 
-                    assert(ancestor != lit_Undef);
-                    control->implCache[(~ancestor).toInt()].merge(
-                        control->implCache[(~thisLit).toInt()].lits
-                        , thisLit
-                        , learntStep
-                        , ancestor
-                        , control->seen
-                    );
+                        assert(ancestor != lit_Undef);
+                        control->implCache[(~ancestor).toInt()].merge(
+                            control->implCache[(~thisLit).toInt()].lits
+                            , thisLit
+                            , learntStep
+                            , ancestor
+                            , control->seen
+                        );
+                    }
                 }
             }
+            Lit lit = trail[trail_lim[0]];
+            if (lit.sign())
+                control->candidateForBothProp[lit.var()].negLit = numElems;
+            else
+                control->candidateForBothProp[lit.var()].posLit = numElems;
             stats.hyperBinAdded += hyperBinResAll();
             stats.transRedRemoved += removeUselessBins();
         } else {

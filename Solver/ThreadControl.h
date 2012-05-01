@@ -426,6 +426,24 @@ class ThreadControl : public CommandControl
         VarReplacer         *varReplacer;
         MTRand              mtrand;           ///< random number generator
 
+        struct TwoSignAppearances
+        {
+            TwoSignAppearances() :
+                posLit(0)
+                , negLit(0)
+            {}
+
+            TwoSignAppearances(size_t _posLit, size_t _negLit) :
+                posLit(_posLit)
+                , negLit(_negLit)
+            {}
+
+            size_t posLit;
+            size_t negLit;
+        };
+
+        vector<TwoSignAppearances>    candidateForBothProp; ///< Variables that propagate a LOT of things
+
 
         /////////////////////////////
         //Renumberer

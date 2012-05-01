@@ -3,6 +3,10 @@
 
 #include "SolverTypes.h"
 #include <iostream>
+#include <set>
+
+Var getUpdatedVar(Var toUpdate, const vector< uint32_t >& mapper);
+Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper);
 
 template<typename T>
 void updateArray(T& toUpdate, const vector< uint32_t >& mapper)
@@ -41,10 +45,28 @@ void updateLitsMap(T& toUpdate, const vector< uint32_t >& mapper)
     }
 }
 
+inline void updateSet(std::set<Var>& toUpdate, const vector< uint32_t >& mapper)
+{
+    std::set<Var> updatedSet;
+    for(std::set<Var>::iterator
+        it = toUpdate.begin(), end = toUpdate.end()
+        ; it != end
+        ; it++
+    ){
+        updatedSet.insert(getUpdatedVar(*it, mapper));
+    }
+    toUpdate.swap(updatedSet);
+}
+
 
 inline Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper)
 {
     return Lit(mapper[toUpdate.var()], toUpdate.sign());
+}
+
+inline Var getUpdatedVar(Var toUpdate, const vector< uint32_t >& mapper)
+{
+    return mapper[toUpdate];
 }
 
 template<typename T, typename T2>

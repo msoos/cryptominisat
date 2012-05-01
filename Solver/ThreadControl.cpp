@@ -533,6 +533,7 @@ void ThreadControl::renumberVariables()
     //Update local data
     myTime = cpuTime();
     updateArray(backupActivity, interToOuter);
+    updateArray(candidateForBothProp, interToOuter);
     updateArray(backupPolarity, interToOuter);
 
     //Update reachability
@@ -635,6 +636,7 @@ Var ThreadControl::newVar(const bool dvar)
     litReachable.push_back(LitReachData());
     backupActivity.push_back(0);
     backupPolarity.push_back(false);
+    candidateForBothProp.push_back(TwoSignAppearances());
 
     CommandControl::newVar();
 
