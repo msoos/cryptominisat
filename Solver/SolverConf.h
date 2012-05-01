@@ -105,6 +105,7 @@ class SolverConf
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         int      doFailedLit;        ///<Carry out Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
+        int      doBothProp;
         int      doRemUselessBins;   ///<Should try to remove useless binary clauses at the beginning of solving?
         int      doCache; ///< Allow storing the cache
         int      doExtendedSCC; ///< Allow extending SCC with the cache

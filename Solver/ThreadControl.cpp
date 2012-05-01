@@ -26,6 +26,7 @@
 #include "SCCFinder.h"
 #include "Subsumer.h"
 #include "FailedLitSearcher.h"
+#include "BothProp.h"
 #include "ClauseVivifier.h"
 #include "ClauseCleaner.h"
 #include "SolutionExtender.h"
@@ -58,6 +59,7 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
     , numBinsLearnt(0)
 {
     failedLitSearcher = new FailedLitSearcher(this);
+    bothProp = new BothProp(this);
     subsumer = new Subsumer(this);
     sCCFinder = new SCCFinder(this);
     clauseVivifier = new ClauseVivifier(this);
@@ -71,6 +73,7 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
 ThreadControl::~ThreadControl()
 {
     delete failedLitSearcher;
+    delete bothProp;
     delete subsumer;
     delete sCCFinder;
     delete clauseVivifier;
@@ -932,6 +935,9 @@ lbool ThreadControl::simplifyProblem()
         implCache.clean(this);
 
     if (!implCache.tryBoth(this))
+        goto end;
+
+    if (conf.doBothProp && !bothProp->tryBothProp())
         goto end;
 
     //PROBE

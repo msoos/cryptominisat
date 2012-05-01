@@ -308,6 +308,8 @@ void Main::parseCommandLine()
 
     po::options_description failedLitOptions("Failed lit options");
     failedLitOptions.add_options()
+    ("bothprop", po::value<int>(&conf.doBothProp)->default_value(conf.doBothProp)
+        , "Do propagations solely to propagate the same value twice")
     ("failedlit", po::value<int>(&conf.doFailedLit)->default_value(conf.doFailedLit)
         , "Failed literal probing")
     ("failmultip", po::value<double>(&conf.failedLitMultiplier)->default_value(conf.failedLitMultiplier)

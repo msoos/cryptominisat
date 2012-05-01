@@ -27,6 +27,7 @@ add_library(cryptoms
     ThreadControl.cpp
     XorFinder.cpp
     GateFinder.cpp
+    BothProp.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 

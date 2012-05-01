@@ -87,6 +87,7 @@ SolverConf::SolverConf() :
         , doSortWatched    (true)
         , doMinimLearntMore(true)
         , doFailedLit      (true)
+        , doBothProp       (true)
         , doRemUselessBins (true)
         , doCache          (true)
         , doExtendedSCC    (false)

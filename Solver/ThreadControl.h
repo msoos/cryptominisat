@@ -46,6 +46,7 @@ class ClauseVivifier;
 class CalcDefPolars;
 class SolutionExtender;
 class ImplCache;
+class BothProp;
 
 class ThreadControl : public CommandControl
 {
@@ -418,7 +419,9 @@ class ThreadControl : public CommandControl
         friend class CommandControl;
         friend class XorFinder;
         friend class GateFinder;
+        friend class BothProp;
         FailedLitSearcher   *failedLitSearcher;
+        BothProp            *bothProp;
         Subsumer            *subsumer;
         SCCFinder           *sCCFinder;
         ClauseVivifier      *clauseVivifier;

@@ -72,7 +72,7 @@ bool FailedLitSearcher::search()
     assert(control->decisionLevel() == 0);
     assert(control->nVars() > 0);
 
-    uint64_t numPropsTodo = 40L*1000L*1000L;
+    uint64_t numPropsTodo = 30L*1000L*1000L;
 
     control->testAllClauseAttach();
     const double myTime = cpuTime();
