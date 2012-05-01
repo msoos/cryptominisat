@@ -210,6 +210,10 @@ template<class T> Subsumer::Sub0Ret Subsumer::subsume0(const uint32_t index, con
 
         runStats.clauses_subsumed++;
         unlinkClause(*it);
+
+        //If we are waaay over time, just exit
+        if (*toDecrease < -10L*1000L*1000L)
+            break;
     }
 
     return ret;
@@ -253,6 +257,10 @@ void Subsumer::subsume1(ClauseIndex c, Clause& ps)
             strengthen(c, subsLits[j]);
             if (!control->ok)
                 return;
+
+            //If we are waaay over time, just exit
+            if (*toDecrease < -10L*1000L*1000L)
+                break;
         }
     }
 }
@@ -273,7 +281,7 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
 {
     Clause& cl = *clauses[c.index];
     for (uint32_t i = 0; i < cl.size(); i++) {
-        *toDecrease -= occur[cl[i].toInt()].size();
+        *toDecrease -= 2*occur[cl[i].toInt()].size();
 
         occur[cl[i].toInt()].remove(c);
         touchedVars.touch(cl[i], cl.learnt());
@@ -351,6 +359,7 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
     for(size_t i = 0; i < cl.size(); i++) {
         ol_seenNeg[cl[i].var()] = 0;
         ol_seenPos[cl[i].var()] = 0;
+        *toDecrease -= 2;
 
         //Pos
         const Occur& occ = occur[cl[i].toInt()];
@@ -360,6 +369,7 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
         ) {
             alreadyAdded[it->index] = 0;
         }
+        *toDecrease -= occ.size();
 
         //Neg
         const Occur& occ2 = occur[(~cl[i]).toInt()];
@@ -369,6 +379,7 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
         ) {
             alreadyAdded[it->index] = 0;
         }
+        *toDecrease -= occ2.size();
     }
 
     #ifdef VERBOSE_DEBUG
@@ -417,6 +428,7 @@ void Subsumer::strengthen(ClauseIndex& c, const Lit toRemoveLit)
     #endif
 
     Clause& cl = *clauses[c.index];
+    *toDecrease -= 5;
     cl.strengthen(toRemoveLit);
     runStats.litsRemStrengthen++;
     touchedVars.touch(toRemoveLit, cl.learnt());
@@ -532,6 +544,10 @@ bool Subsumer::subsume0AndSubsume1()
                 continue;
 
             subsume0(*it, *clauses[it->index]);
+
+            //Waaaay over time? Exit, don't bother about the consequences
+            if (*toDecrease < -5L*1000L*1000L)
+                break;
         }
     }
     //cout << "subsume0 done: " << numDone << endl;
@@ -644,6 +660,10 @@ bool Subsumer::subsume0AndSubsume1()
             subsume1(*it, *clauses[it->index]);
             if (!control->ok)
                 return false;
+
+            //Waaaay over time? Exit, don't bother about the consequences
+            if (*toDecrease < -5L*1000L*1000L)
+                break;
         }
 
         /*cout
@@ -2424,7 +2444,7 @@ inline bool Subsumer::allTautologySlim(const Lit lit)
     //Binary clauses which contain '~lit'
     const vec<Watched>& ws = control->watches[lit.toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
-        *toDecrease -= 1;
+        *toDecrease -= 2;
         if (!it->isNonLearntBinary())
             continue;
 
@@ -2439,12 +2459,14 @@ inline bool Subsumer::allTautologySlim(const Lit lit)
     //Long clauses that contain '~lit'
     const Occur& cs = occur[(~lit).toInt()];
     for (Occur::const_iterator it = cs.begin(), end = cs.end(); it != end; it++) {
-        *toDecrease -= 1;
+        *toDecrease -= 2;
         const Clause& c = *clauses[it->index];
         if (c.learnt())
             continue;
 
+        *toDecrease -= 5;
         for (const Lit *l = c.begin(), *end2 = c.end(); l != end2; l++) {
+            *toDecrease -= 1;
             if (seen[(~(*l)).toInt()] && *l != ~lit) {
                 goto next;
             }
