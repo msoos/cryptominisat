@@ -99,7 +99,7 @@ bool FailedLitSearcher::search()
     else
         numPropsMultiplier = 1.0;
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * control->conf.failedLitMultiplier);
-    numPropsTodo = (double)numPropsTodo * std::pow(numCalls, 0.4);
+    numPropsTodo = (double)numPropsTodo * std::pow(numCalls, 0.2);
 
     //For var-based failed literal probing
     vector<uint32_t> actSortedVars(control->nVars());
