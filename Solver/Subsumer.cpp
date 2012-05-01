@@ -1641,7 +1641,7 @@ void Subsumer::setLimits()
 {
     numMaxSubsume0 = 170L*1000L*1000L;
     numMaxSubsume1 = 80L*1000L*1000L;
-    numMaxElim     = 90L*1000L*1000L;
+    numMaxElim     = 200L*1000L*1000L;
     numMaxAsymm    = 80L *1000L*1000L;
     numMaxBlocked  = 400L *1000L*1000L;
     numMaxVarElimAgressiveCheck  = 400L *1000L*1000L;
@@ -1659,12 +1659,6 @@ void Subsumer::setLimits()
     }
 
     if (addedClauseLits < 3000000) {
-        numMaxElim *= 2;
-        numMaxSubsume0 *= 2;
-        numMaxSubsume1 *= 2;
-    }
-
-    if (addedClauseLits < 1000000) {
         numMaxElim *= 2;
         numMaxSubsume0 *= 2;
         numMaxSubsume1 *= 2;
@@ -1974,7 +1968,7 @@ bool Subsumer::maybeEliminate(const Var var)
         }
     negSize += numNonLearntNeg;
 
-    *toDecrease -= posSize + negSize;
+    *toDecrease -= (posSize + negSize)/2;
 
     // Heuristic CUT OFF:
     if (posSize >= 15 && negSize >= 15) return false;
@@ -1985,7 +1979,6 @@ bool Subsumer::maybeEliminate(const Var var)
     fillClAndBin(negAll, negs, ~lit);
 
     // Count clauses/literals after elimination:
-    *toDecrease -= posSize * negSize + before_literals;
     uint32_t before_clauses = posSize + negSize;
     uint32_t after_clauses = 0;
     uint32_t after_long = 0;
@@ -1995,6 +1988,9 @@ bool Subsumer::maybeEliminate(const Var var)
             if ((it->learnt || it2->learnt)) {
                 continue;
             }
+
+            //Decrement available time
+            *toDecrease -= 2;
 
             // Merge clauses. If 'y' and '~y' exist, clause will not be created.
             bool ok = merge(*it, *it2, lit, ~lit, agressiveCheck, false);
@@ -2023,13 +2019,15 @@ bool Subsumer::maybeEliminate(const Var var)
     removeClauses(posAll, negAll, var);
 
     //add newly dot-producted clauses
-    *toDecrease -= posSize * negSize + before_literals;
     for (vector<ClAndBin>::const_iterator it = posAll.begin(), end = posAll.end(); it != end; it++) {
         for (vector<ClAndBin>::const_iterator it2 = negAll.begin(), end2 = negAll.end(); it2 != end2; it2++) {
 
             //If any of the two is learnt and long, and we don't keep it, skip
             if ((it->learnt || it2->learnt))
                 continue;
+
+            //Decrement available time
+            *toDecrease -= 2;
 
             //Create dot-product
             bool ok = merge(*it, *it2, lit, ~lit, true, true);
@@ -2056,7 +2054,7 @@ bool Subsumer::maybeEliminate(const Var var)
             );
 
             //Add clause and do subsumption
-            *toDecrease -= dummy.size()*2;
+            *toDecrease -= dummy.size();
             Clause* newCl = control->addClauseInt(dummy, learnt, stats, false);
             if (newCl != NULL) {
                 ClauseIndex newClSimp = linkInClause(*newCl);
@@ -2190,7 +2188,7 @@ bool Subsumer::merge(
     } else {
         Clause& c = *clauses[ps.clsimp.index];
         //assert(!clauseData[ps.clsimp.index].defOfOrGate);
-        numMaxElim -= c.size();
+        *toDecrease -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_p){
                 seen[c[i].toInt()] = 1;
@@ -2215,7 +2213,7 @@ bool Subsumer::merge(
     } else {
         Clause& c = *clauses[qs.clsimp.index];
         //assert(!clauseData[qs.clsimp.index].defOfOrGate);
-        numMaxElim -= c.size();
+        *toDecrease -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
             if (c[i] != without_q) {
                 //Opposite is inside, nothing to add
