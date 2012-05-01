@@ -441,7 +441,6 @@ static void printArray(const vector<Var>& array, const std::string& str)
 void ThreadControl::renumberVariables()
 {
     double myTime = cpuTime();
-    double myTotalTime = 0;
     clauseCleaner->removeAndCleanAll();
 
     /*vector<uint32_t> myOuterToInter;
@@ -512,12 +511,6 @@ void ThreadControl::renumberVariables()
         interToOuter2[i*2] = interToOuter[i]*2;
         interToOuter2[i*2+1] = interToOuter[i]*2+1;
     }
-    if (conf.verbosity >= 3) {
-        cout
-        << "c Time to calculate rearrangement: " << (cpuTime() - myTime)
-        << endl;
-    }
-    myTotalTime += (cpuTime() - myTime);
 
     //Update updater data
     updateArray(interToOuterMain, interToOuter);
@@ -531,10 +524,12 @@ void ThreadControl::renumberVariables()
 
 
     //Update local data
-    myTime = cpuTime();
     updateArray(backupActivity, interToOuter);
     updateArray(candidateForBothProp, interToOuter);
     updateArray(backupPolarity, interToOuter);
+    updateArray(decision_var, interToOuter);
+    Solver::updateVars(outerToInter, interToOuter, interToOuter2);
+    updateLitsMap(assumptions, outerToInter);
 
     //Update reachability
     updateArray(litReachable, interToOuter2);
@@ -543,20 +538,7 @@ void ThreadControl::renumberVariables()
             litReachable[i].lit = getUpdatedLit(litReachable[i].lit, outerToInter);
     }
 
-    updateArray(decision_var, interToOuter);
-    Solver::updateVars(outerToInter, interToOuter, interToOuter2);
-    if (conf.verbosity >= 3) {
-        cout
-        << "c Time to var-update local data: " << (cpuTime() - myTime)
-        << endl;
-    }
-    myTotalTime += (cpuTime() - myTime);
-
-
-    updateLitsMap(assumptions, outerToInter);
-
     //Update clauses
-    myTime = cpuTime();
     for(size_t i = 0; i < clauses.size(); i++) {
         updateLitsMap(*clauses[i], outerToInter);
     }
@@ -564,33 +546,11 @@ void ThreadControl::renumberVariables()
     for(size_t i = 0; i < learnts.size(); i++) {
         updateLitsMap(*learnts[i], outerToInter);
     }
-    if (conf.verbosity >= 3) {
-        cout
-        << "c Time to var-update clauses: " << (cpuTime() - myTime)
-        << endl;
-    }
-    myTotalTime += (cpuTime() - myTime);
 
-    //Update sub-elements
-    myTime = cpuTime();
+    //Update sub-elements' vars
     subsumer->updateVars(outerToInter, interToOuter);
     varReplacer->updateVars(outerToInter, interToOuter);
     implCache.updateVars(seen, outerToInter, interToOuter2);
-    if (conf.verbosity >= 3) {
-        cout
-        << "c Time to var-update varreplacer&subsumer&cache: " << (cpuTime() - myTime)
-        << endl;
-    }
-    myTotalTime += (cpuTime() - myTime);
-
-    //Print results
-    if (conf.verbosity >= 3) {
-        cout
-        << "c Reordered variables T: "
-        << std::fixed << std::setw(5) << std::setprecision(2)
-        << myTotalTime
-        << endl;
-    }
 
     //Check if we renumbered the varibles in the order such as to make
     //the unknown ones first and the known/eliminated ones second
@@ -620,6 +580,16 @@ void ThreadControl::renumberVariables()
         }
     }
     assert(!problem && "We renumbered the variables in the wrong order!");
+
+
+    //Print results
+    if (conf.verbosity >= 3) {
+        cout
+        << "c Reordered variables T: "
+        << std::fixed << std::setw(5) << std::setprecision(2)
+        << (cpuTime() - myTime)
+        << endl;
+    }
 }
 
 Var ThreadControl::newVar(const bool dvar)
