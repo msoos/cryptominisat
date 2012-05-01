@@ -105,11 +105,11 @@ void Solver::attachBinClause(
     Watched last;
     //Pust to the begining
     vec<Watched>& ws1 = watches[(~lit1).toInt()];
-    ws1.push_front(Watched(lit2, learnt));
+    ws1.push(Watched(lit2, learnt));
 
     //Push to the beginning
     vec<Watched>& ws2 = watches[(~lit2).toInt()];
-    ws2.push_front(Watched(lit1, learnt));
+    ws2.push(Watched(lit1, learnt));
 }
 
 /**

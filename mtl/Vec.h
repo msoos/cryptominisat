@@ -109,14 +109,14 @@ public:
         }
         data[sz++] = elem;
     }
-    void     push_front  (const T& elem)
+    /*void     push_front  (const T& elem)
     {
         T last = elem;
         for (vec<T>::iterator i = begin(), endd = end(); i != endd; i++) {
             std::swap(*i, last);
         }
         push(last);
-    }
+    }*/
 
     void     push_ (const T& elem)     { assert(sz < cap); data[sz++] = elem; }
 
