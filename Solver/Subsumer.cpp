@@ -212,7 +212,7 @@ template<class T> Subsumer::Sub0Ret Subsumer::subsume0(const uint32_t index, con
         unlinkClause(*it);
 
         //If we are waaay over time, just exit
-        if (*toDecrease < -10L*1000L*1000L)
+        if (*toDecrease < -20L*1000L*1000L)
             break;
     }
 
@@ -259,7 +259,7 @@ void Subsumer::subsume1(ClauseIndex c, Clause& ps)
                 return;
 
             //If we are waaay over time, just exit
-            if (*toDecrease < -10L*1000L*1000L)
+            if (*toDecrease < -20L*1000L*1000L)
                 break;
         }
     }
@@ -546,7 +546,7 @@ bool Subsumer::subsume0AndSubsume1()
             subsume0(*it, *clauses[it->index]);
 
             //Waaaay over time? Exit, don't bother about the consequences
-            if (*toDecrease < -5L*1000L*1000L)
+            if (*toDecrease < -20L*1000L*1000L)
                 break;
         }
     }
@@ -662,7 +662,7 @@ bool Subsumer::subsume0AndSubsume1()
                 return false;
 
             //Waaaay over time? Exit, don't bother about the consequences
-            if (*toDecrease < -5L*1000L*1000L)
+            if (*toDecrease < -20L*1000L*1000L)
                 break;
         }
 
