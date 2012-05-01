@@ -945,11 +945,15 @@ lbool ThreadControl::simplifyProblem()
     reArrangeClauses();
 
     //SCC&VAR-REPL
-    if (conf.doFindEqLits && !sCCFinder->find2LongXors())
-        goto end;
+    if (conf.doFindAndReplaceEqLits) {
+        if (!sCCFinder->find2LongXors())
+            goto end;
 
-    if (conf.doReplace && !varReplacer->performReplace())
-        goto end;
+        if (varReplacer->getNewToReplaceVars() > ((double)getNumFreeVars()*0.001)) {
+            if (!varReplacer->performReplace())
+                goto end;
+        }
+    }
 
     //Cache clean before failed lit (for speed)
     if (conf.doCache)
@@ -963,11 +967,13 @@ lbool ThreadControl::simplifyProblem()
         goto end;
 
     //SCC&VAR-REPL
-    if (conf.doFindEqLits && !sCCFinder->find2LongXors())
-        goto end;
+    if (conf.doFindAndReplaceEqLits) {
+        if (!sCCFinder->find2LongXors())
+            goto end;
 
-    if (conf.doReplace && !varReplacer->performReplace())
-        goto end;
+        if (!varReplacer->performReplace())
+            goto end;
+    }
 
     if (needToInterrupt) return l_Undef;
 
@@ -980,11 +986,15 @@ lbool ThreadControl::simplifyProblem()
         goto end;
 
     //Search & replace 2-long XORs
-    if (conf.doFindEqLits && !sCCFinder->find2LongXors())
-        goto end;
+    if (conf.doFindAndReplaceEqLits) {
+        if (!sCCFinder->find2LongXors())
+            goto end;
 
-    if (conf.doReplace && !varReplacer->performReplace())
-        goto end;
+        if (varReplacer->getNewToReplaceVars() > ((double)getNumFreeVars()*0.001)) {
+            if (!varReplacer->performReplace())
+                goto end;
+        }
+    }
 
     //Cleaning, stat counting, etc.
     if (conf.doCache)

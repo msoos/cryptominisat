@@ -1224,18 +1224,28 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
             control->clauseCleaner->removeAndCleanAll();
         }
 
-        if (control->numNewBinsSinceSCC/2 > ((double)control->getNumFreeVars()*0.003)) {
+        //Eq-lit finding has been enabled? If so, let's see if there might be
+        //a reason to do it
+        if (conf.doFindAndReplaceEqLits
+            && control->numNewBinsSinceSCC/2 > ((double)control->getNumFreeVars()*0.003)
+        ) {
             control->clauseCleaner->removeAndCleanAll();
+
+            //Find eq lits
             if (!control->sCCFinder->find2LongXors()) {
                 status = l_False;
                 break;
             }
-
-            if (conf.doReplace && !control->varReplacer->performReplace()) {
-                status = l_False;
-                break;
-            }
             lastCleanZeroDepthAssigns = trail.size();
+
+            //If enough new variables have been found to be replaced, replace them
+            if (control->varReplacer->getNewToReplaceVars() > ((double)control->getNumFreeVars()*0.001)) {
+                //Perform equivalent variable replacement
+                if (!control->varReplacer->performReplace()) {
+                    status = l_False;
+                    break;
+                }
+            }
         }
     }
 

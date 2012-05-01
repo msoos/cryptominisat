@@ -348,12 +348,10 @@ void Main::parseCommandLine()
         , "Maximum matrix size (=num elements) that we should try to echelonize")
     ("mix", po::value<int>(&conf.doMixXorAndGates)->default_value(conf.doMixXorAndGates)
         , "Mix XORs and OrGates for new truths")
-    ("binxorfind", po::value<int>(&conf.doFindEqLits)->default_value(conf.doFindEqLits)
-        , "Find equivalent literals through SCC")
+    ("binxorfind", po::value<int>(&conf.doFindAndReplaceEqLits)->default_value(conf.doFindAndReplaceEqLits)
+        , "Find equivalent literals through SCC and replace them")
     ("extendedscc", po::value<int>(&conf.doExtendedSCC)->default_value(conf.doExtendedSCC)
         , "Perform SCC using cache")
-    ("varreplace", po::value<int>(&conf.doReplace)->default_value(conf.doReplace)
-        , "Perform variable replacement")
     ;
 
     po::options_description gatesOptions("Gates' options");

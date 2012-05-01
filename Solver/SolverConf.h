@@ -92,8 +92,7 @@ class SolverConf
         int      useCacheWhenFindingXors;
         int      doEchelonizeXOR;
         uint64_t  maxXORMatrix;
-        int      doFindEqLits;       ///<Automatically find binary xor clauses (i.e. variable equi- and antivalences)
-        int      doReplace;          ///<Should var-replacing be performed? If set to FALSE, equi- and antivalent variables will not be replaced with one another. NOTE: This precludes using a lot of the algorithms!
+        int      doFindAndReplaceEqLits;       ///<Automatically find binary xor clauses (i.e. variable equi- and antivalences)
         int      doSchedSimp;        ///<Should simplifyProblem() be scheduled regularly? (if set to FALSE, a lot of opmitisations are disabled)
         int      doSatELite;         ///<Should try to subsume & self-subsuming resolve & variable-eliminate & block-clause eliminate?
         int      doHyperBinRes;      ///<Should try carry out hyper-binary resolution
