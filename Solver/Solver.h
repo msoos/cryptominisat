@@ -69,6 +69,9 @@ struct VarData
     VarData() :
         level(std::numeric_limits< uint32_t >::max())
         , reason(PropBy())
+        , posPolarSet(0)
+        , negPolarSet(0)
+        , flippedPolarity(0)
         , elimed(ELIMED_NONE)
         , polarity(false)
     {}
@@ -78,6 +81,15 @@ struct VarData
 
     //Reason this got propagated. NULL means decision/toplevel
     PropBy reason;
+
+    ///Number of times positive polarity has been set
+    uint32_t posPolarSet;
+
+    ///Number of times negative polarity has been set
+    uint32_t negPolarSet;
+
+    ///Number of times polarity has been flipped
+    uint32_t flippedPolarity;
 
     ///Whether var has been eliminated (var-elim, different component, etc.)
     char elimed;
@@ -356,7 +368,18 @@ inline void Solver::enqueue(const Lit p, const PropBy from)
 
     varData[v].reason = from;
     varData[v].level = decisionLevel();
-    agility.update(varData[v].polarity != !p.sign());
+    if (p.sign())
+        varData[v].negPolarSet++;
+    else
+        varData[v].posPolarSet++;
+
+    if (varData[v].polarity != !p.sign()) {
+        agility.update(true);
+        varData[v].flippedPolarity++;
+    } else {
+        agility.update(false);
+    }
+
     varData[v].polarity = !p.sign();
 
     #ifdef ANIMATE3D

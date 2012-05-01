@@ -383,6 +383,22 @@ template<class T> void printStatsLine(
     << endl;
 }
 
+struct AssignStats
+{
+    AssignStats() :
+        sumAssignPos(0)
+        , sumAssignNeg(0)
+        , sumFlippedPolar(0)
+        , sumFlippedPolarByDecider(0)
+    {};
+
+    uint64_t sumAssignPos;
+    uint64_t sumAssignNeg;
+    uint64_t sumFlippedPolar;
+    uint64_t sumFlippedPolarByDecider;
+
+};
+
 struct PropStats
 {
     PropStats() :

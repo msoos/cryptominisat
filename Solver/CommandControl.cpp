@@ -1377,7 +1377,11 @@ Lit CommandControl::pickBranchLit()
         }
 
         const Var next_var = order_heap.removeMin();
+        bool oldPolar = getStoredPolarity(next_var);
         next = Lit(next_var, !pickPolarity(next_var));
+        bool newPolar = !next.sign();
+        if (oldPolar != newPolar)
+            stats.decisionFlippedPolar++;
     }
 
     //Try to use reachability to pick a literal that dominates this one

@@ -77,6 +77,7 @@ class CommandControl : public Solver
                 , decisions(0)
                 , decisionsAssump(0)
                 , decisionsRand(0)
+                , decisionFlippedPolar(0)
 
                 //Conflict generation
                 , litsLearntNonMin(0)
@@ -118,6 +119,7 @@ class CommandControl : public Solver
                 decisions += other.decisions;
                 decisionsAssump += other.decisionsAssump;
                 decisionsRand += other.decisionsRand;
+                decisionFlippedPolar += other.decisionFlippedPolar;
 
                 //Conflict minimisation stats
                 litsLearntNonMin += other.litsLearntNonMin;
@@ -160,6 +162,12 @@ class CommandControl : public Solver
                     , (double)decisionsRand*100.0/(double)decisions
                     , "% random"
                 );
+
+                printStatsLine("c decisions", decisions
+                    , (double)decisionFlippedPolar/(double)decisions*100.0
+                    , "% flipped polarity"
+                );
+
                 printStatsLine("c decisions/conflicts"
                     , (double)decisions/(double)conflStats.numConflicts
                 );
@@ -268,6 +276,7 @@ class CommandControl : public Solver
             uint64_t  decisions;        ///<Number of decisions made
             uint64_t  decisionsAssump;
             uint64_t  decisionsRand;    ///<Numer of random decisions made
+            uint64_t  decisionFlippedPolar; ///<While deciding, we flipped polarity
 
             uint64_t litsLearntNonMin;
             uint64_t litsLearntRecMin;
