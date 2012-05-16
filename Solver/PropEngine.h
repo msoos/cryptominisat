@@ -131,13 +131,13 @@ struct PolaritySorter
 
 Handles watchlists, conflict analysis, propagation, variable settings, etc.
 */
-class Solver
+class PropEngine
 {
 public:
 
     // Constructor/Destructor:
     //
-    Solver(
+    PropEngine(
         ClauseAllocator* clAllocator
         , const AgilityData& agilityData
         , const bool _updateGlues
@@ -292,7 +292,7 @@ protected:
 ///////////////////////////////////////
 // Implementation of inline methods:
 
-inline void Solver::newDecisionLevel()
+inline void PropEngine::newDecisionLevel()
 {
     trail_lim.push_back(trail.size());
     #ifdef VERBOSE_DEBUG
@@ -300,32 +300,32 @@ inline void Solver::newDecisionLevel()
     #endif
 }
 
-inline uint32_t Solver::decisionLevel() const
+inline uint32_t PropEngine::decisionLevel() const
 {
     return trail_lim.size();
 }
 
-inline lbool Solver::value (const Var x) const
+inline lbool PropEngine::value (const Var x) const
 {
     return assigns[x];
 }
 
-inline lbool Solver::value (const Lit p) const
+inline lbool PropEngine::value (const Lit p) const
 {
     return assigns[p.var()] ^ p.sign();
 }
 
-inline uint32_t Solver::nAssigns() const
+inline uint32_t PropEngine::nAssigns() const
 {
     return trail.size();
 }
 
-inline uint32_t Solver::nVars() const
+inline uint32_t PropEngine::nVars() const
 {
     return assigns.size();
 }
 
-inline bool Solver::okay() const
+inline bool PropEngine::okay() const
 {
     return ok;
 }
@@ -340,7 +340,7 @@ and does some logging if logging is enabled
 @p p the fact to enqueue
 @p from Why was it propagated (binary clause, tertiary clause, normal clause)
 */
-inline void Solver::enqueue(const Lit p, const PropBy from)
+inline void PropEngine::enqueue(const Lit p, const PropBy from)
 {
     #ifdef DEBUG_ENQUEUE_LEVEL0
     #ifndef VERBOSE_DEBUG
@@ -387,7 +387,7 @@ inline void Solver::enqueue(const Lit p, const PropBy from)
     #endif
 }
 
-inline void Solver::enqueueComplex(
+inline void PropEngine::enqueueComplex(
     const Lit p
     , const Lit ancestor
     , const bool learntStep
@@ -400,7 +400,7 @@ inline void Solver::enqueueComplex(
 We can try both ways: either binary clause can be removed. Try to remove one, then the other
 Return which one is to be removed
 */
-inline Lit Solver::removeWhich(Lit conflict, Lit thisAncestor, bool thisStepLearnt)
+inline Lit PropEngine::removeWhich(Lit conflict, Lit thisAncestor, bool thisStepLearnt)
 {
     const PropBy& data = varData[conflict.var()].reason;
 
@@ -423,7 +423,7 @@ hop backwards from thisAncestor until:
 1) we reach ancestor of 'conflict' -- at this point, we return TRUE
 2) we reach an invalid point. Either root, or an invalid hop. We return FALSE.
 */
-inline bool Solver::isAncestorOf(
+inline bool PropEngine::isAncestorOf(
     const Lit conflict
     , Lit thisAncestor
     , const bool thisStepLearnt
@@ -507,7 +507,7 @@ inline bool Solver::isAncestorOf(
     return false;
 }
 
-inline void Solver::addHyperBin(const Lit p, const Lit lit1, const Lit lit2)
+inline void PropEngine::addHyperBin(const Lit p, const Lit lit1, const Lit lit2)
 {
     assert(value(p.var()) == l_Undef);
 
@@ -530,7 +530,7 @@ inline void Solver::addHyperBin(const Lit p, const Lit lit1, const Lit lit2)
     addHyperBin(p);
 }
 
-inline void Solver::addHyperBin(const Lit p, const Clause& cl)
+inline void PropEngine::addHyperBin(const Lit p, const Clause& cl)
 {
     assert(value(p.var()) == l_Undef);
 
@@ -554,7 +554,7 @@ inline void Solver::addHyperBin(const Lit p, const Clause& cl)
 }
 
 //Add binary clause to deepest common ancestor
-inline void Solver::addHyperBin(const Lit p)
+inline void PropEngine::addHyperBin(const Lit p)
 {
     propStats.bogoProps += 1;
     Lit deepestAncestor = lit_Undef;
@@ -587,7 +587,7 @@ inline void Solver::addHyperBin(const Lit p)
 }
 
 //Analyze why did we fail at decision level 1
-inline Lit Solver::analyzeFail(const PropBy propBy)
+inline Lit PropEngine::analyzeFail(const PropBy propBy)
 {
     //Clear out the datastructs we will be usin
     currAncestors.clear();
@@ -634,7 +634,7 @@ inline Lit Solver::analyzeFail(const PropBy propBy)
     return foundLit;
 }
 
-inline Lit Solver::deepestCommonAcestor()
+inline Lit PropEngine::deepestCommonAcestor()
 {
     //Then, we go back on each ancestor recursively, and exit on the first one
     //that unifies ALL the previous ancestors. That is the lowest common ancestor
@@ -704,7 +704,7 @@ inline Lit Solver::deepestCommonAcestor()
     return foundLit;
 }
 
-inline void Solver::cancelZeroLight()
+inline void PropEngine::cancelZeroLight()
 {
     assert((int)decisionLevel() > 0);
 
@@ -717,7 +717,7 @@ inline void Solver::cancelZeroLight()
     trail_lim.clear();
 }
 
-inline uint32_t Solver::getNumUnitaries() const
+inline uint32_t PropEngine::getNumUnitaries() const
 {
     if (decisionLevel() > 0)
         return trail_lim[0];
@@ -725,14 +725,14 @@ inline uint32_t Solver::getNumUnitaries() const
         return trail.size();
 }
 
-inline size_t Solver::getTrailSize() const
+inline size_t PropEngine::getTrailSize() const
 {
     assert(decisionLevel() == 0);
 
     return trail.size();
 }
 
-inline bool Solver::satisfied(const BinaryClause& bin)
+inline bool PropEngine::satisfied(const BinaryClause& bin)
 {
     return ((value(bin.getLit1()) == l_True)
             || (value(bin.getLit2()) == l_True));
@@ -746,7 +746,7 @@ existing clause. Only used if the glue-based activity heuristic is enabled,
 i.e. if we are in GLUCOSE mode (not MiniSat mode)
 */
 template<class T>
-uint16_t Solver::calcGlue(const T& ps)
+uint16_t PropEngine::calcGlue(const T& ps)
 {
     uint32_t nbLevels = 0;
     typename T::const_iterator l, end;
@@ -767,7 +767,7 @@ uint16_t Solver::calcGlue(const T& ps)
 }
 
 
-inline bool Solver::getStoredPolarity(const Var var)
+inline bool PropEngine::getStoredPolarity(const Var var)
 {
     return varData[var].polarity;
 }

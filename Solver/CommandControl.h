@@ -31,7 +31,7 @@ using std::string;
 using std::cout;
 using std::endl;
 
-class CommandControl : public Solver
+class CommandControl : public PropEngine
 {
     public:
         CommandControl(const SolverConf& _conf, ThreadControl* control);

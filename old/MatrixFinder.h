@@ -34,7 +34,7 @@
 #include "Solver.h"
 #include "CommandControl.h"
 
-class Solver;
+class PropEngine;
 
 using std::map;
 using std::vector;

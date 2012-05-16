@@ -35,7 +35,7 @@
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
 
-class Solver;
+class PropEngine;
 
 using std::pair;
 

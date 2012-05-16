@@ -67,7 +67,7 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
     clAllocator = new ClauseAllocator;
     varReplacer = new VarReplacer(this);
 
-    Solver::clAllocator = clAllocator;
+    PropEngine::clAllocator = clAllocator;
 }
 
 ThreadControl::~ThreadControl()
@@ -150,7 +150,7 @@ bool ThreadControl::addXorClauseInt(const vector< Lit >& lits, bool rhs)
 
 This code is very specific in that it must NOT be called with varibles in
 "ps" that have been replaced, eliminated, etc. Also, it must not be called
-when the solver is in an UNSAT (!ok) state, for example. Use it carefully,
+when the wer are in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
 */
 template <class T>
@@ -246,7 +246,7 @@ void ThreadControl::attachClause(const Clause& c)
         clausesLits += c.size();
 
     //Call Solver's function for heavy-lifting
-    Solver::attachClause(c);
+    PropEngine::attachClause(c);
 }
 
 void ThreadControl::attachBinClause(
@@ -266,7 +266,7 @@ void ThreadControl::attachBinClause(
     numNewBinsSinceSCC++;
 
     //Call Solver's function for heavy-lifting
-    Solver::attachBinClause(lit1, lit2, learnt, checkUnassignedFirst);
+    PropEngine::attachBinClause(lit1, lit2, learnt, checkUnassignedFirst);
 }
 
 void ThreadControl::detachClause(const Clause& c)
@@ -296,7 +296,7 @@ void ThreadControl::detachModifiedClause(
         clausesLits -= origSize;
 
     //Call heavy-lifter
-    Solver::detachModifiedClause(lit1, lit2, lit3, origSize, address);
+    PropEngine::detachModifiedClause(lit1, lit2, lit3, origSize, address);
 }
 
 bool ThreadControl::addClauseHelper(vector<Lit>& ps)
@@ -313,7 +313,8 @@ bool ThreadControl::addClauseHelper(vector<Lit>& ps)
         exit(-1);
     }
     for (vector<Lit>::const_iterator it = ps.begin(), end = ps.end(); it != end; it++) {
-        assert(it->var() < nVars() && "Clause inserted, but variable inside has not been declared with Solver::newVar() !");
+        assert(it->var() < nVars()
+        && "Clause inserted, but variable inside has not been declared with PropEngine::newVar() !");
     }
 
     for (uint32_t i = 0; i != ps.size(); i++) {
@@ -531,7 +532,7 @@ void ThreadControl::renumberVariables()
     updateArray(candidateForBothProp, interToOuter);
     updateArray(backupPolarity, interToOuter);
     updateArray(decision_var, interToOuter);
-    Solver::updateVars(outerToInter, interToOuter, interToOuter2);
+    PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     updateLitsMap(assumptions, outerToInter);
 
     //Update reachability

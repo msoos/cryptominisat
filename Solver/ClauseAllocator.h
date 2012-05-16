@@ -36,7 +36,7 @@
 
 class Clause;
 class ThreadControl;
-class Solver;
+class PropEngine;
 
 using std::map;
 using std::vector;
@@ -85,8 +85,7 @@ class ClauseAllocator {
         uint32_t getInterOffset(const Clause* c, const uint32_t outerOffset) const;
         ClauseOffset combineOuterInterOffsets(const uint32_t outerOffset, const uint32_t interOffset) const;
 
-        template<class T>
-        void updateAllOffsetsAndPointers(T* control);
+        void updateAllOffsetsAndPointers(PropEngine* control);
         template<class T>
         void updatePointers(vector<T*>& toUpdate);
         void updatePointers(vector<Clause*>& toUpdate);

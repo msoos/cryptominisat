@@ -44,7 +44,7 @@ using std::endl;
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Solver::Solver(
+PropEngine::PropEngine(
     ClauseAllocator *_clAllocator
     , const AgilityData& agilityData
     , const bool _updateGlues
@@ -60,9 +60,9 @@ Solver::Solver(
 }
 
 /**
-@brief Creates a new SAT variable in the solver
+@brief Creates a new SAT variable
 */
-Var Solver::newVar(const bool)
+Var PropEngine::newVar(const bool)
 {
     const Var v = nVars();
     if (v >= 1<<30) {
@@ -83,7 +83,7 @@ Var Solver::newVar(const bool)
     return v;
 }
 
-void Solver::attachBinClause(
+void PropEngine::attachBinClause(
     const Lit lit1
     , const Lit lit2
     , const bool learnt
@@ -118,7 +118,7 @@ void Solver::attachBinClause(
  Handles 2, 3 and >3 clause sizes differently and specially
  */
 
-void Solver::attachClause(
+void PropEngine::attachClause(
     const Clause& c
     , const bool checkAttach
 ) {
@@ -156,7 +156,7 @@ The first two literals might have chaned through modification, so they are
 passed along as arguments -- they are needed to find the correct place where
 the clause is
 */
-void Solver::detachModifiedClause(
+void PropEngine::detachModifiedClause(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
@@ -187,7 +187,7 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-inline bool Solver::propBinaryClause(
+inline bool PropEngine::propBinaryClause(
     const vec<Watched>::const_iterator i
     , const Lit p
     , PropBy& confl
@@ -223,7 +223,7 @@ inline bool Solver::propBinaryClause(
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
-template<bool simple> inline bool Solver::propNormalClause(
+template<bool simple> inline bool PropEngine::propNormalClause(
     const vec<Watched>::iterator i
     , vec<Watched>::iterator &j
     , const Lit p
@@ -327,7 +327,7 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
-template<bool simple> inline bool Solver::propTriClause(
+template<bool simple> inline bool PropEngine::propTriClause(
     const vec<Watched>::const_iterator i
     , const Lit p
     , PropBy& confl
@@ -364,7 +364,7 @@ template<bool simple> inline bool Solver::propTriClause(
     return true;
 }
 
-PropBy Solver::propagate()
+PropBy PropEngine::propagate()
 {
     PropBy confl;
 
@@ -465,7 +465,7 @@ PropBy Solver::propagate()
     return confl;
 }
 
-PropBy Solver::propagateNonLearntBin()
+PropBy PropEngine::propagateNonLearntBin()
 {
     PropBy confl;
     while (qhead < trail.size()) {
@@ -481,7 +481,7 @@ PropBy Solver::propagateNonLearntBin()
     return PropBy();
 }
 
-Lit Solver::propagateFull()
+Lit PropEngine::propagateFull()
 {
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Prop full started" << endl;
@@ -597,7 +597,7 @@ Lit Solver::propagateFull()
     return lit_Undef;
 }
 
-PropBy Solver::propBin(
+PropBy PropEngine::propBin(
     const Lit p
     , vec<Watched>::const_iterator k
 ) {
@@ -690,7 +690,7 @@ PropBy Solver::propBin(
     return PropBy();
 }
 
-void Solver::sortWatched()
+void PropEngine::sortWatched()
 {
     #ifdef VERBOSE_DEBUG
     cout << "Sorting watchlists:" << endl;
@@ -730,7 +730,7 @@ void Solver::sortWatched()
     }*/
 }
 
-void Solver::printWatchList(const Lit lit) const
+void PropEngine::printWatchList(const Lit lit) const
 {
     const vec<Watched>& ws = watches[(~lit).toInt()];
     for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
@@ -746,7 +746,7 @@ void Solver::printWatchList(const Lit lit) const
     }
 }
 
-uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit) const
+uint32_t PropEngine::getBinWatchSize(const bool alsoLearnt, const Lit lit) const
 {
     uint32_t num = 0;
     const vec<Watched>& ws = watches[lit.toInt()];
@@ -759,7 +759,7 @@ uint32_t Solver::getBinWatchSize(const bool alsoLearnt, const Lit lit) const
     return num;
 }
 
-vector<Lit> Solver::getUnitaries() const
+vector<Lit> PropEngine::getUnitaries() const
 {
     vector<Lit> unitaries;
     if (decisionLevel() > 0) {
@@ -771,7 +771,7 @@ vector<Lit> Solver::getUnitaries() const
     return unitaries;
 }
 
-uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
+uint32_t PropEngine::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLearnt) const
 {
     uint32_t num = 0;
 
@@ -790,7 +790,7 @@ uint32_t Solver::countNumBinClauses(const bool alsoLearnt, const bool alsoNonLea
     return num/2;
 }
 
-void Solver::updateVars(
+void PropEngine::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
     , const vector<uint32_t>& interToOuter2
@@ -809,7 +809,7 @@ void Solver::updateVars(
     }
 }
 
-inline void Solver::updateWatch(vec<Watched>& ws, const vector<uint32_t>& outerToInter)
+inline void PropEngine::updateWatch(vec<Watched>& ws, const vector<uint32_t>& outerToInter)
 {
     for(vec<Watched>::iterator
         it = ws.begin(), end = ws.end()

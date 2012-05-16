@@ -200,15 +200,6 @@ void DimacsParser::printHeader(StreamBuffer& in)
 
 /**
 @brief Parse up comment lines which could contain important information
-
-In CryptoMiniSat we save quite a bit of information in the comment lines.
-These need to be parsed up. This function achieves that. Informations that
-can be given:
-\li "c Solver::newVar() called" -- we execute Solver::newVar()
-\li "c Solver::solve() called" -- we execute Solver::solve() and dump the
-solution to debugLibPartX.out, where X is a number that starts with 1 and
-increases to N, where N is the number of solve() instructions
-\li variable names in the form of "c var VARNUM NAME"
 */
 void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
 {
@@ -364,11 +355,6 @@ void DimacsParser::readFullClause(StreamBuffer& in)
 
 /**
 @brief The main function: parses in a full DIMACS file
-
-Parses in header, the clauses, and special comment lines that define clause
-groups, clause group names, and variable names, plus it parses up special
-comments that have to do with debugging Solver::newVar() and Solver::solve()
-calls for library-debugging
 */
 void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
 {

@@ -543,16 +543,19 @@ void ClauseAllocator::checkGoodPropBy(const ThreadControl* control)
 }
 
 
-template<class T>
-void ClauseAllocator::updateAllOffsetsAndPointers(T* solver)
+void ClauseAllocator::updateAllOffsetsAndPointers(PropEngine*  propEngine)
 {
-    updateOffsets(solver->watches);
+    updateOffsets(propEngine->watches);
 
     Var var = 0;
-    for (vector<VarData>::iterator it = solver->varData.begin(), end = solver->varData.end(); it != end; it++, var++) {
-        if ((uint32_t)it->level > solver->decisionLevel()
+    for (vector<VarData>::iterator
+        it = propEngine->varData.begin(), end = propEngine->varData.end()
+        ; it != end
+        ; it++, var++
+    ) {
+        if ((uint32_t)it->level > propEngine->decisionLevel()
             || it->level == 0
-            || solver->value(var) == l_Undef
+            || propEngine->value(var) == l_Undef
         ) {
             it->reason = PropBy();
             continue;
@@ -576,8 +579,6 @@ void ClauseAllocator::updateAllOffsetsAndPointers(T* solver)
         }
     }
 }
-template void ClauseAllocator::updateAllOffsetsAndPointers(Solver* solver);
-template void ClauseAllocator::updateAllOffsetsAndPointers(CommandControl* solver);
 
 /**
 @brief A dumb helper function to update offsets

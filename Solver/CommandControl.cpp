@@ -43,7 +43,7 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control) :
-        Solver(
+        PropEngine(
             _control->clAllocator
             , AgilityData(_conf.agilityG, _conf.agilityLimit)
             , _conf.updateGlues
@@ -65,7 +65,7 @@ CommandControl::~CommandControl()
 
 Var CommandControl::newVar(const bool dvar)
 {
-    const Var var = Solver::newVar(dvar);
+    const Var var = PropEngine::newVar(dvar);
     assert(var == activities.size());
     activities.push_back(0);
     if (dvar) {
