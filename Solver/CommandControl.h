@@ -22,7 +22,7 @@
 #ifndef __COMMAND_CONTROL_H__
 #define __COMMAND_CONTROL_H__
 
-#include "Solver.h"
+#include "PropEngine.h"
 #include "SolverTypes.h"
 #include "time_mem.h"
 class ThreadControl;

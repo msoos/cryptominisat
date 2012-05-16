@@ -19,7 +19,6 @@
  * MA 02110-1301  USA
 */
 
-#include "Solver.h"
 #include "ThreadControl.h"
 #include "BothProp.h"
 #include "assert.h"

@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#ifndef SOLVER_H
-#define SOLVER_H
+#ifndef __PROPENGINE_H__
+#define __PROPENGINE_H__
 
 #include <cstdio>
 #include <string.h>
@@ -771,4 +771,4 @@ inline bool Solver::getStoredPolarity(const Var var)
 {
     return varData[var].polarity;
 }
-#endif //SOLVER_H
+#endif //__PROPENGINE_H__

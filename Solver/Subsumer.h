@@ -22,7 +22,6 @@
 #ifndef SIMPLIFIER_H
 #define SIMPLIFIER_H
 
-#include "Solver.h"
 #include "Queue.h"
 #include "CSet.h"
 #include "BitArray.h"

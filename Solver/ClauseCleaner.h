@@ -23,7 +23,6 @@
 #define CLAUSECLEANER_H
 
 #include "constants.h"
-#include "Solver.h"
 #include "Subsumer.h"
 #include "ThreadControl.h"
 

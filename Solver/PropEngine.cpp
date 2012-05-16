@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "Solver.h"
+#include "PropEngine.h"
 #include <cmath>
 #include <string.h>
 #include <algorithm>

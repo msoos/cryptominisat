@@ -29,7 +29,7 @@
 #include "SolverTypes.h"
 #include "ImplCache.h"
 #include "SolverConf.h"
-#include "Solver.h"
+#include "PropEngine.h"
 #include "CommandControl.h"
 #include "GitSHA1.h"
 

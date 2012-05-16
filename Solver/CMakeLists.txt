@@ -8,7 +8,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BIN
 #list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" GitSHA1.h)
 
 add_library(cryptoms
-    Solver.cpp
+    PropEngine.cpp
     PackedRow.cpp
     VarReplacer.cpp
     ClauseCleaner.cpp
