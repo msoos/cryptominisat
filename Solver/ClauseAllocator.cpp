@@ -26,7 +26,7 @@
 #include "assert.h"
 #include "SolverTypes.h"
 #include "Clause.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "Searcher.h"
 #include "time_mem.h"
 #include "Subsumer.h"
@@ -268,12 +268,12 @@ large, then it allocates new stacks, copies the non-freed clauses to these new
 stacks, updates all pointers and offsets, and frees the original stacks.
 */
 void ClauseAllocator::consolidate(
-    ThreadControl* control
+    Solver* solver
     , const bool force
 ) {
     double myTime = cpuTime();
     #ifdef DEBUG_PROPAGATEFROM
-    checkGoodPropBy(control);
+    checkGoodPropBy(solver);
     #endif
 
     uint32_t sum = 0;
@@ -297,7 +297,7 @@ void ClauseAllocator::consolidate(
     if (!force
         && ((double)sum/(double)sumAlloc > 0.7 && sizes.size() < 10)
        ) {
-        if (control->conf.verbosity >= 3) {
+        if (solver->conf.verbosity >= 3) {
             cout << "c Not consolidating memory." << endl;
         }
         return;
@@ -414,9 +414,9 @@ void ClauseAllocator::consolidate(
         newDataStartsPointers[outerPart] += sizeNeeded;
     }
 
-    updatePointers(control->clauses);
-    updatePointers(control->learnts);
-    updateAllOffsetsAndPointers(control);
+    updatePointers(solver->clauses);
+    updatePointers(solver->learnts);
+    updateAllOffsetsAndPointers(solver);
 
     for (uint32_t i = 0; i < dataStarts.size(); i++) {
         free(dataStarts[i]);
@@ -439,7 +439,7 @@ void ClauseAllocator::consolidate(
     }
     newOrigClauseSizes.swap(origClauseSizes);
 
-    if (control->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 3) {
         cout
         << "c Consolidated memory."
         << " old sum max size: "
@@ -513,12 +513,12 @@ Clause* ClauseAllocator::getClause()
     return tmp;
 }
 
-void ClauseAllocator::checkGoodPropBy(const ThreadControl* control)
+void ClauseAllocator::checkGoodPropBy(const Solver* solver)
 {
     //Go through each variable's varData and check if 'propBy' is correct
     Var var = 0;
     for (vector<VarData>::const_iterator
-        it = control->varData.begin(), end = control->varData.end()
+        it = solver->varData.begin(), end = solver->varData.end()
         ; it != end
         ; it++, var++
     ) {
@@ -526,9 +526,9 @@ void ClauseAllocator::checkGoodPropBy(const ThreadControl* control)
         //If level is 0, it's assigned at decision level 0, and can be ignored
         //If value is UNDEF then it's something that remained form old days
         //Remember: stuff remains from 'old days' because this is lazily updated
-        if ((uint32_t)it->level > control->decisionLevel()
+        if ((uint32_t)it->level > solver->decisionLevel()
             || it->level == 0
-            || control->value(var) == l_Undef
+            || solver->value(var) == l_Undef
         ) {
             continue;
         }

@@ -21,7 +21,7 @@
 
 #include "XorFinder.h"
 #include "time_mem.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "VarReplacer.h"
 #include "Subsumer.h"
 #include <limits>
@@ -29,9 +29,9 @@
 using std::cout;
 using std::endl;
 
-XorFinder::XorFinder(Subsumer* _subsumer, ThreadControl* _control) :
+XorFinder::XorFinder(Subsumer* _subsumer, Solver* _solver) :
     subsumer(_subsumer)
-    , control(_control)
+    , solver(_solver)
     , numCalls(0)
     , seen(_subsumer->seen)
     , seen2(_subsumer->seen2)
@@ -44,7 +44,7 @@ bool XorFinder::findXors()
     runStats.clear();
     xors.clear();
     xorOcc.clear();
-    xorOcc.resize(control->nVars());
+    xorOcc.resize(solver->nVars());
     triedAlready.clear();
     triedAlready.resize(subsumer->clauses.size());
 
@@ -68,24 +68,24 @@ bool XorFinder::findXors()
     runStats.extractTime = cpuTime() - myTime;
     assert(runStats.foundXors == xors.size());
 
-    if (control->conf.doEchelonizeXOR && xors.size() > 0)
+    if (solver->conf.doEchelonizeXOR && xors.size() > 0)
         extractInfo();
 
-    if (control->getVerbosity() >= 1) {
+    if (solver->getVerbosity() >= 1) {
         runStats.printShort();
     }
 
     globalStats += runStats;
 
-    return control->okay();
+    return solver->okay();
 }
 
 bool XorFinder::extractInfo()
 {
     double myTime = cpuTime();
-    size_t origTrailSize = control->trail.size();
+    size_t origTrailSize = solver->trail.size();
 
-    vector<uint32_t> varsIn(control->nVars(), 0);
+    vector<uint32_t> varsIn(solver->nVars(), 0);
     for(vector<Xor>::const_iterator it = xors.begin(), end = xors.end(); it != end; it++) {
         for(vector<Var>::const_iterator it2 = it->vars.begin(), end2 = it->vars.end(); it2 != end2; it2++) {
             varsIn[*it2]++;
@@ -118,11 +118,11 @@ bool XorFinder::extractInfo()
     myTime = cpuTime();
 
     //These mappings will be needed for the matrixes, which will have far less
-    //variables than control->nVars()
+    //variables than solver->nVars()
     outerToInterVarMap.clear();
-    outerToInterVarMap.resize(control->nVars(), std::numeric_limits<size_t>::max());
+    outerToInterVarMap.resize(solver->nVars(), std::numeric_limits<size_t>::max());
     interToOUterVarMap.clear();
-    interToOUterVarMap.resize(control->nVars(), std::numeric_limits<size_t>::max());
+    interToOUterVarMap.resize(solver->nVars(), std::numeric_limits<size_t>::max());
 
     //Go through all blocks, and extract info
     i = 0;
@@ -147,17 +147,17 @@ bool XorFinder::extractInfo()
 end:
 
     //Update stats
-    runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
     runStats.extractTime += cpuTime() - myTime;
 
-    return control->ok;
+    return solver->ok;
 }
 
 bool XorFinder::extractInfoFromBlock(
     const vector<Var>& block
     , const size_t blockNum
 ) {
-    assert(control->okay());
+    assert(solver->okay());
 
     //Outer-inner var mapping is needed because not all vars are in the matrix
     size_t num = 0;
@@ -173,9 +173,9 @@ bool XorFinder::extractInfoFromBlock(
     //Set up matrix
     size_t numCols = block.size()+1; //we need augmented column
     size_t matSize = numCols*thisXors.size();
-    if (matSize > control->conf.maxXORMatrix) {
+    if (matSize > solver->conf.maxXORMatrix) {
         //this matrix is way too large, skip :(
-        return control->okay();
+        return solver->okay();
     }
     mzd_t *mat = mzd_init(thisXors.size(), numCols);
     assert(mzd_is_zero(mat));
@@ -218,24 +218,24 @@ bool XorFinder::extractInfoFromBlock(
             case 0:
                 //0-long XOR clause is equal to 1? If so, it's UNSAT
                 if (rhs) {
-                    control->addXorClauseInt(lits, 1);
-                    assert(!control->okay());
+                    solver->addXorClauseInt(lits, 1);
+                    assert(!solver->okay());
                     goto end;
                 }
                 break;
 
             case 1: {
                 runStats.newUnits++;
-                control->addXorClauseInt(lits, rhs);
-                if (!control->okay())
+                solver->addXorClauseInt(lits, rhs);
+                if (!solver->okay())
                     goto end;
                 break;
             }
 
             case 2: {
                 runStats.newBins++;
-                control->addXorClauseInt(lits, rhs);
-                if (!control->okay())
+                solver->addXorClauseInt(lits, rhs);
+                if (!solver->okay())
                     goto end;
                 break;
             }
@@ -250,7 +250,7 @@ bool XorFinder::extractInfoFromBlock(
     end:
     mzd_free(mat);
 
-    return control->okay();
+    return solver->okay();
 }
 
 vector<size_t> XorFinder::getXorsForBlock(const size_t blockNum)
@@ -277,7 +277,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
 {
     //Clearing data we will fill below
     varToBlock.clear();
-    varToBlock.resize(control->nVars(), std::numeric_limits<size_t>::max());
+    varToBlock.resize(solver->nVars(), std::numeric_limits<size_t>::max());
     blocks.clear();
 
     //Go through each XOR, and either make a new block for it
@@ -383,12 +383,12 @@ void XorFinder::findXor(ClauseIndex c)
         findXorMatch(subsumer->occur[(*l).toInt()], foundCls);
         findXorMatch(subsumer->occur[(~*l).toInt()], foundCls);
 
-        findXorMatch(control->watches[(~(*l)).toInt()], *l, foundCls);
-        findXorMatch(control->watches[(*l).toInt()], ~(*l), foundCls);
+        findXorMatch(solver->watches[(~(*l)).toInt()], *l, foundCls);
+        findXorMatch(solver->watches[(*l).toInt()], ~(*l), foundCls);
 
-        if (control->conf.useCacheWhenFindingXors) {
-            findXorMatch(control->implCache[(*l).toInt()].lits, *l, foundCls);
-            findXorMatch(control->implCache[(~*l).toInt()].lits, ~(*l), foundCls);
+        if (solver->conf.useCacheWhenFindingXors) {
+            findXorMatch(solver->implCache[(*l).toInt()].lits, *l, foundCls);
+            findXorMatch(solver->implCache[(~*l).toInt()].lits, ~(*l), foundCls);
         }
 
         if (foundCls.foundAll())
@@ -471,7 +471,7 @@ void XorFinder::findXorMatchExt(const Occur& occ, FoundXors& foundCls)
                 if (!seen[l->var()]) {
                     //If this literal is not meant to be inside the XOR, then try to find a replacement for it from the cache
                     bool found = false;
-                    const vector<LitExtra>& cache = control->implCache[Lit(l->var(), true).toInt()].lits;
+                    const vector<LitExtra>& cache = solver->implCache[Lit(l->var(), true).toInt()].lits;
                     for(vector<LitExtra>::const_iterator it2 = cache.begin(), end2 = cache.end(); it2 != end2 && !found; it2++) {
                         if (seen[l->var()] && !seen2[l->var()]) {
                             found = true;

@@ -20,12 +20,12 @@
 */
 
 #include "CompleteDetachReattacher.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "VarReplacer.h"
 #include "ClauseCleaner.h"
 
-CompleteDetachReatacher::CompleteDetachReatacher(ThreadControl* _control) :
-    control(_control)
+CompleteDetachReatacher::CompleteDetachReatacher(Solver* _solver) :
+    solver(_solver)
 {
 }
 
@@ -34,20 +34,20 @@ CompleteDetachReatacher::CompleteDetachReatacher(ThreadControl* _control) :
 */
 void CompleteDetachReatacher::detachNonBinsNonTris(const bool removeTri)
 {
-    uint64_t oldNumBinsLearnt = control->numBinsLearnt;
-    uint64_t oldNumBinsNonLearnt = control->numBinsNonLearnt;
+    uint64_t oldNumBinsLearnt = solver->numBinsLearnt;
+    uint64_t oldNumBinsNonLearnt = solver->numBinsNonLearnt;
     ClausesStay stay;
 
-    for (vector<vec<Watched> >::iterator it = control->watches.begin(), end = control->watches.end(); it != end; it++) {
+    for (vector<vec<Watched> >::iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++) {
         stay += clearWatchNotBinNotTri(*it, removeTri);
     }
 
-    control->learntsLits = stay.learntBins;
-    control->clausesLits = stay.nonLearntBins;
-    control->numBinsLearnt = stay.learntBins/2;
-    control->numBinsNonLearnt = stay.nonLearntBins/2;
-    release_assert(control->numBinsLearnt == oldNumBinsLearnt);
-    release_assert(control->numBinsNonLearnt == oldNumBinsNonLearnt);
+    solver->learntsLits = stay.learntBins;
+    solver->clausesLits = stay.nonLearntBins;
+    solver->numBinsLearnt = stay.learntBins/2;
+    solver->numBinsNonLearnt = stay.nonLearntBins/2;
+    release_assert(solver->numBinsLearnt == oldNumBinsLearnt);
+    release_assert(solver->numBinsNonLearnt == oldNumBinsNonLearnt);
 }
 
 /**
@@ -82,20 +82,20 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
 */
 bool CompleteDetachReatacher::reattachNonBins()
 {
-    cleanAndAttachClauses(control->clauses);
-    cleanAndAttachClauses(control->learnts);
-    control->clauseCleaner->removeSatisfiedBins();
+    cleanAndAttachClauses(solver->clauses);
+    cleanAndAttachClauses(solver->learnts);
+    solver->clauseCleaner->removeSatisfiedBins();
 
-    if (control->ok)
-        control->ok = (control->propagate().isNULL());
+    if (solver->ok)
+        solver->ok = (solver->propagate().isNULL());
 
-    return control->ok;
+    return solver->ok;
 }
 
 /**
 @brief Cleans clauses from failed literals/removes satisfied clauses from cs
 
-May change control->ok to FALSE (!)
+May change solver->ok to FALSE (!)
 */
 void CompleteDetachReatacher::cleanAndAttachClauses(vector<Clause*>& cs)
 {
@@ -103,10 +103,10 @@ void CompleteDetachReatacher::cleanAndAttachClauses(vector<Clause*>& cs)
     vector<Clause*>::iterator j = i;
     for (vector<Clause*>::iterator end = cs.end(); i != end; i++) {
         if (cleanClause(*i)) {
-            control->attachClause(**i);
+            solver->attachClause(**i);
             *j++ = *i;
         } else {
-            control->clAllocator->clauseFree(*i);
+            solver->clAllocator->clauseFree(*i);
         }
     }
     cs.resize(cs.size() - (i-j));
@@ -123,8 +123,8 @@ bool CompleteDetachReatacher::cleanClause(Clause*& cl)
     Lit *i = ps.begin();
     Lit *j = i;
     for (Lit *end = ps.end(); i != end; i++) {
-        if (control->value(*i) == l_True) return false;
-        if (control->value(*i) == l_Undef) {
+        if (solver->value(*i) == l_True) return false;
+        if (solver->value(*i) == l_Undef) {
             *j++ = *i;
         }
     }
@@ -132,16 +132,16 @@ bool CompleteDetachReatacher::cleanClause(Clause*& cl)
 
     switch (ps.size()) {
         case 0:
-            control->ok = false;
+            solver->ok = false;
             return false;
 
         case 1:
-            control->enqueue(ps[0]);
-            control->propStats.propsUnit++;
+            solver->enqueue(ps[0]);
+            solver->propStats.propsUnit++;
             return false;
 
         case 2: {
-            control->attachBinClause(ps[0], ps[1], ps.learnt());
+            solver->attachBinClause(ps[0], ps[1], ps.learnt());
             return false;
         }
 

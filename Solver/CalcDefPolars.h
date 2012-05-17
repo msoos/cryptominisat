@@ -25,19 +25,19 @@
 #include "Vec.h"
 #include "Clause.h"
 
-class ThreadControl;
+class Solver;
 
 class CalcDefPolars
 {
     public:
-        CalcDefPolars(ThreadControl* control);
+        CalcDefPolars(Solver* solver);
         const vector<char> calculate();
 
     private:
         void tallyVotes(const vector<Clause*>& cs, vector<double>& votes) const;
         void tallyVotesBin(vector<double>& votes, const vector<vec<Watched> >& watched) const;
 
-        ThreadControl* control;
+        Solver* solver;
 };
 
 #endif //CALCDEFAULTPOLARITIES__H

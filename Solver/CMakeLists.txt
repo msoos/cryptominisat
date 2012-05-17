@@ -24,7 +24,7 @@ add_library(cryptoms
     SolutionExtender.cpp
     ImplCache.cpp
     Searcher.cpp
-    ThreadControl.cpp
+    Solver.cpp
     XorFinder.cpp
     GateFinder.cpp
     BothProp.cpp

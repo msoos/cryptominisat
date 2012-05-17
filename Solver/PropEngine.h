@@ -52,7 +52,7 @@ using std::set;
 #define DEBUG_ENQUEUE_LEVEL0
 #endif
 
-class ThreadControl;
+class Solver;
 class ClauseAllocator;
 
 //Elimed by which algorithm. NONE = not eliminated

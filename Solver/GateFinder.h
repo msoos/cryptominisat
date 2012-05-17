@@ -25,7 +25,7 @@
 #include "SolverTypes.h"
 #include "CSet.h"
 
-class ThreadControl;
+class Solver;
 class Subsumer;
 
 class NewGateData
@@ -120,7 +120,7 @@ struct OrGateSorter2 {
 class GateFinder
 {
 public:
-    GateFinder(Subsumer *subsumer, ThreadControl *control);
+    GateFinder(Subsumer *subsumer, Solver *control);
 
     void newVar();
     bool doAll();
@@ -390,7 +390,7 @@ private:
 
     //Main data
     Subsumer *subsumer;
-    ThreadControl *control;
+    Solver *solver;
     vector<char>& seen;
     vector<char>& seen2;
 };

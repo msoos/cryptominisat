@@ -12,7 +12,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <iomanip>
 #include <vector>
 #include <fstream>
-#include "ThreadControl.h"
+#include "Solver.h"
 
 #ifdef VERBOSE_DEBUG
 #define DEBUG_COMMENT_PARSING
@@ -24,8 +24,8 @@ using std::endl;
 
 //#define DEBUG_COMMENT_PARSING
 
-DimacsParser::DimacsParser(ThreadControl* _control, const bool _debugLib, const bool _debugNewVar):
-    control(_control)
+DimacsParser::DimacsParser(Solver* _solver, const bool _debugLib, const bool _debugNewVar):
+    solver(_solver)
     , debugLib(_debugLib)
     , debugNewVar(_debugNewVar)
 {}
@@ -153,8 +153,8 @@ void DimacsParser::readClause(StreamBuffer& in, vector<Lit>& lits)
                 cout << "ERROR! Variable requested is far too large: " << var << endl;
                 exit(-1);
             }
-            while (var >= control->nVars())
-                control->newVar();
+            while (var >= solver->nVars())
+                solver->newVar();
         }
         lits.push_back( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
     }
@@ -188,7 +188,7 @@ void DimacsParser::printHeader(StreamBuffer& in)
     if (match(in, "p cnf")) {
         int vars    = parseInt(in, len);
         int clauses = parseInt(in, len);
-        if (control->getVerbosity() >= 1) {
+        if (solver->getVerbosity() >= 1) {
             cout << "c -- header says num vars:   " << std::setw(12) << vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
         }
@@ -213,22 +213,22 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         skipWhitespace(in);
         if (var <= 0) cout << "PARSE ERROR! Var number must be a positive integer" << endl, exit(3);
         std::string name = untilEnd(in);
-        //control->setVariableName(var-1, name.c_str());
+        //solver->setVariableName(var-1, name.c_str());
 
         #ifdef DEBUG_COMMENT_PARSING
         cout << "Parsed 'c var'" << endl;
         #endif //DEBUG_COMMENT_PARSING
     } else if (debugLib && str == "Solver::solve()") {
-        lbool ret = control->solve();
+        lbool ret = solver->solve();
         std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
         std::ofstream partFile;
         partFile.open(s.c_str());
         if (ret == l_True) {
             partFile << "SAT" << endl;
-            for (Var i = 0; i != control->nVars(); i++) {
-                if (control->model[i] != l_Undef)
+            for (Var i = 0; i != solver->nVars(); i++) {
+                if (solver->model[i] != l_Undef)
                     partFile
-                    << ((control->model[i]==l_True) ? "" : "-")
+                    << ((solver->model[i]==l_True) ? "" : "-")
                     << (i+1) <<  " ";
             }
             partFile << "0" << endl;;
@@ -246,7 +246,7 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string str)
         cout << "Parsed Solver::solve()" << endl;
         #endif //DEBUG_COMMENT_PARSING
     } else if (debugNewVar && str == "Solver::newVar()") {
-        control->newVar();
+        solver->newVar();
 
         #ifdef DEBUG_COMMENT_PARSING
         cout << "Parsed Solver::newVar()" << endl;
@@ -337,10 +337,10 @@ void DimacsParser::readFullClause(StreamBuffer& in)
         assert(false && "Cannot read XOR clause!");
     } else {
         if (learnt) {
-            control->addLearntClause(lits, stats);
+            solver->addLearntClause(lits, stats);
             numLearntClauses++;
         } else {
-            control->addClause(lits);
+            solver->addClause(lits);
             numNormClauses++;
         }
     }
@@ -390,12 +390,12 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
     debugLibPart = 1;
     numLearntClauses = 0;
     numNormClauses = 0;
-    const uint32_t origNumVars = control->nVars();
+    const uint32_t origNumVars = solver->nVars();
 
     StreamBuffer in(input_stream);
     parse_DIMACS_main(in);
 
-    if (control->getVerbosity() >= 1) {
+    if (solver->getVerbosity() >= 1) {
         cout << "c -- clauses added: "
         << std::setw(12) << numLearntClauses
         << " learnts, "
@@ -403,7 +403,7 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
         << " normals "
         << endl;
 
-        cout << "c -- vars added " << std::setw(10) << (control->nVars() - origNumVars)
+        cout << "c -- vars added " << std::setw(10) << (solver->nVars() - origNumVars)
         << endl;
     }
 }

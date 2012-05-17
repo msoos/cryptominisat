@@ -26,11 +26,11 @@
 #include "Clause.h"
 #include <stack>
 
-class ThreadControl;
+class Solver;
 
 class SCCFinder {
     public:
-        SCCFinder(ThreadControl* _control);
+        SCCFinder(Solver* _solver);
         bool find2LongXors();
 
         struct Stats
@@ -113,7 +113,7 @@ class SCCFinder {
         vector<char> stackIndicator;
         vector<uint32_t> tmp;
 
-        ThreadControl* control;
+        Solver* solver;
 
         //Stats
         Stats runStats;

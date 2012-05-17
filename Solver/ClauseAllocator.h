@@ -35,7 +35,7 @@
 #define NUM_BITS_OUTER_OFFSET 4
 
 class Clause;
-class ThreadControl;
+class Solver;
 class PropEngine;
 
 using std::map;
@@ -76,7 +76,7 @@ class ClauseAllocator {
         void clauseFree(Clause* c); ///Frees memory and associated clause number
 
         void consolidate(
-            ThreadControl* control
+            Solver* solver
             , const bool force = false
         );
 
@@ -92,7 +92,7 @@ class ClauseAllocator {
         void updatePointers(vector<std::pair<Clause*, uint32_t> >& toUpdate);
         void updateOffsets(vector<vec<Watched> >& watches);
 
-        void checkGoodPropBy(const ThreadControl* control);
+        void checkGoodPropBy(const Solver* solver);
 
         vector<char*> dataStarts; ///<Stacks start at these positions
         vector<size_t> sizes; ///<The number of 32-bit datapieces currently used in each stack

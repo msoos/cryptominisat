@@ -32,7 +32,7 @@ using std::set;
 using std::cout;
 using std::endl;
 
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
 #include "ClauseCleaner.h"
@@ -43,8 +43,8 @@ using std::endl;
 /**
 @brief Sets up variables that are used between calls to search()
 */
-FailedLitSearcher::FailedLitSearcher(ThreadControl* _control):
-    control(_control)
+FailedLitSearcher::FailedLitSearcher(Solver* _solver):
+    solver(_solver)
     , tmpPs(2)
     , numPropsMultiplier(1.0)
     , lastTimeZeroDepthAssings(0)
@@ -69,65 +69,65 @@ struct ActSorter
 
 bool FailedLitSearcher::search()
 {
-    assert(control->decisionLevel() == 0);
-    assert(control->nVars() > 0);
+    assert(solver->decisionLevel() == 0);
+    assert(solver->nVars() > 0);
 
     uint64_t numPropsTodo = 30L*1000L*1000L;
 
-    control->testAllClauseAttach();
+    solver->testAllClauseAttach();
     const double myTime = cpuTime();
-    const size_t origTrailSize = control->trail.size();
-    control->clauseCleaner->removeAndCleanAll();
+    const size_t origTrailSize = solver->trail.size();
+    solver->clauseCleaner->removeAndCleanAll();
 
     //Stats
     extraTime = 0;
-    control->propStats.clear();
+    solver->propStats.clear();
     runStats.clear();
-    runStats.origNumFreeVars = control->getNumFreeVars();
-    runStats.origNumBins = control->numBinsLearnt + control->numBinsNonLearnt;
+    runStats.origNumFreeVars = solver->getNumFreeVars();
+    runStats.origNumBins = solver->numBinsLearnt + solver->numBinsNonLearnt;
     numCalls++;
 
     //State
     visitedAlready.clear();
-    visitedAlready.resize(control->nVars()*2, 0);
+    visitedAlready.resize(solver->nVars()*2, 0);
     cacheUpdated.clear();
-    cacheUpdated.resize(control->nVars()*2, 0);
+    cacheUpdated.resize(solver->nVars()*2, 0);
 
     //If failed var searching is going good, do successively more and more of it
-    if ((double)lastTimeZeroDepthAssings > (double)control->getNumFreeVars() * 0.10)
+    if ((double)lastTimeZeroDepthAssings > (double)solver->getNumFreeVars() * 0.10)
         numPropsMultiplier = std::max(numPropsMultiplier*1.3, 1.6);
     else
         numPropsMultiplier = 1.0;
-    numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * control->conf.failedLitMultiplier);
+    numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.failedLitMultiplier);
     numPropsTodo = (double)numPropsTodo * std::pow(numCalls, 0.2);
 
     //For var-based failed literal probing
-    vector<uint32_t> actSortedVars(control->nVars());
+    vector<uint32_t> actSortedVars(solver->nVars());
     for(size_t i = 0; i < actSortedVars.size(); i++) {
         actSortedVars[i] = i;
     }
-    std::sort(actSortedVars.begin(), actSortedVars.end(), ActSorter(control->backupActivity));
+    std::sort(actSortedVars.begin(), actSortedVars.end(), ActSorter(solver->backupActivity));
 
 
-    uint64_t origBogoProps = control->propStats.bogoProps;
-    while (control->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo) {
-        const uint32_t litnum = control->mtrand.randInt() % (control->nVars()*2);
+    uint64_t origBogoProps = solver->propStats.bogoProps;
+    while (solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo) {
+        const uint32_t litnum = solver->mtrand.randInt() % (solver->nVars()*2);
         Lit lit = Lit::toLit(litnum);
         extraTime += 20;
 
         //Check if var is set already
-        if (control->value(lit.var()) != l_Undef
-            || !control->decision_var[lit.var()]
+        if (solver->value(lit.var()) != l_Undef
+            || !solver->decision_var[lit.var()]
             || visitedAlready[lit.toInt()]
         ) {
             continue;
         }
 
         //If this lit is reachable from somewhere else, then reach it from there
-        if (control->litReachable[lit.toInt()].lit != lit_Undef) {
-            const Lit betterlit = control->litReachable[lit.toInt()].lit;
-            if (control->value(betterlit.var()) == l_Undef
-                && control->decision_var[betterlit.var()]
+        if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
+            const Lit betterlit = solver->litReachable[lit.toInt()].lit;
+            if (solver->value(betterlit.var()) == l_Undef
+                && solver->decision_var[betterlit.var()]
             ) {
                 lit = betterlit;
                 assert(!visitedAlready[lit.toInt()]);
@@ -145,37 +145,37 @@ bool FailedLitSearcher::search()
             ; it++
     ) {
         const Var var = *it;
-        if (control->value(var) != l_Undef || !control->decision_var[var])
+        if (solver->value(var) != l_Undef || !solver->decision_var[var])
             continue;
 
-        if (control->bogoProps >= origBogoProps + numPropsTodo)
+        if (solver->bogoProps >= origBogoProps + numPropsTodo)
             break;
     }*/
 
 end:
 
     //Fast cleanup
-    if (control->ok && runStats.zeroDepthAssigns) {
+    if (solver->ok && runStats.zeroDepthAssigns) {
         double time = cpuTime();
         bool advancedCleanup = false;
         //If more than 10% were set, detach&reattach. It's faster
-        if ((double)runStats.origNumFreeVars - (double)control->getNumFreeVars()
+        if ((double)runStats.origNumFreeVars - (double)solver->getNumFreeVars()
                 >  (double)runStats.origNumFreeVars/10.0
-            && control->getNumLongClauses() > 200000
+            && solver->getNumLongClauses() > 200000
         ) {
             //Advanced cleanup
             advancedCleanup = true;
-            CompleteDetachReatacher reattacher(control);
+            CompleteDetachReatacher reattacher(solver);
             reattacher.detachNonBinsNonTris(true);
             const bool ret = reattacher.reattachNonBins();
             release_assert(ret == true);
         } else {
             //Standard cleanup
-            control->clauseCleaner->removeAndCleanAll();
+            solver->clauseCleaner->removeAndCleanAll();
         }
 
         //Tell me about the speed of cleanup
-        if (control->conf.verbosity  >= 1 &&
+        if (solver->conf.verbosity  >= 1 &&
             (runStats.zeroDepthAssigns > 100 || advancedCleanup)
         ) {
             cout
@@ -191,22 +191,22 @@ end:
         if (visitedAlready[i])
             runStats.numVisited++;
     }
-    runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
     runStats.cpu_time = cpuTime() - myTime;
-    runStats.propStats = control->propStats;
+    runStats.propStats = solver->propStats;
     globalStats += runStats;
 
     //Print & update stats
-    if (control->conf.verbosity >= 1) {
-        if (control->conf.verbosity >= 3)
-            runStats.print(control->nVars());
+    if (solver->conf.verbosity >= 1) {
+        if (solver->conf.verbosity >= 3)
+            runStats.print(solver->nVars());
         else
             runStats.printShort();
     }
 
-    control->testAllClauseAttach();
-    return control->ok;
+    solver->testAllClauseAttach();
+    return solver->ok;
 }
 
 bool FailedLitSearcher::tryThis(const Lit lit)
@@ -219,136 +219,136 @@ bool FailedLitSearcher::tryThis(const Lit lit)
     fillTestUselessBinRemoval(lit);
     #endif
 
-    control->newDecisionLevel();
-    control->enqueue(lit);
+    solver->newDecisionLevel();
+    solver->enqueue(lit);
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Trying " << lit << endl;
     #endif
-    const Lit failed = control->propagateFull();
+    const Lit failed = solver->propagateFull();
     if (failed != lit_Undef) {
         //Update conflict stats
-        runStats.conflStats.update(control->lastConflictCausedBy);
+        runStats.conflStats.update(solver->lastConflictCausedBy);
         runStats.conflStats.numConflicts++;
 
-        control->cancelZeroLight();
+        solver->cancelZeroLight();
         runStats.numFailed++;
         vector<Lit> lits;
         lits.push_back(~failed);
-        control->addClauseInt(lits, true);
-        runStats.addedBin += control->hyperBinResAll();
-        runStats.removedBin += control->removeUselessBins();
-        return control->ok;
+        solver->addClauseInt(lits, true);
+        runStats.addedBin += solver->hyperBinResAll();
+        runStats.removedBin += solver->removeUselessBins();
+        return solver->ok;
     }
 
     //Fill bothprop, cache
-    assert(control->decisionLevel() > 0);
-    for (int64_t c = control->trail.size()-1; c != (int64_t)control->trail_lim[0] - 1; c--) {
-        const Lit thisLit = control->trail[c];
+    assert(solver->decisionLevel() > 0);
+    for (int64_t c = solver->trail.size()-1; c != (int64_t)solver->trail_lim[0] - 1; c--) {
+        const Lit thisLit = solver->trail[c];
 
         visitedAlready[thisLit.toInt()] = 1;
 
-        const Lit ancestor = control->varData[thisLit.var()].reason.getAncestor();
-        if (control->conf.doCache
+        const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
+        if (solver->conf.doCache
             && thisLit != lit
             //&& cacheUpdated[(~ancestor).toInt()] == 0
         ) {
             //Update stats/markings
             cacheUpdated[(~ancestor).toInt()]++;
             extraTime += 1;
-            extraTime += control->implCache[(~ancestor).toInt()].lits.size()/30;
-            extraTime += control->implCache[(~thisLit).toInt()].lits.size()/30;
+            extraTime += solver->implCache[(~ancestor).toInt()].lits.size()/30;
+            extraTime += solver->implCache[(~thisLit).toInt()].lits.size()/30;
 
-            const bool learntStep = control->varData[thisLit.var()].reason.getLearntStep();
+            const bool learntStep = solver->varData[thisLit.var()].reason.getLearntStep();
 
             assert(ancestor != lit_Undef);
-            control->implCache[(~ancestor).toInt()].merge(
-                control->implCache[(~thisLit).toInt()].lits
+            solver->implCache[(~ancestor).toInt()].merge(
+                solver->implCache[(~thisLit).toInt()].lits
                 , thisLit
                 , learntStep
                 , ancestor
-                , control->seen
+                , solver->seen
             );
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "The impl cache of " << (~ancestor) << " is now: ";
-            cout << control->implCache[(~ancestor).toInt()] << endl;
+            cout << solver->implCache[(~ancestor).toInt()] << endl;
             #endif
         }
     }
 
-    control->cancelZeroLight();
-    runStats.addedBin += control->hyperBinResAll();
-    runStats.removedBin += control->removeUselessBins();
+    solver->cancelZeroLight();
+    runStats.addedBin += solver->hyperBinResAll();
+    runStats.removedBin += solver->removeUselessBins();
     #ifdef DEBUG_REMOVE_USELESS_BIN
     testBinRemoval(lit);
     #endif
 
-    return control->ok;
+    return solver->ok;
 }
 
 #ifdef DEBUG_REMOVE_USELESS_BIN
 void FailedLitSearcher::fillTestUselessBinRemoval(const Lit lit)
 {
     origNLBEnqueuedVars.clear();
-    control->newDecisionLevel();
-    control->enqueue(lit);
-    failed = (!control->propagateNonLearntBin().isNULL());
-    for (int c = control->trail.size()-1; c >= (int)control->trail_lim[0]; c--) {
-        Var x = control->trail[c].var();
+    solver->newDecisionLevel();
+    solver->enqueue(lit);
+    failed = (!solver->propagateNonLearntBin().isNULL());
+    for (int c = solver->trail.size()-1; c >= (int)solver->trail_lim[0]; c--) {
+        Var x = solver->trail[c].var();
         origNLBEnqueuedVars.push_back(x);
     }
-    control->cancelZeroLight();
+    solver->cancelZeroLight();
 
     origEnqueuedVars.clear();
-    control->newDecisionLevel();
-    control->enqueue(lit);
-    failed = (!control->propagate(false).isNULL());
-    for (int c = control->trail.size()-1; c >= (int)control->trail_lim[0]; c--) {
-        Var x = control->trail[c].var();
+    solver->newDecisionLevel();
+    solver->enqueue(lit);
+    failed = (!solver->propagate(false).isNULL());
+    for (int c = solver->trail.size()-1; c >= (int)solver->trail_lim[0]; c--) {
+        Var x = solver->trail[c].var();
         origEnqueuedVars.push_back(x);
     }
-    control->cancelZeroLight();
+    solver->cancelZeroLight();
 }
 
 void FailedLitSearcher::testBinRemoval(const Lit origLit)
 {
-    control->newDecisionLevel();
-    control->enqueue(origLit);
-    bool ok = control->propagate().isNULL();
+    solver->newDecisionLevel();
+    solver->enqueue(origLit);
+    bool ok = solver->propagate().isNULL();
     assert(ok && "Prop failed after hyper-bin adding&bin removal. We never reach this point in that case.");
     bool wrong = false;
     for (vector<Var>::const_iterator it = origEnqueuedVars.begin(), end = origEnqueuedVars.end(); it != end; it++) {
-        if (control->value(*it) == l_Undef) {
+        if (solver->value(*it) == l_Undef) {
             cout << "Value of var " << Lit(*it, false) << " is unset, but was set before!" << endl;
             wrong = true;
         }
     }
     assert(!wrong && "Learnt/Non-learnt bin removal is incorrect");
-    control->cancelZeroLight();
+    solver->cancelZeroLight();
 
-    control->newDecisionLevel();
-    control->enqueue(origLit);
-    ok = control->propagateNonLearntBin().isNULL();
+    solver->newDecisionLevel();
+    solver->enqueue(origLit);
+    ok = solver->propagateNonLearntBin().isNULL();
     assert(ok && "Prop failed after hyper-bin adding&bin removal. We never reach this point in that case.");
     for (vector<Var>::const_iterator it = origNLBEnqueuedVars.begin(), end = origNLBEnqueuedVars.end(); it != end; it++) {
-        if (control->value(*it) == l_Undef) {
+        if (solver->value(*it) == l_Undef) {
             cout << "Value of var " << Lit(*it, false) << " is unset, but was set before when propagating non-learnt!" << endl;
             wrong = true;
         }
     }
     assert(!wrong && "Non-learnt bin removal is incorrect");
-    control->cancelZeroLight();
+    solver->cancelZeroLight();
 }
 #endif
 
 // void FailedLitSearcher::fillToTry(vector<Var>& toTry)
 // {
-//     uint32_t max = std::min(control->negPosDist.size()-1, (size_t)300);
+//     uint32_t max = std::min(solver->negPosDist.size()-1, (size_t)300);
 //     while(true) {
-//         Var var = control->negPosDist[control->mtrand.randInt(max)].var;
-//         if (control->value(var) != l_Undef
-//             || (control->varData[var].elimed != ELIMED_NONE
-//                 && control->varData[var].elimed != ELIMED_QUEUED_VARREPLACER)
+//         Var var = solver->negPosDist[solver->mtrand.randInt(max)].var;
+//         if (solver->value(var) != l_Undef
+//             || (solver->varData[var].elimed != ELIMED_NONE
+//                 && solver->varData[var].elimed != ELIMED_QUEUED_VARREPLACER)
 //             ) continue;
 //
 //         bool OK = true;
@@ -367,25 +367,25 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
 //
 // const bool FailedLitSearcher::tryMultiLevelAll()
 // {
-//     assert(control->ok);
-//     uint32_t backupNumUnits = control->trail.size();
+//     assert(solver->ok);
+//     uint32_t backupNumUnits = solver->trail.size();
 //     double myTime = cpuTime();
 //     uint32_t numTries = 0;
 //     uint32_t finished = 0;
-//     uint64_t oldBogoProps = control->bogoProps;
+//     uint64_t oldBogoProps = solver->bogoProps;
 //     uint32_t enqueued = 0;
 //     uint32_t numFailed = 0;
 //
-//     if (control->negPosDist.size() < 30) return true;
+//     if (solver->negPosDist.size() < 30) return true;
 //
-//     propagated.resize(control->nVars(), 0);
-//     propagated2.resize(control->nVars(), 0);
-//     propValue.resize(control->nVars(), 0);
+//     propagated.resize(solver->nVars(), 0);
+//     propagated2.resize(solver->nVars(), 0);
+//     propValue.resize(solver->nVars(), 0);
 //     assert(propagated.isZero());
 //     assert(propagated2.isZero());
 //
 //     vector<Var> toTry;
-//     while(control->bogoProps < oldBogoProps + 300*1000*1000) {
+//     while(solver->bogoProps < oldBogoProps + 300*1000*1000) {
 //         toTry.clear();
 //         for (uint32_t i = 0; i < 3; i++) {
 //             fillToTry(toTry);
@@ -401,18 +401,18 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
 //     cout
 //     << "c multiLevelBoth tried " <<  numTries
 //     << " finished: " << finished
-//     << " units: " << (control->trail.size() - backupNumUnits)
+//     << " units: " << (solver->trail.size() - backupNumUnits)
 //     << " enqueued: " << enqueued
 //     << " numFailed: " << numFailed
 //     << " time: " << (cpuTime() - myTime)
 //     << endl;
 //
-//     return control->ok;
+//     return solver->ok;
 // }
 //
 // const bool FailedLitSearcher::tryMultiLevel(const vector<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed)
 // {
-//     assert(control->ok);
+//     assert(solver->ok);
 //
 //     vector<Lit> toEnqueue;
 //     bool first = true;
@@ -420,36 +420,36 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
 //     //cout << "//////////////////" << endl;
 //     for (uint32_t comb = 0; comb < (1U << vars.size()); comb++) {
 //         last = (comb == (1U << vars.size())-1);
-//         control->newDecisionLevel();
+//         solver->newDecisionLevel();
 //         for (uint32_t i = 0; i < vars.size(); i++) {
-//             control->enqueue(Lit(vars[i], comb&(0x1 << i)));
+//             solver->enqueue(Lit(vars[i], comb&(0x1 << i)));
 //             //cout << "lit: " << Lit(vars[i], comb&(1U << i)) << endl;
 //         }
 //         //cout << "---" << endl;
-//         bool failed = !(control->propagate().isNULL());
+//         bool failed = !(solver->propagate().isNULL());
 //         if (failed) {
-//             control->cancelZeroLight();
+//             solver->cancelZeroLight();
 //             if (!first) propagated.setZero();
 //             numFailed++;
 //             return true;
 //         }
 //
-//         for (int sublevel = control->trail.size()-1; sublevel > (int)control->trail_lim[0]; sublevel--) {
-//             Var x = control->trail[sublevel].var();
+//         for (int sublevel = solver->trail.size()-1; sublevel > (int)solver->trail_lim[0]; sublevel--) {
+//             Var x = solver->trail[sublevel].var();
 //             if (first) {
 //                 propagated.setBit(x);
-//                 if (control->assigns[x].getBool()) propValue.setBit(x);
+//                 if (solver->assigns[x].getBool()) propValue.setBit(x);
 //                 else propValue.clearBit(x);
 //             } else if (last) {
-//                 if (propagated[x] && control->assigns[x].getBool() == propValue[x])
+//                 if (propagated[x] && solver->assigns[x].getBool() == propValue[x])
 //                     toEnqueue.push_back(Lit(x, !propValue[x]));
 //             } else {
-//                 if (control->assigns[x].getBool() == propValue[x]) {
+//                 if (solver->assigns[x].getBool() == propValue[x]) {
 //                     propagated2.setBit(x);
 //                 }
 //             }
 //         }
-//         control->cancelZeroLight();
+//         solver->cancelZeroLight();
 //         if (!first && !last) propagated &= propagated2;
 //         propagated2.setZero();
 //         if (propagated.isZero()) return true;
@@ -460,10 +460,10 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
 //
 //     for (vector<Lit>::iterator l = toEnqueue.begin(), end = toEnqueue.end(); l != end; l++) {
 //         enqueued++;
-//         control->enqueue(*l);
+//         solver->enqueue(*l);
 //     }
-//     control->ok = control->propagate().isNULL();
+//     solver->ok = solver->propagate().isNULL();
 //     //exit(-1);
 //
-//     return control->ok;
+//     return solver->ok;
 // }

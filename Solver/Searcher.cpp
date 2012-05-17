@@ -23,7 +23,7 @@
 #include "Subsumer.h"
 #include "CalcDefPolars.h"
 #include "time_mem.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 #include <iomanip>
 #include <omp.h>
 #include "SCCFinder.h"
@@ -42,15 +42,15 @@ using std::endl;
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Searcher::Searcher(const SolverConf& _conf, ThreadControl* _control) :
+Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
         PropEngine(
-            _control->clAllocator
+            _solver->clAllocator
             , AgilityData(_conf.agilityG, _conf.agilityLimit)
             , _conf.updateGlues
         )
 
         //variables
-        , control(_control)
+        , solver(_solver)
         , conf(_conf)
         , needToInterrupt(false)
         , order_heap(VarOrderLt(activities))
@@ -695,26 +695,26 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
                 for (int64_t c = trail.size()-1; c > (int64_t)trail_lim[0]; c--) {
                     const Lit thisLit = trail[c];
                     const Lit ancestor = varData[thisLit.var()].reason.getAncestor();
-                    if (control->conf.doCache) {
+                    if (solver->conf.doCache) {
                         assert(thisLit != trail[trail_lim[0]]);
                         const bool learntStep = varData[thisLit.var()].reason.getLearntStep();
 
                         assert(ancestor != lit_Undef);
-                        control->implCache[(~ancestor).toInt()].merge(
-                            control->implCache[(~thisLit).toInt()].lits
+                        solver->implCache[(~ancestor).toInt()].merge(
+                            solver->implCache[(~thisLit).toInt()].lits
                             , thisLit
                             , learntStep
                             , ancestor
-                            , control->seen
+                            , solver->seen
                         );
                     }
                 }
             }
             Lit lit = trail[trail_lim[0]];
             if (lit.sign())
-                control->candidateForBothProp[lit.var()].negLit = numElems;
+                solver->candidateForBothProp[lit.var()].negLit = numElems;
             else
-                control->candidateForBothProp[lit.var()].posLit = numElems;
+                solver->candidateForBothProp[lit.var()].posLit = numElems;
             stats.hyperBinAdded += hyperBinResAll();
             stats.transRedRemoved += removeUselessBins();
         } else {
@@ -740,7 +740,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
 
             //If restart is needed, restart here
             if (params.needToStopSearch
-                || sumConflicts() > control->getNextCleanLimit()
+                || sumConflicts() > solver->getNextCleanLimit()
             ) {
                 cancelUntil(0);
                 return l_Undef;
@@ -908,10 +908,10 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
     //Is there on-the-fly subsumption?
     if (cl == NULL) {
         //Get new clause
-        cl = control->newClauseByThread(learnt_clause, glue);
+        cl = solver->newClauseByThread(learnt_clause, glue);
     } else {
         uint32_t origSize = cl->size();
-        control->detachClause(*cl);
+        solver->detachClause(*cl);
         for (uint32_t i = 0; i != learnt_clause.size(); i++)
             (*cl)[i] = learnt_clause[i];
         cl->shrink(origSize - learnt_clause.size());
@@ -933,7 +933,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         case 2:
             //Binary learnt
             stats.learntBins++;
-            control->attachBinClause(learnt_clause[0], learnt_clause[1], true);
+            solver->attachBinClause(learnt_clause[0], learnt_clause[1], true);
             if (decisionLevel() == 1)
                 enqueueComplex(learnt_clause[0], ~learnt_clause[1], true);
             else
@@ -945,7 +945,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         case 3:
             //3-long almost-normal learnt
             stats.learntTris++;
-            control->attachClause(*cl);
+            solver->attachClause(*cl);
 
             if (decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], learnt_clause[1], learnt_clause[2]);
@@ -958,7 +958,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         default:
             //Normal learnt
             stats.learntLongs++;
-            control->attachClause(*cl);
+            solver->attachClause(*cl);
             if (decisionLevel() == 1)
                 addHyperBin(learnt_clause[0], *cl);
             else
@@ -1024,7 +1024,7 @@ void Searcher::resetStats()
     //Set already set vars
     origTrailSize = trail.size();
 
-    order_heap.filter(VarFilter(this, control));
+    order_heap.filter(VarFilter(this, solver));
     lastCleanZeroDepthAssigns = trail.size();
 }
 
@@ -1082,7 +1082,7 @@ void Searcher::printRestartStats()
     if (conf.printFullStats)
         printSearchStats();
     else
-        control->printClauseStats();
+        solver->printClauseStats();
 
     cout << endl;
 }
@@ -1092,9 +1092,9 @@ void Searcher::printBaseStats()
     cout
     << "c"
     //<< omp_get_thread_num()
-    << " " << std::setw(5) << stats.numRestarts + control->getStats().numRestarts
+    << " " << std::setw(5) << stats.numRestarts + solver->getStats().numRestarts
     << " " << std::setw(7) << sumConflicts()
-    << " " << std::setw(7) << control->getNumFreeVarsAdv(trail.size())
+    << " " << std::setw(7) << solver->getNumFreeVarsAdv(trail.size())
     ;
 }
 
@@ -1158,15 +1158,15 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     status = burstSearch();
 
     //Restore some data
-    for(size_t i = 0; i < control->nVars(); i++) {
-        varData[i].polarity = control->getSavedPolarity(i);
-        activities[i] = control->getSavedActivity(i);
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        varData[i].polarity = solver->getSavedPolarity(i);
+        activities[i] = solver->getSavedActivity(i);
     }
-    var_inc = control->getSavedActivityInc();
+    var_inc = solver->getSavedActivityInc();
 
     order_heap.clear();
     for(size_t var = 0; var < nVars(); var++) {
-        if (control->decision_var[var]
+        if (solver->decision_var[var]
             && value(var) == l_Undef
         ) {
             insertVarOrder(var);
@@ -1209,48 +1209,48 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         }
 
         //Check if we should do DBcleaning
-        if (sumConflicts() > control->getNextCleanLimit()) {
+        if (sumConflicts() > solver->getNextCleanLimit()) {
             if (conf.verbosity >= 3) {
                 cout
                 << "c th " << omp_get_thread_num() << " cleaning"
-                << " getNextCleanLimit(): " << control->getNextCleanLimit()
+                << " getNextCleanLimit(): " << solver->getNextCleanLimit()
                 << " numConflicts : " << stats.conflStats.numConflicts
                 << " SumConfl: " << sumConflicts()
                 << " maxConfls:" << maxConfls
                 << " Trail size: " << trail.size() << endl;
             }
-            control->fullReduce();
+            solver->fullReduce();
 
             genRandomVarActMultDiv();
         }
 
         //Check if we should do SCC
-        //cout << "numNewBinsSinceSCC: " << control->numNewBinsSinceSCC << endl;
+        //cout << "numNewBinsSinceSCC: " << solver->numNewBinsSinceSCC << endl;
         const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
-        if (newZeroDepthAss > ((double)control->getNumFreeVars()*0.001))  {
+        if (newZeroDepthAss > ((double)solver->getNumFreeVars()*0.001))  {
             cout << "newZeroDepthAss : " << newZeroDepthAss  << endl;
             lastCleanZeroDepthAssigns = trail.size();
-            control->clauseCleaner->removeAndCleanAll();
+            solver->clauseCleaner->removeAndCleanAll();
         }
 
         //Eq-lit finding has been enabled? If so, let's see if there might be
         //a reason to do it
         if (conf.doFindAndReplaceEqLits
-            && control->numNewBinsSinceSCC/2 > ((double)control->getNumFreeVars()*0.003)
+            && solver->numNewBinsSinceSCC/2 > ((double)solver->getNumFreeVars()*0.003)
         ) {
-            control->clauseCleaner->removeAndCleanAll();
+            solver->clauseCleaner->removeAndCleanAll();
 
             //Find eq lits
-            if (!control->sCCFinder->find2LongXors()) {
+            if (!solver->sCCFinder->find2LongXors()) {
                 status = l_False;
                 break;
             }
             lastCleanZeroDepthAssigns = trail.size();
 
             //If enough new variables have been found to be replaced, replace them
-            if (control->varReplacer->getNewToReplaceVars() > ((double)control->getNumFreeVars()*0.001)) {
+            if (solver->varReplacer->getNewToReplaceVars() > ((double)solver->getNumFreeVars()*0.001)) {
                 //Perform equivalent variable replacement
-                if (!control->varReplacer->performReplace()) {
+                if (!solver->varReplacer->performReplace()) {
                     status = l_False;
                     break;
                 }
@@ -1279,7 +1279,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     if (conf.verbosity >= 4) {
         cout << "c Searcher::solve() finished"
         << " status: " << status
-        << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
+        << " solver->getNextCleanLimit(): " << solver->getNextCleanLimit()
         << " numConflicts : " << stats.conflStats.numConflicts
         << " SumConfl: " << sumConflicts()
         << " maxConfls:" << maxConfls
@@ -1358,7 +1358,7 @@ Lit Searcher::pickBranchLit()
     ) {
         const Var next_var = order_heap[mtrand.randInt(order_heap.size()-1)];
         if (value(next_var) == l_Undef
-            && control->decision_var[next_var]
+            && solver->decision_var[next_var]
         ) {
             stats.decisionsRand++;
             next = Lit(next_var, !pickPolarity(next_var));
@@ -1368,7 +1368,7 @@ Lit Searcher::pickBranchLit()
     // Activity based decision:
     while (next == lit_Undef
       || value(next.var()) != l_Undef
-      || !control->decision_var[next.var()]
+      || !solver->decision_var[next.var()]
     ) {
         //There is no more to branch on. Satisfying assignment found.
         if (order_heap.empty()) {
@@ -1388,10 +1388,10 @@ Lit Searcher::pickBranchLit()
     if (next != lit_Undef
         && (mtrand.randInt(conf.dominPickFreq) == 1)
     ) {
-        const Lit lit2 = control->litReachable[next.toInt()].lit;
+        const Lit lit2 = solver->litReachable[next.toInt()].lit;
         if (lit2 != lit_Undef
             && value(lit2.var()) == l_Undef
-            && control->decision_var[lit2.var()]
+            && solver->decision_var[lit2.var()]
         ) {
             //insert this one back, just in case the litReachable isn't entirely correct
             //which would be a MAJOR bug, btw
@@ -1411,7 +1411,7 @@ Lit Searcher::pickBranchLit()
     }
     #endif
 
-    assert(next == lit_Undef || control->decision_var[next.var()]);
+    assert(next == lit_Undef || solver->decision_var[next.var()]);
     return next;
 }
 
@@ -1447,7 +1447,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
         Lit lit = *l;
 
         //Cache-based minimisation
-        const TransCache& cache1 = control->implCache[l->toInt()];
+        const TransCache& cache1 = solver->implCache[l->toInt()];
         for (vector<LitExtra>::const_iterator it = cache1.lits.begin(), end2 = cache1.lits.end(); it != end2; it++) {
             seen[(~(it->getLit())).toInt()] = 0;
         }
@@ -1505,7 +1505,7 @@ void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 void Searcher::insertVarOrder(const Var x)
 {
     if (!order_heap.inHeap(x)
-        && control->decision_var[x]
+        && solver->decision_var[x]
     ) {
         order_heap.insert(x);
     }
@@ -1513,7 +1513,7 @@ void Searcher::insertVarOrder(const Var x)
 
 bool Searcher::VarFilter::operator()(uint32_t var) const
 {
-    return (cc->value(var) == l_Undef && control->decision_var[var]);
+    return (cc->value(var) == l_Undef && solver->decision_var[var]);
 }
 
 void Searcher::setNeedToInterrupt()
@@ -1542,7 +1542,7 @@ void Searcher::printAgilityStats()
 
 uint64_t Searcher::sumConflicts() const
 {
-    return control->sumStats.conflStats.numConflicts + stats.conflStats.numConflicts;
+    return solver->sumStats.conflStats.numConflicts + stats.conflStats.numConflicts;
 }
 
 size_t Searcher::hyperBinResAll()
@@ -1550,12 +1550,12 @@ size_t Searcher::hyperBinResAll()
     size_t added = 0;
 
     for(std::set<BinaryClause>::const_iterator
-        it = control->needToAddBinClause.begin()
-        , end = control->needToAddBinClause.end()
+        it = solver->needToAddBinClause.begin()
+        , end = solver->needToAddBinClause.end()
         ; it != end
         ; it++
     ) {
-        control->attachBinClause(it->getLit1(), it->getLit2(), true, false);
+        solver->attachBinClause(it->getLit1(), it->getLit2(), true, false);
         added++;
     }
 
@@ -1573,16 +1573,16 @@ size_t Searcher::removeUselessBins()
             ; it++
         ) {
             //cout << "Removing binary clause: " << *it << endl;
-            removeWBin(control->watches, it->getLit1(), it->getLit2(), it->getLearnt());
-            removeWBin(control->watches, it->getLit2(), it->getLit1(), it->getLearnt());
+            removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->getLearnt());
+            removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->getLearnt());
 
             //Update stats
             if (it->getLearnt()) {
-                control->learntsLits -= 2;
-                control->numBinsLearnt--;
+                solver->learntsLits -= 2;
+                solver->numBinsLearnt--;
             } else {
-                control->clausesLits -= 2;
-                control->numBinsNonLearnt--;
+                solver->clausesLits -= 2;
+                solver->numBinsNonLearnt--;
             }
             removed++;
 

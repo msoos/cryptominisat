@@ -26,17 +26,17 @@
 #include "SolverTypes.h"
 #include <vector>
 
-class ThreadControl;
+class Solver;
 
 class BothProp
 {
 public:
-    BothProp(ThreadControl* control);
+    BothProp(Solver* solver);
 
     bool tryBothProp();
 
 private:
-    ThreadControl* control;
+    Solver* solver;
 
     bool tryBoth(const Lit lit);
 

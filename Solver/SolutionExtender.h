@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define VERBOSE_DEBUG_RECONSTRUCT
 
-class ThreadControl;
+class Solver;
 
 class SolutionExtender
 {
@@ -76,7 +76,7 @@ class SolutionExtender
             vector<Lit> lits;
     };
     public:
-        SolutionExtender(ThreadControl* _control, const vector<lbool>& _assigns);
+        SolutionExtender(Solver* _solver, const vector<lbool>& _assigns);
         void extend();
         bool addClause(const vector<Lit>& lits);
         void addBlockedClause(const BlockedClause& cl);
@@ -105,7 +105,7 @@ class SolutionExtender
         }
 
 
-        ThreadControl* control;
+        Solver* solver;
         vector<vector<MyClause*> > occur;
         vector<MyClause*> clauses;
         uint32_t qhead;

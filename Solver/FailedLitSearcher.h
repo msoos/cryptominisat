@@ -34,7 +34,7 @@ using std::set;
 using std::map;
 using std::vector;
 
-class ThreadControl;
+class Solver;
 
 //#define DEBUG_REMOVE_USELESS_BIN
 
@@ -57,7 +57,7 @@ more heuristically
 */
 class FailedLitSearcher {
     public:
-        FailedLitSearcher(ThreadControl* _control);
+        FailedLitSearcher(Solver* _solver);
 
         bool search();
 
@@ -218,7 +218,7 @@ class FailedLitSearcher {
         bool tryThis(const Lit lit);
         vector<char> visitedAlready;
 
-        ThreadControl* control; ///<The solver we are updating&working with
+        Solver* solver; ///<The solver we are updating&working with
 
         /**
         @brief Lits that have been propagated to the same value both by "var" and "~var"

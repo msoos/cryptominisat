@@ -21,7 +21,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include <zlib.h>
 #endif // DISABLE_ZLIB
 
-class ThreadControl;
+class Solver;
 
 /**
 @brief Parses up a DIMACS file that my be zipped
@@ -29,7 +29,7 @@ class ThreadControl;
 class DimacsParser
 {
     public:
-        DimacsParser(ThreadControl* control, const bool debugLib, const bool debugNewVar);
+        DimacsParser(Solver* solver, const bool debugLib, const bool debugNewVar);
 
         template <class T> void parse_DIMACS(T input_stream);
 
@@ -54,7 +54,7 @@ class DimacsParser
         std::string stringify(uint32_t x);
 
 
-        ThreadControl *control;
+        Solver *solver;
         const bool debugLib;
         const bool debugNewVar;
 

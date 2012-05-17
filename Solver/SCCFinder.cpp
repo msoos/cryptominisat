@@ -29,10 +29,10 @@ using std::endl;
 #include "SCCFinder.h"
 #include "VarReplacer.h"
 #include "time_mem.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 
-SCCFinder::SCCFinder(ThreadControl* _control) :
-    control(_control)
+SCCFinder::SCCFinder(Solver* _solver) :
+    solver(_solver)
 {}
 
 bool SCCFinder::find2LongXors()
@@ -40,18 +40,18 @@ bool SCCFinder::find2LongXors()
     runStats.clear();
     runStats.numCalls = 1;
     const double myTime = cpuTime();
-    size_t oldNumReplace = control->varReplacer->getNewToReplaceVars();
+    size_t oldNumReplace = solver->varReplacer->getNewToReplaceVars();
 
     globalIndex = 0;
     index.clear();
-    index.resize(control->nVars()*2, std::numeric_limits<uint32_t>::max());
+    index.resize(solver->nVars()*2, std::numeric_limits<uint32_t>::max());
     lowlink.clear();
-    lowlink.resize(control->nVars()*2, std::numeric_limits<uint32_t>::max());
+    lowlink.resize(solver->nVars()*2, std::numeric_limits<uint32_t>::max());
     stackIndicator.clear();
-    stackIndicator.resize(control->nVars()*2, false);
+    stackIndicator.resize(solver->nVars()*2, false);
     assert(stack.empty());
 
-    for (uint32_t vertex = 0; vertex < control->nVars()*2; vertex++) {
+    for (uint32_t vertex = 0; vertex < solver->nVars()*2; vertex++) {
         //Start a DFS at each node we haven't visited yet
         if (index[vertex] == std::numeric_limits<uint32_t>::max()) {
             tarjan(vertex);
@@ -59,22 +59,22 @@ bool SCCFinder::find2LongXors()
         }
     }
 
-    if (control->ok)
-        control->varReplacer->addLaterAddBinXor();
+    if (solver->ok)
+        solver->varReplacer->addLaterAddBinXor();
 
     //Update & print stats
     runStats.cpu_time = cpuTime() - myTime;
-    runStats.foundXorsNew = control->varReplacer->getNewToReplaceVars() - oldNumReplace;
-    if (control->conf.verbosity >= 1) {
-        if (control->conf.verbosity >= 3)
+    runStats.foundXorsNew = solver->varReplacer->getNewToReplaceVars() - oldNumReplace;
+    if (solver->conf.verbosity >= 1) {
+        if (solver->conf.verbosity >= 3)
             runStats.print();
         else
             runStats.printShort();
     }
     globalStats += runStats;
-    control->numNewBinsSinceSCC = 0;
+    solver->numNewBinsSinceSCC = 0;
 
-    return control->ok;
+    return solver->ok;
 }
 
 void SCCFinder::tarjan(const uint32_t vertex)
@@ -86,19 +86,19 @@ void SCCFinder::tarjan(const uint32_t vertex)
     stackIndicator[vertex] = true;
 
     Var vertexVar = Lit::toLit(vertex).var();
-    if (control->varData[vertexVar].elimed == ELIMED_NONE
-        || control->varData[vertexVar].elimed == ELIMED_QUEUED_VARREPLACER
+    if (solver->varData[vertexVar].elimed == ELIMED_NONE
+        || solver->varData[vertexVar].elimed == ELIMED_QUEUED_VARREPLACER
     ) {
         Lit vertLit = Lit::toLit(vertex);
-        vector<LitExtra>& transCache = control->implCache[(~vertLit).toInt()].lits;
+        vector<LitExtra>& transCache = solver->implCache[(~vertLit).toInt()].lits;
 
         //Prefetch cache in case we are doing extended SCC
-        if (control->conf.doExtendedSCC
+        if (solver->conf.doExtendedSCC
             && transCache.size() > 0
         ) __builtin_prefetch(&transCache[0]);
 
         //Go through the watch
-        const vec<Watched>& ws = control->watches[vertex];
+        const vec<Watched>& ws = solver->watches[vertex];
         for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
             //Only binary clauses matter
             if (!it->isBinary())
@@ -109,7 +109,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             doit(lit, vertex);
         }
 
-        if (control->conf.doExtendedSCC && control->conf.doCache) {
+        if (solver->conf.doExtendedSCC && solver->conf.doCache) {
             vector<LitExtra>::iterator it = transCache.begin();
             for (vector<LitExtra>::iterator end = transCache.end(); it != end; it++) {
                 Lit lit = it->getLit();
@@ -131,7 +131,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
         } while (vprime != vertex);
         if (tmp.size() >= 2) {
             for (uint32_t i = 1; i < tmp.size(); i++) {
-                if (!control->ok) break;
+                if (!solver->ok) break;
                 vector<Lit> lits(2);
                 lits[0] = Lit::toLit(tmp[0]).unsign();
                 lits[1] = Lit::toLit(tmp[i]).unsign();
@@ -140,15 +140,15 @@ void SCCFinder::tarjan(const uint32_t vertex)
                                             ^ true;
 
                 //Both are UNDEF, so this is a proper binary XOR
-                if (control->value(lits[0]) == l_Undef
-                    && control->value(lits[1]) == l_Undef
+                if (solver->value(lits[0]) == l_Undef
+                    && solver->value(lits[1]) == l_Undef
                 ) {
                     runStats.foundXors++;
-                    control->varReplacer->replace(
+                    solver->varReplacer->replace(
                         lits[0]
                         , lits[1]
                         , xorEqualsFalse
-                        , control->conf.doExtendedSCC && control->conf.doCache
+                        , solver->conf.doExtendedSCC && solver->conf.doCache
                     );
                 }
             }

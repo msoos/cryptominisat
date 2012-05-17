@@ -24,36 +24,36 @@
 //#define DEBUG_CLEAN
 //#define VERBOSE_DEBUG
 
-ClauseCleaner::ClauseCleaner(ThreadControl* _control) :
-    control(_control)
+ClauseCleaner::ClauseCleaner(Solver* _solver) :
+    solver(_solver)
 {
     for (uint32_t i = 0; i < 6; i++) {
-        lastNumUnitarySat[i] = control->getNumUnitaries();
-        lastNumUnitaryClean[i] = control->getNumUnitaries();
+        lastNumUnitarySat[i] = solver->getNumUnitaries();
+        lastNumUnitaryClean[i] = solver->getNumUnitaries();
     }
 }
 
 bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
     assert(watched.isBinary());
-    if (control->value(lit) == l_True) return true;
-    if (control->value(watched.getOtherLit()) == l_True) return true;
+    if (solver->value(lit) == l_True) return true;
+    if (solver->value(watched.getOtherLit()) == l_True) return true;
     return false;
 }
 
 void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
 {
     #ifdef DEBUG_CLEAN
-    assert(control->decisionLevel() == 0);
+    assert(solver->decisionLevel() == 0);
     #endif
 
-    if (lastNumUnitarySat[binaryClauses] + limit >= control->getNumUnitaries())
+    if (lastNumUnitarySat[binaryClauses] + limit >= solver->getNumUnitaries())
         return;
 
     uint32_t numRemovedHalfNonLearnt = 0;
     uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::iterator it = control->watches.begin(), end = control->watches.end(); it != end; it++, wsLit++) {
+    for (vector<vec<Watched> >::iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
         vec<Watched>& ws = *it;
 
@@ -76,20 +76,20 @@ void ClauseCleaner::removeSatisfiedBins(const uint32_t limit)
     //cout << "removedHalfNonLeart: " << numRemovedHalfNonLearnt << endl;
     assert(numRemovedHalfLearnt % 2 == 0);
     assert(numRemovedHalfNonLearnt % 2 == 0);
-    control->clausesLits -= numRemovedHalfNonLearnt;
-    control->learntsLits -= numRemovedHalfLearnt;
-    control->numBinsLearnt -= numRemovedHalfLearnt/2;
-    control->numBinsNonLearnt -= numRemovedHalfNonLearnt/2;
+    solver->clausesLits -= numRemovedHalfNonLearnt;
+    solver->learntsLits -= numRemovedHalfLearnt;
+    solver->numBinsLearnt -= numRemovedHalfLearnt/2;
+    solver->numBinsNonLearnt -= numRemovedHalfNonLearnt/2;
 
-    lastNumUnitarySat[binaryClauses] = control->getNumUnitaries();
+    lastNumUnitarySat[binaryClauses] = solver->getNumUnitaries();
 }
 
 void ClauseCleaner::cleanClauses(vector<Clause*>& cs, ClauseSetType type, const uint32_t limit)
 {
-    assert(control->decisionLevel() == 0);
-    assert(control->qhead == control->trail.size());
+    assert(solver->decisionLevel() == 0);
+    assert(solver->qhead == solver->trail.size());
 
-    if (lastNumUnitaryClean[type] + limit >= control->getNumUnitaries())
+    if (lastNumUnitaryClean[type] + limit >= solver->getNumUnitaries())
         return;
 
     #ifdef VERBOSE_DEBUG
@@ -102,14 +102,14 @@ void ClauseCleaner::cleanClauses(vector<Clause*>& cs, ClauseSetType type, const 
             __builtin_prefetch(*(s+1));
 
         if (cleanClause(*s)) {
-            control->clAllocator->clauseFree(*s);
+            solver->clAllocator->clauseFree(*s);
         } else {
             *ss++ = *s;
         }
     }
     cs.resize(cs.size() - (s-ss));
 
-    lastNumUnitaryClean[type] = control->getNumUnitaries();
+    lastNumUnitaryClean[type] = solver->getNumUnitaries();
 
     #ifdef VERBOSE_DEBUG
     cout << "cleanClauses(Clause) useful ?? Removed: " << s-ss << endl;
@@ -129,14 +129,14 @@ inline bool ClauseCleaner::cleanClause(Clause*& cc)
     Lit *i, *j, *end;
     uint32_t num = 0;
     for (i = j = c.begin(), end = i + c.size();  i != end; i++, num++) {
-        lbool val = control->value(*i);
+        lbool val = solver->value(*i);
         if (val == l_Undef) {
             *j++ = *i;
             continue;
         }
 
         if (val == l_True) {
-            control->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
+            solver->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
             return true;
         }
     }
@@ -145,17 +145,17 @@ inline bool ClauseCleaner::cleanClause(Clause*& cc)
     assert(c.size() > 1);
     if (i != j) {
         if (c.size() == 2) {
-            control->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
-            control->attachBinClause(c[0], c[1], c.learnt());
+            solver->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
+            solver->attachBinClause(c[0], c[1], c.learnt());
             return true;
         } else if (c.size() == 3) {
-            control->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
-            control->attachClause(c);
+            solver->detachModifiedClause(origLit1, origLit2, origLit3, origSize, &c);
+            solver->attachClause(c);
         } else {
             if (c.learnt())
-                control->learntsLits -= i-j;
+                solver->learntsLits -= i-j;
             else
-                control->clausesLits -= i-j;
+                solver->clausesLits -= i-j;
         }
     }
 
@@ -165,7 +165,7 @@ inline bool ClauseCleaner::cleanClause(Clause*& cc)
 bool ClauseCleaner::satisfied(const Clause& c) const
 {
     for (uint32_t i = 0; i != c.size(); i++)
-        if (control->value(c[i]) == l_True)
+        if (solver->value(c[i]) == l_True)
             return true;
         return false;
 }

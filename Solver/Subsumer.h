@@ -41,7 +41,7 @@ using std::priority_queue;
 
 class ClauseCleaner;
 class SolutionExtender;
-class ThreadControl;
+class Solver;
 class GateFinder;
 class XorFinder;
 
@@ -113,7 +113,7 @@ class Subsumer
 public:
 
     //Construct-destruct
-    Subsumer(ThreadControl* control);
+    Subsumer(Solver* solver);
     ~Subsumer();
 
     //Called from main
@@ -126,7 +126,7 @@ public:
 
     //UnElimination
     void extendModel(SolutionExtender* extender) const;
-    bool unEliminate(const Var var, ThreadControl* tcontrol);
+    bool unEliminate(const Var var, Solver* tcontrol);
 
     //Get-functions
     struct Stats
@@ -439,7 +439,7 @@ private:
     vector<char> alreadyAdded;
 
     //Persistent data
-    ThreadControl*  control;              ///<The solver this simplifier is connected to
+    Solver*  solver;              ///<The solver this simplifier is connected to
     vector<char>    var_elimed;           ///<Contains TRUE if var has been eliminated
 
     //Temporaries

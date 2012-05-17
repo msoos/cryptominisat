@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "Subsumer.h"
 #include "ClauseCleaner.h"
 #include "time_mem.h"
@@ -62,12 +62,12 @@ using std::endl;
 //#define VERBOSE_GATE_REMOVAL
 //#define VERBOSE_XORGATE_MIX
 
-Subsumer::Subsumer(ThreadControl* _control):
-    control(_control)
+Subsumer::Subsumer(Solver* _solver):
+    solver(_solver)
     , numCalls(0)
 {
-    xorFinder = new XorFinder(this, control);
-    gateFinder = new GateFinder(this, control);
+    xorFinder = new XorFinder(this, solver);
+    gateFinder = new GateFinder(this, solver);
 }
 
 Subsumer::~Subsumer()
@@ -91,7 +91,7 @@ void Subsumer::newVar()
     seen    .push_back(0);
     seen2   .push_back(0);       // (one for each polarity)
     seen2   .push_back(0);
-    touchedVars .addOne(control->nVars()-1);
+    touchedVars .addOne(solver->nVars()-1);
     ol_seenNeg.push_back(1);
     ol_seenPos.push_back(1);
     gateFinder->newVar();
@@ -138,11 +138,11 @@ added back again.
 
 @p var The variable to be added back again
 */
-bool Subsumer::unEliminate(const Var, ThreadControl*)
+bool Subsumer::unEliminate(const Var, Solver*)
 {
     //TODO
     assert(false);
-    return control->ok;
+    return solver->ok;
 }
 
 /**
@@ -255,7 +255,7 @@ void Subsumer::subsume1(ClauseIndex c, Clause& ps)
             unlinkClause(c);
         } else {
             strengthen(c, subsLits[j]);
-            if (!control->ok)
+            if (!solver->ok)
                 return;
 
             //If we are waaay over time, just exit
@@ -304,18 +304,18 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
         std::copy(cl.begin(), cl.end(), lits.begin());
         blockedClauses.push_back(BlockedClause(elim, lits));
     } else {
-        control->clAllocator->clauseFree(&cl);
+        solver->clAllocator->clauseFree(&cl);
         clauses[c.index] = NULL;
     }
 }
 
 lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
 {
-    assert(control->ok);
+    assert(solver->ok);
     #ifdef VERBOSE_DEBUG
     cout << "Clause to clean: " << cl << endl;
     for(size_t i = 0; i < cl.size(); i++) {
-        cout << cl[i] << " : "  << control->value(cl[i]) << " , ";
+        cout << cl[i] << " : "  << solver->value(cl[i]) << " , ";
     }
     cout << endl;
     #endif
@@ -326,19 +326,19 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
     const Lit* end = cl.end();
     *toDecrease -= cl.size();
     for(; i != end; i++) {
-        if (control->value(*i) == l_Undef) {
+        if (solver->value(*i) == l_Undef) {
             *j++ = *i;
             continue;
         }
 
-        if (control->value(*i) == l_True) {
+        if (solver->value(*i) == l_True) {
             occur[i->toInt()].remove(c);
             touchedVars.touch(*i, cl.learnt());
             satisfied = true;
             continue;
         }
 
-        if (control->value(*i) == l_False) {
+        if (solver->value(*i) == l_False) {
             occur[i->toInt()].remove(c);
             touchedVars.touch(*i, cl.learnt());
             continue;
@@ -388,18 +388,18 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
 
     switch(cl.size()) {
         case 0:
-            control->ok = false;
+            solver->ok = false;
             return l_False;
 
         case 1:
-            control->enqueue(cl[0]);
-            control->propStats.propsUnit++;
+            solver->enqueue(cl[0]);
+            solver->propStats.propsUnit++;
             unlinkClause(c);
-            control->ok = control->propagate().isNULL();
-            return (control->ok ? l_True : l_False);
+            solver->ok = solver->propagate().isNULL();
+            return (solver->ok ? l_True : l_False);
 
         case 2:
-            control->attachBinClause(cl[0], cl[1], cl.learnt());
+            solver->attachBinClause(cl[0], cl[1], cl.learnt());
             unlinkClause(c);
             return l_True;
 
@@ -415,7 +415,7 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
 /**
 @brief Removes a literal from a clause
 
-May return with control->ok being FALSE, and may set&propagate variable values.
+May return with solver->ok being FALSE, and may set&propagate variable values.
 
 @param c Clause to be cleaned of the literal
 @param[in] toRemoveLit The literal to be removed from the clause
@@ -658,7 +658,7 @@ bool Subsumer::subsume0AndSubsume1()
                 continue;
 
             subsume1(*it, *clauses[it->index]);
-            if (!control->ok)
+            if (!solver->ok)
                 return false;
 
             //Waaaay over time? Exit, don't bother about the consequences
@@ -673,7 +673,7 @@ bool Subsumer::subsume0AndSubsume1()
     };
     runStats.strengthenTime += cpuTime() - myTime;
 
-    return control->ok;
+    return solver->ok;
 }
 
 /**
@@ -712,7 +712,7 @@ ClauseIndex Subsumer::linkInClause(Clause& cl)
 
 Which clauses are needed can be controlled by the parameters
 
-@param[in] cs The clause-set to use, e.g. control->binaryClauses, control->learnts
+@param[in] cs The clause-set to use, e.g. solver->binaryClauses, solver->learnts
 @param[in] alsoLearnt Also add learnt clauses?
 @param[in] addBinAndAddToCL If set to FALSE, binary clauses are not added, and
 clauses are never added to the cl_touched set.
@@ -749,8 +749,8 @@ void Subsumer::freeMemory()
 */
 void Subsumer::addBackToSolver()
 {
-    assert(control->clauses.size() == 0);
-    assert(control->learnts.size() == 0);
+    assert(solver->clauses.size() == 0);
+    assert(solver->learnts.size() == 0);
     for (uint32_t i = 0; i < clauses.size(); i++) {
         //Clause has been removed
         if (clauses[i] == NULL)
@@ -759,23 +759,23 @@ void Subsumer::addBackToSolver()
         //All clauses are larger than 2-long
         assert(clauses[i]->size() > 2);
 
-        if (control->ok) {
+        if (solver->ok) {
             //Go through each literal
             for (Clause::const_iterator
                 it = clauses[i]->begin(), end = clauses[i]->end()
                 ; it != end
                 ; it++
             ) {
-                assert(control->varData[it->var()].elimed == ELIMED_NONE
-                    || control->varData[it->var()].elimed == ELIMED_QUEUED_VARREPLACER);
+                assert(solver->varData[it->var()].elimed == ELIMED_NONE
+                    || solver->varData[it->var()].elimed == ELIMED_QUEUED_VARREPLACER);
             }
         }
 
         //Add clause according to whether it's learnt or not
         if (clauses[i]->learnt())
-            control->learnts.push_back(clauses[i]);
+            solver->learnts.push_back(clauses[i]);
         else
-            control->clauses.push_back(clauses[i]);
+            solver->clauses.push_back(clauses[i]);
     }
 }
 
@@ -785,11 +785,11 @@ void Subsumer::removeBinsAndTris(const Var var)
 
     Lit lit = Lit(var, false);
 
-    numRemovedLearnt += removeBinAndTrisHelper(lit, control->watches[(~lit).toInt()]);
-    numRemovedLearnt += removeBinAndTrisHelper(~lit, control->watches[lit.toInt()]);
+    numRemovedLearnt += removeBinAndTrisHelper(lit, solver->watches[(~lit).toInt()]);
+    numRemovedLearnt += removeBinAndTrisHelper(~lit, solver->watches[lit.toInt()]);
 
-    control->learntsLits -= numRemovedLearnt*2;
-    control->numBinsLearnt -= numRemovedLearnt;
+    solver->learntsLits -= numRemovedLearnt*2;
+    solver->numBinsLearnt -= numRemovedLearnt;
 }
 
 uint32_t Subsumer::removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws)
@@ -803,7 +803,7 @@ uint32_t Subsumer::removeBinAndTrisHelper(const Lit lit, vec<Watched>& ws)
 
         if (i->isBinary()) {
             assert(i->getLearnt());
-            removeWBin(control->watches, i->getOtherLit(), lit, i->getLearnt());
+            removeWBin(solver->watches, i->getOtherLit(), lit, i->getLearnt());
             numRemovedLearnt++;
             continue;
         }
@@ -820,7 +820,7 @@ void Subsumer::removeWrongBins()
     uint32_t numRemovedHalfLearnt = 0;
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::iterator
-        it = control->watches.begin(), end = control->watches.end()
+        it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
@@ -851,15 +851,15 @@ void Subsumer::removeWrongBins()
     }
 
     assert(numRemovedHalfLearnt % 2 == 0);
-    control->learntsLits -= numRemovedHalfLearnt;
-    control->numBinsLearnt -= numRemovedHalfLearnt/2;
+    solver->learntsLits -= numRemovedHalfLearnt;
+    solver->numBinsLearnt -= numRemovedHalfLearnt/2;
     runStats.binLearntClRemThroughElim += numRemovedHalfLearnt/2;
 }
 
 void Subsumer::removeAllTris()
 {
     for (vector<vec<Watched> >::iterator
-        it = control->watches.begin(), end = control->watches.end()
+        it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++
     ) {
@@ -888,7 +888,7 @@ void Subsumer::clearAll()
     touchedVars.clear();
     clauses.clear();
     addedClauseLits = 0;
-    for (Var var = 0; var < control->nVars(); var++) {
+    for (Var var = 0; var < solver->nVars(); var++) {
         occur[2*var].clear();
         occur[2*var+1].clear();
         ol_seenNeg[var] = 1;
@@ -920,8 +920,8 @@ bool Subsumer::eliminateVars()
         Var var = order[i];
 
         //Can this variable be eliminated at all?
-        if (control->value(var) != l_Undef
-            || control->varData[var].elimed != ELIMED_NONE
+        if (solver->value(var) != l_Undef
+            || solver->varData[var].elimed != ELIMED_NONE
             || !gateFinder->canElim(var)
         ) {
             continue;
@@ -935,7 +935,7 @@ bool Subsumer::eliminateVars()
         }
 
         //During elimination, we reached UNSAT, finish
-        if (!control->ok)
+        if (!solver->ok)
             goto end;
     }
 
@@ -946,18 +946,18 @@ bool Subsumer::eliminateVars()
 end:
     runStats.varElimTime += cpuTime() - myTime;
 
-    return control->ok;
+    return solver->ok;
 }
 
 void Subsumer::subsumeBinsWithBins()
 {
     const double myTime = cpuTime();
-    uint64_t numBinsBefore = control->numBinsLearnt + control->numBinsNonLearnt;
+    uint64_t numBinsBefore = solver->numBinsLearnt + solver->numBinsNonLearnt;
     toDecrease = &numMaxSubsume0;
 
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::iterator
-        it = control->watches.begin(), end = control->watches.end()
+        it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; it++, wsLit++
     ) {
@@ -984,13 +984,13 @@ void Subsumer::subsumeBinsWithBins()
                 assert(!(i->getLearnt() == false && lastLearnt == true));
 
                 assert(i->getOtherLit().var() != lit.var());
-                removeWBin(control->watches, i->getOtherLit(), lit, i->getLearnt());
+                removeWBin(solver->watches, i->getOtherLit(), lit, i->getLearnt());
                 if (i->getLearnt()) {
-                    control->learntsLits -= 2;
-                    control->numBinsLearnt--;
+                    solver->learntsLits -= 2;
+                    solver->numBinsLearnt--;
                 } else {
-                    control->clausesLits -= 2;
-                    control->numBinsNonLearnt--;
+                    solver->clausesLits -= 2;
+                    solver->numBinsNonLearnt--;
                     touchedVars.touch(lit, i->getLearnt());
                     touchedVars.touch(i->getOtherLit(), i->getLearnt());
                 }
@@ -1003,11 +1003,11 @@ void Subsumer::subsumeBinsWithBins()
         ws.shrink_(i-j);
     }
 
-    if (control->conf.verbosity  >= 1) {
+    if (solver->conf.verbosity  >= 1) {
         cout
         << "c bin-w-bin subsume "
         << "rem " << std::setw(10)
-        << (numBinsBefore - control->numBinsLearnt - control->numBinsNonLearnt)
+        << (numBinsBefore - solver->numBinsLearnt - solver->numBinsNonLearnt)
 
         << " time: " << std::fixed << std::setprecision(2) << std::setw(5)
         << (cpuTime() - myTime)
@@ -1016,16 +1016,16 @@ void Subsumer::subsumeBinsWithBins()
 
     //Update global stats
     runStats.subsBinWithBinTime += cpuTime() - myTime;
-    runStats.subsBinWithBin += (numBinsBefore - control->numBinsLearnt - control->numBinsNonLearnt);
+    runStats.subsBinWithBin += (numBinsBefore - solver->numBinsLearnt - solver->numBinsNonLearnt);
 }
 
 bool Subsumer::propagate()
 {
-    assert(control->ok);
+    assert(solver->ok);
 
-    while (control->qhead < control->trail.size()) {
-        Lit p = control->trail[control->qhead];
-        control->qhead++;
+    while (solver->qhead < solver->trail.size()) {
+        Lit p = solver->trail[solver->qhead];
+        solver->qhead++;
         Occur& ws = occur[(~p).toInt()];
 
         //Go through each occurrence list
@@ -1039,7 +1039,7 @@ bool Subsumer::propagate()
             uint32_t numUndef = 0;
             bool satisfied = false;
             for (uint32_t i = 0; i < cl.size(); i++) {
-                const lbool val = control->value(cl[i]);
+                const lbool val = solver->value(cl[i]);
                 if (val == l_True) {
                     satisfied = true;
                     break;
@@ -1057,28 +1057,28 @@ bool Subsumer::propagate()
 
             //UNSAT
             if (numUndef == 0) {
-                control->ok = false;
+                solver->ok = false;
                 return false;
             }
 
             //Propagation
             if (numUndef == 1) {
-                control->enqueue(lastUndef);
+                solver->enqueue(lastUndef);
 
                 //Update stats
                 if (cl.size() == 3)
-                    control->propStats.propsTri++;
+                    solver->propStats.propsTri++;
                 else {
                     if (cl.learnt())
-                        control->propStats.propsLongRed++;
+                        solver->propStats.propsLongRed++;
                     else
-                        control->propStats.propsLongIrred++;
+                        solver->propStats.propsLongIrred++;
                 }
             }
         }
 
         //Propagate binary clauses
-        vec<Watched>& ws2 = control->watches[p.toInt()];
+        vec<Watched>& ws2 = solver->watches[p.toInt()];
         for (vec<Watched>::const_iterator
             it = ws2.begin(), end = ws2.end()
             ; it != end
@@ -1088,21 +1088,21 @@ bool Subsumer::propagate()
             if (!it->isBinary())
                 continue;
 
-            const lbool val = control->value(it->getOtherLit());
+            const lbool val = solver->value(it->getOtherLit());
 
             //UNSAT
             if (val == l_False) {
-                control->ok = false;
+                solver->ok = false;
                 return false;
             }
 
             //Propagation
             if (val == l_Undef) {
-                control->enqueue(it->getOtherLit());
+                solver->enqueue(it->getOtherLit());
                 if (it->getLearnt())
-                    control->propStats.propsBinRed++;
+                    solver->propStats.propsBinRed++;
                 else
-                    control->propStats.propsBinIrred++;
+                    solver->propStats.propsBinIrred++;
             }
         }
         //cleanLitOfClauses(p);
@@ -1113,17 +1113,17 @@ bool Subsumer::propagate()
 
 bool Subsumer::loopSubsumeVarelim()
 {
-    assert(control->ok);
+    assert(solver->ok);
 
     //Do subsume0&1 with var-elim until 'fixedpoint' (it's not really fixed, but low)
-    const size_t origTrailSize = control->trail.size();
+    const size_t origTrailSize = solver->trail.size();
     do {
         //Carry out subsume0 and subsume1 -- i.e. subsumption and strengthening
         if (!subsume0AndSubsume1())
             goto end;
 
         //If no var elimination is needed, this IS fixedpoint
-        if (!control->conf.doVarElim)
+        if (!solver->conf.doVarElim)
             break;
 
         //Eliminate variables
@@ -1131,7 +1131,7 @@ bool Subsumer::loopSubsumeVarelim()
             goto end;
 
         //Clean clauses as much as possible
-        control->clauseCleaner->removeSatisfiedBins();
+        solver->clauseCleaner->removeSatisfiedBins();
     } while (
         (cl_touched2.nElems() > 0 && numMaxSubsume0 > 0)
         || (cl_touched.nElems() > 0 && numMaxSubsume1 > 0)
@@ -1139,7 +1139,7 @@ bool Subsumer::loopSubsumeVarelim()
     );
     printLimits();
 
-    assert(control->ok);
+    assert(solver->ok);
     assert(verifyIntegrity());
 
     //remove 2-longs that contain eliminated variables
@@ -1150,9 +1150,9 @@ bool Subsumer::loopSubsumeVarelim()
 
 end:
     //Update global stats
-    runStats.zeroDepthAssings = control->trail.size() - origTrailSize;
+    runStats.zeroDepthAssings = solver->trail.size() - origTrailSize;
 
-    return control->ok;
+    return solver->ok;
 }
 
 /**
@@ -1167,17 +1167,17 @@ Performs, recursively:
 bool Subsumer::simplifyBySubsumption()
 {
     //Test & debug
-    control->testAllClauseAttach();
-    control->checkNoWrongAttach();
-    assert(control->varReplacer->getNewToReplaceVars() == 0
+    solver->testAllClauseAttach();
+    solver->checkNoWrongAttach();
+    assert(solver->varReplacer->getNewToReplaceVars() == 0
             && "Cannot work in an environment when elimnated vars could be replaced by other vars");
 
     //Clean the clauses before playing with them
-    control->clauseCleaner->removeAndCleanAll();
+    solver->clauseCleaner->removeAndCleanAll();
 
     //If too many clauses, don't do it
-    if (control->getNumLongClauses() > 10000000UL
-        || control->clausesLits > 50000000UL
+    if (solver->getNumLongClauses() > 10000000UL
+        || solver->clausesLits > 50000000UL
     )  return true;
 
     //Setup
@@ -1186,33 +1186,33 @@ bool Subsumer::simplifyBySubsumption()
     numCalls++;
 
     //touch all variables
-    for (Var var = 0; var < control->nVars(); var++) {
-        if (control->decision_var[var] && control->assigns[var] == l_Undef)
+    for (Var var = 0; var < solver->nVars(); var++) {
+        if (solver->decision_var[var] && solver->assigns[var] == l_Undef)
             touchedVars.touch(var);
     }
 
     //Reserve space for clauses
-    const uint32_t expected_size = control->clauses.size() + control->learnts.size();
+    const uint32_t expected_size = solver->clauses.size() + solver->learnts.size();
     clauses.reserve(expected_size);
     cl_touched.reserve(expected_size);
     cl_touched2.reserve(expected_size);
 
     //Detach all non-bins and non-tris, i.e. every long clause
-    CompleteDetachReatacher reattacher(control);
+    CompleteDetachReatacher reattacher(solver);
     reattacher.detachNonBinsNonTris(false);
 
     //Add non-learnt and learnt clauses to occur lists, touch lists, etc.
     toDecrease = &numMaxSubsume1;
-    if (control->clauses.size() < 10000000)
-        std::sort(control->clauses.begin(), control->clauses.end(), sortBySize());
-    runStats.origNumIrredLongClauses = control->clauses.size();
-    addedClauseLits += addFromSolver(control->clauses);
+    if (solver->clauses.size() < 10000000)
+        std::sort(solver->clauses.begin(), solver->clauses.end(), sortBySize());
+    runStats.origNumIrredLongClauses = solver->clauses.size();
+    addedClauseLits += addFromSolver(solver->clauses);
 
-    if (control->learnts.size() < 300000)
-        std::sort(control->learnts.begin(), control->learnts.end(), sortBySize());
-    runStats.origNumRedLongClauses = control->learnts.size();
-    addedClauseLits += addFromSolver(control->learnts);
-    runStats.origNumFreeVars = control->getNumFreeVars();
+    if (solver->learnts.size() < 300000)
+        std::sort(solver->learnts.begin(), solver->learnts.end(), sortBySize());
+    runStats.origNumRedLongClauses = solver->learnts.size();
+    addedClauseLits += addFromSolver(solver->learnts);
+    runStats.origNumFreeVars = solver->getNumFreeVars();
     setLimits();
 
     //Print link-in and startup time
@@ -1228,22 +1228,22 @@ bool Subsumer::simplifyBySubsumption()
     #endif
 
     //XOR-finding
-    if (control->conf.doFindXors
+    if (solver->conf.doFindXors
         && !xorFinder->findXors()
     ) {
         goto end;
     }
 
     //Gate-finding
-    if (control->conf.doCache && control->conf.doGateFind) {
+    if (solver->conf.doCache && solver->conf.doGateFind) {
         if (!gateFinder->doAll())
             goto end;
     }
 
     //Do asymtotic tautology elimination
-    if (control->conf.doBlockedClause)
+    if (solver->conf.doBlockedClause)
         blockClauses();
-    if (control->conf.doAsymmTE)
+    if (solver->conf.doAsymmTE)
         asymmTE();
 
     //Do subsumption & var-elim in loop
@@ -1259,7 +1259,7 @@ end:
     //Add back clauses to solver
     addBackToSolver();
 
-    if (control->ok) {
+    if (solver->ok) {
         //Reattach and clean
         reattacher.reattachNonBins();
     }
@@ -1268,21 +1268,21 @@ end:
     runStats.finalCleanupTime += cpuTime() - myTime;
     globalStats += runStats;
 
-    if (control->ok)
+    if (solver->ok)
         checkElimedUnassignedAndStats();
 
     //Print stats
-    if (control->conf.verbosity >= 1) {
-        if (control->conf.verbosity >= 3)
-            runStats.print(control->nVars());
+    if (solver->conf.verbosity >= 1) {
+        if (solver->conf.verbosity >= 3)
+            runStats.print(solver->nVars());
         else
             runStats.printShort();
     }
 
     //Sanity checks
-    control->testAllClauseAttach();
-    control->checkNoWrongAttach();
-    return control->ok;
+    solver->testAllClauseAttach();
+    solver->checkNoWrongAttach();
+    return solver->ok;
 }
 
 void Subsumer::checkForElimedVars()
@@ -1300,7 +1300,7 @@ void Subsumer::checkForElimedVars()
     }
 
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator it = control->watches.begin(), end = control->watches.end(); it != end; it++, wsLit++) {
+    for (vector<vec<Watched> >::const_iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
@@ -1316,11 +1316,11 @@ void Subsumer::checkForElimedVars()
 
 /*const bool Subsumer::mixXorAndGates()
 {
-    assert(control->ok);
+    assert(solver->ok);
     uint32_t fixed = 0;
     uint32_t ored = 0;
     double myTime = cpuTime();
-    uint32_t oldTrailSize = control->trail.size();
+    uint32_t oldTrailSize = solver->trail.size();
     vector<Lit> lits;
     vector<Lit> tmp;
 
@@ -1381,16 +1381,16 @@ void Subsumer::checkForElimedVars()
                         #ifdef VERBOSE_XORGATE_MIX
                         cout << "setting: " << tmp[0] << endl;
                         #endif
-                        control->addClauseInt(tmp);
-                        if (!control->ok) goto end;
+                        solver->addClauseInt(tmp);
+                        if (!solver->ok) goto end;
 
                         tmp.clear();
                         tmp.push_back(~lits[1]);
                         #ifdef VERBOSE_XORGATE_MIX
                         cout << "setting: " << tmp[0] << endl;
                         #endif
-                        control->addClauseInt(tmp);
-                        if (!control->ok) goto end;
+                        solver->addClauseInt(tmp);
+                        if (!solver->ok) goto end;
                     } else {
                         ored++;
                         tmp.clear();
@@ -1399,9 +1399,9 @@ void Subsumer::checkForElimedVars()
                         #ifdef VERBOSE_XORGATE_MIX
                         cout << "orIng: " << tmp << endl;
                         #endif
-                        Clause* c = control->addClauseInt(tmp, true);
+                        Clause* c = solver->addClauseInt(tmp, true);
                         assert(c == NULL);
-                        if (!control->ok) goto end;
+                        if (!solver->ok) goto end;
                     }
 
                     #ifdef VERBOSE_XORGATE_MIX
@@ -1415,19 +1415,19 @@ void Subsumer::checkForElimedVars()
         for (uint32_t i = 0; i < thisXor.vars.size(); i++) {
             seen[thisXor.vars[i]] = false;
         }
-        if (!control->ok) break;
+        if (!solver->ok) break;
     }
 
-    if (control->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 1) {
         cout << "c OrXorMix"
         << " Or: " << std::setw(6) << ored
         << " Fix: " << std::setw(6) << fixed
-        << " Fixed: " << std::setw(4) << (control->trail.size() - oldTrailSize)
+        << " Fixed: " << std::setw(4) << (solver->trail.size() - oldTrailSize)
         << " T: " << std::setprecision(2) << std::setw(5) << (cpuTime() - myTime) << " s"
         << endl;
     }
 
-    return control->ok;
+    return solver->ok;
 }*/
 
 void Subsumer::blockClauses()
@@ -1468,7 +1468,7 @@ void Subsumer::blockClauses()
 
         //Blocked clause elimination
         for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-            if (control->varData[l->var()].elimed != ELIMED_NONE)
+            if (solver->varData[l->var()].elimed != ELIMED_NONE)
                 continue;
 
             if (allTautologySlim(*l)) {
@@ -1493,7 +1493,7 @@ void Subsumer::blockClauses()
         }
     }
 
-    if (control->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 1) {
         cout
         << "c blocking"
         << " through: " << wenThrough
@@ -1540,7 +1540,7 @@ void Subsumer::asymmTE()
         //add to tmpCl literals that could be added through reverse strengthening
         //ONLY non-learnt
         for (const Lit *l = cl.begin(), *end = cl.end(); l != end; l++) {
-            const vector<LitExtra>& cache = control->implCache[l->toInt()].lits;
+            const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
             *toDecrease -= cache.size();
             for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
                 if (cacheLit->getOnlyNLBin()
@@ -1555,10 +1555,10 @@ void Subsumer::asymmTE()
 
         //subsumption with binary clauses
         bool toRemove = false;
-        if (control->conf.doExtBinSubs) {
+        if (solver->conf.doExtBinSubs) {
             //for (vector<Lit>::const_iterator l = tmpCl.begin(), end = tmpCl.end(); l != end; l++) {
             for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-                const vector<LitExtra>& cache = control->implCache[l->toInt()].lits;
+                const vector<LitExtra>& cache = solver->implCache[l->toInt()].lits;
                 *toDecrease -= cache.size();
                 for (vector<LitExtra>::const_iterator cacheLit = cache.begin(), endCache = cache.end(); cacheLit != endCache; cacheLit++) {
                     if ((cacheLit->getOnlyNLBin() || (**it).learnt()) //subsume non-learnt with non-learnt
@@ -1579,10 +1579,10 @@ void Subsumer::asymmTE()
             goto next;
 
         //Blocked clause elimination
-        if (control->conf.doBlockedClause && numMaxBlocked > 0) {
+        if (solver->conf.doBlockedClause && numMaxBlocked > 0) {
             toDecrease = &numMaxBlocked;
             for (const Lit* l = cl.begin(), *end = cl.end(); l != end; l++) {
-                if (control->varData[l->var()].elimed != ELIMED_NONE)
+                if (solver->varData[l->var()].elimed != ELIMED_NONE)
                     continue;
 
                 if (allTautologySlim(*l)) {
@@ -1636,7 +1636,7 @@ void Subsumer::asymmTE()
         }
     }
 
-    if (control->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 1) {
         cout << "c AsymmTElim"
         << " asymm subsumed: " << asymmSubsumed
         << " blocked: " << blocked
@@ -1684,10 +1684,10 @@ void Subsumer::setLimits()
         numMaxSubsume1 *= 2;
     }
 
-    numMaxElimVars = ((double)control->getNumFreeVars() * control->conf.varElimRatioPerIter);
+    numMaxElimVars = ((double)solver->getNumFreeVars() * solver->conf.varElimRatioPerIter);
     runStats.origNumMaxElimVars = numMaxElimVars;
 
-    if (!control->conf.doSubsume1) {
+    if (!solver->conf.doSubsume1) {
         numMaxSubsume1 = 0;
     }
 
@@ -1719,12 +1719,12 @@ void Subsumer::removeAssignedVarsFromEliminated()
     vector<BlockedClause>::iterator j = blockedClauses.begin();
 
     for (vector<BlockedClause>::iterator end = blockedClauses.end(); i != end; i++) {
-        if (control->value(i->blockedOn) != l_Undef) {
+        if (solver->value(i->blockedOn) != l_Undef) {
             const Var var = i->blockedOn.var();
-            if (control->varData[var].elimed == ELIMED_VARELIM) {
+            if (solver->varData[var].elimed == ELIMED_VARELIM) {
                 var_elimed[var] = false;
-                control->varData[var].elimed = ELIMED_NONE;
-                control->setDecisionVar(var);
+                solver->varData[var].elimed = ELIMED_NONE;
+                solver->setDecisionVar(var);
                 runStats.numVarsElimed--;
             }
         } else {
@@ -1840,19 +1840,19 @@ void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
 
             //Remove binary clause
             assert(lit == c.lit1 || lit == c.lit2);
-            removeWBin(control->watches, c.lit1, c.lit2, c.learnt);
-            removeWBin(control->watches, c.lit2, c.lit1, c.learnt);
+            removeWBin(solver->watches, c.lit1, c.lit2, c.learnt);
+            removeWBin(solver->watches, c.lit2, c.lit1, c.learnt);
 
             //Update stats
             if (!c.learnt) {
-                control->clausesLits -= 2;
+                solver->clausesLits -= 2;
                 runStats.clauses_elimed_bin++;
                 runStats.clauses_elimed_sumsize += 2;
-                control->numBinsNonLearnt--;
+                solver->numBinsNonLearnt--;
             } else {
-                control->learntsLits -= 2;
+                solver->learntsLits -= 2;
                 runStats.binLearntClRemThroughElim++;
-                control->numBinsLearnt--;
+                solver->numBinsLearnt--;
             }
 
             //Put clause into blocked status
@@ -1897,7 +1897,7 @@ void Subsumer::removeClauses(vector<ClAndBin>& posAll, vector<ClAndBin>& negAll,
 uint32_t Subsumer::numNonLearntBins(const Lit lit) const
 {
     uint32_t num = 0;
-    const vec<Watched>& ws = control->watches[(~lit).toInt()];
+    const vec<Watched>& ws = solver->watches[(~lit).toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         if (it->isBinary() && !it->getLearnt()) num++;
     }
@@ -1912,7 +1912,7 @@ void Subsumer::fillClAndBin(vector<ClAndBin>& all, const Occur& cs, const Lit li
             all.push_back(ClAndBin(*it, clauses[it->index]->learnt()));
     }
 
-    const vec<Watched>& ws = control->watches[(~lit).toInt()];
+    const vec<Watched>& ws = solver->watches[(~lit).toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         if (it->isBinary())
             all.push_back(ClAndBin(lit, it->getOtherLit(), it->getLearnt()));
@@ -1930,11 +1930,11 @@ idea to eliminate a variable or not.
 */
 bool Subsumer::maybeEliminate(const Var var)
 {
-    assert(control->ok);
+    assert(solver->ok);
     assert(!var_elimed[var]);
-    assert(control->varData[var].elimed == ELIMED_NONE);
-    assert(control->decision_var[var]);
-    assert(control->value(var) == l_Undef);
+    assert(solver->varData[var].elimed == ELIMED_NONE);
+    assert(solver->decision_var[var]);
+    assert(solver->value(var) == l_Undef);
     const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
 
     //Update stats
@@ -2075,13 +2075,13 @@ bool Subsumer::maybeEliminate(const Var var)
 
             //Add clause and do subsumption
             *toDecrease -= dummy.size();
-            Clause* newCl = control->addClauseInt(dummy, learnt, stats, false);
+            Clause* newCl = solver->addClauseInt(dummy, learnt, stats, false);
             if (newCl != NULL) {
                 ClauseIndex newClSimp = linkInClause(*newCl);
                 subsume0(newClSimp, *newCl);
             }
 
-            if (!control->ok)
+            if (!solver->ok)
                 goto end;
         }
     }
@@ -2092,12 +2092,12 @@ bool Subsumer::maybeEliminate(const Var var)
 
     #ifndef NDEBUG
     //Check that no eliminated non-learnt binary clauses are left inside
-    for (uint32_t i = 0; i < control->watches[lit.toInt()].size(); i++) {
-        Watched& w = control->watches[lit.toInt()][i];
+    for (uint32_t i = 0; i < solver->watches[lit.toInt()].size(); i++) {
+        Watched& w = solver->watches[lit.toInt()][i];
         assert(w.isTriClause() || (w.isBinary() && w.getLearnt()));
     }
-    for (uint32_t i = 0; i < control->watches[(~lit).toInt()].size(); i++) {
-        Watched& w = control->watches[(~lit).toInt()][i];
+    for (uint32_t i = 0; i < solver->watches[(~lit).toInt()].size(); i++) {
+        Watched& w = solver->watches[(~lit).toInt()][i];
         assert(w.isTriClause() || (w.isBinary() && w.getLearnt()));
     }
     #endif
@@ -2107,10 +2107,10 @@ bool Subsumer::maybeEliminate(const Var var)
 
 end:
     var_elimed[var] = true;
-    control->varData[var].elimed = ELIMED_VARELIM;
+    solver->varData[var].elimed = ELIMED_VARELIM;
     runStats.numVarsElimed++;
-    control->unsetDecisionVar(var);
-    return control->ok;
+    solver->unsetDecisionVar(var);
+    return solver->ok;
 }
 
 void Subsumer::freeAfterVarelim(const vector<ClAndBin>& myset)
@@ -2127,7 +2127,7 @@ void Subsumer::freeAfterVarelim(const vector<ClAndBin>& myset)
         cout << "Freeing clause due to varelim: " << *clauses[index] << endl;
         #endif
 
-        control->clAllocator->clauseFree(clauses[index]);
+        solver->clAllocator->clauseFree(clauses[index]);
         clauses[index] = NULL;
     }
 }
@@ -2136,14 +2136,14 @@ void Subsumer::addLearntBinaries(const Var var)
 {
     vector<Lit> tmp(2);
     Lit lit = Lit(var, false);
-    const vec<Watched>& ws = control->watches[lit.toInt()];
-    const vec<Watched>& ws2 = control->watches[(~lit).toInt()];
+    const vec<Watched>& ws = solver->watches[lit.toInt()];
+    const vec<Watched>& ws2 = solver->watches[(~lit).toInt()];
 
     for (vec<Watched>::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
         if (!w1->isBinary()) continue;
         const bool numOneIsLearnt = w1->getLearnt();
         const Lit lit1 = w1->getOtherLit();
-        if (control->value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
+        if (solver->value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
 
         for (vec<Watched>::const_iterator w2 = ws2.begin(), end2 = ws2.end(); w2 != end2; w2++) {
             if (!w2->isBinary()) continue;
@@ -2154,17 +2154,17 @@ void Subsumer::addLearntBinaries(const Var var)
             }
 
             const Lit lit2 = w2->getOtherLit();
-            if (control->value(lit2) != l_Undef || var_elimed[lit2.var()]) continue;
+            if (solver->value(lit2) != l_Undef || var_elimed[lit2.var()]) continue;
 
             tmp[0] = lit1;
             tmp[1] = lit2;
-            Clause* tmpOK = control->addClauseInt(tmp, true);
+            Clause* tmpOK = solver->addClauseInt(tmp, true);
             runStats.numLearntBinVarRemAdded++;
             release_assert(tmpOK == NULL);
-            release_assert(control->ok);
+            release_assert(solver->ok);
         }
     }
-    assert(control->value(lit) == l_Undef);
+    assert(solver->value(lit) == l_Undef);
 }
 
 /**
@@ -2255,7 +2255,7 @@ bool Subsumer::merge(
 
     //We add to 'seen' what COULD be added to the clause
     //This is essentially the reverse of cache-based vivification
-    if (useCache && control->conf.doAsymmTE) {
+    if (useCache && solver->conf.doAsymmTE) {
         for (size_t i= 0; i < dummy.size(); i++) {
             const Lit lit = dummy2[i];
 
@@ -2264,7 +2264,7 @@ bool Subsumer::merge(
             //on the binary clause itself, so that would cause a circular de-
             //pendency
             if (!ps.isBin && !qs.isBin) {
-                const vector<LitExtra>& cache = control->implCache[lit.toInt()].lits;
+                const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
                 numMaxVarElimAgressiveCheck -= cache.size();
                 for(vector<LitExtra>::const_iterator
                     it = cache.begin(), end = cache.end()
@@ -2295,7 +2295,7 @@ bool Subsumer::merge(
 
             //Use watchlists
             //(~lit) because watches are inverted...... this is CONFUSING
-            const vec<Watched>& ws = control->watches[(~lit).toInt()];
+            const vec<Watched>& ws = solver->watches[(~lit).toInt()];
             numMaxVarElimAgressiveCheck -= ws.size();
             for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
                 if (!it->isBinary())
@@ -2307,12 +2307,12 @@ bool Subsumer::merge(
                     //If (a V b) is learnt, make it non-learnt and we are done
                     if (seen[otherLit.toInt()]) {
                         if (final) {
-                            findWatchedOfBin(control->watches, lit, otherLit, true).setLearnt(false);
-                            findWatchedOfBin(control->watches, otherLit, lit, true).setLearnt(false);
-                            control->numBinsLearnt--;
-                            control->numBinsNonLearnt++;
-                            control->learntsLits -= 2;
-                            control->clausesLits += 2;
+                            findWatchedOfBin(solver->watches, lit, otherLit, true).setLearnt(false);
+                            findWatchedOfBin(solver->watches, otherLit, lit, true).setLearnt(false);
+                            solver->numBinsLearnt--;
+                            solver->numBinsNonLearnt++;
+                            solver->learntsLits -= 2;
+                            solver->clausesLits += 2;
                             //cout << "Removed using new technique!!" << endl;
                         }
 
@@ -2417,7 +2417,7 @@ less than occur[var].size(), returns FALSE
 */
 bool Subsumer::verifyIntegrity()
 {
-    vector<uint32_t> occurNum(control->nVars()*2, 0);
+    vector<uint32_t> occurNum(solver->nVars()*2, 0);
 
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i] == NULL) continue;
@@ -2442,7 +2442,7 @@ bool Subsumer::verifyIntegrity()
 inline bool Subsumer::allTautologySlim(const Lit lit)
 {
     //Binary clauses which contain '~lit'
-    const vec<Watched>& ws = control->watches[lit.toInt()];
+    const vec<Watched>& ws = solver->watches[lit.toInt()];
     for (vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
         *toDecrease -= 2;
         if (!it->isNonLearntBinary())
@@ -2481,12 +2481,12 @@ inline bool Subsumer::allTautologySlim(const Lit lit)
 
 void Subsumer::checkElimedUnassignedAndStats() const
 {
-    assert(control->ok);
+    assert(solver->ok);
     uint64_t checkNumElimed = 0;
     for (size_t i = 0; i < var_elimed.size(); i++) {
         if (var_elimed[i]) {
             checkNumElimed++;
-            assert(control->assigns[i] == l_Undef);
+            assert(solver->assigns[i] == l_Undef);
         }
     }
     assert(globalStats.numVarsElimed == checkNumElimed);

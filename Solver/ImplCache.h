@@ -29,7 +29,7 @@
 #include "SolverTypes.h"
 #include <vector>
 
-class ThreadControl;
+class Solver;
 
 class LitReachData {
     public:
@@ -175,8 +175,8 @@ class ImplCache  {
             , const std::vector< uint32_t >& interToOuter2
         );
 
-        void clean(ThreadControl* control);
-        bool tryBoth(ThreadControl* control);
+        void clean(Solver* solver);
+        bool tryBoth(Solver* solver);
 
         struct TryBothStats
         {
@@ -235,7 +235,7 @@ class ImplCache  {
         }
 
 private:
-    void tryVar(ThreadControl* control, Var var);
+    void tryVar(Solver* solver, Var var);
 
     void handleNewData(
         vector<uint16_t>& val
@@ -245,7 +245,7 @@ private:
 
     vector<std::pair<vector<Lit>, bool> > delayedClausesToAddXor;
     vector<Lit> delayedClausesToAddNorm;
-    bool addDelayedClauses(ThreadControl* control);
+    bool addDelayedClauses(Solver* solver);
 };
 
 #endif //TRANSCACHE_H

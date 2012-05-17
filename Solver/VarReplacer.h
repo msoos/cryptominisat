@@ -35,7 +35,7 @@
 using std::map;
 using std::vector;
 class SolutionExtender;
-class ThreadControl;
+class Solver;
 
 class LaterAddBinXor
 {
@@ -55,7 +55,7 @@ class LaterAddBinXor
 class VarReplacer
 {
     public:
-        VarReplacer(ThreadControl* control);
+        VarReplacer(Solver* solver);
         ~VarReplacer();
         bool performReplace();
         bool replace(
@@ -181,7 +181,7 @@ class VarReplacer
         const Stats& getStats() const;
 
     private:
-        ThreadControl* control; ///<The solver we are working with
+        Solver* solver; ///<The solver we are working with
 
         bool replace_set(vector<Clause*>& cs);
         bool replaceBins();

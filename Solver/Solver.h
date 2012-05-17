@@ -48,11 +48,11 @@ class SolutionExtender;
 class ImplCache;
 class BothProp;
 
-class ThreadControl : public Searcher
+class Solver : public Searcher
 {
     public:
-        ThreadControl(const SolverConf& _conf);
-        ~ThreadControl();
+        Solver(const SolverConf& _conf);
+        ~Solver();
 
         //////////////////////////////
         //Solving
@@ -571,7 +571,7 @@ class ThreadControl : public Searcher
         vector<Lit> assumptions;
 };
 
-inline void ThreadControl::setDecisionVar(const uint32_t var)
+inline void Solver::setDecisionVar(const uint32_t var)
 {
     if (!decision_var[var]) {
         numDecisionVars++;
@@ -579,7 +579,7 @@ inline void ThreadControl::setDecisionVar(const uint32_t var)
     }
 }
 
-inline void ThreadControl::unsetDecisionVar(const uint32_t var)
+inline void Solver::unsetDecisionVar(const uint32_t var)
 {
     if (decision_var[var]) {
         numDecisionVars--;
@@ -587,57 +587,57 @@ inline void ThreadControl::unsetDecisionVar(const uint32_t var)
     }
 }
 
-inline const vector<Clause*>& ThreadControl::getLongLearnts() const
+inline const vector<Clause*>& Solver::getLongLearnts() const
 {
     return learnts;
 }
 
-inline bool ThreadControl::getNeedToDumpLearnts() const
+inline bool Solver::getNeedToDumpLearnts() const
 {
     return conf.needToDumpLearnts;
 }
 
-inline bool ThreadControl::getNeedToDumpOrig() const
+inline bool Solver::getNeedToDumpOrig() const
 {
     return conf.needToDumpOrig;
 }
 
-inline uint64_t ThreadControl::getNumLongClauses() const
+inline uint64_t Solver::getNumLongClauses() const
 {
     return clauses.size() + learnts.size();
 }
 
-inline uint32_t ThreadControl::getVerbosity() const
+inline uint32_t Solver::getVerbosity() const
 {
     return conf.verbosity;
 }
 
-inline const Searcher::Stats& ThreadControl::getStats() const
+inline const Searcher::Stats& Solver::getStats() const
 {
     return sumStats;
 }
 
-inline uint64_t ThreadControl::getNextCleanLimit() const
+inline uint64_t Solver::getNextCleanLimit() const
 {
     return nextCleanLimit;
 }
 
-inline bool ThreadControl::getSavedPolarity(const Var var) const
+inline bool Solver::getSavedPolarity(const Var var) const
 {
     return backupPolarity[var];
 }
 
-inline uint32_t ThreadControl::getSavedActivity(const Var var) const
+inline uint32_t Solver::getSavedActivity(const Var var) const
 {
     return backupActivity[var];
 }
 
-inline uint32_t ThreadControl::getSavedActivityInc() const
+inline uint32_t Solver::getSavedActivityInc() const
 {
     return backupActivityInc;
 }
 
-inline void ThreadControl::addInPartialSolvingStat()
+inline void Solver::addInPartialSolvingStat()
 {
     Searcher::addInPartialSolvingStat();
     sumStats += Searcher::getStats();

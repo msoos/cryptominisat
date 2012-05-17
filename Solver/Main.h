@@ -20,7 +20,7 @@ Modifications for CryptoMiniSat are under GPLv3 licence.
 #include "SolverTypes.h"
 #include "SolverConf.h"
 
-class ThreadControl;
+class Solver;
 
 using std::string;
 
@@ -34,7 +34,7 @@ class Main
 
     private:
 
-        ThreadControl* control;
+        Solver* solver;
 
         //File reading
         void readInAFile(const std::string& filename);

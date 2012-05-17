@@ -19,13 +19,13 @@
  * MA 02110-1301  USA
 */
 
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "BothProp.h"
 #include "assert.h"
 #include <cstring>
 
-BothProp::BothProp(ThreadControl* _control) :
-    control(_control)
+BothProp::BothProp(Solver* _solver) :
+    solver(_solver)
     , tmpPs(2)
 {
 }
@@ -51,38 +51,38 @@ bool BothProp::tryBothProp()
     numFailed = 0;
     binXorAdded = 0;
     double myTime = cpuTime();
-    size_t origZeroDepthAssigns = control->trail.size();
+    size_t origZeroDepthAssigns = solver->trail.size();
 
     //For BothSame
     propagatedBitSet.clear();
-    propagated.resize(control->nVars(), 0);
-    propValue.resize(control->nVars(), 0);
+    propagated.resize(solver->nVars(), 0);
+    propValue.resize(solver->nVars(), 0);
 
     //uint32_t fromBin;
     size_t var;
     size_t varStart = 0;
     size_t whichCandidate = 0;
-    const size_t origBogoProps = control->propStats.bogoProps;
-    vector<TwoSignVar> candidates(control->candidateForBothProp.size());
-    for(size_t i = 0; i < control->candidateForBothProp.size(); i++) {
+    const size_t origBogoProps = solver->propStats.bogoProps;
+    vector<TwoSignVar> candidates(solver->candidateForBothProp.size());
+    for(size_t i = 0; i < solver->candidateForBothProp.size(); i++) {
         Lit lit = Lit(i, false);
         candidates[i].var = lit.var();
         size_t posPolar =
-            std::max<size_t>(control->watches[lit.toInt()].size(), control->candidateForBothProp[i].posLit);
-        posPolar = std::max<size_t>(posPolar, control->implCache[(~lit).toInt()].lits.size());
+            std::max<size_t>(solver->watches[lit.toInt()].size(), solver->candidateForBothProp[i].posLit);
+        posPolar = std::max<size_t>(posPolar, solver->implCache[(~lit).toInt()].lits.size());
 
         size_t negPolar =
-            std::max<size_t>(control->watches[(~lit).toInt()].size(), control->candidateForBothProp[i].negLit);
-        negPolar = std::max<size_t>(negPolar, control->implCache[lit.toInt()].lits.size());
+            std::max<size_t>(solver->watches[(~lit).toInt()].size(), solver->candidateForBothProp[i].negLit);
+        negPolar = std::max<size_t>(negPolar, solver->implCache[lit.toInt()].lits.size());
 
         candidates[i].minOfPolarities = std::min(posPolar, negPolar);
         //cout << "can size: " << candidates[i].minOfPolarities << endl;
     }
     std::sort(candidates.begin(), candidates.end());
-    std::fill(control->candidateForBothProp.begin(), control->candidateForBothProp.end(), ThreadControl::TwoSignAppearances());
+    std::fill(solver->candidateForBothProp.begin(), solver->candidateForBothProp.end(), Solver::TwoSignAppearances());
 
     //Do while not done
-    while (control->propStats.bogoProps + extraTime < origBogoProps + numProps) {
+    while (solver->propStats.bogoProps + extraTime < origBogoProps + numProps) {
         bool candidateOK = false;
         //Prefer candidates, but if none is found, use iterative approach
         if (whichCandidate < candidates.size()) {
@@ -96,14 +96,14 @@ bool BothProp::tryBothProp()
         //candidateOK = false;
 
         if (!candidateOK) {
-            //Var thisVvar = control->mtrand.randInt(control->nVars()-1);
+            //Var thisVvar = solver->mtrand.randInt(solver->nVars()-1);
             var = varStart;
-            var %= control->nVars();
+            var %= solver->nVars();
             varStart++;
         }
         extraTime += 20;
 
-        if (control->value(var) != l_Undef || !control->decision_var[var]) {
+        if (solver->value(var) != l_Undef || !solver->decision_var[var]) {
             if (candidateOK) {
                 //cout << "Candidate already failed" << endl;
             }
@@ -116,10 +116,10 @@ bool BothProp::tryBothProp()
     }
 
 end:
-    if (control->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 1) {
         cout
         << "c bprop"
-        << " 0-depth assigns: " << (control->trail.size() - origZeroDepthAssigns)
+        << " 0-depth assigns: " << (solver->trail.size() - origZeroDepthAssigns)
         << " tried:" << tried
         << " failed: " << numFailed
         << " bothSame: " << bothSameAdded
@@ -128,7 +128,7 @@ end:
         << (cpuTime() - myTime)
         << endl;
     }
-    return control->ok;
+    return solver->ok;
 }
 
 bool BothProp::tryBoth(Lit litToSet)
@@ -140,21 +140,21 @@ bool BothProp::tryBoth(Lit litToSet)
     binXorToAdd.clear();
 
     //First one
-    //cout << "watch size: " << control->watches[(litToSet).toInt()].size() << endl;
-    control->newDecisionLevel();
-    control->enqueue(litToSet);
-    failed = (!control->propagate().isNULL());
+    //cout << "watch size: " << solver->watches[(litToSet).toInt()].size() << endl;
+    solver->newDecisionLevel();
+    solver->enqueue(litToSet);
+    failed = (!solver->propagate().isNULL());
     if (failed) {
-        control->cancelUntil(0);
+        solver->cancelUntil(0);
         numFailed++;
-        control->enqueue(~litToSet);
-        control->ok = control->propagate().isNULL();
-        return control->ok;
+        solver->enqueue(~litToSet);
+        solver->ok = solver->propagate().isNULL();
+        return solver->ok;
     }
 
-    assert(control->decisionLevel() > 0);
-    for (int64_t c = control->trail.size()-1; c >= (int64_t)control->trail_lim[0]; c--) {
-        const Var x = control->trail[c].var();
+    assert(solver->decisionLevel() > 0);
+    for (int64_t c = solver->trail.size()-1; c >= (int64_t)solver->trail_lim[0]; c--) {
+        const Var x = solver->trail[c].var();
         extraTime += 5;
 
         //Visited this var, needs clear later on
@@ -164,35 +164,35 @@ bool BothProp::tryBoth(Lit litToSet)
         propagated.setBit(x);
 
         //Set propValue
-        if (control->assigns[x].getBool())
+        if (solver->assigns[x].getBool())
             propValue.setBit(x);
         else
             propValue.clearBit(x);
     }
-    //cout <<"Size was: " << control->trail.size() - (int64_t)control->trail_lim[0] << endl;
-    control->cancelUntil(0);
+    //cout <<"Size was: " << solver->trail.size() - (int64_t)solver->trail_lim[0] << endl;
+    solver->cancelUntil(0);
 
-    //cout << "watch size: " << control->watches[(~litToSet).toInt()].size() << endl;
-    control->newDecisionLevel();
-    control->enqueue(~litToSet);
-    failed = (!control->propagate().isNULL());
+    //cout << "watch size: " << solver->watches[(~litToSet).toInt()].size() << endl;
+    solver->newDecisionLevel();
+    solver->enqueue(~litToSet);
+    failed = (!solver->propagate().isNULL());
     if (failed) {
-        control->cancelUntil(0);
+        solver->cancelUntil(0);
         numFailed++;
-        control->enqueue(litToSet);
-        control->ok = (control->propagate().isNULL());
-        return control->ok;
+        solver->enqueue(litToSet);
+        solver->ok = (solver->propagate().isNULL());
+        return solver->ok;
     }
 
-    assert(control->decisionLevel() > 0);
-    for (int64_t c = control->trail.size()-1; c >= (int64_t)control->trail_lim[0]; c--) {
-        const Var x  = control->trail[c].var();
+    assert(solver->decisionLevel() > 0);
+    for (int64_t c = solver->trail.size()-1; c >= (int64_t)solver->trail_lim[0]; c--) {
+        const Var x  = solver->trail[c].var();
         extraTime += 5;
         if (propagated[x]) {
-            if (propValue[x] == control->value(x).getBool()) {
+            if (propValue[x] == solver->value(x).getBool()) {
                 //they both imply the same
                 bothSame.push_back(Lit(x, !propValue[x]));
-            } else if (c != (int)control->trail_lim[0]) {
+            } else if (c != (int)solver->trail_lim[0]) {
                 bool isEqualTrue;
                 assert(litToSet.sign() == false);
                 tmpPs[0] = Lit(litToSet.var(), false);
@@ -203,33 +203,33 @@ bool BothProp::tryBoth(Lit litToSet)
         }
 
         //Set propValue
-        if (control->assigns[x].getBool())
+        if (solver->assigns[x].getBool())
             propValue.setBit(x);
         else
             propValue.clearBit(x);
     }
-    //cout <<"Size was: " << control->trail.size() - (int64_t)control->trail_lim[0] << endl;
-    control->cancelUntil(0);
+    //cout <<"Size was: " << solver->trail.size() - (int64_t)solver->trail_lim[0] << endl;
+    solver->cancelUntil(0);
 
     for(size_t i = 0; i < bothSame.size(); i++) {
         extraTime += 3;
-        control->enqueue(bothSame[i]);
+        solver->enqueue(bothSame[i]);
     }
     bothSameAdded += bothSame.size();
     //cout << "bothSameAdded: " << bothSame.size() << endl;
     //cout << "---------------" << endl;
-    control->ok = (control->propagate().isNULL());
+    solver->ok = (solver->propagate().isNULL());
     //Check if propagate lead to UNSAT
-    if (!control->ok)
+    if (!solver->ok)
         return false;
 
     for (size_t i = 0; i < binXorToAdd.size(); i++) {
         extraTime += 20;
         tmpPs[0] = binXorToAdd[i].lit1;
         tmpPs[1] = binXorToAdd[i].lit2;
-        control->addXorClauseInt(tmpPs, binXorToAdd[i].isEqualTrue);
+        solver->addXorClauseInt(tmpPs, binXorToAdd[i].isEqualTrue);
 
-        if (!control->ok)
+        if (!solver->ok)
             return false;
     }
     binXorAdded += binXorToAdd.size();

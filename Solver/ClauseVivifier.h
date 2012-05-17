@@ -27,12 +27,12 @@
 #include "SolverTypes.h"
 using std::vector;
 
-class ThreadControl;
+class Solver;
 class Clause;
 
 class ClauseVivifier {
     public:
-        ClauseVivifier(ThreadControl* control);
+        ClauseVivifier(Solver* solver);
         bool vivify();
 
         struct Stats
@@ -240,7 +240,7 @@ class ClauseVivifier {
         };
 
         //Working set
-        ThreadControl* control;
+        Solver* solver;
 
         //Global status
         Stats runStats;

@@ -31,7 +31,7 @@
 using std::vector;
 using std::set;
 
-class ThreadControl;
+class Solver;
 class Subsumer;
 
 class Xor
@@ -166,7 +166,7 @@ class FoundXors
 class XorFinder
 {
 public:
-    XorFinder(Subsumer* subsumer, ThreadControl* control);
+    XorFinder(Subsumer* subsumer, Solver* solver);
     bool findXors();
 
     struct Stats
@@ -320,7 +320,7 @@ private:
     vector<size_t> varToBlock; ///<variable-> block index map
 
     Subsumer* subsumer;
-    ThreadControl *control;
+    Solver *solver;
 
     //Stats
     Stats runStats;

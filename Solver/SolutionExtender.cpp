@@ -22,13 +22,13 @@
 #include "SolutionExtender.h"
 #include "VarReplacer.h"
 #include "Subsumer.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 using std::cout;
 using std::endl;
 
-SolutionExtender::SolutionExtender(ThreadControl* _control, const vector<lbool>& _assigns) :
-    control(_control)
-    , occur(_control->nVars()*2)
+SolutionExtender::SolutionExtender(Solver* _solver, const vector<lbool>& _assigns) :
+    solver(_solver)
+    , occur(_solver->nVars()*2)
     , qhead (0)
     , assigns(_assigns)
 {
@@ -45,7 +45,7 @@ original problem, not just of what remained of it at the end inside this class
 void SolutionExtender::extend()
 {
 
-    if (control->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 3) {
         cout << "c Extending solution" << endl;
     }
 
@@ -58,9 +58,9 @@ void SolutionExtender::extend()
     }*/
 
     //Sanity check
-    control->subsumer->checkElimedUnassignedAndStats();
+    solver->subsumer->checkElimedUnassignedAndStats();
 
-    for (vector<Clause*>::iterator it = control->clauses.begin(), end = control->clauses.end(); it != end; it++) {
+    for (vector<Clause*>::iterator it = solver->clauses.begin(), end = solver->clauses.end(); it != end; it++) {
         Clause& cl = **it;
         assert(!cl.learnt());
         vector<Lit> tmp;
@@ -70,7 +70,7 @@ void SolutionExtender::extend()
     }
 
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator it = control->watches.begin(), end = control->watches.end(); it != end; it++, wsLit++) {
+    for (vector<vec<Watched> >::const_iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++, wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
@@ -84,12 +84,12 @@ void SolutionExtender::extend()
         }
     }
 
-    if (control->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 3) {
         cout << "c Adding equivalent literals" << endl;
     }
-    control->varReplacer->extendModel(this);
+    solver->varReplacer->extendModel(this);
 
-    if (control->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 3) {
         cout << "c Picking braches and propagating" << endl;
     }
     while(pickBranchLit() != lit_Undef) {
@@ -100,18 +100,18 @@ void SolutionExtender::extend()
         }
     }
 
-    if (control->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 3) {
         cout << "c Adding blocked clauses" << endl;
     }
-    control->subsumer->extendModel(this);
+    solver->subsumer->extendModel(this);
 
     //Copy&check model
-    control->model.resize(nVars(), l_Undef);
+    solver->model.resize(nVars(), l_Undef);
     for (Var var = 0; var != nVars(); var++) {
-        control->model[var] = value(var);
+        solver->model[var] = value(var);
     }
 
-    release_assert(control->verifyModel());
+    release_assert(solver->verifyModel());
 
     //free clauses
     for (vector<MyClause*>::iterator it = clauses.begin(), end = clauses.end(); it != end; it++) {
@@ -141,7 +141,7 @@ bool SolutionExtender::satisfiedXor(const vector<Lit>& lits, const bool rhs) con
 void SolutionExtender::addBlockedClause(const BlockedClause& cl)
 {
     assert(qhead == trail.size());
-    if (control->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 3) {
         cout << "c Adding blocked clause: " << cl << endl;
     }
 
@@ -162,16 +162,16 @@ void SolutionExtender::addBlockedClause(const BlockedClause& cl)
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
     cout << "c recursively flipping to " << blockedOn << endl;
     #endif
-    assert(control->varData[blockedOn.var()].level != 0); // we cannot flip forced vars!!
+    assert(solver->varData[blockedOn.var()].level != 0); // we cannot flip forced vars!!
     enqueue(blockedOn);
     //flip forward equiv
-    if (control->varReplacer->getReplaceTable()[blockedOn.var()].var() != blockedOn.var()) {
-        blockedOn = control->varReplacer->getLitReplacedWith(blockedOn);
+    if (solver->varReplacer->getReplaceTable()[blockedOn.var()].var() != blockedOn.var()) {
+        blockedOn = solver->varReplacer->getLitReplacedWith(blockedOn);
         enqueue(Lit(blockedOn.var(), value(blockedOn.var()) == l_True));
     }
     //flip backward equiv
-    map<Var, vector<Var> >::const_iterator revTable = control->varReplacer->getReverseTable().find(blockedOn.var());
-    if (revTable != control->varReplacer->getReverseTable().end()) {
+    map<Var, vector<Var> >::const_iterator revTable = solver->varReplacer->getReverseTable().find(blockedOn.var());
+    if (revTable != solver->varReplacer->getReverseTable().end()) {
         const vector<Var>& toGoThrough = revTable->second;
         for (uint32_t i = 0; i < toGoThrough.size(); i++) {
             enqueue(Lit(toGoThrough[i], value(toGoThrough[i]) == l_True));
@@ -195,11 +195,11 @@ bool SolutionExtender::addClause(const std::vector< Lit >& givenLits)
     vector<Lit>::iterator i = lits.begin();
     vector<Lit>::iterator j = i;
     for (vector<Lit>::iterator end = lits.end(); i != end; i++) {
-        if (value(*i) == l_True && control->varData[i->var()].level == 0) {
+        if (value(*i) == l_True && solver->varData[i->var()].level == 0) {
             return true;
         }
 
-        if (value(*i) == l_False && control->varData[i->var()].level == 0) {
+        if (value(*i) == l_False && solver->varData[i->var()].level == 0) {
             continue;
         }
 
@@ -291,7 +291,7 @@ void SolutionExtender::enqueue(const Lit lit)
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
     cout << "c Enqueueing lit " << lit << " during solution reconstruction" << endl;
     #endif
-    control->varData[lit.var()].level = std::numeric_limits< uint32_t >::max();
+    solver->varData[lit.var()].level = std::numeric_limits< uint32_t >::max();
 }
 
 

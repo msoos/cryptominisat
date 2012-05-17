@@ -25,7 +25,7 @@
 #include "PropEngine.h"
 #include "SolverTypes.h"
 #include "time_mem.h"
-class ThreadControl;
+class Solver;
 
 using std::string;
 using std::cout;
@@ -34,7 +34,7 @@ using std::endl;
 class Searcher : public PropEngine
 {
     public:
-        Searcher(const SolverConf& _conf, ThreadControl* control);
+        Searcher(const SolverConf& _conf, Solver* solver);
         ~Searcher();
 
         //////////////////////////////
@@ -308,7 +308,7 @@ class Searcher : public PropEngine
     protected:
         friend class CalcDefPolars;
 
-        //For connection with ThreadControl
+        //For connection with Solver
         void  resetStats();
         void  addInPartialSolvingStat();
 
@@ -328,7 +328,7 @@ class Searcher : public PropEngine
 
         /////////////////
         //Settings
-        ThreadControl*   control;          ///< Thread control class
+        Solver*   solver;          ///< Thread control class
         MTRand           mtrand;           ///< random number generator
         SolverConf       conf;             ///< Solver config for this thread
         bool             needToInterrupt;  ///<If set to TRUE, interrupt cleanly ASAP
@@ -404,10 +404,10 @@ class Searcher : public PropEngine
 
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
             const Searcher* cc;
-            const ThreadControl* control;
-            VarFilter(const Searcher* _cc, ThreadControl* _control) :
+            const Solver* solver;
+            VarFilter(const Searcher* _cc, Solver* _solver) :
                 cc(_cc)
-                ,control(_control)
+                ,solver(_solver)
             {}
             bool operator()(uint32_t var) const;
         };

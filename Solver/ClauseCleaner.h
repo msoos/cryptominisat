@@ -24,7 +24,7 @@
 
 #include "constants.h"
 #include "Subsumer.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 
 /**
 @brief Cleans clauses from false literals & removes satisfied clauses
@@ -32,7 +32,7 @@
 class ClauseCleaner
 {
     public:
-        ClauseCleaner(ThreadControl* control);
+        ClauseCleaner(Solver* solver);
 
         enum ClauseSetType {clauses, binaryClauses, learnts};
 
@@ -50,7 +50,7 @@ class ClauseCleaner
         uint32_t lastNumUnitarySat[6]; ///<Last time we cleaned from satisfied clauses, this many unitary clauses were known
         uint32_t lastNumUnitaryClean[6]; ///<Last time we cleaned from satisfied clauses&false literals, this many unitary clauses were known
 
-        ThreadControl* control;
+        Solver* solver;
 };
 
 /**
@@ -65,10 +65,10 @@ inline void ClauseCleaner::removeAndCleanAll()
 {
     double myTime = cpuTime();
     removeSatisfiedBins(0);
-    cleanClauses(control->clauses, ClauseCleaner::clauses, 0);
-    cleanClauses(control->learnts, ClauseCleaner::learnts, 0);
+    cleanClauses(solver->clauses, ClauseCleaner::clauses, 0);
+    cleanClauses(solver->learnts, ClauseCleaner::learnts, 0);
 
-    if (control->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 1) {
         cout
         << "c [clean] T: "
         << std::fixed << std::setprecision(2)

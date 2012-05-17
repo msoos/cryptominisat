@@ -24,17 +24,17 @@
 #ifndef __TRANSCACHE_H__
 #define __TRANSCACHE_H__
 
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "VarReplacer.h"
 #include "VarUpdateHelper.h"
 #include "time_mem.h"
 using std::cout;
 using std::endl;
 
-void ImplCache::clean(ThreadControl* control)
+void ImplCache::clean(Solver* solver)
 {
-    assert(control->ok);
-    assert(control->decisionLevel() == 0);
+    assert(solver->ok);
+    assert(solver->decisionLevel() == 0);
 
     double myTime = cpuTime();
     uint64_t numUpdated = 0;
@@ -42,29 +42,29 @@ void ImplCache::clean(ThreadControl* control)
     uint64_t numFreed = 0;
 
     //Free memory if possible
-    for (Var var = 0; var < control->nVars(); var++) {
+    for (Var var = 0; var < solver->nVars(); var++) {
         //If replaced, merge it into the one that replaced it
-        if (control->varData[var].elimed == ELIMED_VARREPLACER) {
+        if (solver->varData[var].elimed == ELIMED_VARREPLACER) {
             for(int i = 0; i < 2; i++) {
                 const Lit litOrig = Lit(var, i);
                 if (implCache[litOrig.toInt()].lits.empty())
                     continue;
 
-                const Lit lit = control->varReplacer->getLitReplacedWith(litOrig);
+                const Lit lit = solver->varReplacer->getLitReplacedWith(litOrig);
                 implCache[lit.toInt()].merge(
                     implCache[litOrig.toInt()].lits
                     , lit_Undef //nothing to add
                     , false //replaced, so 'non-learnt'
                     , lit //exclude this var
-                    , control->seen
+                    , solver->seen
                 );
             }
         }
 
         //Free it
-        if (control->value(var) != l_Undef
-            || control->varData[var].elimed == ELIMED_VARELIM
-            || control->varData[var].elimed == ELIMED_VARREPLACER
+        if (solver->value(var) != l_Undef
+            || solver->varData[var].elimed == ELIMED_VARELIM
+            || solver->varData[var].elimed == ELIMED_VARREPLACER
         ) {
             vector<LitExtra> tmp1;
             numFreed += implCache[Lit(var, false).toInt()].lits.capacity();
@@ -76,8 +76,8 @@ void ImplCache::clean(ThreadControl* control)
         }
     }
 
-    vector<uint16_t>& inside = control->seen;
-    vector<uint16_t>& nonLearnt = control->seen2;
+    vector<uint16_t>& inside = solver->seen;
+    vector<uint16_t>& nonLearnt = solver->seen2;
     size_t wsLit = 0;
     for(vector<TransCache>::iterator
         trans = implCache.begin(), transEnd = implCache.end()
@@ -97,14 +97,14 @@ void ImplCache::clean(ThreadControl* control)
             assert(lit.var() != vertLit.var());
 
             //Remove if value is set
-            if (control->value(lit.var()) != l_Undef)
+            if (solver->value(lit.var()) != l_Undef)
                 continue;
 
             //Update to its replaced version
-            if (control->varData[lit.var()].elimed == ELIMED_VARREPLACER
-                || control->varData[lit.var()].elimed == ELIMED_QUEUED_VARREPLACER
+            if (solver->varData[lit.var()].elimed == ELIMED_VARREPLACER
+                || solver->varData[lit.var()].elimed == ELIMED_QUEUED_VARREPLACER
             ) {
-                lit = control->varReplacer->getLitReplacedWith(lit);
+                lit = solver->varReplacer->getLitReplacedWith(lit);
 
                 //This would be tautological (and incorrect), so skip
                 if (lit.var() == vertLit.var())
@@ -113,7 +113,7 @@ void ImplCache::clean(ThreadControl* control)
             }
 
             //If updated version is eliminated, skip
-            if (control->varData[lit.var()].elimed != ELIMED_NONE)
+            if (solver->varData[lit.var()].elimed != ELIMED_NONE)
                 continue;
 
             //If we have already visited this var, just skip over, but update nonLearnt
@@ -149,7 +149,7 @@ void ImplCache::clean(ThreadControl* control)
         numCleaned += origSize-trans->lits.size();
     }
 
-    if (control->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 1) {
         cout << "c Cache cleaned."
         << " Updated: " << std::setw(7) << numUpdated/1000 << " K"
         << " Cleaned: " << std::setw(7) << numCleaned/1000 << " K"
@@ -183,12 +183,12 @@ void ImplCache::handleNewData(
     }
 }
 
-bool ImplCache::addDelayedClauses(ThreadControl* control)
+bool ImplCache::addDelayedClauses(Solver* solver)
 {
-    assert(control->ok);
+    assert(solver->ok);
 
     //Add all delayed clauses
-    if (control->conf.doFindAndReplaceEqLits) {
+    if (solver->conf.doFindAndReplaceEqLits) {
         for(vector<std::pair<vector<Lit>, bool> > ::const_iterator
             it = delayedClausesToAddXor.begin(), end = delayedClausesToAddXor.end()
             ; it != end
@@ -200,8 +200,8 @@ bool ImplCache::addDelayedClauses(ThreadControl* control)
                 ; it2 != end2
                 ; it2++
             ) {
-                if (control->varData[it2->var()].elimed != ELIMED_NONE
-                    && control->varData[it2->var()].elimed != ELIMED_QUEUED_VARREPLACER
+                if (solver->varData[it2->var()].elimed != ELIMED_NONE
+                    && solver->varData[it2->var()].elimed != ELIMED_QUEUED_VARREPLACER
                 ) {
                     //Var has been eliminated one way or another. Don't add this clause
                     OK = false;
@@ -215,10 +215,10 @@ bool ImplCache::addDelayedClauses(ThreadControl* control)
                 continue;
 
             //Add the clause
-            control->addXorClauseInt(it->first, it->second);
+            solver->addXorClauseInt(it->first, it->second);
 
             //Check if this caused UNSAT
-            if  (!control->ok)
+            if  (!solver->ok)
                 return false;
         }
     }
@@ -233,10 +233,10 @@ bool ImplCache::addDelayedClauses(ThreadControl* control)
         tmp[0] = *it;
 
         //Add unit clause
-        control->addClauseInt(tmp);
+        solver->addClauseInt(tmp);
 
         //Check if this caused UNSAT
-        if  (!control->ok)
+        if  (!solver->ok)
             return false;
     }
 
@@ -247,64 +247,64 @@ bool ImplCache::addDelayedClauses(ThreadControl* control)
     return true;
 }
 
-bool ImplCache::tryBoth(ThreadControl* control)
+bool ImplCache::tryBoth(Solver* solver)
 {
-    assert(control->ok);
-    assert(control->decisionLevel() == 0);
-    const size_t origTrailSize = control->trail.size();
+    assert(solver->ok);
+    assert(solver->decisionLevel() == 0);
+    const size_t origTrailSize = solver->trail.size();
     runStats.clear();
     runStats.numCalls = 1;
 
     //Measuring time & usefulness
     double myTime = cpuTime();
 
-    for (Var var = 0; var < control->nVars(); var++) {
+    for (Var var = 0; var < solver->nVars(); var++) {
 
         //If value is set or eliminated, skip
-        if (control->value(var) != l_Undef
-            || (control->varData[var].elimed != ELIMED_NONE
-                && control->varData[var].elimed != ELIMED_QUEUED_VARREPLACER)
+        if (solver->value(var) != l_Undef
+            || (solver->varData[var].elimed != ELIMED_NONE
+                && solver->varData[var].elimed != ELIMED_QUEUED_VARREPLACER)
            )
             continue;
 
         //Try to do it
-        tryVar(control, var);
+        tryVar(solver, var);
 
         //Add all clauses that have been delayed
-        if (!addDelayedClauses(control))
+        if (!addDelayedClauses(solver))
             goto end;
     }
 
 end:
-    runStats.zeroDepthAssigns = control->trail.size() - origTrailSize;
+    runStats.zeroDepthAssigns = solver->trail.size() - origTrailSize;
     runStats.cpu_time = cpuTime() - myTime;
-    if (control->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 1) {
         runStats.printShort();
     }
     globalStats += runStats;
 
-    return control->ok;
+    return solver->ok;
 }
 
 void ImplCache::tryVar(
-    ThreadControl* control
+    Solver* solver
     , Var var
 ) {
     //Sanity check
-    assert(control->ok);
-    assert(control->decisionLevel() == 0);
+    assert(solver->ok);
+    assert(solver->decisionLevel() == 0);
 
     //Convenience
-    vector<uint16_t>& seen = control->seen;
-    vector<uint16_t>& val = control->seen2;
+    vector<uint16_t>& seen = solver->seen;
+    vector<uint16_t>& val = solver->seen2;
 
     Lit lit = Lit(var, false);
 
     const vector<LitExtra>& cache1 = implCache[lit.toInt()].lits;
-    assert(control->watches.size() > ((~lit).toInt()));
-    const vec<Watched>& ws1 = control->watches[(~lit).toInt()];
+    assert(solver->watches.size() > ((~lit).toInt()));
+    const vec<Watched>& ws1 = solver->watches[(~lit).toInt()];
     const vector<LitExtra>& cache2 = implCache[(~lit).toInt()].lits;
-    const vec<Watched>& ws2 = control->watches[(lit).toInt()];
+    const vec<Watched>& ws2 = solver->watches[(lit).toInt()];
 
     //Fill 'seen' and 'val' from cache
     for (vector<LitExtra>::const_iterator
@@ -313,8 +313,8 @@ void ImplCache::tryVar(
         ; it++
     ) {
         const Var var2 = it->getLit().var();
-        if (control->varData[var2].elimed != ELIMED_NONE
-            && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
+        if (solver->varData[var2].elimed != ELIMED_NONE
+            && solver->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
         ) continue;
 
         seen[it->getLit().var()] = 1;
@@ -357,8 +357,8 @@ void ImplCache::tryVar(
             continue;
 
         //If var has been elimed, skip
-        if (control->varData[var2].elimed != ELIMED_NONE
-            && control->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
+        if (solver->varData[var2].elimed != ELIMED_NONE
+            && solver->varData[var2].elimed != ELIMED_QUEUED_VARREPLACER
         ) continue;
 
         handleNewData(val, var, it->getLit());
@@ -372,7 +372,7 @@ void ImplCache::tryVar(
 
         assert(it->getOtherLit().var() != var);
         const Var var2 = it->getOtherLit().var();
-        assert(var2 < control->nVars());
+        assert(var2 < solver->nVars());
 
         //Only if the other one also contained it
         if (!seen[var2])

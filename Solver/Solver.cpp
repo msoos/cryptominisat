@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "VarReplacer.h"
 #include "time_mem.h"
 #include "Searcher.h"
@@ -39,7 +39,7 @@
 using std::cout;
 using std::endl;
 
-ThreadControl::ThreadControl(const SolverConf& _conf) :
+Solver::Solver(const SolverConf& _conf) :
     Searcher(_conf, this)
     , backupActivityInc(_conf.var_inc_start)
     , mtrand(_conf.origSeed)
@@ -70,7 +70,7 @@ ThreadControl::ThreadControl(const SolverConf& _conf) :
     PropEngine::clAllocator = clAllocator;
 }
 
-ThreadControl::~ThreadControl()
+Solver::~Solver()
 {
     delete failedLitSearcher;
     delete bothProp;
@@ -82,7 +82,7 @@ ThreadControl::~ThreadControl()
     delete varReplacer;
 }
 
-bool ThreadControl::addXorClauseInt(const vector< Lit >& lits, bool rhs)
+bool Solver::addXorClauseInt(const vector< Lit >& lits, bool rhs)
 {
     assert(ok);
     assert(qhead == trail.size());
@@ -154,7 +154,7 @@ when the wer are in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
 */
 template <class T>
-Clause* ThreadControl::addClauseInt(
+Clause* Solver::addClauseInt(
     const T& lits
     , const bool learnt
     , const ClauseStats& stats
@@ -223,21 +223,21 @@ Clause* ThreadControl::addClauseInt(
     }
 }
 
-template Clause* ThreadControl::addClauseInt(
+template Clause* Solver::addClauseInt(
     const Clause& ps
     , const bool learnt
     , const ClauseStats& stats
     , const bool attach
 );
 
-template Clause* ThreadControl::addClauseInt(
+template Clause* Solver::addClauseInt(
     const vector<Lit>& ps
     , const bool learnt
     , const ClauseStats& stats
     , const bool attach
 );
 
-void ThreadControl::attachClause(const Clause& c)
+void Solver::attachClause(const Clause& c)
 {
     //Update stats
     if (c.learnt())
@@ -249,7 +249,7 @@ void ThreadControl::attachClause(const Clause& c)
     PropEngine::attachClause(c);
 }
 
-void ThreadControl::attachBinClause(
+void Solver::attachBinClause(
     const Lit lit1
     , const Lit lit2
     , const bool learnt
@@ -269,7 +269,7 @@ void ThreadControl::attachBinClause(
     PropEngine::attachBinClause(lit1, lit2, learnt, checkUnassignedFirst);
 }
 
-void ThreadControl::detachClause(const Clause& c)
+void Solver::detachClause(const Clause& c)
 {
    if (c.size() > 3) {
        detachModifiedClause(
@@ -283,7 +283,7 @@ void ThreadControl::detachClause(const Clause& c)
     }
 }
 
-void ThreadControl::detachModifiedClause(
+void Solver::detachModifiedClause(
     const Lit lit1
     , const Lit lit2
     , const Lit lit3
@@ -299,7 +299,7 @@ void ThreadControl::detachModifiedClause(
     PropEngine::detachModifiedClause(lit1, lit2, lit3, origSize, address);
 }
 
-bool ThreadControl::addClauseHelper(vector<Lit>& ps)
+bool Solver::addClauseHelper(vector<Lit>& ps)
 {
     //If already UNSAT, just return
     if (!ok)
@@ -343,7 +343,7 @@ variables of the literals in "ps" have been eliminated/replaced etc. If so,
 it acts on them such that they are correct, and calls addClauseInt() to do
 the heavy-lifting
 */
-bool ThreadControl::addClause(const vector<Lit>& lits)
+bool Solver::addClause(const vector<Lit>& lits)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Adding clause " << lits << endl;
@@ -362,7 +362,7 @@ bool ThreadControl::addClause(const vector<Lit>& lits)
     return ok;
 }
 
-bool ThreadControl::addLearntClause(
+bool Solver::addLearntClause(
     const vector<Lit>& lits
     , const ClauseStats& stats
 ) {
@@ -379,7 +379,7 @@ bool ThreadControl::addLearntClause(
     return ok;
 }
 
-void ThreadControl::reArrangeClause(Clause* clause)
+void Solver::reArrangeClause(Clause* clause)
 {
     Clause& c = *clause;
     assert(c.size() > 2);
@@ -410,7 +410,7 @@ void ThreadControl::reArrangeClause(Clause* clause)
     assert(foundDatas == 2);
 }
 
-void ThreadControl::reArrangeClauses()
+void Solver::reArrangeClauses()
 {
     assert(decisionLevel() == 0);
     assert(ok);
@@ -442,7 +442,7 @@ static void printArray(const vector<Var>& array, const std::string& str)
 }
 
 //Beware. Cannot be called while Searcher is running.
-void ThreadControl::renumberVariables()
+void Solver::renumberVariables()
 {
     double myTime = cpuTime();
     clauseCleaner->removeAndCleanAll();
@@ -596,7 +596,7 @@ void ThreadControl::renumberVariables()
     }
 }
 
-Var ThreadControl::newVar(const bool dvar)
+Var Solver::newVar(const bool dvar)
 {
     const Var var = decision_var.size();
 
@@ -621,7 +621,7 @@ Var ThreadControl::newVar(const bool dvar)
 }
 
 /// @brief Sort clauses according to glues: large glues first
-bool ThreadControl::reduceDBStructGlue::operator () (
+bool Solver::reduceDBStructGlue::operator () (
     const Clause* x
     , const Clause* y
 ) {
@@ -640,7 +640,7 @@ bool ThreadControl::reduceDBStructGlue::operator () (
 }
 
 /// @brief Sort clauses according to size: large sizes first
-bool ThreadControl::reduceDBStructSize::operator () (
+bool Solver::reduceDBStructSize::operator () (
     const Clause* x
     , const Clause* y
 ) {
@@ -659,7 +659,7 @@ bool ThreadControl::reduceDBStructSize::operator () (
 }
 
 /// @brief Sort clauses according to size: small prop+confl first
-bool ThreadControl::reduceDBStructPropConfl::operator() (
+bool Solver::reduceDBStructPropConfl::operator() (
     const Clause* x
     , const Clause* y
 ) {
@@ -684,7 +684,7 @@ bool ThreadControl::reduceDBStructPropConfl::operator() (
 Either based on glue or MiniSat-style learnt clause activities, the clauses are
 sorted and then removed
 */
-void ThreadControl::reduceDB()
+void Solver::reduceDB()
 {
     //Clean the clause database before doing cleaning
     clauseCleaner->removeAndCleanAll();
@@ -828,7 +828,7 @@ void ThreadControl::reduceDB()
     cleaningStats += tmpStats;
 }
 
-lbool ThreadControl::solve(const vector<Lit>* _assumptions)
+lbool Solver::solve(const vector<Lit>* _assumptions)
 {
     //Initialise stuff
     nextCleanLimitInc = conf.startClean;
@@ -912,7 +912,7 @@ It burst-searches for given number of conflicts, then it tries all sorts of
 things like variable elimination, subsumption, failed literal probing, etc.
 to try to simplifcy the problem at hand.
 */
-lbool ThreadControl::simplifyProblem()
+lbool Solver::simplifyProblem()
 {
     assert(ok);
     testAllClauseAttach();
@@ -1017,7 +1017,7 @@ end:
     }
 }
 
-void ThreadControl::calcReachability()
+void Solver::calcReachability()
 {
     numCallReachCalc++;
     ReachabilityStats tmpStats;
@@ -1099,7 +1099,7 @@ void ThreadControl::calcReachability()
     reachStats += tmpStats;
 }
 
-Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
+Clause* Solver::newClauseByThread(const vector<Lit>& lits, const uint32_t glue)
 {
     assert(glue < 60000);
     Clause* cl = NULL;
@@ -1118,7 +1118,7 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
     return cl;
 }
 
-ThreadControl::UsageStats ThreadControl::sumClauseData(
+Solver::UsageStats Solver::sumClauseData(
     const vector<Clause*>& toprint
     , const bool learnt
 ) const {
@@ -1229,7 +1229,7 @@ ThreadControl::UsageStats ThreadControl::sumClauseData(
     return stats;
 }
 
-void ThreadControl::printPropConflStats(
+void Solver::printPropConflStats(
     std::string name
     , const vector<UsageStats>& stats
 ) const {
@@ -1270,7 +1270,7 @@ void ThreadControl::printPropConflStats(
     }
 }
 
-void ThreadControl::dumpIndividualPropConflStats(
+void Solver::dumpIndividualPropConflStats(
     std::string name
     , const vector<UsageStats>& stats
     , const bool learnt
@@ -1322,7 +1322,7 @@ void ThreadControl::dumpIndividualPropConflStats(
     }
 }
 
-void ThreadControl::clearPropConfl(vector<Clause*>& clauseset)
+void Solver::clearPropConfl(vector<Clause*>& clauseset)
 {
     //Clear prop&confl for normal clauses
     for(vector<Clause*>::iterator
@@ -1336,7 +1336,7 @@ void ThreadControl::clearPropConfl(vector<Clause*>& clauseset)
     }
 }
 
-void ThreadControl::fullReduce()
+void Solver::fullReduce()
 {
     if (conf.verbosity >= 1) {
         UsageStats stats;
@@ -1361,7 +1361,7 @@ void ThreadControl::fullReduce()
     }
 
     reduceDB();
-    control->consolidateMem();
+    solver->consolidateMem();
 
     if (conf.doClearPropConfEveryClauseCleaning) {
         clearPropConfl(clauses);
@@ -1372,12 +1372,12 @@ void ThreadControl::fullReduce()
     nextCleanLimitInc *= conf.increaseClean;
 }
 
-void ThreadControl::consolidateMem()
+void Solver::consolidateMem()
 {
     clAllocator->consolidate(this, true);
 }
 
-void ThreadControl::printFullStats()
+void Solver::printFullStats()
 {
     const double cpu_time = cpuTime();
     printStatsLine("c UIP search time"
@@ -1442,14 +1442,14 @@ void ThreadControl::printFullStats()
         , "% time"
     );
 
-    subsumer->getStats().print(control->nVars());
+    subsumer->getStats().print(solver->nVars());
 
     //GateFinder stats
     printStatsLine("c gatefinder time"
                     , subsumer->getGateFinder()->getStats().totalTime()
                     , subsumer->getGateFinder()->getStats().totalTime()/cpu_time*100.0
                     , "% time");
-    subsumer->getGateFinder()->getStats().print(control->nVars());
+    subsumer->getGateFinder()->getStats().print(solver->nVars());
 
     //XOR stats
     printStatsLine("c XOR time"
@@ -1517,7 +1517,7 @@ void ThreadControl::printFullStats()
                     , clauseVivifier->getStats().redCacheBased.cpu_time
                     , clauseVivifier->getStats().redCacheBased.cpu_time/cpu_time*100.0
                     , "% time");
-    clauseVivifier->getStats().print(control->nVars());
+    clauseVivifier->getStats().print(solver->nVars());
 
     //Other stats
     printStatsLine("c Conflicts in UIP"
@@ -1528,7 +1528,7 @@ void ThreadControl::printFullStats()
     printStatsLine("c Total time", cpu_time);
 }
 
-void ThreadControl::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const
+void Solver::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, std::ostream& outfile) const
 {
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
@@ -1547,7 +1547,7 @@ void ThreadControl::dumpBinClauses(const bool alsoLearnt, const bool alsoNonLear
     }
 }
 
-void ThreadControl::printClauseSizeDistrib()
+void Solver::printClauseSizeDistrib()
 {
     size_t size3 = 0;
     size_t size4 = 0;
@@ -1603,7 +1603,7 @@ void ThreadControl::printClauseSizeDistrib()
     << " larger: " << sizeLarge << endl;
 }
 
-void ThreadControl::dumpLearnts(std::ostream& os, const uint32_t maxSize)
+void Solver::dumpLearnts(std::ostream& os, const uint32_t maxSize)
 {
     os
     << "c " << endl
@@ -1656,7 +1656,7 @@ void ThreadControl::dumpLearnts(std::ostream& os, const uint32_t maxSize)
     }
 }
 
-void ThreadControl::dumpOrigClauses(std::ostream& os) const
+void Solver::dumpOrigClauses(std::ostream& os) const
 {
     uint32_t numClauses = 0;
     //unitary clauses
@@ -1739,7 +1739,7 @@ void ThreadControl::dumpOrigClauses(std::ostream& os) const
     }
 }
 
-void ThreadControl::printAllClauses() const
+void Solver::printAllClauses() const
 {
     for (uint32_t i = 0; i < clauses.size(); i++) {
         cout
@@ -1767,7 +1767,7 @@ void ThreadControl::printAllClauses() const
     }
 }
 
-bool ThreadControl::verifyBinClauses() const
+bool Solver::verifyBinClauses() const
 {
     uint32_t wsLit = 0;
     for (vector<vec<Watched> >::const_iterator it = watches.begin(), end = watches.end(); it != end; it++, wsLit++) {
@@ -1789,7 +1789,7 @@ bool ThreadControl::verifyBinClauses() const
     return true;
 }
 
-bool ThreadControl::verifyClauses(const vector<Clause*>& cs) const
+bool Solver::verifyClauses(const vector<Clause*>& cs) const
 {
     #ifdef VERBOSE_DEBUG
     cout << "Checking clauses whether they have been properly satisfied." << endl;;
@@ -1812,7 +1812,7 @@ bool ThreadControl::verifyClauses(const vector<Clause*>& cs) const
     return verificationOK;
 }
 
-bool ThreadControl::verifyModel() const
+bool Solver::verifyModel() const
 {
     bool verificationOK = true;
     verificationOK &= verifyClauses(clauses);
@@ -1829,7 +1829,7 @@ bool ThreadControl::verifyModel() const
 }
 
 
-void ThreadControl::checkLiteralCount() const
+void Solver::checkLiteralCount() const
 {
     // Check that sizes are calculated correctly:
     uint64_t cnt = 0;
@@ -1842,24 +1842,24 @@ void ThreadControl::checkLiteralCount() const
     }
 }
 
-uint32_t ThreadControl::getNumDecisionVars() const
+uint32_t Solver::getNumDecisionVars() const
 {
     return numDecisionVars;
 }
 
-void ThreadControl::setNeedToInterrupt()
+void Solver::setNeedToInterrupt()
 {
     Searcher::setNeedToInterrupt();
 
     needToInterrupt = true;
 }
 
-lbool ThreadControl::modelValue (const Lit p) const
+lbool Solver::modelValue (const Lit p) const
 {
     return model[p.var()] ^ p.sign();
 }
 
-void ThreadControl::testAllClauseAttach() const
+void Solver::testAllClauseAttach() const
 {
 #ifndef DEBUG_ATTACH_MORE
     return;
@@ -1870,7 +1870,7 @@ void ThreadControl::testAllClauseAttach() const
     }
 }
 
-bool ThreadControl::normClauseIsAttached(const Clause& c) const
+bool Solver::normClauseIsAttached(const Clause& c) const
 {
     bool attached = true;
     assert(c.size() > 2);
@@ -1896,7 +1896,7 @@ bool ThreadControl::normClauseIsAttached(const Clause& c) const
     return attached;
 }
 
-void ThreadControl::findAllAttach() const
+void Solver::findAllAttach() const
 {
     for (uint32_t i = 0; i < watches.size(); i++) {
         const Lit lit = ~Lit::toLit(i);
@@ -1929,7 +1929,7 @@ void ThreadControl::findAllAttach() const
 }
 
 
-bool ThreadControl::findClause(const Clause* c) const
+bool Solver::findClause(const Clause* c) const
 {
     for (uint32_t i = 0; i < clauses.size(); i++) {
         if (clauses[i] == c) return true;
@@ -1941,7 +1941,7 @@ bool ThreadControl::findClause(const Clause* c) const
     return false;
 }
 
-void ThreadControl::checkNoWrongAttach() const
+void Solver::checkNoWrongAttach() const
 {
     #ifndef VERBOSE_DEBUG
     return;
@@ -1958,7 +1958,7 @@ void ThreadControl::checkNoWrongAttach() const
     }
 }
 
-uint32_t ThreadControl::getNumFreeVars() const
+uint32_t Solver::getNumFreeVars() const
 {
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
@@ -1969,7 +1969,7 @@ uint32_t ThreadControl::getNumFreeVars() const
     return freeVars;
 }
 
-uint32_t ThreadControl::getNumFreeVarsAdv(size_t trail_size_of_thread) const
+uint32_t Solver::getNumFreeVarsAdv(size_t trail_size_of_thread) const
 {
     assert(decisionLevel() == 0);
     uint32_t freeVars = nVars();
@@ -1980,7 +1980,7 @@ uint32_t ThreadControl::getNumFreeVarsAdv(size_t trail_size_of_thread) const
     return freeVars;
 }
 
-void ThreadControl::printClauseStats()
+void Solver::printClauseStats()
 {
     cout
     << " " << std::setw(7) << clauses.size()
@@ -1996,7 +1996,7 @@ void ThreadControl::printClauseStats()
     ;
 }
 
-void ThreadControl::checkStats() const
+void Solver::checkStats() const
 {
     //If in crazy mode, don't check
     #ifdef NDEBUG
@@ -2053,12 +2053,12 @@ void ThreadControl::checkStats() const
 
 }
 
-uint32_t ThreadControl::getNewToReplaceVars() const
+uint32_t Solver::getNewToReplaceVars() const
 {
     return varReplacer->getNewToReplaceVars();
 }
 
-const char* ThreadControl::getVersion()
+const char* Solver::getVersion()
 {
     return get_git_version();
 }

@@ -28,7 +28,7 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "ClauseAllocator.h"
 #include "Clause.h"
 #include "time_mem.h"

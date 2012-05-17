@@ -21,7 +21,7 @@
 
 #include "GateFinder.h"
 #include "time_mem.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 #include "Subsumer.h"
 
 #ifdef USE_VTK
@@ -35,10 +35,10 @@
 using std::cout;
 using std::endl;
 
-GateFinder::GateFinder(Subsumer *_subsumer, ThreadControl *_control) :
+GateFinder::GateFinder(Subsumer *_subsumer, Solver *_solver) :
     numDotPrinted(0)
     , subsumer(_subsumer)
-    , control(_control)
+    , solver(_solver)
     , seen(_subsumer->seen)
     , seen2(_subsumer->seen2)
 {}
@@ -50,11 +50,11 @@ bool GateFinder::doAll()
     if (!doAllOptimisationWithGates())
         goto end;
 
-    if (control->conf.doPrintGateDot)
+    if (solver->conf.doPrintGateDot)
         printDot();
 
     //Do ER with randomly piced variables as gates
-    if (control->conf.doER) {
+    if (solver->conf.doER) {
         const uint32_t addedVars = createNewVars();
         //Play with the newly found gates
         if (addedVars > 0 && !doAllOptimisationWithGates())
@@ -62,7 +62,7 @@ bool GateFinder::doAll()
     }
 
     //TODO enable below
-    /*if (control->conf.doFindXors && control->conf.doMixXorAndGates) {
+    /*if (solver->conf.doFindXors && solver->conf.doMixXorAndGates) {
         if (!mixXorAndGates())
             goto end;
     }*/
@@ -70,9 +70,9 @@ bool GateFinder::doAll()
 
 end:
     //Stats
-    if (control->conf.verbosity >= 1) {
-        if (control->conf.verbosity >= 3) {
-            runStats.print(control->nVars());
+    if (solver->conf.verbosity >= 1) {
+        if (solver->conf.verbosity >= 3) {
+            runStats.print(solver->nVars());
             printGateStats();
         } else {
             runStats.printShort();
@@ -80,7 +80,7 @@ end:
     }
     globalStats += runStats;
 
-    return control->ok;
+    return solver->ok;
 }
 
 uint32_t GateFinder::createNewVars()
@@ -92,7 +92,7 @@ uint32_t GateFinder::createNewVars()
     uint64_t numOp = 0;
     subsumer->toDecrease = &numMaxCreateNewVars;
 
-    const size_t size = control->getNumFreeVars()-1;
+    const size_t size = solver->getNumFreeVars()-1;
 
     size_t tries = 0;
     for (; tries < std::min<size_t>(100000U, size*size/2); tries++) {
@@ -100,26 +100,26 @@ uint32_t GateFinder::createNewVars()
             break;
 
         //Take some variables randomly
-        const Var var1 = control->mtrand.randInt(size);
-        const Var var2 = control->mtrand.randInt(size);
+        const Var var1 = solver->mtrand.randInt(size);
+        const Var var2 = solver->mtrand.randInt(size);
 
         //Check that var1 & var2 are sane choices (not equivalent, not elimed, etc.)
         if (var1 == var2)
             continue;
 
-        if (control->value(var1) != l_Undef
-            || !control->decision_var[var1]
-            || control->varData[var1].elimed != ELIMED_NONE
+        if (solver->value(var1) != l_Undef
+            || !solver->decision_var[var1]
+            || solver->varData[var1].elimed != ELIMED_NONE
             ) continue;
 
-        if (control->value(var2) != l_Undef
-            || !control->decision_var[var2]
-            || control->varData[var2].elimed != ELIMED_NONE
+        if (solver->value(var2) != l_Undef
+            || !solver->decision_var[var2]
+            || solver->varData[var2].elimed != ELIMED_NONE
             ) continue;
 
         //Pick sign randomly
-        Lit lit1 = Lit(var1, control->mtrand.randInt(1));
-        Lit lit2 = Lit(var2, control->mtrand.randInt(1));
+        Lit lit1 = Lit(var1, solver->mtrand.randInt(1));
+        Lit lit2 = Lit(var2, solver->mtrand.randInt(1));
 
         //Make sure they are in the right order
         if (lit1 > lit2)
@@ -158,10 +158,10 @@ uint32_t GateFinder::createNewVars()
     for (uint32_t i = 0; i < newGates.size(); i++) {
         const NewGateData& n = newGates[i];
         if ((i > 50 && n.numLitRem < 1000 && n.numClRem < 25)
-            || i > ((double)control->getNumFreeVars()*0.01)
+            || i > ((double)solver->getNumFreeVars()*0.01)
             || i > 100) break;
 
-        const Var newVar = control->newVar();
+        const Var newVar = solver->newVar();
         dontElim[newVar] = true;
         const Lit newLit = Lit(newVar, false);
         vector<Lit> lits;
@@ -177,32 +177,32 @@ uint32_t GateFinder::createNewVars()
         tmp.clear();
         tmp.push_back(newLit);
         tmp.push_back(~n.lit1);
-        Clause* cl = control->addClauseInt(tmp);
+        Clause* cl = solver->addClauseInt(tmp);
         assert(cl == NULL);
-        assert(control->ok);
+        assert(solver->ok);
 
         tmp.clear();
         tmp.push_back(newLit);
         tmp.push_back(~n.lit2);
-        cl = control->addClauseInt(tmp);
+        cl = solver->addClauseInt(tmp);
         assert(cl == NULL);
-        assert(control->ok);
+        assert(solver->ok);
 
         tmp.clear();
         tmp.push_back(~newLit);
         tmp.push_back(n.lit1);
         tmp.push_back(n.lit2);
-        cl = control->addClauseInt(tmp, false, ClauseStats(), false);
+        cl = solver->addClauseInt(tmp, false, ClauseStats(), false);
         assert(cl != NULL);
-        assert(control->ok);
-        cl->stats.conflictNumIntroduced = control->sumStats.conflStats.numConflicts;
+        assert(solver->ok);
+        cl->stats.conflictNumIntroduced = solver->sumStats.conflStats.numConflicts;
         ClauseIndex c = subsumer->linkInClause(*cl);
         subsumer->clauseData[c.index].defOfOrGate = true;
 
         addedVars++;
     }
 
-    if (control->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 1) {
         cout
         << "c Added vars :" << addedVars
         << " tried: " << tries
@@ -216,7 +216,7 @@ uint32_t GateFinder::createNewVars()
 
 void GateFinder::findOrGates()
 {
-    assert(control->ok);
+    assert(solver->ok);
 
     double myTime = cpuTime();
     clearIndexes();
@@ -293,18 +293,18 @@ void GateFinder::clearIndexes()
 
 bool GateFinder::doAllOptimisationWithGates()
 {
-    assert(control->ok);
+    assert(solver->ok);
 
     //OR gate treatment
-    if (control->conf.doShortenWithOrGates) {
+    if (solver->conf.doShortenWithOrGates) {
         //Setup
         double myTime = cpuTime();
         numMaxShortenWithGates = 100L*1000L*1000L;
         subsumer->toDecrease = &numMaxShortenWithGates;
         runStats.numLongCls = subsumer->runStats.origNumIrredLongClauses +
             subsumer->runStats.origNumRedLongClauses;
-        runStats.numLongClsLits = control->clausesLits + control->learntsLits
-            - control->numBinsLearnt*2 - control->numBinsNonLearnt;
+        runStats.numLongClsLits = solver->clausesLits + solver->learntsLits
+            - solver->numBinsLearnt*2 - solver->numBinsNonLearnt;
 
         //Go through each gate, see if we can do something with it
         for (vector<OrGate>::const_iterator
@@ -329,12 +329,12 @@ bool GateFinder::doAllOptimisationWithGates()
         //Handle results
         runStats.orBasedTime += cpuTime() - myTime;
 
-        if (!control->ok)
+        if (!solver->ok)
             return false;
     }
 
     //AND gate treatment
-    if (control->conf.doRemClWithAndGates) {
+    if (solver->conf.doRemClWithAndGates) {
         //Setup
         numMaxClRemWithGates = 100L*1000L*1000L;
         subsumer->toDecrease = &numMaxClRemWithGates;
@@ -370,12 +370,12 @@ bool GateFinder::doAllOptimisationWithGates()
         //Handle results
         runStats.andBasedTime += cpuTime() - myTime;
 
-        if (!control->ok)
+        if (!solver->ok)
             return false;
     }
 
     //EQ gate treatment
-    if (control->conf.doFindEqLitsWithGates) {
+    if (solver->conf.doFindEqLitsWithGates) {
         //Setup
         double myTime = cpuTime();
 
@@ -385,16 +385,16 @@ bool GateFinder::doAllOptimisationWithGates()
         //Handle results
         runStats.varReplaceTime += cpuTime() - myTime;
 
-        if (!control->ok)
+        if (!solver->ok)
             return false;
     }
 
-    return control->ok;
+    return solver->ok;
 }
 
 size_t GateFinder::findEqOrGates()
 {
-    assert(control->ok);
+    assert(solver->ok);
     size_t foundRep = 0;
     vector<OrGate> gates = orGates;
     std::sort(gates.begin(), gates.end(), OrGateSorter2());
@@ -412,7 +412,7 @@ size_t GateFinder::findEqOrGates()
             tmp[0] = gate1.eqLit.unsign();
             tmp[1] = gate2.eqLit.unsign();
             const bool RHS = gate1.eqLit.sign() ^ gate2.eqLit.sign();
-            if (!control->addXorClauseInt(tmp, RHS))
+            if (!solver->addXorClauseInt(tmp, RHS))
                 return foundRep;
             tmp.resize(2);
         }
@@ -436,7 +436,7 @@ void GateFinder::findOrGates(const bool learntGatesToo)
 
         //Ran out of time
         if (*subsumer->toDecrease < 0) {
-            if (control->conf.verbosity >= 1) {
+            if (solver->conf.verbosity >= 1) {
                 cout << "c Finishing gate-finding: ran out of time" << endl;
             }
             break;
@@ -444,7 +444,7 @@ void GateFinder::findOrGates(const bool learntGatesToo)
 
         const Clause& cl = **it;
         //If clause is larger than the cap on gate size, skip. Only for speed reasons.
-        if (cl.size() > control->conf.maxGateSize)
+        if (cl.size() > solver->conf.maxGateSize)
             continue;
 
         //if no learnt gates are allowed and this is learnt, skip
@@ -458,8 +458,8 @@ void GateFinder::findOrGates(const bool learntGatesToo)
         uint8_t numSizeZero = 0;
         for (const Lit *l = cl.begin(), *end2 = cl.end(); l != end2; l++) {
             Lit lit = *l;
-            const vector<LitExtra>& cache = control->implCache[(~lit).toInt()].lits;
-            const vec<Watched>& ws = control->watches[lit.toInt()];
+            const vector<LitExtra>& cache = solver->implCache[(~lit).toInt()].lits;
+            const vec<Watched>& ws = solver->watches[lit.toInt()];
 
             if (cache.size() == 0 && ws.size() == 0) {
                 numSizeZero++;
@@ -491,7 +491,7 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
         bool OK = false;
 
         //Try to find corresponding binary clause in cache
-        const vector<LitExtra>& cache = control->implCache[(~otherLit).toInt()].lits;
+        const vector<LitExtra>& cache = solver->implCache[(~otherLit).toInt()].lits;
         *subsumer->toDecrease -= cache.size();
         for (vector<LitExtra>::const_iterator
             cacheLit = cache.begin(), endCache = cache.end()
@@ -507,7 +507,7 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
         }
 
         //Try to find corresponding binary clause in watchlist
-        const vec<Watched>& ws = control->watches[otherLit.toInt()];
+        const vec<Watched>& ws = solver->watches[otherLit.toInt()];
         *subsumer->toDecrease -= ws.size();
         for (vec<Watched>::const_iterator
             wsIt = ws.begin(), endWS = ws.end()
@@ -572,7 +572,7 @@ void GateFinder::findOrGate(const Lit eqLit, const ClauseIndex& c, const bool le
 
 bool GateFinder::shortenWithOrGate(const OrGate& gate)
 {
-    assert(control->ok);
+    assert(solver->ok);
 
     //Find clauses that potentially could be shortened
     vector<ClauseIndex> subs;
@@ -652,8 +652,8 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
         //Free the old clause and allocate new one
         subsumer->unlinkClause(c.index);
-        cl = control->addClauseInt(lits, learnt, stats, false);
-        if (!control->ok)
+        cl = solver->addClauseInt(lits, learnt, stats, false);
+        if (!solver->ok)
             return false;
 
         //If this clause is NULL, then just ignore
@@ -855,10 +855,10 @@ bool GateFinder::treatAndGateClause(
     #endif
 
     //Create and link in new clause
-    Clause* c = control->addClauseInt(lits, learnt, stats, false);
+    Clause* c = solver->addClauseInt(lits, learnt, stats, false);
     if (c != NULL)
         subsumer->linkInClause(*c);
-    if (!control->ok)
+    if (!solver->ok)
         return false;
 
     return true;

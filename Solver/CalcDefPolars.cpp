@@ -22,12 +22,12 @@
 #include "CalcDefPolars.h"
 #include "assert.h"
 #include "time_mem.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 using std::cout;
 using std::endl;
 
-CalcDefPolars::CalcDefPolars(ThreadControl* _control) :
-    control(_control)
+CalcDefPolars::CalcDefPolars(Solver* _solver) :
+    solver(_solver)
 {
 }
 
@@ -83,16 +83,16 @@ Uses the tallyVotes() functions to tally the votes
 */
 const vector<char> CalcDefPolars::calculate()
 {
-    assert(control->decisionLevel() == 0);
+    assert(solver->decisionLevel() == 0);
 
     //Setup
-    vector<char> ret(control->nVars(), 0);
-    vector<double> votes(control->nVars(), 0.0);
+    vector<char> ret(solver->nVars(), 0);
+    vector<double> votes(solver->nVars(), 0.0);
     const double myTime = cpuTime();
 
     //Tally votes
-    tallyVotes(control->clauses, votes);
-    tallyVotesBin(votes, control->watches);
+    tallyVotes(solver->clauses, votes);
+    tallyVotesBin(votes, solver->watches);
 
     //Set polarity according to tally
     uint32_t posPolars = 0;
@@ -105,13 +105,13 @@ const vector<char> CalcDefPolars::calculate()
     }
 
     //Print results
-    if (control->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 3) {
         #pragma omp critical
         cout << "c Calc default polars - "
         << " time: " << std::fixed << std::setw(6) << std::setprecision(2) << (cpuTime() - myTime) << " s"
         << " pos: " << std::setw(7) << posPolars
         << " undec: " << std::setw(7) << undecidedPolars
-        << " neg: " << std::setw(7) << control->nVars()-  undecidedPolars - posPolars
+        << " neg: " << std::setw(7) << solver->nVars()-  undecidedPolars - posPolars
         << std:: endl;
     }
 

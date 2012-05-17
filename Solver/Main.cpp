@@ -43,7 +43,7 @@ number of benefits relative to MiniSat.
 #include "time_mem.h"
 #include "constants.h"
 #include "DimacsParser.h"
-#include "ThreadControl.h"
+#include "Solver.h"
 
 
 #include <boost/lexical_cast.hpp>
@@ -67,7 +67,7 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-ThreadControl* solverToInterrupt;
+Solver* solverToInterrupt;
 
 /**
 @brief For correctly and gracefully exiting
@@ -79,17 +79,17 @@ is used to achieve this
 */
 void SIGINT_handler(int)
 {
-    ThreadControl* control = solverToInterrupt;
+    Solver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
-    if (control->getNeedToDumpLearnts() || control->getNeedToDumpOrig()) {
-        control->setNeedToInterrupt();
+    if (solver->getNeedToDumpLearnts() || solver->getNeedToDumpOrig()) {
+        solver->setNeedToInterrupt();
         std::cerr << "*** Please wait. We need to interrupt cleanly" << endl;
         std::cerr << "*** This means we might need to finish some calculations" << endl;
     } else {
-        if (control->getVerbosity() >= 1) {
-            control->addInPartialSolvingStat();
-            control->printFullStats();
+        if (solver->getVerbosity() >= 1) {
+            solver->addInPartialSolvingStat();
+            solver->printFullStats();
         }
         _exit(1);
     }
@@ -111,7 +111,7 @@ void Main::readInAFile(const std::string& filename)
         exit(1);
     }
 
-    DimacsParser parser(control, debugLib, debugNewVar);
+    DimacsParser parser(solver, debugLib, debugNewVar);
     parser.parse_DIMACS(in);
 
     #ifdef DISABLE_ZLIB
@@ -123,7 +123,7 @@ void Main::readInAFile(const std::string& filename)
 
 void Main::readInStandardInput()
 {
-    if (control->getVerbosity()) {
+    if (solver->getVerbosity()) {
         cout << "c Reading from standard input... Use '-h' or '--help' for help." << endl;
     }
     #ifdef DISABLE_ZLIB
@@ -137,7 +137,7 @@ void Main::readInStandardInput()
         exit(1);
     }
 
-    DimacsParser parser(control, debugLib, debugNewVar);
+    DimacsParser parser(solver, debugLib, debugNewVar);
     parser.parse_DIMACS(in);
 
     #ifndef DISABLE_ZLIB
@@ -182,9 +182,9 @@ void Main::printResultFunc(const lbool ret)
     if(ret == l_True && printResult) {
         std::stringstream toPrint;
         toPrint << "v ";
-        for (Var var = 0; var != control->nVars(); var++)
-            if (control->model[var] != l_Undef)
-                toPrint << ((control->model[var] == l_True)? "" : "-") << var+1 << " ";
+        for (Var var = 0; var != solver->nVars(); var++)
+            if (solver->model[var] != l_Undef)
+                toPrint << ((solver->model[var] == l_True)? "" : "-") << var+1 << " ";
             toPrint << "0" << endl;
         cout << toPrint.str();
     }
@@ -599,7 +599,7 @@ void Main::parseCommandLine()
 
 void Main::printVersionInfo()
 {
-    cout << "c CryptoMiniSat version " << ThreadControl::getVersion() << endl;
+    cout << "c CryptoMiniSat version " << Solver::getVersion() << endl;
     #ifdef __GNUC__
     cout << "c compiled with gcc version " << __VERSION__ << endl;
     #else
@@ -609,8 +609,8 @@ void Main::printVersionInfo()
 
 int Main::solve()
 {
-    control = new ThreadControl(conf);
-    solverToInterrupt = control;
+    solver = new Solver(conf);
+    solverToInterrupt = solver;
 
     if (conf.verbosity >= 1)
         printVersionInfo();
@@ -619,7 +619,7 @@ int Main::solve()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = control->solve();
+        ret = solver->solve();
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
@@ -628,19 +628,19 @@ int Main::solve()
 
             if (doBanFoundSolution) {
                 vector<Lit> lits;
-                for (Var var = 0; var != control->nVars(); var++) {
-                    if (control->model[var] != l_Undef) {
-                        lits.push_back( Lit(var, (control->model[var] == l_True)? true : false) );
+                for (Var var = 0; var != solver->nVars(); var++) {
+                    if (solver->model[var] != l_Undef) {
+                        lits.push_back( Lit(var, (solver->model[var] == l_True)? true : false) );
                     }
                 }
-                control->addClause(lits);
+                solver->addClause(lits);
             }
         }
     }
 
     /*
     if (conf.needToDumpLearnts) {
-        control->dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
+        solver->dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
         cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << endl;
     }
     if (conf.needToDumpOrig) {
@@ -648,12 +648,12 @@ int Main::solve()
             cout << "p cnf 0 1" << endl;
             cout << "0";
         } else if (ret == l_True && conf.origFilename == "stdout") {
-            cout << "p cnf " << control->model.size() << " " << control->model.size() << endl;
-            for (uint32_t i = 0; i < control->model.size(); i++) {
-                cout << (control->model[i] == l_True ? "" : "-") << i+1 << " 0" << endl;
+            cout << "p cnf " << solver->model.size() << " " << solver->model.size() << endl;
+            for (uint32_t i = 0; i < solver->model.size(); i++) {
+                cout << (solver->model[i] == l_True ? "" : "-") << i+1 << " 0" << endl;
             }
         } else {
-            control->dumpOrigClauses(conf.origFilename);
+            solver->dumpOrigClauses(conf.origFilename);
             if (conf.verbosity >= 1)
                 cout << "c Simplified original clauses dumped to file '"
                 << conf.origFilename << "'" << endl;
@@ -664,7 +664,7 @@ int Main::solve()
         cout << "c Not finished running -- signal caught or maximum restart reached" << endl;
     }
     if (conf.verbosity >= 1)
-        control->printFullStats();
+        solver->printFullStats();
 
     printResultFunc(ret);
 

@@ -23,7 +23,7 @@
 #include "Vec.h"
 #include "Watched.h"
 
-class ThreadControl;
+class Solver;
 class Clause;
 
 /**
@@ -41,7 +41,7 @@ A main use-case is the following:
 class CompleteDetachReatacher
 {
     public:
-        CompleteDetachReatacher(ThreadControl* control);
+        CompleteDetachReatacher(Solver* solver);
         bool reattachNonBins();
         void detachNonBinsNonTris(const bool removeTri);
 
@@ -70,5 +70,5 @@ class CompleteDetachReatacher
         };
         ClausesStay clearWatchNotBinNotTri(vec<Watched>& ws, const bool removeTri = false);
 
-        ThreadControl* control;
+        Solver* solver;
 };
