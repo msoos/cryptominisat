@@ -64,6 +64,12 @@ enum ElimedBy {
     , ELIMED_DECOMPOSE = 5
 };
 
+enum PropResult {
+    PROP_FAIL = 0
+    , PROP_NOTHING = 1
+    , PROP_SOMETHING = 2
+};
+
 struct VarData
 {
     VarData() :
@@ -239,19 +245,31 @@ protected:
     void         newDecisionLevel();                       ///<Begins a new decision level.
     PropBy       propagate(); ///<Perform unit propagation. Returns possibly conflicting clause.
     bool         propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
-    template<bool simple> bool propTriClause   (const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 3-long clause
+
+    ///Propagate 3-long clause
     template<bool simple>
-    bool propNormalClause(
+    PropResult propTriClause (
+        const vec<Watched>::const_iterator i
+        , const Lit p
+        , PropBy& confl
+    );
+
+    ///Propagate >3-long clause
+    template<bool simple>
+    PropResult propNormalClause(
         const vec<Watched>::iterator i
         , vec<Watched>::iterator &j
         , const Lit p
         , PropBy& confl
-    ); ///<Propagate >3-long clause
+    );
 
     //For hyper-bin and transitive reduction.
-    PropBy            propBin(const Lit p, vec<Watched>::const_iterator k);
+    PropResult propBin(
+        const Lit p
+        , vec<Watched>::const_iterator k
+        , PropBy& confl
+    );
     Lit               propagateFull();
-    bool              enqeuedSomething;         ///<Set if enqueueComplex has been called
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
     PropBy      propagateNonLearntBin();  ///<For debug purposes, to test binary clause removal
@@ -393,7 +411,6 @@ inline void PropEngine::enqueueComplex(
     , const bool learntStep
 ) {
     enqueue(p, PropBy(~ancestor, learntStep, false, false));
-    enqeuedSomething = true;
 }
 
 /**

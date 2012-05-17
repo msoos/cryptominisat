@@ -223,16 +223,17 @@ inline bool PropEngine::propBinaryClause(
 We have blocked literals in this case in the watchlist. That must be checked
 and updated.
 */
-template<bool simple> inline bool PropEngine::propNormalClause(
+template<bool simple>
+PropResult PropEngine::propNormalClause(
     const vec<Watched>::iterator i
     , vec<Watched>::iterator &j
     , const Lit p
     , PropBy& confl
 ) {
+    //Blocked literal is satisfied, so clause is satisfied
     if (value(i->getBlockedLit()).getBool()) {
-        // Clause is sat
         *j++ = *i;
-        return true;
+        return PROP_NOTHING;
     }
     propStats.bogoProps += 4;
     const uint32_t offset = i->getNormOffset();
@@ -251,7 +252,7 @@ template<bool simple> inline bool PropEngine::propNormalClause(
     if (value(c[0]).getBool()) {
         *j = Watched(offset, c[0]);
         j++;
-        return true;
+        return PROP_NOTHING;
     }
 
     // Look for new watch:
@@ -260,13 +261,14 @@ template<bool simple> inline bool PropEngine::propNormalClause(
         ; k != end2
         ; k++, numLitVisited++
     ) {
+        //Literal is either unset or satisfied, attach to other watchlist
         if (value(*k) != l_False) {
             c[1] = *k;
             propStats.bogoProps += numLitVisited/10;
             c.stats.numLitVisited+= numLitVisited;
             *k = ~p;
             watches[(~c[1]).toInt()].push(Watched(offset, c[0]));
-            return true;
+            return PROP_NOTHING;
         }
     }
     propStats.bogoProps += numLitVisited/10;
@@ -292,7 +294,7 @@ template<bool simple> inline bool PropEngine::propNormalClause(
             lastConflictCausedBy = CONFL_BY_LONG_IRRED_CLAUSE;
 
         qhead = trail.size();
-        return false;
+        return PROP_FAIL;
     } else {
 
         //Update stats
@@ -317,7 +319,7 @@ template<bool simple> inline bool PropEngine::propNormalClause(
         }
     }
 
-    return true;
+    return PROP_SOMETHING;
 }
 
 /**
@@ -327,23 +329,29 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. all 3 literals evaluate to FALSE). If conflict is found,
 sets failBinLit
 */
-template<bool simple> inline bool PropEngine::propTriClause(
+template<bool simple>
+PropResult PropEngine::propTriClause(
     const vec<Watched>::const_iterator i
     , const Lit p
     , PropBy& confl
 ) {
     lbool val = value(i->getOtherLit());
-    if (val == l_True) return true;
+
+    //literal is already satisfied, nothing to do
+    if (val == l_True)
+        return PROP_NOTHING;
 
     lbool val2 = value(i->getOtherLit2());
     if (val.isUndef() && val2 == l_False) {
         propStats.propsTri++;
         if (simple) enqueue(i->getOtherLit(), PropBy(~p, i->getOtherLit2()));
         else        addHyperBin(i->getOtherLit(), ~p, i->getOtherLit2());
+        return PROP_SOMETHING;
     } else if (val == l_False && val2.isUndef()) {
         propStats.propsTri++;
         if (simple) enqueue(i->getOtherLit2(), PropBy(~p, i->getOtherLit()));
         else        addHyperBin(i->getOtherLit2(), ~p, i->getOtherLit());
+        return PROP_SOMETHING;
     } else if (val == l_False && val2 == l_False) {
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Conflict from "
@@ -358,10 +366,10 @@ template<bool simple> inline bool PropEngine::propTriClause(
 
         failBinLit = i->getOtherLit();
         qhead = trail.size();
-        return false;
+        return PROP_FAIL;
     }
 
-    return true;
+    return PROP_NOTHING;
 }
 
 PropBy PropEngine::propagate()
@@ -372,13 +380,12 @@ PropBy PropEngine::propagate()
     cout << "Propagation started" << endl;
     #endif
 
-    size_t qheadbin = qhead;
-    size_t qheadlong = qhead;
+    uint32_t qheadlong = qhead;
 
     startAgain:
-    //Propagate binary&tertiary clauses first
-    while (qheadbin < trail.size() && confl.isNULL()) {
-        const Lit p = trail[qheadbin++];     // 'p' is enqueued fact to propagate.
+    //Propagate binary clauses first
+    while (qhead < trail.size() && confl.isNULL()) {
+        const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         const vec<Watched>& ws = watches[p.toInt()];
         vec<Watched>::const_iterator i = ws.begin();
         const vec<Watched>::const_iterator end = ws.end();
@@ -394,15 +401,6 @@ PropBy PropEngine::propagate()
                 continue;
             }
 
-            //Propagate tri clause
-            if (i->isTriClause()) {
-                if (!propTriClause<true>(i, p, confl)) {
-                    break;
-                }
-
-                continue;
-            } //end TRICLAUSE
-
             //Pre-fetch long clause
             if (i->isClause()) {
                 if (value(i->getBlockedLit()) != l_True) {
@@ -415,14 +413,16 @@ PropBy PropEngine::propagate()
         }
     }
 
-    while (qheadlong < qheadbin && confl.isNULL()) {
-        const Lit p = trail[qheadlong++];     // 'p' is enqueued fact to propagate.
+    PropResult ret = PROP_NOTHING;
+    while (qheadlong < qhead && confl.isNULL()) {
+        const Lit p = trail[qheadlong];     // 'p' is enqueued fact to propagate.
         vec<Watched>& ws = watches[p.toInt()];
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = ws.begin();
         const vec<Watched>::iterator end = ws.end();
         propStats.bogoProps += ws.size()/4 + 1;
         for (; i != end; i++) {
+            //Skip binary clauses
             if (i->isBinary()) {
                 *j++ = *i;
                 continue;
@@ -430,21 +430,30 @@ PropBy PropEngine::propagate()
 
             if (i->isTriClause()) {
                 *j++ = *i;
-                if (!propTriClause<true>(i, p, confl)) {
+                //Propagate tri clause
+                ret = propTriClause<true>(i, p, confl);
+                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
+                    //Conflict or propagated something
                     i++;
                     break;
+                } else {
+                    //Didn't propagate anything, continue
+                    assert(ret == PROP_NOTHING);
+                    continue;
                 }
-
-                continue;
             } //end TRICLAUSE
 
             if (i->isClause()) {
-                if (!propNormalClause<true>(i, j, p, confl)) {
+                ret = propNormalClause<true>(i, j, p, confl);
+                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
+                    //Conflict or propagated something
                     i++;
                     break;
+                } else {
+                    //Didn't propagate anything, continue
+                    assert(ret == PROP_NOTHING);
+                    continue;
                 }
-
-                continue;
             } //end CLAUSE
         }
         while (i != end) {
@@ -453,10 +462,12 @@ PropBy PropEngine::propagate()
         ws.shrink_(end-j);
 
         //If propagated something, goto start
-        if (qheadlong < trail.size())
+        if (ret == PROP_SOMETHING) {
             goto startAgain;
+        }
+
+        qheadlong++;
     }
-    qhead = qheadbin;
 
     #ifdef VERBOSE_DEBUG
     cout << "Propagation ended." << endl;
@@ -487,7 +498,7 @@ Lit PropEngine::propagateFull()
     cout << "Prop full started" << endl;
     #endif
 
-    PropBy ret;
+    PropBy confl;
 
     //Assert startup: only 1 enqueued, uselessBin is empty
     assert(uselessBin.empty());
@@ -505,7 +516,8 @@ Lit PropEngine::propagateFull()
     uint32_t nlBinQHead = qhead;
     uint32_t lBinQHead = qhead;
 
-    needToAddBinClause.clear();;
+    needToAddBinClause.clear();
+    PropResult ret = PROP_NOTHING;
     start:
 
     //Propagate binary non-learnt
@@ -514,40 +526,47 @@ Lit PropEngine::propagateFull()
         const vec<Watched>& ws = watches[p.toInt()];
         propStats.bogoProps += 1;
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
-            if (!k->isBinary() || k->getLearnt()) continue;
 
-            ret = propBin(p, k);
-            if (!ret.isNULL())
-                return analyzeFail(ret);
+            //If something other than non-learnt binary, skip
+            if (!k->isBinary() || k->getLearnt())
+                continue;
+
+            ret = propBin(p, k, confl);
+            if (ret == PROP_FAIL)
+                return analyzeFail(confl);
         }
     }
 
     //Propagate binary learnt
+    ret = PROP_NOTHING;
     while (lBinQHead < trail.size()) {
         const Lit p = trail[lBinQHead];
         const vec<Watched>& ws = watches[p.toInt()];
         propStats.bogoProps += 1;
-        enqeuedSomething = false;
 
         for(vec<Watched>::const_iterator k = ws.begin(), end = ws.end(); k != end; k++) {
-            if (!k->isBinary() || !k->getLearnt()) continue;
 
-            ret = propBin(p, k);
-            if (!ret.isNULL())
-                return analyzeFail(ret);
+            //If something other than learnt binary, skip
+            if (!k->isBinary() || !k->getLearnt())
+                continue;
 
-            if (enqeuedSomething)
+            ret = propBin(p, k, confl);
+            if (ret == PROP_FAIL) {
+                return analyzeFail(confl);
+            } else if (ret == PROP_SOMETHING) {
                 goto start;
+            } else {
+                assert(ret == PROP_NOTHING);
+            }
         }
         lBinQHead++;
     }
 
+    ret = PROP_NOTHING;
     while (qhead < trail.size()) {
-        PropBy confl;
         const Lit p = trail[qhead];
         vec<Watched> & ws = watches[p.toInt()];
         propStats.bogoProps += 1;
-        enqeuedSomething = false;
 
         vec<Watched>::iterator i = ws.begin();
         vec<Watched>::iterator j = ws.begin();
@@ -560,46 +579,47 @@ Lit PropEngine::propagateFull()
 
             if (i->isTriClause()) {
                 *j++ = *i;
-                if (!propTriClause<false>(i, p, confl)
-                    || enqeuedSomething
-                ) {
+                ret = propTriClause<false>(i, p, confl);
+                if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     i++;
                     break;
+                } else {
+                    assert(ret == PROP_NOTHING);
+                    continue;
                 }
-
-                continue;
             }
 
             if (i->isClause()) {
-                if ((!propNormalClause<false>(i, j, p, confl))
-                    || enqeuedSomething
-                ) {
+                ret = propNormalClause<false>(i, j, p, confl);
+                if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     i++;
                     break;
+                } else {
+                    assert(ret == PROP_NOTHING);
+                    continue;
                 }
-
-                continue;
             }
         }
         while(i != end)
             *j++ = *i++;
         ws.shrink_(end-j);
 
-        if (!confl.isNULL()) {
+        if (ret == PROP_FAIL) {
             return analyzeFail(confl);
+        } else if (ret == PROP_SOMETHING) {
+            goto start;
         }
 
-        if (enqeuedSomething)
-            goto start;
         qhead++;
     }
 
     return lit_Undef;
 }
 
-PropBy PropEngine::propBin(
+PropResult PropEngine::propBin(
     const Lit p
     , vec<Watched>::const_iterator k
+    , PropBy& confl
 ) {
     const Lit lit = k->getOtherLit();
     const lbool val = value(lit);
@@ -611,7 +631,7 @@ PropBy PropEngine::propBin(
 
         //Never propagated before
         enqueueComplex(lit, p, k->getLearnt());
-        return PropBy();
+        return PROP_SOMETHING;
 
     } else if (val == l_False) {
         //Conflict
@@ -626,7 +646,8 @@ PropBy PropEngine::propBin(
             lastConflictCausedBy = CONFL_BY_BIN_IRRED_CLAUSE;
 
         failBinLit = lit;
-        return PropBy(~p);
+        confl = PropBy(~p);
+        return PROP_FAIL;
 
     } else if (varData[lit.var()].level != 0) {
         //Propaged already
@@ -679,6 +700,7 @@ PropBy PropEngine::propBin(
 
             //for correctness, we would need this, but that would need re-writing of history :S
             //if (!onlyNonLearnt) return PropBy();
+
         } else if (remove != lit_Undef) {
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removing this bin clause" << endl;
@@ -687,7 +709,7 @@ PropBy PropEngine::propBin(
         }
     }
 
-    return PropBy();
+    return PROP_NOTHING;
 }
 
 void PropEngine::sortWatched()
