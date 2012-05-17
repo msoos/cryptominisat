@@ -254,6 +254,16 @@ protected:
 
     ///Propagate 3-long clause
     template<bool simple>
+    bool propTriHelper(
+        const lbool val
+        , const lbool val2
+        , const Lit otherLit
+        , const Lit otherLit2
+        , const Lit p
+        , Solver* solver
+    );
+
+    template<bool simple>
     PropResult propTriClause (
         const vec<Watched>::const_iterator i
         , const Lit p

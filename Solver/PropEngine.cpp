@@ -307,7 +307,7 @@ PropResult PropEngine::propNormalClause(
             propStats.propsLongIrred++;
 
         if (simple) {
-            //Do LHBR if possible
+            //Do lazy hyper-binary resolution if possible
             if (doLHBR
                 && solver != NULL
                 && varData[c[1].var()].reason.getType() == binary_t
@@ -322,11 +322,14 @@ PropResult PropEngine::propNormalClause(
                         break;
                     }
                 }
+
+                //Is it possible?
                 if (OK) {
                     solver->attachBinClause(other, c[0], true, false);
                     propStats.longLHBR++;
                     enqueue(c[0], PropBy(other));
                 } else {
+                    //no, not possible, just enqueue as normal
                     goto norm;
                 }
             } else {
@@ -365,56 +368,21 @@ PropResult PropEngine::propTriClause(
     , PropBy& confl
     , Solver* solver
 ) {
-    const Lit otherLit = i->getOtherLit();
-    const lbool val = value(otherLit);
+    Lit otherLit = i->getOtherLit();
+    lbool val = value(otherLit);
 
     //literal is already satisfied, nothing to do
     if (val == l_True)
         return PROP_NOTHING;
 
-    const Lit otherLit2 = i->getOtherLit2();
-    const lbool val2 = value(otherLit2);
-    if (val.isUndef() && val2 == l_False) {
-        propStats.propsTri++;
-        if (simple) {
-            if (doLHBR
-                && solver != NULL
-                && varData[p.var()].reason.getType() == binary_t
-                && varData[otherLit2.var()].reason.getType() == binary_t
-                && varData[otherLit2.var()].reason.getOtherLit() == varData[p.var()].reason.getOtherLit()
-            ) {
-                Lit lit = varData[p.var()].reason.getOtherLit();
-                solver->attachBinClause(lit, otherLit, true, false);
-                enqueue(otherLit, PropBy(lit));
-                propStats.triLHBR++;
-            } else {
-                enqueue(otherLit, PropBy(~p, otherLit2));
-            }
-        } else {
-            addHyperBin(otherLit, ~p, otherLit2);
-        }
-        return PROP_SOMETHING;
-    } else if (val == l_False && val2.isUndef()) {
-        propStats.propsTri++;
-        if (simple) {
-            if (doLHBR
-                && solver != NULL
-                && varData[p.var()].reason.getType() == binary_t
-                && varData[otherLit.var()].reason.getType() == binary_t
-                && varData[otherLit.var()].reason.getOtherLit() == varData[p.var()].reason.getOtherLit()
-            ) {
-                Lit lit = varData[p.var()].reason.getOtherLit();
-                solver->attachBinClause(lit, otherLit2, true, false);
-                enqueue(otherLit2, PropBy(lit));
-                propStats.triLHBR++;
-            } else {
-                enqueue(otherLit2, PropBy(~p, otherLit));
-            }
-        } else {
-            addHyperBin(otherLit2, ~p, otherLit);
-        }
-        return PROP_SOMETHING;
-    } else if (val == l_False && val2 == l_False) {
+    Lit otherLit2 = i->getOtherLit2();
+    lbool val2 = value(otherLit2);
+
+    //literal is already satisfied, nothing to do
+    if (val2 == l_True)
+        return PROP_NOTHING;
+
+    if (val == l_False && val2 == l_False) {
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Conflict from "
             << p << " , "
@@ -430,8 +398,52 @@ PropResult PropEngine::propTriClause(
         qhead = trail.size();
         return PROP_FAIL;
     }
+    if (propTriHelper<simple>(val, val2, otherLit, otherLit2, p, solver))
+        return PROP_SOMETHING;
+
+    if (propTriHelper<simple>(val2, val, otherLit2, otherLit, p, solver))
+        return PROP_SOMETHING;
 
     return PROP_NOTHING;
+}
+
+template<bool simple>
+bool PropEngine::propTriHelper(
+    const lbool val
+    , const lbool val2
+    , const Lit otherLit
+    , const Lit otherLit2
+    , const Lit p
+    , Solver* solver
+) {
+    if (val.isUndef() && val2 == l_False) {
+        propStats.propsTri++;
+        if (simple) {
+            //Check if we could do lazy hyper-binary resoution
+            if (doLHBR
+                && solver != NULL
+                && varData[p.var()].reason.getType() == binary_t
+                && ((varData[otherLit2.var()].reason.getType() == binary_t
+                    && varData[otherLit2.var()].reason.getOtherLit() == varData[p.var()].reason.getOtherLit())
+                    || (varData[p.var()].reason.getOtherLit().var() == otherLit2.var())
+                )
+            ) {
+                Lit lit= varData[p.var()].reason.getOtherLit();
+
+                solver->attachBinClause(lit, otherLit, true, false);
+                enqueue(otherLit, PropBy(lit));
+                propStats.triLHBR++;
+            } else {
+                //Lazy hyper-bin is not possibe
+                enqueue(otherLit, PropBy(~p, otherLit2));
+            }
+        } else {
+            addHyperBin(otherLit, ~p, otherLit2);
+        }
+        return true;
+    }
+
+    return false;
 }
 
 PropBy PropEngine::propagate(Solver* solver)
