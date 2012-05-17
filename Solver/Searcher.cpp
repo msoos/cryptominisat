@@ -674,7 +674,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
                 stats.conflStats.update(lastConflictCausedBy);
 
                 cancelUntil(0);
-                trail.push_back(~failed);
+                solver->enqueue(~failed);
                 stats.litsLearntNonMin += 1;
                 stats.litsLearntRecMin += 1;
                 stats.litsLearntFinal += 1;
