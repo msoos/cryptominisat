@@ -374,7 +374,7 @@ class Solver : public Searcher
         //Checks
         void checkStats() const;
 
-    private:
+    protected:
 
         //Control
         Clause*  newClauseByThread(
@@ -394,6 +394,8 @@ class Solver : public Searcher
             , const bool attach = true
         );
 
+    private:
+
         bool addXorClauseInt(const vector<Lit>& lits, bool rhs);
         lbool simplifyProblem();
 
@@ -405,6 +407,7 @@ class Solver : public Searcher
 
         /////////////////////
         // Objects that help us accomplish the task
+        friend class ClauseAllocator;
         friend class StateSaver;
         friend class SolutionExtender;
         friend class VarReplacer;
@@ -420,6 +423,7 @@ class Solver : public Searcher
         friend class XorFinder;
         friend class GateFinder;
         friend class BothProp;
+        friend class PropEngine;
         FailedLitSearcher   *failedLitSearcher;
         BothProp            *bothProp;
         Subsumer            *subsumer;
@@ -505,7 +509,6 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool          addClauseHelper(vector<Lit>& ps);
-        friend class        ClauseAllocator;
         vector<char>        decision_var;
         vector<Clause*>     clauses;          ///< List of problem clauses that are larger than 2
         vector<Clause*>     learnts;          ///< List of learnt clauses.

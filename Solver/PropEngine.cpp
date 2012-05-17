@@ -48,9 +48,11 @@ PropEngine::PropEngine(
     ClauseAllocator *_clAllocator
     , const AgilityData& agilityData
     , const bool _updateGlues
+    , const bool _doLHBR
 ) :
         // Stats
         updateGlues(_updateGlues)
+        , doLHBR (_doLHBR)
 
         , clAllocator(_clAllocator)
         , ok(true)
@@ -229,6 +231,7 @@ PropResult PropEngine::propNormalClause(
     , vec<Watched>::iterator &j
     , const Lit p
     , PropBy& confl
+    , Solver* solver
 ) {
     //Blocked literal is satisfied, so clause is satisfied
     if (value(i->getBlockedLit()).getBool()) {
@@ -304,7 +307,33 @@ PropResult PropEngine::propNormalClause(
             propStats.propsLongIrred++;
 
         if (simple) {
-            enqueue(c[0], PropBy(offset));
+            //Do LHBR if possible
+            if (doLHBR
+                && solver != NULL
+                && varData[c[1].var()].reason.getType() == binary_t
+            ) {
+                Lit other = varData[c[1].var()].reason.getOtherLit();
+                bool OK = true;
+                for(uint32_t i = 2; i < c.size(); i++) {
+                    if (varData[c[i].var()].reason.getType() != binary_t
+                        || other != varData[c[i].var()].reason.getOtherLit()
+                    ) {
+                        OK = false;
+                        break;
+                    }
+                }
+                if (OK) {
+                    solver->attachBinClause(other, c[0], true, false);
+                    propStats.longLHBR++;
+                    enqueue(c[0], PropBy(other));
+                } else {
+                    goto norm;
+                }
+            } else {
+                norm:
+                enqueue(c[0], PropBy(offset));
+            }
+
 
             //Update glues?
             if (c.learnt()
@@ -334,23 +363,56 @@ PropResult PropEngine::propTriClause(
     const vec<Watched>::const_iterator i
     , const Lit p
     , PropBy& confl
+    , Solver* solver
 ) {
-    lbool val = value(i->getOtherLit());
+    const Lit otherLit = i->getOtherLit();
+    const lbool val = value(otherLit);
 
     //literal is already satisfied, nothing to do
     if (val == l_True)
         return PROP_NOTHING;
 
-    lbool val2 = value(i->getOtherLit2());
+    const Lit otherLit2 = i->getOtherLit2();
+    const lbool val2 = value(otherLit2);
     if (val.isUndef() && val2 == l_False) {
         propStats.propsTri++;
-        if (simple) enqueue(i->getOtherLit(), PropBy(~p, i->getOtherLit2()));
-        else        addHyperBin(i->getOtherLit(), ~p, i->getOtherLit2());
+        if (simple) {
+            if (doLHBR
+                && solver != NULL
+                && varData[p.var()].reason.getType() == binary_t
+                && varData[otherLit2.var()].reason.getType() == binary_t
+                && varData[otherLit2.var()].reason.getOtherLit() == varData[p.var()].reason.getOtherLit()
+            ) {
+                Lit lit = varData[p.var()].reason.getOtherLit();
+                solver->attachBinClause(lit, otherLit, true, false);
+                enqueue(otherLit, PropBy(lit));
+                propStats.triLHBR++;
+            } else {
+                enqueue(otherLit, PropBy(~p, otherLit2));
+            }
+        } else {
+            addHyperBin(otherLit, ~p, otherLit2);
+        }
         return PROP_SOMETHING;
     } else if (val == l_False && val2.isUndef()) {
         propStats.propsTri++;
-        if (simple) enqueue(i->getOtherLit2(), PropBy(~p, i->getOtherLit()));
-        else        addHyperBin(i->getOtherLit2(), ~p, i->getOtherLit());
+        if (simple) {
+            if (doLHBR
+                && solver != NULL
+                && varData[p.var()].reason.getType() == binary_t
+                && varData[otherLit.var()].reason.getType() == binary_t
+                && varData[otherLit.var()].reason.getOtherLit() == varData[p.var()].reason.getOtherLit()
+            ) {
+                Lit lit = varData[p.var()].reason.getOtherLit();
+                solver->attachBinClause(lit, otherLit2, true, false);
+                enqueue(otherLit2, PropBy(lit));
+                propStats.triLHBR++;
+            } else {
+                enqueue(otherLit2, PropBy(~p, otherLit));
+            }
+        } else {
+            addHyperBin(otherLit2, ~p, otherLit);
+        }
         return PROP_SOMETHING;
     } else if (val == l_False && val2 == l_False) {
         #ifdef VERBOSE_DEBUG_FULLPROP
@@ -372,7 +434,7 @@ PropResult PropEngine::propTriClause(
     return PROP_NOTHING;
 }
 
-PropBy PropEngine::propagate()
+PropBy PropEngine::propagate(Solver* solver)
 {
     PropBy confl;
 
@@ -431,7 +493,7 @@ PropBy PropEngine::propagate()
             if (i->isTriClause()) {
                 *j++ = *i;
                 //Propagate tri clause
-                ret = propTriClause<true>(i, p, confl);
+                ret = propTriClause<true>(i, p, confl, solver);
                  if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     //Conflict or propagated something
                     i++;
@@ -444,7 +506,7 @@ PropBy PropEngine::propagate()
             } //end TRICLAUSE
 
             if (i->isClause()) {
-                ret = propNormalClause<true>(i, j, p, confl);
+                ret = propNormalClause<true>(i, j, p, confl, solver);
                  if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     //Conflict or propagated something
                     i++;
@@ -579,7 +641,7 @@ Lit PropEngine::propagateFull()
 
             if (i->isTriClause()) {
                 *j++ = *i;
-                ret = propTriClause<false>(i, p, confl);
+                ret = propTriClause<false>(i, p, confl, NULL);
                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     i++;
                     break;
@@ -590,7 +652,7 @@ Lit PropEngine::propagateFull()
             }
 
             if (i->isClause()) {
-                ret = propNormalClause<false>(i, j, p, confl);
+                ret = propNormalClause<false>(i, j, p, confl, NULL);
                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
                     i++;
                     break;

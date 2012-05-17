@@ -43,6 +43,7 @@ using std::set;
 #include "SolverConf.h"
 #include "ImplCache.h"
 #include "ClauseAllocator.h"
+class Solver;
 
 //#define VERBOSE_DEBUG_FULLPROP
 
@@ -147,6 +148,7 @@ public:
         ClauseAllocator* clAllocator
         , const AgilityData& agilityData
         , const bool _updateGlues
+        , const bool _doLHBR
     );
 
     // Variable mode:
@@ -178,6 +180,7 @@ protected:
     void     cancelZeroLight(); ///<Backtrack until level 0, without updating agility, etc.
     template<class T> uint16_t calcGlue(const T& ps); ///<Calculates the glue of a clause
     bool updateGlues;
+    bool doLHBR;
     PropStats propStats;
 
 
@@ -243,7 +246,10 @@ protected:
     // Propagating
     ////////////////
     void         newDecisionLevel();                       ///<Begins a new decision level.
-    PropBy       propagate(); ///<Perform unit propagation. Returns possibly conflicting clause.
+
+    ///Perform BCP
+    PropBy       propagate(Solver* solver = NULL);
+
     bool         propBinaryClause(const vec<Watched>::const_iterator i, const Lit p, PropBy& confl); ///<Propagate 2-long clause
 
     ///Propagate 3-long clause
@@ -252,6 +258,7 @@ protected:
         const vec<Watched>::const_iterator i
         , const Lit p
         , PropBy& confl
+        , Solver* solver
     );
 
     ///Propagate >3-long clause
@@ -261,6 +268,7 @@ protected:
         , vec<Watched>::iterator &j
         , const Lit p
         , PropBy& confl
+        , Solver* solver
     );
 
     //For hyper-bin and transitive reduction.

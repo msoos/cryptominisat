@@ -410,6 +410,8 @@ struct PropStats
         , propsTri(0)
         , propsLongIrred(0)
         , propsLongRed(0)
+        , triLHBR(0)
+        , longLHBR(0)
     {
     }
 
@@ -429,6 +431,10 @@ struct PropStats
         propsTri += other.propsTri;
         propsLongIrred += other.propsLongIrred;
         propsLongRed += other.propsLongRed;
+
+        //LHBR
+        longLHBR += other.longLHBR;
+        triLHBR += other.triLHBR;
 
         return *this;
     }
@@ -482,6 +488,16 @@ struct PropStats
             , 100.0*(double)propsLongRed/(double)propagations
             , "% of propagations"
         );
+
+        printStatsLine("c LHBR", (triLHBR + longLHBR)
+            , 100.0*(double)(triLHBR + longLHBR)/(double)(propsLongIrred + propsLongRed + propsTri)
+            , "% of long propagations"
+        );
+
+        printStatsLine("c LHBR only by 3-long", triLHBR
+            , 100.0*(double)triLHBR/(double)(triLHBR + longLHBR)
+            , "% of LHBR"
+        );
     }
 
     uint64_t propagations; ///<Number of propagations made
@@ -494,6 +510,10 @@ struct PropStats
     uint64_t propsTri;
     uint64_t propsLongIrred;
     uint64_t propsLongRed;
+
+    //Lazy hyper-binary clause added
+    uint64_t triLHBR; //LHBR by 3-long clauses
+    uint64_t longLHBR; //LHBR by 3+-long clauses
 };
 
 enum ConflCausedBy {

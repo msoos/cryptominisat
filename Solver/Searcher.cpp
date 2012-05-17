@@ -47,6 +47,7 @@ Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
             _solver->clAllocator
             , AgilityData(_conf.agilityG, _conf.agilityLimit)
             , _conf.updateGlues
+            , _conf.doLHBR
         )
 
         //variables
@@ -663,7 +664,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
         Lit failed;
         PropBy confl;
 
-        //If decision level==1, then try to do all the good stuff
+        //If decision level==1, then do hyperbin & transitive reduction
         if (decisionLevel() == 1) {
             stats.advancedPropCalled++;
             failed = propagateFull();
@@ -718,7 +719,8 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
             stats.hyperBinAdded += hyperBinResAll();
             stats.transRedRemoved += removeUselessBins();
         } else {
-            confl = propagate();
+            //Decision level is higher than 1, so must do normal propagation
+            confl = propagate(solver);
         }
 
         #ifdef VERBOSE_DEBUG
@@ -1038,6 +1040,8 @@ lbool Searcher::burstSearch()
     }
     const size_t numUnitsUntilNow = stats.learntUnits;
     const size_t numBinsUntilNow = stats.learntBins;
+    const size_t numTriLHBRUntilNow = propStats.triLHBR;
+    const size_t numLongLHBRUntilNow = propStats.longLHBR;
 
     //Save old config
     const double backup_rand = conf.random_var_freq;
@@ -1070,6 +1074,8 @@ lbool Searcher::burstSearch()
         << conf.burstSearchLen << "-long burst search "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
+        << " LHBR: "
+        << (propStats.triLHBR + propStats.longLHBR - numLongLHBRUntilNow - numTriLHBRUntilNow)
         << endl;
     }
 
@@ -1227,7 +1233,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         //Check if we should do SCC
         //cout << "numNewBinsSinceSCC: " << solver->numNewBinsSinceSCC << endl;
         const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
-        if (newZeroDepthAss > ((double)solver->getNumFreeVars()*0.001))  {
+        if (newZeroDepthAss > ((double)solver->getNumFreeVars()*0.005))  {
             cout << "newZeroDepthAss : " << newZeroDepthAss  << endl;
             lastCleanZeroDepthAssigns = trail.size();
             solver->clauseCleaner->removeAndCleanAll();
@@ -1236,7 +1242,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         //Eq-lit finding has been enabled? If so, let's see if there might be
         //a reason to do it
         if (conf.doFindAndReplaceEqLits
-            && solver->numNewBinsSinceSCC/2 > ((double)solver->getNumFreeVars()*0.003)
+            && solver->numNewBinsSinceSCC > ((double)solver->getNumFreeVars()*0.02)
         ) {
             solver->clauseCleaner->removeAndCleanAll();
 

@@ -405,6 +405,14 @@ void Main::parseCommandLine()
         , "Print implication graph DOT files (for input into graphviz package)")
     ;
 
+    po::options_description propOptions("Propagation options");
+    propOptions.add_options()
+    ("updateglue", po::value<int>(&conf.updateGlues)->default_value(conf.updateGlues)
+        , "Update glues while propagating")
+    ("lhbr", po::value<int>(&conf.doLHBR)->default_value(conf.doLHBR)
+        , "Perform lazy hyper-binary resolution while propagating")
+    ;
+
     po::options_description miscOptions("Misc options");
     miscOptions.add_options()
     ("presimp", po::value<int>(&conf.doPerformPreSimp)->default_value(conf.doPerformPreSimp)
@@ -416,8 +424,6 @@ void Main::parseCommandLine()
         , "Sort watches according to size")
     ("calcreach", po::value<int>(&conf.doCalcReach)->default_value(conf.doCalcReach)
         , "Calculate literal reachability")
-    ("updateGlues", po::value<int>(&conf.updateGlues)->default_value(conf.updateGlues)
-        , "Update glues while propagating")
     ("cache", po::value<int>(&conf.doCache)->default_value(conf.doCache)
         , "Use implication cache. Less memory used, disables LOTS")
     ("renumber", po::value<int>(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
@@ -435,6 +441,7 @@ void Main::parseCommandLine()
     po::options_description cmdline_options;
     cmdline_options
     .add(generalOptions)
+    .add(propOptions)
     .add(reduceDBOptions)
     .add(varPickOptions)
     .add(conflOptions)
