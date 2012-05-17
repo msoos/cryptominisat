@@ -23,7 +23,7 @@ add_library(cryptoms
     CalcDefPolars.cpp
     SolutionExtender.cpp
     ImplCache.cpp
-    CommandControl.cpp
+    Searcher.cpp
     ThreadControl.cpp
     XorFinder.cpp
     GateFinder.cpp

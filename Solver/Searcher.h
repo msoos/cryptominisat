@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#ifndef __COMMAND_CONTROL_H__
-#define __COMMAND_CONTROL_H__
+#ifndef __SEARCHER_H__
+#define __SEARCHER_H__
 
 #include "PropEngine.h"
 #include "SolverTypes.h"
@@ -31,11 +31,11 @@ using std::string;
 using std::cout;
 using std::endl;
 
-class CommandControl : public PropEngine
+class Searcher : public PropEngine
 {
     public:
-        CommandControl(const SolverConf& _conf, ThreadControl* control);
-        ~CommandControl();
+        Searcher(const SolverConf& _conf, ThreadControl* control);
+        ~Searcher();
 
         //////////////////////////////
         // Problem specification:
@@ -403,9 +403,9 @@ class CommandControl : public PropEngine
         };
 
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
-            const CommandControl* cc;
+            const Searcher* cc;
             const ThreadControl* control;
-            VarFilter(const CommandControl* _cc, ThreadControl* _control) :
+            VarFilter(const Searcher* _cc, ThreadControl* _control) :
                 cc(_cc)
                 ,control(_control)
             {}
@@ -437,12 +437,12 @@ class CommandControl : public PropEngine
         uint32_t var_inc_divider;
 };
 
-inline void CommandControl::varDecayActivity()
+inline void Searcher::varDecayActivity()
 {
     var_inc *= var_inc_multiplier;
     var_inc /= var_inc_divider;
 }
-inline void CommandControl::varBumpActivity(Var var)
+inline void Searcher::varBumpActivity(Var var)
 {
     if ( (activities[var] += var_inc) > (0x1U) << 24 ) {
         // Rescale:
@@ -469,35 +469,35 @@ inline void CommandControl::varBumpActivity(Var var)
         order_heap.decrease(var);
 }
 
-inline uint32_t CommandControl::abstractLevel(const Var x) const
+inline uint32_t Searcher::abstractLevel(const Var x) const
 {
     return ((uint32_t)1) << (varData[x].level % 32);
 }
 
-inline lbool CommandControl::solve(const uint64_t maxConfls)
+inline lbool Searcher::solve(const uint64_t maxConfls)
 {
     vector<Lit> tmp;
     return solve(tmp, maxConfls);
 }
 
-inline uint32_t CommandControl::getSavedActivity(Var var) const
+inline uint32_t Searcher::getSavedActivity(Var var) const
 {
     return activities[var];
 }
 
-inline uint32_t CommandControl::getVarInc() const
+inline uint32_t Searcher::getVarInc() const
 {
     return var_inc;
 }
 
-inline const CommandControl::Stats& CommandControl::getStats() const
+inline const Searcher::Stats& Searcher::getStats() const
 {
     return stats;
 }
 
-inline void CommandControl::addInPartialSolvingStat()
+inline void Searcher::addInPartialSolvingStat()
 {
     stats.cpu_time = cpuTime() - startTime;
 }
 
-#endif //__COMMAND_CONTROL_H__
+#endif //__SEARCHER_H__

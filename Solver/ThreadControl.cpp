@@ -22,7 +22,7 @@
 #include "ThreadControl.h"
 #include "VarReplacer.h"
 #include "time_mem.h"
-#include "CommandControl.h"
+#include "Searcher.h"
 #include "SCCFinder.h"
 #include "Subsumer.h"
 #include "FailedLitSearcher.h"
@@ -40,7 +40,7 @@ using std::cout;
 using std::endl;
 
 ThreadControl::ThreadControl(const SolverConf& _conf) :
-    CommandControl(_conf, this)
+    Searcher(_conf, this)
     , backupActivityInc(_conf.var_inc_start)
     , mtrand(_conf.origSeed)
     , nbReduceDB(0)
@@ -441,7 +441,7 @@ static void printArray(const vector<Var>& array, const std::string& str)
     cout << endl;
 }
 
-//Beware. Cannot be called while CommandControl is running.
+//Beware. Cannot be called while Searcher is running.
 void ThreadControl::renumberVariables()
 {
     double myTime = cpuTime();
@@ -612,7 +612,7 @@ Var ThreadControl::newVar(const bool dvar)
     backupPolarity.push_back(false);
     candidateForBothProp.push_back(TwoSignAppearances());
 
-    CommandControl::newVar();
+    Searcher::newVar();
 
     varReplacer->newVar();
     subsumer->newVar();
@@ -860,8 +860,8 @@ lbool ThreadControl::solve(const vector<Lit>* _assumptions)
             numConfls+= (double)nextCleanLimitInc * std::pow(conf.increaseClean, i);
         }
 
-        status = CommandControl::solve(assumptions, numConfls);
-        sumStats += CommandControl::getStats();
+        status = Searcher::solve(assumptions, numConfls);
+        sumStats += Searcher::getStats();
         sumPropStats += propStats;
         propStats.clear();
 
@@ -872,12 +872,12 @@ lbool ThreadControl::solve(const vector<Lit>* _assumptions)
         backupPolarity.resize(varData.size());
         for (size_t i = 0; i < varData.size(); i++) {
             backupPolarity[i] = varData[i].polarity;
-            backupActivity[i] = CommandControl::getSavedActivity(i);
+            backupActivity[i] = Searcher::getSavedActivity(i);
         }
-        backupActivityInc = CommandControl::getVarInc();
+        backupActivityInc = Searcher::getVarInc();
 
         if (status != l_False) {
-            CommandControl::resetStats();
+            Searcher::resetStats();
             fullReduce();
         }
 
@@ -1109,7 +1109,7 @@ Clause* ThreadControl::newClauseByThread(const vector<Lit>& lits, const uint32_t
         case 2:
             break;
         default:
-            cl = clAllocator->Clause_new(lits, CommandControl::sumConflicts());
+            cl = clAllocator->Clause_new(lits, Searcher::sumConflicts());
             cl->makeLearnt(glue);
             learnts.push_back(cl);
             break;
@@ -1849,7 +1849,7 @@ uint32_t ThreadControl::getNumDecisionVars() const
 
 void ThreadControl::setNeedToInterrupt()
 {
-    CommandControl::setNeedToInterrupt();
+    Searcher::setNeedToInterrupt();
 
     needToInterrupt = true;
 }

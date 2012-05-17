@@ -27,7 +27,7 @@
 #include "SolverTypes.h"
 #include "Clause.h"
 #include "ThreadControl.h"
-#include "CommandControl.h"
+#include "Searcher.h"
 #include "time_mem.h"
 #include "Subsumer.h"
 #define BASE_DATA_TYPE char

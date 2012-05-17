@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "CommandControl.h"
+#include "Searcher.h"
 #include "Subsumer.h"
 #include "CalcDefPolars.h"
 #include "time_mem.h"
@@ -42,7 +42,7 @@ using std::endl;
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control) :
+Searcher::Searcher(const SolverConf& _conf, ThreadControl* _control) :
         PropEngine(
             _control->clAllocator
             , AgilityData(_conf.agilityG, _conf.agilityLimit)
@@ -59,11 +59,11 @@ CommandControl::CommandControl(const SolverConf& _conf, ThreadControl* _control)
     mtrand.seed(conf.origSeed);
 }
 
-CommandControl::~CommandControl()
+Searcher::~Searcher()
 {
 }
 
-Var CommandControl::newVar(const bool dvar)
+Var Searcher::newVar(const bool dvar)
 {
     const Var var = PropEngine::newVar(dvar);
     assert(var == activities.size());
@@ -78,7 +78,7 @@ Var CommandControl::newVar(const bool dvar)
 /**
 @brief Revert to the state at given level
 */
-void CommandControl::cancelUntil(uint32_t level)
+void Searcher::cancelUntil(uint32_t level)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Canceling until level " << level;
@@ -113,7 +113,7 @@ void CommandControl::cancelUntil(uint32_t level)
     #endif
 }
 
-void CommandControl::analyzeHelper(
+void Searcher::analyzeHelper(
     const Lit lit
     , int& pathC
     , vector<Lit>& out_learnt
@@ -154,7 +154,7 @@ void CommandControl::analyzeHelper(
 
 Post-condition: 'out_learnt[0]' is the asserting literal at level 'out_btlevel'
 */
-Clause* CommandControl::analyze(
+Clause* Searcher::analyze(
     PropBy confl
     , vector<Lit>& out_learnt
     , uint32_t& out_btlevel
@@ -330,7 +330,7 @@ Clause* CommandControl::analyze(
 
 }
 
-bool CommandControl::subset(const vector<Lit>& A, const Clause& B)
+bool Searcher::subset(const vector<Lit>& A, const Clause& B)
 {
     //Set seen
     for (uint32_t i = 0; i != B.size(); i++)
@@ -351,7 +351,7 @@ bool CommandControl::subset(const vector<Lit>& A, const Clause& B)
     return ret;
 }
 
-void CommandControl::prune_removable(vector<Lit>& out_learnt)
+void Searcher::prune_removable(vector<Lit>& out_learnt)
 {
     int j = 1;
     for (int i = 1, sz = out_learnt.size(); i < sz; i++) {
@@ -363,7 +363,7 @@ void CommandControl::prune_removable(vector<Lit>& out_learnt)
     out_learnt.resize(j);
 }
 
-void CommandControl::find_removable(const vector<Lit>& out_learnt, const uint32_t abstract_level)
+void Searcher::find_removable(const vector<Lit>& out_learnt, const uint32_t abstract_level)
 {
     bool found_some = false;
     trace_lits_minim.clear();
@@ -380,7 +380,7 @@ void CommandControl::find_removable(const vector<Lit>& out_learnt, const uint32_
        res_removable();
 }
 
-int CommandControl::quick_keeper(Lit p, uint32_t abstract_level, const bool maykeep)
+int Searcher::quick_keeper(Lit p, uint32_t abstract_level, const bool maykeep)
 {
     // See if I can kill myself right away.
     // maykeep == 1 if I am in the original conflict clause.
@@ -397,7 +397,7 @@ int CommandControl::quick_keeper(Lit p, uint32_t abstract_level, const bool mayk
 //seen[x.var()] = 2  -> cannot be removed
 //seen[x.var()] = 2 or 4 or 8 -> DFS has been done
 
-int CommandControl::dfs_removable(Lit p, uint32_t abstract_level)
+int Searcher::dfs_removable(Lit p, uint32_t abstract_level)
 {
     int pseen = seen[p.var()];
     assert((pseen & (2|4|8)) == 0);
@@ -487,7 +487,7 @@ int CommandControl::dfs_removable(Lit p, uint32_t abstract_level)
     return found_some;
 }
 
-void CommandControl::mark_needed_removable(const Lit p)
+void Searcher::mark_needed_removable(const Lit p)
 {
     const PropBy rp = varData[p.var()].reason;
     switch (rp.getType()) {
@@ -543,7 +543,7 @@ void CommandControl::mark_needed_removable(const Lit p)
 }
 
 
-int  CommandControl::res_removable()
+int  Searcher::res_removable()
 {
     int minim_res_ctr = 0;
     while (trace_lits_minim.size() > 0){
@@ -566,7 +566,7 @@ int  CommandControl::res_removable()
 Calculates the (possibly empty) set of assumptions that led to the assignment of 'p', and
 stores the result in 'out_conflict'.
 */
-void CommandControl::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
+void Searcher::analyzeFinal(const Lit p, vector<Lit>& out_conflict)
 {
     out_conflict.clear();
     out_conflict.push_back(p);
@@ -635,7 +635,7 @@ clauseset is found. If all variables are decision variables, this means
 that the clause set is satisfiable. 'l_False' if the clause set is
 unsatisfiable. 'l_Undef' if the bound on number of conflicts is reached.
 */
-lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
+lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
 {
     assert(ok);
 
@@ -654,7 +654,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
 
     //Debug
     #ifdef VERBOSE_DEBUG
-    cout << "c started CommandControl::search()" << endl;
+    cout << "c started Searcher::search()" << endl;
     #endif //VERBOSE_DEBUG
 
     //Loop until restart or finish (SAT/UNSAT)
@@ -722,7 +722,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
         }
 
         #ifdef VERBOSE_DEBUG
-        cout << "c CommandControl::search() has finished propagation" << endl;
+        cout << "c Searcher::search() has finished propagation" << endl;
         #endif //VERBOSE_DEBUG
 
         if (!confl.isNULL()) {
@@ -759,7 +759,7 @@ lbool CommandControl::search(SearchFuncParams _params, uint64_t& rest)
 @returns l_Undef if it should restart instead. l_False if it reached UNSAT
          (through simplification)
 */
-lbool CommandControl::new_decision()
+lbool Searcher::new_decision()
 {
     Lit next = lit_Undef;
     while (decisionLevel() < assumptions.size()) {
@@ -797,7 +797,7 @@ lbool CommandControl::new_decision()
     return l_Undef;
 }
 
-void CommandControl::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
+void Searcher::checkNeedRestart(SearchFuncParams& params, uint64_t& rest)
 {
     if (needToInterrupt)  {
         if (conf.verbosity >= 3)
@@ -857,7 +857,7 @@ conflict analysis, but this is the code that actually replaces the original
 clause with that of the shorter one
 @returns l_False if UNSAT
 */
-bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
+bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Handling conflict" << endl;
@@ -972,7 +972,7 @@ bool CommandControl::handle_conflict(SearchFuncParams& params, PropBy confl)
     return true;
 }
 
-void CommandControl::genRandomVarActMultDiv()
+void Searcher::genRandomVarActMultDiv()
 {
     uint32_t tosubstract = conf.var_inc_variability-mtrand.randInt(2*conf.var_inc_variability);
     var_inc_multiplier = conf.var_inc_multiplier - tosubstract;
@@ -991,7 +991,7 @@ void CommandControl::genRandomVarActMultDiv()
 /**
 @brief Initialises model, restarts, learnt cluause cleaning, burst-search, etc.
 */
-void CommandControl::resetStats()
+void Searcher::resetStats()
 {
     assert(ok);
 
@@ -1028,7 +1028,7 @@ void CommandControl::resetStats()
     lastCleanZeroDepthAssigns = trail.size();
 }
 
-lbool CommandControl::burstSearch()
+lbool Searcher::burstSearch()
 {
     //Print what we will be doing
     if (conf.verbosity >= 2) {
@@ -1076,7 +1076,7 @@ lbool CommandControl::burstSearch()
     return status;
 }
 
-void CommandControl::printRestartStats()
+void Searcher::printRestartStats()
 {
     printBaseStats();
     if (conf.printFullStats)
@@ -1087,7 +1087,7 @@ void CommandControl::printRestartStats()
     cout << endl;
 }
 
-void CommandControl::printBaseStats()
+void Searcher::printBaseStats()
 {
     cout
     << "c"
@@ -1098,7 +1098,7 @@ void CommandControl::printBaseStats()
     ;
 }
 
-void CommandControl::printSearchStats()
+void Searcher::printSearchStats()
 {
     cout
     << " glue"
@@ -1141,7 +1141,7 @@ polarities, and start the loop. Finally, we either report UNSAT or extend the
 found solution with all the intermediary simplifications (e.g. variable
 elimination, etc.) and output the solution.
 */
-lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
+lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 {
     assert(ok);
     assert(qhead == trail.size());
@@ -1277,7 +1277,7 @@ lbool CommandControl::solve(const vector<Lit>& assumps, const uint64_t maxConfls
 
     stats.cpu_time = cpuTime() - startTime;
     if (conf.verbosity >= 4) {
-        cout << "c CommandControl::solve() finished"
+        cout << "c Searcher::solve() finished"
         << " status: " << status
         << " control->getNextCleanLimit(): " << control->getNextCleanLimit()
         << " numConflicts : " << stats.conflStats.numConflicts
@@ -1308,7 +1308,7 @@ inline int64_t abs64(int64_t a)
     return a;
 }
 
-bool CommandControl::pickPolarity(const Var var)
+bool Searcher::pickPolarity(const Var var)
 {
     switch(conf.polarity_mode) {
         case polarity_false:
@@ -1342,7 +1342,7 @@ Then, we pick a sign (True/False):
 totally randomly
 \li Otherwise, we simply take the saved polarity
 */
-Lit CommandControl::pickBranchLit()
+Lit Searcher::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
     cout << "decision level: " << decisionLevel() << " ";
@@ -1421,7 +1421,7 @@ Lit CommandControl::pickBranchLit()
 Only uses binary and tertiary clauses already in the watchlists in native
 form to carry out the forward-self-subsuming resolution
 */
-void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
+void Searcher::minimiseLearntFurther(vector<Lit>& cl)
 {
     assert(conf.doCache);
     stats.OTFShrinkAttempted++;
@@ -1502,7 +1502,7 @@ void CommandControl::minimiseLearntFurther(vector<Lit>& cl)
     #endif
 }
 
-void CommandControl::insertVarOrder(const Var x)
+void Searcher::insertVarOrder(const Var x)
 {
     if (!order_heap.inHeap(x)
         && control->decision_var[x]
@@ -1511,17 +1511,17 @@ void CommandControl::insertVarOrder(const Var x)
     }
 }
 
-bool CommandControl::VarFilter::operator()(uint32_t var) const
+bool Searcher::VarFilter::operator()(uint32_t var) const
 {
     return (cc->value(var) == l_Undef && control->decision_var[var]);
 }
 
-void CommandControl::setNeedToInterrupt()
+void Searcher::setNeedToInterrupt()
 {
     needToInterrupt = true;
 }
 
-void CommandControl::printAgilityStats()
+void Searcher::printAgilityStats()
 {
     cout
     << ", confl: " << std::setw(6) << stats.conflStats.numConflicts
@@ -1540,12 +1540,12 @@ void CommandControl::printAgilityStats()
     << endl;
 }
 
-uint64_t CommandControl::sumConflicts() const
+uint64_t Searcher::sumConflicts() const
 {
     return control->sumStats.conflStats.numConflicts + stats.conflStats.numConflicts;
 }
 
-size_t CommandControl::hyperBinResAll()
+size_t Searcher::hyperBinResAll()
 {
     size_t added = 0;
 
@@ -1562,7 +1562,7 @@ size_t CommandControl::hyperBinResAll()
     return added;
 }
 
-size_t CommandControl::removeUselessBins()
+size_t Searcher::removeUselessBins()
 {
     size_t removed = 0;
     if (conf.doRemUselessBins) {
@@ -1599,7 +1599,7 @@ size_t CommandControl::removeUselessBins()
 }
 
 //Only used to generate nice Graphviz graphs
-string CommandControl::simplAnalyseGraph(
+string Searcher::simplAnalyseGraph(
     PropBy conflHalf
     , vector<Lit>& out_learnt
     , uint32_t& out_btlevel, uint32_t &glue
@@ -1667,7 +1667,7 @@ string CommandControl::simplAnalyseGraph(
 }
 
 //Only used to generate nice Graphviz graphs
-void CommandControl::genConfGraph(const PropBy conflPart)
+void Searcher::genConfGraph(const PropBy conflPart)
 {
     assert(ok);
     assert(!conflPart.isNULL());

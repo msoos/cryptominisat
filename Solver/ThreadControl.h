@@ -30,7 +30,7 @@
 #include "ImplCache.h"
 #include "SolverConf.h"
 #include "PropEngine.h"
-#include "CommandControl.h"
+#include "Searcher.h"
 #include "GitSHA1.h"
 
 using std::vector;
@@ -48,7 +48,7 @@ class SolutionExtender;
 class ImplCache;
 class BothProp;
 
-class ThreadControl : public CommandControl
+class ThreadControl : public Searcher
 {
     public:
         ThreadControl(const SolverConf& _conf);
@@ -416,7 +416,7 @@ class ThreadControl : public CommandControl
         friend class CompleteDetachReatacher;
         friend class CalcDefPolars;
         friend class ImplCache;
-        friend class CommandControl;
+        friend class Searcher;
         friend class XorFinder;
         friend class GateFinder;
         friend class BothProp;
@@ -612,7 +612,7 @@ inline uint32_t ThreadControl::getVerbosity() const
     return conf.verbosity;
 }
 
-inline const CommandControl::Stats& ThreadControl::getStats() const
+inline const Searcher::Stats& ThreadControl::getStats() const
 {
     return sumStats;
 }
@@ -639,8 +639,8 @@ inline uint32_t ThreadControl::getSavedActivityInc() const
 
 inline void ThreadControl::addInPartialSolvingStat()
 {
-    CommandControl::addInPartialSolvingStat();
-    sumStats += CommandControl::getStats();
+    Searcher::addInPartialSolvingStat();
+    sumStats += Searcher::getStats();
     sumPropStats += propStats;
 }
 
