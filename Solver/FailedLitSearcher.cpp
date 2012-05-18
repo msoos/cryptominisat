@@ -334,6 +334,7 @@ bool FailedLitSearcher::tryThis(const Lit lit, const bool first)
         const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
         if (solver->conf.doCache
             && thisLit != lit
+            && numElemsSet <= solver->conf.cacheUpdateCutoff
             //&& cacheUpdated[(~ancestor).toInt()] == 0
         ) {
             //Update stats/markings

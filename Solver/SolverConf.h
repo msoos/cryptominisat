@@ -109,6 +109,7 @@ class SolverConf
         int      doBothProp;
         int      doRemUselessBins;   ///<Should try to remove useless binary clauses at the beginning of solving?
         int      doCache; ///< Allow storing the cache
+        size_t   cacheUpdateCutoff; ///<The trail size of the propagated literal must be smaller than this to bother updating the cache of all the variables below
         int      doExtendedSCC; ///< Allow extending SCC with the cache
         int      doGateFind; ///< Find OR gates
         size_t    maxGateSize;

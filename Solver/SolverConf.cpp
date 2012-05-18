@@ -91,6 +91,7 @@ SolverConf::SolverConf() :
         , doBothProp       (true)
         , doRemUselessBins (true)
         , doCache          (true)
+        , cacheUpdateCutoff(100)
         , doExtendedSCC    (false)
         , doGateFind       (true)
         , maxGateSize      (20)

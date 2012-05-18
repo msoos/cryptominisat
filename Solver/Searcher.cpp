@@ -691,7 +691,7 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
 
             //Update cache
             size_t numElems = trail.size() - trail_lim[0];
-            if (numElems < 300) {
+            if (numElems <= solver->conf.cacheUpdateCutoff) {
                 //cout << "trail size: " << trail.size() - trail_lim[0] << endl;
                 for (int64_t c = trail.size()-1; c > (int64_t)trail_lim[0]; c--) {
                     const Lit thisLit = trail[c];
