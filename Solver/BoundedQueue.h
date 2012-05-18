@@ -86,7 +86,6 @@ public:
         if (totalNumElemsMidLong == 0)
             return 0;
 
-        assert(isvalid());
         return (double)sumOfElemsMidLong/(double)totalNumElemsMidLong;
     }
 
