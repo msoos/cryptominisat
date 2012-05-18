@@ -39,7 +39,7 @@ using std::string;
 
 class VarReplacer;
 class ClauseCleaner;
-class FailedLitSearcher;
+class Prober;
 class Subsumer;
 class SCCFinder;
 class ClauseVivifier;
@@ -411,7 +411,7 @@ class Solver : public Searcher
         friend class SolutionExtender;
         friend class VarReplacer;
         friend class SCCFinder;
-        friend class FailedLitSearcher;
+        friend class Prober;
         friend class ClauseVivifier;
         friend class Subsumer;
         friend class ClauseCleaner;
@@ -422,7 +422,7 @@ class Solver : public Searcher
         friend class XorFinder;
         friend class GateFinder;
         friend class PropEngine;
-        FailedLitSearcher   *failedLitSearcher;
+        Prober              *prober;
         Subsumer            *subsumer;
         SCCFinder           *sCCFinder;
         ClauseVivifier      *clauseVivifier;

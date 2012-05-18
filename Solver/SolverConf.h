@@ -74,7 +74,7 @@ class SolverConf
 
         //Burst?
         int      doPerformPreSimp; //Perform simplification at startup
-        double    failedLitMultiplier; //Increase failed lit time by this multiplier
+        double    probeMultiplier; //Increase failed lit time by this multiplier
 
         //Glues
         int       updateGlues;
@@ -105,9 +105,9 @@ class SolverConf
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving
         int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doMinimLearntMore;  ///<Perform learnt-clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
-        int      doFailedLit;        ///<Carry out Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
+        int      doProbe;        ///<Carry out Failed literal probing + doubly propagated literal detection + 2-long xor clause detection during failed literal probing + hyper-binary resoolution
         int      doBothProp;
-        int      doRemUselessBins;   ///<Should try to remove useless binary clauses at the beginning of solving?
+        int      doTransRed;   ///<Should carry out transitive reduction
         int      doCache; ///< Allow storing the cache
         size_t   cacheUpdateCutoff; ///<The trail size of the propagated literal must be smaller than this to bother updating the cache of all the variables below
         int      doExtendedSCC; ///< Allow extending SCC with the cache

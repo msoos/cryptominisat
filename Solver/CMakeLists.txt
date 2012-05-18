@@ -12,7 +12,7 @@ add_library(cryptoms
     PackedRow.cpp
     VarReplacer.cpp
     ClauseCleaner.cpp
-    FailedLitSearcher.cpp
+    Prober.cpp
     Subsumer.cpp
     ClauseAllocator.cpp
     CompleteDetachReattacher.cpp

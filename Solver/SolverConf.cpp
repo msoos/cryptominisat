@@ -26,7 +26,7 @@ SolverConf::SolverConf() :
         var_inc_start(128)
         , var_inc_multiplier(11)
         , var_inc_divider(10)
-        , var_inc_variability(1)
+        , var_inc_variability(0)
         , rarely_bump_var_act(false)
 
         //Clause cleaning
@@ -57,7 +57,7 @@ SolverConf::SolverConf() :
         , agilityLimit              (0.20)
 
         , doPerformPreSimp (true)
-        , failedLitMultiplier(1.0)
+        , probeMultiplier(1.0)
 
         //Glues
         , updateGlues(true)
@@ -87,9 +87,9 @@ SolverConf::SolverConf() :
         , doClausVivif     (true)
         , doSortWatched    (true)
         , doMinimLearntMore(true)
-        , doFailedLit      (true)
+        , doProbe          (true)
         , doBothProp       (true)
-        , doRemUselessBins (true)
+        , doTransRed (true)
         , doCache          (true)
         , cacheUpdateCutoff(100)
         , doExtendedSCC    (false)

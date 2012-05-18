@@ -306,17 +306,17 @@ void Main::parseCommandLine()
         , "Add new vars at specific 'newVar()' points in 6CNF file")
     ;
 
-    po::options_description failedLitOptions("Failed lit options");
-    failedLitOptions.add_options()
+    po::options_description probeOptions("Probing lit options");
+    probeOptions.add_options()
     ("bothprop", po::value<int>(&conf.doBothProp)->default_value(conf.doBothProp)
         , "Do propagations solely to propagate the same value twice")
-    ("failedlit", po::value<int>(&conf.doFailedLit)->default_value(conf.doFailedLit)
-        , "Failed literal probing")
-    ("failmultip", po::value<double>(&conf.failedLitMultiplier)->default_value(conf.failedLitMultiplier)
+    ("probe", po::value<int>(&conf.doProbe)->default_value(conf.doProbe)
+        , "Carry out probing")
+    ("probemultip", po::value<double>(&conf.probeMultiplier)->default_value(conf.probeMultiplier)
       , "Do this times more/less failed lit than default")
     ("hyperbinres", po::value<int>(&conf.doHyperBinRes)->default_value(conf.doHyperBinRes)
         , "Add binary clauses when doing failed lit probing.")
-    ("removebins", po::value<int>(&conf.doRemUselessBins)->default_value(conf.doRemUselessBins)
+    ("transred", po::value<int>(&conf.doTransRed)->default_value(conf.doTransRed)
         , "Remove useless binary clauses (transitive reduction)")
     ;
 
@@ -448,7 +448,7 @@ void Main::parseCommandLine()
     .add(varPickOptions)
     .add(conflOptions)
     .add(iterativeOptions)
-    .add(failedLitOptions)
+    .add(probeOptions)
     .add(sateliteOptions)
     .add(xorSateliteOptions)
     //.add(xorSateliteOptions)

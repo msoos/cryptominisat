@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#ifndef FAILEDLITSEARCHER_H
-#define FAILEDLITSEARCHER_H
+#ifndef __PROBER_H__
+#define __PROBER_H__
 
 #include <set>
 #include <map>
@@ -55,11 +55,11 @@ Perfoms in asymmBranch(): asymmetric branching, heuristically. Best paper
 on this is 'Vivifying Propositional Clausal Formulae', though we do it much
 more heuristically
 */
-class FailedLitSearcher {
+class Prober {
     public:
-        FailedLitSearcher(Solver* _solver);
+        Prober(Solver* _solver);
 
-        bool search();
+        bool probe();
 
         struct Stats
         {
@@ -336,11 +336,11 @@ class FailedLitSearcher {
         uint32_t numCalls;
 };
 
-inline const FailedLitSearcher::Stats& FailedLitSearcher::getStats() const
+inline const Prober::Stats& Prober::getStats() const
 {
     return globalStats;
 }
 
 
-#endif //FAILEDVARSEARCHER_H
+#endif //__PROBER_H__
 

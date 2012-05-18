@@ -1571,7 +1571,7 @@ size_t Searcher::hyperBinResAll()
 size_t Searcher::removeUselessBins()
 {
     size_t removed = 0;
-    if (conf.doRemUselessBins) {
+    if (conf.doTransRed) {
         for(std::set<BinaryClause>::iterator
             it = uselessBin.begin()
             , end = uselessBin.end()

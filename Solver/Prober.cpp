@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "FailedLitSearcher.h"
+#include "Prober.h"
 
 #include <iomanip>
 #include <utility>
@@ -41,9 +41,9 @@ using std::endl;
 //#define VERBOSE_DEUBUG
 
 /**
-@brief Sets up variables that are used between calls to search()
+@brief Sets up variables that are used between calls to probe()
 */
-FailedLitSearcher::FailedLitSearcher(Solver* _solver):
+Prober::Prober(Solver* _solver):
     solver(_solver)
     , tmpPs(2)
     , numPropsMultiplier(1.0)
@@ -67,7 +67,7 @@ struct ActSorter
     }
 };
 
-void FailedLitSearcher::sortAndResetCandidates()
+void Prober::sortAndResetCandidates()
 {
     candidates.clear();
     candidates.resize(solver->candidateForBothProp.size());
@@ -107,7 +107,7 @@ void FailedLitSearcher::sortAndResetCandidates()
 }
 
 
-bool FailedLitSearcher::search()
+bool Prober::probe()
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
@@ -141,7 +141,7 @@ bool FailedLitSearcher::search()
         numPropsMultiplier = std::max(numPropsMultiplier*1.3, 1.6);
     else
         numPropsMultiplier = 1.0;
-    numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.failedLitMultiplier);
+    numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.probeMultiplier);
     numPropsTodo = (double)numPropsTodo * std::pow(numCalls, 0.2);
 
     //For var-based failed literal probing
@@ -258,7 +258,7 @@ end:
     return solver->ok;
 }
 
-bool FailedLitSearcher::tryThis(const Lit lit, const bool first)
+bool Prober::tryThis(const Lit lit, const bool first)
 {
     if (first) {
         propagated.removeThese(propagatedBitSet);
@@ -383,7 +383,7 @@ bool FailedLitSearcher::tryThis(const Lit lit, const bool first)
 }
 
 #ifdef DEBUG_REMOVE_USELESS_BIN
-void FailedLitSearcher::fillTestUselessBinRemoval(const Lit lit)
+void Prober::fillTestUselessBinRemoval(const Lit lit)
 {
     origNLBEnqueuedVars.clear();
     solver->newDecisionLevel();
@@ -406,7 +406,7 @@ void FailedLitSearcher::fillTestUselessBinRemoval(const Lit lit)
     solver->cancelZeroLight();
 }
 
-void FailedLitSearcher::testBinRemoval(const Lit origLit)
+void Prober::testBinRemoval(const Lit origLit)
 {
     solver->newDecisionLevel();
     solver->enqueue(origLit);
@@ -437,7 +437,7 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
 }
 #endif
 
-// void FailedLitSearcher::fillToTry(vector<Var>& toTry)
+// void Prober::fillToTry(vector<Var>& toTry)
 // {
 //     uint32_t max = std::min(solver->negPosDist.size()-1, (size_t)300);
 //     while(true) {
@@ -461,7 +461,7 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
 //     }
 // }
 //
-// const bool FailedLitSearcher::tryMultiLevelAll()
+// const bool Prober::tryMultiLevelAll()
 // {
 //     assert(solver->ok);
 //     uint32_t backupNumUnits = solver->trail.size();
@@ -506,7 +506,7 @@ void FailedLitSearcher::testBinRemoval(const Lit origLit)
 //     return solver->ok;
 // }
 //
-// const bool FailedLitSearcher::tryMultiLevel(const vector<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed)
+// const bool Prober::tryMultiLevel(const vector<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed)
 // {
 //     assert(solver->ok);
 //

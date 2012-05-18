@@ -25,7 +25,7 @@
 #include "Searcher.h"
 #include "SCCFinder.h"
 #include "Subsumer.h"
-#include "FailedLitSearcher.h"
+#include "Prober.h"
 #include "ClauseVivifier.h"
 #include "ClauseCleaner.h"
 #include "SolutionExtender.h"
@@ -57,7 +57,7 @@ Solver::Solver(const SolverConf& _conf) :
     , numBinsNonLearnt(0)
     , numBinsLearnt(0)
 {
-    failedLitSearcher = new FailedLitSearcher(this);
+    prober = new Prober(this);
     subsumer = new Subsumer(this);
     sCCFinder = new SCCFinder(this);
     clauseVivifier = new ClauseVivifier(this);
@@ -70,7 +70,7 @@ Solver::Solver(const SolverConf& _conf) :
 
 Solver::~Solver()
 {
-    delete failedLitSearcher;
+    delete prober;
     delete subsumer;
     delete sCCFinder;
     delete clauseVivifier;
@@ -939,7 +939,7 @@ lbool Solver::simplifyProblem()
         goto end;*/
 
     //PROBE
-    if (conf.doFailedLit && !failedLitSearcher->search())
+    if (conf.doProbe && !prober->probe())
         goto end;
 
     //SCC&VAR-REPL
@@ -1425,12 +1425,12 @@ void Solver::printFullStats()
 
     //Failed lit stats
     printStatsLine("c probing time"
-        , failedLitSearcher->getStats().cpu_time
-        , failedLitSearcher->getStats().cpu_time/cpu_time*100.0
+        , prober->getStats().cpu_time
+        , prober->getStats().cpu_time/cpu_time*100.0
         , "% time"
     );
 
-    failedLitSearcher->getStats().print(nVars());
+    prober->getStats().print(nVars());
 
     //Subsumer stats
     printStatsLine("c SatELite time"
