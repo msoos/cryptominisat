@@ -1,3 +1,5 @@
+#!/bin/sh
+
 grep CPU *.out | awk '{print $5}' > solveTimes
 grep "CPU time .*:" *out | awk '{print $1}' | sed 's/:c$//' > solvedAll
 ls *.gz.out > allFiles

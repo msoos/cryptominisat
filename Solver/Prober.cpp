@@ -194,6 +194,7 @@ bool Prober::probe()
             goto end;
 
         //If we are still unset, do the opposite, too
+        //this lets us carry out BothProp
         if (solver->value(lit) == l_Undef
             && !tryThis(~lit, false)
         ) {
@@ -228,7 +229,7 @@ end:
             (runStats.zeroDepthAssigns > 100 || advancedCleanup)
         ) {
             cout
-            << "c Cleaning up after failed var search: "
+            << "c Cleaning up after probing: "
             << std::setw(8) << std::fixed << std::setprecision(2)
             << cpuTime() - time << " s "
             << endl;
@@ -331,6 +332,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
         visitedAlready[thisLit.toInt()] = 1;
 
+        //Update cache, if the trail was within limits (cacheUpdateCutoff)
         const Lit ancestor = solver->varData[thisLit.var()].reason.getAncestor();
         if (solver->conf.doCache
             && thisLit != lit
@@ -345,6 +347,7 @@ bool Prober::tryThis(const Lit lit, const bool first)
 
             const bool learntStep = solver->varData[thisLit.var()].reason.getLearntStep();
 
+            //Update the cache now
             assert(ancestor != lit_Undef);
             solver->implCache[(~ancestor).toInt()].merge(
                 solver->implCache[(~thisLit).toInt()].lits
