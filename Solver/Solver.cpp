@@ -26,7 +26,6 @@
 #include "SCCFinder.h"
 #include "Subsumer.h"
 #include "FailedLitSearcher.h"
-#include "BothProp.h"
 #include "ClauseVivifier.h"
 #include "ClauseCleaner.h"
 #include "SolutionExtender.h"
@@ -59,7 +58,6 @@ Solver::Solver(const SolverConf& _conf) :
     , numBinsLearnt(0)
 {
     failedLitSearcher = new FailedLitSearcher(this);
-    bothProp = new BothProp(this);
     subsumer = new Subsumer(this);
     sCCFinder = new SCCFinder(this);
     clauseVivifier = new ClauseVivifier(this);
@@ -73,7 +71,6 @@ Solver::Solver(const SolverConf& _conf) :
 Solver::~Solver()
 {
     delete failedLitSearcher;
-    delete bothProp;
     delete subsumer;
     delete sCCFinder;
     delete clauseVivifier;
@@ -938,8 +935,8 @@ lbool Solver::simplifyProblem()
     if (!implCache.tryBoth(this))
         goto end;
 
-    if (conf.doBothProp && !bothProp->tryBothProp())
-        goto end;
+    /*if (conf.doBothProp && !bothProp->tryBothProp())
+        goto end;*/
 
     //PROBE
     if (conf.doFailedLit && !failedLitSearcher->search())

@@ -46,7 +46,6 @@ class ClauseVivifier;
 class CalcDefPolars;
 class SolutionExtender;
 class ImplCache;
-class BothProp;
 
 class Solver : public Searcher
 {
@@ -422,10 +421,8 @@ class Solver : public Searcher
         friend class Searcher;
         friend class XorFinder;
         friend class GateFinder;
-        friend class BothProp;
         friend class PropEngine;
         FailedLitSearcher   *failedLitSearcher;
-        BothProp            *bothProp;
         Subsumer            *subsumer;
         SCCFinder           *sCCFinder;
         ClauseVivifier      *clauseVivifier;

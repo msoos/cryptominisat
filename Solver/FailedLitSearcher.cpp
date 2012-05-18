@@ -67,12 +67,52 @@ struct ActSorter
     }
 };
 
+void FailedLitSearcher::sortAndResetCandidates()
+{
+    candidates.clear();
+    candidates.resize(solver->candidateForBothProp.size());
+    for(size_t i = 0; i < solver->candidateForBothProp.size(); i++) {
+        Lit lit = Lit(i, false);
+        candidates[i].var = lit.var();
+
+        //Calculate approx number of literals propagated for positive polarity
+        size_t posPolar =
+            std::max<size_t>(
+                solver->watches[lit.toInt()].size()
+                , solver->candidateForBothProp[i].posLit
+            );
+        posPolar = std::max<size_t>(posPolar, solver->implCache[(~lit).toInt()].lits.size());
+
+        //Calculate approx number of literals propagated for negative polarity
+        size_t negPolar =
+            std::max<size_t>(
+                solver->watches[(~lit).toInt()].size()
+                , solver->candidateForBothProp[i].negLit
+            );
+        negPolar = std::max<size_t>(negPolar, solver->implCache[lit.toInt()].lits.size());
+
+        //Minimim of the two polarities
+        candidates[i].minOfPolarities = std::min(posPolar, negPolar);
+        //cout << "candidate size: " << candidates[i].minOfPolarities << endl;
+    }
+
+    //Sort candidates from MAX to MIN of 'minOfPolarities'
+    std::sort(candidates.begin(), candidates.end());
+
+    //Reset candidates
+    std::fill(solver->candidateForBothProp.begin()
+        , solver->candidateForBothProp.end()
+        , Solver::TwoSignAppearances()
+    );
+}
+
+
 bool FailedLitSearcher::search()
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
 
-    uint64_t numPropsTodo = 30L*1000L*1000L;
+    uint64_t numPropsTodo = 20L*1000L*1000L;
 
     solver->testAllClauseAttach();
     const double myTime = cpuTime();
@@ -92,6 +132,9 @@ bool FailedLitSearcher::search()
     visitedAlready.resize(solver->nVars()*2, 0);
     cacheUpdated.clear();
     cacheUpdated.resize(solver->nVars()*2, 0);
+    propagatedBitSet.clear();
+    propagated.resize(solver->nVars(), 0);
+    propValue.resize(solver->nVars(), 0);
 
     //If failed var searching is going good, do successively more and more of it
     if ((double)lastTimeZeroDepthAssings > (double)solver->getNumFreeVars() * 0.10)
@@ -108,10 +151,22 @@ bool FailedLitSearcher::search()
     }
     std::sort(actSortedVars.begin(), actSortedVars.end(), ActSorter(solver->backupActivity));
 
+    //Use candidates
+    sortAndResetCandidates();
+    size_t atCandidates = 0;
 
     uint64_t origBogoProps = solver->propStats.bogoProps;
     while (solver->propStats.bogoProps + extraTime < origBogoProps + numPropsTodo) {
-        const uint32_t litnum = solver->mtrand.randInt() % (solver->nVars()*2);
+        uint32_t litnum;
+
+        if (atCandidates < candidates.size()
+            && candidates[atCandidates].minOfPolarities > 100
+        ) {
+            litnum = Lit(candidates[atCandidates].var, 0).toInt();
+            atCandidates++;
+        } else {
+            litnum = solver->mtrand.randInt() % (solver->nVars()*2);
+        }
         Lit lit = Lit::toLit(litnum);
         extraTime += 20;
 
@@ -135,22 +190,16 @@ bool FailedLitSearcher::search()
         }
 
         //Try it
-        if (!tryThis(lit))
+        if (!tryThis(lit, true))
             goto end;
+
+        //If we are still unset, do the opposite, too
+        if (solver->value(lit) == l_Undef
+            && !tryThis(~lit, false)
+        ) {
+            goto end;
+        }
     }
-
-    /*for (vector<uint32_t>::const_iterator
-            it = actSortedVars.begin(), end = actSortedVars.end()
-            ; it != end
-            ; it++
-    ) {
-        const Var var = *it;
-        if (solver->value(var) != l_Undef || !solver->decision_var[var])
-            continue;
-
-        if (solver->bogoProps >= origBogoProps + numPropsTodo)
-            break;
-    }*/
 
 end:
 
@@ -209,8 +258,14 @@ end:
     return solver->ok;
 }
 
-bool FailedLitSearcher::tryThis(const Lit lit)
+bool FailedLitSearcher::tryThis(const Lit lit, const bool first)
 {
+    if (first) {
+        propagated.removeThese(propagatedBitSet);
+        propagatedBitSet.clear();
+        bothSame.clear();
+    }
+
     //Start-up cleaning
     runStats.numProbed++;
 
@@ -242,8 +297,37 @@ bool FailedLitSearcher::tryThis(const Lit lit)
 
     //Fill bothprop, cache
     assert(solver->decisionLevel() > 0);
+    size_t numElemsSet = solver->trail.size() - solver->trail_lim[0];
     for (int64_t c = solver->trail.size()-1; c != (int64_t)solver->trail_lim[0] - 1; c--) {
         const Lit thisLit = solver->trail[c];
+        const Var var = thisLit.var();
+
+        //If this is the first, set what is propagated
+        if (first) {
+            //Visited this var, needs clear later on
+            propagatedBitSet.push_back(var);
+
+            //Set prop has been done
+            propagated.setBit(var);
+
+            //Set propValue
+            if (solver->assigns[var].getBool())
+                propValue.setBit(var);
+            else
+                propValue.clearBit(var);
+        } else if (propagated[var]) {
+            if (propValue[var] == solver->value(var).getBool()) {
+                //they both imply the same
+                bothSame.push_back(Lit(var, !propValue[var]));
+            } /*else if (c != (int)solver->trail_lim[0]) {
+                bool isEqualTrue;
+                assert(litToSet.sign() == false);
+                tmpPs[0] = Lit(~lit.var(), false);
+                tmpPs[1] = Lit(var, false);
+                isEqualTrue = !propValue[var];
+                binXorToAdd.push_back(BinXorToAdd(tmpPs[0], tmpPs[1], isEqualTrue));
+            }*/
+        }
 
         visitedAlready[thisLit.toInt()] = 1;
 
@@ -255,8 +339,8 @@ bool FailedLitSearcher::tryThis(const Lit lit)
             //Update stats/markings
             cacheUpdated[(~ancestor).toInt()]++;
             extraTime += 1;
-            extraTime += solver->implCache[(~ancestor).toInt()].lits.size()/30;
-            extraTime += solver->implCache[(~thisLit).toInt()].lits.size()/30;
+            extraTime += solver->implCache[(~ancestor).toInt()].lits.size()/100;
+            extraTime += solver->implCache[(~thisLit).toInt()].lits.size()/100;
 
             const bool learntStep = solver->varData[thisLit.var()].reason.getLearntStep();
 
@@ -282,6 +366,17 @@ bool FailedLitSearcher::tryThis(const Lit lit)
     #ifdef DEBUG_REMOVE_USELESS_BIN
     testBinRemoval(lit);
     #endif
+
+    if (!first) {
+        //Add bothsame
+        for(size_t i = 0; i < bothSame.size(); i++) {
+            extraTime += 3;
+            solver->enqueue(bothSame[i]);
+        }
+        runStats.bothSameAdded += bothSame.size();
+    }
+    assert(solver->ok);
+    solver->ok = solver->propagate().isNULL();
 
     return solver->ok;
 }

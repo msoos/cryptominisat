@@ -80,6 +80,9 @@ class FailedLitSearcher {
                 //Compare against
                 , origNumFreeVars(0)
                 , origNumBins(0)
+
+                //bothProp
+                , bothSameAdded(0)
             {}
 
             void clear()
@@ -111,6 +114,9 @@ class FailedLitSearcher {
                 origNumFreeVars += other.origNumFreeVars;
                 origNumBins += other.origNumBins;
 
+                //Bothprop
+                bothSameAdded += other.bothSameAdded;
+
                 return *this;
             }
 
@@ -126,22 +132,31 @@ class FailedLitSearcher {
                     , (double)zeroDepthAssigns/(double)nVars*100.0
                     , "% vars");
 
+                printStatsLine("c bothsame"
+                    , bothSameAdded
+                    , (double)bothSameAdded/(double)numVisited*100.0
+                    , "% visited"
+                );
+
                 printStatsLine("c probed"
                     , numProbed
                     , (double)numProbed/cpu_time
-                    , "probe/sec");
+                    , "probe/sec"
+                );
 
                 printStatsLine("c failed"
                     , numFailed
                     , 100.0*(double)numFailed
                     /(double)numProbed
-                    , "% of probes");
+                    , "% of probes"
+                );
 
                 printStatsLine("c visited"
                     , (double)numVisited/(1000.0*1000.0)
                     , "M lits"
                     , (100.0*(double)numVisited/(double)(origNumFreeVars*2))
-                    , "% of available lits");
+                    , "% of available lits"
+                );
 
 //                 printStatsLine("c probe failed"
 //                     , numFailed
@@ -174,6 +189,7 @@ class FailedLitSearcher {
                 cout
                 << "c"
                 << " 0-depth assigns: " << zeroDepthAssigns
+                << " bsame: " << bothSameAdded
                 << " Flit: " << numFailed
                 << " Visited: " << numVisited << " / " << (origNumFreeVars*2) // x2 because it's LITERAL visit
                 << "(" << std::setprecision(1) << (100.0*(double)numVisited/(double)(origNumFreeVars*2)) << "%)"
@@ -209,23 +225,19 @@ class FailedLitSearcher {
             //Compare against
             uint64_t origNumFreeVars;
             uint64_t origNumBins;
+
+            //Bothprop
+            uint64_t bothSameAdded;
         };
 
         const Stats& getStats() const;
 
     private:
         //Main
-        bool tryThis(const Lit lit);
+        bool tryThis(const Lit lit, const bool first);
         vector<char> visitedAlready;
 
         Solver* solver; ///<The solver we are updating&working with
-
-        /**
-        @brief Lits that have been propagated to the same value both by "var" and "~var"
-
-        value that the literal has been propagated to is available in propValue
-        */
-        vector<Lit> bothSame;
 
         //2-long xor-finding
         /**
@@ -268,8 +280,30 @@ class FailedLitSearcher {
             bool inverted;
         };
 
-        //For hyper-bin resolution
+        //For cancidate selection
+        struct TwoSignVar{
+            size_t minOfPolarities;
+            size_t var;
+
+            //Sort them according to largest firest
+            bool operator<(const TwoSignVar& other) const
+            {
+                return minOfPolarities > other.minOfPolarities;
+            }
+        };
+        vector<TwoSignVar> candidates;
+        void sortAndResetCandidates();
+
+        //For bothprop
+        vector<uint32_t> propagatedBitSet;
+        BitArray propagated; ///<These lits have been propagated by propagating the lit picked
+        BitArray propValue; ///<The value (0 or 1) of the lits propagated set in "propagated"
+        vector<Lit> bothSame;
+
+        //Count how many times the cache has been updated for a specific literal
         vector<uint32_t> cacheUpdated;
+
+        //For hyper-bin resolution
         #ifdef DEBUG_REMOVE_USELESS_BIN
         void testBinRemoval(const Lit origLit);
         void fillTestUselessBinRemoval(const Lit lit);
