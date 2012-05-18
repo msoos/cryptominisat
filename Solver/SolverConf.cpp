@@ -69,7 +69,7 @@ SolverConf::SolverConf() :
         , printFullStats   (false)
         , doRenumberVars   (true)
         , dominPickFreq    (5)
-        , flipPolarFreq    (100)
+        , flipPolarFreq    (300)
         , doFindXors       (true)
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
