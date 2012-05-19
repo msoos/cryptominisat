@@ -144,13 +144,6 @@ bool Prober::probe()
     numPropsTodo = (uint64_t) ((double)numPropsTodo * numPropsMultiplier * solver->conf.probeMultiplier);
     numPropsTodo = (double)numPropsTodo * std::pow(numCalls, 0.2);
 
-    //For var-based failed literal probing
-    vector<uint32_t> actSortedVars(solver->nVars());
-    for(size_t i = 0; i < actSortedVars.size(); i++) {
-        actSortedVars[i] = i;
-    }
-    std::sort(actSortedVars.begin(), actSortedVars.end(), ActSorter(solver->backupActivity));
-
     //Use candidates
     sortAndResetCandidates();
     size_t atCandidates = 0;
