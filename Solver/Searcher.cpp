@@ -89,16 +89,26 @@ void Searcher::cancelUntil(uint32_t level)
 
     if (decisionLevel() > level) {
 
-        for (int sublevel = trail.size()-1; sublevel >= (int)trail_lim[level]; sublevel--) {
-            const Var var = trail[sublevel].var();
+        //Go through in reverse order, unassign & insert then
+        //back to the vars to be branched upon
+        for (int sublevel = trail.size()-1
+            ; sublevel >= (int)trail_lim[level]
+            ; sublevel--
+        ) {
             #ifdef VERBOSE_DEBUG
-            cout << "Canceling var " << var+1 << " sublevel: " << sublevel << endl;
+            cout
+            << "Canceling lit " << trail[sublevel]
+            << " sublevel: " << sublevel
+            << endl;
             #endif
-            assert(value(var) != l_Undef);
-            assigns[var] = l_Undef;
+
             #ifdef ANIMATE3D
             std:cerr << "u " << var << endl;
             #endif
+
+            const Var var = trail[sublevel].var();
+            assert(value(var) != l_Undef);
+            assigns[var] = l_Undef;
             insertVarOrder(var);
         }
         qhead = trail_lim[level];
@@ -217,11 +227,17 @@ Clause* Searcher::analyze(
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
+
+        //Saving old confl for OTF subsumption
         oldConfl = confl;
         confl = varData[p.var()].reason;
-        seen[p.var()] = 0; //This clears out vars that haven't been added to out_learnt, but their 'seen' has been set
+
+        //This clears out vars that haven't been added to out_learnt,
+        //but their 'seen' has been set
+        seen[p.var()] = 0;
+
+        //Okay, one more path done
         pathC--;
-        //cout << "Next 'p' to look at: " << p << endl;
     } while (pathC > 0);
     out_learnt[0] = ~p;
 

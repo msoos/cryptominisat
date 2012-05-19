@@ -81,7 +81,8 @@ void Prober::sortAndResetCandidates()
                 solver->watches[lit.toInt()].size()
                 , solver->candidateForBothProp[i].posLit
             );
-        posPolar = std::max<size_t>(posPolar, solver->implCache[(~lit).toInt()].lits.size());
+        posPolar = std::max<size_t>(posPolar
+            , solver->implCache[(~lit).toInt()].lits.size());
 
         //Calculate approx number of literals propagated for negative polarity
         size_t negPolar =
@@ -89,7 +90,8 @@ void Prober::sortAndResetCandidates()
                 solver->watches[(~lit).toInt()].size()
                 , solver->candidateForBothProp[i].negLit
             );
-        negPolar = std::max<size_t>(negPolar, solver->implCache[lit.toInt()].lits.size());
+        negPolar = std::max<size_t>(negPolar
+            , solver->implCache[lit.toInt()].lits.size());
 
         //Minimim of the two polarities
         candidates[i].minOfPolarities = std::min(posPolar, negPolar);
@@ -197,7 +199,6 @@ bool Prober::probe()
 
 end:
 
-    //Fast cleanup
     if (solver->ok && runStats.zeroDepthAssigns) {
         double time = cpuTime();
         bool advancedCleanup = false;
