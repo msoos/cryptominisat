@@ -179,14 +179,24 @@ void Subsumer::subsume0(ClauseIndex c, Clause& cl)
 @param[in] abs The abstraction of the clause
 @return Subsumed anything? If so, what was the max activity? Was it non-learnt?
 */
-template<class T> Subsumer::Sub0Ret Subsumer::subsume0(const uint32_t index, const T& ps, CL_ABST_TYPE abs)
-{
+template<class T>
+Subsumer::Sub0Ret Subsumer::subsume0(
+    const uint32_t index
+    , const T& ps
+    , CL_ABST_TYPE abs
+) {
     Sub0Ret ret;
     ret.subsumedNonLearnt = false;
 
     vector<ClauseIndex> subs;
     findSubsumed0(index, ps, abs, subs);
-    for (vector<ClauseIndex>::const_iterator it = subs.begin(), end = subs.end(); it != end; it++) {
+
+    //Go through each clause that can be subsumed
+    for (vector<ClauseIndex>::const_iterator
+        it = subs.begin(), end = subs.end()
+        ; it != end
+        ; it++
+    ) {
         #ifdef VERBOSE_DEBUG
         cout << "-> subsume0 removing:" << *clauses[it->index] << endl;
         #endif
@@ -280,8 +290,8 @@ void Subsumer::unlinkClause(ClauseIndex c, const Lit elim)
     }
 
     // Remove from sets:
-    cl_touched.exclude(c);
-    cl_touched2.exclude(c);
+    strengthenWith.exclude(c);
+    subsumeWith.exclude(c);
 
     //If elimed and non-learnt, we need to save it to stack
     if (elim != lit_Undef
@@ -398,8 +408,8 @@ lbool Subsumer::cleanClause(ClauseIndex c, Clause& cl)
         default:
             clauseData[c.index].abst = calcAbstraction(cl);
             clauseData[c.index].size = cl.size();
-            cl_touched.add(c);
-            cl_touched2.add(c);
+            strengthenWith.add(c);
+            subsumeWith.add(c);
             return l_Undef;
     }
 }
@@ -433,8 +443,8 @@ void Subsumer::printLimits()
 {
 #ifdef BIT_MORE_VERBOSITY
     cout << "c  subsumed:" << clauses_subsumed << endl;
-    cout << "c  cl_touched.nElems():" << cl_touched.nElems() << endl;
-    cout << "c  cl_touched2.nElems():" << cl_touched2.nElems() << endl;
+    cout << "c  strengthenWith.nElems():" << strengthenWith.nElems() << endl;
+    cout << "c  subsumeWith.nElems():" << subsumeWith.nElems() << endl;
     cout << "c  clauses.size():" << clauses.size() << endl;
     cout << "c  numMaxSubsume0:" << numMaxSubsume0 << endl;
     cout << "c  numMaxSubsume1:" << numMaxSubsume1 << endl;
@@ -445,16 +455,12 @@ void Subsumer::printLimits()
 /**
 @brief Executes subsume1() recursively on all clauses
 
-This function requires cl_touched to have been set. Then, it manages cl_touched.
+This function requires cl_touched to have been set. Then, it manages strengthenWith.
 The clauses are called to perform subsume1() or subsume0() when appropriate, and
 when there is enough numMaxSubume1 and numMaxSubume0 is available.
 */
 bool Subsumer::subsume0AndSubsume1()
 {
-    uint32_t clTouchedTodo = 2000;
-    if (addedClauseLits > 3000000) clTouchedTodo /= 2;
-    if (addedClauseLits > 10000000) clTouchedTodo /= 2;
-
     // Fixed-point for 1-subsumption:
     printLimits();
 
@@ -464,12 +470,17 @@ bool Subsumer::subsume0AndSubsume1()
     vector<ClauseIndex> s0;
     alreadyAdded.clear();
     alreadyAdded.resize(clauses.size(), 0);
-    while (numMaxSubsume0 > 0 && cl_touched2.nElems() > 0)  {
+    while (numMaxSubsume0 > 0 && subsumeWith.nElems() > 0)  {
         remClTouched.clear();
         s0.clear();
         printLimits();
 
-        for (CSet::iterator it = cl_touched2.begin(), end = cl_touched2.end(); it != end; ++it) {
+        //Go through subsumeWith, break when clTouchedTodo is reached
+        for (CSet::iterator
+            it = subsumeWith.begin(), end = subsumeWith.end()
+            ; it != end
+            ; ++it
+        ) {
             //Clause already removed
             if (it->index == std::numeric_limits< uint32_t >::max())
                 continue;
@@ -522,7 +533,7 @@ bool Subsumer::subsume0AndSubsume1()
         }
         //Remove clauses to be used from touched
         for (uint32_t i = 0; i < remClTouched.size(); i++) {
-            cl_touched2.exclude(remClTouched[i]);
+            subsumeWith.exclude(remClTouched[i]);
         }
 
         //Subsume 0
@@ -550,12 +561,12 @@ bool Subsumer::subsume0AndSubsume1()
     toDecrease = &numMaxSubsume1;
     alreadyAdded.clear();
     alreadyAdded.resize(clauses.size(), 0);
-    while(cl_touched.nElems() > 0 && numMaxSubsume1 > 0) {
+    while(strengthenWith.nElems() > 0 && numMaxSubsume1 > 0) {
         s1.clear();
         remClTouched.clear();
         printLimits();
 
-        for (CSet::iterator it = cl_touched.begin(), end = cl_touched.end(); it != end; ++it) {
+        for (CSet::iterator it = strengthenWith.begin(), end = strengthenWith.end(); it != end; ++it) {
             //Clause already removed
             if (it->index == std::numeric_limits< uint32_t >::max())
                 continue;
@@ -636,7 +647,7 @@ bool Subsumer::subsume0AndSubsume1()
 
         //Remove clauses to be used from touched
         for (uint32_t i = 0; i < remClTouched.size(); i++) {
-            cl_touched.exclude(remClTouched[i]);
+            strengthenWith.exclude(remClTouched[i]);
         }
 
         //Subsume 1
@@ -659,7 +670,7 @@ bool Subsumer::subsume0AndSubsume1()
         }
 
         /*cout
-        << " cl_touched: " << cl_touched.nElems()
+        << " cl_touched: " << strengthenWith.nElems()
         << " numMaxSubume1: " << numMaxSubsume1 << endl;*/
 
     };
@@ -692,8 +703,8 @@ ClauseIndex Subsumer::linkInClause(Clause& cl)
         }
     }
     if (cl.getStrenghtened() || cl.getChanged()) {
-        cl_touched.add(c);
-        cl_touched2.add(c);
+        strengthenWith.add(c);
+        subsumeWith.add(c);
     }
 
     return c;
@@ -887,8 +898,8 @@ void Subsumer::clearAll()
         ol_seenPos[var] = 1;
     }
     clauseData.clear();
-    cl_touched.clear();
-    cl_touched2.clear();
+    strengthenWith.clear();
+    subsumeWith.clear();
     runStats.clear();
 }
 
@@ -1125,8 +1136,8 @@ bool Subsumer::loopSubsumeVarelim()
         //Clean clauses as much as possible
         solver->clauseCleaner->removeSatisfiedBins();
     } while (
-        (cl_touched2.nElems() > 0 && numMaxSubsume0 > 0)
-        || (cl_touched.nElems() > 0 && numMaxSubsume1 > 0)
+        (subsumeWith.nElems() > 0 && numMaxSubsume0 > 0)
+        || (strengthenWith.nElems() > 0 && numMaxSubsume1 > 0)
         || (touchedVars.size() > 0 && numMaxElim > 0)
     );
     printLimits();
@@ -1186,8 +1197,8 @@ bool Subsumer::simplifyBySubsumption()
     //Reserve space for clauses
     const uint32_t expected_size = solver->clauses.size() + solver->learnts.size();
     clauses.reserve(expected_size);
-    cl_touched.reserve(expected_size);
-    cl_touched2.reserve(expected_size);
+    strengthenWith.reserve(expected_size);
+    subsumeWith.reserve(expected_size);
 
     //Detach all non-bins and non-tris, i.e. every long clause
     CompleteDetachReatacher reattacher(solver);
@@ -1682,6 +1693,10 @@ void Subsumer::setLimits()
     if (!solver->conf.doSubsume1) {
         numMaxSubsume1 = 0;
     }
+
+    clTouchedTodo = 2000;
+    if (addedClauseLits > 3000000) clTouchedTodo /= 2;
+    if (addedClauseLits > 10000000) clTouchedTodo /= 2;
 
     //For debugging
 

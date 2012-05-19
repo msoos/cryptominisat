@@ -431,8 +431,8 @@ private:
 
     //Touched, elimed, etc.
     TouchList    touchedVars; ///<A list of the true elements in 'touched'.
-    CSet         cl_touched;  ///<Clauses strengthened/added
-    CSet         cl_touched2;
+    CSet         strengthenWith;  ///<Clauses strengthened/added
+    CSet         subsumeWith;
     vector<ClauseIndex> s1;          ///<Current set of clauses that are examined for subsume0&1
     vector<char> ol_seenNeg;
     vector<char> ol_seenPos;
@@ -458,6 +458,7 @@ private:
     int64_t  numMaxBlocked;
     int64_t  numMaxVarElimAgressiveCheck;
     int64_t* toDecrease;
+    uint32_t clTouchedTodo;
     void     printLimits();
 
     //Propagation&handling of stuff
