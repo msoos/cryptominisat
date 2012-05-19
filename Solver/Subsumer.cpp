@@ -121,8 +121,8 @@ void Subsumer::updateVars(
 void Subsumer::extendModel(SolutionExtender* extender) const
 {
     //go through in reverse order
-    for (vector<BlockedClause>::const_reverse_iterator it = blockedClauses.rbegin()
-        , end = blockedClauses.rend()
+    for (vector<BlockedClause>::const_reverse_iterator
+        it = blockedClauses.rbegin(), end = blockedClauses.rend()
         ; it != end
         ; it++
     ) {
@@ -130,14 +130,6 @@ void Subsumer::extendModel(SolutionExtender* extender) const
     }
 }
 
-/**
-@brief Adds to the solver the clauses representing variable var
-
-This function is useful if a variable was eliminated, but now needs to be
-added back again.
-
-@p var The variable to be added back again
-*/
 bool Subsumer::unEliminate(const Var, Solver*)
 {
     //TODO
