@@ -452,24 +452,15 @@ void Subsumer::printLimits()
 #endif //BIT_MORE_VERBOSITY
 }
 
-/**
-@brief Executes subsume1() recursively on all clauses
-
-This function requires cl_touched to have been set. Then, it manages strengthenWith.
-The clauses are called to perform subsume1() or subsume0() when appropriate, and
-when there is enough numMaxSubume1 and numMaxSubume0 is available.
-*/
-bool Subsumer::subsume0AndSubsume1()
+void Subsumer::performSubsume0()
 {
-    // Fixed-point for 1-subsumption:
-    printLimits();
-
-    double myTime = cpuTime();
-    toDecrease = &numMaxSubsume0;
     vector<ClauseIndex> remClTouched; //These clauses will be untouched
     vector<ClauseIndex> s0;
     alreadyAdded.clear();
     alreadyAdded.resize(clauses.size(), 0);
+
+    double myTime = cpuTime();
+    toDecrease = &numMaxSubsume0;
     while (numMaxSubsume0 > 0 && subsumeWith.nElems() > 0)  {
         remClTouched.clear();
         s0.clear();
@@ -555,12 +546,22 @@ bool Subsumer::subsume0AndSubsume1()
     }
     //cout << "subsume0 done: " << numDone << endl;
     runStats.subsumeTime += cpuTime() - myTime;
+}
 
+/**
+@brief Executes subsume1() recursively on all clauses
+*/
+bool Subsumer::performSubsume1()
+{
+    assert(solver->ok);
 
-    myTime = cpuTime();
-    toDecrease = &numMaxSubsume1;
+    vector<ClauseIndex> remClTouched; //These clauses will be untouched
+    vector<ClauseIndex> s1;
     alreadyAdded.clear();
     alreadyAdded.resize(clauses.size(), 0);
+
+    double myTime = cpuTime();
+    toDecrease = &numMaxSubsume1;
     while(strengthenWith.nElems() > 0 && numMaxSubsume1 > 0) {
         s1.clear();
         remClTouched.clear();
@@ -1118,11 +1119,14 @@ bool Subsumer::loopSubsumeVarelim()
 {
     assert(solver->ok);
 
-    //Do subsume0&1 with var-elim until 'fixedpoint' (it's not really fixed, but low)
+    //Subsume, strengthen, and var-elim until time-out/limit-reached or fixedpoint
     const size_t origTrailSize = solver->trail.size();
     do {
-        //Carry out subsume0 and subsume1 -- i.e. subsumption and strengthening
-        if (!subsume0AndSubsume1())
+        //Carry out subsume0
+        performSubsume0();
+
+        //Carry out strengthening
+        if (!performSubsume1())
             goto end;
 
         //If no var elimination is needed, this IS fixedpoint
@@ -1290,26 +1294,42 @@ end:
 
 void Subsumer::checkForElimedVars()
 {
-    for (uint32_t i = 0; i < clauses.size(); i++) {
-        if (clauses[i] == NULL) continue;
+    //First, sanity-check the long clauses
+    for (size_t i = 0; i < clauses.size(); i++) {
+        if (clauses[i] == NULL)
+            continue;
+
         const Clause& cl = *clauses[i];
         for (uint32_t i = 0; i < cl.size(); i++) {
             if (var_elimed[cl[i].var()]) {
-                cout << "Elmied var -- Lit " << cl[i] << " in clause?" << endl;
-                cout << "wrongly left in clause: " << cl << endl;
+                cout
+                << "Error: elmied var -- Lit " << cl[i] << " in clause"
+                << endl
+                << "wrongly left in clause: " << cl
+                << endl;
+
                 exit(-1);
             }
         }
     }
 
+    //Then, sanity-check the binary clauses
     uint32_t wsLit = 0;
-    for (vector<vec<Watched> >::const_iterator it = solver->watches.begin(), end = solver->watches.end(); it != end; it++, wsLit++) {
+    for (vector<vec<Watched> >::const_iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; it++, wsLit++
+    ) {
         Lit lit = ~Lit::toLit(wsLit);
         const vec<Watched>& ws = *it;
         for (vec<Watched>::const_iterator it2 = ws.begin(), end2 = ws.end(); it2 != end2; it2++) {
             if (it2->isBinary()) {
                 if (var_elimed[lit.var()] || var_elimed[it2->getOtherLit().var()]) {
-                    cout << "One var elimed: " << lit << " , " << it2->getOtherLit() << endl;
+                    cout
+                    << "Error: A var is elimed in a binary clause: "
+                    << lit << " , " << it2->getOtherLit()
+                    << endl;
+
                     exit(-1);
                 }
             }

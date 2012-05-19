@@ -433,7 +433,6 @@ private:
     TouchList    touchedVars; ///<A list of the true elements in 'touched'.
     CSet         strengthenWith;  ///<Clauses strengthened/added
     CSet         subsumeWith;
-    vector<ClauseIndex> s1;          ///<Current set of clauses that are examined for subsume0&1
     vector<char> ol_seenNeg;
     vector<char> ol_seenPos;
     vector<char> alreadyAdded;
@@ -468,7 +467,8 @@ private:
     uint64_t addFromSolver(vector<Clause*>& cs);
     void clearAll();
     void setLimits();
-    bool subsume0AndSubsume1();
+    void performSubsume0();
+    bool performSubsume1();
 
     //Finish-up
     void freeMemory();
