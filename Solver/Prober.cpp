@@ -114,7 +114,7 @@ bool Prober::probe()
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
 
-    uint64_t numPropsTodo = 20L*1000L*1000L;
+    uint64_t numPropsTodo = 40L*1000L*1000L;
 
     solver->testAllClauseAttach();
     const double myTime = cpuTime();
