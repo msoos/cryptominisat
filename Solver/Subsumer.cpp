@@ -1684,7 +1684,7 @@ void Subsumer::setLimits()
 {
     numMaxSubsume0 = 170L*1000L*1000L;
     numMaxSubsume1 = 80L*1000L*1000L;
-    numMaxElim     = 200L*1000L*1000L;
+    numMaxElim     = 400L*1000L*1000L;
     numMaxAsymm    = 80L *1000L*1000L;
     numMaxBlocked  = 400L *1000L*1000L;
     numMaxVarElimAgressiveCheck  = 400L *1000L*1000L;
@@ -1836,8 +1836,10 @@ void inline Subsumer::fillSubs(const T& ps, const uint32_t index, const CL_ABST_
 }
 
 
-void Subsumer::removeClausesHelper(vector<ClAndBin>& todo, const Lit lit)
-{
+void Subsumer::removeClausesHelper(
+    vector<ClAndBin>& todo
+    , const Lit lit
+) {
     for (uint32_t i = 0; i < todo.size(); i++) {
         ClAndBin& c = todo[i];
 
@@ -1911,12 +1913,8 @@ introducing the eliminated variables.
 @param[out] ns Where thre clauses from negs have been moved
 @param[in] var The variable that is being eliminated
 */
-void Subsumer::removeClauses(vector<ClAndBin>& posAll, vector<ClAndBin>& negAll, const Var var)
+void Subsumer::removeClauses(const Var var)
 {
-    pair<uint32_t, uint32_t> removed;
-    removed.first = 0;
-    removed.second = 0;
-
     removeClausesHelper(posAll, Lit(var, false));
     removeClausesHelper(negAll, Lit(var, true));
 }
@@ -1946,16 +1944,7 @@ void Subsumer::fillClAndBin(vector<ClAndBin>& all, const Occur& cs, const Lit li
     }
 }
 
-/**
-@brief Tries to eliminate variable
-
-Tries to eliminate a variable. It uses heuristics to decide whether it's a good
-idea to eliminate a variable or not.
-
-@param[in] var The variable that is being eliminated
-@return TRUE if variable was eliminated
-*/
-bool Subsumer::maybeEliminate(const Var var)
+int Subsumer::testVarElim(Var var)
 {
     assert(solver->ok);
     assert(!var_elimed[var]);
@@ -1963,11 +1952,6 @@ bool Subsumer::maybeEliminate(const Var var)
     assert(solver->decision_var[var]);
     assert(solver->value(var) == l_Undef);
     const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
-
-    //Update stats
-    if (agressiveCheck)
-        runStats.usedAgressiveCheckToELim++;
-    runStats.triedToElimVars++;
 
     //set-up
     const Lit lit = Lit(var, false);
@@ -1979,7 +1963,7 @@ bool Subsumer::maybeEliminate(const Var var)
     const uint32_t numNonLearntNeg = numNonLearntBins(~lit);
     uint32_t before_3long = 0;
     uint32_t before_long = 0;
-    uint32_t before_literals = numNonLearntNeg*2 + numNonLearntPos*2;
+    int before_literals = numNonLearntNeg*2 + numNonLearntPos*2;
 
     //stats on positive
     uint32_t posSize = 0;
@@ -2017,11 +2001,13 @@ bool Subsumer::maybeEliminate(const Var var)
 
     *toDecrease -= (posSize + negSize)/2;
 
-    // Heuristic CUT OFF:
-    if (posSize >= 15 && negSize >= 15) return false;
+    /*// Heuristic CUT OFF:
+    if (posSize >= 15 && negSize >= 15)
+        return -1000;*/
 
     //Fill datastructs that will store data from occur & watchlists
-    vector<ClAndBin> posAll, negAll;
+    posAll.clear();
+    negAll.clear();
     fillClAndBin(posAll, poss, lit);
     fillClAndBin(negAll, negs, ~lit);
 
@@ -2029,8 +2015,17 @@ bool Subsumer::maybeEliminate(const Var var)
     uint32_t before_clauses = posSize + negSize;
     uint32_t after_clauses = 0;
     uint32_t after_long = 0;
-    for (vector<ClAndBin>::const_iterator it = posAll.begin(), end = posAll.end(); it != end; it++) {
-        for (vector<ClAndBin>::const_iterator it2 = negAll.begin(), end2 = negAll.end(); it2 != end2; it2++) {
+    int after_literals = 0;
+    for (vector<ClAndBin>::const_iterator
+        it = posAll.begin(), end = posAll.end()
+        ; it != end
+        ; it++
+    ) {
+        for (vector<ClAndBin>::const_iterator
+            it2 = negAll.begin(), end2 = negAll.end()
+            ; it2 != end2
+            ; it2++
+        ) {
             //If any of the two is learnt and long, and we don't keep it, skip
             if ((it->learnt || it2->learnt)) {
                 continue;
@@ -2047,13 +2042,41 @@ bool Subsumer::maybeEliminate(const Var var)
                     after_long++;
 
                 after_clauses++;
+                after_literals += dummy.size();
 
                 //Early-abort
                 if (after_clauses > before_clauses)
-                    return false;
+                    return -1000;
             }
         }
     }
+
+    //return before_literals-after_literals;
+    return before_long-after_long;
+}
+
+/**
+@brief Tries to eliminate variable
+
+Tries to eliminate a variable. It uses heuristics to decide whether it's a good
+idea to eliminate a variable or not.
+
+@param[in] var The variable that is being eliminated
+@return TRUE if variable was eliminated
+*/
+bool Subsumer::maybeEliminate(const Var var)
+{
+    //Update stats
+    const bool agressiveCheck = (numMaxVarElimAgressiveCheck > 0);
+    if (agressiveCheck)
+        runStats.usedAgressiveCheckToELim++;
+    runStats.triedToElimVars++;
+
+    //Test if we should remove, and fill posAll&negAll
+    if (testVarElim(var) == -1000)
+        return false;
+
+    const Lit lit = Lit(var, false);
 
     //Eliminate:
     #ifdef VERBOSE_DEBUG_VARELIM
@@ -2061,14 +2084,21 @@ bool Subsumer::maybeEliminate(const Var var)
     #endif
 
     //put clauses into blocked status, remove from occur[], but DON'T free&set to NULL
-    poss.clear();
-    negs.clear();
-    removeClauses(posAll, negAll, var);
+    occur[lit.toInt()].clear();
+    occur[(~lit).toInt()].clear();
+    removeClauses(var);
 
     //add newly dot-producted clauses
-    for (vector<ClAndBin>::const_iterator it = posAll.begin(), end = posAll.end(); it != end; it++) {
-        for (vector<ClAndBin>::const_iterator it2 = negAll.begin(), end2 = negAll.end(); it2 != end2; it2++) {
-
+    for (vector<ClAndBin>::const_iterator
+        it = posAll.begin(), end = posAll.end()
+        ; it != end
+        ; it++
+    ) {
+        for (vector<ClAndBin>::const_iterator
+            it2 = negAll.begin(), end2 = negAll.end()
+            ; it2 != end2
+            ; it2++
+        ) {
             //If any of the two is learnt and long, and we don't keep it, skip
             if ((it->learnt || it2->learnt))
                 continue;
@@ -2237,10 +2267,12 @@ bool Subsumer::merge(
         //assert(!clauseData[ps.clsimp.index].defOfOrGate);
         *toDecrease -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
-            if (c[i] != without_p){
-                seen[c[i].toInt()] = 1;
-                dummy.push_back(c[i]);
-            }
+            //Skip without_p
+            if (c[i] == without_p)
+                continue;
+
+            seen[c[i].toInt()] = 1;
+            dummy.push_back(c[i]);
         }
     }
 
@@ -2262,19 +2294,21 @@ bool Subsumer::merge(
         //assert(!clauseData[qs.clsimp.index].defOfOrGate);
         *toDecrease -= c.size();
         for (uint32_t i = 0; i < c.size(); i++){
-            if (c[i] != without_q) {
-                //Opposite is inside, nothing to add
-                if (seen[(~c[i]).toInt()]) {
-                    retval = false;
-                    dummy2 = dummy;
-                    goto end;
-                }
+            //Skip without_q
+            if (c[i] == without_q)
+                continue;
 
-                //Add this
-                if (!seen[c[i].toInt()]) {
-                    dummy.push_back(c[i]);
-                    seen[c[i].toInt()] = 1;
-                }
+            //Opposite is inside, nothing to add
+            if (seen[(~c[i]).toInt()]) {
+                retval = false;
+                dummy2 = dummy;
+                goto end;
+            }
+
+            //Add the literal
+            if (!seen[c[i].toInt()]) {
+                dummy.push_back(c[i]);
+                seen[c[i].toInt()] = 1;
             }
         }
     }
@@ -2283,7 +2317,7 @@ bool Subsumer::merge(
     //We add to 'seen' what COULD be added to the clause
     //This is essentially the reverse of cache-based vivification
     if (useCache && solver->conf.doAsymmTE) {
-        for (size_t i= 0; i < dummy.size(); i++) {
+        for (size_t i = 0; i < dummy.size(); i++) {
             const Lit lit = dummy2[i];
 
             //Use cache -- but only if none of the clauses were binary
@@ -2292,7 +2326,7 @@ bool Subsumer::merge(
             //pendency
             if (!ps.isBin && !qs.isBin) {
                 const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
-                numMaxVarElimAgressiveCheck -= cache.size();
+                numMaxVarElimAgressiveCheck -= cache.size()/3;
                 for(vector<LitExtra>::const_iterator
                     it = cache.begin(), end = cache.end()
                     ; it != end
@@ -2323,8 +2357,13 @@ bool Subsumer::merge(
             //Use watchlists
             //(~lit) because watches are inverted...... this is CONFUSING
             const vec<Watched>& ws = solver->watches[(~lit).toInt()];
-            numMaxVarElimAgressiveCheck -= ws.size();
-            for(vec<Watched>::const_iterator it = ws.begin(), end = ws.end(); it != end; it++) {
+            numMaxVarElimAgressiveCheck -= ws.size()/3;
+            for(vec<Watched>::const_iterator it =
+                ws.begin(), end = ws.end()
+                ; it != end
+                ; it++
+            ) {
+                //Only care about binary clauses
                 if (!it->isBinary())
                     continue;
 
@@ -2333,6 +2372,8 @@ bool Subsumer::merge(
 
                     //If (a V b) is learnt, make it non-learnt and we are done
                     if (seen[otherLit.toInt()]) {
+                        //Only actually make the binary clause non-learnt if
+                        //we are *actually* eliminating the variable
                         if (final) {
                             findWatchedOfBin(solver->watches, lit, otherLit, true).setLearnt(false);
                             findWatchedOfBin(solver->watches, otherLit, lit, true).setLearnt(false);
@@ -2350,20 +2391,22 @@ bool Subsumer::merge(
 
                     continue;
                 }
+                //It's surely a non-learnt binary now
+                assert(it->isNonLearntBinary());
 
                 const Lit otherLit = it->getOtherLit();
 
-                //If (a) was in original clause
+                //If (a) is in clause
                 //then (a V b) means -b can be put inside
                 if (!seen[(~otherLit).toInt()]) {
                     dummy2.push_back(~otherLit);
                     seen[(~otherLit).toInt()] = 1;
                 }
 
-                //If (a V b) is non-learnt in the clause, then done
+                //If (a V b) is non-learnt, and in the clause, then we can remove
                 if (seen[otherLit.toInt()]) {
                     retval = false;
-                    fancyRemove= true;
+                    fancyRemove = true;
                     goto end;
                 }
             }
@@ -2371,10 +2414,16 @@ bool Subsumer::merge(
     }
 
     end:
-    for (vector<Lit>::const_iterator it = dummy2.begin(), end = dummy2.end(); it != end; it++) {
+    //Clear 'seen'
+    for (vector<Lit>::const_iterator
+        it = dummy2.begin(), end = dummy2.end()
+        ; it != end
+        ; it++
+    ) {
         seen[it->toInt()] = 0;
     }
 
+    //If we are *really* eliminating, update the stats
     if (final) {
         runStats.newClauses++;
         if (fancyRemove)
@@ -2399,34 +2448,72 @@ variables are OK to try later.
 */
 vector<Var> Subsumer::orderVarsForElim()
 {
-    vector<Var> order;
     vector<pair<int, Var> > cost_var;
-    for (vector<Var>::const_iterator it = touchedVars.begin(), end = touchedVars.end(); it != end ; it++){
+
+    //Go through all vars that have been touched
+    for (vector<Var>::const_iterator
+        it = touchedVars.begin(), end = touchedVars.end()
+        ; it != end
+        ; it++
+    ){
         Lit x = Lit(*it, false);
-        uint32_t pos = 0;
-        const Occur& poss = occur[x.toInt()];
-        *toDecrease -= poss.size();
-        for (Occur::const_iterator it = poss.begin(), end = poss.end(); it != end; it++)
-            if (!clauses[it->index]->learnt()) pos++;
 
-        uint32_t neg = 0;
-        const Occur& negs = occur[(~x).toInt()];
-        *toDecrease -= negs.size();
-        for (Occur::const_iterator it = negs.begin(), end = negs.end(); it != end; it++)
-            if (!clauses[it->index]->learnt()) neg++;
+        //Can this variable be eliminated at all?
+        if (solver->value(*it) != l_Undef
+            || solver->varData[*it].elimed != ELIMED_NONE
+            || !gateFinder->canElim(*it)
+        ) {
+            continue;
+        }
 
-        //uint32_t nNonLPos = numNonLearntBins(x);
-        //uint32_t nNonLNeg = numNonLearntBins(~x);
-        //uint32_t cost = pos*neg/4 +  nNonLPos*neg*2 + nNonLNeg*pos*2 + nNonLNeg*nNonLPos*6;
-        uint32_t cost = (pos * neg)/2 //long clauses have a good chance of being tautologies
-            + numNonLearntBins(x) * neg * 2 //lower chance of tautology because of binary clause
-            + numNonLearntBins(~x) * pos * 2 //lower chance of tautology because of binary clause
-            + numNonLearntBins(x) * numNonLearntBins(~x) * 5; //Very low chance of tautology
-        cost_var.push_back(std::make_pair(cost, x.var()));
+        if (solver->conf.varelimStrategy == 0) {
+            //Count number of non-learnt long clauses with X inside
+            uint32_t pos = 0;
+            const Occur& poss = occur[x.toInt()];
+            *toDecrease -= poss.size();
+            for (Occur::const_iterator it = poss.begin(), end = poss.end(); it != end; it++)
+                if (!clauses[it->index]->learnt()) pos++;
+
+            //Count number of non-learnt long clauses with ~X inside
+            uint32_t neg = 0;
+            const Occur& negs = occur[(~x).toInt()];
+            *toDecrease -= negs.size();
+            for (Occur::const_iterator it = negs.begin(), end = negs.end(); it != end; it++)
+                if (!clauses[it->index]->learnt()) neg++;
+
+            uint32_t nNonLBinPos = numNonLearntBins(x);
+            uint32_t nNonLBinNeg = numNonLearntBins(~x);
+
+            uint32_t cost = (pos * neg)/2 //long clauses have a good chance of being tautologies
+                + nNonLBinPos * neg * 2 //lower chance of tautology because of binary clause
+                + nNonLBinNeg * pos * 2 //lower chance of tautology because of binary clause
+                + nNonLBinPos * nNonLBinNeg * 5; //Very low chance of tautology
+            cost_var.push_back(std::make_pair(cost, x.var()));
+        } else {
+            int ret = testVarElim(*it);
+
+            //Cannot be eliminated
+            if (ret == -1000)
+                continue;
+
+            cost_var.push_back(std::make_pair(1000-ret, x.var()));
+        }
     }
     touchedVars.clear();
 
+    //Sort "cost_var" according to lowest cost first
     std::sort(cost_var.begin(), cost_var.end(), myComp());
+
+    //Print sorted listed list
+    #ifdef VERBOSE_DEBUG_VARELIM
+    cout << "-----------" << endl;
+    for(size_t i = 0; i < cost_var.size(); i++) {
+        cout << "cost_var[" << i << "]: LIT: " << cost_var[i].second << " val: " << cost_var[i].first << endl;
+    }
+    #endif
+
+    //Put sorted list's vars as output
+    vector<Var> order;
     for (uint32_t x = 0; x < cost_var.size(); x++) {
         order.push_back(cost_var[x].second);
     }

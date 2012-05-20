@@ -100,6 +100,7 @@ class SolverConf
         int       doBlockedClause;    ///<Should try to remove blocked clauses
         int      doExtBinSubs;
         int      doVarElim;          ///<Perform variable elimination
+        int      varelimStrategy; ///<Guess varelim order, or calculate?
         double    varElimRatioPerIter;
         int      doSubsume1;         ///<Perform self-subsuming resolution
         int      doClausVivif;      ///<Perform asymmetric branching at the beginning of the solving

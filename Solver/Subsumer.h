@@ -553,11 +553,13 @@ private:
     };
     vector<Var> orderVarsForElim();
     uint32_t    numNonLearntBins(const Lit lit) const;
-    bool        maybeEliminate(const Var x);
     void        freeAfterVarelim(const vector<ClAndBin>& myset);
     void        addLearntBinaries(const Var var);
-    void        removeClauses(vector<ClAndBin>& posAll, vector<ClAndBin>& negAll, const Var var);
+    void        removeClauses(const Var var);
     void        removeClausesHelper(vector<ClAndBin>& todo, const Lit lit);
+    vector<ClAndBin> posAll, negAll;
+    bool        maybeEliminate(const Var x);
+    int         testVarElim(Var var);
     bool        merge(
         const ClAndBin& ps
         , const ClAndBin& qs
