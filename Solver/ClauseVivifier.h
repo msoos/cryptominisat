@@ -33,7 +33,7 @@ class Clause;
 class ClauseVivifier {
     public:
         ClauseVivifier(Solver* solver);
-        bool vivify();
+        bool vivify(bool alsoStrengthen);
 
         struct Stats
         {
@@ -230,7 +230,11 @@ class ClauseVivifier {
 
         //Actual algorithms used
         bool vivifyClausesNormal();
-        bool vivifyClausesCache(vector<Clause*>& clauses, bool learnt);
+        bool vivifyClausesCache(
+            vector<Clause*>& clauses
+            , bool learnt
+            , bool alsoStrengthen
+        );
         void       makeNonLearntBin(const Lit lit1, const Lit lit2);
 
         ///Sort clauses according to size

@@ -45,7 +45,7 @@ ClauseVivifier::ClauseVivifier(Solver* _solver) :
     , numCalls(0)
 {}
 
-bool ClauseVivifier::vivify()
+bool ClauseVivifier::vivify(bool alsoStrengthen)
 {
     assert(solver->ok);
     #ifdef VERBOSE_DEBUG
@@ -55,10 +55,10 @@ bool ClauseVivifier::vivify()
 
     solver->clauseCleaner->cleanClauses(solver->clauses, ClauseCleaner::clauses);
 
-    if (!vivifyClausesCache(solver->clauses, false))
+    if (!vivifyClausesCache(solver->clauses, false, alsoStrengthen))
         goto end;
 
-    if (!vivifyClausesCache(solver->learnts, true))
+    if (!vivifyClausesCache(solver->learnts, true, alsoStrengthen))
         goto end;
 
     if (!vivifyClausesNormal())
@@ -227,8 +227,11 @@ bool ClauseVivifier::vivifyClausesNormal()
     return solver->ok;
 }
 
-bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
-{
+bool ClauseVivifier::vivifyClausesCache(
+    vector<Clause*>& clauses
+    , bool learnt
+    , bool alsoStrengthen
+) {
     assert(solver->ok);
 
     //Stats
@@ -287,21 +290,23 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
                 ; wit++
             ) {
 
-                //Strengthening w/ bin
-                if (wit->isBinary()
-                    && seen[lit.toInt()] //We haven't yet removed it
-                ) {
-                    seen[(~wit->getOtherLit()).toInt()] = 0;
-                }
-
-                //Strengthening w/ tri
-                if (wit->isTriClause()
-                    && seen[lit.toInt()] //We haven't yet removed it
-                ) {
-                    if (seen[(wit->getOtherLit()).toInt()])
-                        seen[(~wit->getOtherLit2()).toInt()] = 0;
-                    else if (seen[wit->getOtherLit2().toInt()])
+                if (alsoStrengthen) {
+                    //Strengthening w/ bin
+                    if (wit->isBinary()
+                        && seen[lit.toInt()] //We haven't yet removed it
+                    ) {
                         seen[(~wit->getOtherLit()).toInt()] = 0;
+                    }
+
+                    //Strengthening w/ tri
+                    if (wit->isTriClause()
+                        && seen[lit.toInt()] //We haven't yet removed it
+                    ) {
+                        if (seen[(wit->getOtherLit()).toInt()])
+                            seen[(~wit->getOtherLit2()).toInt()] = 0;
+                        else if (seen[wit->getOtherLit2().toInt()])
+                            seen[(~wit->getOtherLit()).toInt()] = 0;
+                    }
                 }
 
                 //Subsumption w/ bin
@@ -332,8 +337,9 @@ bool ClauseVivifier::vivifyClausesCache(vector<Clause*>& clauses, bool learnt)
                 }
             }
 
-            //Go through the cache
-            if (seen[lit.toInt()]) { //We haven't yet removed it
+            if (alsoStrengthen //we need to strengthen
+                && seen[lit.toInt()] //We haven't yet removed it
+            ) {
                 countTime += solver->implCache[lit.toInt()].lits.size();
                 for (vector<LitExtra>::const_iterator it2 = solver->implCache[lit.toInt()].lits.begin()
                     , end2 = solver->implCache[lit.toInt()].lits.end(); it2 != end2; it2++

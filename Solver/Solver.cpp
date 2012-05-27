@@ -965,7 +965,7 @@ lbool Solver::simplifyProblem()
         goto end;
 
     //Vivify clauses
-    if (conf.doClausVivif && !clauseVivifier->vivify())
+    if (conf.doClausVivif && !clauseVivifier->vivify(true))
         goto end;
 
     //Search & replace 2-long XORs
