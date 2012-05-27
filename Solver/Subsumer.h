@@ -446,6 +446,7 @@ private:
     vector<char>    seen2;       ///<Used in various places to help perform algorithms
     vector<Lit>     dummy;       ///<Used by merge()
     vector<Lit>     dummy2;      ///<Used by merge()
+    vector<Lit>     finalLits;   ///<Used by addClauseInt()
 
     //Limits
     int64_t  addedClauseLits;
@@ -528,8 +529,14 @@ private:
     /////////////////////
     //subsume0
     struct Sub0Ret {
+        Sub0Ret() :
+            subsumedNonLearnt(false)
+            , numSubsumed(0)
+        {};
+
         bool subsumedNonLearnt;
         ClauseStats stats;
+        uint32_t numSubsumed;
     };
     void subsume0(ClauseIndex c, Clause& ps);
     template<class T> Sub0Ret subsume0(const uint32_t index, const T& ps, const CL_ABST_TYPE abs);
@@ -730,8 +737,12 @@ Only handles backward-subsumption. Uses occurrence lists
 @param[in] abs Abstraction of the clause ps
 @param[out] out_subsumed The set of clauses subsumed by this clause
 */
-template<class T> void Subsumer::findSubsumed0(const uint32_t index, const T& ps, const CL_ABST_TYPE abs, vector<ClauseIndex>& out_subsumed)
-{
+template<class T> void Subsumer::findSubsumed0(
+    const uint32_t index //Will not match with index of the name value
+    , const T& ps //Literals in clause
+    , const CL_ABST_TYPE abs //Abstraction of literals in clause
+    , vector<ClauseIndex>& out_subsumed //List of clause indexes subsumed
+) {
     #ifdef VERBOSE_DEBUG
     cout << "findSubsumed: ";
     for (uint32_t i = 0; i < ps.size(); i++) {

@@ -391,6 +391,7 @@ class Solver : public Searcher
             , const bool learnt = false
             , const ClauseStats& stats = ClauseStats()
             , const bool attach = true
+            , vector<Lit>* finalLits = NULL
         );
 
     private:

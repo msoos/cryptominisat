@@ -156,6 +156,7 @@ Clause* Solver::addClauseInt(
     , const bool learnt
     , const ClauseStats& stats
     , const bool attach
+    , vector<Lit>* finalLits
 ) {
     assert(ok);
     assert(decisionLevel() == 0);
@@ -193,6 +194,10 @@ Clause* Solver::addClauseInt(
     }
     ps.resize(ps.size() - (i - j));
 
+    //If caller required final set of lits, return it.
+    if (finalLits)
+        *finalLits = ps;
+
     //Handle special cases
     switch (ps.size()) {
         case 0:
@@ -225,6 +230,7 @@ template Clause* Solver::addClauseInt(
     , const bool learnt
     , const ClauseStats& stats
     , const bool attach
+    , vector<Lit>* finalLits
 );
 
 template Clause* Solver::addClauseInt(
@@ -232,6 +238,7 @@ template Clause* Solver::addClauseInt(
     , const bool learnt
     , const ClauseStats& stats
     , const bool attach
+    , vector<Lit>* finalLits
 );
 
 void Solver::attachClause(const Clause& c)

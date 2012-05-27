@@ -186,7 +186,6 @@ Subsumer::Sub0Ret Subsumer::subsume0(
     , CL_ABST_TYPE abs
 ) {
     Sub0Ret ret;
-    ret.subsumedNonLearnt = false;
 
     vector<ClauseIndex> subs;
     findSubsumed0(index, ps, abs, subs);
@@ -212,6 +211,7 @@ Subsumer::Sub0Ret Subsumer::subsume0(
 
         runStats.clauses_subsumed++;
         unlinkClause(*it);
+        ret.numSubsumed++;
 
         //If we are waaay over time, just exit
         if (*toDecrease < -20L*1000L*1000L)
@@ -2079,9 +2079,9 @@ bool Subsumer::maybeEliminate(const Var var)
     const Lit lit = Lit(var, false);
 
     //Eliminate:
-    #ifdef VERBOSE_DEBUG_VARELIM
-    cout << "Eliminating var " << var+1 << endl;
-    #endif
+    if (solver->conf.verbosity >= 5) {
+        cout << "Eliminating var " << lit << endl;
+    }
 
     //put clauses into blocked status, remove from occur[], but DON'T free&set to NULL
     occur[lit.toInt()].clear();
@@ -2132,14 +2132,32 @@ bool Subsumer::maybeEliminate(const Var var)
 
             //Add clause and do subsumption
             *toDecrease -= dummy.size();
-            Clause* newCl = solver->addClauseInt(dummy, learnt, stats, false);
-            if (newCl != NULL) {
-                ClauseIndex newClSimp = linkInClause(*newCl);
-                subsume0(newClSimp, *newCl);
-            }
+            Clause* newCl = solver->addClauseInt(
+                dummy //Literals in new clause
+                , learnt //Is the new clause learnt?
+                , stats //Statistics for this new clause (usage, etc.)
+                , false //Should clause be attached?
+                , &finalLits //Return final set of literals here
+            );
 
             if (!solver->ok)
                 goto end;
+
+            if (newCl != NULL) {
+                ClauseIndex newClSimp = linkInClause(*newCl);
+                subsume0(newClSimp, *newCl);
+            } else if (finalLits.size() == 2) {
+                Sub0Ret ret = subsume0(
+                    std::numeric_limits<uint32_t>::max() //Index of this binary clause (non-existent)
+                    , finalLits //Literals in this binary clause
+                    , calcAbstraction(finalLits) //Abstraction of literals
+                );
+                if (ret.numSubsumed > 0) {
+                    if (solver->conf.verbosity >= 5) {
+                        cout << "Subsumed: " << ret.numSubsumed << endl;
+                    }
+                }
+            }
         }
     }
 
@@ -2163,6 +2181,10 @@ bool Subsumer::maybeEliminate(const Var var)
     assert(occur[lit.toInt()].size() == 0 &&  occur[(~lit).toInt()].size() == 0);
 
 end:
+    if (solver->conf.verbosity >= 5) {
+        cout << "Elimination of var " << lit << " finished " << endl;
+    }
+
     var_elimed[var] = true;
     solver->varData[var].elimed = ELIMED_VARELIM;
     runStats.numVarsElimed++;
