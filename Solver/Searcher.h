@@ -359,7 +359,7 @@ class Searcher : public PropEngine
             , uint32_t &nblevels //The glue of the learnt clause
         );
 
-        void     analyzeHelper    (
+        void analyzeHelper(
             Lit lit
             , int& pathC
             , vector<Lit>& out_learnt
