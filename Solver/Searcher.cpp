@@ -54,8 +54,8 @@ Searcher::Searcher(const SolverConf& _conf, Solver* _solver) :
         , solver(_solver)
         , conf(_conf)
         , needToInterrupt(false)
-        , order_heap(VarOrderLt(activities))
         , var_inc(_conf.var_inc_start)
+        , order_heap(VarOrderLt(activities))
 {
     mtrand.seed(conf.origSeed);
 }

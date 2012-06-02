@@ -388,8 +388,31 @@ class Searcher : public PropEngine
         /////////////////
         // Variable activity
         vector<uint32_t> activities;
-        void     varDecayActivity ();      ///<Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
-        void     varBumpActivity  (Var v); ///<Increase a variable with the current 'bump' value.
+        uint32_t var_inc;
+        void              insertVarOrder(const Var x);  ///< Insert a variable in heap
+        void  genRandomVarActMultDiv();
+
+        ////////////
+        // Transitive on-the-fly self-subsuming resolution
+        void   minimiseLearntFurther(vector<Lit>& cl);
+        const Stats& getStats() const;
+
+    private:
+        //Variable activities
+        struct VarFilter { ///Filter out vars that have been set or is not decision from heap
+            const Searcher* cc;
+            const Solver* solver;
+            VarFilter(const Searcher* _cc, Solver* _solver) :
+                cc(_cc)
+                ,solver(_solver)
+            {}
+            bool operator()(uint32_t var) const;
+        };
+
+        ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
+        void     varDecayActivity ();
+        ///Increase a variable with the current 'bump' value.
+        void     varBumpActivity  (Var v);
         struct VarOrderLt { ///Order variables according to their activities
             const vector<uint32_t>&  activities;
             bool operator () (const uint32_t x, const uint32_t y) const
@@ -401,29 +424,16 @@ class Searcher : public PropEngine
                 activities(_activities)
             {}
         };
+        ///activity-ordered heap of decision variables
+        Heap<VarOrderLt>  order_heap;
 
-        struct VarFilter { ///Filter out vars that have been set or is not decision from heap
-            const Searcher* cc;
-            const Solver* solver;
-            VarFilter(const Searcher* _cc, Solver* _solver) :
-                cc(_cc)
-                ,solver(_solver)
-            {}
-            bool operator()(uint32_t var) const;
-        };
-        Heap<VarOrderLt>  order_heap;                   ///< activity-ordered heap of decision variables
-        uint32_t var_inc;
-        void              insertVarOrder(const Var x);  ///< Insert a variable in heap
-        void  genRandomVarActMultDiv();
-
-        ////////////
-        // Transitive on-the-fly self-subsuming resolution
-        void   minimiseLearntFurther(vector<Lit>& cl);
-        const Stats& getStats() const;
-
-    private:
+        //Assumptions
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
+
+        //Picking polarity when doing decision
         bool     pickPolarity(const Var var);
+
+        //Last time we clean()-ed the clauses, the number of zero-depth assigns was this many
         size_t   lastCleanZeroDepthAssigns;
 
         //Used for on-the-fly subsumption. Does A subsume B?
