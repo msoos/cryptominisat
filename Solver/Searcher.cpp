@@ -1227,6 +1227,52 @@ void Searcher::printRestartSQL()
     << " );" << endl;
 }
 
+void Searcher::printLearntStatsSQL()
+{
+    solver->sqlFile
+    << "insert into `learnts`"
+    << "("
+    << " `runID`, `simplifications`"
+    << " , `units`, `bins`, `tris`, `longs`"
+    << ")"
+    << " values ("
+    //Position
+    << "  " << solver->getSolveStats().runID
+    << ", " << solver->getSolveStats().numSimplify
+
+    //Learnt stats
+    << ", " << stats.learntUnits
+    << ", " << stats.learntBins
+    << ", " << stats.learntTris
+    << ", " << stats.learntLongs
+    << " );" << endl;
+    ;
+}
+
+void Searcher::printPropStatsSQL()
+{
+    solver->sqlFile
+    << "insert into `props`"
+    << "("
+    << " `runID`, `simplifications`"
+    << " , `unit`, `binIrred`, `binRed`, `tri`, `longIrred`, `longRed`"
+    << ")"
+    << " values ("
+    //Position
+    << "  " << solver->getSolveStats().runID
+    << ", " << solver->getSolveStats().numSimplify
+
+    //Learnt stats
+    << ", " << propStats.propsUnit
+    << ", " << propStats.propsBinIrred
+    << ", " << propStats.propsBinRed
+    << ", " << propStats.propsTri
+    << ", " << propStats.propsLongIrred
+    << ", " << propStats.propsLongRed
+    << " );" << endl;
+    ;
+}
+
 /**
 @brief The main solve loop that glues everything together
 
@@ -1381,6 +1427,11 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         << " SumConfl: " << sumConflicts()
         << " maxConfls:" << maxConfls
         << endl;
+    }
+
+    if (conf.doSQL) {
+        printPropStatsSQL();
+        printLearntStatsSQL();
     }
 
     if (conf.verbosity >= 3) {

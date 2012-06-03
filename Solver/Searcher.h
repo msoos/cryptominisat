@@ -432,6 +432,8 @@ class Searcher : public PropEngine
         //SQL
         void printRestartSQL();
         void printDecLevel0SQL();
+        void printLearntStatsSQL();
+        void printPropStatsSQL();
 
         //Assumptions
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
