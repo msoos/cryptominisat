@@ -317,14 +317,16 @@ class Searcher : public PropEngine
         size_t removeUselessBins();
 
         //History statistics
-        bqueue<uint32_t> branchDepthHist;   ///< Avg branch depth in current restart
+        bqueue<uint32_t> branchDepthHist;     ///< Avg branch depth in current restart
         bqueue<uint32_t> branchDepthDeltaHist;
         bqueue<uint32_t> trailDepthHist;
         bqueue<uint32_t> trailDepthDeltaHist;
-        bqueue<uint32_t> glueHist;      ///< Set of last decision levels in (glue of) conflict clauses
-        bqueue<uint32_t> conflSizeHist;    ///< Conflict size history
+        bqueue<uint32_t> glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
+        bqueue<uint32_t> conflSizeHist;       ///< Conflict size history
+        bqueue<uint32_t> numResolutionsHist;  ///< Number of resolutions during conflict analysis
         bqueue<double, double>  agilityHist;
         uint64_t sumConflicts() const;
+        uint64_t sumRestarts() const;
 
         /////////////////
         //Settings
@@ -426,6 +428,10 @@ class Searcher : public PropEngine
         };
         ///activity-ordered heap of decision variables
         Heap<VarOrderLt>  order_heap;
+
+        //SQL
+        void printRestartSQL();
+        void printDecLevel0SQL();
 
         //Assumptions
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.

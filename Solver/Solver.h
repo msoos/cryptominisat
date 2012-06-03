@@ -32,6 +32,7 @@
 #include "PropEngine.h"
 #include "Searcher.h"
 #include "GitSHA1.h"
+#include <fstream>
 
 using std::vector;
 using std::pair;
@@ -96,6 +97,18 @@ class Solver : public Searcher
         void  dumpLearnts(std::ostream& os, const uint32_t maxSize); ///<Dump all learnt clauses into file
         void  dumpOrigClauses(std::ostream& os) const; ///<Dump "original" (simplified) problem to file
 
+        struct SolveStats
+        {
+            SolveStats() :
+                numSimplify(0)
+                , nbReduceDB(0)
+            {}
+
+            uint64_t numSimplify;
+            uint64_t nbReduceDB;
+            uint64_t runID;
+        };
+        const SolveStats& getSolveStats() const;
 
         struct CleaningStats
         {
@@ -398,6 +411,8 @@ class Solver : public Searcher
 
         bool addXorClauseInt(const vector<Lit>& lits, bool rhs);
         lbool simplifyProblem();
+        std::ofstream sqlFile;
+        SolveStats solveStats;
 
         /////////////////////
         //Stats
@@ -467,8 +482,6 @@ class Solver : public Searcher
         void        fullReduce();
         void        clearPropConfl(vector<Clause*>& clauseset);
         void        reduceDB();           ///<Reduce the set of learnt clauses.
-        uint64_t    nbReduceDB;           ///<Number of times learnt clause have been cleaned
-        uint64_t    numCleanedLearnts;    ///< Number of times learnt clauses have been removed through simplify() up until now
         struct reduceDBStructGlue
         {
             bool operator () (const Clause* x, const Clause* y);
@@ -643,6 +656,11 @@ inline void Solver::addInPartialSolvingStat()
     Searcher::addInPartialSolvingStat();
     sumStats += Searcher::getStats();
     sumPropStats += propStats;
+}
+
+inline const Solver::SolveStats& Solver::getSolveStats() const
+{
+    return solveStats;
 }
 
 #endif //THREADCONTROL_H

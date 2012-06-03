@@ -64,6 +64,7 @@ SolverConf::SolverConf() :
         , shortTermGlueHistorySize (100)
 
         //optimisations to do
+        , doSQL            (true)
         , doOTFSubsume     (true)
         , rewardShortenedClauseWithPropConfl(10)
         , printFullStats   (false)

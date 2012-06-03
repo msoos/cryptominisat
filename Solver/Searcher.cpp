@@ -180,13 +180,13 @@ Clause* Searcher::analyze(
     out_btlevel = 0;
     PropBy oldConfl;
 
-    uint32_t numIterations = 0;
+    uint64_t numResolutions = 0;
 
     //cout << "---- Start analysis -----" << endl;
     toClear.clear();
     out_learnt.push_back(lit_Undef); //make space for ~p
     do {
-        numIterations++;
+        numResolutions++;
 
         //Add literals from 'confl' to clause
         switch (confl.getType()) {
@@ -240,6 +240,7 @@ Clause* Searcher::analyze(
         pathC--;
     } while (pathC > 0);
     out_learnt[0] = ~p;
+    numResolutionsHist.push(numResolutions);
 
     //Clear seen2, which was used to mark literals that have been bumped
     for (vector<Lit>::const_iterator
@@ -662,8 +663,13 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
         stats.numRestarts ++;
     agility.reset(conf.agilityLimit);
     agilityHist.fastclear();
+
+    //About the final conflict
     glueHist.fastclear();
     conflSizeHist.fastclear();
+    numResolutionsHist.fastclear();
+
+    //About the search
     branchDepthHist.fastclear();
     branchDepthDeltaHist.fastclear();
     trailDepthHist.fastclear();
@@ -679,6 +685,9 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
         assert(ok);
         Lit failed;
         PropBy confl;
+        if (decisionLevel() == 0 && conf.doSQL) {
+            printDecLevel0SQL();
+        }
 
         //If decision level==1, then do hyperbin & transitive reduction
         if (decisionLevel() == 1) {
@@ -1019,7 +1028,16 @@ void Searcher::resetStats()
     //Clear up previous stuff like model, final conflict
     conflict.clear();
 
-    //Initialise stats
+    //About the conflict generated
+    numResolutionsHist.clear();
+    numResolutionsHist.resize(100);
+    glueHist.clear();
+    glueHist.resize(conf.shortTermGlueHistorySize);
+    conflSizeHist.clear();
+    conflSizeHist.resize(100);
+
+
+    //About the search tree
     branchDepthHist.clear();
     branchDepthHist.resize(100);
     branchDepthDeltaHist.clear();
@@ -1028,10 +1046,8 @@ void Searcher::resetStats()
     trailDepthHist.resize(100);
     trailDepthDeltaHist.clear();
     trailDepthDeltaHist.resize(100);
-    glueHist.clear();
-    glueHist.resize(conf.shortTermGlueHistorySize);
-    conflSizeHist.clear();
-    conflSizeHist.resize(100);
+
+    //About vars
     agilityHist.clear();
     agilityHist.resize(100);
 
@@ -1114,7 +1130,7 @@ void Searcher::printBaseStats()
     cout
     << "c"
     //<< omp_get_thread_num()
-    << " " << std::setw(5) << stats.numRestarts + solver->getStats().numRestarts
+    << " " << std::setw(5) << sumRestarts()
     << " " << std::setw(7) << sumConflicts()
     << " " << std::setw(7) << solver->getNumFreeVarsAdv(trail.size())
     ;
@@ -1153,6 +1169,62 @@ void Searcher::printSearchStats()
     ;
 
     cout << std::right;
+}
+
+void Searcher::printDecLevel0SQL()
+{
+    assert(decisionLevel() == 0);
+
+    solver->sqlFile
+    << "insert into vars"
+    << "("
+    << " `runID`, `conflicts`"
+    << ", `free`, `replaced`, `eliminated`, `set`"
+    << ") values ("
+    << "  " << solver->getSolveStats().runID
+    << ", " << sumConflicts()
+
+    //Var data
+    << ", " << solver->getNumFreeVarsAdv(trail.size())
+    << ", " << solver->varReplacer->getNumReplacedVars()
+    << ", " << solver->subsumer->getStats().numVarsElimed
+    << ", " << trail.size()
+    << ");" << endl;;
+
+}
+
+void Searcher::printRestartSQL()
+{
+    solver->sqlFile
+    << "insert into `restart`"
+    << "("
+    << " `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
+    << " , `glue`, `size`, `resolutions`"
+    << " , `branchDepth`, `branchDepthDelta`, `trailDepth`, `trailDepthDelta`"
+    << " , `agility`"
+    << ")"
+    << " values ("
+    //Position
+    << "  " << solver->getSolveStats().runID
+    << ", " << solver->getSolveStats().numSimplify
+    << ", " << sumRestarts()
+    << ", " << sumConflicts()
+    << ", " << cpuTime()
+
+    //Conflict stats
+    << ", " << glueHist.getAvgMidLong()
+    << ", " << conflSizeHist.getAvgMidLong()
+    << ", " << numResolutionsHist.getAvgMidLong()
+
+    //Search stats
+    << ", " << branchDepthHist.getAvgMidLong()
+    << ", " << branchDepthDeltaHist.getAvgMidLong()
+    << ", " << trailDepthHist.getAvgMidLong()
+    << ", " << trailDepthDeltaHist.getAvgMidLong()
+
+    //Variable stats
+    << ", " << agilityHist.getAvgMidLong()
+    << " );" << endl;
 }
 
 /**
@@ -1210,6 +1282,9 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         if (status != l_Undef)
             break;
 
+        if (conf.doSQL) {
+            printRestartSQL();
+        }
         //Print restart stat
         if (conf.verbosity >= 1
             && ((lastRestartPrint + 800) < stats.conflStats.numConflicts
@@ -1565,6 +1640,11 @@ void Searcher::printAgilityStats()
 uint64_t Searcher::sumConflicts() const
 {
     return solver->sumStats.conflStats.numConflicts + stats.conflStats.numConflicts;
+}
+
+uint64_t Searcher::sumRestarts() const
+{
+    return stats.numRestarts + solver->getStats().numRestarts;
 }
 
 size_t Searcher::hyperBinResAll()

@@ -81,6 +81,7 @@ class SolverConf
         uint32_t  shortTermGlueHistorySize; ///< Rolling avg. glue window size
 
         //Optimisations to do
+        int       doSQL;
         int       doOTFSubsume;
         int       rewardShortenedClauseWithPropConfl; //Shortened through OTF subsumption
         int       printFullStats;

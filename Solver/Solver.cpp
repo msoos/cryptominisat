@@ -35,6 +35,8 @@
 #include <fstream>
 #include <cmath>
 #include "XorFinder.h"
+#include <fcntl.h>
+#include <unistd.h>
 using std::cout;
 using std::endl;
 
@@ -42,7 +44,6 @@ Solver::Solver(const SolverConf& _conf) :
     Searcher(_conf, this)
     , backupActivityInc(_conf.var_inc_start)
     , mtrand(_conf.origSeed)
-    , nbReduceDB(0)
     , conf(_conf)
     , needToInterrupt(false)
 
@@ -65,7 +66,27 @@ Solver::Solver(const SolverConf& _conf) :
     clAllocator = new ClauseAllocator;
     varReplacer = new VarReplacer(this);
 
+    //Open SQL file for writing
     PropEngine::clAllocator = clAllocator;
+    std::string sqlFilename = "data.sql";
+    sqlFile.open(sqlFilename.c_str());
+    if (!sqlFile) {
+        cout
+        << "ERROR: Couldn't open file '" << sqlFilename << "' for writing!"
+        << endl;
+
+        exit(-1);
+    }
+
+    //Generate random ID for SQL
+    int randomData = open("/dev/random", O_RDONLY);
+    if (randomData == -1) {
+        cout << "Error reading from /dev/random !" << endl;
+        exit(-1);
+    }
+    read(randomData, &solveStats.runID, sizeof solveStats.runID);
+    close(randomData);
+    cout << "c runID: " << solveStats.runID << endl;
 }
 
 Solver::~Solver()
@@ -694,7 +715,7 @@ void Solver::reduceDB()
     clauseCleaner->removeAndCleanAll();
 
     const double myTime = cpuTime();
-    nbReduceDB++;
+    solveStats.nbReduceDB++;
     CleaningStats tmpStats;
     tmpStats.origNumClauses = learnts.size();
     tmpStats.origNumLits = learntsLits - numBinsLearnt*2;
@@ -921,7 +942,7 @@ lbool Solver::simplifyProblem()
     assert(ok);
     testAllClauseAttach();
     checkStats();
-
+    solveStats.numSimplify++;
     reArrangeClauses();
 
     //SCC&VAR-REPL
@@ -1281,7 +1302,7 @@ void Solver::dumpIndividualPropConflStats(
 ) const {
     //Generate file name
     std::stringstream ss;
-    ss << "stats/propconflPERlitsvisited-stat-" << nbReduceDB << "-"
+    ss << "stats/propconflPERlitsvisited-stat-" << solveStats.nbReduceDB << "-"
     << name << "-learnt-" << (int)learnt << ".txt";
 
     //Open file
@@ -1304,7 +1325,7 @@ void Solver::dumpIndividualPropConflStats(
 
     //Generate file name
     std::stringstream ss2;
-    ss2 << "stats/AVGpropconfl-stat-" << nbReduceDB << "-"
+    ss2 << "stats/AVGpropconfl-stat-" << solveStats.nbReduceDB << "-"
     << name << "-learnt-" << (int)learnt << ".txt";
 
     //Open file
@@ -1406,7 +1427,7 @@ void Solver::printFullStats()
         , (double)cleaningStats.cpu_time/cpu_time*100.0
         , "% time"
     );
-    cleaningStats.print(nbReduceDB);
+    cleaningStats.print(solveStats.nbReduceDB);
 
     printStatsLine("c reachability time"
         , reachStats.cpu_time
