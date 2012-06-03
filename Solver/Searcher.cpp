@@ -1273,6 +1273,30 @@ void Searcher::printPropStatsSQL()
     ;
 }
 
+void Searcher::printConflStatsSQL()
+{
+    solver->sqlFile
+    << "insert into `confls`"
+    << "("
+    << " `runID`, `simplifications`"
+    << " , `binIrred`, `binRed`, `tri`, `longIrred`, `longRed`"
+    << ")"
+    << " values ("
+    //Position
+    << "  " << solver->getSolveStats().runID
+    << ", " << solver->getSolveStats().numSimplify
+
+    //Learnt stats
+    << ", " << stats.conflStats.conflsBinIrred
+    << ", " << stats.conflStats.conflsBinRed
+    << ", " << stats.conflStats.conflsTri
+    << ", " << stats.conflStats.conflsLongIrred
+    << ", " << stats.conflStats.conflsLongRed
+    << " );" << endl;
+    ;
+}
+
+
 /**
 @brief The main solve loop that glues everything together
 
@@ -1432,6 +1456,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
     if (conf.doSQL) {
         printPropStatsSQL();
         printLearntStatsSQL();
+        printConflStatsSQL();
     }
 
     if (conf.verbosity >= 3) {
