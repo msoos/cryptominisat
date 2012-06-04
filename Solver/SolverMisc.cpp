@@ -305,12 +305,12 @@ bool Solver::dumpOrigClauses(const std::string& fileName) const
     return true;
 }
 
-vector<Lit> Solver::get_unitary_learnts() const
+vec<Lit> Solver::get_unitary_learnts() const
 {
-    vector<Lit> unitaries;
+    vec<Lit> unitaries;
     if (decisionLevel() > 0) {
         for (uint32_t i = 0; i != trail_lim[0]; i++) {
-            unitaries.push_back(trail[i]);
+            unitaries.push(trail[i]);
         }
     }
 

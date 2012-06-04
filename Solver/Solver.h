@@ -167,7 +167,7 @@ public:
     void needProofGraph();         // Prepares the solver to output proof graphs during solving
     const vec<Clause*>& get_sorted_learnts(); //return the set of learned clauses, sorted according to the logic used in MiniSat to distinguish between 'good' and 'bad' clauses
     const vec<Clause*>& get_learnts() const; //Get all learnt clauses that are >1 long
-    vector<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
+    vec<Lit> get_unitary_learnts() const; //return the set of unitary learnt clauses
     uint32_t get_unitary_learnts_num() const; //return the number of unitary learnt clauses
     bool dumpSortedLearnts(const std::string& fileName, const uint32_t maxSize); // Dumps all learnt clauses (including unitary ones) into the file; returns true for success, false for failure
     bool needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
