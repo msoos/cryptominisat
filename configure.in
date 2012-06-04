@@ -1,4 +1,6 @@
-AC_INIT(cryptominisat, 2.9.4)
+m4_define([gettext_version], [2.9.5])
+
+AC_INIT(cryptominisat, gettext_version)
 AC_PREREQ([2.62])
 
 dnl use libtool
