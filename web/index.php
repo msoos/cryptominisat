@@ -34,7 +34,7 @@ function showValue(newValue)
 </script>
 </p>
 
-<script src="danvk-dygraphs-5cfed8c/dygraph-dev.js"></script>
+<script src="dygraphs/dygraph-dev.js"></script>
 <script type="text/javascript">
 var myDataFuncs=new Array();
 var myDataNames=new Array();
@@ -67,8 +67,13 @@ $nrows=mysql_numrows($result);
 function printOneThing($name, $nicename, $data, $nrows)
 {
     $fullname = $name."Data";
-    //<p>$nicename</p>
-    echo "<div id=\"$name\" style=\"width:790px; height:100px\"></div>";
+    $nameLabel = $name."Label";
+    echo "<table><tr><td>
+    <div id=\"$name\" style=\"width:790px; height:100px\"></div>
+    </td><td valign=top>
+    <div id=\"$nameLabel\" style=\"width:150px; font-size:0.8em; padding-top:5px;\"></div>
+    </td>
+    </tr></table>";
     echo "<script type=\"text/javascript\">
     function $fullname() {
     return \"Conflicts,$nicename\\n";
@@ -93,44 +98,34 @@ printOneThing("restarts", "restarts", $result, $nrows);
 printOneThing("branchDepth", "branch depth", $result, $nrows);
 printOneThing("branchDepthDelta", "branch depth delta", $result, $nrows);
 printOneThing("trailDepth", "trail depth", $result, $nrows);
+printOneThing("trailDepthDelta", "trail depth delta", $result, $nrows);
 printOneThing("glue", "glue", $result, $nrows);
 printOneThing("size", "size", $result, $nrows);
 printOneThing("resolutions", "resolutions", $result, $nrows);
 
-function printVars($runID) {
-    $name = "vars";
-    $fullname = $name."Data";
-    echo "<div id=\"$name\" style=\"width:790px; height:200px\"></div>";
-    echo "<script type=\"text/javascript\">
-    function $fullname() {
-    return \"Conflicts,vars replaced,vars set\\n";
-
-    $query="
-    SELECT `conflicts`, `replaced`, `set`
-    from `vars`
-    where `runID` = $runID
-    order by `conflicts`";
-    $result=mysql_query($query);
-    if (!$result) {
-        die('Invalid query: ' . mysql_error());
-    }
-    while($row=mysql_fetch_array($result)) {
-        for($i = 0; $i < 3; $i++) {
-            echo $row[$i];
-            if ($i != 2)
-                echo ", ";
-        }
-        echo "\\n";
-    }
-    echo ";\"};";
-    echo "myDataFuncs.push($fullname);\n";
-    echo "myDataNames.push(\"$name\");\n";
-    echo "</script>\n";
+$query="
+SELECT `conflicts`, `replaced`, `set`
+from `vars`
+where `runID` = $runID
+order by `conflicts`";
+$result=mysql_query($query);
+if (!$result) {
+    die('Invalid query: ' . mysql_error());
 }
-printVars($runID);
+$nrows=mysql_numrows($result);
+printOneThing("set", "vars set", $result, $nrows);
+printOneThing("replaced", "vars replaced", $result, $nrows);
 ?>
 
 <script type="text/javascript">
+function todisplay(i,len)
+{
+if (i == len-1)
+	return "Conflicts";
+else
+	return "";
+};
+
 gs = [];
 var blockRedraw = false;
 for (var i = 0; i <= myDataNames.length; i++) {
@@ -139,9 +134,31 @@ gs.push(
         document.getElementById(myDataNames[i]),
         myDataFuncs[i]
         , {
+            axes: {
+              x: {
+                valueFormatter: function(d) {
+                  return 'Conflicts: ' + d;
+                },
+                pixelsPerLabel: 100,
+              }
+            },
+            stepPlot: true,
+            strokePattern: [0.1, 0, 0, 0.5],
+            strokeWidth: 2,
+            highlightCircleSize: 3,
             rollPeriod: 1,
-            drawXAxis: false,
-            //title: "valami",
+            drawXAxis: i == myDataNames.length-1,
+            legend: 'always',
+            xlabel: todisplay(i, myDataNames.length),
+	    labelsDivStyles: {
+                'text-align': 'right',
+                'background': 'none'
+            },
+            labelsDiv: document.getElementById(myDataNames[i]+"Label"),
+            labelsSeparateLines: true,
+            labelsKMB: true,
+            drawPoints: true,
+            pointSize: 1.5,
             //errorBars: false,
             drawCallback: function(me, initial) {
                 if (blockRedraw || initial)
