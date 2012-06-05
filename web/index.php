@@ -1,23 +1,69 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>Cryptominisat</title>
-<style>
+    <meta charset="utf-8">
+    <title>Cryptominisat</title>
+    <style>
 
-@import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
-@import url(style.css);
-#example1         { min-height: 155px; }
+    @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
+    @import url(style.css);
+    #example1         { min-height: 155px; }
 
-</style>
-<style type="text/css">
-    .jqplot-data-label {
-      /*color: #444;*/
-/*      font-size: 1.1em;*/
-    }
-</style>
-<link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
+    </style>
+    <style type="text/css">
+        .jqplot-data-label {
+          /*color: #444;*/
+    /*      font-size: 1.1em;*/
+        }
+    </style>
+
+    <style type="text/css">
+    /*#leftcontent {
+        position: absolute;
+        left:0%;
+        width:10%;
+        background:#fff;
+        }*/
+
+    #centerleftcontent {
+        position: absolute;
+        left:10%;
+        width:30%;
+        background:#fff;
+        }
+
+    #centerrightcontent {
+        position: absolute;
+        left:40%;
+        width:30%;
+        background:#fff;
+        }
+
+    #rightcontent {
+        position: absolute;
+        left:70%;
+        width:30%;
+        background:#fff;
+        }
+
+    /*#rightcontent, #centerrightcontent, #centerleftcontent, #leftcontent {
+        border:1px solid #000;
+        }*/
+
+    #centerrightcontent p { font-size:10px}
+
+    </style>
+
+    <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<!--     <script type="text/javascript" src="jquery/jquery.jqplot.min.js"></script> -->
+<!--     <script type="text/javascript" src="jquery/plugins/jqplot.pieRenderer.min.js"></script> -->
+<!--     <script type="text/javascript" src="jquery/plugins/jqplot.donutRenderer.min.js"></script> -->
+    <script type="text/javascript" src="dygraphs/dygraph-dev.js"></script>
+    <script type="text/javascript" src="highcharts/js/highcharts.js"></script>
+    <script type="text/javascript" src="highcharts/js/modules/exporting.js"></script>
 </head>
+
 <body>
 <h1>Cryptominisat 3</h1>
 
@@ -34,7 +80,7 @@ function showValue(newValue)
 </script>
 </p>
 
-<script src="dygraphs/dygraph-dev.js"></script>
+
 <script type="text/javascript">
 var myDataFuncs=new Array();
 var myDataNames=new Array();
@@ -222,11 +268,6 @@ echo "]);";
 ?>
 </script>
 
-<script type="text/javascript" src="jquery/jquery.min.js"></script>
-<script type="text/javascript" src="jquery/jquery.jqplot.min.js"></script>
-<script type="text/javascript" src="jquery/plugins/jqplot.pieRenderer.min.js"></script>
-<script type="text/javascript" src="jquery/plugins/jqplot.donutRenderer.min.js"></script>
-
 
 <?
 function getLearntData($runID)
@@ -365,28 +406,40 @@ getConflData($runID);
 //End script, create tables
 function createTable($nrows)
 {
+    $height = 150;
+    $width = 150;
     $i = 0;
-    echo "
-    <table border=\"1\">
-    <tr>
-    <td>simp</td>
-    <td>Learnt clauses</td>
-    <td>Propagations by</td>
-    <td>Conflict by</td>
-    </tr>";
-    $height = 250;
-    $width = 250;
+    /*echo "<div id=\"leftcontent\">\n";
     while ($i < $nrows) {
-        echo "
-        <tr>
-        <td>$i</td>";
-        echo "<td><div id=\"learnt$i\" style=\"height:".$height."px; width:".$width."px;\"></div></td>\n";
-        echo "<td><div id=\"prop$i\" style=\"height:".$height."px; width:".$width."px;\"></div></td>\n";
-        echo "<td><div id=\"confl$i\" style=\"height:".$height."px; width:".$width."px;\"></div></td>\n";
-        echo "</tr>";
+        echo "<p>$i</p>\n";
         $i++;
-    }
-    echo "</table>";
+    };
+    echo "</div>\n";*/
+
+    echo "<div id=\"centerleftcontent\">\n";
+    $i = 0;
+    //<div id="learnt0" style="min-width: 200px; min-height: 200px;"></div>
+    while ($i < $nrows) {
+        echo "  <div id=\"learnt$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div>\n";
+        $i++;
+    };
+    echo "</div>";
+
+    echo "<div id=\"centerrightcontent\">\n";
+    $i = 0;
+    while ($i < $nrows) {
+        echo "  <div id=\"prop$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div>\n";
+        $i++;
+    };
+    echo "</div>\n";
+
+    echo "<div id=\"rightcontent\">\n";
+    $i = 0;
+    while ($i < $nrows) {
+        echo "  <div id=\"confl$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div>\n";
+        $i++;
+    };
+    echo "</div>\n";
 }
 createTable($nrows);
 ?>
@@ -394,15 +447,12 @@ createTable($nrows);
 <script type="text/javascript">
 
 //Part chart definitions
-function pieChart(name, data, num)
+/*function pieChart(name, data, num)
 {
     var name = name+num;
     jQuery.jqplot (name, [data[num]],
     {
         //title: "Learnt clauses after simplification number " + num,
-        /*axesDefaults: {
-            pad: 0
-        },*/
         seriesDefaults: {
             // Make this a pie chart.
             renderer: jQuery.jqplot.PieRenderer,
@@ -430,7 +480,7 @@ for(var i = 0; i < learntData.length; i++) {
     pieChart("learnt", learntData, i);
     pieChart("prop", propData, i);
     pieChart("confl", conflData, i);
-}
+}*/
 </script>
 
 
@@ -438,6 +488,91 @@ for(var i = 0; i < learntData.length; i++) {
 mysql_close();
 ?>
 
+<script type="text/javascript">
+function drawChart(name, num, data) {
+    chart = new Highcharts.Chart(
+    {
+        chart: {
+            renderTo: name + num,
+            plotBackgroundColor: null,
+            plotBorderWidth: null,
+            plotShadow: false,
+            spacingTop: 30,
+            spacingRight: 30,
+            spacingBottom: 30,
+            spacingLeft: 30
+        },
+        title: {
+            text: ''
+        },
+        tooltip: {
+            formatter: function() {
+                return '<b>'+ this.point.name +'</b>: '+ this.y + '(' + this.percentage.toFixed(1) + '%)';
+            }
+        },
+        credits: {
+            enabled: false
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    color: '#000000',
+                    distance: 30,
+                    connectorColor: '#000000',
+                    /*formatter: function() {
+                        return '<b>'+ this.point.name +'</b>: '+ this.percentage +' %';
+                    },*/
+                    overflow: "justify"
+                }
+            }
+        },
+        series: [{
+            type: 'pie',
+            name: 'Learnt clause types',
+            data: data[num]
+        }],
+        exporting: {
+            enabled: false
+        }
+    });
+};
+
+$(function () {
+    var chart;
+    $(document).ready(function() {
+        for(i = 0; i < learntData.length; i++) {
+            drawChart("learnt", i, learntData);
+        }
+
+        for(i = 0; i < propData.length; i++) {
+            drawChart("prop", i, propData);
+        }
+
+        for(i = 0; i < conflData.length; i++) {
+            drawChart("confl", i, conflData);
+        }
+    });
+});
+
+
+// data: [
+//     ['Firefox',   45.0],
+//     ['IE',       26.8],
+//     {
+//         name: 'Chrome',
+//         y: 12.8,
+//         sliced: true,
+//         selected: true
+//     },
+//     ['Safari',    8.5],
+//     ['Opera',     6.2],
+//     ['Others',   0.7]
+// ]
+
+</script>
 
 
 <!--<div id="fig" style="width:20px; height:20px"></div>
