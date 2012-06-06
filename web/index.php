@@ -7,6 +7,7 @@
 
     @import url(//fonts.googleapis.com/css?family=Yanone+Kaffeesatz:400,700);
     @import url(style.css);
+    @import url(tables/style.css);
     #example1         { min-height: 155px; }
 
     </style>
@@ -17,43 +18,6 @@
         }
     </style>
 
-    <style type="text/css">
-    /*#leftcontent {
-        position: absolute;
-        left:0%;
-        width:10%;
-        background:#fff;
-        }*/
-
-    #centerleftcontent {
-        position: absolute;
-        left:10%;
-        width:30%;
-        background:#fff;
-        }
-
-    #centerrightcontent {
-        position: absolute;
-        left:40%;
-        width:30%;
-        background:#fff;
-        }
-
-    #rightcontent {
-        position: absolute;
-        left:70%;
-        width:30%;
-        background:#fff;
-        }
-
-    /*#rightcontent, #centerrightcontent, #centerleftcontent, #leftcontent {
-        border:1px solid #000;
-        }*/
-
-    #centerrightcontent p { font-size:10px}
-
-    </style>
-
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 <!--     <script type="text/javascript" src="jquery/jquery.jqplot.min.js"></script> -->
@@ -61,7 +25,7 @@
 <!--     <script type="text/javascript" src="jquery/plugins/jqplot.donutRenderer.min.js"></script> -->
     <script type="text/javascript" src="dygraphs/dygraph-dev.js"></script>
     <script type="text/javascript" src="highcharts/js/highcharts.js"></script>
-    <script type="text/javascript" src="highcharts/js/modules/exporting.js"></script>
+<!--     <script type="text/javascript" src="highcharts/js/modules/exporting.js"></script> -->
 </head>
 
 <body>
@@ -115,7 +79,7 @@ function printOneThing($name, $nicename, $data, $nrows)
     $fullname = $name."Data";
     $nameLabel = $name."Label";
     echo "<table><tr><td>
-    <div id=\"$name\" style=\"width:790px; height:100px\"></div>
+    <div id=\"$name\" style=\"width:790px; height:100px; margin:0\"></div>
     </td><td valign=top>
     <div id=\"$nameLabel\" style=\"width:150px; font-size:0.8em; padding-top:5px;\"></div>
     </td>
@@ -188,7 +152,7 @@ gs.push(
                 pixelsPerLabel: 100,
               }
             },
-            stepPlot: true,
+            //stepPlot: true,
             strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 2,
             highlightCircleSize: 3,
@@ -415,36 +379,22 @@ function createTable($nrows)
         $i++;
     };
     echo "</div>\n";*/
-
-    echo "<div id=\"centerleftcontent\">\n";
-    $i = 0;
-    //<div id="learnt0" style="min-width: 200px; min-height: 200px;"></div>
+    echo "<table border=\"0\" id=\"box-table-a\">\n";
+    echo "<tr><th>Simp num</th><th>Learnt Clause type</th><th>Propagation by</th><th>Conflicts by</th></tr>\n";
     while ($i < $nrows) {
-        echo "  <div id=\"learnt$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div>\n";
+        echo "<tr>\n";
+        echo "<td width=\"1%\">$i</td>\n";
+        echo " <td width=\"30%\"><div id=\"learnt$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div></td>\n";
+        echo " <td width=\"30%\"><div id=\"prop$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div></td>\n";
+        echo " <td width=\"30%\"><div id=\"confl$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div></td>\n";
+        echo "</tr>\n";
         $i++;
     };
-    echo "</div>";
-
-    echo "<div id=\"centerrightcontent\">\n";
-    $i = 0;
-    while ($i < $nrows) {
-        echo "  <div id=\"prop$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div>\n";
-        $i++;
-    };
-    echo "</div>\n";
-
-    echo "<div id=\"rightcontent\">\n";
-    $i = 0;
-    while ($i < $nrows) {
-        echo "  <div id=\"confl$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div>\n";
-        $i++;
-    };
-    echo "</div>\n";
+    echo "<tr><th>Simp num</th><th>learnt clause type</th><th>propagation by</th><th>conflicts by</th></tr>\n";
+    echo "</table>\n";
 }
 createTable($nrows);
-?>
 
-<script type="text/javascript">
 
 //Part chart definitions
 /*function pieChart(name, data, num)
@@ -481,6 +431,7 @@ for(var i = 0; i < learntData.length; i++) {
     pieChart("prop", propData, i);
     pieChart("confl", conflData, i);
 }*/
+?>
 </script>
 
 
@@ -669,4 +620,5 @@ context.on("focus", function(i) {
 
 
 </html>
+
 

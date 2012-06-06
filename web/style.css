@@ -1,10 +1,10 @@
 html {
-  min-width: 1040px;
+
 }
 
 body {
   font-family: "Helvetica Neue", Helvetica, sans-serif;
-  margin: auto;
+  margin: 0;
   margin-top: 40px;
   margin-bottom: 4em;
   width: 960px;
@@ -130,6 +130,7 @@ blockquote:after {
 }
 
 h1 {
+  margin: 50px;
   font-size: 96px;
   margin-top: .3em;
   margin-bottom: 0;
@@ -140,6 +141,7 @@ h1 + h2 {
 }
 
 h2 {
+  margin: 50px;
   font-weight: 400;
   font-size: 28px;
 }
