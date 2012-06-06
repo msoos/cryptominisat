@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = foreign 1.4
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = Solver MTRand man
+SUBDIRS = Solver man
 EXTRA_DIST = HOWTO_VisualCpp HOWTO_MinGW32 \
 	       LICENSE-GPL LICENSE-MIT TODO
 
