@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir) -I$(srcdir)/../MTRand $(OPENMP_CXXFLAGS)
+AM_CXXFLAGS = -Wall $(all_includes) -I$(srcdir) -I$(srcdir)/../MTRand $(OPENMP_CXXFLAGS) $(MYSQL_INCLUDE)
 
 pkginclude_HEADERS = BitArray.h Clause.h CSet.h MatrixFinder.h Solver.h Subsumer.h Watched.h \
 	BoundedQueue.h ClauseOffset.h DimacsParser.h GaussianConfig.h OnlyNonLearntBins.h SolverTypes.h \
@@ -27,5 +27,9 @@ libcryptominisat_la_SOURCES = \
 
 bin_PROGRAMS = cryptominisat
 cryptominisat_LDADD = libcryptominisat.la
-cryptominisat_LDFLAGS = -static -lz $(OPENMP_CXXFLAGS)
+#if HAVE_MYSQL
+cryptominisat_LDFLAGS = -static -lz $(OPENMP_CXXFLAGS) $(MYSQL_LIBS)
+#else
+#  cryptominisat_LDFLAGS = -static -lz $(OPENMP_CXXFLAGS)
+#endif
 cryptominisat_SOURCES = Main.cpp
