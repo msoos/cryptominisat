@@ -1,19 +1,19 @@
-/***********************************************************************************
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+/*
+This file is part of CryptoMiniSat2.
 
-This program is free software: you can redistribute it and/or modify
+CryptoMiniSat2 is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
+CryptoMiniSat2 is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-**************************************************************************************************/
+along with CryptoMiniSat2.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include "FindUndef.h"
 
@@ -30,21 +30,21 @@ FindUndef::FindUndef(Solver& _solver) :
 void FindUndef::fillPotential()
 {
     int trail = solver.decisionLevel()-1;
-    
+
     while(trail > 0) {
         assert(trail < (int)solver.trail_lim.size());
         uint32_t at = solver.trail_lim[trail];
-        
+
         assert(at > 0);
         Var v = solver.trail[at].var();
         if (solver.assigns[v] != l_Undef) {
             isPotential[v] = true;
             isPotentialSum++;
         }
-        
+
         trail--;
     }
-    
+
     for (XorClause** it = solver.xorclauses.getData(), **end = it + solver.xorclauses.size(); it != end; it++) {
         XorClause& c = **it;
         for (Lit *l = c.getData(), *end = l + c.size(); l != end; l++) {
@@ -55,7 +55,7 @@ void FindUndef::fillPotential()
             assert(!solver.value(*l).isUndef());
         }
     }
-    
+
     vector<Var> replacingVars = solver.varReplacer->getReplacingVars();
     for (Var *it = &replacingVars[0], *end = it + replacingVars.size(); it != end; it++) {
         if (isPotential[*it]) {
@@ -90,17 +90,17 @@ void FindUndef::moveBinFromNormal()
 const uint32_t FindUndef::unRoll()
 {
     if (solver.decisionLevel() == 0) return 0;
-    
+
     moveBinToNormal();
-    
+
     dontLookAtClause.resize(solver.clauses.size(), false);
     isPotential.resize(solver.nVars(), false);
     fillPotential();
     satisfies.resize(solver.nVars(), 0);
-    
+
     while(!updateTables()) {
         assert(isPotentialSum > 0);
-        
+
         uint32_t maximum = 0;
         Var v = var_Undef;
         for (uint32_t i = 0; i < isPotential.size(); i++) {
@@ -110,28 +110,28 @@ const uint32_t FindUndef::unRoll()
             }
         }
         assert(v != var_Undef);
-        
+
         isPotential[v] = false;
         isPotentialSum--;
-        
+
         std::fill(satisfies.begin(), satisfies.end(), 0);
     }
-    
+
     unboundIsPotentials();
     moveBinFromNormal();
-    
+
     return isPotentialSum;
 }
 
 bool FindUndef::updateTables()
 {
     bool allSat = true;
-    
+
     uint32_t i = 0;
     for (Clause** it = solver.clauses.getData(), **end = it + solver.clauses.size(); it != end; it++, i++) {
         if (dontLookAtClause[i])
             continue;
-        
+
         Clause& c = **it;
         bool definitelyOK = false;
         Var v = var_Undef;
@@ -150,7 +150,7 @@ bool FindUndef::updateTables()
         }
         if (definitelyOK)
             continue;
-        
+
         if (numTrue == 1) {
             assert(v != var_Undef);
             isPotential[v] = false;
@@ -158,7 +158,7 @@ bool FindUndef::updateTables()
             dontLookAtClause[i] = true;
             continue;
         }
-        
+
         //numTrue > 1
         allSat = false;
         for (Lit *l = c.getData(), *end = l + c.size(); l != end; l++) {
@@ -166,7 +166,7 @@ bool FindUndef::updateTables()
                 satisfies[l->var()]++;
         }
     }
-    
+
     return allSat;
 }
 

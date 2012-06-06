@@ -1,23 +1,19 @@
-/****************************************************************************************[Solver.h]
-MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
-glucose -- Gilles Audemard, Laurent Simon (2008)
+/*
+This file is part of CryptoMiniSat2.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-associated documentation files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+CryptoMiniSat2 is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
+CryptoMiniSat2 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
-OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-**************************************************************************************************/
+You should have received a copy of the GNU General Public License
+along with CryptoMiniSat2.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #ifndef SOLVER_H
 #define SOLVER_H
@@ -173,6 +169,13 @@ public:
     bool needLibraryCNFFile(const std::string& fileName); //creates file in current directory with the filename indicated, and puts all calls from the library into the file.
     bool dumpOrigClauses(const std::string& fileName) const;
     void printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const;
+    const vector<std::pair<Lit, Lit> > get_all_binary_xors() const;
+    long getMySQLRunNo() const;
+    void resetPolaritiesToRand();
+    void setConflLimit(const uint64_t conflLimit)
+    {
+        conf.maxConfl = conflLimit;
+    }
 
     uint32_t get_sum_gauss_called() const;
     uint32_t get_sum_gauss_confl() const;
@@ -543,6 +546,32 @@ protected:
     void     printEndSearchStat();
     void     addSymmBreakClauses();
     void     initialiseSolver();
+
+    //MySQL
+    void  initMySQLStatements();
+    void  addClauseToMySQL(const vec<Lit>& clause, const bool learnt, const uint32_t glue);
+    struct InsertStatementLits {
+        MYSQL_BIND  bind[3];
+        MYSQL_STMT  *STMT;
+        int        autoInc;
+        int        litVar;
+        short       inverted;
+    };
+    InsertStatementLits insSTMTLits;
+
+    struct InsertStatementClause {
+        MYSQL_BIND  bind[7];
+        MYSQL_STMT  *STMT;
+        int        runNo;
+        int        decLevel;
+        int        trailLevel;
+        int        glue;
+        int        size;
+        int        num;
+        short       learnt;
+    };
+    InsertStatementClause insSTMTCl;
+    uint32_t    mysqClauseNum;
 
     //Misc related binary clauses
     void     dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const;

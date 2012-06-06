@@ -1,25 +1,26 @@
-/*****************************************************************************
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+/*
+This file is part of CryptoMiniSat2.
 
-This program is free software: you can redistribute it and/or modify
+CryptoMiniSat2 is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
+CryptoMiniSat2 is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-******************************************************************************/
+along with CryptoMiniSat2.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #ifndef SOLVERCONF_H
 #define SOLVERCONF_H
 
 #include "SolverTypes.h"
 #include "constants.h"
+#include <mysql/mysql.h>
 
 namespace CMSat {
 
@@ -95,6 +96,7 @@ class SolverConf
         RestartType fixRestartType;   ///<If set, the solver will always choose the given restart strategy instead of automatically trying to guess a strategy. Note that even if set to dynamic_restart, there will be a few restarts made statically after each full restart.
 
         uint32_t origSeed;
+        MYSQL   *serverConn;
 };
 
 }

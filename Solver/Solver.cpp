@@ -1,11 +1,19 @@
-/*****************************************************************************
-MiniSat -- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
-glucose -- Gilles Audemard, Laurent Simon (2008)
-CryptoMiniSat -- Copyright (c) 2009 Mate Soos
+/*
+This file is part of CryptoMiniSat2.
 
-Original code by MiniSat and glucose authors are under an MIT licence.
-Modifications for CryptoMiniSat are under GPLv3 licence.
-******************************************************************************/
+CryptoMiniSat2 is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+CryptoMiniSat2 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with CryptoMiniSat2.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include "Solver.h"
 #include <cmath>
@@ -112,6 +120,138 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
     matrixFinder = new MatrixFinder(*this);
     dataSync = new DataSync(*this, sharedData);
 
+    //SQL
+    insSTMTLits.STMT = NULL;
+    insSTMTCl.STMT = NULL;
+    if (conf.serverConn) {
+        initMySQLStatements();
+    }
+}
+
+void Solver::initMySQLStatements()
+{
+    // Prepare an INSERT query with 2 parameters
+    insSTMTLits.STMT = mysql_stmt_init(conf.serverConn);
+    if (!insSTMTLits.STMT) {
+        std::cout << "Error: mysql_stmt_init() out of memory" << std::endl;
+        exit(1);
+    }
+
+    const char* STMTTxt = "insert into literals(clindex,var,inv) values(?,?,?)";
+    if (mysql_stmt_prepare(insSTMTLits.STMT, STMTTxt, strlen(STMTTxt))) {
+        std::cout << "Error in mysql_stmt_prepare(), INSERT failed" << std::endl
+        << mysql_stmt_error(insSTMTLits.STMT) << std::endl;
+        exit(0);
+    }
+    std::cout << "prepare INSERT successful" << std::endl;
+
+    /* Get the parameter count from the statement */
+    int param_count = mysql_stmt_param_count(insSTMTLits.STMT);
+    if (param_count != 3) { // validate parameter count
+        std::cout << "invalid parameter count returned by MySQL" << std::endl;
+        exit(1);
+    }
+
+    memset(insSTMTLits.bind, 0, sizeof(insSTMTLits.bind));
+
+    //Bind parameters
+    insSTMTLits.bind[0].buffer_type= MYSQL_TYPE_LONG;
+    insSTMTLits.bind[0].buffer= (char *)&insSTMTLits.autoInc;
+    insSTMTLits.bind[0].is_null= 0;
+    insSTMTLits.bind[0].length= 0;
+
+    insSTMTLits.bind[1].buffer_type= MYSQL_TYPE_LONG;
+    insSTMTLits.bind[1].buffer= (char *)&insSTMTLits.litVar;
+    insSTMTLits.bind[1].is_null= 0;
+    insSTMTLits.bind[1].length= 0;
+
+    insSTMTLits.bind[2].buffer_type= MYSQL_TYPE_SHORT;
+    insSTMTLits.bind[2].buffer= (char *)&insSTMTLits.inverted;
+    insSTMTLits.bind[2].is_null= 0;
+    insSTMTLits.bind[2].length= 0;
+
+    // Bind the buffers
+    if (mysql_stmt_bind_param(insSTMTLits.STMT, insSTMTLits.bind)) {
+        std::cout << "mysql_stmt_bind_param() failed" << std::endl
+        << mysql_stmt_error(insSTMTLits.STMT) << std::endl;
+        exit(1);
+    }
+
+    insSTMTCl.STMT = mysql_stmt_init(conf.serverConn);
+    if (!insSTMTCl.STMT) {
+        std::cout << "Error: mysql_stmt_init() out of memory" << std::endl;
+        exit(1);
+    }
+    const char* STMTTxt2 = "insert into clauses(runno, declevel, traillevel, glue, size, num, learnt) values(?,?,?,?,?,?,?)";
+    if (mysql_stmt_prepare(insSTMTCl.STMT, STMTTxt2, strlen(STMTTxt2))) {
+        std::cout << "Error in mysql_stmt_prepare(), INSERT failed" << std::endl
+        << mysql_stmt_error(insSTMTCl.STMT) << std::endl;
+        exit(0);
+    }
+    std::cout << "prepare INSERT successful" << std::endl;
+
+    /* Get the parameter count from the statement */
+    param_count = mysql_stmt_param_count(insSTMTCl.STMT);
+    if (param_count != 7) { // validate parameter count
+        std::cout << "invalid parameter count returned by MySQL" << std::endl;
+        exit(1);
+    }
+
+    memset(insSTMTCl.bind, 0, sizeof(insSTMTCl.bind));
+
+    //Add main parameters of the clause
+    insSTMTCl.bind[0].buffer_type= MYSQL_TYPE_LONG;
+    insSTMTCl.bind[0].buffer= (char *)&insSTMTCl.runNo;
+    insSTMTCl.bind[0].buffer_type= MYSQL_TYPE_LONG;
+    insSTMTCl.bind[0].buffer= (char *)&insSTMTCl.runNo;
+    insSTMTCl.bind[0].is_null= 0;
+    insSTMTCl.bind[0].length= 0;
+
+    insSTMTCl.bind[1].buffer_type= MYSQL_TYPE_LONG;
+    insSTMTCl.bind[1].buffer= (char *)&insSTMTCl.decLevel;
+    insSTMTCl.bind[1].is_null= 0;
+    insSTMTCl.bind[1].length= 0;
+
+    insSTMTCl.bind[2].buffer_type= MYSQL_TYPE_LONG;
+    insSTMTCl.bind[2].buffer= (char *)&insSTMTCl.trailLevel;
+    insSTMTCl.bind[2].is_null= 0;
+    insSTMTCl.bind[2].length= 0;
+
+    insSTMTCl.bind[3].buffer_type= MYSQL_TYPE_LONG;
+    insSTMTCl.bind[3].buffer= (char *)&insSTMTCl.glue;
+    insSTMTCl.bind[3].is_null= 0;
+    insSTMTCl.bind[3].length= 0;
+
+    insSTMTCl.bind[4].buffer_type= MYSQL_TYPE_LONG;
+    insSTMTCl.bind[4].buffer= (char *)&insSTMTCl.size;
+    insSTMTCl.bind[4].is_null= 0;
+    insSTMTCl.bind[4].length= 0;
+
+    insSTMTCl.bind[5].buffer_type= MYSQL_TYPE_LONG;
+    insSTMTCl.bind[5].buffer= (char *)&insSTMTCl.num;
+    insSTMTCl.bind[5].is_null= 0;
+    insSTMTCl.bind[5].length= 0;
+
+    insSTMTCl.bind[6].buffer_type= MYSQL_TYPE_SHORT;
+    insSTMTCl.bind[6].buffer= (char *)&insSTMTCl.learnt;
+    insSTMTCl.bind[6].is_null= 0;
+    insSTMTCl.bind[6].length= 0;
+
+    // Bind the buffers
+    if (mysql_stmt_bind_param(insSTMTCl.STMT, insSTMTCl.bind)) {
+        std::cout << "mysql_stmt_bind_param() failed" << std::endl
+        << mysql_stmt_error(insSTMTCl.STMT) << std::endl;
+        exit(1);
+    }
+
+    //Inserting element into solverruns to get unique ID
+    if (mysql_query(conf.serverConn, "INSERT INTO solverruns VALUES()")) {
+        std::cout << "Couldn't insert into table 'solverruns'" << std::endl;
+        exit(1);
+    }
+
+    insSTMTCl.runNo = mysql_insert_id(conf.serverConn);
+    std::cout << "This run number is: " << insSTMTCl.runNo << std::endl;
 }
 
 /**
@@ -130,6 +270,20 @@ Solver::~Solver()
 
     if (libraryCNFFile)
         fclose(libraryCNFFile);
+
+    if (conf.serverConn && insSTMTLits.STMT) {
+        if (mysql_stmt_close(insSTMTLits.STMT)) {
+            std::cout << "failed while closing the statement"
+            << mysql_stmt_error(insSTMTLits.STMT) << std::endl;
+            exit(1);
+        }
+
+        if (mysql_stmt_close(insSTMTCl.STMT)) {
+            std::cout << "failed while closing the statement"
+            << mysql_stmt_error(insSTMTCl.STMT) << std::endl;
+            exit(1);
+        }
+    }
 }
 
 //**********************************
@@ -2292,6 +2446,52 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
     return l_Nothing;
 }
 
+void Solver::addClauseToMySQL(const vec<Lit>& clause, const bool learnt, const uint32_t glue)
+{
+    if (!conf.serverConn || !insSTMTLits.STMT)
+        return;
+
+    //Add general clause info
+    insSTMTCl.decLevel = decisionLevel();
+    insSTMTCl.glue = glue;
+    insSTMTCl.learnt = learnt;
+    insSTMTCl.num = mysqClauseNum++;
+    insSTMTCl.size = clause.size();
+    insSTMTCl.trailLevel = trail.size();
+    if (mysql_stmt_execute(insSTMTCl.STMT)) {
+        std::cout << "mysql_stmt_execute(), 1 failed" << std::endl
+        << mysql_stmt_error(insSTMTCl.STMT) << std::endl;
+        exit(1);
+    }
+
+    //Get autoinc value
+    my_ulonglong autoInc = mysql_insert_id(conf.serverConn);
+    assert(autoInc != 0);
+    insSTMTLits.autoInc = autoInc;
+
+    //add literals of the clause
+    for(size_t i = 0; i < clause.size(); i++) {
+        insSTMTLits.litVar = clause[i].var();
+        insSTMTLits.inverted = clause[i].sign();
+
+        // Execute the INSERT statement
+        if (mysql_stmt_execute(insSTMTLits.STMT)) {
+            std::cout << "mysql_stmt_execute(), 1 failed" << std::endl
+            << mysql_stmt_error(insSTMTLits.STMT) << std::endl;
+            exit(1);
+        }
+
+        /* Get the number of affected rows */
+        int affected_rows= mysql_stmt_affected_rows(insSTMTLits.STMT);
+
+        // validate affected rows
+        if (affected_rows != 1)  {
+          std::cout << "invalid affected rows by MySQL" << std::endl;
+          exit(1);
+        }
+    }
+}
+
 /**
 @brief Handles a conflict that we reached through propagation
 
@@ -2323,6 +2523,7 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         if (restartType == dynamic_restart) glueHistory.push(glue);
         conflSizeHist.push(learnt_clause.size());
     }
+    addClauseToMySQL(learnt_clause, true, glue);
     cancelUntil(backtrack_level);
     #ifdef DUMP_STATS
     std::cout << "Learnt clause: " << learnt_clause
