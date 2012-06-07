@@ -170,7 +170,9 @@ public:
     bool dumpOrigClauses(const std::string& fileName) const;
     void printBinClause(const Lit litP1, const Lit litP2, FILE* outfile) const;
     const vector<std::pair<Lit, Lit> > get_all_binary_xors() const;
+    #ifdef HAVE_MYSQL
     long getMySQLRunNo() const;
+    #endif
     void resetPolaritiesToRand();
     void setConflLimit(const uint64_t conflLimit)
     {
@@ -547,6 +549,7 @@ protected:
     void     addSymmBreakClauses();
     void     initialiseSolver();
 
+#ifdef HAVE_MYSQL
     //MySQL
     void  initMySQLStatements();
     void  addClauseToMySQL(const vec<Lit>& clause, const bool learnt, const uint32_t glue);
@@ -572,6 +575,7 @@ protected:
     };
     InsertStatementClause insSTMTCl;
     uint32_t    mysqClauseNum;
+#endif
 
     //Misc related binary clauses
     void     dumpBinClauses(const bool alsoLearnt, const bool alsoNonLearnt, FILE* outfile) const;

@@ -104,6 +104,9 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
         , totalSimplifyTime(0.0)
         , simpDB_assigns   (-1)
         , simpDB_props     (0)
+#ifdef HAVE_MYSQL
+        , mysqClauseNum    (0)
+#endif //HAVE_MYSQL
 {
     mtrand.seed(conf.origSeed);
     #ifdef ENABLE_UNWIND_GLUE
@@ -120,14 +123,17 @@ Solver::Solver(const SolverConf& _conf, const GaussConf& _gaussconfig, SharedDat
     matrixFinder = new MatrixFinder(*this);
     dataSync = new DataSync(*this, sharedData);
 
-    //SQL
+    #ifdef HAVE_MYSQL
+    //Init SQL
     insSTMTLits.STMT = NULL;
     insSTMTCl.STMT = NULL;
     if (conf.serverConn) {
         initMySQLStatements();
     }
+    #endif
 }
 
+#ifdef HAVE_MYSQL
 void Solver::initMySQLStatements()
 {
     // Prepare an INSERT query with 2 parameters
@@ -253,6 +259,7 @@ void Solver::initMySQLStatements()
     insSTMTCl.runNo = mysql_insert_id(conf.serverConn);
     std::cout << "This run number is: " << insSTMTCl.runNo << std::endl;
 }
+#endif //HAVE_MYSQL
 
 /**
 @brief Frees clauses and frees all allocated hander classes
@@ -271,6 +278,7 @@ Solver::~Solver()
     if (libraryCNFFile)
         fclose(libraryCNFFile);
 
+#ifdef HAVE_MYSQL
     if (conf.serverConn && insSTMTLits.STMT) {
         if (mysql_stmt_close(insSTMTLits.STMT)) {
             std::cout << "failed while closing the statement"
@@ -284,6 +292,7 @@ Solver::~Solver()
             exit(1);
         }
     }
+#endif
 }
 
 //**********************************
@@ -2446,6 +2455,7 @@ llbool Solver::new_decision(const uint64_t nof_conflicts, const uint64_t nof_con
     return l_Nothing;
 }
 
+#ifdef HAVE_MYSQL
 void Solver::addClauseToMySQL(const vec<Lit>& clause, const bool learnt, const uint32_t glue)
 {
     if (!conf.serverConn || !insSTMTLits.STMT)
@@ -2491,6 +2501,7 @@ void Solver::addClauseToMySQL(const vec<Lit>& clause, const bool learnt, const u
         }
     }
 }
+#endif
 
 /**
 @brief Handles a conflict that we reached through propagation
@@ -2523,7 +2534,10 @@ llbool Solver::handle_conflict(vec<Lit>& learnt_clause, PropBy confl, uint64_t& 
         if (restartType == dynamic_restart) glueHistory.push(glue);
         conflSizeHist.push(learnt_clause.size());
     }
+#ifdef HAVE_MYSQL
     addClauseToMySQL(learnt_clause, true, glue);
+#endif //HAVE_MYSQL
+
     cancelUntil(backtrack_level);
     #ifdef DUMP_STATS
     std::cout << "Learnt clause: " << learnt_clause
