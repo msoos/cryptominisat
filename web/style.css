@@ -157,7 +157,7 @@ h2 {
   font-size: 28px;
 }
 
-h1, h2 {
+h1, h2, p {
   font-family: "Yanone Kaffeesatz";
   text-rendering: optimizeLegibility;
 }
@@ -234,8 +234,10 @@ h1, h2 {
 }
 
 p {
+    font-size: 16px;
     margin-left: 50px;
     width: 600px;
+    font-weight: 200;
 }
 
 

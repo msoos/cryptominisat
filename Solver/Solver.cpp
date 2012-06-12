@@ -1418,8 +1418,8 @@ void Solver::fullReduce()
     }
 
     if (conf.doSQL) {
-        printClauseStatsSQL(clauses);
-        printClauseStatsSQL(learnts);
+        //printClauseStatsSQL(clauses);
+        //printClauseStatsSQL(learnts);
     }
     reduceDB();
     solver->consolidateMem();

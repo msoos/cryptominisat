@@ -170,6 +170,7 @@ Clause* Searcher::analyze(
     , vector<Lit>& out_learnt
     , uint32_t& out_btlevel
     , uint32_t &glue
+    , uint32_t &numResolutions
 ) {
     assert(out_learnt.empty());
     assert(decisionLevel() > 0);
@@ -180,7 +181,7 @@ Clause* Searcher::analyze(
     out_btlevel = 0;
     PropBy oldConfl;
 
-    uint64_t numResolutions = 0;
+    numResolutions = 0;
 
     //cout << "---- Start analysis -----" << endl;
     toClear.clear();
@@ -240,7 +241,6 @@ Clause* Searcher::analyze(
         pathC--;
     } while (pathC > 0);
     out_learnt[0] = ~p;
-    numResolutionsHist.push(numResolutions);
 
     //Clear seen2, which was used to mark literals that have been bumped
     for (vector<Lit>::const_iterator
@@ -887,6 +887,7 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
     //Stats
     uint32_t backtrack_level;
     uint32_t glue;
+    uint32_t numResolutions;
     vector<Lit> learnt_clause;
     stats.conflStats.numConflicts++;
     params.conflictsDoneThisRestart++;
@@ -896,7 +897,14 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
     if (decisionLevel() == 0)
         return false;
 
-    Clause* cl = analyze(confl, learnt_clause, backtrack_level, glue);
+    Clause* cl = analyze(
+        confl
+        , learnt_clause    //return learnt clause here
+        , backtrack_level  //return backtrack level here
+        , glue             //return glue here
+        , numResolutions   //return number of resolutions made here
+    );
+
     size_t orig_trail_size = trail.size();
     if (params.update) {
         trailDepthHist.push(trail.size() - trail_lim[0]);
@@ -905,6 +913,16 @@ bool Searcher::handle_conflict(SearchFuncParams& params, PropBy confl)
         glueHist.push(glue);
         conflSizeHist.push(learnt_clause.size());
         agilityHist.push(agility.getAgility());
+        numResolutionsHist.push(numResolutions);
+
+        if (sumConflicts() % 1000 == 0) {
+            printClauseDistribSQL();
+            std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
+        }
+
+        if (learnt_clause.size() < clauseSizeDistrib.size()) {
+            clauseSizeDistrib[learnt_clause.size()]++;
+        }
     }
     cancelUntil(backtrack_level);
     if (params.update) {
@@ -1045,6 +1063,7 @@ void Searcher::resetStats()
     agilityHist.clear();
     agilityHist.resize(100);
     clearPolarData();
+    clauseSizeDistrib.resize(300);
 
     //Rest solving stats
     stats.clear();
@@ -1184,7 +1203,7 @@ void Searcher::printDecLevel0SQL()
     << ", " << solver->varReplacer->getNumReplacedVars()
     << ", " << solver->subsumer->getStats().numVarsElimed
     << ", " << trail.size()
-    << ");" << endl;;
+    << ");" << endl;
 
 }
 
@@ -1350,6 +1369,26 @@ void Searcher::printVarStatsSQL()
         << ", " << polarData[i].flipped
         << " );" << endl;
     }
+}
+
+void Searcher::printClauseDistribSQL()
+{
+    for(size_t i = 0; i < clauseSizeDistrib.size(); i++) {
+        solver->sqlFile
+        << "insert into `clauseSizeDistrib`"
+        << "("
+        << " `runID`, `conflicts`"
+        << ", `size`, `num`"
+        << ") values ("
+        << "  " << solver->getSolveStats().runID
+        << ", " << sumConflicts()
+
+        //Var data
+        << ", " << i
+        << ", " << clauseSizeDistrib[i]
+        << ");" << endl;
+    }
+    
 }
 
 void Searcher::clearPolarData()

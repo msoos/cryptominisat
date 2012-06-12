@@ -32,7 +32,7 @@
 <h1>Cryptominisat 3</h1>
 
 <h3>Replacing wordy authority with visible certainty</h4>
-<p>This webpage shows the solving of a SAT instance, visually. I was amazed by Edward Tufte's work while others in the office were amazed by a professional explaining the use of PowerPoint. Tufte would probably not approve, as these have a lot of chartjunk and the layout is terrible (pie charts are the worst offenders). However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
+<p>This webpage shows the solving of a SAT instance, visually. I was amazed by Edward Tufte's work and motivated by Parachute to Eternity. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
 
 
 <!--<p>Please select averaging level:
@@ -40,7 +40,7 @@
 <span id="range">1</span>
 </p>-->
 <h2>Search restart statistics</h2>
-<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of simplification sessions. Between the blue lines are what I call search sessions. Observe how time jumps at these blue lines, but, more importantly, observe how the behaviour of the solver changes drastically not much after the simplification session. Use the zoom: there is more than meets the eye.</p></br>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. Every datapoint corresponds to a restart. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of <i>simplification sessions</i>. Between the blue lines are what I call <i>search sessions</i>. The angle of the "time" graph indicates how much time is spent per restart. Time jumps during search sessions. The angle of the "restart no." graph indicates how often restarts were made.</p>
 
 <script type="text/javascript">
 function showValue(newValue)
@@ -56,7 +56,8 @@ var myDataFuncs=new Array();
 var myDataNames=new Array();
 </script>
 <?
-$runID = 456297562;
+$runID = 3097911473;
+//$runID = 456297562;
 //$runID = 657697659;
 //$runID = 3348265795;
 //error_reporting(E_ALL);
@@ -111,14 +112,14 @@ function printOneThing($name, $nicename, $data, $nrows)
 
 echo "<table id=\"plot-table-a\">";
 printOneThing("time", "time", $result, $nrows);
-printOneThing("restarts", "restarts", $result, $nrows);
-printOneThing("branchDepth", "branch depth", $result, $nrows);
-printOneThing("branchDepthDelta", "branch depth delta", $result, $nrows);
-printOneThing("trailDepth", "trail depth", $result, $nrows);
-printOneThing("trailDepthDelta", "trail depth delta", $result, $nrows);
-printOneThing("glue", "glue", $result, $nrows);
-printOneThing("size", "size", $result, $nrows);
-printOneThing("resolutions", "resolutions", $result, $nrows);
+printOneThing("restarts", "restart no.", $result, $nrows);
+printOneThing("branchDepth", "avg. branch depth", $result, $nrows);
+printOneThing("branchDepthDelta", "avg. branch depth delta", $result, $nrows);
+printOneThing("trailDepth", "avg. trail depth", $result, $nrows);
+printOneThing("trailDepthDelta", "avg. trail depth delta", $result, $nrows);
+printOneThing("glue", "avg. glue", $result, $nrows);
+printOneThing("size", "avg. size", $result, $nrows);
+printOneThing("resolutions", "avg. no. resolutions", $result, $nrows);
 
 $query="
 SELECT `conflicts`, `replaced`, `set`
@@ -224,7 +225,7 @@ for (var i = 0; i <= myDataNames.length; i++) {
                 pixelsPerLabel: 100,
               }
             },
-            //stepPlot: true,
+            stepPlot: true,
             strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 2,
             highlightCircleSize: 3,
@@ -240,7 +241,9 @@ for (var i = 0; i <= myDataNames.length; i++) {
             labelsSeparateLines: true,
             labelsKMB: true,
             drawPoints: true,
-            pointSize: 1.5,
+            pointSize: 1,
+            drawXGrid: false,
+            drawYGrid: false,
             //errorBars: false,
             drawCallback: function(me, initial) {
                 if (blockRedraw || initial)
@@ -279,22 +282,24 @@ function setRollPeriod(num)
 
 <script type="text/javascript">
 var clauseStatsData=new Array();
-clauseStatsData.push(new Array());
-clauseStatsData.push(new Array());
 </script>
 
-<h2>Clause statistics before each clause database cleaning</h2>
+<!-- <h2>Clause statistics before each clause database cleaning</h2> -->
 <?
-function createDataClauseStats($reduceDB, $runID, $learnt)
+/*function createDataClauseStats($reduceDB, $runID)
 {
     $query="
-    SELECT sum(`numPropAndConfl`) as mysum, avg(`numPropAndConfl`) as myavg, count(`numPropAndConfl`) as mycnt, `size`
+    SELECT
+        sum(`numPropAndConfl`) as mysum
+        , avg(`numPropAndConfl`) as myavg
+        , count(`numPropAndConfl`) as mycnt
+        , `size`
     FROM `clauseStats`
-    where `runID` = $runID and `reduceDB`= $reduceDB and `learnt` = $learnt
-    and `numPropAndConfl` > 0
+    where `runID` = $runID and `reduceDB`= $reduceDB and `learnt` = 1
     group by `size`
     order by `size`
     limit 200";
+    //and `numPropAndConfl` > 0
 
     $result=mysql_query($query);
     if (!$result) {
@@ -302,7 +307,7 @@ function createDataClauseStats($reduceDB, $runID, $learnt)
     }
     $nrows=mysql_numrows($result);
 
-    echo "clauseStatsData[$learnt].push([\n";
+    echo "clauseStatsData.push([\n";
     $i=0;
     $numprinted = 0;
     while ($i < $nrows) {
@@ -310,7 +315,7 @@ function createDataClauseStats($reduceDB, $runID, $learnt)
         $mysum=mysql_result($result, $i, "mysum");
         $mycnt=mysql_result($result, $i, "mycnt");
         $size=mysql_result($result, $i, "size");
-        if ($mycnt < 10) {
+        if ($mycnt < 10 || $mycnt == 0 || $size <= 3) {
             $i++;
             continue;
         }
@@ -339,56 +344,51 @@ $maxNumReduceDB = mysql_result($result, 0, "mymax");
 
 echo "<script type=\"text/javascript\">\n";
 for($i = 1; $i < $maxNumReduceDB; $i++) {
-    for($learnt = 1; $learnt < 2; $learnt++) {
-        createDataClauseStats($i, $runID, $learnt);
-    }
+    createDataClauseStats($i, $runID);
 }
 echo "</script>\n";
 
 echo "<table id=\"plot-table-a\">";
 for($i = 1; $i < $maxNumReduceDB; $i++) {
-    for($learnt = 1; $learnt < 2; $learnt++) {
-        echo "<tr><td>
-        <div id=\"clauseStatsPlot$i-$learnt\" class=\"myPlotData\"></div>
-        </td><td valign=top>
-        <div id=\"clauseStatsPlotLabel$i-$learnt\" class=\"myPlotLabel\"></div>
-        </td></tr>";
-    }
+    echo "<tr><td>
+    <div id=\"clauseStatsPlot$i\" class=\"myPlotData\"></div>
+    </td><td valign=top>
+    <div id=\"clauseStatsPlotLabel$i\" class=\"myPlotLabel\"></div>
+    </td></tr>";
 }
 echo "</tr></table>";
+*/
 ?>
 
 <script type="text/javascript">
-for(learnt = 1; learnt < 2; learnt++) {
-    for(i = 0; i < clauseStatsData[learnt].length; i++) {
-        var i2 = i+1;
-        var gzz = new Dygraph(
-            document.getElementById('clauseStatsPlot' + i2 + '-' + learnt),
-            clauseStatsData[learnt][i],
-            {
-                drawXAxis: i == clauseStatsData[learnt].length-1,
-                legend: 'always',
-                labels: ['size', 'num prop&confl'],
-                connectSeparatedPoints: true,
-                drawPoints: true,
-                labelsDivStyles: {
-                    'text-align': 'right',
-                    'background': 'none'
-                },
-                labelsDiv: document.getElementById('clauseStatsPlotLabel'+ i2 + '-' + learnt),
-                labelsSeparateLines: true,
-                labelsKMB: true
-                //,title: "Most propagating&conflicting clauses before clause clean " + i
-            }
-        );
-    }
+for(i = 0; i < clauseStatsData.length; i++) {
+    var i2 = i+1;
+    var gzz = new Dygraph(
+        document.getElementById('clauseStatsPlot' + i2),
+        clauseStatsData[i],
+        {
+            drawXAxis: i == clauseStatsData.length-1,
+            legend: 'always',
+            labels: ['size', 'num prop&confl'],
+            connectSeparatedPoints: true,
+            drawPoints: true,
+            labelsDivStyles: {
+                'text-align': 'right',
+                'background': 'none'
+            },
+            labelsDiv: document.getElementById('clauseStatsPlotLabel'+ i2),
+            labelsSeparateLines: true,
+            labelsKMB: true
+            //,title: "Most propagating&conflicting clauses before clause clean " + i
+        }
+    );
 }
 var varPolarsData = new Array();
 </script>
 
 
 
-<h2>Variable statistics for each search session</h2>
+<h2>Variable statistics per search session</h2>
 <p> These graphs show how many times the topmost set variables were set to positive or negative polarity. Also, it shows how many times they were flipped, relative to their stored, old polarity.</p>
 <?
 function createDataVarPolars($simpnum, $runID)
@@ -479,8 +479,12 @@ for(i = 0; i < varPolarsData.length; i++) {
 </script>
 
 
-<h2>Search statistics for each session</h2>
-<p>Here are some pie charts detailing propagations and other stats for each search. "red." means reducible, also called "learnt". "irred." means irreducible, also called "non-learnt" (terminology by A. Biere).</p>
+<h2>Search session statistics</h2>
+<p>Here are some pie charts detailing propagations and other stats for each search. "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt". Terminology shamelessly taken from A. Biere.</p>
+
+<?
+?>
+
 <?
 function getLearntData($runID)
 {
@@ -704,6 +708,9 @@ for(i = 0; i < conflData.length; i++) {
     drawChart("confl", i, conflData);
 }
 </script>
+
+<h2>The End</h2>
+<p>If you enjoyed this visualization, there are two things you can do. First, enjoy, and send it to others. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>
 
 
 <!--<div id="fig" style="width:20px; height:20px"></div>

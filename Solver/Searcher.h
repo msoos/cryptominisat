@@ -325,6 +325,7 @@ class Searcher : public PropEngine
         bqueue<uint32_t> conflSizeHist;       ///< Conflict size history
         bqueue<uint32_t> numResolutionsHist;  ///< Number of resolutions during conflict analysis
         bqueue<double, double>  agilityHist;
+        vector<uint32_t> clauseSizeDistrib;
         uint64_t sumConflicts() const;
         uint64_t sumRestarts() const;
 
@@ -356,9 +357,10 @@ class Searcher : public PropEngine
         void     cancelUntil      (uint32_t level);                        ///<Backtrack until a certain level.
         Clause* analyze(
             PropBy confl //The conflict that we are investigating
-            , vector<Lit>& out_learnt //The learnt clause -- outgoing parameter
-            , uint32_t& out_btlevel //The backtrack level
-            , uint32_t &nblevels //The glue of the learnt clause
+            , vector<Lit>& out_learnt    //learnt clause
+            , uint32_t& out_btlevel      //backtrack level
+            , uint32_t &nblevels         //glue of the learnt clause
+            , uint32_t &numResolutions   //number of resolutions made
         );
 
         void analyzeHelper(
@@ -436,6 +438,7 @@ class Searcher : public PropEngine
         void printPropStatsSQL();
         void printConflStatsSQL();
         void printVarStatsSQL();
+        void printClauseDistribSQL();
         void clearPolarData();
 
         //Assumptions
