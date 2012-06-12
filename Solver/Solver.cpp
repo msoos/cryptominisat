@@ -84,7 +84,7 @@ Solver::Solver(const SolverConf& _conf) :
         cout << "Error reading from /dev/random !" << endl;
         exit(-1);
     }
-    read(randomData, &solveStats.runID, sizeof solveStats.runID);
+    read(randomData, &solveStats.runID, 4);
     close(randomData);
     cout << "c runID: " << solveStats.runID << endl;
 }
@@ -1361,6 +1361,38 @@ void Solver::clearPropConfl(vector<Clause*>& clauseset)
     }
 }
 
+void Solver::printClauseStatsSQL(vector<Clause*> cls)
+{
+    for(vector<Clause*>::const_iterator
+        it = cls.begin(), end = cls.end()
+        ; it != end
+        ; it++
+    ) {
+        sqlFile
+        << "insert into `clauseStats`"
+        << "("
+        << " `runID`, `simplifications`, `reduceDB`"
+        << " , `learnt`, `size`, `glue`, `numPropAndConfl`, `numLitVisited`, `numLookedAt`"
+        << ")"
+        << " values ("
+        //Position
+        << "  " << getSolveStats().runID
+        << ", " << getSolveStats().numSimplify
+        << ", " << solveStats.nbReduceDB
+
+        //data
+        << ", " << (int)(*it)->learnt()
+        << ", " << (*it)->size()
+        << ", " << (*it)->stats.glue
+        << ", " << (*it)->stats.numPropAndConfl
+        << ", " << (*it)->stats.numLitVisited
+        << ", " << (*it)->stats.numLookedAt
+
+        //finish
+        << " );" << endl;
+    }
+}
+
 void Solver::fullReduce()
 {
     if (conf.verbosity >= 1) {
@@ -1385,6 +1417,10 @@ void Solver::fullReduce()
         << endl;
     }
 
+    if (conf.doSQL) {
+        printClauseStatsSQL(clauses);
+        printClauseStatsSQL(learnts);
+    }
     reduceDB();
     solver->consolidateMem();
 

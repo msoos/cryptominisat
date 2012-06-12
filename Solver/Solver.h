@@ -419,6 +419,7 @@ class Solver : public Searcher
         vector<uint32_t> backupActivity;
         vector<bool>     backupPolarity;
         uint32_t         backupActivityInc;
+        void printClauseStatsSQL(vector<Clause*> cls);
 
         /////////////////////
         // Objects that help us accomplish the task

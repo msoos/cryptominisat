@@ -316,9 +316,6 @@ Clause* Searcher::analyze(
         std::swap(out_learnt[max_i], out_learnt[1]);
         out_btlevel = varData[out_learnt[1].var()].level;
     }
-    #ifdef VERBOSE_DEBUG_OTF_GATE_SHORTEN
-    cout << "out_btlevel: " << out_btlevel << endl;
-    #endif
 
     //We can only on-the-fly subsume with clauses that are not 2- or 3-long
     //furthermore, we cannot subsume a clause that is marked for deletion
@@ -685,9 +682,6 @@ lbool Searcher::search(SearchFuncParams _params, uint64_t& rest)
         assert(ok);
         Lit failed;
         PropBy confl;
-        if (decisionLevel() == 0 && conf.doSQL) {
-            printDecLevel0SQL();
-        }
 
         //If decision level==1, then do hyperbin & transitive reduction
         if (decisionLevel() == 1) {
@@ -1050,6 +1044,7 @@ void Searcher::resetStats()
     //About vars
     agilityHist.clear();
     agilityHist.resize(100);
+    clearPolarData();
 
     //Rest solving stats
     stats.clear();
@@ -1176,7 +1171,7 @@ void Searcher::printDecLevel0SQL()
     assert(decisionLevel() == 0);
 
     solver->sqlFile
-    << "insert into vars"
+    << "insert into `vars`"
     << "("
     << " `runID`, `conflicts`"
     << ", `free`, `replaced`, `eliminated`, `set`"
@@ -1296,6 +1291,76 @@ void Searcher::printConflStatsSQL()
     ;
 }
 
+struct MyInvSorter {
+    bool operator()(size_t num, size_t num2)
+    {
+        return num > num2;
+    }
+};
+
+struct MyPolarData
+{
+    MyPolarData (size_t _pos, size_t _neg, size_t _flipped) :
+        pos(_pos)
+        , neg(_neg)
+        , flipped(_flipped)
+    {}
+        
+    size_t pos;
+    size_t neg;
+    size_t flipped;
+
+    bool operator<(const MyPolarData& other) const
+    {
+        return (pos + neg) > (other.pos + other.neg);
+    }
+};
+
+void Searcher::printVarStatsSQL()
+{
+    vector<MyPolarData> polarData;
+    for(size_t i = 0; i < varData.size(); i++) {
+        if (varData[i].posPolarSet == 0 && varData[i].negPolarSet == 0)
+            continue;
+
+        polarData.push_back(MyPolarData(
+            varData[i].posPolarSet
+            , varData[i].negPolarSet
+            , varData[i].flippedPolarity
+        ));
+    }
+    std::sort(polarData.begin(), polarData.end());
+
+    for(size_t i = 0; i < polarData.size(); i++) {
+        solver->sqlFile
+        << "insert into `polarSet`"
+        << "("
+        << " `runID`, `simplifications`"
+        << " , `order`, `pos`, `neg`, `total`, `flipped`"
+        << ")"
+        << " values ("
+        //Position
+        << "  " << solver->getSolveStats().runID
+        << ", " << solver->getSolveStats().numSimplify
+        //Data
+        << ", " << i
+        << ", " << polarData[i].pos
+        << ", " << polarData[i].neg
+        << ", " << polarData[i].pos + polarData[i].neg
+        << ", " << polarData[i].flipped
+        << " );" << endl;
+    }
+}
+
+void Searcher::clearPolarData()
+{
+    for(size_t i = 0; i < varData.size(); i++) {
+        varData[i].posPolarSet = 0;
+        varData[i].negPolarSet = 0;
+        varData[i].flippedPolarity = 0;
+    };
+}
+
 
 /**
 @brief The main solve loop that glues everything together
@@ -1354,6 +1419,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
 
         if (conf.doSQL) {
             printRestartSQL();
+            printDecLevel0SQL();
         }
         //Print restart stat
         if (conf.verbosity >= 1
@@ -1457,6 +1523,7 @@ lbool Searcher::solve(const vector<Lit>& assumps, const uint64_t maxConfls)
         printPropStatsSQL();
         printLearntStatsSQL();
         printConflStatsSQL();
+        printVarStatsSQL();
     }
 
     if (conf.verbosity >= 3) {

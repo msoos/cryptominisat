@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -19,7 +19,7 @@
     </style>
 
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="jquery/jquery.min.js"></script>
 <!--     <script type="text/javascript" src="jquery/jquery.jqplot.min.js"></script> -->
 <!--     <script type="text/javascript" src="jquery/plugins/jqplot.pieRenderer.min.js"></script> -->
 <!--     <script type="text/javascript" src="jquery/plugins/jqplot.donutRenderer.min.js"></script> -->
@@ -31,10 +31,17 @@
 <body>
 <h1>Cryptominisat 3</h1>
 
-<h2>Replacing wordy authority with visible certainty</h2>
-<p>Please select averaging level:
+<h3>Replacing wordy authority with visible certainty</h4>
+<p>This webpage shows the solving of a SAT instance, visually. I was amazed by Edward Tufte's work while others in the office were amazed by a professional explaining the use of PowerPoint. Tufte would probably not approve, as these have a lot of chartjunk and the layout is terrible (pie charts are the worst offenders). However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
+
+
+<!--<p>Please select averaging level:
 <input type="range" min="1" max="21" value="1" step="1" onchange="showValue(this.value)"/>
 <span id="range">1</span>
+</p>-->
+<h2>Search restart statistics</h2>
+<p>Below you will find conflicts in the X axis and several interesting data on the Y axis. You may zoom in by clicking on an interesting point and dragging the cursor along the X axis. Double-click to unzoom. Blue vertical lines indicate the positions of simplification sessions. Between the blue lines are what I call search sessions. Observe how time jumps at these blue lines, but, more importantly, observe how the behaviour of the solver changes drastically not much after the simplification session. Use the zoom: there is more than meets the eye.</p></br>
+
 <script type="text/javascript">
 function showValue(newValue)
 {
@@ -42,7 +49,6 @@ function showValue(newValue)
     setRollPeriod(newValue);
 }
 </script>
-</p>
 
 
 <script type="text/javascript">
@@ -50,8 +56,9 @@ var myDataFuncs=new Array();
 var myDataNames=new Array();
 </script>
 <?
-$runID = 2009009927556288153;
-// Report all PHP errors (see changelog)
+$runID = 456297562;
+//$runID = 657697659;
+//$runID = 3348265795;
 //error_reporting(E_ALL);
 error_reporting(E_STRICT);
 
@@ -78,12 +85,11 @@ function printOneThing($name, $nicename, $data, $nrows)
 {
     $fullname = $name."Data";
     $nameLabel = $name."Label";
-    echo "<table><tr><td>
-    <div id=\"$name\" style=\"width:790px; height:100px; margin:0\"></div>
+    echo "<tr><td>
+    <div id=\"$name\" class=\"myPlotData\"></div>
     </td><td valign=top>
-    <div id=\"$nameLabel\" style=\"width:150px; font-size:0.8em; padding-top:5px;\"></div>
-    </td>
-    </tr></table>";
+    <div id=\"$nameLabel\" class=\"myPlotLabel\"></div>
+    </td></tr>";
     echo "<script type=\"text/javascript\">
     function $fullname() {
     return \"Conflicts,$nicename\\n";
@@ -102,9 +108,10 @@ function printOneThing($name, $nicename, $data, $nrows)
     echo "myDataNames.push(\"$name\");\n";
     echo "</script>\n";
 }
+
+echo "<table id=\"plot-table-a\">";
 printOneThing("time", "time", $result, $nrows);
 printOneThing("restarts", "restarts", $result, $nrows);
-//printOneThing("simplifications", "simplifications", $result, $nrows);
 printOneThing("branchDepth", "branch depth", $result, $nrows);
 printOneThing("branchDepthDelta", "branch depth delta", $result, $nrows);
 printOneThing("trailDepth", "trail depth", $result, $nrows);
@@ -125,25 +132,90 @@ if (!$result) {
 $nrows=mysql_numrows($result);
 printOneThing("set", "vars set", $result, $nrows);
 printOneThing("replaced", "vars replaced", $result, $nrows);
+echo "</table>";
+
+$query="
+SELECT max(conflicts) as confl, simplifications as simpl
+FROM restart
+where runID = $runID
+group by simplifications";
+
+$result=mysql_query($query);
+if (!$result) {
+    die('Invalid query: ' . mysql_error());
+}
+$nrows=mysql_numrows($result);
+
+function getAnnotations($name, $result, $nrows)
+{
+    //echo "gs[0].setAnnotations([";
+
+    echo "myAnnotations = [";
+    $i=0;
+    while ($i < $nrows) {
+        $conf=mysql_result($result, $i, "confl");
+        $b=mysql_result($result, $i, "simpl");
+
+        echo "{series: \"$name\",
+        x: \"$conf\"
+        , shortText: \"S$b\"
+        , text: \"Simplification no. $b\"
+        },";
+        $i++;
+    }
+    echo "];";
+    echo "myDataAnnotations.push(myAnnotations);\n";
+
+    echo "simplificationPoints = [";
+    $i=0;
+    while ($i < $nrows) {
+        $conf=mysql_result($result, $i, "confl");
+        echo "$conf";
+        $i++;
+        if ($i < $nrows) {
+            echo ", ";
+        }
+    }
+    echo "];";
+}
+echo "<script type=\"text/javascript\">";
+echo "var myDataAnnotations=new Array();";
+getAnnotations("time", $result, $nrows);
+/*getAnnotations("restarts", $result, $nrows);
+getAnnotations("branch depth", $result, $nrows);
+getAnnotations("branch depth delta", $result, $nrows);
+getAnnotations("trail depth", $result, $nrows);
+getAnnotations("trail depth delta", $result, $nrows);
+getAnnotations("glue", $result, $nrows);
+getAnnotations("size", $result, $nrows);
+getAnnotations("resolutions", $result, $nrows);*/
+echo "</script>\n";
 ?>
 
 <script type="text/javascript">
 function todisplay(i,len)
 {
 if (i == len-1)
-	return "Conflicts";
+    return "Conflicts";
 else
-	return "";
+    return "";
 };
 
 gs = [];
 var blockRedraw = false;
 for (var i = 0; i <= myDataNames.length; i++) {
-gs.push(
-    new Dygraph(
+    gs.push(new Dygraph(
         document.getElementById(myDataNames[i]),
         myDataFuncs[i]
         , {
+            underlayCallback: function(canvas, area, g) {
+                canvas.fillStyle = "rgba(185, 185, 245, 245)";
+                for(var k = 0; k < simplificationPoints.length; k++) {
+                    var bottom_left = g.toDomCoords(simplificationPoints[k], -20);
+                    var left = bottom_left[0];
+                    canvas.fillRect(left, area.y, 2, area.h);
+                }
+            },
             axes: {
               x: {
                 valueFormatter: function(d) {
@@ -160,7 +232,7 @@ gs.push(
             drawXAxis: i == myDataNames.length-1,
             legend: 'always',
             xlabel: todisplay(i, myDataNames.length),
-	    labelsDivStyles: {
+            labelsDivStyles: {
                 'text-align': 'right',
                 'background': 'none'
             },
@@ -188,9 +260,12 @@ gs.push(
                 blockRedraw = false;
             }
         }
-    )
-);
+    ));
 }
+
+/*for (i = 0; i <= myDataAnnotations.length; i++)  {
+    gs[i].setAnnotations(myDataAnnotations[i]);
+}*/
 
 function setRollPeriod(num)
 {
@@ -200,39 +275,212 @@ function setRollPeriod(num)
         } );
     }
 }
+</script>
 
+<script type="text/javascript">
+var clauseStatsData=new Array();
+clauseStatsData.push(new Array());
+clauseStatsData.push(new Array());
+</script>
+
+<h2>Clause statistics before each clause database cleaning</h2>
 <?
-echo "gs[0].setAnnotations([";
-$query="
-SELECT max(conflicts) as confl, simplifications as simpl
-FROM restart
-where runID = $runID
-group by simplifications";
+function createDataClauseStats($reduceDB, $runID, $learnt)
+{
+    $query="
+    SELECT sum(`numPropAndConfl`) as mysum, avg(`numPropAndConfl`) as myavg, count(`numPropAndConfl`) as mycnt, `size`
+    FROM `clauseStats`
+    where `runID` = $runID and `reduceDB`= $reduceDB and `learnt` = $learnt
+    and `numPropAndConfl` > 0
+    group by `size`
+    order by `size`
+    limit 200";
 
+    $result=mysql_query($query);
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+    $nrows=mysql_numrows($result);
+
+    echo "clauseStatsData[$learnt].push([\n";
+    $i=0;
+    $numprinted = 0;
+    while ($i < $nrows) {
+        $myavg=mysql_result($result, $i, "myavg");
+        $mysum=mysql_result($result, $i, "mysum");
+        $mycnt=mysql_result($result, $i, "mycnt");
+        $size=mysql_result($result, $i, "size");
+        if ($mycnt < 10) {
+            $i++;
+            continue;
+        }
+        $numprinted++;
+        if ($numprinted > 1) {
+            echo ",";
+        }
+
+        echo "[$size, $myavg]\n";
+
+        $i++;
+    }
+    echo "]);\n";
+}
+
+//Get maximum number of simplifications
+$query="
+SELECT max(reduceDB) as mymax
+FROM `clauseStats`
+where `runID` = $runID";
 $result=mysql_query($query);
 if (!$result) {
     die('Invalid query: ' . mysql_error());
 }
-$nrows=mysql_numrows($result);
+$maxNumReduceDB = mysql_result($result, 0, "mymax");
 
-$i=0;
-while ($i < $nrows) {
-    $conf=mysql_result($result, $i, "confl");
-    $b=mysql_result($result, $i, "simpl");
-
-    echo "{series: \"time\"
-    , x: \"$conf\"
-    , shortText: \"S$b\"
-    , text: \"Simplification no. $b\"
-    },";
-    $i++;
+echo "<script type=\"text/javascript\">\n";
+for($i = 1; $i < $maxNumReduceDB; $i++) {
+    for($learnt = 1; $learnt < 2; $learnt++) {
+        createDataClauseStats($i, $runID, $learnt);
+    }
 }
-echo "]);";
+echo "</script>\n";
 
+echo "<table id=\"plot-table-a\">";
+for($i = 1; $i < $maxNumReduceDB; $i++) {
+    for($learnt = 1; $learnt < 2; $learnt++) {
+        echo "<tr><td>
+        <div id=\"clauseStatsPlot$i-$learnt\" class=\"myPlotData\"></div>
+        </td><td valign=top>
+        <div id=\"clauseStatsPlotLabel$i-$learnt\" class=\"myPlotLabel\"></div>
+        </td></tr>";
+    }
+}
+echo "</tr></table>";
 ?>
+
+<script type="text/javascript">
+for(learnt = 1; learnt < 2; learnt++) {
+    for(i = 0; i < clauseStatsData[learnt].length; i++) {
+        var i2 = i+1;
+        var gzz = new Dygraph(
+            document.getElementById('clauseStatsPlot' + i2 + '-' + learnt),
+            clauseStatsData[learnt][i],
+            {
+                drawXAxis: i == clauseStatsData[learnt].length-1,
+                legend: 'always',
+                labels: ['size', 'num prop&confl'],
+                connectSeparatedPoints: true,
+                drawPoints: true,
+                labelsDivStyles: {
+                    'text-align': 'right',
+                    'background': 'none'
+                },
+                labelsDiv: document.getElementById('clauseStatsPlotLabel'+ i2 + '-' + learnt),
+                labelsSeparateLines: true,
+                labelsKMB: true
+                //,title: "Most propagating&conflicting clauses before clause clean " + i
+            }
+        );
+    }
+}
+var varPolarsData = new Array();
 </script>
 
 
+
+<h2>Variable statistics for each search session</h2>
+<p> These graphs show how many times the topmost set variables were set to positive or negative polarity. Also, it shows how many times they were flipped, relative to their stored, old polarity.</p>
+<?
+function createDataVarPolars($simpnum, $runID)
+{
+    $query="
+    SELECT *
+    FROM `polarSet`
+    where `runID` = $runID and `simplifications`= $simpnum
+    order by `order`
+    limit 200";
+
+    $result=mysql_query($query);
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
+    }
+    $nrows=mysql_numrows($result);
+
+    echo "varPolarsData.push([\n";
+    $i=0;
+    while ($i < $nrows) {
+        $order=mysql_result($result, $i, "order");
+        $pos=mysql_result($result, $i, "pos");
+        $neg=mysql_result($result, $i, "neg");
+        $total=mysql_result($result, $i, "total");
+        $flipped=mysql_result($result, $i, "flipped");
+
+        echo "[$order, $pos, $neg, $total, $flipped]\n";
+
+        $i++;
+        if ($i < $nrows) {
+            echo ",";
+        }
+    }
+    echo "]);\n";
+}
+
+//Get maximum number of simplifications
+$query="
+SELECT max(simplifications) as mymax
+FROM `polarSet`
+where `runID` = $runID";
+$result=mysql_query($query);
+if (!$result) {
+    die('Invalid query: ' . mysql_error());
+}
+$maxNumSimp = mysql_result($result, 0, "mymax");
+
+echo "<script type=\"text/javascript\">\n";
+for($i = 1; $i < $maxNumSimp; $i++) {
+    createDataVarPolars($i, $runID);
+}
+echo "</script>\n";
+
+echo "<table id=\"plot-table-a\">";
+for($i = 1; $i < $maxNumSimp; $i++) {
+    echo "<tr><td>
+    <div id=\"varPolarsPlot$i\" class=\"myPlotData2\"></div>
+    </td><td valign=top>
+    <div id=\"varPolarsPlotLabel$i\" class=\"myPlotLabel\"></div>
+    </td></tr>";
+}
+echo "</tr></table>";
+?>
+
+<script type="text/javascript">
+for(i = 0; i < varPolarsData.length; i++) {
+    var i2 = i+1;
+    var gzz = new Dygraph(
+        document.getElementById('varPolarsPlot' + i2),
+        varPolarsData[i],
+        {
+            legend: 'always',
+            labels: ['no.', 'pos polar', 'neg polar', 'total set', 'flipped polar' ],
+            connectSeparatedPoints: true,
+            drawPoints: true,
+            labelsDivStyles: {
+                'text-align': 'right',
+                'background': 'none'
+            },
+            labelsDiv: document.getElementById('varPolarsPlotLabel'+ i2),
+            labelsSeparateLines: true,
+            labelsKMB: true
+//             ,xlabel: "Top 200 most set variables",
+            //,title: "Most set variables during search session " + i
+        }
+    );
+}
+</script>
+
+
+<h2>Search statistics for each session</h2>
+<p>Here are some pie charts detailing propagations and other stats for each search. "red." means reducible, also called "learnt". "irred." means irreducible, also called "non-learnt" (terminology by A. Biere).</p>
 <?
 function getLearntData($runID)
 {
@@ -262,7 +510,7 @@ function getLearntData($runID)
         $tris=mysql_result($result, $i, "tris");
         $longs=mysql_result($result, $i, "longs");
 
-        echo "[ ['units', $units],['bins', $bins],['tris', $tris],['longs', $longs] ]\n";
+        echo "[ ['unit', $units],['bin', $bins],['tri', $tris],['long', $longs] ]\n";
 
         if ($i != $nrows-1) {
             echo " , ";
@@ -373,14 +621,8 @@ function createTable($nrows)
     $height = 150;
     $width = 150;
     $i = 0;
-    /*echo "<div id=\"leftcontent\">\n";
-    while ($i < $nrows) {
-        echo "<p>$i</p>\n";
-        $i++;
-    };
-    echo "</div>\n";*/
-    echo "<table border=\"0\" id=\"box-table-a\">\n";
-    echo "<tr><th>Simp num</th><th>Learnt Clause type</th><th>Propagation by</th><th>Conflicts by</th></tr>\n";
+    echo "<table id=\"box-table-a\">\n";
+    echo "<tr><th>Search session</th><th>Learnt Clause type</th><th>Propagation by</th><th>Conflicts by</th></tr>\n";
     while ($i < $nrows) {
         echo "<tr>\n";
         echo "<td width=\"1%\">$i</td>\n";
@@ -390,54 +632,12 @@ function createTable($nrows)
         echo "</tr>\n";
         $i++;
     };
-    echo "<tr><th>Simp num</th><th>learnt clause type</th><th>propagation by</th><th>conflicts by</th></tr>\n";
     echo "</table>\n";
 }
 createTable($nrows);
-
-
-//Part chart definitions
-/*function pieChart(name, data, num)
-{
-    var name = name+num;
-    jQuery.jqplot (name, [data[num]],
-    {
-        //title: "Learnt clauses after simplification number " + num,
-        seriesDefaults: {
-            // Make this a pie chart.
-            renderer: jQuery.jqplot.PieRenderer,
-            rendererOptions: {
-              showDataLabels: false
-              , barPadding: 0
-              , padding: 0
-            },
-            shadow: false
-        },
-        legend: {
-            show: true
-            , location: 'e'
-        },
-        grid: {
-            borderWidth: 0
-            , shadow: false
-            , drawGridLines: false
-        }
-    });
-}
-
-//Go through all pie charts
-for(var i = 0; i < learntData.length; i++) {
-    pieChart("learnt", learntData, i);
-    pieChart("prop", propData, i);
-    pieChart("confl", conflData, i);
-}*/
-?>
-</script>
-
-
-<?
 mysql_close();
 ?>
+</script>
 
 <script type="text/javascript">
 function drawChart(name, num, data) {
@@ -491,38 +691,18 @@ function drawChart(name, num, data) {
     });
 };
 
-$(function () {
-    var chart;
-    $(document).ready(function() {
-        for(i = 0; i < learntData.length; i++) {
-            drawChart("learnt", i, learntData);
-        }
+var chart;
+for(i = 0; i < learntData.length; i++) {
+    drawChart("learnt", i, learntData);
+}
 
-        for(i = 0; i < propData.length; i++) {
-            drawChart("prop", i, propData);
-        }
+for(i = 0; i < propData.length; i++) {
+    drawChart("prop", i, propData);
+}
 
-        for(i = 0; i < conflData.length; i++) {
-            drawChart("confl", i, conflData);
-        }
-    });
-});
-
-
-// data: [
-//     ['Firefox',   45.0],
-//     ['IE',       26.8],
-//     {
-//         name: 'Chrome',
-//         y: 12.8,
-//         sliced: true,
-//         selected: true
-//     },
-//     ['Safari',    8.5],
-//     ['Opera',     6.2],
-//     ['Others',   0.7]
-// ]
-
+for(i = 0; i < conflData.length; i++) {
+    drawChart("confl", i, conflData);
+}
 </script>
 
 

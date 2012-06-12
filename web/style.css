@@ -2,16 +2,31 @@ html {
 
 }
 
+div.myPlotLabel {
+ width:200px;
+ font-size:0.8em;
+ padding-top:0px;
+}
+
+div.myPlotData {
+ width:700px;
+ height:100px;
+ margin:0;
+}
+
+div.myPlotData2 {
+ width:700px;
+ height:200px;
+ margin:0;
+ margin-top:30px;
+}
+
 body {
   font-family: "Helvetica Neue", Helvetica, sans-serif;
   margin: 0;
-  margin-top: 40px;
+  margin-top: 20px;
   margin-bottom: 4em;
-  width: 960px;
-}
-
-#body {
-  position: relative;
+/*   width: 960px; */
 }
 
 footer {
@@ -24,18 +39,6 @@ aside {
   left: 780px;
   position: absolute;
   width: 180px;
-}
-
-#body > p, li > p {
-  line-height: 1.5em;
-}
-
-#body > p {
-  width: 720px;
-}
-
-#body > blockquote {
-  width: 640px;
 }
 
 li {
@@ -136,12 +139,20 @@ h1 {
   margin-bottom: 0;
 }
 
-h1 + h2 {
+h1 + h2 + h3{
   margin-top: 0;
 }
 
+h3 {
+    margin: 0;
+    margin-top: 0px;
+    margin-left: 50px;
+    font-size: 13px;
+}
+
 h2 {
-  margin: 50px;
+  margin-top: 50px;
+  margin-left: 50px;
   font-weight: 400;
   font-size: 28px;
 }
@@ -220,4 +231,9 @@ h1, h2 {
   background: #000;
   opacity: .2;
   z-index: 2;
+}
+
+p {
+    margin-left: 50px;
+    width: 600px;
 }
