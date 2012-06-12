@@ -16,6 +16,26 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `clauseStats`
+--
+
+DROP TABLE IF EXISTS `clauseStats`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `clauseStats` (
+  `runID` bigint(20) unsigned NOT NULL,
+  `simplifications` bigint(20) unsigned NOT NULL,
+  `reduceDB` bigint(20) unsigned NOT NULL,
+  `learnt` int(10) unsigned NOT NULL,
+  `size` bigint(20) unsigned NOT NULL,
+  `glue` bigint(20) unsigned NOT NULL,
+  `numPropAndConfl` bigint(20) unsigned NOT NULL,
+  `numLitVisited` bigint(20) unsigned NOT NULL,
+  `numLookedAt` bigint(20) unsigned NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `confls`
 --
 
@@ -47,6 +67,24 @@ CREATE TABLE `learnts` (
   `bins` bigint(20) unsigned NOT NULL,
   `tris` bigint(20) unsigned NOT NULL,
   `longs` bigint(20) unsigned NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `polarSet`
+--
+
+DROP TABLE IF EXISTS `polarSet`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `polarSet` (
+  `runID` bigint(20) unsigned NOT NULL,
+  `simplifications` bigint(20) unsigned NOT NULL,
+  `order` int(10) unsigned NOT NULL,
+  `pos` bigint(20) unsigned NOT NULL,
+  `neg` bigint(20) unsigned NOT NULL,
+  `total` bigint(20) unsigned NOT NULL,
+  `flipped` bigint(20) unsigned NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -119,4 +157,4 @@ CREATE TABLE `vars` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2012-06-03 23:10:33
+-- Dump completed on 2012-06-12 16:20:02
