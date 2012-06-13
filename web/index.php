@@ -54,14 +54,17 @@ function showValue(newValue)
 <script type="text/javascript">
 var myDataFuncs=new Array();
 var myDataNames=new Array();
+var myDataTypes=new Array();
+var myDataLabels=new Array();
 </script>
 <?
-$runID = 3097911473;
+$runID = 1628198452;
+//$runID = 3097911473;
 //$runID = 456297562;
 //$runID = 657697659;
 //$runID = 3348265795;
-//error_reporting(E_ALL);
-error_reporting(E_STRICT);
+error_reporting(E_ALL);
+//error_reporting(E_STRICT);
 
 $username="presenter";
 $password="presenter";
@@ -82,7 +85,7 @@ if (!$result) {
 }
 $nrows=mysql_numrows($result);
 
-function printOneThing($name, $nicename, $data, $nrows)
+/*function printOneThing($name, $nicename, $data, $nrows)
 {
     $fullname = $name."Data";
     $nameLabel = $name."Label";
@@ -92,34 +95,115 @@ function printOneThing($name, $nicename, $data, $nrows)
     <div id=\"$nameLabel\" class=\"myPlotLabel\"></div>
     </td></tr>";
     echo "<script type=\"text/javascript\">
-    function $fullname() {
-    return \"Conflicts,$nicename\\n";
+    $fullname = [";
+
     $i=0;
     while ($i < $nrows) {
         $conf=mysql_result($data, $i, "conflicts");
         $b=mysql_result($data, $i, $name);
-        if ($i == $nrows-1) {
-            echo "$conf, $b;\"};\n";
-        } else {
-            echo "$conf, $b\\n";
-        }
+        echo "[$conf, $b]\n";
+
         $i++;
+        if ($i < $nrows) {
+            echo ",";
+        }
     }
+    echo "];";
+
     echo "myDataFuncs.push($fullname);\n";
     echo "myDataNames.push(\"$name\");\n";
+    echo "myDataLabels.push([\"Conflicts\", \"$nicename\"]);\n";
+    echo "myDataTypes.push(0);\n";
+    echo "</script>\n";
+}*/
+
+function printOneThing($name, $datanames, $nicedatanames, $data, $nrows)
+{
+    $fullname = $name."Data";
+    $nameLabel = $name."Label";
+    echo "<tr><td>
+    <div id=\"$name\" class=\"myPlotData\"></div>
+    </td><td valign=top>
+    <div id=\"$nameLabel\" class=\"myPlotLabel\"></div>
+    </td></tr>";
+    echo "<script type=\"text/javascript\">";
+    echo "$fullname = [";
+
+    $i=0;
+    while ($i < $nrows) {
+        $conf=mysql_result($data, $i, "conflicts");
+        echo "[$conf";
+        $sum = 0;
+        $num = 0;
+        foreach ($datanames as $dataname) {
+            $sum += mysql_result($data, $i, $dataname);
+            $num++;
+        }
+        foreach ($datanames as $dataname) {
+            if ($num > 1) {
+                $tmp=mysql_result($data, $i, $dataname)/$sum*100.0;
+            } else {
+                $tmp=mysql_result($data, $i, $dataname);
+            }
+            echo ", $tmp";
+        }
+        echo "]\n";
+
+        $i++;
+        if ($i < $nrows) {
+            echo ",";
+        }
+    }
+    echo "];\n";
+    echo "myDataFuncs.push($fullname);\n";
+    echo "myDataNames.push(\"$name\");\n";
+    echo "myDataLabels.push([\"Conflicts\"";
+    $num = 0;
+    foreach ($nicedatanames as $dataname) {
+        $num++;
+        echo ", \"$dataname\"";
+    }
+    echo "]);\n";
+    echo "myDataTypes.push(".(int)($num > 1).");\n";
     echo "</script>\n";
 }
 
 echo "<table id=\"plot-table-a\">";
-printOneThing("time", "time", $result, $nrows);
-printOneThing("restarts", "restart no.", $result, $nrows);
-printOneThing("branchDepth", "avg. branch depth", $result, $nrows);
-printOneThing("branchDepthDelta", "avg. branch depth delta", $result, $nrows);
-printOneThing("trailDepth", "avg. trail depth", $result, $nrows);
-printOneThing("trailDepthDelta", "avg. trail depth delta", $result, $nrows);
-printOneThing("glue", "avg. glue", $result, $nrows);
-printOneThing("size", "avg. size", $result, $nrows);
-printOneThing("resolutions", "avg. no. resolutions", $result, $nrows);
+printOneThing("time", array("time")
+    , array("time"), $result, $nrows);
+    
+printOneThing("restarts" , array("restarts")
+    , array("restart no."), $result, $nrows);
+
+printOneThing("branchDepth", array("branchDepth")
+    , array("avg. branch depth"), $result, $nrows);
+
+printOneThing("branchDepthDelta", array("branchDepthDelta")
+    , array("avg. branch depth delta"), $result, $nrows);
+    
+printOneThing("trailDepth", array("trailDepth")
+    , array("avg. trail depth"), $result, $nrows);
+
+printOneThing("trailDepthDelta", array("trailDepthDelta")
+    , array("avg. trail depth delta"), $result, $nrows);
+
+printOneThing("glue", array("glue")
+    , array("avg. glue"), $result, $nrows);
+
+printOneThing("size", array("size")
+    , array("avg. size"), $result, $nrows);
+
+printOneThing("resolutions", array("resolutions")
+    , array("avg. no. resolutions"), $result, $nrows);
+
+printOneThing("learntsSt", array("learntUnits", "learntBins", "learntTris", "learntLongs")
+    ,array("unit learnts %", "bin learnts %", "tri learnts %", "long learnts %"), $result, $nrows);
+
+printOneThing("propSt", array("propBinIrred", "propBinRed", "propTri", "propLongIrred", "propLongRed")
+    ,array("prop by bin irred %", "prop by bin red %", "prop by tri %", "prop by long irred %", "prop by long red %"), $result, $nrows);
+
+printOneThing("conflSt", array("conflBinIrred", "conflBinRed", "conflTri", "conflLongIrred", "conflLongRed")
+    ,array("confl by bin irred %", "confl by bin red %", "confl by tri %", "confl by long irred %", "confl by long red %"), $result, $nrows);
 
 $query="
 SELECT `conflicts`, `replaced`, `set`
@@ -131,41 +215,26 @@ if (!$result) {
     die('Invalid query: ' . mysql_error());
 }
 $nrows=mysql_numrows($result);
-printOneThing("set", "vars set", $result, $nrows);
-printOneThing("replaced", "vars replaced", $result, $nrows);
+printOneThing("set", array("set")
+    , array("vars set"), $result, $nrows);
+
+printOneThing("replaced", array("replaced")
+    , array("vars replaced"), $result, $nrows);
 echo "</table>";
 
-$query="
-SELECT max(conflicts) as confl, simplifications as simpl
-FROM restart
-where runID = $runID
-group by simplifications";
-
-$result=mysql_query($query);
-if (!$result) {
-    die('Invalid query: ' . mysql_error());
-}
-$nrows=mysql_numrows($result);
-
-function getAnnotations($name, $result, $nrows)
+function fillSimplificationPoints($runID)
 {
-    //echo "gs[0].setAnnotations([";
+    $query="
+    SELECT max(conflicts) as confl, simplifications as simpl
+    FROM restart
+    where runID = $runID
+    group by simplifications";
 
-    echo "myAnnotations = [";
-    $i=0;
-    while ($i < $nrows) {
-        $conf=mysql_result($result, $i, "confl");
-        $b=mysql_result($result, $i, "simpl");
-
-        echo "{series: \"$name\",
-        x: \"$conf\"
-        , shortText: \"S$b\"
-        , text: \"Simplification no. $b\"
-        },";
-        $i++;
+    $result=mysql_query($query);
+    if (!$result) {
+        die('Invalid query: ' . mysql_error());
     }
-    echo "];";
-    echo "myDataAnnotations.push(myAnnotations);\n";
+    $nrows=mysql_numrows($result);
 
     echo "simplificationPoints = [";
     $i=0;
@@ -180,16 +249,7 @@ function getAnnotations($name, $result, $nrows)
     echo "];";
 }
 echo "<script type=\"text/javascript\">";
-echo "var myDataAnnotations=new Array();";
-getAnnotations("time", $result, $nrows);
-/*getAnnotations("restarts", $result, $nrows);
-getAnnotations("branch depth", $result, $nrows);
-getAnnotations("branch depth delta", $result, $nrows);
-getAnnotations("trail depth", $result, $nrows);
-getAnnotations("trail depth delta", $result, $nrows);
-getAnnotations("glue", $result, $nrows);
-getAnnotations("size", $result, $nrows);
-getAnnotations("resolutions", $result, $nrows);*/
+fillSimplificationPoints($runID);
 echo "</script>\n";
 ?>
 
@@ -209,9 +269,11 @@ for (var i = 0; i <= myDataNames.length; i++) {
         document.getElementById(myDataNames[i]),
         myDataFuncs[i]
         , {
+            stackedGraph: myDataTypes[i],
+            labels: myDataLabels[i],
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(185, 185, 245, 245)";
-                for(var k = 0; k < simplificationPoints.length; k++) {
+                for(var k = 0; k <= simplificationPoints.length; k++) {
                     var bottom_left = g.toDomCoords(simplificationPoints[k], -20);
                     var left = bottom_left[0];
                     canvas.fillRect(left, area.y, 2, area.h);
@@ -225,7 +287,7 @@ for (var i = 0; i <= myDataNames.length; i++) {
                 pixelsPerLabel: 100,
               }
             },
-            stepPlot: true,
+            //stepPlot: true,
             strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 2,
             highlightCircleSize: 3,
@@ -483,6 +545,8 @@ for(i = 0; i < varPolarsData.length; i++) {
 <p>Here are some pie charts detailing propagations and other stats for each search. "red." means reducible, also called "learnt", while "irred." means irreducible, also called "non-learnt". Terminology shamelessly taken from A. Biere.</p>
 
 <?
+
+
 ?>
 
 <?
@@ -506,22 +570,19 @@ function getLearntData($runID)
 
     //Write learnt data to 'learntData'
     $i=0;
-    echo "var learntData = [ ";
-    $divplacement = "";
+    echo "var learntData = new Array();";
+    //echo "var learntDataStacked = [];";
     while ($i < $nrows) {
+        $simplifications=mysql_result($result, $i, "simplifications");
         $units=mysql_result($result, $i, "units");
         $bins=mysql_result($result, $i, "bins");
         $tris=mysql_result($result, $i, "tris");
         $longs=mysql_result($result, $i, "longs");
 
-        echo "[ ['unit', $units],['bin', $bins],['tri', $tris],['long', $longs] ]\n";
-
-        if ($i != $nrows-1) {
-            echo " , ";
-        }
+        echo "learntData.push([ ['unit', $units],['bin', $bins],['tri', $tris],['long', $longs] ]);\n";
+        //echo "learntDataStacked.push([$simplifications, $units, $bins, $tris, $longs]);";
         $i++;
     }
-    echo "];\n";
     echo "</script>";
 
     return $nrows;
@@ -547,7 +608,7 @@ function getPropData($runID)
 
     //Write prop data to 'propData'
     $i=0;
-    echo "var propData = [ ";
+    echo "var propData = new Array();";
     $divplacement = "";
     while ($i < $nrows) {
         $unit=mysql_result($result, $i, "unit");
@@ -557,15 +618,11 @@ function getPropData($runID)
         $longIrred=mysql_result($result, $i, "longIrred");
         $longRed=mysql_result($result, $i, "longRed");
 
-        echo "[ ['unit', $unit],['bin irred.', $binIrred],['bin red.', $binRed]
-        , ['tri', $tri],['long irred.', $longIrred],['long red.', $longRed] ]\n";
+        echo "propData.push([ ['unit', $unit],['bin irred.', $binIrred],['bin red.', $binRed]
+        , ['tri', $tri],['long irred.', $longIrred],['long red.', $longRed] ]);\n";
 
-        if ($i != $nrows-1) {
-            echo " , ";
-        }
         $i++;
     }
-    echo "];\n";
     echo "</script>";
 
     return $nrows;
@@ -591,7 +648,7 @@ function getConflData($runID)
 
     //Write prop data to 'propData'
     $i=0;
-    echo "var conflData = [ ";
+    echo "var conflData = new Array();";
     $divplacement = "";
     while ($i < $nrows) {
         $binIrred=mysql_result($result, $i, "binIrred");
@@ -600,15 +657,11 @@ function getConflData($runID)
         $longIrred=mysql_result($result, $i, "longIrred");
         $longRed=mysql_result($result, $i, "longRed");
 
-        echo "[ ['bin irred.', $binIrred] ,['bin red.', $binRed],['tri', $tri]
-        ,['long irred.', $longIrred],['long red.', $longRed] ]\n";
+        echo "conflData.push([ ['bin irred.', $binIrred] ,['bin red.', $binRed],['tri', $tri]
+        ,['long irred.', $longIrred],['long red.', $longRed] ]);\n";
 
-        if ($i != $nrows-1) {
-            echo " , ";
-        }
         $i++;
     }
-    echo "];\n";
     echo "</script>";
 
     return $nrows;
@@ -622,28 +675,58 @@ getConflData($runID);
 //End script, create tables
 function createTable($nrows)
 {
-    $height = 150;
-    $width = 150;
     $i = 0;
     echo "<table id=\"box-table-a\">\n";
     echo "<tr><th>Search session</th><th>Learnt Clause type</th><th>Propagation by</th><th>Conflicts by</th></tr>\n";
     while ($i < $nrows) {
         echo "<tr>\n";
         echo "<td width=\"1%\">$i</td>\n";
-        echo " <td width=\"30%\"><div id=\"learnt$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div></td>\n";
-        echo " <td width=\"30%\"><div id=\"prop$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div></td>\n";
-        echo " <td width=\"30%\"><div id=\"confl$i\" style=\"min-height:".$height."px; min-width:".$width."px;\"></div></td>\n";
+        echo " <td width=\"30%\"><div id=\"learnt$i\" class=\"piechart\"></div></td>\n";
+        echo " <td width=\"30%\"><div id=\"prop$i\" class=\"piechart\"></div></td>\n";
+        echo " <td width=\"30%\"><div id=\"confl$i\" class=\"piechart\"></div></td>\n";
         echo "</tr>\n";
         $i++;
     };
     echo "</table>\n";
 }
+/*echo "<table id=\"plot-table-a\">";
+echo "<tr><td>
+    <div id=\"learntStatsStacked\" class=\"myPlotData2\"></div>
+    </td><td valign=top>
+    <div id=\"learntStatsStackedLabel\" class=\"myPlotLabel\"></div>
+    </td></tr>";
+echo "</table>";*/
 createTable($nrows);
 mysql_close();
 ?>
 </script>
 
 <script type="text/javascript">
+/*var g = new Dygraph(
+    document.getElementById("learntStatsStacked")
+    , learntDataStacked
+    , {
+        labels: ['x', 'unit', 'bin', 'tri', 'long']
+        , stackedGraph: true
+
+        , highlightCircleSize: 2
+        , strokeWidth: 1
+        , strokeBorderWidth: 1
+        , legend: 'always'
+        , labelsDivStyles: {
+            'text-align': 'right',
+            'background': 'none'
+        }
+        , labelsDiv: document.getElementById("learntStatsStackedLabel")
+        , labelsSeparateLines: true
+        , labelsKMB: true
+        , drawPoints: true
+        , pointSize: 1.5
+        , highlightCircleSize: 4
+        , title: "Learnt Clause type"
+    }
+);*/
+
 function drawChart(name, num, data) {
     chart = new Highcharts.Chart(
     {

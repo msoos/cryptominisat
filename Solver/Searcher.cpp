@@ -1068,6 +1068,8 @@ void Searcher::resetStats()
     //Rest solving stats
     stats.clear();
     propStats.clear();
+    lastSQLPropStats = propStats;
+    lastSQLGlobalStats = stats;
 
     //Set already set vars
     origTrailSize = trail.size();
@@ -1209,6 +1211,9 @@ void Searcher::printDecLevel0SQL()
 
 void Searcher::printRestartSQL()
 {
+    PropStats thisPropStats = propStats - lastSQLPropStats;
+    Stats thisStats = stats - lastSQLGlobalStats;
+    
     solver->sqlFile
     << "insert into `restart`"
     << "("
@@ -1216,6 +1221,9 @@ void Searcher::printRestartSQL()
     << " , `glue`, `size`, `resolutions`"
     << " , `branchDepth`, `branchDepthDelta`, `trailDepth`, `trailDepthDelta`"
     << " , `agility`"
+    << " , `propBinIrred` , `propBinRed` , `propTri` , `propLongIrred` , `propLongRed`"
+    << " , `conflBinIrred`, `conflBinRed`, `conflTri`, `conflLongIrred`, `conflLongRed`"
+    << " , `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
     << ")"
     << " values ("
     //Position
@@ -1235,10 +1243,34 @@ void Searcher::printRestartSQL()
     << ", " << branchDepthDeltaHist.getAvgMidLong()
     << ", " << trailDepthHist.getAvgMidLong()
     << ", " << trailDepthDeltaHist.getAvgMidLong()
+    << ", " << agilityHist.getAvgMidLong()
+
+    //Prop
+    << ", " << thisPropStats.propsBinIrred
+    << ", " << thisPropStats.propsBinRed
+    << ", " << thisPropStats.propsTri
+    << ", " << thisPropStats.propsLongIrred
+    << ", " << thisPropStats.propsLongRed
+
+    //Confl
+    << ", " << thisStats.conflStats.conflsBinIrred
+    << ", " << thisStats.conflStats.conflsBinRed
+    << ", " << thisStats.conflStats.conflsTri
+    << ", " << thisStats.conflStats.conflsLongIrred
+    << ", " << thisStats.conflStats.conflsLongRed
+
+    //Learnt
+    << ", " << thisStats.learntUnits
+    << ", " << thisStats.learntBins
+    << ", " << thisStats.learntTris
+    << ", " << thisStats.learntLongs
+    
 
     //Variable stats
-    << ", " << agilityHist.getAvgMidLong()
     << " );" << endl;
+
+    lastSQLPropStats = propStats;
+    lastSQLGlobalStats = stats;
 }
 
 void Searcher::printLearntStatsSQL()

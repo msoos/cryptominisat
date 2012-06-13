@@ -151,6 +151,53 @@ class Searcher : public PropEngine
                 return *this;
             }
 
+            Stats& operator-=(const Stats& other)
+            {
+                numRestarts -= other.numRestarts;
+
+                //Decisions
+                decisions -= other.decisions;
+                decisionsAssump -= other.decisionsAssump;
+                decisionsRand -= other.decisionsRand;
+                decisionFlippedPolar -= other.decisionFlippedPolar;
+
+                //Conflict minimisation stats
+                litsLearntNonMin -= other.litsLearntNonMin;
+                litsLearntRecMin -= other.litsLearntRecMin;
+                litsLearntFinal -= other.litsLearntFinal;
+                OTFShrinkAttempted  -= other.OTFShrinkAttempted;
+                OTFShrinkedClause -= other.OTFShrinkedClause;
+
+                //Learnt stats
+                learntUnits -= other.learntUnits;
+                learntBins -= other.learntBins;
+                learntTris -= other.learntTris;
+                learntLongs -= other.learntLongs;
+                otfSubsumed -= other.otfSubsumed;
+                otfSubsumedLearnt -= other.otfSubsumedLearnt;
+                otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
+
+                //Hyper-bin & transitive reduction
+                advancedPropCalled -= other.advancedPropCalled;
+                hyperBinAdded -= other.hyperBinAdded;
+                transRedRemoved -= other.transRedRemoved;
+
+                //Stat structs
+                conflStats -= other.conflStats;
+
+                //Time
+                cpu_time -= other.cpu_time;
+
+                return *this;
+            }
+
+            Stats operator-(const Stats& other) const
+            {
+                Stats result = *this;
+                result -= other;
+                return result;
+            }
+
             void print()
             {
                 uint64_t mem_used = memUsed();
@@ -440,6 +487,8 @@ class Searcher : public PropEngine
         void printVarStatsSQL();
         void printClauseDistribSQL();
         void clearPolarData();
+        PropStats lastSQLPropStats;
+        Stats lastSQLGlobalStats;
 
         //Assumptions
         vector<Lit> assumptions; ///< Current set of assumptions provided to solve by the user.
