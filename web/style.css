@@ -3,9 +3,11 @@ html {
 }
 
 div.myPlotLabel {
+ font-family: sans-serif;
  width:200px;
- font-size:0.8em;
- padding-top:0px;
+ font-size:0.7em;
+ padding-top:10px;
+ padding-bottom:10px;
 }
 
 div.myPlotData {
@@ -142,7 +144,7 @@ blockquote:after {
 }
 
 h1 {
-  margin: 50px;
+  margin: 20px;
   font-size: 96px;
   margin-top: .3em;
   margin-bottom: 0;
@@ -155,13 +157,13 @@ h1 + h2 + h3{
 h3 {
     margin: 0;
     margin-top: 0px;
-    margin-left: 50px;
+    margin-left: 20px;
     font-size: 13px;
 }
 
 h2 {
   margin-top: 50px;
-  margin-left: 50px;
+  margin-left: 20px;
   font-weight: 400;
   font-size: 28px;
 }
@@ -244,7 +246,7 @@ h1, h2, p {
 
 p {
     font-size: 16px;
-    margin-left: 50px;
+    margin-left: 20px;
     width: 70%;
     max-width: 500px;
     font-weight: 200;

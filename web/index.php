@@ -32,7 +32,7 @@
 <h1>Cryptominisat 3</h1>
 
 <h3>Replacing wordy authority with visible certainty</h4>
-<p>This webpage shows the solving of a SAT instance, visually. I was amazed by Edward Tufte's work  while others in the office were dazzled by a PowerPoint professional, in German. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
+<p>This webpage shows the solving of a SAT instance, visually. I was amazed by Edward Tufte's work (hence the subtitle) and this came out of it. Tufte would probably not approve, as some of the layout is terrible. However, it might allow you to understand SAT better, and may offer inspiration... or, rather, <i>vision</i>. Enjoy.</p>
 
 
 <!--<p>Please select averaging level:
@@ -273,6 +273,7 @@ for (var i = 0; i <= myDataNames.length; i++) {
             labels: myDataLabels[i],
             underlayCallback: function(canvas, area, g) {
                 canvas.fillStyle = "rgba(185, 185, 245, 245)";
+                canvas.fillRect(0, area.y, 2, area.h);
                 for(var k = 0; k <= simplificationPoints.length; k++) {
                     var bottom_left = g.toDomCoords(simplificationPoints[k], -20);
                     var left = bottom_left[0];
@@ -295,10 +296,6 @@ for (var i = 0; i <= myDataNames.length; i++) {
             drawXAxis: i == myDataNames.length-1,
             legend: 'always',
             xlabel: todisplay(i, myDataNames.length),
-            labelsDivStyles: {
-                'text-align': 'right',
-                'background': 'none'
-            },
             labelsDiv: document.getElementById(myDataNames[i]+"Label"),
             labelsSeparateLines: true,
             labelsKMB: true,
@@ -306,6 +303,7 @@ for (var i = 0; i <= myDataNames.length; i++) {
             pointSize: 1,
             drawXGrid: false,
             drawYGrid: false,
+            drawYAxis: false,
             //errorBars: false,
             drawCallback: function(me, initial) {
                 if (blockRedraw || initial)
@@ -793,7 +791,7 @@ for(i = 0; i < conflData.length; i++) {
 </script>
 
 <h2>The End</h2>
-<p>If you enjoyed this visualization, there are two things you can do. First, enjoy, and send it to others. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>
+<p>If you enjoyed this visualization, there are two things you can do. First, tell me about your impressions and send the link to a friend. Second, you can contact my employer, and he will be happy to find a way for us to help you with your SAT problems.</p>
 
 
 <!--<div id="fig" style="width:20px; height:20px"></div>
